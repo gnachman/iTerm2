@@ -265,26 +265,6 @@
                                 key:KEY_SEND_TERMINAL_GENERATED_ALERT
                                type:kPreferenceInfoTypeCheckbox];
 
-    [self defineControl:_sessionEndMessageColorWell
-                    key:KEY_SESSION_END_MESSAGE_COLOR
-            relatedView:nil
-                   type:kPreferenceInfoTypeColorWell];
-    
-    [self defineControl:_sessionEndMessageText
-                    key:KEY_SESSION_END_MESSAGE_TEXT
-            relatedView:nil
-                   type:kPreferenceInfoTypeStringTextField];
-    
-    [self defineControl:_sessionRestartedMessageText
-                    key:KEY_SESSION_RESTARTED_MESSAGE_TEXT
-            relatedView:nil
-                   type:kPreferenceInfoTypeStringTextField];
-    
-    [self defineControl:_sessionFinishedMessageText
-                    key:KEY_SESSION_FINISHED_MESSAGE_TEXT
-            relatedView:nil
-                   type:kPreferenceInfoTypeStringTextField];
-
     [self defineControl:_flashingBell
                     key:KEY_FLASHING_BELL
             relatedView:nil

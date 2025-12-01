@@ -624,10 +624,8 @@ DEFINE_STRING(composerClearSequence, @"0x15 0x0b", SECTION_SESSION @"Hex codes t
 DEFINE_BOOL(alwaysUseStatusBarComposer, NO, SECTION_SESSION @"Temporarily add a composer to the status bar instead of opening the large composer view when a status bar is present.");
 DEFINE_STRING(successSound, @"", SECTION_SESSION @"When Alert on Next Mark is configured to play a sound, use a file with this name for successful completion of the previous command.\nYou can name a system sound or a file in ~/Library/Sounds.");
 DEFINE_STRING(errorSound, @"", SECTION_SESSION @"When Alert on Next Mark is configured to play a sound, use a file with this name for erroneous completion of the previous command.\nYou can name a system sound or a file in ~/Library/Sounds.");
-DEFINE_SETTABLE_STRING(sessionEndMessageText, SessionEndMessageText, @"Session Ended", SECTION_SESSION @"Text displayed when a session ends. Supports emoji.");
-DEFINE_SETTABLE_STRING(sessionRestartedMessageText, SessionRestartedMessageText, @"Session Restarted", SECTION_SESSION @"Text displayed when a session restarts. Supports emoji.");
-DEFINE_SETTABLE_STRING(sessionFinishedMessageText, SessionFinishedMessageText, @"Finished", SECTION_SESSION @"Text displayed when a short-lived session finishes. Supports emoji.");
-DEFINE_SETTABLE_STRING(sessionEndMessageDividerStyle, SessionEndMessageDividerStyle, @"double", SECTION_SESSION @"Divider line style for session end messages.\nOptions: none, single, double, dashed, dotted, heavy, light");
+DEFINE_SETTABLE_STRING(sessionEndMessageText, SessionEndMessageText, @"", SECTION_SESSION @"Text displayed when a session ends. Leave empty to use default. Supports emoji.");
+DEFINE_SETTABLE_STRING(sessionEndMessageDividerCharacter, SessionEndMessageDividerCharacter, @"", SECTION_SESSION @"Character to use for divider lines in session end messages. Leave empty to use secure default (BrokenPipeDivider image). Examples: ━ ─ ═ ╌ ┄");
 
 #pragma mark - Windows
 

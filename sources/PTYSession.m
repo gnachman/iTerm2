@@ -3882,75 +3882,55 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
             }
         }
 
-        NSString *const message = [NSString stringWithFormat:@" %@ ", unpaddedMessage];
+        NSString *message = [NSString stringWithFormat:@" %@ ", unpaddedMessage];
         if (mutableState.cursorX != 1) {
             [mutableState appendCarriageReturnLineFeed];
         }
         screen_char_t savedFgColor = [terminal foregroundColorCode];
         screen_char_t savedBgColor = [terminal backgroundColorCode];
-        NSColor *messageColor = [iTermProfilePreferences colorForKey:KEY_SESSION_END_MESSAGE_COLOR inProfile:self.profile];
-        if (!messageColor) {
-            messageColor = [NSColor colorWithCalibratedRed:70.0/255.0
-                                                     green:83.0/255.0
-                                                      blue:246.0/255.0
-                                                     alpha:1];
-        }
-        [terminal setForeground24BitColor:messageColor];
+        // This color matches the color used in BrokenPipeDivider.png.
+        [terminal setForeground24BitColor:[NSColor colorWithCalibratedRed:70.0/255.0
+                                                                    green:83.0/255.0
+                                                                     blue:246.0/255.0
+                                                                    alpha:1]];
         [terminal setBackgroundColor:ALTSEM_DEFAULT
                   alternateSemantics:YES];
         [terminal updateDefaultChar];
         mutableState.currentGrid.defaultChar = terminal.defaultChar;
-        
-        NSString *dividerStyle = [iTermAdvancedSettingsModel sessionEndMessageDividerStyle];
-        BOOL showDividers = ![dividerStyle isEqualToString:@"none"];
+        NSString *dividerChar = [iTermAdvancedSettingsModel sessionEndMessageDividerCharacter];
         int width = (mutableState.width - message.length) / 2;
-        
-        if (showDividers && width > 0) {
-            // Determine divider character based on style
-            NSString *dividerChar = @"━"; // default double line
-            if ([dividerStyle isEqualToString:@"single"]) {
-                dividerChar = @"─";
-            } else if ([dividerStyle isEqualToString:@"double"]) {
-                dividerChar = @"━";
-            } else if ([dividerStyle isEqualToString:@"dashed"]) {
-                dividerChar = @"╌";
-            } else if ([dividerStyle isEqualToString:@"dotted"]) {
-                dividerChar = @"┄";
-            } else if ([dividerStyle isEqualToString:@"heavy"]) {
-                dividerChar = @"═";
-            } else if ([dividerStyle isEqualToString:@"light"]) {
-                dividerChar = @"─";
+        if (dividerChar.length == 0) {
+            // Use BrokenPipeDivider by default for security
+            if (width > 0) {
+                [mutableState appendNativeImageAtCursorWithName:@"BrokenPipeDivider"
+                                                          width:width];
             }
-            
-            // Create divider string by repeating the character
-            NSMutableString *leftDivider = [NSMutableString string];
-            for (int i = 0; i < width; i++) {
-                [leftDivider appendString:dividerChar];
+        } else {
+            // Use custom character
+            if (width > 0) {
+                NSMutableString *leftDivider = [NSMutableString string];
+                for (int i = 0; i < width; i++) {
+                    [leftDivider appendString:dividerChar];
+                }
+                [mutableState appendStringAtCursor:leftDivider];
             }
-            [mutableState appendStringAtCursor:leftDivider];
         }
+        message = [iTermAdvancedSettingsModel sessionEndMessageText] ?: message;
         [mutableState appendStringAtCursor:message];
-        if (showDividers && width > 0) {
+        if (dividerChar.length == 0) {
+            if (width > 0) {
+                [mutableState appendNativeImageAtCursorWithName:@"BrokenPipeDivider"
+                                                          width:width];
+            }
+        } else {
             int rightWidth = mutableState.width - mutableState.cursorX + 1;
-            NSMutableString *rightDivider = [NSMutableString string];
-            NSString *dividerChar = @"━";
-            if ([dividerStyle isEqualToString:@"single"]) {
-                dividerChar = @"─";
-            } else if ([dividerStyle isEqualToString:@"double"]) {
-                dividerChar = @"━";
-            } else if ([dividerStyle isEqualToString:@"dashed"]) {
-                dividerChar = @"╌";
-            } else if ([dividerStyle isEqualToString:@"dotted"]) {
-                dividerChar = @"┄";
-            } else if ([dividerStyle isEqualToString:@"heavy"]) {
-                dividerChar = @"═";
-            } else if ([dividerStyle isEqualToString:@"light"]) {
-                dividerChar = @"─";
+            if (rightWidth > 0) {
+                NSMutableString *rightDivider = [NSMutableString string];
+                for (int i = 0; i < rightWidth; i++) {
+                    [rightDivider appendString:dividerChar];
+                }
+                [mutableState appendStringAtCursor:rightDivider];
             }
-            for (int i = 0; i < rightWidth; i++) {
-                [rightDivider appendString:dividerChar];
-            }
-            [mutableState appendStringAtCursor:rightDivider];
         }
         [mutableState appendCarriageReturnLineFeed];
         [terminal setForegroundColor:savedFgColor.foregroundColor
