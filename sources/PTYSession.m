@@ -5175,6 +5175,8 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
     const BOOL didAllowPasteBracketing = _screen.terminalAllowPasteBracketing;
     [terminal setAllowPasteBracketing:[iTermProfilePreferences boolForKey:KEY_ALLOW_PASTE_BRACKETING
                                                                 inProfile:aDict]];
+    self.view.enableProgressBars = [iTermProfilePreferences boolForKey:KEY_ENABLE_PROGRESS_BARS
+                                                             inProfile:aDict];
     if (didAllowPasteBracketing && !_screen.terminalAllowPasteBracketing) {
         // If the user flips the setting off, disable bracketed paste.
         terminal.bracketedPasteMode = NO;
@@ -19737,6 +19739,14 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
                                                    target:self
                                                    action:@selector(addAnnotationWithCompletion:startX:startY:endX:endY:text:)];
         [_methods registerFunction:method namespace:@"iterm2"];
+        method = [[iTermBuiltInMethod alloc] initWithName:@"get_time_offset"
+                                            defaultValues:@{}
+                                                    types:@{}
+                                        optionalArguments:[NSSet set]
+                                                  context:iTermVariablesSuggestionContextSession
+                                                   target:self
+                                                   action:@selector(fetchTimeOffsetWithCompletion:)];
+        [_methods registerFunction:method namespace:@"iterm2"];
     }
     return _methods;
 }
@@ -19809,6 +19819,25 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
         [mutableState addNoteWithText:text inAbsoluteRange:range];
     }];
     completion(nil, nil);
+}
+
+- (void)fetchTimeOffsetWithCompletion:(void (^)(id, NSError *))completion {
+    if (!_conductor) {
+        NSString *tz = [[NSTimeZone localTimeZone] abbreviation];
+        completion(@{ @"offset": @0,
+                      @"tz": tz },
+                   nil);
+        return;
+    }
+    [_conductor fetchTimeOffset:^(NSTimeInterval offset, NSString *tz, NSError *error) {
+        if (error) {
+            completion(nil, error);
+        } else {
+            completion(@{ @"offset": @(offset),
+                          @"tz": tz },
+                       nil);
+        }
+    }];
 }
 
 - (void)setStatusBarComponentUnreadCountWithCompletion:(void (^)(id, NSError *))completion

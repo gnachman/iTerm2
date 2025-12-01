@@ -18,6 +18,7 @@ import subprocess
 import sys
 import tempfile
 import termios
+import textwrap
 import threading
 import time
 import traceback
@@ -689,6 +690,24 @@ async def handle_getenv(identifier, args):
     if q:
         send_esc(q, value)
     end(q, identifier, 0)
+
+async def handle_runpy(identifier, args):
+    "args[0] should be a sequence of Python statements returning a string"
+    log(f'handle_runpy {identifier} {args}')
+    q = begin(identifier)
+    try:
+        encoded = args[0]
+        script = base64.b64decode(encoded).decode('utf-8')
+        indented = textwrap.indent(script, '    ')
+        wrapper = f"def __f__():\n{indented}"
+        env = {}
+        exec(wrapper, env)
+        output = env['__f__']()
+        send_esc(q, str(output) if output is not None else "")
+        end(q, identifier, 0)
+    except:
+        send_esc(q, traceback.format_exc())
+        end(q, identifier, 1)
 
 async def handle_eval(identifier, args):
     log(f'handle_eval {identifier} [{len(args[0])} bytes]')
@@ -1555,7 +1574,8 @@ HANDLERS = {
     "save": handle_save,
     "file": handle_file,
     "eval": handle_eval,
-    "getenv": handle_getenv
+    "getenv": handle_getenv,
+    "runpy": handle_runpy
 }
 
 def main():

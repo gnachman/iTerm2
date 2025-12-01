@@ -1873,15 +1873,19 @@ typedef NS_ENUM(NSInteger, SessionViewTrackingMode) {
     if (progress == _progress) {
         return;
     }
+    _progress = progress;
+    [self updateProgressBar];
+}
+
+- (void)updateProgressBar {
     if (!_progressBar) {
         _progressBar = [[iTermProgressBarView alloc] init];
         _progressBar.darkMode = _terminalBackgroundColor.isDark;
         [self addSubviewBelowFindView:_progressBar];
         [self updateLayout];
     }
-    _progress = progress;
-    _progressBar.state = progress;
-    switch (progress) {
+    _progressBar.state = _progress;
+    switch (_progress) {
         case VT100ScreenProgressStopped:
             _progressBar.hidden = YES;
             break;
@@ -1896,30 +1900,38 @@ typedef NS_ENUM(NSInteger, SessionViewTrackingMode) {
         case VT100ScreenProgressWarningBase:
             break;
     }
-    if (progress >= VT100ScreenProgressSuccessBase && progress <= VT100ScreenProgressSuccessBase + 100) {
-        const int percentage = progress - VT100ScreenProgressSuccessBase;
+    if (_progress >= VT100ScreenProgressSuccessBase && _progress <= VT100ScreenProgressSuccessBase + 100) {
+        const int percentage = _progress - VT100ScreenProgressSuccessBase;
         if (percentage >= 0 && percentage <= 100) {
             _progressBar.hidden = NO;
         } else {
             _progressBar.hidden = YES;
         }
     }
-    if (progress >= VT100ScreenProgressErrorBase && progress <= VT100ScreenProgressErrorBase + 100) {
-        const int percentage = progress - VT100ScreenProgressErrorBase;
+    if (_progress >= VT100ScreenProgressErrorBase && _progress <= VT100ScreenProgressErrorBase + 100) {
+        const int percentage = _progress - VT100ScreenProgressErrorBase;
         if (percentage >= 0 && percentage <= 100) {
             _progressBar.hidden = NO;
         } else {
             _progressBar.hidden = YES;
         }
     }
-    if (progress >= VT100ScreenProgressWarningBase && progress <= VT100ScreenProgressWarningBase + 100) {
-        const int percentage = progress - VT100ScreenProgressWarningBase;
+    if (_progress >= VT100ScreenProgressWarningBase && _progress <= VT100ScreenProgressWarningBase + 100) {
+        const int percentage = _progress - VT100ScreenProgressWarningBase;
         if (percentage >= 0 && percentage <= 100) {
             _progressBar.hidden = NO;
         } else {
             _progressBar.hidden = YES;
         }
     }
+    if (!self.enableProgressBars) {
+        _progressBar.hidden = YES;
+    }
+}
+
+- (void)setEnableProgressBars:(BOOL)enableProgressBars {
+    _enableProgressBars = enableProgressBars;
+    [self updateProgressBar];
 }
 
 - (BOOL)statusBarIsInPaneTitleBar {
