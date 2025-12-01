@@ -216,6 +216,18 @@
 #define KEY_ENABLE_PROGRESS_BARS              @"Enable Progress Bars"
 #define KEY_PROGRESS_BAR_HEIGHT               @"Progress Bar Height"
 #define KEY_PROGRESS_BAR_COLOR_SCHEME         @"Progress Bar Color Scheme"
+
+// Progress bar color scheme constants
+#define PROGRESS_BAR_COLOR_SCHEME_DEFAULT     @"default"
+#define PROGRESS_BAR_COLOR_SCHEME_RAINBOW     @"rainbow"
+#define PROGRESS_BAR_COLOR_SCHEME_RED         @"red"
+#define PROGRESS_BAR_COLOR_SCHEME_GREEN       @"green"
+#define PROGRESS_BAR_COLOR_SCHEME_BLUE        @"blue"
+#define PROGRESS_BAR_COLOR_SCHEME_YELLOW      @"yellow"
+#define PROGRESS_BAR_COLOR_SCHEME_PURPLE      @"purple"
+#define PROGRESS_BAR_COLOR_SCHEME_CYAN        @"cyan"
+#define PROGRESS_BAR_COLOR_SCHEME_ORANGE      @"orange"
+
 #define KEY_ALLOW_TITLE_SETTING               @"Allow Title Setting"
 #define KEY_DISABLE_PRINTING                  @"Disable Printing"
 #define KEY_SCROLLBACK_WITH_STATUS_BAR        @"Scrollback With Status Bar"

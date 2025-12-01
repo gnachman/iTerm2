@@ -114,6 +114,8 @@ static NSString * const kColorGalleryURL = @"https://www.iterm2.com/colorgallery
 
     IBOutlet NSButton *_modeWarning;
     IBOutlet iTermHueVisualizationView *_hueVisualization;
+    
+    IBOutlet NSPopUpButton *_progressBarColorScheme;
 
     NSDictionary<NSString *, id> *_savedColors;
     NSTimer *_timer;
@@ -297,6 +299,12 @@ static NSString * const kColorGalleryURL = @"https://www.iterm2.com/colorgallery
                           type:kPreferenceInfoTypeCheckbox];
     info.observer = ^{ [weakSelf updateColorControlsEnabled]; };
 
+    [self populateProgressBarColorSchemes];
+    [self defineControl:_progressBarColorScheme
+                    key:KEY_PROGRESS_BAR_COLOR_SCHEME
+            displayName:@"Progress bar color scheme"
+                   type:kPreferenceInfoTypePopup];
+
     [self addViewToSearchIndex:_presetsPopupButton
                    displayName:@"Color presets"
                        phrases:@[]
@@ -305,6 +313,29 @@ static NSString * const kColorGalleryURL = @"https://www.iterm2.com/colorgallery
     [self maybeWarnAboutExcessiveContrast];
     [self updateColorControlsEnabled];
     _hueVisualization.delegate = self;
+}
+
+- (void)populateProgressBarColorSchemes {
+    [_progressBarColorScheme removeAllItems];
+    NSArray *schemes = @[
+        PROGRESS_BAR_COLOR_SCHEME_DEFAULT,
+        PROGRESS_BAR_COLOR_SCHEME_RAINBOW,
+        PROGRESS_BAR_COLOR_SCHEME_RED,
+        PROGRESS_BAR_COLOR_SCHEME_GREEN,
+        PROGRESS_BAR_COLOR_SCHEME_BLUE,
+        PROGRESS_BAR_COLOR_SCHEME_YELLOW,
+        PROGRESS_BAR_COLOR_SCHEME_PURPLE,
+        PROGRESS_BAR_COLOR_SCHEME_CYAN,
+        PROGRESS_BAR_COLOR_SCHEME_ORANGE
+    ];
+    for (NSString *scheme in schemes) {
+        NSString *title = [scheme capitalizedString];
+        if ([scheme isEqualToString:PROGRESS_BAR_COLOR_SCHEME_DEFAULT]) {
+            title = @"Default (Green/Blue)";
+        }
+        [_progressBarColorScheme addItemWithTitle:title];
+        [[_progressBarColorScheme lastItem] setRepresentedObject:scheme];
+    }
 }
 
 - (void)viewWillAppear {

@@ -83,6 +83,8 @@ static NSString *const ProfilesSessionPreferencesViewControllerPhonyShortLivedSe
     IBOutlet NSButton *_timestampsEnabled;
     IBOutlet NSTextField *_showTimestampsLabel;
     IBOutlet NSButton *_warnAboutShortLivedSessions;
+    
+    IBOutlet NSTextField *_progressBarHeight;
 
     iTermStatusBarSetupViewController *_statusBarSetupViewController;
     iTermStatusBarSetupPanel *_statusBarSetupWindow;
@@ -282,6 +284,11 @@ static NSString *const ProfilesSessionPreferencesViewControllerPhonyShortLivedSe
                     key:KEY_TIMESTAMPS_VISIBLE
             relatedView:nil
                    type:kPreferenceInfoTypeCheckbox];
+
+    [self defineControl:_progressBarHeight
+                    key:KEY_PROGRESS_BAR_HEIGHT
+            displayName:@"Progress bar height"
+                   type:kPreferenceInfoTypeIntegerTextField];
 
     info = [self unsafeDefineControl:_warnAboutShortLivedSessions
                                  key:ProfilesSessionPreferencesViewControllerPhonyShortLivedSessionsKey
