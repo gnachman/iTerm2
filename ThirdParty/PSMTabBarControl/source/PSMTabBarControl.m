@@ -969,6 +969,7 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionDarkModeInactiveTabDarkness = @"
 
 - (void)backgroundColorWillChange {
     _overflowPopUpButton.appearance = _style.accessoryAppearance;
+    _addTabButton.appearance = _style.accessoryAppearance;
 }
 
 #pragma mark -
