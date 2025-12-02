@@ -69,11 +69,20 @@ class iTermBrowserToolbar: NSView {
     override init(frame frameRect: NSRect) {
         super.init(frame: frameRect)
         setupButtons()
+        setupTransparentBackground()
     }
 
     required init?(coder: NSCoder) {
         super.init(coder: coder)
         setupButtons()
+        setupTransparentBackground()
+    }
+
+    private func setupTransparentBackground() {
+        wantsLayer = true
+        if let layer = layer {
+            layer.backgroundColor = NSColor.clear.cgColor
+        }
     }
 
     private func setupButtons() {

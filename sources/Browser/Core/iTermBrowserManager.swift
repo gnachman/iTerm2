@@ -227,44 +227,72 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler 
         let transparentBackgroundJS = """
         (function() {
             'use strict';
-            const style = document.createElement('style');
-            style.id = 'iterm2-transparent-background';
-            style.textContent = `
-                /* Universal transparent background */
-                *, *::before, *::after {
-                    background-color: transparent !important;
-                    background-image: none !important;
+            console.log('[iTerm2] Transparent background script loaded');
+
+            // Aggressive style injection with continuous monitoring
+            function applyTransparency() {
+                const style = document.getElementById('iterm2-transparent-background');
+                if (!style) {
+                    const newStyle = document.createElement('style');
+                    newStyle.id = 'iterm2-transparent-background';
+                    newStyle.textContent = `
+                        /* Universal transparent background - use transparent, not initial */
+                        *, *::before, *::after {
+                            background-color: transparent !important;
+                            background-image: none !important;
+                            background: transparent !important;
+                        }
+                    `;
+                    (document.head || document.documentElement).appendChild(newStyle);
+                    console.log('[iTerm2] Style tag injected');
                 }
-                /* Keep images and videos visible */
-                img, video, picture, canvas, svg, iframe,
-                [class*="thumbnail"], [class*="avatar"], [class*="icon"],
-                [class*="img"], [class*="video"], [class*="player"] {
-                    background-color: initial !important;
-                    background-image: initial !important;
-                }
-                /* Keep buttons somewhat visible */
-                button, [role="button"], input[type="button"], input[type="submit"] {
-                    background-color: rgba(255,255,255,0.1) !important;
-                }
-            `;
-            function injectStyle() {
-                if (document.head) {
-                    const existing = document.getElementById('iterm2-transparent-background');
-                    if (existing) existing.remove();
-                    document.head.appendChild(style);
-                }
+
+                // Force transparent background on ALL elements (not just inline styles)
+                const allElements = document.querySelectorAll('*');
+                let modified = 0;
+                allElements.forEach(el => {
+                    // Skip media elements
+                    const isMedia = el.tagName.match(/^(IMG|VIDEO|PICTURE|CANVAS|SVG|IFRAME)$/i) ||
+                                   el.className.match(/(thumbnail|avatar|icon|img|video|player|yt-image)/i) ||
+                                   el.id.match(/(thumbnail|avatar|icon|img|video|player)/i);
+                    if (!isMedia) {
+                        // Force transparent regardless of current style source (inline or CSS)
+                        el.style.setProperty('background-color', 'transparent', 'important');
+                        el.style.setProperty('background-image', 'none', 'important');
+                        el.style.setProperty('background', 'transparent', 'important');
+                        modified++;
+                    }
+                });
+                console.log('[iTerm2] Forced ' + modified + ' elements transparent');
             }
-            if (document.head) {
-                injectStyle();
+
+            // Initial application
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', applyTransparency);
             } else {
-                const observer = new MutationObserver(function(mutations, obs) {
-                    if (document.head) {
-                        injectStyle();
+                applyTransparency();
+            }
+
+            // Re-apply when DOM changes (YouTube dynamically adds content)
+            const observer = new MutationObserver(() => {
+                applyTransparency();
+            });
+
+            if (document.body) {
+                observer.observe(document.body, { childList: true, subtree: true });
+            } else {
+                const bodyObserver = new MutationObserver((mutations, obs) => {
+                    if (document.body) {
+                        observer.observe(document.body, { childList: true, subtree: true });
+                        applyTransparency();
                         obs.disconnect();
                     }
                 });
-                observer.observe(document.documentElement, { childList: true, subtree: true });
+                bodyObserver.observe(document.documentElement, { childList: true });
             }
+
+            // Also re-apply periodically for extra safety (YouTube is aggressive)
+            setInterval(applyTransparency, 500);
         })();
         """
         contentManager.add(userScript: BrowserExtensionUserContentManager.UserScript(
