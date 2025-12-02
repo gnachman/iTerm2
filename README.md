@@ -88,7 +88,7 @@ We welcome contributions! Please read our [contribution guide](https://gitlab.co
 
 ## License
 
-iTerm2 is distributed under the [GPLv2](LICENSE) license.
+iTerm2 is distributed under the [GPLv3](LICENSE) license.
 
 ---
 
