@@ -17,6 +17,67 @@
 
 const CGFloat iTermTimestampGradientWidth = 20;
 
+// Date formatter cache indices
+typedef NS_ENUM(NSInteger, iTermTimestampFormatterType) {
+    iTermTimestampFormatterTypeWithinDay = 0,      // jj:mm:ss
+    iTermTimestampFormatterTypeWithinWeek = 1,     // EEE jj:mm:ss
+    iTermTimestampFormatterTypeWithinHalfYear = 2, // MMMd jj:mm:ss
+    iTermTimestampFormatterTypeOlder = 3,          // yyyyMMMd jj:mm:ss
+    iTermTimestampFormatterTypeCount = 4
+};
+
+static NSDateFormatter *sDateFormatterCache[iTermTimestampFormatterTypeCount];
+static id sLocaleChangeObserver;
+
+static void iTermTimestampDrawHelperInvalidateCache(void) {
+    for (int i = 0; i < iTermTimestampFormatterTypeCount; i++) {
+        sDateFormatterCache[i] = nil;
+    }
+}
+
+static NSDateFormatter *iTermTimestampDrawHelperGetCachedFormatter(iTermTimestampFormatterType type) {
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        sLocaleChangeObserver = [[NSNotificationCenter defaultCenter]
+            addObserverForName:NSCurrentLocaleDidChangeNotification
+                        object:nil
+                         queue:nil
+                    usingBlock:^(NSNotification * _Nonnull note) {
+            iTermTimestampDrawHelperInvalidateCache();
+        }];
+    });
+
+    NSDateFormatter *cached = sDateFormatterCache[type];
+    if (cached) {
+        return cached;
+    }
+
+    NSDateFormatter *fmt = [[NSDateFormatter alloc] init];
+    NSString *template;
+    switch (type) {
+        case iTermTimestampFormatterTypeWithinDay:
+            template = @"jj:mm:ss";
+            break;
+        case iTermTimestampFormatterTypeWithinWeek:
+            template = @"EEE jj:mm:ss";
+            break;
+        case iTermTimestampFormatterTypeWithinHalfYear:
+            template = @"MMMd jj:mm:ss";
+            break;
+        case iTermTimestampFormatterTypeOlder:
+            template = @"yyyyMMMd jj:mm:ss";
+            break;
+        default:
+            template = @"jj:mm:ss";
+            break;
+    }
+    [fmt setDateFormat:[NSDateFormatter dateFormatFromTemplate:template
+                                                       options:0
+                                                        locale:[NSLocale currentLocale]]];
+    sDateFormatterCache[type] = fmt;
+    return fmt;
+}
+
 @interface iTermTimestampRow : NSObject
 @property (nonatomic, strong) NSString *string;
 @property (nonatomic) int line;
@@ -278,34 +339,32 @@ const CGFloat iTermTimestampGradientWidth = 20;
 
 - (NSDateFormatter *)dateFormatterWithTimeDelta:(NSTimeInterval)timeDelta
                              useTestingTimezone:(BOOL)useTestingTimezone {
-    NSDateFormatter *fmt = [[NSDateFormatter alloc] init];
     const NSTimeInterval day = -86400;
+    iTermTimestampFormatterType type;
     if (timeDelta < day * 180) {
         // More than 180 days ago: include year
         // I tried using 365 but it was pretty confusing to see tomorrow's date.
-        [fmt setDateFormat:[NSDateFormatter dateFormatFromTemplate:@"yyyyMMMd jj:mm:ss"
-                                                           options:0
-                                                            locale:[NSLocale currentLocale]]];
+        type = iTermTimestampFormatterTypeOlder;
     } else if (timeDelta < day * 6) {
         // 6 days to 180 days ago: include date without year
-        [fmt setDateFormat:[NSDateFormatter dateFormatFromTemplate:@"MMMd jj:mm:ss"
-                                                           options:0
-                                                            locale:[NSLocale currentLocale]]];
+        type = iTermTimestampFormatterTypeWithinHalfYear;
     } else if (timeDelta < day) {
         // 1 day to 6 days ago: include day of week
-        [fmt setDateFormat:[NSDateFormatter dateFormatFromTemplate:@"EEE jj:mm:ss"
-                                                           options:0
-                                                            locale:[NSLocale currentLocale]]];
+        type = iTermTimestampFormatterTypeWithinWeek;
     } else {
         // In last 24 hours, just show time
-        [fmt setDateFormat:[NSDateFormatter dateFormatFromTemplate:@"jj:mm:ss"
-                                                           options:0
-                                                            locale:[NSLocale currentLocale]]];
+        type = iTermTimestampFormatterTypeWithinDay;
     }
+
     if (useTestingTimezone) {
+        // Don't cache testing timezone formatters - this code path is rarely used
+        NSDateFormatter *fmt = [[NSDateFormatter alloc] init];
+        [fmt setDateFormat:[iTermTimestampDrawHelperGetCachedFormatter(type) dateFormat]];
         fmt.timeZone = [NSTimeZone timeZoneForSecondsFromGMT:0];
+        return fmt;
     }
-    return fmt;
+
+    return iTermTimestampDrawHelperGetCachedFormatter(type);
 }
 
 - (NSString *)relativeStringForTimestamp:(NSTimeInterval)timestamp {
