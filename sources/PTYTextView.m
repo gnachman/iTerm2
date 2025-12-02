@@ -6194,6 +6194,10 @@ static NSString *iTermStringFromRange(NSRange range) {
         [self resetFindCursor];
     }
 
+    if (![self hasMarkedText] &&
+        keyboardhandler.performsTextReplacement) {
+        [self.delegate textViewPerformTextReplacement];
+    }
     if ([aString length] > 0) {
         if ([_delegate respondsToSelector:@selector(insertText:)]) {
             [_delegate insertText:aString];
@@ -6201,6 +6205,7 @@ static NSString *iTermStringFromRange(NSRange range) {
             [super insertText:aString];
         }
     }
+
     if ([self hasMarkedText]) {
         // In case imeOffset changed, the frame height must adjust.
         [_delegate refresh];

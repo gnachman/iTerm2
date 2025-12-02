@@ -206,6 +206,52 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     return _state.linebuffer.lastPosition;
 }
 
+- (NSString *)wordBefore:(VT100GridCoord)coord
+additionalWordCharacters:(NSString *)additionalWordCharacters
+                   range:(VT100GridWindowedRange *)rangePtr {
+    return [self wordWithCoord:coord
+                   predecessor:YES
+      additionalWordCharacters:additionalWordCharacters
+                         range:rangePtr];
+}
+
+
+- (NSString *)wordWithCoord:(VT100GridCoord)coord
+                predecessor:(BOOL)predecessor
+   additionalWordCharacters:(NSString *)additionalWordCharacters
+                      range:(VT100GridWindowedRange *)rangePtr {
+    iTermTextExtractor *extractor = [iTermTextExtractor textExtractorWithDataSource:self];
+
+    const VT100GridCoord adjustedCoord = predecessor ? [extractor predecessorOfCoord:coord] : coord;
+    const VT100GridWindowedRange range = [extractor rangeForWordAt:adjustedCoord
+                                                     maximumLength:kReasonableMaximumWordLength
+                                                               big:NO
+                                          additionalWordCharacters:additionalWordCharacters];
+
+    if (rangePtr) {
+        *rangePtr = range;
+    }
+    NSString *s = [extractor contentInRange:range
+                          attributeProvider:nil
+                                 nullPolicy:kiTermTextExtractorNullPolicyFromStartToFirst
+                                        pad:NO
+                         includeLastNewline:NO
+                     trimTrailingWhitespace:NO
+                               cappedAtSize:-1
+                               truncateTail:YES
+                          continuationChars:nil
+                                     coords:nil];
+    return s;
+}
+
+- (NSString *)wordEndingAt:(VT100GridCoord)coord
+                     range:(VT100GridWindowedRange *)rangePtr {
+    return [self wordWithCoord:coord
+                   predecessor:NO
+      additionalWordCharacters:nil
+                         range:rangePtr];
+}
+
 #pragma mark - PTYTextViewDataSource
 
 - (id<iTermTextDataSource>)snapshotDataSource {

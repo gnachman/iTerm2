@@ -224,7 +224,7 @@ const NSInteger kLongMaximumWordLength = 100000;
 
 - (VT100GridWindowedRange)rangeForWordAt:(VT100GridCoord)location
                            maximumLength:(NSInteger)maximumLength {
-    return [self rangeForWordAt:location maximumLength:maximumLength big:NO];
+    return [self rangeForWordAt:location maximumLength:maximumLength big:NO additionalWordCharacters:nil];
 }
 
 - (VT100GridAbsWindowedRange)rangeForBigWordAtAbsCoord:(VT100GridAbsCoord)location
@@ -246,7 +246,8 @@ const NSInteger kLongMaximumWordLength = 100000;
 // The maximum length is a rough guideline. You might get a word up to twice as long.
 - (VT100GridWindowedRange)rangeForWordAt:(VT100GridCoord)visualLocation
                            maximumLength:(NSInteger)maximumLength
-                                     big:(BOOL)big {
+                                     big:(BOOL)big
+                additionalWordCharacters:(NSString *)additionalWordCharacters {
     VT100GridCoord location = visualLocation;
     iTermBidiDisplayInfo *bidi = nil;
     if (_supportBidi) {
@@ -259,6 +260,9 @@ const NSInteger kLongMaximumWordLength = 100000;
     iTermWordExtractor *wordExtractor = [[iTermWordExtractor alloc] initWithLocation:location
                                                                        maximumLength:maximumLength
                                                                                  big:big];
+    if (additionalWordCharacters) {
+        wordExtractor.additionalWordCharacters = additionalWordCharacters;
+    }
     wordExtractor.dataSource = self;
     VT100GridWindowedRange range = [wordExtractor windowedRange];
     if (bidi) {

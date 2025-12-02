@@ -275,5 +275,10 @@ typedef NS_ENUM(NSUInteger, VT100ScreenTriggerCheckType) {
 - (LineBufferPosition *)positionForTailSearchOfScreen;
 - (void)foldAbsLineRange:(NSRange)range;
 - (NSString *)intervalTreeDump;
+- (NSString *)wordEndingAt:(VT100GridCoord)coord
+                     range:(VT100GridWindowedRange *)rangePtr;
+- (NSString *)wordBefore:(VT100GridCoord)coord
+additionalWordCharacters:(NSString *)additionalWordCharacters
+                   range:(VT100GridWindowedRange *)rangePtr;
 
 @end

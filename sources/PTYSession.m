@@ -4391,6 +4391,7 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
         if (gDebugLogging) {
             DebugLog([NSString stringWithFormat:@"writeTask:%@", string]);
         }
+        [[iTermTextReplacementManager shared] didInsert:string];
         [self writeTask:string];
     }
 }
@@ -10897,12 +10898,60 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
         DLog(@"Terminal already dead");
         return;
     }
-
+    if (_textview.keyboardHandler.performsTextReplacement) {
+        [self performTextReplacement];
+    }
     NSData *const dataToSend = [_keyMapper keyMapperDataForPostCocoaEvent:event];
     DLog(@"dataToSend=%@", dataToSend);
     if (dataToSend) {
         [self writeLatin1EncodedData:dataToSend broadcastAllowed:YES reporting:NO];
     }
+}
+
+- (BOOL)performTextReplacement {
+    [self.naggingController cancelTextReplacementOffer];
+    iTermTextReplacementManager *manager = [iTermTextReplacementManager shared];
+    if (![manager hasReplacements] || !manager.anyReplacementIsEligible) {
+        return NO;
+    }
+    VT100GridCoord coord = VT100GridCoordMake(self.screen.cursorX - 1,
+                                              self.screen.numberOfScrollbackLines + self.screen.cursorY - 1);
+    iTermTextExtractor *extractor = [iTermTextExtractor textExtractorWithDataSource:self.screen];
+    VT100GridCoord lastCoord = coord;
+    coord = [extractor predecessorOfCoord:coord];
+    NSMutableString *suffix = [@"" mutableCopy];
+    NSString *replacement = nil;
+    NSString *word = nil;
+    while ([manager hasReplacementsWithSuffix:suffix] &&
+           !VT100GridCoordEquals(coord, lastCoord)) {
+        word = [suffix copy];
+        replacement = [manager applyReplacementsTo:suffix];
+        NSString *c = [extractor stringForCharacterAt:coord];
+        if (!c) {
+            return NO;
+        }
+        [suffix insertString:c atIndex:0];
+        lastCoord = coord;
+        coord = [extractor predecessorOfCoord:coord];
+    }
+    if (!replacement || !word) {
+        return NO;
+    }
+    if (![manager shouldReplaceShortcut:word]) {
+        return NO;
+    }
+    [self.naggingController offerTextReplacement:^{
+        [self replaceWord:word with:replacement];
+    }];
+    return YES;
+}
+
+- (void)replaceWord:(NSString *)word with:(NSString *)replacement {
+    NSData *backspace = [self backspaceData];
+    for (int i = 0; i < word.numberOfComposedCharacters; i++) {
+        [self writeLatin1EncodedData:backspace broadcastAllowed:YES reporting:NO];
+    }
+    [self writeTask:replacement encoding:self.encoding forceEncoding:NO reporting:NO];
 }
 
 - (void)keyUp:(NSEvent *)event {
@@ -13173,6 +13222,10 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 
 - (BOOL)textViewCanUseSSHIntegrationFor:(SCPPath *)path {
     return [_conductor canTransferFilesTo:path];
+}
+
+- (BOOL)textViewPerformTextReplacement {
+    return [self performTextReplacement];
 }
 
 - (void)startDownloadOverSCP:(SCPPath *)path {

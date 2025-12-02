@@ -245,6 +245,10 @@ typedef NS_ENUM(NSUInteger, iTermTextExtractorTrimTrailingWhitespace) {
 - (VT100GridWindowedRange)visualWindowedRangeForLogical:(VT100GridWindowedRange)logical;
 
 - (VT100GridCoord)logicalCoordForVisualCoord:(VT100GridCoord)visualCoord;
+- (VT100GridWindowedRange)rangeForWordAt:(VT100GridCoord)visualLocation
+                           maximumLength:(NSInteger)maximumLength
+                                     big:(BOOL)big
+                additionalWordCharacters:(NSString * _Nullable)additionalWordCharacters;
 
 #pragma mark - For tests
 

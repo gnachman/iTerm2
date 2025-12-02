@@ -62,6 +62,7 @@ typedef struct {
 @property (nonatomic, readonly) BOOL keyIsARepeat;
 @property (nonatomic, strong) id<iTermKeyMapper> keyMapper;
 @property (nonatomic, readonly) NSDictionary *dictionaryValue;
+@property (nonatomic, readonly) BOOL performsTextReplacement;  // Does the current event trigger text replacement?
 
 - (void)keyDown:(NSEvent *)event inputContext:(NSTextInputContext *)inputContext;
 - (void)doCommandBySelector:(SEL)aSelector;

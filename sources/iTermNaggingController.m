@@ -39,8 +39,11 @@ static NSString *iTermNaggingControllerSetBackgroundImageFileIdentifier = @"SetB
 static NSString *iTermNaggingControllerUserDefaultAlwaysAllowBackgroundImage = @"AlwaysAllowBackgroundImage";
 static NSString *iTermNaggingControllerUserDefaultAlwaysDenyBackgroundImage = @"AlwaysDenyBackgroundImage";
 static NSString *const iTermNaggingControllerDidChangeTmuxWindowsShouldCloseAfterDetach = @"iTermNaggingControllerDidChangeTmuxWindowsShouldCloseAfterDetach";
+static NSString *const iTermNaggingControllerArrangementTextReplacements = @"TextReplacements";
 
-@implementation iTermNaggingController
+@implementation iTermNaggingController {
+    BOOL _haveOutstandingTextReplacementOffer;
+}
 
 - (instancetype)init {
     self = [super init];
@@ -94,6 +97,45 @@ static NSString *const iTermNaggingControllerDidChangeTmuxWindowsShouldCloseAfte
                                                               guid:guid];
         }
     }];
+}
+
+- (void)offerTextReplacement:(void (^NS_NOESCAPE)(void))perform {
+    NSString *userDefaultsKey = @"NoSyncTextReplacements";
+    NSNumber *n = [NSNumber castFrom:[[NSUserDefaults standardUserDefaults] objectForKey:userDefaultsKey]];
+    if (n) {
+        if (n.boolValue) {
+            perform();
+        }
+        return;
+    }
+    if (_haveOutstandingTextReplacementOffer) {
+        return;
+    }
+    NSString *notice = @"Would you like macOS Text Replacements to be applied automatically?";
+    _haveOutstandingTextReplacementOffer = YES;
+    __weak __typeof(self) weakSelf = self;
+    [self.delegate naggingControllerShowMessage:notice
+                                     isQuestion:YES
+                                      important:NO
+                                     identifier:iTermNaggingControllerArrangementTextReplacements
+                                        options:@[ @"_Yes", @"_No" ]
+                                     completion:^(int selection) {
+        if (selection == 0 || selection == 1) {
+            [[NSUserDefaults standardUserDefaults] setBool:selection == 0 forKey:userDefaultsKey];
+        }
+        [weakSelf resetHaveTextReplacementOffer];
+    }];
+}
+
+- (void)cancelTextReplacementOffer {
+    if (_haveOutstandingTextReplacementOffer) {
+        [self.delegate naggingControllerRemoveMessageWithIdentifier:iTermNaggingControllerArrangementTextReplacements];
+        _haveOutstandingTextReplacementOffer = NO;
+    }
+}
+
+- (void)resetHaveTextReplacementOffer {
+    _haveOutstandingTextReplacementOffer = NO;
 }
 
 - (void)arrangementWithName:(NSString *)savedArrangementName

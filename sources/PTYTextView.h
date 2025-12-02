@@ -336,6 +336,7 @@ extern const CGFloat PTYTextViewMarginClickGraceWidth;
 - (void)textViewMarginColorDidChange;
 - (BOOL)textViewProfileTypeIsTerminal;
 - (BOOL)textViewCanUseSSHIntegrationFor:(SCPPath *)path;
+- (BOOL)textViewPerformTextReplacement;
 @end
 
 @interface iTermHighlightedRow : NSObject

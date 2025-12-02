@@ -8,6 +8,7 @@
 #import "iTermKeyboardHandler.h"
 
 #import "DebugLogging.h"
+#import "iTerm2SharedARC-Swift.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermNSKeyBindingEmulator.h"
 #import "NSEvent+iTerm.h"
@@ -42,6 +43,8 @@ static iTermKeyboardHandler *sCurrentKeyboardHandler;
     // know if marked text existed prior to -handleEvent so they can avoid passing the event to the
     // delegate in this case.
     BOOL _hadMarkedTextBeforeHandlingKeypressEvent;
+
+    BOOL _performsTextReplacement;
 }
 
 - (instancetype)init {
@@ -69,6 +72,7 @@ static iTermKeyboardHandler *sCurrentKeyboardHandler;
 // * Repeated special keys
 - (void)keyDown:(NSEvent *)event inputContext:(nonnull NSTextInputContext *)inputContext {
     DLog(@"PTYTextView keyDown BEGIN %@", event);
+    _performsTextReplacement = NO;
     if (![self.delegate keyboardHandler:self shouldHandleKeyDown:event]) {
         return;
     }
@@ -114,9 +118,30 @@ static iTermKeyboardHandler *sCurrentKeyboardHandler;
         }
         return;
     }
+    _performsTextReplacement = [self eventPerformsTextReplacement:event];
     [eventsToHandle addObject:event];
     for (NSEvent *event in eventsToHandle) {
         [self handleKeyDownEvent:event eschewCocoaTextHandling:NO context:context inputContext:inputContext];
+    }
+}
+
+- (BOOL)eventPerformsTextReplacement:(NSEvent *)event {
+    const NSEventModifierFlags mask = (NSEventModifierFlagCommand |
+                                       NSEventModifierFlagOption |
+                                       NSEventModifierFlagShift |
+                                       NSEventModifierFlagControl |
+                                       NSEventModifierFlagNumericPad |
+                                       NSEventModifierFlagFunction);
+    if ((event.it_modifierFlags & mask) != 0) {
+        return NO;
+    }
+    switch (event.keyCode) {
+        case kVK_Space:
+        case kVK_Return:
+        case kVK_Tab:
+            return YES;
+        default:
+            return NO;
     }
 }
 
