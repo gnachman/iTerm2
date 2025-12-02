@@ -229,8 +229,14 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler 
             'use strict';
             console.log('[iTerm2] Transparent background script loaded');
 
+            const processedElements = new WeakSet();
+            let isProcessing = false;
+
             // Aggressive style injection with continuous monitoring
             function applyTransparency() {
+                if (isProcessing) return;  // Prevent re-entry
+                isProcessing = true;
+
                 const style = document.getElementById('iterm2-transparent-background');
                 if (!style) {
                     const newStyle = document.createElement('style');
@@ -247,23 +253,29 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler 
                     console.log('[iTerm2] Style tag injected');
                 }
 
-                // Force transparent background on ALL elements (not just inline styles)
+                // Force transparent background on new elements only
                 const allElements = document.querySelectorAll('*');
                 let modified = 0;
                 allElements.forEach(el => {
+                    if (processedElements.has(el)) return;  // Skip already processed
+
                     // Skip media elements
                     const isMedia = el.tagName.match(/^(IMG|VIDEO|PICTURE|CANVAS|SVG|IFRAME)$/i) ||
                                    el.className.match(/(thumbnail|avatar|icon|img|video|player|yt-image)/i) ||
                                    el.id.match(/(thumbnail|avatar|icon|img|video|player)/i);
                     if (!isMedia) {
-                        // Force transparent regardless of current style source (inline or CSS)
                         el.style.setProperty('background-color', 'transparent', 'important');
                         el.style.setProperty('background-image', 'none', 'important');
                         el.style.setProperty('background', 'transparent', 'important');
+                        processedElements.add(el);
                         modified++;
                     }
                 });
-                console.log('[iTerm2] Forced ' + modified + ' elements transparent');
+                if (modified > 0) {
+                    console.log('[iTerm2] Forced ' + modified + ' new elements transparent');
+                }
+
+                isProcessing = false;
             }
 
             // Initial application
@@ -273,9 +285,27 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler 
                 applyTransparency();
             }
 
-            // Re-apply when DOM changes (YouTube dynamically adds content)
-            const observer = new MutationObserver(() => {
-                applyTransparency();
+            // Debounced version to prevent blocking UI
+            let debounceTimer = null;
+            function debouncedApplyTransparency() {
+                if (debounceTimer) clearTimeout(debounceTimer);
+                debounceTimer = setTimeout(() => {
+                    applyTransparency();
+                }, 200);  // Increased to 200ms for better responsiveness
+            }
+
+            // Only watch for NEW nodes, not attribute changes
+            const observer = new MutationObserver((mutations) => {
+                let hasNewNodes = false;
+                for (const mutation of mutations) {
+                    if (mutation.addedNodes.length > 0) {
+                        hasNewNodes = true;
+                        break;
+                    }
+                }
+                if (hasNewNodes) {
+                    debouncedApplyTransparency();
+                }
             });
 
             if (document.body) {
@@ -290,9 +320,6 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler 
                 });
                 bodyObserver.observe(document.documentElement, { childList: true });
             }
-
-            // Also re-apply periodically for extra safety (YouTube is aggressive)
-            setInterval(applyTransparency, 500);
         })();
         """
         contentManager.add(userScript: BrowserExtensionUserContentManager.UserScript(
