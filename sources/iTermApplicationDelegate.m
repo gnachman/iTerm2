@@ -1258,10 +1258,6 @@ void TurnOnDebugLoggingAutomatically(void) {
         [_untitledWindowStateMachine disableInitialUntitledWindow];
     }
 
-    // BROWSER-ONLY MODE: Always disable initial untitled window
-    DLog(@"BROWSER-ONLY MODE: disableInitialUntitledWindow");
-    [_untitledWindowStateMachine disableInitialUntitledWindow];
-
     NSError *error = nil;
     DLog(@"Start iTermSecretServer");
     [[iTermSecretServer instance] listenAndReturnError:&error];
@@ -1271,13 +1267,11 @@ void TurnOnDebugLoggingAutomatically(void) {
 
     DLog(@"willFinishLaunching");
     if (_restorableStateController) {
-        // BROWSER-ONLY MODE: Skip window restoration to prevent terminal windows
         // The system doesn't tell us when it's done invoking NSWindowRestoration calls. My guess
         // is that it's a spin after applicationWillFinishLaunching. We care because we won't make
         // the database writable until we know we don't need to use old records any more.
         dispatch_async(dispatch_get_main_queue(), ^{
-            // [self restoreWindows];  // COMMENTED OUT - prevents terminal window restoration
-            [_untitledWindowStateMachine didFinishRestoringWindows];
+            [self restoreWindows];
         });
     } else {
         [_untitledWindowStateMachine didFinishRestoringWindows];
@@ -2074,19 +2068,43 @@ static iTermKeyEventReplayer *gReplayer;
     }
     [[iTermController sharedInstance] setStartingUp:YES];
 
-    // BROWSER-ONLY MODE: Skip all terminal initialization and only launch browser
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.3 * NSEC_PER_SEC)),
-                   dispatch_get_main_queue(), ^{
-        NSURL *url = [NSURL URLWithString:@"https://www.youtube.com"];
-        [[iTermController sharedInstance] openSingleUserBrowserWindowWithURL:url
-                                                                configuration:nil
-                                                                      options:iTermSingleUseWindowOptionsNone
-                                                                   completion:nil];
-    });
+    // Check if we have an autolaunch script to execute. Do it only once, i.e. at application launch.
+    BOOL ranAutoLaunchScripts = NO;
+    if (![self isAppleScriptTestApp] &&
+        ![[NSApplication sharedApplication] isRunningUnitTests]) {
+        DLog(@"Run autolaunch scripts if needed");
+        ranAutoLaunchScripts = [self.scriptsMenuController runAutoLaunchScriptsIfNeeded];
+    }
+    DLog(@"ranAutoLaunchScripts=%@", @(ranAutoLaunchScripts));
 
+    if ([WindowArrangements defaultArrangementName] == nil &&
+        [WindowArrangements arrangementWithName:LEGACY_DEFAULT_ARRANGEMENT_NAME] != nil) {
+        [WindowArrangements makeDefaultArrangement:LEGACY_DEFAULT_ARRANGEMENT_NAME];
+    }
+
+    if ([iTermPreferences boolForKey:kPreferenceKeyOpenBookmark]) {
+        // Open bookmarks window at startup.
+        [[iTermProfilesWindowController sharedInstance] showWindow:nil];
+    }
+
+    DLog(@"terminals=%@", [[iTermController sharedInstance] terminals]);
+    DLog(@"profileHotKeys=%@", [[iTermHotKeyController sharedInstance] profileHotKeys]);
+    DLog(@"buriedSessions=%@", [[iTermBuriedSessions sharedInstance] buriedSessions]);
+
+    if ([iTermPreferences boolForKey:kPreferenceKeyOpenArrangementAtStartup]) {
+        // Open the saved arrangement at startup.
+        [[iTermController sharedInstance] loadWindowArrangementWithName:[WindowArrangements defaultArrangementName]];
+    } else if ([self shouldOpenUntitledFileAfterRunningAutoLaunchScripts:ranAutoLaunchScripts]) {
+        // This opens the initial untitled window when needed. -applicationOpenUntitledFile is
+        // called for both the initial window (unreliably) and also when clicking on the dock with
+        // no windows.
+        [_untitledWindowStateMachine maybeOpenUntitledFile];
+    }
     [_untitledWindowStateMachine didFinishInitialization];
+
     [[iTermController sharedInstance] setStartingUp:NO];
     [PTYSession removeAllRegisteredSessions];
+
     [iTermLaunchExperienceController performStartupActivities];
 }
 
