@@ -185,6 +185,7 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler 
         case autofillHandler
         case hoverLinkHandler
         case copyModeHandler
+        case transparentBackground
     }
 
     private func configure(_ configuration: WKWebViewConfiguration,
@@ -220,6 +221,59 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler 
             forMainFrameOnly: false,
             worlds: [.page, .defaultClient],
             identifier: UserScripts.consoleLog.rawValue))
+
+        // Inject transparent background CSS for see-through effect (like terminal)
+        // Inline the JS to avoid bundle loading issues
+        let transparentBackgroundJS = """
+        (function() {
+            'use strict';
+            const style = document.createElement('style');
+            style.id = 'iterm2-transparent-background';
+            style.textContent = `
+                /* Universal transparent background */
+                *, *::before, *::after {
+                    background-color: transparent !important;
+                    background-image: none !important;
+                }
+                /* Keep images and videos visible */
+                img, video, picture, canvas, svg, iframe,
+                [class*="thumbnail"], [class*="avatar"], [class*="icon"],
+                [class*="img"], [class*="video"], [class*="player"] {
+                    background-color: initial !important;
+                    background-image: initial !important;
+                }
+                /* Keep buttons somewhat visible */
+                button, [role="button"], input[type="button"], input[type="submit"] {
+                    background-color: rgba(255,255,255,0.1) !important;
+                }
+            `;
+            function injectStyle() {
+                if (document.head) {
+                    const existing = document.getElementById('iterm2-transparent-background');
+                    if (existing) existing.remove();
+                    document.head.appendChild(style);
+                }
+            }
+            if (document.head) {
+                injectStyle();
+            } else {
+                const observer = new MutationObserver(function(mutations, obs) {
+                    if (document.head) {
+                        injectStyle();
+                        obs.disconnect();
+                    }
+                });
+                observer.observe(document.documentElement, { childList: true, subtree: true });
+            }
+        })();
+        """
+        contentManager.add(userScript: BrowserExtensionUserContentManager.UserScript(
+            code: transparentBackgroundJS,
+            injectionTime: .atDocumentStart,
+            forMainFrameOnly: false,
+            worlds: [.page],
+            identifier: UserScripts.transparentBackground.rawValue))
+
         contentManager.add(userScript: .init(
             code: iTermBrowserTemplateLoader.load(template: "graph-discovery.js", substitutions: [:]),
             injectionTime: .atDocumentStart,
@@ -431,6 +485,9 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler 
         webView = iTermBrowserWebView(frame: .zero,
                                       configuration: configuration,
                                       pointerController: pointerController)
+        // Enable transparent background - allows seeing through to window behind
+        webView.setValue(false, forKey: "drawsBackground")
+
         if let safariBundle = Bundle(path: "/Applications/Safari.app"),
            let safariVersion = safariBundle.infoDictionary?["CFBundleShortVersionString"] as? String {
             webView.customUserAgent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) " +
