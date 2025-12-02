@@ -10,6 +10,7 @@
 #import "DebugLogging.h"
 #import "iTerm2SharedARC-Swift.h"
 #import "iTermAdvancedSettingsModel.h"
+#import "iTermCache.h"
 #import "iTermPreferences.h"
 #import "NSColor+iTerm.h"
 #import "NSFont+iTerm.h"
@@ -27,17 +28,22 @@ typedef NS_ENUM(NSInteger, iTermTimestampFormatterType) {
 };
 
 static NSDateFormatter *sDateFormatterCache[iTermTimestampFormatterTypeCount];
+static iTermCache<NSNumber *, NSString *> *sTimestampStringCache[iTermTimestampFormatterTypeCount];
 static id sLocaleChangeObserver;
 
 static void iTermTimestampDrawHelperInvalidateCache(void) {
     for (int i = 0; i < iTermTimestampFormatterTypeCount; i++) {
         sDateFormatterCache[i] = nil;
+        sTimestampStringCache[i] = nil;
     }
 }
 
-static NSDateFormatter *iTermTimestampDrawHelperGetCachedFormatter(iTermTimestampFormatterType type) {
+static void iTermTimestampDrawHelperInitializeIfNeeded(void) {
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
+        for (int i = 0; i < iTermTimestampFormatterTypeCount; i++) {
+            sTimestampStringCache[i] = [[iTermCache alloc] initWithCapacity:1000];
+        }
         sLocaleChangeObserver = [[NSNotificationCenter defaultCenter]
             addObserverForName:NSCurrentLocaleDidChangeNotification
                         object:nil
@@ -46,6 +52,23 @@ static NSDateFormatter *iTermTimestampDrawHelperGetCachedFormatter(iTermTimestam
             iTermTimestampDrawHelperInvalidateCache();
         }];
     });
+}
+
+static iTermTimestampFormatterType iTermTimestampFormatterTypeForTimeDelta(NSTimeInterval timeDelta) {
+    const NSTimeInterval day = -86400;
+    if (timeDelta < day * 180) {
+        return iTermTimestampFormatterTypeOlder;
+    } else if (timeDelta < day * 6) {
+        return iTermTimestampFormatterTypeWithinHalfYear;
+    } else if (timeDelta < day) {
+        return iTermTimestampFormatterTypeWithinWeek;
+    } else {
+        return iTermTimestampFormatterTypeWithinDay;
+    }
+}
+
+static NSDateFormatter *iTermTimestampDrawHelperGetCachedFormatter(iTermTimestampFormatterType type) {
+    iTermTimestampDrawHelperInitializeIfNeeded();
 
     NSDateFormatter *cached = sDateFormatterCache[type];
     if (cached) {
@@ -76,6 +99,25 @@ static NSDateFormatter *iTermTimestampDrawHelperGetCachedFormatter(iTermTimestam
                                                         locale:[NSLocale currentLocale]]];
     sDateFormatterCache[type] = fmt;
     return fmt;
+}
+
+// Returns a cached formatted string for the given timestamp rounded to seconds.
+// The cache is partitioned by formatter type to handle timestamps aging across format boundaries.
+static NSString *iTermTimestampDrawHelperGetCachedString(NSTimeInterval roundedTimestamp,
+                                                          iTermTimestampFormatterType type) {
+    iTermTimestampDrawHelperInitializeIfNeeded();
+
+    NSNumber *key = @(roundedTimestamp);
+    NSString *cached = sTimestampStringCache[type][key];
+    if (cached) {
+        return cached;
+    }
+
+    NSDateFormatter *fmt = iTermTimestampDrawHelperGetCachedFormatter(type);
+    NSDate *date = [NSDate dateWithTimeIntervalSinceReferenceDate:roundedTimestamp];
+    NSString *formatted = [fmt stringFromDate:date];
+    sTimestampStringCache[type][key] = formatted;
+    return formatted;
 }
 
 @interface iTermTimestampRow : NSObject
@@ -339,22 +381,7 @@ static NSDateFormatter *iTermTimestampDrawHelperGetCachedFormatter(iTermTimestam
 
 - (NSDateFormatter *)dateFormatterWithTimeDelta:(NSTimeInterval)timeDelta
                              useTestingTimezone:(BOOL)useTestingTimezone {
-    const NSTimeInterval day = -86400;
-    iTermTimestampFormatterType type;
-    if (timeDelta < day * 180) {
-        // More than 180 days ago: include year
-        // I tried using 365 but it was pretty confusing to see tomorrow's date.
-        type = iTermTimestampFormatterTypeOlder;
-    } else if (timeDelta < day * 6) {
-        // 6 days to 180 days ago: include date without year
-        type = iTermTimestampFormatterTypeWithinHalfYear;
-    } else if (timeDelta < day) {
-        // 1 day to 6 days ago: include day of week
-        type = iTermTimestampFormatterTypeWithinWeek;
-    } else {
-        // In last 24 hours, just show time
-        type = iTermTimestampFormatterTypeWithinDay;
-    }
+    iTermTimestampFormatterType type = iTermTimestampFormatterTypeForTimeDelta(timeDelta);
 
     if (useTestingTimezone) {
         // Don't cache testing timezone formatters - this code path is rarely used
@@ -390,10 +417,19 @@ static NSDateFormatter *iTermTimestampDrawHelperGetCachedFormatter(iTermTimestam
     }
     const NSTimeInterval timeDelta = timeSinceReference - now;
     *deltaPtr = timeDelta;
-    NSDateFormatter *fmt = [self dateFormatterWithTimeDelta:timeDelta
-                                         useTestingTimezone:useTestingTimezone];
-    NSDate *rounded = [NSDate dateWithTimeIntervalSinceReferenceDate:timeSinceReference];
-    NSString *formattedString = [fmt stringFromDate:rounded];
+
+    if (useTestingTimezone) {
+        // Don't use cache for testing timezone - this code path is rarely used
+        NSDateFormatter *fmt = [self dateFormatterWithTimeDelta:timeDelta
+                                             useTestingTimezone:useTestingTimezone];
+        NSDate *rounded = [NSDate dateWithTimeIntervalSinceReferenceDate:timeSinceReference];
+        NSString *formattedString = [fmt stringFromDate:rounded];
+        DLog(@"%@ -> %@", timestamp, formattedString);
+        return formattedString;
+    }
+
+    iTermTimestampFormatterType type = iTermTimestampFormatterTypeForTimeDelta(timeDelta);
+    NSString *formattedString = iTermTimestampDrawHelperGetCachedString(timeSinceReference, type);
     DLog(@"%@ -> %@", timestamp, formattedString);
     return formattedString;
 }
