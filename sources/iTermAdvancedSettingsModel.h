@@ -270,6 +270,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (int)minimumWeightDifferenceForBoldFont;
 + (double)minRunningTime;
 + (int)minTabWidth;
++ (BOOL)moveLeftAfterClosingTab;
 + (BOOL)multiserver;
 + (NSString *)nativeRenderingCSSLight;
 + (NSString *)nativeRenderingCSSDark;
