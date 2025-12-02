@@ -2169,8 +2169,8 @@ static int iTermEmitGlyphsAndSetAttributes(iTermMetalPerFrameState *self,
     return _configuration->_asciiAntialias;
 }
 
-- (NSFont *)timestampFont {
-    return _configuration->_timestampFont;
+- (PTYFontInfo *)timestampFontInfo {
+    return _configuration->_timestampFontInfo;
 }
 
 - (NSTimeInterval)timestampBaseline {

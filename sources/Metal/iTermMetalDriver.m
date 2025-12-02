@@ -1593,7 +1593,7 @@ legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth
         tState.antialiased = frameData.perFrameState.asciiAntiAliased;
         tState.backgroundColor = frameData.perFrameState.timestampsBackgroundColor;
         tState.textColor = frameData.perFrameState.timestampsTextColor;
-        tState.font = frameData.perFrameState.timestampFont;
+        tState.fontInfo = frameData.perFrameState.timestampFontInfo;
         if (frameData.perFrameState.haveOffscreenCommandLine) {
             tState.obscured = frameData.cellSize.height / frameData.scale + iTermOffscreenCommandLineVerticalPadding * 2;
         } else {

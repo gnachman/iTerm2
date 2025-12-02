@@ -1685,7 +1685,7 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
 
     CGFloat rightMargin = 0;
     if (self.showTimestamps) {
-        [_drawingHelper createTimestampDrawingHelperWithFont:_fontTable.asciiFont.font];
+        [_drawingHelper createTimestampDrawingHelperWithFontInfo:_fontTable.asciiFont];
         rightMargin = _drawingHelper.timestampDrawHelper.maximumWidth + 8;
     }
     _drawingHelper.indicatorFrame = [self configureIndicatorsHelperWithRightMargin:rightMargin];

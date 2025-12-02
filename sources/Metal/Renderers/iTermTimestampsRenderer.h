@@ -1,6 +1,8 @@
 #import <Foundation/Foundation.h>
 #import "iTermMetalCellRenderer.h"
 
+@class PTYFontInfo;
+
 NS_ASSUME_NONNULL_BEGIN
 
 @interface iTermTimestampsRendererTransientState : iTermMetalCellRendererTransientState
@@ -9,7 +11,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, strong) NSArray<NSDate *> *timestamps;
 @property (nonatomic) BOOL useThinStrokes;
 @property (nonatomic) BOOL antialiased;
-@property (nonatomic, strong) NSFont *font;
+@property (nonatomic, strong) PTYFontInfo *fontInfo;
 // How many points at the top are obscured by another view? Ensure a timestamp
 // appears just below this level.
 @property (nonatomic) CGFloat obscured;

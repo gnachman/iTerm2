@@ -408,7 +408,7 @@ extern const CGFloat iTermCursorGuideAlphaThreshold;
                     virtualOffset:(CGFloat)virtualOffset;
 
 // If timestamps are to be shown, call this just before drawing.
-- (void)createTimestampDrawingHelperWithFont:(NSFont *)font;
+- (void)createTimestampDrawingHelperWithFontInfo:(PTYFontInfo *)fontInfo;
 
 // Draw timestamps.
 - (void)drawTimestampsWithVirtualOffset:(CGFloat)virtualOffset;

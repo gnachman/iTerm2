@@ -1381,7 +1381,7 @@ const CGFloat commandRegionOutlineThickness = 2.0;
     }
 }
 
-- (void)createTimestampDrawingHelperWithFont:(NSFont *)font {
+- (void)createTimestampDrawingHelperWithFontInfo:(PTYFontInfo *)fontInfo {
     [self updateCachedMetrics];
     CGFloat obscured = 0;
     if (_offscreenCommandLine) {
@@ -1393,8 +1393,9 @@ const CGFloat commandRegionOutlineThickness = 2.0;
                                                               now:self.now
                                                useTestingTimezone:self.useTestingTimezone
                                                         rowHeight:_cellSize.height
+                                        rowHeightWithoutSpacing:_cellSizeWithoutSpacing.height
                                                            retina:self.isRetina
-                                                             font:font
+                                                         fontInfo:fontInfo
                                                          obscured:obscured];
     _timestampDrawHelper.timestampBaseline = self.timestampBaseline;
     for (int y = _scrollViewDocumentVisibleRect.origin.y / _cellSize.height;

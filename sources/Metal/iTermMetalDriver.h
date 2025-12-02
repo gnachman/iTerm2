@@ -18,6 +18,7 @@
 @class iTermKittyImageRun;
 @class iTermTerminalButton;
 @class iTermMetalView;
+@class PTYFontInfo;
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -89,7 +90,7 @@ NS_CLASS_AVAILABLE(10_11, NA)
 @property (nonatomic, readonly) NSEdgeInsets extraMargins;
 @property (nonatomic, readonly) BOOL thinStrokesForTimestamps;
 @property (nonatomic, readonly) BOOL asciiAntiAliased;
-@property (nonatomic, readonly) NSFont *timestampFont;
+@property (nonatomic, readonly) PTYFontInfo *timestampFontInfo;
 @property (nonatomic) NSTimeInterval timestampBaseline;
 @property (nonatomic, readonly) NSColorSpace *colorSpace;
 @property (nonatomic, readonly) BOOL haveOffscreenCommandLine;

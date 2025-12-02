@@ -144,7 +144,7 @@ static vector_float4 VectorForColor(NSColor *color) {
 
     // Timestamps
     _timestampsEnabled = drawingHelper.shouldShowTimestamps;
-    _timestampFont = _fontTable.asciiFont.font;
+    _timestampFontInfo = [_fontTable.asciiFont copy];
     _timestampBaseline = textView.timestampBaseline;
 
     // Offscreen command line
