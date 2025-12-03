@@ -20,6 +20,7 @@
 #import "NSImage+iTerm.h"
 #import "NSObject+iTerm.h"
 #import "NSStringITerm.h"
+#import "iTermProfilePreferences.h"
 #import "Profile.h"
 #import "ProfileModel.h"
 #import "VT100RemoteHost.h"
@@ -464,13 +465,13 @@ static NSString *const iTermStatusBarHostnameComponentAbbreviateLocalhost = @"ab
         return;
     }
 
-    Profile *profile = [[ProfileModel sharedInstance] defaultBookmark];
+    MutableProfile *profile = [[[ProfileModel sharedInstance] defaultBookmark] mutableCopy];
     if (!profile) {
         return;
     }
 
-    NSString *command = [NSString stringWithFormat:@"cd %@ && exec $SHELL -l",
-                        [path stringWithEscapedShellCharactersIncludingNewlines:YES]];
+    profile[KEY_WORKING_DIRECTORY] = path;
+    profile[KEY_CUSTOM_DIRECTORY] = kProfilePreferenceInitialDirectoryCustomValue;
 
     [iTermSessionLauncher launchBookmark:profile
                               inTerminal:nil
@@ -481,7 +482,7 @@ static NSString *const iTermStatusBarHostnameComponentAbbreviateLocalhost = @"ab
                              canActivate:YES
                       respectTabbingMode:NO
                                    index:nil
-                                 command:command
+                                 command:nil
                              makeSession:nil
                           didMakeSession:nil
                               completion:nil];
@@ -493,7 +494,7 @@ static NSString *const iTermStatusBarHostnameComponentAbbreviateLocalhost = @"ab
         return;
     }
 
-    Profile *profile = [[ProfileModel sharedInstance] defaultBookmark];
+    MutableProfile *profile = [[[ProfileModel sharedInstance] defaultBookmark] mutableCopy];
     if (!profile) {
         return;
     }
@@ -504,8 +505,8 @@ static NSString *const iTermStatusBarHostnameComponentAbbreviateLocalhost = @"ab
         return;
     }
 
-    NSString *command = [NSString stringWithFormat:@"cd %@ && exec $SHELL -l",
-                        [path stringWithEscapedShellCharactersIncludingNewlines:YES]];
+    profile[KEY_WORKING_DIRECTORY] = path;
+    profile[KEY_CUSTOM_DIRECTORY] = kProfilePreferenceInitialDirectoryCustomValue;
 
     [iTermSessionLauncher launchBookmark:profile
                               inTerminal:currentTerminal
@@ -516,7 +517,7 @@ static NSString *const iTermStatusBarHostnameComponentAbbreviateLocalhost = @"ab
                              canActivate:YES
                       respectTabbingMode:NO
                                    index:nil
-                                 command:command
+                                 command:nil
                              makeSession:nil
                           didMakeSession:nil
                               completion:nil];
