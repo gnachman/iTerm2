@@ -1079,6 +1079,10 @@ extension iTermBrowserViewController: iTermBrowserToolbarDelegate {
     func browserToolbarIsCurrentPageMuted() -> Bool {
         return browserManager.currentPageIsMuted
     }
+    func browserToolbarDidChangeTransparency(_ value: Double) {
+        DLog("Transparency changed to: \(value)")
+        browserManager.setTransparency(value)
+    }
 }
 
 // MARK: - iTermBrowserManagerDelegate

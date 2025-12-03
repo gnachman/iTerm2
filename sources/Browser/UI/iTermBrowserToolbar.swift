@@ -46,6 +46,7 @@ protocol iTermBrowserToolbarDelegate: AnyObject {
     func browserToolbarResetPermission(for key: BrowserPermissionType, origin: String) async
     func browserToolbarUnmute(url: String)
     func browserToolbarIsCurrentPageMuted() -> Bool
+    func browserToolbarDidChangeTransparency(_ value: Double)
 #if DEBUG
     func browserToolbarDidTapDebugAutofill()
 #endif
@@ -65,6 +66,7 @@ class iTermBrowserToolbar: NSView {
     private var menuButton: NSButton!
     var indicatorsHelper: iTermIndicatorsHelper?
     var sessionGuid: String?
+    private var currentTransparency: Double = 1.0
 
     override init(frame frameRect: NSRect) {
         super.init(frame: frameRect)
@@ -221,6 +223,7 @@ class iTermBrowserToolbar: NSView {
         if !devNullIndicator.isHidden {
             rightHelper.add(devNullIndicator)
         }
+        rightHelper.x -= 8.0
         rightHelper.x -= 12.0
         
         // Position indicators next to menu button - they can shrink but have a minimum size
@@ -262,6 +265,19 @@ class iTermBrowserToolbar: NSView {
         verticalHelper.centerInEnclosure(devNullIndicator)
         verticalHelper.centerInEnclosure(indicatorsView)
         verticalHelper.centerInEnclosure(urlBar, fixedHeight: 28.0)
+    }
+
+    @objc private func setTransparency(_ sender: NSMenuItem) {
+        let value = Double(sender.tag) / 100.0
+        currentTransparency = value
+        NSLog("Transparency preset selected: %f", value)
+        delegate?.browserToolbarDidChangeTransparency(value)
+    }
+
+    @objc private func transparencySliderChanged(_ sender: NSSlider) {
+        currentTransparency = sender.doubleValue
+        NSLog("Transparency slider changed to: %f", sender.doubleValue)
+        delegate?.browserToolbarDidChangeTransparency(sender.doubleValue)
     }
 
     func focusURLBar() {
@@ -413,6 +429,46 @@ class iTermBrowserToolbar: NSView {
                 menu.addItem(item)
                 menu.addItem(NSMenuItem.separator())
             }
+
+            // Transparency control with submenu
+            let transparencyItem = NSMenuItem(title: "Transparency", action: nil, keyEquivalent: "")
+            transparencyItem.image = NSImage(systemSymbolName: SFSymbol.circleLefthalfFilled.rawValue, accessibilityDescription: nil)
+
+            let transparencySubmenu = NSMenu()
+
+            // Add preset transparency values
+            for (title, value) in [("Opaque", 0.0), ("25%", 0.25), ("50%", 0.5), ("75%", 0.75), ("Transparent", 1.0)] {
+                let item = NSMenuItem(title: title, action: #selector(setTransparency(_:)), keyEquivalent: "")
+                item.target = self
+                item.tag = Int(value * 100)
+                if abs(self.currentTransparency - value) < 0.01 {
+                    item.state = .on
+                }
+                transparencySubmenu.addItem(item)
+            }
+
+            transparencySubmenu.addItem(NSMenuItem.separator())
+
+            // Add custom slider view
+            let sliderItem = NSMenuItem()
+            let containerView = NSView(frame: NSRect(x: 0, y: 0, width: 200, height: 30))
+
+            let sliderLabel = NSTextField(labelWithString: "Custom:")
+            sliderLabel.font = NSFont.systemFont(ofSize: 11)
+            sliderLabel.frame = NSRect(x: 10, y: 7, width: 50, height: 16)
+            containerView.addSubview(sliderLabel)
+
+            let slider = NSSlider(value: self.currentTransparency, minValue: 0.0, maxValue: 1.0, target: self, action: #selector(transparencySliderChanged(_:)))
+            slider.controlSize = .small
+            slider.frame = NSRect(x: 65, y: 5, width: 125, height: 20)
+            containerView.addSubview(slider)
+
+            sliderItem.view = containerView
+            transparencySubmenu.addItem(sliderItem)
+
+            transparencyItem.submenu = transparencySubmenu
+            menu.addItem(transparencyItem)
+            menu.addItem(NSMenuItem.separator())
 
             // Settings menu item
             let settingsItem = NSMenuItem(title: "Settings", action: #selector(settingsMenuItemSelected), keyEquivalent: "")

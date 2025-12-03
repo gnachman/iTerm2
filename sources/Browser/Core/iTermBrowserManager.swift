@@ -229,60 +229,77 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler 
             'use strict';
             console.log('[iTerm2] Transparent background script loaded');
 
-            const processedElements = new WeakSet();
+            // Global transparency level (0.0 = opaque, 1.0 = fully transparent)
+            window.iTermTransparencyLevel = 1.0;
+
+            // Make processedElements and applyTransparency global for external control
+            window.processedElements = new Set();  // Use Set instead of WeakSet for clearing
             let isProcessing = false;
 
             // Aggressive style injection with continuous monitoring
-            function applyTransparency() {
+            window.applyTransparency = function() {
                 if (isProcessing) return;  // Prevent re-entry
                 isProcessing = true;
+
+                const transparency = window.iTermTransparencyLevel || 1.0;
+                const bgColor = transparency === 1.0 ? 'transparent' : 'rgba(0,0,0,' + (1 - transparency) + ')';
 
                 const style = document.getElementById('iterm2-transparent-background');
                 if (!style) {
                     const newStyle = document.createElement('style');
                     newStyle.id = 'iterm2-transparent-background';
-                    newStyle.textContent = `
-                        /* Universal transparent background - use transparent, not initial */
-                        *, *::before, *::after {
-                            background-color: transparent !important;
-                            background-image: none !important;
-                            background: transparent !important;
-                        }
-                    `;
                     (document.head || document.documentElement).appendChild(newStyle);
                     console.log('[iTerm2] Style tag injected');
                 }
+                // Update CSS with current transparency level
+                const styleElement = document.getElementById('iterm2-transparent-background');
+                if (styleElement) {
+                    styleElement.textContent = `
+                        /* Universal transparent background - opacity controlled by slider */
+                        *, *::before, *::after {
+                            background-color: ` + bgColor + ` !important;
+                            background-image: none !important;
+                        }
+                    `;
+                }
 
-                // Force transparent background on new elements only
-                const allElements = document.querySelectorAll('*');
+                // Only process elements that have inline styles (to override them)
+                const allElements = document.querySelectorAll('[style]');
                 let modified = 0;
                 allElements.forEach(el => {
-                    if (processedElements.has(el)) return;  // Skip already processed
+                    if (window.processedElements.has(el)) return;  // Skip already processed
 
                     // Skip media elements
                     const isMedia = el.tagName.match(/^(IMG|VIDEO|PICTURE|CANVAS|SVG|IFRAME)$/i) ||
                                    el.className.match(/(thumbnail|avatar|icon|img|video|player|yt-image)/i) ||
                                    el.id.match(/(thumbnail|avatar|icon|img|video|player)/i);
-                    if (!isMedia) {
-                        el.style.setProperty('background-color', 'transparent', 'important');
+                    // Check if setProperty exists before using it (fixes SVG and other special elements)
+                    if (!isMedia && (el.style.backgroundColor || el.style.background) && typeof el.style.setProperty === 'function') {
+                        el.style.setProperty('background-color', bgColor, 'important');
                         el.style.setProperty('background-image', 'none', 'important');
-                        el.style.setProperty('background', 'transparent', 'important');
-                        processedElements.add(el);
+                        window.processedElements.add(el);
                         modified++;
                     }
                 });
                 if (modified > 0) {
-                    console.log('[iTerm2] Forced ' + modified + ' new elements transparent');
+                    console.log('[iTerm2] Applied transparency to ' + modified + ' inline-styled elements (level: ' + transparency + ')');
                 }
 
                 isProcessing = false;
-            }
+            };
+
+            // Expose function for manual triggering
+            window.updateTransparency = function(value) {
+                window.iTermTransparencyLevel = value;
+                window.processedElements.clear();
+                window.applyTransparency();
+            };
 
             // Initial application
             if (document.readyState === 'loading') {
-                document.addEventListener('DOMContentLoaded', applyTransparency);
+                document.addEventListener('DOMContentLoaded', window.applyTransparency);
             } else {
-                applyTransparency();
+                window.applyTransparency();
             }
 
             // Debounced version to prevent blocking UI
@@ -290,12 +307,15 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler 
             function debouncedApplyTransparency() {
                 if (debounceTimer) clearTimeout(debounceTimer);
                 debounceTimer = setTimeout(() => {
-                    applyTransparency();
+                    window.applyTransparency();
                 }, 200);  // Increased to 200ms for better responsiveness
             }
 
             // Only watch for NEW nodes, not attribute changes
             const observer = new MutationObserver((mutations) => {
+                // Skip if page is hidden to prevent background flickering
+                if (document.hidden) return;
+
                 let hasNewNodes = false;
                 for (const mutation of mutations) {
                     if (mutation.addedNodes.length > 0) {
@@ -308,13 +328,23 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler 
                 }
             });
 
+            // Pause observer when page is hidden
+            document.addEventListener('visibilitychange', () => {
+                if (document.hidden) {
+                    console.log('[iTerm2] Page hidden, pausing transparency updates');
+                } else {
+                    console.log('[iTerm2] Page visible, resuming transparency updates');
+                    debouncedApplyTransparency();  // Re-apply when visible again
+                }
+            });
+
             if (document.body) {
                 observer.observe(document.body, { childList: true, subtree: true });
             } else {
                 const bodyObserver = new MutationObserver((mutations, obs) => {
                     if (document.body) {
                         observer.observe(document.body, { childList: true, subtree: true });
-                        applyTransparency();
+                        window.applyTransparency();
                         obs.disconnect();
                     }
                 });
@@ -671,6 +701,37 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler 
         Task {
             for frame in audioHandler?.mutedFrames ?? [] {
                 await audioHandler?.unmute(webView, frame: frame)
+            }
+        }
+    }
+
+    func setTransparency(_ value: Double) {
+        DLog("setTransparency called with value: \(value)")
+        Task { @MainActor in
+            let bgColor = value == 1.0 ? "transparent" : "rgba(0,0,0,\(1.0 - value))"
+            let script = """
+            (function() {
+                const style = document.getElementById('iterm2-transparent-background');
+                if (style) {
+                    style.textContent = '*, *::before, *::after { background-color: \(bgColor) !important; background-image: none !important; }';
+                    console.log('[iTerm2] Updated transparency to \(value)');
+                }
+                document.querySelectorAll('*').forEach(el => {
+                    const isMedia = /^(IMG|VIDEO|PICTURE|CANVAS|SVG|IFRAME)$/i.test(el.tagName);
+                    // Check if setProperty exists before using it (fixes SVG and other special elements)
+                    if (!isMedia && el.style && typeof el.style.setProperty === 'function') {
+                        el.style.setProperty('background-color', '\(bgColor)', 'important');
+                        el.style.setProperty('background-image', 'none', 'important');
+                    }
+                });
+                return true;
+            })()
+            """
+            do {
+                try await webView.safelyEvaluateJavaScript(script, contentWorld: .page)
+                DLog("Transparency applied: \(value)")
+            } catch {
+                DLog("Failed to apply transparency: \(error)")
             }
         }
     }
