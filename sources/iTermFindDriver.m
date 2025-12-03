@@ -107,8 +107,10 @@ static NSString *gSearchString;
         _filterMode = gFilterMode;
         __weak __typeof(self) weakSelf = self;
         _debouncer = [[iTermDebouncer alloc] initWithCallback:^(NSString *query) {
-            [[iTermSearchHistory sharedInstance] addQuery:query];
-            [weakSelf doSearch];
+            if (!weakSelf.viewController.view.isHidden) {
+                [[iTermSearchHistory sharedInstance] addQuery:query];
+                [weakSelf doSearch];
+            }
         }];
         [[iTermFindPasteboard sharedInstance] addObserver:self block:^(id sender, NSString *newValue, BOOL internallyGenerated) {
             [weakSelf loadFindStringFromSharedPasteboard:newValue];
