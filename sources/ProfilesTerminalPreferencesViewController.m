@@ -60,11 +60,6 @@
     IBOutlet NSButton *_sessionEndedAlert;
     IBOutlet NSButton *_terminalGeneratedAlerts;
     IBOutlet NSButton *_dragToScrollInAlternateScreenModeDisabled;
-    
-    IBOutlet iTermColorWell *_sessionEndMessageColorWell;
-    IBOutlet NSTextField *_sessionEndMessageText;
-    IBOutlet NSTextField *_sessionRestartedMessageText;
-    IBOutlet NSTextField *_sessionFinishedMessageText;
 
     IBOutlet NSButton *_automaticallyEnableAlternatemouseScroll;
     IBOutlet NSButton *_restrictAlternateMouseScrollToVertical;
