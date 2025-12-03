@@ -317,20 +317,20 @@ static NSString * const kColorGalleryURL = @"https://www.iterm2.com/colorgallery
 
 - (void)populateProgressBarColorSchemes {
     [_progressBarColorScheme removeAllItems];
-    NSArray *schemes = @[
-        PROGRESS_BAR_COLOR_SCHEME_DEFAULT,
-        PROGRESS_BAR_COLOR_SCHEME_RAINBOW,
-        PROGRESS_BAR_COLOR_SCHEME_RED,
-        PROGRESS_BAR_COLOR_SCHEME_GREEN,
-        PROGRESS_BAR_COLOR_SCHEME_BLUE,
-        PROGRESS_BAR_COLOR_SCHEME_YELLOW,
-        PROGRESS_BAR_COLOR_SCHEME_PURPLE,
-        PROGRESS_BAR_COLOR_SCHEME_CYAN,
-        PROGRESS_BAR_COLOR_SCHEME_ORANGE
+    NSArray<NSString *> *schemes = @[
+        iTermProgressBarColorSchemeDefault,
+        iTermProgressBarColorSchemeRainbow,
+        iTermProgressBarColorSchemeRed,
+        iTermProgressBarColorSchemeGreen,
+        iTermProgressBarColorSchemeBlue,
+        iTermProgressBarColorSchemeYellow,
+        iTermProgressBarColorSchemePurple,
+        iTermProgressBarColorSchemeCyan,
+        iTermProgressBarColorSchemeOrange
     ];
     for (NSString *scheme in schemes) {
         NSString *title = [scheme capitalizedString];
-        if ([scheme isEqualToString:PROGRESS_BAR_COLOR_SCHEME_DEFAULT]) {
+        if ([scheme isEqualToString:iTermProgressBarColorSchemeDefault]) {
             title = @"Default (Green/Blue)";
         }
         [_progressBarColorScheme addItemWithTitle:title];

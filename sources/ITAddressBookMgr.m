@@ -48,6 +48,17 @@
 
 NSString *const iTermUnicodeVersionDidChangeNotification = @"iTermUnicodeVersionDidChangeNotification";
 
+// Progress bar color scheme constants
+NSString *const iTermProgressBarColorSchemeDefault = @"default";
+NSString *const iTermProgressBarColorSchemeRainbow = @"rainbow";
+NSString *const iTermProgressBarColorSchemeRed = @"red";
+NSString *const iTermProgressBarColorSchemeGreen = @"green";
+NSString *const iTermProgressBarColorSchemeBlue = @"blue";
+NSString *const iTermProgressBarColorSchemeYellow = @"yellow";
+NSString *const iTermProgressBarColorSchemePurple = @"purple";
+NSString *const iTermProgressBarColorSchemeCyan = @"cyan";
+NSString *const iTermProgressBarColorSchemeOrange = @"orange";
+
 // Values for KEY_CUSTOM_COMMAND
 NSString *const kProfilePreferenceCommandTypeCustomValue = @"Yes";
 NSString *const kProfilePreferenceCommandTypeLoginShellValue = @"No";

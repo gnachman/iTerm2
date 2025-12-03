@@ -10,9 +10,11 @@
 #import "ITAddressBookMgr.h"
 #import "iTermColorMap.h"
 #import "iTermFunctionCallTextFieldDelegate.h"
+#import "iTermPreferences.h"
 #import "iTermProfilePreferences.h"
 #import "iTermStatusBarSetupViewController.h"
 #import "iTermTheme.h"
+#import "iTermUserDefaultsObserver.h"
 #import "iTermVariableHistory.h"
 #import "iTermVariables.h"
 #import "iTermWarning.h"
@@ -80,15 +82,17 @@ static NSString *const ProfilesSessionPreferencesViewControllerPhonyShortLivedSe
 
     IBOutlet NSButton *_openPasswordManagerAutomatically;
     IBOutlet NSPopUpButton *_showTimestampsPopup;
-    IBOutlet NSButton *_timestampsEnabled;
     IBOutlet NSTextField *_showTimestampsLabel;
     IBOutlet NSButton *_warnAboutShortLivedSessions;
     
     IBOutlet NSTextField *_progressBarHeight;
+    IBOutlet NSStepper *_progressBarHeightStepper;
 
     iTermStatusBarSetupViewController *_statusBarSetupViewController;
     iTermStatusBarSetupPanel *_statusBarSetupWindow;
     BOOL _awoken;
+    iTermUserDefaultsObserver *_topBottomMarginsObserver;
+    PreferenceInfo *_progressBarHeightInfo;
 }
 
 - (void)dealloc {
@@ -285,10 +289,17 @@ static NSString *const ProfilesSessionPreferencesViewControllerPhonyShortLivedSe
             relatedView:nil
                    type:kPreferenceInfoTypeCheckbox];
 
-    [self defineControl:_progressBarHeight
-                    key:KEY_PROGRESS_BAR_HEIGHT
-            displayName:@"Progress bar height"
-                   type:kPreferenceInfoTypeIntegerTextField];
+    _progressBarHeightInfo = [self defineControl:_progressBarHeight
+                                              key:KEY_PROGRESS_BAR_HEIGHT
+                                      displayName:@"Progress bar height"
+                                             type:kPreferenceInfoTypeIntegerTextField];
+    [self associateStepper:_progressBarHeightStepper withPreference:_progressBarHeightInfo];
+    [self updateProgressBarHeightRange];
+    
+    _topBottomMarginsObserver = [[iTermUserDefaultsObserver alloc] init];
+    [_topBottomMarginsObserver observeKey:kPreferenceKeyTopBottomMargins block:^{
+        [weakSelf updateProgressBarHeightRange];
+    }];
 
     info = [self unsafeDefineControl:_warnAboutShortLivedSessions
                                  key:ProfilesSessionPreferencesViewControllerPhonyShortLivedSessionsKey
@@ -661,6 +672,14 @@ static NSString *const ProfilesSessionPreferencesViewControllerPhonyShortLivedSe
 
 - (BOOL)logDirIsWritable {
     return [[NSFileManager defaultManager] directoryIsWritable:[_logDir stringValue].stringByExpandingTildeInPath];
+}
+
+- (void)updateProgressBarHeightRange {
+    if (!_progressBarHeightInfo) {
+        return;
+    }
+    const NSInteger topBottomMargin = [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins];
+    _progressBarHeightInfo.range = NSMakeRange(0, topBottomMargin);
 }
 
 #pragma mark - PSMMinimalTabStyleDelegate

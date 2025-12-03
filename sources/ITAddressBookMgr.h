@@ -218,15 +218,15 @@
 #define KEY_PROGRESS_BAR_COLOR_SCHEME         @"Progress Bar Color Scheme"
 
 // Progress bar color scheme constants
-#define PROGRESS_BAR_COLOR_SCHEME_DEFAULT     @"default"
-#define PROGRESS_BAR_COLOR_SCHEME_RAINBOW     @"rainbow"
-#define PROGRESS_BAR_COLOR_SCHEME_RED         @"red"
-#define PROGRESS_BAR_COLOR_SCHEME_GREEN       @"green"
-#define PROGRESS_BAR_COLOR_SCHEME_BLUE        @"blue"
-#define PROGRESS_BAR_COLOR_SCHEME_YELLOW      @"yellow"
-#define PROGRESS_BAR_COLOR_SCHEME_PURPLE      @"purple"
-#define PROGRESS_BAR_COLOR_SCHEME_CYAN        @"cyan"
-#define PROGRESS_BAR_COLOR_SCHEME_ORANGE      @"orange"
+extern NSString *const iTermProgressBarColorSchemeDefault;
+extern NSString *const iTermProgressBarColorSchemeRainbow;
+extern NSString *const iTermProgressBarColorSchemeRed;
+extern NSString *const iTermProgressBarColorSchemeGreen;
+extern NSString *const iTermProgressBarColorSchemeBlue;
+extern NSString *const iTermProgressBarColorSchemeYellow;
+extern NSString *const iTermProgressBarColorSchemePurple;
+extern NSString *const iTermProgressBarColorSchemeCyan;
+extern NSString *const iTermProgressBarColorSchemeOrange;
 
 #define KEY_ALLOW_TITLE_SETTING               @"Allow Title Setting"
 #define KEY_DISABLE_PRINTING                  @"Disable Printing"
