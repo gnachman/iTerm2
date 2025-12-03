@@ -431,8 +431,9 @@ static NSString *const iTermStatusBarHostnameComponentAbbreviateLocalhost = @"ab
         return;
     }
     
-    NSString *command = [NSString stringWithFormat:@"cd %@ && exec $SHELL -l", 
-                        [path stringWithEscapedShellCharactersIncludingNewlines:YES]];
+    profile = [profile mutableCopy];
+    profile[KEY_WORKING_DIRECTORY] = path;
+    profile[KEY_CUSTOM_DIRECTORY] = kProfilePreferenceInitialDirectoryCustomValue;
     
     [iTermSessionLauncher launchBookmark:profile
                               inTerminal:nil
@@ -443,7 +444,7 @@ static NSString *const iTermStatusBarHostnameComponentAbbreviateLocalhost = @"ab
                              canActivate:YES
                       respectTabbingMode:NO
                                    index:nil
-                                 command:command
+                                 command:nil
                              makeSession:nil
                           didMakeSession:nil
                               completion:nil];
@@ -466,8 +467,9 @@ static NSString *const iTermStatusBarHostnameComponentAbbreviateLocalhost = @"ab
         return;
     }
     
-    NSString *command = [NSString stringWithFormat:@"cd %@ && exec $SHELL -l", 
-                        [path stringWithEscapedShellCharactersIncludingNewlines:YES]];
+    profile = [profile mutableCopy];
+    profile[KEY_WORKING_DIRECTORY] = path;
+    profile[KEY_CUSTOM_DIRECTORY] = kProfilePreferenceInitialDirectoryCustomValue;
     
     [iTermSessionLauncher launchBookmark:profile
                               inTerminal:currentTerminal
@@ -478,7 +480,7 @@ static NSString *const iTermStatusBarHostnameComponentAbbreviateLocalhost = @"ab
                              canActivate:YES
                       respectTabbingMode:NO
                                    index:nil
-                                 command:command
+                                 command:nil
                              makeSession:nil
                           didMakeSession:nil
                               completion:nil];
