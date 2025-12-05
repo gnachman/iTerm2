@@ -93,6 +93,8 @@ git_poll () {
     PUSH_COUNT=$(cut -f1 <<< "$COUNTS")
     PULL_COUNT=$(cut -f2 <<< "$COUNTS")
     BRANCH=$(branch)
+    ADDS=$(adds)
+    DELETES=$(deletes)
 
     iterm2_set_user_var gitBranch "$BRANCH"
     iterm2_set_user_var gitDirty "$DIRTY"
