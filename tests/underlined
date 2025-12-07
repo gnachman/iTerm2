@@ -18,6 +18,20 @@
 [21;9mDouble underline and struck through[m
 [21;58:2:255:0:0mDouble underline, red[m
 
+[4:0mNo underline[m
+[4:1mStraight underline[m
+[4:2mDouble underline[m
+[4:3mCurly underline[m
+[4:4mDotted underline[m
+[4:5mDashed underline[m
+
+[9m[4:0mStrikethrough + No underline[m
+[9m[4:1mStrikethrough + Straight underline[m
+[9m[4:2mStrikethrough + Double underline[m
+[9m[4:3mStrikethrough + Curly underline[m
+[9m[4:4mStrikethrough + Dotted underline[m
+[9m[4:5mStrikethrough + Dashed underline[m
+
 OSC 8 URL TESTS
 
 Plain URL:

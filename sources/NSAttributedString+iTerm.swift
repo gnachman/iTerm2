@@ -64,13 +64,19 @@ class AttributeToControlSequenceConverter {
             switch underlineStyle {
             case .single:
                 c.underline = 1
-                c.underlineStyle = .single
+                ScreenCharSetUnderlineStyle(&c, .single)
             case .double:
                 c.underline = 1
-                c.underlineStyle = .double
-            case .patternDash, .patternDot, .patternDashDot, .patternDashDotDot:
+                ScreenCharSetUnderlineStyle(&c, .double)
+            case .patternDot:
                 c.underline = 1
-                c.underlineStyle = .curly
+                ScreenCharSetUnderlineStyle(&c, .dotted)
+            case .patternDash:
+                c.underline = 1
+                ScreenCharSetUnderlineStyle(&c, .dashed)
+            case .patternDashDot, .patternDashDotDot:
+                c.underline = 1
+                ScreenCharSetUnderlineStyle(&c, .curly)
             default:
                 c.underline = 0
             }

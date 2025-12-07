@@ -1122,7 +1122,7 @@ static const int kMaxScreenRows = 4096;
 
     c.underline = NO;
     c.strikethrough = NO;
-    c.underlineStyle = VT100UnderlineStyleSingle;
+    ScreenCharSetUnderlineStyle(&c, VT100UnderlineStyleSingle);
     c.image = 0;
     c.virtualPlaceholder = NO;
     _defaultChar = c;
@@ -3684,6 +3684,12 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
             case VT100UnderlineStyleDouble:
                 [result addObject:@"21"];
                 break;
+            case VT100UnderlineStyleDotted:
+                [result addObject:@"4:4"];
+                break;
+            case VT100UnderlineStyleDashed:
+                [result addObject:@"4:5"];
+                break;
         }
     }
     if (graphicRendition.blink) {
@@ -4880,7 +4886,10 @@ typedef NS_ENUM(int, iTermDECRPMSetting)  {
 
             case VT100SGRStackAttributeUnderlined:
                 if (entry.graphicRendition.underline && (entry.graphicRendition.underlineStyle == VT100UnderlineStyleSingle ||
-                                                         entry.graphicRendition.underlineStyle == VT100UnderlineStyleCurly)) {
+                                                         entry.graphicRendition.underlineStyle == VT100UnderlineStyleCurly ||
+                                                         entry.graphicRendition.underlineStyle == VT100UnderlineStyleDouble ||
+                                                         entry.graphicRendition.underlineStyle == VT100UnderlineStyleDotted ||
+                                                         entry.graphicRendition.underlineStyle == VT100UnderlineStyleDashed)) {
                     wantUnderline = 1;
                     desiredUnderlineStyle = entry.graphicRendition.underlineStyle;
                 } else if (!entry.graphicRendition.underline) {

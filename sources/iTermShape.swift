@@ -28,8 +28,16 @@ enum Segment {
 // draw shapes with vertices where you'd expect them.
 @objc(iTermShapeBuilder)
 class ShapeBuilder: NSObject {
+    private struct LineDash {
+        var dashPattern: [CGFloat]
+        var phase: CGFloat
+    }
     private var segments = [Segment]()
+    private var lineDash: LineDash?
     @objc var lineWidth = 1.0
+    @objc var endcap = CGLineCap.square
+    @objc var enableEndcap = true
+
     override var description: String {
         "lineWidth=\(lineWidth)\n" +
         segments.map { "  " + $0.description }.joined(separator: "\n")
@@ -48,6 +56,12 @@ class ShapeBuilder: NSObject {
     @objc
     func curve(to destination: NSPoint, control1: NSPoint, control2: NSPoint) {
         segments.append(.curveTo(destination: destination, control1: control1, control2: control2))
+    }
+
+    @objc(setLineDash:count:phase:)
+    func setLineDash(_ dashPattern: UnsafePointer<CGFloat>, count: Int, phase: CGFloat) {
+        let buffer = UnsafeBufferPointer(start: dashPattern, count: count)
+        lineDash = LineDash(dashPattern: Array(buffer), phase: phase)
     }
 
     @objc(addRect:)
@@ -75,6 +89,20 @@ class ShapeBuilder: NSObject {
                 ctx.addCurve(to: d, control1: c1, control2: c2)
             }
         }
+    }
+
+    @objc(strokeInContext:color:)
+    func stroke(in ctx: CGContext, color: CGColor) {
+        addPath(to: ctx)
+        if let lineDash {
+            ctx.setLineDash(phase: lineDash.phase, lengths: lineDash.dashPattern)
+        }
+        ctx.setStrokeColor(color)
+        ctx.setLineWidth(lineWidth)
+        if enableEndcap {
+            ctx.setLineCap(endcap)
+        }
+        ctx.strokePath()
     }
 }
 

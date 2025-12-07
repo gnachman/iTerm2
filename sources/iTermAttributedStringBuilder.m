@@ -39,7 +39,9 @@ typedef NS_ENUM(unsigned char, iTermCharacterAttributesUnderline) {
     iTermCharacterAttributesUnderlineNone,
     iTermCharacterAttributesUnderlineRegular,  // Single unless isURL, then double.
     iTermCharacterAttributesUnderlineCurly,
-    iTermCharacterAttributesUnderlineDouble
+    iTermCharacterAttributesUnderlineDouble,
+    iTermCharacterAttributesUnderlineDotted,
+    iTermCharacterAttributesUnderlineDashed
 };
 
 // IMPORTANT: If you add a field here also update the comparison function
@@ -655,7 +657,7 @@ preferSpeedToFullLigatureSupport:(BOOL)preferSpeedToFullLigatureSupport
         }
     }
     if (c->underline) {
-        switch (c->underlineStyle) {
+        switch (ScreenCharGetUnderlineStyle(*c)) {
             case VT100UnderlineStyleSingle:
                 attributes->underlineType = iTermCharacterAttributesUnderlineRegular;
                 break;
@@ -664,6 +666,12 @@ preferSpeedToFullLigatureSupport:(BOOL)preferSpeedToFullLigatureSupport
                 break;
             case VT100UnderlineStyleDouble:
                 attributes->underlineType = iTermCharacterAttributesUnderlineDouble;
+                break;
+            case VT100UnderlineStyleDotted:
+                attributes->underlineType = iTermCharacterAttributesUnderlineDotted;
+                break;
+            case VT100UnderlineStyleDashed:
+                attributes->underlineType = iTermCharacterAttributesUnderlineDashed;
                 break;
         }
     } else if (inUnderlinedRange) {
@@ -740,25 +748,19 @@ preferSpeedToFullLigatureSupport:(BOOL)preferSpeedToFullLigatureSupport
             }
             break;
         case iTermCharacterAttributesUnderlineDouble:
-            if (attributes->isURL) {
-                underlineStyle = NSUnderlineStylePatternDot;  // Mixed solid/underline isn't an option, so repurpose this.
-            } else {
-                underlineStyle = NSUnderlineStyleDouble;
-            }
+            underlineStyle = NSUnderlineStyleDouble;
             break;
         case iTermCharacterAttributesUnderlineRegular:
-            if (attributes->isURL) {
-                underlineStyle = NSUnderlineStylePatternDot;  // Mixed solid/underline isn't an option, so repurpose this.
-            } else {
-                underlineStyle = NSUnderlineStyleSingle;
-            }
+            underlineStyle = NSUnderlineStyleSingle;
             break;
         case iTermCharacterAttributesUnderlineCurly:
-            if (attributes->isURL) {
-                underlineStyle = NSUnderlineStylePatternDot;  // Mixed solid/underline isn't an option, so repurpose this.
-            } else {
-                underlineStyle = NSUnderlineStyleThick;  // Curly isn't an option, so repurpose this.
-            }
+            underlineStyle = NSUnderlineStyleThick;  // Curly isn't an option, so repurpose this.
+            break;
+        case iTermCharacterAttributesUnderlineDotted:
+            underlineStyle = NSUnderlineStylePatternDot;
+            break;
+        case iTermCharacterAttributesUnderlineDashed:
+            underlineStyle = NSUnderlinePatternDash;
             break;
     }
     NSUnderlineStyle strikethroughStyle = NSUnderlineStyleNone;
