@@ -73,6 +73,11 @@ static NSString *const ProfilesSessionPreferencesViewControllerPhonyShortLivedSe
     IBOutlet NSImageView *_logDirWarning;
     IBOutlet NSButton *_changeLogDir;
 
+    IBOutlet NSButton *_archive;
+    IBOutlet NSImageView *_archiveDirWarning;
+    IBOutlet NSButton *_changeArchiveDir;
+    IBOutlet NSTextField *_archiveDir;
+
     IBOutlet NSTextField *_undoTimeout;
     IBOutlet NSButton *_reduceFlicker;
 
@@ -183,6 +188,25 @@ static NSString *const ProfilesSessionPreferencesViewControllerPhonyShortLivedSe
         strongSelf->_loggingStyle.enabled = loggingEnabled;
         [strongSelf updateLogDirWarning];
     };
+
+    info = [self defineControl:_archive
+                           key:KEY_ARCHIVE
+                   relatedView:nil
+                          type:kPreferenceInfoTypeCheckbox];
+    info.observer = ^() {
+        __strong __typeof(weakSelf) strongSelf = weakSelf;
+        if (!strongSelf) {
+            return;
+        }
+        const BOOL archivingEnabled = [strongSelf boolForKey:KEY_ARCHIVE];
+        strongSelf->_archiveDir.enabled = archivingEnabled;
+        strongSelf->_changeArchiveDir.enabled = archivingEnabled;
+        [strongSelf updateArchiveDirWarning];
+    };
+    info = [self defineUnsearchableControl:_archiveDir
+                                       key:KEY_ARCHIVEDIR
+                                      type:kPreferenceInfoTypeStringTextField];
+    info.observer = ^{ [weakSelf updateArchiveDirWarning]; };
 
     [self defineControl:_loggingStyle
                     key:KEY_LOGGING_STYLE
@@ -441,13 +465,17 @@ static NSString *const ProfilesSessionPreferencesViewControllerPhonyShortLivedSe
     NSArray *viewsToDisable = @[ _autoLog,
                                  _logDir,
                                  _logFilenameFormat,
-                                 _changeLogDir ];
+                                 _changeLogDir,
+                                 _archive,
+                                 _archiveDir ];
     for (id view in viewsToDisable) {
         [view setEnabled:NO];
     }
     [self awakeFromNib];  // We can get called before awakeFromNib
     [self infoForControl:_autoLog].observer = NULL;
     [self infoForControl:_logDir].observer = NULL;
+    [self infoForControl:_archive].observer = NULL;
+    [self infoForControl:_archiveDir].observer = NULL;
     [self updateStatusBarSettingsEnabled];
 }
 
@@ -700,6 +728,39 @@ static NSString *const ProfilesSessionPreferencesViewControllerPhonyShortLivedSe
 
 - (void)reloadProfiles {
     [_jobsTable reloadData];
+}
+
+#pragma mark - Archive Directory
+
+- (IBAction)selectArchiveDir:(id)sender {
+    NSOpenPanel* panel = [NSOpenPanel openPanel];
+    [panel setCanChooseFiles:NO];
+    [panel setCanChooseDirectories:YES];
+    [panel setAllowsMultipleSelection:NO];
+
+    if ([panel runModal] == NSModalResponseOK) {
+        NSString *path = [[panel directoryURL] path];
+        _archiveDir.stringValue = path;
+        [self setString:path forKey:KEY_ARCHIVEDIR];
+    }
+    [self updateArchiveDirWarning];
+}
+
+- (void)updateArchiveDirWarning {
+    if ([_archive state] == NSControlStateValueOff) {
+        _archiveDirWarning.hidden = YES;
+        return;
+    }
+    _archiveDirWarning.hidden = NO;
+    if ([self archiveDirIsWritable]) {
+        _archiveDirWarning.image = [NSImage it_imageNamed:@"CheckMark" forClass:self.class];
+    } else {
+        _archiveDirWarning.image = [NSImage it_imageNamed:@"WarningSign" forClass:self.class];
+    }
+}
+
+- (BOOL)archiveDirIsWritable {
+    return [[NSFileManager defaultManager] directoryIsWritable:[_archiveDir stringValue].stringByExpandingTildeInPath];
 }
 
 #pragma mark - Log directory

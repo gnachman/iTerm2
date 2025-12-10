@@ -1215,6 +1215,7 @@ extension PTYSession {
             KEY_TMUX_NEWLINE: nullValue,
             KEY_PROMPT_PATH_CLICK_OPENS_NAVIGATOR: nullValue,
             KEY_AUTOLOG: nullValue,
+            KEY_ARCHIVE: nullValue,
             KEY_LOGDIR: nullValue,
             KEY_LOG_FILENAME_FORMAT: nullValue,
             KEY_SEND_CODE_WHEN_IDLE: nullValue,
@@ -1415,6 +1416,69 @@ extension PTYSession {
             })
             if haveStats {
                 setSessionSpecificProfileValues([KEY_TRIGGERS: triggerDicts])
+            }
+        }
+    }
+}
+
+@objc
+extension PTYSession {
+    func saveArchive() {
+        guard let destination = iTermProfilePreferences.string(forKey: KEY_ARCHIVEDIR, inProfile: profile) else {
+            DLog("No archive dir in profile")
+            return
+        }
+        let term = delegate?.realParentWindow() as? PseudoTerminal
+        let now = Date()
+        let formatter = DateFormatter()
+        formatter.locale = Locale.current
+        formatter.dateStyle = .short
+        formatter.timeStyle = .medium
+
+        let dateTime = formatter.string(from: now)
+            .replacingOccurrences(of: " ", with: "_")
+            .replacingOccurrences(of: "/", with: "-")
+            .replacingOccurrences(of: ",", with: "")
+        let filename = "\(dateTime) - \(name ?? "Untitled").itermarchive"
+        let url = URL(fileURLWithPath: destination).appendingPathComponent(filename)
+        saveArchive(to: iTermSavePanelItem(filename: url.path, host: .localhost), term: term)
+    }
+
+    @objc(saveArchiveTo:term:)
+    func saveArchive(to location: iTermSavePanelItem, term: PseudoTerminal?) {
+
+        let arrangement: [AnyHashable: Any]?
+        if let term {
+            arrangement = term.arrangement(with: self)
+        } else {
+            arrangement = PseudoTerminal.arrangement(with: self)
+        }
+        guard let data = (arrangement as? NSDictionary)?.propertyListData() else {
+            DLog("Invalid plist at \(((arrangement as? NSDictionary)?.it_invalidPathInPlist()).d)")
+            return
+        }
+        if location.host.isLocalhost {
+            // This has to be synchronous for saving archives on app quit.
+            do {
+                try data.write(to: URL(fileURLWithPath: location.filename))
+                ArchivesMenuBuilder.shared?.didAdd(path: location.filename)
+            } catch {
+                DLog("Saving to \(location.description) failed: \(error)")
+                iTermNotificationController.sharedInstance().notify(
+                    "Archiving to \(location.displayName) failed: \(error.localizedDescription)")
+            }
+            return
+        }
+        Task { @MainActor in
+            do {
+                try await location.upload(data: data)
+                if location.host.isLocalhost {
+                    ArchivesMenuBuilder.shared?.didAdd(path: location.filename)
+                }
+            } catch {
+                DLog("Saving to \(location.description) failed: \(error)")
+                iTermNotificationController.sharedInstance().notify(
+                    "Archiving to \(location.displayName) failed: \(error.localizedDescription)")
             }
         }
     }

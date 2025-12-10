@@ -710,7 +710,7 @@ Gw
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <clipView key="contentView" id="gZI-PG-peZ">
                             <rect key="frame" x="1" y="1" width="373" height="353"/>
-                            <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                            <autoresizingMask key="autoresizingMask"/>
                             <subviews>
                                 <tableView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="lastColumnOnly" alternatingRowBackgroundColors="YES" columnReordering="NO" columnResizing="NO" autosaveColumns="NO" id="5845">
                                     <rect key="frame" x="0.0" y="0.0" width="373" height="353"/>
@@ -917,7 +917,7 @@ DQ
                                 <autoresizingMask key="autoresizingMask" heightSizable="YES"/>
                                 <clipView key="contentView" drawsBackground="NO" id="Yde-8Q-TRE">
                                     <rect key="frame" x="1" y="1" width="256" height="133"/>
-                                    <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                                    <autoresizingMask key="autoresizingMask"/>
                                     <subviews>
                                         <textView wantsLayer="YES" importsGraphics="NO" richText="NO" verticallyResizable="YES" allowsUndo="YES" textCompletion="NO" id="235-ob-yuB">
                                             <rect key="frame" x="0.0" y="0.0" width="256" height="133"/>
@@ -972,7 +972,7 @@ DQ
                         <autoresizingMask key="autoresizingMask"/>
                         <clipView key="contentView" drawsBackground="NO" id="XnQ-nh-5wv">
                             <rect key="frame" x="1" y="1" width="379" height="83"/>
-                            <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                            <autoresizingMask key="autoresizingMask"/>
                             <subviews>
                                 <textView wantsLayer="YES" importsGraphics="NO" richText="NO" verticallyResizable="YES" textCompletion="NO" id="ucv-8U-BE7" customClass="iTermPlaygroundTextView">
                                     <rect key="frame" x="0.0" y="0.0" width="379" height="83"/>
@@ -1055,7 +1055,7 @@ DQ
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <clipView key="contentView" id="Moz-RU-iUF">
                             <rect key="frame" x="1" y="1" width="343" height="375"/>
-                            <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                            <autoresizingMask key="autoresizingMask"/>
                             <subviews>
                                 <tableView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="lastColumnOnly" alternatingRowBackgroundColors="YES" columnReordering="NO" columnResizing="NO" autosaveColumns="NO" id="6283">
                                     <rect key="frame" x="0.0" y="0.0" width="343" height="375"/>
@@ -1745,7 +1745,11 @@ CA
         <customObject id="TG6-06-mq9" userLabel="Prefs&gt;Profiles&gt;Session View Controller" customClass="ProfilesSessionPreferencesViewController">
             <connections>
                 <outlet property="_addJob" destination="5667" id="zOi-em-htI"/>
+                <outlet property="_archive" destination="0x7-mt-fpO" id="3PK-H4-tu8"/>
+                <outlet property="_archiveDir" destination="DIb-OX-MTh" id="lPT-0q-VpR"/>
+                <outlet property="_archiveDirWarning" destination="hsC-n5-Gfh" id="cGi-W7-MoH"/>
                 <outlet property="_autoLog" destination="5685" id="27x-QK-Uur"/>
+                <outlet property="_changeArchiveDir" destination="x5Y-EN-V7q" id="bUh-6x-eSA"/>
                 <outlet property="_changeLogDir" destination="5687" id="mMH-ci-Pff"/>
                 <outlet property="_configureStatusBar" destination="crL-dF-Ixm" id="Wa6-tm-Sfr"/>
                 <outlet property="_enableProgressBars" destination="xxq-Mn-NRG" id="vjh-Rz-tE4"/>
@@ -4840,15 +4844,15 @@ CA
             <point key="canvasLocation" x="106" y="-867"/>
         </customView>
         <customView id="ayN-Cl-pQs" userLabel="Prefs - Profiles - Session" customClass="iTermSizeRememberingView">
-            <rect key="frame" x="0.0" y="0.0" width="660" height="704"/>
+            <rect key="frame" x="0.0" y="0.0" width="660" height="766"/>
             <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
             <subviews>
                 <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Ii9-tP-UaN" customClass="iTermTerminalModeEnclosure">
-                    <rect key="frame" x="16" y="320" width="617" height="117"/>
+                    <rect key="frame" x="16" y="318" width="617" height="181"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <subviews>
                         <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="5687">
-                            <rect key="frame" x="517" y="38" width="107" height="32"/>
+                            <rect key="frame" x="517" y="102" width="107" height="32"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <buttonCell key="cell" type="push" title="Change" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="5690">
                                 <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
@@ -4859,7 +4863,7 @@ CA
                             </connections>
                         </button>
                         <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="9fS-YJ-ldf">
-                            <rect key="frame" x="138" y="20" width="63" height="16"/>
+                            <rect key="frame" x="138" y="84" width="63" height="16"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <textFieldCell key="cell" lineBreakMode="clipping" alignment="left" title="Filename:" id="YpV-Mh-UE0">
                                 <font key="font" usesAppearanceFont="YES"/>
@@ -4868,7 +4872,7 @@ CA
                             </textFieldCell>
                         </textField>
                         <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="5685">
-                            <rect key="frame" x="138" y="100" width="229" height="18"/>
+                            <rect key="frame" x="138" y="164" width="229" height="18"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <buttonCell key="cell" type="check" title="Enable automatic session logging" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="5692">
                                 <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -4880,7 +4884,7 @@ CA
                             </connections>
                         </button>
                         <textField focusRingType="none" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="XBK-8v-aud">
-                            <rect key="frame" x="216" y="18" width="299" height="21"/>
+                            <rect key="frame" x="216" y="82" width="299" height="21"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" continuous="YES" sendsActionOnEndEditing="YES" borderStyle="bezel" placeholderString="Interpolated String" drawsBackground="YES" id="zrh-qF-3Iv">
                                 <font key="font" usesAppearanceFont="YES"/>
@@ -4892,7 +4896,7 @@ CA
                             </connections>
                         </textField>
                         <textField focusRingType="none" verticalHuggingPriority="750" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="5686">
-                            <rect key="frame" x="216" y="45" width="299" height="21"/>
+                            <rect key="frame" x="216" y="109" width="299" height="21"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" state="on" borderStyle="bezel" placeholderString="Interpolated String" drawsBackground="YES" id="5691" customClass="iTermStatusIndicatingTextFieldCell">
                                 <font key="font" metaFont="system"/>
@@ -4904,12 +4908,17 @@ CA
                             </connections>
                         </textField>
                         <imageView hidden="YES" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="5688" userLabel="Log directory warning">
-                            <rect key="frame" x="498" y="47" width="16" height="16"/>
+                            <rect key="frame" x="498" y="111" width="16" height="16"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <imageCell key="cell" refusesFirstResponder="YES" alignment="left" animates="YES" imageScaling="proportionallyDown" image="Warning" id="5689"/>
                         </imageView>
+                        <imageView hidden="YES" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="hsC-n5-Gfh" userLabel="Log directory warning">
+                            <rect key="frame" x="499" y="20" width="16" height="16"/>
+                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                            <imageCell key="cell" refusesFirstResponder="YES" alignment="left" animates="YES" imageScaling="proportionallyDown" image="Warning" id="fXQ-JT-uxS"/>
+                        </imageView>
                         <popUpButton verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="3CY-jo-bCe">
-                            <rect key="frame" x="213" y="70" width="140" height="25"/>
+                            <rect key="frame" x="213" y="134" width="140" height="25"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <popUpButtonCell key="cell" type="push" title="Raw data" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" selectedItem="Qag-mH-b4L" id="fzS-g7-P5q">
                                 <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
@@ -4928,7 +4937,7 @@ CA
                             </connections>
                         </popUpButton>
                         <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="DN8-7n-rg8">
-                            <rect key="frame" x="138" y="77" width="74" height="16"/>
+                            <rect key="frame" x="138" y="141" width="74" height="16"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <textFieldCell key="cell" lineBreakMode="clipping" alignment="left" title="Log format:" id="Pew-sS-rRn">
                                 <font key="font" usesAppearanceFont="YES"/>
@@ -4937,7 +4946,7 @@ CA
                             </textFieldCell>
                         </textField>
                         <textField focusRingType="none" verticalHuggingPriority="750" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="5709">
-                            <rect key="frame" x="-2" y="101" width="131" height="16"/>
+                            <rect key="frame" x="-2" y="165" width="131" height="16"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="right" title="Logging:" id="5710">
                                 <font key="font" metaFont="system"/>
@@ -4945,8 +4954,17 @@ CA
                                 <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                             </textFieldCell>
                         </textField>
+                        <textField focusRingType="none" verticalHuggingPriority="750" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="839-YF-wxn">
+                            <rect key="frame" x="-2" y="50" width="131" height="16"/>
+                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                            <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="right" title="Archiving:" id="SZd-eb-Mse">
+                                <font key="font" metaFont="system"/>
+                                <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                                <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                            </textFieldCell>
+                        </textField>
                         <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Qon-yy-HAh">
-                            <rect key="frame" x="138" y="48" width="63" height="16"/>
+                            <rect key="frame" x="138" y="112" width="63" height="16"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <textFieldCell key="cell" lineBreakMode="clipping" alignment="left" title="Folder:" id="ztD-z6-FaU">
                                 <font key="font" usesAppearanceFont="YES"/>
@@ -4954,6 +4972,63 @@ CA
                                 <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                             </textFieldCell>
                         </textField>
+                        <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="x5Y-EN-V7q">
+                            <rect key="frame" x="517" y="10" width="107" height="32"/>
+                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                            <buttonCell key="cell" type="push" title="Change" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="1hy-i5-p8O">
+                                <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
+                                <font key="font" metaFont="system"/>
+                            </buttonCell>
+                            <connections>
+                                <action selector="selectArchiveDir:" target="TG6-06-mq9" id="kMM-cL-rcf"/>
+                            </connections>
+                        </button>
+                        <textField focusRingType="none" verticalHuggingPriority="750" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="DIb-OX-MTh">
+                            <rect key="frame" x="216" y="17" width="299" height="21"/>
+                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                            <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" state="on" borderStyle="bezel" drawsBackground="YES" id="Oto-AW-5E9" customClass="iTermStatusIndicatingTextFieldCell">
+                                <font key="font" metaFont="system"/>
+                                <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                                <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                            </textFieldCell>
+                            <connections>
+                                <outlet property="delegate" destination="TG6-06-mq9" id="4Xf-Lf-Pg6"/>
+                            </connections>
+                        </textField>
+                        <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="0uV-48-Gnj">
+                            <rect key="frame" x="138" y="20" width="63" height="16"/>
+                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                            <textFieldCell key="cell" lineBreakMode="clipping" alignment="left" title="Folder:" id="dL0-eT-1Y9">
+                                <font key="font" usesAppearanceFont="YES"/>
+                                <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                                <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                            </textFieldCell>
+                        </textField>
+                        <button horizontalHuggingPriority="750" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="046-FY-yXO" customClass="iTermPopoverHelpButton">
+                            <rect key="frame" x="342" y="47" width="24" height="24"/>
+                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                            <buttonCell key="cell" type="help" bezelStyle="helpButton" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="feX-Oy-Emd">
+                                <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
+                                <font key="font" metaFont="system"/>
+                            </buttonCell>
+                            <userDefinedRuntimeAttributes>
+                                <userDefinedRuntimeAttribute type="string" keyPath="helpText">
+                                    <string key="value">When a session is archived, a full-fidelity copy of it gets saved to disk. You can view archives under the menu item Shell &gt; Archives.</string>
+                                </userDefinedRuntimeAttribute>
+                            </userDefinedRuntimeAttributes>
+                        </button>
+                        <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="0x7-mt-fpO">
+                            <rect key="frame" x="140" y="50" width="190" height="18"/>
+                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                            <buttonCell key="cell" type="check" title="Archive sessions on closure" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="3DX-gq-Zsh">
+                                <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                                <font key="font" metaFont="system"/>
+                            </buttonCell>
+                            <connections>
+                                <action selector="settingChanged:" target="TG6-06-mq9" id="3Bw-od-Oeo"/>
+                                <outlet property="nextKeyView" destination="2100" id="XyP-cB-JfI"/>
+                            </connections>
+                        </button>
                     </subviews>
                 </customView>
                 <button toolTip="Shows a configurable status bar at the top of each session." fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="cO8-6s-51k">
@@ -4968,7 +5043,7 @@ CA
                     </connections>
                 </button>
                 <textField focusRingType="none" verticalHuggingPriority="750" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="5707">
-                    <rect key="frame" x="14" y="668" width="131" height="16"/>
+                    <rect key="frame" x="14" y="730" width="131" height="16"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="right" title="Closing:" id="5708">
                         <font key="font" metaFont="system"/>
@@ -5011,15 +5086,84 @@ CA
                         <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
                 </textField>
-                <textField focusRingType="none" verticalHuggingPriority="750" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="7HD-m2-Z38">
-                    <rect key="frame" x="14" y="140" width="131" height="16"/>
+                <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Dbp-IU-3pL" customClass="iTermTerminalModeEnclosure">
+                    <rect key="frame" x="16" y="59" width="483" height="99"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="right" title="Progress Bars:" id="ZgN-gY-svi">
-                        <font key="font" metaFont="system"/>
-                        <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
-                        <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
-                    </textFieldCell>
-                </textField>
+                    <subviews>
+                        <textField focusRingType="none" verticalHuggingPriority="750" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="7HD-m2-Z38">
+                            <rect key="frame" x="-2" y="81" width="131" height="16"/>
+                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                            <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="right" title="Progress Bars:" id="ZgN-gY-svi">
+                                <font key="font" metaFont="system"/>
+                                <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                                <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                            </textFieldCell>
+                        </textField>
+                        <textField toolTip="The progress bar goes at the top of the session. It cannot exceed the top margin height to avoid overlapping terminal contents." focusRingType="none" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="EkI-wa-K9H">
+                            <rect key="frame" x="188" y="46" width="39" height="21"/>
+                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                            <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" continuous="YES" sendsActionOnEndEditing="YES" borderStyle="bezel" drawsBackground="YES" id="BMm-fl-omz">
+                                <font key="font" metaFont="system"/>
+                                <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                                <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                            </textFieldCell>
+                            <connections>
+                                <action selector="settingChanged:" target="TG6-06-mq9" id="BTe-wS-VEG"/>
+                                <outlet property="delegate" destination="TG6-06-mq9" id="hOk-oI-6O9"/>
+                            </connections>
+                        </textField>
+                        <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="1Kh-70-y9o">
+                            <rect key="frame" x="136" y="48" width="45" height="16"/>
+                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                            <textFieldCell key="cell" lineBreakMode="clipping" title="Height" id="uVw-1o-Ei4">
+                                <font key="font" metaFont="system"/>
+                                <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                                <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                            </textFieldCell>
+                        </textField>
+                        <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="2T4-TC-L6z">
+                            <rect key="frame" x="136" y="24" width="90" height="16"/>
+                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                            <textFieldCell key="cell" lineBreakMode="clipping" title="Color Scheme" id="hzS-a0-x6g">
+                                <font key="font" metaFont="system"/>
+                                <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                                <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                            </textFieldCell>
+                        </textField>
+                        <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="xxq-Mn-NRG">
+                            <rect key="frame" x="138" y="81" width="154" height="18"/>
+                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                            <string key="toolTip">Paste bracketing tells compatible apps that text was inserted by a paste operation rather than typing. Some programs use this to treat pastes specially, such as by not auto-indenting it.</string>
+                            <buttonCell key="cell" type="check" title="Show progress bars" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="LoV-5k-RTq">
+                                <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                                <font key="font" metaFont="system"/>
+                            </buttonCell>
+                            <connections>
+                                <action selector="settingChanged:" target="TG6-06-mq9" id="uB8-sI-hR5"/>
+                            </connections>
+                        </button>
+                        <popUpButton toolTip="This sets the color of the indeterminate progress bar." verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="6Qn-Rd-R1m">
+                            <rect key="frame" x="259" y="42" width="224" height="25"/>
+                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                            <popUpButtonCell key="cell" type="push" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" id="Y8X-Ld-zfS">
+                                <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
+                                <font key="font" metaFont="message"/>
+                                <menu key="menu" id="QkL-Oo-h0p"/>
+                            </popUpButtonCell>
+                            <connections>
+                                <action selector="settingChanged:" target="TG6-06-mq9" id="Ll9-RB-Zub"/>
+                            </connections>
+                        </popUpButton>
+                        <stepper horizontalHuggingPriority="750" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="UNl-QI-7fJ">
+                            <rect key="frame" x="232" y="43" width="19" height="28"/>
+                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                            <stepperCell key="cell" continuous="YES" alignment="left" maxValue="100" id="AzB-b2-qoN"/>
+                            <connections>
+                                <action selector="settingChanged:" target="TG6-06-mq9" id="EhS-MB-2P9"/>
+                            </connections>
+                        </stepper>
+                    </subviews>
+                </customView>
                 <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="uwh-Rt-Qhd" customClass="iTermTerminalModeEnclosure">
                     <rect key="frame" x="16" y="0.0" width="589" height="61"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
@@ -5112,7 +5256,7 @@ CA
                     </connections>
                 </button>
                 <popUpButton verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="igT-3q-b00" userLabel="Prompt Before Closing Popup">
-                    <rect key="frame" x="308" y="585" width="338" height="25"/>
+                    <rect key="frame" x="308" y="647" width="338" height="25"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <popUpButtonCell key="cell" type="push" title="Never" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" selectedItem="ZUC-DO-GoS" id="cxj-5G-eDy">
                         <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
@@ -5132,7 +5276,7 @@ CA
                     </connections>
                 </popUpButton>
                 <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="UBh-ad-3dY" userLabel="Closing" customClass="iTermTerminalModeEnclosure">
-                    <rect key="frame" x="156" y="608" width="486" height="76"/>
+                    <rect key="frame" x="156" y="670" width="486" height="76"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <subviews>
                         <button toolTip="If a session ends immediately after starting and this setting is enabled, keep it open so you can see what went wrong." fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="CRE-cb-4lA">
@@ -5250,7 +5394,7 @@ CA
                     </subviews>
                 </customView>
                 <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="CaX-oE-1bI" customClass="iTermTerminalModeEnclosure">
-                    <rect key="frame" x="156" y="435" width="452" height="146"/>
+                    <rect key="frame" x="156" y="497" width="452" height="146"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <subviews>
                         <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="5667">
@@ -5321,7 +5465,7 @@ CA
                     </subviews>
                 </customView>
                 <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="YAa-fh-c4L">
-                    <rect key="frame" x="154" y="592" width="145" height="16"/>
+                    <rect key="frame" x="154" y="654" width="145" height="16"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="right" title="Prompt before closing?" id="iZE-xA-Mxl">
                         <font key="font" metaFont="system"/>
@@ -5329,72 +5473,9 @@ CA
                         <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
                 </textField>
-                <stepper horizontalHuggingPriority="750" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="UNl-QI-7fJ">
-                    <rect key="frame" x="248" y="104" width="19" height="28"/>
-                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <stepperCell key="cell" continuous="YES" alignment="left" maxValue="100" id="AzB-b2-qoN"/>
-                    <connections>
-                        <action selector="settingChanged:" target="TG6-06-mq9" id="EhS-MB-2P9"/>
-                    </connections>
-                </stepper>
-                <textField toolTip="The progress bar goes at the top of the session. It cannot exceed the top margin height to avoid overlapping terminal contents." focusRingType="none" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="EkI-wa-K9H">
-                    <rect key="frame" x="204" y="108" width="39" height="21"/>
-                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" continuous="YES" sendsActionOnEndEditing="YES" borderStyle="bezel" drawsBackground="YES" id="BMm-fl-omz">
-                        <font key="font" metaFont="system"/>
-                        <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
-                        <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
-                    </textFieldCell>
-                    <connections>
-                        <action selector="settingChanged:" target="TG6-06-mq9" id="BTe-wS-VEG"/>
-                        <outlet property="delegate" destination="TG6-06-mq9" id="hOk-oI-6O9"/>
-                    </connections>
-                </textField>
-                <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="1Kh-70-y9o">
-                    <rect key="frame" x="152" y="112" width="45" height="16"/>
-                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <textFieldCell key="cell" lineBreakMode="clipping" title="Height" id="uVw-1o-Ei4">
-                        <font key="font" metaFont="system"/>
-                        <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
-                        <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
-                    </textFieldCell>
-                </textField>
-                <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="2T4-TC-L6z">
-                    <rect key="frame" x="152" y="83" width="90" height="16"/>
-                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <textFieldCell key="cell" lineBreakMode="clipping" title="Color Scheme" id="hzS-a0-x6g">
-                        <font key="font" metaFont="system"/>
-                        <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
-                        <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
-                    </textFieldCell>
-                </textField>
-                <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="xxq-Mn-NRG">
-                    <rect key="frame" x="154" y="140" width="154" height="18"/>
-                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <string key="toolTip">Paste bracketing tells compatible apps that text was inserted by a paste operation rather than typing. Some programs use this to treat pastes specially, such as by not auto-indenting it.</string>
-                    <buttonCell key="cell" type="check" title="Show progress bars" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="LoV-5k-RTq">
-                        <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
-                        <font key="font" metaFont="system"/>
-                    </buttonCell>
-                    <connections>
-                        <action selector="settingChanged:" target="TG6-06-mq9" id="uB8-sI-hR5"/>
-                    </connections>
-                </button>
-                <popUpButton toolTip="This sets the color of the indeterminate progress bar." verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="6Qn-Rd-R1m">
-                    <rect key="frame" x="248" y="79" width="251" height="25"/>
-                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <popUpButtonCell key="cell" type="push" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" id="Y8X-Ld-zfS">
-                        <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
-                        <font key="font" metaFont="message"/>
-                        <menu key="menu" id="QkL-Oo-h0p"/>
-                    </popUpButtonCell>
-                    <connections>
-                        <action selector="settingChanged:" target="TG6-06-mq9" id="Ll9-RB-Zub"/>
-                    </connections>
-                </popUpButton>
             </subviews>
             <accessibility identifier="prefsProfilesSession"/>
-            <point key="canvasLocation" x="723" y="929"/>
+            <point key="canvasLocation" x="723" y="960"/>
         </customView>
         <customView id="M5G-Dw-0HO" userLabel="Prefs - Profiles - Keys" customClass="iTermSizeRememberingView">
             <rect key="frame" x="0.0" y="0.0" width="842" height="465"/>

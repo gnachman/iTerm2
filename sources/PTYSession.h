@@ -52,6 +52,8 @@ extern NSString *const PTYCommandDidExitUserInfoKeyStartLine;
 extern NSString *const PTYCommandDidExitUserInfoKeyLineCount;
 extern NSString *const PTYCommandDidExitUserInfoKeyURL;
 extern NSString *const PTYSessionArrangementOptionsForDuplication;
+extern NSString *const PTYSessionArrangementOptionsUnlimitedHistory;
+extern NSString *const PTYSessionArrangementOptionsArchive;
 
 @class CapturedOutput;
 @protocol ExternalSearchResultsController;
@@ -629,6 +631,7 @@ backgroundColor:(NSColor *)backgroundColor;
 @property(nonatomic, readonly) NSColor *effectiveUnprocessedBackgroundColor;
 @property(nonatomic, readonly) NSColor *effectiveProcessedBackgroundColor;
 @property(nonatomic, readonly) BOOL abortBury;
+@property(nonatomic, readonly) BOOL isArchive;
 
 #pragma mark - methods
 

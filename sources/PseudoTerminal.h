@@ -305,6 +305,8 @@ extern NSString *const iTermDidCreateTerminalWindowNotification;
 // Returns the arrangement for this window, optionally excluding tmux tabs.
 - (NSDictionary *)arrangementExcludingTmuxTabs:(BOOL)excludeTmux
                              includingContents:(BOOL)includeContents;
+- (NSDictionary *)arrangementWithSession:(PTYSession *)session;
++ (NSDictionary *)arrangementWithSession:(PTYSession *)session;
 
 // All tabs in this window.
 - (NSArray<PTYTab *> *)tabs;

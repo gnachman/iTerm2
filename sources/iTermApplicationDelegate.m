@@ -213,6 +213,8 @@ static BOOL hasBecomeActive = NO;
     IBOutlet NSMenuItem *_namedMarksMenuItem;
     IBOutlet NSMenuItem *_toolbeltMenuItem;
     IBOutlet NSMenuItem *_webMenuItem;
+    IBOutlet NSMenuItem *_archivesMenuItem;
+    
     // If set, skip performing launch actions.
     BOOL quiet_;
     NSDate* launchTime_;
@@ -330,6 +332,8 @@ static BOOL hasBecomeActive = NO;
 #pragma mark - Interface Builder
 
 - (void)awakeFromNib {
+    [ArchivesMenuBuilder setShared:[[ArchivesMenuBuilder alloc] initWithMenuItem:_archivesMenuItem]];
+
     NSMenu *viewMenu = [self topLevelViewNamed:@"View"];
     [viewMenu addItem:[NSMenuItem separatorItem]];
 

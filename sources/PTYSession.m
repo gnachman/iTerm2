@@ -369,6 +369,8 @@ static NSString *const kTwoCoprocessesCanNotRunAtOnceAnnouncementIdentifier =
     @"NoSyncTwoCoprocessesCanNotRunAtOnceAnnouncmentIdentifier";
 
 NSString *const PTYSessionArrangementOptionsForDuplication = @"PTYSessionArrangementOptionsForDuplication";
+NSString *const PTYSessionArrangementOptionsUnlimitedHistory = @"PTYSessionArrangementOptionsUnlimitedHistory";
+NSString *const PTYSessionArrangementOptionsArchive = @"PTYSessionArrangementOptionsArchive";
 
 static char iTermEffectiveAppearanceKey;
 
@@ -1867,6 +1869,8 @@ ITERM_WEAKLY_REFERENCEABLE
     aSession.shortLivedSingleUse = [arrangement[SESSION_ARRANGEMENT_SHORT_LIVED_SINGLE_USE] boolValue];
     aSession.hostnameToShell = [[arrangement[SESSION_ARRANGEMENT_HOSTNAME_TO_SHELL] mutableCopy] autorelease];
     [aSession.variablesScope setValue:[aSession bestGuessAtUserShellWithPath:NO] forVariableNamed:iTermVariableKeyShell];
+    const BOOL isArchive = options[PTYSessionArrangementOptionsArchive] != nil;
+    aSession->_isArchive = isArchive;
 
     if (arrangement[SESSION_ARRANGEMENT_SUBSTITUTIONS]) {
         aSession.substitutions = arrangement[SESSION_ARRANGEMENT_SUBSTITUTIONS];
@@ -2019,7 +2023,8 @@ ITERM_WEAKLY_REFERENCEABLE
             DLog(@"Loading content from line buffer dictionary");
             [aSession setContentsFromLineBufferDictionary:contents
                                  includeRestorationBanner:runCommand
-                                               reattached:attachedToServer];
+                                               reattached:attachedToServer
+                                                isArchive:options[PTYSessionArrangementOptionsArchive] != nil];
             // NOTE: THE SCREEN SIZE IS NOW OUT OF SYNC WITH THE VIEW SIZE. IT MUST BE FIXED!
             // Store browser state for restoration in startProgram:
         }
@@ -2199,10 +2204,12 @@ ITERM_WEAKLY_REFERENCEABLE
 // WARNING: This leaves the screen with the wrong size! Call -restoreInitialSize afterwards.
 - (void)setContentsFromLineBufferDictionary:(NSDictionary *)dict
                    includeRestorationBanner:(BOOL)includeRestorationBanner
-                                 reattached:(BOOL)reattached {
+                                 reattached:(BOOL)reattached
+                                  isArchive:(BOOL)isArchive {
     [_screen restoreFromDictionary:dict
           includeRestorationBanner:includeRestorationBanner
-                        reattached:reattached];
+                        reattached:reattached
+                         isArchive:isArchive];
     [_screen enumeratePortholes:^(id<PortholeMarkReading> immutableMark) {
         [[PortholeRegistry instance] registerKey:immutableMark.uniqueIdentifier
                                          forMark:immutableMark];
@@ -3070,28 +3077,34 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
             [_logging stop];
             [_logging autorelease];
             _logging = nil;
-            [[self loggingHelper] setPath:autoLogFilename
-                                  enabled:autoLogFilename != nil
-                                    style:iTermLoggingStyleFromUserDefaultsValue([iTermProfilePreferences unsignedIntegerForKey:KEY_LOGGING_STYLE inProfile:self.profile])
-                        asciicastMetadata:[self asciicastMetadata]
-                                   append:nil
-                                   window:self.view.window];
-            if (env[PWD_ENVNAME] && arrangementName && _arrangementGUID) {
-                __weak __typeof(self) weakSelf = self;
-                [[iTermSlowOperationGateway sharedInstance] checkIfDirectoryExists:env[PWD_ENVNAME]
-                                                                        completion:^(BOOL exists) {
-                    if (exists) {
-                        return;
-                    }
-                    [weakSelf arrangementWithName:arrangementName
-                                        hasBadPWD:env[PWD_ENVNAME]];
-                }];
+            if (!_isArchive) {
+                [[self loggingHelper] setPath:autoLogFilename
+                                      enabled:autoLogFilename != nil
+                                        style:iTermLoggingStyleFromUserDefaultsValue([iTermProfilePreferences unsignedIntegerForKey:KEY_LOGGING_STYLE inProfile:self.profile])
+                            asciicastMetadata:[self asciicastMetadata]
+                                       append:nil
+                                       window:self.view.window];
+                if (env[PWD_ENVNAME] && arrangementName && _arrangementGUID) {
+                    __weak __typeof(self) weakSelf = self;
+                    [[iTermSlowOperationGateway sharedInstance] checkIfDirectoryExists:env[PWD_ENVNAME]
+                                                                            completion:^(BOOL exists) {
+                        if (exists) {
+                            return;
+                        }
+                        [weakSelf arrangementWithName:arrangementName
+                                            hasBadPWD:env[PWD_ENVNAME]];
+                    }];
+                }
             }
             DLog(@"Will call injectShellIntegration");
             [self injectShellIntegrationWithEnvironment:env
                                                    args:argv
                                              completion:^(NSDictionary<NSString *, NSString *> *env,
                                                           NSArray<NSString *> *argv) {
+                if (_isArchive) {
+                    [self setExited:YES];
+                    return;
+                }
                 [_shell launchWithPath:argv[0]
                              arguments:[argv subarrayFromIndex:1]
                            environment:env
@@ -3314,6 +3327,7 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
 - (void)restartSession {
     DLog(@"Restart session %@", self);
     assert(self.isRestartable);
+    _isArchive = NO;
     [_naggingController willRecycleSession];
 
     if (_conductor) {
@@ -3468,6 +3482,11 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
 
 // Not undoable. Kill the process. However, you can replace the terminated shell after this.
 - (void)hardStop {
+    if (!self.isTmuxClient &&
+        !_isArchive &&
+        [iTermProfilePreferences boolForKey:KEY_ARCHIVE inProfile:self.profile]) {
+        [self saveArchive];
+    }
     [[iTermController sharedInstance] removeSessionFromRestorableSessions:self];
     [_screen mutateAsynchronously:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
         [terminal.parser forceUnhookDCS:nil];
@@ -6146,10 +6165,13 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
     if (includeContents) {
         __block int numberOfLinesDropped = 0;
         if (!self.isBrowserSession) {
+            const BOOL unlimited = [options[PTYSessionArrangementOptionsUnlimitedHistory] boolValue];
             [result encodeDictionaryWithKey:SESSION_ARRANGEMENT_CONTENTS
                                  generation:iTermGenerationAlwaysEncode
                                       block:^BOOL(id<iTermEncoderAdapter>  _Nonnull encoder) {
-                return [_screen encodeContents:encoder linesDropped:&numberOfLinesDropped];
+                return [_screen encodeContents:encoder
+                                  linesDropped:&numberOfLinesDropped
+                                     unlimited:unlimited];
             }];
         }
         result[SESSION_ARRANGEMENT_VARIABLES] = _variables.encodableDictionaryValue;
@@ -6241,7 +6263,7 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
                     [combinedOverriddenFields addObject:key];
                 }
             }
-            result[SESSION_ARRANGEMENT_OVERRIDDEN_FIELDS] = combinedOverriddenFields;
+            result[SESSION_ARRANGEMENT_OVERRIDDEN_FIELDS] = [combinedOverriddenFields allObjects];
             DLog(@"Combined overridden fields are: %@", combinedOverriddenFields);
         } else {
             result[SESSION_ARRANGEMENT_OVERRIDDEN_FIELDS] = _overriddenFields.allObjects;
@@ -18301,6 +18323,13 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
 
 - (BOOL)textViewProfileTypeIsTerminal {
     return !_view.isBrowser;
+}
+
+- (void)textViewSaveArchive:(iTermSavePanelItem *)location {
+    PseudoTerminal *term = [PseudoTerminal castFrom:self.delegate.realParentWindow];
+    if (term) {
+        [self saveArchiveTo:location term:term];
+    }
 }
 
 - (void)removeSelectedCommandRange {

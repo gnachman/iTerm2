@@ -91,7 +91,7 @@ static iTermController *gSharedInstance;
 @end
 
 @implementation iTermController {
-    NSMutableArray *_restorableSessions;
+    NSMutableArray<iTermRestorableSession *> *_restorableSessions;
     NSMutableArray *_currentRestorableSessionsStack;
 
     NSMutableArray<PseudoTerminal *> *_terminalWindows;
@@ -221,6 +221,18 @@ static iTermController *gSharedInstance;
         while ([_terminalWindows count] > 0) {
             [[_terminalWindows objectAtIndex:0] close];
         }
+
+        // Kill restorable sessions. I've always been on the fence about whether to do this or not.
+        // If they were undoable when the app quits, shouldn't they be restored? Kind of but I think
+        // it's somewhat surprising. In order to support the auto-archiving feature, we'll kill them
+        // which IMO breaks the tie.
+        [_restorableSessions enumerateObjectsUsingBlock:^(iTermRestorableSession *restorableSession, NSUInteger idx, BOOL * _Nonnull stop) {
+            [restorableSession.sessions enumerateObjectsUsingBlock:^(PTYSession *session, NSUInteger idx, BOOL * _Nonnull stop) {
+                if (!session.isTmuxClient) {
+                    [session terminate];
+                }
+            }];
+        }];
         ITAssertWithMessage([_terminalWindows count] == 0, @"Expected terminals to be gone");
     }
     _terminalWindows = nil;

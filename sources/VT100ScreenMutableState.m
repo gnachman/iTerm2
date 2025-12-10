@@ -5018,7 +5018,8 @@ lengthExcludingInBandSignaling:data.length
 
 - (void)restoreFromDictionary:(NSDictionary *)dictionary
      includeRestorationBanner:(BOOL)includeRestorationBanner
-                   reattached:(BOOL)reattached {
+                   reattached:(BOOL)reattached
+                    isArchive:(BOOL)isArchive {
     const BOOL newFormat = (dictionary[@"PrimaryGrid"] != nil);
     if (!newFormat) {
         return;
@@ -5052,7 +5053,11 @@ lengthExcludingInBandSignaling:data.length
         self.linebuffer = lineBuffer;
     }
     if (includeRestorationBanner && [iTermAdvancedSettingsModel showSessionRestoredBanner]) {
-        [self appendSessionRestoredBanner];
+        if (isArchive) {
+            [self appendArchiveRestoredBanner];
+        } else {
+            [self appendSessionRestoredBanner];
+        }
     }
 
     if (screenState) {
@@ -5117,12 +5122,19 @@ lengthExcludingInBandSignaling:data.length
     }
 }
 
+- (void)appendArchiveRestoredBanner {
+    [self appendRestoredBanner:@"Archive Restored"];
+}
+
 - (void)appendSessionRestoredBanner {
     NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
     dateFormatter.dateStyle = NSDateFormatterMediumStyle;
     dateFormatter.timeStyle = NSDateFormatterShortStyle;
     NSString *message = [NSString stringWithFormat:@"Session Contents Restored on %@", [dateFormatter stringFromDate:[NSDate date]]];
+    [self appendRestoredBanner:message];
+}
 
+- (void)appendRestoredBanner:(NSString *)message {
     // Record the cursor position and append the message.
     const int yBefore = self.currentGrid.cursor.y;
 

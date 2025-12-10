@@ -82,6 +82,18 @@ class iTermOpenPanel: NSObject {
         beginWithFallback(window: nil, handler: handler)
     }
 
+    func show(window: NSWindow?) async throws -> [URL] {
+        return try await withCheckedThrowingContinuation { continuation in
+            beginWithFallback(window: window) { response, maybeURLs in
+                if response == .OK, let urls = maybeURLs {
+                    continuation.resume(returning: urls)
+                } else {
+                    continuation.resume(throwing: iTermError("Canceled"))
+                }
+            }
+        }
+    }
+
     // Always use system picker with SSH panel option
     @objc(beginWithFallbackWindow:handler:)
     func beginWithFallback(window: NSWindow?,

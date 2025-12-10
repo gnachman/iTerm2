@@ -847,7 +847,8 @@ static NSRange NSRangeFromBounds(NSInteger lowerBound, NSInteger upperBound) {
 
 - (int)numberOfLinesDroppedWhenEncodingContentsIncludingGrid:(BOOL)includeGrid
                                                      encoder:(id<iTermEncoderAdapter>)encoder
-                                              intervalOffset:(long long *)intervalOffsetPtr {
+                                              intervalOffset:(long long *)intervalOffsetPtr
+                                                   unlimited:(BOOL)unlimited {
     // We want 10k lines of history at 80 cols, and fewer for small widths, to keep the size
     // reasonable.
     const int maxLines80 = [iTermAdvancedSettingsModel maxHistoryLinesToRestore];
@@ -856,8 +857,13 @@ static NSRange NSRangeFromBounds(NSInteger lowerBound, NSInteger upperBound) {
     const int maxLines = MAX(1000, maxArea / effectiveWidth);
 
     // Make a copy of the last blocks of the line buffer; enough to contain at least |maxLines|.
-    LineBuffer *temp = [self.linebuffer copyWithMinimumLines:maxLines
-                                                     atWidth:effectiveWidth];
+    LineBuffer *temp;
+    if (unlimited) {
+        temp = [self.linebuffer copy];
+    } else {
+        temp = [self.linebuffer copyWithMinimumLines:maxLines
+                                             atWidth:effectiveWidth];
+    }
 
     // Offset for intervals so 0 is the first char in the provided contents.
     int linesDroppedForBrevity = ([self.linebuffer numLinesWithWidth:effectiveWidth] -

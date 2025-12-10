@@ -2707,6 +2707,7 @@
 		A686F3621D32CD8100F08ED7 /* NSWindow+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = A686F3601D32CD8100F08ED7 /* NSWindow+iTerm.h */; };
 		A686F3891D36A49100F08ED7 /* iTermPreciseTimer.h in Headers */ = {isa = PBXBuildFile; fileRef = A686F3871D36A49100F08ED7 /* iTermPreciseTimer.h */; };
 		A686F38D1D3951A800F08ED7 /* iTermBoxDrawingBezierCurveFactory.h in Headers */ = {isa = PBXBuildFile; fileRef = A686F38B1D3951A800F08ED7 /* iTermBoxDrawingBezierCurveFactory.h */; };
+		A68752492EE61314002EDFCB /* ArchivesMenuBuilder.swift in Sources */ = {isa = PBXBuildFile; fileRef = A68752482EE61314002EDFCB /* ArchivesMenuBuilder.swift */; };
 		A68769502C0BE8CC00F7FFEC /* JSFetch.swift in Sources */ = {isa = PBXBuildFile; fileRef = A687694E2C0BE86800F7FFEC /* JSFetch.swift */; };
 		A68769562C0E5F2300F7FFEC /* LLM.swift in Sources */ = {isa = PBXBuildFile; fileRef = A68769542C0E5DF700F7FFEC /* LLM.swift */; };
 		A687B66A25AD6FF600E0A658 /* iTermGitClient.m in Sources */ = {isa = PBXBuildFile; fileRef = A687B66925AD6FF600E0A658 /* iTermGitClient.m */; };
@@ -7765,6 +7766,7 @@
 		A686F3881D36A49100F08ED7 /* iTermPreciseTimer.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermPreciseTimer.m; sourceTree = "<group>"; };
 		A686F38B1D3951A800F08ED7 /* iTermBoxDrawingBezierCurveFactory.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermBoxDrawingBezierCurveFactory.h; sourceTree = "<group>"; };
 		A686F38C1D3951A800F08ED7 /* iTermBoxDrawingBezierCurveFactory.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermBoxDrawingBezierCurveFactory.m; sourceTree = "<group>"; };
+		A68752482EE61314002EDFCB /* ArchivesMenuBuilder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ArchivesMenuBuilder.swift; sourceTree = "<group>"; };
 		A687694E2C0BE86800F7FFEC /* JSFetch.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JSFetch.swift; sourceTree = "<group>"; };
 		A68769542C0E5DF700F7FFEC /* LLM.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LLM.swift; sourceTree = "<group>"; };
 		A687B66825AD6FF600E0A658 /* iTermGitClient.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermGitClient.h; sourceTree = "<group>"; };
@@ -11822,6 +11824,7 @@
 				A6D7E0752C236D54007D0A37 /* LineBlockMetadataArray.h */,
 				A6D7E0762C236D54007D0A37 /* LineBlockMetadataArray.m */,
 				A664EC382EC6A36800F0F596 /* iTermTitlebarAccessoryNanny.swift */,
+				A68752482EE61314002EDFCB /* ArchivesMenuBuilder.swift */,
 			);
 			name = Core;
 			sourceTree = "<group>";
@@ -19173,6 +19176,7 @@
 				A6A4866920B6792900493302 /* iTermEditKeyActionWindowController.m in Sources */,
 				A6D4C27121E19959009CF11B /* iTermVariablesOutlineDelegate.m in Sources */,
 				A614F2631FE47D8600EEE919 /* iTermCharacterBitmap.m in Sources */,
+				A68752492EE61314002EDFCB /* ArchivesMenuBuilder.swift in Sources */,
 				A6A4865F20B675DE00493302 /* AdvancedWorkingDirectoryWindowController.m in Sources */,
 				A6EC8097282EBFB000493544 /* TarJob.swift in Sources */,
 				537C4FD9227BE18B00B292E2 /* iTermSecureKeyboardEntryController.m in Sources */,

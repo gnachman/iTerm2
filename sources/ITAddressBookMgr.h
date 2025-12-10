@@ -259,6 +259,8 @@ extern NSString *const iTermProgressBarColorSchemeOrange;
 #define KEY_PROMPT_PATH_CLICK_OPENS_NAVIGATOR @"Prompt Path Click Opens Navigator"
 // Session
 #define KEY_AUTOLOG                           @"Automatically Log"
+#define KEY_ARCHIVE                           @"Archive On Closure"
+#define KEY_ARCHIVEDIR                        @"Archive Directory"
 #define KEY_UNDO_TIMEOUT                      @"Session Close Undo Timeout"
 #define KEY_LOGDIR                            @"Log Directory"
 #define KEY_LOG_FILENAME_FORMAT               @"Log Filename Format"
