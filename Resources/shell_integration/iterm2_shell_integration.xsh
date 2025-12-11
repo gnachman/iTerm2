@@ -17,6 +17,7 @@ class _iTerm2Xonsh:
     """iTerm2 integration with Xonsh shell."""
 
     def __init__(self):
+        self.version = 1
         self.stdout = @.imp.sys.__stdout__
 
         if @.env.get('ITERM2_INTEGRATION_PROMPT', True):
@@ -76,7 +77,7 @@ class _iTerm2Xonsh:
 
 
     def set_version(self):
-        self.set_vars({"ShellIntegrationVersion":"18", "shell": "xonsh"})
+        self.set_vars({"ShellIntegrationVersion":str(self.version), "shell": "xonsh"})
 
 
     def write_prompt_start_osc(self):
