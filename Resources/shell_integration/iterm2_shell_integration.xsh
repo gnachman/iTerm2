@@ -17,6 +17,8 @@ class _iTerm2Xonsh:
     """iTerm2 integration with Xonsh shell."""
 
     def __init__(self):
+        self.stdout = @.imp.sys.__stdout__
+
         if @.env.get('ITERM2_INTEGRATION_PROMPT', True):
             self.add_iterm_to_prompt()
 
@@ -52,22 +54,22 @@ class _iTerm2Xonsh:
 
 
     def _write_begin_osc(self):
-        @.imp.sys.stdout.write("\033]")
+        self.stdout.write("\033]")
 
 
     def _write_end_osc(self):
-        @.imp.sys.stdout.write("\007")
-        @.imp.sys.stdout.flush()
+        self.stdout.write("\007")
+        self.stdout.flush()
 
 
     def write_cr(self):
         if @.env.get("TERM_PROGRAM",'') == "iTerm.app":
-            @.imp.sys.stdout.write("\r")
-            @.imp.sys.stdout.flush()
+            self.stdout.write("\r")
+            self.stdout.flush()
 
     def write_osc(self, msg, cr=False):
         self._write_begin_osc()
-        @.imp.sys.stdout.write(f"{msg}")
+        self.stdout.write(f"{msg}")
         if cr:
             self.write_cr()
         self._write_end_osc()
