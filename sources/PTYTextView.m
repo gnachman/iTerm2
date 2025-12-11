@@ -3128,7 +3128,7 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
 
 - (BOOL)_haveShortSelection {
     int width = [_dataSource width];
-    return [_selection hasSelection] && [_selection length] <= width;
+    return [_selection hasSelection] && [_selection length] <= MAX(80, width);
 }
 
 - (BOOL)haveReasonableSelection {
