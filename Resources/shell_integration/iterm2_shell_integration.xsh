@@ -31,6 +31,13 @@ class _iTerm2Xonsh:
 
         $ITERM2_INTEGRATION = True
 
+    @staticmethod
+    def is_iterm2_interactive():
+        return (
+            @.env.get('TERM_PROGRAM', False) == 'iTerm.app'
+            and @.env.get('XONSH_INTERACTIVE', False)
+            and @.env.get('TERM','') not in ['linux', 'dumb']
+        )
 
     def set_state(self):
         if (user := @.env.get('USER', '')) and (host := @.env.get('HOSTNAME', '')):
@@ -111,5 +118,5 @@ class _iTerm2Xonsh:
             $PROMPT = '{iterm2_prompt_start}' + $PROMPT + '{iterm2_prompt_end}'
 
 
-if @.env.get('XONSH_INTERACTIVE', False) and @.env.get('TERM','') not in ['linux', 'dumb']:
+if _iTerm2Xonsh.is_iterm2_interactive():
     __xonsh__.iterm2 = _iTerm2Xonsh()
