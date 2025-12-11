@@ -5100,7 +5100,7 @@ CA
                             </textFieldCell>
                         </textField>
                         <textField toolTip="The progress bar goes at the top of the session. It cannot exceed the top margin height to avoid overlapping terminal contents." focusRingType="none" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="EkI-wa-K9H">
-                            <rect key="frame" x="188" y="46" width="39" height="21"/>
+                            <rect key="frame" x="249" y="46" width="39" height="21"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" continuous="YES" sendsActionOnEndEditing="YES" borderStyle="bezel" drawsBackground="YES" id="BMm-fl-omz">
                                 <font key="font" metaFont="system"/>
@@ -5113,18 +5113,18 @@ CA
                             </connections>
                         </textField>
                         <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="1Kh-70-y9o">
-                            <rect key="frame" x="136" y="48" width="45" height="16"/>
+                            <rect key="frame" x="136" y="48" width="99" height="16"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                            <textFieldCell key="cell" lineBreakMode="clipping" title="Height" id="uVw-1o-Ei4">
+                            <textFieldCell key="cell" lineBreakMode="clipping" alignment="left" title="Height:" id="uVw-1o-Ei4">
                                 <font key="font" metaFont="system"/>
                                 <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
                                 <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                             </textFieldCell>
                         </textField>
                         <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="2T4-TC-L6z">
-                            <rect key="frame" x="136" y="24" width="90" height="16"/>
+                            <rect key="frame" x="136" y="24" width="99" height="16"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                            <textFieldCell key="cell" lineBreakMode="clipping" title="Color Scheme" id="hzS-a0-x6g">
+                            <textFieldCell key="cell" lineBreakMode="clipping" alignment="left" title="Color Scheme:" id="hzS-a0-x6g">
                                 <font key="font" metaFont="system"/>
                                 <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
                                 <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
@@ -5143,7 +5143,7 @@ CA
                             </connections>
                         </button>
                         <popUpButton toolTip="This sets the color of the indeterminate progress bar." verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="6Qn-Rd-R1m">
-                            <rect key="frame" x="259" y="42" width="224" height="25"/>
+                            <rect key="frame" x="241" y="20" width="245" height="25"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <popUpButtonCell key="cell" type="push" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" id="Y8X-Ld-zfS">
                                 <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
@@ -5155,7 +5155,7 @@ CA
                             </connections>
                         </popUpButton>
                         <stepper horizontalHuggingPriority="750" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="UNl-QI-7fJ">
-                            <rect key="frame" x="232" y="43" width="19" height="28"/>
+                            <rect key="frame" x="296" y="43" width="19" height="28"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <stepperCell key="cell" continuous="YES" alignment="left" maxValue="100" id="AzB-b2-qoN"/>
                             <connections>
