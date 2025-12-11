@@ -75,6 +75,7 @@ extern NSNotificationName const iTermApplicationCharacterAccentMenuVisibilityDid
 
 // In big sur, sheets aren't key windows any more. This finds the current sheet for the key window and returns it.
 @property(nonatomic, readonly) NSWindow *it_keyWindow;
+@property(nonatomic, readonly) NSArray<NSWindow *> *it_windowsWithSheetModals;
 
 - (void)sendEvent:(NSEvent *)anEvent;
 - (iTermApplicationDelegate<iTermApplicationDelegate> *)delegate;
