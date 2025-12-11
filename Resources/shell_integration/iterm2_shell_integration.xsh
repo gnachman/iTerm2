@@ -17,8 +17,6 @@ class _iTerm2Xonsh:
     """iTerm2 integration with Xonsh shell."""
 
     def __init__(self):
-        $ITERM2_INTEGRATION_PROMPT_BACKUP = @.env.get("PROMPT", "")
-
         if @.env.get('ITERM2_INTEGRATION_PROMPT', True):
             self.add_iterm_to_prompt()
 
