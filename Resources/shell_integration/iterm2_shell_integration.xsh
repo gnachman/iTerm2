@@ -21,7 +21,7 @@ class _iTerm2Xonsh:
         self.stdout = @.imp.sys.__stdout__
 
         if @.env.get('ITERM2_INTEGRATION_PROMPT', True):
-            self.add_iterm_to_prompt()
+            self.add_iterm2_to_prompt()
 
         if @.env.get('ITERM2_INTEGRATION_EVENTS', True):
             self.add_iterm2_to_events()
@@ -48,12 +48,12 @@ class _iTerm2Xonsh:
 
 
     def set_var(self, name, value):
-        self.write_osc("1337;{name}={value}")
+        self.write_osc(f"1337;{name}={value}")
 
 
     def set_vars(self, vars):
         vars_str = ';'.join([f"{k}={v}" for k,v in vars.items()])
-        self.write_osc("1337;{vars_str}")
+        self.write_osc(f"1337;{vars_str}")
 
 
     def set_user_var(self, key, value):
@@ -84,7 +84,7 @@ class _iTerm2Xonsh:
 
 
     def set_version(self):
-        self.set_vars({"ShellIntegrationVersion":str(self.version), "shell": "xonsh"})
+        self.set_vars({"ShellIntegrationVersion": str(self.version), "shell": "xonsh"})
 
 
     def write_prompt_start_osc(self):
@@ -111,7 +111,7 @@ class _iTerm2Xonsh:
         # TODO: @events.on_post_prompt  # https://xon.sh/events.html
 
 
-    def add_iterm_to_prompt(self):
+    def add_iterm2_to_prompt(self):
         if 'iterm2_prompt_start' not in $PROMPT:
             $PROMPT_FIELDS['iterm2_prompt_start'] = self.write_prompt_start_osc
             $PROMPT_FIELDS['iterm2_prompt_end'] = self.write_prompt_end_osc

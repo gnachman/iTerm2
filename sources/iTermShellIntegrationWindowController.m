@@ -18,16 +18,16 @@
 
 NSString *iTermShellIntegrationShellString(iTermShellIntegrationShell shell) {
     switch (shell) {
-        case iTermShellIntegrationShellZsh:
-            return @"zsh";
-        case iTermShellIntegrationShellTcsh:
-            return @"tcsh";
         case iTermShellIntegrationShellBash:
             return @"bash";
         case iTermShellIntegrationShellFish:
             return @"fish";
-        case iTermShellIntegrationShellFish:
+        case iTermShellIntegrationShellTcsh:
+            return @"tcsh";
+        case iTermShellIntegrationShellXonsh:
             return @"xonsh";
+        case iTermShellIntegrationShellZsh:
+            return @"zsh";
         case iTermShellIntegrationShellUnknown:
             return @"an unsupported shell";
     }
