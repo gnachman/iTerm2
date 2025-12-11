@@ -632,6 +632,7 @@ backgroundColor:(NSColor *)backgroundColor;
 @property(nonatomic, readonly) NSColor *effectiveProcessedBackgroundColor;
 @property(nonatomic, readonly) BOOL abortBury;
 @property(nonatomic, readonly) BOOL isArchive;
+@property(nonatomic, copy) NSString *browserTarget;
 
 #pragma mark - methods
 

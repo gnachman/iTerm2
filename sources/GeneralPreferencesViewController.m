@@ -1275,6 +1275,7 @@ enum {
 
 - (IBAction)installPlugin:(id)sender {
     [[NSWorkspace sharedWorkspace] it_openURL:[NSURL URLWithString:@"https://iterm2.com/ai-plugin.html"]
+                                       target:nil
                                 configuration:[NSWorkspaceOpenConfiguration configuration]
                                         style:iTermOpenStyleTab
                                        upsell:NO
@@ -1334,6 +1335,7 @@ enum {
                                 window:self.view.window];
     if (selection == kiTermWarningSelection0) {
         [[NSWorkspace sharedWorkspace] it_openURL:[NSURL fileURLWithPath:path]
+                                           target:nil
                                             style:iTermOpenStyleTab
                                            window:self.view.window];
     }
@@ -1359,6 +1361,7 @@ enum {
 
 - (IBAction)pythonAPIAuthHelp:(id)sender {
     [[NSWorkspace sharedWorkspace] it_openURL:[NSURL URLWithString:@"https://iterm2.com/python-api-auth.html"]
+                                       target:nil
                                         style:iTermOpenStyleTab
                                        window:self.view.window];
 }

@@ -1465,6 +1465,7 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
 
 - (IBAction)titleHelp:(id)sender {
     [[NSWorkspace sharedWorkspace] it_openURL:[NSURL URLWithString:@"https://iterm2.com/documentation-session-title.html"]
+                                       target:nil
                                         style:iTermOpenStyleTab
                                        window:self.view.window];
 }

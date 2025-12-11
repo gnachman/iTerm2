@@ -1674,12 +1674,18 @@ replaceInitialDirectoryForSessionWithGUID:(NSString *)guid
                               completion:completion];
 }
 
-- (BOOL)openURL:(NSURL *)url openStyle:(iTermOpenStyle)openStyle select:(BOOL)select {
+- (BOOL)openURL:(NSURL *)url target:(NSString *)target openStyle:(iTermOpenStyle)openStyle select:(BOOL)select {
     if (![iTermBrowserGateway browserAllowedCheckingIfNot:YES]) {
         return NO;
     }
     Profile *profile = [[ProfileModel sharedInstance] defaultBrowserProfile] ?: [[ProfileModel sessionsInstance] defaultBrowserProfileCreatingIfNeeded];
 
+    if (target) {
+        const BOOL exists = [self openURL:url inTarget:target select:select];
+        if (exists) {
+            return YES;
+        }
+    }
     PseudoTerminal *term = nil;
     switch (openStyle) {
         case iTermOpenStyleWindow:
@@ -1693,6 +1699,7 @@ replaceInitialDirectoryForSessionWithGUID:(NSString *)guid
             term = [self currentTerminal];
             if (term) {
                 return [self openURLInSplitPane:url
+                                         target:target
                                          window:term
                                        vertical:openStyle == iTermOpenStyleVerticalSplit
                                          select:select
@@ -1718,17 +1725,37 @@ replaceInitialDirectoryForSessionWithGUID:(NSString *)guid
     launcher.canActivate = YES;
     launcher.respectTabbingMode = NO;
     launcher.disableAutomaticTabSelection = !select;
+    launcher.browserTarget = target;
     [launcher launchWithCompletion:nil];
     return YES;
 }
 
+- (BOOL)openURL:(NSURL *)url inTarget:(NSString *)target select:(BOOL)select {
+    if (!target) {
+        return NO;
+    }
+    PTYSession *session = [[self allSessions] objectPassingTest:^BOOL(PTYSession *session, NSUInteger index, BOOL *stop) {
+        if (!session.isBrowserSession) {
+            return  NO;
+        }
+        return [session.browserTarget isEqualToString:target];
+    }];
+    if (!session) {
+        return NO;
+    }
+    [session openURL:url];
+    return YES;
+}
+
 - (BOOL)openURLInSplitPane:(NSURL *)url
+                    target:(NSString *)target
                     window:(PseudoTerminal *)term
                   vertical:(BOOL)verticalSplit
                     select:(BOOL)select
                    profile:(Profile *)profile
           splitSessionGuid:(NSString *)guid {
     [term openSplitPaneWithURL:url
+                        target:target
                    baseProfile:profile
                nearSessionGuid:guid
                       vertical:verticalSplit];

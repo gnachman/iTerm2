@@ -3945,6 +3945,7 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
 - (void)openSemanticHistoryPath:(NSString *)path
                   orRawFilename:(NSString *)rawFileName
                        fragment:(NSString *)fragment
+                         target:(NSString *)target
                workingDirectory:(NSString *)workingDirectory
                      lineNumber:(NSString *)lineNumber
                    columnNumber:(NSString *)columnNumber
@@ -3954,6 +3955,7 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
     [_urlActionHelper openSemanticHistoryPath:path
                                 orRawFilename:rawFileName
                                      fragment:fragment
+                                       target:target
                              workingDirectory:workingDirectory
                                    lineNumber:lineNumber
                                  columnNumber:columnNumber
@@ -6569,6 +6571,7 @@ static NSString *iTermStringFromRange(NSRange range) {
                     [[NSWorkspace sharedWorkspace] it_urlIsLocallyOpenableWithUpsell:url]) {
                     const NSSize size = self.enclosingScrollView.frame.size;
                     [[NSWorkspace sharedWorkspace] it_openURL:url
+                                                       target:nil
                                                 configuration:[NSWorkspaceOpenConfiguration configuration]
                                                         style:size.width > size.height ? iTermOpenStyleVerticalSplit : iTermOpenStyleHorizontalSplit
                                                        upsell:YES
@@ -6583,10 +6586,12 @@ static NSString *iTermStringFromRange(NSRange range) {
     if (coord.x >= 0 && coord.y >= 0) {
         iTermTextExtractor *extractor = [iTermTextExtractor textExtractorWithDataSource:_dataSource];
         NSString *urlId = nil;
-        NSURL *url = [extractor urlOfHypertextLinkAt:coord urlId:&urlId];
+        NSString *target = nil;
+        NSURL *url = [extractor urlOfHypertextLinkAt:coord urlId:&urlId target:&target];
         if (url && [[NSWorkspace sharedWorkspace] it_urlIsLocallyOpenableWithUpsell:url]) {
             const NSSize size = self.enclosingScrollView.frame.size;
             [[NSWorkspace sharedWorkspace] it_openURL:url
+                                               target:target
                                         configuration:[NSWorkspaceOpenConfiguration configuration]
                                                 style:size.width > size.height ? iTermOpenStyleVerticalSplit : iTermOpenStyleHorizontalSplit
                                                upsell:YES

@@ -704,6 +704,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
 - (void)openSemanticHistoryPath:(NSString *)path
                   orRawFilename:(NSString *)rawFileName
                        fragment:(NSString *)fragment
+                         target:(NSString *)target
                workingDirectory:(NSString *)workingDirectory
                      lineNumber:(NSString *)lineNumber
                    columnNumber:(NSString *)columnNumber

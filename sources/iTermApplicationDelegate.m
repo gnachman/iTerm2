@@ -2677,6 +2677,7 @@ static iTermKeyEventReplayer *gReplayer;
 
 - (IBAction)showHelp:(id)sender {
     [[NSWorkspace sharedWorkspace] it_openURL:[NSURL URLWithString:@"https://www.iterm2.com/documentation.html"]
+                                       target:nil
                                         style:iTermOpenStyleTab
                                        window:nil];
 }
@@ -2922,6 +2923,7 @@ static iTermKeyEventReplayer *gReplayer;
 - (IBAction)openSourceLicenses:(id)sender {
     NSURL *url = [[NSBundle bundleForClass:self.class] URLForResource:@"Licenses" withExtension:@"txt"];
     [[NSWorkspace sharedWorkspace] it_openURL:url
+                                       target:nil
                                         style:iTermOpenStyleTab
                                        window:nil];
 }

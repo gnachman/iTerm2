@@ -566,7 +566,7 @@ const int kMaxSelectedTextLengthForCustomActions = 400;
     if (coord.x >= 0 && coord.y >= 0) {
         iTermTextExtractor *extractor = [self.delegate contextMenuTextExtractor:self];
         NSString *urlID;
-        NSURL *url = [extractor urlOfHypertextLinkAt:coord urlId:&urlID];
+        NSURL *url = [extractor urlOfHypertextLinkAt:coord urlId:&urlID target:nil];
         if (url) {
             NSMenuItem *item = [theMenu addItemWithTitle:@"Copy Link Address" action:@selector(copyLinkAddress:) keyEquivalent:@""];
             item.target = self;

@@ -360,7 +360,8 @@ static NSMutableArray<iTermURLActionFactory *> *sFactories;
     iTermTextExtractor *extractor = self.extractor;
     iTermExternalAttribute *oea = [extractor externalAttributesAt:self.coord];
     NSString *urlId = nil;
-    NSURL *url = [extractor urlOfHypertextLinkAt:self.coord urlId:&urlId];
+    NSString *target = nil;
+    NSURL *url = [extractor urlOfHypertextLinkAt:self.coord urlId:&urlId target:&target];
     if (url != nil) {
         DLog(@"Found hypertext url %@", url);
         URLAction *action = [URLAction urlActionToOpenURL:url.absoluteString];
@@ -368,6 +369,7 @@ static NSMutableArray<iTermURLActionFactory *> *sFactories;
         // file: URLs with a fragment go through semantic history and therefore need a workingDirectory.
         action.workingDirectory = self.workingDirectory;
         action.osc8 = YES;
+        action.target = target;
         action.logicalRange = [extractor rangeOfCoordinatesAround:self.coord
                                                   maximumDistance:1000
                                                       passingTest:^BOOL(screen_char_t *c,
@@ -377,9 +379,12 @@ static NSMutableArray<iTermURLActionFactory *> *sFactories;
                 return YES;
             }
             NSString *thisId;
-            NSURL *thisURL = [extractor urlOfHypertextLinkAt:coord urlId:&thisId];
-            // Hover together only if URL and ID are equal.
-            return ([thisURL isEqual:url] && (thisId == urlId || [thisId isEqualToString:urlId]));
+            NSString *thisTarget;
+            NSURL *thisURL = [extractor urlOfHypertextLinkAt:coord urlId:&thisId target:&thisTarget];
+            // Hover together only if URL, ID, and target are equal.
+            return ([thisURL isEqual:url] &&
+                    (thisId == urlId || [thisId isEqualToString:urlId]) &&
+                    [NSObject object:thisTarget isEqualToObject:target]);
         }];
         action.visualRange = [extractor visualWindowedRangeForLogical:action.logicalRange];
         return action;

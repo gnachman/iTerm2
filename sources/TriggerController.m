@@ -992,6 +992,7 @@ NSString *const kTwoPraramValueColumnIdentifier = @"kTwoPraramValueColumnIdentif
 
 - (IBAction)help:(id)sender {
     [[NSWorkspace sharedWorkspace] it_openURL:[NSURL URLWithString:@"https://www.iterm2.com/triggers.html"]
+                                       target:nil
                                         style:iTermOpenStyleTab
                                        window:self.window];
 }

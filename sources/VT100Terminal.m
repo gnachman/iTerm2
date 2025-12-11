@@ -4020,7 +4020,9 @@ static NSString *VT100GetURLParamForKey(NSString *params, NSString *key) {
         self.urlParams = nil;
     } else {
         self.urlParams = params;
-        iTermURL *url = [iTermURL urlWithURL:self.url identifier:VT100GetURLParamForKey(params, @"id")];
+        iTermURL *url = [iTermURL urlWithURL:self.url
+                                  identifier:VT100GetURLParamForKey(params, @"id")
+                                      target:VT100GetURLParamForKey(params, @"target")];
         if (url) {
             if (_currentURL) {
                 [_delegate terminalWillEndLinkWithURL:_currentURL];

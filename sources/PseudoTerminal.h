@@ -432,6 +432,7 @@ extern NSString *const iTermDidCreateTerminalWindowNotification;
                           configuration:(WKWebViewConfiguration *)configuration NS_AVAILABLE_MAC(11_0);
 
 - (void)openSplitPaneWithURL:(NSURL *)url
+                      target:(NSString *)target
                  baseProfile:(Profile *)base
              nearSessionGuid:(NSString *)sessionGuid
                     vertical:(BOOL)vertical;

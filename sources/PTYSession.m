@@ -325,6 +325,7 @@ static NSString *const SESSION_ARRANGEMENT_CONDUCTOR = @"Conductor";  // NSStrin
 static NSString *const SESSION_ARRANGEMENT_PENDING_JUMPS = @"Pending Jumps";  // NSArray<NSString *>, optional.
 static NSString *const SESSION_ARRANGEMENT_CHANNEL_ID = @"Channel ID";  // NSString
 static NSString *const SESSION_ARRANGEMENT_TIMESTAMP_BASELINE = @"Timestamp Baseline"; // NSNumber
+static NSString *const SESSION_ARRANGEMENT_BROWSER_TARGET = @"Browser Target";  // String
 
 // Keys for dictionary in SESSION_ARRANGEMENT_PROGRAM
 static NSString *const kProgramType = @"Type";  // Value will be one of the kProgramTypeXxx constants.
@@ -1129,6 +1130,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [_channelUID release];
     [_channelParentGuid release];
     [_pendingFilterUpdates release];
+    [_browserTarget release];
 
     [super dealloc];
 }
@@ -1548,6 +1550,7 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 
     aSession->_textview.timestampBaseline = [arrangement[SESSION_ARRANGEMENT_TIMESTAMP_BASELINE] doubleValue];
+    aSession.browserTarget = [NSString castFrom:arrangement[SESSION_ARRANGEMENT_BROWSER_TARGET]];
     aSession->_channelUID = [arrangement[SESSION_ARRANGEMENT_CHANNEL_ID] copy];
     aSession->_workingDirectoryPollerDisabled = [arrangement[SESSION_ARRANGEMENT_WORKING_DIRECTORY_POLLER_DISABLED] boolValue] || aSession->_shouldExpectCurrentDirUpdates;
     if (arrangement[SESSION_ARRANGEMENT_COMMANDS]) {
@@ -4595,6 +4598,7 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
         [_textview openSemanticHistoryPath:cleanedup
                              orRawFilename:rawFilename
                                   fragment:nil
+                                    target:nil
                           workingDirectory:workingDirectory
                                 lineNumber:lineNumber
                               columnNumber:columnNumber
@@ -4628,6 +4632,7 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
     [NSURL URLWithUserSuppliedString:[selection stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]]];
     if (url) {
         [[NSWorkspace sharedWorkspace] it_openURL:url
+                                           target:nil
                                             style:iTermOpenStyleTab
                                            window:self.view.window];
         return;
@@ -6198,6 +6203,7 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
             }
         }
         result[SESSION_ARRANGEMENT_TIMESTAMP_BASELINE] = @(_textview.timestampBaseline);
+        result[SESSION_ARRANGEMENT_BROWSER_TARGET] = self.browserTarget;
     } else {
         if (_conductor &&
             [self.profile[KEY_CUSTOM_COMMAND] isEqualTo:kProfilePreferenceCommandTypeSSHValue]) {

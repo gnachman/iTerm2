@@ -8419,6 +8419,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
 
 - (IBAction)copyModeShortcuts:(id)sender {
     [[NSWorkspace sharedWorkspace] it_openURL:[NSURL URLWithString:@"https://iterm2.com/documentation-copymode.html"]
+                                       target:nil
                                         style:iTermOpenStyleTab
                                        window:self.window];
 }
@@ -8562,6 +8563,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
 
 - (IBAction)coprocessHelp:(id)sender {
     [[NSWorkspace sharedWorkspace] it_openURL:[NSURL URLWithString:@"http://www.iterm2.com/coprocesses.html"]
+                                       target:nil
                                         style:iTermOpenStyleTab
                                        window:self.window];
 }
@@ -11907,11 +11909,12 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
 }
 
 - (void)openSplitPaneWithURL:(NSURL *)url
+                      target:(NSString *)target
                  baseProfile:(Profile *)base
              nearSessionGuid:(NSString *)sessionGuid
                     vertical:(BOOL)vertical {
-    PTYSession *target = [[iTermController sharedInstance] sessionWithGUID:sessionGuid];
-    if (!target) {
+    PTYSession *sessionToSplit = [[iTermController sharedInstance] sessionWithGUID:sessionGuid];
+    if (!sessionToSplit) {
         return;
     }
     MutableProfile *profile = [[base mutableCopy] autorelease];
@@ -11921,8 +11924,10 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
     [self asyncSplitVertically:vertical
                         before:NO
                        profile:profile
-                 targetSession:target
-                    completion:nil
+                 targetSession:sessionToSplit
+                    completion:^(PTYSession *session, BOOL ok) {
+        session.browserTarget = target;
+    }
                          ready:nil];
 }
 

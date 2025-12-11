@@ -6050,7 +6050,7 @@ launchCoprocessWithCommand:(NSString *)command
                   line:(long long)lineNumber {
     // Modify grid to add URL attribute to affected cells.
     [self linkTextInRange:rangeInString basedAtAbsoluteLineNumber:lineNumber
-                      URL:[iTermURL urlWithURL:url identifier:nil]];
+                      URL:[iTermURL urlWithURL:url identifier:nil target:nil]];
 }
 
 - (void)triggerSession:(Trigger *)trigger

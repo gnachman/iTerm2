@@ -75,6 +75,7 @@ extern NSString *const kSemanticHistoryColumnNumberKey;
 - (void)openPath:(NSString *)path
    orRawFilename:(NSString *)rawFileName
         fragment:(NSString *)fragment
+          target:(NSString *)target
    substitutions:(NSDictionary *)substitutions
            scope:(iTermVariableScope *)scope
       lineNumber:(NSString *)lineNumber
@@ -136,7 +137,7 @@ extern NSString *const kSemanticHistoryColumnNumberKey;
 // Tests can subclass and override these methods to avoid interacting with the filesystem.
 - (void)launchTaskWithPath:(NSString *)path arguments:(NSArray *)arguments completion:(void (^)(void))completion;
 - (void)launchAppWithBundleIdentifier:(NSString *)bundleIdentifier path:(NSString *)path;
-- (void)openFile:(NSString *)fullPath fragment:(NSString *)fragment window:(NSWindow *)window;
+- (void)openFile:(NSString *)fullPath fragment:(NSString *)fragment target:(NSString *)target window:(NSWindow *)window;
 - (void)openURL:(NSURL *)url;
 - (void)openURL:(NSURL *)url editorIdentifier:(NSString *)editorIdentifier;
 - (BOOL)defaultAppForFileIsEditor:(NSString *)file;

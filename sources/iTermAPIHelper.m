@@ -466,6 +466,7 @@ static BOOL iTermAPIHelperLastApplescriptAuthRequiredSetting;
             return NO;
         case kiTermWarningSelection2:
             [[NSWorkspace sharedWorkspace] it_openURL:[NSURL URLWithString:@"https://iterm2.com/python-api-auth.html"]
+                                               target:nil
                                                 style:iTermOpenStyleTab
                                                window:window];
             return NO;
@@ -1503,6 +1504,7 @@ static BOOL iTermAPIHelperLastApplescriptAuthRequiredSetting;
         case kiTermWarningSelection2:
             *reason = @"Denied by user";
             [[NSWorkspace sharedWorkspace] it_openURL:[NSURL URLWithString:@"https://iterm2.com/python-api-security-model"]
+                                               target:nil
                                                 style:iTermOpenStyleTab
                                                window:nil];
             return NO;
