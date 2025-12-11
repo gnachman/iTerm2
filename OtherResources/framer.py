@@ -543,7 +543,10 @@ def procmon_parse(output):
 async def get_env_var(var_name):
     # Get the user's shell
     user_shell = os.environ.get('SHELL', '/bin/bash')
-    known_shells = ['bash', 'sh', 'zsh', 'ksh', 'dash', 'fish', 'csh', 'tcsh']
+    if os.environ.get('XONSHRC', ''):
+        user_shell = 'xonsh'
+
+    known_shells = ['bash', 'csh', 'dash', 'fish', 'ksh', 'sh', 'tcsh', 'zsh']
 
     # Extract the last path component of the user's shell
     shell_name = os.path.basename(user_shell)
