@@ -111,4 +111,4 @@ class _iTerm2Xonsh:
 
 
 if @.env.get('XONSH_INTERACTIVE', False) and @.env.get('TERM','') not in ['linux', 'dumb']:
-    @.iterm2 = _iTerm2Xonsh()
+    __xonsh__.iterm2 = _iTerm2Xonsh()
