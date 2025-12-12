@@ -263,6 +263,7 @@ NSString *const kTwoPraramValueColumnIdentifier = @"kTwoPraramValueColumnIdentif
                         [BounceTrigger class],
                         [iTermRPCTrigger class],
                         [CaptureTrigger class],
+                        [iTermBufferInputTrigger class],
                         [iTermFoldTrigger class],
                         [iTermInjectTrigger class],
                         [iTermHighlightLineTrigger class],

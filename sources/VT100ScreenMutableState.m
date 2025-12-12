@@ -5779,6 +5779,14 @@ lengthExcludingInBandSignaling:data.length
 
 #pragma mark - iTermTriggerSession
 
+- (void)triggerSetBufferInput:(Trigger *)trigger
+                 shouldBuffer:(BOOL)shouldBuffer {
+    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+        [delegate triggerSessionSetBufferInput:shouldBuffer];
+    }
+                   name:@"Buffer Input"];
+}
+
 - (void)triggerSession:(Trigger *)trigger
   showAlertWithMessage:(NSString *)message
              rateLimit:(iTermRateLimitedUpdate *)rateLimit

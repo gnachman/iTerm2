@@ -4208,6 +4208,7 @@
 		A6DC98A628A82608009D21C0 /* Window.png in Resources */ = {isa = PBXBuildFile; fileRef = A6DC98A028A82608009D21C0 /* Window.png */; };
 		A6DCDD202560B410004EA8A1 /* NSAttributedString+PSM.h in Headers */ = {isa = PBXBuildFile; fileRef = A6DCDD1E2560B410004EA8A1 /* NSAttributedString+PSM.h */; };
 		A6DCDD212560B410004EA8A1 /* NSAttributedString+PSM.m in Sources */ = {isa = PBXBuildFile; fileRef = A6DCDD1F2560B410004EA8A1 /* NSAttributedString+PSM.m */; };
+		A6DCDF2E2EECD784006DE530 /* BufferInputTrigger.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6DCDF2D2EECD784006DE530 /* BufferInputTrigger.swift */; };
 		A6DCE3F42BFFCA6E005586F5 /* PlaceholderTextView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6DCE3F32BFFCA6E005586F5 /* PlaceholderTextView.swift */; };
 		A6DCE3FD2C064932005586F5 /* iTermProcess.h in Headers */ = {isa = PBXBuildFile; fileRef = A6DCE3FB2C064932005586F5 /* iTermProcess.h */; };
 		A6DCE3FF2C064936005586F5 /* iTermProcess.m in Sources */ = {isa = PBXBuildFile; fileRef = A6DCE3FC2C064932005586F5 /* iTermProcess.m */; };
@@ -8679,6 +8680,7 @@
 		A6DC98A028A82608009D21C0 /* Window.png */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; name = Window.png; path = images/Window.png; sourceTree = "<group>"; };
 		A6DCDD1E2560B410004EA8A1 /* NSAttributedString+PSM.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "NSAttributedString+PSM.h"; sourceTree = "<group>"; };
 		A6DCDD1F2560B410004EA8A1 /* NSAttributedString+PSM.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "NSAttributedString+PSM.m"; sourceTree = "<group>"; };
+		A6DCDF2D2EECD784006DE530 /* BufferInputTrigger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BufferInputTrigger.swift; sourceTree = "<group>"; };
 		A6DCE3F32BFFCA6E005586F5 /* PlaceholderTextView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaceholderTextView.swift; sourceTree = "<group>"; };
 		A6DCE3FB2C064932005586F5 /* iTermProcess.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermProcess.h; sourceTree = "<group>"; };
 		A6DCE3FC2C064932005586F5 /* iTermProcess.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermProcess.m; sourceTree = "<group>"; };
@@ -10549,6 +10551,7 @@
 		1D9DDE2D142E730700275650 /* Triggers */ = {
 			isa = PBXGroup;
 			children = (
+				A6DCDF2D2EECD784006DE530 /* BufferInputTrigger.swift */,
 				A6AE58092E7E610D00762C1D /* ReloadBrowserTrigger.swift */,
 				A6AE588C2E7E667E00762C1D /* InjectJavascriptTrigger.swift */,
 				A6C6824E2E4043F700B8B021 /* HyperlinkBrowserTrigger.swift */,
@@ -18953,6 +18956,7 @@
 				530AB8B020B201AB00D2AA08 /* iTermFunctionCallSuggester.m in Sources */,
 				A6A9839B27E6BDE1003319D1 /* ModalPasswordAlert.swift in Sources */,
 				A6E2D0F32AC38E6F005C6677 /* TerminalButton.swift in Sources */,
+				A6DCDF2E2EECD784006DE530 /* BufferInputTrigger.swift in Sources */,
 				5357E41F22682B2100FE5A55 /* CPParser+Cache.m in Sources */,
 				A6A4866820B6785400493302 /* iTermAdvancedSettingsViewController.m in Sources */,
 				A6A4867C20B67EFB00493302 /* ProfilesTextPreferencesViewController.m in Sources */,

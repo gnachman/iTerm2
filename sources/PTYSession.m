@@ -674,6 +674,9 @@ typedef NS_ENUM(NSUInteger, PTYSessionTurdType) {
 
     // Disables short-lived session warning so the user can read the error.
     BOOL _execDidFail;
+
+    // Buffer input?
+    BOOL _buffering;
 }
 
 @synthesize isDivorced = _divorced;
@@ -3612,7 +3615,7 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
             [_sshWriteQueue appendData:data];
             return;
         }
-        if (_screen.sendingIsBlocked && !reporting) {
+        if ((_buffering || _screen.sendingIsBlocked) && !reporting) {
             DLog(@"Defer write of %@", [data stringWithEncoding:NSUTF8StringEncoding]);
             if (!_dataQueue) {
                 _dataQueue = [[NSMutableArray alloc] init];
@@ -21217,6 +21220,16 @@ getOptionKeyBehaviorLeft:(iTermOptionKeyBehavior *)left
 }
 
 #pragma mark - iTermTriggerSideEffectExecutor
+
+- (void)triggerSessionSetBufferInput:(BOOL)shouldBuffer {
+    if (_buffering == shouldBuffer) {
+        return;
+    }
+    _buffering = shouldBuffer;
+    if (!_screen.sendingIsBlocked && !shouldBuffer) {
+        [self sendDataQueue];
+    }
+}
 
 - (void)triggerSideEffectShowAlertWithMessage:(NSString *)message
                                     rateLimit:(iTermRateLimitedUpdate *)rateLimit
