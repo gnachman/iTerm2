@@ -513,6 +513,8 @@ DEFINE_SECURE_STRING(browserBundleID, BrowserBundleID, SECTION_GENERAL @"Bundle 
 #endif  // ITERM2_SHARED_ARC
 DEFINE_FLOAT(menuTipDelay, 1.0, SECTION_GENERAL @"Time to wait before showing tips in the main menu.\nSet this to a big number if you don’t like the tips.");
 
+DEFINE_BOOL(revealExportedSettingsAndData, YES, SECTION_GENERAL @"Reveal file created by “Export All Settings and Data” in finder upon completion");
+
 #pragma mark - Drawing
 
 #define SECTION_DRAWING @"Drawing: "
