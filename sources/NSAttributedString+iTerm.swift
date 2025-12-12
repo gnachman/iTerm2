@@ -121,7 +121,7 @@ class AttributeToControlSequenceConverter {
             guard let href else {
                 return nil
             }
-            return iTermURL(url: href, identifier: nil)
+            return iTermURL(url: href, identifier: nil, target: nil)
         }()
         let ea = iTermExternalAttribute(havingUnderlineColor: underlineColor != nil,
                                         underlineColor: underlineColor ?? VT100TerminalColorValue(),
