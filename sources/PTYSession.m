@@ -17597,7 +17597,7 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
         DLog(@"Clipboard access allowed");
         return YES;
     }
-    if ([[iTermUserDefaults userDefaults] objectForKey:kPreferenceKeyAllowClipboardAccessFromTerminal] != nil) {
+    if ([iTermPreferences valueIsExplicitlySetForKey:kPreferenceKeyAllowClipboardAccessFromTerminal]) {
         DLog(@"Clipboard access explicitly denied");
         return NO;
     }

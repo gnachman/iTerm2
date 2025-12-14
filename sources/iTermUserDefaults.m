@@ -11,6 +11,7 @@
 #import "iTermAdvancedSettingsModel.h"
 #import "NSArray+iTerm.h"
 #import "NSObject+iTerm.h"
+#import <os/lock.h>
 
 NSString *const kSelectionRespectsSoftBoundariesKey = @"Selection Respects Soft Boundaries";
 static NSString *gCustomSuiteName = nil;
@@ -46,6 +47,25 @@ static NSString *const iTermUserDefaultsKeyWindowCornerRadiusCache = @"NoSyncWin
 
 + (NSString *)customSuiteName {
     return gCustomSuiteName;
+}
+
+// Cache to avoid spamming defaults for frequently-polled flags.
+static os_unfair_lock sLoggingCacheLock = OS_UNFAIR_LOCK_INIT;
+static BOOL sHasCachedEnableAutomaticProfileSwitchingLogging;
+static BOOL sCachedEnableAutomaticProfileSwitchingLogging;
+
+static void iTermUserDefaultsEnsureLoggingObserver(void) {
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        [[NSNotificationCenter defaultCenter] addObserverForName:NSUserDefaultsDidChangeNotification
+                                                          object:[iTermUserDefaults userDefaults]
+                                                           queue:nil
+                                                      usingBlock:^(NSNotification * _Nonnull note) {
+            os_unfair_lock_lock(&sLoggingCacheLock);
+            sHasCachedEnableAutomaticProfileSwitchingLogging = NO;
+            os_unfair_lock_unlock(&sLoggingCacheLock);
+        }];
+    });
 }
 
 static NSArray *iTermUserDefaultsGetTypedArray(NSUserDefaults *userDefaults, Class objectClass, NSString *key) {
@@ -163,12 +183,30 @@ static NSUserDefaults *iTermPrivateUserDefaults(void) {
 }
 
 + (BOOL)enableAutomaticProfileSwitchingLogging {
-    return [self.userDefaults boolForKey:iTermUserDefaultsKeyEnableAutomaticProfileSwitchingLogging];
+    iTermUserDefaultsEnsureLoggingObserver();
+    os_unfair_lock_lock(&sLoggingCacheLock);
+    if (sHasCachedEnableAutomaticProfileSwitchingLogging) {
+        BOOL value = sCachedEnableAutomaticProfileSwitchingLogging;
+        os_unfair_lock_unlock(&sLoggingCacheLock);
+        return value;
+    }
+    os_unfair_lock_unlock(&sLoggingCacheLock);
+
+    BOOL value = [self.userDefaults boolForKey:iTermUserDefaultsKeyEnableAutomaticProfileSwitchingLogging];
+    os_unfair_lock_lock(&sLoggingCacheLock);
+    sCachedEnableAutomaticProfileSwitchingLogging = value;
+    sHasCachedEnableAutomaticProfileSwitchingLogging = YES;
+    os_unfair_lock_unlock(&sLoggingCacheLock);
+    return value;
 }
 
 + (void)setEnableAutomaticProfileSwitchingLogging:(BOOL)enableAutomaticProfileSwitchingLogging {
     [self.userDefaults setBool:enableAutomaticProfileSwitchingLogging
                         forKey:iTermUserDefaultsKeyEnableAutomaticProfileSwitchingLogging];
+    os_unfair_lock_lock(&sLoggingCacheLock);
+    sCachedEnableAutomaticProfileSwitchingLogging = enableAutomaticProfileSwitchingLogging;
+    sHasCachedEnableAutomaticProfileSwitchingLogging = YES;
+    os_unfair_lock_unlock(&sLoggingCacheLock);
 }
 
 + (BOOL)requireAuthenticationAfterScreenLocks {

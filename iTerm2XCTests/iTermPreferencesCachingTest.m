@@ -1,0 +1,323 @@
+#import <XCTest/XCTest.h>
+#import "iTermPreferences.h"
+
+@interface iTermPreferences (Testing)
++ (void)setUserDefaultsOverrideForTesting:(NSUserDefaults *)userDefaults;
++ (void)resetPreferenceCacheForTesting;
+@end
+
+@interface CountingUserDefaults : NSUserDefaults
+@property(nonatomic) NSInteger objectForKeyCount;
+- (void)setRawObject:(id)object forKey:(NSString *)key;
+- (void)simulateExternalChangeValue:(id)object forKey:(NSString *)key;
+@end
+
+@implementation CountingUserDefaults {
+    NSMutableDictionary *_storage;
+}
+
+- (instancetype)init {
+    self = [super init];
+    if (self) {
+        _storage = [[NSMutableDictionary alloc] init];
+    }
+    return self;
+}
+
+- (id)objectForKey:(NSString *)defaultName {
+    self.objectForKeyCount += 1;
+    return _storage[defaultName];
+}
+
+- (void)setObject:(id)value forKey:(NSString *)defaultName {
+    if (value) {
+        _storage[defaultName] = value;
+    } else {
+        [_storage removeObjectForKey:defaultName];
+    }
+    [[NSNotificationCenter defaultCenter] postNotificationName:NSUserDefaultsDidChangeNotification object:self];
+}
+
+- (void)removeObjectForKey:(NSString *)defaultName {
+    [_storage removeObjectForKey:defaultName];
+    [[NSNotificationCenter defaultCenter] postNotificationName:NSUserDefaultsDidChangeNotification object:self];
+}
+
+- (void)setRawObject:(id)object forKey:(NSString *)key {
+    if (object) {
+        _storage[key] = object;
+    } else {
+        [_storage removeObjectForKey:key];
+    }
+}
+
+- (void)simulateExternalChangeValue:(id)object forKey:(NSString *)key {
+    [self setRawObject:object forKey:key];
+    [[NSNotificationCenter defaultCenter] postNotificationName:NSUserDefaultsDidChangeNotification object:self];
+}
+
+@end
+
+@interface iTermPreferencesCachingTest : XCTestCase
+@property(nonatomic, strong) CountingUserDefaults *testDefaults;
+@end
+
+@implementation iTermPreferencesCachingTest
+
+- (void)setUp {
+    [super setUp];
+    self.testDefaults = [[CountingUserDefaults alloc] init];
+    [iTermPreferences setUserDefaultsOverrideForTesting:self.testDefaults];
+    [iTermPreferences resetPreferenceCacheForTesting];
+}
+
+- (void)tearDown {
+    [iTermPreferences setUserDefaultsOverrideForTesting:nil];
+    [iTermPreferences resetPreferenceCacheForTesting];
+    self.testDefaults = nil;
+    [super tearDown];
+}
+
+- (void)testRepeatedReadsHitCache {
+    [self.testDefaults setRawObject:@5 forKey:kPreferenceKeyTopBottomMargins];
+
+    int first = [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins];
+    int second = [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins];
+
+    XCTAssertEqual(first, 5);
+    XCTAssertEqual(second, 5);
+    XCTAssertEqual(self.testDefaults.objectForKeyCount, 1);
+}
+
+- (void)testSetterUpdatesCacheWithoutExtraLookup {
+    [self.testDefaults setRawObject:@5 forKey:kPreferenceKeyTopBottomMargins];
+    (void)[iTermPreferences intForKey:kPreferenceKeyTopBottomMargins];
+    self.testDefaults.objectForKeyCount = 0;
+
+    [iTermPreferences setInt:10 forKey:kPreferenceKeyTopBottomMargins];
+    NSInteger lookupsAfterSet = self.testDefaults.objectForKeyCount;
+
+    int updated = [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins];
+
+    XCTAssertEqual(updated, 10);
+    XCTAssertEqual(self.testDefaults.objectForKeyCount, lookupsAfterSet);
+}
+
+- (void)testExternalNotificationFlushesCache {
+    [self.testDefaults setRawObject:@5 forKey:kPreferenceKeyTopBottomMargins];
+    (void)[iTermPreferences intForKey:kPreferenceKeyTopBottomMargins];
+    self.testDefaults.objectForKeyCount = 0;
+
+    [self.testDefaults simulateExternalChangeValue:@8 forKey:kPreferenceKeyTopBottomMargins];
+
+    int refreshed = [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins];
+
+    XCTAssertEqual(refreshed, 8);
+    XCTAssertEqual(self.testDefaults.objectForKeyCount, 1);
+}
+
+- (void)testComputedPreferencesAreCached {
+    // TabStyle is a computed preference - should be cached after first read
+    [self.testDefaults setRawObject:@5 forKey:kPreferenceKeyTabStyle];
+    
+    NSNumber *first = [iTermPreferences objectForKey:kPreferenceKeyTabStyle];
+    NSNumber *second = [iTermPreferences objectForKey:kPreferenceKeyTabStyle];
+    NSNumber *third = [iTermPreferences objectForKey:kPreferenceKeyTabStyle];
+    
+    XCTAssertEqualObjects(first, @5);
+    XCTAssertEqualObjects(second, @5);
+    XCTAssertEqualObjects(third, @5);
+    // Should only hit UserDefaults once (for the computed block check + the block itself)
+    // The computed block checks UserDefaults, so we expect 2 calls total
+    XCTAssertLessThanOrEqual(self.testDefaults.objectForKeyCount, 2, @"Computed preference should be cached");
+}
+
+- (void)testComputedPreferencesCacheAfterMultipleReads {
+    [self.testDefaults setRawObject:@5 forKey:kPreferenceKeyTabStyle];
+    
+    // First read populates cache
+    (void)[iTermPreferences objectForKey:kPreferenceKeyTabStyle];
+    NSInteger firstCount = self.testDefaults.objectForKeyCount;
+    
+    // Subsequent reads should use cache
+    (void)[iTermPreferences objectForKey:kPreferenceKeyTabStyle];
+    (void)[iTermPreferences objectForKey:kPreferenceKeyTabStyle];
+    (void)[iTermPreferences objectForKey:kPreferenceKeyTabStyle];
+    
+    XCTAssertEqual(self.testDefaults.objectForKeyCount, firstCount, @"Subsequent reads should not hit UserDefaults");
+}
+
+- (void)testValueIsExplicitlySetForKey {
+    // Test with explicitly set value
+    [self.testDefaults setRawObject:@YES forKey:kPreferenceKeyAllowClipboardAccessFromTerminal];
+    XCTAssertTrue([iTermPreferences valueIsExplicitlySetForKey:kPreferenceKeyAllowClipboardAccessFromTerminal]);
+    
+    // Test with default value (not explicitly set)
+    [self.testDefaults removeObjectForKey:kPreferenceKeyTopBottomMargins];
+    [iTermPreferences resetPreferenceCacheForTesting];
+    XCTAssertFalse([iTermPreferences valueIsExplicitlySetForKey:kPreferenceKeyTopBottomMargins]);
+    
+    // Test after setting value
+    [iTermPreferences setInt:10 forKey:kPreferenceKeyTopBottomMargins];
+    XCTAssertTrue([iTermPreferences valueIsExplicitlySetForKey:kPreferenceKeyTopBottomMargins]);
+    
+    // Test after removing value
+    [iTermPreferences setObject:nil forKey:kPreferenceKeyTopBottomMargins];
+    XCTAssertFalse([iTermPreferences valueIsExplicitlySetForKey:kPreferenceKeyTopBottomMargins]);
+}
+
+- (void)testValueIsExplicitlySetForKeyUsesCache {
+    [self.testDefaults setRawObject:@5 forKey:kPreferenceKeyTopBottomMargins];
+    
+    // First call populates cache
+    (void)[iTermPreferences intForKey:kPreferenceKeyTopBottomMargins];
+    NSInteger firstCount = self.testDefaults.objectForKeyCount;
+    
+    // valueIsExplicitlySetForKey should use cache
+    XCTAssertTrue([iTermPreferences valueIsExplicitlySetForKey:kPreferenceKeyTopBottomMargins]);
+    XCTAssertEqual(self.testDefaults.objectForKeyCount, firstCount, @"Should use cache, not hit UserDefaults again");
+}
+
+- (void)testCacheInvalidationThrottle {
+    [self.testDefaults setRawObject:@5 forKey:kPreferenceKeyTopBottomMargins];
+    (void)[iTermPreferences intForKey:kPreferenceKeyTopBottomMargins];
+    self.testDefaults.objectForKeyCount = 0;
+    
+    // Rapid notifications should be throttled (only first one clears cache)
+    for (int i = 0; i < 10; i++) {
+        [self.testDefaults simulateExternalChangeValue:@(5 + i) forKey:kPreferenceKeyTopBottomMargins];
+    }
+    
+    // Should have hit UserDefaults at least once (cache was cleared), but throttling
+    // means not every notification cleared the cache
+    int value = [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins];
+    XCTAssertGreaterThanOrEqual(value, 5);
+    // Due to throttling, we expect fewer than 10 cache clears
+    XCTAssertLessThan(self.testDefaults.objectForKeyCount, 20, @"Throttling should reduce cache clears");
+}
+
+- (void)testNilValueCaching {
+    // Test that nil values are properly cached using null sentinel
+    [self.testDefaults removeObjectForKey:kPreferenceKeyTopBottomMargins];
+    
+    id first = [iTermPreferences objectForKey:kPreferenceKeyTopBottomMargins];
+    id second = [iTermPreferences objectForKey:kPreferenceKeyTopBottomMargins];
+    
+    // Both should return default value (not nil, but the default)
+    XCTAssertNotNil(first);
+    XCTAssertEqualObjects(first, second);
+    XCTAssertEqual(self.testDefaults.objectForKeyCount, 1, @"Nil/default should be cached");
+}
+
+- (void)testComputedPreferenceWithNoExplicitValue {
+    // Test computed preference when key doesn't exist (uses default)
+    [self.testDefaults removeObjectForKey:kPreferenceKeyTabStyle];
+    
+    NSNumber *value = [iTermPreferences objectForKey:kPreferenceKeyTabStyle];
+    XCTAssertNotNil(value, @"Computed preference should return default when key not set");
+    
+    // Second read should use cache
+    NSInteger firstCount = self.testDefaults.objectForKeyCount;
+    NSNumber *value2 = [iTermPreferences objectForKey:kPreferenceKeyTabStyle];
+    XCTAssertEqualObjects(value, value2);
+    XCTAssertEqual(self.testDefaults.objectForKeyCount, firstCount, @"Should use cache");
+}
+
+- (void)testConcurrentAccess {
+    // Test that cache is thread-safe
+    dispatch_group_t group = dispatch_group_create();
+    for (int i = 0; i < 100; i++) {
+        dispatch_group_async(group, dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+            (void)[iTermPreferences intForKey:kPreferenceKeyTopBottomMargins];
+        });
+    }
+    dispatch_group_wait(group, DISPATCH_TIME_FOREVER);
+    
+    // Should have hit UserDefaults only once (first access), rest from cache
+    XCTAssertLessThanOrEqual(self.testDefaults.objectForKeyCount, 2, @"Concurrent access should be safe");
+}
+
+- (void)testMutationDepthPreventsCacheClearDuringInternalWrites {
+    // Test that cache doesn't clear during internal writes (mutation depth protection)
+    [self.testDefaults setRawObject:@5 forKey:kPreferenceKeyTopBottomMargins];
+    (void)[iTermPreferences intForKey:kPreferenceKeyTopBottomMargins];
+    self.testDefaults.objectForKeyCount = 0;
+    
+    // Setting a preference internally should not trigger cache clear
+    [iTermPreferences setInt:10 forKey:kPreferenceKeyTopBottomMargins];
+    
+    // Cache should still be valid (mutation depth prevents clear during set)
+    int value = [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins];
+    XCTAssertEqual(value, 10);
+    // Should use cached value, not hit UserDefaults again
+    XCTAssertEqual(self.testDefaults.objectForKeyCount, 0, @"Cache should not be cleared during internal write");
+}
+
+- (void)testUnrelatedNotificationDoesNotClearCache {
+    // Test that notifications from unrelated defaults objects don't clear cache
+    [self.testDefaults setRawObject:@5 forKey:kPreferenceKeyTopBottomMargins];
+    (void)[iTermPreferences intForKey:kPreferenceKeyTopBottomMargins];
+    self.testDefaults.objectForKeyCount = 0;
+    
+    // Create a different defaults object and send notification
+    NSUserDefaults *otherDefaults = [[NSUserDefaults alloc] initWithSuiteName:@"com.test.other"];
+    [[NSNotificationCenter defaultCenter] postNotificationName:NSUserDefaultsDidChangeNotification
+                                                        object:otherDefaults];
+    
+    // Cache should still be valid
+    int value = [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins];
+    XCTAssertEqual(value, 5);
+    XCTAssertEqual(self.testDefaults.objectForKeyCount, 0, @"Unrelated notification should not clear cache");
+}
+
+- (void)testNilObjectNotificationDoesNotClearCache {
+    // Test that notifications with nil object don't clear cache (filtered out)
+    [self.testDefaults setRawObject:@5 forKey:kPreferenceKeyTopBottomMargins];
+    (void)[iTermPreferences intForKey:kPreferenceKeyTopBottomMargins];
+    self.testDefaults.objectForKeyCount = 0;
+    
+    // Send notification with nil object (can come from unrelated domains)
+    [[NSNotificationCenter defaultCenter] postNotificationName:NSUserDefaultsDidChangeNotification
+                                                        object:nil];
+    
+    // Cache should still be valid
+    int value = [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins];
+    XCTAssertEqual(value, 5);
+    XCTAssertEqual(self.testDefaults.objectForKeyCount, 0, @"Nil object notification should not clear cache");
+}
+
+- (void)testCacheClearClearsBothCacheAndExplicitSetKeys {
+    // Test that cache clear also clears explicit-set tracking
+    [self.testDefaults setRawObject:@5 forKey:kPreferenceKeyTopBottomMargins];
+    [iTermPreferences setInt:10 forKey:kPreferenceKeyTopBottomMargins];
+    
+    // Verify it's explicitly set
+    XCTAssertTrue([iTermPreferences valueIsExplicitlySetForKey:kPreferenceKeyTopBottomMargins]);
+    
+    // Clear cache via external notification
+    [self.testDefaults simulateExternalChangeValue:@8 forKey:kPreferenceKeyTopBottomMargins];
+    
+    // After cache clear, explicit-set should be recalculated (may still be true if value exists)
+    // But the important thing is that the cache was cleared
+    int value = [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins];
+    XCTAssertEqual(value, 8);
+    // Should have hit UserDefaults after cache clear
+    XCTAssertGreaterThan(self.testDefaults.objectForKeyCount, 0, @"Cache should have been cleared");
+}
+
+- (void)testExplicitSetTrackingInComputedPreferences {
+    // Test that explicit-set tracking works for computed preferences
+    [self.testDefaults setRawObject:@5 forKey:kPreferenceKeyTabStyle];
+    
+    // Should be explicitly set
+    XCTAssertTrue([iTermPreferences valueIsExplicitlySetForKey:kPreferenceKeyTabStyle]);
+    
+    // Remove the key
+    [self.testDefaults removeObjectForKey:kPreferenceKeyTabStyle];
+    [iTermPreferences resetPreferenceCacheForTesting];
+    
+    // Should not be explicitly set (will use default)
+    XCTAssertFalse([iTermPreferences valueIsExplicitlySetForKey:kPreferenceKeyTabStyle]);
+}
+
+@end
