@@ -12,6 +12,25 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
+function is_fish_4_1_or_later
+    if test -z "$FISH_VERSION"
+        # Not fish
+        return 1
+    end
+
+    set -l parts (string split . $FISH_VERSION)
+    set -l major $parts[1]
+    set -l minor $parts[2]
+
+    if test $major -gt 4
+        return 0
+    else if test $major -eq 4 -a $minor -ge 1
+        return 0
+    else
+        return 1
+    end
+end
+
 function is_fish_4_3_or_later
     if test -z "$FISH_VERSION"
         # Not fish
@@ -34,12 +53,16 @@ end
 if begin; status --is-interactive; and not functions -q -- iterm2_status; and test "$ITERM_ENABLE_SHELL_INTEGRATION_WITH_TMUX""$TERM" != screen; and test "$ITERM_ENABLE_SHELL_INTEGRATION_WITH_TMUX""$TERM" != screen-256color; and test "$ITERM_ENABLE_SHELL_INTEGRATION_WITH_TMUX""$TERM" != tmux-256color; and test "$TERM" != dumb; and test "$TERM" != linux; end
   if not is_fish_4_3_or_later
     function iterm2_status
-      printf "\033]133;D;%s\007" $argv
+        if not is_fish_4_1_or_later
+          printf "\033]133;D;%s\007" $argv
+        end
     end
 
     # Mark start of prompt
     function iterm2_prompt_mark
-      printf "\033]133;A\007"
+        if not is_fish_4_1_or_later
+          printf "\033]133;A;iTerm2\007"
+        end
     end
 
     # Mark end of prompt
@@ -50,10 +73,12 @@ if begin; status --is-interactive; and not functions -q -- iterm2_status; and te
     # Tell terminal to create a mark at this location
     function iterm2_preexec --on-event fish_preexec
       # For other shells we would output status here but we can't do that in fish.
-      if test "$TERM_PROGRAM" = "iTerm.app"
-        printf "\033]133;C;\r\007"
-      else
-        printf "\033]133;C;\007"
+      if not is_fish_4_1_or_later
+        if test "$TERM_PROGRAM" = "iTerm.app"
+            printf "\033]133;C;iTerm2\r\007"
+        else
+            printf "\033]133;C;iTerm2\007"
+        end
       end
     end
 
@@ -143,7 +168,7 @@ if begin; status --is-interactive; and not functions -q -- iterm2_status; and te
 
     iterm2_write_remotehost_currentdir_uservars
   end
-  printf "\033]1337;ShellIntegrationVersion=20;shell=fish\007"
+  printf "\033]1337;ShellIntegrationVersion=21;shell=fish\007"
 end
 
 functions -e is_fish_4_3_or_later
