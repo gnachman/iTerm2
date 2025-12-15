@@ -361,7 +361,7 @@
         }
         if (decoded) {
             NSMenuItem *item = [[NSMenuItem alloc] init];
-            item.title = [NSString stringWithFormat:@"Base64: %@", [decoded humanFriendlyStringRepresentation]];
+            item.title = [NSString stringWithFormat:@"Base64: %@", [[decoded humanFriendlyStringRepresentation] ellipsizedDescriptionNoLongerThan:20]];
             item.action = selector;
             item.target = target;
             item.representedObject = decoded;

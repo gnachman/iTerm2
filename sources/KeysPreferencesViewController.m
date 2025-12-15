@@ -573,7 +573,7 @@ static NSString *const kHotkeyWindowGeneratedProfileNameKey = @"Hotkey Window";
     [_popoverVC view];
     _popoverVC.textView.font = [NSFont systemFontOfSize:[NSFont systemFontSize]];
     _popoverVC.textView.drawsBackground = NO;
-    [_popoverVC appendString:@"The leader behaves like a modifier key, such as Command or Option, but is a separate keystroke. It can be used in key bindings. For example, if you set the leader to ⌘s then you could bind an action to the two-keystroke sequence “⌘s x”."];
+    [_popoverVC appendString:@"The leader behaves like a modifier key, such as Command or Option, but is a separate keystroke. It can be used in key bindings. For example, if you set the leader to ⌘b then you could bind an action to the two-keystroke sequence “⌘b x”. ⌘b is the recommended leader and that keystroke will not be used for other purposes in the future."];
     NSRect frame = _popoverVC.view.frame;
     frame.size.width = 300;
     frame.size.height = 108;

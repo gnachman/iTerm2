@@ -106,6 +106,10 @@ typedef NS_ENUM(NSInteger, PreferenceInfoType) {
 // then you should also override this to indicate whether the current value is the default value.
 @property(nonatomic, copy) BOOL (^hasDefaultValue)(void);
 
+// If `range` causes a proposed value to be clamped this is called with the out-of-bounds value the
+// user attempted to set.
+@property(nonatomic, copy) void (^didClamp)(int oobValue);
+
 + (instancetype)infoForPreferenceWithKey:(NSString *)key
                                     type:(PreferenceInfoType)type
                                  control:(NSView *)control;

@@ -278,6 +278,7 @@ DEFINE_INT(minTabWidth, 75, SECTION_TABS @"Minimum tab width when using uneven t
 DEFINE_INT(minCompactTabWidth, 60, SECTION_TABS @"Minimum tab width when using uneven tab widths for compact tabs.");
 DEFINE_INT(optimumTabWidth, 175, SECTION_TABS @"Preferred tab width when tabs are equally sized.");
 DEFINE_BOOL(addNewTabAtEndOfTabs, YES, SECTION_TABS @"Add new tabs at the end of the tab bar, not next to current tab.");
+DEFINE_BOOL(moveLeftAfterClosingTab, NO, SECTION_TABS @"Select the tab to the left when closing a tab?\nIf disabled, the tab to the right of the closing tab will be selected.");
 DEFINE_BOOL(navigatePanesInReadingOrder, YES, SECTION_TABS @"Next Pane and Previous Pane commands use reading order, not the time of last use.");
 DEFINE_FLOAT(tabAutoShowHoldTime, 1.0, SECTION_TABS @"How long in seconds to show tabs in fullscreen.\nThe tab bar appears briefly in fullscreen when the number of tabs changes or you switch tabs. This setting gives the time in seconds for it to remain visible.");
 DEFINE_FLOAT(tabFlashAnimationDuration, 0.25, SECTION_TABS @"Animation duration for fade in/out animation of tabs in full screen, in seconds.")
@@ -512,6 +513,8 @@ DEFINE_SECURE_STRING(browserBundleID, BrowserBundleID, SECTION_GENERAL @"Bundle 
 #endif  // ITERM2_SHARED_ARC
 DEFINE_FLOAT(menuTipDelay, 1.0, SECTION_GENERAL @"Time to wait before showing tips in the main menu.\nSet this to a big number if you don’t like the tips.");
 
+DEFINE_BOOL(revealExportedSettingsAndData, YES, SECTION_GENERAL @"Reveal file created by “Export All Settings and Data” in finder upon completion");
+
 #pragma mark - Drawing
 
 #define SECTION_DRAWING @"Drawing: "
@@ -628,9 +631,10 @@ DEFINE_STRING(errorSound, @"", SECTION_SESSION @"When Alert on Next Mark is conf
 
 #define SECTION_WINDOWS @"Windows: "
 
-DEFINE_BOOL(openFileInNewWindows, NO, SECTION_WINDOWS @"Open files in new windows, not new tabs or split panes.\nThis affects shell scripts opened from Finder, for example. See also “Open files in split panes”.");
-DEFINE_BOOL(openFileInSplitPanes, NO, SECTION_WINDOWS @"Open files in split panes.\nThis affects shell scripts opened from Finder, for example. You must set “Open files in new windows, not new tabs” to “No” for this to take effect. See also “When opening a file in a split pane, should it be a vertical split?”");
-DEFINE_BOOL(openFileInVerticalSplitPane, YES, SECTION_WINDOWS @"When opening a file in a split pane, should it be a vertical split?")
+DEFINE_BOOL(openFileInNewWindows, NO, SECTION_WINDOWS @"DEPRECATED: Use “How should new instances be opened” instead.\nOpen files in new windows, not new tabs or split panes.\nThis affects shell scripts opened from Finder, for example. See also “Open files in split panes”.");
+DEFINE_BOOL(openFileInSplitPanes, NO, SECTION_WINDOWS @"DEPRECATED: Use “How should new instances be opened” instead.\nOpen files in split panes.\nThis affects shell scripts opened from Finder, for example. You must set “Open files in new windows, not new tabs” to “No” for this to take effect. See also “When opening a file in a split pane, should it be a vertical split?”");
+DEFINE_BOOL(openFileInVerticalSplitPane, YES, SECTION_WINDOWS @"DEPRECATED: Use “How should new instances be opened” instead.\nWhen opening a file in a split pane, should it be a vertical split?")
+DEFINE_INT(newInstanceOpenStyle, -1, SECTION_WINDOWS @"How should new instances be opened when triggered by scripts or external applications?\n-1: Use legacy settings (default)\n0: New Window\n1: New Tab\n2: Vertical Split Pane\n3: Horizontal Split Pane\nThis provides a unified setting for controlling external instance creation.")
 DEFINE_BOOL(disableWindowSizeSnap, NO, SECTION_WINDOWS @"Terminal windows resize smoothly.\nDisables snapping to character grid. Holding Control will temporarily disable snap-to-grid.");
 DEFINE_BOOL(profilesWindowJoinsActiveSpace, NO, SECTION_WINDOWS @"If the Profiles window is open, it always moves to join the active Space.\nYou must restart iTerm2 for a change in this setting to take effect.");
 DEFINE_BOOL(darkThemeHasBlackTitlebar, YES, SECTION_WINDOWS @"Dark themes give terminal windows black title bars by default.");

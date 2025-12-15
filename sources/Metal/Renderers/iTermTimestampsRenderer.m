@@ -13,6 +13,7 @@
 #import "iTermSharedImageStore.h"
 #import "iTermTexturePool.h"
 #import "iTermTimestampDrawHelper.h"
+#import "PTYFontInfo.h"
 
 @interface iTermTimestampKey : NSObject
 @property (nonatomic) CGFloat width;
@@ -78,15 +79,18 @@
 // frame arg to block is in points, not pixels.
 - (void)enumerateRows:(void (^)(int row, iTermTimestampKey *key, NSRect frame))block {
     assert(_timestamps);
-    const CGFloat rowHeight = self.cellConfiguration.cellSize.height / self.cellConfiguration.scale;
+    const CGFloat scale = self.cellConfiguration.scale;
+    const CGFloat rowHeight = self.cellConfiguration.cellSize.height / scale;
+    const CGFloat rowHeightWithoutSpacing = self.cellConfiguration.cellSizeWithoutSpacing.height / scale;
     if (!_drawHelper) {
         _drawHelper = [[iTermTimestampDrawHelper alloc] initWithBackgroundColor:_backgroundColor
                                                                       textColor:_textColor
                                                                             now:[NSDate timeIntervalSinceReferenceDate]
                                                              useTestingTimezone:NO
                                                                       rowHeight:rowHeight
+                                                      rowHeightWithoutSpacing:rowHeightWithoutSpacing
                                                                          retina:self.configuration.scale > 1
-                                                                           font:self.font
+                                                                       fontInfo:self.fontInfo
                                                                        obscured:self.obscured];
         self->_drawHelper.timestampBaseline = self.timestampBaseline;
         [_timestamps enumerateObjectsUsingBlock:^(NSDate * _Nonnull date, NSUInteger idx, BOOL * _Nonnull stop) {
@@ -102,7 +106,6 @@
                                                            _backgroundColor.greenComponent,
                                                            _backgroundColor.blueComponent,
                                                            _backgroundColor.alphaComponent);
-    const CGFloat scale = self.configuration.scale;
     const CGFloat vmargin = self.margins.bottom / scale;
 
     const CGFloat gridWidth = self.cellConfiguration.gridSize.width * self.cellConfiguration.cellSize.width;
@@ -151,13 +154,13 @@
 
     // Configuration - if any change invalidate the cache
     NSColorSpace *_colorSpace;
-    NSFont *_font;
+    PTYFontInfo *_fontInfo;
     NSSize _cellSize;
     NSColor *_backgroundColor;
     NSColor *_textColor;
     CGFloat _scale;
     CGFloat _obscured;
-    
+
     NSCache<iTermTimestampKey *, iTermPooledTexture *> *_cache;
     iTermTexturePool *_texturePool;
 }
@@ -210,7 +213,7 @@
     if (![NSObject object:tState.configuration.colorSpace isEqualToObject:_colorSpace]) {
         return YES;
     }
-    if (![tState.font isEqualTo:_font]) {
+    if (![tState.fontInfo.font isEqualTo:_fontInfo.font]) {
         return YES;
     }
     if (!NSEqualSizes(tState.cellConfiguration.cellSize, _cellSize)) {
@@ -239,7 +242,7 @@
     if ([self configurationChanged:tState]) {
         [_cache removeAllObjects];
         _colorSpace = tState.configuration.colorSpace;
-        _font = tState.font;
+        _fontInfo = tState.fontInfo;
         _cellSize = tState.cellConfiguration.cellSize;
         _backgroundColor = tState.backgroundColor;
         _textColor = tState.textColor;

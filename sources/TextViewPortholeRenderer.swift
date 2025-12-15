@@ -174,7 +174,11 @@ class TextViewPortholeRenderer {
         } else {
             self._languages = Set()
         }
-        if MarkdownPortholeRenderer.wants(text) {
+        let supportedLanguages = Set(Highlightr()?.supportedLanguages() ?? [])
+        let detectedAndSupported = _languages.intersection(supportedLanguages)
+        if detectedAndSupported.count == 1, let lang = detectedAndSupported.first {
+            language = lang
+        } else if MarkdownPortholeRenderer.wants(text) {
             language = "markdown"
         } else if JSONPortholeRenderer.wants(text) {
             language = "json"

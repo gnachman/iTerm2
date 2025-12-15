@@ -994,8 +994,13 @@ static BOOL iTermControlCodeAttributeEqualsNumber(const iTermControlCodeAttribut
             }
 
             NSData *idData = [decoder decodeData];
-            if (idData) {
+            if (idData.length > 0) {
                 _identifier = [[NSString alloc] initWithData:idData encoding:NSUTF8StringEncoding];
+            }
+
+            NSData *targetData = [decoder decodeData];
+            if (targetData.length > 0) {
+                _target = [[NSString alloc] initWithData:targetData encoding:NSUTF8StringEncoding];
             }
         } else {
             if (code == lastCode && lastURL != nil) {
@@ -1006,6 +1011,7 @@ static BOOL iTermControlCodeAttributeEqualsNumber(const iTermControlCodeAttribut
                 return nil;
             }
             _identifier = [[iTermURLStore sharedInstance] paramWithKey:@"id" forCode:code];
+            _target = [[iTermURLStore sharedInstance] paramWithKey:@"target" forCode:code];
         }
     }
 
@@ -1016,16 +1022,21 @@ static BOOL iTermControlCodeAttributeEqualsNumber(const iTermControlCodeAttribut
     return self;
 }
 
-+ (instancetype)urlWithURL:(NSURL *)url identifier:(NSString * _Nullable)identifier {
-    return [[iTermURL alloc] initWithURL:url identifier:identifier];
++ (instancetype)urlWithURL:(NSURL *)url
+                identifier:(NSString * _Nullable)identifier
+                    target:(NSString * _Nullable)target {
+    return [[iTermURL alloc] initWithURL:url identifier:identifier target:target];
 }
 
-- (instancetype)initWithURL:(NSURL *)url identifier:(NSString *)identifier {
+- (instancetype)initWithURL:(NSURL *)url
+                 identifier:(NSString *)identifier
+                     target:(NSString * _Nullable)target {
     static iTermURL *lastObject;
 
     if (lastObject != nil &&
         [lastObject.url isEqual:url] &&
-        [NSObject object:identifier isEqualToObject:lastObject.identifier]) {
+        [NSObject object:identifier isEqualToObject:lastObject.identifier] &&
+        [NSObject object:target isEqualToObject:lastObject.target]) {
         return lastObject;
     }
 
@@ -1033,6 +1044,7 @@ static BOOL iTermControlCodeAttributeEqualsNumber(const iTermControlCodeAttribut
     if (self) {
         _url = url;
         _identifier = [identifier copy];
+        _target = [target copy];
     }
 
     lastObject = self;
@@ -1043,9 +1055,8 @@ static BOOL iTermControlCodeAttributeEqualsNumber(const iTermControlCodeAttribut
 - (NSData *)data {
     iTermTLVEncoder *encoder = [[iTermTLVEncoder alloc] init];
     [encoder encodeData:[_url.absoluteString dataUsingEncoding:NSUTF8StringEncoding]];
-    if (_identifier) {
-        [encoder encodeData:[_identifier dataUsingEncoding:NSUTF8StringEncoding]];
-    }
+    [encoder encodeData:[_identifier dataUsingEncoding:NSUTF8StringEncoding] ?: [NSData data]];
+    [encoder encodeData:[_target dataUsingEncoding:NSUTF8StringEncoding] ?: [NSData data]];
     return [encoder data];
 }
 

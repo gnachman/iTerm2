@@ -206,6 +206,52 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     return _state.linebuffer.lastPosition;
 }
 
+- (NSString *)wordBefore:(VT100GridCoord)coord
+additionalWordCharacters:(NSString *)additionalWordCharacters
+                   range:(VT100GridWindowedRange *)rangePtr {
+    return [self wordWithCoord:coord
+                   predecessor:YES
+      additionalWordCharacters:additionalWordCharacters
+                         range:rangePtr];
+}
+
+
+- (NSString *)wordWithCoord:(VT100GridCoord)coord
+                predecessor:(BOOL)predecessor
+   additionalWordCharacters:(NSString *)additionalWordCharacters
+                      range:(VT100GridWindowedRange *)rangePtr {
+    iTermTextExtractor *extractor = [iTermTextExtractor textExtractorWithDataSource:self];
+
+    const VT100GridCoord adjustedCoord = predecessor ? [extractor predecessorOfCoord:coord] : coord;
+    const VT100GridWindowedRange range = [extractor rangeForWordAt:adjustedCoord
+                                                     maximumLength:kReasonableMaximumWordLength
+                                                               big:NO
+                                          additionalWordCharacters:additionalWordCharacters];
+
+    if (rangePtr) {
+        *rangePtr = range;
+    }
+    NSString *s = [extractor contentInRange:range
+                          attributeProvider:nil
+                                 nullPolicy:kiTermTextExtractorNullPolicyFromStartToFirst
+                                        pad:NO
+                         includeLastNewline:NO
+                     trimTrailingWhitespace:NO
+                               cappedAtSize:-1
+                               truncateTail:YES
+                          continuationChars:nil
+                                     coords:nil];
+    return s;
+}
+
+- (NSString *)wordEndingAt:(VT100GridCoord)coord
+                     range:(VT100GridWindowedRange *)rangePtr {
+    return [self wordWithCoord:coord
+                   predecessor:NO
+      additionalWordCharacters:nil
+                         range:rangePtr];
+}
+
 #pragma mark - PTYTextViewDataSource
 
 - (id<iTermTextDataSource>)snapshotDataSource {
@@ -1298,18 +1344,21 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     }
     return [_state numberOfLinesDroppedWhenEncodingContentsIncludingGrid:YES
                                                                  encoder:encoder
-                                                          intervalOffset:intervalOffsetPtr];
+                                                          intervalOffset:intervalOffsetPtr
+                                                               unlimited:NO];
 }
 
 - (int)numberOfLinesDroppedWhenEncodingModernFormatWithEncoder:(id<iTermEncoderAdapter>)encoder
-                                                intervalOffset:(long long *)intervalOffsetPtr {
+                                                intervalOffset:(long long *)intervalOffsetPtr
+                                                     unlimited:(BOOL)unlimited {
     __block int linesDropped = 0;
     [encoder encodeDictionaryWithKey:@"LineBuffer"
                           generation:iTermGenerationAlwaysEncode
                                block:^BOOL(id<iTermEncoderAdapter>  _Nonnull subencoder) {
         linesDropped = [_state numberOfLinesDroppedWhenEncodingContentsIncludingGrid:NO
                                                                              encoder:subencoder
-                                                                      intervalOffset:intervalOffsetPtr];
+                                                                      intervalOffset:intervalOffsetPtr
+                                                                           unlimited:unlimited];
         return YES;
     }];
     [encoder encodeDictionaryWithKey:@"PrimaryGrid"
@@ -1330,7 +1379,8 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
 }
 
 - (BOOL)encodeContents:(id<iTermEncoderAdapter>)encoder
-          linesDropped:(int *)linesDroppedOut {
+          linesDropped:(int *)linesDroppedOut
+             unlimited:(BOOL)unlimited {
     [self performBlockWithJoinedThreads:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
         NSDictionary *extra;
 
@@ -1338,7 +1388,8 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
         if ([iTermAdvancedSettingsModel useNewContentFormat]) {
             long long intervalOffset = 0;
             const int linesDroppedForBrevity = [self numberOfLinesDroppedWhenEncodingModernFormatWithEncoder:encoder
-                                                                                              intervalOffset:&intervalOffset];
+                                                                                              intervalOffset:&intervalOffset
+                                                                                                   unlimited:unlimited];
             extra = @{
                 kScreenStateIntervalTreeKey: [_state.intervalTree dictionaryValueWithOffset:intervalOffset] ?: @{},
             };
@@ -1384,7 +1435,7 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
                kScreenStateAlternateGridStateKey: _state.altGrid.dictionaryValue ?: [NSNull null],
                kScreenStateProtectedMode: @(_state.protectedMode),
                kScreenStatePromptStateKey: _state.promptStateDictionary ?: [NSNull null],
-               kScreenStateBlockStartAbsLineKey: _state.blockStartAbsLine,
+               kScreenStateBlockStartAbsLineKey: _state.blockStartAbsLine ?: @{},
                kScreenStateProgressKey: @(_state.progress),
             };
             dict = [dict dictionaryByRemovingNullValues];
@@ -1690,13 +1741,15 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
 
 - (void)restoreFromDictionary:(NSDictionary *)dictionary
      includeRestorationBanner:(BOOL)includeRestorationBanner
-                   reattached:(BOOL)reattached {
+                   reattached:(BOOL)reattached
+                    isArchive:(BOOL)isArchive {
     [self performBlockWithJoinedThreads:^(VT100Terminal *terminal,
                                           VT100ScreenMutableState *mutableState,
                                           id<VT100ScreenDelegate> delegate) {
         [mutableState restoreFromDictionary:dictionary
                    includeRestorationBanner:includeRestorationBanner
-                                 reattached:reattached];
+                                 reattached:reattached
+                                  isArchive:isArchive];
     }];
 }
 

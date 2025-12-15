@@ -85,7 +85,7 @@
 
 @end
 
-@implementation iTermMutableDictionaryEncoderAdapter: NSObject
+@implementation iTermMutableDictionaryEncoderAdapter
 
 + (instancetype)encoder {
     return [[self alloc] initWithMutableDictionary:[NSMutableDictionary dictionary]];

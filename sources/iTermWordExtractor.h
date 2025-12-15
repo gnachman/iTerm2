@@ -82,6 +82,7 @@ typedef NS_ENUM(NSInteger, iTermTextExtractorClass) {
 @property (nonatomic) NSInteger maximumLength;
 @property (nonatomic) BOOL big;
 @property (nonatomic, weak) id<iTermWordExtractorDataSource> dataSource;
+@property (nonatomic, copy) NSString *additionalWordCharacters;
 
 - (instancetype)initWithLocation:(VT100GridCoord)location
                    maximumLength:(NSInteger)maximumLength

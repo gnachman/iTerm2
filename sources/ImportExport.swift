@@ -29,7 +29,9 @@ class ImportExport: NSObject {
         do {
             let exporter = Exporter()
             try exporter.export(to: url)
-            NSWorkspace.shared.activateFileViewerSelecting([url])
+            if iTermAdvancedSettingsModel.revealExportedSettingsAndData() {
+                NSWorkspace.shared.activateFileViewerSelecting([url])
+            }
             return nil
         } catch {
             DLog("Failed: \(error)")

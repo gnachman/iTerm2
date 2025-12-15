@@ -2740,6 +2740,38 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
                                   contents:(BOOL)contents
                                    encoder:(id<iTermEncoderAdapter>)encoder
                                    options:(NSDictionary *)options {
+    return [PTYTab _recursiveEncodeArrangementForView:view
+                                                idMap:idMap
+                                          isMaximized:isMaximized
+                                             contents:contents
+                                              encoder:encoder
+                                              options:options
+                                        activeSession:self.activeSession
+                                    sessionViewFinder:^SessionView *(NSString *guid) {
+        return [self sessionViewWithGUID:guid];
+    }
+                                        sessionFinder:^PTYSession *(SessionView *sessionView) {
+        return [self sessionForSessionView:sessionView];
+    }];
+}
+
++ (NSSplitView *)placeholderSplitViewForSession:(PTYSession *)session {
+    PTYSplitView *splitView = [[PTYSplitView alloc] initWithFrame:session.view.bounds
+                                                 uniqueIdentifier:[[NSUUID UUID] UUIDString]];
+    splitView.vertical = YES;
+    [splitView addSubview:session.view];
+    return splitView;
+}
+
++ (BOOL)_recursiveEncodeArrangementForView:(NSView *)view
+                                     idMap:(NSMutableDictionary<NSNumber *, SessionView *> *)idMap
+                               isMaximized:(BOOL)isMaximized
+                                  contents:(BOOL)contents
+                                   encoder:(id<iTermEncoderAdapter>)encoder
+                                   options:(NSDictionary *)options
+                             activeSession:(PTYSession *)activeSession
+                         sessionViewFinder:(SessionView *(^NS_NOESCAPE)(NSString *guid))sessionViewFinder
+                             sessionFinder:(PTYSession *(^NS_NOESCAPE)(SessionView *sessionView))sessionFinder{
     DLog(@"Encode view %@", view);
     if (isMaximized && options[PTYTabArrangementOptionsOnlySessionID] == nil) {
         encoder[TAB_ARRANGEMENT_IS_MAXIMIZED] = @YES;
@@ -2754,7 +2786,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 
         NSArray<NSView *> *subviews = splitView.subviews;
         if (options[PTYTabArrangementOptionsOnlySessionID] != nil) {
-            subviews = @[ [self sessionViewWithGUID:options[PTYTabArrangementOptionsOnlySessionID]] ];
+            subviews = @[ sessionViewFinder(options[PTYTabArrangementOptionsOnlySessionID]) ];
         }
         iTermOrderedDictionary<NSString *, __kindof NSView *> *index =
         [iTermOrderedDictionary byMapping:subviews
@@ -2763,7 +2795,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
                 PTYSplitView *splitView = view;
                 return splitView.stringUniqueIdentifier;
             }
-            PTYSession *session = [self sessionForSessionView:view];
+            PTYSession *session = sessionFinder(view);
             return session.stringUniqueIdentifier;
         }];
         [encoder encodeArrayWithKey:SUBVIEWS
@@ -2778,13 +2810,16 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
                                                 isMaximized:isMaximized
                                                    contents:contents
                                                     encoder:encoder
-                                                    options:options];
+                                                    options:options
+                                              activeSession:activeSession
+                                          sessionViewFinder:sessionViewFinder
+                                              sessionFinder:sessionFinder];
         }];
         DLog(@"Done encoding splitter view %@", view);
         return YES;
     }
-    SessionView *sessionView = (SessionView*)view;
-    PTYSession *session = [self sessionForSessionView:sessionView];
+    SessionView *sessionView = (SessionView *)view;
+    PTYSession *session = sessionFinder(sessionView);
     if (!session) {
         DLog(@"Failed to find session for view %@", view);
         return NO;
@@ -2802,7 +2837,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
                                          pendingJumps:options[PTYTabArrangementOptionsPendingJumps]
                                               options:options];
     }];
-    encoder[TAB_ARRANGEMENT_IS_ACTIVE] = @(session == [self activeSession] || options[PTYTabArrangementOptionsOnlySessionID] != nil);
+    encoder[TAB_ARRANGEMENT_IS_ACTIVE] = @(session == activeSession || options[PTYTabArrangementOptionsOnlySessionID] != nil);
 
     if (idMap) {
         const NSUInteger arrangementID = idMap.count;
@@ -3391,6 +3426,22 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
                                   encoder:(id<iTermEncoderAdapter>)encoder
                                   options:(NSDictionary *)options {
     DLog(@"Encode arragnement for %@ from node %@", self, node);
+    return [PTYTab encodeArrangementNodeWithContents:includeContents
+                                 fromArrangementNode:node
+                                             encoder:encoder
+                                             options:options
+                                               idMap:idMap_
+                                       sessionFinder:^PTYSession *(SessionView *sessionView) {
+        return [self sessionForSessionView:sessionView];
+    }];
+}
+
++ (BOOL)encodeArrangementNodeWithContents:(BOOL)includeContents
+                      fromArrangementNode:(NSDictionary *)node
+                                  encoder:(id<iTermEncoderAdapter>)encoder
+                                  options:(NSDictionary *)options
+                                    idMap:(NSMutableDictionary<NSNumber *, SessionView *> *)idMap
+                            sessionFinder:(PTYSession *(^NS_NOESCAPE)(SessionView *sessionView))sessionFinder {
     if ([node[TAB_ARRANGEMENT_VIEW_TYPE] isEqual:VIEW_TYPE_SPLITTER]) {
         // Add everything in node except SUBVIEWS
         [node enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, id  _Nonnull obj, BOOL * _Nonnull stop) {
@@ -3422,7 +3473,9 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
             if (![self encodeArrangementNodeWithContents:includeContents
                                      fromArrangementNode:subnode
                                                  encoder:encoder
-                                                 options:options]) {
+                                                 options:options
+                                                   idMap:idMap
+                                           sessionFinder:sessionFinder]) {
                 // If one leaf fails to encode, toss the whole tab out because it'll be a disaster
                 // trying to restore it.
                 ok = NO;
@@ -3450,12 +3503,12 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
         return NO;
     }
 
-    SessionView *sessionView = idMap_[sessionId];
+    SessionView *sessionView = idMap[sessionId];
     if (![sessionView isKindOfClass:[SessionView class]]) {
         XLog(@"Bogus value in idmap for key %@: %@", sessionId, sessionView);
         return NO;
     }
-    PTYSession *session = [self sessionForSessionView:sessionView];
+    PTYSession *session = sessionFinder(sessionView);
     if (!session) {
         XLog(@"No session for view");
         return NO;
@@ -3472,10 +3525,10 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     }];
 }
 
-static NSString *const PTYTabArrangementOptionsOnlySessionID = @"PTYTabArrangementOptionsOnlySessionID";
-static NSString *const PTYTabArrangementOptionsReplacementProfile = @"PTYTabArrangementOptionsReplacementProfile";
-static NSString *const PTYTabArrangementOptionsReplacementSaveProgram = @"PTYTabArrangementOptionsReplacementSaveProgram";
-static NSString *const PTYTabArrangementOptionsPendingJumps = @"PTYTabArrangementOptionsPendingJumps";
+NSString *const PTYTabArrangementOptionsOnlySessionID = @"PTYTabArrangementOptionsOnlySessionID";
+NSString *const PTYTabArrangementOptionsReplacementProfile = @"PTYTabArrangementOptionsReplacementProfile";
+NSString *const PTYTabArrangementOptionsReplacementSaveProgram = @"PTYTabArrangementOptionsReplacementSaveProgram";
+NSString *const PTYTabArrangementOptionsPendingJumps = @"PTYTabArrangementOptionsPendingJumps";
 
 // This method used to take a gross shortcut and call -unmaximize and
 // -maximize. Because we support 10.7 window restoration, it gets called
@@ -3529,22 +3582,29 @@ static NSString *const PTYTabArrangementOptionsPendingJumps = @"PTYTabArrangemen
     return [self encodeWithContents:contents constructIdMap:NO encoder:encoder options:@{}];
 }
 
-- (BOOL)encodeWithContents:(BOOL)contents
++ (BOOL)encodeWithContents:(BOOL)contents
             constructIdMap:(BOOL)constructIdMap
                    encoder:(id<iTermEncoderAdapter>)encoder
-                   options:(NSDictionary *)options {
-    DLog(@"Encode tab %@", self);
-    encoder[TAB_GUID] = _guid;
-    encoder[TAB_ARRANGEMENT_TITLE_OVERRIDE] = self.titleOverride.length ? self.titleOverride : nil;
-
-    if (isMaximized_ && options[PTYTabArrangementOptionsOnlySessionID] == nil) {
+                   options:(NSDictionary *)options
+             activeSession:(PTYSession *)activeSession
+                   tabGuid:(NSString *)guid
+             titleOverride:(NSString *)titleOverride
+               isMaximized:(BOOL)isMaximized
+          savedArrangement:(NSDictionary *)savedArrangement
+                     idMap:(NSMutableDictionary<NSNumber *, SessionView *> *)idMap
+                      root:(NSView *)root
+         sessionViewFinder:(SessionView *(^NS_NOESCAPE)(NSString *guid))sessionViewFinder
+             sessionFinder:(PTYSession *(^NS_NOESCAPE)(SessionView *sessionView))sessionFinder {
+    encoder[TAB_GUID] = guid;
+    encoder[TAB_ARRANGEMENT_TITLE_OVERRIDE] = titleOverride;
+    if (isMaximized && options[PTYTabArrangementOptionsOnlySessionID] == nil) {
         DLog(@"Tab is maximized");
         // We never construct id map in this case because it must already exist.
         assert(!constructIdMap);
-        assert(savedArrangement_);
+        assert(savedArrangement);
 
-        // Add contents to savedArrangement_ and return that.
-        // When maximized, savedArrangement_  contains the unmaximized
+        // Add contents to savedArrangement and return that.
+        // When maximized, savedArrangement  contains the unmaximized
         // arrangement, including the maximized session. However, it is old
         // (created when the session was maximized), and doesn't have contents.
         // We need to return an updated version of it with the current
@@ -3552,7 +3612,7 @@ static NSString *const PTYTabArrangementOptionsPendingJumps = @"PTYTabArrangemen
 
         // Set the maximized flag in the root.
         NSMutableDictionary *mutableRootNode =
-            [savedArrangement_[TAB_ARRANGEMENT_ROOT] mutableCopy];
+            [savedArrangement[TAB_ARRANGEMENT_ROOT] mutableCopy];
         mutableRootNode[TAB_ARRANGEMENT_IS_MAXIMIZED] = @YES;
 
         // Fill in the contents.
@@ -3562,25 +3622,50 @@ static NSString *const PTYTabArrangementOptionsPendingJumps = @"PTYTabArrangemen
             return [self encodeArrangementNodeWithContents:contents
                                        fromArrangementNode:mutableRootNode
                                                    encoder:encoder
-                                                   options:options];
+                                                   options:options
+                                                     idMap:idMap
+                                             sessionFinder:sessionFinder];
         }];
     }
     // Build a new arrangement. If |constructIdMap| is set then pass in
     // idMap_, and it will get filled in with number->SessionView entries.
     if (constructIdMap) {
-        assert(idMap_);
+        assert(idMap);
     }
     DLog(@"Will encode each view in tab");
     return [encoder encodeDictionaryWithKey:TAB_ARRANGEMENT_ROOT
                                  generation:iTermGenerationAlwaysEncode
                                       block:^BOOL(id<iTermEncoderAdapter>  _Nonnull encoder) {
-        return [self _recursiveEncodeArrangementForView:root_
-                                                  idMap:constructIdMap ? idMap_ : nil
+        return [self _recursiveEncodeArrangementForView:root
+                                                  idMap:constructIdMap ? idMap : nil
                                             isMaximized:NO
                                                contents:contents
                                                 encoder:encoder
-                                                options:options];
+                                                options:options
+                                          activeSession:activeSession
+                                      sessionViewFinder:sessionViewFinder
+                                          sessionFinder:sessionFinder];
     }];
+}
+
+- (BOOL)encodeWithContents:(BOOL)contents
+            constructIdMap:(BOOL)constructIdMap
+                   encoder:(id<iTermEncoderAdapter>)encoder
+                   options:(NSDictionary *)options {
+    DLog(@"Encode tab %@", self);
+    return [PTYTab encodeWithContents:contents
+                       constructIdMap:constructIdMap
+                              encoder:encoder
+                              options:options
+                        activeSession:self.activeSession
+                              tabGuid:_guid
+                        titleOverride:self.titleOverride.length ? self.titleOverride : nil
+                          isMaximized:isMaximized_
+                     savedArrangement:savedArrangement_
+                                idMap:idMap_
+                                 root:root_
+                    sessionViewFinder:^SessionView *(NSString *guid) { return [self sessionViewWithGUID:guid]; }
+                        sessionFinder:^PTYSession *(SessionView *sessionView) { return [self sessionForSessionView:sessionView]; }];
 }
 
 

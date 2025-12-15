@@ -45,8 +45,12 @@
     return [bundleIdentifier isEqualToString:@"com.apple.SecurityAgent"];
 }
 
-- (void)it_openURL:(NSURL *)url style:(iTermOpenStyle)style window:(NSWindow *)window {
+- (void)it_openURL:(NSURL *)url
+            target:target
+             style:(iTermOpenStyle)style
+            window:(NSWindow *)window {
     [self it_openURL:url
+              target:target
        configuration:[NSWorkspaceOpenConfiguration configuration]
                style:style
               window:window];
@@ -91,6 +95,7 @@
         return YES;
     }
     return [self it_tryToOpenURLLocallyDespiteNotBeingDefaultBrowser:url
+                                                              target:nil
                                                        configuration:nil
                                                                style:iTermOpenStyleTab
                                                             testOnly:YES
@@ -106,6 +111,7 @@
         return NO;
     }
     return [self it_tryToOpenURLLocallyDespiteNotBeingDefaultBrowser:url
+                                                              target:nil
                                                        configuration:nil
                                                                style:iTermOpenStyleTab
                                                             testOnly:YES
@@ -124,10 +130,16 @@
 }
 
 - (void)it_openURL:(NSURL *)url
+            target:(NSString *)target
      configuration:(NSWorkspaceOpenConfiguration *)configuration
              style:(iTermOpenStyle)style
             window:(NSWindow *)window {
-    [self it_openURL:url configuration:configuration style:style upsell:YES window:window];
+    [self it_openURL:url
+              target:target
+       configuration:configuration
+               style:style
+              upsell:YES
+              window:window];
 }
 
 
@@ -169,6 +181,7 @@
     }
 
     return [self it_tryToOpenURLLocally:url
+                                 target:nil
                           configuration:configuration
                                   style:style
                                  upsell:upsell
@@ -209,6 +222,7 @@ completionHandler:^(NSRunningApplication *app, NSError *error) {
 }
 
 - (void)it_openURL:(NSURL *)url
+            target:(NSString *)target
      configuration:(NSWorkspaceOpenConfiguration *)configuration
              style:(iTermOpenStyle)style
             upsell:(BOOL)upsell
@@ -221,7 +235,7 @@ completionHandler:^(NSRunningApplication *app, NSError *error) {
         return;
     }
 
-    if ([self it_tryToOpenURLLocally:url configuration:configuration style:style upsell:upsell window:window]) {
+    if ([self it_tryToOpenURLLocally:url target:target configuration:configuration style:style upsell:upsell window:window]) {
         return;
     }
 
@@ -231,6 +245,7 @@ completionHandler:^(NSRunningApplication *app, NSError *error) {
 }
 
 - (BOOL)it_tryToOpenURLLocally:(NSURL *)url
+                        target:(NSString *)target
                  configuration:(NSWorkspaceOpenConfiguration *)configuration
                          style:(iTermOpenStyle)style
                         upsell:(BOOL)upsell
@@ -244,6 +259,7 @@ completionHandler:^(NSRunningApplication *app, NSError *error) {
     if ([self it_isDefaultBrowserForWebURL:url]) {
         // We are the default app. Skip all the machinery and open it directly.
         if ([self it_openURLLocally:url
+                             target:target
                       configuration:configuration
                           openStyle:style]) {
             return YES;
@@ -252,6 +268,7 @@ completionHandler:^(NSRunningApplication *app, NSError *error) {
     if (upsell) {
         // This feature is new and this is the main way people will discover it. Sorry for the annoyance :(
         if ([self it_tryToOpenURLLocallyDespiteNotBeingDefaultBrowser:url
+                                                               target:target
                                                         configuration:configuration
                                                                 style:style
                                                              testOnly:NO
@@ -306,6 +323,7 @@ withApplicationAtURL:appURL
 }
 
 - (void)it_asyncOpenURL:(NSURL *)url
+                 target:(NSString *)target
           configuration:(NSWorkspaceOpenConfiguration *)configuration
                   style:(iTermOpenStyle)style
                  upsell:(BOOL)upsell
@@ -323,7 +341,7 @@ withApplicationAtURL:appURL
                       completion:completion]) {
         return;
     }
-    if ([self it_tryToOpenURLLocally:url configuration:configuration style:style upsell:upsell window:window]) {
+    if ([self it_tryToOpenURLLocally:url target:target configuration:configuration style:style upsell:upsell window:window]) {
         completion([NSRunningApplication currentApplication], nil);
         return;
     }
@@ -352,6 +370,7 @@ withApplicationAtURL:appURL
 // In test-only mode, returns whether the URL could be opened locally if the
 // user were hypothetically to consent should consent be needed.
 - (BOOL)it_tryToOpenURLLocallyDespiteNotBeingDefaultBrowser:(NSURL *)url
+                                                     target:(NSString *)target
                                               configuration:(NSWorkspaceOpenConfiguration *)configuration
                                                       style:(iTermOpenStyle)style
                                                    testOnly:(BOOL)testOnly
@@ -422,13 +441,15 @@ withApplicationAtURL:appURL
     if (!consent) {
         return NO;
     }
-    return [self it_openURLLocally:url configuration:configuration openStyle:style];
+    return [self it_openURLLocally:url target:target configuration:configuration openStyle:style];
 }
 
 - (BOOL)it_openURLLocally:(NSURL *)url
+                   target:(NSString *)target
             configuration:(NSWorkspaceOpenConfiguration *)configuration
                 openStyle:(iTermOpenStyle)openStyle {
     return [[iTermController sharedInstance] openURL:url
+                                              target:target
                                            openStyle:openStyle
                                               select:configuration.activates];
 }

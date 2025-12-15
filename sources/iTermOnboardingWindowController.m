@@ -32,6 +32,7 @@ static void iTermOpenWhatsNewURL(NSString *path, NSWindow *window) {
             }
         }
         [[iTermController sharedInstance] openURL:url
+                                           target:nil
                                         openStyle:iTermOpenStyleTab
                                            select:YES];
         return;

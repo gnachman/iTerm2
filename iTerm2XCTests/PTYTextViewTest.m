@@ -2228,7 +2228,7 @@ static NSString *const kDiffScriptPath = @"/tmp/diffs";
             helper.shouldShowTimestamps = YES;
             helper.now = now;
             helper.useTestingTimezone = YES;  // Use GMT so test can pass anywhere.
-            [helper createTimestampDrawingHelperWithFont:textView.font];
+            [helper createTimestampDrawingHelperWithFontInfo:textView.fontTable.asciiFont];
         };
     }
               profileOverrides:nil

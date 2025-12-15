@@ -186,6 +186,7 @@ NSString *const TERMINAL_ARRANGEMENT_USE_TRANSPARENCY = @"Use Transparency";
 NSString *const TERMINAL_ARRANGEMENT_TOOLBELT_PROPORTIONS = @"Toolbelt Proportions";
 NSString *const TERMINAL_ARRANGEMENT_TITLE_OVERRIDE = @"Title Override";
 NSString *const TERMINAL_ARRANGEMENT_TOOLBELT = @"Toolbelt";
+NSString *const TERMINAL_ARRANGEMENT_ARCHIVE = @"Archive";
 
 // This is used to adjust the window's size to preserve rows x cols when the scroller style changes.
 // If the window was maximized to the screen's visible frame, it will be unset to disable this behavior.
@@ -3613,7 +3614,14 @@ ITERM_WEAKLY_REFERENCEABLE
         }
     }
 
-    [self fitTabsToWindow];
+    NSDictionary *archive = [NSDictionary castFrom:arrangement[TERMINAL_ARRANGEMENT_ARCHIVE]];
+    if (archive) {
+        [self sessionInitiatedResize:self.allSessions.firstObject
+                               width:[archive[@"columns"] intValue]
+                              height:[archive[@"rows"] intValue]];
+    } else {
+        [self fitTabsToWindow];
+    }
 
     // Sessions were created at the wrong size, which means they might not have been able to position
     // their cursors where they needed to be. Move the cursors to their rightful places. See the
@@ -3650,7 +3658,7 @@ ITERM_WEAKLY_REFERENCEABLE
                                     viewMap:nil
                                  sessionMap:sessionMap
                        partialAttachments:partialAttachments
-                                  options:nil]) {
+                                  options:arrangement[TERMINAL_ARRANGEMENT_ARCHIVE] != nil ? @{ PTYSessionArrangementOptionsArchive: @YES } : nil]) {
             return NO;
         }
         openedAny = YES;
@@ -3699,12 +3707,141 @@ ITERM_WEAKLY_REFERENCEABLE
     return result;
 }
 
+// Creates an archive
+- (NSDictionary *)arrangementWithSession:(PTYSession *)session {
+    NSMutableDictionary *result = [NSMutableDictionary dictionaryWithCapacity:7];
+    iTermMutableDictionaryEncoderAdapter *adapter =
+        [[[iTermMutableDictionaryEncoderAdapter alloc] initWithMutableDictionary:result] autorelease];
+    const BOOL commit =
+    [self populateArrangementWithSession:session
+                                  encoder:adapter];
+    if (!commit) {
+        return nil;
+    }
+    return result;
+}
+
++ (NSDictionary *)arrangementWithSession:(PTYSession *)session {
+    NSMutableDictionary *result = [NSMutableDictionary dictionaryWithCapacity:7];
+    iTermMutableDictionaryEncoderAdapter *adapter =
+        [[[iTermMutableDictionaryEncoderAdapter alloc] initWithMutableDictionary:result] autorelease];
+    const BOOL commit =
+    [self populateArrangementWithSession:session
+                                  encoder:adapter];
+    if (!commit) {
+        return nil;
+    }
+    return result;
+}
+
++ (BOOL)populateArrangementWithSession:(PTYSession *)session
+                               encoder:(id<iTermEncoderAdapter>)result {
+    return [PseudoTerminal populateArrangementWith:[iTermOr second:session]
+                                 includingContents:YES
+                                           encoder:result
+                                      terminalGuid:[[NSUUID UUID] UUIDString]
+                                              rect:NSMakeRect(0, 0, 0, 0)
+                                   useTransparency:YES
+                                shouldShowToolbelt:NO
+                               toolbeltProportions:nil
+                           toolbeltRestorableState:nil
+                         windowTitleOverrideFormat:nil
+                  hidingToolbeltShouldResizeWindow:NO
+                                     anyFullScreen:NO
+                                    lionFullScreen:NO
+                                          oldFrame:NSMakeRect(0, 0, 0, 0)
+                                        windowType:WINDOW_TYPE_NORMAL
+                                   savedWindowType:WINDOW_TYPE_NORMAL
+                                    initialProfile:session.profile
+                                    isHotKeyWindow:NO
+                                  hotkeyWindowType:iTermHotkeyWindowTypeNone
+                                       screenIndex:0
+                      screenNumberFromFirstProfile:0
+                                  windowSizeHelper:nil
+                                  hideAfterOpening:NO
+                                  selectedTabIndex:0
+                                               tab:nil
+                                       profileGuid:nil
+                                       isMaximized:NO];
+}
+
+- (BOOL)populateArrangementWithSession:(PTYSession *)session
+                               encoder:(id<iTermEncoderAdapter>)result {
+    return [self populateArrangementWith:[iTermOr second:session]
+                       includingContents:YES
+                                 encoder:result];
+}
+
 - (BOOL)populateArrangementWithTabs:(NSArray<PTYTab *> *)tabs
                   includingContents:(BOOL)includeContents
                             encoder:(id<iTermEncoderAdapter>)result {
+    return [self populateArrangementWith:[iTermOr first:tabs]
+                       includingContents:includeContents
+                                 encoder:result];
+}
+
+- (BOOL)populateArrangementWith:(iTermOr<NSArray<PTYTab *> *, PTYSession *> *)tabsOrSession
+              includingContents:(BOOL)includeContents
+                        encoder:(id<iTermEncoderAdapter>)result {
     NSRect rect = [[self window] frame];
 
-    [result setObject:self.terminalGuid forKey:TERMINAL_GUID];
+    return [PseudoTerminal populateArrangementWith:tabsOrSession
+                                 includingContents:includeContents
+                                           encoder:result
+                                      terminalGuid:self.terminalGuid
+                                              rect:rect
+                                   useTransparency:useTransparency_
+                                shouldShowToolbelt:_contentView.shouldShowToolbelt
+                               toolbeltProportions:_contentView.toolbelt.proportions
+                           toolbeltRestorableState:_contentView.toolbelt.restorableState
+                         windowTitleOverrideFormat:self.scope.windowTitleOverrideFormat
+                  hidingToolbeltShouldResizeWindow:hidingToolbeltShouldResizeWindow_
+                                     anyFullScreen:[self anyFullScreen]
+                                    lionFullScreen:[self lionFullScreen]
+                                          oldFrame:oldFrame_
+                                        windowType:self.windowType
+                                   savedWindowType:self.savedWindowType
+                                    initialProfile:[self expurgatedInitialProfile]
+                                    isHotKeyWindow:self.isHotKeyWindow
+                                  hotkeyWindowType:_hotkeyWindowType
+                                       screenIndex:[[NSScreen screens] indexOfObjectIdenticalTo:[[self window] screen]]
+                      screenNumberFromFirstProfile:_screenNumberFromFirstProfile
+                                  windowSizeHelper:_windowSizeHelper
+                                  hideAfterOpening:hideAfterOpening_
+                                  selectedTabIndex:[_contentView.tabView indexOfTabViewItem:[_contentView.tabView selectedTabViewItem]]
+                                               tab:nil
+                                       profileGuid:[[[[iTermHotKeyController sharedInstance] profileHotKeyForWindowController:self] profile] objectForKey:KEY_GUID]
+                                       isMaximized:[self isMaximized]];
+}
+
++ (BOOL)populateArrangementWith:(iTermOr<NSArray<PTYTab *> *, PTYSession *> *)tabsOrSession
+              includingContents:(BOOL)includeContents
+                        encoder:(id<iTermEncoderAdapter>)result
+                   terminalGuid:(NSString *)terminalGuid
+                           rect:(NSRect)rect
+                useTransparency:(BOOL)useTransparency
+             shouldShowToolbelt:(BOOL)shouldShowToolbelt
+            toolbeltProportions:(NSDictionary *)proportions
+        toolbeltRestorableState:(NSDictionary *)toolbeltRestorableState
+      windowTitleOverrideFormat:(NSString *)windowTitleOverrideFormat
+hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
+                  anyFullScreen:(BOOL)anyFullScreen
+                 lionFullScreen:(BOOL)lionFullScreen
+                       oldFrame:(NSRect)oldFrame
+                     windowType:(iTermWindowType)windowType
+                savedWindowType:(iTermWindowType)savedWindowType
+                 initialProfile:(Profile *)initialProfile
+                 isHotKeyWindow:(BOOL)isHotKeyWindow
+               hotkeyWindowType:(iTermHotkeyWindowType)hotkeyWindowType
+                    screenIndex:(NSUInteger)screenIndex
+  screenNumberFromFirstProfile:(int)screenNumberFromFirstProfile
+               windowSizeHelper:(iTermTerminalWindowSizeHelper *)windowSizeHelper
+               hideAfterOpening:(BOOL)hideAfterOpening
+               selectedTabIndex:(NSUInteger)selectedTabIndex
+                            tab:(PTYTab *)tab  // when saving a single session, set to enclosing tab if possible
+                    profileGuid:(NSString *)profileGuid
+                    isMaximized:(BOOL)isMaximized {
+    [result setObject:terminalGuid forKey:TERMINAL_GUID];
 
     // Save window frame
     result[TERMINAL_ARRANGEMENT_X_ORIGIN] = @(rect.origin.x);
@@ -3712,67 +3849,121 @@ ITERM_WEAKLY_REFERENCEABLE
     result[TERMINAL_ARRANGEMENT_WIDTH] = @(rect.size.width);
     result[TERMINAL_ARRANGEMENT_HEIGHT] = @(rect.size.height);
 
-    result[TERMINAL_ARRANGEMENT_USE_TRANSPARENCY] = @(useTransparency_);
+    result[TERMINAL_ARRANGEMENT_USE_TRANSPARENCY] = @(useTransparency);
 
     DLog(@"While creating arrangement for %@ save frame of %@", self, NSStringFromRect(rect));
     DLog(@"%@", [NSThread callStackSymbols]);
-    result[TERMINAL_ARRANGEMENT_HAS_TOOLBELT] = @(_contentView.shouldShowToolbelt);
-    NSDictionary *proportions = _contentView.toolbelt.proportions;
+    result[TERMINAL_ARRANGEMENT_HAS_TOOLBELT] = @(shouldShowToolbelt);
     if (proportions) {
         result[TERMINAL_ARRANGEMENT_TOOLBELT_PROPORTIONS] = proportions;
     }
-    result[TERMINAL_ARRANGEMENT_TOOLBELT] = _contentView.toolbelt.restorableState;
-    
-    if (self.scope.windowTitleOverrideFormat) {
-        result[TERMINAL_ARRANGEMENT_TITLE_OVERRIDE] = self.scope.windowTitleOverrideFormat;
+    result[TERMINAL_ARRANGEMENT_TOOLBELT] = toolbeltRestorableState;
+
+    if (windowTitleOverrideFormat) {
+        result[TERMINAL_ARRANGEMENT_TITLE_OVERRIDE] = windowTitleOverrideFormat;
     }
     result[TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW] =
-            @(hidingToolbeltShouldResizeWindow_);
+            @(hidingToolbeltShouldResizeWindow);
 
-    if ([self anyFullScreen]) {
+    if (anyFullScreen) {
         // Save old window frame
-        result[TERMINAL_ARRANGEMENT_OLD_X_ORIGIN] = @(oldFrame_.origin.x);
-        result[TERMINAL_ARRANGEMENT_OLD_Y_ORIGIN] = @(oldFrame_.origin.y);
-        result[TERMINAL_ARRANGEMENT_OLD_WIDTH] = @(oldFrame_.size.width);
-        result[TERMINAL_ARRANGEMENT_OLD_HEIGHT] = @(oldFrame_.size.height);
+        result[TERMINAL_ARRANGEMENT_OLD_X_ORIGIN] = @(oldFrame.origin.x);
+        result[TERMINAL_ARRANGEMENT_OLD_Y_ORIGIN] = @(oldFrame.origin.y);
+        result[TERMINAL_ARRANGEMENT_OLD_WIDTH] = @(oldFrame.size.width);
+        result[TERMINAL_ARRANGEMENT_OLD_HEIGHT] = @(oldFrame.size.height);
     }
 
-    result[TERMINAL_ARRANGEMENT_WINDOW_TYPE] = @([self lionFullScreen] ? WINDOW_TYPE_LION_FULL_SCREEN : self.windowType);
-    result[TERMINAL_ARRANGEMENT_SAVED_WINDOW_TYPE] = @(self.savedWindowType);
-    result[TERMINAL_ARRANGEMENT_INITIAL_PROFILE] = [self expurgatedInitialProfile];
-    if (_hotkeyWindowType == iTermHotkeyWindowTypeNone) {
-        result[TERMINAL_ARRANGEMENT_SCREEN_INDEX] = @([[NSScreen screens] indexOfObjectIdenticalTo:[[self window] screen]]);
+    result[TERMINAL_ARRANGEMENT_WINDOW_TYPE] = @(lionFullScreen ? WINDOW_TYPE_LION_FULL_SCREEN : windowType);
+    result[TERMINAL_ARRANGEMENT_SAVED_WINDOW_TYPE] = @(savedWindowType);
+    result[TERMINAL_ARRANGEMENT_INITIAL_PROFILE] = initialProfile;
+    if (hotkeyWindowType == iTermHotkeyWindowTypeNone) {
+        result[TERMINAL_ARRANGEMENT_SCREEN_INDEX] = @(screenIndex);
     } else {
-        result[TERMINAL_ARRANGEMENT_SCREEN_INDEX] = @(_screenNumberFromFirstProfile);
+        result[TERMINAL_ARRANGEMENT_SCREEN_INDEX] = @(screenNumberFromFirstProfile);
     }
-    [_windowSizeHelper populateInArrangement:result];
+    [windowSizeHelper populateInArrangement:result];
 
     // Save tabs.
-    if ([tabs count] == 0) {
+    __block BOOL fail = NO;
+    [tabsOrSession whenFirst:^(NSArray<PTYTab *> *tabs) {
+        if ([tabs count] == 0) {
+            fail = YES;
+            return;
+        }
+        [result encodeArrayWithKey:TERMINAL_ARRANGEMENT_TABS
+                       identifiers:[tabs mapWithBlock:^id(PTYTab *tab) { return tab.stringUniqueIdentifier; }]
+                        generation:iTermGenerationAlwaysEncode
+                             block:^BOOL(id<iTermEncoderAdapter>  _Nonnull encoder,
+                                         NSInteger index,
+                                         NSString * _Nonnull identifier,
+                                         BOOL *stop) {
+            return [tabs[index] encodeWithContents:includeContents
+                                           encoder:encoder];
+        }];
+        // Save index of selected tab.
+        result[TERMINAL_ARRANGEMENT_SELECTED_TAB_INDEX] = @(selectedTabIndex);
+        result[TERMINAL_ARRANGEMENT_HIDE_AFTER_OPENING] = @(hideAfterOpening);
+        result[TERMINAL_ARRANGEMENT_IS_HOTKEY_WINDOW] = @(isHotKeyWindow);
+    } second:^(PTYSession *session) {
+        NSString *tabGuid = [[NSUUID UUID] UUIDString];
+        NSDictionary *options = @{
+            PTYTabArrangementOptionsOnlySessionID: session.guid,
+            PTYTabArrangementOptionsReplacementProfile: session.profile,
+            PTYTabArrangementOptionsReplacementSaveProgram: @NO,
+            PTYSessionArrangementOptionsUnlimitedHistory: @YES,   // because this is the code path for archives
+            PTYSessionArrangementOptionsArchive: @YES
+        };
+        [result encodeArrayWithKey:TERMINAL_ARRANGEMENT_TABS
+                       identifiers:@[ tabGuid ]
+                        generation:iTermGenerationAlwaysEncode
+                             block:^BOOL(id<iTermEncoderAdapter>  _Nonnull encoder,
+                                         NSInteger index,
+                                         NSString * _Nonnull identifier,
+                                         BOOL *stop) {
+            if (tab) {
+                return [tab encodeWithContents:YES constructIdMap:NO encoder:encoder options:options];
+            } else {
+                NSView *sessionSuperview = session.view.superview;
+                const NSUInteger index = [sessionSuperview.subviews indexOfObject:session.view];
+                const BOOL result = [PTYTab encodeWithContents:YES
+                                                constructIdMap:NO
+                                                       encoder:encoder
+                                                       options:options
+                                                 activeSession:session
+                                                       tabGuid:tabGuid
+                                                 titleOverride:nil
+                                                   isMaximized:NO
+                                              savedArrangement:nil
+                                                         idMap:nil
+                                                          root:[PTYTab placeholderSplitViewForSession:session]
+                                             sessionViewFinder:^SessionView *(NSString *guid) {
+                    return session.view;
+                } sessionFinder:^PTYSession *(SessionView *sessionView) {
+                    return session;
+                }];
+                if (index != NSNotFound) {
+                    [sessionSuperview insertSubview:session.view atIndex:index];
+                }
+                return result;
+            }
+        }];
+        result[TERMINAL_ARRANGEMENT_SELECTED_TAB_INDEX] = @0;
+        result[TERMINAL_ARRANGEMENT_HIDE_AFTER_OPENING] = @NO;
+        result[TERMINAL_ARRANGEMENT_IS_HOTKEY_WINDOW] = @NO;
+        result[TERMINAL_ARRANGEMENT_ARCHIVE] = @{
+            @"columns": @(session.screen.width),
+            @"rows": @(session.screen.height),
+        };
+    }];
+    if (fail) {
         return NO;
     }
-    [result encodeArrayWithKey:TERMINAL_ARRANGEMENT_TABS
-                   identifiers:[tabs mapWithBlock:^id(PTYTab *tab) { return tab.stringUniqueIdentifier; }]
-                    generation:iTermGenerationAlwaysEncode
-                         block:^BOOL(id<iTermEncoderAdapter>  _Nonnull encoder,
-                                     NSInteger index,
-                                     NSString * _Nonnull identifier,
-                                     BOOL *stop) {
-        return [tabs[index] encodeWithContents:includeContents
-                                       encoder:encoder];
-    }];
-
-    // Save index of selected tab.
-    result[TERMINAL_ARRANGEMENT_SELECTED_TAB_INDEX] = @([_contentView.tabView indexOfTabViewItem:[_contentView.tabView selectedTabViewItem]]);
-    result[TERMINAL_ARRANGEMENT_HIDE_AFTER_OPENING] = @(hideAfterOpening_);
-    result[TERMINAL_ARRANGEMENT_IS_HOTKEY_WINDOW] = @(self.isHotKeyWindow);
-    NSString *profileGuid = [[[[iTermHotKeyController sharedInstance] profileHotKeyForWindowController:self] profile] objectForKey:KEY_GUID];
     if (profileGuid) {
         result[TERMINAL_ARRANGEMENT_PROFILE_GUID] = profileGuid;
     }
 
     const CGFloat scrollerWidth = iTermScrollbarWidth();
-    if (![self isMaximized]) {
+    if (!isMaximized) {
         result[TERMINAL_ARRANGEMENT_SCROLLER_WIDTH] = @(scrollerWidth);
         DLog(@"Save scroller width of %@", @(scrollerWidth));
     } else {
@@ -4134,17 +4325,21 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)makeCurrentSessionFirstResponder {
+    [self makeCurrentSessionFirstResponderWithRetry:YES];
+}
+- (void)makeCurrentSessionFirstResponderWithRetry:(BOOL)canRetry {
     if ([self currentSession]) {
         PtyLog(@"makeCurrentSessionFirstResponder. New first responder will be %@. The current first responder is %@",
                [[self currentSession] textview], [[self window] firstResponder]);
         NSView *view = [NSView castFrom:[[self currentSession] mainResponder]];
         if (view && view.window != self.window) {
+            if (!canRetry) {
+                return;
+            }
             // Browser is added after a delay so we need to retry for it.
             __weak __typeof(self) weakSelf = self;
-            NSLog(@"Retry");
             dispatch_async(dispatch_get_main_queue(), ^{
-                NSLog(@"Retrying");
-                [weakSelf makeCurrentSessionFirstResponder];
+                [weakSelf makeCurrentSessionFirstResponderWithRetry:NO];
             });
             return;
         }
@@ -8224,6 +8419,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
 
 - (IBAction)copyModeShortcuts:(id)sender {
     [[NSWorkspace sharedWorkspace] it_openURL:[NSURL URLWithString:@"https://iterm2.com/documentation-copymode.html"]
+                                       target:nil
                                         style:iTermOpenStyleTab
                                        window:self.window];
 }
@@ -8367,6 +8563,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
 
 - (IBAction)coprocessHelp:(id)sender {
     [[NSWorkspace sharedWorkspace] it_openURL:[NSURL URLWithString:@"http://www.iterm2.com/coprocesses.html"]
+                                       target:nil
                                         style:iTermOpenStyleTab
                                        window:self.window];
 }
@@ -11712,11 +11909,12 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
 }
 
 - (void)openSplitPaneWithURL:(NSURL *)url
+                      target:(NSString *)target
                  baseProfile:(Profile *)base
              nearSessionGuid:(NSString *)sessionGuid
                     vertical:(BOOL)vertical {
-    PTYSession *target = [[iTermController sharedInstance] sessionWithGUID:sessionGuid];
-    if (!target) {
+    PTYSession *sessionToSplit = [[iTermController sharedInstance] sessionWithGUID:sessionGuid];
+    if (!sessionToSplit) {
         return;
     }
     MutableProfile *profile = [[base mutableCopy] autorelease];
@@ -11726,8 +11924,10 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
     [self asyncSplitVertically:vertical
                         before:NO
                        profile:profile
-                 targetSession:target
-                    completion:nil
+                 targetSession:sessionToSplit
+                    completion:^(PTYSession *session, BOOL ok) {
+        session.browserTarget = target;
+    }
                          ready:nil];
 }
 

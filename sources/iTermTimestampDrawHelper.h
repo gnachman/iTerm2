@@ -7,6 +7,8 @@
 
 #import <Cocoa/Cocoa.h>
 
+@class PTYFontInfo;
+
 extern const CGFloat iTermTimestampGradientWidth;
 
 // Create a new instance for each frame and call -drawTimestampWithDate:line: repeatedly for each
@@ -30,8 +32,9 @@ extern const CGFloat iTermTimestampGradientWidth;
                                     now:(NSTimeInterval)now
                      useTestingTimezone:(BOOL)useTestingTimezone
                               rowHeight:(CGFloat)rowHeight
+              rowHeightWithoutSpacing:(CGFloat)rowHeightWithoutSpacing
                                  retina:(BOOL)isRetina
-                                   font:(NSFont *)font
+                               fontInfo:(PTYFontInfo *)fontInfo
                                obscured:(CGFloat)obscured;
 
 - (void)setDate:(NSDate *)timestamp forLine:(int)line;

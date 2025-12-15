@@ -10,12 +10,117 @@
 #import "DebugLogging.h"
 #import "iTerm2SharedARC-Swift.h"
 #import "iTermAdvancedSettingsModel.h"
+#import "iTermCache.h"
 #import "iTermPreferences.h"
+#import "iTermVirtualOffset.h"
 #import "NSColor+iTerm.h"
 #import "NSFont+iTerm.h"
+#import "PTYFontInfo.h"
 #import "RegexKitLite.h"
 
 const CGFloat iTermTimestampGradientWidth = 20;
+
+// Date formatter cache indices
+typedef NS_ENUM(NSInteger, iTermTimestampFormatterType) {
+    iTermTimestampFormatterTypeWithinDay = 0,      // jj:mm:ss
+    iTermTimestampFormatterTypeWithinWeek = 1,     // EEE jj:mm:ss
+    iTermTimestampFormatterTypeWithinHalfYear = 2, // MMMd jj:mm:ss
+    iTermTimestampFormatterTypeOlder = 3,          // yyyyMMMd jj:mm:ss
+    iTermTimestampFormatterTypeCount = 4
+};
+
+static NSDateFormatter *sDateFormatterCache[iTermTimestampFormatterTypeCount];
+static iTermCache<NSNumber *, NSString *> *sTimestampStringCache[iTermTimestampFormatterTypeCount];
+static id sLocaleChangeObserver;
+
+static void iTermTimestampDrawHelperInvalidateCache(void) {
+    for (int i = 0; i < iTermTimestampFormatterTypeCount; i++) {
+        sDateFormatterCache[i] = nil;
+        sTimestampStringCache[i] = nil;
+    }
+}
+
+static void iTermTimestampDrawHelperInitializeIfNeeded(void) {
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        for (int i = 0; i < iTermTimestampFormatterTypeCount; i++) {
+            sTimestampStringCache[i] = [[iTermCache alloc] initWithCapacity:1000];
+        }
+        sLocaleChangeObserver = [[NSNotificationCenter defaultCenter]
+            addObserverForName:NSCurrentLocaleDidChangeNotification
+                        object:nil
+                         queue:nil
+                    usingBlock:^(NSNotification * _Nonnull note) {
+            iTermTimestampDrawHelperInvalidateCache();
+        }];
+    });
+}
+
+static iTermTimestampFormatterType iTermTimestampFormatterTypeForTimeDelta(NSTimeInterval timeDelta) {
+    const NSTimeInterval day = -86400;
+    if (timeDelta < day * 180) {
+        return iTermTimestampFormatterTypeOlder;
+    } else if (timeDelta < day * 6) {
+        return iTermTimestampFormatterTypeWithinHalfYear;
+    } else if (timeDelta < day) {
+        return iTermTimestampFormatterTypeWithinWeek;
+    } else {
+        return iTermTimestampFormatterTypeWithinDay;
+    }
+}
+
+static NSDateFormatter *iTermTimestampDrawHelperGetCachedFormatter(iTermTimestampFormatterType type) {
+    iTermTimestampDrawHelperInitializeIfNeeded();
+
+    NSDateFormatter *cached = sDateFormatterCache[type];
+    if (cached) {
+        return cached;
+    }
+
+    NSDateFormatter *fmt = [[NSDateFormatter alloc] init];
+    NSString *template;
+    switch (type) {
+        case iTermTimestampFormatterTypeWithinDay:
+            template = @"jj:mm:ss";
+            break;
+        case iTermTimestampFormatterTypeWithinWeek:
+            template = @"EEE jj:mm:ss";
+            break;
+        case iTermTimestampFormatterTypeWithinHalfYear:
+            template = @"MMMd jj:mm:ss";
+            break;
+        case iTermTimestampFormatterTypeOlder:
+            template = @"yyyyMMMd jj:mm:ss";
+            break;
+        default:
+            template = @"jj:mm:ss";
+            break;
+    }
+    [fmt setDateFormat:[NSDateFormatter dateFormatFromTemplate:template
+                                                       options:0
+                                                        locale:[NSLocale currentLocale]]];
+    sDateFormatterCache[type] = fmt;
+    return fmt;
+}
+
+// Returns a cached formatted string for the given timestamp rounded to seconds.
+// The cache is partitioned by formatter type to handle timestamps aging across format boundaries.
+static NSString *iTermTimestampDrawHelperGetCachedString(NSTimeInterval roundedTimestamp,
+                                                          iTermTimestampFormatterType type) {
+    iTermTimestampDrawHelperInitializeIfNeeded();
+
+    NSNumber *key = @(roundedTimestamp);
+    NSString *cached = sTimestampStringCache[type][key];
+    if (cached) {
+        return cached;
+    }
+
+    NSDateFormatter *fmt = iTermTimestampDrawHelperGetCachedFormatter(type);
+    NSDate *date = [NSDate dateWithTimeIntervalSinceReferenceDate:roundedTimestamp];
+    NSString *formatted = [fmt stringFromDate:date];
+    sTimestampStringCache[type][key] = formatted;
+    return formatted;
+}
 
 @interface iTermTimestampRow : NSObject
 @property (nonatomic, strong) NSString *string;
@@ -32,11 +137,13 @@ const CGFloat iTermTimestampGradientWidth = 20;
     NSTimeInterval _now;
     BOOL _useTestingTimezone;
     CGFloat _rowHeight;
+    CGFloat _rowHeightWithoutSpacing;
     BOOL _isRetina;
     CGFloat _obscured;
     NSMutableArray<iTermTimestampRow *> *_rows;
     BOOL _fontIsFixedPitch;
     NSSize _fontPitch;
+    CGFloat _baselineOffset;
 }
 
 - (instancetype)initWithBackgroundColor:(NSColor *)backgroundColor
@@ -44,8 +151,9 @@ const CGFloat iTermTimestampGradientWidth = 20;
                                     now:(NSTimeInterval)now
                      useTestingTimezone:(BOOL)useTestingTimezone
                               rowHeight:(CGFloat)rowHeight
+              rowHeightWithoutSpacing:(CGFloat)rowHeightWithoutSpacing
                                  retina:(BOOL)isRetina
-                                   font:(NSFont *)font
+                               fontInfo:(PTYFontInfo *)fontInfo
                                obscured:(CGFloat)obscured {
     self = [super init];
     if (self) {
@@ -54,10 +162,12 @@ const CGFloat iTermTimestampGradientWidth = 20;
         _now = now;
         _useTestingTimezone = useTestingTimezone;
         _rowHeight = rowHeight;
+        _rowHeightWithoutSpacing = rowHeightWithoutSpacing;
         _isRetina = isRetina;
         _rows = [NSMutableArray array];
         _obscured = obscured;
-        self.font = font ?: [NSFont userFixedPitchFontOfSize:[NSFont systemFontSize]];
+        _baselineOffset = fontInfo.baselineOffset;
+        self.font = fontInfo.font ?: [NSFont userFixedPitchFontOfSize:[NSFont systemFontSize]];
     }
     return self;
 }
@@ -84,7 +194,7 @@ const CGFloat iTermTimestampGradientWidth = 20;
                                             now:_now
                              useTestingTimezone:_useTestingTimezone
                                           delta:&delta];
-    const NSRect textFrame = [self frameForString:string line:line maxX:0 virtualOffset:0];
+    const NSRect textFrame = [self frameForString:string line:line maxX:0];
     _maximumWidth = MAX(_maximumWidth, NSWidth(textFrame));
 
     iTermTimestampRow *row = [[iTermTimestampRow alloc] init];
@@ -101,19 +211,18 @@ const CGFloat iTermTimestampGradientWidth = 20;
         NSRect stringFrame = [self frameForStringGivenWidth:self->_maximumWidth
                                                      height:[self fontHeight]
                                                        line:row.line
-                                                       maxX:NSMaxX(frame)
-                                              virtualOffset:virtualOffset];
+                                                       maxX:NSMaxX(frame)];
         [self drawBackgroundInFrame:[self backgroundFrameForTextFrame:stringFrame]
                             bgColor:self->_bgColor
-                            context:context];
+                            context:context
+                      virtualOffset:virtualOffset];
     }];
     [_rows enumerateObjectsUsingBlock:^(iTermTimestampRow * _Nonnull row, NSUInteger idx, BOOL * _Nonnull stop) {
         NSRect stringFrame = [self frameForStringGivenWidth:self->_maximumWidth
                                                      height:[self fontHeight]
                                                        line:row.line
-                                                       maxX:NSMaxX(frame)
-                                              virtualOffset:virtualOffset];
-        [self drawString:row.string row:idx frame:stringFrame delta:row.delta];
+                                                       maxX:NSMaxX(frame)];
+        [self drawString:row.string row:idx frame:stringFrame delta:row.delta virtualOffset:virtualOffset];
     }];
 }
 
@@ -129,13 +238,13 @@ const CGFloat iTermTimestampGradientWidth = 20;
     NSRect stringFrame = [self frameForStringGivenWidth:_maximumWidth
                                                  height:[self fontHeight]
                                                    line:0
-                                                   maxX:NSMaxX(frame)
-                                          virtualOffset:virtualOffset];
+                                                   maxX:NSMaxX(frame)];
     stringFrame.origin.y += frame.origin.y;
     [self drawBackgroundInFrame:[self backgroundFrameForTextFrame:stringFrame]
                         bgColor:_bgColor
-                        context:context];
-    [self drawString:row.string row:index frame:stringFrame delta:row.delta];
+                        context:context
+                  virtualOffset:virtualOffset];
+    [self drawString:row.string row:index frame:stringFrame delta:row.delta virtualOffset:virtualOffset];
 }
 
 - (BOOL)rowIsRepeat:(int)index {
@@ -163,18 +272,19 @@ const CGFloat iTermTimestampGradientWidth = 20;
 
 - (void)drawBackgroundInFrame:(NSRect)frame
                       bgColor:(NSColor *)bgColor
-                      context:(NSGraphicsContext *)context {
+                      context:(NSGraphicsContext *)context
+                virtualOffset:(CGFloat)virtualOffset {
     const CGFloat alpha = 0.9;
     NSGradient *gradient =
     [[NSGradient alloc] initWithStartingColor:[bgColor colorWithAlphaComponent:0]
                                   endingColor:[bgColor colorWithAlphaComponent:alpha]];
     [context setCompositingOperation:NSCompositingOperationSourceOver];
-    NSRect gradientFrame = frame;
+    NSRect gradientFrame = NSRectSubtractingVirtualOffset(frame, virtualOffset);
     gradientFrame.size.width = iTermTimestampGradientWidth;
     [gradient drawInRect:gradientFrame
                    angle:0];
 
-    NSRect solidFrame = frame;
+    NSRect solidFrame = NSRectSubtractingVirtualOffset(frame, virtualOffset);
     solidFrame.origin.x += iTermTimestampGradientWidth;
     solidFrame.size.width -= iTermTimestampGradientWidth;
     [[bgColor colorWithAlphaComponent:alpha] set];
@@ -204,7 +314,8 @@ const CGFloat iTermTimestampGradientWidth = 20;
 - (void)drawString:(NSString *)s
                row:(int)index
              frame:(NSRect)frame
-             delta:(NSTimeInterval)delta {
+             delta:(NSTimeInterval)delta
+     virtualOffset:(CGFloat)virtualOffset {
     NSColor *color = _fgColor ?: [NSColor colorWithRed:0 green:0 blue:0 alpha:1];
     NSDictionary *attributes = [self attributesForTextColor:[self tintedColor:color delta:delta]
                                                      shadow:[self shadowForTextColor:color ?: [NSColor colorWithRed:1 green:1 blue:1 alpha:1]]
@@ -214,27 +325,35 @@ const CGFloat iTermTimestampGradientWidth = 20;
         [color set];
         const CGFloat center = NSMinX(frame) + 10;
         const NSRect backgroundFrame = [self backgroundFrameForTextFrame:frame];
-        NSRectFill(NSMakeRect(center - 1, NSMinY(backgroundFrame), 1, _rowHeight));
-        NSRectFill(NSMakeRect(center + 1, NSMinY(backgroundFrame), 1, _rowHeight));
+        iTermRectFill(NSMakeRect(center - 1, NSMinY(backgroundFrame), 1, _rowHeight), virtualOffset);
+        iTermRectFill(NSMakeRect(center + 1, NSMinY(backgroundFrame), 1, _rowHeight), virtualOffset);
     } else {
         [NSGraphicsContext saveGraphicsState];
         CGContextRef ctx = [[NSGraphicsContext currentContext] CGContext];
         CGContextSetShouldSmoothFonts(ctx, NO);
-        [s drawAtPoint:frame.origin withAttributes:attributes];
+        [s it_drawAtPoint:frame.origin withAttributes:attributes virtualOffset:virtualOffset];
         [NSGraphicsContext restoreGraphicsState];
     }
 }
 
 #pragma mark - Pixel Arithmetic
 
-- (NSRect)backgroundFrameForTextFrame:(NSRect)frame {
-    return NSMakeRect(NSMinX(frame) - iTermTimestampGradientWidth,
-                      NSMinY(frame) - [self retinaRound:(_rowHeight - [self fontHeight]) / 2.0],
-                      NSWidth(frame) + iTermTimestampGradientWidth,
-                      NSHeight(frame));
+- (CGFloat)lineRelativeOffset {
+    const CGFloat spacingAdjustment = round((_rowHeight - _rowHeightWithoutSpacing) / 2.0);
+    const CGFloat fontHeight = self.font.ascender - self.font.descender;
+    return _rowHeight + _baselineOffset - fontHeight - spacingAdjustment;
 }
 
-- (NSRect)frameForString:(NSString *)s line:(int)line maxX:(CGFloat)maxX virtualOffset:(CGFloat)virtualOffset {
+- (NSRect)backgroundFrameForTextFrame:(NSRect)frame {
+    const CGFloat rowTop = frame.origin.y - self.lineRelativeOffset;
+
+    return NSMakeRect(NSMinX(frame) - iTermTimestampGradientWidth,
+                      rowTop,
+                      NSWidth(frame) + iTermTimestampGradientWidth,
+                      _rowHeight);
+}
+
+- (NSRect)frameForString:(NSString *)s line:(int)line maxX:(CGFloat)maxX {
     NSSize size;
     if (_fontIsFixedPitch) {
         size = NSMakeSize(_fontPitch.width * s.length, _fontPitch.height);
@@ -247,22 +366,20 @@ const CGFloat iTermTimestampGradientWidth = 20;
     return [self frameForStringGivenWidth:size.width
                                    height:[self fontHeight]
                                      line:line
-                                     maxX:maxX
-                            virtualOffset:virtualOffset];
+                                     maxX:maxX];
 }
 
 - (CGFloat)fontHeight {
-    return self.font.capHeight - self.font.descender;
+    return self.font.ascender - self.font.descender;
 }
 
 - (NSRect)frameForStringGivenWidth:(CGFloat)width
                             height:(CGFloat)height
                               line:(int)line
-                              maxX:(CGFloat)maxX
-                     virtualOffset:(CGFloat)virtualOffset {
+                              maxX:(CGFloat)maxX {
     const int w = width + [iTermPreferences intForKey:kPreferenceKeySideMargins];
     const int x = MAX(0, maxX - w);
-    const CGFloat y = line * _rowHeight - virtualOffset + [self retinaRound:(_rowHeight - height) / 2.0];
+    const CGFloat y = line * _rowHeight + self.lineRelativeOffset;
 
     return NSMakeRect(x, y, w, _rowHeight);
 }
@@ -278,34 +395,17 @@ const CGFloat iTermTimestampGradientWidth = 20;
 
 - (NSDateFormatter *)dateFormatterWithTimeDelta:(NSTimeInterval)timeDelta
                              useTestingTimezone:(BOOL)useTestingTimezone {
-    NSDateFormatter *fmt = [[NSDateFormatter alloc] init];
-    const NSTimeInterval day = -86400;
-    if (timeDelta < day * 180) {
-        // More than 180 days ago: include year
-        // I tried using 365 but it was pretty confusing to see tomorrow's date.
-        [fmt setDateFormat:[NSDateFormatter dateFormatFromTemplate:@"yyyyMMMd jj:mm:ss"
-                                                           options:0
-                                                            locale:[NSLocale currentLocale]]];
-    } else if (timeDelta < day * 6) {
-        // 6 days to 180 days ago: include date without year
-        [fmt setDateFormat:[NSDateFormatter dateFormatFromTemplate:@"MMMd jj:mm:ss"
-                                                           options:0
-                                                            locale:[NSLocale currentLocale]]];
-    } else if (timeDelta < day) {
-        // 1 day to 6 days ago: include day of week
-        [fmt setDateFormat:[NSDateFormatter dateFormatFromTemplate:@"EEE jj:mm:ss"
-                                                           options:0
-                                                            locale:[NSLocale currentLocale]]];
-    } else {
-        // In last 24 hours, just show time
-        [fmt setDateFormat:[NSDateFormatter dateFormatFromTemplate:@"jj:mm:ss"
-                                                           options:0
-                                                            locale:[NSLocale currentLocale]]];
-    }
+    iTermTimestampFormatterType type = iTermTimestampFormatterTypeForTimeDelta(timeDelta);
+
     if (useTestingTimezone) {
+        // Don't cache testing timezone formatters - this code path is rarely used
+        NSDateFormatter *fmt = [[NSDateFormatter alloc] init];
+        [fmt setDateFormat:[iTermTimestampDrawHelperGetCachedFormatter(type) dateFormat]];
         fmt.timeZone = [NSTimeZone timeZoneForSecondsFromGMT:0];
+        return fmt;
     }
-    return fmt;
+
+    return iTermTimestampDrawHelperGetCachedFormatter(type);
 }
 
 - (NSString *)relativeStringForTimestamp:(NSTimeInterval)timestamp {
@@ -331,10 +431,19 @@ const CGFloat iTermTimestampGradientWidth = 20;
     }
     const NSTimeInterval timeDelta = timeSinceReference - now;
     *deltaPtr = timeDelta;
-    NSDateFormatter *fmt = [self dateFormatterWithTimeDelta:timeDelta
-                                         useTestingTimezone:useTestingTimezone];
-    NSDate *rounded = [NSDate dateWithTimeIntervalSinceReferenceDate:timeSinceReference];
-    NSString *formattedString = [fmt stringFromDate:rounded];
+
+    if (useTestingTimezone) {
+        // Don't use cache for testing timezone - this code path is rarely used
+        NSDateFormatter *fmt = [self dateFormatterWithTimeDelta:timeDelta
+                                             useTestingTimezone:useTestingTimezone];
+        NSDate *rounded = [NSDate dateWithTimeIntervalSinceReferenceDate:timeSinceReference];
+        NSString *formattedString = [fmt stringFromDate:rounded];
+        DLog(@"%@ -> %@", timestamp, formattedString);
+        return formattedString;
+    }
+
+    iTermTimestampFormatterType type = iTermTimestampFormatterTypeForTimeDelta(timeDelta);
+    NSString *formattedString = iTermTimestampDrawHelperGetCachedString(timeSinceReference, type);
     DLog(@"%@ -> %@", timestamp, formattedString);
     return formattedString;
 }

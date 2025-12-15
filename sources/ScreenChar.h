@@ -129,7 +129,10 @@ typedef enum {
 typedef NS_ENUM(unsigned int, VT100UnderlineStyle) {
     VT100UnderlineStyleSingle,
     VT100UnderlineStyleCurly,
-    VT100UnderlineStyleDouble
+    VT100UnderlineStyleDouble,
+
+    VT100UnderlineStyleDotted,
+    VT100UnderlineStyleDashed
 };
 
 typedef struct {
@@ -203,7 +206,7 @@ typedef struct legacy_screen_char_t {
     unsigned int image : 1;
 
     unsigned int strikethrough : 1;
-    VT100UnderlineStyle underlineStyle : 2;  // VT100UnderlineStyle
+    unsigned int legacyUnderlineStyle : 2;  // VT100UnderlineStyle
 
     unsigned int invisible : 1;
 
@@ -288,7 +291,7 @@ typedef struct screen_char_t {
     unsigned int image : 1;  // See also virtualPlaceholder, below.
 
     unsigned int strikethrough : 1;
-    VT100UnderlineStyle underlineStyle : 2;  // VT100UnderlineStyle
+    unsigned int underlineStyle0 : 2;  // VT100UnderlineStyle (lowest bits)
 
     unsigned int invisible : 1;
 
@@ -305,9 +308,19 @@ typedef struct screen_char_t {
     // BiDi disposition, if any.
     RTLStatus rtlStatus : 2;
 
-    unsigned int unused : 12;
+    unsigned int underlineStyle1 : 1;  // VT100UnderlineStyle (high bit)
+
+    unsigned int unused : 11;
 } screen_char_t;
 
+static inline VT100UnderlineStyle ScreenCharGetUnderlineStyle(screen_char_t sct) {
+    return (VT100UnderlineStyle)((sct.underlineStyle0 & 3) | (sct.underlineStyle1 << 2));
+}
+
+static inline void ScreenCharSetUnderlineStyle(screen_char_t *sct, VT100UnderlineStyle value) {
+    sct->underlineStyle0 = (unsigned int)((value >> 0) & 3);
+    sct->underlineStyle1 = (unsigned int)((value >> 2) & 1);
+}
 
 // Standard unicode replacement string. Is a double-width character.
 static inline NSString* ReplacementString(void) {
@@ -330,7 +343,7 @@ static inline BOOL ScreenCharacterAttributesEqual(const screen_char_t c1, const 
             c1.blink == c2.blink &&
             c1.invisible == c2.invisible &&
             c1.underline == c2.underline &&
-            c1.underlineStyle == c2.underlineStyle &&
+            ScreenCharGetUnderlineStyle(c1) == ScreenCharGetUnderlineStyle(c2) &&
             c1.strikethrough == c2.strikethrough &&
             c1.image == c2.image &&
             c1.virtualPlaceholder == c2.virtualPlaceholder &&
@@ -350,7 +363,7 @@ static inline void CopyForegroundColor(screen_char_t* to, const screen_char_t fr
     to->blink = from.blink;
     to->invisible = from.invisible;
     to->underline = from.underline;
-    to->underlineStyle = from.underlineStyle;
+    ScreenCharSetUnderlineStyle(to, ScreenCharGetUnderlineStyle(from));
     to->strikethrough = from.strikethrough;
     to->unused = from.unused;
     to->image = from.image;
@@ -401,7 +414,7 @@ static inline BOOL ScreenCharHasDefaultAttributesAndColors(const screen_char_t s
             !s.blink &&
             !s.invisible &&
             !s.underline &&
-            s.underlineStyle == VT100UnderlineStyleSingle &&
+            ScreenCharGetUnderlineStyle(s) == VT100UnderlineStyleSingle &&
             !s.strikethrough &&
             urlCode == 0);
 }
@@ -436,6 +449,7 @@ BOOL ComplexCharCodeIsSpacingCombiningMark(unichar code);
 NSString* ScreenCharToStr(const screen_char_t *const sct);
 NSString* CharToStr(unichar code, BOOL isComplex);
 NSString* ScreenCharToKittyPlaceholder(const screen_char_t *const sct);
+UTF32Char BaseCharacterForComplexChar(unichar code);
 
 // This is a faster version of ScreenCharToStr if what you want is an array of
 // unichars. Returns the number of code points appended to dest.

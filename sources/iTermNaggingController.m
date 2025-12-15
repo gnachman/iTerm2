@@ -39,8 +39,11 @@ static NSString *iTermNaggingControllerSetBackgroundImageFileIdentifier = @"SetB
 static NSString *iTermNaggingControllerUserDefaultAlwaysAllowBackgroundImage = @"AlwaysAllowBackgroundImage";
 static NSString *iTermNaggingControllerUserDefaultAlwaysDenyBackgroundImage = @"AlwaysDenyBackgroundImage";
 static NSString *const iTermNaggingControllerDidChangeTmuxWindowsShouldCloseAfterDetach = @"iTermNaggingControllerDidChangeTmuxWindowsShouldCloseAfterDetach";
+static NSString *const iTermNaggingControllerArrangementTextReplacements = @"TextReplacements";
 
-@implementation iTermNaggingController
+@implementation iTermNaggingController {
+    BOOL _haveOutstandingTextReplacementOffer;
+}
 
 - (instancetype)init {
     self = [super init];
@@ -94,6 +97,45 @@ static NSString *const iTermNaggingControllerDidChangeTmuxWindowsShouldCloseAfte
                                                               guid:guid];
         }
     }];
+}
+
+- (void)offerTextReplacement:(void (^NS_NOESCAPE)(void))perform {
+    NSString *userDefaultsKey = @"NoSyncTextReplacements";
+    NSNumber *n = [NSNumber castFrom:[[NSUserDefaults standardUserDefaults] objectForKey:userDefaultsKey]];
+    if (n) {
+        if (n.boolValue) {
+            perform();
+        }
+        return;
+    }
+    if (_haveOutstandingTextReplacementOffer) {
+        return;
+    }
+    NSString *notice = @"Would you like macOS Text Replacements to be applied automatically?";
+    _haveOutstandingTextReplacementOffer = YES;
+    __weak __typeof(self) weakSelf = self;
+    [self.delegate naggingControllerShowMessage:notice
+                                     isQuestion:YES
+                                      important:NO
+                                     identifier:iTermNaggingControllerArrangementTextReplacements
+                                        options:@[ @"_Yes", @"_No" ]
+                                     completion:^(int selection) {
+        if (selection == 0 || selection == 1) {
+            [[NSUserDefaults standardUserDefaults] setBool:selection == 0 forKey:userDefaultsKey];
+        }
+        [weakSelf resetHaveTextReplacementOffer];
+    }];
+}
+
+- (void)cancelTextReplacementOffer {
+    if (_haveOutstandingTextReplacementOffer) {
+        [self.delegate naggingControllerRemoveMessageWithIdentifier:iTermNaggingControllerArrangementTextReplacements];
+        _haveOutstandingTextReplacementOffer = NO;
+    }
+}
+
+- (void)resetHaveTextReplacementOffer {
+    _haveOutstandingTextReplacementOffer = NO;
 }
 
 - (void)arrangementWithName:(NSString *)savedArrangementName
@@ -172,6 +214,7 @@ static NSString *const iTermNaggingControllerDidChangeTmuxWindowsShouldCloseAfte
             // Why?
             NSURL *whyUrl = [NSURL URLWithString:@"https://iterm2.com/why_no_content.html"];
             [[NSWorkspace sharedWorkspace] it_openURL:whyUrl
+                                               target:nil
                                                 style:iTermOpenStyleTab
                                                window:self.delegate.naggingControllerWindow];
         }
@@ -251,6 +294,7 @@ static NSString *const iTermNaggingControllerDidChangeTmuxWindowsShouldCloseAfte
 - (void)showTmuxSupplementaryPlaneBugHelpPage {
     NSURL *whyUrl = [NSURL URLWithString:@"https://iterm2.com//tmux22bug.html"];
     [[NSWorkspace sharedWorkspace] it_openURL:whyUrl
+                                       target:nil
                                         style:iTermOpenStyleTab
                                        window:self.delegate.naggingControllerWindow];
 }
@@ -421,6 +465,7 @@ static NSString *const iTermNaggingControllerDidChangeTmuxWindowsShouldCloseAfte
 
             case 3: // Help
                 [[NSWorkspace sharedWorkspace] it_openURL:[NSURL URLWithString:@"https://iterm2.com/paste_bracketing"]
+                                                   target:nil
                                                     style:iTermOpenStyleTab
                                                    window:self.delegate.naggingControllerWindow];
                 break;
@@ -471,6 +516,7 @@ static NSString *const iTermNaggingControllerDidChangeTmuxWindowsShouldCloseAfte
 
             case 4: // Help
                 [[NSWorkspace sharedWorkspace] it_openURL:[NSURL URLWithString:@"https://iterm2.com/slow_triggers"]
+                                                   target:nil
                                                     style:iTermOpenStyleTab
                                                    window:self.delegate.naggingControllerWindow];
                 break;
@@ -668,6 +714,7 @@ static NSString *const iTermNaggingControllerDidChangeTmuxWindowsShouldCloseAfte
     if ([iTermSecureUserDefaults openURLWithHost:url.host]) {
         DLog(@"Always allow %@", url.host);
         [[NSWorkspace sharedWorkspace] it_openURL:url
+                                           target:nil
                                             style:iTermOpenStyleTab
                                            window:self.delegate.naggingControllerWindow];
         return;
@@ -688,6 +735,7 @@ static NSString *const iTermNaggingControllerDidChangeTmuxWindowsShouldCloseAfte
 
             case 0: // Allow
                 [[NSWorkspace sharedWorkspace] it_openURL:url
+                                                   target:nil
                                                     style:iTermOpenStyleTab
                                                    window:self.delegate.naggingControllerWindow];
                 break;
@@ -695,6 +743,7 @@ static NSString *const iTermNaggingControllerDidChangeTmuxWindowsShouldCloseAfte
             case 1:  // Allow for this host
                 [iTermSecureUserDefaults setOpenURLWithHost:url.host allowed:YES];
                 [[NSWorkspace sharedWorkspace] it_openURL:url
+                                                   target:nil
                                                     style:iTermOpenStyleTab
                                                    window:self.delegate.naggingControllerWindow];
                 break;

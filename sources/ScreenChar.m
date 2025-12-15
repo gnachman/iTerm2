@@ -167,6 +167,10 @@ NSString *CharToStr(unichar code, BOOL isComplex) {
     return [GetComplexCharRegistry() stringForCode:code isComplex:isComplex];
 }
 
+UTF32Char BaseCharacterForComplexChar(unichar code) {
+    return [GetComplexCharRegistry() baseCharacterForComplexCode:code];
+}
+
 int ExpandScreenChar(const screen_char_t *sct, unichar* dest) {
     if (!sct[0].complexChar) {
         // Fast path
@@ -437,7 +441,7 @@ NSString *DebugStringForScreenChar(screen_char_t c) {
             @(c.italic),
             @(c.blink),
             @(c.underline),
-            @(c.underlineStyle),
+            @(ScreenCharGetUnderlineStyle(c)),
             @(c.strikethrough),
             @(c.image),
             @(c.virtualPlaceholder),
@@ -622,7 +626,7 @@ void InitializeScreenChar(screen_char_t *s, screen_char_t fg, screen_char_t bg) 
     s->invisible = fg.invisible;
     s->underline = fg.underline;
     s->strikethrough = fg.strikethrough;
-    s->underlineStyle = fg.underlineStyle;
+    ScreenCharSetUnderlineStyle(s, ScreenCharGetUnderlineStyle(fg));
     s->image = NO;
     s->virtualPlaceholder = NO;
     s->inverse = fg.inverse;
@@ -741,7 +745,7 @@ NSString *ScreenCharDescription(screen_char_t c) {
         [attrs addObject:@"Guarded"];
     }
     if (c.underline) {
-        switch (c.underlineStyle) {
+        switch (ScreenCharGetUnderlineStyle(c)) {
             case VT100UnderlineStyleSingle:
                 [attrs addObject:@"Underline"];
                 break;
@@ -750,6 +754,12 @@ NSString *ScreenCharDescription(screen_char_t c) {
                 break;
             case VT100UnderlineStyleDouble:
                 [attrs addObject:@"Double-Underline"];
+                break;
+            case VT100UnderlineStyleDotted:
+                [attrs addObject:@"Dotted-Underline"];
+                break;
+            case VT100UnderlineStyleDashed:
+                [attrs addObject:@"Dashed-Underline"];
                 break;
         }
     }

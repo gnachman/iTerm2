@@ -260,6 +260,12 @@ static const char *iTermApplicationKVOKey = "iTermApplicationKVOKey";
     return event;
 }
 
+- (NSArray<NSWindow *> *)it_windowsWithSheetModals {
+    return [self.windows filteredArrayUsingBlock:^BOOL(NSWindow *window) {
+        return window.sheets.count > 0 || window.attachedSheet != nil;
+    }];
+}
+
 - (NSWindow *)it_keyWindow {
     NSWindow *window = self.keyWindow;
     while (window.sheets.count) {

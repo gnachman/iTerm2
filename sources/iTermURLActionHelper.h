@@ -110,6 +110,7 @@ launchProfileInCurrentTerminal:(Profile *)profile
 - (void)openSemanticHistoryPath:(NSString *)path
                   orRawFilename:(NSString *)rawFileName
                        fragment:(NSString * _Nullable)fragment
+                         target:(NSString * _Nullable)target
                workingDirectory:(NSString *)workingDirectory
                      lineNumber:(NSString *)lineNumber
                    columnNumber:(NSString *)columnNumber

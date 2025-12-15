@@ -133,11 +133,14 @@ isEqualToExternalAttribute:(iTermExternalAttribute * _Nullable)rhs;
 // Represents an OSC 8 URL.
 @interface iTermURL: NSObject
 @property (nonatomic, readonly) NSURL *url;
-@property (nonatomic, readonly) NSString *identifier;
+@property (nonatomic, readonly, nullable) NSString *identifier;
+@property (nonatomic, readonly, nullable) NSString *target;
 @property (nonatomic, readonly) NSData *data;
 
 + (instancetype _Nullable)urlWithData:(NSData * _Nullable)data code:(int)code;
-+ (instancetype)urlWithURL:(NSURL *)url identifier:(NSString * _Nullable)identifier;
++ (instancetype)urlWithURL:(NSURL *)url
+                identifier:(NSString * _Nullable)identifier
+                    target:(NSString * _Nullable)target;
 
 @end
 

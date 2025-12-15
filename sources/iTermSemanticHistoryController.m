@@ -714,10 +714,11 @@ NSString *const kSemanticHistoryColumnNumberKey = @"semanticHistory.columnNumber
     [runner run];
 }
 
-- (void)openFile:(NSString *)fullPath fragment:(NSString *)fragment window:(NSWindow *)window {
+- (void)openFile:(NSString *)fullPath fragment:(NSString *)fragment target:(NSString *)target window:(NSWindow *)window {
     DLog(@"Open file %@", fullPath);
     [[iTermLaunchServices sharedInstance] openFile:fullPath
                                           fragment:fragment
+                                            target:target
                                             window:window
                                         completion:^(BOOL ok) {}];
 }
@@ -736,6 +737,7 @@ NSString *const kSemanticHistoryColumnNumberKey = @"semanticHistory.columnNumber
                               completionHandler:nil];
     } else {
         [[NSWorkspace sharedWorkspace] it_openURL:url
+                                           target:nil
                                             style:iTermOpenStyleTab
                                            window:NSApp.keyWindow];
     }
@@ -760,6 +762,7 @@ NSString *const kSemanticHistoryColumnNumberKey = @"semanticHistory.columnNumber
 - (void)openPath:(NSString *)cleanedUpPath
    orRawFilename:(NSString *)rawFileName
         fragment:(NSString *)fragment
+          target:(NSString *)target
    substitutions:(NSDictionary *)substitutions
            scope:(iTermVariableScope *)originalScope
       lineNumber:(NSString *)lineNumber
@@ -867,7 +870,7 @@ NSString *const kSemanticHistoryColumnNumberKey = @"semanticHistory.columnNumber
 
     if (isDirectory) {
         DLog(@"Open directory %@", path);
-        [self openFile:path fragment:fragment window:window];
+        [self openFile:path fragment:fragment target:target window:window];
         completion(YES);
         return;
     }
@@ -922,7 +925,7 @@ NSString *const kSemanticHistoryColumnNumberKey = @"semanticHistory.columnNumber
         }
     }
 
-    [self openFile:path fragment:fragment window:window];
+    [self openFile:path fragment:fragment target:target window:window];
     completion(YES);
 }
 

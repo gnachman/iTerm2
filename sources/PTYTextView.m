@@ -1685,7 +1685,7 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
 
     CGFloat rightMargin = 0;
     if (self.showTimestamps) {
-        [_drawingHelper createTimestampDrawingHelperWithFont:_fontTable.asciiFont.font];
+        [_drawingHelper createTimestampDrawingHelperWithFontInfo:_fontTable.asciiFont];
         rightMargin = _drawingHelper.timestampDrawHelper.maximumWidth + 8;
     }
     _drawingHelper.indicatorFrame = [self configureIndicatorsHelperWithRightMargin:rightMargin];
@@ -3128,7 +3128,7 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
 
 - (BOOL)_haveShortSelection {
     int width = [_dataSource width];
-    return [_selection hasSelection] && [_selection length] <= width;
+    return [_selection hasSelection] && [_selection length] <= MAX(80, width);
 }
 
 - (BOOL)haveReasonableSelection {
@@ -3945,6 +3945,7 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
 - (void)openSemanticHistoryPath:(NSString *)path
                   orRawFilename:(NSString *)rawFileName
                        fragment:(NSString *)fragment
+                         target:(NSString *)target
                workingDirectory:(NSString *)workingDirectory
                      lineNumber:(NSString *)lineNumber
                    columnNumber:(NSString *)columnNumber
@@ -3954,6 +3955,7 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
     [_urlActionHelper openSemanticHistoryPath:path
                                 orRawFilename:rawFileName
                                      fragment:fragment
+                                       target:target
                              workingDirectory:workingDirectory
                                    lineNumber:lineNumber
                                  columnNumber:columnNumber
@@ -6194,6 +6196,10 @@ static NSString *iTermStringFromRange(NSRange range) {
         [self resetFindCursor];
     }
 
+    if (![self hasMarkedText] &&
+        keyboardhandler.performsTextReplacement) {
+        [self.delegate textViewPerformTextReplacement];
+    }
     if ([aString length] > 0) {
         if ([_delegate respondsToSelector:@selector(insertText:)]) {
             [_delegate insertText:aString];
@@ -6201,6 +6207,7 @@ static NSString *iTermStringFromRange(NSRange range) {
             [super insertText:aString];
         }
     }
+
     if ([self hasMarkedText]) {
         // In case imeOffset changed, the frame height must adjust.
         [_delegate refresh];
@@ -6564,6 +6571,7 @@ static NSString *iTermStringFromRange(NSRange range) {
                     [[NSWorkspace sharedWorkspace] it_urlIsLocallyOpenableWithUpsell:url]) {
                     const NSSize size = self.enclosingScrollView.frame.size;
                     [[NSWorkspace sharedWorkspace] it_openURL:url
+                                                       target:nil
                                                 configuration:[NSWorkspaceOpenConfiguration configuration]
                                                         style:size.width > size.height ? iTermOpenStyleVerticalSplit : iTermOpenStyleHorizontalSplit
                                                        upsell:YES
@@ -6578,10 +6586,12 @@ static NSString *iTermStringFromRange(NSRange range) {
     if (coord.x >= 0 && coord.y >= 0) {
         iTermTextExtractor *extractor = [iTermTextExtractor textExtractorWithDataSource:_dataSource];
         NSString *urlId = nil;
-        NSURL *url = [extractor urlOfHypertextLinkAt:coord urlId:&urlId];
+        NSString *target = nil;
+        NSURL *url = [extractor urlOfHypertextLinkAt:coord urlId:&urlId target:&target];
         if (url && [[NSWorkspace sharedWorkspace] it_urlIsLocallyOpenableWithUpsell:url]) {
             const NSSize size = self.enclosingScrollView.frame.size;
             [[NSWorkspace sharedWorkspace] it_openURL:url
+                                               target:target
                                         configuration:[NSWorkspaceOpenConfiguration configuration]
                                                 style:size.width > size.height ? iTermOpenStyleVerticalSplit : iTermOpenStyleHorizontalSplit
                                                upsell:YES

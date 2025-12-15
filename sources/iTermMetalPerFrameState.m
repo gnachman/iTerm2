@@ -588,7 +588,7 @@ typedef struct {
     c.backgroundColorMode = ColorModeAlternate;
 
     c.underline = YES;
-    c.underlineStyle = VT100UnderlineStyleSingle;
+    ScreenCharSetUnderlineStyle(&c, VT100UnderlineStyleSingle);
     c.strikethrough = NO;
     c.rtlStatus = RTLStatusUnknown;
 
@@ -1359,18 +1359,25 @@ static void iTermMetalSetUnderline(iTermMetalPerFrameState *self,
                                    iTermURL *url,
                                    iTermExternalAttribute *ea,
                                    iTermMetalGlyphAttributes *attributes) {
-    if (annotated) {
+    if (annotated || inUnderlinedRange) {
         attributes[visualX].underlineStyle = iTermMetalGlyphAttributesUnderlineSingle;
-    } else if (line[logicalIndex].underline || inUnderlinedRange) {
-        const BOOL curly = line[logicalIndex].underline && line[logicalIndex].underlineStyle == VT100UnderlineStyleCurly;
-        if (url != nil) {
-            attributes[visualX].underlineStyle = iTermMetalGlyphAttributesUnderlineHyperlink;
-        } else if (line[logicalIndex].underline && line[logicalIndex].underlineStyle == VT100UnderlineStyleDouble && !inUnderlinedRange) {
-            attributes[visualX].underlineStyle = iTermMetalGlyphAttributesUnderlineDouble;
-        } else if (curly && !inUnderlinedRange) {
-            attributes[visualX].underlineStyle = iTermMetalGlyphAttributesUnderlineCurly;
-        } else {
-            attributes[visualX].underlineStyle = iTermMetalGlyphAttributesUnderlineSingle;
+    } else if (line[logicalIndex].underline) {
+        switch (ScreenCharGetUnderlineStyle(line[logicalIndex])) {
+            case VT100UnderlineStyleSingle:
+                attributes[visualX].underlineStyle = iTermMetalGlyphAttributesUnderlineSingle;
+                break;
+            case VT100UnderlineStyleCurly:
+                attributes[visualX].underlineStyle = iTermMetalGlyphAttributesUnderlineCurly;
+                break;
+            case VT100UnderlineStyleDouble:
+                attributes[visualX].underlineStyle = iTermMetalGlyphAttributesUnderlineDouble;
+                break;
+            case VT100UnderlineStyleDotted:
+                attributes[visualX].underlineStyle = iTermMetalGlyphAttributesUnderlineDotted;
+                break;
+            case VT100UnderlineStyleDashed:
+                attributes[visualX].underlineStyle = iTermMetalGlyphAttributesUnderlineDashed;
+                break;
         }
     } else if (url != nil && underlineHyperlinks) {
         attributes[visualX].underlineStyle = iTermMetalGlyphAttributesUnderlineDashedSingle;
@@ -1495,17 +1502,20 @@ static int iTermEmitGlyphsAndSetAttributes(iTermMetalPerFrameState *self,
 
         iTermExternalAttribute *ea = eaIndex[logicalIndex];
         iTermURL *url = ea.url;
+        NSString *complexString = line[logicalIndex].complexChar ? ScreenCharToStr(&line[logicalIndex]) : nil;
         const BOOL characterIsDrawable = iTermTextDrawingHelperIsCharacterDrawable(&line[logicalIndex],
                                                                                    logicalIndex > 0 ? &line[logicalIndex - 1] : NULL,
-                                                                                   line[logicalIndex].complexChar && (ScreenCharToStr(&line[logicalIndex]) != nil),
+                                                                                   line[logicalIndex].complexChar && (complexString != nil),
                                                                                    _configuration->_blinkingItemsVisible,
                                                                                    _configuration->_blinkAllowed,
                                                                                    NO /* preferSpeedToFullLigatureSupport */,
                                                                                    url != nil);
         const BOOL isBoxDrawingCharacter = (characterIsDrawable &&
-                                            !line[logicalIndex].complexChar &&
-                                            line[logicalIndex].code > 127 &&
-                                            [boxCharacterSet characterIsMember:line[logicalIndex].code]);
+                                            ((!line[logicalIndex].complexChar &&
+                                              line[logicalIndex].code > 127 &&
+                                              [boxCharacterSet characterIsMember:line[logicalIndex].code]) ||
+                                             (line[logicalIndex].complexChar &&
+                                              [boxCharacterSet longCharacterIsMember:[complexString firstCharacter]])));
         const BOOL isBlockCharacter = (characterIsDrawable &&
                                        !line[logicalIndex].complexChar &&
                                        line[logicalIndex].code > 127 &&
@@ -2169,8 +2179,8 @@ static int iTermEmitGlyphsAndSetAttributes(iTermMetalPerFrameState *self,
     return _configuration->_asciiAntialias;
 }
 
-- (NSFont *)timestampFont {
-    return _configuration->_timestampFont;
+- (PTYFontInfo *)timestampFontInfo {
+    return _configuration->_timestampFontInfo;
 }
 
 - (NSTimeInterval)timestampBaseline {

@@ -110,15 +110,16 @@ const NSUInteger kAllModifiers = (NSEventModifierFlagControl |
     [_tabViewItemsInMRUOrder removeObject:tabViewItemToRemove];
 
     if (self.selectedTabViewItem == tabViewItemToRemove) {
-        // Select the next tab to the right if possible
         NSArray<NSTabViewItem *> *items = self.tabViewItems;
         NSInteger index = [items indexOfObject:tabViewItemToRemove];
         if (index != NSNotFound) {
-            if ([iTermAdvancedSettingsModel addNewTabAtEndOfTabs]) {
+            if (![iTermAdvancedSettingsModel moveLeftAfterClosingTab]) {
+                // Select the next tab to the right if possible
                 if (index + 1 < items.count) {
                     [self selectTabViewItem:items[index + 1]];
                 }
             } else {
+                // Select the next tab to the left if possible
                 if (index == 0 && items.count > 1) {
                     [self selectTabViewItem:items[1]];
                 } else if (index > 0) {

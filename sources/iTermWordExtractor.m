@@ -19,6 +19,7 @@ typedef NS_ENUM(NSUInteger, iTermAlphaNumericDefinition) {
 
 @implementation iTermWordExtractor {
     VT100GridRange _logicalWindow;
+    NSString *_additionalWordCharacters;
 }
 
 - (instancetype)initWithLocation:(VT100GridCoord)location
@@ -29,6 +30,7 @@ typedef NS_ENUM(NSUInteger, iTermAlphaNumericDefinition) {
         _location = location;
         _maximumLength = maximumLength;
         _big = big;
+        _additionalWordCharacters = [iTermPreferences stringForKey:kPreferenceKeyCharactersConsideredPartOfAWordForSelection];
     }
     return self;
 }
@@ -603,8 +605,7 @@ typedef struct {
                       definitionOfAlphanumeric:(iTermAlphaNumericDefinition)definition {
     switch (definition) {
         case iTermAlphaNumericDefinitionUserDefined: {
-            NSRange range = [[iTermPreferences stringForKey:kPreferenceKeyCharactersConsideredPartOfAWordForSelection]
-                             rangeOfString:characterAsString];
+            NSRange range = [_additionalWordCharacters rangeOfString:characterAsString];
             return (range.length == characterAsString.length);
         }
         case iTermAlphaNumericDefinitionUnixCommands: {

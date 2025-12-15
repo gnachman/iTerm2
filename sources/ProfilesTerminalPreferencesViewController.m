@@ -32,7 +32,6 @@
     IBOutlet NSButton *_allowAlternateMouseScroll;
     IBOutlet NSButton *_restrictMouseReportingToAlternateScreenMode;
     IBOutlet NSButton *_allowPasteBracketing;
-    IBOutlet NSButton *_enableProgressBars;
     IBOutlet NSButton *_disablePrinting;
     IBOutlet NSButton *_disableAltScreen;
     IBOutlet NSButton *_disableWindowResizing;
@@ -188,11 +187,6 @@
 
     [self defineControl:_allowPasteBracketing
                     key:KEY_ALLOW_PASTE_BRACKETING
-            displayName:nil
-                   type:kPreferenceInfoTypeCheckbox];
-
-    [self defineControl:_enableProgressBars
-                    key:KEY_ENABLE_PROGRESS_BARS
             displayName:nil
                    type:kPreferenceInfoTypeCheckbox];
 

@@ -210,7 +210,7 @@ precededByWhitespace:precededByWhitespace
     const BOOL precededByWhitespace = [self characterIsWhitespaceAt:coord in:screen];
 
     VT100GridWindowedRange range;
-    NSString *s = [self wordBeforeCursor:coord range:&range];
+    NSString *s = [[[self delegate] popupVT100Screen] wordEndingAt:coord range:&range];
 
     const BOOL prefixIsWhitespaceOnly = [self wordIsAllWhitespace:s];
     const int maxWords = [self numberOfContextWordsForWhitespaceOnlyPrefix:prefixIsWhitespaceOnly];
@@ -224,24 +224,6 @@ precededByWhitespace:precededByWhitespace
               range:range
            overflow:screen.scrollbackOverflow
        contextWords:context];
-}
-
-- (NSString *)wordBeforeCursor:(VT100GridCoord)coord range:(VT100GridWindowedRange *)rangePtr {
-    iTermTextExtractor *extractor = [self textExtractor];
-    const VT100GridWindowedRange range = [extractor rangeForWordAt:coord
-                                                     maximumLength:kReasonableMaximumWordLength];
-    *rangePtr = range;
-    NSString *s = [extractor contentInRange:range
-                          attributeProvider:nil
-                                 nullPolicy:kiTermTextExtractorNullPolicyFromStartToFirst
-                                        pad:NO
-                         includeLastNewline:NO
-                     trimTrailingWhitespace:NO
-                               cappedAtSize:-1
-                               truncateTail:YES
-                          continuationChars:nil
-                                     coords:nil];
-    return s;
 }
 
 - (BOOL)wordIsAllWhitespace:(NSString *)s {

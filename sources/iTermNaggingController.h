@@ -91,6 +91,8 @@ extern NSString *const kTurnOffBracketedPasteOnHostChangeAnnouncementIdentifier;
 - (void)offerToFixSessionWithBrokenArrangementProfileIn:(NSString *)arrangementName
                                                    guid:(NSString *)guid;
 - (void)showJSONPromotion;
+- (void)offerTextReplacement:(void (^NS_NOESCAPE)(void))perform;
+- (void)cancelTextReplacementOffer;
 
 @end
 

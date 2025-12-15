@@ -361,6 +361,7 @@
                                 [session openURL:item.url];
                             } else {
                                 [[iTermController sharedInstance] openURL:item.url
+                                                                   target:nil
                                                                 openStyle:iTermOpenStyleTab
                                                                 select:YES];
                             }
@@ -371,6 +372,7 @@
                                 [session openURL:item.url];
                             } else {
                                 [[iTermController sharedInstance] openURL:item.url
+                                                                   target:nil
                                                                 openStyle:iTermOpenStyleTab
                                                                    select:YES];
                             }

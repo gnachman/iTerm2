@@ -91,7 +91,7 @@ static iTermController *gSharedInstance;
 @end
 
 @implementation iTermController {
-    NSMutableArray *_restorableSessions;
+    NSMutableArray<iTermRestorableSession *> *_restorableSessions;
     NSMutableArray *_currentRestorableSessionsStack;
 
     NSMutableArray<PseudoTerminal *> *_terminalWindows;
@@ -221,6 +221,18 @@ static iTermController *gSharedInstance;
         while ([_terminalWindows count] > 0) {
             [[_terminalWindows objectAtIndex:0] close];
         }
+
+        // Kill restorable sessions. I've always been on the fence about whether to do this or not.
+        // If they were undoable when the app quits, shouldn't they be restored? Kind of but I think
+        // it's somewhat surprising. In order to support the auto-archiving feature, we'll kill them
+        // which IMO breaks the tie.
+        [_restorableSessions enumerateObjectsUsingBlock:^(iTermRestorableSession *restorableSession, NSUInteger idx, BOOL * _Nonnull stop) {
+            [restorableSession.sessions enumerateObjectsUsingBlock:^(PTYSession *session, NSUInteger idx, BOOL * _Nonnull stop) {
+                if (!session.isTmuxClient) {
+                    [session terminate];
+                }
+            }];
+        }];
         ITAssertWithMessage([_terminalWindows count] == 0, @"Expected terminals to be gone");
     }
     _terminalWindows = nil;
@@ -1662,12 +1674,18 @@ replaceInitialDirectoryForSessionWithGUID:(NSString *)guid
                               completion:completion];
 }
 
-- (BOOL)openURL:(NSURL *)url openStyle:(iTermOpenStyle)openStyle select:(BOOL)select {
+- (BOOL)openURL:(NSURL *)url target:(NSString *)target openStyle:(iTermOpenStyle)openStyle select:(BOOL)select {
     if (![iTermBrowserGateway browserAllowedCheckingIfNot:YES]) {
         return NO;
     }
     Profile *profile = [[ProfileModel sharedInstance] defaultBrowserProfile] ?: [[ProfileModel sessionsInstance] defaultBrowserProfileCreatingIfNeeded];
 
+    if (target) {
+        const BOOL exists = [self openURL:url inTarget:target select:select];
+        if (exists) {
+            return YES;
+        }
+    }
     PseudoTerminal *term = nil;
     switch (openStyle) {
         case iTermOpenStyleWindow:
@@ -1681,6 +1699,7 @@ replaceInitialDirectoryForSessionWithGUID:(NSString *)guid
             term = [self currentTerminal];
             if (term) {
                 return [self openURLInSplitPane:url
+                                         target:target
                                          window:term
                                        vertical:openStyle == iTermOpenStyleVerticalSplit
                                          select:select
@@ -1706,17 +1725,37 @@ replaceInitialDirectoryForSessionWithGUID:(NSString *)guid
     launcher.canActivate = YES;
     launcher.respectTabbingMode = NO;
     launcher.disableAutomaticTabSelection = !select;
+    launcher.browserTarget = target;
     [launcher launchWithCompletion:nil];
     return YES;
 }
 
+- (BOOL)openURL:(NSURL *)url inTarget:(NSString *)target select:(BOOL)select {
+    if (!target) {
+        return NO;
+    }
+    PTYSession *session = [[self allSessions] objectPassingTest:^BOOL(PTYSession *session, NSUInteger index, BOOL *stop) {
+        if (!session.isBrowserSession) {
+            return  NO;
+        }
+        return [session.browserTarget isEqualToString:target];
+    }];
+    if (!session) {
+        return NO;
+    }
+    [session openURL:url];
+    return YES;
+}
+
 - (BOOL)openURLInSplitPane:(NSURL *)url
+                    target:(NSString *)target
                     window:(PseudoTerminal *)term
                   vertical:(BOOL)verticalSplit
                     select:(BOOL)select
                    profile:(Profile *)profile
           splitSessionGuid:(NSString *)guid {
     [term openSplitPaneWithURL:url
+                        target:target
                    baseProfile:profile
                nearSessionGuid:guid
                       vertical:verticalSplit];

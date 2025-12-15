@@ -152,13 +152,17 @@ class HTMLEncoder {
             style["background-color"] = Self.formattedColor(bgcolor)
         }
         if foreground.underline != 0 {
-            switch foreground.underlineStyle {
+            switch ScreenCharGetUnderlineStyle(foreground) {
             case .curly:
                 style["text-decoration-style"] = "wavy"
             case .single:
                 break
             case .double:
                 style["text-decoration-style"] = "double"
+            case .dotted:
+                style["text-decoration-style"] = "dotted"
+            case .dashed:
+                style["text-decoration-style"] = "dashed"
             @unknown default:
                 break
             }

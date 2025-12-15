@@ -225,7 +225,9 @@ typedef NS_ENUM(NSUInteger, iTermTextExtractorTrimTrailingWhitespace) {
 // all punctuation except -.
 - (NSString * _Nullable)fastWordAt:(VT100GridCoord)location;
 
-- (NSURL * _Nullable)urlOfHypertextLinkAt:(VT100GridCoord)coord urlId:(out NSString * _Nullable * _Nonnull)urlId;
+- (NSURL * _Nullable)urlOfHypertextLinkAt:(VT100GridCoord)coord
+                                    urlId:(out NSString * _Nullable * _Nullable)urlId
+                                   target:(out NSString * _Nullable * _Nullable)target;
 
 // Searches before and after `coord` until a coordinate is found that does not pass the test.
 // Returns the resulting range.
@@ -245,6 +247,10 @@ typedef NS_ENUM(NSUInteger, iTermTextExtractorTrimTrailingWhitespace) {
 - (VT100GridWindowedRange)visualWindowedRangeForLogical:(VT100GridWindowedRange)logical;
 
 - (VT100GridCoord)logicalCoordForVisualCoord:(VT100GridCoord)visualCoord;
+- (VT100GridWindowedRange)rangeForWordAt:(VT100GridCoord)visualLocation
+                           maximumLength:(NSInteger)maximumLength
+                                     big:(BOOL)big
+                additionalWordCharacters:(NSString * _Nullable)additionalWordCharacters;
 
 #pragma mark - For tests
 
