@@ -5,7 +5,7 @@
 
 .hljs-comment,
 .hljs-quote {
-    color: ${white};
+    color: ${brightBlack};
 }
 
 .hljs-variable,

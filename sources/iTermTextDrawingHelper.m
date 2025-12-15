@@ -1940,7 +1940,7 @@ static BOOL NSRangesAdjacent(NSRange lhs, NSRange rhs) {
     }
 }
 
-- (void)drawBoxDrawingCharacter:(unichar)theCharacter
+- (void)drawBoxDrawingCharacter:(UTF32Char)theCharacter
                  withAttributes:(NSDictionary *)attributes
                              at:(NSPoint)pos
                   virtualOffset:(CGFloat)virtualOffset {
@@ -2291,7 +2291,7 @@ static BOOL NSRangesAdjacent(NSRange lhs, NSRange rhs) {
         // Special box-drawing cells don't use the font so they look prettier.
         [attributedString.string enumerateComposedCharacters:^(NSRange range, unichar simple, NSString *complexString, BOOL *stop) {
             NSPoint p = NSMakePoint(point.x + positions[range.location], point.y);
-            [self drawBoxDrawingCharacter:simple
+            [self drawBoxDrawingCharacter:simple ?: [complexString firstCharacter]
                            withAttributes:[attributedString attributesAtIndex:range.location
                                                                effectiveRange:nil]
                                        at:p
@@ -2530,12 +2530,15 @@ static BOOL NSRangesAdjacent(NSRange lhs, NSRange rhs) {
                                                 font:(NSFont *)font
                                        virtualOffset:(CGFloat)virtualOffset
                                                block:(void (^)(CGContextRef))block {
+    NSGraphicsContext *graphicsContext = [NSGraphicsContext currentContext];
+    CGContextRef cgContext = (CGContextRef)[graphicsContext CGContext];
     if ([iTermAdvancedSettingsModel solidUnderlines]) {
         [self drawUnderlineOrStrikethroughOfColor:underlineColor
                                     wantUnderline:wantUnderline
                                             style:underlineStyle
                                              font:font
                                              rect:rect
+                                          context:cgContext
                                     virtualOffset:virtualOffset];
         return;
     }
@@ -2546,8 +2549,6 @@ static BOOL NSRangesAdjacent(NSRange lhs, NSRange rhs) {
                                    block:block];
     }
 
-    NSGraphicsContext *graphicsContext = [NSGraphicsContext currentContext];
-    CGContextRef cgContext = (CGContextRef)[graphicsContext CGContext];
     [self drawInContext:cgContext
                  inRect:rect
               alphaMask:underlineContext->alphaMask
@@ -2558,6 +2559,7 @@ static BOOL NSRangesAdjacent(NSRange lhs, NSRange rhs) {
                                                           style:underlineStyle
                                                            font:font
                                                            rect:rect
+                                                        context:cgContext
                                                   virtualOffset:virtualOffset];
                   }];
 }
@@ -2809,98 +2811,89 @@ BOOL iTermDecodeKittyUnicodePlaceholder(const screen_char_t *c,
                                       style:(NSUnderlineStyle)underlineStyle
                                        font:(NSFont *)font
                                        rect:(NSRect)rawRect
+                                    context:(CGContextRef)ctx
                               virtualOffset:(CGFloat)virtualOffset {
     const NSRect rect = NSRectSubtractingVirtualOffset(rawRect, virtualOffset);
-    [color set];
-    NSBezierPath *path = [NSBezierPath bezierPath];
+    CGColorRef cgColor = color.CGColor;
+    iTermShapeBuilder *shapeBuilder = [[iTermShapeBuilder alloc] init];
+    shapeBuilder.enableEndcap = NO;
 
-    const CGFloat y = (wantUnderline ?
+    const CGFloat y = [self retinaRound:(wantUnderline ?
                        [self yOriginForUnderlineForFont:font yOffset:rect.origin.y cellHeight:_cellSize.height] :
-                       [self yOriginForStrikethroughForFont:font yOffset:rect.origin.y cellHeight:_cellSize.height]);
+                       [self yOriginForStrikethroughForFont:font yOffset:rect.origin.y cellHeight:_cellSize.height])];
     NSPoint origin = NSMakePoint(rect.origin.x,
                                  y);
-    origin.y += self.isRetina ? 0.25 : 0.5;
     CGFloat dashPattern[] = { 4, 3 };
     CGFloat phase = fmod(rect.origin.x, dashPattern[0] + dashPattern[1]);
+
+    CGFloat dotPattern[] = { 1, 1 };
+    CGFloat dotPhase = fmod(rect.origin.x, dotPattern[0] + dotPattern[1]);
 
     const CGFloat lineWidth = wantUnderline ? [self underlineThicknessForFont:font] : [self strikethroughThicknessForFont:font];
     switch (underlineStyle) {
         case NSUnderlineStyleSingle:
-            [path moveToPoint:origin];
-            [path lineToPoint:NSMakePoint(origin.x + rect.size.width, origin.y)];
-            [path setLineWidth:lineWidth];
-            [path stroke];
+            [shapeBuilder moveTo:origin];
+            [shapeBuilder lineTo:NSMakePoint(origin.x + rect.size.width, origin.y)];
+            [shapeBuilder setLineWidth:lineWidth];
+            [shapeBuilder strokeInContext:ctx color:cgColor];
             break;
 
-        case NSUnderlineStylePatternDot: {  // Single underline with dash beneath
-            origin.y = rect.origin.y + _cellSize.height - 1;
-            origin.y -= self.isRetina ? 0.25 : 0.5;
-            [path moveToPoint:origin];
-            [path lineToPoint:NSMakePoint(origin.x + rect.size.width, origin.y)];
-            [path setLineWidth:lineWidth];
-            [path stroke];
-
-            const CGFloat px = self.isRetina ? 0.5 : 1;
-            path = [NSBezierPath bezierPath];
-            [path moveToPoint:NSMakePoint(origin.x, origin.y + lineWidth + px)];
-            [path lineToPoint:NSMakePoint(origin.x + rect.size.width, origin.y + lineWidth + px)];
-            [path setLineWidth:lineWidth];
-            [path setLineDash:dashPattern count:2 phase:phase];
-            [path stroke];
+        case NSUnderlineStylePatternDot: {
+            [shapeBuilder moveTo:origin];
+            [shapeBuilder lineTo:NSMakePoint(origin.x + rect.size.width, origin.y)];
+            [shapeBuilder setLineWidth:lineWidth];
+            [shapeBuilder setLineDash:dotPattern count:2 phase:dotPhase];
+            [shapeBuilder strokeInContext:ctx color:cgColor];
             break;
         }
         case NSUnderlineStyleDouble: {  // Actual double underline
-            origin.y = rect.origin.y + _cellSize.height - 1;
-            origin.y -= self.isRetina ? 0.25 : 0.5;
-            [path moveToPoint:origin];
-            [path lineToPoint:NSMakePoint(origin.x + rect.size.width, origin.y)];
-            [path setLineWidth:lineWidth];
-            [path stroke];
+            origin.y = rect.origin.y + _cellSize.height - 2;
+            [shapeBuilder moveTo:origin];
+            [shapeBuilder lineTo:NSMakePoint(origin.x + rect.size.width, origin.y)];
+            [shapeBuilder setLineWidth:lineWidth];
+            [shapeBuilder strokeInContext:ctx color:cgColor];
 
-            const CGFloat px = self.isRetina ? 0.5 : 1;
-            path = [NSBezierPath bezierPath];
-            [path moveToPoint:NSMakePoint(origin.x, origin.y + lineWidth + px)];
-            [path lineToPoint:NSMakePoint(origin.x + rect.size.width, origin.y + lineWidth + px)];
-            [path setLineWidth:lineWidth];
-            [path stroke];
+            shapeBuilder = [[iTermShapeBuilder alloc] init];
+            shapeBuilder.enableEndcap = NO;
+            [shapeBuilder moveTo:NSMakePoint(origin.x, origin.y + lineWidth * 2)];
+            [shapeBuilder lineTo:NSMakePoint(origin.x + rect.size.width, origin.y + lineWidth * 2)];
+            [shapeBuilder setLineWidth:lineWidth];
+            [shapeBuilder strokeInContext:ctx color:cgColor];
             break;
         }
 
         case NSUnderlineStyleThick: {  // We use this for curly. Cocoa doesn't have curly underlines, so we reprupose thick.
-            const CGFloat offset = 0;
-            origin.y = rect.origin.y + _cellSize.height - 1.5;
-            CGContextRef cgContext = [[NSGraphicsContext currentContext] CGContext];
-            CGContextSaveGState(cgContext);
-            CGContextClipToRect(cgContext, NSMakeRect(origin.x, origin.y - 1, rect.size.width, 3));
-
-            [color set];
-            NSBezierPath *path = [NSBezierPath bezierPath];
+            CGFloat dashPattern[] = { 3, 3 };
             const CGFloat height = 1;
-            const CGFloat width = 3;
-            const CGFloat lowY = origin.y + offset;
-            const CGFloat highY = origin.y + height + offset;
-            for (CGFloat x = origin.x - fmod(origin.x, width * 2); x < NSMaxX(rect); x += width * 2) {
-                [path moveToPoint:NSMakePoint(x + 0, highY)];
-                [path lineToPoint:NSMakePoint(x + width, highY)];
-
-                [path moveToPoint:NSMakePoint(x + width, lowY)];
-                [path lineToPoint:NSMakePoint(x + width * 2, lowY)];
+            const CGFloat lowY = origin.y;
+            const CGFloat highY = origin.y + height;
+            {
+                shapeBuilder.enableEndcap = NO;
+                [shapeBuilder moveTo:NSMakePoint(origin.x, highY)];
+                [shapeBuilder lineTo:NSMakePoint(origin.x + rect.size.width, highY)];
+                [shapeBuilder setLineWidth:lineWidth];
+                [shapeBuilder setLineDash:dashPattern count:2 phase:5];
+                [shapeBuilder strokeInContext:ctx color:cgColor];
             }
-            [path setLineWidth:1];
-            [path stroke];
-            CGContextRestoreGState(cgContext);
+
+            shapeBuilder = [[iTermShapeBuilder alloc] init];
+            {
+                shapeBuilder.enableEndcap = NO;
+                [shapeBuilder moveTo:NSMakePoint(origin.x, lowY)];
+                [shapeBuilder lineTo:NSMakePoint(origin.x + rect.size.width, lowY)];
+                [shapeBuilder setLineWidth:lineWidth];
+                [shapeBuilder setLineDash:dashPattern count:2 phase:2];
+                [shapeBuilder strokeInContext:ctx color:cgColor];
+            }
             break;
         }
 
         case NSUnderlinePatternDash: {
-            if (![iTermAdvancedSettingsModel underlineHyperlinks]) {
-                break;
-            }
-            [path moveToPoint:origin];
-            [path lineToPoint:NSMakePoint(origin.x + rect.size.width, origin.y)];
-            [path setLineWidth:lineWidth];
-            [path setLineDash:dashPattern count:2 phase:phase];
-            [path stroke];
+            [shapeBuilder moveTo:origin];
+            [shapeBuilder lineTo:NSMakePoint(origin.x + rect.size.width, origin.y)];
+            [shapeBuilder setLineWidth:lineWidth];
+            [shapeBuilder setLineDash:dashPattern count:2 phase:phase];
+            [shapeBuilder strokeInContext:ctx color:cgColor];
             break;
 
         case NSUnderlineStyleNone:
@@ -3393,6 +3386,7 @@ iTermKittyImageDraw *iTermFindKittyImageDrawForVirtualPlaceholder(NSArray<iTermK
                                                 style:NSUnderlineStyleSingle
                                                  font:fontInfo.font
                                                  rect:rect
+                                              context:ctx
                                         virtualOffset:virtualOffset];
 
             // Save the cursor's cell coords

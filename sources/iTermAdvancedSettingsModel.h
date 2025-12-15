@@ -368,6 +368,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (BOOL)restoreWindowContents;
 + (BOOL)restoreWindowsWithinScreens;
 + (BOOL)retinaInlineImages;
++ (BOOL)revealExportedSettingsAndData;
 + (BOOL)rightJustifyRTLLines;
 + (BOOL)runJobsInServers;
 + (BOOL)saveToPasteHistoryWhenSecureInputEnabled;

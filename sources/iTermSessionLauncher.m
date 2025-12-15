@@ -303,6 +303,7 @@
     DLog(@"Creating a new session by URL: %@", _url);
     PTYSession *session = [windowController.sessionFactory newSessionWithProfile:profile
                                                                           parent:nil];
+    session.browserTarget = self.browserTarget;
     const BOOL saved = windowController.automaticallySelectNewTabs;
     switch (_style) {
         case iTermOpenStyleVerticalSplit:

@@ -1501,7 +1501,7 @@ extension Conductor {
             case .kiTermWarningSelection0:  // Download
                 download(path: path)
             case .kiTermWarningSelection1:  // View
-                iTermController.sharedInstance().open(url, openStyle: .tab, select: true)
+                iTermController.sharedInstance().open(url, target: nil, openStyle: .tab, select: true)
             default:
                 break
             }

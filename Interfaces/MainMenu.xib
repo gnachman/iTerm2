@@ -238,6 +238,31 @@
                             <menuItem isSeparatorItem="YES" id="224">
                                 <modifierMask key="keyEquivalentModifierMask" command="YES"/>
                             </menuItem>
+                            <menuItem title="Archives" id="fb0-0W-qYG">
+                                <modifierMask key="keyEquivalentModifierMask"/>
+                                <menu key="submenu" title="Archives" id="A4d-bK-MaG">
+                                    <items>
+                                        <menuItem title="Save Archive of Current Session…" id="owl-7s-n9a">
+                                            <modifierMask key="keyEquivalentModifierMask"/>
+                                            <connections>
+                                                <action selector="saveArchive:" target="-1" id="Hkx-vn-Rgq"/>
+                                            </connections>
+                                        </menuItem>
+                                        <menuItem title="Restore Archive…" id="UXA-3l-Mrb">
+                                            <modifierMask key="keyEquivalentModifierMask"/>
+                                            <connections>
+                                                <action selector="restoreArchive:" target="-1" id="mU3-QI-qQ4"/>
+                                            </connections>
+                                        </menuItem>
+                                        <menuItem isSeparatorItem="YES" id="xCi-zA-H6Z">
+                                            <modifierMask key="keyEquivalentModifierMask" command="YES"/>
+                                        </menuItem>
+                                    </items>
+                                </menu>
+                            </menuItem>
+                            <menuItem isSeparatorItem="YES" id="sr9-jE-RB0">
+                                <modifierMask key="keyEquivalentModifierMask" command="YES"/>
+                            </menuItem>
                             <menuItem title="Broadcast Input" id="1261">
                                 <modifierMask key="keyEquivalentModifierMask"/>
                                 <menu key="submenu" title="Broadcast Input" id="1262">
@@ -1894,6 +1919,7 @@ DQ
         </menu>
         <customObject id="201" userLabel="iTermApplicationDelegate" customClass="iTermApplicationDelegate">
             <connections>
+                <outlet property="_archivesMenuItem" destination="fb0-0W-qYG" id="Vfm-kg-kma"/>
                 <outlet property="_buriedSessions" destination="PTu-aD-qbz" id="Fl9-Gn-jv2"/>
                 <outlet property="_captureGPUFrameMenuItem" destination="8KO-hG-xdC" id="boz-fC-4l8"/>
                 <outlet property="_composerMenuItem" destination="Bhs-45-5yR" id="Od6-HK-qOR"/>

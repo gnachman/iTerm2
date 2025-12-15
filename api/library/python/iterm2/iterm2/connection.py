@@ -360,6 +360,7 @@ class Connection:
             path,
             "ws://localhost/",
             ping_interval=None,
+            close_timeout=0,
             extra_headers=_headers(),
             subprotocols=_subprotocols(),
             max_size=None)
@@ -369,6 +370,7 @@ class Connection:
         """Legacy: connect with tcp socket."""
         return websockets_connect(_uri(),
                                         ping_interval=None,
+                                        close_timeout=0,
                                         extra_headers=_headers(),
                                         subprotocols=_subprotocols())
 

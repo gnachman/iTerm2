@@ -76,6 +76,7 @@ NSString *const iTermWebViewErrorDomain = @"com.iterm2.webview";
         URL = self.backupURL;
     }
     [[NSWorkspace sharedWorkspace] it_openURL:URL
+                                       target:nil
                                         style:iTermOpenStyleTab
                                        window:self.view.window];
 }

@@ -337,6 +337,7 @@ extern const CGFloat PTYTextViewMarginClickGraceWidth;
 - (BOOL)textViewProfileTypeIsTerminal;
 - (BOOL)textViewCanUseSSHIntegrationFor:(SCPPath *)path;
 - (BOOL)textViewPerformTextReplacement;
+- (void)textViewSaveArchive:(iTermSavePanelItem *)location;
 @end
 
 @interface iTermHighlightedRow : NSObject
@@ -703,6 +704,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
 - (void)openSemanticHistoryPath:(NSString *)path
                   orRawFilename:(NSString *)rawFileName
                        fragment:(NSString *)fragment
+                         target:(NSString *)target
                workingDirectory:(NSString *)workingDirectory
                      lineNumber:(NSString *)lineNumber
                    columnNumber:(NSString *)columnNumber

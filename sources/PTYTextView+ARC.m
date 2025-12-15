@@ -1918,6 +1918,7 @@ withRelativeCoordRange:(VT100GridAbsCoordRange)range
 - (void)contextMenu:(iTermTextViewContextMenuHelper *)contextMenu
             openURL:(NSURL *)url {
     [[NSWorkspace sharedWorkspace] it_openURL:url
+                                       target:nil
                                         style:iTermOpenStyleTab
                                        window:self.window];
 }

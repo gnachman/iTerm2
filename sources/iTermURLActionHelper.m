@@ -147,7 +147,7 @@
         return;
     }
     NSURL *url = [NSURL URLWithUserSuppliedString:trimmedURLString];
-    [self openURL:url inBackground:background workingDirectory:nil style:style];
+    [self openURL:url target:nil inBackground:background workingDirectory:nil style:style];
 }
 
 - (void)downloadFileAtSecureCopyPath:(SCPPath *)scpPath
@@ -211,6 +211,7 @@
 - (void)openSemanticHistoryPath:(NSString *)path
                   orRawFilename:(NSString *)rawFileName
                        fragment:(NSString *)fragment
+                         target:(NSString *)target
                workingDirectory:(NSString *)workingDirectory
                      lineNumber:(NSString *)lineNumber
                    columnNumber:(NSString *)columnNumber
@@ -226,6 +227,7 @@
     [self.semanticHistoryController openPath:path
                                orRawFilename:rawFileName
                                     fragment:fragment
+                                      target:target
                                substitutions:subs
                                        scope:[self.delegate urlActionHelperScope:self]
                                   lineNumber:lineNumber
@@ -247,6 +249,7 @@
 // If iTerm2 is the handler for the scheme, then the profile is launched directly.
 // Otherwise it's passed to the OS to launch.
 - (void)openURL:(NSURL *)url
+         target:(NSString *)target
    inBackground:(BOOL)background
 workingDirectory:(NSString *)workingDirectory
           style:(iTermOpenStyle)style {
@@ -273,6 +276,7 @@ workingDirectory:(NSString *)workingDirectory
         [self.semanticHistoryController openPath:url.path
                                    orRawFilename:url.path
                                         fragment:url.fragment
+                                          target:target
                                    substitutions:subs
                                            scope:[self.delegate urlActionHelperScope:self]
                                       lineNumber:lineNumber
@@ -291,11 +295,13 @@ workingDirectory:(NSString *)workingDirectory
         NSWorkspaceOpenConfiguration *config = [NSWorkspaceOpenConfiguration configuration];
         config.activates = NO;
         [[NSWorkspace sharedWorkspace] it_openURL:url
+                                           target:target
                                     configuration:config
                                             style:style
                                            window:self.delegate.urlActionHelperWindow];
     } else {
         [[NSWorkspace sharedWorkspace] it_openURL:url
+                                           target:target
                                             style:style
                                            window:self.delegate.urlActionHelperWindow];
     }
@@ -341,6 +347,7 @@ workingDirectory:(NSString *)workingDirectory
                 [self openSemanticHistoryPath:action.fullPath
                                 orRawFilename:action.rawFilename
                                      fragment:nil
+                                       target:nil
                              workingDirectory:action.workingDirectory
                                    lineNumber:action.lineNumber
                                  columnNumber:action.columnNumber
@@ -373,6 +380,7 @@ workingDirectory:(NSString *)workingDirectory
                                         locationInView:action.visualRange.coordRange];
                 } else {
                     [self openURL:url
+                           target:action.target
                      inBackground:openInBackground
                  workingDirectory:action.workingDirectory
                             style:style];

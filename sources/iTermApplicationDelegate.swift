@@ -213,3 +213,10 @@ extension iTermApplicationDelegate {
         }
     }
 }
+
+@objc
+extension iTermApplicationDelegate {
+    @IBAction func restoreArchive(_ sender: Any?) {
+        ArchivesMenuBuilder.shared?.restoreArchive(nil)
+    }
+}

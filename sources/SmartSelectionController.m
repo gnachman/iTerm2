@@ -247,12 +247,14 @@ const double SmartSelectionVeryHighPrecision = 1000000.0;
 
 - (IBAction)syntaxHelp:(id)sender {
     [[NSWorkspace sharedWorkspace] it_openURL:[NSURL URLWithString:@"https://unicode-org.github.io/icu/userguide/strings/regexp.html"]
+                                       target:nil
                                         style:iTermOpenStyleTab
                                        window:self.window];
 }
 
 - (IBAction)help:(id)sender {
     [[NSWorkspace sharedWorkspace] it_openURL:[NSURL URLWithString:@"http://www.iterm2.com/smartselection.html"]
+                                       target:nil
                                         style:iTermOpenStyleTab
                                        window:self.window];
 }

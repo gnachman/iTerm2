@@ -1344,18 +1344,21 @@ additionalWordCharacters:(NSString *)additionalWordCharacters
     }
     return [_state numberOfLinesDroppedWhenEncodingContentsIncludingGrid:YES
                                                                  encoder:encoder
-                                                          intervalOffset:intervalOffsetPtr];
+                                                          intervalOffset:intervalOffsetPtr
+                                                               unlimited:NO];
 }
 
 - (int)numberOfLinesDroppedWhenEncodingModernFormatWithEncoder:(id<iTermEncoderAdapter>)encoder
-                                                intervalOffset:(long long *)intervalOffsetPtr {
+                                                intervalOffset:(long long *)intervalOffsetPtr
+                                                     unlimited:(BOOL)unlimited {
     __block int linesDropped = 0;
     [encoder encodeDictionaryWithKey:@"LineBuffer"
                           generation:iTermGenerationAlwaysEncode
                                block:^BOOL(id<iTermEncoderAdapter>  _Nonnull subencoder) {
         linesDropped = [_state numberOfLinesDroppedWhenEncodingContentsIncludingGrid:NO
                                                                              encoder:subencoder
-                                                                      intervalOffset:intervalOffsetPtr];
+                                                                      intervalOffset:intervalOffsetPtr
+                                                                           unlimited:unlimited];
         return YES;
     }];
     [encoder encodeDictionaryWithKey:@"PrimaryGrid"
@@ -1376,7 +1379,8 @@ additionalWordCharacters:(NSString *)additionalWordCharacters
 }
 
 - (BOOL)encodeContents:(id<iTermEncoderAdapter>)encoder
-          linesDropped:(int *)linesDroppedOut {
+          linesDropped:(int *)linesDroppedOut
+             unlimited:(BOOL)unlimited {
     [self performBlockWithJoinedThreads:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
         NSDictionary *extra;
 
@@ -1384,7 +1388,8 @@ additionalWordCharacters:(NSString *)additionalWordCharacters
         if ([iTermAdvancedSettingsModel useNewContentFormat]) {
             long long intervalOffset = 0;
             const int linesDroppedForBrevity = [self numberOfLinesDroppedWhenEncodingModernFormatWithEncoder:encoder
-                                                                                              intervalOffset:&intervalOffset];
+                                                                                              intervalOffset:&intervalOffset
+                                                                                                   unlimited:unlimited];
             extra = @{
                 kScreenStateIntervalTreeKey: [_state.intervalTree dictionaryValueWithOffset:intervalOffset] ?: @{},
             };
@@ -1430,7 +1435,7 @@ additionalWordCharacters:(NSString *)additionalWordCharacters
                kScreenStateAlternateGridStateKey: _state.altGrid.dictionaryValue ?: [NSNull null],
                kScreenStateProtectedMode: @(_state.protectedMode),
                kScreenStatePromptStateKey: _state.promptStateDictionary ?: [NSNull null],
-               kScreenStateBlockStartAbsLineKey: _state.blockStartAbsLine,
+               kScreenStateBlockStartAbsLineKey: _state.blockStartAbsLine ?: @{},
                kScreenStateProgressKey: @(_state.progress),
             };
             dict = [dict dictionaryByRemovingNullValues];
@@ -1736,13 +1741,15 @@ additionalWordCharacters:(NSString *)additionalWordCharacters
 
 - (void)restoreFromDictionary:(NSDictionary *)dictionary
      includeRestorationBanner:(BOOL)includeRestorationBanner
-                   reattached:(BOOL)reattached {
+                   reattached:(BOOL)reattached
+                    isArchive:(BOOL)isArchive {
     [self performBlockWithJoinedThreads:^(VT100Terminal *terminal,
                                           VT100ScreenMutableState *mutableState,
                                           id<VT100ScreenDelegate> delegate) {
         [mutableState restoreFromDictionary:dictionary
                    includeRestorationBanner:includeRestorationBanner
-                                 reattached:reattached];
+                                 reattached:reattached
+                                  isArchive:isArchive];
     }];
 }
 

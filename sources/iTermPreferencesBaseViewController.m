@@ -319,14 +319,25 @@ NSString *const iTermPreferencesDidToggleIndicateNonDefaultValues = @"iTermPrefe
                 [self setBool:([(NSButton *)sender state] == NSControlStateValueOff) forKey:info.key];
                 break;
 
-            case kPreferenceInfoTypeIntegerTextField:
-                [self applyIntegerConstraints:info];
-                const int intValue = [sender separatorTolerantIntValue];
+            case kPreferenceInfoTypeIntegerTextField: {
+                // This clamps the main control's value and returns the attempted value.
+                const int mainControlValue = [self applyIntegerConstraints:info];
+                // The sender might be an associated view whose value is unclamped.
+                const int senderValue = [sender separatorTolerantIntValue];
+                int intValue = senderValue;
+                const int before = MAX(mainControlValue, senderValue);
+                if (!NSLocationInRange(before, info.range)) {
+                    intValue = MAX(MIN(NSMaxRange(info.range) - 1, intValue), info.range.location);
+                    if (intValue != before && info.didClamp) {
+                        info.didClamp(before);
+                    }
+                }
                 if (!info.deferUpdate) {
                     [self setInt:intValue forKey:info.key];
                 }
                 info.associatedStepper.integerValue = intValue;
                 break;
+            }
 
             case kPreferenceInfoTypeDoubleTextField: {
                 NSScanner *scanner = [NSScanner localizedScannerWithString:[sender stringValue]];
@@ -1065,17 +1076,19 @@ NSString *const iTermPreferencesDidToggleIndicateNonDefaultValues = @"iTermPrefe
     return val;
 }
 
-- (void)applyIntegerConstraints:(PreferenceInfo *)info {
+- (int)applyIntegerConstraints:(PreferenceInfo *)info {
     // NSNumberFormatter seems to have lost its mind on Lion. See a description of the problem here:
     // http://stackoverflow.com/questions/7976951/nsnumberformatter-erasing-value-when-it-violates-constraints
     assert([info.control isKindOfClass:[NSTextField class]]);
     NSTextField *textField = (NSTextField *)info.control;
+    const int original = [self intForString:[textField stringValue] inRange:NSMakeRange(0, NSUIntegerMax)];
     int iv = [self intForString:[textField stringValue] inRange:info.range];
     if (iv != [textField separatorTolerantIntValue]) {
         // If the int values don't match up or there are terminal non-number
         // chars, then update the value.
         [textField setIntValue:iv];
     }
+    return original;
 }
 
 - (void)applyUnsignedIntegerConstraints:(PreferenceInfo *)info {

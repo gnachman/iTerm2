@@ -213,6 +213,8 @@ static BOOL hasBecomeActive = NO;
     IBOutlet NSMenuItem *_namedMarksMenuItem;
     IBOutlet NSMenuItem *_toolbeltMenuItem;
     IBOutlet NSMenuItem *_webMenuItem;
+    IBOutlet NSMenuItem *_archivesMenuItem;
+    
     // If set, skip performing launch actions.
     BOOL quiet_;
     NSDate* launchTime_;
@@ -330,6 +332,8 @@ static BOOL hasBecomeActive = NO;
 #pragma mark - Interface Builder
 
 - (void)awakeFromNib {
+    [ArchivesMenuBuilder setShared:[[ArchivesMenuBuilder alloc] initWithMenuItem:_archivesMenuItem]];
+
     NSMenu *viewMenu = [self topLevelViewNamed:@"View"];
     [viewMenu addItem:[NSMenuItem separatorItem]];
 
@@ -2673,6 +2677,7 @@ static iTermKeyEventReplayer *gReplayer;
 
 - (IBAction)showHelp:(id)sender {
     [[NSWorkspace sharedWorkspace] it_openURL:[NSURL URLWithString:@"https://www.iterm2.com/documentation.html"]
+                                       target:nil
                                         style:iTermOpenStyleTab
                                        window:nil];
 }
@@ -2918,6 +2923,7 @@ static iTermKeyEventReplayer *gReplayer;
 - (IBAction)openSourceLicenses:(id)sender {
     NSURL *url = [[NSBundle bundleForClass:self.class] URLForResource:@"Licenses" withExtension:@"txt"];
     [[NSWorkspace sharedWorkspace] it_openURL:url
+                                       target:nil
                                         style:iTermOpenStyleTab
                                        window:nil];
 }

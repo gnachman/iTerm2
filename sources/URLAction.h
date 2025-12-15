@@ -66,6 +66,7 @@ typedef NS_ENUM(NSInteger, URLActionType) {
 @property(nonatomic, strong) id<VT100ScreenMarkReading> mark;
 @property(nonatomic) VT100GridCoord coord;
 @property(nonatomic) BOOL osc8;
+@property(nonatomic, copy) NSString *target;  // where to open? Used for osc 8 urls.
 
 + (instancetype)urlActionToSecureCopyFile:(SCPPath *)scpPath;
 + (instancetype)urlActionToOpenURL:(NSString *)filename;

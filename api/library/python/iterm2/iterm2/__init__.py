@@ -74,7 +74,7 @@ from iterm2.tmux import (
 
 from iterm2.tool import async_register_web_view_tool
 
-from iterm2.triggers import decode_trigger, Trigger, AlertTrigger, AnnotateTrigger, BellTrigger, BounceTrigger, CaptureTrigger, CoprocessTrigger, HighlightLineTrigger, HighlightTrigger, HyperlinkTrigger, InjectTrigger, MarkTrigger, MuteCoprocessTrigger, PasswordTrigger, RPCTrigger, RunCommandTrigger, SendTextTrigger, SetDirectoryTrigger, SetHostnameTrigger, SetTitleTrigger, SetUserVariableTrigger, ShellPromptTrigger, StopTrigger, UserNotificationTrigger, SetNamedMarkTrigger, FoldTrigger
+from iterm2.triggers import decode_trigger, Trigger, AlertTrigger, AnnotateTrigger, BellTrigger, BounceTrigger, BufferInputTrigger, CaptureTrigger, CoprocessTrigger, FoldTrigger, HighlightLineTrigger, HighlightTrigger, HyperlinkTrigger, InjectTrigger, MarkTrigger, MuteCoprocessTrigger, PasswordTrigger, RPCTrigger, RunCommandTrigger, SendTextTrigger, SetDirectoryTrigger, SetHostnameTrigger, SetNamedMarkTrigger, SetTitleTrigger, SetUserVariableTrigger, SGRTrigger, ShellPromptTrigger, StopTrigger, UserNotificationTrigger
 
 from iterm2.util import (
     frame_str, size_str, Size, Point, Frame, CoordRange, Range,

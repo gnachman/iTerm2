@@ -8,6 +8,7 @@
 
 #import "iTermBoxDrawingBezierCurveFactory.h"
 
+#import "iTerm2SharedARC-Swift.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "charmaps.h"
 #import "iTermImageCache.h"
@@ -65,6 +66,14 @@
             iTermLightShade,  // ░
             iTermMediumShade,  // ▒
             iTermDarkShade,  // ▓
+            iTermBlackLowerRightTriangle,  // ◢
+            iTermBlackLowerLeftTriangle,  // ◣
+            iTermBlackUpperLeftTriangle,  // ◤
+            iTermBlackUpperRightTriangle,  // ◥
+            iTermUpperLeftTriangle,  // ◸
+            iTermUpperRightTriangle,  // ◹
+            iTermLowerLeftTriangle,  // ◺
+            iTermLowerRightTriangle,  // ◿
 
             // Powerline. See https://github.com/ryanoasis/powerline-extra-symbols
             0xe0b0,
@@ -87,6 +96,72 @@
         };
         for (size_t i = 0; i < sizeof(chars) / sizeof(*chars); i++) {
             [temp addCharactersInRange:NSMakeRange(chars[i], 1)];
+        }
+
+        UTF32Char extendedChars[] = {
+            iTermBlockSextant1,
+            iTermBlockSextant2,
+            iTermBlockSextant12,
+            iTermBlockSextant3,
+            iTermBlockSextant13,
+            iTermBlockSextant23,
+            iTermBlockSextant123,
+            iTermBlockSextant4,
+            iTermBlockSextant14,
+            iTermBlockSextant24,
+            iTermBlockSextant124,
+            iTermBlockSextant34,
+            iTermBlockSextant134,
+            iTermBlockSextant234,
+            iTermBlockSextant1234,
+            iTermBlockSextant5,
+            iTermBlockSextant15,
+            iTermBlockSextant25,
+            iTermBlockSextant125,
+            iTermBlockSextant35,
+            iTermBlockSextant235,
+            iTermBlockSextant1235,
+            iTermBlockSextant45,
+            iTermBlockSextant145,
+            iTermBlockSextant245,
+            iTermBlockSextant1245,
+            iTermBlockSextant345,
+            iTermBlockSextant1345,
+            iTermBlockSextant2345,
+            iTermBlockSextant12345,
+            iTermBlockSextant6,
+            iTermBlockSextant16,
+            iTermBlockSextant26,
+            iTermBlockSextant126,
+            iTermBlockSextant36,
+            iTermBlockSextant136,
+            iTermBlockSextant236,
+            iTermBlockSextant1236,
+            iTermBlockSextant46,
+            iTermBlockSextant146,
+            iTermBlockSextant1246,
+            iTermBlockSextant346,
+            iTermBlockSextant1346,
+            iTermBlockSextant2346,
+            iTermBlockSextant12346,
+            iTermBlockSextant56,
+            iTermBlockSextant156,
+            iTermBlockSextant256,
+            iTermBlockSextant1256,
+            iTermBlockSextant356,
+            iTermBlockSextant1356,
+            iTermBlockSextant2356,
+            iTermBlockSextant12356,
+            iTermBlockSextant456,
+            iTermBlockSextant1456,
+            iTermBlockSextant2456,
+            iTermBlockSextant12456,
+            iTermBlockSextant3456,
+            iTermBlockSextant13456,
+            iTermBlockSextant23456,
+        };
+        for (size_t i = 0; i < sizeof(extendedChars) / sizeof(*extendedChars); i++) {
+            [temp addCharactersInRange:NSMakeRange(extendedChars[i], 1)];
         }
         characterSet = [temp copy];
     });
@@ -213,24 +288,71 @@ typedef NS_OPTIONS(NSUInteger, iTermPowerlineDrawingOptions) {
         if ([iTermAdvancedSettingsModel disableCustomBoxDrawing]) {
             sBoxDrawingCharactersWithBezierPaths = [NSCharacterSet characterSetWithCharactersInString:@""];
         } else {
-            sBoxDrawingCharactersWithBezierPaths = [NSCharacterSet characterSetWithCharactersInString:@"─━│┃┌┍┎┏┐┑┒┓└┕┖┗┘┙┚┛├┝┞┟┠┡┢┣┤"
-                                                     @"┥┦┧┨┩┪┫┬┭┮┯┰┱┲┳┴┵┶┷┸┹┺┻┼┽┾┿╀╁╂╃╄╅╆╇╈╉╊╋═║╒╓╔╕╖╗╘╙╚╛╜╝╞╟╠╡╢╣╤╥╦╧╨╩╪╫╬╴╵╶╷╸╹╺╻╼╽╾╿"
-                                                     @"╯╮╰╭╱╲╳▀▁▂▃▄▅▆▇█▉▊▋▌▍▎▏▐▔▕▖▗▘▙▚▛▜▝▞▟"];
+            sBoxDrawingCharactersWithBezierPaths = [NSCharacterSet characterSetWithCharactersInString:
+                                                    @"─━│┃┌┍┎┏┐┑┒┓└┕┖┗┘┙┚┛├┝┞┟┠┡┢┣┤"
+                                                    @"┥┦┧┨┩┪┫┬┭┮┯┰┱┲┳┴┵┶┷┸┹┺┻┼┽┾┿╀╁╂╃╄╅╆╇╈╉╊╋═║╒╓╔╕╖╗╘╙╚╛╜╝╞╟╠╡╢╣╤╥╦╧╨╩╪╫╬╴╵╶╷╸╹╺╻╼╽╾╿"
+                                                    @"╯╮╰╭╱╲╳▀▁▂▃▄▅▆▇█▉▊▋▌▍▎▏▐▔▕▖▗▘▙▚▛▜▝▞▟"
+                                                    @"◢◣◤◥◸◹◺◿"
+                                                    @"🬀🬁🬂🬃🬄🬅🬆🬇🬈🬉🬊🬋🬌🬍🬎🬏🬐🬑🬒🬓🬔🬕🬖🬗🬘🬙🬚🬛🬜🬝🬞🬟🬠🬡🬢🬣🬤🬥🬦🬧🬨🬩🬪🬫🬬🬭🬮🬯🬰🬱🬲🬳🬴🬵🬶🬷🬸🬹🬺🬻"
+                                                    @"🬼🬽🬾🬿🭀🭁🭂🭃🭄🭅🭆🭇🭈🭉🭊🭋🭌🭍🭎🭏🭐🭑🭒🭓🭔🭕🭖🭗🭘🭙🭚🭛🭜🭝🭞🭟🭠🭡🭢🭣🭤🭥🭦🭧🭨🭩🭪🭫🭬🭭🭮🭯"
+            ];
         };
     });
     return sBoxDrawingCharactersWithBezierPaths;
 }
 
++ (NSArray<NSString *> *)solidBoxesForSextant:(NSString *)digits {
+    // 12
+    // 34
+    // 56
+    NSMutableArray<NSString *> *parts = [NSMutableArray array];
+    for (NSUInteger i = 0; i < digits.length; i++) {
+        const unichar digit = [digits characterAtIndex:i];
+        unichar left = 0;
+        unichar top = 0;
+        switch (digit) {
+            case '1':
+                left = 'a';
+                top = '0';
+                break;
+            case '2':
+                left = 'e';
+                top = '0';
+                break;
+            case '3':
+                left = 'a';
+                top = 'B';
+                break;
+            case '4':
+                left = 'e';
+                top = 'B';
+                break;
+            case '5':
+                left = 'a';
+                top = 'C';
+                break;
+            case '6':
+                left = 'e';
+                top = 'C';
+                break;
+        }
+        assert(left);
+        assert(top);
+        [parts addObject:[NSString stringWithFormat:@"%c%c4B", left, top]];
+    }
+    return parts;
+}
+
 // NOTE: If you change this also update blockDrawingCharacters
-+ (NSArray<NSBezierPath *> *)bezierPathsForSolidBoxesForCode:(unichar)code
-                                                    cellSize:(NSSize)cellSize
-                                                      offset:(CGPoint)offset
-                                                       scale:(CGFloat)scale {
++ (iTermShapeBuilder *)shapeBuilderForSolidBoxesForCode:(UTF32Char)longCode
+                                               cellSize:(NSSize)cellSize
+                                                 offset:(CGPoint)offset
+                                                  scale:(CGFloat)scale {
     NSArray<NSString *> *parts = nil;
 
     // First two characters give the letter + number of origin in eighths.
     // Then come two digits giving width and height in eighths.
-    switch (code) {
+    switch (longCode) {
         case 0xE0A0:  // Version control branch
         case 0xE0A1:  // LN (line) symbol
         case 0xE0A2:  // Closed padlock
@@ -327,26 +449,261 @@ typedef NS_OPTIONS(NSUInteger, iTermPowerlineDrawingOptions) {
         case iTermQuadrantUpperRightAndLowerLeftAndLowerRight: // ▟
             parts = @[ @"e044", @"a444", @"e444" ];
             break;
-
+        case iTermBlackLowerRightTriangle:  // ◢
+        case iTermBlackLowerLeftTriangle:  // ◣
+        case iTermBlackUpperLeftTriangle:  // ◤
+        case iTermBlackUpperRightTriangle:  // ◥
+        case iTermUpperLeftTriangle:  // ◸
+        case iTermUpperRightTriangle:  // ◹
+        case iTermLowerLeftTriangle:  // ◺
+        case iTermLowerRightTriangle:  // ◿
         case iTermLightShade: // ░
         case iTermMediumShade: // ▒
         case iTermDarkShade: // ▓
             return nil;
+
+        case iTermBlockSextant1:  // 🬀
+            parts = [self solidBoxesForSextant:@"1"];
+            break;
+        case iTermBlockSextant2:  // 🬁
+            parts = [self solidBoxesForSextant:@"2"];
+            break;
+        case iTermBlockSextant12:  // 🬂
+            parts = [self solidBoxesForSextant:@"12"];
+            break;
+        case iTermBlockSextant3:  // 🬃
+            parts = [self solidBoxesForSextant:@"3"];
+            break;
+        case iTermBlockSextant13:  // 🬄
+            parts = [self solidBoxesForSextant:@"13"];
+            break;
+        case iTermBlockSextant23:  // 🬅
+            parts = [self solidBoxesForSextant:@"23"];
+            break;
+        case iTermBlockSextant123:  // 🬆
+            parts = [self solidBoxesForSextant:@"123"];
+            break;
+        case iTermBlockSextant4:  // 🬇
+            parts = [self solidBoxesForSextant:@"4"];
+            break;
+        case iTermBlockSextant14:  // 🬈
+            parts = [self solidBoxesForSextant:@"14"];
+            break;
+        case iTermBlockSextant24:  // 🬉
+            parts = [self solidBoxesForSextant:@"24"];
+            break;
+        case iTermBlockSextant124:  // 🬊
+            parts = [self solidBoxesForSextant:@"124"];
+            break;
+        case iTermBlockSextant34:  // 🬋
+            parts = [self solidBoxesForSextant:@"34"];
+            break;
+        case iTermBlockSextant134:  // 🬌
+            parts = [self solidBoxesForSextant:@"134"];
+            break;
+        case iTermBlockSextant234:  // 🬍
+            parts = [self solidBoxesForSextant:@"234"];
+            break;
+        case iTermBlockSextant1234:  // 🬎
+            parts = [self solidBoxesForSextant:@"1234"];
+            break;
+        case iTermBlockSextant5:  // 🬏
+            parts = [self solidBoxesForSextant:@"5"];
+            break;
+        case iTermBlockSextant15:  // 🬐
+            parts = [self solidBoxesForSextant:@"15"];
+            break;
+        case iTermBlockSextant25:  // 🬑
+            parts = [self solidBoxesForSextant:@"25"];
+            break;
+        case iTermBlockSextant125:  // 🬒
+            parts = [self solidBoxesForSextant:@"125"];
+            break;
+        case iTermBlockSextant35:  // 🬓
+            parts = [self solidBoxesForSextant:@"35"];
+            break;
+        case iTermBlockSextant235:  // 🬔
+            parts = [self solidBoxesForSextant:@"235"];
+            break;
+        case iTermBlockSextant1235:  // 🬕
+            parts = [self solidBoxesForSextant:@"1235"];
+            break;
+        case iTermBlockSextant45:  // 🬖
+            parts = [self solidBoxesForSextant:@"45"];
+            break;
+        case iTermBlockSextant145:  // 🬗
+            parts = [self solidBoxesForSextant:@"145"];
+            break;
+        case iTermBlockSextant245:  // 🬘
+            parts = [self solidBoxesForSextant:@"245"];
+            break;
+        case iTermBlockSextant1245:  // 🬙
+            parts = [self solidBoxesForSextant:@"1245"];
+            break;
+        case iTermBlockSextant345:  // 🬚
+            parts = [self solidBoxesForSextant:@"345"];
+            break;
+        case iTermBlockSextant1345:  // 🬛
+            parts = [self solidBoxesForSextant:@"1345"];
+            break;
+        case iTermBlockSextant2345:  // 🬜
+            parts = [self solidBoxesForSextant:@"2345"];
+            break;
+        case iTermBlockSextant12345:  // 🬝
+            parts = [self solidBoxesForSextant:@"12345"];
+            break;
+        case iTermBlockSextant6:  // 🬞
+            parts = [self solidBoxesForSextant:@"6"];
+            break;
+        case iTermBlockSextant16:  // 🬟
+            parts = [self solidBoxesForSextant:@"16"];
+            break;
+        case iTermBlockSextant26:  // 🬠
+            parts = [self solidBoxesForSextant:@"26"];
+            break;
+        case iTermBlockSextant126:  // 🬡
+            parts = [self solidBoxesForSextant:@"126"];
+            break;
+        case iTermBlockSextant36:  // 🬢
+            parts = [self solidBoxesForSextant:@"36"];
+            break;
+        case iTermBlockSextant136:  // 🬣
+            parts = [self solidBoxesForSextant:@"136"];
+            break;
+        case iTermBlockSextant236:  // 🬤
+            parts = [self solidBoxesForSextant:@"236"];
+            break;
+        case iTermBlockSextant1236:  // 🬥
+            parts = [self solidBoxesForSextant:@"1236"];
+            break;
+        case iTermBlockSextant46:  // 🬦
+            parts = [self solidBoxesForSextant:@"46"];
+            break;
+        case iTermBlockSextant146:  // 🬧
+            parts = [self solidBoxesForSextant:@"146"];
+            break;
+        case iTermBlockSextant1246:  // 🬨
+            parts = [self solidBoxesForSextant:@"1246"];
+            break;
+        case iTermBlockSextant346:  // 🬩
+            parts = [self solidBoxesForSextant:@"346"];
+            break;
+        case iTermBlockSextant1346:  // 🬪
+            parts = [self solidBoxesForSextant:@"1346"];
+            break;
+        case iTermBlockSextant2346:  // 🬫
+            parts = [self solidBoxesForSextant:@"2346"];
+            break;
+        case iTermBlockSextant12346:  // 🬬
+            parts = [self solidBoxesForSextant:@"12346"];
+            break;
+        case iTermBlockSextant56:  // 🬭
+            parts = [self solidBoxesForSextant:@"56"];
+            break;
+        case iTermBlockSextant156:  // 🬮
+            parts = [self solidBoxesForSextant:@"156"];
+            break;
+        case iTermBlockSextant256:  // 🬯
+            parts = [self solidBoxesForSextant:@"256"];
+            break;
+        case iTermBlockSextant1256:  // 🬰
+            parts = [self solidBoxesForSextant:@"1256"];
+            break;
+        case iTermBlockSextant356:  // 🬱
+            parts = [self solidBoxesForSextant:@"356"];
+            break;
+        case iTermBlockSextant1356:  // 🬲
+            parts = [self solidBoxesForSextant:@"1356"];
+            break;
+        case iTermBlockSextant2356:  // 🬳
+            parts = [self solidBoxesForSextant:@"2356"];
+            break;
+        case iTermBlockSextant12356:  // 🬴
+            parts = [self solidBoxesForSextant:@"12356"];
+            break;
+        case iTermBlockSextant456:  // 🬵
+            parts = [self solidBoxesForSextant:@"456"];
+            break;
+        case iTermBlockSextant1456:  // 🬶
+            parts = [self solidBoxesForSextant:@"1456"];
+            break;
+        case iTermBlockSextant2456:  // 🬷
+            parts = [self solidBoxesForSextant:@"2456"];
+            break;
+        case iTermBlockSextant12456:  // 🬸
+            parts = [self solidBoxesForSextant:@"12456"];
+            break;
+        case iTermBlockSextant3456:  // 🬹
+            parts = [self solidBoxesForSextant:@"3456"];
+            break;
+        case iTermBlockSextant13456:  // 🬺
+            parts = [self solidBoxesForSextant:@"13456"];
+            break;
+        case iTermBlockSextant23456:  // 🬻
+            parts = [self solidBoxesForSextant:@"23456"];
+            break;
     }
 
-    return [parts mapWithBlock:^id(NSString *part) {
+    // Origin uses this grid:
+    //        0  .125  .250  .333  .375  .500  .625  .666  .750  .875  1
+    //        a  b     c     B     d     e     f     C     g     h     i
+    // 0     0
+    // .125  1
+    // .250  2
+    // .333  B
+    // .375  3
+    // .500  4
+    // .625  5
+    // .666  C
+    // .750  6
+    // .875  7
+    // 1     8
+    //
+    // Width uses numbers for eighths and uppercase letters for thirds.
+    // Height uses numbers for eighths and uppercase letters for thirds.
+    if (!parts) {
+        return nil;
+    }
+    iTermShapeBuilder *shapeBuilder = [[iTermShapeBuilder alloc] init];
+    for (NSString *part in parts) {
         const char *bytes = part.UTF8String;
 
-        CGFloat xo = cellSize.width * (CGFloat)(bytes[0] - 'a') / 8.0;
-        CGFloat yo = cellSize.height * (CGFloat)(bytes[1] - '0') / 8.0;
-        CGFloat w = cellSize.width / 8.0 * (CGFloat)(bytes[2] - '0');
-        CGFloat h = cellSize.height / 8.0 * (CGFloat)(bytes[3] - '0');
+        CGFloat xo;
+        if (bytes[0] <= 'Z') {
+            xo = cellSize.width * (CGFloat)(bytes[0] - 'A') / 3.0;
+        } else {
+            xo = cellSize.width * (CGFloat)(bytes[0] - 'a') / 8.0;
+        }
+        CGFloat yo;
+        if (bytes[1] >= 'A') {
+            yo = cellSize.height * (CGFloat)(bytes[1] - 'A') / 3.0;
+        } else {
+            yo = cellSize.height * (CGFloat)(bytes[1] - '0') / 8.0;
+        }
+        CGFloat w;
+        if (bytes[2] >= 'A') {
+            w = cellSize.width / 3.0 * (CGFloat)(bytes[2] - 'A');
+        } else {
+            w = cellSize.width / 8.0 * (CGFloat)(bytes[2] - '0');
+        }
+        CGFloat h;
+        if (bytes[3] >= 'A') {
+            h = cellSize.height / 3.0 * (CGFloat)(bytes[3] - 'A');
+        } else {
+            h = cellSize.height / 8.0 * (CGFloat)(bytes[3] - '0');
+        }
 
         xo += offset.x;
         yo += offset.y;
 
-        return [NSBezierPath bezierPathWithRect:NSMakeRect(xo, yo, w, h)];
-    }];
+        // Round to pixel boundaries for sharp edges on filled shapes
+        CGFloat x1 = round(xo);
+        CGFloat y1 = round(yo);
+        CGFloat x2 = round(xo + w);
+        CGFloat y2 = round(yo + h);
+        [shapeBuilder addRect:NSMakeRect(x1, y1, x2 - x1, y2 - y1)];
+    }
+    return shapeBuilder;
 }
 
 + (void)performBlockWithoutAntialiasing:(void (^)(void))block {
@@ -356,18 +713,18 @@ typedef NS_OPTIONS(NSUInteger, iTermPowerlineDrawingOptions) {
     [[NSGraphicsContext currentContext] setImageInterpolation:saved];
 }
 
-+ (void)drawPowerlineCode:(unichar)code
-cellSize:(NSSize)regularCellSize
-color:(CGColorRef)color
-scale:(CGFloat)scale
-isPoints:(BOOL)isPoints
-offset:(CGPoint)offset {
++ (void)drawPowerlineCode:(UTF32Char)longCode
+                 cellSize:(NSSize)regularCellSize
+                    color:(CGColorRef)color
+                    scale:(CGFloat)scale
+                 isPoints:(BOOL)isPoints
+                   offset:(CGPoint)offset {
 
     NSSize cellSize = regularCellSize;
-    if ([[iTermBoxDrawingBezierCurveFactory doubleWidthPowerlineSymbols] containsObject:@(code)]) {
+    if ([[iTermBoxDrawingBezierCurveFactory doubleWidthPowerlineSymbols] containsObject:@(longCode)]) {
         cellSize.width *= 2;
     }
-    switch (code) {
+    switch (longCode) {
         case 0xE0A0:
             [self drawPDFWithName:@"PowerlineVersionControlBranch" options:0 cellSize:cellSize stretch:NO color:color antialiased:YES offset:offset];
             break;
@@ -380,16 +737,16 @@ offset:(CGPoint)offset {
             [self drawPDFWithName:@"PowerlinePadlock" options:0 cellSize:cellSize stretch:NO color:color antialiased:YES offset:offset];
             break;
         case 0xE0B0:
-            [self drawPDFWithName:@"PowerlineSolidRightArrow" options:0 cellSize:cellSize stretch:YES color:color antialiased:YES offset:offset];
+            [self drawPDFWithName:@"PowerlineSolidRightArrow" options:iTermPowerlineDrawingOptionsFullBleedLeft cellSize:cellSize stretch:YES color:color antialiased:YES offset:offset];
             break;
         case 0xE0B2:
-            [self drawPDFWithName:@"PowerlineSolidLeftArrow" options:0 cellSize:cellSize stretch:YES color:color antialiased:YES offset:offset];
+            [self drawPDFWithName:@"PowerlineSolidLeftArrow" options:iTermPowerlineDrawingOptionsFullBleedRight cellSize:cellSize stretch:YES color:color antialiased:YES offset:offset];
             break;
         case 0xE0B1:
-            [self drawPDFWithName:@"PowerlineLineRightArrow" options:0 cellSize:cellSize stretch:YES color:color antialiased:YES offset:offset];
+            [self drawPDFWithName:@"PowerlineLineRightArrow" options:iTermPowerlineDrawingOptionsFullBleedLeft cellSize:cellSize stretch:YES color:color antialiased:YES offset:offset];
             break;
         case 0xE0B3:
-            [self drawPDFWithName:@"PowerlineLineLeftArrow" options:0 cellSize:cellSize stretch:YES color:color antialiased:YES offset:offset];
+            [self drawPDFWithName:@"PowerlineLineLeftArrow" options:iTermPowerlineDrawingOptionsFullBleedRight cellSize:cellSize stretch:YES color:color antialiased:YES offset:offset];
             break;
         case 0xE0B9:  // (Extended) Negative slope diagonal line
         case 0xE0BF:
@@ -422,18 +779,24 @@ offset:(CGPoint)offset {
                 offset:(CGPoint)offset
                  color:(CGColorRef)color
                  solid:(BOOL)solid {
-    NSArray<NSBezierPath *> *paths = [self bezierPathsForComponents:components
-                                                           cellSize:cellSize
-                                                              scale:scale
-                                                           isPoints:isPoints
-                                                             offset:offset];
-    if (!paths) {
+    iTermShapeBuilder *shapeBuilder = [self shapeBuilderForComponents:components
+                                                             cellSize:cellSize
+                                                                scale:scale
+                                                             isPoints:isPoints
+                                                               offset:offset
+                                                                solid:solid];
+    if (!shapeBuilder) {
         return;
     }
     CGContextRef cgContext = [[NSGraphicsContext currentContext] CGContext];
     CGContextSaveGState(cgContext);
     CGContextClipToRect(cgContext, CGRectMake(0, 0, cellSize.width, cellSize.height));
-    [self drawPaths:paths color:color scale:scale isPoints:isPoints solid:solid];
+    [self drawShape:shapeBuilder
+              color:color
+              scale:scale
+           isPoints:isPoints
+              solid:solid
+            context:cgContext];
     CGContextRestoreGState(cgContext);
 }
 
@@ -605,7 +968,7 @@ color:(NSColor *)color {
     }
 }
 
-+ (BOOL)isPowerlineGlyph:(unichar)code {
++ (BOOL)isPowerlineGlyph:(UTF32Char)code {
     switch (code) {
         case 0xE0A0:  // Version control branch
         case 0xE0A1:  // LN (line) symbol
@@ -626,20 +989,20 @@ color:(NSColor *)color {
     return NO;
 }
 
-+ (BOOL)isDoubleWidthPowerlineGlyph:(unichar)code {
++ (BOOL)isDoubleWidthPowerlineGlyph:(UTF32Char)code {
     return [[iTermBoxDrawingBezierCurveFactory doubleWidthPowerlineSymbols] containsObject:@(code)];
 }
 
-+ (BOOL)haveCustomGlyph:(unichar)code {
++ (BOOL)haveCustomGlyph:(UTF32Char)code {
     return self.powerlineExtendedSymbols[@(code)] != nil;
 }
 
-+ (void)drawCustomGlyphForCode:(unichar)code cellSize:(NSSize)cellSize color:(CGColorRef)color offset:(CGPoint)offset {
++ (void)drawCustomGlyphForCode:(UTF32Char)longCode cellSize:(NSSize)cellSize color:(CGColorRef)color offset:(CGPoint)offset {
     NSSize adjustedCellSize = cellSize;
-    if ([[iTermBoxDrawingBezierCurveFactory doubleWidthPowerlineSymbols] containsObject:@(code)]) {
+    if ([[iTermBoxDrawingBezierCurveFactory doubleWidthPowerlineSymbols] containsObject:@(longCode)]) {
         adjustedCellSize.width *= 2;
     }
-    NSArray *array = self.powerlineExtendedSymbols[@(code)];
+    NSArray *array = self.powerlineExtendedSymbols[@(longCode)];
     NSString *name = array[0];
     NSNumber *options = array[1];
     [self drawPDFWithName:name
@@ -651,15 +1014,15 @@ color:(NSColor *)color {
                    offset:offset];
 }
 
-+ (void)drawCodeInCurrentContext:(unichar)code
++ (void)drawCodeInCurrentContext:(UTF32Char)longCode
                         cellSize:(NSSize)cellSize
                            scale:(CGFloat)scale
                         isPoints:(BOOL)isPoints
                           offset:(CGPoint)offset
                            color:(CGColorRef)colorRef
         useNativePowerlineGlyphs:(BOOL)useNativePowerlineGlyphs {
-    if (useNativePowerlineGlyphs && [self isPowerlineGlyph:code]) {
-        [self drawPowerlineCode:code
+    if (useNativePowerlineGlyphs && [self isPowerlineGlyph:longCode]) {
+        [self drawPowerlineCode:longCode
                        cellSize:cellSize
                           color:colorRef
                           scale:scale
@@ -667,14 +1030,14 @@ color:(NSColor *)color {
                          offset:offset];
         return;
     }
-    if (useNativePowerlineGlyphs && [self haveCustomGlyph:code]) {
-        [self drawCustomGlyphForCode:code
+    if (useNativePowerlineGlyphs && [self haveCustomGlyph:longCode]) {
+        [self drawCustomGlyphForCode:longCode
                             cellSize:cellSize
                                color:colorRef
                               offset:offset];
         return;
     }
-    if (code == iTermFullBlock) {
+    if (longCode == iTermFullBlock) {
         // Fast path
         CGContextRef context = [[NSGraphicsContext currentContext] CGContext];
         CGContextSetFillColorWithColor(context, colorRef);
@@ -682,47 +1045,61 @@ color:(NSColor *)color {
         return;
     }
     BOOL solid = NO;
-    NSArray<NSBezierPath *> *paths = [iTermBoxDrawingBezierCurveFactory bezierPathsForBoxDrawingCode:code
+    iTermShapeBuilder *shapeBuilder = [iTermBoxDrawingBezierCurveFactory shapeBuilderForBoxDrawingCode:longCode
                                                                                             cellSize:cellSize
                                                                                                scale:scale
                                                                                             isPoints:isPoints
                                                                                               offset:offset
                                                                                                solid:&solid];
-    [self drawPaths:paths color:colorRef scale:scale isPoints:isPoints solid:solid];
+    CGContextRef ctx = [[NSGraphicsContext currentContext] CGContext];
+    CGContextSaveGState(ctx);
+    CGContextClipToRect(ctx, CGRectMake(offset.x, offset.y, cellSize.width, cellSize.height));
+    [self drawShape:shapeBuilder
+              color:colorRef
+              scale:scale
+           isPoints:isPoints
+              solid:solid
+            context:ctx];
+    CGContextRestoreGState(ctx);
 }
 
-+ (void)drawPaths:(NSArray<NSBezierPath *> *)paths
++ (void)drawShape:(iTermShapeBuilder *)shapeBuilder
             color:(CGColorRef)colorRef
             scale:(CGFloat)scale
          isPoints:(BOOL)isPoints
-            solid:(BOOL)solid {
-    NSColor *color = [NSColor colorWithCGColor:colorRef];
-    [color set];
-    for (NSBezierPath *path in paths) {
-        if (solid) {
-            [path fill];
-        } else {
-            [path setLineWidth:isPoints ? 1.0 : scale];
-            [path stroke];
-        }
+            solid:(BOOL)solid
+          context:(CGContextRef)ctx {
+    if (!shapeBuilder || !colorRef || !ctx) {
+        return;
+    }
+    [shapeBuilder addPathTo:ctx];
+    if (solid) {
+        CGContextSetFillColorWithColor(ctx, colorRef);
+        CGContextFillPath(ctx);
+    } else {
+        CGContextSetStrokeColorWithColor(ctx, colorRef);
+        CGContextSetLineWidth(ctx, isPoints ? 1.0 : scale);
+        // Square caps extend stroke by lineWidth/2 at endpoints, ensuring full pixel coverage
+        CGContextSetLineCap(ctx, kCGLineCapSquare);
+        CGContextStrokePath(ctx);
     }
 }
 
-+ (NSArray<NSBezierPath *> *)bezierPathsForBoxDrawingCode:(unichar)code
-                                                 cellSize:(NSSize)cellSize
-                                                    scale:(CGFloat)scale
-                                                 isPoints:(BOOL)isPoints
-                                                   offset:(CGPoint)offset
-                                                    solid:(out BOOL *)solid {
-    NSArray<NSBezierPath *> *solidBoxPaths = [self bezierPathsForSolidBoxesForCode:code
-                                                                          cellSize:cellSize
-                                                                            offset:offset
-                                                                             scale:scale];
-    if (solidBoxPaths) {
++ (iTermShapeBuilder *)shapeBuilderForBoxDrawingCode:(UTF32Char)longCode
+                                            cellSize:(NSSize)cellSize
+                                               scale:(CGFloat)scale
+                                            isPoints:(BOOL)isPoints
+                                              offset:(CGPoint)offset
+                                               solid:(out BOOL *)solid {
+    iTermShapeBuilder *shapeBuilder = [self shapeBuilderForSolidBoxesForCode:longCode
+                                                                    cellSize:cellSize
+                                                                      offset:offset
+                                                                       scale:scale];
+    if (shapeBuilder) {
         if (solid) {
             *solid = YES;
         }
-        return solidBoxPaths;
+        return shapeBuilder;
     }
     if (solid) {
         *solid = NO;
@@ -739,7 +1116,7 @@ color:(NSColor *)color {
     //
     // b        7
     NSString *components = nil;
-    switch (code) {
+    switch (longCode) {
         case iTermBoxDrawingCodeLightHorizontal:  // ─
             components = @"a4g4";
             break;
@@ -1106,29 +1483,281 @@ color:(NSColor *)color {
         case iTermBoxDrawingCodeHeavyUpAndLightDown:  // ╿
             components = @"c1c4 e1e4 d4d7";
             break;
+        case iTermBlackUpperLeftTriangle:  // ◤
+            *solid = YES;
+            components = @"a1k1 k1a: a:a1";  // Filled: exact edges (k=right, :=bottom)
+            break;
+        case iTermUpperLeftTriangle:  // ◸
+            components = @"a1f1 f1a4 a4a1";  // Outline: smaller inset
+            break;
+        case iTermBlackUpperRightTriangle:  // ◥
+            *solid = YES;
+            components = @"a1k1 k1k: k:a1";  // Filled: exact edges
+            break;
+        case iTermUpperRightTriangle:  // ◹
+            components = @"a1g1 g1g4 g4a1";  // Outline: right edge
+            break;
+        case iTermBlackLowerLeftTriangle:  // ◣
+            *solid = YES;
+            components = @"a1a: a:k: k:a1";  // Filled: exact edges
+            break;
+        case iTermLowerLeftTriangle:  // ◺
+            components = @"a7a4 a4f7 f7a7";  // Outline: smaller inset
+            break;
+        case iTermBlackLowerRightTriangle:  // ◢
+            *solid = YES;
+            components = @"a:k1 k1k: k:a:";  // Filled: exact edges
+            break;
+        case iTermLowerRightTriangle:  // ◿
+            components = @"a7g4 g4g7 g7a7";  // Outline: right edge
+            break;
+
+
+            // Triangles
+        case iTermLowerLeftBlockDiagonalLowerMiddleLeftToLowerCentre:
+            *solid = YES;
+            components = @"a9a7 a7d7 d7a9";
+            break;
+        case iTermLowerLeftBlockDiagonalLowerMiddleLeftToLowerRight:
+            *solid = YES;
+            components = @"a9a7 a7g7 g7a9";
+            break;
+        case iTermLowerLeftBlockDiagonalUpperMiddleLeftToLowerCentre:
+            *solid = YES;
+            components = @"a8a7 a7d7 d7a8";
+            break;
+        case iTermLowerLeftBlockDiagonalUpperMiddleLeftToLowerRight:
+            *solid = YES;
+            components = @"a8a7 a7g7 g7a8";
+            break;
+        case iTermLowerLeftBlockDiagonalUpperLeftToLowerCentre:
+            *solid = YES;
+            components = @"a1a7 a7d7 d7a1";
+            break;
+        case iTermLowerRightBlockDiagonalLowerCentreToLowerMiddleRight:
+            *solid = YES;
+            components = @"d7g7 g7g9 g9d7";
+            break;
+        case iTermLowerRightBlockDiagonalLowerLeftToLowerMiddleRight:
+            *solid = YES;
+            components = @"a7g7 g7g9 g9a7";
+            break;
+        case iTermLowerRightBlockDiagonalLowerCentreToUpperMiddleRight:
+            *solid = YES;
+            components = @"d7g7 g7g8 g8d7";
+            break;
+        case iTermLowerRightBlockDiagonalLowerLeftToUpperMiddleRight:
+            *solid = YES;
+            components = @"a7g7 g7g8 g8a7";
+            break;
+        case iTermLowerRightBlockDiagonalLowerCentreToUpperRight:
+            *solid = YES;
+            components = @"d7g7 g7g1 g1d7";
+            break;
+        case iTermUpperLeftBlockDiagonalUpperMiddleLeftToUpperCentre:
+            *solid = YES;
+            components = @"a8a1 a1d1 d1a8";
+            break;
+        case iTermUpperLeftBlockDiagonalUpperMiddleLeftToUpperRight:
+            *solid = YES;
+            components = @"a8a1 a1g1 g1a8";
+            break;
+        case iTermUpperLeftBlockDiagonalLowerMiddleLeftToUpperCentre:
+            *solid = YES;
+            components = @"a9a1 a1d1 d1a9";
+            break;
+        case iTermUpperLeftBlockDiagonalLowerMiddleLeftToUpperRight:
+            *solid = YES;
+            components = @"a9a1 a1g1 g1a9";
+            break;
+        case iTermUpperLeftBlockDiagonalLowerLeftToUpperCentre:
+            *solid = YES;
+            components = @"a7a1 a1d1 d1a7";
+            break;
+        case iTermUpperRightBlockDiagonalUpperCentreToUpperMiddleRight:
+            *solid = YES;
+            components = @"d1g1 g1g8 g8d1";
+            break;
+        case iTermUpperRightBlockDiagonalUpperLeftToUpperMiddleRight:
+            *solid = YES;
+            components = @"a1g1 g1g8 g8a1";
+            break;
+        case iTermUpperRightBlockDiagonalUpperCentreToLowerMiddleRight:
+            *solid = YES;
+            components = @"d1g1 g1g9 g9d1";
+            break;
+        case iTermUpperRightBlockDiagonalUpperLeftToLowerMiddleRight:
+            *solid = YES;
+            components = @"a1g1 g1g9 g9a1";
+            break;
+        case iTermUpperRightBlockDiagonalUpperCentreToLowerRight:
+            *solid = YES;
+            components = @"d1g1 g1g7 g7d1";
+            break;
+
+        // One quarter blocks
+        case iTermLeftTriangularOneQuarterBlock:  // 🭬
+            *solid = YES;
+            components = @"l1l7 l7j4 j4l1";
+            break;
+        case iTermUpperTriangularOneQuarterBlock:  // 🭭
+            *solid = YES;
+            components = @"l1m1 m1j4 j4l1";
+            break;
+        case iTermRightTriangularOneQuarterBlock:  // 🭮
+            *solid = YES;
+            components = @"g1g7 g7j4 j4g1";
+            break;
+        case iTermLowerTriangularOneQuarterBlock:  // 🭯
+            *solid = YES;
+            components = @"l7g7 g7j4 j4l7";
+            break;
+
+        // Block diagonals
+        case iTermLowerRightBlockDiagonalUpperMiddleLeftToUpperCentre:  // 🭁
+            *solid = YES;
+            components = @"g7l7 l7l8 l8j1 j1g1 g1g7";
+            break;
+        case iTermLowerRightBlockDiagonalUpperMiddleLeftToUpperRight:  // 🭂
+            *solid = YES;
+            components = @"g7l7 l7l8 l8g1 g1g7";
+            break;
+        case iTermLowerRightBlockDiagonalLowerMiddleLeftToUpperCentre:  // 🭃
+            *solid = YES;
+            components = @"g7l7 l7l9 l9j1 j1g1 g1g7";
+            break;
+        case iTermLowerRightBlockDiagonalLowerMiddleLeftToUpperRight:  // 🭄
+            *solid = YES;
+            components = @"g7l7 l7l9 l9g1 g1g7";
+            break;
+        case iTermLowerRightBlockDiagonalLowerLeftToUpperCentre:  // 🭅
+            *solid = YES;
+            components = @"g7l7 l7l9 l9j1 j1g1 g1g7";
+            break;
+        case iTermLowerRightBlockDiagonalLowerMiddleLeftToUpperMiddleRight:  // 🭆
+            *solid = YES;
+            components = @"g7l7 l7l9 l9g8 g8g7";
+            break;
+
+
+
+        case iTermLowerLeftBlockDiagonalUpperCentreToUpperMiddleRight:  // 🭌
+            *solid = YES;
+            components = @"l7l1 l1j1 j1g8 g8g7 g7l7";
+            break;
+        case iTermLowerLeftBlockDiagonalUpperLeftToUpperMiddleRight:  // 🭍
+            *solid = YES;
+            components = @"l7l1 l1g8 g8g7 g7l7";
+            break;
+        case iTermLowerLeftBlockDiagonalUpperCentreToLowerMiddleRight:  // 🭎
+            *solid = YES;
+            components = @"l7l1 l1j1 j1g9 g9g7 g7l7";
+            break;
+        case iTermLowerLeftBlockDiagonalUpperLeftToLowerMiddleRight:  // 🭏
+            *solid = YES;
+            components = @"l7l1 l1g9 g9g7 g7l7";
+            break;
+        case iTermLowerLeftBlockDiagonalUpperCentreToLowerRight:  // 🭐
+            *solid = YES;
+            components = @"l7l1 l1j1 j1g7 g7l7";
+            break;
+        case iTermLowerLeftBlockDiagonalUpperMiddleLeftToLowerMiddleRight:  // 🭑
+            *solid = YES;
+            components = @"l7l8 l8g9 g9g7 g7l7";
+            break;
+
+        case iTermUpperRightBlockDiagonalLowerMiddleLeftToLowerCentre:  // 🭒
+            *solid = YES;
+            components = @"g1g7 g7j7 j7l9 l9l1 l1g1";
+            break;
+        case iTermUpperRightBlockDiagonalLowerMiddleLeftToLowerRight:  // 🭓
+            *solid = YES;
+            components = @"g1g7 g7l9 l9l1 l1g1";
+            break;
+        case iTermUpperRightBlockDiagonalUpperMiddleLeftToLowerCentre:  // 🭔
+            *solid = YES;
+            components = @"g1g7 g7j7 j7l8 l8l1 l1g1";
+            break;
+        case iTermUpperRightBlockDiagonalUpperMiddleLeftToLowerRight:  // 🭕
+            *solid = YES;
+            components = @"g1g7 g7l8 l8l1 l1g1";
+            break;
+        case iTermUpperRightBlockDiagonalUpperLeftToLowerCentre:  // 🭖
+            *solid = YES;
+            components = @"g1g7 g7j7 j7l1 l1g1";
+            break;
+        case iTermUpperRightBlockDiagonalUpperMiddleLeftToLowerMiddleRight:  // 🭧
+            *solid = YES;
+            components = @"g1g9 g9l8 l8l1 l1g1";
+            break;
+
+        case iTermUpperLeftBlockDiagonalLowerMiddleLeftToUpperMiddleRight:  // 🭜
+            *solid = YES;
+            components = @"l1g1 g1g8 g8l9 l9l1";
+            break;
+        case iTermUpperLeftBlockDiagonalLowerCentreToLowerMiddleRight:  // 🭝
+            *solid = YES;
+            components = @"l1g1 g1g9 g9j7 j7l7 l7l1";
+            break;
+        case iTermUpperLeftBlockDiagonalLowerLeftToLowerMiddleRight:  // 🭞
+            *solid = YES;
+            components = @"l1g1 g1g9 g9l7 l7l1";
+            break;
+        case iTermUpperLeftBlockDiagonalLowerCentreToUpperMiddleRight:  // 🭟
+            *solid = YES;
+            components = @"l1g1 g1g8 g8j7 j7l7 l7l1";
+            break;
+        case iTermUpperLeftBlockDiagonalLowerLeftToUpperMiddleRight:  // 🭠
+            *solid = YES;
+            components = @"l1g1 g1g8 g8l7 l7l1";
+            break;
+        case iTermUpperLeftBlockDiagonalLowerCentreToUpperRight:  // 🭡
+            *solid = YES;
+            components = @"l1g1 g1j7 j7l7 l7l1";
+            break;
+
+        // Three-quarters blocks
+        case iTermUpperAndRightAndLowerTriangularThreeQuartersBlock:  // 🭨
+            *solid = YES;
+            components = @"l1g1 g1g7 g7l7 l7j4 j4l1";
+            break;
+        case iTermLeftAndLowerAndRightTriangularThreeQuartersBlock:  // 🭩
+            *solid = YES;
+            components = @"l1j4 j4g1 g1g7 g7l7 l7l1";
+            break;
+        case iTermUpperAndLeftAndLowerTriangularThreeQuartersBlock:  // 🭪
+            *solid = YES;
+            components = @"l1g1 g1j4 j4g7 g7l7 l7l1";
+            break;
+        case iTermLeftAndUpperAndRightTriangularThreeQuartersBlock:  // 🭫
+            *solid = YES;
+            components = @"l1g1 g1g7 g7j4 j4l7 l7l1";
+            break;
     }
 
     if (!components) {
         return nil;
     }
-    return [self bezierPathsForComponents:components
-                                 cellSize:cellSize
-                                    scale:scale
-                                 isPoints:isPoints
-                                   offset:offset];
+    return [self shapeBuilderForComponents:components
+                                  cellSize:cellSize
+                                     scale:scale
+                                  isPoints:isPoints
+                                    offset:offset
+                                     solid:(solid ? *solid : NO)];
 }
 
-+ (NSArray<NSBezierPath *> *)bezierPathsForComponents:(NSString *)components
-                                             cellSize:(NSSize)cellSize
-                                                scale:(CGFloat)scale
-                                             isPoints:(BOOL)isPoints
-                                               offset:(CGPoint)offset {
++ (iTermShapeBuilder *)shapeBuilderForComponents:(NSString *)components
+                                        cellSize:(NSSize)cellSize
+                                           scale:(CGFloat)scale
+                                        isPoints:(BOOL)isPoints
+                                          offset:(CGPoint)offset
+                                           solid:(BOOL)solid {
     CGFloat horizontalCenter = cellSize.width / 2.0;
     CGFloat verticalCenter = cellSize.height / 2.0;
 
     const char *bytes = [components UTF8String];
-    NSBezierPath *path = [NSBezierPath bezierPath];
-    [path setLineWidth:scale];
+    iTermShapeBuilder *shapeBuilder = [[iTermShapeBuilder alloc] init];
+    shapeBuilder.lineWidth = scale;
     int lastX = -1;
     int lastY = -1;
     int i = 0;
@@ -1141,80 +1770,155 @@ color:(NSColor *)color {
     // In low DPI, thick centered lines will be 2 pixels wide and off center.
     // Center - halfpoint and center + roundedUpHalfPoint form a pair of coordinates that give this result.
     CGFloat roundedUpHalfPoint;
-    CGFloat xShift;
-    CGFloat yShift;
 
     if (isPoints && scale >= 2) {
         // Legacy renderer, high DPI
         fullPoint = 1.0;
         roundedUpHalfPoint = halfPoint = 0.5;
-        yShift = xShift = 0;
     } else if (scale >= 2) {
         // GPU renderer, high DPI
         fullPoint = 2.0;
         roundedUpHalfPoint = halfPoint = 1.0;
-        yShift = xShift = 1.0;
     } else {
         // Low DPI
         halfPoint = 0;
         roundedUpHalfPoint = 1.0;
         fullPoint = 1.0;
-        yShift = xShift = -0.5;
     }
 
-
+    // For geometric shapes like diagonal blocks we use this grid:
+    /*
+             an    bcdef  g
+                l h  j  i  m
+            1
+            0
+            8
+           2
+           3
+            4
+           5
+           6
+            9
+            7
+     */
     CGFloat xs[] = {
-        0,
-        horizontalCenter - fullPoint + xShift,
-        horizontalCenter - halfPoint + xShift,
-        horizontalCenter + xShift,
-        horizontalCenter + roundedUpHalfPoint + xShift,
-        horizontalCenter + fullPoint + xShift,
-        cellSize.width - halfPoint + xShift,
+        0, // a
+        horizontalCenter - fullPoint, // b
+        horizontalCenter - halfPoint, // c
+        horizontalCenter,  // d
+        horizontalCenter + roundedUpHalfPoint, // e
+        horizontalCenter + fullPoint,  // f
+        cellSize.width,  // g - right edge for strokes
+
+        1.0 * cellSize.width / 3.0 - fullPoint,  // h
+        2.0 * cellSize.width / 3.0 - fullPoint,  // i
+        cellSize.width / 2.0 - fullPoint,  // j
+        cellSize.width,  // k - exact right edge for fills
+        (1.0 / scale) / 2 - fullPoint,  // l
+
+        cellSize.width - fullPoint,  // m
+        0,  // n
     };
     CGFloat ys[] = {
-        0,
-        verticalCenter - fullPoint + yShift,
-        verticalCenter - halfPoint + yShift,
-        verticalCenter + yShift,
-        verticalCenter + roundedUpHalfPoint + yShift,
-        verticalCenter + fullPoint + yShift,
-        cellSize.height - halfPoint + yShift,
+        -scale / 4,  // /
+        cellSize.height - fullPoint,  // 0
+        0,  // 1
+        verticalCenter - fullPoint,  // 2
+        verticalCenter - halfPoint,  // 3
+        verticalCenter,  // 4
+        verticalCenter + roundedUpHalfPoint, // 5
+        verticalCenter + fullPoint, // 6
+        cellSize.height,  // 7 - bottom edge for strokes
+        cellSize.height / 3.0,  // 8
+        2.0 * cellSize.height / 3.0,  // 9
+        cellSize.height  // : - exact bottom edge for fills
     };
 
 
-    CGFloat (^centerPoint)(CGFloat) = ^CGFloat(CGFloat value) {
-        CGFloat nearest = value;
-        if (nearest > 0) {
-            return nearest + scale / 2;
-        } else {
-            return 0;
+    // For sharp strokes on non-retina, coordinates need half-pixel alignment.
+    // But solid (filled) shapes should use exact pixel boundaries.
+    // Edge coordinates must be inset so strokes don't get clipped outside the cell.
+    //
+    // The actual lineWidth used in drawShape: is (isPoints ? 1.0 : scale).
+    // For stroked shapes, we need to inset edge coordinates by half the stroke width.
+    CGFloat actualLineWidth = isPoints ? 1.0 : scale;
+    CGFloat halfStroke = actualLineWidth / 2.0;
+    CGFloat (^alignX)(CGFloat) = ^CGFloat(CGFloat x) {
+        if (solid) {
+            // Solid shapes use exact pixel boundaries
+            return round(x);
         }
+        // For stroked shapes:
+        // 1. Inset edge coordinates so stroke stays inside cell
+        // 2. Non-retina: move integer coordinates to half-pixel for sharp rendering
+        // 3. Retina: keep fractional values for sub-point precision
+        if (x <= halfStroke) {
+            return halfStroke;  // Inset from left edge
+        }
+        if (x >= cellSize.width - halfStroke) {
+            return cellSize.width - halfStroke;  // Inset from right edge
+        }
+        if (scale < 2) {
+            // Non-retina: move to half-pixel position for sharp rendering
+            // But only if not already at half-pixel (e.g., center coordinates)
+            CGFloat frac = x - floor(x);
+            if (frac < 0.01) {
+                // Integer coordinate, move to half-pixel
+                return x + halfStroke;
+            }
+        }
+        // Retina or already fractional: keep original value
+        return x;
+    };
+    CGFloat (^alignY)(CGFloat) = ^CGFloat(CGFloat y) {
+        if (solid) {
+            // Solid shapes use exact pixel boundaries
+            return round(y);
+        }
+        // For stroked shapes:
+        // 1. Inset edge coordinates so stroke stays inside cell
+        // 2. Non-retina: move integer coordinates to half-pixel for sharp rendering
+        // 3. Retina: keep fractional values for sub-point precision
+        if (y <= halfStroke) {
+            return halfStroke;  // Inset from top edge
+        }
+        if (y >= cellSize.height - halfStroke) {
+            return cellSize.height - halfStroke;  // Inset from bottom edge
+        }
+        if (scale < 2) {
+            // Non-retina: move to half-pixel position for sharp rendering
+            // But only if not already at half-pixel (e.g., center coordinates)
+            CGFloat frac = y - floor(y);
+            if (frac < 0.01) {
+                // Integer coordinate, move to half-pixel
+                return y + halfStroke;
+            }
+        }
+        // Retina or already fractional: keep original value
+        return y;
     };
     CGPoint (^makePoint)(CGFloat, CGFloat) = ^CGPoint(CGFloat x, CGFloat y) {
-        return CGPointMake(centerPoint(x) + offset.x,
-                           centerPoint(y) + offset.y);
+        return CGPointMake(alignX(x) + offset.x, alignY(y) + offset.y);
     };
     while (i + 4 <= length) {
         int x1 = bytes[i++] - 'a';
-        int y1 = bytes[i++] - '1';
+        int y1 = bytes[i++] - '/';
         int x2 = bytes[i++] - 'a';
-        int y2 = bytes[i++] - '1';
+        int y2 = bytes[i++] - '/';
 
         if (x1 != lastX || y1 != lastY) {
-            [path moveToPoint:makePoint((xs[x1]),
-                                          (ys[y1]))];
+            [shapeBuilder moveTo:makePoint(xs[x1], ys[y1])];
         }
         if (i < length && isalpha(bytes[i])) {
             int cx1 = bytes[i++] - 'a';
-            int cy1 = bytes[i++] - '1';
+            int cy1 = bytes[i++] - '/';
             int cx2 = bytes[i++] - 'a';
-            int cy2 = bytes[i++] - '1';
-            [path curveToPoint:makePoint((xs[x2]), (ys[y2]))
-                 controlPoint1:makePoint((xs[cx1]), (ys[cy1]))
-                 controlPoint2:makePoint((xs[cx2]), (ys[cy2]))];
+            int cy2 = bytes[i++] - '/';
+            [shapeBuilder curveTo:makePoint(xs[x2], ys[y2])
+                         control1:makePoint(xs[cx1], ys[cy1])
+                         control2:makePoint(xs[cx2], ys[cy2])];
         } else {
-            [path lineToPoint:makePoint((xs[x2]), (ys[y2]))];
+            [shapeBuilder lineTo:makePoint(xs[x2], ys[y2])];
         }
 
         i++;
@@ -1223,17 +1927,17 @@ color:(NSColor *)color {
         lastY = y2;
     }
 
-    return @[ path ];
+    return shapeBuilder;
 }
 
-+ (NSBezierPath *)bezierPathForPoints:(NSArray *)points
-                   extendPastCenterBy:(NSPoint)extension
-                             cellSize:(NSSize)cellSize {
++ (iTermShapeBuilder *)shapeBuilderForPoints:(NSArray *)points
+                          extendPastCenterBy:(NSPoint)extension
+                                    cellSize:(NSSize)cellSize {
     CGFloat cx = cellSize.width / 2.0;
     CGFloat cy = cellSize.height / 2.0;
     CGFloat xs[] = { 0, cx - 1, cx, cx + 1, cellSize.width };
     CGFloat ys[] = { 0, cy - 1, cy, cy + 1, cellSize.height };
-    NSBezierPath *path = [NSBezierPath bezierPath];
+    iTermShapeBuilder *shapeBuilder = [[iTermShapeBuilder alloc] init];
     BOOL first = YES;
     for (NSNumber *n in points) {
         CGFloat x = xs[n.intValue % 5];
@@ -1244,13 +1948,13 @@ color:(NSColor *)color {
         }
         NSPoint p = NSMakePoint(x, y);
         if (first) {
-            [path moveToPoint:p];
+            [shapeBuilder moveTo:p];
             first = NO;
         } else {
-            [path lineToPoint:p];
+            [shapeBuilder lineTo:p];
         }
     }
-    return path;
+    return shapeBuilder;
 }
 
 @end

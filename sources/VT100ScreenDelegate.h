@@ -59,6 +59,7 @@
                  forVariableNamed:(NSString * _Nonnull)name;
 - (void)triggerSideEffectCurrentDirectoryDidChange:(NSString * _Nonnull)newPath;
 - (void)triggerSideEffectShowCapturedOutputTool;
+- (void)triggerSessionSetBufferInput:(BOOL)shouldBuffer;
 
 @end
 

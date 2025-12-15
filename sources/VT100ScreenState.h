@@ -319,7 +319,8 @@ extern NSString *const kScreenStateProgressKey;
 
 - (int)numberOfLinesDroppedWhenEncodingContentsIncludingGrid:(BOOL)includeGrid
                                                      encoder:(id<iTermEncoderAdapter>)encoder
-                                              intervalOffset:(long long *)intervalOffsetPtr;
+                                              intervalOffset:(long long *)intervalOffsetPtr
+                                                   unlimited:(BOOL)unlimited;
 
 #pragma mark - Interval Tree
 
