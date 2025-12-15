@@ -325,6 +325,7 @@ static NSString *const SESSION_ARRANGEMENT_CONDUCTOR = @"Conductor";  // NSStrin
 static NSString *const SESSION_ARRANGEMENT_PENDING_JUMPS = @"Pending Jumps";  // NSArray<NSString *>, optional.
 static NSString *const SESSION_ARRANGEMENT_CHANNEL_ID = @"Channel ID";  // NSString
 static NSString *const SESSION_ARRANGEMENT_TIMESTAMP_BASELINE = @"Timestamp Baseline"; // NSNumber
+static NSString *const SESSION_ARRANGEMENT_BROWSER_TARGET = @"Browser Target";  // String
 
 // Keys for dictionary in SESSION_ARRANGEMENT_PROGRAM
 static NSString *const kProgramType = @"Type";  // Value will be one of the kProgramTypeXxx constants.
@@ -369,6 +370,8 @@ static NSString *const kTwoCoprocessesCanNotRunAtOnceAnnouncementIdentifier =
     @"NoSyncTwoCoprocessesCanNotRunAtOnceAnnouncmentIdentifier";
 
 NSString *const PTYSessionArrangementOptionsForDuplication = @"PTYSessionArrangementOptionsForDuplication";
+NSString *const PTYSessionArrangementOptionsUnlimitedHistory = @"PTYSessionArrangementOptionsUnlimitedHistory";
+NSString *const PTYSessionArrangementOptionsArchive = @"PTYSessionArrangementOptionsArchive";
 
 static char iTermEffectiveAppearanceKey;
 
@@ -671,6 +674,9 @@ typedef NS_ENUM(NSUInteger, PTYSessionTurdType) {
 
     // Disables short-lived session warning so the user can read the error.
     BOOL _execDidFail;
+
+    // Buffer input?
+    BOOL _buffering;
 }
 
 @synthesize isDivorced = _divorced;
@@ -1127,6 +1133,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [_channelUID release];
     [_channelParentGuid release];
     [_pendingFilterUpdates release];
+    [_browserTarget release];
 
     [super dealloc];
 }
@@ -1546,6 +1553,7 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 
     aSession->_textview.timestampBaseline = [arrangement[SESSION_ARRANGEMENT_TIMESTAMP_BASELINE] doubleValue];
+    aSession.browserTarget = [NSString castFrom:arrangement[SESSION_ARRANGEMENT_BROWSER_TARGET]];
     aSession->_channelUID = [arrangement[SESSION_ARRANGEMENT_CHANNEL_ID] copy];
     aSession->_workingDirectoryPollerDisabled = [arrangement[SESSION_ARRANGEMENT_WORKING_DIRECTORY_POLLER_DISABLED] boolValue] || aSession->_shouldExpectCurrentDirUpdates;
     if (arrangement[SESSION_ARRANGEMENT_COMMANDS]) {
@@ -1867,6 +1875,8 @@ ITERM_WEAKLY_REFERENCEABLE
     aSession.shortLivedSingleUse = [arrangement[SESSION_ARRANGEMENT_SHORT_LIVED_SINGLE_USE] boolValue];
     aSession.hostnameToShell = [[arrangement[SESSION_ARRANGEMENT_HOSTNAME_TO_SHELL] mutableCopy] autorelease];
     [aSession.variablesScope setValue:[aSession bestGuessAtUserShellWithPath:NO] forVariableNamed:iTermVariableKeyShell];
+    const BOOL isArchive = options[PTYSessionArrangementOptionsArchive] != nil;
+    aSession->_isArchive = isArchive;
 
     if (arrangement[SESSION_ARRANGEMENT_SUBSTITUTIONS]) {
         aSession.substitutions = arrangement[SESSION_ARRANGEMENT_SUBSTITUTIONS];
@@ -2019,7 +2029,8 @@ ITERM_WEAKLY_REFERENCEABLE
             DLog(@"Loading content from line buffer dictionary");
             [aSession setContentsFromLineBufferDictionary:contents
                                  includeRestorationBanner:runCommand
-                                               reattached:attachedToServer];
+                                               reattached:attachedToServer
+                                                isArchive:options[PTYSessionArrangementOptionsArchive] != nil];
             // NOTE: THE SCREEN SIZE IS NOW OUT OF SYNC WITH THE VIEW SIZE. IT MUST BE FIXED!
             // Store browser state for restoration in startProgram:
         }
@@ -2199,10 +2210,12 @@ ITERM_WEAKLY_REFERENCEABLE
 // WARNING: This leaves the screen with the wrong size! Call -restoreInitialSize afterwards.
 - (void)setContentsFromLineBufferDictionary:(NSDictionary *)dict
                    includeRestorationBanner:(BOOL)includeRestorationBanner
-                                 reattached:(BOOL)reattached {
+                                 reattached:(BOOL)reattached
+                                  isArchive:(BOOL)isArchive {
     [_screen restoreFromDictionary:dict
           includeRestorationBanner:includeRestorationBanner
-                        reattached:reattached];
+                        reattached:reattached
+                         isArchive:isArchive];
     [_screen enumeratePortholes:^(id<PortholeMarkReading> immutableMark) {
         [[PortholeRegistry instance] registerKey:immutableMark.uniqueIdentifier
                                          forMark:immutableMark];
@@ -3070,28 +3083,34 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
             [_logging stop];
             [_logging autorelease];
             _logging = nil;
-            [[self loggingHelper] setPath:autoLogFilename
-                                  enabled:autoLogFilename != nil
-                                    style:iTermLoggingStyleFromUserDefaultsValue([iTermProfilePreferences unsignedIntegerForKey:KEY_LOGGING_STYLE inProfile:self.profile])
-                        asciicastMetadata:[self asciicastMetadata]
-                                   append:nil
-                                   window:self.view.window];
-            if (env[PWD_ENVNAME] && arrangementName && _arrangementGUID) {
-                __weak __typeof(self) weakSelf = self;
-                [[iTermSlowOperationGateway sharedInstance] checkIfDirectoryExists:env[PWD_ENVNAME]
-                                                                        completion:^(BOOL exists) {
-                    if (exists) {
-                        return;
-                    }
-                    [weakSelf arrangementWithName:arrangementName
-                                        hasBadPWD:env[PWD_ENVNAME]];
-                }];
+            if (!_isArchive) {
+                [[self loggingHelper] setPath:autoLogFilename
+                                      enabled:autoLogFilename != nil
+                                        style:iTermLoggingStyleFromUserDefaultsValue([iTermProfilePreferences unsignedIntegerForKey:KEY_LOGGING_STYLE inProfile:self.profile])
+                            asciicastMetadata:[self asciicastMetadata]
+                                       append:nil
+                                       window:self.view.window];
+                if (env[PWD_ENVNAME] && arrangementName && _arrangementGUID) {
+                    __weak __typeof(self) weakSelf = self;
+                    [[iTermSlowOperationGateway sharedInstance] checkIfDirectoryExists:env[PWD_ENVNAME]
+                                                                            completion:^(BOOL exists) {
+                        if (exists) {
+                            return;
+                        }
+                        [weakSelf arrangementWithName:arrangementName
+                                            hasBadPWD:env[PWD_ENVNAME]];
+                    }];
+                }
             }
             DLog(@"Will call injectShellIntegration");
             [self injectShellIntegrationWithEnvironment:env
                                                    args:argv
                                              completion:^(NSDictionary<NSString *, NSString *> *env,
                                                           NSArray<NSString *> *argv) {
+                if (_isArchive) {
+                    [self setExited:YES];
+                    return;
+                }
                 [_shell launchWithPath:argv[0]
                              arguments:[argv subarrayFromIndex:1]
                            environment:env
@@ -3314,6 +3333,7 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
 - (void)restartSession {
     DLog(@"Restart session %@", self);
     assert(self.isRestartable);
+    _isArchive = NO;
     [_naggingController willRecycleSession];
 
     if (_conductor) {
@@ -3468,6 +3488,11 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
 
 // Not undoable. Kill the process. However, you can replace the terminated shell after this.
 - (void)hardStop {
+    if (!self.isTmuxClient &&
+        !_isArchive &&
+        [iTermProfilePreferences boolForKey:KEY_ARCHIVE inProfile:self.profile]) {
+        [self saveArchive];
+    }
     [[iTermController sharedInstance] removeSessionFromRestorableSessions:self];
     [_screen mutateAsynchronously:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
         [terminal.parser forceUnhookDCS:nil];
@@ -3590,7 +3615,7 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
             [_sshWriteQueue appendData:data];
             return;
         }
-        if (_screen.sendingIsBlocked && !reporting) {
+        if ((_buffering || _screen.sendingIsBlocked) && !reporting) {
             DLog(@"Defer write of %@", [data stringWithEncoding:NSUTF8StringEncoding]);
             if (!_dataQueue) {
                 _dataQueue = [[NSMutableArray alloc] init];
@@ -4576,6 +4601,7 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
         [_textview openSemanticHistoryPath:cleanedup
                              orRawFilename:rawFilename
                                   fragment:nil
+                                    target:nil
                           workingDirectory:workingDirectory
                                 lineNumber:lineNumber
                               columnNumber:columnNumber
@@ -4609,6 +4635,7 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
     [NSURL URLWithUserSuppliedString:[selection stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]]];
     if (url) {
         [[NSWorkspace sharedWorkspace] it_openURL:url
+                                           target:nil
                                             style:iTermOpenStyleTab
                                            window:self.view.window];
         return;
@@ -5178,6 +5205,10 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
                                                                 inProfile:aDict]];
     self.view.enableProgressBars = [iTermProfilePreferences boolForKey:KEY_ENABLE_PROGRESS_BARS
                                                              inProfile:aDict];
+    self.view.progressBarHeight = [iTermProfilePreferences floatForKey:KEY_PROGRESS_BAR_HEIGHT
+                                                             inProfile:aDict];
+    self.view.progressBarColorScheme = [iTermProfilePreferences stringForKey:KEY_PROGRESS_BAR_COLOR_SCHEME
+                                                                   inProfile:aDict];
     if (didAllowPasteBracketing && !_screen.terminalAllowPasteBracketing) {
         // If the user flips the setting off, disable bracketed paste.
         terminal.bracketedPasteMode = NO;
@@ -6142,10 +6173,13 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
     if (includeContents) {
         __block int numberOfLinesDropped = 0;
         if (!self.isBrowserSession) {
+            const BOOL unlimited = [options[PTYSessionArrangementOptionsUnlimitedHistory] boolValue];
             [result encodeDictionaryWithKey:SESSION_ARRANGEMENT_CONTENTS
                                  generation:iTermGenerationAlwaysEncode
                                       block:^BOOL(id<iTermEncoderAdapter>  _Nonnull encoder) {
-                return [_screen encodeContents:encoder linesDropped:&numberOfLinesDropped];
+                return [_screen encodeContents:encoder
+                                  linesDropped:&numberOfLinesDropped
+                                     unlimited:unlimited];
             }];
         }
         result[SESSION_ARRANGEMENT_VARIABLES] = _variables.encodableDictionaryValue;
@@ -6172,6 +6206,7 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
             }
         }
         result[SESSION_ARRANGEMENT_TIMESTAMP_BASELINE] = @(_textview.timestampBaseline);
+        result[SESSION_ARRANGEMENT_BROWSER_TARGET] = self.browserTarget;
     } else {
         if (_conductor &&
             [self.profile[KEY_CUSTOM_COMMAND] isEqualTo:kProfilePreferenceCommandTypeSSHValue]) {
@@ -6237,7 +6272,7 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
                     [combinedOverriddenFields addObject:key];
                 }
             }
-            result[SESSION_ARRANGEMENT_OVERRIDDEN_FIELDS] = combinedOverriddenFields;
+            result[SESSION_ARRANGEMENT_OVERRIDDEN_FIELDS] = [combinedOverriddenFields allObjects];
             DLog(@"Combined overridden fields are: %@", combinedOverriddenFields);
         } else {
             result[SESSION_ARRANGEMENT_OVERRIDDEN_FIELDS] = _overriddenFields.allObjects;
@@ -18299,6 +18334,13 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     return !_view.isBrowser;
 }
 
+- (void)textViewSaveArchive:(iTermSavePanelItem *)location {
+    PseudoTerminal *term = [PseudoTerminal castFrom:self.delegate.realParentWindow];
+    if (term) {
+        [self saveArchiveTo:location term:term];
+    }
+}
+
 - (void)removeSelectedCommandRange {
     if (!_selectedCommandMark) {
         return;
@@ -21178,6 +21220,16 @@ getOptionKeyBehaviorLeft:(iTermOptionKeyBehavior *)left
 }
 
 #pragma mark - iTermTriggerSideEffectExecutor
+
+- (void)triggerSessionSetBufferInput:(BOOL)shouldBuffer {
+    if (_buffering == shouldBuffer) {
+        return;
+    }
+    _buffering = shouldBuffer;
+    if (!_screen.sendingIsBlocked && !shouldBuffer) {
+        [self sendDataQueue];
+    }
+}
 
 - (void)triggerSideEffectShowAlertWithMessage:(NSString *)message
                                     rateLimit:(iTermRateLimitedUpdate *)rateLimit

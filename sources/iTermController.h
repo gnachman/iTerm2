@@ -226,7 +226,10 @@ typedef NS_OPTIONS(NSUInteger, iTermSingleUseWindowOptions) {
                             completion:(void (^)(void))completion;
 - (NSWindow *)openSingleUseLoginWindowAndWrite:(NSData *)data completion:(void (^)(PTYSession *session))completion;
 
-- (BOOL)openURL:(NSURL *)url openStyle:(iTermOpenStyle)openStyle select:(BOOL)select;
+- (BOOL)openURL:(NSURL *)url
+         target:(NSString *)target
+      openStyle:(iTermOpenStyle)openStyle
+         select:(BOOL)select;
 - (WKWebView *)openSingleUserBrowserWindowWithURL:(NSURL *)url
                                     configuration:(WKWebViewConfiguration *)configuration
                                           options:(iTermSingleUseWindowOptions)options

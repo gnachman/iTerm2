@@ -145,12 +145,13 @@ extension screen_char_t: DefaultInitializable {
                              underline: 0,
                              image: 0,
                              strikethrough: 0,
-                             underlineStyle: .single,
+                             underlineStyle0: 0,
                              invisible: 0,
                              inverse: 0,
                              guarded: 0,
                              virtualPlaceholder: 0,
                              rtlStatus: .unknown,
+                             underlineStyle1: 0,
                              unused: 0)
     }
 }

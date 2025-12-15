@@ -109,6 +109,13 @@ class ComplexCharRegistry: NSObject {
         }
     }
 
+    @objc(baseCharacterForComplexCode:)
+    func baseCharacter(complexCode code: unichar) -> UTF32Char {
+        mutex.sync {
+            impl.string(for: Int(code))?.firstCharacter() ?? 0
+        }
+    }
+
     @objc(expandScreenChar:to:)
     func expand(screenChar: screen_char_t, to destination: UnsafeMutablePointer<unichar>) -> Int32 {
         if screenChar.code != UNICODE_REPLACEMENT_CHAR && screenChar.complexChar != 0 {

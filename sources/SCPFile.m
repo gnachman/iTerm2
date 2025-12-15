@@ -365,6 +365,7 @@ static NSError *SCPFileError(NSString *description) {
                                             window:nil];
             if (selection == kiTermWarningSelection1) {
                 [[NSWorkspace sharedWorkspace] it_openURL:[NSURL URLWithString:@"https://iterm2.com/troubleshoot-hostname"]
+                                                   target:nil
                                                     style:iTermOpenStyleTab
                                                    window:nil];
             }

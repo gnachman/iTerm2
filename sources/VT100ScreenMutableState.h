@@ -422,7 +422,8 @@ lengthExcludingInBandSignaling:(int)lengthExcludingInBandSignaling
 
 - (void)restoreFromDictionary:(NSDictionary *)dictionary
      includeRestorationBanner:(BOOL)includeRestorationBanner
-                   reattached:(BOOL)reattached;
+                   reattached:(BOOL)reattached
+                    isArchive:(BOOL)isArchive;
 
 // Sets the primary grid's contents and scrollback history. `history` is an array of NSData
 // containing screen_char_t's. It contains a bizarre workaround for tmux bugs.

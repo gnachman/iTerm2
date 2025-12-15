@@ -27,7 +27,7 @@
 // Tries to open a file. If no app is associated with the UTI, offer the user an open panel to
 // choose an application. Associate the selected app as a view and reopen, if he picks one.
 - (void)openFile:(NSString *)fullPath window:(NSWindow *)window completion:(void (^)(BOOL ok))completion;
-- (void)openFile:(NSString *)fullPath fragment:(NSString *)fragment window:(NSWindow *)window completion:(void (^)(BOOL ok))completion;
+- (void)openFile:(NSString *)fullPath fragment:(NSString *)fragment target:(NSString *)target window:(NSWindow *)window completion:(void (^)(BOOL ok))completion;
 
 - (BOOL)iTermIsDefaultForScheme:(NSString *)scheme;
 

@@ -214,6 +214,7 @@ static NSString *const iTermNaggingControllerArrangementTextReplacements = @"Tex
             // Why?
             NSURL *whyUrl = [NSURL URLWithString:@"https://iterm2.com/why_no_content.html"];
             [[NSWorkspace sharedWorkspace] it_openURL:whyUrl
+                                               target:nil
                                                 style:iTermOpenStyleTab
                                                window:self.delegate.naggingControllerWindow];
         }
@@ -293,6 +294,7 @@ static NSString *const iTermNaggingControllerArrangementTextReplacements = @"Tex
 - (void)showTmuxSupplementaryPlaneBugHelpPage {
     NSURL *whyUrl = [NSURL URLWithString:@"https://iterm2.com//tmux22bug.html"];
     [[NSWorkspace sharedWorkspace] it_openURL:whyUrl
+                                       target:nil
                                         style:iTermOpenStyleTab
                                        window:self.delegate.naggingControllerWindow];
 }
@@ -463,6 +465,7 @@ static NSString *const iTermNaggingControllerArrangementTextReplacements = @"Tex
 
             case 3: // Help
                 [[NSWorkspace sharedWorkspace] it_openURL:[NSURL URLWithString:@"https://iterm2.com/paste_bracketing"]
+                                                   target:nil
                                                     style:iTermOpenStyleTab
                                                    window:self.delegate.naggingControllerWindow];
                 break;
@@ -513,6 +516,7 @@ static NSString *const iTermNaggingControllerArrangementTextReplacements = @"Tex
 
             case 4: // Help
                 [[NSWorkspace sharedWorkspace] it_openURL:[NSURL URLWithString:@"https://iterm2.com/slow_triggers"]
+                                                   target:nil
                                                     style:iTermOpenStyleTab
                                                    window:self.delegate.naggingControllerWindow];
                 break;
@@ -710,6 +714,7 @@ static NSString *const iTermNaggingControllerArrangementTextReplacements = @"Tex
     if ([iTermSecureUserDefaults openURLWithHost:url.host]) {
         DLog(@"Always allow %@", url.host);
         [[NSWorkspace sharedWorkspace] it_openURL:url
+                                           target:nil
                                             style:iTermOpenStyleTab
                                            window:self.delegate.naggingControllerWindow];
         return;
@@ -730,6 +735,7 @@ static NSString *const iTermNaggingControllerArrangementTextReplacements = @"Tex
 
             case 0: // Allow
                 [[NSWorkspace sharedWorkspace] it_openURL:url
+                                                   target:nil
                                                     style:iTermOpenStyleTab
                                                    window:self.delegate.naggingControllerWindow];
                 break;
@@ -737,6 +743,7 @@ static NSString *const iTermNaggingControllerArrangementTextReplacements = @"Tex
             case 1:  // Allow for this host
                 [iTermSecureUserDefaults setOpenURLWithHost:url.host allowed:YES];
                 [[NSWorkspace sharedWorkspace] it_openURL:url
+                                                   target:nil
                                                     style:iTermOpenStyleTab
                                                    window:self.delegate.naggingControllerWindow];
                 break;

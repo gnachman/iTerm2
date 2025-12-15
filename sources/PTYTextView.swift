@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import UniformTypeIdentifiers
 
 extension VT100GridAbsCoordRange {
     func relativeRange(overflow: Int64) -> VT100GridCoordRange {
@@ -857,6 +858,8 @@ extension PTYTextView {
             } else {
                 return false
             }
+        } else if item.action == #selector(saveArchive(_:)) {
+            return true
         }
         return false
     }
@@ -875,6 +878,27 @@ extension PTYTextView {
                 return
             }
             NSWorkspace.shared.activateFileViewerSelecting(panel.items.map { $0.urlPromise.maybeValue }.compactMap { $0 as? URL })
+        }
+    }
+}
+
+@objc
+extension PTYTextView {
+    @IBAction
+    @objc(saveArchive:)
+    func saveArchive(_ sender: Any) {
+        if let window = self.window {
+            let savePanel = iTermModernSavePanel()
+            savePanel.defaultFilename = ((delegate?.textViewVariablesScope().value(forVariableName: iTermVariableKeySessionName) as? String) ?? "iTerm2 Session") + ".itermarchive"
+            savePanel.preferredSSHIdentity = .localhost
+            savePanel.allowedContentTypes = [ UTType(filenameExtension: "itermarchive")! ]
+            Task {
+                let response = await savePanel.beginSheetModal(for: window)
+                if response == .OK,
+                   let item = savePanel.item {
+                    delegate?.textViewSaveArchive(item)
+                }
+            }
         }
     }
 }

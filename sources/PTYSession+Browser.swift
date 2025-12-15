@@ -56,6 +56,7 @@ extension PTYSession: iTermBrowserViewControllerDelegate {
                                vertical: Bool) {
         let term = (delegate?.realParentWindow() as? PseudoTerminal)
         term?.openSplitPane(with: url,
+                            target: nil,
                             baseProfile: profile,
                             nearSessionGuid: guid,
                             vertical: vertical)

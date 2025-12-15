@@ -48,8 +48,17 @@ VT100GraphicRenditionSideEffect VT100GraphicRenditionExecuteSGR(VT100GraphicRend
                     case 1:
                         rendition->underlineStyle = VT100UnderlineStyleSingle;
                         return VT100GraphicRenditionSideEffectNone;
+                    case 2:
+                        rendition->underlineStyle = VT100UnderlineStyleDouble;
+                        return VT100GraphicRenditionSideEffectNone;
                     case 3:
                         rendition->underlineStyle = VT100UnderlineStyleCurly;
+                        return VT100GraphicRenditionSideEffectNone;
+                    case 4:
+                        rendition->underlineStyle = VT100UnderlineStyleDotted;
+                        return VT100GraphicRenditionSideEffectNone;
+                    case 5:
+                        rendition->underlineStyle = VT100UnderlineStyleDashed;
                         return VT100GraphicRenditionSideEffectNone;
                 }
             } else {
@@ -336,7 +345,7 @@ VT100GraphicRendition VT100GraphicRenditionFromCharacter(const screen_char_t *c,
         .blink = c->blink,
         .invisible = c->invisible,
         .underline = c->underline,
-        .underlineStyle = c->underlineStyle,
+        .underlineStyle = ScreenCharGetUnderlineStyle(*c),
         .strikethrough = c->strikethrough,
         .reversed = c->inverse,
         .faint = c->faint,
@@ -392,7 +401,7 @@ void VT100GraphicRenditionUpdateForeground(const VT100GraphicRendition *renditio
     c->italic = rendition->italic;
     c->underline = rendition->underline;
     c->strikethrough = rendition->strikethrough;
-    c->underlineStyle = rendition->underlineStyle;
+    ScreenCharSetUnderlineStyle(c, rendition->underlineStyle);
     c->blink = rendition->blink;
     c->invisible = rendition->invisible;
     c->image = NO;

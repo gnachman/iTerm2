@@ -164,6 +164,18 @@ NS_INLINE NSString *iTermMetalGlyphAttributesDescription(iTermMetalGlyphAttribut
         case iTermMetalGlyphAttributesUnderlineStrikethroughAndCurly:
             underline = @"STRIKETHROUGH+CURLY";
             break;
+        case iTermMetalGlyphAttributesUnderlineDotted:
+            underline = @"DOTTED";
+            break;
+        case iTermMetalGlyphAttributesUnderlineDashed:
+            underline = @"DASHED";
+            break;
+        case iTermMetalGlyphAttributesUnderlineStrikethroughAndDotted:
+            underline = @"STRIKETHROUGH+DOTTED";
+            break;
+        case iTermMetalGlyphAttributesUnderlineStrikethroughAndDashed:
+            underline = @"STRIKETHROUGH+DASHED";
+            break;
     }
     return [NSString stringWithFormat:@"fg=%@ bg=%@ underline=%@ hasUnderlineColor=%@ underlineColor=%@ annotation=%@",
             iTermStringFromColorVectorFloat4(attrs->foregroundColor),

@@ -101,10 +101,15 @@ const NSInteger kLongMaximumWordLength = 100000;
     return [wordExtractor fastString];
 }
 
-- (NSURL *)urlOfHypertextLinkAt:(VT100GridCoord)coord urlId:(out NSString **)urlId {
+- (NSURL *)urlOfHypertextLinkAt:(VT100GridCoord)coord
+                          urlId:(out NSString **)urlId
+                          target:(out NSString **)target {
     iTermExternalAttribute *ea = [self externalAttributesAt:coord];
     if (urlId) {
         *urlId = ea.url.identifier;
+    }
+    if (target) {
+        *target = ea.url.target;
     }
     return ea.url.url;
 }

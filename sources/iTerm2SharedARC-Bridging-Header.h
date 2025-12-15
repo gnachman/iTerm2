@@ -70,6 +70,7 @@
 #import "iTermMetalRenderer.h"
 #import "iTermMiniSearchFieldViewController.h"
 #import "iTermNotificationCenter.h"
+#import "iTermNotificationController.h"
 #import "iTermObject.h"
 #import "iTermOrderEnforcer.h"
 #import "iTermParser.h"

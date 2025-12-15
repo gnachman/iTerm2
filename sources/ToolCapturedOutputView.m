@@ -428,6 +428,7 @@ static NSString *const iTermCapturedOutputToolTableViewCellIdentifier = @"ToolCa
 
 - (void)help:(id)sender {
     [[NSWorkspace sharedWorkspace] it_openURL:[NSURL URLWithString:@"http://iterm2.com/captured_output.html"]
+                                       target:nil
                                         style:iTermOpenStyleTab
                                        window:self.window];
 }

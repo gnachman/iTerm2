@@ -200,14 +200,16 @@ extern const NSInteger VT100ScreenBigFileDownloadThreshold;
 - (id<VT100ScreenMarkReading>)penultimateCommandMark;
 
 - (BOOL)encodeContents:(id<iTermEncoderAdapter>)encoder
-          linesDropped:(int *)linesDroppedOut;
+          linesDropped:(int *)linesDroppedOut
+             unlimited:(BOOL)unlimited;
 
 // WARNING: This may change the screen size! Use -restoreInitialSize to restore it.
 // This is useful for restoring other stuff that depends on the screen having its original size
 // such as selections.
 - (void)restoreFromDictionary:(NSDictionary *)dictionary
      includeRestorationBanner:(BOOL)includeRestorationBanner
-                   reattached:(BOOL)reattached;
+                   reattached:(BOOL)reattached
+                    isArchive:(BOOL)isArchive;
 
 // Uninitialize timestamps.
 - (void)resetTimestamps;

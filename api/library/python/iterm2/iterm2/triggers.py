@@ -64,6 +64,7 @@ def decode_trigger(encoded: dict) -> 'Trigger':
         SetNamedMarkTrigger._name(): SetNamedMarkTrigger,
         FoldTrigger._name(): FoldTrigger,
         SGRTrigger._name(): SGRTrigger,
+        BufferInputTrigger._name(): BufferInputTrigger,
     }
 
     name = encoded["action"]
@@ -242,6 +243,36 @@ class BounceTrigger(Trigger):
 
     @action.setter
     def action(self, value: 'iterm2.Trigger.BounceTrigger.Action'):
+        self.__action = value
+        self.param = self._param
+
+    @property
+    def _param(self):
+        return self.__action.value
+
+class BufferInputTrigger(Trigger):
+    class Action(enum.Enum):
+        START = 0
+        STOP = 1
+
+    def __init__(self, regex: str, action: 'BufferInputTrigger.Action', instant: bool, enabled: bool):
+        self.__action = action
+        super().__init__(regex, self._param, instant, enabled)
+
+    @staticmethod
+    def _name():
+        return "iTermBufferInputTrigger"
+
+    @staticmethod
+    def deserialize(regex: str, param, instant: bool, enabled: bool):
+        return _futureproof(param, BufferInputTrigger(regex, BufferInputTrigger.Action(param), instant, enabled))
+
+    @property
+    def action(self) -> 'BufferInputTrigger.Action':
+        return self.__action
+
+    @action.setter
+    def action(self, value: 'BufferInputTrigger.Action'):
         self.__action = value
         self.param = self._param
 

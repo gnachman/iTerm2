@@ -112,7 +112,8 @@ extern NSString * const kTriggerNameKey;
               setRange:(NSRange)rangeInScreenChars
           absoluteLine:(long long)lineNumber
                    sgr:(CSIParam)csi;
-
+- (void)triggerSetBufferInput:(Trigger *)trigger
+                 shouldBuffer:(BOOL)shouldBuffer;
 @end
 
 @interface Trigger : NSObject<iTermObject>

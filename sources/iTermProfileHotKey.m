@@ -111,6 +111,14 @@ static NSString *const kArrangement = @"Arrangement";
                                                  selector:@selector(windowDidBecomeKey:)
                                                      name:NSWindowDidBecomeKeyNotification
                                                    object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(sheetModalDidBeginOrEnd:)
+                                                     name:NSWindowWillBeginSheetNotification
+                                                   object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(sheetModalDidBeginOrEnd:)
+                                                     name:NSWindowDidEndSheetNotification
+                                                   object:nil];
         [[[NSWorkspace sharedWorkspace] notificationCenter] addObserver:self
                                                                selector:@selector(activeSpaceDidChange:)
                                                                    name:NSWorkspaceActiveSpaceDidChangeNotification
@@ -271,6 +279,13 @@ static NSString *const kArrangement = @"Arrangement";
 - (NSWindowLevel)floatingLevel {
     DLog(@"calculate floating level");
     iTermApplication *app = [iTermApplication sharedApplication];
+    const BOOL otherWindowHasSheetModal = [app.it_windowsWithSheetModals anyWithBlock:^BOOL(NSWindow *window) {
+        return window != _windowController.window;
+    }];
+    if (otherWindowHasSheetModal) {
+        DLog(@"There is a sheet modal");
+        return NSNormalWindowLevel;
+    }
     if (app.it_characterPanelIsOpen || app.it_modalWindowOpen || app.it_imeOpen || [[NSWorkspace sharedWorkspace] it_securityAgentIsActive] || app.it_accentMenuOpen) {
         DLog(@"Use floating window level. characterPanelIsOpen=%@, modalWindowOpen=%@ imeOpen=%@ accentMenuOpen=%@",
              @(app.it_characterPanelIsOpen), @(app.it_modalWindowOpen),
@@ -1220,6 +1235,14 @@ static NSString *const kArrangement = @"Arrangement";
 - (void)inputMethodEditorDidClose:(NSNotification *)notification {
     DLog(@"inputMethodEditorDidClose");
     [self updateWindowLevel];
+}
+
+- (void)sheetModalDidBeginOrEnd:(NSNotification *)notification {
+    DLog(@"sheetModalDidBeginOrEnd: %@", notification);
+    // If this is called for a "will begin", wait a spin so it can actually begin.
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [self updateWindowLevel];
+    });
 }
 
 @end

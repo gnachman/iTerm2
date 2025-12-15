@@ -60,6 +60,9 @@ NS_ASSUME_NONNULL_BEGIN
 // Select newly created tab? Set to YES to keep the original tab selected.
 @property (nonatomic) BOOL disableAutomaticTabSelection;
 
+// Assign a target when opening a browser session
+@property (nonatomic, copy) NSString *browserTarget;
+
 + (BOOL)profileIsWellFormed:(Profile *)profile;
 
 // These class methods are a migration path for legacy code that predates the session launcher.

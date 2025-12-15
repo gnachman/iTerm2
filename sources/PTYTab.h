@@ -26,6 +26,11 @@ extern NSString *const iTermSessionBecameKey;
 extern NSString *const iTermCurrentSessionDidChange;
 extern NSString *const PTYTabVariableTitleOverride;
 
+extern NSString *const PTYTabArrangementOptionsOnlySessionID;
+extern NSString *const PTYTabArrangementOptionsReplacementProfile;
+extern NSString *const PTYTabArrangementOptionsReplacementSaveProgram;
+extern NSString *const PTYTabArrangementOptionsPendingJumps;
+
 // This implements NSSplitViewDelegate but it was an informal protocol in 10.5. If 10.5 support
 // is eventually dropped, change this to make it official.
 @interface PTYTab : NSObject <
@@ -269,6 +274,24 @@ extern NSString *const PTYTabVariableTitleOverride;
 - (NSDictionary*)arrangementWithContents:(BOOL)contents;
 - (BOOL)encodeWithContents:(BOOL)contents
                    encoder:(id<iTermEncoderAdapter>)encoder;
+- (BOOL)encodeWithContents:(BOOL)contents
+            constructIdMap:(BOOL)constructIdMap
+                   encoder:(id<iTermEncoderAdapter>)encoder
+                   options:(NSDictionary *)options;
++ (BOOL)encodeWithContents:(BOOL)contents
+            constructIdMap:(BOOL)constructIdMap
+                   encoder:(id<iTermEncoderAdapter>)encoder
+                   options:(NSDictionary *)options
+             activeSession:(PTYSession *)activeSession
+                   tabGuid:(NSString *)guid
+             titleOverride:(NSString *)titleOverride
+               isMaximized:(BOOL)isMaximized
+          savedArrangement:(NSDictionary *)savedArrangement
+                     idMap:(NSMutableDictionary<NSNumber *, SessionView *> *)idMap
+                      root:(NSView *)root
+         sessionViewFinder:(SessionView *(^NS_NOESCAPE)(NSString *guid))sessionViewFinder
+             sessionFinder:(PTYSession *(^NS_NOESCAPE)(SessionView *sessionView))sessionFinder;
++ (NSSplitView *)placeholderSplitViewForSession:(PTYSession *)session;
 
 // Update the tab's title from the active session's name. Needed for initializing the tab's title
 // after setting up tmux tabs.

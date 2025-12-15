@@ -211,8 +211,22 @@ float FractionOfPixelThatIntersectsUnderlineForStyle(int underlineStyle,  // iTe
         case iTermMetalGlyphAttributesUnderlineStrikethroughAndDouble:
         case iTermMetalGlyphAttributesUnderlineStrikethroughAndDashedSingle:
         case iTermMetalGlyphAttributesUnderlineStrikethroughAndCurly:
+        case iTermMetalGlyphAttributesUnderlineStrikethroughAndDotted:
+        case iTermMetalGlyphAttributesUnderlineStrikethroughAndDashed:
             // This shouldn't happen.
             return 0;
+        case iTermMetalGlyphAttributesUnderlineDotted:
+            if (weight > 0 && fmod(clipSpacePosition.x, 2 * scale) >= 1 * scale) {
+                return 0;
+            } else {
+                return weight;
+            }
+        case iTermMetalGlyphAttributesUnderlineDashed:
+            if (weight > 0 && fmod(clipSpacePosition.x, 7 * scale) >= 4 * scale) {
+                return 0;
+            } else {
+                return weight;
+            }
     }
 
     // Shouldn't get here
