@@ -201,6 +201,11 @@ static NSString *const kAggressiveResize = @"aggressive-resize";
     // If we don't tell tmux to change the active window or pane in response to its notification
     // we'll eventually catch up to its current state and remain stable.
     NSInteger _suppressActivityChanges;
+    // Number of window-change notifications to ignore. Incremented when we send select-window,
+    // decremented when we receive a session-window-changed notification. This prevents the UI
+    // from flickering when quickly switching tabs (e.g., cmd-2 then cmd-3) by ignoring the
+    // stale notifications that arrive after the UI has already moved on.
+    NSInteger _ignoreWindowChangeNotificationCount;
     BOOL _shouldWorkAroundTabBug;
 
     // Window frames before font size changes. Used to preserve window size in
@@ -2779,6 +2784,10 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
 }
 
 - (void)activeWindowDidChangeTo:(int)windowID {
+    if (_ignoreWindowChangeNotificationCount > 0) {
+        _ignoreWindowChangeNotificationCount--;
+        return;
+    }
     [self suppressActivityChanges:^{
         const BOOL shouldMakeKeyAndOrderFront = [self shouldMakeWindowKeyOnActiveWindowChange];
         PTYTab *tab = [self window:windowID];
@@ -3390,6 +3399,7 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
         DLog(@"Not sending select-window -t %%%d because activity changes are suppressed", windowId);
         return;
     }
+    _ignoreWindowChangeNotificationCount++;
     NSString *command = [NSString stringWithFormat:@"select-window -t @%d", windowId];
     [gateway_ sendCommand:command
            responseTarget:nil
