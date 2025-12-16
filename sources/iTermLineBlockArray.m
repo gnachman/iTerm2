@@ -713,6 +713,10 @@ static NSUInteger iTermLineBlockArrayNextUniqueID;
                                                                       width:width
                                                                   remainder:&endWrappedLineInBlock];
 
+    if (startBlockIndex == NSNotFound || endBlockIndex == NSNotFound) {
+        return 0;
+    }
+
     // Step 2: Convert wrapped line offsets to raw line numbers within their blocks
     LineBlock *startBlock = self[startBlockIndex];
     NSNumber *startRawLineNum = [startBlock rawLineNumberAtWrappedLineOffset:startWrappedLineInBlock

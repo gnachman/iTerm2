@@ -990,6 +990,11 @@ static NSRange NSRangeFromBounds(NSInteger lowerBound, NSInteger upperBound) {
                 DLog(@"Move end up one line for line-style mark at next prompt");
                 range.end.y -= 1;
             }
+            // Ensure end is not before start to avoid negative range lengths.
+            if (range.end.y < range.start.y) {
+                range.end.y = range.start.y;
+                range.end.x = range.start.x;
+            }
             return range;
         }
     }
