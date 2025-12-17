@@ -728,6 +728,15 @@ static NSMutableArray<NSString *> *_combinedLog;
     return [NSString uuid];
 }
 
++ (Profile *)profileForCreatingNewSessionBasedOn:(Profile *)profile {
+    NSString *guid = profile[KEY_GUID];
+    BOOL divorced = ([[ProfileModel sessionsInstance] bookmarkWithGuid:guid] != nil);
+    if (divorced) {
+        return [profile dictionaryBySettingObject:[ProfileModel freshGuid] forKey:KEY_GUID];
+    }
+    return profile;
+}
+
 - (int)indexOfProfileWithGuid:(NSString*)guid
 {
     return [self indexOfProfileWithGuid:guid withFilter:@""];

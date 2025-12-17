@@ -1418,7 +1418,7 @@ NS_CLASS_AVAILABLE_MAC(10_14)
     if ((thisWindow.styleMask & NSWindowStyleMaskFullSizeContentView) != NSWindowStyleMaskFullSizeContentView) {
         return frame;
     }
-    if (![self tabBarShouldBeVisible]) {
+    if (![self tabBarShouldBeVisibleEvenWhenOnLoan]) {
         return frame;
     }
     if (![self.delegate enteringLionFullscreen] &&

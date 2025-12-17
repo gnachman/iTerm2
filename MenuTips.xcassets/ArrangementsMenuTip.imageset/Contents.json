@@ -1,0 +1,18 @@
+{
+  "images" : [
+    {
+      "filename" : "ArrangementsMenuTip.jpg",
+      "idiom" : "mac",
+      "scale" : "1x"
+    },
+    {
+      "filename" : "ArrangementsMenuTip@2x.jpg",
+      "idiom" : "mac",
+      "scale" : "2x"
+    }
+  ],
+  "info" : {
+    "author" : "xcode",
+    "version" : 1
+  }
+}

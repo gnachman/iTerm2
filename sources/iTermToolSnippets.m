@@ -259,7 +259,8 @@ static NSButton *iTermToolSnippetsNewButton(NSString *imageName, NSString *title
                   toTree:(NSMutableArray *)tree
                  parents:(NSArray<NSString *> *)parents {
     if (components.count == 0) {
-        [tree addObject:[iTermSnippetItem itemWithSnippet:snippet]];
+        NSRange folderRange = [self rangeOfFolders:tree];
+        [tree insertObject:[iTermSnippetItem itemWithSnippet:snippet] atIndex:folderRange.location];
         return;
     }
     NSString *folderName = components[0];

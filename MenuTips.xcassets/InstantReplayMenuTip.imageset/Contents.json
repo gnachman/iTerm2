@@ -1,0 +1,18 @@
+{
+  "images" : [
+    {
+      "filename" : "InstantReplayMenuTip.jpg",
+      "idiom" : "mac",
+      "scale" : "1x"
+    },
+    {
+      "filename" : "InstantReplayMenuTip@2x.jpg",
+      "idiom" : "mac",
+      "scale" : "2x"
+    }
+  ],
+  "info" : {
+    "author" : "xcode",
+    "version" : 1
+  }
+}

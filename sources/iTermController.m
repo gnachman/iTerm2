@@ -360,12 +360,9 @@ static iTermController *gSharedInstance;
         }
         bookmark = [[_frontTerminalWindowController currentSession] profile];
     }
-    BOOL divorced = ([[ProfileModel sessionsInstance] bookmarkWithGuid:bookmark[KEY_GUID]] != nil);
-    if (divorced) {
-        DLog(@"Creating a new session with a sessions instance guid");
-        NSString *guid = [ProfileModel freshGuid];
-        bookmark = [bookmark dictionaryBySettingObject:guid forKey:KEY_GUID];
-    }
+    Profile *originalBookmark = bookmark;
+    bookmark = [ProfileModel profileForCreatingNewSessionBasedOn:bookmark];
+    const BOOL divorced = (bookmark != originalBookmark);
     PseudoTerminal *windowController = (newWindow) ? nil : _frontTerminalWindowController;
     [iTermSessionLauncher launchBookmark:bookmark
                               inTerminal:windowController

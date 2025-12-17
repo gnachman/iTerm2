@@ -410,7 +410,7 @@ NSString *const kTwoPraramValueColumnIdentifier = @"kTwoPraramValueColumnIdentif
 - (NSArray *)triggerDictionariesForCurrentProfile {
     Profile *bookmark = [self bookmark];
     NSArray *triggers = [bookmark objectForKey:KEY_TRIGGERS];
-    _cached = triggers ? triggers : [NSArray array];
+    _cached = triggers ? [triggers copy] : [NSArray array];
     return _cached;
 }
 
@@ -515,8 +515,13 @@ NSString *const kTwoPraramValueColumnIdentifier = @"kTwoPraramValueColumnIdentif
 }
 
 - (void)reloadAllProfiles:(NSNotification *)notification {
-    if (_cached && ![_cached isEqual:[self triggerDictionariesForCurrentProfile]]) {
-        [self reloadData];
+    if (_cached) {
+        NSArray *currentTriggers = self.bookmark[KEY_TRIGGERS] ?: @[];
+        const BOOL wasEqual = [_cached isEqual:currentTriggers];
+        _cached = [currentTriggers copy];
+        if (!wasEqual) {
+            [self reloadData];
+        }
     }
     [self updateUseInterpolatedStringParametersState];
 }

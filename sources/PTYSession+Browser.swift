@@ -36,8 +36,9 @@ extension PTYSession: iTermBrowserViewControllerDelegate {
          completion: {})
          */
         let term = (delegate?.realParentWindow() as? PseudoTerminal)
+        let baseProfile = ProfileModel.profileForCreatingNewSessionBased(on: profile)
         return term?.openTab(with: url,
-                             baseProfile: profile,
+                             baseProfile: baseProfile,
                              nearSessionGuid: guid,
                              configuration: configuration)
     }
@@ -45,8 +46,9 @@ extension PTYSession: iTermBrowserViewControllerDelegate {
     func browserViewController(_ controller: iTermBrowserViewController,
                                openNewTabForURL url: URL) {
         let term = (delegate?.realParentWindow() as? PseudoTerminal)
+        let baseProfile = ProfileModel.profileForCreatingNewSessionBased(on: profile)
         term?.openTab(with: url,
-                      baseProfile: profile,
+                      baseProfile: baseProfile,
                       nearSessionGuid: guid,
                       configuration: nil)
     }
@@ -55,9 +57,10 @@ extension PTYSession: iTermBrowserViewControllerDelegate {
                                openNewSplitPaneForURL url: URL,
                                vertical: Bool) {
         let term = (delegate?.realParentWindow() as? PseudoTerminal)
+        let baseProfile = ProfileModel.profileForCreatingNewSessionBased(on: profile)
         term?.openSplitPane(with: url,
                             target: nil,
-                            baseProfile: profile,
+                            baseProfile: baseProfile,
                             nearSessionGuid: guid,
                             vertical: vertical)
     }
