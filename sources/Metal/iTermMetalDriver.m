@@ -1812,7 +1812,37 @@ extraIdentifyingInfoForIcon:button.extraIdentifyingInfoForIcon];
          withRenderPassDescriptor:(MTLRenderPassDescriptor *)renderPassDescriptor
                             label:(NSString *)label
                         frameData:(iTermMetalFrameData *)frameData {
-    // Copy from texture to drawable
+    // Check for nil textures
+    id<MTLTexture> drawableTexture = renderPassDescriptor.colorAttachments[0].texture;
+    ITCriticalError(sourceTexture != nil, @"Debug copy: source texture is nil");
+    ITCriticalError(drawableTexture != nil, @"Debug copy: drawable texture is nil");
+
+    // Check for size mismatch between drawable and viewport
+    const BOOL sizeMatches = (drawableTexture.width == frameData.viewportSize.x &&
+                              drawableTexture.height == frameData.viewportSize.y);
+    ITCriticalError(sizeMatches,
+                    @"Debug copy: Drawable size (%ldx%ld) != viewport size (%dx%d)",
+                    (long)drawableTexture.width,
+                    (long)drawableTexture.height,
+                    frameData.viewportSize.x,
+                    frameData.viewportSize.y);
+
+    // Copy from texture to drawable using blit encoder for reliability
+    id<MTLBlitCommandEncoder> blitEncoder = [frameData.commandBuffer blitCommandEncoder];
+    blitEncoder.label = label;
+    [blitEncoder copyFromTexture:sourceTexture
+                     sourceSlice:0
+                     sourceLevel:0
+                    sourceOrigin:MTLOriginMake(0, 0, 0)
+                      sourceSize:MTLSizeMake(sourceTexture.width, sourceTexture.height, 1)
+                       toTexture:drawableTexture
+                destinationSlice:0
+                destinationLevel:0
+               destinationOrigin:MTLOriginMake(0, 0, 0)];
+    [blitEncoder endEncoding];
+
+    // Keep the old render-based copy as fallback (commented out for now)
+    /*
     [frameData updateRenderEncoderWithRenderPassDescriptor:renderPassDescriptor
                                                       stat:iTermMetalFrameDataStatNA
                                                      label:label];
@@ -1828,6 +1858,7 @@ extraIdentifyingInfoForIcon:button.extraIdentifyingInfoForIcon];
     tState.debugInfo = frameData.debugInfo;
     [_copyOffscreenRenderer drawWithFrameData:frameData transientState:tState];
     [frameData.renderEncoder endEncoding];
+    */
 }
 
 // frameData's renderEncoder must have just had -endEncoding called on it at this point.
@@ -2191,20 +2222,49 @@ extraIdentifyingInfoForIcon:button.extraIdentifyingInfoForIcon];
 #endif
 
     if (shouldCopyToDrawable) {
-        // Copy to the drawable
+        // Copy to the drawable using blit encoder for reliability
         DLog(@"  Copy to drawable %@", frameData);
         frameData.currentPass = 2;
         [frameData.renderEncoder endEncoding];
 
-        [self updateRenderEncoderForCurrentPass:frameData label:@"Copy to drawable"];
-        [self drawRenderer:_copyToDrawableRenderer
-                 frameData:frameData
-                      stat:iTermMetalFrameDataStatPqEnqueueCopyToDrawable];
+        // Get source and destination textures
+        id<MTLTexture> sourceTexture = frameData.temporaryRenderPassDescriptor.colorAttachments[0].texture;
+        id<MTLTexture> destTexture = frameData.renderPassDescriptor.colorAttachments[0].texture;
+
+        ITCriticalError(sourceTexture != nil, @"Copy to drawable: source texture is nil");
+        ITCriticalError(destTexture != nil, @"Copy to drawable: destination texture is nil");
+
+        // Check for size mismatch
+        const BOOL sizeMatches = (destTexture.width == frameData.viewportSize.x &&
+                                  destTexture.height == frameData.viewportSize.y);
+        ITCriticalError(sizeMatches,
+                        @"Copy to drawable: Drawable size (%ldx%ld) != viewport size (%dx%d)",
+                        (long)destTexture.width,
+                        (long)destTexture.height,
+                        frameData.viewportSize.x,
+                        frameData.viewportSize.y);
+
+        // Use blit encoder instead of quad-based copy
+        id<MTLBlitCommandEncoder> blitEncoder = [commandBuffer blitCommandEncoder];
+        blitEncoder.label = @"Copy to drawable";
+        [blitEncoder copyFromTexture:sourceTexture
+                         sourceSlice:0
+                         sourceLevel:0
+                        sourceOrigin:MTLOriginMake(0, 0, 0)
+                          sourceSize:MTLSizeMake(sourceTexture.width, sourceTexture.height, 1)
+                           toTexture:destTexture
+                    destinationSlice:0
+                    destinationLevel:0
+                   destinationOrigin:MTLOriginMake(0, 0, 0)];
+        [frameData measureTimeForStat:iTermMetalFrameDataStatPqEnqueueCopyToDrawable ofBlock:^{
+            [blitEncoder endEncoding];
+        }];
+    } else {
+        [frameData measureTimeForStat:iTermMetalFrameDataStatPqEnqueueDrawEndEncodingToDrawable ofBlock:^{
+            DLog(@"  endEncoding %@", frameData);
+            [frameData.renderEncoder endEncoding];
+        }];
     }
-    [frameData measureTimeForStat:iTermMetalFrameDataStatPqEnqueueDrawEndEncodingToDrawable ofBlock:^{
-        DLog(@"  endEncoding %@", frameData);
-        [frameData.renderEncoder endEncoding];
-    }];
 
     if (frameData.debugInfo) {
         DLog(@"  Copy offscreen texture to drawable %@", frameData);
