@@ -64,6 +64,11 @@ extern NSString *const iTermProfileDidChange;
 
 - (NSMutableArray<NSString *> *)debugHistoryForGuid:(NSString *)guid;
 + (NSString*)freshGuid;
+// Returns a profile suitable for creating a new session based on the given profile.
+// If the source profile is divorced (its guid exists in the sessions instance),
+// returns a copy with a fresh guid to avoid two sessions sharing the same divorced guid.
+// Otherwise, returns the original profile unchanged.
++ (Profile *)profileForCreatingNewSessionBasedOn:(Profile *)profile;
 + (void)migratePromptOnCloseInMutableBookmark:(NSMutableDictionary *)dict;
 + (BOOL)migrated;
 + (NSAttributedString *)attributedStringForCommand:(NSString *)command
