@@ -96,3 +96,10 @@ Screenshot from an imaginary text editor:
 
 
 ]8;;https://example.com/\[58:2:255:0:255;4mRegular text, purple underline[0m]8;;\
+
+---
+iTerm2 Additions
+
+
+]8;target=example;https://example.com/\example.com, target=example]8;;\[m
+]8;target=example;https://badssl.com/\badssl.com, target=example]8;;\[m
