@@ -4,6 +4,20 @@
 #import "CPKPopover.h"
 #import "NSObject+CPK.h"
 
+// Returns YES if the color has a valid colorSpace that can be queried.
+// Pattern colors and some catalog colors throw an exception when accessing colorSpace.
+static BOOL CPKColorHasValidColorSpace(NSColor *color) {
+    if (!color) {
+        return YES;  // nil colors are handled elsewhere
+    }
+    @try {
+        (void)[color colorSpace];
+        return YES;
+    } @catch (NSException *exception) {
+        return NO;
+    }
+}
+
 @protocol CPKColorWellViewDelegate
 @property(nonatomic, readonly) void (^willOpenPopover)(void);
 @property(nonatomic, readonly) void (^willClosePopover)(void);
@@ -200,7 +214,7 @@
                                    usingBlock:^(NSDraggingItem * _Nonnull draggingItem, NSInteger idx, BOOL * _Nonnull stop) {
         NSColor *color = draggingItem.item;
         CPKLog(@"performDragOperation color=%@", color);
-        if (color) {
+        if (color && CPKColorHasValidColorSpace(color)) {
             self.popover.selectedColor = color;
             self.selectedColor = color;
             [self.delegate colorChangedByDrag:color];
@@ -220,7 +234,11 @@
 }
 
 - (void)colorPanelColorDidChange:(id)sender {
-    [self.delegate colorChangedByDrag:[sender color]];
+    NSColor *color = [sender color];
+    if (!CPKColorHasValidColorSpace(color)) {
+        return;
+    }
+    [self.delegate colorChangedByDrag:color];
 }
 
 - (void)noColorChosenInSystemColorPicker:(id)sender {
@@ -459,6 +477,10 @@ static NSColorSpace *gDefaultColorSpace;
 - (void)setColor:(NSColor *)color {
     CPKLog(@"setColor:%@", color);
     if (color) {
+        if (!CPKColorHasValidColorSpace(color)) {
+            // Pattern colors and some catalog colors don't support colorSpace
+            return;
+        }
         self.colorSpace = color.colorSpace;
     }
     self.view.color = color;

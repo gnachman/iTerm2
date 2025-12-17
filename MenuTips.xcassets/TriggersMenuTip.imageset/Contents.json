@@ -1,0 +1,18 @@
+{
+  "images" : [
+    {
+      "filename" : "TriggersMenuTip.jpg",
+      "idiom" : "mac",
+      "scale" : "1x"
+    },
+    {
+      "filename" : "TriggersMenuTip@2x.jpg",
+      "idiom" : "mac",
+      "scale" : "2x"
+    }
+  ],
+  "info" : {
+    "author" : "xcode",
+    "version" : 1
+  }
+}

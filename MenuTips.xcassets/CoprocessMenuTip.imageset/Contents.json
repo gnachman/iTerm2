@@ -1,0 +1,18 @@
+{
+  "images" : [
+    {
+      "filename" : "CoprocessMenuTip.jpg",
+      "idiom" : "mac",
+      "scale" : "1x"
+    },
+    {
+      "filename" : "CoprocessMenuTip@2x.jpg",
+      "idiom" : "mac",
+      "scale" : "2x"
+    }
+  ],
+  "info" : {
+    "author" : "xcode",
+    "version" : 1
+  }
+}

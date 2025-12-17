@@ -10194,7 +10194,8 @@ static BOOL iTermApproximatelyEqualRects(NSRect lhs, NSRect rhs, double epsilon)
     if ([self shouldHaveTallTabBar]) {
         return [iTermAdvancedSettingsModel compactMinimalTabBarHeight];
     } else {
-        if (iTermWindowTypeIsCompact(self.windowType)) {
+        if (iTermWindowTypeIsCompact(self.windowType) ||
+            iTermWindowTypeIsCompact(self.savedWindowType)) {
             return [iTermAdvancedSettingsModel defaultTabBarHeight];
         }
         if (@available(macOS 26, *)) {

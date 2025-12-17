@@ -557,7 +557,9 @@ iTermCommandInfoViewControllerDelegate>
 
 - (VT100GridRange)lineRangeForMark:(id<VT100ScreenMarkReading>)mark {
     const VT100GridCoordRange coordRange = [self coordRangeForMark:mark];
-    return VT100GridRangeMake(coordRange.start.y, coordRange.end.y - coordRange.start.y + 1);
+    const int location = MAX(0, coordRange.start.y);
+    const int length = MAX(0, coordRange.end.y - coordRange.start.y + 1);
+    return VT100GridRangeMake(location, length);
 }
 
 - (iTermRenegablePromise<NSString *> *)promisedOutputForMark:(id<VT100ScreenMarkReading>)mark
