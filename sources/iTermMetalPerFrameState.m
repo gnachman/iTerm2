@@ -1067,7 +1067,11 @@ NS_INLINE int iTermGlyphKeyEmitDecomposedFromNSAttributedString(iTermCachedGlyph
     NSDictionary *attributes = [attributedString attributesAtIndex:0 effectiveRange:nil];
     if (attributes[iTermImageCodeAttribute] ||
         [attributes[iTermIsBoxDrawingAttribute] boolValue]) {
-        assert(false);
+        ITAssertWithMessage(NO,
+                            @"Unexpected attribute in decomposed string path: imageCode=%@, boxDrawing=%@, attributes=%@",
+                            attributes[iTermImageCodeAttribute],
+                            attributes[iTermIsBoxDrawingAttribute],
+                            attributes);
         return gk;
     }
 
