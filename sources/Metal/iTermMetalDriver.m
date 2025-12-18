@@ -630,6 +630,11 @@ legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth
         if (@available(macOS 10.15, *)) {
             frameData.maximumExtendedDynamicRangeColorComponentValue = self.mainThreadState->maximumExtendedDynamicRangeColorComponentValue;
         }
+
+        // Capture diagnostic sizes for debugging tab switch size mismatches
+        frameData.debugViewFrame = view.frame.size;
+        frameData.debugViewBounds = view.bounds.size;
+        frameData.debugLayerDrawableSize = view.layerDrawableSize;
     }];
     return frameData;
 }
@@ -642,6 +647,28 @@ legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth
     DLog(@"Begin private queue setup for frame %@", frameData);
     if ([iTermAdvancedSettingsModel showMetalFPSmeter]) {
         [frameData.perFrameState setDebugString:[self fpsMeterStringForFrameNumber:frameData.frameNumber]];
+    }
+
+    // Debug overlay for diagnosing tab switch size mismatches
+    {
+        const vector_uint2 vp = frameData.viewportSize;
+        const CGSize dt = frameData.debugDrawableTextureSize;
+        const CGSize vf = frameData.debugViewFrame;
+        const CGSize ld = frameData.debugLayerDrawableSize;
+
+        // Check for mismatches
+        BOOL mismatch = (vp.x != (unsigned int)dt.width ||
+                         vp.y != (unsigned int)dt.height ||
+                         vp.x != (unsigned int)ld.width ||
+                         vp.y != (unsigned int)ld.height);
+
+        NSString *debugString = [NSString stringWithFormat:@"%@VP:%dx%d DT:%.0fx%.0f VF:%.0fx%.0f LD:%.0fx%.0f",
+                                 mismatch ? @"!!" : @"",
+                                 vp.x, vp.y,
+                                 dt.width, dt.height,
+                                 vf.width, vf.height,
+                                 ld.width, ld.height];
+        [frameData.perFrameState setDebugString:debugString];
     }
 
     // Get glyph keys, attributes, background colors, etc. from datasource.
@@ -927,6 +954,11 @@ legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth
             if (frameData.destinationDrawable == nil) {
                 DLog(@"YIKES! Failed to get a drawable. %@/%@", self, frameData);
                 return;
+            }
+            // Capture actual drawable texture size for debugging
+            if (frameData.destinationTexture) {
+                frameData.debugDrawableTextureSize = CGSizeMake(frameData.destinationTexture.width,
+                                                                 frameData.destinationTexture.height);
             }
         }
 

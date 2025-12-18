@@ -351,6 +351,12 @@ extension iTermMetalView {
     public var preferredDevice: MTLDevice? {
         metalLayerBox?.preferredDevice
     }
+
+    // For debugging size mismatches - returns the actual CAMetalLayer's drawable size
+    @objc
+    public var layerDrawableSize: CGSize {
+        metalLayerBox?.drawableSize ?? .zero
+    }
 }
 
 // MARK: - Fetch drawable with configurable timeout

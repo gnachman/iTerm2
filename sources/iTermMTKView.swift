@@ -17,6 +17,10 @@ public class iTermMTKView: iTermMetalView {
             colorPixelFormat = .bgra8Unorm
         }
         it_schedule()
+
+        // Debug border for diagnosing tab switch size issues
+        layer?.borderColor = NSColor.red.cgColor
+        layer?.borderWidth = 2.0
     }
     
     @MainActor required init?(coder: NSCoder) {

@@ -166,6 +166,12 @@ NS_CLASS_AVAILABLE(10_11, NA)
 @property (nonatomic) CGFloat rightExtraPixels;
 @property (nonatomic) CGFloat vmargin;
 
+// Debug diagnostics for tracking size mismatches during tab switching
+@property (nonatomic) CGSize debugViewFrame;           // view.frame.size at frame creation
+@property (nonatomic) CGSize debugViewBounds;          // view.bounds.size at frame creation
+@property (nonatomic) CGSize debugLayerDrawableSize;   // metalLayer.drawableSize at frame creation
+@property (nonatomic) CGSize debugDrawableTextureSize; // actual drawable texture size (set when drawable obtained)
+
 // When drawing to an intermediate texture there may be two passes (i.e., two render encoders)
 @property (nonatomic) int currentPass;
 
