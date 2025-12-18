@@ -652,6 +652,12 @@ extension iTermMetalView {
             guard currentInterval >= frameInterval else { return }
             currentInterval = 0
         }
+        // Ensure drawable size is recalculated with current window's backing scale.
+        // This handles the case where the view was sized before being added to a window
+        // (when convertToBacking uses the main display's scale instead of the window's).
+        if autoResizeDrawable {
+            resizeDrawable()
+        }
         resizeMetalLayerDrawable()
         if subClassOverridesDrawRect {
             callDrawRectIMP(on: self, with: bounds, imp: drawRectSubIMP!)
@@ -748,6 +754,13 @@ extension iTermMetalView {
 
     open override func viewDidMoveToWindow() {
         updateToNativeScale()
+        // Recalculate drawable size now that we're in a window, since convertToBacking()
+        // uses the main display's scale factor when the view has no window.
+        // Only do this when we have a window - when window becomes nil, we don't want
+        // to recalculate using the main display's scale.
+        if autoResizeDrawable && window != nil {
+            resizeDrawable()
+        }
     }
 }
 
