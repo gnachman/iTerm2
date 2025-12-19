@@ -89,6 +89,7 @@ assert(value != nil)
 - Use Objective-C when modifying existing Objective-C code
 - Use Swift for new features
 - Use `@objc` attributes for Swift/Objective-C interop
+- The Swift bridging header is `sources/iTerm2SharedARC-Bridging-Header.h` - check here for available Objective-C types and constants in Swift
 
 **Where code lives:**
 - Session logic → `PTYSession.{h,m}`
