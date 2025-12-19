@@ -142,6 +142,8 @@ typedef enum {
         [[self window] setDelegate:self];
         if ([iTermAdvancedSettingsModel profilesWindowJoinsActiveSpace]) {
             [[self window] setCollectionBehavior:NSWindowCollectionBehaviorCanJoinAllSpaces];
+        } else {
+            [[self window] setCollectionBehavior:NSWindowCollectionBehaviorMoveToActiveSpace];
         }
         [tableView_ setDelegate:self];
         [tableView_ allowMultipleSelections];
