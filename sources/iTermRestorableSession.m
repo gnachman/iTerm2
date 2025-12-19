@@ -33,6 +33,7 @@
         self.arrangement = restorableState[@"arrangement"];
         self.predecessors = restorableState[@"predecessors"];
         self.windowType = restorableState[@"windowType"] ? [restorableState[@"windowType"] intValue] : iTermWindowDefaultType();
+        self.percentage = restorableState[@"percentage"] ? [restorableState[@"percentage"] doubleValue] : 100;
         self.savedWindowType = restorableState[@"savedWindowType"] ? [restorableState[@"savedWindowType"] intValue] : iTermWindowDefaultType();
         self.screen = restorableState[@"screen"] ? [restorableState[@"screen"] intValue] : -1;
         self.windowTitle = [restorableState[@"windowTitle"] nilIfNull];
@@ -57,6 +58,7 @@
               @"arrangement": _arrangement ?: @{},
               @"predecessors": _predecessors ?: @[],
               @"windowType": @(_windowType),
+              @"percentage": @(_percentage),
               @"savedWindowType": @(_savedWindowType),
               @"screen": @(_screen),
               @"windowTitle": _windowTitle ?: [NSNull null],

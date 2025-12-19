@@ -171,6 +171,7 @@ NSString *const TERMINAL_ARRANGEMENT_TABS = @"Tabs";
 NSString *const TERMINAL_ARRANGEMENT_FULLSCREEN = @"Fullscreen";
 NSString *const TERMINAL_ARRANGEMENT_LION_FULLSCREEN = @"LionFullscreen";
 NSString *const TERMINAL_ARRANGEMENT_WINDOW_TYPE = @"Window Type";
+NSString *const TERMINAL_ARRANGEMENT_WINDOW_TYPE_PERCENTAGE = @"Window Type Percentage";
 NSString *const TERMINAL_ARRANGEMENT_SAVED_WINDOW_TYPE = @"Saved Window Type";  // Only relevant for fullscreen
 NSString *const TERMINAL_ARRANGEMENT_SELECTED_TAB_INDEX = @"Selected Tab Index";
 NSString *const TERMINAL_ARRANGEMENT_SCREEN_INDEX = @"Screen";
@@ -474,11 +475,13 @@ typedef NS_ENUM(int, iTermShouldHaveTitleSeparator) {
 - (instancetype)initWithSmartLayout:(BOOL)smartLayout
                          windowType:(iTermWindowType)windowType
                     savedWindowType:(iTermWindowType)savedWindowType
+                         percentage:(double)percentage
                              screen:(int)screenNumber
                             profile:(Profile *)profile {
     return [self initWithSmartLayout:smartLayout
                           windowType:windowType
                      savedWindowType:savedWindowType
+                          percentage:percentage
                               screen:screenNumber
                     hotkeyWindowType:iTermHotkeyWindowTypeNone
                              profile:profile];
@@ -487,6 +490,7 @@ typedef NS_ENUM(int, iTermShouldHaveTitleSeparator) {
 - (instancetype)initWithSmartLayout:(BOOL)smartLayout
                          windowType:(iTermWindowType)windowType
                     savedWindowType:(iTermWindowType)savedWindowType
+                         percentage:(double)percentage
                              screen:(int)screenNumber
                    hotkeyWindowType:(iTermHotkeyWindowType)hotkeyWindowType
                             profile:(Profile *)profile {
@@ -496,6 +500,7 @@ typedef NS_ENUM(int, iTermShouldHaveTitleSeparator) {
         [self finishInitializationWithSmartLayout:smartLayout
                                        windowType:windowType
                                   savedWindowType:savedWindowType
+                                       percentage:percentage
                                            screen:screenNumber
                                  hotkeyWindowType:hotkeyWindowType
                                           profile:profile];
@@ -550,6 +555,7 @@ typedef NS_ENUM(int, iTermShouldHaveTitleSeparator) {
 - (void)finishInitializationWithSmartLayout:(BOOL)smartLayout
                                  windowType:(iTermWindowType)unsafeWindowType
                             savedWindowType:(iTermWindowType)unsafeSavedWindowType
+                                 percentage:(double)percentage
                                      screen:(int)screenNumber
                            hotkeyWindowType:(iTermHotkeyWindowType)hotkeyWindowType
                                     profile:(Profile *)profile {
@@ -598,18 +604,30 @@ typedef NS_ENUM(int, iTermShouldHaveTitleSeparator) {
     screenNumber = [PseudoTerminal screenNumberForPreferredScreenNumber:screenNumber
                                                              windowType:windowType
                                                           defaultScreen:[[self window] screen]];
+    _percentage = percentage;
+    if (_percentage <= 0 || percentage > 100) {
+        _percentage = 100;
+    }
     switch (windowType) {
+        case WINDOW_TYPE_TOP_PERCENTAGE:
+        case WINDOW_TYPE_BOTTOM_PERCENTAGE:
+            DLog(@"Window type is %d with percentage %@", windowType, @(_percentage));
+            smartLayout = NO;
+            break;
+
+        case WINDOW_TYPE_LEFT_PERCENTAGE:
+        case WINDOW_TYPE_RIGHT_PERCENTAGE:
+            DLog(@"Window type is %d with percentage %@", windowType, @(_percentage));
+            smartLayout = NO;
+            break;
+
         case WINDOW_TYPE_COMPACT_MAXIMIZED:
         case WINDOW_TYPE_MAXIMIZED:
-        case WINDOW_TYPE_TOP:
         case WINDOW_TYPE_CENTERED:
-        case WINDOW_TYPE_TOP_PARTIAL:
-        case WINDOW_TYPE_BOTTOM:
-        case WINDOW_TYPE_BOTTOM_PARTIAL:
-        case WINDOW_TYPE_LEFT:
-        case WINDOW_TYPE_LEFT_PARTIAL:
-        case WINDOW_TYPE_RIGHT:
-        case WINDOW_TYPE_RIGHT_PARTIAL:
+        case WINDOW_TYPE_TOP_CELLS:
+        case WINDOW_TYPE_BOTTOM_CELLS:
+        case WINDOW_TYPE_LEFT_CELLS:
+        case WINDOW_TYPE_RIGHT_CELLS:
             PtyLog(@"Window type is %d so disable smart layout", windowType);
             smartLayout = NO;
         case WINDOW_TYPE_NO_TITLE_BAR:
@@ -637,15 +655,15 @@ typedef NS_ENUM(int, iTermShouldHaveTitleSeparator) {
     _windowSizeHelper = [[iTermTerminalWindowSizeHelper alloc] init];
     NSRect initialFrame;
     switch (windowType) {
-        case WINDOW_TYPE_TOP:
-        case WINDOW_TYPE_BOTTOM:
-        case WINDOW_TYPE_LEFT:
-        case WINDOW_TYPE_RIGHT:
+        case WINDOW_TYPE_TOP_PERCENTAGE:
+        case WINDOW_TYPE_BOTTOM_PERCENTAGE:
+        case WINDOW_TYPE_LEFT_PERCENTAGE:
+        case WINDOW_TYPE_RIGHT_PERCENTAGE:
         case WINDOW_TYPE_CENTERED:
-        case WINDOW_TYPE_TOP_PARTIAL:
-        case WINDOW_TYPE_BOTTOM_PARTIAL:
-        case WINDOW_TYPE_LEFT_PARTIAL:
-        case WINDOW_TYPE_RIGHT_PARTIAL:
+        case WINDOW_TYPE_TOP_CELLS:
+        case WINDOW_TYPE_BOTTOM_CELLS:
+        case WINDOW_TYPE_LEFT_CELLS:
+        case WINDOW_TYPE_RIGHT_CELLS:
         case WINDOW_TYPE_COMPACT_MAXIMIZED:
         case WINDOW_TYPE_MAXIMIZED:
             initialFrame = [screen visibleFrameIgnoringHiddenDock];
@@ -911,31 +929,47 @@ typedef NS_ENUM(int, iTermShouldHaveTitleSeparator) {
         case WINDOW_TYPE_MAXIMIZED:
             style = @"maximized";
             break;
-        case WINDOW_TYPE_TOP:
-            style = @"full-width top";
+        case WINDOW_TYPE_TOP_PERCENTAGE:
+            if (_percentage == 100) {
+                style = @"full-width top";
+            } else {
+                style = @"percentage-width top";
+            }
             break;
-        case WINDOW_TYPE_BOTTOM:
-            style = @"full-width bottom";
+        case WINDOW_TYPE_BOTTOM_PERCENTAGE:
+            if (_percentage == 100) {
+                style = @"full-width bottom";
+            } else {
+                style = @"percentage-width bottom";
+            }
             break;
-        case WINDOW_TYPE_LEFT:
-            style = @"full-height left";
+        case WINDOW_TYPE_LEFT_PERCENTAGE:
+            if (_percentage == 100) {
+                style = @"full-height left";
+            } else {
+                style = @"percentage-height left";
+            }
             break;
-        case WINDOW_TYPE_RIGHT:
-            style = @"full-height right";
+        case WINDOW_TYPE_RIGHT_PERCENTAGE:
+            if (_percentage == 100) {
+                style = @"full-height right";
+            } else {
+                style = @"percentage-height right";
+            }
             break;
-        case WINDOW_TYPE_BOTTOM_PARTIAL:
+        case WINDOW_TYPE_BOTTOM_CELLS:
             style = @"bottom";
             break;
         case WINDOW_TYPE_CENTERED:
             style = @"centered";
             break;
-        case WINDOW_TYPE_TOP_PARTIAL:
+        case WINDOW_TYPE_TOP_CELLS:
             style = @"top";
             break;
-        case WINDOW_TYPE_LEFT_PARTIAL:
+        case WINDOW_TYPE_LEFT_CELLS:
             style = @"left";
             break;
-        case WINDOW_TYPE_RIGHT_PARTIAL:
+        case WINDOW_TYPE_RIGHT_CELLS:
             style = @"right";
             break;
         case WINDOW_TYPE_NO_TITLE_BAR:
@@ -1324,15 +1358,15 @@ ITERM_WEAKLY_REFERENCEABLE
         case WINDOW_TYPE_LION_FULL_SCREEN:
         case WINDOW_TYPE_MAXIMIZED:
         case WINDOW_TYPE_COMPACT_MAXIMIZED:
-        case WINDOW_TYPE_TOP:
-        case WINDOW_TYPE_BOTTOM:
-        case WINDOW_TYPE_LEFT:
-        case WINDOW_TYPE_RIGHT:
-        case WINDOW_TYPE_BOTTOM_PARTIAL:
+        case WINDOW_TYPE_TOP_PERCENTAGE:
+        case WINDOW_TYPE_BOTTOM_PERCENTAGE:
+        case WINDOW_TYPE_LEFT_PERCENTAGE:
+        case WINDOW_TYPE_RIGHT_PERCENTAGE:
+        case WINDOW_TYPE_BOTTOM_CELLS:
         case WINDOW_TYPE_CENTERED:
-        case WINDOW_TYPE_TOP_PARTIAL:
-        case WINDOW_TYPE_LEFT_PARTIAL:
-        case WINDOW_TYPE_RIGHT_PARTIAL:
+        case WINDOW_TYPE_TOP_CELLS:
+        case WINDOW_TYPE_LEFT_CELLS:
+        case WINDOW_TYPE_RIGHT_CELLS:
         case WINDOW_TYPE_NO_TITLE_BAR:
         case WINDOW_TYPE_ACCESSORY:
             screen = [self _screenAtPoint:point];
@@ -1355,15 +1389,15 @@ ITERM_WEAKLY_REFERENCEABLE
             newWindowType = WINDOW_TYPE_TRADITIONAL_FULL_SCREEN;
             break;
             
-        case WINDOW_TYPE_TOP:
-        case WINDOW_TYPE_BOTTOM:
-        case WINDOW_TYPE_LEFT:
-        case WINDOW_TYPE_RIGHT:
+        case WINDOW_TYPE_TOP_PERCENTAGE:
+        case WINDOW_TYPE_BOTTOM_PERCENTAGE:
+        case WINDOW_TYPE_LEFT_PERCENTAGE:
+        case WINDOW_TYPE_RIGHT_PERCENTAGE:
         case WINDOW_TYPE_CENTERED:
-        case WINDOW_TYPE_TOP_PARTIAL:
-        case WINDOW_TYPE_BOTTOM_PARTIAL:
-        case WINDOW_TYPE_LEFT_PARTIAL:
-        case WINDOW_TYPE_RIGHT_PARTIAL:
+        case WINDOW_TYPE_TOP_CELLS:
+        case WINDOW_TYPE_BOTTOM_CELLS:
+        case WINDOW_TYPE_LEFT_CELLS:
+        case WINDOW_TYPE_RIGHT_CELLS:
             savedWindowType = newWindowType = iTermWindowDefaultType();
             break;
             
@@ -1385,6 +1419,7 @@ ITERM_WEAKLY_REFERENCEABLE
     term = [[[PseudoTerminal alloc] initWithSmartLayout:NO
                                              windowType:newWindowType
                                         savedWindowType:savedWindowType
+                                             percentage:_percentage
                                                  screen:screen
                                                 profile:self.initialProfile] autorelease];
     if (term == nil) {
@@ -1409,15 +1444,15 @@ ITERM_WEAKLY_REFERENCEABLE
         case WINDOW_TYPE_LION_FULL_SCREEN:
         case WINDOW_TYPE_MAXIMIZED:
         case WINDOW_TYPE_COMPACT_MAXIMIZED:
-        case WINDOW_TYPE_TOP:
-        case WINDOW_TYPE_LEFT:
-        case WINDOW_TYPE_RIGHT:
-        case WINDOW_TYPE_BOTTOM:
+        case WINDOW_TYPE_TOP_PERCENTAGE:
+        case WINDOW_TYPE_LEFT_PERCENTAGE:
+        case WINDOW_TYPE_RIGHT_PERCENTAGE:
+        case WINDOW_TYPE_BOTTOM_PERCENTAGE:
         case WINDOW_TYPE_CENTERED:
-        case WINDOW_TYPE_TOP_PARTIAL:
-        case WINDOW_TYPE_LEFT_PARTIAL:
-        case WINDOW_TYPE_RIGHT_PARTIAL:
-        case WINDOW_TYPE_BOTTOM_PARTIAL:
+        case WINDOW_TYPE_TOP_CELLS:
+        case WINDOW_TYPE_LEFT_CELLS:
+        case WINDOW_TYPE_RIGHT_CELLS:
+        case WINDOW_TYPE_BOTTOM_CELLS:
             break;
     }
 
@@ -1581,15 +1616,15 @@ ITERM_WEAKLY_REFERENCEABLE
                 return YES;
             case WINDOW_TYPE_MAXIMIZED:
             case WINDOW_TYPE_COMPACT_MAXIMIZED:
-            case WINDOW_TYPE_TOP:
-            case WINDOW_TYPE_LEFT:
-            case WINDOW_TYPE_RIGHT:
-            case WINDOW_TYPE_BOTTOM:
+            case WINDOW_TYPE_TOP_PERCENTAGE:
+            case WINDOW_TYPE_LEFT_PERCENTAGE:
+            case WINDOW_TYPE_RIGHT_PERCENTAGE:
+            case WINDOW_TYPE_BOTTOM_PERCENTAGE:
             case WINDOW_TYPE_CENTERED:
-            case WINDOW_TYPE_TOP_PARTIAL:
-            case WINDOW_TYPE_LEFT_PARTIAL:
-            case WINDOW_TYPE_RIGHT_PARTIAL:
-            case WINDOW_TYPE_BOTTOM_PARTIAL:
+            case WINDOW_TYPE_TOP_CELLS:
+            case WINDOW_TYPE_LEFT_CELLS:
+            case WINDOW_TYPE_RIGHT_CELLS:
+            case WINDOW_TYPE_BOTTOM_CELLS:
             case WINDOW_TYPE_LION_FULL_SCREEN:
             case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
             case WINDOW_TYPE_COMPACT:
@@ -1802,20 +1837,20 @@ ITERM_WEAKLY_REFERENCEABLE
             // This shouldn't happen.
             return PTYWindowTitleBarFlavorDefault;
 
-        case WINDOW_TYPE_TOP:
-        case WINDOW_TYPE_TOP_PARTIAL:
+        case WINDOW_TYPE_TOP_PERCENTAGE:
+        case WINDOW_TYPE_TOP_CELLS:
             return PTYWindowTitleBarFlavorZeroPoints;
 
         case WINDOW_TYPE_MAXIMIZED:
         case WINDOW_TYPE_COMPACT_MAXIMIZED:
         case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
         case WINDOW_TYPE_NORMAL:
-        case WINDOW_TYPE_BOTTOM:
-        case WINDOW_TYPE_LEFT:
-        case WINDOW_TYPE_RIGHT:
-        case WINDOW_TYPE_BOTTOM_PARTIAL:
-        case WINDOW_TYPE_LEFT_PARTIAL:
-        case WINDOW_TYPE_RIGHT_PARTIAL:
+        case WINDOW_TYPE_BOTTOM_PERCENTAGE:
+        case WINDOW_TYPE_LEFT_PERCENTAGE:
+        case WINDOW_TYPE_RIGHT_PERCENTAGE:
+        case WINDOW_TYPE_BOTTOM_CELLS:
+        case WINDOW_TYPE_LEFT_CELLS:
+        case WINDOW_TYPE_RIGHT_CELLS:
         case WINDOW_TYPE_NO_TITLE_BAR:
         case WINDOW_TYPE_COMPACT:
         case WINDOW_TYPE_ACCESSORY:
@@ -1837,16 +1872,16 @@ ITERM_WEAKLY_REFERENCEABLE
     }
     switch (_windowType) {
         case WINDOW_TYPE_LION_FULL_SCREEN:
-        case WINDOW_TYPE_TOP:
-        case WINDOW_TYPE_TOP_PARTIAL:
+        case WINDOW_TYPE_TOP_PERCENTAGE:
+        case WINDOW_TYPE_TOP_CELLS:
         case WINDOW_TYPE_CENTERED:
         case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
-        case WINDOW_TYPE_BOTTOM:
-        case WINDOW_TYPE_LEFT:
-        case WINDOW_TYPE_RIGHT:
-        case WINDOW_TYPE_BOTTOM_PARTIAL:
-        case WINDOW_TYPE_LEFT_PARTIAL:
-        case WINDOW_TYPE_RIGHT_PARTIAL:
+        case WINDOW_TYPE_BOTTOM_PERCENTAGE:
+        case WINDOW_TYPE_LEFT_PERCENTAGE:
+        case WINDOW_TYPE_RIGHT_PERCENTAGE:
+        case WINDOW_TYPE_BOTTOM_CELLS:
+        case WINDOW_TYPE_LEFT_CELLS:
+        case WINDOW_TYPE_RIGHT_CELLS:
             return NO;
 
         case WINDOW_TYPE_MAXIMIZED:
@@ -2060,6 +2095,7 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (void)storeWindowStateInRestorableSession:(iTermRestorableSession *)restorableSession {
     restorableSession.windowType = self.lionFullScreen ? WINDOW_TYPE_LION_FULL_SCREEN : self.windowType;
+    restorableSession.percentage = _percentage;
     restorableSession.savedWindowType = self.savedWindowType;
     restorableSession.screen = _screenNumberFromFirstProfile;
     restorableSession.windowTitle = [self.scope windowTitleOverrideFormat];
@@ -2704,7 +2740,8 @@ ITERM_WEAKLY_REFERENCEABLE
     return tab.isBroadcasting;
 }
 
-+ (iTermWindowType)_windowTypeForArrangement:(NSDictionary*)arrangement {
++ (iTermWindowType)_windowTypeForArrangement:(NSDictionary*)arrangement
+                                  percentage:(out double *)percentage {
     int windowType;
     if ([arrangement objectForKey:TERMINAL_ARRANGEMENT_WINDOW_TYPE]) {
         windowType = iTermThemedWindowType([[arrangement objectForKey:TERMINAL_ARRANGEMENT_WINDOW_TYPE] intValue]);
@@ -2718,6 +2755,10 @@ ITERM_WEAKLY_REFERENCEABLE
             windowType = iTermWindowDefaultType();
         }
     }
+    *percentage = [[NSNumber castFrom:arrangement[TERMINAL_ARRANGEMENT_WINDOW_TYPE_PERCENTAGE]] doubleValue];
+    if (*percentage <= 0 || *percentage > 100) {
+        *percentage = 100;
+    }
     return windowType;
 }
 
@@ -2728,7 +2769,8 @@ ITERM_WEAKLY_REFERENCEABLE
 + (void)drawArrangementPreview:(NSDictionary*)terminalArrangement
                   screenFrames:(NSArray *)frames
                           dark:(BOOL)dark {
-    int windowType = [PseudoTerminal _windowTypeForArrangement:terminalArrangement];
+    double percentage = 100;
+    int windowType = [PseudoTerminal _windowTypeForArrangement:terminalArrangement percentage:&percentage];
     int screenIndex = [PseudoTerminal _screenIndexForArrangement:terminalArrangement];
     if (screenIndex < 0 || screenIndex >= [[NSScreen screens] count]) {
         screenIndex = 0;
@@ -2766,23 +2808,23 @@ ITERM_WEAKLY_REFERENCEABLE
             rect.size.height = yScale * h;
             break;
 
-        case WINDOW_TYPE_TOP:
-            rect.origin.x = xOrigin;
+        case WINDOW_TYPE_TOP_PERCENTAGE:
             rect.origin.y = yOrigin;
-            rect.size.width = virtualScreenFrame.size.width;
+            rect.size.width = virtualScreenFrame.size.width * percentage / 100;
+            rect.origin.x = xOrigin + (virtualScreenFrame.size.width - rect.size.width)/ 2;
             rect.size.height = yScale * [[terminalArrangement objectForKey:TERMINAL_ARRANGEMENT_HEIGHT] doubleValue];
             break;
 
-        case WINDOW_TYPE_TOP_PARTIAL:
+        case WINDOW_TYPE_TOP_CELLS:
             rect.origin.x = xOrigin;
             rect.origin.y = yOrigin;
             rect.size.width = xScale * [[terminalArrangement objectForKey:TERMINAL_ARRANGEMENT_WIDTH] doubleValue];
             rect.size.height = yScale * [[terminalArrangement objectForKey:TERMINAL_ARRANGEMENT_HEIGHT] doubleValue];
             break;
 
-        case WINDOW_TYPE_BOTTOM:
-            rect.origin.x = xOrigin;
-            rect.size.width = virtualScreenFrame.size.width;
+        case WINDOW_TYPE_BOTTOM_PERCENTAGE:
+            rect.size.width = virtualScreenFrame.size.width * percentage / 100;
+            rect.origin.x = xOrigin + (virtualScreenFrame.size.width - rect.size.width) / 2;
             rect.size.height = yScale * [[terminalArrangement objectForKey:TERMINAL_ARRANGEMENT_HEIGHT] doubleValue];
             rect.origin.y = virtualScreenFrame.size.height - rect.size.height;
             break;
@@ -2794,35 +2836,35 @@ ITERM_WEAKLY_REFERENCEABLE
             rect.origin.y = virtualScreenFrame.origin.y + (virtualScreenFrame.size.height - rect.size.height) / 2;
             break;
 
-        case WINDOW_TYPE_BOTTOM_PARTIAL:
+        case WINDOW_TYPE_BOTTOM_CELLS:
             rect.origin.x = xOrigin;
             rect.size.width = xScale * [[terminalArrangement objectForKey:TERMINAL_ARRANGEMENT_WIDTH] doubleValue];
             rect.size.height = yScale * [[terminalArrangement objectForKey:TERMINAL_ARRANGEMENT_HEIGHT] doubleValue];
             rect.origin.y = virtualScreenFrame.size.height - rect.size.height;
             break;
 
-        case WINDOW_TYPE_LEFT:
+        case WINDOW_TYPE_LEFT_PERCENTAGE:
             rect.origin.x = xOrigin;
-            rect.origin.y = yOrigin;
             rect.size.width = xScale * [[terminalArrangement objectForKey:TERMINAL_ARRANGEMENT_WIDTH] doubleValue];
-            rect.size.height = virtualScreenFrame.size.height;
+            rect.size.height = virtualScreenFrame.size.height * percentage / 100;
+            rect.origin.y = yOrigin + (virtualScreenFrame.size.height - rect.size.height) / 2;
             break;
 
-        case WINDOW_TYPE_LEFT_PARTIAL:
+        case WINDOW_TYPE_LEFT_CELLS:
             rect.origin.x = xOrigin;
             rect.origin.y = yOrigin;
             rect.size.width = xScale * [[terminalArrangement objectForKey:TERMINAL_ARRANGEMENT_WIDTH] doubleValue];
             rect.size.height = yScale * [[terminalArrangement objectForKey:TERMINAL_ARRANGEMENT_HEIGHT] doubleValue];
             break;
 
-        case WINDOW_TYPE_RIGHT:
+        case WINDOW_TYPE_RIGHT_PERCENTAGE:
             rect.size.width = xScale * [[terminalArrangement objectForKey:TERMINAL_ARRANGEMENT_WIDTH] doubleValue];
             rect.origin.x = virtualScreenFrame.size.width - rect.size.width;
-            rect.origin.y = yOrigin;
-            rect.size.height = virtualScreenFrame.size.height;
+            rect.size.height = virtualScreenFrame.size.height * percentage / 100;
+            rect.origin.y = yOrigin + (virtualScreenFrame.size.height - rect.size.height) / 2;
             break;
 
-        case WINDOW_TYPE_RIGHT_PARTIAL:
+        case WINDOW_TYPE_RIGHT_CELLS:
             rect.size.width = xScale * [[terminalArrangement objectForKey:TERMINAL_ARRANGEMENT_WIDTH] doubleValue];
             rect.origin.x = virtualScreenFrame.size.width - rect.size.width;
             rect.origin.y = yOrigin;
@@ -2952,7 +2994,8 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 + (BOOL)arrangementIsLionFullScreen:(NSDictionary *)arrangement {
-    return [PseudoTerminal _windowTypeForArrangement:arrangement] == WINDOW_TYPE_LION_FULL_SCREEN;
+    double dummy = 0;
+    return [PseudoTerminal _windowTypeForArrangement:arrangement percentage:&dummy] == WINDOW_TYPE_LION_FULL_SCREEN;
 }
 
 + (BOOL)shouldRestoreHotKeyWindowWithGUID:(NSString *)guid {
@@ -2997,7 +3040,8 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 
     PseudoTerminal* term;
-    iTermWindowType windowType = iTermThemedWindowType([PseudoTerminal _windowTypeForArrangement:arrangement]);
+    double percentage = 100;
+    iTermWindowType windowType = iTermThemedWindowType([PseudoTerminal _windowTypeForArrangement:arrangement percentage:&percentage]);
     int screenIndex = [PseudoTerminal _screenIndexForArrangement:arrangement];
     iTermProfileHotKey *profileHotKey = [[iTermHotKeyController sharedInstance] profileHotKeyForGUID:guid];
     iTermHotkeyWindowType hotkeyWindowType = iTermHotkeyWindowTypeNone;
@@ -3011,6 +3055,7 @@ ITERM_WEAKLY_REFERENCEABLE
         term = [[[PseudoTerminal alloc] initWithSmartLayout:NO
                                                  windowType:WINDOW_TYPE_TRADITIONAL_FULL_SCREEN
                                             savedWindowType:[arrangement[TERMINAL_ARRANGEMENT_SAVED_WINDOW_TYPE] intValue]
+                                                 percentage:[arrangement[TERMINAL_ARRANGEMENT_WINDOW_TYPE_PERCENTAGE] doubleValue]
                                                      screen:screenIndex
                                            hotkeyWindowType:hotkeyWindowType
                                                     profile:arrangement[TERMINAL_ARRANGEMENT_INITIAL_PROFILE]] autorelease];
@@ -3029,6 +3074,7 @@ ITERM_WEAKLY_REFERENCEABLE
         term = [[[PseudoTerminal alloc] initWithSmartLayout:NO
                                                  windowType:WINDOW_TYPE_LION_FULL_SCREEN
                                             savedWindowType:[arrangement[TERMINAL_ARRANGEMENT_SAVED_WINDOW_TYPE] intValue]
+                                                 percentage:[arrangement[TERMINAL_ARRANGEMENT_WINDOW_TYPE_PERCENTAGE] doubleValue]
                                                      screen:screenIndex
                                            hotkeyWindowType:hotkeyWindowType
                                                     profile:arrangement[TERMINAL_ARRANGEMENT_INITIAL_PROFILE]] autorelease];
@@ -3038,20 +3084,20 @@ ITERM_WEAKLY_REFERENCEABLE
         // window type.
         if ([arrangement[TERMINAL_ARRANGEMENT_EDGE_SPANNING_OFF] boolValue]) {
             switch (windowType) {
-                case WINDOW_TYPE_TOP:
-                    windowType = WINDOW_TYPE_TOP_PARTIAL;
+                case WINDOW_TYPE_TOP_PERCENTAGE:
+                    windowType = WINDOW_TYPE_TOP_CELLS;
                     break;
 
-                case WINDOW_TYPE_BOTTOM:
-                    windowType = WINDOW_TYPE_BOTTOM_PARTIAL;
+                case WINDOW_TYPE_BOTTOM_PERCENTAGE:
+                    windowType = WINDOW_TYPE_BOTTOM_CELLS;
                     break;
 
-                case WINDOW_TYPE_LEFT:
-                    windowType = WINDOW_TYPE_LEFT_PARTIAL;
+                case WINDOW_TYPE_LEFT_PERCENTAGE:
+                    windowType = WINDOW_TYPE_LEFT_CELLS;
                     break;
 
-                case WINDOW_TYPE_RIGHT:
-                    windowType = WINDOW_TYPE_RIGHT_PARTIAL;
+                case WINDOW_TYPE_RIGHT_PERCENTAGE:
+                    windowType = WINDOW_TYPE_RIGHT_CELLS;
                     break;
 
                 case WINDOW_TYPE_CENTERED:
@@ -3060,10 +3106,10 @@ ITERM_WEAKLY_REFERENCEABLE
                 case WINDOW_TYPE_NORMAL:
                 case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
                 case WINDOW_TYPE_LION_FULL_SCREEN:
-                case WINDOW_TYPE_BOTTOM_PARTIAL:
-                case WINDOW_TYPE_TOP_PARTIAL:
-                case WINDOW_TYPE_LEFT_PARTIAL:
-                case WINDOW_TYPE_RIGHT_PARTIAL:
+                case WINDOW_TYPE_BOTTOM_CELLS:
+                case WINDOW_TYPE_TOP_CELLS:
+                case WINDOW_TYPE_LEFT_CELLS:
+                case WINDOW_TYPE_RIGHT_CELLS:
                 case WINDOW_TYPE_NO_TITLE_BAR:
                 case WINDOW_TYPE_COMPACT:
                 case WINDOW_TYPE_ACCESSORY:
@@ -3073,6 +3119,7 @@ ITERM_WEAKLY_REFERENCEABLE
         term = [[[PseudoTerminal alloc] initWithSmartLayout:NO
                                                  windowType:windowType
                                             savedWindowType:windowType
+                                                 percentage:percentage
                                                      screen:screenIndex
                                            hotkeyWindowType:hotkeyWindowType
                                                     profile:arrangement[TERMINAL_ARRANGEMENT_INITIAL_PROFILE]] autorelease];
@@ -3463,7 +3510,9 @@ ITERM_WEAKLY_REFERENCEABLE
      partialAttachments:(NSDictionary *)partialAttachments {
     PtyLog(@"Restore arrangement: %@", arrangement);
     [_windowSizeHelper willLoadArrangement:arrangement];
-    iTermWindowType windowType = iTermThemedWindowType([PseudoTerminal _windowTypeForArrangement:arrangement]);
+    double percentage = 100;
+    iTermWindowType windowType = iTermThemedWindowType([PseudoTerminal _windowTypeForArrangement:arrangement
+                                                                                      percentage:&percentage]);
     NSRect rect;
     rect.origin.x = [[arrangement objectForKey:TERMINAL_ARRANGEMENT_X_ORIGIN] doubleValue];
     rect.origin.y = [[arrangement objectForKey:TERMINAL_ARRANGEMENT_Y_ORIGIN] doubleValue];
@@ -3540,8 +3589,8 @@ ITERM_WEAKLY_REFERENCEABLE
                 DLog(@"We shouldn't set the frame");
                 setFrame = NO;
                 break;
-            case WINDOW_TYPE_TOP:
-            case WINDOW_TYPE_BOTTOM:
+            case WINDOW_TYPE_TOP_PERCENTAGE:
+            case WINDOW_TYPE_BOTTOM_PERCENTAGE:
             case WINDOW_TYPE_MAXIMIZED:
             case WINDOW_TYPE_COMPACT_MAXIMIZED:
                 DLog(@"Neither width adjustment nor sanitization needed.");
@@ -3557,12 +3606,12 @@ ITERM_WEAKLY_REFERENCEABLE
                 _widthAdjustment = 0;
                 break;
 
-            case WINDOW_TYPE_LEFT:
-            case WINDOW_TYPE_RIGHT:
-            case WINDOW_TYPE_BOTTOM_PARTIAL:
-            case WINDOW_TYPE_TOP_PARTIAL:
-            case WINDOW_TYPE_LEFT_PARTIAL:
-            case WINDOW_TYPE_RIGHT_PARTIAL:
+            case WINDOW_TYPE_LEFT_PERCENTAGE:
+            case WINDOW_TYPE_RIGHT_PERCENTAGE:
+            case WINDOW_TYPE_BOTTOM_CELLS:
+            case WINDOW_TYPE_TOP_CELLS:
+            case WINDOW_TYPE_LEFT_CELLS:
+            case WINDOW_TYPE_RIGHT_CELLS:
             case WINDOW_TYPE_CENTERED:
                 DLog(@"No sanitization but width adjustment.");
                 // There's a good chance that sanitization would make sense here but I'm afraid of
@@ -3752,6 +3801,7 @@ ITERM_WEAKLY_REFERENCEABLE
                                           oldFrame:NSMakeRect(0, 0, 0, 0)
                                         windowType:WINDOW_TYPE_NORMAL
                                    savedWindowType:WINDOW_TYPE_NORMAL
+                                        percentage:100
                                     initialProfile:session.profile
                                     isHotKeyWindow:NO
                                   hotkeyWindowType:iTermHotkeyWindowTypeNone
@@ -3801,6 +3851,7 @@ ITERM_WEAKLY_REFERENCEABLE
                                           oldFrame:oldFrame_
                                         windowType:self.windowType
                                    savedWindowType:self.savedWindowType
+                                        percentage:_percentage
                                     initialProfile:[self expurgatedInitialProfile]
                                     isHotKeyWindow:self.isHotKeyWindow
                                   hotkeyWindowType:_hotkeyWindowType
@@ -3830,6 +3881,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
                        oldFrame:(NSRect)oldFrame
                      windowType:(iTermWindowType)windowType
                 savedWindowType:(iTermWindowType)savedWindowType
+                     percentage:(double)percentage
                  initialProfile:(Profile *)initialProfile
                  isHotKeyWindow:(BOOL)isHotKeyWindow
                hotkeyWindowType:(iTermHotkeyWindowType)hotkeyWindowType
@@ -3874,6 +3926,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     }
 
     result[TERMINAL_ARRANGEMENT_WINDOW_TYPE] = @(lionFullScreen ? WINDOW_TYPE_LION_FULL_SCREEN : windowType);
+    result[TERMINAL_ARRANGEMENT_WINDOW_TYPE_PERCENTAGE] = @(percentage);
     result[TERMINAL_ARRANGEMENT_SAVED_WINDOW_TYPE] = @(savedWindowType);
     result[TERMINAL_ARRANGEMENT_INITIAL_PROFILE] = initialProfile;
     if (hotkeyWindowType == iTermHotkeyWindowTypeNone) {
@@ -4410,15 +4463,15 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
 
         case WINDOW_TYPE_MAXIMIZED:
         case WINDOW_TYPE_COMPACT_MAXIMIZED:
-        case WINDOW_TYPE_TOP:
-        case WINDOW_TYPE_LEFT:
-        case WINDOW_TYPE_RIGHT:
-        case WINDOW_TYPE_BOTTOM:
+        case WINDOW_TYPE_TOP_PERCENTAGE:
+        case WINDOW_TYPE_LEFT_PERCENTAGE:
+        case WINDOW_TYPE_RIGHT_PERCENTAGE:
+        case WINDOW_TYPE_BOTTOM_PERCENTAGE:
         case WINDOW_TYPE_CENTERED:
-        case WINDOW_TYPE_TOP_PARTIAL:
-        case WINDOW_TYPE_LEFT_PARTIAL:
-        case WINDOW_TYPE_RIGHT_PARTIAL:
-        case WINDOW_TYPE_BOTTOM_PARTIAL: {
+        case WINDOW_TYPE_TOP_CELLS:
+        case WINDOW_TYPE_LEFT_CELLS:
+        case WINDOW_TYPE_RIGHT_CELLS:
+        case WINDOW_TYPE_BOTTOM_CELLS: {
             NSRect desiredWindowFrame = [self canonicalFrameForScreen:screen];
             if (desiredWindowFrame.size.width > 0 && desiredWindowFrame.size.height > 0) {
                 [[self window] setFrame:desiredWindowFrame display:YES];
@@ -4559,10 +4612,10 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
         DLog(@"Line height or char width is 0. Returning existing frame. session=%@", session);
         return self.window.frame;
     }
-    BOOL edgeSpanning = YES;
+    BOOL percentageBased = YES;
     switch (self.windowType) {
         case WINDOW_TYPE_CENTERED:
-            edgeSpanning = NO;
+            percentageBased = NO;
             PtyLog(@"Window type = CENTERED. %@", _windowSizeHelper);
             if (!preserveSize) {
                 // If the screen grew and the window was smaller than the desired number of rows, grow it.
@@ -4581,10 +4634,10 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
             return frame;
             break;
 
-        case WINDOW_TYPE_TOP_PARTIAL:
-            edgeSpanning = NO;
+        case WINDOW_TYPE_TOP_CELLS:
+            percentageBased = NO;
             // Fall through
-        case WINDOW_TYPE_TOP:
+        case WINDOW_TYPE_TOP_PERCENTAGE:
             PtyLog(@"Window type = TOP. %@", _windowSizeHelper);
             if (!preserveSize) {
                 // If the screen grew and the window was smaller than the desired number of rows, grow it.
@@ -4593,23 +4646,23 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
                                                                  decorationHeight:decorationSize.height
                                                                          fallback:frame.size.height];
             }
-            if (!edgeSpanning) {
+            if (!percentageBased) {
                 if (!preserveSize) {
                     frame.size.width = MIN(frame.size.width, screenVisibleFrameIgnoringHiddenDock.size.width);
                 }
                 frame = iTermRectCenteredHorizontallyWithinRect(frame, screenVisibleFrameIgnoringHiddenDock);
             } else {
-                frame.size.width = screenVisibleFrameIgnoringHiddenDock.size.width;
-                frame.origin.x = screenVisibleFrameIgnoringHiddenDock.origin.x;
+                frame.size.width = round(screenVisibleFrameIgnoringHiddenDock.size.width * _percentage / 100);
+                frame.origin.x = screenVisibleFrameIgnoringHiddenDock.origin.x + (screenVisibleFrameIgnoringHiddenDock.size.width - frame.size.width) / 2;
             }
             frame.origin.y = screenVisibleFrame.origin.y + screenVisibleFrame.size.height - frame.size.height;
             DLog(@"Canonical frame for top of screen window is %@", NSStringFromRect(frame));
             return frame;
             break;
 
-        case WINDOW_TYPE_BOTTOM_PARTIAL:
-            edgeSpanning = NO;
-        case WINDOW_TYPE_BOTTOM:
+        case WINDOW_TYPE_BOTTOM_CELLS:
+            percentageBased = NO;
+        case WINDOW_TYPE_BOTTOM_PERCENTAGE:
             PtyLog(@"Window type = BOTTOM. %@", _windowSizeHelper);
             if (!preserveSize) {
                 // If the screen grew and the window was smaller than the desired number of rows, grow it.
@@ -4618,14 +4671,14 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
                                                                  decorationHeight:decorationSize.height
                                                                          fallback:frame.size.height];
             }
-            if (!edgeSpanning) {
+            if (!percentageBased) {
                 if (!preserveSize) {
                     frame.size.width = MIN(frame.size.width, screenVisibleFrameIgnoringHiddenDock.size.width);
                 }
                 frame = iTermRectCenteredHorizontallyWithinRect(frame, screenVisibleFrameIgnoringHiddenDock);
             } else {
-                frame.size.width = screenVisibleFrameIgnoringHiddenDock.size.width;
-                frame.origin.x = screenVisibleFrameIgnoringHiddenDock.origin.x;
+                frame.size.width = round(screenVisibleFrameIgnoringHiddenDock.size.width * _percentage / 100);
+                frame.origin.x = screenVisibleFrameIgnoringHiddenDock.origin.x + (screenVisibleFrameIgnoringHiddenDock.size.width - frame.size.width) / 2;
             }
             frame.origin.y = screenVisibleFrameIgnoringHiddenDock.origin.y;
 
@@ -4634,10 +4687,10 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
             }
             break;
 
-        case WINDOW_TYPE_LEFT_PARTIAL:
-            edgeSpanning = NO;
+        case WINDOW_TYPE_LEFT_CELLS:
+            percentageBased = NO;
             // Fall through
-        case WINDOW_TYPE_LEFT:
+        case WINDOW_TYPE_LEFT_PERCENTAGE:
             PtyLog(@"Window type = LEFT. %@", _windowSizeHelper);
             if (!preserveSize) {
                 // If the screen grew and the window was smaller than the desired number of columns, grow it.
@@ -4646,23 +4699,23 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
                                                                 decorationWidth:iTermScrollbarWidth()
                                                                        fallback:frame.size.width];
             }
-            if (!edgeSpanning) {
+            if (!percentageBased) {
                 if (!preserveSize) {
                     frame.size.height = MIN(frame.size.height, screenVisibleFrameIgnoringHiddenDock.size.height);
                 }
                 frame = iTermRectCenteredVerticallyWithinRect(frame, screenVisibleFrameIgnoringHiddenDock);
             } else {
-                frame.size.height = screenVisibleFrameIgnoringHiddenDock.size.height;
-                frame.origin.y = screenVisibleFrameIgnoringHiddenDock.origin.y;
+                frame.size.height = round(screenVisibleFrameIgnoringHiddenDock.size.height * _percentage / 100);
+                frame.origin.y = screenVisibleFrameIgnoringHiddenDock.origin.y + (screenVisibleFrameIgnoringHiddenDock.size.height - frame.size.height) / 2;
             }
             frame.origin.x = screenVisibleFrameIgnoringHiddenDock.origin.x;
 
             return frame;
 
-        case WINDOW_TYPE_RIGHT_PARTIAL:
-            edgeSpanning = NO;
+        case WINDOW_TYPE_RIGHT_CELLS:
+            percentageBased = NO;
             // Fall through
-        case WINDOW_TYPE_RIGHT:
+        case WINDOW_TYPE_RIGHT_PERCENTAGE:
             PtyLog(@"Window type = RIGHT. %@", _windowSizeHelper);
             if (!preserveSize) {
                 // If the screen grew and the window was smaller than the desired number of columns, grow it.
@@ -4671,14 +4724,14 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
                                                                 decorationWidth:iTermScrollbarWidth()
                                                                        fallback:frame.size.width];
             }
-            if (!edgeSpanning) {
+            if (!percentageBased) {
                 if (!preserveSize) {
                     frame.size.height = MIN(frame.size.height, screenVisibleFrameIgnoringHiddenDock.size.height);
                 }
                 frame = iTermRectCenteredVerticallyWithinRect(frame, screenVisibleFrameIgnoringHiddenDock);
             } else {
-                frame.size.height = screenVisibleFrameIgnoringHiddenDock.size.height;
-                frame.origin.y = screenVisibleFrameIgnoringHiddenDock.origin.y;
+                frame.size.height = round(screenVisibleFrameIgnoringHiddenDock.size.height * _percentage / 100);
+                frame.origin.y = screenVisibleFrameIgnoringHiddenDock.origin.y + (screenVisibleFrameIgnoringHiddenDock.size.height - frame.size.height) / 2;
             }
             frame.origin.x = screenVisibleFrameIgnoringHiddenDock.origin.x + screenVisibleFrameIgnoringHiddenDock.size.width - frame.size.width;
 
@@ -4854,17 +4907,16 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     [_contentView updateDivisionViewAndWindowNumberLabel];
 }
 
-- (BOOL)isEdgeWindow
-{
+- (BOOL)isEdgeWindow {
     switch (self.windowType) {
-        case WINDOW_TYPE_LEFT:
-        case WINDOW_TYPE_TOP:
-        case WINDOW_TYPE_BOTTOM:
-        case WINDOW_TYPE_RIGHT:
-        case WINDOW_TYPE_LEFT_PARTIAL:
-        case WINDOW_TYPE_TOP_PARTIAL:
-        case WINDOW_TYPE_BOTTOM_PARTIAL:
-        case WINDOW_TYPE_RIGHT_PARTIAL:
+        case WINDOW_TYPE_LEFT_PERCENTAGE:
+        case WINDOW_TYPE_TOP_PERCENTAGE:
+        case WINDOW_TYPE_BOTTOM_PERCENTAGE:
+        case WINDOW_TYPE_RIGHT_PERCENTAGE:
+        case WINDOW_TYPE_LEFT_CELLS:
+        case WINDOW_TYPE_TOP_CELLS:
+        case WINDOW_TYPE_BOTTOM_CELLS:
+        case WINDOW_TYPE_RIGHT_CELLS:
             return YES;
 
         case WINDOW_TYPE_NORMAL:
@@ -4882,14 +4934,14 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
 
 - (BOOL)movesWhenDraggedOntoSelf {
     switch (self.windowType) {
-        case WINDOW_TYPE_LEFT:
-        case WINDOW_TYPE_TOP:
-        case WINDOW_TYPE_BOTTOM:
-        case WINDOW_TYPE_RIGHT:
-        case WINDOW_TYPE_LEFT_PARTIAL:
-        case WINDOW_TYPE_TOP_PARTIAL:
-        case WINDOW_TYPE_BOTTOM_PARTIAL:
-        case WINDOW_TYPE_RIGHT_PARTIAL:
+        case WINDOW_TYPE_LEFT_PERCENTAGE:
+        case WINDOW_TYPE_TOP_PERCENTAGE:
+        case WINDOW_TYPE_BOTTOM_PERCENTAGE:
+        case WINDOW_TYPE_RIGHT_PERCENTAGE:
+        case WINDOW_TYPE_LEFT_CELLS:
+        case WINDOW_TYPE_TOP_CELLS:
+        case WINDOW_TYPE_BOTTOM_CELLS:
+        case WINDOW_TYPE_RIGHT_CELLS:
         case WINDOW_TYPE_LION_FULL_SCREEN:
         case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
         case WINDOW_TYPE_MAXIMIZED:
@@ -5114,16 +5166,16 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
       snapWidth = snapHeight = NO;
     }
 
-    // If resizing a full-width/height X-of-screen window in a direction perpendicular to the screen
+    // If resizing a percentage-width/height X-of-screen window in a direction perpendicular to the screen
     // edge it's attached to, turn off snapping in the direction parallel to the edge.
-    if (self.windowType == WINDOW_TYPE_RIGHT || self.windowType == WINDOW_TYPE_LEFT) {
+    if (self.windowType == WINDOW_TYPE_RIGHT_PERCENTAGE || self.windowType == WINDOW_TYPE_LEFT_PERCENTAGE) {
         self.timeOfLastResize = [NSDate timeIntervalSinceReferenceDate];
         proposedFrameSize.height = self.window.frame.size.height;
         if (proposedFrameSize.height == self.window.frame.size.height) {
             snapHeight = NO;
         }
     }
-    if (self.windowType == WINDOW_TYPE_TOP || self.windowType == WINDOW_TYPE_BOTTOM) {
+    if (self.windowType == WINDOW_TYPE_TOP_PERCENTAGE || self.windowType == WINDOW_TYPE_BOTTOM_PERCENTAGE) {
         self.timeOfLastResize = [NSDate timeIntervalSinceReferenceDate];
         proposedFrameSize.width = self.window.frame.size.width;
         if (proposedFrameSize.width == self.window.frame.size.width) {
@@ -5652,15 +5704,15 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     DLog(@"windowType=%@", @(self.windowType));
 
     switch (iTermThemedWindowType(self.windowType)) {
-        case WINDOW_TYPE_TOP:
-        case WINDOW_TYPE_BOTTOM:
-        case WINDOW_TYPE_LEFT:
-        case WINDOW_TYPE_RIGHT:
+        case WINDOW_TYPE_TOP_PERCENTAGE:
+        case WINDOW_TYPE_BOTTOM_PERCENTAGE:
+        case WINDOW_TYPE_LEFT_PERCENTAGE:
+        case WINDOW_TYPE_RIGHT_PERCENTAGE:
         case WINDOW_TYPE_CENTERED:
-        case WINDOW_TYPE_TOP_PARTIAL:
-        case WINDOW_TYPE_BOTTOM_PARTIAL:
-        case WINDOW_TYPE_LEFT_PARTIAL:
-        case WINDOW_TYPE_RIGHT_PARTIAL:
+        case WINDOW_TYPE_TOP_CELLS:
+        case WINDOW_TYPE_BOTTOM_CELLS:
+        case WINDOW_TYPE_LEFT_CELLS:
+        case WINDOW_TYPE_RIGHT_CELLS:
         case WINDOW_TYPE_NO_TITLE_BAR:
         case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
         case WINDOW_TYPE_COMPACT:
@@ -5699,6 +5751,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
         DLog(@"Bogus sender: %@", sender);
         return;
     }
+    _percentage = 100;  // Not ideal but I don't want to make the UI more cumbersome by prompting.
     [self changeToWindowType:(iTermWindowType)menuItem.tag];
     [[self currentTab] recheckBlur];
 }
@@ -5754,19 +5807,19 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
             }
             return;
 
-        case WINDOW_TYPE_TOP:
-        case WINDOW_TYPE_LEFT:
-        case WINDOW_TYPE_RIGHT:
-        case WINDOW_TYPE_BOTTOM:
+        case WINDOW_TYPE_TOP_PERCENTAGE:
+        case WINDOW_TYPE_LEFT_PERCENTAGE:
+        case WINDOW_TYPE_RIGHT_PERCENTAGE:
+        case WINDOW_TYPE_BOTTOM_PERCENTAGE:
         case WINDOW_TYPE_NORMAL:
         case WINDOW_TYPE_MAXIMIZED:
         case WINDOW_TYPE_COMPACT_MAXIMIZED:
         case WINDOW_TYPE_CENTERED:
-        case WINDOW_TYPE_TOP_PARTIAL:
-        case WINDOW_TYPE_LEFT_PARTIAL:
+        case WINDOW_TYPE_TOP_CELLS:
+        case WINDOW_TYPE_LEFT_CELLS:
         case WINDOW_TYPE_NO_TITLE_BAR:
-        case WINDOW_TYPE_RIGHT_PARTIAL:
-        case WINDOW_TYPE_BOTTOM_PARTIAL:
+        case WINDOW_TYPE_RIGHT_CELLS:
+        case WINDOW_TYPE_BOTTOM_CELLS:
         case WINDOW_TYPE_COMPACT:
         case WINDOW_TYPE_ACCESSORY:
             shouldEnableShadow = YES;
@@ -5846,15 +5899,15 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
 
 - (BOOL)windowTitleIsVisible {
     switch (iTermThemedWindowType(_windowType)) {
-        case WINDOW_TYPE_TOP:
-        case WINDOW_TYPE_BOTTOM:
-        case WINDOW_TYPE_LEFT:
-        case WINDOW_TYPE_RIGHT:
+        case WINDOW_TYPE_TOP_PERCENTAGE:
+        case WINDOW_TYPE_BOTTOM_PERCENTAGE:
+        case WINDOW_TYPE_LEFT_PERCENTAGE:
+        case WINDOW_TYPE_RIGHT_PERCENTAGE:
         case WINDOW_TYPE_CENTERED:
-        case WINDOW_TYPE_TOP_PARTIAL:
-        case WINDOW_TYPE_BOTTOM_PARTIAL:
-        case WINDOW_TYPE_LEFT_PARTIAL:
-        case WINDOW_TYPE_RIGHT_PARTIAL:
+        case WINDOW_TYPE_TOP_CELLS:
+        case WINDOW_TYPE_BOTTOM_CELLS:
+        case WINDOW_TYPE_LEFT_CELLS:
+        case WINDOW_TYPE_RIGHT_CELLS:
         case WINDOW_TYPE_NO_TITLE_BAR:
         case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
         case WINDOW_TYPE_LION_FULL_SCREEN:
@@ -5880,20 +5933,20 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
             case WINDOW_TYPE_LION_FULL_SCREEN:
             case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
             case WINDOW_TYPE_CENTERED:
-            case WINDOW_TYPE_TOP_PARTIAL:
-            case WINDOW_TYPE_LEFT_PARTIAL:
+            case WINDOW_TYPE_TOP_CELLS:
+            case WINDOW_TYPE_LEFT_CELLS:
             case WINDOW_TYPE_NO_TITLE_BAR:
-            case WINDOW_TYPE_RIGHT_PARTIAL:
-            case WINDOW_TYPE_BOTTOM_PARTIAL:
+            case WINDOW_TYPE_RIGHT_CELLS:
+            case WINDOW_TYPE_BOTTOM_CELLS:
             case WINDOW_TYPE_COMPACT:
             case WINDOW_TYPE_ACCESSORY:
             case WINDOW_TYPE_NORMAL:
                 break;
 
-            case WINDOW_TYPE_TOP:
-            case WINDOW_TYPE_LEFT:
-            case WINDOW_TYPE_RIGHT:
-            case WINDOW_TYPE_BOTTOM:
+            case WINDOW_TYPE_TOP_PERCENTAGE:
+            case WINDOW_TYPE_LEFT_PERCENTAGE:
+            case WINDOW_TYPE_RIGHT_PERCENTAGE:
+            case WINDOW_TYPE_BOTTOM_PERCENTAGE:
             case WINDOW_TYPE_MAXIMIZED:
             case WINDOW_TYPE_COMPACT_MAXIMIZED:
                 // Force the note about the window not being resizable to be shown.
@@ -5925,13 +5978,11 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     NSRect screenFrameForEdgeSpanningWindow = [self screenFrameForEdgeSpanningWindows:screen];
 
     switch (self.windowType) {
-        case WINDOW_TYPE_TOP:
-        case WINDOW_TYPE_TOP_PARTIAL:
-            if ((frame.size.width < screenFrameForEdgeSpanningWindow.size.width)) {
-                self.windowType = WINDOW_TYPE_TOP_PARTIAL;
-            } else {
-                self.windowType = WINDOW_TYPE_TOP;
-            }
+        case WINDOW_TYPE_TOP_PERCENTAGE:
+        case WINDOW_TYPE_BOTTOM_PERCENTAGE:
+            _percentage = 100 * frame.size.width / screenFrameForEdgeSpanningWindow.size.width;
+            // FALL THROUGH
+        case WINDOW_TYPE_TOP_CELLS:
             // desiredRows/Columns get reset here to fix issue 4073. If you manually resize a window
             // then its desired size becomes irrelevant; we want it to preserve the size you set
             // and forget about the size in its profile. This way it will go back to the old size
@@ -5939,33 +5990,16 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
             [_windowSizeHelper didEndLiveResizeVerticallyConstrained:YES];
             break;
 
-        case WINDOW_TYPE_BOTTOM:
-        case WINDOW_TYPE_BOTTOM_PARTIAL:
-            if (frame.size.width < screenFrameForEdgeSpanningWindow.size.width) {
-                self.windowType = WINDOW_TYPE_BOTTOM_PARTIAL;
-            } else {
-                self.windowType = WINDOW_TYPE_BOTTOM;
-            }
+        case WINDOW_TYPE_BOTTOM_CELLS:
             [_windowSizeHelper didEndLiveResizeVerticallyConstrained:YES];
             break;
 
-        case WINDOW_TYPE_LEFT:
-        case WINDOW_TYPE_LEFT_PARTIAL:
-            if (frame.size.height < screenFrameForEdgeSpanningWindow.size.height) {
-                self.windowType = WINDOW_TYPE_LEFT_PARTIAL;
-            } else {
-                self.windowType = WINDOW_TYPE_LEFT;
-            }
-            [_windowSizeHelper didEndLiveResizeVerticallyConstrained:NO];
-            break;
-
-        case WINDOW_TYPE_RIGHT:
-        case WINDOW_TYPE_RIGHT_PARTIAL:
-            if (frame.size.height < screenFrameForEdgeSpanningWindow.size.height) {
-                self.windowType = WINDOW_TYPE_RIGHT_PARTIAL;
-            } else {
-                self.windowType = WINDOW_TYPE_RIGHT;
-            }
+        case WINDOW_TYPE_LEFT_PERCENTAGE:
+        case WINDOW_TYPE_RIGHT_PERCENTAGE:
+            _percentage = 100 * frame.size.height / screenFrameForEdgeSpanningWindow.size.height;
+            // FALL THROUGH
+        case WINDOW_TYPE_LEFT_CELLS:
+        case WINDOW_TYPE_RIGHT_CELLS:
             [_windowSizeHelper didEndLiveResizeVerticallyConstrained:NO];
             break;
 
@@ -6107,15 +6141,15 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
             break;
     }
     switch (exitingLionFullscreen_ ? self.savedWindowType : self.windowType) {
-        case WINDOW_TYPE_TOP:
-        case WINDOW_TYPE_LEFT:
-        case WINDOW_TYPE_RIGHT:
-        case WINDOW_TYPE_BOTTOM:
+        case WINDOW_TYPE_TOP_PERCENTAGE:
+        case WINDOW_TYPE_LEFT_PERCENTAGE:
+        case WINDOW_TYPE_RIGHT_PERCENTAGE:
+        case WINDOW_TYPE_BOTTOM_PERCENTAGE:
         case WINDOW_TYPE_CENTERED:
-        case WINDOW_TYPE_TOP_PARTIAL:
-        case WINDOW_TYPE_LEFT_PARTIAL:
-        case WINDOW_TYPE_BOTTOM_PARTIAL:
-        case WINDOW_TYPE_RIGHT_PARTIAL:
+        case WINDOW_TYPE_TOP_CELLS:
+        case WINDOW_TYPE_LEFT_CELLS:
+        case WINDOW_TYPE_BOTTOM_CELLS:
+        case WINDOW_TYPE_RIGHT_CELLS:
         case WINDOW_TYPE_NO_TITLE_BAR:
         case WINDOW_TYPE_COMPACT:
         case WINDOW_TYPE_COMPACT_MAXIMIZED:
@@ -6417,15 +6451,15 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
             break;
         case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
         case WINDOW_TYPE_LION_FULL_SCREEN:
-        case WINDOW_TYPE_TOP:
-        case WINDOW_TYPE_BOTTOM:
-        case WINDOW_TYPE_LEFT:
-        case WINDOW_TYPE_RIGHT:
-        case WINDOW_TYPE_BOTTOM_PARTIAL:
+        case WINDOW_TYPE_TOP_PERCENTAGE:
+        case WINDOW_TYPE_BOTTOM_PERCENTAGE:
+        case WINDOW_TYPE_LEFT_PERCENTAGE:
+        case WINDOW_TYPE_RIGHT_PERCENTAGE:
+        case WINDOW_TYPE_BOTTOM_CELLS:
         case WINDOW_TYPE_CENTERED:
-        case WINDOW_TYPE_TOP_PARTIAL:
-        case WINDOW_TYPE_LEFT_PARTIAL:
-        case WINDOW_TYPE_RIGHT_PARTIAL:
+        case WINDOW_TYPE_TOP_CELLS:
+        case WINDOW_TYPE_LEFT_CELLS:
+        case WINDOW_TYPE_RIGHT_CELLS:
         case WINDOW_TYPE_MAXIMIZED:
         case WINDOW_TYPE_COMPACT_MAXIMIZED:
             DLog(@"Window not positionable");
@@ -6772,15 +6806,15 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     }
 
     switch (self.windowType) {
-        case WINDOW_TYPE_TOP:
-        case WINDOW_TYPE_LEFT:
-        case WINDOW_TYPE_RIGHT:
-        case WINDOW_TYPE_BOTTOM:
+        case WINDOW_TYPE_TOP_PERCENTAGE:
+        case WINDOW_TYPE_LEFT_PERCENTAGE:
+        case WINDOW_TYPE_RIGHT_PERCENTAGE:
+        case WINDOW_TYPE_BOTTOM_PERCENTAGE:
         case WINDOW_TYPE_CENTERED:
-        case WINDOW_TYPE_TOP_PARTIAL:
-        case WINDOW_TYPE_LEFT_PARTIAL:
-        case WINDOW_TYPE_BOTTOM_PARTIAL:
-        case WINDOW_TYPE_RIGHT_PARTIAL:
+        case WINDOW_TYPE_TOP_CELLS:
+        case WINDOW_TYPE_LEFT_CELLS:
+        case WINDOW_TYPE_BOTTOM_CELLS:
+        case WINDOW_TYPE_RIGHT_CELLS:
         case WINDOW_TYPE_NO_TITLE_BAR:
         case WINDOW_TYPE_COMPACT:
         case WINDOW_TYPE_COMPACT_MAXIMIZED:
@@ -7220,16 +7254,16 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
                 case WINDOW_TYPE_ACCESSORY:
                     [[self window] setFrameOrigin:originalOrigin];
                     break;
-                case WINDOW_TYPE_BOTTOM_PARTIAL:
-                case WINDOW_TYPE_RIGHT_PARTIAL:
-                case WINDOW_TYPE_LEFT_PARTIAL:
-                case WINDOW_TYPE_TOP_PARTIAL:
+                case WINDOW_TYPE_BOTTOM_CELLS:
+                case WINDOW_TYPE_RIGHT_CELLS:
+                case WINDOW_TYPE_LEFT_CELLS:
+                case WINDOW_TYPE_TOP_CELLS:
                 case WINDOW_TYPE_CENTERED:
-                case WINDOW_TYPE_BOTTOM:
-                case WINDOW_TYPE_RIGHT:
-                case WINDOW_TYPE_LEFT:
+                case WINDOW_TYPE_BOTTOM_PERCENTAGE:
+                case WINDOW_TYPE_RIGHT_PERCENTAGE:
+                case WINDOW_TYPE_LEFT_PERCENTAGE:
                 case WINDOW_TYPE_LION_FULL_SCREEN:
-                case WINDOW_TYPE_TOP:
+                case WINDOW_TYPE_TOP_PERCENTAGE:
                 case WINDOW_TYPE_MAXIMIZED:
                 case WINDOW_TYPE_COMPACT_MAXIMIZED:
                 case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
@@ -7411,15 +7445,15 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
 
                 case WINDOW_TYPE_MAXIMIZED:
                 case WINDOW_TYPE_COMPACT_MAXIMIZED:
-                case WINDOW_TYPE_TOP:
-                case WINDOW_TYPE_LEFT:
-                case WINDOW_TYPE_RIGHT:
-                case WINDOW_TYPE_BOTTOM:
+                case WINDOW_TYPE_TOP_PERCENTAGE:
+                case WINDOW_TYPE_LEFT_PERCENTAGE:
+                case WINDOW_TYPE_RIGHT_PERCENTAGE:
+                case WINDOW_TYPE_BOTTOM_PERCENTAGE:
                 case WINDOW_TYPE_CENTERED:
-                case WINDOW_TYPE_TOP_PARTIAL:
-                case WINDOW_TYPE_LEFT_PARTIAL:
-                case WINDOW_TYPE_RIGHT_PARTIAL:
-                case WINDOW_TYPE_BOTTOM_PARTIAL:
+                case WINDOW_TYPE_TOP_CELLS:
+                case WINDOW_TYPE_LEFT_CELLS:
+                case WINDOW_TYPE_RIGHT_CELLS:
+                case WINDOW_TYPE_BOTTOM_CELLS:
                 case WINDOW_TYPE_LION_FULL_SCREEN:
                 case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
                     break;
@@ -7439,15 +7473,15 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
                     break;
                 case WINDOW_TYPE_MAXIMIZED:
                 case WINDOW_TYPE_COMPACT_MAXIMIZED:
-                case WINDOW_TYPE_TOP:
-                case WINDOW_TYPE_LEFT:
-                case WINDOW_TYPE_RIGHT:
-                case WINDOW_TYPE_BOTTOM:
+                case WINDOW_TYPE_TOP_PERCENTAGE:
+                case WINDOW_TYPE_LEFT_PERCENTAGE:
+                case WINDOW_TYPE_RIGHT_PERCENTAGE:
+                case WINDOW_TYPE_BOTTOM_PERCENTAGE:
                 case WINDOW_TYPE_CENTERED:
-                case WINDOW_TYPE_TOP_PARTIAL:
-                case WINDOW_TYPE_LEFT_PARTIAL:
-                case WINDOW_TYPE_RIGHT_PARTIAL:
-                case WINDOW_TYPE_BOTTOM_PARTIAL:
+                case WINDOW_TYPE_TOP_CELLS:
+                case WINDOW_TYPE_LEFT_CELLS:
+                case WINDOW_TYPE_RIGHT_CELLS:
+                case WINDOW_TYPE_BOTTOM_CELLS:
                 case WINDOW_TYPE_LION_FULL_SCREEN:
                 case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
                     break;
@@ -7472,15 +7506,15 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
                 }
                 case WINDOW_TYPE_MAXIMIZED:
                 case WINDOW_TYPE_COMPACT_MAXIMIZED:
-                case WINDOW_TYPE_TOP:
-                case WINDOW_TYPE_LEFT:
-                case WINDOW_TYPE_RIGHT:
-                case WINDOW_TYPE_BOTTOM:
+                case WINDOW_TYPE_TOP_PERCENTAGE:
+                case WINDOW_TYPE_LEFT_PERCENTAGE:
+                case WINDOW_TYPE_RIGHT_PERCENTAGE:
+                case WINDOW_TYPE_BOTTOM_PERCENTAGE:
                 case WINDOW_TYPE_CENTERED:
-                case WINDOW_TYPE_TOP_PARTIAL:
-                case WINDOW_TYPE_LEFT_PARTIAL:
-                case WINDOW_TYPE_RIGHT_PARTIAL:
-                case WINDOW_TYPE_BOTTOM_PARTIAL:
+                case WINDOW_TYPE_TOP_CELLS:
+                case WINDOW_TYPE_LEFT_CELLS:
+                case WINDOW_TYPE_RIGHT_CELLS:
+                case WINDOW_TYPE_BOTTOM_CELLS:
                 case WINDOW_TYPE_LION_FULL_SCREEN:
                 case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
                     break;
@@ -7747,14 +7781,14 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
         case WINDOW_TYPE_COMPACT_MAXIMIZED:
         case WINDOW_TYPE_ACCESSORY:
         case WINDOW_TYPE_CENTERED:
-        case WINDOW_TYPE_TOP_PARTIAL:
-        case WINDOW_TYPE_LEFT_PARTIAL:
-        case WINDOW_TYPE_RIGHT_PARTIAL:
-        case WINDOW_TYPE_BOTTOM_PARTIAL:
-        case WINDOW_TYPE_TOP:
-        case WINDOW_TYPE_LEFT:
-        case WINDOW_TYPE_RIGHT:
-        case WINDOW_TYPE_BOTTOM:
+        case WINDOW_TYPE_TOP_CELLS:
+        case WINDOW_TYPE_LEFT_CELLS:
+        case WINDOW_TYPE_RIGHT_CELLS:
+        case WINDOW_TYPE_BOTTOM_CELLS:
+        case WINDOW_TYPE_TOP_PERCENTAGE:
+        case WINDOW_TYPE_LEFT_PERCENTAGE:
+        case WINDOW_TYPE_RIGHT_PERCENTAGE:
+        case WINDOW_TYPE_BOTTOM_PERCENTAGE:
         case WINDOW_TYPE_NO_TITLE_BAR:
         case WINDOW_TYPE_COMPACT:
             return [PseudoTerminal titleBarShouldAppearTransparentForWindowType:self.windowType];
@@ -7771,14 +7805,14 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
             break;
 
         case WINDOW_TYPE_CENTERED:
-        case WINDOW_TYPE_TOP_PARTIAL:
-        case WINDOW_TYPE_LEFT_PARTIAL:
-        case WINDOW_TYPE_RIGHT_PARTIAL:
-        case WINDOW_TYPE_BOTTOM_PARTIAL:
-        case WINDOW_TYPE_TOP:
-        case WINDOW_TYPE_LEFT:
-        case WINDOW_TYPE_RIGHT:
-        case WINDOW_TYPE_BOTTOM:
+        case WINDOW_TYPE_TOP_CELLS:
+        case WINDOW_TYPE_LEFT_CELLS:
+        case WINDOW_TYPE_RIGHT_CELLS:
+        case WINDOW_TYPE_BOTTOM_CELLS:
+        case WINDOW_TYPE_TOP_PERCENTAGE:
+        case WINDOW_TYPE_LEFT_PERCENTAGE:
+        case WINDOW_TYPE_RIGHT_PERCENTAGE:
+        case WINDOW_TYPE_BOTTOM_PERCENTAGE:
         case WINDOW_TYPE_NO_TITLE_BAR:
         case WINDOW_TYPE_COMPACT:
         case WINDOW_TYPE_COMPACT_MAXIMIZED:
@@ -8113,15 +8147,15 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
         case WINDOW_TYPE_NORMAL:
         case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
         case WINDOW_TYPE_LION_FULL_SCREEN:
-        case WINDOW_TYPE_TOP:
-        case WINDOW_TYPE_BOTTOM:
-        case WINDOW_TYPE_LEFT:
-        case WINDOW_TYPE_RIGHT:
-        case WINDOW_TYPE_BOTTOM_PARTIAL:
-        case WINDOW_TYPE_TOP_PARTIAL:
+        case WINDOW_TYPE_TOP_PERCENTAGE:
+        case WINDOW_TYPE_BOTTOM_PERCENTAGE:
+        case WINDOW_TYPE_LEFT_PERCENTAGE:
+        case WINDOW_TYPE_RIGHT_PERCENTAGE:
+        case WINDOW_TYPE_BOTTOM_CELLS:
+        case WINDOW_TYPE_TOP_CELLS:
         case WINDOW_TYPE_CENTERED:
-        case WINDOW_TYPE_LEFT_PARTIAL:
-        case WINDOW_TYPE_RIGHT_PARTIAL:
+        case WINDOW_TYPE_LEFT_CELLS:
+        case WINDOW_TYPE_RIGHT_CELLS:
         case WINDOW_TYPE_COMPACT:
         case WINDOW_TYPE_ACCESSORY:
         case WINDOW_TYPE_MAXIMIZED:
@@ -10230,16 +10264,16 @@ static BOOL iTermApproximatelyEqualRects(NSRect lhs, NSRect rhs, double epsilon)
         case WINDOW_TYPE_COMPACT_MAXIMIZED:
             return nil;
             
-        case WINDOW_TYPE_TOP:
-        case WINDOW_TYPE_LEFT:
-        case WINDOW_TYPE_RIGHT:
-        case WINDOW_TYPE_BOTTOM:
+        case WINDOW_TYPE_TOP_PERCENTAGE:
+        case WINDOW_TYPE_LEFT_PERCENTAGE:
+        case WINDOW_TYPE_RIGHT_PERCENTAGE:
+        case WINDOW_TYPE_BOTTOM_PERCENTAGE:
         case WINDOW_TYPE_CENTERED:
-        case WINDOW_TYPE_TOP_PARTIAL:
-        case WINDOW_TYPE_LEFT_PARTIAL:
+        case WINDOW_TYPE_TOP_CELLS:
+        case WINDOW_TYPE_LEFT_CELLS:
         case WINDOW_TYPE_NO_TITLE_BAR:
-        case WINDOW_TYPE_RIGHT_PARTIAL:
-        case WINDOW_TYPE_BOTTOM_PARTIAL:
+        case WINDOW_TYPE_RIGHT_CELLS:
+        case WINDOW_TYPE_BOTTOM_CELLS:
         case WINDOW_TYPE_NORMAL:
         case WINDOW_TYPE_MAXIMIZED:
         case WINDOW_TYPE_ACCESSORY:
@@ -10259,16 +10293,16 @@ static BOOL iTermApproximatelyEqualRects(NSRect lhs, NSRect rhs, double epsilon)
     }
     const iTermWindowType windowType = exitingLionFullscreen_ ? _savedWindowType : _windowType;
     switch (windowType) {
-        case WINDOW_TYPE_TOP:
-        case WINDOW_TYPE_LEFT:
-        case WINDOW_TYPE_RIGHT:
-        case WINDOW_TYPE_BOTTOM:
+        case WINDOW_TYPE_TOP_PERCENTAGE:
+        case WINDOW_TYPE_LEFT_PERCENTAGE:
+        case WINDOW_TYPE_RIGHT_PERCENTAGE:
+        case WINDOW_TYPE_BOTTOM_PERCENTAGE:
         case WINDOW_TYPE_CENTERED:
-        case WINDOW_TYPE_TOP_PARTIAL:
-        case WINDOW_TYPE_LEFT_PARTIAL:
+        case WINDOW_TYPE_TOP_CELLS:
+        case WINDOW_TYPE_LEFT_CELLS:
         case WINDOW_TYPE_NO_TITLE_BAR:
-        case WINDOW_TYPE_RIGHT_PARTIAL:
-        case WINDOW_TYPE_BOTTOM_PARTIAL:
+        case WINDOW_TYPE_RIGHT_CELLS:
+        case WINDOW_TYPE_BOTTOM_CELLS:
         case WINDOW_TYPE_COMPACT:
         case WINDOW_TYPE_COMPACT_MAXIMIZED:
             return NO;
@@ -10299,16 +10333,16 @@ static BOOL iTermApproximatelyEqualRects(NSRect lhs, NSRect rhs, double epsilon)
             case PSMTab_TopTab:
             case PSMTab_LeftTab:
                 switch (_savedWindowType) {
-                    case WINDOW_TYPE_TOP:
-                    case WINDOW_TYPE_LEFT:
-                    case WINDOW_TYPE_RIGHT:
-                    case WINDOW_TYPE_BOTTOM:
+                    case WINDOW_TYPE_TOP_PERCENTAGE:
+                    case WINDOW_TYPE_LEFT_PERCENTAGE:
+                    case WINDOW_TYPE_RIGHT_PERCENTAGE:
+                    case WINDOW_TYPE_BOTTOM_PERCENTAGE:
                     case WINDOW_TYPE_CENTERED:
-                    case WINDOW_TYPE_TOP_PARTIAL:
-                    case WINDOW_TYPE_LEFT_PARTIAL:
+                    case WINDOW_TYPE_TOP_CELLS:
+                    case WINDOW_TYPE_LEFT_CELLS:
                     case WINDOW_TYPE_NO_TITLE_BAR:
-                    case WINDOW_TYPE_RIGHT_PARTIAL:
-                    case WINDOW_TYPE_BOTTOM_PARTIAL:
+                    case WINDOW_TYPE_RIGHT_CELLS:
+                    case WINDOW_TYPE_BOTTOM_CELLS:
                     case WINDOW_TYPE_LION_FULL_SCREEN:
                     case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
                     case WINDOW_TYPE_NORMAL:
@@ -10425,21 +10459,21 @@ static BOOL iTermApproximatelyEqualRects(NSRect lhs, NSRect rhs, double epsilon)
         case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
         case WINDOW_TYPE_LION_FULL_SCREEN:
         case WINDOW_TYPE_CENTERED:
-        case WINDOW_TYPE_BOTTOM_PARTIAL:
-        case WINDOW_TYPE_TOP_PARTIAL:
-        case WINDOW_TYPE_LEFT_PARTIAL:
-        case WINDOW_TYPE_RIGHT_PARTIAL:
+        case WINDOW_TYPE_BOTTOM_CELLS:
+        case WINDOW_TYPE_TOP_CELLS:
+        case WINDOW_TYPE_LEFT_CELLS:
+        case WINDOW_TYPE_RIGHT_CELLS:
         case WINDOW_TYPE_NO_TITLE_BAR:
         case WINDOW_TYPE_COMPACT:
         case WINDOW_TYPE_ACCESSORY:
             break;
 
-        case WINDOW_TYPE_TOP:
-        case WINDOW_TYPE_BOTTOM:
+        case WINDOW_TYPE_TOP_PERCENTAGE:
+        case WINDOW_TYPE_BOTTOM_PERCENTAGE:
             return @"Fixed-width window";
 
-        case WINDOW_TYPE_LEFT:
-        case WINDOW_TYPE_RIGHT:
+        case WINDOW_TYPE_LEFT_PERCENTAGE:
+        case WINDOW_TYPE_RIGHT_PERCENTAGE:
             return @"Fixed-height window";
 
         case WINDOW_TYPE_MAXIMIZED:
@@ -10526,7 +10560,7 @@ static BOOL iTermApproximatelyEqualRects(NSRect lhs, NSRect rhs, double epsilon)
     if (!self.shouldShowBorder) {
         return NO;
     } else if ([self anyFullScreen] ||
-               self.windowType == WINDOW_TYPE_LEFT ||
+               self.windowType == WINDOW_TYPE_LEFT_PERCENTAGE ||
                (leftTabBar && [self tabBarShouldBeVisible])) {
         return NO;
     } else {
@@ -10541,7 +10575,7 @@ static BOOL iTermApproximatelyEqualRects(NSRect lhs, NSRect rhs, double epsilon)
         return NO;
     }
     if ([self anyFullScreen] ||
-        self.windowType == WINDOW_TYPE_BOTTOM) {
+        self.windowType == WINDOW_TYPE_BOTTOM_PERCENTAGE) {
         return NO;
     }
     if (!bottomTabBar) {
@@ -10566,9 +10600,9 @@ static BOOL iTermApproximatelyEqualRects(NSRect lhs, NSRect rhs, double epsilon)
     BOOL tabBarVisible = [self tabBarShouldBeVisible];
     BOOL topTabBar = ([iTermPreferences intForKey:kPreferenceKeyTabPosition] == PSMTab_TopTab);
     BOOL visibleTopTabBar = (tabBarVisible && topTabBar);
-    BOOL windowTypeCompatibleWithTopBorder = (self.windowType == WINDOW_TYPE_BOTTOM ||
+    BOOL windowTypeCompatibleWithTopBorder = (self.windowType == WINDOW_TYPE_BOTTOM_PERCENTAGE ||
                                               self.windowType == WINDOW_TYPE_NO_TITLE_BAR ||
-                                              self.windowType == WINDOW_TYPE_BOTTOM_PARTIAL);
+                                              self.windowType == WINDOW_TYPE_BOTTOM_CELLS);
     return (!visibleTopTabBar &&
             windowTypeCompatibleWithTopBorder);
 }
@@ -10577,7 +10611,7 @@ static BOOL iTermApproximatelyEqualRects(NSRect lhs, NSRect rhs, double epsilon)
     if (!self.shouldShowBorder) {
         return NO;
     } else if ([self anyFullScreen] ||
-               self.windowType == WINDOW_TYPE_RIGHT ) {
+               self.windowType == WINDOW_TYPE_RIGHT_PERCENTAGE ) {
         return NO;
     }
     return YES;
@@ -13183,8 +13217,8 @@ backgroundColor:(NSColor *)backgroundColor {
     switch (self.windowType) {
         case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
         case WINDOW_TYPE_LION_FULL_SCREEN:
-        case WINDOW_TYPE_TOP:
-        case WINDOW_TYPE_BOTTOM:
+        case WINDOW_TYPE_TOP_PERCENTAGE:
+        case WINDOW_TYPE_BOTTOM_PERCENTAGE:
         case WINDOW_TYPE_MAXIMIZED:
         case WINDOW_TYPE_COMPACT_MAXIMIZED:
             DLog(@"No width adjustment because of window type");
@@ -13192,12 +13226,12 @@ backgroundColor:(NSColor *)backgroundColor {
 
         case WINDOW_TYPE_CENTERED:
         case WINDOW_TYPE_NORMAL:
-        case WINDOW_TYPE_LEFT:
-        case WINDOW_TYPE_RIGHT:
-        case WINDOW_TYPE_BOTTOM_PARTIAL:
-        case WINDOW_TYPE_TOP_PARTIAL:
-        case WINDOW_TYPE_LEFT_PARTIAL:
-        case WINDOW_TYPE_RIGHT_PARTIAL:
+        case WINDOW_TYPE_LEFT_PERCENTAGE:
+        case WINDOW_TYPE_RIGHT_PERCENTAGE:
+        case WINDOW_TYPE_BOTTOM_CELLS:
+        case WINDOW_TYPE_TOP_CELLS:
+        case WINDOW_TYPE_LEFT_CELLS:
+        case WINDOW_TYPE_RIGHT_CELLS:
         case WINDOW_TYPE_NO_TITLE_BAR:
         case WINDOW_TYPE_COMPACT:
         case WINDOW_TYPE_ACCESSORY: {

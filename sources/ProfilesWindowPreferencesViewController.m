@@ -7,6 +7,7 @@
 //
 
 #import "ProfilesWindowPreferencesViewController.h"
+#import "DebugLogging.h"
 #import "FutureMethods.h"
 #import "ITAddressBookMgr.h"
 #import "iTermFunctionCallTextFieldDelegate.h"
@@ -57,14 +58,18 @@ CGFloat iTermMaxBlurRadius(void) {
 
     IBOutlet NSTextField *_widthField;
     IBOutlet NSTextField *_heightField;
+    IBOutlet NSTextField *_percentageWidthField;
+    IBOutlet NSTextField *_percentageHeightField;
+    IBOutlet NSTextField *_widthLabel;
+    IBOutlet NSTextField *_heightLabel;
+    IBOutlet NSPopUpButton *_unitsButton;
+    IBOutlet NSTextField *_byLabel;
 
-    IBOutlet NSTextField *_columnsLabel;
     IBOutlet NSButton *_hideAfterOpening;
     IBOutlet NSPopUpButton *_windowStyle;
     IBOutlet NSPopUpButton *_screen;
     IBOutlet NSTextField *_screenLabel;
     IBOutlet NSPopUpButton *_space;
-    IBOutlet NSTextField *_rowsLabel;
     IBOutlet NSTextField *_windowStyleLabel;
     IBOutlet NSTextField *_spaceLabel;
     IBOutlet NSButton *_preventTab;
@@ -210,6 +215,18 @@ CGFloat iTermMaxBlurRadius(void) {
                           type:kPreferenceInfoTypeIntegerTextField];
     info.range = NSMakeRange(1, iTermMaxInitialSessionSize);
 
+    info = [self defineControl:_percentageWidthField
+                           key:KEY_WIDTH_PERCENTAGE
+                   displayName:@"Window width in percentage of screen width"
+                          type:kPreferenceInfoTypeIntegerTextField];
+    info.range = NSMakeRange(1, 100);
+
+    info = [self defineControl:_percentageHeightField
+                           key:KEY_HEIGHT_PERCENTAGE
+                   displayName:@"Window height in percentage of screen height"
+                          type:kPreferenceInfoTypeIntegerTextField];
+    info.range = NSMakeRange(1, 100);
+
     info = [self defineControl:_heightField
                            key:KEY_HEIGHT
                    displayName:@"Window height in pixels"
@@ -232,6 +249,9 @@ CGFloat iTermMaxBlurRadius(void) {
         // iTermThemedWindowType(). Therefore we must modify the value in user defaults to properly
         // select an item in the popup.
         return [weakSelf updateWindowTypeControlFromSettings];
+    };
+    info.customSettingChangedHandler = ^(id sender) {
+        [weakSelf saveWindowType];
     };
     [self defineControl:_screen
                     key:KEY_SCREEN
@@ -321,11 +341,261 @@ CGFloat iTermMaxBlurRadius(void) {
                            key:nil];
 }
 
+- (void)saveWindowType {
+    switch ((iTermWindowType)_windowStyle.selectedTag) {
+        case WINDOW_TYPE_NORMAL:
+        case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
+        case WINDOW_TYPE_LION_FULL_SCREEN:
+        case WINDOW_TYPE_NO_TITLE_BAR:
+        case WINDOW_TYPE_COMPACT:
+        case WINDOW_TYPE_ACCESSORY:
+        case WINDOW_TYPE_MAXIMIZED:
+        case WINDOW_TYPE_COMPACT_MAXIMIZED:
+        case WINDOW_TYPE_CENTERED:
+            [self setInteger:_windowStyle.selectedTag
+                      forKey:KEY_WINDOW_TYPE];
+            break;
+
+        case WINDOW_TYPE_TOP_PERCENTAGE:
+            [self setInteger:_unitsButton.selectedTag == 0 ? WINDOW_TYPE_TOP_CELLS : WINDOW_TYPE_TOP_PERCENTAGE
+                      forKey:KEY_WINDOW_TYPE];
+            break;
+        case WINDOW_TYPE_BOTTOM_PERCENTAGE:
+            [self setInteger:_unitsButton.selectedTag == 0 ? WINDOW_TYPE_BOTTOM_CELLS : WINDOW_TYPE_BOTTOM_PERCENTAGE
+                      forKey:KEY_WINDOW_TYPE];
+            break;
+        case WINDOW_TYPE_LEFT_PERCENTAGE:
+            [self setInteger:_unitsButton.selectedTag == 0 ? WINDOW_TYPE_LEFT_CELLS : WINDOW_TYPE_LEFT_PERCENTAGE
+                      forKey:KEY_WINDOW_TYPE];
+            break;
+        case WINDOW_TYPE_RIGHT_PERCENTAGE:
+            [self setInteger:_unitsButton.selectedTag == 0 ? WINDOW_TYPE_RIGHT_CELLS : WINDOW_TYPE_RIGHT_PERCENTAGE
+                      forKey:KEY_WINDOW_TYPE];
+            break;
+
+        case WINDOW_TYPE_BOTTOM_CELLS:
+        case WINDOW_TYPE_TOP_CELLS:
+        case WINDOW_TYPE_LEFT_CELLS:
+        case WINDOW_TYPE_RIGHT_CELLS:
+            assert(NO);
+            break;
+    }
+}
+
 - (BOOL)updateWindowTypeControlFromSettings {
     PreferenceInfo *info = [self infoForControl:_windowStyle];
-    [_windowStyle selectItemWithTag:iTermUnthemedWindowType([self intForKey:info.key])];
+    iTermWindowType type = iTermUnthemedWindowType([self intForKey:info.key]);
+    switch (type) {
+        case WINDOW_TYPE_NORMAL:
+        case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
+        case WINDOW_TYPE_LION_FULL_SCREEN:
+        case WINDOW_TYPE_TOP_PERCENTAGE:
+        case WINDOW_TYPE_BOTTOM_PERCENTAGE:
+        case WINDOW_TYPE_LEFT_PERCENTAGE:
+        case WINDOW_TYPE_RIGHT_PERCENTAGE:
+        case WINDOW_TYPE_NO_TITLE_BAR:
+        case WINDOW_TYPE_COMPACT:
+        case WINDOW_TYPE_ACCESSORY:
+        case WINDOW_TYPE_MAXIMIZED:
+        case WINDOW_TYPE_COMPACT_MAXIMIZED:
+        case WINDOW_TYPE_CENTERED:
+            [_windowStyle selectItemWithTag:type];
+            break;
+        case WINDOW_TYPE_BOTTOM_CELLS:
+            [_windowStyle selectItemWithTag:WINDOW_TYPE_BOTTOM_PERCENTAGE];
+            break;
+        case WINDOW_TYPE_TOP_CELLS:
+            [_windowStyle selectItemWithTag:WINDOW_TYPE_TOP_PERCENTAGE];
+            break;
+        case WINDOW_TYPE_LEFT_CELLS:
+            [_windowStyle selectItemWithTag:WINDOW_TYPE_LEFT_PERCENTAGE];
+            break;
+        case WINDOW_TYPE_RIGHT_CELLS:
+            [_windowStyle selectItemWithTag:WINDOW_TYPE_RIGHT_PERCENTAGE];
+            break;
+    }
     if (info.observer) {
         info.observer();
+    }
+    NSButton *columnsUnitButton = [[NSButton alloc] init];
+    columnsUnitButton.hidden = YES;
+    NSButton *rowsUnitButton = [[NSButton alloc] init];
+    rowsUnitButton.hidden = YES;
+
+    switch (type) {
+        case WINDOW_TYPE_NORMAL:
+        case WINDOW_TYPE_COMPACT:
+        case WINDOW_TYPE_ACCESSORY:
+        case WINDOW_TYPE_CENTERED:
+        case WINDOW_TYPE_NO_TITLE_BAR:
+            _columnsField.enabled = YES;
+            _columnsField.hidden = NO;
+
+            _rowsField.enabled = YES;
+            _rowsField.hidden = NO;	
+
+            _percentageWidthField.hidden = YES;
+            _percentageHeightField.hidden = YES;
+
+            _unitsButton.hidden = YES;
+
+            _widthLabel.hidden = NO;
+            _heightLabel.hidden = NO;
+
+            _widthLabel.stringValue = @"columns by";
+            _heightLabel.stringValue = @"rows";
+
+            _byLabel.hidden = YES;
+            break;
+
+        case WINDOW_TYPE_BOTTOM_CELLS:
+        case WINDOW_TYPE_TOP_CELLS:
+            _columnsField.enabled = YES;
+            _columnsField.hidden = NO;
+
+            _rowsField.enabled = YES;
+            _rowsField.hidden = NO;
+
+            _percentageWidthField.hidden = YES;
+            _percentageHeightField.hidden = YES;
+
+            _unitsButton.hidden = NO;
+            _unitsButton.menu.itemArray[0].title = @"Columns";
+            _unitsButton.menu.itemArray[1].title = @"% of screen width";
+            [_unitsButton selectItemWithTag:0];
+            _widthLabel.hidden = YES;
+            _heightLabel.hidden = NO;
+            columnsUnitButton = _unitsButton;
+
+            _widthLabel.stringValue = @"columns by";
+            _heightLabel.stringValue = @"rows";
+
+            _byLabel.hidden = NO;
+            break;
+
+        case WINDOW_TYPE_LEFT_CELLS:
+        case WINDOW_TYPE_RIGHT_CELLS:
+            _columnsField.enabled = YES;
+            _columnsField.hidden = NO;
+
+            _rowsField.enabled = YES;
+            _rowsField.hidden = NO;
+
+            _percentageWidthField.hidden = YES;
+            _percentageHeightField.hidden = YES;
+
+            _unitsButton.hidden = NO;
+            _unitsButton.menu.itemArray[0].title = @"Rows";
+            _unitsButton.menu.itemArray[1].title = @"% of screen height";
+            [_unitsButton selectItemWithTag:0];
+            _widthLabel.hidden = NO;
+            _heightLabel.hidden = YES;
+            rowsUnitButton = _unitsButton;
+
+            _widthLabel.stringValue = @"columns by";
+            _heightLabel.stringValue = @"rows";
+
+            _byLabel.hidden = YES;
+            break;
+
+        case WINDOW_TYPE_TOP_PERCENTAGE:
+        case WINDOW_TYPE_BOTTOM_PERCENTAGE:
+            _columnsField.hidden = YES;
+
+            _rowsField.enabled = YES;
+            _rowsField.hidden = NO;
+
+            _percentageWidthField.hidden = NO;
+            _percentageHeightField.hidden = YES;
+
+            _unitsButton.hidden = NO;
+            _unitsButton.menu.itemArray[0].title = @"Columns";
+            _unitsButton.menu.itemArray[1].title = @"% of screen width";
+            columnsUnitButton = _unitsButton;
+            [_unitsButton selectItemWithTag:1];
+
+            _widthLabel.hidden = YES;
+            _heightLabel.hidden = NO;
+
+            _heightLabel.stringValue = @"rows";
+
+            _byLabel.hidden = NO;
+            break;
+
+        case WINDOW_TYPE_LEFT_PERCENTAGE:
+        case WINDOW_TYPE_RIGHT_PERCENTAGE:
+            _columnsField.hidden = NO;
+            _columnsField.enabled = YES;
+
+            _rowsField.hidden = YES;
+
+            _percentageWidthField.hidden = YES;
+            _percentageHeightField.hidden = NO;
+
+            _unitsButton.hidden = NO;
+            _unitsButton.menu.itemArray[0].title = @"Rows";
+            _unitsButton.menu.itemArray[1].title = @"% of screen height";
+            [_unitsButton selectItemWithTag:1];
+            rowsUnitButton = _unitsButton;
+            _widthLabel.hidden = NO;
+            _heightLabel.hidden = YES;
+
+            _widthLabel.stringValue = @"columns by";
+
+            _byLabel.hidden = YES;
+            break;
+
+        case WINDOW_TYPE_MAXIMIZED:
+        case WINDOW_TYPE_COMPACT_MAXIMIZED:
+        case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
+        case WINDOW_TYPE_LION_FULL_SCREEN:
+            _columnsField.hidden = NO;
+            _columnsField.enabled = NO;
+
+            _rowsField.hidden = NO;
+            _rowsField.enabled = NO;
+
+            _percentageWidthField.hidden = YES;
+            _percentageHeightField.hidden = YES;
+
+            _unitsButton.hidden = YES;
+            _widthLabel.hidden = NO;
+            _heightLabel.hidden = NO;
+
+            _widthLabel.stringValue = @"columns by";
+            _heightLabel.stringValue = @"rows";
+
+            _byLabel.hidden = YES;
+            break;
+    }
+    columnsUnitButton.identifier = @"column units";
+    rowsUnitButton.identifier = @"row units";
+    NSArray<NSView *> *views = @[ _columnsField,           // Editable number of columns
+                                  _percentageWidthField,   // Editable percent of screen width
+                                  _widthLabel,             // "columns by"
+                                  columnsUnitButton,       // Popup [Columns / % of screen width]
+                                  _byLabel,                // "by"
+                                  _rowsField,              // Editable number of rows
+                                  _percentageHeightField,  // Editable percent of screen height
+                                  _heightLabel,            // "rows"
+                                  rowsUnitButton           // Popup [Rows / % of screen height]
+    ];
+    CGFloat x = 0;
+    for (NSView *view in views) {
+        if (view.isHidden) {
+            continue;
+        }
+        NSTextField *textField = [NSTextField castFrom:view];
+        if (textField && !textField.isEditable) {
+            [textField sizeToFit];
+        }
+        [[NSButton castFrom:view] sizeToFit];
+
+        NSRect frame = view.frame;
+        frame.origin.x = x;
+        view.frame = frame;
+        DLog(@"Set frame of %@ to %@", view.identifier, NSStringFromRect(frame));
+        x += frame.size.width;
     }
     return YES;
 }
@@ -380,6 +650,11 @@ CGFloat iTermMaxBlurRadius(void) {
 }
 
 #pragma mark - Actions
+
+- (IBAction)unitsChanged:(id)sender {
+    [self saveWindowType];
+    [self updateWindowTypeControlFromSettings];
+}
 
 // Opens a file picker and updates views and state.
 - (IBAction)useBackgroundImageDidChange:(id)sender {

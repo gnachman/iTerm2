@@ -156,6 +156,7 @@ NSString *const iTermSessionBuriedStateChangeTabNotification = @"iTermSessionBur
         term = [[PseudoTerminal alloc] initWithSmartLayout:YES
                                                 windowType:restorableSession.windowType
                                            savedWindowType:restorableSession.savedWindowType
+                                                percentage:restorableSession.percentage
                                                     screen:restorableSession.screen
                                                    profile:nil];
         if (term) {
