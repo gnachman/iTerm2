@@ -357,8 +357,11 @@ static BOOL hasBecomeActive = NO;
 #if BETA
     isReleaseBuild = NO;
 #else
-    if ([version isEqual:@"unknown"] || [version containsString:@".git."] || [version hasSuffix:@"-adhoc"]) {
-        isReleaseBuild = NO;
+    {
+        NSString *version = [[[NSBundle mainBundle] infoDictionary] objectForKey:@"CFBundleShortVersionString"];
+        if ([version isEqual:@"unknown"] || [version containsString:@".git."] || [version hasSuffix:@"-adhoc"]) {
+            isReleaseBuild = NO;
+        }
     }
 #endif
     if (isReleaseBuild) {
