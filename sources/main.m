@@ -30,6 +30,9 @@ int main(int argc, const char *argv[]) {
         return iterm2_server(argc - 2, (char *const *)argv + 2);
     }
     // Normal launch of GUI.
+    if ([[NSUserDefaults standardUserDefaults] boolForKey:@"MetalCaptureEnabled"]) {
+        setenv("MTL_CAPTURE_ENABLED", "1", 1);
+    }
     iTermResourceLimitsHelperSaveCurrentLimits();
     signal(SIGPIPE, SIG_IGN);
     sigset_t signals;
