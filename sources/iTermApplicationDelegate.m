@@ -353,9 +353,17 @@ static BOOL hasBecomeActive = NO;
         _splitVerticallyWithCurrentProfile.title = [@"│⃞ " stringByAppendingString:_splitVerticallyWithCurrentProfile.title];
     }
 
-#if !BETA
-    [_iterm2Menu removeItem:_captureGPUFrameMenuItem];
+    BOOL isReleaseBuild = YES;
+#if BETA
+    isReleaseBuild = NO;
+#else
+    if ([version isEqual:@"unknown"] || [version containsString:@".git."] || [version hasSuffix:@"-adhoc"]) {
+        isReleaseBuild = NO;
+    }
 #endif
+    if (isReleaseBuild) {
+        [_iterm2Menu removeItem:_captureGPUFrameMenuItem];
+    }
 
     [[iTermBuriedSessions sharedInstance] setMenus:[NSArray arrayWithObjects:_buriedSessions, _statusIconBuriedSessions, nil]];
     _triggers.submenu.delegate = self;
