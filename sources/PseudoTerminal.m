@@ -9783,7 +9783,7 @@ typedef struct {
 }
 
 - (void)addTabAtAutomaticallyDeterminedLocation:(PTYTab *)tab {
-    if ([iTermAdvancedSettingsModel addNewTabAtEndOfTabs] || ![self currentTab]) {
+    if ([iTermPreferences boolForKey:kPreferenceKeyNewTabsOpenAtEndOfTabBar] || ![self currentTab]) {
         [self insertTab:tab atIndex:self.numberOfTabs];
     } else {
         [self insertTab:tab atIndex:[self indexOfTab:self.currentTab] + 1];
@@ -11576,7 +11576,7 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
 }
 
 - (NSUInteger)indexForNewTab {
-    if ([iTermAdvancedSettingsModel addNewTabAtEndOfTabs] || ![self currentTab]) {
+    if ([iTermPreferences boolForKey:kPreferenceKeyNewTabsOpenAtEndOfTabBar] || ![self currentTab]) {
         return [_contentView.tabView numberOfTabViewItems];
     }
     return [self indexOfTab:[self currentTab]] + 1;

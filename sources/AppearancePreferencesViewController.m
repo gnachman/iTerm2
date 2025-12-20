@@ -62,6 +62,8 @@ NSString *const iTermProcessTypeDidChangeNotification = @"iTermProcessTypeDidCha
     IBOutlet NSButton *_uiElement;
     IBOutlet NSButton *_uiElementRequiresHotkeyWindows;
 
+    IBOutlet NSButton *_newTabsOpenAtEndOfTabBar;
+
     IBOutlet NSButton *_flashTabBarInFullscreenWhenSwitchingTabs;
     IBOutlet NSButton *_showTabBarInFullscreen;
 
@@ -291,6 +293,11 @@ NSString *const iTermProcessTypeDidChangeNotification = @"iTermProcessTypeDidCha
     };
 
     [self updateHiddenAndEnabled];
+
+    [self defineControl:_newTabsOpenAtEndOfTabBar
+                    key:kPreferenceKeyNewTabsOpenAtEndOfTabBar
+            relatedView:nil
+                   type:kPreferenceInfoTypeCheckbox];
 
     info = [self defineControl:_showTabBarInFullscreen
                            key:kPreferenceKeyShowFullscreenTabBar
