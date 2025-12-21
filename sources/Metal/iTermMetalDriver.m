@@ -632,9 +632,17 @@ legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth
         }
 
         // Capture diagnostic sizes for debugging tab switch size mismatches
-        frameData.debugViewFrame = view.frame.size;
-        frameData.debugViewBounds = view.bounds.size;
-        frameData.debugLayerDrawableSize = view.layerDrawableSize;
+        iTermMetalFrameDataDebugInfo debugInfo2 = {
+            .viewFrame = view.frame.size,
+            .viewBounds = view.bounds.size,
+            .layerDrawableSize = view.layerDrawableSize,
+            .drawableTextureSize = CGSizeZero,  // Set later when drawable is obtained
+            .contentsScale = view.layerContentsScale,
+            .backingScaleFactor = view.window.screen.backingScaleFactor,
+            .drawableScaleFactor = view.currentDrawableScaleFactor,
+            .hasWindow = (view.window != nil)
+        };
+        frameData.debugInfo2 = debugInfo2;
     }];
     return frameData;
 }
@@ -652,22 +660,24 @@ legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth
     // Debug overlay for diagnosing tab switch size mismatches
     {
         const vector_uint2 vp = frameData.viewportSize;
-        const CGSize dt = frameData.debugDrawableTextureSize;
-        const CGSize vf = frameData.debugViewFrame;
-        const CGSize ld = frameData.debugLayerDrawableSize;
+        const iTermMetalFrameDataDebugInfo di = frameData.debugInfo2;
 
         // Check for mismatches
-        BOOL mismatch = (vp.x != (unsigned int)dt.width ||
-                         vp.y != (unsigned int)dt.height ||
-                         vp.x != (unsigned int)ld.width ||
-                         vp.y != (unsigned int)ld.height);
+        BOOL sizeMismatch = (vp.x != (unsigned int)di.drawableTextureSize.width ||
+                             vp.y != (unsigned int)di.drawableTextureSize.height ||
+                             vp.x != (unsigned int)di.layerDrawableSize.width ||
+                             vp.y != (unsigned int)di.layerDrawableSize.height);
+        BOOL scaleMismatch = (di.contentsScale != di.backingScaleFactor && di.hasWindow);
 
-        NSString *debugString = [NSString stringWithFormat:@"%@VP:%dx%d DT:%.0fx%.0f VF:%.0fx%.0f LD:%.0fx%.0f",
-                                 mismatch ? @"!!" : @"",
+        NSString *debugString = [NSString stringWithFormat:@"%@VP:%dx%d DT:%.0fx%.0f VF:%.0fx%.0f LD:%.0fx%.0f CS:%.1f BS:%.1f W:%d",
+                                 (sizeMismatch || scaleMismatch) ? @"!!" : @"",
                                  vp.x, vp.y,
-                                 dt.width, dt.height,
-                                 vf.width, vf.height,
-                                 ld.width, ld.height];
+                                 di.drawableTextureSize.width, di.drawableTextureSize.height,
+                                 di.viewFrame.width, di.viewFrame.height,
+                                 di.layerDrawableSize.width, di.layerDrawableSize.height,
+                                 di.contentsScale,
+                                 di.backingScaleFactor,
+                                 di.hasWindow ? 1 : 0];
         [frameData.perFrameState setDebugString:debugString];
     }
 
@@ -957,8 +967,10 @@ legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth
             }
             // Capture actual drawable texture size for debugging
             if (frameData.destinationTexture) {
-                frameData.debugDrawableTextureSize = CGSizeMake(frameData.destinationTexture.width,
-                                                                 frameData.destinationTexture.height);
+                iTermMetalFrameDataDebugInfo debugInfo2 = frameData.debugInfo2;
+                debugInfo2.drawableTextureSize = CGSizeMake(frameData.destinationTexture.width,
+                                                            frameData.destinationTexture.height);
+                frameData.debugInfo2 = debugInfo2;
             }
         }
 

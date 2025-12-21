@@ -122,6 +122,18 @@ NS_CLASS_AVAILABLE(10_11, NA)
 @class MTLRenderPassDescriptor;
 @protocol CAMetalDrawable;
 
+// Debug diagnostics for tracking size mismatches during tab switching
+typedef struct {
+    CGSize viewFrame;           // view.frame.size at frame creation
+    CGSize viewBounds;          // view.bounds.size at frame creation
+    CGSize layerDrawableSize;   // metalLayer.drawableSize at frame creation
+    CGSize drawableTextureSize; // actual drawable texture size (set when drawable obtained)
+    CGFloat contentsScale;      // CAMetalLayer.contentsScale at frame creation
+    CGFloat backingScaleFactor; // window.screen.backingScaleFactor at frame creation (0 if no window)
+    CGSize drawableScaleFactor; // custom drawableScaleFactor at frame creation
+    BOOL hasWindow;             // whether view.window != nil at frame creation
+} iTermMetalFrameDataDebugInfo;
+
 NS_CLASS_AVAILABLE(10_11, NA)
 @interface iTermMetalFrameData : NSObject
 @property (atomic, readonly) iTermTexturePool *fullSizeTexturePool;
@@ -166,11 +178,7 @@ NS_CLASS_AVAILABLE(10_11, NA)
 @property (nonatomic) CGFloat rightExtraPixels;
 @property (nonatomic) CGFloat vmargin;
 
-// Debug diagnostics for tracking size mismatches during tab switching
-@property (nonatomic) CGSize debugViewFrame;           // view.frame.size at frame creation
-@property (nonatomic) CGSize debugViewBounds;          // view.bounds.size at frame creation
-@property (nonatomic) CGSize debugLayerDrawableSize;   // metalLayer.drawableSize at frame creation
-@property (nonatomic) CGSize debugDrawableTextureSize; // actual drawable texture size (set when drawable obtained)
+@property (nonatomic) iTermMetalFrameDataDebugInfo debugInfo2;
 
 // When drawing to an intermediate texture there may be two passes (i.e., two render encoders)
 @property (nonatomic) int currentPass;

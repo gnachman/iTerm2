@@ -357,6 +357,18 @@ extension iTermMetalView {
     public var layerDrawableSize: CGSize {
         metalLayerBox?.drawableSize ?? .zero
     }
+
+    // For debugging size mismatches - returns the CAMetalLayer's contentsScale
+    @objc
+    public var layerContentsScale: CGFloat {
+        metalLayerBox?.contentsScale ?? 0
+    }
+
+    // For debugging size mismatches - returns the custom drawableScaleFactor
+    @objc
+    public var currentDrawableScaleFactor: CGSize {
+        drawableScaleFactor
+    }
 }
 
 // MARK: - Fetch drawable with configurable timeout
