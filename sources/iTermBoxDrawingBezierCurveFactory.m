@@ -1835,12 +1835,11 @@ color:(NSColor *)color {
     };
 
 
-    // For sharp strokes on non-retina, coordinates need half-pixel alignment.
+    // For sharp strokes on non-retina, interior coordinates need half-pixel alignment.
     // But solid (filled) shapes should use exact pixel boundaries.
-    // Edge coordinates must be inset so strokes don't get clipped outside the cell.
+    // Edge coordinates stay at exact edges - the clip rect handles any stroke overshoot.
     //
     // The actual lineWidth used in drawShape: is (isPoints ? 1.0 : scale).
-    // For stroked shapes, we need to inset edge coordinates by half the stroke width.
     CGFloat actualLineWidth = isPoints ? 1.0 : scale;
     CGFloat halfStroke = actualLineWidth / 2.0;
     CGFloat (^alignX)(CGFloat) = ^CGFloat(CGFloat x) {
@@ -1849,14 +1848,14 @@ color:(NSColor *)color {
             return round(x);
         }
         // For stroked shapes:
-        // 1. Inset edge coordinates so stroke stays inside cell
-        // 2. Non-retina: move integer coordinates to half-pixel for sharp rendering
+        // 1. Edge coordinates stay at exact edges - clip rect handles any overshoot
+        // 2. Non-retina: move interior integer coordinates to half-pixel for sharp rendering
         // 3. Retina: keep fractional values for sub-point precision
-        if (x <= halfStroke) {
-            return halfStroke;  // Inset from left edge
+        if (x <= 0) {
+            return 0;  // Keep at left edge
         }
-        if (x >= cellSize.width - halfStroke) {
-            return cellSize.width - halfStroke;  // Inset from right edge
+        if (x >= cellSize.width) {
+            return cellSize.width;  // Keep at right edge
         }
         if (scale < 2) {
             // Non-retina: move to half-pixel position for sharp rendering
@@ -1876,14 +1875,14 @@ color:(NSColor *)color {
             return round(y);
         }
         // For stroked shapes:
-        // 1. Inset edge coordinates so stroke stays inside cell
-        // 2. Non-retina: move integer coordinates to half-pixel for sharp rendering
+        // 1. Edge coordinates stay at exact edges - clip rect handles any overshoot
+        // 2. Non-retina: move interior integer coordinates to half-pixel for sharp rendering
         // 3. Retina: keep fractional values for sub-point precision
-        if (y <= halfStroke) {
-            return halfStroke;  // Inset from top edge
+        if (y <= 0) {
+            return 0;  // Keep at top edge
         }
-        if (y >= cellSize.height - halfStroke) {
-            return cellSize.height - halfStroke;  // Inset from bottom edge
+        if (y >= cellSize.height) {
+            return cellSize.height;  // Keep at bottom edge
         }
         if (scale < 2) {
             // Non-retina: move to half-pixel position for sharp rendering
