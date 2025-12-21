@@ -320,6 +320,7 @@ extern NSString *const kPreferenceKeyLeftTabBarWidth;
 extern NSString *const kPreferenceKeyPasteWarningNumberOfSpacesPerTab;
 
 extern NSString *const kPreferenceKeyShowFullscreenTabBar;
+extern NSString *const kPreferenceKeyNewTabsOpenAtEndOfTabBar;
 extern NSString *const kPreferenceKeyDefaultToolbeltWidth;
 extern NSString *const kPreferenceKeySizeChangesAffectProfile;
 extern NSString *const kPreferenceKeyAlertOnMarksInOffscreenSessions;

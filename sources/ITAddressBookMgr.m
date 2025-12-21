@@ -94,15 +94,15 @@ iTermWindowType iTermUnthemedWindowType(iTermWindowType windowType) {
         case WINDOW_TYPE_LION_FULL_SCREEN:
             return WINDOW_TYPE_TRADITIONAL_FULL_SCREEN;
 
-        case WINDOW_TYPE_TOP:
-        case WINDOW_TYPE_BOTTOM:
-        case WINDOW_TYPE_LEFT:
-        case WINDOW_TYPE_RIGHT:
+        case WINDOW_TYPE_TOP_PERCENTAGE:
+        case WINDOW_TYPE_BOTTOM_PERCENTAGE:
+        case WINDOW_TYPE_LEFT_PERCENTAGE:
+        case WINDOW_TYPE_RIGHT_PERCENTAGE:
         case WINDOW_TYPE_CENTERED:
-        case WINDOW_TYPE_BOTTOM_PARTIAL:
-        case WINDOW_TYPE_TOP_PARTIAL:
-        case WINDOW_TYPE_LEFT_PARTIAL:
-        case WINDOW_TYPE_RIGHT_PARTIAL:
+        case WINDOW_TYPE_BOTTOM_CELLS:
+        case WINDOW_TYPE_TOP_CELLS:
+        case WINDOW_TYPE_LEFT_CELLS:
+        case WINDOW_TYPE_RIGHT_CELLS:
         case WINDOW_TYPE_NO_TITLE_BAR:
         case WINDOW_TYPE_ACCESSORY:
             return windowType;
@@ -146,18 +146,18 @@ iTermWindowType iTermThemedWindowType(iTermWindowType windowType) {
             assert(false);
             return windowType;
 
-        case WINDOW_TYPE_TOP:
-        case WINDOW_TYPE_LEFT:
-        case WINDOW_TYPE_RIGHT:
-        case WINDOW_TYPE_BOTTOM:
+        case WINDOW_TYPE_TOP_PERCENTAGE:
+        case WINDOW_TYPE_LEFT_PERCENTAGE:
+        case WINDOW_TYPE_RIGHT_PERCENTAGE:
+        case WINDOW_TYPE_BOTTOM_PERCENTAGE:
         case WINDOW_TYPE_ACCESSORY:
         case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
         case WINDOW_TYPE_LION_FULL_SCREEN:
         case WINDOW_TYPE_CENTERED:
-        case WINDOW_TYPE_TOP_PARTIAL:
-        case WINDOW_TYPE_LEFT_PARTIAL:
-        case WINDOW_TYPE_BOTTOM_PARTIAL:
-        case WINDOW_TYPE_RIGHT_PARTIAL:
+        case WINDOW_TYPE_TOP_CELLS:
+        case WINDOW_TYPE_LEFT_CELLS:
+        case WINDOW_TYPE_BOTTOM_CELLS:
+        case WINDOW_TYPE_RIGHT_CELLS:
         case WINDOW_TYPE_NO_TITLE_BAR:
             return windowType;
     }

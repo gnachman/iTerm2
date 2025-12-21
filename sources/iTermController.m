@@ -1063,9 +1063,36 @@ replaceInitialDirectoryForSessionWithGUID:(NSString *)guid
     [iTermMissionControlHacks switchToSpace:spaceNum];
 }
 
-- (iTermWindowType)windowTypeForBookmark:(Profile *)aDict {
+- (iTermWindowType)windowTypeForBookmark:(Profile *)aDict percentage:(double *)percentage {
     if ([aDict objectForKey:KEY_WINDOW_TYPE]) {
         const iTermWindowType windowType = iTermThemedWindowType([[aDict objectForKey:KEY_WINDOW_TYPE] intValue]);
+        switch (windowType) {
+            case WINDOW_TYPE_NORMAL:
+            case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
+            case WINDOW_TYPE_LION_FULL_SCREEN:
+            case WINDOW_TYPE_BOTTOM_CELLS:
+            case WINDOW_TYPE_TOP_CELLS:
+            case WINDOW_TYPE_LEFT_CELLS:
+            case WINDOW_TYPE_RIGHT_CELLS:
+            case WINDOW_TYPE_NO_TITLE_BAR:
+            case WINDOW_TYPE_COMPACT:
+            case WINDOW_TYPE_ACCESSORY:
+            case WINDOW_TYPE_MAXIMIZED:
+            case WINDOW_TYPE_COMPACT_MAXIMIZED:
+            case WINDOW_TYPE_CENTERED:
+                *percentage = 100;
+                break;
+
+            case WINDOW_TYPE_TOP_PERCENTAGE:
+            case WINDOW_TYPE_BOTTOM_PERCENTAGE:
+                *percentage = [iTermProfilePreferences intForKey:KEY_WIDTH_PERCENTAGE inProfile:aDict];
+                break;
+
+            case WINDOW_TYPE_LEFT_PERCENTAGE:
+            case WINDOW_TYPE_RIGHT_PERCENTAGE:
+                *percentage = [iTermProfilePreferences intForKey:KEY_HEIGHT_PERCENTAGE inProfile:aDict];
+                break;
+        }
         if (windowType == WINDOW_TYPE_TRADITIONAL_FULL_SCREEN &&
             [iTermPreferences boolForKey:kPreferenceKeyLionStyleFullscreen]) {
             return WINDOW_TYPE_LION_FULL_SCREEN;
@@ -1073,6 +1100,7 @@ replaceInitialDirectoryForSessionWithGUID:(NSString *)guid
             return windowType;
         }
     } else {
+        *percentage = 100;
         return iTermWindowDefaultType();
     }
 }
@@ -1102,8 +1130,9 @@ replaceInitialDirectoryForSessionWithGUID:(NSString *)guid
                                            tmuxController:(TmuxController *)tmuxController {
     [iTermController switchToSpaceInBookmark:profile];
     iTermWindowType windowType;
+    double percentage = 100;
     if ([iTermAdvancedSettingsModel serializeOpeningMultipleFullScreenWindows]) {
-        windowType = [self windowTypeForBookmark:profile];
+        windowType = [self windowTypeForBookmark:profile percentage:&percentage];
     } else {
         windowType = iTermThemedWindowType([iTermProfilePreferences intForKey:KEY_WINDOW_TYPE inProfile:profile]);
     }
@@ -1111,6 +1140,7 @@ replaceInitialDirectoryForSessionWithGUID:(NSString *)guid
         [[PseudoTerminal alloc] initWithSmartLayout:YES
                                          windowType:windowType
                                     savedWindowType:windowType
+                                         percentage:percentage
                                              screen:[iTermProfilePreferences intForKey:KEY_SCREEN inProfile:profile]
                                    hotkeyWindowType:iTermHotkeyWindowTypeNone
                                             profile:profile];
@@ -1550,6 +1580,7 @@ replaceInitialDirectoryForSessionWithGUID:(NSString *)guid
         term = [[PseudoTerminal alloc] initWithSmartLayout:YES
                                                  windowType:WINDOW_TYPE_NORMAL
                                             savedWindowType:WINDOW_TYPE_NORMAL
+                                                percentage:100
                                                      screen:-1
                                            hotkeyWindowType:iTermHotkeyWindowTypeNone
                                                     profile:profile];
@@ -1601,6 +1632,7 @@ replaceInitialDirectoryForSessionWithGUID:(NSString *)guid
     term = [[PseudoTerminal alloc] initWithSmartLayout:YES
                                             windowType:WINDOW_TYPE_ACCESSORY
                                        savedWindowType:WINDOW_TYPE_ACCESSORY
+                                            percentage:100
                                                 screen:-1
                                       hotkeyWindowType:iTermHotkeyWindowTypeNone
                                                profile:profile];
@@ -1709,6 +1741,7 @@ replaceInitialDirectoryForSessionWithGUID:(NSString *)guid
         term = [[PseudoTerminal alloc] initWithSmartLayout:YES
                                                 windowType:WINDOW_TYPE_ACCESSORY
                                            savedWindowType:WINDOW_TYPE_ACCESSORY
+                                                percentage:100
                                                     screen:-1
                                           hotkeyWindowType:iTermHotkeyWindowTypeNone
                                                    profile:profile];
@@ -1785,6 +1818,7 @@ replaceInitialDirectoryForSessionWithGUID:(NSString *)guid
     term = [[PseudoTerminal alloc] initWithSmartLayout:YES
                                             windowType:WINDOW_TYPE_ACCESSORY
                                        savedWindowType:WINDOW_TYPE_ACCESSORY
+                                            percentage:100
                                                 screen:-1
                                       hotkeyWindowType:iTermHotkeyWindowTypeNone
                                                profile:windowProfile];
@@ -1899,6 +1933,7 @@ replaceInitialDirectoryForSessionWithGUID:(NSString *)guid
     term = [[PseudoTerminal alloc] initWithSmartLayout:YES
                                             windowType:WINDOW_TYPE_ACCESSORY
                                        savedWindowType:WINDOW_TYPE_ACCESSORY
+                                            percentage:100
                                                 screen:-1
                                       hotkeyWindowType:iTermHotkeyWindowTypeNone
                                                profile:windowProfile];

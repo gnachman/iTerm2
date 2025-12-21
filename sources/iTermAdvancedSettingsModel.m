@@ -277,7 +277,6 @@ DEFINE_BOOL(useUnevenTabs, NO, SECTION_TABS @"Uneven tab widths allowed.");
 DEFINE_INT(minTabWidth, 75, SECTION_TABS @"Minimum tab width when using uneven tab widths.");
 DEFINE_INT(minCompactTabWidth, 60, SECTION_TABS @"Minimum tab width when using uneven tab widths for compact tabs.");
 DEFINE_INT(optimumTabWidth, 175, SECTION_TABS @"Preferred tab width when tabs are equally sized.");
-DEFINE_BOOL(addNewTabAtEndOfTabs, YES, SECTION_TABS @"Add new tabs at the end of the tab bar, not next to current tab.");
 DEFINE_BOOL(moveLeftAfterClosingTab, NO, SECTION_TABS @"Select the tab to the left when closing a tab?\nIf disabled, the tab to the right of the closing tab will be selected.");
 DEFINE_BOOL(navigatePanesInReadingOrder, YES, SECTION_TABS @"Next Pane and Previous Pane commands use reading order, not the time of last use.");
 DEFINE_FLOAT(tabAutoShowHoldTime, 1.0, SECTION_TABS @"How long in seconds to show tabs in fullscreen.\nThe tab bar appears briefly in fullscreen when the number of tabs changes or you switch tabs. This setting gives the time in seconds for it to remain visible.");

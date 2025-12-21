@@ -196,6 +196,7 @@ NSString *const kPreferenceKeyLeftTabBarWidth = @"LeftTabBarWidth";
 
 NSString *const kPreferenceKeyPasteWarningNumberOfSpacesPerTab = @"PasteTabToStringTabStopSize";
 
+NSString *const kPreferenceKeyNewTabsOpenAtEndOfTabBar = @"AddNewTabAtEndOfTabs";
 NSString *const kPreferenceKeyShowFullscreenTabBar = @"ShowFullScreenTabBar";
 NSString *const kPreferenceKeyHotkeyMigratedFromSingleToMulti = @"HotkeyMigratedFromSingleToMulti";
 NSString *const kPreferenceKeyDefaultToolbeltWidth = @"Default Toolbelt Width";
@@ -648,6 +649,7 @@ static NSString *sPreviousVersion;
 
                   kPreferenceKeyPasteWarningNumberOfSpacesPerTab: @4,
                   kPreferenceKeyShowFullscreenTabBar: @YES,
+                  kPreferenceKeyNewTabsOpenAtEndOfTabBar: @YES,
                   kPreferenceKeyHotkeyMigratedFromSingleToMulti: @NO,
                   kPreferenceKeyLeftTabBarWidth: @150,
                   kPreferenceKeyDefaultToolbeltWidth: @250,

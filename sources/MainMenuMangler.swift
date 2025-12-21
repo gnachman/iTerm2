@@ -388,6 +388,11 @@ class MainMenuMangler: NSObject {
             selector: #selector(currentSessionDidChange(_:)),
             name: Notification.Name(rawValue: iTermCurrentSessionDidChange),
             object: nil)
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(currentSessionDidChange(_:)),
+            name: Notification.Name(kCurrentSessionDidChange),
+            object: nil)
         update()
     }
 
@@ -544,7 +549,7 @@ class MainMenuMangler: NSObject {
         }
         let currentSessionIsWeb: Bool
         if let term = NSApp.keyWindow?.delegate as? PseudoTerminal {
-            currentSessionIsWeb = term.checkFirstResponder() == nil
+            currentSessionIsWeb = term.currentSession()?.isBrowserSession() ?? false
         } else {
             currentSessionIsWeb = false
         }

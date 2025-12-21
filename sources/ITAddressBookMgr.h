@@ -137,6 +137,8 @@
 // Display
 #define KEY_ROWS                   @"Rows"  // not to exceed iTermMaxInitialSessionSize
 #define KEY_COLUMNS                @"Columns"  // not to exceed iTermMaxInitialSessionSize
+#define KEY_WIDTH_PERCENTAGE       @"Width Percentage"
+#define KEY_HEIGHT_PERCENTAGE      @"Height Percentage"
 
 // for browser only, at least for now
 #define KEY_WIDTH                  @"Width in Points"  // NSNumber
@@ -412,16 +414,16 @@ typedef enum {
     WINDOW_TYPE_LION_FULL_SCREEN = 4,  // Lion-native fullscreen
 
     // These are glued to an edge of the screen and span the full width/height
-    WINDOW_TYPE_TOP = 2,  // note: number is out of order
-    WINDOW_TYPE_BOTTOM = 5,
-    WINDOW_TYPE_LEFT = 6,
-    WINDOW_TYPE_RIGHT = 7,
+    WINDOW_TYPE_TOP_PERCENTAGE = 2,  // note: number is out of order
+    WINDOW_TYPE_BOTTOM_PERCENTAGE = 5,
+    WINDOW_TYPE_LEFT_PERCENTAGE = 6,
+    WINDOW_TYPE_RIGHT_PERCENTAGE = 7,
 
     // These are glued to an edge of the screen but may vary in width/height
-    WINDOW_TYPE_BOTTOM_PARTIAL = 8,
-    WINDOW_TYPE_TOP_PARTIAL = 9,
-    WINDOW_TYPE_LEFT_PARTIAL = 10,
-    WINDOW_TYPE_RIGHT_PARTIAL = 11,
+    WINDOW_TYPE_BOTTOM_CELLS = 8,
+    WINDOW_TYPE_TOP_CELLS = 9,
+    WINDOW_TYPE_LEFT_CELLS = 10,
+    WINDOW_TYPE_RIGHT_CELLS = 11,
 
     WINDOW_TYPE_NO_TITLE_BAR = 12,
     WINDOW_TYPE_COMPACT = 13,  // May be converted to normal depending on theme

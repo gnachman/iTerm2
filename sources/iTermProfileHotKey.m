@@ -417,14 +417,14 @@ static NSString *const kArrangement = @"Arrangement";
     NSScreen *screen = windowController.screen;
 
     switch (windowController.windowType) {
-        case WINDOW_TYPE_TOP:
-        case WINDOW_TYPE_TOP_PARTIAL:
-        case WINDOW_TYPE_LEFT:
-        case WINDOW_TYPE_LEFT_PARTIAL:
-        case WINDOW_TYPE_RIGHT:
-        case WINDOW_TYPE_RIGHT_PARTIAL:
-        case WINDOW_TYPE_BOTTOM:
-        case WINDOW_TYPE_BOTTOM_PARTIAL:
+        case WINDOW_TYPE_TOP_PERCENTAGE:
+        case WINDOW_TYPE_TOP_CELLS:
+        case WINDOW_TYPE_LEFT_PERCENTAGE:
+        case WINDOW_TYPE_LEFT_CELLS:
+        case WINDOW_TYPE_RIGHT_PERCENTAGE:
+        case WINDOW_TYPE_RIGHT_CELLS:
+        case WINDOW_TYPE_BOTTOM_PERCENTAGE:
+        case WINDOW_TYPE_BOTTOM_CELLS:
         case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:  // Framerate drops too much to roll this (2014 5k iMac)
         case WINDOW_TYPE_LION_FULL_SCREEN:
         case WINDOW_TYPE_MAXIMIZED:
@@ -461,20 +461,20 @@ static NSString *const kArrangement = @"Arrangement";
         case WINDOW_TYPE_CENTERED:
             return rect.origin;
 
-        case WINDOW_TYPE_TOP:
-        case WINDOW_TYPE_TOP_PARTIAL:
+        case WINDOW_TYPE_TOP_PERCENTAGE:
+        case WINDOW_TYPE_TOP_CELLS:
             return NSMakePoint(rect.origin.x, NSMaxY(screen.visibleFrame));
 
-        case WINDOW_TYPE_LEFT:
-        case WINDOW_TYPE_LEFT_PARTIAL:
+        case WINDOW_TYPE_LEFT_PERCENTAGE:
+        case WINDOW_TYPE_LEFT_CELLS:
             return NSMakePoint(NSMinX(screen.visibleFrameIgnoringHiddenDock), rect.origin.y);
 
-        case WINDOW_TYPE_RIGHT:
-        case WINDOW_TYPE_RIGHT_PARTIAL:
+        case WINDOW_TYPE_RIGHT_PERCENTAGE:
+        case WINDOW_TYPE_RIGHT_CELLS:
             return NSMakePoint(NSMaxX(screen.visibleFrameIgnoringHiddenDock), rect.origin.y);
 
-        case WINDOW_TYPE_BOTTOM:
-        case WINDOW_TYPE_BOTTOM_PARTIAL:
+        case WINDOW_TYPE_BOTTOM_PERCENTAGE:
+        case WINDOW_TYPE_BOTTOM_CELLS:
             return NSMakePoint(rect.origin.x, NSMinY(screen.visibleFrameIgnoringHiddenDock) - NSHeight(rect));
 
         case WINDOW_TYPE_NORMAL:
@@ -613,23 +613,23 @@ static NSString *const kArrangement = @"Arrangement";
 
 - (iTermAnimationDirection)animateInDirectionForWindowType:(iTermWindowType)windowType {
     switch (iTermThemedWindowType(windowType)) {
-        case WINDOW_TYPE_TOP:
-        case WINDOW_TYPE_TOP_PARTIAL:
+        case WINDOW_TYPE_TOP_PERCENTAGE:
+        case WINDOW_TYPE_TOP_CELLS:
             return kAnimationDirectionDown;
             break;
 
-        case WINDOW_TYPE_LEFT:
-        case WINDOW_TYPE_LEFT_PARTIAL:
+        case WINDOW_TYPE_LEFT_PERCENTAGE:
+        case WINDOW_TYPE_LEFT_CELLS:
             return kAnimationDirectionRight;
             break;
 
-        case WINDOW_TYPE_RIGHT:
-        case WINDOW_TYPE_RIGHT_PARTIAL:
+        case WINDOW_TYPE_RIGHT_PERCENTAGE:
+        case WINDOW_TYPE_RIGHT_CELLS:
             return kAnimationDirectionLeft;
             break;
 
-        case WINDOW_TYPE_BOTTOM:
-        case WINDOW_TYPE_BOTTOM_PARTIAL:
+        case WINDOW_TYPE_BOTTOM_PERCENTAGE:
+        case WINDOW_TYPE_BOTTOM_CELLS:
             return kAnimationDirectionUp;
             break;
 
@@ -684,14 +684,14 @@ static NSString *const kArrangement = @"Arrangement";
     [self.windowController.window makeKeyAndOrderFront:nil];
     if (animated) {
         switch (self.windowController.windowType) {
-            case WINDOW_TYPE_TOP:
-            case WINDOW_TYPE_TOP_PARTIAL:
-            case WINDOW_TYPE_LEFT:
-            case WINDOW_TYPE_LEFT_PARTIAL:
-            case WINDOW_TYPE_RIGHT:
-            case WINDOW_TYPE_RIGHT_PARTIAL:
-            case WINDOW_TYPE_BOTTOM:
-            case WINDOW_TYPE_BOTTOM_PARTIAL:
+            case WINDOW_TYPE_TOP_PERCENTAGE:
+            case WINDOW_TYPE_TOP_CELLS:
+            case WINDOW_TYPE_LEFT_PERCENTAGE:
+            case WINDOW_TYPE_LEFT_CELLS:
+            case WINDOW_TYPE_RIGHT_PERCENTAGE:
+            case WINDOW_TYPE_RIGHT_CELLS:
+            case WINDOW_TYPE_BOTTOM_PERCENTAGE:
+            case WINDOW_TYPE_BOTTOM_CELLS:
                 [self rollInAnimatingInDirection:[self animateInDirectionForWindowType:self.windowController.windowType]];
                 break;
 
@@ -740,14 +740,14 @@ static NSString *const kArrangement = @"Arrangement";
 
     if ([iTermProfilePreferences boolForKey:KEY_HOTKEY_ANIMATE inProfile:self.profile]) {
         switch (self.windowController.windowType) {
-            case WINDOW_TYPE_TOP:
-            case WINDOW_TYPE_TOP_PARTIAL:
-            case WINDOW_TYPE_LEFT:
-            case WINDOW_TYPE_LEFT_PARTIAL:
-            case WINDOW_TYPE_RIGHT:
-            case WINDOW_TYPE_RIGHT_PARTIAL:
-            case WINDOW_TYPE_BOTTOM:
-            case WINDOW_TYPE_BOTTOM_PARTIAL: {
+            case WINDOW_TYPE_TOP_PERCENTAGE:
+            case WINDOW_TYPE_TOP_CELLS:
+            case WINDOW_TYPE_LEFT_PERCENTAGE:
+            case WINDOW_TYPE_LEFT_CELLS:
+            case WINDOW_TYPE_RIGHT_PERCENTAGE:
+            case WINDOW_TYPE_RIGHT_CELLS:
+            case WINDOW_TYPE_BOTTOM_PERCENTAGE:
+            case WINDOW_TYPE_BOTTOM_CELLS: {
                 iTermAnimationDirection inDirection = [self animateInDirectionForWindowType:self.windowController.windowType];
                 iTermAnimationDirection outDirection = iTermAnimationDirectionOpposite(inDirection);
                 [self rollOutAnimatingInDirection:outDirection causedByKeypress:causedByKeypress];

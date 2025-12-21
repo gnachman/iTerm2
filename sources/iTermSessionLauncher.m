@@ -695,7 +695,8 @@
     }
 
     [iTermController switchToSpaceInBookmark:profile];
-    int windowType = [[iTermController sharedInstance] windowTypeForBookmark:profile];
+    double percentage = 100;
+    int windowType = [[iTermController sharedInstance] windowTypeForBookmark:profile percentage:&percentage];
     if (self.isHotkey && windowType == WINDOW_TYPE_LION_FULL_SCREEN) {
         DLog(@"Convert lion to traditional fullscreen because hotkey window");
         windowType = WINDOW_TYPE_TRADITIONAL_FULL_SCREEN;
@@ -709,6 +710,7 @@
         [windowController finishInitializationWithSmartLayout:YES
                                                    windowType:windowType
                                               savedWindowType:iTermWindowDefaultType()
+                                                   percentage:percentage
                                                        screen:profile[KEY_SCREEN] ? [profile[KEY_SCREEN] intValue] : -1
                                              hotkeyWindowType:_hotkeyWindowType
                                                       profile:profile];
@@ -717,6 +719,7 @@
         windowController = [[PseudoTerminal alloc] initWithSmartLayout:YES
                                                             windowType:windowType
                                                        savedWindowType:windowType
+                                                            percentage:percentage
                                                                 screen:profile[KEY_SCREEN] ? [profile[KEY_SCREEN] intValue] : -1
                                                       hotkeyWindowType:_hotkeyWindowType
                                                                profile:profile];

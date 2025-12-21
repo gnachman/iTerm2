@@ -471,10 +471,38 @@ NS_CLASS_AVAILABLE_MAC(10_14)
 }
 
 - (CGFloat)leftInsetForWindowButtons {
+    if (@available(macOS 26, *)) {
+        const iTermPreferencesTabStyle preferredStyle = [iTermPreferences intForKey:kPreferenceKeyTabStyle];
+        switch (preferredStyle) {
+            case TAB_STYLE_MINIMAL:
+                return 2.5;
+            case TAB_STYLE_COMPACT:
+            case TAB_STYLE_DARK:
+            case TAB_STYLE_LIGHT:
+            case TAB_STYLE_AUTOMATIC:
+            case TAB_STYLE_DARK_HIGH_CONTRAST:
+            case TAB_STYLE_LIGHT_HIGH_CONTRAST:
+                break;
+        }
+    }
     return 6;
 }
 
 - (CGFloat)strideForWindowButtons {
+    if (@available(macOS 26, *)) {
+        const iTermPreferencesTabStyle preferredStyle = [iTermPreferences intForKey:kPreferenceKeyTabStyle];
+        switch (preferredStyle) {
+            case TAB_STYLE_MINIMAL:
+                return 23;
+            case TAB_STYLE_COMPACT:
+            case TAB_STYLE_DARK:
+            case TAB_STYLE_LIGHT:
+            case TAB_STYLE_AUTOMATIC:
+            case TAB_STYLE_DARK_HIGH_CONTRAST:
+            case TAB_STYLE_LIGHT_HIGH_CONTRAST:
+                break;
+        }
+    }
     return 20;
 }
 

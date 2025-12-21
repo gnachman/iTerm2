@@ -83,7 +83,8 @@ extern NSString *const TERMINAL_ARRANGEMENT_MINIATURIZED;
 
     // DO NOT ACCESS DIRECTLY - USE ACCESSORS INSTEAD
     iTermWindowType _windowType;
-
+    double _percentage;
+    
     // DO NOT ACCESS DIRECTLY - USE ACCESSORS INSTEAD
     // Window type before entering fullscreen. Only relevant if in/entering fullscreen.
     iTermWindowType _savedWindowType;

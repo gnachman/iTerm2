@@ -353,9 +353,20 @@ static BOOL hasBecomeActive = NO;
         _splitVerticallyWithCurrentProfile.title = [@"│⃞ " stringByAppendingString:_splitVerticallyWithCurrentProfile.title];
     }
 
-#if !BETA
-    [_iterm2Menu removeItem:_captureGPUFrameMenuItem];
+    BOOL isReleaseBuild = YES;
+#if BETA
+    isReleaseBuild = NO;
+#else
+    {
+        NSString *version = [[[NSBundle mainBundle] infoDictionary] objectForKey:@"CFBundleShortVersionString"];
+        if ([version isEqual:@"unknown"] || [version containsString:@".git."] || [version hasSuffix:@"-adhoc"]) {
+            isReleaseBuild = NO;
+        }
+    }
 #endif
+    if (isReleaseBuild) {
+        [_iterm2Menu removeItem:_captureGPUFrameMenuItem];
+    }
 
     [[iTermBuriedSessions sharedInstance] setMenus:[NSArray arrayWithObjects:_buriedSessions, _statusIconBuriedSessions, nil]];
     _triggers.submenu.delegate = self;
@@ -2571,6 +2582,7 @@ static iTermKeyEventReplayer *gReplayer;
                     term = [[[PseudoTerminal alloc] initWithSmartLayout:YES
                                                              windowType:iTermWindowDefaultType()
                                                         savedWindowType:iTermWindowDefaultType()
+                                                             percentage:100
                                                                  screen:-1
                                                                 profile:nil] autorelease];
                     if (term) {
@@ -2594,6 +2606,7 @@ static iTermKeyEventReplayer *gReplayer;
                     term = [[[PseudoTerminal alloc] initWithSmartLayout:YES
                                                              windowType:iTermWindowDefaultType()
                                                         savedWindowType:iTermWindowDefaultType()
+                                                             percentage:100
                                                                  screen:-1
                                                                 profile:nil] autorelease];
                     [[iTermController sharedInstance] addTerminalWindow:term];
