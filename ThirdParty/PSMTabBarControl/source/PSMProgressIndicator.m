@@ -83,7 +83,8 @@
     CGFloat radius = (diameter - lineWidth) / 2.0;
 
     CGMutablePathRef path = CGPathCreateMutable();
-    CGPathAddArc(path, NULL, center.x, center.y, radius, (CGFloat)-M_PI_2, (CGFloat)(-M_PI_2 + 2.0 * M_PI), false);
+    // Start at 12 o'clock (M_PI_2 in flipped coordinates) and go clockwise to match macOS
+    CGPathAddArc(path, NULL, center.x, center.y, radius, (CGFloat)(M_PI_2), (CGFloat)(M_PI_2 - 2.0 * M_PI), true);
     return path;
 }
 
