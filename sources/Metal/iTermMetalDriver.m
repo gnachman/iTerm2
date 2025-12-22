@@ -640,7 +640,10 @@ legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth
             .contentsScale = view.layerContentsScale,
             .backingScaleFactor = view.window.screen.backingScaleFactor,
             .drawableScaleFactor = view.currentDrawableScaleFactor,
-            .hasWindow = (view.window != nil)
+            .hasWindow = (view.window != nil),
+            .mainScreenScale = view.mainScreenBackingScaleFactor,
+            .sizeDirty = view.isSizeDirty,
+            .resizeDrawableChanged = view.didResizeDrawableChange
         };
         frameData.debugInfo2 = debugInfo2;
     }];
@@ -668,16 +671,20 @@ legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth
                              vp.x != (unsigned int)di.layerDrawableSize.width ||
                              vp.y != (unsigned int)di.layerDrawableSize.height);
         BOOL scaleMismatch = (di.contentsScale != di.backingScaleFactor && di.hasWindow);
+        BOOL mainScreenMismatch = (di.mainScreenScale != di.backingScaleFactor && di.hasWindow);
 
-        NSString *debugString = [NSString stringWithFormat:@"%@VP:%dx%d DT:%.0fx%.0f VF:%.0fx%.0f LD:%.0fx%.0f CS:%.1f BS:%.1f W:%d",
-                                 (sizeMismatch || scaleMismatch) ? @"!!" : @"",
+        NSString *debugString = [NSString stringWithFormat:@"%@VP:%dx%d DT:%.0fx%.0f VF:%.0fx%.0f LD:%.0fx%.0f CS:%.1f BS:%.1f MS:%.1f W:%d SD:%d RD:%d",
+                                 (sizeMismatch || scaleMismatch || mainScreenMismatch) ? @"!!" : @"",
                                  vp.x, vp.y,
                                  di.drawableTextureSize.width, di.drawableTextureSize.height,
                                  di.viewFrame.width, di.viewFrame.height,
                                  di.layerDrawableSize.width, di.layerDrawableSize.height,
                                  di.contentsScale,
                                  di.backingScaleFactor,
-                                 di.hasWindow ? 1 : 0];
+                                 di.mainScreenScale,
+                                 di.hasWindow ? 1 : 0,
+                                 di.sizeDirty ? 1 : 0,
+                                 di.resizeDrawableChanged ? 1 : 0];
         [frameData.perFrameState setDebugString:debugString];
     }
 

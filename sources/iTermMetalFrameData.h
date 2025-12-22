@@ -132,6 +132,9 @@ typedef struct {
     CGFloat backingScaleFactor; // window.screen.backingScaleFactor at frame creation (0 if no window)
     CGSize drawableScaleFactor; // custom drawableScaleFactor at frame creation
     BOOL hasWindow;             // whether view.window != nil at frame creation
+    CGFloat mainScreenScale;    // NSScreen.main.backingScaleFactor (to detect multi-monitor mismatch)
+    BOOL sizeDirty;             // whether sizeDirty was true at frame start
+    BOOL resizeDrawableChanged; // whether resizeDrawable() changed the size this frame
 } iTermMetalFrameDataDebugInfo;
 
 NS_CLASS_AVAILABLE(10_11, NA)
