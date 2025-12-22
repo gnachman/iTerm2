@@ -11,6 +11,89 @@ import Cocoa
 @objc(iTermAutoResizingTextView)
 class AutoResizingTextView: NSTextView {
     private let minimumFontSize: CGFloat = 8
+    @objc var linkClickHandler: ((URL) -> Void)?
+
+    private static let popoverScheme = "x-iterm2-popover"
+
+    override func mouseDown(with event: NSEvent) {
+        if let url = linkAtPoint(convert(event.locationInWindow, from: nil)) {
+            if let handler = linkClickHandler {
+                handler(url)
+            } else if url.scheme == Self.popoverScheme {
+                showPopover(for: url, at: event.locationInWindow)
+            } else {
+                NSWorkspace.shared.open(url)
+            }
+            return
+        }
+        super.mouseDown(with: event)
+    }
+
+    private func showPopover(for url: URL, at windowPoint: NSPoint) {
+        // URL format: x-iterm2-popover:?message=URL-encoded-markdown
+        guard let components = URLComponents(url: url, resolvingAgainstBaseURL: false),
+              let message = components.queryItems?.first(where: { $0.name == "message" })?.value,
+              !message.isEmpty else {
+            return
+        }
+        it_showInformativeMessage(withMarkdown: message)
+    }
+
+    override func resetCursorRects() {
+        super.resetCursorRects()
+        addCursorRectsForLinks()
+    }
+
+    private func addCursorRectsForLinks() {
+        guard let textStorage, let layoutManager, let textContainer else { return }
+
+        let fullRange = NSRange(location: 0, length: textStorage.length)
+        textStorage.enumerateAttribute(.link, in: fullRange) { value, range, _ in
+            guard value != nil else { return }
+
+            let glyphRange = layoutManager.glyphRange(forCharacterRange: range, actualCharacterRange: nil)
+            layoutManager.enumerateEnclosingRects(
+                forGlyphRange: glyphRange,
+                withinSelectedGlyphRange: NSRange(location: NSNotFound, length: 0),
+                in: textContainer
+            ) { rect, _ in
+                var adjustedRect = rect
+                adjustedRect.origin.x += self.textContainerInset.width
+                adjustedRect.origin.y += self.textContainerInset.height
+                self.addCursorRect(adjustedRect, cursor: .pointingHand)
+            }
+        }
+    }
+
+    private func linkAtPoint(_ point: NSPoint) -> URL? {
+        guard let textStorage, let layoutManager, let textContainer else { return nil }
+
+        var adjustedPoint = point
+        adjustedPoint.x -= textContainerInset.width
+        adjustedPoint.y -= textContainerInset.height
+
+        let glyphIndex = layoutManager.glyphIndex(for: adjustedPoint, in: textContainer)
+        let charIndex = layoutManager.characterIndexForGlyph(at: glyphIndex)
+
+        guard charIndex < textStorage.length else { return nil }
+
+        // Verify the click is actually within the glyph's bounding rect
+        let glyphRect = layoutManager.boundingRect(forGlyphRange: NSRange(location: glyphIndex, length: 1), in: textContainer)
+        var adjustedGlyphRect = glyphRect
+        adjustedGlyphRect.origin.x += textContainerInset.width
+        adjustedGlyphRect.origin.y += textContainerInset.height
+
+        guard adjustedGlyphRect.contains(point) else { return nil }
+
+        if let link = textStorage.attribute(.link, at: charIndex, effectiveRange: nil) {
+            if let url = link as? URL {
+                return url
+            } else if let urlString = link as? String, let url = URL(string: urlString) {
+                return url
+            }
+        }
+        return nil
+    }
 
     override var string: String {
         didSet {
@@ -34,6 +117,7 @@ class AutoResizingTextView: NSTextView {
     override func setFrameSize(_ newSize: NSSize) {
         super.setFrameSize(newSize)
         adjustFontSizes()
+        window?.invalidateCursorRects(for: self)
     }
 
     override func viewDidMoveToSuperview() {
@@ -106,6 +190,9 @@ class AutoResizingTextView: NSTextView {
 
         // Set attributed string and update layout
         truncateTextIfNeeded()
+
+        // Update cursor rects for links
+        window?.invalidateCursorRects(for: self)
     }
 
     func sizeThatFits(_ attributedString: NSAttributedString,

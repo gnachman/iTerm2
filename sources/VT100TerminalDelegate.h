@@ -441,6 +441,7 @@ typedef NS_ENUM(NSUInteger, VT100TerminalProtectedMode) {
 - (void)terminalSetBackgroundImageFile:(NSString *)filename;
 - (void)terminalSetBadgeFormat:(NSString *)badge;
 - (void)terminalSetUserVar:(NSString *)kvp;
+- (void)terminalSetProfileProperty:(NSString *)kvp;
 
 - (BOOL)terminalFocusReportingAllowed;
 - (BOOL)terminalCursorVisible;

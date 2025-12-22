@@ -14,6 +14,7 @@
 #import "NSArray+iTerm.h"
 #import "NSColor+iTerm.h"
 #import "NSData+iTerm.h"
+#import "NSJSONSerialization+iTerm.h"
 #import "NSStringITerm.h"
 #import "VT100ScreenConfiguration.h"
 #import "VT100ScreenState+Private.h"
@@ -1671,6 +1672,40 @@ typedef struct {
         [delegate screenSetBackgroundImageFile:filename];
         [unpauser unpause];
     } name:@"set bg image"];
+}
+
+- (void)terminalSetProfileProperty:(NSString *)kvps {
+    NSArray<iTermTuple<NSString *, NSString *> *> *tuples = [[kvps componentsSeparatedByString:@";"] mapWithBlock:^id _Nullable(NSString *kvp) {
+        return [kvp keyValuePair];
+    }];
+    DLog(@"begin %@ -> %@", kvps, tuples);
+    if (!tuples.count) {
+        return;
+    }
+    NSMutableDictionary *dict = [NSMutableDictionary dictionary];
+    [tuples enumerateObjectsUsingBlock:^(iTermTuple<NSString *,NSString *> *tuple, NSUInteger idx, BOOL * _Nonnull stop) {
+        NSString *string = [tuple.secondObject stringByBase64DecodingStringWithEncoding:NSUTF8StringEncoding];
+        if (!string) {
+            DLog(@"Base base64 %@", tuple.secondObject);
+            return;
+        }
+        id obj = [NSJSONSerialization it_objectForJsonString:string];
+        if (!obj) {
+            DLog(@"Failed to decode %@", tuple.secondObject);
+            return;
+        }
+        dict[tuple.firstObject] = obj;
+    }];
+    DLog(@"After decoding: %@", dict);
+    if (!dict.count) {
+        DLog(@"Nothing to do");
+        return;
+    }
+    [self addPausedSideEffect:^(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser) {
+        DLog(@"begin side-effect");
+        [delegate screenSetProfileProperties:dict];
+        [unpauser unpause];
+    } name:@"set profile property"];
 }
 
 - (void)terminalSetBadgeFormat:(NSString *)badge {

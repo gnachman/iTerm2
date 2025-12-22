@@ -36,6 +36,19 @@
     return announcement;
 }
 
++ (instancetype)announcementWithMarkdownTitle:(NSString *)title
+                                style:(iTermAnnouncementViewStyle)style
+                          withActions:(NSArray *)actions
+                           completion:(void (^)(int))completion {
+    iTermAnnouncementViewController *announcement = [[self alloc] init];
+    announcement.isMarkdown = YES;
+    announcement.title = title;
+    announcement.actions = actions;
+    announcement.completion = completion;
+    announcement.style = style;
+    return announcement;
+}
+
 - (NSString *)description {
     return [NSString stringWithFormat:@"<%@: %p title=\"%@\" dismissing=%d>",
             self.class, self, self.title, (int)_dismissing];
@@ -43,12 +56,21 @@
 
 - (void)loadView {
     __weak __typeof(self) weakSelf = self;
-    self.view = [iTermAnnouncementView announcementViewWithTitle:self.title
-                                                           style:_style
-                                                         actions:self.actions
-                                                           block:^(int index) {
-        [weakSelf didInvoke:index];
-    }];
+    if (self.isMarkdown) {
+        self.view = [iTermAnnouncementView announcementViewWithMarkdownTitle:self.title
+                                                                       style:_style
+                                                                     actions:self.actions
+                                                                       block:^(int index) {
+            [weakSelf didInvoke:index];
+        }];
+    } else {
+        self.view = [iTermAnnouncementView announcementViewWithTitle:self.title
+                                                               style:_style
+                                                             actions:self.actions
+                                                               block:^(int index) {
+            [weakSelf didInvoke:index];
+        }];
+    }
 }
 
 - (void)setTitle:(NSString *)title {

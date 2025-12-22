@@ -22,6 +22,12 @@ extern NSString *const kTurnOffBracketedPasteOnHostChangeAnnouncementIdentifier;
                           identifier:(NSString *)identifier
                              options:(NSArray<NSString *> *)options
                           completion:(void (^)(int))completion;
+- (void)naggingControllerShowMarkdownMessage:(NSString *)message
+                                  isQuestion:(BOOL)isQuestion
+                                   important:(BOOL)important
+                                  identifier:(NSString *)identifier
+                                     options:(NSArray<NSString *> *)options
+                                  completion:(void (^)(int))completion;
 
 - (void)naggingControllerRepairSavedArrangement:(NSString *)savedArrangementName
                             missingProfileNamed:(NSString *)profileName
@@ -43,6 +49,8 @@ extern NSString *const kTurnOffBracketedPasteOnHostChangeAnnouncementIdentifier;
                                            guid:(NSString *)guid;
 - (void)naggingControllerPrettyPrintJSON;
 - (NSWindow * _Nullable)naggingControllerWindow;
+- (void)naggingControllerSetProfileProperties:(NSDictionary *)dict;
+
 @end
 
 @interface iTermNaggingController : NSObject
@@ -93,6 +101,7 @@ extern NSString *const kTurnOffBracketedPasteOnHostChangeAnnouncementIdentifier;
 - (void)showJSONPromotion;
 - (void)offerTextReplacement:(void (^NS_NOESCAPE)(void))perform;
 - (void)cancelTextReplacementOffer;
+- (void)offerToSetProfileProperties:(NSDictionary *)dict;
 
 @end
 

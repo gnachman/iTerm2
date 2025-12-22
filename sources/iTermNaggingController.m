@@ -40,6 +40,7 @@ static NSString *iTermNaggingControllerUserDefaultAlwaysAllowBackgroundImage = @
 static NSString *iTermNaggingControllerUserDefaultAlwaysDenyBackgroundImage = @"AlwaysDenyBackgroundImage";
 static NSString *const iTermNaggingControllerDidChangeTmuxWindowsShouldCloseAfterDetach = @"iTermNaggingControllerDidChangeTmuxWindowsShouldCloseAfterDetach";
 static NSString *const iTermNaggingControllerArrangementTextReplacements = @"TextReplacements";
+static NSString *const iTermNaggingControllerArrangementSetProfileProperty = @"SetProfileProperty";
 
 @implementation iTermNaggingController {
     BOOL _haveOutstandingTextReplacementOffer;
@@ -95,6 +96,71 @@ static NSString *const iTermNaggingControllerArrangementTextReplacements = @"Tex
         if (selection == 0) {
             [self.delegate naggingControllerAssignProfileToSession:arrangementName
                                                               guid:guid];
+        }
+    }];
+}
+
+- (NSString *)userDefaultsKeyForProfileProperty:(NSString *)key {
+    return [@"NoSyncSetProfileProperty_" stringByAppendingString:key];
+}
+
+- (void)offerToSetProfileProperties:(NSDictionary<NSString *, id> *)dict {
+    DLog(@"%@", dict);
+    NSDictionary *permissions = [dict mapValuesWithBlock:^id(NSString *key, id object) {
+        return [[NSUserDefaults standardUserDefaults] objectForKey:[self userDefaultsKeyForProfileProperty:key]];
+    }];
+    DLog(@"permissions: %@", permissions);
+    // true = deny, false = always allow
+    if ([permissions.allValues containsObject:@(iTermTriStateTrue)]) {
+        DLog(@"Disallowed by setting");
+        return;
+    }
+    if (permissions.count == dict.count && [permissions.allValues allWithBlock:^BOOL(id anObject) {
+        return [anObject isEqual:@(iTermTriStateFalse)];
+    }]) {
+        [self.delegate naggingControllerSetProfileProperties:dict];
+        return;
+    }
+    NSString *notice;
+    if (dict.count == 1) {
+        NSString *key = dict.allKeys.firstObject;
+        notice = [NSString stringWithFormat:@"An app tried to change the profile property **%@**", [iTermProfilePreferences descriptionForKey:key]];
+    } else {
+        NSMutableArray<NSString *> *descriptions = [NSMutableArray array];
+        for (NSString *key in dict.allKeys) {
+            NSString *desc = [iTermProfilePreferences descriptionForKey:key] ?: key;
+            [descriptions addObject:[NSString stringWithFormat:@"* %@", desc]];
+        }
+        NSString *bulletList = [descriptions componentsJoinedByString:@"\n"];
+        NSString *popoverMessage = [NSString stringWithFormat:@"**Properties to be changed:**\n\n%@", bulletList];
+        NSString *encodedMessage = [popoverMessage stringByAddingPercentEncodingWithAllowedCharacters:[NSCharacterSet URLQueryAllowedCharacterSet]];
+        NSString *popoverURL = [NSString stringWithFormat:@"x-iterm2-popover:?message=%@", encodedMessage];
+        notice = [NSString stringWithFormat:@"An app tried to change [multiple profile properties](%@).", popoverURL];
+    }
+    __weak __typeof(self) weakSelf = self;
+    [self.delegate naggingControllerShowMarkdownMessage:notice
+                                             isQuestion:YES
+                                              important:NO
+                                             identifier:iTermNaggingControllerArrangementSetProfileProperty
+                                                options:@[ @"_Allow Once", @"Allow Always", @"Deny Always" ]
+                                             completion:^(int selection) {
+        if (selection == 0 || selection == 1) {
+            [weakSelf.delegate naggingControllerSetProfileProperties:dict];
+        }
+        __strong __typeof(self) strongSelf = weakSelf;
+        if (!strongSelf) {
+            return;
+        }
+        if (selection == 1) {
+            for (NSString *key in dict) {
+                [[NSUserDefaults standardUserDefaults] setObject:@(iTermTriStateFalse)
+                                                          forKey:[strongSelf userDefaultsKeyForProfileProperty:key]];
+            }
+        } else if (selection == 2) {
+            for (NSString *key in dict) {
+                [[NSUserDefaults standardUserDefaults] setObject:@(iTermTriStateTrue)
+                                                          forKey:[strongSelf userDefaultsKeyForProfileProperty:key]];
+            }
         }
     }];
 }
