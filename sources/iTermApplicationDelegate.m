@@ -518,6 +518,9 @@ static BOOL hasBecomeActive = NO;
             return NO;
         }
         return !!(menuItem.tag & profileType);
+    } else if (menuItem.action == @selector(newSessionAlternate:)) {
+        menuItem.title = [self alternateNewSessionShouldOpenAtEnd] ? @"New Tab At End" : @"New Tab Next to Current Tab";
+        return YES;
     } else {
         return YES;
     }
@@ -2439,6 +2442,29 @@ static iTermKeyEventReplayer *gReplayer;
 
 - (IBAction)newSession:(id)sender {
     [self newTabAtIndex:nil];
+}
+
+- (BOOL)alternateNewSessionShouldOpenAtEnd {
+    return ![iTermPreferences boolForKey:kPreferenceKeyNewTabsOpenAtEndOfTabBar];
+}
+
+- (IBAction)newSessionAlternate:(id)sender {
+    NSNumber *index = nil;
+    PseudoTerminal *term = [[iTermController sharedInstance] currentTerminal];
+    if (term) {
+        if ([self alternateNewSessionShouldOpenAtEnd]) {
+            index = @(term.numberOfTabs);
+        } else {
+            PTYTab *tab = term.currentTab;
+            const NSInteger i = [term indexOfTab:tab];
+            if (i == NSNotFound) {
+                index = nil;
+            } else {
+                index = @(i + 1);
+            }
+        }
+    }
+    [self newTabAtIndex:index];
 }
 
 - (void)newTabAtIndex:(NSNumber *)index {
