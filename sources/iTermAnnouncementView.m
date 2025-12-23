@@ -35,6 +35,18 @@ static const CGFloat kMargin = 8;
     void (^_block)(int);
 }
 
++ (id)announcementViewWithMarkdownTitle:(NSString *)title
+                                  style:(iTermAnnouncementViewStyle)style
+                                actions:(NSArray *)actions
+                                  block:(void (^)(int index))block {
+    iTermAnnouncementView *view = [[self alloc] initWithFrame:NSMakeRect(0, 0, 1000, 44)];
+    view.style = style;
+    view.isMarkdown = YES;
+    [view setTitle:title];
+    [view createButtonsFromActions:actions block:block];
+    return view;
+}
+
 + (id)announcementViewWithTitle:(NSString *)title
                            style:(iTermAnnouncementViewStyle)style
                         actions:(NSArray *)actions
@@ -277,8 +289,15 @@ static const CGFloat kMargin = 8;
         iTermAutoResizingTextView *textView = [[iTermAutoResizingTextView alloc] initWithFrame:rect];
         NSDictionary *attributes = @{ NSFontAttributeName: [NSFont systemFontOfSize:12],
                                       NSForegroundColorAttributeName: [NSColor textColor] };
-        NSAttributedString *attributedString = [[NSAttributedString alloc] initWithString:title
-                                                                               attributes:attributes];
+        NSAttributedString *attributedString;
+        if (self.isMarkdown) {
+            attributedString = [NSAttributedString attributedStringWithMarkdown:title
+                                                                           font:attributes[NSFontAttributeName]
+                                                                 paragraphStyle:[NSParagraphStyle defaultParagraphStyle]];
+        } else {
+            attributedString = [[NSAttributedString alloc] initWithString:title
+                                                               attributes:attributes];
+        }
         textView.textStorage.attributedString = attributedString;
         [textView setEditable:NO];
         textView.autoresizingMask = NSViewWidthSizable | NSViewMaxXMargin;

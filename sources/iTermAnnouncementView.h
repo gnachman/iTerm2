@@ -15,11 +15,17 @@ typedef NS_ENUM(NSInteger, iTermAnnouncementViewStyle) {
 
 @interface iTermAnnouncementView : NSView
 @property (nonatomic, strong)NSString *title;
+@property (nonatomic) BOOL isMarkdown;
 
 + (instancetype)announcementViewWithTitle:(NSString *)title
                                     style:(iTermAnnouncementViewStyle)style
                                   actions:(NSArray *)actions
                                     block:(void (^)(int index))block;
+
++ (instancetype)announcementViewWithMarkdownTitle:(NSString *)title
+                                            style:(iTermAnnouncementViewStyle)style
+                                          actions:(NSArray *)actions
+                                            block:(void (^)(int index))block;
 
 - (void)sizeToFit;
 

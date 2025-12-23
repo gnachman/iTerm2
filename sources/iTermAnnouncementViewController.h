@@ -19,6 +19,7 @@
 
 @property(nonatomic, assign) id<iTermAnnouncementDelegate> delegate;
 @property(nonatomic, copy) void (^completion)(int);
+@property(nonatomic) BOOL isMarkdown;
 
 // NOTE: Once this is set to YES it can never be changed.
 @property(nonatomic, assign) BOOL dismissOnKeyDown;
@@ -27,6 +28,11 @@
                                 style:(iTermAnnouncementViewStyle)style
                           withActions:(NSArray *)actions
                            completion:(void (^)(int))completion;
+
++ (instancetype)announcementWithMarkdownTitle:(NSString *)title
+                                        style:(iTermAnnouncementViewStyle)style
+                                  withActions:(NSArray *)actions
+                                   completion:(void (^)(int))completion;
 
 - (void)dismiss;
 

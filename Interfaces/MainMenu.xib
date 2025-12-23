@@ -151,6 +151,12 @@
                                     <action selector="newSession:" target="201" id="871"/>
                                 </connections>
                             </menuItem>
+                            <menuItem title="New Tab Next to Current Tab" alternate="YES" keyEquivalent="t" identifier="New Tab" id="YXw-k6-LJh">
+                                <modifierMask key="keyEquivalentModifierMask" option="YES" command="YES"/>
+                                <connections>
+                                    <action selector="newSessionAlternate:" target="201" id="OR1-bT-pP2"/>
+                                </connections>
+                            </menuItem>
                             <menuItem title="New Tab with Current Profile" keyEquivalent="T" identifier="New Tab with Current Profile" id="1302">
                                 <modifierMask key="keyEquivalentModifierMask" option="YES" command="YES"/>
                                 <connections>

@@ -14866,6 +14866,22 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     [self.naggingController setBackgroundImageToFileWithName:filename];
 }
 
+- (void)screenSetProfileProperties:(NSDictionary *)dict {
+    DLog(@"begin with dict %@", dict);
+    __block BOOL ok = YES;
+    [dict enumerateKeysAndObjectsUsingBlock:^(id key, id value, BOOL *stop) {
+        if (![iTermProfilePreferences valueIsLegal:value forKey:key]) {
+            DLog(@"Value %@ not legal for %@", value, key);
+            ok = NO;
+            *stop = YES;
+        }
+    }];
+    if (!ok) {
+        return;
+    }
+    [self.naggingController offerToSetProfileProperties:dict];
+}
+
 - (void)screenSetBadgeFormat:(NSString *)base64Format {
     NSString *theFormat = [base64Format stringByBase64DecodingStringWithEncoding:self.encoding];
     iTermParsedExpression *parsedExpression = [iTermExpressionParser parsedExpressionWithInterpolatedString:theFormat scope:self.variablesScope];
@@ -20098,6 +20114,25 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     return ![self hasAnnouncementWithIdentifier:identifier];
 }
 
+- (void)naggingControllerShowMarkdownMessage:(NSString *)message
+                                  isQuestion:(BOOL)isQuestion
+                                   important:(BOOL)important
+                                  identifier:(NSString *)identifier
+                                     options:(NSArray<NSString *> *)options
+                                  completion:(void (^)(int))completion {
+    iTermAnnouncementViewController *announcement =
+    [iTermAnnouncementViewController announcementWithMarkdownTitle:message
+                                                     style:isQuestion ? kiTermAnnouncementViewStyleQuestion : kiTermAnnouncementViewStyleWarning
+                                               withActions:options
+                                                completion:^(int selection) {
+        completion(selection);
+    }];
+    if (!important) {
+        announcement.dismissOnKeyDown = YES;
+    }
+    [self queueAnnouncement:announcement identifier:identifier];
+}
+
 - (void)naggingControllerShowMessage:(NSString *)message
                           isQuestion:(BOOL)isQuestion
                            important:(BOOL)important
@@ -20132,6 +20167,10 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
 - (void)naggingControllerRemoveMessageWithIdentifier:(NSString *)identifier {
     [self dismissAnnouncementWithIdentifier:identifier];
     [self removeAnnouncementWithIdentifier:identifier];
+}
+
+- (void)naggingControllerSetProfileProperties:(NSDictionary *)dict {
+    [self setSessionSpecificProfileValues:dict];
 }
 
 - (void)naggingControllerPrettyPrintJSON {

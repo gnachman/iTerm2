@@ -4193,6 +4193,12 @@ static NSString *VT100GetURLParamForKey(NSString *params, NSString *key) {
         if ([_delegate terminalIsTrusted]) {
             [_delegate terminalSetBackgroundImageFile:value];
         }
+    } else if ([key isEqualToString:@"SetProfileProperty"]) {
+        DLog(@"Handle SetProfileProperty");
+        if ([_delegate terminalIsTrusted]) {
+            // OSC 1337 ; SetProfileProperty=key=[base64-encoded JSON object]
+            [_delegate terminalSetProfileProperty:value];
+        }
     } else if ([key isEqualToString:@"SetBadgeFormat"]) {
         [_delegate terminalSetBadgeFormat:value];
     } else if ([key isEqualToString:@"SetUserVar"]) {

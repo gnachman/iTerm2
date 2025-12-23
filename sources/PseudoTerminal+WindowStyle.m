@@ -1023,6 +1023,7 @@ BOOL iTermWindowTypeIsCompact(iTermWindowType windowType) {
             case WINDOW_TYPE_LION_FULL_SCREEN:
             case WINDOW_TYPE_ACCESSORY:
             case WINDOW_TYPE_NORMAL:
+            case WINDOW_TYPE_MAXIMIZED:
                 return NO;
             case WINDOW_TYPE_NO_TITLE_BAR:
             case WINDOW_TYPE_TOP_PERCENTAGE:
@@ -1036,7 +1037,6 @@ BOOL iTermWindowTypeIsCompact(iTermWindowType windowType) {
             case WINDOW_TYPE_RIGHT_CELLS:
             case WINDOW_TYPE_COMPACT:
             case WINDOW_TYPE_COMPACT_MAXIMIZED:
-            case WINDOW_TYPE_MAXIMIZED:
                 return YES;
         }
     }

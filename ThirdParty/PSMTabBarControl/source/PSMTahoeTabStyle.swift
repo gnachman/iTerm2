@@ -1068,15 +1068,8 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
     }
     
     private func widthOfAttributedStringInCell(_ cell: PSMTabBarCell) -> CGFloat {
-        let attributedString = cell.attributedStringValue
-        if cell.previousAttributedString?.isEqual(to: attributedString) != true {
-            cell.previousAttributedString = attributedString
-            let width = attributedString.size().width
-            cell.previousWidthOfAttributedString = width
-            return width
-        } else {
-            return cell.previousWidthOfAttributedString
-        }
+        guard let cachedTitle = cell.cachedTitle else { return 0 }
+        return ceil(cachedTitle.size.width)
     }
     
     var fontSize: CGFloat {
