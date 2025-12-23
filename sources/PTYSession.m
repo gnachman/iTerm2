@@ -18680,59 +18680,63 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
 
 - (ITMCellStyle *)protoStyleForCharacter:(screen_char_t)c externalAttributes:(iTermExternalAttribute *)ea {
     ITMCellStyle *style = [[[ITMCellStyle alloc] init] autorelease];
-    switch (c.foregroundColorMode) {
-        case ColorModeAlternate: {
-            switch ((ITMAlternateColor)c.foregroundColor) {
-                case ITMAlternateColor_Default:
-                case ITMAlternateColor_SystemMessage:
-                case ITMAlternateColor_ReversedDefault:
-                    style.fgAlternate = (ITMAlternateColor)c.foregroundColor;
-                    break;
+    // For image cells, foregroundColor/backgroundColor store X/Y image coordinates,
+    // not actual colors. Skip color mode processing to avoid invalid enum values.
+    if (!c.image) {
+        switch (c.foregroundColorMode) {
+            case ColorModeAlternate: {
+                switch ((ITMAlternateColor)c.foregroundColor) {
+                    case ITMAlternateColor_Default:
+                    case ITMAlternateColor_SystemMessage:
+                    case ITMAlternateColor_ReversedDefault:
+                        style.fgAlternate = (ITMAlternateColor)c.foregroundColor;
+                        break;
+                }
+                break;
             }
-            break;
+            case ColorModeNormal: {
+                style.fgStandard = c.foregroundColor;
+                break;
+            }
+            case ColorMode24bit: {
+                ITMRGBColor *rgb = [[[ITMRGBColor alloc] init] autorelease];
+                rgb.red = c.foregroundColor;
+                rgb.green = c.fgGreen;
+                rgb.blue = c.fgBlue;
+                style.fgRgb = rgb;
+                break;
+            }
+            case ColorModeInvalid: {
+                break;
+            }
         }
-        case ColorModeNormal: {
-            style.fgStandard = c.foregroundColor;
-            break;
-        }
-        case ColorMode24bit: {
-            ITMRGBColor *rgb = [[[ITMRGBColor alloc] init] autorelease];
-            rgb.red = c.foregroundColor;
-            rgb.green = c.fgGreen;
-            rgb.blue = c.fgBlue;
-            style.fgRgb = rgb;
-            break;
-        }
-        case ColorModeInvalid: {
-            break;
-        }
-    }
 
-    switch (c.backgroundColorMode) {
-        case ColorModeAlternate: {
-            switch ((ITMAlternateColor)c.foregroundColor) {
-                case ITMAlternateColor_Default:
-                case ITMAlternateColor_SystemMessage:
-                case ITMAlternateColor_ReversedDefault:
-                    style.bgAlternate = (ITMAlternateColor)c.backgroundColor;
-                    break;
+        switch (c.backgroundColorMode) {
+            case ColorModeAlternate: {
+                switch ((ITMAlternateColor)c.backgroundColor) {
+                    case ITMAlternateColor_Default:
+                    case ITMAlternateColor_SystemMessage:
+                    case ITMAlternateColor_ReversedDefault:
+                        style.bgAlternate = (ITMAlternateColor)c.backgroundColor;
+                        break;
+                }
+                break;
             }
-            break;
-        }
-        case ColorModeNormal: {
-            style.bgStandard = c.backgroundColor;
-            break;
-        }
-        case ColorMode24bit: {
-            ITMRGBColor *rgb = [[[ITMRGBColor alloc] init] autorelease];
-            rgb.red = c.backgroundColor;
-            rgb.green = c.bgGreen;
-            rgb.blue = c.bgBlue;
-            style.bgRgb = rgb;
-            break;
-        }
-        case ColorModeInvalid: {
-            break;
+            case ColorModeNormal: {
+                style.bgStandard = c.backgroundColor;
+                break;
+            }
+            case ColorMode24bit: {
+                ITMRGBColor *rgb = [[[ITMRGBColor alloc] init] autorelease];
+                rgb.red = c.backgroundColor;
+                rgb.green = c.bgGreen;
+                rgb.blue = c.bgBlue;
+                style.bgRgb = rgb;
+                break;
+            }
+            case ColorModeInvalid: {
+                break;
+            }
         }
     }
 
