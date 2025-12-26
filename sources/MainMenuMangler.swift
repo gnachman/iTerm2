@@ -545,13 +545,16 @@ class MainMenuMangler: NSObject {
 
     func updateMainMenu() {
         guard let web else {
+            DLog("updateMainMenu: web is nil, returning early")
             return
         }
         let currentSessionIsWeb: Bool
-        if let term = NSApp.keyWindow?.delegate as? PseudoTerminal {
+        if let term = iTermController.sharedInstance().currentTerminal {
             currentSessionIsWeb = term.currentSession()?.isBrowserSession() ?? false
+            DLog("updateMainMenu: currentTerminal=\(term), currentSession=\(term.currentSession().d), isBrowser=\(currentSessionIsWeb)")
         } else {
             currentSessionIsWeb = false
+            DLog("updateMainMenu: no currentTerminal")
         }
 
         if currentSessionIsWeb {
