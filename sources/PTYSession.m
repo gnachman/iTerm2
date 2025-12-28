@@ -788,7 +788,8 @@ typedef NS_ENUM(NSUInteger, PTYSessionTurdType) {
         [_autoNameSwiftyString autorelease];
         _autoNameSwiftyString = [[iTermSwiftyString alloc] initWithScope:self.variablesScope
                                                               sourcePath:iTermVariableKeySessionAutoNameFormat
-                                                         destinationPath:iTermVariableKeySessionAutoName];
+                                                         destinationPath:iTermVariableKeySessionAutoName
+                                                      sideEffectsAllowed:NO];
         _autoNameSwiftyString.observer = ^NSString *(NSString * _Nonnull newValue, NSError *error) {
             if ([weakSelf checkForCyclesInSwiftyStrings]) {
                 weakSelf.variablesScope.autoNameFormat = @"[Cycle detected]";
@@ -3209,7 +3210,7 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
     iTermExpressionEvaluator *evaluator =
     [[[iTermExpressionEvaluator alloc] initWithStrictInterpolatedString:initialText
                                                                   scope:self.variablesScope] autorelease];
-    [evaluator evaluateWithTimeout:5 completion:^(iTermExpressionEvaluator * _Nonnull evaluator) {
+    [evaluator evaluateWithTimeout:5 sideEffectsAllowed:YES completion:^(iTermExpressionEvaluator * _Nonnull evaluator) {
         NSString *string = [NSString castFrom:evaluator.value];
         if (!string) {
             DLog(@"Evaluation of %@ returned %@", initialText, evaluator.value);
@@ -5326,6 +5327,7 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
         // _subtitleSwiftyString is assigned to.
         _subtitleSwiftyString = [[iTermSwiftyString alloc] initWithString:@""
                                                                     scope:self.variablesScope
+                                                       sideEffectsAllowed:NO
                                                                  observer:^NSString *(NSString * _Nonnull newValue,
                                                                                       NSError *error) {
             if (error) {
@@ -5350,6 +5352,7 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
     [_badgeSwiftyString autorelease];
     _badgeSwiftyString = [[iTermSwiftyString alloc] initWithString:badgeFormat
                                                              scope:self.variablesScope
+                                                sideEffectsAllowed:NO
                                                           observer:^NSString *(NSString * _Nonnull newValue, NSError *error) {
         if (error) {
             return [NSString stringWithFormat:@"🐞 %@", error.localizedDescription];
@@ -5701,6 +5704,7 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
     }
     _backgroundImageSwiftyString = [[iTermSwiftyString alloc] initWithString:interpolatedString
                                                                        scope:self.variablesScope
+                                                          sideEffectsAllowed:NO
                                                                     observer:^NSString * _Nonnull(NSString * _Nullable newValue, NSError * _Nullable error) {
         if (!error) {
             [weakSelf reallySetBackgroundImagePath:newValue];
@@ -10022,6 +10026,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
                     origin:(NSString *)origin {
     [iTermScriptFunctionCall callFunction:invocation
                                   timeout:[[NSDate distantFuture] timeIntervalSinceNow]
+                       sideEffectsAllowed:YES
                                     scope:scope
                                retainSelf:YES
                                completion:^(id value, NSError *error, NSSet<NSString *> *missing) {
@@ -10160,6 +10165,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
         case KEY_ACTION_INVOKE_SCRIPT_FUNCTION:
             [iTermScriptFunctionCall callFunction:action.parameter
                                           timeout:[[NSDate distantFuture] timeIntervalSinceNow]
+                               sideEffectsAllowed:YES
                                             scope:[iTermVariableScope globalsScope]
                                        retainSelf:YES
                                        completion:^(id value, NSError *error, NSSet<NSString *> *missing) {
@@ -10602,9 +10608,11 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
         case KEY_ACTION_COPY_INTERPOLATED_STRING: {
             NSString *parameter = [[action.parameter copy] autorelease];
             __weak typeof(self) weakSelf = self;
-            [[[[iTermExpressionEvaluator alloc] initWithStrictInterpolatedString:parameter
-                                                                           scope:[self variablesScope]] autorelease] evaluateWithTimeout:0
-             completion:^(iTermExpressionEvaluator *evaluator) {
+            iTermExpressionEvaluator *evaluator = [[[iTermExpressionEvaluator alloc] initWithStrictInterpolatedString:parameter
+                                                                                                                scope:[self variablesScope]] autorelease];
+            [evaluator evaluateWithTimeout:5
+                        sideEffectsAllowed:YES
+                                completion:^(iTermExpressionEvaluator *evaluator) {
                 if (evaluator.error) {
                     [iTermWarning showWarningWithTitle:[NSString stringWithFormat:@"The key-binding action Copy Interpolated String “%@” failed:\n\n%@",
                                                         parameter, evaluator.error.localizedDescription]
@@ -17678,7 +17686,9 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     iTermExpressionEvaluator *eval = [[[iTermExpressionEvaluator alloc] initWithInterpolatedString:swifty
                                                                                              scope:scope] autorelease];
     __weak __typeof(self) weakSelf = self;
-    [eval evaluateWithTimeout:5 completion:^(iTermExpressionEvaluator * _Nonnull evaluator) {
+    [eval evaluateWithTimeout:5
+           sideEffectsAllowed:YES
+                   completion:^(iTermExpressionEvaluator * _Nonnull evaluator) {
         if (![NSString castFrom:evaluator.value]) {
             return;
         }
@@ -19787,6 +19797,7 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
                                                     types:@{ @"name": [NSString class] }
                                         optionalArguments:[NSSet set]
                                                   context:iTermVariablesSuggestionContextSession
+                                   sideEffectsPlaceholder:@"[set_name]"
                                                    target:self
                                                    action:@selector(setNameWithCompletion:name:)];
         [_methods registerFunction:method namespace:@"iterm2"];
@@ -19796,6 +19807,7 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
                                                     types:@{ @"command": [NSString class] }
                                         optionalArguments:[NSSet set]
                                                   context:iTermVariablesSuggestionContextSession
+                                   sideEffectsPlaceholder:@"[run_tmux_command]"
                                                    target:self
                                                    action:@selector(sendTmuxCommandWithCompletion:command:)];
         [_methods registerFunction:method namespace:@"iterm2"];
@@ -19806,6 +19818,7 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
                                                              @"count": [NSNumber class] }
                                         optionalArguments:[NSSet set]
                                                   context:iTermVariablesSuggestionContextSession
+                                   sideEffectsPlaceholder:@"[set_status_bar_component_unread_count]"
                                                    target:self
                                                    action:@selector(setStatusBarComponentUnreadCountWithCompletion:identifier:count:)];
         [_methods registerFunction:method namespace:@"iterm2"];
@@ -19815,6 +19828,7 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
                                                     types:@{}
                                         optionalArguments:[NSSet set]
                                                   context:iTermVariablesSuggestionContextSession
+                                   sideEffectsPlaceholder:@"[stop_coprocess]"
                                                    target:self
                                                    action:@selector(stopCoprocessWithCompletion:)];
         [_methods registerFunction:method namespace:@"iterm2"];
@@ -19824,6 +19838,7 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
                                                     types:@{}
                                         optionalArguments:[NSSet set]
                                                   context:iTermVariablesSuggestionContextSession
+                                   sideEffectsPlaceholder:nil
                                                    target:self
                                                    action:@selector(getCoprocessWithCompletion:)];
         [_methods registerFunction:method namespace:@"iterm2"];
@@ -19834,6 +19849,7 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
                                                              @"mute": [NSNumber class] }
                                         optionalArguments:[NSSet setWithArray:@[ @"mute" ]]
                                                   context:iTermVariablesSuggestionContextSession
+                                   sideEffectsPlaceholder:@"[run_coprocess]"
                                                    target:self
                                                    action:@selector(runCoprocessWithCompletion:commandLine:mute:)];
         [_methods registerFunction:method namespace:@"iterm2"];
@@ -19847,6 +19863,7 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
                                                              @"text": [NSString class] }
                                         optionalArguments:[NSSet set]
                                                   context:iTermVariablesSuggestionContextSession
+                                   sideEffectsPlaceholder:@"[add_annotation]"
                                                    target:self
                                                    action:@selector(addAnnotationWithCompletion:startX:startY:endX:endY:text:)];
         [_methods registerFunction:method namespace:@"iterm2"];
@@ -19855,6 +19872,7 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
                                                     types:@{}
                                         optionalArguments:[NSSet set]
                                                   context:iTermVariablesSuggestionContextSession
+                                   sideEffectsPlaceholder:nil
                                                    target:self
                                                    action:@selector(fetchTimeOffsetWithCompletion:)];
         [_methods registerFunction:method namespace:@"iterm2"];

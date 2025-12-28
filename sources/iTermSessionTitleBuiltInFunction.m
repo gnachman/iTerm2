@@ -74,6 +74,7 @@ static NSString *const iTermSessionTitleSession = @"session";
                                  optionalArguments:optionalArguments
                                      defaultValues:defaults
                                            context:iTermVariablesSuggestionContextSession
+                            sideEffectsPlaceholder:nil
                                              block:
          ^(NSDictionary * _Nonnull parameters, iTermBuiltInFunctionCompletionBlock  _Nonnull completion) {
              NSString *result = [self titleForParameters:parameters isWindow:NO];
@@ -89,6 +90,7 @@ static NSString *const iTermSessionTitleSession = @"session";
                                  optionalArguments:optionalArguments
                                      defaultValues:defaults
                                            context:iTermVariablesSuggestionContextSession
+                            sideEffectsPlaceholder:nil
                                              block:
          ^(NSDictionary * _Nonnull parameters, iTermBuiltInFunctionCompletionBlock  _Nonnull completion) {
              NSString *result = [self titleForParameters:parameters isWindow:YES];

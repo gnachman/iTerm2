@@ -11,4 +11,7 @@
 // Contains methods exposed in sdef file but not used internally.
 @interface PTYTab (Scripting)
 
+// Interface is conformed to in PTYTab.m, this is just the implementation.
+- (NSScriptObjectSpecifier *)scriptingObjectSpecifier;
+
 @end

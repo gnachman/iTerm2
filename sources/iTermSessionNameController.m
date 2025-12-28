@@ -96,6 +96,7 @@ NSString *const iTermSessionNameControllerSystemTitleUniqueIdentifier = @"com.it
 
 // Synchronous evaluation updates _dependencies with all paths occurring in the title format.
 - (void)evaluateInvocationSynchronously:(BOOL)sync
+                     sideEffectsAllowed:(BOOL)sideEffectsAllowed
                              completion:(void (^)(NSString *presentationName))completion {
     __weak __typeof(self) weakSelf = self;
     iTermVariableScope *scope;
@@ -122,6 +123,7 @@ NSString *const iTermSessionNameControllerSystemTitleUniqueIdentifier = @"com.it
     DLog(@"Evaluate “%@” for %@. Synchronously=%@", invocation, self.delegate, @(sync));
     [iTermScriptFunctionCall callFunction:invocation
                                   timeout:sync ? 0 : 30
+                       sideEffectsAllowed:sideEffectsAllowed
                                     scope:scope
                                retainSelf:YES
                                completion:
@@ -144,6 +146,7 @@ NSString *const iTermSessionNameControllerSystemTitleUniqueIdentifier = @"com.it
         __block NSString *windowTitle = nil;
         [iTermScriptFunctionCall callFunction:@"iterm2.private.window_title(session: session.id)"
                                       timeout:0
+                           sideEffectsAllowed:YES
                                         scope:scope
                                    retainSelf:YES
                                    completion:
@@ -385,7 +388,7 @@ NSString *const iTermSessionNameControllerSystemTitleUniqueIdentifier = @"com.it
 - (void)evaluateInvocationSynchronously:(BOOL)synchronous {
     __weak __typeof(self) weakSelf = self;
     NSInteger count = ++_count;
-    [self evaluateInvocationSynchronously:synchronous completion:^(NSString *presentationName) {
+    [self evaluateInvocationSynchronously:synchronous sideEffectsAllowed:NO completion:^(NSString *presentationName) {
         DLog(@"evaluation (sync=%@) finished with value %@. %@", @(synchronous), presentationName, weakSelf.delegate);
         __strong __typeof(self) strongSelf = weakSelf;
         if (strongSelf) {

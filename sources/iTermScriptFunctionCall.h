@@ -22,6 +22,7 @@ void iTermFunctionCallSplitFullyQualifiedName(NSString *fqName, NSString **names
 // Hold a reference to the result until you no longer care to receive the completion block, or pass retainSelf: YES
 + (iTermParsedExpression *)callFunction:(NSString *)invocation
                                 timeout:(NSTimeInterval)timeout
+                     sideEffectsAllowed:(BOOL)sideEffectsAllowed
                                   scope:(iTermVariableScope *)scope
                              retainSelf:(BOOL)retainSelf  // YES to keep it alive until it's complete
                              completion:(void (^)(id, NSError *, NSSet<NSString *> *))completion;
@@ -29,6 +30,7 @@ void iTermFunctionCallSplitFullyQualifiedName(NSString *fqName, NSString **names
 + (iTermParsedExpression *)callMethod:(NSString *)invocation
                              receiver:(NSString *)receiver
                               timeout:(NSTimeInterval)timeout
+                   sideEffectsAllowed:(BOOL)sideEffectsAllowed
                            retainSelf:(BOOL)retainSelf  // YES to keep it alive until it's complete
                            completion:(void (^)(id, NSError *, NSSet<NSString *> *))completion;
 
@@ -36,6 +38,7 @@ void iTermFunctionCallSplitFullyQualifiedName(NSString *fqName, NSString **names
                   invocation:(NSString *)invocation
                     receiver:(NSString *)receiver
                      timeout:(NSTimeInterval)timeout
+          sideEffectsAllowed:(BOOL)sideEffectsAllowed
                        scope:(iTermVariableScope *)scope
                   completion:(void (^)(id, NSError *, NSSet<NSString *> *))completion;
 @end

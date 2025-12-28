@@ -518,7 +518,9 @@ static NSMutableArray<iTermURLActionFactory *> *sFactories;
         }
         ContextMenuActions value = [ContextMenuActionPrefsController actionForActionDict:actions[index]];
         action.selector = NSSelectorFromString(self.selectors[@(value)]);
-
+        if ([ContextMenuActionPrefsController actionForActionDict:actions[index]] == kOpenUrlContextMenuAction) {
+            action.hover = YES;
+        }
         action.representedObject = @{ iTermSmartSelectionActionContextKeyAction: actions[index],
                                       iTermSmartSelectionActionContextKeyComponents: smartMatch.components,
                                       iTermSmartSelectionActionContextKeyWorkingDirectory: self.workingDirectory ?: [NSNull null],

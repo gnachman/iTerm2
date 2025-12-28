@@ -28,7 +28,8 @@ extension GetProfilePropertyBuiltInFunction: iTermBuiltInFunctionProtocol {
             arguments: [keyArgName: NSString.self],
             optionalArguments: Set(),
             defaultValues: [sessionIDArgName: iTermVariableKeySessionID],
-            context: .session) { parameters, completion in
+            context: .session,
+            sideEffectsPlaceholder: nil) { parameters, completion in
                 guard let sessionID = parameters[sessionIDArgName] as? String else {
                     completion(nil, error(message: "Missing session_id. This shouldn't happen so please report a bug."))
                     return

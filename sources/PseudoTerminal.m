@@ -891,7 +891,8 @@ typedef NS_ENUM(int, iTermShouldHaveTitleSeparator) {
     _windowTitleOverrideSwiftyString =
         [[iTermSwiftyString alloc] initWithScope:self.scope
                                       sourcePath:iTermVariableKeyWindowTitleOverrideFormat
-                                 destinationPath:iTermVariableKeyWindowTitleOverride];
+                                 destinationPath:iTermVariableKeyWindowTitleOverride
+                              sideEffectsAllowed:NO];
     _windowTitleOverrideSwiftyString.observer = ^NSString *(NSString * _Nonnull newValue, NSError *error) {
         if (error) {
             return [NSString stringWithFormat:@"🐞 %@", error.localizedDescription];
@@ -13035,6 +13036,7 @@ backgroundColor:(NSColor *)backgroundColor {
                                                     types:@{ @"title": [NSString class] }
                                         optionalArguments:[NSSet set]
                                                   context:iTermVariablesSuggestionContextSession
+                                   sideEffectsPlaceholder:@"[set_title]"
                                                    target:self
                                                    action:@selector(setTitleWithCompletion:title:)];
         [_methods registerFunction:method namespace:@"iterm2"];

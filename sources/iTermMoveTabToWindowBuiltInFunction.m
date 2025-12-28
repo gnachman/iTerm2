@@ -20,6 +20,7 @@
                              optionalArguments:[NSSet set]
                                  defaultValues:@{ @"tab_id": iTermVariableKeyTabID }
                                        context:iTermVariablesSuggestionContextTab
+                        sideEffectsPlaceholder:@"[move_tab_to_window]"
                                          block:
      ^(NSDictionary * _Nonnull parameters, iTermBuiltInFunctionCompletionBlock  _Nonnull completion) {
          NSString *tabID = parameters[@"tab_id"];

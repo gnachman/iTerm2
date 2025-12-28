@@ -21,6 +21,7 @@ NS_ASSUME_NONNULL_BEGIN
                                  receiver:(NSString * _Nullable)receiver
                                     scope:(iTermVariableScope *)scope
                                   timeout:(NSTimeInterval)timeout
+                       sideEffectsAllowed:(BOOL)sideEffectsAllowed
                                completion:(void (^)(id, NSError *, NSSet<NSString *> *))completion;
 
 - (void)addParameterWithName:(NSString *)name parsedExpression:(iTermParsedExpression *)expression;

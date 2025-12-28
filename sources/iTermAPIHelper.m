@@ -4085,6 +4085,7 @@ static BOOL iTermCheckSplitTreesIsomorphic(ITMSplitTreeNode *node1, ITMSplitTree
 - (void)invokeFunction:(NSString *)invocation inAppContextWithCompletion:(void (^)(ITMInvokeFunctionResponse *))completion timeout:(NSTimeInterval)timeout {
     [iTermScriptFunctionCall callFunction:invocation
                                   timeout:timeout >= 0 ? timeout : 30
+                       sideEffectsAllowed:YES
                                     scope:[iTermVariableScope globalsScope]
                                retainSelf:YES
                                completion:^(id object, NSError *error, NSSet<NSString *> *missing) {
@@ -4103,6 +4104,7 @@ static BOOL iTermCheckSplitTreesIsomorphic(ITMSplitTreeNode *node1, ITMSplitTree
     }
     [iTermScriptFunctionCall callFunction:invocation
                                   timeout:timeout >= 0 ? timeout : 30
+                       sideEffectsAllowed:YES
                                     scope:tab.variablesScope
                                retainSelf:YES
                                completion:^(id object, NSError *error, NSSet<NSString *> *missing) {
@@ -4117,6 +4119,7 @@ static BOOL iTermCheckSplitTreesIsomorphic(ITMSplitTreeNode *node1, ITMSplitTree
     [iTermScriptFunctionCall callMethod:invocation
                                receiver:receiver
                                 timeout:timeout >= 0 ? timeout : 30
+                     sideEffectsAllowed:YES
                              retainSelf:YES
                              completion:^(id object, NSError *error, NSSet<NSString *> *missing) {
                                  [self functionInvocationDidCompleteWithObject:object error:error completion:completion];
@@ -4134,6 +4137,7 @@ static BOOL iTermCheckSplitTreesIsomorphic(ITMSplitTreeNode *node1, ITMSplitTree
     }
     [iTermScriptFunctionCall callFunction:invocation
                                   timeout:timeout >= 0 ? timeout : 30
+                       sideEffectsAllowed:YES
                                     scope:term.scope
                                retainSelf:YES
                                completion:^(id object, NSError *error, NSSet<NSString *> *missing) {
@@ -4152,6 +4156,7 @@ static BOOL iTermCheckSplitTreesIsomorphic(ITMSplitTreeNode *node1, ITMSplitTree
     }
     [iTermScriptFunctionCall callFunction:invocation
                                   timeout:timeout >= 0 ? timeout : 30
+                       sideEffectsAllowed:YES
                                     scope:session.variablesScope
                                retainSelf:YES
                                completion:^(id object, NSError *error, NSSet<NSString *> *missing) {

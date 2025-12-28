@@ -105,8 +105,8 @@ class AITermControllerObjC: NSObject, AITermControllerDelegate, iTermObject {
         let frame = iTermVariables(context: [], owner: self)
         myScope.add(frame, toScopeNamed: "ai")
         myScope.setValue(sanitizedPrompt, forVariableNamed: "ai.prompt")
-        let swiftyString = iTermSwiftyString(string: template, scope: myScope)
-        swiftyString.evaluateSynchronously(false, with: myScope) { maybeResult, maybeError, _ in
+        let swiftyString = iTermSwiftyString(string: template, scope: myScope, sideEffectsAllowed: true)
+        swiftyString.evaluateSynchronously(false, sideEffectsAllowed: true, with: myScope) { maybeResult, maybeError, _ in
             if let prompt = maybeResult {
                 Timer.scheduledTimer(withTimeInterval: 0, repeats: false) { _ in
                     if !shouldCancel {

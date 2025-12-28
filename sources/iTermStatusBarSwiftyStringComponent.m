@@ -119,6 +119,7 @@ NSString *const iTermStatusBarSwiftyStringComponentExpressionKey = @"expression"
     } else {
         _swiftyString = [[iTermSwiftyString alloc] initWithString:expression
                                                             scope:self.scope
+                                               sideEffectsAllowed:false
                                                          observer:^NSString *(NSString * _Nonnull newValue, NSError *error) {
                                                              return [weakSelf didEvaluateExpression:expression withResult:newValue error:error];
                                                          }];

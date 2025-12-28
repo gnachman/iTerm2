@@ -134,14 +134,45 @@ static ContextMenuActionDeclaration ContextMenuActionDeclarationForTag(ContextMe
                                 scope:(iTermVariableScope *)scope
                                 owner:(id<iTermObject>)owner
                            completion:(void (^)(NSString *parameter))completion {
+    if (useInterpolation) {
+        [self computeInterpolatedParameterForActionDict:dict
+                                  withCaptureComponents:components
+                                                  scope:scope
+                                                  owner:owner
+                                            synchronous:NO
+                                             completion:completion];
+        return;
+    }
+    NSString *result = [self computeNonInterpolatedParameterForActionDict:dict
+                                                    withCaptureComponents:components
+                                                                    scope:scope];
+    completion(result);
+}
+
++ (void)computeInterpolatedParameterForActionDict:(NSDictionary *)dict
+                            withCaptureComponents:(NSArray *)components
+                                            scope:(iTermVariableScope *)scope
+                                            owner:(id<iTermObject>)owner
+                                      synchronous:(BOOL)synchronous
+                                       completion:(void (^)(NSString *parameter))completion {
     NSString *parameter = [dict objectForKey:kParameterKey];
     ContextMenuActions action = (ContextMenuActions) [[dict objectForKey:kActionKey] intValue];
-    if (useInterpolation) {
-        iTermSwiftyStringWithBackreferencesEvaluator *evaluator = [[iTermSwiftyStringWithBackreferencesEvaluator alloc] initWithExpression:parameter];
-        NSArray *encodedCaptures = [components mapWithBlock:^id(id anObject) {
-            return [self parameterValue:anObject encodedForAction:action];
-        }];
-        [evaluator evaluateWithAdditionalContext:@{ @"matches": encodedCaptures }
+    iTermSwiftyStringWithBackreferencesEvaluator *evaluator = [[iTermSwiftyStringWithBackreferencesEvaluator alloc] initWithExpression:parameter];
+    NSArray *encodedCaptures = [components mapWithBlock:^id(id anObject) {
+        return [self parameterValue:anObject encodedForAction:action];
+    }];
+    NSDictionary *additionalContext = @{ @"matches": encodedCaptures };
+    if (synchronous) {
+        NSError *error;
+        NSString *result = [evaluator evaluateWithAdditionalContext:additionalContext
+                                                              scope:scope
+                                                              owner:owner
+                                                 sideEffectsAllowed:NO
+                                                              error:&error];
+        DLog(@"value=%@, error=%@", result, error);
+        completion(result);
+    } else {
+        [evaluator evaluateWithAdditionalContext:additionalContext
                                            scope:scope
                                            owner:owner
                                       completion:^(NSString * _Nullable value,
@@ -149,8 +180,14 @@ static ContextMenuActionDeclaration ContextMenuActionDeclarationForTag(ContextMe
             DLog(@"value=%@, error=%@", value, error);
             completion(value);
         }];
-        return;
     }
+}
+
++ (NSString *)computeNonInterpolatedParameterForActionDict:(NSDictionary *)dict
+                                     withCaptureComponents:(NSArray *)components
+                                                     scope:(iTermVariableScope *)scope {
+    NSString *parameter = [dict objectForKey:kParameterKey];
+    ContextMenuActions action = (ContextMenuActions) [[dict objectForKey:kActionKey] intValue];
     for (int i = 0; i < 9; i++) {
         NSString *repl = @"";
         if (i < components.count) {
@@ -170,7 +207,30 @@ static ContextMenuActionDeclaration ContextMenuActionDeclarationForTag(ContextMe
     parameter = [parameter stringByReplacingEscapedChar:'n' withString:@"\n"];
     parameter = [parameter stringByReplacingEscapedChar:'\\' withString:@"\\"];
 
-    completion(parameter);
+    return parameter;
+}
+
++ (NSString *)computeParameterForActionDict:(NSDictionary *)dict
+                withCaptureComponents:(NSArray *)components
+                     useInterpolation:(BOOL)useInterpolation
+                                scope:(iTermVariableScope *)scope
+                                owner:(id<iTermObject>)owner {
+    if (useInterpolation) {
+        __block NSString *result = nil;
+        [self computeInterpolatedParameterForActionDict:dict
+                                  withCaptureComponents:components
+                                                  scope:scope
+                                                  owner:owner
+                                            synchronous:YES
+                                             completion:^(NSString *parameter) {
+            result = parameter;
+        }];
+        return result;
+    }
+    NSString *result = [self computeNonInterpolatedParameterForActionDict:dict
+                                                    withCaptureComponents:components
+                                                                    scope:scope];
+    return result;
 }
 
 - (BOOL)validateMenuItem:(NSMenuItem *)menuItem {

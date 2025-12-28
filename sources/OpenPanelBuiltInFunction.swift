@@ -48,7 +48,8 @@ class OpenPanelBuiltInFunction: NSObject, iTermBuiltInFunctionProtocol {
                                     promptArgName,
                                     messageArgName]),
             defaultValues: [:],
-            context: .app) { parameters, completion in
+            context: .app,
+            sideEffectsPlaceholder: "[open_panel]") { parameters, completion in
                 let panel = NSOpenPanel()
 
                 if let path = parameters[pathArgName] as? String {

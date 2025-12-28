@@ -28,10 +28,12 @@
     iTermVariableScope *_scope;
     BOOL _observing;
     iTermVariableReference<NSString *> *_sourceRef;
+    BOOL _sideEffectsAllowed;
 }
 
 - (instancetype)initWithString:(NSString *)swiftyString
                         scope:(iTermVariableScope *)scope
+            sideEffectsAllowed:(BOOL)sideEffectsAllowed
                       observer:(NSString *(^)(NSString *, NSError *))observer {
     self = [super init];
     if (self) {
@@ -40,6 +42,7 @@
         _refs = [NSMutableArray array];
         _observer = [observer copy];
         _missingFunctions = [NSMutableSet set];
+        _sideEffectsAllowed = sideEffectsAllowed;
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(registeredFunctionsDidChange:)
                                                      name:iTermAPIRegisteredFunctionsDidChangeNotification
@@ -51,9 +54,11 @@
 
 - (instancetype)initWithScope:(iTermVariableScope *)scope
                    sourcePath:(nonnull NSString *)sourcePath
-              destinationPath:(NSString *)destinationPath {
+              destinationPath:(NSString *)destinationPath
+           sideEffectsAllowed:(BOOL)sideEffectsAllowed {
     self = [super init];
     if (self) {
+        _sideEffectsAllowed = sideEffectsAllowed;
         _swiftyString = [[NSString castFrom:[scope valueForVariableName:sourcePath]] copy] ?: @"";
         _scope = scope;
         _refs = [NSMutableArray array];
@@ -89,7 +94,9 @@
     _swiftyString = [swiftyString copy];
     if (_evaluatedString) {
         // Update the refs without losing the cached evaluation.
-        [self evaluateSynchronously:YES completion:^(NSString *newValue, NSError *error) {}];
+        [self evaluateSynchronously:YES
+                 sideEffectsAllowed:NO
+                         completion:^(NSString *newValue, NSError *error) {}];
     }
     // Reevaluate later, which may happen asynchronously.
     [self setNeedsReevaluation];
@@ -138,11 +145,13 @@
     _observing = NO;
 }
 
-- (void)evaluateSynchronously:(BOOL)synchronously {
+- (void)evaluateSynchronously:(BOOL)synchronously sideEffectsAllowed:(BOOL)sideEffectsAllowed {
     __weak __typeof(self) weakSelf = self;
     NSInteger count = ++_count;
     DLog(@"%p: %@->%@ evaluate %@", self, _sourceRef.path, _destinationPath, _swiftyString);
-    [self evaluateSynchronously:synchronously completion:^(NSString *result, NSError *error) {
+    [self evaluateSynchronously:synchronously
+             sideEffectsAllowed:sideEffectsAllowed
+                     completion:^(NSString *result, NSError *error) {
         DLog(@"%p: result=%@ error=%@", weakSelf, result, error);
         __strong __typeof(self) strongSelf = weakSelf;
         if (strongSelf) {
@@ -162,10 +171,14 @@
 }
 
 - (void)evaluateSynchronously:(BOOL)synchronously
+           sideEffectsAllowed:(BOOL)sideEffectsAllowed
                    completion:(void (^)(NSString *, NSError *))completion {
     iTermVariableRecordingScope *scope = [self.scope recordingCopy];
     __weak __typeof(self) weakSelf = self;
-    [self evaluateSynchronously:synchronously withScope:scope completion:^(NSString *result, NSError *error, NSSet<NSString *> *missing) {
+    [self evaluateSynchronously:synchronously
+             sideEffectsAllowed:sideEffectsAllowed
+                      withScope:scope
+                     completion:^(NSString *result, NSError *error, NSSet<NSString *> *missing) {
         __strong __typeof(self) strongSelf = weakSelf;
         if (!strongSelf) {
             return;
@@ -197,11 +210,13 @@
 }
 
 - (void)evaluateSynchronously:(BOOL)synchronously
+           sideEffectsAllowed:(BOOL)sideEffectsAllowed
                    withScope:(iTermVariableScope *)scope
                    completion:(void (^)(NSString *result, NSError *error, NSSet<NSString *> *missing))completion {
     iTermExpressionEvaluator *evaluator = [[iTermExpressionEvaluator alloc] initWithInterpolatedString:_swiftyString
                                                                                                  scope:scope];
     [evaluator evaluateWithTimeout:synchronously ? 0 : 30
+                sideEffectsAllowed:sideEffectsAllowed
                         completion:^(iTermExpressionEvaluator * _Nonnull evaluator) {
                             completion(evaluator.value, evaluator.error, evaluator.missingValues);
                         }];
@@ -213,6 +228,7 @@
     }
     
 }
+
 - (void)setNeedsReevaluation {
     self.needsReevaluation = YES;
     dispatch_async(dispatch_get_main_queue(), ^{
@@ -231,9 +247,9 @@
     }
     _needsReevaluation = NO;
     if (!_evaluatedString) {
-        [self evaluateSynchronously:YES];
+        [self evaluateSynchronously:YES sideEffectsAllowed:NO];
     }
-    [self evaluateSynchronously:NO];
+    [self evaluateSynchronously:NO sideEffectsAllowed:_sideEffectsAllowed];
 }
 
 #pragma mark - Notifications
@@ -258,6 +274,7 @@
 - (instancetype)initWithString:(NSString *)swiftyString {
     self = [super initWithString:@""
                            scope:nil
+              sideEffectsAllowed:NO
                         observer:^NSString *(NSString * _Nonnull newValue, NSError *error) { return newValue; }];
     if (self) {
         _string = [swiftyString copy];

@@ -34,6 +34,7 @@
                              optionalArguments:[NSSet setWithObject:window_id]
                                  defaultValues:@{ window_id: @"" }
                                        context:iTermVariablesSuggestionContextNone
+                        sideEffectsPlaceholder:@"[alert]"
                                          block:
      ^(NSDictionary * _Nonnull parameters, iTermBuiltInFunctionCompletionBlock  _Nonnull completion) {
          [self showAlertWithTitle:parameters[title]
@@ -88,6 +89,7 @@
                              optionalArguments:[NSSet setWithObject:window_id]
                                  defaultValues:@{ }
                                        context:iTermVariablesSuggestionContextNone
+                        sideEffectsPlaceholder:@"[get_string]"
                                          block:
      ^(NSDictionary * _Nonnull parameters, iTermBuiltInFunctionCompletionBlock  _Nonnull completion) {
          [self showAlertWithTextFieldAccessoryWithTitle:parameters[title]
@@ -221,6 +223,7 @@
                              optionalArguments:[NSSet setWithObject:window_id]
                                  defaultValues:@{ window_id: @"" }
                                        context:iTermVariablesSuggestionContextNone
+                        sideEffectsPlaceholder:@"[get_poly_modal_alert]"
                                          block:
      ^(NSDictionary * _Nonnull parameters, iTermBuiltInFunctionCompletionBlock  _Nonnull completion) {
          [self showPolyModalAlert:parameters[title]

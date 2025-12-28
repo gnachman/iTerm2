@@ -25,7 +25,8 @@ extension FocusBuiltInFunction: iTermBuiltInFunctionProtocol {
             arguments: [:],
             optionalArguments: Set(),
             defaultValues: ["session_id": iTermVariableKeySessionID],
-            context: .session) {
+            context: .session,
+            sideEffectsPlaceholder: "[focus]") {
                 parameters, completion in
                 guard let sessionID = parameters["session_id"] as? String else {
                     completion(nil, error(message: "Missing session_id. This shouldn't happen so please report a bug."))

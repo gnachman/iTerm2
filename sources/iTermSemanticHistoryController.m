@@ -801,7 +801,9 @@ NSString *const kSemanticHistoryColumnNumberKey = @"semanticHistory.columnNumber
 
     if (isRawAction) {
         __weak __typeof(self) weakSelf = self;
-        [_expressionEvaluator evaluateWithTimeout:self.evaluationTimeout completion:^(iTermExpressionEvaluator * _Nonnull evaluator) {
+        [_expressionEvaluator evaluateWithTimeout:self.evaluationTimeout
+                               sideEffectsAllowed:YES
+                                       completion:^(iTermExpressionEvaluator * _Nonnull evaluator) {
             DLog(@"Launch raw action: /bin/sh -c %@", evaluator.value);
             if (evaluator.error) {
                 completion(YES);
@@ -825,7 +827,9 @@ NSString *const kSemanticHistoryColumnNumberKey = @"semanticHistory.columnNumber
 
     if ([prefs_[kSemanticHistoryActionKey] isEqualToString:kSemanticHistoryCommandAction]) {
         __weak __typeof(self) weakSelf = self;
-        [_expressionEvaluator evaluateWithTimeout:self.evaluationTimeout completion:^(iTermExpressionEvaluator * _Nonnull evaluator) {
+        [_expressionEvaluator evaluateWithTimeout:self.evaluationTimeout
+                               sideEffectsAllowed:YES
+                                       completion:^(iTermExpressionEvaluator * _Nonnull evaluator) {
             DLog(@"Running /bin/sh -c %@", evaluator.value);
             if (evaluator.error) {
                 completion(YES);
@@ -842,7 +846,9 @@ NSString *const kSemanticHistoryColumnNumberKey = @"semanticHistory.columnNumber
 
     if ([prefs_[kSemanticHistoryActionKey] isEqualToString:kSemanticHistoryCoprocessAction]) {
         __weak __typeof(self) weakSelf = self;
-        [_expressionEvaluator evaluateWithTimeout:self.evaluationTimeout completion:^(iTermExpressionEvaluator * _Nonnull evaluator) {
+        [_expressionEvaluator evaluateWithTimeout:self.evaluationTimeout
+                               sideEffectsAllowed:YES
+                                       completion:^(iTermExpressionEvaluator * _Nonnull evaluator) {
             DLog(@"Launch coprocess with script %@", evaluator.value);
             if (evaluator.error) {
                 completion(YES);
@@ -856,7 +862,9 @@ NSString *const kSemanticHistoryColumnNumberKey = @"semanticHistory.columnNumber
 
     if ([prefs_[kSemanticHistoryActionKey] isEqualToString:kSemanticHistorySendTextAction]) {
         __weak __typeof(self) weakSelf = self;
-        [_expressionEvaluator evaluateWithTimeout:self.evaluationTimeout completion:^(iTermExpressionEvaluator * _Nonnull evaluator) {
+        [_expressionEvaluator evaluateWithTimeout:self.evaluationTimeout
+                               sideEffectsAllowed:YES
+                                       completion:^(iTermExpressionEvaluator * _Nonnull evaluator) {
             DLog(@"Send text %@", evaluator.value);
             if (evaluator.error) {
                 completion(YES);
@@ -894,7 +902,9 @@ NSString *const kSemanticHistoryColumnNumberKey = @"semanticHistory.columnNumber
         // Add percent escapes substitutions
         _expressionEvaluator.escapingFunction = urlEscapeFunction;
         __weak __typeof(self) weakSelf = self;
-        [_expressionEvaluator evaluateWithTimeout:self.evaluationTimeout completion:^(iTermExpressionEvaluator * _Nonnull evaluator) {
+        [_expressionEvaluator evaluateWithTimeout:self.evaluationTimeout
+                               sideEffectsAllowed:YES
+                                       completion:^(iTermExpressionEvaluator * _Nonnull evaluator) {
             DLog(@"URL format is %@. Error is %@. Evaluated value is %@.", url, evaluator.error, evaluator.value);
             if (!evaluator.error) {
                 [weakSelf openURL:[NSURL URLWithUserSuppliedString:evaluator.value]];

@@ -644,7 +644,18 @@ iTermCommandInfoViewControllerDelegate>
                ([[iTermApplication sharedApplication] it_modifierFlags] & (NSEventModifierFlagOption | NSEventModifierFlagCommand)) == NSEventModifierFlagCommand) {
         changed = [self setCursor:[NSCursor pointingHandCursor]];
         if (action.hover && action.string.length && ([iTermAdvancedSettingsModel showURLPreviewForSemanticHistory] || action.osc8)) {
-            hover = action.string;
+            NSDictionary *meta = [NSDictionary castFrom:action.representedObject];
+            NSDictionary *actionDict = meta[iTermSmartSelectionActionContextKeyAction];
+            NSArray *smartMatchComponents = meta[iTermSmartSelectionActionContextKeyComponents];
+            if (actionDict && smartMatchComponents && [ContextMenuActionPrefsController actionForActionDict:actionDict] == kOpenUrlContextMenuAction) {
+                hover = [ContextMenuActionPrefsController computeParameterForActionDict:actionDict
+                                                                  withCaptureComponents:smartMatchComponents
+                                                                       useInterpolation:[self.delegate textViewSmartSelectionActionsShouldUseInterpolatedStrings]
+                                                                                  scope:[self.delegate textViewVariablesScope]
+                                                                                  owner:self.delegate];
+            } else {
+                hover = action.string;
+            }
             anchorRange = action.visualRange;
         }
     } else if ([self mouseIsOverImageInEvent:event]) {

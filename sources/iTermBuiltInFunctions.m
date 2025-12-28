@@ -84,6 +84,7 @@ NSString *iTermNamespaceFromSignature(NSString *signature) {
            optionalArguments:(NSSet<NSString *> *)optionalArguments
                defaultValues:(NSDictionary<NSString *,NSString *> *)defaultValues
                      context:(iTermVariablesSuggestionContext)context
+      sideEffectsPlaceholder:(NSString * _Nullable)sideEffectsPlaceholder
                        block:(iTermBuiltInFunctionsExecutionBlock)block {
     self = [super init];
     if (self) {
@@ -92,6 +93,7 @@ NSString *iTermNamespaceFromSignature(NSString *signature) {
         _defaultValues = [defaultValues copy];
         _block = [block copy];
         _optionalArguments = [optionalArguments copy];
+        _sideEffectsPlaceholder = [sideEffectsPlaceholder copy];
         [defaultValues enumerateKeysAndObjectsUsingBlock:^(NSString * _Nonnull key, NSString * _Nonnull obj, BOOL * _Nonnull stop) {
             [iTermVariableHistory recordUseOfVariableNamed:obj inContext:context];
         }];
@@ -230,6 +232,7 @@ NSString *iTermNamespaceFromSignature(NSString *signature) {
                    namespace:(NSString *)namespace
                   parameters:(NSDictionary<NSString *, id> *)parameters
                        scope:(iTermVariableScope *)scope
+          sideEffectsAllowed:(BOOL)sideEffectsAllowed
                   completion:(nonnull iTermBuiltInFunctionCompletionBlock)completion {
     NSArray<NSString *> *arguments = parameters.allKeys;
     NSString *signature = iTermFunctionSignatureFromNamespaceAndNameAndArguments(namespace, name, arguments);
@@ -259,6 +262,10 @@ NSString *iTermNamespaceFromSignature(NSString *signature) {
         return;
     }
 
+    if (!sideEffectsAllowed && function.sideEffectsPlaceholder) {
+        completion(function.sideEffectsPlaceholder, nil);
+        return;
+    }
     function.block([amendedParameters dictionaryByRemovingNullValues], completion);
 }
 
@@ -308,6 +315,7 @@ NSString *iTermNamespaceFromSignature(NSString *signature) {
                                  optionalArguments:[NSSet set]
                                      defaultValues:@{}
                                            context:iTermVariablesSuggestionContextNone
+                            sideEffectsPlaceholder:nil
                                              block:
          ^(NSDictionary * _Nonnull parameters, iTermBuiltInFunctionCompletionBlock  _Nonnull completion) {
              [self countOfObject:parameters[array] completion:completion];
@@ -352,6 +360,7 @@ NSString *iTermNamespaceFromSignature(NSString *signature) {
                                  optionalArguments:[NSSet set]
                                      defaultValues:@{}
                                            context:iTermVariablesSuggestionContextNone
+                            sideEffectsPlaceholder:nil
                                              block:
          ^(NSDictionary * _Nonnull parameters, iTermBuiltInFunctionCompletionBlock  _Nonnull completion) {
             [self urlEncoded:parameters[string] completion:completion];
@@ -441,6 +450,7 @@ NSString *iTermNamespaceFromSignature(NSString *signature) {
                        types:(NSDictionary<NSString *, Class> *)types
            optionalArguments:(NSSet<NSString *> *)optionalArguments
                      context:(iTermVariablesSuggestionContext)context
+      sideEffectsPlaceholder:(NSString *)sideEffectsPlaceholder
                       target:(id<iTermObject>)target
                       action:(SEL)action {
     NSArray<iTermReflectionMethodArgument *> *args = [iTermBuiltInMethod argumentsFromTarget:target action:action];
@@ -456,6 +466,7 @@ NSString *iTermNamespaceFromSignature(NSString *signature) {
              optionalArguments:[NSSet set]
                  defaultValues:defaultValues
                        context:context
+        sideEffectsPlaceholder:sideEffectsPlaceholder
                          block:^(NSDictionary * _Nonnull parameters, iTermBuiltInFunctionCompletionBlock  _Nonnull completion) {
                              // Use callWithArguments:completion: instead.
                              assert(NO);

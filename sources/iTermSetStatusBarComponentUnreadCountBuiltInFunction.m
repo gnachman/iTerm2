@@ -22,6 +22,7 @@
                              optionalArguments:[NSSet set]
                                  defaultValues:@{ }
                                        context:iTermVariablesSuggestionContextNone
+                        sideEffectsPlaceholder:@"[set_status_bar_component_unread_count]"
                                          block:
      ^(NSDictionary * _Nonnull parameters, iTermBuiltInFunctionCompletionBlock  _Nonnull completion) {
          [self setCount:[parameters[count] integerValue] forIdentifier:parameters[identifier] completion:completion];

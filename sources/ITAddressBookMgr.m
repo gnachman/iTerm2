@@ -737,7 +737,7 @@ iTermWindowType iTermThemedWindowType(iTermWindowType windowType) {
     iTermExpressionEvaluator *evaluator =
     [[iTermExpressionEvaluator alloc] initWithStrictInterpolatedString:swifty
                                                                  scope:scope];
-    [evaluator evaluateWithTimeout:5 completion:^(iTermExpressionEvaluator * _Nonnull evaluator) {
+    [evaluator evaluateWithTimeout:5 sideEffectsAllowed:YES completion:^(iTermExpressionEvaluator * _Nonnull evaluator) {
         NSString *string = [NSString castFrom:evaluator.value];
         DLog(@"Evaluation finished with value %@", string);
         string = [string stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];

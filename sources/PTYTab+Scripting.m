@@ -14,7 +14,7 @@
 
 @implementation PTYTab (Scripting)
 
-- (NSScriptObjectSpecifier *)objectSpecifier {
+- (NSScriptObjectSpecifier *)scriptingObjectSpecifier {
   id classDescription = [NSClassDescription classDescriptionForClass:[iTermScriptingWindow class]];
   NSInteger index = [[self realParentWindow] indexOfTab:self];
   return [[[NSIndexSpecifier alloc] initWithContainerClassDescription:classDescription

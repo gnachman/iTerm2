@@ -45,6 +45,7 @@
 #import "PTYScrollView.h"
 #import "PTYSession.h"
 #import "PTYSession+ARC.h"
+#import "PTYTab+Scripting.h"
 #import "SessionView.h"
 #import "SolidColorView.h"
 #import "TmuxDashboardController.h"
@@ -471,7 +472,8 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     [iTermPreferenceDidChangeNotification subscribe:self selector:@selector(preferenceDidChange:)];
     _tabTitleOverrideSwiftyString = [[iTermSwiftyString alloc] initWithScope:self.variablesScope
                                                                   sourcePath:iTermVariableKeyTabTitleOverrideFormat
-                                                             destinationPath:iTermVariableKeyTabTitleOverride];
+                                                             destinationPath:iTermVariableKeyTabTitleOverride
+                                                          sideEffectsAllowed:NO];
     __weak __typeof(self) weakSelf = self;
     _tabTitleOverrideSwiftyString.observer = ^(NSString * _Nonnull newValue, NSError *error) {
         if (error) {
@@ -7025,6 +7027,10 @@ backgroundColor:(NSColor *)backgroundColor {
     }
 }
 
+- (NSScriptObjectSpecifier *)objectSpecifier { 
+    return [self scriptingObjectSpecifier];
+}
+
 #pragma mark - iTermObject
 
 - (iTermBuiltInFunctions *)objectMethodRegistry {
@@ -7036,6 +7042,7 @@ backgroundColor:(NSColor *)backgroundColor {
                                                     types:@{ @"title": [NSString class] }
                                         optionalArguments:[NSSet set]
                                                   context:iTermVariablesSuggestionContextSession
+                                   sideEffectsPlaceholder:@"[set_title]"
                                                    target:self
                                                    action:@selector(setTitleWithCompletion:title:)];
         [_methods registerFunction:method namespace:@"iterm2"];
@@ -7045,6 +7052,7 @@ backgroundColor:(NSColor *)backgroundColor {
                                                     types:@{ @"direction": [NSString class] }
                                         optionalArguments:[NSSet set]
                                                   context:iTermVariablesSuggestionContextSession
+                                   sideEffectsPlaceholder:@"[select_pane_in_direction]"
                                                    target:self
                                                    action:@selector(selectPaneInDirectionWithCompletion:direction:)];
         [_methods registerFunction:method namespace:@"iterm2"];

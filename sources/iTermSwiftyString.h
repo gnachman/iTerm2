@@ -49,15 +49,18 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (instancetype)initWithString:(NSString *)swiftyString
                          scope:(nullable iTermVariableScope *)scope
+            sideEffectsAllowed:(BOOL)sideEffectsAllowed
                       observer:(NSString *(^ _Nullable)(NSString * _Nullable newValue, NSError * _Nullable error))observer NS_DESIGNATED_INITIALIZER;
 
 - (instancetype)initWithScope:(nullable iTermVariableScope *)scope
                    sourcePath:(NSString *)sourcePath
-              destinationPath:(nullable NSString *)destinationPath NS_DESIGNATED_INITIALIZER;
+              destinationPath:(nullable NSString *)destinationPath
+           sideEffectsAllowed:(BOOL)sideEffectsAllowed NS_DESIGNATED_INITIALIZER;
 
 - (instancetype)init NS_UNAVAILABLE;
 - (void)invalidate;
 - (void)evaluateSynchronously:(BOOL)synchronously
+           sideEffectsAllowed:(BOOL)sideEffectsAllowed
                     withScope:(iTermVariableScope *)scope
                    completion:(void (^)(NSString * _Nullable result,
                                         NSError * _Nullable error,
@@ -73,10 +76,12 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (instancetype)initWithScope:(nullable iTermVariableScope *)scope
                    sourcePath:(NSString *)sourcePath
-              destinationPath:(nullable NSString *)destinationPath NS_UNAVAILABLE;
+              destinationPath:(nullable NSString *)destinationPath
+           sideEffectsAllowed:(BOOL)sideEffectsAllowed NS_UNAVAILABLE;
 
 - (instancetype)initWithString:(NSString *)swiftyString
                          scope:(nullable iTermVariableScope *)scope
+            sideEffectsAllowed:(BOOL)sideEffectsAllowed
                       observer:(NSString *(^ _Nullable)(NSString * _Nullable newValue, NSError * _Nullable error))observer NS_UNAVAILABLE;
 
 @end

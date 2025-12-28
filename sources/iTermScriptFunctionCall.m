@@ -90,22 +90,36 @@ void iTermFunctionCallSplitFullyQualifiedName(NSString *fqName, NSString **names
 + (iTermParsedExpression *)callMethod:(NSString *)invocation
                              receiver:(NSString *)receiver
                               timeout:(NSTimeInterval)timeout
+                   sideEffectsAllowed:(BOOL)sideEffectsAllowed
                            retainSelf:(BOOL)retainSelf  // YES to keep it alive until it's complete
                            completion:(void (^)(id, NSError *, NSSet<NSString *> *))completion {
-    return [self callFunction:invocation receiver:receiver timeout:timeout scope:nil retainSelf:retainSelf completion:completion];
+    return [self callFunction:invocation receiver:receiver
+                      timeout:timeout
+           sideEffectsAllowed:sideEffectsAllowed
+                        scope:nil
+                   retainSelf:retainSelf
+                   completion:completion];
 }
 
 + (iTermParsedExpression *)callFunction:(NSString *)invocation
                                 timeout:(NSTimeInterval)timeout
+                     sideEffectsAllowed:(BOOL)sideEffectsAllowed
                                   scope:(iTermVariableScope *)scope
                              retainSelf:(BOOL)retainSelf
                              completion:(void (^)(id, NSError *, NSSet<NSString *> *))completion {
-    return [self callFunction:invocation receiver:nil timeout:timeout scope:scope retainSelf:retainSelf completion:completion];
+    return [self callFunction:invocation
+                     receiver:nil
+                      timeout:timeout
+           sideEffectsAllowed:sideEffectsAllowed
+                        scope:scope
+                   retainSelf:retainSelf
+                   completion:completion];
 }
 
 + (iTermParsedExpression *)callFunction:(NSString *)invocation
                                receiver:(NSString *)receiver
                                 timeout:(NSTimeInterval)timeout
+                     sideEffectsAllowed:(BOOL)sideEffectsAllowed
                                   scope:(iTermVariableScope *)scope
                              retainSelf:(BOOL)retainSelf
                              completion:(void (^)(id, NSError *, NSSet<NSString *> *))completion {
@@ -119,6 +133,7 @@ void iTermFunctionCallSplitFullyQualifiedName(NSString *fqName, NSString **names
     expression = [self callFunction:invocation
                            receiver:receiver
                             timeout:timeout
+                 sideEffectsAllowed:sideEffectsAllowed
                               scope:scope
                          completion:^(id result, NSError *error, NSSet<NSString *> *missing) {
                              completion(result, error, missing);
@@ -136,6 +151,7 @@ void iTermFunctionCallSplitFullyQualifiedName(NSString *fqName, NSString **names
 + (iTermParsedExpression *)callFunction:(NSString *)invocation
                                receiver:(NSString *)receiver
                                 timeout:(NSTimeInterval)timeout
+                     sideEffectsAllowed:(BOOL)sideEffectsAllowed
                                   scope:(iTermVariableScope *)scope
                              completion:(void (^)(id, NSError *, NSSet<NSString *> *))completion {
     iTermVariableScope *placeholderScope = scope ? nil : [[iTermVariablePlaceholderScope alloc] init];
@@ -178,6 +194,7 @@ void iTermFunctionCallSplitFullyQualifiedName(NSString *fqName, NSString **names
                             invocation:invocation
                               receiver:receiver
                                timeout:timeout
+                    sideEffectsAllowed:sideEffectsAllowed
                                  scope:scope
                             completion:completion];
             return expression;
@@ -186,6 +203,7 @@ void iTermFunctionCallSplitFullyQualifiedName(NSString *fqName, NSString **names
                             invocation:invocation
                               receiver:receiver
                                timeout:timeout
+                    sideEffectsAllowed:sideEffectsAllowed
                                  scope:scope
                             completion:completion];
             return expression;
@@ -207,6 +225,7 @@ void iTermFunctionCallSplitFullyQualifiedName(NSString *fqName, NSString **names
                   invocation:(NSString *)invocation
                     receiver:(NSString *)receiver
                      timeout:(NSTimeInterval)timeout
+          sideEffectsAllowed:(BOOL)sideEffectsAllowed
                        scope:(iTermVariableScope *)scope
                   completion:(void (^)(id, NSError *, NSSet<NSString *> *))completion {
     if (calls.count == 0) {
@@ -219,6 +238,7 @@ void iTermFunctionCallSplitFullyQualifiedName(NSString *fqName, NSString **names
         [call performMethodCallFromInvocation:invocation
                                      receiver:receiver
                                       timeout:timeout
+                           sideEffectsAllowed:sideEffectsAllowed
                                    completion:^(id result, NSError *error, NSSet<NSString *> *missing) {
             if (error) {
                 completion(nil, error, missing);
@@ -232,6 +252,7 @@ void iTermFunctionCallSplitFullyQualifiedName(NSString *fqName, NSString **names
                                 invocation:invocation
                                   receiver:receiver
                                    timeout:timeout
+                        sideEffectsAllowed:sideEffectsAllowed
                                      scope:scope
                                 completion:completion];
         }];
@@ -240,6 +261,7 @@ void iTermFunctionCallSplitFullyQualifiedName(NSString *fqName, NSString **names
                                        receiver:nil
                                           scope:scope
                                         timeout:timeout
+                             sideEffectsAllowed:sideEffectsAllowed
                                      completion:^(id result, NSError *error, NSSet<NSString *> *missing) {
             if (error) {
                 completion(nil, error, missing);
@@ -253,6 +275,7 @@ void iTermFunctionCallSplitFullyQualifiedName(NSString *fqName, NSString **names
                                 invocation:invocation
                                   receiver:receiver
                                    timeout:timeout
+                        sideEffectsAllowed:sideEffectsAllowed
                                      scope:scope
                                 completion:completion];
         }];
@@ -264,6 +287,7 @@ void iTermFunctionCallSplitFullyQualifiedName(NSString *fqName, NSString **names
 - (void)performMethodCallFromInvocation:(NSString *)invocation
                                receiver:(NSString *)receiver
                                 timeout:(NSTimeInterval)timeout
+                     sideEffectsAllowed:(BOOL)sideEffectsAllowed
                              completion:(void (^)(id, NSError *, NSSet<NSString *> *))completion {
     id<iTermObject> object = [[iTermVariablesIndex sharedInstance] variablesForKey:receiver].owner;
     if (!object) {
@@ -279,6 +303,7 @@ void iTermFunctionCallSplitFullyQualifiedName(NSString *fqName, NSString **names
                                    receiver:receiver
                                       scope:object.objectScope
                                     timeout:timeout
+                         sideEffectsAllowed:sideEffectsAllowed
                                  completion:completion];
 }
 
@@ -310,6 +335,7 @@ void iTermFunctionCallSplitFullyQualifiedName(NSString *fqName, NSString **names
                                  receiver:(NSString *)receiver
                                     scope:(iTermVariableScope *)scope
                                   timeout:(NSTimeInterval)timeout
+                       sideEffectsAllowed:(BOOL)sideEffectsAllowed
                                completion:(void (^)(id, NSError *, NSSet<NSString *> *))completion {
     __block NSTimer *timer = nil;
     _remainingArgs = [NSMutableSet setWithArray:_argToExpression.allKeys];
@@ -332,6 +358,7 @@ void iTermFunctionCallSplitFullyQualifiedName(NSString *fqName, NSString **names
              invocation:invocation
                receiver:receiver
             synchronous:(timeout == 0)
+     sideEffectsAllowed:sideEffectsAllowed
              completion:
      ^(id output, NSError *error, NSSet<NSString *> *missing) {
          if (timeout > 0) {
@@ -355,6 +382,7 @@ void iTermFunctionCallSplitFullyQualifiedName(NSString *fqName, NSString **names
            invocation:(NSString *)invocation
              receiver:(NSString *)receiver
           synchronous:(BOOL)synchronous
+   sideEffectsAllowed:(BOOL)sideEffectsAllowed
            completion:(void (^)(id, NSError *, NSSet<NSString *> *))completion {
     static NSMutableArray<iTermScriptFunctionCall *> *outstandingCalls;
     static dispatch_once_t onceToken;
@@ -368,6 +396,7 @@ void iTermFunctionCallSplitFullyQualifiedName(NSString *fqName, NSString **names
     [self evaluateParametersWithScope:scope
                            invocation:invocation
                           synchronous:synchronous
+                   sideEffectsAllowed:sideEffectsAllowed
                            completion:^(NSDictionary<NSString *, id> *parameterValues,
                                         NSError *depError,
                                         NSSet<NSString *> *missing) {
@@ -377,6 +406,7 @@ void iTermFunctionCallSplitFullyQualifiedName(NSString *fqName, NSString **names
                                }
                                [strongSelf didEvaluateParametersWithScope:scope
                                                               synchronous:synchronous
+                                                       sideEffectsAllowed:sideEffectsAllowed
                                                           parameterValues:parameterValues
                                                                  receiver:receiver
                                                                  depError:depError
@@ -388,6 +418,7 @@ void iTermFunctionCallSplitFullyQualifiedName(NSString *fqName, NSString **names
 
 - (void)didEvaluateParametersWithScope:(iTermVariableScope *)scope
                            synchronous:(BOOL)synchronous
+                    sideEffectsAllowed:(BOOL)sideEffectsAllowed
                        parameterValues:(NSDictionary<NSString *, id> *)parameterValues
                               receiver:(NSString *)receiver
                               depError:(NSError *)depError
@@ -409,6 +440,7 @@ void iTermFunctionCallSplitFullyQualifiedName(NSString *fqName, NSString **names
     if (self.isBuiltinFunction) {
         [self callBuiltinFunctionWithScope:scope
                            parameterValues:parameterValues
+                        sideEffectsAllowed:sideEffectsAllowed
                                 completion:^(id object, NSError *error) {
             completion(object, error, nil);
         }];
@@ -456,12 +488,14 @@ void iTermFunctionCallSplitFullyQualifiedName(NSString *fqName, NSString **names
 
 - (void)callBuiltinFunctionWithScope:(iTermVariableScope *)scope
                      parameterValues:(NSDictionary<NSString *, id> *)parameterValues
+                  sideEffectsAllowed:(BOOL)sideEffectsAllowed
                           completion:(void (^)(id, NSError *))completion {
     iTermBuiltInFunctions *bif = [iTermBuiltInFunctions sharedInstance];
     [bif callFunctionWithName:_name
                     namespace:_namespace
                    parameters:parameterValues
                         scope:scope
+           sideEffectsAllowed:sideEffectsAllowed
                    completion:completion];
 }
 
@@ -472,6 +506,7 @@ void iTermFunctionCallSplitFullyQualifiedName(NSString *fqName, NSString **names
 - (void)evaluateParametersWithScope:(iTermVariableScope *)scope
                          invocation:(NSString *)invocation
                         synchronous:(BOOL)synchronous
+                 sideEffectsAllowed:(BOOL)sideEffectsAllowed
                          completion:(void (^)(NSDictionary<NSString *, id> *parameterValues,
                                               NSError *depError,
                                               NSSet<NSString *> *missing))completion {
@@ -486,6 +521,7 @@ void iTermFunctionCallSplitFullyQualifiedName(NSString *fqName, NSString **names
                                         invocation:invocation
                                              scope:scope
                                        synchronous:synchronous
+                                sideEffectsAllowed:sideEffectsAllowed
                                         completion:^(NSError *error, id value, NSSet<NSString *> *innerMissing) {
                                             [weakSelf didEvaluateArgument:key];
                                             [missing unionSet:innerMissing];
@@ -511,12 +547,15 @@ void iTermFunctionCallSplitFullyQualifiedName(NSString *fqName, NSString **names
                                   invocation:(NSString *)invocation
                                        scope:(iTermVariableScope *)scope
                                  synchronous:(BOOL)synchronous
+                          sideEffectsAllowed:(BOOL)sideEffectsAllowed
                                   completion:(void (^)(NSError *error, id value, NSSet<NSString *> *missing))completion {
     iTermExpressionEvaluator *parameterEvaluator = [[iTermExpressionEvaluator alloc] initWithParsedExpression:parsedExpression
                                                                                                    invocation:invocation
                                                                                                         scope:scope];
     [self->_evaluators addObject:parameterEvaluator];
-    [parameterEvaluator evaluateWithTimeout:synchronous ? 0 : INFINITY completion:^(iTermExpressionEvaluator *evaluator) {
+    [parameterEvaluator evaluateWithTimeout:synchronous ? 0 : INFINITY
+                         sideEffectsAllowed:sideEffectsAllowed
+                                 completion:^(iTermExpressionEvaluator *evaluator) {
         if (!evaluator.error) {
             completion(nil, evaluator.value, evaluator.missingValues);
             return;

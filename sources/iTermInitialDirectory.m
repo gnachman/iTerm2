@@ -103,7 +103,7 @@
 
     iTermExpressionEvaluator *evaluator = [[iTermExpressionEvaluator alloc] initWithInterpolatedString:modified
                                                                                                  scope:scope];
-    [evaluator evaluateWithTimeout:5 completion:^(iTermExpressionEvaluator * _Nonnull evaluator) {
+    [evaluator evaluateWithTimeout:5 sideEffectsAllowed:YES completion:^(iTermExpressionEvaluator * _Nonnull evaluator) {
         self->_evaluated = evaluator.value;
         completion(evaluator.value);
     }];

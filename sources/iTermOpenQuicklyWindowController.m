@@ -336,6 +336,7 @@
                     iTermOpenQuicklyInvocationItem *item = [iTermOpenQuicklyInvocationItem castFrom:object];
                     [iTermScriptFunctionCall callFunction:item.identifier
                                                   timeout:[[NSDate distantFuture] timeIntervalSinceNow]
+                                       sideEffectsAllowed:YES
                                                     scope:item.scope
                                                retainSelf:YES
                                                completion:^(id value, NSError *error, NSSet<NSString *> *missing) {

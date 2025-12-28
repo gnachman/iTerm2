@@ -35,6 +35,7 @@ NS_SWIFT_NAME(iTermBuiltInFunctionProtocol)
 @property (nonatomic, readonly) NSDictionary<NSString *, NSString *> *defaultValues;
 @property (nonatomic, readonly) iTermBuiltInFunctionsExecutionBlock block;
 @property (nonatomic, readonly) NSSet<NSString *> *optionalArguments;
+@property (nonatomic, readonly, nullable) NSString *sideEffectsPlaceholder;
 
 // All arguments must always be passed, even if they are optional.
 // Optional arguments may take a value of NSNull but must be specified regardless.
@@ -44,6 +45,7 @@ NS_SWIFT_NAME(iTermBuiltInFunctionProtocol)
            optionalArguments:(NSSet<NSString *> *)optionalArguments
                defaultValues:(NSDictionary<NSString *, NSString *> *)defaultValues  // arg name -> variable name
                      context:(iTermVariablesSuggestionContext)context
+      sideEffectsPlaceholder:(NSString * _Nullable)sideEffectsPlaceholder
                        block:(iTermBuiltInFunctionsExecutionBlock)block NS_DESIGNATED_INITIALIZER;
 - (instancetype)init NS_UNAVAILABLE;
 
@@ -56,6 +58,7 @@ NS_SWIFT_NAME(iTermBuiltInFunctionProtocol)
                        types:(NSDictionary<NSString *, Class> *)types
            optionalArguments:(NSSet<NSString *> *)optionalArguments
                      context:(iTermVariablesSuggestionContext)context
+      sideEffectsPlaceholder:(NSString * _Nullable)sideEffectsPlaceholder
                       target:(id<iTermObject>)target
                       action:(SEL)action;
 
@@ -86,6 +89,7 @@ NS_SWIFT_NAME(iTermBuiltInFunctionProtocol)
                    namespace:(NSString *)namespace_
                   parameters:(NSDictionary<NSString *, id> *)parameters
                        scope:(iTermVariableScope *)scope
+          sideEffectsAllowed:(BOOL)sideEffectsAllowed
                   completion:(iTermBuiltInFunctionCompletionBlock)completion;
 
 - (NSError *)undeclaredIdentifierError:(NSString *)identifier;

@@ -203,6 +203,9 @@ runCommandInBackground:(NSString *)command;
 - (id<VT100ScreenMarkReading> _Nullable)markForClick:(NSEvent *)event requireMargin:(BOOL)requireMargin;
 - (void)selectOutputOfCommandMark:(id<VT100ScreenMarkReading>)mark;
 
+// May leave placeholders
+- (NSString *)evaluateCustomActionDictionary:(NSDictionary *)dict;
+
 @end
 
 NS_ASSUME_NONNULL_END

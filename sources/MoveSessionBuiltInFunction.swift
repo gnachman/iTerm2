@@ -16,7 +16,8 @@ class MoveSessionBuiltInFunction: iTermBuiltInFunction {
                                                     "before": NSNumber.self],
                                         optionalArguments: Set(),
                                         defaultValues: [:],
-                                        context: .session) { parameters, completion in
+                                     context: .session,
+                                     sideEffectsPlaceholder: "[move_session]") { parameters, completion in
             do {
                 guard let session = parameters["session"] as? String,
                       let destination = parameters["destination"] as? String,

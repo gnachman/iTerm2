@@ -1007,6 +1007,23 @@ const int kMaxSelectedTextLengthForCustomActions = 400;
                                                          completion:completion];
 }
 
+- (NSString *)evaluateCustomActionDictionary:(NSDictionary *)dict {
+    NSDictionary *action = dict[iTermSmartSelectionActionContextKeyAction];
+    NSArray *components = dict[iTermSmartSelectionActionContextKeyComponents];
+    NSString *workingDirectory = [dict[iTermSmartSelectionActionContextKeyWorkingDirectory] nilIfNull];
+    id<VT100RemoteHostReading> remoteHost = [dict[iTermSmartSelectionActionContextKeyRemoteHost] nilIfNull];
+
+    iTermVariableScope *myScope = [[self.delegate contextMenuSessionScope:self] copy];
+    [myScope setValue:workingDirectory forVariableNamed:iTermVariableKeySessionPath];
+    [myScope setValue:remoteHost.hostname forVariableNamed:iTermVariableKeySessionHostname];
+    [myScope setValue:remoteHost.username forVariableNamed:iTermVariableKeySessionUsername];
+    return [ContextMenuActionPrefsController computeParameterForActionDict:action
+                                              withCaptureComponents:components
+                                                   useInterpolation:[self smartSelectionActionsShouldUseInterpolatedStrings]
+                                                              scope:myScope
+                                                              owner:[self.delegate contextMenuOwner:self]];
+}
+
 - (void)downloadWithSCP:(id)sender {
     iTermSelection *selection = [self.delegate contextMenuSelection:self];
     if (![selection hasSelection]) {
@@ -1241,6 +1258,7 @@ const int kMaxSelectedTextLengthForCustomActions = 400;
         NSString *invocation = [self invocationForAPIRegistrationRequest:req];
         [iTermScriptFunctionCall callFunction:invocation
                                       timeout:req.hasTimeout ? req.timeout : 30
+                           sideEffectsAllowed:YES
                                         scope:[self.delegate contextMenuSessionScope:self]
                                    retainSelf:YES
                                    completion:^(id value, NSError *error, NSSet<NSString *> *missingFunctions) {

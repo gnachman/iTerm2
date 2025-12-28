@@ -71,6 +71,7 @@ static NSString *const iTermStatusBarActionKey = @"action";
     NSString *expression = self.action.title.copy ?: @"";
     _swiftyString = [[iTermSwiftyString alloc] initWithString:expression
                                                         scope:self.scope
+                                           sideEffectsAllowed:false
                                                      observer:^(NSString * _Nonnull newValue, NSError *error) {
         if (error != nil) {
             [[iTermScriptHistoryEntry globalEntry] addOutput:[NSString stringWithFormat:@"Error while evaluating %@ in status bar action button: %@", expression, error]

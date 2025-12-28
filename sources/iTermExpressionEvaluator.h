@@ -42,6 +42,7 @@ NS_ASSUME_NONNULL_BEGIN
 // If the timeout is positive the object will live until the timer fires or the RPC completes.
 // Callers do not need to retain a reference to the expression evaluator.
 - (void)evaluateWithTimeout:(NSTimeInterval)timeout
+         sideEffectsAllowed:(BOOL)sideEffectsAllowed
                  completion:(void (^)(iTermExpressionEvaluator *evaluator))completion;
 
 @end

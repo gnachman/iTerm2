@@ -196,6 +196,7 @@ static NSString *const iTermStatusBarRPCRegistrationRequestV2Key = @"registratio
     scope.neverReturnNil = YES;
     [iTermScriptFunctionCall callFunction:self.invocation
                                   timeout:0
+                       sideEffectsAllowed:NO
                                     scope:scope
                                retainSelf:YES
                                completion:^(id value, NSError *error, NSSet<NSString *> *missingFunctions) {}];
@@ -362,6 +363,7 @@ static NSString *const iTermStatusBarRPCRegistrationRequestV2Key = @"registratio
     [scope setValue:jsonKnobs forVariableNamed:@"__knobs"];
     [iTermScriptFunctionCall callFunction:self.invocation
                                   timeout:_savedRegistrationRequest.latestStatusBarRequest.timeout ?: [[NSDate distantFuture] timeIntervalSinceNow]
+                       sideEffectsAllowed:YES
                                     scope:scope
                                retainSelf:YES
                                completion:
@@ -550,6 +552,7 @@ static NSString *const iTermStatusBarRPCRegistrationRequestV2Key = @"registratio
     NSString *func = [NSString stringWithFormat:@"__%@__on_click(session_id: \"%@\")", identifier, sessionId];
     [iTermScriptFunctionCall callFunction:func
                                   timeout:30
+                       sideEffectsAllowed:YES
                                     scope:self.delegate.scope
                                retainSelf:YES
                                completion:^(id result, NSError *error, NSSet<NSString *> *mutations) {

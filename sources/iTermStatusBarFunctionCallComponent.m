@@ -180,6 +180,7 @@ static NSString *const iTermStatusBarTimeoutKey = @"timeout";
     __weak __typeof(self) weakSelf = self;
     [iTermScriptFunctionCall callFunction:invocation
                                   timeout:timeout
+                       sideEffectsAllowed:YES
                                     scope:weakSelf.scope
                                retainSelf:YES
                                completion:^(id value, NSError *error, NSSet<NSString *> *dependencies) {

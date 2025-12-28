@@ -61,7 +61,8 @@ class SavePanelBuiltInFunction: NSObject, iTermBuiltInFunctionProtocol {
                                     nameFieldLabelArgName,
                                     defaultFilenameArgName]),
             defaultValues: [:],
-            context: .app) { parameters, completion in
+            context: .app,
+            sideEffectsPlaceholder: "[save_panel]") { parameters, completion in
                 let panel = NSSavePanel()
 
                 if let path = parameters[pathArgName] as? String {

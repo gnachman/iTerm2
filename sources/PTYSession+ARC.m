@@ -141,6 +141,7 @@ extern NSString *const SESSION_ARRANGEMENT_SERVER_DICT;
     [mux evaluateInterpolatedStrings:@[logdirInterpolatedString, filenameInterpolatedString]
                                scope:self.variablesScope
                              timeout:5
+                  sideEffectsAllowed:YES
                            retryTime:5
                              success:^(NSArray<NSString *> *values) {
         NSString *folder = values[0];

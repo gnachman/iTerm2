@@ -21,6 +21,38 @@ class SwiftyStringWithBackreferencesEvaluator: NSObject {
     @objc func evaluate(additionalContext: [String: AnyObject],
                         scope: iTermVariableScope,
                         owner: iTermObject,
+                        sideEffectsAllowed: Bool) throws -> String {
+        let myScope = amendedScope(scope,
+                                   owner: owner,
+                                   values: additionalContext)
+        if cachedSwiftyString?.swiftyString != expression {
+            cachedSwiftyString = iTermSwiftyString(string: expression,
+                                                   scope: myScope,
+                                                   sideEffectsAllowed: sideEffectsAllowed,
+                                                   observer: nil)
+        }
+        var result: Result<String, Error>?
+        cachedSwiftyString!.evaluateSynchronously(true,
+                                                  sideEffectsAllowed: sideEffectsAllowed,
+                                                  with: myScope) { value, error, missing in
+            if let error = error {
+                result = .failure(error)
+            } else {
+                result = .success(value ?? "[async value]")
+            }
+        }
+        switch result {
+        case .none:
+            it_fatalError("Result not set")
+        case .success(let value):
+            return value
+        case .failure(let error):
+            throw error
+        }
+    }
+    @objc func evaluate(additionalContext: [String: AnyObject],
+                        scope: iTermVariableScope,
+                        owner: iTermObject,
                         completion: @escaping (String?, NSError?) -> ()) {
         let myScope = amendedScope(scope,
                                    owner: owner,
@@ -28,9 +60,11 @@ class SwiftyStringWithBackreferencesEvaluator: NSObject {
         if cachedSwiftyString?.swiftyString != expression {
             cachedSwiftyString = iTermSwiftyString(string: expression,
                                                    scope: myScope,
+                                                   sideEffectsAllowed: false,
                                                    observer: nil)
         }
         cachedSwiftyString!.evaluateSynchronously(false,
+                                                  sideEffectsAllowed: true,
                                                   with: myScope) { value, error, missing in
             if let error = error {
                 completion(nil, error as NSError)

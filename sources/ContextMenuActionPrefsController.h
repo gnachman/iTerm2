@@ -59,6 +59,13 @@ extern NSString *iTermSmartSelectionActionContextKeyRemoteHost;
                                 owner:(id<iTermObject>)owner
                            completion:(void (^)(NSString *parameter))completion;
 
+// May leave placeholders
++ (NSString *)computeParameterForActionDict:(NSDictionary *)dict
+                      withCaptureComponents:(NSArray *)components
+                           useInterpolation:(BOOL)useInterpolation
+                                      scope:(iTermVariableScope *)scope
+                                      owner:(id<iTermObject>)owner;
+
 - (IBAction)ok:(id)sender;
 - (void)setActions:(NSArray *)newActions browser:(BOOL)browser;
 - (IBAction)add:(id)sender;

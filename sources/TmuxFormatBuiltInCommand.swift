@@ -27,7 +27,8 @@ extension TmuxFormatBuiltInFunction: iTermBuiltInFunctionProtocol {
                backingVariableKey: iTermVariableReference<AnyObject>.self],
             optionalArguments: [sessionIDKey],
             defaultValues: [sessionIDKey: iTermVariableKeySessionID],
-            context: .session) {
+            context: .session,
+            sideEffectsPlaceholder: nil) {
                 parameters, completion in
                 guard let sessionID = parameters[sessionIDKey] as? String else {
                     completion(nil, error(message: "Missing \(sessionIDKey). This shouldn't happen so please report a bug."))

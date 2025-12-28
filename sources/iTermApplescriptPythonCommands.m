@@ -121,7 +121,7 @@
                                                          scope:[iTermVariableScope globalsScope]];
     [self suspendExecution];
     __weak __typeof(self) weakSelf = self;
-    [evaluator evaluateWithTimeout:sync ? 0 : 10 completion:^(iTermExpressionEvaluator * _Nonnull evaluator) {
+    [evaluator evaluateWithTimeout:sync ? 0 : 10 sideEffectsAllowed:YES completion:^(iTermExpressionEvaluator * _Nonnull evaluator) {
         if (evaluator.error) {
             [self setScriptErrorNumber:2];
             [self setScriptErrorString:evaluator.error.localizedDescription];

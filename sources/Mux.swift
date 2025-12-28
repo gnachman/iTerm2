@@ -51,10 +51,11 @@ class Mux: NSObject {
 // MARK:- Convenience methods for interpolated strings.
 
 extension Mux {
-    @objc(evaluateInterpolatedString:scope:timeout:retryTime:success:error:)
+    @objc(evaluateInterpolatedString:scope:timeout:sideEffectsAllowed:retryTime:success:error:)
     func evaluate(_ interpolatedString: String,
                   scope: iTermVariableScope,
                   timeout: TimeInterval,
+                  sideEffectsAllowed: Bool,
                   retryTime: TimeInterval,
                   success successHandler: @escaping (AnyObject?) -> Void,
                   error errorHandler: @escaping (Error) -> Void) {
@@ -64,7 +65,7 @@ extension Mux {
         if retryTime > 0 {
             evaluator.retryUntil = Date().addingTimeInterval(retryTime)
         }
-        evaluator.evaluate(withTimeout: timeout) { evaluator in
+        evaluator.evaluate(withTimeout: timeout, sideEffectsAllowed: sideEffectsAllowed) { evaluator in
             defer {
                 completion()
             }
@@ -76,10 +77,11 @@ extension Mux {
         }
     }
 
-    @objc(evaluateInterpolatedStrings:scope:timeout:retryTime:success:error:)
+    @objc(evaluateInterpolatedStrings:scope:timeout:sideEffectsAllowed:retryTime:success:error:)
     func evaluate(_ interpolatedStrings: [String],
                   scope: iTermVariableScope,
                   timeout: TimeInterval,
+                  sideEffectsAllowed: Bool,
                   retryTime: TimeInterval,
                   success successHandler: @escaping ([AnyObject]) -> Void,
                   error errorHandler: @escaping (Error) -> Void) {
@@ -102,7 +104,7 @@ extension Mux {
         var results: [Result] = []
         for (i, string) in interpolatedStrings.enumerated() {
             results.append(.pending)
-            evaluate(string, scope: scope, timeout: timeout, retryTime: retryTime) { obj in
+            evaluate(string, scope: scope, timeout: timeout, sideEffectsAllowed: sideEffectsAllowed, retryTime: retryTime) { obj in
                 DLog("Mux \(self) evaluated \(string) with result \(obj?.debugDescription ?? "(nil)")")
                 results[i] = .value(obj)
             } error: { error in
