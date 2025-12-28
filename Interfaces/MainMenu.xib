@@ -151,7 +151,7 @@
                                     <action selector="newSession:" target="201" id="871"/>
                                 </connections>
                             </menuItem>
-                            <menuItem title="New Tab Next to Current Tab" alternate="YES" keyEquivalent="t" identifier="New Tab" id="YXw-k6-LJh">
+                            <menuItem title="New Tab Next to Current Tab" alternate="YES" keyEquivalent="t" identifier="New Tab Next to Current Tab" id="YXw-k6-LJh">
                                 <modifierMask key="keyEquivalentModifierMask" option="YES" command="YES"/>
                                 <connections>
                                     <action selector="newSessionAlternate:" target="201" id="OR1-bT-pP2"/>

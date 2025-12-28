@@ -710,7 +710,7 @@ Gw
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <clipView key="contentView" id="gZI-PG-peZ">
                             <rect key="frame" x="1" y="1" width="373" height="353"/>
-                            <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                            <autoresizingMask key="autoresizingMask"/>
                             <subviews>
                                 <tableView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="lastColumnOnly" alternatingRowBackgroundColors="YES" columnReordering="NO" columnResizing="NO" autosaveColumns="NO" id="5845">
                                     <rect key="frame" x="0.0" y="0.0" width="373" height="353"/>
@@ -917,7 +917,7 @@ DQ
                                 <autoresizingMask key="autoresizingMask" heightSizable="YES"/>
                                 <clipView key="contentView" drawsBackground="NO" id="Yde-8Q-TRE">
                                     <rect key="frame" x="1" y="1" width="256" height="133"/>
-                                    <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                                    <autoresizingMask key="autoresizingMask"/>
                                     <subviews>
                                         <textView wantsLayer="YES" importsGraphics="NO" richText="NO" verticallyResizable="YES" allowsUndo="YES" textCompletion="NO" id="235-ob-yuB">
                                             <rect key="frame" x="0.0" y="0.0" width="256" height="133"/>
@@ -972,7 +972,7 @@ DQ
                         <autoresizingMask key="autoresizingMask"/>
                         <clipView key="contentView" drawsBackground="NO" id="XnQ-nh-5wv">
                             <rect key="frame" x="1" y="1" width="379" height="83"/>
-                            <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                            <autoresizingMask key="autoresizingMask"/>
                             <subviews>
                                 <textView wantsLayer="YES" importsGraphics="NO" richText="NO" verticallyResizable="YES" textCompletion="NO" id="ucv-8U-BE7" customClass="iTermPlaygroundTextView">
                                     <rect key="frame" x="0.0" y="0.0" width="379" height="83"/>
@@ -1096,7 +1096,7 @@ DQ
                     <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="6297">
                         <rect key="frame" x="698" y="13" width="96" height="32"/>
                         <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxY="YES"/>
-                        <buttonCell key="cell" type="push" title="Ok" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="6298">
+                        <buttonCell key="cell" type="push" title="OK" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="6298">
                             <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
                             <font key="font" metaFont="system"/>
                             <string key="keyEquivalent" base64-UTF8="YES">
@@ -1145,7 +1145,7 @@ CA
                         </connections>
                     </button>
                     <button horizontalHuggingPriority="750" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="l5x-7m-fTj">
-                        <rect key="frame" x="452" y="16" width="25" height="25"/>
+                        <rect key="frame" x="470" y="16" width="25" height="25"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                         <buttonCell key="cell" type="help" bezelStyle="helpButton" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="VXT-TZ-RtU">
                             <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
@@ -3742,7 +3742,7 @@ CA
                                                 <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                                             </textFieldCell>
                                         </textField>
-                                        <textField identifier="width_label" focusRingType="none" verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="7so-Zo-Vb0">
+                                        <textField identifier="by_label" focusRingType="none" verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="7so-Zo-Vb0">
                                             <rect key="frame" x="157" y="3" width="78" height="16"/>
                                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                             <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="left" title="by" id="Os1-TL-DbG">
@@ -5482,7 +5482,7 @@ CA
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <clipView key="contentView" id="ArV-0K-qze">
                                 <rect key="frame" x="1" y="1" width="450" height="95"/>
-                                <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                                <autoresizingMask key="autoresizingMask"/>
                                 <subviews>
                                     <tableView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="lastColumnOnly" alternatingRowBackgroundColors="YES" columnReordering="NO" columnResizing="NO" multipleSelection="NO" autosaveColumns="NO" id="5661">
                                         <rect key="frame" x="0.0" y="0.0" width="450" height="95"/>
@@ -6113,7 +6113,7 @@ See the [documentation](https://iterm2.com/automatic-profile-switching.html) for
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <clipView key="contentView" id="FMp-vf-IvG">
                                 <rect key="frame" x="1" y="1" width="551" height="76"/>
-                                <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                                <autoresizingMask key="autoresizingMask"/>
                                 <subviews>
                                     <tableView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="lastColumnOnly" alternatingRowBackgroundColors="YES" columnSelection="YES" multipleSelection="NO" autosaveColumns="NO" id="69M-P0-mzb">
                                         <rect key="frame" x="0.0" y="0.0" width="551" height="76"/>
@@ -8222,11 +8222,11 @@ See the [documentation](https://iterm2.com/automatic-profile-switching.html) for
                     <tabViewItems>
                         <tabViewItem label="General" identifier="" id="wt3-Hu-DaR">
                             <view key="view" id="7fG-Sy-1hE">
-                                <rect key="frame" x="10" y="33" width="590" height="267"/>
+                                <rect key="frame" x="10" y="33" width="590" height="304"/>
                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                 <subviews>
                                     <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Wsp-9H-Fsm" customClass="iTermPreferencesInnerTabContainerView">
-                                        <rect key="frame" x="47" y="106" width="496" height="158"/>
+                                        <rect key="frame" x="47" y="143" width="496" height="158"/>
                                         <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxX="YES" flexibleMinY="YES"/>
                                         <subviews>
                                             <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="awA-hH-ziY">
@@ -9598,7 +9598,7 @@ instead of the system keyboard.</string>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <clipView key="contentView" id="N1C-ir-dI5">
                         <rect key="frame" x="1" y="1" width="238" height="377"/>
-                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <autoresizingMask key="autoresizingMask"/>
                         <subviews>
                             <tableView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="lastColumnOnly" columnReordering="NO" columnResizing="NO" autosaveColumns="NO" typeSelect="NO" id="5562">
                                 <rect key="frame" x="0.0" y="0.0" width="238" height="377"/>
@@ -9989,7 +9989,7 @@ instead of the system keyboard.</string>
                     <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMinY="YES"/>
                     <clipView key="contentView" id="Fm3-fw-Qw5">
                         <rect key="frame" x="1" y="1" width="950" height="362"/>
-                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <autoresizingMask key="autoresizingMask"/>
                         <subviews>
                             <tableView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="none" columnReordering="NO" columnResizing="NO" multipleSelection="NO" autosaveColumns="NO" typeSelect="NO" rowSizeStyle="automatic" viewBased="YES" id="5ik-Xh-beg" customClass="iTermAdvancedSettingsTableView">
                                 <rect key="frame" x="0.0" y="0.0" width="950" height="362"/>
@@ -10011,11 +10011,11 @@ instead of the system keyboard.</string>
                                         <tableColumnResizingMask key="resizingMask" resizeWithTable="YES"/>
                                         <prototypeCellViews>
                                             <tableCellView id="RoD-zs-eHF">
-                                                <rect key="frame" x="1" y="1" width="563" height="17"/>
+                                                <rect key="frame" x="11" y="1" width="562.5" height="17"/>
                                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                                 <subviews>
                                                     <textField focusRingType="none" verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="zlz-2J-KIa">
-                                                        <rect key="frame" x="0.0" y="0.0" width="563" height="17"/>
+                                                        <rect key="frame" x="0.0" y="0.0" width="562.5" height="17"/>
                                                         <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMinY="YES"/>
                                                         <textFieldCell key="cell" lineBreakMode="truncatingTail" sendsActionOnEndEditing="YES" title="Table View Cell" id="XeY-ex-eKM">
                                                             <font key="font" metaFont="system"/>
@@ -10043,7 +10043,7 @@ instead of the system keyboard.</string>
                                         <tableColumnResizingMask key="resizingMask" resizeWithTable="YES"/>
                                         <prototypeCellViews>
                                             <tableCellView id="W6M-oM-X4N">
-                                                <rect key="frame" x="566.5" y="1" width="353" height="17"/>
+                                                <rect key="frame" x="576.5" y="1" width="353" height="17"/>
                                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                                 <subviews>
                                                     <textField focusRingType="none" verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="n68-XZ-ujb">
