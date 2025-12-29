@@ -10,6 +10,7 @@
 #import "BulkCopyProfilePreferencesWindowController.h"
 #import "DebugLogging.h"
 #import "iTerm2SharedARC-Swift.h"
+#import "iTermAdvancedSettingsModel.h"
 #import "ITAddressBookMgr.h"
 #import "iTerm2SharedARC-Swift.h"
 #import "iTermController.h"
@@ -812,7 +813,10 @@ andEditComponentWithIdentifier:(NSString *)identifier
     newProfile[KEY_DEFAULT_BOOKMARK] = @"No";
     newProfile[KEY_SHORTCUT] = @"";
     newProfile[KEY_BOUND_HOSTS] = @[];
-    newProfile[KEY_TAGS] = [newProfile[KEY_TAGS] arrayByRemovingObject:kProfileDynamicTag];
+    [newProfile removeObjectForKey:KEY_DYNAMIC_PROFILE];
+    if ([iTermAdvancedSettingsModel addDynamicTagToDynamicProfiles]) {
+        newProfile[KEY_TAGS] = [newProfile[KEY_TAGS] arrayByRemovingObject:kProfileDynamicTag];
+    }
     newProfile[KEY_HAS_HOTKEY] = @NO;  // Don't create another hotkey window with the same hotkey
     [[_delegate profilePreferencesModel] addBookmark:newProfile];
     [_profilesListView reloadData];
@@ -1160,8 +1164,7 @@ andEditComponentWithIdentifier:(NSString *)identifier
     if (!guid) {
         return;
     }
-    NSArray *tagsArray = [NSArray castFrom:[profile objectForKey:KEY_TAGS]];
-    if (![tagsArray containsObject:kProfileDynamicTag]) {
+    if (!profile.profileIsDynamic) {
         return;
     }
     if ([iTermProfilePreferences boolForKey:KEY_DYNAMIC_PROFILE_REWRITABLE inProfile:profile]) {

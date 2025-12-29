@@ -12,6 +12,8 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
+extern NSString *const iTermDynamicProfileSymbolName;
+
 @interface iTermTableCellViewWithTextField: NSTableCellView
 @end
 

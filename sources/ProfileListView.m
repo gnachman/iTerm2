@@ -28,6 +28,7 @@
 #import "DebugLogging.h"
 #import "iTermSplitViewAnimation.h"
 #import "ITAddressBookMgr.h"
+#import "NSDictionary+Profile.h"
 #import "NSArray+iTerm.h"
 #import "NSMutableAttributedString+iTerm.h"
 #import "NSObject+iTerm.h"
@@ -46,51 +47,9 @@
 
 #define kProfileTableViewDataType @"com.googlecode.iterm2.iTerm2ProfileGuid"
 
-// NSAttributedString attribute keys used as source values by
-// iTermProfileListViewTextField. One of these colors will be used as the
-// NSForegroundColorAttributeName's value when the background style changes.
-static NSString *const iTermSelectedActiveForegroundColor = @"iTermSelectedActiveForegroundColor";
-static NSString *const iTermRegularForegroundColor = @"iTermRegularForegroundColor";
+// NSAttributedString attribute keys
 static NSString *const iTermProfileListViewRestorableStateTagsVisible = @"iTermProfileListViewRestorableStateTagsVisible";
 static NSString *const iTermProfileListViewRestorableStateTagsFraction = @"iTermProfileListViewRestorableStateTagsFraction";
-
-// This is a text field that updates its text colors depending on the current background style.
-@interface iTermProfileListViewTextField : NSTextField
-@end
-
-@implementation iTermProfileListViewTextField
-
-- (void)setBackgroundStyle:(NSBackgroundStyle)backgroundStyle {
-    switch (backgroundStyle) {
-        case NSBackgroundStyleNormal:
-            self.textColor = [NSColor labelColor];
-            [self setAttributedTextColorsForKey:iTermRegularForegroundColor];
-            break;
-        case NSBackgroundStyleEmphasized:
-            [self setAttributedTextColorsForKey:iTermSelectedActiveForegroundColor];
-            self.textColor = [NSColor labelColor];
-            break;
-
-        case NSBackgroundStyleRaised:
-        case NSBackgroundStyleLowered:
-            DLog(@"Unexpected background style %@", @(backgroundStyle));
-            break;
-    }
-}
-
-- (void)setAttributedTextColorsForKey:(NSString *)key {
-    NSMutableAttributedString *m = [self.attributedStringValue.mutableCopy autorelease];
-    [self.attributedStringValue enumerateAttributesInRange:NSMakeRange(0, self.attributedStringValue.string.length)
-                                                   options:0
-                                                usingBlock:^(NSDictionary<NSAttributedStringKey,id> * _Nonnull attrs, NSRange range, BOOL * _Nonnull stop) {
-                                                    NSMutableDictionary *newAttrs = [[attrs mutableCopy] autorelease];
-                                                    newAttrs[NSForegroundColorAttributeName] = attrs[key];
-                                                    [m setAttributes:newAttrs range:range];
-                                                }];
-    self.attributedStringValue = m;
-}
-
-@end
 
 NSString *const kProfileWasDeletedNotification = @"kProfileWasDeletedNotification";
 
@@ -619,59 +578,26 @@ const CGFloat kDefaultTagsWidth = 80;
     return ![self.window.appearance.name isEqual:NSAppearanceNameVibrantDark];
 }
 
-- (NSColor *)regularTextColor {
-    return [NSColor labelColor];
-}
-
-- (NSColor *)textColorWhenInactiveAndSelected {
-    return [NSColor unemphasizedSelectedTextColor];
-}
-
-- (NSColor *)selectedActiveTagColor {
-    return [NSColor selectedMenuItemTextColor];
-}
-
-- (NSColor *)selectedActiveTextColor {
-    return [NSColor selectedMenuItemTextColor];
-}
-
-- (NSColor *)regularTagColor {
-    return [NSColor colorWithCalibratedWhite:0.5 alpha:1];
-}
-
 - (NSAttributedString *)attributedStringForName:(NSString *)name
                                            tags:(NSArray *)tags
                                        selected:(BOOL)selected
                                       isDefault:(BOOL)isDefault
                                       isBrowser:(BOOL)isBrowser
+                                      isDynamic:(BOOL)isDynamic
                                          filter:(NSString *)filter {
     NSColor *highlightedBackgroundColor = [NSColor colorWithCalibratedRed:1 green:1 blue:0 alpha:0.4];
 
-    NSColor *textColor = [self regularTextColor];
-    NSColor *highlightedTextColor = [NSColor blackColor];
-    NSColor *tagColor = [self regularTagColor];
-    NSColor *selectedActiveTextColor = [self selectedActiveTextColor];
-    NSColor *selectedActiveTagColor = [self selectedActiveTagColor];
-    
     NSMutableParagraphStyle *paragraphStyle = [[[NSMutableParagraphStyle alloc] init] autorelease];
     paragraphStyle.lineBreakMode = NSLineBreakByTruncatingTail;
 
-    NSDictionary* plainAttributes = @{ iTermSelectedActiveForegroundColor: selectedActiveTextColor,
-                                       iTermRegularForegroundColor: textColor,
-                                       NSParagraphStyleAttributeName: paragraphStyle,
+    NSDictionary* plainAttributes = @{ NSParagraphStyleAttributeName: paragraphStyle,
                                        NSFontAttributeName: self.mainFont };
-    NSDictionary* highlightedNameAttributes = @{ iTermSelectedActiveForegroundColor: selectedActiveTextColor,
-                                                 iTermRegularForegroundColor: highlightedTextColor,
-                                                 NSParagraphStyleAttributeName: paragraphStyle,
+    NSDictionary* highlightedNameAttributes = @{ NSParagraphStyleAttributeName: paragraphStyle,
                                                  NSBackgroundColorAttributeName: highlightedBackgroundColor,
                                                  NSFontAttributeName: self.mainFont };
-    NSDictionary* smallAttributes = @{ iTermSelectedActiveForegroundColor: selectedActiveTagColor,
-                                       iTermRegularForegroundColor: tagColor,
-                                       NSParagraphStyleAttributeName: paragraphStyle,
+    NSDictionary* smallAttributes = @{ NSParagraphStyleAttributeName: paragraphStyle,
                                        NSFontAttributeName: self.tagFont };
-    NSDictionary* highlightedSmallAttributes = @{ iTermSelectedActiveForegroundColor: selectedActiveTagColor,
-                                                  iTermRegularForegroundColor: highlightedTextColor,
-                                                  NSParagraphStyleAttributeName: paragraphStyle,
+    NSDictionary* highlightedSmallAttributes = @{ NSParagraphStyleAttributeName: paragraphStyle,
                                                   NSBackgroundColorAttributeName: highlightedBackgroundColor,
                                                   NSFontAttributeName: self.tagFont };
     NSMutableAttributedString *theAttributedString =
@@ -698,6 +624,28 @@ const CGFloat kDefaultTagsWidth = 80;
                                                            attributes:plainAttributes] autorelease];
             browserIcon = [safari attributedStringByAppendingAttributedString:space];
             [theAttributedString insertAttributedString:browserIcon atIndex:0];
+        }
+    }
+    if (isDynamic) {
+        if (@available(macOS 12.0, *)) {
+            NSTextAttachment *attachment = [[[NSTextAttachment alloc] init] autorelease];
+            NSString *imageName = SFSymbolGetString(SFSymbolTrayAndArrowDown);
+            NSColor *color = [[NSColor labelColor] colorWithAlphaComponent:0.75];
+            NSImageSymbolConfiguration *config = [NSImageSymbolConfiguration configurationWithHierarchicalColor:color];
+            NSImage *image = [[NSImage imageWithSystemSymbolName:imageName accessibilityDescription:nil]
+                              imageWithSymbolConfiguration:config];
+            image.size = NSMakeSize(16, 16);
+            attachment.image = image;
+            NSAttributedString *dynamicIcon = [NSAttributedString attributedStringWithAttachment:attachment];
+            NSMutableAttributedString *dynamicIconWithAttr = [[dynamicIcon mutableCopy] autorelease];
+            [dynamicIconWithAttr addAttribute:iTermDynamicProfileSymbolName
+                                        value:imageName
+                                        range:NSMakeRange(0, dynamicIconWithAttr.length)];
+            NSAttributedString *space = [[[NSAttributedString alloc] initWithString:@" "
+                                                                         attributes:plainAttributes] autorelease];
+            NSMutableAttributedString *spaceWithIcon = [[[NSMutableAttributedString alloc] initWithAttributedString:space] autorelease];
+            [spaceWithIcon appendAttributedString:dynamicIconWithAttr];
+            [theAttributedString appendAttributedString:spaceWithIcon];
         }
     }
     if (tags.count) {
@@ -727,20 +675,12 @@ const CGFloat kDefaultTagsWidth = 80;
                                             filter:(NSString *)filter {
     NSColor *highlightedBackgroundColor = [NSColor colorWithCalibratedRed:1 green:1 blue:0 alpha:0.4];
 
-    NSColor *textColor = [self regularTextColor];
-    NSColor *highlightedTextColor = [NSColor blackColor];
-    NSColor *selectedActiveTextColor = [self selectedActiveTextColor];
-
     NSMutableParagraphStyle *paragraphStyle = [[[NSMutableParagraphStyle alloc] init] autorelease];
     paragraphStyle.lineBreakMode = NSLineBreakByTruncatingTail;
 
-    NSDictionary* plainAttributes = @{ iTermSelectedActiveForegroundColor: selectedActiveTextColor,
-                                       iTermRegularForegroundColor: textColor,
-                                       NSParagraphStyleAttributeName: paragraphStyle,
+    NSDictionary* plainAttributes = @{ NSParagraphStyleAttributeName: paragraphStyle,
                                        NSFontAttributeName: self.mainFont };
-    NSDictionary* highlightedNameAttributes = @{ iTermSelectedActiveForegroundColor: selectedActiveTextColor,
-                                                 iTermRegularForegroundColor: highlightedTextColor,
-                                                 NSParagraphStyleAttributeName: paragraphStyle,
+    NSDictionary* highlightedNameAttributes = @{ NSParagraphStyleAttributeName: paragraphStyle,
                                                  NSBackgroundColorAttributeName: highlightedBackgroundColor,
                                                  NSFontAttributeName: self.mainFont };
     return [[[ProfileModel attributedStringForCommand:command
@@ -753,13 +693,8 @@ const CGFloat kDefaultTagsWidth = 80;
     NSMutableParagraphStyle *paragraphStyle = [[[NSMutableParagraphStyle alloc] init] autorelease];
     paragraphStyle.lineBreakMode = NSLineBreakByTruncatingTail;
 
-    NSColor *textColor = [self regularTextColor];
-    NSColor *selectedActiveTextColor = [self selectedActiveTextColor];
-
     NSDictionary *attributes = @{ NSFontAttributeName: [NSFont systemFontOfSize:[NSFont systemFontSize]],
-                                  NSParagraphStyleAttributeName: paragraphStyle,
-                                  iTermSelectedActiveForegroundColor: selectedActiveTextColor,
-                                  iTermRegularForegroundColor: textColor };
+                                  NSParagraphStyleAttributeName: paragraphStyle };
     return [[[NSAttributedString alloc] initWithString:string ?: @"" attributes:attributes] autorelease];
 }
 
@@ -795,6 +730,7 @@ const CGFloat kDefaultTagsWidth = 80;
                                     selected:[[tableView_ selectedRowIndexes] containsIndex:rowIndex]
                                    isDefault:[bookmark[KEY_GUID] isEqualToString:defaultProfile[KEY_GUID]] || [bookmark[KEY_GUID] isEqualToString:defaultBrowserProfile[KEY_GUID]]
                                    isBrowser:[bookmark[KEY_CUSTOM_COMMAND] isEqualToString:kProfilePreferenceCommandTypeBrowserValue]
+                                   isDynamic:bookmark.profileIsDynamic
                                       filter:[searchField_ stringValue]];
     } else if (aTableColumn == commandColumn_) {
         NSString *theString = nil;

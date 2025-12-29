@@ -9,12 +9,10 @@
 #import <Foundation/Foundation.h>
 
 extern NSString *const kProfileDynamicTag;
-extern NSString *const kProfileLegacyDynamicTag;
 
 @interface NSDictionary (Profile)
 
-// Profile has the tag "Dynamic" or "dynamic" (deprecated) or a tag that begins
-// with "Dynamic/".
+// Profile is dynamic if KEY_DYNAMIC_PROFILE is YES.
 @property(nonatomic, readonly) BOOL profileIsDynamic;
 
 // Just compares GUIDs.

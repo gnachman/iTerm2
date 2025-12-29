@@ -523,7 +523,7 @@
     if ([self shouldDisableSeparateColorsForDynamicProfile:dynamicProfile prototype:parent]) {
         merged[KEY_USE_SEPARATE_COLORS_FOR_LIGHT_AND_DARK_MODE] = @NO;
     }
-    [merged profileAddDynamicTagIfNeeded];
+    [merged profileMarkAsDynamic];
     return merged;
 }
 
@@ -630,7 +630,7 @@
     // Don't inherit the deprecated KEY_DEFAULT_BOOKMARK value, which in issue 4115 we learn can
     // cause a dynamic profile to become the default profile!
     [merged removeObjectForKey:KEY_DEFAULT_BOOKMARK];
-    [merged profileAddDynamicTagIfNeeded];
+    [merged profileMarkAsDynamic];
 
     [[ProfileModel sharedInstance] addBookmark:merged];
     [[ProfileModel sharedInstance] moveProfileWithGuidIfNeededToRespectSortOrder:merged[KEY_GUID]];
@@ -751,13 +751,18 @@
         // Value is different than the hydrated value so it must be written.
         stripped[key] = updatedProfile[key];
     }
-    NSArray<NSString *> *tags = stripped[KEY_TAGS];
-    if (tags) {
-        tags = [tags arrayByRemovingObject:kProfileDynamicTag];
-        if (tags.count) {
-            stripped[KEY_TAGS] = tags;
-        } else {
-            [stripped removeObjectForKey:KEY_TAGS];
+    // Don't write the dynamic profile key to the file - it's set when loading.
+    [stripped removeObjectForKey:KEY_DYNAMIC_PROFILE];
+    // Also remove the Dynamic tag if it was added by the advanced setting.
+    if ([iTermAdvancedSettingsModel addDynamicTagToDynamicProfiles]) {
+        NSArray<NSString *> *tags = stripped[KEY_TAGS];
+        if (tags) {
+            tags = [tags arrayByRemovingObject:kProfileDynamicTag];
+            if (tags.count) {
+                stripped[KEY_TAGS] = tags;
+            } else {
+                [stripped removeObjectForKey:KEY_TAGS];
+            }
         }
     }
     return stripped;

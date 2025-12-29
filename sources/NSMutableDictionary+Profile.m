@@ -8,19 +8,27 @@
 
 #import "NSMutableDictionary+Profile.h"
 #import "ITAddressBookMgr.h"
+#import "iTermAdvancedSettingsModel.h"
 #import "NSDictionary+Profile.h"
 #import "NSObject+iTerm.h"
 
 @implementation NSMutableDictionary (Profile)
 
+- (void)profileMarkAsDynamic {
+    self[KEY_DYNAMIC_PROFILE] = @YES;
+    if ([iTermAdvancedSettingsModel addDynamicTagToDynamicProfiles]) {
+        [self profileAddDynamicTagIfNeeded];
+    }
+}
+
 - (void)profileAddDynamicTagIfNeeded {
-    if (self.profileIsDynamic) {
+    NSArray *tags = [NSArray castFrom:self[KEY_TAGS]];
+    if ([tags containsObject:kProfileDynamicTag]) {
         return;
     }
-    NSArray *tags = [NSArray castFrom:self[KEY_TAGS]];
     if (!tags) {
         self[KEY_TAGS] = @[ kProfileDynamicTag ];
-    } else if (!self.profileIsDynamic) {
+    } else {
         self[KEY_TAGS] = [tags arrayByAddingObject:kProfileDynamicTag];
     }
 }

@@ -169,7 +169,7 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
               KEY_AWDS_TAB_DIRECTORY, KEY_AWDS_PANE_OPTION, KEY_AWDS_PANE_DIRECTORY,
               KEY_NORMAL_FONT, KEY_NON_ASCII_FONT, KEY_FONT_CONFIG, KEY_KEYBOARD_MAP,
               KEY_TOUCHBAR_MAP, KEY_DYNAMIC_PROFILE_PARENT_NAME, KEY_DYNAMIC_PROFILE_PARENT_GUID,
-              KEY_DYNAMIC_PROFILE_FILENAME, KEY_DYNAMIC_PROFILE_REWRITABLE ];
+              KEY_DYNAMIC_PROFILE_FILENAME, KEY_DYNAMIC_PROFILE_REWRITABLE, KEY_DYNAMIC_PROFILE ];
 }
 + (NSArray<NSString *> *)allKeys {
     return [self.defaultValueMap.allKeys arrayByAddingObjectsFromArray:self.keysWithoutDefaultValues];
@@ -322,6 +322,7 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
                              KEY_USE_SEPARATE_COLORS_FOR_LIGHT_AND_DARK_MODE,
                              KEY_LOAD_SHELL_INTEGRATION_AUTOMATICALLY,
                              KEY_DYNAMIC_PROFILE_REWRITABLE,
+                             KEY_DYNAMIC_PROFILE,
                              KEY_COMPOSER_TOP_OFFSET,
                              KEY_LEFT_CONTROL,
                              KEY_RIGHT_CONTROL,

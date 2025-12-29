@@ -14,8 +14,11 @@
 #import "NSTableColumn+iTerm.h"
 #import "NSView+RecursiveDescription.h"
 
+NSString *const iTermDynamicProfileSymbolName = @"iTermDynamicProfileSymbolName";
+
 @implementation iTermTableCellViewWithTextField {
     NSString *_identifier;
+    BOOL _emphasized;
 }
 
 - (instancetype)initWithFrame:(NSRect)frameRect
@@ -88,6 +91,64 @@
     frame.origin.y += verticalPadding;
     frame.size.height -= verticalPadding * 2;
     self.textField.frame = frame;
+}
+
+- (void)setBackgroundStyle:(NSBackgroundStyle)backgroundStyle {
+    [super setBackgroundStyle:backgroundStyle];
+    _emphasized = (backgroundStyle == NSBackgroundStyleEmphasized);
+    if (@available(macOS 12.0, *)) {
+        [self updateSymbolImagesForEmphasized:_emphasized];
+    }
+}
+
+- (void)viewDidChangeEffectiveAppearance {
+    [super viewDidChangeEffectiveAppearance];
+    if (@available(macOS 12.0, *)) {
+        [self updateSymbolImagesForEmphasized:_emphasized];
+    }
+}
+
+- (void)updateSymbolImagesForEmphasized:(BOOL)emphasized API_AVAILABLE(macos(12.0)) {
+    [self.effectiveAppearance performAsCurrentDrawingAppearance:^{
+        [self updateSymbolImagesForEmphasizedImpl:emphasized];
+    }];
+}
+
+- (void)updateSymbolImagesForEmphasizedImpl:(BOOL)emphasized API_AVAILABLE(macos(12.0)) {
+    NSAttributedString *original = self.textField.attributedStringValue;
+    NSMutableAttributedString *m = [original mutableCopy];
+    __block BOOL changed = NO;
+    // Enumerate in reverse so ranges stay valid after replacement
+    [original enumerateAttribute:NSAttachmentAttributeName
+                         inRange:NSMakeRange(0, original.length)
+                         options:NSAttributedStringEnumerationReverse
+                      usingBlock:^(NSTextAttachment *attachment, NSRange range, BOOL *stop) {
+        if (!attachment) {
+            return;
+        }
+        NSString *symbolName = [original attribute:iTermDynamicProfileSymbolName
+                                           atIndex:range.location
+                                    effectiveRange:nil];
+        if (!symbolName) {
+            return;
+        }
+        NSColor *color = emphasized ? [[NSColor alternateSelectedControlTextColor] colorWithAlphaComponent:0.75]
+                                    : [[NSColor labelColor] colorWithAlphaComponent:0.75];
+        NSImageSymbolConfiguration *config = [NSImageSymbolConfiguration configurationWithHierarchicalColor:color];
+        NSImage *image = [[NSImage imageWithSystemSymbolName:symbolName accessibilityDescription:nil]
+                          imageWithSymbolConfiguration:config];
+        image.size = NSMakeSize(16, 16);
+        NSTextAttachment *newAttachment = [[NSTextAttachment alloc] init];
+        newAttachment.image = image;
+        NSMutableAttributedString *replacement = [[NSMutableAttributedString alloc]
+                                                  initWithAttributedString:[NSAttributedString attributedStringWithAttachment:newAttachment]];
+        [replacement addAttribute:iTermDynamicProfileSymbolName value:symbolName range:NSMakeRange(0, replacement.length)];
+        [m replaceCharactersInRange:range withAttributedString:replacement];
+        changed = YES;
+    }];
+    if (changed) {
+        self.textField.attributedStringValue = m;
+    }
 }
 
 @end

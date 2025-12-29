@@ -11,25 +11,12 @@
 #import "NSObject+iTerm.h"
 
 NSString *const kProfileDynamicTag = @"Dynamic";
-NSString *const kProfileDynamicTagRoot = @"Dynamic/";
-NSString *const kProfileLegacyDynamicTag = @"dynamic";
 
 @implementation NSDictionary (Profile)
 
 - (BOOL)profileIsDynamic {
-    NSArray *tags = [NSArray castFrom:self[KEY_TAGS]];
-    if ([tags containsObject:kProfileDynamicTag]) {
-        return YES;
-    }
-    if ([tags containsObject:kProfileLegacyDynamicTag]) {
-        return YES;
-    }
-    for (NSString *tag in tags) {
-        if ([tag hasPrefix:kProfileDynamicTagRoot]) {
-            return YES;
-        }
-    }
-    return NO;
+    NSNumber *isDynamic = [NSNumber castFrom:self[KEY_DYNAMIC_PROFILE]];
+    return [isDynamic boolValue];
 }
 
 - (BOOL)isEqualToProfile:(NSDictionary *)other {

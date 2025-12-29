@@ -10,8 +10,7 @@
 
 @interface NSMutableDictionary (Profile)
 
-// If the profile is not currently tagged as dynamic (per the rules for
-// profileIsDynamic), add a "Dynamic" tag.
-- (void)profileAddDynamicTagIfNeeded;
+// Mark this profile as a dynamic profile by setting KEY_DYNAMIC_PROFILE to YES.
+- (void)profileMarkAsDynamic;
 
 @end

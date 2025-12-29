@@ -171,6 +171,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (BOOL)dwcLineCache;
 + (double)dynamicProfilesNotificationLatency;
 + (NSString *)dynamicProfilesPath;
++ (BOOL)addDynamicTagToDynamicProfiles;
 + (double)echoProbeDuration;
 + (void)setEchoProbeDuration:(double)value;
 + (BOOL)enableCharacterAccentMenu;
