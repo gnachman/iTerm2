@@ -1,15 +1,14 @@
 //
-//  iTermSettingsColorWell.swift
+//  iTermSettingsCheckbox.swift
 //  iTerm2SharedARC
 //
-//  Created by George Nachman on 12/30/25.
+//  Created by George Nachman on 12/31/25.
 //
 
 import Foundation
-import ColorPicker
 
-@objc(iTermSettingsColorWell)
-class SettingsColorWell: CPKColorWell, ExpressionBindableView {
+@objc(iTermSettingsCheckbox)
+class SettingsCheckbox: NSButton, ExpressionBindableView {
     var textFieldDelegate: iTermFunctionCallTextFieldDelegate?
     @objc var bindingDidChange: ((String?) -> ())?
     @objc var expression: String? {
@@ -29,11 +28,11 @@ class SettingsColorWell: CPKColorWell, ExpressionBindableView {
 
     @objc
     func editBinding(_ sender: Any) {
-        editBinding(example: "bgColor")
+        editBinding(example: "user.mySetting")
     }
 
     func iconOrigin(size: NSSize) -> NSPoint {
-        return NSPoint(x: 32 - size.width - 2, y: 2)
+        return NSPoint(x: -14, y: 2)
     }
 
     override func viewDidMoveToWindow() {
@@ -42,10 +41,10 @@ class SettingsColorWell: CPKColorWell, ExpressionBindableView {
     }
 }
 
-extension SettingsColorWell: NSAlertDelegate {
+extension SettingsCheckbox: NSAlertDelegate {
     func alertShowHelp(_ sender: NSAlert) -> Bool {
         showHelp(alert: sender,
-                 exampleUserVar: "bgColor",
-                 exampleEnvironmentVar: "BACKGROUND_COLOR")
+                 exampleUserVar: "user.mySetting",
+                 exampleEnvironmentVar: "MY_SETTING")
     }
 }
