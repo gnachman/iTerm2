@@ -122,4 +122,8 @@
     }
 }
 
+- (NSString *)it_classDescription {
+    return @"number";
+}
+
 @end

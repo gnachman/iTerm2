@@ -68,10 +68,6 @@ NSString *const iTermStatusBarSwiftyStringComponentExpressionKey = @"expression"
     return YES;
 }
 
-- (NSSet<NSString *> *)statusBarComponentVariableDependencies {
-    return _swiftyString.dependencies;
-}
-
 - (void)setStringValue:(NSString *)value {
     _value = [value copy];
     [self updateTextFieldIfNeeded];

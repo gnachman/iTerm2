@@ -124,7 +124,7 @@ NS_INLINE NSUInteger iTermCombineHash(NSUInteger hash1, NSUInteger hash2) {
 + (instancetype _Nullable)it_fromKeyValueCodedData:(NSData *)data;
 - (NSString *)jsonEncoded;
 + (instancetype)fromJsonEncodedString:(NSString *)string;
-
+- (NSString *)it_classDescription;
 
 @end
 

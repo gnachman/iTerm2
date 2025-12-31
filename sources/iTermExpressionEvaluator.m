@@ -37,6 +37,20 @@
     NSString *_invocation;
 }
 
++ (void)evaluateExpression:(NSString *)expression
+                   timeout:(NSTimeInterval)timeout
+        sideEffectsAllowed:(BOOL)sideEffectsAllowed
+                     scope:(iTermVariableScope *)scope
+                completion:(void (^)(id, NSError *, NSSet<NSString *> *))completion {
+    iTermExpressionEvaluator *evaluator = [[iTermExpressionEvaluator alloc] initWithExpressionString:expression scope:scope];
+    [evaluator evaluateWithTimeout:timeout
+                sideEffectsAllowed:sideEffectsAllowed
+                        completion:^(iTermExpressionEvaluator *evaluator) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            completion(evaluator.value, evaluator.error, evaluator.missingValues);
+        });
+    }];
+}
 - (instancetype)initWithParsedExpression:(iTermParsedExpression *)parsedExpression
                               invocation:(NSString *)invocation
                                    scope:(iTermVariableScope *)scope {

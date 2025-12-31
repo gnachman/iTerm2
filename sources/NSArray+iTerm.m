@@ -777,5 +777,9 @@ void iTermFreeeNullTerminatedCStringArray(char **array) {
     [self insertObject:object atIndex:idx];
 }
 
+- (NSString *)it_classDescription {
+    return @"array";
+}
+
 @end
 

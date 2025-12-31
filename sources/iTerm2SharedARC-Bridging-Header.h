@@ -40,6 +40,7 @@
 #import "iTermExpressionEvaluator.h"
 #import "iTermFindPasteboard.h"
 #import "iTermFlippedView.h"
+#import "iTermFunctionCallTextFieldDelegate.h"
 #import "iTermGCD.h"
 #import "iTermGlobalSearchResult.h"
 #import "iTermHistogram.h"

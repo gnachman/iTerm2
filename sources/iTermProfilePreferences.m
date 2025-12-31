@@ -15,6 +15,7 @@
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermCursor.h"
 #import "iTermPreferences.h"
+#import "iTermScriptHistory.h"
 #import "iTermStatusBarLayout.h"
 #import "NSArray+iTerm.h"
 #import "NSColor+iTerm.h"
@@ -30,6 +31,12 @@ NSString *const kProfilePreferenceInitialDirectoryCustomValue = @"Yes";
 NSString *const kProfilePreferenceInitialDirectoryHomeValue = @"No";
 NSString *const kProfilePreferenceInitialDirectoryRecycleValue = @"Recycle";
 NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
+
+typedef struct {
+    NSDictionary<NSString *, BOOL (^)(id)> *validationBlocks;
+    NSDictionary<NSString *, id (^)(id)> *conversionBlocks;
+    NSDictionary<NSString *, NSString *> *typeHelp;
+} iTermProfilePreferencesKeyFuncs;
 
 @implementation iTermProfilePreferences
 
@@ -189,13 +196,29 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
     return [NSJSONSerialization it_jsonStringForObject:value];
 }
 
++ (id _Nullable)plistValueFromBoundVariableValue:(id)value forKey:(NSString *)key {
+    // You can bind a setting to a Variable, typically a user-defined variable. This method takes
+    // the value of the user-defined variable and converts it to a plist-friendly value that the
+    // profile setting `key` can safely be set to.
+    NSDictionary<NSString *, id (^)(id)> *conversionBlocks = self.keyFuncs.conversionBlocks;
+    id (^block)(id) = conversionBlocks[key];
+    if (!block) {
+        return nil;
+    }
+    return block(value);
+}
+
++ (NSString * _Nullable)typeHelpForKey:(NSString *)key {
+    return self.keyFuncs.typeHelp[key];
+}
+
 #pragma mark - Private
 
-+ (NSDictionary<NSString *, BOOL (^)(id)> *)validationBlocks {
-    static NSMutableDictionary<NSString *, BOOL (^)(id)> *result;
++ (iTermProfilePreferencesKeyFuncs)keyFuncs {
+    static iTermProfilePreferencesKeyFuncs funcs;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
-        result = [NSMutableDictionary dictionary];
+        funcs.validationBlocks = [NSMutableDictionary dictionary];
         NSArray *string = @[ KEY_NAME, KEY_BADGE_FORMAT, KEY_ANSWERBACK_STRING, KEY_NORMAL_FONT,
                              KEY_NON_ASCII_FONT, KEY_FONT_CONFIG, KEY_AWDS_TAB_OPTION, KEY_AWDS_PANE_OPTION, KEY_AWDS_WIN_OPTION,
                              KEY_SHORTCUT, KEY_ICON_PATH, KEY_CUSTOM_COMMAND, KEY_COMMAND_LINE,
@@ -340,22 +363,42 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
         NSArray *dictArrays = @[ KEY_HOTKEY_ALTERNATE_SHORTCUTS, KEY_TRIGGERS, KEY_SMART_SELECTION_RULES,
                                  ];
         NSArray *dict = @[ KEY_STATUS_BAR_LAYOUT, KEY_SESSION_HOTKEY, KEY_SEMANTIC_HISTORY,
-                           KEY_KEYBOARD_MAP, KEY_TOUCHBAR_MAP, KEY_SSH_CONFIG];
+                           KEY_KEYBOARD_MAP, KEY_TOUCHBAR_MAP, KEY_SSH_CONFIG, KEY_BINDINGS];
 
+        NSMutableDictionary *validationBlocks = [NSMutableDictionary dictionary];
+        NSMutableDictionary *conversionBlocks = [NSMutableDictionary dictionary];
+        NSMutableDictionary *typeHelp = [NSMutableDictionary dictionary];
         for (NSString *key in string) {
-            result[key] = ^BOOL(id value) { return [value isKindOfClass:[NSString class]]; };
+            validationBlocks[key] = ^BOOL(id value) { return [value isKindOfClass:[NSString class]]; };
         }
         for (NSString *key in color) {
-            result[key] = ^BOOL(id value) {
+            typeHelp[key] = @"Colors can be specified as 3- or 6-digit hex strings such as \"#f8a\" like in HTML. By default it uses the sRGB color space. To use P3 instead, place p3 before the # as in: \"p3#f8a\".";
+            validationBlocks[key] = ^BOOL(id value) {
                 return ([value isKindOfClass:[NSDictionary class]] &&
                         [value isColorValue]);
             };
+            conversionBlocks[key] = ^id(id value) {
+                NSString *string = [NSString castFrom:value];
+                if (!string) {
+                    if (value) {
+                        NSString *keyDescription = [iTermProfilePreferences descriptionForKey:key] ?: key;
+                        NSString *valueTypeDescription = [value it_classDescription];
+                        NSString *logMessage = [NSString stringWithFormat:@"❗️ The bound expression for %@ is a color. It expected a string like #ff8844 but got the value “%@” of type “%@” instead.\n",
+                                                keyDescription,
+                                                value,
+                                                valueTypeDescription];
+                        [[iTermScriptHistoryEntry globalEntry] addOutput:logMessage completion:^{}];
+                    }
+                    return nil;
+                }
+                return [[NSColor colorFromHexString:string] dictionaryValue];
+            };
         }
         for (NSString *key in number) {
-            result[key] = ^BOOL(id value) { return [value isKindOfClass:[NSNumber class]]; };
+            validationBlocks[key] = ^BOOL(id value) { return [value isKindOfClass:[NSNumber class]]; };
         }
         for (NSString *key in stringArrays) {
-            result[key] = ^BOOL(id value) {
+            validationBlocks[key] = ^BOOL(id value) {
                 if (![value isKindOfClass:[NSArray class]]) {
                     return NO;
                 }
@@ -368,7 +411,7 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
             };
         }
         for (NSString *key in dictArrays) {
-            result[key] = ^BOOL(id value) {
+            validationBlocks[key] = ^BOOL(id value) {
                 if (![value isKindOfClass:[NSArray class]]) {
                     return NO;
                 }
@@ -381,10 +424,17 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
             };
         }
         for (NSString *key in dict) {
-            result[key] = ^BOOL(id value) { return [value isKindOfClass:[NSDictionary class]]; };
+            validationBlocks[key] = ^BOOL(id value) { return [value isKindOfClass:[NSDictionary class]]; };
         }
+        funcs.validationBlocks = validationBlocks;
+        funcs.conversionBlocks = conversionBlocks;
+        funcs.typeHelp = typeHelp;
     });
-    return result;
+    return funcs;
+}
+
++ (NSDictionary<NSString *, BOOL (^)(id)> *)validationBlocks {
+    return self.keyFuncs.validationBlocks;
 }
 
 + (BOOL)valueIsLegal:(id)value forKey:(NSString *)key {
@@ -686,6 +736,8 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
             KEY_WIDTH:                                              @"Initial width in points for Browser profile",
             KEY_HEIGHT:                                             @"Initial height in points for Browser profile",
             KEY_INSTANT_REPLAY:                                     @"Whether instant replay is enabled for Browser profile",
+
+            KEY_BINDINGS:                                           @"Variable bindings"
         };
     }
     return dict[key];
@@ -1001,6 +1053,8 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
                   KEY_WIDTH: @1000,
                   KEY_HEIGHT: @800,
                   KEY_INSTANT_REPLAY: @NO,
+
+                  KEY_BINDINGS: @{},
 
                   // NOTES:
                   //   * Remove deprecated values from this list.

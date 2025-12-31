@@ -677,6 +677,8 @@ typedef NS_ENUM(NSUInteger, PTYSessionTurdType) {
 
     // Buffer input?
     BOOL _buffering;
+
+    NSDictionary<NSString *, iTermExpressionObserver *> *_bindings;
 }
 
 @synthesize isDivorced = _divorced;
@@ -1135,6 +1137,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [_channelParentGuid release];
     [_pendingFilterUpdates release];
     [_browserTarget release];
+    [_bindings release];
 
     [super dealloc];
 }
@@ -5285,11 +5288,58 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
         [self.tmuxController setTabColorString:tabColor ? [tabColor hexString] : iTermTmuxTabColorNone
                                  forWindowPane:self.tmuxPane];
     }
+
+    NSDictionary *bindings = [NSDictionary castFrom:[iTermProfilePreferences objectForKey:KEY_BINDINGS inProfile:aDict]];
+    DLog(@"bindings=%@", bindings);
+    if (bindings) {
+        [self removeBindings];
+        [self makeBindings:bindings];
+    } else {
+        [_bindings release];
+        _bindings = nil;
+    }
     [self.delegate sessionDidChangeGraphic:self
                                 shouldShow:[self shouldShowTabGraphicForProfile:aDict]
                                      image:[self tabGraphicForProfile:aDict]];
     [self.delegate sessionUpdateMetalAllowed];
     [self profileNameDidChangeTo:self.profile[KEY_NAME]];
+}
+
+- (void)removeBindings {
+    for (iTermExpressionObserver *observer in _bindings.allValues) {
+        [observer invalidate];
+    }
+    [_bindings autorelease];
+    _bindings = nil;
+}
+
+- (void)makeBindings:(NSDictionary *)bindings {
+    iTermVariableScope *myScope = [self variablesScope];
+    __weak __typeof(self) weakSelf = self;
+    _bindings = [[bindings mapValuesWithBlock:^id(NSString *key, NSString *expression) {
+        DLog(@"Add expression observer for key %@ with expression %@", key, expression);
+        iTermExpressionObserver *ss = [[[iTermExpressionObserver alloc] initWithString:expression
+                                                                                 scope:myScope
+                                                                    sideEffectsAllowed:NO
+                                                                              observer:^NSString *(id valueWithPlaceholders, NSError *error) {
+            // Evaluate again allowing side-effects. Importantly, this always runs its callback
+            // after a spin of the runloop. It is not safe at this time to change the profile
+            // because this could be called by a VT100ScreenMutableState side effect but because
+            // of the forced asynchronicity of the completion block below it is safe to call
+            // boundVariableDidChange:value: there.
+            DLog(@"Re-evaluate with side effects for key %@, expression %@", key, expression);
+            [iTermExpressionEvaluator evaluateExpression:expression
+                                                 timeout:30
+                                      sideEffectsAllowed:YES
+                                                   scope:myScope
+                                              completion:^(id value, NSError *error, NSSet<NSString *> *missingValues) {
+                DLog(@"value=%@ error=%@ missingValues=%@", value, error, missingValues);
+                [weakSelf boundVariableDidChange:key value:value];
+            }];
+            return valueWithPlaceholders;
+        }] autorelease];
+        return ss;
+    }] retain];
 }
 
 - (void)setStatusBarViewController:(iTermStatusBarViewController *)statusBarViewController {
@@ -19119,6 +19169,23 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
 }
 
 #pragma mark - Variable Change Handlers
+
+- (void)boundVariableDidChange:(NSString *)key value:(id)value {
+    DLog(@"key=%@ value=%@", key, value);
+    if (value) {
+        id plistValue = [iTermProfilePreferences plistValueFromBoundVariableValue:value forKey:key];
+        if (plistValue) {
+            DLog(@"plistValue=%@", plistValue);
+            [self setSessionSpecificProfileValues:@{ key: plistValue }];
+        }
+        return;
+    }
+    id unboundValue = [iTermProfilePreferences objectForKey:key inProfile:self.profile];
+    DLog(@"unboundValue=%@", unboundValue);
+    if (unboundValue) {
+        [self setSessionSpecificProfileValues:@{ key: unboundValue }];
+    }
+}
 
 - (void)jobPidDidChange {
     // Avoid requesting an update before we know the name because doing so delays updating it when

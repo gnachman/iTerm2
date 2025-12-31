@@ -29,28 +29,53 @@
 @end
 
 @implementation iTermFunctionCallTextFieldDelegate {
-    iTermFunctionCallSuggester *_suggester;
+    id<iTermFunctionCallSuggester> _suggester;
     NSSet<NSString *> *(^_pathSource)(NSString *prefix);
 }
 
 - (instancetype)initWithPathSource:(NSSet<NSString *> *(^)(NSString *))pathSource
                   passthrough:(id)passthrough
-                functionsOnly:(BOOL)functionsOnly {
+                         suggester:(id<iTermFunctionCallSuggester>)suggester
+                     functionsOnly:(BOOL)functionsOnly {
     self = [super init];
     if (self) {
         _functionsOnly = functionsOnly;
-        NSDictionary<NSString *,NSArray<NSString *> *> *registeredSignatures =
-            [iTermAPIHelper registeredFunctionSignatureDictionary];
-        NSDictionary<NSString *,NSArray<NSString *> *> *bifSignatures =
-            [[iTermBuiltInFunctions sharedInstance] registeredFunctionSignatureDictionary];
-        NSDictionary<NSString *,NSArray<NSString *> *> *combinedSignatures = [registeredSignatures dictionaryByMergingDictionary:bifSignatures];
-        Class suggesterClass = functionsOnly ? [iTermFunctionCallSuggester class] : [iTermSwiftyStringSuggester class];
-        _suggester = [[suggesterClass alloc] initWithFunctionSignatures:combinedSignatures
-                                                             pathSource:pathSource];
+        _suggester = suggester;
         _passthrough = passthrough;
         _pathSource = pathSource;
     }
     return self;
+}
+
++ (NSDictionary<NSString *,NSArray<NSString *> *> *)combinedFunctionSignatures {
+    NSDictionary<NSString *,NSArray<NSString *> *> *registeredSignatures =
+        [iTermAPIHelper registeredFunctionSignatureDictionary];
+    NSDictionary<NSString *,NSArray<NSString *> *> *bifSignatures =
+        [[iTermBuiltInFunctions sharedInstance] registeredFunctionSignatureDictionary];
+    NSDictionary<NSString *,NSArray<NSString *> *> *combinedSignatures = [registeredSignatures dictionaryByMergingDictionary:bifSignatures];
+    return combinedSignatures;
+}
+
+- (instancetype)initForExpressionsWithPathSource:(NSSet<NSString *> *(^)(NSString *))pathSource
+                                     passthrough:(id _Nullable)passthrough {
+    id<iTermFunctionCallSuggester> suggester = [[iTermExpressionSuggester alloc] initWithFunctionSignatures:[iTermFunctionCallTextFieldDelegate combinedFunctionSignatures]
+                                                                                                 pathSource:pathSource];
+    return [self initWithPathSource:pathSource
+                        passthrough:passthrough
+                          suggester:suggester
+                      functionsOnly:YES];
+}
+
+- (instancetype)initWithPathSource:(NSSet<NSString *> *(^)(NSString *))pathSource
+                  passthrough:(id)passthrough
+                functionsOnly:(BOOL)functionsOnly {
+    Class suggesterClass = functionsOnly ? [iTermFunctionCallSuggester class] : [iTermSwiftyStringSuggester class];
+    id<iTermFunctionCallSuggester> suggester = [[suggesterClass alloc] initWithFunctionSignatures:[iTermFunctionCallTextFieldDelegate combinedFunctionSignatures]
+                                                                                       pathSource:pathSource];
+    return [self initWithPathSource:pathSource
+                        passthrough:passthrough
+                          suggester:suggester
+                      functionsOnly:functionsOnly];
 }
 
 - (BOOL)smellsLikeSessionContext:(NSString *)string {

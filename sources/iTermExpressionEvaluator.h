@@ -22,6 +22,13 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nullable, nonatomic, copy) NSString *(^escapingFunction)(NSString *string);
 @property (nullable, nonatomic, strong) NSDate *retryUntil;
 
++ (void)evaluateExpression:(NSString *)expression
+                   timeout:(NSTimeInterval)timeout
+        sideEffectsAllowed:(BOOL)sideEffectsAllowed
+                     scope:(iTermVariableScope *)scope
+                completion:(void (^)(id value, NSError *error, NSSet<NSString *> *missingValues))completion;
+
+
 - (instancetype)initWithParsedExpression:(iTermParsedExpression *)parsedExpression
                               invocation:(NSString *)invocation
                                    scope:(iTermVariableScope *)scope NS_DESIGNATED_INITIALIZER;

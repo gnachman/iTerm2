@@ -227,7 +227,9 @@ NSString *const iTermStatusBarElementPasteboardType = @"com.iterm2.status-bar-el
     return nil;
 }
 
-
+- (iTermFindDriver * _Nullable)statusBarComponentFindDriver:(nonnull id<iTermStatusBarComponent>)component {
+    return nil;
+}
 
 @end
 

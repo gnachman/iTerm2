@@ -2539,19 +2539,19 @@ CA
                                         <outlet property="nextKeyView" destination="4896" id="5227"/>
                                     </connections>
                                 </button>
-                                <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="2285" customClass="CPKColorWell">
+                                <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="2285" customClass="iTermSettingsColorWell">
                                     <rect key="frame" x="225" y="661" width="32" height="21"/>
                                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                 </customView>
-                                <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="O31-5M-Une" customClass="CPKColorWell">
+                                <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="O31-5M-Une" customClass="iTermSettingsColorWell">
                                     <rect key="frame" x="141" y="428" width="32" height="21"/>
                                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                 </customView>
-                                <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Kwz-zv-T9c" customClass="CPKColorWell">
+                                <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Kwz-zv-T9c" customClass="iTermSettingsColorWell">
                                     <rect key="frame" x="141" y="321" width="32" height="21"/>
                                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                 </customView>
-                                <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="2287" customClass="CPKColorWell">
+                                <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="2287" customClass="iTermSettingsColorWell">
                                     <rect key="frame" x="206" y="180" width="32" height="21"/>
                                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                 </customView>
@@ -2573,7 +2573,7 @@ CA
                                         <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                                     </textFieldCell>
                                 </textField>
-                                <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="2292" customClass="CPKColorWell">
+                                <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="2292" customClass="iTermSettingsColorWell">
                                     <rect key="frame" x="250" y="232" width="32" height="21"/>
                                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                 </customView>
@@ -2586,7 +2586,7 @@ CA
                                         <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                                     </textFieldCell>
                                 </textField>
-                                <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="2295" customClass="CPKColorWell">
+                                <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="2295" customClass="iTermSettingsColorWell">
                                     <rect key="frame" x="250" y="206" width="32" height="21"/>
                                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                 </customView>
@@ -2599,7 +2599,7 @@ CA
                                         <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                                     </textFieldCell>
                                 </textField>
-                                <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="2301" customClass="CPKColorWell">
+                                <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="2301" customClass="iTermSettingsColorWell">
                                     <rect key="frame" x="250" y="50" width="32" height="21"/>
                                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                 </customView>
@@ -2612,7 +2612,7 @@ CA
                                         <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                                     </textFieldCell>
                                 </textField>
-                                <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="2289" customClass="CPKColorWell">
+                                <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="2289" customClass="iTermSettingsColorWell">
                                     <rect key="frame" x="206" y="154" width="32" height="21"/>
                                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                 </customView>
@@ -2625,11 +2625,11 @@ CA
                                         <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                                     </textFieldCell>
                                 </textField>
-                                <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="2288" customClass="CPKColorWell">
+                                <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="2288" customClass="iTermSettingsColorWell">
                                     <rect key="frame" x="206" y="128" width="32" height="21"/>
                                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                 </customView>
-                                <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="2280" customClass="CPKColorWell">
+                                <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="2280" customClass="iTermSettingsColorWell">
                                     <rect key="frame" x="225" y="632" width="32" height="20"/>
                                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                 </customView>
@@ -2658,7 +2658,7 @@ CA
                                         </slider>
                                     </subviews>
                                 </customView>
-                                <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="2273" customClass="CPKColorWell">
+                                <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="2273" customClass="iTermSettingsColorWell">
                                     <rect key="frame" x="360" y="661" width="32" height="21"/>
                                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                 </customView>
@@ -2680,7 +2680,7 @@ CA
                                         <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                                     </textFieldCell>
                                 </textField>
-                                <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="2297" customClass="CPKColorWell">
+                                <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="2297" customClass="iTermSettingsColorWell">
                                     <rect key="frame" x="206" y="232" width="32" height="21"/>
                                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                 </customView>
@@ -2715,7 +2715,7 @@ CA
                                         <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                                     </textFieldCell>
                                 </textField>
-                                <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="2272" customClass="CPKColorWell">
+                                <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="2272" customClass="iTermSettingsColorWell">
                                     <rect key="frame" x="141" y="486" width="32" height="21"/>
                                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                 </customView>
@@ -2728,11 +2728,11 @@ CA
                                         <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                                     </textFieldCell>
                                 </textField>
-                                <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="2298" customClass="CPKColorWell">
+                                <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="2298" customClass="iTermSettingsColorWell">
                                     <rect key="frame" x="250" y="102" width="32" height="21"/>
                                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                 </customView>
-                                <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="2290" customClass="CPKColorWell">
+                                <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="2290" customClass="iTermSettingsColorWell">
                                     <rect key="frame" x="206" y="102" width="32" height="21"/>
                                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                 </customView>
@@ -2745,19 +2745,19 @@ CA
                                         <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                                     </textFieldCell>
                                 </textField>
-                                <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="2293" customClass="CPKColorWell">
+                                <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="2293" customClass="iTermSettingsColorWell">
                                     <rect key="frame" x="206" y="50" width="32" height="21"/>
                                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                 </customView>
-                                <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="2294" customClass="CPKColorWell">
+                                <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="2294" customClass="iTermSettingsColorWell">
                                     <rect key="frame" x="250" y="154" width="32" height="21"/>
                                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                 </customView>
-                                <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="2300" customClass="CPKColorWell">
+                                <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="2300" customClass="iTermSettingsColorWell">
                                     <rect key="frame" x="250" y="180" width="32" height="21"/>
                                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                 </customView>
-                                <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="2286" customClass="CPKColorWell">
+                                <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="2286" customClass="iTermSettingsColorWell">
                                     <rect key="frame" x="206" y="206" width="32" height="21"/>
                                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                 </customView>
@@ -2770,11 +2770,11 @@ CA
                                         <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                                     </textFieldCell>
                                 </textField>
-                                <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="2291" customClass="CPKColorWell">
+                                <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="2291" customClass="iTermSettingsColorWell">
                                     <rect key="frame" x="206" y="76" width="32" height="21"/>
                                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                 </customView>
-                                <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="2299" customClass="CPKColorWell">
+                                <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="2299" customClass="iTermSettingsColorWell">
                                     <rect key="frame" x="250" y="128" width="32" height="21"/>
                                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                 </customView>
@@ -2812,14 +2812,14 @@ CA
                                         <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                                     </textFieldCell>
                                 </textField>
-                                <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Yny-j0-8Wk" customClass="CPKColorWell">
+                                <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Yny-j0-8Wk" customClass="iTermSettingsColorWell">
                                     <rect key="frame" x="141" y="549" width="32" height="21"/>
                                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                     <userDefinedRuntimeAttributes>
                                         <userDefinedRuntimeAttribute type="boolean" keyPath="alphaAllowed" value="YES"/>
                                     </userDefinedRuntimeAttributes>
                                 </customView>
-                                <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="2278" customClass="CPKColorWell">
+                                <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="2278" customClass="iTermSettingsColorWell">
                                     <rect key="frame" x="360" y="632" width="32" height="21"/>
                                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                 </customView>
@@ -2850,7 +2850,7 @@ CA
                                         <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                                     </textFieldCell>
                                 </textField>
-                                <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="2296" customClass="CPKColorWell">
+                                <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="2296" customClass="iTermSettingsColorWell">
                                     <rect key="frame" x="250" y="76" width="32" height="21"/>
                                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                 </customView>
@@ -2943,11 +2943,11 @@ CA
                                         <outlet property="nextKeyView" destination="4896" id="acz-bU-TQP"/>
                                     </connections>
                                 </button>
-                                <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="2282" customClass="CPKColorWell">
+                                <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="2282" customClass="iTermSettingsColorWell">
                                     <rect key="frame" x="223" y="292" width="32" height="21"/>
                                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                 </customView>
-                                <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="rSL-fL-hpc" customClass="CPKColorWell">
+                                <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="rSL-fL-hpc" customClass="iTermSettingsColorWell">
                                     <rect key="frame" x="141" y="457" width="32" height="21"/>
                                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                 </customView>
@@ -3040,7 +3040,7 @@ CA
                                         <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                                     </textFieldCell>
                                 </textField>
-                                <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="A9a-sA-67D" customClass="CPKColorWell">
+                                <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="A9a-sA-67D" customClass="iTermSettingsColorWell">
                                     <rect key="frame" x="141" y="0.0" width="32" height="21"/>
                                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                     <userDefinedRuntimeAttributes>
@@ -3056,7 +3056,7 @@ CA
                                         <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                                     </textFieldCell>
                                 </textField>
-                                <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="2277" customClass="CPKColorWell">
+                                <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="2277" customClass="iTermSettingsColorWell">
                                     <rect key="frame" x="359" y="292" width="32" height="21"/>
                                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                 </customView>
@@ -3155,7 +3155,7 @@ CA
                         <action selector="showModeWarning:" target="p8i-eM-oBc" id="NQS-RU-aPL"/>
                     </connections>
                 </button>
-                <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Wzz-9B-zqB" customClass="CPKColorWell">
+                <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Wzz-9B-zqB" customClass="iTermSettingsColorWell">
                     <rect key="frame" x="323" y="20" width="32" height="21"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                 </customView>

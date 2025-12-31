@@ -451,4 +451,8 @@ static void (*originalNSThemeZoomWidgetCellShowMenuIMP)(id, SEL, id) = NULL;
     return [self castFrom:[NSJSONSerialization it_objectForJsonString:string]];
 }
 
+- (NSString *)it_classDescription {
+    return NSStringFromClass([self class]);
+}
+
 @end

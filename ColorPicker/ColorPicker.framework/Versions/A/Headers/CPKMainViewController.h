@@ -18,7 +18,7 @@ typedef NS_OPTIONS(NSInteger, CPKMainViewControllerOptions) {
 @property(nonatomic, readonly) NSColor *selectedColor;
 
 /** The color space to return values from. */
-@property(nonatomic) NSColorSpace *colorSpace;
+@property(nonatomic, strong) NSColorSpace *colorSpace;
 
 /** Called when the color space changes. */
 @property(nonatomic, copy) void (^colorSpaceDidChangeBlock)(NSColorSpace *);

@@ -170,7 +170,7 @@
                                                  KEY_BOUND_HOSTS, KEY_DYNAMIC_PROFILE_PARENT_NAME,
                                                  KEY_DYNAMIC_PROFILE_PARENT_GUID,
                                                  KEY_DYNAMIC_PROFILE_FILENAME, KEY_DYNAMIC_PROFILE_REWRITABLE,
-                                                 KEY_DYNAMIC_PROFILE ]];
+                                                 KEY_DYNAMIC_PROFILE, KEY_BINDINGS ]];
 
                 // Make sure the GUID doesn't match an existing one.
                 profile[KEY_GUID] = [[NSUUID UUID] UUIDString];

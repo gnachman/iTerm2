@@ -42,36 +42,36 @@ static NSString * const kColorGalleryURL = @"https://www.iterm2.com/colorgallery
     IBOutlet NSButton *_useSeparateColorsForLightAndDarkMode;
     IBOutlet NSTextField *_modeLabel;
 
-    IBOutlet CPKColorWell *_ansi0Color;
-    IBOutlet CPKColorWell *_ansi1Color;
-    IBOutlet CPKColorWell *_ansi2Color;
-    IBOutlet CPKColorWell *_ansi3Color;
-    IBOutlet CPKColorWell *_ansi4Color;
-    IBOutlet CPKColorWell *_ansi5Color;
-    IBOutlet CPKColorWell *_ansi6Color;
-    IBOutlet CPKColorWell *_ansi7Color;
-    IBOutlet CPKColorWell *_ansi8Color;
-    IBOutlet CPKColorWell *_ansi9Color;
-    IBOutlet CPKColorWell *_ansi10Color;
-    IBOutlet CPKColorWell *_ansi11Color;
-    IBOutlet CPKColorWell *_ansi12Color;
-    IBOutlet CPKColorWell *_ansi13Color;
-    IBOutlet CPKColorWell *_ansi14Color;
-    IBOutlet CPKColorWell *_ansi15Color;
-    IBOutlet CPKColorWell *_foregroundColor;
-    IBOutlet CPKColorWell *_backgroundColor;
+    IBOutlet iTermSettingsColorWell *_ansi0Color;
+    IBOutlet iTermSettingsColorWell *_ansi1Color;
+    IBOutlet iTermSettingsColorWell *_ansi2Color;
+    IBOutlet iTermSettingsColorWell *_ansi3Color;
+    IBOutlet iTermSettingsColorWell *_ansi4Color;
+    IBOutlet iTermSettingsColorWell *_ansi5Color;
+    IBOutlet iTermSettingsColorWell *_ansi6Color;
+    IBOutlet iTermSettingsColorWell *_ansi7Color;
+    IBOutlet iTermSettingsColorWell *_ansi8Color;
+    IBOutlet iTermSettingsColorWell *_ansi9Color;
+    IBOutlet iTermSettingsColorWell *_ansi10Color;
+    IBOutlet iTermSettingsColorWell *_ansi11Color;
+    IBOutlet iTermSettingsColorWell *_ansi12Color;
+    IBOutlet iTermSettingsColorWell *_ansi13Color;
+    IBOutlet iTermSettingsColorWell *_ansi14Color;
+    IBOutlet iTermSettingsColorWell *_ansi15Color;
+    IBOutlet iTermSettingsColorWell *_foregroundColor;
+    IBOutlet iTermSettingsColorWell *_backgroundColor;
     IBOutlet NSButton *_useBrightBold;  // Respect bold
     IBOutlet NSButton *_brightenBoldText;
-    IBOutlet CPKColorWell *_boldColor;
-    IBOutlet CPKColorWell *_linkColor;
-    IBOutlet CPKColorWell *_matchColor;
-    IBOutlet CPKColorWell *_selectionColor;
-    IBOutlet CPKColorWell *_selectedTextColor;
-    IBOutlet CPKColorWell *_cursorColor;
-    IBOutlet CPKColorWell *_cursorTextColor;
-    IBOutlet CPKColorWell *_tabColor;
-    IBOutlet CPKColorWell *_underlineColor;
-    IBOutlet CPKColorWell *_badgeColor;
+    IBOutlet iTermSettingsColorWell *_boldColor;
+    IBOutlet iTermSettingsColorWell *_linkColor;
+    IBOutlet iTermSettingsColorWell *_matchColor;
+    IBOutlet iTermSettingsColorWell *_selectionColor;
+    IBOutlet iTermSettingsColorWell *_selectedTextColor;
+    IBOutlet iTermSettingsColorWell *_cursorColor;
+    IBOutlet iTermSettingsColorWell *_cursorTextColor;
+    IBOutlet iTermSettingsColorWell *_tabColor;
+    IBOutlet iTermSettingsColorWell *_underlineColor;
+    IBOutlet iTermSettingsColorWell *_badgeColor;
 
     IBOutlet NSTextField *_ansi0ColorLabel;
     IBOutlet NSTextField *_ansi1ColorLabel;
@@ -106,7 +106,7 @@ static NSString * const kColorGalleryURL = @"https://www.iterm2.com/colorgallery
     IBOutlet NSMenu *_presetsMenu;
 
     IBOutlet NSButton *_useGuide;
-    IBOutlet CPKColorWell *_guideColor;
+    IBOutlet iTermSettingsColorWell *_guideColor;
 
     IBOutlet NSPopUpButton *_presetsPopupButton;
     IBOutlet NSView *_bwWarning1;
@@ -188,8 +188,9 @@ static NSString * const kColorGalleryURL = @"https://www.iterm2.com/colorgallery
 
     NSDictionary *colorWellDictionary = [self colorWellDictionary];
     NSDictionary *relatedViews = [self colorWellRelatedViews];
+    NSDictionary<NSString *, NSString *> *bindings = [NSDictionary castFrom:[self objectForKey:KEY_BINDINGS]];
     for (NSString *key in colorWellDictionary) {
-        CPKColorWell *colorWell = colorWellDictionary[key];
+        iTermSettingsColorWell *colorWell = colorWellDictionary[key];
         colorWell.colorSpace = [NSColorSpace it_defaultColorSpace];
         NSTextField *relatedView = relatedViews[key];
         PreferenceInfo *info = [self defineControl:colorWell
@@ -203,6 +204,14 @@ static NSString * const kColorGalleryURL = @"https://www.iterm2.com/colorgallery
         colorWell.action = @selector(settingChanged:);
         colorWell.target = self;
         colorWell.continuous = YES;
+        colorWell.typeHelp = [iTermProfilePreferences typeHelpForKey:key];
+        NSString *amendedKey = [self amendedKey:key];
+        colorWell.expression = bindings[amendedKey];
+
+        colorWell.bindingDidChange = ^(NSString *newBinding) {
+            [weakSelf setBinding:newBinding forColorWellWithKey:key];
+        };
+
         __weak NSView *weakColorWell = colorWell;
         colorWell.willClosePopover = ^() {
             // NSSearchField remembers who was first responder before it gained
@@ -217,6 +226,7 @@ static NSString * const kColorGalleryURL = @"https://www.iterm2.com/colorgallery
         __weak __typeof(self) weakSelf = self;
         info.observer = ^{
             [weakSelf updateHueChromaVisualizationForKey:key];
+            [weakSelf updateColorWellBindingsForKey:key];
         };
     }
 
@@ -432,7 +442,7 @@ static NSString * const kColorGalleryURL = @"https://www.iterm2.com/colorgallery
     _cursorTextColorLabel.labelEnabled = shouldEnableCursorColor;
 }
 
-- (NSDictionary<NSString *, CPKColorWell *> *)colorWellDictionary {
+- (NSDictionary<NSString *, iTermSettingsColorWell *> *)colorWellDictionary {
     return @{ KEY_ANSI_0_COLOR: _ansi0Color,
               KEY_ANSI_1_COLOR: _ansi1Color,
               KEY_ANSI_2_COLOR: _ansi2Color,
@@ -502,6 +512,14 @@ static NSString * const kColorGalleryURL = @"https://www.iterm2.com/colorgallery
     ];
 }
 
+- (void)updateColorWellBindingsForKey:(NSString *)key {
+    NSDictionary *colorWellDictionary = [self colorWellDictionary];
+    iTermSettingsColorWell *colorWell = colorWellDictionary[key];
+    NSDictionary<NSString *, NSString *> *bindings = [NSDictionary castFrom:[self objectForKey:KEY_BINDINGS]];
+    NSString *amendedKey = [self amendedKey:key];
+    colorWell.expression = bindings[amendedKey];
+}
+
 - (void)updateHueChromaVisualizationForKey:(NSString *)key {
     if (![self.chromaHueVisualizationKeys containsObject:key]) {
         return;
@@ -511,6 +529,15 @@ static NSString * const kColorGalleryURL = @"https://www.iterm2.com/colorgallery
     if (color) {
         [_hueVisualization setColor:color forKey:key];
     }
+}
+
+#pragma mark - Bindings
+
+- (void)setBinding:(NSString *)newBinding forColorWellWithKey:(NSString *)key {
+    NSDictionary *dict = [NSDictionary castFrom:[self objectForKey:KEY_BINDINGS]] ?: @{};
+    dict = [dict dictionaryBySettingObject:newBinding forKey:[self amendedKey:key]];
+    // bypass self because we don't want KEY_BINDINGS amended.
+    [super setObject:dict forKey:KEY_BINDINGS];
 }
 
 #pragma mark - Color Presets
@@ -706,7 +733,7 @@ static NSString * const kColorGalleryURL = @"https://www.iterm2.com/colorgallery
 
 - (NSDictionary *)presetDictionaryForCurrentColors {
     NSMutableDictionary* theDict = [NSMutableDictionary dictionaryWithCapacity:24];
-    NSDictionary<NSString *, CPKColorWell *> *colorWellDictionary = [self colorWellDictionary];
+    NSDictionary<NSString *, iTermSettingsColorWell *> *colorWellDictionary = [self colorWellDictionary];
     if ([self boolForKey:KEY_USE_SEPARATE_COLORS_FOR_LIGHT_AND_DARK_MODE]) {
         for (NSString *baseKey in colorWellDictionary) {
             // For compatibility with older versions of iTerm2 - just use the current mode.
@@ -980,6 +1007,9 @@ static NSString * const kColorGalleryURL = @"https://www.iterm2.com/colorgallery
 }
 
 - (BOOL)shouldAmendKey:(NSString *)key {
+    if ([key isEqualToString:KEY_BINDINGS]) {
+        return NO;
+    }
     if ([key isEqualToString:KEY_USE_SEPARATE_COLORS_FOR_LIGHT_AND_DARK_MODE]) {
         return NO;
     }

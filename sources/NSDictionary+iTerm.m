@@ -439,6 +439,10 @@ static const NSEventModifierFlags iTermHotkeyModifierMask = (NSEventModifierFlag
     return safe;
 }
 
+- (NSString *)it_classDescription {
+    return @"dictionary";
+}
+
 @end
 
 @implementation NSDictionary(HotKey)

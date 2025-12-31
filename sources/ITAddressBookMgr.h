@@ -357,6 +357,9 @@ extern NSString *const iTermProgressBarColorSchemeOrange;
 // This setting is not exposed in the settings UI. You can change it with menu commands.
 #define KEY_COMPOSER_TOP_OFFSET             @"Composer Top Offset"
 
+// A dictionary mapping a profile key to a variable binding (e.g., KEY_BACKGROUND_COLOR -> "user.bgColor"
+#define KEY_BINDINGS                        @"Bindings"
+
 @class iTermVariableScope;
 
 // Posted when a session's unicode version changes.

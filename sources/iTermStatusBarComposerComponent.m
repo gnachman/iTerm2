@@ -99,10 +99,6 @@
     return [[iTermController sharedInstance] sessionWithGUID:sessionID];
 }
 
-- (NSSet<NSString *> *)statusBarComponentVariableDependencies {
-    return [NSSet setWithObject:iTermVariableKeySessionHostname];
-}
-
 - (NSString *)stringValue {
     return [[self viewController] stringValue];
 }

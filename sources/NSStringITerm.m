@@ -3160,6 +3160,10 @@ static NSDictionary<NSString *, NSNumber *> *iTermKittyDiacriticIndex(void) {
     return [self it_componentsSeparatedAtRanges:ranges];
 }
 
+- (NSString *)it_classDescription {
+    return @"string";
+}
+
 @end
 
 @implementation NSMutableString (iTerm)

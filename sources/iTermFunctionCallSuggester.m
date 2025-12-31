@@ -546,3 +546,20 @@
 
 @end
 
+
+@implementation iTermExpressionSuggester
+
+- (NSString *)grammarStart {
+    return @"expression";
+}
+
+- (NSArray<NSString *> *)parsedResult:(id)result forString:(NSString *)prefix {
+    NSArray<NSString *> *suggestions = [self suggestedExpressions:[NSDictionary castFrom:result]
+                                                 nextArgumentName:nil
+                                                 valuesMustBeArgs:NO];
+    return [suggestions mapWithBlock:^id _Nullable(NSString *suffix) {
+        return [prefix stringByAppendingString:suffix];
+    }];
+}
+
+@end
