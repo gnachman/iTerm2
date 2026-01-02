@@ -30,9 +30,9 @@
     return [NSString castFrom:self.evaluationResult];
 }
 
-- (iTermExpressionEvaluator *)expressionEvaluator {
+- (iTermExpressionEvaluator *)expressionEvaluatorUsingScope:(iTermVariableScope *)scope {
     return [[iTermExpressionEvaluator alloc] initWithInterpolatedString:self.swiftyString
-                                                                  scope:self.scope];
+                                                                  scope:scope];
 }
 
 - (void)evaluateSynchronously:(BOOL)synchronously
@@ -50,9 +50,9 @@
 
 @implementation iTermExpressionObserver
 
-- (iTermExpressionEvaluator *)expressionEvaluator {
+- (iTermExpressionEvaluator *)expressionEvaluatorUsingScope:(iTermVariableScope *)scope {
     return [[iTermExpressionEvaluator alloc] initWithExpressionString:self.stringToEvaluate
-                                                                scope:self.scope];
+                                                                scope:scope];
 }
 
 @end

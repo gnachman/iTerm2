@@ -343,4 +343,27 @@
     return [[iTermProfilePreferenceObserver alloc] initWithGUID:guid model:model];
 }
 
+- (void)didDefineControl:(NSView *)control key:(NSString *)key {
+    [super didDefineControl:control key:key];
+
+    if ([control conformsToProtocol:@protocol(iTermExpressionBindableView)]) {
+        NSDictionary<NSString *, NSString *> *bindings = [NSDictionary castFrom:[self objectForKey:KEY_BINDINGS]];
+        id<iTermExpressionBindableView> bindableView = (id<iTermExpressionBindableView>)control;
+        bindableView.typeHelp = [iTermProfilePreferences typeHelpForKey:key];
+        NSString *amendedKey = [self amendedKey:key];
+        bindableView.expression = bindings[amendedKey];
+
+        __weak __typeof(self) weakSelf = self;
+        bindableView.bindingDidChange = ^(NSString *newBinding) {
+            [weakSelf setBinding:newBinding forKey:key];
+        };
+    }
+}
+
+- (void)setBinding:(NSString *)newBinding forKey:(NSString *)key {
+    NSDictionary *dict = [NSDictionary castFrom:[self objectForKey:KEY_BINDINGS]] ?: @{};
+    dict = [dict dictionaryBySettingObject:newBinding forKey:[self amendedKey:key]];
+    [self setObject:dict forKey:KEY_BINDINGS];
+}
+
 @end

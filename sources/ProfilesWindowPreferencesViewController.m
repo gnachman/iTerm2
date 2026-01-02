@@ -102,7 +102,7 @@ CGFloat iTermMaxBlurRadius(void) {
     PreferenceInfo *info;
     info = [self defineControl:_backgroundImageTextField
                            key:KEY_BACKGROUND_IMAGE_LOCATION
-                   relatedView:nil
+                   displayName:@"Path to background image"
                           type:kPreferenceInfoTypeStringTextField];
     info.observer = ^{
         [weakSelf backgroundImageTextFieldDidChange];

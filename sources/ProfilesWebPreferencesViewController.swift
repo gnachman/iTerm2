@@ -23,7 +23,7 @@ class ProfilesWebPreferencesViewController: iTermProfilePreferencesBaseViewContr
         do {
             let _ = defineControl(browserPageZoom,
                                   key: KEY_BROWSER_ZOOM,
-                                  relatedView: nil,
+                                  displayName: "Browser page zoom",
                                   type: .slider)
         }
         do {

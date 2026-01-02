@@ -264,7 +264,7 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
 
     info = [self defineControl:_profileType
                            key:KEY_PROFILE_TYPE_PHONY
-                   relatedView:nil
+                   displayName:@"Profile type"
                           type:kPreferenceInfoTypeSegmentedControl];
     info.syntheticGetter = ^id{
         if ([[weakSelf stringForKey:KEY_CUSTOM_COMMAND] isEqualToString:kProfilePreferenceCommandTypeBrowserValue]) {

@@ -603,8 +603,11 @@ NSString *const iTermPreferencesDidToggleIndicateNonDefaultValues = @"iTermPrefe
     }
 
     [self updateValueForInfo:info];
-
+    [self didDefineControl:control key:key];
     return info;
+}
+
+- (void)didDefineControl:(NSView *)control key:(NSString *)key {
 }
 
 - (void)setControl:(NSView *)control inPreference:(PreferenceInfo *)info {
@@ -758,6 +761,7 @@ NSString *const iTermPreferencesDidToggleIndicateNonDefaultValues = @"iTermPrefe
             assert([info.control isKindOfClass:[NSTextField class]]);
             NSTextField *field = (NSTextField *)info.control;
             field.stringValue = [NSString stringWithFormat:@"%lu", [self unsignedIntegerForKey:info.key]];
+            break;
         }
 
         case kPreferenceInfoTypeDoubleTextField: {
@@ -878,8 +882,22 @@ NSString *const iTermPreferencesDidToggleIndicateNonDefaultValues = @"iTermPrefe
     if (info.observer) {
         info.observer();
     }
+    [self updateBoundExpressionForInfo:info];
     [self updateNonDefaultIndicatorVisibleForInfo:info];
     [self updateEnabledStateForInfo:info];
+}
+
+- (void)updateBoundExpressionForInfo:(PreferenceInfo *)info {
+    if ([info.control conformsToProtocol:@protocol(iTermExpressionBindableView)]) {
+        id<iTermExpressionBindableView> bindableView = (id<iTermExpressionBindableView>)info.control;
+        NSDictionary<NSString *, NSString *> *bindings = [NSDictionary castFrom:[self objectForKey:KEY_BINDINGS]];
+        NSString *key = [self amendedKey:info.key];
+        bindableView.expression = bindings[key];
+    }
+}
+
+- (NSString *)amendedKey:(NSString *)key {
+    return key;
 }
 
 - (void)updateNonDefaultIndicatorVisibleForInfo:(PreferenceInfo *)info {

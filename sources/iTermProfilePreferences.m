@@ -250,115 +250,150 @@ typedef struct {
                       [key stringByAppendingString:COLORS_DARK_MODE_SUFFIX]];
         }];
 
-        NSArray *number = @[ KEY_USE_CURSOR_GUIDE COLORS_LIGHT_MODE_SUFFIX,
-                             KEY_USE_CURSOR_GUIDE COLORS_DARK_MODE_SUFFIX,
-                             KEY_USE_CURSOR_GUIDE,
+        NSArray *booleans = @[
+            KEY_USE_CURSOR_GUIDE COLORS_LIGHT_MODE_SUFFIX,
+            KEY_USE_CURSOR_GUIDE COLORS_DARK_MODE_SUFFIX,
+            KEY_USE_CURSOR_GUIDE,
 
-                             KEY_USE_TAB_COLOR COLORS_LIGHT_MODE_SUFFIX,
-                             KEY_USE_TAB_COLOR COLORS_DARK_MODE_SUFFIX,
-                             KEY_USE_TAB_COLOR,
+            KEY_USE_TAB_COLOR COLORS_LIGHT_MODE_SUFFIX,
+            KEY_USE_TAB_COLOR COLORS_DARK_MODE_SUFFIX,
+            KEY_USE_TAB_COLOR,
 
-                             KEY_USE_SELECTED_TEXT_COLOR COLORS_LIGHT_MODE_SUFFIX,
-                             KEY_USE_SELECTED_TEXT_COLOR COLORS_DARK_MODE_SUFFIX,
-                             KEY_USE_SELECTED_TEXT_COLOR,
+            KEY_USE_SELECTED_TEXT_COLOR COLORS_LIGHT_MODE_SUFFIX,
+            KEY_USE_SELECTED_TEXT_COLOR COLORS_DARK_MODE_SUFFIX,
+            KEY_USE_SELECTED_TEXT_COLOR,
 
-                             KEY_USE_UNDERLINE_COLOR COLORS_LIGHT_MODE_SUFFIX,
-                             KEY_USE_UNDERLINE_COLOR COLORS_DARK_MODE_SUFFIX,
-                             KEY_USE_UNDERLINE_COLOR,
+            KEY_USE_UNDERLINE_COLOR COLORS_LIGHT_MODE_SUFFIX,
+            KEY_USE_UNDERLINE_COLOR COLORS_DARK_MODE_SUFFIX,
+            KEY_USE_UNDERLINE_COLOR,
 
-                             KEY_SMART_CURSOR_COLOR COLORS_LIGHT_MODE_SUFFIX,
-                             KEY_SMART_CURSOR_COLOR COLORS_DARK_MODE_SUFFIX,
-                             KEY_SMART_CURSOR_COLOR,
+            KEY_SMART_CURSOR_COLOR COLORS_LIGHT_MODE_SUFFIX,
+            KEY_SMART_CURSOR_COLOR COLORS_DARK_MODE_SUFFIX,
+            KEY_SMART_CURSOR_COLOR,
 
-                             KEY_MINIMUM_CONTRAST COLORS_LIGHT_MODE_SUFFIX,
-                             KEY_MINIMUM_CONTRAST COLORS_DARK_MODE_SUFFIX,
-                             KEY_MINIMUM_CONTRAST,
+            KEY_USE_BOLD_COLOR,
+            KEY_USE_BOLD_COLOR COLORS_LIGHT_MODE_SUFFIX,
+            KEY_USE_BOLD_COLOR COLORS_DARK_MODE_SUFFIX,
 
-                             KEY_FAINT_TEXT_ALPHA COLORS_LIGHT_MODE_SUFFIX,
-                             KEY_FAINT_TEXT_ALPHA COLORS_DARK_MODE_SUFFIX,
-                             KEY_FAINT_TEXT_ALPHA,
+            KEY_BLINKING_CURSOR, KEY_USE_BOLD_FONT,
+            KEY_ASCII_LIGATURES, KEY_NON_ASCII_LIGATURES, KEY_CURSOR_SHADOW,
+            KEY_ANIMATE_MOVEMENT, KEY_CURSOR_HIDDEN_WITHOUT_FOCUS,
+            KEY_ANIMATE_MOVEMENT_ONLY_IN_INTERACTIVE_APPS,
 
-                             KEY_CURSOR_BOOST COLORS_LIGHT_MODE_SUFFIX,
-                             KEY_CURSOR_BOOST COLORS_DARK_MODE_SUFFIX,
-                             KEY_CURSOR_BOOST,
+            KEY_BRIGHTEN_BOLD_TEXT,
+            KEY_BRIGHTEN_BOLD_TEXT COLORS_LIGHT_MODE_SUFFIX,
+            KEY_BRIGHTEN_BOLD_TEXT COLORS_DARK_MODE_SUFFIX,
 
-                             KEY_CURSOR_TYPE, KEY_BLINKING_CURSOR, KEY_USE_BOLD_FONT, KEY_THIN_STROKES,
-                             KEY_ASCII_LIGATURES, KEY_NON_ASCII_LIGATURES, KEY_CURSOR_SHADOW,
-                             KEY_ANIMATE_MOVEMENT, KEY_CURSOR_HIDDEN_WITHOUT_FOCUS,
-                             KEY_ANIMATE_MOVEMENT_ONLY_IN_INTERACTIVE_APPS,
+            KEY_BLINK_ALLOWED, KEY_USE_ITALIC_FONT, KEY_AMBIGUOUS_DOUBLE_WIDTH,
+            KEY_USE_NONASCII_FONT, KEY_INITIAL_USE_TRANSPARENCY, KEY_BLUR,
+            KEY_DISABLE_WINDOW_RESIZING, KEY_DISABLE_UNFOCUSED_WINDOW_RESIZING,
+            KEY_ALLOW_CHANGE_CURSOR_BLINK,
+            KEY_TRANSPARENCY_AFFECTS_ONLY_DEFAULT_BACKGROUND_COLOR,
+            KEY_ASCII_ANTI_ALIASED, KEY_NONASCII_ANTI_ALIASED,
 
-                             KEY_USE_BOLD_COLOR,
-                             KEY_USE_BOLD_COLOR COLORS_LIGHT_MODE_SUFFIX,
-                             KEY_USE_BOLD_COLOR COLORS_DARK_MODE_SUFFIX,
+            KEY_UNLIMITED_SCROLLBACK, KEY_SCROLLBACK_WITH_STATUS_BAR,
+            KEY_SCROLLBACK_IN_ALTERNATE_SCREEN,
 
-                             KEY_BRIGHTEN_BOLD_TEXT,
-                             KEY_BRIGHTEN_BOLD_TEXT COLORS_LIGHT_MODE_SUFFIX,
-                             KEY_BRIGHTEN_BOLD_TEXT COLORS_DARK_MODE_SUFFIX,
+            KEY_DRAG_TO_SCROLL_IN_ALTERNATE_SCREEN_MODE_DISABLED,
+            KEY_AUTOMATICALLY_ENABLE_ALTERNATE_MOUSE_SCROLL,
+            KEY_RESTRICT_ALTERNATE_MOUSE_SCROLL_TO_VERTICAL,
+            KEY_XTERM_MOUSE_REPORTING, KEY_XTERM_MOUSE_REPORTING_ALLOW_MOUSE_WHEEL,
+            KEY_XTERM_MOUSE_REPORTING_ALLOW_CLICKS_AND_DRAGS,
+            KEY_ALLOW_TITLE_REPORTING, KEY_ALLOW_ALTERNATE_MOUSE_SCROLL,
+            KEY_RESTRICT_MOUSE_REPORTING_TO_ALTERNATE_SCREEN_MODE,
+            KEY_ALLOW_TITLE_SETTING,
+            KEY_DISABLE_PRINTING, KEY_DISABLE_SMCUP_RMCUP, KEY_SILENCE_BELL,
 
-                             KEY_BLINK_ALLOWED, KEY_USE_ITALIC_FONT, KEY_AMBIGUOUS_DOUBLE_WIDTH,
-                             KEY_UNICODE_NORMALIZATION, KEY_HORIZONTAL_SPACING, KEY_VERTICAL_SPACING,
-                             KEY_USE_NONASCII_FONT, KEY_TRANSPARENCY, KEY_INITIAL_USE_TRANSPARENCY,
-                             KEY_BLUR, KEY_BLUR_RADIUS,
-                             KEY_BACKGROUND_IMAGE_MODE, KEY_BLEND,
-                             KEY_DISABLE_WINDOW_RESIZING, KEY_DISABLE_UNFOCUSED_WINDOW_RESIZING,
-                             KEY_ALLOW_CHANGE_CURSOR_BLINK,
-                             KEY_TRANSPARENCY_AFFECTS_ONLY_DEFAULT_BACKGROUND_COLOR,
-                             KEY_ASCII_ANTI_ALIASED, KEY_NONASCII_ANTI_ALIASED, KEY_SCROLLBACK_LINES,
-                             KEY_UNLIMITED_SCROLLBACK, KEY_SCROLLBACK_WITH_STATUS_BAR,
-                             KEY_SCROLLBACK_IN_ALTERNATE_SCREEN, KEY_CHARACTER_ENCODING,
-                             KEY_DRAG_TO_SCROLL_IN_ALTERNATE_SCREEN_MODE_DISABLED,
-                             KEY_AUTOMATICALLY_ENABLE_ALTERNATE_MOUSE_SCROLL,
-                             KEY_RESTRICT_ALTERNATE_MOUSE_SCROLL_TO_VERTICAL,
-                             KEY_XTERM_MOUSE_REPORTING, KEY_XTERM_MOUSE_REPORTING_ALLOW_MOUSE_WHEEL,
-                             KEY_XTERM_MOUSE_REPORTING_ALLOW_CLICKS_AND_DRAGS,
-                             KEY_UNICODE_VERSION, KEY_ALLOW_TITLE_REPORTING, KEY_ALLOW_ALTERNATE_MOUSE_SCROLL,
-                             KEY_RESTRICT_MOUSE_REPORTING_TO_ALTERNATE_SCREEN_MODE,
-                             KEY_ALLOW_TITLE_SETTING,
-                             KEY_DISABLE_PRINTING, KEY_DISABLE_SMCUP_RMCUP, KEY_SILENCE_BELL,
-                             KEY_BOOKMARK_USER_NOTIFICATIONS, KEY_SEND_BELL_ALERT, KEY_SEND_IDLE_ALERT,
-                             KEY_SEND_NEW_OUTPUT_ALERT, KEY_SEND_SESSION_ENDED_ALERT,
-                             KEY_SEND_TERMINAL_GENERATED_ALERT, KEY_FLASHING_BELL, KEY_VISUAL_BELL,
-                             KEY_SESSION_END_ACTION, KEY_PROMPT_CLOSE,
-                             KEY_UNDO_TIMEOUT, KEY_REDUCE_FLICKER, KEY_SHOW_STATUS_BAR, KEY_SEND_CODE_WHEN_IDLE,
-                             KEY_IDLE_CODE, KEY_IDLE_PERIOD, KEY_OPTION_KEY_SENDS,
-                             KEY_RIGHT_OPTION_KEY_SENDS, KEY_APPLICATION_KEYPAD_ALLOWED, KEY_ALLOW_MODIFY_OTHER_KEYS,
-                             KEY_LEFT_OPTION_KEY_CHANGEABLE, KEY_RIGHT_OPTION_KEY_CHANGEABLE,
-                             KEY_PLACE_PROMPT_AT_FIRST_COLUMN, KEY_SHOW_MARK_INDICATORS, KEY_SHOW_OFFSCREEN_COMMANDLINE,
-                             KEY_TMUX_NEWLINE, KEY_PROMPT_PATH_CLICK_OPENS_NAVIGATOR,
-                             KEY_POWERLINE, KEY_TRIGGERS_USE_INTERPOLATED_STRINGS,
-                             KEY_ENABLE_TRIGGERS_IN_INTERACTIVE_APPS,
-                             KEY_SMART_SELECTION_ACTIONS_USE_INTERPOLATED_STRINGS,
-                             KEY_COLUMNS, KEY_ROWS, KEY_ICON, KEY_AUTOLOG, KEY_ARCHIVE, KEY_LOGGING_STYLE, KEY_HAS_HOTKEY,
-                             KEY_WIDTH_PERCENTAGE, KEY_HEIGHT_PERCENTAGE,
-                             KEY_HIDE_AFTER_OPENING, KEY_HOTKEY_MODIFIER_FLAGS, KEY_HOTKEY_KEY_CODE,
-                             KEY_HOTKEY_AUTOHIDE, KEY_HOTKEY_REOPEN_ON_ACTIVATION, KEY_HOTKEY_ANIMATE,
-                             KEY_HOTKEY_FLOAT, KEY_HOTKEY_DOCK_CLICK_ACTION,
-                             KEY_HOTKEY_MODIFIER_ACTIVATION, KEY_HOTKEY_ACTIVATE_WITH_MODIFIER,
-                             KEY_OPEN_TOOLBELT, KEY_PREVENT_TAB, KEY_SCREEN, KEY_SET_LOCALE_VARS, KEY_SPACE,
-                             KEY_TITLE_COMPONENTS, KEY_USE_CUSTOM_WINDOW_TITLE, KEY_USE_CUSTOM_TAB_TITLE,
-                             KEY_USE_LIBTICKIT_PROTOCOL, KEY_WINDOW_TYPE, KEY_ALLOW_PASTE_BRACKETING,
-                             KEY_ENABLE_PROGRESS_BARS, KEY_PROGRESS_BAR_HEIGHT, KEY_PROGRESS_BAR_COLOR_SCHEME,
-                             KEY_PREVENT_APS, KEY_MOVEMENT_KEYS_SCROLL_OUTSIDE_INTERACTIVE_APPS,
-                             KEY_TREAT_OPTION_AS_ALT,
-                             KEY_OPEN_PASSWORD_MANAGER_AUTOMATICALLY, KEY_TIMESTAMPS_STYLE,
-                             KEY_TIMESTAMPS_VISIBLE,
-                             KEY_USE_SEPARATE_COLORS_FOR_LIGHT_AND_DARK_MODE,
-                             KEY_LOAD_SHELL_INTEGRATION_AUTOMATICALLY,
-                             KEY_DYNAMIC_PROFILE_REWRITABLE,
-                             KEY_DYNAMIC_PROFILE,
-                             KEY_COMPOSER_TOP_OFFSET,
-                             KEY_LEFT_CONTROL,
-                             KEY_RIGHT_CONTROL,
-                             KEY_LEFT_COMMAND,
-                             KEY_RIGHT_COMMAND,
-                             KEY_FUNCTION,
+            KEY_BOOKMARK_USER_NOTIFICATIONS, KEY_SEND_BELL_ALERT, KEY_SEND_IDLE_ALERT,
+            KEY_SEND_NEW_OUTPUT_ALERT, KEY_SEND_SESSION_ENDED_ALERT,
+            KEY_SEND_TERMINAL_GENERATED_ALERT, KEY_FLASHING_BELL, KEY_VISUAL_BELL,
 
-                             KEY_BROWSER_ZOOM,
-                             KEY_BROWSER_DEV_NULL,
-                             KEY_WIDTH, KEY_HEIGHT,
-                             KEY_INSTANT_REPLAY,
+            KEY_REDUCE_FLICKER, KEY_SHOW_STATUS_BAR, KEY_SEND_CODE_WHEN_IDLE,
+            KEY_APPLICATION_KEYPAD_ALLOWED, KEY_ALLOW_MODIFY_OTHER_KEYS,
+            KEY_LEFT_OPTION_KEY_CHANGEABLE, KEY_RIGHT_OPTION_KEY_CHANGEABLE,
+            KEY_PLACE_PROMPT_AT_FIRST_COLUMN, KEY_SHOW_MARK_INDICATORS, KEY_SHOW_OFFSCREEN_COMMANDLINE,
 
-                             KEY_PROFILE_TYPE_PHONY];
+            KEY_TMUX_NEWLINE, KEY_PROMPT_PATH_CLICK_OPENS_NAVIGATOR,
+            KEY_POWERLINE, KEY_TRIGGERS_USE_INTERPOLATED_STRINGS,
+            KEY_ENABLE_TRIGGERS_IN_INTERACTIVE_APPS,
+            KEY_SMART_SELECTION_ACTIONS_USE_INTERPOLATED_STRINGS,
+
+            KEY_AUTOLOG, KEY_ARCHIVE, KEY_HAS_HOTKEY,
+            KEY_HIDE_AFTER_OPENING,
+            KEY_HOTKEY_AUTOHIDE, KEY_HOTKEY_REOPEN_ON_ACTIVATION, KEY_HOTKEY_ANIMATE,
+            KEY_HOTKEY_FLOAT, KEY_OPEN_TOOLBELT, KEY_PREVENT_TAB,
+            KEY_HOTKEY_ACTIVATE_WITH_MODIFIER,
+
+            KEY_USE_CUSTOM_WINDOW_TITLE, KEY_USE_CUSTOM_TAB_TITLE,
+            KEY_USE_LIBTICKIT_PROTOCOL,
+
+            KEY_ALLOW_PASTE_BRACKETING, KEY_ENABLE_PROGRESS_BARS,
+            KEY_PREVENT_APS, KEY_MOVEMENT_KEYS_SCROLL_OUTSIDE_INTERACTIVE_APPS,
+            KEY_TREAT_OPTION_AS_ALT,
+            KEY_OPEN_PASSWORD_MANAGER_AUTOMATICALLY,
+
+            KEY_TIMESTAMPS_VISIBLE,
+            KEY_USE_SEPARATE_COLORS_FOR_LIGHT_AND_DARK_MODE,
+            KEY_LOAD_SHELL_INTEGRATION_AUTOMATICALLY,
+            KEY_DYNAMIC_PROFILE_REWRITABLE,
+            KEY_DYNAMIC_PROFILE,
+            KEY_BROWSER_DEV_NULL,
+            KEY_INSTANT_REPLAY,
+        ];
+        NSArray *number = @[
+            KEY_MINIMUM_CONTRAST COLORS_LIGHT_MODE_SUFFIX,
+            KEY_MINIMUM_CONTRAST COLORS_DARK_MODE_SUFFIX,
+            KEY_MINIMUM_CONTRAST,
+
+            KEY_FAINT_TEXT_ALPHA COLORS_LIGHT_MODE_SUFFIX,
+            KEY_FAINT_TEXT_ALPHA COLORS_DARK_MODE_SUFFIX,
+            KEY_FAINT_TEXT_ALPHA,
+
+            KEY_CURSOR_BOOST COLORS_LIGHT_MODE_SUFFIX,
+            KEY_CURSOR_BOOST COLORS_DARK_MODE_SUFFIX,
+            KEY_CURSOR_BOOST,
+
+            KEY_CURSOR_TYPE, KEY_THIN_STROKES,
+
+            KEY_UNICODE_NORMALIZATION, KEY_HORIZONTAL_SPACING, KEY_VERTICAL_SPACING,
+            KEY_TRANSPARENCY,
+            KEY_BLUR_RADIUS,
+            KEY_BACKGROUND_IMAGE_MODE, KEY_BLEND,
+            KEY_SCROLLBACK_LINES,
+            KEY_CHARACTER_ENCODING,
+
+            KEY_UNICODE_VERSION,
+
+            KEY_SESSION_END_ACTION, KEY_PROMPT_CLOSE,
+            KEY_UNDO_TIMEOUT,
+            KEY_IDLE_CODE, KEY_IDLE_PERIOD, KEY_OPTION_KEY_SENDS,
+            KEY_RIGHT_OPTION_KEY_SENDS,
+
+            KEY_COLUMNS, KEY_ROWS, KEY_ICON,
+            KEY_LOGGING_STYLE,
+            KEY_WIDTH_PERCENTAGE, KEY_HEIGHT_PERCENTAGE,
+            KEY_HOTKEY_MODIFIER_FLAGS, KEY_HOTKEY_KEY_CODE,
+            KEY_HOTKEY_DOCK_CLICK_ACTION,
+            KEY_HOTKEY_MODIFIER_ACTIVATION,
+
+            KEY_SCREEN, KEY_SET_LOCALE_VARS, KEY_SPACE,
+            KEY_TITLE_COMPONENTS,
+            KEY_WINDOW_TYPE,
+            KEY_PROGRESS_BAR_HEIGHT, KEY_PROGRESS_BAR_COLOR_SCHEME,
+            KEY_TIMESTAMPS_STYLE,
+
+            KEY_COMPOSER_TOP_OFFSET,
+            KEY_LEFT_CONTROL,
+            KEY_RIGHT_CONTROL,
+            KEY_LEFT_COMMAND,
+            KEY_RIGHT_COMMAND,
+            KEY_FUNCTION,
+
+            KEY_BROWSER_ZOOM,
+            KEY_WIDTH, KEY_HEIGHT,
+
+            KEY_PROFILE_TYPE_PHONY
+        ];
         NSArray *stringArrays = @[ KEY_TAGS, KEY_JOBS, KEY_BOUND_HOSTS, KEY_SNIPPETS_FILTER ];
         NSArray *dictArrays = @[ KEY_HOTKEY_ALTERNATE_SHORTCUTS, KEY_TRIGGERS, KEY_SMART_SELECTION_RULES,
                                  ];
@@ -372,7 +407,7 @@ typedef struct {
             validationBlocks[key] = ^BOOL(id value) { return [value isKindOfClass:[NSString class]]; };
         }
         for (NSString *key in color) {
-            typeHelp[key] = @"Colors can be specified as 3- or 6-digit hex strings such as \"#f8a\" like in HTML. By default it uses the sRGB color space. To use P3 instead, place p3 before the # as in: \"p3#f8a\".";
+            typeHelp[key] = @"Colors can be specified as 3- or 6-digit hex strings such as \"#f8a\" like in HTML. By default it uses the sRGB color space. To use P3 instead, place p3 before the # as in: \"p3#f8a\". While you can use a string literal here, typically this would come from a string-valued variable or function.";
             validationBlocks[key] = ^BOOL(id value) {
                 return ([value isKindOfClass:[NSDictionary class]] &&
                         [value isColorValue]);
@@ -396,6 +431,21 @@ typedef struct {
         }
         for (NSString *key in number) {
             validationBlocks[key] = ^BOOL(id value) { return [value isKindOfClass:[NSNumber class]]; };
+        }
+        for (NSString *key in booleans) {
+            validationBlocks[key] = ^BOOL(id value) { return [value isKindOfClass:[NSNumber class]]; };
+            conversionBlocks[key] = ^id(id value) {
+                NSNumber *number = [NSNumber castFrom:value];
+                if (number) {
+                    return @(number.boolValue);
+                }
+                NSString *string = [NSString castFrom:value];
+                if (string) {
+                    return @(string.boolValue);
+                }
+                return nil;
+            };
+            typeHelp[key] = @"Checkboxes accept numbers (0 is false and any other number is true), strings containing a number, or strings like \"true\" and \"false\". While you can use a numeric literal here, typically this would come from a number-valued variable or function.";
         }
         for (NSString *key in stringArrays) {
             validationBlocks[key] = ^BOOL(id value) {

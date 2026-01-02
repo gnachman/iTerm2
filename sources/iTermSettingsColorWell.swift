@@ -32,6 +32,11 @@ class SettingsColorWell: CPKColorWell, ExpressionBindableView {
         editBinding(example: "bgColor")
     }
 
+    @objc
+    func removeBinding(_ sender: Any) {
+        removeBinding()
+    }
+
     func iconOrigin(size: NSSize) -> NSPoint {
         return NSPoint(x: 32 - size.width - 2, y: 2)
     }

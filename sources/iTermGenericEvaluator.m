@@ -209,7 +209,7 @@
     }
 }
 
-- (iTermExpressionEvaluator *)expressionEvaluator {
+- (iTermExpressionEvaluator *)expressionEvaluatorUsingScope:(iTermVariableScope *)scope {
     ITAssertWithMessage(NO, @"Subclass must implement this");
     [self doesNotRecognizeSelector:_cmd];
 }
@@ -218,7 +218,7 @@
            sideEffectsAllowed:(BOOL)sideEffectsAllowed
                    withScope:(iTermVariableScope *)scope
                    completion:(void (^)(id result, NSError *error, NSSet<NSString *> *missing))completion {
-    iTermExpressionEvaluator *evaluator = [self expressionEvaluator];
+    iTermExpressionEvaluator *evaluator = [self expressionEvaluatorUsingScope:scope];
     [evaluator evaluateWithTimeout:synchronously ? 0 : 30
                 sideEffectsAllowed:sideEffectsAllowed
                         completion:^(iTermExpressionEvaluator * _Nonnull evaluator) {

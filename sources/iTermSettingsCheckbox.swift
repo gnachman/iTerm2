@@ -16,6 +16,11 @@ class SettingsCheckbox: NSButton, ExpressionBindableView {
             if expression != oldValue {
                 DLog("Change to \(expression ?? "(nil)")")
                 updateIcon()
+                if expression?.isEmpty == false {
+                    title = "\u{2003}" + title
+                } else {
+                    title = String(title.trimmingLeadingCharacters(in: .whitespaces))
+                }
             }
         }
     }
@@ -31,8 +36,13 @@ class SettingsCheckbox: NSButton, ExpressionBindableView {
         editBinding(example: "user.mySetting")
     }
 
+    @objc
+    func removeBinding(_ sender: Any) {
+        removeBinding()
+    }
+
     func iconOrigin(size: NSSize) -> NSPoint {
-        return NSPoint(x: -14, y: 2)
+        return NSPoint(x: 17, y: 3)
     }
 
     override func viewDidMoveToWindow() {

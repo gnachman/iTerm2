@@ -7,13 +7,14 @@
 
 import Foundation
 
-@objc
+@objc(iTermExpressionBindableView)
 protocol ExpressionBindableView: AnyObject {
     @objc var bindingDidChange: ((String?) -> ())? { get set }
     @objc var expression: String? { get set }
     @objc var typeHelp: String? { get set }
     var textFieldDelegate: iTermFunctionCallTextFieldDelegate? { get set }
     @objc func editBinding(_ sender: Any)
+    @objc func removeBinding(_ sender: Any)
     var iconContainerView: ExpressionBindingIconView? { get set }
     func iconOrigin(size: NSSize) -> NSPoint
 }
@@ -24,12 +25,35 @@ extension ExpressionBindableView where Self: NSView, Self: NSAlertDelegate {
             return
         }
         let menu = NSMenu()
-        let item = NSMenuItem(title: expression == nil ? "Bind to Expression" : "Edit Expression Binding",
-                              action: #selector(editBinding(_:)),
-                              keyEquivalent: "")
-        item.target = self
-        menu.addItem(item)
+        let hasExpression = (expression?.isEmpty == false)
+        do {
+            let item = NSMenuItem(title: hasExpression ? "Edit Expression Binding" : "Bind to Expression",
+                                  action: #selector(editBinding(_:)),
+                                  keyEquivalent: "")
+            item.target = self
+            menu.addItem(item)
+        }
+        if hasExpression {
+            let item = NSMenuItem(title: "Remove Expression Binding",
+                                  action: #selector(removeBinding(_:)),
+                                  keyEquivalent: "")
+            item.target = self
+            menu.addItem(item)
+        }
         NSMenu.popUpContextMenu(menu, with: event, for: view)
+    }
+
+    private func set(binding: String?) {
+        if let binding, binding.isEmpty {
+            set(binding: nil)
+            return
+        }
+        expression = binding
+        bindingDidChange?(binding)
+    }
+
+    func removeBinding() {
+        set(binding: nil)
     }
 
     func editBinding(example: String) {
@@ -37,7 +61,7 @@ extension ExpressionBindableView where Self: NSView, Self: NSAlertDelegate {
             return
         }
 
-        let textField = NSTextField(frame: NSRect(x: 0, y: 0, width: 200, height: 24))
+        let textField = NSTextField(frame: NSRect(x: 0, y: 0, width: 350, height: 24))
         textField.isEditable = true
         textField.isSelectable = true
         textField.stringValue = expression ?? ""
@@ -64,13 +88,7 @@ extension ExpressionBindableView where Self: NSView, Self: NSAlertDelegate {
         alert.beginSheetModal(for: window) { [weak self] response in
             switch response {
             case .alertFirstButtonReturn:
-                let newBinding: String? = if textField.stringValue.isEmpty {
-                    nil
-                } else {
-                    textField.stringValue
-                }
-                self?.expression = textField.stringValue
-                self?.bindingDidChange?(newBinding)
+                self?.set(binding: textField.stringValue)
             default:
                 DLog("Cancel \(response)")
             }
@@ -114,7 +132,7 @@ extension ExpressionBindableView {
                                                             optionalTypeHelp +
             """
             ### Background
-            Binding a setting to an expression lets you change settings programatically.
+            Binding a setting to an expression lets you change settings programmatically.
             
             iTerm2 tracks a collection of “Variables” for each session. You can learn more about them in [Scripting Fundamentals](https://iterm2.com/documentation-scripting-fundamentals.html).
             

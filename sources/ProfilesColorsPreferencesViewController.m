@@ -188,7 +188,6 @@ static NSString * const kColorGalleryURL = @"https://www.iterm2.com/colorgallery
 
     NSDictionary *colorWellDictionary = [self colorWellDictionary];
     NSDictionary *relatedViews = [self colorWellRelatedViews];
-    NSDictionary<NSString *, NSString *> *bindings = [NSDictionary castFrom:[self objectForKey:KEY_BINDINGS]];
     for (NSString *key in colorWellDictionary) {
         iTermSettingsColorWell *colorWell = colorWellDictionary[key];
         colorWell.colorSpace = [NSColorSpace it_defaultColorSpace];
@@ -204,14 +203,6 @@ static NSString * const kColorGalleryURL = @"https://www.iterm2.com/colorgallery
         colorWell.action = @selector(settingChanged:);
         colorWell.target = self;
         colorWell.continuous = YES;
-        colorWell.typeHelp = [iTermProfilePreferences typeHelpForKey:key];
-        NSString *amendedKey = [self amendedKey:key];
-        colorWell.expression = bindings[amendedKey];
-
-        colorWell.bindingDidChange = ^(NSString *newBinding) {
-            [weakSelf setBinding:newBinding forColorWellWithKey:key];
-        };
-
         __weak NSView *weakColorWell = colorWell;
         colorWell.willClosePopover = ^() {
             // NSSearchField remembers who was first responder before it gained
@@ -226,7 +217,6 @@ static NSString * const kColorGalleryURL = @"https://www.iterm2.com/colorgallery
         __weak __typeof(self) weakSelf = self;
         info.observer = ^{
             [weakSelf updateHueChromaVisualizationForKey:key];
-            [weakSelf updateColorWellBindingsForKey:key];
         };
     }
 
@@ -512,14 +502,6 @@ static NSString * const kColorGalleryURL = @"https://www.iterm2.com/colorgallery
     ];
 }
 
-- (void)updateColorWellBindingsForKey:(NSString *)key {
-    NSDictionary *colorWellDictionary = [self colorWellDictionary];
-    iTermSettingsColorWell *colorWell = colorWellDictionary[key];
-    NSDictionary<NSString *, NSString *> *bindings = [NSDictionary castFrom:[self objectForKey:KEY_BINDINGS]];
-    NSString *amendedKey = [self amendedKey:key];
-    colorWell.expression = bindings[amendedKey];
-}
-
 - (void)updateHueChromaVisualizationForKey:(NSString *)key {
     if (![self.chromaHueVisualizationKeys containsObject:key]) {
         return;
@@ -529,15 +511,6 @@ static NSString * const kColorGalleryURL = @"https://www.iterm2.com/colorgallery
     if (color) {
         [_hueVisualization setColor:color forKey:key];
     }
-}
-
-#pragma mark - Bindings
-
-- (void)setBinding:(NSString *)newBinding forColorWellWithKey:(NSString *)key {
-    NSDictionary *dict = [NSDictionary castFrom:[self objectForKey:KEY_BINDINGS]] ?: @{};
-    dict = [dict dictionaryBySettingObject:newBinding forKey:[self amendedKey:key]];
-    // bypass self because we don't want KEY_BINDINGS amended.
-    [super setObject:dict forKey:KEY_BINDINGS];
 }
 
 #pragma mark - Color Presets
@@ -558,10 +531,10 @@ static NSString * const kColorGalleryURL = @"https://www.iterm2.com/colorgallery
 
     [_presetsMenu addItem:[NSMenuItem separatorItem]];
 
-    [self addPresetItemWithTitle:@"Import..." action:@selector(importColorPreset:)];
-    [self addPresetItemWithTitle:@"Export..." action:@selector(exportColorPreset:)];
-    [self addPresetItemWithTitle:@"Save As..." action:@selector(saveColorPreset:)];
-    [self addPresetItemWithTitle:@"Delete Preset..." action:@selector(deleteColorPreset:)];
+    [self addPresetItemWithTitle:@"Import…" action:@selector(importColorPreset:)];
+    [self addPresetItemWithTitle:@"Export…" action:@selector(exportColorPreset:)];
+    [self addPresetItemWithTitle:@"Save As…" action:@selector(saveColorPreset:)];
+    [self addPresetItemWithTitle:@"Delete Preset…" action:@selector(deleteColorPreset:)];
     [self addPresetItemWithTitle:@"Visit Online Gallery" action:@selector(visitGallery:)];
     _presetsMenu.delegate = self;
 }

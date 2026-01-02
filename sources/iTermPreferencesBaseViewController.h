@@ -194,6 +194,8 @@ extern NSString *const iTermPreferencesDidToggleIndicateNonDefaultValues;
 - (NSArray<iTermSetting *> *)allSettingsWithPathComponents:(NSArray<NSString *> *)pathComponents;
 - (BOOL)hasControlWithKey:(NSString *)key;
 - (BOOL)tryToggleControlWithKey:(NSString *)key;
+- (void)didDefineControl:(NSView *)control key:(NSString *)key;
+- (NSString *)amendedKey:(NSString *)key;
 
 @end
 

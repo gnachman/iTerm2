@@ -64,7 +64,7 @@ NS_ASSUME_NONNULL_BEGIN
                                         NSSet<NSString *> *missing))completion;
 
 // Subclasses must implement this.
-- (iTermExpressionEvaluator *)expressionEvaluator;
+- (iTermExpressionEvaluator *)expressionEvaluatorUsingScope:(iTermVariableScope *)scope;
 
 @end
 

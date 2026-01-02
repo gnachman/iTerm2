@@ -510,7 +510,7 @@ enum {
 
     info = [self defineControl:_customScriptsFolder
                            key:kPreferenceKeyCustomScriptsFolder
-                   relatedView:nil
+                   displayName:@"Custom folder for Python API scripts"
                           type:kPreferenceInfoTypeStringTextField];
     info.shouldBeEnabled = ^BOOL() {
         return [iTermPreferences boolForKey:kPreferenceKeyUseCustomScriptsFolder];
@@ -632,7 +632,7 @@ enum {
 
     info = [self defineControl:_placementContainer
                            key:kPreferenceKeyWindowPlacement
-                   relatedView:nil
+                   displayName:@"New window placement"
                           type:kPreferenceInfoTypeRadioButton];
 
     [self defineControl:_adjustWindowForFontSizeChange
@@ -742,9 +742,9 @@ enum {
                 relatedView:_aiTokenLimitLabel
                        type:kPreferenceInfoTypeIntegerTextField];
     PreferenceInfo *urlInfo = [self defineControl:_customAIEndpoint
-                           key:kPreferenceKeyAITermURL
-                   relatedView:nil
-                          type:kPreferenceInfoTypeStringTextField];
+                                              key:kPreferenceKeyAITermURL
+                                      displayName:@"Custom URL for AI"
+                                             type:kPreferenceInfoTypeStringTextField];
     urlInfo.onUpdate = ^BOOL{
         [weakSelf updateEnabledState];
         return NO;
@@ -911,7 +911,7 @@ enum {
     };
     [self defineControl:_aiTimeout
                     key:kPreferenceKeyAITimeout
-            relatedView:nil
+            displayName:@"AI timeout"
                    type:kPreferenceInfoTypeIntegerTextField];
 
     [self defineControl:_aiSafetyCheck
