@@ -235,7 +235,7 @@ Gw
                                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                     </customView>
                                     <button horizontalHuggingPriority="750" verticalHuggingPriority="750" id="kfx-iG-Tb8">
-                                        <rect key="frame" x="410" y="362" width="25" height="25"/>
+                                        <rect key="frame" x="410" y="363" width="25" height="25"/>
                                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                         <buttonCell key="cell" type="help" bezelStyle="helpButton" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="0mB-uh-A8z">
                                             <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>

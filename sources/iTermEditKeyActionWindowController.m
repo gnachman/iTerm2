@@ -107,6 +107,7 @@ const CGFloat sideMarginWidth = 40;
                 break;
 
             case KEY_ACTION_VIM_TEXT:
+            case KEY_ACTION_VIM_TEXT_NO_BROADCAST:
                 _parameterHidden = NO;
                 _helpString = @"Special characters are:\n* \\<1-to-3-digit octal>\n* \\x<1 or 2 digit hex>\n* \\u<4 digit hex>\n* \\b for backspace\n* \\e for esc\n* \\f for formfeed\n* \\n for newline and \\r for return\n* \\t for tab\n* \\\\ and \\\" for literal \\ and \"\n* <C-x> for control key\n* <M-x> for meta key.";
                 _parameterPlaceholder = @"Enter value to send. Click help button for special characters.";
@@ -449,6 +450,7 @@ const CGFloat sideMarginWidth = 40;
             [[iTermSearchableComboViewItem alloc] initWithLabel:@"Send Hex Code" tag:KEY_ACTION_HEX_CODE],
             [[iTermSearchableComboViewItem alloc] initWithLabel:@"Send Text" tag:KEY_ACTION_TEXT],
             [[iTermSearchableComboViewItem alloc] initWithLabel:@"Send Text with “vim” Special Chars" tag:KEY_ACTION_VIM_TEXT],
+            [[iTermSearchableComboViewItem alloc] initWithLabel:@"Send Text without Broadcasting" tag:KEY_ACTION_VIM_TEXT_NO_BROADCAST],
             [[iTermSearchableComboViewItem alloc] initWithLabel:@"Send Snippet" tag:KEY_ACTION_SEND_SNIPPET],
             [[iTermSearchableComboViewItem alloc] initWithLabel:@"Compose…" tag:KEY_ACTION_COMPOSE],
         ] arrayByRemovingNulls]],

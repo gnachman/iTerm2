@@ -273,6 +273,9 @@ static NSString *GetProfileName(NSString *guid) {
         case KEY_ACTION_VIM_TEXT:
             actionString = [NSString stringWithFormat:@"%@ \"%@\"", @"Send:", _parameter];
             break;
+        case KEY_ACTION_VIM_TEXT_NO_BROADCAST:
+            actionString = [NSString stringWithFormat:@"%@ \"%@\"", @"Send (no broadcast):", _parameter];
+            break;
         case KEY_ACTION_TEXT:
             actionString = [NSString stringWithFormat:@"%@ \"%@\"", @"Send:", _parameter];
             break;
@@ -528,6 +531,7 @@ static NSString *GetProfileName(NSString *guid) {
         case KEY_ACTION_COMPOSE:
         case KEY_ACTION_SEND_TMUX_COMMAND:
         case KEY_ACTION_VIM_TEXT:
+        case KEY_ACTION_VIM_TEXT_NO_BROADCAST:
         case KEY_ACTION_RUN_COPROCESS:
         case KEY_ACTION_SEND_C_H_BACKSPACE:
         case KEY_ACTION_SEND_C_QM_BACKSPACE:
@@ -621,6 +625,7 @@ static NSString *GetProfileName(NSString *guid) {
         case KEY_ACTION_HEX_CODE:
         case KEY_ACTION_TEXT:
         case KEY_ACTION_VIM_TEXT:
+        case KEY_ACTION_VIM_TEXT_NO_BROADCAST:
         case KEY_ACTION_SEND_SNIPPET:
         case KEY_ACTION_COMPOSE:
         case KEY_ACTION_SEND_TMUX_COMMAND:

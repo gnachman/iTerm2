@@ -3816,10 +3816,22 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
          encoding:(NSStringEncoding)optionalEncoding
     forceEncoding:(BOOL)forceEncoding
         reporting:(BOOL)reporting {
+    [self writeTask:string
+           encoding:optionalEncoding
+      forceEncoding:forceEncoding
+       canBroadcast:YES
+          reporting:reporting];
+}
+
+- (void)writeTask:(NSString *)string
+         encoding:(NSStringEncoding)optionalEncoding
+    forceEncoding:(BOOL)forceEncoding
+     canBroadcast:(BOOL)canBroadcast
+        reporting:(BOOL)reporting {
     NSStringEncoding encoding = forceEncoding ? optionalEncoding : _screen.terminalEncoding;
     if (self.tmuxMode == TMUX_CLIENT || _conductor.handlesKeystrokes || _connectingSSH) {
         [self setBell:NO];
-        if ([[_delegate realParentWindow] broadcastInputToSession:self]) {
+        if (canBroadcast && [[_delegate realParentWindow] broadcastInputToSession:self]) {
             [[_delegate realParentWindow] sendInputToAllSessions:string
                                                         encoding:optionalEncoding
                                                    forceEncoding:forceEncoding];
@@ -3844,7 +3856,11 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
         return;
     }
     self.currentMarkOrNotePosition = nil;
-    [self writeTaskImpl:string encoding:encoding forceEncoding:forceEncoding canBroadcast:YES reporting:reporting];
+    [self writeTaskImpl:string
+               encoding:encoding
+          forceEncoding:forceEncoding
+           canBroadcast:canBroadcast
+              reporting:reporting];
 }
 
 // This is run in PTYTask's thread. It parses the input here and then queues an async task to run
@@ -10150,6 +10166,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
         case KEY_ACTION_HEX_CODE:
         case KEY_ACTION_TEXT:
         case KEY_ACTION_VIM_TEXT:
+        case KEY_ACTION_VIM_TEXT_NO_BROADCAST:
         case KEY_ACTION_RUN_COPROCESS:
         case KEY_ACTION_SEND_C_H_BACKSPACE:
         case KEY_ACTION_SEND_C_QM_BACKSPACE:
@@ -10380,6 +10397,20 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
             }
             [self sendText:action.parameter escaping:action.vimEscaping];
             break;
+        case KEY_ACTION_VIM_TEXT_NO_BROADCAST: {
+            if (_exited || isTmuxGateway) {
+                return;
+            }
+            NSString *text = [NSString castFrom:action.parameter];
+            if (text.length > 0) {
+                [self writeTask:[self escapedText:text mode:action.vimEscaping]
+                       encoding:_screen.terminalEncoding
+                  forceEncoding:NO
+                   canBroadcast:NO
+                      reporting:NO];
+            }
+            break;
+        }
         case KEY_ACTION_SEND_SNIPPET:
             if (_exited || isTmuxGateway) {
                 return;
@@ -11246,6 +11277,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
             return [action.parameter dataUsingEncoding:self.encoding];
 
         case KEY_ACTION_VIM_TEXT:
+        case KEY_ACTION_VIM_TEXT_NO_BROADCAST:
             return [[action.parameter stringByExpandingVimSpecialCharacters] dataUsingEncoding:self.encoding];
 
         case KEY_ACTION_ESCAPE_SEQUENCE:
