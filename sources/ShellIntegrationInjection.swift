@@ -118,6 +118,8 @@ import Foundation
              destinationBase),
             (local("iterm2_shell_integration.fish"),
              destinationBase),
+            (local("iterm2_shell_integration.xsh"),
+             destinationBase),
             (local("bash-si-loader"),
              destinationBase),
             (local(".zshenv"),
@@ -131,9 +133,11 @@ import Foundation
 
 fileprivate class ShellIntegrationInjectionFactory {
     private enum Shell: String {
-        case fish = "fish"
-        case zsh = "zsh"
         case bash = "bash"
+        case fish = "fish"
+        case xonsh = "xonsh"
+        case zsh = "zsh"
+
 
         init?(path: String) {
             if path == "/bin/bash" {
@@ -162,12 +166,15 @@ fileprivate class ShellIntegrationInjectionFactory {
         case .none:
             DLog("Don't know what shell \(path) is")
             return nil
-        case .fish:
-            DLog("fish")
-            return FishShellIntegrationInjection(shellIntegrationDir: shellIntegrationDir)
         case .bash:
             DLog("bash")
             return BashShellIntegrationInjection(shellIntegrationDir: shellIntegrationDir)
+        case .fish:
+            DLog("fish")
+            return FishShellIntegrationInjection(shellIntegrationDir: shellIntegrationDir)
+        case .xonsh:
+            DLog("xonsh")
+            return XonshShellIntegrationInjection(shellIntegrationDir: shellIntegrationDir)
         case .zsh:
             DLog("zsh")
             return ZshShellIntegrationInjection(shellIntegrationDir: shellIntegrationDir)
@@ -215,6 +222,25 @@ fileprivate class FishShellIntegrationInjection: BaseShellIntegrationInjection, 
         // If there was a preexisting XDG_DATA_DIRS we'd want to set this to shellIntegrationDir:$XDG_DATA_DIRS
         env[Env.XDG_DATA_DIRS] = shellIntegrationDir
         env[FishEnv.IT2_FISH_XDG_DATA_DIRS] = shellIntegrationDir
+        return env
+    }
+}
+
+fileprivate class XonshShellIntegrationInjection: BaseShellIntegrationInjection, ShellIntegrationInjecting {
+    fileprivate struct XonshEnv {
+        static let IT2_XONSH_XDG_DATA_DIRS = "IT2_XONSH_XDG_DATA_DIRS"
+    }
+    func computeModified(env: [String: String],
+                         argv: [String]) -> ([String: String], [String]) {
+        return (modifiedEnvironment(env, argv: argv), argv)
+    }
+
+    private func modifiedEnvironment(_ originalEnv: [String: String],
+                                     argv: [String]) -> [String: String] {
+        var env = originalEnv
+        // If there was a preexisting XDG_DATA_DIRS we'd want to set this to shellIntegrationDir:$XDG_DATA_DIRS
+        env[Env.XDG_DATA_DIRS] = shellIntegrationDir
+        env[XonshEnv.IT2_XONSH_XDG_DATA_DIRS] = shellIntegrationDir
         return env
     }
 }
