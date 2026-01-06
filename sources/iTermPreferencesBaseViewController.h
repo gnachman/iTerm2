@@ -164,6 +164,7 @@ extern NSString *const iTermPreferencesDidToggleIndicateNonDefaultValues;
 - (void)updateControlForKey:(NSString *)key;
 
 - (BOOL)valueOfKeyEqualsDefaultValue:(NSString *)key;
+- (BOOL)valueIsExplicitlySetForKey:(NSString *)key;
 
 // If this returns YES, then changes to this panel will post a notification causing other panels to
 // update their values for the affected preference.

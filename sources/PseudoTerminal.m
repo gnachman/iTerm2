@@ -178,6 +178,8 @@ NSString *const TERMINAL_ARRANGEMENT_SCREEN_INDEX = @"Screen";
 NSString *const TERMINAL_ARRANGEMENT_HIDE_AFTER_OPENING = @"Hide After Opening";
 NSString *const TERMINAL_ARRANGEMENT_DESIRED_COLUMNS = @"Desired Columns";
 NSString *const TERMINAL_ARRANGEMENT_DESIRED_ROWS = @"Desired Rows";
+NSString *const TERMINAL_ARRANGEMENT_DESIRED_SCREEN_HEIGHT_PERCENTAGE = @"Desired Screen Height Percentage";
+NSString *const TERMINAL_ARRANGEMENT_DESIRED_SCREEN_WIDTH_PERCENTAGE = @"Desired Screen Width Percentage";
 NSString *const TERMINAL_ARRANGEMENT_IS_HOTKEY_WINDOW = @"Is Hotkey Window";
 NSString *const TERMINAL_ARRANGEMENT_INITIAL_PROFILE = @"Initial Profile";  // Optional
 NSString *const TERMINAL_GUID = @"TerminalGuid";
@@ -197,20 +199,17 @@ NSString *const TERMINAL_ARRANGEMENT_SCROLLER_WIDTH = @"Scroller Width";
 // Boolean NSNumber.
 NSString *const TERMINAL_ARRANGEMENT_MINIATURIZED = @"miniaturized";
 
-static NSRect iTermRectCenteredHorizontallyWithinRect(NSRect frameToCenter, NSRect container) {
-    CGFloat centerOfContainer = NSMidX(container);
-    CGFloat centerOfFrame = NSMidX(frameToCenter);
-    CGFloat diff = centerOfContainer - centerOfFrame;
-    frameToCenter.origin.x += diff;
-    return frameToCenter;
-}
-
-static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect container) {
-    CGFloat centerOfContainer = NSMidY(container);
-    CGFloat centerOfFrame = NSMidY(frameToCenter);
-    CGFloat diff = centerOfContainer - centerOfFrame;
-    frameToCenter.origin.y += diff;
-    return frameToCenter;
+static void iTermPercentageSanitize(iTermPercentage *percentage) {
+    if (percentage->width >= 0) {
+        if (percentage->width <= 0 || percentage->width > 100) {
+            percentage->width = 100;
+        }
+    }
+    if (percentage->height >= 0) {
+        if (percentage->height <= 0 || percentage->height > 100) {
+            percentage->height = 100;
+        }
+    }
 }
 
 typedef NS_OPTIONS(NSUInteger, iTermSuppressMakeCurrentTerminal) {
@@ -475,7 +474,7 @@ typedef NS_ENUM(int, iTermShouldHaveTitleSeparator) {
 - (instancetype)initWithSmartLayout:(BOOL)smartLayout
                          windowType:(iTermWindowType)windowType
                     savedWindowType:(iTermWindowType)savedWindowType
-                         percentage:(double)percentage
+                         percentage:(iTermPercentage)percentage
                              screen:(int)screenNumber
                             profile:(Profile *)profile {
     return [self initWithSmartLayout:smartLayout
@@ -490,7 +489,7 @@ typedef NS_ENUM(int, iTermShouldHaveTitleSeparator) {
 - (instancetype)initWithSmartLayout:(BOOL)smartLayout
                          windowType:(iTermWindowType)windowType
                     savedWindowType:(iTermWindowType)savedWindowType
-                         percentage:(double)percentage
+                         percentage:(iTermPercentage)percentage
                              screen:(int)screenNumber
                    hotkeyWindowType:(iTermHotkeyWindowType)hotkeyWindowType
                             profile:(Profile *)profile {
@@ -555,7 +554,7 @@ typedef NS_ENUM(int, iTermShouldHaveTitleSeparator) {
 - (void)finishInitializationWithSmartLayout:(BOOL)smartLayout
                                  windowType:(iTermWindowType)unsafeWindowType
                             savedWindowType:(iTermWindowType)unsafeSavedWindowType
-                                 percentage:(double)percentage
+                                 percentage:(iTermPercentage)percentage
                                      screen:(int)screenNumber
                            hotkeyWindowType:(iTermHotkeyWindowType)hotkeyWindowType
                                     profile:(Profile *)profile {
@@ -604,20 +603,18 @@ typedef NS_ENUM(int, iTermShouldHaveTitleSeparator) {
     screenNumber = [PseudoTerminal screenNumberForPreferredScreenNumber:screenNumber
                                                              windowType:windowType
                                                           defaultScreen:[[self window] screen]];
+    iTermPercentageSanitize(&percentage);
     _percentage = percentage;
-    if (_percentage <= 0 || percentage > 100) {
-        _percentage = 100;
-    }
     switch (windowType) {
         case WINDOW_TYPE_TOP_PERCENTAGE:
         case WINDOW_TYPE_BOTTOM_PERCENTAGE:
-            DLog(@"Window type is %d with percentage %@", windowType, @(_percentage));
+            DLog(@"Window type is %d with percentage %@", windowType, iTermPercentageDescription(_percentage));
             smartLayout = NO;
             break;
 
         case WINDOW_TYPE_LEFT_PERCENTAGE:
         case WINDOW_TYPE_RIGHT_PERCENTAGE:
-            DLog(@"Window type is %d with percentage %@", windowType, @(_percentage));
+            DLog(@"Window type is %d with percentage %@", windowType, iTermPercentageDescription(_percentage));
             smartLayout = NO;
             break;
 
@@ -931,28 +928,28 @@ typedef NS_ENUM(int, iTermShouldHaveTitleSeparator) {
             style = @"maximized";
             break;
         case WINDOW_TYPE_TOP_PERCENTAGE:
-            if (_percentage == 100) {
+            if (_percentage.width == 100) {
                 style = @"full-width top";
             } else {
                 style = @"percentage-width top";
             }
             break;
         case WINDOW_TYPE_BOTTOM_PERCENTAGE:
-            if (_percentage == 100) {
+            if (_percentage.width == 100) {
                 style = @"full-width bottom";
             } else {
                 style = @"percentage-width bottom";
             }
             break;
         case WINDOW_TYPE_LEFT_PERCENTAGE:
-            if (_percentage == 100) {
+            if (_percentage.height == 100) {
                 style = @"full-height left";
             } else {
                 style = @"percentage-height left";
             }
             break;
         case WINDOW_TYPE_RIGHT_PERCENTAGE:
-            if (_percentage == 100) {
+            if (_percentage.height == 100) {
                 style = @"full-height right";
             } else {
                 style = @"percentage-height right";
@@ -2741,8 +2738,51 @@ ITERM_WEAKLY_REFERENCEABLE
     return tab.isBroadcasting;
 }
 
++ (iTermPercentage)percentageFromObject:(id)obj windowType:(iTermWindowType)windowType {
+    iTermPercentage percentage = { .width = -1, .height = -1 };
+    if (!obj) {
+        percentage = (iTermPercentage){ .width = -1, .height = -1 };
+    } else {
+        NSNumber *number = [NSNumber castFrom:obj];
+        NSArray *array = [NSArray castFrom:obj];
+        if (number) {
+            percentage = (iTermPercentage){ .width = -1, .height = -1 };
+            switch ((iTermWindowType)windowType) {
+                case WINDOW_TYPE_NORMAL:
+                case WINDOW_TYPE_COMPACT:
+                case WINDOW_TYPE_MAXIMIZED:
+                case WINDOW_TYPE_COMPACT_MAXIMIZED:
+                case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
+                case WINDOW_TYPE_LION_FULL_SCREEN:
+                case WINDOW_TYPE_CENTERED:
+                case WINDOW_TYPE_BOTTOM_CELLS:
+                case WINDOW_TYPE_TOP_CELLS:
+                case WINDOW_TYPE_LEFT_CELLS:
+                case WINDOW_TYPE_RIGHT_CELLS:
+                case WINDOW_TYPE_NO_TITLE_BAR:
+                case WINDOW_TYPE_ACCESSORY:
+                    break;
+
+                case WINDOW_TYPE_TOP_PERCENTAGE:
+                case WINDOW_TYPE_BOTTOM_PERCENTAGE:
+                    percentage.width = number.doubleValue;
+                    break;
+
+                case WINDOW_TYPE_LEFT_PERCENTAGE:
+                case WINDOW_TYPE_RIGHT_PERCENTAGE:
+                    percentage.height = number.doubleValue;
+                    break;
+            }
+        } else if (array.count >= 2) {
+            percentage.width = [array[0] doubleValue];
+            percentage.height = [array[1] doubleValue];
+        }
+    }
+    iTermPercentageSanitize(&percentage);
+    return percentage;
+}
 + (iTermWindowType)_windowTypeForArrangement:(NSDictionary*)arrangement
-                                  percentage:(out double *)percentage {
+                                  percentage:(out iTermPercentage *)percentage {
     int windowType;
     if ([arrangement objectForKey:TERMINAL_ARRANGEMENT_WINDOW_TYPE]) {
         windowType = iTermThemedWindowType([[arrangement objectForKey:TERMINAL_ARRANGEMENT_WINDOW_TYPE] intValue]);
@@ -2756,10 +2796,8 @@ ITERM_WEAKLY_REFERENCEABLE
             windowType = iTermWindowDefaultType();
         }
     }
-    *percentage = [[NSNumber castFrom:arrangement[TERMINAL_ARRANGEMENT_WINDOW_TYPE_PERCENTAGE]] doubleValue];
-    if (*percentage <= 0 || *percentage > 100) {
-        *percentage = 100;
-    }
+    id obj = arrangement[TERMINAL_ARRANGEMENT_WINDOW_TYPE_PERCENTAGE];
+    *percentage = [self percentageFromObject:obj windowType:(iTermWindowType)windowType];
     return windowType;
 }
 
@@ -2770,7 +2808,7 @@ ITERM_WEAKLY_REFERENCEABLE
 + (void)drawArrangementPreview:(NSDictionary*)terminalArrangement
                   screenFrames:(NSArray *)frames
                           dark:(BOOL)dark {
-    double percentage = 100;
+    iTermPercentage percentage = { .width = -1, .height = -1 };
     int windowType = [PseudoTerminal _windowTypeForArrangement:terminalArrangement percentage:&percentage];
     int screenIndex = [PseudoTerminal _screenIndexForArrangement:terminalArrangement];
     if (screenIndex < 0 || screenIndex >= [[NSScreen screens] count]) {
@@ -2811,9 +2849,17 @@ ITERM_WEAKLY_REFERENCEABLE
 
         case WINDOW_TYPE_TOP_PERCENTAGE:
             rect.origin.y = yOrigin;
-            rect.size.width = virtualScreenFrame.size.width * percentage / 100;
+            if (percentage.width >= 0) {
+                rect.size.width = virtualScreenFrame.size.width * percentage.width / 100;
+            } else {
+                rect.size.width = xScale * [[terminalArrangement objectForKey:TERMINAL_ARRANGEMENT_WIDTH] doubleValue];
+            }
             rect.origin.x = xOrigin + (virtualScreenFrame.size.width - rect.size.width)/ 2;
-            rect.size.height = yScale * [[terminalArrangement objectForKey:TERMINAL_ARRANGEMENT_HEIGHT] doubleValue];
+            if (percentage.height >= 0) {
+                rect.size.height = virtualScreenFrame.size.height * percentage.height / 100;
+            } else {
+                rect.size.height = yScale * [[terminalArrangement objectForKey:TERMINAL_ARRANGEMENT_HEIGHT] doubleValue];
+            }
             break;
 
         case WINDOW_TYPE_TOP_CELLS:
@@ -2824,9 +2870,17 @@ ITERM_WEAKLY_REFERENCEABLE
             break;
 
         case WINDOW_TYPE_BOTTOM_PERCENTAGE:
-            rect.size.width = virtualScreenFrame.size.width * percentage / 100;
+            if (percentage.width >= 0) {
+                rect.size.width = virtualScreenFrame.size.width * percentage.width / 100;
+            } else {
+                rect.size.width = xScale * [[terminalArrangement objectForKey:TERMINAL_ARRANGEMENT_WIDTH] doubleValue];
+            }
             rect.origin.x = xOrigin + (virtualScreenFrame.size.width - rect.size.width) / 2;
-            rect.size.height = yScale * [[terminalArrangement objectForKey:TERMINAL_ARRANGEMENT_HEIGHT] doubleValue];
+            if (percentage.height >= 0) {
+                rect.size.height = virtualScreenFrame.size.height * percentage.height / 100;
+            } else {
+                rect.size.height = yScale * [[terminalArrangement objectForKey:TERMINAL_ARRANGEMENT_HEIGHT] doubleValue];
+            }
             rect.origin.y = virtualScreenFrame.size.height - rect.size.height;
             break;
 
@@ -2846,8 +2900,16 @@ ITERM_WEAKLY_REFERENCEABLE
 
         case WINDOW_TYPE_LEFT_PERCENTAGE:
             rect.origin.x = xOrigin;
-            rect.size.width = xScale * [[terminalArrangement objectForKey:TERMINAL_ARRANGEMENT_WIDTH] doubleValue];
-            rect.size.height = virtualScreenFrame.size.height * percentage / 100;
+            if (percentage.width >= 0) {
+                rect.size.width = virtualScreenFrame.size.width * percentage.width / 100;
+            } else {
+                rect.size.width = xScale * [[terminalArrangement objectForKey:TERMINAL_ARRANGEMENT_WIDTH] doubleValue];
+            }
+            if (percentage.height >= 0) {
+                rect.size.height = virtualScreenFrame.size.height * percentage.height / 100;
+            } else {
+                rect.size.height = yScale * [[terminalArrangement objectForKey:TERMINAL_ARRANGEMENT_HEIGHT] doubleValue];
+            }
             rect.origin.y = yOrigin + (virtualScreenFrame.size.height - rect.size.height) / 2;
             break;
 
@@ -2859,9 +2921,17 @@ ITERM_WEAKLY_REFERENCEABLE
             break;
 
         case WINDOW_TYPE_RIGHT_PERCENTAGE:
-            rect.size.width = xScale * [[terminalArrangement objectForKey:TERMINAL_ARRANGEMENT_WIDTH] doubleValue];
+            if (percentage.width >= 0) {
+                rect.size.width = virtualScreenFrame.size.width * percentage.width / 100;
+            } else {
+                rect.size.width = xScale * [[terminalArrangement objectForKey:TERMINAL_ARRANGEMENT_WIDTH] doubleValue];
+            }
             rect.origin.x = virtualScreenFrame.size.width - rect.size.width;
-            rect.size.height = virtualScreenFrame.size.height * percentage / 100;
+            if (percentage.height >= 0) {
+                rect.size.height = virtualScreenFrame.size.height * percentage.height / 100;
+            } else {
+                rect.size.height = yScale * [[terminalArrangement objectForKey:TERMINAL_ARRANGEMENT_HEIGHT] doubleValue];
+            }
             rect.origin.y = yOrigin + (virtualScreenFrame.size.height - rect.size.height) / 2;
             break;
 
@@ -2995,7 +3065,7 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 + (BOOL)arrangementIsLionFullScreen:(NSDictionary *)arrangement {
-    double dummy = 0;
+    iTermPercentage dummy = { .width=-1, .height=-1 };
     return [PseudoTerminal _windowTypeForArrangement:arrangement percentage:&dummy] == WINDOW_TYPE_LION_FULL_SCREEN;
 }
 
@@ -3041,8 +3111,9 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 
     PseudoTerminal* term;
-    double percentage = 100;
-    iTermWindowType windowType = iTermThemedWindowType([PseudoTerminal _windowTypeForArrangement:arrangement percentage:&percentage]);
+    iTermPercentage percentage = { .width=-1, .height=-1 };
+    iTermWindowType windowType = iTermThemedWindowType([PseudoTerminal _windowTypeForArrangement:arrangement
+                                                                                      percentage:&percentage]);
     int screenIndex = [PseudoTerminal _screenIndexForArrangement:arrangement];
     iTermProfileHotKey *profileHotKey = [[iTermHotKeyController sharedInstance] profileHotKeyForGUID:guid];
     iTermHotkeyWindowType hotkeyWindowType = iTermHotkeyWindowTypeNone;
@@ -3053,10 +3124,14 @@ ITERM_WEAKLY_REFERENCEABLE
         hotkeyWindowType = profileHotKey.hotkeyWindowType;
     }
     if (windowType == WINDOW_TYPE_TRADITIONAL_FULL_SCREEN) {
+        id percentageObj = arrangement[TERMINAL_ARRANGEMENT_WINDOW_TYPE_PERCENTAGE];
+        iTermWindowType savedWindowType = (iTermWindowType)[arrangement[TERMINAL_ARRANGEMENT_SAVED_WINDOW_TYPE] intValue];
+        iTermPercentage percentage = [PseudoTerminal percentageFromObject:percentageObj
+                                                               windowType:savedWindowType];
         term = [[[PseudoTerminal alloc] initWithSmartLayout:NO
                                                  windowType:WINDOW_TYPE_TRADITIONAL_FULL_SCREEN
-                                            savedWindowType:[arrangement[TERMINAL_ARRANGEMENT_SAVED_WINDOW_TYPE] intValue]
-                                                 percentage:[arrangement[TERMINAL_ARRANGEMENT_WINDOW_TYPE_PERCENTAGE] doubleValue]
+                                            savedWindowType:savedWindowType
+                                                 percentage:percentage
                                                      screen:screenIndex
                                            hotkeyWindowType:hotkeyWindowType
                                                     profile:arrangement[TERMINAL_ARRANGEMENT_INITIAL_PROFILE]] autorelease];
@@ -3072,10 +3147,14 @@ ITERM_WEAKLY_REFERENCEABLE
         term->oldUseTransparency_ = YES;
         term->restoreUseTransparency_ = YES;
     } else if (windowType == WINDOW_TYPE_LION_FULL_SCREEN) {
+        const iTermWindowType savedWindowType = [arrangement[TERMINAL_ARRANGEMENT_SAVED_WINDOW_TYPE] intValue];
+        id percentageObj = arrangement[TERMINAL_ARRANGEMENT_WINDOW_TYPE_PERCENTAGE];
+        iTermPercentage percentage = [PseudoTerminal percentageFromObject:percentageObj
+                                                               windowType:savedWindowType];
         term = [[[PseudoTerminal alloc] initWithSmartLayout:NO
                                                  windowType:WINDOW_TYPE_LION_FULL_SCREEN
-                                            savedWindowType:[arrangement[TERMINAL_ARRANGEMENT_SAVED_WINDOW_TYPE] intValue]
-                                                 percentage:[arrangement[TERMINAL_ARRANGEMENT_WINDOW_TYPE_PERCENTAGE] doubleValue]
+                                            savedWindowType:savedWindowType
+                                                 percentage:percentage
                                                      screen:screenIndex
                                            hotkeyWindowType:hotkeyWindowType
                                                     profile:arrangement[TERMINAL_ARRANGEMENT_INITIAL_PROFILE]] autorelease];
@@ -3511,7 +3590,7 @@ ITERM_WEAKLY_REFERENCEABLE
      partialAttachments:(NSDictionary *)partialAttachments {
     PtyLog(@"Restore arrangement: %@", arrangement);
     [_windowSizeHelper willLoadArrangement:arrangement];
-    double percentage = 100;
+    iTermPercentage percentage = { .width = -1, .height = -1 };
     iTermWindowType windowType = iTermThemedWindowType([PseudoTerminal _windowTypeForArrangement:arrangement
                                                                                       percentage:&percentage]);
     NSRect rect;
@@ -3592,6 +3671,17 @@ ITERM_WEAKLY_REFERENCEABLE
                 break;
             case WINDOW_TYPE_TOP_PERCENTAGE:
             case WINDOW_TYPE_BOTTOM_PERCENTAGE:
+            case WINDOW_TYPE_LEFT_PERCENTAGE:
+            case WINDOW_TYPE_RIGHT_PERCENTAGE:
+                if (_percentage.width >= 0) {
+                    // Width specified in percentage
+                    DLog(@"Neither width adjustment nor sanitization needed.");
+                } else {
+                    // Width specified in cells
+                    DLog(@"No sanitization but width adjustment.");
+                    frame = [self rectByAdjustingWidth:rect];
+                }
+                break;
             case WINDOW_TYPE_MAXIMIZED:
             case WINDOW_TYPE_COMPACT_MAXIMIZED:
                 DLog(@"Neither width adjustment nor sanitization needed.");
@@ -3607,8 +3697,6 @@ ITERM_WEAKLY_REFERENCEABLE
                 _widthAdjustment = 0;
                 break;
 
-            case WINDOW_TYPE_LEFT_PERCENTAGE:
-            case WINDOW_TYPE_RIGHT_PERCENTAGE:
             case WINDOW_TYPE_BOTTOM_CELLS:
             case WINDOW_TYPE_TOP_CELLS:
             case WINDOW_TYPE_LEFT_CELLS:
@@ -3802,7 +3890,7 @@ ITERM_WEAKLY_REFERENCEABLE
                                           oldFrame:NSMakeRect(0, 0, 0, 0)
                                         windowType:WINDOW_TYPE_NORMAL
                                    savedWindowType:WINDOW_TYPE_NORMAL
-                                        percentage:100
+                                        percentage:(iTermPercentage){ .width = -1, .height = -1 }
                                     initialProfile:session.profile
                                     isHotKeyWindow:NO
                                   hotkeyWindowType:iTermHotkeyWindowTypeNone
@@ -3882,7 +3970,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
                        oldFrame:(NSRect)oldFrame
                      windowType:(iTermWindowType)windowType
                 savedWindowType:(iTermWindowType)savedWindowType
-                     percentage:(double)percentage
+                     percentage:(iTermPercentage)percentage
                  initialProfile:(Profile *)initialProfile
                  isHotKeyWindow:(BOOL)isHotKeyWindow
                hotkeyWindowType:(iTermHotkeyWindowType)hotkeyWindowType
@@ -3927,7 +4015,8 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     }
 
     result[TERMINAL_ARRANGEMENT_WINDOW_TYPE] = @(lionFullScreen ? WINDOW_TYPE_LION_FULL_SCREEN : windowType);
-    result[TERMINAL_ARRANGEMENT_WINDOW_TYPE_PERCENTAGE] = @(percentage);
+    result[TERMINAL_ARRANGEMENT_WINDOW_TYPE_PERCENTAGE] = @[ @(percentage.width),
+                                                             @(percentage.height) ];
     result[TERMINAL_ARRANGEMENT_SAVED_WINDOW_TYPE] = @(savedWindowType);
     result[TERMINAL_ARRANGEMENT_INITIAL_PROFILE] = initialProfile;
     if (hotkeyWindowType == iTermHotkeyWindowTypeNone) {
@@ -4529,6 +4618,33 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     return [self canonicalFrameForScreen:screen windowFrame:self.window.frame preserveSize:NO];
 }
 
+- (NSRect)screenFrame {
+    switch (self.windowType) {
+        case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
+        case WINDOW_TYPE_LION_FULL_SCREEN:
+            return self.window.screen.frame;
+
+        case WINDOW_TYPE_BOTTOM_CELLS:
+        case WINDOW_TYPE_TOP_CELLS:
+        case WINDOW_TYPE_LEFT_CELLS:
+        case WINDOW_TYPE_RIGHT_CELLS:
+            return [self screenFrameForEdgeSpanningWindows:self.window.screen];
+
+        case WINDOW_TYPE_NORMAL:
+        case WINDOW_TYPE_TOP_PERCENTAGE:
+        case WINDOW_TYPE_BOTTOM_PERCENTAGE:
+        case WINDOW_TYPE_LEFT_PERCENTAGE:
+        case WINDOW_TYPE_RIGHT_PERCENTAGE:
+        case WINDOW_TYPE_NO_TITLE_BAR:
+        case WINDOW_TYPE_COMPACT:
+        case WINDOW_TYPE_ACCESSORY:
+        case WINDOW_TYPE_MAXIMIZED:
+        case WINDOW_TYPE_COMPACT_MAXIMIZED:
+        case WINDOW_TYPE_CENTERED:
+            return [self visibleFrameForScreen:self.window.screen];
+    }
+}
+
 - (NSRect)screenFrameForEdgeSpanningWindows:(NSScreen *)screen {
     DLog(@"Begin");
     if ([[[iTermHotKeyController sharedInstance] profileHotKeyForWindowController:self] floats]) {
@@ -4599,7 +4715,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     // NOTE: In bug 1347, we see that for some machines, [screen frame].size.width==0 at some point
     // during sleep/wake from sleep. That is why we check that width is positive before setting the
     // window's frame.
-    NSSize decorationSize = [self windowDecorationSize];
+    const NSSize decorationSize = [self windowDecorationSize];
 
     // Note: During window state restoration, this may be called before the tabs are created from
     // the arrangement, in which case the line height and char width will be 0.
@@ -4613,154 +4729,22 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
         DLog(@"Line height or char width is 0. Returning existing frame. session=%@", session);
         return self.window.frame;
     }
-    BOOL percentageBased = YES;
-    switch (self.windowType) {
-        case WINDOW_TYPE_CENTERED:
-            percentageBased = NO;
-            PtyLog(@"Window type = CENTERED. %@", _windowSizeHelper);
-            if (!preserveSize) {
-                // If the screen grew and the window was smaller than the desired number of rows, grow it.
-                frame.size.height = [_windowSizeHelper heightForScreenVisibleSize:screenVisibleFrame.size
-                                                                       lineHeight:[[session textview] lineHeight]
-                                                                 decorationHeight:decorationSize.height
-                                                                         fallback:frame.size.height];
-                frame.size.width = [_windowSizeHelper widthForScreenVisibleSize:screenVisibleFrame.size
-                                                                      charWidth:[[session textview] charWidth]
-                                                                decorationWidth:iTermScrollbarWidth()
-                                                                       fallback:frame.size.width];
-            }
-            frame = iTermRectCenteredHorizontallyWithinRect(frame, screenVisibleFrameIgnoringHiddenDock);
-            frame = iTermRectCenteredVerticallyWithinRect(frame, screenVisibleFrameIgnoringHiddenDock);
-            DLog(@"Canonical frame for centered window is %@", NSStringFromRect(frame));
-            return frame;
-            break;
 
-        case WINDOW_TYPE_TOP_CELLS:
-            percentageBased = NO;
-            // Fall through
-        case WINDOW_TYPE_TOP_PERCENTAGE:
-            PtyLog(@"Window type = TOP. %@", _windowSizeHelper);
-            if (!preserveSize) {
-                // If the screen grew and the window was smaller than the desired number of rows, grow it.
-                frame.size.height = [_windowSizeHelper heightForScreenVisibleSize:screenVisibleFrame.size
-                                                                       lineHeight:[[session textview] lineHeight]
-                                                                 decorationHeight:decorationSize.height
-                                                                         fallback:frame.size.height];
-            }
-            if (!percentageBased) {
-                if (!preserveSize) {
-                    frame.size.width = MIN(frame.size.width, screenVisibleFrameIgnoringHiddenDock.size.width);
-                }
-                frame = iTermRectCenteredHorizontallyWithinRect(frame, screenVisibleFrameIgnoringHiddenDock);
-            } else {
-                frame.size.width = round(screenVisibleFrameIgnoringHiddenDock.size.width * _percentage / 100);
-                frame.origin.x = screenVisibleFrameIgnoringHiddenDock.origin.x + (screenVisibleFrameIgnoringHiddenDock.size.width - frame.size.width) / 2;
-            }
-            frame.origin.y = screenVisibleFrame.origin.y + screenVisibleFrame.size.height - frame.size.height;
-            DLog(@"Canonical frame for top of screen window is %@", NSStringFromRect(frame));
-            return frame;
-            break;
-
-        case WINDOW_TYPE_BOTTOM_CELLS:
-            percentageBased = NO;
-        case WINDOW_TYPE_BOTTOM_PERCENTAGE:
-            PtyLog(@"Window type = BOTTOM. %@", _windowSizeHelper);
-            if (!preserveSize) {
-                // If the screen grew and the window was smaller than the desired number of rows, grow it.
-                frame.size.height = [_windowSizeHelper heightForScreenVisibleSize:screenVisibleFrame.size
-                                                                       lineHeight:[[session textview] lineHeight]
-                                                                 decorationHeight:decorationSize.height
-                                                                         fallback:frame.size.height];
-            }
-            if (!percentageBased) {
-                if (!preserveSize) {
-                    frame.size.width = MIN(frame.size.width, screenVisibleFrameIgnoringHiddenDock.size.width);
-                }
-                frame = iTermRectCenteredHorizontallyWithinRect(frame, screenVisibleFrameIgnoringHiddenDock);
-            } else {
-                frame.size.width = round(screenVisibleFrameIgnoringHiddenDock.size.width * _percentage / 100);
-                frame.origin.x = screenVisibleFrameIgnoringHiddenDock.origin.x + (screenVisibleFrameIgnoringHiddenDock.size.width - frame.size.width) / 2;
-            }
-            frame.origin.y = screenVisibleFrameIgnoringHiddenDock.origin.y;
-
-            if (frame.size.width > 0) {
-                return frame;
-            }
-            break;
-
-        case WINDOW_TYPE_LEFT_CELLS:
-            percentageBased = NO;
-            // Fall through
-        case WINDOW_TYPE_LEFT_PERCENTAGE:
-            PtyLog(@"Window type = LEFT. %@", _windowSizeHelper);
-            if (!preserveSize) {
-                // If the screen grew and the window was smaller than the desired number of columns, grow it.
-                frame.size.width = [_windowSizeHelper widthForScreenVisibleSize:screenVisibleFrame.size
-                                                                      charWidth:[[session textview] charWidth]
-                                                                decorationWidth:iTermScrollbarWidth()
-                                                                       fallback:frame.size.width];
-            }
-            if (!percentageBased) {
-                if (!preserveSize) {
-                    frame.size.height = MIN(frame.size.height, screenVisibleFrameIgnoringHiddenDock.size.height);
-                }
-                frame = iTermRectCenteredVerticallyWithinRect(frame, screenVisibleFrameIgnoringHiddenDock);
-            } else {
-                frame.size.height = round(screenVisibleFrameIgnoringHiddenDock.size.height * _percentage / 100);
-                frame.origin.y = screenVisibleFrameIgnoringHiddenDock.origin.y + (screenVisibleFrameIgnoringHiddenDock.size.height - frame.size.height) / 2;
-            }
-            frame.origin.x = screenVisibleFrameIgnoringHiddenDock.origin.x;
-
-            return frame;
-
-        case WINDOW_TYPE_RIGHT_CELLS:
-            percentageBased = NO;
-            // Fall through
-        case WINDOW_TYPE_RIGHT_PERCENTAGE:
-            PtyLog(@"Window type = RIGHT. %@", _windowSizeHelper);
-            if (!preserveSize) {
-                // If the screen grew and the window was smaller than the desired number of columns, grow it.
-                frame.size.width = [_windowSizeHelper widthForScreenVisibleSize:screenVisibleFrame.size
-                                                                      charWidth:[[session textview] charWidth]
-                                                                decorationWidth:iTermScrollbarWidth()
-                                                                       fallback:frame.size.width];
-            }
-            if (!percentageBased) {
-                if (!preserveSize) {
-                    frame.size.height = MIN(frame.size.height, screenVisibleFrameIgnoringHiddenDock.size.height);
-                }
-                frame = iTermRectCenteredVerticallyWithinRect(frame, screenVisibleFrameIgnoringHiddenDock);
-            } else {
-                frame.size.height = round(screenVisibleFrameIgnoringHiddenDock.size.height * _percentage / 100);
-                frame.origin.y = screenVisibleFrameIgnoringHiddenDock.origin.y + (screenVisibleFrameIgnoringHiddenDock.size.height - frame.size.height) / 2;
-            }
-            frame.origin.x = screenVisibleFrameIgnoringHiddenDock.origin.x + screenVisibleFrameIgnoringHiddenDock.size.width - frame.size.width;
-
-            return frame;
-            break;
-
-        case WINDOW_TYPE_MAXIMIZED:
-        case WINDOW_TYPE_COMPACT_MAXIMIZED:
-            PtyLog(@"Window type = MAXIMIZED or COMPACT_MAXIMIZED");
-            return [screen visibleFrameIgnoringHiddenDock];
- 
-        case WINDOW_TYPE_NORMAL:
-        case WINDOW_TYPE_NO_TITLE_BAR:
-        case WINDOW_TYPE_COMPACT:
-        case WINDOW_TYPE_LION_FULL_SCREEN:
-        case WINDOW_TYPE_ACCESSORY:
-            PtyLog(@"Window type = NORMAL, NO_TITLE_BAR, WINDOW_TYPE_COMPACT, WINDOW_TYPE_ACCSSORY, or LION_FULL_SCREEN");
-            return frame;
-
-        case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
-            PtyLog(@"Window type = FULL SCREEN");
-            if ([screen frame].size.width > 0) {
-                return [self traditionalFullScreenFrameForScreen:screen];
-            } else {
-                return NSZeroRect;
-            }
-    }
-    return NSZeroRect;
+    iTermFrameCanonicalizer *canonicalizer =
+    [[iTermFrameCanonicalizer alloc] initPreservingSize:preserveSize
+                                             windowType:self.windowType
+                                     screenVisibleFrame:screenVisibleFrame
+                   screenVisibleFrameIgnoringHiddenDock:screenVisibleFrameIgnoringHiddenDock
+                                           initialFrame:frame
+                                               cellSize:NSMakeSize(session.textview.charWidth,
+                                                                   session.textview.lineHeight)
+                                             percentage:_percentage
+                                         decorationSize:NSMakeSize(iTermScrollbarWidth(),
+                                                                   decorationSize.height)
+                                       windowSizeHelper:_windowSizeHelper
+                                                 screen:screen
+                                                 window:self.window];
+    return [canonicalizer canonicalized];
 }
 
 - (void)screenParametersDidChange {
@@ -5171,14 +5155,12 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     // edge it's attached to, turn off snapping in the direction parallel to the edge.
     if (self.windowType == WINDOW_TYPE_RIGHT_PERCENTAGE || self.windowType == WINDOW_TYPE_LEFT_PERCENTAGE) {
         self.timeOfLastResize = [NSDate timeIntervalSinceReferenceDate];
-        proposedFrameSize.height = self.window.frame.size.height;
         if (proposedFrameSize.height == self.window.frame.size.height) {
             snapHeight = NO;
         }
     }
     if (self.windowType == WINDOW_TYPE_TOP_PERCENTAGE || self.windowType == WINDOW_TYPE_BOTTOM_PERCENTAGE) {
         self.timeOfLastResize = [NSDate timeIntervalSinceReferenceDate];
-        proposedFrameSize.width = self.window.frame.size.width;
         if (proposedFrameSize.width == self.window.frame.size.width) {
             snapWidth = NO;
         }
@@ -5661,7 +5643,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     return changed;
 }
 
-// This is a hack to fix the problem of exiting a fullscreen window that as never not-fullscreen.
+// This is a hack to fix the problem of exiting a fullscreen window that was never not-fullscreen.
 // We need to have some size to go to. This method computes the size based on the current session's
 // profile's rows and columns setting plus the window decoration size. It's sort of arbitrary
 // because split panes will have to share that space, but there's no perfect solution to this issue.
@@ -5672,7 +5654,8 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     const NSSize decorationSize = [self windowDecorationSize];
     return [_windowSizeHelper preferredSizeForCellSize:cellSize
                                         decorationSize:decorationSize
-                                               profile:session.profile];
+                                               profile:session.profile
+                                            screenSize:[self screenFrameForEdgeSpanningWindows:self.window.screen].size];
 }
 
 - (void)addShortcutAccessorViewControllerToTitleBarIfNeeded {
@@ -5752,7 +5735,36 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
         DLog(@"Bogus sender: %@", sender);
         return;
     }
-    _percentage = 100;  // Not ideal but I don't want to make the UI more cumbersome by prompting.
+    // Setting the percentage to 100% x (invalid) is not ideal but I don't want to make the UI more
+    // cumbersome by prompting.
+    _percentage.width = -1;
+    _percentage.height = -1;
+
+    switch ((iTermWindowType)menuItem.tag) {
+        case WINDOW_TYPE_TOP_PERCENTAGE:
+        case WINDOW_TYPE_BOTTOM_PERCENTAGE:
+            _percentage.width = 100;
+            break;
+        case WINDOW_TYPE_LEFT_PERCENTAGE:
+        case WINDOW_TYPE_RIGHT_PERCENTAGE:
+            _percentage.height = 100;
+            break;
+        case WINDOW_TYPE_NORMAL:
+        case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
+        case WINDOW_TYPE_LION_FULL_SCREEN:
+        case WINDOW_TYPE_BOTTOM_CELLS:
+        case WINDOW_TYPE_TOP_CELLS:
+        case WINDOW_TYPE_LEFT_CELLS:
+        case WINDOW_TYPE_RIGHT_CELLS:
+        case WINDOW_TYPE_NO_TITLE_BAR:
+        case WINDOW_TYPE_COMPACT:
+        case WINDOW_TYPE_ACCESSORY:
+        case WINDOW_TYPE_MAXIMIZED:
+        case WINDOW_TYPE_COMPACT_MAXIMIZED:
+        case WINDOW_TYPE_CENTERED:
+            break;
+    }
+
     [self changeToWindowType:(iTermWindowType)menuItem.tag];
     [[self currentTab] recheckBlur];
 }
@@ -5981,7 +5993,10 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     switch (self.windowType) {
         case WINDOW_TYPE_TOP_PERCENTAGE:
         case WINDOW_TYPE_BOTTOM_PERCENTAGE:
-            _percentage = 100 * frame.size.width / screenFrameForEdgeSpanningWindow.size.width;
+            _percentage.width = 100 * frame.size.width / screenFrameForEdgeSpanningWindow.size.width;
+            if (_percentage.height >= 0) {
+                _percentage.height = 100 * frame.size.height / screenFrameForEdgeSpanningWindow.size.height;
+            }
             // FALL THROUGH
         case WINDOW_TYPE_TOP_CELLS:
             // desiredRows/Columns get reset here to fix issue 4073. If you manually resize a window
@@ -5997,7 +6012,10 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
 
         case WINDOW_TYPE_LEFT_PERCENTAGE:
         case WINDOW_TYPE_RIGHT_PERCENTAGE:
-            _percentage = 100 * frame.size.height / screenFrameForEdgeSpanningWindow.size.height;
+            if (_percentage.width >= 0) {
+                _percentage.width = 100 * frame.size.width / screenFrameForEdgeSpanningWindow.size.width;
+            }
+            _percentage.height = 100 * frame.size.height / screenFrameForEdgeSpanningWindow.size.height;
             // FALL THROUGH
         case WINDOW_TYPE_LEFT_CELLS:
         case WINDOW_TYPE_RIGHT_CELLS:
@@ -10467,15 +10485,12 @@ static BOOL iTermApproximatelyEqualRects(NSRect lhs, NSRect rhs, double epsilon)
         case WINDOW_TYPE_NO_TITLE_BAR:
         case WINDOW_TYPE_COMPACT:
         case WINDOW_TYPE_ACCESSORY:
-            break;
-
         case WINDOW_TYPE_TOP_PERCENTAGE:
         case WINDOW_TYPE_BOTTOM_PERCENTAGE:
-            return @"Fixed-width window";
-
         case WINDOW_TYPE_LEFT_PERCENTAGE:
         case WINDOW_TYPE_RIGHT_PERCENTAGE:
-            return @"Fixed-height window";
+            break;
+
 
         case WINDOW_TYPE_MAXIMIZED:
         case WINDOW_TYPE_COMPACT_MAXIMIZED:
@@ -10844,8 +10859,10 @@ static BOOL iTermApproximatelyEqualRects(NSRect lhs, NSRect rhs, double epsilon)
 // a view of that size; otherwise the size is derived from the existing window if there is already
 // an open tab, or its bookmark's preference if it's the first session in the window.
 - (void)setupSession:(PTYSession *)aSession
-            withSize:(NSSize*)size {
-    [self setupSessionImpl:aSession withSize:size];
+            withSize:(NSSize *)size {
+    [self setupSessionImpl:aSession
+                screenSize:[self screenFrame].size
+                  withSize:size];
 }
 
 - (IBAction)moveSessionToWindow:(id)sender {

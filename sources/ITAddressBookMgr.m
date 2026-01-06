@@ -165,6 +165,18 @@ iTermWindowType iTermThemedWindowType(iTermWindowType windowType) {
     return WINDOW_TYPE_NORMAL;
 }
 
+NSString *iTermPercentageDescription(iTermPercentage percentage) {
+    return [NSString stringWithFormat:@"w=%0.1f%% h=%0.1f%%", percentage.width, percentage.height];
+}
+
+iTermPercentage iTermPercentageFromProfile(Profile *profile) {
+    iTermPercentage result = {
+        .width = [iTermProfilePreferences doubleForKey:KEY_WIDTH_PERCENTAGE inProfile:profile],
+        .height = [iTermProfilePreferences doubleForKey:KEY_HEIGHT_PERCENTAGE inProfile:profile]
+    };
+    return result;
+}
+
 @implementation ITAddressBookMgr {
     NSNetServiceBrowser *sshBonjourBrowser;
     NSNetServiceBrowser *ftpBonjourBrowser;

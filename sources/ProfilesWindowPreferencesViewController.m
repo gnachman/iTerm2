@@ -32,6 +32,11 @@ CGFloat iTermMaxBlurRadius(void) {
     return 64;
 }
 
+typedef NS_ENUM(NSUInteger, iTermWindowUnitsTag) {
+    iTermWindowUnitsTagCells = 0,
+    iTermWindowUnitsTagScreenPercentage = 1
+};
+
 @interface ProfilesWindowPreferencesViewController ()<iTermImageWellDelegate>
 
 @property(nonatomic, copy) NSString *backgroundImageFilename;
@@ -62,7 +67,8 @@ CGFloat iTermMaxBlurRadius(void) {
     IBOutlet NSTextField *_percentageHeightField;
     IBOutlet NSTextField *_widthLabel;
     IBOutlet NSTextField *_heightLabel;
-    IBOutlet NSPopUpButton *_unitsButton;
+    IBOutlet NSPopUpButton *_columnsUnitsButton;
+    IBOutlet NSPopUpButton *_rowsUnitsButton;
     IBOutlet NSTextField *_byLabel;
 
     IBOutlet NSButton *_hideAfterOpening;
@@ -341,7 +347,44 @@ CGFloat iTermMaxBlurRadius(void) {
                            key:nil];
 }
 
+- (NSDictionary *)dictionaryToSaveWindowType:(iTermWindowType)windowType {
+    NSMutableDictionary *dict = [NSMutableDictionary dictionary];
+    dict[KEY_WINDOW_TYPE] = @(windowType);
+    switch ((iTermWindowUnitsTag)_rowsUnitsButton.selectedTag) {
+        case iTermWindowUnitsTagScreenPercentage: {
+            NSInteger height = _percentageHeightField.integerValue;
+            if (height < 0) {
+                height = 50;
+            }
+            dict[KEY_HEIGHT_PERCENTAGE] = @(height);
+            break;
+        }
+        case iTermWindowUnitsTagCells:
+            dict[KEY_HEIGHT_PERCENTAGE] = @-1;
+            dict[KEY_ROWS] = @(_rowsField.integerValue);
+            break;
+    }
+
+    switch ((iTermWindowUnitsTag)_columnsUnitsButton.selectedTag) {
+        case iTermWindowUnitsTagScreenPercentage: {
+            NSInteger width = _percentageWidthField.integerValue;
+            if (width < 0) {
+                width = 25;
+            }
+            dict[KEY_WIDTH_PERCENTAGE] = @(width);
+            break;
+        }
+        case iTermWindowUnitsTagCells:
+            dict[KEY_WIDTH_PERCENTAGE] = @-1;
+            dict[KEY_COLUMNS] = @(_columnsField.integerValue);
+            break;
+    }
+    return dict;
+}
+
 - (void)saveWindowType {
+    const BOOL percentage = (_columnsUnitsButton.selectedTag == iTermWindowUnitsTagScreenPercentage ||
+                             _rowsUnitsButton.selectedTag == iTermWindowUnitsTagScreenPercentage);
     switch ((iTermWindowType)_windowStyle.selectedTag) {
         case WINDOW_TYPE_NORMAL:
         case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
@@ -357,20 +400,16 @@ CGFloat iTermMaxBlurRadius(void) {
             break;
 
         case WINDOW_TYPE_TOP_PERCENTAGE:
-            [self setInteger:_unitsButton.selectedTag == 0 ? WINDOW_TYPE_TOP_CELLS : WINDOW_TYPE_TOP_PERCENTAGE
-                      forKey:KEY_WINDOW_TYPE];
+            [self setObjectsFromDictionary:[self dictionaryToSaveWindowType:percentage ? WINDOW_TYPE_TOP_PERCENTAGE : WINDOW_TYPE_TOP_CELLS]];
             break;
         case WINDOW_TYPE_BOTTOM_PERCENTAGE:
-            [self setInteger:_unitsButton.selectedTag == 0 ? WINDOW_TYPE_BOTTOM_CELLS : WINDOW_TYPE_BOTTOM_PERCENTAGE
-                      forKey:KEY_WINDOW_TYPE];
+            [self setObjectsFromDictionary:[self dictionaryToSaveWindowType:percentage ? WINDOW_TYPE_BOTTOM_PERCENTAGE : WINDOW_TYPE_BOTTOM_CELLS]];
             break;
         case WINDOW_TYPE_LEFT_PERCENTAGE:
-            [self setInteger:_unitsButton.selectedTag == 0 ? WINDOW_TYPE_LEFT_CELLS : WINDOW_TYPE_LEFT_PERCENTAGE
-                      forKey:KEY_WINDOW_TYPE];
+            [self setObjectsFromDictionary:[self dictionaryToSaveWindowType:percentage ? WINDOW_TYPE_LEFT_PERCENTAGE : WINDOW_TYPE_LEFT_CELLS]];
             break;
         case WINDOW_TYPE_RIGHT_PERCENTAGE:
-            [self setInteger:_unitsButton.selectedTag == 0 ? WINDOW_TYPE_RIGHT_CELLS : WINDOW_TYPE_RIGHT_PERCENTAGE
-                      forKey:KEY_WINDOW_TYPE];
+            [self setObjectsFromDictionary:[self dictionaryToSaveWindowType:percentage ? WINDOW_TYPE_RIGHT_PERCENTAGE : WINDOW_TYPE_RIGHT_CELLS]];
             break;
 
         case WINDOW_TYPE_BOTTOM_CELLS:
@@ -417,10 +456,12 @@ CGFloat iTermMaxBlurRadius(void) {
     if (info.observer) {
         info.observer();
     }
-    NSButton *columnsUnitButton = [[NSButton alloc] init];
-    columnsUnitButton.hidden = YES;
-    NSButton *rowsUnitButton = [[NSButton alloc] init];
-    rowsUnitButton.hidden = YES;
+    _columnsUnitsButton.hidden = YES;
+    _rowsUnitsButton.hidden = YES;
+    const BOOL columnsIsCells = ((![self valueIsExplicitlySetForKey:KEY_WIDTH_PERCENTAGE] && (type == WINDOW_TYPE_LEFT_PERCENTAGE || type == WINDOW_TYPE_RIGHT_PERCENTAGE)) ||
+                                 [self doubleForKey:KEY_WIDTH_PERCENTAGE] < 0);
+    const BOOL rowsIsCells = ((![self valueIsExplicitlySetForKey:KEY_HEIGHT_PERCENTAGE] && (type == WINDOW_TYPE_TOP_PERCENTAGE || type == WINDOW_TYPE_BOTTOM_PERCENTAGE)) ||
+                              [self doubleForKey:KEY_HEIGHT_PERCENTAGE] < 0);
 
     switch (type) {
         case WINDOW_TYPE_NORMAL:
@@ -436,8 +477,6 @@ CGFloat iTermMaxBlurRadius(void) {
 
             _percentageWidthField.hidden = YES;
             _percentageHeightField.hidden = YES;
-
-            _unitsButton.hidden = YES;
 
             _widthLabel.hidden = NO;
             _heightLabel.hidden = NO;
@@ -459,22 +498,24 @@ CGFloat iTermMaxBlurRadius(void) {
             _percentageWidthField.hidden = YES;
             _percentageHeightField.hidden = YES;
 
-            _unitsButton.hidden = NO;
-            _unitsButton.menu.itemArray[0].title = @"Columns";
-            _unitsButton.menu.itemArray[1].title = @"% of screen width";
-            [_unitsButton selectItemWithTag:0];
-            _widthLabel.hidden = YES;
-            _heightLabel.hidden = NO;
-            columnsUnitButton = _unitsButton;
+            _columnsUnitsButton.hidden = NO;
+            _columnsUnitsButton.menu.itemArray[0].title = @"Columns";
+            _columnsUnitsButton.menu.itemArray[1].title = @"% of screen width";
+            [_columnsUnitsButton selectItemWithTag:columnsIsCells ? 0 : 1];
 
-            _widthLabel.stringValue = @"columns by";
-            _heightLabel.stringValue = @"rows";
+            _rowsUnitsButton.hidden = NO;
+            _rowsUnitsButton.menu.itemArray[0].title = @"Rows";
+            _rowsUnitsButton.menu.itemArray[1].title = @"% of screen height";
+            [_rowsUnitsButton selectItemWithTag:rowsIsCells ? iTermWindowUnitsTagCells : iTermWindowUnitsTagScreenPercentage];
+
+            _widthLabel.hidden = YES;
+            _heightLabel.hidden = YES;
 
             _byLabel.hidden = NO;
             break;
 
         case WINDOW_TYPE_LEFT_CELLS:
-        case WINDOW_TYPE_RIGHT_CELLS:
+        case WINDOW_TYPE_RIGHT_CELLS: {
             _columnsField.enabled = YES;
             _columnsField.hidden = NO;
 
@@ -484,63 +525,75 @@ CGFloat iTermMaxBlurRadius(void) {
             _percentageWidthField.hidden = YES;
             _percentageHeightField.hidden = YES;
 
-            _unitsButton.hidden = NO;
-            _unitsButton.menu.itemArray[0].title = @"Rows";
-            _unitsButton.menu.itemArray[1].title = @"% of screen height";
-            [_unitsButton selectItemWithTag:0];
-            _widthLabel.hidden = NO;
-            _heightLabel.hidden = YES;
-            rowsUnitButton = _unitsButton;
+            _columnsUnitsButton.hidden = NO;
+            _columnsUnitsButton.menu.itemArray[0].title = @"Columns";
+            _columnsUnitsButton.menu.itemArray[1].title = @"% of screen width";
+            [_columnsUnitsButton selectItemWithTag:columnsIsCells ? iTermWindowUnitsTagCells : iTermWindowUnitsTagScreenPercentage];
 
-            _widthLabel.stringValue = @"columns by";
-            _heightLabel.stringValue = @"rows";
+            _rowsUnitsButton.hidden = NO;
+            _rowsUnitsButton.menu.itemArray[0].title = @"Rows";
+            _rowsUnitsButton.menu.itemArray[1].title = @"% of screen height";
+            [_rowsUnitsButton selectItemWithTag:rowsIsCells ? iTermWindowUnitsTagCells : iTermWindowUnitsTagScreenPercentage];
+
+            _widthLabel.hidden = YES;
+            _heightLabel.hidden = YES;
 
             _byLabel.hidden = YES;
             break;
+        }
 
         case WINDOW_TYPE_TOP_PERCENTAGE:
         case WINDOW_TYPE_BOTTOM_PERCENTAGE:
-            _columnsField.hidden = YES;
+            _columnsField.hidden = !columnsIsCells;
+            _rowsField.hidden = !rowsIsCells;
+            _percentageWidthField.hidden = columnsIsCells;
+            _percentageHeightField.hidden = rowsIsCells;
 
+            _columnsField.enabled = YES;
             _rowsField.enabled = YES;
-            _rowsField.hidden = NO;
+            _percentageWidthField.enabled = YES;
+            _percentageHeightField.enabled = YES;
 
-            _percentageWidthField.hidden = NO;
-            _percentageHeightField.hidden = YES;
+            _columnsUnitsButton.hidden = NO;
+            _columnsUnitsButton.menu.itemArray[0].title = @"Columns";
+            _columnsUnitsButton.menu.itemArray[1].title = @"% of screen width";
+            [_columnsUnitsButton selectItemWithTag:columnsIsCells ? iTermWindowUnitsTagCells : iTermWindowUnitsTagScreenPercentage];
 
-            _unitsButton.hidden = NO;
-            _unitsButton.menu.itemArray[0].title = @"Columns";
-            _unitsButton.menu.itemArray[1].title = @"% of screen width";
-            columnsUnitButton = _unitsButton;
-            [_unitsButton selectItemWithTag:1];
+            _rowsUnitsButton.hidden = NO;
+            _rowsUnitsButton.menu.itemArray[0].title = @"Rows";
+            _rowsUnitsButton.menu.itemArray[1].title = @"% of screen height";
+            [_rowsUnitsButton selectItemWithTag:rowsIsCells ? iTermWindowUnitsTagCells : iTermWindowUnitsTagScreenPercentage];
 
             _widthLabel.hidden = YES;
-            _heightLabel.hidden = NO;
-
-            _heightLabel.stringValue = @"rows";
+            _heightLabel.hidden = YES;
 
             _byLabel.hidden = NO;
             break;
 
         case WINDOW_TYPE_LEFT_PERCENTAGE:
         case WINDOW_TYPE_RIGHT_PERCENTAGE:
-            _columnsField.hidden = NO;
+            _columnsField.hidden = !columnsIsCells;
+            _rowsField.hidden = !rowsIsCells;
+            _percentageWidthField.hidden = columnsIsCells;
+            _percentageHeightField.hidden = rowsIsCells;
+
             _columnsField.enabled = YES;
+            _rowsField.enabled = YES;
+            _percentageWidthField.enabled = YES;
+            _percentageHeightField.enabled = YES;
 
-            _rowsField.hidden = YES;
+            _columnsUnitsButton.hidden = NO;
+            _columnsUnitsButton.menu.itemArray[0].title = @"Columns";
+            _columnsUnitsButton.menu.itemArray[1].title = @"% of screen width";
+            [_columnsUnitsButton selectItemWithTag:columnsIsCells ? iTermWindowUnitsTagCells : iTermWindowUnitsTagScreenPercentage];
 
-            _percentageWidthField.hidden = YES;
-            _percentageHeightField.hidden = NO;
+            _rowsUnitsButton.hidden = NO;
+            _rowsUnitsButton.menu.itemArray[0].title = @"Rows";
+            _rowsUnitsButton.menu.itemArray[1].title = @"% of screen height";
+            [_rowsUnitsButton selectItemWithTag:rowsIsCells ? iTermWindowUnitsTagCells : iTermWindowUnitsTagScreenPercentage];
 
-            _unitsButton.hidden = NO;
-            _unitsButton.menu.itemArray[0].title = @"Rows";
-            _unitsButton.menu.itemArray[1].title = @"% of screen height";
-            [_unitsButton selectItemWithTag:1];
-            rowsUnitButton = _unitsButton;
-            _widthLabel.hidden = NO;
+            _widthLabel.hidden = YES;
             _heightLabel.hidden = YES;
-
-            _widthLabel.stringValue = @"columns by";
 
             _byLabel.hidden = YES;
             break;
@@ -558,7 +611,8 @@ CGFloat iTermMaxBlurRadius(void) {
             _percentageWidthField.hidden = YES;
             _percentageHeightField.hidden = YES;
 
-            _unitsButton.hidden = YES;
+            _columnsUnitsButton.hidden = YES;
+            _rowsUnitsButton.hidden = YES;
             _widthLabel.hidden = NO;
             _heightLabel.hidden = NO;
 
@@ -568,17 +622,15 @@ CGFloat iTermMaxBlurRadius(void) {
             _byLabel.hidden = YES;
             break;
     }
-    columnsUnitButton.identifier = @"column units";
-    rowsUnitButton.identifier = @"row units";
     NSArray<NSView *> *views = @[ _columnsField,           // Editable number of columns
                                   _percentageWidthField,   // Editable percent of screen width
                                   _widthLabel,             // "columns by"
-                                  columnsUnitButton,       // Popup [Columns / % of screen width]
+                                  _columnsUnitsButton,      // Popup [Columns / % of screen width]
                                   _byLabel,                // "by"
                                   _rowsField,              // Editable number of rows
                                   _percentageHeightField,  // Editable percent of screen height
                                   _heightLabel,            // "rows"
-                                  rowsUnitButton           // Popup [Rows / % of screen height]
+                                  _rowsUnitsButton          // Popup [Rows / % of screen height]
     ];
     CGFloat x = 0;
     for (NSView *view in views) {

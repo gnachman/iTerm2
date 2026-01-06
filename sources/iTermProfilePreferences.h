@@ -116,6 +116,7 @@ extern NSString *const kProfilePreferenceInitialDirectoryAdvancedValue;
 + (NSString * _Nullable)descriptionForKey:(NSString *)key;
 + (id _Nullable)plistValueFromBoundVariableValue:(id)value forKey:(NSString *)key;
 + (NSString * _Nullable)typeHelpForKey:(NSString *)key;
++ (BOOL)valueIsExplicitlySetForKey:(NSString *)key inProfile:(Profile *)profile;
 
 @end
 

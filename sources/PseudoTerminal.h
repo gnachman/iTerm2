@@ -166,7 +166,7 @@ extern NSString *const iTermDidCreateTerminalWindowNotification;
 - (instancetype)initWithSmartLayout:(BOOL)smartLayout
                          windowType:(iTermWindowType)windowType
                     savedWindowType:(iTermWindowType)savedWindowType
-                         percentage:(double)percentage
+                         percentage:(iTermPercentage)percentage
                              screen:(int)screenIndex
                             profile:(Profile *)profile;
 
@@ -175,7 +175,7 @@ extern NSString *const iTermDidCreateTerminalWindowNotification;
 - (instancetype)initWithSmartLayout:(BOOL)smartLayout
                          windowType:(iTermWindowType)windowType
                     savedWindowType:(iTermWindowType)savedWindowType
-                         percentage:(double)percentage
+                         percentage:(iTermPercentage)percentage
                              screen:(int)screenNumber
                    hotkeyWindowType:(iTermHotkeyWindowType)hotkeyWindowType
                             profile:(Profile *)profile;
@@ -185,7 +185,7 @@ extern NSString *const iTermDidCreateTerminalWindowNotification;
 - (void)finishInitializationWithSmartLayout:(BOOL)smartLayout
                                  windowType:(iTermWindowType)windowType
                             savedWindowType:(iTermWindowType)savedWindowType
-                                 percentage:(double)percentage
+                                 percentage:(iTermPercentage)percentage
                                      screen:(int)screenNumber
                                    hotkeyWindowType:(iTermHotkeyWindowType)hotkeyWindowType
                                     profile:(Profile *)profile;

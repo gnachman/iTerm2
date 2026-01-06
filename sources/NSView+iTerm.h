@@ -13,6 +13,9 @@
 - (void)enclosingWindowDidMoveToScreen:(NSScreen *)screen;
 @end
 
+NSRect iTermRectCenteredHorizontallyWithinRect(NSRect frameToCenter, NSRect container);
+NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect container);
+
 @interface NSView (iTerm)
 
 + (BOOL)iterm_takingSnapshot;

@@ -325,7 +325,15 @@ iTermWindowType iTermWindowTypeNormalized(iTermWindowType windowType) {
             if ([self windowTypeHasTitleBar:self.windowType]) {
                 DLog(@"Window type has title bar");
                 [self updateWindowForWindowType:newWindowType];
-                _percentage = 100;
+                _percentage.width = -1;
+                _percentage.height = -1;
+                if (newWindowType == WINDOW_TYPE_TOP_PERCENTAGE ||
+                    newWindowType == WINDOW_TYPE_BOTTOM_PERCENTAGE) {
+                    _percentage.width = 100;
+                } else if (newWindowType == WINDOW_TYPE_LEFT_PERCENTAGE ||
+                           newWindowType == WINDOW_TYPE_RIGHT_PERCENTAGE) {
+                    _percentage.height = 100;
+                }
                 self.windowType = newWindowType;
                 [self updateTabColors];
                 [self.contentView didChangeCompactness];
@@ -695,45 +703,7 @@ iTermWindowType iTermWindowTypeNormalized(iTermWindowType windowType) {
 }
 
 - (NSRect)traditionalFullScreenFrameForScreen:(NSScreen *)screen {
-    NSRect screenFrame = [screen frame];
-    NSRect frameMinusMenuBar = [screen frameExceptMenuBar];
-    BOOL menuBarIsVisible = NO;
-
-    if ([self fullScreenWindowFrameShouldBeShiftedDownBelowMenuBarOnScreen:screen]) {
-        menuBarIsVisible = YES;
-    }
-    if (menuBarIsVisible) {
-        DLog(@"Subtract menu bar from frame");
-    } else {
-        DLog(@"Do not subtract menu bar from frame");
-    }
-    return menuBarIsVisible ? frameMinusMenuBar : screenFrame;
-}
-
-- (BOOL)fullScreenWindowFrameShouldBeShiftedDownBelowMenuBarOnScreen:(NSScreen *)screen {
-    const BOOL wantToHideMenuBar = [iTermPreferences boolForKey:kPreferenceKeyHideMenuBarInFullscreen];
-    const BOOL canHideMenuBar = ![[iTermApplication sharedApplication] isUIElement];
-    const BOOL menuBarIsHidden = ![[iTermMenuBarObserver sharedInstance] menuBarVisibleOnScreen:screen];
-    const BOOL canOverlapMenuBar = [self.window isKindOfClass:[iTermPanel class]];
-
-    DLog(@"Checking if the fullscreen window frame should be shifted down below the menu bar. "
-         @"wantToHideMenuBar=%@, canHideMenuBar=%@, menuIsHidden=%@, canOverlapMenuBar=%@",
-         @(wantToHideMenuBar), @(canHideMenuBar), @(menuBarIsHidden), @(canOverlapMenuBar));
-    if (wantToHideMenuBar && canHideMenuBar) {
-        DLog(@"Nope");
-        return NO;
-    }
-    if (menuBarIsHidden) {
-        DLog(@"Nope");
-        return NO;
-    }
-    if (canOverlapMenuBar && wantToHideMenuBar) {
-        DLog(@"Nope");
-        return NO;
-    }
-
-    DLog(@"Yep");
-    return YES;
+    return [self.windowSizeHelper traditionalFullScreenFrameForScreen:screen forWindow:self.window];
 }
 
 // Like toggleTraditionalFullScreenMode but does nothing if it's already

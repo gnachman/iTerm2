@@ -407,37 +407,39 @@ typedef NS_ENUM(NSUInteger, iTermBuckyBit) {
 // The numerical values for each enum matter because they are used in
 // the UI as "tag" values for each select list item. They are also
 // stored in saved arrangements.
-typedef enum {
+typedef NS_ENUM(int, iTermWindowType) {
     WINDOW_TYPE_NORMAL = 0,  // May be converted to compact depending on theme
     WINDOW_TYPE_TRADITIONAL_FULL_SCREEN = 1,  // Pre-Lion fullscreen
     // note: 2 is out of order below
-
+    
     // Type 3 is deprecated and used to be used internally to create a
     // fullscreen window during toggling.
-
+    
     WINDOW_TYPE_LION_FULL_SCREEN = 4,  // Lion-native fullscreen
-
-    // These are glued to an edge of the screen and span the full width/height
+    
+    // These are glued to an edge of the screen. Their width or height may be a number of cells or
+    // a percentage of the screen width/height. Legacy profiles fall back to 100% spanning of the
+    // attached edge (so WINDOW_TYPE_TOP_PERCENTAGE defaults to 100% width).
     WINDOW_TYPE_TOP_PERCENTAGE = 2,  // note: number is out of order
     WINDOW_TYPE_BOTTOM_PERCENTAGE = 5,
     WINDOW_TYPE_LEFT_PERCENTAGE = 6,
     WINDOW_TYPE_RIGHT_PERCENTAGE = 7,
-
-    // These are glued to an edge of the screen but may vary in width/height
+    
+    // These are glued to an edge of the screen but may vary in width/height, given in cells only.
     WINDOW_TYPE_BOTTOM_CELLS = 8,
     WINDOW_TYPE_TOP_CELLS = 9,
     WINDOW_TYPE_LEFT_CELLS = 10,
     WINDOW_TYPE_RIGHT_CELLS = 11,
-
+    
     WINDOW_TYPE_NO_TITLE_BAR = 12,
     WINDOW_TYPE_COMPACT = 13,  // May be converted to normal depending on theme
     WINDOW_TYPE_ACCESSORY = 14,
-
+    
     WINDOW_TYPE_MAXIMIZED = 15,
     WINDOW_TYPE_COMPACT_MAXIMIZED = 16,
-
+    
     WINDOW_TYPE_CENTERED = 17,
-} iTermWindowType;
+};
 
 iTermWindowType iTermWindowDefaultType(void);
 iTermWindowType iTermThemedWindowType(iTermWindowType windowType);
@@ -548,6 +550,13 @@ typedef NS_ENUM(NSInteger, iTermTriggerMatchType) {
     iTermTriggerMatchTypePageContentRegex = 2
 };
 
+typedef struct {
+    double width;
+    double height;
+} iTermPercentage;
+
+iTermPercentage iTermPercentageFromProfile(Profile *profile);
+NSString *iTermPercentageDescription(iTermPercentage percentage);
 
 NSString *iTermPathToSSH(void);
 

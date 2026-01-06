@@ -156,7 +156,7 @@ replaceInitialDirectoryForSessionWithGUID:(NSString *)guid
 
 - (void)dumpViewHierarchy;
 
-- (iTermWindowType)windowTypeForBookmark:(Profile*)aDict percentage:(double *)percentage;
+- (iTermWindowType)windowTypeForBookmark:(Profile*)aDict percentage:(iTermPercentage *)percentage;
 
 - (void)reloadAllBookmarks;
 - (Profile *)defaultBookmark;

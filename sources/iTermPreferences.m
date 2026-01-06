@@ -672,6 +672,11 @@ static NSString *sPreviousVersion;
     }
 }
 
++ (BOOL)valueIsExplicitlySetForKey:(NSString *)key {
+    id object = [[NSUserDefaults standardUserDefaults] objectForKey:key];
+    return object != nil;
+}
+
 + (BOOL)defaultValueForKey:(NSString *)key isCompatibleWithType:(PreferenceInfoType)type {
     id defaultValue = [self defaultValueMap][key];
     switch (type) {

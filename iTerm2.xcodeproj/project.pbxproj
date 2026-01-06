@@ -1655,6 +1655,7 @@
 		A63B92462F05C43200591B9E /* iTermSettingsCheckbox.swift in Sources */ = {isa = PBXBuildFile; fileRef = A63B92452F05C43200591B9E /* iTermSettingsCheckbox.swift */; };
 		A63B92482F05C75200591B9E /* ExpressionBindingIconView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A63B92472F05C75200591B9E /* ExpressionBindingIconView.swift */; };
 		A63B924D2F05CC2100591B9E /* ExpressionBindableView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A63B924C2F05CC2100591B9E /* ExpressionBindableView.swift */; };
+		A63B928F2F08617700591B9E /* FrameCanonicalizer.swift in Sources */ = {isa = PBXBuildFile; fileRef = A63B928E2F08617700591B9E /* FrameCanonicalizer.swift */; };
 		A63B9D5B234EE4ED002EEF30 /* ToolProfiles.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DE8DC8C1415546000F83147 /* ToolProfiles.m */; };
 		A63BA39518A9CB43002BE075 /* iTermSelection.h in Headers */ = {isa = PBXBuildFile; fileRef = A63BA39318A9CB43002BE075 /* iTermSelection.h */; };
 		A63BA39F18B27B92002BE075 /* iTermTextExtractor.h in Headers */ = {isa = PBXBuildFile; fileRef = A63BA39D18B27B92002BE075 /* iTermTextExtractor.h */; };
@@ -6846,6 +6847,7 @@
 		A63B92452F05C43200591B9E /* iTermSettingsCheckbox.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermSettingsCheckbox.swift; sourceTree = "<group>"; };
 		A63B92472F05C75200591B9E /* ExpressionBindingIconView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExpressionBindingIconView.swift; sourceTree = "<group>"; };
 		A63B924C2F05CC2100591B9E /* ExpressionBindableView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExpressionBindableView.swift; sourceTree = "<group>"; };
+		A63B928E2F08617700591B9E /* FrameCanonicalizer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FrameCanonicalizer.swift; sourceTree = "<group>"; };
 		A63BA39318A9CB43002BE075 /* iTermSelection.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = iTermSelection.h; sourceTree = "<group>"; tabWidth = 4; };
 		A63BA39418A9CB43002BE075 /* iTermSelection.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = iTermSelection.m; sourceTree = "<group>"; tabWidth = 4; };
 		A63BA39D18B27B92002BE075 /* iTermTextExtractor.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = iTermTextExtractor.h; sourceTree = "<group>"; tabWidth = 4; };
@@ -11554,6 +11556,7 @@
 				A6D7E0762C236D54007D0A37 /* LineBlockMetadataArray.m */,
 				A664EC382EC6A36800F0F596 /* iTermTitlebarAccessoryNanny.swift */,
 				A68752482EE61314002EDFCB /* ArchivesMenuBuilder.swift */,
+				A63B928E2F08617700591B9E /* FrameCanonicalizer.swift */,
 			);
 			name = Core;
 			sourceTree = "<group>";
@@ -18692,6 +18695,7 @@
 				A6EB647E2D5E8EE400481D33 /* MessageCellView.swift in Sources */,
 				A6E312622E386342008222DE /* NSObject.swift in Sources */,
 				A6EC47C121EC623D000E1321 /* iTermOnboardingWindowController.m in Sources */,
+				A63B928F2F08617700591B9E /* FrameCanonicalizer.swift in Sources */,
 				A6FE7A752E0DF12900BEBCE4 /* iTermBrowserUser.swift in Sources */,
 				A6E7352B20EBF3270034FCFD /* iTermSetCurrentTerminalHelper.m in Sources */,
 				A6069F1A2DF366E300EE6CC7 /* Pipeline.swift in Sources */,

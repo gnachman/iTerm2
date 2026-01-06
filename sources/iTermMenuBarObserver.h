@@ -7,10 +7,14 @@
 
 #import <Cocoa/Cocoa.h>
 
+NS_ASSUME_NONNULL_BEGIN
+
 @interface iTermMenuBarObserver : NSObject
 
-- (BOOL)menuBarVisibleOnScreen:(NSScreen *)screen;
+- (BOOL)menuBarVisibleOnScreen:(NSScreen * _Nullable)screen;
 
 + (instancetype)sharedInstance;
 
 @end
+
+NS_ASSUME_NONNULL_END

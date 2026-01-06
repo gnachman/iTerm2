@@ -2608,7 +2608,7 @@ static iTermKeyEventReplayer *gReplayer;
                     term = [[[PseudoTerminal alloc] initWithSmartLayout:YES
                                                              windowType:iTermWindowDefaultType()
                                                         savedWindowType:iTermWindowDefaultType()
-                                                             percentage:100
+                                                             percentage:(iTermPercentage){ .width = -1, .height = -1 }
                                                                  screen:-1
                                                                 profile:nil] autorelease];
                     if (term) {
@@ -2632,7 +2632,7 @@ static iTermKeyEventReplayer *gReplayer;
                     term = [[[PseudoTerminal alloc] initWithSmartLayout:YES
                                                              windowType:iTermWindowDefaultType()
                                                         savedWindowType:iTermWindowDefaultType()
-                                                             percentage:100
+                                                             percentage:(iTermPercentage){ .width = -1, .height = -1 }
                                                                  screen:-1
                                                                 profile:nil] autorelease];
                     [[iTermController sharedInstance] addTerminalWindow:term];

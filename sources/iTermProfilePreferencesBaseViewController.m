@@ -264,6 +264,11 @@
     return [NSObject object:defaultValue isNullablyEqualToObject:[self objectForKey:key] epsilon:0.001];
 }
 
+- (BOOL)valueIsExplicitlySetForKey:(NSString *)key {
+    Profile *profile = [_delegate profilePreferencesCurrentProfile];
+    return [iTermProfilePreferences valueIsExplicitlySetForKey:key inProfile:profile];
+}
+
 - (void)willReloadProfile {
 }
 

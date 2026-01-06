@@ -396,6 +396,7 @@ static NSString *const kHotkeyWindowGeneratedProfileNameKey = @"Hotkey Window";
             NSMutableDictionary *dict = [[[ProfileModel sharedInstance] defaultBookmark] mutableCopy];
             dict[KEY_WINDOW_TYPE] = @(WINDOW_TYPE_TOP_PERCENTAGE);
             dict[KEY_WIDTH_PERCENTAGE] = @100;
+            dict[KEY_HEIGHT_PERCENTAGE] = @-1;
             dict[KEY_ROWS] = @25;
             dict[KEY_TRANSPARENCY] = @0.3;
             dict[KEY_INITIAL_USE_TRANSPARENCY] = @YES;

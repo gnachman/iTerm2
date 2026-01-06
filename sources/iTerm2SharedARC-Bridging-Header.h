@@ -49,6 +49,7 @@
 #import "iTermIndicatorsHelper.h"
 #import "iTermKeyboardNavigatableTableView.h"
 #import "iTermLogoGenerator.h"
+#import "iTermMenuBarObserver.h"
 #import "iTermMetalBufferPool.h"
 #import "iTermMetalCellRenderer.h"
 #import "iTermMigrationHelper.h"

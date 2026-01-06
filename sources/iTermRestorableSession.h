@@ -28,7 +28,7 @@ typedef NS_ENUM(NSInteger, iTermRestorableSessionGroup) {
 @property(nonatomic) iTermRestorableSessionGroup group;
 @property(nonatomic) iTermWindowType windowType;
 @property(nonatomic) iTermWindowType savedWindowType;
-@property(nonatomic) double percentage;
+@property(nonatomic) iTermPercentage percentage;
 @property(nonatomic) int screen;
 @property(nonatomic, copy) NSString *windowTitle;
 @property(nonatomic, copy) NSString *channelParentGuid;

@@ -96,6 +96,11 @@ class iTermBrowserKeyBindingActionPerformer {
                 data: iTermKeyBindingAction.escapedText(parameter as String,
                                                         mode: action.vimEscaping).lossyData,
                 broadcastAllowed: true)
+        case .ACTION_VIM_TEXT_NO_BROADCAST:
+            delegate?.actionPerformingSend(
+                data: iTermKeyBindingAction.escapedText(parameter as String,
+                                                        mode: action.vimEscaping).lossyData,
+                broadcastAllowed: false)
         case .ACTION_SEND_SNIPPET:
             if let snippet  = iTermSnippetsModel.sharedInstance().snippet(withActionKey: parameter) {
                 delegate?.actionPerformingSend(

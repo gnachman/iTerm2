@@ -11,15 +11,19 @@ extension PseudoTerminal {
     // window title to the session's name. If size is not nil then the session is initialized to fit
     // a view of that size; otherwise the size is derived from the existing window if there is already
     // an open tab, or its bookmark's preference if it's the first session in the window.
-    @objc(setupSessionImpl:withSize:)
-    func setup(session: PTYSession, size: UnsafePointer<NSSize>?) {
-        let sessionSize = self.windowSizeHelper.sessionSize(
+    @objc(setupSessionImpl:screenSize:withSize:)
+    func setup(session: PTYSession,
+               screenSize: NSSize,
+               size: UnsafePointer<NSSize>?) {
+        let sessionSize = windowSizeHelper.sessionSize(
             profile: session.profile,
             existingViewSize: currentSession()?.view?.scrollview?.documentVisibleRect.size,
             desiredPointSize: size?.pointee,
             hasScrollbar: scrollbarShouldBeVisible(),
             scrollerStyle: scrollerStyle(),
-            rightExtra: currentSession()?.desiredRightExtra() ?? 0.0)
+            rightExtra: currentSession()?.desiredRightExtra() ?? 0.0,
+            screenSize: screenSize)
+        windowSizeHelper.updateDesiredSize(sessionSize.desiredSize)
         if session.setScreenSize(sessionSize.pointSize,
                                  parent: self) {
             DLog("setupSession - call safelySetSessionSize")

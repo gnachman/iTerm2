@@ -32,6 +32,8 @@ extern NSString *const TERMINAL_ARRANGEMENT_SCREEN_INDEX;
 extern NSString *const TERMINAL_ARRANGEMENT_HIDE_AFTER_OPENING;
 extern NSString *const TERMINAL_ARRANGEMENT_DESIRED_COLUMNS;
 extern NSString *const TERMINAL_ARRANGEMENT_DESIRED_ROWS;
+extern NSString *const TERMINAL_ARRANGEMENT_DESIRED_SCREEN_HEIGHT_PERCENTAGE;
+extern NSString *const TERMINAL_ARRANGEMENT_DESIRED_SCREEN_WIDTH_PERCENTAGE;
 extern NSString *const TERMINAL_ARRANGEMENT_IS_HOTKEY_WINDOW;
 extern NSString *const TERMINAL_ARRANGEMENT_INITIAL_PROFILE;
 extern NSString *const TERMINAL_GUID;
@@ -83,7 +85,7 @@ extern NSString *const TERMINAL_ARRANGEMENT_MINIATURIZED;
 
     // DO NOT ACCESS DIRECTLY - USE ACCESSORS INSTEAD
     iTermWindowType _windowType;
-    double _percentage;
+    iTermPercentage _percentage;
     
     // DO NOT ACCESS DIRECTLY - USE ACCESSORS INSTEAD
     // Window type before entering fullscreen. Only relevant if in/entering fullscreen.

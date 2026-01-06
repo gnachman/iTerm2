@@ -33,7 +33,29 @@
         self.arrangement = restorableState[@"arrangement"];
         self.predecessors = restorableState[@"predecessors"];
         self.windowType = restorableState[@"windowType"] ? [restorableState[@"windowType"] intValue] : iTermWindowDefaultType();
-        self.percentage = restorableState[@"percentage"] ? [restorableState[@"percentage"] doubleValue] : 100;
+        if ([NSNumber castFrom:restorableState[@"percentage"]]) {
+            const double p = [restorableState[@"percentage"] doubleValue];
+            if (self.windowType == WINDOW_TYPE_TOP_PERCENTAGE ||
+                self.windowType == WINDOW_TYPE_BOTTOM_PERCENTAGE) {
+                self.percentage = (iTermPercentage){ .width = p, .height = -1 };
+            } else if (self.windowType == WINDOW_TYPE_LEFT_PERCENTAGE ||
+                       self.windowType == WINDOW_TYPE_RIGHT_PERCENTAGE) {
+                self.percentage = (iTermPercentage){ .width = -1, .height = p };
+            } else {
+                self.percentage = (iTermPercentage){ .width = -1, .height = -1 };
+            }
+        } else if ([NSArray castFrom:restorableState[@"percentage"]]) {
+            NSArray *a = restorableState[@"percentage"];
+            self.percentage = (iTermPercentage){
+                .width = [a[0] doubleValue],
+                .height = [a[1] doubleValue]
+            };
+        } else {
+            self.percentage = (iTermPercentage){
+                .width = -1,
+                .height = -1
+            };
+        }
         self.savedWindowType = restorableState[@"savedWindowType"] ? [restorableState[@"savedWindowType"] intValue] : iTermWindowDefaultType();
         self.screen = restorableState[@"screen"] ? [restorableState[@"screen"] intValue] : -1;
         self.windowTitle = [restorableState[@"windowTitle"] nilIfNull];
@@ -58,7 +80,7 @@
               @"arrangement": _arrangement ?: @{},
               @"predecessors": _predecessors ?: @[],
               @"windowType": @(_windowType),
-              @"percentage": @(_percentage),
+              @"percentage": @[ @(_percentage.width), @(_percentage.height) ],
               @"savedWindowType": @(_savedWindowType),
               @"screen": @(_screen),
               @"windowTitle": _windowTitle ?: [NSNull null],

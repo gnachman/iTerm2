@@ -289,6 +289,10 @@ NSString *const iTermPreferencesDidToggleIndicateNonDefaultValues = @"iTermPrefe
                     epsilon:0.001];
 }
 
+- (BOOL)valueIsExplicitlySetForKey:(NSString *)key {
+    return [iTermPreferences valueIsExplicitlySetForKey:key];
+}
+
 - (BOOL)shouldUpdateOtherPanels {
     return YES;
 }

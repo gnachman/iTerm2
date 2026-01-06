@@ -380,6 +380,7 @@ extern NSString *const iTermDefaultAIPrompt;
 + (BOOL)keyHasDefaultValue:(NSString *)key;
 + (BOOL)defaultValueForKey:(NSString *)key isCompatibleWithType:(PreferenceInfoType)type;
 + (id)defaultObjectForKey:(NSString *)key;
++ (BOOL)valueIsExplicitlySetForKey:(NSString *)key;
 
 // When the value held by |key| changes, the block is invoked with the old an
 // new values. Either may be nil, but they are guaranteed to be different by
