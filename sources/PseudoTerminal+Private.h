@@ -11,6 +11,7 @@
 @class iTermRootTerminalView;
 @class iTermWindowShortcutLabelTitlebarAccessoryViewController;
 @class iTermTitlebarAccessoryNanny;
+@class iTermWindowInitialPositioner;
 
 // Constants for saved window arrangement key names.
 extern NSString *const TERMINAL_ARRANGEMENT_OLD_X_ORIGIN;
@@ -104,6 +105,7 @@ extern NSString *const TERMINAL_ARRANGEMENT_MINIATURIZED;
 
     BOOL _settingStyleMask;
     iTermTitlebarAccessoryNanny *_titlebarAccessoryNanny;
+    iTermWindowInitialPositioner *_windowPositioner;
 }
 
 @property (nonatomic, retain) NSCustomTouchBarItem *tabsTouchBarItem;

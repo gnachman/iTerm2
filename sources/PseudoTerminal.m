@@ -142,6 +142,8 @@
 #import <QuartzCore/QuartzCore.h>
 #include <unistd.h>
 
+#import "iTerm2SharedARC-Swift.h"
+
 @class QLPreviewPanel;
 
 NSString *const kCurrentSessionDidChange = @"kCurrentSessionDidChange";
@@ -152,8 +154,6 @@ NSString *const iTermSelectedTabDidChange = @"iTermSelectedTabDidChange";
 NSString *const iTermWindowDidCloseNotification = @"iTermWindowDidClose";
 NSString *const iTermTabDidCloseNotification = @"iTermTabDidClose";
 NSString *const iTermDidCreateTerminalWindowNotification = @"iTermDidCreateTerminalWindowNotification";
-
-static NSString *const kWindowNameFormat = @"iTerm Window %d";
 
 #define PtyLog DLog
 
@@ -238,6 +238,7 @@ typedef NS_ENUM(int, iTermShouldHaveTitleSeparator) {
     iTermTabBarControlViewDelegate,
     iTermPasswordManagerDelegate,
     iTermUniquelyIdentifiable,
+    iTermWindowInitialPositionerDelegate,
     PTYTabDelegate,
     iTermRootTerminalViewDelegate,
     iTermToolbeltViewDelegate,
@@ -263,8 +264,6 @@ typedef NS_ENUM(int, iTermShouldHaveTitleSeparator) {
 @end
 
 @implementation PseudoTerminal {
-    NSPoint preferredOrigin_;
-
     ////////////////////////////////////////////////////////////////////////////
     // Instant Replay
     iTermInstantReplayWindowController *_instantReplayWindowController;
@@ -284,26 +283,10 @@ typedef NS_ENUM(int, iTermShouldHaveTitleSeparator) {
     // This prevents recursive resizing.
     BOOL _resizeInProgressFlag;
 
-    // There is a scheme for saving window positions. Each window is assigned
-    // a number, and the positions are stored by window name. The window name
-    // includes its unique number. This variable gives this window's number.
-    int uniqueNumber_;
-
     PasteboardHistoryWindowController* pbHistoryView;
     CommandHistoryPopupWindowController *commandHistoryPopup;
     DirectoriesPopupWindowController *_directoriesPopupWindowController;
     AutocompleteView* autocompleteView;
-
-
-    // Indicates if _anchoredScreenNumber is to be used.
-    BOOL _isAnchoredToScreen;
-
-    // The initial screen used for the window. Always >= 0.
-    int _anchoredScreenNumber;
-
-    // // The KEY_SCREEN from the profile the window was created with.
-    // -2 = follow cursor, -1 = no preference, >= 0 screen number
-    int _screenNumberFromFirstProfile;
 
     // Window number, used for keyboard shortcut to select a window.
     // This value is 0-based while the UI is 1-based.
@@ -540,13 +523,11 @@ typedef NS_ENUM(int, iTermShouldHaveTitleSeparator) {
         screen = [[self window] screen];
         DLog(@"Screen number %d is out of range [0,%d] so using 0",
              screenNumber, (int)[[NSScreen screens] count]);
-        _anchoredScreenNumber = 0;
-        _isAnchoredToScreen = NO;
+        [_windowPositioner setAnchoredScreenNumber:-1];
     } else if (screenNumber >= 0) {
         DLog(@"Selecting screen number %d", screenNumber);
         screen = [[NSScreen screens] objectAtIndex:screenNumber];
-        _anchoredScreenNumber = screenNumber;
-        _isAnchoredToScreen = YES;
+        [_windowPositioner setAnchoredScreenNumber:screenNumber];
     }
     return screen;
 }
@@ -558,6 +539,11 @@ typedef NS_ENUM(int, iTermShouldHaveTitleSeparator) {
                                      screen:(int)screenNumber
                            hotkeyWindowType:(iTermHotkeyWindowType)hotkeyWindowType
                                     profile:(Profile *)profile {
+    _initialProfile = [[PseudoTerminal expurgatedInitialProfile:profile] retain];
+    const BOOL disableAutoFrame = [_initialProfile[KEY_DISABLE_AUTO_FRAME] boolValue];
+    _windowPositioner = [[iTermWindowInitialPositioner alloc] initWithScreenNumberFromFirstProfile:screenNumber
+                                                                                  disableAutoFrame:disableAutoFrame
+                                                                                          delegate:self];
     _titlebarAccessoryNanny = [[iTermTitlebarAccessoryNanny alloc] init];
     _titlebarAccessoryNanny.windowController = self;
     _titlebarAccessoryNanny.defaultHeight = [self desiredTabBarHeight];
@@ -599,7 +585,6 @@ typedef NS_ENUM(int, iTermShouldHaveTitleSeparator) {
 
     // Force the nib to load
     [self window];
-    _screenNumberFromFirstProfile = screenNumber;
     screenNumber = [PseudoTerminal screenNumberForPreferredScreenNumber:screenNumber
                                                              windowType:windowType
                                                           defaultScreen:[[self window] screen]];
@@ -687,7 +672,7 @@ typedef NS_ENUM(int, iTermShouldHaveTitleSeparator) {
             // Use the system-supplied frame which has a reasonable origin. It may
             // be overridden by smart window placement or a saved window location.
             initialFrame = [[self window] frame];
-            if (_isAnchoredToScreen) {
+            if (_windowPositioner.isAnchoredToScreen) {
                 // Move the frame to the desired screen
                 NSScreen* baseScreen = [[self window] screen];
                 NSPoint basePoint = [baseScreen visibleFrame].origin;
@@ -716,7 +701,7 @@ typedef NS_ENUM(int, iTermShouldHaveTitleSeparator) {
             }
             break;
     }
-    preferredOrigin_ = initialFrame.origin;
+    _windowPositioner.preferredOrigin = initialFrame.origin;
 
     if (savedWindowType == WINDOW_TYPE_LION_FULL_SCREEN ||
         savedWindowType == WINDOW_TYPE_TRADITIONAL_FULL_SCREEN) {
@@ -877,7 +862,6 @@ typedef NS_ENUM(int, iTermShouldHaveTitleSeparator) {
 
     DLog(@"Creating window with profile:%@", profile);
     DLog(@"%@\n%@", self, [NSThread callStackSymbols]);
-    _initialProfile = [[PseudoTerminal expurgatedInitialProfile:profile] retain];
     if ([iTermProfilePreferences boolForKey:KEY_USE_CUSTOM_WINDOW_TITLE inProfile:profile]) {
         NSString *override = [iTermProfilePreferences stringForKey:KEY_CUSTOM_WINDOW_TITLE inProfile:profile];
         [self.scope setValue:override.length ? override : @" " forVariableNamed:iTermVariableKeyWindowTitleOverrideFormat];
@@ -1095,6 +1079,7 @@ ITERM_WEAKLY_REFERENCEABLE
         [[iTermController sharedInstance] setCurrentTerminal:nil];
     }
     [_broadcastInputHelper release];
+    [_windowPositioner release];
     [autocompleteView shutdown];
     [commandHistoryPopup shutdown];
     [_directoriesPopupWindowController shutdown];
@@ -1483,6 +1468,10 @@ ITERM_WEAKLY_REFERENCEABLE
     return (iTermTerminalWindow *)[self window];
 }
 
+- (NSWindow<PTYWindow> *)windowForPositioner {
+    return (NSWindow<PTYWindow> *)[self window];
+}
+
 - (PTYTab *)tabWithUniqueId:(int)uniqueId {
     for (int i = 0; i < [self numberOfTabs]; i++) {
         PTYTab *tab = [[_contentView.tabView tabViewItemAtIndex:i] identifier];
@@ -1495,23 +1484,25 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (NSScreen *)screen {
     NSArray *screens = [NSScreen screens];
+    const int anchoredScreenNumber = [_windowPositioner getAnchoredScreenNumber];
+    const int screenNumberFromFirstProfile = _windowPositioner.screenNumberFromFirstProfile;
     if (screens.count == 0) {
         DLog(@"We are headless");
         return nil;
-    } else if (_isAnchoredToScreen && _anchoredScreenNumber < screens.count) {
-        DLog(@"Anchor screen preference %d respected", _anchoredScreenNumber);
-        return screens[_anchoredScreenNumber];
+    } else if (_windowPositioner.isAnchoredToScreen && anchoredScreenNumber < screens.count) {
+        DLog(@"Anchor screen preference %d respected", anchoredScreenNumber);
+        return screens[anchoredScreenNumber];
     } else if (self.window.screen) {
         DLog(@"Not anchored, or anchored screen does not exist. Using current screen.");
         return self.window.screen;
-    } else if (_screenNumberFromFirstProfile >= 0 && _screenNumberFromFirstProfile < screens.count) {
-        DLog(@"Using screen number from first profile %d", _screenNumberFromFirstProfile);
-        return screens[_screenNumberFromFirstProfile];
+    } else if (screenNumberFromFirstProfile >= 0 && screenNumberFromFirstProfile < screens.count) {
+        DLog(@"Using screen number from first profile %d", screenNumberFromFirstProfile);
+        return screens[screenNumberFromFirstProfile];
     } else {
-        // _screenNumberFromFirstProfile must be no preference (-1), where
+        // screenNumberFromFirstProfile must be no preference (-1), where
         // cursor was at creation time (-2), or out of range. We'll use the
         // first screen for lack of any better option.
-        DLog(@"Using first screen because screen number from first profile is %d", _screenNumberFromFirstProfile);
+        DLog(@"Using first screen because screen number from first profile is %d", screenNumberFromFirstProfile);
         return screens.firstObject;
     }
 }
@@ -1757,24 +1748,25 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (void)terminalWindowWillMoveToScreen:(NSScreen *)screen {
     DLog(@"moving to screen with frame %@. self=%@", NSStringFromRect(screen.frame), self);
-    if (!_isAnchoredToScreen) {
+    if (!_windowPositioner.isAnchoredToScreen) {
         DLog(@"Not anchored, do nothing");
         return;
     }
     NSArray<NSScreen *> *screens = [NSScreen screens];
-    if (_anchoredScreenNumber >= screens.count) {
-        DLog(@"Am anchored to screen %@ but there aren't that many screens. Unanchor", @(_anchoredScreenNumber));
-        _isAnchoredToScreen = NO;
+    const int anchoredScreenNumber = [_windowPositioner getAnchoredScreenNumber];
+    if (anchoredScreenNumber >= screens.count) {
+        DLog(@"Am anchored to screen %@ but there aren't that many screens. Unanchor", @(anchoredScreenNumber));
+        [_windowPositioner clearScreenAnchor];
         return;
     }
 
-    NSScreen *currentScreen = screens[_anchoredScreenNumber];
+    NSScreen *currentScreen = screens[anchoredScreenNumber];
     if (NSEqualRects(currentScreen.frame, screen.frame)) {
         DLog(@"New screen has same frame. Doing nothing.");
         return;
     }
     DLog(@"Current screen has frame %@. Moving.", NSStringFromRect(currentScreen.frame));
-    _isAnchoredToScreen = NO;
+    [_windowPositioner clearScreenAnchor];
 }
 
 - (void)moveToScreen:(NSScreen *)screen {
@@ -2095,7 +2087,7 @@ ITERM_WEAKLY_REFERENCEABLE
     restorableSession.windowType = self.lionFullScreen ? WINDOW_TYPE_LION_FULL_SCREEN : self.windowType;
     restorableSession.percentage = _percentage;
     restorableSession.savedWindowType = self.savedWindowType;
-    restorableSession.screen = _screenNumberFromFirstProfile;
+    restorableSession.screen = _windowPositioner.screenNumberFromFirstProfile;
     restorableSession.windowTitle = [self.scope windowTitleOverrideFormat];
 }
 
@@ -3611,8 +3603,9 @@ ITERM_WEAKLY_REFERENCEABLE
     // then rect might not lie inside it.
     if (windowType == WINDOW_TYPE_LION_FULL_SCREEN) {
         NSArray *screens = [NSScreen screens];
-        if (_anchoredScreenNumber >= 0 && _anchoredScreenNumber < screens.count) {
-            NSScreen *screen = screens[_anchoredScreenNumber];
+        const int anchoredScreenNumber = [_windowPositioner getAnchoredScreenNumber];
+        if (anchoredScreenNumber >= 0 && anchoredScreenNumber < screens.count) {
+            NSScreen *screen = screens[anchoredScreenNumber];
             rect = [self traditionalFullScreenFrameForScreen:screen];
         }
     }
@@ -3945,7 +3938,7 @@ ITERM_WEAKLY_REFERENCEABLE
                                     isHotKeyWindow:self.isHotKeyWindow
                                   hotkeyWindowType:_hotkeyWindowType
                                        screenIndex:[[NSScreen screens] indexOfObjectIdenticalTo:[[self window] screen]]
-                      screenNumberFromFirstProfile:_screenNumberFromFirstProfile
+                      screenNumberFromFirstProfile:_windowPositioner.screenNumberFromFirstProfile
                                   windowSizeHelper:_windowSizeHelper
                                   hideAfterOpening:hideAfterOpening_
                                   selectedTabIndex:[_contentView.tabView indexOfTabViewItem:[_contentView.tabView selectedTabViewItem]]
@@ -4290,11 +4283,6 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     return _fieldEditor;
 }
 
-- (NSDictionary<NSString *, NSString *> *)savedWindowPositions {
-    id obj = [[NSUserDefaults standardUserDefaults] objectForKey:kPreferenceKeySavedWindowPositions];
-    return [NSDictionary castFrom:obj] ?: @{};
-}
-
 - (void)windowWillClose:(NSNotification *)aNotification {
    DLog(@"windowWillClose %@", self);
     _closing = YES;
@@ -4328,9 +4316,8 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
             [self closeInstantReplayWindow];
         }
     }
-    [[self window] saveFrameUsingName:[NSString stringWithFormat:kWindowNameFormat, uniqueNumber_]];
-    [self saveWindowPosition];
-    [[TemporaryNumberAllocator sharedInstance] deallocateNumber:uniqueNumber_];
+    [_windowPositioner saveFrame];
+    [_windowPositioner saveWindowPosition];
 
     if ([[self allSessions] count]) {
         // First close any tmux tabs because their closure is not undoable.
@@ -4755,11 +4742,12 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
         [self.currentTab bounceMetal];
     }
     if ([iTermAdvancedSettingsModel chaseAnchoredScreen]) {
-        if (_isAnchoredToScreen && _anchoredScreenNumber >= 0 && _anchoredScreenNumber < NSScreen.screens.count) {
+        const int anchoredScreenNumber = [_windowPositioner getAnchoredScreenNumber];
+        if (_windowPositioner.isAnchoredToScreen && anchoredScreenNumber >= 0 && anchoredScreenNumber < NSScreen.screens.count) {
             const NSInteger i = [[NSScreen screens] indexOfObject:self.window.screen];
-            if (i != _anchoredScreenNumber) {
+            if (i != anchoredScreenNumber) {
                 dispatch_async(dispatch_get_main_queue(), ^{
-                    [self.ptyWindow it_moveToScreen:NSScreen.screens[_anchoredScreenNumber]];
+                    [self.ptyWindow it_moveToScreen:NSScreen.screens[anchoredScreenNumber]];
                 });
             }
         }
@@ -5510,11 +5498,11 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
         [self canonicalizeWindowFrame];
     }
     [self saveTmuxWindowOrigins];
-    if (_windowIsMoving && _isAnchoredToScreen) {
+    if (_windowIsMoving && _windowPositioner.isAnchoredToScreen) {
         NSInteger screenIndex = [[NSScreen screens] indexOfObject:self.window.screen];
         if (screenIndex != _screenBeforeMoving) {
             DLog(@"User appears to have dragged the window from screen %@ to screen %@. Removing screen anchor.", @(_screenBeforeMoving), @(screenIndex));
-            _isAnchoredToScreen = NO;
+            [_windowPositioner clearScreenAnchor];
         }
     }
     _windowIsMoving = NO;
@@ -6376,134 +6364,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
 }
 
 - (void)windowWillShowInitial {
-    PtyLog(@"windowWillShowInitial");
-    [self assignUniqueNumberToWindow];
-    iTermTerminalWindow *window = [self ptyWindow];
-    // If it's a full or top-of-screen window with a screen number preference, always honor that.
-    if (_isAnchoredToScreen) {
-        PtyLog(@"have screen preference is set");
-        NSRect frame = [window frame];
-        frame.origin = preferredOrigin_;
-        [window setFrame:frame display:NO];
-    }
-    const NSUInteger numberOfTerminalWindows = [[[iTermController sharedInstance] terminals] count];
-    switch ([iTermPreferences unsignedIntegerForKey:kPreferenceKeyWindowPlacement]) {
-        case iTermWindowPlacementSystem:
-            DLog(@"Using system placement");
-            return;
-        case iTermWindowPlacementSizeAndPosition: {
-            DLog(@"Restoring size and position");
-            const int screenNumber = window.screenNumber;
-            [self loadAutoSaveFrame];
-            if (_isAnchoredToScreen && window.screenNumber != screenNumber) {
-                DLog(@"Move window to preferred origin because it moved to another screen.");
-                [window setFrameOrigin:preferredOrigin_];
-            }
-            break;
-        }
-        case iTermWindowPlacementPosition: {
-            DLog(@"Restoring position");
-            [self loadSavedWindowPosition:window];
-            break;
-        }
-        case iTermWindowPlacementSmart:
-            if (numberOfTerminalWindows != 1) {
-                PtyLog(@"Invoking smartLayout");
-                [window smartLayout];
-                return;
-            }
-            DLog(@"Smart Layout: restoring position");
-            [self loadSavedWindowPosition:window];
-            break;
-    }
-
-}
-
-- (void)loadSavedWindowPosition:(iTermTerminalWindow *)window {
-    const int screenNumber = window.screenNumber;
-    [self loadAutoSavePosition];
-    if (_isAnchoredToScreen && window.screenNumber != screenNumber) {
-        DLog(@"Move window to preferred origin because it moved to another screen.");
-        [window setFrameOrigin:preferredOrigin_];
-    }
-}
-
-- (void)loadAutoSaveFrame {
-    DLog(@"-[%p loadAutoSaveFrame]. Profile is\n%@", self, self.initialProfile);
-    if ([_initialProfile[KEY_DISABLE_AUTO_FRAME] boolValue]) {
-        DLog(@"Auto-frame disabled.");
-        return;
-    }
-    DLog(@"Load auto-save frame");
-    iTermTerminalWindow *window = [self ptyWindow];
-    NSRect frame = [window frame];
-    NSString *name = [NSString stringWithFormat:kWindowNameFormat, uniqueNumber_];
-    const BOOL hadAutoSaveFrame = [window setFrameUsingName:name];
-    if (hadAutoSaveFrame) {
-        DLog(@"Autosave frame restored (possibly asynchronously! good luck)");
-    } else {
-        frame.origin = preferredOrigin_;
-        [window setFrame:frame display:NO];
-        DLog(@"Update frame to %@", NSStringFromRect(frame));
-    }
-}
-
-- (void)saveWindowPosition {
-    NSMutableDictionary<NSString *, NSString *> *savedPositions = [[[self savedWindowPositions] mutableCopy] autorelease];
-    NSPoint point = self.window.frame.origin;
-    point.y += self.window.frame.size.height;
-    savedPositions[@(uniqueNumber_).stringValue] = NSStringFromPoint(point);
-    [[NSUserDefaults standardUserDefaults] setObject:savedPositions
-                                              forKey:kPreferenceKeySavedWindowPositions];
-}
-
-- (void)loadAutoSavePosition {
-    if ([_initialProfile[KEY_DISABLE_AUTO_FRAME] boolValue]) {
-        DLog(@"Auto-frame disabled.");
-        return;
-    }
-    switch (self.windowType) {
-        case WINDOW_TYPE_NORMAL:
-        case WINDOW_TYPE_NO_TITLE_BAR:
-        case WINDOW_TYPE_COMPACT:
-        case WINDOW_TYPE_ACCESSORY:
-            break;
-        case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
-        case WINDOW_TYPE_LION_FULL_SCREEN:
-        case WINDOW_TYPE_TOP_PERCENTAGE:
-        case WINDOW_TYPE_BOTTOM_PERCENTAGE:
-        case WINDOW_TYPE_LEFT_PERCENTAGE:
-        case WINDOW_TYPE_RIGHT_PERCENTAGE:
-        case WINDOW_TYPE_BOTTOM_CELLS:
-        case WINDOW_TYPE_CENTERED:
-        case WINDOW_TYPE_TOP_CELLS:
-        case WINDOW_TYPE_LEFT_CELLS:
-        case WINDOW_TYPE_RIGHT_CELLS:
-        case WINDOW_TYPE_MAXIMIZED:
-        case WINDOW_TYPE_COMPACT_MAXIMIZED:
-            DLog(@"Window not positionable");
-            return;
-    }
-    DLog(@"Load auto-save position");
-    iTermTerminalWindow *window = [self ptyWindow];
-    NSRect frame = [window frame];
-    NSDictionary<NSString *, NSString *> *savedPositions = [self savedWindowPositions];
-    NSString *position = savedPositions[@(uniqueNumber_).stringValue];
-    if (position) {
-        NSPoint point = NSPointFromString(position);
-        point.y -= self.window.frame.size.height;
-        [self.window setFrameOrigin:point];
-        return;
-    }
-
-    // Put it on the correct display
-    frame.origin = preferredOrigin_;
-    [window setFrame:frame display:NO];
-
-    // And then move it to a nicer spot.
-    [self.ptyWindow smartLayout];
-
-    DLog(@"Update frame to %@", NSStringFromRect(frame));
+    [_windowPositioner windowWillShowInitial];
 }
 
 - (BOOL)sessionInitiatedResize:(PTYSession *)session width:(int)width height:(int)height {
@@ -11054,12 +10915,6 @@ static BOOL iTermApproximatelyEqualRects(NSRect lhs, NSRect rhs, double epsilon)
     [aSession setSessionSpecificProfileValues:@{ KEY_NAME: theSessionName }];
 }
 
-// Assign a value to the 'uniqueNumber_' member variable which is used for storing
-// window frame positions between invocations of iTerm.
-- (void)assignUniqueNumberToWindow {
-    uniqueNumber_ = [[TemporaryNumberAllocator sharedInstance] allocateNumber];
-}
-
 // Reset all state associated with the terminal.
 - (void)reset:(id)sender {
     for (PTYSession *session in [self sessionsToSendCommand:iTermBroadcastCommandReset]) {
@@ -11822,13 +11677,13 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
         Profile *profile = profileHotKey.profile;
         if (profile) {
             int screenNumber = [iTermProfilePreferences intForKey:KEY_SCREEN inProfile:profile];
-            _screenNumberFromFirstProfile = screenNumber;
+            _windowPositioner.screenNumberFromFirstProfile = screenNumber;
             screenNumber = [PseudoTerminal screenNumberForPreferredScreenNumber:screenNumber
                                                                      windowType:self.windowType
                                                                   defaultScreen:[[self window] screen]];
             [self anchorToScreenNumber:screenNumber];
             DLog(@"Change hotkey window's anchored screen to %@ (isAnchored=%@) for %@",
-                 @(_anchoredScreenNumber), @(_isAnchoredToScreen), self);
+                 @([_windowPositioner getAnchoredScreenNumber]), @(_windowPositioner.isAnchoredToScreen), self);
         }
     }
     [self updateTouchBarIfNeeded:NO];
@@ -12412,13 +12267,12 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
 }
 
 - (void)moveToPreferredScreen {
-    if (_screenNumberFromFirstProfile == -2) {
+    if (_windowPositioner.screenNumberFromFirstProfile == -2) {
         // Return screen with cursor
         NSPoint cursor = [NSEvent mouseLocation];
         [[NSScreen screens] enumerateObjectsUsingBlock:^(NSScreen * _Nonnull screen, NSUInteger i, BOOL * _Nonnull stop) {
             if (NSPointInRect(cursor, screen.frame)) {
-                _isAnchoredToScreen = YES;
-                _anchoredScreenNumber = i;
+                [_windowPositioner setAnchoredScreenNumber:i];
                 DLog(@"Move window to screen %d %@", (int)i, NSStringFromRect(screen.frame));
                 *stop = YES;
             }

@@ -189,6 +189,7 @@
 #import "SessionView+Nullability.h"
 #import "SolidColorView.h"
 #import "TaskNotifier.h"
+#import "TemporaryNumberAllocator.h"
 #import "ToastWindowController.h"
 #import "TokenExecutorHelpers.h"
 #import "Trigger.h"
