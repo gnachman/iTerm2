@@ -387,14 +387,17 @@ typedef NS_ENUM(NSUInteger, iTermWindowUnitsTag) {
                              _rowsUnitsButton.selectedTag == iTermWindowUnitsTagScreenPercentage);
     switch ((iTermWindowType)_windowStyle.selectedTag) {
         case WINDOW_TYPE_NORMAL:
-        case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
-        case WINDOW_TYPE_LION_FULL_SCREEN:
         case WINDOW_TYPE_NO_TITLE_BAR:
         case WINDOW_TYPE_COMPACT:
+        case WINDOW_TYPE_CENTERED:
+            [self setObjectsFromDictionary:[self dictionaryToSaveWindowType:_windowStyle.selectedTag]];
+            break;
+
+        case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
+        case WINDOW_TYPE_LION_FULL_SCREEN:
         case WINDOW_TYPE_ACCESSORY:
         case WINDOW_TYPE_MAXIMIZED:
         case WINDOW_TYPE_COMPACT_MAXIMIZED:
-        case WINDOW_TYPE_CENTERED:
             [self setInteger:_windowStyle.selectedTag
                       forKey:KEY_WINDOW_TYPE];
             break;
@@ -458,22 +461,48 @@ typedef NS_ENUM(NSUInteger, iTermWindowUnitsTag) {
     }
     _columnsUnitsButton.hidden = YES;
     _rowsUnitsButton.hidden = YES;
-    const BOOL columnsIsCells = ((![self valueIsExplicitlySetForKey:KEY_WIDTH_PERCENTAGE] && (type == WINDOW_TYPE_LEFT_PERCENTAGE || type == WINDOW_TYPE_RIGHT_PERCENTAGE)) ||
+    const BOOL columnsIsCells = (![self valueIsExplicitlySetForKey:KEY_WIDTH_PERCENTAGE] ||
                                  [self doubleForKey:KEY_WIDTH_PERCENTAGE] < 0);
-    const BOOL rowsIsCells = ((![self valueIsExplicitlySetForKey:KEY_HEIGHT_PERCENTAGE] && (type == WINDOW_TYPE_TOP_PERCENTAGE || type == WINDOW_TYPE_BOTTOM_PERCENTAGE)) ||
+    const BOOL rowsIsCells = (![self valueIsExplicitlySetForKey:KEY_HEIGHT_PERCENTAGE] ||
                               [self doubleForKey:KEY_HEIGHT_PERCENTAGE] < 0);
 
     switch (type) {
         case WINDOW_TYPE_NORMAL:
         case WINDOW_TYPE_COMPACT:
-        case WINDOW_TYPE_ACCESSORY:
         case WINDOW_TYPE_CENTERED:
         case WINDOW_TYPE_NO_TITLE_BAR:
+            _columnsField.hidden = !columnsIsCells;
+            _rowsField.hidden = !rowsIsCells;
+            _percentageWidthField.hidden = columnsIsCells;
+            _percentageHeightField.hidden = rowsIsCells;
+
+            _columnsField.enabled = YES;
+            _rowsField.enabled = YES;
+            _percentageWidthField.enabled = YES;
+            _percentageHeightField.enabled = YES;
+
+            _columnsUnitsButton.hidden = NO;
+            _columnsUnitsButton.menu.itemArray[0].title = @"Columns";
+            _columnsUnitsButton.menu.itemArray[1].title = @"% of screen width";
+            [_columnsUnitsButton selectItemWithTag:columnsIsCells ? iTermWindowUnitsTagCells : iTermWindowUnitsTagScreenPercentage];
+
+            _rowsUnitsButton.hidden = NO;
+            _rowsUnitsButton.menu.itemArray[0].title = @"Rows";
+            _rowsUnitsButton.menu.itemArray[1].title = @"% of screen height";
+            [_rowsUnitsButton selectItemWithTag:rowsIsCells ? iTermWindowUnitsTagCells : iTermWindowUnitsTagScreenPercentage];
+
+            _widthLabel.hidden = YES;
+            _heightLabel.hidden = YES;
+
+            _byLabel.hidden = NO;
+            break;
+
+        case WINDOW_TYPE_ACCESSORY:
             _columnsField.enabled = YES;
             _columnsField.hidden = NO;
 
             _rowsField.enabled = YES;
-            _rowsField.hidden = NO;	
+            _rowsField.hidden = NO;
 
             _percentageWidthField.hidden = YES;
             _percentageHeightField.hidden = YES;
