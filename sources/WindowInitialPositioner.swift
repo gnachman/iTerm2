@@ -14,6 +14,9 @@ private let kWindowNameFormat = "iTerm Window %d"
 protocol WindowInitialPositionerDelegate: AnyObject {
     var windowForPositioner: (any NSWindow & PTYWindow)? { get }
     var windowType: iTermWindowType { get }
+    func canonicalize()
+    @objc(canonicalFrameForScreen:)
+    func canonicalFrame(screen: NSScreen) -> NSRect
 }
 
 @objc(iTermWindowInitialPositioner)
@@ -83,6 +86,7 @@ class WindowInitialPositioner: NSObject {
     /// Sets the anchored screen number. Use -1 to clear the anchor.
     @objc
     func setAnchoredScreenNumber(_ screenNumber: Int32) {
+        DLog("setAnchoredScreenNumber(\(screenNumber))")
         anchoredScreenNumber = screenNumber >= 0 ? screenNumber : nil
     }
 
@@ -92,15 +96,17 @@ class WindowInitialPositioner: NSObject {
     /// Called from iTermWindowImpl's makeKeyAndOrderFront:.
     @objc
     func windowWillShowInitial() {
-        DLog("windowWillShowInitial")
+        DLog("windowWillShowInitial: preferredOrigin=\(NSStringFromPoint(preferredOrigin)) anchoredScreenNumber=\(String(describing: anchoredScreenNumber)) screenNumberFromFirstProfile=\(screenNumberFromFirstProfile) disableAutoFrame=\(disableAutoFrame)")
 
         guard let window = delegate?.windowForPositioner else {
+            DLog("windowWillShowInitial: no window")
             return
         }
+        DLog("windowWillShowInitial: window.frame=\(NSStringFromRect(window.frame)) window.screenNumber=\(window.screenNumber)")
 
         // If it's a full or top-of-screen window with a screen number preference, always honor that.
-        if let _ = anchoredScreenNumber {
-            DLog("have screen preference is set")
+        if let anchoredScreen = anchoredScreenNumber {
+            DLog("windowWillShowInitial: have screen preference, anchoredScreenNumber=\(anchoredScreen)")
             var frame = window.frame
             frame.origin = preferredOrigin
             window.setFrame(frame, display: false)
@@ -108,6 +114,7 @@ class WindowInitialPositioner: NSObject {
 
         let numberOfTerminalWindows = iTermController.sharedInstance()?.terminals().count ?? 0
         let placement = iTermPreferences.unsignedInteger(forKey: kPreferenceKeyWindowPlacement)
+        DLog("windowWillShowInitial: numberOfTerminalWindows=\(numberOfTerminalWindows) placement=\(placement)")
 
         switch iTermWindowPlacement(rawValue: placement) {
         case .system:
@@ -147,11 +154,15 @@ class WindowInitialPositioner: NSObject {
     /// Saves the current window position to user defaults for later restoration.
     @objc
     func saveWindowPosition() {
-        guard let window = delegate?.windowForPositioner else { return }
+        guard let window = delegate?.windowForPositioner else {
+            DLog("saveWindowPosition: no window")
+            return
+        }
 
         var positions = savedWindowPositions
         var point = window.frame.origin
         point.y += window.frame.size.height
+        DLog("saveWindowPosition: uniqueNumber=\(uniqueNumber) point=\(NSStringFromPoint(point))")
         positions[String(uniqueNumber)] = NSStringFromPoint(point)
         UserDefaults.standard.set(positions, forKey: kPreferenceKeySavedWindowPositions)
     }
@@ -159,14 +170,19 @@ class WindowInitialPositioner: NSObject {
     /// Saves the window frame using the autosave system.
     @objc
     func saveFrame() {
-        guard let window = delegate?.windowForPositioner else { return }
+        guard let window = delegate?.windowForPositioner else {
+            DLog("saveFrame: no window")
+            return
+        }
         let name = String(format: kWindowNameFormat, uniqueNumber)
+        DLog("saveFrame: name=\(name) frame=\(NSStringFromRect(window.frame))")
         window.saveFrame(usingName: name)
     }
 
     /// Clears the screen anchor, allowing the window to move freely between screens.
     @objc
     func clearScreenAnchor() {
+        DLog("clearScreenAnchor")
         anchoredScreenNumber = nil
     }
 
@@ -179,9 +195,14 @@ class WindowInitialPositioner: NSObject {
     // MARK: - Private Methods
 
     private func loadSavedWindowPosition() {
-        guard let window = delegate?.windowForPositioner else { return }
+        DLog("loadSavedWindowPosition")
+        guard let window = delegate?.windowForPositioner else {
+            DLog("loadSavedWindowPosition: no window")
+            return
+        }
 
         let screenNumber = window.screenNumber
+        DLog("loadSavedWindowPosition: screenNumber=\(screenNumber) anchoredScreenNumber=\(String(describing: anchoredScreenNumber))")
         loadAutoSavePosition()
         if anchoredScreenNumber != nil && window.screenNumber != screenNumber {
             DLog("Move window to preferred origin because it moved to another screen.")
@@ -214,19 +235,25 @@ class WindowInitialPositioner: NSObject {
     }
 
     private func loadAutoSavePosition() {
+        DLog("loadAutoSavePosition")
+        guard let delegate else {
+            DLog("loadAutoSavePosition: No delegate")
+            return
+        }
         guard !disableAutoFrame else {
-            DLog("Auto-frame disabled.")
+            DLog("loadAutoSavePosition: Auto-frame disabled.")
             return
         }
 
-        guard let windowType = delegate?.windowType else { return }
+        let windowType = delegate.windowType
+        DLog("loadAutoSavePosition: windowType=\(windowType.rawValue)")
 
-        switch windowType {
+        let canonicalizeAfterPositioning = switch windowType {
         case .WINDOW_TYPE_NORMAL,
              .WINDOW_TYPE_NO_TITLE_BAR,
              .WINDOW_TYPE_COMPACT,
              .WINDOW_TYPE_ACCESSORY:
-            break
+            false
         case .WINDOW_TYPE_TRADITIONAL_FULL_SCREEN,
              .WINDOW_TYPE_LION_FULL_SCREEN,
              .WINDOW_TYPE_TOP_PERCENTAGE,
@@ -240,31 +267,57 @@ class WindowInitialPositioner: NSObject {
              .WINDOW_TYPE_RIGHT_CELLS,
              .WINDOW_TYPE_MAXIMIZED,
              .WINDOW_TYPE_COMPACT_MAXIMIZED:
-            DLog("Window not positionable")
-            return
+            true
         @unknown default:
+            false
+        }
+        DLog("loadAutoSavePosition: canonicalizeAfterPositioning=\(canonicalizeAfterPositioning)")
+        defer {
+            if canonicalizeAfterPositioning {
+                DLog("loadAutoSavePosition: calling canonicalize")
+                delegate.canonicalize()
+            }
+        }
+
+        guard let window = delegate.windowForPositioner else {
+            DLog("loadAutoSavePosition: no window")
             return
         }
 
-        DLog("Load auto-save position")
-        guard let window = delegate?.windowForPositioner else { return }
-
         var frame = window.frame
         let positions = savedWindowPositions
+        DLog("loadAutoSavePosition: uniqueNumber=\(uniqueNumber) positions=\(positions)")
         if let position = positions[String(uniqueNumber)] {
-            var point = NSPointFromString(position)
-            point.y -= window.frame.size.height
-            window.setFrameOrigin(point)
+            let point = NSPointFromString(position)
+            DLog("loadAutoSavePosition: found saved position \(NSStringFromPoint(point))")
+            if canonicalizeAfterPositioning, let screen = NSScreen(containingCoordinate: point) {
+                // Since the frame is canonicalizable all we need to do is put it on the right
+                // screen at the right size. Preserving the exact point is unneeded since it can
+                // be derived from the window type, initial size, and screen and might differ from
+                // the saved value (for example if screens have changed or the initial size is
+                // different than the window's size when its position was saved).
+                let canonicalFrame = delegate.canonicalFrame(screen: screen)
+                DLog("loadAutoSavePosition: using canonical frame \(NSStringFromRect(canonicalFrame)) on screen \(screen.localizedName)")
+                window.setFrame(canonicalFrame, display: false)
+            } else {
+                // This might not do anything if the frame's size is too big. Or it might decide
+                // to put it somewhere else if it would be clipped (or not! who knows! probably
+                // only ex-apple employees). This is a YOLO best effort.
+                DLog("loadAutoSavePosition: setting top-left point to \(NSStringFromPoint(point))")
+                window.setFrameTopLeftPoint(point)
+            }
             return
         }
 
         // Put it on the correct display
+        DLog("loadAutoSavePosition: no saved position, using preferredOrigin=\(NSStringFromPoint(preferredOrigin))")
         frame.origin = preferredOrigin
         window.setFrame(frame, display: false)
 
         // And then move it to a nicer spot.
+        DLog("loadAutoSavePosition: calling smartLayout")
         window.smartLayout()
 
-        DLog("Update frame to \(NSStringFromRect(frame))")
+        DLog("loadAutoSavePosition: final frame=\(NSStringFromRect(window.frame))")
     }
 }

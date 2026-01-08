@@ -119,3 +119,20 @@ extension NSRect {
         return result
     }
 }
+
+extension NSRect {
+    // Max is just outside the rect
+    init(min: NSPoint, max: NSPoint) {
+        self.init(origin: NSPoint(x: Swift.min(min.x, max.x),
+                                  y: Swift.min(min.y, max.y)),
+                  size: NSSize(width: abs(max.x - min.x),
+                               height: abs(max.y - min.y)))
+    }
+}
+
+extension NSRect {
+    func nearestPoint(to point: NSPoint) -> NSPoint {
+        NSPoint(x: point.x.clamped(to: minX...(maxX - 1)),
+                y: point.y.clamped(to: minY...(maxY - 1)))
+    }
+}

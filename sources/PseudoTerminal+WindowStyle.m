@@ -282,11 +282,11 @@ iTermWindowType iTermWindowTypeNormalized(iTermWindowType windowType) {
     }
 }
 
-- (void)changeToWindowType:(iTermWindowType)newWindowType {
+- (BOOL)changeToWindowType:(iTermWindowType)newWindowType {
     DLog(@"%@ %@", self, @(newWindowType));
     if (newWindowType == self.windowType) {
         DLog(@"Already that type");
-        return;
+        return NO;
     }
     // The general categories of window are:
     // Full screen
@@ -303,7 +303,7 @@ iTermWindowType iTermWindowTypeNormalized(iTermWindowType windowType) {
             DLog(@"Recursing");
             [self changeToWindowType:newWindowType];
         }];
-        return;
+        return YES;
     }
 
     // Because this is not a transition out of full screen, we must update the saved window type
@@ -343,7 +343,7 @@ iTermWindowType iTermWindowTypeNormalized(iTermWindowType windowType) {
                 self.window.movable = [self.class windowTypeIsMovable:newWindowType];
             }
             [self canonicalizeWindowFrame];
-            return;
+            return YES;
 
         case WINDOW_TYPE_CENTERED:
         case WINDOW_TYPE_COMPACT:
@@ -372,10 +372,10 @@ iTermWindowType iTermWindowTypeNormalized(iTermWindowType windowType) {
             DLog(@"full screen");
             if (self.anyFullScreen) {
                 DLog(@"Already full screen");
-                return;
+                return YES;
             }
             [self toggleFullScreenMode:nil];
-            return;
+            return YES;
 
         case WINDOW_TYPE_NO_TITLE_BAR:
             DLog(@"No title bar");
@@ -386,11 +386,12 @@ iTermWindowType iTermWindowTypeNormalized(iTermWindowType windowType) {
                 [self updateTabColors];
                 [self.contentView didChangeCompactness];
                 [self.contentView layoutSubviews];
-                return;
+                return YES;
             }
             self.window.movable = [self.class windowTypeIsMovable:newWindowType];
-            return;
+            return YES;
     }
+    return YES;
 }
 
 - (BOOL)replaceWindowWithWindowOfType:(iTermWindowType)newWindowType {

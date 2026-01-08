@@ -325,8 +325,8 @@ ITERM_WEAKLY_REFERENCEABLE
 
     double lowestCost = INFINITY;
     NSRect bestFrame = self.frame;
-    const CGFloat widthToScan = screenRect.size.width - self.frame.size.width;
-    const CGFloat heightToScan = screenRect.size.height - self.frame.size.height;
+    const CGFloat widthToScan = MAX(1, screenRect.size.width - self.frame.size.width);
+    const CGFloat heightToScan = MAX(1, screenRect.size.height - self.frame.size.height);
     const CGFloat stride = 50;
     const NSPoint screenCenter = NSMakePoint(NSMidX(screenRect), NSMidY(screenRect));
     const CGFloat maxDistance = sqrt(pow(screenRect.size.width, 2) + pow(screenRect.size.height, 2));
@@ -342,7 +342,7 @@ ITERM_WEAKLY_REFERENCEABLE
             CGFloat distanceFromScreenCenter = sqrt(pow(proposedCenter.x - screenCenter.x, 2) +
                                                     pow(proposedCenter.y - screenCenter.y, 2)) / maxDistance;
             const CGFloat cost = [self sumOfIntersectingAreaOfRect:proposedRect withRects:frames] + distanceFromScreenCenter;
-
+            DLog(@"Cost of %@ is %@", NSStringFromRect(proposedRect), @(cost));
             if (cost < lowestCost) {
                 lowestCost = cost;
                 bestFrame = proposedRect;
@@ -619,9 +619,9 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)setFrameOrigin:(NSPoint)point {
-    DLog(@"Set frame origin to %@", NSStringFromPoint(point));
+    DLog(@"Set frame origin to %@\n%@", NSStringFromPoint(point), [NSThread callStackSymbols]);
     [super setFrameOrigin:point];
-    DLog(@"Frame maxy=%@ now", @(NSMaxY(self.frame)));
+    DLog(@"Frame is now: %@", NSStringFromRect(self.frame));
 }
 
 #if ENABLE_COMPACT_WINDOW_HACK

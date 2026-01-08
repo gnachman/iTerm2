@@ -590,36 +590,6 @@ typedef NS_ENUM(int, iTermShouldHaveTitleSeparator) {
                                                           defaultScreen:[[self window] screen]];
     iTermPercentageSanitize(&percentage);
     _percentage = percentage;
-    switch (windowType) {
-        case WINDOW_TYPE_TOP_PERCENTAGE:
-        case WINDOW_TYPE_BOTTOM_PERCENTAGE:
-            DLog(@"Window type is %d with percentage %@", windowType, iTermPercentageDescription(_percentage));
-            smartLayout = NO;
-            break;
-
-        case WINDOW_TYPE_LEFT_PERCENTAGE:
-        case WINDOW_TYPE_RIGHT_PERCENTAGE:
-            DLog(@"Window type is %d with percentage %@", windowType, iTermPercentageDescription(_percentage));
-            smartLayout = NO;
-            break;
-
-        case WINDOW_TYPE_COMPACT_MAXIMIZED:
-        case WINDOW_TYPE_MAXIMIZED:
-        case WINDOW_TYPE_CENTERED:
-        case WINDOW_TYPE_TOP_CELLS:
-        case WINDOW_TYPE_BOTTOM_CELLS:
-        case WINDOW_TYPE_LEFT_CELLS:
-        case WINDOW_TYPE_RIGHT_CELLS:
-            PtyLog(@"Window type is %d so disable smart layout", windowType);
-            smartLayout = NO;
-        case WINDOW_TYPE_NO_TITLE_BAR:
-        case WINDOW_TYPE_LION_FULL_SCREEN:
-        case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
-        case WINDOW_TYPE_ACCESSORY:
-        case WINDOW_TYPE_COMPACT:
-        case WINDOW_TYPE_NORMAL:
-            break;
-    }
     if (windowType == WINDOW_TYPE_NORMAL) {
         // If you create a window with a minimize button and the menu bar is hidden then the
         // minimize button is disabled. Currently the only window type with a miniaturize button
@@ -4508,6 +4478,10 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     [self fitTabsToWindow];
 }
 
+- (void)canonicalize {
+    [self canonicalizeWindowFrame];
+}
+
 - (void)canonicalizeWindowFrame {
     PtyLog(@"canonicalizeWindowFrame %@\n%@", self, [NSThread callStackSymbols]);
     if (self.ptyWindow.it_isMovingScreen) {
@@ -4691,7 +4665,21 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     }
 }
 
-- (NSRect)canonicalFrameForScreen:(NSScreen *)screen windowFrame:(NSRect)frame preserveSize:(BOOL)preserveSize {
+- (NSRect)canonicalFrameForScreen:(NSScreen *)screen
+                      windowFrame:(NSRect)frame
+                     preserveSize:(BOOL)preserveSize {
+    return [self canonicalFrameForScreen:screen
+                             windowFrame:frame
+                            preserveSize:preserveSize
+                              percentage:_percentage
+                              windowType:self.windowType];
+}
+
+- (NSRect)canonicalFrameForScreen:(NSScreen *)screen
+                      windowFrame:(NSRect)frame
+                     preserveSize:(BOOL)preserveSize
+                       percentage:(iTermPercentage)percentage
+                       windowType:(iTermWindowType)windowType {
     PTYSession* session = [self currentSession];
     NSRect screenVisibleFrame = [self visibleFrameForScreen:screen];
     DLog(@"screenVisibleFrame is %@", NSStringFromRect(screenVisibleFrame));
@@ -4719,13 +4707,13 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
 
     iTermFrameCanonicalizer *canonicalizer =
     [[iTermFrameCanonicalizer alloc] initPreservingSize:preserveSize
-                                             windowType:self.windowType
+                                             windowType:windowType
                                      screenVisibleFrame:screenVisibleFrame
                    screenVisibleFrameIgnoringHiddenDock:screenVisibleFrameIgnoringHiddenDock
                                            initialFrame:frame
                                                cellSize:NSMakeSize(session.textview.charWidth,
                                                                    session.textview.lineHeight)
-                                             percentage:_percentage
+                                             percentage:percentage
                                          decorationSize:NSMakeSize(iTermScrollbarWidth(),
                                                                    decorationSize.height)
                                        windowSizeHelper:_windowSizeHelper
@@ -5725,16 +5713,20 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     }
     // Setting the percentage to 100% x (invalid) is not ideal but I don't want to make the UI more
     // cumbersome by prompting.
+    iTermPercentage oldPercentage = _percentage;
     _percentage.width = -1;
     _percentage.height = -1;
+    BOOL force = NO;
 
     switch ((iTermWindowType)menuItem.tag) {
         case WINDOW_TYPE_TOP_PERCENTAGE:
         case WINDOW_TYPE_BOTTOM_PERCENTAGE:
+            force = (oldPercentage.width != 100);
             _percentage.width = 100;
             break;
         case WINDOW_TYPE_LEFT_PERCENTAGE:
         case WINDOW_TYPE_RIGHT_PERCENTAGE:
+            force = (oldPercentage.height != 100);
             _percentage.height = 100;
             break;
         case WINDOW_TYPE_NORMAL:
@@ -5753,7 +5745,11 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
             break;
     }
 
-    [self changeToWindowType:(iTermWindowType)menuItem.tag];
+    const BOOL didChange = [self changeToWindowType:(iTermWindowType)menuItem.tag];
+    if (!didChange && force) {
+        // Ensure changing to a full-width/full-height frame does a resize.
+        [self canonicalizeWindowFrame];
+    }
     [[self currentTab] recheckBlur];
 }
 
@@ -5981,9 +5977,11 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     switch (self.windowType) {
         case WINDOW_TYPE_TOP_PERCENTAGE:
         case WINDOW_TYPE_BOTTOM_PERCENTAGE:
-            _percentage.width = 100 * frame.size.width / screenFrameForEdgeSpanningWindow.size.width;
-            if (_percentage.height >= 0) {
-                _percentage.height = 100 * frame.size.height / screenFrameForEdgeSpanningWindow.size.height;
+            if (!self.ptyWindow.it_isMovingScreen) {
+                _percentage.width = 100 * frame.size.width / screenFrameForEdgeSpanningWindow.size.width;
+                if (_percentage.height >= 0) {
+                    _percentage.height = 100 * frame.size.height / screenFrameForEdgeSpanningWindow.size.height;
+                }
             }
             // FALL THROUGH
         case WINDOW_TYPE_TOP_CELLS:
@@ -6000,10 +5998,12 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
 
         case WINDOW_TYPE_LEFT_PERCENTAGE:
         case WINDOW_TYPE_RIGHT_PERCENTAGE:
-            if (_percentage.width >= 0) {
-                _percentage.width = 100 * frame.size.width / screenFrameForEdgeSpanningWindow.size.width;
+            if (!self.ptyWindow.it_isMovingScreen) {
+                if (_percentage.width >= 0) {
+                    _percentage.width = 100 * frame.size.width / screenFrameForEdgeSpanningWindow.size.width;
+                }
+                _percentage.height = 100 * frame.size.height / screenFrameForEdgeSpanningWindow.size.height;
             }
-            _percentage.height = 100 * frame.size.height / screenFrameForEdgeSpanningWindow.size.height;
             // FALL THROUGH
         case WINDOW_TYPE_LEFT_CELLS:
         case WINDOW_TYPE_RIGHT_CELLS:
@@ -11267,7 +11267,47 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
         colorMenuItem.colorsView.currentColor = self.currentSession.tabColor;
         return self.currentSession != nil;
     } else if (item.action == @selector(setWindowStyle:)) {
-        item.state = (iTermWindowTypeNormalized(self.windowType) == item.tag) ? NSControlStateValueOn : NSControlStateValueOff;
+        iTermWindowType normalized = iTermWindowTypeNormalized(self.windowType);
+        // For backward compatibility the main menu still makes a distinction between full-width/height
+        // and non-full-width/height edge-attached windows. This tries to map between that legacy
+        // concept and the present interpretation, which is more flexible.
+        switch (normalized) {
+            case WINDOW_TYPE_TOP_CELLS:
+            case WINDOW_TYPE_TOP_PERCENTAGE:
+                if (round(_percentage.width) == 100.0) {
+                    normalized = WINDOW_TYPE_TOP_PERCENTAGE;
+                } else {
+                    normalized = WINDOW_TYPE_TOP_CELLS;
+                }
+                break;
+            case WINDOW_TYPE_BOTTOM_CELLS:
+            case WINDOW_TYPE_BOTTOM_PERCENTAGE:
+                if (round(_percentage.width) == 100.0) {
+                    normalized = WINDOW_TYPE_BOTTOM_PERCENTAGE;
+                } else {
+                    normalized = WINDOW_TYPE_BOTTOM_CELLS;
+                }
+                break;
+            case WINDOW_TYPE_LEFT_CELLS:
+            case WINDOW_TYPE_LEFT_PERCENTAGE:
+                if (round(_percentage.height) == 100.0) {
+                    normalized =WINDOW_TYPE_LEFT_PERCENTAGE;
+                } else {
+                    normalized = WINDOW_TYPE_LEFT_CELLS;
+                }
+                break;
+            case WINDOW_TYPE_RIGHT_CELLS:
+            case WINDOW_TYPE_RIGHT_PERCENTAGE:
+                if (round(_percentage.height) == 100.0) {
+                    normalized = WINDOW_TYPE_RIGHT_PERCENTAGE;
+                } else {
+                    normalized = WINDOW_TYPE_RIGHT_CELLS;
+                }
+                break;
+            default:
+                break;
+        }
+        item.state = (normalized == item.tag) ? NSControlStateValueOn : NSControlStateValueOff;
         return YES;
     } else if (item.action == @selector(enableAllTriggers:)) {
         return [[self currentSession] anyTriggerCanBeEnabled];

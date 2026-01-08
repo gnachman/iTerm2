@@ -45,3 +45,11 @@ extension NSPoint {
         return sqrt(pow(x - other.x, 2) + pow(y - other.y, 2))
     }
 }
+
+func min(_ lhs: NSPoint, _ rhs: NSPoint) -> NSPoint {
+    return NSPoint(x: Swift.min(lhs.x, rhs.x), y: Swift.min(lhs.y, rhs.y))
+}
+
+func max(_ lhs: NSPoint, _ rhs: NSPoint) -> NSPoint {
+    return NSPoint(x: Swift.max(lhs.x, rhs.x), y: Swift.max(lhs.y, rhs.y))
+}

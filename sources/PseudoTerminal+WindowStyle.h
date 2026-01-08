@@ -26,7 +26,7 @@ iTermWindowType iTermWindowTypeNormalized(iTermWindowType windowType);
 
 + (BOOL)windowTypeHasFullSizeContentView:(iTermWindowType)windowType;
 
-- (void)changeToWindowType:(iTermWindowType)newWindowType;
+- (BOOL)changeToWindowType:(iTermWindowType)newWindowType;
 - (void)setWindowType:(iTermWindowType)windowType;
 - (NSRect)traditionalFullScreenFrameForScreen:(NSScreen *)screen;
 - (iTermWindowType)savedWindowType;
