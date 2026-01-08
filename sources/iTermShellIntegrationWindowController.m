@@ -18,14 +18,16 @@
 
 NSString *iTermShellIntegrationShellString(iTermShellIntegrationShell shell) {
     switch (shell) {
-        case iTermShellIntegrationShellZsh:
-            return @"zsh";
-        case iTermShellIntegrationShellTcsh:
-            return @"tcsh";
         case iTermShellIntegrationShellBash:
             return @"bash";
         case iTermShellIntegrationShellFish:
             return @"fish";
+        case iTermShellIntegrationShellTcsh:
+            return @"tcsh";
+        case iTermShellIntegrationShellXonsh:
+            return @"xonsh";
+        case iTermShellIntegrationShellZsh:
+            return @"zsh";
         case iTermShellIntegrationShellUnknown:
             return @"an unsupported shell";
     }
@@ -399,6 +401,10 @@ typedef NS_ENUM(NSUInteger, iTermShellIntegrationInstallationState) {
             [strings addObject:@"mkdir -p ~/.config/fish\n"];
             script = @"~/.config/fish/config.fish";
             break;
+        case iTermShellIntegrationShellXonsh:
+            [strings addObject:@"mkdir -p ~/.config/xonsh/rc.d/\n"];
+            script = @"~/.config/xonsh/rc.d/iterm2.xsh";
+            break;
         case iTermShellIntegrationShellUnknown:
             assert(NO);
     }
@@ -572,7 +578,8 @@ typedef NS_ENUM(NSUInteger, iTermShellIntegrationInstallationState) {
     NSDictionary<NSString *, NSNumber *> *map = @{ @"tcsh": @(iTermShellIntegrationShellTcsh),
                                                    @"bash": @(iTermShellIntegrationShellBash),
                                                    @"zsh": @(iTermShellIntegrationShellZsh),
-                                                   @"fish": @(iTermShellIntegrationShellFish) };
+                                                   @"fish": @(iTermShellIntegrationShellFish),
+                                                   @"xonsh": @(iTermShellIntegrationShellXonsh)};
     NSNumber *number = map[shell ?: @""];
     self.dotdir = dotdir;
     if (number) {
