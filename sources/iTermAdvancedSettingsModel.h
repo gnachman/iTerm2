@@ -400,6 +400,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (BOOL)showWindowTitleWhenTabBarInvisible;
 + (BOOL)showYellowMarkForJobStoppedBySignal;
 + (BOOL)silentUserNotifications;
++ (BOOL)simpleNotifications;
 + (double)slowFrameRate;
 + (int)slowPasteBytesPerCall;
 + (double)slowPasteDelayBetweenCalls;
