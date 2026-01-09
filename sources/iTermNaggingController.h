@@ -12,6 +12,7 @@ NS_ASSUME_NONNULL_BEGIN
 @class NSWindow;
 
 extern NSString *const kTurnOffBracketedPasteOnHostChangeUserDefaultsKey;
+extern NSString *const kRestoreIconAndWindowNameOnHostChangeUserDefaultsKey;
 extern NSString *const kTurnOffBracketedPasteOnHostChangeAnnouncementIdentifier;
 
 @protocol iTermNaggingControllerDelegate<NSObject>
@@ -41,6 +42,7 @@ extern NSString *const kTurnOffBracketedPasteOnHostChangeAnnouncementIdentifier;
 - (void)naggingControllerSetBackgroundImageToFileWithName:(nullable NSString *)filename;
 - (void)naggingControllerDisableMouseReportingPermanently:(BOOL)permanently;
 - (void)naggingControllerDisableBracketedPasteMode;
+- (void)naggingControllerRestoreIconNameTo:(NSString *)iconName windowName:(NSString *)windowName;
 - (void)naggingControllerCloseSession;
 - (void)naggingControllerRepairInitialWorkingDirectoryOfSessionWithGUID:(NSString *)guid
                                                   inArrangementWithName:(NSString *)arrangementName;
@@ -84,6 +86,7 @@ extern NSString *const kTurnOffBracketedPasteOnHostChangeAnnouncementIdentifier;
 - (void)didDetectMouseReportingFrustration;
 
 - (void)offerToTurnOffBracketedPasteOnHostChange;
+- (void)offerToRestoreIconName:(NSString *)iconName windowName:(NSString *)windowName;
 
 - (BOOL)shouldAskAboutClearingScrollbackHistory;
 - (void)askAboutClearingScrollbackHistory;

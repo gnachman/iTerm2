@@ -15,4 +15,6 @@ class PTYSessionHostState: NSObject {
     
     @objc var remoteHost: VT100RemoteHostReading?
     @objc var keyMappingMode: iTermKeyMappingMode = .standard
+    @objc var iconName: String?
+    @objc var windowName: String?
 }

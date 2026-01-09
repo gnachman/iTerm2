@@ -15205,6 +15205,8 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
         PTYSessionHostState *state = [[[PTYSessionHostState alloc] init] autorelease];
         state.keyMappingMode = _keyMappingMode;
         state.remoteHost = self.currentHost;
+        state.iconName = self.variablesScope.terminalIconName;
+        state.windowName = self.variablesScope.windowName;
         [_hostStack addObject:state];
         return;
     }
@@ -15214,6 +15216,10 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     // TODO: Add key reporting flags
     if (_keyMappingMode != state.keyMappingMode) {
         [self setKeyMappingMode:state.keyMappingMode];
+    }
+    if (![(self.variablesScope.terminalIconName ?: @"") isEqual:(state.iconName ?: @"")] ||
+        ![(self.variablesScope.windowName ?: @"") isEqual:(state.windowName ?: @"")]) {
+        [self maybeOfferToRestoreIconName:state.iconName windowName:state.windowName];
     }
 }
 
@@ -15362,6 +15368,10 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 
 - (void)offerToTurnOffBracketedPasteOnHostChange {
     [self.naggingController offerToTurnOffBracketedPasteOnHostChange];
+}
+
+- (void)offerToRestoreIconName:(NSString *)iconName windowName:(NSString *)windowName {
+    [self.naggingController offerToRestoreIconName:iconName windowName:windowName];
 }
 
 - (void)tryAutoProfileSwitchWithHostname:(NSString *)hostname
@@ -20371,6 +20381,11 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
                                              id<VT100ScreenDelegate> delegate) {
         terminal.bracketedPasteMode = NO;
     }];
+}
+
+- (void)naggingControllerRestoreIconNameTo:(NSString *)iconName windowName:(NSString *)windowName {
+    [self screenSetWindowTitle:windowName];
+    [self screenSetIconName:iconName];
 }
 
 - (void)naggingControllerCloseSession {
