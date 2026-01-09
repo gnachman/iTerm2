@@ -25,9 +25,11 @@ static NSString *const iTermNaggingControllerTmuxSupplementaryPlaneErrorIdentifi
 static NSString *const iTermNaggingControllerAskAboutAlternateMouseScrollIdentifier = @"AskAboutAlternateMouseScroll";
 static NSString *const iTermNaggingControllerAskAboutMouseReportingFrustrationIdentifier = @"AskAboutMouseReportingFrustration";
 NSString *const kTurnOffBracketedPasteOnHostChangeAnnouncementIdentifier = @"TurnOffBracketedPasteOnHostChange";
+NSString *const kRestoreIconAndWindowNameOnHostChangeAnnouncementIdentifier = @"RestoreIconAndWindowName";
 static NSString *const iTermNaggingControllerAskAboutClearingScrollbackHistoryIdentifier = @"ClearScrollbackHistory";
 static NSString *const iTermNaggingControllerWarnAboutSecureKeyboardInputWithOpenCommand = @"WarnAboutSecureKeyboardInputWithOpenCommand";
 NSString *const kTurnOffBracketedPasteOnHostChangeUserDefaultsKey = @"NoSyncTurnOffBracketedPasteOnHostChange";
+NSString *const kRestoreIconAndWindowNameOnHostChangeUserDefaultsKey = @"NoSyncRestoreIconAndWindowNameOnHostChange";
 static NSString *const iTermNaggingControllerAskAboutChangingProfileIdentifier = @"AskAboutChangingProfile";
 static NSString *const iTermNaggingControllerTmuxWindowsShouldCloseAfterDetach = @"TmuxWindowsShouldCloseAfterDetach";
 static NSString *const kTurnOffSlowTriggersOfferUserDefaultsKey = @"kTurnOffSlowTriggersOfferUserDefaultsKey";
@@ -468,6 +470,41 @@ static NSString *const iTermNaggingControllerArrangementTextReplacements = @"Tex
                                                    target:nil
                                                     style:iTermOpenStyleTab
                                                    window:self.delegate.naggingControllerWindow];
+                break;
+        }
+    }];
+}
+
+- (void)offerToRestoreIconName:(NSString *)iconName windowName:(NSString *)windowName {
+    NSString *title;
+    title = @"Automatically restore the tab and window title when an ssh session ends?";
+
+    [self.delegate naggingControllerShowMessage:title
+                                     isQuestion:YES
+                                      important:YES
+                                     identifier:kRestoreIconAndWindowNameOnHostChangeAnnouncementIdentifier
+                                        options:@[ @"_Yes", @"Always", @"Never" ]
+                                     completion:^(int selection) {
+        switch (selection) {
+            case -2:  // Dismiss programmatically
+                break;
+
+            case -1: // No
+                break;
+
+            case 0: // Yes
+                [self.delegate naggingControllerRestoreIconNameTo:iconName windowName:windowName];
+                break;
+
+            case 1: // Always
+                [[NSUserDefaults standardUserDefaults] setBool:YES
+                                                        forKey:kRestoreIconAndWindowNameOnHostChangeUserDefaultsKey];
+                [self.delegate naggingControllerRestoreIconNameTo:iconName windowName:windowName];
+                break;
+
+            case 2: // Never
+                [[NSUserDefaults standardUserDefaults] setBool:NO
+                                                        forKey:kRestoreIconAndWindowNameOnHostChangeUserDefaultsKey];
                 break;
         }
     }];

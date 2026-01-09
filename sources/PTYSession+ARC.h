@@ -40,6 +40,7 @@ NS_ASSUME_NONNULL_BEGIN
                       metadata:(iTermImmutableMetadata)metadata
           lineBufferGeneration:(long long)lineBufferGeneration;
 - (void)maybeTurnOffPasteBracketing;
+- (void)maybeOfferToRestoreIconName:(NSString *)iconName windowName:(NSString *)windowName;
 - (id<iTermPopupWindowHosting> _Nullable)popupHost;
 
 #pragma mark - AITerm

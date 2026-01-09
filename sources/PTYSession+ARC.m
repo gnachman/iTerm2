@@ -44,6 +44,7 @@ extern NSString *const SESSION_ARRANGEMENT_SERVER_DICT;
 @interface PTYSession(Private)
 @property(nonatomic, retain) iTermExpectation *pasteBracketingOopsieExpectation;
 - (void)offerToTurnOffBracketedPasteOnHostChange;
+- (void)offerToRestoreIconName:(NSString *)iconName windowName:(NSString *)windowName;
 @end
 
 @implementation PTYSession (ARC)
@@ -227,6 +228,18 @@ extern NSString *const SESSION_ARRANGEMENT_SERVER_DICT;
         [self offerToTurnOffBracketedPasteOnHostChange];
     }
  }
+
+- (void)maybeOfferToRestoreIconName:(NSString *)iconName windowName:(NSString *)windowName {
+    if (![iTermProfilePreferences boolForKey:KEY_ALLOW_TITLE_SETTING inProfile:self.profile]) {
+        return;
+    }
+    NSNumber *number = [[NSUserDefaults standardUserDefaults] objectForKey:kRestoreIconAndWindowNameOnHostChangeUserDefaultsKey];
+    if (number.boolValue) {
+        [self naggingControllerRestoreIconNameTo:iconName windowName:windowName];
+    } else if (!number) {
+        [self offerToRestoreIconName:iconName windowName:windowName];
+    }
+}
 
 #pragma mark - iTermPopupWindowPresenter
 
