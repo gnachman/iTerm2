@@ -2725,6 +2725,8 @@ BOOL iTermDecodeKittyUnicodePlaceholder(const screen_char_t *c,
         .placementID = placementID,
         .runLength = state->runLength
     };
+    DLog(@"Decoded kitty unicode placeholder: imageID=%u (0x%x) placementID=%u row=%d col=%d runLength=%d",
+         imageID, imageID, placementID, coord.y, coord.x, state->runLength);
     return YES;
 }
 
@@ -2923,19 +2925,26 @@ BOOL iTermDecodeKittyUnicodePlaceholder(const screen_char_t *c,
 }
 
 - (void)drawKittyImagesInRange:(iTermSignedRange)zIndexRange virtualOffset:(CGFloat)virtualOffset {
+    DLog(@"drawKittyImagesInRange: zIndexRange=[%ld, %ld) virtualOffset=%f draws.count=%lu",
+         (long)zIndexRange.minValue, (long)zIndexRange.halfOpenUpperBound, virtualOffset, (unsigned long)_kittyImageDraws.count);
     [_kittyImageDraws enumerateObjectsUsingBlock:^(iTermKittyImageDraw * _Nonnull draw, NSUInteger idx, BOOL * _Nonnull stop) {
         if (draw.virtual) {
             // These are drawn in unicode placeholders.
+            DLog(@"  draw[%lu]: skipping virtual draw imageID=%u", (unsigned long)idx, draw.imageID);
             return;
         }
         if (!iTermSignedRangeContainsValue(zIndexRange, draw.zIndex)) {
+            DLog(@"  draw[%lu]: skipping, zIndex=%d not in range", (unsigned long)idx, draw.zIndex);
             return;
         }
+        DLog(@"  draw[%lu]: drawing imageID=%u (0x%x) zIndex=%d", (unsigned long)idx, draw.imageID, draw.imageID, draw.zIndex);
         [self drawKittyImage:draw virtualOffset:virtualOffset];
     }];
 }
 
 - (void)drawKittyImage:(iTermKittyImageDraw *)draw virtualOffset:(CGFloat)virtualOffset {
+    DLog(@"drawKittyImage: imageID=%u (0x%x) destFrame=%@ sourceFrame=%@",
+         draw.imageID, draw.imageID, NSStringFromRect(draw.destinationFrame), NSStringFromRect(draw.sourceFrame));
     NSRect destination = draw.destinationFrame;
     if (self.isRetina) {
         destination.origin.x /= 2;
@@ -2945,6 +2954,8 @@ BOOL iTermDecodeKittyUnicodePlaceholder(const screen_char_t *c,
     }
     destination.origin.y -= self.cellSize.height * self.totalScrollbackOverflow;
     if (!NSIntersectsRect(destination, _scrollViewDocumentVisibleRect)) {
+        DLog(@"drawKittyImage: skipping, destination %@ does not intersect visible rect %@",
+             NSStringFromRect(destination), NSStringFromRect(_scrollViewDocumentVisibleRect));
         return;
     }
 
@@ -2956,6 +2967,7 @@ BOOL iTermDecodeKittyUnicodePlaceholder(const screen_char_t *c,
     destination.origin = NSZeroPoint;
 
     NSImage *image = draw.image.images[draw.index];
+    DLog(@"drawKittyImage: drawing image %@ in rect %@", image, NSStringFromRect(destination));
     [image drawInRect:destination
              fromRect:draw.sourceFrame
             operation:NSCompositingOperationSourceOver
@@ -3021,18 +3033,28 @@ iTermKittyPlaceholderDrawInstructions iTermKittyPlaceholderDrawInstructionsCreat
 iTermKittyImageDraw *iTermFindKittyImageDrawForVirtualPlaceholder(NSArray<iTermKittyImageDraw *> *draws,
                                                                   unsigned int placementID,
                                                                   unsigned int imageID) {
+    DLog(@"Looking for virtual placeholder: placementID=%u imageID=%u (0x%x) in %lu draws",
+         placementID, imageID, imageID, (unsigned long)draws.count);
+    for (iTermKittyImageDraw *element in draws) {
+        DLog(@"  Available draw: placementID=%u imageID=%u (0x%x) placementSize=%@ virtual=%@",
+             element.placementID, element.imageID, element.imageID,
+             VT100GridSizeDescription(element.placementSize),
+             element.virtual ? @"YES" : @"NO");
+    }
     iTermKittyImageDraw *draw = nil;
     if (placementID != 0) {
         // Look up by placement ID when specified
         draw = [draws objectPassingTest:^BOOL(iTermKittyImageDraw *element, NSUInteger index, BOOL *stop) {
             return element.placementID == placementID;
         }];
+        DLog(@"Looked up by placementID, found: %@", draw);
     }
     if (!draw) {
         // Look up placement by image ID. Must include a size.
         draw = [draws objectPassingTest:^BOOL(iTermKittyImageDraw *element, NSUInteger index, BOOL *stop) {
             return element.imageID == imageID && element.placementSize.width > 0 && element.placementSize.height > 0;
         }];
+        DLog(@"Looked up by imageID, found: %@", draw);
     }
     return draw;
 }
@@ -3043,16 +3065,21 @@ iTermKittyImageDraw *iTermFindKittyImageDrawForVirtualPlaceholder(NSArray<iTermK
                                      imageID:(unsigned int)imageID
                                  placementID:(unsigned int)placementID
                                virtualOffset:(CGFloat)virtualOffset {
+    DLog(@"drawKittyImageInPlaceholderWithCoord: sourceCoord=(%d,%d) destCoord=(%d,%d) point=%@ imageID=%u (0x%x) placementID=%u",
+         sourceCoord.x, sourceCoord.y, destCoord.x, destCoord.y, NSStringFromPoint(point), imageID, imageID, placementID);
     // Look up the placement
     iTermKittyImageDraw *draw = iTermFindKittyImageDrawForVirtualPlaceholder(_kittyImageDraws,
                                                                              placementID,
                                                                              imageID);
     if (!draw) {
+        DLog(@"drawKittyImageInPlaceholderWithCoord: NO DRAW FOUND for imageID=%u placementID=%u", imageID, placementID);
         return;
     }
     if (draw.placementSize.width <= 0 || draw.placementSize.height <= 0) {
+        DLog(@"drawKittyImageInPlaceholderWithCoord: invalid placementSize %dx%d", draw.placementSize.width, draw.placementSize.height);
         return;
     }
+    DLog(@"drawKittyImageInPlaceholderWithCoord: found draw=%@ placementSize=%dx%d", draw, draw.placementSize.width, draw.placementSize.height);
     NSImage *image = draw.image.images[0];
     iTermKittyPlaceholderDrawInstructions instructions =
         iTermKittyPlaceholderDrawInstructionsCreate(draw,
@@ -3063,6 +3090,8 @@ iTermKittyImageDraw *iTermFindKittyImageDrawForVirtualPlaceholder(NSArray<iTermK
                                                     imageID,
                                                     placementID,
                                                     virtualOffset);
+    DLog(@"drawKittyImageInPlaceholderWithCoord: instructions sourceRect=%@ destRect=%@ translation=%@",
+         NSStringFromRect(instructions.sourceRect), NSStringFromRect(instructions.destRect), NSStringFromPoint(instructions.translation));
     [NSGraphicsContext saveGraphicsState];
     NSAffineTransform *transform = [NSAffineTransform transform];
     [transform translateXBy:instructions.translation.x yBy:instructions.translation.y];

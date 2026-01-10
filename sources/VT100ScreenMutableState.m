@@ -6604,7 +6604,9 @@ launchCoprocessWithCommand:(NSString *)command
 }
 
 - (void)kittyImageControllerPlacementsDidChange {
+    DLog(@"kittyImageControllerPlacementsDidChange called");
     self.kittyImageDraws = [_kittyImageController draws];
+    DLog(@"kittyImageControllerPlacementsDidChange: stored %lu draws", (unsigned long)self.kittyImageDraws.count);
     [self setNeedsRedraw];
 }
 

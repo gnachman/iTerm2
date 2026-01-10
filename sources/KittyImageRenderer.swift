@@ -45,11 +45,16 @@ class KittyImageRendererTransientState: iTermMetalCellRendererTransientState {
 
     @objc(addDraw:)
     func add(draw: iTermKittyImageDraw) {
+        DLog("KittyImageRendererTransientState.add(draw:): imageID=\(draw.imageID) (0x\(String(draw.imageID, radix: 16))) placementID=\(draw.placementID) virtual=\(draw.virtual)")
         draws.append(draw)
     }
 
     @objc(addRuns:)
     func add(runs: [KittyImageRun]) {
+        DLog("KittyImageRendererTransientState.add(runs:): adding \(runs.count) runs")
+        for (i, run) in runs.enumerated() {
+            DLog("  run[\(i)]: imageID=\(run.draw.imageID) (0x\(String(run.draw.imageID, radix: 16))) sourceCoord=\(VT100GridCoordDescription(run.sourceCoord)) destCoord=\(VT100GridCoordDescription(run.destCoord)) length=\(run.length)")
+        }
         self.runs.append(contentsOf: runs)
     }
 
@@ -61,23 +66,29 @@ class KittyImageRendererTransientState: iTermMetalCellRendererTransientState {
     }
 
     fileprivate func enumerateOperations(zRange: Range<Int>, closure: (Operation) -> ()) {
+        DLog("enumerateOperations: zRange=\(zRange) draws.count=\(draws.count) runs.count=\(runs.count)")
         let screenOrigin = scaledVisibleRect.origin.addingY(-configuration.extraMargins.top)
-        for draw in draws {
+        for (i, draw) in draws.enumerated() {
             let texture = texture(for: draw)
             guard let texture else {
+                DLog("enumerateOperations: draw[\(i)] imageID=\(draw.imageID) - no texture, skipping")
                 continue
             }
             guard zRange.contains(Int(clamping: draw.zIndex)) else {
+                DLog("enumerateOperations: draw[\(i)] imageID=\(draw.imageID) - zIndex \(draw.zIndex) not in range, skipping")
                 continue
             }
             if draw.virtual {
+                DLog("enumerateOperations: draw[\(i)] imageID=\(draw.imageID) - virtual, skipping (handled via runs)")
                 continue
             }
             var shiftedDestinationFrame = draw.destinationFrame
             shiftedDestinationFrame.shiftY(by: cellConfiguration.cellSize.height * CGFloat(-totalScrollbackOverflow))
             guard shiftedDestinationFrame.intersects(scaledVisibleRect) else {
+                DLog("enumerateOperations: draw[\(i)] imageID=\(draw.imageID) - not visible, skipping")
                 continue
             }
+            DLog("enumerateOperations: draw[\(i)] imageID=\(draw.imageID) (0x\(String(draw.imageID, radix: 16))) - rendering")
             let destinationFrame = shiftedDestinationFrame
                 .translatedToOrigin(screenOrigin)
                 .flipped(in: CGFloat(configuration.viewportSize.y))
@@ -92,15 +103,19 @@ class KittyImageRendererTransientState: iTermMetalCellRendererTransientState {
         }
 
         // Now do unicode placeholders.
+        DLog("enumerateOperations: processing \(runs.count) unicode placeholder runs")
         let cellSizePoints = cellConfiguration.cellSize / configuration.scale
-        for run in runs {
+        for (i, run) in runs.enumerated() {
             guard let draw = draw(for: run) else {
+                DLog("enumerateOperations: run[\(i)] - NO DRAW FOUND for imageID=\(run.draw.imageID) placementID=\(run.draw.placementID)")
                 continue
             }
             let texture = texture(for: draw)
             guard let texture else {
+                DLog("enumerateOperations: run[\(i)] imageID=\(draw.imageID) - no texture, skipping")
                 continue
             }
+            DLog("enumerateOperations: run[\(i)] imageID=\(draw.imageID) (0x\(String(draw.imageID, radix: 16))) sourceCoord=\(VT100GridCoordDescription(run.sourceCoord)) destCoord=\(VT100GridCoordDescription(run.destCoord)) - rendering")
             let instructions =
             iTermKittyPlaceholderDrawInstructionsCreate(
                 draw,
