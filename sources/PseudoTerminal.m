@@ -8413,7 +8413,9 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
 
     // After it is captured, re-enable metal everywhere.
     __block NSTimer *timer = nil;
-    timer = [NSTimer scheduledTimerWithTimeInterval:1 repeats:YES block:^(NSTimer * _Nonnull timer) {
+    [tokens retain];
+    [session retain];
+    timer = [[NSTimer scheduledTimerWithTimeInterval:1 repeats:YES block:^(NSTimer *t) {
         if (session.view.driver.captureDebugInfoForNextFrame) {
             DLog(@"Still waiting for frame capture");
             return;
@@ -8423,8 +8425,11 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
             [s drawFrameAndRemoveTemporarilyDisablementOfMetalForToken:tokens[guid]];
         }
         [timer invalidate];
+        [timer release];
         timer = nil;
-    }];
+        [tokens release];
+        [session release];
+    }] retain];
 }
 
 - (IBAction)zoomOut:(id)sender {
