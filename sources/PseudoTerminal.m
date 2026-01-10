@@ -8295,11 +8295,50 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
         [self turnOnMetalCaptureInInfoPlist];
         return;
     }
-    self.currentSession.overrideGlobalDisableMetalWhenIdleSetting = YES;
-    [self.currentTab updateUseMetal];
-    self.currentSession.view.driver.captureDebugInfoForNextFrame = YES;
-    self.currentSession.overrideGlobalDisableMetalWhenIdleSetting = NO;
-    [self.currentSession.view setNeedsDisplay:YES];
+    [self captureMetalFrameInSession:self.currentSession];
+}
+
+- (void)captureMetalFrameInSession:(PTYSession *)session {
+    PTYTab *tab = [self tabForSession:session];
+
+    // Disable metal in all other sessions
+    NSMutableDictionary<NSString *, id> *tokens = [NSMutableDictionary dictionary];
+    for (PseudoTerminal *term in [[iTermController sharedInstance] terminals]) {
+        for (PTYSession *s in term.allSessions) {
+            if (s == session) {
+                continue;
+            }
+            if (s.useMetal) {
+                tokens[s.guid] = [s temporarilyDisableMetal];
+            }
+        }
+    }
+
+    // Sleep for a second to drain the metal queue.
+    [NSThread sleepForTimeInterval:1];
+
+    // Capture the next frame the driver draws
+    session.view.driver.captureDebugInfoForNextFrame = YES;
+
+    // If the session was idle, make it draw anyway.
+    session.overrideGlobalDisableMetalWhenIdleSetting = YES;
+    [tab updateUseMetal];
+    session.overrideGlobalDisableMetalWhenIdleSetting = NO;
+
+    // After it is captured, re-enable metal everywhere.
+    __block NSTimer *timer = nil;
+    timer = [NSTimer scheduledTimerWithTimeInterval:1 repeats:YES block:^(NSTimer * _Nonnull timer) {
+        if (session.view.driver.captureDebugInfoForNextFrame) {
+            DLog(@"Still waiting for frame capture");
+            return;
+        }
+        for (NSString *guid in tokens) {
+            PTYSession *s = [[iTermController sharedInstance] sessionWithGUID:guid];
+            [s drawFrameAndRemoveTemporarilyDisablementOfMetalForToken:tokens[guid]];
+        }
+        [timer invalidate];
+        timer = nil;
+    }];
 }
 
 - (IBAction)zoomOut:(id)sender {
