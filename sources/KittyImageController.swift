@@ -285,8 +285,9 @@ class KittyImageController: NSObject {
         }
     }
 
-    @objc 
+    @objc
     func clear() {
+        DLog("clear(): removing all images and \(placements.count) placements")
         _images.removeAll()
         accumulator = nil
         let hadPlacements = !placements.isEmpty
@@ -431,10 +432,13 @@ class KittyImageController: NSObject {
 
     private func transmissionDidFinish(image: Image, query: Bool) {
         if !query && image.metadata.identifier != 0 {
+            DLog("transmissionDidFinish: storing image with identifier=\(image.metadata.identifier) (0x\(String(image.metadata.identifier, radix: 16))) cost=\(image.cost)")
             handleEvictions(_images.insert(key: UInt64(image.metadata.identifier), value: image, cost: image.cost))
         } else {
+            DLog("transmissionDidFinish: storing image with lastImageKey (query=\(query), identifier=\(image.metadata.identifier))")
             handleEvictions(_images.insert(key: lastImageKey, value: image, cost: image.cost))
         }
+        DLog("transmissionDidFinish: total images in cache: \(_images.keys.count)")
     }
 
     private func handleEvictions(_ kvps: [(UInt64, Image)]) {
@@ -723,31 +727,39 @@ class KittyImageController: NSObject {
     // MARK: - Display
 
     func executeDisplay(_ command: KittyImageCommand.ImageDisplay) {
+        DLog("executeDisplay: identifier=\(command.identifier) (0x\(String(command.identifier, radix: 16))) placement=\(command.placement) createUnicodePlaceholder=\(command.createUnicodePlaceholder) rows=\(command.r) cols=\(command.c)")
         if command.identifier != 0 {
             // The spec alludes to multiple images having the same ID but doesn't say what to do
             // when you try to display that ID ("Delete newest image with the specified number…")
             if let image = _images[UInt64(command.identifier)] {
+                DLog("executeDisplay: found image for identifier=\(command.identifier)")
                 respondToDisplay(error: executeDisplay(command, image: image),
                                  identifier: command.identifier,
                                  placement: command.placement,
                                  q: command.q)
             } else {
+                DLog("executeDisplay: NO IMAGE FOUND for identifier=\(command.identifier)")
                 respondToDisplay(error: "ENOENT:Put command refers to non-existent image with id: \(command.identifier) and number: 0",
                                  identifier: command.identifier,
                                  placement: command.placement,
                                  q: command.q)
             }
         } else if let lastImage = _images[lastImageKey] {
+            DLog("executeDisplay: using lastImage (identifier=\(lastImage.metadata.identifier))")
             respondToDisplay(error: executeDisplay(command, image: lastImage),
                              identifier: command.identifier,
                              placement: command.placement,
                              q: command.q)
+        } else {
+            DLog("executeDisplay: no identifier specified and no lastImage available")
         }
     }
 
     private func executeDisplay(_ command: KittyImageCommand.ImageDisplay,
                                 image: Image) -> String? {
+        DLog("executeDisplay(image): imageID=\(image.metadata.identifier) (0x\(String(image.metadata.identifier, radix: 16))) placementID=\(command.placement) virtual=\(command.createUnicodePlaceholder == .createPlaceholder)")
         guard let delegate else {
+            DLog("executeDisplay(image): no delegate, returning error")
             return "Client unavailable"
         }
         let pixelOffset: NSPoint? =
@@ -800,9 +812,16 @@ class KittyImageController: NSObject {
             return "ENOPARENT"
         }
         if command.placement != 0 {
+            let removedCount = placements.count
             placements.removeAll { $0.placementId == command.placement }
+            let actuallyRemoved = removedCount - placements.count
+            if actuallyRemoved > 0 {
+                DLog("addPlacement: removed \(actuallyRemoved) existing placements with placementId=\(command.placement)")
+            }
         }
+        DLog("addPlacement: appending placement imageID=\(placement.image.metadata.identifier) (0x\(String(placement.image.metadata.identifier, radix: 16))) placementID=\(placement.placementId) virtual=\(placement.virtual) rows=\(String(describing: placement.rows)) columns=\(String(describing: placement.columns))")
         placements.append(placement)
+        DLog("addPlacement: total placements now \(placements.count)")
         delegate.kittyImageControllerPlacementsDidChange()
         switch command.cursorMovementPolicy {
         case .doNotMoveCursor:
@@ -905,6 +924,7 @@ class KittyImageController: NSObject {
         guard let delegate else {
             return
         }
+        DLog("executeDeleteImage: d='\(command.d)' imageId=\(command.imageId) placementId=\(command.placementId) current placements=\(placements.count)")
         let count = placements.count
         switch command.d {
         case "":
@@ -912,11 +932,13 @@ class KittyImageController: NSObject {
             // I don't know if the spec means all images or all images in the mutable area. And I
             // don't know if dangling placements are allowed.
             // I'll make the simplifying assumption that it is all images and placements.
+            DLog("executeDeleteImage: case '' - deleting ALL images and placements")
             _images.removeAll()
             placements = []
 
         case "a", "A":
             // Delete all placements visible on screen
+            DLog("executeDeleteImage: case 'a/A' - deleting all placements")
             removePlacements(where: { _ in true })
 
         case "i", "I":
@@ -1022,9 +1044,11 @@ class KittyImageController: NSObject {
 
         default:
             // Undocumented
+            DLog("executeDeleteImage: unrecognized delete command '\(command.d)'")
             break
         }
 
+        DLog("executeDeleteImage: finished, placements changed from \(count) to \(placements.count)")
         if placements.count != count {
             delegate.kittyImageControllerPlacementsDidChange()
         }
@@ -1047,13 +1071,20 @@ class KittyImageController: NSObject {
             }
             current = next
         }
+        DLog("removePlacements: removing \(closure.count) placements at indexes \(closure)")
+        for i in closure {
+            let p = placements[i]
+            DLog("  removing: imageID=\(p.image.metadata.identifier) (0x\(String(p.image.metadata.identifier, radix: 16))) placementID=\(p.placementId) virtual=\(p.virtual)")
+        }
         placements.remove(at: closure)
+        DLog("removePlacements: total placements now \(placements.count)")
     }
 
-    private func removeImage(_ id: UInt64, placements: Bool, notify: Bool) {
+    private func removeImage(_ id: UInt64, placements removePlacements: Bool, notify: Bool) {
+        DLog("removeImage: id=\(id) (0x\(String(id, radix: 16))) removePlacements=\(removePlacements) notify=\(notify)")
         _images.delete(forKey: id)
-        if placements {
-            removePlacements { placement in
+        if removePlacements {
+            self.removePlacements { placement in
                 placement.image.metadata.identifier == id
             }
             if notify {
@@ -1065,11 +1096,17 @@ class KittyImageController: NSObject {
     @objc(draws)
     func draws() -> [iTermKittyImageDraw] {
         guard let delegate else {
+            DLog("draws(): no delegate, returning empty array")
             return []
         }
         let cellSize = delegate.kittyImageControllerCellSize()
-        return placements.filter { candidate in
+        DLog("draws(): cellSize=\(cellSize), placements.count=\(placements.count)")
+        for (index, placement) in placements.enumerated() {
+            DLog("draws(): placement[\(index)]: imageID=\(placement.image.metadata.identifier) (0x\(String(placement.image.metadata.identifier, radix: 16))) placementID=\(placement.placementId) virtual=\(placement.virtual) rows=\(String(describing: placement.rows)) columns=\(String(describing: placement.columns))")
+        }
+        let result = placements.filter { candidate in
             guard candidate.pixelRect(cellSize: cellSize, finder: finder(placementId:)) != nil else {
+                DLog("draws(): filtering out placement with nil pixelRect: imageID=\(candidate.image.metadata.identifier)")
                 return false
             }
             return true
@@ -1078,6 +1115,11 @@ class KittyImageController: NSObject {
         }.sorted { lhs, rhs in
             lhs.zIndex < rhs.zIndex
         }
+        DLog("draws(): returning \(result.count) draws")
+        for (index, draw) in result.enumerated() {
+            DLog("draws(): result[\(index)]: \(draw)")
+        }
+        return result
     }
 }
 

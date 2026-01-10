@@ -222,6 +222,10 @@ typedef struct {
 
 - (void)loadImagesFromTextView:(PTYTextView *)textView {
     _kittyImageDraws = [textView.dataSource.kittyImageDraws copy];
+    DLog(@"loadImagesFromTextView: loaded %lu kitty image draws", (unsigned long)_kittyImageDraws.count);
+    for (iTermKittyImageDraw *draw in _kittyImageDraws) {
+        DLog(@"  draw: %@", draw);
+    }
 }
 
 - (void)loadSettingsWithDrawingHelper:(iTermTextDrawingHelper *)drawingHelper
@@ -1196,13 +1200,17 @@ NS_INLINE void iTermGlyphKeyEmitImage(const screen_char_t *const line,
     if (line[logicalIndex].virtualPlaceholder) {
         iTermKittyUnicodePlaceholderInfo info;
         if (iTermDecodeKittyUnicodePlaceholder(&line[logicalIndex], ea, kittyPlaceholderStatePtr, &info)) {
+            DLog(@"Metal: decoded virtual placeholder at logicalIndex=%d row=%d: imageID=%u (0x%x) placementID=%u sourceRow=%d sourceCol=%d runLength=%d",
+                 logicalIndex, row, info.imageID, info.imageID, info.placementID, info.row, info.column, info.runLength);
             if (info.runLength > 1) {
                 kittyImageRuns.lastObject.length += 1;
+                DLog(@"Metal: extending existing run, new length=%d", (int)kittyImageRuns.lastObject.length);
             } else {
                 iTermKittyImageDraw *draw = iTermFindKittyImageDrawForVirtualPlaceholder(kittyImageDraws,
                                                                                          info.placementID,
                                                                                          info.imageID);
                 if (draw) {
+                    DLog(@"Metal: found draw for virtual placeholder: %@", draw);
                     iTermKittyImageRun *run =
                     [[iTermKittyImageRun alloc] initWithDraw:draw
                                                  sourceCoord:VT100GridCoordMake(info.column,
@@ -1210,8 +1218,13 @@ NS_INLINE void iTermGlyphKeyEmitImage(const screen_char_t *const line,
                                                    destCoord:VT100GridCoordMake(logicalIndex, row)
                                                       length:1];
                     [kittyImageRuns addObject:run];
+                } else {
+                    DLog(@"Metal: NO DRAW FOUND for virtual placeholder imageID=%u (0x%x) placementID=%u",
+                         info.imageID, info.imageID, info.placementID);
                 }
             }
+        } else {
+            DLog(@"Metal: failed to decode virtual placeholder at logicalIndex=%d row=%d", logicalIndex, row);
         }
     } else {
         if (line[logicalIndex].code == *previousImageCodePtr &&
