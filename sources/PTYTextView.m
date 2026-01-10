@@ -1604,7 +1604,7 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
 
 - (iTermTextDrawingHelper *)drawingHelper {
     _drawingHelper.showStripes = (_showStripesWhenBroadcastingInput &&
-                                  [_delegate textViewSessionIsBroadcastingInput]);
+                                  [_delegate textViewSessionIsBroadcastingInput:YES]);
     _drawingHelper.cursorBlinking = [self isCursorBlinking];
     _drawingHelper.excess = [self excess];
     _drawingHelper.selection = _selection;
@@ -1858,8 +1858,13 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
     [_indicatorsHelper setIndicator:kiTermIndicatorMaximized
                             visible:[_delegate textViewIsMaximized]
                      darkBackground:isDark];
+    const BOOL receivesBroadcasts = [_delegate textViewSessionIsBroadcastingInput:YES];
+    const BOOL sendsBroadcasts = [_delegate textViewSessionIsBroadcastingInput:NO];
     [_indicatorsHelper setIndicator:kItermIndicatorBroadcastInput
-                            visible:[_delegate textViewSessionIsBroadcastingInput]
+                            visible:sendsBroadcasts
+                     darkBackground:isDark];
+    [_indicatorsHelper setIndicator:kItermIndicatorBroadcastInputReceiver
+                            visible:receivesBroadcasts && !sendsBroadcasts
                      darkBackground:isDark];
     [_indicatorsHelper setIndicator:kiTermIndicatorCoprocess
                             visible:[_delegate textViewHasCoprocess]

@@ -183,7 +183,9 @@ extension iTermApplicationDelegate {
                 text: "Adds or removes this session from the set of sessions in this window that have broadcast enabled. When you type in a session with broadcast enabled, the keystrokes are sent to all other sessions in the same window that have broadcast enabled."),
             Tip(identifier: "Broadcast Input.Show Background Pattern Indicator",
                 imageName: "BroadcastStripesMenuTip",
-                text: "When enabled, prominent red lines are drawn in the background to indicate that text you type is being broadcast to other sessions.")
+                text: "When enabled, prominent red lines are drawn in the background to indicate that text you type is being broadcast to other sessions."),
+            Tip(identifier: "Broadcast Input.Current Session is Broadcast Source",
+                text: "When enabled, typing in this session is broadcast to other sessions in the same broadcast domain. Typing in other sessions sends input only to those sessions.")
         ]
         var index = [String: NSMenuItem]()
         func makeIndex(menu: NSMenu) {

@@ -17,6 +17,8 @@ NS_ASSUME_NONNULL_BEGIN
 - (ObjectType _Nullable)anyObjectPassingTest:(BOOL (^)(ObjectType element))block;
 - (NSSet<ObjectType> *)setByIntersectingWithSet:(NSSet<ObjectType> *)other;
 - (NSSet<ObjectType> *)setByUnioningWithSet:(NSSet<ObjectType> *)other;
+- (NSSet<ObjectType> *)it_setByRemovingObject:(ObjectType)other;
+- (NSSet<ObjectType> *)it_setBySubtractingSet:(NSSet<ObjectType> *)other;
 
 @end
 

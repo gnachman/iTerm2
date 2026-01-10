@@ -303,6 +303,12 @@
                                                 <action selector="toggleUseBackgroundPatternIndicator:" target="201" id="1414"/>
                                             </connections>
                                         </menuItem>
+                                        <menuItem title="Current Session is Broadcast Source" identifier="Broadcast Input.Current Session is Broadcast Source" id="QhX-mz-L6a">
+                                            <modifierMask key="keyEquivalentModifierMask"/>
+                                            <connections>
+                                                <action selector="toggleBroadcastSource:" target="-1" id="uaW-C6-mTO"/>
+                                            </connections>
+                                        </menuItem>
                                     </items>
                                 </menu>
                             </menuItem>

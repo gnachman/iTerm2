@@ -3595,7 +3595,7 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
         }];
     }
     // check if we want to send this input to all the sessions
-    if (canBroadcast && [[_delegate realParentWindow] broadcastInputToSession:self]) {
+    if (canBroadcast && [[_delegate realParentWindow] broadcastInputToSession:self fromSessionWithGUID:self.guid]) {
         // Ask the parent window to write to the other tasks.
         DLog(@"Passing input to window to broadcast it. Won't send in this call.");
         [[_delegate realParentWindow] sendInputToAllSessions:string
@@ -3831,7 +3831,7 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
     NSStringEncoding encoding = forceEncoding ? optionalEncoding : _screen.terminalEncoding;
     if (self.tmuxMode == TMUX_CLIENT || _conductor.handlesKeystrokes || _connectingSSH) {
         [self setBell:NO];
-        if (canBroadcast && [[_delegate realParentWindow] broadcastInputToSession:self]) {
+        if (canBroadcast && [[_delegate realParentWindow] broadcastInputToSession:self fromSessionWithGUID:self.guid]) {
             [[_delegate realParentWindow] sendInputToAllSessions:string
                                                         encoding:optionalEncoding
                                                    forceEncoding:forceEncoding];
@@ -11822,9 +11822,15 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     return [_delegate sessionIsActiveInTab:self];
 }
 
-- (BOOL)textViewSessionIsBroadcastingInput
-{
-    return [[_delegate realParentWindow] broadcastInputToSession:self];
+- (BOOL)textViewSessionIsBroadcastingInput:(BOOL)asReceiver {
+    const BOOL belongsToDomain = [[_delegate realParentWindow] broadcastInputToSession:self fromSessionWithGUID:nil];
+    const BOOL isSender = [[_delegate realParentWindow] broadcastInputToSession:self fromSessionWithGUID:self.guid];
+    if (asReceiver) {
+        // We will receive what is broadcast
+        return belongsToDomain;
+    }
+    // We will send and receive.
+    return belongsToDomain && isSender;
 }
 
 - (BOOL)textViewIsMaximized {

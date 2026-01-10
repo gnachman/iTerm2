@@ -20,6 +20,7 @@ NSString *const kiTermIndicatorBell = @"kiTermIndicatorBell";
 NSString *const kiTermIndicatorWrapToTop = @"kiTermIndicatorWrapToTop";
 NSString *const kiTermIndicatorWrapToBottom = @"kiTermIndicatorWrapToBottom";
 NSString *const kItermIndicatorBroadcastInput = @"kItermIndicatorBroadcastInput";
+NSString *const kItermIndicatorBroadcastInputReceiver = @"kItermIndicatorBroadcastInputReceiver";
 NSString *const kiTermIndicatorMaximized = @"kiTermIndicatorMaximized";
 NSString *const kiTermIndicatorCoprocess = @"kiTermIndicatorCoprocess";
 NSString *const kiTermIndicatorAlert = @"kiTermIndicatorAlert";
@@ -92,7 +93,8 @@ CGFloat kiTermIndicatorStandardHeight = 20;
             kiTermIndicatorBell: SFSymbolGetString(SFSymbolBell),
             kiTermIndicatorWrapToTop: SFSymbolGetString(SFSymbolArrowCounterclockwise),
             kiTermIndicatorWrapToBottom: SFSymbolGetString(SFSymbolArrowClockwise),
-            kItermIndicatorBroadcastInput: SFSymbolGetString(SFSymbolDotRadiowavesRight),
+            kItermIndicatorBroadcastInput: SFSymbolGetString(SFSymbolDotRadiowavesLeftAndRight),  // sends and receives (default, or for source)
+            kItermIndicatorBroadcastInputReceiver: SFSymbolGetString(SFSymbolDotRadiowavesRight),  // receives only (rare, only for non-sources)
             kiTermIndicatorMaximized: maximizedSymbol,
             kiTermIndicatorCoprocess: SFSymbolGetString(SFSymbolRectangle2Swap),
             kiTermIndicatorAlert: SFSymbolGetString(SFSymbolEye),
@@ -294,6 +296,7 @@ CGFloat kiTermIndicatorStandardHeight = 20;
 + (NSArray *)sequentialIndicatorIdentifiers {
     return @[ kiTermIndicatorMaximized,
               kItermIndicatorBroadcastInput,
+              kItermIndicatorBroadcastInputReceiver,
               kiTermIndicatorCoprocess,
               kiTermIndicatorAlert,
               kiTermIndicatorAllOutputSuppressed,
@@ -343,6 +346,7 @@ CGFloat kiTermIndicatorStandardHeight = 20;
     // NOTE: These messages are interpreted as markdown.
     NSDictionary<NSString *, NSString *> *messages = @{
         kItermIndicatorBroadcastInput: @"Keyboard input gets broadcast to other sessions.",
+        kItermIndicatorBroadcastInputReceiver: @"Keyboard input from another session gets broadcast to this one, but this session is not an input source for broadcasting (anything you type here stays here).",
         kiTermIndicatorMaximized: @"This is a maximized split pane.",
         kiTermIndicatorCoprocess: @"A coprocess is running.",
         kiTermIndicatorAlert: @"Will alert on next mark.",

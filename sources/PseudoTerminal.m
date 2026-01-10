@@ -99,6 +99,7 @@
 #import "NSResponder+iTerm.h"
 #import "NSScreen+iTerm.h"
 #import "NSScroller+iTerm.h"
+#import "NSSet+iTerm.h"
 #import "NSView+iTerm.h"
 #import "NSView+RecursiveDescription.h"
 #import "NSWindow+iTerm.h"
@@ -2681,8 +2682,9 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 }
 
-- (BOOL)broadcastInputToSession:(PTYSession *)session {
-    return [_broadcastInputHelper shouldBroadcastToSessionWithID:session.guid];
+- (BOOL)broadcastInputToSession:(PTYSession *)session fromSessionWithGUID:(NSString *)sender {
+    return [_broadcastInputHelper shouldBroadcastToSessionWithID:session.guid
+                                             fromSessionWithGUID:sender];
 }
 
 - (BOOL)broadcastInputHelper:(iTermBroadcastInputHelper *)helper tabWithSessionIsBroadcasting:(NSString *)sessionID {
@@ -9859,10 +9861,10 @@ typedef struct {
         [[aSession view] setDimmed:NO];
     } else if (aSession == [[self tabForSession:aSession] activeSession]) {
         [[aSession view] setDimmed:NO];
-    } else if (![self broadcastInputToSession:aSession]) {
+    } else if (![self broadcastInputToSession:aSession fromSessionWithGUID:self.currentSession.guid]) {
         // Session is not the active session and we're not broadcasting to it.
         [[aSession view] setDimmed:YES];
-    } else if ([self broadcastInputToSession:[self currentSession]]) {
+    } else if ([self broadcastInputToSession:[self currentSession] fromSessionWithGUID:self.currentSession.guid]) {
         // Session is not active, we are broadcasting to it, and the current
         // session is also broadcasting.
         [[aSession view] setDimmed:NO];
@@ -11159,6 +11161,14 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
         item.state = (_broadcastInputHelper.broadcastMode == BROADCAST_TO_ALL_PANES) ? NSControlStateValueOn : NSControlStateValueOff;
     } else if (item.action == @selector(disableBroadcasting:)) {
         item.state = (_broadcastInputHelper.broadcastMode == BROADCAST_OFF) ? NSControlStateValueOn : NSControlStateValueOff;
+    } else if (item.action == @selector(toggleBroadcastSource:)) {
+        if (!self.currentSession.exited && [_broadcastInputHelper shouldBroadcastToSessionWithID:self.currentSession.guid
+                                                                             fromSessionWithGUID:nil]) {
+            item.state = [_broadcastInputHelper.sources containsObject:self.currentSession.guid] ? NSControlStateValueOn : NSControlStateValueOff;
+            item.enabled = YES;
+        } else {
+            item.enabled = NO;
+        }
     } else if ([item action] == @selector(runCoprocess:)) {
         if (self.currentSession.isBrowserSession) {
             return NO;
@@ -11450,6 +11460,23 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
                                                         object:self
                                                       userInfo:nil];
     [self setWindowTitle];
+}
+
+- (IBAction)toggleBroadcastSource:(id)sender {
+    NSString *session = self.currentSession.guid;
+
+    // Start by removing every session in this domain from broadcast sources.
+    NSSet<NSString *> *sources = _broadcastInputHelper.sources;
+    const BOOL wasSender = [sources containsObject:session];
+    NSSet<NSString *> *domainMembers = [_broadcastInputHelper domainContainingSession:session];
+    sources = [sources it_setBySubtractingSet:domainMembers];
+
+    if (!wasSender) {
+        // Make this session the sender.
+        sources = [sources setByAddingObject:self.currentSession.guid];
+    }
+
+    _broadcastInputHelper.sources = sources;
 }
 
 - (IBAction)disableBroadcasting:(id)sender {
@@ -12917,6 +12944,22 @@ backgroundColor:(NSColor *)backgroundColor {
 - (NSArray<NSString *> *)broadcastInputHelperSessionsInCurrentTab:(iTermBroadcastInputHelper *)helper
                                                     includeExited:(BOOL)includeExited {
     return [self.currentTab.sessions mapWithBlock:^id(PTYSession *session) {
+        if (!includeExited && session.exited) {
+            return nil;
+        }
+        return session.guid;
+    }];
+}
+
+- (NSArray<NSString *> *)broadcastInputHelper:(iTermBroadcastInputHelper *)helper
+                     sessionsInTabWithSession:(NSString *)guid
+                                includeExited:(BOOL)includeExited {
+    PTYTab *tab = [[self tabs] objectPassingTest:^BOOL(PTYTab *tab, NSUInteger index, BOOL *stop) {
+        return [tab.sessions anyWithBlock:^BOOL(PTYSession *session) {
+            return [session.guid isEqual:guid];
+        }];
+    }];
+    return [tab.sessions mapWithBlock:^id _Nullable(PTYSession *session) {
         if (!includeExited && session.exited) {
             return nil;
         }

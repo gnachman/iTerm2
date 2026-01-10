@@ -14,6 +14,7 @@ extern NSString *const kiTermIndicatorWrapToBottom;
 
 extern NSString *const kiTermIndicatorMaximized;
 extern NSString *const kItermIndicatorBroadcastInput;
+extern NSString *const kItermIndicatorBroadcastInputReceiver;
 extern NSString *const kiTermIndicatorCoprocess;
 extern NSString *const kiTermIndicatorAlert;
 extern NSString *const kiTermIndicatorAllOutputSuppressed;

@@ -25,6 +25,9 @@ typedef NS_ENUM(NSInteger, BroadcastMode) {
 
 - (NSArray<NSString *> *)broadcastInputHelperSessionsInCurrentTab:(iTermBroadcastInputHelper *)helper
                                                     includeExited:(BOOL)includeExited;
+- (NSArray<NSString *> *)broadcastInputHelper:(iTermBroadcastInputHelper *)helper
+                     sessionsInTabWithSession:(NSString *)session
+                                includeExited:(BOOL)includeExited;
 - (NSArray<NSString *> *)broadcastInputHelperSessionsInAllTabs:(iTermBroadcastInputHelper *)helper
                                                  includeExited:(BOOL)includeExited;
 - (NSString *)broadcastInputHelperCurrentSession:(iTermBroadcastInputHelper *)helper;
@@ -42,14 +45,24 @@ typedef NS_ENUM(NSInteger, BroadcastMode) {
 
 @property (nonatomic, weak) id<iTermBroadcastInputHelperDelegate> delegate;
 
+// GUID of broadcast sources. If nonnil, typing into other sessions won't broadcast.
+// If nil, typing into any session broadcasts to others in its domain. This is a set because you
+// could have multiple domains.
+@property (nullable, nonatomic, copy) NSSet<NSString *> *sources;
+
 // How input should be broadcast (or not).
 @property (nonatomic) BroadcastMode broadcastMode;
 @property (nonatomic, copy) NSSet<NSSet<NSString *> *> *broadcastDomains;
 
 - (void)toggleSession:(NSString *)sessionID;
 
-- (BOOL)shouldBroadcastToSessionWithID:(NSString *)sessionID;
+// If sender is nil then assume it can broadcast. Otherwise this will return NO if sessionID has
+// a broadcast source that isn't sender.
+- (BOOL)shouldBroadcastToSessionWithID:(NSString *)sessionID
+                   fromSessionWithGUID:(NSString * _Nullable)sender;
+
 - (NSSet<NSString *> *)currentDomain;
+- (NSSet<NSString *> *)domainContainingSession:(NSString *)session;
 
 @end
 

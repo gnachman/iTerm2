@@ -26,6 +26,7 @@ NSString *const iTermBroadcastDomainsDidChangeNotification = @"iTermBroadcastDom
     self = [super init];
     if (self) {
         _broadcastDomains = [NSSet set];
+        _sources = [NSSet set];
     }
     return self;
 }
@@ -58,7 +59,7 @@ NSString *const iTermBroadcastDomainsDidChangeNotification = @"iTermBroadcastDom
         case BROADCAST_OFF:
             _broadcastDomains = [NSSet set];
             break;
-            
+
         case BROADCAST_CUSTOM:
             break;
     }
@@ -119,16 +120,16 @@ NSString *const iTermBroadcastDomainsDidChangeNotification = @"iTermBroadcastDom
     switch ([self broadcastMode]) {
         case BROADCAST_OFF:
             return [NSSet set];
-            
+
         case BROADCAST_TO_ALL_PANES:
             return [NSSet setWithArray:[self.delegate broadcastInputHelperSessionsInCurrentTab:self
                                                                                  includeExited:NO]];
-            
+
         case BROADCAST_TO_ALL_TABS:
             return [NSSet setWithArray:[self.delegate broadcastInputHelperSessionsInAllTabs:self
                                                                               includeExited:NO]];
             break;
-            
+
         case BROADCAST_CUSTOM: {
             NSString *currentSession = [self.delegate broadcastInputHelperCurrentSession:self];
             NSSet<NSString *> *domain = [_broadcastDomains anyObjectPassingTest:^BOOL(NSSet<NSString *> * _Nonnull set) {
@@ -266,7 +267,16 @@ NSString *const iTermBroadcastDomainsDidChangeNotification = @"iTermBroadcastDom
     }
 }
 
-- (BOOL)shouldBroadcastToSessionWithID:(NSString *)sessionID {
+- (BOOL)shouldBroadcastToSessionWithID:(NSString *)sessionID
+                   fromSessionWithGUID:(NSString *)sender {
+    NSSet<NSString *> *domain = [self domainContainingSession:sessionID];
+    if ([self.sources intersectsSet:domain] && sender != nil) {
+        // This domain has a broadcast source.
+        if (![self.sources containsObject:sender]) {
+            // This sender is not the broadcast source.
+            return NO;
+        }
+    }
     DLog(@"shouldBroadcastToSessionWithID:%@", sessionID);
     switch (_broadcastMode) {
         case BROADCAST_OFF:
@@ -285,6 +295,29 @@ NSString *const iTermBroadcastDomainsDidChangeNotification = @"iTermBroadcastDom
                 return [domain containsObject:sessionID];
             }] != nil;
     }
+}
+
+- (NSSet<NSString *> *)domainContainingSession:(NSString *)session {
+    switch (_broadcastMode) {
+        case BROADCAST_OFF:
+            return nil;
+        case BROADCAST_TO_ALL_TABS:
+            return [self allSessions];
+        case BROADCAST_TO_ALL_PANES: {
+            if (![self.delegate broadcastInputHelper:self tabWithSessionIsBroadcasting:session]) {
+                return nil;
+            }
+            return [NSSet setWithArray:[self.delegate broadcastInputHelper:self
+                                                  sessionsInTabWithSession:session
+                                                             includeExited:YES]];
+        }
+        case BROADCAST_CUSTOM: {
+            return [_broadcastDomains anyObjectPassingTest:^BOOL(NSSet<NSString *> *domain) {
+                return [domain containsObject:session];
+            }];
+        }
+    }
+    assert(NO);
 }
 
 - (NSSet<NSString *> *)currentDomain {

@@ -279,7 +279,7 @@ static NSString *const kDiffScriptPath = @"/tmp/diffs";
     return NO;
 }
 
-- (BOOL)textViewSessionIsBroadcastingInput {
+- (BOOL)textViewSessionIsBroadcastingInput:(BOOL)asReceiver {
     return NO;
 }
 

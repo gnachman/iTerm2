@@ -128,7 +128,7 @@ extern const CGFloat PTYTextViewMarginClickGraceWidth;
 - (void)textViewDidResignFirstResponder;
 - (void)refresh;
 - (BOOL)textViewIsActiveSession;
-- (BOOL)textViewSessionIsBroadcastingInput;
+- (BOOL)textViewSessionIsBroadcastingInput:(BOOL)asReceiver;
 - (BOOL)textViewIsMaximized;
 - (BOOL)textViewTabHasMaximizedPanel;
 - (void)textViewWillNeedUpdateForBlink;

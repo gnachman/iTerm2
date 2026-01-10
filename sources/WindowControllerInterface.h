@@ -338,7 +338,7 @@
 #pragma mark - Broadcast
 
 // Indicates if a session participates in input broadcasting.
-- (BOOL)broadcastInputToSession:(PTYSession *)session;
+- (BOOL)broadcastInputToSession:(PTYSession *)session fromSessionWithGUID:(NSString *)sender;
 
 // Toggles broadcasting to a single session.
 - (void)toggleBroadcastingInputToSession:(PTYSession *)session;

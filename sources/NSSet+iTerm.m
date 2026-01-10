@@ -69,9 +69,28 @@
 }
 
 - (NSSet *)setByUnioningWithSet:(NSSet *)other {
+    if (!other.count) {
+        return self;
+    }
     NSMutableSet *u = [self mutableCopy];
     [u unionSet:other];
     return u;
 }
+
+- (NSSet *)it_setByRemovingObject:(id)other {
+    NSMutableSet *u = [self mutableCopy];
+    [u removeObject:other];
+    return u;
+}
+
+- (NSSet *)it_setBySubtractingSet:(NSSet *)other {
+    if (!other.count) {
+        return self;
+    }
+    NSMutableSet *difference = [self mutableCopy];
+    [difference minusSet:other];
+    return difference;
+}
+
 
 @end
