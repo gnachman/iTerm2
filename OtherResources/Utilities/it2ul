@@ -41,8 +41,10 @@ function decode() {
     BASE64ARG=-d
   elif [[ "$VERSION" =~ GNU ]]; then
     BASE64ARG=-di
-  else
+  elif [[ $(uname) == Darwin ]]; then
     BASE64ARG=-D
+  else
+    BASE64ARG=-d
   fi
 
   base64 "$BASE64ARG" <<< "$1"

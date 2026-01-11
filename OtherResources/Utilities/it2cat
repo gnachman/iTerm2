@@ -46,8 +46,10 @@ function b64_decode() {
         BASE64ARG=-d
     elif [[ $IT2CAT_BASE64_VERSION =~ GNU ]]; then
         BASE64ARG=-di
-    else
+    elif [[ $(uname) == Darwin ]]; then
         BASE64ARG=-D
+    else
+        BASE64ARG=-d
     fi
     base64 $BASE64ARG
 }
