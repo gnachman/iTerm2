@@ -141,8 +141,9 @@ enum {
     IBOutlet NSButton *_lionStyleFullscreen;
 
     // Open tmux windows in [windows, tabs]
-    IBOutlet NSPopUpButton *_openTmuxWindows;
-    IBOutlet NSTextField *_openTmuxWindowsLabel;
+    IBOutlet NSButton *_openTmuxWindowsAsTabsInAttachingWindow;
+    IBOutlet NSTextField *_whenAttachingTmuxLabel;
+    IBOutlet NSPopUpButton *_openUnrecognizedTmuxWindowsIn;
 
     // Hide the tmux client session
     IBOutlet NSButton *_autoHideTmuxClientSession;
@@ -655,12 +656,49 @@ enum {
             relatedView:nil
                    type:kPreferenceInfoTypeCheckbox];
 
-    info = [self defineControl:_openTmuxWindows
-                           key:kPreferenceKeyOpenTmuxWindowsIn
-                   relatedView:_openTmuxWindowsLabel
+    info = [self defineControl:_openTmuxWindowsAsTabsInAttachingWindow
+                           key:kPreferenceKeyOpenTmuxWindowsAsTabsInAttachingWindow
+                   relatedView:nil
+                          type:kPreferenceInfoTypeCheckbox];
+    info.syntheticGetter = ^id{
+        const iTermOpenTmuxWindowsMode mode = (iTermOpenTmuxWindowsMode)[iTermPreferences unsignedIntegerForKey:kPreferenceKeyOpenTmuxWindowsIn];
+        return @(mode == kOpenTmuxWindowsAsNativeTabsInExistingWindow);
+    };
+    info.syntheticSetter = ^(id newValue) {
+        __strong __typeof(self) strongSelf = weakSelf;
+        if ([NSNumber castFrom:newValue].boolValue) {
+            [iTermPreferences setUnsignedInteger:kOpenTmuxWindowsAsNativeTabsInExistingWindow
+                                          forKey:kPreferenceKeyOpenTmuxWindowsIn];
+        } else if (strongSelf) {
+            [iTermPreferences setUnsignedInteger:strongSelf->_openUnrecognizedTmuxWindowsIn.selectedTag
+                                          forKey:kPreferenceKeyOpenTmuxWindowsIn];
+        }
+    };
+    info = [self defineControl:_openUnrecognizedTmuxWindowsIn
+                           key:kPreferenceKeyOpenUnrecognizedTmuxWindowsIn
+                   relatedView:_whenAttachingTmuxLabel
                           type:kPreferenceInfoTypePopup];
+    info.syntheticGetter = ^id{
+        const iTermOpenTmuxWindowsMode mode = (iTermOpenTmuxWindowsMode)[iTermPreferences unsignedIntegerForKey:kPreferenceKeyOpenTmuxWindowsIn];
+        if (mode == kOpenTmuxWindowsAsNativeTabsInExistingWindow) {
+            return @(kOpenTmuxWindowsAsNativeTabsInNewWindow);
+        }
+        return @(mode);
+    };
+    info.syntheticSetter = ^(id newValue) {
+        [iTermPreferences setUnsignedInteger:[NSNumber castFrom:newValue].unsignedIntegerValue
+                                      forKey:kPreferenceKeyOpenTmuxWindowsIn];
+    };
+    info.shouldBeEnabled = ^BOOL{
+        const iTermOpenTmuxWindowsMode mode = (iTermOpenTmuxWindowsMode)[iTermPreferences unsignedIntegerForKey:kPreferenceKeyOpenTmuxWindowsIn];
+        return (mode != kOpenTmuxWindowsAsNativeTabsInExistingWindow);
+    };
+    // Depend on the user defaults key, not the phony one, since it uses a User Defaults Observer to cause updates.
+    [info addShouldBeEnabledDependencyOnSetting:kPreferenceKeyOpenTmuxWindowsIn
+                                     controller:self];
     // This is how it was done before the great refactoring, but I don't see why it's needed.
     info.onChange = ^() { [weakSelf postRefreshNotification]; };
+    [self updateEnabledStateForInfo:info];
 
     [self defineControl:_autoHideTmuxClientSession
                     key:kPreferenceKeyAutoHideTmuxClientSession
