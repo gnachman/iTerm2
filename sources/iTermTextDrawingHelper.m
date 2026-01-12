@@ -3007,10 +3007,15 @@ iTermKittyPlaceholderDrawInstructions iTermKittyPlaceholderDrawInstructionsCreat
                                                                                   unsigned int imageID,
                                                                                   unsigned int placementID,
                                                                                   CGFloat virtualOffset) {
+    DLog(@"iTermKittyPlaceholderDrawInstructionsCreate: imageID=%u (0x%x) placementID=%u sourceCoord=(%d,%d) destCoord=(%d,%d) point=%@ placementSize=%dx%d",
+         imageID, imageID, placementID, sourceCoord.x, sourceCoord.y, destCoord.x, destCoord.y, NSStringFromPoint(point),
+         draw.placementSize.width, draw.placementSize.height);
     iTermKittyPlaceholderDrawInstructions result = { 0 };
     result.valid = NO;
 
     if (draw.placementSize.width <= 0 || draw.placementSize.height <= 0) {
+        DLog(@"iTermKittyPlaceholderDrawInstructionsCreate: returning invalid - placementSize is %dx%d",
+             draw.placementSize.width, draw.placementSize.height);
         return result;
     }
     const NSSize sourceCellSize = [iTermTextDrawingHelper sizeForKittyImageCellInPlacementOfSize:draw.placementSize
@@ -3035,11 +3040,13 @@ iTermKittyImageDraw *iTermFindKittyImageDrawForVirtualPlaceholder(NSArray<iTermK
                                                                   unsigned int imageID) {
     DLog(@"Looking for virtual placeholder: placementID=%u imageID=%u (0x%x) in %lu draws",
          placementID, imageID, imageID, (unsigned long)draws.count);
-    for (iTermKittyImageDraw *element in draws) {
-        DLog(@"  Available draw: placementID=%u imageID=%u (0x%x) placementSize=%@ virtual=%@",
-             element.placementID, element.imageID, element.imageID,
-             VT100GridSizeDescription(element.placementSize),
-             element.virtual ? @"YES" : @"NO");
+    if (gDebugLogging) {
+        for (iTermKittyImageDraw *element in draws) {
+            DLog(@"  Available draw: placementID=%u imageID=%u (0x%x) placementSize=%@ virtual=%@",
+                 element.placementID, element.imageID, element.imageID,
+                 VT100GridSizeDescription(element.placementSize),
+                 element.virtual ? @"YES" : @"NO");
+        }
     }
     iTermKittyImageDraw *draw = nil;
     if (placementID != 0) {

@@ -6605,8 +6605,22 @@ launchCoprocessWithCommand:(NSString *)command
 
 - (void)kittyImageControllerPlacementsDidChange {
     DLog(@"kittyImageControllerPlacementsDidChange called");
-    self.kittyImageDraws = [_kittyImageController draws];
-    DLog(@"kittyImageControllerPlacementsDidChange: stored %lu draws", (unsigned long)self.kittyImageDraws.count);
+    NSArray<iTermKittyImageDraw *> *draws = [_kittyImageController draws];
+    DLog(@"kittyImageControllerPlacementsDidChange: got %lu draws from controller", (unsigned long)draws.count);
+    if (gDebugLogging) {
+        for (NSUInteger i = 0; i < draws.count; i++) {
+            iTermKittyImageDraw *draw = draws[i];
+            DLog(@"  draw[%lu]: imageID=%u (0x%x) placementID=%u virtual=%@ placementSize=%dx%d zIndex=%d destFrame=%@ sourceFrame=%@",
+                 (unsigned long)i, draw.imageID, draw.imageID, draw.placementID,
+                 draw.virtual ? @"YES" : @"NO",
+                 draw.placementSize.width, draw.placementSize.height,
+                 draw.zIndex,
+                 NSStringFromRect(draw.destinationFrame),
+                 NSStringFromRect(draw.sourceFrame));
+        }
+    }
+    self.kittyImageDraws = draws;
+    DLog(@"kittyImageControllerPlacementsDidChange: stored draws, calling setNeedsRedraw");
     [self setNeedsRedraw];
 }
 
