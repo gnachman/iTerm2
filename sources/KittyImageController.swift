@@ -247,42 +247,62 @@ class KittyImageController: NSObject {
 
     @objc(executeCommand:)
     func execute(command: KittyImageCommand) {
-        DLog("\(command.category)")
+        DLog("execute(command:) BEGIN - category=\(command.category) action=\(command.action) payloadLength=\(command.payload.count)")
         switch command.category {
         case .imageTransmission(let imageTransmission):
-            _ = executeTransmit(imageTransmission,
+            DLog("execute: .imageTransmission - id=\(imageTransmission.identifier) (0x\(String(imageTransmission.identifier, radix: 16))) imageNumber=\(imageTransmission.imageNumber) more=\(imageTransmission.more) medium=\(imageTransmission.medium) format=\(imageTransmission.format) compression=\(imageTransmission.compression) width=\(imageTransmission.width) height=\(imageTransmission.height) verbosity=\(imageTransmission.verbosity)")
+            let result = executeTransmit(imageTransmission,
                                 display: nil,
                                 payload: command.payload,
                                 query: command.action == .query)
+            DLog("execute: .imageTransmission completed - result=\(result)")
         case .imageDisplay(let imageDisplay):
+            DLog("execute: .imageDisplay - id=\(imageDisplay.identifier) (0x\(String(imageDisplay.identifier, radix: 16))) placement=\(imageDisplay.placement) createUnicodePlaceholder=\(imageDisplay.createUnicodePlaceholder) rows=\(imageDisplay.r) cols=\(imageDisplay.c) q=\(imageDisplay.q)")
             executeDisplay(imageDisplay)
         case .transmitAndDisplay(let imageTransmission, let imageDisplay):
+            DLog("execute: .transmitAndDisplay - transmit.id=\(imageTransmission.identifier) (0x\(String(imageTransmission.identifier, radix: 16))) transmit.imageNumber=\(imageTransmission.imageNumber) transmit.more=\(imageTransmission.more) transmit.medium=\(imageTransmission.medium) transmit.format=\(imageTransmission.format) transmit.compression=\(imageTransmission.compression) transmit.verbosity=\(imageTransmission.verbosity)")
+            DLog("execute: .transmitAndDisplay - display.id=\(imageDisplay.identifier) (0x\(String(imageDisplay.identifier, radix: 16))) display.placement=\(imageDisplay.placement) display.createUnicodePlaceholder=\(imageDisplay.createUnicodePlaceholder) display.rows=\(imageDisplay.r) display.cols=\(imageDisplay.c) display.q=\(imageDisplay.q)")
             let hadAccumulator = (accumulator != nil)
             let savedDisplay = accumulator?.display
-            if executeTransmit(imageTransmission, display: imageDisplay, payload: command.payload, query: false) {
+            DLog("execute: .transmitAndDisplay - hadAccumulator=\(hadAccumulator) savedDisplay=\(String(describing: savedDisplay))")
+            let transmitResult = executeTransmit(imageTransmission, display: imageDisplay, payload: command.payload, query: false)
+            DLog("execute: .transmitAndDisplay - executeTransmit returned \(transmitResult)")
+            if transmitResult {
                 if (imageTransmission.more == .finalChunk) {
                     if let savedDisplay {
                         // If transmission was split up into multiple parts use the display commands
                         // from the first part.
+                        DLog("execute: .transmitAndDisplay - calling executeDisplay with savedDisplay")
                         executeDisplay(savedDisplay)
                     } else {
+                        DLog("execute: .transmitAndDisplay - calling executeDisplay with imageDisplay")
                         executeDisplay(imageDisplay)
                     }
                 } else if !hadAccumulator, let accumulator, accumulator.display == nil {
                     // This is the first part of a multipart transmitAndDisplay. Save the display
                     // params in the accumulator.
+                    DLog("execute: .transmitAndDisplay - saving display params to accumulator for multipart transmission")
                     self.accumulator?.display = imageDisplay
+                } else {
+                    DLog("execute: .transmitAndDisplay - not calling executeDisplay (more=\(imageTransmission.more), hadAccumulator=\(hadAccumulator))")
                 }
+            } else {
+                DLog("execute: .transmitAndDisplay - executeTransmit failed, not calling executeDisplay")
             }
         case .animationFrameLoading(let animationFrameLoading):
+            DLog("execute: .animationFrameLoading")
             executeLoadAnimationFrame(animationFrameLoading)
         case .animationFrameComposition(let animationFrameComposition):
+            DLog("execute: .animationFrameComposition")
             executeComposeAnimationFrame(animationFrameComposition)
         case .animationControl(let animationControl):
+            DLog("execute: .animationControl")
             executeControlAnimation(animationControl)
         case .deleteImage(let deleteImage):
+            DLog("execute: .deleteImage - d='\(deleteImage.d)' imageId=\(deleteImage.imageId) placementId=\(deleteImage.placementId)")
             executeDeleteImage(deleteImage)
         }
+        DLog("execute(command:) END")
     }
 
     @objc
@@ -308,112 +328,168 @@ class KittyImageController: NSObject {
         return 0
     }
 
-    private func executeTransmit(_ command: KittyImageCommand.ImageTransmission, 
+    private func executeTransmit(_ command: KittyImageCommand.ImageTransmission,
                                  display: KittyImageCommand.ImageDisplay?,
                                  payload: String,
                                  query: Bool) -> Bool {
+        DLog("executeTransmit BEGIN - id=\(command.identifier) (0x\(String(command.identifier, radix: 16))) imageNumber=\(command.imageNumber) more=\(command.more) allocationAllowed=\(command.allocationAllowed) query=\(query) payloadLength=\(payload.count) hasDisplay=\(display != nil)")
         var modifiedCommand = command
 
         if command.allocationAllowed && command.imageNumber > 0 {
             // Have not yet recursed after allocating an image ID.
+            DLog("executeTransmit: allocationAllowed && imageNumber > 0, checking identifier")
             if command.identifier > 0 {
+                DLog("executeTransmit: ERROR - both i and I specified")
                 respondToTransmit(command, display: display, error: "EINVAL:Can't give both i and I")
                 return false
             }
 
             // Rewrite command to have an identifier and recurse.
             modifiedCommand.identifier = allocateIdentifier()
+            DLog("executeTransmit: allocated identifier=\(modifiedCommand.identifier)")
             if modifiedCommand.identifier == 0 {
+                DLog("executeTransmit: ERROR - out of identifiers")
                 respondToTransmit(command, display: display, error: "ENOSPC:Out of identifiers")
                 return false
             }
             modifiedCommand.allocationAllowed = false
         }
 
+        DLog("executeTransmit: calling reallyExecuteTransmit with id=\(modifiedCommand.identifier) (0x\(String(modifiedCommand.identifier, radix: 16)))")
         let error = reallyExecuteTransmit(modifiedCommand, payload: payload, query: query)
+        DLog("executeTransmit: reallyExecuteTransmit returned error=\(String(describing: error))")
         if error != nil || display == nil {
+            DLog("executeTransmit: calling respondToTransmit (error=\(String(describing: error)), display=\(display == nil ? "nil" : "present"))")
             respondToTransmit(modifiedCommand, display: display, error: error)
         }
-        return error == nil
+        let result = error == nil
+        DLog("executeTransmit END - returning \(result)")
+        return result
     }
 
     private func reallyExecuteTransmit(_ command: KittyImageCommand.ImageTransmission,
                                        payload: String,
                                        query: Bool) -> String? {
+        DLog("reallyExecuteTransmit BEGIN - id=\(command.identifier) (0x\(String(command.identifier, radix: 16))) more=\(command.more) medium=\(command.medium) format=\(command.format) query=\(query) payloadLength=\(payload.count)")
+        DLog("reallyExecuteTransmit: current accumulator state: \(accumulator == nil ? "nil" : "exists with id=\(accumulator!.transmission.identifier) (0x\(String(accumulator!.transmission.identifier, radix: 16))) payloadLength=\(accumulator!.payload.count) hasDisplay=\(accumulator!.display != nil)")")
+
         if let accumulator {
-            // Validate this chunk belongs to the same image transmission
-            if command.identifier != 0 &&
-               accumulator.transmission.identifier != 0 &&
-               command.identifier != accumulator.transmission.identifier {
-                // Clear the abandoned accumulator and report error
+            // Validate this chunk belongs to the same image transmission.
+            // Only reject if both have non-zero IDs that don't match.
+            let idsMatch: Bool
+            if command.identifier != 0 && accumulator.transmission.identifier != 0 {
+                // Both have IDs - must match exactly
+                idsMatch = command.identifier == accumulator.transmission.identifier
+                DLog("reallyExecuteTransmit: both have non-zero IDs, idsMatch=\(idsMatch) (cmd.id=\(command.identifier) vs accum.id=\(accumulator.transmission.identifier))")
+            } else {
+                // At least one ID is 0 - assume they match (can't verify otherwise)
+                idsMatch = true
+                DLog("reallyExecuteTransmit: at least one ID is 0, assuming match (cmd.id=\(command.identifier), accum.id=\(accumulator.transmission.identifier))")
+            }
+
+            if !idsMatch {
+                // Clear the abandoned accumulator. If the new command is a final chunk,
+                // it's likely a new single-chunk transmission, so process it fresh rather
+                // than returning an error. If it's expecting more chunks, return an error
+                // since we can't know which transmission it belongs to.
+                DLog("reallyExecuteTransmit: IDs don't match - clearing stale accumulator (accum.id=\(accumulator.transmission.identifier) (0x\(String(accumulator.transmission.identifier, radix: 16))), accum.payloadLength=\(accumulator.payload.count), cmd.id=\(command.identifier) (0x\(String(command.identifier, radix: 16))), cmd.more=\(command.more))")
                 self.accumulator = nil
-                return "EINVAL:Image ID mismatch in chunked transmission"
-            }
-
-            if command.more == .expectMore {
-                self.accumulator?.payload += payload
-                return nil
-            }
-
-            // Processing final chunk
-            let display = accumulator.display
-            self.accumulator = nil
-            var modifiedCommand = accumulator.transmission
-            modifiedCommand.more = .finalChunk
-
-            let result = reallyExecuteTransmit(modifiedCommand,
-                                               payload: accumulator.payload + payload,
-                                               query: accumulator.query)
-
-            // If transmission succeeded and we have saved display parameters, execute display
-            if result == nil, let display {
-                if let image = _images[UInt64(modifiedCommand.identifier)] {
-                    let displayError = executeDisplay(display, image: image)
-                    if displayError != nil {
-                        // Return display error as the overall error
-                        respondToTransmit(modifiedCommand, display: display, error: displayError)
-                        return displayError
-                    }
-                    // Send the combined response for successful transmit+display
-                    respondToTransmit(modifiedCommand, display: display, error: nil)
-                } else {
-                    let error = "ENOENT:Image not found after transmission"
-                    respondToTransmit(modifiedCommand, display: display, error: error)
-                    return error
+                if command.more == .expectMore {
+                    DLog("reallyExecuteTransmit: returning error because new chunk expects more but accumulator was stale")
+                    return "EINVAL:Image ID mismatch in chunked transmission"
                 }
-            }
+                DLog("reallyExecuteTransmit: falling through to process as new single-chunk transmission")
+                // Fall through to process as a new single-chunk transmission
+            } else {
+                if command.more == .expectMore {
+                    DLog("reallyExecuteTransmit: appending payload to accumulator (new total length=\(accumulator.payload.count + payload.count))")
+                    self.accumulator?.payload += payload
+                    DLog("reallyExecuteTransmit END - returning nil (accumulating)")
+                    return nil
+                }
 
-            return result
+                // Processing final chunk of accumulated transmission
+                DLog("reallyExecuteTransmit: processing final chunk of accumulated transmission")
+                let display = accumulator.display
+                let accumulatedPayloadLength = accumulator.payload.count
+                self.accumulator = nil
+                var modifiedCommand = accumulator.transmission
+                modifiedCommand.more = .finalChunk
+
+                DLog("reallyExecuteTransmit: recursing with accumulated payload (accum.payloadLength=\(accumulatedPayloadLength) + new.payloadLength=\(payload.count) = \(accumulatedPayloadLength + payload.count))")
+                let result = reallyExecuteTransmit(modifiedCommand,
+                                                   payload: accumulator.payload + payload,
+                                                   query: accumulator.query)
+                DLog("reallyExecuteTransmit: recursive call returned error=\(String(describing: result))")
+
+                // If transmission succeeded and we have saved display parameters, execute display
+                if result == nil, let display {
+                    DLog("reallyExecuteTransmit: transmission succeeded, executing saved display params")
+                    if let image = _images[UInt64(modifiedCommand.identifier)] {
+                        DLog("reallyExecuteTransmit: found image for id=\(modifiedCommand.identifier), calling executeDisplay")
+                        let displayError = executeDisplay(display, image: image)
+                        if displayError != nil {
+                            // Return display error as the overall error
+                            DLog("reallyExecuteTransmit: executeDisplay returned error=\(String(describing: displayError))")
+                            respondToTransmit(modifiedCommand, display: display, error: displayError)
+                            return displayError
+                        }
+                        // Send the combined response for successful transmit+display
+                        DLog("reallyExecuteTransmit: executeDisplay succeeded, sending response")
+                        respondToTransmit(modifiedCommand, display: display, error: nil)
+                    } else {
+                        let error = "ENOENT:Image not found after transmission"
+                        DLog("reallyExecuteTransmit: ERROR - image not found for id=\(modifiedCommand.identifier) after transmission")
+                        respondToTransmit(modifiedCommand, display: display, error: error)
+                        return error
+                    }
+                }
+
+                DLog("reallyExecuteTransmit END - returning result from recursive call: \(String(describing: result))")
+                return result
+            }
         } else if command.more == .expectMore {
+            DLog("reallyExecuteTransmit: no accumulator and more expected, creating new accumulator with id=\(command.identifier) (0x\(String(command.identifier, radix: 16))) payloadLength=\(payload.count)")
             accumulator = Accumulator(transmission: command, payload: payload, query: query)
+            DLog("reallyExecuteTransmit END - returning nil (new accumulator created)")
             return nil
         }
 
-        return switch command.medium {
+        DLog("reallyExecuteTransmit: processing single-chunk transmission via medium=\(command.medium)")
+        let result: String?
+        switch command.medium {
         case .direct:
-            executeTransmitDirect(command, payload: payload, query: query)
+            result = executeTransmitDirect(command, payload: payload, query: query)
         case .file:
-            executeTransmitFile(command, payload: payload, query: query)
+            result = executeTransmitFile(command, payload: payload, query: query)
         case .temporaryFile:
-            executeTransmitTemporaryFile(command, payload: payload, query: query)
+            result = executeTransmitTemporaryFile(command, payload: payload, query: query)
         case .sharedMemory:
-            executeTransmitSharedMemory(command, payload: payload, query: query)
+            result = executeTransmitSharedMemory(command, payload: payload, query: query)
         }
+        DLog("reallyExecuteTransmit END - medium handler returned error=\(String(describing: result))")
+        return result
     }
 
     // Direct (the data is transmitted within the escape code itself)
     private func executeTransmitDirect(_ command: KittyImageCommand.ImageTransmission,
                                        payload: String,
                                        query: Bool) -> String? {
+        DLog("executeTransmitDirect BEGIN - id=\(command.identifier) (0x\(String(command.identifier, radix: 16))) format=\(command.format) compression=\(command.compression) payloadLength=\(payload.count)")
         guard let data = decodeDirectTransmission(command, payload: payload) else {
+            DLog("executeTransmitDirect: ERROR - could not decode payload (payloadLength=\(payload.count), compression=\(command.compression))")
             return "could not decode payload"
         }
-        return handle(command: command, data: data, query: query)
+        DLog("executeTransmitDirect: decoded payload to \(data.count) bytes")
+        let result = handle(command: command, data: data, query: query)
+        DLog("executeTransmitDirect END - handle returned error=\(String(describing: result))")
+        return result
     }
 
     private func handle(command: KittyImageCommand.ImageTransmission,
                         data: Data,
                         query: Bool) -> String? {
+        DLog("handle BEGIN - id=\(command.identifier) (0x\(String(command.identifier, radix: 16))) format=\(command.format) dataLength=\(data.count) width=\(command.width) height=\(command.height)")
         let image = switch command.format {
         case .raw24:
             image(data: data, bpp: 3, width: command.width, height: command.height)
@@ -423,10 +499,13 @@ class KittyImageController: NSObject {
             iTermImage.init(compressedData: data)
         }
         guard let image else {
+            DLog("handle: ERROR - invalid payload, could not create image (format=\(command.format), dataLength=\(data.count))")
             return "invalid payload"
         }
+        DLog("handle: created image with size=\(image.size)")
         transmissionDidFinish(image: Image(metadata: command, image: ReferenceContainer(image)),
                               query: query)
+        DLog("handle END - success")
         return nil
     }
 
@@ -574,19 +653,25 @@ class KittyImageController: NSObject {
     func executeTransmitFile(_ command: KittyImageCommand.ImageTransmission,
                              payload: String,
                              query: Bool) -> String? {
+        DLog("executeTransmitFile: id=\(command.identifier) (0x\(String(command.identifier, radix: 16))) payloadLength=\(payload.count)")
         let fileURL = URL(fileURLWithPath: payload.base64Decoded ?? "").resolvingSymlinksInPath().standardizedFileURL.absoluteURL
+        DLog("executeTransmitFile: fileURL=\(fileURL.path)")
         return handle(command: command, fileURL: fileURL, query: query)
     }
 
     func executeTransmitTemporaryFile(_ command: KittyImageCommand.ImageTransmission,
                                       payload: String,
                                       query: Bool) -> String? {
+        DLog("executeTransmitTemporaryFile: id=\(command.identifier) (0x\(String(command.identifier, radix: 16))) payloadLength=\(payload.count)")
         let tempPath = FileManager.default.temporaryDirectory.resolvingSymlinksInPath().standardizedFileURL.path
         let fileURL = URL(fileURLWithPath: payload.base64Decoded ?? "").resolvingSymlinksInPath().standardizedFileURL.absoluteURL
+        DLog("executeTransmitTemporaryFile: fileURL=\(fileURL.path) tempPath=\(tempPath)")
         if !fileURL.path.hasPrefix("/tmp/") && !fileURL.path.hasPrefix(tempPath) {
+            DLog("executeTransmitTemporaryFile: ERROR - invalid filename (not in /tmp/ or tempPath)")
             return "EBADF:Invalid filename"
         }
         guard fileURL.path.contains("tty-graphics-protocol") else {
+            DLog("executeTransmitTemporaryFile: ERROR - bad filename (missing tty-graphics-protocol)")
             return "EBADF:Bad filename"
         }
         defer {
@@ -611,17 +696,22 @@ class KittyImageController: NSObject {
     private func handle(command: KittyImageCommand.ImageTransmission,
                         fileURL: URL,
                         query: Bool) -> String? {
+        DLog("handle(fileURL) BEGIN - id=\(command.identifier) (0x\(String(command.identifier, radix: 16))) fileURL=\(fileURL.path)")
         do {
             let values = try fileURL.resourceValues(forKeys: [.isRegularFileKey])
             guard values.isRegularFile == true else {
+                DLog("handle(fileURL): ERROR - not a regular file")
                 return "EBADF:Not a file"
             }
             guard filenameIsSafe(fileURL: fileURL) else {
+                DLog("handle(fileURL): ERROR - unsafe filename")
                 return "EBADF:Invalid path"
             }
             let content = try Data(contentsOf: fileURL)
+            DLog("handle(fileURL): read \(content.count) bytes from file")
             return handle(command: command, data: content, query: query)
         } catch {
+            DLog("handle(fileURL): ERROR - \(error.localizedDescription)")
             return "EBADF:\(error.localizedDescription)"
         }
     }
@@ -629,13 +719,18 @@ class KittyImageController: NSObject {
     func executeTransmitSharedMemory(_ command: KittyImageCommand.ImageTransmission,
                                      payload: String,
                                      query: Bool) -> String? {
+        DLog("executeTransmitSharedMemory: id=\(command.identifier) (0x\(String(command.identifier, radix: 16))) payloadLength=\(payload.count)")
         do {
             guard let name = payload.base64Decoded else {
+                DLog("executeTransmitSharedMemory: ERROR - invalid name (base64 decode failed)")
                 return "EBADF:Invalid name"
             }
+            DLog("executeTransmitSharedMemory: shm name=\(name)")
             let data = try readPOSIXSharedMemory(named: name)
+            DLog("executeTransmitSharedMemory: read \(data.count) bytes from shared memory")
             return handle(command: command, data: data, query: query)
         } catch {
+            DLog("executeTransmitSharedMemory: ERROR - \(error.localizedDescription)")
             return "EBADF:\(error.localizedDescription)"
         }
     }
@@ -695,8 +790,10 @@ class KittyImageController: NSObject {
     func respondToTransmit(_ imageTransmission: KittyImageCommand.ImageTransmission,
                             display: KittyImageCommand.ImageDisplay?,
                             error: String?) {
+        DLog("respondToTransmit: id=\(imageTransmission.identifier) (0x\(String(imageTransmission.identifier, radix: 16))) more=\(imageTransmission.more) verbosity=\(imageTransmission.verbosity) error=\(String(describing: error))")
         if imageTransmission.more == .expectMore {
             // This is undocumented by the spec.
+            DLog("respondToTransmit: more=expectMore, not sending response")
             return
         }
         var args = [String]()
@@ -713,13 +810,18 @@ class KittyImageController: NSObject {
 
         switch imageTransmission.verbosity {
         case .normal:
+            DLog("respondToTransmit: verbosity=normal, sending response: \(payload)")
             delegate?.kittyImageControllerReport(message: message)
         case .query:
             if error != nil {
+                DLog("respondToTransmit: verbosity=query with error, sending response: \(payload)")
                 delegate?.kittyImageControllerReport(message: message)
+            } else {
+                DLog("respondToTransmit: verbosity=query with no error, NOT sending response")
             }
             return
         case .quiet:
+            DLog("respondToTransmit: verbosity=quiet, NOT sending response (error would have been: \(String(describing: error)))")
             return
         }
     }
@@ -727,39 +829,45 @@ class KittyImageController: NSObject {
     // MARK: - Display
 
     func executeDisplay(_ command: KittyImageCommand.ImageDisplay) {
-        DLog("executeDisplay: identifier=\(command.identifier) (0x\(String(command.identifier, radix: 16))) placement=\(command.placement) createUnicodePlaceholder=\(command.createUnicodePlaceholder) rows=\(command.r) cols=\(command.c)")
+        DLog("executeDisplay BEGIN - identifier=\(command.identifier) (0x\(String(command.identifier, radix: 16))) placement=\(command.placement) createUnicodePlaceholder=\(command.createUnicodePlaceholder) rows=\(command.r) cols=\(command.c) q=\(command.q)")
+        DLog("executeDisplay: _images has \(_images.keys.count) images, keys=\(_images.keys.map { "0x\(String($0, radix: 16))" })")
         if command.identifier != 0 {
             // The spec alludes to multiple images having the same ID but doesn't say what to do
             // when you try to display that ID ("Delete newest image with the specified number…")
             if let image = _images[UInt64(command.identifier)] {
-                DLog("executeDisplay: found image for identifier=\(command.identifier)")
-                respondToDisplay(error: executeDisplay(command, image: image),
+                DLog("executeDisplay: found image for identifier=\(command.identifier) (0x\(String(command.identifier, radix: 16))), imageSize=\(image.image.value?.size ?? .zero)")
+                let displayError = executeDisplay(command, image: image)
+                DLog("executeDisplay: executeDisplay(command, image:) returned error=\(String(describing: displayError))")
+                respondToDisplay(error: displayError,
                                  identifier: command.identifier,
                                  placement: command.placement,
                                  q: command.q)
             } else {
-                DLog("executeDisplay: NO IMAGE FOUND for identifier=\(command.identifier)")
+                DLog("executeDisplay: NO IMAGE FOUND for identifier=\(command.identifier) (0x\(String(command.identifier, radix: 16))) - available keys: \(_images.keys.map { "0x\(String($0, radix: 16))" })")
                 respondToDisplay(error: "ENOENT:Put command refers to non-existent image with id: \(command.identifier) and number: 0",
                                  identifier: command.identifier,
                                  placement: command.placement,
                                  q: command.q)
             }
         } else if let lastImage = _images[lastImageKey] {
-            DLog("executeDisplay: using lastImage (identifier=\(lastImage.metadata.identifier))")
-            respondToDisplay(error: executeDisplay(command, image: lastImage),
+            DLog("executeDisplay: using lastImage (identifier=\(lastImage.metadata.identifier) (0x\(String(lastImage.metadata.identifier, radix: 16))))")
+            let displayError = executeDisplay(command, image: lastImage)
+            DLog("executeDisplay: executeDisplay(command, image:) returned error=\(String(describing: displayError))")
+            respondToDisplay(error: displayError,
                              identifier: command.identifier,
                              placement: command.placement,
                              q: command.q)
         } else {
-            DLog("executeDisplay: no identifier specified and no lastImage available")
+            DLog("executeDisplay: no identifier specified and no lastImage available - available keys: \(_images.keys.map { "0x\(String($0, radix: 16))" })")
         }
+        DLog("executeDisplay END")
     }
 
     private func executeDisplay(_ command: KittyImageCommand.ImageDisplay,
                                 image: Image) -> String? {
-        DLog("executeDisplay(image): imageID=\(image.metadata.identifier) (0x\(String(image.metadata.identifier, radix: 16))) placementID=\(command.placement) virtual=\(command.createUnicodePlaceholder == .createPlaceholder)")
+        DLog("executeDisplay(image) BEGIN - imageID=\(image.metadata.identifier) (0x\(String(image.metadata.identifier, radix: 16))) placementID=\(command.placement) virtual=\(command.createUnicodePlaceholder == .createPlaceholder) imageSize=\(image.image.value?.size ?? .zero)")
         guard let delegate else {
-            DLog("executeDisplay(image): no delegate, returning error")
+            DLog("executeDisplay(image): ERROR - no delegate")
             return "Client unavailable"
         }
         let pixelOffset: NSPoint? =
@@ -783,19 +891,23 @@ class KittyImageController: NSObject {
                 nil
             }
         let virtual = command.createUnicodePlaceholder == .createPlaceholder
+        DLog("executeDisplay(image): virtual=\(virtual) pixelOffset=\(String(describing: pixelOffset)) sourceRect=\(String(describing: sourceRect))")
         if virtual {
             if command.parentImageIdentifier != nil || command.parentPlacement != nil {
+                DLog("executeDisplay(image): ERROR - virtual placement cannot have parent")
                 return "EINVAL"
             }
         }
+        let cursorCoord = delegate.kittyImageControllerCursorCoord()
         let origin =
             if let p = command.parentPlacement, let i = command.parentImageIdentifier {
                 Placement.Origin.relative(parentPlacementIdentifier: p,
                                           parentImageIdentifier: i,
                                           displacement: Placement.Displacement(x: command.H, y: command.V))
             } else {
-                Placement.Origin.absolute(delegate.kittyImageControllerCursorCoord())
+                Placement.Origin.absolute(cursorCoord)
             }
+        DLog("executeDisplay(image): origin=\(origin) cursorCoord=(\(cursorCoord.x), \(cursorCoord.y))")
         let placement = Placement(image: image,
                                   placementId: command.placement,
                                   origin: origin,
@@ -806,9 +918,11 @@ class KittyImageController: NSObject {
                                   zIndex: command.z,
                                   virtual: virtual)
         if addingFormsCycle(placement: placement) {
+            DLog("executeDisplay(image): ERROR - adding would form cycle")
             return "ECYCLE"
         }
         if placement.parentPlacementIdentifier != nil && placement.parent(finder: finder) == nil {
+            DLog("executeDisplay(image): ERROR - parent placement not found")
             return "ENOPARENT"
         }
         if command.placement != 0 {
@@ -816,31 +930,35 @@ class KittyImageController: NSObject {
             placements.removeAll { $0.placementId == command.placement }
             let actuallyRemoved = removedCount - placements.count
             if actuallyRemoved > 0 {
-                DLog("addPlacement: removed \(actuallyRemoved) existing placements with placementId=\(command.placement)")
+                DLog("executeDisplay(image): removed \(actuallyRemoved) existing placements with placementId=\(command.placement)")
             }
         }
-        DLog("addPlacement: appending placement imageID=\(placement.image.metadata.identifier) (0x\(String(placement.image.metadata.identifier, radix: 16))) placementID=\(placement.placementId) virtual=\(placement.virtual) rows=\(String(describing: placement.rows)) columns=\(String(describing: placement.columns))")
+        DLog("executeDisplay(image): appending placement - imageID=\(placement.image.metadata.identifier) (0x\(String(placement.image.metadata.identifier, radix: 16))) placementID=\(placement.placementId) virtual=\(placement.virtual) rows=\(String(describing: placement.rows)) columns=\(String(describing: placement.columns)) zIndex=\(placement.zIndex)")
         placements.append(placement)
-        DLog("addPlacement: total placements now \(placements.count)")
+        DLog("executeDisplay(image): total placements now \(placements.count), calling kittyImageControllerPlacementsDidChange")
         delegate.kittyImageControllerPlacementsDidChange()
         switch command.cursorMovementPolicy {
         case .doNotMoveCursor:
+            DLog("executeDisplay(image): cursorMovementPolicy=doNotMoveCursor")
             break
         case .moveCursorToAfterImage:
+            DLog("executeDisplay(image): cursorMovementPolicy=moveCursorToAfterImage parentPlacement=\(String(describing: command.parentPlacement)) virtual=\(placement.virtual)")
             if command.parentPlacement == nil && !placement.virtual {
                 // Since a relative placement gets its position specified based on another placement,
-                // instead of the cursor, the cursor must not move after a relative position, 
+                // instead of the cursor, the cursor must not move after a relative position,
                 // regardless of the value of the C key to control cursor movement.
                 //
                 // It is not written in the spec, but I assume you don't move the cursor for virtual
                 // placements either as that doesn't make any sense.
                 let cellSize = delegate.kittyImageControllerCellSize()
                 if let rect = placement.absRect(cellSize: cellSize, finder: finder) {
+                    DLog("executeDisplay(image): moving cursor by dx=\(rect.width) dy=\(rect.height)")
                     delegate.kittyImageControllerMoveCursor(dx: Int(rect.width),
                                                             dy: Int(rect.height))
                 }
             }
         }
+        DLog("executeDisplay(image) END - success")
         return nil
     }
 
@@ -872,10 +990,13 @@ class KittyImageController: NSObject {
     }
 
     private func respondToDisplay(error: String?, identifier: UInt32, placement: UInt32, q: UInt32) {
+        DLog("respondToDisplay: identifier=\(identifier) (0x\(String(identifier, radix: 16))) placement=\(placement) q=\(q) error=\(String(describing: error))")
         if q == 2 {
+            DLog("respondToDisplay: q=2 (quiet), NOT sending response (error would have been: \(String(describing: error)))")
             return
         }
         if q == 1 && error == nil {
+            DLog("respondToDisplay: q=1 and no error, NOT sending response")
             return
         }
         let parameters = {
@@ -899,6 +1020,7 @@ class KittyImageController: NSObject {
             } else {
                 parameters + ";" + errorOrOK
             }
+        DLog("respondToDisplay: sending response: \(message)")
         delegate?.kittyImageControllerReport(message: pre + message + post)
     }
 
@@ -1101,8 +1223,10 @@ class KittyImageController: NSObject {
         }
         let cellSize = delegate.kittyImageControllerCellSize()
         DLog("draws(): cellSize=\(cellSize), placements.count=\(placements.count)")
-        for (index, placement) in placements.enumerated() {
-            DLog("draws(): placement[\(index)]: imageID=\(placement.image.metadata.identifier) (0x\(String(placement.image.metadata.identifier, radix: 16))) placementID=\(placement.placementId) virtual=\(placement.virtual) rows=\(String(describing: placement.rows)) columns=\(String(describing: placement.columns))")
+        if gDebugLogging.boolValue {
+            for (index, placement) in placements.enumerated() {
+                DLog("draws(): placement[\(index)]: imageID=\(placement.image.metadata.identifier) (0x\(String(placement.image.metadata.identifier, radix: 16))) placementID=\(placement.placementId) virtual=\(placement.virtual) rows=\(String(describing: placement.rows)) columns=\(String(describing: placement.columns))")
+            }
         }
         let result = placements.filter { candidate in
             guard candidate.pixelRect(cellSize: cellSize, finder: finder(placementId:)) != nil else {
@@ -1116,8 +1240,10 @@ class KittyImageController: NSObject {
             lhs.zIndex < rhs.zIndex
         }
         DLog("draws(): returning \(result.count) draws")
-        for (index, draw) in result.enumerated() {
-            DLog("draws(): result[\(index)]: \(draw)")
+        if gDebugLogging.boolValue {
+            for (index, draw) in result.enumerated() {
+                DLog("draws(): result[\(index)]: \(draw)")
+            }
         }
         return result
     }

@@ -1662,7 +1662,18 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
     _drawingHelper.forceRegularBottomMargin = autoComposerOpen;
     // TODO: Don't leave find on page helper as the source of truth for this!
     _drawingHelper.selectedCommandRegion = [self relativeRangeFromAbsLineRange:self.findOnPageHelper.absLineRange];
-    _drawingHelper.kittyImageDraws = [self.dataSource kittyImageDraws];
+    NSArray<iTermKittyImageDraw *> *kittyDraws = [self.dataSource kittyImageDraws];
+    DLog(@"PTYTextView: setting kittyImageDraws on drawingHelper, count=%lu", (unsigned long)kittyDraws.count);
+    if (gDebugLogging) {
+        for (NSUInteger i = 0; i < kittyDraws.count; i++) {
+            iTermKittyImageDraw *draw = kittyDraws[i];
+            DLog(@"  draw[%lu]: imageID=%u (0x%x) placementID=%u virtual=%@ placementSize=%dx%d",
+                 (unsigned long)i, draw.imageID, draw.imageID, draw.placementID,
+                 draw.virtual ? @"YES" : @"NO",
+                 draw.placementSize.width, draw.placementSize.height);
+        }
+    }
+    _drawingHelper.kittyImageDraws = kittyDraws;
     const VT100GridRange range = [self rangeOfVisibleLines];
     _drawingHelper.folds = [self.dataSource foldsInRange:range];
     _drawingHelper.rightExtra = self.delegate.textViewRightExtra;
