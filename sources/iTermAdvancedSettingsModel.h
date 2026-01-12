@@ -122,6 +122,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (NSString *)composerClearSequence;
 + (BOOL)conservativeURLGuessing;
 + (BOOL)convertItalicsToReverseVideoForTmux;
++ (BOOL)convertItalicsToReverseVideoForTmuxBugwardsCompatible;
 + (BOOL)convertTabDragToWindowDragForSolitaryTabInCompactOrMinimalTheme;
 + (BOOL)copyBackgroundColor;
 + (BOOL)copyWithStylesByDefault;

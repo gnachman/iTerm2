@@ -275,7 +275,11 @@ static const int kMaxScreenRows = 4096;
     self.dirty = YES;
     DLog(@"setTermType:%@", termtype);
     _termType = [termtype copy];
-    _isScreenLike = [termtype containsString:@"screen"] || [termtype containsString:@"tmux"];
+    if ([iTermAdvancedSettingsModel convertItalicsToReverseVideoForTmuxBugwardsCompatible]) {
+        _isScreenLike = [termtype containsString:@"screen"] || [termtype containsString:@"tmux"];
+    } else {
+        _isScreenLike = [termtype containsString:@"screen"];
+    }
 
     self.allowKeypadMode = [_termType rangeOfString:@"xterm"].location != NSNotFound;
     _output.termType = _termType;
