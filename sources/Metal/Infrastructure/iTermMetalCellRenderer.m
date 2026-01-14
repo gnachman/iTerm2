@@ -78,8 +78,8 @@ maximumExtendedDynamicRangeColorComponentValue:maximumExtendedDynamicRangeColorC
 - (NSEdgeInsets)margins {
     // iTermMetalView goes to window's edges. It does not overlap the rounded corners.
     const CGSize marginSize =
-        CGSizeMake([iTermPreferences intForKey:kPreferenceKeySideMargins] * self.configuration.scale,
-                   [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins] * self.configuration.scale);
+        CGSizeMake([iTermPreferences sideMargins] * self.configuration.scale,
+                   [iTermPreferences topBottomMargins] * self.configuration.scale);
 
     const NSEdgeInsets extraMargins = self.configuration.extraMargins;
     const CGSize usableSize =

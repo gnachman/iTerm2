@@ -105,13 +105,13 @@
     const CGFloat scale = tState.configuration.scale;
 
     DLog(@"Side margin size is %@, scale is %@, cell size is %@, cell size without spacing is %@",
-         @([iTermPreferences intForKey:kPreferenceKeySideMargins]),
+         @([iTermPreferences sideMargins]),
          @(scale),
          NSStringFromSize(tState.cellConfiguration.cellSize),
          NSStringFromSize(tState.cellConfiguration.cellSizeWithoutSpacing));
     CGRect leftMarginRect = CGRectMake(1,
                                        0,
-                                       ([iTermPreferences intForKey:kPreferenceKeySideMargins] - 1) * scale,
+                                       ([iTermPreferences sideMargins] - 1) * scale,
                                        tState.cellConfiguration.cellSize.height);
     DLog(@"leftMarginRect=%@", NSStringFromRect(leftMarginRect));
     CGRect markRect = [iTermTextDrawingHelper frameForMarkContainedInRect:leftMarginRect
