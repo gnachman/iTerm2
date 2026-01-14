@@ -794,7 +794,7 @@ const CGFloat PTYTextViewMarginClickGraceWidth = 2.0;
 
 - (long long)absoluteScrollPosition {
     NSRect visibleRect = [self visibleRect];
-    long long localOffset = (visibleRect.origin.y + [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins]) / [self lineHeight];
+    long long localOffset = (visibleRect.origin.y + [iTermPreferences topBottomMargins]) / [self lineHeight];
     return localOffset + [_dataSource totalScrollbackOverflow];
 }
 
@@ -802,7 +802,7 @@ const CGFloat PTYTextViewMarginClickGraceWidth = 2.0;
 {
     NSRect aFrame;
     aFrame.origin.x = 0;
-    aFrame.origin.y = (absOff - [_dataSource totalScrollbackOverflow]) * _lineHeight - [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins];
+    aFrame.origin.y = (absOff - [_dataSource totalScrollbackOverflow]) * _lineHeight - [iTermPreferences topBottomMargins];
     aFrame.size.width = [self frame].size.width;
     aFrame.size.height = _lineHeight * height;
     [self scrollRectToVisible: aFrame];
@@ -856,7 +856,7 @@ const CGFloat PTYTextViewMarginClickGraceWidth = 2.0;
     [self withRelativeCoordRange:[_selection spanningAbsRange] block:^(VT100GridCoordRange range) {
         NSRect aFrame;
         aFrame.origin.x = 0;
-        aFrame.origin.y = range.start.y * _lineHeight - [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins];  // allow for top margin
+        aFrame.origin.y = range.start.y * _lineHeight - [iTermPreferences topBottomMargins];  // allow for top margin
         aFrame.size.width = [self frame].size.width;
         aFrame.size.height = (range.end.y - range.start.y + 1) * _lineHeight;
         [self cancelMomentumScroll];
@@ -884,7 +884,7 @@ const CGFloat PTYTextViewMarginClickGraceWidth = 2.0;
 
 - (void)scrollToCenterLine:(int)line {
     NSRect visible = [self visibleRect];
-    int visibleLines = (visible.size.height - [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins] * 2) / _lineHeight;
+    int visibleLines = (visible.size.height - [iTermPreferences topBottomMargins] * 2) / _lineHeight;
     int lineMargin = (visibleLines - 1) / 2;
     double margin = lineMargin * _lineHeight;
 
@@ -938,7 +938,7 @@ const CGFloat PTYTextViewMarginClickGraceWidth = 2.0;
     if (includeOffscreenCommandLine) {
         return range;
     }
-    const int topBottomMargin = [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins];
+    const int topBottomMargin = [iTermPreferences topBottomMargins];
     if (![_delegate textViewShouldShowOffscreenCommandLineAt:relativeRange.location]) {
         return range;
     }
@@ -1368,7 +1368,7 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
     if (userScroll) {
         const NSRect rectToDraw = [self textDrawingHelperVisibleRectExcludingTopMargin];
         DLog(@"rectToDraw=%@", NSStringFromRect(rectToDraw));
-        const CGFloat virtualOffset = NSMinY(rectToDraw) - [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins];
+        const CGFloat virtualOffset = NSMinY(rectToDraw) - [iTermPreferences topBottomMargins];
         DLog(@"Draw document visible rect. virtualOffset=%@", @(virtualOffset));
         return virtualOffset;
     }
@@ -1376,9 +1376,9 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
     // called. Force the last lines to be drawn so the screen doesn't appear to jump as in issue
     // 9676.
     const int height = _dataSource.height;
-    const CGFloat virtualOffset = (_dataSource.numberOfLines - height + _drawingHelper.numberOfIMELines) * _lineHeight - [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins];
+    const CGFloat virtualOffset = (_dataSource.numberOfLines - height + _drawingHelper.numberOfIMELines) * _lineHeight - [iTermPreferences topBottomMargins];
     DLog(@"Force draw last rows. numberOfLines=%@ height=%@ lineHeight=%@ bottomMargins=%@ -> virtualOffset=%@",
-         @(_dataSource.numberOfLines), @(height), @(_lineHeight), @([iTermPreferences intForKey:kPreferenceKeyTopBottomMargins]), @(virtualOffset));
+         @(_dataSource.numberOfLines), @(height), @(_lineHeight), @([iTermPreferences topBottomMargins]), @(virtualOffset));
     return virtualOffset;
 }
 
@@ -1534,9 +1534,9 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
     // Subtract the top margin's height.
     rect.origin.y = row * _lineHeight;
     if (excludeTopMargin) {
-        rect.size.height -= [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins];
+        rect.size.height -= [iTermPreferences topBottomMargins];
     } else {
-        rect.origin.y -= [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins];
+        rect.origin.y -= [iTermPreferences topBottomMargins];
     }
     return rect;
 }
@@ -1686,7 +1686,7 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
         [self updateTooltipsForButtons:[_drawingHelper updateButtonFrames]];
     }
 
-    const int topBottomMargin = [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins];
+    const int topBottomMargin = [iTermPreferences topBottomMargins];
     if ([_delegate textViewShouldShowOffscreenCommandLineAt:range.location] &&
         self.enclosingScrollView.contentView.bounds.origin.y > topBottomMargin) {
         _drawingHelper.offscreenCommandLine = [self.dataSource offscreenCommandLineBefore:range.location];
@@ -1808,10 +1808,10 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
 // This is 2 except for just after the frame has changed and things are resizing.
 - (double)excess {
     NSRect visibleRectExcludingTopAndBottomMargins = [self scrollViewContentSize];
-    visibleRectExcludingTopAndBottomMargins.size.height -= [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins] * 2;  // Height without top and bottom margins.
+    visibleRectExcludingTopAndBottomMargins.size.height -= [iTermPreferences topBottomMargins] * 2;  // Height without top and bottom margins.
     int rows = visibleRectExcludingTopAndBottomMargins.size.height / _lineHeight;
     double heightOfTextRows = rows * _lineHeight;
-    const CGFloat bottomMarginHeight = [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins];
+    const CGFloat bottomMarginHeight = [iTermPreferences topBottomMargins];
     const CGFloat visibleHeightExceptTopMargin = NSHeight(visibleRectExcludingTopAndBottomMargins) + bottomMarginHeight;
     return MAX(visibleHeightExceptTopMargin - heightOfTextRows,
                bottomMarginHeight);  // Never have less than VMARGIN excess, but it can be more (if another tab has a bigger font)
@@ -1971,7 +1971,7 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
 - (NSRect)visibleContentRect {
     NSRect visibleRect = [[self enclosingScrollView] documentVisibleRect];
     visibleRect.size.height -= [self excess];
-    visibleRect.size.height -= [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins];
+    visibleRect.size.height -= [iTermPreferences topBottomMargins];
     return visibleRect;
 }
 
@@ -2920,7 +2920,7 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
     BOOL anyBlinkers = NO;
     // Visible chars that have changed selection status are dirty
     // Also mark blinking text as dirty if needed
-    int lineStart = ([self visibleRect].origin.y + [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins]) / _lineHeight;  // add VMARGIN because stuff under top margin isn't visible.
+    int lineStart = ([self visibleRect].origin.y + [iTermPreferences topBottomMargins]) / _lineHeight;  // add VMARGIN because stuff under top margin isn't visible.
     int lineEnd = ceil(([self visibleRect].origin.y + [self visibleRect].size.height - [self excess]) / _lineHeight);
     if (lineStart < 0) {
         lineStart = 0;
@@ -3212,7 +3212,7 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
     int width = [_dataSource width];
     if (locationInTextView.y == 0) {
         x = y = 0;
-    } else if (locationInTextView.x < [iTermPreferences intForKey:kPreferenceKeySideMargins] && _selection.liveRange.coordRange.start.y < y) {
+    } else if (locationInTextView.x < [iTermPreferences sideMargins] && _selection.liveRange.coordRange.start.y < y) {
         // complete selection of previous line
         x = width;
         y--;
@@ -3805,7 +3805,7 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
     for (PTYNoteViewController *note in _notes) {
         VT100GridCoordRange coordRange = [_dataSource coordRangeOfAnnotation:note.annotation];
         if (coordRange.end.y >= 0) {
-            [note setAnchor:NSMakePoint(coordRange.end.x * _charWidth + [iTermPreferences intForKey:kPreferenceKeySideMargins],
+            [note setAnchor:NSMakePoint(coordRange.end.x * _charWidth + [iTermPreferences sideMargins],
                                         (1 + coordRange.end.y) * _lineHeight)];
         }
     }
@@ -4144,7 +4144,7 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
     // drag from center of the image
     NSPoint dragPoint = [self convertPoint:[theEvent locationInWindow] fromView:nil];
 
-    VT100GridCoord coord = VT100GridCoordMake((dragPoint.x - [iTermPreferences intForKey:kPreferenceKeySideMargins]) / _charWidth,
+    VT100GridCoord coord = VT100GridCoordMake((dragPoint.x - [iTermPreferences sideMargins]) / _charWidth,
                                               dragPoint.y / _lineHeight);
     const screen_char_t* theLine = [_dataSource screenCharArrayForLine:coord.y].line;
     if (theLine &&
@@ -4160,7 +4160,7 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
                                                             coord.y - pos.y);
 
         // Compute the pixel coordinate of the image's top left point
-        NSPoint imageTopLeftPoint = NSMakePoint(imageCellOrigin.x * _charWidth + [iTermPreferences intForKey:kPreferenceKeySideMargins],
+        NSPoint imageTopLeftPoint = NSMakePoint(imageCellOrigin.x * _charWidth + [iTermPreferences sideMargins],
                                                 imageCellOrigin.y * _lineHeight);
 
         // Compute the distance from the click location to the image's origin
@@ -4575,7 +4575,7 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
     int y = [_dataSource cursorY] - 1;
     int x = [_dataSource cursorX] - 1;
 
-    NSRect rect=NSMakeRect(x * _charWidth + [iTermPreferences intForKey:kPreferenceKeySideMargins],
+    NSRect rect=NSMakeRect(x * _charWidth + [iTermPreferences sideMargins],
                            (y + [_dataSource numberOfLines] - [_dataSource height] + 1) * _lineHeight,
                            _charWidth * theRange.length,
                            _lineHeight);
@@ -4698,7 +4698,7 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
 }
 
 - (NSRect)frameForCoord:(VT100GridCoord)coord {
-    return NSMakeRect(MAX(0, floor(coord.x * _charWidth + [iTermPreferences intForKey:kPreferenceKeySideMargins])),
+    return NSMakeRect(MAX(0, floor(coord.x * _charWidth + [iTermPreferences sideMargins])),
                       MAX(0, coord.y * _lineHeight),
                       _charWidth,
                       _lineHeight);
@@ -4870,7 +4870,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
 #pragma mark - Find Cursor
 
 - (NSRect)rectForCoord:(VT100GridCoord)coord {
-    return NSMakeRect([iTermPreferences intForKey:kPreferenceKeySideMargins] + coord.x * _charWidth,
+    return NSMakeRect([iTermPreferences sideMargins] + coord.x * _charWidth,
                       coord.y * _lineHeight,
                       _charWidth,
                       _lineHeight);
@@ -5287,7 +5287,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
     int height = [_dataSource height];
     rect.origin.y = numLines - height;
     rect.origin.y *= _lineHeight;
-    rect.origin.x = [iTermPreferences intForKey:kPreferenceKeySideMargins];
+    rect.origin.x = [iTermPreferences sideMargins];
     rect.size.width = _charWidth * [_dataSource width];
     rect.size.height = _lineHeight * [_dataSource height];
     return rect;
@@ -6042,7 +6042,7 @@ static NSString *iTermStringFromRange(NSRange range) {
 - (VT100GridCoord)accessibilityHelperCoordForPoint:(NSPoint)accessibilityScreenPosition {
     const NSPoint locationInTextView = [self viewPointFromAccessibilityScreenPoint:accessibilityScreenPosition];
     NSRect visibleRect = [[self enclosingScrollView] documentVisibleRect];
-    int x = (locationInTextView.x - [iTermPreferences intForKey:kPreferenceKeySideMargins] - visibleRect.origin.x) / _charWidth;
+    int x = (locationInTextView.x - [iTermPreferences sideMargins] - visibleRect.origin.x) / _charWidth;
     int y = locationInTextView.y / _lineHeight;
     return VT100GridCoordMake(x, [self accessibilityHelperAccessibilityLineNumberForLineNumber:y]);
 }
@@ -6050,7 +6050,7 @@ static NSString *iTermStringFromRange(NSRange range) {
 - (NSRect)accessibilityHelperFrameForCoordRange:(VT100GridCoordRange)coordRange {
     coordRange.start.y = [self accessibilityHelperLineNumberForAccessibilityLineNumber:coordRange.start.y];
     coordRange.end.y = [self accessibilityHelperLineNumberForAccessibilityLineNumber:coordRange.end.y];
-    NSRect result = NSMakeRect(MAX(0, floor(coordRange.start.x * _charWidth + [iTermPreferences intForKey:kPreferenceKeySideMargins])),
+    NSRect result = NSMakeRect(MAX(0, floor(coordRange.start.x * _charWidth + [iTermPreferences sideMargins])),
                                MAX(0, coordRange.start.y * _lineHeight),
                                MAX(0, (coordRange.end.x - coordRange.start.x) * _charWidth),
                                MAX(0, (coordRange.end.y - coordRange.start.y + 1) * _lineHeight));
@@ -6491,7 +6491,7 @@ static NSString *iTermStringFromRange(NSRange range) {
             DLog(@"mouseUp: fold mark");
             [self unfoldMark:foldMark];
             return VT100GridCoordMake(-1, -1);
-        } else if (pointInSelf.x < [iTermPreferences intForKey:kPreferenceKeySideMargins] + PTYTextViewMarginClickGraceWidth &&
+        } else if (pointInSelf.x < [iTermPreferences sideMargins] + PTYTextViewMarginClickGraceWidth &&
                    pointInSelf.x >= 0 &&
                    blockID != nil) {
             DLog(@"Clicked on unfolded block indicator");
