@@ -1090,4 +1090,7 @@ FAST_BOOL_ACCESSOR(dimOnlyText, kPreferenceKeyDimOnlyText)
 FAST_INT_ACCESSOR(sideMargins, kPreferenceKeySideMargins)
 FAST_INT_ACCESSOR(topBottomMargins, kPreferenceKeyTopBottomMargins)
 
+FAST_INT_ACCESSOR(sideMargins, kPreferenceKeySideMargins)
+FAST_INT_ACCESSOR(topBottomMargins, kPreferenceKeyTopBottomMargins)
+
 @end
