@@ -394,7 +394,7 @@ static NSRange NSRangeFromBounds(NSInteger lowerBound, NSInteger upperBound) {
 - (void)mergeFrom:(VT100ScreenMutableState *)source {
     [self copyFastStuffFrom:source];
     [self releaseOverwrittenImagesIn:source];
-    if ([iTermPreferences boolForKey:kPreferenceKeyBidi]) {
+    if ([iTermPreferences bidiEnabled]) {
         [source populateRTLStateIfNeeded];
     }
 

@@ -7906,7 +7906,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
         }
         return NO;
     }
-    if (![iTermPreferences boolForKey:kPreferenceKeyBidi] && [self ligaturesEnabledInEitherFont]) {
+    if (![iTermPreferences bidiEnabled] && [self ligaturesEnabledInEitherFont]) {
         if (reason) {
             *reason = iTermMetalUnavailableReasonLigatures;
         }
