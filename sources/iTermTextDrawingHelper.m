@@ -673,7 +673,7 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
 
 //        NSLog(@"Paint background row %d range %@", line, NSStringFromRange(run->range));
 
-        NSRect rect = NSMakeRect(floor([iTermPreferences intForKey:kPreferenceKeySideMargins] + run->visualRange.location * _cellSize.width),
+        NSRect rect = NSMakeRect(floor([iTermPreferences sideMargins] + run->visualRange.location * _cellSize.width),
                                  yOrigin,
                                  ceil(run->visualRange.length * _cellSize.width),
                                  _cellSize.height * rows);
@@ -874,9 +874,9 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
 - (void)drawTopMarginWithVirtualOffset:(CGFloat)virtualOffset {
     // Draw a margin at the top of the visible area.
     NSRect topMarginRect = _visibleRectExcludingTopMargin;
-    topMarginRect.origin.y -= [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins];
+    topMarginRect.origin.y -= [iTermPreferences topBottomMargins];
 
-    topMarginRect.size.height = [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins];
+    topMarginRect.size.height = [iTermPreferences topBottomMargins];
 
     NSColor *color = [self colorForMarginsUsingDominant:YES];
     const BOOL enableBlending = !iTermTextIsMonochrome() || [NSView iterm_takingSnapshot];
@@ -904,7 +904,7 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
 }
 
 - (NSRect)leftMarginRectAt:(CGFloat)y {
-    return NSMakeRect(0, y, MAX(0, [iTermPreferences intForKey:kPreferenceKeySideMargins]), _cellSize.height);
+    return NSMakeRect(0, y, MAX(0, [iTermPreferences sideMargins]), _cellSize.height);
 }
 
 - (void)drawMarginsForLine:(int)line
@@ -914,7 +914,7 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
     NSRect leftMargin = [self leftMarginRectAt:y];
     NSRect rightMargin;
     NSRect visibleRect = _visibleRectExcludingTopMargin;
-    rightMargin.origin.x = _cellSize.width * _gridSize.width + [iTermPreferences intForKey:kPreferenceKeySideMargins];
+    rightMargin.origin.x = _cellSize.width * _gridSize.width + [iTermPreferences sideMargins];
     rightMargin.origin.y = y;
     rightMargin.size.width = visibleRect.size.width - rightMargin.origin.x;
     rightMargin.size.height = _cellSize.height;
@@ -1051,7 +1051,7 @@ const CGFloat commandRegionOutlineThickness = 2.0;
     [color set];
 
     [NSGraphicsContext saveGraphicsState];
-    [[NSGraphicsContext currentContext] setPatternPhase:NSMakePoint([iTermPreferences intForKey:kPreferenceKeySideMargins], 0)];
+    [[NSGraphicsContext currentContext] setPatternPhase:NSMakePoint([iTermPreferences sideMargins], 0)];
     iTermRectFillUsingOperation(rect, NSCompositingOperationSourceOver, virtualOffset);
     [NSGraphicsContext restoreGraphicsState];
 }
@@ -1106,7 +1106,7 @@ const CGFloat commandRegionOutlineThickness = 2.0;
         return;
     }
     [_cursorGuideColor set];
-    NSPoint textOrigin = NSMakePoint([iTermPreferences intForKey:kPreferenceKeySideMargins] + range.location * _cellSize.width, yOrigin);
+    NSPoint textOrigin = NSMakePoint([iTermPreferences sideMargins] + range.location * _cellSize.width, yOrigin);
     NSRect rect = NSMakeRect(0,
                              textOrigin.y,
                              _scrollViewDocumentVisibleRect.size.width,
@@ -1367,11 +1367,11 @@ const CGFloat commandRegionOutlineThickness = 2.0;
     if (noteRanges.count) {
         for (NSValue *value in noteRanges) {
             VT100GridRange range = [value gridRangeValue];
-            CGFloat x = range.location * _cellSize.width + [iTermPreferences intForKey:kPreferenceKeySideMargins];
+            CGFloat x = range.location * _cellSize.width + [iTermPreferences sideMargins];
             CGFloat y = line * _cellSize.height;
             [[NSColor yellowColor] set];
 
-            CGFloat maxX = MIN(_frame.size.width - [iTermPreferences intForKey:kPreferenceKeySideMargins], range.length * _cellSize.width + x);
+            CGFloat maxX = MIN(_frame.size.width - [iTermPreferences sideMargins], range.length * _cellSize.width + x);
             CGFloat w = maxX - x;
             iTermRectFill(NSMakeRect(x, y + _cellSize.height - 1.5, w, 1), virtualOffset);
             [[NSColor orangeColor] set];
@@ -1531,7 +1531,7 @@ const CGFloat commandRegionOutlineThickness = 2.0;
 - (NSArray<iTermTerminalButton *> *)updateButtonFrames NS_AVAILABLE_MAC(11) {
     const VT100GridCoordRange drawableCoordRange = [self drawableCoordRangeForRect:_visibleRectExcludingTopMargin];
     const long long minAbsY = drawableCoordRange.start.y + _totalScrollbackOverflow;
-    const CGFloat margin = [iTermPreferences intForKey:kPreferenceKeySideMargins];
+    const CGFloat margin = [iTermPreferences sideMargins];
     int floatingCount = 0;
     NSMutableDictionary<NSNumber *, NSMutableIndexSet *> *usedDict = [NSMutableDictionary dictionary];
     NSMutableArray<iTermTerminalButton *> *buttons = [NSMutableArray array];
@@ -1740,7 +1740,7 @@ static BOOL NSRangesAdjacent(NSRange lhs, NSRange rhs) {
     iTermBackgroundColorRunsInLine *representativeRunArray = nil;
     NSInteger count = 0;
     const int firstLine = [self rangeOfVisibleRows].location;
-    const CGFloat vmargin = [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins];
+    const CGFloat vmargin = [iTermPreferences topBottomMargins];
     for (iTermBackgroundColorRunsInLine *runArray in backgroundRunArrays) {
         if (count == 0) {
             representativeRunArray = runArray;
@@ -1813,7 +1813,7 @@ static BOOL NSRangesAdjacent(NSRange lhs, NSRange rhs) {
     }
     for (iTermBoxedBackgroundColorRun *box in backgroundRuns) {
         iTermBackgroundColorRun *run = box.valuePointer;
-        NSPoint textOrigin = NSMakePoint([iTermPreferences intForKey:kPreferenceKeySideMargins],
+        NSPoint textOrigin = NSMakePoint([iTermPreferences sideMargins],
                                          y);
         [self constructAndDrawRunsForLine:theLine
                                  bidiInfo:rtlFound ? [self.delegate drawingHelperBidiInfoForLine:sourceLine] : nil
@@ -3207,8 +3207,8 @@ iTermKittyImageDraw *iTermFindKittyImageDrawForVirtualPlaceholder(NSArray<iTermK
 + (NSRect)offscreenCommandLineFrameForVisibleRect:(NSRect)visibleRect
                                          cellSize:(NSSize)cellSize
                                          gridSize:(VT100GridSize)gridSize {
-    const CGFloat hmargin = [iTermPreferences intForKey:kPreferenceKeySideMargins];
-    const CGFloat vmargin = [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins];
+    const CGFloat hmargin = [iTermPreferences sideMargins];
+    const CGFloat vmargin = [iTermPreferences topBottomMargins];
     NSRect rect = NSMakeRect(hmargin,
                              visibleRect.origin.y - vmargin - 1,
                              cellSize.width * gridSize.width,
@@ -3274,7 +3274,7 @@ iTermKittyImageDraw *iTermFindKittyImageDrawForVirtualPlaceholder(NSArray<iTermK
     [self drawOffscreenCommandLineDecorationsInContext:ctx
                                          virtualOffset:virtualOffset];
 
-    const CGFloat vmargin = [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins];
+    const CGFloat vmargin = [iTermPreferences topBottomMargins];
     // Use padding to disable drawing default background color
     [self drawBackgroundForLine:0
                             atY:row * _cellSize.height + iTermOffscreenCommandLineVerticalPadding - vmargin - 1
@@ -3357,7 +3357,7 @@ iTermKittyImageDraw *iTermFindKittyImageDrawForVirtualPlaceholder(NSArray<iTermK
                             self.softAlternateScreenMode,
                             NULL);
         int cursorX = 0;
-        int baseX = floor(xStart * _cellSize.width + [iTermPreferences intForKey:kPreferenceKeySideMargins]);
+        int baseX = floor(xStart * _cellSize.width + [iTermPreferences sideMargins]);
         int i;
         int y = (yStart + _numberOfLines - height) * _cellSize.height;
         int cursorY = y;
@@ -3444,14 +3444,14 @@ iTermKittyImageDraw *iTermFindKittyImageDrawForVirtualPlaceholder(NSArray<iTermK
             } else {
                 justWrapped = NO;
             }
-            x = floor(xStart * _cellSize.width + [iTermPreferences intForKey:kPreferenceKeySideMargins]);
+            x = floor(xStart * _cellSize.width + [iTermPreferences sideMargins]);
             y = (yStart + _numberOfLines - height) * _cellSize.height;
             i += charsInLine;
         }
 
         if (!foundCursor && i == cursorIndex) {
             if (justWrapped) {
-                cursorX = [iTermPreferences intForKey:kPreferenceKeySideMargins] + width * _cellSize.width;
+                cursorX = [iTermPreferences sideMargins] + width * _cellSize.width;
                 cursorY = preWrapY;
             } else {
                 cursorX = x;
@@ -3459,7 +3459,7 @@ iTermKittyImageDraw *iTermFindKittyImageDrawForVirtualPlaceholder(NSArray<iTermK
             }
         }
         const double kCursorWidth = 2.0;
-        double rightMargin = [iTermPreferences intForKey:kPreferenceKeySideMargins] + _gridSize.width * _cellSize.width;
+        double rightMargin = [iTermPreferences sideMargins] + _gridSize.width * _cellSize.width;
         if (cursorX + kCursorWidth >= rightMargin) {
             // Make sure the cursor doesn't draw in the margin. Shove it left
             // a little bit so it fits.
@@ -3488,13 +3488,13 @@ iTermKittyImageDraw *iTermFindKittyImageDrawForVirtualPlaceholder(NSArray<iTermK
     const int rowNumber = cursorCoord.y + _numberOfLines - _gridSize.height;
     if ([iTermAdvancedSettingsModel fullHeightCursor]) {
         const CGFloat height = MAX(_cellSize.height, _cellSizeWithoutSpacing.height);
-        return NSMakeRect(floor(cursorCoord.x * _cellSize.width + [iTermPreferences intForKey:kPreferenceKeySideMargins]),
+        return NSMakeRect(floor(cursorCoord.x * _cellSize.width + [iTermPreferences sideMargins]),
                           rowNumber * _cellSize.height,
                           MIN(_cellSize.width, _cellSizeWithoutSpacing.width),
                           height);
     } else {
         const CGFloat height = MIN(_cellSize.height, _cellSizeWithoutSpacing.height);
-        return NSMakeRect(floor(cursorCoord.x * _cellSize.width + [iTermPreferences intForKey:kPreferenceKeySideMargins]),
+        return NSMakeRect(floor(cursorCoord.x * _cellSize.width + [iTermPreferences sideMargins]),
                           rowNumber * _cellSize.height + MAX(0, round((_cellSize.height - _cellSizeWithoutSpacing.height) / 2.0)),
                           MIN(_cellSize.width, _cellSizeWithoutSpacing.width),
                           height);
@@ -3865,7 +3865,7 @@ typedef struct {
 #pragma mark - Coord/Rect Utilities
 
 - (NSRange)rangeOfVisibleRows {
-    int visibleRows = floor((_scrollViewContentSize.height - [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins] * 2) / _cellSize.height);
+    int visibleRows = floor((_scrollViewContentSize.height - [iTermPreferences topBottomMargins] * 2) / _cellSize.height);
     CGFloat top = _scrollViewDocumentVisibleRect.origin.y;
     int firstVisibleRow = floor(top / _cellSize.height);
     if (firstVisibleRow < 0) {
@@ -3892,7 +3892,7 @@ typedef struct {
     const int maxY = ceil(NSMaxY(rect) / _cellSize.height);
 
     VT100GridCoordRange convexHull = VT100GridCoordRangeInvalid;
-    const CGFloat sideMargin = [iTermPreferences intForKey:kPreferenceKeySideMargins];
+    const CGFloat sideMargin = [iTermPreferences sideMargins];
     for (int i = minY; i <= maxY; i++) {
         const VT100GridCoordRange logicalRect = VT100GridCoordRangeMake(MAX(0, floor((rect.origin.x - sideMargin) / _cellSize.width)),
                                                                         i,
@@ -3918,14 +3918,14 @@ typedef struct {
 }
 
 - (VT100GridCoordRange)coordRangeForRect:(NSRect)rect {
-    return VT100GridCoordRangeMake(MAX(0, floor((rect.origin.x - [iTermPreferences intForKey:kPreferenceKeySideMargins]) / _cellSize.width)),
+    return VT100GridCoordRangeMake(MAX(0, floor((rect.origin.x - [iTermPreferences sideMargins]) / _cellSize.width)),
                                    floor(rect.origin.y / _cellSize.height),
-                                   MAX(0, ceil((NSMaxX(rect) - [iTermPreferences intForKey:kPreferenceKeySideMargins]) / _cellSize.width)),
+                                   MAX(0, ceil((NSMaxX(rect) - [iTermPreferences sideMargins]) / _cellSize.width)),
                                    ceil(NSMaxY(rect) / _cellSize.height));
 }
 
 - (NSRect)rectForCoordRange:(VT100GridCoordRange)coordRange {
-    return NSMakeRect(coordRange.start.x * _cellSize.width + [iTermPreferences intForKey:kPreferenceKeySideMargins],
+    return NSMakeRect(coordRange.start.x * _cellSize.width + [iTermPreferences sideMargins],
                       coordRange.start.y * _cellSize.height,
                       (coordRange.end.x - coordRange.start.x) * _cellSize.width,
                       (coordRange.end.y - coordRange.start.y) * _cellSize.height);
@@ -3948,8 +3948,8 @@ typedef struct {
 
 - (NSRange)rangeOfColumnsFrom:(CGFloat)x ofWidth:(CGFloat)width {
     NSRange charRange;
-    charRange.location = MAX(0, (x - [iTermPreferences intForKey:kPreferenceKeySideMargins]) / _cellSize.width);
-    charRange.length = ceil((x + width - [iTermPreferences intForKey:kPreferenceKeySideMargins]) / _cellSize.width) - charRange.location;
+    charRange.location = MAX(0, (x - [iTermPreferences sideMargins]) / _cellSize.width);
+    charRange.length = ceil((x + width - [iTermPreferences sideMargins]) / _cellSize.width) - charRange.location;
     if (charRange.location + charRange.length > _gridSize.width) {
         charRange.length = _gridSize.width - charRange.location;
     }
@@ -4114,7 +4114,7 @@ typedef struct {
                       sourceLineNumer:row
                     displayLineNumber:row
                               inRange:NSMakeRange(0, _gridSize.width)
-                      startingAtPoint:NSMakePoint([iTermPreferences intForKey:kPreferenceKeySideMargins], row * _cellSize.height)
+                      startingAtPoint:NSMakePoint([iTermPreferences sideMargins], row * _cellSize.height)
                            bgselected:NO
                               bgColor:backgroundColor
              processedBackgroundColor:backgroundColor

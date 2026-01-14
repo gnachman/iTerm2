@@ -1032,6 +1032,12 @@ typedef struct {
     dispatch_once_t onceToken;
 } iTermPreferencesBoolCache;
 
+typedef struct {
+    NSString *key;
+    int value;
+    dispatch_once_t onceToken;
+} iTermPreferencesIntCache;
+
 #define FAST_BOOL_ACCESSOR(accessorName, userDefaultsKey) \
 + (BOOL)accessorName { \
     static iTermPreferencesBoolCache cache = { \
@@ -1040,6 +1046,16 @@ typedef struct {
         .onceToken = 0 \
     }; \
     return [self boolWithCache:&cache]; \
+}
+
+#define FAST_INT_ACCESSOR(accessorName, userDefaultsKey) \
++ (int)accessorName { \
+    static iTermPreferencesIntCache cache = { \
+        .key = userDefaultsKey, \
+        .value = 0, \
+        .onceToken = 0 \
+    }; \
+    return [self intWithCache:&cache]; \
 }
 
 @implementation iTermPreferences (FastAccessors)
@@ -1054,8 +1070,21 @@ typedef struct {
     return cache->value;
 }
 
++ (int)intWithCache:(iTermPreferencesIntCache *)cache {
+    dispatch_once(&cache->onceToken, ^{
+        cache->value = [self intForKey:cache->key];
+        [[self sharedObserver] observeKey:cache->key block:^{
+            cache->value = [self intForKey:cache->key];
+        }];
+    });
+    return cache->value;
+}
+
 FAST_BOOL_ACCESSOR(hideTabActivityIndicator, kPreferenceKeyHideTabActivityIndicator)
 FAST_BOOL_ACCESSOR(maximizeThroughput, kPreferenceKeyMaximizeThroughput)
 FAST_BOOL_ACCESSOR(useTmuxProfile, kPreferenceKeyUseTmuxProfile)
+
+FAST_INT_ACCESSOR(sideMargins, kPreferenceKeySideMargins)
+FAST_INT_ACCESSOR(topBottomMargins, kPreferenceKeyTopBottomMargins)
 
 @end
