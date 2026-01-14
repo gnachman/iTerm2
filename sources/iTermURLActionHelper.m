@@ -74,7 +74,7 @@
         return nil;
     }
     iTermTextExtractor *extractor = [self.delegate urlActionHelperNewTextExtractor:self];
-    extractor.supportBidi = [iTermPreferences boolForKey:kPreferenceKeyBidi];
+    extractor.supportBidi = [iTermPreferences bidiEnabled];
     VT100GridCoord logicalCoord = [extractor logicalCoordForVisualCoord:visualCoord];
     if ([extractor characterAt:logicalCoord].code == 0) {
         completion(nil);
