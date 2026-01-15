@@ -402,6 +402,8 @@ extern NSString *const iTermDefaultAIPrompt;
 + (BOOL)hideTabActivityIndicator;
 + (BOOL)maximizeThroughput;
 + (BOOL)useTmuxProfile;
++ (BOOL)allowClipboardAccessFromTerminal;
++ (BOOL)dimOnlyText;
 + (int)sideMargins;
 + (int)topBottomMargins;
 @end
