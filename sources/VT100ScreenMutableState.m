@@ -6467,13 +6467,9 @@ launchCoprocessWithCommand:(NSString *)command
 
 // Main queue or mutation queue while joined.
 - (void)tokenExecutorSync {
-    DLog(@"[side effects] begin");
-    [self performLightweightBlockWithJoinedThreads:^(VT100ScreenMutableState * _Nonnull mutableState) {
-        [self performSideEffect:^(id<VT100ScreenDelegate> delegate) {
-            [delegate screenSync:mutableState];
-        } name:@"tokenExecutorSync calling screenSync"];
-    }];
-    DLog(@"[side effects] end");
+    // No-op: Syncing is handled by the cadence-driven refresh path.
+    // Visible tabs sync at ~60Hz, background tabs at 1Hz.
+    // Doing an additional sync here is redundant and expensive.
 }
 
 // Runs on mutation queue

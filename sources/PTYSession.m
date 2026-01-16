@@ -13542,15 +13542,12 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 
 - (void)screenNeedsRedraw {
     DLog(@"screenNeedsRedraw");
-    [self refresh];
+    // Refresh handled by cadence (60Hz visible, 1Hz background)
     [_textview updateSubviewFrames];
 }
 
 - (void)screenUpdateDisplay:(BOOL)redraw {
-    [self updateDisplayBecause:[NSString stringWithFormat:@"screen requested update redraw=%@", @(redraw)]];
-    if (redraw) {
-        [_textview requestDelegateRedraw];
-    }
+    // No-op: Cadence-driven refresh handles display updates.
 }
 
 - (void)screenRefreshFindOnPageView {
