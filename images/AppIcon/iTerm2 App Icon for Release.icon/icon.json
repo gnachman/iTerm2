@@ -21,6 +21,14 @@
           }
         },
         {
+          "fill-specializations" : [
+            {
+              "appearance" : "tinted",
+              "value" : {
+                "solid" : "extended-gray:1.00000,1.00000"
+              }
+            }
+          ],
           "hidden" : false,
           "image-name" : "cursor@2x 4.png",
           "name" : "cursor@2x 4",
@@ -33,6 +41,14 @@
           }
         },
         {
+          "fill-specializations" : [
+            {
+              "appearance" : "tinted",
+              "value" : {
+                "solid" : "extended-gray:1.00000,1.00000"
+              }
+            }
+          ],
           "hidden" : false,
           "image-name" : "dollar@2x 2.png",
           "name" : "dollar@2x 2",
