@@ -307,6 +307,7 @@ typedef struct {
             KEY_RESTRICT_MOUSE_REPORTING_TO_ALTERNATE_SCREEN_MODE,
             KEY_ALLOW_TITLE_SETTING,
             KEY_DISABLE_PRINTING, KEY_DISABLE_SMCUP_RMCUP, KEY_SILENCE_BELL,
+            KEY_DEFAULT_PANE_LOCKED,
 
             KEY_BOOKMARK_USER_NOTIFICATIONS, KEY_SEND_BELL_ALERT, KEY_SEND_IDLE_ALERT,
             KEY_SEND_NEW_OUTPUT_ALERT, KEY_SEND_SESSION_ENDED_ALERT,
@@ -705,6 +706,7 @@ typedef struct {
             KEY_DISABLE_PRINTING:                                   @"Whether to disable printing via escape sequences",
             KEY_DISABLE_SMCUP_RMCUP:                                @"Whether to disable alternate screen mode switching",
             KEY_SILENCE_BELL:                                       @"Whether to silence the terminal bell",
+            KEY_DEFAULT_PANE_LOCKED:                                @"Whether new panes are locked by default",
             KEY_BOOKMARK_USER_NOTIFICATIONS:                        @"Whether to post user notifications for this profile",
             KEY_SEND_BELL_ALERT:                                    @"Whether to send notification when bell rings",
             KEY_SEND_IDLE_ALERT:                                    @"Whether to send notification when session becomes idle",
@@ -1020,6 +1022,7 @@ typedef struct {
                   KEY_DISABLE_PRINTING: @NO,
                   KEY_DISABLE_SMCUP_RMCUP: @NO,
                   KEY_SILENCE_BELL: @NO,
+                  KEY_DEFAULT_PANE_LOCKED: @NO,
                   KEY_BOOKMARK_USER_NOTIFICATIONS: @NO,
                   KEY_SEND_BELL_ALERT: @YES,
                   KEY_SEND_IDLE_ALERT: @NO,
