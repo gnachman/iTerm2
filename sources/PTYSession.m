@@ -13547,7 +13547,10 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 }
 
 - (void)screenUpdateDisplay:(BOOL)redraw {
-    // No-op: Cadence-driven refresh handles display updates.
+    [self updateDisplayBecause:[NSString stringWithFormat:@"screen requested update redraw=%@", @(redraw)]];
+    if (redraw) {
+        [_textview requestDelegateRedraw];
+    }
 }
 
 - (void)screenRefreshFindOnPageView {
