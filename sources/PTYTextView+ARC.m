@@ -1721,6 +1721,30 @@ hasOpenAnnotationInRange:(VT100GridCoordRange)coordRange {
     [self.delegate textViewToggleBroadcastingInput];
 }
 
+- (void)contextMenuToggleLock:(iTermTextViewContextMenuHelper *)contextMenu {
+    [self.delegate textViewToggleLock];
+}
+
+- (BOOL)contextMenuIsLocked:(iTermTextViewContextMenuHelper *)contextMenu {
+    return [self.delegate textViewIsLocked];
+}
+
+- (void)contextMenuLockAllInTab:(iTermTextViewContextMenuHelper *)contextMenu {
+    [self.delegate textViewLockAllInTab];
+}
+
+- (void)contextMenuUnlockAllInTab:(iTermTextViewContextMenuHelper *)contextMenu {
+    [self.delegate textViewUnlockAllInTab];
+}
+
+- (BOOL)contextMenuAreAllPanesInTabLocked:(iTermTextViewContextMenuHelper *)contextMenu {
+    return [self.delegate textViewAreAllPanesInTabLocked];
+}
+
+- (BOOL)contextMenuIsAnyPaneInTabLocked:(iTermTextViewContextMenuHelper *)contextMenu {
+    return [self.delegate textViewIsAnyPaneInTabLocked];
+}
+
 - (BOOL)contextMenuHasCoprocess:(iTermTextViewContextMenuHelper *)contextMenu {
     return [self.delegate textViewHasCoprocess];
 }

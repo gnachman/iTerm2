@@ -18,6 +18,7 @@
 #import "PSMMinimalTabStyle.h"
 #import "PSMTabBarControl.h"
 #import "PTYWindow.h"
+#import "SFSymbolEnum.h"
 
 const double kBottomMargin = 0;
 static const CGFloat kButtonSize = 17;
@@ -38,6 +39,7 @@ static const CGFloat kButtonSize = 17;
 @implementation SessionTitleView {
     NSTextField *label_;
     NSButton *closeButton_;
+    NSButton *lockButton_;
     iTermHamburgerButton *menuButton_;
 }
 
@@ -46,17 +48,14 @@ static const CGFloat kButtonSize = 17;
 @synthesize dimmingAmount = dimmingAmount_;
 @synthesize statusBarViewController = _statusBarViewController;
 
+static const double kMargin = 5;
+static const CGFloat kLockButtonSize = 14;
+
 - (instancetype)initWithFrame:(NSRect)frame {
     self = [super initWithFrame:frame];
     if (self) {
-        const double kMargin = 5;
-        double x = kMargin;
-
         NSImage *closeImage = [NSImage it_imageNamed:@"closebutton" forClass:self.class];
-        closeButton_ = [[NoFirstResponderButton alloc] initWithFrame:NSMakeRect(x,
-                                                                                (frame.size.height - kButtonSize) / 2,
-                                                                                kButtonSize,
-                                                                                kButtonSize)];
+        closeButton_ = [[NoFirstResponderButton alloc] initWithFrame:NSMakeRect(0, 0, kButtonSize, kButtonSize)];
         [closeButton_ setButtonType:NSButtonTypeMomentaryPushIn];
         [closeButton_ setImage:closeImage];
         [closeButton_ setTarget:self];
@@ -65,8 +64,6 @@ static const CGFloat kButtonSize = 17;
         [closeButton_ setTitle:@""];
         [[closeButton_ cell] setHighlightsBy:NSContentsCellMask];
         [self addSubview:closeButton_];
-
-        x += closeButton_.frame.size.width + kMargin;
 
         __weak __typeof(self) weakSelf = self;
         menuButton_ = [[iTermHamburgerButton alloc] initWithMenuProvider:^NSMenu * _Nonnull {
@@ -78,14 +75,29 @@ static const CGFloat kButtonSize = 17;
                                                      name:kPSMModifierChangedNotification
                                                    object:nil];
 
-        menuButton_.frame = NSMakeRect(frame.size.width - menuButton_.image.size.width - 6,
-                                       (frame.size.height - menuButton_.image.size.height) / 2,
-                                       menuButton_.image.size.width,
-                                       menuButton_.image.size.height);
-        [menuButton_ setAutoresizingMask:NSViewMinXMargin];
+        // Menu button - positioned at right edge
         [self addSubview:menuButton_];
 
-        label_ = [[NSTextField alloc] initWithFrame:NSMakeRect(x, 0, menuButton_.frame.origin.x - x - kMargin, frame.size.height)];
+        // Create lock button - positioned to the left of menu button, hidden by default
+        NSImage *lockImage = [NSImage imageWithSystemSymbolName:SFSymbolGetString(SFSymbolLockFill)
+                                         accessibilityDescription:@"Pane is locked"];
+        NSImageSymbolConfiguration *config = [NSImageSymbolConfiguration configurationWithPointSize:11 weight:NSFontWeightMedium];
+        lockImage = [lockImage imageWithSymbolConfiguration:config];
+
+        lockButton_ = [[NoFirstResponderButton alloc] initWithFrame:NSMakeRect(0, 0, kLockButtonSize, kLockButtonSize)];
+        [lockButton_ setButtonType:NSButtonTypeMomentaryPushIn];
+        [lockButton_ setImage:lockImage];
+        [lockButton_ setTarget:self];
+        [lockButton_ setAction:@selector(toggleLock:)];
+        [lockButton_ setBordered:NO];
+        [lockButton_ setTitle:@""];
+        [lockButton_ setToolTip:@"This pane is locked. It cannot be moved, swapped, or dragged, and closing it requires confirmation. Right-click to unlock."];
+        [[lockButton_ cell] setHighlightsBy:NSContentsCellMask];
+        [lockButton_ setHidden:YES]; // Hidden by default until delegate says it's locked
+        [self addSubview:lockButton_];
+
+        label_ = [[NSTextField alloc] initWithFrame:NSMakeRect(0, 0, 100, frame.size.height)];
+        label_.lineBreakMode = NSLineBreakByTruncatingTail;
         [label_ setStringValue:@""];
         [label_ setBezeled:NO];
         [label_ setDrawsBackground:NO];
@@ -93,14 +105,13 @@ static const CGFloat kButtonSize = 17;
         [label_ setSelectable:NO];
         [label_ setFont:[NSFont systemFontOfSize:[NSFont smallSystemFontSize]]];
         [label_ sizeToFit];
-        [label_ setAutoresizingMask:NSViewMaxYMargin | NSViewWidthSizable];
 
-        NSRect lframe = label_.frame;
-        lframe.origin.y += (frame.size.height - lframe.size.height) / 2 + kBottomMargin;
-        lframe.size.width = menuButton_.frame.origin.x - x - kMargin;
-        label_.frame = lframe;
         [self addSubview:label_];
 
+        [self layoutSubviews];
+        [menuButton_ setAutoresizingMask:NSViewMinXMargin];
+        [lockButton_ setAutoresizingMask:NSViewMinXMargin]; // Stay at right side
+        [label_ setAutoresizingMask:NSViewMaxYMargin | NSViewWidthSizable];
         [self addCursorRect:NSMakeRect(0, 0, frame.size.width, frame.size.height)
                      cursor:[NSCursor arrowCursor]];
 
@@ -111,6 +122,33 @@ static const CGFloat kButtonSize = 17;
 
 - (void)dealloc {
     [[NSNotificationCenter defaultCenter] removeObserver:self];
+}
+
+- (void)layoutSubviews {
+    const NSRect frame = self.frame;
+    double x = kMargin;
+    closeButton_.frame = NSMakeRect(x,
+                                    (frame.size.height - kButtonSize) / 2,
+                                    kButtonSize,
+                                    kButtonSize);
+    x += closeButton_.frame.size.width + kMargin;
+    menuButton_.frame = NSMakeRect(frame.size.width - menuButton_.image.size.width - 6,
+                                   (frame.size.height - menuButton_.image.size.height) / 2,
+                                   menuButton_.image.size.width,
+                                   menuButton_.image.size.height);
+    lockButton_.frame = NSMakeRect(menuButton_.frame.origin.x - kMargin - kLockButtonSize,
+                                   (frame.size.height - kLockButtonSize) / 2,
+                                   kLockButtonSize,
+                                   kLockButtonSize);
+    [label_ sizeToFit];
+    NSRect lframe = label_.frame;
+    lframe.origin.x = x;
+    lframe.origin.y = (frame.size.height - lframe.size.height) / 2 + kBottomMargin;
+    lframe.size.width = menuButton_.frame.origin.x - x - kMargin;
+    if (!lockButton_.isHidden) {
+        lframe.size.width -= kMargin + kLockButtonSize;
+    }
+    label_.frame = lframe;
 }
 
 - (void)scrollWheel:(NSEvent *)event {
@@ -154,6 +192,18 @@ static const CGFloat kButtonSize = 17;
 - (void)close:(id)sender
 {
     [delegate_ close];
+}
+
+- (void)toggleLock:(id)sender {
+    [delegate_ sessionTitleViewToggleLock];
+    [self updateLockButton];
+}
+
+- (void)updateLockButton {
+    BOOL locked = [delegate_ sessionTitleViewIsLocked];
+    [lockButton_ setHidden:!locked];
+    [self layoutSubviews];
+    [self setNeedsDisplay:YES];
 }
 
 - (void)drawRect:(NSRect)insaneRect {

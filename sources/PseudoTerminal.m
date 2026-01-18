@@ -1930,14 +1930,17 @@ ITERM_WEAKLY_REFERENCEABLE
 
     if (mustAsk && !suppressConfirmation) {
         BOOL okToClose;
+        const BOOL anyIsLocked = [[aTab sessions] anyWithBlock:^BOOL(PTYSession *anObject) {
+            return anObject.locked;
+        }];
         if (numClosing == 1) {
             okToClose = [self confirmCloseForSessions:[aTab sessions]
-                                           identifier:@"This tab"
+                                           identifier:anyIsLocked ? @"This tab (with a locked session)" : @"This tab"
                                           genericName:[NSString stringWithFormat:@"tab #%d",
                                                        [aTab tabNumber]]];
         } else {
             okToClose = [self confirmCloseForSessions:[aTab sessions]
-                                           identifier:@"This multi-pane tab"
+                                           identifier:anyIsLocked ? @"This multi-pane tab (with locked sessions)" : @"This multi-pane tab"
                                           genericName:[NSString stringWithFormat:@"tab #%d",
                                                        [aTab tabNumber]]];
         }
@@ -2263,7 +2266,7 @@ ITERM_WEAKLY_REFERENCEABLE
         okToClose = YES;
     } else {
       okToClose = [self confirmCloseForSessions:[NSArray arrayWithObject:aSession]
-                                     identifier:@"This session"
+                                     identifier:aSession.locked ? @"This locked session" : @"This session"
                                     genericName:[NSString stringWithFormat:@"session \"%@\"",
                                                     [[aSession name] removingHTMLFromTabTitleIfNeeded]]];
     }
@@ -11139,8 +11142,14 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
         [item setState:_contentView.shouldShowToolbelt ? NSControlStateValueOn : NSControlStateValueOff];
         return [[iTermToolbeltView availableConfiguredToolsForProfileType:self.currentSession.profile.profileType] count] > 0;
     } else if ([item action] == @selector(moveSessionToWindow:)) {
+        if (self.currentSession.locked) {
+            return NO;
+        }
         result = ([[self allSessions] count] > 1);
     } else if ([item action] == @selector(moveSessionToTab:)) {
+        if (self.currentSession.locked) {
+            return NO;
+        }
         result = [self tabForSession:self.currentSession].sessions.count > 1;
     } else if ([item action] == @selector(openSplitHorizontallySheet:) ||
                [item action] == @selector(openSplitVerticallySheet:)) {
@@ -11527,10 +11536,12 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
 }
 
 // Show a dialog confirming close. Returns YES if the window should be closed.
-- (BOOL)showCloseWindow
-{
+- (BOOL)showCloseWindow {
+    const BOOL hasLockedSession = [self.allSessions anyWithBlock:^BOOL(PTYSession *session) {
+        return session.locked;
+    }];
     return ([self confirmCloseForSessions:[self allSessions]
-                               identifier:@"This window"
+                               identifier:hasLockedSession ? @"This window (with locked sessions)" : @"This window"
                               genericName:[NSString stringWithFormat:@"Window #%d", number_+1]]);
 }
 

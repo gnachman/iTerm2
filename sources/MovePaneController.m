@@ -66,11 +66,19 @@ NSString *const iTermSessionDidChangeTabNotification = @"iTermSessionDidChangeTa
 
 - (void)movePane:(PTYSession *)session {
     DLog(@"movePane:%@", session);
+    if (session.locked) {
+        DLog(@"Session is locked, refusing to move");
+        return;
+    }
     [self startWithSession:session move:YES];
 }
 
 - (void)swapPane:(PTYSession *)session {
     DLog(@"swapPane:%@", session);
+    if (session.locked) {
+        DLog(@"Session is locked, refusing to swap");
+        return;
+    }
     [self startWithSession:session move:NO];
 }
 
@@ -93,6 +101,11 @@ NSString *const iTermSessionDidChangeTabNotification = @"iTermSessionDidChangeTa
 }
 
 - (void)moveSession:(PTYSession *)movingSession toTabInWindow:(NSWindow *)window {
+    DLog(@"moveSession:%@ toTabInWindow:%@", movingSession, window);
+    if (movingSession.locked) {
+        DLog(@"Locked");
+        return;
+    }
     PTYTab *oldTab = [movingSession.delegate.realParentWindow tabForSession:movingSession];
     assert(oldTab);
     if (oldTab.sessions.count < 2) {
@@ -127,6 +140,10 @@ NSString *const iTermSessionDidChangeTabNotification = @"iTermSessionDidChangeTa
 
 - (void)moveSessionToNewWindow:(PTYSession *)movingSession atPoint:(NSPoint)point {
     DLog(@"moveSessionToNewWindow:%@", movingSession);
+    if (movingSession.locked) {
+        DLog(@"Locked");
+        return;
+    }
     if ([movingSession isTmuxClient]) {
         [[movingSession tmuxController] breakOutWindowPane:[movingSession tmuxPane]
                                                    toPoint:point];
@@ -318,6 +335,10 @@ NSString *const iTermSessionDidChangeTabNotification = @"iTermSessionDidChangeTa
 
 - (void)beginDrag:(PTYSession *)session {
     DLog(@"beginDrag:%@", session);
+    if (session.locked) {
+        DLog(@"Session is locked, refusing to drag");
+        return;
+    }
     isMove_ = YES;
     [self exitMovePaneMode];
     session_ = session;

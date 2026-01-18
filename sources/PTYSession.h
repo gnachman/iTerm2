@@ -189,6 +189,18 @@ typedef enum {
 // Does the tab have a maximized pane?
 - (BOOL)hasMaximizedPane;
 
+// Lock all sessions in this tab.
+- (void)lockAllSessionsInTab;
+
+// Unlock all sessions in this tab.
+- (void)unlockAllSessionsInTab;
+
+// Are all sessions in this tab locked?
+@property (nonatomic, readonly) BOOL areAllSessionsInTabLocked;
+
+// Is any session in this tab locked?
+@property (nonatomic, readonly) BOOL isAnySessionInTabLocked;
+
 // Make session active in this tab. Assumes session belongs to thet ab.
 - (void)setActiveSession:(PTYSession*)session;
 - (void)setActiveSessionPreservingMaximization:(PTYSession *)session;
@@ -338,6 +350,8 @@ backgroundColor:(NSColor *)backgroundColor;
 @property(nonatomic, assign) BOOL active;
 
 @property(nonatomic, assign) BOOL alertOnNextMark;
+// Prevents the pane from being dragged or detached.
+@property(nonatomic, assign) BOOL locked;
 // This comes from prefs and is kept up to date.
 @property(nonatomic, readonly) BOOL alertOnMarksinOffscreenSessions;
 @property(nonatomic, copy) NSColor *tabColor;

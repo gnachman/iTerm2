@@ -259,14 +259,20 @@ const int kMaxSelectedTextLengthForCustomActions = 400;
     if ([item action] == @selector(restartSession:)) {
         return [self.delegate contextMenuSessionCanBeRestarted:self];
     }
+    // Disable move/swap when locked
+    if ([item action] == @selector(movePane:) ||
+        [item action] == @selector(swapSessions:)) {
+        return ![self.delegate contextMenuIsLocked:self];
+    }
     if ([item action] == @selector(toggleBroadcastingInput:) ||
+        [item action] == @selector(toggleLock:) ||
+        [item action] == @selector(lockAllInTab:) ||
+        [item action] == @selector(unlockAllInTab:) ||
         [item action] == @selector(closeTextViewSession:) ||
         [item action] == @selector(editTextViewSession:) ||
         [item action] == @selector(clearTextViewBuffer:) ||
         [item action] == @selector(splitTextViewVertically:) ||
         [item action] == @selector(splitTextViewHorizontally:) ||
-        [item action] == @selector(movePane:) ||
-        [item action] == @selector(swapSessions:) ||
         [item action] == @selector(reRunCommand:) ||
         [item action] == @selector(saveImageAs:) ||
         [item action] == @selector(copyImage:) ||
@@ -616,6 +622,52 @@ const int kMaxSelectedTextLengthForCustomActions = 400;
 
     // Toggle broadcast
     add(@"Toggle Broadcasting Input", @selector(toggleBroadcastingInput:));
+
+    // Lock pane
+    {
+        NSMenuItem *lockItem = [[NSMenuItem alloc] initWithTitle:@"Lock Pane"
+                                                          action:@selector(toggleLock:)
+                                                   keyEquivalent:@""];
+        lockItem.target = self;
+        lockItem.state = [self.delegate contextMenuIsLocked:self] ? NSControlStateValueOn : NSControlStateValueOff;
+        [theMenu addItem:lockItem];
+    }
+
+    // Lock all panes in tab (with Option-key alternate)
+    if ([self.delegate contextMenuCurrentTabHasMultipleSessions:self]) {
+        BOOL allLocked = [self.delegate contextMenuAreAllPanesInTabLocked:self];
+        BOOL anyLocked = [self.delegate contextMenuIsAnyPaneInTabLocked:self];
+
+        // Primary item: shows contextual action based on current state
+        // Alternate item: shows opposite action when Option is held (only if useful)
+        if (allLocked) {
+            // Primary: Unlock (since all are locked)
+            // No alternate needed - Lock All would be a no-op
+            NSMenuItem *unlockItem = [[NSMenuItem alloc] initWithTitle:@"Unlock All Panes in Tab"
+                                                                action:@selector(unlockAllInTab:)
+                                                         keyEquivalent:@""];
+            unlockItem.target = self;
+            [theMenu addItem:unlockItem];
+        } else {
+            // Primary: Lock (since not all are locked)
+            NSMenuItem *lockItem = [[NSMenuItem alloc] initWithTitle:@"Lock All Panes in Tab"
+                                                              action:@selector(lockAllInTab:)
+                                                       keyEquivalent:@""];
+            lockItem.target = self;
+            [theMenu addItem:lockItem];
+
+            // Alternate: Unlock (Option-key) - only if at least one pane is locked
+            if (anyLocked) {
+                NSMenuItem *unlockItem = [[NSMenuItem alloc] initWithTitle:@"Unlock All Panes in Tab"
+                                                                    action:@selector(unlockAllInTab:)
+                                                             keyEquivalent:@""];
+                unlockItem.target = self;
+                unlockItem.alternate = YES;
+                unlockItem.keyEquivalentModifierMask = NSEventModifierFlagOption;
+                [theMenu addItem:unlockItem];
+            }
+        }
+    }
 
     if ([self.delegate contextMenuHasCoprocess:self]) {
         add(@"Stop Coprocess", @selector(stopCoprocess:));
@@ -1177,6 +1229,18 @@ const int kMaxSelectedTextLengthForCustomActions = 400;
 
 - (void)toggleBroadcastingInput:(id)sender {
     [self.delegate contextMenuToggleBroadcastingInput:self];
+}
+
+- (void)toggleLock:(id)sender {
+    [self.delegate contextMenuToggleLock:self];
+}
+
+- (void)lockAllInTab:(id)sender {
+    [self.delegate contextMenuLockAllInTab:self];
+}
+
+- (void)unlockAllInTab:(id)sender {
+    [self.delegate contextMenuUnlockAllInTab:self];
 }
 
 - (void)stopCoprocess:(id)sender {

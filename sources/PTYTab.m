@@ -5144,6 +5144,36 @@ typedef struct {
     return isMaximized_;
 }
 
+- (BOOL)areAllSessionsInTabLocked {
+    for (PTYSession *session in [self sessions]) {
+        if (!session.locked) {
+            return NO;
+        }
+    }
+    return YES;
+}
+
+- (BOOL)isAnySessionInTabLocked {
+    for (PTYSession *session in [self sessions]) {
+        if (session.locked) {
+            return YES;
+        }
+    }
+    return NO;
+}
+
+- (void)lockAllSessionsInTab {
+    for (PTYSession *session in [self sessions]) {
+        session.locked = YES;
+    }
+}
+
+- (void)unlockAllSessionsInTab {
+    for (PTYSession *session in [self sessions]) {
+        session.locked = NO;
+    }
+}
+
 - (void)maximize {
     DLog(@"maximize %@", self);
     for (PTYSession *session in [self sessions]) {

@@ -561,7 +561,7 @@ const CGFloat PTYTextViewMarginClickGraceWidth = 2.0;
         return self.findOnPageHelper.searchResults.count > 0;
     }
     if (item.action == @selector(movePane:)) {
-        return [[MovePaneController sharedInstance] session] == nil;
+        return [[MovePaneController sharedInstance] session] == nil && ![self.delegate textViewIsLocked];
     }
     SEL theSel = [item action];
     if ([NSStringFromSelector(theSel) hasPrefix:@"contextMenuAction"]) {
@@ -6446,6 +6446,10 @@ static NSString *iTermStringFromRange(NSRange range) {
 
 - (void)mouseHandlerWillBeginDragPane:(PTYMouseHandler *)handler {
     [_delegate textViewBeginDrag];
+}
+
+- (BOOL)mouseHandlerSessionIsLocked:(PTYMouseHandler *)handler {
+    return [_delegate textViewIsLocked];
 }
 
 - (BOOL)mouseHandlerIsInKeyWindow:(PTYMouseHandler *)handler {
