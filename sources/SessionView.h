@@ -158,6 +158,8 @@ extern NSString *const SessionViewWasSelectedForInspectionNotification;
 - (NSDictionary *)sessionViewStatusBarAdvancedConfigurationDictionary;
 - (CGFloat)desiredRightExtra;
 - (void)sessionViewWillDraw;
+- (BOOL)sessionViewIsLocked;
+- (void)sessionViewToggleLock;
 @end
 
 typedef NS_ENUM(NSUInteger, iTermSessionViewFindDriver) {
@@ -217,6 +219,7 @@ typedef NS_ENUM(NSUInteger, iTermSessionViewFindDriver) {
 @property (nonatomic) BOOL enableProgressBars;
 @property (nonatomic) CGFloat progressBarHeight;
 @property (nonatomic, copy) NSString *progressBarColorScheme;
+@property (nonatomic, readonly) SessionTitleView *title;
 
 - (void)setBrowserViewController:(iTermBrowserViewController *)browserViewController
                       initialURL:(NSString *)initialURL

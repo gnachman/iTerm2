@@ -293,6 +293,7 @@ static NSString *const SESSION_ARRANGEMENT_SHOULD_EXPECT_CURRENT_DIR_UPDATES = @
 
 static NSString *const SESSION_ARRANGEMENT_WORKING_DIRECTORY_POLLER_DISABLED = @"Working Directory Poller Disabled";  // BOOL
 static NSString *const SESSION_ARRANGEMENT_ALERT_ON_NEXT_MARK = @"Alert on Next Mark";  // BOOL
+static NSString *const SESSION_ARRANGEMENT_LOCKED = @"Locked";  // BOOL
 static NSString *const SESSION_ARRANGEMENT_COMMANDS = @"Commands";  // Array of strings
 static NSString *const SESSION_ARRANGEMENT_DIRECTORIES = @"Directories";  // Array of strings
 static NSString *const SESSION_ARRANGEMENT_HOSTS = @"Hosts";  // Array of VT100RemoteHost
@@ -1591,6 +1592,9 @@ ITERM_WEAKLY_REFERENCEABLE
         if (arrangement[SESSION_ARRANGEMENT_ALERT_ON_NEXT_MARK]) {
             aSession->_alertOnNextMark = [arrangement[SESSION_ARRANGEMENT_ALERT_ON_NEXT_MARK] boolValue];
         }
+        if (arrangement[SESSION_ARRANGEMENT_LOCKED]) {
+            aSession->_locked = [arrangement[SESSION_ARRANGEMENT_LOCKED] boolValue];
+        }
         if (arrangement[SESSION_ARRANGEMENT_CURSOR_GUIDE]) {
             aSession.textview.highlightCursorLine = [arrangement[SESSION_ARRANGEMENT_CURSOR_GUIDE] boolValue];
         }
@@ -2622,6 +2626,10 @@ ITERM_WEAKLY_REFERENCEABLE
     DLog(@"entered");
     if (_exited) {
         return [iTermPromptOnCloseReason noReason];
+    }
+    if (_locked) {
+        DLog(@"session is locked");
+        return [iTermPromptOnCloseReason sessionIsLocked];
     }
     switch ([[_profile objectForKey:KEY_PROMPT_CLOSE] intValue]) {
         case PROMPT_ALWAYS:
@@ -5203,6 +5211,7 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
     [self setAntiIdleCode:[iTermProfilePreferences intForKey:KEY_IDLE_CODE inProfile:aDict]];
     [self setAntiIdlePeriod:[iTermProfilePreferences doubleForKey:KEY_IDLE_PERIOD inProfile:aDict]];
     [self setAntiIdle:[iTermProfilePreferences boolForKey:KEY_SEND_CODE_WHEN_IDLE inProfile:aDict]];
+    self.locked = [iTermProfilePreferences boolForKey:KEY_DEFAULT_PANE_LOCKED inProfile:aDict];
     self.endAction = [iTermProfilePreferences unsignedIntegerForKey:KEY_SESSION_END_ACTION inProfile:aDict];
     [self setTreatAmbiguousWidthAsDoubleWidth:[iTermProfilePreferences boolForKey:KEY_AMBIGUOUS_DOUBLE_WIDTH
                                                                         inProfile:aDict]];
@@ -5319,6 +5328,7 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
                                      image:[self tabGraphicForProfile:aDict]];
     [self.delegate sessionUpdateMetalAllowed];
     [self profileNameDidChangeTo:self.profile[KEY_NAME]];
+    [_view.title updateLockButton];
 }
 
 - (void)removeBindings {
@@ -5729,6 +5739,7 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
     [newView updateTitleFrame];
     [_view setFindDriverDelegate:self];
     [self updateViewBackgroundImage];
+    [newView.title updateLockButton];
 }
 
 - (NSStringEncoding)encoding {
@@ -6254,6 +6265,7 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
         }
         result[SESSION_ARRANGEMENT_VARIABLES] = _variables.encodableDictionaryValue;
         result[SESSION_ARRANGEMENT_ALERT_ON_NEXT_MARK] = @(_alertOnNextMark);
+        result[SESSION_ARRANGEMENT_LOCKED] = @(_locked);
         result[SESSION_ARRANGEMENT_CURSOR_GUIDE] = @(_textview.highlightCursorLine);
         result[SESSION_ARRANGEMENT_CURSOR_TYPE_OVERRIDE] = self.cursorTypeOverride;
         if (self.lastDirectory) {
@@ -11835,6 +11847,39 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 
 - (BOOL)textViewIsMaximized {
     return [_delegate hasMaximizedPane];
+}
+
+- (BOOL)textViewIsLocked {
+    return _locked;
+}
+
+- (void)setLocked:(BOOL)locked {
+    if (_locked == locked) {
+        return;
+    }
+    _locked = locked;
+    [_view.title updateLockButton];
+    [_textview requestDelegateRedraw];
+}
+
+- (void)textViewToggleLock {
+    self.locked = !_locked;
+}
+
+- (void)textViewToggleLockAllInTab {
+    [_delegate toggleLockAllSessionsInTab];
+}
+
+- (void)textViewLockAllInTab {
+    [_delegate lockAllSessionsInTab];
+}
+
+- (void)textViewUnlockAllInTab {
+    [_delegate unlockAllSessionsInTab];
+}
+
+- (BOOL)textViewAreAllPanesInTabLocked {
+    return [_delegate areAllSessionsInTabLocked];
 }
 
 - (BOOL)textViewTabHasMaximizedPanel
@@ -18700,6 +18745,14 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     if (self.isBrowserSession) {
         [_textview configureIndicatorsHelperWithRightMargin:0];
     }
+}
+
+- (BOOL)sessionViewIsLocked {
+    return _locked;
+}
+
+- (void)sessionViewToggleLock {
+    self.locked = !_locked;
 }
 
 #pragma mark - iTermCoprocessDelegate

@@ -18,6 +18,7 @@
 #import "PSMMinimalTabStyle.h"
 #import "PSMTabBarControl.h"
 #import "PTYWindow.h"
+#import "SFSymbolEnum.h"
 
 const double kBottomMargin = 0;
 static const CGFloat kButtonSize = 17;
@@ -38,6 +39,7 @@ static const CGFloat kButtonSize = 17;
 @implementation SessionTitleView {
     NSTextField *label_;
     NSButton *closeButton_;
+    NSButton *lockButton_;
     iTermHamburgerButton *menuButton_;
 }
 
@@ -78,12 +80,36 @@ static const CGFloat kButtonSize = 17;
                                                      name:kPSMModifierChangedNotification
                                                    object:nil];
 
+        // Menu button - positioned at right edge
         menuButton_.frame = NSMakeRect(frame.size.width - menuButton_.image.size.width - 6,
                                        (frame.size.height - menuButton_.image.size.height) / 2,
                                        menuButton_.image.size.width,
                                        menuButton_.image.size.height);
         [menuButton_ setAutoresizingMask:NSViewMinXMargin];
         [self addSubview:menuButton_];
+
+        // Create lock button - positioned to the left of menu button, hidden by default
+        static const CGFloat kLockButtonSize = 14;
+        NSImage *lockImage = [NSImage imageWithSystemSymbolName:SFSymbolGetString(SFSymbolLockFill)
+                                         accessibilityDescription:@"Pane is locked"];
+        NSImageSymbolConfiguration *config = [NSImageSymbolConfiguration configurationWithPointSize:11 weight:NSFontWeightMedium];
+        lockImage = [lockImage imageWithSymbolConfiguration:config];
+
+        lockButton_ = [[NoFirstResponderButton alloc] initWithFrame:NSMakeRect(menuButton_.frame.origin.x - kMargin - kLockButtonSize,
+                                                                                (frame.size.height - kLockButtonSize) / 2,
+                                                                                kLockButtonSize,
+                                                                                kLockButtonSize)];
+        [lockButton_ setButtonType:NSButtonTypeMomentaryPushIn];
+        [lockButton_ setImage:lockImage];
+        [lockButton_ setTarget:self];
+        [lockButton_ setAction:@selector(toggleLock:)];
+        [lockButton_ setBordered:NO];
+        [lockButton_ setTitle:@""];
+        [lockButton_ setToolTip:@"Pane is locked (click to unlock)"];
+        [[lockButton_ cell] setHighlightsBy:NSContentsCellMask];
+        [lockButton_ setAutoresizingMask:NSViewMinXMargin]; // Stay at right side
+        [lockButton_ setHidden:YES]; // Hidden by default until delegate says it's locked
+        [self addSubview:lockButton_];
 
         label_ = [[NSTextField alloc] initWithFrame:NSMakeRect(x, 0, menuButton_.frame.origin.x - x - kMargin, frame.size.height)];
         [label_ setStringValue:@""];
@@ -154,6 +180,27 @@ static const CGFloat kButtonSize = 17;
 - (void)close:(id)sender
 {
     [delegate_ close];
+}
+
+- (void)toggleLock:(id)sender {
+    [delegate_ sessionTitleViewToggleLock];
+    [self updateLockButton];
+}
+
+- (void)updateLockButton {
+    BOOL locked = [delegate_ sessionTitleViewIsLocked];
+    [lockButton_ setHidden:!locked];
+
+    if (locked) {
+        // Position lock button to the left of menu button
+        const CGFloat kMargin = 5;
+        static const CGFloat kLockButtonSize = 14;
+        NSRect lockFrame = lockButton_.frame;
+        lockFrame.origin.x = menuButton_.frame.origin.x - kMargin - kLockButtonSize;
+        lockButton_.frame = lockFrame;
+    }
+
+    [self setNeedsDisplay:YES];
 }
 
 - (void)drawRect:(NSRect)insaneRect {
