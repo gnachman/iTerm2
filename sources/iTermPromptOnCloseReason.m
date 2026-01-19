@@ -231,7 +231,7 @@
 }
 
 + (instancetype)tmuxClientsAlwaysPromptBecauseJobsAreNotExposed {
-    return [[[iTermPromptOnCloseMessageReason alloc] initWithMessage:@"A tmux session is configured to prompt if jobs are running, but tmux doesn't expose the process tree." priority:80] autorelease];
+    return [[[iTermPromptOnCloseMessageReason alloc] initWithMessage:@"A tmux session is configured to prompt if jobs are running, but tmux doesn’t expose the process tree." priority:80] autorelease];
 }
 
 + (instancetype)sessionIsLocked {

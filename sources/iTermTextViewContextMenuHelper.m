@@ -637,25 +637,18 @@ const int kMaxSelectedTextLengthForCustomActions = 400;
     // Lock all panes in tab (with Option-key alternate)
     if ([self.delegate contextMenuCurrentTabHasMultipleSessions:self]) {
         BOOL allLocked = [self.delegate contextMenuAreAllPanesInTabLocked:self];
+        BOOL anyLocked = [self.delegate contextMenuIsAnyPaneInTabLocked:self];
 
         // Primary item: shows contextual action based on current state
-        // Alternate item: shows opposite action when Option is held
+        // Alternate item: shows opposite action when Option is held (only if useful)
         if (allLocked) {
             // Primary: Unlock (since all are locked)
+            // No alternate needed - Lock All would be a no-op
             NSMenuItem *unlockItem = [[NSMenuItem alloc] initWithTitle:@"Unlock All Panes in Tab"
                                                                 action:@selector(unlockAllInTab:)
                                                          keyEquivalent:@""];
             unlockItem.target = self;
             [theMenu addItem:unlockItem];
-
-            // Alternate: Lock (Option-key)
-            NSMenuItem *lockItem = [[NSMenuItem alloc] initWithTitle:@"Lock All Panes in Tab"
-                                                              action:@selector(lockAllInTab:)
-                                                       keyEquivalent:@""];
-            lockItem.target = self;
-            lockItem.alternate = YES;
-            lockItem.keyEquivalentModifierMask = NSEventModifierFlagOption;
-            [theMenu addItem:lockItem];
         } else {
             // Primary: Lock (since not all are locked)
             NSMenuItem *lockItem = [[NSMenuItem alloc] initWithTitle:@"Lock All Panes in Tab"
@@ -664,14 +657,16 @@ const int kMaxSelectedTextLengthForCustomActions = 400;
             lockItem.target = self;
             [theMenu addItem:lockItem];
 
-            // Alternate: Unlock (Option-key)
-            NSMenuItem *unlockItem = [[NSMenuItem alloc] initWithTitle:@"Unlock All Panes in Tab"
-                                                                action:@selector(unlockAllInTab:)
-                                                         keyEquivalent:@""];
-            unlockItem.target = self;
-            unlockItem.alternate = YES;
-            unlockItem.keyEquivalentModifierMask = NSEventModifierFlagOption;
-            [theMenu addItem:unlockItem];
+            // Alternate: Unlock (Option-key) - only if at least one pane is locked
+            if (anyLocked) {
+                NSMenuItem *unlockItem = [[NSMenuItem alloc] initWithTitle:@"Unlock All Panes in Tab"
+                                                                    action:@selector(unlockAllInTab:)
+                                                             keyEquivalent:@""];
+                unlockItem.target = self;
+                unlockItem.alternate = YES;
+                unlockItem.keyEquivalentModifierMask = NSEventModifierFlagOption;
+                [theMenu addItem:unlockItem];
+            }
         }
     }
 

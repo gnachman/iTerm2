@@ -11882,6 +11882,10 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     return [_delegate areAllSessionsInTabLocked];
 }
 
+- (BOOL)textViewIsAnyPaneInTabLocked {
+    return [_delegate isAnySessionInTabLocked];
+}
+
 - (BOOL)textViewTabHasMaximizedPanel
 {
     return [_delegate hasMaximizedPane];

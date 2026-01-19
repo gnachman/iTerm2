@@ -1086,8 +1086,6 @@
 	<string></string>
 	<key>Silence Bell</key>
 	<false/>
-	<key>Default Pane Locked</key>
-	<false/>
 	<key>Sync Title</key>
 	<false/>
 	<key>Terminal Type</key>

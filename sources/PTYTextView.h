@@ -136,6 +136,7 @@ extern const CGFloat PTYTextViewMarginClickGraceWidth;
 - (void)textViewLockAllInTab;
 - (void)textViewUnlockAllInTab;
 - (BOOL)textViewAreAllPanesInTabLocked;
+- (BOOL)textViewIsAnyPaneInTabLocked;
 - (BOOL)textViewTabHasMaximizedPanel;
 - (void)textViewWillNeedUpdateForBlink;
 - (BOOL)textViewDelegateHandlesAllKeystrokes;

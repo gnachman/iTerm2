@@ -105,7 +105,7 @@ static const CGFloat kButtonSize = 17;
         [lockButton_ setAction:@selector(toggleLock:)];
         [lockButton_ setBordered:NO];
         [lockButton_ setTitle:@""];
-        [lockButton_ setToolTip:@"Pane is locked (click to unlock)"];
+        [lockButton_ setToolTip:@"This pane is locked. It cannot be moved, swapped, or dragged, and closing it requires confirmation. Click to unlock."];
         [[lockButton_ cell] setHighlightsBy:NSContentsCellMask];
         [lockButton_ setAutoresizingMask:NSViewMinXMargin]; // Stay at right side
         [lockButton_ setHidden:YES]; // Hidden by default until delegate says it's locked

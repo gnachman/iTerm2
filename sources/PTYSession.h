@@ -199,7 +199,10 @@ typedef enum {
 - (void)unlockAllSessionsInTab;
 
 // Are all sessions in this tab locked?
-- (BOOL)areAllSessionsInTabLocked;
+@property (nonatomic, readonly) BOOL areAllSessionsInTabLocked;
+
+// Is any session in this tab locked?
+@property (nonatomic, readonly) BOOL isAnySessionInTabLocked;
 
 // Make session active in this tab. Assumes session belongs to thet ab.
 - (void)setActiveSession:(PTYSession*)session;

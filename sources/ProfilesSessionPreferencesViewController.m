@@ -300,7 +300,10 @@ static NSString *const ProfilesSessionPreferencesViewControllerPhonyShortLivedSe
                    type:kPreferenceInfoTypeCheckbox];
     info.observer = ^{
         __strong __typeof(weakSelf) strongSelf = weakSelf;
-        NSLog(@"Default pane locked changed to: %@", @(strongSelf->_defaultPaneLocked.state));
+        if (!strongSelf) {
+            return;
+        }
+        DLog(@"Default pane locked changed to: %@", @(strongSelf->_defaultPaneLocked.state));
     };
 
     info = [self defineControl:_statusBarEnabled

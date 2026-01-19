@@ -5153,11 +5153,13 @@ typedef struct {
     return YES;
 }
 
-- (void)toggleLockAllSessionsInTab {
-    BOOL shouldLock = ![self areAllSessionsInTabLocked];
+- (BOOL)isAnySessionInTabLocked {
     for (PTYSession *session in [self sessions]) {
-        session.locked = shouldLock;
+        if (session.locked) {
+            return YES;
+        }
     }
+    return NO;
 }
 
 - (void)lockAllSessionsInTab {

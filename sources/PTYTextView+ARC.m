@@ -1745,6 +1745,10 @@ hasOpenAnnotationInRange:(VT100GridCoordRange)coordRange {
     return [self.delegate textViewAreAllPanesInTabLocked];
 }
 
+- (BOOL)contextMenuIsAnyPaneInTabLocked:(iTermTextViewContextMenuHelper *)contextMenu {
+    return [self.delegate textViewIsAnyPaneInTabLocked];
+}
+
 - (BOOL)contextMenuHasCoprocess:(iTermTextViewContextMenuHelper *)contextMenu {
     return [self.delegate textViewHasCoprocess];
 }
