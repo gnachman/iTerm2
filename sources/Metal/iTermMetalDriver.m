@@ -626,7 +626,7 @@ legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth
                                                   pointInsets.left * scale,
                                                   pointInsets.bottom * scale,
                                                   pointInsets.right * scale);
-        frameData.vmargin = [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins];
+        frameData.vmargin = [iTermPreferences topBottomMargins];
         if (@available(macOS 10.15, *)) {
             frameData.maximumExtendedDynamicRangeColorComponentValue = self.mainThreadState->maximumExtendedDynamicRangeColorComponentValue;
         }
@@ -904,7 +904,7 @@ legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth
     } else {
 #if ENABLE_DEFER_CURRENT_DRAWABLE
         const BOOL synchronousDraw = (_context.group != nil);
-        frameData.deferCurrentDrawable = ([iTermPreferences boolForKey:kPreferenceKeyMaximizeThroughput] &&
+        frameData.deferCurrentDrawable = ([iTermPreferences maximizeThroughput] &&
                                           !synchronousDraw);
 #else
         frameData.deferCurrentDrawable = NO;

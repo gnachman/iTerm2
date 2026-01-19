@@ -15825,7 +15825,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
         _config.printingAllowed = printingAllowed;
         dirty = YES;
     }
-    const BOOL clipboardAccessAllowed = [iTermPreferences boolForKey:kPreferenceKeyAllowClipboardAccessFromTerminal];
+    const BOOL clipboardAccessAllowed = [iTermPreferences allowClipboardAccessFromTerminal];
     if (clipboardAccessAllowed != _config.clipboardAccessAllowed) {
         _config.clipboardAccessAllowed = clipboardAccessAllowed;
         dirty = YES;
@@ -15874,7 +15874,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
         _config.maximumTheoreticalImageDimension = PTYSessionMaximumMetalViewSize;
         dirty = YES;
     }
-    const BOOL dimOnlyText = [iTermPreferences boolForKey:kPreferenceKeyDimOnlyText];
+    const BOOL dimOnlyText = [iTermPreferences dimOnlyText];
     if (_config.dimOnlyText != dimOnlyText) {
         _config.dimOnlyText = dimOnlyText;
         dirty = YES;
