@@ -179,7 +179,7 @@ final class iTermNonASCIIStringTest: XCTestCase {
         let A: UInt16 = 65
         let codes: [UInt16] = [A, A]
         // give an extended URL attr at index 1
-        let url = iTermURL(url: URL(string: "https://x")!, identifier: nil)
+        let url = iTermURL(url: URL(string: "https://x")!, identifier: nil, target: nil)
         let ea = iTermExternalAttribute(havingUnderlineColor: false,
                                         underlineColor: VT100TerminalColorValue(),
                                         url: url,

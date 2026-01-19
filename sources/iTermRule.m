@@ -9,6 +9,7 @@
 #import "iTermRule.h"
 #import "NSStringITerm.h"
 #import "RegexKitLite.h"
+#import "iTerm2SharedARC-Swift.h"
 
 @interface iTermRule()
 @property(nonatomic, copy) NSString *username;
@@ -16,6 +17,7 @@
 @property(nonatomic, copy) NSString *path;
 @property(nonatomic, copy) NSString *job;
 @property(nonatomic, readwrite) BOOL sticky;
+@property(nonatomic, copy) NSString *expression;
 @end
 
 @implementation iTermRule
@@ -38,15 +40,26 @@
     // username@*:path&job
     // hostname:path&job
     // /path&job
+    // {expression}
 
     NSString *username = nil;
     NSString *hostname = nil;
     NSString *path = nil;
     BOOL sticky = NO;
 
+    // Check for sticky prefix first (before checking for expression syntax)
     if ([string hasPrefix:@"!"]) {
         sticky = YES;
         string = [string substringFromIndex:1];
+    }
+
+    // Now check for expression syntax
+    if ([string hasPrefix:@"{"] && [string hasSuffix:@"}"]) {
+        iTermRule *rule = [[iTermRule alloc] init];
+        NSString *expressionString = [[string substringFromIndex:1] stringByDroppingLastCharacters:1];
+        rule.expression = expressionString;
+        rule.sticky = sticky;
+        return rule;
     }
 
     NSInteger ampersand = [string rangeOfString:@"&"].location;
@@ -54,6 +67,17 @@
     if (ampersand != NSNotFound) {
         job = [string substringFromIndex:ampersand + 1];
         string = [string substringToIndex:ampersand];
+    }
+
+    // Check for path-only rules first (start with /)
+    // This handles cases like "/foo:bar@baz" where : and @ are part of the path
+    if ([string hasPrefix:@"/"]) {
+        path = string;
+        iTermRule *rule = [[iTermRule alloc] init];
+        rule.path = path;
+        rule.sticky = sticky;
+        rule.job = job;
+        return rule;
     }
 
     NSUInteger atSign = [string rangeOfString:@"@"].location;
@@ -69,21 +93,28 @@
             // user@host:path
             hostname = [string substringWithRange:NSMakeRange(atSign + 1, colon - atSign - 1)];
         } else if (colon == NSNotFound) {
-            // user@host
-            hostname = [string substringFromIndex:atSign + 1];
+            // user@host or user@ (empty hostname)
+            NSString *hostPart = [string substringFromIndex:atSign + 1];
+            if (hostPart.length > 0) {
+                hostname = hostPart;
+            }
+            // If hostPart is empty, hostname remains nil
         }
     }
     if (colon != NSNotFound) {
         // [user@]host:path
         if (!hostname) {
-            hostname = [string substringToIndex:colon];
+            NSString *hostPart = [string substringToIndex:colon];
+            if (hostPart.length > 0) {
+                hostname = hostPart;
+            }
         }
         path = [string substringFromIndex:colon + 1];
     } else if (atSign == NSNotFound && [string hasPrefix:@"/"]) {
         // /path
         path = string;
-    } else if (atSign == NSNotFound && colon == NSNotFound) {
-        // host
+    } else if (atSign == NSNotFound && colon == NSNotFound && string.length > 0) {
+        // host (only if non-empty after stripping job)
         hostname = string;
     }
     iTermRule *rule = [[iTermRule alloc] init];
@@ -112,7 +143,12 @@
                   username:(NSString *)username
                       path:(NSString *)path
                        job:(NSString *)job
-               commandLine:(NSString *)commandLine {
+               commandLine:(NSString *)commandLine
+   expressionValueProvider:(id<iTermAutomaticProfileSwitchingExpressionValueProvider>)expressionValueProvider {
+    if (self.expression) {
+        return [expressionValueProvider scoreForExpression:self.expression];
+    }
+
     int acc = 1;
     const int kPathPartialMatchScore = 0;
     const int kCatchallRuleScore = acc;

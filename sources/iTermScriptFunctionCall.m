@@ -164,11 +164,11 @@ void iTermFunctionCallSplitFullyQualifiedName(NSString *fqName, NSString **names
 
         case iTermParsedExpressionTypeArrayOfValues:
         case iTermParsedExpressionTypeArrayOfExpressions:
-        case iTermParsedExpressionTypeNumber:
+        case iTermParsedExpressionTypeSubexpression:
         case iTermParsedExpressionTypeReference:
-        case iTermParsedExpressionTypeBoolean:
+        case iTermParsedExpressionTypeIndirectValue:
         case iTermParsedExpressionTypeString: {
-            NSString *reason = @"Expected a function call, not a literal";
+            NSString *reason = @"Expected a function call, not a value";
             completion(nil,
                        [NSError errorWithDomain:@"com.iterm2.call"
                                            code:3

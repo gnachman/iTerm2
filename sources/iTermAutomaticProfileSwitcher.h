@@ -1,5 +1,5 @@
 //
-//  iTermAutomaticProfileSwitching.h
+//  iTermAutomaticProfileSwitcher.h
 //  iTerm2
 //
 //  Created by George Nachman on 2/28/16.
@@ -10,6 +10,8 @@
 #import "ProfileModel.h"
 
 NS_ASSUME_NONNULL_BEGIN
+
+@protocol iTermAutomaticProfileSwitchingExpressionValueProvider;
 
 // Describes all the possible state of a profile needed to restore it.
 @interface iTermSavedProfile : NSObject
@@ -52,13 +54,15 @@ NS_ASSUME_NONNULL_BEGIN
 - (instancetype)init NS_UNAVAILABLE;
 
 - (NSDictionary *)savedState;
-
+// Force reevaluation on next call to setHostname:…
+- (void)markDirty;
 // Call this when the hostname, username, or path changes.
 - (void)setHostname:(nullable NSString *)hostname
            username:(nullable NSString *)username
                path:(nullable NSString *)path
                 job:(nullable NSString *)job
-        commandLine:(nullable NSString *)commandLine;
+        commandLine:(nullable NSString *)commandLine
+expressionValueProvider:(id<iTermAutomaticProfileSwitchingExpressionValueProvider>)expressionValueProvider;
 
 @end
 

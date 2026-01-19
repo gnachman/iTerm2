@@ -952,7 +952,7 @@ class VT100GridTests: XCTestCase {
         grid.markAllCharsDirty(false, updateTimestamps: false)
 
         let rect = VT100GridRect(x: 1, y: 1, width: 2, height: 2)
-        grid.scroll(rect, downBy: 0, softBreak: false)
+        grid.scroll(rect, downBy: 0, softBreak: false, fill: .zero)
 
         // Content should be unchanged
         let expectedGrid = [
@@ -981,7 +981,7 @@ class VT100GridTests: XCTestCase {
         grid.markAllCharsDirty(false, updateTimestamps: false)
 
         let rect = VT100GridRect(x: 1, y: 1, width: 2, height: 2)
-        grid.scroll(rect, downBy: 1, softBreak: false)
+        grid.scroll(rect, downBy: 1, softBreak: false, fill: .zero)
 
         let expectedContent = [
             "abcd\n",
@@ -1013,7 +1013,7 @@ class VT100GridTests: XCTestCase {
         grid.markAllCharsDirty(false, updateTimestamps: false)
 
         let rect = VT100GridRect(x: 1, y: 1, width: 2, height: 2)
-        grid.scroll(rect, downBy: -1, softBreak: false)
+        grid.scroll(rect, downBy: -1, softBreak: false, fill: .zero)
 
         let expected = [
             "abcd\n",
@@ -1045,7 +1045,7 @@ class VT100GridTests: XCTestCase {
         grid.markAllCharsDirty(false, updateTimestamps: false)
 
         let rect = VT100GridRect(x: 1, y: 1, width: 3, height: 3)
-        grid.scroll(rect, downBy: 2, softBreak: false)
+        grid.scroll(rect, downBy: 2, softBreak: false, fill: .zero)
 
         let expectedContent = [
             "abcde\n",
@@ -1075,7 +1075,7 @@ class VT100GridTests: XCTestCase {
         grid.markAllCharsDirty(false, updateTimestamps: false)
 
         let rect = VT100GridRect(x: 1, y: 1, width: 3, height: 3)
-        grid.scroll(rect, downBy: -2, softBreak: false)
+        grid.scroll(rect, downBy: -2, softBreak: false, fill: .zero)
 
         let expected = [
             "abcde\n",
@@ -1103,7 +1103,7 @@ class VT100GridTests: XCTestCase {
         grid.markAllCharsDirty(false, updateTimestamps: false)
 
         let rect = VT100GridRect(x: 1, y: 1, width: 3, height: 3)
-        grid.scroll(rect, downBy: 3, softBreak: false)
+        grid.scroll(rect, downBy: 3, softBreak: false, fill: .zero)
 
         let expected = [
             "abcde\n",
@@ -1131,7 +1131,7 @@ class VT100GridTests: XCTestCase {
         grid.markAllCharsDirty(false, updateTimestamps: false)
 
         let rect = VT100GridRect(x: 1, y: 1, width: 3, height: 3)
-        grid.scroll(rect, downBy: -3, softBreak: false)
+        grid.scroll(rect, downBy: -3, softBreak: false, fill: .zero)
 
         let expected = [
             "abcde\n",
@@ -1159,7 +1159,7 @@ class VT100GridTests: XCTestCase {
         grid.markAllCharsDirty(false, updateTimestamps: false)
 
         let rect = VT100GridRect(x: 1, y: 1, width: 3, height: 3)
-        grid.scroll(rect, downBy: 4, softBreak: false)
+        grid.scroll(rect, downBy: 4, softBreak: false, fill: .zero)
 
         let expected = [
             "abcde\n",
@@ -1187,7 +1187,7 @@ class VT100GridTests: XCTestCase {
         grid.markAllCharsDirty(false, updateTimestamps: false)
 
         let rect = VT100GridRect(x: 1, y: 1, width: 3, height: 3)
-        grid.scroll(rect, downBy: -4, softBreak: false)
+        grid.scroll(rect, downBy: -4, softBreak: false, fill: .zero)
 
         let expectedContent = [
             "abcde\n",
@@ -1213,7 +1213,7 @@ class VT100GridTests: XCTestCase {
         grid.markAllCharsDirty(false, updateTimestamps: false)
 
         let rect = VT100GridRect(x: 0, y: 1, width: 3, height: 2)
-        grid.scroll(rect, downBy: -1, softBreak: false)
+        grid.scroll(rect, downBy: -1, softBreak: false, fill: .zero)
 
         // The broken EOL_DWC placeholders at rows 0 and 1 should be cleaned up ('.'),
         // blank row inserted at row 2, and the intact DWC_RIGHT at row 3 should remain.
@@ -1250,7 +1250,7 @@ class VT100GridTests: XCTestCase {
 
         // Scroll rectangle x=0,y=1,width=3,height=2 down by 1
         let rect = VT100GridRect(x: 0, y: 1, width: 3, height: 2)
-        grid.scroll(rect, downBy: 1, softBreak: false)
+        grid.scroll(rect, downBy: 1, softBreak: false, fill: .zero)
 
         // After scroll:
         // Row 0: the broken split‐DWC at top is cleaned up → "ab."
@@ -1289,7 +1289,7 @@ class VT100GridTests: XCTestCase {
 
         // Scroll the entire 3×3 region up by 1 (downBy: -1)
         let rect = VT100GridRect(x: 0, y: 0, width: 3, height: 3)
-        grid.scroll(rect, downBy: -1, softBreak: false)
+        grid.scroll(rect, downBy: -1, softBreak: false, fill: .zero)
 
         // After scroll:
         // Row 0 <- old Row 1 ("de>\n")
@@ -1325,7 +1325,7 @@ class VT100GridTests: XCTestCase {
         grid.markAllCharsDirty(false, updateTimestamps: false)
 
         let rect = VT100GridRect(x: 1, y: 0, width: 3, height: 6)
-        grid.scroll(rect, downBy: -1, softBreak: false)
+        grid.scroll(rect, downBy: -1, softBreak: false, fill: .zero)
 
         let expectedContent = [
             "a\0g\0e\n",
@@ -1356,7 +1356,7 @@ class VT100GridTests: XCTestCase {
         grid.markAllCharsDirty(false, updateTimestamps: false)
 
         let rect = VT100GridRect(x: 0, y: 1, width: 5, height: 3)
-        grid.scroll(rect, downBy: -1, softBreak: false)
+        grid.scroll(rect, downBy: -1, softBreak: false, fill: .zero)
 
         let expectedContent = [
             "abcd\n",
@@ -1392,7 +1392,7 @@ class VT100GridTests: XCTestCase {
         grid.markAllCharsDirty(false, updateTimestamps: false)
 
         let rect = VT100GridRect(x: 1, y: 0, width: 4, height: 5)
-        grid.scroll(rect, downBy: -1, softBreak: false)
+        grid.scroll(rect, downBy: -1, softBreak: false, fill: .zero)
 
         let expectedContent = [
             "a\0fgh\n",
@@ -1423,7 +1423,7 @@ class VT100GridTests: XCTestCase {
         grid.markAllCharsDirty(false, updateTimestamps: false)
 
         let rect = VT100GridRect(x: 0, y: 0, width: 4, height: 5)
-        grid.scroll(rect, downBy: -1, softBreak: false)
+        grid.scroll(rect, downBy: -1, softBreak: false, fill: .zero)
 
         let expectedContent = [
             "e-fg\n",
@@ -1454,7 +1454,7 @@ class VT100GridTests: XCTestCase {
 
         // Empty rect → no-op
         let rect = VT100GridRect(x: 1, y: 1, width: 0, height: 0)
-        grid.scroll(rect, downBy: 1, softBreak: false)
+        grid.scroll(rect, downBy: 1, softBreak: false, fill: .zero)
 
         // Content unchanged
         let expectedContent = [
@@ -1485,7 +1485,7 @@ class VT100GridTests: XCTestCase {
         grid.markAllCharsDirty(false, updateTimestamps: false)
 
         let rect = VT100GridRect(x: 0, y: 1, width: 3, height: 2)
-        grid.scroll(rect, downBy: -1, softBreak: false)
+        grid.scroll(rect, downBy: -1, softBreak: false, fill: .zero)
 
         let expectedContent = [
             "ab\n",
@@ -1514,7 +1514,7 @@ class VT100GridTests: XCTestCase {
         grid.markAllCharsDirty(false, updateTimestamps: false)
 
         let rect = VT100GridRect(x: 0, y: 1, width: 3, height: 3)
-        grid.scroll(rect, downBy: 1, softBreak: false)
+        grid.scroll(rect, downBy: 1, softBreak: false, fill: .zero)
 
         let expectedContent = [
             "ab\n",
@@ -1543,7 +1543,7 @@ class VT100GridTests: XCTestCase {
         grid.markAllCharsDirty(false, updateTimestamps: false)
 
         let rect = VT100GridRect(x: 0, y: 1, width: 3, height: 3)
-        grid.scroll(rect, downBy: -1, softBreak: false)
+        grid.scroll(rect, downBy: -1, softBreak: false, fill: .zero)
 
         let expectedContent = [
             "ab\n",
@@ -1572,7 +1572,7 @@ class VT100GridTests: XCTestCase {
         grid.markAllCharsDirty(false, updateTimestamps: false)
 
         let rect = VT100GridRect(x: 0, y: 1, width: 4, height: 3)
-        grid.scroll(rect, downBy: 1, softBreak: false)
+        grid.scroll(rect, downBy: 1, softBreak: false, fill: .zero)
 
         let expectedContent = [
             "abcd\n",
@@ -1602,7 +1602,7 @@ class VT100GridTests: XCTestCase {
         grid.markAllCharsDirty(false, updateTimestamps: false)
 
         let rect = VT100GridRect(x: 0, y: 1, width: 4, height: 3)
-        grid.scroll(rect, downBy: 2, softBreak: false)
+        grid.scroll(rect, downBy: 2, softBreak: false, fill: .zero)
 
         let expectedContent = [
             "abcd\n",
@@ -1630,7 +1630,7 @@ class VT100GridTests: XCTestCase {
         grid.markAllCharsDirty(false, updateTimestamps: false)
 
         let rect = VT100GridRect(x: 0, y: 1, width: 4, height: 3)
-        grid.scroll(rect, downBy: -1, softBreak: false)
+        grid.scroll(rect, downBy: -1, softBreak: false, fill: .zero)
 
         let expectedContent = [
             "abcd\n",
@@ -1658,7 +1658,7 @@ class VT100GridTests: XCTestCase {
         grid.markAllCharsDirty(false, updateTimestamps: false)
 
         let rect = VT100GridRect(x: 0, y: 1, width: 4, height: 3)
-        grid.scroll(rect, downBy: -2, softBreak: false)
+        grid.scroll(rect, downBy: -2, softBreak: false, fill: .zero)
 
         let expectedContent = [
             "abcd\n",
@@ -1686,7 +1686,7 @@ class VT100GridTests: XCTestCase {
         grid.markAllCharsDirty(false, updateTimestamps: false)
 
         let rect = VT100GridRect(x: 1, y: 1, width: 3, height: 3)
-        grid.scroll(rect, downBy: 1, softBreak: false)
+        grid.scroll(rect, downBy: 1, softBreak: false, fill: .zero)
 
         let expectedContent = [
             "abcd",
@@ -1714,7 +1714,7 @@ class VT100GridTests: XCTestCase {
         grid.markAllCharsDirty(false, updateTimestamps: false)
 
         let rect = VT100GridRect(x: 1, y: 1, width: 3, height: 3)
-        grid.scroll(rect, downBy: 2, softBreak: false)
+        grid.scroll(rect, downBy: 2, softBreak: false, fill: .zero)
 
         let expectedContent = [
             "abcd",
@@ -1745,7 +1745,7 @@ class VT100GridTests: XCTestCase {
         grid.markAllCharsDirty(false, updateTimestamps: false)
 
         let rect = VT100GridRect(x: 1, y: 1, width: 3, height: 3)
-        grid.scroll(rect, downBy: 1, softBreak: false)
+        grid.scroll(rect, downBy: 1, softBreak: false, fill: .zero)
 
         let expectedContent = [
             "abcd",
@@ -1773,7 +1773,7 @@ class VT100GridTests: XCTestCase {
         grid.markAllCharsDirty(false, updateTimestamps: false)
 
         let rect = VT100GridRect(x: 1, y: 1, width: 3, height: 3)
-        grid.scroll(rect, downBy: -1, softBreak: false)
+        grid.scroll(rect, downBy: -1, softBreak: false, fill: .zero)
 
         let expectedContent = [
             "abcd",
@@ -1803,7 +1803,7 @@ class VT100GridTests: XCTestCase {
         grid.markAllCharsDirty(false, updateTimestamps: false)
 
         let rect = VT100GridRect(x: 1, y: 1, width: 3, height: 3)
-        grid.scroll(rect, downBy: -1, softBreak: false)
+        grid.scroll(rect, downBy: -1, softBreak: false, fill: .zero)
 
         let expectedContent = [
             "abc\n",
@@ -1831,7 +1831,7 @@ class VT100GridTests: XCTestCase {
         grid.markAllCharsDirty(false, updateTimestamps: false)
 
         let rect = VT100GridRect(x: 1, y: 1, width: 3, height: 3)
-        grid.scroll(rect, downBy: -2, softBreak: false)
+        grid.scroll(rect, downBy: -2, softBreak: false, fill: .zero)
 
         let expectedContent = [
             "abcd",

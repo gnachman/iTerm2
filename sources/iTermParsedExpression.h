@@ -9,26 +9,28 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
+@class iTermIndirectValue;
 @class iTermScriptFunctionCall;
 @class iTermVariableScope;
 @class iTermVariableReference;
+@class iTermSubexpression;
 
 typedef NS_ENUM(NSUInteger, iTermParsedExpressionType) {
     iTermParsedExpressionTypeNil,
     iTermParsedExpressionTypeArrayOfExpressions,
     iTermParsedExpressionTypeArrayOfValues,
     iTermParsedExpressionTypeString,  // This only occurs inside interpolated string parts arrays.
-    iTermParsedExpressionTypeNumber,
+    iTermParsedExpressionTypeSubexpression,
     iTermParsedExpressionTypeFunctionCall,
     iTermParsedExpressionTypeError,
     iTermParsedExpressionTypeInterpolatedString,
     iTermParsedExpressionTypeReference,
+    iTermParsedExpressionTypeIndirectValue,
 
     // These two are only produced if you request an AST from the expression parser
     iTermParsedExpressionTypeVariableReference,
     iTermParsedExpressionTypeArrayLookup,
     iTermParsedExpressionTypeFunctionCalls,
-    iTermParsedExpressionTypeBoolean
 
     // Note: When adding new types, also update the Python function iterm2_encode().
 };
@@ -39,14 +41,13 @@ typedef NS_ENUM(NSUInteger, iTermParsedExpressionType) {
 @end
 
 @interface iTermExpressionParserArrayDereferencePlaceholder : NSObject<iTermExpressionParserPlaceholder>
-@property (nonatomic, readonly) NSInteger index;
-- (instancetype)initWithPath:(NSString *)path index:(NSInteger)index;
+@property (nonatomic, readonly) iTermSubexpression *indexExpression;
+- (instancetype)initWithPath:(NSString *)path indexExpression:(iTermSubexpression *)indexExpression;
 @end
 
 @interface iTermExpressionParserVariableReferencePlaceholder : NSObject<iTermExpressionParserPlaceholder>
 - (instancetype)initWithPath:(NSString *)path;
 @end
-
 
 @interface iTermParsedExpression : NSObject
 // Only one property will be set.
@@ -55,7 +56,8 @@ typedef NS_ENUM(NSUInteger, iTermParsedExpressionType) {
 @property (nonatomic, strong, readonly) NSArray<iTermParsedExpression *> *arrayOfExpressions;
 @property (nonatomic, strong, readonly) NSArray *arrayOfValues;
 @property (nonatomic, strong, readonly) NSString *string;
-@property (nonatomic, strong, readonly) NSNumber *number;
+@property (nonatomic, strong, readonly) iTermSubexpression *subexpression;
+@property (nonatomic, strong, readonly) iTermIndirectValue *indirectValue;
 @property (nonatomic, strong, readonly) NSError *error;
 @property (nonatomic, strong, readonly) iTermScriptFunctionCall *functionCall;
 @property (nonatomic, strong, readonly) NSArray<iTermScriptFunctionCall *> *functionCalls;
@@ -74,9 +76,9 @@ typedef NS_ENUM(NSUInteger, iTermParsedExpressionType) {
 // Object may be NSString, NSNumber, or NSArray. If it is not, an error will be created with the
 // given reason.
 - (instancetype)initWithObject:(id)object errorReason:(NSString *)errorReason;
+- (instancetype)initWithIndirectValue:(iTermIndirectValue *)indirectValue;
 - (instancetype)initWithOptionalObject:(id)object;
-- (instancetype)initWithNumber:(NSNumber *)number;
-- (instancetype)initWithBoolean:(BOOL)value;
+- (instancetype)initWithSubexpression:(iTermSubexpression *)subexpression;
 - (instancetype)initWithError:(NSError *)error;
 - (instancetype)initWithInterpolatedStringParts:(NSArray<iTermParsedExpression *> *)parts;
 - (instancetype)initWithArrayOfExpressions:(NSArray<iTermParsedExpression *> *)array;
@@ -85,6 +87,13 @@ typedef NS_ENUM(NSUInteger, iTermParsedExpressionType) {
                            optional:(BOOL)optional;
 - (instancetype)initWithReference:(iTermVariableReference *)ref;
 - (BOOL)containsAnyFunctionCall;
+- (iTermParsedExpression *)optionalized;
+- (iTermParsedExpression *)deoptionalized;
+
+// Returns subexpression if this is a Subexpression type.
+// Wraps function calls in Subexpression for use in arithmetic.
+// Returns nil for other types (caller should handle error).
+- (iTermSubexpression * _Nullable)asSubexpression;
 
 @end
 

@@ -7,6 +7,7 @@
 
 #import "iTermParsedExpression.h"
 
+#import "iTerm2SharedARC-Swift.h"
 #import "iTermScriptFunctionCall.h"
 #import "iTermVariableReference.h"
 #import "NSArray+iTerm.h"
@@ -21,11 +22,11 @@
     return iTermParsedExpressionTypeArrayLookup;
 }
 
-- (instancetype)initWithPath:(NSString *)path index:(NSInteger)index {
+- (instancetype)initWithPath:(NSString *)path indexExpression:(iTermSubexpression *)indexExpression {
     self = [super init];
     if (self) {
         _path = [path copy];
-        _index = index;
+        _indexExpression = indexExpression;
     }
     return self;
 }
@@ -51,7 +52,9 @@
 @end
 
 
-@implementation iTermParsedExpression
+@implementation iTermParsedExpression {
+    NSString *_fallbackError;
+}
 
 - (NSString *)description {
     NSString *value = nil;
@@ -75,9 +78,8 @@
         case iTermParsedExpressionTypeError:
             value = self.error.description;
             break;
-        case iTermParsedExpressionTypeNumber:
-        case iTermParsedExpressionTypeBoolean:
-            value = [self.number stringValue];
+        case iTermParsedExpressionTypeSubexpression:
+            value = self.subexpression.description;
             break;
         case iTermParsedExpressionTypeReference:
             value = self.reference.path;
@@ -92,9 +94,12 @@
             }] componentsJoinedByString:@" "];
             value = [NSString stringWithFormat:@"[ %@ ]", value];
             break;
+        case iTermParsedExpressionTypeIndirectValue:
+            return [self.indirectValue description];
+
         case iTermParsedExpressionTypeArrayLookup: {
             iTermExpressionParserArrayDereferencePlaceholder *placeholder = self.placeholder;
-            return [NSString stringWithFormat:@"%@[%@]", placeholder.path, @(placeholder.index)];
+            return [NSString stringWithFormat:@"%@[%@]", placeholder.path, placeholder.indexExpression];
         }
         case iTermParsedExpressionTypeVariableReference: {
             iTermExpressionParserVariableReferencePlaceholder *placeholder = self.placeholder;
@@ -131,6 +136,15 @@
     return self;
 }
 
+- (instancetype)initWithSubexpression:(iTermSubexpression *)subexpression {
+    self = [super init];
+    if (self) {
+        _expressionType = iTermParsedExpressionTypeSubexpression;
+        _object = subexpression;
+    }
+    return self;
+}
+
 - (instancetype)initWithFunctionCall:(iTermScriptFunctionCall *)functionCall {
     self = [super init];
     if (self) {
@@ -160,14 +174,25 @@
     return self;
 }
 
-// Object may be NSString, NSNumber, or NSArray. If it is not, an error will be created with the
-// given reason.
+// Object may be NSString, NSNumber, or NSArray. If it is nil, a Nil type expression is created
+// (which will become an error if deoptionalized). If it is some other type, an error will be
+// created with the given reason.
 - (instancetype)initWithObject:(id)object errorReason:(NSString *)errorReason {
+    _fallbackError = [errorReason copy];
+    if (object == nil) {
+        // Create a Nil type expression. The fallbackError is preserved so that
+        // deoptionalized can convert this to an error if needed.
+        self = [super init];
+        if (self) {
+            _expressionType = iTermParsedExpressionTypeNil;
+        }
+        return self;
+    }
     if ([object isKindOfClass:[NSString class]]) {
         return [self initWithString:object];
     }
     if ([object isKindOfClass:[NSNumber class]]) {
-        return [self initWithNumber:object];
+        return [self initWithSubexpression:[[iTermSubexpression alloc] initWithNumber:object]];
     }
     if ([object isKindOfClass:[NSArray class]]) {
         return [self initWithArrayOfValues:object];
@@ -175,6 +200,14 @@
     return [self initWithErrorCode:7 reason:errorReason];
 }
 
+- (instancetype)initWithIndirectValue:(iTermIndirectValue *)indirectValue {
+    self = [super init];
+    if (self) {
+        _expressionType = iTermParsedExpressionTypeIndirectValue;
+        _object = indirectValue;
+    }
+    return self;
+}
 - (instancetype)initWithOptionalObject:(id)object {
     if (object) {
         self = [self initWithObject:object errorReason:[NSString stringWithFormat:@"Invalid type: %@", [object class]]];
@@ -214,24 +247,6 @@
     return self;
 }
 
-- (instancetype)initWithNumber:(NSNumber *)number {
-    self = [super init];
-    if (self) {
-        _expressionType = iTermParsedExpressionTypeNumber;
-        _object = number;
-    }
-    return self;
-}
-
-- (instancetype)initWithBoolean:(BOOL)value {
-    self = [super init];
-    if (self) {
-        _expressionType = iTermParsedExpressionTypeBoolean;
-        _object = @(value);
-    }
-    return self;
-}
-
 - (instancetype)initWithError:(NSError *)error {
     self = [super init];
     if (self) {
@@ -257,6 +272,29 @@
         _expressionType = placeholder.expressionType;
         _object = placeholder;
         _optional = optional;
+    }
+    return self;
+}
+
+- (instancetype)initWithExpressionType:(iTermParsedExpressionType)expressionType
+                                object:(id)object
+                              optional:(BOOL)optional {
+    return [self initWithExpressionType:expressionType
+                                 object:object
+                               optional:optional
+                          fallbackError:nil];
+}
+
+- (instancetype)initWithExpressionType:(iTermParsedExpressionType)expressionType
+                                object:(id)object
+                              optional:(BOOL)optional
+                         fallbackError:(NSString *)fallbackError {
+    self = [super init];
+    if (self) {
+        _expressionType = expressionType;
+        _object = object;
+        _optional = optional;
+        _fallbackError = [fallbackError copy];
     }
     return self;
 }
@@ -291,6 +329,11 @@
     return _object;
 }
 
+- (iTermSubexpression *)subexpression {
+    assert([_object isKindOfClass:[iTermSubexpression class]]);
+    return _object;
+}
+
 - (iTermScriptFunctionCall *)functionCall {
     assert([_object isKindOfClass:[iTermScriptFunctionCall class]]);
     return _object;
@@ -321,14 +364,16 @@
             return YES;
         case iTermParsedExpressionTypeNil:
         case iTermParsedExpressionTypeError:
-        case iTermParsedExpressionTypeNumber:
         case iTermParsedExpressionTypeReference:
-        case iTermParsedExpressionTypeBoolean:
         case iTermParsedExpressionTypeString:
         case iTermParsedExpressionTypeArrayOfValues:
         case iTermParsedExpressionTypeVariableReference:
         case iTermParsedExpressionTypeArrayLookup:
             return NO;
+        case iTermParsedExpressionTypeSubexpression:
+            return [self.subexpression containsAnyFunctionCall];
+        case iTermParsedExpressionTypeIndirectValue:
+            return [self.indirectValue containsAnyFunctionCall];
         case iTermParsedExpressionTypeArrayOfExpressions:
             return [self.arrayOfExpressions anyWithBlock:^BOOL(iTermParsedExpression *expression) {
                 return [expression containsAnyFunctionCall];
@@ -340,6 +385,42 @@
     }
     assert(false);
     return YES;
+}
+
+- (iTermParsedExpression *)optionalized {
+    return [[iTermParsedExpression alloc] initWithExpressionType:_expressionType
+                                                          object:_object
+                                                        optional:YES
+                                                   fallbackError:_fallbackError];
+}
+
+- (iTermParsedExpression *)deoptionalized {
+    // If this is a Nil expression with a fallback error, convert to an error expression.
+    // This handles the case of an undefined variable that wasn't marked as optional with ?.
+    if (_expressionType == iTermParsedExpressionTypeNil && _fallbackError) {
+        return [[iTermParsedExpression alloc] initWithErrorCode:7 reason:_fallbackError];
+    }
+    return [[iTermParsedExpression alloc] initWithExpressionType:_expressionType
+                                                          object:_object
+                                                        optional:NO
+                                                   fallbackError:_fallbackError];
+}
+
+- (iTermSubexpression *)asSubexpression {
+    switch (_expressionType) {
+        case iTermParsedExpressionTypeSubexpression:
+            return self.subexpression;
+        case iTermParsedExpressionTypeFunctionCall:
+            // Wrap function call in Subexpression for arithmetic use.
+            // At evaluation time, the function will be called and its result
+            // checked to be a number.
+            return [[iTermSubexpression alloc] initWithFunctionCall:self.functionCall];
+        case iTermParsedExpressionTypeString:
+            // Wrap string literal in Subexpression for comparison operations.
+            return [[iTermSubexpression alloc] initWithStringLiteral:self.string];
+        default:
+            return nil;
+    }
 }
 
 @end

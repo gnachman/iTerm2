@@ -15,7 +15,7 @@ NS_ASSUME_NONNULL_BEGIN
 @interface iTermExpressionEvaluator : NSObject
 // If you access this before calling evaluateWithTimeout you get the result of the synchronous
 // evaluation.
-@property (nonatomic, readonly) id value;
+@property (nullable, nonatomic, readonly) id value;
 @property (nullable, nonatomic, readonly) NSError *error;
 @property (nullable, nonatomic, readonly) NSSet<NSString *> *missingValues;
 @property (nonatomic) BOOL debug;

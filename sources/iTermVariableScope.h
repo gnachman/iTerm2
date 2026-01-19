@@ -36,8 +36,8 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)addVariables:(iTermVariables *)variables toScopeNamed:(nullable NSString *)scopeName;
 - (void)removeFrameWithName:(NSString *)name;
-- (id)valueForVariableName:(NSString *)name;
-- (id)valueForPath:(NSString *)firstName, ... NS_REQUIRES_NIL_TERMINATION;
+- (id _Nullable)valueForVariableName:(NSString *)name;
+- (id _Nullable)valueForPath:(NSString *)firstName, ... NS_REQUIRES_NIL_TERMINATION;
 
 - (NSString *)stringValueForVariableName:(NSString *)name;
 // Values of NSNull get unset

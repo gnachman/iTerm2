@@ -1140,6 +1140,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [_pendingFilterUpdates release];
     [_browserTarget release];
     [_bindings release];
+    [_apsContext release];
 
     [super dealloc];
 }
@@ -5285,6 +5286,11 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
                                          [iTermProfilePreferences floatForKey:KEY_BADGE_MAX_HEIGHT inProfile:aDict]);
 
     self.subtitleFormat = [iTermProfilePreferences stringForKey:KEY_SUBTITLE inProfile:aDict];
+
+    if (!_apsContext) {
+        _apsContext = [[iTermAutomaticProfileSwitchingSession alloc] initWithScope:self.variablesScope];
+        _apsContext.delegate = self;
+    }
 
     // forces the badge to update
     _textview.badgeLabel = @"";
@@ -15441,7 +15447,8 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
                                   username:username
                                       path:path
                                        job:job
-                               commandLine:commandLine];
+                               commandLine:commandLine
+                   expressionValueProvider:self.apsContext];
 }
 
 // This is called when we get a high-confidence working directory (e.g., CurrentDir=).

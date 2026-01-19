@@ -60,6 +60,8 @@ extern NSString *const PTYSessionArrangementOptionsArchive;
 @class FakeWindow;
 @class iTermAction;
 @class iTermAnnouncementViewController;
+@class iTermAutomaticProfileSwitcher;
+@class iTermAutomaticProfileSwitchingSession;
 @class iTermChannelClient;
 @class iTermConductor;
 @protocol iTermContentSubscriber;
@@ -646,6 +648,9 @@ backgroundColor:(NSColor *)backgroundColor;
 @property(nonatomic, readonly) BOOL abortBury;
 @property(nonatomic, readonly) BOOL isArchive;
 @property(nonatomic, copy) NSString *browserTarget;
+
+@property(nonatomic, retain) iTermAutomaticProfileSwitcher *automaticProfileSwitcher;
+@property(nonatomic, readonly) iTermAutomaticProfileSwitchingSession *apsContext;
 
 #pragma mark - methods
 

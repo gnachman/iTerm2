@@ -17,6 +17,13 @@ struct iTermError: LocalizedError, CustomStringConvertible, CustomNSError, Codab
     public internal(set) var message: String
     public internal(set) var type = iTermErrorObjC.ErrorType.generic
 
+    public init(_ error: Error, adding message: String) {
+        self.message = message + ": " + error.localizedDescription
+        if let other = error as? iTermError {
+            self.type = other.type
+        }
+    }
+
     public init(_ message: String) {
         self.message = message
     }

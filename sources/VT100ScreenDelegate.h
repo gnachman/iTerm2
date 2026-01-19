@@ -357,7 +357,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionResizePermission) {
 - (void)screenSetBackgroundImageFile:(NSString * _Nonnull)filename;
 - (void)screenSetBadgeFormat:(NSString * _Nonnull)theFormat;
 - (void)screenSetUserVar:(NSString * _Nonnull)kvp;
-- (void)screenSetProfileProperties:(NSDictionary *)dict;
+- (void)screenSetProfileProperties:(NSDictionary * _Nonnull)dict;
 
 - (BOOL)screenShouldReduceFlicker;
 - (NSInteger)screenUnicodeVersion;

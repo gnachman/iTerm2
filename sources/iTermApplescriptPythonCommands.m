@@ -6,6 +6,8 @@
 //
 
 #import "iTermApplescriptPythonCommands.h"
+
+#import "iTerm2SharedARC-Swift.h"
 #import "iTermApplication.h"
 #import "iTermApplicationDelegate.h"
 #import "iTermAPIScriptLauncher.h"
@@ -98,12 +100,10 @@
             return nil;
 
         case iTermParsedExpressionTypeNil:
-        case iTermParsedExpressionTypeNumber:
         case iTermParsedExpressionTypeString:
         case iTermParsedExpressionTypeArrayLookup:
         case iTermParsedExpressionTypeArrayOfValues:
         case iTermParsedExpressionTypeVariableReference:
-        case iTermParsedExpressionTypeBoolean:
         case iTermParsedExpressionTypeReference:
             sync = YES;
             break;
@@ -113,6 +113,14 @@
         case iTermParsedExpressionTypeFunctionCall:
         case iTermParsedExpressionTypeFunctionCalls:
             sync = NO;
+            break;
+
+        case iTermParsedExpressionTypeIndirectValue:
+            sync = !parsedExpression.indirectValue.requiresAsyncEvaluation;
+            break;
+
+        case iTermParsedExpressionTypeSubexpression:
+            sync = !parsedExpression.subexpression.requiresAsyncEvaluation;
             break;
     }
     iTermExpressionEvaluator *evaluator =

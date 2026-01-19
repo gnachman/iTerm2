@@ -111,7 +111,7 @@ NS_ASSUME_NONNULL_BEGIN
     return result;
 }
 
-- (id)valueForPath:(NSString *)firstName, ... {
+- (id _Nullable)valueForPath:(NSString *)firstName, ... {
     va_list args;
     va_start(args, firstName);
     NSMutableArray<NSString *> *parts = [NSMutableArray array];
@@ -122,7 +122,7 @@ NS_ASSUME_NONNULL_BEGIN
     return [self valueForVariableName:[parts componentsJoinedByString:@"."]];
 }
 
-- (id)valueForVariableName:(NSString *)name {
+- (id _Nullable)valueForVariableName:(NSString *)name {
     NSString *stripped = nil;
     iTermVariables *owner = [self ownerForKey:name forWriting:NO stripped:&stripped];
     return [owner valueForVariableName:stripped];
@@ -368,7 +368,7 @@ NS_ASSUME_NONNULL_BEGIN
     return self;
 }
 
-- (id)valueForVariableName:(NSString *)name {
+- (id _Nullable)valueForVariableName:(NSString *)name {
     if (!_names) {
         _names = [NSMutableSet set];
     }

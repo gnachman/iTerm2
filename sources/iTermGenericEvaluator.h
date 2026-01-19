@@ -46,8 +46,8 @@ NS_ASSUME_NONNULL_BEGIN
 - (instancetype)initWithString:(NSString *)stringToEvaluate
                          scope:(nullable iTermVariableScope *)scope
             sideEffectsAllowed:(BOOL)sideEffectsAllowed
-                      observer:(id(^ _Nullable)(id _Nullable newValue,
-                                                NSError * _Nullable error))observer NS_DESIGNATED_INITIALIZER;
+                      observer:(id _Nullable(^ _Nullable)(id _Nullable newValue,
+                                                          NSError * _Nullable error))observer NS_DESIGNATED_INITIALIZER;
 
 - (instancetype)initWithScope:(nullable iTermVariableScope *)scope
                    sourcePath:(NSString *)sourcePath

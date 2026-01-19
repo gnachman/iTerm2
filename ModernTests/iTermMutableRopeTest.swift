@@ -346,7 +346,8 @@ final class iTermMutableRopeTests: XCTestCase {
         s.foregroundColorMode = 1; s.backgroundColorMode = 2
         s.complexChar = 0; s.bold = 1; s.faint = 0; s.italic = 1
         s.blink = 0; s.underline = 1; s.image = 0; s.strikethrough = 1
-        s.underlineStyle = .single; s.invisible = 0; s.inverse = 1
+        s.underlineStyle = .single
+        s.invisible = 0; s.inverse = 1
         s.guarded = 0; s.virtualPlaceholder = 0; s.rtlStatus = .unknown
         return s
     }

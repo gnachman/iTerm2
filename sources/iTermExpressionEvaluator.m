@@ -8,6 +8,7 @@
 #import "iTermExpressionEvaluator.h"
 
 #import "DebugLogging.h"
+#import "iTerm2SharedARC-Swift.h"
 #import "iTermAPIHelper.h"
 #import "iTermExpressionParser.h"
 #import "iTermGCD.h"
@@ -236,10 +237,41 @@ static NSMutableArray *iTermExpressionEvaluatorGlobalStore(void) {
                      completion:completion];
             return;
         }
+
+        case iTermParsedExpressionTypeSubexpression: {
+            [parsedExpression.subexpression evaluateWithInvocation:invocation
+                                                              receiver:nil
+                                                               timeout:timeout
+                                                    sideEffectsAllowed:sideEffectsAllowed
+                                                                 scope:_scope
+                                                            completion:^(iTermOr<NSObject *,NSError *> *result) {
+                [result whenFirst:^(NSObject *value) {
+                    completion(value, nil, nil);
+                } second:^(NSError *error) {
+                    completion(nil, error, nil);
+                }];
+            }];
+            return;
+        }
+
+        case iTermParsedExpressionTypeIndirectValue: {
+            [parsedExpression.indirectValue evaluateWithInvocation:invocation
+                                                          receiver:nil
+                                                           timeout:timeout
+                                                sideEffectsAllowed:sideEffectsAllowed
+                                                             scope:_scope
+                                                        completion:^(iTermOr<id,NSError *> *result) {
+                [result whenFirst:^(id value) {
+                    completion(value, nil, nil);
+                } second:^(NSError *error) {
+                    completion(nil, error, nil);
+                }];
+            }];
+            return;
+        }
+
         case iTermParsedExpressionTypeArrayOfValues:
         case iTermParsedExpressionTypeString:
-        case iTermParsedExpressionTypeNumber:
-        case iTermParsedExpressionTypeBoolean:
         case iTermParsedExpressionTypeReference:
             completion(parsedExpression.object, nil, nil);
             return;

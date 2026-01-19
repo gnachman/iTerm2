@@ -914,9 +914,9 @@ static const double kProfileNameMultiplierForWindowItem = 0.08;
                 case iTermParsedExpressionTypeArrayLookup:
                 case iTermParsedExpressionTypeArrayOfValues:
                 case iTermParsedExpressionTypeArrayOfExpressions:
-                case iTermParsedExpressionTypeNumber:
+                case iTermParsedExpressionTypeSubexpression:
                 case iTermParsedExpressionTypeReference:
-                case iTermParsedExpressionTypeBoolean:
+                case iTermParsedExpressionTypeIndirectValue:
                 case iTermParsedExpressionTypeError:
                 case iTermParsedExpressionTypeString:
                 case iTermParsedExpressionTypeNil:
@@ -939,13 +939,13 @@ static const double kProfileNameMultiplierForWindowItem = 0.08;
             case iTermParsedExpressionTypeArrayLookup:
             case iTermParsedExpressionTypeArrayOfValues:
             case iTermParsedExpressionTypeArrayOfExpressions:
-            case iTermParsedExpressionTypeNumber:
             case iTermParsedExpressionTypeReference:
-            case iTermParsedExpressionTypeBoolean:
             case iTermParsedExpressionTypeError:
             case iTermParsedExpressionTypeString:
             case iTermParsedExpressionTypeNil:
             case iTermParsedExpressionTypeInterpolatedString:
+            case iTermParsedExpressionTypeSubexpression:
+            case iTermParsedExpressionTypeIndirectValue:
                 break;
 
             case iTermParsedExpressionTypeFunctionCall:

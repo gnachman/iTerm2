@@ -775,12 +775,13 @@ public extension screen_char_t {
                                     underline: 0,
                                     image: 0,
                                     strikethrough: 0,
-                                    underlineStyle: VT100UnderlineStyle.single,
+                                    underlineStyle0: VT100UnderlineStyle.single.rawValue & 3,
                                     invisible: 0,
                                     inverse: 0,
                                     guarded: 0,
                                     virtualPlaceholder: 0,
                                     rtlStatus: .unknown,
+                                    underlineStyle1: 0,
                                     unused: 0)
 
     static let defaultForeground = screen_char_t(code: 0,
@@ -800,12 +801,13 @@ public extension screen_char_t {
                                                  underline: 0,
                                                  image: 0,
                                                  strikethrough: 0,
-                                                 underlineStyle: .single,
+                                                 underlineStyle0: VT100UnderlineStyle.single.rawValue & 3,
                                                  invisible: 0,
                                                  inverse: 0,
                                                  guarded: 0,
                                                  virtualPlaceholder: 0,
                                                  rtlStatus: .unknown,
+                                                 underlineStyle1: 0,
                                                  unused: 0)
 
     static let defaultBackground = screen_char_t(code: 0,
@@ -825,12 +827,13 @@ public extension screen_char_t {
                                                  underline: 0,
                                                  image: 0,
                                                  strikethrough: 0,
-                                                 underlineStyle: .single,
+                                                 underlineStyle0: VT100UnderlineStyle.single.rawValue & 3,
                                                  invisible: 0,
                                                  inverse: 0,
                                                  guarded: 0,
                                                  virtualPlaceholder: 0,
                                                  rtlStatus: .unknown,
+                                                 underlineStyle1: 0,
                                                  unused: 0)
 
     func with(code: unichar) -> screen_char_t {
@@ -851,12 +854,13 @@ public extension screen_char_t {
                              underline: underline,
                              image: 0,
                              strikethrough: strikethrough,
-                             underlineStyle: underlineStyle,
+                             underlineStyle0: underlineStyle.part0,
                              invisible: invisible,
                              inverse: inverse,
                              guarded: guarded,
                              virtualPlaceholder: 0,
                              rtlStatus: .unknown,
+                             underlineStyle1: underlineStyle.part1,
                              unused: unused)
     }
 }

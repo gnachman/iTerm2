@@ -186,24 +186,295 @@
                            treeTransform:^id(CPSyntaxTree *syntaxTree) {
                                return @{ @"identifier": [syntaxTree.children[0] identifier] };
                            }];
-    [_grammarProcessor addProductionRule:@"expression ::= <path>"
+    // MARK: Hierarchical expression grammar (using right recursion to avoid LALR conflicts)
+    // expression → Subexpression (top-level entry point)
+    [_grammarProcessor addProductionRule:@"expression ::= <Subexpression>"
                            treeTransform:^id(CPSyntaxTree *syntaxTree) {
-                               return @{ @"path": syntaxTree.children[0] };
+                               return syntaxTree.children[0];
                            }];
-    [_grammarProcessor addProductionRule:@"expression ::= <path> '[' 'Number' ']'"
+
+    // Subexpression → ConditionalExpression
+    [_grammarProcessor addProductionRule:@"Subexpression ::= <ConditionalExpression>"
                            treeTransform:^id(CPSyntaxTree *syntaxTree) {
-                               return @{ @"path": syntaxTree.children[0] };
+                               return syntaxTree.children[0];
                            }];
-    [_grammarProcessor addProductionRule:@"expression ::= <path> '?'"
+
+    // MARK: Conditional expressions (ternary and optional marker)
+    // ConditionalExpression → LogicalOrExpr (base case)
+    [_grammarProcessor addProductionRule:@"ConditionalExpression ::= <LogicalOrExpr>"
                            treeTransform:^id(CPSyntaxTree *syntaxTree) {
-                               return @{ @"path": syntaxTree.children[0],
-                                         @"terminated": @YES };
+                               return syntaxTree.children[0];
                            }];
-    [_grammarProcessor addProductionRule:@"expression ::= 'Number'"
+
+    // ConditionalExpression → LogicalOrExpr '?' (optional marker, terminated)
+    [_grammarProcessor addProductionRule:@"ConditionalExpression ::= <LogicalOrExpr> '?'"
+                           treeTransform:^id(CPSyntaxTree *syntaxTree) {
+                               return @{ @"terminated": @YES };
+                           }];
+
+    // ConditionalExpression → LogicalOrExpr '?' ConditionalExpression ':' ConditionalExpression (complete ternary)
+    [_grammarProcessor addProductionRule:@"ConditionalExpression ::= <LogicalOrExpr> '?' <ConditionalExpression> ':' <ConditionalExpression>"
+                           treeTransform:^id(CPSyntaxTree *syntaxTree) {
+                               // Return the false branch expression for suggestions
+                               return syntaxTree.children[4];
+                           }];
+
+    // ConditionalExpression → LogicalOrExpr '?' ConditionalExpression ':' EOF (incomplete false branch)
+    [_grammarProcessor addProductionRule:@"ConditionalExpression ::= <LogicalOrExpr> '?' <ConditionalExpression> ':' 'EOF'"
+                           treeTransform:^id(CPSyntaxTree *syntaxTree) {
+                               return @{ @"operator_pending": @YES };
+                           }];
+
+    // MARK: Logical OR (using right recursion)
+    // LogicalOrExpr → LogicalAndExpr (base case)
+    [_grammarProcessor addProductionRule:@"LogicalOrExpr ::= <LogicalAndExpr>"
+                           treeTransform:^id(CPSyntaxTree *syntaxTree) {
+                               return syntaxTree.children[0];
+                           }];
+
+    // LogicalOrExpr → LogicalAndExpr '||' LogicalOrExpr (right-recursive)
+    [_grammarProcessor addProductionRule:@"LogicalOrExpr ::= <LogicalAndExpr> '||' <LogicalOrExpr>"
+                           treeTransform:^id(CPSyntaxTree *syntaxTree) {
+                               return syntaxTree.children[2];
+                           }];
+
+    // LogicalOrExpr → LogicalAndExpr '||' EOF (incomplete, need RHS)
+    [_grammarProcessor addProductionRule:@"LogicalOrExpr ::= <LogicalAndExpr> '||' 'EOF'"
+                           treeTransform:^id(CPSyntaxTree *syntaxTree) {
+                               return @{ @"operator_pending": @YES };
+                           }];
+
+    // MARK: Logical AND (using right recursion)
+    // LogicalAndExpr → EqualityExpr (base case)
+    [_grammarProcessor addProductionRule:@"LogicalAndExpr ::= <EqualityExpr>"
+                           treeTransform:^id(CPSyntaxTree *syntaxTree) {
+                               return syntaxTree.children[0];
+                           }];
+
+    // LogicalAndExpr → EqualityExpr '&&' LogicalAndExpr (right-recursive)
+    [_grammarProcessor addProductionRule:@"LogicalAndExpr ::= <EqualityExpr> '&&' <LogicalAndExpr>"
+                           treeTransform:^id(CPSyntaxTree *syntaxTree) {
+                               return syntaxTree.children[2];
+                           }];
+
+    // LogicalAndExpr → EqualityExpr '&&' EOF (incomplete, need RHS)
+    [_grammarProcessor addProductionRule:@"LogicalAndExpr ::= <EqualityExpr> '&&' 'EOF'"
+                           treeTransform:^id(CPSyntaxTree *syntaxTree) {
+                               return @{ @"operator_pending": @YES };
+                           }];
+
+    // MARK: Equality (using right recursion)
+    // EqualityExpr → RelationalExpr (base case)
+    [_grammarProcessor addProductionRule:@"EqualityExpr ::= <RelationalExpr>"
+                           treeTransform:^id(CPSyntaxTree *syntaxTree) {
+                               return syntaxTree.children[0];
+                           }];
+
+    // EqualityExpr → RelationalExpr '==' EqualityExpr (right-recursive equality)
+    [_grammarProcessor addProductionRule:@"EqualityExpr ::= <RelationalExpr> '==' <EqualityExpr>"
+                           treeTransform:^id(CPSyntaxTree *syntaxTree) {
+                               return syntaxTree.children[2];
+                           }];
+
+    // EqualityExpr → RelationalExpr '!=' EqualityExpr (right-recursive inequality)
+    [_grammarProcessor addProductionRule:@"EqualityExpr ::= <RelationalExpr> '!=' <EqualityExpr>"
+                           treeTransform:^id(CPSyntaxTree *syntaxTree) {
+                               return syntaxTree.children[2];
+                           }];
+
+    // EqualityExpr → RelationalExpr '==' EOF (incomplete, need RHS)
+    [_grammarProcessor addProductionRule:@"EqualityExpr ::= <RelationalExpr> '==' 'EOF'"
+                           treeTransform:^id(CPSyntaxTree *syntaxTree) {
+                               return @{ @"operator_pending": @YES };
+                           }];
+
+    // EqualityExpr → RelationalExpr '!=' EOF (incomplete, need RHS)
+    [_grammarProcessor addProductionRule:@"EqualityExpr ::= <RelationalExpr> '!=' 'EOF'"
+                           treeTransform:^id(CPSyntaxTree *syntaxTree) {
+                               return @{ @"operator_pending": @YES };
+                           }];
+
+    // MARK: Relational (using right recursion)
+    // RelationalExpr → AddExpr (base case)
+    [_grammarProcessor addProductionRule:@"RelationalExpr ::= <AddExpr>"
+                           treeTransform:^id(CPSyntaxTree *syntaxTree) {
+                               return syntaxTree.children[0];
+                           }];
+
+    // RelationalExpr → AddExpr '<' RelationalExpr (right-recursive less than)
+    [_grammarProcessor addProductionRule:@"RelationalExpr ::= <AddExpr> '<' <RelationalExpr>"
+                           treeTransform:^id(CPSyntaxTree *syntaxTree) {
+                               return syntaxTree.children[2];
+                           }];
+
+    // RelationalExpr → AddExpr '>' RelationalExpr (right-recursive greater than)
+    [_grammarProcessor addProductionRule:@"RelationalExpr ::= <AddExpr> '>' <RelationalExpr>"
+                           treeTransform:^id(CPSyntaxTree *syntaxTree) {
+                               return syntaxTree.children[2];
+                           }];
+
+    // RelationalExpr → AddExpr '<=' RelationalExpr (right-recursive less than or equal)
+    [_grammarProcessor addProductionRule:@"RelationalExpr ::= <AddExpr> '<=' <RelationalExpr>"
+                           treeTransform:^id(CPSyntaxTree *syntaxTree) {
+                               return syntaxTree.children[2];
+                           }];
+
+    // RelationalExpr → AddExpr '>=' RelationalExpr (right-recursive greater than or equal)
+    [_grammarProcessor addProductionRule:@"RelationalExpr ::= <AddExpr> '>=' <RelationalExpr>"
+                           treeTransform:^id(CPSyntaxTree *syntaxTree) {
+                               return syntaxTree.children[2];
+                           }];
+
+    // RelationalExpr → AddExpr '<' EOF (incomplete, need RHS)
+    [_grammarProcessor addProductionRule:@"RelationalExpr ::= <AddExpr> '<' 'EOF'"
+                           treeTransform:^id(CPSyntaxTree *syntaxTree) {
+                               return @{ @"operator_pending": @YES };
+                           }];
+
+    // RelationalExpr → AddExpr '>' EOF (incomplete, need RHS)
+    [_grammarProcessor addProductionRule:@"RelationalExpr ::= <AddExpr> '>' 'EOF'"
+                           treeTransform:^id(CPSyntaxTree *syntaxTree) {
+                               return @{ @"operator_pending": @YES };
+                           }];
+
+    // RelationalExpr → AddExpr '<=' EOF (incomplete, need RHS)
+    [_grammarProcessor addProductionRule:@"RelationalExpr ::= <AddExpr> '<=' 'EOF'"
+                           treeTransform:^id(CPSyntaxTree *syntaxTree) {
+                               return @{ @"operator_pending": @YES };
+                           }];
+
+    // RelationalExpr → AddExpr '>=' EOF (incomplete, need RHS)
+    [_grammarProcessor addProductionRule:@"RelationalExpr ::= <AddExpr> '>=' 'EOF'"
+                           treeTransform:^id(CPSyntaxTree *syntaxTree) {
+                               return @{ @"operator_pending": @YES };
+                           }];
+
+    // MARK: Addition/Subtraction (using right recursion)
+    // AddExpr → MulExpr (base case)
+    [_grammarProcessor addProductionRule:@"AddExpr ::= <MulExpr>"
+                           treeTransform:^id(CPSyntaxTree *syntaxTree) {
+                               return syntaxTree.children[0];
+                           }];
+
+    // AddExpr → MulExpr '+' AddExpr (right-recursive addition)
+    [_grammarProcessor addProductionRule:@"AddExpr ::= <MulExpr> '+' <AddExpr>"
+                           treeTransform:^id(CPSyntaxTree *syntaxTree) {
+                               return syntaxTree.children[2];
+                           }];
+
+    // AddExpr → MulExpr '-' AddExpr (right-recursive subtraction)
+    [_grammarProcessor addProductionRule:@"AddExpr ::= <MulExpr> '-' <AddExpr>"
+                           treeTransform:^id(CPSyntaxTree *syntaxTree) {
+                               return syntaxTree.children[2];
+                           }];
+
+    // AddExpr → MulExpr '+' EOF (incomplete, need RHS)
+    [_grammarProcessor addProductionRule:@"AddExpr ::= <MulExpr> '+' 'EOF'"
+                           treeTransform:^id(CPSyntaxTree *syntaxTree) {
+                               return @{ @"operator_pending": @YES };
+                           }];
+
+    // AddExpr → MulExpr '-' EOF (incomplete, need RHS)
+    [_grammarProcessor addProductionRule:@"AddExpr ::= <MulExpr> '-' 'EOF'"
+                           treeTransform:^id(CPSyntaxTree *syntaxTree) {
+                               return @{ @"operator_pending": @YES };
+                           }];
+
+    // MARK: Multiplication/Division (using right recursion)
+    // MulExpr → UnaryExpr (base case)
+    [_grammarProcessor addProductionRule:@"MulExpr ::= <UnaryExpr>"
+                           treeTransform:^id(CPSyntaxTree *syntaxTree) {
+                               return syntaxTree.children[0];
+                           }];
+
+    // MulExpr → UnaryExpr '*' MulExpr (right-recursive multiplication)
+    [_grammarProcessor addProductionRule:@"MulExpr ::= <UnaryExpr> '*' <MulExpr>"
+                           treeTransform:^id(CPSyntaxTree *syntaxTree) {
+                               return syntaxTree.children[2];
+                           }];
+
+    // MulExpr → UnaryExpr '/' MulExpr (right-recursive division)
+    [_grammarProcessor addProductionRule:@"MulExpr ::= <UnaryExpr> '/' <MulExpr>"
+                           treeTransform:^id(CPSyntaxTree *syntaxTree) {
+                               return syntaxTree.children[2];
+                           }];
+
+    // MulExpr → UnaryExpr '*' EOF (incomplete, need RHS)
+    [_grammarProcessor addProductionRule:@"MulExpr ::= <UnaryExpr> '*' 'EOF'"
+                           treeTransform:^id(CPSyntaxTree *syntaxTree) {
+                               return @{ @"operator_pending": @YES };
+                           }];
+
+    // MulExpr → UnaryExpr '/' EOF (incomplete, need RHS)
+    [_grammarProcessor addProductionRule:@"MulExpr ::= <UnaryExpr> '/' 'EOF'"
+                           treeTransform:^id(CPSyntaxTree *syntaxTree) {
+                               return @{ @"operator_pending": @YES };
+                           }];
+
+    // MARK: Unary expressions (for consistency with iTermExpressionParser)
+    // UnaryExpr → PrimaryExpression
+    [_grammarProcessor addProductionRule:@"UnaryExpr ::= <PrimaryExpression>"
+                           treeTransform:^id(CPSyntaxTree *syntaxTree) {
+                               return syntaxTree.children[0];
+                           }];
+
+    // UnaryExpr → '!' UnaryExpr (logical NOT, right-recursive)
+    [_grammarProcessor addProductionRule:@"UnaryExpr ::= '!' <UnaryExpr>"
+                           treeTransform:^id(CPSyntaxTree *syntaxTree) {
+                               return syntaxTree.children[1];
+                           }];
+
+    // UnaryExpr → '!' EOF (incomplete, need operand)
+    [_grammarProcessor addProductionRule:@"UnaryExpr ::= '!' 'EOF'"
+                           treeTransform:^id(CPSyntaxTree *syntaxTree) {
+                               return @{ @"operator_pending": @YES };
+                           }];
+
+    // UnaryExpr → '-' UnaryExpr (unary negation, right-recursive)
+    [_grammarProcessor addProductionRule:@"UnaryExpr ::= '-' <UnaryExpr>"
+                           treeTransform:^id(CPSyntaxTree *syntaxTree) {
+                               return syntaxTree.children[1];
+                           }];
+
+    // UnaryExpr → '-' EOF (incomplete, need operand)
+    [_grammarProcessor addProductionRule:@"UnaryExpr ::= '-' 'EOF'"
+                           treeTransform:^id(CPSyntaxTree *syntaxTree) {
+                               return @{ @"operator_pending": @YES };
+                           }];
+
+    // MARK: Primary expressions (highest precedence)
+    // PrimaryExpression → Number
+    [_grammarProcessor addProductionRule:@"PrimaryExpression ::= 'Number'"
                            treeTransform:^id(CPSyntaxTree *syntaxTree) {
                                return @{ @"literal": @YES };
                            }];
-    [_grammarProcessor addProductionRule:@"expression ::= 'SwiftyString'"
+
+    // PrimaryExpression → true (boolean literal)
+    [_grammarProcessor addProductionRule:@"PrimaryExpression ::= 'true'"
+                           treeTransform:^id(CPSyntaxTree *syntaxTree) {
+                               return @{ @"literal": @YES };
+                           }];
+
+    // PrimaryExpression → false (boolean literal)
+    [_grammarProcessor addProductionRule:@"PrimaryExpression ::= 'false'"
+                           treeTransform:^id(CPSyntaxTree *syntaxTree) {
+                               return @{ @"literal": @YES };
+                           }];
+
+    // PrimaryExpression → indirect_value (path with optional array index)
+    [_grammarProcessor addProductionRule:@"PrimaryExpression ::= <indirect_value>"
+                           treeTransform:^id(CPSyntaxTree *syntaxTree) {
+                               return syntaxTree.children[0];
+                           }];
+
+    // PrimaryExpression → composed_call (function call)
+    [_grammarProcessor addProductionRule:@"PrimaryExpression ::= <composed_call>"
+                           treeTransform:^id(CPSyntaxTree *syntaxTree) {
+                               return @{ @"call": syntaxTree.children[0] };
+                           }];
+
+    // PrimaryExpression → SwiftyString
+    [_grammarProcessor addProductionRule:@"PrimaryExpression ::= 'SwiftyString'"
                            treeTransform:^id(CPSyntaxTree *syntaxTree) {
                                iTermSwiftyStringToken *token = [iTermSwiftyStringToken castFrom:syntaxTree.children[0]];
                                if (token.truncated && !token.endsWithLiteral) {
@@ -212,25 +483,64 @@
                                    return @{ @"literal": @YES };
                                }
                            }];
-    [_grammarProcessor addProductionRule:@"expression ::= <composed_call>"
+
+    // PrimaryExpression → '(' Subexpression ')' (complete parenthesized)
+    [_grammarProcessor addProductionRule:@"PrimaryExpression ::= '(' <Subexpression> ')'"
                            treeTransform:^id(CPSyntaxTree *syntaxTree) {
-                               return @{ @"call": syntaxTree.children[0] };
+                               return syntaxTree.children[1];
                            }];
 
-    // Array literals
-    [_grammarProcessor addProductionRule:@"expression ::= '[' <comma_delimited_expressions> 'EOF'"
+    // PrimaryExpression → '(' Subexpression EOF (incomplete parenthesized)
+    [_grammarProcessor addProductionRule:@"PrimaryExpression ::= '(' <Subexpression> 'EOF'"
+                           treeTransform:^id(CPSyntaxTree *syntaxTree) {
+                               return syntaxTree.children[1];
+                           }];
+
+    // PrimaryExpression → '(' EOF (empty parentheses, need expression)
+    [_grammarProcessor addProductionRule:@"PrimaryExpression ::= '(' 'EOF'"
+                           treeTransform:^id(CPSyntaxTree *syntaxTree) {
+                               return @{ @"operator_pending": @YES };
+                           }];
+
+    // MARK: Indirect values (paths with optional array indexing)
+    // indirect_value → path (simple path)
+    [_grammarProcessor addProductionRule:@"indirect_value ::= <path>"
+                           treeTransform:^id(CPSyntaxTree *syntaxTree) {
+                               return @{ @"path": syntaxTree.children[0] };
+                           }];
+
+    // indirect_value → path '[' Subexpression ']' (complete array index)
+    [_grammarProcessor addProductionRule:@"indirect_value ::= <path> '[' <Subexpression> ']'"
+                           treeTransform:^id(CPSyntaxTree *syntaxTree) {
+                               return @{ @"path": syntaxTree.children[0] };
+                           }];
+
+    // indirect_value → path '[' Subexpression EOF (incomplete array index expression)
+    [_grammarProcessor addProductionRule:@"indirect_value ::= <path> '[' <Subexpression> 'EOF'"
+                           treeTransform:^id(CPSyntaxTree *syntaxTree) {
+                               return syntaxTree.children[2];
+                           }];
+
+    // indirect_value → path '[' EOF (empty array index, need expression)
+    [_grammarProcessor addProductionRule:@"indirect_value ::= <path> '[' 'EOF'"
+                           treeTransform:^id(CPSyntaxTree *syntaxTree) {
+                               return @{ @"operator_pending": @YES };
+                           }];
+
+    // MARK: Array literals
+    [_grammarProcessor addProductionRule:@"PrimaryExpression ::= '[' <comma_delimited_expressions> 'EOF'"
                            treeTransform:^id(CPSyntaxTree *syntaxTree) {
                                return [syntaxTree.children[1] dictionaryBySettingObject:@YES forKey:@"inside-truncated-array-literal"];
                            }];
-    [_grammarProcessor addProductionRule:@"expression ::= '[' <comma_delimited_expressions> ']'"
+    [_grammarProcessor addProductionRule:@"PrimaryExpression ::= '[' <comma_delimited_expressions> ']'"
                            treeTransform:^id(CPSyntaxTree *syntaxTree) {
                                return @{ @"literal": @YES };
                            }];
-    [_grammarProcessor addProductionRule:@"comma_delimited_expressions ::= <expression>"
+    [_grammarProcessor addProductionRule:@"comma_delimited_expressions ::= <Subexpression>"
                            treeTransform:^id(CPSyntaxTree *syntaxTree) {
                                return syntaxTree.children[0];
                            }];
-    [_grammarProcessor addProductionRule:@"comma_delimited_expressions ::= <expression> ',' <comma_delimited_expressions>"
+    [_grammarProcessor addProductionRule:@"comma_delimited_expressions ::= <Subexpression> ',' <comma_delimited_expressions>"
                            treeTransform:^id(CPSyntaxTree *syntaxTree) {
                                return syntaxTree.children.lastObject;
                            }];
@@ -369,11 +679,16 @@
 // @{ @"literal": @YES }
 // @{ @"truncated_interpolation": @"truncated expression" }
 // @{ @"call": @[ suggestions ] };
+// @{ @"operator_pending": @YES } - after arithmetic operator, ternary colon, or open paren
 - (NSArray<NSString *> *)suggestedExpressions:(NSDictionary *)expression
                              nextArgumentName:(NSString *)nextArgumentName
                              valuesMustBeArgs:(BOOL)valuesMustBeArgs {
     if (expression == nil || expression[@"literal"] || expression[@"terminated"]) {
         return @[];
+    } else if (expression[@"operator_pending"]) {
+        // After arithmetic operator, ternary ':', or open paren - suggest all paths and functions
+        NSArray<NSString *> *legalPaths = [_pathSource(@"") allObjects];
+        return [self pathsAndFunctionSuggestionsWithPrefix:@"" legalPaths:legalPaths];
     } else if (expression[@"call"]) {
         return expression[@"call"];
     } else if (expression[@"truncated_interpolation"]) {
@@ -385,8 +700,11 @@
         //    Foo\(bar("baz\(blatz(
         // The truncated_interpolation's value would be bar("baz\(blatz(
         // A few recursions later you should get suggestions for blatz's arguments.
-        iTermFunctionCallSuggester *inner = [[iTermFunctionCallSuggester alloc] initWithFunctionSignatures:_functionSignatures
-                                                                                                pathSource:_pathSource];
+        //
+        // Use iTermExpressionSuggester (not iTermFunctionCallSuggester) because the
+        // truncated part could be a simple path, not necessarily a function call.
+        iTermExpressionSuggester *inner = [[iTermExpressionSuggester alloc] initWithFunctionSignatures:_functionSignatures
+                                                                                            pathSource:_pathSource];
         return [inner suggestionsForString:expression[@"truncated_interpolation"]];
     } else {
         NSArray<NSString *> *legalPaths = [_pathSource(expression[@"path"]) allObjects];
@@ -517,7 +835,7 @@
     NSArray<NSString *> *suggestionsUpToFirstPeriod = [allSuggestions mapWithBlock:^id(NSString *string) {
         NSInteger remaining = string.length;
         remaining -= prefix.length;
-        if (remaining <= 0) {
+        if (remaining < 0) {
             return nil;
         }
         NSInteger index = [string rangeOfString:@"." options:0 range:NSMakeRange(prefix.length, remaining)].location;

@@ -195,6 +195,9 @@ sparkle: force
 	cd submodules/Sparkle && xcodebuild -scheme Sparkle -configuration Release 'CONFIGURATION_BUILD_DIR=$$(SRCROOT)/Build/$$(CONFIGURATION)'
 	mv submodules/Sparkle/Build/Release/Sparkle.framework ThirdParty/Sparkle.framework
 
+paranoid-coreparse: force
+	/usr/bin/sandbox-exec -f deps.sb $(MAKE) CoreParse
+
 paranoid-swiftymarkdown: force
 	/usr/bin/sandbox-exec -f deps.sb $(MAKE) SwiftyMarkdown
 

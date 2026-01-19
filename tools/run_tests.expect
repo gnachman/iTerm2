@@ -1,0 +1,26 @@
+#!/usr/bin/expect -f
+
+if {$argc < 1} {
+    puts "Usage: run_tests.expect <test-name>"
+    puts "Example: run_tests.expect ModernTests/iTermScriptFunctionCallTest/testSignature"
+    exit 1
+}
+
+set test_name [lindex $argv 0]
+set timeout -1
+
+spawn xcodebuild test -project iTerm2.xcodeproj -scheme ModernTests -only-testing:$test_name -parallel-testing-enabled NO
+
+expect {
+    "Program crashed" {
+        send_user "\n\n*** Detected interactive debug prompt, killing process ***\n\n"
+        exec kill -9 [exp_pid]
+        exec killall -9 iTerm2
+        wait
+        exit 1
+    }
+    eof {
+        catch wait result
+        exit [lindex $result 3]
+    }
+}

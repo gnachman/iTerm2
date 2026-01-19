@@ -13,13 +13,13 @@
 
 // Use this to get an instance. Only on the main thread.
 // Parses strings like: foo(x:y)
-+ (instancetype)callParser;
++ (instancetype)callParser NS_SWIFT_NAME(callParser());
 
 // Parses expressions, like:
 // 1
 // "foo \(bar)"
 // [1, 2]
-+ (instancetype)expressionParser;
++ (instancetype)expressionParser NS_SWIFT_NAME(expressionParser());
 
 - (instancetype)init NS_UNAVAILABLE;
 

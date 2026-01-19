@@ -1483,3 +1483,18 @@ extension PTYSession {
         }
     }
 }
+
+extension PTYSession: AutomaticProfileSwitchingSessionDelegate {
+    func automaticProfileSwitchingSessionExpressionNeedEvaluation(_ session: AutomaticProfileSwitchingSession) {
+        if iTermProfilePreferences.bool(forKey: KEY_PREVENT_APS, inProfile: profile) {
+            return
+        }
+        automaticProfileSwitcher.markDirty()
+        automaticProfileSwitcher.setHostname(genericScope.value(forVariableName: iTermVariableKeySessionHostname) as? String,
+                                             username: genericScope.value(forVariableName: iTermVariableKeySessionUsername) as? String,
+                                             path: genericScope.value(forVariableName: iTermVariableKeySessionPath) as? String,
+                                             job: genericScope.value(forVariableName: iTermVariableKeySessionJob) as? String,
+                                             commandLine: genericScope.value(forVariableName: iTermVariableKeySessionCommandLine) as? String,
+                                             expressionValueProvider: apsContext)
+    }
+}

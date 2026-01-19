@@ -7,6 +7,8 @@
 
 #import <Cocoa/Cocoa.h>
 
+NS_ASSUME_NONNULL_BEGIN
+
 typedef struct {
     NSInteger currentIndex;
     NSInteger numberOfResults;
@@ -15,8 +17,8 @@ typedef struct {
 @class iTermSearchFieldCell;
 
 @protocol iTermSearchFieldControl<NSObject>
-- (BOOL)searchFieldControlHasCounts:(iTermSearchFieldCell *)cell;
-- (iTermSearchFieldCounts)searchFieldControlGetCounts:(iTermSearchFieldCell *)cell;
+- (BOOL)searchFieldControlHasCounts:(iTermSearchFieldCell * _Nullable)cell;
+- (iTermSearchFieldCounts)searchFieldControlGetCounts:(iTermSearchFieldCell * _Nullable)cell;
 @end
 
 @interface iTermSearchFieldCell : NSSearchFieldCell
@@ -37,3 +39,5 @@ typedef struct {
 @interface iTermMiniSearchFieldCell : iTermSearchFieldCell
 @property(nonatomic, strong, nullable) NSColor *loupeColor;
 @end
+
+NS_ASSUME_NONNULL_END

@@ -14,6 +14,7 @@
 #import "iTermUserDefaults.h"
 #import "NSDictionary+iTerm.h"
 #import "NSDictionary+Profile.h"
+#import "iTerm2SharedARC-Swift.h"
 
 static void APSWriteToScriptHistory(id<iTermAutomaticProfileSwitcherDelegate> delegate,
                                     NSString *format, ...) {
@@ -114,13 +115,18 @@ static NSString *const kStackKey = @"Profile Stack";
     _dirty = YES;
 }
 
+- (void)markDirty {
+    APSLog(@"markDirty %@", [NSThread callStackSymbols]);
+    _dirty = YES;
+}
 #pragma mark - APIs
 
 - (void)setHostname:(nullable NSString *)hostname
            username:(nullable NSString *)username
                path:(nullable NSString *)path
                 job:(nullable NSString *)job
-        commandLine:(nullable NSString *)commandLine {
+        commandLine:(nullable NSString *)commandLine
+expressionValueProvider:(id<iTermAutomaticProfileSwitchingExpressionValueProvider>)expressionValueProvider {
     APSLog(@"APS: Updating configuration to hostname=%@, username=%@, path=%@, job=%@, commandLine=%@",
            hostname, username, path, job, commandLine);
     if (_switching) {
@@ -154,7 +160,8 @@ static NSString *const kStackKey = @"Profile Stack";
                                                         username:username
                                                             path:path
                                                              job:job
-                                                     commandLine:commandLine];
+                                                     commandLine:commandLine
+                                         expressionValueProvider:expressionValueProvider];
     double scoreForTopmostMatchingSavedProfile = 0;
     iTermSavedProfile *topmostMatchingSavedProfile =
         [self topmostSavedProfileMatchingHostname:hostname
@@ -162,6 +169,7 @@ static NSString *const kStackKey = @"Profile Stack";
                                              path:path
                                               job:job
                                       commandLine:commandLine
+                          expressionValueProvider:expressionValueProvider
                                             score:&scoreForTopmostMatchingSavedProfile];
     APSLog(@"The current profile is %@ with a score of %0.2f. The highest-ranking profile in the stack is %@, with score of %0.2f",
            currentProfile[KEY_NAME],
@@ -188,6 +196,7 @@ static NSString *const kStackKey = @"Profile Stack";
                                                                            path:path
                                                                             job:job
                                                                     commandLine:commandLine
+                                                        expressionValueProvider:expressionValueProvider
                                                                          sticky:&sticky
                                                                           score:&scoreOfHighestScoringProfile];
         APSLog(@"The highest scoring profile is %@ with a score of %@",
@@ -266,17 +275,12 @@ static NSString *const kStackKey = @"Profile Stack";
                                                   path:(NSString *)path
                                                    job:(NSString *)job
                                            commandLine:(NSString *)commandLine
+                               expressionValueProvider:(id<iTermAutomaticProfileSwitchingExpressionValueProvider>)expressionValueProvider
                                                 sticky:(BOOL *)sticky
                                                  score:(double *)scorePtr {
     // Construct a map from host binding to profile. This could be expensive with a lot of profiles
     // but it should be fairly rare for this code to run.
-    NSMutableDictionary<NSString *, Profile *> *ruleToProfileMap = [NSMutableDictionary dictionary];
-    for (Profile *profile in [_delegate automaticProfileSwitcherAllProfiles]) {
-        NSArray *rules = profile[KEY_BOUND_HOSTS];
-        for (NSString *rule in rules) {
-            ruleToProfileMap[rule] = profile;
-        }
-    }
+    NSDictionary<NSString *, Profile *> *ruleToProfileMap = [self ruleToProfileMap:[_delegate automaticProfileSwitcherAllProfiles]];
 
     // Find the best-matching rule.
     double bestScore = 0;
@@ -284,7 +288,12 @@ static NSString *const kStackKey = @"Profile Stack";
 
     for (NSString *ruleString in ruleToProfileMap) {
         iTermRule *rule = [iTermRule ruleWithString:ruleString];
-        double score = [rule scoreForHostname:hostname username:username path:path job:job commandLine:commandLine];
+        double score = [rule scoreForHostname:hostname
+                                     username:username
+                                         path:path
+                                          job:job
+                                  commandLine:commandLine
+                      expressionValueProvider:expressionValueProvider];
         if (score > bestScore) {
             bestScore = score;
             bestProfile = ruleToProfileMap[ruleString];
@@ -319,11 +328,17 @@ static NSString *const kStackKey = @"Profile Stack";
                         username:(NSString *)username
                             path:(NSString *)path
                              job:(NSString *)job
-                     commandLine:(NSString *)commandLine {
+                     commandLine:(NSString *)commandLine
+         expressionValueProvider:(id<iTermAutomaticProfileSwitchingExpressionValueProvider>)expressionValueProvider {
     double highestScore = 0;
     for (NSString *ruleString in candidate[KEY_BOUND_HOSTS]) {
         iTermRule *rule = [iTermRule ruleWithString:ruleString];
-        double score = [rule scoreForHostname:hostname username:username path:path job:job commandLine:commandLine];
+        double score = [rule scoreForHostname:hostname
+                                     username:username
+                                         path:path
+                                          job:job
+                                  commandLine:commandLine
+                      expressionValueProvider:expressionValueProvider];
         highestScore = MAX(highestScore, score);
     }
     return highestScore;
@@ -336,9 +351,16 @@ static NSString *const kStackKey = @"Profile Stack";
                                                                path:(NSString *)path
                                                                 job:(NSString *)job
                                                         commandLine:(NSString *)commandLine
+                                            expressionValueProvider:(id<iTermAutomaticProfileSwitchingExpressionValueProvider>)expressionValueProvider
                                                               score:(double *)scorePtr {
     for (iTermSavedProfile *savedProfile in [_profileStack reverseObjectEnumerator]) {
-        double score = [self highestScoreForProfile:savedProfile.profile hostname:hostname username:username path:path job:job commandLine:commandLine];
+        double score = [self highestScoreForProfile:savedProfile.profile
+                                           hostname:hostname
+                                           username:username
+                                               path:path
+                                                job:job
+                                        commandLine:commandLine
+                            expressionValueProvider:expressionValueProvider];
         if (score > 0) {
             if (scorePtr) {
                 *scorePtr = score;

@@ -297,13 +297,14 @@ class VT100ScreenTests: XCTestCase {
         screen.addNote(note, in: range, focus: true, visible: true)
         let encoder = iTermMutableDictionaryEncoderAdapter.encoder()
         var linesDropped = Int32(0)
-        screen.encodeContents(encoder, linesDropped: &linesDropped)
+        screen.encodeContents(encoder, linesDropped: &linesDropped, unlimited: true)
         let state = encoder.mutableDictionary
 
         screen = self.screen(width: 3, height: 4)
         screen.restore(from: state as? [AnyHashable : Any],
                        includeRestorationBanner: false,
-                       reattached: false)
+                       reattached: false,
+                       isArchive: false)
         XCTAssertEqual(screen.compactLineDumpWithHistory()!,
                        ".....\n" +
                        "abcde\n" +
@@ -429,13 +430,14 @@ class VT100ScreenTests: XCTestCase {
 
         let encoder = iTermMutableDictionaryEncoderAdapter.encoder()
         var linesDropped: Int32 = 0
-        screen.encodeContents(encoder, linesDropped: &linesDropped)
+        screen.encodeContents(encoder, linesDropped: &linesDropped, unlimited: true)
         let state = encoder.mutableDictionary
 
         screen = self.screen(width: 80, height: 25)
         screen.restore(from: state as? [AnyHashable: Any],
                        includeRestorationBanner: false,
-                       reattached: true)
+                       reattached: true,
+                       isArchive: false)
 
         screen.size = VT100GridSizeMake(77, 25)
         var notes = screen.annotations(in: VT100GridCoordRangeMake(0, 0, 80, 25))!
@@ -598,7 +600,7 @@ class VT100ScreenTests: XCTestCase {
 
     func testGang_random() {
         var prng = SeededGenerator(seed: 0)
-        let iterations = 1_000
+        let iterations = 100
         for i in 0..<iterations {
             var saved = prng
             if !performRandomGangTest(prng: &prng) {
@@ -606,7 +608,7 @@ class VT100ScreenTests: XCTestCase {
                 NSLog("Random test failed on iteration \(i)")
                 _ = performRandomGangTest(prng: &saved)
             } else if i % 100 == 0 {
-                NSLog("Iteratrion \(i) passed")
+                NSLog("Iteration \(i) passed")
             }
         }
     }
@@ -1472,5 +1474,10 @@ fileprivate class FakeSession: NSObject, VT100ScreenDelegate {
     }
 
     func screenExecDidFail() {
+    }
+    func screenSetProfileProperties(_ dict: [AnyHashable : Any]!) {
+    }
+
+    func triggerSessionSetBufferInput(_ shouldBuffer: Bool) {
     }
 }

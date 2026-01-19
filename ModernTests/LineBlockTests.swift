@@ -2636,8 +2636,8 @@ class LineBlockTests: XCTestCase {
         // Prepare two distinct lines with different metadata
         let ts1 = Date().timeIntervalSinceReferenceDate
         let rtl1 = false
-        let url1 = iTermURL(url: URL(string: "https://example.com")!, identifier: nil)
-        let url2 = iTermURL(url: URL(string: "https://swift.org")!, identifier: nil)
+        let url1 = iTermURL(url: URL(string: "https://example.com")!, identifier: nil, target: nil)
+        let url2 = iTermURL(url: URL(string: "https://swift.org")!, identifier: nil, target: nil)
         let ea1 = iTermExternalAttribute(underlineColor: VT100TerminalColorValue(), url: url1, blockIDList: "ID1", controlCode: nil)
         let lineMeta1 = iTermLineStringMetadata(timestamp: ts1, rtlFound: ObjCBool(rtl1))
         let line1 = makeLineString("FirstLine", eol: EOL_HARD, lineStringMetadata: lineMeta1, externalAttribute: ea1)
