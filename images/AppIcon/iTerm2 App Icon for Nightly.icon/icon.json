@@ -10,6 +10,14 @@
     {
       "layers" : [
         {
+          "fill-specializations" : [
+            {
+              "appearance" : "tinted",
+              "value" : {
+                "solid" : "extended-gray:1.00000,1.00000"
+              }
+            }
+          ],
           "image-name" : "a.png",
           "name" : "a",
           "position" : {
@@ -21,6 +29,14 @@
           }
         },
         {
+          "fill-specializations" : [
+            {
+              "appearance" : "tinted",
+              "value" : {
+                "solid" : "extended-gray:1.00000,1.00000"
+              }
+            }
+          ],
           "image-name" : "cursor@2x 4.png",
           "name" : "cursor@2x 4",
           "position" : {
