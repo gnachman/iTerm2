@@ -5409,7 +5409,7 @@ lengthExcludingInBandSignaling:data.length
         } else {
             memset(&continuation, 0, sizeof(continuation));
         }
-        if (history.rtlFound && [iTermPreferences boolForKey:kPreferenceKeyBidi]) {
+        if (history.rtlFound && [iTermPreferences bidiEnabled]) {
             metadata.rtlFound = AnnotateRightToLeftInScreenChars(line, len);
         }
         [temp appendLine:line

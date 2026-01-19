@@ -1083,6 +1083,7 @@ typedef struct {
 FAST_BOOL_ACCESSOR(hideTabActivityIndicator, kPreferenceKeyHideTabActivityIndicator)
 FAST_BOOL_ACCESSOR(maximizeThroughput, kPreferenceKeyMaximizeThroughput)
 FAST_BOOL_ACCESSOR(useTmuxProfile, kPreferenceKeyUseTmuxProfile)
+FAST_BOOL_ACCESSOR(bidiEnabled, kPreferenceKeyBidi)
 FAST_BOOL_ACCESSOR(allowClipboardAccessFromTerminal, kPreferenceKeyAllowClipboardAccessFromTerminal)
 FAST_BOOL_ACCESSOR(dimOnlyText, kPreferenceKeyDimOnlyText)
 
