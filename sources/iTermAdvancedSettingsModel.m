@@ -499,6 +499,7 @@ DEFINE_FLOAT(alertTriggerRateLimit, 1, SECTION_GENERAL @"Rate limit for Alert tr
 DEFINE_FLOAT(userNotificationTriggerRateLimit, 0, SECTION_GENERAL @"Rate limit for Notification triggers.\nIf the same trigger fires with less than this time interval (in seconds) between firings, it will be suppressed.")
 DEFINE_FLOAT(notificationOcclusionThreshold, 0.4, SECTION_GENERAL @"Foreground tabs will post user notifications if their window is partially hidden (for example, it is partially offscreen). This value, in 0 to 1, gives the fraction that must be occluded for a notification be posted.");
 DEFINE_BOOL(silentUserNotifications, NO, SECTION_GENERAL @"System notifications should be silent.");
+DEFINE_BOOL(simpleNotifications, NO, SECTION_GENERAL @"Omit session identifier from notifications.\nWhen enabled, notifications will only show the message without the session name and tab number prefix.");
 
 DEFINE_FLOAT(commandHistoryUsePower, 3, SECTION_GENERAL @"When sorting command history for auto command completion: how much should number of uses of a command contribute to its score? A higher score moves the command closer to the top of the list.\nUse 0 to ignore number of uses.");
 DEFINE_FLOAT(commandHistoryAgePower, 1, SECTION_GENERAL @"When sorting command history for auto command completion: how much should the time-since-last-use of a command contribute to its score? A higher score moves the command closer to the top of the list.\nUse 0 to ignore time since last use.");

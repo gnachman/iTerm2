@@ -17109,10 +17109,15 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
                       tabIndex:[self screenTabIndex]
                      viewIndex:[self screenViewIndex]];
     } else {
-        NSString *description = [NSString stringWithFormat:@"Session %@ #%d: %@",
-                                 [[self name] removingHTMLFromTabTitleIfNeeded],
-                                 [_delegate tabNumber],
-                                 message];
+        NSString *description;
+        if ([iTermAdvancedSettingsModel simpleNotifications]) {
+            description = message;
+        } else {
+            description = [NSString stringWithFormat:@"Session %@ #%d: %@",
+                                     [[self name] removingHTMLFromTabTitleIfNeeded],
+                                     [_delegate tabNumber],
+                                     message];
+        }
         [controller notify:@"Alert"
            withDescription:description
                windowIndex:[self screenWindowIndex]
