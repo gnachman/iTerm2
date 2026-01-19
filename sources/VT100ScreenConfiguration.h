@@ -65,6 +65,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly)BOOL optionIsMetaForSpecialChars;
 @property (nonatomic, readonly) BOOL wantsCommandChangeNotifications;
 @property (nonatomic, readonly) BOOL osc52;
+@property (nonatomic, readonly) BOOL sessionIsVisible;
 
 @property (nonatomic, readonly) BOOL isDirty;
 
@@ -122,6 +123,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readwrite) BOOL optionIsMetaForSpecialChars;
 @property (nonatomic, readwrite) BOOL wantsCommandChangeNotifications;
 @property (nonatomic, readwrite) BOOL osc52;
+@property (nonatomic, readwrite) BOOL sessionIsVisible;
 
 @property (nonatomic, readwrite) BOOL isDirty;
 - (NSSet<NSString *> *)dirtyKeyPaths;

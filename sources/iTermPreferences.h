@@ -403,4 +403,8 @@ extern NSString *const iTermDefaultAIPrompt;
 + (BOOL)maximizeThroughput;
 + (BOOL)useTmuxProfile;
 + (BOOL)bidiEnabled;
++ (BOOL)allowClipboardAccessFromTerminal;
++ (BOOL)dimOnlyText;
++ (int)sideMargins;
++ (int)topBottomMargins;
 @end

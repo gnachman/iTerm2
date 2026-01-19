@@ -15825,7 +15825,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
         _config.printingAllowed = printingAllowed;
         dirty = YES;
     }
-    const BOOL clipboardAccessAllowed = [iTermPreferences boolForKey:kPreferenceKeyAllowClipboardAccessFromTerminal];
+    const BOOL clipboardAccessAllowed = [iTermPreferences allowClipboardAccessFromTerminal];
     if (clipboardAccessAllowed != _config.clipboardAccessAllowed) {
         _config.clipboardAccessAllowed = clipboardAccessAllowed;
         dirty = YES;
@@ -15874,7 +15874,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
         _config.maximumTheoreticalImageDimension = PTYSessionMaximumMetalViewSize;
         dirty = YES;
     }
-    const BOOL dimOnlyText = [iTermPreferences boolForKey:kPreferenceKeyDimOnlyText];
+    const BOOL dimOnlyText = [iTermPreferences dimOnlyText];
     if (_config.dimOnlyText != dimOnlyText) {
         _config.dimOnlyText = dimOnlyText;
         dirty = YES;
@@ -15981,6 +15981,12 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     const BOOL osc52 = [self supportsOSC52];
     if (_config.osc52 != osc52) {
         _config.osc52 = osc52;
+        dirty = YES;
+    }
+
+    const BOOL sessionIsVisible = self.view.window != nil;
+    if (_config.sessionIsVisible != sessionIsVisible) {
+        _config.sessionIsVisible = sessionIsVisible;
         dirty = YES;
     }
 
