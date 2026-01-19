@@ -55,6 +55,7 @@
 @property (nonatomic, readwrite) BOOL optionIsMetaForSpecialChars;
 @property (nonatomic, readwrite) BOOL wantsCommandChangeNotifications;
 @property (nonatomic, readwrite) BOOL osc52;
+@property (nonatomic, readwrite) BOOL sessionIsVisible;
 @end
 
 @implementation VT100ScreenConfiguration
@@ -102,6 +103,7 @@
 @synthesize optionIsMetaForSpecialChars = _optionIsMetaForSpecialChars;
 @synthesize wantsCommandChangeNotifications = _wantsCommandChangeNotifications;
 @synthesize osc52 = _osc52;
+@synthesize sessionIsVisible = _sessionIsVisible;
 
 @synthesize isDirty = _isDirty;
 @synthesize terminfoValues = _terminfoValues;
@@ -153,6 +155,7 @@
         _optionIsMetaForSpecialChars = other.optionIsMetaForSpecialChars;
         _wantsCommandChangeNotifications = other.wantsCommandChangeNotifications;
         _osc52 = other.osc52;
+        _sessionIsVisible = other.sessionIsVisible;
 
         _isDirty = other.isDirty;
     }
@@ -212,6 +215,7 @@
                             @"optionIsMetaForSpecialChars": @(_optionIsMetaForSpecialChars),
                             @"wantsCommandChangeNotifications": @(_wantsCommandChangeNotifications),
                             @"osc52": @(_osc52),
+                            @"sessionIsVisible": @(_sessionIsVisible),
 
                             @"isDirty": @(_isDirty),
     };
@@ -274,6 +278,7 @@
 @dynamic optionIsMetaForSpecialChars;
 @dynamic wantsCommandChangeNotifications;
 @dynamic osc52;
+@dynamic sessionIsVisible;
 
 @dynamic isDirty;
 

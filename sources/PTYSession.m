@@ -15984,6 +15984,12 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
         dirty = YES;
     }
 
+    const BOOL sessionIsVisible = self.view.window != nil;
+    if (_config.sessionIsVisible != sessionIsVisible) {
+        _config.sessionIsVisible = sessionIsVisible;
+        dirty = YES;
+    }
+
     if (dirty) {
         _config.isDirty = dirty;
     }
