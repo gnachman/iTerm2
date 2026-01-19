@@ -201,6 +201,11 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     _mouseDownIsThreeFingerClick = NO;
     DLog(@"mouseDownImpl - set mouseDownIsThreeFingerClick=NO");
     if (([event it_modifierFlags] & kDragPaneModifiers) == kDragPaneModifiers) {
+        if ([self.mouseDelegate mouseHandlerSessionIsLocked:self]) {
+            DLog(@"Ignoring drag because pane is locked");
+            *sideEffects = iTermClickSideEffectsIgnore;
+            return NO;
+        }
         [self.mouseDelegate mouseHandlerWillBeginDragPane:self];
         DLog(@"Returning because of drag starting");
         *sideEffects = iTermClickSideEffectsIgnore;

@@ -21,6 +21,7 @@
 + (instancetype)alwaysConfirmQuitPreferenceEvenIfThereAreNoWindowsEnabled;
 + (instancetype)closingMultipleSessionsPreferenceEnabled;
 + (instancetype)tmuxClientsAlwaysPromptBecauseJobsAreNotExposed;
++ (instancetype)sessionIsLocked;
 
 - (void)addReason:(iTermPromptOnCloseReason *)reason;
 

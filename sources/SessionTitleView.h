@@ -17,6 +17,8 @@
 - (void)doubleClickOnTitleView;
 - (void)sessionTitleViewBecomeFirstResponder;
 - (NSColor *)sessionTitleViewBackgroundColor;
+- (BOOL)sessionTitleViewIsLocked;
+- (void)sessionTitleViewToggleLock;
 
 @end
 
@@ -29,5 +31,6 @@
 
 - (void)updateTextColor;
 - (void)updateBackgroundColor;
+- (void)updateLockButton;
 
 @end

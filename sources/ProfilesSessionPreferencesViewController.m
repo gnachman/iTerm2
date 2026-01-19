@@ -97,6 +97,8 @@ static NSString *const ProfilesSessionPreferencesViewControllerPhonyShortLivedSe
     IBOutlet NSStepper *_progressBarHeightStepper;
     IBOutlet NSPopUpButton *_progressBarColorScheme;
 
+    IBOutlet NSButton *_defaultPaneLocked;
+
     iTermStatusBarSetupViewController *_statusBarSetupViewController;
     iTermStatusBarSetupPanel *_statusBarSetupWindow;
     BOOL _awoken;
@@ -291,6 +293,15 @@ static NSString *const ProfilesSessionPreferencesViewControllerPhonyShortLivedSe
                     key:KEY_REDUCE_FLICKER
             relatedView:nil
                    type:kPreferenceInfoTypeCheckbox];
+
+    info = [self defineControl:_defaultPaneLocked
+                    key:KEY_DEFAULT_PANE_LOCKED
+            relatedView:nil
+                   type:kPreferenceInfoTypeCheckbox];
+    info.observer = ^{
+        __strong __typeof(weakSelf) strongSelf = weakSelf;
+        NSLog(@"Default pane locked changed to: %@", @(strongSelf->_defaultPaneLocked.state));
+    };
 
     info = [self defineControl:_statusBarEnabled
                            key:KEY_SHOW_STATUS_BAR

@@ -1845,6 +1845,7 @@ typedef NS_ENUM(NSInteger, SessionViewTrackingMode) {
         }
         _title.delegate = self;
         [_title setDimmingAmount:[self adjustedDimmingAmount]];
+        [_title updateLockButton];
         [self addSubviewBelowFindView:_title];
     } else {
         DLog(@"Adjust frame to eliminate title bar");
@@ -2300,6 +2301,14 @@ typedef NS_ENUM(NSInteger, SessionViewTrackingMode) {
         }
     }
     return [self backgroundColorForDecorativeSubviews];
+}
+
+- (BOOL)sessionTitleViewIsLocked {
+    return [_delegate sessionViewIsLocked];
+}
+
+- (void)sessionTitleViewToggleLock {
+    [_delegate sessionViewToggleLock];
 }
 
 - (void)addAnnouncement:(iTermAnnouncementViewController *)announcement {

@@ -6448,6 +6448,10 @@ static NSString *iTermStringFromRange(NSRange range) {
     [_delegate textViewBeginDrag];
 }
 
+- (BOOL)mouseHandlerSessionIsLocked:(PTYMouseHandler *)handler {
+    return [_delegate textViewIsLocked];
+}
+
 - (BOOL)mouseHandlerIsInKeyWindow:(PTYMouseHandler *)handler {
     return ([NSApp keyWindow] == [self window]);
 }
