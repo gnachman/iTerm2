@@ -112,7 +112,13 @@ class TokenExecutor: NSObject {
         }
     }
     private let totalSlots = Int(iTermAdvancedSettingsModel.bufferDepth())
-    private var availableSlots = iTermAtomicInt64Create()
+    // Initialize counter to totalSlots immediately (not in init) to avoid a window
+    // where backpressureLevel could return .blocked before init completes.
+    private var availableSlots = {
+        let counter = iTermAtomicInt64Create()
+        iTermAtomicInt64Add(counter, Int64(iTermAdvancedSettingsModel.bufferDepth()))
+        return counter
+    }()
     private let semaphore = DispatchSemaphore(value: Int(iTermAdvancedSettingsModel.bufferDepth()))
     private let impl: TokenExecutorImpl
     private let queue: DispatchQueue
@@ -143,7 +149,6 @@ class TokenExecutor: NSObject {
          slownessDetector: SlownessDetector,
          queue: DispatchQueue) {
         self.queue = queue
-        iTermAtomicInt64Add(availableSlots, Int64(totalSlots))
         queue.setSpecific(key: Self.isTokenExecutorSpecificKey, value: true)
         impl = TokenExecutorImpl(terminal,
                                  slownessDetector: slownessDetector,
@@ -153,6 +158,10 @@ class TokenExecutor: NSObject {
 
     // Returns the current backpressure level based on available slots.
     // This can be called from any queue.
+    //
+    // NOTE: High-priority tokens bypass backpressure (no semaphore wait), so this
+    // metric only reflects load from normal PTY token processing. This is intentional:
+    // high-priority tokens are meant to bypass flow control.
     @objc var backpressureLevel: BackpressureLevel {
         let available = Int(iTermAtomicInt64Get(availableSlots))
         if available == 0 {
