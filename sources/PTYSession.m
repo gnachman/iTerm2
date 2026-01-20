@@ -3989,6 +3989,15 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
     [_conductor sendKeys:data];
 }
 
+// TODO: Open issue to discuss taskPaused behavior and potential conversion to mutateAsynchronously.
+// Questions:
+// 1. Should taskPaused stop processing existing queued tokens, or just stop reading new ones?
+//    A real terminal would process buffered tokens and just wait for new input.
+// 2. If unpausing should resume token processing, we need to call scheduleTokenExecution
+//    (like copyModeHandlerDidChangeEnabledState does). Currently queued tokens sit in purgatory
+//    until new data arrives.
+// 3. Since changes may be needed anyway, consider converting to mutateAsynchronously for
+//    single-writer consistency.
 - (void)taskDidChangePaused:(PTYTask *)task paused:(BOOL)paused {
     [_screen performBlockWithJoinedThreads:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
         mutableState.taskPaused = paused;
@@ -19738,6 +19747,8 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     }].action;
 }
 
+// TODO: Open issue to discuss adding scheduleTokenExecution here (like copyModeHandlerDidChangeEnabledState)
+// and converting to mutateAsynchronously. Currently queued tokens sit in purgatory until new data arrives.
 - (void)shortcutNavigationDidComplete {
     [_textview removeContentNavigationShortcutsAndSearchResults:_modeHandler.clearSelectionsOnExit];
     [_screen performBlockWithJoinedThreads:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
