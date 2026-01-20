@@ -92,6 +92,16 @@ func CVectorReleaseObjectsAndDestroy(_ vector: CVector) {
     CVectorDestroy(&temp)
 }
 
+// Indicates the current level of backpressure on token processing.
+// Higher levels mean the mutation queue is falling behind.
+@objc enum BackpressureLevel: Int {
+    case none = 0       // > 75% slots available
+    case light = 1      // 50-75% available
+    case moderate = 2   // 25-50% available
+    case heavy = 3      // < 25% available
+    case blocked = 4    // 0 available, PTY read is blocked
+}
+
 @objc(iTermTokenExecutor)
 class TokenExecutor: NSObject {
     @objc weak var delegate: TokenExecutorDelegate? {
@@ -99,6 +109,8 @@ class TokenExecutor: NSObject {
             impl.delegate = delegate
         }
     }
+    private let totalSlots = Int(iTermAdvancedSettingsModel.bufferDepth())
+    private var availableSlots = iTermAtomicInt64Create()
     private let semaphore = DispatchSemaphore(value: Int(iTermAdvancedSettingsModel.bufferDepth()))
     private let impl: TokenExecutorImpl
     private let queue: DispatchQueue
@@ -129,11 +141,32 @@ class TokenExecutor: NSObject {
          slownessDetector: SlownessDetector,
          queue: DispatchQueue) {
         self.queue = queue
+        iTermAtomicInt64Add(availableSlots, Int64(totalSlots))
         queue.setSpecific(key: Self.isTokenExecutorSpecificKey, value: true)
         impl = TokenExecutorImpl(terminal,
                                  slownessDetector: slownessDetector,
                                  semaphore: semaphore,
                                  queue: queue)
+    }
+
+    // Returns the current backpressure level based on available slots.
+    // This can be called from any queue.
+    @objc var backpressureLevel: BackpressureLevel {
+        let available = Int(iTermAtomicInt64Get(availableSlots))
+        if available == 0 {
+            return .blocked
+        }
+        let ratio = Double(available) / Double(totalSlots)
+        switch ratio {
+        case ..<0.25:
+            return .heavy
+        case ..<0.50:
+            return .moderate
+        case ..<0.75:
+            return .light
+        default:
+            return .none
+        }
     }
 
     // This takes ownership of vector.
@@ -187,6 +220,8 @@ class TokenExecutor: NSObject {
             TokenExecutor.addTokensTimingStats.recordEnd()
         }
         _ = semaphore.wait(timeout: .distantFuture)
+        // Track that we've consumed a slot for backpressure monitoring
+        iTermAtomicInt64Add(availableSlots, -1)
         if enableTimingStats {
             TokenExecutor.addTokensTimingStats.recordStart()
         }
@@ -247,10 +282,20 @@ class TokenExecutor: NSObject {
                                  lengthExcludingInBandSignaling: Int,
                                  highPriority: Bool,
                                  semaphore: DispatchSemaphore?) {
+        // When semaphore is signaled (slot released), increment the available slots counter
+        let onSemaphoreSignaled: (() -> Void)?
+        if semaphore != nil {
+            onSemaphoreSignaled = { [availableSlots] in
+                iTermAtomicInt64Add(availableSlots, 1)
+            }
+        } else {
+            onSemaphoreSignaled = nil
+        }
         let tokenArray = TokenArray(vector,
                                     lengthTotal: lengthTotal,
                                     lengthExcludingInBandSignaling: lengthExcludingInBandSignaling,
-                                    semaphore: semaphore)
+                                    semaphore: semaphore,
+                                    onSemaphoreSignaled: onSemaphoreSignaled)
         self.impl.addTokens(tokenArray, highPriority: highPriority)
     }
 

@@ -26,6 +26,8 @@ class TokenArray: IteratorProtocol, CustomDebugStringConvertible {
         return DispatchQueue(label: "com.iterm2.token-destroyer")
     }()
     private var semaphore: DispatchSemaphore?
+    // Called when the semaphore is signaled (slot released back to backpressure pool).
+    private var onSemaphoreSignaled: (() -> Void)?
 
     var hasNext: Bool {
         return nextIndex < count
@@ -53,16 +55,18 @@ class TokenArray: IteratorProtocol, CustomDebugStringConvertible {
                                       nextToken?.asciiData.pointee.buffer[0] == 13)
     }
 
-    // length is byte length ofinputs
+    // length is byte length of inputs
     init(_ cvector: CVector,
          lengthTotal: Int,
          lengthExcludingInBandSignaling: Int,
-         semaphore: DispatchSemaphore?) {
+         semaphore: DispatchSemaphore?,
+         onSemaphoreSignaled: (() -> Void)? = nil) {
         precondition(lengthTotal > 0 && lengthExcludingInBandSignaling >= 0)
         self.cvector = cvector
         self.lengthTotal = lengthTotal
         self.lengthExcludingInBandSignaling = lengthExcludingInBandSignaling
         self.semaphore = semaphore
+        self.onSemaphoreSignaled = onSemaphoreSignaled
         count = CVectorCount(&self.cvector)
     }
 
@@ -74,7 +78,9 @@ class TokenArray: IteratorProtocol, CustomDebugStringConvertible {
             nextIndex += 1
             if nextIndex == count, let semaphore = semaphore {
                 semaphore.signal()
+                onSemaphoreSignaled?()
                 self.semaphore = nil
+                self.onSemaphoreSignaled = nil
             }
         }
         return (CVectorGetObject(&cvector, nextIndex) as! VT100Token)
@@ -99,7 +105,9 @@ class TokenArray: IteratorProtocol, CustomDebugStringConvertible {
         nextIndex += 1
         if nextIndex == count, let semaphore = semaphore {
             semaphore.signal()
+            onSemaphoreSignaled?()
             self.semaphore = nil
+            self.onSemaphoreSignaled = nil
         }
         return hasNext
     }
@@ -112,7 +120,9 @@ class TokenArray: IteratorProtocol, CustomDebugStringConvertible {
         nextIndex = count
         if let semaphore = semaphore {
             semaphore.signal()
+            onSemaphoreSignaled?()
             self.semaphore = nil
+            self.onSemaphoreSignaled = nil
         }
     }
 
@@ -120,7 +130,9 @@ class TokenArray: IteratorProtocol, CustomDebugStringConvertible {
 
     func didFinish() {
         semaphore?.signal()
+        onSemaphoreSignaled?()
         semaphore = nil
+        onSemaphoreSignaled = nil
     }
 
     func cleanup(asyncFree: Bool) {
@@ -129,6 +141,9 @@ class TokenArray: IteratorProtocol, CustomDebugStringConvertible {
         }
         dirty = false
         semaphore?.signal()
+        onSemaphoreSignaled?()
+        semaphore = nil
+        onSemaphoreSignaled = nil
         if asyncFree {
             TokenArray.destroyQueue.async { [cvector] in
                 CVectorReleaseObjectsAndDestroy(cvector)
