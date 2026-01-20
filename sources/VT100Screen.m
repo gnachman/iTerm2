@@ -1937,8 +1937,10 @@ additionalWordCharacters:(NSString *)additionalWordCharacters
 }
 
 - (void)setTrackCursorLineMovement:(BOOL)trackCursorLineMovement {
-    [self performBlockWithJoinedThreads:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
-        _mutableState.trackCursorLineMovement = trackCursorLineMovement;
+    [self mutateAsynchronously:^(VT100Terminal *terminal,
+                                 VT100ScreenMutableState *mutableState,
+                                 id<VT100ScreenDelegate> delegate) {
+        mutableState.trackCursorLineMovement = trackCursorLineMovement;
     }];
 }
 
@@ -1963,7 +1965,11 @@ additionalWordCharacters:(NSString *)additionalWordCharacters
 }
 
 - (void)setAudibleBell:(BOOL)audibleBell {
-    _mutableState.audibleBell = audibleBell;
+    [self mutateAsynchronously:^(VT100Terminal *terminal,
+                                 VT100ScreenMutableState *mutableState,
+                                 id<VT100ScreenDelegate> delegate) {
+        mutableState.audibleBell = audibleBell;
+    }];
 }
 
 - (BOOL)showBellIndicator {
@@ -1971,7 +1977,11 @@ additionalWordCharacters:(NSString *)additionalWordCharacters
 }
 
 - (void)setShowBellIndicator:(BOOL)showBellIndicator {
-    _mutableState.showBellIndicator = showBellIndicator;
+    [self mutateAsynchronously:^(VT100Terminal *terminal,
+                                 VT100ScreenMutableState *mutableState,
+                                 id<VT100ScreenDelegate> delegate) {
+        mutableState.showBellIndicator = showBellIndicator;
+    }];
 }
 
 - (BOOL)flashBell {
@@ -1979,7 +1989,11 @@ additionalWordCharacters:(NSString *)additionalWordCharacters
 }
 
 - (void)setFlashBell:(BOOL)flashBell {
-    _mutableState.flashBell = flashBell;
+    [self mutateAsynchronously:^(VT100Terminal *terminal,
+                                 VT100ScreenMutableState *mutableState,
+                                 id<VT100ScreenDelegate> delegate) {
+        mutableState.flashBell = flashBell;
+    }];
 }
 
 - (BOOL)postUserNotifications {
@@ -1987,7 +2001,11 @@ additionalWordCharacters:(NSString *)additionalWordCharacters
 }
 
 - (void)setPostUserNotifications:(BOOL)postUserNotifications {
-    _mutableState.postUserNotifications = postUserNotifications;
+    [self mutateAsynchronously:^(VT100Terminal *terminal,
+                                 VT100ScreenMutableState *mutableState,
+                                 id<VT100ScreenDelegate> delegate) {
+        mutableState.postUserNotifications = postUserNotifications;
+    }];
 }
 
 - (BOOL)cursorBlinks {
@@ -1995,7 +2013,11 @@ additionalWordCharacters:(NSString *)additionalWordCharacters
 }
 
 - (void)setCursorBlinks:(BOOL)cursorBlinks {
-    _mutableState.cursorBlinks = cursorBlinks;
+    [self mutateAsynchronously:^(VT100Terminal *terminal,
+                                 VT100ScreenMutableState *mutableState,
+                                 id<VT100ScreenDelegate> delegate) {
+        mutableState.cursorBlinks = cursorBlinks;
+    }];
 }
 
 - (BOOL)collectInputForPrinting {
@@ -2003,7 +2025,11 @@ additionalWordCharacters:(NSString *)additionalWordCharacters
 }
 
 - (void)setCollectInputForPrinting:(BOOL)collectInputForPrinting {
-    _mutableState.collectInputForPrinting = collectInputForPrinting;
+    [self mutateAsynchronously:^(VT100Terminal *terminal,
+                                 VT100ScreenMutableState *mutableState,
+                                 id<VT100ScreenDelegate> delegate) {
+        mutableState.collectInputForPrinting = collectInputForPrinting;
+    }];
 }
 
 - (BOOL)allowTitleReporting {
@@ -2011,11 +2037,19 @@ additionalWordCharacters:(NSString *)additionalWordCharacters
 }
 
 - (void)setAllowTitleReporting:(BOOL)allowTitleReporting {
-    _mutableState.allowTitleReporting = allowTitleReporting;
+    [self mutateAsynchronously:^(VT100Terminal *terminal,
+                                 VT100ScreenMutableState *mutableState,
+                                 id<VT100ScreenDelegate> delegate) {
+        mutableState.allowTitleReporting = allowTitleReporting;
+    }];
 }
 
 - (void)setAllowAlternateMouseScroll:(BOOL)allowAlternateMouseScroll {
-    _mutableState.allowAlternateMouseScroll = allowAlternateMouseScroll;
+    [self mutateAsynchronously:^(VT100Terminal *terminal,
+                                 VT100ScreenMutableState *mutableState,
+                                 id<VT100ScreenDelegate> delegate) {
+        mutableState.allowAlternateMouseScroll = allowAlternateMouseScroll;
+    }];
 }
 
 - (BOOL)allowAlternateMouseScroll {
