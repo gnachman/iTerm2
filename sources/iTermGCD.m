@@ -9,6 +9,8 @@
 #import "iTermAdvancedSettingsModel.h"
 #import "DebugLogging.h"
 
+#import <stdatomic.h>
+
 @implementation iTermGCD
 
 static char iTermGCDMainQueueSafeKey;
@@ -113,6 +115,24 @@ static _Atomic BOOL gJoined;
 
 + (void)setJoined:(BOOL)joined {
     gJoined = joined;
+}
+
+#pragma mark - Performing Joined Block
+
+static _Atomic int gPerformingJoinedBlock;
+
++ (BOOL)performingJoinedBlock {
+    return atomic_load(&gPerformingJoinedBlock) != 0;
+}
+
+// Sets the flag and returns the previous value (atomic exchange).
+// This allows callers to restore the previous state after their block completes.
++ (BOOL)setPerformingJoinedBlock:(BOOL)value {
+    if (value) {
+        return atomic_exchange(&gPerformingJoinedBlock, 1) != 0;
+    } else {
+        return atomic_exchange(&gPerformingJoinedBlock, 0) != 0;
+    }
 }
 
 @end
