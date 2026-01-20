@@ -1516,7 +1516,8 @@ VT100Capabilities VT100OutputMakeCapabilities(BOOL compatibility24Bit,
                                               BOOL hyperlinks,
                                               BOOL notifications,
                                               BOOL sixel,
-                                              BOOL file) {
+                                              BOOL file,
+                                              BOOL progressIndicator) {
     const VT100Capabilities capabilities = {
         .twentyFourBit = (compatibility24Bit ? 1 : 0) | (full24Bit ? 2 : 0),
         .clipboardWritable = clipboardWritable,
@@ -1536,6 +1537,7 @@ VT100Capabilities VT100OutputMakeCapabilities(BOOL compatibility24Bit,
         .notifications = notifications,
         .sixel = sixel,
         .file = file,
+        .progressIndicator = progressIndicator
     };
     return capabilities;
 }
@@ -1572,6 +1574,7 @@ VT100Capabilities VT100OutputMakeCapabilities(BOOL compatibility24Bit,
         capabilities.notifications ? @"No" : @"",
         capabilities.sixel ? @"Sx" : @"",
         capabilities.file ? @"F" : @"",
+        capabilities.progressIndicator ? @"P" : @""
     ];
     return [parts componentsJoinedByString:@""];
 }

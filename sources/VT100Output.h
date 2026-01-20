@@ -158,6 +158,7 @@ typedef struct {
     BOOL notifications;      // "No"
     BOOL sixel;              // "Sx"
     BOOL file;               // "F"
+    BOOL progressIndicator;  // "P"
 } VT100Capabilities;
 
 VT100Capabilities VT100OutputMakeCapabilities(BOOL compatibility24Bit,
@@ -181,7 +182,8 @@ VT100Capabilities VT100OutputMakeCapabilities(BOOL compatibility24Bit,
                                               BOOL hyperlinks,
                                               BOOL notifications,
                                               BOOL sixel,
-                                              BOOL file);
+                                              BOOL file,
+                                              BOOL progressIndicator);
 
 - (NSData *)reportCapabilities:(VT100Capabilities)capabilities;
 + (NSString *)encodedTermFeaturesForCapabilities:(VT100Capabilities)capabilities;

@@ -15412,7 +15412,9 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
                                 YES,                                // hyperlinks
                                 YES,                                // notifications
                                 YES,                                // sixel
-                                YES);                               // file
+                                YES,                                // file
+                                YES                                 // progress indicator
+                                       );
 }
 
 - (VT100GridRange)screenRangeOfVisibleLines {
