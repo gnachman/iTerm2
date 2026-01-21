@@ -29,7 +29,7 @@
 @implementation iTermExpressionParser {
     @protected
     CPTokeniser *_tokenizer;
-    CPSLRParser *_parser;
+    CPLALR1Parser *_parser;
     iTermVariableScope *_scope;
     NSError *_error;
     NSString *_input;
