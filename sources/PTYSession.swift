@@ -1198,6 +1198,7 @@ extension PTYSession {
             KEY_SEND_IDLE_ALERT: nullValue,
             KEY_SEND_NEW_OUTPUT_ALERT: nullValue,
             KEY_SEND_TERMINAL_GENERATED_ALERT: nullValue,
+            KEY_SUPPRESS_ALERTS_IN_ACTIVE_SESSION: nullValue,
             KEY_ALLOW_CHANGE_CURSOR_BLINK: nullValue,
             KEY_LOAD_SHELL_INTEGRATION_AUTOMATICALLY: nullValue,
             KEY_AUTOMATICALLY_ENABLE_ALTERNATE_MOUSE_SCROLL: nullValue,

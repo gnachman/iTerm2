@@ -4556,8 +4556,18 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
     [_shell stopCoprocess];
 }
 
+- (BOOL)notificationsSuppressed {
+    return ([iTermProfilePreferences boolForKey:KEY_SUPPRESS_ALERTS_IN_ACTIVE_SESSION inProfile:self.profile] &&
+            [_delegate sessionIsActiveInTab:self] &&
+            [_delegate sessionBelongsToVisibleTab] &&
+            self.view.window.isKeyWindow);
+}
+
 - (BOOL)shouldPostUserNotification {
     if (!_screen.postUserNotifications) {
+        return NO;
+    }
+    if ([self notificationsSuppressed]) {
         return NO;
     }
     if (_shortLivedSingleUse) {
@@ -16140,6 +16150,10 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 }
 
 - (BOOL)shouldPostTerminalGeneratedAlert {
+    if ([self notificationsSuppressed]) {
+        DLog(@"NO - Notification suppressed %@", [NSThread callStackSymbols]);
+        return NO;
+    }
     return [iTermProfilePreferences boolForKey:KEY_SEND_TERMINAL_GENERATED_ALERT
                                      inProfile:_profile];
 }

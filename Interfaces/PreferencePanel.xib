@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="24506" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES">
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="24127" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES">
     <dependencies>
         <deployment identifier="macosx"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="24506"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="24127"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <objects>
@@ -135,7 +135,7 @@
             <windowStyleMask key="styleMask" titled="YES" utility="YES" documentModal="YES"/>
             <windowPositionMask key="initialPositionMask" leftStrut="YES" rightStrut="YES" topStrut="YES" bottomStrut="YES"/>
             <rect key="contentRect" x="196" y="132" width="451" height="246"/>
-            <rect key="screenRect" x="0.0" y="0.0" width="1920" height="1055"/>
+            <rect key="screenRect" x="0.0" y="0.0" width="3008" height="1662"/>
             <view key="contentView" id="6180">
                 <rect key="frame" x="0.0" y="0.0" width="451" height="246"/>
                 <autoresizingMask key="autoresizingMask"/>
@@ -390,7 +390,7 @@ Gw
         <window title="Preferences" allowsToolTipsWhenApplicationIsInactive="NO" autorecalculatesKeyViewLoop="NO" releasedWhenClosed="NO" visibleAtLaunch="NO" animationBehavior="default" id="1923" userLabel="Main Preferences Window" customClass="iTermPrefsPanel">
             <windowStyleMask key="styleMask" titled="YES" closable="YES" miniaturizable="YES"/>
             <rect key="contentRect" x="269" y="110" width="924" height="463"/>
-            <rect key="screenRect" x="0.0" y="0.0" width="1920" height="1055"/>
+            <rect key="screenRect" x="0.0" y="0.0" width="3008" height="1662"/>
             <view key="contentView" id="1924" customClass="iTermPreferencesPanelRootView">
                 <rect key="frame" x="0.0" y="0.0" width="924" height="463"/>
                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
@@ -699,7 +699,7 @@ Gw
             <windowStyleMask key="styleMask" titled="YES" closable="YES" miniaturizable="YES" resizable="YES" utility="YES" documentModal="YES"/>
             <windowPositionMask key="initialPositionMask" leftStrut="YES" rightStrut="YES" topStrut="YES" bottomStrut="YES"/>
             <rect key="contentRect" x="162" y="156" width="805" height="448"/>
-            <rect key="screenRect" x="0.0" y="0.0" width="1920" height="1055"/>
+            <rect key="screenRect" x="0.0" y="0.0" width="3008" height="1662"/>
             <value key="minSize" type="size" width="805" height="358"/>
             <view key="contentView" id="5911">
                 <rect key="frame" x="0.0" y="0.0" width="805" height="448"/>
@@ -916,15 +916,15 @@ DQ
                                 <rect key="frame" x="124" y="79" width="258" height="135"/>
                                 <autoresizingMask key="autoresizingMask" heightSizable="YES"/>
                                 <clipView key="contentView" drawsBackground="NO" id="Yde-8Q-TRE">
-                                    <rect key="frame" x="1" y="1" width="241" height="133"/>
+                                    <rect key="frame" x="1" y="1" width="256" height="133"/>
                                     <autoresizingMask key="autoresizingMask"/>
                                     <subviews>
                                         <textView wantsLayer="YES" importsGraphics="NO" richText="NO" verticallyResizable="YES" allowsUndo="YES" textCompletion="NO" id="235-ob-yuB">
-                                            <rect key="frame" x="0.0" y="0.0" width="241" height="133"/>
+                                            <rect key="frame" x="0.0" y="0.0" width="256" height="133"/>
                                             <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                             <color key="textColor" name="textColor" catalog="System" colorSpace="catalog"/>
                                             <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
-                                            <size key="minSize" width="241" height="133"/>
+                                            <size key="minSize" width="256" height="133"/>
                                             <size key="maxSize" width="258" height="10000000"/>
                                             <connections>
                                                 <outlet property="delegate" destination="5863" id="Fo0-Ps-Gpj"/>
@@ -971,15 +971,15 @@ DQ
                         <rect key="frame" x="403" y="76" width="381" height="85"/>
                         <autoresizingMask key="autoresizingMask"/>
                         <clipView key="contentView" drawsBackground="NO" id="XnQ-nh-5wv">
-                            <rect key="frame" x="1" y="1" width="364" height="83"/>
+                            <rect key="frame" x="1" y="1" width="379" height="83"/>
                             <autoresizingMask key="autoresizingMask"/>
                             <subviews>
                                 <textView wantsLayer="YES" importsGraphics="NO" richText="NO" verticallyResizable="YES" textCompletion="NO" id="ucv-8U-BE7" customClass="iTermPlaygroundTextView">
-                                    <rect key="frame" x="0.0" y="0.0" width="364" height="83"/>
+                                    <rect key="frame" x="0.0" y="0.0" width="379" height="83"/>
                                     <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                     <color key="textColor" name="textColor" catalog="System" colorSpace="catalog"/>
                                     <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
-                                    <size key="minSize" width="364" height="83"/>
+                                    <size key="minSize" width="379" height="83"/>
                                     <size key="maxSize" width="381" height="10000000"/>
                                 </textView>
                             </subviews>
@@ -1026,7 +1026,7 @@ DQ
             <windowStyleMask key="styleMask" titled="YES" closable="YES" miniaturizable="YES" resizable="YES" utility="YES" documentModal="YES"/>
             <windowPositionMask key="initialPositionMask" leftStrut="YES" rightStrut="YES" topStrut="YES" bottomStrut="YES"/>
             <rect key="contentRect" x="162" y="229" width="808" height="518"/>
-            <rect key="screenRect" x="0.0" y="0.0" width="1920" height="1055"/>
+            <rect key="screenRect" x="0.0" y="0.0" width="3008" height="1662"/>
             <value key="minSize" type="size" width="575" height="100"/>
             <view key="contentView" id="6275">
                 <rect key="frame" x="0.0" y="0.0" width="808" height="518"/>
@@ -1860,6 +1860,7 @@ CA
                 <outlet property="_showMarkIndicators" destination="Wi4-0H-Bb4" id="gD6-Fj-f9H"/>
                 <outlet property="_showOffscreenCommandLine" destination="bAl-3O-ik0" id="2QD-PE-Ynt"/>
                 <outlet property="_silenceBell" destination="2397" id="qqe-8n-AAy"/>
+                <outlet property="_suppressAlertsInActiveSession" destination="neY-Tu-CXc" id="CKq-qr-X9F"/>
                 <outlet property="_terminalGeneratedAlerts" destination="pot-jK-a8U" id="BZL-Lh-M8N"/>
                 <outlet property="_terminalType" destination="2405" id="ReP-eL-1uJ"/>
                 <outlet property="_terminalTypeLabel" destination="2393" id="h9G-Sr-1z6"/>
@@ -7098,15 +7099,15 @@ See the [documentation](https://iterm2.com/automatic-profile-switching.html) for
                                                                             <rect key="frame" x="20" y="25" width="577" height="269"/>
                                                                             <autoresizingMask key="autoresizingMask"/>
                                                                             <clipView key="contentView" drawsBackground="NO" id="6XT-bG-foe">
-                                                                                <rect key="frame" x="0.0" y="0.0" width="562" height="269"/>
+                                                                                <rect key="frame" x="0.0" y="0.0" width="577" height="269"/>
                                                                                 <autoresizingMask key="autoresizingMask"/>
                                                                                 <subviews>
                                                                                     <textView wantsLayer="YES" importsGraphics="NO" richText="NO" verticallyResizable="YES" allowsUndo="YES" spellingCorrection="YES" smartInsertDelete="YES" id="pSg-z3-7LN">
-                                                                                        <rect key="frame" x="0.0" y="0.0" width="562" height="269"/>
+                                                                                        <rect key="frame" x="0.0" y="0.0" width="577" height="269"/>
                                                                                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                                                                         <color key="textColor" name="textColor" catalog="System" colorSpace="catalog"/>
                                                                                         <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
-                                                                                        <size key="minSize" width="562" height="269"/>
+                                                                                        <size key="minSize" width="577" height="269"/>
                                                                                         <size key="maxSize" width="577" height="10000000"/>
                                                                                         <connections>
                                                                                             <outlet property="delegate" destination="9Se-ld-UJa" id="udT-Fb-yHi"/>
@@ -8177,7 +8178,7 @@ See the [documentation](https://iterm2.com/automatic-profile-switching.html) for
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <popUpButtonCell key="cell" type="push" title="Windows" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" selectedItem="Cy3-Xh-IIQ" id="8fZ-AU-hBh">
                                                     <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
-                                                    <font key="font" metaFont="menu"/>
+                                                    <font key="font" metaFont="message"/>
                                                     <menu key="menu" id="unC-76-xBH">
                                                         <items>
                                                             <menuItem title="Windows" state="on" id="Cy3-Xh-IIQ"/>
@@ -9690,11 +9691,11 @@ instead of the system keyboard.</string>
                     <rect key="frame" x="265" y="36" width="629" height="397"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <view key="contentView" id="e7Z-SC-6xP">
-                        <rect key="frame" x="4" y="5" width="621" height="377"/>
+                        <rect key="frame" x="0.0" y="0.0" width="629" height="385"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
                             <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="5571" customClass="ArrangementPreviewView">
-                                <rect key="frame" x="4" y="1" width="619" height="374"/>
+                                <rect key="frame" x="4" y="9" width="619" height="374"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             </customView>
                         </subviews>
@@ -10372,14 +10373,14 @@ instead of the system keyboard.</string>
         </customView>
         <window title="Filter Alerts" allowsToolTipsWhenApplicationIsInactive="NO" autorecalculatesKeyViewLoop="NO" restorable="NO" hidesOnDeactivate="YES" releasedWhenClosed="NO" visibleAtLaunch="NO" animationBehavior="default" id="u39-OD-7hu" customClass="NSPanel">
             <windowPositionMask key="initialPositionMask" leftStrut="YES" rightStrut="YES" topStrut="YES" bottomStrut="YES"/>
-            <rect key="contentRect" x="120" y="138" width="406" height="145"/>
-            <rect key="screenRect" x="0.0" y="0.0" width="1920" height="1055"/>
+            <rect key="contentRect" x="120" y="138" width="406" height="171"/>
+            <rect key="screenRect" x="0.0" y="0.0" width="3008" height="1662"/>
             <view key="contentView" id="dXn-d7-O8o">
-                <rect key="frame" x="0.0" y="0.0" width="406" height="145"/>
+                <rect key="frame" x="0.0" y="0.0" width="406" height="171"/>
                 <autoresizingMask key="autoresizingMask"/>
                 <subviews>
                     <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="O5A-H9-sKq">
-                        <rect key="frame" x="18" y="109" width="152" height="18"/>
+                        <rect key="frame" x="18" y="135" width="152" height="18"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                         <buttonCell key="cell" type="check" title="Send “Bell” alert" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="RWj-e3-HBy">
                             <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -10391,7 +10392,7 @@ instead of the system keyboard.</string>
                         </connections>
                     </button>
                     <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="bxF-vz-pm1">
-                        <rect key="frame" x="18" y="89" width="152" height="18"/>
+                        <rect key="frame" x="18" y="115" width="152" height="18"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                         <buttonCell key="cell" type="check" title="Send “Idle” alert" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="5OR-eB-vkq">
                             <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -10403,7 +10404,7 @@ instead of the system keyboard.</string>
                         </connections>
                     </button>
                     <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="gMB-do-VHw">
-                        <rect key="frame" x="195" y="89" width="179" height="18"/>
+                        <rect key="frame" x="195" y="115" width="179" height="18"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                         <buttonCell key="cell" type="check" title="Send “New Output” alert" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="cP6-Jq-skb">
                             <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -10415,7 +10416,7 @@ instead of the system keyboard.</string>
                         </connections>
                     </button>
                     <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Hn1-0h-Vve">
-                        <rect key="frame" x="195" y="109" width="193" height="18"/>
+                        <rect key="frame" x="195" y="135" width="193" height="18"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                         <buttonCell key="cell" type="check" title="Send “Session Ended” alert" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="2lN-Vt-8WG">
                             <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -10427,7 +10428,7 @@ instead of the system keyboard.</string>
                         </connections>
                     </button>
                     <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="pot-jK-a8U">
-                        <rect key="frame" x="18" y="59" width="356" height="18"/>
+                        <rect key="frame" x="18" y="85" width="356" height="18"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                         <buttonCell key="cell" type="check" title="Send escape sequence-generated alerts" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="T4Q-lq-oX1">
                             <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -10438,9 +10439,21 @@ instead of the system keyboard.</string>
                             <outlet property="nextKeyView" destination="2100" id="dyj-eI-mck"/>
                         </connections>
                     </button>
-                    <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Rzp-rB-JFI">
-                        <rect key="frame" x="334" y="13" width="58" height="32"/>
+                    <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="neY-Tu-CXc">
+                        <rect key="frame" x="18" y="67" width="368" height="18"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                        <buttonCell key="cell" type="check" title="Suppress alerts from active session" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="FB4-af-uFa">
+                            <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                            <font key="font" metaFont="system"/>
+                        </buttonCell>
+                        <connections>
+                            <action selector="settingChanged:" target="gMD-DK-gev" id="GMB-2j-6qa"/>
+                            <outlet property="nextKeyView" destination="2100" id="MXH-BS-Ibd"/>
+                        </connections>
+                    </button>
+                    <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Rzp-rB-JFI">
+                        <rect key="frame" x="334" y="20" width="58" height="32"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxY="YES"/>
                         <buttonCell key="cell" type="push" title="Ok" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="jN9-Kg-e2W">
                             <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
                             <font key="font" metaFont="system"/>
@@ -10452,7 +10465,7 @@ instead of the system keyboard.</string>
                 </subviews>
             </view>
             <accessibility identifier="filterAlertsPanel"/>
-            <point key="canvasLocation" x="139" y="344.5"/>
+            <point key="canvasLocation" x="139" y="357.5"/>
         </window>
         <viewController id="NZL-jc-nXF" userLabel="Global Actions Editing View Controller" customClass="iTermActionsEditingViewController"/>
         <viewController id="wEw-Xc-e6F" userLabel="Global Snippets Editing View Controller" customClass="iTermSnippetsEditingViewController"/>

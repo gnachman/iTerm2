@@ -312,6 +312,7 @@ typedef struct {
             KEY_BOOKMARK_USER_NOTIFICATIONS, KEY_SEND_BELL_ALERT, KEY_SEND_IDLE_ALERT,
             KEY_SEND_NEW_OUTPUT_ALERT, KEY_SEND_SESSION_ENDED_ALERT,
             KEY_SEND_TERMINAL_GENERATED_ALERT, KEY_FLASHING_BELL, KEY_VISUAL_BELL,
+            KEY_SUPPRESS_ALERTS_IN_ACTIVE_SESSION,
 
             KEY_REDUCE_FLICKER, KEY_SHOW_STATUS_BAR, KEY_SEND_CODE_WHEN_IDLE,
             KEY_APPLICATION_KEYPAD_ALLOWED, KEY_ALLOW_MODIFY_OTHER_KEYS,
@@ -713,6 +714,7 @@ typedef struct {
             KEY_SEND_NEW_OUTPUT_ALERT:                              @"Whether to send notification on new output",
             KEY_SEND_SESSION_ENDED_ALERT:                           @"Whether to send notification when session ends",
             KEY_SEND_TERMINAL_GENERATED_ALERT:                      @"Whether to send notifications triggered by escape sequences",
+            KEY_SUPPRESS_ALERTS_IN_ACTIVE_SESSION:                  @"Whether to suppress alerts sent by the active session",
             KEY_FLASHING_BELL:                                      @"Whether to flash the screen on bell",
             KEY_VISUAL_BELL:                                        @"Whether to show visual indicator on bell",
             KEY_SET_LOCALE_VARS:                                    @"How to set locale environment variables",
@@ -1029,6 +1031,7 @@ typedef struct {
                   KEY_SEND_NEW_OUTPUT_ALERT: @NO,
                   KEY_SEND_SESSION_ENDED_ALERT: @YES,
                   KEY_SEND_TERMINAL_GENERATED_ALERT: @YES,
+                  KEY_SUPPRESS_ALERTS_IN_ACTIVE_SESSION: @NO,
                   KEY_FLASHING_BELL: @NO,
                   KEY_VISUAL_BELL: @NO,
                   KEY_SET_LOCALE_VARS: @(iTermSetLocalVarsModeSetAutomatically),

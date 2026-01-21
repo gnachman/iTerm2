@@ -59,6 +59,7 @@
     IBOutlet NSButton *_sessionEndedAlert;
     IBOutlet NSButton *_terminalGeneratedAlerts;
     IBOutlet NSButton *_dragToScrollInAlternateScreenModeDisabled;
+    IBOutlet NSButton *_suppressAlertsInActiveSession;
 
     IBOutlet NSButton *_automaticallyEnableAlternatemouseScroll;
     IBOutlet NSButton *_restrictAlternateMouseScrollToVertical;
@@ -252,6 +253,9 @@
                                type:kPreferenceInfoTypeCheckbox];
     [self defineUnsearchableControl:_terminalGeneratedAlerts
                                 key:KEY_SEND_TERMINAL_GENERATED_ALERT
+                               type:kPreferenceInfoTypeCheckbox];
+    [self defineUnsearchableControl:_suppressAlertsInActiveSession
+                                key:KEY_SUPPRESS_ALERTS_IN_ACTIVE_SESSION
                                type:kPreferenceInfoTypeCheckbox];
 
     [self defineControl:_flashingBell
