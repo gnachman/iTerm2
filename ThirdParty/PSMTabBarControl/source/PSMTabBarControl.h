@@ -11,6 +11,9 @@
 #import "PSMCachedTitle.h"
 #import "PSMProgressIndicator.h"
 
+// Set to 1 to enable drag performance debugging (timestamp overlay and NSLog statements)
+#define PSM_DEBUG_DRAG_PERFORMANCE 0
+
 extern NSString *const kPSMModifierChangedNotification;
 extern NSString *const kPSMTabModifierKey;  // Key for user info dict in modifier changed notification
 

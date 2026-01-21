@@ -519,6 +519,10 @@ static NSRect PSMConvertAccessibilityFrameToScreen(NSView *view, NSRect frame) {
 
 - (void)drawWithFrame:(NSRect)cellFrame inView:(NSView *)controlView {
     if (_isPlaceholder){
+        // Don't draw zero-size placeholders (they appear as thin vertical/horizontal lines)
+        if (cellFrame.size.width <= 0 || cellFrame.size.height <= 0) {
+            return;
+        }
         [[NSColor colorWithCalibratedWhite:0 alpha:0.2] set];
         NSRectFillUsingOperation(cellFrame, NSCompositingOperationSourceAtop);
         return;

@@ -21,9 +21,6 @@
 #import "NSWindow+PSM.h"
 #import <os/signpost.h>
 
-// Set to 1 to enable drag performance debugging (timestamp overlay and NSLog statements)
-#define PSM_DEBUG_DRAG_PERFORMANCE 0
-
 #if PSM_DEBUG_DRAG_PERFORMANCE
 static os_log_t PSMTabBarLog(void) {
     static os_log_t log;

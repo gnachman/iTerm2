@@ -16,9 +16,6 @@
 #import <CoreVideo/CoreVideo.h>
 #import <sys/time.h>
 
-// Set to 1 to enable drag performance debugging (timestamp overlay and NSLog statements)
-#define PSM_DEBUG_DRAG_PERFORMANCE 0
-
 #if PSM_DEBUG_DRAG_PERFORMANCE
 static os_log_t PSMTabDragLog(void) {
     static os_log_t log;
@@ -1203,9 +1200,17 @@ static CVReturn DisplayLinkCallback(CVDisplayLinkRef displayLink,
         if ([control orientation] == PSMTabBarHorizontalOrientation) {
             newRect.origin.x = position;
             position += newRect.size.width;
+            // Only add intercell spacing after cells with visible width
+            if (newRect.size.width > 0) {
+                position += [[control style] intercellSpacing];
+            }
         } else {
             newRect.origin.y = position;
             position += newRect.size.height;
+            // Only add intercell spacing after cells with visible height
+            if (newRect.size.height > 0) {
+                position += [[control style] intercellSpacing];
+            }
         }
         [cell setFrame:newRect];
         if([cell indicator])

@@ -625,6 +625,13 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
         if leftCell.isHighlighted || rightCell.isHighlighted || leftCell.state == .on || rightCell.state == .on {
             return
         }
+        // Don't draw dividers involving zero-width placeholder cells
+        if leftCell.isPlaceholder && leftCell.frame.width <= 0 {
+            return
+        }
+        if rightCell.isPlaceholder && rightCell.frame.width <= 0 {
+            return
+        }
         guard let cells = tabBar?.cells() as? [PSMTabBarCell], cells.count >= 4 else {
             return
         }
