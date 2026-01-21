@@ -19,6 +19,21 @@
 #import "PTYTask.h"
 #import "NSColor+PSM.h"
 #import "NSWindow+PSM.h"
+#import <os/signpost.h>
+
+// Set to 1 to enable drag performance debugging (timestamp overlay and NSLog statements)
+#define PSM_DEBUG_DRAG_PERFORMANCE 0
+
+#if PSM_DEBUG_DRAG_PERFORMANCE
+static os_log_t PSMTabBarLog(void) {
+    static os_log_t log;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        log = os_log_create("com.iterm2.tabbar", "drawing");
+    });
+    return log;
+}
+#endif
 
 NSString *const kPSMModifierChangedNotification = @"kPSMModifierChangedNotification";
 NSString *const kPSMTabModifierKey = @"TabModifier";
@@ -982,6 +997,14 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionDarkModeInactiveTabDarkness = @"
 
 // In sonoma, rect can be larger than the bounds and filling can cause other views to be drawn over. WTF
 - (void)drawRect:(NSRect)insaneRect {
+#if PSM_DEBUG_DRAG_PERFORMANCE
+    static int drawCount = 0;
+    static CFAbsoluteTime lastDrawTime = 0;
+
+    os_signpost_interval_begin(PSMTabBarLog(), OS_SIGNPOST_ID_EXCLUSIVE, "drawRect", "");
+    CFAbsoluteTime start = CFAbsoluteTimeGetCurrent();
+#endif
+
     const NSRect rect = NSIntersectionRect(self.bounds, insaneRect);
     for (PSMTabBarCell *cell in [self cells]) {
         [cell setIsLast:NO];
@@ -992,6 +1015,25 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionDarkModeInactiveTabDarkness = @"
               clipRect:rect
             horizontal:(_orientation == PSMTabBarHorizontalOrientation)
           withOverflow:_lainOutWithOverflow];
+
+#if PSM_DEBUG_DRAG_PERFORMANCE
+    CFAbsoluteTime end = CFAbsoluteTimeGetCurrent();
+    drawCount++;
+
+    // Log every 10th draw during drag, or if it takes > 1ms
+    BOOL isDragging = [[PSMTabDragAssistant sharedDragAssistant] isDragging];
+    if (isDragging) {
+        double elapsed = (end - start) * 1000;
+        double sinceLast = lastDrawTime > 0 ? (start - lastDrawTime) * 1000 : 0;
+        if (drawCount % 10 == 0 || elapsed > 1.0) {
+            NSLog(@"[PSMTabBar] drawRect #%d took %.2fms (%.1fms since last draw, %d cells)",
+                  drawCount, elapsed, sinceLast, (int)[[self cells] count]);
+        }
+    }
+    lastDrawTime = start;
+
+    os_signpost_interval_end(PSMTabBarLog(), OS_SIGNPOST_ID_EXCLUSIVE, "drawRect", "");
+#endif
 }
 
 - (void)moveTabAtIndex:(NSInteger)sourceIndex toIndex:(NSInteger)destIndex
@@ -1836,11 +1878,44 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionDarkModeInactiveTabDarkness = @"
     return YES;
 }
 
+// File-level statics for tracking drag move frequency
+#if PSM_DEBUG_DRAG_PERFORMANCE
+static int gDragMoveCount = 0;
+static CFAbsoluteTime gDragMoveLastTime = 0;
+static CFAbsoluteTime gDragMoveFirstTime = 0;
+#endif
+
 - (void)draggingSession:(NSDraggingSession *)session willBeginAtPoint:(NSPoint)screenPoint {
+#if PSM_DEBUG_DRAG_PERFORMANCE
+    // Reset drag move tracking
+    gDragMoveCount = 0;
+    gDragMoveLastTime = 0;
+    gDragMoveFirstTime = 0;
+    NSLog(@"[PSMTabBar] draggingSession:willBeginAtPoint: - drag session started");
+#endif
     [[PSMTabDragAssistant sharedDragAssistant] draggingBeganAt:screenPoint];
 }
 
 - (void)draggingSession:(NSDraggingSession *)session movedToPoint:(NSPoint)screenPoint {
+#if PSM_DEBUG_DRAG_PERFORMANCE
+    CFAbsoluteTime now = CACurrentMediaTime();
+    gDragMoveCount++;
+
+    if (gDragMoveFirstTime == 0) {
+        gDragMoveFirstTime = now;
+    }
+
+    // Log every call to see actual frequency
+    double sinceLast = gDragMoveLastTime > 0 ? (now - gDragMoveLastTime) * 1000 : 0;
+    double elapsed = now - gDragMoveFirstTime;
+    double avgFps = elapsed > 0 ? (gDragMoveCount / elapsed) : 0;
+
+    // Log every 10th call, or first few calls
+    NSLog(@"[PSMTabBar] draggingSession:movedToPoint: #%d, interval=%.1fms, avg=%.1f calls/sec",
+          gDragMoveCount, sinceLast, avgFps);
+    gDragMoveLastTime = now;
+#endif
+
     [[PSMTabDragAssistant sharedDragAssistant] draggingMovedTo:screenPoint];
 }
 
@@ -1931,6 +2006,14 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionDarkModeInactiveTabDarkness = @"
 }
 
 - (void)draggingSession:(NSDraggingSession *)session endedAtPoint:(NSPoint)aPoint operation:(NSDragOperation)operation {
+#if PSM_DEBUG_DRAG_PERFORMANCE
+    // Log drag move summary
+    CFAbsoluteTime elapsed = gDragMoveFirstTime > 0 ? (CACurrentMediaTime() - gDragMoveFirstTime) : 0;
+    double avgFps = elapsed > 0 ? (gDragMoveCount / elapsed) : 0;
+    NSLog(@"[PSMTabBar] draggingSession:endedAtPoint: - drag ended. Total moves: %d over %.2fs (avg %.1f calls/sec)",
+          gDragMoveCount, elapsed, avgFps);
+#endif
+
     _haveInitialDragLocation = NO;
     if (operation != NSDragOperationNone) {
         [self removeTabForCell:[[PSMTabDragAssistant sharedDragAssistant] draggedCell]];
