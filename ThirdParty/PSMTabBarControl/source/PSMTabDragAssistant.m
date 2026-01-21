@@ -37,7 +37,7 @@
 
     // A window that shows the tab while it's being dragged.
     PSMTabDragWindow *_dragTabWindow;
-    
+
     // A window that shows a ghost pane while a tab is being dragged out of its tab bar
     PSMTabDragWindow *_dragViewWindow;
     NSSize _dragWindowOffset;
@@ -49,6 +49,11 @@
     NSPoint _currentMouseLoc;
     PSMTabBarCell *_targetCell;
     NSSize _dragTabOffset;
+
+    // The drag window stays at its initial position along the cross-axis
+    // (Y for horizontal tab bars, X for vertical) until movement exceeds a threshold.
+    NSPoint _initialDragWindowOrigin;
+    BOOL _dragThresholdExceeded;
 }
 
 #pragma mark -
@@ -700,6 +705,12 @@
 - (void)draggingBeganAt:(NSPoint)aPoint {
     ILog(@"Drag of %p began with current event %@ in window with frame %@ from\n%@", [self sourceTabBar], [NSApp currentEvent], NSStringFromRect(self.sourceTabBar.window.frame), [NSThread callStackSymbols]);
     if (_dragTabWindow) {
+        // Remember the initial drag window origin so it can stay stable along the
+        // cross-axis until movement exceeds a threshold.
+        _initialDragWindowOrigin = NSMakePoint(aPoint.x - _dragTabOffset.width,
+                                               aPoint.y - _dragTabOffset.height);
+        _dragThresholdExceeded = NO;
+
         [self moveDragTabWindowForMouseLocation:aPoint];
 
         if ([[[self sourceTabBar] tabView] numberOfTabViewItems] == 1) {
@@ -717,8 +728,45 @@
     return aPoint;
 }
 
+// Adjusts the mouse location to keep the drag window stable along the cross-axis
+// (Y for horizontal tab bars, X for vertical) until movement exceeds a threshold.
+- (NSPoint)adjustedMouseLocationForDrag:(NSPoint)mouseLocation {
+    if (_dragThresholdExceeded) {
+        return mouseLocation;
+    }
+
+    NSPoint windowOrigin = NSMakePoint(mouseLocation.x - _dragTabOffset.width,
+                                       mouseLocation.y - _dragTabOffset.height);
+
+    const NSSize kDragThreshold = { .width = 40.0, .height = 20.0 };
+    CGFloat deviation;
+    CGFloat threshold;
+    if ([[self sourceTabBar] orientation] == PSMTabBarHorizontalOrientation) {
+        deviation = fabs(windowOrigin.y - _initialDragWindowOrigin.y);
+        threshold = kDragThreshold.height;
+    } else {
+        deviation = fabs(windowOrigin.x - _initialDragWindowOrigin.x);
+        threshold = kDragThreshold.width;
+    }
+
+    if (deviation > threshold) {
+        _dragThresholdExceeded = YES;
+        return mouseLocation;
+    }
+
+    // Clamp to initial position along the cross-axis.
+    if ([[self sourceTabBar] orientation] == PSMTabBarHorizontalOrientation) {
+        mouseLocation.y = _initialDragWindowOrigin.y + _dragTabOffset.height;
+    } else {
+        mouseLocation.x = _initialDragWindowOrigin.x + _dragTabOffset.width;
+    }
+    return mouseLocation;
+}
+
 - (void)draggingMovedTo:(NSPoint)aPoint {
     if (_dragTabWindow) {
+        aPoint = [self adjustedMouseLocationForDrag:aPoint];
+
         [self moveDragTabWindowForMouseLocation:aPoint];
 
         if (_dragViewWindow) {
