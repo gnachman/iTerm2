@@ -155,13 +155,18 @@ static CVReturn DisplayLinkCallback(CVDisplayLinkRef displayLink,
 #pragma mark Functionality
 
 - (void)addSineCurveWidthsWithOrientation:(PSMTabBarOrientation)orientation size:(NSSize)size {
-    float cellStepSize = (orientation == PSMTabBarHorizontalOrientation) ? (size.width + 6) : (size.height + 1);
-    for (int i = 0; i < kPSMTabDragAnimationSteps - 1; i++) {
-        int thisWidth = (int)(cellStepSize - ((cellStepSize/2.0) + ((sin((PI/2.0) + ((float)i/(float)kPSMTabDragAnimationSteps)*PI) * cellStepSize) / 2.0)));
+    // Use a cosine-based curve where width[i] + width[N-i] = cellWidth.
+    // This ensures that when one placeholder shrinks and another grows during a target change,
+    // the total width remains constant, preventing tabs from stuttering/shifting.
+    const int cellWidth = (orientation == PSMTabBarHorizontalOrientation) ? (int)size.width : (int)size.height;
+    const int steps = kPSMTabDragAnimationSteps;
+    for (int i = 0; i < steps; i++) {
+        // Formula: cellWidth * (1 - cos(π * i / (steps-1))) / 2
+        // This gives 0 at i=0, cellWidth at i=steps-1, and width[i] + width[steps-1-i] = cellWidth
+        const double fraction = (1.0 - cos(PI * (double)i / (double)(steps - 1))) / 2.0;
+        const int thisWidth = (int)round(cellWidth * fraction);
         [_sineCurveWidths addObject:@(thisWidth)];
     }
-    int width = (orientation == PSMTabBarHorizontalOrientation) ? size.width : size.height;
-    [_sineCurveWidths addObject:@(width)];
 }
 
 - (void)startAnimation {
@@ -217,6 +222,10 @@ static CVReturn DisplayLinkCallback(CVDisplayLinkRef displayLink,
     NSImage *dragImage = [cell dragImage];
     [[cell indicator] removeFromSuperview];
     [self distributePlaceholdersInTabBar:control withDraggedCell:cell];
+
+    // Set the initial mouse location so the first animation frame can correctly
+    // track the target cell.
+    [self setCurrentMouseLoc:[control convertPoint:[event locationInWindow] fromView:nil]];
 
     if ([control isFlipped]) {
         cellFrame.origin.y += cellFrame.size.height;
@@ -1125,41 +1134,86 @@ static CVReturn DisplayLinkCallback(CVDisplayLinkRef displayLink,
     // identify target cell
     // mouse at beginning of tabs
     NSPoint mouseLoc = [self currentMouseLoc];
+    PSMTabBarCell *proposedTarget = nil;
+
     if ([self destinationTabBar] == control) {
         removeFlag = NO;
         if (mouseLoc.x < [[control style] leftMarginForTabBarControl]) {
-            [self setTargetCell:[cells objectAtIndex:0]];
+            proposedTarget = [cells objectAtIndex:0];
         } else {
             NSRect overCellRect;
             PSMTabBarCell *overCell = [control cellForPoint:mouseLoc cellFrame:&overCellRect];
             if (overCell) {
                 // mouse among cells - placeholder
                 if ([overCell isPlaceholder]) {
-                    [self setTargetCell:overCell];
+                    proposedTarget = overCell;
                 } else if ([control orientation] == PSMTabBarHorizontalOrientation) {
                     // non-placeholders - horizontal orientation
                     if (mouseLoc.x < (overCellRect.origin.x + (overCellRect.size.width / 2.0))) {
                         // mouse on left side of cell
-                        [self setTargetCell:[cells objectAtIndex:([cells indexOfObject:overCell] - 1)]];
+                        proposedTarget = [cells objectAtIndex:([cells indexOfObject:overCell] - 1)];
                     } else {
                         // mouse on right side of cell
-                        [self setTargetCell:[cells objectAtIndex:([cells indexOfObject:overCell] + 1)]];
+                        proposedTarget = [cells objectAtIndex:([cells indexOfObject:overCell] + 1)];
                     }
                 } else {
                     // non-placeholders - vertical orientation
                     if (mouseLoc.y < (overCellRect.origin.y + (overCellRect.size.height / 2.0))) {
                         // mouse on top of cell
-                        [self setTargetCell:[cells objectAtIndex:([cells indexOfObject:overCell] - 1)]];
+                        proposedTarget = [cells objectAtIndex:([cells indexOfObject:overCell] - 1)];
                     } else {
                         // mouse on bottom of cell
-                        [self setTargetCell:[cells objectAtIndex:([cells indexOfObject:overCell] + 1)]];
+                        proposedTarget = [cells objectAtIndex:([cells indexOfObject:overCell] + 1)];
                     }
                 }
             } else {
                 // out at end - must find proper cell (could be more in overflow menu)
-                [self setTargetCell:[control lastVisibleTab]];
+                proposedTarget = [control lastVisibleTab];
             }
         }
+
+        // Apply hysteresis to prevent target bouncing due to animation-induced boundary shifts.
+        // Only change target if it's different AND the mouse is sufficiently into the new target area.
+        PSMTabBarCell *currentTarget = [self targetCell];
+        if (proposedTarget != currentTarget && currentTarget != nil && proposedTarget != nil) {
+            // Check if mouse is far enough into the proposed target to accept the change
+            NSRect proposedFrame = [proposedTarget frame];
+            CGFloat hysteresis = 8.0; // pixels of hysteresis
+
+            if ([control orientation] == PSMTabBarHorizontalOrientation) {
+                NSInteger proposedIndex = [cells indexOfObject:proposedTarget];
+                NSInteger currentIndex = [cells indexOfObject:currentTarget];
+
+                if (proposedIndex > currentIndex) {
+                    // Moving right - mouse must be hysteresis pixels past the left edge of proposed target
+                    if (mouseLoc.x < proposedFrame.origin.x + hysteresis) {
+                        proposedTarget = currentTarget; // Keep current target
+                    }
+                } else {
+                    // Moving left - mouse must be hysteresis pixels before the right edge of proposed target
+                    if (mouseLoc.x > NSMaxX(proposedFrame) - hysteresis) {
+                        proposedTarget = currentTarget; // Keep current target
+                    }
+                }
+            } else {
+                NSInteger proposedIndex = [cells indexOfObject:proposedTarget];
+                NSInteger currentIndex = [cells indexOfObject:currentTarget];
+
+                if (proposedIndex > currentIndex) {
+                    // Moving down
+                    if (mouseLoc.y < proposedFrame.origin.y + hysteresis) {
+                        proposedTarget = currentTarget;
+                    }
+                } else {
+                    // Moving up
+                    if (mouseLoc.y > NSMaxY(proposedFrame) - hysteresis) {
+                        proposedTarget = currentTarget;
+                    }
+                }
+            }
+        }
+
+        [self setTargetCell:proposedTarget];
     } else {
         [self setTargetCell:nil];
     }
@@ -1179,9 +1233,17 @@ static CVReturn DisplayLinkCallback(CVDisplayLinkRef displayLink,
 #endif
             if([cell isPlaceholder]){
                 if (cell == [self targetCell]) {
-                    [cell setCurrentStep:([cell currentStep] + 1)];
+                    NSInteger newStep = [cell currentStep] + 1;
+                    if (newStep >= kPSMTabDragAnimationSteps) {
+                        newStep = kPSMTabDragAnimationSteps - 1;
+                    }
+                    [cell setCurrentStep:newStep];
                 } else {
-                    [cell setCurrentStep:([cell currentStep] - 1)];
+                    NSInteger newStep = [cell currentStep] - 1;
+                    if (newStep < 0) {
+                        newStep = 0;
+                    }
+                    [cell setCurrentStep:newStep];
                     if([cell currentStep] > 0){
                         removeFlag = NO;
                     }
@@ -1200,15 +1262,18 @@ static CVReturn DisplayLinkCallback(CVDisplayLinkRef displayLink,
         if ([control orientation] == PSMTabBarHorizontalOrientation) {
             newRect.origin.x = position;
             position += newRect.size.width;
-            // Only add intercell spacing after cells with visible width
-            if (newRect.size.width > 0) {
+            // Only add intercell spacing after non-placeholder cells (real tabs).
+            // Placeholders only contribute their width, not additional spacing.
+            // This prevents a 1-point shift when placeholders transition from
+            // width 0 to width > 0.
+            if (![cell isPlaceholder]) {
                 position += [[control style] intercellSpacing];
             }
         } else {
             newRect.origin.y = position;
             position += newRect.size.height;
-            // Only add intercell spacing after cells with visible height
-            if (newRect.size.height > 0) {
+            // Only add intercell spacing after non-placeholder cells (real tabs).
+            if (![cell isPlaceholder]) {
                 position += [[control style] intercellSpacing];
             }
         }
@@ -1248,6 +1313,10 @@ static CVReturn DisplayLinkCallback(CVDisplayLinkRef displayLink,
     [[control cells] replaceObjectAtIndex:cellIndex withObject:pc];
     [[control cells] removeObjectAtIndex:(cellIndex + 1)];
     [[control cells] removeObjectAtIndex:(cellIndex - 1)];
+    // Set the expanded placeholder as the initial target to prevent the first
+    // animation frame from picking the wrong target when currentMouseLoc hasn't
+    // been set yet.
+    [self setTargetCell:pc];
     ILog(@"distributePlaceholdersInTabBar:withDraggedCell:%@", cell);
     return;
 }

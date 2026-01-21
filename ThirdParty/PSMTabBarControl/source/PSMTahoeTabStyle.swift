@@ -598,14 +598,22 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
             for cell in drawableCells {
                 cell.draw(withFrame: cell.frame, in: bar)
             }
-            let sorted = drawableCells.sorted { lhs, rhs in
+            // For divider drawing, filter out zero-width placeholder cells first
+            // so dividers are drawn between actual visible cells
+            let cellsForDividers = drawableCells.filter { cell in
+                if cell.isPlaceholder {
+                    return orientation == .horizontalOrientation ? cell.frame.width > 0 : cell.frame.height > 0
+                }
+                return true
+            }
+            let sorted = cellsForDividers.sorted { lhs, rhs in
                 if orientation == .horizontalOrientation {
                     lhs.frame.minX < rhs.frame.minX
                 } else {
                     lhs.frame.minY < rhs.frame.minY
                 }
             }
-            for i in 0..<(drawableCells.count - 1) {
+            for i in 0..<(sorted.count - 1) {
                 drawDivider(betweenCell: sorted[i], andCell: sorted[i + 1])
             }
             if let selectedCell = drawableCells.first, selectedCell.state == .on {
@@ -623,13 +631,6 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
             return
         }
         if leftCell.isHighlighted || rightCell.isHighlighted || leftCell.state == .on || rightCell.state == .on {
-            return
-        }
-        // Don't draw dividers involving zero-width placeholder cells
-        if leftCell.isPlaceholder && leftCell.frame.width <= 0 {
-            return
-        }
-        if rightCell.isPlaceholder && rightCell.frame.width <= 0 {
             return
         }
         guard let cells = tabBar?.cells() as? [PSMTabBarCell], cells.count >= 4 else {
