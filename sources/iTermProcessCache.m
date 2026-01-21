@@ -67,6 +67,9 @@ typedef NS_OPTIONS(unsigned long, iTermProcessCacheCoalescerEvent) {
     NSMutableIndexSet *_dirtyHighRootsLQ;   // High-priority roots needing refresh (_lockQueue)
     NSMutableIndexSet *_dirtyLowRootsLQ;    // Low-priority (background) roots (_lockQueue)
     NSUInteger _currentEpoch;               // Incremented on each refresh cycle (_workQueue)
+
+    // Throttle for background refresh (ensures 0.5s minimum between background refreshes)
+    NSTimeInterval _lastBackgroundRefreshTime;
 }
 
 + (instancetype)sharedInstance {
@@ -381,8 +384,12 @@ typedef NS_OPTIONS(unsigned long, iTermProcessCacheCoalescerEvent) {
 - (void)updateIfNeeded {
     DLog(@"updateIfNeeded");
 
-    // Always process background roots on the cadence timer (amortized refresh)
-    [self backgroundRefreshTick];
+    // Process background roots only on ~0.5s cadence (not on every call)
+    NSTimeInterval now = [NSDate timeIntervalSinceReferenceDate];
+    if (now - _lastBackgroundRefreshTime >= 0.5) {
+        _lastBackgroundRefreshTime = now;
+        [self backgroundRefreshTick];
+    }
 
     __block BOOL needsUpdate;
     dispatch_sync(_lockQueue, ^{
@@ -563,10 +570,12 @@ typedef NS_OPTIONS(unsigned long, iTermProcessCacheCoalescerEvent) {
     }
 
     // Walk foreground chain preferentially (root → fg child → fg grandchild)
+    // Collect PIDs to mark as seen (batched to avoid per-PID dispatch_sync)
+    NSMutableIndexSet *seenPIDs = [NSMutableIndexSet indexSet];
     iTermProcessInfo *candidate = root;
     int depth = 0;
     while (depth < 50) {
-        [self markSeenForEpoch:epoch pid:candidate.processID rootInfo:rootInfo];
+        [seenPIDs addIndex:candidate.processID];
 
         iTermProcessInfo *fgChild = [self findForegroundChildOf:candidate inCollection:collection];
         if (!fgChild) {
@@ -583,7 +592,10 @@ typedef NS_OPTIONS(unsigned long, iTermProcessCacheCoalescerEvent) {
         depth++;
     }
 
+    // Single dispatch_sync to mark all seen PIDs and clear dirty flag
     dispatch_sync(_lockQueue, ^{
+        [rootInfo.cachedDescendants addIndexes:seenPIDs];
+        rootInfo.lastRefreshEpoch = epoch;
         rootInfo.isDirty = NO;
     });
 
@@ -593,9 +605,9 @@ typedef NS_OPTIONS(unsigned long, iTermProcessCacheCoalescerEvent) {
 // _workQueue - Find foreground child using collection's cached foreground state
 - (iTermProcessInfo *)findForegroundChildOf:(iTermProcessInfo *)parent
                                inCollection:(iTermProcessCollection *)collection {
-    // iTermProcessInfo has children and isForeground properties
+    // iTermProcessInfo has children and isForegroundJob properties
     for (iTermProcessInfo *child in parent.children) {
-        if (child.isForeground) {
+        if (child.isForegroundJob) {
             return child;
         }
     }
@@ -616,28 +628,21 @@ typedef NS_OPTIONS(unsigned long, iTermProcessCacheCoalescerEvent) {
         return nil;
     }
 
-    // Mark root as seen
-    [self markSeenForEpoch:epoch pid:rootPid rootInfo:rootInfo];
-
-    // For now, just mark children as seen and return nil (no deep traversal in fallback)
-    // The full refresh (reallyUpdate) will catch up on the next 0.5s tick
+    // Collect all PIDs to mark as seen (batched to avoid per-PID dispatch_sync)
+    NSMutableIndexSet *seenPIDs = [NSMutableIndexSet indexSet];
+    [seenPIDs addIndex:rootPid];
     for (NSNumber *childPid in children) {
-        [self markSeenForEpoch:epoch pid:childPid.intValue rootInfo:rootInfo];
+        [seenPIDs addIndex:childPid.unsignedIntegerValue];
     }
 
+    // Single dispatch_sync to mark all seen PIDs and clear dirty flag
     dispatch_sync(_lockQueue, ^{
+        [rootInfo.cachedDescendants addIndexes:seenPIDs];
+        rootInfo.lastRefreshEpoch = epoch;
         rootInfo.isDirty = NO;
     });
 
     return nil;  // Let the regular cadence update provide the full answer
-}
-
-// Thread-safe helper to mark a PID as seen in this epoch
-- (void)markSeenForEpoch:(NSUInteger)epoch pid:(pid_t)pid rootInfo:(iTermTrackedRootInfo *)rootInfo {
-    dispatch_sync(_lockQueue, ^{
-        [rootInfo.cachedDescendants addIndex:pid];
-        rootInfo.lastRefreshEpoch = epoch;
-    });
 }
 
 // _lockQueue - Remove PIDs that weren't seen in the current epoch
