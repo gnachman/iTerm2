@@ -125,6 +125,8 @@ NSString *const kProfileSessionHotkeyDidChange = @"kProfileSessionHotkeyDidChang
     // Web tab view controller
     IBOutlet ProfilesWebPreferencesViewController *_webViewController;
 
+    IBOutlet NSView *_noProfileSelectedView;
+
     CGFloat _minWidth;
 
     BulkCopyProfilePreferencesWindowController *_bulkCopyController;
@@ -209,6 +211,7 @@ NSString *const kProfileSessionHotkeyDidChange = @"kProfileSessionHotkeyDidChang
         _tabView.hidden = YES;
         [_removeProfileButton setEnabled:NO];
     }
+    _noProfileSelectedView.hidden = !_tabView.hidden;
     [self refresh];
 
     if (!profile && [_profilesListView numberOfRows]) {
@@ -432,6 +435,7 @@ andEditComponentWithIdentifier:(NSString *)identifier
     BOOL hasSelection = (profile != nil);
 
     _tabView.hidden = !hasSelection;
+    _noProfileSelectedView.hidden = !_tabView.hidden;
     _otherActionsPopup.enabled = hasSelection;
     _removeProfileButton.enabled = hasSelection && [_profilesListView numberOfRows] > 1;
 
@@ -507,6 +511,7 @@ andEditComponentWithIdentifier:(NSString *)identifier
         _removeProfileButton.enabled = [[_profilesListView selectedGuids] count] < [model numberOfBookmarks];
     }
     _tabView.hidden = !profile;
+    _noProfileSelectedView.hidden = !_tabView.hidden;
     _otherActionsPopup.enabled = (profile != nil);
     if (_initialized) {
         [self updateEnclosureVisibilityForProfile:profile];

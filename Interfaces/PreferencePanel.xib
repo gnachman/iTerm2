@@ -392,11 +392,11 @@ Gw
             <rect key="contentRect" x="269" y="110" width="924" height="463"/>
             <rect key="screenRect" x="0.0" y="0.0" width="3008" height="1662"/>
             <view key="contentView" id="1924" customClass="iTermPreferencesPanelRootView">
-                <rect key="frame" x="0.0" y="0.0" width="924" height="463"/>
+                <rect key="frame" x="0.0" y="0.0" width="957" height="463"/>
                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                 <subviews>
                     <tabView fixedFrame="YES" type="noTabsNoBorder" initialItem="1944" translatesAutoresizingMaskIntoConstraints="NO" id="1943" userLabel="Top level NSTabView">
-                        <rect key="frame" x="13" y="0.0" width="911" height="454"/>
+                        <rect key="frame" x="13" y="0.0" width="944" height="454"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <font key="font" metaFont="system"/>
                         <tabViewItems>
@@ -414,21 +414,45 @@ Gw
                             </tabViewItem>
                             <tabViewItem label="Bookmarks" identifier="2" id="1945" userLabel="Profiles">
                                 <view key="view" id="1946">
-                                    <rect key="frame" x="0.0" y="0.0" width="911" height="454"/>
+                                    <rect key="frame" x="0.0" y="0.0" width="944" height="454"/>
                                     <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                     <subviews>
                                         <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="P2y-de-Vwq" userLabel="Wrapper view" customClass="iTermProfilePreferencesTabViewWrapperView">
-                                            <rect key="frame" x="327" y="0.0" width="575" height="454"/>
+                                            <rect key="frame" x="327" y="0.0" width="608" height="454"/>
                                             <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                             <subviews>
+                                                <customView hidden="YES" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="F3K-0d-Q7D" userLabel="No Profile Selected view">
+                                                    <rect key="frame" x="2" y="202" width="596" height="33"/>
+                                                    <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMinY="YES"/>
+                                                    <subviews>
+                                                        <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="aAB-kt-yxk">
+                                                            <rect key="frame" x="-2" y="17" width="600" height="16"/>
+                                                            <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMinY="YES"/>
+                                                            <textFieldCell key="cell" lineBreakMode="clipping" alignment="center" title="No profile selected." id="sHC-jY-eG1">
+                                                                <font key="font" usesAppearanceFont="YES"/>
+                                                                <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                                                                <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                                                            </textFieldCell>
+                                                        </textField>
+                                                        <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="oIK-1O-5py">
+                                                            <rect key="frame" x="-2" y="0.0" width="600" height="16"/>
+                                                            <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMinY="YES"/>
+                                                            <textFieldCell key="cell" lineBreakMode="clipping" alignment="center" title="Select a profile on the left to access its settings." id="qis-Bi-1PH">
+                                                                <font key="font" usesAppearanceFont="YES"/>
+                                                                <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                                                                <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                                                            </textFieldCell>
+                                                        </textField>
+                                                    </subviews>
+                                                </customView>
                                                 <tabView fixedFrame="YES" allowsTruncatedLabels="NO" initialItem="2101" translatesAutoresizingMaskIntoConstraints="NO" id="2100" userLabel="Profiles Tab View">
-                                                    <rect key="frame" x="-7" y="0.0" width="579" height="450"/>
+                                                    <rect key="frame" x="-7" y="0.0" width="612" height="450"/>
                                                     <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                                     <font key="font" metaFont="system"/>
                                                     <tabViewItems>
                                                         <tabViewItem label="General" identifier="1" id="2101">
                                                             <view key="view" id="2104" userLabel="Filler">
-                                                                <rect key="frame" x="10" y="33" width="559" height="404"/>
+                                                                <rect key="frame" x="10" y="33" width="592" height="404"/>
                                                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                                             </view>
                                                         </tabViewItem>
@@ -681,7 +705,7 @@ Gw
                 <outlet property="delegate" destination="-2" id="2982"/>
                 <outlet property="initialFirstResponder" destination="1959" id="5303"/>
             </connections>
-            <point key="canvasLocation" x="-489" y="-1494"/>
+            <point key="canvasLocation" x="-489.5" y="-1494.5"/>
         </window>
         <userDefaultsController representsSharedInstance="YES" id="1971"/>
         <customObject id="5572" customClass="WindowArrangements">
@@ -710,7 +734,7 @@ Gw
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <clipView key="contentView" id="gZI-PG-peZ">
                             <rect key="frame" x="1" y="1" width="373" height="353"/>
-                            <autoresizingMask key="autoresizingMask"/>
+                            <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                             <subviews>
                                 <tableView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="lastColumnOnly" alternatingRowBackgroundColors="YES" columnReordering="NO" columnResizing="NO" autosaveColumns="NO" id="5845">
                                     <rect key="frame" x="0.0" y="0.0" width="373" height="353"/>
@@ -917,7 +941,7 @@ DQ
                                 <autoresizingMask key="autoresizingMask" heightSizable="YES"/>
                                 <clipView key="contentView" drawsBackground="NO" id="Yde-8Q-TRE">
                                     <rect key="frame" x="1" y="1" width="256" height="133"/>
-                                    <autoresizingMask key="autoresizingMask"/>
+                                    <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                     <subviews>
                                         <textView wantsLayer="YES" importsGraphics="NO" richText="NO" verticallyResizable="YES" allowsUndo="YES" textCompletion="NO" id="235-ob-yuB">
                                             <rect key="frame" x="0.0" y="0.0" width="256" height="133"/>
@@ -972,7 +996,7 @@ DQ
                         <autoresizingMask key="autoresizingMask"/>
                         <clipView key="contentView" drawsBackground="NO" id="XnQ-nh-5wv">
                             <rect key="frame" x="1" y="1" width="379" height="83"/>
-                            <autoresizingMask key="autoresizingMask"/>
+                            <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                             <subviews>
                                 <textView wantsLayer="YES" importsGraphics="NO" richText="NO" verticallyResizable="YES" textCompletion="NO" id="ucv-8U-BE7" customClass="iTermPlaygroundTextView">
                                     <rect key="frame" x="0.0" y="0.0" width="379" height="83"/>
@@ -1503,6 +1527,7 @@ CA
                 <outlet property="_generalViewController" destination="dVg-Ac-SiZ" id="ppv-wN-HJr"/>
                 <outlet property="_keysTab" destination="2109" id="7T9-TK-hiO"/>
                 <outlet property="_keysViewController" destination="kOZ-HN-eXg" id="4DV-Eg-7b1"/>
+                <outlet property="_noProfileSelectedView" destination="F3K-0d-Q7D" id="D50-Uv-acP"/>
                 <outlet property="_otherActionsPopup" destination="3230" id="Qhw-QD-BOd"/>
                 <outlet property="_profilesListView" destination="3260" id="22S-wx-dOs"/>
                 <outlet property="_removeProfileButton" destination="2113" id="bCy-bg-Kla"/>
