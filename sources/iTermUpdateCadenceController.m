@@ -167,6 +167,7 @@ static const NSTimeInterval kBackgroundUpdateCadence = 1;
         [self setUpdateCadence:[self foregroundNonadaptiveInterval:&state]
                   liveResizing:state.liveResizing
                          force:force];
+        return;
     }
 
     // Adaptive framerate path - the session is active and visible
