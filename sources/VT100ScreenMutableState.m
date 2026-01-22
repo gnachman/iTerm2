@@ -72,14 +72,14 @@ static const int64_t VT100ScreenMutableStateSideEffectFlagLineBufferDidDropLines
     void (^_nextPromptBlock)(void);
 }
 
-static _Atomic int gPerformingJoinedBlock;
-
+// performingJoinedBlock is now centralized in iTermGCD.
+// Provide convenience accessors for compatibility with existing callers.
 + (BOOL)performingJoinedBlock {
-    return atomic_load(&gPerformingJoinedBlock) != 0;
+    return iTermGCD.performingJoinedBlock;
 }
 
-+ (void)setPerformingJoinedBlock:(BOOL)performingJoinedBlock {
-    atomic_store(&gPerformingJoinedBlock, performingJoinedBlock ? 1 : 0);
++ (void)setPerformingJoinedBlock:(BOOL)value {
+    [iTermGCD setPerformingJoinedBlock:value];
 }
 
 - (instancetype)initWithSideEffectPerformer:(id<VT100ScreenSideEffectPerforming>)performer {
@@ -4875,7 +4875,7 @@ lengthExcludingInBandSignaling:data.length
 
     id<VT100ScreenDelegate> delegate = self.sideEffectPerformer.sideEffectPerformingScreenDelegate;
 
-    if (gPerformingJoinedBlock) {
+    if (iTermGCD.performingJoinedBlock) {
         // Reentrant call. Avoid deadlock by running it immediately.
         [self reallyPerformBlockWithJoinedThreads:block delegate:delegate topmost:NO];
     } else {
@@ -4923,8 +4923,8 @@ lengthExcludingInBandSignaling:data.length
     // Set `performingJoinedBlock` to YES so that a side-effect that wants to join threads won't
     // deadlock.
     // This get-and-set is not a data race because assignment to performingJoinedBlock only happens
-    // on the mutation queue.
-    const BOOL wasPerformingJoinedBlock = atomic_exchange(&gPerformingJoinedBlock, 1);
+    // on the main queue while joined.
+    const BOOL wasPerformingJoinedBlock = [iTermGCD setPerformingJoinedBlock:YES];
 
     VT100ScreenState *oldState;
     if (!wasPerformingJoinedBlock) {
@@ -4973,7 +4973,7 @@ lengthExcludingInBandSignaling:data.length
         _screenNeedsUpdate = NO;
     }
 
-    VT100ScreenMutableState.performingJoinedBlock = wasPerformingJoinedBlock;
+    [iTermGCD setPerformingJoinedBlock:wasPerformingJoinedBlock];
     DLog(@"done");
 }
 
@@ -4991,12 +4991,11 @@ lengthExcludingInBandSignaling:data.length
     // Set `performingJoinedBlock` to YES so that a side-effect that wants to join threads won't
     // deadlock.
     DLog(@"begin");
-    const BOOL previousValue = VT100ScreenMutableState.performingJoinedBlock;
-    VT100ScreenMutableState.performingJoinedBlock = YES;
+    const BOOL previousValue = [iTermGCD setPerformingJoinedBlock:YES];
     if (block) {
         block(self);
     }
-    VT100ScreenMutableState.performingJoinedBlock = previousValue;
+    [iTermGCD setPerformingJoinedBlock:previousValue];
 }
 
 - (void)performBlockAsynchronously:(void (^ _Nullable)(VT100Terminal *terminal,
