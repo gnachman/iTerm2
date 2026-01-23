@@ -242,6 +242,10 @@ static const int64_t VT100ScreenMutableStateSideEffectFlagLineBufferDidDropLines
     iTermTokenExecutorUnpauser *unpauser = [_tokenExecutor pause];
     __weak __typeof(self) weakSelf = self;
     [_tokenExecutor addSideEffect:^{
+        if (!weakSelf) {
+            [unpauser unpause];
+            return;
+        }
         [weakSelf performPausedSideEffect:unpauser block:sideEffect name:name];
     }];
 }
@@ -282,6 +286,10 @@ static const int64_t VT100ScreenMutableStateSideEffectFlagLineBufferDidDropLines
     __weak __typeof(self) weakSelf = self;
     iTermTokenExecutorUnpauser *unpauser = [_tokenExecutor pause];
     [_tokenExecutor addSideEffect:^{
+        if (!weakSelf) {
+            [unpauser unpause];
+            return;
+        }
         [weakSelf performPausedNoDelegateSideEffect:unpauser block:sideEffect name:name];
     }];
 }

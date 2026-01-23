@@ -80,6 +80,8 @@ class Unpauser: NSObject {
         #if DEBUG
         it_assert(hasBeenUnpaused)
         #endif
+        DLog("Unpause in deinit! This should never happen.")
+        unpause()
 //        if stack != "" {
 //            fatalError()
 //        }
