@@ -425,8 +425,10 @@ class KittyImageController: NSObject {
                 // If transmission succeeded and we have saved display parameters, execute display
                 if result == nil, let display {
                     DLog("reallyExecuteTransmit: transmission succeeded, executing saved display params")
-                    if let image = _images[UInt64(modifiedCommand.identifier)] {
-                        DLog("reallyExecuteTransmit: found image for id=\(modifiedCommand.identifier), calling executeDisplay")
+                    // Use lastImageKey when identifier is 0, matching storage behavior in transmissionDidFinish
+                    let imageKey = modifiedCommand.identifier != 0 ? UInt64(modifiedCommand.identifier) : lastImageKey
+                    if let image = _images[imageKey] {
+                        DLog("reallyExecuteTransmit: found image for key=\(imageKey) (id=\(modifiedCommand.identifier)), calling executeDisplay")
                         let displayError = executeDisplay(display, image: image)
                         if displayError != nil {
                             // Return display error as the overall error
@@ -439,7 +441,7 @@ class KittyImageController: NSObject {
                         respondToTransmit(modifiedCommand, display: display, error: nil)
                     } else {
                         let error = "ENOENT:Image not found after transmission"
-                        DLog("reallyExecuteTransmit: ERROR - image not found for id=\(modifiedCommand.identifier) after transmission")
+                        DLog("reallyExecuteTransmit: ERROR - image not found for key=\(imageKey) (id=\(modifiedCommand.identifier)) after transmission")
                         respondToTransmit(modifiedCommand, display: display, error: error)
                         return error
                     }
