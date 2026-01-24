@@ -393,4 +393,12 @@
     [self setValue:uname forVariableNamed:iTermVariableKeyUname];
 }
 
+- (BOOL)isBroadcastSource {
+    return [[self valueForVariableName:iTermVariableKeyIsBroadcastSource] boolValue];
+}
+
+- (void)setIsBroadcastSource:(BOOL)isBroadcastSource {
+    [self setValue:@(isBroadcastSource) forVariableNamed:iTermVariableKeyIsBroadcastSource];
+}
+
 @end

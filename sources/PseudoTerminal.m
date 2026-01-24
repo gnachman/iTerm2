@@ -2690,6 +2690,11 @@ ITERM_WEAKLY_REFERENCEABLE
                                              fromSessionWithGUID:sender];
 }
 
+- (BOOL)sessionIsBroadcastSource:(PTYSession *)session {
+    return ([_broadcastInputHelper.sources containsObject:session.guid] &&  // Is a source
+            [_broadcastInputHelper shouldBroadcastToSessionWithID:session.guid fromSessionWithGUID:nil]); // Belongs to a domain
+}
+
 - (BOOL)broadcastInputHelper:(iTermBroadcastInputHelper *)helper tabWithSessionIsBroadcasting:(NSString *)sessionID {
     PTYSession *session = [[iTermController sharedInstance] sessionWithGUID:sessionID];
     if (!session) {
@@ -11472,18 +11477,20 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
 }
 
 - (IBAction)toggleBroadcastSource:(id)sender {
-    NSString *session = self.currentSession.guid;
+    PTYSession *session = self.currentSession;
+    NSString *sessionID = session.guid;
 
     // Start by removing every session in this domain from broadcast sources.
     NSSet<NSString *> *sources = _broadcastInputHelper.sources;
-    const BOOL wasSender = [sources containsObject:session];
-    NSSet<NSString *> *domainMembers = [_broadcastInputHelper domainContainingSession:session];
+    const BOOL wasSender = [sources containsObject:sessionID];
+    NSSet<NSString *> *domainMembers = [_broadcastInputHelper domainContainingSession:sessionID];
     sources = [sources it_setBySubtractingSet:domainMembers];
 
     if (!wasSender) {
         // Make this session the sender.
         sources = [sources setByAddingObject:self.currentSession.guid];
     }
+    session.variablesScope.isBroadcastSource = !wasSender;
 
     _broadcastInputHelper.sources = sources;
 }

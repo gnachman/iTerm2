@@ -339,6 +339,7 @@
 
 // Indicates if a session participates in input broadcasting.
 - (BOOL)broadcastInputToSession:(PTYSession *)session fromSessionWithGUID:(NSString *)sender;
+- (BOOL)sessionIsBroadcastSource:(PTYSession *)session;
 
 // Toggles broadcasting to a single session.
 - (void)toggleBroadcastingInputToSession:(PTYSession *)session;

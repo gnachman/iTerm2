@@ -91,6 +91,7 @@ NSString *const iTermVariableKeySessionHomeDirectory = @"homeDirectory";
 NSString *const iTermVariableKeySSHIntegrationLevel = @"sshIntegrationLevel";
 NSString *const iTermVariableKeyShell = @"shell";
 NSString *const iTermVariableKeyUname = @"uname";
+NSString *const iTermVariableKeyIsBroadcastSource = @"isBroadcastSource";
 
 #pragma mark - Window Context
 

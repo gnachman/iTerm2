@@ -779,6 +779,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTurdType) {
         [self.variablesScope setValue:@0 forVariableNamed:iTermVariableKeySSHIntegrationLevel];
         self.variablesScope.shell = [self bestGuessAtUserShellWithPath:NO];
         self.variablesScope.uname = [self bestGuessAtUName];
+        self.variablesScope.isBroadcastSource = NO;
 
         _variables.primaryKey = iTermVariableKeySessionID;
         _jobPidRef = [[iTermVariableReference alloc] initWithPath:iTermVariableKeySessionJobPid
@@ -932,6 +933,10 @@ typedef NS_ENUM(NSUInteger, PTYSessionTurdType) {
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(autoComposerDidChange:)
                                                      name:iTermAutoComposerDidChangeNotification
+                                                   object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(broadcastDomainsDidChange:)
+                                                     name:iTermBroadcastDomainsDidChangeNotification
                                                    object:nil];
         [[[NSWorkspace sharedWorkspace] notificationCenter] addObserver:self
                                                                selector:@selector(activeSpaceDidChange:)
@@ -1539,6 +1544,10 @@ ITERM_WEAKLY_REFERENCEABLE
                 // When starting a new session, don't restore the tty. We *do* want to restore it
                 // when attaching to a session restoration server, though. We have a reasonable
                 // believe that it's the same process and therefore the same TTY.
+                continue;
+            }
+            if ([key isEqualToString:iTermVariableKeyIsBroadcastSource]) {
+                // Input broadcasting is not restored.
                 continue;
             }
             [aSession.variablesScope setValue:variables[key] forVariableNamed:key];
@@ -3572,6 +3581,10 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
     } else {
         return NO;
     }
+}
+
+- (void)broadcastDomainsDidChange:(NSNotification *)notification {
+    self.variablesScope.isBroadcastSource = [[_delegate realParentWindow] sessionIsBroadcastSource:self];
 }
 
 // This does not handle tmux properly. Any writing to tmux should happen in a
@@ -11846,6 +11859,10 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 }
 
 - (BOOL)textViewSessionIsBroadcastingInput:(BOOL)asReceiver {
+    return [self isBroadcastingAsReceiver:asReceiver];
+}
+
+- (BOOL)isBroadcastingAsReceiver:(BOOL)asReceiver {
     const BOOL belongsToDomain = [[_delegate realParentWindow] broadcastInputToSession:self fromSessionWithGUID:nil];
     const BOOL isSender = [[_delegate realParentWindow] broadcastInputToSession:self fromSessionWithGUID:self.guid];
     if (asReceiver) {
