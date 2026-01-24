@@ -538,7 +538,9 @@ class KittyImageController: NSObject {
     }
 
     private func image(data rawData: Data, bpp: UInt, width: UInt, height: UInt) -> iTermImage? {
+        DLog("image(data:bpp:width:height:): rawDataLength=\(rawData.count) bpp=\(bpp) width=\(width) height=\(height)")
         guard bpp == 3 || bpp == 4 else {
+            DLog("image(data:bpp:width:height:): FAILED - invalid bpp=\(bpp) (must be 3 or 4)")
             return nil
         }
 
@@ -547,6 +549,7 @@ class KittyImageController: NSObject {
         let unpaddedBytes = Int(clamping: bpp) * Int(clamping: width) * Int(clamping: height)
 
         guard rawData.count >= unpaddedBytes else {
+            DLog("image(data:bpp:width:height:): FAILED - data too short: have \(rawData.count) bytes, need \(unpaddedBytes) bytes (bpp=\(bpp) * width=\(width) * height=\(height))")
             return nil
         }
         var data = rawData
@@ -562,7 +565,10 @@ class KittyImageController: NSObject {
                 dataByAddingAlphaTo3bppData(data, 0xff)
             }
 
-        guard let provider = CGDataProvider(data: rgbaData as CFData) else { return nil }
+        guard let provider = CGDataProvider(data: rgbaData as CFData) else {
+            DLog("image(data:bpp:width:height:): FAILED - could not create CGDataProvider")
+            return nil
+        }
 
         let cgImage = CGImage(
             width: Int(clamping: width),
@@ -578,23 +584,34 @@ class KittyImageController: NSObject {
             intent: .defaultIntent)
 
         guard let cgImage else {
+            DLog("image(data:bpp:width:height:): FAILED - CGImage creation failed (width=\(width), height=\(height), bytesPerRow=\(bytesPerRow))")
             return nil
         }
 
         let nsimage = NSImage(cgImage: cgImage, size: NSSize(width: Int(width), height: Int(height)))
+        DLog("image(data:bpp:width:height:): success - created image \(width)x\(height)")
         return iTermImage(nativeImage: nsimage)
     }
 
     private func decodeDirectTransmission(_ command: KittyImageCommand.ImageTransmission, payload: String) -> Data? {
-        return switch command.compression {
+        DLog("decodeDirectTransmission: compression=\(command.compression) payloadLength=\(payload.count)")
+        let result: Data?
+        switch command.compression {
         case .zlib:
-            decompressAndDecode(payload)
+            result = decompressAndDecode(payload)
         case .uncompressed:
-            decode(payload)
+            result = decode(payload)
         }
+        if let result {
+            DLog("decodeDirectTransmission: success - decodedLength=\(result.count)")
+        } else {
+            DLog("decodeDirectTransmission: FAILED to decode payload")
+        }
+        return result
     }
 
     func inflate(data compressedData: Data) -> Data? {
+        DLog("inflate: compressedDataLength=\(compressedData.count)")
         var z = z_stream()
         z.zalloc = nil
         z.zfree = nil
@@ -613,7 +630,9 @@ class KittyImageController: NSObject {
         }
 
         // Initialize the zlib stream
-        if inflateInit_(&z, ZLIB_VERSION, Int32(MemoryLayout<z_stream>.size)) != Z_OK {
+        let initResult = inflateInit_(&z, ZLIB_VERSION, Int32(MemoryLayout<z_stream>.size))
+        if initResult != Z_OK {
+            DLog("inflate: FAILED inflateInit - result=\(initResult)")
             return nil
         }
 
@@ -626,6 +645,7 @@ class KittyImageController: NSObject {
             result = zlib.inflate(&z, Z_NO_FLUSH)
 
             if result == Z_STREAM_ERROR || result == Z_DATA_ERROR || result == Z_MEM_ERROR {
+                DLog("inflate: FAILED during decompression - result=\(result) (Z_STREAM_ERROR=\(Z_STREAM_ERROR), Z_DATA_ERROR=\(Z_DATA_ERROR), Z_MEM_ERROR=\(Z_MEM_ERROR))")
                 inflateEnd(&z)
                 return nil
             }
@@ -638,18 +658,36 @@ class KittyImageController: NSObject {
         // Clean up
         inflateEnd(&z)
 
+        DLog("inflate: success - decompressedLength=\(decompressedData.count)")
         return decompressedData
     }
 
     private func decompressAndDecode(_ payload: String) -> Data? {
+        DLog("decompressAndDecode: payloadLength=\(payload.count)")
         guard let compressed = payload.base64DecodedData else {
+            let prefix = String(payload.prefix(20))
+            let suffix = String(payload.suffix(20))
+            let paddingNeeded = (4 - (payload.count % 4)) % 4
+            DLog("decompressAndDecode: FAILED base64 decode - length=\(payload.count) mod4=\(payload.count % 4) paddingNeeded=\(paddingNeeded) prefix=\(prefix) suffix=\(suffix)")
             return nil
         }
-        return inflate(data: compressed)
+        DLog("decompressAndDecode: base64 decoded to \(compressed.count) bytes, calling inflate")
+        let result = inflate(data: compressed)
+        if result == nil {
+            DLog("decompressAndDecode: inflate returned nil")
+        }
+        return result
     }
 
     private func decode(_ payload: String) -> Data? {
-        return payload.base64DecodedData
+        let result = payload.base64DecodedData
+        if result == nil {
+            let prefix = String(payload.prefix(20))
+            let suffix = String(payload.suffix(20))
+            let paddingNeeded = (4 - (payload.count % 4)) % 4
+            DLog("decode: FAILED - length=\(payload.count) mod4=\(payload.count % 4) paddingNeeded=\(paddingNeeded) prefix=\(prefix) suffix=\(suffix)")
+        }
+        return result
     }
 
     func executeTransmitFile(_ command: KittyImageCommand.ImageTransmission,
