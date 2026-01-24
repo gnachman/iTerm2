@@ -4564,7 +4564,7 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
 }
 
 - (BOOL)shouldPostUserNotification {
-    if (!_screen.postUserNotifications) {
+    if (!_screen.config.postUserNotifications) {
         return NO;
     }
     if ([self notificationsSuppressed]) {
@@ -5187,12 +5187,7 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
     [self setUseItalicFont:[iTermProfilePreferences boolForKey:KEY_USE_ITALIC_FONT inProfile:aDict]];
 
     // Set up the rest of the preferences
-    [_screen setAudibleBell:![iTermProfilePreferences boolForKey:KEY_SILENCE_BELL inProfile:aDict]];
-    [_screen setShowBellIndicator:[iTermProfilePreferences boolForKey:KEY_VISUAL_BELL inProfile:aDict]];
-    [_screen setFlashBell:[iTermProfilePreferences boolForKey:KEY_FLASHING_BELL inProfile:aDict]];
-    [_screen setPostUserNotifications:[iTermProfilePreferences boolForKey:KEY_BOOKMARK_USER_NOTIFICATIONS inProfile:aDict]];
     [_textview setBlinkAllowed:[iTermProfilePreferences boolForKey:KEY_BLINK_ALLOWED inProfile:aDict]];
-    [_screen setCursorBlinks:[iTermProfilePreferences boolForKey:KEY_BLINKING_CURSOR inProfile:aDict]];
     [_textview setCursorShadow:[iTermProfilePreferences boolForKey:KEY_CURSOR_SHADOW inProfile:aDict]];
     _textview.hideCursorWhenUnfocused = [iTermProfilePreferences boolForKey:KEY_CURSOR_HIDDEN_WITHOUT_FOCUS inProfile:aDict];
     _textview.animateMovement = [iTermProfilePreferences boolForKey:KEY_ANIMATE_MOVEMENT inProfile:aDict];
@@ -5240,11 +5235,7 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
                                                          inProfile:aDict]];
     [terminal setDisableSmcupRmcup:[iTermProfilePreferences boolForKey:KEY_DISABLE_SMCUP_RMCUP
                                                              inProfile:aDict]];
-    [_screen setAllowTitleReporting:[iTermProfilePreferences boolForKey:KEY_ALLOW_TITLE_REPORTING
-                                                              inProfile:aDict]];
-    [_screen setAllowAlternateMouseScroll:[iTermProfilePreferences boolForKey:KEY_ALLOW_ALTERNATE_MOUSE_SCROLL
-                                                                    inProfile:aDict]];
-    const BOOL didAllowPasteBracketing = _screen.terminalAllowPasteBracketing;
+        const BOOL didAllowPasteBracketing = _screen.terminalAllowPasteBracketing;
     [terminal setAllowPasteBracketing:[iTermProfilePreferences boolForKey:KEY_ALLOW_PASTE_BRACKETING
                                                                 inProfile:aDict]];
     self.view.enableProgressBars = [iTermProfilePreferences boolForKey:KEY_ENABLE_PROGRESS_BARS
@@ -16014,6 +16005,13 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
         _config.profileName = [self profileName];
         _config.terminalCanChangeBlink = [iTermProfilePreferences boolForKey:KEY_ALLOW_CHANGE_CURSOR_BLINK inProfile:self.profile];
         _config.optionIsMetaForSpecialChars = ![iTermProfilePreferences boolForKey:KEY_TREAT_OPTION_AS_ALT inProfile:_profile];
+        _config.audibleBell = ![iTermProfilePreferences boolForKey:KEY_SILENCE_BELL inProfile:_profile];
+        _config.showBellIndicator = [iTermProfilePreferences boolForKey:KEY_VISUAL_BELL inProfile:_profile];
+        _config.flashBell = [iTermProfilePreferences boolForKey:KEY_FLASHING_BELL inProfile:_profile];
+        _config.postUserNotifications = [iTermProfilePreferences boolForKey:KEY_BOOKMARK_USER_NOTIFICATIONS inProfile:_profile];
+        _config.cursorBlinks = [iTermProfilePreferences boolForKey:KEY_BLINKING_CURSOR inProfile:_profile];
+        _config.allowTitleReporting = [iTermProfilePreferences boolForKey:KEY_ALLOW_TITLE_REPORTING inProfile:_profile];
+        _config.allowAlternateMouseScroll = [iTermProfilePreferences boolForKey:KEY_ALLOW_ALTERNATE_MOUSE_SCROLL inProfile:_profile];
 
         dirty = YES;
         _profileDidChange = NO;

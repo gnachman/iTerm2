@@ -56,6 +56,13 @@
 @property (nonatomic, readwrite) BOOL wantsCommandChangeNotifications;
 @property (nonatomic, readwrite) BOOL osc52;
 @property (nonatomic, readwrite) BOOL sessionIsVisible;
+@property (nonatomic, readwrite) BOOL audibleBell;
+@property (nonatomic, readwrite) BOOL showBellIndicator;
+@property (nonatomic, readwrite) BOOL flashBell;
+@property (nonatomic, readwrite) BOOL postUserNotifications;
+@property (nonatomic, readwrite) BOOL cursorBlinks;
+@property (nonatomic, readwrite) BOOL allowTitleReporting;
+@property (nonatomic, readwrite) BOOL allowAlternateMouseScroll;
 @end
 
 @implementation VT100ScreenConfiguration
@@ -104,6 +111,13 @@
 @synthesize wantsCommandChangeNotifications = _wantsCommandChangeNotifications;
 @synthesize osc52 = _osc52;
 @synthesize sessionIsVisible = _sessionIsVisible;
+@synthesize audibleBell = _audibleBell;
+@synthesize showBellIndicator = _showBellIndicator;
+@synthesize flashBell = _flashBell;
+@synthesize postUserNotifications = _postUserNotifications;
+@synthesize cursorBlinks = _cursorBlinks;
+@synthesize allowTitleReporting = _allowTitleReporting;
+@synthesize allowAlternateMouseScroll = _allowAlternateMouseScroll;
 
 @synthesize isDirty = _isDirty;
 @synthesize terminfoValues = _terminfoValues;
@@ -156,6 +170,13 @@
         _wantsCommandChangeNotifications = other.wantsCommandChangeNotifications;
         _osc52 = other.osc52;
         _sessionIsVisible = other.sessionIsVisible;
+        _audibleBell = other.audibleBell;
+        _showBellIndicator = other.showBellIndicator;
+        _flashBell = other.flashBell;
+        _postUserNotifications = other.postUserNotifications;
+        _cursorBlinks = other.cursorBlinks;
+        _allowTitleReporting = other.allowTitleReporting;
+        _allowAlternateMouseScroll = other.allowAlternateMouseScroll;
 
         _isDirty = other.isDirty;
     }
@@ -216,6 +237,13 @@
                             @"wantsCommandChangeNotifications": @(_wantsCommandChangeNotifications),
                             @"osc52": @(_osc52),
                             @"sessionIsVisible": @(_sessionIsVisible),
+                            @"audibleBell": @(_audibleBell),
+                            @"showBellIndicator": @(_showBellIndicator),
+                            @"flashBell": @(_flashBell),
+                            @"postUserNotifications": @(_postUserNotifications),
+                            @"cursorBlinks": @(_cursorBlinks),
+                            @"allowTitleReporting": @(_allowTitleReporting),
+                            @"allowAlternateMouseScroll": @(_allowAlternateMouseScroll),
 
                             @"isDirty": @(_isDirty),
     };
@@ -279,6 +307,13 @@
 @dynamic wantsCommandChangeNotifications;
 @dynamic osc52;
 @dynamic sessionIsVisible;
+@dynamic audibleBell;
+@dynamic showBellIndicator;
+@dynamic flashBell;
+@dynamic postUserNotifications;
+@dynamic cursorBlinks;
+@dynamic allowTitleReporting;
+@dynamic allowAlternateMouseScroll;
 
 @dynamic isDirty;
 

@@ -1210,7 +1210,7 @@ typedef struct {
 
 - (void)terminalReportIconTitle {
     DLog(@"begin");
-    if (!self.allowTitleReporting) {
+    if (!self.config.allowTitleReporting) {
         return;
     }
     [self willSendReport];
@@ -1223,7 +1223,7 @@ typedef struct {
 
 - (void)terminalReportWindowTitle {
     DLog(@"begin");
-    if (!self.allowTitleReporting) {
+    if (!self.config.allowTitleReporting) {
         return;
     }
     [self willSendReport];
@@ -1305,7 +1305,7 @@ typedef struct {
 
 - (void)terminalPostUserNotification:(NSString *)message rich:(BOOL)rich {
     DLog(@"begin %@", message);
-    if (!self.postUserNotifications) {
+    if (!self.config.postUserNotifications) {
         DLog(@"Declining to allow terminal to post user notification %@", message);
         return;
     }
@@ -1896,7 +1896,7 @@ typedef struct {
 }
 
 - (BOOL)terminalAllowAlternateMouseScroll {
-    return self.allowAlternateMouseScroll;
+    return self.config.allowAlternateMouseScroll;
 }
 
 - (BOOL)terminalCursorVisible {

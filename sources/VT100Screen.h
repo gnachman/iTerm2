@@ -54,14 +54,7 @@ extern const NSInteger VT100ScreenBigFileDownloadThreshold;
     PTYTriggerEvaluatorDataSource>
 
 @property(nonatomic) BOOL terminalEnabled;
-@property(nonatomic, assign) BOOL audibleBell;
-@property(nonatomic, assign) BOOL showBellIndicator;
-@property(nonatomic, assign) BOOL flashBell;
 @property(atomic, weak) id<VT100ScreenDelegate> delegate;
-@property(nonatomic, assign) BOOL postUserNotifications;
-@property(nonatomic, assign) BOOL cursorBlinks;
-@property(nonatomic, assign) BOOL allowTitleReporting;
-@property(nonatomic, assign) BOOL allowAlternateMouseScroll;
 @property(nonatomic, readonly) unsigned int maxScrollbackLines;
 @property(nonatomic, readonly) BOOL unlimitedScrollback;
 @property(nonatomic, readonly) BOOL useColumnScrollRegion;

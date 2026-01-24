@@ -62,17 +62,7 @@ extern NSString *const kScreenStateProgressKey;
 
 @protocol VT100ScreenState<NSObject>
 
-@property (nonatomic, readonly) BOOL audibleBell;
-@property (nonatomic, readonly) BOOL showBellIndicator;
-@property (nonatomic, readonly) BOOL flashBell;
-@property (nonatomic, readonly) BOOL postUserNotifications;
-@property (nonatomic, readonly) BOOL cursorBlinks;
-
 @property (nullable, nonatomic, strong, readonly) NSString *printBuffer;
-
-// OK to report window title?
-@property (nonatomic, readonly) BOOL allowTitleReporting;
-@property (nonatomic, readonly) BOOL allowAlternateMouseScroll;
 
 @property (nonatomic, readonly) NSTimeInterval lastBell;
 
@@ -207,14 +197,7 @@ extern NSString *const kScreenStateProgressKey;
 @end
 
 @protocol VT100ScreenMutableState<VT100ScreenState>
-@property (nonatomic, readwrite) BOOL audibleBell;
-@property (nonatomic, readwrite) BOOL showBellIndicator;
-@property (nonatomic, readwrite) BOOL flashBell;
-@property (nonatomic, readwrite) BOOL postUserNotifications;
-@property (nonatomic, readwrite) BOOL cursorBlinks;
 @property (nullable, nonatomic, strong, readwrite) NSMutableString *printBuffer;
-@property (nonatomic, readwrite) BOOL allowTitleReporting;
-@property (nonatomic, readwrite) BOOL allowAlternateMouseScroll;
 @property (nonatomic, readwrite) NSTimeInterval lastBell;
 @property (nullable, nonatomic, strong, readwrite) NSMutableString *pasteboardString;
 @property (nonatomic, strong, readwrite) id<IntervalTreeReading> intervalTree;

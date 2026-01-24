@@ -1898,9 +1898,9 @@ void VT100ScreenEraseCell(screen_char_t *sct,
 }
 
 - (void)activateBell {
-    const BOOL audibleBell = self.audibleBell;
-    const BOOL flashBell = self.flashBell;
-    const BOOL showBellIndicator = self.showBellIndicator;
+    const BOOL audibleBell = self.config.audibleBell;
+    const BOOL flashBell = self.config.flashBell;
+    const BOOL showBellIndicator = self.config.showBellIndicator;
     const BOOL shouldQuellBell = [self shouldQuellBell];
     [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
         [delegate screenActivateBellAudibly:audibleBell

@@ -67,6 +67,21 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly) BOOL osc52;
 @property (nonatomic, readonly) BOOL sessionIsVisible;
 
+// Bell and notification settings
+@property (nonatomic, readonly) BOOL audibleBell;
+@property (nonatomic, readonly) BOOL showBellIndicator;
+@property (nonatomic, readonly) BOOL flashBell;
+@property (nonatomic, readonly) BOOL postUserNotifications;
+
+// Cursor settings
+@property (nonatomic, readonly) BOOL cursorBlinks;
+
+// Title reporting
+@property (nonatomic, readonly) BOOL allowTitleReporting;
+
+// Mouse scroll
+@property (nonatomic, readonly) BOOL allowAlternateMouseScroll;
+
 @property (nonatomic, readonly) BOOL isDirty;
 
 - (id<VT100ScreenConfiguration>)copy;
@@ -124,6 +139,21 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readwrite) BOOL wantsCommandChangeNotifications;
 @property (nonatomic, readwrite) BOOL osc52;
 @property (nonatomic, readwrite) BOOL sessionIsVisible;
+
+// Bell and notification settings
+@property (nonatomic, readwrite) BOOL audibleBell;
+@property (nonatomic, readwrite) BOOL showBellIndicator;
+@property (nonatomic, readwrite) BOOL flashBell;
+@property (nonatomic, readwrite) BOOL postUserNotifications;
+
+// Cursor settings
+@property (nonatomic, readwrite) BOOL cursorBlinks;
+
+// Title reporting
+@property (nonatomic, readwrite) BOOL allowTitleReporting;
+
+// Mouse scroll
+@property (nonatomic, readwrite) BOOL allowAlternateMouseScroll;
 
 @property (nonatomic, readwrite) BOOL isDirty;
 - (NSSet<NSString *> *)dirtyKeyPaths;
