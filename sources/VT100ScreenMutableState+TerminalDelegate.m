@@ -38,7 +38,7 @@
 
 - (void)terminalAppendString:(NSString *)string {
     DLog(@"begin %@", string);
-    if (self.collectInputForPrinting) {
+    if (_collectInputForPrinting) {
         [self.printBuffer appendString:string];
     } else {
         [self appendStringAtCursor:string];
@@ -61,7 +61,7 @@
 
 - (void)terminalAppendAsciiData:(AsciiData *)asciiData {
     DLog(@"begin");
-    if (self.collectInputForPrinting) {
+    if (_collectInputForPrinting) {
         NSString *string = iTermCreateStringFromAsciiData(asciiData);
         [self terminalAppendString:string];
         return;
@@ -233,7 +233,7 @@ typedef struct {
 
 - (void)terminalAppendMixedAsciiGang:(NSArray<VT100Token *> *)tokens {
     VT100Terminal *terminal = self.terminal;
-    BOOL canTakeFastPath = (!self.collectInputForPrinting &&
+    BOOL canTakeFastPath = (!_collectInputForPrinting &&
                             ![self shouldEvaluateTriggers] &&
                             ![self shouldConvertCharactersToGraphicsCharacterSetInTerminal:terminal] &&
                             !self.config.publishing &&
@@ -433,7 +433,7 @@ typedef struct {
         [_promptStateMachine triggerDetectedCommandDidBeginExecution];
         [self commandDidEnd];
     }
-    if (self.collectInputForPrinting) {
+    if (_collectInputForPrinting) {
         [self.printBuffer appendString:@"\n"];
     } else {
         [self appendLineFeed];
@@ -839,7 +839,7 @@ typedef struct {
     NSString *string = [self.printBuffer copy];
     DLog(@"string is: %@", string);
     self.printBuffer = nil;
-    self.collectInputForPrinting = NO;
+    _collectInputForPrinting = NO;
     // Pause so that attributes like colors don't change until printing (which is async) can begin.
     [self addPausedSideEffect:^(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser) {
         DLog(@"begin side-effect");
@@ -854,7 +854,7 @@ typedef struct {
     DLog(@"begin");
     // Print out the whole screen
     self.printBuffer = nil;
-    self.collectInputForPrinting = NO;
+    _collectInputForPrinting = NO;
 
     // Pause so we print the current state and not future updates.
     [self addPausedSideEffect:^(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser) {
@@ -873,7 +873,7 @@ typedef struct {
     DLog(@"allowed");
     // allocate a string for the stuff to be printed
     self.printBuffer = [[NSMutableString alloc] init];
-    self.collectInputForPrinting = YES;
+    _collectInputForPrinting = YES;
 }
 
 - (void)terminalSetWindowTitle:(NSString *)title {

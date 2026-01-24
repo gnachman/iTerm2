@@ -55,6 +55,8 @@ iTermTriggerScopeProvider> {
     BOOL _triggerDidDetectPrompt;
     BOOL _autoComposerEnabled;
     iTermKittyImageController *_kittyImageController;
+    // When YES, terminal input is collected into printBuffer for ANSI print commands.
+    BOOL _collectInputForPrinting;
 }
 
 @property (atomic) BOOL hadCommand;

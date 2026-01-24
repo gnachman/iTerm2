@@ -1998,14 +1998,6 @@ additionalWordCharacters:(NSString *)additionalWordCharacters
     _mutableState.cursorBlinks = cursorBlinks;
 }
 
-- (BOOL)collectInputForPrinting {
-    return _state.collectInputForPrinting;
-}
-
-- (void)setCollectInputForPrinting:(BOOL)collectInputForPrinting {
-    _mutableState.collectInputForPrinting = collectInputForPrinting;
-}
-
 - (BOOL)allowTitleReporting {
     return _state.allowTitleReporting;
 }

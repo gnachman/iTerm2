@@ -68,10 +68,6 @@ extern NSString *const kScreenStateProgressKey;
 @property (nonatomic, readonly) BOOL postUserNotifications;
 @property (nonatomic, readonly) BOOL cursorBlinks;
 
-// When set, strings, newlines, and linefeeds are appended to printBuffer_. When ANSICSI_PRINT
-// with code 4 is received, it's sent for printing.
-@property (nonatomic, readonly) BOOL collectInputForPrinting;
-
 @property (nullable, nonatomic, strong, readonly) NSString *printBuffer;
 
 // OK to report window title?
@@ -216,7 +212,6 @@ extern NSString *const kScreenStateProgressKey;
 @property (nonatomic, readwrite) BOOL flashBell;
 @property (nonatomic, readwrite) BOOL postUserNotifications;
 @property (nonatomic, readwrite) BOOL cursorBlinks;
-@property (nonatomic, readwrite) BOOL collectInputForPrinting;
 @property (nullable, nonatomic, strong, readwrite) NSMutableString *printBuffer;
 @property (nonatomic, readwrite) BOOL allowTitleReporting;
 @property (nonatomic, readwrite) BOOL allowAlternateMouseScroll;
