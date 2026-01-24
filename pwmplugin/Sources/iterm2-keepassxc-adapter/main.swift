@@ -39,7 +39,6 @@ func readStdin() -> Data? {
     let fd = handle.fileDescriptor
 
     var buffer = [UInt8](repeating: 0, count: 4096)
-    var totalRead = 0
 
     while true {
         let bytesRead = read(fd, &buffer, buffer.count)
@@ -50,7 +49,6 @@ func readStdin() -> Data? {
             break
         } else {
             data.append(contentsOf: buffer[0..<bytesRead])
-            totalRead += bytesRead
         }
     }
 
