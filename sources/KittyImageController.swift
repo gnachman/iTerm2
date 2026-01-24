@@ -649,7 +649,7 @@ class KittyImageController: NSObject {
     }
 
     private func decode(_ payload: String) -> Data? {
-        return Data(base64Encoded: payload)
+        return payload.base64DecodedData
     }
 
     func executeTransmitFile(_ command: KittyImageCommand.ImageTransmission,
