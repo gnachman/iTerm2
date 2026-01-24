@@ -19,6 +19,7 @@ class PasswordManagerDataSourceProvider: NSObject {
     private var _onePassword: OnePasswordDataSource
     private var _lastPass: LastPassDataSource
     private var _keePassXC: AdapterPasswordDataSource
+    private var _bitwarden: AdapterPasswordDataSource
     private let browser: Bool
     private var dataSourceNameUserDefaultsKey: String {
         "NoSyncPasswordManagerDataSourceName" + (browser ? "Browser" : "")
@@ -29,6 +30,7 @@ class PasswordManagerDataSourceProvider: NSObject {
         case onePassword = "OnePassword"
         case lastPass = "LastPass"
         case keePassXC = "KeePassXC"
+        case bitwarden = "Bitwarden"
 
         static let defaultValue = DataSource.keychain
     }
@@ -38,10 +40,15 @@ class PasswordManagerDataSourceProvider: NSObject {
         _onePassword = OnePasswordDataSource(browser: browser)
         _lastPass = LastPassDataSource(browser: browser)
 
-        let path = Bundle(for: Self.self).path(forAuxiliaryExecutable: "iterm2-keepassxc-adapter")!
+        let keepassPath = Bundle(for: Self.self).path(forAuxiliaryExecutable: "iterm2-keepassxc-adapter")!
         _keePassXC = AdapterPasswordDataSource(browser: browser,
-                                               adapterPath: path,
+                                               adapterPath: keepassPath,
                                                identifier: "KeePassXC")
+
+        let bitwardenPath = Bundle(for: Self.self).path(forAuxiliaryExecutable: "iterm2-bitwarden-adapter")!
+        _bitwarden = AdapterPasswordDataSource(browser: browser,
+                                               adapterPath: bitwardenPath,
+                                               identifier: "Bitwarden")
 
         self.browser = browser
 
@@ -76,6 +83,8 @@ class PasswordManagerDataSourceProvider: NSObject {
                     return lastPass!
                 case .keePassXC:
                     return keePassXC!
+                case .bitwarden:
+                    return bitwarden!
                 }
             }()
             _dataSource = fresh
@@ -90,6 +99,14 @@ class PasswordManagerDataSourceProvider: NSObject {
 
     @objc var keePassXCEnabled: Bool {
         return preferredDataSource == .keePassXC
+    }
+
+    @objc func enableBitwarden() {
+        preferredDataSource = .bitwarden
+    }
+
+    @objc var bitwardenEnabled: Bool {
+        return preferredDataSource == .bitwarden
     }
 
     @objc func enableKeychain() {
@@ -142,6 +159,13 @@ class PasswordManagerDataSourceProvider: NSObject {
             return nil
         }
         return _keePassXC
+    }
+
+    private var bitwarden: AdapterPasswordDataSource? {
+        if !authenticated {
+            return nil
+        }
+        return _bitwarden
     }
 
     @objc func revokeAuthentication() {

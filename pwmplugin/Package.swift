@@ -4,7 +4,7 @@
 import PackageDescription
 
 let package = Package(
-    name: "iterm2-keepassxc-adapter",
+    name: "iterm2-password-manager-adapters",
     platforms: [
         .macOS(.v12)
     ],
@@ -12,6 +12,10 @@ let package = Package(
         .executable(
             name: "iterm2-keepassxc-adapter",
             targets: ["iterm2-keepassxc-adapter"]
+        ),
+        .executable(
+            name: "iterm2-bitwarden-adapter",
+            targets: ["iterm2-bitwarden-adapter"]
         ),
     ],
     targets: [
@@ -23,8 +27,16 @@ let package = Package(
                 "PasswordManagerProtocol/PasswordManagerProtocol.swift"
             ]
         ),
+        .executableTarget(
+            name: "iterm2-bitwarden-adapter",
+            path: "Sources/iterm2-bitwarden-adapter"
+        ),
         .testTarget(
             name: "iterm2-keepassxc-adapterTests",
+            dependencies: []
+        ),
+        .testTarget(
+            name: "iterm2-bitwarden-adapterTests",
             dependencies: []
         )
     ]

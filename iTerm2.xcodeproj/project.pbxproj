@@ -1227,6 +1227,7 @@
 		A616D78C2EA82E71000C0C18 /* iTermTipWindowController.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DA76A041B30892900CB272A /* iTermTipWindowController.m */; };
 		A616D78E2EA85D9E000C0C18 /* AdapterPasswordDataSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = A616D78D2EA85D9E000C0C18 /* AdapterPasswordDataSource.swift */; };
 		A616D7D92EA94318000C0C18 /* iterm2-keepassxc-adapter in CopyFiles */ = {isa = PBXBuildFile; fileRef = A616D78F2EA86224000C0C18 /* iterm2-keepassxc-adapter */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
+		A616D7DA2EA94319000C0C18 /* iterm2-bitwarden-adapter in CopyFiles */ = {isa = PBXBuildFile; fileRef = A616D7902EA86225000C0C18 /* iterm2-bitwarden-adapter */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 		A616E6792EA9548D000C0C18 /* PasswordManagerProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = A616E6632EA9544D000C0C18 /* PasswordManagerProtocol.swift */; };
 		A6180D6C21A35D5E0073F219 /* iTermMetalPerFrameState.h in Headers */ = {isa = PBXBuildFile; fileRef = A6180D6A21A35D5E0073F219 /* iTermMetalPerFrameState.h */; };
 		A6180D6D21A35D5E0073F219 /* iTermMetalPerFrameState.m in Sources */ = {isa = PBXBuildFile; fileRef = A6180D6B21A35D5E0073F219 /* iTermMetalPerFrameState.m */; };
@@ -5366,6 +5367,7 @@
 			dstSubfolderSpec = 6;
 			files = (
 				A616D7D92EA94318000C0C18 /* iterm2-keepassxc-adapter in CopyFiles */,
+				A616D7DA2EA94319000C0C18 /* iterm2-bitwarden-adapter in CopyFiles */,
 				A6A5BE0D2A070D4A00F5FD44 /* iTerm2ImportStatus.app in CopyFiles */,
 				A60593CC257DFAE400CACEE6 /* ShellLauncher in CopyFiles */,
 				A63F2A3923FA5698008DDEA4 /* iTermServer in CopyFiles */,
@@ -6496,6 +6498,7 @@
 		A616D78A2EA7F167000C0C18 /* CyclicLog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CyclicLog.swift; sourceTree = "<group>"; };
 		A616D78D2EA85D9E000C0C18 /* AdapterPasswordDataSource.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdapterPasswordDataSource.swift; sourceTree = "<group>"; };
 		A616D78F2EA86224000C0C18 /* iterm2-keepassxc-adapter */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.executable"; name = "iterm2-keepassxc-adapter"; path = "../pwmplugin/binaries/iterm2-keepassxc-adapter"; sourceTree = "<group>"; };
+		A616D7902EA86225000C0C18 /* iterm2-bitwarden-adapter */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.executable"; name = "iterm2-bitwarden-adapter"; path = "../pwmplugin/binaries/iterm2-bitwarden-adapter"; sourceTree = "<group>"; };
 		A616E65F2EA9544D000C0C18 /* spec.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = spec.md; sourceTree = "<group>"; };
 		A616E6612EA9544D000C0C18 /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
 		A616E6632EA9544D000C0C18 /* PasswordManagerProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PasswordManagerProtocol.swift; sourceTree = "<group>"; };
@@ -8386,6 +8389,8 @@
 		A6D4C26F21E19959009CF11B /* iTermVariablesOutlineDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermVariablesOutlineDelegate.m; sourceTree = "<group>"; };
 		A6D4C27221E1A75B009CF11B /* iTermRegisteredFunctionsTableViewDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermRegisteredFunctionsTableViewDelegate.h; sourceTree = "<group>"; };
 		A6D4C27321E1A75B009CF11B /* iTermRegisteredFunctionsTableViewDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermRegisteredFunctionsTableViewDelegate.m; sourceTree = "<group>"; };
+		A6D4E1832F2582F8008DF9BC /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
+		A6D4E1842F2582F8008DF9BC /* PasswordManagerProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PasswordManagerProtocol.swift; sourceTree = "<group>"; };
 		A6D5724027BCDAA1002E6E9F /* CharacterAttributes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CharacterAttributes.swift; sourceTree = "<group>"; };
 		A6D5724227BCE06C002E6E9F /* iTermTextDataSource.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermTextDataSource.h; sourceTree = "<group>"; };
 		A6D5984F21B78B9700B59C94 /* iTermBroadcastInputHelper.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermBroadcastInputHelper.h; sourceTree = "<group>"; };
@@ -11126,6 +11131,7 @@
 		A616E6652EA9544D000C0C18 /* Sources */ = {
 			isa = PBXGroup;
 			children = (
+				A6D4E1852F2582F8008DF9BC /* iterm2-bitwarden-adapter */,
 				A616E6622EA9544D000C0C18 /* iterm2-keepassxc-adapter */,
 				A616E6642EA9544D000C0C18 /* PasswordManagerProtocol */,
 			);
@@ -11192,6 +11198,7 @@
 				A629F57223AF2DD900C2F16B /* shell_integration */,
 				A629F57723AF2DD900C2F16B /* utilities */,
 				A616D78F2EA86224000C0C18 /* iterm2-keepassxc-adapter */,
+				A616D7902EA86225000C0C18 /* iterm2-bitwarden-adapter */,
 			);
 			path = Resources;
 			sourceTree = "<group>";
@@ -13851,6 +13858,15 @@
 				A62C3B221BCC24AB00B5629D /* iTermRecentDirectoryMO.m */,
 			);
 			name = NSManagedObjects;
+			sourceTree = "<group>";
+		};
+		A6D4E1852F2582F8008DF9BC /* iterm2-bitwarden-adapter */ = {
+			isa = PBXGroup;
+			children = (
+				A6D4E1832F2582F8008DF9BC /* main.swift */,
+				A6D4E1842F2582F8008DF9BC /* PasswordManagerProtocol.swift */,
+			);
+			path = "iterm2-bitwarden-adapter";
 			sourceTree = "<group>";
 		};
 		A6D693EE2E417111005E9AFE /* Audio Muting */ = {

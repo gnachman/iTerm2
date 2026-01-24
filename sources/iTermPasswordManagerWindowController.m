@@ -522,6 +522,16 @@ static NSArray<NSString *> *gTerminalCachedCombinedAccountNames;
     [self updateConfiguration];
 }
 
+- (IBAction)useBitwarden:(id)sender {
+    [self.dataSourceProvider enableBitwarden];
+    [self.currentDataSource resetErrors];
+    if (![self.currentDataSource checkAvailability]) {
+        [self useKeychain:nil];
+    }
+    [self update];
+    [self updateConfiguration];
+}
+
 - (IBAction)closeCurrentSession:(id)sender {
     [self orderOutOrEndSheet];
 }
@@ -957,6 +967,8 @@ static NSArray<NSString *> *gTerminalCachedCombinedAccountNames;
         menuItem.state = self.dataSourceProvider.lastPassEnabled ? NSControlStateValueOn : NSControlStateValueOff;
     } else if (menuItem.action == @selector(useKeePassXC:)) {
         menuItem.state = self.dataSourceProvider.keePassXCEnabled ? NSControlStateValueOn : NSControlStateValueOff;
+    } else if (menuItem.action == @selector(useBitwarden:)) {
+        menuItem.state = self.dataSourceProvider.bitwardenEnabled ? NSControlStateValueOn : NSControlStateValueOff;
     } else if (menuItem.action == @selector(resetIntegrationConfiguration:)) {
         const BOOL allowed = [[self currentDataSource] canResetConfiguration];
         if (allowed) {
