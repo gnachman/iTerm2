@@ -72,6 +72,7 @@ INTEGRATION_TEST_CLASSES=(
     "IntegrationMutationQueueTests"
     "IntegrationDispatchSourceActivationTests"
     "IntegrationPTYSessionWiringTests"
+    "PTYSessionWiringTests"
     "DispatchSourceLifecycleIntegrationTests"
     "BackpressureIntegrationTests"
     "SessionLifecycleIntegrationTests"
