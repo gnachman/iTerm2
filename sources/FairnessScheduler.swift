@@ -5,6 +5,9 @@
 //  Round-robin fair scheduler for token execution across PTY sessions.
 //  See implementation.md for design details.
 //
+//  Thread Safety: All state access is synchronized via iTermGCD.mutationQueue.
+//  Public methods dispatch to mutationQueue; callers may invoke from any thread.
+//
 
 import Foundation
 
@@ -56,27 +59,41 @@ class FairnessScheduler: NSObject {
     // MARK: - Registration
 
     /// Register an executor with the scheduler. Returns a stable session ID.
+    /// Thread-safe: may be called from any thread.
     @objc func register(_ executor: FairnessSchedulerExecutor) -> SessionID {
-        let sessionId = nextSessionId
-        nextSessionId += 1
-        sessions[sessionId] = SessionState(executor: executor)
-        return sessionId
+        return iTermGCD.mutationQueue().sync {
+            let sessionId = nextSessionId
+            nextSessionId += 1
+            sessions[sessionId] = SessionState(executor: executor)
+            return sessionId
+        }
     }
 
     /// Unregister a session.
+    /// Thread-safe: may be called from any thread.
     @objc func unregister(sessionId: SessionID) {
-        if let state = sessions[sessionId], let executor = state.executor {
-            executor.cleanupForUnregistration()
+        iTermGCD.mutationQueue().async {
+            if let state = self.sessions[sessionId], let executor = state.executor {
+                executor.cleanupForUnregistration()
+            }
+            self.sessions.removeValue(forKey: sessionId)
+            self.busySet.remove(sessionId)
+            // busyList cleaned lazily in executeNextTurn
         }
-        sessions.removeValue(forKey: sessionId)
-        busySet.remove(sessionId)
-        // busyList cleaned lazily in executeNextTurn
     }
 
     // MARK: - Work Notification
 
     /// Notify scheduler that a session has work to do.
+    /// Thread-safe: may be called from any thread.
     @objc func sessionDidEnqueueWork(_ sessionId: SessionID) {
+        iTermGCD.mutationQueue().async {
+            self.sessionDidEnqueueWorkOnQueue(sessionId)
+        }
+    }
+
+    /// Internal implementation - must be called on mutationQueue.
+    private func sessionDidEnqueueWorkOnQueue(_ sessionId: SessionID) {
         guard var state = sessions[sessionId] else { return }
 
         if state.isExecuting {
@@ -94,19 +111,20 @@ class FairnessScheduler: NSObject {
 
     // MARK: - Execution
 
+    /// Must be called on mutationQueue.
     private func ensureExecutionScheduled() {
         guard !busyList.isEmpty else { return }
         guard !executionScheduled else { return }
 
         executionScheduled = true
 
-        // Phase 1: main queue for test compatibility
-        // Integration phase: switch to iTermGCD.mutationQueue
-        DispatchQueue.main.async { [weak self] in
+        // Async dispatch to avoid deep recursion while staying on mutationQueue
+        iTermGCD.mutationQueue().async { [weak self] in
             self?.executeNextTurn()
         }
     }
 
+    /// Must be called on mutationQueue.
     private func executeNextTurn() {
         executionScheduled = false
 
@@ -128,10 +146,14 @@ class FairnessScheduler: NSObject {
         sessions[sessionId] = state
 
         executor.executeTurn(tokenBudget: Self.defaultTokenBudget) { [weak self] result in
-            self?.sessionFinishedTurn(sessionId, result: result)
+            // Completion may be called from any thread; dispatch back to mutationQueue
+            iTermGCD.mutationQueue().async {
+                self?.sessionFinishedTurn(sessionId, result: result)
+            }
         }
     }
 
+    /// Must be called on mutationQueue.
     private func sessionFinishedTurn(_ sessionId: SessionID, result: TurnResult) {
         guard var state = sessions[sessionId] else { return }
 

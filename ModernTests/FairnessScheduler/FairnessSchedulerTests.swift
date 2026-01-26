@@ -102,6 +102,9 @@ final class FairnessSchedulerSessionTests: XCTestCase {
         let idA = scheduler.register(mockExecutorA)
         scheduler.unregister(sessionId: idA)
 
+        // Wait for async unregister to complete on mutationQueue
+        iTermGCD.mutationQueue().sync {}
+
         XCTAssertTrue(mockExecutorA.cleanupCalled,
                       "cleanupForUnregistration should be called on unregister")
     }
@@ -884,6 +887,10 @@ final class FairnessSchedulerLifecycleEdgeCaseTests: XCTestCase {
 
         // First unregister
         scheduler.unregister(sessionId: sessionId)
+
+        // Wait for async unregister to complete on mutationQueue
+        iTermGCD.mutationQueue().sync {}
+
         XCTAssertTrue(executor.cleanupCalled, "First unregister should call cleanup")
 
         // Use a fresh executor to detect if cleanup is called again
@@ -893,6 +900,9 @@ final class FairnessSchedulerLifecycleEdgeCaseTests: XCTestCase {
 
         // Second unregister of original session - should be no-op (no crash)
         scheduler.unregister(sessionId: sessionId)
+
+        // Wait for second unregister to complete
+        iTermGCD.mutationQueue().sync {}
 
         // The test passes if we get here without crash
         // We can't directly verify cleanup wasn't called again,
