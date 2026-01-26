@@ -1261,12 +1261,12 @@ final class PTYTaskBackpressureIntegrationTests: XCTestCase {
         // Read source state depends on ioAllowed (requires jobManager setup)
         // For this test, we verify the mechanism is in place
 
-        // Create heavy backpressure by adding many token arrays
+        // Create blocked backpressure by adding many token arrays (200 > 40 slots)
         executor.addMultipleTokenArrays(count: 200, tokensPerArray: 5)
 
-        // Check backpressure level
-        XCTAssertEqual(executor.backpressureLevel, .heavy,
-                       "Adding many tokens should create heavy backpressure")
+        // Check backpressure level - should be blocked when exceeding capacity
+        XCTAssertEqual(executor.backpressureLevel, .blocked,
+                       "Adding more tokens than slots should cause blocked backpressure")
 
         // Trigger state update
         let selector = NSSelectorFromString("updateReadSourceState")
@@ -1275,10 +1275,10 @@ final class PTYTaskBackpressureIntegrationTests: XCTestCase {
         }
         task.testWaitForIOQueue()
 
-        // With heavy backpressure, read source should be suspended
+        // With blocked backpressure, read source should be suspended
         // (if it was ever resumed - it may have stayed suspended due to ioAllowed)
         XCTAssertTrue(task.testIsReadSourceSuspended,
-                      "Read source should be suspended with heavy backpressure")
+                      "Read source should be suspended with blocked backpressure")
 
         // Cleanup
         task.testTeardownDispatchSourcesForTesting()
@@ -1336,16 +1336,16 @@ final class PTYTaskBackpressureIntegrationTests: XCTestCase {
         XCTAssertEqual(executor.backpressureLevel, .none)
         XCTAssertFalse(task.testIsReadSourceSuspended, "Read source should start resumed (no backpressure)")
 
-        // Create heavy backpressure
+        // Create blocked backpressure (200 tokens > 40 slots)
         executor.addMultipleTokenArrays(count: 200, tokensPerArray: 5)
-        XCTAssertEqual(executor.backpressureLevel, .heavy, "Should have heavy backpressure")
+        XCTAssertEqual(executor.backpressureLevel, .blocked, "Should be blocked when exceeding capacity")
 
         // Trigger state update
         task.perform(NSSelectorFromString("updateReadSourceState"))
         task.testWaitForIOQueue()
 
-        // With heavy backpressure, read source should be suspended
-        XCTAssertTrue(task.testIsReadSourceSuspended, "Read source should suspend with heavy backpressure")
+        // With blocked backpressure, read source should be suspended
+        XCTAssertTrue(task.testIsReadSourceSuspended, "Read source should suspend with blocked backpressure")
 
         // Set up handler to track heavy->non-heavy transition
         // The handler fires once per token group consumed, but we only care that
@@ -1448,19 +1448,19 @@ final class PTYTaskBackpressureIntegrationTests: XCTestCase {
         // Clear the callback for next phase
         mockDelegate.onThreadedRead = nil
 
-        // Step 2: Create heavy backpressure
+        // Step 2: Create blocked backpressure (200 tokens > 40 slots)
         executor.addMultipleTokenArrays(count: 200, tokensPerArray: 5)
-        XCTAssertEqual(executor.backpressureLevel, .heavy, "Should have heavy backpressure")
+        XCTAssertEqual(executor.backpressureLevel, .blocked, "Should be blocked when exceeding capacity")
 
         // Trigger state update
         task.perform(NSSelectorFromString("updateReadSourceState"))
         task.testWaitForIOQueue()
 
-        XCTAssertTrue(task.testIsReadSourceSuspended, "Read source should suspend with heavy backpressure")
+        XCTAssertTrue(task.testIsReadSourceSuspended, "Read source should suspend with blocked backpressure")
 
         // Step 3: Write more data - it should NOT be delivered while suspended
         let readCountBeforeWrite = mockDelegate.readCallCount
-        let testData2 = "Data during heavy backpressure".data(using: .utf8)!
+        let testData2 = "Data during blocked backpressure".data(using: .utf8)!
         testData2.withUnsafeBytes { bufferPointer in
             let rawPointer = bufferPointer.baseAddress!
             _ = Darwin.write(pipe.writeFd, rawPointer, testData2.count)
@@ -1472,7 +1472,7 @@ final class PTYTaskBackpressureIntegrationTests: XCTestCase {
 
         // Data should NOT have been read (source is suspended)
         XCTAssertEqual(mockDelegate.readCallCount, readCountBeforeWrite,
-                       "Data should NOT be delivered when read source is suspended due to heavy backpressure")
+                       "Data should NOT be delivered when read source is suspended due to blocked backpressure")
 
         // Cleanup
         task.testTeardownDispatchSourcesForTesting()

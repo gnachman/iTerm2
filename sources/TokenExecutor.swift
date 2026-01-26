@@ -185,7 +185,9 @@ class TokenExecutor: NSObject, FairnessSchedulerExecutor {
     // high-priority tokens are meant to bypass flow control.
     @objc var backpressureLevel: BackpressureLevel {
         let available = Int(iTermAtomicInt64Get(availableSlots))
-        if available == 0 {
+        // Use <= 0 since availableSlots can go negative when more tokens are added
+        // than total capacity (the counter isn't clamped at 0)
+        if available <= 0 {
             return .blocked
         }
         let ratio = Double(available) / Double(totalSlots)
@@ -980,6 +982,23 @@ extension TokenExecutor: IdempotentOperationScheduler {
         addDeferredSideEffect(closure)
     }
 }
+
+// MARK: - Testing Hooks
+
+#if ITERM_DEBUG
+extension TokenExecutor {
+    /// Test-only: Returns the current value of availableSlots for verifying accounting invariants.
+    /// This should equal totalSlots when no tokens are pending.
+    @objc var testAvailableSlots: Int {
+        return Int(iTermAtomicInt64Get(availableSlots))
+    }
+
+    /// Test-only: Returns the total slots capacity for computing expected values.
+    @objc var testTotalSlots: Int {
+        return totalSlots
+    }
+}
+#endif
 
 // Run a closure but not too often.
 @objc(iTermPeriodicScheduler)

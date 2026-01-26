@@ -73,18 +73,28 @@ final class TokenExecutorNonBlockingTests: XCTestCase {
         let initialLevel = executor.backpressureLevel
         XCTAssertEqual(initialLevel, .none, "Fresh executor should have no backpressure")
 
-        // Add a token array
-        let vector = createTestTokenVector(count: 1)
-        executor.addTokens(vector, lengthTotal: 10, lengthExcludingInBandSignaling: 10)
+        // Block token consumption so they accumulate
+        mockDelegate.shouldQueueTokens = true
 
-        // Process to avoid blocking
+        // With default bufferDepth of 40:
+        // - .none = >30 available (>75%)
+        // - .light = 20-30 available (50-75%)
+        // - .moderate = 10-20 available (25-50%)
+        // - .heavy = <10 available (<25%)
+        // Adding 11 tokens should move from .none to .light (29 remaining)
+        for _ in 0..<11 {
+            let vector = createTestTokenVector(count: 1)
+            executor.addTokens(vector, lengthTotal: 10, lengthExcludingInBandSignaling: 10)
+        }
+
+        // Schedule to ensure pending work is processed (won't execute due to shouldQueueTokens)
         executor.schedule()
 
-        let expectation = XCTestExpectation(description: "Processed")
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-            expectation.fulfill()
-        }
-        wait(for: [expectation], timeout: 1.0)
+        let afterLevel = executor.backpressureLevel
+        XCTAssertGreaterThan(afterLevel, initialLevel,
+                            "Backpressure should increase after adding tokens without consumption")
+        XCTAssertGreaterThanOrEqual(afterLevel, .light,
+                                    "Adding 11 tokens should cause at least .light backpressure")
     }
 
     func testHighPriorityTokensAlsoDecrementSlots() throws {
@@ -94,19 +104,24 @@ final class TokenExecutorNonBlockingTests: XCTestCase {
         let initialLevel = executor.backpressureLevel
         XCTAssertEqual(initialLevel, .none, "Fresh executor should have no backpressure")
 
-        // Schedule high-priority tasks
-        for _ in 0..<50 {
-            executor.scheduleHighPriorityTask { }
+        // Block token consumption so they accumulate
+        mockDelegate.shouldQueueTokens = true
+
+        // Add high-priority tokens (they also decrement availableSlots)
+        // With 40 total slots, adding 11+ should move from .none to .light
+        for _ in 0..<15 {
+            let vector = createTestTokenVector(count: 1)
+            executor.addTokens(vector, lengthTotal: 10, lengthExcludingInBandSignaling: 10, highPriority: true)
         }
 
-        // Process to clear
+        // Schedule to ensure pending work is processed
         executor.schedule()
 
-        let expectation = XCTestExpectation(description: "Processed")
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
-            expectation.fulfill()
-        }
-        wait(for: [expectation], timeout: 1.0)
+        let afterLevel = executor.backpressureLevel
+        XCTAssertGreaterThan(afterLevel, initialLevel,
+                            "Backpressure should increase after adding high-priority tokens")
+        XCTAssertGreaterThanOrEqual(afterLevel, .light,
+                                    "Adding 15 high-priority tokens should cause at least .light backpressure")
     }
 
     // NEGATIVE TEST: Verify semaphore is NOT created after implementation
@@ -865,16 +880,16 @@ final class TokenExecutorCleanupTests: XCTestCase {
         XCTAssertEqual(executor.backpressureLevel, .none,
                        "Fresh executor should have no backpressure")
 
-        // Add enough token arrays to create heavy backpressure
+        // Add enough token arrays to exceed capacity (200 with 40 slots = blocked)
         let arraysToAdd = 200
         for _ in 0..<arraysToAdd {
             let vector = createTestTokenVector(count: 5)
             executor.addTokens(vector, lengthTotal: 50, lengthExcludingInBandSignaling: 50)
         }
 
-        // Should have heavy backpressure now
-        XCTAssertEqual(executor.backpressureLevel, .heavy,
-                       "Should have heavy backpressure after adding many arrays")
+        // Should be blocked (availableSlots = 40 - 200 = -160, which is <= 0)
+        XCTAssertEqual(executor.backpressureLevel, .blocked,
+                       "Should be blocked after adding more arrays than slots")
 
         // Cleanup should restore all slots
         executor.cleanupForUnregistration()
@@ -891,8 +906,8 @@ final class TokenExecutorCleanupTests: XCTestCase {
             executor.addTokens(vector, lengthTotal: 50, lengthExcludingInBandSignaling: 50)
         }
 
-        // Should have the same heavy backpressure again
-        XCTAssertEqual(executor.backpressureLevel, .heavy,
+        // Should have the same blocked state again
+        XCTAssertEqual(executor.backpressureLevel, .blocked,
                        "After re-adding same arrays, should have same backpressure (slots properly restored)")
     }
 
@@ -1647,16 +1662,32 @@ final class TokenExecutorAvailableSlotsBoundaryTests: XCTestCase {
         let sessionId = FairnessScheduler.shared.register(executor)
         executor.fairnessSessionId = sessionId
 
-        // Add a moderate number of token groups
-        for _ in 0..<50 {
+        #if ITERM_DEBUG
+        let initialSlots = executor.testAvailableSlots
+        let totalSlots = executor.testTotalSlots
+        XCTAssertEqual(initialSlots, totalSlots, "Fresh executor should have all slots available")
+        #endif
+
+        // Add a moderate number of token groups (more than totalSlots to ensure we hit limits)
+        let addCount = 50
+        for _ in 0..<addCount {
             let vector = createTestTokenVector(count: 1)
             executor.addTokens(vector, lengthTotal: 10, lengthExcludingInBandSignaling: 10)
         }
 
-        // Backpressure level should be valid (not undefined due to negative slots)
+        #if ITERM_DEBUG
+        // After adding 50 tokens with 40 slots, availableSlots = 40 - 50 = -10
+        // The counter can go negative (by design) to track over-capacity
+        let afterAddSlots = executor.testAvailableSlots
+        let expectedSlots = totalSlots - addCount  // 40 - 50 = -10
+        XCTAssertEqual(afterAddSlots, expectedSlots,
+                       "availableSlots should be totalSlots - addCount (can be negative)")
+        #endif
+
+        // Backpressure should be blocked when availableSlots <= 0
         let level = executor.backpressureLevel
-        XCTAssertTrue(level == .none || level == .moderate || level == .heavy,
-                      "Backpressure level should be valid, not undefined from negative slots")
+        XCTAssertEqual(level, .blocked,
+                       "Adding more tokens than slots should cause blocked backpressure")
 
         // Process all by repeatedly calling executeTurn
         for _ in 0..<100 {
@@ -1673,6 +1704,13 @@ final class TokenExecutorAvailableSlotsBoundaryTests: XCTestCase {
         }
 
         FairnessScheduler.shared.unregister(sessionId: sessionId)
+
+        #if ITERM_DEBUG
+        // After processing all, slots should return to totalSlots
+        let finalSlots = executor.testAvailableSlots
+        XCTAssertEqual(finalSlots, totalSlots,
+                       "After processing all tokens, slots should return to maximum (\(totalSlots)), got \(finalSlots)")
+        #endif
 
         // After processing and cleanup, should return to none
         XCTAssertEqual(executor.backpressureLevel, .none,
@@ -1692,6 +1730,10 @@ final class TokenExecutorAvailableSlotsBoundaryTests: XCTestCase {
         // Register with scheduler
         let sessionId = FairnessScheduler.shared.register(executor)
         executor.fairnessSessionId = sessionId
+
+        #if ITERM_DEBUG
+        let totalSlots = executor.testTotalSlots
+        #endif
 
         let group = DispatchGroup()
         let addCount = 50
@@ -1739,10 +1781,22 @@ final class TokenExecutorAvailableSlotsBoundaryTests: XCTestCase {
 
         FairnessScheduler.shared.unregister(sessionId: sessionId)
 
-        // Slots should be consistent - not corrupted
+        #if ITERM_DEBUG
+        // Verify slots are within valid range (not corrupted)
+        let finalSlots = executor.testAvailableSlots
+        XCTAssertGreaterThanOrEqual(finalSlots, 0,
+                                    "availableSlots must never go negative (got \(finalSlots))")
+        XCTAssertLessThanOrEqual(finalSlots, totalSlots,
+                                 "availableSlots must not exceed totalSlots (got \(finalSlots), max \(totalSlots))")
+        #endif
+
+        // Slots should be consistent - verify via backpressure
         let finalLevel = executor.backpressureLevel
-        XCTAssertTrue(finalLevel == .none || finalLevel == .moderate || finalLevel == .heavy,
-                      "Final backpressure should be valid")
+        // After concurrent ops, we may have some pending tokens or be fully processed
+        // The key invariant is that the level must be valid and consistent with slots
+        XCTAssertTrue(finalLevel.rawValue >= BackpressureLevel.none.rawValue &&
+                      finalLevel.rawValue <= BackpressureLevel.blocked.rawValue,
+                      "Final backpressure must be a valid level")
     }
 
     func testCleanupDoesNotOverflowSlots() {
@@ -1755,6 +1809,13 @@ final class TokenExecutorAvailableSlotsBoundaryTests: XCTestCase {
         )
         executor.delegate = mockDelegate
 
+        #if ITERM_DEBUG
+        let totalSlots = executor.testTotalSlots
+        let initialSlots = executor.testAvailableSlots
+        XCTAssertEqual(initialSlots, totalSlots,
+                       "Fresh executor should have all slots available")
+        #endif
+
         // Start fresh - slots should be at max
         XCTAssertEqual(executor.backpressureLevel, .none,
                        "Fresh executor should have no backpressure")
@@ -1762,12 +1823,28 @@ final class TokenExecutorAvailableSlotsBoundaryTests: XCTestCase {
         // Cleanup on empty queue should not overflow
         executor.cleanupForUnregistration()
 
+        #if ITERM_DEBUG
+        let afterFirstCleanup = executor.testAvailableSlots
+        XCTAssertEqual(afterFirstCleanup, totalSlots,
+                       "Cleanup on empty queue should not change slots")
+        XCTAssertLessThanOrEqual(afterFirstCleanup, totalSlots,
+                                 "Cleanup must not overflow slots beyond maximum")
+        #endif
+
         // Should still be valid
         XCTAssertEqual(executor.backpressureLevel, .none,
                        "Cleanup on empty queue should not change backpressure")
 
         // Call cleanup again - should still be safe
         executor.cleanupForUnregistration()
+
+        #if ITERM_DEBUG
+        let afterSecondCleanup = executor.testAvailableSlots
+        XCTAssertEqual(afterSecondCleanup, totalSlots,
+                       "Multiple cleanups should not change slots")
+        XCTAssertLessThanOrEqual(afterSecondCleanup, totalSlots,
+                                 "Multiple cleanups must not overflow slots")
+        #endif
 
         XCTAssertEqual(executor.backpressureLevel, .none,
                        "Multiple cleanups should not overflow slots")
@@ -1787,10 +1864,23 @@ final class TokenExecutorAvailableSlotsBoundaryTests: XCTestCase {
         let sessionId = FairnessScheduler.shared.register(executor)
         executor.fairnessSessionId = sessionId
 
+        #if ITERM_DEBUG
+        let totalSlots = executor.testTotalSlots
+        let initialSlots = executor.testAvailableSlots
+        XCTAssertEqual(initialSlots, totalSlots, "Should start with all slots available")
+        #endif
+
         for cycle in 0..<20 {
             // Add
             let vector = createTestTokenVector(count: 5)
             executor.addTokens(vector, lengthTotal: 50, lengthExcludingInBandSignaling: 50)
+
+            #if ITERM_DEBUG
+            // After add, slots should decrease by 1
+            let afterAdd = executor.testAvailableSlots
+            XCTAssertEqual(afterAdd, totalSlots - 1,
+                           "After add in cycle \(cycle), should have one fewer slot")
+            #endif
 
             // Immediately trigger consume
             let expectation = XCTestExpectation(description: "Cycle \(cycle)")
@@ -1798,9 +1888,23 @@ final class TokenExecutorAvailableSlotsBoundaryTests: XCTestCase {
                 expectation.fulfill()
             }
             wait(for: [expectation], timeout: 1.0)
+
+            #if ITERM_DEBUG
+            // After consume, slots should return to totalSlots
+            let afterConsume = executor.testAvailableSlots
+            XCTAssertEqual(afterConsume, totalSlots,
+                           "After consume in cycle \(cycle), slots should return to max")
+            #endif
         }
 
         FairnessScheduler.shared.unregister(sessionId: sessionId)
+
+        #if ITERM_DEBUG
+        // Verify no drift after many cycles
+        let finalSlots = executor.testAvailableSlots
+        XCTAssertEqual(finalSlots, totalSlots,
+                       "After \(20) add/consume cycles, slots should equal totalSlots (no drift)")
+        #endif
 
         // After many cycles, should be back to none
         XCTAssertEqual(executor.backpressureLevel, .none,

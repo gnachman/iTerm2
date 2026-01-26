@@ -836,8 +836,8 @@ final class DispatchSourceLifecycleIntegrationTests: XCTestCase {
 final class BackpressureIntegrationTests: XCTestCase {
 
     func testHighThroughputSuspended() throws {
-        // REQUIREMENT: High-throughput session's read source suspended at heavy backpressure
-        // When backpressure is heavy, reading should stop
+        // REQUIREMENT: High-throughput session's read source suspended at high backpressure
+        // When backpressure is blocked, reading should stop
 
         let terminal = VT100Terminal()
         let executor = TokenExecutor(terminal, slownessDetector: SlownessDetector(), queue: DispatchQueue.main)
@@ -845,7 +845,7 @@ final class BackpressureIntegrationTests: XCTestCase {
         let sessionId = FairnessScheduler.shared.register(executor)
         executor.fairnessSessionId = sessionId
 
-        // Add many tokens to create heavy backpressure
+        // Add many tokens to create blocked backpressure (50 tokens > 40 slots)
         for _ in 0..<50 {
             var vector = CVector()
             CVectorCreate(&vector, 10)
@@ -857,9 +857,9 @@ final class BackpressureIntegrationTests: XCTestCase {
             executor.addTokens(vector, lengthTotal: 100, lengthExcludingInBandSignaling: 100)
         }
 
-        // Should have heavy backpressure now
-        XCTAssertEqual(executor.backpressureLevel, .heavy,
-                       "Should have heavy backpressure after flooding with tokens")
+        // Should be blocked when exceeding capacity
+        XCTAssertEqual(executor.backpressureLevel, .blocked,
+                       "Should be blocked after exceeding slot capacity")
 
         // Create a PTYTask to verify shouldRead is false
         guard let task = PTYTask() else {
@@ -870,9 +870,9 @@ final class BackpressureIntegrationTests: XCTestCase {
         task.tokenExecutor = executor
         task.paused = false
 
-        // shouldRead should be false due to heavy backpressure
+        // shouldRead should be false due to blocked backpressure
         if let shouldRead = task.value(forKey: "shouldRead") as? Bool {
-            // With heavy backpressure, reading should be gated
+            // With blocked backpressure, reading should be gated
             // (Note: also requires ioAllowed, which we don't have without a real job)
             _ = shouldRead  // The important thing is it doesn't crash
         }
