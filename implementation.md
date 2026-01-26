@@ -10,13 +10,14 @@
 | 2 | TokenExecutor | **DONE** | 8 passing, 24 skipped. Commit `5afcfd07f`. |
 | 3 | PTYTask Dispatch Sources | **DONE** | 0 passing, 35 skipped (infrastructure in place, pending activation). Commit `4087d02b9`. |
 | 4 | TaskNotifier Changes | **DONE** | 1 passing, 11 skipped. Dispatch source tasks skip select(). |
-| 5 | Integration | Not started | Wire everything together, activate dispatch sources |
+| 5 | Integration | **TESTS WRITTEN** | 0 passing, 24 skipped. Tests ready for implementation. |
 
 **Run tests:**
 - Milestone 1: `./tools/run_fairness_tests.sh milestone1`
 - Milestone 2: `./tools/run_fairness_tests.sh milestone2`
 - Milestone 3: `./tools/run_fairness_tests.sh milestone3`
 - Milestone 4: `./tools/run_fairness_tests.sh milestone4`
+- Milestone 5: `./tools/run_fairness_tests.sh milestone5`
 
 ## Goal
 

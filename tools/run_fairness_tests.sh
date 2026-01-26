@@ -49,8 +49,21 @@ TASKNOTIFIER_TEST_CLASSES=(
     "TaskNotifierMixedModeTests"
 )
 
+# Milestone 5: Integration (Checkpoint 5)
+INTEGRATION_TEST_CLASSES=(
+    "IntegrationRegistrationTests"
+    "IntegrationUnregistrationTests"
+    "IntegrationRekickTests"
+    "IntegrationMutationQueueTests"
+    "IntegrationDispatchSourceActivationTests"
+    "IntegrationPTYSessionWiringTests"
+    "DispatchSourceLifecycleIntegrationTests"
+    "BackpressureIntegrationTests"
+    "SessionLifecycleIntegrationTests"
+)
+
 # All test classes
-ALL_TEST_CLASSES=("${FAIRNESS_TEST_CLASSES[@]}" "${TOKENEXECUTOR_TEST_CLASSES[@]}" "${PTYTASK_TEST_CLASSES[@]}" "${TASKNOTIFIER_TEST_CLASSES[@]}")
+ALL_TEST_CLASSES=("${FAIRNESS_TEST_CLASSES[@]}" "${TOKENEXECUTOR_TEST_CLASSES[@]}" "${PTYTASK_TEST_CLASSES[@]}" "${TASKNOTIFIER_TEST_CLASSES[@]}" "${INTEGRATION_TEST_CLASSES[@]}")
 
 # Build the -only-testing arguments
 build_only_testing_args() {
@@ -72,15 +85,18 @@ build_only_testing_args() {
         milestone4|phase4|checkpoint4)
             classes_to_check=("${TASKNOTIFIER_TEST_CLASSES[@]}")
             ;;
+        milestone5|phase5|checkpoint5)
+            classes_to_check=("${INTEGRATION_TEST_CLASSES[@]}")
+            ;;
         *)
             classes_to_check=("${ALL_TEST_CLASSES[@]}")
             ;;
     esac
 
     for class in "${classes_to_check[@]}"; do
-        if [[ -z "$filter" ]] || [[ "$filter" == "milestone1" ]] || [[ "$filter" == "milestone2" ]] || [[ "$filter" == "milestone3" ]] || [[ "$filter" == "milestone4" ]] || \
-           [[ "$filter" == "phase1" ]] || [[ "$filter" == "phase2" ]] || [[ "$filter" == "phase3" ]] || [[ "$filter" == "phase4" ]] || \
-           [[ "$filter" == "checkpoint1" ]] || [[ "$filter" == "checkpoint2" ]] || [[ "$filter" == "checkpoint3" ]] || [[ "$filter" == "checkpoint4" ]] || \
+        if [[ -z "$filter" ]] || [[ "$filter" == "milestone1" ]] || [[ "$filter" == "milestone2" ]] || [[ "$filter" == "milestone3" ]] || [[ "$filter" == "milestone4" ]] || [[ "$filter" == "milestone5" ]] || \
+           [[ "$filter" == "phase1" ]] || [[ "$filter" == "phase2" ]] || [[ "$filter" == "phase3" ]] || [[ "$filter" == "phase4" ]] || [[ "$filter" == "phase5" ]] || \
+           [[ "$filter" == "checkpoint1" ]] || [[ "$filter" == "checkpoint2" ]] || [[ "$filter" == "checkpoint3" ]] || [[ "$filter" == "checkpoint4" ]] || [[ "$filter" == "checkpoint5" ]] || \
            [[ "$class" == *"$filter"* ]]; then
             args="$args -only-testing:ModernTests/$class"
         fi
@@ -118,6 +134,7 @@ if [[ -z "$ONLY_TESTING_ARGS" ]]; then
     echo "  milestone2  - Run TokenExecutor fairness tests only (Checkpoint 2)"
     echo "  milestone3  - Run PTYTask dispatch source tests only (Checkpoint 3)"
     echo "  milestone4  - Run TaskNotifier dispatch source tests only (Checkpoint 4)"
+    echo "  milestone5  - Run Integration tests only (Checkpoint 5)"
     echo "  <classname> - Run tests matching class name"
     echo "  (no filter) - Run all fairness tests"
     echo ""
@@ -138,6 +155,11 @@ if [[ -z "$ONLY_TESTING_ARGS" ]]; then
     echo ""
     echo "Milestone 4 test classes (TaskNotifier):"
     for class in "${TASKNOTIFIER_TEST_CLASSES[@]}"; do
+        echo "  - $class"
+    done
+    echo ""
+    echo "Milestone 5 test classes (Integration):"
+    for class in "${INTEGRATION_TEST_CLASSES[@]}"; do
         echo "  - $class"
     done
     exit 1

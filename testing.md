@@ -10,7 +10,7 @@ This document specifies the tests required for the round-robin fair scheduling i
 | 2 | `TokenExecutorFairnessTests.swift` | **COMPLETE** | 8 | 24 |
 | 3 | `PTYTaskDispatchSourceTests.swift` | **COMPLETE** | 0 | 35 |
 | 4 | `TaskNotifierDispatchSourceTests.swift` | **COMPLETE** | 1 | 11 |
-| 5 | (Integration tests) | Not started | - | - |
+| 5 | `IntegrationTests.swift` | **TESTS WRITTEN** | 0 | 24 |
 
 **Note:** Milestone 3 tests are all skipped because the dispatch source infrastructure is in place but not yet activated. Tests will pass after Milestone 5 integration.
 
@@ -20,6 +20,7 @@ This document specifies the tests required for the round-robin fair scheduling i
 ./tools/run_fairness_tests.sh milestone2   # TokenExecutor only
 ./tools/run_fairness_tests.sh milestone3   # PTYTask dispatch sources only
 ./tools/run_fairness_tests.sh milestone4   # TaskNotifier dispatch sources only
+./tools/run_fairness_tests.sh milestone5   # Integration tests only
 ./tools/run_fairness_tests.sh              # All fairness tests
 ```
 
