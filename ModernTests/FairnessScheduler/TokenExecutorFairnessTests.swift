@@ -183,10 +183,13 @@ final class TokenExecutorAccountingTests: XCTestCase {
         executor.addTokens(vector, lengthTotal: 10, lengthExcludingInBandSignaling: 10)
         executor.schedule()
 
-        // Wait for backpressure to return to none after consumption
-        let backpressureCleared = waitForCondition({ self.executor.backpressureLevel == .none }, timeout: 1.0)
-        XCTAssertTrue(backpressureCleared,
-                      "Backpressure should return to none after consuming tokens")
+        // Drain main queue to let execution complete
+        for _ in 0..<5 {
+            waitForMainQueue()
+        }
+
+        XCTAssertEqual(executor.backpressureLevel, .none,
+                       "Backpressure should return to none after consuming tokens")
     }
 
     func testBackpressureReleaseHandlerCalled() throws {
@@ -630,6 +633,7 @@ final class TokenExecutorSchedulerEntryPointTests: XCTestCase {
         // Register executor with scheduler
         let sessionId = FairnessScheduler.shared.register(executor)
         executor.fairnessSessionId = sessionId
+        defer { FairnessScheduler.shared.unregister(sessionId: sessionId) }
 
         mockDelegate.shouldQueueTokens = false
 
@@ -639,12 +643,13 @@ final class TokenExecutorSchedulerEntryPointTests: XCTestCase {
         let vector = createTestTokenVector(count: 5)
         executor.addTokens(vector, lengthTotal: 50, lengthExcludingInBandSignaling: 50)
 
-        // Wait for execution to occur
-        let executed = waitForCondition({ self.mockDelegate.executedLengths.count > originalCount }, timeout: 1.0)
+        // Drain mutation queue to let execution complete
+        for _ in 0..<5 {
+            waitForMutationQueue()
+        }
 
-        FairnessScheduler.shared.unregister(sessionId: sessionId)
-
-        XCTAssertTrue(executed, "Adding tokens should notify scheduler and trigger execution")
+        XCTAssertGreaterThan(mockDelegate.executedLengths.count, originalCount,
+                             "Adding tokens should notify scheduler and trigger execution")
     }
 
     func testScheduleNotifiesScheduler() throws {
@@ -653,22 +658,30 @@ final class TokenExecutorSchedulerEntryPointTests: XCTestCase {
         // Register executor with scheduler
         let sessionId = FairnessScheduler.shared.register(executor)
         executor.fairnessSessionId = sessionId
+        defer { FairnessScheduler.shared.unregister(sessionId: sessionId) }
+
+        // Block execution initially
+        mockDelegate.shouldQueueTokens = true
 
         // Add tokens first
         let vector = createTestTokenVector(count: 5)
         executor.addTokens(vector, lengthTotal: 50, lengthExcludingInBandSignaling: 50)
 
+        waitForMutationQueue()
+
         let initialCount = mockDelegate.executedLengths.count
 
-        // Call schedule() - should notify scheduler
+        // Unblock and call schedule() - should notify scheduler
+        mockDelegate.shouldQueueTokens = false
         executor.schedule()
 
-        // Wait for execution to occur
-        let executed = waitForCondition({ self.mockDelegate.executedLengths.count > initialCount }, timeout: 1.0)
+        // Drain mutation queue to let execution complete
+        for _ in 0..<5 {
+            waitForMutationQueue()
+        }
 
-        FairnessScheduler.shared.unregister(sessionId: sessionId)
-
-        XCTAssertTrue(executed, "schedule() should trigger execution via scheduler")
+        XCTAssertGreaterThan(mockDelegate.executedLengths.count, initialCount,
+                             "schedule() should trigger execution via scheduler")
     }
 
     func testScheduleHighPriorityTaskNotifiesScheduler() throws {
@@ -677,18 +690,19 @@ final class TokenExecutorSchedulerEntryPointTests: XCTestCase {
         // Register executor with scheduler
         let sessionId = FairnessScheduler.shared.register(executor)
         executor.fairnessSessionId = sessionId
+        defer { FairnessScheduler.shared.unregister(sessionId: sessionId) }
 
         var taskExecuted = false
         executor.scheduleHighPriorityTask {
             taskExecuted = true
         }
 
-        // Wait for task execution
-        let executed = waitForCondition({ taskExecuted }, timeout: 1.0)
+        // Drain mutation queue to let execution complete
+        for _ in 0..<5 {
+            waitForMutationQueue()
+        }
 
-        FairnessScheduler.shared.unregister(sessionId: sessionId)
-
-        XCTAssertTrue(executed, "scheduleHighPriorityTask should notify scheduler and execute")
+        XCTAssertTrue(taskExecuted, "scheduleHighPriorityTask should notify scheduler and execute")
     }
 
     // NEGATIVE TEST: No duplicate notifications for already-busy session
@@ -698,6 +712,7 @@ final class TokenExecutorSchedulerEntryPointTests: XCTestCase {
         // Register executor with scheduler
         let sessionId = FairnessScheduler.shared.register(executor)
         executor.fairnessSessionId = sessionId
+        defer { FairnessScheduler.shared.unregister(sessionId: sessionId) }
 
         mockDelegate.shouldQueueTokens = false
 
@@ -707,19 +722,16 @@ final class TokenExecutorSchedulerEntryPointTests: XCTestCase {
             executor.addTokens(vector, lengthTotal: 10, lengthExcludingInBandSignaling: 10)
         }
 
-        // Wait for all tokens to be processed
-        let allProcessed = waitForCondition({ self.mockDelegate.executedLengths.count >= 1 }, timeout: 1.0)
-        XCTAssertTrue(allProcessed, "Tokens should be processed")
-
-        // Flush mutation queue to ensure all scheduler operations complete
-        waitForMutationQueue()
+        // Drain mutation queue to let all tokens be processed
+        for _ in 0..<10 {
+            waitForMutationQueue()
+        }
 
         let executionCount = mockDelegate.executedLengths.count
 
-        FairnessScheduler.shared.unregister(sessionId: sessionId)
-
-        // Should have processed but not created duplicate busy list entries
+        // Should have processed tokens but not created duplicate busy list entries
         // (verified by not having 5x the expected executions)
+        XCTAssertGreaterThan(executionCount, 0, "Tokens should be processed")
         XCTAssertLessThanOrEqual(executionCount, 5, "Should not create duplicate busy list entries")
     }
 
@@ -735,6 +747,8 @@ final class TokenExecutorSchedulerEntryPointTests: XCTestCase {
         // Register executor with scheduler
         let sessionId = FairnessScheduler.shared.register(executor)
         executor.fairnessSessionId = sessionId
+        defer { FairnessScheduler.shared.unregister(sessionId: sessionId) }
+
         mockDelegate.shouldQueueTokens = false
 
         let initialExecuteCount = mockDelegate.executedLengths.count
@@ -745,13 +759,13 @@ final class TokenExecutorSchedulerEntryPointTests: XCTestCase {
             self.executor.addTokens(vector, lengthTotal: 10, lengthExcludingInBandSignaling: 10, highPriority: true)
         }
 
-        // Wait for execution to occur
-        let executed = waitForCondition({ self.mockDelegate.executedLengths.count > initialExecuteCount }, timeout: 1.0)
+        // Drain mutation queue to let execution complete
+        for _ in 0..<5 {
+            waitForMutationQueue()
+        }
 
-        FairnessScheduler.shared.unregister(sessionId: sessionId)
-
-        XCTAssertTrue(executed,
-                      "High-priority tokens added from mutation queue should trigger execution")
+        XCTAssertGreaterThan(mockDelegate.executedLengths.count, initialExecuteCount,
+                             "High-priority tokens added from mutation queue should trigger execution")
     }
 
     func testHighPriorityTokensNotifySchedulerSynchronously() throws {
@@ -762,6 +776,8 @@ final class TokenExecutorSchedulerEntryPointTests: XCTestCase {
         // Register executor with scheduler
         let sessionId = FairnessScheduler.shared.register(executor)
         executor.fairnessSessionId = sessionId
+        defer { FairnessScheduler.shared.unregister(sessionId: sessionId) }
+
         mockDelegate.shouldQueueTokens = false
 
         var executionOccurred = false
@@ -775,12 +791,12 @@ final class TokenExecutorSchedulerEntryPointTests: XCTestCase {
             self.executor.addTokens(vector, lengthTotal: 10, lengthExcludingInBandSignaling: 10, highPriority: true)
         }
 
-        // Wait for execution to occur via onWillExecute callback
-        let executed = waitForCondition({ executionOccurred }, timeout: 2.0)
+        // Drain mutation queue to let execution complete
+        for _ in 0..<5 {
+            waitForMutationQueue()
+        }
 
-        FairnessScheduler.shared.unregister(sessionId: sessionId)
-
-        XCTAssertTrue(executed,
+        XCTAssertTrue(executionOccurred,
                       "High-priority tokens should trigger execution via scheduler")
     }
 }
@@ -900,10 +916,13 @@ final class TokenExecutorLegacyRemovalTests: XCTestCase {
         let vector = createTestTokenVector(count: 5)
         executor.addTokens(vector, lengthTotal: 50, lengthExcludingInBandSignaling: 50)
 
-        // Wait for execution to occur
-        let executed = waitForCondition({ self.mockDelegate.executedLengths.count > 0 }, timeout: 1.0)
+        // Drain mutation queue to let execution complete
+        for _ in 0..<5 {
+            waitForMutationQueue()
+        }
 
-        XCTAssertTrue(executed, "Background session should process tokens")
+        XCTAssertGreaterThan(mockDelegate.executedLengths.count, 0,
+                             "Background session should process tokens")
 
         // Clean up
         FairnessScheduler.shared.unregister(sessionId: sessionId)
@@ -1087,9 +1106,13 @@ final class TokenExecutorCleanupTests: XCTestCase {
         executor.addTokens(vector, lengthTotal: 50, lengthExcludingInBandSignaling: 50)
         executor.schedule()
 
-        // Wait for tokens to be consumed (backpressure returns to none)
-        let consumed = waitForCondition({ executor.backpressureLevel == .none }, timeout: 1.0)
-        XCTAssertTrue(consumed, "Tokens should be consumed")
+        // Drain main queue to let tokens be consumed
+        for _ in 0..<5 {
+            waitForMainQueue()
+        }
+
+        XCTAssertEqual(executor.backpressureLevel, .none,
+                       "Tokens should be consumed (backpressure none)")
 
         // Now cleanup - should not over-increment
         executor.cleanupForUnregistration()
@@ -1207,9 +1230,13 @@ final class TokenExecutorAccountingInvariantTests: XCTestCase {
         executor.addTokens(vector, lengthTotal: 50, lengthExcludingInBandSignaling: 50)
         executor.schedule()
 
-        // Wait for backpressure to return to none
-        let processed = waitForCondition({ executor.backpressureLevel == .none }, timeout: 1.0)
-        XCTAssertTrue(processed, "Backpressure should return to none after processing")
+        // Drain main queue to let processing complete
+        for _ in 0..<5 {
+            waitForMainQueue()
+        }
+
+        XCTAssertEqual(executor.backpressureLevel, .none,
+                       "Backpressure should return to none after processing")
     }
 
     // NEGATIVE TEST: Accounting should NEVER drift over multiple cycles
@@ -1229,9 +1256,12 @@ final class TokenExecutorAccountingInvariantTests: XCTestCase {
             executor.addTokens(vector, lengthTotal: 30, lengthExcludingInBandSignaling: 30)
             executor.schedule()
 
-            // Wait for processing to complete for this cycle
-            let cycleComplete = waitForCondition({ executor.backpressureLevel == .none }, timeout: 1.0)
-            XCTAssertTrue(cycleComplete, "Cycle should complete")
+            // Drain mutation queue to let processing complete for this cycle
+            for _ in 0..<5 {
+                waitForMutationQueue()
+            }
+            XCTAssertEqual(executor.backpressureLevel, .none,
+                           "Cycle should complete with no backpressure")
         }
 
         // Final check - backpressure should be none after all cycles
