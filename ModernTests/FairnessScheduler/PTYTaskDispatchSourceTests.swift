@@ -537,15 +537,15 @@ final class PTYTaskEventHandlerTests: XCTestCase {
         // Now call writeBufferDidChange to trigger the write source resume
         task.perform(NSSelectorFromString("writeBufferDidChange"))
         task.testWaitForIOQueue()
-        // Additional small delay for dispatch source to fire (source firing is async from kernel)
-        Thread.sleep(forTimeInterval: 0.02)
 
-        // After the wait, the write source likely fired and drained the buffer.
-        // This is CORRECT behavior - the mechanism worked! The buffer was written.
-        // We verify the mechanism worked by checking that the buffer is now empty
-        // (meaning the write completed successfully).
-        XCTAssertFalse(task.testWriteBufferHasData,
-                       "Write buffer should be drained after write source fires")
+        // Wait for the dispatch source to fire and drain the buffer.
+        // Using waitForCondition is more robust than Thread.sleep as it:
+        // 1. Returns immediately if condition is met
+        // 2. Handles variable system load gracefully
+        // 3. Makes the expected condition explicit
+        let bufferDrained = waitForCondition({ !task.testWriteBufferHasData }, timeout: 1.0)
+        XCTAssertTrue(bufferDrained,
+                      "Write buffer should be drained after write source fires")
 
         // Reset override
         task.testShouldWriteOverride = false
@@ -605,13 +605,12 @@ final class PTYTaskEventHandlerTests: XCTestCase {
         // Trigger write buffer change notification - this will resume write source
         task.perform(NSSelectorFromString("writeBufferDidChange"))
         task.testWaitForIOQueue()
-        // Additional small delay for dispatch source to fire
-        Thread.sleep(forTimeInterval: 0.02)
 
-        // After the notification and wait, the write source resumed, fired, and drained buffer.
-        // This is correct behavior - verify the write completed by checking buffer is empty.
-        XCTAssertFalse(task.testWriteBufferHasData,
-                       "Buffer should be drained after write source fires (write completed)")
+        // Wait for the dispatch source to fire and drain the buffer.
+        // Using waitForCondition is more robust than Thread.sleep.
+        let bufferDrained = waitForCondition({ !task.testWriteBufferHasData }, timeout: 1.0)
+        XCTAssertTrue(bufferDrained,
+                      "Buffer should be drained after write source fires (write completed)")
 
         // Reset override
         task.testShouldWriteOverride = false
@@ -674,14 +673,12 @@ final class PTYTaskEventHandlerTests: XCTestCase {
         task.paused = false
         task.perform(NSSelectorFromString("updateWriteSourceState"))
         task.testWaitForIOQueue()
-        // Additional small delay for dispatch source to fire
-        Thread.sleep(forTimeInterval: 0.02)
 
-        // After unpause, shouldWrite was true briefly (data + not paused + override),
-        // so write source resumed, fired, and drained the buffer.
-        // Verify the write completed by checking buffer is empty.
-        XCTAssertFalse(task.testWriteBufferHasData,
-                       "Buffer should be drained after unpause triggers write")
+        // Wait for the dispatch source to fire and drain the buffer after unpause.
+        // Using waitForCondition is more robust than Thread.sleep.
+        let bufferDrained = waitForCondition({ !task.testWriteBufferHasData }, timeout: 1.0)
+        XCTAssertTrue(bufferDrained,
+                      "Buffer should be drained after unpause triggers write")
 
         // Reset override
         task.testShouldWriteOverride = false
