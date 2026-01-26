@@ -178,3 +178,61 @@ class FairnessScheduler: NSObject {
         ensureExecutionScheduled()
     }
 }
+
+// MARK: - Testing Hooks
+
+#if ITERM_DEBUG
+extension FairnessScheduler {
+    /// Test-only: Returns whether a session ID is currently registered.
+    /// Must be called from mutationQueue or uses sync dispatch.
+    @objc func testIsSessionRegistered(_ sessionId: SessionID) -> Bool {
+        return iTermGCD.mutationQueue().sync {
+            return sessions[sessionId] != nil
+        }
+    }
+
+    /// Test-only: Returns the count of sessions in the busy list.
+    @objc var testBusySessionCount: Int {
+        return iTermGCD.mutationQueue().sync {
+            return busyList.count
+        }
+    }
+
+    /// Test-only: Returns the total count of registered sessions.
+    @objc var testRegisteredSessionCount: Int {
+        return iTermGCD.mutationQueue().sync {
+            return sessions.count
+        }
+    }
+
+    /// Test-only: Returns whether a session is currently in the busy list.
+    @objc func testIsSessionInBusyList(_ sessionId: SessionID) -> Bool {
+        return iTermGCD.mutationQueue().sync {
+            return busySet.contains(sessionId)
+        }
+    }
+
+    /// Test-only: Returns whether a session is currently executing.
+    @objc func testIsSessionExecuting(_ sessionId: SessionID) -> Bool {
+        return iTermGCD.mutationQueue().sync {
+            return sessions[sessionId]?.isExecuting ?? false
+        }
+    }
+
+    /// Test-only: Reset state for clean test runs.
+    /// WARNING: Only call this in test teardown, never in production.
+    @objc func testReset() {
+        iTermGCD.mutationQueue().sync {
+            // Call cleanup on all registered executors
+            for state in sessions.values {
+                state.executor?.cleanupForUnregistration()
+            }
+            sessions.removeAll()
+            busyList.removeAll()
+            busySet.removeAll()
+            executionScheduled = false
+            nextSessionId = 0
+        }
+    }
+}
+#endif

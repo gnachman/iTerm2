@@ -1,4 +1,4 @@
-prefix=/Users/gnachman/git/iterm2-alt/ThirdParty/libsixel-x86
+prefix=/Users/hall/Development/iTerm2-fairness-scheduler/ThirdParty/libsixel-x86
 exec_prefix=${prefix}
 libdir=${exec_prefix}/lib
 includedir=${prefix}/include

@@ -257,3 +257,26 @@ typedef NS_OPTIONS(NSUInteger, iTermJobManagerAttachResults) {
                                                        queue:(dispatch_queue_t)queue;
 
 @end
+
+#if ITERM_DEBUG
+// Test-only interface for verifying dispatch source state in unit tests.
+// These accessors provide visibility into private ivar state for testing
+// dispatch source lifecycle, suspend/resume transitions, and teardown.
+@interface PTYTask (Testing)
+
+/// Returns YES if a read dispatch source has been created.
+@property(nonatomic, readonly) BOOL testHasReadSource;
+
+/// Returns YES if a write dispatch source has been created.
+@property(nonatomic, readonly) BOOL testHasWriteSource;
+
+/// Returns YES if the read source is currently suspended.
+/// Only meaningful if testHasReadSource is YES.
+@property(nonatomic, readonly) BOOL testIsReadSourceSuspended;
+
+/// Returns YES if the write source is currently suspended.
+/// Only meaningful if testHasWriteSource is YES.
+@property(nonatomic, readonly) BOOL testIsWriteSourceSuspended;
+
+@end
+#endif

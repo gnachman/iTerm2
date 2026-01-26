@@ -2816,6 +2816,8 @@
 		A693C0BF29D0B1F100AED4E4 /* MemoryAddressHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = A693C0BE29D0B1F100AED4E4 /* MemoryAddressHelper.swift */; };
 		A69553892DD1AA7F002E694D /* TokenArray.swift in Sources */ = {isa = PBXBuildFile; fileRef = A69553882DD1AA7B002E694D /* TokenArray.swift */; };
 		3BB35CCF037D48AB2C479283 /* FairnessScheduler.swift in Sources */ = {isa = PBXBuildFile; fileRef = EF9D9FE0E680CEC64728F3AE /* FairnessScheduler.swift */; };
+		MOCK0001TEST00M200000001 /* MockTaskNotifierTask.m in Sources */ = {isa = PBXBuildFile; fileRef = MOCK0002TEST00M100000002 /* MockTaskNotifierTask.m */; };
+		MOCK0003TEST00S200000003 /* MockTaskNotifierTask+Swift.swift in Sources */ = {isa = PBXBuildFile; fileRef = MOCK0004TEST00S100000004 /* MockTaskNotifierTask+Swift.swift */; };
 		A695CA7F213DAA8500486440 /* NSHost+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = A695CA7D213DAA8500486440 /* NSHost+iTerm.h */; };
 		A695CA80213DAA8500486440 /* NSHost+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = A695CA7E213DAA8500486440 /* NSHost+iTerm.m */; };
 		A697100618D82E79007E901D /* iTermAdvancedSettingsViewController.h in Headers */ = {isa = PBXBuildFile; fileRef = A697100418D82E79007E901D /* iTermAdvancedSettingsViewController.h */; };
@@ -7728,6 +7730,9 @@
 		A693C0BE29D0B1F100AED4E4 /* MemoryAddressHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MemoryAddressHelper.swift; sourceTree = "<group>"; };
 		A69553882DD1AA7B002E694D /* TokenArray.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TokenArray.swift; sourceTree = "<group>"; };
 		EF9D9FE0E680CEC64728F3AE /* FairnessScheduler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FairnessScheduler.swift; sourceTree = "<group>"; };
+		MOCK0000TEST00H100000000 /* MockTaskNotifierTask.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MockTaskNotifierTask.h; sourceTree = "<group>"; };
+		MOCK0002TEST00M100000002 /* MockTaskNotifierTask.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = MockTaskNotifierTask.m; sourceTree = "<group>"; };
+		MOCK0004TEST00S100000004 /* MockTaskNotifierTask+Swift.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "MockTaskNotifierTask+Swift.swift"; sourceTree = "<group>"; };
 		A695CA7D213DAA8500486440 /* NSHost+iTerm.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "NSHost+iTerm.h"; sourceTree = "<group>"; };
 		A695CA7E213DAA8500486440 /* NSHost+iTerm.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "NSHost+iTerm.m"; sourceTree = "<group>"; };
 		A696AB3921603A3F000023C3 /* iTermMetalUnavailableReason.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermMetalUnavailableReason.h; sourceTree = "<group>"; };
@@ -11471,6 +11476,9 @@
 				A6F7D4CE2E038B540065D09C /* PTYSession+Browser.swift */,
 				A69553882DD1AA7B002E694D /* TokenArray.swift */,
 				EF9D9FE0E680CEC64728F3AE /* FairnessScheduler.swift */,
+				MOCK0000TEST00H100000000 /* MockTaskNotifierTask.h */,
+				MOCK0002TEST00M100000002 /* MockTaskNotifierTask.m */,
+				MOCK0004TEST00S100000004 /* MockTaskNotifierTask+Swift.swift */,
 				A6C811F82DD1A7850088E628 /* TwoTierTokenQueue.swift */,
 				A697CD702D973E370031583F /* iTermApplicationDelegate.swift */,
 				A61E0C4F2D5ACD4C00D4633A /* PTYSession.swift */,
@@ -18632,6 +18640,8 @@
 				A667C26027791223006B4DEF /* PTYAnnotation.m in Sources */,
 				A69553892DD1AA7F002E694D /* TokenArray.swift in Sources */,
 				3BB35CCF037D48AB2C479283 /* FairnessScheduler.swift in Sources */,
+				MOCK0001TEST00M200000001 /* MockTaskNotifierTask.m in Sources */,
+				MOCK0003TEST00S200000003 /* MockTaskNotifierTask+Swift.swift in Sources */,
 				A653F6BB24D4C9B50062377E /* iTermKeyLabels.m in Sources */,
 				A6EC0B0F2C9C9AA800598D20 /* FoldMark.swift in Sources */,
 				A6A3EDC62E0CDA9D00D711DA /* iTermBrowserActionPerforming.swift in Sources */,
@@ -23648,6 +23658,7 @@
 				GCC_OPTIMIZATION_LEVEL = 0;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"DEBUG=1",
+					"ITERM_DEBUG=1",
 					"$(inherited)",
 				);
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
@@ -23666,7 +23677,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.iterm2.ModernTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
-				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG ITERM_DEBUG $(inherited)";
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;
@@ -23731,6 +23742,10 @@
 				);
 				GCC_C_LANGUAGE_STANDARD = gnu17;
 				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"ITERM_DEBUG=1",
+					"$(inherited)",
+				);
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
 				GCC_WARN_UNDECLARED_SELECTOR = YES;
@@ -23746,6 +23761,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.iterm2.ModernTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "ITERM_DEBUG $(inherited)";
 				SWIFT_COMPILATION_MODE = wholemodule;
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_VERSION = 5.0;
@@ -23810,6 +23826,10 @@
 				);
 				GCC_C_LANGUAGE_STANDARD = gnu17;
 				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"ITERM_DEBUG=1",
+					"$(inherited)",
+				);
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
 				GCC_WARN_UNDECLARED_SELECTOR = YES;
@@ -23825,6 +23845,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.iterm2.ModernTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "ITERM_DEBUG $(inherited)";
 				SWIFT_COMPILATION_MODE = wholemodule;
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_VERSION = 5.0;
@@ -23889,6 +23910,10 @@
 				);
 				GCC_C_LANGUAGE_STANDARD = gnu17;
 				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"ITERM_DEBUG=1",
+					"$(inherited)",
+				);
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
 				GCC_WARN_UNDECLARED_SELECTOR = YES;
@@ -23904,6 +23929,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.iterm2.ModernTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "ITERM_DEBUG $(inherited)";
 				SWIFT_COMPILATION_MODE = wholemodule;
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_VERSION = 5.0;

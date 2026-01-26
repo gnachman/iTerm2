@@ -14,20 +14,6 @@
 import XCTest
 @testable import iTerm2SharedARC
 
-// MARK: - Test Helpers
-
-/// Creates a CVector containing the specified number of simple tokens.
-private func createTestTokenVector(count: Int) -> CVector {
-    var vector = CVector()
-    CVectorCreate(&vector, Int32(max(count, 1)))
-    for _ in 0..<count {
-        let token = VT100Token()
-        token.type = VT100_UNKNOWNCHAR
-        CVectorAppendVT100Token(&vector, token)
-    }
-    return vector
-}
-
 // MARK: - Mock Delegate
 
 /// Mock implementation of TokenExecutorDelegate for testing.

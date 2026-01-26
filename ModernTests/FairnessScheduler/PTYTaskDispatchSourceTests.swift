@@ -73,14 +73,25 @@ final class PTYTaskDispatchSourceLifecycleTests: XCTestCase {
             return
         }
 
+        #if ITERM_DEBUG
+        // Verify no sources exist before teardown
+        XCTAssertFalse(task.testHasReadSource, "No read source should exist before setup")
+        XCTAssertFalse(task.testHasWriteSource, "No write source should exist before setup")
+        #endif
+
         // This should not crash - sources were never created
         let selector = NSSelectorFromString("teardownDispatchSources")
         if task.responds(to: selector) {
             task.perform(selector)
         }
 
-        // If we get here without crashing, test passes
-        XCTAssertNotNil(task)
+        #if ITERM_DEBUG
+        // Verify state remains valid after teardown
+        XCTAssertFalse(task.testHasReadSource, "No read source after teardown on fresh task")
+        XCTAssertFalse(task.testHasWriteSource, "No write source after teardown on fresh task")
+        #endif
+
+        XCTAssertNotNil(task, "Task should remain valid after teardown")
     }
 
     func testMultipleTeardownCallsSafe() {
@@ -92,15 +103,25 @@ final class PTYTaskDispatchSourceLifecycleTests: XCTestCase {
         }
 
         let selector = NSSelectorFromString("teardownDispatchSources")
-        if task.responds(to: selector) {
-            // Call teardown multiple times
-            task.perform(selector)
-            task.perform(selector)
-            task.perform(selector)
+        guard task.responds(to: selector) else {
+            XCTFail("PTYTask should respond to teardownDispatchSources")
+            return
         }
 
-        // If we get here without crashing, test passes
-        XCTAssertNotNil(task)
+        // Call teardown multiple times - should be idempotent
+        for i in 0..<5 {
+            task.perform(selector)
+
+            #if ITERM_DEBUG
+            // After each teardown, state should be consistent
+            XCTAssertFalse(task.testHasReadSource,
+                           "No read source after teardown \(i)")
+            XCTAssertFalse(task.testHasWriteSource,
+                           "No write source after teardown \(i)")
+            #endif
+        }
+
+        XCTAssertNotNil(task, "Task should remain valid after multiple teardowns")
     }
 }
 
@@ -191,13 +212,30 @@ final class PTYTaskReadStateTests: XCTestCase {
             return
         }
 
+        #if ITERM_DEBUG
+        // Before update, no sources exist
+        XCTAssertFalse(task.testHasReadSource, "No read source before update")
+        #endif
+
         // This should not crash even though sources don't exist
         let selector = NSSelectorFromString("updateReadSourceState")
-        if task.responds(to: selector) {
+        guard task.responds(to: selector) else {
+            XCTFail("PTYTask should respond to updateReadSourceState")
+            return
+        }
+
+        // Call multiple times - should be no-op without sources
+        for _ in 0..<3 {
             task.perform(selector)
         }
 
-        XCTAssertNotNil(task, "updateReadSourceState should be safe without sources")
+        #if ITERM_DEBUG
+        // State should remain unchanged - no source created
+        XCTAssertFalse(task.testHasReadSource,
+                       "updateReadSourceState should not create source")
+        #endif
+
+        XCTAssertNotNil(task, "Task should remain valid after updateReadSourceState")
     }
 }
 
@@ -274,12 +312,29 @@ final class PTYTaskWriteStateTests: XCTestCase {
             return
         }
 
+        #if ITERM_DEBUG
+        // Before update, no sources exist
+        XCTAssertFalse(task.testHasWriteSource, "No write source before update")
+        #endif
+
         let selector = NSSelectorFromString("updateWriteSourceState")
-        if task.responds(to: selector) {
+        guard task.responds(to: selector) else {
+            XCTFail("PTYTask should respond to updateWriteSourceState")
+            return
+        }
+
+        // Call multiple times - should be no-op without sources
+        for _ in 0..<3 {
             task.perform(selector)
         }
 
-        XCTAssertNotNil(task, "updateWriteSourceState should be safe without sources")
+        #if ITERM_DEBUG
+        // State should remain unchanged - no source created
+        XCTAssertFalse(task.testHasWriteSource,
+                       "updateWriteSourceState should not create source")
+        #endif
+
+        XCTAssertNotNil(task, "Task should remain valid after updateWriteSourceState")
     }
 }
 
@@ -592,15 +647,30 @@ final class PTYTaskStateTransitionTests: XCTestCase {
         let readSelector = NSSelectorFromString("updateReadSourceState")
         let writeSelector = NSSelectorFromString("updateWriteSourceState")
 
-        // Call update methods multiple times - should not crash
-        for _ in 0..<10 {
-            if task.responds(to: readSelector) {
-                task.perform(readSelector)
-            }
-            if task.responds(to: writeSelector) {
-                task.perform(writeSelector)
-            }
+        guard task.responds(to: readSelector) && task.responds(to: writeSelector) else {
+            XCTFail("PTYTask should respond to update methods")
+            return
         }
+
+        #if ITERM_DEBUG
+        // Record initial state
+        let initialHasReadSource = task.testHasReadSource
+        let initialHasWriteSource = task.testHasWriteSource
+        #endif
+
+        // Call update methods many times - should be idempotent
+        for _ in 0..<20 {
+            task.perform(readSelector)
+            task.perform(writeSelector)
+        }
+
+        #if ITERM_DEBUG
+        // State should be unchanged after idempotent calls
+        XCTAssertEqual(task.testHasReadSource, initialHasReadSource,
+                       "Read source state should remain stable")
+        XCTAssertEqual(task.testHasWriteSource, initialHasWriteSource,
+                       "Write source state should remain stable")
+        #endif
 
         XCTAssertNotNil(task, "Multiple update calls should be safe")
     }
@@ -639,17 +709,46 @@ final class PTYTaskEdgeCaseTests: XCTestCase {
 
         // Ensure delegate is nil
         task.delegate = nil
+        XCTAssertNil(task.delegate, "Delegate should be nil for this test")
 
         // Operations should not crash with nil delegate
         task.paused = true
-        task.paused = false
+        XCTAssertTrue(task.paused, "Pause should work with nil delegate")
 
+        task.paused = false
+        XCTAssertFalse(task.paused, "Unpause should work with nil delegate")
+
+        // Verify shouldRead/shouldWrite don't crash with nil delegate
+        if let shouldRead = task.value(forKey: "shouldRead") as? Bool {
+            // With nil delegate and no job manager, shouldRead is likely false
+            // The important thing is it didn't crash
+            XCTAssertFalse(shouldRead, "shouldRead should be false without job manager")
+        }
+
+        if let shouldWrite = task.value(forKey: "shouldWrite") as? Bool {
+            // With nil delegate and no buffer, shouldWrite should be false
+            XCTAssertFalse(shouldWrite, "shouldWrite should be false without job manager")
+        }
+
+        // Update methods should be safe with nil delegate
         let readSelector = NSSelectorFromString("updateReadSourceState")
+        let writeSelector = NSSelectorFromString("updateWriteSourceState")
+
         if task.responds(to: readSelector) {
             task.perform(readSelector)
         }
+        if task.responds(to: writeSelector) {
+            task.perform(writeSelector)
+        }
 
-        XCTAssertNotNil(task, "Operations should be safe with nil delegate")
+        #if ITERM_DEBUG
+        // State should be valid after operations
+        // No sources should have been created (no valid fd)
+        XCTAssertFalse(task.testHasReadSource, "No read source with nil delegate")
+        XCTAssertFalse(task.testHasWriteSource, "No write source with nil delegate")
+        #endif
+
+        XCTAssertNotNil(task, "Task should remain valid with nil delegate")
     }
 
     func testConcurrentPauseChanges() {

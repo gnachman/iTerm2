@@ -1125,3 +1125,25 @@ static void HandleSigChld(int n) {
 }
 
 @end
+
+#if ITERM_DEBUG
+@implementation PTYTask (Testing)
+
+- (BOOL)testHasReadSource {
+    return _readSource != nil;
+}
+
+- (BOOL)testHasWriteSource {
+    return _writeSource != nil;
+}
+
+- (BOOL)testIsReadSourceSuspended {
+    return _readSourceSuspended;
+}
+
+- (BOOL)testIsWriteSourceSuspended {
+    return _writeSourceSuspended;
+}
+
+@end
+#endif
