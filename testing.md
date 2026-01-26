@@ -454,3 +454,30 @@ These tests verify the critical `availableSlots` accounting never drifts.
 - Use real components with test harness
 - Instrument with timing measurements
 - Use dedicated test sessions/terminals
+
+---
+
+## Test Implementation Note
+
+**TDD approach** - Write tests first, then implement to make them pass. Benefits:
+1. Forces interface design - Test skeletons establish the API before implementation
+2. Catches edge cases early - Writing tests surfaces scenarios you might miss while coding
+3. Regression baseline - Can verify existing TokenExecutor behavior before modifying it
+
+### Test-First Viability by Component
+
+| Component | Test-first viable? | Why |
+|-----------|-------------------|-----|
+| FairnessScheduler | Yes | New class, isolated, behavior well-defined |
+| TokenExecutor accounting invariants | Yes | Can test existing accounting before changes |
+| PTYTask dispatch sources | Partially | Need stubs for dispatch_source mocking |
+| TaskNotifier changes | Not really | Integration-heavy, hard to unit test |
+
+### Recommended Implementation Order
+
+1. ~~Create `FairnessSchedulerTests` with mocked `TokenExecutor`~~ **DONE**
+2. ~~Write tests for registration, busy list management, round-robin ordering~~ **DONE** (18 tests)
+3. Implement `FairnessScheduler` to pass those tests
+4. Then proceed to TokenExecutor modifications
+
+**Current status:** Test infrastructure complete. All 18 Phase 1 tests fail against stub implementation. Run with `./tools/run_fairness_tests.sh phase1`
