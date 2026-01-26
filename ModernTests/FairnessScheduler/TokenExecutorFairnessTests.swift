@@ -1903,6 +1903,13 @@ final class TokenExecutorAvailableSlotsBoundaryTests: XCTestCase {
 
     func testConcurrentAddAndConsumeDoesNotCorruptSlots() {
         // REQUIREMENT: Concurrent add and consume operations must not corrupt availableSlots.
+        //
+        // NOTE: During operation, availableSlots CAN go negative by design:
+        // - High-priority tokens bypass backpressure and can overdraw slots
+        // - This test calls addTokens directly, bypassing PTYTask's backpressure gate
+        //
+        // The invariant we verify: after unregister (which calls cleanupForUnregistration),
+        // slots must return to totalSlots (balanced accounting, no drift).
 
         let executor = TokenExecutor(
             mockTerminal,
@@ -1960,24 +1967,27 @@ final class TokenExecutorAvailableSlotsBoundaryTests: XCTestCase {
         waitForMutationQueue()
         waitForMainQueue()
 
+        // Unregister calls cleanupForUnregistration which discards remaining tokens
+        // and restores their slots
         FairnessScheduler.shared.unregister(sessionId: sessionId)
 
+        // Wait for cleanup to complete (unregister dispatches async to mutation queue)
+        waitForMutationQueue()
+
         #if ITERM_DEBUG
-        // Verify slots are within valid range (not corrupted)
+        // After cleanup, slots should return to totalSlots (balanced accounting)
+        // This verifies no drift/corruption from concurrent operations
         let finalSlots = executor.testAvailableSlots
-        XCTAssertGreaterThanOrEqual(finalSlots, 0,
-                                    "availableSlots must never go negative (got \(finalSlots))")
-        XCTAssertLessThanOrEqual(finalSlots, totalSlots,
-                                 "availableSlots must not exceed totalSlots (got \(finalSlots), max \(totalSlots))")
+        XCTAssertEqual(finalSlots, totalSlots,
+                       "After cleanup, availableSlots should return to totalSlots " +
+                       "(got \(finalSlots), expected \(totalSlots)). " +
+                       "A mismatch indicates accounting corruption from concurrent ops.")
         #endif
 
-        // Slots should be consistent - verify via backpressure
+        // Verify backpressure is consistent with slots (should be .none after cleanup)
         let finalLevel = executor.backpressureLevel
-        // After concurrent ops, we may have some pending tokens or be fully processed
-        // The key invariant is that the level must be valid and consistent with slots
-        XCTAssertTrue(finalLevel.rawValue >= BackpressureLevel.none.rawValue &&
-                      finalLevel.rawValue <= BackpressureLevel.blocked.rawValue,
-                      "Final backpressure must be a valid level")
+        XCTAssertEqual(finalLevel, .none,
+                       "Backpressure should be .none after cleanup restores all slots")
     }
 
     func testCleanupDoesNotOverflowSlots() {
