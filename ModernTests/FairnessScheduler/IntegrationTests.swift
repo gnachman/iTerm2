@@ -1096,17 +1096,21 @@ final class IntegrationDispatchSourceActivationTests: XCTestCase {
     }
 
     func testBackpressureHandlerCalledOnBackpressureRelease() throws {
-        // REQUIREMENT: backpressureReleaseHandler wired from TokenExecutor to PTYTask
-        // When backpressure is released, the handler should be called to update read state
+        // REQUIREMENT: backpressureReleaseHandler is called when transitioning from
+        // heavy backpressure to non-heavy during token consumption.
         //
-        // This test verifies the wiring pattern that PTYSession.taskDidRegister establishes:
-        // - PTYTask.tokenExecutor is set to the TokenExecutor
-        // - TokenExecutor.backpressureReleaseHandler calls [PTYTask updateReadSourceState]
+        // The handler is called in TokenExecutor.onConsumed when:
+        //   availableSlots > 0 && backpressureLevel < .heavy
         //
-        // The actual handler callback is tested by verifying:
-        // 1. The handler property can be set
-        // 2. Consuming tokens triggers the callback (via onConsumed in TokenArray)
+        // Test design:
+        // 1. Drive executor to heavy backpressure (>75% slots consumed)
+        // 2. Set up handler to track calls
+        // 3. Consume tokens via execution (scheduler turns)
+        // 4. Verify handler was called when crossing out of heavy
 
+        try XCTSkipUnless(isDebugBuild, "Test requires ITERM_DEBUG hooks")
+
+        #if ITERM_DEBUG
         let terminal = VT100Terminal()
         let executor = TokenExecutor(terminal, slownessDetector: SlownessDetector(), queue: iTermGCD.mutationQueue())
         let delegate = MockTokenExecutorDelegate()
@@ -1114,53 +1118,62 @@ final class IntegrationDispatchSourceActivationTests: XCTestCase {
 
         let sessionId = FairnessScheduler.shared.register(executor)
         executor.fairnessSessionId = sessionId
-
-        // Set up handler to track calls
-        var handlerCallCount = 0
-        let handlerLock = NSLock()
-        executor.backpressureReleaseHandler = {
-            handlerLock.lock()
-            handlerCallCount += 1
-            handlerLock.unlock()
+        defer {
+            FairnessScheduler.shared.unregister(sessionId: sessionId)
+            waitForMutationQueue()
         }
 
-        // Verify the handler is set
-        XCTAssertNotNil(executor.backpressureReleaseHandler,
-                        "backpressureReleaseHandler should be settable")
+        // Get total slots to calculate how many tokens needed for heavy backpressure
+        let totalSlots = executor.testTotalSlots
+        // Heavy = < 25% available, so consume > 75% of slots
+        let tokensForHeavy = Int(Double(totalSlots) * 0.80)
 
-        // Add a single token array and verify the wiring works when tokens are consumed
-        // (The actual callback happens when onSemaphoreSignaled is called after TokenArray consumption)
-        var vector = CVector()
-        CVectorCreate(&vector, 1)
-        let token = VT100Token()
-        token.type = VT100_UNKNOWNCHAR
-        CVectorAppendVT100Token(&vector, token)
-        executor.addTokens(vector, lengthTotal: 10, lengthExcludingInBandSignaling: 10)
+        // Block execution initially so we can fill up the queue
+        delegate.shouldQueueTokens = true
+
+        // Add enough token arrays to reach heavy backpressure
+        for _ in 0..<tokensForHeavy {
+            var vector = CVector()
+            CVectorCreate(&vector, 1)
+            let token = VT100Token()
+            token.type = VT100_UNKNOWNCHAR
+            CVectorAppendVT100Token(&vector, token)
+            executor.addTokens(vector, lengthTotal: 10, lengthExcludingInBandSignaling: 10)
+        }
 
         waitForMutationQueue()
 
-        // Reset counter after potential callbacks during addTokens
-        handlerLock.lock()
-        let countAfterAdd = handlerCallCount
-        handlerLock.unlock()
+        // Verify we reached heavy backpressure
+        XCTAssertEqual(executor.backpressureLevel, .heavy,
+                       "Should be at heavy backpressure after adding \(tokensForHeavy) tokens")
 
-        // The backpressureReleaseHandler is designed to be called when:
-        // 1. Token arrays are consumed (via onSemaphoreSignaled callback)
-        // 2. availableSlots > 0 AND backpressureLevel < .heavy
-        //
-        // Since we're testing the wiring, verify the property is callable
-        executor.backpressureReleaseHandler?()
+        // Now set up handler to track calls AFTER reaching heavy
+        let handlerCallCount = MutableAtomicObject<Int>(0)
+        executor.backpressureReleaseHandler = {
+            _ = handlerCallCount.mutate { $0 + 1 }
+        }
 
-        handlerLock.lock()
-        let countAfterManualCall = handlerCallCount
-        handlerLock.unlock()
+        // Unblock execution and let tokens be consumed
+        iTermGCD.mutationQueue().sync {
+            delegate.shouldQueueTokens = false
+        }
+        executor.schedule()
 
-        XCTAssertGreaterThan(countAfterManualCall, countAfterAdd,
-                             "backpressureReleaseHandler should be callable")
+        // Drain queue multiple times to let consumption happen
+        for _ in 0..<20 {
+            waitForMutationQueue()
+        }
 
-        // Cleanup
-        FairnessScheduler.shared.unregister(sessionId: sessionId)
-        waitForMutationQueue()
+        // Handler should have been called when crossing out of heavy backpressure
+        let finalCount = handlerCallCount.value
+        XCTAssertGreaterThan(finalCount, 0,
+                             "backpressureReleaseHandler should be called when transitioning out of heavy. " +
+                             "Final backpressure: \(executor.backpressureLevel)")
+
+        // Backpressure should be reduced after consumption
+        XCTAssertLessThan(executor.backpressureLevel.rawValue, BackpressureLevel.heavy.rawValue,
+                          "Backpressure should be below heavy after consumption")
+        #endif
     }
 
     func testTokenExecutorWiringEnablesBackpressureMonitoring() throws {
