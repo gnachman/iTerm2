@@ -416,6 +416,9 @@ static void HandleSigChld(int n) {
 // Main queue
 - (void)didRegister {
     DLog(@"didRegister %@", self);
+    // Activate dispatch sources for per-PTY I/O handling
+    // This is called for all paths: launch, attach, and restore
+    [self setupDispatchSources];
     [self.delegate taskDidRegister:self];
 }
 

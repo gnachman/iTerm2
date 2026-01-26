@@ -4039,6 +4039,16 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
 // Main thread
 - (void)taskDidRegister:(PTYTask *)task {
     [self updateTTYSize];
+
+    // Wire up backpressure integration between TokenExecutor and PTYTask
+    // This enables the fairness scheduler to control read source state
+    iTermTokenExecutor *executor = _screen.mutableState.tokenExecutor;
+    task.tokenExecutor = executor;
+
+    __weak PTYTask *weakTask = task;
+    executor.backpressureReleaseHandler = ^{
+        [weakTask updateReadSourceState];
+    };
 }
 
 - (void)tmuxDidDisconnect {
