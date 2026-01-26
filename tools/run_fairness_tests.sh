@@ -68,6 +68,7 @@ TASKNOTIFIER_TEST_CLASSES=(
 INTEGRATION_TEST_CLASSES=(
     "IntegrationRegistrationTests"
     "IntegrationUnregistrationTests"
+    "IntegrationAutomaticSchedulingTests"
     "IntegrationRekickTests"
     "IntegrationMutationQueueTests"
     "IntegrationDispatchSourceActivationTests"

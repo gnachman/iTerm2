@@ -211,6 +211,147 @@ final class IntegrationUnregistrationTests: XCTestCase {
     }
 }
 
+// MARK: - 5.2.5 Automatic Scheduling Contract Tests
+
+/// Tests that addTokens() automatically kicks the scheduler without explicit scheduleTokenExecution().
+/// This is the fundamental contract: tokens added to an unblocked session execute automatically.
+final class IntegrationAutomaticSchedulingTests: XCTestCase {
+
+    func testAddTokensAutomaticallyTriggersExecution() throws {
+        // REQUIREMENT: addTokens() must call notifyScheduler() which causes tokens to execute
+        // WITHOUT any explicit scheduleTokenExecution() call.
+        //
+        // This tests the core contract: when a session is unblocked (terminalEnabled=true,
+        // taskPaused=false, copyMode=false, shortcutNavigationMode=false), adding tokens
+        // should automatically trigger execution via the FairnessScheduler.
+
+        let performer = MockSideEffectPerformer()
+        let mutableState = VT100ScreenMutableState(sideEffectPerformer: performer)
+
+        // Enable terminal - this makes the session ready to execute
+        mutableState.terminalEnabled = true
+        waitForMutationQueue()
+
+        let sessionId = mutableState.tokenExecutor.fairnessSessionId
+        #if ITERM_DEBUG
+        XCTAssertTrue(FairnessScheduler.shared.testIsSessionRegistered(sessionId),
+                      "Session should be registered with FairnessScheduler")
+
+        // Reset test counters for clean measurement
+        mutableState.tokenExecutor.testResetCounters()
+
+        // Verify no execution has happened yet
+        XCTAssertEqual(mutableState.tokenExecutor.testExecuteTurnCompletedCount, 0,
+                       "No execution should have happened before adding tokens")
+        #endif
+
+        // Add tokens - this should AUTOMATICALLY trigger execution via notifyScheduler()
+        // We are NOT calling scheduleTokenExecution() - that's the point of this test
+        var vector = CVector()
+        CVectorCreate(&vector, 5)
+        for _ in 0..<5 {
+            let token = VT100Token()
+            token.type = VT100_UNKNOWNCHAR
+            CVectorAppendVT100Token(&vector, token)
+        }
+        mutableState.tokenExecutor.addTokens(vector, lengthTotal: 50, lengthExcludingInBandSignaling: 50)
+
+        // Wait for automatic execution to occur
+        #if ITERM_DEBUG
+        let executionOccurred = waitForCondition({
+            mutableState.tokenExecutor.testExecuteTurnCompletedCount > 0
+        }, timeout: 2.0)
+
+        XCTAssertTrue(executionOccurred,
+                      "addTokens() should automatically trigger execution via notifyScheduler(). " +
+                      "ExecutionCount: \(mutableState.tokenExecutor.testExecuteTurnCompletedCount)")
+
+        // Also verify tokens were consumed (slots restored)
+        let availableSlots = mutableState.tokenExecutor.testAvailableSlots
+        let totalSlots = mutableState.tokenExecutor.testTotalSlots
+        XCTAssertEqual(availableSlots, totalSlots,
+                       "All tokens should be consumed after automatic execution")
+        #endif
+
+        // Cleanup
+        mutableState.terminalEnabled = false
+        waitForMutationQueue()
+    }
+
+    func testAddTokensToUnregisteredExecutorDoesNotCrash() throws {
+        // REQUIREMENT: addTokens() should be safe even if executor is not registered.
+        // This is a defensive test - ensure no crash or hang occurs.
+
+        let terminal = VT100Terminal()
+        let executor = TokenExecutor(terminal, slownessDetector: SlownessDetector(), queue: iTermGCD.mutationQueue())
+
+        // Don't register with FairnessScheduler - fairnessSessionId remains 0
+
+        // Add tokens - should not crash
+        var vector = CVector()
+        CVectorCreate(&vector, 1)
+        let token = VT100Token()
+        token.type = VT100_UNKNOWNCHAR
+        CVectorAppendVT100Token(&vector, token)
+        executor.addTokens(vector, lengthTotal: 10, lengthExcludingInBandSignaling: 10)
+
+        // Flush queue to ensure async operations complete
+        waitForMutationQueue()
+
+        // If we get here without crashing, test passes
+        XCTAssertTrue(true, "addTokens to unregistered executor should not crash")
+    }
+
+    func testMultipleAddTokensTriggersMultipleExecutions() throws {
+        // REQUIREMENT: Multiple addTokens() calls should each contribute to scheduling,
+        // and all tokens should eventually be consumed.
+
+        let performer = MockSideEffectPerformer()
+        let mutableState = VT100ScreenMutableState(sideEffectPerformer: performer)
+        mutableState.terminalEnabled = true
+        waitForMutationQueue()
+
+        #if ITERM_DEBUG
+        mutableState.tokenExecutor.testResetCounters()
+        #endif
+
+        // Add tokens in multiple batches - each should trigger scheduling
+        for batch in 0..<3 {
+            var vector = CVector()
+            CVectorCreate(&vector, 5)
+            for _ in 0..<5 {
+                let token = VT100Token()
+                token.type = VT100_UNKNOWNCHAR
+                CVectorAppendVT100Token(&vector, token)
+            }
+            mutableState.tokenExecutor.addTokens(vector, lengthTotal: 50, lengthExcludingInBandSignaling: 50)
+
+            // Small delay between batches to allow some async processing
+            if batch < 2 {
+                Thread.sleep(forTimeInterval: 0.01)
+            }
+        }
+
+        // Wait for all tokens to be consumed
+        #if ITERM_DEBUG
+        let allConsumed = waitForCondition({
+            mutableState.tokenExecutor.testAvailableSlots == mutableState.tokenExecutor.testTotalSlots
+        }, timeout: 2.0)
+
+        XCTAssertTrue(allConsumed,
+                      "All tokens from multiple addTokens() calls should be automatically consumed")
+
+        // Verify at least one execution occurred
+        XCTAssertGreaterThan(mutableState.tokenExecutor.testExecuteTurnCompletedCount, 0,
+                             "At least one execution turn should have completed")
+        #endif
+
+        // Cleanup
+        mutableState.terminalEnabled = false
+        waitForMutationQueue()
+    }
+}
+
 // MARK: - 5.3 Re-kick on Unblock Tests
 
 /// Tests for re-kicking the scheduler when sessions are unblocked (5.3)
