@@ -1586,9 +1586,42 @@ final class BackpressureIntegrationTests: XCTestCase {
         let executor1 = TokenExecutor(terminal1, slownessDetector: SlownessDetector(), queue: DispatchQueue.main)
         let executor2 = TokenExecutor(terminal2, slownessDetector: SlownessDetector(), queue: DispatchQueue.main)
 
-        // Each should have independent backpressure
-        XCTAssertEqual(executor1.backpressureLevel, .none)
-        XCTAssertEqual(executor2.backpressureLevel, .none)
+        // Register both with scheduler
+        let sessionId1 = FairnessScheduler.shared.register(executor1)
+        let sessionId2 = FairnessScheduler.shared.register(executor2)
+        executor1.fairnessSessionId = sessionId1
+        executor2.fairnessSessionId = sessionId2
+
+        // Both should start with no backpressure
+        XCTAssertEqual(executor1.backpressureLevel, .none,
+                       "Executor 1 should start with no backpressure")
+        XCTAssertEqual(executor2.backpressureLevel, .none,
+                       "Executor 2 should start with no backpressure")
+
+        // Drive executor1 to blocked backpressure (50 tokens > 40 slots)
+        for _ in 0..<50 {
+            var vector = CVector()
+            CVectorCreate(&vector, 10)
+            for _ in 0..<10 {
+                let token = VT100Token()
+                token.type = VT100_UNKNOWNCHAR
+                CVectorAppendVT100Token(&vector, token)
+            }
+            executor1.addTokens(vector, lengthTotal: 100, lengthExcludingInBandSignaling: 100)
+        }
+
+        // Verify executor1 is now blocked
+        XCTAssertEqual(executor1.backpressureLevel, .blocked,
+                       "Executor 1 should be blocked after exceeding slot capacity")
+
+        // CRITICAL: Verify executor2 remains unaffected - this is the isolation test
+        XCTAssertEqual(executor2.backpressureLevel, .none,
+                       "Executor 2 should remain at .none - backpressure must be isolated per-session")
+
+        // Cleanup
+        FairnessScheduler.shared.unregister(sessionId: sessionId1)
+        FairnessScheduler.shared.unregister(sessionId: sessionId2)
+        waitForMutationQueue()
     }
 }
 
