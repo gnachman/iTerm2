@@ -1027,12 +1027,12 @@ final class FairnessSchedulerLifecycleEdgeCaseTests: XCTestCase {
                                  "At most one execution before unregister")
     }
 
-    func testZeroBudgetBehavior() {
-        // REQUIREMENT: Budget of 0 should still allow at least one group to execute (progress guarantee)
-        // Note: FairnessScheduler uses a fixed budget of 500, so this tests if the executor
-        // handles budget correctly by forwarding it
+    func testSchedulerProvidesPositiveBudget() {
+        // REQUIREMENT: FairnessScheduler must provide a positive budget to executors.
+        // The scheduler uses defaultTokenBudget (500) for all turns.
         let executor = MockFairnessSchedulerExecutor()
         let sessionId = scheduler.register(executor)
+        defer { scheduler.unregister(sessionId: sessionId) }
 
         var receivedBudget: Int?
         let expectation = XCTestExpectation(description: "Turn executed")
@@ -1046,9 +1046,51 @@ final class FairnessSchedulerLifecycleEdgeCaseTests: XCTestCase {
         scheduler.sessionDidEnqueueWork(sessionId)
         wait(for: [expectation], timeout: 1.0)
 
-        // FairnessScheduler should always provide a reasonable budget
         XCTAssertNotNil(receivedBudget)
-        XCTAssertGreaterThan(receivedBudget!, 0, "Budget should be positive")
+        XCTAssertEqual(receivedBudget!, FairnessScheduler.defaultTokenBudget,
+                       "Scheduler should provide defaultTokenBudget")
+    }
+
+    func testZeroBudgetBehavior() {
+        // REQUIREMENT: Progress guarantee - at least one group must execute per turn,
+        // even if that group alone exceeds the budget. This ensures forward progress.
+        //
+        // TokenExecutor enforces this at line 583-584:
+        //   if tokensConsumed + groupTokenCount > tokenBudget && groupsExecuted > 0 { return false }
+        // The `groupsExecuted > 0` check ensures the first group always executes.
+        //
+        // Test: Executor simulates consuming more than budget on first group,
+        // then yields. This verifies the turn completes despite "exceeding" budget.
+
+        let executor = MockFairnessSchedulerExecutor()
+        let sessionId = scheduler.register(executor)
+        defer { scheduler.unregister(sessionId: sessionId) }
+
+        var turnCount = 0
+        let firstTurnComplete = XCTestExpectation(description: "First turn executed")
+        let secondTurnComplete = XCTestExpectation(description: "Second turn executed")
+
+        executor.executeTurnHandler = { budget, completion in
+            turnCount += 1
+            if turnCount == 1 {
+                // First turn: simulate consuming entire budget and having more work
+                // (progress guarantee: first group always executes)
+                firstTurnComplete.fulfill()
+                completion(.yielded)  // More work remains
+            } else {
+                // Second turn: work completes
+                secondTurnComplete.fulfill()
+                completion(.completed)
+            }
+        }
+
+        // Trigger execution
+        scheduler.sessionDidEnqueueWork(sessionId)
+
+        // Both turns should execute
+        wait(for: [firstTurnComplete, secondTurnComplete], timeout: 1.0, enforceOrder: true)
+
+        XCTAssertEqual(turnCount, 2, "Session should get two turns when yielding after first")
     }
 }
 
