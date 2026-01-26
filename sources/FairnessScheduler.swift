@@ -48,6 +48,11 @@ class FairnessScheduler: NSObject {
     private var sessions: [SessionID: SessionState] = [:]
     private var busyList: [SessionID] = []       // Round-robin order
     private var busySet: Set<SessionID> = []     // O(1) membership check
+
+    #if ITERM_DEBUG
+    /// Test-only: Records session IDs in the order they executed, for verifying round-robin fairness.
+    private var _testExecutionHistory: [SessionID] = []
+    #endif
     private var executionScheduled = false
 
     private struct SessionState {
@@ -145,6 +150,10 @@ class FairnessScheduler: NSObject {
         state.workArrivedWhileExecuting = false
         sessions[sessionId] = state
 
+        #if ITERM_DEBUG
+        _testExecutionHistory.append(sessionId)
+        #endif
+
         executor.executeTurn(tokenBudget: Self.defaultTokenBudget) { [weak self] result in
             // Completion may be called from any thread; dispatch back to mutationQueue
             iTermGCD.mutationQueue().async {
@@ -232,6 +241,31 @@ extension FairnessScheduler {
             busySet.removeAll()
             executionScheduled = false
             nextSessionId = 0
+            _testExecutionHistory.removeAll()
+        }
+    }
+
+    /// Test-only: Returns the execution history (session IDs in execution order) and clears it.
+    /// Use this to verify round-robin fairness invariants.
+    @objc func testGetAndClearExecutionHistory() -> [UInt64] {
+        return iTermGCD.mutationQueue().sync {
+            let history = _testExecutionHistory
+            _testExecutionHistory.removeAll()
+            return history
+        }
+    }
+
+    /// Test-only: Returns the current execution history without clearing it.
+    @objc func testGetExecutionHistory() -> [UInt64] {
+        return iTermGCD.mutationQueue().sync {
+            return _testExecutionHistory
+        }
+    }
+
+    /// Test-only: Clears the execution history.
+    @objc func testClearExecutionHistory() {
+        iTermGCD.mutationQueue().sync {
+            _testExecutionHistory.removeAll()
         }
     }
 }

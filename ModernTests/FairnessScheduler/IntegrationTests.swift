@@ -731,139 +731,217 @@ final class IntegrationRekickTests: XCTestCase {
 /// This is the KEY REGRESSION TEST for removing activeSessionsWithTokens.
 final class IntegrationBackgroundForegroundFairnessTests: XCTestCase {
 
-    func testBackgroundSessionExecutesWhileForegroundBusy() throws {
-        // REQUIREMENT: After removing activeSessionsWithTokens, background sessions must
-        // still get execution turns even when foreground sessions are continuously busy.
+    func testRoundRobinFairnessWithFullStack() throws {
+        // REQUIREMENT: The round-robin fairness invariant must hold through the full stack:
+        // VT100ScreenMutableState -> TokenExecutor -> FairnessScheduler
         //
-        // This tests the FULL INTEGRATION: VT100ScreenMutableState -> TokenExecutor -> FairnessScheduler
-        try XCTSkipUnless(isDebugBuild, "Test requires ITERM_DEBUG hooks for execution tracking")
+        // Invariant: No session gets a second turn until all other busy sessions have had one turn.
+        // This is the KEY REGRESSION TEST for removing activeSessionsWithTokens.
+        //
+        // Test design (DETERMINISTIC - no polling/timeouts):
+        // 1. Create sessions with taskPaused=true to block execution
+        // 2. Add tokens to all sessions while blocked
+        // 3. Clear execution history
+        // 4. Unblock all sessions and kick scheduler
+        // 5. Sync to mutation queue to let execution complete
+        // 6. Verify proper round-robin order
+        try XCTSkipUnless(isDebugBuild, "Test requires ITERM_DEBUG hooks for execution history tracking")
 
-        // Create background session
-        let bgPerformer = MockSideEffectPerformer()
-        let bgMutableState = VT100ScreenMutableState(sideEffectPerformer: bgPerformer)
-        bgMutableState.terminalEnabled = true
-        bgMutableState.tokenExecutor.isBackgroundSession = true
+        #if ITERM_DEBUG
+        // Create sessions with blocking enabled
+        var sessions: [(state: VT100ScreenMutableState, performer: MockSideEffectPerformer, id: UInt64)] = []
 
-        // Create foreground session
-        let fgPerformer = MockSideEffectPerformer()
-        let fgMutableState = VT100ScreenMutableState(sideEffectPerformer: fgPerformer)
-        fgMutableState.terminalEnabled = true
-        fgMutableState.tokenExecutor.isBackgroundSession = false
+        for i in 0..<3 {
+            let performer = MockSideEffectPerformer()
+            let state = VT100ScreenMutableState(sideEffectPerformer: performer)
+            state.terminalEnabled = true
+            state.tokenExecutor.isBackgroundSession = (i > 0)
+
+            // Block execution using taskPaused
+            iTermGCD.mutationQueue().sync {
+                state.taskPaused = true
+            }
+
+            let sessionId = state.tokenExecutor.fairnessSessionId
+            sessions.append((state: state, performer: performer, id: sessionId))
+        }
 
         waitForMutationQueue()
 
-        #if ITERM_DEBUG
-        // Reset counters for clean measurement
-        bgMutableState.tokenExecutor.testResetCounters()
-        fgMutableState.tokenExecutor.testResetCounters()
-
-        // Verify both sessions are registered
-        let bgSessionId = bgMutableState.tokenExecutor.fairnessSessionId
-        let fgSessionId = fgMutableState.tokenExecutor.fairnessSessionId
-        XCTAssertTrue(FairnessScheduler.shared.testIsSessionRegistered(bgSessionId),
-                      "Background session should be registered")
-        XCTAssertTrue(FairnessScheduler.shared.testIsSessionRegistered(fgSessionId),
-                      "Foreground session should be registered")
-        #endif
-
-        // Add tokens to background session once
-        var bgVector = CVector()
-        CVectorCreate(&bgVector, 5)
-        for _ in 0..<5 {
-            let token = VT100Token()
-            token.type = VT100_UNKNOWNCHAR
-            CVectorAppendVT100Token(&bgVector, token)
+        // Verify all sessions are registered
+        for session in sessions {
+            XCTAssertTrue(FairnessScheduler.shared.testIsSessionRegistered(session.id),
+                          "Session \(session.id) should be registered")
         }
-        bgMutableState.tokenExecutor.addTokens(bgVector, lengthTotal: 50, lengthExcludingInBandSignaling: 50)
 
-        // Keep adding tokens to foreground to simulate continuously busy session
-        for _ in 0..<10 {
-            var fgVector = CVector()
-            CVectorCreate(&fgVector, 5)
-            for _ in 0..<5 {
-                let token = VT100Token()
-                token.type = VT100_UNKNOWNCHAR
-                CVectorAppendVT100Token(&fgVector, token)
+        // Add tokens to ALL sessions while blocked
+        for session in sessions {
+            for _ in 0..<10 {
+                var vector = CVector()
+                CVectorCreate(&vector, 100)
+                for _ in 0..<100 {
+                    let token = VT100Token()
+                    token.type = VT100_UNKNOWNCHAR
+                    CVectorAppendVT100Token(&vector, token)
+                }
+                session.state.tokenExecutor.addTokens(vector, lengthTotal: 1000, lengthExcludingInBandSignaling: 1000)
             }
-            fgMutableState.tokenExecutor.addTokens(fgVector, lengthTotal: 50, lengthExcludingInBandSignaling: 50)
-            Thread.sleep(forTimeInterval: 0.01)
         }
 
-        #if ITERM_DEBUG
-        // Wait for background to execute at least once
-        let bgExecuted = waitForCondition({
-            bgMutableState.tokenExecutor.testExecuteTurnCompletedCount > 0
-        }, timeout: 3.0)
+        waitForMutationQueue()
 
-        XCTAssertTrue(bgExecuted,
-                      "Background session MUST execute even when foreground is busy. " +
-                      "BG executions: \(bgMutableState.tokenExecutor.testExecuteTurnCompletedCount), " +
-                      "FG executions: \(fgMutableState.tokenExecutor.testExecuteTurnCompletedCount)")
+        // Clear execution history before unblocking
+        FairnessScheduler.shared.testClearExecutionHistory()
 
-        // Both should have executed
-        XCTAssertGreaterThan(bgMutableState.tokenExecutor.testExecuteTurnCompletedCount, 0,
-                             "Background must get at least one execution turn")
-        XCTAssertGreaterThan(fgMutableState.tokenExecutor.testExecuteTurnCompletedCount, 0,
-                             "Foreground should also have executed")
+        // Unblock all sessions
+        iTermGCD.mutationQueue().sync {
+            for session in sessions {
+                session.state.taskPaused = false
+            }
+        }
+
+        // Kick scheduler for each session
+        for session in sessions {
+            session.state.scheduleTokenExecution()
+        }
+
+        // Sync multiple times to let execution complete
+        for _ in 0..<20 {
+            waitForMutationQueue()
+        }
+
+        // Get execution history
+        let history = FairnessScheduler.shared.testGetAndClearExecutionHistory()
+
+        // Basic sanity check
+        XCTAssertGreaterThanOrEqual(history.count, 3,
+                                     "Should have at least one round. History: \(history)")
+
+        // VERIFY ROUND-ROBIN INVARIANT: No session executes twice in a row
+        var violations: [String] = []
+        for i in 1..<history.count {
+            if history[i] == history[i-1] {
+                violations.append("Session \(history[i]) at indices \(i-1) and \(i)")
+            }
+        }
+
+        XCTAssertTrue(violations.isEmpty,
+                      "Round-robin violated: same session executed consecutively. " +
+                      "History: \(history), Violations: \(violations)")
+
+        // Each session should have gotten turns (no starvation)
+        for session in sessions {
+            let turnCount = history.filter { $0 == session.id }.count
+            XCTAssertGreaterThan(turnCount, 0,
+                                 "Session \(session.id) should have at least one turn. History: \(history)")
+        }
+
+        // Verify first round includes all sessions
+        let sessionCount = sessions.count
+        if history.count >= sessionCount {
+            let firstRound = Array(history.prefix(sessionCount))
+            let uniqueInFirstRound = Set(firstRound)
+            XCTAssertEqual(uniqueInFirstRound.count, sessionCount,
+                           "First round should include all sessions. First \(sessionCount): \(firstRound)")
+        }
         #endif
 
         // Cleanup
-        bgMutableState.terminalEnabled = false
-        fgMutableState.terminalEnabled = false
+        for session in sessions {
+            session.state.terminalEnabled = false
+        }
         waitForMutationQueue()
     }
 
     func testMultipleBackgroundSessionsAllGetTurns() throws {
         // REQUIREMENT: Multiple background sessions should all get fair turns.
         // Tests that fairness applies across ALL sessions, not just foreground vs one background.
-        try XCTSkipUnless(isDebugBuild, "Test requires ITERM_DEBUG hooks for execution tracking")
+        //
+        // Test design (DETERMINISTIC):
+        // 1. Create sessions with taskPaused=true to block execution
+        // 2. Add tokens to all sessions while blocked
+        // 3. Clear history, unblock, and let execution complete
+        // 4. Verify all sessions got turns via execution history
+        try XCTSkipUnless(isDebugBuild, "Test requires ITERM_DEBUG hooks for execution history tracking")
 
-        // Create 3 background sessions
-        var sessions: [(state: VT100ScreenMutableState, performer: MockSideEffectPerformer)] = []
+        #if ITERM_DEBUG
+        // Create 3 background sessions with blocking enabled
+        var sessions: [(state: VT100ScreenMutableState, performer: MockSideEffectPerformer, id: UInt64)] = []
         for _ in 0..<3 {
             let performer = MockSideEffectPerformer()
             let state = VT100ScreenMutableState(sideEffectPerformer: performer)
             state.terminalEnabled = true
             state.tokenExecutor.isBackgroundSession = true
-            sessions.append((state: state, performer: performer))
+
+            // Block execution
+            iTermGCD.mutationQueue().sync {
+                state.taskPaused = true
+            }
+
+            let sessionId = state.tokenExecutor.fairnessSessionId
+            sessions.append((state: state, performer: performer, id: sessionId))
         }
 
         waitForMutationQueue()
 
-        #if ITERM_DEBUG
-        // Reset counters
+        // Add tokens while blocked
         for session in sessions {
-            session.state.tokenExecutor.testResetCounters()
-        }
-        #endif
-
-        // Add tokens to all sessions
-        for session in sessions {
-            var vector = CVector()
-            CVectorCreate(&vector, 5)
-            for _ in 0..<5 {
-                let token = VT100Token()
-                token.type = VT100_UNKNOWNCHAR
-                CVectorAppendVT100Token(&vector, token)
+            for _ in 0..<10 {
+                var vector = CVector()
+                CVectorCreate(&vector, 100)
+                for _ in 0..<100 {
+                    let token = VT100Token()
+                    token.type = VT100_UNKNOWNCHAR
+                    CVectorAppendVT100Token(&vector, token)
+                }
+                session.state.tokenExecutor.addTokens(vector, lengthTotal: 1000, lengthExcludingInBandSignaling: 1000)
             }
-            session.state.tokenExecutor.addTokens(vector, lengthTotal: 50, lengthExcludingInBandSignaling: 50)
         }
 
-        #if ITERM_DEBUG
-        // Wait for all sessions to execute at least once
-        let allExecuted = waitForCondition({
-            sessions.allSatisfy { $0.state.tokenExecutor.testExecuteTurnCompletedCount > 0 }
-        }, timeout: 3.0)
+        waitForMutationQueue()
 
-        let counts = sessions.map { $0.state.tokenExecutor.testExecuteTurnCompletedCount }
-        XCTAssertTrue(allExecuted,
-                      "All background sessions should execute under fairness. Counts: \(counts)")
+        // Clear history before unblocking
+        FairnessScheduler.shared.testClearExecutionHistory()
 
-        // Each session should have at least one turn
-        for (index, session) in sessions.enumerated() {
-            XCTAssertGreaterThan(session.state.tokenExecutor.testExecuteTurnCompletedCount, 0,
-                                 "Background session \(index) should have executed")
+        // Unblock all sessions
+        iTermGCD.mutationQueue().sync {
+            for session in sessions {
+                session.state.taskPaused = false
+            }
         }
+
+        // Kick scheduler
+        for session in sessions {
+            session.state.scheduleTokenExecution()
+        }
+
+        // Let execution complete
+        for _ in 0..<20 {
+            waitForMutationQueue()
+        }
+
+        // Verify via execution history
+        let history = FairnessScheduler.shared.testGetAndClearExecutionHistory()
+
+        XCTAssertGreaterThanOrEqual(history.count, 3,
+                                     "Should have at least one round. History: \(history)")
+
+        // Each session should have gotten turns
+        for session in sessions {
+            let turnCount = history.filter { $0 == session.id }.count
+            XCTAssertGreaterThan(turnCount, 0,
+                                 "Session \(session.id) should have at least one turn. History: \(history)")
+        }
+
+        // Verify round-robin (no consecutive same-session executions)
+        var violations = 0
+        for i in 1..<history.count {
+            if history[i] == history[i-1] {
+                violations += 1
+            }
+        }
+        XCTAssertEqual(violations, 0,
+                       "Round-robin violated. History: \(history)")
         #endif
 
         // Cleanup
