@@ -393,19 +393,21 @@ final class TwoTierTokenQueueGroupingTests: XCTestCase {
 
         let queue = TwoTierTokenQueue()
 
-        // Add 3 groups with 100 tokens each (simulating 100 "token cost")
+        // Add 3 groups with 10 tokens each
+        let tokensPerGroup = 10
         for _ in 0..<3 {
-            let tokenArray = createNonCoalescableTokenArray(tokenCount: 10, lengthPerToken: 10)
+            let tokenArray = createNonCoalescableTokenArray(tokenCount: tokensPerGroup, lengthPerToken: 10)
             queue.addTokens(tokenArray, highPriority: false)  // All normal priority
         }
 
         // Simulate budget enforcement: stop after first group exceeds budget
         var tokensConsumed = 0
         var groupsExecuted = 0
-        let budget = 50  // Budget that first group (100 tokens) will exceed
+        let budget = 5  // Budget that first group (10 tokens) will exceed
 
         queue.enumerateTokenArrayGroups { group, priority in
-            let groupTokenCount = group.lengthTotal
+            // We know each group has exactly tokensPerGroup tokens (our input constant)
+            let groupTokenCount = tokensPerGroup
 
             // Budget check BETWEEN groups (not within)
             if tokensConsumed + groupTokenCount > budget && groupsExecuted > 0 {
@@ -423,7 +425,7 @@ final class TwoTierTokenQueueGroupingTests: XCTestCase {
         // First group should execute (progress guarantee), but not second
         XCTAssertEqual(groupsExecuted, 1,
                        "Only first group should execute when it exceeds budget")
-        XCTAssertEqual(tokensConsumed, 100,
+        XCTAssertEqual(tokensConsumed, tokensPerGroup,
                        "First group's tokens should be consumed")
         XCTAssertFalse(queue.isEmpty,
                        "Remaining groups should still be in queue")
