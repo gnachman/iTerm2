@@ -753,14 +753,111 @@ final class DispatchSourceLifecycleIntegrationTests: XCTestCase {
 
     func testProcessLaunchCreatesSource() throws {
         // REQUIREMENT: Dispatch source created after successful forkpty
-        // setupDispatchSources should be called when fd becomes valid
+        // This test verifies the ACTUAL launch path calls setupDispatchSources:
+        // TaskNotifier.registerTask: → dispatch_async(main) → didRegister → setupDispatchSources
+        //
+        // This exercises the production code path, not just test helpers.
 
-        // Verified by implementation - launch creates dispatch sources
         guard let task = PTYTask() else {
             XCTFail("Failed to create PTYTask")
             return
         }
-        XCTAssertNotNil(task)
+
+        // Create a pipe to get valid file descriptors (simulates what forkpty provides)
+        var pipeFds: [Int32] = [0, 0]
+        let pipeResult = pipe(&pipeFds)
+        XCTAssertEqual(pipeResult, 0, "pipe() should succeed")
+
+        // Cast to iTermTask protocol (PTYTask implements iTermTask but Swift needs explicit cast)
+        let iTermTaskConformingTask = task as! any iTermTask
+
+        defer {
+            // Cleanup: teardown sources and close pipe
+            task.testTeardownDispatchSourcesForTesting()
+            TaskNotifier.sharedInstance().deregister(iTermTaskConformingTask)
+            close(pipeFds[0])
+            close(pipeFds[1])
+        }
+
+        // Set the fd on the task (simulates fd becoming valid after forkpty)
+        task.testSetFd(pipeFds[0])
+
+        #if ITERM_DEBUG
+        // Before registration, task should have no dispatch sources
+        XCTAssertFalse(task.testHasReadSource, "Task should have no read source before registration")
+        XCTAssertFalse(task.testHasWriteSource, "Task should have no write source before registration")
+        #endif
+
+        // Register with TaskNotifier using the ACTUAL production API
+        // This triggers: registerTask: → dispatch_async(main) → didRegister → setupDispatchSources
+        TaskNotifier.sharedInstance().register(iTermTaskConformingTask)
+
+        // Wait for the main queue dispatch where didRegister is called
+        let expectation = XCTestExpectation(description: "didRegister called")
+        DispatchQueue.main.async {
+            expectation.fulfill()
+        }
+        wait(for: [expectation], timeout: 2.0)
+
+        #if ITERM_DEBUG
+        // After registration through the real path, dispatch sources should be created
+        XCTAssertTrue(task.testHasReadSource,
+                      "Task should have read source after TaskNotifier registration calls didRegister")
+        XCTAssertTrue(task.testHasWriteSource,
+                      "Task should have write source after TaskNotifier registration calls didRegister")
+        #endif
+    }
+
+    func testTaskNotifierRegistrationTriggersSetupDispatchSources() throws {
+        // REQUIREMENT: Verify the wiring from TaskNotifier → didRegister → setupDispatchSources
+        // This is an end-to-end test of the production dispatch source activation path.
+
+        guard let task = PTYTask() else {
+            XCTFail("Failed to create PTYTask")
+            return
+        }
+
+        // Create a pipe for valid fd
+        var pipeFds: [Int32] = [0, 0]
+        XCTAssertEqual(pipe(&pipeFds), 0, "pipe() should succeed")
+
+        // Cast to iTermTask protocol
+        let iTermTaskConformingTask = task as! any iTermTask
+
+        defer {
+            task.testTeardownDispatchSourcesForTesting()
+            TaskNotifier.sharedInstance().deregister(iTermTaskConformingTask)
+            close(pipeFds[0])
+            close(pipeFds[1])
+        }
+
+        task.testSetFd(pipeFds[0])
+
+        // Track whether didRegister was called by observing source creation
+        #if ITERM_DEBUG
+        let hadSourceBefore = task.testHasReadSource
+        XCTAssertFalse(hadSourceBefore, "Should start without sources")
+        #endif
+
+        // Use the production TaskNotifier registration path
+        TaskNotifier.sharedInstance().register(iTermTaskConformingTask)
+
+        // The didRegister call is dispatched to main queue, so we need to wait
+        let expectation = XCTestExpectation(description: "Sources created")
+
+        // Poll for source creation (didRegister is async on main queue)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+            expectation.fulfill()
+        }
+        wait(for: [expectation], timeout: 2.0)
+
+        #if ITERM_DEBUG
+        // Verify the production path created sources
+        XCTAssertTrue(task.testHasReadSource,
+                      "Production path (TaskNotifier.register → didRegister) should create read source")
+        XCTAssertTrue(task.testHasWriteSource,
+                      "Production path (TaskNotifier.register → didRegister) should create write source")
+        #endif
     }
 
     func testProcessExitCleansUpSource() throws {
