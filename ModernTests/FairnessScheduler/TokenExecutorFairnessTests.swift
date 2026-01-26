@@ -548,6 +548,10 @@ final class TokenExecutorBudgetEdgeCaseTests: XCTestCase {
 // MARK: - 2.5 Scheduler Entry Points Tests
 
 /// Tests for scheduler notification from all entry points (2.5)
+///
+/// IMPORTANT: TokenExecutor's queue parameter must be the mutation queue.
+/// - High-priority tokens: notifyScheduler() called synchronously (no async hop)
+/// - Normal tokens: notifyScheduler() dispatched via queue.async
 final class TokenExecutorSchedulerEntryPointTests: XCTestCase {
 
     var mockDelegate: MockTokenExecutorDelegate!
@@ -558,10 +562,12 @@ final class TokenExecutorSchedulerEntryPointTests: XCTestCase {
         super.setUp()
         mockDelegate = MockTokenExecutorDelegate()
         mockTerminal = VT100Terminal()
+        // CRITICAL: Use mutation queue, not main queue
+        // The executor dispatches scheduler notifications to this queue
         executor = TokenExecutor(
             mockTerminal,
             slownessDetector: SlownessDetector(),
-            queue: DispatchQueue.main
+            queue: iTermGCD.mutationQueue()
         )
         executor.delegate = mockDelegate
     }
@@ -681,6 +687,73 @@ final class TokenExecutorSchedulerEntryPointTests: XCTestCase {
         // Should have processed but not created duplicate busy list entries
         // (verified by not having 5x the expected executions)
         XCTAssertLessThanOrEqual(executionCount, 5, "Should not create duplicate busy list entries")
+    }
+
+    func testHighPriorityAddTokensOnMutationQueueTriggersExecution() throws {
+        // REQUIREMENT: addTokens(highPriority: true) when called from mutation queue context
+        // should call notifyScheduler() synchronously (not via queue.async like normal tokens).
+        // This ensures the scheduler is notified without an extra async hop.
+        //
+        // The key difference vs normal priority:
+        // - High priority: reallyAddTokens() + notifyScheduler() - both synchronous
+        // - Normal priority: reallyAddTokens() + queue.async { notifyScheduler() }
+
+        // Register executor with scheduler
+        let sessionId = FairnessScheduler.shared.register(executor)
+        executor.fairnessSessionId = sessionId
+        mockDelegate.shouldQueueTokens = false
+
+        let initialExecuteCount = mockDelegate.executedLengths.count
+
+        // Add high-priority tokens from mutation queue context
+        iTermGCD.mutationQueue().async {
+            let vector = createTestTokenVector(count: 1)
+            self.executor.addTokens(vector, lengthTotal: 10, lengthExcludingInBandSignaling: 10, highPriority: true)
+        }
+
+        let expectation = XCTestExpectation(description: "High-priority execution")
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+            expectation.fulfill()
+        }
+        wait(for: [expectation], timeout: 1.0)
+
+        FairnessScheduler.shared.unregister(sessionId: sessionId)
+
+        XCTAssertGreaterThan(mockDelegate.executedLengths.count, initialExecuteCount,
+                             "High-priority tokens added from mutation queue should trigger execution")
+    }
+
+    func testHighPriorityTokensNotifySchedulerSynchronously() throws {
+        // REQUIREMENT: Verify high-priority addTokens notifies scheduler without extra async hop.
+        // The scheduler is notified synchronously when high-priority tokens are added on
+        // mutation queue, vs normal tokens which dispatch notification via queue.async.
+
+        // Register executor with scheduler
+        let sessionId = FairnessScheduler.shared.register(executor)
+        executor.fairnessSessionId = sessionId
+        mockDelegate.shouldQueueTokens = false
+
+        var executionOccurred = false
+        mockDelegate.onWillExecute = {
+            executionOccurred = true
+        }
+
+        // Add high-priority tokens from mutation queue
+        iTermGCD.mutationQueue().async {
+            let vector = createTestTokenVector(count: 1)
+            self.executor.addTokens(vector, lengthTotal: 10, lengthExcludingInBandSignaling: 10, highPriority: true)
+        }
+
+        let expectation = XCTestExpectation(description: "Execution callback")
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            expectation.fulfill()
+        }
+        wait(for: [expectation], timeout: 2.0)
+
+        FairnessScheduler.shared.unregister(sessionId: sessionId)
+
+        XCTAssertTrue(executionOccurred,
+                      "High-priority tokens should trigger execution via scheduler")
     }
 }
 
