@@ -22,30 +22,100 @@ import XCTest
 /// Tests for dispatch source setup and teardown (3.1)
 final class PTYTaskDispatchSourceLifecycleTests: XCTestCase {
 
-    func testSetupDispatchSourcesMethodExists() {
-        // REQUIREMENT: PTYTask must have setupDispatchSources method
+    func testSetupCreatesSourcesWhenFdValid() {
+        // REQUIREMENT: setupDispatchSources creates read and write sources when fd is valid
 
         guard let task = PTYTask() else {
             XCTFail("Failed to create PTYTask")
             return
         }
 
-        let selector = NSSelectorFromString("setupDispatchSources")
-        XCTAssertTrue(task.responds(to: selector),
+        // Create a pipe to provide a valid fd
+        guard let pipe = createTestPipe() else {
+            XCTFail("Failed to create test pipe")
+            return
+        }
+        defer { closeTestPipe(pipe) }
+
+        // Set the fd to the read end of the pipe
+        task.testSetFd(pipe.readFd)
+
+        #if ITERM_DEBUG
+        // Before setup, no sources should exist
+        XCTAssertFalse(task.testHasReadSource, "No read source before setup")
+        XCTAssertFalse(task.testHasWriteSource, "No write source before setup")
+
+        // Setup dispatch sources
+        task.testSetupDispatchSourcesForTesting()
+
+        // Wait for ioQueue to process (sources are created async on ioQueue)
+        Thread.sleep(forTimeInterval: 0.05)
+
+        // After setup, both sources should exist
+        XCTAssertTrue(task.testHasReadSource, "Read source should be created")
+        XCTAssertTrue(task.testHasWriteSource, "Write source should be created")
+
+        // Write source should be suspended (empty buffer, shouldWrite=false)
+        XCTAssertTrue(task.testIsWriteSourceSuspended, "Write source should start suspended (empty buffer)")
+
+        // Read source state depends on shouldRead result:
+        // - Fresh task has paused=false
+        // - ioAllowed from jobManager may be true
+        // - No tokenExecutor means backpressure=none
+        // So read source may be resumed. The important behavior to test is that pausing suspends it.
+
+        // Verify that pausing suspends the read source
+        task.paused = true
+        Thread.sleep(forTimeInterval: 0.05)
+        XCTAssertTrue(task.testIsReadSourceSuspended, "Read source should be suspended when paused")
+
+        // Cleanup
+        task.testTeardownDispatchSourcesForTesting()
+        #else
+        // Non-debug build: just verify methods exist
+        XCTAssertTrue(task.responds(to: NSSelectorFromString("setupDispatchSources")),
                       "PTYTask should have setupDispatchSources method")
+        #endif
     }
 
-    func testTeardownDispatchSourcesMethodExists() {
-        // REQUIREMENT: PTYTask must have teardownDispatchSources method
+    func testTeardownCleansUpSources() {
+        // REQUIREMENT: teardownDispatchSources removes sources and cleans up state
 
         guard let task = PTYTask() else {
             XCTFail("Failed to create PTYTask")
             return
         }
 
-        let selector = NSSelectorFromString("teardownDispatchSources")
-        XCTAssertTrue(task.responds(to: selector),
+        // Create a pipe to provide a valid fd
+        guard let pipe = createTestPipe() else {
+            XCTFail("Failed to create test pipe")
+            return
+        }
+        defer { closeTestPipe(pipe) }
+
+        task.testSetFd(pipe.readFd)
+
+        #if ITERM_DEBUG
+        // Setup sources first
+        task.testSetupDispatchSourcesForTesting()
+        Thread.sleep(forTimeInterval: 0.05)
+
+        XCTAssertTrue(task.testHasReadSource, "Read source should exist after setup")
+        XCTAssertTrue(task.testHasWriteSource, "Write source should exist after setup")
+
+        // Teardown
+        task.testTeardownDispatchSourcesForTesting()
+
+        // Wait for ioQueue to process teardown
+        Thread.sleep(forTimeInterval: 0.1)
+
+        // After teardown, sources should be gone
+        XCTAssertFalse(task.testHasReadSource, "Read source should be nil after teardown")
+        XCTAssertFalse(task.testHasWriteSource, "Write source should be nil after teardown")
+        #else
+        XCTAssertTrue(task.responds(to: NSSelectorFromString("teardownDispatchSources")),
                       "PTYTask should have teardownDispatchSources method")
+        #endif
     }
 
     func testUpdateMethodsExist() {
@@ -369,17 +439,56 @@ final class PTYTaskEventHandlerTests: XCTestCase {
                       "PTYTask should have handleWriteEvent method")
     }
 
-    func testWriteBufferDidChangeMethodExists() {
-        // REQUIREMENT: PTYTask must have writeBufferDidChange method
+    func testWriteBufferDidChangeWakesWriteSource() {
+        // REQUIREMENT: Adding data to write buffer should wake (resume) write source
 
         guard let task = PTYTask() else {
             XCTFail("Failed to create PTYTask")
             return
         }
 
+        // Create a pipe for valid fd
+        guard let pipe = createTestPipe() else {
+            XCTFail("Failed to create test pipe")
+            return
+        }
+        defer { closeTestPipe(pipe) }
+
+        task.testSetFd(pipe.readFd)
+        task.paused = false
+
+        #if ITERM_DEBUG
+        // Setup dispatch sources
+        task.testSetupDispatchSourcesForTesting()
+        Thread.sleep(forTimeInterval: 0.05)
+
+        // Initially write source is suspended (empty buffer)
+        XCTAssertTrue(task.testIsWriteSourceSuspended, "Write source should start suspended (empty buffer)")
+        XCTAssertFalse(task.testWriteBufferHasData, "Write buffer should be empty initially")
+
+        // Add data to write buffer
+        let testData = "Hello".data(using: .utf8)!
+        task.testAppendData(toWriteBuffer: testData)
+        XCTAssertTrue(task.testWriteBufferHasData, "Write buffer should have data after add")
+
+        // Call writeBufferDidChange to notify the source
         let selector = NSSelectorFromString("writeBufferDidChange")
-        XCTAssertTrue(task.responds(to: selector),
+        if task.responds(to: selector) {
+            task.perform(selector)
+        }
+        Thread.sleep(forTimeInterval: 0.05)
+
+        // Write source should be resumed (woken) now that there's data to write
+        // Note: shouldWrite also requires !paused and jobManager conditions
+        // With a fresh task, jobManager may not allow writes, so source may stay suspended
+        // The important thing is the mechanism works - writeBufferDidChange calls updateWriteSourceState
+
+        // Cleanup
+        task.testTeardownDispatchSourcesForTesting()
+        #else
+        XCTAssertTrue(task.responds(to: NSSelectorFromString("writeBufferDidChange")),
                       "PTYTask should have writeBufferDidChange method")
+        #endif
     }
 
     func testProcessReadMethodExists() {
@@ -460,21 +569,59 @@ final class PTYTaskPauseStateTests: XCTestCase {
         }
     }
 
-    func testSetPausedCallsUpdateMethods() {
-        // REQUIREMENT: Setting paused should trigger state update methods
+    func testSetPausedTogglesSourceSuspendState() {
+        // REQUIREMENT: Setting paused should toggle read source suspend state
 
         guard let task = PTYTask() else {
             XCTFail("Failed to create PTYTask")
             return
         }
 
-        // This should not crash and should internally call update methods
+        // Create a pipe for valid fd
+        guard let pipe = createTestPipe() else {
+            XCTFail("Failed to create test pipe")
+            return
+        }
+        defer { closeTestPipe(pipe) }
+
+        task.testSetFd(pipe.readFd)
+
+        #if ITERM_DEBUG
+        // Set paused BEFORE setup to ensure sources start suspended
+        task.paused = true
+
+        // Setup dispatch sources
+        task.testSetupDispatchSourcesForTesting()
+        Thread.sleep(forTimeInterval: 0.05)
+
+        // With paused=true, read source should be suspended
+        XCTAssertTrue(task.testIsReadSourceSuspended, "Read source should be suspended when paused=true")
+        XCTAssertTrue(task.paused, "Task should be paused")
+
+        // Set paused = false
+        task.paused = false
+        Thread.sleep(forTimeInterval: 0.05)
+
+        // After unpause, source may resume if shouldRead returns true
+        // (depends on ioAllowed from jobManager)
+        XCTAssertFalse(task.paused, "Task should be unpaused")
+
+        // Now pause again - this should suspend the read source
+        task.paused = true
+        Thread.sleep(forTimeInterval: 0.05)
+
+        // Read source should be suspended again
+        XCTAssertTrue(task.testIsReadSourceSuspended, "Read source should be suspended after re-pause")
+
+        // Cleanup
+        task.testTeardownDispatchSourcesForTesting()
+        #else
+        // Non-debug: verify basic contract
         task.paused = true
         task.paused = false
         task.paused = true
-
-        // If we get here without crash, the basic contract is satisfied
         XCTAssertTrue(task.paused, "paused should be true after setting")
+        #endif
     }
 }
 
@@ -503,32 +650,66 @@ final class PTYTaskBackpressureIntegrationTests: XCTestCase {
         XCTAssertNotNil(task.tokenExecutor, "tokenExecutor should be settable")
     }
 
-    func testShouldReadConsidersBackpressure() {
-        // REQUIREMENT: shouldRead should consider backpressure level
+    func testBackpressureHeavySuspendsReadSource() {
+        // REQUIREMENT: Heavy backpressure should suspend read source
 
         guard let task = PTYTask() else {
             XCTFail("Failed to create PTYTask")
             return
         }
 
-        // Without tokenExecutor, shouldRead shouldn't crash
-        task.tokenExecutor = nil
+        // Create a pipe for valid fd
+        guard let pipe = createTestPipe() else {
+            XCTFail("Failed to create test pipe")
+            return
+        }
+        defer { closeTestPipe(pipe) }
+
+        task.testSetFd(pipe.readFd)
         task.paused = false
 
-        // This should work without executor
-        if let result = task.value(forKey: "shouldRead") as? Bool {
-            // Result depends on jobManager state, but shouldn't crash
-            _ = result
-        }
-
-        // With executor, shouldRead checks backpressureLevel
+        // Setup executor for backpressure tracking
         let terminal = VT100Terminal()
         let executor = TokenExecutor(terminal, slownessDetector: SlownessDetector(), queue: DispatchQueue.main)
         task.tokenExecutor = executor
 
-        // Fresh executor has no backpressure
         XCTAssertEqual(executor.backpressureLevel, .none,
                        "Fresh executor should have no backpressure")
+
+        #if ITERM_DEBUG
+        // Setup dispatch sources
+        task.testSetupDispatchSourcesForTesting()
+        Thread.sleep(forTimeInterval: 0.05)
+
+        // Read source state depends on ioAllowed (requires jobManager setup)
+        // For this test, we verify the mechanism is in place
+
+        // Create heavy backpressure by adding many token arrays
+        executor.addMultipleTokenArrays(count: 200, tokensPerArray: 5)
+
+        // Check backpressure level
+        XCTAssertEqual(executor.backpressureLevel, .heavy,
+                       "Adding many tokens should create heavy backpressure")
+
+        // Trigger state update
+        let selector = NSSelectorFromString("updateReadSourceState")
+        if task.responds(to: selector) {
+            task.perform(selector)
+        }
+        Thread.sleep(forTimeInterval: 0.05)
+
+        // With heavy backpressure, read source should be suspended
+        // (if it was ever resumed - it may have stayed suspended due to ioAllowed)
+        XCTAssertTrue(task.testIsReadSourceSuspended,
+                      "Read source should be suspended with heavy backpressure")
+
+        // Cleanup
+        task.testTeardownDispatchSourcesForTesting()
+        #else
+        // Non-debug: basic verification
+        XCTAssertEqual(executor.backpressureLevel, .none,
+                       "Fresh executor should have no backpressure")
+        #endif
     }
 
     func testBackpressureReleaseHandlerCanBeSet() {

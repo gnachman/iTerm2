@@ -278,5 +278,22 @@ typedef NS_OPTIONS(NSUInteger, iTermJobManagerAttachResults) {
 /// Only meaningful if testHasWriteSource is YES.
 @property(nonatomic, readonly) BOOL testIsWriteSourceSuspended;
 
+/// Returns YES if the write buffer has data waiting to be written.
+@property(nonatomic, readonly) BOOL testWriteBufferHasData;
+
+/// Set the file descriptor for testing purposes.
+/// This sets the fd via the jobManager.
+- (void)testSetFd:(int)fd;
+
+/// Set up dispatch sources for testing with a pre-configured fd.
+/// Requires fd >= 0 to be set before calling.
+- (void)testSetupDispatchSourcesForTesting;
+
+/// Tear down dispatch sources for testing cleanup.
+- (void)testTeardownDispatchSourcesForTesting;
+
+/// Add data to the write buffer for testing write source behavior.
+- (void)testAppendDataToWriteBuffer:(NSData *)data;
+
 @end
 #endif

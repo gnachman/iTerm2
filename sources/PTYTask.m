@@ -1145,5 +1145,30 @@ static void HandleSigChld(int n) {
     return _writeSourceSuspended;
 }
 
+- (BOOL)testWriteBufferHasData {
+    [writeLock lock];
+    BOOL hasData = [writeBuffer length] > 0;
+    [writeLock unlock];
+    return hasData;
+}
+
+- (void)testSetFd:(int)fd {
+    self.jobManager.fd = fd;
+}
+
+- (void)testSetupDispatchSourcesForTesting {
+    [self setupDispatchSources];
+}
+
+- (void)testTeardownDispatchSourcesForTesting {
+    [self teardownDispatchSources];
+}
+
+- (void)testAppendDataToWriteBuffer:(NSData *)data {
+    [writeLock lock];
+    [writeBuffer appendData:data];
+    [writeLock unlock];
+}
+
 @end
 #endif
