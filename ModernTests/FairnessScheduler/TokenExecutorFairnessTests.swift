@@ -1725,7 +1725,8 @@ final class TokenExecutorSameQueueGroupBoundaryTests: XCTestCase {
 // MARK: - AvailableSlots Boundary Tests
 
 /// Tests for availableSlots boundary conditions.
-/// These ensure accounting never goes negative or overflows.
+/// These ensure accounting is balanced (no drift) and handles over-capacity correctly.
+/// Note: availableSlots CAN go negative when high-priority tokens bypass backpressure.
 final class TokenExecutorAvailableSlotsBoundaryTests: XCTestCase {
 
     var mockDelegate: MockTokenExecutorDelegate!
@@ -1743,8 +1744,19 @@ final class TokenExecutorAvailableSlotsBoundaryTests: XCTestCase {
         super.tearDown()
     }
 
-    func testSlotsNeverGoNegativeUnderStress() {
-        // REQUIREMENT: availableSlots should never go negative, even under heavy load.
+    func testSlotsAccountingBalancedAfterFullDrain() {
+        // REQUIREMENT: availableSlots accounting must be balanced - after all tokens
+        // are consumed, slots must return to totalSlots (no drift).
+        //
+        // NOTE: This test bypasses PTYTask's backpressure check and adds tokens
+        // directly to TokenExecutor. In the real system:
+        // - PTYTask suspends reading when backpressureLevel >= .heavy (25% remaining)
+        // - Only high-priority tokens (API injection) can bypass this check
+        // - High-priority tokens are allowed to temporarily go negative by design
+        //   (see implementation.md: "High-priority can temporarily go negative")
+        //
+        // This test verifies raw TokenExecutor accounting is correct, not the
+        // integrated PTYTask backpressure behavior.
 
         let executor = TokenExecutor(
             mockTerminal,
@@ -1763,7 +1775,9 @@ final class TokenExecutorAvailableSlotsBoundaryTests: XCTestCase {
         XCTAssertEqual(initialSlots, totalSlots, "Fresh executor should have all slots available")
         #endif
 
-        // Add a moderate number of token groups (more than totalSlots to ensure we hit limits)
+        // Add more token groups than totalSlots (simulating high-priority bypass)
+        // In real usage, only high-priority tokens would do this; normal PTY tokens
+        // are blocked by PTYTask's backpressure check at 25% capacity.
         let addCount = 50
         for _ in 0..<addCount {
             let vector = createTestTokenVector(count: 1)
@@ -1771,18 +1785,17 @@ final class TokenExecutorAvailableSlotsBoundaryTests: XCTestCase {
         }
 
         #if ITERM_DEBUG
-        // After adding 50 tokens with 40 slots, availableSlots = 40 - 50 = -10
-        // The counter can go negative (by design) to track over-capacity
+        // Verify accounting: 40 - 50 = -10 (negative is allowed for high-priority bypass)
         let afterAddSlots = executor.testAvailableSlots
-        let expectedSlots = totalSlots - addCount  // 40 - 50 = -10
+        let expectedSlots = totalSlots - addCount
         XCTAssertEqual(afterAddSlots, expectedSlots,
-                       "availableSlots should be totalSlots - addCount (can be negative)")
+                       "availableSlots should track total pending tokens")
         #endif
 
         // Backpressure should be blocked when availableSlots <= 0
         let level = executor.backpressureLevel
         XCTAssertEqual(level, .blocked,
-                       "Adding more tokens than slots should cause blocked backpressure")
+                       "Backpressure should be .blocked when over capacity")
 
         // Process all by repeatedly calling executeTurn
         for _ in 0..<100 {
