@@ -35,9 +35,11 @@ TOKENEXECUTOR_TEST_CLASSES=(
     "TokenExecutorAccountingInvariantTests"
     "TokenExecutorCompletionCallbackTests"
     "TokenExecutorBudgetEnforcementDetailedTests"
+    "TokenExecutorSameQueueGroupBoundaryTests"
     "TokenExecutorAvailableSlotsBoundaryTests"
     "TokenExecutorHighPriorityOrderingTests"
     "TwoTierTokenQueueTests"
+    "TwoTierTokenQueueGroupingTests"
 )
 
 # Milestone 3: PTYTask Dispatch Sources (Checkpoint 3)
@@ -47,6 +49,7 @@ PTYTASK_TEST_CLASSES=(
     "PTYTaskWriteStateTests"
     "PTYTaskEventHandlerTests"
     "PTYTaskPauseStateTests"
+    "PTYTaskIoAllowedPredicateTests"
     "PTYTaskBackpressureIntegrationTests"
     "PTYTaskUseDispatchSourceTests"
     "PTYTaskStateTransitionTests"

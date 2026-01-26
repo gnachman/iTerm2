@@ -1396,6 +1396,222 @@ final class TokenExecutorBudgetEnforcementDetailedTests: XCTestCase {
 
 }
 
+// MARK: - Same-Queue Group Boundary Tests
+
+/// Tests for budget enforcement with multiple groups in the SAME priority queue.
+/// These tests verify that enumerateTokenArrayGroups correctly identifies group
+/// boundaries based on token coalesceability, and that budget is checked between
+/// these groups (not just between high-priority and normal-priority queues).
+///
+/// Key invariant: VT100_UNKNOWNCHAR tokens are non-coalescable, so each TokenArray
+/// with such tokens forms its own group, even when added to the same queue.
+final class TokenExecutorSameQueueGroupBoundaryTests: XCTestCase {
+
+    var mockDelegate: MockTokenExecutorDelegate!
+    var mockTerminal: VT100Terminal!
+    var executor: TokenExecutor!
+
+    override func setUp() {
+        super.setUp()
+        mockDelegate = MockTokenExecutorDelegate()
+        mockTerminal = VT100Terminal()
+        executor = TokenExecutor(
+            mockTerminal,
+            slownessDetector: SlownessDetector(),
+            queue: DispatchQueue.main
+        )
+        executor.delegate = mockDelegate
+
+        let sessionId = FairnessScheduler.shared.register(executor)
+        executor.fairnessSessionId = sessionId
+    }
+
+    override func tearDown() {
+        if let id = executor?.fairnessSessionId {
+            FairnessScheduler.shared.unregister(sessionId: id)
+        }
+        executor = nil
+        mockTerminal = nil
+        mockDelegate = nil
+        super.tearDown()
+    }
+
+    func testBudgetEnforcementBetweenGroupsInSameQueue() {
+        // REQUIREMENT: Budget should be checked BETWEEN groups in the same queue,
+        // not just between different priority queues.
+        // This test adds multiple TokenArrays to the NORMAL priority queue only.
+        //
+        // NOTE: Budget is measured in TOKEN COUNT, not byte length.
+        // VT100_UNKNOWNCHAR tokens are non-coalescable, so each array is its own group.
+
+        // Add 3 groups of 100 TOKENS each to normal priority queue
+        for _ in 0..<3 {
+            let vector = createTestTokenVector(count: 100)  // 100 tokens per group
+            executor.addTokens(vector, lengthTotal: 1000, lengthExcludingInBandSignaling: 1000)
+        }
+
+        let initialWillExecuteCount = mockDelegate.willExecuteCount
+
+        let expectation = XCTestExpectation(description: "ExecuteTurn completed")
+        var receivedResult: TurnResult?
+        executor.executeTurn(tokenBudget: 50) { result in  // Budget of 50 tokens
+            receivedResult = result
+            expectation.fulfill()
+        }
+
+        wait(for: [expectation], timeout: 1.0)
+
+        // First group (100 tokens) exceeds budget (50), should yield with more work
+        XCTAssertEqual(receivedResult, .yielded,
+                       "Should yield because first group exceeds budget and more groups remain")
+
+        // Only ONE group should have executed (progress guarantee + budget stop)
+        XCTAssertEqual(mockDelegate.willExecuteCount, initialWillExecuteCount + 1,
+                       "Only first group should execute when it exceeds budget")
+    }
+
+    func testSecondGroupInSameQueueSkippedWhenBudgetExceeded() {
+        // REQUIREMENT: Second group in same queue should NOT execute if budget
+        // was exceeded by first group. This verifies the budget check between
+        // groups within the same priority queue.
+        //
+        // NOTE: Budget is measured in TOKEN COUNT, not byte length.
+
+        // Add 2 groups to normal priority queue with different TOKEN counts
+        let firstGroupTokens = 100
+        let secondGroupTokens = 50
+
+        let vector1 = createTestTokenVector(count: firstGroupTokens)
+        executor.addTokens(vector1, lengthTotal: firstGroupTokens * 10, lengthExcludingInBandSignaling: firstGroupTokens * 10)
+
+        let vector2 = createTestTokenVector(count: secondGroupTokens)
+        executor.addTokens(vector2, lengthTotal: secondGroupTokens * 10, lengthExcludingInBandSignaling: secondGroupTokens * 10)
+
+        // First turn: budget 10, first group is 100 tokens - should execute only first
+        let firstExpectation = XCTestExpectation(description: "First turn")
+        var firstResult: TurnResult?
+        executor.executeTurn(tokenBudget: 10) { result in
+            firstResult = result
+            firstExpectation.fulfill()
+        }
+        wait(for: [firstExpectation], timeout: 1.0)
+
+        XCTAssertEqual(firstResult, .yielded,
+                       "First turn should yield (more work remains)")
+        XCTAssertEqual(mockDelegate.willExecuteCount, 1,
+                       "Only first group should execute in first turn")
+
+        // Second turn: should process remaining group
+        let secondExpectation = XCTestExpectation(description: "Second turn")
+        var secondResult: TurnResult?
+        executor.executeTurn(tokenBudget: 100) { result in
+            secondResult = result
+            secondExpectation.fulfill()
+        }
+        wait(for: [secondExpectation], timeout: 1.0)
+
+        XCTAssertEqual(secondResult, .completed,
+                       "Second turn should complete (all work done)")
+        XCTAssertEqual(mockDelegate.willExecuteCount, 2,
+                       "Second group should execute in second turn")
+    }
+
+    func testMultipleGroupsProcessedWithinBudget() {
+        // REQUIREMENT: Multiple groups should all execute if they fit within budget.
+        // This verifies that budget check allows continuation when budget not exceeded.
+        //
+        // NOTE: Budget is measured in TOKEN COUNT, not byte length.
+        // NOTE: willExecuteCount and executedLengths are per-TURN metrics, not per-group.
+
+        // Add 3 small groups (10 TOKENS each) to normal priority queue
+        // Each has lengthTotal of 100 bytes
+        for _ in 0..<3 {
+            let vector = createTestTokenVector(count: 10)  // 10 tokens per group
+            executor.addTokens(vector, lengthTotal: 100, lengthExcludingInBandSignaling: 100)
+        }
+
+        let expectation = XCTestExpectation(description: "ExecuteTurn completed")
+        var receivedResult: TurnResult?
+        executor.executeTurn(tokenBudget: 500) { result in  // Budget of 500 tokens
+            receivedResult = result
+            expectation.fulfill()
+        }
+
+        wait(for: [expectation], timeout: 1.0)
+
+        // All 3 groups (total 30 tokens) fit within budget (500)
+        XCTAssertEqual(receivedResult, .completed,
+                       "Should complete when all groups fit within budget")
+
+        // Verify all 3 groups were processed by checking total byte length
+        // Each group has lengthTotal=100, so 3 groups = 300 bytes total
+        XCTAssertEqual(mockDelegate.executedLengths.count, 1,
+                       "Should have one execution record per turn")
+        if let execution = mockDelegate.executedLengths.first {
+            XCTAssertEqual(execution.total, 300,
+                           "Total length should be 300 (3 groups * 100 bytes each)")
+        }
+    }
+
+    func testBudgetBoundaryExactMatch() {
+        // REQUIREMENT: When cumulative tokens exactly match budget, next group should NOT execute.
+        // (Budget check: tokensConsumed + nextGroup > budget, so exact match triggers stop)
+        //
+        // NOTE: Budget is measured in TOKEN COUNT, not byte length.
+
+        // Add 2 groups: first exactly matches budget (100 tokens), second should NOT execute
+        let budget = 100
+
+        let vector1 = createTestTokenVector(count: budget)  // 100 tokens
+        executor.addTokens(vector1, lengthTotal: budget * 10, lengthExcludingInBandSignaling: budget * 10)
+
+        let vector2 = createTestTokenVector(count: 50)  // 50 tokens
+        executor.addTokens(vector2, lengthTotal: 500, lengthExcludingInBandSignaling: 500)
+
+        let expectation = XCTestExpectation(description: "ExecuteTurn completed")
+        var receivedResult: TurnResult?
+        executor.executeTurn(tokenBudget: budget) { result in
+            receivedResult = result
+            expectation.fulfill()
+        }
+
+        wait(for: [expectation], timeout: 1.0)
+
+        // First group exactly matches budget (100 tokens); second group (50) would exceed budget (100 + 50 > 100)
+        // So only first group should execute
+        XCTAssertEqual(receivedResult, .yielded,
+                       "Should yield because adding second group would exceed budget")
+        XCTAssertEqual(mockDelegate.willExecuteCount, 1,
+                       "Only first group should execute when it exactly matches budget")
+    }
+
+    func testProgressGuaranteeWithSameQueueGroups() {
+        // REQUIREMENT: At least one group must execute per turn (progress guarantee),
+        // even if that group exceeds budget. Verifies this with same-queue groups.
+        //
+        // NOTE: Budget is measured in TOKEN COUNT, not byte length.
+
+        // Add 1 large group (1000 tokens) that exceeds budget (1)
+        let vector = createTestTokenVector(count: 1000)
+        executor.addTokens(vector, lengthTotal: 10000, lengthExcludingInBandSignaling: 10000)
+
+        let expectation = XCTestExpectation(description: "ExecuteTurn completed")
+        var receivedResult: TurnResult?
+        executor.executeTurn(tokenBudget: 1) { result in
+            receivedResult = result
+            expectation.fulfill()
+        }
+
+        wait(for: [expectation], timeout: 1.0)
+
+        // Group should still execute (progress guarantee)
+        XCTAssertEqual(receivedResult, .completed,
+                       "Single large group should complete (progress guarantee)")
+        XCTAssertEqual(mockDelegate.willExecuteCount, 1,
+                       "Large group should execute despite exceeding budget")
+    }
+}
+
 // MARK: - AvailableSlots Boundary Tests
 
 /// Tests for availableSlots boundary conditions.

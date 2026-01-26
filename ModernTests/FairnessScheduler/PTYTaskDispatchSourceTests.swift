@@ -869,6 +869,339 @@ final class PTYTaskPauseStateTests: XCTestCase {
     }
 }
 
+// MARK: - 3.5b ioAllowed Predicate Tests
+
+/// Tests for ioAllowed affecting shouldRead/shouldWrite predicates
+/// These tests use testIoAllowedOverride to control the ioAllowed input
+/// without needing a real jobManager or launched process.
+final class PTYTaskIoAllowedPredicateTests: XCTestCase {
+
+    func testIoAllowedOverridePropertyExists() {
+        // REQUIREMENT: PTYTask must have testIoAllowedOverride property for testing
+
+        guard let task = PTYTask() else {
+            XCTFail("Failed to create PTYTask")
+            return
+        }
+
+        #if ITERM_DEBUG
+        // Should be nil by default
+        XCTAssertNil(task.testIoAllowedOverride, "testIoAllowedOverride should be nil by default")
+
+        // Should be settable to @YES
+        task.testIoAllowedOverride = NSNumber(value: true)
+        XCTAssertEqual(task.testIoAllowedOverride?.boolValue, true)
+
+        // Should be settable to @NO
+        task.testIoAllowedOverride = NSNumber(value: false)
+        XCTAssertEqual(task.testIoAllowedOverride?.boolValue, false)
+
+        // Should be resettable to nil
+        task.testIoAllowedOverride = nil
+        XCTAssertNil(task.testIoAllowedOverride)
+        #else
+        XCTAssertTrue(task.responds(to: NSSelectorFromString("testIoAllowedOverride")))
+        #endif
+    }
+
+    func testShouldReadFalseWhenIoAllowedFalse() {
+        // REQUIREMENT: shouldRead returns false when ioAllowed is false
+        // Per spec: shouldRead = !paused && ioAllowed && backpressure < heavy
+
+        guard let task = PTYTask() else {
+            XCTFail("Failed to create PTYTask")
+            return
+        }
+
+        #if ITERM_DEBUG
+        // Set up favorable conditions except ioAllowed
+        task.paused = false  // not paused
+        // No tokenExecutor means no backpressure check
+
+        // Force ioAllowed = false
+        task.testIoAllowedOverride = NSNumber(value: false)
+
+        // shouldRead should be false because ioAllowed is false
+        if let result = task.value(forKey: "shouldRead") as? Bool {
+            XCTAssertFalse(result, "shouldRead should be false when ioAllowed=false")
+        } else {
+            XCTFail("Could not read shouldRead value")
+        }
+        #else
+        task.paused = true
+        if let result = task.value(forKey: "shouldRead") as? Bool {
+            XCTAssertFalse(result)
+        }
+        #endif
+    }
+
+    func testShouldReadTrueWhenIoAllowedTrueAndOtherConditionsMet() {
+        // REQUIREMENT: shouldRead returns true when ioAllowed=true, paused=false, backpressure<heavy
+        // Per spec: shouldRead = !paused && ioAllowed && backpressure < heavy
+
+        guard let task = PTYTask() else {
+            XCTFail("Failed to create PTYTask")
+            return
+        }
+
+        #if ITERM_DEBUG
+        // Set up all favorable conditions
+        task.paused = false  // not paused
+        // No tokenExecutor means no backpressure check (treated as none)
+
+        // Force ioAllowed = true
+        task.testIoAllowedOverride = NSNumber(value: true)
+
+        // shouldRead should be true because all conditions are met
+        if let result = task.value(forKey: "shouldRead") as? Bool {
+            XCTAssertTrue(result, "shouldRead should be true when ioAllowed=true and other conditions met")
+        } else {
+            XCTFail("Could not read shouldRead value")
+        }
+        #else
+        XCTAssertTrue(task.responds(to: NSSelectorFromString("shouldRead")))
+        #endif
+    }
+
+    func testShouldReadFlipsWhenIoAllowedChanges() {
+        // REQUIREMENT: shouldRead changes when ioAllowed flips from true to false
+        // This tests the predicate responds to ioAllowed state changes
+
+        guard let task = PTYTask() else {
+            XCTFail("Failed to create PTYTask")
+            return
+        }
+
+        #if ITERM_DEBUG
+        task.paused = false  // not paused, no backpressure (no executor)
+
+        // Start with ioAllowed = true
+        task.testIoAllowedOverride = NSNumber(value: true)
+        if let resultTrue = task.value(forKey: "shouldRead") as? Bool {
+            XCTAssertTrue(resultTrue, "shouldRead should be true when ioAllowed=true")
+        }
+
+        // Flip to ioAllowed = false
+        task.testIoAllowedOverride = NSNumber(value: false)
+        if let resultFalse = task.value(forKey: "shouldRead") as? Bool {
+            XCTAssertFalse(resultFalse, "shouldRead should flip to false when ioAllowed flips to false")
+        }
+
+        // Flip back to ioAllowed = true
+        task.testIoAllowedOverride = NSNumber(value: true)
+        if let resultTrueAgain = task.value(forKey: "shouldRead") as? Bool {
+            XCTAssertTrue(resultTrueAgain, "shouldRead should flip back to true when ioAllowed flips to true")
+        }
+        #else
+        XCTAssertTrue(task.responds(to: NSSelectorFromString("shouldRead")))
+        #endif
+    }
+
+    func testShouldWriteFalseWhenIoAllowedFalse() {
+        // REQUIREMENT: shouldWrite returns false when ioAllowed is false
+        // Per spec: shouldWrite = !paused && !isReadOnly && ioAllowed && bufferHasData
+
+        guard let task = PTYTask() else {
+            XCTFail("Failed to create PTYTask")
+            return
+        }
+
+        #if ITERM_DEBUG
+        // Set up favorable conditions except ioAllowed
+        task.paused = false
+        task.testShouldWriteOverride = false  // Don't bypass isReadOnly check
+
+        // Add data to buffer
+        let testData = "Test data".data(using: .utf8)!
+        task.testAppendData(toWriteBuffer: testData)
+        XCTAssertTrue(task.testWriteBufferHasData, "Buffer should have data")
+
+        // Force ioAllowed = false
+        task.testIoAllowedOverride = NSNumber(value: false)
+
+        // shouldWrite should be false because ioAllowed is false
+        if let result = task.value(forKey: "shouldWrite") as? Bool {
+            XCTAssertFalse(result, "shouldWrite should be false when ioAllowed=false")
+        } else {
+            XCTFail("Could not read shouldWrite value")
+        }
+        #else
+        task.paused = true
+        if let result = task.value(forKey: "shouldWrite") as? Bool {
+            XCTAssertFalse(result)
+        }
+        #endif
+    }
+
+    func testShouldWriteTrueWhenIoAllowedTrueAndOtherConditionsMet() {
+        // REQUIREMENT: shouldWrite returns true when all conditions met
+        // Per spec: shouldWrite = !paused && !isReadOnly && ioAllowed && bufferHasData
+        // Note: We use testShouldWriteOverride to bypass isReadOnly (no real jobManager)
+
+        guard let task = PTYTask() else {
+            XCTFail("Failed to create PTYTask")
+            return
+        }
+
+        #if ITERM_DEBUG
+        task.paused = false
+        task.testShouldWriteOverride = true  // Bypass isReadOnly check
+
+        // Add data to buffer
+        let testData = "Test data".data(using: .utf8)!
+        task.testAppendData(toWriteBuffer: testData)
+        XCTAssertTrue(task.testWriteBufferHasData, "Buffer should have data")
+
+        // Force ioAllowed = true (though testShouldWriteOverride bypasses this too)
+        task.testIoAllowedOverride = NSNumber(value: true)
+
+        // shouldWrite should be true
+        if let result = task.value(forKey: "shouldWrite") as? Bool {
+            XCTAssertTrue(result, "shouldWrite should be true when all conditions met")
+        } else {
+            XCTFail("Could not read shouldWrite value")
+        }
+
+        task.testShouldWriteOverride = false
+        #else
+        XCTAssertTrue(task.responds(to: NSSelectorFromString("shouldWrite")))
+        #endif
+    }
+
+    func testIoAllowedFalseOverridesPausedFalse() {
+        // REQUIREMENT: ioAllowed=false should cause shouldRead=false even when paused=false
+        // This verifies that ioAllowed is checked independently of pause state
+
+        guard let task = PTYTask() else {
+            XCTFail("Failed to create PTYTask")
+            return
+        }
+
+        #if ITERM_DEBUG
+        task.paused = false  // Favorable
+
+        // Force ioAllowed = false
+        task.testIoAllowedOverride = NSNumber(value: false)
+
+        // shouldRead should still be false (ioAllowed blocks it)
+        if let result = task.value(forKey: "shouldRead") as? Bool {
+            XCTAssertFalse(result, "ioAllowed=false should make shouldRead=false regardless of paused state")
+        }
+        #else
+        XCTAssertTrue(task.responds(to: NSSelectorFromString("shouldRead")))
+        #endif
+    }
+
+    func testIoAllowedTrueDoesNotOverridePausedTrue() {
+        // REQUIREMENT: ioAllowed=true should NOT make shouldRead=true when paused=true
+        // This verifies that pause state is still respected
+
+        guard let task = PTYTask() else {
+            XCTFail("Failed to create PTYTask")
+            return
+        }
+
+        #if ITERM_DEBUG
+        task.paused = true  // Unfavorable
+
+        // Force ioAllowed = true
+        task.testIoAllowedOverride = NSNumber(value: true)
+
+        // shouldRead should still be false (paused blocks it)
+        if let result = task.value(forKey: "shouldRead") as? Bool {
+            XCTAssertFalse(result, "paused=true should make shouldRead=false regardless of ioAllowed")
+        }
+        #else
+        task.paused = true
+        if let result = task.value(forKey: "shouldRead") as? Bool {
+            XCTAssertFalse(result)
+        }
+        #endif
+    }
+
+    func testReadSourceSuspendsWhenIoAllowedBecomesFalse() {
+        // REQUIREMENT: Read source should suspend when ioAllowed changes from true to false
+
+        guard let task = PTYTask() else {
+            XCTFail("Failed to create PTYTask")
+            return
+        }
+
+        guard let pipe = createTestPipe() else {
+            XCTFail("Failed to create test pipe")
+            return
+        }
+        defer { closeTestPipe(pipe) }
+
+        task.testSetFd(pipe.readFd)
+        task.paused = false
+
+        #if ITERM_DEBUG
+        // Start with ioAllowed = true
+        task.testIoAllowedOverride = NSNumber(value: true)
+
+        task.testSetupDispatchSourcesForTesting()
+        task.testWaitForIOQueue()
+
+        // Read source should be resumed (all conditions favorable)
+        XCTAssertFalse(task.testIsReadSourceSuspended, "Read source should be resumed with ioAllowed=true")
+
+        // Flip ioAllowed to false
+        task.testIoAllowedOverride = NSNumber(value: false)
+        task.perform(NSSelectorFromString("updateReadSourceState"))
+        task.testWaitForIOQueue()
+
+        // Read source should now be suspended
+        XCTAssertTrue(task.testIsReadSourceSuspended, "Read source should SUSPEND when ioAllowed becomes false")
+
+        task.testTeardownDispatchSourcesForTesting()
+        #else
+        XCTAssertTrue(task.responds(to: NSSelectorFromString("updateReadSourceState")))
+        #endif
+    }
+
+    func testReadSourceResumesWhenIoAllowedBecomesTrue() {
+        // REQUIREMENT: Read source should resume when ioAllowed changes from false to true
+
+        guard let task = PTYTask() else {
+            XCTFail("Failed to create PTYTask")
+            return
+        }
+
+        guard let pipe = createTestPipe() else {
+            XCTFail("Failed to create test pipe")
+            return
+        }
+        defer { closeTestPipe(pipe) }
+
+        task.testSetFd(pipe.readFd)
+        task.paused = false
+
+        #if ITERM_DEBUG
+        // Start with ioAllowed = false
+        task.testIoAllowedOverride = NSNumber(value: false)
+
+        task.testSetupDispatchSourcesForTesting()
+        task.testWaitForIOQueue()
+
+        // Read source should be suspended (ioAllowed=false)
+        XCTAssertTrue(task.testIsReadSourceSuspended, "Read source should be suspended with ioAllowed=false")
+
+        // Flip ioAllowed to true
+        task.testIoAllowedOverride = NSNumber(value: true)
+        task.perform(NSSelectorFromString("updateReadSourceState"))
+        task.testWaitForIOQueue()
+
+        // Read source should now be resumed
+        XCTAssertFalse(task.testIsReadSourceSuspended, "Read source should RESUME when ioAllowed becomes true")
+
+        task.testTeardownDispatchSourcesForTesting()
+        #else
+        XCTAssertTrue(task.responds(to: NSSelectorFromString("updateReadSourceState")))
+        #endif
+    }
+}
+
 // MARK: - 3.6 Backpressure Integration Tests
 
 /// Tests for backpressure integration with PTYTask (3.6)

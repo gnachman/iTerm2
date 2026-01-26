@@ -213,6 +213,8 @@ static const int64_t VT100ScreenMutableStateSideEffectFlagLineBufferDidDropLines
         _commandRangeChangeJoiner = [iTermIdempotentOperationJoiner joinerWithScheduler:_tokenExecutor];
         _terminal.delegate = self;
         _tokenExecutor.delegate = self;
+        // Re-kick token execution when terminal becomes enabled
+        [self scheduleTokenExecution];
     } else {
         // Unregister from FairnessScheduler BEFORE clearing delegate
         // This also calls cleanupForUnregistration() to restore availableSlots

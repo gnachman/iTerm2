@@ -301,6 +301,13 @@ typedef NS_OPTIONS(NSUInteger, iTermJobManagerAttachResults) {
 /// Reset to NO to restore normal behavior.
 @property(nonatomic, assign) BOOL testShouldWriteOverride;
 
+/// Override jobManager.ioAllowed for predicate testing.
+/// nil = use real jobManager.ioAllowed value
+/// @YES = force ioAllowed to return true
+/// @NO = force ioAllowed to return false
+/// This affects both shouldRead and shouldWrite predicates.
+@property(nonatomic, strong, nullable) NSNumber *testIoAllowedOverride;
+
 /// Synchronously wait for the ioQueue to drain all pending work.
 /// Use this instead of Thread.sleep to avoid flaky timing-dependent tests.
 - (void)testWaitForIOQueue;

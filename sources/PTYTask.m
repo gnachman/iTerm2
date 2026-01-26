@@ -82,6 +82,10 @@ static void HandleSigChld(int n) {
 
     // Test hook to override shouldWrite for testing write source resume
     BOOL _testShouldWriteOverride;
+
+    // Test hook to override jobManager.ioAllowed for predicate tests
+    // nil = use real value, @YES = force true, @NO = force false
+    NSNumber *_testIoAllowedOverride;
 }
 
 - (instancetype)init {
@@ -566,15 +570,25 @@ static void HandleSigChld(int n) {
 
 #pragma mark - Unified State Check
 
+// Helper to get effective ioAllowed, considering test override
+- (BOOL)effectiveIoAllowed {
+#if ITERM_DEBUG
+    if (_testIoAllowedOverride != nil) {
+        return _testIoAllowedOverride.boolValue;
+    }
+#endif
+    return self.jobManager.ioAllowed;
+}
+
 // All conditions that affect whether we should read
 - (BOOL)shouldRead {
     iTermTokenExecutor *executor = (iTermTokenExecutor *)self.tokenExecutor;
     if (!executor) {
         // No executor means no backpressure tracking - allow reads
-        return !self.paused && self.jobManager.ioAllowed;
+        return !self.paused && [self effectiveIoAllowed];
     }
     return !self.paused &&
-           self.jobManager.ioAllowed &&
+           [self effectiveIoAllowed] &&
            executor.backpressureLevel < BackpressureLevelHeavy;
 }
 
@@ -584,7 +598,7 @@ static void HandleSigChld(int n) {
         return NO;
     }
     // Test hook allows bypassing jobManager constraints for testing write source resume
-    if (!_testShouldWriteOverride && (self.jobManager.isReadOnly || !self.jobManager.ioAllowed)) {
+    if (!_testShouldWriteOverride && (self.jobManager.isReadOnly || ![self effectiveIoAllowed])) {
         return NO;
     }
     [writeLock lock];
@@ -1183,6 +1197,14 @@ static void HandleSigChld(int n) {
 
 - (void)setTestShouldWriteOverride:(BOOL)testShouldWriteOverride {
     _testShouldWriteOverride = testShouldWriteOverride;
+}
+
+- (NSNumber *)testIoAllowedOverride {
+    return _testIoAllowedOverride;
+}
+
+- (void)setTestIoAllowedOverride:(NSNumber *)testIoAllowedOverride {
+    _testIoAllowedOverride = testIoAllowedOverride;
 }
 
 - (void)testWaitForIOQueue {

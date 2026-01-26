@@ -191,3 +191,177 @@ final class TwoTierTokenQueueTests: XCTestCase {
         return tokenArray
     }
 }
+
+// MARK: - Group Boundary Tests
+
+/// Tests for TokenArrayGroup formation within a single queue.
+/// These tests verify that enumerateTokenArrayGroups correctly identifies
+/// group boundaries based on token coalesceability.
+final class TwoTierTokenQueueGroupingTests: XCTestCase {
+
+    func testNonCoalescableTokensFormSeparateGroups() {
+        // REQUIREMENT: Each TokenArray with non-coalescable tokens (e.g., VT100_UNKNOWNCHAR)
+        // should form its own group, even when in the same queue.
+
+        let queue = TwoTierTokenQueue()
+
+        // Add 3 token arrays with non-coalescable tokens (VT100_UNKNOWNCHAR)
+        // Use different lengths to verify each is a separate group
+        let lengths = [100, 200, 300]
+        for length in lengths {
+            let tokenArray = createNonCoalescableTokenArray(tokenCount: 1, lengthPerToken: length)
+            queue.addTokens(tokenArray, highPriority: false)
+        }
+
+        // Count how many groups we get and their lengths
+        var groupCount = 0
+        var observedLengths: [Int] = []
+
+        queue.enumerateTokenArrayGroups { group, priority in
+            groupCount += 1
+            observedLengths.append(group.lengthTotal)
+            _ = group.consume()
+            return true  // Continue enumerating
+        }
+
+        // Each TokenArray should be its own group (non-coalescable)
+        XCTAssertEqual(groupCount, 3, "Each non-coalescable TokenArray should form its own group")
+        XCTAssertEqual(observedLengths, lengths, "Each group should have the expected length")
+    }
+
+    func testEnumerateGroupsProcessesInOrder() {
+        // REQUIREMENT: Groups should be processed in FIFO order within a queue.
+
+        let queue = TwoTierTokenQueue()
+
+        // Add arrays with different lengths to identify them
+        let lengths = [10, 20, 30]
+        for length in lengths {
+            let tokenArray = createNonCoalescableTokenArray(tokenCount: 1, lengthPerToken: length)
+            queue.addTokens(tokenArray, highPriority: false)
+        }
+
+        var observedLengths: [Int] = []
+
+        queue.enumerateTokenArrayGroups { group, priority in
+            observedLengths.append(group.lengthTotal)
+            _ = group.consume()
+            return true
+        }
+
+        XCTAssertEqual(observedLengths, lengths,
+                       "Groups should be processed in FIFO order")
+    }
+
+    func testEnumerateGroupsStopsWhenClosureReturnsFalse() {
+        // REQUIREMENT: Enumeration should stop when closure returns false.
+        // This is essential for budget enforcement to work.
+
+        let queue = TwoTierTokenQueue()
+
+        // Add 5 groups
+        for i in 0..<5 {
+            let tokenArray = createNonCoalescableTokenArray(tokenCount: 1, lengthPerToken: (i + 1) * 10)
+            queue.addTokens(tokenArray, highPriority: false)
+        }
+
+        var groupsProcessed = 0
+
+        queue.enumerateTokenArrayGroups { group, priority in
+            groupsProcessed += 1
+            _ = group.consume()
+            return groupsProcessed < 2  // Stop after 2 groups
+        }
+
+        XCTAssertEqual(groupsProcessed, 2,
+                       "Enumeration should stop when closure returns false")
+
+        // Queue should still have remaining groups
+        XCTAssertFalse(queue.isEmpty, "Queue should still have 3 remaining groups")
+    }
+
+    func testEnumerateGroupsReturnsCorrectPriority() {
+        // REQUIREMENT: Enumeration should report correct priority for each group.
+
+        let queue = TwoTierTokenQueue()
+
+        // Add high-priority group first
+        queue.addTokens(createNonCoalescableTokenArray(tokenCount: 1), highPriority: true)
+
+        // Add normal-priority group
+        queue.addTokens(createNonCoalescableTokenArray(tokenCount: 1), highPriority: false)
+
+        var priorities: [Int] = []
+
+        queue.enumerateTokenArrayGroups { group, priority in
+            priorities.append(priority)
+            _ = group.consume()
+            return true
+        }
+
+        // Priority 0 = high, Priority 1 = normal
+        XCTAssertEqual(priorities, [0, 1],
+                       "Should process high-priority (0) before normal-priority (1)")
+    }
+
+    func testMultipleGroupsInSameQueueWithBudgetSemantics() {
+        // REQUIREMENT: Budget enforcement should be able to stop between groups
+        // in the same queue. This test simulates what executeTurn does.
+
+        let queue = TwoTierTokenQueue()
+
+        // Add 3 groups with 100 tokens each (simulating 100 "token cost")
+        for _ in 0..<3 {
+            let tokenArray = createNonCoalescableTokenArray(tokenCount: 10, lengthPerToken: 10)
+            queue.addTokens(tokenArray, highPriority: false)  // All normal priority
+        }
+
+        // Simulate budget enforcement: stop after first group exceeds budget
+        var tokensConsumed = 0
+        var groupsExecuted = 0
+        let budget = 50  // Budget that first group (100 tokens) will exceed
+
+        queue.enumerateTokenArrayGroups { group, priority in
+            let groupTokenCount = group.lengthTotal
+
+            // Budget check BETWEEN groups (not within)
+            if tokensConsumed + groupTokenCount > budget && groupsExecuted > 0 {
+                return false  // Stop - budget exceeded
+            }
+
+            // Execute group
+            _ = group.consume()
+            tokensConsumed += groupTokenCount
+            groupsExecuted += 1
+
+            return true
+        }
+
+        // First group should execute (progress guarantee), but not second
+        XCTAssertEqual(groupsExecuted, 1,
+                       "Only first group should execute when it exceeds budget")
+        XCTAssertEqual(tokensConsumed, 100,
+                       "First group's tokens should be consumed")
+        XCTAssertFalse(queue.isEmpty,
+                       "Remaining groups should still be in queue")
+    }
+
+    // MARK: - Test Helpers
+
+    /// Create a TokenArray with non-coalescable tokens (VT100_UNKNOWNCHAR).
+    private func createNonCoalescableTokenArray(tokenCount: Int, lengthPerToken: Int = 10) -> TokenArray {
+        var vector = CVector()
+        CVectorCreate(&vector, Int32(tokenCount))
+
+        for _ in 0..<tokenCount {
+            let token = VT100Token()
+            token.type = VT100_UNKNOWNCHAR  // Non-coalescable
+            CVectorAppendVT100Token(&vector, token)
+        }
+
+        return TokenArray(vector,
+                          lengthTotal: tokenCount * lengthPerToken,
+                          lengthExcludingInBandSignaling: tokenCount * lengthPerToken,
+                          semaphore: nil)
+    }
+}

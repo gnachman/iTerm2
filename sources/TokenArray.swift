@@ -76,8 +76,8 @@ class TokenArray: IteratorProtocol, CustomDebugStringConvertible {
         }
         defer {
             nextIndex += 1
-            if nextIndex == count, let semaphore = semaphore {
-                semaphore.signal()
+            if nextIndex == count {
+                semaphore?.signal()
                 onSemaphoreSignaled?()
                 self.semaphore = nil
                 self.onSemaphoreSignaled = nil
@@ -103,8 +103,8 @@ class TokenArray: IteratorProtocol, CustomDebugStringConvertible {
     // Returns whether there is another token.
     func consume() -> Bool {
         nextIndex += 1
-        if nextIndex == count, let semaphore = semaphore {
-            semaphore.signal()
+        if nextIndex == count {
+            semaphore?.signal()
             onSemaphoreSignaled?()
             self.semaphore = nil
             self.onSemaphoreSignaled = nil
@@ -118,12 +118,10 @@ class TokenArray: IteratorProtocol, CustomDebugStringConvertible {
             return
         }
         nextIndex = count
-        if let semaphore = semaphore {
-            semaphore.signal()
-            onSemaphoreSignaled?()
-            self.semaphore = nil
-            self.onSemaphoreSignaled = nil
-        }
+        semaphore?.signal()
+        onSemaphoreSignaled?()
+        self.semaphore = nil
+        self.onSemaphoreSignaled = nil
     }
 
     private var dirty = true

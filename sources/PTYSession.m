@@ -3989,18 +3989,18 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
     [_conductor sendKeys:data];
 }
 
-// TODO: Open issue to discuss taskPaused behavior and potential conversion to mutateAsynchronously.
-// Questions:
-// 1. Should taskPaused stop processing existing queued tokens, or just stop reading new ones?
-//    A real terminal would process buffered tokens and just wait for new input.
-// 2. If unpausing should resume token processing, we need to call scheduleTokenExecution
-//    (like copyModeHandlerDidChangeEnabledState does). Currently queued tokens sit in purgatory
-//    until new data arrives.
-// 3. Since changes may be needed anyway, consider converting to mutateAsynchronously for
-//    single-writer consistency.
+// Use mutateAsynchronously for single-writer consistency on mutation queue.
+// When unpausing, scheduleTokenExecution re-kicks the scheduler so queued tokens
+// don't sit in purgatory until new data arrives.
 - (void)taskDidChangePaused:(PTYTask *)task paused:(BOOL)paused {
-    [_screen performBlockWithJoinedThreads:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
+    [_screen mutateAsynchronously:^(VT100Terminal *terminal,
+                                    VT100ScreenMutableState *mutableState,
+                                    id<VT100ScreenDelegate> delegate) {
         mutableState.taskPaused = paused;
+        if (!paused) {
+            // Resume token execution when unpausing
+            [mutableState scheduleTokenExecution];
+        }
     }];
 }
 
@@ -19757,12 +19757,16 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     }].action;
 }
 
-// TODO: Open issue to discuss adding scheduleTokenExecution here (like copyModeHandlerDidChangeEnabledState)
-// and converting to mutateAsynchronously. Currently queued tokens sit in purgatory until new data arrives.
+// Use mutateAsynchronously for single-writer consistency on mutation queue.
+// scheduleTokenExecution re-kicks the scheduler so queued tokens don't sit in purgatory.
+// The textview operation runs on main thread first, then the mutation queue state change.
 - (void)shortcutNavigationDidComplete {
     [_textview removeContentNavigationShortcutsAndSearchResults:_modeHandler.clearSelectionsOnExit];
-    [_screen performBlockWithJoinedThreads:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
+    [_screen mutateAsynchronously:^(VT100Terminal *terminal,
+                                    VT100ScreenMutableState *mutableState,
+                                    id<VT100ScreenDelegate> delegate) {
         mutableState.shortcutNavigationMode = NO;
+        [mutableState scheduleTokenExecution];
     }];
 }
 
