@@ -416,6 +416,127 @@ final class FairnessSchedulerTurnExecutionTests: XCTestCase {
 
         wait(for: [expectation], timeout: 1.0)
     }
+
+    func testNoOverlappingTurnsWhenCompletionDelayed() {
+        // REQUIREMENT: Scheduler must not call executeTurn on a session that's
+        // already executing (completion not yet called). This is a key safety
+        // property for the mutation queue model.
+
+        let idA = scheduler.register(mockExecutorA)
+
+        var executeTurnCallCount = 0
+        var concurrentExecutionDetected = false
+        var isCurrentlyExecuting = false
+        var storedCompletion: ((TurnResult) -> Void)?
+
+        let firstTurnStarted = XCTestExpectation(description: "First turn started")
+        let secondTurnStarted = XCTestExpectation(description: "Second turn started")
+
+        mockExecutorA.executeTurnHandler = { _, completion in
+            executeTurnCallCount += 1
+
+            // Check for overlapping execution
+            if isCurrentlyExecuting {
+                concurrentExecutionDetected = true
+            }
+
+            isCurrentlyExecuting = true
+
+            if executeTurnCallCount == 1 {
+                // First turn: delay completion, store it
+                storedCompletion = completion
+                firstTurnStarted.fulfill()
+            } else {
+                // Second turn: complete immediately
+                secondTurnStarted.fulfill()
+                isCurrentlyExecuting = false
+                completion(.completed)
+            }
+        }
+
+        // Start first turn
+        scheduler.sessionDidEnqueueWork(idA)
+
+        // Wait for first turn to start
+        wait(for: [firstTurnStarted], timeout: 1.0)
+
+        XCTAssertEqual(executeTurnCallCount, 1, "First turn should have started")
+        XCTAssertNotNil(storedCompletion, "Completion should be stored")
+
+        // While first turn is executing (completion not called), enqueue more work
+        // This should NOT trigger another executeTurn call
+        scheduler.sessionDidEnqueueWork(idA)
+        scheduler.sessionDidEnqueueWork(idA)
+        scheduler.sessionDidEnqueueWork(idA)
+
+        // Give scheduler time to (incorrectly) start another turn
+        let noOverlap = XCTestExpectation(description: "No overlapping turn")
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+            noOverlap.fulfill()
+        }
+        wait(for: [noOverlap], timeout: 0.5)
+
+        // Verify no second turn was started while first is still executing
+        XCTAssertEqual(executeTurnCallCount, 1,
+                       "No new turn should start while completion is pending")
+        XCTAssertFalse(concurrentExecutionDetected,
+                       "No concurrent execution should occur")
+
+        // Now complete the first turn with .yielded (indicating more work)
+        isCurrentlyExecuting = false
+        storedCompletion?(.yielded)
+
+        // Second turn should now start
+        wait(for: [secondTurnStarted], timeout: 1.0)
+
+        XCTAssertEqual(executeTurnCallCount, 2,
+                       "Second turn should start after first completion")
+        XCTAssertFalse(concurrentExecutionDetected,
+                       "No concurrent execution should have occurred")
+    }
+
+    func testWorkArrivedWhileExecutingIsPreserved() {
+        // REQUIREMENT: Work that arrives while a session is executing should
+        // cause the session to be re-added to busy list after completion,
+        // even if the result is .completed
+
+        let idA = scheduler.register(mockExecutorA)
+
+        var executeTurnCallCount = 0
+        var storedCompletion: ((TurnResult) -> Void)?
+
+        let firstTurnStarted = XCTestExpectation(description: "First turn started")
+        let secondTurnStarted = XCTestExpectation(description: "Second turn started")
+
+        mockExecutorA.executeTurnHandler = { _, completion in
+            executeTurnCallCount += 1
+
+            if executeTurnCallCount == 1 {
+                storedCompletion = completion
+                firstTurnStarted.fulfill()
+            } else {
+                secondTurnStarted.fulfill()
+                completion(.completed)
+            }
+        }
+
+        // Start first turn
+        scheduler.sessionDidEnqueueWork(idA)
+        wait(for: [firstTurnStarted], timeout: 1.0)
+
+        // While executing, new work arrives
+        scheduler.sessionDidEnqueueWork(idA)
+
+        // Complete with .completed (normally wouldn't re-add)
+        // But because work arrived, it SHOULD re-add
+        storedCompletion?(.completed)
+
+        // Second turn should start because work arrived during execution
+        wait(for: [secondTurnStarted], timeout: 1.0)
+
+        XCTAssertEqual(executeTurnCallCount, 2,
+                       "Second turn should start because work arrived during first turn")
+    }
 }
 
 /// Tests for FairnessScheduler round-robin fairness guarantees.
