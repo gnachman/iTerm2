@@ -1506,12 +1506,19 @@ final class BackpressureIntegrationTests: XCTestCase {
         task.tokenExecutor = executor
         task.paused = false
 
+        // Use test override to force ioAllowed = true (bypasses jobManager requirement)
+        task.testIoAllowedOverride = NSNumber(value: true)
+
         // shouldRead should be false due to blocked backpressure
-        if let shouldRead = task.value(forKey: "shouldRead") as? Bool {
-            // With blocked backpressure, reading should be gated
-            // (Note: also requires ioAllowed, which we don't have without a real job)
-            _ = shouldRead  // The important thing is it doesn't crash
+        // shouldRead checks: !paused && ioAllowed && backpressureLevel < .heavy
+        // With blocked backpressure (>= .heavy), shouldRead must be false
+        guard let shouldRead = task.value(forKey: "shouldRead") as? Bool else {
+            XCTFail("Failed to get shouldRead from PTYTask")
+            FairnessScheduler.shared.unregister(sessionId: sessionId)
+            return
         }
+        XCTAssertFalse(shouldRead,
+                       "shouldRead should be false when backpressure is blocked")
 
         // Cleanup
         FairnessScheduler.shared.unregister(sessionId: sessionId)
