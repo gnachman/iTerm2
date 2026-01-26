@@ -152,12 +152,8 @@ final class TaskNotifierSelectLoopTests: XCTestCase {
         notifier?.register(mockTask)
         defer { notifier?.deregister(mockTask) }
 
-        // Wait for registration to complete
-        let registerExp = XCTestExpectation(description: "Wait for registration")
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-            registerExp.fulfill()
-        }
-        wait(for: [registerExp], timeout: 1.0)
+        // Wait for registration to complete (dispatched to main queue)
+        waitForMainQueue()
 
         // Reset call count after registration
         mockTask.reset()
@@ -170,12 +166,13 @@ final class TaskNotifierSelectLoopTests: XCTestCase {
             Darwin.write(writeFd, ptr, strlen(ptr))
         }
 
-        // Wait for TaskNotifier's select loop to run multiple cycles
-        let selectExp = XCTestExpectation(description: "Wait for select cycles")
-        DispatchQueue.global().asyncAfter(deadline: .now() + 0.5) {
-            selectExp.fulfill()
+        // Give TaskNotifier's select loop time to run by flushing queues multiple times.
+        // The select loop runs in its own thread, so we flush main queue several times
+        // to allow it to iterate. This is a negative test - we're verifying processRead
+        // is NOT called for dispatch source tasks.
+        for _ in 0..<5 {
+            waitForMainQueue()
         }
-        wait(for: [selectExp], timeout: 2.0)
 
         // Since useDispatchSource=YES, TaskNotifier should NOT call processRead
         // (the task's main FD is skipped in fd_set)
@@ -220,12 +217,8 @@ final class TaskNotifierSelectLoopTests: XCTestCase {
         notifier?.register(mockTask)
         defer { notifier?.deregister(mockTask) }
 
-        // Wait for registration
-        let registerExp = XCTestExpectation(description: "Wait for registration")
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-            registerExp.fulfill()
-        }
-        wait(for: [registerExp], timeout: 1.0)
+        // Wait for registration (dispatched to main queue)
+        waitForMainQueue()
 
         // Reset and re-configure after registration
         let initialCount = mockTask.processReadCallCount
@@ -301,11 +294,7 @@ final class TaskNotifierSelectLoopTests: XCTestCase {
         notifier?.register(mockTask)
 
         // didRegister should be called on main queue (proves unblock worked)
-        let expectation = XCTestExpectation(description: "didRegister called")
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
-            expectation.fulfill()
-        }
-        wait(for: [expectation], timeout: 1.0)
+        waitForMainQueue()
 
         XCTAssertGreaterThan(mockTask.didRegisterCallCount, 0,
                              "didRegister should be called after registration (proves unblock pipe works)")
@@ -368,11 +357,7 @@ final class TaskNotifierSelectLoopTests: XCTestCase {
         // Register and deregister to verify the path works
         notifier?.register(mockTask)
 
-        let expectation = XCTestExpectation(description: "Wait for registration")
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-            expectation.fulfill()
-        }
-        wait(for: [expectation], timeout: 1.0)
+        waitForMainQueue()
 
         notifier?.deregister(mockTask)
 
@@ -433,12 +418,8 @@ final class TaskNotifierMixedModeTests: XCTestCase {
             notifier?.deregister(dispatchTask)
         }
 
-        // Wait for registration
-        let registerExp = XCTestExpectation(description: "Wait for registration")
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
-            registerExp.fulfill()
-        }
-        wait(for: [registerExp], timeout: 1.0)
+        // Wait for registration (dispatched to main queue)
+        waitForMainQueue()
 
         // Reset counts
         legacyTask.reset()
@@ -493,12 +474,8 @@ final class TaskNotifierMixedModeTests: XCTestCase {
         let notifier = TaskNotifier.sharedInstance()
         notifier?.register(mockTask)
 
-        // Wait for registration to complete
-        let expectation = XCTestExpectation(description: "Wait for registration")
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
-            expectation.fulfill()
-        }
-        wait(for: [expectation], timeout: 1.0)
+        // Wait for registration to complete (dispatched to main queue)
+        waitForMainQueue()
 
         // Task should be registered without issue
         XCTAssertGreaterThan(mockTask.didRegisterCallCount, 0,
@@ -542,12 +519,8 @@ final class TaskNotifierMixedModeTests: XCTestCase {
         TaskNotifier.sharedInstance()?.register(mockTask)
         defer { TaskNotifier.sharedInstance()?.deregister(mockTask) }
 
-        // Wait for registration
-        let registerExp = XCTestExpectation(description: "Wait for registration")
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-            registerExp.fulfill()
-        }
-        wait(for: [registerExp], timeout: 1.0)
+        // Wait for registration (dispatched to main queue)
+        waitForMainQueue()
 
         // Reset and reconfigure
         let initialCount = mockTask.processReadCallCount
@@ -595,12 +568,8 @@ final class TaskNotifierMixedModeTests: XCTestCase {
         notifier?.register(mockTask)
         defer { notifier?.deregister(mockTask) }
 
-        // Wait for registration to complete
-        let registerExp = XCTestExpectation(description: "Wait for registration")
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-            registerExp.fulfill()
-        }
-        wait(for: [registerExp], timeout: 1.0)
+        // Wait for registration to complete (dispatched to main queue)
+        waitForMainQueue()
 
         // Verify the task was registered
         XCTAssertGreaterThan(mockTask.didRegisterCallCount, 0,

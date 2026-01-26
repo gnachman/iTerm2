@@ -765,12 +765,9 @@ final class FairnessSchedulerThreadSafetyTests: XCTestCase {
         let result = group.wait(timeout: .now() + 10.0)
         XCTAssertEqual(result, .success, "Concurrent enqueue should complete without deadlock")
 
-        // Wait for processing to complete
-        let processingDone = XCTestExpectation(description: "Processing complete")
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-            processingDone.fulfill()
-        }
-        wait(for: [processingDone], timeout: 2.0)
+        // Flush queues to ensure all processing completes
+        waitForMutationQueue()
+        waitForMainQueue()
 
         // Each executor should have been called at least once
         for executor in executors {
@@ -860,12 +857,11 @@ final class FairnessSchedulerThreadSafetyTests: XCTestCase {
             scheduler.sessionDidEnqueueWork(id)
         }
 
-        // Wait for all to complete
-        let expectation = XCTestExpectation(description: "All sessions processed")
-        DispatchQueue.main.asyncAfter(deadline: .now() + 5.0) {
-            expectation.fulfill()
-        }
-        wait(for: [expectation], timeout: 10.0)
+        // Wait for all sessions to complete (each yields twice then completes)
+        let allProcessed = waitForCondition({
+            executors.allSatisfy { $0.executeTurnCallCount >= 3 }
+        }, timeout: 10.0)
+        XCTAssertTrue(allProcessed, "All sessions should complete processing")
 
         // Each should have executed multiple times due to yielding
         var totalExecutions = 0
@@ -1021,12 +1017,9 @@ final class FairnessSchedulerLifecycleEdgeCaseTests: XCTestCase {
         scheduler.unregister(sessionId: sessionId)
         scheduler.sessionDidEnqueueWork(sessionId)  // This should be no-op
 
-        // Wait for any processing
-        let wait = XCTestExpectation(description: "Wait")
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-            wait.fulfill()
-        }
-        self.wait(for: [wait], timeout: 1.0)
+        // Flush queues to ensure all pending operations complete
+        waitForMutationQueue()
+        waitForMainQueue()
 
         // Execution count should be 0 or 1, never more
         // (depending on timing, the first enqueue may or may not have executed)

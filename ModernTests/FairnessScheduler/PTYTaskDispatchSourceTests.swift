@@ -1662,9 +1662,9 @@ final class PTYTaskBackpressureIntegrationTests: XCTestCase {
             _ = Darwin.write(pipe.writeFd, rawPointer, testData2.count)
         }
 
-        // Give time for data to (not) be delivered
-        Thread.sleep(forTimeInterval: 0.1)
+        // Flush queues to ensure any pending dispatch source events would have been processed
         task.testWaitForIOQueue()
+        waitForMainQueue()
 
         // Data should NOT have been read (source is suspended)
         XCTAssertEqual(mockDelegate.readCallCount, readCountBeforeWrite,
@@ -2064,29 +2064,35 @@ final class PTYTaskReadHandlerPipelineTests: XCTestCase {
         // Track total data received
         var totalReceived = Data()
         let lock = NSLock()
-        let allDataExpectation = XCTestExpectation(description: "All data received")
-        allDataExpectation.expectedFulfillmentCount = 3
+
+        // Calculate expected total bytes
+        let messages = ["First", "Second", "Third"]
+        let expectedBytes = messages.reduce(0) { $0 + $1.data(using: .utf8)!.count }
 
         mockDelegate.onThreadedRead = { data in
             lock.lock()
             totalReceived.append(data)
             lock.unlock()
-            allDataExpectation.fulfill()
         }
 
         // Write multiple chunks of data
-        let messages = ["First", "Second", "Third"]
         for msg in messages {
             let data = msg.data(using: .utf8)!
             data.withUnsafeBytes { bufferPointer in
                 let rawPointer = bufferPointer.baseAddress!
                 _ = Darwin.write(pipe.writeFd, rawPointer, data.count)
             }
-            // Small delay between writes for dispatch source to fire
-            Thread.sleep(forTimeInterval: 0.02)
         }
 
-        wait(for: [allDataExpectation], timeout: 2.0)
+        // Wait for all bytes to be received using condition-based wait
+        // The reads may be coalesced into fewer callbacks, but total data should match
+        let allDataReceived = waitForCondition({
+            lock.lock()
+            let received = totalReceived.count >= expectedBytes
+            lock.unlock()
+            return received
+        }, timeout: 2.0)
+        XCTAssertTrue(allDataReceived, "All data should be received")
 
         // Verify all data was received
         lock.lock()

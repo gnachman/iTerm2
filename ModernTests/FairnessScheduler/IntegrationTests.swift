@@ -842,14 +842,8 @@ final class DispatchSourceLifecycleIntegrationTests: XCTestCase {
         // Use the production TaskNotifier registration path
         TaskNotifier.sharedInstance().register(iTermTaskConformingTask)
 
-        // The didRegister call is dispatched to main queue, so we need to wait
-        let expectation = XCTestExpectation(description: "Sources created")
-
-        // Poll for source creation (didRegister is async on main queue)
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-            expectation.fulfill()
-        }
-        wait(for: [expectation], timeout: 2.0)
+        // The didRegister call is dispatched to main queue, wait for it to complete
+        waitForMainQueue()
 
         #if ITERM_DEBUG
         // Verify the production path created sources
