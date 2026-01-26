@@ -53,11 +53,14 @@ final class TokenExecutorNonBlockingTests: XCTestCase {
         // and returns immediately with backpressure reflected in backpressureLevel
         let expectation = XCTestExpectation(description: "addTokens returns immediately")
 
+        // Capture executor locally to prevent race with tearDown deallocation
+        let executor = self.executor!
+
         DispatchQueue.global().async {
             // Add many token arrays rapidly - should never block
             for _ in 0..<100 {
                 let vector = createTestTokenVector(count: 10)
-                self.executor.addTokens(vector, lengthTotal: 100, lengthExcludingInBandSignaling: 100)
+                executor.addTokens(vector, lengthTotal: 100, lengthExcludingInBandSignaling: 100)
             }
             expectation.fulfill()
         }
@@ -133,11 +136,14 @@ final class TokenExecutorNonBlockingTests: XCTestCase {
         // If semaphores were still in use, this would deadlock or timeout
         let group = DispatchGroup()
 
+        // Capture executor locally to prevent race with tearDown deallocation
+        let executor = self.executor!
+
         for _ in 0..<10 {
             group.enter()
             DispatchQueue.global().async {
                 let vector = createTestTokenVector(count: 5)
-                self.executor.addTokens(vector, lengthTotal: 50, lengthExcludingInBandSignaling: 50)
+                executor.addTokens(vector, lengthTotal: 50, lengthExcludingInBandSignaling: 50)
                 group.leave()
             }
         }

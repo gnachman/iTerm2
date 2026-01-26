@@ -661,6 +661,9 @@ final class FairnessSchedulerThreadSafetyTests: XCTestCase {
         let lock = NSLock()
         var encounteredError = false
 
+        // Capture scheduler locally to prevent race with tearDown deallocation
+        let scheduler = self.scheduler!
+
         for threadIndex in 0..<threadCount {
             group.enter()
             DispatchQueue.global().async {
@@ -668,7 +671,7 @@ final class FairnessSchedulerThreadSafetyTests: XCTestCase {
                 for _ in 0..<registrationsPerThread {
                     autoreleasepool {
                         let executor = MockFairnessSchedulerExecutor()
-                        let sessionId = self.scheduler.register(executor)
+                        let sessionId = scheduler.register(executor)
                         threadIds.append(sessionId)
                     }
                 }
@@ -713,13 +716,16 @@ final class FairnessSchedulerThreadSafetyTests: XCTestCase {
         let threadCount = 10
         let sessionsPerThread = sessionCount / threadCount
 
+        // Capture scheduler locally to prevent race with tearDown deallocation
+        let scheduler = self.scheduler!
+
         for threadIndex in 0..<threadCount {
             group.enter()
             DispatchQueue.global().async {
                 let startIdx = threadIndex * sessionsPerThread
                 let endIdx = startIdx + sessionsPerThread
                 for i in startIdx..<endIdx {
-                    self.scheduler.unregister(sessionId: sessionIds[i])
+                    scheduler.unregister(sessionId: sessionIds[i])
                 }
                 group.leave()
             }
@@ -751,12 +757,15 @@ final class FairnessSchedulerThreadSafetyTests: XCTestCase {
         let group = DispatchGroup()
         let enqueuesPerSession = 100
 
+        // Capture scheduler locally to prevent race with tearDown deallocation
+        let scheduler = self.scheduler!
+
         // Each session gets work enqueued from multiple threads
         for sessionIndex in 0..<executorCount {
             for _ in 0..<enqueuesPerSession {
                 group.enter()
                 DispatchQueue.global().async {
-                    self.scheduler.sessionDidEnqueueWork(sessionIds[sessionIndex])
+                    scheduler.sessionDidEnqueueWork(sessionIds[sessionIndex])
                     group.leave()
                 }
             }
@@ -782,15 +791,18 @@ final class FairnessSchedulerThreadSafetyTests: XCTestCase {
         let group = DispatchGroup()
         var didCrash = false
 
+        // Capture scheduler locally to prevent race with tearDown deallocation
+        let scheduler = self.scheduler!
+
         for _ in 0..<iterations {
             group.enter()
             DispatchQueue.global().async {
                 let executor = MockFairnessSchedulerExecutor()
-                let sessionId = self.scheduler.register(executor)
+                let sessionId = scheduler.register(executor)
 
                 // Immediately unregister from another queue
                 DispatchQueue.global().async {
-                    self.scheduler.unregister(sessionId: sessionId)
+                    scheduler.unregister(sessionId: sessionId)
                     group.leave()
                 }
             }
@@ -810,6 +822,9 @@ final class FairnessSchedulerThreadSafetyTests: XCTestCase {
             completion(.completed)
         }
 
+        // Capture scheduler locally to prevent race with tearDown deallocation
+        let scheduler = self.scheduler!
+
         let sessionId = scheduler.register(executor)
         let group = DispatchGroup()
 
@@ -817,7 +832,7 @@ final class FairnessSchedulerThreadSafetyTests: XCTestCase {
         group.enter()
         DispatchQueue.global().async {
             for _ in 0..<100 {
-                self.scheduler.sessionDidEnqueueWork(sessionId)
+                scheduler.sessionDidEnqueueWork(sessionId)
             }
             group.leave()
         }
@@ -825,7 +840,7 @@ final class FairnessSchedulerThreadSafetyTests: XCTestCase {
         // Unregister from another thread after a short delay
         group.enter()
         DispatchQueue.global().asyncAfter(deadline: .now() + 0.01) {
-            self.scheduler.unregister(sessionId: sessionId)
+            scheduler.unregister(sessionId: sessionId)
             group.leave()
         }
 
@@ -896,6 +911,10 @@ final class FairnessSchedulerLifecycleEdgeCaseTests: XCTestCase {
 
     func testUnregisterDuringExecuteTurn() {
         // REQUIREMENT: Unregistering while executeTurn completion hasn't fired should be safe
+
+        // Capture scheduler locally to prevent race with tearDown deallocation
+        let scheduler = self.scheduler!
+
         let executor = MockFairnessSchedulerExecutor()
         let sessionId = scheduler.register(executor)
 
@@ -907,7 +926,7 @@ final class FairnessSchedulerLifecycleEdgeCaseTests: XCTestCase {
 
             // Unregister while execution is "in progress" (before completion called)
             DispatchQueue.global().asyncAfter(deadline: .now() + 0.05) {
-                self.scheduler.unregister(sessionId: sessionId)
+                scheduler.unregister(sessionId: sessionId)
                 unregisterDone.fulfill()
 
                 // Now call completion - should be safe even though unregistered
