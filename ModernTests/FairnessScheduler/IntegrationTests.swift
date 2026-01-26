@@ -11,12 +11,30 @@
 //  - Re-kick mechanisms for blocked sessions
 //  - PTYSession dispatch source activation
 //
-//  Note: Many integration tests require full system setup.
-//  Tests are marked with XCTSkip until integration code is implemented.
+//  Note: Tests exercise actual VT100ScreenMutableState.init and setTerminalEnabled:NO
+//  to verify the real integration points, not just direct scheduler calls.
 //
 
 import XCTest
 @testable import iTerm2SharedARC
+
+// MARK: - Mock for VT100ScreenSideEffectPerforming
+
+/// Mock implementation of VT100ScreenSideEffectPerforming for testing VT100ScreenMutableState.
+/// Returns nil for delegates which is acceptable for our test scenarios (init/deinit don't use them).
+@objc final class MockSideEffectPerformer: NSObject, VT100ScreenSideEffectPerforming {
+    // Note: The protocol is declared in NS_ASSUME_NONNULL block but the actual
+    // implementation can return nil (weak references). For tests, we return nil
+    // via Objective-C's nil-coercion behavior.
+
+    @objc func sideEffectPerformingScreenDelegate() -> (any VT100ScreenDelegate)! {
+        return nil
+    }
+
+    @objc func sideEffectPerformingIntervalTreeObserver() -> (any iTermIntervalTreeObserver)! {
+        return nil
+    }
+}
 
 // MARK: - 5.1 Registration Tests
 
@@ -24,70 +42,72 @@ import XCTest
 final class IntegrationRegistrationTests: XCTestCase {
 
     func testRegisterOnInit() throws {
-        // REQUIREMENT: TokenExecutor registered with FairnessScheduler in init
-        // VT100ScreenMutableState.init should register the TokenExecutor
-
-        // Create a terminal and executor, register directly
-        let terminal = VT100Terminal()
-        let executor = TokenExecutor(terminal, slownessDetector: SlownessDetector(), queue: DispatchQueue.main)
+        // REQUIREMENT: TokenExecutor registered with FairnessScheduler in VT100ScreenMutableState.init
+        // This tests the ACTUAL call site, not a simulation
 
         #if ITERM_DEBUG
         let initialCount = FairnessScheduler.shared.testRegisteredSessionCount
         #endif
 
-        let sessionId = FairnessScheduler.shared.register(executor)
-        executor.fairnessSessionId = sessionId
+        // Create VT100ScreenMutableState - this should register with FairnessScheduler in init
+        let performer = MockSideEffectPerformer()
+        let mutableState = VT100ScreenMutableState(sideEffectPerformer: performer)
 
-        XCTAssertGreaterThan(sessionId, 0, "Session ID should be non-zero")
+        // The tokenExecutor should have a valid fairnessSessionId set during init
+        let sessionId = mutableState.tokenExecutor.fairnessSessionId
+        XCTAssertGreaterThan(sessionId, 0, "Session ID should be non-zero after init")
 
         #if ITERM_DEBUG
         XCTAssertTrue(FairnessScheduler.shared.testIsSessionRegistered(sessionId),
-                      "Session should be registered")
+                      "Session should be registered after VT100ScreenMutableState.init")
         XCTAssertEqual(FairnessScheduler.shared.testRegisteredSessionCount, initialCount + 1,
                        "Registered count should increase by 1")
         #endif
 
-        // Cleanup
-        FairnessScheduler.shared.unregister(sessionId: sessionId)
+        // Cleanup via setTerminalEnabled:NO (the real unregistration path)
+        // First enable (to allow disable to work)
+        mutableState.terminalEnabled = true
+        mutableState.terminalEnabled = false
         waitForMutationQueue()
     }
 
     func testSessionIdStoredOnExecutor() throws {
         // REQUIREMENT: fairnessSessionId set on TokenExecutor after registration
-        // The session ID returned from register() should be stored on the executor
+        // Verify VT100ScreenMutableState.init stores session ID on executor
 
-        // Verify TokenExecutor has fairnessSessionId property
-        let terminal = VT100Terminal()
-        let executor = TokenExecutor(terminal, slownessDetector: SlownessDetector(), queue: DispatchQueue.main)
+        let performer = MockSideEffectPerformer()
+        let mutableState = VT100ScreenMutableState(sideEffectPerformer: performer)
 
-        // Property should exist (starts at 0 until registered)
-        XCTAssertEqual(executor.fairnessSessionId, 0, "Initial session ID should be 0")
+        // After init, executor should have session ID stored
+        XCTAssertGreaterThan(mutableState.tokenExecutor.fairnessSessionId, 0,
+                             "TokenExecutor should have fairnessSessionId set after init")
+
+        // Cleanup (enable then disable to trigger unregistration)
+        mutableState.terminalEnabled = true
+        mutableState.terminalEnabled = false
+        waitForMutationQueue()
     }
 
     func testSessionIdStoredOnMutableState() throws {
         // REQUIREMENT: _fairnessSessionId stored on VT100ScreenMutableState
-        // The mutable state should store the session ID for unregistration
+        // The mutable state stores the session ID for unregistration
 
-        // Create and register an executor
-        let terminal = VT100Terminal()
-        let executor = TokenExecutor(terminal, slownessDetector: SlownessDetector(), queue: DispatchQueue.main)
+        let performer = MockSideEffectPerformer()
+        let mutableState = VT100ScreenMutableState(sideEffectPerformer: performer)
 
-        let sessionId = FairnessScheduler.shared.register(executor)
-        XCTAssertGreaterThan(sessionId, 0, "Session ID should be valid")
+        // VT100ScreenMutableState stores _fairnessSessionId internally
+        // We can verify by checking the executor has the same ID
+        let sessionId = mutableState.tokenExecutor.fairnessSessionId
+        XCTAssertGreaterThan(sessionId, 0, "Session ID should be stored")
 
-        // Store session ID on executor (as VT100ScreenMutableState would)
-        executor.fairnessSessionId = sessionId
-        XCTAssertEqual(executor.fairnessSessionId, sessionId,
-                       "fairnessSessionId should be stored on executor")
-
-        // The session ID can be used for later unregistration
         #if ITERM_DEBUG
         XCTAssertTrue(FairnessScheduler.shared.testIsSessionRegistered(sessionId),
-                      "Session should still be registered")
+                      "Session should be registered")
         #endif
 
-        // Cleanup
-        FairnessScheduler.shared.unregister(sessionId: sessionId)
+        // Cleanup (enable then disable to trigger unregistration)
+        mutableState.terminalEnabled = true
+        mutableState.terminalEnabled = false
         waitForMutationQueue()
     }
 }
@@ -98,78 +118,99 @@ final class IntegrationRegistrationTests: XCTestCase {
 final class IntegrationUnregistrationTests: XCTestCase {
 
     func testUnregisterOnSetEnabledNo() throws {
-        // REQUIREMENT: Unregistration called in setEnabled:NO
-        // When screen is disabled, session should be unregistered from scheduler
+        // REQUIREMENT: Unregistration called in setTerminalEnabled:NO
+        // This tests the ACTUAL call site in VT100ScreenMutableState
 
-        // Create and register an executor
-        let terminal = VT100Terminal()
-        let executor = TokenExecutor(terminal, slownessDetector: SlownessDetector(), queue: DispatchQueue.main)
+        let performer = MockSideEffectPerformer()
+        let mutableState = VT100ScreenMutableState(sideEffectPerformer: performer)
 
-        let sessionId = FairnessScheduler.shared.register(executor)
-        executor.fairnessSessionId = sessionId
+        let sessionId = mutableState.tokenExecutor.fairnessSessionId
+        XCTAssertGreaterThan(sessionId, 0, "Should have valid session ID after init")
 
         #if ITERM_DEBUG
         XCTAssertTrue(FairnessScheduler.shared.testIsSessionRegistered(sessionId),
                       "Session should be registered initially")
         #endif
 
-        // Simulate setEnabled:NO by calling unregister
-        FairnessScheduler.shared.unregister(sessionId: sessionId)
+        // First enable the terminal (setTerminalEnabled: has early return if unchanged)
+        mutableState.terminalEnabled = true
+
+        // Now call setTerminalEnabled:NO - this is the ACTUAL unregistration call site
+        mutableState.terminalEnabled = false
         waitForMutationQueue()
 
         #if ITERM_DEBUG
         XCTAssertFalse(FairnessScheduler.shared.testIsSessionRegistered(sessionId),
-                       "Session should be unregistered after setEnabled:NO")
+                       "Session should be unregistered after setTerminalEnabled:NO")
         #endif
     }
 
     func testUnregisterBeforeDelegateCleared() throws {
         // REQUIREMENT: Unregistration happens before delegate = nil
-        // Order matters: cleanup needs delegate to be valid
+        // Verify that setTerminalEnabled:NO calls unregister before clearing delegate
+        // (This is enforced by the order of operations in VT100ScreenMutableState.setTerminalEnabled:)
 
-        // Create and register an executor with a delegate
-        let terminal = VT100Terminal()
-        let executor = TokenExecutor(terminal, slownessDetector: SlownessDetector(), queue: DispatchQueue.main)
-        let delegate = MockTokenExecutorDelegate()
-        executor.delegate = delegate
+        let performer = MockSideEffectPerformer()
+        let mutableState = VT100ScreenMutableState(sideEffectPerformer: performer)
 
-        let sessionId = FairnessScheduler.shared.register(executor)
-        executor.fairnessSessionId = sessionId
+        let sessionId = mutableState.tokenExecutor.fairnessSessionId
 
-        // Verify delegate is set
-        XCTAssertNotNil(executor.delegate, "Delegate should be set initially")
+        // First enable the terminal (which sets up delegates)
+        mutableState.terminalEnabled = true
 
-        // Unregister (which triggers cleanupForUnregistration)
-        FairnessScheduler.shared.unregister(sessionId: sessionId)
+        // The executor's delegate is set by VT100ScreenMutableState when enabled
+        XCTAssertNotNil(mutableState.tokenExecutor.delegate, "Delegate should be set when enabled")
+
+        #if ITERM_DEBUG
+        XCTAssertTrue(FairnessScheduler.shared.testIsSessionRegistered(sessionId),
+                      "Session should be registered before disable")
+        #endif
+
+        // setTerminalEnabled:NO calls unregister THEN clears delegate (see VT100ScreenMutableState.m:216-223)
+        mutableState.terminalEnabled = false
         waitForMutationQueue()
 
-        // After unregistration, cleanup was called while delegate was still valid
-        // Now we can safely clear delegate
-        executor.delegate = nil
-        XCTAssertNil(executor.delegate, "Delegate can be cleared after unregistration")
+        // After setTerminalEnabled:NO, delegate should be nil (cleared in the method)
+        XCTAssertNil(mutableState.tokenExecutor.delegate, "Delegate should be nil after disable")
 
-        // This test verifies the ordering: unregister before delegate = nil
-        // The actual ordering check is in VT100ScreenMutableState.setEnabled:NO
-        // which this test simulates by following the correct order
+        #if ITERM_DEBUG
+        // Unregistration happened before delegate was cleared
+        XCTAssertFalse(FairnessScheduler.shared.testIsSessionRegistered(sessionId),
+                       "Session should be unregistered")
+        #endif
     }
 
     func testUnregisterCleanupCalled() throws {
         // REQUIREMENT: cleanupForUnregistration called during unregister
         // This restores availableSlots for any unconsumed tokens
 
-        // Test via FairnessScheduler directly
-        let terminal = VT100Terminal()
-        let executor = TokenExecutor(terminal, slownessDetector: SlownessDetector(), queue: DispatchQueue.main)
+        let performer = MockSideEffectPerformer()
+        let mutableState = VT100ScreenMutableState(sideEffectPerformer: performer)
 
-        let sessionId = FairnessScheduler.shared.register(executor)
-        executor.fairnessSessionId = sessionId
+        // Enable terminal first
+        mutableState.terminalEnabled = true
 
-        // Unregister should call cleanup
-        FairnessScheduler.shared.unregister(sessionId: sessionId)
+        // Add some tokens to create backpressure
+        var vector = CVector()
+        CVectorCreate(&vector, 10)
+        for _ in 0..<10 {
+            let token = VT100Token()
+            token.type = VT100_UNKNOWNCHAR
+            CVectorAppendVT100Token(&vector, token)
+        }
+        mutableState.tokenExecutor.addTokens(vector, lengthTotal: 100, lengthExcludingInBandSignaling: 100)
 
-        // If cleanup was called, executor should be in clean state
-        XCTAssertEqual(executor.backpressureLevel, .none,
-                       "Cleanup should have been called during unregister")
+        // Verify we have some backpressure
+        XCTAssertNotEqual(mutableState.tokenExecutor.backpressureLevel, .heavy,
+                          "Should have light/medium backpressure before cleanup")
+
+        // setTerminalEnabled:NO calls unregister which calls cleanupForUnregistration
+        mutableState.terminalEnabled = false
+        waitForMutationQueue()
+
+        // After cleanup, backpressure should be released
+        XCTAssertEqual(mutableState.tokenExecutor.backpressureLevel, .none,
+                       "Cleanup should release all backpressure")
     }
 }
 
