@@ -4,8 +4,8 @@
 
 ## Implementation Status
 
-| Phase | Component | Status | Notes |
-|-------|-----------|--------|-------|
+| Milestone | Component | Status | Notes |
+|-----------|-----------|--------|-------|
 | 1 | FairnessScheduler | **DONE** | 18/18 tests passing. Commit `2ee3aebcf`. |
 | 2 | TokenExecutor Tests | **DONE** | 32 tests written (7 passing, 25 skipped pending impl). |
 | 2 | TokenExecutor Implementation | Not started | Next step |
@@ -14,8 +14,8 @@
 | 5 | Integration | Not started | - |
 
 **Run tests:**
-- Phase 1: `./tools/run_fairness_tests.sh phase1`
-- Phase 2: `./tools/run_fairness_tests.sh phase2`
+- Milestone 1: `./tools/run_fairness_tests.sh milestone1`
+- Milestone 2: `./tools/run_fairness_tests.sh milestone2`
 
 ## Goal
 

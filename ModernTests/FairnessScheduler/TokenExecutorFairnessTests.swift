@@ -446,7 +446,7 @@ final class TokenExecutorLegacyRemovalTests: XCTestCase {
     }
 
     func testBackgroundSessionGetsEqualTurns() {
-        // Test that background sessions process tokens (existing behavior should work)
+        // Test that background sessions process tokens under fairness model
 
         let executor = TokenExecutor(
             mockTerminal,
@@ -456,15 +456,20 @@ final class TokenExecutorLegacyRemovalTests: XCTestCase {
         executor.delegate = mockDelegate
         executor.isBackgroundSession = true
 
+        // Register with FairnessScheduler (required for schedule() to work)
+        let sessionId = FairnessScheduler.shared.register(executor)
+        executor.fairnessSessionId = sessionId
+
         // Add and process tokens
         let vector = createTestTokenVector(count: 5)
         executor.addTokens(vector, lengthTotal: 50, lengthExcludingInBandSignaling: 50)
-        executor.schedule()
 
         let expectation = XCTestExpectation(description: "Background processed")
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
             XCTAssertGreaterThan(self.mockDelegate.executedLengths.count, 0,
                                  "Background session should process tokens")
+            // Clean up
+            FairnessScheduler.shared.unregister(sessionId: sessionId)
             expectation.fulfill()
         }
         wait(for: [expectation], timeout: 1.0)

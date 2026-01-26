@@ -12,7 +12,7 @@ PROJECT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$PROJECT_DIR"
 
 # Test classes that are part of the fairness scheduler test suite
-# Phase 1: FairnessScheduler (Checkpoint 1)
+# Milestone 1: FairnessScheduler (Checkpoint 1)
 FAIRNESS_TEST_CLASSES=(
     "FairnessSchedulerSessionTests"
     "FairnessSchedulerBusyListTests"
@@ -20,7 +20,7 @@ FAIRNESS_TEST_CLASSES=(
     "FairnessSchedulerRoundRobinTests"
 )
 
-# Phase 2: TokenExecutor Fairness (Checkpoint 2)
+# Milestone 2: TokenExecutor Fairness (Checkpoint 2)
 TOKENEXECUTOR_TEST_CLASSES=(
     "TokenExecutorNonBlockingTests"
     "TokenExecutorAccountingTests"
@@ -43,10 +43,10 @@ build_only_testing_args() {
 
     # Determine which classes to check based on filter
     case "$filter" in
-        phase1|checkpoint1)
+        milestone1|phase1|checkpoint1)
             classes_to_check=("${FAIRNESS_TEST_CLASSES[@]}")
             ;;
-        phase2|checkpoint2)
+        milestone2|phase2|checkpoint2)
             classes_to_check=("${TOKENEXECUTOR_TEST_CLASSES[@]}")
             ;;
         *)
@@ -55,7 +55,8 @@ build_only_testing_args() {
     esac
 
     for class in "${classes_to_check[@]}"; do
-        if [[ -z "$filter" ]] || [[ "$filter" == "phase1" ]] || [[ "$filter" == "phase2" ]] || \
+        if [[ -z "$filter" ]] || [[ "$filter" == "milestone1" ]] || [[ "$filter" == "milestone2" ]] || \
+           [[ "$filter" == "phase1" ]] || [[ "$filter" == "phase2" ]] || \
            [[ "$filter" == "checkpoint1" ]] || [[ "$filter" == "checkpoint2" ]] || \
            [[ "$class" == *"$filter"* ]]; then
             args="$args -only-testing:ModernTests/$class"
@@ -90,17 +91,17 @@ if [[ -z "$ONLY_TESTING_ARGS" ]]; then
     echo "Usage: $0 [filter]"
     echo ""
     echo "Filters:"
-    echo "  phase1, checkpoint1  - Run FairnessScheduler tests only"
-    echo "  phase2, checkpoint2  - Run TokenExecutor fairness tests only"
-    echo "  <classname>          - Run tests matching class name"
-    echo "  (no filter)          - Run all fairness tests"
+    echo "  milestone1  - Run FairnessScheduler tests only (Checkpoint 1)"
+    echo "  milestone2  - Run TokenExecutor fairness tests only (Checkpoint 2)"
+    echo "  <classname> - Run tests matching class name"
+    echo "  (no filter) - Run all fairness tests"
     echo ""
-    echo "Phase 1 test classes (FairnessScheduler):"
+    echo "Milestone 1 test classes (FairnessScheduler):"
     for class in "${FAIRNESS_TEST_CLASSES[@]}"; do
         echo "  - $class"
     done
     echo ""
-    echo "Phase 2 test classes (TokenExecutor):"
+    echo "Milestone 2 test classes (TokenExecutor):"
     for class in "${TOKENEXECUTOR_TEST_CLASSES[@]}"; do
         echo "  - $class"
     done

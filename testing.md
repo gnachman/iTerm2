@@ -4,8 +4,8 @@ This document specifies the tests required for the round-robin fair scheduling i
 
 ## Test Status
 
-| Phase | Test File | Status | Passing | Skipped |
-|-------|-----------|--------|---------|---------|
+| Milestone | Test File | Status | Passing | Skipped |
+|-----------|-----------|--------|---------|---------|
 | 1 | `FairnessSchedulerTests.swift` | **COMPLETE** | 18/18 | 0 |
 | 2 | `TokenExecutorFairnessTests.swift` | Tests written | 7 | 25 |
 | 3 | (PTYTask tests) | Not started | - | - |
@@ -14,9 +14,9 @@ This document specifies the tests required for the round-robin fair scheduling i
 
 **Run commands:**
 ```bash
-./tools/run_fairness_tests.sh phase1   # FairnessScheduler only
-./tools/run_fairness_tests.sh phase2   # TokenExecutor only
-./tools/run_fairness_tests.sh          # All fairness tests
+./tools/run_fairness_tests.sh milestone1   # FairnessScheduler only
+./tools/run_fairness_tests.sh milestone2   # TokenExecutor only
+./tools/run_fairness_tests.sh              # All fairness tests
 ```
 
 ---
@@ -30,9 +30,9 @@ This document specifies the tests required for the round-robin fair scheduling i
 
 ---
 
-## Phase 1: FairnessScheduler Unit Tests
+## Milestone 1: FairnessScheduler Unit Tests
 
-**Checkpoint: All Phase 1 tests must pass before implementing Phase 2**
+**Checkpoint: All Milestone 1 tests must pass before implementing Milestone 2**
 
 ### 1.1 Session Registration/Unregistration
 
@@ -83,9 +83,9 @@ This document specifies the tests required for the round-robin fair scheduling i
 
 ---
 
-## Phase 2: TokenExecutor Modifications
+## Milestone 2: TokenExecutor Modifications
 
-**Checkpoint: All Phase 1 and Phase 2 tests must pass before implementing Phase 3**
+**Checkpoint: All Milestone 1 and Milestone 2 tests must pass before implementing Milestone 3**
 
 ### 2.1 Non-Blocking Token Addition
 
@@ -159,9 +159,9 @@ This document specifies the tests required for the round-robin fair scheduling i
 
 ---
 
-## Phase 3: PTYTask Dispatch Source
+## Milestone 3: PTYTask Dispatch Source
 
-**Checkpoint: All Phase 1, 2, and 3 tests must pass before implementing Phase 4**
+**Checkpoint: All Milestone 1, 2, and 3 tests must pass before implementing Milestone 4**
 
 ### 3.1 Dispatch Source Lifecycle
 
@@ -232,9 +232,9 @@ This document specifies the tests required for the round-robin fair scheduling i
 
 ---
 
-## Phase 4: TaskNotifier Changes
+## Milestone 4: TaskNotifier Changes
 
-**Checkpoint: All Phase 1, 2, 3, and 4 tests must pass before implementing Phase 5**
+**Checkpoint: All Milestone 1, 2, 3, and 4 tests must pass before implementing Milestone 5**
 
 ### 4.1 Dispatch Source Protocol
 
@@ -265,9 +265,9 @@ This document specifies the tests required for the round-robin fair scheduling i
 
 ---
 
-## Phase 5: VT100ScreenMutableState Integration
+## Milestone 5: VT100ScreenMutableState Integration
 
-**Checkpoint: All Phase 1-5 tests must pass before integration testing**
+**Checkpoint: All Milestone 1-5 tests must pass before integration testing**
 
 ### 5.1 Registration
 
@@ -395,32 +395,32 @@ These tests verify the critical `availableSlots` accounting never drifts.
 
 ### Checkpoint 1: FairnessScheduler Complete
 **Must pass before proceeding to TokenExecutor changes:**
-- All Phase 1 tests (1.1 - 1.4)
+- All Milestone 1 tests (1.1 - 1.4)
 - Smoke tests for basic terminal operation
 
 ### Checkpoint 2: TokenExecutor Complete
 **Must pass before proceeding to PTYTask changes:**
-- All Phase 1 tests
-- All Phase 2 tests (2.1 - 2.7)
+- All Milestone 1 tests
+- All Milestone 2 tests (2.1 - 2.7)
 - Accounting invariant tests
 - Smoke tests
 
 ### Checkpoint 3: PTYTask Complete
 **Must pass before proceeding to TaskNotifier changes:**
-- All Phase 1-3 tests
+- All Milestone 1-3 tests
 - Backpressure integration tests (I.3)
 - Dispatch source lifecycle tests (I.5)
 - Smoke tests
 
 ### Checkpoint 4: TaskNotifier Complete
 **Must pass before proceeding to integration:**
-- All Phase 1-4 tests
+- All Milestone 1-4 tests
 - Mixed mode operation tests
 - Smoke tests
 
 ### Checkpoint 5: Full Integration
 **Must pass before merge:**
-- All unit tests (Phases 1-5)
+- All unit tests (Milestones 1-5)
 - All integration tests (I.1 - I.6)
 - All smoke tests
 - Performance regression tests
@@ -497,4 +497,4 @@ These tests verify the critical `availableSlots` accounting never drifts.
 3. Implement `FairnessScheduler` to pass those tests
 4. Then proceed to TokenExecutor modifications
 
-**Current status:** Test infrastructure complete. All 18 Phase 1 tests fail against stub implementation. Run with `./tools/run_fairness_tests.sh phase1`
+**Current status:** Test infrastructure complete. All 18 Milestone 1 tests pass. Run with `./tools/run_fairness_tests.sh milestone1`
