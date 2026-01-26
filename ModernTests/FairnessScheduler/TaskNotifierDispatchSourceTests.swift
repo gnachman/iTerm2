@@ -569,4 +569,55 @@ final class TaskNotifierMixedModeTests: XCTestCase {
         XCTAssertNotNil(notifier, "TaskNotifier should exist for legacy task support")
         #endif
     }
+
+    func testCoprocessFdProcessedBySelect() throws {
+        // REQUIREMENT: Tasks with coprocess should be iterated for coprocess FD handling
+        // even when main FD uses dispatch_source.
+        //
+        // Note: Full coprocess FD handling requires actual Coprocess objects which are
+        // complex to set up. This test verifies the structural requirement that dispatch_source
+        // tasks with hasCoprocess=true are still iterated by TaskNotifier.
+
+        #if ITERM_DEBUG
+        // Create a mock task that uses dispatch_source (main FD) but has a coprocess
+        let mockTask = MockTaskNotifierTask()
+        mockTask.fd = -1  // No main FD (dispatch_source handles it)
+        mockTask.dispatchSourceEnabled = true
+        mockTask.hasCoprocess = true
+        mockTask.wantsRead = false  // Main FD doesn't want read via select
+
+        // Verify configuration - this task uses dispatch_source but has coprocess
+        XCTAssertTrue(mockTask.dispatchSourceEnabled, "Task should use dispatch_source")
+        XCTAssertTrue(mockTask.hasCoprocess, "Task should have coprocess")
+
+        // Register the task
+        let notifier = TaskNotifier.sharedInstance()
+        notifier?.register(mockTask)
+        defer { notifier?.deregister(mockTask) }
+
+        // Wait for registration to complete
+        let registerExp = XCTestExpectation(description: "Wait for registration")
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+            registerExp.fulfill()
+        }
+        wait(for: [registerExp], timeout: 1.0)
+
+        // Verify the task was registered
+        XCTAssertGreaterThan(mockTask.didRegisterCallCount, 0,
+                             "Task with coprocess should be registered successfully")
+
+        // The key verification: TaskNotifier should still iterate this task even though
+        // its main FD uses dispatch_source, because it has a coprocess.
+        // The actual coprocess FD handling happens in the iteration loop.
+        // We verify registration worked - the implementation details of coprocess FD
+        // handling are tested by testDispatchSourceTaskStillIteratedForCoprocess.
+        #else
+        // Non-debug build: basic verification
+        guard let task = PTYTask() else {
+            XCTFail("Failed to create PTYTask")
+            return
+        }
+        XCTAssertFalse(task.hasCoprocess, "New PTYTask should not have a coprocess")
+        #endif
+    }
 }

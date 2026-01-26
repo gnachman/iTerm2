@@ -20,6 +20,7 @@ FAIRNESS_TEST_CLASSES=(
     "FairnessSchedulerRoundRobinTests"
     "FairnessSchedulerThreadSafetyTests"
     "FairnessSchedulerLifecycleEdgeCaseTests"
+    "FairnessSchedulerSustainedLoadTests"
 )
 
 # Milestone 2: TokenExecutor Fairness (Checkpoint 2)
@@ -36,6 +37,7 @@ TOKENEXECUTOR_TEST_CLASSES=(
     "TokenExecutorBudgetEnforcementDetailedTests"
     "TokenExecutorAvailableSlotsBoundaryTests"
     "TokenExecutorHighPriorityOrderingTests"
+    "TwoTierTokenQueueTests"
 )
 
 # Milestone 3: PTYTask Dispatch Sources (Checkpoint 3)

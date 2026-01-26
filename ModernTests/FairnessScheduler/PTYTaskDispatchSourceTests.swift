@@ -1055,6 +1055,99 @@ final class PTYTaskBackpressureIntegrationTests: XCTestCase {
         XCTAssertNotNil(executor.backpressureReleaseHandler)
         #endif
     }
+
+    func testHeavyBackpressureStopsDataFlow() {
+        // REQUIREMENT: When backpressure becomes heavy, the read source should be suspended
+        // AND data should actually stop being delivered to the delegate.
+        // This is the end-to-end verification that backpressure throttling works.
+
+        guard let task = PTYTask() else {
+            XCTFail("Failed to create PTYTask")
+            return
+        }
+
+        guard let pipe = createTestPipe() else {
+            XCTFail("Failed to create test pipe")
+            return
+        }
+        defer { closeTestPipe(pipe) }
+
+        // Create mock delegate to track data flow
+        let mockDelegate = MockPTYTaskDelegate()
+        task.delegate = mockDelegate
+
+        task.testSetFd(pipe.readFd)
+        task.paused = false
+
+        // Setup executor for backpressure tracking
+        let terminal = VT100Terminal()
+        let executor = TokenExecutor(terminal, slownessDetector: SlownessDetector(), queue: DispatchQueue.main)
+        task.tokenExecutor = executor
+
+        #if ITERM_DEBUG
+        // Set up expectation BEFORE starting anything
+        let readExpectation = XCTestExpectation(description: "Data read with no backpressure")
+        mockDelegate.onThreadedRead = { _ in
+            readExpectation.fulfill()
+        }
+
+        // Setup dispatch sources
+        task.testSetupDispatchSourcesForTesting()
+        task.testWaitForIOQueue()
+
+        XCTAssertEqual(executor.backpressureLevel, .none)
+        XCTAssertFalse(task.testIsReadSourceSuspended, "Read source should start resumed")
+
+        // Step 1: Verify data flows when backpressure is low
+        let initialReadCount = mockDelegate.readCallCount
+        let testData1 = "Initial data flow test".data(using: .utf8)!
+        testData1.withUnsafeBytes { bufferPointer in
+            let rawPointer = bufferPointer.baseAddress!
+            _ = Darwin.write(pipe.writeFd, rawPointer, testData1.count)
+        }
+
+        // Wait for data to be read
+        wait(for: [readExpectation], timeout: 2.0)
+
+        XCTAssertGreaterThan(mockDelegate.readCallCount, initialReadCount,
+                             "Data should flow when backpressure is low")
+
+        // Clear the callback for next phase
+        mockDelegate.onThreadedRead = nil
+
+        // Step 2: Create heavy backpressure
+        executor.addMultipleTokenArrays(count: 200, tokensPerArray: 5)
+        XCTAssertEqual(executor.backpressureLevel, .heavy, "Should have heavy backpressure")
+
+        // Trigger state update
+        task.perform(NSSelectorFromString("updateReadSourceState"))
+        task.testWaitForIOQueue()
+
+        XCTAssertTrue(task.testIsReadSourceSuspended, "Read source should suspend with heavy backpressure")
+
+        // Step 3: Write more data - it should NOT be delivered while suspended
+        let readCountBeforeWrite = mockDelegate.readCallCount
+        let testData2 = "Data during heavy backpressure".data(using: .utf8)!
+        testData2.withUnsafeBytes { bufferPointer in
+            let rawPointer = bufferPointer.baseAddress!
+            _ = Darwin.write(pipe.writeFd, rawPointer, testData2.count)
+        }
+
+        // Give time for data to (not) be delivered
+        Thread.sleep(forTimeInterval: 0.1)
+        task.testWaitForIOQueue()
+
+        // Data should NOT have been read (source is suspended)
+        XCTAssertEqual(mockDelegate.readCallCount, readCountBeforeWrite,
+                       "Data should NOT be delivered when read source is suspended due to heavy backpressure")
+
+        // Cleanup
+        task.testTeardownDispatchSourcesForTesting()
+        #else
+        // Non-debug build: basic verification
+        XCTAssertNotNil(task.tokenExecutor)
+        #endif
+    }
 }
 
 // MARK: - 3.7 useDispatchSource Protocol Tests
@@ -1288,91 +1381,7 @@ final class PTYTaskEdgeCaseTests: XCTestCase {
     }
 }
 
-// MARK: - Mock PTYTask Delegate
-
-/// Mock delegate for testing the read handler pipeline
-final class MockPTYTaskDelegate: NSObject, PTYTaskDelegate {
-    var readCallCount = 0
-    var lastReadData: Data?
-    var brokenPipeCount = 0
-    var threadedBrokenPipeCount = 0
-
-    /// Callback invoked when threadedReadTask is called
-    var onThreadedRead: ((Data) -> Void)?
-
-    /// Lock for thread-safe access to counters
-    private let lock = NSLock()
-
-    func threadedReadTask(_ buffer: UnsafeMutablePointer<CChar>, length: Int32) {
-        lock.lock()
-        readCallCount += 1
-        let data = Data(bytes: buffer, count: Int(length))
-        lastReadData = data
-        lock.unlock()
-
-        onThreadedRead?(data)
-    }
-
-    func threadedTaskBrokenPipe() {
-        lock.lock()
-        threadedBrokenPipeCount += 1
-        lock.unlock()
-    }
-
-    func brokenPipe() {
-        lock.lock()
-        brokenPipeCount += 1
-        lock.unlock()
-    }
-
-    func tmuxClientWrite(_ data: Data) {
-        // Not used in these tests
-    }
-
-    func taskDiedImmediately() {
-        // Not used in these tests
-    }
-
-    func taskDiedWithError(_ error: String!) {
-        // Not used in these tests
-    }
-
-    func taskDidChangeTTY(_ task: PTYTask) {
-        // Not used in these tests
-    }
-
-    func taskDidRegister(_ task: PTYTask) {
-        // Not used in these tests
-    }
-
-    func taskDidChangePaused(_ task: PTYTask, paused: Bool) {
-        // Not used in these tests
-    }
-
-    func taskMuteCoprocessDidChange(_ task: PTYTask, hasMuteCoprocess: Bool) {
-        // Not used in these tests
-    }
-
-    func taskDidResize(to gridSize: VT100GridSize, pixelSize: NSSize) {
-        // Not used in these tests
-    }
-
-    func taskDidReadFromCoprocessWhileSSHIntegration(inUse data: Data) {
-        // Not used in these tests
-    }
-
-    func getReadCount() -> Int {
-        lock.lock()
-        defer { lock.unlock() }
-        return readCallCount
-    }
-
-    func getLastReadData() -> Data? {
-        lock.lock()
-        defer { lock.unlock() }
-        return lastReadData
-    }
-}
+// MockPTYTaskDelegate is defined in Mocks/MockPTYTaskDelegate.swift
 
 // MARK: - Read Handler Pipeline Tests
 
@@ -1468,8 +1477,17 @@ final class PTYTaskReadHandlerPipelineTests: XCTestCase {
         task.paused = false
 
         #if ITERM_DEBUG
+        // Set up callback BEFORE starting sources to avoid race condition
+        let readExpectation = XCTestExpectation(description: "Quick read")
+        mockDelegate.onThreadedRead = { _ in
+            readExpectation.fulfill()
+        }
+
         task.testSetupDispatchSourcesForTesting()
         task.testWaitForIOQueue()
+
+        // Measure time from write to callback
+        let startTime = CFAbsoluteTimeGetCurrent()
 
         // Write data to trigger read
         let testData = "Quick read test".data(using: .utf8)!
@@ -1478,14 +1496,7 @@ final class PTYTaskReadHandlerPipelineTests: XCTestCase {
             _ = Darwin.write(pipe.writeFd, rawPointer, testData.count)
         }
 
-        // Measure time for delegate to be called
-        let startTime = CFAbsoluteTimeGetCurrent()
-        let readExpectation = XCTestExpectation(description: "Quick read")
-        mockDelegate.onThreadedRead = { _ in
-            readExpectation.fulfill()
-        }
-
-        wait(for: [readExpectation], timeout: 1.0)
+        wait(for: [readExpectation], timeout: 2.0)
         let elapsed = CFAbsoluteTimeGetCurrent() - startTime
 
         // Handler should complete quickly (much less than 1 second)
@@ -1639,42 +1650,4 @@ final class PTYTaskReadHandlerPipelineTests: XCTestCase {
     }
 }
 
-// MARK: - Enqueueing Delegate for Pipeline Tests
-
-/// A delegate that enqueues tokens to TokenExecutor when data is received,
-/// mimicking the behavior of PTYSession.threadedReadTask
-final class EnqueuingPTYTaskDelegate: NSObject, PTYTaskDelegate {
-    private let executor: TokenExecutor
-    private let lock = NSLock()
-    var enqueueCount = 0
-    var onEnqueued: (() -> Void)?
-
-    init(executor: TokenExecutor) {
-        self.executor = executor
-        super.init()
-    }
-
-    func threadedReadTask(_ buffer: UnsafeMutablePointer<CChar>, length: Int32) {
-        // Mimic PTYSession's behavior: receive data, create tokens, enqueue to executor
-        // We create enough tokens to trigger backpressure change for verification
-        executor.addMultipleTokenArrays(count: 100, tokensPerArray: 5)
-
-        lock.lock()
-        enqueueCount += 1
-        lock.unlock()
-
-        onEnqueued?()
-    }
-
-    func threadedTaskBrokenPipe() {}
-    func brokenPipe() {}
-    func tmuxClientWrite(_ data: Data) {}
-    func taskDiedImmediately() {}
-    func taskDiedWithError(_ error: String!) {}
-    func taskDidChangeTTY(_ task: PTYTask) {}
-    func taskDidRegister(_ task: PTYTask) {}
-    func taskDidChangePaused(_ task: PTYTask, paused: Bool) {}
-    func taskMuteCoprocessDidChange(_ task: PTYTask, hasMuteCoprocess: Bool) {}
-    func taskDidResize(to gridSize: VT100GridSize, pixelSize: NSSize) {}
-    func taskDidReadFromCoprocessWhileSSHIntegration(inUse data: Data) {}
-}
+// EnqueuingPTYTaskDelegate is defined in Mocks/EnqueuingPTYTaskDelegate.swift

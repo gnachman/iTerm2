@@ -1058,3 +1058,154 @@ final class FairnessSchedulerLifecycleEdgeCaseTests: XCTestCase {
         XCTAssertGreaterThan(receivedBudget!, 0, "Budget should be positive")
     }
 }
+
+// MARK: - Sustained Load Fairness Tests
+
+/// Tests that verify fairness under sustained load conditions.
+/// These tests validate the core fairness goal: no session should wait more than N-1 turns.
+final class FairnessSchedulerSustainedLoadTests: XCTestCase {
+
+    var scheduler: FairnessScheduler!
+
+    override func setUp() {
+        super.setUp()
+        scheduler = FairnessScheduler()
+    }
+
+    override func tearDown() {
+        scheduler = nil
+        super.tearDown()
+    }
+
+    func testThreeSessionsSustainedLoadFairness() {
+        // REQUIREMENT: With 3 sessions continuously producing work,
+        // turns should interleave fairly: A, B, C, A, B, C, ...
+        // Each session should never wait more than 2 turns (N-1 where N=3).
+
+        let executorA = MockFairnessSchedulerExecutor()
+        let executorB = MockFairnessSchedulerExecutor()
+        let executorC = MockFairnessSchedulerExecutor()
+
+        let sessionA = scheduler.register(executorA)
+        let sessionB = scheduler.register(executorB)
+        let sessionC = scheduler.register(executorC)
+
+        var turnOrder: [FairnessScheduler.SessionID] = []
+        let lock = NSLock()
+        let totalTurns = 15  // 5 rounds of 3 sessions each
+        let turnExpectation = XCTestExpectation(description: "All turns completed")
+        turnExpectation.expectedFulfillmentCount = totalTurns
+
+        // Configure executors to track turn order and simulate continuous work
+        func configureExecutor(_ executor: MockFairnessSchedulerExecutor, sessionId: FairnessScheduler.SessionID) {
+            executor.executeTurnHandler = { budget, completion in
+                lock.lock()
+                let currentCount = turnOrder.count
+                if currentCount < totalTurns {
+                    turnOrder.append(sessionId)
+                    turnExpectation.fulfill()
+                }
+                lock.unlock()
+                // Return .yielded to simulate continuous work
+                completion(.yielded)
+            }
+        }
+
+        configureExecutor(executorA, sessionId: sessionA)
+        configureExecutor(executorB, sessionId: sessionB)
+        configureExecutor(executorC, sessionId: sessionC)
+
+        // Trigger initial work for all sessions
+        scheduler.sessionDidEnqueueWork(sessionA)
+        scheduler.sessionDidEnqueueWork(sessionB)
+        scheduler.sessionDidEnqueueWork(sessionC)
+
+        wait(for: [turnExpectation], timeout: 5.0)
+
+        // Verify fairness: each session should appear roughly equally
+        lock.lock()
+        let finalOrder = turnOrder
+        lock.unlock()
+
+        let countA = finalOrder.filter { $0 == sessionA }.count
+        let countB = finalOrder.filter { $0 == sessionB }.count
+        let countC = finalOrder.filter { $0 == sessionC }.count
+
+        // With round-robin, each session gets totalTurns/3 turns (5 each)
+        XCTAssertEqual(countA, 5, "Session A should get 5 turns in 15 total")
+        XCTAssertEqual(countB, 5, "Session B should get 5 turns in 15 total")
+        XCTAssertEqual(countC, 5, "Session C should get 5 turns in 15 total")
+
+        // Verify round-robin pattern: check that no session has 2 consecutive turns
+        for i in 0..<min(finalOrder.count - 1, totalTurns - 1) {
+            XCTAssertNotEqual(finalOrder[i], finalOrder[i+1],
+                              "Same session should not get consecutive turns in round-robin")
+        }
+    }
+
+    func testNoSessionStarvationUnderLoad() {
+        // REQUIREMENT: No session should be starved (wait indefinitely) under load.
+        // All sessions that have work get turns.
+
+        let executorA = MockFairnessSchedulerExecutor()
+        let executorB = MockFairnessSchedulerExecutor()
+        let executorC = MockFairnessSchedulerExecutor()
+
+        let sessionA = scheduler.register(executorA)
+        let sessionB = scheduler.register(executorB)
+        let sessionC = scheduler.register(executorC)
+
+        var turnsPerSession: [FairnessScheduler.SessionID: Int] = [sessionA: 0, sessionB: 0, sessionC: 0]
+        let lock = NSLock()
+        let totalTurns = 30
+        let turnExpectation = XCTestExpectation(description: "All turns completed")
+        turnExpectation.expectedFulfillmentCount = totalTurns
+
+        var turnsCounted = 0
+
+        // Configure executors - all yielding to simulate continuous work
+        func configureExecutor(_ executor: MockFairnessSchedulerExecutor, sessionId: FairnessScheduler.SessionID) {
+            executor.executeTurnHandler = { budget, completion in
+                lock.lock()
+                if turnsCounted < totalTurns {
+                    turnsPerSession[sessionId, default: 0] += 1
+                    turnsCounted += 1
+                    turnExpectation.fulfill()
+                }
+                lock.unlock()
+
+                // Always yield to simulate continuous heavy workload
+                completion(.yielded)
+            }
+        }
+
+        // All sessions have continuous work
+        configureExecutor(executorA, sessionId: sessionA)
+        configureExecutor(executorB, sessionId: sessionB)
+        configureExecutor(executorC, sessionId: sessionC)
+
+        // Start all sessions
+        scheduler.sessionDidEnqueueWork(sessionA)
+        scheduler.sessionDidEnqueueWork(sessionB)
+        scheduler.sessionDidEnqueueWork(sessionC)
+
+        wait(for: [turnExpectation], timeout: 10.0)
+
+        // Verify no session was starved - each should have gotten at least some turns
+        lock.lock()
+        let countA = turnsPerSession[sessionA, default: 0]
+        let countB = turnsPerSession[sessionB, default: 0]
+        let countC = turnsPerSession[sessionC, default: 0]
+        lock.unlock()
+
+        // With 3 sessions and 30 total turns, each should get exactly 10 (perfect fairness)
+        // Allow a small variance for timing issues
+        XCTAssertGreaterThanOrEqual(countA, 8, "Session A should not be starved")
+        XCTAssertGreaterThanOrEqual(countB, 8, "Session B should not be starved")
+        XCTAssertGreaterThanOrEqual(countC, 8, "Session C should not be starved")
+
+        XCTAssertLessThanOrEqual(countA, 12, "Session A should not dominate")
+        XCTAssertLessThanOrEqual(countB, 12, "Session B should not dominate")
+        XCTAssertLessThanOrEqual(countC, 12, "Session C should not dominate")
+    }
+}

@@ -18,23 +18,8 @@
 import XCTest
 @testable import iTerm2SharedARC
 
-// MARK: - Mock for VT100ScreenSideEffectPerforming
-
-/// Mock implementation of VT100ScreenSideEffectPerforming for testing VT100ScreenMutableState.
-/// Returns nil for delegates which is acceptable for our test scenarios (init/deinit don't use them).
-@objc final class MockSideEffectPerformer: NSObject, VT100ScreenSideEffectPerforming {
-    // Note: The protocol is declared in NS_ASSUME_NONNULL block but the actual
-    // implementation can return nil (weak references). For tests, we return nil
-    // via Objective-C's nil-coercion behavior.
-
-    @objc func sideEffectPerformingScreenDelegate() -> (any VT100ScreenDelegate)! {
-        return nil
-    }
-
-    @objc func sideEffectPerformingIntervalTreeObserver() -> (any iTermIntervalTreeObserver)! {
-        return nil
-    }
-}
+// MockSideEffectPerformer is defined in Mocks/MockSideEffectPerformer.swift
+// MockTokenExecutorDelegate is defined in Mocks/MockTokenExecutorDelegate.swift
 
 // MARK: - 5.1 Registration Tests
 
