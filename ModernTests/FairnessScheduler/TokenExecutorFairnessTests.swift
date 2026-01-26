@@ -1409,6 +1409,96 @@ final class TokenExecutorBudgetEnforcementDetailedTests: XCTestCase {
         }
     }
 
+    func testBudgetUsesTokenCountNotLengthTotal() {
+        // REQUIREMENT: Budget enforcement must use TOKEN COUNT, not lengthTotal.
+        // This test uses mismatched values to distinguish the two metrics.
+        //
+        // If budget used lengthTotal (bug), this test would fail because:
+        // - Group1 (50 lengthTotal) + Group2 (5000 lengthTotal) = 5050 > budget of 100
+        // - Only Group1 would execute, result = .yielded
+        //
+        // If budget uses token count (correct), this test passes because:
+        // - Group1 (50 tokens) + Group2 (5 tokens) = 55 < budget of 100
+        // - Both groups execute, result = .completed
+
+        // Group 1: Many tokens, small lengthTotal (high-priority for separate group)
+        let manyTokensVector = createTestTokenVector(count: 50)
+        executor.addTokens(manyTokensVector, lengthTotal: 50, lengthExcludingInBandSignaling: 50, highPriority: true)
+
+        // Group 2: Few tokens, large lengthTotal (normal-priority for separate group)
+        let fewTokensVector = createTestTokenVector(count: 5)
+        executor.addTokens(fewTokensVector, lengthTotal: 5000, lengthExcludingInBandSignaling: 5000, highPriority: false)
+
+        let initialWillExecuteCount = mockDelegate.willExecuteCount
+
+        let expectation = XCTestExpectation(description: "ExecuteTurn completed")
+        var receivedResult: TurnResult?
+        // Budget of 100: if using token count, 50+5=55 fits. If using lengthTotal, 50+5000 doesn't fit.
+        executor.executeTurn(tokenBudget: 100) { result in
+            receivedResult = result
+            expectation.fulfill()
+        }
+
+        wait(for: [expectation], timeout: 1.0)
+
+        // Both groups should execute because token count (55) fits within budget (100)
+        // This would fail if implementation incorrectly used lengthTotal (5050 > 100)
+        XCTAssertEqual(receivedResult, .completed,
+                       "Both groups should execute when TOKEN COUNT fits budget (budget uses token count, not lengthTotal)")
+
+        // Verify both groups executed (willExecuteTokens called, then both groups' lengths reported)
+        XCTAssertGreaterThan(mockDelegate.willExecuteCount, initialWillExecuteCount,
+                             "At least one execution should have occurred")
+
+        // Verify both groups' lengths were reported (50 + 5000 = 5050 total)
+        let totalReportedLength = mockDelegate.executedLengths.reduce(0) { $0 + $1.total }
+        XCTAssertEqual(totalReportedLength, 5050,
+                       "Both groups should have reported their lengths (50 + 5000)")
+    }
+
+    func testBudgetExceedanceUsesTokenCountNotLengthTotal() {
+        // REQUIREMENT: Budget exceedance check must use TOKEN COUNT, not lengthTotal.
+        // This is the inverse test - verifies that large token counts cause yielding
+        // even when lengthTotal is small.
+        //
+        // If budget used lengthTotal (bug), this test would fail because:
+        // - Group1 (5 lengthTotal) + Group2 (50 lengthTotal) = 55 < budget of 100
+        // - Both groups would execute, result = .completed
+        //
+        // If budget uses token count (correct), this test passes because:
+        // - Group1 (50 tokens) exceeds budget of 10, but executes due to progress guarantee
+        // - Group2 (5 tokens): 50 + 5 = 55 > 10, so yield before executing Group2
+        // - Only Group1 executes, result = .yielded
+
+        // Group 1: Many tokens, tiny lengthTotal (high-priority for separate group)
+        let manyTokensVector = createTestTokenVector(count: 50)
+        executor.addTokens(manyTokensVector, lengthTotal: 5, lengthExcludingInBandSignaling: 5, highPriority: true)
+
+        // Group 2: Few tokens, small lengthTotal (normal-priority for separate group)
+        let fewTokensVector = createTestTokenVector(count: 5)
+        executor.addTokens(fewTokensVector, lengthTotal: 50, lengthExcludingInBandSignaling: 50, highPriority: false)
+
+        let expectation = XCTestExpectation(description: "ExecuteTurn completed")
+        var receivedResult: TurnResult?
+        // Budget of 10: token count of Group1 (50) already exceeds it
+        executor.executeTurn(tokenBudget: 10) { result in
+            receivedResult = result
+            expectation.fulfill()
+        }
+
+        wait(for: [expectation], timeout: 1.0)
+
+        // Should yield because token count (50) exceeds budget (10), even though lengthTotal is tiny
+        // Group1 executes due to progress guarantee, then yields before Group2
+        XCTAssertEqual(receivedResult, .yielded,
+                       "Should yield when TOKEN COUNT exceeds budget (budget uses token count, not lengthTotal)")
+
+        // Verify only first group's length was reported (5, not 5+50=55)
+        let totalReportedLength = mockDelegate.executedLengths.reduce(0) { $0 + $1.total }
+        XCTAssertEqual(totalReportedLength, 5,
+                       "Only first group should have executed (length 5, not 55)")
+    }
+
 }
 
 // MARK: - Same-Queue Group Boundary Tests
