@@ -39,11 +39,31 @@ final class TaskNotifierDispatchSourceProtocolTests: XCTestCase {
         // REQUIREMENT: PTYTask returns YES for useDispatchSource
         // This indicates PTYTask uses dispatch_source for I/O, not select()
 
-        throw XCTSkip("Requires PTYTask.useDispatchSource implementation - Milestone 4")
+        guard let task = PTYTask() else {
+            XCTFail("Failed to create PTYTask")
+            return
+        }
 
-        // Once implemented:
-        // let task = PTYTask()
-        // XCTAssertTrue(task.useDispatchSource)
+        // Verify PTYTask responds to the useDispatchSource selector
+        let selector = NSSelectorFromString("useDispatchSource")
+        XCTAssertTrue(task.responds(to: selector),
+                      "PTYTask should respond to useDispatchSource")
+
+        // Call the method via perform to get the result
+        // useDispatchSource returns BOOL, which we can check via responds + perform
+        let result = task.perform(selector)
+        // For BOOL methods, non-nil result means YES, nil means NO
+        // Actually, perform returns an object, so we need to check differently
+
+        // Alternative: use the iTermTask protocol cast
+        let iTermTaskObj = task as AnyObject
+        if iTermTaskObj.responds(to: selector) {
+            // Use value(forKey:) to call the getter
+            let value = task.value(forKey: "useDispatchSource") as? Bool
+            XCTAssertEqual(value, true, "PTYTask.useDispatchSource should return YES")
+        } else {
+            XCTFail("PTYTask does not respond to useDispatchSource")
+        }
     }
 
     func testRespondsToSelectorCheckUsed() throws {

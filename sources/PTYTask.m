@@ -1045,6 +1045,13 @@ static void HandleSigChld(int n) {
     return self.jobManager.ioAllowed;
 }
 
+// iTermTask @optional protocol method
+// Returns YES to indicate PTYTask uses dispatch_source for I/O instead of select().
+// TaskNotifier will skip adding this task's FD to select() fd_sets.
+- (BOOL)useDispatchSource {
+    return YES;
+}
+
 - (BOOL)hasOutput {
     return hasOutput;
 }

@@ -9,7 +9,7 @@
 | 1 | FairnessScheduler | **DONE** | 18/18 tests passing. Commit `2ee3aebcf`. |
 | 2 | TokenExecutor | **DONE** | 8 passing, 24 skipped. Commit `5afcfd07f`. |
 | 3 | PTYTask Dispatch Sources | **DONE** | 0 passing, 35 skipped (infrastructure in place, pending activation). Commit `4087d02b9`. |
-| 4 | TaskNotifier Changes | **TESTS WRITTEN** | 0 passing, 12 skipped. Tests ready for implementation. |
+| 4 | TaskNotifier Changes | **DONE** | 1 passing, 11 skipped. Dispatch source tasks skip select(). |
 | 5 | Integration | Not started | Wire everything together, activate dispatch sources |
 
 **Run tests:**
