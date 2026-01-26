@@ -827,35 +827,58 @@ final class TokenExecutorLegacyRemovalTests: XCTestCase {
     func testBackgroundSessionNotPreemptedByForeground() throws {
         // REQUIREMENT: Under fairness model, all sessions get equal turns.
         // Background sessions should NOT yield to foreground mid-turn.
+        //
+        // Test design:
+        // 1. Create both background and foreground executors with tokens
+        // 2. Add tokens to BOTH (foreground having tokens is what could cause preemption)
+        // 3. Verify both sessions get execution turns (proving no preemption/starvation)
 
+        // Create background executor with its own delegate for tracking
+        let bgDelegate = MockTokenExecutorDelegate()
         let bgExecutor = TokenExecutor(mockTerminal, slownessDetector: SlownessDetector(), queue: iTermGCD.mutationQueue())
-        bgExecutor.delegate = mockDelegate
+        bgExecutor.delegate = bgDelegate
         bgExecutor.isBackgroundSession = true
 
-        let fgExecutor = TokenExecutor(mockTerminal, slownessDetector: SlownessDetector(), queue: iTermGCD.mutationQueue())
+        // Create foreground executor with its own delegate
         let fgDelegate = MockTokenExecutorDelegate()
+        let fgExecutor = TokenExecutor(mockTerminal, slownessDetector: SlownessDetector(), queue: iTermGCD.mutationQueue())
         fgExecutor.delegate = fgDelegate
         fgExecutor.isBackgroundSession = false
 
-        // Register both
+        // Register both with scheduler
         let bgId = FairnessScheduler.shared.register(bgExecutor)
         let fgId = FairnessScheduler.shared.register(fgExecutor)
         bgExecutor.fairnessSessionId = bgId
         fgExecutor.fairnessSessionId = fgId
 
-        // Add tokens to background
-        let vector = createTestTokenVector(count: 5)
-        bgExecutor.addTokens(vector, lengthTotal: 50, lengthExcludingInBandSignaling: 50)
+        defer {
+            FairnessScheduler.shared.unregister(sessionId: bgId)
+            FairnessScheduler.shared.unregister(sessionId: fgId)
+        }
 
-        // Wait for execution to occur
-        let executed = waitForCondition({ self.mockDelegate.executedLengths.count > 0 }, timeout: 1.0)
+        // Add tokens to BOTH executors - this is crucial for testing preemption
+        // If foreground has tokens, the old activeSessionsWithTokens logic would
+        // have preempted background. Under fairness, both should get turns.
+        let bgVector = createTestTokenVector(count: 5)
+        bgExecutor.addTokens(bgVector, lengthTotal: 50, lengthExcludingInBandSignaling: 50)
 
-        // Background should have processed (not preempted)
-        XCTAssertTrue(executed,
-                      "Background session should process without preemption")
+        let fgVector = createTestTokenVector(count: 5)
+        fgExecutor.addTokens(fgVector, lengthTotal: 50, lengthExcludingInBandSignaling: 50)
 
-        FairnessScheduler.shared.unregister(sessionId: bgId)
-        FairnessScheduler.shared.unregister(sessionId: fgId)
+        // Wait for BOTH to execute - under fairness, both should get turns
+        let bothExecuted = waitForCondition({
+            bgDelegate.executedLengths.count > 0 && fgDelegate.executedLengths.count > 0
+        }, timeout: 2.0)
+
+        // Verify both sessions processed (neither was starved/preempted)
+        XCTAssertTrue(bothExecuted,
+                      "Both background and foreground should process under fairness. " +
+                      "Background executions: \(bgDelegate.executedLengths.count), " +
+                      "Foreground executions: \(fgDelegate.executedLengths.count)")
+
+        // Additional verification: background specifically got a turn
+        XCTAssertGreaterThan(bgDelegate.executedLengths.count, 0,
+                             "Background session should not be preempted by foreground")
     }
 
     func testBackgroundSessionGetsEqualTurns() {
