@@ -2,6 +2,21 @@
 
 **Testing:** A comprehensive test plan with checkpoints exists in `testing.md`. Each major section below references the checkpoint that must pass before proceeding to the next section.
 
+## Implementation Status
+
+| Phase | Component | Status | Notes |
+|-------|-----------|--------|-------|
+| 1 | FairnessScheduler | **DONE** | 18/18 tests passing. Commit `2ee3aebcf`. |
+| 2 | TokenExecutor Tests | **DONE** | 32 tests written (7 passing, 25 skipped pending impl). |
+| 2 | TokenExecutor Implementation | Not started | Next step |
+| 3 | PTYTask Dispatch Source | Not started | - |
+| 4 | TaskNotifier Changes | Not started | - |
+| 5 | Integration | Not started | - |
+
+**Run tests:**
+- Phase 1: `./tools/run_fairness_tests.sh phase1`
+- Phase 2: `./tools/run_fairness_tests.sh phase2`
+
 ## Goal
 
 Replace the current scheduling with round-robin fair scheduling so that "each PTY has some of its tokens executed after waiting for other PTYs to have *no more than one turn* getting their tokens executed." (PR #560)

@@ -1,6 +1,23 @@
 # Fairness Scheduler Testing Plan
 
-This document specifies the tests required for the round-robin fair scheduling implementation described in `pure-brewing-candy.md`. Tests are organized by component with checkpoints where all tests must pass before proceeding.
+This document specifies the tests required for the round-robin fair scheduling implementation described in `implementation.md`. Tests are organized by component with checkpoints where all tests must pass before proceeding.
+
+## Test Status
+
+| Phase | Test File | Status | Passing | Skipped |
+|-------|-----------|--------|---------|---------|
+| 1 | `FairnessSchedulerTests.swift` | **COMPLETE** | 18/18 | 0 |
+| 2 | `TokenExecutorFairnessTests.swift` | Tests written | 7 | 25 |
+| 3 | (PTYTask tests) | Not started | - | - |
+| 4 | (TaskNotifier tests) | Not started | - | - |
+| 5 | (Integration tests) | Not started | - | - |
+
+**Run commands:**
+```bash
+./tools/run_fairness_tests.sh phase1   # FairnessScheduler only
+./tools/run_fairness_tests.sh phase2   # TokenExecutor only
+./tools/run_fairness_tests.sh          # All fairness tests
+```
 
 ---
 
