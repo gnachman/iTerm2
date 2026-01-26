@@ -47,21 +47,64 @@ final class TwoTierTokenQueueTests: XCTestCase {
 
     func testDiscardAllEmptiesQueue() {
         // REQUIREMENT: After discardAllAndReturnCount(), queue should be empty.
+        // Test with deterministic distributions to ensure reproducibility.
 
-        let queue = TwoTierTokenQueue()
+        let totalTokens = 10
 
-        // Add token arrays
-        for _ in 0..<10 {
-            let tokenArray = createTestTokenArray(tokenCount: 5)
-            queue.addTokens(tokenArray, highPriority: Bool.random())
+        // First: test with equal distribution (5 high, 5 normal)
+        do {
+            let queue = TwoTierTokenQueue()
+            let highCount = totalTokens / 2
+            let normalCount = totalTokens - highCount
+
+            for i in 0..<highCount {
+                let tokenArray = createTestTokenArray(tokenCount: 5)
+                queue.addTokens(tokenArray, highPriority: true)
+                XCTAssertFalse(queue.isEmpty,
+                              "Equal distribution: queue should not be empty after adding high-priority token \(i + 1)")
+            }
+            for i in 0..<normalCount {
+                let tokenArray = createTestTokenArray(tokenCount: 5)
+                queue.addTokens(tokenArray, highPriority: false)
+                XCTAssertFalse(queue.isEmpty,
+                              "Equal distribution: queue should not be empty after adding normal-priority token \(i + 1)")
+            }
+
+            let discardedCount = queue.discardAllAndReturnCount()
+            XCTAssertEqual(discardedCount, totalTokens,
+                          "Equal distribution (\(highCount) high, \(normalCount) normal): discardedCount should be \(totalTokens)")
+            XCTAssertTrue(queue.isEmpty,
+                         "Equal distribution (\(highCount) high, \(normalCount) normal): queue should be empty after discard")
         }
 
-        XCTAssertFalse(queue.isEmpty, "Queue should not be empty before discard")
+        // Second: test with all complementary distributions (0/10, 1/9, 2/8, ..., 10/0)
+        for highCount in 0...totalTokens {
+            let normalCount = totalTokens - highCount
+            let queue = TwoTierTokenQueue()
 
-        // Discard all
-        _ = queue.discardAllAndReturnCount()
+            for i in 0..<highCount {
+                let tokenArray = createTestTokenArray(tokenCount: 5)
+                queue.addTokens(tokenArray, highPriority: true)
+                XCTAssertFalse(queue.isEmpty,
+                              "Complementary (\(highCount)/\(normalCount)): queue should not be empty after adding high-priority token \(i + 1)")
+            }
+            for i in 0..<normalCount {
+                let tokenArray = createTestTokenArray(tokenCount: 5)
+                queue.addTokens(tokenArray, highPriority: false)
+                XCTAssertFalse(queue.isEmpty,
+                              "Complementary (\(highCount)/\(normalCount)): queue should not be empty after adding normal-priority token \(i + 1)")
+            }
 
-        XCTAssertTrue(queue.isEmpty, "Queue should be empty after discardAllAndReturnCount()")
+            // Since highCount + normalCount = totalTokens = 10, queue is always non-empty
+            XCTAssertFalse(queue.isEmpty,
+                          "Complementary (\(highCount)/\(normalCount)): queue should not be empty before discard")
+
+            let discardedCount = queue.discardAllAndReturnCount()
+            XCTAssertEqual(discardedCount, totalTokens,
+                          "Complementary (\(highCount)/\(normalCount)): discardedCount should be \(totalTokens), got \(discardedCount)")
+            XCTAssertTrue(queue.isEmpty,
+                         "Complementary (\(highCount)/\(normalCount)): queue should be empty after discard")
+        }
     }
 
     func testDiscardAllOnEmptyQueueReturnsZero() {
