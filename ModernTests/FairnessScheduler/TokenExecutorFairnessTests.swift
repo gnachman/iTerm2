@@ -190,17 +190,70 @@ final class TokenExecutorAccountingTests: XCTestCase {
     }
 
     func testBackpressureReleaseHandlerCalled() throws {
-        // REQUIREMENT: backpressureReleaseHandler must be called when crossing threshold.
-        // This triggers PTYTask to re-evaluate read source state.
+        // REQUIREMENT: backpressureReleaseHandler must be called when crossing from
+        // heavy backpressure to a lighter level. This triggers PTYTask to re-evaluate
+        // read source state.
+        //
+        // Test design:
+        // 1. Set up handler with thread-safe counter
+        // 2. Drive backpressure to heavy (add many tokens)
+        // 3. Register with scheduler and execute turns to consume tokens
+        // 4. Verify handler was called when crossing out of heavy
 
-        // Verify that the backpressureReleaseHandler property exists and can be set
-        var handlerSet = false
+        // Thread-safe counter for handler calls
+        let handlerCallCount = MutableAtomicObject<Int>(0)
         executor.backpressureReleaseHandler = {
-            handlerSet = true
+            _ = handlerCallCount.mutate { $0 + 1 }
         }
 
-        XCTAssertNotNil(executor.backpressureReleaseHandler,
-                        "backpressureReleaseHandler should be settable")
+        // Register with scheduler so executeTurn works properly
+        let sessionId = FairnessScheduler.shared.register(executor)
+        executor.fairnessSessionId = sessionId
+        defer {
+            FairnessScheduler.shared.unregister(sessionId: sessionId)
+        }
+
+        // Step 1: Add enough tokens to reach heavy backpressure
+        // Heavy = < 25% slots available, so we need to consume > 75% of slots
+        // Default bufferDepth is 40, so we need > 30 token arrays
+        #if ITERM_DEBUG
+        let totalSlots = executor.testTotalSlots
+        let targetTokenArrays = Int(Double(totalSlots) * 0.80)  // 80% to ensure heavy
+        #else
+        let targetTokenArrays = 35  // Safe default assuming 40 slots
+        #endif
+
+        for _ in 0..<targetTokenArrays {
+            let vector = createTestTokenVector(count: 1)
+            executor.addTokens(vector, lengthTotal: 10, lengthExcludingInBandSignaling: 10)
+        }
+
+        // Verify we reached heavy backpressure
+        XCTAssertGreaterThanOrEqual(executor.backpressureLevel, .heavy,
+                                     "Should be at heavy backpressure after adding \(targetTokenArrays) token arrays")
+
+        // Reset counter after setup (adding tokens might have triggered some callbacks)
+        _ = handlerCallCount.mutate { _ in 0 }
+
+        // Step 2: Execute turns to consume tokens until we drop below heavy
+        let droppedBelowHeavy = waitForCondition({
+            // Execute a turn to consume tokens
+            let expectation = XCTestExpectation(description: "Turn complete")
+            self.executor.executeTurn(tokenBudget: 100) { _ in
+                expectation.fulfill()
+            }
+            _ = XCTWaiter.wait(for: [expectation], timeout: 0.5)
+
+            return self.executor.backpressureLevel < .heavy
+        }, timeout: 5.0)
+
+        XCTAssertTrue(droppedBelowHeavy, "Should eventually drop below heavy backpressure")
+
+        // Step 3: Verify handler was called at least once during the transition
+        let finalCallCount = handlerCallCount.value
+        XCTAssertGreaterThan(finalCallCount, 0,
+                             "backpressureReleaseHandler should be called when crossing from heavy to non-heavy. " +
+                             "Final call count: \(finalCallCount)")
     }
 
     // NEGATIVE TEST: Handler should NOT be called if still at heavy backpressure
