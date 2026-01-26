@@ -79,6 +79,9 @@ static void HandleSigChld(int n) {
     dispatch_queue_t _ioQueue;
     BOOL _readSourceSuspended;
     BOOL _writeSourceSuspended;
+
+    // Test hook to override shouldWrite for testing write source resume
+    BOOL _testShouldWriteOverride;
 }
 
 - (instancetype)init {
@@ -577,7 +580,11 @@ static void HandleSigChld(int n) {
 
 // All conditions that affect whether we should write
 - (BOOL)shouldWrite {
-    if (self.paused || self.jobManager.isReadOnly || !self.jobManager.ioAllowed) {
+    if (self.paused) {
+        return NO;
+    }
+    // Test hook allows bypassing jobManager constraints for testing write source resume
+    if (!_testShouldWriteOverride && (self.jobManager.isReadOnly || !self.jobManager.ioAllowed)) {
         return NO;
     }
     [writeLock lock];
@@ -1168,6 +1175,25 @@ static void HandleSigChld(int n) {
     [writeLock lock];
     [writeBuffer appendData:data];
     [writeLock unlock];
+}
+
+- (BOOL)testShouldWriteOverride {
+    return _testShouldWriteOverride;
+}
+
+- (void)setTestShouldWriteOverride:(BOOL)testShouldWriteOverride {
+    _testShouldWriteOverride = testShouldWriteOverride;
+}
+
+- (void)testWaitForIOQueue {
+    if (!_ioQueue) {
+        return;
+    }
+    // Dispatch a sync block to the ioQueue - this will wait until
+    // all previously queued async work has completed
+    dispatch_sync(_ioQueue, ^{
+        // Empty block - just waiting for queue to drain
+    });
 }
 
 @end

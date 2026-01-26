@@ -295,5 +295,15 @@ typedef NS_OPTIONS(NSUInteger, iTermJobManagerAttachResults) {
 /// Add data to the write buffer for testing write source behavior.
 - (void)testAppendDataToWriteBuffer:(NSData *)data;
 
+/// Override shouldWrite to return YES for testing write source resume.
+/// When set to YES, shouldWrite will return YES regardless of jobManager state
+/// (but still requires buffer to have data and not be paused).
+/// Reset to NO to restore normal behavior.
+@property(nonatomic, assign) BOOL testShouldWriteOverride;
+
+/// Synchronously wait for the ioQueue to drain all pending work.
+/// Use this instead of Thread.sleep to avoid flaky timing-dependent tests.
+- (void)testWaitForIOQueue;
+
 @end
 #endif

@@ -49,7 +49,7 @@ final class PTYTaskDispatchSourceLifecycleTests: XCTestCase {
         task.testSetupDispatchSourcesForTesting()
 
         // Wait for ioQueue to process (sources are created async on ioQueue)
-        Thread.sleep(forTimeInterval: 0.05)
+        task.testWaitForIOQueue()
 
         // After setup, both sources should exist
         XCTAssertTrue(task.testHasReadSource, "Read source should be created")
@@ -66,7 +66,7 @@ final class PTYTaskDispatchSourceLifecycleTests: XCTestCase {
 
         // Verify that pausing suspends the read source
         task.paused = true
-        Thread.sleep(forTimeInterval: 0.05)
+        task.testWaitForIOQueue()
         XCTAssertTrue(task.testIsReadSourceSuspended, "Read source should be suspended when paused")
 
         // Cleanup
@@ -98,7 +98,7 @@ final class PTYTaskDispatchSourceLifecycleTests: XCTestCase {
         #if ITERM_DEBUG
         // Setup sources first
         task.testSetupDispatchSourcesForTesting()
-        Thread.sleep(forTimeInterval: 0.05)
+        task.testWaitForIOQueue()
 
         XCTAssertTrue(task.testHasReadSource, "Read source should exist after setup")
         XCTAssertTrue(task.testHasWriteSource, "Write source should exist after setup")
@@ -107,7 +107,7 @@ final class PTYTaskDispatchSourceLifecycleTests: XCTestCase {
         task.testTeardownDispatchSourcesForTesting()
 
         // Wait for ioQueue to process teardown
-        Thread.sleep(forTimeInterval: 0.1)
+        task.testWaitForIOQueue()
 
         // After teardown, sources should be gone
         XCTAssertFalse(task.testHasReadSource, "Read source should be nil after teardown")
@@ -361,6 +361,48 @@ final class PTYTaskWriteStateTests: XCTestCase {
         }
     }
 
+    func testShouldWriteOverrideProperty() {
+        // REQUIREMENT: testShouldWriteOverride should bypass jobManager constraints
+        // This tests that the override property is properly accessible from Swift
+
+        guard let task = PTYTask() else {
+            XCTFail("Failed to create PTYTask")
+            return
+        }
+
+        #if ITERM_DEBUG
+        // Initially override should be false
+        XCTAssertFalse(task.testShouldWriteOverride, "Override should initially be false")
+
+        // Set override to true
+        task.testShouldWriteOverride = true
+        XCTAssertTrue(task.testShouldWriteOverride, "Override should be settable to true")
+
+        // Reset override
+        task.testShouldWriteOverride = false
+        XCTAssertFalse(task.testShouldWriteOverride, "Override should be resettable to false")
+
+        // Now test that override affects shouldWrite with buffer data
+        task.testShouldWriteOverride = true
+        task.paused = false
+
+        // Add data to buffer
+        let testData = "Test data".data(using: .utf8)!
+        task.testAppendData(toWriteBuffer: testData)
+
+        // Verify buffer has data
+        XCTAssertTrue(task.testWriteBufferHasData, "Buffer should have data after append")
+
+        // With override and data, shouldWrite should be true
+        if let shouldWrite = task.value(forKey: "shouldWrite") as? Bool {
+            XCTAssertTrue(shouldWrite, "shouldWrite should be true with override and data in buffer")
+        }
+
+        // Clean up
+        task.testShouldWriteOverride = false
+        #endif
+    }
+
     func testUpdateWriteSourceStateMethodExists() {
         // REQUIREMENT: updateWriteSourceState method must exist
 
@@ -441,53 +483,212 @@ final class PTYTaskEventHandlerTests: XCTestCase {
 
     func testWriteBufferDidChangeWakesWriteSource() {
         // REQUIREMENT: Adding data to write buffer should wake (resume) write source
+        // when conditions are favorable (not paused, ioAllowed, buffer has data)
+        // Uses testShouldWriteOverride to bypass jobManager.isReadOnly constraint
+        //
+        // NOTE: When the write source resumes on a valid fd, it may fire immediately
+        // and drain the buffer. This test verifies the shouldWrite predicate works
+        // correctly, and that the write mechanism is functional (buffer gets drained).
 
         guard let task = PTYTask() else {
             XCTFail("Failed to create PTYTask")
             return
         }
 
-        // Create a pipe for valid fd
+        // Create a pipe for valid fd - use WRITE end for write source testing
         guard let pipe = createTestPipe() else {
             XCTFail("Failed to create test pipe")
             return
         }
         defer { closeTestPipe(pipe) }
 
-        task.testSetFd(pipe.readFd)
+        // Set the WRITE fd (pipe.writeFd) for write source to work correctly
+        // The fd must be >= 0 for ioAllowed to return true
+        task.testSetFd(pipe.writeFd)
         task.paused = false
 
         #if ITERM_DEBUG
+        // Enable write override to bypass jobManager.isReadOnly constraint
+        task.testShouldWriteOverride = true
+
         // Setup dispatch sources
         task.testSetupDispatchSourcesForTesting()
-        Thread.sleep(forTimeInterval: 0.05)
+        task.testWaitForIOQueue()
 
-        // Initially write source is suspended (empty buffer)
+        // Initially write source is suspended (empty buffer, shouldWrite=false)
         XCTAssertTrue(task.testIsWriteSourceSuspended, "Write source should start suspended (empty buffer)")
         XCTAssertFalse(task.testWriteBufferHasData, "Write buffer should be empty initially")
 
         // Add data to write buffer
         let testData = "Hello".data(using: .utf8)!
         task.testAppendData(toWriteBuffer: testData)
-        XCTAssertTrue(task.testWriteBufferHasData, "Write buffer should have data after add")
 
-        // Call writeBufferDidChange to notify the source
-        let selector = NSSelectorFromString("writeBufferDidChange")
-        if task.responds(to: selector) {
-            task.perform(selector)
+        // Verify buffer has data BEFORE triggering writeBufferDidChange
+        XCTAssertTrue(task.testWriteBufferHasData, "Write buffer should have data after append")
+
+        // Verify shouldWrite is true BEFORE the dispatch source has a chance to drain
+        guard let shouldWriteBefore = task.value(forKey: "shouldWrite") as? Bool else {
+            XCTFail("Could not read shouldWrite")
+            return
         }
-        Thread.sleep(forTimeInterval: 0.05)
+        XCTAssertTrue(shouldWriteBefore,
+                      "shouldWrite should be true with override and data in buffer (before notification)")
 
-        // Write source should be resumed (woken) now that there's data to write
-        // Note: shouldWrite also requires !paused and jobManager conditions
-        // With a fresh task, jobManager may not allow writes, so source may stay suspended
-        // The important thing is the mechanism works - writeBufferDidChange calls updateWriteSourceState
+        // Now call writeBufferDidChange to trigger the write source resume
+        task.perform(NSSelectorFromString("writeBufferDidChange"))
+        task.testWaitForIOQueue()
+        // Additional small delay for dispatch source to fire (source firing is async from kernel)
+        Thread.sleep(forTimeInterval: 0.02)
+
+        // After the wait, the write source likely fired and drained the buffer.
+        // This is CORRECT behavior - the mechanism worked! The buffer was written.
+        // We verify the mechanism worked by checking that the buffer is now empty
+        // (meaning the write completed successfully).
+        XCTAssertFalse(task.testWriteBufferHasData,
+                       "Write buffer should be drained after write source fires")
+
+        // Reset override
+        task.testShouldWriteOverride = false
 
         // Cleanup
         task.testTeardownDispatchSourcesForTesting()
         #else
         XCTAssertTrue(task.responds(to: NSSelectorFromString("writeBufferDidChange")),
                       "PTYTask should have writeBufferDidChange method")
+        #endif
+    }
+
+    func testWriteSourceResumesWhenBufferFills() {
+        // REQUIREMENT: Write source should resume when buffer transitions from empty to non-empty
+        // Uses testShouldWriteOverride to bypass jobManager.isReadOnly constraint
+        //
+        // NOTE: When write source resumes on a valid writable fd, it fires and drains buffer.
+        // This test verifies the shouldWrite predicate and confirms writes complete.
+
+        guard let task = PTYTask() else {
+            XCTFail("Failed to create PTYTask")
+            return
+        }
+
+        guard let pipe = createTestPipe() else {
+            XCTFail("Failed to create test pipe")
+            return
+        }
+        defer { closeTestPipe(pipe) }
+
+        task.testSetFd(pipe.writeFd)
+        task.paused = false
+
+        #if ITERM_DEBUG
+        // Enable write override to bypass jobManager.isReadOnly constraint
+        task.testShouldWriteOverride = true
+
+        task.testSetupDispatchSourcesForTesting()
+        task.testWaitForIOQueue()
+
+        // Verify initial state: empty buffer, write source suspended
+        XCTAssertFalse(task.testWriteBufferHasData, "Buffer should be empty initially")
+        XCTAssertTrue(task.testIsWriteSourceSuspended, "Write source should be suspended with empty buffer")
+
+        // Fill buffer
+        let testData = "Test data for write source".data(using: .utf8)!
+        task.testAppendData(toWriteBuffer: testData)
+        XCTAssertTrue(task.testWriteBufferHasData, "Buffer should have data after append")
+
+        // Check shouldWrite predicate BEFORE triggering notification
+        guard let shouldWrite = task.value(forKey: "shouldWrite") as? Bool else {
+            XCTFail("Could not read shouldWrite")
+            return
+        }
+        XCTAssertTrue(shouldWrite, "shouldWrite should be true with override and data in buffer")
+
+        // Trigger write buffer change notification - this will resume write source
+        task.perform(NSSelectorFromString("writeBufferDidChange"))
+        task.testWaitForIOQueue()
+        // Additional small delay for dispatch source to fire
+        Thread.sleep(forTimeInterval: 0.02)
+
+        // After the notification and wait, the write source resumed, fired, and drained buffer.
+        // This is correct behavior - verify the write completed by checking buffer is empty.
+        XCTAssertFalse(task.testWriteBufferHasData,
+                       "Buffer should be drained after write source fires (write completed)")
+
+        // Reset override
+        task.testShouldWriteOverride = false
+
+        task.testTeardownDispatchSourcesForTesting()
+        #else
+        XCTAssertTrue(task.responds(to: NSSelectorFromString("updateWriteSourceState")))
+        #endif
+    }
+
+    func testWriteSourceSuspendResumeCycleViaPause() {
+        // REQUIREMENT: Write source should suspend when paused and resume when unpaused
+        // This tests the pause -> unpause cycle for write source using a paused state
+        // to prevent the write from completing, allowing us to observe the resume.
+
+        guard let task = PTYTask() else {
+            XCTFail("Failed to create PTYTask")
+            return
+        }
+
+        guard let pipe = createTestPipe() else {
+            XCTFail("Failed to create test pipe")
+            return
+        }
+        defer { closeTestPipe(pipe) }
+
+        task.testSetFd(pipe.writeFd)
+
+        #if ITERM_DEBUG
+        // Enable write override to bypass jobManager.isReadOnly constraint
+        task.testShouldWriteOverride = true
+
+        // Start PAUSED - this prevents writes from completing
+        task.paused = true
+
+        task.testSetupDispatchSourcesForTesting()
+        task.testWaitForIOQueue()
+
+        // Step 1: Start paused with empty buffer - write source should be SUSPENDED
+        XCTAssertFalse(task.testWriteBufferHasData, "Buffer should be empty initially")
+        XCTAssertTrue(task.testIsWriteSourceSuspended, "Write source should be SUSPENDED when paused")
+
+        // Step 2: Add data to buffer while paused
+        let testData = "Data for resume test".data(using: .utf8)!
+        task.testAppendData(toWriteBuffer: testData)
+        XCTAssertTrue(task.testWriteBufferHasData, "Buffer should have data after append")
+
+        // Trigger update - but since we're paused, write source should stay suspended
+        task.perform(NSSelectorFromString("writeBufferDidChange"))
+        task.testWaitForIOQueue()
+
+        // shouldWrite should be false (paused)
+        if let shouldWrite = task.value(forKey: "shouldWrite") as? Bool {
+            XCTAssertFalse(shouldWrite, "shouldWrite should be false when paused")
+        }
+        XCTAssertTrue(task.testIsWriteSourceSuspended, "Write source should stay SUSPENDED when paused")
+        XCTAssertTrue(task.testWriteBufferHasData, "Buffer should still have data (no write occurred)")
+
+        // Step 3: Unpause - write source should RESUME and then drain buffer
+        task.paused = false
+        task.perform(NSSelectorFromString("updateWriteSourceState"))
+        task.testWaitForIOQueue()
+        // Additional small delay for dispatch source to fire
+        Thread.sleep(forTimeInterval: 0.02)
+
+        // After unpause, shouldWrite was true briefly (data + not paused + override),
+        // so write source resumed, fired, and drained the buffer.
+        // Verify the write completed by checking buffer is empty.
+        XCTAssertFalse(task.testWriteBufferHasData,
+                       "Buffer should be drained after unpause triggers write")
+
+        // Reset override
+        task.testShouldWriteOverride = false
+
+        task.testTeardownDispatchSourcesForTesting()
+        #else
+        XCTAssertTrue(task.responds(to: NSSelectorFromString("updateWriteSourceState")))
         #endif
     }
 
@@ -592,7 +793,7 @@ final class PTYTaskPauseStateTests: XCTestCase {
 
         // Setup dispatch sources
         task.testSetupDispatchSourcesForTesting()
-        Thread.sleep(forTimeInterval: 0.05)
+        task.testWaitForIOQueue()
 
         // With paused=true, read source should be suspended
         XCTAssertTrue(task.testIsReadSourceSuspended, "Read source should be suspended when paused=true")
@@ -600,15 +801,15 @@ final class PTYTaskPauseStateTests: XCTestCase {
 
         // Set paused = false
         task.paused = false
-        Thread.sleep(forTimeInterval: 0.05)
+        task.testWaitForIOQueue()
 
-        // After unpause, source may resume if shouldRead returns true
-        // (depends on ioAllowed from jobManager)
+        // After unpause, source should resume (fd is valid so ioAllowed=true, no tokenExecutor so no backpressure)
         XCTAssertFalse(task.paused, "Task should be unpaused")
+        XCTAssertFalse(task.testIsReadSourceSuspended, "Read source should RESUME after unpause with valid fd")
 
         // Now pause again - this should suspend the read source
         task.paused = true
-        Thread.sleep(forTimeInterval: 0.05)
+        task.testWaitForIOQueue()
 
         // Read source should be suspended again
         XCTAssertTrue(task.testIsReadSourceSuspended, "Read source should be suspended after re-pause")
@@ -621,6 +822,49 @@ final class PTYTaskPauseStateTests: XCTestCase {
         task.paused = false
         task.paused = true
         XCTAssertTrue(task.paused, "paused should be true after setting")
+        #endif
+    }
+
+    func testReadSourceResumesAfterUnpause() {
+        // REQUIREMENT: Read source should resume when unpause makes shouldRead true
+        // This tests the full suspend -> resume cycle
+
+        guard let task = PTYTask() else {
+            XCTFail("Failed to create PTYTask")
+            return
+        }
+
+        guard let pipe = createTestPipe() else {
+            XCTFail("Failed to create test pipe")
+            return
+        }
+        defer { closeTestPipe(pipe) }
+
+        task.testSetFd(pipe.readFd)
+
+        #if ITERM_DEBUG
+        // Start unpaused, setup sources
+        task.paused = false
+        task.testSetupDispatchSourcesForTesting()
+        task.testWaitForIOQueue()
+
+        // With valid fd and no pause, read source should be resumed
+        // (ioAllowed=true because fd>=0, no tokenExecutor means no backpressure check)
+        XCTAssertFalse(task.testIsReadSourceSuspended, "Read source should be resumed initially (favorable conditions)")
+
+        // Pause - should suspend
+        task.paused = true
+        task.testWaitForIOQueue()
+        XCTAssertTrue(task.testIsReadSourceSuspended, "Read source should suspend on pause")
+
+        // Unpause - should resume (this is the key resume test)
+        task.paused = false
+        task.testWaitForIOQueue()
+        XCTAssertFalse(task.testIsReadSourceSuspended, "Read source should RESUME after unpause")
+
+        task.testTeardownDispatchSourcesForTesting()
+        #else
+        XCTAssertTrue(task.responds(to: NSSelectorFromString("updateReadSourceState")))
         #endif
     }
 }
@@ -679,7 +923,7 @@ final class PTYTaskBackpressureIntegrationTests: XCTestCase {
         #if ITERM_DEBUG
         // Setup dispatch sources
         task.testSetupDispatchSourcesForTesting()
-        Thread.sleep(forTimeInterval: 0.05)
+        task.testWaitForIOQueue()
 
         // Read source state depends on ioAllowed (requires jobManager setup)
         // For this test, we verify the mechanism is in place
@@ -696,7 +940,7 @@ final class PTYTaskBackpressureIntegrationTests: XCTestCase {
         if task.responds(to: selector) {
             task.perform(selector)
         }
-        Thread.sleep(forTimeInterval: 0.05)
+        task.testWaitForIOQueue()
 
         // With heavy backpressure, read source should be suspended
         // (if it was ever resumed - it may have stayed suspended due to ioAllowed)
@@ -725,6 +969,91 @@ final class PTYTaskBackpressureIntegrationTests: XCTestCase {
 
         XCTAssertNotNil(executor.backpressureReleaseHandler,
                         "backpressureReleaseHandler should be settable")
+    }
+
+    func testReadSourceResumesWhenBackpressureDrops() {
+        // REQUIREMENT: Read source should resume when backpressure drops from heavy to below heavy
+        // This tests the backpressure release -> read source resume path
+
+        guard let task = PTYTask() else {
+            XCTFail("Failed to create PTYTask")
+            return
+        }
+
+        guard let pipe = createTestPipe() else {
+            XCTFail("Failed to create test pipe")
+            return
+        }
+        defer { closeTestPipe(pipe) }
+
+        task.testSetFd(pipe.readFd)
+        task.paused = false
+
+        // Setup executor for backpressure tracking
+        let terminal = VT100Terminal()
+        let executor = TokenExecutor(terminal, slownessDetector: SlownessDetector(), queue: DispatchQueue.main)
+        task.tokenExecutor = executor
+
+        #if ITERM_DEBUG
+        // Setup dispatch sources
+        task.testSetupDispatchSourcesForTesting()
+        task.testWaitForIOQueue()
+
+        // Initially: no backpressure, fd valid, not paused -> read source should be resumed
+        XCTAssertEqual(executor.backpressureLevel, .none)
+        XCTAssertFalse(task.testIsReadSourceSuspended, "Read source should start resumed (no backpressure)")
+
+        // Create heavy backpressure
+        executor.addMultipleTokenArrays(count: 200, tokensPerArray: 5)
+        XCTAssertEqual(executor.backpressureLevel, .heavy, "Should have heavy backpressure")
+
+        // Trigger state update
+        task.perform(NSSelectorFromString("updateReadSourceState"))
+        task.testWaitForIOQueue()
+
+        // With heavy backpressure, read source should be suspended
+        XCTAssertTrue(task.testIsReadSourceSuspended, "Read source should suspend with heavy backpressure")
+
+        // Set up handler to track heavy->non-heavy transition
+        // The handler fires once per token group consumed, but we only care that
+        // it fires at least once when transitioning from heavy to below heavy
+        var handlerFired = false
+        var wasHeavyWhenHandlerFired = false
+        executor.backpressureReleaseHandler = { [weak task, weak executor] in
+            if !handlerFired {
+                handlerFired = true
+                wasHeavyWhenHandlerFired = (executor?.backpressureLevel == .heavy)
+            }
+            // Handler should trigger read state re-evaluation
+            task?.perform(NSSelectorFromString("updateReadSourceState"))
+        }
+
+        // Drain tokens by executing a turn with large budget
+        let drainExpectation = XCTestExpectation(description: "Tokens drained")
+        executor.executeTurn(tokenBudget: 10000) { result in
+            drainExpectation.fulfill()
+        }
+        wait(for: [drainExpectation], timeout: 2.0)
+
+        // Give time for handler to fire and state to update
+        task.testWaitForIOQueue()
+
+        // Backpressure should now be below heavy
+        XCTAssertNotEqual(executor.backpressureLevel, .heavy,
+                          "Backpressure should drop after draining tokens")
+
+        // Handler should have fired (at least once during the drain)
+        XCTAssertTrue(handlerFired,
+                       "backpressureReleaseHandler should fire when backpressure drops")
+
+        // Read source should have resumed
+        XCTAssertFalse(task.testIsReadSourceSuspended,
+                       "Read source should RESUME after backpressure drops")
+
+        task.testTeardownDispatchSourcesForTesting()
+        #else
+        XCTAssertNotNil(executor.backpressureReleaseHandler)
+        #endif
     }
 }
 
@@ -957,4 +1286,395 @@ final class PTYTaskEdgeCaseTests: XCTestCase {
         let result = group.wait(timeout: .now() + 5.0)
         XCTAssertEqual(result, .success, "Concurrent pause changes should complete")
     }
+}
+
+// MARK: - Mock PTYTask Delegate
+
+/// Mock delegate for testing the read handler pipeline
+final class MockPTYTaskDelegate: NSObject, PTYTaskDelegate {
+    var readCallCount = 0
+    var lastReadData: Data?
+    var brokenPipeCount = 0
+    var threadedBrokenPipeCount = 0
+
+    /// Callback invoked when threadedReadTask is called
+    var onThreadedRead: ((Data) -> Void)?
+
+    /// Lock for thread-safe access to counters
+    private let lock = NSLock()
+
+    func threadedReadTask(_ buffer: UnsafeMutablePointer<CChar>, length: Int32) {
+        lock.lock()
+        readCallCount += 1
+        let data = Data(bytes: buffer, count: Int(length))
+        lastReadData = data
+        lock.unlock()
+
+        onThreadedRead?(data)
+    }
+
+    func threadedTaskBrokenPipe() {
+        lock.lock()
+        threadedBrokenPipeCount += 1
+        lock.unlock()
+    }
+
+    func brokenPipe() {
+        lock.lock()
+        brokenPipeCount += 1
+        lock.unlock()
+    }
+
+    func tmuxClientWrite(_ data: Data) {
+        // Not used in these tests
+    }
+
+    func taskDiedImmediately() {
+        // Not used in these tests
+    }
+
+    func taskDiedWithError(_ error: String!) {
+        // Not used in these tests
+    }
+
+    func taskDidChangeTTY(_ task: PTYTask) {
+        // Not used in these tests
+    }
+
+    func taskDidRegister(_ task: PTYTask) {
+        // Not used in these tests
+    }
+
+    func taskDidChangePaused(_ task: PTYTask, paused: Bool) {
+        // Not used in these tests
+    }
+
+    func taskMuteCoprocessDidChange(_ task: PTYTask, hasMuteCoprocess: Bool) {
+        // Not used in these tests
+    }
+
+    func taskDidResize(to gridSize: VT100GridSize, pixelSize: NSSize) {
+        // Not used in these tests
+    }
+
+    func taskDidReadFromCoprocessWhileSSHIntegration(inUse data: Data) {
+        // Not used in these tests
+    }
+
+    func getReadCount() -> Int {
+        lock.lock()
+        defer { lock.unlock() }
+        return readCallCount
+    }
+
+    func getLastReadData() -> Data? {
+        lock.lock()
+        defer { lock.unlock() }
+        return lastReadData
+    }
+}
+
+// MARK: - Read Handler Pipeline Tests
+
+/// Tests for the read handler pipeline (read → threadedReadTask)
+/// These tests verify that data flows correctly from dispatch source to delegate
+final class PTYTaskReadHandlerPipelineTests: XCTestCase {
+
+    func testReadSourceTriggersThreadedReadTask() {
+        // REQUIREMENT: When data is available on fd, handleReadEvent should read it
+        // and call delegate's threadedReadTask with the data
+
+        guard let task = PTYTask() else {
+            XCTFail("Failed to create PTYTask")
+            return
+        }
+
+        guard let pipe = createTestPipe() else {
+            XCTFail("Failed to create test pipe")
+            return
+        }
+        defer { closeTestPipe(pipe) }
+
+        // Create and set mock delegate
+        let mockDelegate = MockPTYTaskDelegate()
+        task.delegate = mockDelegate
+
+        // Set the READ fd (data will be read from here)
+        task.testSetFd(pipe.readFd)
+        task.paused = false
+
+        #if ITERM_DEBUG
+        // Set up expectation BEFORE any data flow
+        let readExpectation = XCTestExpectation(description: "threadedReadTask called")
+        mockDelegate.onThreadedRead = { _ in
+            readExpectation.fulfill()
+        }
+
+        // Setup dispatch sources
+        task.testSetupDispatchSourcesForTesting()
+        task.testWaitForIOQueue()
+
+        // Verify read source is active (not suspended)
+        XCTAssertFalse(task.testIsReadSourceSuspended, "Read source should be resumed")
+
+        // Write data to the pipe (write end) - this should trigger the read source
+        let testMessage = "Hello from read handler test!"
+        let testData = testMessage.data(using: .utf8)!
+        let bytesWritten = testData.withUnsafeBytes { bufferPointer -> Int in
+            let rawPointer = bufferPointer.baseAddress!
+            return Darwin.write(pipe.writeFd, rawPointer, testData.count)
+        }
+        XCTAssertEqual(bytesWritten, testData.count, "Should write all bytes to pipe")
+
+        // Wait for dispatch source to fire and process the read
+        wait(for: [readExpectation], timeout: 2.0)
+
+        // Verify the delegate received the data
+        XCTAssertGreaterThan(mockDelegate.getReadCount(), 0, "threadedReadTask should be called")
+
+        if let receivedData = mockDelegate.getLastReadData() {
+            let receivedString = String(data: receivedData, encoding: .utf8)
+            XCTAssertEqual(receivedString, testMessage, "Delegate should receive the written data")
+        } else {
+            XCTFail("Delegate should have received data")
+        }
+
+        // Cleanup
+        task.testTeardownDispatchSourcesForTesting()
+        #else
+        // Non-debug build: basic verification
+        XCTAssertTrue(task.responds(to: NSSelectorFromString("handleReadEvent")))
+        #endif
+    }
+
+    func testReadHandlerDoesNotBlock() {
+        // REQUIREMENT: The read handler should complete quickly (not block on main thread operations)
+        // This test verifies the handler returns promptly by measuring elapsed time
+
+        guard let task = PTYTask() else {
+            XCTFail("Failed to create PTYTask")
+            return
+        }
+
+        guard let pipe = createTestPipe() else {
+            XCTFail("Failed to create test pipe")
+            return
+        }
+        defer { closeTestPipe(pipe) }
+
+        let mockDelegate = MockPTYTaskDelegate()
+        task.delegate = mockDelegate
+        task.testSetFd(pipe.readFd)
+        task.paused = false
+
+        #if ITERM_DEBUG
+        task.testSetupDispatchSourcesForTesting()
+        task.testWaitForIOQueue()
+
+        // Write data to trigger read
+        let testData = "Quick read test".data(using: .utf8)!
+        testData.withUnsafeBytes { bufferPointer in
+            let rawPointer = bufferPointer.baseAddress!
+            _ = Darwin.write(pipe.writeFd, rawPointer, testData.count)
+        }
+
+        // Measure time for delegate to be called
+        let startTime = CFAbsoluteTimeGetCurrent()
+        let readExpectation = XCTestExpectation(description: "Quick read")
+        mockDelegate.onThreadedRead = { _ in
+            readExpectation.fulfill()
+        }
+
+        wait(for: [readExpectation], timeout: 1.0)
+        let elapsed = CFAbsoluteTimeGetCurrent() - startTime
+
+        // Handler should complete quickly (much less than 1 second)
+        // If it were blocking on a semaphore or main thread sync, it would timeout
+        XCTAssertLessThan(elapsed, 0.5, "Read handler should complete quickly (not block)")
+
+        task.testTeardownDispatchSourcesForTesting()
+        #else
+        XCTAssertTrue(task.responds(to: NSSelectorFromString("handleReadEvent")))
+        #endif
+    }
+
+    func testMultipleReadsAccumulate() {
+        // REQUIREMENT: Multiple reads should all be delivered to the delegate
+
+        guard let task = PTYTask() else {
+            XCTFail("Failed to create PTYTask")
+            return
+        }
+
+        guard let pipe = createTestPipe() else {
+            XCTFail("Failed to create test pipe")
+            return
+        }
+        defer { closeTestPipe(pipe) }
+
+        let mockDelegate = MockPTYTaskDelegate()
+        task.delegate = mockDelegate
+        task.testSetFd(pipe.readFd)
+        task.paused = false
+
+        #if ITERM_DEBUG
+        task.testSetupDispatchSourcesForTesting()
+        task.testWaitForIOQueue()
+
+        // Track total data received
+        var totalReceived = Data()
+        let lock = NSLock()
+        let allDataExpectation = XCTestExpectation(description: "All data received")
+        allDataExpectation.expectedFulfillmentCount = 3
+
+        mockDelegate.onThreadedRead = { data in
+            lock.lock()
+            totalReceived.append(data)
+            lock.unlock()
+            allDataExpectation.fulfill()
+        }
+
+        // Write multiple chunks of data
+        let messages = ["First", "Second", "Third"]
+        for msg in messages {
+            let data = msg.data(using: .utf8)!
+            data.withUnsafeBytes { bufferPointer in
+                let rawPointer = bufferPointer.baseAddress!
+                _ = Darwin.write(pipe.writeFd, rawPointer, data.count)
+            }
+            // Small delay between writes for dispatch source to fire
+            Thread.sleep(forTimeInterval: 0.02)
+        }
+
+        wait(for: [allDataExpectation], timeout: 2.0)
+
+        // Verify all data was received
+        lock.lock()
+        let receivedString = String(data: totalReceived, encoding: .utf8) ?? ""
+        lock.unlock()
+
+        for msg in messages {
+            XCTAssertTrue(receivedString.contains(msg), "Should receive message: \(msg)")
+        }
+
+        task.testTeardownDispatchSourcesForTesting()
+        #else
+        XCTAssertTrue(task.responds(to: NSSelectorFromString("handleReadEvent")))
+        #endif
+    }
+
+    func testReadPipelineEnqueuesToTokenExecutor() {
+        // REQUIREMENT: Full pipeline test - data on fd → read → parse → TokenExecutor enqueue
+        // This tests that the dispatch_source handler correctly reads data and the data
+        // flows through to the token processing pipeline.
+        //
+        // The test verifies:
+        // 1. Dispatch source reads data from fd
+        // 2. Handler calls delegate.threadedReadTask (non-blocking)
+        // 3. Delegate can enqueue tokens to TokenExecutor (mimicking PTYSession)
+        // 4. TokenExecutor receives the tokens (verified via backpressure change)
+
+        guard let task = PTYTask() else {
+            XCTFail("Failed to create PTYTask")
+            return
+        }
+
+        guard let pipe = createTestPipe() else {
+            XCTFail("Failed to create test pipe")
+            return
+        }
+        defer { closeTestPipe(pipe) }
+
+        // Create a real VT100Terminal and TokenExecutor
+        let terminal = VT100Terminal()
+        let executor = TokenExecutor(terminal, slownessDetector: SlownessDetector(), queue: DispatchQueue.main)
+
+        // Create a delegate that enqueues tokens when data is received (mimicking PTYSession)
+        let enqueuingDelegate = EnqueuingPTYTaskDelegate(executor: executor)
+        task.delegate = enqueuingDelegate
+        task.tokenExecutor = executor
+
+        task.testSetFd(pipe.readFd)
+        task.paused = false
+
+        #if ITERM_DEBUG
+        // Track initial backpressure level
+        let initialLevel = executor.backpressureLevel
+
+        // Set up expectation for delegate call and token enqueue
+        let enqueueExpectation = XCTestExpectation(description: "Tokens enqueued")
+        enqueuingDelegate.onEnqueued = {
+            enqueueExpectation.fulfill()
+        }
+
+        task.testSetupDispatchSourcesForTesting()
+        task.testWaitForIOQueue()
+
+        XCTAssertFalse(task.testIsReadSourceSuspended, "Read source should be active")
+
+        // Write data to the pipe - this should trigger the read source
+        let testData = "Test data for token pipeline".data(using: .utf8)!
+        testData.withUnsafeBytes { bufferPointer in
+            let rawPointer = bufferPointer.baseAddress!
+            _ = Darwin.write(pipe.writeFd, rawPointer, testData.count)
+        }
+
+        // Wait for tokens to be enqueued
+        wait(for: [enqueueExpectation], timeout: 2.0)
+
+        // Verify the full pipeline worked:
+        // 1. Delegate was called (handler didn't block - we got here within timeout)
+        XCTAssertGreaterThan(enqueuingDelegate.enqueueCount, 0,
+                             "Delegate should have enqueued tokens")
+
+        // 2. Tokens were actually added to executor
+        // The delegate adds enough tokens to change backpressure level
+        XCTAssertNotEqual(executor.backpressureLevel, initialLevel,
+                          "TokenExecutor backpressure should change after enqueue")
+
+        task.testTeardownDispatchSourcesForTesting()
+        #else
+        XCTAssertTrue(task.responds(to: NSSelectorFromString("handleReadEvent")))
+        #endif
+    }
+}
+
+// MARK: - Enqueueing Delegate for Pipeline Tests
+
+/// A delegate that enqueues tokens to TokenExecutor when data is received,
+/// mimicking the behavior of PTYSession.threadedReadTask
+final class EnqueuingPTYTaskDelegate: NSObject, PTYTaskDelegate {
+    private let executor: TokenExecutor
+    private let lock = NSLock()
+    var enqueueCount = 0
+    var onEnqueued: (() -> Void)?
+
+    init(executor: TokenExecutor) {
+        self.executor = executor
+        super.init()
+    }
+
+    func threadedReadTask(_ buffer: UnsafeMutablePointer<CChar>, length: Int32) {
+        // Mimic PTYSession's behavior: receive data, create tokens, enqueue to executor
+        // We create enough tokens to trigger backpressure change for verification
+        executor.addMultipleTokenArrays(count: 100, tokensPerArray: 5)
+
+        lock.lock()
+        enqueueCount += 1
+        lock.unlock()
+
+        onEnqueued?()
+    }
+
+    func threadedTaskBrokenPipe() {}
+    func brokenPipe() {}
+    func tmuxClientWrite(_ data: Data) {}
+    func taskDiedImmediately() {}
+    func taskDiedWithError(_ error: String!) {}
+    func taskDidChangeTTY(_ task: PTYTask) {}
+    func taskDidRegister(_ task: PTYTask) {}
+    func taskDidChangePaused(_ task: PTYTask, paused: Bool) {}
+    func taskMuteCoprocessDidChange(_ task: PTYTask, hasMuteCoprocess: Bool) {}
+    func taskDidResize(to gridSize: VT100GridSize, pixelSize: NSSize) {}
+    func taskDidReadFromCoprocessWhileSSHIntegration(inUse data: Data) {}
 }

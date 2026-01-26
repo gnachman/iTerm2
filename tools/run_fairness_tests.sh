@@ -49,6 +49,7 @@ PTYTASK_TEST_CLASSES=(
     "PTYTaskUseDispatchSourceTests"
     "PTYTaskStateTransitionTests"
     "PTYTaskEdgeCaseTests"
+    "PTYTaskReadHandlerPipelineTests"
 )
 
 # Milestone 4: TaskNotifier Changes (Checkpoint 4)

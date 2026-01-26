@@ -2,14 +2,20 @@
 //  MockTokenExecutorDelegate.swift
 //  ModernTests
 //
-//  Mock implementation of TokenExecutorDelegate for testing TokenExecutor.
-//  STUB: Placeholder for Phase 2 tests. Will be implemented when TokenExecutor tests are needed.
+//  NOTE: The actual MockTokenExecutorDelegate implementation is defined in:
+//  ModernTests/FairnessScheduler/TokenExecutorFairnessTests.swift
+//
+//  This file is intentionally empty. The mock is co-located with its tests
+//  in TokenExecutorFairnessTests.swift for better locality and maintainability.
+//
+//  The mock implements TokenExecutorDelegate with:
+//  - shouldQueueTokens/shouldDiscardTokens flags
+//  - executedLengths tracking
+//  - syncCount and willExecuteCount counters
+//  - onWillExecute callback for expectations
+//  - reset() method for test cleanup
 //
 
 import Foundation
 
-// NOTE: This mock is for Phase 2 (TokenExecutor tests).
-// Phase 1 (FairnessScheduler tests) uses MockFairnessSchedulerExecutor instead.
-//
-// Full implementation deferred because TokenExecutorDelegate depends on VT100Token
-// which requires proper bridging header setup in the test target.
+// See TokenExecutorFairnessTests.swift for the MockTokenExecutorDelegate implementation.
