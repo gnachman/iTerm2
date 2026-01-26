@@ -347,6 +347,46 @@ final class TwoTierTokenQueueGroupingTests: XCTestCase {
                        "Should process high-priority (0) before normal-priority (1)")
     }
 
+    func testHighPriorityExecutesBeforeNormalEvenWhenAddedSecond() {
+        // REQUIREMENT: High-priority token arrays must execute before normal-priority,
+        // regardless of insertion order. This is essential for API injection (e.g., report
+        // responses) to be handled promptly.
+
+        let queue = TwoTierTokenQueue()
+
+        // Add NORMAL-priority first with distinct length (200)
+        let normalArray = createNonCoalescableTokenArray(tokenCount: 1, lengthPerToken: 200)
+        queue.addTokens(normalArray, highPriority: false)
+
+        // Add HIGH-priority second with distinct length (100)
+        let highPriArray = createNonCoalescableTokenArray(tokenCount: 1, lengthPerToken: 100)
+        queue.addTokens(highPriArray, highPriority: true)
+
+        // Track execution order via (priority, lengthTotal) tuples
+        var executionOrder: [(priority: Int, length: Int)] = []
+
+        queue.enumerateTokenArrayGroups { group, priority in
+            executionOrder.append((priority: priority, length: group.lengthTotal))
+            _ = group.consume()
+            return true
+        }
+
+        // Should have processed both
+        XCTAssertEqual(executionOrder.count, 2, "Both arrays should be processed")
+
+        // High-priority (length=100) should execute FIRST despite being added SECOND
+        XCTAssertEqual(executionOrder[0].priority, 0,
+                       "High-priority (queue[0]) should execute first")
+        XCTAssertEqual(executionOrder[0].length, 100,
+                       "High-priority array (length=100) should execute first")
+
+        // Normal-priority (length=200) should execute SECOND despite being added FIRST
+        XCTAssertEqual(executionOrder[1].priority, 1,
+                       "Normal-priority (queue[1]) should execute second")
+        XCTAssertEqual(executionOrder[1].length, 200,
+                       "Normal-priority array (length=200) should execute second")
+    }
+
     func testMultipleGroupsInSameQueueWithBudgetSemantics() {
         // REQUIREMENT: Budget enforcement should be able to stop between groups
         // in the same queue. This test simulates what executeTurn does.

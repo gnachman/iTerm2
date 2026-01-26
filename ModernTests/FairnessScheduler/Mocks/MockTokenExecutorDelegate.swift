@@ -109,3 +109,62 @@ final class MockTokenExecutorDelegate: NSObject, TokenExecutorDelegate {
         lock.unlock()
     }
 }
+
+/// TokenExecutorDelegate that tracks execution order for ordering tests.
+/// Provides callbacks when tokens are executed to verify priority ordering.
+final class OrderTrackingTokenExecutorDelegate: NSObject, TokenExecutorDelegate {
+
+    private let lock = NSLock()
+    private var _willExecuteCount = 0
+    private var _totalExecutedLength = 0
+
+    /// Callback invoked with lengthTotal when tokenExecutorDidExecute is called
+    var onExecute: ((Int) -> Void)?
+
+    var willExecuteCount: Int {
+        lock.lock()
+        defer { lock.unlock() }
+        return _willExecuteCount
+    }
+
+    var totalExecutedLength: Int {
+        lock.lock()
+        defer { lock.unlock() }
+        return _totalExecutedLength
+    }
+
+    // MARK: - TokenExecutorDelegate
+
+    func tokenExecutorShouldQueueTokens() -> Bool {
+        return false  // Allow execution
+    }
+
+    func tokenExecutorShouldDiscard(token: VT100Token, highPriority: Bool) -> Bool {
+        return false  // Don't discard
+    }
+
+    func tokenExecutorDidExecute(lengthTotal: Int, lengthExcludingInBandSignaling: Int, throughput: Int) {
+        lock.lock()
+        _totalExecutedLength += lengthTotal
+        lock.unlock()
+        onExecute?(lengthTotal)
+    }
+
+    func tokenExecutorCursorCoordString() -> NSString {
+        return "(0,0)" as NSString
+    }
+
+    func tokenExecutorSync() {
+        // Not used in ordering tests
+    }
+
+    func tokenExecutorHandleSideEffectFlags(_ flags: Int64) {
+        // Not used in ordering tests
+    }
+
+    func tokenExecutorWillExecuteTokens() {
+        lock.lock()
+        _willExecuteCount += 1
+        lock.unlock()
+    }
+}
