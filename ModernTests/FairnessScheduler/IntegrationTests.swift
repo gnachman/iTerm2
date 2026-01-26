@@ -1024,26 +1024,33 @@ final class IntegrationMutationQueueTests: XCTestCase {
         let mutableState = VT100ScreenMutableState(sideEffectPerformer: performer)
         mutableState.terminalEnabled = true
 
-        var stateChangedBeforeReturn = false
-        var stateValueAtReturn = false
+        let expectation = XCTestExpectation(description: "Non-blocking verification from background thread")
 
-        // This simulates what mutateAsynchronously does
-        iTermGCD.mutationQueue().async {
-            mutableState.taskPaused = true
+        // Run test from background thread to ensure we're not on mutation queue
+        DispatchQueue.global().async {
+            var stateChangedBeforeReturn = false
+
+            // This simulates what mutateAsynchronously does
+            iTermGCD.mutationQueue().async {
+                mutableState.taskPaused = true
+            }
+
+            // Capture state immediately after dispatch (should still be false if truly async)
+            // Since we're on a background thread (not the mutation queue), the async
+            // dispatch should return before the state change happens
+            stateChangedBeforeReturn = mutableState.taskPaused
+
+            // Assert the non-blocking behavior - this is the core test
+            XCTAssertFalse(stateChangedBeforeReturn,
+                           "State should not change synchronously with mutateAsynchronously when called from background thread")
+
+            expectation.fulfill()
         }
 
-        // Capture state immediately after dispatch (should still be false if truly async)
-        stateValueAtReturn = mutableState.taskPaused
-        stateChangedBeforeReturn = stateValueAtReturn
+        wait(for: [expectation], timeout: 5.0)
 
-        // Now wait for mutation queue
+        // Now wait for mutation queue to complete
         waitForMutationQueue()
-
-        // The state change should have happened after the dispatch call returned
-        // (unless we're already on mutation queue, which we're not in this test)
-        if !Thread.isMainThread {
-            XCTAssertFalse(stateChangedBeforeReturn, "State should not change synchronously with mutateAsynchronously")
-        }
         XCTAssertTrue(mutableState.taskPaused, "State should change after waiting for mutation queue")
 
         // Cleanup
