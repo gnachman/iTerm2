@@ -6,10 +6,49 @@
 #   ./tools/run_fairness_tests.sh SessionTests # Run specific test class
 #
 
-set -e
-
+# Don't use set -e so we can capture exit codes and check for crashes
 PROJECT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$PROJECT_DIR"
+
+# Crash detection: Check for existing crash reports before tests run
+CRASH_DIR="$HOME/Library/Logs/DiagnosticReports"
+
+# Check for pre-existing crash reports
+EXISTING_CRASHES=$(ls -1 "$CRASH_DIR"/*iTerm*.ips 2>/dev/null)
+if [[ -n "$EXISTING_CRASHES" ]]; then
+    echo "=========================================="
+    echo "ERROR: Pre-existing iTerm2 crash reports found"
+    echo "=========================================="
+    echo "$EXISTING_CRASHES"
+    echo ""
+    echo "Review and/or delete before running tests:"
+    echo "  - To view: head -100 <file> | grep -A5 'exception\\|termination'"
+    echo "  - To delete: rm $CRASH_DIR/*iTerm*.ips"
+    echo "=========================================="
+    exit 1
+fi
+
+CRASH_REPORTS_BEFORE=0
+
+# Function to check for new crash reports
+check_for_crashes() {
+    local crash_reports_after=$(ls -1 "$CRASH_DIR"/*iTerm*.ips 2>/dev/null | wc -l | tr -d ' ')
+    if [[ "$crash_reports_after" -gt "$CRASH_REPORTS_BEFORE" ]]; then
+        echo ""
+        echo "=========================================="
+        echo "WARNING: NEW CRASH REPORT(S) DETECTED!"
+        echo "=========================================="
+        echo "New crash reports found in $CRASH_DIR:"
+        # Show new crash reports (those newer than when we started)
+        ls -lt "$CRASH_DIR"/*iTerm*.ips 2>/dev/null | head -$((crash_reports_after - CRASH_REPORTS_BEFORE))
+        echo ""
+        echo "To view crash details:"
+        echo "  head -100 $CRASH_DIR/iTerm2-*.ips | grep -A5 'exception\|termination'"
+        echo "=========================================="
+        return 1
+    fi
+    return 0
+}
 
 # Test classes that are part of the fairness scheduler test suite
 # Milestone 1: FairnessScheduler (Checkpoint 1)
@@ -195,6 +234,10 @@ rm -rf "TestResults/FairnessSchedulerTests.xcresult"
 # Run tests (with code signing disabled for command-line builds)
 SIGNING_FLAGS="CODE_SIGN_IDENTITY=- CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO"
 
+# Use a temp file to capture output so we can both display and analyze it
+TEST_OUTPUT=$(mktemp)
+trap "rm -f $TEST_OUTPUT" EXIT
+
 if [[ $VERBOSE -eq 1 ]]; then
     xcodebuild test \
         -project iTerm2.xcodeproj \
@@ -203,7 +246,8 @@ if [[ $VERBOSE -eq 1 ]]; then
         -parallel-testing-enabled NO \
         -resultBundlePath "TestResults/FairnessSchedulerTests.xcresult" \
         $SIGNING_FLAGS \
-        2>&1 | tee test_output.log
+        2>&1 | tee "$TEST_OUTPUT" | tee test_output.log
+    XCODE_EXIT=${PIPESTATUS[0]}
 else
     xcodebuild test \
         -project iTerm2.xcodeproj \
@@ -212,8 +256,30 @@ else
         -parallel-testing-enabled NO \
         -resultBundlePath "TestResults/FairnessSchedulerTests.xcresult" \
         $SIGNING_FLAGS \
-        2>&1 | grep -E "(Test Case|passed|failed|error:|\*\*)"
+        2>&1 | tee "$TEST_OUTPUT" | grep -E "(Test Case|passed|failed|error:|\*\*)"
+    XCODE_EXIT=${PIPESTATUS[0]}
 fi
 
 echo ""
-echo "Done."
+
+# Check for crash indicators in test output
+if grep -q "Program crashed" "$TEST_OUTPUT" 2>/dev/null; then
+    echo "=========================================="
+    echo "WARNING: TEST CRASHED! (detected 'Program crashed' in output)"
+    echo "=========================================="
+    XCODE_EXIT=1
+fi
+
+# Check for new crash reports
+if ! check_for_crashes; then
+    XCODE_EXIT=1
+fi
+
+# Final status
+if [[ $XCODE_EXIT -eq 0 ]]; then
+    echo "Done. All tests passed."
+else
+    echo "Done. Tests FAILED or CRASHED (exit code: $XCODE_EXIT)"
+fi
+
+exit $XCODE_EXIT
