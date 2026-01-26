@@ -2351,9 +2351,12 @@ final class TokenExecutorHighPriorityOrderingTests: XCTestCase {
     func testHighPriorityTokenArraysExecuteBeforeNormalTokenArrays() {
         // REQUIREMENT: High-priority token arrays (queue[0]) must execute before
         // normal-priority token arrays (queue[1]), even when normal is added first.
-        // This ensures API responses (e.g., terminal reports) are handled promptly.
+        //
+        // NOTE: Ordering is verified by TwoTierTokenQueueGroupingTests/
+        // testHighPriorityExecutesBeforeNormalEvenWhenAddedSecond which has
+        // direct access to enumeration order. This test verifies the integration:
+        // that TokenExecutor processes both priority levels correctly.
 
-        // Use a tracking delegate that records execution by length
         var executedLengths: [Int] = []
         let trackingDelegate = OrderTrackingTokenExecutorDelegate()
         trackingDelegate.onExecute = { length in
@@ -2376,17 +2379,19 @@ final class TokenExecutorHighPriorityOrderingTests: XCTestCase {
 
         wait(for: [expectation], timeout: 1.0)
 
-        // Both should have executed
+        // Verify execution occurred
         XCTAssertEqual(trackingDelegate.willExecuteCount, 1,
                        "Tokens should have been executed")
 
-        // The total length should be 300 (100 + 200)
+        // Verify the callback recorded the execution
+        XCTAssertEqual(executedLengths.count, 1,
+                       "onExecute callback should have been invoked")
+
+        // Total length should be 300 (100 high-pri + 200 normal)
         XCTAssertEqual(trackingDelegate.totalExecutedLength, 300,
                        "Both token arrays should have executed (100 + 200 = 300)")
-
-        // Note: tokenExecutorDidExecute is called once with aggregate lengths,
-        // so we verify ordering through the TwoTierTokenQueue test instead.
-        // This test verifies both arrays execute when budget allows.
+        XCTAssertEqual(executedLengths.first, 300,
+                       "Callback should report total length of both arrays")
     }
 
     func testHighPriorityTaskAddedDuringExecutionRunsInSameTurn() {
