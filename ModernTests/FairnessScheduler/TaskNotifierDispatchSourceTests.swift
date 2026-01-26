@@ -69,6 +69,7 @@ final class TaskNotifierDispatchSourceProtocolTests: XCTestCase {
     func testRespondsToSelectorCheckUsed() throws {
         // REQUIREMENT: TaskNotifier uses respondsToSelector: before calling useDispatchSource
         // This ensures backward compatibility with tasks that don't implement the method
+        try XCTSkipUnless(isDebugBuild, "Test requires ITERM_DEBUG hooks for MockTaskNotifierTask")
 
         #if ITERM_DEBUG
         // Create a mock task that simulates NOT implementing useDispatchSource
@@ -86,13 +87,6 @@ final class TaskNotifierDispatchSourceProtocolTests: XCTestCase {
                       "Dispatch source mock should respond to useDispatchSource")
         XCTAssertTrue(dispatchSourceTask.useDispatchSource(),
                       "Dispatch source mock should return YES")
-        #else
-        // Fallback for non-debug builds
-        guard let task = PTYTask() else {
-            XCTFail("Failed to create PTYTask")
-            return
-        }
-        XCTAssertNotNil(task)
         #endif
     }
 

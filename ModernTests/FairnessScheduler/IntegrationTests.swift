@@ -29,10 +29,10 @@ final class IntegrationRegistrationTests: XCTestCase {
     func testRegisterOnInit() throws {
         // REQUIREMENT: TokenExecutor registered with FairnessScheduler in VT100ScreenMutableState.init
         // This tests the ACTUAL call site, not a simulation
+        try XCTSkipUnless(isDebugBuild, "Test requires ITERM_DEBUG hooks for FairnessScheduler introspection")
 
         #if ITERM_DEBUG
         let initialCount = FairnessScheduler.shared.testRegisteredSessionCount
-        #endif
 
         // Create VT100ScreenMutableState - this should register with FairnessScheduler in init
         let performer = MockSideEffectPerformer()
@@ -40,24 +40,18 @@ final class IntegrationRegistrationTests: XCTestCase {
 
         // The tokenExecutor should have a valid fairnessSessionId set during init
         let sessionId = mutableState.tokenExecutor.fairnessSessionId
-        // Session ID can be 0 for first session - verify registration instead
-        #if ITERM_DEBUG
-        XCTAssertTrue(FairnessScheduler.shared.testIsSessionRegistered(sessionId),
-                      "Session should be registered with FairnessScheduler")
-        #endif
 
-        #if ITERM_DEBUG
         XCTAssertTrue(FairnessScheduler.shared.testIsSessionRegistered(sessionId),
                       "Session should be registered after VT100ScreenMutableState.init")
         XCTAssertEqual(FairnessScheduler.shared.testRegisteredSessionCount, initialCount + 1,
                        "Registered count should increase by 1")
-        #endif
 
         // Cleanup via setTerminalEnabled:NO (the real unregistration path)
         // First enable (to allow disable to work)
         mutableState.terminalEnabled = true
         mutableState.terminalEnabled = false
         waitForMutationQueue()
+        #endif
     }
 
     func testSessionIdStoredOnExecutor() throws {

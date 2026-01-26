@@ -22,8 +22,9 @@ import XCTest
 /// Tests for dispatch source setup and teardown (3.1)
 final class PTYTaskDispatchSourceLifecycleTests: XCTestCase {
 
-    func testSetupCreatesSourcesWhenFdValid() {
+    func testSetupCreatesSourcesWhenFdValid() throws {
         // REQUIREMENT: setupDispatchSources creates read and write sources when fd is valid
+        try XCTSkipUnless(isDebugBuild, "Test requires ITERM_DEBUG hooks for dispatch source introspection")
 
         guard let task = PTYTask() else {
             XCTFail("Failed to create PTYTask")
@@ -71,15 +72,12 @@ final class PTYTaskDispatchSourceLifecycleTests: XCTestCase {
 
         // Cleanup
         task.testTeardownDispatchSourcesForTesting()
-        #else
-        // Non-debug build: just verify methods exist
-        XCTAssertTrue(task.responds(to: NSSelectorFromString("setupDispatchSources")),
-                      "PTYTask should have setupDispatchSources method")
         #endif
     }
 
-    func testTeardownCleansUpSources() {
+    func testTeardownCleansUpSources() throws {
         // REQUIREMENT: teardownDispatchSources removes sources and cleans up state
+        try XCTSkipUnless(isDebugBuild, "Test requires ITERM_DEBUG hooks for dispatch source introspection")
 
         guard let task = PTYTask() else {
             XCTFail("Failed to create PTYTask")
@@ -112,9 +110,6 @@ final class PTYTaskDispatchSourceLifecycleTests: XCTestCase {
         // After teardown, sources should be gone
         XCTAssertFalse(task.testHasReadSource, "Read source should be nil after teardown")
         XCTAssertFalse(task.testHasWriteSource, "Write source should be nil after teardown")
-        #else
-        XCTAssertTrue(task.responds(to: NSSelectorFromString("teardownDispatchSources")),
-                      "PTYTask should have teardownDispatchSources method")
         #endif
     }
 

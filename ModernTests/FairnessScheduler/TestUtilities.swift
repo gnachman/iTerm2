@@ -9,6 +9,20 @@
 import XCTest
 @testable import iTerm2SharedARC
 
+// MARK: - Debug Build Detection
+
+/// Indicates whether the test is running in a debug build with ITERM_DEBUG hooks available.
+/// Tests that require ITERM_DEBUG-only APIs should use:
+///   `try XCTSkipUnless(isDebugBuild, "Test requires ITERM_DEBUG hooks")`
+/// This makes test requirements explicit rather than silently becoming no-ops.
+let isDebugBuild: Bool = {
+    #if ITERM_DEBUG
+    return true
+    #else
+    return false
+    #endif
+}()
+
 // MARK: - Token Vector Creation
 
 /// Creates a CVector containing test tokens.
