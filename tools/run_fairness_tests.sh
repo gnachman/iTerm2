@@ -18,6 +18,8 @@ FAIRNESS_TEST_CLASSES=(
     "FairnessSchedulerBusyListTests"
     "FairnessSchedulerTurnExecutionTests"
     "FairnessSchedulerRoundRobinTests"
+    "FairnessSchedulerThreadSafetyTests"
+    "FairnessSchedulerLifecycleEdgeCaseTests"
 )
 
 # Milestone 2: TokenExecutor Fairness (Checkpoint 2)
@@ -30,6 +32,10 @@ TOKENEXECUTOR_TEST_CLASSES=(
     "TokenExecutorLegacyRemovalTests"
     "TokenExecutorCleanupTests"
     "TokenExecutorAccountingInvariantTests"
+    "TokenExecutorCompletionCallbackTests"
+    "TokenExecutorBudgetEnforcementDetailedTests"
+    "TokenExecutorAvailableSlotsBoundaryTests"
+    "TokenExecutorHighPriorityOrderingTests"
 )
 
 # Milestone 3: PTYTask Dispatch Sources (Checkpoint 3)
@@ -40,6 +46,9 @@ PTYTASK_TEST_CLASSES=(
     "PTYTaskEventHandlerTests"
     "PTYTaskPauseStateTests"
     "PTYTaskBackpressureIntegrationTests"
+    "PTYTaskUseDispatchSourceTests"
+    "PTYTaskStateTransitionTests"
+    "PTYTaskEdgeCaseTests"
 )
 
 # Milestone 4: TaskNotifier Changes (Checkpoint 4)
