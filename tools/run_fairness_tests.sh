@@ -70,6 +70,7 @@ INTEGRATION_TEST_CLASSES=(
     "IntegrationUnregistrationTests"
     "IntegrationAutomaticSchedulingTests"
     "IntegrationRekickTests"
+    "IntegrationBackgroundForegroundFairnessTests"
     "IntegrationMutationQueueTests"
     "IntegrationDispatchSourceActivationTests"
     "IntegrationPTYSessionWiringTests"

@@ -908,6 +908,81 @@ final class TokenExecutorLegacyRemovalTests: XCTestCase {
         // Clean up
         FairnessScheduler.shared.unregister(sessionId: sessionId)
     }
+
+    func testBackgroundGetsturnsWhileForegroundContinuouslyBusy() {
+        // REQUIREMENT: Background sessions must get turns even when foreground is continuously busy.
+        // This is the KEY REGRESSION TEST for removing activeSessionsWithTokens.
+        //
+        // Under the old model, foreground sessions with tokens (activeSessionsWithTokens)
+        // would preempt background sessions. Under the fairness model, ALL sessions get
+        // equal round-robin turns regardless of foreground/background status.
+        //
+        // Test design:
+        // 1. Create background and foreground sessions
+        // 2. Keep adding tokens to foreground (simulating continuously busy)
+        // 3. Add tokens to background once
+        // 4. Verify background eventually gets execution turns even while foreground is busy
+
+        let bgDelegate = MockTokenExecutorDelegate()
+        let bgExecutor = TokenExecutor(mockTerminal, slownessDetector: SlownessDetector(), queue: iTermGCD.mutationQueue())
+        bgExecutor.delegate = bgDelegate
+        bgExecutor.isBackgroundSession = true
+
+        let fgDelegate = MockTokenExecutorDelegate()
+        let fgTerminal = VT100Terminal()  // Need separate terminal for separate executor
+        let fgExecutor = TokenExecutor(fgTerminal, slownessDetector: SlownessDetector(), queue: iTermGCD.mutationQueue())
+        fgExecutor.delegate = fgDelegate
+        fgExecutor.isBackgroundSession = false
+
+        // Register both with scheduler
+        let bgId = FairnessScheduler.shared.register(bgExecutor)
+        let fgId = FairnessScheduler.shared.register(fgExecutor)
+        bgExecutor.fairnessSessionId = bgId
+        fgExecutor.fairnessSessionId = fgId
+
+        defer {
+            FairnessScheduler.shared.unregister(sessionId: bgId)
+            FairnessScheduler.shared.unregister(sessionId: fgId)
+        }
+
+        // Add tokens to background session - just once
+        let bgVector = createTestTokenVector(count: 5)
+        bgExecutor.addTokens(bgVector, lengthTotal: 50, lengthExcludingInBandSignaling: 50)
+
+        // Keep adding tokens to foreground to simulate continuously busy session
+        // This simulates a session that's receiving lots of data from the PTY
+        for _ in 0..<10 {
+            let fgVector = createTestTokenVector(count: 5)
+            fgExecutor.addTokens(fgVector, lengthTotal: 50, lengthExcludingInBandSignaling: 50)
+            // Small delay to spread out the additions
+            Thread.sleep(forTimeInterval: 0.01)
+        }
+
+        // Wait for background to get at least one execution turn
+        // Under fairness, this should happen even while foreground is busy
+        let bgGotTurn = waitForCondition({
+            bgDelegate.executedLengths.count > 0
+        }, timeout: 3.0)
+
+        // KEY ASSERTION: Background must get turns even when foreground is busy
+        XCTAssertTrue(bgGotTurn,
+                      "Background session MUST get execution turns even when foreground is continuously busy. " +
+                      "This is the key fairness guarantee. " +
+                      "Background executions: \(bgDelegate.executedLengths.count), " +
+                      "Foreground executions: \(fgDelegate.executedLengths.count)")
+
+        // Both should have executed - fairness means round-robin scheduling
+        XCTAssertGreaterThan(bgDelegate.executedLengths.count, 0,
+                             "Background session should have executed at least once")
+        XCTAssertGreaterThan(fgDelegate.executedLengths.count, 0,
+                             "Foreground session should have executed")
+
+        // Note: We don't require exact turn equality. The key requirement is that
+        // background is NOT STARVED - it must get at least one turn even when
+        // foreground is busy. The ratio may vary based on when tokens are added
+        // and how the round-robin scheduling plays out. The important thing is
+        // that background got turns (which we verified above).
+    }
 }
 
 // MARK: - 2.7 Cleanup Tests
