@@ -831,18 +831,18 @@ final class TokenExecutorLegacyRemovalTests: XCTestCase {
         // REQUIREMENT: The static activeSessionsWithTokens set must be removed.
         // FairnessScheduler replaces this ad-hoc preemption mechanism.
 
-        // Verify by checking that TokenExecutor doesn't have activeSessionsWithTokens property
-        // This is verified at compile-time - if the property exists, tests would use it
-        // Runtime verification: create executors and verify fairness model works
-        let executor1 = TokenExecutor(mockTerminal, slownessDetector: SlownessDetector(), queue: DispatchQueue.main)
-        let executor2 = TokenExecutor(mockTerminal, slownessDetector: SlownessDetector(), queue: DispatchQueue.main)
+        // Use Objective-C runtime to verify the property/method doesn't exist
+        let executorClass: AnyClass = TokenExecutor.self
 
-        executor1.delegate = mockDelegate
-        executor2.delegate = mockDelegate
+        // Check that no class method or property named activeSessionsWithTokens exists
+        let selector = NSSelectorFromString("activeSessionsWithTokens")
+        let hasClassMethod = class_getClassMethod(executorClass, selector) != nil
+        let hasInstanceMethod = class_getInstanceMethod(executorClass, selector) != nil
 
-        // Both should be able to process without the old preemption mechanism
-        XCTAssertNotNil(executor1)
-        XCTAssertNotNil(executor2)
+        XCTAssertFalse(hasClassMethod,
+                       "TokenExecutor should not have activeSessionsWithTokens class method - legacy preemption removed")
+        XCTAssertFalse(hasInstanceMethod,
+                       "TokenExecutor should not have activeSessionsWithTokens instance method - legacy preemption removed")
     }
 
     // NEGATIVE TEST: Background sessions should NOT be preempted by foreground
