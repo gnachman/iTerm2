@@ -1119,6 +1119,205 @@ final class PTYTaskIoAllowedPredicateTests: XCTestCase {
         #endif
     }
 
+    // MARK: - Write Source State Transition Tests
+
+    func testWriteSourceSuspendsWhenIoAllowedBecomesFalse() {
+        // REQUIREMENT: Write source should suspend when ioAllowed changes from true to false
+        // Mirrors testReadSourceSuspendsWhenIoAllowedBecomesFalse for write side
+        //
+        // Note: We do NOT use testShouldWriteOverride here because that bypasses the
+        // ioAllowed check entirely. Without a jobManager, isReadOnly returns false
+        // (nil messaging), so the only blocking condition is ioAllowed.
+
+        guard let task = PTYTask() else {
+            XCTFail("Failed to create PTYTask")
+            return
+        }
+
+        guard let pipe = createTestPipe() else {
+            XCTFail("Failed to create test pipe")
+            return
+        }
+        defer { closeTestPipe(pipe) }
+
+        task.testSetFd(pipe.writeFd)
+        task.paused = false
+
+        #if ITERM_DEBUG
+        // Start with ioAllowed = true and data in buffer (write source needs data to resume)
+        // Note: NOT using testShouldWriteOverride so ioAllowed check is active
+        task.testIoAllowedOverride = NSNumber(value: true)
+        let testData = "Test data for write".data(using: .utf8)!
+        task.testAppendData(toWriteBuffer: testData)
+
+        task.testSetupDispatchSourcesForTesting()
+        task.testWaitForIOQueue()
+
+        // Write source should be resumed (ioAllowed=true + data in buffer + not paused)
+        XCTAssertFalse(task.testIsWriteSourceSuspended,
+                       "Write source should be resumed with ioAllowed=true and data in buffer")
+
+        // Flip ioAllowed to false
+        task.testIoAllowedOverride = NSNumber(value: false)
+        task.perform(NSSelectorFromString("updateWriteSourceState"))
+        task.testWaitForIOQueue()
+
+        // Write source should now be suspended
+        XCTAssertTrue(task.testIsWriteSourceSuspended,
+                      "Write source should SUSPEND when ioAllowed becomes false")
+
+        task.testTeardownDispatchSourcesForTesting()
+        #else
+        XCTAssertTrue(task.responds(to: NSSelectorFromString("updateWriteSourceState")))
+        #endif
+    }
+
+    func testWriteSourceResumesWhenIoAllowedBecomesTrue() {
+        // REQUIREMENT: Write source should resume when ioAllowed changes from false to true
+        // Mirrors testReadSourceResumesWhenIoAllowedBecomesTrue for write side
+        //
+        // Note: We do NOT use testShouldWriteOverride here because that bypasses the
+        // ioAllowed check entirely. Without a jobManager, isReadOnly returns false
+        // (nil messaging), so the only blocking condition is ioAllowed.
+
+        guard let task = PTYTask() else {
+            XCTFail("Failed to create PTYTask")
+            return
+        }
+
+        guard let pipe = createTestPipe() else {
+            XCTFail("Failed to create test pipe")
+            return
+        }
+        defer { closeTestPipe(pipe) }
+
+        task.testSetFd(pipe.writeFd)
+        task.paused = false
+
+        #if ITERM_DEBUG
+        // Start with ioAllowed = false and data in buffer
+        // Note: NOT using testShouldWriteOverride so ioAllowed check is active
+        task.testIoAllowedOverride = NSNumber(value: false)
+        let testData = "Test data for write".data(using: .utf8)!
+        task.testAppendData(toWriteBuffer: testData)
+
+        task.testSetupDispatchSourcesForTesting()
+        task.testWaitForIOQueue()
+
+        // Write source should be suspended (ioAllowed=false blocks shouldWrite)
+        XCTAssertTrue(task.testIsWriteSourceSuspended,
+                      "Write source should be suspended with ioAllowed=false")
+
+        // Flip ioAllowed to true
+        task.testIoAllowedOverride = NSNumber(value: true)
+        task.perform(NSSelectorFromString("updateWriteSourceState"))
+        task.testWaitForIOQueue()
+
+        // Write source should now be resumed (ioAllowed=true + data in buffer)
+        XCTAssertFalse(task.testIsWriteSourceSuspended,
+                       "Write source should RESUME when ioAllowed becomes true")
+
+        task.testTeardownDispatchSourcesForTesting()
+        #else
+        XCTAssertTrue(task.responds(to: NSSelectorFromString("updateWriteSourceState")))
+        #endif
+    }
+
+    func testWriteSourceStaysSuspendedWithoutData() {
+        // REQUIREMENT: Write source should stay suspended even with ioAllowed=true if no data
+        // This is different from read source - write needs data in buffer to resume
+
+        guard let task = PTYTask() else {
+            XCTFail("Failed to create PTYTask")
+            return
+        }
+
+        guard let pipe = createTestPipe() else {
+            XCTFail("Failed to create test pipe")
+            return
+        }
+        defer { closeTestPipe(pipe) }
+
+        task.testSetFd(pipe.writeFd)
+        task.paused = false
+
+        #if ITERM_DEBUG
+        // ioAllowed = true but NO data in buffer
+        task.testIoAllowedOverride = NSNumber(value: true)
+        task.testShouldWriteOverride = true  // Bypass isReadOnly check
+        // Note: NOT adding data to buffer
+
+        task.testSetupDispatchSourcesForTesting()
+        task.testWaitForIOQueue()
+
+        // Write source should be suspended (no data to write)
+        XCTAssertTrue(task.testIsWriteSourceSuspended,
+                      "Write source should stay suspended without data in buffer")
+
+        // Now add data - source should resume
+        let testData = "Test data".data(using: .utf8)!
+        task.testAppendData(toWriteBuffer: testData)
+        task.perform(NSSelectorFromString("updateWriteSourceState"))
+        task.testWaitForIOQueue()
+
+        // Write source should now be resumed
+        XCTAssertFalse(task.testIsWriteSourceSuspended,
+                       "Write source should resume after data is added to buffer")
+
+        task.testTeardownDispatchSourcesForTesting()
+        #else
+        XCTAssertTrue(task.responds(to: NSSelectorFromString("updateWriteSourceState")))
+        #endif
+    }
+
+    func testWriteSourceSuspendsWhenPausedBecomesTrue() {
+        // REQUIREMENT: Write source should suspend when paused changes to true
+        // Mirrors pause behavior for read source
+
+        guard let task = PTYTask() else {
+            XCTFail("Failed to create PTYTask")
+            return
+        }
+
+        guard let pipe = createTestPipe() else {
+            XCTFail("Failed to create test pipe")
+            return
+        }
+        defer { closeTestPipe(pipe) }
+
+        task.testSetFd(pipe.writeFd)
+
+        #if ITERM_DEBUG
+        // Start unpaused with favorable conditions
+        task.paused = false
+        task.testIoAllowedOverride = NSNumber(value: true)
+        task.testShouldWriteOverride = true
+        let testData = "Test data".data(using: .utf8)!
+        task.testAppendData(toWriteBuffer: testData)
+
+        task.testSetupDispatchSourcesForTesting()
+        task.testWaitForIOQueue()
+
+        // Write source should be resumed
+        XCTAssertFalse(task.testIsWriteSourceSuspended,
+                       "Write source should be resumed when unpaused with data")
+
+        // Pause the task
+        task.paused = true
+        task.testWaitForIOQueue()
+
+        // Write source should now be suspended
+        XCTAssertTrue(task.testIsWriteSourceSuspended,
+                      "Write source should SUSPEND when paused becomes true")
+
+        task.testTeardownDispatchSourcesForTesting()
+        #else
+        XCTAssertTrue(task.responds(to: NSSelectorFromString("updateWriteSourceState")))
+        #endif
+    }
+
+    // MARK: - Read Source State Transition Tests
+
     func testReadSourceSuspendsWhenIoAllowedBecomesFalse() {
         // REQUIREMENT: Read source should suspend when ioAllowed changes from true to false
 
