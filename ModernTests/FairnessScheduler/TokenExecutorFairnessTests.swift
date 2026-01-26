@@ -25,6 +25,10 @@ final class MockTokenExecutorDelegate: NSObject, TokenExecutorDelegate {
     var willExecuteCount = 0
     var handledFlags: [Int64] = []
 
+    /// Callback invoked when tokenExecutorWillExecuteTokens is called.
+    /// Use this to fulfill expectations in tests.
+    var onWillExecute: (() -> Void)?
+
     func tokenExecutorShouldQueueTokens() -> Bool {
         return shouldQueueTokens
     }
@@ -51,6 +55,7 @@ final class MockTokenExecutorDelegate: NSObject, TokenExecutorDelegate {
 
     func tokenExecutorWillExecuteTokens() {
         willExecuteCount += 1
+        onWillExecute?()
     }
 
     func reset() {
@@ -60,6 +65,7 @@ final class MockTokenExecutorDelegate: NSObject, TokenExecutorDelegate {
         syncCount = 0
         willExecuteCount = 0
         handledFlags = []
+        onWillExecute = nil
     }
 }
 

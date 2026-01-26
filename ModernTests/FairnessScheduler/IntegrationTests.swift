@@ -243,18 +243,20 @@ final class IntegrationRekickTests: XCTestCase {
         // Wait for scheduler to process
         waitForMutationQueue()
 
+        // Set up expectation for execution
+        let executionExpectation = XCTestExpectation(description: "Execution after unpause")
+        delegate.onWillExecute = {
+            executionExpectation.fulfill()
+        }
+
         // Now unblock (simulate taskPaused=NO)
         delegate.shouldQueueTokens = false
 
         // Call schedule to simulate re-kick after unpause
         executor.schedule()
 
-        // Wait for execution
-        let expectation = XCTestExpectation(description: "Execution after unpause")
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
-            expectation.fulfill()
-        }
-        wait(for: [expectation], timeout: 1.0)
+        // Wait for execution to happen
+        wait(for: [executionExpectation], timeout: 1.0)
 
         // Should have executed after unpausing
         XCTAssertGreaterThan(delegate.willExecuteCount, 0,
@@ -288,16 +290,18 @@ final class IntegrationRekickTests: XCTestCase {
 
         waitForMutationQueue()
 
+        // Set up expectation for execution
+        let executionExpectation = XCTestExpectation(description: "Execution after shortcut nav")
+        delegate.onWillExecute = {
+            executionExpectation.fulfill()
+        }
+
         // Simulate shortcutNavigationDidComplete by unblocking and scheduling
         delegate.shouldQueueTokens = false
         executor.schedule()
 
-        // Wait for execution
-        let expectation = XCTestExpectation(description: "Execution after shortcut nav")
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
-            expectation.fulfill()
-        }
-        wait(for: [expectation], timeout: 1.0)
+        // Wait for execution to happen
+        wait(for: [executionExpectation], timeout: 1.0)
 
         XCTAssertGreaterThan(delegate.willExecuteCount, 0,
                              "Should execute after shortcut nav complete")
@@ -330,16 +334,18 @@ final class IntegrationRekickTests: XCTestCase {
 
         waitForMutationQueue()
 
+        // Set up expectation for execution
+        let executionExpectation = XCTestExpectation(description: "Execution after terminal enabled")
+        delegate.onWillExecute = {
+            executionExpectation.fulfill()
+        }
+
         // Simulate terminalEnabled=YES by unblocking and scheduling
         delegate.shouldQueueTokens = false
         executor.schedule()
 
-        // Wait for execution
-        let expectation = XCTestExpectation(description: "Execution after terminal enabled")
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
-            expectation.fulfill()
-        }
-        wait(for: [expectation], timeout: 1.0)
+        // Wait for execution to happen
+        wait(for: [executionExpectation], timeout: 1.0)
 
         XCTAssertGreaterThan(delegate.willExecuteCount, 0,
                              "Should execute after terminal enabled")
@@ -372,16 +378,18 @@ final class IntegrationRekickTests: XCTestCase {
 
         waitForMutationQueue()
 
+        // Set up expectation for execution
+        let executionExpectation = XCTestExpectation(description: "Execution after copy mode exit")
+        delegate.onWillExecute = {
+            executionExpectation.fulfill()
+        }
+
         // Simulate copy mode exit by unblocking and scheduling
         delegate.shouldQueueTokens = false
         executor.schedule()
 
-        // Wait for execution
-        let expectation = XCTestExpectation(description: "Execution after copy mode exit")
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
-            expectation.fulfill()
-        }
-        wait(for: [expectation], timeout: 1.0)
+        // Wait for execution to happen
+        wait(for: [executionExpectation], timeout: 1.0)
 
         XCTAssertGreaterThan(delegate.willExecuteCount, 0,
                              "Should execute after copy mode exit")

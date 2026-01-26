@@ -358,15 +358,8 @@ final class FairnessSchedulerTurnExecutionTests: XCTestCase {
 
         wait(for: [expectation], timeout: 1.0)
 
-        // Wait a bit more to ensure no additional executions
-        let noMoreExecutions = XCTestExpectation(description: "No more")
-        noMoreExecutions.isInverted = true
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-            if executionCount > 1 {
-                noMoreExecutions.fulfill()
-            }
-        }
-        wait(for: [noMoreExecutions], timeout: 0.2)
+        // Flush mutation queue to ensure all scheduler operations complete
+        waitForMutationQueue()
 
         XCTAssertEqual(executionCount, 1,
                        "Completed session should not be re-added without new work")
@@ -388,15 +381,8 @@ final class FairnessSchedulerTurnExecutionTests: XCTestCase {
 
         wait(for: [expectation], timeout: 1.0)
 
-        // Wait to ensure no re-execution
-        let noMoreExecutions = XCTestExpectation(description: "No more")
-        noMoreExecutions.isInverted = true
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-            if executionCount > 1 {
-                noMoreExecutions.fulfill()
-            }
-        }
-        wait(for: [noMoreExecutions], timeout: 0.2)
+        // Flush mutation queue to ensure all scheduler operations complete
+        waitForMutationQueue()
 
         XCTAssertEqual(executionCount, 1,
                        "Blocked session should not be re-added until unblocked")
@@ -469,12 +455,8 @@ final class FairnessSchedulerTurnExecutionTests: XCTestCase {
         scheduler.sessionDidEnqueueWork(idA)
         scheduler.sessionDidEnqueueWork(idA)
 
-        // Give scheduler time to (incorrectly) start another turn
-        let noOverlap = XCTestExpectation(description: "No overlapping turn")
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-            noOverlap.fulfill()
-        }
-        wait(for: [noOverlap], timeout: 0.5)
+        // Flush mutation queue to ensure all sessionDidEnqueueWork calls are processed
+        waitForMutationQueue()
 
         // Verify no second turn was started while first is still executing
         XCTAssertEqual(executeTurnCallCount, 1,
@@ -944,12 +926,8 @@ final class FairnessSchedulerLifecycleEdgeCaseTests: XCTestCase {
         // Verify cleanup was called
         XCTAssertTrue(executor.cleanupCalled, "Cleanup should be called on unregister")
 
-        // Wait to ensure no crash from late completion
-        let safetyWait = XCTestExpectation(description: "Safety wait")
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
-            safetyWait.fulfill()
-        }
-        wait(for: [safetyWait], timeout: 1.0)
+        // Flush mutation queue to ensure no crash from late completion
+        waitForMutationQueue()
     }
 
     func testUnregisterAfterYieldedBeforeNextTurn() {
@@ -984,12 +962,8 @@ final class FairnessSchedulerLifecycleEdgeCaseTests: XCTestCase {
 
         wait(for: [firstExecution, unregisterDone], timeout: 2.0)
 
-        // Wait for any pending work to settle
-        let settling = XCTestExpectation(description: "Settling")
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-            settling.fulfill()
-        }
-        wait(for: [settling], timeout: 1.0)
+        // Flush mutation queue to ensure all pending work is processed
+        waitForMutationQueue()
 
         // Verify cleanup was called (the main guarantee)
         XCTAssertTrue(executor.cleanupCalled,
