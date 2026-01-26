@@ -72,6 +72,13 @@ static void HandleSigChld(int n) {
 
     dispatch_queue_t _jobManagerQueue;
     BOOL _isTmuxTask;
+
+    // Dispatch sources for per-PTY I/O (fairness scheduler integration)
+    dispatch_source_t _readSource;
+    dispatch_source_t _writeSource;
+    dispatch_queue_t _ioQueue;
+    BOOL _readSourceSuspended;
+    BOOL _writeSourceSuspended;
 }
 
 - (instancetype)init {
@@ -99,6 +106,8 @@ static void HandleSigChld(int n) {
 
 - (void)dealloc {
     DLog(@"Dealloc PTYTask %p", self);
+    // Tear down dispatch sources before releasing
+    [self teardownDispatchSources];
     // TODO: The use of killpg seems pretty sketchy. It takes a pgid_t, not a
     // pid_t. Are they guaranteed to always be the same for process group
     // leaders? It is not clear from git history why killpg is used here and
@@ -140,6 +149,9 @@ static void HandleSigChld(int n) {
     }
     // Start/stop selecting on our FD
     [[TaskNotifier sharedInstance] unblock];
+    // Update dispatch sources based on new paused state
+    [self updateReadSourceState];
+    [self updateWriteSourceState];
     [_delegate taskDidChangePaused:self paused:paused];
 }
 
@@ -476,6 +488,167 @@ static void HandleSigChld(int n) {
 
     // Clean up locks
     [writeLock unlock];
+}
+
+#pragma mark - Dispatch Source Management (Fairness Scheduler)
+
+// LIFECYCLE: Only call after fd >= 0 (i.e., after process launch succeeds)
+- (void)setupDispatchSources {
+    NSAssert(self.fd >= 0, @"setupDispatchSources called with invalid fd");
+
+    _ioQueue = dispatch_queue_create("com.iterm2.pty-io", DISPATCH_QUEUE_SERIAL);
+
+    // Read source - starts SUSPENDED, will be resumed by updateReadSourceState if conditions allow
+    _readSource = dispatch_source_create(DISPATCH_SOURCE_TYPE_READ,
+                                         self.fd, 0, _ioQueue);
+    __weak typeof(self) weakSelf = self;
+    dispatch_source_set_event_handler(_readSource, ^{
+        [weakSelf handleReadEvent];
+    });
+    dispatch_resume(_readSource);  // Must resume before we can suspend
+    dispatch_suspend(_readSource); // Start suspended - updateReadSourceState will resume
+    _readSourceSuspended = YES;
+
+    // Write source - starts SUSPENDED until writeBuffer has data
+    _writeSource = dispatch_source_create(DISPATCH_SOURCE_TYPE_WRITE,
+                                          self.fd, 0, _ioQueue);
+    dispatch_source_set_event_handler(_writeSource, ^{
+        [weakSelf handleWriteEvent];
+    });
+    dispatch_resume(_writeSource);  // Must resume before we can suspend
+    dispatch_suspend(_writeSource); // Start suspended - updateWriteSourceState will resume
+    _writeSourceSuspended = YES;
+
+    // Initial state sync - resume sources if conditions allow
+    [self updateReadSourceState];
+    [self updateWriteSourceState];
+}
+
+// TEARDOWN: Must resume suspended sources before canceling to avoid crash
+- (void)teardownDispatchSources {
+    dispatch_queue_t ioQueue = _ioQueue;
+    dispatch_source_t readSource = _readSource;
+    dispatch_source_t writeSource = _writeSource;
+    BOOL readSuspended = _readSourceSuspended;
+    BOOL writeSuspended = _writeSourceSuspended;
+
+    _readSource = nil;
+    _writeSource = nil;
+
+    if (!ioQueue) {
+        return;
+    }
+
+    // All operations on _ioQueue to ensure serialization
+    dispatch_async(ioQueue, ^{
+        if (readSource) {
+            // Resume if suspended before canceling (required by GCD)
+            if (readSuspended) {
+                dispatch_resume(readSource);
+            }
+            dispatch_source_cancel(readSource);
+        }
+        if (writeSource) {
+            // Resume if suspended before canceling (required by GCD)
+            if (writeSuspended) {
+                dispatch_resume(writeSource);
+            }
+            dispatch_source_cancel(writeSource);
+        }
+    });
+}
+
+#pragma mark - Unified State Check
+
+// All conditions that affect whether we should read
+- (BOOL)shouldRead {
+    iTermTokenExecutor *executor = (iTermTokenExecutor *)self.tokenExecutor;
+    if (!executor) {
+        // No executor means no backpressure tracking - allow reads
+        return !self.paused && self.jobManager.ioAllowed;
+    }
+    return !self.paused &&
+           self.jobManager.ioAllowed &&
+           executor.backpressureLevel < BackpressureLevelHeavy;
+}
+
+// All conditions that affect whether we should write
+- (BOOL)shouldWrite {
+    if (self.paused || self.jobManager.isReadOnly || !self.jobManager.ioAllowed) {
+        return NO;
+    }
+    [writeLock lock];
+    BOOL hasData = [writeBuffer length] > 0;
+    [writeLock unlock];
+    return hasData;
+}
+
+// Called whenever ANY condition affecting read state changes
+- (void)updateReadSourceState {
+    if (!_ioQueue || !_readSource) {
+        return;
+    }
+    BOOL shouldRead = [self shouldRead];
+    dispatch_async(_ioQueue, ^{
+        if (shouldRead && self->_readSourceSuspended && self->_readSource) {
+            dispatch_resume(self->_readSource);
+            self->_readSourceSuspended = NO;
+        } else if (!shouldRead && !self->_readSourceSuspended && self->_readSource) {
+            dispatch_suspend(self->_readSource);
+            self->_readSourceSuspended = YES;
+        }
+    });
+}
+
+// Called whenever ANY condition affecting write state changes
+- (void)updateWriteSourceState {
+    if (!_ioQueue || !_writeSource) {
+        return;
+    }
+    BOOL shouldWrite = [self shouldWrite];
+    dispatch_async(_ioQueue, ^{
+        if (shouldWrite && self->_writeSourceSuspended && self->_writeSource) {
+            dispatch_resume(self->_writeSource);
+            self->_writeSourceSuspended = NO;
+        } else if (!shouldWrite && !self->_writeSourceSuspended && self->_writeSource) {
+            dispatch_suspend(self->_writeSource);
+            self->_writeSourceSuspended = YES;
+        }
+    });
+}
+
+#pragma mark - Dispatch Source Event Handlers
+
+- (void)handleReadEvent {
+    char buffer[MAXRW];
+    ssize_t bytesRead = read(self.fd, buffer, MAXRW);
+    if (bytesRead <= 0) {
+        if (bytesRead < 0 && errno != EAGAIN) {
+            [self brokenPipe];
+        }
+        return;
+    }
+
+    hasOutput = YES;
+
+    // Send data to delegate via non-blocking path
+    // (addTokens internally calls notifyScheduler which kicks FairnessScheduler)
+    [self.delegate threadedReadTask:buffer length:(int)bytesRead];
+
+    // Re-check state after read (backpressure may have increased)
+    [self updateReadSourceState];
+}
+
+- (void)handleWriteEvent {
+    [self processWrite];  // Existing method - drains writeBuffer
+
+    // Re-check state after write (buffer may now be empty)
+    [self updateWriteSourceState];
+}
+
+// Called when data is added to writeBuffer
+- (void)writeBufferDidChange {
+    [self updateWriteSourceState];
 }
 
 - (void)stopCoprocess {

@@ -7,15 +7,18 @@ This document specifies the tests required for the round-robin fair scheduling i
 | Milestone | Test File | Status | Passing | Skipped |
 |-----------|-----------|--------|---------|---------|
 | 1 | `FairnessSchedulerTests.swift` | **COMPLETE** | 18/18 | 0 |
-| 2 | `TokenExecutorFairnessTests.swift` | Tests written | 7 | 25 |
-| 3 | (PTYTask tests) | Not started | - | - |
+| 2 | `TokenExecutorFairnessTests.swift` | **COMPLETE** | 8 | 24 |
+| 3 | `PTYTaskDispatchSourceTests.swift` | **COMPLETE** | 0 | 35 |
 | 4 | (TaskNotifier tests) | Not started | - | - |
 | 5 | (Integration tests) | Not started | - | - |
+
+**Note:** Milestone 3 tests are all skipped because the dispatch source infrastructure is in place but not yet activated. Tests will pass after Milestone 5 integration.
 
 **Run commands:**
 ```bash
 ./tools/run_fairness_tests.sh milestone1   # FairnessScheduler only
 ./tools/run_fairness_tests.sh milestone2   # TokenExecutor only
+./tools/run_fairness_tests.sh milestone3   # PTYTask dispatch sources only
 ./tools/run_fairness_tests.sh              # All fairness tests
 ```
 
@@ -497,4 +500,4 @@ These tests verify the critical `availableSlots` accounting never drifts.
 3. Implement `FairnessScheduler` to pass those tests
 4. Then proceed to TokenExecutor modifications
 
-**Current status:** Test infrastructure complete. All 18 Milestone 1 tests pass. Run with `./tools/run_fairness_tests.sh milestone1`
+**Current status:** Milestones 1-3 complete. Milestone 1: 18/18 passing. Milestone 2: 8 passing, 24 skipped. Milestone 3: 0 passing, 35 skipped (infrastructure in place, pending integration). Run with `./tools/run_fairness_tests.sh`

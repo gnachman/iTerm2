@@ -187,6 +187,12 @@ typedef NS_OPTIONS(NSUInteger, iTermJobManagerAttachResults) {
 // This is used by channels. It takes care of handling IO and this is the one strong reference to the ioBuffer.
 @property(nonatomic, strong) iTermIOBuffer *ioBuffer;
 
+// TokenExecutor for backpressure monitoring. Set by PTYSession during setup.
+// Used by dispatch sources to determine when to suspend/resume reading.
+// Typed as `id` to avoid requiring Swift header import in this header.
+// Implementation casts to TokenExecutor after importing Swift header.
+@property(nonatomic, weak) id tokenExecutor;
+
 + (NSMutableDictionary *)mutableEnvironmentDictionary;
 
 - (instancetype)init;
