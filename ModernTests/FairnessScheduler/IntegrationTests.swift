@@ -40,7 +40,11 @@ final class IntegrationRegistrationTests: XCTestCase {
 
         // The tokenExecutor should have a valid fairnessSessionId set during init
         let sessionId = mutableState.tokenExecutor.fairnessSessionId
-        XCTAssertGreaterThan(sessionId, 0, "Session ID should be non-zero after init")
+        // Session ID can be 0 for first session - verify registration instead
+        #if ITERM_DEBUG
+        XCTAssertTrue(FairnessScheduler.shared.testIsSessionRegistered(sessionId),
+                      "Session should be registered with FairnessScheduler")
+        #endif
 
         #if ITERM_DEBUG
         XCTAssertTrue(FairnessScheduler.shared.testIsSessionRegistered(sessionId),
@@ -83,7 +87,11 @@ final class IntegrationRegistrationTests: XCTestCase {
         // VT100ScreenMutableState stores _fairnessSessionId internally
         // We can verify by checking the executor has the same ID
         let sessionId = mutableState.tokenExecutor.fairnessSessionId
-        XCTAssertGreaterThan(sessionId, 0, "Session ID should be stored")
+        // Session ID can be 0 for first session - verify registration instead
+        #if ITERM_DEBUG
+        XCTAssertTrue(FairnessScheduler.shared.testIsSessionRegistered(sessionId),
+                      "Session should be registered with FairnessScheduler")
+        #endif
 
         #if ITERM_DEBUG
         XCTAssertTrue(FairnessScheduler.shared.testIsSessionRegistered(sessionId),
@@ -110,7 +118,11 @@ final class IntegrationUnregistrationTests: XCTestCase {
         let mutableState = VT100ScreenMutableState(sideEffectPerformer: performer)
 
         let sessionId = mutableState.tokenExecutor.fairnessSessionId
-        XCTAssertGreaterThan(sessionId, 0, "Should have valid session ID after init")
+        // Session ID can be 0 for first session - verify registration instead
+        #if ITERM_DEBUG
+        XCTAssertTrue(FairnessScheduler.shared.testIsSessionRegistered(sessionId),
+                      "Session should be registered after init")
+        #endif
 
         #if ITERM_DEBUG
         XCTAssertTrue(FairnessScheduler.shared.testIsSessionRegistered(sessionId),
@@ -207,42 +219,79 @@ final class IntegrationRekickTests: XCTestCase {
     func testTaskUnpausedSchedulesExecution() throws {
         // REQUIREMENT: taskPaused=NO triggers scheduleTokenExecution
         // When a task is unpaused, scheduleTokenExecution re-kicks the scheduler
-        // Note: PTYSession.taskDidChangePaused:paused: calls mutateAsynchronously with
-        // mutableState.taskPaused = paused and scheduleTokenExecution when !paused
+        //
+        // Test design:
+        // 1. Set blocking state (taskPaused=true) BEFORE adding tokens to prevent race conditions
+        // 2. Add tokens (they queue but cannot execute because blocked)
+        // 3. Verify tokens are pending via availableSlots
+        // 4. Record execution count before unblocking
+        // 5. Unblock and call scheduleTokenExecution
+        // 6. Wait for execution to complete
+        // 7. Verify execution count increased
 
         let performer = MockSideEffectPerformer()
         let mutableState = VT100ScreenMutableState(sideEffectPerformer: performer)
         mutableState.terminalEnabled = true
 
-        // Add tokens
-        var vector = CVector()
-        CVectorCreate(&vector, 1)
-        let token = VT100Token()
-        token.type = VT100_UNKNOWNCHAR
-        CVectorAppendVT100Token(&vector, token)
-        mutableState.tokenExecutor.addTokens(vector, lengthTotal: 10, lengthExcludingInBandSignaling: 10)
+        let sessionId = mutableState.tokenExecutor.fairnessSessionId
+        #if ITERM_DEBUG
+        XCTAssertTrue(FairnessScheduler.shared.testIsSessionRegistered(sessionId),
+                      "Session should be registered with FairnessScheduler")
 
-        waitForMutationQueue()
+        // Reset test counters for clean measurement
+        mutableState.tokenExecutor.testResetCounters()
+        #endif
 
-        // Set paused (blocks execution)
+        // Step 1: Set blocking state BEFORE adding tokens
         iTermGCD.mutationQueue().async {
             mutableState.taskPaused = true
         }
         waitForMutationQueue()
         XCTAssertTrue(mutableState.taskPaused, "taskPaused should be true")
-        // When paused, execution is blocked (tokenExecutorShouldQueueTokens returns true)
 
-        // Simulate what PTYSession.taskDidChangePaused:paused: does when unpausing
-        // (mutateAsynchronously with taskPaused = false and scheduleTokenExecution)
+        // Step 2: Add tokens while blocked - they should queue without executing
+        var vector = CVector()
+        CVectorCreate(&vector, 5)
+        for _ in 0..<5 {
+            let token = VT100Token()
+            token.type = VT100_UNKNOWNCHAR
+            CVectorAppendVT100Token(&vector, token)
+        }
+        mutableState.tokenExecutor.addTokens(vector, lengthTotal: 50, lengthExcludingInBandSignaling: 50)
+        waitForMutationQueue()
+
+        #if ITERM_DEBUG
+        // Step 3: Verify tokens are pending (slots consumed)
+        let availableSlotsBefore = mutableState.tokenExecutor.testAvailableSlots
+        let totalSlots = mutableState.tokenExecutor.testTotalSlots
+        XCTAssertLessThan(availableSlotsBefore, totalSlots,
+                          "Should have pending tokens (available slots < total slots)")
+
+        // Step 4: Record execution count before unblocking
+        let executionCountBefore = mutableState.tokenExecutor.testExecuteTurnCompletedCount
+        #endif
+
+        // Step 5: Simulate PTYSession.taskDidChangePaused:paused: when unpausing
         iTermGCD.mutationQueue().async {
             mutableState.taskPaused = false
             mutableState.scheduleTokenExecution()
         }
         waitForMutationQueue()
 
-        // Verify state after unpause - execution should be unblocked
-        XCTAssertFalse(mutableState.taskPaused, "taskPaused should be false")
-        // With taskPaused=false and terminalEnabled=true, execution can proceed
+        XCTAssertFalse(mutableState.taskPaused, "taskPaused should be false after unpausing")
+
+        #if ITERM_DEBUG
+        // Step 6: Wait for execution to complete (use polling since scheduler is async)
+        let executionOccurred = waitForCondition({
+            mutableState.tokenExecutor.testExecuteTurnCompletedCount > executionCountBefore
+        }, timeout: 2.0)
+
+        // Step 7: Verify execution occurred
+        XCTAssertTrue(executionOccurred,
+                      "scheduleTokenExecution after unpausing should trigger token execution. " +
+                      "ExecutionCountBefore: \(executionCountBefore), " +
+                      "ExecutionCountAfter: \(mutableState.tokenExecutor.testExecuteTurnCompletedCount)")
+        #endif
 
         // Cleanup
         mutableState.terminalEnabled = false
@@ -252,42 +301,76 @@ final class IntegrationRekickTests: XCTestCase {
     func testShortcutNavigationCompleteSchedulesExecution() throws {
         // REQUIREMENT: Shortcut nav complete triggers scheduleTokenExecution
         // When shortcut navigation ends, scheduleTokenExecution re-kicks the scheduler
-        // Note: PTYSession.shortcutNavigationDidComplete calls mutateAsynchronously with
-        // mutableState.shortcutNavigationMode = NO and scheduleTokenExecution
+        //
+        // Test design: Same pattern as testTaskUnpausedSchedulesExecution
+        // 1. Set blocking state BEFORE adding tokens
+        // 2. Add tokens (queued but not executed)
+        // 3. Record execution count
+        // 4. Unblock and call scheduleTokenExecution
+        // 5. Verify execution occurred
 
         let performer = MockSideEffectPerformer()
         let mutableState = VT100ScreenMutableState(sideEffectPerformer: performer)
         mutableState.terminalEnabled = true
 
-        // Add tokens
-        var vector = CVector()
-        CVectorCreate(&vector, 1)
-        let token = VT100Token()
-        token.type = VT100_UNKNOWNCHAR
-        CVectorAppendVT100Token(&vector, token)
-        mutableState.tokenExecutor.addTokens(vector, lengthTotal: 10, lengthExcludingInBandSignaling: 10)
+        let sessionId = mutableState.tokenExecutor.fairnessSessionId
+        #if ITERM_DEBUG
+        XCTAssertTrue(FairnessScheduler.shared.testIsSessionRegistered(sessionId),
+                      "Session should be registered with FairnessScheduler")
 
-        waitForMutationQueue()
+        // Reset test counters for clean measurement
+        mutableState.tokenExecutor.testResetCounters()
+        #endif
 
-        // Set shortcut nav mode (blocks execution)
+        // Step 1: Set blocking state BEFORE adding tokens
         iTermGCD.mutationQueue().async {
             mutableState.shortcutNavigationMode = true
         }
         waitForMutationQueue()
         XCTAssertTrue(mutableState.shortcutNavigationMode, "shortcutNavigationMode should be true")
-        // When in shortcut nav mode, execution is blocked (tokenExecutorShouldQueueTokens returns true)
 
-        // Simulate what PTYSession.shortcutNavigationDidComplete does
-        // (mutateAsynchronously with shortcutNavigationMode = NO and scheduleTokenExecution)
+        // Step 2: Add tokens while blocked
+        var vector = CVector()
+        CVectorCreate(&vector, 5)
+        for _ in 0..<5 {
+            let token = VT100Token()
+            token.type = VT100_UNKNOWNCHAR
+            CVectorAppendVT100Token(&vector, token)
+        }
+        mutableState.tokenExecutor.addTokens(vector, lengthTotal: 50, lengthExcludingInBandSignaling: 50)
+        waitForMutationQueue()
+
+        #if ITERM_DEBUG
+        // Verify tokens are pending
+        let availableSlotsBefore = mutableState.tokenExecutor.testAvailableSlots
+        let totalSlots = mutableState.tokenExecutor.testTotalSlots
+        XCTAssertLessThan(availableSlotsBefore, totalSlots,
+                          "Should have pending tokens (available slots < total slots)")
+
+        // Step 3: Record execution count before unblocking
+        let executionCountBefore = mutableState.tokenExecutor.testExecuteTurnCompletedCount
+        #endif
+
+        // Step 4: Simulate PTYSession.shortcutNavigationDidComplete
         iTermGCD.mutationQueue().async {
             mutableState.shortcutNavigationMode = false
             mutableState.scheduleTokenExecution()
         }
         waitForMutationQueue()
 
-        // Verify state after shortcut nav complete - execution should be unblocked
         XCTAssertFalse(mutableState.shortcutNavigationMode, "shortcutNavigationMode should be false")
-        // With shortcutNavigationMode=false and terminalEnabled=true, execution can proceed
+
+        #if ITERM_DEBUG
+        // Step 5: Wait for and verify execution occurred
+        let executionOccurred = waitForCondition({
+            mutableState.tokenExecutor.testExecuteTurnCompletedCount > executionCountBefore
+        }, timeout: 2.0)
+
+        XCTAssertTrue(executionOccurred,
+                      "scheduleTokenExecution after shortcut nav complete should trigger token execution. " +
+                      "ExecutionCountBefore: \(executionCountBefore), " +
+                      "ExecutionCountAfter: \(mutableState.tokenExecutor.testExecuteTurnCompletedCount)")
+        #endif
 
         // Cleanup
         mutableState.terminalEnabled = false
@@ -297,91 +380,142 @@ final class IntegrationRekickTests: XCTestCase {
     func testTerminalEnabledSchedulesExecution() throws {
         // REQUIREMENT: terminalEnabled=YES triggers scheduleTokenExecution
         // Test the ACTUAL call site: VT100ScreenMutableState.setTerminalEnabled:
+        //
+        // Note: Terminal is disabled by default, which blocks execution via
+        // tokenExecutorShouldQueueTokens returning YES. So tokens added while
+        // disabled will queue until terminal is enabled.
 
         let performer = MockSideEffectPerformer()
         let mutableState = VT100ScreenMutableState(sideEffectPerformer: performer)
 
         let sessionId = mutableState.tokenExecutor.fairnessSessionId
-        XCTAssertGreaterThan(sessionId, 0, "Should have session ID after init")
-
-        // Add tokens while terminal is in initial state (enabled by default)
-        var vector = CVector()
-        CVectorCreate(&vector, 1)
-        let token = VT100Token()
-        token.type = VT100_UNKNOWNCHAR
-        CVectorAppendVT100Token(&vector, token)
-        mutableState.tokenExecutor.addTokens(vector, lengthTotal: 10, lengthExcludingInBandSignaling: 10)
-
-        waitForMutationQueue()
-
-        // Disable terminal (stops execution)
-        mutableState.terminalEnabled = false
-        waitForMutationQueue()
-
-        // Add more tokens while disabled
-        var vector2 = CVector()
-        CVectorCreate(&vector2, 1)
-        let token2 = VT100Token()
-        token2.type = VT100_UNKNOWNCHAR
-        CVectorAppendVT100Token(&vector2, token2)
-
-        // Re-enable terminal - this calls scheduleTokenExecution internally
-        // First need to re-register since disable unregistered
-        let performer2 = MockSideEffectPerformer()
-        let mutableState2 = VT100ScreenMutableState(sideEffectPerformer: performer2)
-
-        let sessionId2 = mutableState2.tokenExecutor.fairnessSessionId
-        XCTAssertGreaterThan(sessionId2, 0, "Should have new session ID")
-
-        // The fact that setTerminalEnabled: calls scheduleTokenExecution is verified
-        // by the implementation - the scheduler will be kicked when enabled
         #if ITERM_DEBUG
-        XCTAssertTrue(FairnessScheduler.shared.testIsSessionRegistered(sessionId2),
+        XCTAssertTrue(FairnessScheduler.shared.testIsSessionRegistered(sessionId),
                       "Session should be registered after init")
+
+        // Reset test counters for clean measurement
+        mutableState.tokenExecutor.testResetCounters()
+        #endif
+
+        // Terminal is disabled by default - this is our blocking state
+        XCTAssertFalse(mutableState.terminalEnabled, "terminalEnabled should be false after init")
+
+        // Add tokens while terminal is disabled - they queue without executing
+        var vector = CVector()
+        CVectorCreate(&vector, 5)
+        for _ in 0..<5 {
+            let token = VT100Token()
+            token.type = VT100_UNKNOWNCHAR
+            CVectorAppendVT100Token(&vector, token)
+        }
+        mutableState.tokenExecutor.addTokens(vector, lengthTotal: 50, lengthExcludingInBandSignaling: 50)
+        waitForMutationQueue()
+
+        #if ITERM_DEBUG
+        // Verify tokens are pending
+        let availableSlotsBefore = mutableState.tokenExecutor.testAvailableSlots
+        let totalSlots = mutableState.tokenExecutor.testTotalSlots
+        XCTAssertLessThan(availableSlotsBefore, totalSlots,
+                          "Should have queued tokens (consumed slots)")
+
+        // Record execution count before enabling
+        let executionCountBefore = mutableState.tokenExecutor.testExecuteTurnCompletedCount
+        #endif
+
+        // Enable terminal - this calls scheduleTokenExecution internally
+        mutableState.terminalEnabled = true
+        waitForMutationQueue()
+
+        #if ITERM_DEBUG
+        // Wait for and verify execution occurred
+        let executionOccurred = waitForCondition({
+            mutableState.tokenExecutor.testExecuteTurnCompletedCount > executionCountBefore
+        }, timeout: 2.0)
+
+        XCTAssertTrue(executionOccurred,
+                      "setTerminalEnabled:YES should trigger token execution. " +
+                      "ExecutionCountBefore: \(executionCountBefore), " +
+                      "ExecutionCountAfter: \(mutableState.tokenExecutor.testExecuteTurnCompletedCount)")
         #endif
 
         // Cleanup
-        mutableState2.terminalEnabled = false
+        mutableState.terminalEnabled = false
         waitForMutationQueue()
     }
 
     func testCopyModeExitSchedulesExecution() throws {
         // REQUIREMENT: Copy mode exit triggers scheduleTokenExecution (existing)
         // This is a regression test - existing behavior should be preserved
-        // Note: This tests the downstream behavior since PTYSession.copyModeHandlerDidChangeEnabledState
-        // calls mutateAsynchronously with scheduleTokenExecution
+        //
+        // Test design: Same pattern as other re-kick tests
+        // 1. Set blocking state (copyMode=true) BEFORE adding tokens
+        // 2. Add tokens (queued but not executed)
+        // 3. Record execution count
+        // 4. Exit copy mode and call scheduleTokenExecution
+        // 5. Verify execution occurred
 
         let performer = MockSideEffectPerformer()
         let mutableState = VT100ScreenMutableState(sideEffectPerformer: performer)
         mutableState.terminalEnabled = true
 
         let sessionId = mutableState.tokenExecutor.fairnessSessionId
+        #if ITERM_DEBUG
+        XCTAssertTrue(FairnessScheduler.shared.testIsSessionRegistered(sessionId),
+                      "Session should be registered with FairnessScheduler")
 
-        // Add tokens
+        // Reset test counters for clean measurement
+        mutableState.tokenExecutor.testResetCounters()
+        #endif
+
+        // Step 1: Set blocking state BEFORE adding tokens
+        iTermGCD.mutationQueue().async {
+            mutableState.copyMode = true
+        }
+        waitForMutationQueue()
+        XCTAssertTrue(mutableState.copyMode, "copyMode should be true")
+
+        // Step 2: Add tokens while blocked
         var vector = CVector()
-        CVectorCreate(&vector, 1)
-        let token = VT100Token()
-        token.type = VT100_UNKNOWNCHAR
-        CVectorAppendVT100Token(&vector, token)
-        mutableState.tokenExecutor.addTokens(vector, lengthTotal: 10, lengthExcludingInBandSignaling: 10)
-
+        CVectorCreate(&vector, 5)
+        for _ in 0..<5 {
+            let token = VT100Token()
+            token.type = VT100_UNKNOWNCHAR
+            CVectorAppendVT100Token(&vector, token)
+        }
+        mutableState.tokenExecutor.addTokens(vector, lengthTotal: 50, lengthExcludingInBandSignaling: 50)
         waitForMutationQueue()
 
-        // Simulate entering copy mode (which blocks execution)
-        mutableState.copyMode = true
+        #if ITERM_DEBUG
+        // Verify tokens are pending
+        let availableSlotsBefore = mutableState.tokenExecutor.testAvailableSlots
+        let totalSlots = mutableState.tokenExecutor.testTotalSlots
+        XCTAssertLessThan(availableSlotsBefore, totalSlots,
+                          "Should have pending tokens (available slots < total slots)")
 
-        // Simulate exiting copy mode with scheduleTokenExecution
-        // This is what PTYSession.copyModeHandlerDidChangeEnabledState does
+        // Step 3: Record execution count before unblocking
+        let executionCountBefore = mutableState.tokenExecutor.testExecuteTurnCompletedCount
+        #endif
+
+        // Step 4: Simulate PTYSession.copyModeHandlerDidChangeEnabledState when exiting copy mode
         iTermGCD.mutationQueue().async {
             mutableState.copyMode = false
             mutableState.scheduleTokenExecution()
         }
-
         waitForMutationQueue()
 
-        // Verify copy mode is off - execution can proceed
         XCTAssertFalse(mutableState.copyMode, "copyMode should be false after exit")
-        // With copyMode=false and terminalEnabled=true, execution can proceed
+
+        #if ITERM_DEBUG
+        // Step 5: Wait for and verify execution occurred
+        let executionOccurred = waitForCondition({
+            mutableState.tokenExecutor.testExecuteTurnCompletedCount > executionCountBefore
+        }, timeout: 2.0)
+
+        XCTAssertTrue(executionOccurred,
+                      "scheduleTokenExecution after copy mode exit should trigger token execution. " +
+                      "ExecutionCountBefore: \(executionCountBefore), " +
+                      "ExecutionCountAfter: \(mutableState.tokenExecutor.testExecuteTurnCompletedCount)")
+        #endif
 
         // Cleanup
         mutableState.terminalEnabled = false
@@ -391,28 +525,64 @@ final class IntegrationRekickTests: XCTestCase {
     func testSetTerminalEnabledCallsScheduleTokenExecution() throws {
         // REQUIREMENT: setTerminalEnabled:YES calls scheduleTokenExecution
         // This tests the ACTUAL call site in VT100ScreenMutableState
+        //
+        // This is similar to testTerminalEnabledSchedulesExecution but focuses
+        // specifically on verifying the scheduleTokenExecution call path.
 
         let performer = MockSideEffectPerformer()
         let mutableState = VT100ScreenMutableState(sideEffectPerformer: performer)
 
-        // terminalEnabled is false by default after init
+        // Terminal is disabled by default - this is our blocking state
         XCTAssertFalse(mutableState.terminalEnabled, "terminalEnabled should be false after init")
 
-        #if ITERM_DEBUG
         let sessionId = mutableState.tokenExecutor.fairnessSessionId
-        // Session should be registered (init registers it)
+        #if ITERM_DEBUG
         XCTAssertTrue(FairnessScheduler.shared.testIsSessionRegistered(sessionId),
                       "Session should be registered after init")
+
+        // Reset test counters for clean measurement
+        mutableState.tokenExecutor.testResetCounters()
         #endif
 
-        // Enable terminal - this should call scheduleTokenExecution internally
+        // Add tokens while disabled - they queue without executing
+        var vector = CVector()
+        CVectorCreate(&vector, 5)
+        for _ in 0..<5 {
+            let token = VT100Token()
+            token.type = VT100_UNKNOWNCHAR
+            CVectorAppendVT100Token(&vector, token)
+        }
+        mutableState.tokenExecutor.addTokens(vector, lengthTotal: 50, lengthExcludingInBandSignaling: 50)
+        waitForMutationQueue()
+
+        #if ITERM_DEBUG
+        // Verify tokens are pending
+        let availableSlotsBefore = mutableState.tokenExecutor.testAvailableSlots
+        let totalSlots = mutableState.tokenExecutor.testTotalSlots
+        XCTAssertLessThan(availableSlotsBefore, totalSlots,
+                          "Should have queued tokens before enabling (consumed slots)")
+
+        // Record execution count before enabling
+        let executionCountBefore = mutableState.tokenExecutor.testExecuteTurnCompletedCount
+        #endif
+
+        // Enable terminal - this calls scheduleTokenExecution internally
         mutableState.terminalEnabled = true
         waitForMutationQueue()
 
-        // Verify the state is correct after enabling
         XCTAssertTrue(mutableState.terminalEnabled, "terminalEnabled should be true after setting")
-        // The scheduleTokenExecution call happens within setTerminalEnabled:
-        // We verify this by checking that the state transition succeeded without errors
+
+        #if ITERM_DEBUG
+        // Wait for and verify execution occurred
+        let executionOccurred = waitForCondition({
+            mutableState.tokenExecutor.testExecuteTurnCompletedCount > executionCountBefore
+        }, timeout: 2.0)
+
+        XCTAssertTrue(executionOccurred,
+                      "setTerminalEnabled:YES should trigger token execution via scheduleTokenExecution. " +
+                      "ExecutionCountBefore: \(executionCountBefore), " +
+                      "ExecutionCountAfter: \(mutableState.tokenExecutor.testExecuteTurnCompletedCount)")
+        #endif
 
         // Cleanup
         mutableState.terminalEnabled = false

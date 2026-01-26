@@ -426,6 +426,26 @@ private class TokenExecutorImpl {
     private(set) var isExecutingToken = false
     weak var delegate: TokenExecutorDelegate?
 
+    // MARK: - Test Tracking (ITERM_DEBUG only)
+    #if ITERM_DEBUG
+    /// Atomic counter: total number of times executeTurn was called
+    private let _testExecuteTurnCallCount = iTermAtomicInt64Create()
+    /// Atomic counter: number of times executeTurn completed without being blocked
+    private let _testExecuteTurnCompletedCount = iTermAtomicInt64Create()
+    /// Atomic counter: total number of token arrays consumed across all executions
+    private let _testTokenArraysConsumedCount = iTermAtomicInt64Create()
+
+    var testExecuteTurnCallCount: Int64 { iTermAtomicInt64Get(_testExecuteTurnCallCount) }
+    var testExecuteTurnCompletedCount: Int64 { iTermAtomicInt64Get(_testExecuteTurnCompletedCount) }
+    var testTokenArraysConsumedCount: Int64 { iTermAtomicInt64Get(_testTokenArraysConsumedCount) }
+
+    func testResetCounters() {
+        _ = iTermAtomicInt64GetAndReset(_testExecuteTurnCallCount)
+        _ = iTermAtomicInt64GetAndReset(_testExecuteTurnCompletedCount)
+        _ = iTermAtomicInt64GetAndReset(_testTokenArraysConsumedCount)
+    }
+    #endif
+
     /// Closure called when backpressure transitions from heavy to lighter.
     var backpressureReleaseHandler: (() -> Void)?
 
@@ -522,6 +542,11 @@ private class TokenExecutorImpl {
 #if DEBUG
         assertQueue()
 #endif
+
+        #if ITERM_DEBUG
+        iTermAtomicInt64Add(_testExecuteTurnCallCount, 1)
+        #endif
+
         // Check if we're blocked (paused, copy mode, etc.)
         if let delegate = delegate, delegate.tokenExecutorShouldQueueTokens() {
             completion(.blocked)
@@ -538,6 +563,9 @@ private class TokenExecutorImpl {
 
         guard let delegate = delegate else {
             tokenQueue.removeAll()
+            #if ITERM_DEBUG
+            iTermAtomicInt64Add(_testExecuteTurnCompletedCount, 1)
+            #endif
             completion(.completed)
             return
         }
@@ -570,6 +598,11 @@ private class TokenExecutorImpl {
             tokensConsumed += groupTokenCount
             groupsExecuted += 1
 
+            #if ITERM_DEBUG
+            // Track token arrays consumed (one per group iteration)
+            iTermAtomicInt64Add(self._testTokenArraysConsumedCount, Int64(group.arrays.count))
+            #endif
+
             return shouldContinue && !self.isPaused
         }
 
@@ -578,6 +611,10 @@ private class TokenExecutorImpl {
                                              lengthExcludingInBandSignaling: accumulatedLength.excludingInBandSignaling,
                                              throughput: throughputEstimator.estimatedThroughput)
         }
+
+        #if ITERM_DEBUG
+        iTermAtomicInt64Add(_testExecuteTurnCompletedCount, 1)
+        #endif
 
         // Report back to scheduler
         let hasMoreWork = !tokenQueue.isEmpty || taskQueue.count > 0
@@ -996,6 +1033,27 @@ extension TokenExecutor {
     /// Test-only: Returns the total slots capacity for computing expected values.
     @objc var testTotalSlots: Int {
         return totalSlots
+    }
+
+    /// Test-only: Total number of times executeTurn was called (includes blocked calls).
+    @objc var testExecuteTurnCallCount: Int64 {
+        return impl.testExecuteTurnCallCount
+    }
+
+    /// Test-only: Number of times executeTurn completed without being blocked.
+    /// This increments only when actual token execution happens.
+    @objc var testExecuteTurnCompletedCount: Int64 {
+        return impl.testExecuteTurnCompletedCount
+    }
+
+    /// Test-only: Total number of token arrays consumed across all executions.
+    @objc var testTokenArraysConsumedCount: Int64 {
+        return impl.testTokenArraysConsumedCount
+    }
+
+    /// Test-only: Reset all test counters to zero.
+    @objc func testResetCounters() {
+        impl.testResetCounters()
     }
 }
 #endif
