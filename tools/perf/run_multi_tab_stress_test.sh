@@ -7,9 +7,9 @@ source "$script_dir_early/tmux_wrapper.sh"
 
 usage() {
   cat <<'USAGE'
-Usage: run_multi_tab_stress_test.sh [OPTIONS] /path/to/iTerm2.app [duration]
+Usage: run_multi_tab_stress_test.sh [OPTIONS] /path/to/iTerm2.app
 
-Opens iTerm2, starts a single profiler, creates N tabs running stress_load.py
+Opens iTerm2, starts a single profiler, creates N tabs running a stress load
 for the specified duration (default 20 seconds), waits for completion, then
 analyzes the profile output.
 
@@ -22,7 +22,8 @@ Options:
 
   --inject       Enable interaction injection during stress test. Performs
                  tab switches, focus toggles, and keyboard input to exercise
-                 latency instrumentation code paths.
+                 latency instrumentation code paths. Requires synchronized
+                 start (the default).
 
   --dtrace       Enable enhanced DTrace UX metrics collection. Measures:
                    - Apparent frame rate (content updates vs cadence refreshes)
@@ -30,13 +31,21 @@ Options:
                    - Lock contention (joined thread time)
                  Requires root privileges.
 
-  --mode=MODES   Comma-separated list of stress test modes. Time-sliced equally
-                 across the duration. Available modes:
-                   normal     - excludes patterns with clear/erase sequences (default)
+  --mode=MODE    Stress test mode. Available modes:
+
+                 Terminal output stress (stress_load.py):
+                   normal     - mixed output patterns, no screen clears (default)
+                   buffer     - long lines (~600 chars), stresses line buffers
                    clearcodes - all patterns including clear/erase sequences
-                   buffer     - very long lines (~600 chars), no clears
                    flood      - maximum throughput using 'yes' (no throttling)
-                   all        - runs normal, buffer, clearcodes (mutually exclusive)
+                   all        - runs normal, buffer, clearcodes in sequence
+
+                 Dashboard/UI stress (load_dashboard.py):
+                   htop       - CPU meters + scrolling process list
+                   watch      - full-screen clear + redraw every 100ms
+                   progress   - 20 progress bars updating in place
+                   table      - fixed header + scroll region body
+                   status     - grid of color-coded service status cells
 
   --title[=MS]   Inject OSC 0 title changes every MS milliseconds (default 2000ms).
                  Exercises TitleUpdate and TabTitleUpdate latency instrumentation.
@@ -45,6 +54,12 @@ Options:
                  Example: --tabs=1,3,5,10
                  Runs a separate test for each count and shows a summary table.
                  If not specified, defaults to 10 tabs.
+
+  -t, --time=SEC Duration in seconds (default: 20).
+
+  --fps=N        Target frame rate for dashboard modes (default: 30).
+                 Use 0 for unthrottled (as fast as possible).
+                 Ignored for stress modes (normal, buffer, clearcodes, flood).
 
   --speed=SPEED  Output speed: normal (default) or slow.
                  slow: adds 100ms delay after each output iteration.
@@ -58,9 +73,8 @@ Options:
                  Useful for ensuring clean test termination.
 
   --load-script=PATH
-                 Use a custom load generator script instead of stress_load.py.
+                 Use a custom load generator script instead of the built-in ones.
                  The script must accept: duration label --sync-dir DIR [--mode=X]
-                 Example: --load-script=load_dashboard.py
 
 USAGE
 }
@@ -75,7 +89,9 @@ title_arg=""  # empty = disabled, value = milliseconds
 stress_mode=""
 tabs_arg=""
 speed_arg="normal"
+fps_arg=""  # empty = use default 30fps
 load_script_arg=""  # empty = use default stress_load.py
+duration_arg=""  # empty = use default 20s
 positional_args=()
 
 while [[ $# -gt 0 ]]; do
@@ -137,6 +153,26 @@ while [[ $# -gt 0 ]]; do
       fi
       shift
       ;;
+    --fps=*)
+      fps_arg="${1#--fps=}"
+      if ! [[ "$fps_arg" =~ ^[0-9]*\.?[0-9]+$ ]]; then
+        echo "Error: --fps must be a non-negative number, got '$fps_arg'" >&2
+        exit 1
+      fi
+      shift
+      ;;
+    --time=*)
+      duration_arg="${1#--time=}"
+      shift
+      ;;
+    -t)
+      if [[ $# -lt 2 ]]; then
+        echo "Error: -t requires a value" >&2
+        exit 1
+      fi
+      duration_arg="$2"
+      shift 2
+      ;;
     -h|--help)
       usage
       exit 0
@@ -154,6 +190,7 @@ set -- "${positional_args[@]}"
 if [[ "$tmux_mode" == true ]]; then
   tmux_ensure_wrapped --tmux ${stress_mode:+"$stress_mode"} \
     ${title_arg:+--title="$title_arg"} ${tabs_arg:+--tabs="$tabs_arg"} \
+    ${duration_arg:+--time="$duration_arg"} \
     ${speed_arg:+--speed="$speed_arg"} ${load_script_arg:+--load-script="$load_script_arg"} \
     $([[ "$inject_mode" == true ]] && echo "--inject") \
     $([[ "$dtrace_mode" == true ]] && echo "--dtrace") \
@@ -162,26 +199,37 @@ if [[ "$tmux_mode" == true ]]; then
     "${positional_args[@]}"
 fi
 
-# Validate stress modes if specified (only for default stress_load.py)
-if [[ -n "$stress_mode" && -z "$load_script_arg" ]]; then
-  valid_modes="simple normal clearcodes buffer flood all"
+# Valid modes (all handled by stress_load.py)
+valid_modes="normal buffer clearcodes flood htop watch progress table status all"
+
+# Validate mode(s) if specified
+if [[ -n "$stress_mode" ]]; then
   mode_value="${stress_mode#--mode=}"
-  IFS=',' read -ra modes <<< "$mode_value"
-  for mode in "${modes[@]}"; do
-    if [[ ! " $valid_modes " =~ " $mode " ]]; then
-      echo "Error: Invalid mode '$mode'. Valid modes: $valid_modes" >&2
+  IFS=',' read -ra mode_list <<< "$mode_value"
+  for m in "${mode_list[@]}"; do
+    if [[ ! " $valid_modes " =~ " $m " ]]; then
+      echo "Error: Unknown mode '$m'" >&2
+      echo "  Valid modes: $valid_modes" >&2
       exit 1
     fi
   done
 fi
 
-if [[ $# -lt 1 || $# -gt 2 ]]; then
+if [[ $# -lt 1 ]]; then
   usage
   exit 1
 fi
 
 app_path="$1"
-duration="${2:-20}"
+
+# Duration: prefer --time/-t, then positional arg, then default
+if [[ -n "$duration_arg" ]]; then
+  duration="$duration_arg"
+elif [[ $# -ge 2 ]]; then
+  duration="$2"
+else
+  duration=20
+fi
 
 # Parse tab counts
 tab_counts=()
@@ -198,9 +246,8 @@ else
 fi
 
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-# Use custom load script if specified, otherwise default to stress_load.py
+# Determine load script: explicit --load-script or default stress_load.py
 if [[ -n "$load_script_arg" ]]; then
-  # Resolve relative paths against script_dir
   if [[ "$load_script_arg" == /* ]]; then
     load_script="$load_script_arg"
   else
@@ -287,6 +334,7 @@ on run argv
   set stressMode to item 5 of argv
   set titleArg to item 6 of argv
   set speedArg to item 7 of argv
+  set fpsArg to item 8 of argv
 
   tell application "iTerm2"
       activate
@@ -316,6 +364,9 @@ on run argv
         end if
         if speedArg is not "" and speedArg is not "normal" then
           set cmd to cmd & " --speed=" & speedArg
+        end if
+        if fpsArg is not "" then
+          set cmd to cmd & " --fps=" & fpsArg
         end if
         set cmd to cmd & "; exit"
         tell theSession to write text cmd
@@ -357,6 +408,7 @@ on run argv
   set stressMode to item 3 of argv
   set titleArg to item 4 of argv
   set speedArg to item 5 of argv
+  set fpsArg to item 6 of argv
 
   tell application "iTerm2"
       activate
@@ -381,6 +433,9 @@ on run argv
         end if
         if speedArg is not "" and speedArg is not "normal" then
           set cmd to cmd & " --speed=" & speedArg
+        end if
+        if fpsArg is not "" then
+          set cmd to cmd & " --fps=" & fpsArg
         end if
         tell theSession to write text cmd
       end repeat
@@ -475,8 +530,8 @@ run_single_test() {
 
   echo "Launching $tab_count tabs, each running stress test for $duration seconds..."
 
-  # Launch tabs with stress_load.py (in background so we can coordinate sync)
-  osascript "$applescript_file" "$tab_count" "$load_script" "$duration" "${sync_dir:-}" "$stress_mode" "$title_arg" "$speed_arg" &
+  # Launch tabs with load script (in background so we can coordinate sync)
+  osascript "$applescript_file" "$tab_count" "$load_script" "$duration" "${sync_dir:-}" "$stress_mode" "$title_arg" "$speed_arg" "$fps_arg" &
   local applescript_pid=$!
 
   # If sync mode, wait for all ready signals, start profiler, then send go signal
@@ -1070,7 +1125,7 @@ run_forever() {
   echo "Launching $tab_count tabs with stress load..."
 
   # Launch tabs (runs in background)
-  osascript "$applescript_forever_file" "$tab_count" "$load_script" "$stress_mode" "$title_arg" "$speed_arg" &
+  osascript "$applescript_forever_file" "$tab_count" "$load_script" "$stress_mode" "$title_arg" "$speed_arg" "$fps_arg" &
   local applescript_pid=$!
 
   # Wait for AppleScript to finish launching tabs
@@ -1095,9 +1150,11 @@ echo "Inject interactions: $inject_mode"
 echo "DTrace mode: $dtrace_mode"
 echo "Tmux wrapped: $tmux_mode"
 echo "Speed: $speed_arg"
-[[ -n "$load_script_arg" ]] && echo "Load script: $load_script"
+if [[ -n "$stress_mode" ]]; then
+  echo "Mode: ${stress_mode#--mode=}"
+fi
+echo "Load script: $(basename "$load_script")"
 [[ -n "$title_arg" ]] && echo "Title injection: ${title_arg}ms"
-[[ -n "$stress_mode" ]] && echo "Stress mode: $stress_mode"
 
 # Run forever mode or normal mode
 if [[ "$forever_mode" == true ]]; then

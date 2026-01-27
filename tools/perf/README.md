@@ -5,7 +5,7 @@ Scripts for stress testing and profiling iTerm2 builds with latency instrumentat
 ## Quick Start
 
 ```bash
-# Basic test (10 tabs, 20 seconds)
+# Basic test (10 tabs, 20 seconds, normal mode)
 ./run_multi_tab_stress_test.sh /path/to/iTerm2.app
 
 # Compare behavior across tab counts
@@ -20,14 +20,14 @@ Scripts for stress testing and profiling iTerm2 builds with latency instrumentat
 # With tmux wrapping (crash-safe cleanup)
 ./run_multi_tab_stress_test.sh --tmux /path/to/iTerm2.app
 
-# Htop-style dashboard load (default mode)
-./run_multi_tab_stress_test.sh --load-script=load_dashboard.py --mode=htop /path/to/iTerm2.app
+# Htop-style dashboard load
+./run_multi_tab_stress_test.sh --mode=htop /path/to/iTerm2.app
 
 # Progress bars stress test
-./run_multi_tab_stress_test.sh --load-script=load_dashboard.py --mode=progress /path/to/iTerm2.app
+./run_multi_tab_stress_test.sh --mode=progress /path/to/iTerm2.app
 
 # Status grid with tmux wrapping
-./run_multi_tab_stress_test.sh --tmux --load-script=load_dashboard.py --mode=status /path/to/iTerm2.app
+./run_multi_tab_stress_test.sh --tmux --mode=status /path/to/iTerm2.app
 ```
 
 ## Scripts
@@ -35,8 +35,7 @@ Scripts for stress testing and profiling iTerm2 builds with latency instrumentat
 | Script | Purpose |
 |--------|---------|
 | `run_multi_tab_stress_test.sh` | Main test harness - opens iTerm2, creates tabs, runs stress load, profiles |
-| `stress_load.py` | Generates terminal output to stress rendering |
-| `load_dashboard.py` | Dashboard/htop-style load generator with cursor positioning |
+| `stress_load.py` | Unified load generator - terminal output stress and dashboard modes |
 | `analyze_profile.py` | Analyzes `sample` profiler output for hotspots |
 | `iterm_ux_metrics_v2.d` | DTrace script for frame rate and latency metrics |
 | `tmux_wrapper.sh` | Library for auto-cleanup tmux session wrapping |
@@ -44,38 +43,62 @@ Scripts for stress testing and profiling iTerm2 builds with latency instrumentat
 ## Options
 
 ```
+-t, --time=SEC    Duration in seconds (default: 20)
 --tabs=N,M,...    Tab counts to test (runs separate test for each)
 --title[=MS]      Inject OSC 0 title changes (default: every 2000ms)
+--fps=N           Target frame rate for dashboard modes (default: 30, 0 = unthrottled)
+                  Accepts decimals (e.g., 0.5). Ignored for stress modes.
 --dtrace          Enable DTrace UX metrics (requires sudo)
 --inject          Enable interaction injection (tab switches, keyboard input)
---mode=MODE       Stress mode: normal, buffer, clearcodes, all
+--mode=MODES      Stress mode(s), comma-separated (see Modes below)
 --speed=SPEED     Output speed: normal or slow
 --tmux            Wrap test in auto-cleanup tmux session
---load-script=PATH  Use custom load generator (default: stress_load.py)
+--load-script=PATH  Use custom load generator (for non-built-in scripts)
 --forever         Run indefinitely without profiling
 ```
 
-## Load Generators
+## Modes
 
-### stress_load.py (default)
-Generates various terminal output patterns to exercise text processing:
-- Plain ASCII, ANSI colors, wide characters (CJK)
-- RTL text (bidi processing), emoji, combining characters
-- Control characters, hyperlinks, box drawing
+The `--mode` flag selects the stress pattern. Multiple modes can be comma-separated
+and will run sequentially, time-sliced within a single test.
 
-### load_dashboard.py
-Dashboard-style displays that stress cursor positioning and partial updates.
-Runs at ~30fps, uses alternate screen mode (restores terminal on exit).
+### Terminal Output Stress (unthrottled)
+
+| Mode | Description |
+|------|-------------|
+| `normal` | Mixed output patterns (ASCII, CJK, emoji, bidi), no screen clears (default) |
+| `buffer` | Long lines (~600 chars), stresses line buffer handling |
+| `clearcodes` | All patterns including screen clear/erase sequences |
+| `flood` | Maximum throughput using `yes` command |
+
+### Dashboard/UI Stress (throttled by --fps, default 30)
 
 | Mode | Description | Code Paths Stressed |
 |------|-------------|---------------------|
 | `htop` | CPU meters + scrolling process list | Scroll regions, partial updates, color bars |
-| `watch` | Full-screen clear + redraw every 100ms | Burst rendering, screen clear, cursor home |
+| `watch` | Full-screen clear + redraw | Burst rendering, screen clear, cursor home |
 | `progress` | 20 progress bars updating in place | Cursor positioning, same-line overwrites |
 | `table` | Fixed header + scroll region body | Scroll regions, selective scroll |
-| `status` | Grid of color-coded service status | Frequent SGR changes, partial cell updates |
+| `status` | Grid of color-coded service status cells | Frequent SGR changes, partial cell updates |
 
-Usage: `--load-script=load_dashboard.py --mode=htop`
+### Special
+
+| Mode | Description |
+|------|-------------|
+| `all` | Runs all 8 modes sequentially within a single test |
+
+### Examples
+
+```bash
+# All dashboard modes at 120fps
+./run_multi_tab_stress_test.sh --mode=htop,watch,progress,table,status --fps=120 -t 50 /path/to/iTerm2.app
+
+# Mix stress and dashboard modes
+./run_multi_tab_stress_test.sh --mode=normal,htop,buffer -t 30 /path/to/iTerm2.app
+
+# Dashboard unthrottled (as fast as possible)
+./run_multi_tab_stress_test.sh --mode=htop --fps=0 /path/to/iTerm2.app
+```
 
 ## Tmux Wrapping
 
