@@ -64,8 +64,11 @@ class FairnessScheduler: NSObject {
     // MARK: - Registration
 
     /// Register an executor with the scheduler. Returns a stable session ID.
-    /// Thread-safe: may be called from any thread.
+    /// Thread-safe: may be called from any thread, EXCEPT the mutation queue
+    /// (would deadlock due to sync dispatch).
     @objc func register(_ executor: FairnessSchedulerExecutor) -> SessionID {
+        // Catch deadlock-prone pattern: calling sync from within mutation queue
+        dispatchPrecondition(condition: .notOnQueue(iTermGCD.mutationQueue()))
         return iTermGCD.mutationQueue().sync {
             let sessionId = nextSessionId
             nextSessionId += 1

@@ -250,17 +250,18 @@ final class IntegrationAutomaticSchedulingTests: XCTestCase {
         }
         mutableState.tokenExecutor.addTokens(vector, lengthTotal: 50, lengthExcludingInBandSignaling: 50)
 
-        // Wait for automatic execution to occur
+        // Drain mutation queue to let execution complete - deterministic, no polling
         #if ITERM_DEBUG
-        let executionOccurred = waitForCondition({
-            mutableState.tokenExecutor.testExecuteTurnCompletedCount > 0
-        }, timeout: 2.0)
+        // Sync mutation queue multiple times to ensure all async work completes
+        for _ in 0..<10 {
+            waitForMutationQueue()
+        }
 
-        XCTAssertTrue(executionOccurred,
+        XCTAssertGreaterThan(mutableState.tokenExecutor.testExecuteTurnCompletedCount, 0,
                       "addTokens() should automatically trigger execution via notifyScheduler(). " +
                       "ExecutionCount: \(mutableState.tokenExecutor.testExecuteTurnCompletedCount)")
 
-        // Also verify tokens were consumed (slots restored)
+        // Also verify tokens were consumed (slots restored) - the deterministic assertion
         let availableSlots = mutableState.tokenExecutor.testAvailableSlots
         let totalSlots = mutableState.tokenExecutor.testTotalSlots
         XCTAssertEqual(availableSlots, totalSlots,
@@ -310,7 +311,7 @@ final class IntegrationAutomaticSchedulingTests: XCTestCase {
         #endif
 
         // Add tokens in multiple batches - each should trigger scheduling
-        for batch in 0..<3 {
+        for _ in 0..<3 {
             var vector = CVector()
             CVectorCreate(&vector, 5)
             for _ in 0..<5 {
@@ -319,21 +320,19 @@ final class IntegrationAutomaticSchedulingTests: XCTestCase {
                 CVectorAppendVT100Token(&vector, token)
             }
             mutableState.tokenExecutor.addTokens(vector, lengthTotal: 50, lengthExcludingInBandSignaling: 50)
-
-            // Small delay between batches to allow some async processing
-            if batch < 2 {
-                Thread.sleep(forTimeInterval: 0.01)
-            }
+            // No delay needed - queue sync is deterministic
         }
 
-        // Wait for all tokens to be consumed
+        // Drain mutation queue to let all execution complete - deterministic, no polling
         #if ITERM_DEBUG
-        let allConsumed = waitForCondition({
-            mutableState.tokenExecutor.testAvailableSlots == mutableState.tokenExecutor.testTotalSlots
-        }, timeout: 2.0)
+        for _ in 0..<10 {
+            waitForMutationQueue()
+        }
 
-        XCTAssertTrue(allConsumed,
-                      "All tokens from multiple addTokens() calls should be automatically consumed")
+        // Verify all tokens were consumed via slot accounting
+        XCTAssertEqual(mutableState.tokenExecutor.testAvailableSlots,
+                       mutableState.tokenExecutor.testTotalSlots,
+                       "All tokens from multiple addTokens() calls should be automatically consumed")
 
         // Verify at least one execution occurred
         XCTAssertGreaterThan(mutableState.tokenExecutor.testExecuteTurnCompletedCount, 0,
@@ -416,13 +415,13 @@ final class IntegrationRekickTests: XCTestCase {
         XCTAssertFalse(mutableState.taskPaused, "taskPaused should be false after unpausing")
 
         #if ITERM_DEBUG
-        // Step 6: Wait for execution to complete (use polling since scheduler is async)
-        let executionOccurred = waitForCondition({
-            mutableState.tokenExecutor.testExecuteTurnCompletedCount > executionCountBefore
-        }, timeout: 2.0)
+        // Step 6: Drain mutation queue deterministically
+        for _ in 0..<10 {
+            waitForMutationQueue()
+        }
 
         // Step 7: Verify execution occurred
-        XCTAssertTrue(executionOccurred,
+        XCTAssertGreaterThan(mutableState.tokenExecutor.testExecuteTurnCompletedCount, executionCountBefore,
                       "scheduleTokenExecution after unpausing should trigger token execution. " +
                       "ExecutionCountBefore: \(executionCountBefore), " +
                       "ExecutionCountAfter: \(mutableState.tokenExecutor.testExecuteTurnCompletedCount)")
@@ -496,12 +495,12 @@ final class IntegrationRekickTests: XCTestCase {
         XCTAssertFalse(mutableState.shortcutNavigationMode, "shortcutNavigationMode should be false")
 
         #if ITERM_DEBUG
-        // Step 5: Wait for and verify execution occurred
-        let executionOccurred = waitForCondition({
-            mutableState.tokenExecutor.testExecuteTurnCompletedCount > executionCountBefore
-        }, timeout: 2.0)
+        // Step 5: Drain mutation queue and verify execution occurred
+        for _ in 0..<10 {
+            waitForMutationQueue()
+        }
 
-        XCTAssertTrue(executionOccurred,
+        XCTAssertGreaterThan(mutableState.tokenExecutor.testExecuteTurnCompletedCount, executionCountBefore,
                       "scheduleTokenExecution after shortcut nav complete should trigger token execution. " +
                       "ExecutionCountBefore: \(executionCountBefore), " +
                       "ExecutionCountAfter: \(mutableState.tokenExecutor.testExecuteTurnCompletedCount)")
@@ -562,12 +561,12 @@ final class IntegrationRekickTests: XCTestCase {
         waitForMutationQueue()
 
         #if ITERM_DEBUG
-        // Wait for and verify execution occurred
-        let executionOccurred = waitForCondition({
-            mutableState.tokenExecutor.testExecuteTurnCompletedCount > executionCountBefore
-        }, timeout: 2.0)
+        // Drain mutation queue and verify execution occurred
+        for _ in 0..<10 {
+            waitForMutationQueue()
+        }
 
-        XCTAssertTrue(executionOccurred,
+        XCTAssertGreaterThan(mutableState.tokenExecutor.testExecuteTurnCompletedCount, executionCountBefore,
                       "setTerminalEnabled:YES should trigger token execution. " +
                       "ExecutionCountBefore: \(executionCountBefore), " +
                       "ExecutionCountAfter: \(mutableState.tokenExecutor.testExecuteTurnCompletedCount)")
@@ -641,12 +640,12 @@ final class IntegrationRekickTests: XCTestCase {
         XCTAssertFalse(mutableState.copyMode, "copyMode should be false after exit")
 
         #if ITERM_DEBUG
-        // Step 5: Wait for and verify execution occurred
-        let executionOccurred = waitForCondition({
-            mutableState.tokenExecutor.testExecuteTurnCompletedCount > executionCountBefore
-        }, timeout: 2.0)
+        // Step 5: Drain mutation queue and verify execution occurred
+        for _ in 0..<10 {
+            waitForMutationQueue()
+        }
 
-        XCTAssertTrue(executionOccurred,
+        XCTAssertGreaterThan(mutableState.tokenExecutor.testExecuteTurnCompletedCount, executionCountBefore,
                       "scheduleTokenExecution after copy mode exit should trigger token execution. " +
                       "ExecutionCountBefore: \(executionCountBefore), " +
                       "ExecutionCountAfter: \(mutableState.tokenExecutor.testExecuteTurnCompletedCount)")
@@ -708,12 +707,12 @@ final class IntegrationRekickTests: XCTestCase {
         XCTAssertTrue(mutableState.terminalEnabled, "terminalEnabled should be true after setting")
 
         #if ITERM_DEBUG
-        // Wait for and verify execution occurred
-        let executionOccurred = waitForCondition({
-            mutableState.tokenExecutor.testExecuteTurnCompletedCount > executionCountBefore
-        }, timeout: 2.0)
+        // Drain mutation queue and verify execution occurred
+        for _ in 0..<10 {
+            waitForMutationQueue()
+        }
 
-        XCTAssertTrue(executionOccurred,
+        XCTAssertGreaterThan(mutableState.tokenExecutor.testExecuteTurnCompletedCount, executionCountBefore,
                       "setTerminalEnabled:YES should trigger token execution via scheduleTokenExecution. " +
                       "ExecutionCountBefore: \(executionCountBefore), " +
                       "ExecutionCountAfter: \(mutableState.tokenExecutor.testExecuteTurnCompletedCount)")
@@ -805,10 +804,9 @@ final class IntegrationBackgroundForegroundFairnessTests: XCTestCase {
             session.state.scheduleTokenExecution()
         }
 
-        // Sync multiple times to let execution complete
-        for _ in 0..<20 {
-            waitForMutationQueue()
-        }
+        // Wait for quiescence using iteration-based approach (deterministic, no timeout)
+        let iterations = waitForSchedulerQuiescence(maxIterations: 100)
+        XCTAssertNotEqual(iterations, -1, "Scheduler should reach quiescence within 100 iterations")
 
         // Get execution history
         let history = FairnessScheduler.shared.testGetAndClearExecutionHistory()
@@ -915,10 +913,9 @@ final class IntegrationBackgroundForegroundFairnessTests: XCTestCase {
             session.state.scheduleTokenExecution()
         }
 
-        // Let execution complete
-        for _ in 0..<20 {
-            waitForMutationQueue()
-        }
+        // Wait for quiescence using iteration-based approach (deterministic, no timeout)
+        let iterations = waitForSchedulerQuiescence(maxIterations: 100)
+        XCTAssertNotEqual(iterations, -1, "Scheduler should reach quiescence within 100 iterations")
 
         // Verify via execution history
         let history = FairnessScheduler.shared.testGetAndClearExecutionHistory()
@@ -1166,10 +1163,14 @@ final class IntegrationDispatchSourceActivationTests: XCTestCase {
         }
         executor.schedule()
 
-        // Drain queue multiple times to let consumption happen
-        for _ in 0..<20 {
+        // Wait until all tokens consumed (deterministic, iteration-based)
+        var iterations = 0
+        let maxIterations = 100
+        while executor.testAvailableSlots < executor.testTotalSlots && iterations < maxIterations {
             waitForMutationQueue()
+            iterations += 1
         }
+        XCTAssertLessThan(iterations, maxIterations, "Should consume all tokens within \(maxIterations) iterations")
 
         // Handler should have been called when crossing out of heavy backpressure
         let finalCount = handlerCallCount.value
