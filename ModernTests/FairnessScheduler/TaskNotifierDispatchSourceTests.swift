@@ -773,11 +773,11 @@ final class CoprocessDataFlowBridgeTests: XCTestCase {
         let testData = testMessage.data(using: .utf8)!
         task.write(testData)
 
-        // Verify data was added to writeBuffer
-        XCTAssertTrue(task.testWriteBufferHasData,
-                      "writeTask should add data to writeBuffer")
+        // NOTE: We cannot assert testWriteBufferHasData here because it's racy.
+        // The write dispatch source may have already drained the buffer to the pipe.
+        // Instead, we verify data appears on the pipe (below).
 
-        // Wait for write source to drain the buffer
+        // Wait for write source to drain the buffer to the pipe
         task.testWaitForIOQueue()
 
         // Read from the PTY pipe to verify data was written
@@ -876,6 +876,99 @@ final class CoprocessDataFlowBridgeTests: XCTestCase {
         if let receivedString = String(data: receivedData, encoding: .utf8) {
             XCTAssertEqual(receivedString, testMessage,
                           "PTY should receive the coprocess output")
+        }
+        #else
+        throw XCTSkip("Test requires ITERM_DEBUG build")
+        #endif
+    }
+
+    // MARK: - Gap 3: TaskNotifier Coprocess Write FD Handling
+
+    func testCoprocessWriteFdProcessedBySelect() throws {
+        // GAP 3: Verify TaskNotifier calls [coprocess write] when coprocess has outgoing data.
+        // The flow is:
+        //   1. Coprocess.outputBuffer has data (wantToWrite=YES)
+        //   2. TaskNotifier adds coprocess.writeFileDescriptor to select()'s wfds
+        //   3. When fd is writable, TaskNotifier calls [coprocess write]
+        //   4. Data flows from outputBuffer to the fd
+        //
+        // We verify by reading from MockCoprocess.testReadFd after the select() runs.
+
+        #if ITERM_DEBUG
+        // Create a mock task with a pipe
+        guard let (mockTask, writeFd) = createMockPipeTask() else {
+            XCTFail("Failed to create mock pipe task")
+            return
+        }
+        defer {
+            mockTask.closeFd()
+            close(writeFd)
+        }
+
+        // Configure as dispatch source task (the PTY I/O is handled by dispatch source,
+        // but coprocess FDs still go through select())
+        mockTask.dispatchSourceEnabled = true
+        mockTask.hasCoprocess = true
+        mockTask.writeBufferHasRoom = true
+
+        // Create MockCoprocess
+        guard let coprocess = MockCoprocess.createPipe() else {
+            XCTFail("Failed to create MockCoprocess")
+            return
+        }
+        defer {
+            coprocess.closeTestFds()
+            coprocess.terminate()
+        }
+
+        // Attach coprocess to task
+        mockTask.coprocess = coprocess
+
+        // Put data in coprocess.outputBuffer - this makes wantToWrite return YES
+        let testMessage = "Outgoing coprocess data!"
+        let testData = testMessage.data(using: .utf8)!
+        coprocess.outputBuffer.append(testData)
+
+        // Verify wantToWrite is true before we register
+        XCTAssertTrue(coprocess.wantToWrite(), "Coprocess should wantToWrite when outputBuffer has data")
+
+        // Register with TaskNotifier
+        let notifier = TaskNotifier.sharedInstance()
+        notifier?.register(mockTask)
+        defer { notifier?.deregister(mockTask) }
+
+        // Wait for registration
+        waitForMainQueue()
+
+        // Unblock to wake select loop
+        notifier?.unblock()
+
+        // Wait for select() to process the coprocess write fd
+        // The data should be written from outputBuffer to writeFileDescriptor
+        var receivedData = Data()
+        var buffer = [UInt8](repeating: 0, count: 1024)
+
+        // Make testReadFd non-blocking
+        let flags = fcntl(coprocess.testReadFd, F_GETFL)
+        fcntl(coprocess.testReadFd, F_SETFL, flags | O_NONBLOCK)
+
+        // Poll for data with iteration-based waiting
+        for _ in 0..<50 {
+            waitForMainQueue()
+            let bytesRead = Darwin.read(coprocess.testReadFd, &buffer, buffer.count)
+            if bytesRead > 0 {
+                receivedData.append(contentsOf: buffer[0..<bytesRead])
+            }
+            if receivedData.count >= testData.count { break }
+            Thread.sleep(forTimeInterval: 0.01)
+        }
+
+        XCTAssertEqual(receivedData.count, testData.count,
+                      "TaskNotifier select() should call [coprocess write] draining outputBuffer to fd")
+
+        if let receivedString = String(data: receivedData, encoding: .utf8) {
+            XCTAssertEqual(receivedString, testMessage,
+                          "Data from coprocess.outputBuffer should appear on testReadFd")
         }
         #else
         throw XCTSkip("Test requires ITERM_DEBUG build")

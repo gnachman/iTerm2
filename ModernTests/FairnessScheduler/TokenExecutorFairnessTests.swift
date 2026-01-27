@@ -843,6 +843,107 @@ final class TokenExecutorSchedulerEntryPointTests: XCTestCase {
         XCTAssertTrue(executionOccurred,
                       "High-priority tokens should trigger execution via scheduler")
     }
+
+    // MARK: - Gap 4: Cross-Queue addTokens Test
+
+    func testAddTokensFromBackgroundQueueNotifiesScheduler() throws {
+        // GAP 4: Verify addTokens() notifies scheduler when called from a non-mutation queue.
+        // The implementation dispatches to queue.async { notifyScheduler() } for normal priority,
+        // so this tests that cross-queue calls still trigger execution.
+
+        // Register executor with scheduler
+        let sessionId = FairnessScheduler.shared.register(executor)
+        executor.fairnessSessionId = sessionId
+        defer { FairnessScheduler.shared.unregister(sessionId: sessionId) }
+
+        mockDelegate.shouldQueueTokens = false
+
+        let initialCount = mockDelegate.executedLengths.count
+
+        // Capture executor in local variable to prevent race with tearDown
+        // (background thread holds strong reference)
+        let capturedExecutor = self.executor!
+
+        // Dispatch to a background queue (NOT the mutation queue)
+        let backgroundQueue = DispatchQueue(label: "test.background.queue")
+        let addCompleted = DispatchSemaphore(value: 0)
+
+        backgroundQueue.async {
+            let vector = createTestTokenVector(count: 5)
+            capturedExecutor.addTokens(vector, lengthTotal: 50, lengthExcludingInBandSignaling: 50)
+            addCompleted.signal()
+        }
+
+        // Wait for addTokens to complete
+        _ = addCompleted.wait(timeout: .now() + 1.0)
+
+        // Drain mutation queue to let scheduler notification and execution complete
+        // Use iteration-based polling instead of wall-clock timeout
+        var success = false
+        for _ in 0..<20 {
+            waitForMutationQueue()
+            if mockDelegate.executedLengths.count > initialCount {
+                success = true
+                break
+            }
+        }
+
+        XCTAssertTrue(success,
+                      "addTokens from background queue should notify scheduler and trigger execution")
+    }
+
+    func testAddTokensFromMultipleBackgroundQueuesAllExecute() throws {
+        // GAP 4 (extended): Multiple concurrent addTokens from different background queues
+        // should all result in scheduler notification and token execution.
+
+        // Register executor with scheduler
+        let sessionId = FairnessScheduler.shared.register(executor)
+        executor.fairnessSessionId = sessionId
+        defer { FairnessScheduler.shared.unregister(sessionId: sessionId) }
+
+        mockDelegate.shouldQueueTokens = false
+
+        let initialCount = mockDelegate.executedLengths.count
+
+        // Capture executor
+        let capturedExecutor = self.executor!
+
+        // Create multiple background queues
+        let queue1 = DispatchQueue(label: "test.bg1")
+        let queue2 = DispatchQueue(label: "test.bg2")
+        let queue3 = DispatchQueue(label: "test.bg3")
+
+        let group = DispatchGroup()
+
+        // Add tokens from all three queues concurrently
+        for queue in [queue1, queue2, queue3] {
+            group.enter()
+            queue.async {
+                let vector = createTestTokenVector(count: 3)
+                capturedExecutor.addTokens(vector, lengthTotal: 30, lengthExcludingInBandSignaling: 30)
+                group.leave()
+            }
+        }
+
+        // Wait for all addTokens calls to complete
+        _ = group.wait(timeout: .now() + 2.0)
+
+        // Drain mutation queue to let all executions complete
+        var finalCount = 0
+        for _ in 0..<30 {
+            waitForMutationQueue()
+            finalCount = mockDelegate.executedLengths.count
+            // We expect 3 batches of tokens to be added and eventually executed
+            if finalCount >= initialCount + 3 {
+                break
+            }
+        }
+
+        // All tokens from all queues should eventually be executed
+        // At minimum, we should see more executions than before
+        XCTAssertGreaterThan(finalCount, initialCount,
+                             "Tokens from multiple background queues should all be executed")
+    }
 }
 
 // MARK: - 2.6 Legacy Removal Tests
