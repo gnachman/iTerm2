@@ -1,0 +1,341 @@
+DTrace mode enabled (using /...
+Multi-Tab Stress Test
+=====================
+App: /...
+Duration: 15s
+Tab counts: 1 2 5
+Synchronized start: true
+Inject interactions: false
+DTrace mode: true
+Tmux wrapped: false
+Speed: normal
+Load script: stress_load.py
+
+Run 1: 1 tab(s), 15s duration
+Synchronized start enabled (sync dir: /tmp/iterm2-perf-sync.NtR95s)
+Found iTerm2 PID: 14927
+Launching 1 tabs, each running stress test for 15 seconds...
+Waiting for all tabs to signal ready...
+All 1 tabs ready.
+Starting profiler for 20 seconds...
+Waiting for DTrace to attach...
+DTrace attached.
+Sending go signal...
+All tabs completed. Waiting for profiler...
+Signaling DTrace to finish...
+
+============================================================
+Iteration Summary
+============================================================
+  Total iterations: 139100
+  Tabs: 1
+  Duration: 15s
+  Rate: 9273 iterations/sec
+============================================================
+
+
+Analyzing profile: /tmp/iterm2_multi_tab_profile_20260127_165839.txt
+
+============================================================
+Profile Summary
+============================================================
+  boolForKey: 8 occurrences
+  intForKey: 9 occurrences
+  objectForKey: 23 occurrences
+  updateConfigurationFields: 22 occurrences
+  NSUserDefaults: 24 occurrences
+  @synchronized: 0 occurrences
+  os_unfair_lock: 30 occurrences
+  StringToScreenChars: 55 occurrences
+  ScreenCharArray: 91 occurrences
+  bidi/Bidi: 18 occurrences
+  VT100Terminal: 106 occurrences
+  executeToken: 19 occurrences
+  Metal: 874 occurrences
+  iTermTextRenderer: 95 occurrences
+============================================================
+
+============================================================
+Category Summary
+============================================================
+  Allocations: 27 occurrences
+  ObjC retain/release: 718 occurrences
+  Autorelease pools: 2 occurrences
+  Strings/Unicode: 802 occurrences
+  CoreText: 240 occurrences
+  CoreGraphics: 468 occurrences
+  AppKit geometry: 1059 occurrences
+  Locks/dispatch: 55 occurrences
+  Terminal parsing: 715 occurrences
+  Rendering: 969 occurrences
+  Process/cache: 48 occurrences
+============================================================
+
+============================================================
+Top iTerm2 Symbols (by sample count)
+============================================================
+  17140  main
+  17140  __40-[iTermSocket listenWithBacklog:accept:]_block_invoke
+  16359  -[TaskNotifier run]
+  85  DYLD-STUB$$objc_release
+  52  DYLD-STUB$$objc_retainAutoreleasedReturnValue
+  44  DYLD-STUB$$objc_retain
+  28  __35-[iTermProcessCache updateIfNeeded]_block_invoke_2
+  22  -[iTermMetalFrameData measureTimeForStat:ofBlock:]
+  21  -[iTermProcessCache reallyUpdate]
+  14  DYLD-STUB$$objc_autoreleaseReturnValue
+  13  iTerm2::Sampler::value_for_percentile(double const&) const
+  10  -[PTYTask fd]
+  10  -[iTermMultiServerJobManager fd]
+  10  <deduplicated_symbol>
+  10  +[iTermPreferences objectForKey:]
+============================================================
+
+Full profile saved to: /tmp/iterm2_multi_tab_profile_20260127_165839.txt
+
+Shutting down test iTerm2...
+
+============================================================
+DTrace UX Metrics (duration: 18s)
+============================================================
+  Adaptive mode:          30fps
+  Content frames:         39947 (lines marked dirty)
+  Refreshes (cadence):    385
+  Metal frames (GPU):     600
+  ---
+  Apparent frame rate:    21 fps (refreshes/sec)
+  Metal frame rate:       33 fps
+  ---
+  Join calls:             380
+  Join time:              1323 us (total)
+============================================================
+
+Run 2: 2 tab(s), 15s duration
+Synchronized start enabled (sync dir: /tmp/iterm2-perf-sync.V73bGF)
+Found iTerm2 PID: 21299
+Launching 2 tabs, each running stress test for 15 seconds...
+Waiting for all tabs to signal ready...
+All 2 tabs ready.
+Starting profiler for 20 seconds...
+Waiting for DTrace to attach...
+DTrace attached.
+Sending go signal...
+All tabs completed. Waiting for profiler...
+Signaling DTrace to finish...
+
+============================================================
+Iteration Summary
+============================================================
+  Total iterations: 153503
+  Tabs: 2
+  Duration: 15s
+  Rate: 10233 iterations/sec
+============================================================
+
+
+Analyzing profile: /tmp/iterm2_multi_tab_profile_20260127_165919.txt
+
+============================================================
+Profile Summary
+============================================================
+  boolForKey: 10 occurrences
+  intForKey: 3 occurrences
+  objectForKey: 16 occurrences
+  updateConfigurationFields: 30 occurrences
+  NSUserDefaults: 33 occurrences
+  @synchronized: 0 occurrences
+  os_unfair_lock: 48 occurrences
+  StringToScreenChars: 55 occurrences
+  ScreenCharArray: 88 occurrences
+  bidi/Bidi: 40 occurrences
+  VT100Terminal: 103 occurrences
+  executeToken: 24 occurrences
+  Metal: 986 occurrences
+  iTermTextRenderer: 96 occurrences
+============================================================
+
+============================================================
+Category Summary
+============================================================
+  Allocations: 28 occurrences
+  ObjC retain/release: 760 occurrences
+  Autorelease pools: 4 occurrences
+  Strings/Unicode: 900 occurrences
+  CoreText: 330 occurrences
+  CoreGraphics: 493 occurrences
+  AppKit geometry: 1067 occurrences
+  Locks/dispatch: 71 occurrences
+  Terminal parsing: 752 occurrences
+  Rendering: 1082 occurrences
+  Process/cache: 60 occurrences
+============================================================
+
+============================================================
+Top iTerm2 Symbols (by sample count)
+============================================================
+  16942  main
+  16942  __40-[iTermSocket listenWithBacklog:accept:]_block_invoke
+  16040  -[TaskNotifier run]
+  253  <deduplicated_symbol>
+  248  closure #3 in TwoTierTokenQueue.enumerateTokenArrayGroups(_:)
+  145  -[iTermApplication sendEvent:]
+  103  DYLD-STUB$$objc_release
+  48  DYLD-STUB$$objc_retainAutoreleasedReturnValue
+  42  DYLD-STUB$$objc_retain
+  22  __35-[iTermProcessCache updateIfNeeded]_block_invoke_2
+  21  -[iTermMetalFrameData measureTimeForStat:ofBlock:]
+  16  -[iTermProcessCache reallyUpdate]
+  14  DYLD-STUB$$objc_autoreleaseReturnValue
+  14  iTerm2::Sampler::value_for_percentile(double const&) const
+  13  +[iTermPreferences objectForKey:]
+============================================================
+
+Full profile saved to: /tmp/iterm2_multi_tab_profile_20260127_165919.txt
+
+Shutting down test iTerm2...
+
+============================================================
+DTrace UX Metrics (duration: 18s)
+============================================================
+  Adaptive mode:          30fps
+  Content frames:         40255 (lines marked dirty)
+  Refreshes (cadence):    404
+  Metal frames (GPU):     638
+  ---
+  Apparent frame rate:    22 fps (refreshes/sec)
+  Metal frame rate:       35 fps
+  ---
+  Join calls:             396
+  Join time:              1541 us (total)
+============================================================
+
+Run 3: 5 tab(s), 15s duration
+Synchronized start enabled (sync dir: /tmp/iterm2-perf-sync.4DNwfq)
+Found iTerm2 PID: 28157
+Launching 5 tabs, each running stress test for 15 seconds...
+Waiting for all tabs to signal ready...
+All 5 tabs ready.
+Starting profiler for 20 seconds...
+Waiting for DTrace to attach...
+DTrace attached.
+Sending go signal...
+All tabs completed. Waiting for profiler...
+Signaling DTrace to finish...
+
+============================================================
+Iteration Summary
+============================================================
+  Total iterations: 183299
+  Tabs: 5
+  Duration: 15s
+  Rate: 12219 iterations/sec
+============================================================
+
+
+Analyzing profile: /tmp/iterm2_multi_tab_profile_20260127_170000.txt
+
+============================================================
+Profile Summary
+============================================================
+  boolForKey: 4 occurrences
+  intForKey: 13 occurrences
+  objectForKey: 20 occurrences
+  updateConfigurationFields: 18 occurrences
+  NSUserDefaults: 28 occurrences
+  @synchronized: 0 occurrences
+  os_unfair_lock: 43 occurrences
+  StringToScreenChars: 53 occurrences
+  ScreenCharArray: 87 occurrences
+  bidi/Bidi: 53 occurrences
+  VT100Terminal: 116 occurrences
+  executeToken: 26 occurrences
+  Metal: 1174 occurrences
+  iTermTextRenderer: 96 occurrences
+============================================================
+
+============================================================
+Category Summary
+============================================================
+  Allocations: 34 occurrences
+  ObjC retain/release: 781 occurrences
+  Autorelease pools: 4 occurrences
+  Strings/Unicode: 973 occurrences
+  CoreText: 636 occurrences
+  CoreGraphics: 888 occurrences
+  AppKit geometry: 1087 occurrences
+  Locks/dispatch: 78 occurrences
+  Terminal parsing: 853 occurrences
+  Rendering: 1270 occurrences
+  Process/cache: 75 occurrences
+============================================================
+
+============================================================
+Top iTerm2 Symbols (by sample count)
+============================================================
+  16869  main
+  16869  __40-[iTermSocket listenWithBacklog:accept:]_block_invoke
+  15734  -[TaskNotifier run]
+  222  <deduplicated_symbol>
+  218  closure #1 in closure #1 in implicit closure #2 in iTermMetalView.fetchDrawable(timeout:)
+  100  DYLD-STUB$$objc_release
+  54  DYLD-STUB$$objc_retainAutoreleasedReturnValue
+  50  DYLD-STUB$$objc_retain
+  29  -[iTermMetalFrameData measureTimeForStat:ofBlock:]
+  25  __35-[iTermProcessCache updateIfNeeded]_block_invoke_2
+  20  -[PTYTask fd]
+  19  -[iTermMultiServerJobManager fd]
+  19  -[iTermThread dispatchSync:]
+  18  -[iTermProcessCache reallyUpdate]
+  16  __28-[iTermThread dispatchSync:]_block_invoke
+============================================================
+
+Full profile saved to: /tmp/iterm2_multi_tab_profile_20260127_170000.txt
+
+Shutting down test iTerm2...
+
+============================================================
+DTrace UX Metrics (duration: 18s)
+============================================================
+  Adaptive mode:          30fps
+  Content frames:         44053 (lines marked dirty)
+  Refreshes (cadence):    461
+  Metal frames (GPU):     617
+  ---
+  Apparent frame rate:    25 fps (refreshes/sec)
+  Metal frame rate:       34 fps
+  ---
+  Join calls:             438
+  Join time:              1446 us (total)
+============================================================
+
+Summary Table
+┌──────────────────────────┬──────────┬──────────┬──────────┐
+│ Metric                   │     1 Tab│    2 Tabs│    5 Tabs│
+├──────────────────────────┼──────────┼──────────┼──────────┤
+│ Iteration rate           │    9273/s│   10233/s│   12219/s│
+│ Total iterations         │    139100│    153503│    183299│
+├──────────────────────────┼──────────┼──────────┼──────────┤
+│ Adaptive mode            │     30fps│     30fps│     30fps│
+│ Refresh FPS              │        21│        22│        25│
+│ Metal FPS                │        33│        35│        34│
+│ Iters/frame              │     231.8│     240.6│     297.1│
+├──────────────────────────┼──────────┼──────────┼──────────┤
+│ Refreshes                │       385│       404│       461│
+│ Metal frames             │       600│       638│       617│
+│ Content updates          │     39947│     40255│     44053│
+├──────────────────────────┼──────────┼──────────┼──────────┤
+│ Join calls               │       380│       396│       438│
+│ Join time (us)           │      1323│      1541│      1446│
+└──────────────────────────┴──────────┴──────────┴──────────┘
+
+Legend:
+  Iteration rate   - stress_load.py output lines/sec (terminal throughput)
+  Adaptive mode    - Frame rate mode (60fps=low load, 30fps=high load)
+  Refresh FPS      - Cadence-driven refresh rate
+  Metal FPS        - GPU frame submissions/sec
+  Iters/frame      - Stress iterations per Metal frame (throughput)
+  Refreshes        - Total cadence-driven refresh calls
+  Metal frames     - Total GPU frame submissions
+  Content updates  - Lines marked dirty (setNeedsDisplayOnLine calls)
+  Join calls       - performBlockWithJoinedThreads calls (thread sync)
+  Join time        - Total time in joined blocks (microseconds)
