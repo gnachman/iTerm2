@@ -96,12 +96,17 @@ func CVectorReleaseObjectsAndDestroy(_ vector: CVector) {
 
 // Indicates the current level of backpressure on token processing.
 // Higher levels mean the mutation queue is falling behind.
-@objc enum BackpressureLevel: Int {
+// Conforms to Comparable for natural ordering comparisons.
+@objc enum BackpressureLevel: Int, Comparable {
     case none = 0       // > 75% slots available
     case light = 1      // 50-75% available
     case moderate = 2   // 25-50% available
     case heavy = 3      // < 25% available
     case blocked = 4    // 0 available, PTY read is blocked
+
+    static func < (lhs: BackpressureLevel, rhs: BackpressureLevel) -> Bool {
+        return lhs.rawValue < rhs.rawValue
+    }
 }
 
 @objc(iTermTokenExecutor)
@@ -126,6 +131,15 @@ class TokenExecutor: NSObject {
     private var onExecutorQueue: Bool {
         return DispatchQueue.getSpecific(key: Self.isTokenExecutorSpecificKey) == true
     }
+
+    /// Closure called when backpressure transitions from heavy to lighter.
+    /// Used by PTYTask to re-evaluate read source state.
+    @objc var backpressureReleaseHandler: (() -> Void)? {
+        didSet {
+            impl.backpressureReleaseHandler = backpressureReleaseHandler
+        }
+    }
+
     @objc var isBackgroundSession = false {
         didSet {
 #if DEBUG
@@ -164,7 +178,9 @@ class TokenExecutor: NSObject {
     // high-priority tokens are meant to bypass flow control.
     @objc var backpressureLevel: BackpressureLevel {
         let available = Int(iTermAtomicInt64Get(availableSlots))
-        if available == 0 {
+        // Use <= 0 since availableSlots can go negative when more tokens are added
+        // than total capacity (the counter isn't clamped at 0)
+        if available <= 0 {
             return .blocked
         }
         let ratio = Double(available) / Double(totalSlots)
@@ -294,10 +310,16 @@ class TokenExecutor: NSObject {
                                  highPriority: Bool,
                                  semaphore: DispatchSemaphore?) {
         // When semaphore is signaled (slot released), increment the available slots counter
+        // and notify if backpressure has eased
         let onSemaphoreSignaled: (() -> Void)?
         if semaphore != nil {
-            onSemaphoreSignaled = { [availableSlots] in
-                iTermAtomicInt64Add(availableSlots, 1)
+            onSemaphoreSignaled = { [weak self, availableSlots] in
+                guard let self = self else { return }
+                let newValue = iTermAtomicInt64Add(availableSlots, 1)
+                // Notify when crossing out of heavy backpressure
+                if newValue > 0 && self.backpressureLevel < .heavy {
+                    self.impl.backpressureReleaseHandler?()
+                }
             }
         } else {
             onSemaphoreSignaled = nil
@@ -382,6 +404,9 @@ private class TokenExecutorImpl {
     // Access on mutation queue only
     private(set) var isExecutingToken = false
     weak var delegate: TokenExecutorDelegate?
+
+    /// Closure called when backpressure transitions from heavy to lighter.
+    var backpressureReleaseHandler: (() -> Void)?
 
     // This is used to give visible sessions priority for token processing over those that cannot
     // be seen. This prevents a very busy non-selected tab from starving a visible one.
