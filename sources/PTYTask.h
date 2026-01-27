@@ -193,6 +193,11 @@ typedef NS_OPTIONS(NSUInteger, iTermJobManagerAttachResults) {
 // Implementation casts to TokenExecutor after importing Swift header.
 @property(nonatomic, weak) id tokenExecutor;
 
+// Update read dispatch source state based on current conditions.
+// Called when backpressure changes or other read-affecting state changes.
+// Public to allow testing via SpyPTYTask.
+- (void)updateReadSourceState;
+
 + (NSMutableDictionary *)mutableEnvironmentDictionary;
 
 - (instancetype)init;

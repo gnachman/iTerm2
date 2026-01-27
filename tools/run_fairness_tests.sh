@@ -114,6 +114,7 @@ INTEGRATION_TEST_CLASSES=(
     "IntegrationDispatchSourceActivationTests"
     "IntegrationPTYSessionWiringTests"
     "PTYSessionWiringTests"
+    "PTYSessionBackpressureWiringTests"
     "DispatchSourceLifecycleIntegrationTests"
     "BackpressureIntegrationTests"
     "SessionLifecycleIntegrationTests"
