@@ -1436,8 +1436,17 @@ final class PTYTaskBackpressureIntegrationTests: XCTestCase {
         XCTAssertNotNil(task.tokenExecutor, "tokenExecutor should be settable")
     }
 
-    func testBackpressureHeavySuspendsReadSource() {
-        // REQUIREMENT: Heavy backpressure should suspend read source
+    func testBackpressureHeavyWithPositiveSlotsStillSuspendsReadSource() {
+        // REQUIREMENT: Heavy backpressure (ratio < 0.25, availableSlots > 0) should suspend read source
+        // This tests the "heavy but not blocked" cutoff: backpressureLevel < .heavy gate
+        //
+        // PTYTask.shouldRead checks: backpressureLevel < BackpressureLevelHeavy
+        // .heavy is NOT less than .heavy, so shouldRead=false when level is .heavy
+        //
+        // With totalSlots=40:
+        // - .heavy occurs at ratio < 0.25, meaning available < 10
+        // - .blocked occurs at available <= 0
+        // Adding 35 tokens leaves 5 available → ratio 0.125 → .heavy (not .blocked)
 
         guard let task = PTYTask() else {
             XCTFail("Failed to create PTYTask")
@@ -1467,8 +1476,67 @@ final class PTYTaskBackpressureIntegrationTests: XCTestCase {
         task.testSetupDispatchSourcesForTesting()
         task.testWaitForIOQueue()
 
-        // Read source state depends on ioAllowed (requires jobManager setup)
-        // For this test, we verify the mechanism is in place
+        // Create .heavy backpressure (NOT .blocked) by consuming most but not all slots
+        // With 40 slots, adding 35 leaves 5 available → ratio 0.125 → .heavy
+        executor.addMultipleTokenArrays(count: 35, tokensPerArray: 5)
+
+        // Verify we're at .heavy (not .blocked) with positive available slots
+        XCTAssertEqual(executor.backpressureLevel, .heavy,
+                       "Adding 35 tokens (of 40 slots) should cause .heavy backpressure")
+        XCTAssertGreaterThan(executor.testAvailableSlots, 0,
+                             "Should have positive availableSlots (not blocked)")
+
+        // Trigger state update
+        let selector = NSSelectorFromString("updateReadSourceState")
+        if task.responds(to: selector) {
+            task.perform(selector)
+        }
+        task.testWaitForIOQueue()
+
+        // With .heavy backpressure, read source should be suspended
+        // because shouldRead requires backpressureLevel < .heavy
+        XCTAssertTrue(task.testIsReadSourceSuspended,
+                      "Read source should be suspended at .heavy backpressure (even with availableSlots > 0)")
+
+        // Cleanup
+        task.testTeardownDispatchSourcesForTesting()
+        #else
+        // Non-debug: basic verification
+        XCTAssertEqual(executor.backpressureLevel, .none,
+                       "Fresh executor should have no backpressure")
+        #endif
+    }
+
+    func testBackpressureBlockedSuspendsReadSource() {
+        // REQUIREMENT: Blocked backpressure (availableSlots <= 0) should suspend read source
+
+        guard let task = PTYTask() else {
+            XCTFail("Failed to create PTYTask")
+            return
+        }
+
+        // Create a pipe for valid fd
+        guard let pipe = createTestPipe() else {
+            XCTFail("Failed to create test pipe")
+            return
+        }
+        defer { closeTestPipe(pipe) }
+
+        task.testSetFd(pipe.readFd)
+        task.paused = false
+
+        // Setup executor for backpressure tracking
+        let terminal = VT100Terminal()
+        let executor = TokenExecutor(terminal, slownessDetector: SlownessDetector(), queue: DispatchQueue.main)
+        task.tokenExecutor = executor
+
+        XCTAssertEqual(executor.backpressureLevel, .none,
+                       "Fresh executor should have no backpressure")
+
+        #if ITERM_DEBUG
+        // Setup dispatch sources
+        task.testSetupDispatchSourcesForTesting()
+        task.testWaitForIOQueue()
 
         // Create blocked backpressure by adding many token arrays (200 > 40 slots)
         executor.addMultipleTokenArrays(count: 200, tokensPerArray: 5)
@@ -1485,7 +1553,6 @@ final class PTYTaskBackpressureIntegrationTests: XCTestCase {
         task.testWaitForIOQueue()
 
         // With blocked backpressure, read source should be suspended
-        // (if it was ever resumed - it may have stayed suspended due to ioAllowed)
         XCTAssertTrue(task.testIsReadSourceSuspended,
                       "Read source should be suspended with blocked backpressure")
 
