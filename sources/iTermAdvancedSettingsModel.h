@@ -494,6 +494,9 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (BOOL)useDivorcedProfileToSplit;
 + (BOOL)useExperimentalFontMetrics;
 + (BOOL)useFairnessScheduler;
+#if DEBUG
++ (void)setUseFairnessSchedulerForTesting:(BOOL)value;
+#endif
 + (BOOL)useGCDUpdateTimer;
 
 #if ENABLE_LOW_POWER_GPU_DETECTION

@@ -70,6 +70,7 @@ static const int64_t VT100ScreenMutableStateSideEffectFlagLineBufferDidDropLines
     BOOL _runSideEffectAfterTopJoinFinishes;
     NSMutableArray<void (^)(void)> *_postTriggerActions;
     void (^_nextPromptBlock)(void);
+    uint64_t _fairnessSessionId;
 }
 
 // performingJoinedBlock is now centralized in iTermGCD.
@@ -123,6 +124,13 @@ static const int64_t VT100ScreenMutableStateSideEffectFlagLineBufferDidDropLines
                                                      slownessDetector:_triggerEvaluator.triggersSlownessDetector
                                                                 queue:_queue];
         _tokenExecutor.delegate = self;
+
+        // Register with FairnessScheduler for round-robin token execution (if enabled)
+        if ([iTermAdvancedSettingsModel useFairnessScheduler]) {
+            _fairnessSessionId = [iTermFairnessScheduler.shared register:_tokenExecutor];
+            _tokenExecutor.fairnessSessionId = _fairnessSessionId;
+        }
+
         _echoProbe = [[iTermEchoProbe alloc] initWithQueue:_queue];
         _echoProbe.delegate = self;
         self.unconditionalTemporaryDoubleBuffer.delegate = self;
@@ -209,6 +217,13 @@ static const int64_t VT100ScreenMutableStateSideEffectFlagLineBufferDidDropLines
         _terminal.delegate = self;
         _tokenExecutor.delegate = self;
     } else {
+        // Unregister from FairnessScheduler BEFORE clearing delegate
+        // This calls cleanupForUnregistration() to restore availableSlots
+        if (_fairnessSessionId != 0) {
+            [iTermFairnessScheduler.shared unregisterWithSessionId:_fairnessSessionId];
+            _fairnessSessionId = 0;
+        }
+
         [_commandRangeChangeJoiner invalidate];
         _commandRangeChangeJoiner = nil;
         _tokenExecutor.delegate = nil;
