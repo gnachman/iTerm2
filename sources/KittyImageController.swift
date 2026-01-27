@@ -232,9 +232,12 @@ class KittyImageController: NSObject {
     }
 
     // Stores state for multipart transmissions.
+    // Note: decodedData stores already base64-decoded binary data, not the base64 string.
+    // This allows senders to base64-encode each chunk independently (which may include
+    // padding in non-final chunks) rather than requiring a single base64 stream.
     private struct Accumulator {
         var transmission: KittyImageCommand.ImageTransmission
-        var payload: String
+        var decodedData: Data
         var query: Bool
         var display: KittyImageCommand.ImageDisplay?
     }
@@ -369,9 +372,10 @@ class KittyImageController: NSObject {
 
     private func reallyExecuteTransmit(_ command: KittyImageCommand.ImageTransmission,
                                        payload: String,
-                                       query: Bool) -> String? {
+                                       query: Bool,
+                                       preDecodedData: Data? = nil) -> String? {
         DLog("reallyExecuteTransmit BEGIN - id=\(command.identifier) (0x\(String(command.identifier, radix: 16))) more=\(command.more) medium=\(command.medium) format=\(command.format) query=\(query) payloadLength=\(payload.count)")
-        DLog("reallyExecuteTransmit: current accumulator state: \(accumulator == nil ? "nil" : "exists with id=\(accumulator!.transmission.identifier) (0x\(String(accumulator!.transmission.identifier, radix: 16))) payloadLength=\(accumulator!.payload.count) hasDisplay=\(accumulator!.display != nil)")")
+        DLog("reallyExecuteTransmit: current accumulator state: \(accumulator == nil ? "nil" : "exists with id=\(accumulator!.transmission.identifier) (0x\(String(accumulator!.transmission.identifier, radix: 16))) decodedDataLength=\(accumulator!.decodedData.count) hasDisplay=\(accumulator!.display != nil)")")
 
         if let accumulator {
             // Validate this chunk belongs to the same image transmission.
@@ -392,7 +396,7 @@ class KittyImageController: NSObject {
                 // it's likely a new single-chunk transmission, so process it fresh rather
                 // than returning an error. If it's expecting more chunks, return an error
                 // since we can't know which transmission it belongs to.
-                DLog("reallyExecuteTransmit: IDs don't match - clearing stale accumulator (accum.id=\(accumulator.transmission.identifier) (0x\(String(accumulator.transmission.identifier, radix: 16))), accum.payloadLength=\(accumulator.payload.count), cmd.id=\(command.identifier) (0x\(String(command.identifier, radix: 16))), cmd.more=\(command.more))")
+                DLog("reallyExecuteTransmit: IDs don't match - clearing stale accumulator (accum.id=\(accumulator.transmission.identifier) (0x\(String(accumulator.transmission.identifier, radix: 16))), accum.decodedDataLength=\(accumulator.decodedData.count), cmd.id=\(command.identifier) (0x\(String(command.identifier, radix: 16))), cmd.more=\(command.more))")
                 self.accumulator = nil
                 if command.more == .expectMore {
                     DLog("reallyExecuteTransmit: returning error because new chunk expects more but accumulator was stale")
@@ -401,25 +405,36 @@ class KittyImageController: NSObject {
                 DLog("reallyExecuteTransmit: falling through to process as new single-chunk transmission")
                 // Fall through to process as a new single-chunk transmission
             } else {
+                // Decode this chunk's base64 and append to accumulated data.
+                // This allows senders to base64-encode each chunk independently
+                // (which may include padding in non-final chunks).
+                guard let chunkData = payload.base64DecodedData else {
+                    DLog("reallyExecuteTransmit: ERROR - could not decode chunk payload (length=\(payload.count))")
+                    self.accumulator = nil
+                    return "EINVAL:could not decode payload chunk"
+                }
+
                 if command.more == .expectMore {
-                    DLog("reallyExecuteTransmit: appending payload to accumulator (new total length=\(accumulator.payload.count + payload.count))")
-                    self.accumulator?.payload += payload
+                    DLog("reallyExecuteTransmit: appending decoded chunk to accumulator (chunkBytes=\(chunkData.count), new total bytes=\(accumulator.decodedData.count + chunkData.count))")
+                    self.accumulator?.decodedData += chunkData
                     DLog("reallyExecuteTransmit END - returning nil (accumulating)")
                     return nil
                 }
 
                 // Processing final chunk of accumulated transmission
                 DLog("reallyExecuteTransmit: processing final chunk of accumulated transmission")
+                let combinedData = accumulator.decodedData + chunkData
                 let display = accumulator.display
-                let accumulatedPayloadLength = accumulator.payload.count
+                let accumulatedDataLength = accumulator.decodedData.count
                 self.accumulator = nil
                 var modifiedCommand = accumulator.transmission
                 modifiedCommand.more = .finalChunk
 
-                DLog("reallyExecuteTransmit: recursing with accumulated payload (accum.payloadLength=\(accumulatedPayloadLength) + new.payloadLength=\(payload.count) = \(accumulatedPayloadLength + payload.count))")
+                DLog("reallyExecuteTransmit: recursing with pre-decoded data (accum.bytes=\(accumulatedDataLength) + chunk.bytes=\(chunkData.count) = \(combinedData.count))")
                 let result = reallyExecuteTransmit(modifiedCommand,
-                                                   payload: accumulator.payload + payload,
-                                                   query: accumulator.query)
+                                                   payload: "",
+                                                   query: accumulator.query,
+                                                   preDecodedData: combinedData)
                 DLog("reallyExecuteTransmit: recursive call returned error=\(String(describing: result))")
 
                 // If transmission succeeded and we have saved display parameters, execute display
@@ -451,8 +466,13 @@ class KittyImageController: NSObject {
                 return result
             }
         } else if command.more == .expectMore {
-            DLog("reallyExecuteTransmit: no accumulator and more expected, creating new accumulator with id=\(command.identifier) (0x\(String(command.identifier, radix: 16))) payloadLength=\(payload.count)")
-            accumulator = Accumulator(transmission: command, payload: payload, query: query)
+            // First chunk of a new multipart transmission - decode and start accumulating
+            guard let chunkData = payload.base64DecodedData else {
+                DLog("reallyExecuteTransmit: ERROR - could not decode first chunk payload (length=\(payload.count))")
+                return "EINVAL:could not decode payload chunk"
+            }
+            DLog("reallyExecuteTransmit: no accumulator and more expected, creating new accumulator with id=\(command.identifier) (0x\(String(command.identifier, radix: 16))) decodedBytes=\(chunkData.count)")
+            accumulator = Accumulator(transmission: command, decodedData: chunkData, query: query)
             DLog("reallyExecuteTransmit END - returning nil (new accumulator created)")
             return nil
         }
@@ -461,7 +481,7 @@ class KittyImageController: NSObject {
         let result: String?
         switch command.medium {
         case .direct:
-            result = executeTransmitDirect(command, payload: payload, query: query)
+            result = executeTransmitDirect(command, payload: payload, query: query, preDecodedData: preDecodedData)
         case .file:
             result = executeTransmitFile(command, payload: payload, query: query)
         case .temporaryFile:
@@ -474,13 +494,31 @@ class KittyImageController: NSObject {
     }
 
     // Direct (the data is transmitted within the escape code itself)
+    // preDecodedData is used for multipart transmissions where chunks were already base64-decoded during accumulation.
     private func executeTransmitDirect(_ command: KittyImageCommand.ImageTransmission,
                                        payload: String,
-                                       query: Bool) -> String? {
-        DLog("executeTransmitDirect BEGIN - id=\(command.identifier) (0x\(String(command.identifier, radix: 16))) format=\(command.format) compression=\(command.compression) payloadLength=\(payload.count)")
-        guard let data = decodeDirectTransmission(command, payload: payload) else {
-            DLog("executeTransmitDirect: ERROR - could not decode payload (payloadLength=\(payload.count), compression=\(command.compression))")
-            return "could not decode payload"
+                                       query: Bool,
+                                       preDecodedData: Data? = nil) -> String? {
+        DLog("executeTransmitDirect BEGIN - id=\(command.identifier) (0x\(String(command.identifier, radix: 16))) format=\(command.format) compression=\(command.compression) payloadLength=\(payload.count) preDecodedDataLength=\(preDecodedData?.count ?? 0)")
+        let data: Data
+        if let preDecodedData {
+            // Multipart transmission: data was already base64-decoded during chunk accumulation
+            if command.compression == .zlib {
+                guard let decompressed = inflate(data: preDecodedData) else {
+                    DLog("executeTransmitDirect: ERROR - could not decompress pre-decoded data (length=\(preDecodedData.count))")
+                    return "could not decompress payload"
+                }
+                data = decompressed
+            } else {
+                data = preDecodedData
+            }
+        } else {
+            // Single-chunk transmission: decode base64 (and decompress if needed)
+            guard let decoded = decodeDirectTransmission(command, payload: payload) else {
+                DLog("executeTransmitDirect: ERROR - could not decode payload (payloadLength=\(payload.count), compression=\(command.compression))")
+                return "could not decode payload"
+            }
+            data = decoded
         }
         DLog("executeTransmitDirect: decoded payload to \(data.count) bytes")
         let result = handle(command: command, data: data, query: query)
