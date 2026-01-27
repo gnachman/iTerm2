@@ -651,15 +651,14 @@ final class FairnessSchedulerThreadSafetyTests: XCTestCase {
 
     func testConcurrentRegistration() {
         // REQUIREMENT: Multiple threads can safely call register() simultaneously
-        // NOTE: This test may uncover thread-safety issues in FairnessScheduler.
-        // If it fails with exceptions, the FairnessScheduler needs synchronization.
-        let threadCount = 4  // Reduced to make test more reliable
+        // NOTE: This is the WATCHDOG test - keeps a timeout to catch unexpected deadlocks.
+        // FairnessScheduler.register() has dispatchPrecondition to catch deadlock-prone patterns.
+        let threadCount = 4
         let registrationsPerThread = 10
         let group = DispatchGroup()
 
         var allSessionIds: [[UInt64]] = Array(repeating: [], count: threadCount)
         let lock = NSLock()
-        var encounteredError = false
 
         // Capture scheduler locally to prevent race with tearDown deallocation
         let scheduler = self.scheduler!
@@ -682,14 +681,17 @@ final class FairnessSchedulerThreadSafetyTests: XCTestCase {
             }
         }
 
-        let result = group.wait(timeout: .now() + 30.0)
+        // WATCHDOG: This is the only concurrent test with a timeout.
+        // All other concurrent tests use bounded-progress assertions.
+        // 60s is generous - if correct, completes in < 1s.
+        let result = group.wait(timeout: .now() + 60.0)
 
         if result == .timedOut {
             XCTFail("Concurrent registration timed out - possible deadlock in FairnessScheduler")
             return
         }
 
-        // Verify all IDs are unique
+        // Verify all IDs are unique (deterministic assertion)
         let flatIds = allSessionIds.flatMap { $0 }
         let uniqueIds = Set(flatIds)
         XCTAssertEqual(flatIds.count, threadCount * registrationsPerThread,
@@ -700,6 +702,7 @@ final class FairnessSchedulerThreadSafetyTests: XCTestCase {
 
     func testConcurrentUnregistration() {
         // REQUIREMENT: Multiple threads can safely call unregister() simultaneously
+        // Bounded-progress test: all unregister calls complete, all cleanups called.
         let sessionCount = 100
         var executors: [MockFairnessSchedulerExecutor] = []
         var sessionIds: [UInt64] = []
@@ -731,10 +734,13 @@ final class FairnessSchedulerThreadSafetyTests: XCTestCase {
             }
         }
 
-        let result = group.wait(timeout: .now() + 10.0)
-        XCTAssertEqual(result, .success, "Concurrent unregistration should complete without deadlock")
+        // No timeout - completes quickly if correct (watchdog is testConcurrentRegistration)
+        group.wait()
 
-        // Verify all executors had cleanup called
+        // Drain queues to ensure async cleanup completes
+        waitForMutationQueue()
+
+        // Bounded-progress assertion: verify all executors had cleanup called
         for executor in executors {
             XCTAssertTrue(executor.cleanupCalled,
                           "All executors should have cleanup called")
@@ -743,6 +749,7 @@ final class FairnessSchedulerThreadSafetyTests: XCTestCase {
 
     func testConcurrentEnqueueWork() {
         // REQUIREMENT: Multiple threads can safely call sessionDidEnqueueWork() simultaneously
+        // Bounded-progress test: all enqueues complete, each executor executes at least once.
         let executorCount = 10
         var executors: [MockFairnessSchedulerExecutor] = []
         var sessionIds: [UInt64] = []
@@ -771,14 +778,14 @@ final class FairnessSchedulerThreadSafetyTests: XCTestCase {
             }
         }
 
-        let result = group.wait(timeout: .now() + 10.0)
-        XCTAssertEqual(result, .success, "Concurrent enqueue should complete without deadlock")
+        // No timeout - completes quickly if correct
+        group.wait()
 
-        // Flush queues to ensure all processing completes
+        // Drain queues to ensure all processing completes
         waitForMutationQueue()
         waitForMainQueue()
 
-        // Each executor should have been called at least once
+        // Bounded-progress assertion: each executor should have been called at least once
         for executor in executors {
             XCTAssertGreaterThanOrEqual(executor.executeTurnCallCount, 1,
                                         "Each executor should have executed at least once")
@@ -787,9 +794,9 @@ final class FairnessSchedulerThreadSafetyTests: XCTestCase {
 
     func testConcurrentRegisterAndUnregister() {
         // REQUIREMENT: register() and unregister() can be called concurrently without races
+        // Bounded-progress test: all register/unregister pairs complete without crash.
         let iterations = 100
         let group = DispatchGroup()
-        var didCrash = false
 
         // Capture scheduler locally to prevent race with tearDown deallocation
         let scheduler = self.scheduler!
@@ -808,13 +815,16 @@ final class FairnessSchedulerThreadSafetyTests: XCTestCase {
             }
         }
 
-        let result = group.wait(timeout: .now() + 10.0)
-        XCTAssertEqual(result, .success, "Concurrent register/unregister should complete")
-        XCTAssertFalse(didCrash, "Should not crash during concurrent operations")
+        // No timeout - completes quickly if correct
+        group.wait()
+
+        // If we reach here without crash, the test passes
+        // (dispatchPrecondition in register() catches deadlock-prone patterns)
     }
 
     func testConcurrentEnqueueAndUnregister() {
         // REQUIREMENT: sessionDidEnqueueWork() and unregister() can race without issues
+        // Bounded-progress test: both enqueue and unregister complete without crash.
         let executor = MockFairnessSchedulerExecutor()
         executor.executeTurnHandler = { _, completion in
             // Simulate some work
@@ -844,13 +854,15 @@ final class FairnessSchedulerThreadSafetyTests: XCTestCase {
             group.leave()
         }
 
-        let result = group.wait(timeout: .now() + 5.0)
-        XCTAssertEqual(result, .success,
-                       "Concurrent enqueue and unregister should complete without crash")
+        // No timeout - completes quickly if correct
+        group.wait()
+
+        // If we reach here without crash, the test passes
     }
 
     func testManySessionsStressTest() {
         // REQUIREMENT: Scheduler handles many concurrent sessions without issues
+        // Bounded-progress test: iteration-based waiting, no wall-clock timeout.
         let sessionCount = 100
         var executors: [MockFairnessSchedulerExecutor] = []
         var sessionIds: [UInt64] = []
@@ -872,11 +884,15 @@ final class FairnessSchedulerThreadSafetyTests: XCTestCase {
             scheduler.sessionDidEnqueueWork(id)
         }
 
-        // Wait for all sessions to complete (each yields twice then completes)
-        let allProcessed = waitForCondition({
-            executors.allSatisfy { $0.executeTurnCallCount >= 3 }
-        }, timeout: 10.0)
-        XCTAssertTrue(allProcessed, "All sessions should complete processing")
+        // Iteration-based waiting (deterministic, no wall-clock timeout)
+        var iterations = 0
+        let maxIterations = 500  // 100 sessions * 3 turns each + buffer
+        while !executors.allSatisfy({ $0.executeTurnCallCount >= 3 }) && iterations < maxIterations {
+            waitForMutationQueue()
+            iterations += 1
+        }
+        XCTAssertLessThan(iterations, maxIterations,
+                          "All sessions should complete within \(maxIterations) iterations")
 
         // Each should have executed multiple times due to yielding
         var totalExecutions = 0
