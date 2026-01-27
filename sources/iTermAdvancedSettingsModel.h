@@ -493,6 +493,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (BOOL)useColorfgbgFallback;
 + (BOOL)useDivorcedProfileToSplit;
 + (BOOL)useExperimentalFontMetrics;
++ (BOOL)useFairnessScheduler;
 + (BOOL)useGCDUpdateTimer;
 
 #if ENABLE_LOW_POWER_GPU_DETECTION
