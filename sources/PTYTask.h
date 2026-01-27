@@ -317,5 +317,9 @@ typedef NS_OPTIONS(NSUInteger, iTermJobManagerAttachResults) {
 /// Use this instead of Thread.sleep to avoid flaky timing-dependent tests.
 - (void)testWaitForIOQueue;
 
+/// Write data as if it came from a coprocess (for testing coprocess → PTY bridge).
+/// This calls writeTask:coprocess:YES internally.
+- (void)testWriteFromCoprocess:(NSData *)data;
+
 @end
 #endif

@@ -549,3 +549,233 @@ final class TaskNotifierMixedModeTests: XCTestCase {
         #endif
     }
 }
+
+// MARK: - 4.4 Coprocess Data Flow Bridge Tests
+
+/// Tests for coprocess data flow bridging with dispatch_source PTY I/O.
+/// These tests verify the bridge code paths are correctly wired:
+///   - handleReadEvent calls writeToCoprocess (PTY output → coprocess)
+///   - writeTask:coprocess: calls writeBufferDidChange (coprocess output → PTY)
+final class CoprocessDataFlowBridgeTests: XCTestCase {
+
+    func testHandleReadEventRoutesToCoprocess() throws {
+        // REQUIREMENT: handleReadEvent should call writeToCoprocess when coprocess is attached
+        // This tests that PTY output flows to coprocess.outputBuffer via the bridge
+
+        #if ITERM_DEBUG
+        guard let task = PTYTask() else {
+            XCTFail("Failed to create PTYTask")
+            return
+        }
+
+        // Create pipe for PTY fd
+        guard let ptyPipe = createTestPipe() else {
+            XCTFail("Failed to create PTY test pipe")
+            return
+        }
+        defer { closeTestPipe(ptyPipe) }
+
+        // Create MockCoprocess
+        guard let coprocess = MockCoprocess.createPipe() else {
+            XCTFail("Failed to create MockCoprocess")
+            return
+        }
+        defer {
+            coprocess.closeTestFds()
+            coprocess.terminate()
+        }
+        // Set up the PTYTask
+        task.testSetFd(ptyPipe.readFd)
+        task.paused = false
+        task.testIoAllowedOverride = NSNumber(value: true)
+
+        // Attach coprocess to task
+        task.coprocess = coprocess
+        XCTAssertTrue(task.hasCoprocess, "Task should have coprocess attached")
+
+        // Set up dispatch sources directly (not via TaskNotifier to avoid complexity)
+        task.testSetupDispatchSourcesForTesting()
+        defer { task.testTeardownDispatchSourcesForTesting() }
+
+        // Verify setup
+        task.testWaitForIOQueue()
+        XCTAssertTrue(task.testHasReadSource, "Task should have read source")
+        XCTAssertFalse(task.testIsReadSourceSuspended, "Read source should be resumed (shouldRead=true)")
+
+        // Write data to PTY pipe - this triggers handleReadEvent
+        let testMessage = "Hello coprocess!"
+        let testData = testMessage.data(using: .utf8)!
+        testData.withUnsafeBytes { bufferPointer in
+            let rawPointer = bufferPointer.baseAddress!
+            _ = Darwin.write(ptyPipe.writeFd, rawPointer, testData.count)
+        }
+
+        // Wait for dispatch source to fire and handleReadEvent to run
+        // Multiple waits to ensure async processing completes
+        for _ in 0..<5 {
+            task.testWaitForIOQueue()
+            if coprocess.outputBuffer.length > 0 { break }
+            Thread.sleep(forTimeInterval: 0.01)
+        }
+
+        // Verify data was routed to coprocess.outputBuffer
+        // The bridge code (writeToCoprocess) should have been called
+        XCTAssertGreaterThan(coprocess.outputBuffer.length, 0,
+                      "handleReadEvent should route PTY data to coprocess.outputBuffer via writeToCoprocess bridge")
+
+        let outputData = coprocess.outputBuffer as Data
+        if let outputString = String(data: outputData, encoding: .utf8) {
+            XCTAssertTrue(outputString.contains(testMessage),
+                          "Coprocess outputBuffer should contain the PTY data")
+        }
+        #else
+        throw XCTSkip("Test requires ITERM_DEBUG build")
+        #endif
+    }
+
+    func testWriteTaskTriggersWriteSource() throws {
+        // REQUIREMENT: writeTask should call writeBufferDidChange
+        // This tests that the write dispatch_source is triggered when data is added
+
+        #if ITERM_DEBUG
+        guard let task = PTYTask() else {
+            XCTFail("Failed to create PTYTask")
+            return
+        }
+
+        // Create pipe for PTY fd
+        guard let ptyPipe = createTestPipe() else {
+            XCTFail("Failed to create PTY test pipe")
+            return
+        }
+        defer { closeTestPipe(ptyPipe) }
+
+        // Set up the PTYTask
+        task.testSetFd(ptyPipe.writeFd)
+        task.paused = false
+        task.testShouldWriteOverride = true
+        defer { task.testShouldWriteOverride = false }
+
+        // Set up dispatch sources directly
+        task.testSetupDispatchSourcesForTesting()
+        defer { task.testTeardownDispatchSourcesForTesting() }
+
+        // Verify setup
+        task.testWaitForIOQueue()
+        XCTAssertTrue(task.testHasWriteSource, "Task should have write source")
+        XCTAssertFalse(task.testWriteBufferHasData, "Write buffer should start empty")
+
+        // Write data via writeTask (this tests writeBufferDidChange is called)
+        let testMessage = "Hello PTY!"
+        let testData = testMessage.data(using: .utf8)!
+        task.write(testData)
+
+        // Verify data was added to writeBuffer
+        XCTAssertTrue(task.testWriteBufferHasData,
+                      "writeTask should add data to writeBuffer")
+
+        // Wait for write source to drain the buffer
+        task.testWaitForIOQueue()
+
+        // Read from the PTY pipe to verify data was written
+        var buffer = [UInt8](repeating: 0, count: 1024)
+        let flags = fcntl(ptyPipe.readFd, F_GETFL)
+        fcntl(ptyPipe.readFd, F_SETFL, flags | O_NONBLOCK)
+
+        var receivedData = Data()
+        for _ in 0..<10 {
+            task.testWaitForIOQueue()
+            let bytesRead = Darwin.read(ptyPipe.readFd, &buffer, buffer.count)
+            if bytesRead > 0 {
+                receivedData.append(contentsOf: buffer[0..<bytesRead])
+            }
+            if receivedData.count >= testData.count { break }
+            Thread.sleep(forTimeInterval: 0.01)
+        }
+
+        XCTAssertEqual(receivedData.count, testData.count,
+                       "writeBufferDidChange should trigger write source which drains to PTY fd")
+
+        if let receivedString = String(data: receivedData, encoding: .utf8) {
+            XCTAssertEqual(receivedString, testMessage,
+                           "PTY should receive the data")
+        }
+        #else
+        throw XCTSkip("Test requires ITERM_DEBUG build")
+        #endif
+    }
+
+    func testCoprocessOutputRoutesToPTY() throws {
+        // REQUIREMENT: Coprocess output flows to PTY via writeTask:coprocess:
+        // This tests the coprocess → PTY direction of the data flow bridge
+        //
+        // Flow: writeTask:coprocess:YES → writeBuffer → writeBufferDidChange
+        //       → write source → PTY fd
+        //
+        // Note: In production, TaskNotifier's select() reads from coprocess.inputFd
+        // and calls writeTask:coprocess:YES. Here we call it directly to test the bridge.
+
+        #if ITERM_DEBUG
+        guard let task = PTYTask() else {
+            XCTFail("Failed to create PTYTask")
+            return
+        }
+
+        // Create pipe for PTY fd (task writes here, we read to verify)
+        guard let ptyPipe = createTestPipe() else {
+            XCTFail("Failed to create PTY test pipe")
+            return
+        }
+        defer { closeTestPipe(ptyPipe) }
+
+        // Set up the PTYTask with write fd
+        task.testSetFd(ptyPipe.writeFd)
+        task.paused = false
+        task.testIoAllowedOverride = NSNumber(value: true)
+        task.testShouldWriteOverride = true
+        defer { task.testShouldWriteOverride = false }
+
+        // Set up dispatch sources
+        task.testSetupDispatchSourcesForTesting()
+        defer { task.testTeardownDispatchSourcesForTesting() }
+
+        task.testWaitForIOQueue()
+
+        // Simulate coprocess output by calling writeTask:coprocess:YES directly
+        // This is what TaskNotifier does when it reads from coprocess.inputFd
+        let testMessage = "From coprocess!"
+        let testData = testMessage.data(using: .utf8)!
+        task.testWrite(fromCoprocess: testData)
+
+        // Wait for write source to drain buffer to PTY
+        task.testWaitForIOQueue()
+
+        // Read from PTY pipe to verify data arrived
+        var receivedData = Data()
+        var buffer = [UInt8](repeating: 0, count: 1024)
+
+        let flags = fcntl(ptyPipe.readFd, F_GETFL)
+        fcntl(ptyPipe.readFd, F_SETFL, flags | O_NONBLOCK)
+
+        for _ in 0..<10 {
+            task.testWaitForIOQueue()
+            let bytesRead = Darwin.read(ptyPipe.readFd, &buffer, buffer.count)
+            if bytesRead > 0 {
+                receivedData.append(contentsOf: buffer[0..<bytesRead])
+            }
+            if receivedData.count >= testData.count { break }
+            Thread.sleep(forTimeInterval: 0.01)
+        }
+
+        XCTAssertEqual(receivedData.count, testData.count,
+                      "Coprocess output should flow to PTY via writeTask:coprocess: bridge")
+
+        if let receivedString = String(data: receivedData, encoding: .utf8) {
+            XCTAssertEqual(receivedString, testMessage,
+                          "PTY should receive the coprocess output")
+        }
+        #else
+        throw XCTSkip("Test requires ITERM_DEBUG build")
+        #endif
+    }
+}

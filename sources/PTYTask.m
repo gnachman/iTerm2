@@ -387,9 +387,12 @@ static void HandleSigChld(int n) {
     assert(!jobManager || !self.jobManager.isReadOnly);
     [writeLock lock];
     [writeBuffer appendData:data];
-    [self writeBufferDidChange];  // Trigger write dispatch_source (no-op if not set up)
-    [[TaskNotifier sharedInstance] unblock];  // Still needed for coprocess FD wake-up
     [writeLock unlock];
+
+    // Trigger write dispatch_source (no-op if not set up)
+    // Must be outside writeLock because writeBufferDidChange -> shouldWrite takes writeLock
+    [self writeBufferDidChange];
+    [[TaskNotifier sharedInstance] unblock];  // Still needed for coprocess FD wake-up
 }
 
 - (void)killWithMode:(iTermJobManagerKillingMode)mode {
@@ -1214,6 +1217,11 @@ static void HandleSigChld(int n) {
 }
 
 - (void)testSetFd:(int)fd {
+    // MultiServerJobManager.setFd: asserts fd == -1 and does nothing.
+    // Replace with LegacyJobManager which has a simple fd property.
+    if (![self.jobManager isKindOfClass:[iTermLegacyJobManager class]]) {
+        self.jobManager = [[iTermLegacyJobManager alloc] initWithQueue:_jobManagerQueue];
+    }
     self.jobManager.fd = fd;
 }
 
@@ -1256,6 +1264,10 @@ static void HandleSigChld(int n) {
     dispatch_sync(_ioQueue, ^{
         // Empty block - just waiting for queue to drain
     });
+}
+
+- (void)testWriteFromCoprocess:(NSData *)data {
+    [self writeTask:data coprocess:YES];
 }
 
 @end

@@ -16,33 +16,23 @@
 }
 
 + (MockCoprocess *)createPipeCoprocess {
-    // Create two pipes:
-    // 1. readPipe: coprocess output -> main process reads
-    //    readPipe[0] = inputFd (TaskNotifier reads here via readFileDescriptor)
-    //    readPipe[1] = testWriteFd (test code writes here to simulate coprocess output)
-    //
-    // 2. writePipe: main process writes -> coprocess input
-    //    writePipe[0] = testReadFd (test code reads here to see writes)
-    //    writePipe[1] = outputFd (TaskNotifier writes here via writeFileDescriptor)
-
     int readPipe[2];
     int writePipe[2];
 
     if (pipe(readPipe) != 0) {
         return nil;
     }
-
     if (pipe(writePipe) != 0) {
         close(readPipe[0]);
         close(readPipe[1]);
         return nil;
     }
 
-    // Set non-blocking on the read end (inputFd - where TaskNotifier reads)
+    // Set non-blocking on inputFd
     int flags = fcntl(readPipe[0], F_GETFL);
     fcntl(readPipe[0], F_SETFL, flags | O_NONBLOCK);
 
-    // Set non-blocking on the write end (outputFd - where TaskNotifier writes)
+    // Set non-blocking on outputFd
     flags = fcntl(writePipe[1], F_GETFL);
     fcntl(writePipe[1], F_SETFL, flags | O_NONBLOCK);
 
@@ -55,20 +45,32 @@
         return nil;
     }
 
-    // Set up the Coprocess FDs (inherited properties)
-    coprocess.inputFd = readPipe[0];     // TaskNotifier reads here (readFileDescriptor)
-    coprocess.outputFd = writePipe[1];   // TaskNotifier writes here (writeFileDescriptor)
-    coprocess.pid = getpid();            // Use current process PID (no real child)
-
-    // Set up the test FDs
-    coprocess->_testWriteFd = readPipe[1];  // Test writes here to simulate coprocess output
-    coprocess->_testReadFd = writePipe[0];  // Test reads here to verify writes to coprocess
+    coprocess.inputFd = readPipe[0];
+    coprocess.outputFd = writePipe[1];
+    coprocess.pid = getpid();
+    coprocess->_testWriteFd = readPipe[1];
+    coprocess->_testReadFd = writePipe[0];
 
     return coprocess;
 }
 
 - (void)dealloc {
     [self closeTestFds];
+}
+
+// Override to NOT send kill signal - MockCoprocess uses getpid() as pid
+// and we don't want to kill the test process!
+- (void)terminate {
+    // Close the FDs without killing (since pid = getpid() would kill ourselves)
+    if (self.outputFd >= 0) {
+        close(self.outputFd);
+        self.outputFd = -1;
+    }
+    if (self.inputFd >= 0) {
+        close(self.inputFd);
+        self.inputFd = -1;
+    }
+    self.pid = -1;
 }
 
 #pragma mark - Properties
