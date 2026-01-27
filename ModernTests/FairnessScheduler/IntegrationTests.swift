@@ -1631,6 +1631,157 @@ final class BackpressureIntegrationTests: XCTestCase {
         FairnessScheduler.shared.unregister(sessionId: sessionId2)
         waitForMutationQueue()
     }
+
+    func testBackpressureIsolationEndToEndWithDispatchSources() throws {
+        // CRITICAL END-TO-END TEST: Session A backpressured does not stall Session B reads
+        //
+        // This is the core fix for TaskNotifier starvation. In the old select() model,
+        // when session A blocked, session B couldn't read either because they shared
+        // the same select loop. With dispatch_source, each session reads independently.
+        //
+        // Test setup:
+        // 1. Two PTYTasks with real pipes and dispatch sources
+        // 2. Drive session A to backpressure (suspending its read source)
+        // 3. Write data to BOTH sessions' pipes
+        // 4. Verify session B still receives data (dispatch source fires)
+        // 5. Verify session A does NOT receive data (read source suspended)
+
+        #if ITERM_DEBUG
+        // Create task A
+        guard let taskA = PTYTask() else {
+            XCTFail("Failed to create PTYTask A")
+            return
+        }
+        guard let pipeA = createTestPipe() else {
+            XCTFail("Failed to create pipe A")
+            return
+        }
+
+        // Create task B
+        guard let taskB = PTYTask() else {
+            closeTestPipe(pipeA)
+            XCTFail("Failed to create PTYTask B")
+            return
+        }
+        guard let pipeB = createTestPipe() else {
+            closeTestPipe(pipeA)
+            XCTFail("Failed to create pipe B")
+            return
+        }
+
+        defer {
+            taskA.testTeardownDispatchSourcesForTesting()
+            taskB.testTeardownDispatchSourcesForTesting()
+            closeTestPipe(pipeA)
+            closeTestPipe(pipeB)
+        }
+
+        // Set up delegates to track reads
+        let delegateA = MockPTYTaskDelegate()
+        let delegateB = MockPTYTaskDelegate()
+        taskA.delegate = delegateA
+        taskB.delegate = delegateB
+
+        // Configure tasks with FDs
+        taskA.testSetFd(pipeA.readFd)
+        taskB.testSetFd(pipeB.readFd)
+        taskA.paused = false
+        taskB.paused = false
+
+        // Set up executors for backpressure tracking
+        let terminalA = VT100Terminal()
+        let terminalB = VT100Terminal()
+        let executorA = TokenExecutor(terminalA, slownessDetector: SlownessDetector(), queue: DispatchQueue.main)
+        let executorB = TokenExecutor(terminalB, slownessDetector: SlownessDetector(), queue: DispatchQueue.main)
+        taskA.tokenExecutor = executorA
+        taskB.tokenExecutor = executorB
+
+        // Register with scheduler
+        let sessionIdA = FairnessScheduler.shared.register(executorA)
+        let sessionIdB = FairnessScheduler.shared.register(executorB)
+        executorA.fairnessSessionId = sessionIdA
+        executorB.fairnessSessionId = sessionIdB
+        defer {
+            FairnessScheduler.shared.unregister(sessionId: sessionIdA)
+            FairnessScheduler.shared.unregister(sessionId: sessionIdB)
+            waitForMutationQueue()
+        }
+
+        // Setup dispatch sources for both tasks
+        taskA.testSetupDispatchSourcesForTesting()
+        taskB.testSetupDispatchSourcesForTesting()
+        taskA.testWaitForIOQueue()
+        taskB.testWaitForIOQueue()
+
+        // Verify both start with no backpressure and resumed read sources
+        XCTAssertEqual(executorA.backpressureLevel, .none)
+        XCTAssertEqual(executorB.backpressureLevel, .none)
+        XCTAssertFalse(taskA.testIsReadSourceSuspended, "Task A read source should start resumed")
+        XCTAssertFalse(taskB.testIsReadSourceSuspended, "Task B read source should start resumed")
+
+        // Drive Task A to blocked backpressure (200 tokens > 40 slots)
+        executorA.addMultipleTokenArrays(count: 200, tokensPerArray: 5)
+        XCTAssertEqual(executorA.backpressureLevel, .blocked,
+                       "Executor A should be blocked after exceeding slot capacity")
+
+        // Trigger state update on Task A
+        taskA.perform(NSSelectorFromString("updateReadSourceState"))
+        taskA.testWaitForIOQueue()
+
+        // Verify Task A's read source is suspended
+        XCTAssertTrue(taskA.testIsReadSourceSuspended,
+                      "Task A read source should be SUSPENDED due to backpressure")
+
+        // CRITICAL: Verify Task B is UNAFFECTED
+        XCTAssertEqual(executorB.backpressureLevel, .none,
+                       "Executor B should remain at .none")
+        XCTAssertFalse(taskB.testIsReadSourceSuspended,
+                       "Task B read source should remain RESUMED - isolation required")
+
+        // Now write data to BOTH pipes
+        let testDataA = "Data for session A".data(using: .utf8)!
+        let testDataB = "Data for session B".data(using: .utf8)!
+
+        let initialReadCountA = delegateA.readCallCount
+        let initialReadCountB = delegateB.readCallCount
+
+        // Set up expectation for Task B to receive data
+        let taskBReadExpectation = XCTestExpectation(description: "Task B receives data")
+        delegateB.onThreadedRead = { _ in
+            taskBReadExpectation.fulfill()
+        }
+
+        // Write to both pipes
+        testDataA.withUnsafeBytes { bufferPointer in
+            _ = Darwin.write(pipeA.writeFd, bufferPointer.baseAddress!, testDataA.count)
+        }
+        testDataB.withUnsafeBytes { bufferPointer in
+            _ = Darwin.write(pipeB.writeFd, bufferPointer.baseAddress!, testDataB.count)
+        }
+
+        // Wait for Task B to receive data (should happen quickly since not backpressured)
+        wait(for: [taskBReadExpectation], timeout: 2.0)
+
+        // Flush queues
+        taskA.testWaitForIOQueue()
+        taskB.testWaitForIOQueue()
+        waitForMainQueue()
+
+        // CRITICAL ASSERTIONS:
+        // Task B MUST have received data (proves dispatch_source independence)
+        XCTAssertGreaterThan(delegateB.readCallCount, initialReadCountB,
+                             "Task B MUST receive data - this proves session isolation works")
+
+        // Task A should NOT have received data (read source suspended)
+        XCTAssertEqual(delegateA.readCallCount, initialReadCountA,
+                       "Task A should NOT receive data while backpressured")
+
+        // This test proves the core fix: Session A's backpressure does NOT stall Session B's reads.
+        // In the old TaskNotifier select() model, both sessions would have been blocked.
+        #else
+        throw XCTSkip("End-to-end backpressure isolation test requires ITERM_DEBUG")
+        #endif
+    }
 }
 
 // MARK: - Session Lifecycle Integration Tests
