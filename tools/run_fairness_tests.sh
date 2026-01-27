@@ -94,6 +94,7 @@ PTYTASK_TEST_CLASSES=(
     "PTYTaskStateTransitionTests"
     "PTYTaskEdgeCaseTests"
     "PTYTaskReadHandlerPipelineTests"
+    "PTYTaskWritePathRoundTripTests"
 )
 
 # Milestone 4: TaskNotifier Changes (Checkpoint 4)
@@ -101,6 +102,11 @@ TASKNOTIFIER_TEST_CLASSES=(
     "TaskNotifierDispatchSourceProtocolTests"
     "TaskNotifierSelectLoopTests"
     "TaskNotifierMixedModeTests"
+)
+
+# Milestone 4b: Coprocess Bridge Tests (separate due to hang investigation)
+COPROCESS_TEST_CLASSES=(
+    "CoprocessDataFlowBridgeTests"
 )
 
 # Milestone 5: Integration (Checkpoint 5)
@@ -121,7 +127,7 @@ INTEGRATION_TEST_CLASSES=(
 )
 
 # All test classes
-ALL_TEST_CLASSES=("${FAIRNESS_TEST_CLASSES[@]}" "${TOKENEXECUTOR_TEST_CLASSES[@]}" "${PTYTASK_TEST_CLASSES[@]}" "${TASKNOTIFIER_TEST_CLASSES[@]}" "${INTEGRATION_TEST_CLASSES[@]}")
+ALL_TEST_CLASSES=("${FAIRNESS_TEST_CLASSES[@]}" "${TOKENEXECUTOR_TEST_CLASSES[@]}" "${PTYTASK_TEST_CLASSES[@]}" "${TASKNOTIFIER_TEST_CLASSES[@]}" "${COPROCESS_TEST_CLASSES[@]}" "${INTEGRATION_TEST_CLASSES[@]}")
 
 # Build the -only-testing arguments
 build_only_testing_args() {
@@ -143,6 +149,9 @@ build_only_testing_args() {
         milestone4|phase4|checkpoint4)
             classes_to_check=("${TASKNOTIFIER_TEST_CLASSES[@]}")
             ;;
+        coprocess)
+            classes_to_check=("${COPROCESS_TEST_CLASSES[@]}")
+            ;;
         milestone5|phase5|checkpoint5)
             classes_to_check=("${INTEGRATION_TEST_CLASSES[@]}")
             ;;
@@ -155,7 +164,7 @@ build_only_testing_args() {
         if [[ -z "$filter" ]] || [[ "$filter" == "milestone1" ]] || [[ "$filter" == "milestone2" ]] || [[ "$filter" == "milestone3" ]] || [[ "$filter" == "milestone4" ]] || [[ "$filter" == "milestone5" ]] || \
            [[ "$filter" == "phase1" ]] || [[ "$filter" == "phase2" ]] || [[ "$filter" == "phase3" ]] || [[ "$filter" == "phase4" ]] || [[ "$filter" == "phase5" ]] || \
            [[ "$filter" == "checkpoint1" ]] || [[ "$filter" == "checkpoint2" ]] || [[ "$filter" == "checkpoint3" ]] || [[ "$filter" == "checkpoint4" ]] || [[ "$filter" == "checkpoint5" ]] || \
-           [[ "$class" == *"$filter"* ]]; then
+           [[ "$filter" == "coprocess" ]] || [[ "$class" == *"$filter"* ]]; then
             args="$args -only-testing:ModernTests/$class"
         fi
     done

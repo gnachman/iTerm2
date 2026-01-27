@@ -1,0 +1,464 @@
+//
+//  PTYTaskDispatchSourceIntegrationTests.swift
+//  ModernTests
+//
+//  Integration and edge case tests for PTYTask dispatch sources.
+//
+
+import XCTest
+@testable import iTerm2SharedARC
+
+final class PTYTaskBackpressureIntegrationTests: XCTestCase {
+
+    func testTokenExecutorPropertyExists() {
+        // REQUIREMENT: PTYTask must have tokenExecutor property for backpressure
+
+        guard let task = PTYTask() else {
+            XCTFail("Failed to create PTYTask")
+            return
+        }
+
+        // Verify tokenExecutor property exists and is settable
+        // Initial value should be nil
+        XCTAssertNil(task.tokenExecutor, "tokenExecutor should initially be nil")
+
+        // Should be able to set it
+        let terminal = VT100Terminal()
+        let executor = TokenExecutor(terminal, slownessDetector: SlownessDetector(), queue: DispatchQueue.main)
+        task.tokenExecutor = executor
+
+        XCTAssertNotNil(task.tokenExecutor, "tokenExecutor should be settable")
+    }
+
+    func testBackpressureHeavyWithPositiveSlotsStillSuspendsReadSource() {
+        // REQUIREMENT: Heavy backpressure (ratio < 0.25, availableSlots > 0) should suspend read source
+        // This tests the "heavy but not blocked" cutoff: backpressureLevel < .heavy gate
+        //
+        // PTYTask.shouldRead checks: backpressureLevel < BackpressureLevelHeavy
+        // .heavy is NOT less than .heavy, so shouldRead=false when level is .heavy
+        //
+        // With totalSlots=40:
+        // - .heavy occurs at ratio < 0.25, meaning available < 10
+        // - .blocked occurs at available <= 0
+        // Adding 35 tokens leaves 5 available → ratio 0.125 → .heavy (not .blocked)
+
+        guard let task = PTYTask() else {
+            XCTFail("Failed to create PTYTask")
+            return
+        }
+
+        // Create a pipe for valid fd
+        guard let pipe = createTestPipe() else {
+            XCTFail("Failed to create test pipe")
+            return
+        }
+        defer { closeTestPipe(pipe) }
+
+        task.testSetFd(pipe.readFd)
+        task.paused = false
+
+        // Setup executor for backpressure tracking
+        let terminal = VT100Terminal()
+        let executor = TokenExecutor(terminal, slownessDetector: SlownessDetector(), queue: DispatchQueue.main)
+        task.tokenExecutor = executor
+
+        XCTAssertEqual(executor.backpressureLevel, .none,
+                       "Fresh executor should have no backpressure")
+
+        #if ITERM_DEBUG
+        // Setup dispatch sources
+        task.testSetupDispatchSourcesForTesting()
+        task.testWaitForIOQueue()
+
+        // Create .heavy backpressure (NOT .blocked) by consuming most but not all slots
+        // With 40 slots, adding 35 leaves 5 available → ratio 0.125 → .heavy
+        executor.addMultipleTokenArrays(count: 35, tokensPerArray: 5)
+
+        // Verify we're at .heavy (not .blocked) with positive available slots
+        XCTAssertEqual(executor.backpressureLevel, .heavy,
+                       "Adding 35 tokens (of 40 slots) should cause .heavy backpressure")
+        XCTAssertGreaterThan(executor.testAvailableSlots, 0,
+                             "Should have positive availableSlots (not blocked)")
+
+        // Trigger state update
+        let selector = NSSelectorFromString("updateReadSourceState")
+        if task.responds(to: selector) {
+            task.perform(selector)
+        }
+        task.testWaitForIOQueue()
+
+        // With .heavy backpressure, read source should be suspended
+        // because shouldRead requires backpressureLevel < .heavy
+        XCTAssertTrue(task.testIsReadSourceSuspended,
+                      "Read source should be suspended at .heavy backpressure (even with availableSlots > 0)")
+
+        // Cleanup
+        task.testTeardownDispatchSourcesForTesting()
+        #else
+        // Non-debug: basic verification
+        XCTAssertEqual(executor.backpressureLevel, .none,
+                       "Fresh executor should have no backpressure")
+        #endif
+    }
+
+    func testBackpressureBlockedSuspendsReadSource() {
+        // REQUIREMENT: Blocked backpressure (availableSlots <= 0) should suspend read source
+
+        guard let task = PTYTask() else {
+            XCTFail("Failed to create PTYTask")
+            return
+        }
+
+        // Create a pipe for valid fd
+        guard let pipe = createTestPipe() else {
+            XCTFail("Failed to create test pipe")
+            return
+        }
+        defer { closeTestPipe(pipe) }
+
+        task.testSetFd(pipe.readFd)
+        task.paused = false
+
+        // Setup executor for backpressure tracking
+        let terminal = VT100Terminal()
+        let executor = TokenExecutor(terminal, slownessDetector: SlownessDetector(), queue: DispatchQueue.main)
+        task.tokenExecutor = executor
+
+        XCTAssertEqual(executor.backpressureLevel, .none,
+                       "Fresh executor should have no backpressure")
+
+        #if ITERM_DEBUG
+        // Setup dispatch sources
+        task.testSetupDispatchSourcesForTesting()
+        task.testWaitForIOQueue()
+
+        // Create blocked backpressure by adding many token arrays (200 > 40 slots)
+        executor.addMultipleTokenArrays(count: 200, tokensPerArray: 5)
+
+        // Check backpressure level - should be blocked when exceeding capacity
+        XCTAssertEqual(executor.backpressureLevel, .blocked,
+                       "Adding more tokens than slots should cause blocked backpressure")
+
+        // Trigger state update
+        let selector = NSSelectorFromString("updateReadSourceState")
+        if task.responds(to: selector) {
+            task.perform(selector)
+        }
+        task.testWaitForIOQueue()
+
+        // With blocked backpressure, read source should be suspended
+        XCTAssertTrue(task.testIsReadSourceSuspended,
+                      "Read source should be suspended with blocked backpressure")
+
+        // Cleanup
+        task.testTeardownDispatchSourcesForTesting()
+        #else
+        // Non-debug: basic verification
+        XCTAssertEqual(executor.backpressureLevel, .none,
+                       "Fresh executor should have no backpressure")
+        #endif
+    }
+
+    func testBackpressureReleaseHandlerCanBeSet() {
+        // REQUIREMENT: TokenExecutor's backpressureReleaseHandler should be settable
+
+        let terminal = VT100Terminal()
+        let executor = TokenExecutor(terminal, slownessDetector: SlownessDetector(), queue: DispatchQueue.main)
+
+        var handlerCalled = false
+        executor.backpressureReleaseHandler = {
+            handlerCalled = true
+        }
+
+        XCTAssertNotNil(executor.backpressureReleaseHandler,
+                        "backpressureReleaseHandler should be settable")
+    }
+
+    func testReadSourceResumesWhenBackpressureDrops() {
+        // REQUIREMENT: Read source should resume when backpressure drops from heavy to below heavy
+        // This tests the backpressure release -> read source resume path
+
+        guard let task = PTYTask() else {
+            XCTFail("Failed to create PTYTask")
+            return
+        }
+
+        guard let pipe = createTestPipe() else {
+            XCTFail("Failed to create test pipe")
+            return
+        }
+        defer { closeTestPipe(pipe) }
+
+        task.testSetFd(pipe.readFd)
+        task.paused = false
+
+        // Setup executor for backpressure tracking
+        let terminal = VT100Terminal()
+        let executor = TokenExecutor(terminal, slownessDetector: SlownessDetector(), queue: DispatchQueue.main)
+        task.tokenExecutor = executor
+
+        #if ITERM_DEBUG
+        // Setup dispatch sources
+        task.testSetupDispatchSourcesForTesting()
+        task.testWaitForIOQueue()
+
+        // Initially: no backpressure, fd valid, not paused -> read source should be resumed
+        XCTAssertEqual(executor.backpressureLevel, .none)
+        XCTAssertFalse(task.testIsReadSourceSuspended, "Read source should start resumed (no backpressure)")
+
+        // Create blocked backpressure (200 tokens > 40 slots)
+        executor.addMultipleTokenArrays(count: 200, tokensPerArray: 5)
+        XCTAssertEqual(executor.backpressureLevel, .blocked, "Should be blocked when exceeding capacity")
+
+        // Trigger state update
+        task.perform(NSSelectorFromString("updateReadSourceState"))
+        task.testWaitForIOQueue()
+
+        // With blocked backpressure, read source should be suspended
+        XCTAssertTrue(task.testIsReadSourceSuspended, "Read source should suspend with blocked backpressure")
+
+        // Set up handler to track heavy->non-heavy transition
+        // The handler fires once per token group consumed, but we only care that
+        // it fires at least once when transitioning from heavy to below heavy
+        var handlerFired = false
+        var wasHeavyWhenHandlerFired = false
+        executor.backpressureReleaseHandler = { [weak task, weak executor] in
+            if !handlerFired {
+                handlerFired = true
+                wasHeavyWhenHandlerFired = (executor?.backpressureLevel == .heavy)
+            }
+            // Handler should trigger read state re-evaluation
+            task?.perform(NSSelectorFromString("updateReadSourceState"))
+        }
+
+        // Drain tokens by executing a turn with large budget
+        let drainExpectation = XCTestExpectation(description: "Tokens drained")
+        executor.executeTurn(tokenBudget: 10000) { result in
+            drainExpectation.fulfill()
+        }
+        wait(for: [drainExpectation], timeout: 2.0)
+
+        // Give time for handler to fire and state to update
+        task.testWaitForIOQueue()
+
+        // Backpressure should now be below heavy
+        XCTAssertNotEqual(executor.backpressureLevel, .heavy,
+                          "Backpressure should drop after draining tokens")
+
+        // Handler should have fired (at least once during the drain)
+        XCTAssertTrue(handlerFired,
+                       "backpressureReleaseHandler should fire when backpressure drops")
+
+        // Read source should have resumed
+        XCTAssertFalse(task.testIsReadSourceSuspended,
+                       "Read source should RESUME after backpressure drops")
+
+        task.testTeardownDispatchSourcesForTesting()
+        #else
+        XCTAssertNotNil(executor.backpressureReleaseHandler)
+        #endif
+    }
+
+    func testHeavyBackpressureStopsDataFlow() {
+        // REQUIREMENT: When backpressure becomes heavy, the read source should be suspended
+        // AND data should actually stop being delivered to the delegate.
+        // This is the end-to-end verification that backpressure throttling works.
+
+        guard let task = PTYTask() else {
+            XCTFail("Failed to create PTYTask")
+            return
+        }
+
+        guard let pipe = createTestPipe() else {
+            XCTFail("Failed to create test pipe")
+            return
+        }
+        defer { closeTestPipe(pipe) }
+
+        // Create mock delegate to track data flow
+        let mockDelegate = MockPTYTaskDelegate()
+        task.delegate = mockDelegate
+
+        task.testSetFd(pipe.readFd)
+        task.paused = false
+
+        // Setup executor for backpressure tracking
+        let terminal = VT100Terminal()
+        let executor = TokenExecutor(terminal, slownessDetector: SlownessDetector(), queue: DispatchQueue.main)
+        task.tokenExecutor = executor
+
+        #if ITERM_DEBUG
+        // Set up expectation BEFORE starting anything
+        let readExpectation = XCTestExpectation(description: "Data read with no backpressure")
+        mockDelegate.onThreadedRead = { _ in
+            readExpectation.fulfill()
+        }
+
+        // Setup dispatch sources
+        task.testSetupDispatchSourcesForTesting()
+        task.testWaitForIOQueue()
+
+        XCTAssertEqual(executor.backpressureLevel, .none)
+        XCTAssertFalse(task.testIsReadSourceSuspended, "Read source should start resumed")
+
+        // Step 1: Verify data flows when backpressure is low
+        let initialReadCount = mockDelegate.readCallCount
+        let testData1 = "Initial data flow test".data(using: .utf8)!
+        testData1.withUnsafeBytes { bufferPointer in
+            let rawPointer = bufferPointer.baseAddress!
+            _ = Darwin.write(pipe.writeFd, rawPointer, testData1.count)
+        }
+
+        // Wait for data to be read
+        wait(for: [readExpectation], timeout: 2.0)
+
+        XCTAssertGreaterThan(mockDelegate.readCallCount, initialReadCount,
+                             "Data should flow when backpressure is low")
+
+        // Clear the callback for next phase
+        mockDelegate.onThreadedRead = nil
+
+        // Step 2: Create blocked backpressure (200 tokens > 40 slots)
+        executor.addMultipleTokenArrays(count: 200, tokensPerArray: 5)
+        XCTAssertEqual(executor.backpressureLevel, .blocked, "Should be blocked when exceeding capacity")
+
+        // Trigger state update
+        task.perform(NSSelectorFromString("updateReadSourceState"))
+        task.testWaitForIOQueue()
+
+        XCTAssertTrue(task.testIsReadSourceSuspended, "Read source should suspend with blocked backpressure")
+
+        // Step 3: Write more data - it should NOT be delivered while suspended
+        let readCountBeforeWrite = mockDelegate.readCallCount
+        let testData2 = "Data during blocked backpressure".data(using: .utf8)!
+        testData2.withUnsafeBytes { bufferPointer in
+            let rawPointer = bufferPointer.baseAddress!
+            _ = Darwin.write(pipe.writeFd, rawPointer, testData2.count)
+        }
+
+        // Flush queues to ensure any pending dispatch source events would have been processed
+        task.testWaitForIOQueue()
+        waitForMainQueue()
+
+        // Data should NOT have been read (source is suspended)
+        XCTAssertEqual(mockDelegate.readCallCount, readCountBeforeWrite,
+                       "Data should NOT be delivered when read source is suspended due to blocked backpressure")
+
+        // Cleanup
+        task.testTeardownDispatchSourcesForTesting()
+        #else
+        // Non-debug build: basic verification
+        XCTAssertNotNil(task.tokenExecutor)
+        #endif
+    }
+}
+
+// MARK: - 3.7 useDispatchSource Protocol Tests
+
+/// Tests for the useDispatchSource protocol method (3.7)
+final class PTYTaskEdgeCaseTests: XCTestCase {
+
+    func testFreshTaskHasValidState() {
+        // REQUIREMENT: Fresh PTYTask should have consistent initial state
+
+        guard let task = PTYTask() else {
+            XCTFail("Failed to create PTYTask")
+            return
+        }
+
+        // Fresh task should not be paused
+        XCTAssertFalse(task.paused, "Fresh task should not be paused")
+
+        // Fresh task has fd = -1 (no process)
+        XCTAssertEqual(task.fd, -1, "Fresh task should have invalid fd")
+
+        // Fresh task has no tokenExecutor
+        XCTAssertNil(task.tokenExecutor, "Fresh task should have nil tokenExecutor")
+    }
+
+    func testTaskWithNilDelegate() {
+        // REQUIREMENT: Task should handle nil delegate gracefully
+
+        guard let task = PTYTask() else {
+            XCTFail("Failed to create PTYTask")
+            return
+        }
+
+        // Ensure delegate is nil
+        task.delegate = nil
+        XCTAssertNil(task.delegate, "Delegate should be nil for this test")
+
+        // Operations should not crash with nil delegate
+        task.paused = true
+        XCTAssertTrue(task.paused, "Pause should work with nil delegate")
+
+        task.paused = false
+        XCTAssertFalse(task.paused, "Unpause should work with nil delegate")
+
+        // Verify shouldRead/shouldWrite don't crash with nil delegate
+        if let shouldRead = task.value(forKey: "shouldRead") as? Bool {
+            // With nil delegate and no job manager, shouldRead is likely false
+            // The important thing is it didn't crash
+            XCTAssertFalse(shouldRead, "shouldRead should be false without job manager")
+        }
+
+        if let shouldWrite = task.value(forKey: "shouldWrite") as? Bool {
+            // With nil delegate and no buffer, shouldWrite should be false
+            XCTAssertFalse(shouldWrite, "shouldWrite should be false without job manager")
+        }
+
+        // Update methods should be safe with nil delegate
+        let readSelector = NSSelectorFromString("updateReadSourceState")
+        let writeSelector = NSSelectorFromString("updateWriteSourceState")
+
+        if task.responds(to: readSelector) {
+            task.perform(readSelector)
+        }
+        if task.responds(to: writeSelector) {
+            task.perform(writeSelector)
+        }
+
+        #if ITERM_DEBUG
+        // State should be valid after operations
+        // No sources should have been created (no valid fd)
+        XCTAssertFalse(task.testHasReadSource, "No read source with nil delegate")
+        XCTAssertFalse(task.testHasWriteSource, "No write source with nil delegate")
+        #endif
+
+        XCTAssertNotNil(task, "Task should remain valid with nil delegate")
+    }
+
+    func testConcurrentPauseChanges() {
+        // REQUIREMENT: Concurrent pause changes should be thread-safe
+
+        guard let task = PTYTask() else {
+            XCTFail("Failed to create PTYTask")
+            return
+        }
+
+        let group = DispatchGroup()
+
+        // Toggle pause from multiple threads
+        for _ in 0..<10 {
+            group.enter()
+            DispatchQueue.global().async {
+                for _ in 0..<100 {
+                    task.paused = true
+                    task.paused = false
+                }
+                group.leave()
+            }
+        }
+
+        // No timeout - operations are bounded (10 threads × 100 iterations each)
+        // If there's a deadlock, test runner will kill the test
+        group.wait()
+    }
+}
+
+// MockPTYTaskDelegate is defined in Mocks/MockPTYTaskDelegate.swift
+
+// MARK: - Read Handler Pipeline Tests
+
+/// Tests for the read handler pipeline (read → threadedReadTask)
+/// These tests verify that data flows correctly from dispatch source to delegate

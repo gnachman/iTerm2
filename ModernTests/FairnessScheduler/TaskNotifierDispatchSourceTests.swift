@@ -240,6 +240,109 @@ final class TaskNotifierSelectLoopTests: XCTestCase {
         #endif
     }
 
+    // MARK: - Gap 1: processWrite Skip Test
+
+    func testDispatchSourceTaskSkipsProcessWrite() throws {
+        // GAP 1: Verify TaskNotifier skips processWrite for dispatch source tasks.
+        // When useDispatchSource=YES, the task's write FD is NOT in select()'s wfds,
+        // so processWrite should never be called by TaskNotifier.
+
+        #if ITERM_DEBUG
+        guard let (mockTask, writeFd) = createMockPipeTask() else {
+            XCTFail("Failed to create test pipe")
+            return
+        }
+        defer {
+            mockTask.closeFd()
+            close(writeFd)
+        }
+
+        mockTask.dispatchSourceEnabled = true
+        mockTask.wantsWrite = true  // Indicate buffer has data to write
+
+        // Register with TaskNotifier
+        let notifier = TaskNotifier.sharedInstance()
+        notifier?.register(mockTask)
+        defer { notifier?.deregister(mockTask) }
+
+        // Wait for registration to complete
+        waitForMainQueue()
+
+        // Reset call count after registration
+        mockTask.reset()
+        mockTask.dispatchSourceEnabled = true
+        mockTask.wantsWrite = true
+
+        // Unblock to wake select loop
+        notifier?.unblock()
+
+        // Give TaskNotifier's select loop time to run
+        for _ in 0..<5 {
+            waitForMainQueue()
+        }
+
+        // Since useDispatchSource=YES, TaskNotifier should NOT call processWrite
+        XCTAssertEqual(mockTask.processWriteCallCount, 0,
+                       "Dispatch source task should NOT have processWrite called by TaskNotifier's select() loop")
+        #else
+        guard let task = PTYTask() else {
+            XCTFail("Failed to create PTYTask")
+            return
+        }
+        let usesDispatchSource = task.value(forKey: "useDispatchSource") as? Bool
+        XCTAssertEqual(usesDispatchSource, true,
+                       "PTYTask should use dispatch source")
+        #endif
+    }
+
+    func testLegacyTaskProcessWriteCalledBySelect() throws {
+        // GAP 1 (inverse): Verify legacy tasks DO have processWrite called.
+
+        #if ITERM_DEBUG
+        guard let (mockTask, _) = createMockPipeTask() else {
+            XCTFail("Failed to create test pipe")
+            return
+        }
+        defer { mockTask.closeFd() }
+
+        // Configure as legacy task
+        mockTask.simulateLegacyTask = true
+        mockTask.wantsWrite = true
+
+        // Register with TaskNotifier
+        let notifier = TaskNotifier.sharedInstance()
+        notifier?.register(mockTask)
+        defer { notifier?.deregister(mockTask) }
+
+        // Wait for registration
+        waitForMainQueue()
+
+        let initialCount = mockTask.processWriteCallCount
+        mockTask.simulateLegacyTask = true
+        mockTask.wantsWrite = true
+
+        // Unblock to wake select loop
+        notifier?.unblock()
+
+        // Wait for processWrite to be called
+        // Use short timeout since this should happen quickly
+        var success = false
+        for _ in 0..<50 {
+            if mockTask.processWriteCallCount > initialCount {
+                success = true
+                break
+            }
+            Thread.sleep(forTimeInterval: 0.01)
+        }
+
+        XCTAssertTrue(success,
+                      "Legacy task SHOULD have processWrite called via select()")
+        #else
+        let notifier = TaskNotifier.sharedInstance()
+        XCTAssertNotNil(notifier, "TaskNotifier should exist")
+        #endif
+    }
+
     func testDispatchSourceTaskStillIteratedForCoprocess() throws {
         // REQUIREMENT: Dispatch source tasks are still iterated for coprocess handling
         // Even if PTY I/O is via dispatch_source, coprocess FDs need select()

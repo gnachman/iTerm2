@@ -585,9 +585,11 @@ static void HandleSigChld(int n) {
             writeSuspended = self->_writeSourceSuspended;
         });
 
-        // Now teardown asynchronously with the captured (consistent) state.
+        // Now teardown synchronously with the captured (consistent) state.
+        // Using dispatch_sync ensures all cleanup completes before we return,
+        // preventing races where the task is deallocated while blocks are pending.
         // No self access here - just the captured sources and suspend flags.
-        dispatch_async(ioQueue, ^{
+        dispatch_sync(ioQueue, ^{
             if (readSource) {
                 if (readSuspended) {
                     dispatch_resume(readSource);
