@@ -44,7 +44,8 @@ class FairnessScheduler: NSObject {
 
     // MARK: - Private State
 
-    private var nextSessionId: SessionID = 0
+    // Start at 1 so that 0 can be used as "not registered" sentinel value
+    private var nextSessionId: SessionID = 1
     private var sessions: [SessionID: SessionState] = [:]
     private var busyList: [SessionID] = []       // Round-robin order
     private var busySet: Set<SessionID> = []     // O(1) membership check
@@ -243,7 +244,7 @@ extension FairnessScheduler {
             busyList.removeAll()
             busySet.removeAll()
             executionScheduled = false
-            nextSessionId = 0
+            nextSessionId = 1
             _testExecutionHistory.removeAll()
         }
     }
