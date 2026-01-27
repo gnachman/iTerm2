@@ -9130,8 +9130,17 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 
 - (void)setCurrentMarkOrNote:(id<IntervalTreeImmutableObject>)obj {
     self.currentMarkOrNotePosition = obj.entry.interval;
-    VT100GridRange range = [_screen lineNumberRangeOfInterval:self.currentMarkOrNotePosition];
-    [_textview scrollLineNumberRangeIntoView:range];
+    const VT100GridRange range = [_screen lineNumberRangeOfInterval:self.currentMarkOrNotePosition];
+    BOOL isCommandMark = NO;
+    if ([obj isKindOfClass:[VT100ScreenMark class]]) {
+        id<VT100ScreenMarkReading> mark = (id<VT100ScreenMarkReading>)obj;
+        isCommandMark = mark.command != nil;
+    }
+    if (isCommandMark) {
+        [_textview scrollLineNumberRangeToTop:range];
+    } else {
+        [_textview scrollLineNumberRangeIntoView:range];
+    }
     [self highlightMarkOrNote:obj];
 }
 

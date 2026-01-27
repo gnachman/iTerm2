@@ -633,6 +633,7 @@ typedef void (^PTYTextViewDrawingHookBlock)(iTermTextDrawingHelper *);
 
 // Scrolling control
 - (void)scrollLineNumberRangeIntoView:(VT100GridRange)range;
+- (void)scrollLineNumberRangeToTop:(VT100GridRange)range;
 - (void)scrollLineUp:(id)sender;
 - (void)scrollLineDown:(id)sender;
 - (void)scrollPageUp:(id)sender;

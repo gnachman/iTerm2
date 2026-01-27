@@ -902,6 +902,24 @@ const CGFloat PTYTextViewMarginClickGraceWidth = 2.0;
     [self scrollRectToVisible:aFrame];
 }
 
+- (void)scrollLineToTop:(int)line {
+    const NSRect visible = [self visibleRect];
+    const CGFloat topMargin = [iTermPreferences topBottomMargins];
+
+    NSRect aFrame;
+    aFrame.origin.x = 0;
+    aFrame.origin.y = MAX(0, line * _lineHeight - topMargin);
+    aFrame.size.width = [self frame].size.width;
+    aFrame.size.height = visible.size.height;
+    const CGFloat end = aFrame.origin.y + aFrame.size.height;
+    const NSRect total = [self frame];
+    if (end > total.size.height) {
+        const CGFloat err = end - total.size.height;
+        aFrame.origin.y = MAX(0, aFrame.origin.y - err);
+    }
+    [self scrollRectToVisible:aFrame];
+}
+
 - (NSRange)visibleRelativeRange {
     NSRect visibleRect = [[self enclosingScrollView] documentVisibleRect];
     
@@ -979,6 +997,20 @@ const CGFloat PTYTextViewMarginClickGraceWidth = 2.0;
         const int dy = desiredBottomLine - currentBottomLine;
         [self scrollBy:[self.enclosingScrollView verticalLineScroll] * dy];
     }
+    [self cancelMomentumScroll];
+    [self lockScroll];
+}
+
+- (void)scrollLineNumberRangeToTop:(VT100GridRange)range {
+    const NSRange currentlyVisibleRange = [self visibleRelativeRange];
+    if (currentlyVisibleRange.location == NSNotFound) {
+        return;
+    }
+    if (currentlyVisibleRange.location == range.location) {
+        // Already at top
+        return;
+    }
+    [self scrollLineToTop:range.location];
     [self cancelMomentumScroll];
     [self lockScroll];
 }
