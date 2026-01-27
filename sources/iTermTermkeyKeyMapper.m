@@ -8,6 +8,7 @@
 #import "iTermTermkeyKeyMapper.h"
 
 #import "DebugLogging.h"
+#import "iTermAdvancedSettingsModel.h"
 #import "iTermKeyboardHandler.h"
 #import "NSEvent+iTerm.h"
 #import "VT100Output.h"
@@ -599,8 +600,11 @@ static NSRange iTermMakeRange(NSInteger smallestValueInRange,
 - (BOOL)keyMapperShouldBypassPreCocoaForEvent:(NSEvent *)event {
     const NSEventModifierFlags modifiers = event.it_modifierFlags;
     const BOOL isSpecialKey = !!(modifiers & (NSEventModifierFlagNumericPad | NSEventModifierFlagFunction));
-    if (isSpecialKey) {
+    if (isSpecialKey && ![iTermAdvancedSettingsModel allowSendingFunctionKeysToCocoa]) {
         // Arrow key, function key, etc.
+        // When allowSendingFunctionKeysToCocoa is enabled, let these go through
+        // Cocoa so keyboard layouts that define function keys as dead/compose
+        // keys can work properly. Issue 3578.
         DLog(@"is special key -> bypass pre-cocoa");
         return YES;
     }

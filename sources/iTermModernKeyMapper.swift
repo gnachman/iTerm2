@@ -412,7 +412,8 @@ fileprivate class ModernKeyMapperImpl {
     func keyMapperShouldBypassPreCocoa(for event: KeyEventInfo) -> Bool {
         DLog("keyMapperShouldBypassPreCocoa \(event)")
 
-        if NSEvent.it_isFunctionOrNumericKeypad(modifierFlags: event.modifiers.excludingBuckyBits.flags) {
+        if NSEvent.it_isFunctionOrNumericKeypad(modifierFlags: event.modifiers.excludingBuckyBits.flags) &&
+            !iTermAdvancedSettingsModel.allowSendingFunctionKeysToCocoa() {
             // The original reason for this clause is in the old iterm codebase (commit f7c8312)
             // where Ujwal wrote:
             //   Fixed problem when PTYSession: -keyDown is never called when numeric or
@@ -426,6 +427,10 @@ fileprivate class ModernKeyMapperImpl {
             // This causes the IME to be bypassed, but I still think it's the right thing to
             // do because we do want the delegate to get first whack at scrolling keys, which
             // returning true forces to happen here.
+            //
+            // When allowSendingFunctionKeysToCocoa is enabled, let these go through
+            // Cocoa so keyboard layouts that define function keys as dead/compose
+            // keys can work properly. Issue 3578.
             DLog("true: event is function or numeric keypad")
             return true
         }
