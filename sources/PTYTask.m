@@ -539,9 +539,9 @@ static void HandleSigChld(int n) {
     dispatch_queue_t ioQueue = _ioQueue;
     dispatch_source_t readSource = _readSource;
     dispatch_source_t writeSource = _writeSource;
-    BOOL readSuspended = _readSourceSuspended;
-    BOOL writeSuspended = _writeSourceSuspended;
 
+    // Clear source ivars first - this prevents updateReadSourceState/updateWriteSourceState
+    // from dispatching any NEW blocks (they check _readSource/_writeSource != nil first).
     _readSource = nil;
     _writeSource = nil;
 
@@ -549,23 +549,55 @@ static void HandleSigChld(int n) {
         return;
     }
 
-    // All operations on _ioQueue to ensure serialization
-    dispatch_async(ioQueue, ^{
+    // Check if we're already on ioQueue to avoid deadlock from dispatch_sync.
+    const char *currentLabel = dispatch_queue_get_label(DISPATCH_CURRENT_QUEUE_LABEL);
+    const char *ioQueueLabel = dispatch_queue_get_label(ioQueue);
+    BOOL onIOQueue = (currentLabel != NULL && ioQueueLabel != NULL &&
+                      strcmp(currentLabel, ioQueueLabel) == 0);
+
+    if (onIOQueue) {
+        // Already on ioQueue - do teardown inline with current state.
+        // No race here since we're already serialized on ioQueue.
         if (readSource) {
-            // Resume if suspended before canceling (required by GCD)
-            if (readSuspended) {
+            if (_readSourceSuspended) {
                 dispatch_resume(readSource);
             }
             dispatch_source_cancel(readSource);
         }
         if (writeSource) {
-            // Resume if suspended before canceling (required by GCD)
-            if (writeSuspended) {
+            if (_writeSourceSuspended) {
                 dispatch_resume(writeSource);
             }
             dispatch_source_cancel(writeSource);
         }
-    });
+    } else {
+        // Not on ioQueue - use sync to capture state, then async to teardown.
+        // The sync ensures all prior updateRead/WriteSourceState blocks have completed,
+        // giving us the actual current state.
+        __block BOOL readSuspended = NO;
+        __block BOOL writeSuspended = NO;
+        dispatch_sync(ioQueue, ^{
+            readSuspended = self->_readSourceSuspended;
+            writeSuspended = self->_writeSourceSuspended;
+        });
+
+        // Now teardown asynchronously with the captured (consistent) state.
+        // No self access here - just the captured sources and suspend flags.
+        dispatch_async(ioQueue, ^{
+            if (readSource) {
+                if (readSuspended) {
+                    dispatch_resume(readSource);
+                }
+                dispatch_source_cancel(readSource);
+            }
+            if (writeSource) {
+                if (writeSuspended) {
+                    dispatch_resume(writeSource);
+                }
+                dispatch_source_cancel(writeSource);
+            }
+        });
+    }
 }
 
 #pragma mark - Unified State Check

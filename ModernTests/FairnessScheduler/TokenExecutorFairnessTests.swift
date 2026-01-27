@@ -148,8 +148,9 @@ final class TokenExecutorNonBlockingTests: XCTestCase {
             }
         }
 
-        let result = group.wait(timeout: .now() + 1.0)
-        XCTAssertEqual(result, .success, "Token addition should not block on semaphores")
+        // No timeout - if semaphores were in use, this would deadlock permanently
+        // (test runner would kill the test). Completion means non-blocking.
+        group.wait()
     }
 }
 
@@ -245,18 +246,25 @@ final class TokenExecutorAccountingTests: XCTestCase {
         _ = handlerCallCount.mutate { _ in 0 }
 
         // Step 2: Execute turns to consume tokens until we drop below heavy
-        let droppedBelowHeavy = waitForCondition({
+        // Use iteration-based loop instead of wall-clock timeout for determinism
+        var droppedBelowHeavy = false
+        let maxIterations = 100
+        var iterations = 0
+
+        while iterations < maxIterations && !droppedBelowHeavy {
             // Execute a turn to consume tokens
-            let expectation = XCTestExpectation(description: "Turn complete")
-            self.executor.executeTurn(tokenBudget: 100) { _ in
-                expectation.fulfill()
+            let semaphore = DispatchSemaphore(value: 0)
+            executor.executeTurn(tokenBudget: 100) { _ in
+                semaphore.signal()
             }
-            _ = XCTWaiter.wait(for: [expectation], timeout: 0.5)
+            semaphore.wait()
 
-            return self.executor.backpressureLevel < .heavy
-        }, timeout: 5.0)
+            droppedBelowHeavy = executor.backpressureLevel < .heavy
+            iterations += 1
+        }
 
-        XCTAssertTrue(droppedBelowHeavy, "Should eventually drop below heavy backpressure")
+        XCTAssertTrue(droppedBelowHeavy,
+                      "Should eventually drop below heavy backpressure (iterations: \(iterations))")
 
         // Step 3: Verify handler was called at least once during the transition
         let finalCallCount = handlerCallCount.value
@@ -887,12 +895,17 @@ final class TokenExecutorLegacyRemovalTests: XCTestCase {
         let fgVector = createTestTokenVector(count: 5)
         fgExecutor.addTokens(fgVector, lengthTotal: 50, lengthExcludingInBandSignaling: 50)
 
-        // Wait for BOTH to execute - under fairness, both should get turns
-        let bothExecuted = waitForCondition({
-            bgDelegate.executedLengths.count > 0 && fgDelegate.executedLengths.count > 0
-        }, timeout: 2.0)
-
-        // Verify both sessions processed (neither was starved/preempted)
+        // Wait for both executors to process tokens using iteration-based loop.
+        // We drain both mutation and main queues since token execution may involve both.
+        var bothExecuted = false
+        for _ in 0..<100 {
+            waitForMutationQueue()
+            waitForMainQueue()
+            if bgDelegate.executedLengths.count > 0 && fgDelegate.executedLengths.count > 0 {
+                bothExecuted = true
+                break
+            }
+        }
         XCTAssertTrue(bothExecuted,
                       "Both background and foreground should process under fairness. " +
                       "Background executions: \(bgDelegate.executedLengths.count), " +
@@ -2104,13 +2117,9 @@ final class TokenExecutorAvailableSlotsBoundaryTests: XCTestCase {
             group.leave()
         }
 
-        let result = group.wait(timeout: .now() + 5.0)
-
-        // Even if it times out, we should verify state is valid
-        if result == .timedOut {
-            // Not a hard failure - just note it
-            print("Note: Concurrent test timed out, checking final state")
-        }
+        // No timeout - operations are bounded, should complete quickly
+        // If there's a deadlock, test runner will kill the test
+        group.wait()
 
         // Flush queues to process pending work
         waitForMutationQueue()

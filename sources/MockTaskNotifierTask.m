@@ -14,6 +14,8 @@
     NSInteger _processWriteCallCount;
     NSInteger _brokenPipeCallCount;
     NSInteger _didRegisterCallCount;
+    NSInteger _writeTaskCoprocessCallCount;
+    NSData *_lastCoprocessData;
 }
 
 - (instancetype)init {
@@ -49,8 +51,11 @@
     _brokenPipeCallCount++;
 }
 
-- (void)writeTask:(NSData *)data coprocess:(BOOL)coprocess {
-    // Not tracking for now, can add if needed
+- (void)writeTask:(NSData *)data coprocess:(BOOL)isCoprocess {
+    if (isCoprocess) {
+        _writeTaskCoprocessCallCount++;
+        _lastCoprocessData = [data copy];
+    }
 }
 
 - (void)didRegister {
@@ -91,6 +96,14 @@
     return _didRegisterCallCount;
 }
 
+- (NSInteger)writeTaskCoprocessCallCount {
+    return _writeTaskCoprocessCallCount;
+}
+
+- (NSData *)lastCoprocessData {
+    return _lastCoprocessData;
+}
+
 #pragma mark - Test Helpers
 
 - (void)reset {
@@ -98,6 +111,8 @@
     _processWriteCallCount = 0;
     _brokenPipeCallCount = 0;
     _didRegisterCallCount = 0;
+    _writeTaskCoprocessCallCount = 0;
+    _lastCoprocessData = nil;
     _dispatchSourceEnabled = NO;
     _simulateLegacyTask = NO;
     _wantsRead = YES;
@@ -112,6 +127,14 @@
         [NSThread sleepForTimeInterval:0.01];
     }
     return _processReadCallCount >= count;
+}
+
+- (BOOL)waitForCoprocessWriteCalls:(NSInteger)count timeout:(NSTimeInterval)timeout {
+    NSDate *deadline = [NSDate dateWithTimeIntervalSinceNow:timeout];
+    while (_writeTaskCoprocessCallCount < count && [[NSDate date] compare:deadline] == NSOrderedAscending) {
+        [NSThread sleepForTimeInterval:0.01];
+    }
+    return _writeTaskCoprocessCallCount >= count;
 }
 
 - (void)closeFd {

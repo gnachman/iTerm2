@@ -53,6 +53,12 @@ NS_ASSUME_NONNULL_BEGIN
 /// Number of times didRegister was called
 @property (nonatomic, readonly) NSInteger didRegisterCallCount;
 
+/// Number of times writeTask:coprocess: was called with coprocess=YES
+@property (nonatomic, readonly) NSInteger writeTaskCoprocessCallCount;
+
+/// Last data received via writeTask:coprocess: with coprocess=YES
+@property (nonatomic, strong, readonly, nullable) NSData *lastCoprocessData;
+
 // MARK: - Test Helpers
 
 /// Reset all call counts and state for a fresh test
@@ -61,6 +67,10 @@ NS_ASSUME_NONNULL_BEGIN
 /// Wait for processRead to be called at least `count` times, with timeout
 /// Returns YES if reached, NO if timed out
 - (BOOL)waitForProcessReadCalls:(NSInteger)count timeout:(NSTimeInterval)timeout;
+
+/// Wait for writeTask:coprocess: to be called at least `count` times, with timeout
+/// Returns YES if reached, NO if timed out
+- (BOOL)waitForCoprocessWriteCalls:(NSInteger)count timeout:(NSTimeInterval)timeout;
 
 /// Close the file descriptor if valid
 - (void)closeFd;

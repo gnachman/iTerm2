@@ -2815,6 +2815,7 @@
 		A693C0BD29D0B15900AED4E4 /* DeadlineMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = A693C0BC29D0B15900AED4E4 /* DeadlineMonitor.swift */; };
 		A693C0BF29D0B1F100AED4E4 /* MemoryAddressHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = A693C0BE29D0B1F100AED4E4 /* MemoryAddressHelper.swift */; };
 		A69553892DD1AA7F002E694D /* TokenArray.swift in Sources */ = {isa = PBXBuildFile; fileRef = A69553882DD1AA7B002E694D /* TokenArray.swift */; };
+		AF0994AA2BF992398250200F /* MockCoprocess.m in Sources */ = {isa = PBXBuildFile; fileRef = 0667ECA7CDA4D18F0DECC2C2 /* MockCoprocess.m */; };
 		3BB35CCF037D48AB2C479283 /* FairnessScheduler.swift in Sources */ = {isa = PBXBuildFile; fileRef = EF9D9FE0E680CEC64728F3AE /* FairnessScheduler.swift */; };
 		MOCK0001TEST00M200000001 /* MockTaskNotifierTask.m in Sources */ = {isa = PBXBuildFile; fileRef = MOCK0002TEST00M100000002 /* MockTaskNotifierTask.m */; };
 		MOCK0003TEST00S200000003 /* MockTaskNotifierTask+Swift.swift in Sources */ = {isa = PBXBuildFile; fileRef = MOCK0004TEST00S100000004 /* MockTaskNotifierTask+Swift.swift */; };
@@ -7729,6 +7730,7 @@
 		A693C0BC29D0B15900AED4E4 /* DeadlineMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeadlineMonitor.swift; sourceTree = "<group>"; };
 		A693C0BE29D0B1F100AED4E4 /* MemoryAddressHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MemoryAddressHelper.swift; sourceTree = "<group>"; };
 		A69553882DD1AA7B002E694D /* TokenArray.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TokenArray.swift; sourceTree = "<group>"; };
+		0667ECA7CDA4D18F0DECC2C2 /* MockCoprocess.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = MockCoprocess.m; sourceTree = "<group>"; };
 		EF9D9FE0E680CEC64728F3AE /* FairnessScheduler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FairnessScheduler.swift; sourceTree = "<group>"; };
 		MOCK0000TEST00H100000000 /* MockTaskNotifierTask.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MockTaskNotifierTask.h; sourceTree = "<group>"; };
 		MOCK0002TEST00M100000002 /* MockTaskNotifierTask.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = MockTaskNotifierTask.m; sourceTree = "<group>"; };
@@ -11475,6 +11477,7 @@
 				A61220E22E10489000F48E64 /* iTermFocusFollowsMouse.swift */,
 				A6F7D4CE2E038B540065D09C /* PTYSession+Browser.swift */,
 				A69553882DD1AA7B002E694D /* TokenArray.swift */,
+				0667ECA7CDA4D18F0DECC2C2 /* MockCoprocess.m */,
 				EF9D9FE0E680CEC64728F3AE /* FairnessScheduler.swift */,
 				MOCK0000TEST00H100000000 /* MockTaskNotifierTask.h */,
 				MOCK0002TEST00M100000002 /* MockTaskNotifierTask.m */,
@@ -18639,6 +18642,7 @@
 				A62132D12786109000B80724 /* CapturedOutput.m in Sources */,
 				A667C26027791223006B4DEF /* PTYAnnotation.m in Sources */,
 				A69553892DD1AA7F002E694D /* TokenArray.swift in Sources */,
+				AF0994AA2BF992398250200F /* MockCoprocess.m in Sources */,
 				3BB35CCF037D48AB2C479283 /* FairnessScheduler.swift in Sources */,
 				MOCK0001TEST00M200000001 /* MockTaskNotifierTask.m in Sources */,
 				MOCK0003TEST00S200000003 /* MockTaskNotifierTask+Swift.swift in Sources */,

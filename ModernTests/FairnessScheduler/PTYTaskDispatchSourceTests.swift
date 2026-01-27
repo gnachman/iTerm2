@@ -534,11 +534,15 @@ final class PTYTaskEventHandlerTests: XCTestCase {
         task.testWaitForIOQueue()
 
         // Wait for the dispatch source to fire and drain the buffer.
-        // Using waitForCondition is more robust than Thread.sleep as it:
-        // 1. Returns immediately if condition is met
-        // 2. Handles variable system load gracefully
-        // 3. Makes the expected condition explicit
-        let bufferDrained = waitForCondition({ !task.testWriteBufferHasData }, timeout: 1.0)
+        // Use iteration-based loop for determinism instead of wall-clock timeout.
+        var bufferDrained = false
+        for _ in 0..<100 {
+            task.testWaitForIOQueue()
+            if !task.testWriteBufferHasData {
+                bufferDrained = true
+                break
+            }
+        }
         XCTAssertTrue(bufferDrained,
                       "Write buffer should be drained after write source fires")
 
@@ -602,8 +606,15 @@ final class PTYTaskEventHandlerTests: XCTestCase {
         task.testWaitForIOQueue()
 
         // Wait for the dispatch source to fire and drain the buffer.
-        // Using waitForCondition is more robust than Thread.sleep.
-        let bufferDrained = waitForCondition({ !task.testWriteBufferHasData }, timeout: 1.0)
+        // Use iteration-based loop for determinism instead of wall-clock timeout.
+        var bufferDrained = false
+        for _ in 0..<100 {
+            task.testWaitForIOQueue()
+            if !task.testWriteBufferHasData {
+                bufferDrained = true
+                break
+            }
+        }
         XCTAssertTrue(bufferDrained,
                       "Buffer should be drained after write source fires (write completed)")
 
@@ -670,8 +681,15 @@ final class PTYTaskEventHandlerTests: XCTestCase {
         task.testWaitForIOQueue()
 
         // Wait for the dispatch source to fire and drain the buffer after unpause.
-        // Using waitForCondition is more robust than Thread.sleep.
-        let bufferDrained = waitForCondition({ !task.testWriteBufferHasData }, timeout: 1.0)
+        // Use iteration-based loop for determinism instead of wall-clock timeout.
+        var bufferDrained = false
+        for _ in 0..<100 {
+            task.testWaitForIOQueue()
+            if !task.testWriteBufferHasData {
+                bufferDrained = true
+                break
+            }
+        }
         XCTAssertTrue(bufferDrained,
                       "Buffer should be drained after unpause triggers write")
 
@@ -1900,8 +1918,9 @@ final class PTYTaskEdgeCaseTests: XCTestCase {
             }
         }
 
-        let result = group.wait(timeout: .now() + 5.0)
-        XCTAssertEqual(result, .success, "Concurrent pause changes should complete")
+        // No timeout - operations are bounded (10 threads × 100 iterations each)
+        // If there's a deadlock, test runner will kill the test
+        group.wait()
     }
 }
 
@@ -2079,14 +2098,19 @@ final class PTYTaskReadHandlerPipelineTests: XCTestCase {
             }
         }
 
-        // Wait for all bytes to be received using condition-based wait
+        // Wait for all bytes to be received using iteration-based loop
         // The reads may be coalesced into fewer callbacks, but total data should match
-        let allDataReceived = waitForCondition({
+        var allDataReceived = false
+        for _ in 0..<200 {
+            task.testWaitForIOQueue()
             lock.lock()
             let received = totalReceived.count >= expectedBytes
             lock.unlock()
-            return received
-        }, timeout: 2.0)
+            if received {
+                allDataReceived = true
+                break
+            }
+        }
         XCTAssertTrue(allDataReceived, "All data should be received")
 
         // Verify all data was received

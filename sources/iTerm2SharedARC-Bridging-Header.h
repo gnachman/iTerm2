@@ -212,3 +212,4 @@
 #import "SSKeychain.h"
 #import "librailroad_dsl/include/railroad_dsl.h"
 #import "MockTaskNotifierTask.h"
+#import "MockCoprocess.h"
