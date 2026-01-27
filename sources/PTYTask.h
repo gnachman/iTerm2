@@ -5,6 +5,7 @@
 #import "iTermFileDescriptorClient.h"
 #import "iTermLoggingHelper.h"
 #import "iTermTTYState.h"
+#import "iTermWorkingDirectoryProvider.h"
 #import "VT100GridTypes.h"
 
 #import <termios.h>
@@ -145,7 +146,7 @@ typedef NS_OPTIONS(NSUInteger, iTermJobManagerAttachResults) {
 @property (nonatomic, strong) dispatch_queue_t queue;
 @end
 
-@interface PTYTask : NSObject<iTermLogging>
+@interface PTYTask : NSObject<iTermLogging, iTermWorkingDirectoryProvider>
 
 @property(atomic, readonly) BOOL hasMuteCoprocess;
 @property(atomic, weak) id<PTYTaskDelegate> delegate;

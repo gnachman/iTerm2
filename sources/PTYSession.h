@@ -570,6 +570,11 @@ backgroundColor:(NSColor *)backgroundColor;
 
 - (void)asyncInitialDirectoryForNewSessionBasedOnCurrentDirectory:(void (^)(NSString *pwd))completion;
 
+// Like the above but filters by SSH identity of the new session.
+// If newSessionSSHIdentity is non-nil, only returns a directory if it came from the same SSH host.
+- (void)asyncInitialDirectoryForNewSessionBasedOnCurrentDirectoryWithSSHIdentity:(SSHIdentity *)newSessionSSHIdentity
+                                                                       completion:(void (^)(NSString *pwd))completion;
+
 // Gets the local directory as URL. Weirdly, combines the remote hostname and the local path because this is really only used for the proxy icon.
 - (void)asyncGetCurrentLocationWithCompletion:(void (^)(NSURL *url))completion;
 

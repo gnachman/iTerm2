@@ -71,7 +71,7 @@ iTermTermkeyKeyMapperDelegate,
 iTermTriggersDataSource,
 iTermTmuxControllerSession,
 iTermUpdateCadenceControllerDelegate,
-iTermWorkingDirectoryPollerDelegate,
+iTermSessionDirectoryTrackerDelegate,
 TriggerDelegate> {
     // Changes are made in the main thread to this and it periodically copied to the mutation thread.
     iTermExpect *_expect;
@@ -94,10 +94,11 @@ TriggerDelegate> {
 // Time the window was last resized at.
 @property(nonatomic) NSTimeInterval lastResize;
 @property(atomic, assign) PTYSessionTmuxMode tmuxMode;
-@property(nonatomic, copy) NSString *lastDirectory;
-@property(nonatomic, copy) NSString *lastLocalDirectory;
-@property(nonatomic) BOOL lastLocalDirectoryWasPushed;  // was lastLocalDirectory from shell integration?
-@property(nonatomic, retain) id<VT100RemoteHostReading> lastRemoteHost;  // last remote host at time of setting current directory
+@property(nonatomic, readonly) NSString *lastDirectory;
+@property(nonatomic, readonly) NSString *lastLocalDirectory;
+@property(nonatomic, readonly) BOOL lastLocalDirectoryWasPushed;  // was lastLocalDirectory from shell integration?
+@property(nonatomic, readonly) id<VT100RemoteHostReading> lastRemoteHost;  // last remote host at time of setting current directory
+@property(nonatomic, strong) iTermSessionDirectoryTracker *directoryTracker;
 @property(nonatomic, retain) NSColor *cursorGuideColor;
 @property(nonatomic, copy) NSString *badgeFormat;
 

@@ -20,7 +20,7 @@ protocol ConductorDelegate: Any {
 
 @objc(iTermConductor)
 @MainActor
-class Conductor: NSObject {
+class Conductor: NSObject, SSHIdentityProvider {
     struct Payload: Codable {
         let path: String
         let destination: String

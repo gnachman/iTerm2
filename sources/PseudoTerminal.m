@@ -9104,11 +9104,9 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     }
     PTYSession *currentSession = [self currentSession];
     if (currentSession) {
-        [currentSession asyncInitialDirectoryForNewSessionBasedOnCurrentDirectory:^(NSString *oldCWD) {
+        [currentSession asyncInitialDirectoryForNewSessionBasedOnCurrentDirectoryWithSSHIdentity:theBookmark.sshIdentity
+                                                                                       completion:^(NSString *oldCWD) {
             DLog(@"Get local pwd so I can split: %@", oldCWD);
-            if (theBookmark.sshIdentity != nil && ![currentSession.sshIdentity isEqualTo:theBookmark.sshIdentity]) {
-                oldCWD = nil;
-            }
             PTYSession *session = [self splitVertically:isVertical
                                                  before:before
                                                 profile:theBookmark
@@ -12056,14 +12054,12 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
     }
 
     __weak __typeof(self) weakSelf = self;
-    [currentSession asyncInitialDirectoryForNewSessionBasedOnCurrentDirectory:^(NSString *pwd) {
+    [currentSession asyncInitialDirectoryForNewSessionBasedOnCurrentDirectoryWithSSHIdentity:profile.sshIdentity
+                                                                                   completion:^(NSString *pwd) {
         DLog(@"Got local pwd so I can create a tab: %@", pwd);
         PseudoTerminal *strongSelf = [[weakSelf retain] autorelease];
         if (!strongSelf) {
             return;
-        }
-        if (profile.sshIdentity != nil && ![currentSession.sshIdentity isEqual:profile.sshIdentity]) {
-            pwd = nil;
         }
         PTYSession *newSession = [strongSelf createTabWithProfile:profile
                                                       withCommand:command

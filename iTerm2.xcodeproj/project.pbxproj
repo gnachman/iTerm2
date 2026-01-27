@@ -3895,6 +3895,7 @@
 		A6D4C27121E19959009CF11B /* iTermVariablesOutlineDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = A6D4C26F21E19959009CF11B /* iTermVariablesOutlineDelegate.m */; };
 		A6D4C27421E1A75B009CF11B /* iTermRegisteredFunctionsTableViewDelegate.h in Headers */ = {isa = PBXBuildFile; fileRef = A6D4C27221E1A75B009CF11B /* iTermRegisteredFunctionsTableViewDelegate.h */; };
 		A6D4C27521E1A75B009CF11B /* iTermRegisteredFunctionsTableViewDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = A6D4C27321E1A75B009CF11B /* iTermRegisteredFunctionsTableViewDelegate.m */; };
+		A6D4E1872F25A408008DF9BC /* iTermSessionDirectoryTracker.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6D4E1862F25A408008DF9BC /* iTermSessionDirectoryTracker.swift */; };
 		A6D5724127BCDAA1002E6E9F /* CharacterAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6D5724027BCDAA1002E6E9F /* CharacterAttributes.swift */; };
 		A6D5985121B78B9700B59C94 /* iTermBroadcastInputHelper.h in Headers */ = {isa = PBXBuildFile; fileRef = A6D5984F21B78B9700B59C94 /* iTermBroadcastInputHelper.h */; };
 		A6D5985221B78B9700B59C94 /* iTermBroadcastInputHelper.m in Sources */ = {isa = PBXBuildFile; fileRef = A6D5985021B78B9700B59C94 /* iTermBroadcastInputHelper.m */; };
@@ -8391,6 +8392,7 @@
 		A6D4C27321E1A75B009CF11B /* iTermRegisteredFunctionsTableViewDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermRegisteredFunctionsTableViewDelegate.m; sourceTree = "<group>"; };
 		A6D4E1832F2582F8008DF9BC /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
 		A6D4E1842F2582F8008DF9BC /* PasswordManagerProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PasswordManagerProtocol.swift; sourceTree = "<group>"; };
+		A6D4E1862F25A408008DF9BC /* iTermSessionDirectoryTracker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermSessionDirectoryTracker.swift; sourceTree = "<group>"; };
 		A6D5724027BCDAA1002E6E9F /* CharacterAttributes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CharacterAttributes.swift; sourceTree = "<group>"; };
 		A6D5724227BCE06C002E6E9F /* iTermTextDataSource.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermTextDataSource.h; sourceTree = "<group>"; };
 		A6D5984F21B78B9700B59C94 /* iTermBroadcastInputHelper.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermBroadcastInputHelper.h; sourceTree = "<group>"; };
@@ -11452,6 +11454,7 @@
 		A63F40AC1842988A003A6A6D /* Core */ = {
 			isa = PBXGroup;
 			children = (
+				A6D4E1862F25A408008DF9BC /* iTermSessionDirectoryTracker.swift */,
 				A6C267072F0DE418009C9954 /* WindowInitialPositioner.swift */,
 				A605A2022EB2DB270072ED7E /* VT100ScreenProgress.h */,
 				A605A18E2EB020060072ED7E /* iTermCoreSearch.m */,
@@ -19303,6 +19306,7 @@
 				A6A9839927E69B50003319D1 /* OnePasswordDataSource.swift in Sources */,
 				A667C23A276BD90B006B4DEF /* VT100State.m in Sources */,
 				A6A4866720B6780C00493302 /* iTermAdvancedSettingsModel.m in Sources */,
+				A6D4E1872F25A408008DF9BC /* iTermSessionDirectoryTracker.swift in Sources */,
 				A6D16EBB2E087A640099139D /* iTermBrowserPermissionManager.swift in Sources */,
 				A62841572CE28BA200D0796B /* iTermWordExtractor.m in Sources */,
 				A66433582DEA87DA0099F722 /* ResponsesResponseStreamingParser.swift in Sources */,

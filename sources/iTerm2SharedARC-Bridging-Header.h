@@ -131,6 +131,8 @@
 #import "iTermVariables.h"
 #import "iTermVirtualOffset.h"
 #import "iTermWarning.h"
+#import "iTermWorkingDirectoryPoller.h"
+#import "iTermWorkingDirectoryProvider.h"
 #import "WindowControllerInterface.h"
 #import "FileTransferManager.h"
 #import "FindContext.h"
