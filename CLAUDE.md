@@ -7,3 +7,4 @@
 - Don't create dependency cycles. Use delegates or closures instead.
 - To run unit tests in ModernTests, use tools/run_tests.expect. It takes an argument naming the test or tests, such as `tools/run_tests.expect ModernTests/iTermScriptFunctionCallTest/testSignature`
 - When renaming a file tracked by git (and almost all of them are) use `git mv` instead of `mv`
+- To make a debug build run `make Development`
