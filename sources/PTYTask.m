@@ -387,7 +387,8 @@ static void HandleSigChld(int n) {
     assert(!jobManager || !self.jobManager.isReadOnly);
     [writeLock lock];
     [writeBuffer appendData:data];
-    [[TaskNotifier sharedInstance] unblock];
+    [self writeBufferDidChange];  // Trigger write dispatch_source (no-op if not set up)
+    [[TaskNotifier sharedInstance] unblock];  // Still needed for coprocess FD wake-up
     [writeLock unlock];
 }
 
@@ -690,6 +691,13 @@ static void HandleSigChld(int n) {
     // Send data to delegate via non-blocking path
     // (addTokens internally calls notifyScheduler which kicks FairnessScheduler)
     [self.delegate threadedReadTask:buffer length:(int)bytesRead];
+
+    // Route PTY output to coprocess (same as readTask:length:)
+    @synchronized (self) {
+        if (coprocess_ && !self.sshIntegrationActive) {
+            [self writeToCoprocess:[NSData dataWithBytes:buffer length:bytesRead]];
+        }
+    }
 
     // Re-check state after read (backpressure may have increased)
     [self updateReadSourceState];

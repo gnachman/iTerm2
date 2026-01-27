@@ -244,9 +244,10 @@ final class TaskNotifierSelectLoopTests: XCTestCase {
         // REQUIREMENT: Dispatch source tasks are still iterated for coprocess handling
         // Even if PTY I/O is via dispatch_source, coprocess FDs need select()
         //
-        // TODO: Coprocess handling for dispatch_source tasks needs architectural review.
-        // The interaction between select() and dispatch_source for the same task
-        // may have fundamental conflicts. Skipping behavioral test for now.
+        // Coprocess FDs stay on select() while PTY FDs use dispatch_source.
+        // Data flow bridging handled by:
+        //   - handleReadEvent calls writeToCoprocess (PTY output → coprocess)
+        //   - writeTask:coprocess: calls writeBufferDidChange (coprocess output → PTY)
 
         #if ITERM_DEBUG
         let mockTask = MockTaskNotifierTask()
@@ -304,9 +305,10 @@ final class TaskNotifierSelectLoopTests: XCTestCase {
         // REQUIREMENT: Coprocess FDs remain in select() set
         // Coprocess I/O stays on select() even when PTY uses dispatch_source
         //
-        // TODO: Coprocess handling for dispatch_source tasks needs architectural review.
-        // The interaction between select() and dispatch_source for the same task
-        // may have fundamental conflicts. Skipping behavioral test for now.
+        // The hybrid approach works because:
+        //   - Coprocess FDs are non-blocking (O_NONBLOCK set in Coprocess.m)
+        //   - Data flow is bridged at PTY I/O boundary
+        //   - No blocking risks in TaskNotifier's select() loop
 
         #if ITERM_DEBUG
         let mockTask = MockTaskNotifierTask()
@@ -327,10 +329,7 @@ final class TaskNotifierSelectLoopTests: XCTestCase {
 
     func testDeadpoolHandlingUnchanged() throws {
         // REQUIREMENT: Deadpool/waitpid handling continues working
-        // Process reaping is independent of I/O mechanism
-        //
-        // TODO: Coprocess/deadpool handling for dispatch_source tasks needs
-        // architectural review. Skipping behavioral test for now.
+        // Process reaping is independent of I/O mechanism (uses WNOHANG)
 
         #if ITERM_DEBUG
         let mockTask = MockTaskNotifierTask()
@@ -527,9 +526,10 @@ final class TaskNotifierMixedModeTests: XCTestCase {
         // REQUIREMENT: Tasks with coprocess should be iterated for coprocess FD handling
         // even when main FD uses dispatch_source.
         //
-        // TODO: Coprocess handling for dispatch_source tasks needs architectural review.
-        // The interaction between select() and dispatch_source for the same task
-        // may have fundamental conflicts. Skipping behavioral test for now.
+        // Hybrid approach: Coprocess FDs stay on select(), PTY FDs use dispatch_source.
+        // Data flow bridging ensures coprocess I/O works correctly:
+        //   - PTY output → coprocess: handleReadEvent calls writeToCoprocess
+        //   - Coprocess output → PTY: writeTask:coprocess: calls writeBufferDidChange
 
         #if ITERM_DEBUG
         let mockTask = MockTaskNotifierTask()

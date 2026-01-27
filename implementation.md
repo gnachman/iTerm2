@@ -305,7 +305,15 @@ Replace TaskNotifier's select() with per-FD dispatch sources. **Critical:** The 
     //    NOTE: addTokens() internally calls notifyScheduler() which kicks FairnessScheduler
     [self.delegate threadedReadTask:buffer length:bytesRead];
 
-    // 3. Re-check state after read (backpressure may have increased)
+    // 3. Route PTY output to coprocess (same as readTask:length:)
+    //    This bridges dispatch_source PTY reads with select()-based coprocess handling
+    @synchronized (self) {
+        if (coprocess_ && !self.sshIntegrationActive) {
+            [self writeToCoprocess:[NSData dataWithBytes:buffer length:bytesRead]];
+        }
+    }
+
+    // 4. Re-check state after read (backpressure may have increased)
     [self updateReadSourceState];
 }
 
@@ -1299,3 +1307,27 @@ Coprocesses are external processes that filter terminal I/O (rare, advanced feat
 - **Hybrid viable:** Coprocesses can stay on select() while PTYs move to dispatch_source
 - **Starvation risk:** Coprocesses bypass the token queue (direct to writeBuffer), but low severity in practice due to low throughput
 - **Future work:** Full migration to dispatch_source + fairness integration deferred to Phase 2
+
+**Data flow bridging (required for hybrid approach):**
+
+The coprocess FDs stay on select(), but the PTY I/O is on dispatch_source. Two bridges are needed:
+
+1. **PTY output → Coprocess** (in `handleReadEvent`):
+   ```objc
+   @synchronized (self) {
+       if (coprocess_ && !self.sshIntegrationActive) {
+           [self writeToCoprocess:[NSData dataWithBytes:buffer length:bytesRead]];
+       }
+   }
+   ```
+
+2. **Coprocess output → PTY** (in `writeTask:coprocess:`):
+   ```objc
+   [writeBuffer appendData:data];
+   [self writeBufferDidChange];  // Trigger write dispatch_source
+   [[TaskNotifier sharedInstance] unblock];  // Still needed for coprocess FD handling
+   ```
+
+Without these bridges, coprocess data flow would be broken:
+- PTY reads via dispatch_source wouldn't notify the coprocess
+- Coprocess output would pile up in writeBuffer with no dispatch_source trigger
