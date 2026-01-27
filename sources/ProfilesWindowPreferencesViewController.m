@@ -72,6 +72,7 @@ typedef NS_ENUM(NSUInteger, iTermWindowUnitsTag) {
     IBOutlet NSTextField *_byLabel;
 
     IBOutlet NSButton *_hideAfterOpening;
+    IBOutlet NSButton *_lockSizeAutomatically;
     IBOutlet NSPopUpButton *_windowStyle;
     IBOutlet NSPopUpButton *_screen;
     IBOutlet NSTextField *_screenLabel;
@@ -242,6 +243,11 @@ typedef NS_ENUM(NSUInteger, iTermWindowUnitsTag) {
 
     [self defineControl:_hideAfterOpening
                     key:KEY_HIDE_AFTER_OPENING
+            relatedView:nil
+                   type:kPreferenceInfoTypeCheckbox];
+
+    [self defineControl:_lockSizeAutomatically
+                    key:KEY_LOCK_WINDOW_SIZE_AUTOMATICALLY
             relatedView:nil
                    type:kPreferenceInfoTypeCheckbox];
 

@@ -199,6 +199,7 @@ NSString *const TERMINAL_ARRANGEMENT_SCROLLER_WIDTH = @"Scroller Width";
 // Only present in arrangements created by the window restoration system, not (for example) saved arrangements in the UI.
 // Boolean NSNumber.
 NSString *const TERMINAL_ARRANGEMENT_MINIATURIZED = @"miniaturized";
+NSString *const TERMINAL_ARRANGEMENT_SIZE_LOCKED = @"Size Locked";
 
 static void iTermPercentageSanitize(iTermPercentage *percentage) {
     if (percentage->width >= 0) {
@@ -573,6 +574,7 @@ typedef NS_ENUM(int, iTermShouldHaveTitleSeparator) {
     _toggleFullScreenModeCompletionBlocks = [[NSMutableArray alloc] init];
     _windowWasJustCreated = YES;
     _deferSetAppearance = YES;
+    _sizeLocked = [iTermProfilePreferences boolForKey:KEY_LOCK_WINDOW_SIZE_AUTOMATICALLY inProfile:profile];
     __weak __typeof(self) weakSelf = self;
     dispatch_async(dispatch_get_main_queue(), ^{
         [weakSelf disableDeferSetAppearance];
@@ -3613,6 +3615,7 @@ ITERM_WEAKLY_REFERENCEABLE
     if (arrangement[TERMINAL_ARRANGEMENT_USE_TRANSPARENCY]) {
         useTransparency_ = [arrangement[TERMINAL_ARRANGEMENT_USE_TRANSPARENCY] boolValue];
     }
+    _sizeLocked = [arrangement[TERMINAL_ARRANGEMENT_SIZE_LOCKED] boolValue];
     self.scope.windowTitleOverrideFormat = arrangement[TERMINAL_ARRANGEMENT_TITLE_OVERRIDE];
 
     _contentView.shouldShowToolbelt = [arrangement[TERMINAL_ARRANGEMENT_HAS_TOOLBELT] boolValue];
@@ -5058,6 +5061,32 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     return _fullScreen || lionFullScreen_;
 }
 
+- (BOOL)windowTypeSupportsSizeLock {
+    switch (self.windowType) {
+        case WINDOW_TYPE_NORMAL:
+        case WINDOW_TYPE_NO_TITLE_BAR:
+        case WINDOW_TYPE_COMPACT:
+        case WINDOW_TYPE_ACCESSORY:
+        case WINDOW_TYPE_CENTERED:
+        case WINDOW_TYPE_TOP_PERCENTAGE:
+        case WINDOW_TYPE_BOTTOM_PERCENTAGE:
+        case WINDOW_TYPE_LEFT_PERCENTAGE:
+        case WINDOW_TYPE_RIGHT_PERCENTAGE:
+        case WINDOW_TYPE_BOTTOM_CELLS:
+        case WINDOW_TYPE_TOP_CELLS:
+        case WINDOW_TYPE_LEFT_CELLS:
+        case WINDOW_TYPE_RIGHT_CELLS:
+            return YES;
+
+        case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
+        case WINDOW_TYPE_LION_FULL_SCREEN:
+        case WINDOW_TYPE_MAXIMIZED:
+        case WINDOW_TYPE_COMPACT_MAXIMIZED:
+            return NO;
+    }
+    return NO;
+}
+
 - (BOOL)lionFullScreen {
     return lionFullScreen_;
 }
@@ -5113,6 +5142,11 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
         DLog( @"Blocking resize" );
         self.timeOfLastResize = [NSDate timeIntervalSinceReferenceDate];
         return self.window.screen.visibleFrameIgnoringHiddenDock.size;
+    }
+    if (_sizeLocked && self.windowTypeSupportsSizeLock) {
+        DLog(@"Blocking resize because size is locked");
+        self.timeOfLastResize = [NSDate timeIntervalSinceReferenceDate];
+        return self.window.frame.size;
     }
      NSSize originalProposal = proposedFrameSize;
     // Find the session for the current pane of the current tab.
@@ -10386,6 +10420,9 @@ static BOOL iTermApproximatelyEqualRects(NSRect lhs, NSRect rhs, double epsilon)
 }
 
 - (NSString *)rootTerminalViewWindowSizeViewDetailString {
+    if (_sizeLocked && [self windowTypeSupportsSizeLock]) {
+        return @"Window size locked";
+    }
     switch (self.windowType) {
         case WINDOW_TYPE_NORMAL:
         case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
@@ -10778,6 +10815,10 @@ static BOOL iTermApproximatelyEqualRects(NSRect lhs, NSRect rhs, double epsilon)
                   withSize:size];
 }
 
+- (IBAction)toggleSizeLocked:(id)sender {
+    _sizeLocked = !_sizeLocked;
+}
+
 - (IBAction)moveSessionToWindow:(id)sender {
     [[MovePaneController sharedInstance] moveSessionToNewWindow:[self currentSession]
                                                         atPoint:[[self window] pointToScreenCoords:NSMakePoint(10, -10)]];
@@ -11144,6 +11185,9 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
     } else if ([item action] == @selector(toggleToolbeltVisibility:)) {
         [item setState:_contentView.shouldShowToolbelt ? NSControlStateValueOn : NSControlStateValueOff];
         return [[iTermToolbeltView availableConfiguredToolsForProfileType:self.currentSession.profile.profileType] count] > 0;
+    } else if ([item action] == @selector(toggleSizeLocked:)) {
+        [item setState:_sizeLocked ? NSControlStateValueOn : NSControlStateValueOff];
+        return self.windowTypeSupportsSizeLock;
     } else if ([item action] == @selector(moveSessionToWindow:)) {
         if (self.currentSession.locked) {
             return NO;
@@ -13197,6 +13241,7 @@ backgroundColor:(NSColor *)backgroundColor {
                                         includingContents:includeContents
                                                   encoder:adapter];
     [encoder encodeNumber:@(self.window.miniaturized) forKey:TERMINAL_ARRANGEMENT_MINIATURIZED];
+    [encoder encodeNumber:@(_sizeLocked) forKey:TERMINAL_ARRANGEMENT_SIZE_LOCKED];
     return commit;
 }
 

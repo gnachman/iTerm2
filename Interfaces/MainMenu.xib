@@ -1801,6 +1801,12 @@ DQ
                                     </items>
                                 </menu>
                             </menuItem>
+                            <menuItem title="Lock Size" identifier="Lock Size" id="df3-h4-b4O">
+                                <modifierMask key="keyEquivalentModifierMask"/>
+                                <connections>
+                                    <action selector="toggleSizeLocked:" target="-1" id="K1B-UU-I0m"/>
+                                </connections>
+                            </menuItem>
                             <menuItem isSeparatorItem="YES" id="XJx-vd-H4Y">
                                 <modifierMask key="keyEquivalentModifierMask" command="YES"/>
                             </menuItem>
