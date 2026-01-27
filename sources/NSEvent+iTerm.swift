@@ -38,7 +38,7 @@ extension NSEvent {
                                    forKey: Self.previousFlagsKey)
         }
     }
-    
+
     var it_isFunctionOrNumericKeypad: Bool {
         return NSEvent.it_isFunctionOrNumericKeypad(
             modifierFlags: it_modifierFlags)
@@ -129,6 +129,6 @@ extension NSEvent {
         // This is a control key. We can't just send it in modifyOtherKeys=2 mode. For example,
         // in issue 9279 @elias.baixas notes that on a Spanish ISO keyboard you press control-alt-+
         // to get control-]. characters="<0x1d>".
-        return charactersIgnoringModifiers != String(controlCode)
+        return charactersIgnoringModifiers?.lowercased() != String(controlCode).lowercased()
     }
 }
