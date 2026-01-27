@@ -110,7 +110,7 @@ func CVectorReleaseObjectsAndDestroy(_ vector: CVector) {
 }
 
 @objc(iTermTokenExecutor)
-class TokenExecutor: NSObject {
+class TokenExecutor: NSObject, FairnessSchedulerExecutor {
     @objc weak var delegate: TokenExecutorDelegate? {
         didSet {
             impl.delegate = delegate
@@ -137,6 +137,13 @@ class TokenExecutor: NSObject {
     @objc var backpressureReleaseHandler: (() -> Void)? {
         didSet {
             impl.backpressureReleaseHandler = backpressureReleaseHandler
+        }
+    }
+
+    /// Session ID assigned by FairnessScheduler during registration.
+    @objc var fairnessSessionId: UInt64 = 0 {
+        didSet {
+            impl.fairnessSessionId = fairnessSessionId
         }
     }
 
@@ -363,6 +370,22 @@ class TokenExecutor: NSObject {
         impl.schedule()
     }
 
+    // MARK: - FairnessSchedulerExecutor
+
+    /// Execute tokens up to the given budget. Calls completion with result.
+    @objc
+    func executeTurn(tokenBudget: Int, completion: @escaping (TurnResult) -> Void) {
+        if gDebugLogging.boolValue { DLog("executeTurn(tokenBudget: \(tokenBudget))") }
+        impl.executeTurn(tokenBudget: tokenBudget, completion: completion)
+    }
+
+    /// Called when session is unregistered to clean up pending tokens.
+    @objc
+    func cleanupForUnregistration() {
+        if gDebugLogging.boolValue { DLog("cleanupForUnregistration") }
+        impl.cleanupForUnregistration()
+    }
+
     @objc func assertSynchronousSideEffectsAreSafe() {
         impl.assertSynchronousSideEffectsAreSafe()
     }
@@ -407,6 +430,9 @@ private class TokenExecutorImpl {
 
     /// Closure called when backpressure transitions from heavy to lighter.
     var backpressureReleaseHandler: (() -> Void)?
+
+    /// Session ID assigned by FairnessScheduler during registration.
+    var fairnessSessionId: UInt64 = 0
 
     // This is used to give visible sessions priority for token processing over those that cannot
     // be seen. This prevents a very busy non-selected tab from starving a visible one.
@@ -502,13 +528,112 @@ private class TokenExecutorImpl {
     }
 
     func didAddTokens() {
-        execute()
+        notifyScheduler()
+    }
+
+    // MARK: - Scheduler Notification
+
+    /// Notify the FairnessScheduler that this session has work, or execute directly if scheduler disabled.
+    /// Must be called on mutation queue.
+    func notifyScheduler() {
+        DLog("notifyScheduler(sessionId: \(fairnessSessionId))")
+#if DEBUG
+        assertQueue()
+#endif
+        if iTermAdvancedSettingsModel.useFairnessScheduler() && fairnessSessionId != 0 {
+            FairnessScheduler.shared.sessionDidEnqueueWork(fairnessSessionId)
+        } else {
+            // Legacy behavior: execute immediately
+            execute()
+        }
     }
 
     // You can call this on any queue.
     func schedule() {
         queue.async { [weak self] in
-            self?.execute()
+            self?.notifyScheduler()
+        }
+    }
+
+    // MARK: - FairnessSchedulerExecutor Support
+
+    /// Execute tokens up to the given budget. Called by FairnessScheduler.
+    func executeTurn(tokenBudget: Int, completion: @escaping (TurnResult) -> Void) {
+        DLog("executeTurn(tokenBudget: \(tokenBudget))")
+#if DEBUG
+        assertQueue()
+#endif
+
+        // Check if we're blocked (paused, copy mode, etc.)
+        if let delegate = delegate, delegate.tokenExecutorShouldQueueTokens() {
+            completion(.blocked)
+            return
+        }
+
+        executingCount += 1
+        defer {
+            executingCount -= 1
+            executeHighPriorityTasks()
+        }
+
+        executeHighPriorityTasks()
+
+        guard let delegate = delegate else {
+            tokenQueue.removeAll()
+            completion(.completed)
+            return
+        }
+
+        var tokensConsumed = 0
+        var groupsExecuted = 0
+        var accumulatedLength = ByteExecutionStats()
+
+        tokenQueue.enumerateTokenArrayGroups { [weak self] (group, priority) in
+            guard let self = self else { return false }
+
+            let groupTokenCount = group.arrays.reduce(0) { $0 + Int($1.count) }
+
+            // Budget check BETWEEN groups, not within
+            // At least one group always executes (progress guarantee)
+            if tokensConsumed + groupTokenCount > tokenBudget && groupsExecuted > 0 {
+                return false  // budget would be exceeded, yield to next session
+            }
+
+            // Execute the entire group atomically
+            if groupsExecuted == 0 {
+                delegate.tokenExecutorWillExecuteTokens()
+            }
+
+            let shouldContinue = self.executeTokenGroups(group,
+                                                         priority: priority,
+                                                         accumulatedLength: &accumulatedLength,
+                                                         delegate: delegate)
+
+            tokensConsumed += groupTokenCount
+            groupsExecuted += 1
+
+            return shouldContinue && !self.isPaused
+        }
+
+        if accumulatedLength.total > 0 || groupsExecuted > 0 {
+            delegate.tokenExecutorDidExecute(lengthTotal: accumulatedLength.total,
+                                             lengthExcludingInBandSignaling: accumulatedLength.excludingInBandSignaling,
+                                             throughput: throughputEstimator.estimatedThroughput)
+        }
+
+        // Report back to scheduler
+        let hasMoreWork = !tokenQueue.isEmpty || taskQueue.count > 0
+        completion(hasMoreWork ? .yielded : .completed)
+    }
+
+    /// Called when session is unregistered to clean up pending tokens.
+    func cleanupForUnregistration() {
+        DLog("cleanupForUnregistration")
+        // Discard all remaining tokens and trigger their consumption callbacks
+        // This ensures availableSlots is correctly incremented for unconsumed tokens
+        let unconsumedCount = tokenQueue.discardAllAndReturnCount()
+        if unconsumedCount > 0 {
+            DLog("Cleaned up \(unconsumedCount) unconsumed token arrays")
         }
     }
 
@@ -520,9 +645,11 @@ private class TokenExecutorImpl {
             assertQueue()
 #endif
             if executingCount == 0 {
-                execute()
+                notifyScheduler()
                 return
             }
+            // Already executing - task will be picked up in current turn
+            return
         }
         schedule()
     }

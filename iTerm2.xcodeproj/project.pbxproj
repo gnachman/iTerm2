@@ -2818,6 +2818,7 @@
 		A693C0BD29D0B15900AED4E4 /* DeadlineMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = A693C0BC29D0B15900AED4E4 /* DeadlineMonitor.swift */; };
 		A693C0BF29D0B1F100AED4E4 /* MemoryAddressHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = A693C0BE29D0B1F100AED4E4 /* MemoryAddressHelper.swift */; };
 		A69553892DD1AA7F002E694D /* TokenArray.swift in Sources */ = {isa = PBXBuildFile; fileRef = A69553882DD1AA7B002E694D /* TokenArray.swift */; };
+		375E381EC78004ECB18F67A1 /* FairnessScheduler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 933A3C237022F915E5EE975D /* FairnessScheduler.swift */; };
 		A695CA7F213DAA8500486440 /* NSHost+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = A695CA7D213DAA8500486440 /* NSHost+iTerm.h */; };
 		A695CA80213DAA8500486440 /* NSHost+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = A695CA7E213DAA8500486440 /* NSHost+iTerm.m */; };
 		A697100618D82E79007E901D /* iTermAdvancedSettingsViewController.h in Headers */ = {isa = PBXBuildFile; fileRef = A697100418D82E79007E901D /* iTermAdvancedSettingsViewController.h */; };
@@ -7733,6 +7734,7 @@
 		A693C0BC29D0B15900AED4E4 /* DeadlineMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeadlineMonitor.swift; sourceTree = "<group>"; };
 		A693C0BE29D0B1F100AED4E4 /* MemoryAddressHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MemoryAddressHelper.swift; sourceTree = "<group>"; };
 		A69553882DD1AA7B002E694D /* TokenArray.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TokenArray.swift; sourceTree = "<group>"; };
+		933A3C237022F915E5EE975D /* FairnessScheduler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FairnessScheduler.swift; sourceTree = "<group>"; };
 		A695CA7D213DAA8500486440 /* NSHost+iTerm.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "NSHost+iTerm.h"; sourceTree = "<group>"; };
 		A695CA7E213DAA8500486440 /* NSHost+iTerm.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "NSHost+iTerm.m"; sourceTree = "<group>"; };
 		A696AB3921603A3F000023C3 /* iTermMetalUnavailableReason.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermMetalUnavailableReason.h; sourceTree = "<group>"; };
@@ -11477,6 +11479,7 @@
 				A61220E22E10489000F48E64 /* iTermFocusFollowsMouse.swift */,
 				A6F7D4CE2E038B540065D09C /* PTYSession+Browser.swift */,
 				A69553882DD1AA7B002E694D /* TokenArray.swift */,
+				933A3C237022F915E5EE975D /* FairnessScheduler.swift */,
 				A6C811F82DD1A7850088E628 /* TwoTierTokenQueue.swift */,
 				A697CD702D973E370031583F /* iTermApplicationDelegate.swift */,
 				A61E0C4F2D5ACD4C00D4633A /* PTYSession.swift */,
@@ -18640,6 +18643,7 @@
 				A62132D12786109000B80724 /* CapturedOutput.m in Sources */,
 				A667C26027791223006B4DEF /* PTYAnnotation.m in Sources */,
 				A69553892DD1AA7F002E694D /* TokenArray.swift in Sources */,
+				375E381EC78004ECB18F67A1 /* FairnessScheduler.swift in Sources */,
 				A653F6BB24D4C9B50062377E /* iTermKeyLabels.m in Sources */,
 				A6EC0B0F2C9C9AA800598D20 /* FoldMark.swift in Sources */,
 				A6A3EDC62E0CDA9D00D711DA /* iTermBrowserActionPerforming.swift in Sources */,
