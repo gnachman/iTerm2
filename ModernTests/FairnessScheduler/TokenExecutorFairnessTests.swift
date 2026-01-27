@@ -48,6 +48,13 @@ final class TokenExecutorNonBlockingTests: XCTestCase {
     func testAddTokensDoesNotBlock() throws {
         // REQUIREMENT: addTokens() must return immediately without blocking.
         // This enables the dispatch_source model where PTY read handlers never block.
+        //
+        // Critical: We must BLOCK consumption to prove non-blocking behavior.
+        // Without this, tokens could drain fast enough that a semaphore-based
+        // implementation would never actually block (always having permits).
+
+        // Block token consumption so tokens accumulate
+        mockDelegate.shouldQueueTokens = true
 
         // Verify adding tokens beyond buffer capacity doesn't block
         // and returns immediately with backpressure reflected in backpressureLevel
@@ -57,7 +64,8 @@ final class TokenExecutorNonBlockingTests: XCTestCase {
         let executor = self.executor!
 
         DispatchQueue.global().async {
-            // Add many token arrays rapidly - should never block
+            // Add many token arrays rapidly (100 > 40 buffer slots) - should never block
+            // even though consumption is blocked and we exceed capacity
             for _ in 0..<100 {
                 let vector = createTestTokenVector(count: 10)
                 executor.addTokens(vector, lengthTotal: 100, lengthExcludingInBandSignaling: 100)
@@ -65,8 +73,14 @@ final class TokenExecutorNonBlockingTests: XCTestCase {
             expectation.fulfill()
         }
 
-        // If addTokens blocks, this will timeout
+        // If addTokens blocks (old semaphore behavior), this will timeout.
+        // With non-blocking implementation, completes immediately despite
+        // blocked consumption and exceeded capacity.
         wait(for: [expectation], timeout: 1.0)
+
+        // Verify we actually exceeded capacity (proving the test conditions were met)
+        XCTAssertEqual(executor.backpressureLevel, .blocked,
+                       "Should be at blocked backpressure after adding 100 tokens with consumption blocked")
     }
 
     func testAddTokensDecrementsAvailableSlots() {
@@ -131,6 +145,13 @@ final class TokenExecutorNonBlockingTests: XCTestCase {
     func testSemaphoreNotCreated() throws {
         // REQUIREMENT: After Phase 2, no DispatchSemaphore should be created for token arrays.
         // The semaphore-based blocking model is replaced by suspend/resume.
+        //
+        // Critical: We must BLOCK consumption to prove semaphores aren't used.
+        // Without this, tokens could drain fast enough that a semaphore-based
+        // implementation would never actually block.
+
+        // Block token consumption so tokens accumulate
+        mockDelegate.shouldQueueTokens = true
 
         // Verify by checking that rapid token addition doesn't cause blocking behavior
         // If semaphores were still in use, this would deadlock or timeout
@@ -139,7 +160,9 @@ final class TokenExecutorNonBlockingTests: XCTestCase {
         // Capture executor locally to prevent race with tearDown deallocation
         let executor = self.executor!
 
-        for _ in 0..<10 {
+        // Add 100 token arrays from concurrent threads (100 > 40 buffer slots)
+        // With blocked consumption, a semaphore-based implementation would deadlock
+        for _ in 0..<100 {
             group.enter()
             DispatchQueue.global().async {
                 let vector = createTestTokenVector(count: 5)
@@ -148,9 +171,16 @@ final class TokenExecutorNonBlockingTests: XCTestCase {
             }
         }
 
-        // No timeout - if semaphores were in use, this would deadlock permanently
-        // (test runner would kill the test). Completion means non-blocking.
-        group.wait()
+        // If semaphores were in use with blocked consumption, this would deadlock
+        // because semaphore.wait() would block waiting for permits that never come.
+        // Completion proves no blocking semaphores are used.
+        let result = group.wait(timeout: .now() + 2.0)
+        XCTAssertEqual(result, .success,
+                       "Adding tokens should complete without blocking even with consumption blocked")
+
+        // Verify we actually exceeded capacity
+        XCTAssertEqual(executor.backpressureLevel, .blocked,
+                       "Should be at blocked backpressure after adding 100 tokens with consumption blocked")
     }
 }
 
