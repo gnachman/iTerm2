@@ -1111,10 +1111,16 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
     _backgroundColorView.frame = self.bounds;
     _smearView.frame = self.bounds;
     _legacyScrollerBackgroundView.frame = [self frameForLegacyScroller];
-    _progressBar.frame = NSMakeRect(0,
-                                    self.bounds.size.height - _progressBar.desiredHeight,
-                                    self.bounds.size.width,
-                                    _progressBar.desiredHeight);
+    {
+        CGFloat progressBarY = self.bounds.size.height - _progressBar.desiredHeight;
+        if (_showTitle) {
+            progressBarY -= iTermGetSessionViewTitleHeight();
+        }
+        _progressBar.frame = NSMakeRect(0,
+                                        progressBarY,
+                                        self.bounds.size.width,
+                                        _progressBar.desiredHeight);
+    }
     [CATransaction commit];
 
     if (_hoverURLView) {
