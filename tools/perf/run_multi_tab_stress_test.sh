@@ -263,6 +263,23 @@ if [[ ! -d "$app_path" ]]; then
   exit 1
 fi
 
+# Extract build metadata from app's Info.plist
+app_plist="$app_path/Contents/Info.plist"
+if [[ -f "$app_plist" ]]; then
+  app_version=$(/usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" "$app_plist" 2>/dev/null || echo "unknown")
+  build_commit=$(/usr/libexec/PlistBuddy -c "Print :BuildCommit" "$app_plist" 2>/dev/null || echo "")
+  build_branch=$(/usr/libexec/PlistBuddy -c "Print :BuildBranch" "$app_plist" 2>/dev/null || echo "")
+  build_date=$(/usr/libexec/PlistBuddy -c "Print :BuildDate" "$app_plist" 2>/dev/null || echo "")
+  build_uncommitted=$(/usr/libexec/PlistBuddy -c "Print :BuildUncommittedChanges" "$app_plist" 2>/dev/null || echo "")
+else
+  echo "Warning: Could not read Info.plist from app bundle" >&2
+  app_version="unknown"
+  build_commit=""
+  build_branch=""
+  build_date=""
+  build_uncommitted=""
+fi
+
 if ! [[ "$duration" =~ ^[0-9]+$ ]] || [[ "$duration" -lt 1 ]]; then
   echo "Error: duration must be a positive integer" >&2
   exit 1
@@ -392,9 +409,8 @@ on run argv
         delay 1
       end repeat
 
-      try
-        close theWindow
-      end try
+      -- Don't close window here; let main script handle shutdown order
+      -- (needed so dtrace can be signaled before iTerm2 exits)
   end tell
 end run
 APPLESCRIPT
@@ -473,9 +489,11 @@ run_single_test() {
   fi
 
   # Set up sync directory if in sync mode
+  # Use /tmp so it's accessible to all users (needed when running as root for dtrace)
   local sync_dir=""
   if [[ "$synchronized_start" == true ]]; then
-    sync_dir=$(mktemp -d)
+    sync_dir=$(mktemp -d /tmp/iterm2-perf-sync.XXXXXX)
+    chmod 777 "$sync_dir"
     echo "Synchronized start enabled (sync dir: $sync_dir)"
   fi
 
@@ -522,10 +540,23 @@ run_single_test() {
     profiler_pid=$!
     # Start DTrace if enabled (with timeout matching profiler duration)
     if [[ "$dtrace_mode" == true ]]; then
-      timeout "$profiler_duration" dtrace -s "$dtrace_script" -p "$iterm_pid" > "$dtrace_output" 2>&1 &
+      timeout "$((profiler_duration + 30))" dtrace -p "$iterm_pid" -s "$dtrace_script" $profiler_duration > "$dtrace_output" 2>&1 &
       dtrace_pid=$!
+      # Wait for dtrace to attach (it prints "Tracing" when ready)
+      echo "Waiting for DTrace to attach..."
+      for _ in {1..50}; do
+        if grep -q "Tracing" "$dtrace_output" 2>/dev/null; then
+          echo "DTrace attached."
+          break
+        fi
+        sleep 0.2
+      done
+      if ! grep -q "Tracing" "$dtrace_output" 2>/dev/null; then
+        echo "Warning: DTrace may not have attached properly"
+      fi
+    else
+      sleep 1
     fi
-    sleep 1
   fi
 
   echo "Launching $tab_count tabs, each running stress test for $duration seconds..."
@@ -555,10 +586,23 @@ run_single_test() {
     profiler_pid=$!
     # Start DTrace if enabled (with timeout matching profiler duration)
     if [[ "$dtrace_mode" == true ]]; then
-      timeout "$profiler_duration" dtrace -s "$dtrace_script" -p "$iterm_pid" > "$dtrace_output" 2>&1 &
+      timeout "$((profiler_duration + 30))" dtrace -p "$iterm_pid" -s "$dtrace_script" $profiler_duration > "$dtrace_output" 2>&1 &
       dtrace_pid=$!
+      # Wait for dtrace to attach (it prints "Tracing" when ready)
+      echo "Waiting for DTrace to attach..."
+      for _ in {1..50}; do
+        if grep -q "Tracing" "$dtrace_output" 2>/dev/null; then
+          echo "DTrace attached."
+          break
+        fi
+        sleep 0.2
+      done
+      if ! grep -q "Tracing" "$dtrace_output" 2>/dev/null; then
+        echo "Warning: DTrace may not have attached properly"
+      fi
+    else
+      sleep 1  # Brief pause for profiler to attach
     fi
-    sleep 0.5  # Brief pause for profiler to attach
 
     echo "Sending go signal..."
     touch "$sync_dir/go"
@@ -601,9 +645,19 @@ run_single_test() {
   if [[ -n "$profiler_pid" ]]; then
     wait "$profiler_pid" 2>/dev/null || true
   fi
-  # Wait for DTrace if enabled (timeout will kill it, then we get summary output)
+
+  # Signal DTrace to output its END block summary before quitting iTerm2
+  # (timeout is just a failsafe; we want a clean shutdown here)
   if [[ "$dtrace_mode" == true && -n "$dtrace_pid" ]]; then
-    echo "Waiting for DTrace..."
+    echo "Signaling DTrace to finish..."
+    kill -INT "$dtrace_pid" 2>/dev/null || true
+    # Give dtrace time to output its END block
+    for _ in {1..20}; do
+      if ! kill -0 "$dtrace_pid" 2>/dev/null; then
+        break
+      fi
+      sleep 0.2
+    done
     wait "$dtrace_pid" 2>/dev/null || true
   fi
 
@@ -1139,6 +1193,13 @@ run_forever() {
 echo "Multi-Tab Stress Test"
 echo "====================="
 echo "App: $app_path"
+echo "Version: $app_version"
+if [[ -n "$build_commit" ]]; then
+  echo "Commit: ${build_commit:0:12}"
+  [[ -n "$build_branch" ]] && echo "Branch: $build_branch"
+  [[ -n "$build_date" ]] && echo "Build date: $build_date"
+  [[ "$build_uncommitted" == "true" ]] && echo "Uncommitted changes: yes"
+fi
 if [[ "$forever_mode" == true ]]; then
   echo "Mode: forever (no profiling)"
 else

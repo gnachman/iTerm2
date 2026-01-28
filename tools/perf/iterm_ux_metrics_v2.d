@@ -7,13 +7,26 @@
  * 1. Apparent frame rate - frames where content actually changed
  * 2. Latency - time from PTY read to refresh (approximate)
  * 3. Lock contention - time in performBlockWithJoinedThreads
+ *
+ * Usage: dtrace -s script.d DURATION -p PID
+ * Pass DURATION=0 for no auto-exit (Ctrl-C to stop).
  */
 
 #pragma D option quiet
 
 dtrace:::BEGIN {
     start = timestamp;
+    seconds = 0;
     printf("Tracing iTerm2 UX metrics... Ctrl-C to stop.\n");
+}
+
+tick-1sec {
+    seconds++;
+}
+
+tick-1sec
+/$1 > 0 && seconds >= $1/ {
+    exit(0);
 }
 
 /* ============================================================
