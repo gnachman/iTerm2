@@ -44,16 +44,22 @@ class FairnessScheduler: NSObject {
 
     // MARK: - Private State
 
+    // Access on mutation queue only
     // Start at 1 so that 0 can be used as "not registered" sentinel value
     private var nextSessionId: SessionID = 1
+    // Access on mutation queue only
     private var sessions: [SessionID: SessionState] = [:]
+    // Access on mutation queue only
     private var busyList: [SessionID] = []       // Round-robin order
+    // Access on mutation queue only
     private var busySet: Set<SessionID> = []     // O(1) membership check
 
     #if ITERM_DEBUG
+    // Access on mutation queue only
     /// Test-only: Records session IDs in the order they executed, for verifying round-robin fairness.
     private var _testExecutionHistory: [SessionID] = []
     #endif
+    // Access on mutation queue only
     private var executionScheduled = false
 
     private struct SessionState {
