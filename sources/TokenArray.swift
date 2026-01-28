@@ -76,11 +76,8 @@ class TokenArray: IteratorProtocol, CustomDebugStringConvertible {
         }
         defer {
             nextIndex += 1
-            if nextIndex == count, let semaphore = semaphore {
-                semaphore.signal()
-                onSemaphoreSignaled?()
-                self.semaphore = nil
-                self.onSemaphoreSignaled = nil
+            if nextIndex == count {
+                signalAndRelease()
             }
         }
         return (CVectorGetObject(&cvector, nextIndex) as! VT100Token)
@@ -103,11 +100,8 @@ class TokenArray: IteratorProtocol, CustomDebugStringConvertible {
     // Returns whether there is another token.
     func consume() -> Bool {
         nextIndex += 1
-        if nextIndex == count, let semaphore = semaphore {
-            semaphore.signal()
-            onSemaphoreSignaled?()
-            self.semaphore = nil
-            self.onSemaphoreSignaled = nil
+        if nextIndex == count {
+            signalAndRelease()
         }
         return hasNext
     }
@@ -118,21 +112,25 @@ class TokenArray: IteratorProtocol, CustomDebugStringConvertible {
             return
         }
         nextIndex = count
-        if let semaphore = semaphore {
-            semaphore.signal()
-            onSemaphoreSignaled?()
-            self.semaphore = nil
-            self.onSemaphoreSignaled = nil
-        }
+        signalAndRelease()
     }
 
     private var dirty = true
 
     func didFinish() {
-        semaphore?.signal()
-        onSemaphoreSignaled?()
+        signalAndRelease()
+    }
+
+    /// Signals the semaphore and invokes the callback, if present.
+    /// Captures the callback before niling to avoid footguns if the
+    /// callback assigns to onSemaphoreSignaled.
+    private func signalAndRelease() {
+        guard let sem = semaphore else { return }
+        let closure = onSemaphoreSignaled
         semaphore = nil
         onSemaphoreSignaled = nil
+        sem.signal()
+        closure?()
     }
 
     func cleanup(asyncFree: Bool) {
@@ -140,10 +138,7 @@ class TokenArray: IteratorProtocol, CustomDebugStringConvertible {
             return
         }
         dirty = false
-        semaphore?.signal()
-        onSemaphoreSignaled?()
-        semaphore = nil
-        onSemaphoreSignaled = nil
+        signalAndRelease()
         if asyncFree {
             TokenArray.destroyQueue.async { [cvector] in
                 CVectorReleaseObjectsAndDestroy(cvector)
