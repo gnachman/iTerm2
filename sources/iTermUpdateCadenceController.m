@@ -286,22 +286,26 @@ static const NSTimeInterval kBackgroundUpdateCadence = 1;
 
     _cadence = period;
 
-    if (_gcdUpdateTimer != nil) {
-        dispatch_source_cancel(_gcdUpdateTimer);
-        _gcdUpdateTimer = nil;
+    if (_gcdUpdateTimer == nil) {
+        // First-time creation: set up the dispatch source and event handler
+        _gcdUpdateTimer = dispatch_source_create(DISPATCH_SOURCE_TYPE_TIMER, 0, 0, dispatch_get_main_queue());
+        __weak __typeof(self) weakSelf = self;
+        dispatch_source_set_event_handler(_gcdUpdateTimer, ^{
+            DLog(@"GCD cadence timer fired for %@", weakSelf);
+            [weakSelf maybeUpdateDisplay];
+        });
+        dispatch_source_set_timer(_gcdUpdateTimer,
+                                  dispatch_time(DISPATCH_TIME_NOW, period * NSEC_PER_SEC),
+                                  period * NSEC_PER_SEC,
+                                  0.0005 * NSEC_PER_SEC);
+        dispatch_resume(_gcdUpdateTimer);
+    } else {
+        // Reuse existing timer: just update the timing parameters
+        dispatch_source_set_timer(_gcdUpdateTimer,
+                                  dispatch_time(DISPATCH_TIME_NOW, period * NSEC_PER_SEC),
+                                  period * NSEC_PER_SEC,
+                                  0.0005 * NSEC_PER_SEC);
     }
-
-    _gcdUpdateTimer = dispatch_source_create(DISPATCH_SOURCE_TYPE_TIMER, 0, 0, dispatch_get_main_queue());
-    dispatch_source_set_timer(_gcdUpdateTimer,
-                              dispatch_time(DISPATCH_TIME_NOW, period * NSEC_PER_SEC),
-                              period * NSEC_PER_SEC,
-                              0.0005 * NSEC_PER_SEC);
-    __weak __typeof(self) weakSelf = self;
-    dispatch_source_set_event_handler(_gcdUpdateTimer, ^{
-        DLog(@"GCD cadence timer fired for %@", weakSelf);
-        [weakSelf maybeUpdateDisplay];
-    });
-    dispatch_resume(_gcdUpdateTimer);
 }
 
 - (BOOL)updateTimerIsValid {
