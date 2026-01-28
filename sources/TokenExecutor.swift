@@ -132,6 +132,7 @@ class TokenExecutor: NSObject, FairnessSchedulerExecutor {
         return DispatchQueue.getSpecific(key: Self.isTokenExecutorSpecificKey) == true
     }
 
+    // Access on mutation queue only
     /// Closure called when backpressure transitions from heavy to lighter.
     /// Used by PTYTask to re-evaluate read source state.
     @objc var backpressureReleaseHandler: (() -> Void)? {
@@ -140,6 +141,7 @@ class TokenExecutor: NSObject, FairnessSchedulerExecutor {
         }
     }
 
+    // Access on mutation queue only
     /// Session ID assigned by FairnessScheduler during registration.
     @objc var fairnessSessionId: UInt64 = 0 {
         didSet {
@@ -428,9 +430,11 @@ private class TokenExecutorImpl {
     private(set) var isExecutingToken = false
     weak var delegate: TokenExecutorDelegate?
 
+    // Access on mutation queue only
     /// Closure called when backpressure transitions from heavy to lighter.
     var backpressureReleaseHandler: (() -> Void)?
 
+    // Access on mutation queue only
     /// Session ID assigned by FairnessScheduler during registration.
     var fairnessSessionId: UInt64 = 0
 
