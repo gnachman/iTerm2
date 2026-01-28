@@ -109,6 +109,7 @@ class FairnessScheduler: NSObject {
 
     /// Internal implementation - must be called on mutationQueue.
     private func sessionDidEnqueueWorkOnQueue(_ sessionId: SessionID) {
+        dispatchPrecondition(condition: .onQueue(iTermGCD.mutationQueue()))
         guard var state = sessions[sessionId] else { return }
 
         if state.isExecuting {
@@ -128,6 +129,7 @@ class FairnessScheduler: NSObject {
 
     /// Must be called on mutationQueue.
     private func ensureExecutionScheduled() {
+        dispatchPrecondition(condition: .onQueue(iTermGCD.mutationQueue()))
         guard !busyList.isEmpty else { return }
         guard !executionScheduled else { return }
 
@@ -141,6 +143,7 @@ class FairnessScheduler: NSObject {
 
     /// Must be called on mutationQueue.
     private func executeNextTurn() {
+        dispatchPrecondition(condition: .onQueue(iTermGCD.mutationQueue()))
         executionScheduled = false
 
         guard !busyList.isEmpty else { return }
@@ -174,6 +177,7 @@ class FairnessScheduler: NSObject {
 
     /// Must be called on mutationQueue.
     private func sessionFinishedTurn(_ sessionId: SessionID, result: TurnResult) {
+        dispatchPrecondition(condition: .onQueue(iTermGCD.mutationQueue()))
         guard var state = sessions[sessionId] else { return }
 
         state.isExecuting = false
