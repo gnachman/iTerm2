@@ -374,16 +374,20 @@ class TokenExecutor: NSObject, FairnessSchedulerExecutor {
 
     // MARK: - FairnessSchedulerExecutor
 
+    // Mutation queue only
     /// Execute tokens up to the given budget. Calls completion with result.
     @objc
     func executeTurn(tokenBudget: Int, completion: @escaping (TurnResult) -> Void) {
+        dispatchPrecondition(condition: .onQueue(iTermGCD.mutationQueue()))
         if gDebugLogging.boolValue { DLog("executeTurn(tokenBudget: \(tokenBudget))") }
         impl.executeTurn(tokenBudget: tokenBudget, completion: completion)
     }
 
+    // Mutation queue only
     /// Called when session is unregistered to clean up pending tokens.
     @objc
     func cleanupForUnregistration() {
+        dispatchPrecondition(condition: .onQueue(iTermGCD.mutationQueue()))
         if gDebugLogging.boolValue { DLog("cleanupForUnregistration") }
         impl.cleanupForUnregistration()
     }
