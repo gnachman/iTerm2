@@ -1,3 +1,35 @@
+> **Fork Note:** This fork's [`instrumentation-only`](https://github.com/chall37/iTerm2/tree/instrumentation-only) branch provides performance testing infrastructure for iTerm2.
+>
+> ### Quick Start
+>
+> ```bash
+> # Basic test (10 tabs, 20 seconds)
+> ./tools/perf/run_multi_tab_stress_test.sh /path/to/iTerm2.app
+>
+> # Compare behavior across tab counts
+> ./tools/perf/run_multi_tab_stress_test.sh --tabs=1,3,10 /path/to/iTerm2.app
+>
+> # With DTrace metrics (requires sudo)
+> ./tools/perf/run_multi_tab_stress_test.sh --dtrace /path/to/iTerm2.app
+> ```
+>
+> ### Scripts
+>
+> | Script | Purpose |
+> |--------|---------|
+> | `run_multi_tab_stress_test.sh` | Main test harness - opens iTerm2, creates tabs, runs stress load, profiles |
+> | `stress_load.py` | Generates terminal output to stress rendering |
+> | `analyze_profile.py` | Analyzes `sample` profiler output for hotspots |
+> | `iterm_ux_metrics_v2.d` | DTrace script for frame rate and latency metrics |
+>
+> ### Output
+>
+> - **Profile analysis** - CPU hotspots from `sample` profiler
+> - **Latency metrics** - KeyboardInput, TitleUpdate timings (from instrumented builds)
+> - **Timer analysis** - GCD/NSTimer efficiency, cadence stability
+> - **DTrace metrics** - Frame rates, adaptive mode, lock contention (if --dtrace)
+> - **Summary table** - Cross-run comparison when testing multiple tab counts
+
 <div align="center">
 
 # iTerm2

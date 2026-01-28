@@ -1,36 +1,5 @@
 PATH := /usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin
 
-# Code signing flags for local builds without certificates
-CODESIGN_FLAGS := CODE_SIGN_IDENTITY="-" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO
-
-# Parallel build jobs (use all CPU cores)
-JOBS := -jobs $(shell sysctl -n hw.ncpu)
-
-# Export to child Makefiles
-export CODESIGN_FLAGS
-export JOBS
-export CODE_SIGNING_REQUIRED := NO
-
-# Enable parallel Swift whole-module optimization (helps with wholemodule builds)
-SWIFT_PARALLEL := SWIFT_USE_PARALLEL_WHOLE_MODULE_OPTIMIZATION=YES
-
-# Build artifact management - keep rolled builds in ~/claude
-BUILD_OUTPUT_DIR := $(HOME)/claude
-
-# External dependencies cache (frameworks built with current Xcode)
-DEPS_DIR ?= $(HOME)/claude/deps
-MAX_BUILDS := 3
-TIMESTAMP := $(shell date +"%Y%m%d_%H%M%S")
-
-# Roll builds: keep last N, archive current before new build
-define roll_builds
-	@mkdir -p $(BUILD_OUTPUT_DIR)
-	@if [ -d "$(BUILD_OUTPUT_DIR)/iTerm2-dev.app" ]; then \
-		mv "$(BUILD_OUTPUT_DIR)/iTerm2-dev.app" "$(BUILD_OUTPUT_DIR)/iTerm2-dev-$(TIMESTAMP).app"; \
-	fi
-	@ls -dt $(BUILD_OUTPUT_DIR)/iTerm2-dev-*.app 2>/dev/null | tail -n +$(MAX_BUILDS) | xargs rm -rf 2>/dev/null || true
-endef
-
 ORIG_PATH := $(PATH)
 PATH := /usr/bin:/bin:/usr/sbin:/sbin
 ITERM_PID=$(shell pgrep "iTerm2")
@@ -58,23 +27,24 @@ install: | Deployment backup-old-iterm
 
 Development:
 	echo "Using PATH for build: $(PATH)"
-	xcodebuild -scheme iTerm2 -configuration Development -destination 'platform=macOS' -skipPackagePluginValidation ARCHS=arm64 ONLY_ACTIVE_ARCH=YES $(CODESIGN_FLAGS) $(SWIFT_PARALLEL) $(JOBS) && \
+	xcodebuild -scheme iTerm2 -configuration Development -destination 'platform=macOS' -skipPackagePluginValidation && \
 	chmod -R go+rX build/Development
 
 Dep:
-	xcodebuild -scheme iTerm2 -configuration Deployment -destination 'platform=macOS' -skipPackagePluginValidation ARCHS=arm64 ONLY_ACTIVE_ARCH=YES
+	xcodebuild -scheme iTerm2 -configuration Deployment -destination 'platform=macOS' -skipPackagePluginValidation
 
 Beta:
 	cp plists/beta-iTerm2.plist plists/iTerm2.plist
-	xcodebuild -scheme iTerm2 -configuration Beta -destination 'platform=macOS' -skipPackagePluginValidation ENABLE_ADDRESS_SANITIZER=NO ARCHS=arm64 ONLY_ACTIVE_ARCH=YES $(CODESIGN_FLAGS) $(SWIFT_PARALLEL) $(JOBS) && \
+	xcodebuild -scheme iTerm2 -configuration Beta -destination 'platform=macOS' -skipPackagePluginValidation ENABLE_ADDRESS_SANITIZER=NO && \
 	chmod -R go+rX build/Beta
 
 Deployment:
-	time xcodebuild -scheme iTerm2 -configuration Deployment -destination 'platform=macOS' -skipPackagePluginValidation ENABLE_ADDRESS_SANITIZER=NO ARCHS=arm64 ONLY_ACTIVE_ARCH=YES $(CODESIGN_FLAGS) $(SWIFT_PARALLEL) $(JOBS)
+	xcodebuild -scheme iTerm2 -configuration Deployment -destination 'platform=macOS' -skipPackagePluginValidation ENABLE_ADDRESS_SANITIZER=NO && \
+	chmod -R go+rX build/Deployment
 
 Nightly: force
 	cp plists/nightly-iTerm2.plist plists/iTerm2.plist
-	xcodebuild -scheme iTerm2 -configuration Nightly -destination 'platform=macOS' -skipPackagePluginValidation ENABLE_ADDRESS_SANITIZER=NO ARCHS=arm64 ONLY_ACTIVE_ARCH=YES $(CODESIGN_FLAGS) $(SWIFT_PARALLEL) $(JOBS)
+	xcodebuild -scheme iTerm2 -configuration Nightly -destination 'platform=macOS' -skipPackagePluginValidation ENABLE_ADDRESS_SANITIZER=NO
 	chmod -R go+rX build/Nightly
 
 run: Development
@@ -192,22 +162,22 @@ fatlibssh2: force fatopenssl
 
 CoreParse: force
 	rm -rf ThirdParty/CoreParse.framework
-	cd submodules/CoreParse && xcodebuild -target CoreParse -configuration Release CONFIGURATION_BUILD_DIR=../../ThirdParty VALID_ARCHS="arm64 x86_64" $(CODESIGN_FLAGS) $(JOBS)
+	cd submodules/CoreParse && xcodebuild -target CoreParse -configuration Release CONFIGURATION_BUILD_DIR=../../ThirdParty VALID_ARCHS="arm64 x86_64"
 	cp "submodules/CoreParse//CoreParse/Tokenisation/Token Recognisers/CPRegexpRecogniser.h" ThirdParty/CoreParse.framework/Versions/A/Headers/CPRegexpRecogniser.h
 
 NMSSH: force fatlibssh2
 	echo Begin building NMSSH
 	rm -rf ThirdParty/NMSSH.framework
 	cp submodules/libssh2/include/* submodules/NMSSH/NMSSH-OSX/Libraries/include/libssh2
-	cd submodules/NMSSH && xcodebuild -target NMSSH -project NMSSH.xcodeproj -configuration Release CONFIGURATION_BUILD_DIR=../../ThirdParty $(CODESIGN_FLAGS) $(JOBS)
+	cd submodules/NMSSH && xcodebuild -target NMSSH -project NMSSH.xcodeproj -configuration Release CONFIGURATION_BUILD_DIR=../../ThirdParty
 
 paranoidNMSSH: force
 	/usr/bin/sandbox-exec -f deps.sb $(MAKE) NMSSH
 
 librailroad_dsl: force
-	$(HOME)/.cargo/bin/rustup target add x86_64-apple-darwin
-	$(HOME)/.cargo/bin/rustup target add aarch64-apple-darwin
-	cd submodules/railroad_dsl && $(HOME)/.cargo/bin/rustup run stable cargo build --release --target aarch64-apple-darwin && $(HOME)/.cargo/bin/rustup run stable cargo build --release --target x86_64-apple-darwin && lipo -create target/aarch64-apple-darwin/release/librailroad_dsl.dylib target/x86_64-apple-darwin/release/librailroad_dsl.dylib -output ../../ThirdParty/librailroad_dsl/lib/librailroad_dsl.dylib && cp include/railroad_dsl.h ../../ThirdParty/librailroad_dsl/include && install_name_tool -id @rpath/librailroad_dsl.dylib ../../ThirdParty/librailroad_dsl/lib/librailroad_dsl.dylib
+	/opt/homebrew/bin/rustup target add x86_64-apple-darwin
+	/opt/homebrew/bin/rustup target add aarch64-apple-darwin
+	cd submodules/railroad_dsl && /opt/homebrew/bin/rustup run stable cargo build --release --target aarch64-apple-darwin && /opt/homebrew/bin/rustup run stable cargo build --release --target x86_64-apple-darwin && lipo -create target/aarch64-apple-darwin/release/librailroad_dsl.dylib target/x86_64-apple-darwin/release/librailroad_dsl.dylib -output ../../ThirdParty/librailroad_dsl/lib/librailroad_dsl.dylib && cp include/railroad_dsl.h ../../ThirdParty/librailroad_dsl/include && install_name_tool -id @rpath/librailroad_dsl.dylib ../../ThirdParty/librailroad_dsl/lib/librailroad_dsl.dylib
 
 pwmadapters: force
 	cd pwmplugin/ && ./build.sh
@@ -222,17 +192,14 @@ libgit2: force
 
 sparkle: force
 	rm -rf ThirdParty/Sparkle.framework
-	cd submodules/Sparkle && xcodebuild -scheme Sparkle -configuration Release 'CONFIGURATION_BUILD_DIR=$$(SRCROOT)/Build/$$(CONFIGURATION)' $(CODESIGN_FLAGS) $(SWIFT_PARALLEL) $(JOBS)
+	cd submodules/Sparkle && xcodebuild -scheme Sparkle -configuration Release 'CONFIGURATION_BUILD_DIR=$$(SRCROOT)/Build/$$(CONFIGURATION)'
 	mv submodules/Sparkle/Build/Release/Sparkle.framework ThirdParty/Sparkle.framework
 
 paranoid-swiftymarkdown: force
 	/usr/bin/sandbox-exec -f deps.sb $(MAKE) SwiftyMarkdown
 
 paranoiddeps: force
-	/usr/bin/sandbox-exec -f deps.sb $(MAKE) deps-sandboxed
-	$(MAKE) pwmadapters
-
-deps-sandboxed: force fatlibsixel CoreParse NMSSH bindeps libgit2 sparkle librailroad_dsl sfsymbolenum
+	/usr/bin/sandbox-exec -f deps.sb $(MAKE) deps
 
 paranoidlibssh2: force
 	/usr/bin/sandbox-exec -f deps.sb $(MAKE) fatlibssh2
@@ -276,38 +243,33 @@ powerline-extra-symbols: force
 	cp submodules/powerline-extra-symbols/src/*eps ThirdParty/PowerlineExtraSymbols/
 
 BetterFontPicker: force
-	@mkdir -p $(DEPS_DIR)
-	cd BetterFontPicker && $(MAKE) DEST_DIR=$(DEPS_DIR)
+	cd BetterFontPicker && $(MAKE)
 
 BetterFontPicker-Dev: force
 	cd BetterFontPicker && $(MAKE) dev
 
 ColorPicker: force
-	@mkdir -p $(DEPS_DIR)
-	cd ColorPicker && $(MAKE) DEST_DIR=$(DEPS_DIR)
+	cd ColorPicker && $(MAKE)
 
 bindeps: SwiftyMarkdown Highlightr BetterFontPicker
 	$(MAKE) ColorPicker
 	$(MAKE) SearchableComboListView
 
 SearchableComboListView: force
-	@mkdir -p $(DEPS_DIR)
-	cd SearchableComboListView && $(MAKE) DEST_DIR=$(DEPS_DIR)
+	cd SearchableComboListView && $(MAKE)
 
 paranoidsclv: force
 	/usr/bin/sandbox-exec -f deps.sb $(MAKE) SearchableComboListView
 
 SwiftyMarkdown: force
-	@mkdir -p $(DEPS_DIR)/ThirdParty
-	cd submodules/SwiftyMarkdown && xcodebuild -configuration Release 'CONFIGURATION_BUILD_DIR=$$(SRCROOT)/Build/$$(CONFIGURATION)' $(CODESIGN_FLAGS) $(SWIFT_PARALLEL) $(JOBS)
-	rm -rf $(DEPS_DIR)/ThirdParty/SwiftyMarkdown.framework
-	mv submodules/SwiftyMarkdown/build/Release/SwiftyMarkdown.framework $(DEPS_DIR)/ThirdParty/SwiftyMarkdown.framework
+	cd submodules/SwiftyMarkdown && xcodebuild -configuration Release 'CONFIGURATION_BUILD_DIR=$$(SRCROOT)/Build/$$(CONFIGURATION)'
+	rm -rf ThirdParty/SwiftyMarkdown.framework
+	mv submodules/SwiftyMarkdown/build/Release/SwiftyMarkdown.framework ThirdParty/SwiftyMarkdown.framework
 
 Highlightr: force
-	@mkdir -p $(DEPS_DIR)/ThirdParty
-	cd submodules/Highlightr && xcodebuild -project Highlightr.xcodeproj -target Highlightr-macOS 'CONFIGURATION_BUILD_DIR=$$(SRCROOT)/Build/$$(CONFIGURATION)' $(CODESIGN_FLAGS) $(SWIFT_PARALLEL) $(JOBS)
-	rm -rf $(DEPS_DIR)/ThirdParty/Highlightr.framework
-	mv submodules/Highlightr/build/Release/Highlightr.framework $(DEPS_DIR)/ThirdParty/Highlightr.framework
+	cd submodules/Highlightr && xcodebuild -project Highlightr.xcodeproj -target Highlightr-macOS 'CONFIGURATION_BUILD_DIR=$$(SRCROOT)/Build/$$(CONFIGURATION)'
+	rm -rf ThirdParty/Highlightr.framework
+	mv submodules/Highlightr/build/Release/Highlightr.framework ThirdParty/Highlightr.framework
 
 cleandeps: force
 	cd submodules/CoreParse/ && git clean -f -d .

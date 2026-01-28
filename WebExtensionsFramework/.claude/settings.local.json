@@ -1,0 +1,24 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:developer.apple.com)",
+      "Bash(mkdir:*)",
+      "Bash(swift test)",
+      "WebFetch(domain:w3c.github.io)",
+      "WebFetch(domain:developer.mozilla.org)",
+      "Bash(swift test:*)",
+      "Bash(swift build)",
+      "Bash(swift package:*)",
+      "Bash(grep:*)",
+      "Bash(git add:*)",
+      "Bash(rg:*)",
+      "Bash(find:*)",
+      "WebFetch(domain:developer.chrome.com)",
+      "WebFetch(domain:chromium.googlesource.com)",
+      "WebFetch(domain:searchfox.org)",
+      "Bash(swift run:*)",
+      "Bash(ls:*)"
+    ],
+    "deny": []
+  }
+}
