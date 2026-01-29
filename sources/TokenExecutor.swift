@@ -599,66 +599,98 @@ private class TokenExecutorImpl {
         assertQueue()
 #endif
 
-        // Check if we're blocked (paused, copy mode, etc.)
-        if let delegate = delegate, delegate.tokenExecutorShouldQueueTokens() {
-            completion(.blocked)
-            return
-        }
+        var turnResult: TurnResult = .completed
 
-        executingCount += 1
-        defer {
-            executingCount -= 1
+        execution: do {
+            executingCount += 1
+            defer {
+                executingCount -= 1
+                executeHighPriorityTasks()
+            }
+
             executeHighPriorityTasks()
-        }
 
-        executeHighPriorityTasks()
-
-        guard let delegate = delegate else {
-            tokenQueue.removeAll()
-            completion(.completed)
-            return
-        }
-
-        var tokensConsumed = 0
-        var groupsExecuted = 0
-        var accumulatedLength = ByteExecutionStats()
-
-        tokenQueue.enumerateTokenArrayGroups { [weak self] (group, priority) in
-            guard let self = self else { return false }
-
-            let groupTokenCount = group.arrays.reduce(0) { $0 + Int($1.count) }
-
-            // Budget check BETWEEN groups, not within
-            // At least one group always executes (progress guarantee)
-            if tokensConsumed + groupTokenCount > tokenBudget && groupsExecuted > 0 {
-                return false  // budget would be exceeded, yield to next session
+            guard let delegate = delegate else {
+                tokenQueue.removeAll()
+                turnResult = .completed
+                break execution
             }
 
-            // Execute the entire group atomically
-            if groupsExecuted == 0 {
-                delegate.tokenExecutorWillExecuteTokens()
+            // Check if we're blocked (paused, copy mode, etc.) - after high-priority tasks
+            if delegate.tokenExecutorShouldQueueTokens() {
+                turnResult = .blocked
+                break execution
             }
 
-            let shouldContinue = self.executeTokenGroups(group,
-                                                         priority: priority,
-                                                         accumulatedLength: &accumulatedLength,
-                                                         delegate: delegate)
+            let hadTokens = !tokenQueue.isEmpty
+            var tokensConsumed = 0
+            var groupsExecuted = 0
+            var accumulatedLength = ByteExecutionStats()
 
-            tokensConsumed += groupTokenCount
-            groupsExecuted += 1
+            slownessDetector.measure(event: PTYSessionSlownessEventExecute) {
+                if gDebugLogging.boolValue {
+                    DLog("Will enumerate token arrays")
+                }
+                tokenQueue.enumerateTokenArrayGroups { [weak self] (group, priority) in
+                    guard let self = self else { return false }
 
-            return shouldContinue && !self.isPaused
+                    let groupTokenCount = group.arrays.reduce(0) { $0 + Int($1.count) }
+
+                    // Budget check BETWEEN groups, not within
+                    // At least one group always executes (progress guarantee)
+                    if tokensConsumed + groupTokenCount > tokenBudget && groupsExecuted > 0 {
+                        return false  // budget would be exceeded, yield to next session
+                    }
+
+                    if gDebugLogging.boolValue {
+                        DLog("Begin executing a batch of tokens of sizes \(group.arrays.map(\.numberRemaining))")
+                    }
+                    defer {
+                        if gDebugLogging.boolValue {
+                            DLog("Done executing a batch of tokens. Vector has \(group.arrays.map(\.numberRemaining)) remaining.")
+                        }
+                    }
+
+                    // Execute the entire group atomically
+                    if groupsExecuted == 0 {
+                        delegate.tokenExecutorWillExecuteTokens()
+                    }
+
+                    let shouldContinue = self.executeTokenGroups(group,
+                                                                 priority: priority,
+                                                                 accumulatedLength: &accumulatedLength,
+                                                                 delegate: delegate)
+
+                    tokensConsumed += groupTokenCount
+                    groupsExecuted += 1
+
+                    return shouldContinue && !self.isPaused
+                }
+
+                if !isBackgroundSession && tokenQueue.isEmpty {
+                    DLog("Active session completely drained")
+                    Self.activeSessionsWithTokens.mutableAccess { set in
+                        set.remove(ObjectIdentifier(self))
+                    }
+                }
+                if gDebugLogging.boolValue {
+                    DLog("Finished enumerating token arrays. \(tokenQueue.isEmpty ? "There are no more tokens in the queue" : "The queue is not empty")")
+                }
+            }
+
+            if accumulatedLength.total > 0 || hadTokens {
+                delegate.tokenExecutorDidExecute(lengthTotal: accumulatedLength.total,
+                                                 lengthExcludingInBandSignaling: accumulatedLength.excludingInBandSignaling,
+                                                 throughput: throughputEstimator.estimatedThroughput)
+            }
+
+            // Report back to scheduler
+            let hasMoreWork = !tokenQueue.isEmpty || taskQueue.count > 0
+            turnResult = hasMoreWork ? .yielded : .completed
         }
 
-        if accumulatedLength.total > 0 || groupsExecuted > 0 {
-            delegate.tokenExecutorDidExecute(lengthTotal: accumulatedLength.total,
-                                             lengthExcludingInBandSignaling: accumulatedLength.excludingInBandSignaling,
-                                             throughput: throughputEstimator.estimatedThroughput)
-        }
-
-        // Report back to scheduler
-        let hasMoreWork = !tokenQueue.isEmpty || taskQueue.count > 0
-        completion(hasMoreWork ? .yielded : .completed)
+        // defer has fired — high-priority tasks completed before completion callback
+        completion(turnResult)
     }
 
     /// Called when session is unregistered to clean up pending tokens.
