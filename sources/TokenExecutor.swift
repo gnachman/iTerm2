@@ -149,6 +149,15 @@ class TokenExecutor: NSObject {
         }
     }
 
+#if ITERM_DEBUG
+    /// Test hook: when true, notifyScheduler() becomes a no-op.
+    /// Allows unit tests to call executeTurn() directly without interference.
+    var testSkipNotifyScheduler: Bool {
+        get { impl.testSkipNotifyScheduler }
+        set { impl.testSkipNotifyScheduler = newValue }
+    }
+#endif
+
     @objc var isBackgroundSession = false {
         didSet {
 #if DEBUG
@@ -176,7 +185,8 @@ class TokenExecutor: NSObject {
         impl = TokenExecutorImpl(terminal,
                                  slownessDetector: slownessDetector,
                                  semaphore: semaphore,
-                                 queue: queue)
+                                 queue: queue,
+                                 useFairnessScheduler: iTermAdvancedSettingsModel.useFairnessScheduler())
     }
 
     // Returns the current backpressure level based on available slots.
@@ -248,6 +258,8 @@ class TokenExecutor: NSObject {
                             lengthExcludingInBandSignaling: lengthExcludingInBandSignaling,
                             highPriority: highPriority,
                             semaphore: nil)
+            // High-priority: already on mutation queue, notify scheduler synchronously
+            impl.notifyScheduler()
             return
         }
         // Normal code path for tokens from PTY. Use the semaphore to give backpressure to reading.
@@ -422,6 +434,7 @@ private class TokenExecutorImpl {
     private let queue: DispatchQueue
     private let slownessDetector: SlownessDetector
     private let semaphore: DispatchSemaphore
+    private let useFairnessScheduler: Bool
     private var taskQueue = iTermTaskQueue()
     private var sideEffects = iTermTaskQueue()
     private let tokenQueue = TwoTierTokenQueue()
@@ -466,11 +479,13 @@ private class TokenExecutorImpl {
     init(_ terminal: VT100Terminal,
          slownessDetector: SlownessDetector,
          semaphore: DispatchSemaphore,
-         queue: DispatchQueue) {
+         queue: DispatchQueue,
+         useFairnessScheduler: Bool) {
         self.terminal = terminal
         self.queue = queue
         self.slownessDetector = slownessDetector
         self.semaphore = semaphore
+        self.useFairnessScheduler = useFairnessScheduler
         sideEffectScheduler = PeriodicScheduler(DispatchQueue.main, period: 1 / 30.0, action: { [weak self] in
             guard let self = self else {
                 return
@@ -543,6 +558,12 @@ private class TokenExecutorImpl {
 
     // MARK: - Scheduler Notification
 
+#if ITERM_DEBUG
+    /// Test hook: when true, notifyScheduler() becomes a no-op.
+    /// Allows unit tests to call executeTurn() directly without interference.
+    var testSkipNotifyScheduler = false
+#endif
+
     /// Notify the FairnessScheduler that this session has work, or execute directly if scheduler disabled.
     /// Must be called on mutation queue.
     func notifyScheduler() {
@@ -550,7 +571,11 @@ private class TokenExecutorImpl {
 #if DEBUG
         assertQueue()
 #endif
-        if iTermAdvancedSettingsModel.useFairnessScheduler() && fairnessSessionId != 0 {
+#if ITERM_DEBUG
+        if testSkipNotifyScheduler { return }
+#endif
+        if useFairnessScheduler {
+            it_assert(fairnessSessionId != 0, "Fairness scheduler enabled but executor not registered")
             FairnessScheduler.shared.sessionDidEnqueueWork(fairnessSessionId)
         } else {
             // Legacy behavior: execute immediately
