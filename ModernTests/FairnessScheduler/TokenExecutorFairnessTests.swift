@@ -2830,3 +2830,229 @@ final class TokenExecutorHighPriorityOrderingTests: XCTestCase {
         }
     }
 }
+
+// MARK: - Defer/Completion Ordering Tests
+
+/// Tests for the ordering of defer { executeHighPriorityTasks() } relative to completion().
+/// These verify that high-priority tasks run BEFORE the scheduler is notified of turn completion.
+final class TokenExecutorDeferCompletionOrderingTests: XCTestCase {
+
+    var mockDelegate: MockTokenExecutorDelegate!
+    var mockTerminal: VT100Terminal!
+    var executor: TokenExecutor!
+
+    override func setUp() {
+        super.setUp()
+        iTermAdvancedSettingsModel.setUseFairnessSchedulerForTesting(true)
+        mockDelegate = MockTokenExecutorDelegate()
+        mockTerminal = VT100Terminal()
+        executor = TokenExecutor(
+            mockTerminal,
+            slownessDetector: SlownessDetector(),
+            queue: iTermGCD.mutationQueue()
+        )
+        executor.delegate = mockDelegate
+        executor.testSkipNotifyScheduler = true
+    }
+
+    override func tearDown() {
+        executor = nil
+        mockTerminal = nil
+        mockDelegate = nil
+        FairnessScheduler.shared.testReset()
+        iTermAdvancedSettingsModel.setUseFairnessSchedulerForTesting(false)
+        super.tearDown()
+    }
+
+    func testDeferFiresBeforeCompletionCallback() {
+        // INVARIANT TESTED: High-priority tasks scheduled during token execution
+        // run before the completion callback.
+        //
+        // SCOPE: This test verifies that SOME defer runs executeHighPriorityTasks()
+        // before completion. It does NOT isolate the outer defer in executeTurn()
+        // specifically—the inner defer in executeTokenGroups() can also satisfy
+        // this invariant. Both defers exist as defense-in-depth.
+        //
+        // WHY THIS MATTERS: High-priority tasks may add tokens or perform work
+        // that should complete before the scheduler receives the turn result.
+
+        var eventOrder: [String] = []
+
+        // Add tokens so we have actual work to do
+        let vector = createTestTokenVector(count: 5)
+        executor.addTokens(vector, lengthTotal: 50, lengthExcludingInBandSignaling: 50)
+
+        // Schedule a high-priority task that records when it runs
+        executor.scheduleHighPriorityTask {
+            eventOrder.append("high-priority-task")
+        }
+
+        // Add another task DURING execution so it's picked up by a defer
+        mockDelegate.onWillExecute = { [weak self] in
+            self?.executor.scheduleHighPriorityTask {
+                eventOrder.append("defer-high-priority")
+            }
+        }
+
+        let expectation = XCTestExpectation(description: "ExecuteTurn completed")
+        executor.executeTurnOnMutationQueue(tokenBudget: 500) { _ in
+            eventOrder.append("completion")
+            expectation.fulfill()
+        }
+
+        wait(for: [expectation], timeout: 1.0)
+
+        // Verify ordering: high-priority task runs before completion callback
+        guard let deferIndex = eventOrder.firstIndex(of: "defer-high-priority"),
+              let completionIndex = eventOrder.firstIndex(of: "completion") else {
+            XCTFail("Expected both defer-high-priority and completion events, got: \(eventOrder)")
+            return
+        }
+
+        XCTAssertLessThan(deferIndex, completionIndex,
+                          "High-priority task should run before completion. Order: \(eventOrder)")
+    }
+
+    func testHighPriorityTaskInDeferAddingTokensTriggersNotifyScheduler() {
+        // INVARIANT TESTED: Tokens added by high-priority tasks (during any defer)
+        // are eventually processed via the scheduler.
+        //
+        // SCOPE: This tests the SAFETY NET, not defer ordering. When a high-priority
+        // task calls addTokens(), that triggers notifyScheduler(), which calls
+        // sessionDidEnqueueWork(). Because sessionDidEnqueueWork uses queue.async,
+        // it can race with sessionFinishedTurn():
+        //
+        //   - If it runs BEFORE sessionFinishedTurn: sets workArrivedWhileExecuting,
+        //     causing sessionFinishedTurn to re-add the session to the busy list.
+        //   - If it runs AFTER sessionFinishedTurn: adds directly to the busy list
+        //     via the normal enqueue path.
+        //
+        // Either way, the tokens get processed. This test verifies that outcome
+        // without asserting which race outcome occurred.
+        //
+        // NOT TESTED: Whether the outer vs inner defer runs these tasks. Both work.
+
+        // Enable scheduler notification for this test
+        executor.testSkipNotifyScheduler = false
+
+        // Register with scheduler
+        let sessionId = FairnessScheduler.shared.register(executor)
+        executor.fairnessSessionId = sessionId
+
+        // Track total bytes expected
+        let expectedTotalBytes = 50 + 30  // Initial (50) + added by high-priority task (30)
+
+        // During token execution, schedule a high-priority task that adds MORE tokens.
+        // The task runs during some defer's executeHighPriorityTasks() call.
+        var tokensAddedByHighPriorityTask = false
+        mockDelegate.onWillExecute = { [weak self] in
+            guard let self = self, !tokensAddedByHighPriorityTask else { return }
+            tokensAddedByHighPriorityTask = true
+
+            self.executor.scheduleHighPriorityTask {
+                let moreTokens = createTestTokenVector(count: 3)
+                self.executor.addTokens(moreTokens, lengthTotal: 30, lengthExcludingInBandSignaling: 30)
+            }
+        }
+
+        // Add initial tokens - this triggers the scheduler to start executing
+        let vector = createTestTokenVector(count: 5)
+        executor.addTokens(vector, lengthTotal: 50, lengthExcludingInBandSignaling: 50)
+
+        // Wait for all tokens to be processed (initial + those added by high-priority task)
+        let condition = expectation(description: "All bytes processed")
+
+        // Poll for completion - check total bytes from delegate's executedLengths
+        func getTotalBytes() -> Int {
+            return mockDelegate.executedLengths.reduce(0) { $0 + $1.total }
+        }
+
+        func checkCompletion() {
+            if getTotalBytes() >= expectedTotalBytes {
+                condition.fulfill()
+            } else {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+                    checkCompletion()
+                }
+            }
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+            checkCompletion()
+        }
+
+        wait(for: [condition], timeout: 2.0)
+
+        // The high-priority task should have added tokens
+        XCTAssertTrue(tokensAddedByHighPriorityTask, "High-priority task should have run")
+
+        // The key assertion: ALL bytes should have been processed, including those
+        // added by the high-priority task. This proves the scheduler re-added the
+        // session via the safety net (workArrivedWhileExecuting) and processed them.
+        let totalBytesExecuted = getTotalBytes()
+        XCTAssertGreaterThanOrEqual(totalBytesExecuted, expectedTotalBytes,
+                                    "All tokens should be processed including those added by high-priority task. " +
+                                    "Expected \(expectedTotalBytes), got \(totalBytesExecuted)")
+    }
+
+    func testTurnResultReflectsTokenQueueStateAfterDefer() {
+        // BEHAVIOR DOCUMENTED (not strictly tested): turnResult is calculated BEFORE
+        // the outer defer fires, so tokens added by high-priority tasks during the
+        // outer defer are NOT reflected in turnResult.
+        //
+        // KNOWN GAP: If a high-priority task adds tokens during the outer defer,
+        // turnResult may be .completed when there's actually more work.
+        //
+        // MITIGATION: The safety net (tested above) ensures addTokens() triggers
+        // notifyScheduler(), which re-queues the session regardless of turnResult.
+        //
+        // NOTE: This test is NON-ASSERTING on the turnResult value. It documents
+        // current behavior and verifies the test machinery works.
+
+        // Add initial tokens
+        let vector = createTestTokenVector(count: 2)
+        executor.addTokens(vector, lengthTotal: 20, lengthExcludingInBandSignaling: 20)
+
+        // During execution, schedule a high-priority task that adds more tokens.
+        // This task runs in a defer's executeHighPriorityTasks() call.
+        var tokensAddedByHighPriorityTask = false
+        mockDelegate.onWillExecute = { [weak self] in
+            guard let self = self, !tokensAddedByHighPriorityTask else { return }
+            tokensAddedByHighPriorityTask = true
+
+            self.executor.scheduleHighPriorityTask {
+                let moreTokens = createTestTokenVector(count: 5)
+                self.executor.addTokens(moreTokens, lengthTotal: 50, lengthExcludingInBandSignaling: 50)
+            }
+        }
+
+        let expectation = XCTestExpectation(description: "ExecuteTurn completed")
+        var reportedResult: TurnResult?
+        executor.executeTurnOnMutationQueue(tokenBudget: 500) { result in
+            reportedResult = result
+            expectation.fulfill()
+        }
+
+        wait(for: [expectation], timeout: 1.0)
+
+        XCTAssertTrue(tokensAddedByHighPriorityTask, "High-priority task should have added tokens")
+
+        // The key question: does turnResult reflect tokens added by high-priority tasks?
+        //
+        // turnResult is calculated at the end of the labeled do{} block, BEFORE the
+        // outer defer. So tokens added by the outer defer's executeHighPriorityTasks()
+        // are not reflected. However, tokens added by the INNER defer (in executeTokenGroups)
+        // would be reflected if they were added before turnResult calculation.
+        //
+        // This test doesn't distinguish which defer ran the task.
+
+        if reportedResult == .completed {
+            print("Note: turnResult was .completed despite tokens added by high-priority task. " +
+                  "Safety net (notifyScheduler) ensures they still get processed.")
+        } else if reportedResult == .yielded {
+            print("turnResult reflects tokens added by high-priority task (inner defer ran first).")
+        }
+
+        // For now, just verify the test ran correctly
+        XCTAssertNotNil(reportedResult, "Should have received a turn result")
+    }
+}

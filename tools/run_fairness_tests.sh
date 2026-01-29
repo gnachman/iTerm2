@@ -78,6 +78,7 @@ TOKENEXECUTOR_TEST_CLASSES=(
     "TokenExecutorAvailableSlotsBoundaryTests"
     "TokenExecutorHighPriorityOrderingTests"
     "TokenExecutorFeatureFlagGatingTests"
+    "TokenExecutorDeferCompletionOrderingTests"
     "TwoTierTokenQueueTests"
     "TwoTierTokenQueueGroupingTests"
 )
