@@ -110,7 +110,7 @@ func CVectorReleaseObjectsAndDestroy(_ vector: CVector) {
 }
 
 @objc(iTermTokenExecutor)
-class TokenExecutor: NSObject, FairnessSchedulerExecutor {
+class TokenExecutor: NSObject {
     @objc weak var delegate: TokenExecutorDelegate? {
         didSet {
             impl.delegate = delegate
@@ -372,26 +372,6 @@ class TokenExecutor: NSObject, FairnessSchedulerExecutor {
         impl.schedule()
     }
 
-    // MARK: - FairnessSchedulerExecutor
-
-    // Mutation queue only
-    /// Execute tokens up to the given budget. Calls completion with result.
-    @objc
-    func executeTurn(tokenBudget: Int, completion: @escaping (TurnResult) -> Void) {
-        dispatchPrecondition(condition: .onQueue(iTermGCD.mutationQueue()))
-        if gDebugLogging.boolValue { DLog("executeTurn(tokenBudget: \(tokenBudget))") }
-        impl.executeTurn(tokenBudget: tokenBudget, completion: completion)
-    }
-
-    // Mutation queue only
-    /// Called when session is unregistered to clean up pending tokens.
-    @objc
-    func cleanupForUnregistration() {
-        dispatchPrecondition(condition: .onQueue(iTermGCD.mutationQueue()))
-        if gDebugLogging.boolValue { DLog("cleanupForUnregistration") }
-        impl.cleanupForUnregistration()
-    }
-
     @objc func assertSynchronousSideEffectsAreSafe() {
         impl.assertSynchronousSideEffectsAreSafe()
     }
@@ -411,6 +391,28 @@ class TokenExecutor: NSObject, FairnessSchedulerExecutor {
     @objc
     func whilePaused(_ block: () -> ()) {
         self.impl.whilePaused(block, onExecutorQueue: onExecutorQueue)
+    }
+}
+
+// MARK: - FairnessSchedulerExecutor
+
+extension TokenExecutor: FairnessSchedulerExecutor {
+    // Mutation queue only
+    /// Execute tokens up to the given budget. Calls completion with result.
+    @objc
+    func executeTurn(tokenBudget: Int, completion: @escaping (TurnResult) -> Void) {
+        dispatchPrecondition(condition: .onQueue(iTermGCD.mutationQueue()))
+        if gDebugLogging.boolValue { DLog("executeTurn(tokenBudget: \(tokenBudget))") }
+        impl.executeTurn(tokenBudget: tokenBudget, completion: completion)
+    }
+
+    // Mutation queue only
+    /// Called when session is unregistered to clean up pending tokens.
+    @objc
+    func cleanupForUnregistration() {
+        dispatchPrecondition(condition: .onQueue(iTermGCD.mutationQueue()))
+        if gDebugLogging.boolValue { DLog("cleanupForUnregistration") }
+        impl.cleanupForUnregistration()
     }
 }
 
