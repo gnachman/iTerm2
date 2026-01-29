@@ -59,8 +59,9 @@ class FairnessScheduler: NSObject {
     /// Test-only: Records session IDs in the order they executed, for verifying round-robin fairness.
     private var _testExecutionHistory: [SessionID] = []
     #endif
-    // Access on mutation queue only
-    private var executionScheduled = false
+
+    /// Coalesces multiple ensureExecutionScheduled() calls into a single async dispatch.
+    private let executionJoiner = IdempotentOperationJoiner.asyncJoiner(iTermGCD.mutationQueue())
 
     private struct SessionState {
         weak var executor: FairnessSchedulerExecutor?
@@ -131,12 +132,7 @@ class FairnessScheduler: NSObject {
     private func ensureExecutionScheduled() {
         dispatchPrecondition(condition: .onQueue(iTermGCD.mutationQueue()))
         guard !busyList.isEmpty else { return }
-        guard !executionScheduled else { return }
-
-        executionScheduled = true
-
-        // Async dispatch to avoid deep recursion while staying on mutationQueue
-        iTermGCD.mutationQueue().async { [weak self] in
+        executionJoiner.setNeedsUpdate { [weak self] in
             self?.executeNextTurn()
         }
     }
@@ -144,8 +140,6 @@ class FairnessScheduler: NSObject {
     /// Must be called on mutationQueue.
     private func executeNextTurn() {
         dispatchPrecondition(condition: .onQueue(iTermGCD.mutationQueue()))
-        executionScheduled = false
-
         guard !busyList.isEmpty else { return }
 
         let sessionId = busyList.removeFirst()
@@ -253,7 +247,6 @@ extension FairnessScheduler {
             sessions.removeAll()
             busyList.removeAll()
             busySet.removeAll()
-            executionScheduled = false
             nextSessionId = 1
             _testExecutionHistory.removeAll()
         }
