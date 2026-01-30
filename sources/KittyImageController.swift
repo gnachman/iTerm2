@@ -759,16 +759,33 @@ class KittyImageController: NSObject {
     }
 
     private func filenameIsSafe(fileURL: URL) -> Bool {
-        let sensitivePatterns = [
-            "/dev/",
-            "/System/",
-            "/private/var/db/",
-            "/private/etc/",
-            "/private/var/root/",
-            "/Library/Keychains/",
-            "/.ssh/"
+        let path = fileURL.path
+
+        // Sensitive directories - block the directory itself and anything inside it.
+        // The path has already been canonicalized via resolvingSymlinksInPath().standardizedFileURL
+        // so we don't need to worry about /usr/../dev or //dev tricks.
+        let sensitiveDirs = [
+            "/dev",
+            "/System",
+            "/private/var/db",
+            "/private/etc",
+            "/private/var/root",
+            "/Library/Keychains"
         ]
-        return !sensitivePatterns.anySatisfies({ fileURL.path.contains($0) })
+
+        for dir in sensitiveDirs {
+            // Block /dev, /dev/, and /dev/anything but not /developer
+            if path == dir || path.hasPrefix(dir + "/") {
+                return false
+            }
+        }
+
+        // .ssh can appear anywhere in user home directories (e.g., /Users/foo/.ssh/)
+        if path.contains("/.ssh/") || path.hasSuffix("/.ssh") {
+            return false
+        }
+
+        return true
     }
 
     private func handle(command: KittyImageCommand.ImageTransmission,
