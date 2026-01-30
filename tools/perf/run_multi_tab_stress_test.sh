@@ -7,9 +7,8 @@ if pgrep -x iTerm2 >/dev/null 2>&1; then
   exit 1
 fi
 
-# Source tmux wrapper library
+# Get script directory early (needed for relative paths)
 script_dir_early="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-source "$script_dir_early/tmux_wrapper.sh"
 
 usage() {
   cat <<'USAGE'
@@ -74,17 +73,24 @@ Options:
                  collection. Useful for manual testing or external profiling.
                  Press Ctrl-C to stop. Ignores duration parameter.
 
-  --tmux         Wrap the entire test in an auto-cleanup tmux session.
-                 The session is automatically killed on exit, Ctrl-C, or crash.
-                 Useful for ensuring clean test termination.
+  --tmux         Run stress_load.py inside tmux sessions within iTerm2 tabs.
+                 Each tab gets its own tmux session with a unique name.
+                 Sessions auto-close when the stress load completes.
+                 Cleanup is attempted on Ctrl-C or script exit.
 
   --load-script=PATH
                  Use a custom load generator script instead of the built-in ones.
                  The script must accept: duration label --sync-dir DIR [--mode=X]
 
   --config=PATH  Use custom iTerm2 preferences from PATH instead of defaults.
-                 If not specified, uses --use-default-config (built-in defaults).
                  PATH must exist and be accessible.
+                 Mutually exclusive with --use-default-config.
+
+  --use-default-config[=BOOL]
+                 Use iTerm2's built-in defaults instead of user preferences.
+                 Values: true/false, yes/no, 1/0 (default: true if flag present)
+                 If neither --config nor --use-default-config is specified,
+                 defaults to --use-default-config=true for reproducible tests.
 
 USAGE
 }
@@ -102,14 +108,17 @@ speed_arg="normal"
 fps_arg=""  # empty = use default 30fps
 load_script_arg=""  # empty = use default stress_load.py
 duration_arg=""  # empty = use default 20s
-config_arg=""  # empty = use --use-default-config, value = path to config
+config_arg=""  # empty = no custom config path
+use_default_config=true  # default to true for reproducible tests
+use_default_config_explicit=false  # track if explicitly specified
 positional_args=()
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --synchronized-start=*)
       val="${1#--synchronized-start=}"
-      case "${val,,}" in  # lowercase
+      val_lower=$(echo "$val" | tr '[:upper:]' '[:lower:]')
+      case "$val_lower" in
         false|no|0) synchronized_start=false ;;
         true|yes|1) synchronized_start=true ;;
         *) echo "Error: --synchronized-start requires true/false/yes/no/1/0, got '$val'" >&2; exit 1 ;;
@@ -138,6 +147,22 @@ while [[ $# -gt 0 ]]; do
       ;;
     --config=*)
       config_arg="${1#--config=}"
+      shift
+      ;;
+    --use-default-config)
+      use_default_config=true
+      use_default_config_explicit=true
+      shift
+      ;;
+    --use-default-config=*)
+      val="${1#--use-default-config=}"
+      val_lower=$(echo "$val" | tr '[:upper:]' '[:lower:]')
+      case "$val_lower" in
+        false|no|0) use_default_config=false ;;
+        true|yes|1) use_default_config=true ;;
+        *) echo "Error: --use-default-config requires true/false/yes/no/1/0, got '$val'" >&2; exit 1 ;;
+      esac
+      use_default_config_explicit=true
       shift
       ;;
     --title)
@@ -201,19 +226,8 @@ done
 
 set -- "${positional_args[@]}"
 
-# If --tmux specified, re-exec inside tmux session (this may not return)
-if [[ "$tmux_mode" == true ]]; then
-  tmux_ensure_wrapped --tmux ${stress_mode:+"$stress_mode"} \
-    ${title_arg:+--title="$title_arg"} ${tabs_arg:+--tabs="$tabs_arg"} \
-    ${duration_arg:+--time="$duration_arg"} \
-    ${speed_arg:+--speed="$speed_arg"} ${load_script_arg:+--load-script="$load_script_arg"} \
-    ${config_arg:+--config="$config_arg"} \
-    $([[ "$inject_mode" == true ]] && echo "--inject") \
-    $([[ "$dtrace_mode" == true ]] && echo "--dtrace") \
-    $([[ "$forever_mode" == true ]] && echo "--forever") \
-    $([[ "$synchronized_start" == false ]] && echo "--synchronized-start=false") \
-    "${positional_args[@]}"
-fi
+# Note: --tmux mode wraps stress_load.py in tmux sessions inside iTerm2 tabs,
+# not the test harness itself.
 
 # Valid modes (all handled by stress_load.py)
 valid_modes="normal buffer clearcodes flood htop watch progress table status all"
@@ -237,6 +251,17 @@ if [[ $# -lt 1 ]]; then
 fi
 
 app_path="$1"
+
+# Validate: --config and explicit --use-default-config=true conflict
+if [[ -n "$config_arg" && "$use_default_config_explicit" == true && "$use_default_config" == true ]]; then
+  echo "Error: --config and --use-default-config=true are mutually exclusive" >&2
+  exit 1
+fi
+
+# If --config is specified, don't pass --use-default-config to the app
+if [[ -n "$config_arg" ]]; then
+  use_default_config=false
+fi
 
 # Validate config path if specified
 if [[ -n "$config_arg" ]]; then
@@ -269,8 +294,10 @@ if [[ -n "$config_arg" ]]; then
       exit 1
     fi
   fi
-else
+elif [[ "$use_default_config" == true ]]; then
   echo "Using default iTerm2 config (--use-default-config)"
+else
+  echo "Using user's normal preferences (no config flags)"
 fi
 
 # Duration: prefer --time/-t, then positional arg, then default
@@ -403,6 +430,7 @@ on run argv
   set titleArg to item 6 of argv
   set speedArg to item 7 of argv
   set fpsArg to item 8 of argv
+  set tmuxPrefix to item 9 of argv
 
   tell application "iTerm2"
       activate
@@ -420,23 +448,29 @@ on run argv
         end if
         delay 1
         set theSession to current session of theWindow
-        set cmd to "python3 " & quoted form of scriptPath & " " & duration & " tab_" & i
+        set innerCmd to "python3 " & quoted form of scriptPath & " " & duration & " tab_" & i
         if syncDir is not "" then
-          set cmd to cmd & " --sync-dir " & quoted form of syncDir
+          set innerCmd to innerCmd & " --sync-dir " & quoted form of syncDir
         end if
         if stressMode is not "" then
-          set cmd to cmd & " " & stressMode
+          set innerCmd to innerCmd & " " & stressMode
         end if
         if titleArg is not "" then
-          set cmd to cmd & " --title=" & titleArg
+          set innerCmd to innerCmd & " --title=" & titleArg
         end if
         if speedArg is not "" and speedArg is not "normal" then
-          set cmd to cmd & " --speed=" & speedArg
+          set innerCmd to innerCmd & " --speed=" & speedArg
         end if
         if fpsArg is not "" then
-          set cmd to cmd & " --fps=" & fpsArg
+          set innerCmd to innerCmd & " --fps=" & fpsArg
         end if
-        set cmd to cmd & "; exit"
+        -- Wrap in tmux if prefix provided, otherwise run directly
+        if tmuxPrefix is not "" then
+          set sessionName to tmuxPrefix & "-tab" & i
+          set cmd to "tmux new-session -s " & quoted form of sessionName & " '" & innerCmd & "; exit'"
+        else
+          set cmd to innerCmd & "; exit"
+        end if
         tell theSession to write text cmd
         set end of sessionList to theSession
       end repeat
@@ -476,6 +510,7 @@ on run argv
   set titleArg to item 4 of argv
   set speedArg to item 5 of argv
   set fpsArg to item 6 of argv
+  set tmuxPrefix to item 7 of argv
 
   tell application "iTerm2"
       activate
@@ -491,18 +526,25 @@ on run argv
         delay 1
         set theSession to current session of theWindow
         -- Run forever (no duration limit)
-        set cmd to "python3 " & quoted form of scriptPath & " 999999999 tab_" & i
+        set innerCmd to "python3 " & quoted form of scriptPath & " 999999999 tab_" & i
         if stressMode is not "" then
-          set cmd to cmd & " " & stressMode
+          set innerCmd to innerCmd & " " & stressMode
         end if
         if titleArg is not "" then
-          set cmd to cmd & " --title=" & titleArg
+          set innerCmd to innerCmd & " --title=" & titleArg
         end if
         if speedArg is not "" and speedArg is not "normal" then
-          set cmd to cmd & " --speed=" & speedArg
+          set innerCmd to innerCmd & " --speed=" & speedArg
         end if
         if fpsArg is not "" then
-          set cmd to cmd & " --fps=" & fpsArg
+          set innerCmd to innerCmd & " --fps=" & fpsArg
+        end if
+        -- Wrap in tmux if prefix provided, otherwise run directly
+        if tmuxPrefix is not "" then
+          set sessionName to tmuxPrefix & "-tab" & i
+          set cmd to "tmux new-session -s " & quoted form of sessionName & " '" & innerCmd & "; exit'"
+        else
+          set cmd to innerCmd
         end if
         tell theSession to write text cmd
       end repeat
@@ -544,7 +586,18 @@ get_energy_mode() {
 }
 
 # Cleanup function
+# Track tmux session prefix for cleanup (set per-run when --tmux is used)
+tmux_session_prefix=""
+tmux_tab_count=0
+
 cleanup() {
+  # Clean up tmux sessions if we created any
+  if [[ -n "$tmux_session_prefix" && "$tmux_tab_count" -gt 0 ]]; then
+    for i in $(seq 1 "$tmux_tab_count"); do
+      tmux kill-session -t "${tmux_session_prefix}-tab${i}" 2>/dev/null || true
+    done
+  fi
+  # Clean up temp files
   if [[ -n "${sync_dir:-}" && -d "${sync_dir:-}" ]]; then
     rm -rf "$sync_dir"
   fi
@@ -554,8 +607,10 @@ cleanup() {
   if [[ -n "${applescript_forever_file:-}" && -f "${applescript_forever_file:-}" ]]; then
     rm -f "$applescript_forever_file"
   fi
+  # Try to quit iTerm2 if it's running (best effort)
+  osascript -e 'tell application "iTerm2" to quit' 2>/dev/null || true
 }
-trap cleanup EXIT
+trap cleanup EXIT INT TERM
 
 # Function to run a single test with given tab count
 # Results are stored in global RESULT_* arrays
@@ -579,7 +634,7 @@ run_single_test() {
   local run_start_epoch
   run_start_epoch=$(date +%s)
 
-  # Launch iTerm2 with config flag (--use-default-config or --config=path)
+  # Launch iTerm2 with appropriate config flag
   if [[ -n "$config_arg" ]]; then
     # Convert to absolute path for iTerm2 (unless it's a URL)
     local config_launch_path="$config_arg"
@@ -587,8 +642,11 @@ run_single_test() {
       config_launch_path="$(cd "$(dirname "${config_arg/#\~/$HOME}")" 2>/dev/null && pwd)/$(basename "${config_arg/#\~/$HOME}")" || echo "${config_arg/#\~/$HOME}"
     fi
     open -a "$app_path" --args --config="$config_launch_path"
-  else
+  elif [[ "$use_default_config" == true ]]; then
     open -a "$app_path" --args --use-default-config
+  else
+    # No config flags - use user's normal preferences
+    open -a "$app_path"
   fi
   sleep 2
 
@@ -650,8 +708,16 @@ run_single_test() {
 
   echo "Launching $tab_count tabs, each running stress test for $duration seconds..."
 
+  # Generate unique tmux session prefix if --tmux mode
+  local tmux_prefix=""
+  if [[ "$tmux_mode" == true ]]; then
+    tmux_prefix="iterm2-perf-$$-$(date +%s)"
+    tmux_session_prefix="$tmux_prefix"  # Store globally for cleanup
+    tmux_tab_count="$tab_count"
+  fi
+
   # Launch tabs with load script (in background so we can coordinate sync)
-  osascript "$applescript_file" "$tab_count" "$load_script" "$duration" "${sync_dir:-}" "$stress_mode" "$title_arg" "$speed_arg" "$fps_arg" &
+  osascript "$applescript_file" "$tab_count" "$load_script" "$duration" "${sync_dir:-}" "$stress_mode" "$title_arg" "$speed_arg" "$fps_arg" "$tmux_prefix" &
   local applescript_pid=$!
 
   # If sync mode, wait for all ready signals, start profiler, then send go signal
@@ -1239,8 +1305,17 @@ run_forever() {
   echo ""
   echo "Forever mode: $tab_count tab(s), no profiling"
 
+  # Warn about tmux + forever combination
+  if [[ "$tmux_mode" == true ]]; then
+    echo ""
+    echo "WARNING: --tmux with --forever mode cannot guarantee session cleanup."
+    echo "         tmux sessions will run until manually stopped."
+    echo "         Press Ctrl-C to attempt cleanup of tmux sessions and iTerm2."
+    echo ""
+  fi
+
   # Open iTerm2 and wait for it to launch
-  # Launch iTerm2 with config flag (--use-default-config or --config=path)
+  # Launch iTerm2 with appropriate config flag
   if [[ -n "$config_arg" ]]; then
     # Convert to absolute path for iTerm2 (unless it's a URL)
     local config_launch_path="$config_arg"
@@ -1248,8 +1323,11 @@ run_forever() {
       config_launch_path="$(cd "$(dirname "${config_arg/#\~/$HOME}")" 2>/dev/null && pwd)/$(basename "${config_arg/#\~/$HOME}")" || echo "${config_arg/#\~/$HOME}"
     fi
     open -a "$app_path" --args --config="$config_launch_path"
-  else
+  elif [[ "$use_default_config" == true ]]; then
     open -a "$app_path" --args --use-default-config
+  else
+    # No config flags - use user's normal preferences
+    open -a "$app_path"
   fi
   sleep 2
 
@@ -1271,8 +1349,16 @@ run_forever() {
   echo "Found iTerm2 PID: $iterm_pid"
   echo "Launching $tab_count tabs with stress load..."
 
+  # Generate unique tmux session prefix if --tmux mode
+  local tmux_prefix=""
+  if [[ "$tmux_mode" == true ]]; then
+    tmux_prefix="iterm2-perf-$$-$(date +%s)"
+    tmux_session_prefix="$tmux_prefix"  # Store globally for cleanup
+    tmux_tab_count="$tab_count"
+  fi
+
   # Launch tabs (runs in background)
-  osascript "$applescript_forever_file" "$tab_count" "$load_script" "$stress_mode" "$title_arg" "$speed_arg" "$fps_arg" &
+  osascript "$applescript_forever_file" "$tab_count" "$load_script" "$stress_mode" "$title_arg" "$speed_arg" "$fps_arg" "$tmux_prefix" &
   local applescript_pid=$!
 
   # Wait for AppleScript to finish launching tabs
@@ -1300,22 +1386,22 @@ fi
 echo "Power Source: $power_source"
 echo "Energy Mode: $energy_mode"
 
-# Warn if not on AC power, not in high performance mode, or using custom config
-if [[ "$power_source" != "AC Power" || "$energy_mode" != "High Power/High Performance" || -n "$config_arg" ]]; then
+# Warn if not on AC power, not in high performance mode, or not using default config
+if [[ "$power_source" != "AC Power" || "$energy_mode" != "High Power/High Performance" || "$use_default_config" == false ]]; then
   echo ""
   echo "WARNING: Performance testing should use standard conditions for reliable results!"
   echo ""
   echo "         Current issues:"
   [[ "$power_source" != "AC Power" ]] && echo "           - Running on $power_source (not AC Power)"
   [[ "$energy_mode" != "High Power/High Performance" ]] && echo "           - Energy Mode: $energy_mode (not High Power/High Performance)"
-  [[ -n "$config_arg" ]] && echo "           - Using custom config (not default settings)"
+  [[ "$use_default_config" == false ]] && echo "           - Not using default config (results may vary)"
   echo ""
   echo "         These conditions may produce unreliable or unexpected performance results."
   echo ""
   echo "         Recommendations:"
   [[ "$power_source" != "AC Power" ]] && echo "           - Connect to AC Power"
   [[ "$energy_mode" != "High Power/High Performance" ]] && echo "           - Set Energy Mode to High Power/High Performance"
-  [[ -n "$config_arg" ]] && echo "           - Use default config (remove --config flag) for baseline testing"
+  [[ "$use_default_config" == false ]] && echo "           - Use default config (remove --use-default-config=false)"
   echo ""
 fi
 
@@ -1338,8 +1424,10 @@ if [[ -n "$config_arg" ]]; then
     config_full_path="$(cd "$(dirname "${config_arg/#\~/$HOME}")" 2>/dev/null && pwd)/$(basename "${config_arg/#\~/$HOME}")" || echo "${config_arg/#\~/$HOME}"
     echo "Config: $config_full_path"
   fi
-else
+elif [[ "$use_default_config" == true ]]; then
   echo "Config: Default"
+else
+  echo "Config: User preferences"
 fi
 if [[ -n "$stress_mode" ]]; then
   echo "Mode: ${stress_mode#--mode=}"
@@ -1363,8 +1451,8 @@ else
     print_summary_table
   fi
 
-  # Repeat warning at end if not on AC power, not in high performance mode, or using custom config
-  if [[ "$power_source" != "AC Power" || "$energy_mode" != "High Power/High Performance" || -n "$config_arg" ]]; then
+  # Repeat warning at end if not on AC power, not in high performance mode, or not using default config
+  if [[ "$power_source" != "AC Power" || "$energy_mode" != "High Power/High Performance" || "$use_default_config" == false ]]; then
     echo ""
     echo "============================================================"
     echo "WARNING: These results may not reflect optimal performance!"
@@ -1373,7 +1461,7 @@ else
     echo "Issues detected:"
     [[ "$power_source" != "AC Power" ]] && echo "  - Power Source: $power_source (not AC Power)"
     [[ "$energy_mode" != "High Power/High Performance" ]] && echo "  - Energy Mode: $energy_mode (not High Power/High Performance)"
-    [[ -n "$config_arg" ]] && echo "  - Using custom config (not default settings)"
+    [[ "$use_default_config" == false ]] && echo "  - Not using default config (results may vary)"
     echo ""
     echo "Performance testing should use standard conditions for reliable results."
     echo "Current configuration may produce unreliable or unexpected performance."
@@ -1381,7 +1469,7 @@ else
     echo "Recommendations:"
     [[ "$power_source" != "AC Power" ]] && echo "  - Connect to AC Power"
     [[ "$energy_mode" != "High Power/High Performance" ]] && echo "  - Set Energy Mode to High Power/High Performance"
-    [[ -n "$config_arg" ]] && echo "  - Use default config (remove --config flag) for baseline testing"
+    [[ "$use_default_config" == false ]] && echo "  - Use default config (remove --use-default-config=false)"
     echo "============================================================"
   fi
 fi

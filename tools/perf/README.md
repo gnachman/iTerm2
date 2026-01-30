@@ -38,7 +38,6 @@ Scripts for stress testing and profiling iTerm2 builds with latency instrumentat
 | `stress_load.py` | Unified load generator - terminal output stress and dashboard modes |
 | `analyze_profile.py` | Analyzes `sample` profiler output for hotspots |
 | `iterm_ux_metrics_v2.d` | DTrace script for frame rate and latency metrics |
-| `tmux_wrapper.sh` | Library for auto-cleanup tmux session wrapping |
 
 ## Options
 
