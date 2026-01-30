@@ -71,8 +71,20 @@
 
 - (void)setTintColor:(NSColor *)tintColor {
     _tintColor = tintColor;
-    _searchFieldCell.loupeColor = tintColor ?: [NSColor controlTextColor];
-    _searchField.textColor = tintColor ?: [NSColor controlTextColor];
+    NSColor *effectiveColor = tintColor ?: [NSColor controlTextColor];
+    _searchFieldCell.loupeColor = effectiveColor;
+    _searchField.textColor = effectiveColor;
+
+    NSString *placeholderText = _searchField.placeholderString ?: _searchField.placeholderAttributedString.string;
+    if (placeholderText) {
+        NSMutableDictionary *attributes = [NSMutableDictionary dictionary];
+        attributes[NSForegroundColorAttributeName] = [effectiveColor colorWithAlphaComponent:0.75];
+        if (_searchField.font) {
+            attributes[NSFontAttributeName] = _searchField.font;
+        }
+        _searchField.placeholderAttributedString = [[NSAttributedString alloc] initWithString:placeholderText
+                                                                                    attributes:attributes];
+    }
 }
 
 - (void)sizeToFitSize:(NSSize)size {
@@ -152,6 +164,7 @@
             _closeButton.controlSize = NSControlSizeLarge;
         }
     }
+    [self setTintColor:_tintColor];
     [self updateSubviews];
 }
 
