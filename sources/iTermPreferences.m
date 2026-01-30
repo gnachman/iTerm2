@@ -107,6 +107,7 @@ NSString *const kPreferenceKeyTopBottomMargins = @"TerminalVMargin";
 NSString *const kPreferenceKeyHideTabBar = @"HideTab";
 NSString *const kPreferenceKeyHideTabNumber = @"HideTabNumber";
 NSString *const kPreferenceKeyPreserveWindowSizeWhenTabBarVisibilityChanges = @"PreserveWindowSizeWhenTabBarVisibilityChanges";
+NSString *const kPreferenceKeyPreserveWindowSizeToKeepOnScreenWhenTabBarVisibilityChanges = @"PreserveWindowSizeToKeepOnScreenWhenTabBarVisibilityChanges";
 NSString *const kPreferenceKeyHideTabCloseButton = @"HideTabCloseButton";  // Deprecated
 NSString *const kPreferenceKeyTabsHaveCloseButton = @"TabsHaveCloseButton";
 NSString *const kPreferenceKeyHideTabActivityIndicator = @"HideActivityIndicator";
@@ -565,6 +566,7 @@ static NSString *sPreviousVersion;
                   kPreferenceKeyHideTabBar: @YES,
                   kPreferenceKeyHideTabNumber: @NO,
                   kPreferenceKeyPreserveWindowSizeWhenTabBarVisibilityChanges: @NO,
+                  kPreferenceKeyPreserveWindowSizeToKeepOnScreenWhenTabBarVisibilityChanges: @NO,
                   kPreferenceKeyHideTabCloseButton: @NO,  // Deprecated
                   kPreferenceKeyTabsHaveCloseButton: @YES,
                   kPreferenceKeyHideTabActivityIndicator: @NO,

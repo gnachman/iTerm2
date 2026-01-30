@@ -428,6 +428,7 @@ typedef NS_ENUM(int, iTermShouldHaveTitleSeparator) {
     BOOL _needsCanonicalize;
 
     iTermIdempotentOperationJoiner *_rightExtraJoiner;
+    BOOL _excursionPrevented;
 }
 
 @synthesize scope = _scope;
@@ -5969,6 +5970,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
 
     [self clearForceFrame];
     liveResize_ = YES;
+    _excursionPrevented = NO;
     if ([self windowTitleIsVisible]) {
         switch (self.windowType) {
             case WINDOW_TYPE_LION_FULL_SCREEN:
@@ -7103,6 +7105,9 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     const BOOL willShowTabBar = ([iTermPreferences boolForKey:kPreferenceKeyHideTabBar] &&
                                  [_contentView.tabView numberOfTabViewItems] > 1 &&
                                  ([_contentView.tabBarControl isHidden] || [self rootTerminalViewShouldLeaveEmptyAreaAtTop]));
+    const BOOL willHideTabBar = ([iTermPreferences boolForKey:kPreferenceKeyHideTabBar] &&
+                                 [_contentView.tabView numberOfTabViewItems] == 1 &&
+                                 !([_contentView.tabBarControl isHidden] || [self rootTerminalViewShouldLeaveEmptyAreaAtTop]));
     // check window size in case tabs have to be hidden or shown
     if (([_contentView.tabView numberOfTabViewItems] == 1) ||  // just decreased to 1 or increased above 1 and is hidden
         willShowTabBar) {
@@ -7139,7 +7144,15 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
         if (willShowTabBar && [iTermPreferences intForKey:kPreferenceKeyTabPosition] == PSMTab_LeftTab) {
             [_contentView willShowTabBar];
         }
-        if (_windowNeedsInitialSize || ![iTermPreferences boolForKey:kPreferenceKeyPreserveWindowSizeWhenTabBarVisibilityChanges]) {
+        const BOOL generallyPreserveWindowSize = [iTermPreferences boolForKey:kPreferenceKeyPreserveWindowSizeWhenTabBarVisibilityChanges];
+        const BOOL preserveOnlyIfExcursion = [iTermPreferences boolForKey:kPreferenceKeyPreserveWindowSizeToKeepOnScreenWhenTabBarVisibilityChanges];
+        const BOOL wouldCauseExcursion = willShowTabBar && [self fittingWindowToTabsWouldCauseExcursion];
+        const BOOL preserveDueToShowing = generallyPreserveWindowSize && (!preserveOnlyIfExcursion || wouldCauseExcursion);
+        const BOOL preserveDueToHiding = willHideTabBar && _excursionPrevented;
+        const BOOL actuallyPreserve = preserveDueToHiding || preserveDueToShowing;
+        const BOOL shouldResizeWindow = _windowNeedsInitialSize || !actuallyPreserve;
+
+        if (shouldResizeWindow) {
             const BOOL neededInitialSize = _windowNeedsInitialSize;
             const NSRect frameBefore = self.window.frame;
             if (_windowNeedsInitialSize) {
@@ -7155,6 +7168,15 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
                 // Minimal theme.
                 [self fitTabsToWindow];
             }
+        } else if (!_windowNeedsInitialSize &&
+                   wouldCauseExcursion &&
+                   preserveDueToShowing &&
+                   preserveOnlyIfExcursion) {
+            DLog(@"Prevented due to excursion.");
+            // Set this flag because if the tab bar goes away later we don't want it to shrink.
+            _excursionPrevented = YES;
+        } else if (preserveDueToHiding) {
+            _excursionPrevented = NO;
         }
         // May need to enter or exit being a titlebar accessory if its visibility changed.
         [self updateTabBarControlIsTitlebarAccessory];
@@ -7220,6 +7242,33 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
         // Hiding tabbar in fullscreen on 10.14 is extra work because it's a titlebar accessory.
         [self updateTabBarStyle];
     }
+}
+
+- (BOOL)fittingWindowToTabsWouldCauseExcursion {
+    const NSRect proposedFrame = [self frameFittingWindowToTabs];
+    if (isnan(proposedFrame.origin.x) ||
+        isnan(proposedFrame.origin.y) ||
+        isnan(proposedFrame.size.width) ||
+        isnan(proposedFrame.size.height)) {
+        return NO;
+    }
+    const NSRect screenFrame = self.window.screen.visibleFrame;
+    DLog(@"Proposed frame is %@, current frame is %@, screen is %@ with visible frame %@",
+         NSStringFromRect(proposedFrame),
+         NSStringFromRect(self.window.frame),
+         self.window.screen,
+         NSStringFromRect(screenFrame));
+    if (!NSContainsRect(screenFrame, self.window.frame)) {
+        // Window didn't start in visible frame
+        return NO;
+    }
+    if (NSContainsRect(screenFrame, proposedFrame)) {
+        // End frame is in visible frame
+        return NO;
+    }
+
+    DLog(@"Frame would leave the screen");
+    return YES;
 }
 
 - (NSMenu *)tabView:(NSTabView *)tabView menuForTabViewItem:(NSTabViewItem *)tabViewItem
@@ -9299,8 +9348,15 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     [self updateTabProgress];
 }
 
+- (NSRect)frameFittingWindowToTabs {
+    return [self frameFittingWindowToTabsExcludingTmuxTabs:NO preservingHeight:NO];
+}
 - (void)fitWindowToTabs {
     [self fitWindowToTabsExcludingTmuxTabs:NO preservingHeight:NO];
+}
+
+- (NSRect)frameFittingWindowToTabsExcludingTmuxTabs:(BOOL)excludeTmux {
+    return [self frameFittingWindowToTabsExcludingTmuxTabs:excludeTmux preservingHeight:NO];
 }
 
 - (void)fitWindowToTabsExcludingTmuxTabs:(BOOL)excludeTmux {
@@ -9356,10 +9412,29 @@ typedef NS_ENUM(NSUInteger, PseudoTerminalTabSizeExclusion) {
     return maxTabSize;
 }
 
+- (NSRect)frameFittingWindowToTabsExcludingTmuxTabs:(BOOL)excludeTmux preservingHeight:(BOOL)preserveHeight {
+    return [self frameFittingWindowToTabsExcludingTmuxTabs:excludeTmux
+                                          preservingHeight:preserveHeight
+                                          sizeOfLargestTab:[self sizeOfLargestTabWithExclusion:excludeTmux ? PseudoTerminalTabSizeExclusionTmux : PseudoTerminalTabSizeExclusionNone]];
+}
+
 - (void)fitWindowToTabsExcludingTmuxTabs:(BOOL)excludeTmux preservingHeight:(BOOL)preserveHeight {
     [self fitWindowToTabsExcludingTmuxTabs:excludeTmux
                           preservingHeight:preserveHeight
                           sizeOfLargestTab:[self sizeOfLargestTabWithExclusion:excludeTmux ? PseudoTerminalTabSizeExclusionTmux : PseudoTerminalTabSizeExclusionNone]];
+}
+
+- (NSRect)frameFittingWindowToTabsExcludingTmuxTabs:(BOOL)excludeTmux
+                                   preservingHeight:(BOOL)preserveHeight
+                                   sizeOfLargestTab:(NSSize)maxTabSize {
+    if (togglingFullScreen_) {
+        return NSMakeRect(NAN, NAN, NAN, NAN);
+    }
+    if (NSEqualSizes(NSZeroSize, maxTabSize)) {
+        return NSMakeRect(NAN, NAN, NAN, NAN);
+    }
+    NSNumber *preferredHeight = preserveHeight ? @(self.window.frame.size.height) : nil;
+    return [self frameFittingWindowToTabSize:maxTabSize preferredHeight:preferredHeight];
 }
 
 - (void)fitWindowToTabsExcludingTmuxTabs:(BOOL)excludeTmux
@@ -9386,6 +9461,10 @@ typedef NS_ENUM(NSUInteger, PseudoTerminalTabSizeExclusion) {
         // the scrollbar.
         [self repositionWidgets];
     }
+}
+
+- (NSRect)frameFittingWindowToTabSize:(NSSize)tabSize {
+    return [self frameFittingWindowToTabSize:tabSize preferredHeight:nil];
 }
 
 - (BOOL)fitWindowToTabSize:(NSSize)tabSize {
@@ -9524,6 +9603,15 @@ typedef struct {
     if (shouldResize) {
         [self fitWindowToTabSize:tabSize preferredHeight:nil];
     }
+}
+
+- (NSRect)frameFittingWindowToTabSize:(NSSize)tabSize preferredHeight:(NSNumber *)preferredHeight {
+    PseudoTerminalWindowFrameInfo frameInfo = [self windowFrameForTabSize:tabSize
+                                                          preferredHeight:preferredHeight];
+    if (!frameInfo.ok) {
+        return NSMakeRect(NAN, NAN, NAN, NAN);
+    }
+    return frameInfo.frame;
 }
 
 // NOTE: The preferred height is respected only if it would be larger than the height the window would
