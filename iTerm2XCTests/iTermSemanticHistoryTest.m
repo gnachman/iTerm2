@@ -546,6 +546,78 @@
     XCTAssert(lineNumber.length == 0);
 }
 
+- (void)testGetFullPathStripsLeadingISlash {
+    NSString *lineNumber = nil;
+    NSString *columnNumber = nil;
+    static NSString *const kRelativeFilename = @"path/to/file";
+    static NSString *const kWorkingDirectory = @"/working/directory";
+    NSString *kAbsoluteFilename =
+        [kWorkingDirectory stringByAppendingPathComponent:kRelativeFilename];
+    [_semanticHistoryController.fakeFileManager.files addObject:kAbsoluteFilename];
+    NSString *actual = [_semanticHistoryController cleanedUpPathFromPath:[@"i/" stringByAppendingString:kRelativeFilename]
+                                                                  suffix:nil
+                                                        workingDirectory:kWorkingDirectory
+                                                     extractedLineNumber:&lineNumber
+                                                            columnNumber:&columnNumber];
+    NSString *expected = kAbsoluteFilename;
+    XCTAssert([expected isEqualToString:actual]);
+    XCTAssert(lineNumber.length == 0);
+}
+
+- (void)testGetFullPathStripsLeadingWSlash {
+    NSString *lineNumber = nil;
+    NSString *columnNumber = nil;
+    static NSString *const kRelativeFilename = @"path/to/file";
+    static NSString *const kWorkingDirectory = @"/working/directory";
+    NSString *kAbsoluteFilename =
+        [kWorkingDirectory stringByAppendingPathComponent:kRelativeFilename];
+    [_semanticHistoryController.fakeFileManager.files addObject:kAbsoluteFilename];
+    NSString *actual = [_semanticHistoryController cleanedUpPathFromPath:[@"w/" stringByAppendingString:kRelativeFilename]
+                                                                  suffix:nil
+                                                        workingDirectory:kWorkingDirectory
+                                                     extractedLineNumber:&lineNumber
+                                                            columnNumber:&columnNumber];
+    NSString *expected = kAbsoluteFilename;
+    XCTAssert([expected isEqualToString:actual]);
+    XCTAssert(lineNumber.length == 0);
+}
+
+- (void)testGetFullPathStripsLeadingCSlash {
+    NSString *lineNumber = nil;
+    NSString *columnNumber = nil;
+    static NSString *const kRelativeFilename = @"path/to/file";
+    static NSString *const kWorkingDirectory = @"/working/directory";
+    NSString *kAbsoluteFilename =
+        [kWorkingDirectory stringByAppendingPathComponent:kRelativeFilename];
+    [_semanticHistoryController.fakeFileManager.files addObject:kAbsoluteFilename];
+    NSString *actual = [_semanticHistoryController cleanedUpPathFromPath:[@"c/" stringByAppendingString:kRelativeFilename]
+                                                                  suffix:nil
+                                                        workingDirectory:kWorkingDirectory
+                                                     extractedLineNumber:&lineNumber
+                                                            columnNumber:&columnNumber];
+    NSString *expected = kAbsoluteFilename;
+    XCTAssert([expected isEqualToString:actual]);
+    XCTAssert(lineNumber.length == 0);
+}
+
+- (void)testGetFullPathStripsLeadingOSlash {
+    NSString *lineNumber = nil;
+    NSString *columnNumber = nil;
+    static NSString *const kRelativeFilename = @"path/to/file";
+    static NSString *const kWorkingDirectory = @"/working/directory";
+    NSString *kAbsoluteFilename =
+        [kWorkingDirectory stringByAppendingPathComponent:kRelativeFilename];
+    [_semanticHistoryController.fakeFileManager.files addObject:kAbsoluteFilename];
+    NSString *actual = [_semanticHistoryController cleanedUpPathFromPath:[@"o/" stringByAppendingString:kRelativeFilename]
+                                                                  suffix:nil
+                                                        workingDirectory:kWorkingDirectory
+                                                     extractedLineNumber:&lineNumber
+                                                            columnNumber:&columnNumber];
+    NSString *expected = kAbsoluteFilename;
+    XCTAssert([expected isEqualToString:actual]);
+    XCTAssert(lineNumber.length == 0);
+}
+
 - (void)testGetFullPathRejectsNetworkPaths {
     NSString *lineNumber = nil;
     NSString *columnNumber = nil;

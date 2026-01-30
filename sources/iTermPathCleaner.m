@@ -63,10 +63,20 @@ static dispatch_queue_t iTermPathCleanerQueue(void) {
 }
 
 - (NSString *)pathByRemovingDiffPrefix:(NSString *)path {
-    if (![path hasPrefix:@"a/"] && ![path hasPrefix:@"b/"]) {
-        return nil;
+    // Git diff uses various prefixes for different versions:
+    // a/ and b/ - traditional diff format (old/new)
+    // i/ and w/ - index and worktree (git diff --ita-visible-in-index)
+    // c/ - commit
+    // o/ - object
+    NSArray<NSString *> *gitDiffPrefixes = @[@"a/", @"b/", @"i/", @"w/", @"c/", @"o/"];
+    
+    for (NSString *prefix in gitDiffPrefixes) {
+        if ([path hasPrefix:prefix]) {
+            return [path substringFromIndex:2];
+        }
     }
-    return [path substringFromIndex:2];
+    
+    return nil;
 }
 
 - (void)cleanSynchronously {
@@ -90,8 +100,8 @@ static dispatch_queue_t iTermPathCleanerQueue(void) {
         return fullPath;
     }
 
-    // If path doesn't exist and it starts with "a/" or "b/" (from `diff`), try again without the
-    // [ab]/ prefix.
+    // If path doesn't exist and it starts with a git diff prefix (a/, b/, i/, w/, c/, o/),
+    // try again without the prefix.
     pathWithoutNearbyGunk = [self pathByRemovingDiffPrefix:pathWithoutNearbyGunk];
     if (!pathWithoutNearbyGunk) {
         return nil;

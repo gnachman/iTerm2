@@ -18,8 +18,8 @@ NS_ASSUME_NONNULL_BEGIN
 // - Expand leading tilde
 // - Make the path absolute relative to the provided working directory
 // - Check if it appears to be on a network mount, failing if so.
-// - Ensure the file actually exists; if it does not, try again by removing an a/ or b/ prefix
-//   (as seen in diff output)
+// - Ensure the file actually exists; if it does not, try again by removing a git diff prefix
+//   (a/, b/, i/, w/, c/, o/ as seen in diff output)
 // - Standardize the path by removing . and .. anywhere in the path,
 //   turning /bar/baz/../foo into /bar/foo
 //
