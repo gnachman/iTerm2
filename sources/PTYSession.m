@@ -3997,9 +3997,18 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
     [_conductor sendKeys:data];
 }
 
+// Use mutateAsynchronously for single-writer consistency on mutation queue.
+// When unpausing, scheduleTokenExecution re-kicks the scheduler so queued tokens
+// don't sit in purgatory until new data arrives.
 - (void)taskDidChangePaused:(PTYTask *)task paused:(BOOL)paused {
-    [_screen performBlockWithJoinedThreads:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
+    [_screen mutateAsynchronously:^(VT100Terminal *terminal,
+                                    VT100ScreenMutableState *mutableState,
+                                    id<VT100ScreenDelegate> delegate) {
         mutableState.taskPaused = paused;
+        if (!paused) {
+            // Resume token execution when unpausing
+            [mutableState scheduleTokenExecution];
+        }
     }];
 }
 
@@ -4038,6 +4047,16 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
 // Main thread
 - (void)taskDidRegister:(PTYTask *)task {
     [self updateTTYSize];
+
+    // Wire up backpressure integration between TokenExecutor and PTYTask
+    // This enables the fairness scheduler to control read source state
+    iTermTokenExecutor *executor = _screen.mutableState.tokenExecutor;
+    task.tokenExecutor = executor;
+
+    __weak PTYTask *weakTask = task;
+    executor.backpressureReleaseHandler = ^{
+        [weakTask updateReadSourceState];
+    };
 }
 
 - (void)tmuxDidDisconnect {
@@ -20037,10 +20056,16 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     }].action;
 }
 
+// Use mutateAsynchronously for single-writer consistency on mutation queue.
+// scheduleTokenExecution re-kicks the scheduler so queued tokens don't sit in purgatory.
+// The textview operation runs on main thread first, then the mutation queue state change.
 - (void)shortcutNavigationDidComplete {
     [_textview removeContentNavigationShortcutsAndSearchResults:_modeHandler.clearSelectionsOnExit];
-    [_screen performBlockWithJoinedThreads:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
+    [_screen mutateAsynchronously:^(VT100Terminal *terminal,
+                                    VT100ScreenMutableState *mutableState,
+                                    id<VT100ScreenDelegate> delegate) {
         mutableState.shortcutNavigationMode = NO;
+        [mutableState scheduleTokenExecution];
     }];
 }
 

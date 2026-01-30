@@ -30,6 +30,14 @@ extern NSString *const kCoprocessStatusChangeNotification;
 - (void)writeTask:(NSData *)data coprocess:(BOOL)coprocess;
 - (void)didRegister;
 
+@optional
+
+// Returns YES if this task uses dispatch_source for I/O instead of select().
+// Tasks implementing this and returning YES will have their FD skipped in
+// TaskNotifier's select() loop. Coprocess FDs are still handled via select().
+// Default (not implemented): NO - use select() for backward compatibility.
+- (BOOL)useDispatchSource;
+
 @end
 
 @interface TaskNotifier : NSObject

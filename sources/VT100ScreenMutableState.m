@@ -70,6 +70,7 @@ static const int64_t VT100ScreenMutableStateSideEffectFlagLineBufferDidDropLines
     BOOL _runSideEffectAfterTopJoinFinishes;
     NSMutableArray<void (^)(void)> *_postTriggerActions;
     void (^_nextPromptBlock)(void);
+    uint64_t _fairnessSessionId;
 }
 
 // performingJoinedBlock is now centralized in iTermGCD.
@@ -123,6 +124,10 @@ static const int64_t VT100ScreenMutableStateSideEffectFlagLineBufferDidDropLines
                                                      slownessDetector:_triggerEvaluator.triggersSlownessDetector
                                                                 queue:_queue];
         _tokenExecutor.delegate = self;
+
+        // Register with FairnessScheduler for round-robin token execution
+        _fairnessSessionId = [iTermFairnessScheduler.shared register:_tokenExecutor];
+        _tokenExecutor.fairnessSessionId = _fairnessSessionId;
         _echoProbe = [[iTermEchoProbe alloc] initWithQueue:_queue];
         _echoProbe.delegate = self;
         self.unconditionalTemporaryDoubleBuffer.delegate = self;
@@ -208,7 +213,13 @@ static const int64_t VT100ScreenMutableStateSideEffectFlagLineBufferDidDropLines
         _commandRangeChangeJoiner = [iTermIdempotentOperationJoiner joinerWithScheduler:_tokenExecutor];
         _terminal.delegate = self;
         _tokenExecutor.delegate = self;
+        // Re-kick token execution when terminal becomes enabled
+        [self scheduleTokenExecution];
     } else {
+        // Unregister from FairnessScheduler BEFORE clearing delegate
+        // This also calls cleanupForUnregistration() to restore availableSlots
+        [iTermFairnessScheduler.shared unregisterWithSessionId:_fairnessSessionId];
+
         [_commandRangeChangeJoiner invalidate];
         _commandRangeChangeJoiner = nil;
         _tokenExecutor.delegate = nil;
@@ -4903,12 +4914,17 @@ lengthExcludingInBandSignaling:data.length
     }
 }
 
-- (void)performSynchroDanceWithBlock:(void (^)(void))block {
+// Performs a synchronous join with the mutation queue.
+// whilePaused: will crash (it_fatalError) if the join times out, so this method
+// always returns YES if it returns at all. The BOOL return is kept for API clarity.
+- (BOOL)performSynchroDanceWithBlock:(void (^)(void))block {
     assert(dispatch_queue_get_label(DISPATCH_CURRENT_QUEUE_LABEL) == dispatch_queue_get_label(dispatch_get_main_queue()));
     DLog(@"begin");
     [iTermGCD setMainQueueSafe:YES];
 
     // Stop the token executor while we run `block`.
+    // Note: whilePaused: crashes on timeout since skipping the joined block would
+    // leave mutable state inconsistent. If this returns, the join succeeded.
     DLog(@"Calling whilePaused:");
     [_tokenExecutor whilePaused:^{
         // The token executor is now stopped. This runs on the main thread.
@@ -4919,6 +4935,7 @@ lengthExcludingInBandSignaling:data.length
         DLog(@"unblock executor");
     }];
     DLog(@"returning");
+    return YES;
 }
 
 // This runs on the main queue while the mutation queue waits on `group`.
@@ -6475,13 +6492,9 @@ launchCoprocessWithCommand:(NSString *)command
 
 // Main queue or mutation queue while joined.
 - (void)tokenExecutorSync {
-    DLog(@"[side effects] begin");
-    [self performLightweightBlockWithJoinedThreads:^(VT100ScreenMutableState * _Nonnull mutableState) {
-        [self performSideEffect:^(id<VT100ScreenDelegate> delegate) {
-            [delegate screenSync:mutableState];
-        } name:@"tokenExecutorSync calling screenSync"];
-    }];
-    DLog(@"[side effects] end");
+    // No-op: Syncing is handled by the cadence-driven refresh path.
+    // Visible tabs sync at ~60Hz, background tabs at 1Hz.
+    // Doing an additional sync here is redundant and expensive.
 }
 
 // Runs on mutation queue

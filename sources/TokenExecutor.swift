@@ -94,13 +94,36 @@ func CVectorReleaseObjectsAndDestroy(_ vector: CVector) {
     CVectorDestroy(&temp)
 }
 
+// Indicates the current level of backpressure on token processing.
+// Higher levels mean the mutation queue is falling behind.
+// Conforms to Comparable for natural ordering comparisons.
+@objc enum BackpressureLevel: Int, Comparable {
+    case none = 0       // > 75% slots available
+    case light = 1      // 50-75% available
+    case moderate = 2   // 25-50% available
+    case heavy = 3      // < 25% available
+    case blocked = 4    // 0 available, PTY read is blocked
+
+    static func < (lhs: BackpressureLevel, rhs: BackpressureLevel) -> Bool {
+        return lhs.rawValue < rhs.rawValue
+    }
+}
+
 @objc(iTermTokenExecutor)
-class TokenExecutor: NSObject {
+class TokenExecutor: NSObject, FairnessSchedulerExecutor {
     @objc weak var delegate: TokenExecutorDelegate? {
         didSet {
             impl.delegate = delegate
         }
     }
+    private let totalSlots = Int(iTermAdvancedSettingsModel.bufferDepth())
+    // Initialize counter to totalSlots immediately (not in init) to avoid a window
+    // where backpressureLevel could return .blocked before init completes.
+    private var availableSlots = {
+        let counter = iTermAtomicInt64Create()
+        iTermAtomicInt64Add(counter, Int64(iTermAdvancedSettingsModel.bufferDepth()))
+        return counter
+    }()
     private let semaphore = DispatchSemaphore(value: Int(iTermAdvancedSettingsModel.bufferDepth()))
     private let impl: TokenExecutorImpl
     private let queue: DispatchQueue
@@ -108,6 +131,22 @@ class TokenExecutor: NSObject {
     private var onExecutorQueue: Bool {
         return DispatchQueue.getSpecific(key: Self.isTokenExecutorSpecificKey) == true
     }
+
+    /// Closure called when backpressure transitions from heavy to lighter.
+    /// Used by PTYTask to re-evaluate read source state.
+    @objc var backpressureReleaseHandler: (() -> Void)? {
+        didSet {
+            impl.backpressureReleaseHandler = backpressureReleaseHandler
+        }
+    }
+
+    /// Session ID assigned by FairnessScheduler during registration.
+    @objc var fairnessSessionId: UInt64 = 0 {
+        didSet {
+            impl.fairnessSessionId = fairnessSessionId
+        }
+    }
+
     @objc var isBackgroundSession = false {
         didSet {
 #if DEBUG
@@ -138,6 +177,32 @@ class TokenExecutor: NSObject {
                                  queue: queue)
     }
 
+    // Returns the current backpressure level based on available slots.
+    // This can be called from any queue.
+    //
+    // NOTE: High-priority tokens bypass backpressure (no semaphore wait), so this
+    // metric only reflects load from normal PTY token processing. This is intentional:
+    // high-priority tokens are meant to bypass flow control.
+    @objc var backpressureLevel: BackpressureLevel {
+        let available = Int(iTermAtomicInt64Get(availableSlots))
+        // Use <= 0 since availableSlots can go negative when more tokens are added
+        // than total capacity (the counter isn't clamped at 0)
+        if available <= 0 {
+            return .blocked
+        }
+        let ratio = Double(available) / Double(totalSlots)
+        switch ratio {
+        case ..<0.25:
+            return .heavy
+        case ..<0.50:
+            return .moderate
+        case ..<0.75:
+            return .light
+        default:
+            return .none
+        }
+    }
+
     // This takes ownership of vector.
     // You can call this on any queue.
     @objc
@@ -160,7 +225,7 @@ class TokenExecutor: NSObject {
     // This takes ownership of vector.
     // You can call this on any queue when not high priority.
     // If high priority, then you must be on the main queue or have joined the main & mutation queue.
-    // This blocks when the queue of tokens gets too large.
+    // NON-BLOCKING: PTY read sources should never block.
     @objc
     func addTokens(_ vector: CVector,
                    lengthTotal: Int,
@@ -170,6 +235,10 @@ class TokenExecutor: NSObject {
         if lengthTotal == 0 {
             return
         }
+
+        // Always decrement availableSlots for backpressure tracking (both normal and high-priority)
+        iTermAtomicInt64Add(availableSlots, -1)
+
         if highPriority {
 #if DEBUG
             iTermGCD.assertMutationQueueSafe()
@@ -179,26 +248,26 @@ class TokenExecutor: NSObject {
             reallyAddTokens(vector,
                             lengthTotal: lengthTotal,
                             lengthExcludingInBandSignaling: lengthExcludingInBandSignaling,
-                            highPriority: highPriority,
-                            semaphore: nil)
+                            highPriority: highPriority)
+            // High-priority: already on mutation queue, notify scheduler synchronously
+            impl.notifyScheduler()
             return
         }
-        // Normal code path for tokens from PTY. Use the semaphore to give backpressure to reading.
-        let semaphore = self.semaphore
+
+        // Normal code path for tokens from PTY. Non-blocking with backpressure via suspend/resume.
         if enableTimingStats {
             TokenExecutor.addTokensTimingStats.recordEnd()
         }
-        _ = semaphore.wait(timeout: .distantFuture)
         if enableTimingStats {
             TokenExecutor.addTokensTimingStats.recordStart()
         }
         reallyAddTokens(vector,
                         lengthTotal: lengthTotal,
                         lengthExcludingInBandSignaling: lengthExcludingInBandSignaling,
-                        highPriority: highPriority,
-                        semaphore: semaphore)
+                        highPriority: highPriority)
+        // Normal: dispatch to mutation queue to notify scheduler
         queue.async { [weak self] in
-            self?.impl.didAddTokens()
+            self?.impl.notifyScheduler()
         }
     }
 
@@ -247,12 +316,21 @@ class TokenExecutor: NSObject {
     private func reallyAddTokens(_ vector: CVector,
                                  lengthTotal: Int,
                                  lengthExcludingInBandSignaling: Int,
-                                 highPriority: Bool,
-                                 semaphore: DispatchSemaphore?) {
+                                 highPriority: Bool) {
+        // Always set consumption callback to increment availableSlots and trigger backpressure release
+        let onConsumed: () -> Void = { [weak self, availableSlots] in
+            guard let self = self else { return }
+            let newValue = iTermAtomicInt64Add(availableSlots, 1)
+            // Notify PTYTask to re-evaluate read state when crossing out of heavy backpressure
+            if newValue > 0 && self.backpressureLevel < .heavy {
+                self.impl.backpressureReleaseHandler?()
+            }
+        }
         let tokenArray = TokenArray(vector,
                                     lengthTotal: lengthTotal,
                                     lengthExcludingInBandSignaling: lengthExcludingInBandSignaling,
-                                    semaphore: semaphore)
+                                    semaphore: nil,  // No semaphore - non-blocking model
+                                    onSemaphoreSignaled: onConsumed)
         self.impl.addTokens(tokenArray, highPriority: highPriority)
     }
 
@@ -287,6 +365,22 @@ class TokenExecutor: NSObject {
         impl.schedule()
     }
 
+    // MARK: - FairnessSchedulerExecutor
+
+    /// Execute tokens up to the given budget. Calls completion with result.
+    @objc
+    func executeTurn(tokenBudget: Int, completion: @escaping (TurnResult) -> Void) {
+        if gDebugLogging.boolValue { DLog("executeTurn(tokenBudget: \(tokenBudget))") }
+        impl.executeTurn(tokenBudget: tokenBudget, completion: completion)
+    }
+
+    /// Called when session is unregistered to clean up pending tokens.
+    @objc
+    func cleanupForUnregistration() {
+        if gDebugLogging.boolValue { DLog("cleanupForUnregistration") }
+        impl.cleanupForUnregistration()
+    }
+
     @objc func assertSynchronousSideEffectsAreSafe() {
         impl.assertSynchronousSideEffectsAreSafe()
     }
@@ -303,9 +397,12 @@ class TokenExecutor: NSObject {
     }
 
     // Main queue only
+    // Returns true if the block was executed.
+    // Crashes (it_fatalError) on timeout since skipping the joined block would leave state inconsistent.
     @objc
-    func whilePaused(_ block: () -> ()) {
-        self.impl.whilePaused(block, onExecutorQueue: onExecutorQueue)
+    @discardableResult
+    func whilePaused(_ block: () -> ()) -> Bool {
+        return self.impl.whilePaused(block, onExecutorQueue: onExecutorQueue)
     }
 }
 
@@ -329,9 +426,32 @@ private class TokenExecutorImpl {
     private(set) var isExecutingToken = false
     weak var delegate: TokenExecutorDelegate?
 
-    // This is used to give visible sessions priority for token processing over those that cannot
-    // be seen. This prevents a very busy non-selected tab from starving a visible one.
-    private static var activeSessionsWithTokens = MutableAtomicObject<Set<ObjectIdentifier>>(Set())
+    // MARK: - Test Tracking (ITERM_DEBUG only)
+    #if ITERM_DEBUG
+    /// Atomic counter: total number of times executeTurn was called
+    private let _testExecuteTurnCallCount = iTermAtomicInt64Create()
+    /// Atomic counter: number of times executeTurn completed without being blocked
+    private let _testExecuteTurnCompletedCount = iTermAtomicInt64Create()
+    /// Atomic counter: total number of token arrays consumed across all executions
+    private let _testTokenArraysConsumedCount = iTermAtomicInt64Create()
+
+    var testExecuteTurnCallCount: Int64 { iTermAtomicInt64Get(_testExecuteTurnCallCount) }
+    var testExecuteTurnCompletedCount: Int64 { iTermAtomicInt64Get(_testExecuteTurnCompletedCount) }
+    var testTokenArraysConsumedCount: Int64 { iTermAtomicInt64Get(_testTokenArraysConsumedCount) }
+
+    func testResetCounters() {
+        _ = iTermAtomicInt64GetAndReset(_testExecuteTurnCallCount)
+        _ = iTermAtomicInt64GetAndReset(_testExecuteTurnCompletedCount)
+        _ = iTermAtomicInt64GetAndReset(_testTokenArraysConsumedCount)
+    }
+    #endif
+
+    /// Closure called when backpressure transitions from heavy to lighter.
+    var backpressureReleaseHandler: (() -> Void)?
+
+    /// Session ID assigned by FairnessScheduler during registration.
+    var fairnessSessionId: UInt64 = 0
+
     @objc var isBackgroundSession = false {
         didSet {
 #if DEBUG
@@ -339,11 +459,6 @@ private class TokenExecutorImpl {
 #endif
             if isBackgroundSession != oldValue {
                 sideEffectScheduler.period = isBackgroundSession ? 1.0 : 1.0 / 30.0
-                if isBackgroundSession {
-                    Self.activeSessionsWithTokens.mutableAccess { set in
-                        set.remove(ObjectIdentifier(self))
-                    }
-                }
             }
         }
     }
@@ -381,9 +496,7 @@ private class TokenExecutorImpl {
     }
 
     deinit {
-        Self.activeSessionsWithTokens.mutableAccess { set in
-            set.remove(ObjectIdentifier(self))
-        }
+        // No cleanup needed - FairnessScheduler uses weak references
     }
 
     func pause() -> Unpauser {
@@ -415,21 +528,126 @@ private class TokenExecutorImpl {
     func addTokens(_ tokenArray: TokenArray, highPriority: Bool) {
         throughputEstimator.addByteCount(tokenArray.lengthTotal)
         tokenQueue.addTokens(tokenArray, highPriority: highPriority)
-        if !isBackgroundSession {
-            Self.activeSessionsWithTokens.mutableAccess { set in
-                set.insert(ObjectIdentifier(self))
-            }
-        }
     }
 
     func didAddTokens() {
-        execute()
+        notifyScheduler()
+    }
+
+    // MARK: - FairnessSchedulerExecutor Support
+
+    /// Execute tokens up to the given budget. Calls completion with result.
+    func executeTurn(tokenBudget: Int, completion: @escaping (TurnResult) -> Void) {
+        DLog("executeTurn(tokenBudget: \(tokenBudget))")
+#if DEBUG
+        assertQueue()
+#endif
+
+        #if ITERM_DEBUG
+        iTermAtomicInt64Add(_testExecuteTurnCallCount, 1)
+        #endif
+
+        // Check if we're blocked (paused, copy mode, etc.)
+        if let delegate = delegate, delegate.tokenExecutorShouldQueueTokens() {
+            completion(.blocked)
+            return
+        }
+
+        executingCount += 1
+        defer {
+            executingCount -= 1
+            executeHighPriorityTasks()
+        }
+
+        executeHighPriorityTasks()
+
+        guard let delegate = delegate else {
+            tokenQueue.removeAll()
+            #if ITERM_DEBUG
+            iTermAtomicInt64Add(_testExecuteTurnCompletedCount, 1)
+            #endif
+            completion(.completed)
+            return
+        }
+
+        var tokensConsumed = 0
+        var groupsExecuted = 0
+        var accumulatedLength = ByteExecutionStats()
+
+        tokenQueue.enumerateTokenArrayGroups { [weak self] (group, priority) in
+            guard let self = self else { return false }
+
+            let groupTokenCount = group.arrays.reduce(0) { $0 + Int($1.count) }
+
+            // Budget check BETWEEN groups, not within
+            // At least one group always executes (progress guarantee)
+            if tokensConsumed + groupTokenCount > tokenBudget && groupsExecuted > 0 {
+                return false  // budget would be exceeded, yield to next session
+            }
+
+            // Execute the entire group atomically
+            if groupsExecuted == 0 {
+                delegate.tokenExecutorWillExecuteTokens()
+            }
+
+            let shouldContinue = self.executeTokenGroups(group,
+                                                         priority: priority,
+                                                         accumulatedLength: &accumulatedLength,
+                                                         delegate: delegate)
+
+            tokensConsumed += groupTokenCount
+            groupsExecuted += 1
+
+            #if ITERM_DEBUG
+            // Track token arrays consumed (one per group iteration)
+            iTermAtomicInt64Add(self._testTokenArraysConsumedCount, Int64(group.arrays.count))
+            #endif
+
+            return shouldContinue && !self.isPaused
+        }
+
+        if accumulatedLength.total > 0 || groupsExecuted > 0 {
+            delegate.tokenExecutorDidExecute(lengthTotal: accumulatedLength.total,
+                                             lengthExcludingInBandSignaling: accumulatedLength.excludingInBandSignaling,
+                                             throughput: throughputEstimator.estimatedThroughput)
+        }
+
+        #if ITERM_DEBUG
+        iTermAtomicInt64Add(_testExecuteTurnCompletedCount, 1)
+        #endif
+
+        // Report back to scheduler
+        let hasMoreWork = !tokenQueue.isEmpty || taskQueue.count > 0
+        completion(hasMoreWork ? .yielded : .completed)
+    }
+
+    /// Called when session is unregistered to clean up pending tokens.
+    func cleanupForUnregistration() {
+        DLog("cleanupForUnregistration")
+        // Discard all remaining tokens and trigger their consumption callbacks
+        // This ensures availableSlots is correctly incremented for unconsumed tokens
+        let unconsumedCount = tokenQueue.discardAllAndReturnCount()
+        if unconsumedCount > 0 {
+            DLog("Cleaned up \(unconsumedCount) unconsumed token arrays")
+        }
+    }
+
+    // MARK: - Scheduler Notification
+
+    /// Notify the FairnessScheduler that this session has work.
+    /// Must be called on mutation queue.
+    func notifyScheduler() {
+        DLog("notifyScheduler(sessionId: \(fairnessSessionId))")
+#if DEBUG
+        assertQueue()
+#endif
+        FairnessScheduler.shared.sessionDidEnqueueWork(fairnessSessionId)
     }
 
     // You can call this on any queue.
     func schedule() {
         queue.async { [weak self] in
-            self?.execute()
+            self?.notifyScheduler()
         }
     }
 
@@ -441,41 +659,87 @@ private class TokenExecutorImpl {
             assertQueue()
 #endif
             if executingCount == 0 {
-                execute()
+                notifyScheduler()
                 return
             }
+            // Already executing - task will be picked up in current turn
+            return
         }
         schedule()
     }
 
     // Main queue
     // Runs block synchronously while token executor is stopped.
-    func whilePaused(_ block: () -> (), onExecutorQueue: Bool) {
+    // Returns true if the block was executed.
+    // Crashes (it_fatalError) on timeout since skipping the joined block would leave state inconsistent.
+    @discardableResult
+    func whilePaused(_ block: () -> (), onExecutorQueue: Bool) -> Bool {
         dispatchPrecondition(condition: .onQueue(.main))
+
+#if DEBUG
+        // Detect reentrant joins
+        let wasInProgress = Self.joinInProgress.getAndSet(true)
+        it_assert(!wasInProgress, "Reentrant join detected - check call stack")
+        defer { Self.joinInProgress.set(false) }
+#endif
+
         if gDebugLogging.boolValue { DLog("Incr pending pauses if \(iTermPreferences.maximizeThroughput())") }
         var unpauser = iTermPreferences.maximizeThroughput() ? nil : TokenExecutor.globalPause()
 
         let sema = DispatchSemaphore(value: 0)
         let sema2 = DispatchSemaphore(value: 0)
+        // Cancellation flag - checked by async block before setting joined = true.
+        // This prevents the async block from setting joined state if main times out.
+        // NOTE: There's a small race window where the async block may have passed the
+        // cancel check but not yet signaled sema2. Under it_fatalError this is acceptable;
+        // if soft-failure is ever needed, a stronger handshake (e.g., DispatchWorkItem.cancel)
+        // would be required.
+        let cancelled = MutableAtomicObject(false)
+
         queue.async {
+            // If main timed out and cancelled, don't set joined state
+            if cancelled.value {
+                DLog("Join was cancelled due to timeout - not setting joined state")
+                return
+            }
             sema2.signal()
             iTermGCD.joined = true
             sema.wait()
             iTermGCD.joined = false
             DLog("Mutation queue unpaused")
         }
-        if unpauser != nil {
-            sema2.wait()
-        } else {
-            // When maximize throughput is on, we want to avoid pausing token execution but we can't
-            // let it go on indefinitely. After a timeout, pause it and block for what should be a short
-            // amount of time (until the current batch of tokens is done being executed).
-            let timeout = 0.03
-            if sema2.wait(timeout: .now() + timeout) == .timedOut {
+
+        // Timeouts prevent deadlock if mutation queue is stuck.
+        // DEBUG: Short timeouts catch issues during development.
+        // RELEASE: Longer timeouts avoid false positives from legitimately busy queues,
+        // but still catch truly stuck queues.
+#if DEBUG
+        let initialTimeout: TimeInterval = unpauser != nil ? 1.0 : 0.03
+        let retryTimeout: TimeInterval = 1.0
+#else
+        let initialTimeout: TimeInterval = unpauser != nil ? 5.0 : 0.03
+        let retryTimeout: TimeInterval = 10.0
+#endif
+
+        if sema2.wait(timeout: .now() + initialTimeout) == .timedOut {
+            if unpauser == nil {
+                // When maximize throughput is on, we want to avoid pausing token execution but we can't
+                // let it go on indefinitely. After a timeout, pause it and block for what should be a short
+                // amount of time (until the current batch of tokens is done being executed).
                 unpauser = TokenExecutor.globalPause()
-                sema2.wait()
+            }
+            // Try once more with pause in effect, but still use a timeout
+            if sema2.wait(timeout: .now() + retryTimeout) == .timedOut {
+                DLog("FATAL: whilePaused timed out waiting for mutation queue")
+                // Cancel the async block before crashing so it doesn't set joined state
+                cancelled.set(true)
+                // Signal sema in case the async block is waiting
+                sema.signal()
+                unpauser?.unpause()
+                it_fatalError("whilePaused timed out waiting for mutation queue - join required for state coherence")
             }
         }
+
         DLog("Mutation queue paused")
         block()
         if unpauser != nil {
@@ -483,7 +747,12 @@ private class TokenExecutorImpl {
         }
         unpauser?.unpause()
         sema.signal()
+        return true
     }
+
+#if DEBUG
+    private static let joinInProgress = MutableAtomicObject(false)
+#endif
 
     // Any queue
     func addSideEffect(_ task: @escaping TokenExecutorTask) {
@@ -601,12 +870,6 @@ private class TokenExecutorImpl {
                                               accumulatedLength: &accumulatedLength,
                                               delegate: delegate)
                 }
-                if !isBackgroundSession && tokenQueue.isEmpty {
-                    DLog("Active session completely drained")
-                    Self.activeSessionsWithTokens.mutableAccess { set in
-                        set.remove(ObjectIdentifier(self))
-                    }
-                }
                 if gDebugLogging.boolValue { DLog("Finished enumerating token arrays. \(tokenQueue.isEmpty ? "There are no more tokens in the queue" : "The queue is not empty")") }
             }
         }
@@ -659,12 +922,8 @@ private class TokenExecutorImpl {
                     DLog("commit=\(commit) consume=\(consume) remaining=\(group.arrays.map(\.numberRemaining))")
                 }
             }
-            if isBackgroundSession && !Self.activeSessionsWithTokens.value.isEmpty {
-                // Avoid blocking the active session. If there were multiple mutation threads this
-                // would be unnecessary.
-                DLog("Stop processing early because active session has tokens")
-                return false
-            }
+            // FairnessScheduler now provides equal round-robin for all sessions,
+            // so background sessions don't need to yield to foreground sessions here.
         }
         if quitVectorEarly {
             if gDebugLogging.boolValue { DLog("quitVectorEarly") }
@@ -760,6 +1019,44 @@ extension TokenExecutor: IdempotentOperationScheduler {
         addDeferredSideEffect(closure)
     }
 }
+
+// MARK: - Testing Hooks
+
+#if ITERM_DEBUG
+extension TokenExecutor {
+    /// Test-only: Returns the current value of availableSlots for verifying accounting invariants.
+    /// This should equal totalSlots when no tokens are pending.
+    @objc var testAvailableSlots: Int {
+        return Int(iTermAtomicInt64Get(availableSlots))
+    }
+
+    /// Test-only: Returns the total slots capacity for computing expected values.
+    @objc var testTotalSlots: Int {
+        return totalSlots
+    }
+
+    /// Test-only: Total number of times executeTurn was called (includes blocked calls).
+    @objc var testExecuteTurnCallCount: Int64 {
+        return impl.testExecuteTurnCallCount
+    }
+
+    /// Test-only: Number of times executeTurn completed without being blocked.
+    /// This increments only when actual token execution happens.
+    @objc var testExecuteTurnCompletedCount: Int64 {
+        return impl.testExecuteTurnCompletedCount
+    }
+
+    /// Test-only: Total number of token arrays consumed across all executions.
+    @objc var testTokenArraysConsumedCount: Int64 {
+        return impl.testTokenArraysConsumedCount
+    }
+
+    /// Test-only: Reset all test counters to zero.
+    @objc func testResetCounters() {
+        impl.testResetCounters()
+    }
+}
+#endif
 
 // Run a closure but not too often.
 @objc(iTermPeriodicScheduler)

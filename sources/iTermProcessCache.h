@@ -19,6 +19,11 @@ NS_ASSUME_NONNULL_BEGIN
 + (instancetype)sharedInstance;
 + (iTermProcessCollection *)newProcessCollection;
 
+// Update which root PIDs are foreground (high priority).
+// Foreground roots get fast incremental updates via process monitors.
+// Background roots have their monitors suspended and rely on the 0.5s cadence.
+- (void)setForegroundRootPIDs:(NSSet<NSNumber *> *)foregroundPIDs;
+
 @end
 
 NS_ASSUME_NONNULL_END
