@@ -409,6 +409,13 @@ typedef NS_ENUM(NSUInteger, PTYSessionTurdType) {
     // to profile except for these keys.
     NSMutableSet *_overriddenFields;
 
+    // Stores the profile color values that existed before any escape sequence modified them.
+    // Key is the profile key (e.g., "Foreground Color" or "Foreground Color (Dark)").
+    // Value is the color dictionary value from the profile.
+    // When an escape sequence resets a color, we restore from here instead of _originalProfile.
+    // This ensures Edit Session color changes are preserved through escape sequence set/reset cycles.
+    NSMutableDictionary *_preEscapeSequenceColors;
+
     // A digital video recorder for this session that implements the instant replay feature. These
     // are non-null while showing instant replay.
     DVR *_dvr;
@@ -981,6 +988,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [_colorFgBgVariable release];
     [_profile release];
     [_overriddenFields release];
+    [_preEscapeSequenceColors release];
     _pasteHelper.delegate = nil;
     [_pasteHelper release];
     [_backgroundImage release];
@@ -7090,6 +7098,15 @@ static NSString *const PTYSessionComposerPrefixUserDataKeyDetectedByTrigger = @"
         // commonly when setting tab color after a split.
         return;
     }
+
+    // Clear pre-escape-sequence baselines for modified keys.
+    // When Edit Session changes a color, it becomes the new baseline for reset operations.
+    // Note: screenSetColor:profileKey: will restore the baseline after calling this method
+    // for escape-sequence-initiated changes.
+    for (NSString *key in newValues) {
+        [_preEscapeSequenceColors removeObjectForKey:key];
+    }
+
     DLog(@"Set bookmark and reload profile");
     [[ProfileModel sessionsInstance] setBookmark:temp withGuid:temp[KEY_GUID]];
 
@@ -15028,10 +15045,128 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 // 8-15 are ansi bright colors,
 // 16-255 are 256 color-mode colors.
 // If empty, reset all.
+// Returns the base color key by stripping any light/dark mode suffix.
+- (NSString *)baseColorKeyForProfileKey:(NSString *)profileKey {
+    if ([profileKey hasSuffix:COLORS_LIGHT_MODE_SUFFIX]) {
+        return [profileKey substringToIndex:profileKey.length - [COLORS_LIGHT_MODE_SUFFIX length]];
+    }
+    if ([profileKey hasSuffix:COLORS_DARK_MODE_SUFFIX]) {
+        return [profileKey substringToIndex:profileKey.length - [COLORS_DARK_MODE_SUFFIX length]];
+    }
+    return profileKey;
+}
+
+// Returns YES if the given key is a color key (not KEY_USE_SEPARATE_COLORS_FOR_LIGHT_AND_DARK_MODE).
+- (BOOL)isColorBaselineKey:(NSString *)key {
+    return ![key isEqualToString:KEY_USE_SEPARATE_COLORS_FOR_LIGHT_AND_DARK_MODE];
+}
+
+// Returns YES if there are any color baselines remaining (excluding the mode setting).
+- (BOOL)hasRemainingColorBaselines {
+    for (NSString *key in _preEscapeSequenceColors) {
+        if ([self isColorBaselineKey:key]) {
+            return YES;
+        }
+    }
+    return NO;
+}
+
 - (NSDictionary<NSNumber *, id> *)screenResetColorWithColorMapKey:(int)key
                                                        profileKey:(NSString *)profileKey
                                                              dark:(BOOL)dark {
-    DLog(@"key=%d profileKey=%@ dark=%d", key, profileKey, dark);
+    DLog(@"screenResetColor: key=%d profileKey=%@ dark=%d", key, profileKey, dark);
+    DLog(@"screenResetColor: _preEscapeSequenceColors=%@", _preEscapeSequenceColors);
+
+    // Check for saved pre-escape-sequence color (Edit Session baseline)
+    if (profileKey) {
+        // Check if the mode setting has changed since baselines were saved.
+        NSNumber *baselineModeSetting = _preEscapeSequenceColors[KEY_USE_SEPARATE_COLORS_FOR_LIGHT_AND_DARK_MODE];
+        const BOOL currentlyUsesModes = [iTermProfilePreferences boolForKey:KEY_USE_SEPARATE_COLORS_FOR_LIGHT_AND_DARK_MODE
+                                                                  inProfile:_profile];
+        const BOOL baselineUsedModes = [baselineModeSetting boolValue];
+        const BOOL modeSettingChanged = baselineModeSetting && (baselineUsedModes != currentlyUsesModes);
+        DLog(@"screenResetColor: baselineModeSetting=%@ currentlyUsesModes=%d baselineUsedModes=%d modeSettingChanged=%d",
+              baselineModeSetting, currentlyUsesModes, baselineUsedModes, modeSettingChanged);
+
+        id savedColorValue = nil;
+        NSString *baselineKey = nil;
+        NSMutableDictionary *valuesToRestore = [NSMutableDictionary dictionary];
+
+        if (modeSettingChanged) {
+            NSString *baseKey = [self baseColorKeyForProfileKey:profileKey];
+
+            if (currentlyUsesModes && !baselineUsedModes) {
+                // Session NOW uses separate colors but originally did NOT.
+                // The baseline was saved with an unsuffixed key.
+                // Look up the unsuffixed key and restore to it.
+                baselineKey = baseKey;
+                savedColorValue = _preEscapeSequenceColors[baselineKey];
+                if (savedColorValue) {
+                    // Restore to the unsuffixed key
+                    valuesToRestore[baselineKey] = savedColorValue;
+                }
+            } else if (!currentlyUsesModes && baselineUsedModes) {
+                // Session originally used separate colors but NOW does NOT.
+                // The baselines were saved with suffixed keys.
+                // Look up both suffixed keys and restore all of them plus the unsuffixed key.
+                NSString *lightKey = [baseKey stringByAppendingString:COLORS_LIGHT_MODE_SUFFIX];
+                NSString *darkKey = [baseKey stringByAppendingString:COLORS_DARK_MODE_SUFFIX];
+
+                id lightValue = _preEscapeSequenceColors[lightKey];
+                id darkValue = _preEscapeSequenceColors[darkKey];
+
+                if (lightValue) {
+                    valuesToRestore[lightKey] = lightValue;
+                    valuesToRestore[baseKey] = lightValue;  // Also restore unsuffixed
+                    baselineKey = lightKey;
+                    savedColorValue = lightValue;
+                }
+                if (darkValue) {
+                    valuesToRestore[darkKey] = darkValue;
+                    if (!lightValue) {
+                        valuesToRestore[baseKey] = darkValue;  // Also restore unsuffixed if no light
+                        baselineKey = darkKey;
+                        savedColorValue = darkValue;
+                    }
+                }
+            }
+        } else {
+            // Mode setting hasn't changed, use the key as-is.
+            baselineKey = profileKey;
+            savedColorValue = _preEscapeSequenceColors[profileKey];
+            if (savedColorValue) {
+                valuesToRestore[profileKey] = savedColorValue;
+            }
+        }
+
+        if (savedColorValue) {
+            DLog(@"screenResetColor: Restoring from pre-escape-sequence baseline: %@", valuesToRestore);
+
+            // Remove the baseline key(s) we're consuming
+            for (NSString *keyToRemove in valuesToRestore) {
+                [_preEscapeSequenceColors removeObjectForKey:keyToRemove];
+            }
+
+            [self setSessionSpecificProfileValues:valuesToRestore];
+
+            DLog(@"screenResetColor: after restore, profile foreground keys: Light=%@ Dark=%@ Unsuffixed=%@",
+                  _profile[@"Foreground Color (Light)"],
+                  _profile[@"Foreground Color (Dark)"],
+                  _profile[@"Foreground Color"]);
+
+            // If this was the last color baseline, also restore the mode setting.
+            if (baselineModeSetting && ![self hasRemainingColorBaselines]) {
+                DLog(@"Last color baseline consumed, restoring mode setting to %@", baselineModeSetting);
+                [_preEscapeSequenceColors removeObjectForKey:KEY_USE_SEPARATE_COLORS_FOR_LIGHT_AND_DARK_MODE];
+                [self setSessionSpecificProfileValues:@{ KEY_USE_SEPARATE_COLORS_FOR_LIGHT_AND_DARK_MODE: baselineModeSetting }];
+            }
+
+            return @{};
+        }
+    }
+
+    DLog(@"screenResetColor: no baseline found, falling back to original profile");
+    // Fall back to original profile
     return [self resetColorWithKey:key
                        fromProfile:_originalProfile
                         profileKey:profileKey
@@ -15044,18 +15179,94 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     }
 
     if (profileKey) {
+        // Save current value BEFORE modifying, if not already saved.
+        // This preserves the Edit Session baseline for later reset operations.
+        // Retain the baseline since setSessionSpecificProfileValues will remove it from
+        // _preEscapeSequenceColors, potentially deallocating it.
+        id baselineToPreserve = [[_preEscapeSequenceColors[profileKey] retain] autorelease];
+        DLog(@"screenSetColor: profileKey=%@ existingBaseline=%@", profileKey, baselineToPreserve);
+        if (!baselineToPreserve) {
+            id currentValue = _profile[profileKey];
+            DLog(@"screenSetColor: no existing baseline, currentValue from profile=%@", currentValue);
+            if (currentValue) {
+                if (!_preEscapeSequenceColors) {
+                    _preEscapeSequenceColors = [[NSMutableDictionary alloc] init];
+                }
+                baselineToPreserve = currentValue;
+            }
+        }
+
         [self setSessionSpecificProfileValues:@{ profileKey: [color dictionaryValue] }];
+
+        // Restore the baseline after setSessionSpecificProfileValues clears it.
+        // For escape-sequence-initiated changes, we want to preserve the baseline
+        // so that reset operations restore to the Edit Session value.
+        if (baselineToPreserve) {
+            _preEscapeSequenceColors[profileKey] = baselineToPreserve;
+        }
+        DLog(@"screenSetColor: after set, _preEscapeSequenceColors=%@", _preEscapeSequenceColors);
         return NO;
     }
     return YES;
 }
 
 - (void)screenSelectColorPresetNamed:(NSString *)name {
+    // This is an escape-sequence-initiated color change. Like screenSetColor:profileKey:,
+    // we need to preserve baselines so reset operations restore to Edit Session values.
+    iTermColorPreset *settings = [iTermColorPresets presetWithName:name];
+    if (!settings) {
+        return;
+    }
+
+    if (!_preEscapeSequenceColors) {
+        _preEscapeSequenceColors = [[NSMutableDictionary alloc] init];
+    }
+
+    // Save baseline for KEY_USE_SEPARATE_COLORS_FOR_LIGHT_AND_DARK_MODE if not already saved.
+    // This is needed to correctly transform color keys during reset operations.
+    // Use boolForKey to get the effective value (respecting defaults).
+    const BOOL currentlyUsesModes = [iTermProfilePreferences boolForKey:KEY_USE_SEPARATE_COLORS_FOR_LIGHT_AND_DARK_MODE
+                                                              inProfile:_profile];
+    if (!_preEscapeSequenceColors[KEY_USE_SEPARATE_COLORS_FOR_LIGHT_AND_DARK_MODE]) {
+        _preEscapeSequenceColors[KEY_USE_SEPARATE_COLORS_FOR_LIGHT_AND_DARK_MODE] = @(currentlyUsesModes);
+    }
+
+    // Build a dictionary of baselines to preserve. For each color the preset will change,
+    // save the current profile value if we don't already have a baseline.
+    // Use the CURRENT key format (before preset changes the mode setting).
+    NSMutableDictionary *baselinesToPreserve = [NSMutableDictionary dictionary];
+    baselinesToPreserve[KEY_USE_SEPARATE_COLORS_FOR_LIGHT_AND_DARK_MODE] =
+        _preEscapeSequenceColors[KEY_USE_SEPARATE_COLORS_FOR_LIGHT_AND_DARK_MODE];
+
+    for (NSString *baseColorKey in [ProfileModel colorKeysWithModes:NO]) {
+        if (currentlyUsesModes) {
+            // Save both light and dark mode keys
+            NSString *lightKey = [baseColorKey stringByAppendingString:COLORS_LIGHT_MODE_SUFFIX];
+            NSString *darkKey = [baseColorKey stringByAppendingString:COLORS_DARK_MODE_SUFFIX];
+            if (_profile[lightKey]) {
+                id existingBaseline = _preEscapeSequenceColors[lightKey];
+                baselinesToPreserve[lightKey] = existingBaseline ?: _profile[lightKey];
+            }
+            if (_profile[darkKey]) {
+                id existingBaseline = _preEscapeSequenceColors[darkKey];
+                baselinesToPreserve[darkKey] = existingBaseline ?: _profile[darkKey];
+            }
+        } else {
+            if (_profile[baseColorKey]) {
+                id existingBaseline = _preEscapeSequenceColors[baseColorKey];
+                baselinesToPreserve[baseColorKey] = existingBaseline ?: _profile[baseColorKey];
+            }
+        }
+    }
+
     [self setColorsFromPresetNamed:name];
+
+    // Restore baselines after setColorsFromPresetNamed cleared them.
+    [_preEscapeSequenceColors addEntriesFromDictionary:baselinesToPreserve];
 }
 
 - (void)screenSetCurrentTabColor:(NSColor *)color {
-    [self setTabColor:color];
+    [self setTabColor:color fromEscapeSequence:YES];
     id<WindowControllerInterface> term = [_delegate parentWindow];
     [term updateTabColors];
 }
@@ -15065,15 +15276,75 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 }
 
 - (void)setTabColor:(NSColor *)color {
-    NSDictionary *dict;
-    if (color) {
-        dict = @{ [self amendedColorKey:KEY_USE_TAB_COLOR]: @YES,
-                  [self amendedColorKey:KEY_TAB_COLOR]: [ITAddressBookMgr encodeColor:color] };
-    } else {
-        dict = @{ [self amendedColorKey:KEY_USE_TAB_COLOR]: @NO };
-    }
+    [self setTabColor:color fromEscapeSequence:NO];
+}
 
-    [self setSessionSpecificProfileValues:dict];
+- (void)setTabColor:(NSColor *)color fromEscapeSequence:(BOOL)fromEscapeSequence {
+    NSString *useTabColorKey = [self amendedColorKey:KEY_USE_TAB_COLOR];
+    NSString *tabColorKey = [self amendedColorKey:KEY_TAB_COLOR];
+
+    if (fromEscapeSequence) {
+        // Save baselines before modifying, if not already saved.
+        if (!_preEscapeSequenceColors) {
+            _preEscapeSequenceColors = [[NSMutableDictionary alloc] init];
+        }
+
+        // Retain baselines since setSessionSpecificProfileValues will remove them from
+        // _preEscapeSequenceColors, potentially deallocating them.
+        id useTabColorBaseline = [[_preEscapeSequenceColors[useTabColorKey] retain] autorelease];
+        id tabColorBaseline = [[_preEscapeSequenceColors[tabColorKey] retain] autorelease];
+
+        if (!useTabColorBaseline) {
+            useTabColorBaseline = @([iTermProfilePreferences boolForKey:useTabColorKey inProfile:_profile]);
+        }
+        if (!tabColorBaseline) {
+            tabColorBaseline = _profile[tabColorKey];
+        }
+
+        // If this is a reset (color == nil) and we have baselines, restore them.
+        if (!color && (useTabColorBaseline || tabColorBaseline)) {
+            NSMutableDictionary *valuesToRestore = [NSMutableDictionary dictionary];
+            if (useTabColorBaseline) {
+                valuesToRestore[useTabColorKey] = useTabColorBaseline;
+                [_preEscapeSequenceColors removeObjectForKey:useTabColorKey];
+            }
+            if (tabColorBaseline) {
+                valuesToRestore[tabColorKey] = tabColorBaseline;
+                [_preEscapeSequenceColors removeObjectForKey:tabColorKey];
+            }
+            [self setSessionSpecificProfileValues:valuesToRestore];
+            return;
+        }
+
+        // Setting a new color - apply the change
+        NSDictionary *dict;
+        if (color) {
+            dict = @{ useTabColorKey: @YES,
+                      tabColorKey: [ITAddressBookMgr encodeColor:color] };
+        } else {
+            dict = @{ useTabColorKey: @NO };
+        }
+        [self setSessionSpecificProfileValues:dict];
+
+        // Restore baselines after setSessionSpecificProfileValues clears them.
+        if (useTabColorBaseline) {
+            _preEscapeSequenceColors[useTabColorKey] = useTabColorBaseline;
+        }
+        if (tabColorBaseline) {
+            _preEscapeSequenceColors[tabColorKey] = tabColorBaseline;
+        }
+    } else {
+        // Not from escape sequence (Edit Session) - just apply the change.
+        // setSessionSpecificProfileValues will clear any baselines.
+        NSDictionary *dict;
+        if (color) {
+            dict = @{ useTabColorKey: @YES,
+                      tabColorKey: [ITAddressBookMgr encodeColor:color] };
+        } else {
+            dict = @{ useTabColorKey: @NO };
+        }
+        [self setSessionSpecificProfileValues:dict];
+    }
 }
 
 - (void)screenSetTabColorRedComponentTo:(CGFloat)color {
@@ -15081,7 +15352,8 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     [self setTabColor:[curColor it_colorWithRed:color
                                           green:curColor.greenComponent
                                            blue:curColor.blueComponent
-                                          alpha:1]];
+                                          alpha:1]
+   fromEscapeSequence:YES];
     [[_delegate parentWindow] updateTabColors];
 }
 
@@ -15090,7 +15362,8 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     [self setTabColor:[curColor it_colorWithRed:curColor.redComponent
                                           green:color
                                            blue:curColor.blueComponent
-                                          alpha:1]];
+                                          alpha:1]
+   fromEscapeSequence:YES];
     [[_delegate parentWindow] updateTabColors];
 }
 
@@ -15099,7 +15372,8 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     [self setTabColor:[curColor it_colorWithRed:curColor.redComponent
                                           green:curColor.greenComponent
                                            blue:color
-                                          alpha:1]];
+                                          alpha:1]
+   fromEscapeSequence:YES];
     [[_delegate parentWindow] updateTabColors];
 }
 
@@ -16917,6 +17191,8 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
 }
 
 - (void)screenRestoreColorsFromSlot:(VT100SavedColorsSlot *)slot {
+    // This is an escape-sequence-initiated color change (PopColors).
+    // Preserve baselines so reset operations restore to Edit Session values.
     const BOOL dark = _screen.colorMap.darkMode;
     NSMutableDictionary *dict = [[@{ iTermAmendedColorKey(KEY_FOREGROUND_COLOR, _profile, dark): slot.text.dictionaryValue,
                                      iTermAmendedColorKey(KEY_BACKGROUND_COLOR, _profile, dark): slot.background.dictionaryValue,
@@ -16930,7 +17206,30 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
             dict[profileKey] = [slot.indexedColors[i] dictionaryValue];
         }
     }
+
+    // Save baselines for keys we're about to modify
+    NSMutableDictionary *baselinesToPreserve = [NSMutableDictionary dictionary];
+    for (NSString *key in dict) {
+        id existingBaseline = [[_preEscapeSequenceColors[key] retain] autorelease];
+        if (existingBaseline) {
+            baselinesToPreserve[key] = existingBaseline;
+        } else {
+            id currentValue = _profile[key];
+            if (currentValue) {
+                baselinesToPreserve[key] = currentValue;
+            }
+        }
+    }
+
     [self setSessionSpecificProfileValues:dict];
+
+    // Restore baselines after setSessionSpecificProfileValues clears them
+    if (baselinesToPreserve.count > 0) {
+        if (!_preEscapeSequenceColors) {
+            _preEscapeSequenceColors = [[NSMutableDictionary alloc] init];
+        }
+        [_preEscapeSequenceColors addEntriesFromDictionary:baselinesToPreserve];
+    }
 }
 
 - (BOOL)supportsOSC52 {
