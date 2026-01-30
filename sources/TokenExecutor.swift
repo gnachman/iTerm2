@@ -452,6 +452,12 @@ private class TokenExecutorImpl {
     // Runs block synchronously while token executor is stopped.
     func whilePaused(_ block: () -> (), onExecutorQueue: Bool) {
         dispatchPrecondition(condition: .onQueue(.main))
+        if iTermGCD.joined {
+            // Already joined (likely re-entrant via a nested runloop). Avoid deadlock by reusing
+            // the existing join instead of creating a new one.
+            block()
+            return
+        }
         if gDebugLogging.boolValue { DLog("Incr pending pauses if \(iTermPreferences.maximizeThroughput())") }
         var unpauser = iTermPreferences.maximizeThroughput() ? nil : TokenExecutor.globalPause()
 
