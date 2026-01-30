@@ -132,6 +132,17 @@ class TwoTierTokenQueue {
         }
     }
 
+    /// Discard all token arrays and return the count for accounting cleanup.
+    /// Calls didFinish() on each array to trigger consumption callbacks.
+    func discardAllAndReturnCount() -> Int {
+        DLog("discard all and return count")
+        var count = 0
+        for queue in queues {
+            count += queue.discardAllAndReturnCount()
+        }
+        return count
+    }
+
     func addTokens(_ tokenArray: TokenArray, highPriority: Bool) {
         if gDebugLogging.boolValue {
             DLog("add \(tokenArray.count) tokens, highpri=\(highPriority)")
@@ -206,6 +217,18 @@ fileprivate class Queue: CustomDebugStringConvertible {
     func removeAll() {
         mutex.sync {
             arrays.removeAll()
+        }
+    }
+
+    /// Discard all arrays and return count. Calls didFinish() on each.
+    func discardAllAndReturnCount() -> Int {
+        mutex.sync {
+            let count = arrays.count
+            for array in arrays {
+                array.didFinish()
+            }
+            arrays.removeAll()
+            return count
         }
     }
 
