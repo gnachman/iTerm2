@@ -1,6 +1,12 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# Check that no iTerm2 instance is already running
+if pgrep -x iTerm2 >/dev/null 2>&1; then
+  echo "Error: iTerm2 is already running. Please close all iTerm2 instances." >&2
+  exit 1
+fi
+
 # Source tmux wrapper library
 script_dir_early="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$script_dir_early/tmux_wrapper.sh"
@@ -76,6 +82,10 @@ Options:
                  Use a custom load generator script instead of the built-in ones.
                  The script must accept: duration label --sync-dir DIR [--mode=X]
 
+  --config=PATH  Use custom iTerm2 preferences from PATH instead of defaults.
+                 If not specified, uses --use-default-config (built-in defaults).
+                 PATH must exist and be accessible.
+
 USAGE
 }
 
@@ -92,6 +102,7 @@ speed_arg="normal"
 fps_arg=""  # empty = use default 30fps
 load_script_arg=""  # empty = use default stress_load.py
 duration_arg=""  # empty = use default 20s
+config_arg=""  # empty = use --use-default-config, value = path to config
 positional_args=()
 
 while [[ $# -gt 0 ]]; do
@@ -123,6 +134,10 @@ while [[ $# -gt 0 ]]; do
       ;;
     --load-script=*)
       load_script_arg="${1#--load-script=}"
+      shift
+      ;;
+    --config=*)
+      config_arg="${1#--config=}"
       shift
       ;;
     --title)
@@ -192,6 +207,7 @@ if [[ "$tmux_mode" == true ]]; then
     ${title_arg:+--title="$title_arg"} ${tabs_arg:+--tabs="$tabs_arg"} \
     ${duration_arg:+--time="$duration_arg"} \
     ${speed_arg:+--speed="$speed_arg"} ${load_script_arg:+--load-script="$load_script_arg"} \
+    ${config_arg:+--config="$config_arg"} \
     $([[ "$inject_mode" == true ]] && echo "--inject") \
     $([[ "$dtrace_mode" == true ]] && echo "--dtrace") \
     $([[ "$forever_mode" == true ]] && echo "--forever") \
@@ -221,6 +237,41 @@ if [[ $# -lt 1 ]]; then
 fi
 
 app_path="$1"
+
+# Validate config path if specified
+if [[ -n "$config_arg" ]]; then
+  # Expand tilde for validation
+  config_path_expanded="${config_arg/#\~/$HOME}"
+
+  # Check if it's a URL (skip validation)
+  if [[ "$config_arg" =~ ^https?:// ]]; then
+    echo "Using config from URL: $config_arg"
+  else
+    # Local path - must exist
+    if [[ ! -e "$config_path_expanded" ]]; then
+      echo "Error: Config path does not exist: $config_arg" >&2
+      echo "  Expanded to: $config_path_expanded" >&2
+      exit 1
+    fi
+
+    # Check if it's a directory (should contain com.googlecode.iterm2.plist)
+    if [[ -d "$config_path_expanded" ]]; then
+      if [[ ! -f "$config_path_expanded/com.googlecode.iterm2.plist" ]]; then
+        echo "Error: Config directory must contain com.googlecode.iterm2.plist" >&2
+        echo "  Directory: $config_path_expanded" >&2
+        exit 1
+      fi
+      echo "Using config from directory: $config_arg"
+    elif [[ -f "$config_path_expanded" ]]; then
+      echo "Using config from file: $config_arg"
+    else
+      echo "Error: Config path is not a file or directory: $config_arg" >&2
+      exit 1
+    fi
+  fi
+else
+  echo "Using default iTerm2 config (--use-default-config)"
+fi
 
 # Duration: prefer --time/-t, then positional arg, then default
 if [[ -n "$duration_arg" ]]; then
@@ -459,6 +510,39 @@ on run argv
 end run
 APPLESCRIPT
 
+# Get power source from pmset
+get_power_source() {
+  pmset -g batt 2>/dev/null | head -1 | sed "s/.*Now drawing from '//;s/'.*//g" || echo "Unknown"
+}
+
+# Get power/energy mode from pmset (based on current power source)
+get_energy_mode() {
+  local power_source=$(get_power_source)
+  local section=""
+
+  # Determine which section to read from pmset -g custom
+  case "$power_source" in
+    "AC Power") section="AC Power:" ;;
+    "Battery Power") section="Battery Power:" ;;
+    "UPS Power") section="UPS Power:" ;;
+    *) echo "Unknown"; return ;;
+  esac
+
+  # Get powermode for the current power source
+  local powermode=$(pmset -g custom 2>/dev/null | awk -v sect="$section" '
+    $0 ~ sect { in_section=1; next }
+    in_section && /^[A-Z]/ { in_section=0 }
+    in_section && /powermode/ { print $NF; exit }
+  ')
+
+  case "$powermode" in
+    0) echo "Automatic" ;;
+    1) echo "Low Power" ;;
+    2) echo "High Power/High Performance" ;;
+    *) echo "Unknown" ;;
+  esac
+}
+
 # Cleanup function
 cleanup() {
   if [[ -n "${sync_dir:-}" && -d "${sync_dir:-}" ]]; then
@@ -482,12 +566,6 @@ run_single_test() {
   echo ""
   echo "Run $((run_index + 1)): $tab_count tab(s), ${duration}s duration"
 
-  # Check that no iTerm2 instance is already running
-  if pgrep -x iTerm2 >/dev/null 2>&1; then
-    echo "Error: iTerm2 is already running. Please close all iTerm2 instances." >&2
-    return 1
-  fi
-
   # Set up sync directory if in sync mode
   # Use /tmp so it's accessible to all users (needed when running as root for dtrace)
   local sync_dir=""
@@ -500,7 +578,18 @@ run_single_test() {
   # Open iTerm2 and wait for it to launch
   local run_start_epoch
   run_start_epoch=$(date +%s)
-  open -a "$app_path"
+
+  # Launch iTerm2 with config flag (--use-default-config or --config=path)
+  if [[ -n "$config_arg" ]]; then
+    # Convert to absolute path for iTerm2 (unless it's a URL)
+    local config_launch_path="$config_arg"
+    if [[ ! "$config_arg" =~ ^https?:// ]]; then
+      config_launch_path="$(cd "$(dirname "${config_arg/#\~/$HOME}")" 2>/dev/null && pwd)/$(basename "${config_arg/#\~/$HOME}")" || echo "${config_arg/#\~/$HOME}"
+    fi
+    open -a "$app_path" --args --config="$config_launch_path"
+  else
+    open -a "$app_path" --args --use-default-config
+  fi
   sleep 2
 
   # Find iTerm2 PID
@@ -1150,14 +1239,18 @@ run_forever() {
   echo ""
   echo "Forever mode: $tab_count tab(s), no profiling"
 
-  # Check that no iTerm2 instance is already running
-  if pgrep -x iTerm2 >/dev/null 2>&1; then
-    echo "Error: iTerm2 is already running. Please close all iTerm2 instances." >&2
-    exit 1
-  fi
-
   # Open iTerm2 and wait for it to launch
-  open -a "$app_path"
+  # Launch iTerm2 with config flag (--use-default-config or --config=path)
+  if [[ -n "$config_arg" ]]; then
+    # Convert to absolute path for iTerm2 (unless it's a URL)
+    local config_launch_path="$config_arg"
+    if [[ ! "$config_arg" =~ ^https?:// ]]; then
+      config_launch_path="$(cd "$(dirname "${config_arg/#\~/$HOME}")" 2>/dev/null && pwd)/$(basename "${config_arg/#\~/$HOME}")" || echo "${config_arg/#\~/$HOME}"
+    fi
+    open -a "$app_path" --args --config="$config_launch_path"
+  else
+    open -a "$app_path" --args --use-default-config
+  fi
   sleep 2
 
   # Find iTerm2 PID
@@ -1189,6 +1282,10 @@ run_forever() {
   echo "Stress load running."
 }
 
+# Capture power information at script start
+power_source=$(get_power_source)
+energy_mode=$(get_energy_mode)
+
 # Main execution
 echo "Multi-Tab Stress Test"
 echo "====================="
@@ -1200,6 +1297,28 @@ if [[ -n "$build_commit" ]]; then
   [[ -n "$build_date" ]] && echo "Build date: $build_date"
   [[ "$build_uncommitted" == "true" ]] && echo "Uncommitted changes: yes"
 fi
+echo "Power Source: $power_source"
+echo "Energy Mode: $energy_mode"
+
+# Warn if not on AC power, not in high performance mode, or using custom config
+if [[ "$power_source" != "AC Power" || "$energy_mode" != "High Power/High Performance" || -n "$config_arg" ]]; then
+  echo ""
+  echo "WARNING: Performance testing should use standard conditions for reliable results!"
+  echo ""
+  echo "         Current issues:"
+  [[ "$power_source" != "AC Power" ]] && echo "           - Running on $power_source (not AC Power)"
+  [[ "$energy_mode" != "High Power/High Performance" ]] && echo "           - Energy Mode: $energy_mode (not High Power/High Performance)"
+  [[ -n "$config_arg" ]] && echo "           - Using custom config (not default settings)"
+  echo ""
+  echo "         These conditions may produce unreliable or unexpected performance results."
+  echo ""
+  echo "         Recommendations:"
+  [[ "$power_source" != "AC Power" ]] && echo "           - Connect to AC Power"
+  [[ "$energy_mode" != "High Power/High Performance" ]] && echo "           - Set Energy Mode to High Power/High Performance"
+  [[ -n "$config_arg" ]] && echo "           - Use default config (remove --config flag) for baseline testing"
+  echo ""
+fi
+
 if [[ "$forever_mode" == true ]]; then
   echo "Mode: forever (no profiling)"
 else
@@ -1211,6 +1330,17 @@ echo "Inject interactions: $inject_mode"
 echo "DTrace mode: $dtrace_mode"
 echo "Tmux wrapped: $tmux_mode"
 echo "Speed: $speed_arg"
+if [[ -n "$config_arg" ]]; then
+  # Show full expanded path
+  if [[ "$config_arg" =~ ^https?:// ]]; then
+    echo "Config: $config_arg"
+  else
+    config_full_path="$(cd "$(dirname "${config_arg/#\~/$HOME}")" 2>/dev/null && pwd)/$(basename "${config_arg/#\~/$HOME}")" || echo "${config_arg/#\~/$HOME}"
+    echo "Config: $config_full_path"
+  fi
+else
+  echo "Config: Default"
+fi
 if [[ -n "$stress_mode" ]]; then
   echo "Mode: ${stress_mode#--mode=}"
 fi
@@ -1231,5 +1361,27 @@ else
     echo ""
     echo "Summary Table"
     print_summary_table
+  fi
+
+  # Repeat warning at end if not on AC power, not in high performance mode, or using custom config
+  if [[ "$power_source" != "AC Power" || "$energy_mode" != "High Power/High Performance" || -n "$config_arg" ]]; then
+    echo ""
+    echo "============================================================"
+    echo "WARNING: These results may not reflect optimal performance!"
+    echo "============================================================"
+    echo ""
+    echo "Issues detected:"
+    [[ "$power_source" != "AC Power" ]] && echo "  - Power Source: $power_source (not AC Power)"
+    [[ "$energy_mode" != "High Power/High Performance" ]] && echo "  - Energy Mode: $energy_mode (not High Power/High Performance)"
+    [[ -n "$config_arg" ]] && echo "  - Using custom config (not default settings)"
+    echo ""
+    echo "Performance testing should use standard conditions for reliable results."
+    echo "Current configuration may produce unreliable or unexpected performance."
+    echo ""
+    echo "Recommendations:"
+    [[ "$power_source" != "AC Power" ]] && echo "  - Connect to AC Power"
+    [[ "$energy_mode" != "High Power/High Performance" ]] && echo "  - Set Energy Mode to High Power/High Performance"
+    [[ -n "$config_arg" ]] && echo "  - Use default config (remove --config flag) for baseline testing"
+    echo "============================================================"
   fi
 fi
