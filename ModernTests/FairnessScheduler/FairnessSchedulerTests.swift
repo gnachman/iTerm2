@@ -5,6 +5,10 @@
 //  Unit tests for FairnessScheduler - the round-robin fair scheduling coordinator.
 //  See testing.md Phase 1 for test specifications.
 //
+//  TODO: Test coverage gap - session restoration (undo termination) path needs tests:
+//  - Test re-registration after unregister (simulating session revive)
+//  - Verify sessionDidEnqueueWork processes preserved tokens after re-registration
+//
 
 import XCTest
 @testable import iTerm2SharedARC

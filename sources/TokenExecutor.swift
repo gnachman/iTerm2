@@ -696,12 +696,10 @@ private class TokenExecutorImpl {
     /// Called when session is unregistered to clean up pending tokens.
     func cleanupForUnregistration() {
         DLog("cleanupForUnregistration")
-        // Discard all remaining tokens and trigger their consumption callbacks
-        // This ensures availableSlots is correctly incremented for unconsumed tokens
-        let unconsumedCount = tokenQueue.discardAllAndReturnCount()
-        if unconsumedCount > 0 {
-            DLog("Cleaned up \(unconsumedCount) unconsumed token arrays")
-        }
+        // Tokens are intentionally preserved here. Termination is undoable (via revive),
+        // so tokens must not be discarded. They will drain via the normal execution path
+        // when the terminal is re-enabled and re-registered with the scheduler, or be
+        // freed on dealloc if the session is never revived.
     }
 
     // Any queue

@@ -2,8 +2,11 @@
 //  TwoTierTokenQueueTests.swift
 //  ModernTests
 //
-//  Unit tests for TwoTierTokenQueue, specifically for the discardAllAndReturnCount() method
-//  used for cleanup accounting when sessions are unregistered.
+//  Unit tests for TwoTierTokenQueue, specifically for the discardAllAndReturnCount() method.
+//
+//  NOTE: discardAllAndReturnCount() is no longer used by cleanupForUnregistration().
+//  Tokens are now preserved on unregister to support session revive. These tests remain
+//  valid for the method itself but are not exercised by the cleanup flow.
 //
 
 import XCTest
@@ -11,9 +14,9 @@ import XCTest
 
 // MARK: - TwoTierTokenQueue Tests
 
-/// Tests for TwoTierTokenQueue cleanup accounting functionality.
-/// These tests verify the discardAllAndReturnCount() method correctly returns
-/// the count of discarded arrays for slot accounting.
+/// Tests for TwoTierTokenQueue discardAllAndReturnCount() functionality.
+/// These tests verify the method correctly returns the count of discarded arrays.
+/// Note: This method is no longer called during session unregistration (tokens are preserved).
 final class TwoTierTokenQueueTests: XCTestCase {
 
     func testDiscardAllReturnsCorrectCount() {
