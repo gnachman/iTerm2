@@ -4463,6 +4463,7 @@
 		A6E525E01A9C5730007B898E /* VT100StateTransition.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E525DB1A9C5730007B898E /* VT100StateTransition.h */; };
 		A6E525E11A9C5730007B898E /* VT100State.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E525DC1A9C5730007B898E /* VT100State.h */; };
 		A6E525E21A9C5730007B898E /* VT100State.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E525DC1A9C5730007B898E /* VT100State.h */; };
+		A6E5A9282F2DD832002331AE /* iTermKeyMappingRepair.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6E5A9272F2DD832002331AE /* iTermKeyMappingRepair.swift */; };
 		A6E5D20B1FA3C55700EDD002 /* iTermMetalRowData.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E5D2091FA3C55700EDD002 /* iTermMetalRowData.h */; };
 		A6E5D20C1FA3C55700EDD002 /* iTermMetalRowData.m in Sources */ = {isa = PBXBuildFile; fileRef = A6E5D20A1FA3C55700EDD002 /* iTermMetalRowData.m */; };
 		A6E5D20F1FA3C57900EDD002 /* iTermMetalFrameData.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E5D20D1FA3C57900EDD002 /* iTermMetalFrameData.h */; };
@@ -8565,6 +8566,7 @@
 		A6E525DA1A9C5730007B898E /* VT100StateMachine.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = VT100StateMachine.h; sourceTree = "<group>"; };
 		A6E525DB1A9C5730007B898E /* VT100StateTransition.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = VT100StateTransition.h; sourceTree = "<group>"; };
 		A6E525DC1A9C5730007B898E /* VT100State.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = VT100State.h; sourceTree = "<group>"; };
+		A6E5A9272F2DD832002331AE /* iTermKeyMappingRepair.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermKeyMappingRepair.swift; sourceTree = "<group>"; };
 		A6E5D2091FA3C55700EDD002 /* iTermMetalRowData.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = iTermMetalRowData.h; path = Metal/Infrastructure/iTermMetalRowData.h; sourceTree = "<group>"; };
 		A6E5D20A1FA3C55700EDD002 /* iTermMetalRowData.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = iTermMetalRowData.m; path = Metal/Infrastructure/iTermMetalRowData.m; sourceTree = "<group>"; };
 		A6E5D20D1FA3C57900EDD002 /* iTermMetalFrameData.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermMetalFrameData.h; sourceTree = "<group>"; };
@@ -10129,6 +10131,7 @@
 		1D24C37714303E00006B246F /* Preferences */ = {
 			isa = PBXGroup;
 			children = (
+				A6E5A9272F2DD832002331AE /* iTermKeyMappingRepair.swift */,
 				A6D90D5F2E2F5F3B00BA9F4F /* ai-prompt-help.md */,
 				A604641F2E0DEE3D002C7986 /* ProfilesWebPreferencesViewController.swift */,
 				A6AF79D92E072C15008D77BA /* iTermPreferencesBaseViewController.swift */,
@@ -18809,6 +18812,7 @@
 				A6E2D0F32AC38E6F005C6677 /* TerminalButton.swift in Sources */,
 				A6DCDF2E2EECD784006DE530 /* BufferInputTrigger.swift in Sources */,
 				5357E41F22682B2100FE5A55 /* CPParser+Cache.m in Sources */,
+				A6E5A9282F2DD832002331AE /* iTermKeyMappingRepair.swift in Sources */,
 				A6A4866820B6785400493302 /* iTermAdvancedSettingsViewController.m in Sources */,
 				A6A4867C20B67EFB00493302 /* ProfilesTextPreferencesViewController.m in Sources */,
 				A66433372DE7E6050099F722 /* RangeMap.swift in Sources */,

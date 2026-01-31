@@ -34,7 +34,10 @@
 #import "PreferencePanel.h"
 #import "PSMTabBarControl.h"
 
+#import "iTerm2SharedARC-Swift.h"
+
 static NSString *const kHotkeyWindowGeneratedProfileNameKey = @"Hotkey Window";
+static NSString *const kKeyCode0MitigationSuffixGlobal = @"Global";
 
 @interface KeysPreferencesViewController () <iTermKeyMappingViewControllerDelegate>
 @end
@@ -89,6 +92,8 @@ static NSString *const kHotkeyWindowGeneratedProfileNameKey = @"Hotkey Window";
     IBOutlet NSButton *_forceKeyboard;
     IBOutlet NSPopUpButton *_keyboardLocale;
     IBOutlet NSButton *_allowSymbolicHotKeys;
+
+    IBOutlet NSButton *_repairKeyMappingsButton;
 }
 
 - (void)dealloc {
@@ -314,6 +319,7 @@ static NSString *const kHotkeyWindowGeneratedProfileNameKey = @"Hotkey Window";
 
 - (void)viewWillAppear {
     [self updateDuplicateWarning];
+    [self updateRepairKeyMappingsButtonVisibility];
 }
 
 - (iTermHotKeyDescriptor *)hotkeyDescriptor {
@@ -803,6 +809,53 @@ static NSString *const kHotkeyWindowGeneratedProfileNameKey = @"Hotkey Window";
 
 - (CGFloat)minimumWidth {
     return 468;
+}
+
+#pragma mark - Corrupted Key Mapping Repair
+
+- (void)updateRepairKeyMappingsButtonVisibility {
+    if (!_repairKeyMappingsButton) {
+        return;
+    }
+
+    if ([iTermKeyMappingRepair isMitigationDisabledWithSuffix:kKeyCode0MitigationSuffixGlobal]) {
+        _repairKeyMappingsButton.hidden = YES;
+        return;
+    }
+
+    NSDictionary *globalMap = [iTermKeyMappings globalKeyMap];
+    NSArray<NSString *> *corrupted = [iTermKeyMappingRepair corruptedKeyBindingsIn:globalMap];
+    BOOL hasCorrupted = corrupted.count > 0;
+    _repairKeyMappingsButton.hidden = !hasCorrupted;
+
+    // If no corrupted bindings found, disable the mitigation so we don't check again
+    if (!hasCorrupted) {
+        [iTermKeyMappingRepair setMitigationDisabled:YES suffix:kKeyCode0MitigationSuffixGlobal];
+    }
+}
+
+- (IBAction)repairKeyMappings:(id)sender {
+    NSDictionary *globalMap = [iTermKeyMappings globalKeyMap];
+    if (![iTermKeyMappingRepair confirmRepairWithKeyMappings:globalMap window:self.view.window]) {
+        return;
+    }
+
+    NSDictionary *repaired = [iTermKeyMappingRepair repairedKeyMappings:globalMap];
+    [iTermKeyMappings setGlobalKeyMap:repaired];
+
+    // Disable the mitigation now that we've repaired
+    [iTermKeyMappingRepair setMitigationDisabled:YES suffix:kKeyCode0MitigationSuffixGlobal];
+
+    // Hide the button
+    _repairKeyMappingsButton.hidden = YES;
+
+    // Notify that key bindings changed
+    [[NSNotificationCenter defaultCenter] postNotificationName:kKeyBindingsChangedNotification
+                                                        object:nil
+                                                      userInfo:nil];
+
+    // Reload the key mapping view
+    [_keyMappingViewController reloadData];
 }
 
 @end
