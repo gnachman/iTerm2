@@ -20867,6 +20867,17 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     _execDidFail = YES;
 }
 
+- (BOOL)screenOffscreenCommandLineShouldBeVisibleForCurrentCommand {
+    if (![iTermProfilePreferences boolForKey:KEY_SHOW_OFFSCREEN_COMMANDLINE_FOR_CURRENT_COMMAND
+                                   inProfile:self.profile]) {
+        return NO;
+    }
+    if (_screen.terminalSoftAlternateScreenMode) {
+        return NO;
+    }
+    return YES;
+}
+
 - (CGFloat)composerManagerLineHeight:(iTermComposerManager *)composerManager {
     return _textview.lineHeight;
 }

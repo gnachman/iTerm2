@@ -319,6 +319,7 @@ typedef struct {
             KEY_APPLICATION_KEYPAD_ALLOWED, KEY_ALLOW_MODIFY_OTHER_KEYS,
             KEY_LEFT_OPTION_KEY_CHANGEABLE, KEY_RIGHT_OPTION_KEY_CHANGEABLE,
             KEY_PLACE_PROMPT_AT_FIRST_COLUMN, KEY_SHOW_MARK_INDICATORS, KEY_SHOW_OFFSCREEN_COMMANDLINE,
+            KEY_SHOW_OFFSCREEN_COMMANDLINE_FOR_CURRENT_COMMAND,
 
             KEY_TMUX_NEWLINE, KEY_PROMPT_PATH_CLICK_OPENS_NAVIGATOR,
             KEY_POWERLINE, KEY_TRIGGERS_USE_INTERPOLATED_STRINGS,
@@ -753,6 +754,7 @@ typedef struct {
             KEY_SHOW_MARK_INDICATORS:                               @"Whether to show shell integration mark indicators",
             KEY_PROMPT_PATH_CLICK_OPENS_NAVIGATOR:                  @"Whether clicking path in prompt opens file navigator",
             KEY_SHOW_OFFSCREEN_COMMANDLINE:                         @"Whether to show command line when scrolled up",
+            KEY_SHOW_OFFSCREEN_COMMANDLINE_FOR_CURRENT_COMMAND:     @"Whether to show command line over the top of the screen for the running command",
             KEY_TMUX_NEWLINE:                                       @"Whether to send newline instead of carriage return in tmux",
             KEY_HAS_HOTKEY:                                         @"Whether this profile has a dedicated hotkey window",
             KEY_HOTKEY_MODIFIER_FLAGS:                              @"Modifier flags for the hotkey",
@@ -1071,6 +1073,7 @@ typedef struct {
                   KEY_SHOW_MARK_INDICATORS: @YES,
                   KEY_PROMPT_PATH_CLICK_OPENS_NAVIGATOR: @NO,
                   KEY_SHOW_OFFSCREEN_COMMANDLINE: @YES,
+                  KEY_SHOW_OFFSCREEN_COMMANDLINE_FOR_CURRENT_COMMAND: @NO,
                   KEY_TMUX_NEWLINE: @NO,
                   KEY_HAS_HOTKEY: @NO,
                   KEY_HOTKEY_MODIFIER_FLAGS: @0,

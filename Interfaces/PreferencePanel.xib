@@ -1888,6 +1888,7 @@ CA
                 <outlet property="_shellIntegrationRequiredButton" destination="Yv4-ze-aYW" id="DbO-2y-TZd"/>
                 <outlet property="_showMarkIndicators" destination="Wi4-0H-Bb4" id="gD6-Fj-f9H"/>
                 <outlet property="_showOffscreenCommandLine" destination="bAl-3O-ik0" id="2QD-PE-Ynt"/>
+                <outlet property="_showOffscreenCommandLineForCurrentCommand" destination="8RE-RE-YOM" id="uio-Vp-EkG"/>
                 <outlet property="_silenceBell" destination="2397" id="qqe-8n-AAy"/>
                 <outlet property="_suppressAlertsInActiveSession" destination="neY-Tu-CXc" id="CKq-qr-X9F"/>
                 <outlet property="_terminalGeneratedAlerts" destination="pot-jK-a8U" id="BZL-Lh-M8N"/>
@@ -4377,15 +4378,15 @@ CA
             <point key="canvasLocation" x="-941.5" y="705"/>
         </customView>
         <customView id="0rQ-EK-tyN" userLabel="Prefs - Profiles - Terminal" customClass="iTermSizeRememberingView">
-            <rect key="frame" x="0.0" y="0.0" width="596" height="854"/>
+            <rect key="frame" x="0.0" y="0.0" width="596" height="887"/>
             <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
             <subviews>
                 <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Rzi-HT-kR4" customClass="iTermTerminalModeEnclosure">
-                    <rect key="frame" x="17" y="15" width="559" height="819"/>
+                    <rect key="frame" x="17" y="20" width="559" height="847"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <subviews>
                         <popUpButton verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="2390">
-                            <rect key="frame" x="155" y="677" width="396" height="26"/>
+                            <rect key="frame" x="155" y="705" width="396" height="26"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <popUpButtonCell key="cell" type="push" bezelStyle="rounded" alignment="left" lineBreakMode="clipping" borderStyle="borderAndBezel" inset="2" arrowPosition="arrowAtCenter" preferredEdge="maxY" id="2427">
                                 <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
@@ -4398,7 +4399,7 @@ CA
                             </connections>
                         </popUpButton>
                         <textField focusRingType="none" verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="2391">
-                            <rect key="frame" x="1" y="683" width="146" height="16"/>
+                            <rect key="frame" x="1" y="711" width="146" height="16"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="right" title="Character encoding:" id="2426">
                                 <font key="font" metaFont="system"/>
@@ -4407,7 +4408,7 @@ CA
                             </textFieldCell>
                         </textField>
                         <textField focusRingType="none" verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="2393">
-                            <rect key="frame" x="1" y="656" width="146" height="16"/>
+                            <rect key="frame" x="1" y="684" width="146" height="16"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="right" title="Report terminal type:" id="2424">
                                 <font key="font" metaFont="system"/>
@@ -4416,7 +4417,7 @@ CA
                             </textFieldCell>
                         </textField>
                         <textField focusRingType="none" verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="2400">
-                            <rect key="frame" x="1" y="801" width="146" height="16"/>
+                            <rect key="frame" x="1" y="829" width="146" height="16"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="right" title="Scrollback lines:" id="2417">
                                 <font key="font" metaFont="system"/>
@@ -4425,7 +4426,7 @@ CA
                             </textFieldCell>
                         </textField>
                         <textField focusRingType="none" verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="iIb-2x-lrb">
-                            <rect key="frame" x="1" y="774" width="146" height="16"/>
+                            <rect key="frame" x="1" y="802" width="146" height="16"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="right" title="History:" id="UGX-V6-bbT">
                                 <font key="font" metaFont="system"/>
@@ -4434,7 +4435,7 @@ CA
                             </textFieldCell>
                         </textField>
                         <textField focusRingType="none" verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="fbo-Fc-Ofn">
-                            <rect key="frame" x="1" y="720" width="146" height="16"/>
+                            <rect key="frame" x="1" y="748" width="146" height="16"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="right" title="Scrolling:" id="Ct7-kY-JuC">
                                 <font key="font" metaFont="system"/>
@@ -4443,7 +4444,7 @@ CA
                             </textFieldCell>
                         </textField>
                         <textField focusRingType="none" verticalHuggingPriority="750" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="2401">
-                            <rect key="frame" x="158" y="798" width="171" height="21"/>
+                            <rect key="frame" x="158" y="826" width="171" height="21"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" state="on" borderStyle="bezel" alignment="left" drawsBackground="YES" id="2416">
                                 <font key="font" metaFont="system"/>
@@ -4456,7 +4457,7 @@ CA
                             </connections>
                         </textField>
                         <comboBox focusRingType="none" verticalHuggingPriority="750" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="2405">
-                            <rect key="frame" x="157" y="649" width="393" height="25"/>
+                            <rect key="frame" x="157" y="677" width="393" height="25"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <comboBoxCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" borderStyle="bezel" title="vt100" drawsBackground="YES" completes="NO" numberOfVisibleItems="7" id="2412">
                                 <font key="font" metaFont="system"/>
@@ -4479,7 +4480,7 @@ CA
                             </connections>
                         </comboBox>
                         <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="5154" customClass="iTermSettingsCheckbox">
-                            <rect key="frame" x="156" y="773" width="391" height="18"/>
+                            <rect key="frame" x="156" y="801" width="391" height="18"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <string key="toolTip">When using a program like tmux, which shows a status bar at the bottom of the screen, history is not normally saved. This allows such history to be saved but with a performance penalty.</string>
                             <buttonCell key="cell" type="check" title="Save lines to scrollback when an app status bar is present" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="5155">
@@ -4492,7 +4493,7 @@ CA
                             </connections>
                         </button>
                         <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="5758" customClass="iTermSettingsCheckbox">
-                            <rect key="frame" x="156" y="751" width="391" height="18"/>
+                            <rect key="frame" x="156" y="779" width="391" height="18"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <buttonCell key="cell" type="check" title="Save lines to scrollback in alternate screen mode" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="5759">
                                 <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -4504,7 +4505,7 @@ CA
                             </connections>
                         </button>
                         <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Qv5-de-qOl" customClass="iTermSettingsCheckbox">
-                            <rect key="frame" x="156" y="719" width="391" height="18"/>
+                            <rect key="frame" x="156" y="747" width="391" height="18"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <buttonCell key="cell" type="check" title="Drag-to-scroll disabled in alternate screen mode" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="r21-na-g8s">
                                 <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -4515,7 +4516,7 @@ CA
                             </connections>
                         </button>
                         <textField focusRingType="none" verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Fzk-rB-88j">
-                            <rect key="frame" x="1" y="627" width="146" height="16"/>
+                            <rect key="frame" x="1" y="655" width="146" height="16"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="right" title="ENQ answer back:" id="Lrt-Oz-1A8">
                                 <font key="font" metaFont="system"/>
@@ -4524,7 +4525,7 @@ CA
                             </textFieldCell>
                         </textField>
                         <textField focusRingType="none" verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="g2c-Nh-J4x">
-                            <rect key="frame" x="1" y="600" width="146" height="16"/>
+                            <rect key="frame" x="1" y="628" width="146" height="16"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="right" title="Mouse reporting:" id="C8F-2h-kIt">
                                 <font key="font" metaFont="system"/>
@@ -4533,7 +4534,7 @@ CA
                             </textFieldCell>
                         </textField>
                         <textField focusRingType="none" verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="jPD-Hb-F9Q">
-                            <rect key="frame" x="-2" y="434" width="146" height="16"/>
+                            <rect key="frame" x="-2" y="462" width="146" height="16"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="right" title="Emulation features:" id="kSx-zn-JDX">
                                 <font key="font" metaFont="system"/>
@@ -4542,7 +4543,7 @@ CA
                             </textFieldCell>
                         </textField>
                         <textField focusRingType="none" verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="nHk-sA-Hdn">
-                            <rect key="frame" x="1" y="272" width="146" height="16"/>
+                            <rect key="frame" x="1" y="300" width="146" height="16"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="right" title="Bell:" id="1ui-hs-P55">
                                 <font key="font" metaFont="system"/>
@@ -4551,7 +4552,7 @@ CA
                             </textFieldCell>
                         </textField>
                         <textField focusRingType="none" verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="kyo-gh-RaL">
-                            <rect key="frame" x="1" y="196" width="146" height="16"/>
+                            <rect key="frame" x="1" y="224" width="146" height="16"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="right" title="Notifications:" id="9CY-ML-bMd">
                                 <font key="font" metaFont="system"/>
@@ -4560,7 +4561,7 @@ CA
                             </textFieldCell>
                         </textField>
                         <textField focusRingType="none" verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Nkb-Xd-uFb">
-                            <rect key="frame" x="1" y="162" width="146" height="16"/>
+                            <rect key="frame" x="1" y="190" width="146" height="16"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="right" title="Environment:" id="wlk-QX-Gn5">
                                 <font key="font" metaFont="system"/>
@@ -4569,7 +4570,7 @@ CA
                             </textFieldCell>
                         </textField>
                         <textField focusRingType="none" verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="fQi-F4-Sfd">
-                            <rect key="frame" x="34" y="101" width="113" height="16"/>
+                            <rect key="frame" x="34" y="129" width="113" height="16"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="right" title="Shell Integration:" id="ujU-dw-TmB">
                                 <font key="font" metaFont="system"/>
@@ -4587,7 +4588,7 @@ CA
                             </textFieldCell>
                         </textField>
                         <textField focusRingType="none" verticalHuggingPriority="750" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="tcJ-V2-9Fd" userLabel="ENQ Answer Back text field">
-                            <rect key="frame" x="158" y="624" width="390" height="21"/>
+                            <rect key="frame" x="158" y="652" width="390" height="21"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" continuous="YES" sendsActionOnEndEditing="YES" state="on" borderStyle="bezel" alignment="left" drawsBackground="YES" id="UkZ-8d-b91">
                                 <font key="font" metaFont="system"/>
@@ -4600,7 +4601,7 @@ CA
                             </connections>
                         </textField>
                         <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="2402" customClass="iTermSettingsCheckbox">
-                            <rect key="frame" x="156" y="599" width="391" height="18"/>
+                            <rect key="frame" x="156" y="627" width="391" height="18"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <buttonCell key="cell" type="check" title="Enable mouse reporting" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="2415">
                                 <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -4612,7 +4613,7 @@ CA
                             </connections>
                         </button>
                         <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="2403" customClass="iTermSettingsCheckbox">
-                            <rect key="frame" x="156" y="229" width="383" height="18"/>
+                            <rect key="frame" x="156" y="257" width="383" height="18"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <buttonCell key="cell" type="check" title="Show bell icon in tabs" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="2414">
                                 <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -4624,7 +4625,7 @@ CA
                             </connections>
                         </button>
                         <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="3553" customClass="iTermSettingsCheckbox">
-                            <rect key="frame" x="156" y="250" width="383" height="18"/>
+                            <rect key="frame" x="156" y="278" width="383" height="18"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <buttonCell key="cell" type="check" title="Flash visual bell" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="3554">
                                 <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -4636,7 +4637,7 @@ CA
                             </connections>
                         </button>
                         <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="2404" customClass="iTermSettingsCheckbox">
-                            <rect key="frame" x="156" y="195" width="193" height="18"/>
+                            <rect key="frame" x="156" y="223" width="193" height="18"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <buttonCell key="cell" type="check" title="Notification Center alerts" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="2413">
                                 <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -4648,7 +4649,7 @@ CA
                             </connections>
                         </button>
                         <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="5081" customClass="iTermSettingsCheckbox">
-                            <rect key="frame" x="156" y="370" width="383" height="18"/>
+                            <rect key="frame" x="156" y="398" width="383" height="18"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <buttonCell key="cell" type="check" title="Disable save/restore alternate screen" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="5082">
                                 <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -4659,7 +4660,7 @@ CA
                             </connections>
                         </button>
                         <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="5633" customClass="iTermSettingsCheckbox">
-                            <rect key="frame" x="156" y="391" width="383" height="18"/>
+                            <rect key="frame" x="156" y="419" width="383" height="18"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <buttonCell key="cell" type="check" title="Disable session-initiated printing" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="5634">
                                 <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -4671,7 +4672,7 @@ CA
                             </connections>
                         </button>
                         <button toolTip="This may be a security risk in an untrusted environment, especially if the terminal can set the title." fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="6387" customClass="iTermSettingsCheckbox">
-                            <rect key="frame" x="156" y="433" width="383" height="18"/>
+                            <rect key="frame" x="156" y="461" width="383" height="18"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <buttonCell key="cell" type="check" title="Terminal may report window title" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="6388">
                                 <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -4682,7 +4683,7 @@ CA
                             </connections>
                         </button>
                         <button horizontalHuggingPriority="750" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="2Fs-LK-buW">
-                            <rect key="frame" x="5" y="95" width="25" height="25"/>
+                            <rect key="frame" x="5" y="123" width="25" height="25"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <buttonCell key="cell" type="help" bezelStyle="helpButton" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="YsN-fW-Qkw">
                                 <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
@@ -4693,7 +4694,7 @@ CA
                             </connections>
                         </button>
                         <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="ZMH-MS-a4p">
-                            <rect key="frame" x="337" y="189" width="89" height="27"/>
+                            <rect key="frame" x="337" y="217" width="89" height="27"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <buttonCell key="cell" type="push" title="Filter Alerts" bezelStyle="rounded" alignment="center" controlSize="small" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="7Pi-Gm-UyI">
                                 <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
@@ -4704,7 +4705,7 @@ CA
                             </connections>
                         </button>
                         <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="5004" customClass="iTermSettingsCheckbox">
-                            <rect key="frame" x="156" y="349" width="383" height="18"/>
+                            <rect key="frame" x="156" y="377" width="383" height="18"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <buttonCell key="cell" type="check" title="A session may cause the window to resize" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="5005">
                                 <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -4716,7 +4717,7 @@ CA
                             </connections>
                         </button>
                         <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="upX-YT-gci" customClass="iTermSettingsCheckbox">
-                            <rect key="frame" x="176" y="328" width="363" height="18"/>
+                            <rect key="frame" x="176" y="356" width="363" height="18"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <buttonCell key="cell" type="check" title="…even if it is in an unselected tab or split pane" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="xLu-6A-YiV">
                                 <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -4730,7 +4731,7 @@ CA
                             </connections>
                         </button>
                         <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="3647" customClass="iTermSettingsCheckbox">
-                            <rect key="frame" x="337" y="800" width="202" height="18"/>
+                            <rect key="frame" x="337" y="828" width="202" height="18"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <buttonCell key="cell" type="check" title="Unlimited scrollback" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="3648">
                                 <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -4742,7 +4743,7 @@ CA
                             </connections>
                         </button>
                         <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="EMG-WL-JwE" customClass="iTermSettingsCheckbox">
-                            <rect key="frame" x="156" y="577" width="383" height="18"/>
+                            <rect key="frame" x="156" y="605" width="383" height="18"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <buttonCell key="cell" type="check" title="Report mouse wheel events" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="DCM-jj-J4m">
                                 <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -4754,7 +4755,7 @@ CA
                             </connections>
                         </button>
                         <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="FkF-MP-YU8" customClass="iTermSettingsCheckbox">
-                            <rect key="frame" x="156" y="555" width="383" height="18"/>
+                            <rect key="frame" x="156" y="583" width="383" height="18"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <buttonCell key="cell" type="check" title="Report mouse clicks &amp; drags" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="nd6-iP-ZjG">
                                 <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -4766,7 +4767,7 @@ CA
                             </connections>
                         </button>
                         <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="4Ha-Ub-4AS" customClass="iTermSettingsCheckbox">
-                            <rect key="frame" x="156" y="307" width="383" height="18"/>
+                            <rect key="frame" x="156" y="335" width="383" height="18"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <string key="toolTip">Paste bracketing tells compatible apps that text was inserted by a paste operation rather than typing. Some programs use this to treat pastes specially, such as by not auto-indenting it.</string>
                             <buttonCell key="cell" type="check" title="Terminal may enable paste bracketing" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="s2Z-za-TW8">
@@ -4778,7 +4779,7 @@ CA
                             </connections>
                         </button>
                         <button toolTip="Allow control sequences to enable or disable cursor blink?" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="fwC-LQ-VKF" customClass="iTermSettingsCheckbox">
-                            <rect key="frame" x="156" y="412" width="383" height="18"/>
+                            <rect key="frame" x="156" y="440" width="383" height="18"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <buttonCell key="cell" type="check" title="Terminal may change cursor blink" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="akw-8K-q2d">
                                 <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -4789,7 +4790,7 @@ CA
                             </connections>
                         </button>
                         <popUpButton verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="d6b-Te-0Hg">
-                            <rect key="frame" x="155" y="155" width="323" height="25"/>
+                            <rect key="frame" x="155" y="183" width="323" height="25"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <popUpButtonCell key="cell" type="push" title="Set locale environment variables automatically" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" tag="1" imageScaling="proportionallyDown" inset="2" selectedItem="L20-q0-Xgn" id="Rdj-bT-cjt">
                                 <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
@@ -4808,7 +4809,7 @@ CA
                             </connections>
                         </popUpButton>
                         <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="7NJ-MT-L5i">
-                            <rect key="frame" x="470" y="152" width="91" height="32"/>
+                            <rect key="frame" x="470" y="180" width="91" height="32"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <buttonCell key="cell" type="push" title="Change…" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="EYf-qB-bdj">
                                 <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
@@ -4819,7 +4820,7 @@ CA
                             </connections>
                         </button>
                         <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="3PU-hM-DSB" customClass="iTermSettingsCheckbox">
-                            <rect key="frame" x="156" y="533" width="383" height="18"/>
+                            <rect key="frame" x="156" y="561" width="383" height="18"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <string key="toolTip">Alternate Mouse Scroll is a feature that sends arrow keys in response to scroll wheel/scroll gestures. It is toggled by a control sequence.</string>
                             <buttonCell key="cell" type="check" title="Terminal may enable alternate mouse scroll" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="dW7-gR-D6W">
@@ -4831,7 +4832,7 @@ CA
                             </connections>
                         </button>
                         <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="nN3-pV-Hlq" customClass="iTermSettingsCheckbox">
-                            <rect key="frame" x="156" y="511" width="383" height="18"/>
+                            <rect key="frame" x="156" y="539" width="383" height="18"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <string key="toolTip">Alternate Mouse Scroll is a feature that sends arrow keys in response to scroll wheel/scroll gestures. Enable this if you always want it on in alternate screen mode.</string>
                             <buttonCell key="cell" type="check" title="Automatically enable alternate mouse scroll" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="6CL-kh-gKr">
@@ -4843,7 +4844,7 @@ CA
                             </connections>
                         </button>
                         <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="HqN-xF-ITg" customClass="iTermSettingsCheckbox">
-                            <rect key="frame" x="156" y="489" width="383" height="18"/>
+                            <rect key="frame" x="156" y="517" width="383" height="18"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <string key="toolTip">Alternate Mouse Scroll is a feature that sends arrow keys in response to scroll wheel/scroll gestures. Enable this if you prefer not to use it for horizontal scrolling. Alternate mouse scroll takes priority over swipe to switch tabs.</string>
                             <buttonCell key="cell" type="check" title="Restrict alternate mouse scroll to vertical scrolling" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="vTm-IT-1wG">
@@ -4855,7 +4856,7 @@ CA
                             </connections>
                         </button>
                         <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="9Ds-KM-wpJ" customClass="iTermSettingsCheckbox">
-                            <rect key="frame" x="156" y="467" width="383" height="18"/>
+                            <rect key="frame" x="156" y="495" width="383" height="18"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <string key="toolTip">Alternate Mouse Scroll is a feature that sends arrow keys in response to scroll wheel/scroll gestures. It is toggled by a control sequence.</string>
                             <buttonCell key="cell" type="check" title="Restrict mouse reporting to alternate screen mode" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="kWZ-q8-lOb">
@@ -4867,7 +4868,7 @@ CA
                             </connections>
                         </button>
                         <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="2397" customClass="iTermSettingsCheckbox">
-                            <rect key="frame" x="156" y="271" width="383" height="18"/>
+                            <rect key="frame" x="156" y="299" width="383" height="18"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <buttonCell key="cell" type="check" title="Silence bell" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="2420">
                                 <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -4879,7 +4880,7 @@ CA
                             </connections>
                         </button>
                         <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="hhc-1V-LXg">
-                            <rect key="frame" x="156" y="135" width="405" height="16"/>
+                            <rect key="frame" x="156" y="163" width="405" height="16"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <textFieldCell key="cell" lineBreakMode="clipping" alignment="left" title="English (US) UTF-8" id="o2f-OF-qHo">
                                 <font key="font" usesAppearanceFont="YES"/>
@@ -4888,7 +4889,7 @@ CA
                             </textFieldCell>
                         </textField>
                         <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Qz5-Ow-iQt" customClass="iTermSettingsCheckbox">
-                            <rect key="frame" x="156" y="100" width="383" height="18"/>
+                            <rect key="frame" x="156" y="128" width="383" height="18"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <string key="toolTip">If Shell Integration is enabled, this prevents command prompts from starting in the middle of a line when the previous command did not end with a newline.</string>
                             <buttonCell key="cell" type="check" title="Insert newline before start of command prompt if needed" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="bRB-N5-KFZ">
@@ -4900,7 +4901,7 @@ CA
                             </connections>
                         </button>
                         <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Wi4-0H-Bb4" customClass="iTermSettingsCheckbox">
-                            <rect key="frame" x="156" y="78" width="383" height="18"/>
+                            <rect key="frame" x="156" y="106" width="383" height="18"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <buttonCell key="cell" type="check" title="Show mark indicators" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="uCi-Qa-X8t">
                                 <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -4911,7 +4912,7 @@ CA
                             </connections>
                         </button>
                         <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="xsN-qz-rhj" customClass="iTermSettingsCheckbox">
-                            <rect key="frame" x="156" y="34" width="383" height="18"/>
+                            <rect key="frame" x="156" y="36" width="383" height="18"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <buttonCell key="cell" type="check" title="Click on a path in a shell prompt to open Navigator" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="l1H-Xh-EAu">
                                 <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -4922,7 +4923,7 @@ CA
                             </connections>
                         </button>
                         <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="bAl-3O-ik0" customClass="iTermSettingsCheckbox">
-                            <rect key="frame" x="156" y="56" width="383" height="18"/>
+                            <rect key="frame" x="156" y="84" width="383" height="18"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <string key="toolTip">When the command that produced output is partially invisible, this option shows the  last line of the prompt and the command that produced the output at the top of the screen.</string>
                             <buttonCell key="cell" type="check" title="Show offscreen command line at top of session" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="Loo-aN-wrn">
@@ -4931,6 +4932,18 @@ CA
                             </buttonCell>
                             <connections>
                                 <action selector="settingChanged:" target="gMD-DK-gev" id="MqU-tP-HRR"/>
+                            </connections>
+                        </button>
+                        <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="8RE-RE-YOM" customClass="iTermSettingsCheckbox">
+                            <rect key="frame" x="166" y="60" width="383" height="18"/>
+                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                            <string key="toolTip">When the command that produced output is partially invisible, this option shows the  last line of the prompt and the command that produced the output at the top of the screen.</string>
+                            <buttonCell key="cell" type="check" title="…even for the currently running command" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="VFq-8R-NOg">
+                                <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                                <font key="font" metaFont="system"/>
+                            </buttonCell>
+                            <connections>
+                                <action selector="settingChanged:" target="gMD-DK-gev" id="vn5-7j-C6M"/>
                             </connections>
                         </button>
                         <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="5Xl-Cr-LpL" customClass="iTermSettingsCheckbox">
@@ -4946,7 +4959,7 @@ CA
                             </connections>
                         </button>
                         <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Yv4-ze-aYW">
-                            <rect key="frame" x="316" y="73" width="32" height="32"/>
+                            <rect key="frame" x="316" y="101" width="32" height="32"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <buttonCell key="cell" type="bevel" title="⚠️" bezelStyle="rounded" alignment="center" imageScaling="proportionallyDown" inset="2" id="5mf-qS-33o">
                                 <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
@@ -4960,7 +4973,7 @@ CA
                 </customView>
             </subviews>
             <accessibility identifier="prefsProfilesTerminal"/>
-            <point key="canvasLocation" x="106" y="-867"/>
+            <point key="canvasLocation" x="106" y="-850.5"/>
         </customView>
         <customView id="ayN-Cl-pQs" userLabel="Prefs - Profiles - Session" customClass="iTermSizeRememberingView">
             <rect key="frame" x="0.0" y="0.0" width="660" height="775"/>

@@ -772,7 +772,7 @@ additionalWordCharacters:(NSString *)additionalWordCharacters
     if (!mark) {
         return nil;
     }
-    if (!mark.hasCode) {
+    if (!mark.hasCode && ![self.delegate screenOffscreenCommandLineShouldBeVisibleForCurrentCommand]) {
         return nil;
     }
     const long long absLine = mark.commandRange.start.y;
