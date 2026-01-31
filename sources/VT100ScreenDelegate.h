@@ -461,5 +461,6 @@ typedef NS_ENUM(NSUInteger, PTYSessionResizePermission) {
 - (void)screenStartWrappedCommand:(NSString * _Nonnull)command channel:(NSString * _Nonnull)uid;
 - (void)screenExecDidFail;
 - (BOOL)screenOffscreenCommandLineShouldBeVisibleForCurrentCommand;
+- (void)screenUpdateBlock:(NSString *)blockID action:(iTermUpdateBlockAction)action;
 
 @end

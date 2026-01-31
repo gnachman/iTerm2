@@ -20878,6 +20878,17 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     return YES;
 }
 
+- (void)screenUpdateBlock:(NSString *)blockID action:(iTermUpdateBlockAction)action {
+    switch (action) {
+        case iTermUpdateBlockActionFold:
+            [_textview foldBlock:blockID];
+            break;
+        case iTermUpdateBlockActionUnfold:
+            [_textview unfoldBlock:blockID];
+            break;
+    }
+}
+
 - (CGFloat)composerManagerLineHeight:(iTermComposerManager *)composerManager {
     return _textview.lineHeight;
 }

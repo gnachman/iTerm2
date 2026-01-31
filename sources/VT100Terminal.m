@@ -4108,6 +4108,17 @@ static NSString *VT100GetURLParamForKey(NSString *params, NSString *key) {
                 [_delegate terminalBlock:blockID start:NO type:nil render:[dict[@"render"] isEqual:@"1"]];
             }
         }
+    } else if ([key isEqualToString:@"UpdateBlock"]) {
+        NSDictionary<NSString *, NSString *> *dict = [value it_keyValuePairsSeparatedBy:@";"];
+        NSString *blockID = dict[@"id"];
+        NSString *action = dict[@"action"];
+        if (blockID) {
+            if ([action isEqualToString:@"fold"]) {
+                [_delegate terminalUpdateBlock:blockID action:iTermUpdateBlockActionFold];
+            } else if ([action isEqualToString:@"unfold"]) {
+                [_delegate terminalUpdateBlock:blockID action:iTermUpdateBlockActionUnfold];
+            }
+        }
     } else if ([key isEqualToString:@"Button"]) {
         NSDictionary<NSString *, NSString *> *dict = [value it_keyValuePairsSeparatedBy:@";"];
         NSString *type = dict[@"type"];

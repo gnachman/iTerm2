@@ -548,6 +548,13 @@ typedef NS_ENUM(NSUInteger, VT100TerminalProtectedMode) {
 - (void)terminal:(VT100Terminal *)terminal willExecuteToken:(VT100Token *)token defaultChar:(const screen_char_t *)defaultChar encoding:(NSStringEncoding)encoding;
 - (void)terminalOpenURL:(NSURL *)url;
 - (void)terminalBlock:(NSString *)blockID start:(BOOL)start type:(NSString *)type render:(BOOL)render;
+
+typedef NS_ENUM(NSUInteger, iTermUpdateBlockAction) {
+    iTermUpdateBlockActionFold,
+    iTermUpdateBlockActionUnfold
+};
+
+- (void)terminalUpdateBlock:(NSString *)blockID action:(iTermUpdateBlockAction)action;
 - (void)terminalInsertCopyButtonForBlock:(NSString *)blockID;
 - (void)terminalSetPointerShape:(NSString *)pointerShape;
 - (void)terminalDidReceiveKittyImageCommand:(iTermKittyImageCommand *)kittyImageCommand;

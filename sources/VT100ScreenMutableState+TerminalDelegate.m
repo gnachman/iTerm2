@@ -3192,6 +3192,12 @@ willExecuteToken:(VT100Token *)token
     } name:@"open url"];
 }
 
+- (void)terminalUpdateBlock:(NSString *)blockID action:(iTermUpdateBlockAction)action {
+    [self addPausedSideEffect:^(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser) {
+        [delegate screenUpdateBlock:blockID action:action];
+        [unpauser unpause];
+    } name:@"Update block"];
+}
 - (void)terminalBlock:(NSString *)blockID
                 start:(BOOL)start
                  type:(NSString *)type
