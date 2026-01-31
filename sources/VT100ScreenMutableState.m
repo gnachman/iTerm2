@@ -123,13 +123,8 @@ static const int64_t VT100ScreenMutableStateSideEffectFlagLineBufferDidDropLines
         _tokenExecutor = [[iTermTokenExecutor alloc] initWithTerminal:_terminal
                                                      slownessDetector:_triggerEvaluator.triggersSlownessDetector
                                                                 queue:_queue];
-        _tokenExecutor.delegate = self;
-
-        // Register with FairnessScheduler for round-robin token execution (if enabled)
-        if ([iTermAdvancedSettingsModel useFairnessScheduler]) {
-            _fairnessSessionId = [iTermFairnessScheduler.shared register:_tokenExecutor];
-            _tokenExecutor.fairnessSessionId = _fairnessSessionId;
-        }
+        // Note: delegate and FairnessScheduler registration happen in setTerminalEnabled:YES
+        // to maintain symmetry with setTerminalEnabled:NO (which does unregistration).
 
         _echoProbe = [[iTermEchoProbe alloc] initWithQueue:_queue];
         _echoProbe.delegate = self;
@@ -216,9 +211,21 @@ static const int64_t VT100ScreenMutableStateSideEffectFlagLineBufferDidDropLines
         _commandRangeChangeJoiner = [iTermIdempotentOperationJoiner joinerWithScheduler:_tokenExecutor];
         _terminal.delegate = self;
         _tokenExecutor.delegate = self;
+
+        // Register with FairnessScheduler for round-robin token execution (if enabled).
+        // This is symmetric with unregistration in the enabled=NO branch.
+        // On revive, this re-registers and gets a fresh sessionId.
+        if ([iTermAdvancedSettingsModel useFairnessScheduler]) {
+            _fairnessSessionId = [iTermFairnessScheduler.shared register:_tokenExecutor];
+            _tokenExecutor.fairnessSessionId = _fairnessSessionId;
+            // Notify scheduler of any preserved tokens from before disable.
+            // If no tokens are queued, this is a no-op.
+            [_tokenExecutor schedule];
+        }
     } else {
-        // Unregister from FairnessScheduler BEFORE clearing delegate
-        // This calls cleanupForUnregistration() to restore availableSlots
+        // Unregister from FairnessScheduler BEFORE clearing delegate.
+        // cleanupForUnregistration() is called but tokens are preserved (not discarded)
+        // to support session revive. They drain naturally when re-enabled.
         if (_fairnessSessionId != 0) {
             [iTermFairnessScheduler.shared unregisterWithSessionId:_fairnessSessionId];
             _fairnessSessionId = 0;
