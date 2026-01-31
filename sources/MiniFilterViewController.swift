@@ -63,7 +63,7 @@ class MiniFilterField: iTermMiniSearchField {
         if let string {
             var attributes: [NSAttributedString.Key: Any] = [:]
             if let textColor {
-                attributes[.foregroundColor] = textColor.withAlphaComponent(0.5)
+                attributes[.foregroundColor] = textColor.withAlphaComponent(0.75)
             }
             if let font {
                 attributes[.font] = font
