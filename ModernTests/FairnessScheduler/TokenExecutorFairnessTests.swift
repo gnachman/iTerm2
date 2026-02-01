@@ -782,9 +782,11 @@ final class TokenExecutorSchedulerEntryPointTests: XCTestCase {
         XCTAssertTrue(taskExecuted, "scheduleHighPriorityTask should notify scheduler and execute")
     }
 
-    // NEGATIVE TEST: No duplicate notifications for already-busy session
-    func testNoDuplicateNotificationsForBusySession() throws {
-        // REQUIREMENT: If session already in busy list, don't add duplicate entry.
+    // Test that rapid addTokens calls all get processed correctly
+    func testRapidAddTokensAllProcessed() throws {
+        // REQUIREMENT: Multiple rapid addTokens calls should all be processed.
+        // The "no duplicate busy list entries" invariant is tested in FairnessScheduler tests
+        // (testEnqueueWorkNoDuplicates).
 
         // Register executor with scheduler
         let sessionId = FairnessScheduler.shared.register(executor)
@@ -794,10 +796,13 @@ final class TokenExecutorSchedulerEntryPointTests: XCTestCase {
 
         mockDelegate.shouldQueueTokens = false
 
-        // Add tokens multiple times rapidly
-        for _ in 0..<5 {
+        // Add tokens multiple times rapidly - each triggers notifyScheduler
+        let addCount = 5
+        var totalLength = 0
+        for _ in 0..<addCount {
             let vector = createTestTokenVector(count: 1)
             executor.addTokens(vector, lengthTotal: 10, lengthExcludingInBandSignaling: 10)
+            totalLength += 10
         }
 
         // Drain mutation queue to let all tokens be processed
@@ -805,12 +810,10 @@ final class TokenExecutorSchedulerEntryPointTests: XCTestCase {
             waitForMutationQueue()
         }
 
-        let executionCount = mockDelegate.executedLengths.count
-
-        // Should have processed tokens but not created duplicate busy list entries
-        // (verified by not having 5x the expected executions)
-        XCTAssertGreaterThan(executionCount, 0, "Tokens should be processed")
-        XCTAssertLessThanOrEqual(executionCount, 5, "Should not create duplicate busy list entries")
+        // All tokens should be processed (sum of executed lengths equals total added)
+        let totalExecuted = mockDelegate.executedLengths.reduce(0) { $0 + $1.total }
+        XCTAssertEqual(totalExecuted, totalLength,
+                       "All rapidly-added tokens should be processed. Expected \(totalLength), got \(totalExecuted)")
     }
 
     func testHighPriorityAddTokensOnMutationQueueTriggersExecution() throws {
@@ -1040,13 +1043,6 @@ final class TokenExecutorFeatureFlagGatingTests: XCTestCase {
         super.tearDown()
     }
 
-    func testLegacyPathWhenSessionIdIsZero() throws {
-        // REMOVED: The old behavior (flag ON + sessionId == 0 → fallback to legacy) is now
-        // an assertion failure. With the fairness scheduler enabled, executors MUST register.
-        // Flag OFF → legacy path is tested in testLegacyPathWhenFlagIsOffDespiteNonZeroSessionId.
-        throw XCTSkip("Behavior changed: flag ON + sessionId == 0 is now an assertion failure")
-    }
-
     func testSchedulerPathWhenSessionIdIsNonZero() throws {
         // REQUIREMENT: When fairnessSessionId != 0 AND useFairnessScheduler() is true,
         // notifyScheduler() must route through FairnessScheduler.
@@ -1088,14 +1084,6 @@ final class TokenExecutorFeatureFlagGatingTests: XCTestCase {
                        "Execution history should NOT be empty when using scheduler path")
         XCTAssertTrue(history.contains(sessionId),
                       "Execution history should contain our sessionId (\(sessionId)), got: \(history)")
-    }
-
-    func testCodePathDiffersBetweenRegisteredAndUnregistered() throws {
-        // REMOVED: The old behavior (flag ON + sessionId == 0 → fallback to legacy) is now
-        // an assertion failure. The test's premise (comparing registered vs unregistered
-        // with flag ON) is no longer valid - with flag ON, registration is required.
-        // The distinction between code paths is now tested by comparing flag ON vs flag OFF.
-        throw XCTSkip("Behavior changed: flag ON + sessionId == 0 is now an assertion failure")
     }
 
     func testLegacyPathWhenFlagIsOffDespiteNonZeroSessionId() throws {
@@ -1241,8 +1229,8 @@ final class TokenExecutorLegacyRemovalTests: XCTestCase {
                              "Background session should not be preempted by foreground")
     }
 
-    func testBackgroundSessionGetsEqualTurns() {
-        // Test that background sessions process tokens under fairness model
+    func testBackgroundSessionCanProcessTokens() {
+        // Test that background sessions can process tokens under fairness model
 
         let executor = TokenExecutor(
             mockTerminal,
@@ -3029,67 +3017,6 @@ final class TokenExecutorDeferCompletionOrderingTests: XCTestCase {
                                     "Expected \(expectedTotalBytes), got \(totalBytesExecuted)")
     }
 
-    func testTurnResultReflectsTokenQueueStateAfterDefer() {
-        // BEHAVIOR DOCUMENTED (not strictly tested): turnResult is calculated BEFORE
-        // the outer defer fires, so tokens added by high-priority tasks during the
-        // outer defer are NOT reflected in turnResult.
-        //
-        // KNOWN GAP: If a high-priority task adds tokens during the outer defer,
-        // turnResult may be .completed when there's actually more work.
-        //
-        // MITIGATION: The safety net (tested above) ensures addTokens() triggers
-        // notifyScheduler(), which re-queues the session regardless of turnResult.
-        //
-        // NOTE: This test is NON-ASSERTING on the turnResult value. It documents
-        // current behavior and verifies the test machinery works.
-
-        // Add initial tokens
-        let vector = createTestTokenVector(count: 2)
-        executor.addTokens(vector, lengthTotal: 20, lengthExcludingInBandSignaling: 20)
-
-        // During execution, schedule a high-priority task that adds more tokens.
-        // This task runs in a defer's executeHighPriorityTasks() call.
-        var tokensAddedByHighPriorityTask = false
-        mockDelegate.onWillExecute = { [weak self] in
-            guard let self = self, !tokensAddedByHighPriorityTask else { return }
-            tokensAddedByHighPriorityTask = true
-
-            self.executor.scheduleHighPriorityTask {
-                let moreTokens = createTestTokenVector(count: 5)
-                self.executor.addTokens(moreTokens, lengthTotal: 50, lengthExcludingInBandSignaling: 50)
-            }
-        }
-
-        let expectation = XCTestExpectation(description: "ExecuteTurn completed")
-        var reportedResult: TurnResult?
-        executor.executeTurnOnMutationQueue(tokenBudget: 500) { result in
-            reportedResult = result
-            expectation.fulfill()
-        }
-
-        wait(for: [expectation], timeout: 1.0)
-
-        XCTAssertTrue(tokensAddedByHighPriorityTask, "High-priority task should have added tokens")
-
-        // The key question: does turnResult reflect tokens added by high-priority tasks?
-        //
-        // turnResult is calculated at the end of the labeled do{} block, BEFORE the
-        // outer defer. So tokens added by the outer defer's executeHighPriorityTasks()
-        // are not reflected. However, tokens added by the INNER defer (in executeTokenGroups)
-        // would be reflected if they were added before turnResult calculation.
-        //
-        // This test doesn't distinguish which defer ran the task.
-
-        if reportedResult == .completed {
-            print("Note: turnResult was .completed despite tokens added by high-priority task. " +
-                  "Safety net (notifyScheduler) ensures they still get processed.")
-        } else if reportedResult == .yielded {
-            print("turnResult reflects tokens added by high-priority task (inner defer ran first).")
-        }
-
-        // For now, just verify the test ran correctly
-        XCTAssertNotNil(reportedResult, "Should have received a turn result")
-    }
 }
 
 // MARK: - Session Restoration (Revive) Tests
