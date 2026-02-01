@@ -556,6 +556,8 @@ typedef NS_ENUM(NSUInteger, iTermUpdateBlockAction) {
 
 - (void)terminalUpdateBlock:(NSString *)blockID action:(iTermUpdateBlockAction)action;
 - (void)terminalInsertCopyButtonForBlock:(NSString *)blockID;
+- (void)terminalInsertCustomButtonWithCode:(int)code icon:(NSString *)icon;
+- (void)terminalInvalidateCustomButtons;
 - (void)terminalSetPointerShape:(NSString *)pointerShape;
 - (void)terminalDidReceiveKittyImageCommand:(iTermKittyImageCommand *)kittyImageCommand;
 - (void)terminalStartWrappedCommand:(NSString *)command channel:(NSString *)uid;

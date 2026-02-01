@@ -81,9 +81,9 @@ class TerminalButton: NSObject {
 
     var useRoundedRectForBackground: Bool { true }
 
-    private func images(backgroundColor: NSColor,
-                        foregroundColor: NSColor,
-                        size: NSSize) -> (NSImage, NSImage) {
+    fileprivate func images(backgroundColor: NSColor,
+                            foregroundColor: NSColor,
+                            size: NSSize) -> (NSImage, NSImage) {
         let bg: NSImage
         if !drawsBackground {
             // Transparent background - icon only (for buttons inside pill containers)
@@ -247,6 +247,14 @@ class TerminalButton: NSObject {
             state = .normal
         }
     }
+
+    // Override this and return false if the button is no longer a correct representation of the
+    // mark (i.e., the mark changed but the button hasn't been updated yet, such as a button that
+    // can be invalidated)
+    @objc(matchesMark:)
+    func matchesMark(_ mark: ButtonMarkReading?) -> Bool {
+        return true
+    }
 }
 
 extension TerminalButton: NSViewToolTipOwner {
@@ -313,6 +321,130 @@ class TerminalCopyButton: GenericBlockButton {
 
     required init?(_ original: TerminalButton) {
         super.init(original)
+    }
+}
+
+@objc(iTermTerminalCustomButton)
+class TerminalCustomButton: TerminalButton {
+    @objc let code: Int32
+    @objc let valid: Bool
+    let icon: String
+    @objc var absY: NSNumber?
+    override var transientAbsY: Int {
+        if let absY {
+            return absY.intValue
+        }
+        return -1
+    }
+    @objc var isFloating = false
+    override var floating: Bool { isFloating }
+
+    required init?(_ original: TerminalButton) {
+        let downcast = original as! TerminalCustomButton
+        self.icon = downcast.icon
+        self.code = downcast.code
+        self.valid = downcast.valid
+        self.absY = downcast.absY
+        isFloating = downcast.isFloating
+        super.init(original)
+    }
+
+    override func clone() -> Self {
+        return Self(self)!
+    }
+
+    @objc(initWithID:code:icon:mark:absY:valid:)
+    init?(id: Int, code: Int32, icon: String, mark: iTermMarkProtocol?, absY: NSNumber?, valid: Bool) {
+        guard let fg = NSImage(systemSymbolName: icon, accessibilityDescription: nil) else {
+            return nil
+        }
+        self.icon = icon
+        self.code = code
+        self.absY = absY
+        self.valid = valid
+        super.init(id: id,
+                   backgroundImage: fg,
+                   foregroundImage: fg,
+                   mark: mark,
+                   tooltip: "")
+    }
+
+    override var extraIdentifyingInfoForIcon: AnyHashable? {
+        [icon, String(valid)]
+    }
+
+    override func matchesMark(_ mark: ButtonMarkReading?) -> Bool {
+        return mark == nil || valid == mark?.valid
+    }
+
+    override func mouseDownInside() -> Bool {
+        if !valid {
+            return false
+        }
+        return super.mouseDownInside()
+    }
+
+    override func mouseDownOutside() -> Bool {
+        if !valid {
+            return false
+        }
+        return super.mouseDownOutside()
+    }
+
+    override func mouseUp(locationInWindow: NSPoint) -> Bool {
+        if !valid {
+            return false
+        }
+        return super.mouseUp(locationInWindow: locationInWindow)
+    }
+
+    override func mouseExited() {
+        if !valid {
+            return
+        }
+        super.mouseExited()
+    }
+
+    override var highlighted: Bool {
+        if !valid {
+            return false
+        }
+        return super.highlighted
+    }
+
+    override func draw(backgroundColor: NSColor,
+                       foregroundColor: NSColor,
+                       selectedColor: NSColor,
+                       frame rect: NSRect,
+                       virtualOffset: CGFloat) {
+        if valid {
+            super.draw(backgroundColor: backgroundColor,
+                       foregroundColor: foregroundColor,
+                       selectedColor: selectedColor,
+                       frame: rect,
+                       virtualOffset: virtualOffset)
+            return
+        }
+        let (foregroundImage, backgroundImage) = images(
+            backgroundColor: selected ? selectedColor : backgroundColor,
+            foregroundColor: selected ? backgroundColor : foregroundColor,
+            size: rect.size)
+
+
+        backgroundImage.it_draw(in: rect,
+                                from: .zero,
+                                operation: .sourceOver,
+                                fraction: 0.4,
+                                respectFlipped: true,
+                                hints: nil,
+                                virtualOffset: virtualOffset)
+        foregroundImage.it_draw(in: rect,
+                                from: .zero,
+                                operation: .sourceOver,
+                                fraction: 0.4,
+                                respectFlipped: true,
+                                hints: nil,
+                                virtualOffset: virtualOffset)
     }
 }
 

@@ -344,6 +344,7 @@ extern const CGFloat PTYTextViewMarginClickGraceWidth;
 - (BOOL)textViewCanUseSSHIntegrationFor:(SCPPath *)path;
 - (BOOL)textViewPerformTextReplacement;
 - (void)textViewSaveArchive:(iTermSavePanelItem *)location;
+- (void)textViewSendCustomButtonCode:(int)code;
 @end
 
 @interface iTermHighlightedRow : NSObject

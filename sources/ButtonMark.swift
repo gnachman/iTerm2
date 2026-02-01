@@ -12,6 +12,9 @@ protocol ButtonMarkReading: AnyObject, iTermMarkProtocol {
     @objc var copyBlockID: String? { get }
     @objc var channelUID: String? { get }
     @objc var buttonID: Int { get }
+    @objc var code: Int32 { get }
+    @objc var icon: String? { get }
+    @objc var valid: Bool { get }
 }
 
 enum ButtonType {
@@ -21,7 +24,12 @@ enum ButtonType {
             if let block = dict["block ID"], let blockID = block as? String {
                 return .copy(block: blockID)
             }
-            break
+        case "custom":
+            if let code = dict["code"] as? Int32,
+                let icon = dict["icon"] as? String,
+            let valid = dict["valid"] as? Bool {
+                return .custom(code: code, icon: icon, valid: valid)
+            }
         default:
             break
         }
@@ -36,10 +44,16 @@ enum ButtonType {
         case .channel(uid: let uid):
             return ["type": "channel",
                     "uid": uid]
+        case let .custom(code: code, icon: icon, valid: valid):
+            return ["type": "custom",
+                    "code": code,
+                    "icon": icon,
+                    "valid": valid]
         }
     }
     case copy(block: String)
     case channel(uid: String)
+    case custom(code: Int32, icon: String, valid: Bool)
 }
 
 @objc(iTermButtonMark)
@@ -52,7 +66,7 @@ class ButtonMark: iTermMark, ButtonMarkReading {
             switch buttonType {
             case .copy(block: let blockID):
                 return blockID
-            case .none, .channel:
+            case .none, .channel, .custom:
                 break
             }
             return nil
@@ -70,7 +84,7 @@ class ButtonMark: iTermMark, ButtonMarkReading {
     var channelUID: String? {
         get {
             switch buttonType {
-            case .copy, .none:
+            case .copy, .none, .custom:
                 nil
             case .channel(uid: let uid):
                 uid
@@ -82,6 +96,31 @@ class ButtonMark: iTermMark, ButtonMarkReading {
             } else {
                 buttonType = nil
             }
+        }
+    }
+
+    @objc
+    var code: Int32 {
+        switch buttonType {
+        case .copy, .channel, .none: 0
+        case .custom(code: let code, icon: _, valid: _): code
+        }
+    }
+
+
+    @objc
+    var valid: Bool {
+        switch buttonType {
+        case .copy, .channel, .none: true
+        case .custom(code: _, icon: _, valid: let valid): valid
+        }
+    }
+
+    @objc
+    var icon: String? {
+        switch buttonType {
+        case .copy, .channel, .none: nil
+        case .custom(code: _, icon: let icon, valid: _): icon
         }
     }
 
@@ -114,6 +153,19 @@ class ButtonMark: iTermMark, ButtonMarkReading {
         }
         dict["id"] = buttonID
         return dict
+    }
+
+    @objc
+    func makeCustom(code: Int32, icon: String) {
+        buttonType = .custom(code: code, icon: icon, valid: true)
+    }
+
+    @objc
+    func invalidate() {
+        guard code != 0, let icon else {
+            return
+        }
+        buttonType = .custom(code: code, icon: icon, valid: false)
     }
 }
 

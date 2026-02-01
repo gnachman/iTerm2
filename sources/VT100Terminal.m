@@ -4124,6 +4124,11 @@ static NSString *VT100GetURLParamForKey(NSString *params, NSString *key) {
         NSString *type = dict[@"type"];
         if ([type isEqualToString:@"copy"] && dict[@"block"]) {
             [_delegate terminalInsertCopyButtonForBlock:dict[@"block"]];
+        } else if ([type isEqualToString:@"custom"] && [dict[@"code"] intValue] > 0 && dict[@"icon"]) {
+            [_delegate terminalInsertCustomButtonWithCode:[dict[@"code"] intValue]
+                                                     icon:dict[@"icon"]];
+        } else if ([type isEqualToString:@"custom"]) {
+            [_delegate terminalInvalidateCustomButtons];
         }
     } else if ([key isEqualToString:@"FilePart"]) {
         if ([_delegate terminalIsTrusted]) {

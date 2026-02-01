@@ -5561,7 +5561,9 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
         NSInteger i = [_buttons indexOfObjectPassingTest:^BOOL(iTermTerminalButton * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
             return (obj.id == place.id);
         }];
-        if (i == NSNotFound || !VT100GridAbsCoordEquals([self absCoordForButton:_buttons[i]], place.coord)) {
+        if (i == NSNotFound ||
+            !VT100GridAbsCoordEquals([self absCoordForButton:_buttons[i]], place.coord) ||
+            ![_buttons[i] matchesMark:place.mark]) {
             if (place.mark.copyBlockID) {
                 iTermTerminalButton *button = [[[iTermTerminalCopyButton alloc] initWithID:place.id
                                                                                    blockID:place.mark.copyBlockID
@@ -5574,6 +5576,19 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
                     [weakSelf copyBlock:blockID
                                 absLine:-1
                        screenCoordinate:[weakSelf.window convertPointToScreen:locationInWindow]];
+                };
+                [updated addObject:button];
+            } else if (place.mark.code) {
+                iTermTerminalButton *button = [[[iTermTerminalCustomButton alloc] initWithID:place.id
+                                                                                        code:place.mark.code
+                                                                                        icon:place.mark.icon
+                                                                                        mark:place.mark
+                                                                                        absY:nil
+                                                                                       valid:place.mark.valid] autorelease];
+                const int code = place.mark.code;
+
+                button.action = ^(NSPoint locationInWindow) {
+                    [weakSelf.delegate textViewSendCustomButtonCode:code];
                 };
                 [updated addObject:button];
             } else if (place.mark.channelUID) {

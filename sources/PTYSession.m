@@ -18677,6 +18677,14 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     }
 }
 
+- (void)textViewSendCustomButtonCode:(int)code {
+    if (!self.terminalIsTrusted) {
+        return;
+    }
+    NSString *s = [NSString stringWithFormat:@"\033[?1337;%d~", code];
+    [self screenSendReportData:[s dataUsingEncoding:NSUTF8StringEncoding]];
+}
+
 - (void)removeSelectedCommandRange {
     if (!_selectedCommandMark) {
         return;
