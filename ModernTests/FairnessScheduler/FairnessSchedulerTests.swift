@@ -5,9 +5,8 @@
 //  Unit tests for FairnessScheduler - the round-robin fair scheduling coordinator.
 //  See testing.md Phase 1 for test specifications.
 //
-//  TODO: Test coverage gap - session restoration (undo termination) path needs tests:
-//  - Test re-registration after unregister (simulating session revive)
-//  - Verify sessionDidEnqueueWork processes preserved tokens after re-registration
+//  Session restoration tests (revive/undo termination) are implemented in
+//  FairnessSchedulerSessionRestorationTests at the end of this file.
 //
 
 import XCTest
@@ -1281,5 +1280,262 @@ final class FairnessSchedulerSustainedLoadTests: XCTestCase {
         XCTAssertLessThanOrEqual(countA, 12, "Session A should not dominate")
         XCTAssertLessThanOrEqual(countB, 12, "Session B should not dominate")
         XCTAssertLessThanOrEqual(countC, 12, "Session C should not dominate")
+    }
+}
+
+// MARK: - Session Restoration Tests
+
+/// Tests for session restoration (revive/undo termination) path.
+/// Verifies that sessions can be unregistered and re-registered.
+final class FairnessSchedulerSessionRestorationTests: XCTestCase {
+
+    var scheduler: FairnessScheduler!
+    var mockExecutorA: MockFairnessSchedulerExecutor!
+    var mockExecutorB: MockFairnessSchedulerExecutor!
+
+    override func setUp() {
+        super.setUp()
+        scheduler = FairnessScheduler()
+        mockExecutorA = MockFairnessSchedulerExecutor()
+        mockExecutorB = MockFairnessSchedulerExecutor()
+    }
+
+    override func tearDown() {
+        scheduler = nil
+        mockExecutorA = nil
+        mockExecutorB = nil
+        super.tearDown()
+    }
+
+    // MARK: - Test 1: Re-registration After Unregister
+
+    func testReRegistrationAfterUnregister() {
+        let sessionId1 = scheduler.register(mockExecutorA)
+
+        let firstExecutionExpectation = XCTestExpectation(description: "First execution")
+        mockExecutorA.executeTurnHandler = { _, completion in
+            firstExecutionExpectation.fulfill()
+            completion(.completed)
+        }
+
+        scheduler.sessionDidEnqueueWork(sessionId1)
+        wait(for: [firstExecutionExpectation], timeout: 1.0)
+
+        XCTAssertEqual(mockExecutorA.executeTurnCallCount, 1)
+
+        scheduler.unregister(sessionId: sessionId1)
+        waitForMutationQueue()
+
+        XCTAssertTrue(mockExecutorA.cleanupCalled)
+
+        mockExecutorA.reset()
+
+        let sessionId2 = scheduler.register(mockExecutorA)
+
+        XCTAssertNotEqual(sessionId2, sessionId1)
+        XCTAssertGreaterThan(sessionId2, sessionId1)
+
+        let secondExecutionExpectation = XCTestExpectation(description: "Second execution")
+        mockExecutorA.executeTurnHandler = { _, completion in
+            secondExecutionExpectation.fulfill()
+            completion(.completed)
+        }
+
+        scheduler.sessionDidEnqueueWork(sessionId2)
+        wait(for: [secondExecutionExpectation], timeout: 1.0)
+
+        XCTAssertEqual(mockExecutorA.executeTurnCallCount, 1)
+    }
+
+    // MARK: - Test 2: Preserved Tokens Processed After Re-registration
+
+    func testPreservedTokensProcessedAfterReRegistration() {
+        let mockTerminal = VT100Terminal()
+        let mockDelegate = MockTokenExecutorDelegate()
+        let executor = TokenExecutor(mockTerminal,
+                                      slownessDetector: SlownessDetector(),
+                                      queue: iTermGCD.mutationQueue())
+        executor.delegate = mockDelegate
+
+        let sessionId1 = scheduler.register(executor)
+        executor.fairnessSessionId = sessionId1
+        executor.isRegistered = true
+
+        mockDelegate.shouldQueueTokens = true
+        for _ in 0..<10 {
+            let vector = createTestTokenVector(count: 5)
+            executor.addTokens(vector, lengthTotal: 50, lengthExcludingInBandSignaling: 50)
+        }
+
+        waitForMutationQueue()
+
+        XCTAssertEqual(mockDelegate.willExecuteCount, 0)
+
+        #if ITERM_DEBUG
+        let tokensBeforeUnregister = executor.testQueuedTokenCount
+        XCTAssertGreaterThan(tokensBeforeUnregister, 0)
+        #endif
+
+        scheduler.unregister(sessionId: sessionId1)
+        executor.isRegistered = false
+        executor.fairnessSessionId = 0
+
+        waitForMutationQueue()
+
+        #if ITERM_DEBUG
+        let tokensAfterUnregister = executor.testQueuedTokenCount
+        XCTAssertEqual(tokensAfterUnregister, tokensBeforeUnregister)
+        #endif
+
+        let sessionId2 = scheduler.register(executor)
+        executor.fairnessSessionId = sessionId2
+        executor.isRegistered = true
+
+        XCTAssertNotEqual(sessionId2, sessionId1)
+
+        mockDelegate.shouldQueueTokens = false
+
+        let processedExpectation = XCTestExpectation(description: "Tokens processed")
+        mockDelegate.onWillExecute = {
+            processedExpectation.fulfill()
+        }
+
+        scheduler.sessionDidEnqueueWork(sessionId2)
+
+        wait(for: [processedExpectation], timeout: 2.0)
+
+        XCTAssertGreaterThan(mockDelegate.willExecuteCount, 0)
+
+        scheduler.unregister(sessionId: sessionId2)
+    }
+
+    // MARK: - Test 3: sessionDidEnqueueWork After Re-registration
+
+    func testSessionDidEnqueueWorkAfterReRegistration() {
+        let mockTerminal = VT100Terminal()
+        let mockDelegate = MockTokenExecutorDelegate()
+        let executor = TokenExecutor(mockTerminal,
+                                      slownessDetector: SlownessDetector(),
+                                      queue: iTermGCD.mutationQueue())
+        executor.delegate = mockDelegate
+
+        let sessionId1 = scheduler.register(executor)
+        executor.fairnessSessionId = sessionId1
+        executor.isRegistered = true
+
+        let vector = createTestTokenVector(count: 5)
+        executor.addTokens(vector, lengthTotal: 50, lengthExcludingInBandSignaling: 50)
+
+        let turnStartedExpectation = XCTestExpectation(description: "Turn started")
+
+        mockDelegate.onWillExecute = {
+            turnStartedExpectation.fulfill()
+        }
+
+        executor.executeTurnOnMutationQueue(tokenBudget: 500) { _ in }
+
+        wait(for: [turnStartedExpectation], timeout: 1.0)
+
+        for _ in 0..<5 {
+            let additionalVector = createTestTokenVector(count: 5)
+            executor.addTokens(additionalVector,
+                              lengthTotal: 50,
+                              lengthExcludingInBandSignaling: 50)
+        }
+
+        waitForMutationQueue()
+
+        scheduler.unregister(sessionId: sessionId1)
+        executor.isRegistered = false
+        executor.fairnessSessionId = 0
+
+        waitForMutationQueue()
+
+        #if ITERM_DEBUG
+        let tokensAfterUnregister = executor.testQueuedTokenCount
+        XCTAssertGreaterThan(tokensAfterUnregister, 0)
+        #endif
+
+        let sessionId2 = scheduler.register(executor)
+        executor.fairnessSessionId = sessionId2
+        executor.isRegistered = true
+
+        mockDelegate.reset()
+
+        let newTurnExpectation = XCTestExpectation(description: "New turn executed")
+        mockDelegate.onWillExecute = {
+            newTurnExpectation.fulfill()
+        }
+
+        scheduler.sessionDidEnqueueWork(sessionId2)
+
+        wait(for: [newTurnExpectation], timeout: 2.0)
+
+        XCTAssertGreaterThan(mockDelegate.willExecuteCount, 0)
+
+        scheduler.unregister(sessionId: sessionId2)
+    }
+
+    // MARK: - Test 4: Double Unregister Does Not Lose Tokens
+
+    func testDoubleUnregisterDoesNotLoseTokens() {
+        let mockTerminal = VT100Terminal()
+        let mockDelegate = MockTokenExecutorDelegate()
+        let executor = TokenExecutor(mockTerminal,
+                                      slownessDetector: SlownessDetector(),
+                                      queue: iTermGCD.mutationQueue())
+        executor.delegate = mockDelegate
+
+        let sessionId1 = scheduler.register(executor)
+        executor.fairnessSessionId = sessionId1
+        executor.isRegistered = true
+
+        mockDelegate.shouldQueueTokens = true
+        for _ in 0..<10 {
+            let vector = createTestTokenVector(count: 5)
+            executor.addTokens(vector, lengthTotal: 50, lengthExcludingInBandSignaling: 50)
+        }
+
+        waitForMutationQueue()
+
+        #if ITERM_DEBUG
+        let tokensBeforeUnregister = executor.testQueuedTokenCount
+        XCTAssertGreaterThan(tokensBeforeUnregister, 0)
+        #endif
+
+        scheduler.unregister(sessionId: sessionId1)
+        waitForMutationQueue()
+
+        #if ITERM_DEBUG
+        let tokensAfterFirstUnregister = executor.testQueuedTokenCount
+        XCTAssertEqual(tokensAfterFirstUnregister, tokensBeforeUnregister)
+        #endif
+
+        scheduler.unregister(sessionId: sessionId1)
+        waitForMutationQueue()
+
+        #if ITERM_DEBUG
+        let tokensAfterSecondUnregister = executor.testQueuedTokenCount
+        XCTAssertEqual(tokensAfterSecondUnregister, tokensAfterFirstUnregister)
+        #endif
+
+        let sessionId2 = scheduler.register(executor)
+        executor.fairnessSessionId = sessionId2
+        executor.isRegistered = true
+
+        mockDelegate.shouldQueueTokens = false
+
+        let processedExpectation = XCTestExpectation(description: "Tokens processed")
+        mockDelegate.onWillExecute = {
+            processedExpectation.fulfill()
+        }
+
+        scheduler.sessionDidEnqueueWork(sessionId2)
+
+        wait(for: [processedExpectation], timeout: 2.0)
+
+        XCTAssertGreaterThan(mockDelegate.willExecuteCount, 0)
+
+        scheduler.unregister(sessionId: sessionId2)
     }
 }
