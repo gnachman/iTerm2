@@ -149,12 +149,38 @@ class TokenExecutor: NSObject {
         }
     }
 
+    // Access on mutation queue only
+    /// Whether this executor is registered with the FairnessScheduler.
+    /// Set explicitly at registration/unregistration points, not derived from sessionId.
+    @objc var isRegistered: Bool {
+        get { impl.isRegistered }
+        set { impl.isRegistered = newValue }
+    }
+
 #if ITERM_DEBUG
     /// Test hook: when true, notifyScheduler() becomes a no-op.
     /// Allows unit tests to call executeTurn() directly without interference.
     var testSkipNotifyScheduler: Bool {
         get { impl.testSkipNotifyScheduler }
         set { impl.testSkipNotifyScheduler = newValue }
+    }
+
+    /// Test hook: Returns the number of queued token arrays.
+    /// Used to verify token preservation during cleanup and revive cycles.
+    @objc var testQueuedTokenCount: Int {
+        return impl.testQueuedTokenCount
+    }
+
+    /// Test hook: Returns the total number of slots (buffer depth).
+    /// Used to verify accounting invariants in tests.
+    @objc var testTotalSlots: Int {
+        return totalSlots
+    }
+
+    /// Test hook: Returns the current number of available slots.
+    /// Used to verify accounting correctness in tests.
+    @objc var testAvailableSlots: Int {
+        return Int(iTermAtomicInt64Get(availableSlots))
     }
 #endif
 
@@ -457,6 +483,10 @@ private class TokenExecutorImpl {
     /// Session ID assigned by FairnessScheduler during registration.
     var fairnessSessionId: UInt64 = 0
 
+    /// Whether this executor is registered with the FairnessScheduler.
+    /// Separate from fairnessSessionId because the ID is an identifier, not a state flag.
+    var isRegistered: Bool = false
+
     // This is used to give visible sessions priority for token processing over those that cannot
     // be seen. This prevents a very busy non-selected tab from starving a visible one.
     private static var activeSessionsWithTokens = MutableAtomicObject<Set<ObjectIdentifier>>(Set())
@@ -562,12 +592,18 @@ private class TokenExecutorImpl {
     /// Test hook: when true, notifyScheduler() becomes a no-op.
     /// Allows unit tests to call executeTurn() directly without interference.
     var testSkipNotifyScheduler = false
+
+    /// Test hook: Returns the number of queued token arrays.
+    /// Used to verify token preservation during cleanup and revive cycles.
+    var testQueuedTokenCount: Int {
+        return tokenQueue.count
+    }
 #endif
 
     /// Notify the FairnessScheduler that this session has work, or execute directly if scheduler disabled.
     /// Must be called on mutation queue.
     func notifyScheduler() {
-        DLog("notifyScheduler(sessionId: \(fairnessSessionId))")
+        DLog("notifyScheduler(sessionId: \(fairnessSessionId), isRegistered: \(isRegistered))")
 #if DEBUG
         assertQueue()
 #endif
@@ -575,10 +611,13 @@ private class TokenExecutorImpl {
         if testSkipNotifyScheduler { return }
 #endif
         if useFairnessScheduler {
-            it_assert(fairnessSessionId != 0, "Fairness scheduler enabled but executor not registered")
+            guard isRegistered else {
+                // Not yet registered - tokens accumulate, processed on registration
+                return
+            }
             FairnessScheduler.shared.sessionDidEnqueueWork(fairnessSessionId)
         } else {
-            // Legacy behavior: execute immediately
+            // Legacy behavior (will be removed when fairness scheduler becomes default)
             execute()
         }
     }
