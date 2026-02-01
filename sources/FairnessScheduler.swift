@@ -42,7 +42,7 @@ class FairnessScheduler: NSObject {
     typealias SessionID = UInt64
 
     /// Default token budget per turn
-    static let defaultTokenBudget = 500
+    static let defaultTokenBudget = 1000
 
     // MARK: - Private State
 
