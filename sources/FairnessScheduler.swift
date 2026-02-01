@@ -5,10 +5,10 @@
 //  Round-robin fair scheduler for token execution across PTY sessions.
 //  See implementation.md for design details.
 //
-//  Thread Safety: Internal state is protected by a private Mutex lock.
-//  Public methods may be called from any thread, including during "joined block"
-//  contexts where the mutation queue is blocked. Actual token execution still
-//  happens on the mutation queue via executionJoiner.
+//  Thread Safety:
+//  - ID allocation uses a lightweight Mutex (allows register() from joined blocks)
+//  - All other state is synchronized via iTermGCD.mutationQueue
+//  - Public methods dispatch async to avoid blocking callers
 //
 
 import Foundation
@@ -46,21 +46,23 @@ class FairnessScheduler: NSObject {
 
     // MARK: - Private State
 
-    /// Lock protecting all scheduler state. Use lock.sync {} to access any state below.
-    private let lock = Mutex()
+    /// Lock protecting only nextSessionId for ID allocation.
+    /// This allows register() to be called from joined blocks without deadlock.
+    private let idLock = Mutex()
 
-    // Protected by lock
+    // Protected by idLock (only accessed during register)
     // Start at 1 so that 0 can be used as "not registered" sentinel value
     private var nextSessionId: SessionID = 1
-    // Protected by lock
+
+    // Access on mutation queue only
     private var sessions: [SessionID: SessionState] = [:]
-    // Protected by lock
+    // Access on mutation queue only
     private var busyList: [SessionID] = []       // Round-robin order
-    // Protected by lock
+    // Access on mutation queue only
     private var busySet: Set<SessionID> = []     // O(1) membership check
 
     #if ITERM_DEBUG
-    // Protected by lock
+    // Access on mutation queue only
     /// Test-only: Records session IDs in the order they executed, for verifying round-robin fairness.
     private var _testExecutionHistory: [SessionID] = []
     #endif
@@ -79,73 +81,73 @@ class FairnessScheduler: NSObject {
     /// Register an executor with the scheduler. Returns a stable session ID.
     /// Thread-safe: may be called from any thread, including during joined blocks.
     @objc func register(_ executor: FairnessSchedulerExecutor) -> SessionID {
-        return lock.sync {
-            let sessionId = nextSessionId
+        // Allocate ID under lock (instant, no queue dispatch needed)
+        let sessionId = idLock.sync {
+            let id = nextSessionId
             nextSessionId += 1
-            sessions[sessionId] = SessionState(executor: executor)
-            return sessionId
+            return id
         }
+
+        // Session creation dispatches async to mutation queue.
+        // This avoids deadlock when called from joined blocks.
+        // Safe because callers set isRegistered after this returns,
+        // and schedule() also dispatches to mutation queue (ordering preserved).
+        iTermGCD.mutationQueue().async {
+            self.sessions[sessionId] = SessionState(executor: executor)
+        }
+
+        return sessionId
     }
 
     /// Unregister a session.
-    /// Thread-safe: may be called from any thread, including during joined blocks.
+    /// Thread-safe: may be called from any thread.
     @objc func unregister(sessionId: SessionID) {
-        // Get executor reference and clean up bookkeeping under lock
-        let executor: FairnessSchedulerExecutor? = lock.sync {
-            let exec = sessions[sessionId]?.executor
-            sessions.removeValue(forKey: sessionId)
-            busySet.remove(sessionId)
-            // busyList cleaned lazily in executeNextTurn
-            return exec
-        }
+        iTermGCD.mutationQueue().async {
+            guard let state = self.sessions[sessionId] else { return }
+            let executor = state.executor
 
-        // Cleanup must run on mutation queue (TokenExecutor requirement)
-        if let executor = executor {
-            iTermGCD.mutationQueue().async {
-                executor.cleanupForUnregistration()
-            }
+            self.sessions.removeValue(forKey: sessionId)
+            self.busySet.remove(sessionId)
+            // busyList cleaned lazily in executeNextTurn
+
+            executor?.cleanupForUnregistration()
         }
     }
 
     // MARK: - Work Notification
 
     /// Notify scheduler that a session has work to do.
-    /// Thread-safe: may be called from any thread, including during joined blocks.
+    /// Thread-safe: may be called from any thread.
     @objc func sessionDidEnqueueWork(_ sessionId: SessionID) {
-        let needsSchedule = lock.sync {
-            sessionDidEnqueueWorkLocked(sessionId)
-        }
-        if needsSchedule {
-            ensureExecutionScheduled()
+        iTermGCD.mutationQueue().async {
+            self.sessionDidEnqueueWorkOnQueue(sessionId)
         }
     }
 
-    /// Internal implementation - must be called while holding lock.
-    /// Returns true if ensureExecutionScheduled() should be called after releasing lock.
-    private func sessionDidEnqueueWorkLocked(_ sessionId: SessionID) -> Bool {
-        guard var state = sessions[sessionId] else { return false }
+    /// Internal implementation - must be called on mutationQueue.
+    private func sessionDidEnqueueWorkOnQueue(_ sessionId: SessionID) {
+        dispatchPrecondition(condition: .onQueue(iTermGCD.mutationQueue()))
+        guard var state = sessions[sessionId] else { return }
 
         if state.isExecuting {
             state.workArrivedWhileExecuting = true
             sessions[sessionId] = state
-            return false
+            return
         }
 
         if !busySet.contains(sessionId) {
             busySet.insert(sessionId)
             busyList.append(sessionId)
-            return true
+            ensureExecutionScheduled()
         }
-        return false
     }
 
     // MARK: - Execution
 
-    /// Schedule execution if needed. Thread-safe: may be called from any thread.
-    /// The actual execution happens on mutation queue via executionJoiner.
+    /// Must be called on mutationQueue.
     private func ensureExecutionScheduled() {
-        let hasBusyWork = lock.sync { !busyList.isEmpty }
-        guard hasBusyWork else { return }
+        dispatchPrecondition(condition: .onQueue(iTermGCD.mutationQueue()))
+        guard !busyList.isEmpty else { return }
         executionJoiner.setNeedsUpdate { [weak self] in
             self?.executeNextTurn()
         }
@@ -154,43 +156,31 @@ class FairnessScheduler: NSObject {
     /// Must be called on mutationQueue (via executionJoiner).
     private func executeNextTurn() {
         dispatchPrecondition(condition: .onQueue(iTermGCD.mutationQueue()))
+        guard !busyList.isEmpty else { return }
 
-        // Get next session under lock, release before calling executor
-        let result: (sessionId: SessionID, executor: FairnessSchedulerExecutor)? = lock.sync {
-            guard !busyList.isEmpty else { return nil }
+        let sessionId = busyList.removeFirst()
+        busySet.remove(sessionId)
 
-            let sessionId = busyList.removeFirst()
-            busySet.remove(sessionId)
-
-            guard var state = sessions[sessionId],
-                  let executor = state.executor else {
-                // Dead session - clean up
-                sessions.removeValue(forKey: sessionId)
-                return nil
-            }
-
-            state.isExecuting = true
-            state.workArrivedWhileExecuting = false
-            sessions[sessionId] = state
-
-            #if ITERM_DEBUG
-            _testExecutionHistory.append(sessionId)
-            #endif
-
-            return (sessionId: sessionId, executor: executor)
-        }
-
-        guard let nextSession = result else {
-            // Either empty or dead session - try again
+        guard var state = sessions[sessionId],
+              let executor = state.executor else {
+            // Dead session - clean up and try next
+            sessions.removeValue(forKey: sessionId)
             ensureExecutionScheduled()
             return
         }
 
-        // Call executor outside the lock
-        nextSession.executor.executeTurn(tokenBudget: Self.defaultTokenBudget) { [weak self] turnResult in
+        state.isExecuting = true
+        state.workArrivedWhileExecuting = false
+        sessions[sessionId] = state
+
+        #if ITERM_DEBUG
+        _testExecutionHistory.append(sessionId)
+        #endif
+
+        executor.executeTurn(tokenBudget: Self.defaultTokenBudget) { [weak self] turnResult in
             // Completion may be called from any thread; dispatch back to mutationQueue
             iTermGCD.mutationQueue().async {
-                self?.sessionFinishedTurn(nextSession.sessionId, result: turnResult)
+                self?.sessionFinishedTurn(sessionId, result: turnResult)
             }
         }
     }
@@ -198,30 +188,26 @@ class FairnessScheduler: NSObject {
     /// Must be called on mutationQueue.
     private func sessionFinishedTurn(_ sessionId: SessionID, result: TurnResult) {
         dispatchPrecondition(condition: .onQueue(iTermGCD.mutationQueue()))
+        guard var state = sessions[sessionId] else { return }
 
-        lock.sync {
-            guard var state = sessions[sessionId] else { return }
+        state.isExecuting = false
+        let workArrived = state.workArrivedWhileExecuting
+        state.workArrivedWhileExecuting = false
 
-            state.isExecuting = false
-            let workArrived = state.workArrivedWhileExecuting
-            state.workArrivedWhileExecuting = false
-
-            switch result {
-            case .completed:
-                if workArrived {
-                    busySet.insert(sessionId)
-                    busyList.append(sessionId)
-                }
-            case .yielded:
+        switch result {
+        case .completed:
+            if workArrived {
                 busySet.insert(sessionId)
                 busyList.append(sessionId)
-            case .blocked:
-                break // Don't reschedule
             }
-
-            sessions[sessionId] = state
+        case .yielded:
+            busySet.insert(sessionId)
+            busyList.append(sessionId)
+        case .blocked:
+            break // Don't reschedule
         }
 
+        sessions[sessionId] = state
         ensureExecutionScheduled()
     }
 }
@@ -232,35 +218,35 @@ class FairnessScheduler: NSObject {
 extension FairnessScheduler {
     /// Test-only: Returns whether a session ID is currently registered.
     @objc func testIsSessionRegistered(_ sessionId: SessionID) -> Bool {
-        return lock.sync {
+        return iTermGCD.mutationQueue().sync {
             return sessions[sessionId] != nil
         }
     }
 
     /// Test-only: Returns the count of sessions in the busy list.
     @objc var testBusySessionCount: Int {
-        return lock.sync {
+        return iTermGCD.mutationQueue().sync {
             return busyList.count
         }
     }
 
     /// Test-only: Returns the total count of registered sessions.
     @objc var testRegisteredSessionCount: Int {
-        return lock.sync {
+        return iTermGCD.mutationQueue().sync {
             return sessions.count
         }
     }
 
     /// Test-only: Returns whether a session is currently in the busy list.
     @objc func testIsSessionInBusyList(_ sessionId: SessionID) -> Bool {
-        return lock.sync {
+        return iTermGCD.mutationQueue().sync {
             return busySet.contains(sessionId)
         }
     }
 
     /// Test-only: Returns whether a session is currently executing.
     @objc func testIsSessionExecuting(_ sessionId: SessionID) -> Bool {
-        return lock.sync {
+        return iTermGCD.mutationQueue().sync {
             return sessions[sessionId]?.isExecuting ?? false
         }
     }
@@ -268,19 +254,19 @@ extension FairnessScheduler {
     /// Test-only: Reset state for clean test runs.
     /// WARNING: Only call this in test teardown, never in production.
     @objc func testReset() {
-        // Get executors under lock, then call cleanup outside lock
-        let executors: [FairnessSchedulerExecutor] = lock.sync {
-            let execs = sessions.values.compactMap { $0.executor }
+        // Reset ID counter under its lock
+        idLock.sync {
+            nextSessionId = 1
+        }
+
+        // Reset all other state on mutation queue
+        iTermGCD.mutationQueue().sync {
+            let executors = sessions.values.compactMap { $0.executor }
             sessions.removeAll()
             busyList.removeAll()
             busySet.removeAll()
-            nextSessionId = 1
             _testExecutionHistory.removeAll()
-            return execs
-        }
 
-        // Cleanup must run on mutation queue (TokenExecutor requirement)
-        iTermGCD.mutationQueue().sync {
             for executor in executors {
                 executor.cleanupForUnregistration()
             }
@@ -290,7 +276,7 @@ extension FairnessScheduler {
     /// Test-only: Returns the execution history (session IDs in execution order) and clears it.
     /// Use this to verify round-robin fairness invariants.
     @objc func testGetAndClearExecutionHistory() -> [UInt64] {
-        return lock.sync {
+        return iTermGCD.mutationQueue().sync {
             let history = _testExecutionHistory
             _testExecutionHistory.removeAll()
             return history
@@ -299,14 +285,14 @@ extension FairnessScheduler {
 
     /// Test-only: Returns the current execution history without clearing it.
     @objc func testGetExecutionHistory() -> [UInt64] {
-        return lock.sync {
+        return iTermGCD.mutationQueue().sync {
             return _testExecutionHistory
         }
     }
 
     /// Test-only: Clears the execution history.
     @objc func testClearExecutionHistory() {
-        lock.sync {
+        iTermGCD.mutationQueue().sync {
             _testExecutionHistory.removeAll()
         }
     }
