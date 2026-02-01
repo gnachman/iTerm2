@@ -81,7 +81,6 @@ TOKENEXECUTOR_TEST_CLASSES=(
     "TokenExecutorFeatureFlagGatingTests"
     "TokenExecutorDeferCompletionOrderingTests"
     "TokenExecutorSessionReviveTests"
-    "TwoTierTokenQueueTests"
     "TwoTierTokenQueueGroupingTests"
 )
 

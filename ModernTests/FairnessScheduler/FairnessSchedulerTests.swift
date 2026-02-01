@@ -89,13 +89,10 @@ final class FairnessSchedulerSessionTests: XCTestCase {
         // Enqueuing work for unregistered session should be a no-op
         scheduler.sessionDidEnqueueWork(idA)
 
-        // Give scheduler a chance to (incorrectly) execute
-        let noExecution = XCTestExpectation(description: "No execution after unregister")
-        noExecution.isInverted = true
-        mockExecutorA.executeTurnHandler = { _, _ in
-            noExecution.fulfill()
+        // Sync to mutation queue to ensure any (incorrect) execution would have completed
+        for _ in 0..<3 {
+            iTermGCD.mutationQueue().sync {}
         }
-        wait(for: [noExecution], timeout: 0.2)
 
         XCTAssertEqual(mockExecutorA.executeTurnCallCount, 0,
                        "Unregistered session should not execute")
@@ -193,11 +190,12 @@ final class FairnessSchedulerBusyListTests: XCTestCase {
         let idA = scheduler.register(mockExecutorA)
 
         var turnCount = 0
-        let expectation = XCTestExpectation(description: "Single turn executed")
+        let firstTurn = XCTestExpectation(description: "First turn executed")
+
         mockExecutorA.executeTurnHandler = { budget, completion in
             turnCount += 1
             if turnCount == 1 {
-                expectation.fulfill()
+                firstTurn.fulfill()
             }
             completion(.completed)
         }
@@ -207,7 +205,13 @@ final class FairnessSchedulerBusyListTests: XCTestCase {
         scheduler.sessionDidEnqueueWork(idA)
         scheduler.sessionDidEnqueueWork(idA)
 
-        wait(for: [expectation], timeout: 1.0)
+        // Wait for first turn
+        wait(for: [firstTurn], timeout: 1.0)
+
+        // Sync to mutation queue to ensure any duplicate execution would have completed
+        for _ in 0..<3 {
+            iTermGCD.mutationQueue().sync {}
+        }
 
         // Should only execute once (no duplicates in busy list)
         XCTAssertEqual(turnCount, 1,
@@ -272,17 +276,13 @@ final class FairnessSchedulerBusyListTests: XCTestCase {
                        "Session should execute when work is enqueued")
 
         // Now register a new session but don't enqueue work
-        let idB = scheduler.register(mockExecutorB)
-
-        let noExecutionWithoutWork = XCTestExpectation(description: "No execution without work")
-        noExecutionWithoutWork.isInverted = true
-
-        mockExecutorB.executeTurnHandler = { _, _ in
-            noExecutionWithoutWork.fulfill()
-        }
+        let _ = scheduler.register(mockExecutorB)
 
         // Don't call sessionDidEnqueueWork for B
-        wait(for: [noExecutionWithoutWork], timeout: 0.2)
+        // Sync to mutation queue to ensure any (incorrect) execution would have completed
+        for _ in 0..<3 {
+            iTermGCD.mutationQueue().sync {}
+        }
 
         XCTAssertEqual(mockExecutorB.executeTurnCallCount, 0,
                        "Session should not execute without enqueued work")
@@ -818,11 +818,13 @@ final class FairnessSchedulerThreadSafetyTests: XCTestCase {
             }
         }
 
-        // No timeout - completes quickly if correct
-        group.wait()
+        // Timeout detects deadlocks
+        let result = group.wait(timeout: .now() + 5.0)
+        XCTAssertEqual(result, .success, "Concurrent register/unregister should complete without deadlock")
 
-        // If we reach here without crash, the test passes
-        // (dispatchPrecondition in register() catches deadlock-prone patterns)
+        // Verify all sessions were properly unregistered
+        XCTAssertEqual(scheduler.testRegisteredSessionCount, 0,
+                       "All sessions should be unregistered after concurrent operations")
     }
 
     func testConcurrentEnqueueAndUnregister() {
@@ -857,10 +859,13 @@ final class FairnessSchedulerThreadSafetyTests: XCTestCase {
             group.leave()
         }
 
-        // No timeout - completes quickly if correct
-        group.wait()
+        // Timeout detects deadlocks
+        let result = group.wait(timeout: .now() + 5.0)
+        XCTAssertEqual(result, .success, "Concurrent enqueue/unregister should complete without deadlock")
 
-        // If we reach here without crash, the test passes
+        // Verify session was properly unregistered
+        XCTAssertFalse(scheduler.testIsSessionRegistered(sessionId),
+                       "Session should be unregistered after concurrent operations")
     }
 
     func testManySessionsStressTest() {
@@ -1021,11 +1026,7 @@ final class FairnessSchedulerLifecycleEdgeCaseTests: XCTestCase {
         iTermGCD.mutationQueue().sync {}
 
         XCTAssertTrue(executor.cleanupCalled, "First unregister should call cleanup")
-
-        // Use a fresh executor to detect if cleanup is called again
-        // (The original executor's cleanupCalled is already true)
-        let executor2 = MockFairnessSchedulerExecutor()
-        // Registering a new session shouldn't affect the old unregistered one
+        XCTAssertEqual(executor.cleanupCallCount, 1, "Cleanup should be called exactly once")
 
         // Second unregister of original session - should be no-op (no crash)
         scheduler.unregister(sessionId: sessionId)
@@ -1033,10 +1034,11 @@ final class FairnessSchedulerLifecycleEdgeCaseTests: XCTestCase {
         // Wait for second unregister to complete
         iTermGCD.mutationQueue().sync {}
 
-        // The test passes if we get here without crash
-        // We can't directly verify cleanup wasn't called again,
-        // but the session is already removed so cleanup can't be called
-        XCTAssertNotNil(executor, "Double unregister should not crash")
+        // Verify cleanup was NOT called a second time
+        XCTAssertEqual(executor.cleanupCallCount, 1,
+                       "Double unregister should not call cleanup again")
+        XCTAssertFalse(scheduler.testIsSessionRegistered(sessionId),
+                       "Session should remain unregistered")
     }
 
     func testEnqueueWorkForSessionBeingUnregistered() {
