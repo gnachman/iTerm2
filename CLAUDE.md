@@ -9,3 +9,4 @@
 - When renaming a file tracked by git (and almost all of them are) use `git mv` instead of `mv`
 - To make a debug build run `make Development`
 - Little scripts or text files that are used for manual testing of features go in tests/
+- The deployment target for iTerm2 is macOS 12. You don't need to perform availability checks for older versions.

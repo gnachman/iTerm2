@@ -184,9 +184,9 @@ const CGFloat PTYTextViewMarginClickGraceWidth = 2.0;
 
     NSTimer *_selectCommandTimer;
 
-    iTermTerminalCopyButton *_hoverBlockCopyButton NS_AVAILABLE_MAC(11);
-    iTermTerminalFoldBlockButton *_hoverBlockFoldButton NS_AVAILABLE_MAC(11);
-    NSMutableArray<iTermTerminalButton *> *_buttons NS_AVAILABLE_MAC(11);
+    iTermTerminalCopyButton *_hoverBlockCopyButton;
+    iTermTerminalFoldBlockButton *_hoverBlockFoldButton;
+    NSMutableArray<iTermTerminalButton *> *_buttons;
 
     NSRect _previousCursorFrame;
     BOOL _ignoreMomentumScroll;
@@ -1213,10 +1213,16 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
             buttons = [buttons arrayByAddingObject:_hoverBlockCopyButton];
         }
         DLog(@"Mouse at %@", NSStringFromPoint(point));
-        return [buttons anyWithBlock:^BOOL(iTermTerminalButton *button) {
+        // Check direct button hits
+        BOOL directHit = [buttons anyWithBlock:^BOOL(iTermTerminalButton *button) {
             DLog(@"Button %@ at %@", button, NSStringFromRect(button.desiredFrame));
             return NSPointInRect(point, button.desiredFrame);
         }];
+        if (directHit) {
+            return YES;
+        }
+        // Also check pill container areas
+        return [self buttonInPillContainerAtPoint:point] != nil;
     }
     return NO;
 }
@@ -2840,7 +2846,7 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
     }
 }
 
-- (void)makeBlockCopyButtonForLine:(int)line block:(NSString *)block NS_AVAILABLE_MAC(11) {
+- (void)makeBlockCopyButtonForLine:(int)line block:(NSString *)block {
     int i = line;
     while (i > 0 && [[self blockIDsOnLine:i - 1] containsObject:block]) {
         i -= 1;
@@ -2861,7 +2867,7 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
 - (void)makeOrUpdateBlockFoldButtonForLine:(int)line
                                      block:(NSString *)block
                               absLineRange:(NSRange)absLineRange
-                                   changed:(out BOOL *)changedPtr NS_AVAILABLE_MAC(11) {
+                                   changed:(out BOOL *)changedPtr {
     id<iTermFoldMarkReading> foldMark = [[self.dataSource foldMarksInRange:VT100GridRangeMake(line, 1)] firstObject];
     const BOOL wasFolded = foldMark != nil;
     int i = line;
@@ -5521,7 +5527,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
 }
 
 // Does not include hover buttons.
-- (NSArray<iTermTerminalButton *> *)terminalButtons NS_AVAILABLE_MAC(11) {
+- (NSArray<iTermTerminalButton *> *)terminalButtons {
     NSMutableArray<iTermTerminalButton *> *updated = [NSMutableArray array];
     if (_hoverBlockFoldButton) {
         [updated addObject:_hoverBlockFoldButton];
@@ -5615,7 +5621,8 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
     const long long offset = self.dataSource.totalScrollbackOverflow;
     __weak __typeof(self) weakSelf = self;
     NSMutableArray<iTermTerminalButton *> *updated = [NSMutableArray array];
-    __block int x = width - 2;
+    // Start 3 cells from right edge to leave room for pill padding.
+    __block int x = width - 3;
 
     // Helper block to add a button, reusing cached instance if available.
     void (^addButtonForClass)(Class, void(^)(NSPoint, id)) = ^(Class buttonClass, void(^actionBlock)(NSPoint, id)){
@@ -5806,7 +5813,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
 }
 
 - (iTermTerminalMarkButton *)cachedTerminalButtonForMark:(id<VT100ScreenMarkReading>)mark
-                                                 ofClass:(Class)desiredClass NS_AVAILABLE_MAC(11) {
+                                                 ofClass:(Class)desiredClass {
     return [iTermTerminalMarkButton castFrom:[_buttons objectPassingTest:^BOOL(iTermTerminalButton *genericButton, NSUInteger index, BOOL *stop) {
         iTermTerminalMarkButton *button = [iTermTerminalMarkButton castFrom:genericButton];
         if (!button) {
@@ -5862,8 +5869,20 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
     DLog(@"updateHover location=%@ pressed=%@", NSStringFromPoint(locationInWindow), @(pressed));
     if (@available(macOS 11, *)) {
         BOOL changed = NO;
+        // Find which button the mouse is over (including pill container areas)
+        iTermTerminalButton *buttonUnderMouse = nil;
         for (iTermTerminalButton *button in self.terminalButtons) {
             if (NSPointInRect(point, button.desiredFrame)) {
+                buttonUnderMouse = button;
+                break;
+            }
+        }
+        if (!buttonUnderMouse) {
+            buttonUnderMouse = [self buttonInPillContainerAtPoint:point];
+        }
+
+        for (iTermTerminalButton *button in self.terminalButtons) {
+            if (button == buttonUnderMouse) {
                 DLog(@"mouse is over %@", button);
                 // Mouse over button
                 if (pressed) {
@@ -7110,6 +7129,7 @@ dragSemanticHistoryWithEvent:(NSEvent *)event
         return NO;
     }
     if (@available(macOS 11, *)) {
+        // First check direct button hits
         for (iTermTerminalButton *button in self.terminalButtons) {
             if (NSPointInRect(point, button.desiredFrame)) {
                 if ([button mouseDownInside]) {
@@ -7119,9 +7139,49 @@ dragSemanticHistoryWithEvent:(NSEvent *)event
             }
             DLog(@"TextView handling mouseDown: not in %@ with frame %@", button.description, NSStringFromRect(button.desiredFrame));
         }
+        // Check if click is within a pill container but between buttons
+        iTermTerminalButton *buttonInPill = [self buttonInPillContainerAtPoint:point];
+        if (buttonInPill) {
+            if ([buttonInPill mouseDownInside]) {
+                [self requestDelegateRedraw];
+            }
+            return YES;
+        }
     }
     DLog(@"TextView handling mouseDown: not in anything");
     return NO;
+}
+
+// Find the button that should handle a click at the given point if it's within a pill container
+- (iTermTerminalButton *)buttonInPillContainerAtPoint:(NSPoint)point {
+    NSArray<iTermButtonPillInfo *> *pillInfos = [_drawingHelper buttonPillInfos];
+    for (iTermButtonPillInfo *pillInfo in pillInfos) {
+        // Expand the hit test rect vertically to cover the full button area
+        // The visual pill rect may be smaller for alignment purposes
+        NSRect hitTestRect = NSInsetRect(pillInfo.rect, 0, -4);
+        if (!NSPointInRect(point, hitTestRect)) {
+            continue;
+        }
+        // Point is in this pill container. Find the appropriate button based on x position.
+        NSArray<iTermTerminalButton *> *buttons = pillInfo.buttons;
+        if (buttons.count == 0) {
+            continue;
+        }
+        if (buttons.count == 1) {
+            return buttons.firstObject;
+        }
+        // Find which button region contains this x coordinate using divider positions
+        CGFloat relativeX = point.x - pillInfo.rect.origin.x;
+        NSArray<NSNumber *> *dividers = pillInfo.dividerXPositions;
+        for (NSUInteger i = 0; i < dividers.count; i++) {
+            if (relativeX < dividers[i].doubleValue) {
+                return buttons[i];
+            }
+        }
+        // Past all dividers, return the last button
+        return buttons.lastObject;
+    }
+    return nil;
 }
 
 - (BOOL)mouseHandlerMouseUp:(NSEvent *)event {

@@ -7,7 +7,6 @@
 
 import Foundation
 
-@available(macOS 11, *)
 @objc(iTermTerminalButtonRendererTransientState)
 class TerminalButtonRendererTransientState: iTermMetalCellRendererTransientState {
     fileprivate struct Button: CustomDebugStringConvertible {
@@ -54,11 +53,6 @@ class TerminalButtonRendererTransientState: iTermMetalCellRendererTransientState
     }
 }
 
-@available(macOS 11, *)
-@objc(iTermButtonsBackgroundRenderer)
-class ButtonsBackgroundRenderer: RectangleRenderer {}
-
-@available(macOS 11, *)
 @objc(iTermTerminalButtonRenderer)
 class TerminalButtonRenderer: NSObject, iTermMetalCellRendererProtocol {
     private let buttonRenderer: iTermMetalCellRenderer

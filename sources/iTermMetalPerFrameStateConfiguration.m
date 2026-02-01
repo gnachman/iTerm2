@@ -78,6 +78,11 @@ static vector_float4 VectorForColor(NSColor *color) {
     const CGFloat vmargin = [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins];
     _buttonsBackgroundRects = [drawingHelper.buttonsBackgroundRects shiftedBy:NSMakePoint(0, -textView.visibleRect.origin.y - vmargin)];
 
+    if (@available(macOS 11, *)) {
+        // Pass raw pill infos - the renderer will calculate Y from absLine and margins
+        _buttonPillInfos = [drawingHelper buttonPillInfos];
+    }
+
     _lineStyleMarkColors = (iTermLineStyleMarkColors) {
         .success = [[[drawingHelper defaultBackgroundColor] blendedWithColor:[iTermTextDrawingHelper successMarkColor] weight:0.5] colorUsingColorSpace:colorSpace].vector,
         .other = [[[drawingHelper defaultBackgroundColor] blendedWithColor:[iTermTextDrawingHelper otherMarkColor] weight:0.5] colorUsingColorSpace:colorSpace].vector,
