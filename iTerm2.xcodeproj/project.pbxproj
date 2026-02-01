@@ -1825,6 +1825,9 @@
 		A656E9951F99C5FB00158128 /* iTermSubpixelModelBuilder.h in Headers */ = {isa = PBXBuildFile; fileRef = A656E9931F99C5FB00158128 /* iTermSubpixelModelBuilder.h */; };
 		A656E9961F99C60300158128 /* iTermSubpixelModelBuilder.mm in Sources */ = {isa = PBXBuildFile; fileRef = A656E9921F99C5FB00158128 /* iTermSubpixelModelBuilder.mm */; };
 		A657D1AA2BAFA95200A3B6C2 /* RectangleRenderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = A657D1A92BAFA95200A3B6C2 /* RectangleRenderer.swift */; };
+		CDCD9FF08FCE42F7A6963859 /* PillBackgroundGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7EA289FFE2BF4090A65931BA /* PillBackgroundGenerator.swift */; };
+		6998793AE8C54A0EAE7D5D0F /* PillBackgroundRenderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7F3AA921DF1744D7BA890104 /* PillBackgroundRenderer.swift */; };
+		70C067D3E9484CA9A48D69BD /* ButtonPillInfo.swift in Sources */ = {isa = PBXBuildFile; fileRef = E7E1E38CBCE5463DA81CC1CF /* ButtonPillInfo.swift */; };
 		A657D1B12BAFAF6300A3B6C2 /* Rectangle.metal in Sources */ = {isa = PBXBuildFile; fileRef = A657D1B02BAFAF6300A3B6C2 /* Rectangle.metal */; };
 		A657D1B22BAFAF6300A3B6C2 /* Rectangle.metal in Sources */ = {isa = PBXBuildFile; fileRef = A657D1B02BAFAF6300A3B6C2 /* Rectangle.metal */; };
 		A657D1B32BAFAF6300A3B6C2 /* Rectangle.metal in Sources */ = {isa = PBXBuildFile; fileRef = A657D1B02BAFAF6300A3B6C2 /* Rectangle.metal */; };
@@ -7025,6 +7028,9 @@
 		A656E9921F99C5FB00158128 /* iTermSubpixelModelBuilder.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = iTermSubpixelModelBuilder.mm; path = Metal/Infrastructure/iTermSubpixelModelBuilder.mm; sourceTree = "<group>"; };
 		A656E9931F99C5FB00158128 /* iTermSubpixelModelBuilder.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = iTermSubpixelModelBuilder.h; path = Metal/Infrastructure/iTermSubpixelModelBuilder.h; sourceTree = "<group>"; };
 		A657D1A92BAFA95200A3B6C2 /* RectangleRenderer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RectangleRenderer.swift; sourceTree = "<group>"; };
+		7EA289FFE2BF4090A65931BA /* PillBackgroundGenerator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PillBackgroundGenerator.swift; sourceTree = "<group>"; };
+		7F3AA921DF1744D7BA890104 /* PillBackgroundRenderer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PillBackgroundRenderer.swift; sourceTree = "<group>"; };
+		E7E1E38CBCE5463DA81CC1CF /* ButtonPillInfo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ButtonPillInfo.swift; sourceTree = "<group>"; };
 		A657D1B02BAFAF6300A3B6C2 /* Rectangle.metal */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.metal; name = Rectangle.metal; path = Metal/Shaders/Rectangle.metal; sourceTree = "<group>"; };
 		A65871671D85E6700061CEEE /* PFMoveApplication.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = PFMoveApplication.m; path = LetsMove/PFMoveApplication.m; sourceTree = "<group>"; };
 		A65871681D85E6700061CEEE /* PFMoveApplication.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = PFMoveApplication.h; path = LetsMove/PFMoveApplication.h; sourceTree = "<group>"; };
@@ -11765,6 +11771,9 @@
 				A6E2D0F42AC485F3005C6677 /* BlockRenderer.swift */,
 				A6E2DF862AC4A1FF005C6677 /* TerminalButtonRenderer.swift */,
 				A657D1A92BAFA95200A3B6C2 /* RectangleRenderer.swift */,
+				7EA289FFE2BF4090A65931BA /* PillBackgroundGenerator.swift */,
+				7F3AA921DF1744D7BA890104 /* PillBackgroundRenderer.swift */,
+				E7E1E38CBCE5463DA81CC1CF /* ButtonPillInfo.swift */,
 				A6275BFE2C7D45140031089D /* KittyImageRenderer.swift */,
 			);
 			name = Renderers;
@@ -18945,6 +18954,9 @@
 				A6B6A4FE23CEE6E80016B1AE /* iTermOrderEnforcer.m in Sources */,
 				A65429BB20CE3C9F00CE71B1 /* iTermExpressionParser.m in Sources */,
 				A657D1AA2BAFA95200A3B6C2 /* RectangleRenderer.swift in Sources */,
+				CDCD9FF08FCE42F7A6963859 /* PillBackgroundGenerator.swift in Sources */,
+				6998793AE8C54A0EAE7D5D0F /* PillBackgroundRenderer.swift in Sources */,
+				70C067D3E9484CA9A48D69BD /* ButtonPillInfo.swift in Sources */,
 				A61562522C5FFF830085B285 /* NSEvent+iTerm.swift in Sources */,
 				5376CB0A2205337400FE7476 /* TmuxDashboardController.m in Sources */,
 				A6F718B22263E8A20053488E /* iTermInitialDirectory.m in Sources */,

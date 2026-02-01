@@ -1480,15 +1480,30 @@ const CGFloat commandRegionOutlineThickness = 2.0;
     NSColor *selectedColor = [self.delegate drawingHelperColorForCode:ALTSEM_SELECTED green:0 blue:0 colorMode:ColorModeAlternate bold:NO faint:NO isBackground:YES];
 
     if (@available(macOS 11, *)) {
-        iTermRectArray *rects = [self buttonsBackgroundRects];
-        for (NSInteger i = 0; i < rects.count; i++) {
-            const NSRect rect = [rects rectAtIndex:i];
-            [background set];
-            iTermRectFill(rect, virtualOffset);
-            [foreground set];
-            iTermFrameRect(rect, virtualOffset);
+        // Draw pill-shaped backgrounds for button groups
+        NSArray<iTermButtonPillInfo *> *pillInfos = [self buttonPillInfos];
+        const CGFloat scale = self.isRetina ? 2.0 : 1.0;
+        for (iTermButtonPillInfo *pillInfo in pillInfos) {
+            NSImage *pillImage = [iTermPillBackgroundGenerator generatePillImageWithSize:pillInfo.rect.size
+                                                                       dividerXPositions:pillInfo.dividerXPositions
+                                                                         backgroundColor:background
+                                                                         foregroundColor:foreground
+                                                                     pressedSegmentIndex:pillInfo.pressedButtonIndex
+                                                                                   scale:scale];
+            // Draw at 1:1 scale (the image is already scaled internally)
+            // Adjust y by 2 points to align with Metal renderer
+            NSRect destRect = pillInfo.rect;
+            destRect.origin.y -= virtualOffset;
+            destRect.origin.y -= 2;
+            [pillImage drawInRect:destRect
+                         fromRect:NSMakeRect(0, 0, pillImage.size.width, pillImage.size.height)
+                        operation:NSCompositingOperationSourceOver
+                         fraction:1.0
+                   respectFlipped:YES
+                            hints:nil];
         }
 
+        // Draw buttons (they now have transparent backgrounds since drawsBackground was set to false)
         for (iTermTerminalButton *button in [self.delegate drawingHelperTerminalButtons]) {
             if (![self canDrawLine:button.absCoordForDesiredFrame.y - _totalScrollbackOverflow]) {
                 continue;
@@ -1502,7 +1517,8 @@ const CGFloat commandRegionOutlineThickness = 2.0;
     }
 }
 
-- (iTermRectArray *)buttonsBackgroundRects NS_AVAILABLE_MAC(11) {
+- (iTermRectArray *)buttonsBackgroundRects {
+    // Legacy method - still used for Metal path until pill renderer is integrated
     NSMutableDictionary<NSNumber *, NSValue *> *dict = [NSMutableDictionary dictionary];
     NSArray<iTermTerminalButton *> *buttons = [self.delegate drawingHelperTerminalButtons];
     for (iTermTerminalButton *button in buttons) {
@@ -1528,7 +1544,24 @@ const CGFloat commandRegionOutlineThickness = 2.0;
     return result;
 }
 
-- (NSArray<iTermTerminalButton *> *)updateButtonFrames NS_AVAILABLE_MAC(11) {
+- (NSArray<iTermButtonPillInfo *> *)buttonPillInfos {
+    NSArray<iTermTerminalButton *> *buttons = [self.delegate drawingHelperTerminalButtons];
+    __weak __typeof(self) weakSelf = self;
+    // Add an extra cell width of horizontal padding so edge buttons don't look off-center
+    const CGFloat horizontalPadding = 6.0 + _cellSize.width;
+    return [iTermButtonPillInfo createPillInfosFrom:buttons
+                                  absCoordProvider:^VT100GridAbsCoord(iTermTerminalButton *button) {
+        __strong __typeof(weakSelf) strongSelf = weakSelf;
+        if (!strongSelf) {
+            return VT100GridAbsCoordMake(-1, -1);
+        }
+        return [strongSelf->_delegate absCoordForButton:button];
+    }
+                                 horizontalPadding:horizontalPadding
+                                   verticalPadding:2.0];
+}
+
+- (NSArray<iTermTerminalButton *> *)updateButtonFrames {
     const VT100GridCoordRange drawableCoordRange = [self drawableCoordRangeForRect:_visibleRectExcludingTopMargin];
     const long long minAbsY = drawableCoordRange.start.y + _totalScrollbackOverflow;
     const CGFloat margin = [iTermPreferences intForKey:kPreferenceKeySideMargins];
@@ -1540,10 +1573,10 @@ const CGFloat commandRegionOutlineThickness = 2.0;
         button.enclosingSessionWidth = _gridSize.width;
         VT100GridAbsCoord absCoord = [_delegate absCoordForButton:button];
         int proposedX;
-        int widthInCells = ceil([button sizeWithCellSize:_cellSize].width / self.cellSize.width) + 1;
+        int widthInCells = ceil([button sizeWithCellSize:_cellSize].width / self.cellSize.width) + 2;
         if (absCoord.x < 0) {
-            // Floating button
-            proposedX = self.gridSize.width - 2 - floatingCount * widthInCells;
+            // Floating button. Start 3 cells from right edge to leave room for pill padding.
+            proposedX = self.gridSize.width - 3 - floatingCount * widthInCells;
             floatingCount += 1;
         } else {
             // Absolutely positioned button

@@ -11,6 +11,7 @@
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermApplication.h"
 #import "iTermBuiltInFunctions.h"
+#import "iTermCache.h"
 #import "iTermColorMap.h"
 #import "iTermCommandRunner.h"
 #import "PTYSession.h"

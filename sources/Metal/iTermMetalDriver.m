@@ -137,8 +137,8 @@ typedef struct {
     iTermImageRenderer *_imageRenderer;
     iTermCopyToDrawableRenderer *_copyToDrawableRenderer;
     iTermBlockRenderer *_blockRenderer;
-    iTermButtonsBackgroundRenderer *_buttonsBackgroundRenderer NS_AVAILABLE_MAC(11);
-    iTermTerminalButtonRenderer *_terminalButtonRenderer NS_AVAILABLE_MAC(11);
+    iTermPillBackgroundRenderer *_pillBackgroundRenderer;
+    iTermTerminalButtonRenderer *_terminalButtonRenderer;
     iTermRectangleRenderer *_rectangleRenderer;
     iTermKittyImageRenderer *_kittyImageRenderer;
 
@@ -228,7 +228,7 @@ typedef struct {
         }
         _blockRenderer = [[iTermBlockRenderer alloc] initWithDevice:device];
         if (@available(macOS 11, *)) {
-            _buttonsBackgroundRenderer = [[iTermButtonsBackgroundRenderer alloc] initWithDevice:device];
+            _pillBackgroundRenderer = [[iTermPillBackgroundRenderer alloc] initWithDevice:device];
             _terminalButtonRenderer = [[iTermTerminalButtonRenderer alloc] initWithDevice:device];
         }
         _rectangleRenderer = [[iTermRectangleRenderer alloc] initWithDevice:device];
@@ -1003,7 +1003,7 @@ legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth
     [self drawCursorAfterTextWithFrameData:frameData];
 
     if (_terminalButtonRenderer) {
-        [self drawCellRenderer:_buttonsBackgroundRenderer
+        [self drawCellRenderer:_pillBackgroundRenderer
                      frameData:frameData
                           stat:iTermMetalFrameDataStatPqEnqueueDrawButtons];
         [self drawCellRenderer:_terminalButtonRenderer
@@ -1731,8 +1731,8 @@ legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth
     }
 }
 
-- (void)populateTerminalButtonRendererTransientStateWithFrameData:(iTermMetalFrameData *)frameData NS_AVAILABLE_MAC(11) {
-    if (!_terminalButtonRenderer || !_buttonsBackgroundRenderer) {
+- (void)populateTerminalButtonRendererTransientStateWithFrameData:(iTermMetalFrameData *)frameData {
+    if (!_terminalButtonRenderer || !_pillBackgroundRenderer) {
         return;
     }
     iTermTerminalButtonRendererTransientState *tState = [frameData transientStateForRenderer:_terminalButtonRenderer];
@@ -1757,12 +1757,30 @@ legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth
              sizeInPoints:button.desiredFrame.size
 extraIdentifyingInfoForIcon:button.extraIdentifyingInfoForIcon];
     }
-    if (frameData.perFrameState.buttonsBackgroundRects.count > 0) {
-        iTermRectangleRendererTransientState *bgTState = [frameData transientStateForRenderer:_buttonsBackgroundRenderer];
-        [frameData.perFrameState.buttonsBackgroundRects enumerateWithBlock:^(NSRect rect) {
-            [bgTState addPointsRect:rect color:frameData.perFrameState.defaultBackgroundColor];
-            [bgTState addPointsFrameRect:rect color:frameData.perFrameState.defaultTextColor thickness:1];
-        }];
+
+    // Populate pill backgrounds
+    if (frameData.perFrameState.buttonPillInfos.count > 0) {
+        iTermPillBackgroundRendererTransientState *bgTState = [frameData transientStateForRenderer:_pillBackgroundRenderer];
+        DLog(@"Processing %lu pill infos, firstLine=%lld gridHeight=%d",
+             (unsigned long)frameData.perFrameState.buttonPillInfos.count,
+             firstLine,
+             frameData.perFrameState.gridSize.height);
+        for (iTermButtonPillInfo *pillInfo in frameData.perFrameState.buttonPillInfos) {
+            // Calculate screen line from absolute line, same as buttons
+            const long long screenLine = pillInfo.absLine - firstLine;
+            DLog(@"Pill absLine=%lld screenLine=%lld rect=%@",
+                 pillInfo.absLine, screenLine, NSStringFromRect(pillInfo.rect));
+            if (screenLine < 0 || screenLine >= frameData.perFrameState.gridSize.height) {
+                DLog(@"Skipping pill - out of bounds");
+                continue;
+            }
+            [bgTState addPillWithRect:pillInfo.rect
+                    dividerXPositions:pillInfo.dividerXPositions
+                      foregroundColor:frameData.perFrameState.defaultTextColor
+                      backgroundColor:frameData.perFrameState.defaultBackgroundColor
+                  pressedSegmentIndex:pillInfo.pressedButtonIndex
+                                 line:(int)screenLine];
+        }
     }
 }
 
@@ -2363,7 +2381,7 @@ extraIdentifyingInfoForIcon:button.extraIdentifyingInfoForIcon];
                _keyCursorRenderer,
                _timestampsRenderer,
                _blockRenderer,
-               _buttonsBackgroundRenderer ?: [NSNull null],
+               _pillBackgroundRenderer ?: [NSNull null],
                _terminalButtonRenderer ?: [NSNull null],
                _rectangleRenderer,
                _kittyImageRenderer] arrayByRemovingNulls];
