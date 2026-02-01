@@ -10,10 +10,8 @@
 //  - Tests include both positive cases (desired behavior) and negative cases (undesired behavior)
 //  - No test should hang - all use timeouts or verify existing behavior
 //
-//  TODO: Test coverage gap - session restoration (revive) path needs tests:
-//  - Verify preserved tokens are processed after setTerminalEnabled:YES re-registers
-//  - Verify schedule() is called after re-registration to kick off preserved work
-//  - Test the full disable → preserve tokens → revive → tokens drain cycle
+//  Session restoration (revive) tests are implemented in TokenExecutorSessionReviveTests
+//  at the end of this file. These tests verify the full disable → preserve → revive → drain cycle.
 //
 
 import XCTest
@@ -709,6 +707,7 @@ final class TokenExecutorSchedulerEntryPointTests: XCTestCase {
         // Register executor with scheduler
         let sessionId = FairnessScheduler.shared.register(executor)
         executor.fairnessSessionId = sessionId
+        executor.isRegistered = true
         defer { FairnessScheduler.shared.unregister(sessionId: sessionId) }
 
         mockDelegate.shouldQueueTokens = false
@@ -734,6 +733,7 @@ final class TokenExecutorSchedulerEntryPointTests: XCTestCase {
         // Register executor with scheduler
         let sessionId = FairnessScheduler.shared.register(executor)
         executor.fairnessSessionId = sessionId
+        executor.isRegistered = true
         defer { FairnessScheduler.shared.unregister(sessionId: sessionId) }
 
         // Block execution initially
@@ -766,6 +766,7 @@ final class TokenExecutorSchedulerEntryPointTests: XCTestCase {
         // Register executor with scheduler
         let sessionId = FairnessScheduler.shared.register(executor)
         executor.fairnessSessionId = sessionId
+        executor.isRegistered = true
         defer { FairnessScheduler.shared.unregister(sessionId: sessionId) }
 
         var taskExecuted = false
@@ -788,6 +789,7 @@ final class TokenExecutorSchedulerEntryPointTests: XCTestCase {
         // Register executor with scheduler
         let sessionId = FairnessScheduler.shared.register(executor)
         executor.fairnessSessionId = sessionId
+        executor.isRegistered = true
         defer { FairnessScheduler.shared.unregister(sessionId: sessionId) }
 
         mockDelegate.shouldQueueTokens = false
@@ -823,6 +825,7 @@ final class TokenExecutorSchedulerEntryPointTests: XCTestCase {
         // Register executor with scheduler
         let sessionId = FairnessScheduler.shared.register(executor)
         executor.fairnessSessionId = sessionId
+        executor.isRegistered = true
         defer { FairnessScheduler.shared.unregister(sessionId: sessionId) }
 
         mockDelegate.shouldQueueTokens = false
@@ -852,6 +855,7 @@ final class TokenExecutorSchedulerEntryPointTests: XCTestCase {
         // Register executor with scheduler
         let sessionId = FairnessScheduler.shared.register(executor)
         executor.fairnessSessionId = sessionId
+        executor.isRegistered = true
         defer { FairnessScheduler.shared.unregister(sessionId: sessionId) }
 
         mockDelegate.shouldQueueTokens = false
@@ -886,6 +890,7 @@ final class TokenExecutorSchedulerEntryPointTests: XCTestCase {
         // Register executor with scheduler
         let sessionId = FairnessScheduler.shared.register(executor)
         executor.fairnessSessionId = sessionId
+        executor.isRegistered = true
         defer { FairnessScheduler.shared.unregister(sessionId: sessionId) }
 
         mockDelegate.shouldQueueTokens = false
@@ -931,6 +936,7 @@ final class TokenExecutorSchedulerEntryPointTests: XCTestCase {
         // Register executor with scheduler
         let sessionId = FairnessScheduler.shared.register(executor)
         executor.fairnessSessionId = sessionId
+        executor.isRegistered = true
         defer { FairnessScheduler.shared.unregister(sessionId: sessionId) }
 
         mockDelegate.shouldQueueTokens = false
@@ -1055,6 +1061,7 @@ final class TokenExecutorFeatureFlagGatingTests: XCTestCase {
         // Register executor with scheduler - this gives us a non-zero sessionId
         let sessionId = FairnessScheduler.shared.register(executor)
         executor.fairnessSessionId = sessionId
+        executor.isRegistered = true
         XCTAssertNotEqual(sessionId, 0, "Registration should return non-zero sessionId")
 
         mockDelegate.shouldQueueTokens = false
@@ -1139,6 +1146,7 @@ final class TokenExecutorLegacyRemovalTests: XCTestCase {
 
     override func setUp() {
         super.setUp()
+        iTermAdvancedSettingsModel.setUseFairnessSchedulerForTesting(true)
         mockDelegate = MockTokenExecutorDelegate()
         mockTerminal = VT100Terminal()
     }
@@ -1146,6 +1154,7 @@ final class TokenExecutorLegacyRemovalTests: XCTestCase {
     override func tearDown() {
         mockTerminal = nil
         mockDelegate = nil
+        iTermAdvancedSettingsModel.setUseFairnessSchedulerForTesting(false)
         super.tearDown()
     }
 
@@ -1193,7 +1202,9 @@ final class TokenExecutorLegacyRemovalTests: XCTestCase {
         let bgId = FairnessScheduler.shared.register(bgExecutor)
         let fgId = FairnessScheduler.shared.register(fgExecutor)
         bgExecutor.fairnessSessionId = bgId
+        bgExecutor.isRegistered = true
         fgExecutor.fairnessSessionId = fgId
+        fgExecutor.isRegistered = true
 
         defer {
             FairnessScheduler.shared.unregister(sessionId: bgId)
@@ -1244,6 +1255,7 @@ final class TokenExecutorLegacyRemovalTests: XCTestCase {
         // Register with FairnessScheduler (required for schedule() to work)
         let sessionId = FairnessScheduler.shared.register(executor)
         executor.fairnessSessionId = sessionId
+        executor.isRegistered = true
 
         // Add and process tokens
         let vector = createTestTokenVector(count: 5)
@@ -1290,6 +1302,7 @@ final class TokenExecutorLegacyRemovalTests: XCTestCase {
 
             let sessionId = FairnessScheduler.shared.register(executor)
             executor.fairnessSessionId = sessionId
+            executor.isRegistered = true
 
             executors.append((executor: executor, delegate: delegate, id: sessionId))
         }
@@ -1426,56 +1439,54 @@ final class TokenExecutorCleanupTests: XCTestCase {
         throw XCTSkip("Requires restructuring for blocking semaphore model")
     }
 
-    func testCleanupRestoresExactSlotCount() throws {
-        // SKIP: This test requires the non-blocking backpressure model from milestone 3.
-        // It tries to add 200 tokens with only 40 slots, which blocks on the semaphore.
-        //
-        // TODO: This test's premise is now incorrect. cleanupForUnregistration() no longer
-        // discards tokens or restores slots immediately. Tokens are preserved for potential
-        // revive and drain naturally when the terminal is re-enabled. This test should be
-        // rewritten to verify tokens remain in queue after cleanup, not that slots are restored.
-        throw XCTSkip("Requires non-blocking backpressure model from milestone 3")
+    func testCleanupPreservesTokensInQueue() throws {
+        // REQUIREMENT: Verify cleanup preserves tokens rather than discarding them.
+        // Tokens remain in queue for potential session revive.
+        // NOTE: This test only verifies preservation. Processing after re-registration
+        // is tested in TokenExecutorSessionReviveTests.
 
-        // REQUIREMENT: Verify cleanup restores slots by checking backpressure behavior.
-        // We verify the exact restoration by testing that we can add the same number
-        // of arrays again after cleanup without exceeding capacity.
-
-        let executor = TokenExecutor(mockTerminal, slownessDetector: SlownessDetector(), queue: iTermGCD.mutationQueue())
+        let executor = TokenExecutor(mockTerminal,
+                                      slownessDetector: SlownessDetector(),
+                                      queue: iTermGCD.mutationQueue())
         executor.delegate = mockDelegate
 
-        // Verify initial state - no backpressure
-        XCTAssertEqual(executor.backpressureLevel, .none,
-                       "Fresh executor should have no backpressure")
+        mockDelegate.shouldQueueTokens = true
 
-        // Add enough token arrays to exceed capacity (200 with 40 slots = blocked)
-        let arraysToAdd = 200
-        for _ in 0..<arraysToAdd {
+        // Semaphore has bufferDepth (40) slots. Since scheduler is disabled and
+        // shouldQueueTokens=true prevents consumption, addTokens blocks when slots exhausted.
+        // Use 30 to stay within limit while still creating meaningful backpressure.
+        let tokenArrayCount = 30
+        for _ in 0..<tokenArrayCount {
             let vector = createTestTokenVector(count: 5)
             executor.addTokens(vector, lengthTotal: 50, lengthExcludingInBandSignaling: 50)
         }
 
-        // Should be blocked (availableSlots = 40 - 200 = -160, which is <= 0)
-        XCTAssertEqual(executor.backpressureLevel, .blocked,
-                       "Should be blocked after adding more arrays than slots")
+        waitForMutationQueue()
 
-        // Cleanup should restore all slots
-        executor.cleanupForUnregistration()
+        let backpressureBeforeCleanup = executor.backpressureLevel
+        XCTAssertGreaterThan(backpressureBeforeCleanup, .none,
+                             "Should have backpressure with \(tokenArrayCount)/40 slots used")
 
-        // After cleanup, backpressure should be none
-        XCTAssertEqual(executor.backpressureLevel, .none,
-                       "Cleanup should restore all slots (backpressure none)")
+        #if ITERM_DEBUG
+        let tokensBeforeCleanup = executor.testQueuedTokenCount
+        XCTAssertGreaterThan(tokensBeforeCleanup, 0, "Should have queued tokens")
+        #endif
 
-        // The real test: we should be able to add the same number of arrays again
-        // without the behavior being different. If cleanup didn't restore exactly,
-        // this would behave differently.
-        for _ in 0..<arraysToAdd {
-            let vector = createTestTokenVector(count: 5)
-            executor.addTokens(vector, lengthTotal: 50, lengthExcludingInBandSignaling: 50)
+        let cleanupExpectation = XCTestExpectation(description: "Cleanup completed")
+        executor.cleanupForUnregistrationOnMutationQueue {
+            cleanupExpectation.fulfill()
         }
+        wait(for: [cleanupExpectation], timeout: 1.0)
 
-        // Should have the same blocked state again
-        XCTAssertEqual(executor.backpressureLevel, .blocked,
-                       "After re-adding same arrays, should have same backpressure (slots properly restored)")
+        #if ITERM_DEBUG
+        let tokensAfterCleanup = executor.testQueuedTokenCount
+        XCTAssertEqual(tokensAfterCleanup, tokensBeforeCleanup,
+                       "Cleanup should preserve tokens for revive")
+        #endif
+
+        let backpressureAfterCleanup = executor.backpressureLevel
+        XCTAssertEqual(backpressureAfterCleanup, backpressureBeforeCleanup,
+                       "Backpressure should remain unchanged after cleanup")
     }
 
     func testCleanupEmptyQueueNoChange() throws {
@@ -2412,14 +2423,9 @@ final class TokenExecutorAvailableSlotsBoundaryTests: XCTestCase {
         // - High-priority tokens bypass backpressure and can overdraw slots
         // - This test calls addTokens directly, bypassing PTYTask's backpressure gate
         //
-        // TODO: This test's invariant check is now incorrect. cleanupForUnregistration() no
-        // longer discards tokens or restores slots. Tokens are preserved for potential revive.
-        // The assertions at the end (lines 2467-2480) that expect slots to return to totalSlots
-        // and backpressure to be .none after cleanup need to be removed or rewritten to verify
-        // tokens remain in queue instead.
-        //
-        // ORIGINAL INVARIANT (now obsolete): after unregister (which calls cleanupForUnregistration),
-        // slots must return to totalSlots (balanced accounting, no drift).
+        // ACCOUNTING INVARIANT: cleanupForUnregistration() preserves tokens for potential revive.
+        // This test verifies that concurrent operations don't corrupt slot accounting.
+        // After cleanup, slots should still reflect queued tokens (not return to totalSlots).
 
         let executor = TokenExecutor(
             mockTerminal,
@@ -2431,6 +2437,7 @@ final class TokenExecutorAvailableSlotsBoundaryTests: XCTestCase {
         // Register with scheduler
         let sessionId = FairnessScheduler.shared.register(executor)
         executor.fairnessSessionId = sessionId
+        executor.isRegistered = true
 
         #if ITERM_DEBUG
         let totalSlots = executor.testTotalSlots
@@ -2482,19 +2489,24 @@ final class TokenExecutorAvailableSlotsBoundaryTests: XCTestCase {
         waitForMutationQueue()
 
         #if ITERM_DEBUG
-        // After cleanup, slots should return to totalSlots (balanced accounting)
-        // This verifies no drift/corruption from concurrent operations
+        // Verify accounting is consistent (not corrupted by concurrent operations)
         let finalSlots = executor.testAvailableSlots
-        XCTAssertEqual(finalSlots, totalSlots,
-                       "After cleanup, availableSlots should return to totalSlots " +
-                       "(got \(finalSlots), expected \(totalSlots)). " +
-                       "A mismatch indicates accounting corruption from concurrent ops.")
-        #endif
+        let queuedTokens = executor.testQueuedTokenCount
 
-        // Verify backpressure is consistent with slots (should be .none after cleanup)
-        let finalLevel = executor.backpressureLevel
-        XCTAssertEqual(finalLevel, .none,
-                       "Backpressure should be .none after cleanup restores all slots")
+        // Accounting invariant: slots should not exceed totalSlots
+        XCTAssertLessThanOrEqual(finalSlots, totalSlots,
+                                 "Available slots should not exceed total slots " +
+                                 "(corruption check: got \(finalSlots), max \(totalSlots))")
+
+        // Backpressure should be consistent with queued tokens
+        if queuedTokens > 0 {
+            XCTAssertGreaterThan(executor.backpressureLevel, .none,
+                                 "Should have backpressure with \(queuedTokens) queued tokens")
+        } else {
+            XCTAssertTrue(executor.backpressureLevel == .none,
+                          "Backpressure should be .none when no tokens remain")
+        }
+        #endif
     }
 
     func testCleanupDoesNotOverflowSlots() throws {
@@ -2955,6 +2967,7 @@ final class TokenExecutorDeferCompletionOrderingTests: XCTestCase {
         // Register with scheduler
         let sessionId = FairnessScheduler.shared.register(executor)
         executor.fairnessSessionId = sessionId
+        executor.isRegistered = true
 
         // Track total bytes expected
         let expectedTotalBytes = 50 + 30  // Initial (50) + added by high-priority task (30)
@@ -2978,13 +2991,17 @@ final class TokenExecutorDeferCompletionOrderingTests: XCTestCase {
 
         // Wait for all tokens to be processed (initial + those added by high-priority task)
         let condition = expectation(description: "All bytes processed")
+        var testFinished = false
 
         // Poll for completion - check total bytes from delegate's executedLengths
         func getTotalBytes() -> Int {
-            return mockDelegate.executedLengths.reduce(0) { $0 + $1.total }
+            guard let delegate = mockDelegate else { return 0 }
+            return delegate.executedLengths.reduce(0) { $0 + $1.total }
         }
 
         func checkCompletion() {
+            // Stop polling if test has finished (prevents crash in tearDown)
+            guard !testFinished else { return }
             if getTotalBytes() >= expectedTotalBytes {
                 condition.fulfill()
             } else {
@@ -2998,6 +3015,7 @@ final class TokenExecutorDeferCompletionOrderingTests: XCTestCase {
         }
 
         wait(for: [condition], timeout: 2.0)
+        testFinished = true
 
         // The high-priority task should have added tokens
         XCTAssertTrue(tokensAddedByHighPriorityTask, "High-priority task should have run")
@@ -3071,5 +3089,257 @@ final class TokenExecutorDeferCompletionOrderingTests: XCTestCase {
 
         // For now, just verify the test ran correctly
         XCTAssertNotNil(reportedResult, "Should have received a turn result")
+    }
+}
+
+// MARK: - Session Restoration (Revive) Tests
+
+/// Tests for the session revive path: disable → preserve tokens → re-enable → tokens drain.
+/// This validates the new cleanupForUnregistration behavior that preserves tokens.
+final class TokenExecutorSessionReviveTests: XCTestCase {
+
+    var mockDelegate: MockTokenExecutorDelegate!
+    var mockTerminal: VT100Terminal!
+
+    override func setUp() {
+        super.setUp()
+        iTermAdvancedSettingsModel.setUseFairnessSchedulerForTesting(true)
+        mockDelegate = MockTokenExecutorDelegate()
+        mockTerminal = VT100Terminal()
+    }
+
+    override func tearDown() {
+        mockTerminal = nil
+        mockDelegate = nil
+        super.tearDown()
+    }
+
+    // MARK: - Test 1: Tokens Preserved After Cleanup
+
+    func testTokensPreservedAfterCleanup() throws {
+        let executor = TokenExecutor(mockTerminal,
+                                      slownessDetector: SlownessDetector(),
+                                      queue: iTermGCD.mutationQueue())
+        executor.delegate = mockDelegate
+        mockDelegate.shouldQueueTokens = true
+
+        for _ in 0..<10 {
+            let vector = createTestTokenVector(count: 5)
+            executor.addTokens(vector, lengthTotal: 50, lengthExcludingInBandSignaling: 50)
+        }
+
+        waitForMutationQueue()
+
+        #if ITERM_DEBUG
+        let tokensBeforeCleanup = executor.testQueuedTokenCount
+        XCTAssertGreaterThan(tokensBeforeCleanup, 0, "Should have tokens before cleanup")
+        #endif
+
+        let cleanupExpectation = XCTestExpectation(description: "Cleanup completed")
+        executor.cleanupForUnregistrationOnMutationQueue {
+            cleanupExpectation.fulfill()
+        }
+        wait(for: [cleanupExpectation], timeout: 1.0)
+
+        #if ITERM_DEBUG
+        let tokensAfterCleanup = executor.testQueuedTokenCount
+        XCTAssertEqual(tokensAfterCleanup, tokensBeforeCleanup,
+                       "Cleanup should preserve tokens for revive")
+        #endif
+    }
+
+    // MARK: - Test 2: Unregister Preserves Tokens
+
+    func testUnregisterPreservesTokens() throws {
+        let executor = TokenExecutor(mockTerminal,
+                                      slownessDetector: SlownessDetector(),
+                                      queue: iTermGCD.mutationQueue())
+        executor.delegate = mockDelegate
+        mockDelegate.shouldQueueTokens = true
+
+        let sessionId = FairnessScheduler.shared.register(executor)
+        executor.fairnessSessionId = sessionId
+        executor.isRegistered = true
+
+        for _ in 0..<10 {
+            let vector = createTestTokenVector(count: 5)
+            executor.addTokens(vector, lengthTotal: 50, lengthExcludingInBandSignaling: 50)
+        }
+
+        waitForMutationQueue()
+
+        #if ITERM_DEBUG
+        let tokensBeforeUnregister = executor.testQueuedTokenCount
+        XCTAssertGreaterThan(tokensBeforeUnregister, 0)
+        #endif
+
+        FairnessScheduler.shared.unregister(sessionId: sessionId)
+        executor.fairnessSessionId = 0
+        executor.isRegistered = false
+
+        waitForMutationQueue()
+
+        #if ITERM_DEBUG
+        let tokensAfterUnregister = executor.testQueuedTokenCount
+        XCTAssertEqual(tokensAfterUnregister, tokensBeforeUnregister)
+        #endif
+
+        XCTAssertEqual(executor.fairnessSessionId, 0)
+        XCTAssertFalse(executor.isRegistered)
+    }
+
+    // MARK: - Test 3: Re-registration Processes Preserved Tokens
+
+    func testReRegistrationProcessesPreservedTokens() throws {
+        let executor = TokenExecutor(mockTerminal,
+                                      slownessDetector: SlownessDetector(),
+                                      queue: iTermGCD.mutationQueue())
+        executor.delegate = mockDelegate
+        mockDelegate.shouldQueueTokens = true
+
+        let sessionId1 = FairnessScheduler.shared.register(executor)
+        executor.fairnessSessionId = sessionId1
+        executor.isRegistered = true
+
+        for _ in 0..<10 {
+            let vector = createTestTokenVector(count: 5)
+            executor.addTokens(vector, lengthTotal: 50, lengthExcludingInBandSignaling: 50)
+        }
+
+        waitForMutationQueue()
+
+        FairnessScheduler.shared.unregister(sessionId: sessionId1)
+        executor.fairnessSessionId = 0
+        executor.isRegistered = false
+        waitForMutationQueue()
+
+        let sessionId2 = FairnessScheduler.shared.register(executor)
+        executor.fairnessSessionId = sessionId2
+        executor.isRegistered = true
+        waitForMutationQueue()
+
+        XCTAssertNotEqual(sessionId2, sessionId1)
+        XCTAssertTrue(executor.isRegistered)
+
+        mockDelegate.shouldQueueTokens = false
+
+        let processedExpectation = XCTestExpectation(description: "Tokens processed")
+        mockDelegate.onWillExecute = {
+            processedExpectation.fulfill()
+        }
+
+        executor.schedule()
+        wait(for: [processedExpectation], timeout: 2.0)
+
+        XCTAssertGreaterThan(mockDelegate.willExecuteCount, 0)
+
+        FairnessScheduler.shared.unregister(sessionId: sessionId2)
+    }
+
+    // MARK: - Test 4: Full Disable-Preserve-Revive-Drain Cycle
+
+    func testFullDisablePreserveReviveDrainCycle() throws {
+        let executor = TokenExecutor(mockTerminal,
+                                      slownessDetector: SlownessDetector(),
+                                      queue: iTermGCD.mutationQueue())
+        executor.delegate = mockDelegate
+        mockDelegate.shouldQueueTokens = true
+
+        let sessionId1 = FairnessScheduler.shared.register(executor)
+        executor.fairnessSessionId = sessionId1
+        executor.isRegistered = true
+
+        // Add tokens while queued
+        for _ in 0..<20 {
+            let vector = createTestTokenVector(count: 5)
+            executor.addTokens(vector, lengthTotal: 50, lengthExcludingInBandSignaling: 50)
+        }
+
+        waitForMutationQueue()
+
+        #if ITERM_DEBUG
+        let tokensBeforeUnregister = executor.testQueuedTokenCount
+        XCTAssertGreaterThan(tokensBeforeUnregister, 0, "Should have queued tokens")
+        #endif
+
+        // Unregister (preserve tokens)
+        FairnessScheduler.shared.unregister(sessionId: sessionId1)
+        executor.isRegistered = false
+        executor.fairnessSessionId = 0
+
+        waitForMutationQueue()
+
+        #if ITERM_DEBUG
+        let tokensAfterUnregister = executor.testQueuedTokenCount
+        XCTAssertEqual(tokensAfterUnregister, tokensBeforeUnregister,
+                       "Tokens should be preserved after unregister")
+        #endif
+
+        // Re-register
+        let sessionId2 = FairnessScheduler.shared.register(executor)
+        executor.fairnessSessionId = sessionId2
+        executor.isRegistered = true
+
+        XCTAssertNotEqual(sessionId2, sessionId1, "Should get new session ID")
+
+        // Unpause and verify tokens can be processed
+        mockDelegate.shouldQueueTokens = false
+
+        let postReviveExpectation = XCTestExpectation(description: "Post-revive execution")
+        mockDelegate.onWillExecute = {
+            postReviveExpectation.fulfill()
+        }
+
+        FairnessScheduler.shared.sessionDidEnqueueWork(sessionId2)
+
+        wait(for: [postReviveExpectation], timeout: 2.0)
+
+        XCTAssertGreaterThan(mockDelegate.willExecuteCount, 0,
+                             "Preserved tokens should be processed after revive")
+
+        FairnessScheduler.shared.unregister(sessionId: sessionId2)
+    }
+
+    // MARK: - Test 5: schedule() Triggers Processing After Re-Registration
+
+    func testScheduleTriggersProcessingAfterReRegistration() throws {
+        let executor = TokenExecutor(mockTerminal,
+                                      slownessDetector: SlownessDetector(),
+                                      queue: iTermGCD.mutationQueue())
+        executor.delegate = mockDelegate
+        mockDelegate.shouldQueueTokens = true
+
+        let sessionId1 = FairnessScheduler.shared.register(executor)
+        executor.fairnessSessionId = sessionId1
+        executor.isRegistered = true
+
+        for _ in 0..<10 {
+            let vector = createTestTokenVector(count: 5)
+            executor.addTokens(vector, lengthTotal: 50, lengthExcludingInBandSignaling: 50)
+        }
+
+        waitForMutationQueue()
+
+        FairnessScheduler.shared.unregister(sessionId: sessionId1)
+        executor.fairnessSessionId = 0
+        executor.isRegistered = false
+        waitForMutationQueue()
+
+        let sessionId2 = FairnessScheduler.shared.register(executor)
+        executor.fairnessSessionId = sessionId2
+        executor.isRegistered = true
+
+        mockDelegate.shouldQueueTokens = false
+        let scheduleCalledExpectation = XCTestExpectation(description: "schedule() called")
+        mockDelegate.onWillExecute = {
+            scheduleCalledExpectation.fulfill()
+        }
+
+        executor.schedule()
+        wait(for: [scheduleCalledExpectation], timeout: 2.0)
+
+        XCTAssertGreaterThan(mockDelegate.willExecuteCount, 0)
+
+        FairnessScheduler.shared.unregister(sessionId: sessionId2)
     }
 }

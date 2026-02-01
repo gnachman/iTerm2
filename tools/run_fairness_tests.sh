@@ -60,6 +60,7 @@ FAIRNESS_TEST_CLASSES=(
     "FairnessSchedulerThreadSafetyTests"
     "FairnessSchedulerLifecycleEdgeCaseTests"
     "FairnessSchedulerSustainedLoadTests"
+    "FairnessSchedulerSessionRestorationTests"
 )
 
 # Milestone 2: TokenExecutor Fairness (Checkpoint 2)
@@ -79,6 +80,7 @@ TOKENEXECUTOR_TEST_CLASSES=(
     "TokenExecutorHighPriorityOrderingTests"
     "TokenExecutorFeatureFlagGatingTests"
     "TokenExecutorDeferCompletionOrderingTests"
+    "TokenExecutorSessionReviveTests"
     "TwoTierTokenQueueTests"
     "TwoTierTokenQueueGroupingTests"
 )
