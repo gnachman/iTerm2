@@ -143,6 +143,12 @@ class TwoTierTokenQueue {
         return count
     }
 
+    var count: Int {
+        return queues.reduce(0) { total, queue in
+            total + queue.count
+        }
+    }
+
     func addTokens(_ tokenArray: TokenArray, highPriority: Bool) {
         if gDebugLogging.boolValue {
             DLog("add \(tokenArray.count) tokens, highpri=\(highPriority)")
@@ -241,6 +247,12 @@ fileprivate class Queue: CustomDebugStringConvertible {
     var isEmpty: Bool {
         mutex.sync {
             return arrays.isEmpty
+        }
+    }
+
+    var count: Int {
+        mutex.sync {
+            return arrays.count
         }
     }
 
