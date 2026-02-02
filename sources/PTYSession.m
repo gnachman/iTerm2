@@ -10952,24 +10952,13 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     VT100GridCoord coord = VT100GridCoordMake(self.screen.cursorX - 1,
                                               self.screen.numberOfScrollbackLines + self.screen.cursorY - 1);
     iTermTextExtractor *extractor = [iTermTextExtractor textExtractorWithDataSource:self.screen];
-    VT100GridCoord lastCoord = coord;
     coord = [extractor predecessorOfCoord:coord];
-    NSMutableString *suffix = [@"" mutableCopy];
-    NSString *replacement = nil;
-    NSString *word = nil;
-    while ([manager hasReplacementsWithSuffix:suffix] &&
-           !VT100GridCoordEquals(coord, lastCoord)) {
-        word = [suffix copy];
-        replacement = [manager applyReplacementsTo:suffix];
-        NSString *c = [extractor stringForCharacterAt:coord];
-        if (!c) {
-            return NO;
-        }
-        [suffix insertString:c atIndex:0];
-        lastCoord = coord;
-        coord = [extractor predecessorOfCoord:coord];
+    NSString *word = [[extractor fastWordAt:coord] stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
+    if (!word) {
+        return NO;
     }
-    if (!replacement || !word) {
+    NSString *replacement = [manager applyReplacementsTo:word];
+    if (!replacement) {
         return NO;
     }
     if (![manager shouldReplaceShortcut:word]) {
