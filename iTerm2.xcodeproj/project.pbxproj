@@ -922,6 +922,8 @@
 		53FF984B20967806008688D7 /* iTermMetalDeviceProvider.h in Headers */ = {isa = PBXBuildFile; fileRef = 53FF984920967805008688D7 /* iTermMetalDeviceProvider.h */; };
 		53FF984C20967806008688D7 /* iTermMetalDeviceProvider.m in Sources */ = {isa = PBXBuildFile; fileRef = 53FF984A20967805008688D7 /* iTermMetalDeviceProvider.m */; };
 		5ECE005F1454E59B004861E9 /* PseudoTerminalRestorer.h in Headers */ = {isa = PBXBuildFile; fileRef = 5ECE005D1454E59B004861E9 /* PseudoTerminalRestorer.h */; };
+		6998793AE8C54A0EAE7D5D0F /* PillBackgroundRenderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7F3AA921DF1744D7BA890104 /* PillBackgroundRenderer.swift */; };
+		70C067D3E9484CA9A48D69BD /* ButtonPillInfo.swift in Sources */ = {isa = PBXBuildFile; fileRef = E7E1E38CBCE5463DA81CC1CF /* ButtonPillInfo.swift */; };
 		756C32AD2597AC2E0047B3A9 /* iTermImage+Sixel.m in Sources */ = {isa = PBXBuildFile; fileRef = 756C32AC2597AC2E0047B3A9 /* iTermImage+Sixel.m */; };
 		756C32B72597AC8C0047B3A9 /* libsixel.a in Frameworks */ = {isa = PBXBuildFile; fileRef = A67D194E2237045C00BD0D4D /* libsixel.a */; };
 		7577E2A12593B88700905402 /* iTermSandboxedWorkerClient.h in Headers */ = {isa = PBXBuildFile; fileRef = 7577E29F2593B88700905402 /* iTermSandboxedWorkerClient.h */; };
@@ -1833,9 +1835,6 @@
 		A656E9951F99C5FB00158128 /* iTermSubpixelModelBuilder.h in Headers */ = {isa = PBXBuildFile; fileRef = A656E9931F99C5FB00158128 /* iTermSubpixelModelBuilder.h */; };
 		A656E9961F99C60300158128 /* iTermSubpixelModelBuilder.mm in Sources */ = {isa = PBXBuildFile; fileRef = A656E9921F99C5FB00158128 /* iTermSubpixelModelBuilder.mm */; };
 		A657D1AA2BAFA95200A3B6C2 /* RectangleRenderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = A657D1A92BAFA95200A3B6C2 /* RectangleRenderer.swift */; };
-		CDCD9FF08FCE42F7A6963859 /* PillBackgroundGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7EA289FFE2BF4090A65931BA /* PillBackgroundGenerator.swift */; };
-		6998793AE8C54A0EAE7D5D0F /* PillBackgroundRenderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7F3AA921DF1744D7BA890104 /* PillBackgroundRenderer.swift */; };
-		70C067D3E9484CA9A48D69BD /* ButtonPillInfo.swift in Sources */ = {isa = PBXBuildFile; fileRef = E7E1E38CBCE5463DA81CC1CF /* ButtonPillInfo.swift */; };
 		A657D1B12BAFAF6300A3B6C2 /* Rectangle.metal in Sources */ = {isa = PBXBuildFile; fileRef = A657D1B02BAFAF6300A3B6C2 /* Rectangle.metal */; };
 		A657D1B22BAFAF6300A3B6C2 /* Rectangle.metal in Sources */ = {isa = PBXBuildFile; fileRef = A657D1B02BAFAF6300A3B6C2 /* Rectangle.metal */; };
 		A657D1B32BAFAF6300A3B6C2 /* Rectangle.metal in Sources */ = {isa = PBXBuildFile; fileRef = A657D1B02BAFAF6300A3B6C2 /* Rectangle.metal */; };
@@ -5121,6 +5120,7 @@
 		A6FFAE732CF682BD0031FB21 /* iTermDoubleWidthCharacterCache.h in Headers */ = {isa = PBXBuildFile; fileRef = A6FFAE722CF682B60031FB21 /* iTermDoubleWidthCharacterCache.h */; };
 		A6FFAE752CF682D60031FB21 /* iTermDoubleWidthCharacterCache.m in Sources */ = {isa = PBXBuildFile; fileRef = A6FFAE742CF682D40031FB21 /* iTermDoubleWidthCharacterCache.m */; };
 		C6675EBC1C4FE96B0041173B /* iTermSelectorSwizzler.m in Sources */ = {isa = PBXBuildFile; fileRef = C6675EBB1C4FE96B0041173B /* iTermSelectorSwizzler.m */; };
+		CDCD9FF08FCE42F7A6963859 /* PillBackgroundGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7EA289FFE2BF4090A65931BA /* PillBackgroundGenerator.swift */; };
 		D3CE2D4E1A00936F0098ED99 /* PSMDarkTabStyle.h in Headers */ = {isa = PBXBuildFile; fileRef = D3CE2D4C1A00936F0098ED99 /* PSMDarkTabStyle.h */; };
 		DDF0FD65062916F70080EF74 /* iTermApplication.h in Headers */ = {isa = PBXBuildFile; fileRef = DDF0FD63062916F70080EF74 /* iTermApplication.h */; };
 		FB4CEC973C7E9235362E3F26 /* iTermRemotePreferences.h in Headers */ = {isa = PBXBuildFile; fileRef = FB4CECF4AC4392B21E87A07B /* iTermRemotePreferences.h */; };
@@ -6183,6 +6183,8 @@
 		7596379E2593AE0700E278CC /* iTerm2SandboxedWorker.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTerm2SandboxedWorker.m; sourceTree = "<group>"; };
 		759637A02593AE0700E278CC /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
 		759637A22593AE0700E278CC /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		7EA289FFE2BF4090A65931BA /* PillBackgroundGenerator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PillBackgroundGenerator.swift; sourceTree = "<group>"; };
+		7F3AA921DF1744D7BA890104 /* PillBackgroundRenderer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PillBackgroundRenderer.swift; sourceTree = "<group>"; };
 		8742065A0564169600CFC3F1 /* iTerm2.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = iTerm2.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		904AE312A0E0489899D9ECB8 /* MenuTips.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = MenuTips.xcassets; sourceTree = "<group>"; };
 		90A1E139186F9EA4003EC3E8 /* AppleScriptTest.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AppleScriptTest.h; sourceTree = "<group>"; };
@@ -7051,9 +7053,6 @@
 		A656E9921F99C5FB00158128 /* iTermSubpixelModelBuilder.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = iTermSubpixelModelBuilder.mm; path = Metal/Infrastructure/iTermSubpixelModelBuilder.mm; sourceTree = "<group>"; };
 		A656E9931F99C5FB00158128 /* iTermSubpixelModelBuilder.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = iTermSubpixelModelBuilder.h; path = Metal/Infrastructure/iTermSubpixelModelBuilder.h; sourceTree = "<group>"; };
 		A657D1A92BAFA95200A3B6C2 /* RectangleRenderer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RectangleRenderer.swift; sourceTree = "<group>"; };
-		7EA289FFE2BF4090A65931BA /* PillBackgroundGenerator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PillBackgroundGenerator.swift; sourceTree = "<group>"; };
-		7F3AA921DF1744D7BA890104 /* PillBackgroundRenderer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PillBackgroundRenderer.swift; sourceTree = "<group>"; };
-		E7E1E38CBCE5463DA81CC1CF /* ButtonPillInfo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ButtonPillInfo.swift; sourceTree = "<group>"; };
 		A657D1B02BAFAF6300A3B6C2 /* Rectangle.metal */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.metal; name = Rectangle.metal; path = Metal/Shaders/Rectangle.metal; sourceTree = "<group>"; };
 		A65871671D85E6700061CEEE /* PFMoveApplication.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = PFMoveApplication.m; path = LetsMove/PFMoveApplication.m; sourceTree = "<group>"; };
 		A65871681D85E6700061CEEE /* PFMoveApplication.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = PFMoveApplication.h; path = LetsMove/PFMoveApplication.h; sourceTree = "<group>"; };
@@ -9094,6 +9093,7 @@
 		DD57633605653C5F00F1905E /* iTerm2.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = iTerm2.plist; sourceTree = "<group>"; };
 		DDF0FD63062916F70080EF74 /* iTermApplication.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = iTermApplication.h; sourceTree = "<group>"; tabWidth = 4; };
 		DDF0FD64062916F70080EF74 /* iTermApplication.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; lineEnding = 0; path = iTermApplication.m; sourceTree = "<group>"; tabWidth = 4; xcLanguageSpecificationIdentifier = xcode.lang.objc; };
+		E7E1E38CBCE5463DA81CC1CF /* ButtonPillInfo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ButtonPillInfo.swift; sourceTree = "<group>"; };
 		E8A66F030272453F03A80106 /* iTermController.m */ = {isa = PBXFileReference; fileEncoding = 30; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; lineEnding = 0; path = iTermController.m; sourceTree = "<group>"; tabWidth = 4; xcLanguageSpecificationIdentifier = xcode.lang.objc; };
 		E8CF755F026DDA6303A80106 /* PTYScrollView.m */ = {isa = PBXFileReference; fileEncoding = 30; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; lineEnding = 0; path = PTYScrollView.m; sourceTree = "<group>"; tabWidth = 4; xcLanguageSpecificationIdentifier = xcode.lang.objc; };
 		E8CF7560026DDA6303A80106 /* PTYTask.m */ = {isa = PBXFileReference; fileEncoding = 30; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = PTYTask.m; sourceTree = "<group>"; tabWidth = 4; };

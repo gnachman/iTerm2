@@ -1078,7 +1078,6 @@ const BOOL ScreenCharIsNullOrWhitespace(const screen_char_t c) {
 
 - (void)setMetadata:(iTermMetadata)metadata {
     iTermImmutableMetadataRelease(_metadata);
-#warning TODO: Make sure this does not leak
     iTermMetadataRetain(metadata);
     _metadata = iTermMetadataMakeImmutable(metadata);
 }
