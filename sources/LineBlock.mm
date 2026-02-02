@@ -2084,6 +2084,97 @@ int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BO
     return -1;
 }
 
+// Search for a multi-line pattern starting at the given entry.
+// Returns a MutableResultRange if all lines of splitLines match consecutive raw lines
+// starting at entry, or nil if no match is found.
+- (MutableResultRange *)_searchMultiLineFromEntry:(int)entry
+                                       splitLines:(NSArray<NSString *> *)splitLines
+                                          options:(FindOptions)options
+                                             mode:(iTermFindMode)mode
+                                             skip:(int)skipped
+                                  multipleResults:(BOOL)multipleResults {
+    static const int MAX_SEARCHABLE_LINE_LENGTH = 30000000;
+    DLog(@"There are enough lines in the buffer to match the lines of substring.");
+    MutableResultRange *multiLineRange = nil;
+
+    // Match each line in the query in turn.
+    for (NSInteger i = 0; i < splitLines.count; i++) {
+        NSMutableArray* lineResults = [NSMutableArray arrayWithCapacity:1];
+        if (splitLines[i].length == 0) {
+            DLog(@"Every line matches an empty string.");
+            [lineResults addObject:[[ResultRange alloc] initWithPosition:0 length:0]];
+        } else {
+            DLog(@"Search the `%@`th line for the `%@`th line in the substring.", @(entry + i), @(i));
+            [self _findInRawLine:entry + i
+                          needle:splitLines[i]
+                         options:options
+                            mode:mode
+                            skip:skipped
+                          length:MIN(MAX_SEARCHABLE_LINE_LENGTH, [self _lineLength:entry + i])
+                 multipleResults:multipleResults
+                         results:lineResults];
+        }
+        if (lineResults.count == 0) {
+            DLog(@"No matches");
+            multiLineRange = nil;
+            break;
+        }
+        ResultRange *range = nil;
+        const int lineLength = [self lengthOfRawLine:entry + i];
+        if (i == 0) {
+            // For the first line of the query:
+            // If there were multiple results use the first one that extends to the end.
+            // Then a document of `aa\nb` can match a query of `a\nb`.
+            // There is a bug here that a regex query of `a*\nb` should have multiple
+            // matches in that document.
+            for (ResultRange *candidate in lineResults.reverseObjectEnumerator) {
+                if (candidate.position + candidate.length == lineLength) {
+                    DLog(@"Accept candidate %@", candidate);
+                    range = candidate;
+                    break;
+                }
+            }
+        } else {
+            // For lines of the query after the first:
+            // Pick a result that starts at 0 and has the greatest length;
+            range = [[lineResults filteredArrayUsingBlock:^BOOL(ResultRange *range) {
+                return range.position == 0;
+            }]
+                     maxWithBlock:^NSComparisonResult(ResultRange *lhs, ResultRange *rhs) {
+                return [@(lhs.length) compare:@(rhs.length)];
+            }];
+        }
+        if (!range) {
+            DLog(@"No match found.");
+            multiLineRange = nil;
+            break;
+        }
+        if (i == 0) {
+            DLog(@"This is the first line of the query.");
+            if (range.position + range.length != lineLength) {
+                DLog(@"The result did not extend to the end so it shouldn't match the newline.");
+                break;
+            }
+            DLog(@"Accept this result by initializing the range.");
+            multiLineRange = [range mutableCopy];
+        } else {
+            DLog(@"This is not the first line of the query");
+            const BOOL mustBeLast = (range.position + range.length) < lineLength;
+            if (mustBeLast && i + 1 < splitLines.count) {
+                DLog(@"The match does not extend to the end of the line and there is at least one more line after, so it doesn't match the newline.");
+                multiLineRange = nil;
+                break;
+            }
+            DLog(@"Accept this `%@>0`th line by extending the range.", @(i));
+            multiLineRange.length += range.length;
+        }
+    }
+    if (multiLineRange) {
+        DLog(@"We found a multi-line result %@", multiLineRange);
+    }
+    return multiLineRange;
+}
+
 - (void)findSubstring:(NSString *)substring
               options:(FindOptions)options
                  mode:(iTermFindMode)mode
@@ -2134,83 +2225,13 @@ includesPartialLastLine:(BOOL *)includesPartialLastLine {
             numberOfQueryLines = splitLines.count;
             if (entry + splitLines.count <= cll_entries) {
 #warning TODO: Support searching over multiple blocks
-                DLog(@"There are enough lines in the buffer to match the lines of substring.");
-                MutableResultRange *multiLineRange = nil;
-
-                // Match each line in the query in turn.
-                for (NSInteger i = 0; i < splitLines.count; i++) {
-                    NSMutableArray* lineResults = [NSMutableArray arrayWithCapacity:1];
-                    if (splitLines[i].length == 0) {
-                        DLog(@"Every line matches an empty string.");
-                        [lineResults addObject:[[ResultRange alloc] initWithPosition:0 length:0]];
-                    } else {
-                        DLog(@"Search the `%@`th line for the `%@`th line in the substring.", @(entry + i), @(i));
-                        [self _findInRawLine:entry + i
-                                      needle:splitLines[i]
-                                     options:options
-                                        mode:mode
-                                        skip:skipped
-                                      length:MIN(MAX_SEARCHABLE_LINE_LENGTH, [self _lineLength:entry + i])
-                             multipleResults:multipleResults
-                                     results:lineResults];
-                    }
-                    if (lineResults.count == 0) {
-                        DLog(@"No matches");
-                        multiLineRange = nil;
-                        break;
-                    }
-                    ResultRange *range = nil;
-                    const int lineLength = [self lengthOfRawLine:entry + i];
-                    if (i == 0) {
-                        // For the first line of the query:
-                        // If there were multiple results use the first one that extends to the end.
-                        // Then a document of `aa\nb` can match a query of `a\nb`.
-                        // There is a bug here that a regex query of `a*\nb` should have multiple
-                        // matches in that document.
-                        for (ResultRange *candidate in lineResults.reverseObjectEnumerator) {
-                            if (candidate.position + candidate.length == lineLength) {
-                                DLog(@"Accept candidate %@", candidate);
-                                range = candidate;
-                                break;
-                            }
-                        }
-                    } else {
-                        // For lines of the query after the first:
-                        // Pick a result that starts at 0 and has the greatest length;
-                        range = [[lineResults filteredArrayUsingBlock:^BOOL(ResultRange *range) {
-                            return range.position == 0;
-                        }]
-                                 maxWithBlock:^NSComparisonResult(ResultRange *lhs, ResultRange *rhs) {
-                            return [@(lhs.length) compare:@(rhs.length)];
-                        }];
-                    }
-                    if (!range) {
-                        DLog(@"No match found.");
-                        multiLineRange = nil;
-                        break;
-                    }
-                    if (i == 0) {
-                        DLog(@"This is the first line of the query.");
-                        if (range.position + range.length != lineLength) {
-                            DLog(@"The result did not extend to the end so it shouldn't match the newline.");
-                            break;
-                        }
-                        DLog(@"Accept this result by initializing the range.");
-                        multiLineRange = [range mutableCopy];
-                    } else {
-                        DLog(@"This is not the first line of the query");
-                        const BOOL mustBeLast = (range.position + range.length) < lineLength;
-                        if (mustBeLast && i + 1 < splitLines.count) {
-                            DLog(@"The match does not extend to the end of the line and there is at least one more line after, so it doesn't match the newline.");
-                            multiLineRange = nil;
-                            break;
-                        }
-                        DLog(@"Accept this `%@>0`th line by extending the range.", @(i));
-                        multiLineRange.length += range.length;
-                    }
-                }
+                MutableResultRange *multiLineRange = [self _searchMultiLineFromEntry:entry
+                                                                          splitLines:splitLines
+                                                                             options:options
+                                                                                mode:mode
+                                                                                skip:skipped
+                                                                     multipleResults:multipleResults];
                 if (multiLineRange) {
-                    DLog(@"We found a multi-line result %@", multiLineRange);
                     [newResults addObject:multiLineRange];
                 }
             }

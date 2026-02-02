@@ -650,6 +650,179 @@ class LineBufferTests: XCTestCase {
             XCTAssertEqual(count, 1)
         }
     }
+
+    // MARK: - Multi-line search across blocks
+
+    /// Tests multi-line search when the pattern spans two LineBlocks.
+    /// This test verifies a suspected bug: multi-line search fails to find
+    /// matches that cross block boundaries.
+    func testMultiLineSearchSpanningBlocks() {
+        let buffer = LineBuffer()
+        let width = Int32(80)
+
+        // Add a line that will be in the first block
+        let line1 = screenCharArrayWithDefaultStyle("first line", eol: EOL_HARD)
+        buffer.append(line1, width: width)
+
+        // Force the first block to be sealed, so subsequent lines go into a new block
+        buffer.forceSeal()
+
+        // Add a line that will be in the second block
+        let line2 = screenCharArrayWithDefaultStyle("second line", eol: EOL_HARD)
+        buffer.append(line2, width: width)
+
+        // Verify we have two blocks by checking that block at index 1 exists
+        // (testOnlyBlock will return the second block if forceSeal worked)
+        let _ = buffer.testOnlyBlock(at: 1)
+
+        // Search for a multi-line pattern that spans the block boundary
+        // The pattern "first line\nsecond" should match if multi-line search works across blocks
+        let context = FindContext()
+        buffer.prepareToSearch(for: "first line\nsecond",
+                               startingAt: buffer.firstPosition(),
+                               options: .optMultiLine,
+                               mode: .caseSensitiveSubstring,
+                               with: context)
+
+        // Search through the entire buffer
+        while context.status == .Searching {
+            buffer.findSubstring(context, stopAt: buffer.lastPosition())
+        }
+
+        // If the bug exists, the search will fail to find the match
+        // because the pattern spans two blocks.
+        // Expected: status should be .Matched if multi-line search works across blocks
+        // Actual (with bug): status will be .NotFound
+        XCTAssertEqual(context.status, .Matched,
+                       "Multi-line search should find patterns spanning block boundaries")
+
+        // Verify we have results and they're at the expected position
+        XCTAssertNotNil(context.results)
+        XCTAssertEqual(context.results?.count, 1, "Should have exactly one result")
+
+        if let results = context.results as? [ResultRange], results.count > 0 {
+            let xyRanges = buffer.convertPositions(results, withWidth: width)
+            XCTAssertEqual(xyRanges?.count, 1)
+            if let xyRange = xyRanges?.first {
+                XCTAssertEqual(xyRange.yStart, 0, "Match should start on line 0")
+                XCTAssertEqual(xyRange.xStart, 0, "Match should start at column 0")
+            }
+        }
+    }
+
+    /// Tests multi-line search when entire pattern is within a single block (should work).
+    func testMultiLineSearchWithinSingleBlock() {
+        let buffer = LineBuffer()
+        let width = Int32(80)
+
+        // Add two lines in the same block
+        let line1 = screenCharArrayWithDefaultStyle("first line", eol: EOL_HARD)
+        let line2 = screenCharArrayWithDefaultStyle("second line", eol: EOL_HARD)
+        buffer.append(line1, width: width)
+        buffer.append(line2, width: width)
+
+        // Search for a multi-line pattern within the same block
+        let context = FindContext()
+        buffer.prepareToSearch(for: "first line\nsecond",
+                               startingAt: buffer.firstPosition(),
+                               options: .optMultiLine,
+                               mode: .caseSensitiveSubstring,
+                               with: context)
+
+        // Search through the buffer
+        while context.status == .Searching {
+            buffer.findSubstring(context, stopAt: buffer.lastPosition())
+        }
+
+        // This should work since both lines are in the same block
+        XCTAssertEqual(context.status, .Matched,
+                       "Multi-line search should find patterns within a single block")
+
+        // Verify we have results and they're at the expected position
+        XCTAssertNotNil(context.results)
+        XCTAssertEqual(context.results?.count, 1, "Should have exactly one result")
+
+        if let results = context.results as? [ResultRange], results.count > 0 {
+            let xyRanges = buffer.convertPositions(results, withWidth: width)
+            XCTAssertEqual(xyRanges?.count, 1)
+            if let xyRange = xyRanges?.first {
+                XCTAssertEqual(xyRange.yStart, 0, "Match should start on line 0")
+                XCTAssertEqual(xyRange.xStart, 0, "Match should start at column 0")
+            }
+        }
+    }
+
+    /// Tests multi-line search spanning three blocks to verify the bug with more complex scenarios.
+    func testMultiLineSearchSpanningThreeBlocks() {
+        let buffer = LineBuffer()
+        let width = Int32(80)
+
+        // Add content to three separate blocks
+        let line1 = screenCharArrayWithDefaultStyle("alpha", eol: EOL_HARD)
+        buffer.append(line1, width: width)
+        buffer.forceSeal()
+
+        let line2 = screenCharArrayWithDefaultStyle("beta", eol: EOL_HARD)
+        buffer.append(line2, width: width)
+        buffer.forceSeal()
+
+        let line3 = screenCharArrayWithDefaultStyle("gamma", eol: EOL_HARD)
+        buffer.append(line3, width: width)
+
+        // Verify we have three blocks by checking that block at index 2 exists
+        let _ = buffer.testOnlyBlock(at: 2)
+
+        // Search for a pattern spanning the first two blocks
+        do {
+            let context = FindContext()
+            buffer.prepareToSearch(for: "alpha\nbeta",
+                                   startingAt: buffer.firstPosition(),
+                                   options: .optMultiLine,
+                                   mode: .caseSensitiveSubstring,
+                                   with: context)
+
+            while context.status == .Searching {
+                buffer.findSubstring(context, stopAt: buffer.lastPosition())
+            }
+
+            XCTAssertEqual(context.status, .Matched,
+                           "Multi-line search should find 'alpha\\nbeta' spanning blocks 1-2")
+        }
+
+        // Search for a pattern spanning the last two blocks
+        do {
+            let context = FindContext()
+            buffer.prepareToSearch(for: "beta\ngamma",
+                                   startingAt: buffer.firstPosition(),
+                                   options: .optMultiLine,
+                                   mode: .caseSensitiveSubstring,
+                                   with: context)
+
+            while context.status == .Searching {
+                buffer.findSubstring(context, stopAt: buffer.lastPosition())
+            }
+
+            XCTAssertEqual(context.status, .Matched,
+                           "Multi-line search should find 'beta\\ngamma' spanning blocks 2-3")
+        }
+
+        // Search for a pattern spanning all three blocks
+        do {
+            let context = FindContext()
+            buffer.prepareToSearch(for: "alpha\nbeta\ngamma",
+                                   startingAt: buffer.firstPosition(),
+                                   options: .optMultiLine,
+                                   mode: .caseSensitiveSubstring,
+                                   with: context)
+
+            while context.status == .Searching {
+                buffer.findSubstring(context, stopAt: buffer.lastPosition())
+            }
+
+            XCTAssertEqual(context.status, .Matched,
+                           "Multi-line search should find 'alpha\\nbeta\\ngamma' spanning all 3 blocks")
+        }
+    }
 }
 
 extension LineBuffer {

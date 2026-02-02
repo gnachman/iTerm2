@@ -194,6 +194,17 @@ typedef struct {
 
 - (LineBlockLocation)locationOfRawLineForWidth:(int)width
                                        lineNum:(int *)lineNum;
+
+// Search for a multi-line pattern starting at the given entry.
+// Returns a MutableResultRange if all lines of splitLines match consecutive raw lines
+// starting at entry, or nil if no match is found.
+- (MutableResultRange * _Nullable)_searchMultiLineFromEntry:(int)entry
+                                                 splitLines:(NSArray<NSString *> *)splitLines
+                                                    options:(FindOptions)options
+                                                       mode:(iTermFindMode)mode
+                                                       skip:(int)skipped
+                                            multipleResults:(BOOL)multipleResults;
+
 - (int)_wrappedLineWithWrapWidth:(int)width
                         location:(LineBlockLocation)location
                          lineNum:(int *)lineNum
