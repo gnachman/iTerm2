@@ -630,7 +630,6 @@ private class TokenExecutorImpl {
         }
         var quitVectorEarly = false
         var vectorHasNext = true
-        let myObjectIdentifier = ObjectIdentifier(self)
         while !isPaused && !quitVectorEarly && vectorHasNext {
             if gDebugLogging.boolValue {
                 DLog("continuing to next token")
