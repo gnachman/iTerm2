@@ -122,13 +122,17 @@ class iTermBrowserGateway: NSObject {
     //   .other -> Abort open
     @objc
     static func upsell() -> iTermTriState {
-        let selection = iTermWarning.show(withTitle: "iTerm2 can display web pages! But first you must download the Browser Plugin.",
-                                          actions: ["Download", "Use System Browser", "Cancel"],
-                                          accessory: nil,
-                                          identifier: upsellWarningIdentifier,
-                                          silenceable: .kiTermWarningTypePermanentlySilenceable,
-                                          heading: "Plugin Required",
-                                          window: nil)
+        // Only "Use System Browser" should be remembered. Remembering "Download"
+        // would cause an infinite loop since the plugin would still not be installed.
+        // Remembering "Cancel" is also not useful.
+        let warning = iTermWarning()
+        warning.title = "iTerm2 can display web pages! But first you must download the Browser Plugin."
+        warning.actionLabels = ["Download", "Use System Browser", "Cancel"]
+        warning.identifier = upsellWarningIdentifier
+        warning.warningType = .kiTermWarningTypePermanentlySilenceable
+        warning.heading = "Plugin Required"
+        warning.doNotRememberLabels = ["Download", "Cancel"]
+        let selection = warning.runModal()
         switch selection {
         case .kiTermWarningSelection0:
             cached.expire()

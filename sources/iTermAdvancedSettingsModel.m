@@ -721,6 +721,7 @@ DEFINE_BOOL(noSyncSuppressSendSignal, NO, SECTION_WARNINGS @"Suppress warning ab
 DEFINE_BOOL(noSyncConfirmRemoveAnnotation, NO, SECTION_WARNINGS @"Suppress confirmation to remove annotation?");
 DEFINE_SETTABLE_BOOL(noSyncDisableOpenURL, NoSyncDisableOpenURL, NO, SECTION_WARNINGS @"Disable control sequence to open URLs?");
 DEFINE_SETTABLE_BOOL(noSyncOpenLinksInApp, NoSyncOpenLinksInApp, NO, SECTION_WARNINGS @"Open links using the in-app browser?");
+DEFINE_SETTABLE_BOOL(noSyncBrowserUpsell, NoSyncBrowserUpsell, NO, SECTION_WARNINGS @"Suppress the browser plugin upsell when clicking links?");
 
 #pragma mark Pasteboard
 
