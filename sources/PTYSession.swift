@@ -505,7 +505,6 @@ extension PTYSession {
             "The contents of the shell prompt could not be provided because it appears the session is not currently at a prompt.")
             return
         }
-        #warning("TODO: Test this")
         try completion(currentCommandUpToCursor, "Current command provided to AI.")
 
     }
