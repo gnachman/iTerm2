@@ -4039,6 +4039,17 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
 // Main thread
 - (void)taskDidRegister:(PTYTask *)task {
     [self updateTTYSize];
+
+    // Wire up backpressure integration for dispatch sources (fairness scheduler only)
+    if ([iTermAdvancedSettingsModel useFairnessScheduler]) {
+        iTermTokenExecutor *executor = _screen.mutableState.tokenExecutor;
+        task.tokenExecutor = executor;
+
+        __weak PTYTask *weakTask = task;
+        executor.backpressureReleaseHandler = ^{
+            [weakTask updateReadSourceState];
+        };
+    }
 }
 
 - (void)tmuxDidDisconnect {
