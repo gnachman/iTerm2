@@ -435,14 +435,15 @@ static BOOL iTermAPIHelperLastApplescriptAuthRequiredSetting;
     }
     valueForLastWarning = actualContents;
 
-    const iTermWarningSelection selection =
-    [iTermWarning showWarningWithTitle:@"The location of your Application Support directory appears to have moved or its contents have changed unexpectedly. As a precaution, the authentication mechanism for Python API scripts for iTerm2 has been reverted to always require Automation permission."
-                               actions:@[ @"OK", @"Reveal Preference" ]
-                             accessory:nil
-                            identifier:@"NoSyncAppSupportMoved"
-                           silenceable:kiTermWarningTypePermanentlySilenceable
-                               heading:@"Python API Permissions Reset"
-                                window:nil];
+    // "Reveal Preference" is a one-time navigation action and shouldn't be remembered.
+    iTermWarning *warning = [[iTermWarning alloc] init];
+    warning.title = @"The location of your Application Support directory appears to have moved or its contents have changed unexpectedly. As a precaution, the authentication mechanism for Python API scripts for iTerm2 has been reverted to always require Automation permission.";
+    warning.actionLabels = @[ @"OK", @"Reveal Preference" ];
+    warning.identifier = @"NoSyncAppSupportMoved";
+    warning.warningType = kiTermWarningTypePermanentlySilenceable;
+    warning.heading = @"Python API Permissions Reset";
+    warning.doNotRememberLabels = @[ @"Reveal Preference" ];
+    const iTermWarningSelection selection = [warning runModal];
     if (selection == kiTermWarningSelection1) {
         [[PreferencePanel sharedInstance] openToPreferenceWithKey:kPreferenceKeyAPIAuthentication];
     }

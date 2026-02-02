@@ -9340,14 +9340,15 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 
 - (void)tmuxGatewayDidTimeOutDuringInitialization:(BOOL)duringInitialization {
     if (duringInitialization) {
-        const iTermWarningSelection selection =
-        [iTermWarning showWarningWithTitle:@"It’s taking a long time for tmux to respond. If this is a old or funky system it might expect newline rather than carriage return to end commands. You can adjust the line terminator used by tmux integration in Settings."
-                                   actions:@[ @"OK", @"Reveal Setting" ]
-                                 accessory:nil
-                                identifier:@"NoSyncTmuxHung"
-                               silenceable:kiTermWarningTypePermanentlySilenceable
-                                   heading:@"Slow tmux Response"
-                                    window:nil];
+        // "Reveal Setting" is a one-time navigation action and shouldn't be remembered.
+        iTermWarning *warning = [[iTermWarning alloc] init];
+        warning.title = @"It's taking a long time for tmux to respond. If this is a old or funky system it might expect newline rather than carriage return to end commands. You can adjust the line terminator used by tmux integration in Settings.";
+        warning.actionLabels = @[ @"OK", @"Reveal Setting" ];
+        warning.identifier = @"NoSyncTmuxHung";
+        warning.warningType = kiTermWarningTypePermanentlySilenceable;
+        warning.heading = @"Slow tmux Response";
+        warning.doNotRememberLabels = @[ @"Reveal Setting" ];
+        const iTermWarningSelection selection = [warning runModal];
         if (selection == 1) {
             [self revealProfileSettingWithKey:KEY_TMUX_NEWLINE];
         }

@@ -535,12 +535,14 @@ static NSDictionary *iTermRemotePreferencesSave(NSDictionary *myDict, NSString *
                                   @"Settings have changed. Copy them to %@?",
                                   [self customFolderOrURL]];
 
-            iTermWarningSelection selection =
-                [iTermWarning showWarningWithTitle:theTitle
-                                           actions:@[ @"Copy", @"Lose Changes" ]
-                                        identifier:@"NoSyncNeverRemindPrefsChangesLostForFile"
-                                       silenceable:kiTermWarningTypePermanentlySilenceable
-                                            window:nil];
+            // "Lose Changes" is destructive and shouldn't be remembered.
+            iTermWarning *warning = [[iTermWarning alloc] init];
+            warning.title = theTitle;
+            warning.actionLabels = @[ @"Copy", @"Lose Changes" ];
+            warning.identifier = @"NoSyncNeverRemindPrefsChangesLostForFile";
+            warning.warningType = kiTermWarningTypePermanentlySilenceable;
+            warning.doNotRememberLabels = @[ @"Lose Changes" ];
+            iTermWarningSelection selection = [warning runModal];
             if (selection == kiTermWarningSelection0) {
                 DLog(@"Save changes on quit");
                 [self saveLocalUserDefaultsToRemotePrefs];

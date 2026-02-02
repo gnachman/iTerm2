@@ -301,14 +301,16 @@ NS_ASSUME_NONNULL_BEGIN
         return;
     }
     [alreadyFound addObject:file];
-    const iTermWarningSelection selection =
-    [iTermWarning showWarningWithTitle:[NSString stringWithFormat:@"A script archive named “%@” was found in the Scripts directory. Would you like to install it?", file.lastPathComponent]
-                               actions:@[ @"OK", @"Cancel", @"Move to Trash" ]
-                             accessory:nil
-                            identifier:@"NoSyncInstallScriptArchive"
-                           silenceable:kiTermWarningTypeTemporarilySilenceable
-                               heading:@"Install Script Archive?"
-                                window:nil];
+    // "Move to Trash" should not be remembered - silently trashing future
+    // script archives without prompting would be surprising.
+    iTermWarning *warning = [[iTermWarning alloc] init];
+    warning.title = [NSString stringWithFormat:@"A script archive named “%@” was found in the Scripts directory. Would you like to install it?", file.lastPathComponent];
+    warning.actionLabels = @[ @"OK", @"Cancel", @"Move to Trash" ];
+    warning.identifier = @"NoSyncInstallScriptArchive";
+    warning.warningType = kiTermWarningTypeTemporarilySilenceable;
+    warning.heading = @"Install Script Archive?";
+    warning.doNotRememberLabels = @[ @"Move to Trash", @"Cancel" ];
+    const iTermWarningSelection selection = [warning runModal];
     NSURL *url = [NSURL fileURLWithPath:file];
     switch (selection) {
         case kiTermWarningSelection0: {
@@ -648,13 +650,15 @@ NS_ASSUME_NONNULL_BEGIN
         return;
     }
     if ([[NSFileManager defaultManager] itemIsDirectory:fullPath]) {
-        iTermWarningSelection selection = [iTermWarning showWarningWithTitle:[NSString stringWithFormat:@"The script “%@” is malformed.", fullPath.lastPathComponent]
-                                                                     actions:@[ @"OK", @"Reveal" ]
-                                                                   accessory:nil
-                                                                  identifier:@"NoSyncScriptMalformed"
-                                                                 silenceable:kiTermWarningTypeTemporarilySilenceable
-                                                                     heading:@"Cannot Run Script"
-                                                                      window:nil];
+        // "Reveal" is a one-time Finder action and shouldn't be remembered.
+        iTermWarning *warning = [[iTermWarning alloc] init];
+        warning.title = [NSString stringWithFormat:@"The script “%@” is malformed.", fullPath.lastPathComponent];
+        warning.actionLabels = @[ @"OK", @"Reveal" ];
+        warning.identifier = @"NoSyncScriptMalformed";
+        warning.warningType = kiTermWarningTypeTemporarilySilenceable;
+        warning.heading = @"Cannot Run Script";
+        warning.doNotRememberLabels = @[ @"Reveal" ];
+        iTermWarningSelection selection = [warning runModal];
         if (selection == kiTermWarningSelection1) {
             [[NSWorkspace sharedWorkspace] activateFileViewerSelectingURLs:@[ [NSURL fileURLWithPath:fullPath] ]];
             return;
@@ -822,11 +826,14 @@ NS_ASSUME_NONNULL_BEGIN
         app = [[NSFileManager defaultManager] displayNameAtPath:appURL.path];
     }
     if (app) {
-        iTermWarningSelection selection = [iTermWarning showWarningWithTitle:[NSString stringWithFormat:@"Open new script in %@?", app]
-                                                                     actions:@[ @"OK", @"Show in Finder" ]
-                                                                  identifier:@"NoSyncOpenNewPythonScriptInDefaultEditor"
-                                                                 silenceable:kiTermWarningTypePermanentlySilenceable
-                                                                      window:nil];
+        // "Show in Finder" is a one-time navigation action and shouldn't be remembered.
+        iTermWarning *warning = [[iTermWarning alloc] init];
+        warning.title = [NSString stringWithFormat:@"Open new script in %@?", app];
+        warning.actionLabels = @[ @"OK", @"Show in Finder" ];
+        warning.identifier = @"NoSyncOpenNewPythonScriptInDefaultEditor";
+        warning.warningType = kiTermWarningTypePermanentlySilenceable;
+        warning.doNotRememberLabels = @[ @"Show in Finder" ];
+        iTermWarningSelection selection = [warning runModal];
         if (selection == kiTermWarningSelection0) {
             [[NSWorkspace sharedWorkspace] openURL:[NSURL fileURLWithPath:destinationTemplatePath]];
             return;
