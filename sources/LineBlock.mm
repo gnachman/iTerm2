@@ -2116,8 +2116,7 @@ int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BO
         }
         if (lineResults.count == 0) {
             DLog(@"No matches");
-            multiLineRange = nil;
-            break;
+            return nil;
         }
         ResultRange *range = nil;
         const int lineLength = [self lengthOfRawLine:entry + i];
@@ -2146,14 +2145,13 @@ int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BO
         }
         if (!range) {
             DLog(@"No match found.");
-            multiLineRange = nil;
-            break;
+            return nil;
         }
         if (i == 0) {
             DLog(@"This is the first line of the query.");
             if (range.position + range.length != lineLength) {
                 DLog(@"The result did not extend to the end so it shouldn't match the newline.");
-                break;
+                return nil;
             }
             DLog(@"Accept this result by initializing the range.");
             multiLineRange = [range mutableCopy];
@@ -2162,8 +2160,7 @@ int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BO
             const BOOL mustBeLast = (range.position + range.length) < lineLength;
             if (mustBeLast && i + 1 < splitLines.count) {
                 DLog(@"The match does not extend to the end of the line and there is at least one more line after, so it doesn't match the newline.");
-                multiLineRange = nil;
-                break;
+                return nil;
             }
             DLog(@"Accept this `%@>0`th line by extending the range.", @(i));
             multiLineRange.length += range.length;
