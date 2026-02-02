@@ -76,6 +76,9 @@ class KeyActionSequenceTableViewController: NSObject {
                                                            parameter: "",
                                                            escaping: .none,
                                                            applyMode: .currentSession)
+        guard let replacement else {
+            return
+        }
         let row = tableView.selectedRow
         precondition(row >= 0 && row < _actions.count)
         _actions[row] = replacement
@@ -103,6 +106,9 @@ class KeyActionSequenceTableViewController: NSObject {
                                                       parameter: "",
                                                       escaping: .none,
                                                       applyMode: .currentSession)
+        guard let action else {
+            return
+        }
         let row = insertAfter + 1
         _actions.insert(action, at: row)
         delegate?.keyActionSequenceTableViewControllerDidChange(self, actions: _actions)
