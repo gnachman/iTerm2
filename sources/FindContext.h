@@ -94,10 +94,6 @@ typedef NS_ENUM(NSInteger, FindContextStatus) {
 // needed to continue the search on the next block.
 @property(nonatomic, strong, nullable) LineBlockMultiLineSearchState *multiLineSearchState;
 
-// Number of results that came from cross-block matches (already have global positions).
-// LineBuffer uses this to skip position adjustment for these results.
-@property(nonatomic) NSInteger crossBlockResultCount;
-
 - (void)copyFromFindContext:(FindContext *)other;
 
 - (void)reset;

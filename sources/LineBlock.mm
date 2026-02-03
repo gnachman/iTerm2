@@ -2297,9 +2297,23 @@ crossBlockResultCount:(NSInteger *)crossBlockResultCount {
             if (backward) {
                 // First query line is at entry continuationEntry - (splitLines.count - 1 - priorState.queryLineIndex)
                 int firstLineEntry = continuationEntry - ((int)splitLines.count - 1 - (int)priorState.queryLineIndex);
+                ITAssertWithMessage(firstLineEntry >= _firstEntry,
+                                    @"firstLineEntry=%d < _firstEntry=%d", firstLineEntry, _firstEntry);
                 state.result->position += [self _lineRawOffset:firstLineEntry];
             }
             [results addObject:state.result];
+            // Check if this cross-block match touches the partial last line.
+            if (is_partial) {
+                if (!backward) {
+                    int lastMatchedEntry = _firstEntry + ((int)splitLines.count - (int)priorState.queryLineIndex - 1);
+                    if (lastMatchedEntry == cll_entries - 1) {
+                        *includesPartialLastLine = YES;
+                    }
+                } else {
+                    // Backward continuation always starts at the last entry (cll_entries - 1).
+                    *includesPartialLastLine = YES;
+                }
+            }
             if (!multipleResults) {
                 return;
             }
@@ -2365,6 +2379,8 @@ crossBlockResultCount:(NSInteger *)crossBlockResultCount {
             } else if (continuationState && *continuationState == nil) {
                 // Not enough lines in this block - try to start a partial match that may continue
                 // on the next block. Only do this if we don't already have a pending continuation.
+                // At most one continuation is ever needed because if entry E doesn't have enough
+                // lines, all subsequent entries (E+dir) have even fewer remaining lines in this block.
                 state = [self _searchMultiLineFromEntry:entry
                                             splitLines:splitLines
                                                options:options
@@ -2385,6 +2401,16 @@ crossBlockResultCount:(NSInteger *)crossBlockResultCount {
                             positionOffset = line_raw_offset;
                         }
                         state.partialResult->position += positionOffset;
+                    }
+                    // Track partial last line: for forward search the match
+                    // extended to the end of the block (that's why it needs
+                    // continuation). For backward, only if we started at the last entry.
+                    if (is_partial) {
+                        if (!(options & FindOptBackwards)) {
+                            *includesPartialLastLine = YES;
+                        } else if (entry == cll_entries - 1) {
+                            *includesPartialLastLine = YES;
+                        }
                     }
                     *continuationState = state;
                     return;

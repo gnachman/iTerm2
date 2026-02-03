@@ -1118,6 +1118,41 @@ class LineBufferTests: XCTestCase {
                            "Multi-line search should find 'alpha\\nbeta\\ngamma' spanning all 3 blocks")
         }
     }
+
+    /// Tests that includesPartialLastLine is set when a cross-block multi-line
+    /// match extends to the partial (non-hard-EOL) last line of the last block.
+    func testMultiLineSearchSpanningBlocksSetsIncludesPartialLastLine() {
+        let buffer = LineBuffer()
+        let width = Int32(80)
+
+        // Block 1: hard EOL line
+        buffer.append(screenCharArrayWithDefaultStyle("first line", eol: EOL_HARD), width: width)
+        buffer.forceSeal()
+
+        // Block 2: soft EOL line (partial — no trailing newline)
+        buffer.append(screenCharArrayWithDefaultStyle("second", eol: EOL_SOFT), width: width)
+
+        // Verify two blocks
+        let _ = buffer.testOnlyBlock(at: 1)
+
+        // Search for a multi-line pattern that spans both blocks and includes
+        // the partial last line of block 2.
+        let context = FindContext()
+        buffer.prepareToSearch(for: "first line\nsecond",
+                               startingAt: buffer.firstPosition(),
+                               options: .optMultiLine,
+                               mode: .caseSensitiveSubstring,
+                               with: context)
+
+        while context.status == .Searching {
+            buffer.findSubstring(context, stopAt: buffer.lastPosition())
+        }
+
+        XCTAssertEqual(context.status, .Matched,
+                       "Should find 'first line\\nsecond' spanning blocks")
+        XCTAssertTrue(context.includesPartialLastLine,
+                      "includesPartialLastLine should be true when cross-block match touches partial last line")
+    }
 }
 
 extension LineBuffer {

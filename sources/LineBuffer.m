@@ -1384,6 +1384,9 @@ NS_INLINE int TotalNumberOfRawLines(LineBuffer *self) {
         NSInteger resultIndex = 0;
         for (ResultRange* range in context.results) {
             // Skip position adjustment for cross-block results (they already have global positions).
+            // This relies on cross-block results being at the beginning of context.results,
+            // which is guaranteed because the continuation handler in findSubstring: appends
+            // them before the main search loop runs.
             if (resultIndex >= crossBlockResultCount) {
                 range->position += blockPosition;
             }
