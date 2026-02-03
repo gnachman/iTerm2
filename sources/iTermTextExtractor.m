@@ -271,7 +271,7 @@ const NSInteger kLongMaximumWordLength = 100000;
     wordExtractor.dataSource = self;
     VT100GridWindowedRange range = [wordExtractor windowedRange];
     if (bidi) {
-#warning TODO: This is wrong. When a word wraps, we need to select characters from the left side of the start line and the right side of the end line. Selections don't know how to do this currently.
+        // TODO: This is wrong. When a word wraps, we need to select characters from the left side of the start line and the right side of the end line. Selections don't know how to do this currently.
         return [self visualWindowedRangeForLogical:range];
     }
     return range;

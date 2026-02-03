@@ -75,6 +75,10 @@ NS_ASSUME_NONNULL_BEGIN
 - (VT100GridAbsCoord)absCoordForButton:(iTermTerminalButton *)button API_AVAILABLE(macos(11));
 - (iTermBidiDisplayInfo * _Nullable)drawingHelperBidiInfoForLine:(int)line;
 
+// Returns YES if the given line is the first line of a LineBuffer block.
+// Used for debugging block boundaries.
+- (BOOL)drawingHelperIsFirstLineOfBlock:(int)line;
+
 @end
 
 NS_ASSUME_NONNULL_END

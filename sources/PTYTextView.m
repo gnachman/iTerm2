@@ -1227,6 +1227,38 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
     return NO;
 }
 
+// Find the button that should handle a click at the given point if it's within a pill container
+- (iTermTerminalButton *)buttonInPillContainerAtPoint:(NSPoint)point {
+    NSArray<iTermButtonPillInfo *> *pillInfos = [_drawingHelper buttonPillInfos];
+    for (iTermButtonPillInfo *pillInfo in pillInfos) {
+        // Expand the hit test rect vertically to cover the full button area
+        // The visual pill rect may be smaller for alignment purposes
+        NSRect hitTestRect = NSInsetRect(pillInfo.rect, 0, -4);
+        if (!NSPointInRect(point, hitTestRect)) {
+            continue;
+        }
+        // Point is in this pill container. Find the appropriate button based on x position.
+        NSArray<iTermTerminalButton *> *buttons = pillInfo.buttons;
+        if (buttons.count == 0) {
+            continue;
+        }
+        if (buttons.count == 1) {
+            return buttons.firstObject;
+        }
+        // Find which button region contains this x coordinate using divider positions
+        CGFloat relativeX = point.x - pillInfo.rect.origin.x;
+        NSArray<NSNumber *> *dividers = pillInfo.dividerXPositions;
+        for (NSUInteger i = 0; i < dividers.count; i++) {
+            if (relativeX < dividers[i].doubleValue) {
+                return buttons[i];
+            }
+        }
+        // Past all dividers, return the last button
+        return buttons.lastObject;
+    }
+    return nil;
+}
+
 // If this changes also update -wantsMouseMovementEvents.
 - (void)mouseMoved:(NSEvent *)event {
     DLog(@"mouseMoved:%@", event);
@@ -5493,6 +5525,10 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
     return [self.dataSource bidiInfoForLine:line];
 }
 
+- (BOOL)drawingHelperIsFirstLineOfBlock:(int)line {
+    return [self.dataSource isFirstLineOfBlock:line];
+}
+
 - (VT100GridAbsCoord)absCoordForButton:(iTermTerminalButton *)button API_AVAILABLE(macos(11)) {
     if (!button.mark) {
         NSInteger y = button.transientAbsY;
@@ -7165,38 +7201,6 @@ dragSemanticHistoryWithEvent:(NSEvent *)event
     }
     DLog(@"TextView handling mouseDown: not in anything");
     return NO;
-}
-
-// Find the button that should handle a click at the given point if it's within a pill container
-- (iTermTerminalButton *)buttonInPillContainerAtPoint:(NSPoint)point {
-    NSArray<iTermButtonPillInfo *> *pillInfos = [_drawingHelper buttonPillInfos];
-    for (iTermButtonPillInfo *pillInfo in pillInfos) {
-        // Expand the hit test rect vertically to cover the full button area
-        // The visual pill rect may be smaller for alignment purposes
-        NSRect hitTestRect = NSInsetRect(pillInfo.rect, 0, -4);
-        if (!NSPointInRect(point, hitTestRect)) {
-            continue;
-        }
-        // Point is in this pill container. Find the appropriate button based on x position.
-        NSArray<iTermTerminalButton *> *buttons = pillInfo.buttons;
-        if (buttons.count == 0) {
-            continue;
-        }
-        if (buttons.count == 1) {
-            return buttons.firstObject;
-        }
-        // Find which button region contains this x coordinate using divider positions
-        CGFloat relativeX = point.x - pillInfo.rect.origin.x;
-        NSArray<NSNumber *> *dividers = pillInfo.dividerXPositions;
-        for (NSUInteger i = 0; i < dividers.count; i++) {
-            if (relativeX < dividers[i].doubleValue) {
-                return buttons[i];
-            }
-        }
-        // Past all dividers, return the last button
-        return buttons.lastObject;
-    }
-    return nil;
 }
 
 - (BOOL)mouseHandlerMouseUp:(NSEvent *)event {

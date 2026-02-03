@@ -518,6 +518,7 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
                    virtualOffset:virtualOffset];
     [self drawMarksWithBackgroundRunArrays:backgroundRunArrays
                              virtualOffset:virtualOffset];
+    [self drawBlockBoundariesInRect:boundingRect virtualOffset:virtualOffset];
 
     // If the IME is in use, draw its contents over top of the "real" screen
     // contents.
@@ -1118,6 +1119,27 @@ const CGFloat commandRegionOutlineThickness = 2.0;
 
     rect.origin.y += _cellSize.height - 1;
     iTermRectFillUsingOperation(rect, NSCompositingOperationSourceOver, virtualOffset);
+}
+
+- (void)drawBlockBoundariesInRect:(NSRect)bgRect virtualOffset:(CGFloat)virtualOffset {
+    if (![iTermAdvancedSettingsModel showBlockBoundaries]) {
+        return;
+    }
+    const VT100GridCoordRange coordRange = [self safeCoordRange:[self coordRangeForRect:bgRect]];
+
+    // Use a contrasting color for the boundary line
+    [[NSColor redColor] set];
+
+    for (int line = coordRange.start.y; line <= coordRange.end.y; line++) {
+        if ([self.delegate drawingHelperIsFirstLineOfBlock:line]) {
+            CGFloat y = line * _cellSize.height;
+            NSRect rect = NSMakeRect(0,
+                                     y,
+                                     _scrollViewDocumentVisibleRect.size.width,
+                                     1);
+            iTermRectFillUsingOperation(rect, NSCompositingOperationSourceOver, virtualOffset);
+        }
+    }
 }
 
 + (NSRect)frameForMarkContainedInRect:(NSRect)container

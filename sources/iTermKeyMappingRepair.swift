@@ -90,7 +90,7 @@ class iTermKeyMappingRepair: NSObject {
                 return keystrokeString
             }
             let action = iTermKeyBindingAction.withDictionary(actionDict)
-            let actionName = action.displayName ?? "Unknown action"
+            let actionName = action?.displayName ?? "Unknown action"
             return "\(keystrokeString): \(actionName)"
         }
 

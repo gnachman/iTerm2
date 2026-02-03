@@ -1482,9 +1482,9 @@ fileprivate class FakeSession: NSObject, VT100ScreenDelegate {
     }
 
     func screenOffscreenCommandLineShouldBeVisibleForCurrentCommand() -> Bool {
-        false
+        return false
     }
 
-    func screenUpdateBlock(_ blockID: String, action: iTermUpdateBlockAction) {
+    func screenUpdateBlock(_ blockID: String?, action: iTermUpdateBlockAction) {
     }
 }

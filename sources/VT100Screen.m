@@ -458,6 +458,10 @@ additionalWordCharacters:(NSString *)additionalWordCharacters
     return [_state metadataOnLine:lineNumber];
 }
 
+- (BOOL)isFirstLineOfBlock:(int)lineNumber {
+    return [_state isFirstLineOfBlock:lineNumber];
+}
+
 - (iTermImmutableMetadata)metadataAtScreenIndex:(int)index {
     return [_state.currentGrid immutableMetadataAtLineNumber:index];
 }

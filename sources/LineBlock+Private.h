@@ -194,6 +194,23 @@ typedef struct {
 
 - (LineBlockLocation)locationOfRawLineForWidth:(int)width
                                        lineNum:(int *)lineNum;
+
+// Search for a multi-line pattern starting at the given entry.
+// Returns a state object indicating the result:
+// - nil: no match was found starting at this entry.
+// - Non-nil with state.result set: a complete match was found.
+// - Non-nil with state.needsContinuation: ran out of lines, continue on next block.
+//
+// To resume a search on a subsequent block, pass in the returned state as priorState.
+// For a fresh search, pass nil for priorState.
+- (LineBlockMultiLineSearchState * _Nullable)_searchMultiLineFromEntry:(int)entry
+                                                            splitLines:(NSArray<NSString *> *)splitLines
+                                                               options:(FindOptions)options
+                                                                  mode:(iTermFindMode)mode
+                                                                  skip:(int)skipped
+                                                       multipleResults:(BOOL)multipleResults
+                                                            priorState:(LineBlockMultiLineSearchState * _Nullable)priorState;
+
 - (int)_wrappedLineWithWrapWidth:(int)width
                         location:(LineBlockLocation)location
                          lineNum:(int *)lineNum
