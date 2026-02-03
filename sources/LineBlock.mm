@@ -2144,12 +2144,20 @@ int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BO
             DLog(@"Every line matches an empty string.");
             [lineResults addObject:[[ResultRange alloc] initWithPosition:0 length:0]];
         } else {
-            DLog(@"Search raw line %d for query line %@ ('%@').", rawLineIndex, @(queryLineIndex), queryLine);
+            // Only apply the skip restriction to the first entry of a fresh search.
+            // For subsequent entries in a multi-line match (and for all entries in a
+            // continuation from a prior block), search the entire line. The skip value
+            // constrains _findInRawLine via position filtering (backward: position <= skip,
+            // forward: position >= skip), so we need to use an unrestricted value for
+            // non-initial entries. Without this, a continuation with skip=0 would filter
+            // out matches at non-zero positions in backward search.
+            const int lineSkip = (i == startIndex && priorState == nil) ? skipped : (backward ? [self _lineLength:rawLineIndex] : 0);
+            DLog(@"Search raw line %d for query line %@ ('%@'). skip=%d", rawLineIndex, @(queryLineIndex), queryLine, lineSkip);
             [self _findInRawLine:rawLineIndex
                           needle:queryLine
                          options:options
                             mode:mode
-                            skip:skipped
+                            skip:lineSkip
                           length:MIN(MAX_SEARCHABLE_LINE_LENGTH, [self _lineLength:rawLineIndex])
                  multipleResults:multipleResults
                          results:lineResults];
@@ -2379,6 +2387,7 @@ crossBlockResultCount:(NSInteger *)crossBlockResultCount {
                         state.partialResult->position += positionOffset;
                     }
                     *continuationState = state;
+                    return;
                 }
             }
         } else {

@@ -625,6 +625,10 @@ fileprivate class Screen: NSObject, iTermSearchEngineDataSource, iTermTextDataSo
     func metadata(onLine lineNumber: Int32) -> iTermImmutableMetadata {
         return iTermImmutableMetadataDefault()
     }
+
+    func isFirstLine(ofBlock lineNumber: Int32) -> Bool {
+        return false
+    }
 }
 
 

@@ -763,6 +763,13 @@ static int RawNumLines(LineBuffer* buffer, int width) {
     return [block bidiInfoForLineNumber:remainder width:width];
 }
 
+- (BOOL)isFirstLineOfBlock:(int)lineNumber width:(int)width {
+    int remainder = 0;
+    LineBlock *block = [_lineBlocks blockContainingLineNumber:lineNumber
+                                                        width:width
+                                                    remainder:&remainder];
+    return block != nil && remainder == 0;
+}
 
 - (iTermImmutableMetadata)metadataForRawLineWithWrappedLineNumber:(int)lineNum width:(int)width {
     int remainder = 0;

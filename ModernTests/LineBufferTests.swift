@@ -882,6 +882,172 @@ class LineBufferTests: XCTestCase {
     }
 
     /// Tests multi-line search spanning three blocks to verify the bug with more complex scenarios.
+    /// Tests multi-line search where the first query line partially matches a line
+    /// and the match spans a block boundary. The query "8\n19\n20\n21\n22" should match
+    /// within lines "18", "19", "20", "21", "22" with a block boundary between "20" and "21".
+    func testMultiLineSearchPartialFirstLineSpanningBlocks() {
+        let buffer = LineBuffer()
+        let width = Int32(80)
+
+        // Add lines 18-20 in first block
+        for text in ["18", "19", "20"] {
+            buffer.append(screenCharArrayWithDefaultStyle(text, eol: EOL_HARD), width: width)
+        }
+        buffer.forceSeal()
+
+        // Add lines 21-22 in second block
+        for text in ["21", "22"] {
+            buffer.append(screenCharArrayWithDefaultStyle(text, eol: EOL_HARD), width: width)
+        }
+
+        // Verify two blocks
+        let _ = buffer.testOnlyBlock(at: 1)
+
+        // Search for "8\n19\n20\n21\n22" — the "8" should match the end of "18"
+        let context = FindContext()
+        buffer.prepareToSearch(for: "8\n19\n20\n21\n22",
+                               startingAt: buffer.firstPosition(),
+                               options: .optMultiLine,
+                               mode: .caseSensitiveSubstring,
+                               with: context)
+
+        while context.status == .Searching {
+            buffer.findSubstring(context, stopAt: buffer.lastPosition())
+        }
+
+        XCTAssertEqual(context.status, .Matched,
+                       "Should find '8\\n19\\n20\\n21\\n22' spanning block boundary")
+
+        XCTAssertEqual(context.results?.count, 1, "Should have exactly one result")
+
+        if let results = context.results as? [ResultRange], results.count > 0 {
+            let xyRanges = buffer.convertPositions(results, withWidth: width)
+            XCTAssertEqual(xyRanges?.count, 1)
+            if let xyRange = xyRanges?.first {
+                XCTAssertEqual(xyRange.yStart, 0, "Match should start on line 0 (the '8' in '18')")
+                XCTAssertEqual(xyRange.xStart, 1, "Match should start at column 1 (the '8' in '18')")
+            }
+        }
+
+        // Also verify the full-line version works: "18\n19\n20\n21\n22"
+        let context2 = FindContext()
+        buffer.prepareToSearch(for: "18\n19\n20\n21\n22",
+                               startingAt: buffer.firstPosition(),
+                               options: .optMultiLine,
+                               mode: .caseSensitiveSubstring,
+                               with: context2)
+
+        while context2.status == .Searching {
+            buffer.findSubstring(context2, stopAt: buffer.lastPosition())
+        }
+
+        XCTAssertEqual(context2.status, .Matched,
+                       "Should find '18\\n19\\n20\\n21\\n22' spanning block boundary")
+    }
+
+    /// Tests backward multi-line search spanning blocks where the first query line
+    /// partially matches the end of a raw line. Searching for "1\n12\n13\n14\n1" backward
+    /// in lines "11","12","13" | "14","15" (block boundary between 13 and 14).
+    /// The "1" at the end must match the second "1" in "11", not the first.
+    func testMultiLineSearchBackwardPartialFirstLineSpanningBlocks() {
+        let buffer = LineBuffer()
+        let width = Int32(80)
+
+        // Block 1: lines "11", "12", "13"
+        for text in ["11", "12", "13"] {
+            buffer.append(screenCharArrayWithDefaultStyle(text, eol: EOL_HARD), width: width)
+        }
+        buffer.forceSeal()
+
+        // Block 2: lines "14", "15"
+        for text in ["14", "15"] {
+            buffer.append(screenCharArrayWithDefaultStyle(text, eol: EOL_HARD), width: width)
+        }
+
+        // Verify two blocks
+        let _ = buffer.testOnlyBlock(at: 1)
+
+        // Search backward for "1\n12\n13\n14\n1"
+        // The first query line "1" must match at position 1 in "11" (extending to end).
+        // Lines "12","13" must match fully. "14" must match fully. "1" must match start of "15".
+        let context = FindContext()
+        buffer.prepareToSearch(for: "1\n12\n13\n14\n1",
+                               startingAt: buffer.penultimatePosition(),
+                               options: [.optMultiLine, .optBackwards],
+                               mode: .caseSensitiveSubstring,
+                               with: context)
+
+        while context.status == .Searching {
+            buffer.findSubstring(context, stopAt: buffer.firstPosition())
+        }
+
+        XCTAssertEqual(context.status, .Matched,
+                       "Backward search for '1\\n12\\n13\\n14\\n1' should find match spanning blocks")
+
+        XCTAssertEqual(context.results?.count, 1, "Should have exactly one result")
+
+        if let results = context.results as? [ResultRange], results.count > 0 {
+            let xyRanges = buffer.convertPositions(results, withWidth: width)
+            XCTAssertEqual(xyRanges?.count, 1)
+            if let xyRange = xyRanges?.first {
+                XCTAssertEqual(xyRange.yStart, 0, "Match should start on line 0 (the '1' at end of '11')")
+                XCTAssertEqual(xyRange.xStart, 1, "Match should start at column 1")
+            }
+        }
+    }
+
+    // Edge case: backward 2-line query where the block boundary falls between
+    // the first and second query lines, and the first query line ("1") must
+    // match at a non-zero position in "11" (position 1, extending to end).
+    // This triggers a continuation with startIndex == N-1, where the current
+    // code applies skip=0 on the first (and only) iteration, filtering out
+    // the match at position 1.
+    func testMultiLineSearchBackwardFirstQueryLineInPriorBlock() {
+        let buffer = LineBuffer()
+        let width = Int32(80)
+
+        // Block 1: just "11"
+        buffer.append(screenCharArrayWithDefaultStyle("11", eol: EOL_HARD), width: width)
+        buffer.forceSeal()
+
+        // Block 2: just "12"
+        buffer.append(screenCharArrayWithDefaultStyle("12", eol: EOL_HARD), width: width)
+
+        // Verify two blocks
+        let _ = buffer.testOnlyBlock(at: 1)
+
+        // Search backward for "1\n12".
+        // "1" must match at the END of "11" (position 1, extending to end of line).
+        // "12" must match at the START of "12" (position 0).
+        // The block boundary falls between these two lines, so the continuation
+        // has startIndex == 1 (N-1 for a 2-line query). The first iteration of
+        // the continuation searches for the first query line "1" in block 1.
+        let context = FindContext()
+        buffer.prepareToSearch(for: "1\n12",
+                               startingAt: buffer.penultimatePosition(),
+                               options: [.optMultiLine, .optBackwards],
+                               mode: .caseSensitiveSubstring,
+                               with: context)
+
+        while context.status == .Searching {
+            buffer.findSubstring(context, stopAt: buffer.firstPosition())
+        }
+
+        XCTAssertEqual(context.status, .Matched,
+                       "Backward search for '1\\n12' should find match spanning blocks where first query line is at non-zero position")
+
+        XCTAssertEqual(context.results?.count, 1, "Should have exactly one result")
+
+        if let results = context.results as? [ResultRange], results.count > 0 {
+            let xyRanges = buffer.convertPositions(results, withWidth: width)
+            XCTAssertEqual(xyRanges?.count, 1)
+            if let xyRange = xyRanges?.first {
+                XCTAssertEqual(xyRange.yStart, 0, "Match should start on line 0 ('11')")
+                XCTAssertEqual(xyRange.xStart, 1, "Match should start at column 1 (the '1' at end of '11')")
+            }
+        }
+    }
+
     func testMultiLineSearchSpanningThreeBlocks() {
         let buffer = LineBuffer()
         let width = Int32(80)

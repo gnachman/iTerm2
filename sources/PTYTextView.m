@@ -5525,6 +5525,10 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
     return [self.dataSource bidiInfoForLine:line];
 }
 
+- (BOOL)drawingHelperIsFirstLineOfBlock:(int)line {
+    return [self.dataSource isFirstLineOfBlock:line];
+}
+
 - (VT100GridAbsCoord)absCoordForButton:(iTermTerminalButton *)button API_AVAILABLE(macos(11)) {
     if (!button.mark) {
         NSInteger y = button.transientAbsY;
