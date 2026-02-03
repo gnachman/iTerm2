@@ -497,7 +497,8 @@ private class TokenExecutorImpl {
 #endif
             if isBackgroundSession != oldValue {
                 sideEffectScheduler.period = isBackgroundSession ? 1.0 : 1.0 / 30.0
-                if isBackgroundSession {
+                // Legacy prioritization tracking - not needed with FairnessScheduler
+                if !useFairnessScheduler && isBackgroundSession {
                     Self.activeSessionsWithTokens.mutableAccess { set in
                         set.remove(ObjectIdentifier(self))
                     }
@@ -541,8 +542,11 @@ private class TokenExecutorImpl {
     }
 
     deinit {
-        Self.activeSessionsWithTokens.mutableAccess { set in
-            set.remove(ObjectIdentifier(self))
+        // Legacy prioritization tracking - not needed with FairnessScheduler
+        if !useFairnessScheduler {
+            Self.activeSessionsWithTokens.mutableAccess { set in
+                set.remove(ObjectIdentifier(self))
+            }
         }
     }
 
@@ -575,7 +579,8 @@ private class TokenExecutorImpl {
     func addTokens(_ tokenArray: TokenArray, highPriority: Bool) {
         throughputEstimator.addByteCount(tokenArray.lengthTotal)
         tokenQueue.addTokens(tokenArray, highPriority: highPriority)
-        if !isBackgroundSession {
+        // Legacy prioritization tracking - not needed with FairnessScheduler
+        if !useFairnessScheduler && !isBackgroundSession {
             Self.activeSessionsWithTokens.mutableAccess { set in
                 set.insert(ObjectIdentifier(self))
             }
@@ -706,7 +711,8 @@ private class TokenExecutorImpl {
                     return shouldContinue && !self.isPaused
                 }
 
-                if !isBackgroundSession && tokenQueue.isEmpty {
+                // Legacy prioritization tracking - not needed with FairnessScheduler
+                if !useFairnessScheduler && !isBackgroundSession && tokenQueue.isEmpty {
                     DLog("Active session completely drained")
                     Self.activeSessionsWithTokens.mutableAccess { set in
                         set.remove(ObjectIdentifier(self))
@@ -911,7 +917,8 @@ private class TokenExecutorImpl {
                                               accumulatedLength: &accumulatedLength,
                                               delegate: delegate)
                 }
-                if !isBackgroundSession && tokenQueue.isEmpty {
+                // Legacy prioritization tracking - not needed with FairnessScheduler
+                if !useFairnessScheduler && !isBackgroundSession && tokenQueue.isEmpty {
                     DLog("Active session completely drained")
                     Self.activeSessionsWithTokens.mutableAccess { set in
                         set.remove(ObjectIdentifier(self))
@@ -969,9 +976,9 @@ private class TokenExecutorImpl {
                     DLog("commit=\(commit) consume=\(consume) remaining=\(group.arrays.map(\.numberRemaining))")
                 }
             }
-            if isBackgroundSession && !Self.activeSessionsWithTokens.value.isEmpty {
-                // Avoid blocking the active session. If there were multiple mutation threads this
-                // would be unnecessary.
+            // Legacy prioritization: yield to visible session. Not needed with FairnessScheduler
+            // since fair round-robin scheduling already handles this.
+            if !useFairnessScheduler && isBackgroundSession && !Self.activeSessionsWithTokens.value.isEmpty {
                 DLog("Stop processing early because active session has tokens")
                 return false
             }
