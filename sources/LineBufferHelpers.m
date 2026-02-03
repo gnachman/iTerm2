@@ -93,3 +93,39 @@
 
 @end
 
+@implementation LineBlockMultiLineSearchState
+
++ (instancetype)initialState {
+    return [[self alloc] init];
+}
+
++ (instancetype)stateWithResult:(MutableResultRange *)result {
+    LineBlockMultiLineSearchState *state = [[self alloc] init];
+    state.result = result;
+    state.needsContinuation = NO;
+    return state;
+}
+
++ (instancetype)stateNeedingContinuationAtIndex:(NSInteger)index
+                                  partialResult:(MutableResultRange *)partialResult {
+    LineBlockMultiLineSearchState *state = [[self alloc] init];
+    state.result = nil;
+    state.needsContinuation = YES;
+    state.queryLineIndex = index;
+    state.partialResult = partialResult;
+    return state;
+}
+
+- (NSString *)description {
+    if (self.result) {
+        return [NSString stringWithFormat:@"<%@: %p found=%@>", NSStringFromClass(self.class), self, self.result];
+    } else if (self.needsContinuation) {
+        return [NSString stringWithFormat:@"<%@: %p needsContinuation at index %@ partial=%@>",
+                NSStringFromClass(self.class), self, @(self.queryLineIndex), self.partialResult];
+    } else {
+        return [NSString stringWithFormat:@"<%@: %p notFound>", NSStringFromClass(self.class), self];
+    }
+}
+
+@end
+

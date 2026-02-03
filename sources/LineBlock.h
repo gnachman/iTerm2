@@ -184,13 +184,21 @@ extern dispatch_queue_t gDeallocQueue;
 - (int)numEntries;
 
 // Searches for a substring, populating results with ResultRange objects.
+// For multi-line searches that may span blocks:
+// - Pass priorState if continuing a partial match from a previous block
+// - continuationState will be set if a partial match needs to continue on the next block
+// - crossBlockResultCount returns the number of results that came from cross-block matches
+//   (these already have global positions and should not be adjusted by blockPosition)
 - (void)findSubstring:(NSString*)substring
               options:(FindOptions)options
                  mode:(iTermFindMode)mode
              atOffset:(int)offset
               results:(NSMutableArray*)results
       multipleResults:(BOOL)multipleResults
-includesPartialLastLine:(BOOL *)includesPartialLastLine;
+includesPartialLastLine:(BOOL *)includesPartialLastLine
+  multiLinePriorState:(LineBlockMultiLineSearchState * _Nullable)priorState
+    continuationState:(LineBlockMultiLineSearchState * _Nullable * _Nullable)continuationState
+crossBlockResultCount:(NSInteger * _Nullable)crossBlockResultCount;
 
 // Tries to convert a byte offset into the block to an x,y coordinate relative to the first char
 // in the block. Returns YES on success, NO if the position is out of range.

@@ -752,6 +752,135 @@ class LineBufferTests: XCTestCase {
         }
     }
 
+    /// Tests backward multi-line search when entire pattern is within a single block.
+    func testMultiLineSearchWithinSingleBlockBackwards() {
+        let buffer = LineBuffer()
+        let width = Int32(80)
+
+        // Add three lines in the same block
+        let line1 = screenCharArrayWithDefaultStyle("first line", eol: EOL_HARD)
+        let line2 = screenCharArrayWithDefaultStyle("second line", eol: EOL_HARD)
+        let line3 = screenCharArrayWithDefaultStyle("third line", eol: EOL_HARD)
+        buffer.append(line1, width: width)
+        buffer.append(line2, width: width)
+        buffer.append(line3, width: width)
+
+        // Search backward for a multi-line pattern within the same block
+        let context = FindContext()
+        buffer.prepareToSearch(for: "second line\nthird",
+                               startingAt: buffer.penultimatePosition(),
+                               options: [.optMultiLine, .optBackwards],
+                               mode: .caseSensitiveSubstring,
+                               with: context)
+
+        // Search through the buffer
+        while context.status == .Searching {
+            buffer.findSubstring(context, stopAt: buffer.firstPosition())
+        }
+
+        // This should work since both lines are in the same block
+        XCTAssertEqual(context.status, .Matched,
+                       "Backward multi-line search should find patterns within a single block")
+
+        // Verify we have results and they're at the expected position
+        XCTAssertNotNil(context.results)
+        XCTAssertEqual(context.results?.count, 1, "Should have exactly one result")
+
+        if let results = context.results as? [ResultRange], results.count > 0 {
+            let xyRanges = buffer.convertPositions(results, withWidth: width)
+            XCTAssertEqual(xyRanges?.count, 1)
+            if let xyRange = xyRanges?.first {
+                XCTAssertEqual(xyRange.yStart, 1, "Match should start on line 1")
+                XCTAssertEqual(xyRange.xStart, 0, "Match should start at column 0")
+            }
+        }
+    }
+
+    /// Tests backward multi-line search finds the last occurrence when there are multiple matches.
+    func testMultiLineSearchWithinSingleBlockBackwardsFindsLastMatch() {
+        let buffer = LineBuffer()
+        let width = Int32(80)
+
+        // Add lines with a repeated pattern
+        let lines = ["hello", "world", "hello", "world", "end"]
+        for line in lines {
+            buffer.append(screenCharArrayWithDefaultStyle(line, eol: EOL_HARD), width: width)
+        }
+
+        // Search backward for "hello\nworld" - should find the second occurrence (lines 2-3)
+        let context = FindContext()
+        buffer.prepareToSearch(for: "hello\nworld",
+                               startingAt: buffer.penultimatePosition(),
+                               options: [.optMultiLine, .optBackwards],
+                               mode: .caseSensitiveSubstring,
+                               with: context)
+
+        while context.status == .Searching {
+            buffer.findSubstring(context, stopAt: buffer.firstPosition())
+        }
+
+        XCTAssertEqual(context.status, .Matched,
+                       "Backward multi-line search should find the pattern")
+
+        XCTAssertNotNil(context.results)
+        XCTAssertEqual(context.results?.count, 1, "Should have exactly one result")
+
+        if let results = context.results as? [ResultRange], results.count > 0 {
+            let xyRanges = buffer.convertPositions(results, withWidth: width)
+            XCTAssertEqual(xyRanges?.count, 1)
+            if let xyRange = xyRanges?.first {
+                // Should find the LAST occurrence (at line 2), not the first (at line 0)
+                XCTAssertEqual(xyRange.yStart, 2, "Backward search should find the last occurrence at line 2")
+                XCTAssertEqual(xyRange.xStart, 0, "Match should start at column 0")
+            }
+        }
+    }
+
+    /// Tests backward multi-line search spanning two blocks.
+    func testMultiLineSearchSpanningBlocksBackwards() {
+        let buffer = LineBuffer()
+        let width = Int32(80)
+
+        // Add a line that will be in the first block
+        let line1 = screenCharArrayWithDefaultStyle("first line", eol: EOL_HARD)
+        buffer.append(line1, width: width)
+
+        // Force the first block to be sealed
+        buffer.forceSeal()
+
+        // Add a line that will be in the second block
+        let line2 = screenCharArrayWithDefaultStyle("second line", eol: EOL_HARD)
+        buffer.append(line2, width: width)
+
+        // Verify we have two blocks
+        let _ = buffer.testOnlyBlock(at: 1)
+
+        // Search backward for a multi-line pattern that spans the block boundary
+        let context = FindContext()
+        buffer.prepareToSearch(for: "first line\nsecond",
+                               startingAt: buffer.penultimatePosition(),
+                               options: [.optMultiLine, .optBackwards],
+                               mode: .caseSensitiveSubstring,
+                               with: context)
+
+        while context.status == .Searching {
+            buffer.findSubstring(context, stopAt: buffer.firstPosition())
+        }
+
+        // This test verifies the bug: backward multi-line search should find patterns spanning blocks
+        XCTAssertEqual(context.status, .Matched,
+                       "Backward multi-line search should find patterns spanning block boundaries")
+
+        if let results = context.results as? [ResultRange], results.count > 0 {
+            let xyRanges = buffer.convertPositions(results, withWidth: width)
+            XCTAssertEqual(xyRanges?.count, 1)
+            if let xyRange = xyRanges?.first {
+                XCTAssertEqual(xyRange.yStart, 0, "Match should start on line 0")
+                XCTAssertEqual(xyRange.xStart, 0, "Match should start at column 0")
+            }
+        }
+    }
+
     /// Tests multi-line search spanning three blocks to verify the bug with more complex scenarios.
     func testMultiLineSearchSpanningThreeBlocks() {
         let buffer = LineBuffer()

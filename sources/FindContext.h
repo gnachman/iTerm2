@@ -89,6 +89,15 @@ typedef NS_ENUM(NSInteger, FindContextStatus) {
 @property(nonatomic) BOOL forceMainScreen;
 @property(nonatomic) NSRange lastAbsPositionsSearched;
 
+// State for continuing a multi-line search across block boundaries.
+// When a partial match is found at the end of a block, this holds the state
+// needed to continue the search on the next block.
+@property(nonatomic, strong, nullable) LineBlockMultiLineSearchState *multiLineSearchState;
+
+// Number of results that came from cross-block matches (already have global positions).
+// LineBuffer uses this to skip position adjustment for these results.
+@property(nonatomic) NSInteger crossBlockResultCount;
+
 - (void)copyFromFindContext:(FindContext *)other;
 
 - (void)reset;

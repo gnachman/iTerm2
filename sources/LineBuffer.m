@@ -1338,18 +1338,33 @@ NS_INLINE int TotalNumberOfRawLines(LineBuffer *self) {
     const NSRange blockAbsolutePositions = NSMakeRange([self absPositionOfAbsBlock:blockIndex + num_dropped_blocks],
                                                        block.rawSpaceUsed);
     BOOL includesPartialLastLine = NO;
+    LineBlockMultiLineSearchState *continuationState = nil;
+    NSInteger crossBlockResultCount = 0;
     [block findSubstring:context.substring
                  options:context.options
                     mode:context.mode
                 atOffset:context.offset
                  results:context.results
          multipleResults:((context.options & FindMultipleResults) != 0)
- includesPartialLastLine:&includesPartialLastLine];
+ includesPartialLastLine:&includesPartialLastLine
+     multiLinePriorState:context.multiLineSearchState
+       continuationState:&continuationState
+   crossBlockResultCount:&crossBlockResultCount];
     context.lastAbsPositionsSearched = blockAbsolutePositions;
     context.includesPartialLastLine = includesPartialLastLine && (blockIndex + 1 == numBlocks);
     NSMutableArray* filtered = [NSMutableArray arrayWithCapacity:[context.results count]];
     BOOL haveOutOfRangeResults = NO;
     const int blockPosition = [self _blockPosition:blockIndex];
+    if (continuationState && !context.multiLineSearchState) {
+        // This is a new partial match starting in this block.
+        // Save the block's global position so we can compute the correct final position later.
+        continuationState.startingBlockPosition = blockPosition;
+    } else if (continuationState && context.multiLineSearchState) {
+        // Continuing a partial match that spans multiple blocks.
+        // Preserve the starting block position from the prior state.
+        continuationState.startingBlockPosition = context.multiLineSearchState.startingBlockPosition;
+    }
+    context.multiLineSearchState = continuationState;
     const int blockSize = _lineBlocks.blocks[blockIndex].rawSpaceUsed;  // TODO: Is this right when lines are dropped?
     const int stopAt = stopPosition.absolutePosition - droppedChars;
     if (context.dir > 0 && blockPosition >= stopAt) {
@@ -1359,8 +1374,13 @@ NS_INLINE int TotalNumberOfRawLines(LineBuffer *self) {
         DLog(@"status<-NotFound because dir<0, blockPosition(%@)+blockSize(%@)<stopAt(%@)", @(blockPosition), @(blockSize), @(stopAt));
         context.status = NotFound;
     } else {
+        NSInteger resultIndex = 0;
         for (ResultRange* range in context.results) {
-            range->position += blockPosition;
+            // Skip position adjustment for cross-block results (they already have global positions).
+            if (resultIndex >= crossBlockResultCount) {
+                range->position += blockPosition;
+            }
+            resultIndex++;
             if (context.dir * (range->position - stopAt) > 0 ||
                 context.dir * (range->position + context.matchLength - stopAt) > 0) {
                 // result was outside the range to be searched

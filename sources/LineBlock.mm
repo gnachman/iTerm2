@@ -2085,32 +2085,72 @@ int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BO
 }
 
 // Search for a multi-line pattern starting at the given entry.
-// Returns a MutableResultRange if all lines of splitLines match consecutive raw lines
-// starting at entry, or nil if no match is found.
-- (MutableResultRange *)_searchMultiLineFromEntry:(int)entry
-                                       splitLines:(NSArray<NSString *> *)splitLines
-                                          options:(FindOptions)options
-                                             mode:(iTermFindMode)mode
-                                             skip:(int)skipped
-                                  multipleResults:(BOOL)multipleResults {
+// Returns a state object indicating the result:
+// - If state.result is non-nil: a complete match was found.
+// - If state.needsContinuation is YES: ran out of lines, continue on next block.
+// - Otherwise: no match was found starting at this entry.
+//
+// To resume a search on a subsequent block, pass in the returned state as priorState.
+// For a fresh search, pass nil for priorState.
+- (LineBlockMultiLineSearchState *)_searchMultiLineFromEntry:(int)entry
+                                                  splitLines:(NSArray<NSString *> *)splitLines
+                                                     options:(FindOptions)options
+                                                        mode:(iTermFindMode)mode
+                                                        skip:(int)skipped
+                                             multipleResults:(BOOL)multipleResults
+                                                  priorState:(LineBlockMultiLineSearchState *)priorState {
     static const int MAX_SEARCHABLE_LINE_LENGTH = 30000000;
-    DLog(@"There are enough lines in the buffer to match the lines of substring.");
-    MutableResultRange *multiLineRange = nil;
+    const BOOL backward = (options & FindOptBackwards) != 0;
+    DLog(@"Searching for multi-line pattern starting at entry %d, backward=%d, priorState=%@", entry, backward, priorState);
+
+    // Initialize from prior state if resuming, otherwise start fresh.
+    NSInteger startIndex = priorState ? priorState.queryLineIndex : 0;
+    MutableResultRange *multiLineRange = priorState ? priorState.partialResult : nil;
+
+    // For backward search, we accumulate length first and set position at the end.
+    // This tracks accumulated length until we find the first query line.
+    int accumulatedLength = multiLineRange ? multiLineRange.length : 0;
 
     // Match each line in the query in turn.
-    for (NSInteger i = 0; i < splitLines.count; i++) {
+    for (NSInteger i = startIndex; i < (NSInteger)splitLines.count; i++) {
+        // Calculate raw line index and query line index based on direction.
+        // For a fresh search (startIndex=0):
+        //   Forward: iterate through query lines 0, 1, 2, ... matching raw lines entry, entry+1, entry+2, ...
+        //   Backward: iterate through query lines N-1, N-2, ... matching raw lines entry, entry-1, entry-2, ...
+        // For a continuation (startIndex>0), we offset by startIndex so that:
+        //   rawLineIndex starts at entry when i=startIndex
+        const int rawLineIndex = backward ? (entry - (int)(i - startIndex)) : (entry + (int)(i - startIndex));
+        const NSInteger queryLineIndex = backward ? ((NSInteger)splitLines.count - 1 - i) : i;
+
+        // Check if we've run out of lines in this block.
+        if (backward) {
+            if (rawLineIndex < _firstEntry) {
+                DLog(@"Ran out of lines in block at query index %@, need to continue on previous block", @(i));
+                MutableResultRange *partial = [[MutableResultRange alloc] initWithPosition:0 length:accumulatedLength];
+                return [LineBlockMultiLineSearchState stateNeedingContinuationAtIndex:i
+                                                                        partialResult:partial];
+            }
+        } else {
+            if (rawLineIndex >= cll_entries) {
+                DLog(@"Ran out of lines in block at query index %@, need to continue on next block", @(i));
+                return [LineBlockMultiLineSearchState stateNeedingContinuationAtIndex:i
+                                                                        partialResult:multiLineRange];
+            }
+        }
+
+        NSString *queryLine = splitLines[queryLineIndex];
         NSMutableArray* lineResults = [NSMutableArray arrayWithCapacity:1];
-        if (splitLines[i].length == 0) {
+        if (queryLine.length == 0) {
             DLog(@"Every line matches an empty string.");
             [lineResults addObject:[[ResultRange alloc] initWithPosition:0 length:0]];
         } else {
-            DLog(@"Search the `%@`th line for the `%@`th line in the substring.", @(entry + i), @(i));
-            [self _findInRawLine:entry + i
-                          needle:splitLines[i]
+            DLog(@"Search raw line %d for query line %@ ('%@').", rawLineIndex, @(queryLineIndex), queryLine);
+            [self _findInRawLine:rawLineIndex
+                          needle:queryLine
                          options:options
                             mode:mode
                             skip:skipped
-                          length:MIN(MAX_SEARCHABLE_LINE_LENGTH, [self _lineLength:entry + i])
+                          length:MIN(MAX_SEARCHABLE_LINE_LENGTH, [self _lineLength:rawLineIndex])
                  multipleResults:multipleResults
                          results:lineResults];
         }
@@ -2118,9 +2158,28 @@ int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BO
             DLog(@"No matches");
             return nil;
         }
+
+        // Determine match criteria based on query line position (not iteration order).
+        // First query line (idx=0): must extend to end of line
+        // Last query line (idx=N-1): must start at position 0
+        // Middle query lines: must start at 0 AND extend to end
+        const BOOL isFirstQueryLine = (queryLineIndex == 0);
+        const BOOL isLastQueryLine = (queryLineIndex == (NSInteger)splitLines.count - 1);
+        const BOOL mustStartAtZero = !isFirstQueryLine;  // middle or last
+        const BOOL mustExtendToEnd = !isLastQueryLine;   // first or middle
+
         ResultRange *range = nil;
-        const int lineLength = [self lengthOfRawLine:entry + i];
-        if (i == 0) {
+        const int lineLength = [self lengthOfRawLine:rawLineIndex];
+
+        if (mustStartAtZero) {
+            // Pick a result that starts at 0 and has the greatest length.
+            range = [[lineResults filteredArrayUsingBlock:^BOOL(ResultRange *r) {
+                return r.position == 0;
+            }]
+                     maxWithBlock:^NSComparisonResult(ResultRange *lhs, ResultRange *rhs) {
+                return [@(lhs.length) compare:@(rhs.length)];
+            }];
+        } else {
             // For the first line of the query:
             // If there were multiple results use the first one that extends to the end.
             // Then a document of `aa\nb` can match a query of `a\nb`.
@@ -2133,43 +2192,46 @@ int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BO
                     break;
                 }
             }
-        } else {
-            // For lines of the query after the first:
-            // Pick a result that starts at 0 and has the greatest length;
-            range = [[lineResults filteredArrayUsingBlock:^BOOL(ResultRange *range) {
-                return range.position == 0;
-            }]
-                     maxWithBlock:^NSComparisonResult(ResultRange *lhs, ResultRange *rhs) {
-                return [@(lhs.length) compare:@(rhs.length)];
-            }];
         }
+
         if (!range) {
-            DLog(@"No match found.");
+            DLog(@"No match found satisfying start-at-zero constraint.");
             return nil;
         }
-        if (i == 0) {
+
+        // Check mustExtendToEnd constraint.
+        if (mustExtendToEnd && range.position + range.length != lineLength) {
+            DLog(@"The result did not extend to the end so it doesn't match the newline.");
+            return nil;
+        }
+
+        // Update result based on whether this is the first query line.
+        if (isFirstQueryLine) {
             DLog(@"This is the first line of the query.");
-            if (range.position + range.length != lineLength) {
-                DLog(@"The result did not extend to the end so it shouldn't match the newline.");
-                return nil;
+            if (backward) {
+                // For backward search, we've accumulated length from later query lines.
+                // Now set position and add our length plus accumulated.
+                multiLineRange = [range mutableCopy];
+                multiLineRange.length += accumulatedLength;
+            } else {
+                // For forward search, this is the first iteration.
+                multiLineRange = [range mutableCopy];
             }
-            DLog(@"Accept this result by initializing the range.");
-            multiLineRange = [range mutableCopy];
+            DLog(@"Accept this result by initializing the range to %@.", multiLineRange);
         } else {
             DLog(@"This is not the first line of the query");
-            const BOOL mustBeLast = (range.position + range.length) < lineLength;
-            if (mustBeLast && i + 1 < splitLines.count) {
-                DLog(@"The match does not extend to the end of the line and there is at least one more line after, so it doesn't match the newline.");
-                return nil;
+            if (backward) {
+                // Accumulate length for now; we'll set position when we find the first query line.
+                accumulatedLength += range.length;
+                DLog(@"Accumulated length is now %d", accumulatedLength);
+            } else {
+                multiLineRange.length += range.length;
+                DLog(@"Accept this line by extending the range to %@.", multiLineRange);
             }
-            DLog(@"Accept this `%@>0`th line by extending the range.", @(i));
-            multiLineRange.length += range.length;
         }
     }
-    if (multiLineRange) {
-        DLog(@"We found a multi-line result %@", multiLineRange);
-    }
-    return multiLineRange;
+    DLog(@"We found a multi-line result %@", multiLineRange);
+    return [LineBlockMultiLineSearchState stateWithResult:multiLineRange];
 }
 
 - (void)findSubstring:(NSString *)substring
@@ -2178,8 +2240,17 @@ int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BO
              atOffset:(int)offset
               results:(NSMutableArray *)results
       multipleResults:(BOOL)multipleResults
-includesPartialLastLine:(BOOL *)includesPartialLastLine {
+includesPartialLastLine:(BOOL *)includesPartialLastLine
+  multiLinePriorState:(LineBlockMultiLineSearchState *)priorState
+    continuationState:(LineBlockMultiLineSearchState **)continuationState
+crossBlockResultCount:(NSInteger *)crossBlockResultCount {
     *includesPartialLastLine = NO;
+    if (continuationState) {
+        *continuationState = nil;
+    }
+    if (crossBlockResultCount) {
+        *crossBlockResultCount = 0;
+    }
     if (offset == -1) {
         offset = [self rawSpaceUsed] - 1;
     }
@@ -2188,6 +2259,48 @@ includesPartialLastLine:(BOOL *)includesPartialLastLine {
         // The purpose of the find option is to avoid having to do this in the normal case.
         splitLines = [substring componentsSeparatedByString:@"\n"];
     }
+
+    // Handle continuation of a partial match from a prior block.
+    if (priorState && priorState.needsContinuation && splitLines.count > 1) {
+        const BOOL backward = (options & FindOptBackwards) != 0;
+        // For forward search, continue at _firstEntry. For backward, continue at the last entry.
+        int continuationEntry = backward ? (cll_entries - 1) : _firstEntry;
+        LineBlockMultiLineSearchState *state = [self _searchMultiLineFromEntry:continuationEntry
+                                                                    splitLines:splitLines
+                                                                       options:options
+                                                                          mode:mode
+                                                                          skip:0
+                                                               multipleResults:multipleResults
+                                                                    priorState:priorState];
+        if (state.result) {
+            // Found a complete match spanning blocks.
+            // The result's position is relative to the first line of the match.
+            // For forward search: first line was in a prior block, use startingBlockPosition.
+            // For backward search: first line is in this block, position is already correct
+            // (will be adjusted by blockPosition in LineBuffer like normal results).
+            if (!backward) {
+                state.result->position += priorState.startingBlockPosition;
+                if (crossBlockResultCount) {
+                    (*crossBlockResultCount)++;
+                }
+            }
+            // For backward, the position needs to be relative to the first query line's entry
+            // in this block. We need to add the raw offset of that entry.
+            if (backward) {
+                // First query line is at entry continuationEntry - (splitLines.count - 1 - priorState.queryLineIndex)
+                int firstLineEntry = continuationEntry - ((int)splitLines.count - 1 - (int)priorState.queryLineIndex);
+                state.result->position += [self _lineRawOffset:firstLineEntry];
+            }
+            [results addObject:state.result];
+            if (!multipleResults) {
+                return;
+            }
+        } else if (state.needsContinuation && continuationState) {
+            // Still need more blocks to complete the match.
+            *continuationState = state;
+        }
+    }
+
     int entry;
     int limit;
     int dir;
@@ -2220,16 +2333,52 @@ includesPartialLastLine:(BOOL *)includesPartialLastLine {
             DLog(@"Multiline query");
             assert(splitLines.count > 1);
             numberOfQueryLines = splitLines.count;
-            if (entry + splitLines.count <= cll_entries) {
-#warning TODO: Support searching over multiple blocks
-                MutableResultRange *multiLineRange = [self _searchMultiLineFromEntry:entry
-                                                                          splitLines:splitLines
-                                                                             options:options
-                                                                                mode:mode
-                                                                                skip:skipped
-                                                                     multipleResults:multipleResults];
-                if (multiLineRange) {
-                    [newResults addObject:multiLineRange];
+            // Check if there are enough lines in this block to attempt a multi-line search.
+            // For forward search: need lines entry, entry+1, ..., entry+N-1
+            // For backward search: need lines entry, entry-1, ..., entry-(N-1)
+            BOOL hasEnoughLines;
+            if (options & FindOptBackwards) {
+                hasEnoughLines = (entry - ((int)splitLines.count - 1) >= _firstEntry);
+            } else {
+                hasEnoughLines = (entry + (int)splitLines.count <= cll_entries);
+            }
+            LineBlockMultiLineSearchState *state = nil;
+            if (hasEnoughLines) {
+                state = [self _searchMultiLineFromEntry:entry
+                                            splitLines:splitLines
+                                               options:options
+                                                  mode:mode
+                                                  skip:skipped
+                                       multipleResults:multipleResults
+                                            priorState:nil];
+                if (state.result) {
+                    [newResults addObject:state.result];
+                }
+            } else if (continuationState && *continuationState == nil) {
+                // Not enough lines in this block - try to start a partial match that may continue
+                // on the next block. Only do this if we don't already have a pending continuation.
+                state = [self _searchMultiLineFromEntry:entry
+                                            splitLines:splitLines
+                                               options:options
+                                                  mode:mode
+                                                  skip:skipped
+                                       multipleResults:multipleResults
+                                            priorState:nil];
+                if (state.needsContinuation) {
+                    // Save the partial match state. The position needs to be adjusted by
+                    // this entry's raw offset since the result position is relative to the entry.
+                    if (state.partialResult) {
+                        int positionOffset;
+                        if (options & FindOptBackwards) {
+                            // For backward, we don't know the first line yet (it's in a prior block)
+                            // so we can't adjust position here. We'll handle it when the match completes.
+                            positionOffset = 0;
+                        } else {
+                            positionOffset = line_raw_offset;
+                        }
+                        state.partialResult->position += positionOffset;
+                    }
+                    *continuationState = state;
                 }
             }
         } else {
@@ -2244,7 +2393,15 @@ includesPartialLastLine:(BOOL *)includesPartialLastLine {
                          results:newResults];
         }
         for (ResultRange* r in newResults) {
-            r->position += line_raw_offset;
+            // For multi-line backward search, the result position is relative to the first line
+            // of the match, which is entry - (numberOfQueryLines - 1), not entry.
+            int positionOffset;
+            if ((options & FindOptMultiLine) && (options & FindOptBackwards)) {
+                positionOffset = [self _lineRawOffset:entry - (numberOfQueryLines - 1)];
+            } else {
+                positionOffset = line_raw_offset;
+            }
+            r->position += positionOffset;
             [results addObject:r];
         }
         if (newResults.count && is_partial && entry + numberOfQueryLines == cll_entries) {

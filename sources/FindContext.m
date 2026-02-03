@@ -23,6 +23,7 @@ static const NSTimeInterval kDefaultMaxTime = 0.1;
     NSMutableArray* results_;
     BOOL hasWrapped_;
     NSTimeInterval maxTime_;
+    LineBlockMultiLineSearchState *multiLineSearchState_;
 }
 
 @synthesize absBlockNum = absBlockNum_;
@@ -36,6 +37,7 @@ static const NSTimeInterval kDefaultMaxTime = 0.1;
 @synthesize results = results_;
 @synthesize hasWrapped = hasWrapped_;
 @synthesize maxTime = maxTime_;
+@synthesize multiLineSearchState = multiLineSearchState_;
 
 - (instancetype)init {
     self = [super init];
@@ -49,6 +51,7 @@ static const NSTimeInterval kDefaultMaxTime = 0.1;
 - (void)dealloc {
     [results_ release];
     [substring_ release];
+    [multiLineSearchState_ release];
     [super dealloc];
 }
 
@@ -76,11 +79,13 @@ static const NSTimeInterval kDefaultMaxTime = 0.1;
     self.hasWrapped = other.hasWrapped;
     self.maxTime = other.maxTime;
     self.lastAbsPositionsSearched = other.lastAbsPositionsSearched;
+    self.multiLineSearchState = other.multiLineSearchState;
 }
 
 - (void)reset {
     self.substring = nil;
     self.results = nil;
+    self.multiLineSearchState = nil;
 }
 
 - (void)removeResults {

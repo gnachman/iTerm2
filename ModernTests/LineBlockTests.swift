@@ -2040,7 +2040,10 @@ class LineBlockTests: XCTestCase {
                             atOffset: 0,
                             results: results,
                             multipleResults: false,
-                            includesPartialLastLine: &includesPartialLastLine)
+                            includesPartialLastLine: &includesPartialLastLine,
+                            multiLinePriorState: nil,
+                            continuationState: nil,
+                            crossBlockResultCount: nil)
 
         // Then exactly one match should be returned
         XCTAssertEqual(results.count, 1, "Expected exactly one match when multipleResults=false")
@@ -2075,7 +2078,10 @@ class LineBlockTests: XCTestCase {
                             atOffset: Int32(block.rawSpaceUsed() - 1),
                             results: results,
                             multipleResults: true,
-                            includesPartialLastLine: &includesPartialLastLine)
+                            includesPartialLastLine: &includesPartialLastLine,
+                            multiLinePriorState: nil,
+                            continuationState: nil,
+                            crossBlockResultCount: nil)
 
         // Then we expect three matches in reverse order of occurrence
         XCTAssertEqual(results.count, 3, "Expected three matches when multipleResults=true")
@@ -2115,7 +2121,10 @@ class LineBlockTests: XCTestCase {
                             atOffset: 0,
                             results: results,
                             multipleResults: false,
-                            includesPartialLastLine: &includesPartialLastLine)
+                            includesPartialLastLine: &includesPartialLastLine,
+                            multiLinePriorState: nil,
+                            continuationState: nil,
+                            crossBlockResultCount: nil)
 
         // Then exactly one match should be returned
         XCTAssertEqual(results.count, 1,
@@ -2156,7 +2165,10 @@ class LineBlockTests: XCTestCase {
                             atOffset: 0,
                             results: results,
                             multipleResults: false,
-                            includesPartialLastLine: &includesPartialLastLine)
+                            includesPartialLastLine: &includesPartialLastLine,
+                            multiLinePriorState: nil,
+                            continuationState: nil,
+                            crossBlockResultCount: nil)
         // Then exactly one match should be returned covering the concatenation of both lines
         XCTAssertEqual(results.count, 1,
                        "Multi-line mode should allow a single match spanning the EOL between 'foo' and 'bar'")
@@ -2945,7 +2957,10 @@ class LineBlockTests: XCTestCase {
             atOffset: Int32(block.rawSpaceUsed() - 1),
             results: results,
             multipleResults: false,
-            includesPartialLastLine: &includesPartialLastLine
+            includesPartialLastLine: &includesPartialLastLine,
+            multiLinePriorState: nil,
+            continuationState: nil,
+            crossBlockResultCount: nil
         )
 
         // Then we expect exactly one match (the last occurrence "item3")
@@ -2996,7 +3011,10 @@ class LineBlockTests: XCTestCase {
             atOffset: 0,
             results: results,
             multipleResults: true,
-            includesPartialLastLine: &includesPartialLastLine
+            includesPartialLastLine: &includesPartialLastLine,
+            multiLinePriorState: nil,
+            continuationState: nil,
+            crossBlockResultCount: nil
         )
 
         // Then exactly two matches should be returned (one per raw line)
