@@ -724,6 +724,7 @@
 		531E71F72229A69C00915960 /* iTermExpressionParser+Private.h in Headers */ = {isa = PBXBuildFile; fileRef = 531E71F62229A69C00915960 /* iTermExpressionParser+Private.h */; };
 		532755852387821C00C50732 /* iTermProcessMonitor.h in Headers */ = {isa = PBXBuildFile; fileRef = 532755832387821C00C50732 /* iTermProcessMonitor.h */; };
 		532755862387821C00C50732 /* iTermProcessMonitor.m in Sources */ = {isa = PBXBuildFile; fileRef = 532755842387821C00C50732 /* iTermProcessMonitor.m */; };
+		D7A9E6F12ABC123456789012 /* iTermProcessMonitor+Testing.m in Sources */ = {isa = PBXBuildFile; fileRef = D7A9E6F02ABC123456789011 /* iTermProcessMonitor+Testing.m */; };
 		532F942B215DFEF600D509E4 /* iTermCacheableImage.h in Headers */ = {isa = PBXBuildFile; fileRef = 532F9429215DFEF600D509E4 /* iTermCacheableImage.h */; };
 		532F942C215DFEF600D509E4 /* iTermCacheableImage.m in Sources */ = {isa = PBXBuildFile; fileRef = 532F942A215DFEF600D509E4 /* iTermCacheableImage.m */; };
 		533292A6237E75360027EB49 /* iTermPythonArgumentParserTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 533292A5237E75360027EB49 /* iTermPythonArgumentParserTests.m */; };
@@ -5998,6 +5999,8 @@
 		531E71F62229A69C00915960 /* iTermExpressionParser+Private.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "iTermExpressionParser+Private.h"; sourceTree = "<group>"; };
 		532755832387821C00C50732 /* iTermProcessMonitor.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermProcessMonitor.h; sourceTree = "<group>"; };
 		532755842387821C00C50732 /* iTermProcessMonitor.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermProcessMonitor.m; sourceTree = "<group>"; };
+		D7A9E6EF2ABC123456789010 /* iTermProcessMonitor+Testing.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "iTermProcessMonitor+Testing.h"; sourceTree = "<group>"; };
+		D7A9E6F02ABC123456789011 /* iTermProcessMonitor+Testing.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "iTermProcessMonitor+Testing.m"; sourceTree = "<group>"; };
 		532F9429215DFEF600D509E4 /* iTermCacheableImage.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermCacheableImage.h; sourceTree = "<group>"; };
 		532F942A215DFEF600D509E4 /* iTermCacheableImage.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermCacheableImage.m; sourceTree = "<group>"; };
 		533292A5237E75360027EB49 /* iTermPythonArgumentParserTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermPythonArgumentParserTests.m; sourceTree = "<group>"; };
@@ -12649,6 +12652,8 @@
 				A6A802E8226ED20800BC70DC /* iTermPrintGuard.m */,
 				532755832387821C00C50732 /* iTermProcessMonitor.h */,
 				532755842387821C00C50732 /* iTermProcessMonitor.m */,
+				D7A9E6EF2ABC123456789010 /* iTermProcessMonitor+Testing.h */,
+				D7A9E6F02ABC123456789011 /* iTermProcessMonitor+Testing.m */,
 				1D468BBF1B056CD600226083 /* iTermProfileSearchToken.m */,
 				A63493F623F2685A0047C31B /* iTermPromise.h */,
 				A63493F723F2685A0047C31B /* iTermPromise.m */,
@@ -18854,6 +18859,7 @@
 				A667C235276AB01F006B4DEF /* iTermMetalUnavailableReason.m in Sources */,
 				A6DB7BAC2CE52BB000EB7973 /* iTermPasteSpecialWindowController.m in Sources */,
 				532755862387821C00C50732 /* iTermProcessMonitor.m in Sources */,
+				D7A9E6F12ABC123456789012 /* iTermProcessMonitor+Testing.m in Sources */,
 				A6758565245AA23400827C25 /* iTermSwipeState.m in Sources */,
 				A667C266277A3B29006B4DEF /* PTYTriggerEvaluator.m in Sources */,
 				A6024B82254CE2000036D6CF /* iTermAddTriggerViewController.m in Sources */,
