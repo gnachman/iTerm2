@@ -461,15 +461,24 @@ private class TokenExecutorImpl {
     private let slownessDetector: SlownessDetector
     private let semaphore: DispatchSemaphore
     private let useFairnessScheduler: Bool
+    // Thread-safe: iTermTaskQueue uses internal locking
     private var taskQueue = iTermTaskQueue()
+    // Thread-safe: iTermTaskQueue uses internal locking
     private var sideEffects = iTermTaskQueue()
+    // Access on mutation queue only
     private let tokenQueue = TwoTierTokenQueue()
+    // Thread-safe: atomic operations
     private var pauseCount = iTermAtomicInt64Create()
+    // Access on mutation queue only
     private var executingCount = 0
+    // Thread-safe: MutableAtomicObject
     private let executingSideEffects = MutableAtomicObject(false)
+    // Initialized at init; period modified on mutation queue, markNeedsUpdate from any queue
     private var sideEffectScheduler: PeriodicScheduler! = nil
+    // Thread-safe: addByteCount from any queue, estimatedThroughput read on mutation queue
     private let throughputEstimator = iTermThroughputEstimator(historyOfDuration: 5.0 / 30.0,
                                                                secondsPerBucket: 1.0 / 30.0)
+    // Access on mutation queue only
     private var commit = true
     // Access on mutation queue only
     private(set) var isExecutingToken = false
@@ -483,6 +492,7 @@ private class TokenExecutorImpl {
     /// Session ID assigned by FairnessScheduler during registration.
     var fairnessSessionId: UInt64 = 0
 
+    // Access on mutation queue only
     /// Whether this executor is registered with the FairnessScheduler.
     /// Separate from fairnessSessionId because the ID is an identifier, not a state flag.
     var isRegistered: Bool = false
