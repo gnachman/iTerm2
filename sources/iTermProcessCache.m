@@ -809,16 +809,30 @@ typedef NS_OPTIONS(unsigned long, iTermProcessCacheCoalescerEvent) {
         }
 
         // Update cache with results and remove confirmed dead entries
-        if (newCache.count > 0 || confirmedDeadRoots.count > 0) {
-            dispatch_sync(self->_lockQueue, ^{
+        NSSet<NSNumber *> *deadSet = [NSSet setWithArray:confirmedDeadRoots];
+        dispatch_sync(self->_lockQueue, ^{
+            if (newCache.count > 0 || confirmedDeadRoots.count > 0) {
                 NSMutableDictionary *mutableCache = [self->_cachedDeepestForegroundJobLQ mutableCopy] ?: [NSMutableDictionary dictionary];
                 [mutableCache addEntriesFromDictionary:newCache];
                 for (NSNumber *deadPid in confirmedDeadRoots) {
                     [mutableCache removeObjectForKey:deadPid];
                 }
                 self->_cachedDeepestForegroundJobLQ = [mutableCache copy];
-            });
-        }
+            }
+
+            // Re-add ALL alive roots that are still background (low priority)
+            // so they continue getting periodic updates on the 0.5s cadence.
+            // This includes roots where refresh returned nil due to stale collection.
+            for (NSNumber *pidNum in toRefresh) {
+                if ([deadSet containsObject:pidNum]) {
+                    continue;  // Don't re-add confirmed dead roots
+                }
+                iTermTrackedRootInfo *info = self->_rootsLQ[pidNum];
+                if (info && !info.isHighPriority) {
+                    [self->_dirtyLowRootsLQ addIndex:pidNum.unsignedIntegerValue];
+                }
+            }
+        });
     });
 }
 

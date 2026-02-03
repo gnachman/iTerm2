@@ -815,6 +815,8 @@
 		537BFDC520FFA5A40098C91F /* iTermStatusBarJobComponent.h in Headers */ = {isa = PBXBuildFile; fileRef = 537BFDC320FFA5A40098C91F /* iTermStatusBarJobComponent.h */; };
 		537BFDC920FFB2590098C91F /* iTermProcessCache.h in Headers */ = {isa = PBXBuildFile; fileRef = 537BFDC720FFB2590098C91F /* iTermProcessCache.h */; };
 		537BFDCA20FFB2590098C91F /* iTermProcessCache.m in Sources */ = {isa = PBXBuildFile; fileRef = 537BFDC820FFB2590098C91F /* iTermProcessCache.m */; };
+		BAB0C1C2780DA546AFE73B80 /* iTermProcessCache+Testing.m in Sources */ = {isa = PBXBuildFile; fileRef = 42BC3DE2E88700AF9526F074 /* iTermProcessCache+Testing.m */; };
+		2A1F4551EB4181AC933F6915 /* iTermProcessCacheTestHelper.m in Sources */ = {isa = PBXBuildFile; fileRef = 08829F633C36167ABC85693D /* iTermProcessCacheTestHelper.m */; };
 		537BFDD12101AD9F0098C91F /* iTermCPUUtilization.h in Headers */ = {isa = PBXBuildFile; fileRef = 537BFDCF2101AD9F0098C91F /* iTermCPUUtilization.h */; };
 		537BFDD22101AD9F0098C91F /* iTermCPUUtilization.m in Sources */ = {isa = PBXBuildFile; fileRef = 537BFDD02101AD9F0098C91F /* iTermCPUUtilization.m */; };
 		537BFDD52101B2500098C91F /* iTermStatusBarCPUUtilizationComponent.h in Headers */ = {isa = PBXBuildFile; fileRef = 537BFDD32101B2500098C91F /* iTermStatusBarCPUUtilizationComponent.h */; };
@@ -6076,6 +6078,10 @@
 		537BFDC420FFA5A40098C91F /* iTermStatusBarJobComponent.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermStatusBarJobComponent.m; sourceTree = "<group>"; };
 		537BFDC720FFB2590098C91F /* iTermProcessCache.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermProcessCache.h; sourceTree = "<group>"; };
 		537BFDC820FFB2590098C91F /* iTermProcessCache.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermProcessCache.m; sourceTree = "<group>"; };
+		C47650BBAFA6A247F2489C37 /* iTermProcessCache+Testing.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "iTermProcessCache+Testing.h"; sourceTree = "<group>"; };
+		42BC3DE2E88700AF9526F074 /* iTermProcessCache+Testing.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "iTermProcessCache+Testing.m"; sourceTree = "<group>"; };
+		0FB571F65DACC53FDDE3E286 /* iTermProcessCacheTestHelper.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermProcessCacheTestHelper.h; sourceTree = "<group>"; };
+		08829F633C36167ABC85693D /* iTermProcessCacheTestHelper.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermProcessCacheTestHelper.m; sourceTree = "<group>"; };
 		537BFDCF2101AD9F0098C91F /* iTermCPUUtilization.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermCPUUtilization.h; sourceTree = "<group>"; };
 		537BFDD02101AD9F0098C91F /* iTermCPUUtilization.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermCPUUtilization.m; sourceTree = "<group>"; };
 		537BFDD32101B2500098C91F /* iTermStatusBarCPUUtilizationComponent.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermStatusBarCPUUtilizationComponent.h; sourceTree = "<group>"; };
@@ -14203,6 +14209,10 @@
 			children = (
 				537BFDC720FFB2590098C91F /* iTermProcessCache.h */,
 				537BFDC820FFB2590098C91F /* iTermProcessCache.m */,
+				C47650BBAFA6A247F2489C37 /* iTermProcessCache+Testing.h */,
+				42BC3DE2E88700AF9526F074 /* iTermProcessCache+Testing.m */,
+				0FB571F65DACC53FDDE3E286 /* iTermProcessCacheTestHelper.h */,
+				08829F633C36167ABC85693D /* iTermProcessCacheTestHelper.m */,
 				53AFFC8A1DD2A03800E6CEC6 /* iTermLSOF.h */,
 				53AFFC8B1DD2A03800E6CEC6 /* iTermLSOF.m */,
 				A6EEAEDD283712070039E850 /* ProcessDataSource.swift */,
@@ -19638,6 +19648,8 @@
 				A6D3205529C29EE30088BBE1 /* NerdFontInstaller.swift in Sources */,
 				5308BF8A22828268004BECAC /* iTermStatusBarBatteryComponent.m in Sources */,
 				537BFDCA20FFB2590098C91F /* iTermProcessCache.m in Sources */,
+				BAB0C1C2780DA546AFE73B80 /* iTermProcessCache+Testing.m in Sources */,
+				2A1F4551EB4181AC933F6915 /* iTermProcessCacheTestHelper.m in Sources */,
 				A6F9EF3820850C41005530F7 /* iTermCompetentTableRowView.m in Sources */,
 				A6D10E3427F7C2BC0026DB56 /* NSRange+MultiCursor.swift in Sources */,
 				A65B1BD32D1E31CB00F5A740 /* iTermMetalView.swift in Sources */,
