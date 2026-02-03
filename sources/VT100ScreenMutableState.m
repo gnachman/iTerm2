@@ -218,6 +218,7 @@ static const int64_t VT100ScreenMutableStateSideEffectFlagLineBufferDidDropLines
         if ([iTermAdvancedSettingsModel useFairnessScheduler]) {
             _fairnessSessionId = [iTermFairnessScheduler.shared register:_tokenExecutor];
             _tokenExecutor.fairnessSessionId = _fairnessSessionId;
+            _tokenExecutor.isRegistered = YES;
             // Notify scheduler of any preserved tokens from before disable.
             // If no tokens are queued, this is a no-op.
             [_tokenExecutor schedule];
@@ -229,6 +230,7 @@ static const int64_t VT100ScreenMutableStateSideEffectFlagLineBufferDidDropLines
         if (_fairnessSessionId != 0) {
             [iTermFairnessScheduler.shared unregisterWithSessionId:_fairnessSessionId];
             _fairnessSessionId = 0;
+            _tokenExecutor.isRegistered = NO;
         }
 
         [_commandRangeChangeJoiner invalidate];
