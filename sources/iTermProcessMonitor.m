@@ -105,6 +105,11 @@
                                                   callback:_callback
                                             trackedRootPID:_trackedRootPID];
         [child setProcessInfo:childInfo depth:depth + 1];
+        // If this monitor is paused, immediately pause the new child so it
+        // doesn't generate callbacks while the parent is in the background.
+        if (_isPaused) {
+            [child pauseMonitoring];
+        }
         [childrenToAdd addObject:child];
     }];
     [childrenToAdd enumerateObjectsUsingBlock:^(iTermProcessMonitor * _Nonnull child, NSUInteger idx, BOOL * _Nonnull stop) {
