@@ -191,7 +191,7 @@ class FairnessScheduler: NSObject {
         // Completion is called synchronously on mutationQueue (see protocol contract).
         // We rely on this to avoid an extra async dispatch per turn.
         executor.executeTurn(tokenBudget: Self.defaultTokenBudget) { [weak self] turnResult in
-            #if DEBUG
+            #if ITERM_DEBUG
             dispatchPrecondition(condition: .onQueue(iTermGCD.mutationQueue()))
             #endif
             self?.sessionFinishedTurn(sessionId, result: turnResult)
