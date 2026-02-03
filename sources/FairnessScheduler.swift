@@ -32,6 +32,7 @@ protocol FairnessSchedulerExecutor: AnyObject {
     func executeTurn(tokenBudget: Int, completion: @escaping (TurnResult) -> Void)
 
     /// Called when session is unregistered to clean up pending tokens.
+    /// Called on mutationQueue.
     func cleanupForUnregistration()
 }
 
