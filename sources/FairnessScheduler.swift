@@ -25,6 +25,10 @@ import Foundation
 @objc(iTermFairnessSchedulerExecutor)
 protocol FairnessSchedulerExecutor: AnyObject {
     /// Execute tokens up to the given budget. Calls completion with result.
+    ///
+    /// Threading contract: This method is called on mutationQueue, and the completion
+    /// callback MUST be invoked synchronously on mutationQueue before returning.
+    /// FairnessScheduler relies on this guarantee to avoid unnecessary async dispatch.
     func executeTurn(tokenBudget: Int, completion: @escaping (TurnResult) -> Void)
 
     /// Called when session is unregistered to clean up pending tokens.
@@ -41,7 +45,13 @@ class FairnessScheduler: NSObject {
     /// Session ID type - monotonically increasing counter
     typealias SessionID = UInt64
 
-    /// Default token budget per turn
+    /// Default token budget per turn.
+    ///
+    /// Future enhancement: This could become adaptive based on session count,
+    /// backpressure level, frame rate thresholds, or system load to balance
+    /// responsiveness with throughput. Lower budgets yield more frequently
+    /// (better responsiveness, lower throughput). Higher budgets process more
+    /// per turn (better throughput, less responsive).
     static let defaultTokenBudget = 1000
 
     // MARK: - Private State
@@ -177,11 +187,13 @@ class FairnessScheduler: NSObject {
         _testExecutionHistory.append(sessionId)
         #endif
 
+        // Completion is called synchronously on mutationQueue (see protocol contract).
+        // We rely on this to avoid an extra async dispatch per turn.
         executor.executeTurn(tokenBudget: Self.defaultTokenBudget) { [weak self] turnResult in
-            // Completion may be called from any thread; dispatch back to mutationQueue
-            iTermGCD.mutationQueue().async {
-                self?.sessionFinishedTurn(sessionId, result: turnResult)
-            }
+            #if DEBUG
+            dispatchPrecondition(condition: .onQueue(iTermGCD.mutationQueue()))
+            #endif
+            self?.sessionFinishedTurn(sessionId, result: turnResult)
         }
     }
 

@@ -396,7 +396,8 @@ final class FairnessSchedulerTurnExecutionTests: XCTestCase {
 
         let expectation = XCTestExpectation(description: "Turn executed")
         mockExecutorA.executeTurnHandler = { budget, completion in
-            XCTAssertEqual(budget, 500, "Default token budget should be 500")
+            XCTAssertEqual(budget, FairnessScheduler.defaultTokenBudget,
+                           "Token budget should match FairnessScheduler.defaultTokenBudget")
             expectation.fulfill()
             completion(.completed)
         }
@@ -468,8 +469,11 @@ final class FairnessSchedulerTurnExecutionTests: XCTestCase {
                        "No concurrent execution should occur")
 
         // Now complete the first turn with .yielded (indicating more work)
-        isCurrentlyExecuting = false
-        storedCompletion?(.yielded)
+        // Must call completion on mutation queue per protocol contract
+        iTermGCD.mutationQueue().async {
+            isCurrentlyExecuting = false
+            storedCompletion?(.yielded)
+        }
 
         // Second turn should now start
         wait(for: [secondTurnStarted], timeout: 1.0)
@@ -514,7 +518,10 @@ final class FairnessSchedulerTurnExecutionTests: XCTestCase {
 
         // Complete with .completed (normally wouldn't re-add)
         // But because work arrived, it SHOULD re-add
-        storedCompletion?(.completed)
+        // Must call completion on mutation queue per protocol contract
+        iTermGCD.mutationQueue().async {
+            storedCompletion?(.completed)
+        }
 
         // Second turn should start because work arrived during execution
         wait(for: [secondTurnStarted], timeout: 1.0)
@@ -953,8 +960,11 @@ final class FairnessSchedulerLifecycleEdgeCaseTests: XCTestCase {
                 scheduler.unregister(sessionId: sessionId)
                 unregisterDone.fulfill()
 
-                // Now call completion - should be safe even though unregistered
-                completion(.yielded)
+                // Call completion on mutation queue (required by threading contract)
+                // Should be safe even though session was unregistered
+                iTermGCD.mutationQueue().async {
+                    completion(.yielded)
+                }
             }
         }
 
