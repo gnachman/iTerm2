@@ -637,6 +637,7 @@ private class TokenExecutorImpl {
     // MARK: - FairnessSchedulerExecutor Support
 
     /// Execute tokens up to the given budget. Called by FairnessScheduler.
+    /// Must be called on mutation queue.
     func executeTurn(tokenBudget: Int, completion: @escaping (TurnResult) -> Void) {
         DLog("executeTurn(tokenBudget: \(tokenBudget))")
 #if DEBUG
@@ -739,6 +740,7 @@ private class TokenExecutorImpl {
     }
 
     /// Called when session is unregistered to clean up pending tokens.
+    /// Must be called on mutation queue.
     func cleanupForUnregistration() {
         DLog("cleanupForUnregistration")
         // Tokens are intentionally preserved here. Termination is undoable (via revive),
