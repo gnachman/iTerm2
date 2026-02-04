@@ -42,11 +42,13 @@
 
 // Called on _queue
 - (BOOL)setProcessInfo:(iTermProcessInfo *)processInfo {
+    ITAssertOnQueue(_queue);
     return [self setProcessInfo:processInfo depth:0];
 }
 
 // Called on _queue
 - (BOOL)setProcessInfo:(iTermProcessInfo *)processInfo depth:(NSInteger)depth {
+    ITAssertOnQueue(_queue);
     if (![iTermAdvancedSettingsModel fastForegroundJobUpdates]) {
         return NO;
     }
@@ -134,6 +136,7 @@
 
 // Called on _queue
 - (iTermProcessMonitor *)childForProcessInfo:(iTermProcessInfo *)info {
+    ITAssertOnQueue(_queue);
     const pid_t pid = info.processID;
     return [_children objectPassingTest:^BOOL(iTermProcessMonitor *element, NSUInteger index, BOOL *stop) {
         return element.processInfo.processID == pid;
@@ -142,6 +145,7 @@
 
 // Called on _queue
 - (void)handleEvent {
+    ITAssertOnQueue(_queue);
     const dispatch_source_proc_flags_t flags = (dispatch_source_proc_flags_t)dispatch_source_get_data(_source);
     _callback(self, flags);
     if (flags & DISPATCH_PROC_EXIT) {
@@ -151,6 +155,7 @@
 
 // Called on _queue
 - (void)invalidate {
+    ITAssertOnQueue(_queue);
     if (_source == nil) {
         return;
     }
@@ -173,6 +178,7 @@
 
 // Called on _queue
 - (void)pauseMonitoring {
+    ITAssertOnQueue(_queue);
     if (_isPaused) {
         return;
     }
@@ -191,6 +197,7 @@
 
 // Called on _queue
 - (void)resumeMonitoring {
+    ITAssertOnQueue(_queue);
     if (!_isPaused) {
         return;
     }
@@ -209,12 +216,14 @@
 
 // Called on _queue
 - (void)addChild:(iTermProcessMonitor *)child {
+    ITAssertOnQueue(_queue);
     [_children addObject:child];
     child.parent = self;
 }
 
 // Called on _queue
 - (void)removeChild:(iTermProcessMonitor *)child {
+    ITAssertOnQueue(_queue);
     if (child.parent == self) {
         [_children removeObject:child];
         child.parent = nil;

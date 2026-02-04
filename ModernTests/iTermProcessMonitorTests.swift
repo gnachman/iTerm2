@@ -133,7 +133,10 @@ final class iTermProcessMonitorTests: XCTestCase {
         let monitor = iTermProcessMonitor(queue: testQueue, callback: makeCallback(), trackedRootPID: pid)
 
         // When
-        let changed = monitor.setProcessInfo(processInfo)
+        var changed = false
+        testQueue.sync {
+            changed = monitor.setProcessInfo(processInfo)
+        }
 
         // Then
         XCTAssertTrue(changed)
@@ -152,10 +155,15 @@ final class iTermProcessMonitorTests: XCTestCase {
         }
 
         let monitor = iTermProcessMonitor(queue: testQueue, callback: makeCallback(), trackedRootPID: pid)
-        _ = monitor.setProcessInfo(processInfo)
+        testQueue.sync {
+            _ = monitor.setProcessInfo(processInfo)
+        }
 
         // When
-        let changed = monitor.setProcessInfo(processInfo)
+        var changed = false
+        testQueue.sync {
+            changed = monitor.setProcessInfo(processInfo)
+        }
 
         // Then
         XCTAssertFalse(changed)
@@ -173,11 +181,16 @@ final class iTermProcessMonitorTests: XCTestCase {
         }
 
         let monitor = iTermProcessMonitor(queue: testQueue, callback: makeCallback(), trackedRootPID: pid)
-        _ = monitor.setProcessInfo(processInfo)
+        testQueue.sync {
+            _ = monitor.setProcessInfo(processInfo)
+        }
         XCTAssertNotNil(monitor.processInfo)
 
         // When
-        let changed = monitor.setProcessInfo(nil as iTermProcessInfo?)
+        var changed = false
+        testQueue.sync {
+            changed = monitor.setProcessInfo(nil as iTermProcessInfo?)
+        }
 
         // Then
         XCTAssertTrue(changed)
@@ -211,7 +224,10 @@ final class iTermProcessMonitorTests: XCTestCase {
         let monitor = iTermProcessMonitor(queue: testQueue, callback: makeCallback(), trackedRootPID: parentPID)
 
         // When
-        let changed = monitor.setProcessInfo(parentInfo)
+        var changed = false
+        testQueue.sync {
+            changed = monitor.setProcessInfo(parentInfo)
+        }
 
         // Then
         XCTAssertTrue(changed)
@@ -327,7 +343,9 @@ final class iTermProcessMonitorTests: XCTestCase {
         let monitor = iTermProcessMonitor(queue: testQueue, callback: makeCallback(), trackedRootPID: rootPID)
 
         // When
-        _ = monitor.setProcessInfo(parentInfo)
+        testQueue.sync {
+            _ = monitor.setProcessInfo(parentInfo)
+        }
 
         // Then
         XCTAssertEqual(monitor.trackedRootPID, rootPID)
@@ -348,7 +366,9 @@ final class iTermProcessMonitorTests: XCTestCase {
         }
 
         let monitor = iTermProcessMonitor(queue: testQueue, callback: makeCallback(), trackedRootPID: pid)
-        _ = monitor.setProcessInfo(processInfo)
+        testQueue.sync {
+            _ = monitor.setProcessInfo(processInfo)
+        }
 
         // When: Pause multiple times
         testQueue.sync {
@@ -375,7 +395,9 @@ final class iTermProcessMonitorTests: XCTestCase {
         }
 
         let monitor = iTermProcessMonitor(queue: testQueue, callback: makeCallback(), trackedRootPID: pid)
-        _ = monitor.setProcessInfo(processInfo)
+        testQueue.sync {
+            _ = monitor.setProcessInfo(processInfo)
+        }
 
         // When: Resume multiple times without pausing first
         testQueue.sync {
@@ -427,7 +449,9 @@ final class iTermProcessMonitorTests: XCTestCase {
         }
 
         let monitor = iTermProcessMonitor(queue: testQueue, callback: makeCallback(), trackedRootPID: parentPID)
-        _ = monitor.setProcessInfo(initialInfo)
+        testQueue.sync {
+            _ = monitor.setProcessInfo(initialInfo)
+        }
 
         // Pause the parent monitor
         testQueue.sync {
@@ -498,7 +522,9 @@ final class iTermProcessMonitorTests: XCTestCase {
         }
 
         let monitor = iTermProcessMonitor(queue: testQueue, callback: makeCallback(), trackedRootPID: parentPID)
-        _ = monitor.setProcessInfo(initialInfo)
+        testQueue.sync {
+            _ = monitor.setProcessInfo(initialInfo)
+        }
 
         // Pause the monitor tree
         testQueue.sync {
@@ -573,7 +599,9 @@ final class iTermProcessMonitorTests: XCTestCase {
         }
 
         let monitor = iTermProcessMonitor(queue: testQueue, callback: makeCallback(), trackedRootPID: parentPID)
-        _ = monitor.setProcessInfo(initialInfo)
+        testQueue.sync {
+            _ = monitor.setProcessInfo(initialInfo)
+        }
 
         // Pause the parent monitor
         testQueue.sync {
@@ -633,7 +661,9 @@ final class iTermProcessMonitorTests: XCTestCase {
         }
 
         let monitor = iTermProcessMonitor(queue: testQueue, callback: makeCallback(), trackedRootPID: parentPID)
-        _ = monitor.setProcessInfo(initialInfo)
+        testQueue.sync {
+            _ = monitor.setProcessInfo(initialInfo)
+        }
 
         // Pause the parent
         testQueue.sync {
@@ -699,7 +729,9 @@ final class iTermProcessMonitorTests: XCTestCase {
         }
 
         let monitor = iTermProcessMonitor(queue: testQueue, callback: makeCallback(), trackedRootPID: parentPID)
-        _ = monitor.setProcessInfo(initialInfo)
+        testQueue.sync {
+            _ = monitor.setProcessInfo(initialInfo)
+        }
 
         // Parent is NOT paused
 
@@ -996,7 +1028,9 @@ final class iTermProcessMonitorTests: XCTestCase {
         }
 
         let monitor = iTermProcessMonitor(queue: testQueue, callback: makeCallback(), trackedRootPID: pid)
-        _ = monitor.setProcessInfo(processInfo)
+        testQueue.sync {
+            _ = monitor.setProcessInfo(processInfo)
+        }
         XCTAssertNotNil(monitor.processInfo)
 
         // When
@@ -1020,7 +1054,9 @@ final class iTermProcessMonitorTests: XCTestCase {
         }
 
         let monitor = iTermProcessMonitor(queue: testQueue, callback: makeCallback(), trackedRootPID: pid)
-        _ = monitor.setProcessInfo(processInfo)
+        testQueue.sync {
+            _ = monitor.setProcessInfo(processInfo)
+        }
 
         testQueue.sync {
             monitor.pauseMonitoring()
@@ -1046,7 +1082,9 @@ final class iTermProcessMonitorTests: XCTestCase {
         }
 
         let monitor = iTermProcessMonitor(queue: testQueue, callback: makeCallback(), trackedRootPID: pid)
-        _ = monitor.setProcessInfo(processInfo)
+        testQueue.sync {
+            _ = monitor.setProcessInfo(processInfo)
+        }
 
         // When: Invalidate multiple times
         testQueue.sync {
@@ -1080,7 +1118,9 @@ final class iTermProcessMonitorTests: XCTestCase {
         }
 
         let monitor = iTermProcessMonitor(queue: testQueue, callback: makeCallback(), trackedRootPID: parentPID)
-        _ = monitor.setProcessInfo(parentInfo)
+        testQueue.sync {
+            _ = monitor.setProcessInfo(parentInfo)
+        }
 
         // When: Pause and resume multiple times
         for _ in 0..<5 {
@@ -1117,7 +1157,9 @@ final class iTermProcessMonitorTests: XCTestCase {
         }
 
         let monitor = iTermProcessMonitor(queue: testQueue, callback: makeCallback(), trackedRootPID: parentPID)
-        _ = monitor.setProcessInfo(initialInfo)
+        testQueue.sync {
+            _ = monitor.setProcessInfo(initialInfo)
+        }
 
         // Pause
         testQueue.sync {
