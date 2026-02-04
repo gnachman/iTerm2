@@ -225,8 +225,8 @@ static const int64_t VT100ScreenMutableStateSideEffectFlagLineBufferDidDropLines
         }
     } else {
         // Unregister from FairnessScheduler BEFORE clearing delegate.
-        // cleanupForUnregistration() is called but tokens are preserved (not discarded)
-        // to support session revive. They drain naturally when re-enabled.
+        // Tokens are preserved (not discarded) to support session revive.
+        // They drain naturally when re-enabled.
         if (_fairnessSessionId != 0) {
             [iTermFairnessScheduler.shared unregisterWithSessionId:_fairnessSessionId];
             _fairnessSessionId = 0;

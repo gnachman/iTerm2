@@ -6,7 +6,7 @@
 //  See implementation.md for design details.
 //
 //  Thread Safety:
-//  - ID allocation uses a lightweight Mutex (allows register() from joined blocks)
+//  - ID allocation uses lock-free atomic increment
 //  - All other state is synchronized via iTermGCD.mutationQueue
 //  - Public methods dispatch async to avoid blocking callers
 //
@@ -30,10 +30,6 @@ protocol FairnessSchedulerExecutor: AnyObject {
     /// callback MUST be invoked synchronously on mutationQueue before returning.
     /// FairnessScheduler relies on this guarantee to avoid unnecessary async dispatch.
     func executeTurn(tokenBudget: Int, completion: @escaping (TurnResult) -> Void)
-
-    /// Called when session is unregistered to clean up pending tokens.
-    /// Called on mutationQueue.
-    func cleanupForUnregistration()
 }
 
 /// Coordinates round-robin fair scheduling of token execution across all PTY sessions.
@@ -57,20 +53,19 @@ class FairnessScheduler: NSObject {
 
     // MARK: - Private State
 
-    /// Lock protecting only nextSessionId for ID allocation.
-    /// This allows register() to be called from joined blocks without deadlock.
-    private let idLock = Mutex()
+    /// Atomic counter for session ID allocation.
+    /// Uses lock-free atomic increment for thread safety without blocking.
+    /// Initialized to 0; first ID returned will be 1 (0 reserved as "not registered" sentinel).
+    private let nextSessionIdAtomic = iTermAtomicInt64Create()
 
-    // Protected by idLock (only accessed during register)
-    // Start at 1 so that 0 can be used as "not registered" sentinel value
-    private var nextSessionId: SessionID = 1
+    deinit {
+        iTermAtomicInt64Free(nextSessionIdAtomic)
+    }
 
     // Access on mutation queue only
     private var sessions: [SessionID: SessionState] = [:]
     // Access on mutation queue only
-    private var busyList: [SessionID] = []       // Round-robin order
-    // Access on mutation queue only
-    private var busySet: Set<SessionID> = []     // O(1) membership check
+    private var busyQueue = BusyQueue()
 
     #if ITERM_DEBUG
     // Access on mutation queue only
@@ -87,17 +82,52 @@ class FairnessScheduler: NSObject {
         var workArrivedWhileExecuting: Bool = false
     }
 
+    /// Encapsulates the busy queue (round-robin order) with O(1) membership checks.
+    /// Invariant: set and list always contain the same session IDs (modulo lazy cleanup).
+    private struct BusyQueue {
+        private var list: [SessionID] = []
+        private var set: Set<SessionID> = []
+
+        var isEmpty: Bool { list.isEmpty }
+        var count: Int { list.count }
+
+        mutating func enqueue(_ id: SessionID) {
+            guard !set.contains(id) else {
+                it_fatalError("Session \(id) already in busy queue")
+            }
+            set.insert(id)
+            list.append(id)
+        }
+
+        mutating func dequeue() -> SessionID? {
+            guard let id = list.first else { return nil }
+            list.removeFirst()
+            set.remove(id)
+            return id
+        }
+
+        /// Remove from set only (list cleaned lazily during dequeue).
+        mutating func removeFromSet(_ id: SessionID) {
+            set.remove(id)
+        }
+
+        func contains(_ id: SessionID) -> Bool {
+            set.contains(id)
+        }
+
+        mutating func removeAll() {
+            list.removeAll()
+            set.removeAll()
+        }
+    }
+
     // MARK: - Registration
 
     /// Register an executor with the scheduler. Returns a stable session ID.
     /// Thread-safe: may be called from any thread, including during joined blocks.
     @objc func register(_ executor: FairnessSchedulerExecutor) -> SessionID {
-        // Allocate ID under lock (instant, no queue dispatch needed)
-        let sessionId = idLock.sync {
-            let id = nextSessionId
-            nextSessionId += 1
-            return id
-        }
+        // Allocate ID atomically (lock-free, instant)
+        let sessionId = SessionID(iTermAtomicInt64Add(nextSessionIdAtomic, 1))
 
         // Session creation dispatches async to mutation queue.
         // This avoids deadlock when called from joined blocks.
@@ -114,14 +144,9 @@ class FairnessScheduler: NSObject {
     /// Thread-safe: may be called from any thread.
     @objc func unregister(sessionId: SessionID) {
         iTermGCD.mutationQueue().async {
-            guard let state = self.sessions[sessionId] else { return }
-            let executor = state.executor
-
+            guard self.sessions[sessionId] != nil else { return }
             self.sessions.removeValue(forKey: sessionId)
-            self.busySet.remove(sessionId)
-            // busyList cleaned lazily in executeNextTurn
-
-            executor?.cleanupForUnregistration()
+            self.busyQueue.removeFromSet(sessionId)
         }
     }
 
@@ -146,9 +171,8 @@ class FairnessScheduler: NSObject {
             return
         }
 
-        if !busySet.contains(sessionId) {
-            busySet.insert(sessionId)
-            busyList.append(sessionId)
+        if !busyQueue.contains(sessionId) {
+            busyQueue.enqueue(sessionId)
             ensureExecutionScheduled()
         }
     }
@@ -158,7 +182,7 @@ class FairnessScheduler: NSObject {
     /// Must be called on mutationQueue.
     private func ensureExecutionScheduled() {
         dispatchPrecondition(condition: .onQueue(iTermGCD.mutationQueue()))
-        guard !busyList.isEmpty else { return }
+        guard !busyQueue.isEmpty else { return }
         executionJoiner.setNeedsUpdate { [weak self] in
             self?.executeNextTurn()
         }
@@ -167,10 +191,7 @@ class FairnessScheduler: NSObject {
     /// Must be called on mutationQueue (via executionJoiner).
     private func executeNextTurn() {
         dispatchPrecondition(condition: .onQueue(iTermGCD.mutationQueue()))
-        guard !busyList.isEmpty else { return }
-
-        let sessionId = busyList.removeFirst()
-        busySet.remove(sessionId)
+        guard let sessionId = busyQueue.dequeue() else { return }
 
         guard var state = sessions[sessionId],
               let executor = state.executor else {
@@ -210,12 +231,10 @@ class FairnessScheduler: NSObject {
         switch result {
         case .completed:
             if workArrived {
-                busySet.insert(sessionId)
-                busyList.append(sessionId)
+                busyQueue.enqueue(sessionId)
             }
         case .yielded:
-            busySet.insert(sessionId)
-            busyList.append(sessionId)
+            busyQueue.enqueue(sessionId)
         case .blocked:
             break // Don't reschedule
         }
@@ -239,7 +258,7 @@ extension FairnessScheduler {
     /// Test-only: Returns the count of sessions in the busy list.
     @objc var testBusySessionCount: Int {
         return iTermGCD.mutationQueue().sync {
-            return busyList.count
+            return busyQueue.count
         }
     }
 
@@ -253,7 +272,7 @@ extension FairnessScheduler {
     /// Test-only: Returns whether a session is currently in the busy list.
     @objc func testIsSessionInBusyList(_ sessionId: SessionID) -> Bool {
         return iTermGCD.mutationQueue().sync {
-            return busySet.contains(sessionId)
+            return busyQueue.contains(sessionId)
         }
     }
 
@@ -267,22 +286,14 @@ extension FairnessScheduler {
     /// Test-only: Reset state for clean test runs.
     /// WARNING: Only call this in test teardown, never in production.
     @objc func testReset() {
-        // Reset ID counter under its lock
-        idLock.sync {
-            nextSessionId = 1
-        }
+        // Reset ID counter atomically (set to 0, next ID will be 1)
+        _ = iTermAtomicInt64GetAndReset(nextSessionIdAtomic)
 
         // Reset all other state on mutation queue
         iTermGCD.mutationQueue().sync {
-            let executors = sessions.values.compactMap { $0.executor }
             sessions.removeAll()
-            busyList.removeAll()
-            busySet.removeAll()
+            busyQueue.removeAll()
             _testExecutionHistory.removeAll()
-
-            for executor in executors {
-                executor.cleanupForUnregistration()
-            }
         }
     }
 

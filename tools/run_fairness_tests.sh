@@ -71,7 +71,6 @@ TOKENEXECUTOR_TEST_CLASSES=(
     "TokenExecutorBudgetEdgeCaseTests"
     "TokenExecutorSchedulerEntryPointTests"
     "TokenExecutorLegacyRemovalTests"
-    "TokenExecutorCleanupTests"
     "TokenExecutorAccountingInvariantTests"
     "TokenExecutorCompletionCallbackTests"
     "TokenExecutorBudgetEnforcementDetailedTests"

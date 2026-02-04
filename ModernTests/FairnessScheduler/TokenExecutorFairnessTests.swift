@@ -29,15 +29,6 @@ extension TokenExecutor {
             self.executeTurn(tokenBudget: tokenBudget, completion: completion)
         }
     }
-
-    /// Test helper: Dispatches cleanupForUnregistration to the mutation queue.
-    /// Required because cleanupForUnregistration has a dispatchPrecondition for mutation queue.
-    func cleanupForUnregistrationOnMutationQueue(completion: @escaping () -> Void) {
-        iTermGCD.mutationQueue().async {
-            self.cleanupForUnregistration()
-            completion()
-        }
-    }
 }
 
 // MARK: - 2.1 Non-Blocking Token Addition Tests
@@ -1376,127 +1367,6 @@ final class TokenExecutorLegacyRemovalTests: XCTestCase {
     }
 }
 
-// MARK: - 2.7 Cleanup Tests
-
-/// Tests for cleanup when session is unregistered (2.7)
-final class TokenExecutorCleanupTests: XCTestCase {
-
-    var mockDelegate: MockTokenExecutorDelegate!
-    var mockTerminal: VT100Terminal!
-
-    override func setUp() {
-        super.setUp()
-        // Explicitly disable fairness scheduler since these tests don't need it
-        iTermAdvancedSettingsModel.setUseFairnessSchedulerForTesting(false)
-        mockDelegate = MockTokenExecutorDelegate()
-        mockTerminal = VT100Terminal()
-    }
-
-    override func tearDown() {
-        mockTerminal = nil
-        mockDelegate = nil
-        super.tearDown()
-    }
-
-    func testCleanupForUnregistrationExists() throws {
-        // REQUIREMENT: cleanupForUnregistration() must exist and handle unconsumed tokens.
-
-        let executor = TokenExecutor(mockTerminal, slownessDetector: SlownessDetector(), queue: iTermGCD.mutationQueue())
-        executor.delegate = mockDelegate
-
-        // Verify the method exists by calling it on the mutation queue
-        let exp = XCTestExpectation(description: "cleanup")
-        executor.cleanupForUnregistrationOnMutationQueue {
-            exp.fulfill()
-        }
-        wait(for: [exp], timeout: 1.0)
-
-        // Should not crash - test passes if we get here
-    }
-
-    func testCleanupIncrementsAvailableSlots() throws {
-        // SKIP: This test adds tokens which blocks on semaphore, then cleanup needs mutation queue.
-        // Requires restructuring to work with blocking semaphore model.
-        throw XCTSkip("Requires restructuring for blocking semaphore model")
-    }
-
-    // NEGATIVE TEST: Cleanup should NOT double-increment for already-consumed tokens
-    func testCleanupNoDoubleIncrement() throws {
-        // SKIP: This test adds tokens and calls schedule() which involves complex queue interactions.
-        // Requires restructuring to work with blocking semaphore model.
-        throw XCTSkip("Requires restructuring for blocking semaphore model")
-    }
-
-    func testCleanupPreservesTokensInQueue() throws {
-        // REQUIREMENT: Verify cleanup preserves tokens rather than discarding them.
-        // Tokens remain in queue for potential session revive.
-        // NOTE: This test only verifies preservation. Processing after re-registration
-        // is tested in TokenExecutorSessionReviveTests.
-
-        let executor = TokenExecutor(mockTerminal,
-                                      slownessDetector: SlownessDetector(),
-                                      queue: iTermGCD.mutationQueue())
-        executor.delegate = mockDelegate
-
-        mockDelegate.shouldQueueTokens = true
-
-        // Semaphore has bufferDepth (40) slots. Since scheduler is disabled and
-        // shouldQueueTokens=true prevents consumption, addTokens blocks when slots exhausted.
-        // Use 30 to stay within limit while still creating meaningful backpressure.
-        let tokenArrayCount = 30
-        for _ in 0..<tokenArrayCount {
-            let vector = createTestTokenVector(count: 5)
-            executor.addTokens(vector, lengthTotal: 50, lengthExcludingInBandSignaling: 50)
-        }
-
-        waitForMutationQueue()
-
-        let backpressureBeforeCleanup = executor.backpressureLevel
-        XCTAssertGreaterThan(backpressureBeforeCleanup, .none,
-                             "Should have backpressure with \(tokenArrayCount)/40 slots used")
-
-        #if ITERM_DEBUG
-        let tokensBeforeCleanup = executor.testQueuedTokenCount
-        XCTAssertGreaterThan(tokensBeforeCleanup, 0, "Should have queued tokens")
-        #endif
-
-        let cleanupExpectation = XCTestExpectation(description: "Cleanup completed")
-        executor.cleanupForUnregistrationOnMutationQueue {
-            cleanupExpectation.fulfill()
-        }
-        wait(for: [cleanupExpectation], timeout: 1.0)
-
-        #if ITERM_DEBUG
-        let tokensAfterCleanup = executor.testQueuedTokenCount
-        XCTAssertEqual(tokensAfterCleanup, tokensBeforeCleanup,
-                       "Cleanup should preserve tokens for revive")
-        #endif
-
-        let backpressureAfterCleanup = executor.backpressureLevel
-        XCTAssertEqual(backpressureAfterCleanup, backpressureBeforeCleanup,
-                       "Backpressure should remain unchanged after cleanup")
-    }
-
-    func testCleanupEmptyQueueNoChange() throws {
-        // REQUIREMENT: Cleanup with empty queue should not change availableSlots.
-
-        let executor = TokenExecutor(mockTerminal, slownessDetector: SlownessDetector(), queue: iTermGCD.mutationQueue())
-        executor.delegate = mockDelegate
-
-        let initialLevel = executor.backpressureLevel
-
-        // Cleanup with no tokens - must dispatch to mutation queue
-        let exp = XCTestExpectation(description: "cleanup")
-        executor.cleanupForUnregistrationOnMutationQueue {
-            exp.fulfill()
-        }
-        wait(for: [exp], timeout: 1.0)
-
-        XCTAssertEqual(executor.backpressureLevel, initialLevel,
-                       "Cleanup with empty queue should not change slots")
-    }
-}
-
 // MARK: - Accounting Invariant Tests
 
 /// Critical tests for availableSlots accounting invariants.
@@ -2411,9 +2281,7 @@ final class TokenExecutorAvailableSlotsBoundaryTests: XCTestCase {
         // - High-priority tokens bypass backpressure and can overdraw slots
         // - This test calls addTokens directly, bypassing PTYTask's backpressure gate
         //
-        // ACCOUNTING INVARIANT: cleanupForUnregistration() preserves tokens for potential revive.
         // This test verifies that concurrent operations don't corrupt slot accounting.
-        // After cleanup, slots should still reflect queued tokens (not return to totalSlots).
 
         let executor = TokenExecutor(
             mockTerminal,
@@ -2468,9 +2336,7 @@ final class TokenExecutorAvailableSlotsBoundaryTests: XCTestCase {
         waitForMutationQueue()
         waitForMainQueue()
 
-        // Unregister calls cleanupForUnregistration.
-        // NOTE: cleanupForUnregistration no longer discards tokens - they are preserved
-        // for potential revive. See TODO comment at top of this test.
+        // Unregister the session. Tokens are preserved for potential revive.
         FairnessScheduler.shared.unregister(sessionId: sessionId)
 
         // Wait for cleanup to complete (unregister dispatches async to mutation queue)
@@ -2495,12 +2361,6 @@ final class TokenExecutorAvailableSlotsBoundaryTests: XCTestCase {
                           "Backpressure should be .none when no tokens remain")
         }
         #endif
-    }
-
-    func testCleanupDoesNotOverflowSlots() throws {
-        // SKIP: cleanupForUnregistration requires mutation queue but test runs on main thread.
-        // Requires restructuring to dispatch to mutation queue properly.
-        throw XCTSkip("Requires mutation queue dispatch restructuring")
     }
 
     func testRapidAddConsumeAddCycle() {
@@ -3022,7 +2882,7 @@ final class TokenExecutorDeferCompletionOrderingTests: XCTestCase {
 // MARK: - Session Restoration (Revive) Tests
 
 /// Tests for the session revive path: disable → preserve tokens → re-enable → tokens drain.
-/// This validates the new cleanupForUnregistration behavior that preserves tokens.
+/// Tokens are preserved on unregister to support session revival.
 final class TokenExecutorSessionReviveTests: XCTestCase {
 
     var mockDelegate: MockTokenExecutorDelegate!
@@ -3041,41 +2901,7 @@ final class TokenExecutorSessionReviveTests: XCTestCase {
         super.tearDown()
     }
 
-    // MARK: - Test 1: Tokens Preserved After Cleanup
-
-    func testTokensPreservedAfterCleanup() throws {
-        let executor = TokenExecutor(mockTerminal,
-                                      slownessDetector: SlownessDetector(),
-                                      queue: iTermGCD.mutationQueue())
-        executor.delegate = mockDelegate
-        mockDelegate.shouldQueueTokens = true
-
-        for _ in 0..<10 {
-            let vector = createTestTokenVector(count: 5)
-            executor.addTokens(vector, lengthTotal: 50, lengthExcludingInBandSignaling: 50)
-        }
-
-        waitForMutationQueue()
-
-        #if ITERM_DEBUG
-        let tokensBeforeCleanup = executor.testQueuedTokenCount
-        XCTAssertGreaterThan(tokensBeforeCleanup, 0, "Should have tokens before cleanup")
-        #endif
-
-        let cleanupExpectation = XCTestExpectation(description: "Cleanup completed")
-        executor.cleanupForUnregistrationOnMutationQueue {
-            cleanupExpectation.fulfill()
-        }
-        wait(for: [cleanupExpectation], timeout: 1.0)
-
-        #if ITERM_DEBUG
-        let tokensAfterCleanup = executor.testQueuedTokenCount
-        XCTAssertEqual(tokensAfterCleanup, tokensBeforeCleanup,
-                       "Cleanup should preserve tokens for revive")
-        #endif
-    }
-
-    // MARK: - Test 2: Unregister Preserves Tokens
+    // MARK: - Test 1: Unregister Preserves Tokens
 
     func testUnregisterPreservesTokens() throws {
         let executor = TokenExecutor(mockTerminal,
@@ -3115,7 +2941,7 @@ final class TokenExecutorSessionReviveTests: XCTestCase {
         XCTAssertFalse(executor.isRegistered)
     }
 
-    // MARK: - Test 3: Re-registration Processes Preserved Tokens
+    // MARK: - Test 2: Re-registration Processes Preserved Tokens
 
     func testReRegistrationProcessesPreservedTokens() throws {
         let executor = TokenExecutor(mockTerminal,

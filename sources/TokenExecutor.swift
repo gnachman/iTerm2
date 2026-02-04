@@ -444,14 +444,6 @@ extension TokenExecutor: FairnessSchedulerExecutor {
         impl.executeTurn(tokenBudget: tokenBudget, completion: completion)
     }
 
-    // Mutation queue only
-    /// Called when session is unregistered to clean up pending tokens.
-    @objc
-    func cleanupForUnregistration() {
-        dispatchPrecondition(condition: .onQueue(iTermGCD.mutationQueue()))
-        if gDebugLogging.boolValue { DLog("cleanupForUnregistration") }
-        impl.cleanupForUnregistration()
-    }
 }
 
 private class TokenExecutorImpl {
@@ -747,16 +739,6 @@ private class TokenExecutorImpl {
 
         // defer has fired — high-priority tasks completed before completion callback
         completion(turnResult)
-    }
-
-    /// Called when session is unregistered to clean up pending tokens.
-    /// Must be called on mutation queue.
-    func cleanupForUnregistration() {
-        DLog("cleanupForUnregistration")
-        // Tokens are intentionally preserved here. Termination is undoable (via revive),
-        // so tokens must not be discarded. They will drain via the normal execution path
-        // when the terminal is re-enabled and re-registered with the scheduler, or be
-        // freed on dealloc if the session is never revived.
     }
 
     // Any queue
