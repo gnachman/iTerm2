@@ -6,6 +6,8 @@
 #import "iTerm2SharedARC-Swift.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermParser.h"
+#import "iTermModifierRemapper.h"
+#import "iTermPreferences.h"
 #import "iTermPromise.h"
 #import "iTermTerminfo.h"
 #import "iTermURLStore.h"
@@ -4346,6 +4348,29 @@ static NSString *VT100GetURLParamForKey(NSString *params, NSString *key) {
                 }
             }
         }
+#if DEBUG
+    } else if ([key isEqualToString:@"Debug"]) {
+        if ([value hasPrefix:@"RemapFn="]) {
+            int tag = [[value substringFromIndex:@"RemapFn=".length] intValue];
+            [iTermPreferences setInt:tag forKey:kPreferenceKeyFunctionRemapping];
+            dispatch_async(dispatch_get_main_queue(), ^{
+                if ([[iTermModifierRemapper sharedInstance] isAnyModifierRemapped]) {
+                    [[iTermModifierRemapper sharedInstance] setRemapModifiers:YES];
+                }
+            });
+            NSString *ack = [NSString stringWithFormat:@"\033]1337;DebugAck=FnRemap=%d\007", tag];
+            [_delegate terminalSendReport:[ack dataUsingEncoding:NSUTF8StringEncoding]];
+        } else if ([value isEqualToString:@"QueryFnState"]) {
+            BOOL fnDown = [[iTermModifierRemapper sharedInstance] physicalFnKeyDown];
+            int remap = [iTermPreferences intForKey:kPreferenceKeyFunctionRemapping];
+            BOOL anyRemapped = [[iTermModifierRemapper sharedInstance] isAnyModifierRemapped];
+            BOOL remapping = [[iTermModifierRemapper sharedInstance] isRemappingModifiers];
+            NSString *report = [NSString stringWithFormat:
+                @"\033]1337;DebugAck=FnState=%d;Remap=%d;Any=%d;ET=%d\007",
+                fnDown, remap, anyRemapped, remapping];
+            [_delegate terminalSendReport:[report dataUsingEncoding:NSUTF8StringEncoding]];
+        }
+#endif
     } else if ([key isEqualToString:@"ExecFailed"]) {
         [_delegate terminalExecDidFail];
     }

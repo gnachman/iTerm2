@@ -20,6 +20,11 @@
 // Is any modifier set in prefs to do something other than its un-remapped behavior?
 @property(nonatomic, readonly) BOOL isAnyModifierRemapped;
 
+// Whether the physical Fn key is currently held down. Updated by the event tap,
+// or by iTermApplication for the application-level remapping path.
+// Atomic because it is written from the event tap thread and read from the main thread.
+@property(atomic) BOOL physicalFnKeyDown;
+
 // Assign to start or stop remapping. The getter indicates if the event tap is
 // on (even if self.isAnyModifierRemapped is NO).
 @property(nonatomic, getter=isRemappingModifiers) BOOL remapModifiers;
