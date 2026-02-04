@@ -116,6 +116,7 @@
         [self addChild:child];
     }];
     [childrenToRemove enumerateObjectsUsingBlock:^(iTermProcessMonitor * _Nonnull child, NSUInteger idx, BOOL * _Nonnull stop) {
+        [child invalidate];
         [self removeChild:child];
     }];
     if (childrenToAdd.count || childrenToRemove.count) {
