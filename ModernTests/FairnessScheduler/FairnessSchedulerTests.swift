@@ -98,17 +98,6 @@ final class FairnessSchedulerSessionTests: XCTestCase {
                        "Unregistered session should not execute")
     }
 
-    func testUnregisterCallsCleanupOnExecutor() {
-        let idA = scheduler.register(mockExecutorA)
-        scheduler.unregister(sessionId: idA)
-
-        // Wait for async unregister to complete on mutationQueue
-        iTermGCD.mutationQueue().sync {}
-
-        XCTAssertTrue(mockExecutorA.cleanupCalled,
-                      "cleanupForUnregistration should be called on unregister")
-    }
-
     func testUnregisterNonexistentSessionIsNoOp() {
         // Register a real session first
         let idA = scheduler.register(mockExecutorA)
@@ -747,13 +736,13 @@ final class FairnessSchedulerThreadSafetyTests: XCTestCase {
         // No timeout - completes quickly if correct (watchdog is testConcurrentRegistration)
         group.wait()
 
-        // Drain queues to ensure async cleanup completes
+        // Drain queues to ensure async unregister completes
         waitForMutationQueue()
 
-        // Bounded-progress assertion: verify all executors had cleanup called
-        for executor in executors {
-            XCTAssertTrue(executor.cleanupCalled,
-                          "All executors should have cleanup called")
+        // Verify all sessions were unregistered
+        for sessionId in sessionIds {
+            XCTAssertFalse(scheduler.testIsSessionRegistered(sessionId),
+                           "All sessions should be unregistered")
         }
     }
 
@@ -972,11 +961,12 @@ final class FairnessSchedulerLifecycleEdgeCaseTests: XCTestCase {
 
         wait(for: [executionStarted, unregisterDone], timeout: 2.0)
 
-        // Verify cleanup was called
-        XCTAssertTrue(executor.cleanupCalled, "Cleanup should be called on unregister")
-
         // Flush mutation queue to ensure no crash from late completion
         waitForMutationQueue()
+
+        // Verify session was unregistered
+        XCTAssertFalse(scheduler.testIsSessionRegistered(sessionId),
+                       "Session should be unregistered")
     }
 
     func testUnregisterAfterYieldedBeforeNextTurn() {
@@ -1014,9 +1004,9 @@ final class FairnessSchedulerLifecycleEdgeCaseTests: XCTestCase {
         // Flush mutation queue to ensure all pending work is processed
         waitForMutationQueue()
 
-        // Verify cleanup was called (the main guarantee)
-        XCTAssertTrue(executor.cleanupCalled,
-                      "Cleanup should be called on unregister")
+        // Verify session was unregistered
+        XCTAssertFalse(scheduler.testIsSessionRegistered(sessionId),
+                       "Session should be unregistered")
 
         // The execution count may be 1 or 2 depending on timing
         // (2 if the next turn was already queued before unregister)
@@ -1035,8 +1025,8 @@ final class FairnessSchedulerLifecycleEdgeCaseTests: XCTestCase {
         // Wait for async unregister to complete on mutationQueue
         iTermGCD.mutationQueue().sync {}
 
-        XCTAssertTrue(executor.cleanupCalled, "First unregister should call cleanup")
-        XCTAssertEqual(executor.cleanupCallCount, 1, "Cleanup should be called exactly once")
+        XCTAssertFalse(scheduler.testIsSessionRegistered(sessionId),
+                       "Session should be unregistered")
 
         // Second unregister of original session - should be no-op (no crash)
         scheduler.unregister(sessionId: sessionId)
@@ -1044,9 +1034,7 @@ final class FairnessSchedulerLifecycleEdgeCaseTests: XCTestCase {
         // Wait for second unregister to complete
         iTermGCD.mutationQueue().sync {}
 
-        // Verify cleanup was NOT called a second time
-        XCTAssertEqual(executor.cleanupCallCount, 1,
-                       "Double unregister should not call cleanup again")
+        // Session should still be unregistered
         XCTAssertFalse(scheduler.testIsSessionRegistered(sessionId),
                        "Session should remain unregistered")
     }
@@ -1338,7 +1326,7 @@ final class FairnessSchedulerSessionRestorationTests: XCTestCase {
         scheduler.unregister(sessionId: sessionId1)
         waitForMutationQueue()
 
-        XCTAssertTrue(mockExecutorA.cleanupCalled)
+        XCTAssertFalse(scheduler.testIsSessionRegistered(sessionId1))
 
         mockExecutorA.reset()
 

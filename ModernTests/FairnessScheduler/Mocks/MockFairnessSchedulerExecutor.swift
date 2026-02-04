@@ -26,12 +26,6 @@ final class MockFairnessSchedulerExecutor: FairnessSchedulerExecutor {
     /// Delay before calling completion (simulates execution time)
     var executionDelay: TimeInterval = 0
 
-    /// Whether cleanupForUnregistration was called
-    private(set) var cleanupCalled = false
-
-    /// Number of times cleanupForUnregistration was called
-    private(set) var cleanupCallCount = 0
-
     // MARK: - Call Tracking
 
     struct ExecuteTurnCall: Equatable {
@@ -66,19 +60,12 @@ final class MockFairnessSchedulerExecutor: FairnessSchedulerExecutor {
         }
     }
 
-    func cleanupForUnregistration() {
-        cleanupCalled = true
-        cleanupCallCount += 1
-    }
-
     // MARK: - Test Helpers
 
     func reset() {
         turnResult = .completed
         executeTurnHandler = nil
         executionDelay = 0
-        cleanupCalled = false
-        cleanupCallCount = 0
         executeTurnCalls = []
         totalTokenBudgetConsumed = 0
     }
