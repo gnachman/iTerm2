@@ -470,6 +470,7 @@ typedef NS_OPTIONS(unsigned long, iTermProcessCacheCoalescerEvent) {
 
 #pragma mark - Coalescer
 
+// Called during init
 - (void)setupCoalescer {
     _coalescer = dispatch_source_create(DISPATCH_SOURCE_TYPE_DATA_OR, 0, 0, _workQueue);
 
@@ -663,7 +664,7 @@ typedef NS_OPTIONS(unsigned long, iTermProcessCacheCoalescerEvent) {
     // A more sophisticated implementation could track (pid -> lastSeenEpoch) in cachedDescendants
 }
 
-// Check if a process is still alive using kill(pid, 0)
+// Any queue - Check if a process is still alive using kill(pid, 0)
 // Returns YES if process exists, NO if confirmed dead
 - (BOOL)processIsAlive:(pid_t)pid {
     if (pid <= 0) {
@@ -756,7 +757,7 @@ typedef NS_OPTIONS(unsigned long, iTermProcessCacheCoalescerEvent) {
 
 #pragma mark - Amortized Background Refresh
 
-// Called by 0.5s cadence timer - refresh 1-2 background roots per tick
+// Any queue - Called by 0.5s cadence timer - refresh 1-2 background roots per tick
 - (void)backgroundRefreshTick {
     __block NSArray<NSNumber *> *toRefresh = nil;
     __block iTermProcessCollection *collection = nil;
