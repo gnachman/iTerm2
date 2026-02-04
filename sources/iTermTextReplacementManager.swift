@@ -74,7 +74,7 @@ extension iTermTextReplacementManager {
         inserted = ""
 
         // NSUserDictionaryReplacementItems is an array of dictionaries with "on", "replace", "with" keys
-        guard let items = UserDefaults.standard.array(forKey: "NSUserDictionaryReplacementItems") as? [[String: Any]] else {
+        guard let items = iTermUserDefaults.userDefaults().array(forKey: "NSUserDictionaryReplacementItems") as? [[String: Any]] else {
             return
         }
 

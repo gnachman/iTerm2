@@ -8,13 +8,14 @@
 
 #import "WindowArrangements.h"
 
-#import "iTerm2SharedARC-Swift.h"
-#import "iTermApplicationDelegate.h"
 #import "NSAlert+iTerm.h"
 #import "NSObject+iTerm.h"
 #import "NSTextField+iTerm.h"
 #import "PreferencePanel.h"
+#import "iTerm2SharedARC-Swift.h"
+#import "iTermApplicationDelegate.h"
 #import "iTermSavePanel.h"
+#import "iTermUserDefaults.h"
 
 static NSString* WINDOW_ARRANGEMENTS = @"Window Arrangements";
 static NSString* DEFAULT_ARRANGEMENT_KEY = @"Default Arrangement Name";
@@ -54,12 +55,12 @@ static NSString *const kSavedArrangementWillChangeNotification = @"kSavedArrange
 }
 
 + (BOOL)hasWindowArrangement:(NSString *)name {
-    NSDictionary *arrangements = [[NSUserDefaults standardUserDefaults] objectForKey:WINDOW_ARRANGEMENTS];
+    NSDictionary *arrangements = [[iTermUserDefaults userDefaults] objectForKey:WINDOW_ARRANGEMENTS];
     return [arrangements objectForKey:name] != nil;
 }
 
 + (int)count {
-    NSDictionary *arrangements = [[NSUserDefaults standardUserDefaults] objectForKey:WINDOW_ARRANGEMENTS];
+    NSDictionary *arrangements = [[iTermUserDefaults userDefaults] objectForKey:WINDOW_ARRANGEMENTS];
     return [arrangements count];
 }
 
@@ -69,7 +70,7 @@ static NSString *const kSavedArrangementWillChangeNotification = @"kSavedArrange
 }
 
 + (NSDictionary *)arrangements {
-    return [[NSUserDefaults standardUserDefaults] objectForKey:WINDOW_ARRANGEMENTS];
+    return [[iTermUserDefaults userDefaults] objectForKey:WINDOW_ARRANGEMENTS];
 }
 
 static NSInteger sWindowArrangementGeneration;
@@ -92,7 +93,7 @@ static NSInteger sWindowArrangementGeneration;
     NSMutableDictionary *arrangements = [NSMutableDictionary dictionaryWithDictionary:[WindowArrangements arrangements]];
     [arrangements setObject:arrangement forKey:name];
     @try {
-        [[NSUserDefaults standardUserDefaults] setObject:arrangements forKey:WINDOW_ARRANGEMENTS];
+        [[iTermUserDefaults userDefaults] setObject:arrangements forKey:WINDOW_ARRANGEMENTS];
     }
     @catch (NSException *e) {
         NSString *oops = [arrangements it_invalidPathInPlist];
@@ -132,12 +133,12 @@ static NSInteger sWindowArrangementGeneration;
 }
 
 + (void)makeDefaultArrangement:(NSString *)name {
-    [[NSUserDefaults standardUserDefaults] setObject:name forKey:DEFAULT_ARRANGEMENT_KEY];
+    [[iTermUserDefaults userDefaults] setObject:name forKey:DEFAULT_ARRANGEMENT_KEY];
     [WindowArrangements postChangeNotification];
 }
 
 + (NSString *)defaultArrangementName {
-    return [[NSUserDefaults standardUserDefaults] objectForKey:DEFAULT_ARRANGEMENT_KEY];
+    return [[iTermUserDefaults userDefaults] objectForKey:DEFAULT_ARRANGEMENT_KEY];
 }
 
 - (NSArray *)defaultArrangement {
@@ -338,7 +339,7 @@ static NSInteger sWindowArrangementGeneration;
         return;
     }
     const BOOL wasDefault = [oldName isEqualToString:[WindowArrangements defaultArrangementName]];
-    NSMutableDictionary *dict = [[[NSUserDefaults standardUserDefaults] objectForKey:WINDOW_ARRANGEMENTS] mutableCopy];
+    NSMutableDictionary *dict = [[[iTermUserDefaults userDefaults] objectForKey:WINDOW_ARRANGEMENTS] mutableCopy];
     NSDictionary *value = [dict[oldName] copy];
     if (dict[newName]) {
         NSAlert *alert = [[NSAlert alloc] init];
@@ -355,9 +356,9 @@ static NSInteger sWindowArrangementGeneration;
     [self pushUndo];
     [dict removeObjectForKey:oldName];
     dict[newName] = value;
-    [[NSUserDefaults standardUserDefaults] setObject:dict forKey:WINDOW_ARRANGEMENTS];
+    [[iTermUserDefaults userDefaults] setObject:dict forKey:WINDOW_ARRANGEMENTS];
     if (wasDefault) {
-        [[NSUserDefaults standardUserDefaults] setObject:newName forKey:DEFAULT_ARRANGEMENT_KEY];
+        [[iTermUserDefaults userDefaults] setObject:newName forKey:DEFAULT_ARRANGEMENT_KEY];
     }
     [tableView_ reloadData];
     [WindowArrangements postChangeNotification];
@@ -412,7 +413,7 @@ static NSInteger sWindowArrangementGeneration;
     [names enumerateObjectsUsingBlock:^(NSString * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
         [temp removeObjectForKey:obj];
     }];
-    [[NSUserDefaults standardUserDefaults] setObject:temp forKey:WINDOW_ARRANGEMENTS];
+    [[iTermUserDefaults userDefaults] setObject:temp forKey:WINDOW_ARRANGEMENTS];
     [self setDefaultIfNeededAtRow:rows.firstIndex];
 
     [tableView_ reloadData];
@@ -433,8 +434,8 @@ static NSInteger sWindowArrangementGeneration;
 
     NSString *defaultArrangementName = [NSString castFrom:saved[@"default"]];
     NSDictionary *arrangements = [NSDictionary castFrom:saved[@"arrangements"]];
-    [[NSUserDefaults standardUserDefaults] setObject:arrangements forKey:WINDOW_ARRANGEMENTS];
-    [[NSUserDefaults standardUserDefaults] setObject:defaultArrangementName forKey:DEFAULT_ARRANGEMENT_KEY];
+    [[iTermUserDefaults userDefaults] setObject:arrangements forKey:WINDOW_ARRANGEMENTS];
+    [[iTermUserDefaults userDefaults] setObject:defaultArrangementName forKey:DEFAULT_ARRANGEMENT_KEY];
     [WindowArrangements postChangeNotification];
 }
 
@@ -442,7 +443,7 @@ static NSInteger sWindowArrangementGeneration;
     [[self undoManager] registerUndoWithTarget:self
                                       selector:@selector(setArrangements:)
                                         object:@{ @"default": [WindowArrangements defaultArrangementName] ?: [NSNull null],
-                                                  @"arrangements": [[NSUserDefaults standardUserDefaults] objectForKey:WINDOW_ARRANGEMENTS] ?: @{} }];
+                                                  @"arrangements": [[iTermUserDefaults userDefaults] objectForKey:WINDOW_ARRANGEMENTS] ?: @{} }];
 }
 
 #pragma mark Delegate methods

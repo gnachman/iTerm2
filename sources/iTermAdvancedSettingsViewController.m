@@ -9,12 +9,13 @@
 #import "iTermAdvancedSettingsViewController.h"
 
 #import "DebugLogging.h"
-#import "iTermAdvancedSettingsModel.h"
 #import "NSApplication+iTerm.h"
 #import "NSArray+iTerm.h"
 #import "NSMutableAttributedString+iTerm.h"
 #import "NSObject+iTerm.h"
 #import "NSTextField+iTerm.h"
+#import "iTermAdvancedSettingsModel.h"
+#import "iTermUserDefaults.h"
 #import <objc/runtime.h>
 
 static char iTermAdvancedSettingsTableKey;
@@ -302,7 +303,7 @@ static NSDictionary *gIntrospection;
         id newValue = [iTermAdvancedSettingsModel performSelector:selector withObject:@(value)];
         [sender selectItemAtIndex:[newValue boolValue] ? 1 : 0];
     } else {
-        [[NSUserDefaults standardUserDefaults] setBool:value
+        [[iTermUserDefaults userDefaults] setBool:value
                                                 forKey:identifier];
     }
 }
@@ -312,7 +313,7 @@ static NSDictionary *gIntrospection;
     NSDictionary *dict = settings[row];
     NSString *identifier = dict[kAdvancedSettingIdentifier];
     // TODO: Update this when there are tristate secure defaults.
-    return [[NSUserDefaults standardUserDefaults] objectForKey:identifier];
+    return [[iTermUserDefaults userDefaults] objectForKey:identifier];
 }
 
 // 0 = unknown, 1 = off, 2 = on
@@ -344,9 +345,9 @@ static NSDictionary *gIntrospection;
     NSString *identifier = dict[kAdvancedSettingIdentifier];
     // TODO: Update this when there are tristate secure defaults.
     if (value == 0) {
-        [[NSUserDefaults standardUserDefaults] removeObjectForKey:identifier];
+        [[iTermUserDefaults userDefaults] removeObjectForKey:identifier];
     } else {
-        [[NSUserDefaults standardUserDefaults] setBool:value == 2
+        [[iTermUserDefaults userDefaults] setBool:value == 2
                                                 forKey:identifier];
     }
 }
@@ -509,7 +510,7 @@ static NSDictionary *gIntrospection;
         SEL selector = NSSelectorFromString(getter);
         return [iTermAdvancedSettingsModel performSelector:selector];
     } else {
-        return [[NSUserDefaults standardUserDefaults] objectForKey:identifier];
+        return [[iTermUserDefaults userDefaults] objectForKey:identifier];
     }
 }
 
@@ -646,19 +647,19 @@ static void iTermAdvancedSettingsSaveSecureString(NSDictionary *dict, NSString *
                 break;
 
             case kiTermAdvancedSettingTypeFloat:
-                [[NSUserDefaults standardUserDefaults] setFloat:string.floatValue
+                [[iTermUserDefaults userDefaults] setFloat:string.floatValue
                                                          forKey:identifier];
                 break;
 
             case kiTermAdvancedSettingTypeInteger:
-                [[NSUserDefaults standardUserDefaults] setInteger:string.integerValue
+                [[iTermUserDefaults userDefaults] setInteger:string.integerValue
                                                            forKey:identifier];
                 break;
 
             case kiTermAdvancedSettingTypeString: {
                 NSString *selectorName = dict[kAdvancedSettingSetter];
                 if (!selectorName) {
-                    [[NSUserDefaults standardUserDefaults] setObject:string
+                    [[iTermUserDefaults userDefaults] setObject:string
                                                               forKey:identifier];
                 }
                 break;

@@ -6,17 +6,18 @@
 //  Copyright (c) 2011 George Nachman. All rights reserved.
 //
 
-#import "PointerPrefsController.h"
-#import "PointerController.h"
-#import "PreferencePanel.h"
+#import "FutureMethods.h"
+#import "ITAddressBookMgr.h"
 #import "NSPopUpButton+iTerm.h"
+#import "NSTextField+iTerm.h"
+#import "PointerController.h"
+#import "PointerPrefsController.h"
+#import "PreferencePanel.h"
 #import "iTerm2SharedARC-Swift.h"
 #import "iTermApplicationDelegate.h"
 #import "iTermFunctionCallTextFieldDelegate.h"
 #import "iTermPasteSpecialViewController.h"
-#import "ITAddressBookMgr.h"
-#import "FutureMethods.h"
-#import "NSTextField+iTerm.h"
+#import "iTermUserDefaults.h"
 
 static NSString *kPointerActionsKey = @"PointerActions";  // Used in NSUserDefaults
 static NSString *kActionKey = @"Action";  // Used within values
@@ -617,17 +618,17 @@ typedef enum {
 
 + (NSDictionary *)settings
 {
-    NSDictionary *dict = [[NSUserDefaults standardUserDefaults] dictionaryForKey:kPointerActionsKey];
+    NSDictionary *dict = [[iTermUserDefaults userDefaults] dictionaryForKey:kPointerActionsKey];
     if (!dict) {
         dict = [PointerPrefsController defaultActions];
-        [[NSUserDefaults standardUserDefaults] setObject:dict forKey:kPointerActionsKey];
+        [[iTermUserDefaults userDefaults] setObject:dict forKey:kPointerActionsKey];
     }
     return dict;
 }
 
 + (void)setSettings:(NSDictionary *)newSettings
 {
-    [[NSUserDefaults standardUserDefaults] setObject:newSettings forKey:kPointerActionsKey];
+    [[iTermUserDefaults userDefaults] setObject:newSettings forKey:kPointerActionsKey];
     [[NSNotificationCenter defaultCenter] postNotificationName:kPointerPrefsChangedNotification
                                                         object:nil];
 }

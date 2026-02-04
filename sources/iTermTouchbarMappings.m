@@ -8,9 +8,10 @@
 #import "iTermTouchbarMappings.h"
 
 #import "ITAddressBookMgr.h"
+#import "NSArray+iTerm.h"
 #import "iTermKeyBindingAction.h"
 #import "iTermKeystroke.h"
-#import "NSArray+iTerm.h"
+#import "iTermUserDefaults.h"
 
 static NSDictionary<NSString *, NSDictionary *> *gTouchBarMappings;
 
@@ -41,7 +42,7 @@ static NSDictionary<NSString *, NSDictionary *> *gTouchBarMappings;
 }
 
 + (void)loadGlobalTouchBarMap {
-    gTouchBarMappings = [[NSUserDefaults standardUserDefaults] objectForKey:@"GlobalTouchBarMap"];
+    gTouchBarMappings = [[iTermUserDefaults userDefaults] objectForKey:@"GlobalTouchBarMap"];
     if (!gTouchBarMappings) {
         NSString *plistFile = [[NSBundle bundleForClass: [self class]] pathForResource:@"DefaultGlobalTouchBarMap" ofType:@"plist"];
         gTouchBarMappings = [NSDictionary dictionaryWithContentsOfFile:plistFile] ?: @{};
@@ -57,7 +58,7 @@ static NSDictionary<NSString *, NSDictionary *> *gTouchBarMappings;
 
 + (void)setGlobalTouchBarMap:(NSDictionary *)src {
     gTouchBarMappings = [src copy];
-    [[NSUserDefaults standardUserDefaults] setObject:gTouchBarMappings forKey:@"GlobalTouchBarMap"];
+    [[iTermUserDefaults userDefaults] setObject:gTouchBarMappings forKey:@"GlobalTouchBarMap"];
 }
 
 + (NSDictionary *)dictionaryByRemovingTouchbarItem:(iTermTouchbarItem *)item

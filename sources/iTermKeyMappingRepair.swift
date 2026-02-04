@@ -5,11 +5,11 @@ class iTermKeyMappingRepair: NSObject {
     private static let mitigationDisabledKeyPrefix = "NoSyncKeyCode0MitigationDisabled_"
 
     @objc static func isMitigationDisabled(suffix: String) -> Bool {
-        UserDefaults.standard.bool(forKey: mitigationDisabledKeyPrefix + suffix)
+        iTermUserDefaults.userDefaults().bool(forKey: mitigationDisabledKeyPrefix + suffix)
     }
 
     @objc static func setMitigationDisabled(_ disabled: Bool, suffix: String) {
-        UserDefaults.standard.set(disabled, forKey: mitigationDisabledKeyPrefix + suffix)
+        iTermUserDefaults.userDefaults().set(disabled, forKey: mitigationDisabledKeyPrefix + suffix)
     }
 
     /// Returns YES if the given serialized key binding has keycode 0 with a character

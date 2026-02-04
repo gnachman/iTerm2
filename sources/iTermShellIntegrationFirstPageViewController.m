@@ -6,6 +6,7 @@
 //
 
 #import "iTermShellIntegrationFirstPageViewController.h"
+#import "iTermUserDefaults.h"
 
 @interface iTermShellIntegrationFirstPageViewController ()
 @property (nonatomic, weak) IBOutlet id<iTermShellIntegrationInstallerDelegate> shellInstallerDelegate;
@@ -39,7 +40,7 @@ static NSString *const iTermShellIntegrationInstallUtilitiesUserDefaultsKey = @"
 }
 
 - (void)viewDidLoad {
-    NSNumber *number = [[NSUserDefaults standardUserDefaults] objectForKey:iTermShellIntegrationInstallUtilitiesUserDefaultsKey];
+    NSNumber *number = [[iTermUserDefaults userDefaults] objectForKey:iTermShellIntegrationInstallUtilitiesUserDefaultsKey];
     BOOL installUtilities = number ? number.boolValue : YES;
     self.utilities.state = installUtilities ? NSControlStateValueOn : NSControlStateValueOff;
 
@@ -58,7 +59,7 @@ static NSString *const iTermShellIntegrationInstallUtilitiesUserDefaultsKey = @"
 }
 
 - (IBAction)toggleInstallUtilities:(id)sender {
-    [[NSUserDefaults standardUserDefaults] setBool:self.utilities.state == NSControlStateValueOn forKey:iTermShellIntegrationInstallUtilitiesUserDefaultsKey];
+    [[iTermUserDefaults userDefaults] setBool:self.utilities.state == NSControlStateValueOn forKey:iTermShellIntegrationInstallUtilitiesUserDefaultsKey];
 }
 
 - (IBAction)next:(id)sender {

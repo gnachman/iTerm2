@@ -7,6 +7,7 @@
 //
 
 #import "iTermPrintAccessoryViewController.h"
+#import "iTermUserDefaults.h"
 
 static NSString *const kBlackAndWhiteKey = @"Print In Black And White";
 
@@ -23,8 +24,8 @@ static NSString *const kBlackAndWhiteKey = @"Print In Black And White";
 }
 
 - (void)awakeFromNib {
-  [[NSUserDefaults standardUserDefaults] registerDefaults:@{ kBlackAndWhiteKey: @YES } ];
-  self.blackAndWhite = [[NSUserDefaults standardUserDefaults] boolForKey:kBlackAndWhiteKey];
+  [[iTermUserDefaults userDefaults] registerDefaults:@{ kBlackAndWhiteKey: @YES } ];
+  self.blackAndWhite = [[iTermUserDefaults userDefaults] boolForKey:kBlackAndWhiteKey];
   [super awakeFromNib];
 }
 
@@ -33,7 +34,7 @@ static NSString *const kBlackAndWhiteKey = @"Print In Black And White";
 }
 
 - (void)setBlackAndWhite:(BOOL)blackAndWhite {
-  [[NSUserDefaults standardUserDefaults] setBool:blackAndWhite forKey:kBlackAndWhiteKey];
+  [[iTermUserDefaults userDefaults] setBool:blackAndWhite forKey:kBlackAndWhiteKey];
   _blackAndWhite = blackAndWhite;
   if (self.userDidChangeSetting) {
     self.userDidChangeSetting();

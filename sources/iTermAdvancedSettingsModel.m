@@ -6,16 +6,17 @@
 //
 //
 
+#import "iTermUserDefaults.h"
 #import <Foundation/Foundation.h>
 
 #if ITERM2_SHARED_ARC
 #import "iTerm2SharedARC-Swift.h"
 #endif
 
-#import "iTermAdvancedSettingsModel.h"
-#import "iTermUserDefaultsObserver.h"
 #import "NSApplication+iTerm.h"
 #import "NSStringITerm.h"
+#import "iTermAdvancedSettingsModel.h"
+#import "iTermUserDefaultsObserver.h"
 #import <objc/runtime.h>
 
 
@@ -110,7 +111,7 @@ static id sAdvancedSetting_##name; \
 } \
 + (NSString *)load_##name { \
     NSString *key = [self name##UserDefaultsKey]; \
-    id valueFromUserDefaults = [[NSUserDefaults standardUserDefaults] objectForKey:key]; \
+    id valueFromUserDefaults = [[iTermUserDefaults userDefaults] objectForKey:key]; \
     sAdvancedSetting_##name = valueFromUserDefaults ?: inverseTransformation(default); \
     return key; \
 } \
@@ -124,7 +125,7 @@ static id sAdvancedSetting_##name; \
 DEFINE_BOILERPLATE(name, podtype, type, default, description, transformation, inverseTransformation) \
 + (void)set##capitalizedName :(podtype)newValue { \
     sAdvancedSetting_##name = inverseTransformation(newValue); \
-    [[NSUserDefaults standardUserDefaults] setObject:sAdvancedSetting_##name forKey:@#capitalizedName]; \
+    [[iTermUserDefaults userDefaults] setObject:sAdvancedSetting_##name forKey:@#capitalizedName]; \
 }
 
 #if ITERM2_SHARED_ARC

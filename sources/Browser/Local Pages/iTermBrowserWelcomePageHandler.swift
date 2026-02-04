@@ -46,7 +46,7 @@ class iTermBrowserWelcomePageHandler: NSObject, iTermBrowserPageHandler {
     
     func start(urlSchemeTask: WKURLSchemeTask, url: URL) {
         // Check if onboarding is complete
-        let onboardingCompleted = UserDefaults.standard.bool(forKey: "NoSyncBrowserOnboardingCompleted")
+        let onboardingCompleted = iTermUserDefaults.userDefaults().bool(forKey: "NoSyncBrowserOnboardingCompleted")
         
         if !onboardingCompleted {
             // Redirect to onboarding page

@@ -1,134 +1,15 @@
-#import "PTYSession.h"
 #import "PTYSession+ARC.h"
 #import "PTYSession+Private.h"
+#import "PTYSession.h"
 
-#import "CapturedOutput.h"
-#import "CaptureTrigger.h"
-#import "Coprocess.h"
 #import "CVector.h"
+#import "CaptureTrigger.h"
+#import "CapturedOutput.h"
+#import "Coprocess.h"
 #import "FakeWindow.h"
 #import "FileTransferManager.h"
 #import "FutureMethods.h"
 #import "ITAddressBookMgr.h"
-#import "iTerm2SharedARC-Swift.h"
-#import "iTerm.h"
-#import "iTermAPIHelper.h"
-#import "iTermActionsModel.h"
-#import "iTermAddTriggerViewController.h"
-#import "iTermAdvancedSettingsModel.h"
-#import "iTermAnnouncementViewController.h"
-#import "iTermApplication.h"
-#import "iTermApplicationDelegate.h"
-#import "iTermAutomaticProfileSwitcher.h"
-#import "iTermBackgroundCommandRunner.h"
-#import "iTermBackgroundDrawingHelper.h"
-#import "iTermBadgeLabel.h"
-#import "iTermBuriedSessions.h"
-#import "iTermBuiltInFunctions.h"
-#import "iTermCacheableImage.h"
-#import "iTermCapturedOutputMark.h"
-#import "iTermCarbonHotKeyController.h"
-#import "iTermCharacterSource.h"
-#import "iTermColorMap.h"
-#import "iTermColorPresets.h"
-#import "iTermColorSuggester.h"
-#import "iTermCommandRunnerPool.h"
-#import "iTermComposerManager.h"
-#import "iTermCommandHistoryCommandUseMO+Additions.h"
-#import "iTermController.h"
-#import "iTermCopyModeHandler.h"
-#import "iTermCopyModeState.h"
-#import "iTermDisclosableView.h"
-#import "iTermEchoProbe.h"
-#import "iTermExpect.h"
-#import "iTermExpressionEvaluator.h"
-#import "iTermExpressionParser.h"
-#import "iTermFindDriver.h"
-#import "iTermFindOnPageHelper.h"
-#import "iTermFindPasteboard.h"
-#import "iTermGCD.h"
-#import "iTermGraphicSource.h"
-#import "iTermIntervalTreeObserver.h"
-#import "iTermKeyMappings.h"
-#import "iTermKeystroke.h"
-#import "iTermModifyOtherKeysMapper1.h"
-#import "iTermModifyOtherKeysMapper.h"
-#import "iTermNaggingController.h"
-#import "iTermNotificationController.h"
-#import "iTermHapticActuator.h"
-#import "iTermHistogram.h"
-#import "iTermHotKeyController.h"
-#import "iTermInitialDirectory.h"
-#import "iTermKeyLabels.h"
-#import "iTermLoggingHelper.h"
-#import "iTermMalloc.h"
-#import "iTermMetalClipView.h"
-#import "iTermMigrationHelper.h"
-#import "iTermMultiServerJobManager.h"
-#import "iTermObject.h"
-#import "iTermOpenDirectory.h"
-#import "iTermPreferences.h"
-#import "iTermRateLimitedUpdate.h"
-#import "iTermScriptConsole.h"
-#import "iTermScriptHistory.h"
-#import "iTermSharedImageStore.h"
-#import "iTermSnippetsModel.h"
-#import "iTermStandardKeyMapper.h"
-#import "iTermStatusBarUnreadCountController.h"
-#import "iTermSoundPlayer.h"
-#import "iTermRawKeyMapper.h"
-#import "iTermTermkeyKeyMapper.h"
-#import "iTermMetaFrustrationDetector.h"
-#import "iTermMetalGlue.h"
-#import "iTermMetalDriver.h"
-#import "iTermMouseCursor.h"
-#import "iTermNotificationCenter.h"
-#import "iTermPasteHelper.h"
-#import "iTermPreferences.h"
-#import "iTermPrintGuard.h"
-#import "iTermProcessCache.h"
-#import "iTermProfilePreferences.h"
-#import "iTermPromptOnCloseReason.h"
-#import "iTermRecentDirectoryMO.h"
-#import "iTermRestorableSession.h"
-#import "iTermRule.h"
-#import "iTermSavePanel.h"
-#import "iTermScriptFunctionCall.h"
-#import "iTermSecureKeyboardEntryController.h"
-#import "iTermSelection.h"
-#import "iTermSemanticHistoryController.h"
-#import "iTermSessionFactory.h"
-#import "iTermSessionHotkeyController.h"
-#import "iTermSessionLauncher.h"
-#import "iTermSessionNameController.h"
-#import "iTermSessionTitleBuiltInFunction.h"
-#import "iTermSetFindStringNotification.h"
-#import "iTermShellHistoryController.h"
-#import "iTermShortcut.h"
-#import "iTermShortcutInputView.h"
-#import "iTermSlowOperationGateway.h"
-#import "iTermStatusBarLayout.h"
-#import "iTermStatusBarLayout+tmux.h"
-#import "iTermStatusBarViewController.h"
-#import "iTermSwiftyString.h"
-#import "iTermSwiftyStringGraph.h"
-#import "iTermSwipeTracker.h"
-#import "iTermSystemVersion.h"
-#import "iTermTextExtractor.h"
-#import "iTermTheme.h"
-#import "iTermThroughputEstimator.h"
-#import "iTermTmuxStatusBarMonitor.h"
-#import "iTermTmuxOptionMonitor.h"
-#import "iTermUpdateCadenceController.h"
-#import "iTermURLStore.h"
-#import "iTermUserDefaultsObserver.h"
-#import "iTermVariableReference.h"
-#import "iTermVariableScope.h"
-#import "iTermVariableScope+Global.h"
-#import "iTermVariableScope+Session.h"
-#import "iTermWarning.h"
-#import "iTermWebSocketCookieJar.h"
-#import "iTermWorkingDirectoryPoller.h"
 #import "MovePaneController.h"
 #import "MovingAverage.h"
 #import "NSAlert+iTerm.h"
@@ -152,24 +33,24 @@
 #import "NSThread+iTerm.h"
 #import "NSURL+iTerm.h"
 #import "NSUserDefaults+iTerm.h"
-#import "NSView+iTerm.h"
 #import "NSView+RecursiveDescription.h"
+#import "NSView+iTerm.h"
 #import "NSWindow+PSM.h"
 #import "NSWorkspace+iTerm.h"
+#import "PSMMinimalTabStyle.h"
+#import "PTYNoteViewController.h"
+#import "PTYTask+ProcessInfo.h"
+#import "PTYTask.h"
+#import "PTYTextView+ARC.h"
+#import "PTYTextView+MouseHandler.h"
+#import "PTYTextView.h"
+#import "PTYWindow.h"
 #import "PasteContext.h"
 #import "PasteEvent.h"
 #import "PreferencePanel.h"
 #import "ProfilePreferencesViewController.h"
 #import "ProfilesColorsPreferencesViewController.h"
 #import "ProfilesGeneralPreferencesViewController.h"
-#import "PSMMinimalTabStyle.h"
-#import "PTYNoteViewController.h"
-#import "PTYTask.h"
-#import "PTYTask+ProcessInfo.h"
-#import "PTYTextView.h"
-#import "PTYTextView+MouseHandler.h"
-#import "PTYTextView+ARC.h"
-#import "PTYWindow.h"
 #import "RegexKitLite.h"
 #import "SCPFile.h"
 #import "SCPPath.h"
@@ -177,7 +58,6 @@
 #import "SessionView.h"
 #import "TaskNotifier.h"
 #import "TerminalFile.h"
-#import "TriggerController.h"
 #import "TmuxController.h"
 #import "TmuxControllerRegistry.h"
 #import "TmuxGateway.h"
@@ -185,18 +65,139 @@
 #import "TmuxStateParser.h"
 #import "TmuxWindowOpener.h"
 #import "Trigger.h"
+#import "TriggerController.h"
 #import "VT100DCSParser.h"
 #import "VT100RemoteHost.h"
-#import "VT100Screen.h"
 #import "VT100Screen+Search.h"
+#import "VT100Screen.h"
 #import "VT100ScreenConfiguration.h"
 #import "VT100ScreenMark.h"
-#import "VT100ScreenMutableState.h"
 #import "VT100ScreenMutableState+Resizing.h"
+#import "VT100ScreenMutableState.h"
 #import "VT100Terminal.h"
 #import "VT100Token.h"
 #import "WindowArrangements.h"
 #import "WindowControllerInterface.h"
+#import "iTerm.h"
+#import "iTerm2SharedARC-Swift.h"
+#import "iTermAPIHelper.h"
+#import "iTermActionsModel.h"
+#import "iTermAddTriggerViewController.h"
+#import "iTermAdvancedSettingsModel.h"
+#import "iTermAnnouncementViewController.h"
+#import "iTermApplication.h"
+#import "iTermApplicationDelegate.h"
+#import "iTermAutomaticProfileSwitcher.h"
+#import "iTermBackgroundCommandRunner.h"
+#import "iTermBackgroundDrawingHelper.h"
+#import "iTermBadgeLabel.h"
+#import "iTermBuiltInFunctions.h"
+#import "iTermBuriedSessions.h"
+#import "iTermCacheableImage.h"
+#import "iTermCapturedOutputMark.h"
+#import "iTermCarbonHotKeyController.h"
+#import "iTermCharacterSource.h"
+#import "iTermColorMap.h"
+#import "iTermColorPresets.h"
+#import "iTermColorSuggester.h"
+#import "iTermCommandHistoryCommandUseMO+Additions.h"
+#import "iTermCommandRunnerPool.h"
+#import "iTermComposerManager.h"
+#import "iTermController.h"
+#import "iTermCopyModeHandler.h"
+#import "iTermCopyModeState.h"
+#import "iTermDisclosableView.h"
+#import "iTermEchoProbe.h"
+#import "iTermExpect.h"
+#import "iTermExpressionEvaluator.h"
+#import "iTermExpressionParser.h"
+#import "iTermFindDriver.h"
+#import "iTermFindOnPageHelper.h"
+#import "iTermFindPasteboard.h"
+#import "iTermGCD.h"
+#import "iTermGraphicSource.h"
+#import "iTermHapticActuator.h"
+#import "iTermHistogram.h"
+#import "iTermHotKeyController.h"
+#import "iTermInitialDirectory.h"
+#import "iTermIntervalTreeObserver.h"
+#import "iTermKeyLabels.h"
+#import "iTermKeyMappings.h"
+#import "iTermKeystroke.h"
+#import "iTermLoggingHelper.h"
+#import "iTermMalloc.h"
+#import "iTermMetaFrustrationDetector.h"
+#import "iTermMetalClipView.h"
+#import "iTermMetalDriver.h"
+#import "iTermMetalGlue.h"
+#import "iTermMigrationHelper.h"
+#import "iTermModifyOtherKeysMapper.h"
+#import "iTermModifyOtherKeysMapper1.h"
+#import "iTermMouseCursor.h"
+#import "iTermMultiServerJobManager.h"
+#import "iTermNaggingController.h"
+#import "iTermNotificationCenter.h"
+#import "iTermNotificationController.h"
+#import "iTermObject.h"
+#import "iTermOpenDirectory.h"
+#import "iTermPasteHelper.h"
+#import "iTermPreferences.h"
+#import "iTermPreferences.h"
+#import "iTermPrintGuard.h"
+#import "iTermProcessCache.h"
+#import "iTermProfilePreferences.h"
+#import "iTermPromptOnCloseReason.h"
+#import "iTermRateLimitedUpdate.h"
+#import "iTermRawKeyMapper.h"
+#import "iTermRecentDirectoryMO.h"
+#import "iTermRestorableSession.h"
+#import "iTermRule.h"
+#import "iTermSavePanel.h"
+#import "iTermScriptConsole.h"
+#import "iTermScriptFunctionCall.h"
+#import "iTermScriptHistory.h"
+#import "iTermSecureKeyboardEntryController.h"
+#import "iTermSelection.h"
+#import "iTermSemanticHistoryController.h"
+#import "iTermSessionFactory.h"
+#import "iTermSessionHotkeyController.h"
+#import "iTermSessionLauncher.h"
+#import "iTermSessionNameController.h"
+#import "iTermSessionTitleBuiltInFunction.h"
+#import "iTermSetFindStringNotification.h"
+#import "iTermSharedImageStore.h"
+#import "iTermShellHistoryController.h"
+#import "iTermShortcut.h"
+#import "iTermShortcutInputView.h"
+#import "iTermSlowOperationGateway.h"
+#import "iTermSnippetsModel.h"
+#import "iTermSoundPlayer.h"
+#import "iTermStandardKeyMapper.h"
+#import "iTermStatusBarLayout+tmux.h"
+#import "iTermStatusBarLayout.h"
+#import "iTermStatusBarUnreadCountController.h"
+#import "iTermStatusBarViewController.h"
+#import "iTermSwiftyString.h"
+#import "iTermSwiftyStringGraph.h"
+#import "iTermSwipeTracker.h"
+#import "iTermSystemVersion.h"
+#import "iTermTermkeyKeyMapper.h"
+#import "iTermTextExtractor.h"
+#import "iTermTheme.h"
+#import "iTermThroughputEstimator.h"
+#import "iTermTmuxOptionMonitor.h"
+#import "iTermTmuxStatusBarMonitor.h"
+#import "iTermURLStore.h"
+#import "iTermUpdateCadenceController.h"
+#import "iTermUserDefaults.h"
+#import "iTermUserDefaultsObserver.h"
+#import "iTermVariableReference.h"
+#import "iTermVariableScope+Global.h"
+#import "iTermVariableScope+Session.h"
+#import "iTermVariableScope.h"
+#import "iTermWarning.h"
+#import "iTermWebSocketCookieJar.h"
+#import "iTermWorkingDirectoryPoller.h"
 #import <apr-1/apr_base64.h>
 #include <stdlib.h>
 #include <sys/time.h>
@@ -929,7 +930,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTurdType) {
                                                                selector:@selector(activeSpaceDidChange:)
                                                                    name:NSWorkspaceActiveSpaceDidChangeNotification
                                                                  object:nil];
-        [[NSUserDefaults standardUserDefaults] it_addObserverForKey:kPreferenceKeyTabStyle
+        [[iTermUserDefaults userDefaults] it_addObserverForKey:kPreferenceKeyTabStyle
                                                               block:^(id _Nonnull newValue) {
             [weakSelf themeDidChange];
         }];
@@ -9246,10 +9247,10 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
         [self hideSession];
 
         static NSString *const kAutoBurialKey = @"NoSyncAutoBurialReveal";
-        if (![[NSUserDefaults standardUserDefaults] boolForKey:kAutoBurialKey]) {
+        if (![[iTermUserDefaults userDefaults] boolForKey:kAutoBurialKey]) {
             [[iTermNotificationController sharedInstance] notify:@"Session Buried"
                                                  withDescription:@"It can be restored by detaching from tmux, or from the Sessions > Buried Sessions menu."];
-            [[NSUserDefaults standardUserDefaults] setBool:YES forKey:kAutoBurialKey];
+            [[iTermUserDefaults userDefaults] setBool:YES forKey:kAutoBurialKey];
         }
     }
 }
@@ -10757,7 +10758,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 }
 
 - (void)showError:(NSString *)message suppressionKey:(NSString *)key identifier:(NSString *)identifier {
-    if ([[NSUserDefaults standardUserDefaults] boolForKey:key]) {
+    if ([[iTermUserDefaults userDefaults] boolForKey:key]) {
         return;
     }
     void (^completion)(int) = ^(int selection) { };
@@ -13832,7 +13833,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 
 - (void)askToEnableTerminalInitiatedResizing:(void (^)(void))allowOnce {
     NSString *key = @"NoSyncSuppressPromptToEnableResizing";
-    if ([[NSUserDefaults standardUserDefaults] boolForKey:key]) {
+    if ([[iTermUserDefaults userDefaults] boolForKey:key]) {
         return;
     }
     NSString *identifier = @"Resize Window Announcement";
@@ -13847,7 +13848,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
                 break;
 
             case 2:
-                [[NSUserDefaults standardUserDefaults] setBool:YES forKey:key];
+                [[iTermUserDefaults userDefaults] setBool:YES forKey:key];
                 break;
 
             default:
@@ -13870,7 +13871,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 
 - (void)askToEnableTerminalInitiatedResizingWhenUnfocused:(void (^)(void))allowOnce {
     NSString *key = @"NoSyncSuppressPromptToEnableUnfocusedResizing";
-    if ([[NSUserDefaults standardUserDefaults] boolForKey:key]) {
+    if ([[iTermUserDefaults userDefaults] boolForKey:key]) {
         return;
     }
     NSString *identifier = @"Resize Unfocused Window Announcement";
@@ -13885,7 +13886,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
                 break;
 
             case 2:
-                [[NSUserDefaults standardUserDefaults] setBool:YES forKey:key];
+                [[iTermUserDefaults userDefaults] setBool:YES forKey:key];
                 break;
 
             default:
@@ -14912,7 +14913,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 
 - (void)screenDidTryToUseDECRQCRA {
     NSString *const userDefaultsKey = @"NoSyncDisableDECRQCRA";
-    NSUserDefaults *ud = [NSUserDefaults standardUserDefaults];
+    NSUserDefaults *ud = [iTermUserDefaults userDefaults];
     NSNumber *obj = [NSNumber castFrom:[ud objectForKey:userDefaultsKey]];
     if (obj) {
         return;
@@ -15410,7 +15411,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 
 - (void)turnOffMouseReportingOrOffer:(VT100Terminal *)terminal {
     DLog(@"begin");
-    NSNumber *number = [[NSUserDefaults standardUserDefaults] objectForKey:kTurnOffMouseReportingOnHostChangeUserDefaultsKey];
+    NSNumber *number = [[iTermUserDefaults userDefaults] objectForKey:kTurnOffMouseReportingOnHostChangeUserDefaultsKey];
     if ([number boolValue]) {
         DLog(@"Turn off mouse reporting automatically");
         terminal.mouseMode = MOUSE_REPORTING_NONE;
@@ -15421,7 +15422,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 
 - (void)turnOffDEC2048OrOffer:(VT100Terminal *)terminal {
     DLog(@"begin");
-    NSNumber *number = [[NSUserDefaults standardUserDefaults] objectForKey:kTurnOffDEC2048OnHostChangeUserDefaultsKey];
+    NSNumber *number = [[iTermUserDefaults userDefaults] objectForKey:kTurnOffDEC2048OnHostChangeUserDefaultsKey];
     if ([number boolValue]) {
         DLog(@"Turn off DEC 2048 automatically");
         terminal.sendResizeNotifications = NO;
@@ -15538,7 +15539,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
                 break;
 
             case 1: // Always
-                [[NSUserDefaults standardUserDefaults] setBool:YES
+                [[iTermUserDefaults userDefaults] setBool:YES
                                                         forKey:userDefaultsKey];
                 // FALL THROUGH
             case 0: // Yes
@@ -15557,7 +15558,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
                 break;
 
             case 2: // Never
-                [[NSUserDefaults standardUserDefaults] setBool:NO
+                [[iTermUserDefaults userDefaults] setBool:NO
                                                         forKey:userDefaultsKey];
         }
     }];
@@ -15565,7 +15566,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 }
 
 - (void)offerToTurnOffFocusReportingRespectingSavedPreference:(VT100Terminal *)terminal {
-    NSNumber *number = [[NSUserDefaults standardUserDefaults] objectForKey:kTurnOffFocusReportingOnHostChangeUserDefaultsKey];
+    NSNumber *number = [[iTermUserDefaults userDefaults] objectForKey:kTurnOffFocusReportingOnHostChangeUserDefaultsKey];
     if ([number boolValue]) {
         if (terminal) {
             terminal.reportFocus = NO;
@@ -15605,7 +15606,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
                 break;
 
             case 1: // Always
-                [[NSUserDefaults standardUserDefaults] setBool:YES
+                [[iTermUserDefaults userDefaults] setBool:YES
                                                         forKey:kTurnOffFocusReportingOnHostChangeUserDefaultsKey];
                 [_screen performBlockWithJoinedThreads:^(VT100Terminal *terminal,
                                                          VT100ScreenMutableState *mutableState,
@@ -15615,7 +15616,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
                 break;
 
             case 2: // Never
-                [[NSUserDefaults standardUserDefaults] setBool:NO
+                [[iTermUserDefaults userDefaults] setBool:NO
                                                         forKey:kTurnOffFocusReportingOnHostChangeUserDefaultsKey];
         }
     }];
@@ -16447,7 +16448,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
         existingAnnouncement.timeout = 10;
     }
     if ([_bellRate value] < kThresholdForBellMovingAverageToInferAnnoyance &&
-        [[NSUserDefaults standardUserDefaults] boolForKey:kSilenceAnnoyingBellAutomatically]) {
+        [[iTermUserDefaults userDefaults] boolForKey:kSilenceAnnoyingBellAutomatically]) {
         // Silence automatically
         _ignoreBellUntil = now + 60;
         return YES;
@@ -16456,7 +16457,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     if ([_bellRate value] < kThresholdForBellMovingAverageToInferAnnoyance &&
         !existingAnnouncement &&
         (now - _annoyingBellOfferDeclinedAt > kTimeToWaitAfterDecline) &&
-        ![[NSUserDefaults standardUserDefaults] boolForKey:kSuppressAnnoyingBellOffer]) {
+        ![[iTermUserDefaults userDefaults] boolForKey:kSuppressAnnoyingBellOffer]) {
         iTermAnnouncementViewController *announcement = nil;
         if (audible) {
             DLog(@"Want to show a bell announcement. The bell is audible.");
@@ -16493,13 +16494,13 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 
                     case 2: // Never offer again
                         DLog(@"Never offer again");
-                        [[NSUserDefaults standardUserDefaults] setBool:YES
+                        [[iTermUserDefaults userDefaults] setBool:YES
                                                                 forKey:kSuppressAnnoyingBellOffer];
                         break;
 
                     case 3:  // Silence automatically
                         DLog(@"Silence automatically");
-                        [[NSUserDefaults standardUserDefaults] setBool:YES
+                        [[iTermUserDefaults userDefaults] setBool:YES
                                                                 forKey:kSilenceAnnoyingBellAutomatically];
                         break;
                 }
@@ -16533,7 +16534,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 
                     case 1: // Never offer again
                         DLog(@"Don't offer again");
-                        [[NSUserDefaults standardUserDefaults] setBool:YES
+                        [[iTermUserDefaults userDefaults] setBool:YES
                                                                 forKey:kSuppressAnnoyingBellOffer];
                         break;
                 }
@@ -16728,7 +16729,7 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     id<VT100RemoteHostReading> currentRemoteHost = [self currentHost];
 
     NSString *theKey = [self shellIntegrationUpgradeUserDefaultsKeyForHost:currentRemoteHost];
-    NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
+    NSUserDefaults *userDefaults = [iTermUserDefaults userDefaults];
     if ([userDefaults boolForKey:theKey]) {
         return;
     }
@@ -17227,7 +17228,7 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
         DLog(@"Clipboard access allowed");
         return YES;
     }
-    if ([[NSUserDefaults standardUserDefaults] objectForKey:kPreferenceKeyAllowClipboardAccessFromTerminal] != nil) {
+    if ([[iTermUserDefaults userDefaults] objectForKey:kPreferenceKeyAllowClipboardAccessFromTerminal] != nil) {
         DLog(@"Clipboard access explicitly denied");
         return NO;
     }
@@ -18030,7 +18031,7 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
         return;
     }
     NSString *const bypassKey = @"NoSyncBypassConfirmAIPrompt";
-    if (defaultString.length > 0 && bypassable && [[NSUserDefaults standardUserDefaults] boolForKey:bypassKey]) {
+    if (defaultString.length > 0 && bypassable && [[iTermUserDefaults userDefaults] boolForKey:bypassKey]) {
         completion(defaultString);
         return;
     }
@@ -18107,7 +18108,7 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     [alert beginSheetModalForWindow:self.view.window completionHandler:^(NSModalResponse button) {
         if (button == NSAlertFirstButtonReturn) {
             if (disableButton.state == NSControlStateValueOn) {
-                [[NSUserDefaults standardUserDefaults] setBool:YES forKey:bypassKey];
+                [[iTermUserDefaults userDefaults] setBool:YES forKey:bypassKey];
             }
             completion([[[input string] copy] autorelease]);
         }
@@ -18507,8 +18508,8 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     [self selectCommandWithMarkIfSafe:mark];
     if (allowed && mark != nil) {
         NSString *const warningKey = @"NoSyncUserHasSelectedCommand";
-        if (mark != nil && ![[NSUserDefaults standardUserDefaults] boolForKey:warningKey]) {
-            [[NSUserDefaults standardUserDefaults] setBool:YES forKey:warningKey];
+        if (mark != nil && ![[iTermUserDefaults userDefaults] boolForKey:warningKey]) {
+            [[iTermUserDefaults userDefaults] setBool:YES forKey:warningKey];
             [self showCommandSelectionInfo];
         }
     }
@@ -18567,7 +18568,7 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
         return;
     }
     NSString *const warningKey = @"NoSyncScrollingHorizontally";
-    if ([[NSUserDefaults standardUserDefaults] boolForKey:warningKey]) {
+    if ([[iTermUserDefaults userDefaults] boolForKey:warningKey]) {
         return;
     }
     NSString *identifier = @"HorizontalScrollWarning";
@@ -18589,7 +18590,7 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
                 [[PreferencePanel sharedInstance] openToPreferenceWithKey:kPreferenceKeyReportHorizontalScrollEvents];
                 break;
         }
-        [[NSUserDefaults standardUserDefaults] setBool:YES forKey:warningKey];
+        [[iTermUserDefaults userDefaults] setBool:YES forKey:warningKey];
     }];
     [self queueAnnouncement:announcement identifier:identifier];
 
@@ -19887,7 +19888,7 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
         return;
     }
     NSString *neverPromptUserDefaultsKey = @"NoSyncNeverPromptToChangeOption";
-    if ([[NSUserDefaults standardUserDefaults] boolForKey:neverPromptUserDefaultsKey]) {
+    if ([[iTermUserDefaults userDefaults] boolForKey:neverPromptUserDefaultsKey]) {
         // User said never to ask.
         return;
     }
@@ -19938,7 +19939,7 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
                                                             [iTermProfilePreferences setInt:OPT_ESC forKey:profileKey inProfile:profile model:[ProfileModel sharedInstance]];
                                                         }
                                                     } else {
-                                                        [[NSUserDefaults standardUserDefaults] setBool:YES forKey:neverPromptUserDefaultsKey];
+                                                        [[iTermUserDefaults userDefaults] setBool:YES forKey:neverPromptUserDefaultsKey];
                                                     }
                                                 }];
     static NSString *const identifier = @"OfferToChangeOptionKeyToSendESC";
@@ -21695,7 +21696,7 @@ getOptionKeyBehaviorLeft:(iTermOptionKeyBehavior *)left
         return;
     }
 
-    if ([[NSUserDefaults standardUserDefaults] boolForKey:kSuppressCaptureOutputToolNotVisibleWarning]) {
+    if ([[iTermUserDefaults userDefaults] boolForKey:kSuppressCaptureOutputToolNotVisibleWarning]) {
         return;
     }
 
@@ -21713,7 +21714,7 @@ getOptionKeyBehaviorLeft:(iTermOptionKeyBehavior *)left
                 break;
 
             case 1:
-                [[NSUserDefaults standardUserDefaults] setBool:YES
+                [[iTermUserDefaults userDefaults] setBool:YES
                                                         forKey:kSuppressCaptureOutputToolNotVisibleWarning];
                 break;
         }
@@ -21730,7 +21731,7 @@ getOptionKeyBehaviorLeft:(iTermOptionKeyBehavior *)left
 
 - (void)triggerSideEffectShowShellIntegrationRequiredAnnouncement {
     [iTermGCD assertMainQueueSafe];
-    if ([[NSUserDefaults standardUserDefaults] boolForKey:kSuppressCaptureOutputRequiresShellIntegrationWarning]) {
+    if ([[iTermUserDefaults userDefaults] boolForKey:kSuppressCaptureOutputRequiresShellIntegrationWarning]) {
         return;
     }
     NSString *theTitle = @"A Capture Output trigger fired, but Shell Integration is not installed.";
@@ -21744,7 +21745,7 @@ getOptionKeyBehaviorLeft:(iTermOptionKeyBehavior *)left
                 break;
 
             case 1:
-                [[NSUserDefaults standardUserDefaults] setBool:YES
+                [[iTermUserDefaults userDefaults] setBool:YES
                                                         forKey:kSuppressCaptureOutputRequiresShellIntegrationWarning];
                 break;
         }
@@ -21778,7 +21779,7 @@ getOptionKeyBehaviorLeft:(iTermOptionKeyBehavior *)left
                             silent:(BOOL)silent
                       triggerTitle:(NSString * _Nonnull)triggerName {
     if (self.hasCoprocess) {
-        if (identifier && [[NSUserDefaults standardUserDefaults] boolForKey:identifier]) {
+        if (identifier && [[iTermUserDefaults userDefaults] boolForKey:identifier]) {
             return;
         }
         NSString *message = [NSString stringWithFormat:@"%@: Can't run two coprocesses at once.", triggerName];
@@ -21793,7 +21794,7 @@ getOptionKeyBehaviorLeft:(iTermOptionKeyBehavior *)left
             }
             switch (selection) {
                 case 0:
-                    [[NSUserDefaults standardUserDefaults] setBool:YES
+                    [[iTermUserDefaults userDefaults] setBool:YES
                                                             forKey:identifier];
                     break;
             }

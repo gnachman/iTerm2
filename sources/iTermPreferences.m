@@ -13,18 +13,19 @@
 // and the view controller may customize how its control's appearance changes dynamically.
 
 #import "DebugLogging.h"
+#import "NSArray+iTerm.h"
+#import "NSNumber+iTerm.h"
+#import "PSMTabBarControl.h"
+#import "RegexKitLite.h"
+#import "WindowArrangements.h"
 #import "iTerm2SharedARC-Swift.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermNotificationCenter.h"
 #import "iTermPreferenceDidChangeNotification.h"
 #import "iTermPreferences.h"
 #import "iTermRemotePreferences.h"
+#import "iTermUserDefaults.h"
 #import "iTermUserDefaultsObserver.h"
-#import "NSArray+iTerm.h"
-#import "NSNumber+iTerm.h"
-#import "PSMTabBarControl.h"
-#import "RegexKitLite.h"
-#import "WindowArrangements.h"
 
 #define BLOCK(x) [^id() { return [self x]; } copy]
 
@@ -277,7 +278,7 @@ static NSString *sPreviousVersion;
 
 + (NSString *)appVersionBeforeThisLaunch {
     if (!sPreviousVersion) {
-        NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
+        NSUserDefaults *userDefaults = [iTermUserDefaults userDefaults];
         sPreviousVersion = [[userDefaults objectForKey:kPreferenceKeyAppVersion] copy];
     }
     return sPreviousVersion;
@@ -287,7 +288,7 @@ static NSString *sPreviousVersion;
     static NSSet<NSString *> *versions;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
-        versions = [NSSet setWithArray:[[NSUserDefaults standardUserDefaults] objectForKey:kPreferenceKeyAllAppVersions] ?: @[]];
+        versions = [NSSet setWithArray:[[iTermUserDefaults userDefaults] objectForKey:kPreferenceKeyAllAppVersions] ?: @[]];
     });
     return versions;
 
@@ -297,15 +298,15 @@ static NSString *sPreviousVersion;
     // Force it to be lazy-loaded.
     [self appVersionBeforeThisLaunch];
     // Then overwrite it with the current version
-    [[NSUserDefaults standardUserDefaults] setObject:thisVersion forKey:kPreferenceKeyAppVersion];
+    [[iTermUserDefaults userDefaults] setObject:thisVersion forKey:kPreferenceKeyAppVersion];
     NSProcessInfo *processInfo = [NSProcessInfo processInfo];
-    [[NSUserDefaults standardUserDefaults] setObject:processInfo.operatingSystemVersionString
+    [[iTermUserDefaults userDefaults] setObject:processInfo.operatingSystemVersionString
                                               forKey:kPreferenceKeyOSVersion];
 }
 
 + (void)initializeAllAppVersionsUsedOnThisMachine:(NSString *)thisVersion {
     // Update all app versions ever seena.
-    NSMutableSet *allVersions = [NSMutableSet setWithArray:[[NSUserDefaults standardUserDefaults] objectForKey:kPreferenceKeyAllAppVersions] ?: @[]];
+    NSMutableSet *allVersions = [NSMutableSet setWithArray:[[iTermUserDefaults userDefaults] objectForKey:kPreferenceKeyAllAppVersions] ?: @[]];
     
     NSString *const before = [self appVersionBeforeThisLaunch];
     if (before) {
@@ -314,7 +315,7 @@ static NSString *sPreviousVersion;
 
     [allVersions addObject:thisVersion];
     [allVersions removeObject:@"unknown"];
-    [[NSUserDefaults standardUserDefaults] setObject:allVersions.allObjects forKey:kPreferenceKeyAllAppVersions];
+    [[iTermUserDefaults userDefaults] setObject:allVersions.allObjects forKey:kPreferenceKeyAllAppVersions];
 }
 
 + (NSDictionary *)systemPreferenceOverrides {
@@ -414,7 +415,7 @@ static NSString *sPreviousVersion;
     if (!url) {
         return;
     }
-    NSUserDefaults *ud = [NSUserDefaults standardUserDefaults];
+    NSUserDefaults *ud = [iTermUserDefaults userDefaults];
     NSString *urlString = url.absoluteString;
     if ([ud boolForKey:kPreferenceKeyLoadPrefsFromCustomFolder] &&
         [[ud stringForKey:kPreferenceKeyCustomFolder] isEqual:urlString]) {
@@ -439,7 +440,7 @@ static NSString *sPreviousVersion;
 #if DEBUG
     [self handleGitlabURLOnPasteboard];
 #endif
-    NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
+    NSUserDefaults *userDefaults = [iTermUserDefaults userDefaults];
     [[self systemPreferenceOverrides] enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, id  _Nonnull obj, BOOL * _Nonnull stop) {
         [userDefaults setObject:obj forKey:key];
     }];
@@ -679,7 +680,7 @@ static NSString *sPreviousVersion;
 }
 
 + (BOOL)valueIsExplicitlySetForKey:(NSString *)key {
-    id object = [[NSUserDefaults standardUserDefaults] objectForKey:key];
+    id object = [[iTermUserDefaults userDefaults] objectForKey:key];
     return object != nil;
 }
 
@@ -758,7 +759,7 @@ static NSString *sPreviousVersion;
 }
 
 + (NSString *)uncomputedObjectForKey:(NSString *)key {
-    id object = [[NSUserDefaults standardUserDefaults] objectForKey:key];
+    id object = [[iTermUserDefaults userDefaults] objectForKey:key];
     if (!object) {
         object = [self defaultObjectForKey:key];
     }
@@ -776,10 +777,10 @@ static NSString *sPreviousVersion;
 + (void)setWithoutSideEffectsObject:(id)object forKey:(NSString *)key {
     if (object) {
         DLog(@"Set NSUserDefaults[%@] <- %@", key, object);
-        [[NSUserDefaults standardUserDefaults] setObject:object forKey:key];
+        [[iTermUserDefaults userDefaults] setObject:object forKey:key];
     } else {
         DLog(@"Delete %@ from NSUserDefaults", key);
-        [[NSUserDefaults standardUserDefaults] removeObjectForKey:key];
+        [[iTermUserDefaults userDefaults] removeObjectForKey:key];
     }
 }
 
@@ -938,7 +939,7 @@ static NSString *sPreviousVersion;
 // Migrates all pre-10.14 users now on 10.14 to automatic, since anything else looks bad.
 + (NSNumber *)computedTabStyle {
     NSNumber *value;
-    value = [[NSUserDefaults standardUserDefaults] objectForKey:kPreferenceKeyTabStyle];
+    value = [[iTermUserDefaults userDefaults] objectForKey:kPreferenceKeyTabStyle];
     if (value) {
         return value;
     }
@@ -948,11 +949,11 @@ static NSString *sPreviousVersion;
 
 + (NSNumber *)computedLeftControlRemapping {
     NSNumber *value;
-    value = [[NSUserDefaults standardUserDefaults] objectForKey:kPreferenceKeyLeftControlRemapping];
+    value = [[iTermUserDefaults userDefaults] objectForKey:kPreferenceKeyLeftControlRemapping];
     if (value) {
         return value;
     }
-    value = [[NSUserDefaults standardUserDefaults] objectForKey:kPreferenceKeyControlRemapping_Deprecated];
+    value = [[iTermUserDefaults userDefaults] objectForKey:kPreferenceKeyControlRemapping_Deprecated];
     if (value) {
         return @(value.intValue);
     }
@@ -961,15 +962,15 @@ static NSString *sPreviousVersion;
 
 + (NSNumber *)computedWindowPlacement {
     NSNumber *value;
-    value = [[NSUserDefaults standardUserDefaults] objectForKey:kPreferenceKeyWindowPlacement];
+    value = [[iTermUserDefaults userDefaults] objectForKey:kPreferenceKeyWindowPlacement];
     if (value) {
         return value;
     }
-    value = [[NSUserDefaults standardUserDefaults] objectForKey:kPreferenceKeySmartWindowPlacement_Deprecated];
+    value = [[iTermUserDefaults userDefaults] objectForKey:kPreferenceKeySmartWindowPlacement_Deprecated];
     if (value.boolValue) {
         return @(iTermWindowPlacementSmart);
     }
-    value = [[NSUserDefaults standardUserDefaults] objectForKey:kPreferenceKeyUseAutoSaveFrames_Deprecated];
+    value = [[iTermUserDefaults userDefaults] objectForKey:kPreferenceKeyUseAutoSaveFrames_Deprecated];
     if (value.boolValue) {
         return @(iTermWindowPlacementSizeAndPosition);
     }
@@ -978,11 +979,11 @@ static NSString *sPreviousVersion;
 
 + (NSNumber *)computedRightControlRemapping {
     NSNumber *value;
-    value = [[NSUserDefaults standardUserDefaults] objectForKey:kPreferenceKeyRightControlRemapping];
+    value = [[iTermUserDefaults userDefaults] objectForKey:kPreferenceKeyRightControlRemapping];
     if (value) {
         return value;
     }
-    value = [[NSUserDefaults standardUserDefaults] objectForKey:kPreferenceKeyControlRemapping_Deprecated];
+    value = [[iTermUserDefaults userDefaults] objectForKey:kPreferenceKeyControlRemapping_Deprecated];
     if (value) {
         return @(value.intValue);
     }
@@ -990,12 +991,12 @@ static NSString *sPreviousVersion;
 }
 + (NSNumber *)computedTabsHaveCloseButton {
     NSNumber *value;
-    value = [[NSUserDefaults standardUserDefaults] objectForKey:kPreferenceKeyTabsHaveCloseButton];
+    value = [[iTermUserDefaults userDefaults] objectForKey:kPreferenceKeyTabsHaveCloseButton];
     if (value) {
         return value;
     }
 
-    value = [[NSUserDefaults standardUserDefaults] objectForKey:@"eliminateCloseButtons"];
+    value = [[iTermUserDefaults userDefaults] objectForKey:@"eliminateCloseButtons"];
     if (value) {
         return @(!value.boolValue);
     }
@@ -1005,7 +1006,7 @@ static NSString *sPreviousVersion;
 
 + (NSNumber *)computedUseMetal {
     NSNumber *value;
-    value = [[NSUserDefaults standardUserDefaults] objectForKey:kPreferenceKeyUseMetal];
+    value = [[iTermUserDefaults userDefaults] objectForKey:kPreferenceKeyUseMetal];
     if (value) {
         return value;
     }

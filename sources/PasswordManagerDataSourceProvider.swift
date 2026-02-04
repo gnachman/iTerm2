@@ -59,11 +59,11 @@ class PasswordManagerDataSourceProvider: NSObject {
 
     var preferredDataSource: DataSource {
         get {
-            let rawValue = UserDefaults.standard.string(forKey: dataSourceNameUserDefaultsKey) ?? ""
+            let rawValue = iTermUserDefaults.userDefaults().string(forKey: dataSourceNameUserDefaultsKey) ?? ""
             return DataSource(rawValue: rawValue) ?? DataSource.defaultValue
         }
         set {
-            UserDefaults.standard.set(newValue.rawValue, forKey: dataSourceNameUserDefaultsKey)
+            iTermUserDefaults.userDefaults().set(newValue.rawValue, forKey: dataSourceNameUserDefaultsKey)
             _dataSource = nil
         }
     }

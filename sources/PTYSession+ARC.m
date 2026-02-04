@@ -10,6 +10,11 @@
 
 #import "DebugLogging.h"
 #import "ITAddressBookMgr.h"
+#import "NSObject+iTerm.h"
+#import "NSStringITerm.h"
+#import "NSWindow+PSM.h"
+#import "PTYSession+Private.h"
+#import "PTYSession.h"
 #import "iTerm2SharedARC-Swift.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermAnnouncementViewController.h"
@@ -21,13 +26,9 @@
 #import "iTermProfilePreferences.h"
 #import "iTermResult.h"
 #import "iTermThreadSafety.h"
+#import "iTermUserDefaults.h"
 #import "iTermVariableScope.h"
 #import "iTermWarning.h"
-#import "NSObject+iTerm.h"
-#import "NSStringITerm.h"
-#import "NSWindow+PSM.h"
-#import "PTYSession.h"
-#import "PTYSession+Private.h"
 
 extern NSString *const SESSION_ARRANGEMENT_TMUX_PANE;
 extern NSString *const SESSION_ARRANGEMENT_SERVER_DICT;
@@ -218,7 +219,7 @@ extern NSString *const SESSION_ARRANGEMENT_SERVER_DICT;
 }
 
 - (void)maybeTurnOffPasteBracketing {
-    NSNumber *number = [[NSUserDefaults standardUserDefaults] objectForKey:kTurnOffBracketedPasteOnHostChangeUserDefaultsKey];
+    NSNumber *number = [[iTermUserDefaults userDefaults] objectForKey:kTurnOffBracketedPasteOnHostChangeUserDefaultsKey];
     if (number.boolValue) {
         [self.screen performBlockWithJoinedThreads:^(VT100Terminal *terminal,
                                                      VT100ScreenMutableState *mutableState,
@@ -234,7 +235,7 @@ extern NSString *const SESSION_ARRANGEMENT_SERVER_DICT;
     if (![iTermProfilePreferences boolForKey:KEY_ALLOW_TITLE_SETTING inProfile:self.profile]) {
         return;
     }
-    NSNumber *number = [[NSUserDefaults standardUserDefaults] objectForKey:kRestoreIconAndWindowNameOnHostChangeUserDefaultsKey];
+    NSNumber *number = [[iTermUserDefaults userDefaults] objectForKey:kRestoreIconAndWindowNameOnHostChangeUserDefaultsKey];
     if (number.boolValue) {
         [self naggingControllerRestoreIconNameTo:iconName windowName:windowName];
     } else if (!number) {

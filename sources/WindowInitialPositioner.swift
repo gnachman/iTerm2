@@ -55,7 +55,7 @@ class WindowInitialPositioner: NSObject {
 
     /// Saved window positions from user defaults
     @objc var savedWindowPositions: [String: String] {
-        let obj = UserDefaults.standard.object(forKey: kPreferenceKeySavedWindowPositions)
+        let obj = iTermUserDefaults.userDefaults().object(forKey: kPreferenceKeySavedWindowPositions)
         return (obj as? [String: String]) ?? [:]
     }
 
@@ -164,7 +164,7 @@ class WindowInitialPositioner: NSObject {
         point.y += window.frame.size.height
         DLog("saveWindowPosition: uniqueNumber=\(uniqueNumber) point=\(NSStringFromPoint(point))")
         positions[String(uniqueNumber)] = NSStringFromPoint(point)
-        UserDefaults.standard.set(positions, forKey: kPreferenceKeySavedWindowPositions)
+        iTermUserDefaults.userDefaults().set(positions, forKey: kPreferenceKeySavedWindowPositions)
     }
 
     /// Saves the window frame using the autosave system.

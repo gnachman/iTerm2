@@ -8,6 +8,8 @@
 #import "PTYMouseHandler.h"
 
 #import "DebugLogging.h"
+#import "NSEvent+iTerm.h"
+#import "ThreeFingerTapGestureRecognizer.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermAltScreenMouseScrollInferrer.h"
 #import "iTermController.h"
@@ -17,8 +19,7 @@
 #import "iTermSelection.h"
 #import "iTermSelectionScrollHelper.h"
 #import "iTermSwipeTracker.h"
-#import "NSEvent+iTerm.h"
-#import "ThreeFingerTapGestureRecognizer.h"
+#import "iTermUserDefaults.h"
 
 // Minimum distance that the mouse must move before a cmd+drag will be
 // recognized as a drag.
@@ -1411,7 +1412,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                     // macOS reverses direction for horizontal scrolls when natural mouse reporting
                     // is on. This is what the user wants if it moves the window contents but in
                     // a terminal it will often send arrow keys and that is total chaos. Issue 10881
-                    const BOOL natural = [[[NSUserDefaults standardUserDefaults] objectForKey:@"com.apple.swipescrolldirection"] boolValue];
+                    const BOOL natural = [[[iTermUserDefaults userDefaults] objectForKey:@"com.apple.swipescrolldirection"] boolValue];
                     if (natural) {
                         DLog(@"Natural mouse reporting is on so swap left/right scroll wheel button");
                         scrollLeft = !scrollLeft;

@@ -28,14 +28,15 @@
 
 #include <wctype.h>
 #import "DebugLogging.h"
-#import "PasteboardHistory.h"
 #import "NSDateFormatterExtras.h"
 #import "NSStringITerm.h"
+#import "PasteboardHistory.h"
 #import "PopupModel.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermController.h"
 #import "iTermPreferences.h"
 #import "iTermSecureKeyboardEntryController.h"
+#import "iTermUserDefaults.h"
 
 #define PBHKEY_ENTRIES @"Entries"
 #define PBHKEY_VALUE @"Value"
@@ -71,8 +72,8 @@
         int maxEntries = [PasteboardHistory maxEntries];
         // MaxPasteHistoryEntries is a legacy thing. I'm not removing it because it's a security
         // issue for some people.
-        if ([[NSUserDefaults standardUserDefaults] objectForKey:@"MaxPasteHistoryEntries"]) {
-            maxEntries = [[NSUserDefaults standardUserDefaults] integerForKey:@"MaxPasteHistoryEntries"];
+        if ([[iTermUserDefaults userDefaults] objectForKey:@"MaxPasteHistoryEntries"]) {
+            maxEntries = [[iTermUserDefaults userDefaults] integerForKey:@"MaxPasteHistoryEntries"];
             if (maxEntries < 0) {
                 maxEntries = 0;
             }

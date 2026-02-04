@@ -29,20 +29,7 @@
 
 #import "DebugLogging.h"
 #import "FutureMethods.h"
-#import "iTerm2SharedARC-Swift.h"
 #import "ITAddressBookMgr.h"
-#import "iTermAdvancedSettingsModel.h"
-#import "iTermApplication.h"
-#import "iTermBuriedSessions.h"
-#import "iTermHotKeyController.h"
-#import "iTermMissionControlHacks.h"
-#import "iTermPresentationController.h"
-#import "iTermProfileModelJournal.h"
-#import "iTermRestorableStateController.h"
-#import "iTermSavePanel.h"
-#import "iTermSessionFactory.h"
-#import "iTermSessionLauncher.h"
-#import "iTermWebSocketCookieJar.h"
 #import "NSArray+iTerm.h"
 #import "NSFileManager+iTerm.h"
 #import "NSStringITerm.h"
@@ -51,26 +38,39 @@
 #import "NSWindow+iTerm.h"
 #import "PTYSession.h"
 #import "PTYTab.h"
+#import "PTYWindow.h"
+#import "PTYWindow.h"
 #import "PasteboardHistory.h"
 #import "PreferencePanel.h"
 #import "PseudoTerminal.h"
-#import "PTYWindow.h"
 #import "UKCrashReporter.h"
 #import "VT100Screen.h"
 #import "WindowArrangements.h"
 #import "iTerm.h"
+#import "iTerm2SharedARC-Swift.h"
+#import "iTermAdvancedSettingsModel.h"
+#import "iTermApplication.h"
 #import "iTermApplication.h"
 #import "iTermApplicationDelegate.h"
+#import "iTermBuriedSessions.h"
 #import "iTermFullScreenWindowManager.h"
+#import "iTermHotKeyController.h"
+#import "iTermMissionControlHacks.h"
 #import "iTermNotificationController.h"
 #import "iTermPreferences.h"
+#import "iTermPresentationController.h"
+#import "iTermProfileModelJournal.h"
 #import "iTermProfilePreferences.h"
 #import "iTermRestorableSession.h"
+#import "iTermRestorableStateController.h"
+#import "iTermSavePanel.h"
+#import "iTermSessionFactory.h"
+#import "iTermSessionLauncher.h"
 #import "iTermSetCurrentTerminalHelper.h"
 #import "iTermSystemVersion.h"
 #import "iTermUserDefaults.h"
 #import "iTermWarning.h"
-#import "PTYWindow.h"
+#import "iTermWebSocketCookieJar.h"
 
 #include <objc/runtime.h>
 
@@ -119,10 +119,10 @@ static iTermController *gSharedInstance;
 
 + (NSString *)installationId {
     NSString *const kInstallationIdKey = @"NoSyncInstallationId";
-    NSString *installationId = [[NSUserDefaults standardUserDefaults] stringForKey:kInstallationIdKey];
+    NSString *installationId = [[iTermUserDefaults userDefaults] stringForKey:kInstallationIdKey];
     if (!installationId) {
         installationId = [NSString uuid];
-        [[NSUserDefaults standardUserDefaults] setObject:installationId forKey:kInstallationIdKey];
+        [[iTermUserDefaults userDefaults] setObject:installationId forKey:kInstallationIdKey];
     }
     return installationId;
 }
@@ -1358,22 +1358,22 @@ replaceInitialDirectoryForSessionWithGUID:(NSString *)guid
     NSURL *url = [NSURL URLWithString:appCast];
     NSNumber *shard = @([iTermController shard]);
     url = [url URLByAppendingQueryParameter:[NSString stringWithFormat:@"shard=%@", shard]];
-    [[NSUserDefaults standardUserDefaults] setObject:url.absoluteString forKey:@"SUFeedURL"];
+    [[iTermUserDefaults userDefaults] setObject:url.absoluteString forKey:@"SUFeedURL"];
     // Allow Sparkle to update from a zip file containing an "iTerm" directory,
     // even though our bundle name is now "iTerm2". I had to add this feature
     // to my fork of Sparkle so I could change the app's name without breaking
     // auto-update. https://github.com/gnachman/Sparkle, commit
     // bd6a8df6e63b843f1f8aff79f40bd70907761a99.
-    [[NSUserDefaults standardUserDefaults] setObject:@"iTerm"
+    [[iTermUserDefaults userDefaults] setObject:@"iTerm"
                                               forKey:@"SUFeedAlternateAppNameKey"];
 }
 
 - (BOOL)selectionRespectsSoftBoundaries {
-    return [[NSUserDefaults standardUserDefaults] boolForKey:kSelectionRespectsSoftBoundariesKey];
+    return [[iTermUserDefaults userDefaults] boolForKey:kSelectionRespectsSoftBoundariesKey];
 }
 
 - (void)setSelectionRespectsSoftBoundaries:(BOOL)selectionRespectsSoftBoundaries {
-    [[NSUserDefaults standardUserDefaults] setBool:selectionRespectsSoftBoundaries
+    [[iTermUserDefaults userDefaults] setBool:selectionRespectsSoftBoundaries
                                             forKey:kSelectionRespectsSoftBoundariesKey];
 }
 

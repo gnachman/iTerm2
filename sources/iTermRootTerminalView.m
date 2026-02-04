@@ -10,31 +10,32 @@
 
 #import "DebugLogging.h"
 
+#import "NSAppearance+iTerm.h"
 #import "NSEvent+iTerm.h"
 #import "NSImage+iTerm.h"
 #import "NSObject+iTerm.h"
+#import "NSTextField+iTerm.h"
+#import "NSView+RecursiveDescription.h"
 #import "NSView+iTerm.h"
+#import "NSWindow+iTerm.h"
+#import "PTYTabView.h"
 #import "PTYTabView.h"
 #import "PTYWindow.h"
-#import "iTermApplication.h"
 #import "iTermAdvancedSettingsModel.h"
+#import "iTermApplication.h"
 #import "iTermDragHandleView.h"
 #import "iTermFakeWindowTitleLabel.h"
 #import "iTermGenericStatusBarContainer.h"
 #import "iTermImageView.h"
 #import "iTermPreferences.h"
-#import "iTermWindowSizeView.h"
 #import "iTermStandardWindowButtonsView.h"
 #import "iTermStatusBarViewController.h"
 #import "iTermStoplightHotbox.h"
 #import "iTermTabBarControlView.h"
 #import "iTermToolbeltView.h"
+#import "iTermUserDefaults.h"
 #import "iTermWindowShortcutLabelTitlebarAccessoryViewController.h"
-#import "NSAppearance+iTerm.h"
-#import "NSTextField+iTerm.h"
-#import "NSView+RecursiveDescription.h"
-#import "NSWindow+iTerm.h"
-#import "PTYTabView.h"
+#import "iTermWindowSizeView.h"
 
 static const CGFloat iTermWindowBorderRadius = 12;
 
@@ -1829,7 +1830,7 @@ NS_CLASS_AVAILABLE_MAC(10_14)
     CGFloat originalValue = _leftTabBarPreferredWidth;
     _leftTabBarPreferredWidth = round([self leftTabBarWidthForPreferredWidth:_leftTabBarPreferredWidth + delta]);
     [self layoutSubviews];  // This may modify _leftTabBarWidth if it's too big or too small.
-    [[NSUserDefaults standardUserDefaults] setDouble:_leftTabBarPreferredWidth
+    [[iTermUserDefaults userDefaults] setDouble:_leftTabBarPreferredWidth
                                               forKey:kPreferenceKeyLeftTabBarWidth];
     return _leftTabBarPreferredWidth - originalValue;
 }

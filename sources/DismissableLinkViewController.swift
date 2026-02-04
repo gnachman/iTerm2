@@ -37,7 +37,7 @@ class DismissableLinkViewController: NSViewController {
 
     @objc public func disabled() -> Bool {
         if #available(macOS 11.0, *) {
-            return UserDefaults.standard.bool(forKey: userDefaultsKey)
+            return iTermUserDefaults.userDefaults().bool(forKey: userDefaultsKey)
         } else {
             // Hide pre-big sur because I need SF Symbols.
             return true
@@ -172,7 +172,7 @@ class DismissableLinkViewController: NSViewController {
     }
 
     @objc func hide(_ sender: Any) {
-        UserDefaults.standard.set(true, forKey: userDefaultsKey)
+        iTermUserDefaults.userDefaults().set(true, forKey: userDefaultsKey)
         view.isHidden = true
     }
 }

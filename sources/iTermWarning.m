@@ -1,12 +1,13 @@
 #import "iTermWarning.h"
 
 #import "DebugLogging.h"
-#import "iTermAdvancedSettingsModel.h"
-#import "iTermDisclosableView.h"
 #import "NSAlert+iTerm.h"
 #import "NSArray+iTerm.h"
 #import "NSObject+iTerm.h"
 #import "NSStringITerm.h"
+#import "iTermAdvancedSettingsModel.h"
+#import "iTermDisclosableView.h"
+#import "iTermUserDefaults.h"
 
 static const NSTimeInterval kTemporarySilenceTime = 600;
 static const NSTimeInterval kOneMonthTime = 30 * 24 * 60 * 60;
@@ -231,7 +232,7 @@ static BOOL gShowingWarning;
 + (void)unsilenceIdentifier:(NSString *)identifier ifSelectionEquals:(iTermWarningSelection)problemSelection {
     if ([self identifierIsSilenced:identifier] &&
         [self savedSelectionForIdentifier:identifier] == problemSelection) {
-        NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
+        NSUserDefaults *userDefaults = [iTermUserDefaults userDefaults];
         NSString *theKey = [self permanentlySilenceKeyForIdentifier:identifier];
         [userDefaults removeObjectForKey:theKey];
     }
@@ -241,19 +242,19 @@ static BOOL gShowingWarning;
     if (![self identifierIsSilenced:identifier]) {
         return;
     }
-    NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
+    NSUserDefaults *userDefaults = [iTermUserDefaults userDefaults];
     NSString *theKey = [self permanentlySilenceKeyForIdentifier:identifier];
     [userDefaults removeObjectForKey:theKey];
 }
 
 + (void)setIdentifier:(NSString *)identifier isSilenced:(BOOL)silenced {
-    NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
+    NSUserDefaults *userDefaults = [iTermUserDefaults userDefaults];
     NSString *theKey = [self permanentlySilenceKeyForIdentifier:identifier];
     [userDefaults removeObjectForKey:theKey];
 }
 
 + (void)setIdentifier:(NSString *)identifier permanentSelection:(iTermWarningSelection)selection {
-    NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
+    NSUserDefaults *userDefaults = [iTermUserDefaults userDefaults];
     {
         NSString *theKey = [self permanentlySilenceKeyForIdentifier:identifier];
         [userDefaults setBool:YES forKey:theKey];
@@ -488,7 +489,7 @@ static BOOL gShowingWarning;
     // Save info if suppression was enabled.
     if (remember && alert.suppressionButton.state == NSControlStateValueOn) {
         DLog(@"Remember selection for %@", self);
-        NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
+        NSUserDefaults *userDefaults = [iTermUserDefaults userDefaults];
         if (_warningType == kiTermWarningTypeTemporarilySilenceable) {
             NSString *theKey = [self.class temporarySilenceKeyForIdentifier:_identifier];
             [userDefaults setDouble:[NSDate timeIntervalSinceReferenceDate] + kTemporarySilenceTime
@@ -501,7 +502,7 @@ static BOOL gShowingWarning;
             NSString *theKey = [self.class permanentlySilenceKeyForIdentifier:_identifier];
             [userDefaults setBool:YES forKey:theKey];
         }
-        [[NSUserDefaults standardUserDefaults] setObject:@(selection)
+        [[iTermUserDefaults userDefaults] setObject:@(selection)
                                                   forKey:[self.class selectionKeyForIdentifier:_identifier]];
     }
     DLog(@"Return selection %@ for %@", @(selection), self);
@@ -534,7 +535,7 @@ static BOOL gShowingWarning;
     if (!identifier) {
         return NO;
     }
-    NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
+    NSUserDefaults *userDefaults = [iTermUserDefaults userDefaults];
     NSString *theKey = [self permanentlySilenceKeyForIdentifier:identifier];
     if ([userDefaults boolForKey:theKey]) {
         return YES;
@@ -563,7 +564,7 @@ static BOOL gShowingWarning;
 
 + (iTermWarningSelection)savedSelectionForIdentifier:(NSString *)identifier {
     NSString *theKey = [self selectionKeyForIdentifier:identifier];
-    return [[NSUserDefaults standardUserDefaults] integerForKey:theKey];
+    return [[iTermUserDefaults userDefaults] integerForKey:theKey];
 }
 
 + (BOOL)showingWarning {

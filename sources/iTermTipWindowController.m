@@ -9,15 +9,16 @@
 
 #import "iTermTipWindowController.h"
 
-#import "iTermCarbonHotKeyController.h"
-#import "iTermTip.h"
-#import "iTermTipCardActionButton.h"
-#import "iTermTipCardViewController.h"
-#import "iTermFlippedView.h"
 #import "NSImage+iTerm.h"
 #import "NSView+iTerm.h"
 #import "NSWorkspace+iTerm.h"
 #import "SolidColorView.h"
+#import "iTermCarbonHotKeyController.h"
+#import "iTermFlippedView.h"
+#import "iTermTip.h"
+#import "iTermTipCardActionButton.h"
+#import "iTermTipCardViewController.h"
+#import "iTermUserDefaults.h"
 
 #import <QuartzCore/QuartzCore.h>
 
@@ -151,11 +152,11 @@ static const CGFloat kWindowTopMargin = 8;
     const NSRect screenFrame = self.window.screen.visibleFrame;
     const NSSize offset = NSMakeSize(NSMinX(frame) - NSMinX(screenFrame) - kWindowLeftMargin,
                                      NSMaxY(screenFrame) - NSMaxY(frame) - kWindowTopMargin);
-    [[NSUserDefaults standardUserDefaults] setObject:NSStringFromSize(offset) forKey:@"NoSyncTipOfTheDayOffset"];
+    [[iTermUserDefaults userDefaults] setObject:NSStringFromSize(offset) forKey:@"NoSyncTipOfTheDayOffset"];
 }
 
 - (NSSize)windowOffset {
-    return NSSizeFromString([[NSUserDefaults standardUserDefaults] objectForKey:@"NoSyncTipOfTheDayOffset"]);
+    return NSSizeFromString([[iTermUserDefaults userDefaults] objectForKey:@"NoSyncTipOfTheDayOffset"]);
 }
 
 // Add the standard buttons.

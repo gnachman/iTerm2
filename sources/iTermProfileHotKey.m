@@ -2,6 +2,11 @@
 
 #import "DebugLogging.h"
 #import "ITAddressBookMgr.h"
+#import "NSArray+iTerm.h"
+#import "NSScreen+iTerm.h"
+#import "NSWorkspace+iTerm.h"
+#import "PseudoTerminal.h"
+#import "SolidColorView.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermApplication.h"
 #import "iTermCarbonHotKeyController.h"
@@ -13,12 +18,8 @@
 #import "iTermProfilePreferences.h"
 #import "iTermSecureKeyboardEntryController.h"
 #import "iTermSessionLauncher.h"
+#import "iTermUserDefaults.h"
 #import "iTermWindowHacks.h"
-#import "NSArray+iTerm.h"
-#import "NSScreen+iTerm.h"
-#import "NSWorkspace+iTerm.h"
-#import "PseudoTerminal.h"
-#import "SolidColorView.h"
 #import <QuartzCore/QuartzCore.h>
 
 typedef NS_ENUM(NSUInteger, iTermAnimationDirection) {
@@ -385,7 +386,7 @@ static NSString *const kArrangement = @"Arrangement";
 }
 
 - (BOOL)menuBarAutoHides {
-    if ([[NSUserDefaults standardUserDefaults] boolForKey:@"_HIHideMenuBar"]) {
+    if ([[iTermUserDefaults userDefaults] boolForKey:@"_HIHideMenuBar"]) {
         return YES;
     }
     if (![iTermPreferences boolForKey:kPreferenceKeyHideMenuBarInFullscreen]) {

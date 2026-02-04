@@ -110,7 +110,7 @@ class iTermBrowserAdblockManager: NSObject {
     }
     
     private func shouldPerformUpdate() -> Bool {
-        let lastUpdate = UserDefaults.standard.object(forKey: lastUpdateKey) as? Date ?? Date.distantPast
+        let lastUpdate = iTermUserDefaults.userDefaults().object(forKey: lastUpdateKey) as? Date ?? Date.distantPast
         let timeSinceUpdate = Date().timeIntervalSince(lastUpdate)
         
         // Check if we need to update (24 hours have passed)
@@ -250,7 +250,7 @@ class iTermBrowserAdblockManager: NSObject {
     
     private func handleSuccess() {
         // Record successful update
-        UserDefaults.standard.set(Date(), forKey: lastUpdateKey)
+        iTermUserDefaults.userDefaults().set(Date(), forKey: lastUpdateKey)
 
         NotificationCenter.default.post(name: Self.didUpdateRulesNotification, object: self)
     }
@@ -269,7 +269,7 @@ class iTermBrowserAdblockManager: NSObject {
     }
     
     private func checkForProlongedFailure() {
-        guard let lastUpdate = UserDefaults.standard.object(forKey: lastUpdateKey) as? Date else {
+        guard let lastUpdate = iTermUserDefaults.userDefaults().object(forKey: lastUpdateKey) as? Date else {
             return // Never had a successful update
         }
         

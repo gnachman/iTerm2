@@ -8,10 +8,11 @@
 
 #import "NSWindow+iTerm.h"
 
-#import "iTermApplication.h"
 #import "DebugLogging.h"
 #import "NSObject+iTerm.h"
 #import "PTYWindow.h"
+#import "iTermApplication.h"
+#import "iTermUserDefaults.h"
 #import <Quartz/Quartz.h>
 
 NSString *const iTermWindowAppearanceDidChange = @"iTermWindowAppearanceDidChange";
@@ -25,7 +26,7 @@ void *const iTermDeclineFirstResponderAssociatedObjectKey = (void *)"iTermDeclin
 
 - (void)it_titleBarDoubleClick {
     DLog(@"begin");
-    NSString *doubleClickAction = [[NSUserDefaults standardUserDefaults] objectForKey:@"AppleActionOnDoubleClick"];
+    NSString *doubleClickAction = [[iTermUserDefaults userDefaults] objectForKey:@"AppleActionOnDoubleClick"];
     if ([doubleClickAction isEqualToString:@"Minimize"]) {
         DLog(@"Minimize");
         [self performMiniaturize:nil];

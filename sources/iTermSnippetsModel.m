@@ -7,16 +7,17 @@
 
 #import "iTermSnippetsModel.h"
 
-#import "iTerm2SharedARC-Swift.h"
-#import "iTermNotificationCenter+Protected.h"
-#import "iTermPreferences.h"
-#import "iTermWarning.h"
 #import "NSArray+iTerm.h"
 #import "NSData+iTerm.h"
 #import "NSFileManager+iTerm.h"
 #import "NSIndexSet+iTerm.h"
 #import "NSObject+iTerm.h"
 #import "NSStringITerm.h"
+#import "iTerm2SharedARC-Swift.h"
+#import "iTermNotificationCenter+Protected.h"
+#import "iTermPreferences.h"
+#import "iTermUserDefaults.h"
+#import "iTermWarning.h"
 
 NSString *iTermSnippetHelpMarkdown = @"Terms in the search query are used to prefix search snippet titles, content, and tags.\n\nYou can use the following operators to restrict what attributes of snippets a term searches:\n * `tag:` to search only tags.\n * `title:` to search only snippet titles.\n * `text:` to search only the text of a snippet.\nFor example, `tag:linux`.\n\nTo search only for snippets that do *not* match a term, use the `-` operator. For example, `-linux` or `-tag:linux`.\n\nYou can use `|` as logical OR. For example, `linux|bsd` or `tag:linux|tag:bsd`.";
 
@@ -238,7 +239,7 @@ NSString *iTermSnippetHelpMarkdown = @"Terms in the search query are used to pre
 }
 
 + (NSArray<NSDictionary *> *)freshlyLoadedValues {
-    id obj = [[NSUserDefaults standardUserDefaults] objectForKey:kPreferenceKeySnippets];
+    id obj = [[iTermUserDefaults userDefaults] objectForKey:kPreferenceKeySnippets];
     if (obj) {
         return [NSArray castFrom:obj];
     }
@@ -255,7 +256,7 @@ NSString *iTermSnippetHelpMarkdown = @"Terms in the search query are used to pre
     if (error) {
         // Fall back to user defaults to avoid losing data but then we are subject to a potentially
         // catastrophic size limit on user defaults.
-        [[NSUserDefaults standardUserDefaults] setObject:arrayOfDictionaries
+        [[iTermUserDefaults userDefaults] setObject:arrayOfDictionaries
                                                   forKey:kPreferenceKeySnippets];
         [iTermWarning showWarningWithTitle:[NSString stringWithFormat:@"There was a problem saving snippets to “%@”.\n\nThe error was:\n%@", path, error.localizedDescription]
                                    actions:@[ @"OK" ]
@@ -265,7 +266,7 @@ NSString *iTermSnippetHelpMarkdown = @"Terms in the search query are used to pre
                                    heading:@"Problem Saving Snippets"
                                     window:nil];
     } else {
-        [[NSUserDefaults standardUserDefaults] removeObjectForKey:kPreferenceKeySnippets];
+        [[iTermUserDefaults userDefaults] removeObjectForKey:kPreferenceKeySnippets];
     }
 }
 

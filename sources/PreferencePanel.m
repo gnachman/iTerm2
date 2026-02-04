@@ -69,10 +69,30 @@
 #import "PreferencePanel.h"
 #import "SFSymbolEnum/SFSymbolEnum.h"
 
-#import "DebugLogging.h"
 #import "AppearancePreferencesViewController.h"
+#import "DebugLogging.h"
 #import "GeneralPreferencesViewController.h"
 #import "ITAddressBookMgr.h"
+#import "KeysPreferencesViewController.h"
+#import "NSAppearance+iTerm.h"
+#import "NSArray+iTerm.h"
+#import "NSDictionary+iTerm.h"
+#import "NSFileManager+iTerm.h"
+#import "NSImage+iTerm.h"
+#import "NSNumber+iTerm.h"
+#import "NSPopUpButton+iTerm.h"
+#import "NSStringITerm.h"
+#import "NSView+iTerm.h"
+#import "NSWindow+iTerm.h"
+#import "PTYSession.h"
+#import "PasteboardHistory.h"
+#import "PointerPrefsController.h"
+#import "ProfileModel.h"
+#import "ProfilePreferencesViewController.h"
+#import "ProfilesColorsPreferencesViewController.h"
+#import "PseudoTerminal.h"
+#import "SessionView.h"
+#import "WindowArrangements.h"
 #import "iTerm2SharedARC-Swift.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermAdvancedSettingsViewController.h"
@@ -83,32 +103,13 @@
 #import "iTermLaunchServices.h"
 #import "iTermPreferences.h"
 #import "iTermPreferencesSearch.h"
-#import "iTermRemotePreferences.h"
 #import "iTermPreferencesSearchEngineResultsWindowController.h"
+#import "iTermRemotePreferences.h"
 #import "iTermSearchableViewController.h"
 #import "iTermShortcutsViewController.h"
 #import "iTermSizeRememberingView.h"
+#import "iTermUserDefaults.h"
 #import "iTermWarning.h"
-#import "KeysPreferencesViewController.h"
-#import "NSArray+iTerm.h"
-#import "NSAppearance+iTerm.h"
-#import "NSDictionary+iTerm.h"
-#import "NSFileManager+iTerm.h"
-#import "NSImage+iTerm.h"
-#import "NSNumber+iTerm.h"
-#import "NSPopUpButton+iTerm.h"
-#import "NSStringITerm.h"
-#import "NSView+iTerm.h"
-#import "NSWindow+iTerm.h"
-#import "PasteboardHistory.h"
-#import "PointerPrefsController.h"
-#import "ProfileModel.h"
-#import "ProfilePreferencesViewController.h"
-#import "ProfilesColorsPreferencesViewController.h"
-#import "PseudoTerminal.h"
-#import "PTYSession.h"
-#import "SessionView.h"
-#import "WindowArrangements.h"
 #include <stdlib.h>
 
 NSString *const kRefreshTerminalNotification = @"kRefreshTerminalNotification";
@@ -351,17 +352,17 @@ static PreferencePanel *gSessionsPreferencePanel;
 }
 
 - (BOOL)setFrameUsingName:(NSWindowFrameAutosaveName)name force:(BOOL)force {
-    NSDictionary *dict = [[NSUserDefaults standardUserDefaults] objectForKey:[self userDefaultsKeyForFrameName:name]];
+    NSDictionary *dict = [[iTermUserDefaults userDefaults] objectForKey:[self userDefaultsKeyForFrameName:name]];
     return [self setFrameFromDict:dict];
 }
 
 - (void)saveFrameUsingName:(NSWindowFrameAutosaveName)name {
-    [[NSUserDefaults standardUserDefaults] setObject:[self dictForFrame:self.frame onScreen:self.screen]
+    [[iTermUserDefaults userDefaults] setObject:[self dictForFrame:self.frame onScreen:self.screen]
                                               forKey:[self userDefaultsKeyForFrameName:name]];
 }
 
 - (BOOL)haveSavedFrameForFrameWithName:(NSString *)name {
-    return [[NSUserDefaults standardUserDefaults] objectForKey:[self userDefaultsKeyForFrameName:name]] != nil;
+    return [[iTermUserDefaults userDefaults] objectForKey:[self userDefaultsKeyForFrameName:name]] != nil;
 }
 
 - (BOOL)setFrameFromDict:(NSDictionary *)dict {
@@ -838,7 +839,7 @@ andEditComponentWithIdentifier:(NSString *)identifier
     }
 
     [strongSelf postWillCloseNotification];
-    [[NSUserDefaults standardUserDefaults] synchronize];
+    [[iTermUserDefaults userDefaults] synchronize];
 }
 
 - (void)windowDidBecomeKey:(NSNotification *)aNotification {

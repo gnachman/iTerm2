@@ -8,13 +8,14 @@
 #import "iTermNaggingController.h"
 
 #import "DebugLogging.h"
-#import "iTerm2SharedARC-Swift.h"
-#import "iTermAdvancedSettingsModel.h"
-#import "iTermPreferences.h"
 #import "NSArray+iTerm.h"
 #import "NSStringITerm.h"
 #import "NSWorkspace+iTerm.h"
 #import "ProfileModel.h"
+#import "iTerm2SharedARC-Swift.h"
+#import "iTermAdvancedSettingsModel.h"
+#import "iTermPreferences.h"
+#import "iTermUserDefaults.h"
 
 static NSString *const iTermNaggingControllerOrphanIdentifier = @"DidRestoreOrphan";
 static NSString *const iTermNaggingControllerReopenSessionAfterBrokenPipeIdentifier = @"ReopenSessionAfterBrokenPipe";
@@ -109,7 +110,7 @@ static NSString *const iTermNaggingControllerArrangementSetProfileProperty = @"S
 - (void)offerToSetProfileProperties:(NSDictionary<NSString *, id> *)dict {
     DLog(@"%@", dict);
     NSDictionary *permissions = [dict mapValuesWithBlock:^id(NSString *key, id object) {
-        return [[NSUserDefaults standardUserDefaults] objectForKey:[self userDefaultsKeyForProfileProperty:key]];
+        return [[iTermUserDefaults userDefaults] objectForKey:[self userDefaultsKeyForProfileProperty:key]];
     }];
     DLog(@"permissions: %@", permissions);
     // true = deny, false = always allow
@@ -155,12 +156,12 @@ static NSString *const iTermNaggingControllerArrangementSetProfileProperty = @"S
         }
         if (selection == 1) {
             for (NSString *key in dict) {
-                [[NSUserDefaults standardUserDefaults] setObject:@(iTermTriStateFalse)
+                [[iTermUserDefaults userDefaults] setObject:@(iTermTriStateFalse)
                                                           forKey:[strongSelf userDefaultsKeyForProfileProperty:key]];
             }
         } else if (selection == 2) {
             for (NSString *key in dict) {
-                [[NSUserDefaults standardUserDefaults] setObject:@(iTermTriStateTrue)
+                [[iTermUserDefaults userDefaults] setObject:@(iTermTriStateTrue)
                                                           forKey:[strongSelf userDefaultsKeyForProfileProperty:key]];
             }
         }
@@ -169,7 +170,7 @@ static NSString *const iTermNaggingControllerArrangementSetProfileProperty = @"S
 
 - (void)offerTextReplacement:(void (^NS_NOESCAPE)(void))perform {
     NSString *userDefaultsKey = @"NoSyncTextReplacements";
-    NSNumber *n = [NSNumber castFrom:[[NSUserDefaults standardUserDefaults] objectForKey:userDefaultsKey]];
+    NSNumber *n = [NSNumber castFrom:[[iTermUserDefaults userDefaults] objectForKey:userDefaultsKey]];
     if (n) {
         if (n.boolValue) {
             perform();
@@ -189,7 +190,7 @@ static NSString *const iTermNaggingControllerArrangementSetProfileProperty = @"S
                                         options:@[ @"_Yes", @"_No" ]
                                      completion:^(int selection) {
         if (selection == 0 || selection == 1) {
-            [[NSUserDefaults standardUserDefaults] setBool:selection == 0 forKey:userDefaultsKey];
+            [[iTermUserDefaults userDefaults] setBool:selection == 0 forKey:userDefaultsKey];
         }
         [weakSelf resetHaveTextReplacementOffer];
     }];
@@ -372,7 +373,7 @@ static NSString *const iTermNaggingControllerArrangementSetProfileProperty = @"S
         [self.delegate naggingControllerRemoveMessageWithIdentifier:iTermNaggingControllerAskAboutAlternateMouseScrollIdentifier];
         return;
     }
-    if ([[NSUserDefaults standardUserDefaults] boolForKey:iTermNaggingControllerUserDefaultNeverAskAboutSettingAlternateMouseScroll]) {
+    if ([[iTermUserDefaults userDefaults] boolForKey:iTermNaggingControllerUserDefaultNeverAskAboutSettingAlternateMouseScroll]) {
         return;
     }
     [self.delegate naggingControllerShowMessage:@"Do you want the scroll wheel to move the cursor in interactive programs like this?"
@@ -392,7 +393,7 @@ static NSString *const iTermNaggingControllerArrangementSetProfileProperty = @"S
             break;
 
         case 1: { // Never
-            [[NSUserDefaults standardUserDefaults] setBool:YES forKey:iTermNaggingControllerUserDefaultNeverAskAboutSettingAlternateMouseScroll];
+            [[iTermUserDefaults userDefaults] setBool:YES forKey:iTermNaggingControllerUserDefaultNeverAskAboutSettingAlternateMouseScroll];
             break;
         }
     }
@@ -402,7 +403,7 @@ static NSString *const iTermNaggingControllerArrangementSetProfileProperty = @"S
     NSString *filename = maybeFilename ?: @"";
     DLog(@"screenSetbackgroundImageFile:%@", filename);
 
-    NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
+    NSUserDefaults *userDefaults = [iTermUserDefaults userDefaults];
     NSArray *allowedFiles = [userDefaults objectForKey:iTermNaggingControllerUserDefaultAlwaysAllowBackgroundImage];
     NSArray *deniedFiles = [userDefaults objectForKey:iTermNaggingControllerUserDefaultAlwaysDenyBackgroundImage];
     if ([deniedFiles containsObject:filename]) {
@@ -430,7 +431,7 @@ static NSString *const iTermNaggingControllerArrangementSetProfileProperty = @"S
 }
 
 - (void)handleSetBackgroundImageToFileWithName:(NSString *)filename selection:(int)selection {
-    NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
+    NSUserDefaults *userDefaults = [iTermUserDefaults userDefaults];
     switch (selection) {
         case 0: // Yes
             if (!filename.length) {
@@ -521,13 +522,13 @@ static NSString *const iTermNaggingControllerArrangementSetProfileProperty = @"S
                 break;
 
             case 1: // Always
-                [[NSUserDefaults standardUserDefaults] setBool:YES
+                [[iTermUserDefaults userDefaults] setBool:YES
                                                         forKey:kTurnOffBracketedPasteOnHostChangeUserDefaultsKey];
                 [self.delegate naggingControllerDisableBracketedPasteMode];
                 break;
 
             case 2: // Never
-                [[NSUserDefaults standardUserDefaults] setBool:NO
+                [[iTermUserDefaults userDefaults] setBool:NO
                                                         forKey:kTurnOffBracketedPasteOnHostChangeUserDefaultsKey];
                 break;
 
@@ -563,13 +564,13 @@ static NSString *const iTermNaggingControllerArrangementSetProfileProperty = @"S
                 break;
 
             case 1: // Always
-                [[NSUserDefaults standardUserDefaults] setBool:YES
+                [[iTermUserDefaults userDefaults] setBool:YES
                                                         forKey:kRestoreIconAndWindowNameOnHostChangeUserDefaultsKey];
                 [self.delegate naggingControllerRestoreIconNameTo:iconName windowName:windowName];
                 break;
 
             case 2: // Never
-                [[NSUserDefaults standardUserDefaults] setBool:NO
+                [[iTermUserDefaults userDefaults] setBool:NO
                                                         forKey:kRestoreIconAndWindowNameOnHostChangeUserDefaultsKey];
                 break;
         }
@@ -581,7 +582,7 @@ static NSString *const iTermNaggingControllerArrangementSetProfileProperty = @"S
         DLog(@"Don't show warning");
         return;
     }
-    if ([[[NSUserDefaults standardUserDefaults] objectForKey:kTurnOffSlowTriggersOfferUserDefaultsKey] isEqual:@NO]) {
+    if ([[[iTermUserDefaults userDefaults] objectForKey:kTurnOffSlowTriggersOfferUserDefaultsKey] isEqual:@NO]) {
         return;
     }
     NSString *title;
@@ -605,7 +606,7 @@ static NSString *const iTermNaggingControllerArrangementSetProfileProperty = @"S
                 break;
 
             case 1: // Stop Asking
-                [[NSUserDefaults standardUserDefaults] setBool:NO
+                [[iTermUserDefaults userDefaults] setBool:NO
                                                         forKey:kTurnOffSlowTriggersOfferUserDefaultsKey];
                 break;
 
@@ -648,7 +649,7 @@ static NSString *const iTermNaggingControllerArrangementSetProfileProperty = @"S
         DLog(@"Don't show warning");
         return;
     }
-    if ([[NSUserDefaults standardUserDefaults] objectForKey:kPreferenceKeyTmuxSyncClipboard]) {
+    if ([[iTermUserDefaults userDefaults] objectForKey:kPreferenceKeyTmuxSyncClipboard]) {
         DLog(@"Nag disabled");
         return;
     }

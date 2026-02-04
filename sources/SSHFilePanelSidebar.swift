@@ -267,7 +267,7 @@ class SSHFilePanelSidebar: NSView {
     }
     
     private func loadFavorites() {
-        if let dicts = UserDefaults.standard.array(
+        if let dicts = iTermUserDefaults.userDefaults().array(
             forKey: favoritesKey
         ) as? [[String: Any]] {
             unfilteredFavorites = dicts.compactMap { Favorite($0) }
@@ -329,7 +329,7 @@ class SSHFilePanelSidebar: NSView {
     }
 
     private func saveFavorites() {
-        UserDefaults.standard.set(unfilteredFavorites.map { $0.userDefaultsObject }, forKey: favoritesKey)
+        iTermUserDefaults.userDefaults().set(unfilteredFavorites.map { $0.userDefaultsObject }, forKey: favoritesKey)
     }
 
     private func addFavorite(favorite: Favorite,

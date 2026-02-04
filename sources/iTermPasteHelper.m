@@ -7,6 +7,13 @@
 //
 
 #import "DebugLogging.h"
+#import "NSData+iTerm.h"
+#import "NSStringITerm.h"
+#import "PasteContext.h"
+#import "PasteEvent.h"
+#import "PasteViewController.h"
+#import "PasteboardHistory.h"
+#import "RegexKitLite.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermApplicationDelegate.h"
 #import "iTermNumberOfSpacesAccessoryViewController.h"
@@ -15,15 +22,9 @@
 #import "iTermPasteSpecialWindowController.h"
 #import "iTermPasteViewManager.h"
 #import "iTermPreferences.h"
+#import "iTermUserDefaults.h"
 #import "iTermVariableScope+Session.h"
 #import "iTermWarning.h"
-#import "NSData+iTerm.h"
-#import "NSStringITerm.h"
-#import "PasteboardHistory.h"
-#import "PasteContext.h"
-#import "PasteEvent.h"
-#import "PasteViewController.h"
-#import "RegexKitLite.h"
 
 const int kNumberOfSpacesPerTabCancel = -2;
 const int kNumberOfSpacesPerTabNoConversion = -1;
@@ -472,7 +473,7 @@ const NSInteger iTermQuickPasteBytesPerCallDefaultValue = 768;
 }
 
 - (NSInteger)normalChunkSize {
-    NSNumber *n = [[NSUserDefaults standardUserDefaults] objectForKey:@"QuickPasteBytesPerCall"];
+    NSNumber *n = [[iTermUserDefaults userDefaults] objectForKey:@"QuickPasteBytesPerCall"];
     if (!n) {
         return iTermQuickPasteBytesPerCallDefaultValue;
     } else {
@@ -481,7 +482,7 @@ const NSInteger iTermQuickPasteBytesPerCallDefaultValue = 768;
 }
 
 - (NSTimeInterval)normalDelay {
-    NSNumber *n = [[NSUserDefaults standardUserDefaults] objectForKey:@"QuickPasteDelayBetweenCalls"];
+    NSNumber *n = [[iTermUserDefaults userDefaults] objectForKey:@"QuickPasteDelayBetweenCalls"];
     if (!n) {
         return 0.01;
     } else {

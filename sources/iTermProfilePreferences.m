@@ -7,16 +7,12 @@
 //
 
 #import "iTermProfilePreferences.h"
+#import "iTermUserDefaults.h"
 
 #define ENABLE_DEPRECATED_ADVANCED_SETTINGS
 
 #import "DebugLogging.h"
 #import "ITAddressBookMgr.h"
-#import "iTermAdvancedSettingsModel.h"
-#import "iTermCursor.h"
-#import "iTermPreferences.h"
-#import "iTermScriptHistory.h"
-#import "iTermStatusBarLayout.h"
 #import "NSArray+iTerm.h"
 #import "NSColor+iTerm.h"
 #import "NSDictionary+iTerm.h"
@@ -24,6 +20,11 @@
 #import "NSJSONSerialization+iTerm.h"
 #import "PreferencePanel.h"
 #import "Trigger.h"
+#import "iTermAdvancedSettingsModel.h"
+#import "iTermCursor.h"
+#import "iTermPreferences.h"
+#import "iTermScriptHistory.h"
+#import "iTermStatusBarLayout.h"
 
 #define PROFILE_BLOCK(x) [^id(Profile *profile) { return [self x:profile]; } copy]
 
@@ -1108,7 +1109,7 @@ typedef struct {
                   KEY_OPEN_PASSWORD_MANAGER_AUTOMATICALLY: @NO,
                   KEY_TIMESTAMPS_STYLE: @(iTermTimestampsModeOverlap),
                   // Migration path for former advanced setting
-                  KEY_TIMESTAMPS_VISIBLE: [[NSUserDefaults standardUserDefaults] objectForKey:@"ShowTimestampsByDefault"] ?: @NO,
+                  KEY_TIMESTAMPS_VISIBLE: [[iTermUserDefaults userDefaults] objectForKey:@"ShowTimestampsByDefault"] ?: @NO,
                   KEY_USE_SEPARATE_COLORS_FOR_LIGHT_AND_DARK_MODE: @NO,
                   KEY_SNIPPETS_FILTER: @[],
 
@@ -1312,7 +1313,7 @@ typedef struct {
     }
 
     // If the user set a preference with the now-removed advanced setting, use it.
-    NSNumber *legacyDefault = [[NSUserDefaults standardUserDefaults] objectForKey:@"AntiIdleTimerPeriod"];
+    NSNumber *legacyDefault = [[iTermUserDefaults userDefaults] objectForKey:@"AntiIdleTimerPeriod"];
     if (legacyDefault) {
         return legacyDefault;
     }
@@ -1479,7 +1480,7 @@ typedef struct {
     }
 
     // If there was an old setting in advanced prefs, use that. Fall back to the default value.
-    NSNumber *number = [NSNumber castFrom:[[NSUserDefaults standardUserDefaults] objectForKey:@"OptionIsMetaForSpecialChars"]];
+    NSNumber *number = [NSNumber castFrom:[[iTermUserDefaults userDefaults] objectForKey:@"OptionIsMetaForSpecialChars"]];
     if (number){
         return @(!number.boolValue);
     }
@@ -1542,9 +1543,9 @@ typedef struct {
     }
 
     // Respect any existing now-deprecated settings.
-    NSNumber *stickyNumber = [[NSUserDefaults standardUserDefaults] objectForKey:KEY_SYNC_TITLE_DEPRECATED];
-    NSNumber *showJobNumber = [[NSUserDefaults standardUserDefaults] objectForKey:kPreferenceKeyShowJobName_Deprecated];
-    NSNumber *showProfileNameNumber = [[NSUserDefaults standardUserDefaults] objectForKey:kPreferenceKeyShowProfileName_Deprecated];
+    NSNumber *stickyNumber = [[iTermUserDefaults userDefaults] objectForKey:KEY_SYNC_TITLE_DEPRECATED];
+    NSNumber *showJobNumber = [[iTermUserDefaults userDefaults] objectForKey:kPreferenceKeyShowJobName_Deprecated];
+    NSNumber *showProfileNameNumber = [[iTermUserDefaults userDefaults] objectForKey:kPreferenceKeyShowProfileName_Deprecated];
 
     if (!stickyNumber && !showJobNumber && !showProfileNameNumber) {
         // No deprecated settings; use the modern default.

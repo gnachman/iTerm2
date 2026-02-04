@@ -7,6 +7,7 @@
 //
 
 #import "SCPFile.h"
+#import "iTermUserDefaults.h"
 #import <NMSSH/NMSSH.h>
 #import <NMSSH/NMSSHConfig.h>
 #import <NMSSH/NMSSHHostConfig.h>
@@ -14,15 +15,15 @@
 
 #import "DebugLogging.h"
 #import "ITAddressBookMgr.h"
-#import "iTermSlowOperationGateway.h"
-#import "iTermOpenDirectory.h"
-#import "iTermSSHHelpers.h"
-#import "iTermWarning.h"
 #import "NSFileManager+iTerm.h"
 #import "NSObject+iTerm.h"
 #import "NSStringITerm.h"
 #import "NSWorkspace+iTerm.h"
 #import "ProfileModel.h"
+#import "iTermOpenDirectory.h"
+#import "iTermSSHHelpers.h"
+#import "iTermSlowOperationGateway.h"
+#import "iTermWarning.h"
 
 @interface NMSSHSession(iTerm)
 @property (atomic, readonly) void *agent;
@@ -712,7 +713,7 @@ static NSString *const SCPFileKnownHostsUserDefaultsKey = @"NoSyncKnownHosts";
 }
 
 - (BOOL)hostnameIsKnown {
-    return [[[NSUserDefaults standardUserDefaults] objectForKey:SCPFileKnownHostsUserDefaultsKey] containsObject:self.userHostPort];
+    return [[[iTermUserDefaults userDefaults] objectForKey:SCPFileKnownHostsUserDefaultsKey] containsObject:self.userHostPort];
 }
 
 - (BOOL)shouldConnectToNewHostname {
@@ -728,9 +729,9 @@ static NSString *const SCPFileKnownHostsUserDefaultsKey = @"NoSyncKnownHosts";
 }
 
 - (void)addKnownHost {
-    NSArray<NSString *> *hosts = [[NSUserDefaults standardUserDefaults] objectForKey:SCPFileKnownHostsUserDefaultsKey] ?: @[];
+    NSArray<NSString *> *hosts = [[iTermUserDefaults userDefaults] objectForKey:SCPFileKnownHostsUserDefaultsKey] ?: @[];
     hosts = [hosts arrayByAddingObject:self.userHostPort];
-    [[NSUserDefaults standardUserDefaults] setObject:hosts forKey:SCPFileKnownHostsUserDefaultsKey];
+    [[iTermUserDefaults userDefaults] setObject:hosts forKey:SCPFileKnownHostsUserDefaultsKey];
 }
 
 - (void)download {

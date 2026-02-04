@@ -897,7 +897,7 @@ class CodeciergeGoalView: NSView, NSTextViewDelegate, NSControlTextEditingDelega
     private let codeciergeWarningAcknowledgedUserDefaultsKey = "NoSyncCodeciergeWarningAcknowledged"
 
     @objc private func startButtonPressed() {
-        if !UserDefaults.standard.bool(forKey: codeciergeWarningAcknowledgedUserDefaultsKey) {
+        if !iTermUserDefaults.userDefaults().bool(forKey: codeciergeWarningAcknowledgedUserDefaultsKey) {
             let option = iTermWarning.show(withTitle: "Everything that happens in your terminal while Codecierge is running will be sent to your AI provider. Don't send them confidential information!",
                               actions: [ "OK", "Cancel" ],
                               accessory: nil,
@@ -906,7 +906,7 @@ class CodeciergeGoalView: NSView, NSTextViewDelegate, NSControlTextEditingDelega
                               heading: "Privacy Warning",
                               window: window)
             if option == .kiTermWarningSelection0 {
-                UserDefaults.standard.setValue(true, forKey: codeciergeWarningAcknowledgedUserDefaultsKey)
+                iTermUserDefaults.userDefaults().setValue(true, forKey: codeciergeWarningAcknowledgedUserDefaultsKey)
             } else {
                 return
             }

@@ -9,14 +9,35 @@
 
 #import "CVector.h"
 #import "DebugLogging.h"
+#import "MovePaneController.h"
+#import "NSApplication+iTerm.h"
+#import "NSArray+iTerm.h"
+#import "NSColor+iTerm.h"
+#import "NSData+iTerm.h"
+#import "NSDictionary+iTerm.h"
+#import "NSFileManager+iTerm.h"
+#import "NSJSONSerialization+iTerm.h"
+#import "NSObject+iTerm.h"
+#import "NSStringITerm.h"
+#import "NSWorkspace+iTerm.h"
+#import "PTYSession.h"
+#import "PTYTab.h"
+#import "PreferencePanel.h"
+#import "ProfileModel.h"
+#import "PseudoTerminal.h"
+#import "TmuxController.h"
+#import "TmuxControllerRegistry.h"
+#import "TmuxGateway.h"
+#import "VT100Parser.h"
+#import "WindowControllerInterface.h"
 #import "iTermAdvancedSettingsModel.h"
-#import "iTermBuriedSessions.h"
 #import "iTermBuiltInFunctions.h"
+#import "iTermBuriedSessions.h"
 #import "iTermColorPresets.h"
 #import "iTermController.h"
 #import "iTermDisclosableView.h"
-#import "iTermLSOF.h"
 #import "iTermKeyMappings.h"
+#import "iTermLSOF.h"
 #import "iTermMalloc.h"
 #import "iTermObject.h"
 #import "iTermPreferences.h"
@@ -30,30 +51,10 @@
 #import "iTermSessionLauncher.h"
 #import "iTermStatusBarComponent.h"
 #import "iTermStatusBarViewController.h"
+#import "iTermUserDefaults.h"
 #import "iTermVariableReference.h"
 #import "iTermVariableScope+Global.h"
 #import "iTermWarning.h"
-#import "MovePaneController.h"
-#import "NSApplication+iTerm.h"
-#import "NSArray+iTerm.h"
-#import "NSColor+iTerm.h"
-#import "NSData+iTerm.h"
-#import "NSDictionary+iTerm.h"
-#import "NSFileManager+iTerm.h"
-#import "NSJSONSerialization+iTerm.h"
-#import "NSObject+iTerm.h"
-#import "NSStringITerm.h"
-#import "NSWorkspace+iTerm.h"
-#import "PreferencePanel.h"
-#import "ProfileModel.h"
-#import "PseudoTerminal.h"
-#import "PTYSession.h"
-#import "PTYTab.h"
-#import "TmuxController.h"
-#import "TmuxControllerRegistry.h"
-#import "TmuxGateway.h"
-#import "WindowControllerInterface.h"
-#import "VT100Parser.h"
 
 NSString *const iTermRemoveAPIServerSubscriptionsNotification = @"iTermRemoveAPIServerSubscriptionsNotification";
 NSString *const iTermAPIRegisteredFunctionsDidChangeNotification = @"iTermAPIRegisteredFunctionsDidChangeNotification";
@@ -1296,7 +1297,7 @@ static BOOL iTermAPIHelperLastApplescriptAuthRequiredSetting;
 }
 
 + (NSString *)nameOfScriptVendingStatusBarComponentWithUniqueIdentifier:(NSString *)uniqueID {
-    return [[NSUserDefaults standardUserDefaults] objectForKey:[self userDefaultsKeyForNameOfScriptVendingStatusBarComponentWithID:uniqueID]];
+    return [[iTermUserDefaults userDefaults] objectForKey:[self userDefaultsKeyForNameOfScriptVendingStatusBarComponentWithID:uniqueID]];
 }
 
 - (NSArray<iTermSessionTitleProvider *> *)sessionTitleFunctions {
@@ -1789,7 +1790,7 @@ static BOOL iTermAPIHelperLastApplescriptAuthRequiredSetting;
         return;
     }
     NSString *uniqueID = attributes.uniqueIdentifier;
-    return [[NSUserDefaults standardUserDefaults] setObject:fullPath
+    return [[iTermUserDefaults userDefaults] setObject:fullPath
                                                      forKey:[self.class userDefaultsKeyForNameOfScriptVendingStatusBarComponentWithID:uniqueID]];
 }
 

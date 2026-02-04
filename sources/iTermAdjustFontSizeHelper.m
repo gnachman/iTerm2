@@ -7,15 +7,16 @@
 
 #import "iTermAdjustFontSizeHelper.h"
 
-#import "iTerm2SharedARC-Swift.h"
 #import "ITAddressBookMgr.h"
 #import "NSFont+iTerm.h"
 #import "PTYSession.h"
 #import "ProfileModel.h"
 #import "PseudoTerminal.h"
+#import "iTerm2SharedARC-Swift.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermController.h"
 #import "iTermPreferences.h"
+#import "iTermUserDefaults.h"
 
 @implementation iTermAdjustFontSizeHelper
 
@@ -108,7 +109,7 @@
                                                       userInfo:nil];
     
     // Update user defaults
-    [[NSUserDefaults standardUserDefaults] setObject:[[ProfileModel sharedInstance] rawData]
+    [[iTermUserDefaults userDefaults] setObject:[[ProfileModel sharedInstance] rawData]
                                               forKey: @"New Bookmarks"];
 }
 

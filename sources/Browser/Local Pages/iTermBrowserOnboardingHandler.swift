@@ -130,7 +130,7 @@ class iTermBrowserOnboardingHandler: NSObject, iTermBrowserPageHandler {
             sendSettingsStatus(to: webView)
             
         case "completeOnboarding":
-            UserDefaults.standard.set(true, forKey: "NoSyncBrowserOnboardingCompleted")
+            iTermUserDefaults.userDefaults().set(true, forKey: "NoSyncBrowserOnboardingCompleted")
 
         default:
             DLog("Unknown onboarding action: \(action)")

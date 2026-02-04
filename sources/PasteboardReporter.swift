@@ -29,7 +29,7 @@ class PasteboardReporter: NSObject {
 
     @objc
     static func configuration() -> Configuration {
-        if UserDefaults.standard.bool(forKey: Self.userDefaultsKey) {
+        if iTermUserDefaults.userDefaults().bool(forKey: Self.userDefaultsKey) {
             return .never
         }
         if SecureUserDefaults.instance.allowPaste.value {
@@ -47,7 +47,7 @@ class PasteboardReporter: NSObject {
         switch configuration {
         case .never:
             if Self.removeAuth() {
-                UserDefaults.standard.set(true, forKey: Self.userDefaultsKey)
+                iTermUserDefaults.userDefaults().set(true, forKey: Self.userDefaultsKey)
             }
 
         case .always:
@@ -58,7 +58,7 @@ class PasteboardReporter: NSObject {
                 DLog("Set secure user default to true")
                 try SecureUserDefaults.instance.allowPaste.set(true)
                 DLog("Set user default to false")
-                UserDefaults.standard.set(false, forKey: Self.userDefaultsKey)
+                iTermUserDefaults.userDefaults().set(false, forKey: Self.userDefaultsKey)
             } catch {
                 DLog("Failed to enable allowPaste: \(error.localizedDescription)")
             }
@@ -67,7 +67,7 @@ class PasteboardReporter: NSObject {
             guard Self.removeAuth() else {
                 return
             }
-            UserDefaults.standard.set(false, forKey: Self.userDefaultsKey)
+            iTermUserDefaults.userDefaults().set(false, forKey: Self.userDefaultsKey)
         }
     }
 

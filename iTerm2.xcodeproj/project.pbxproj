@@ -972,8 +972,6 @@
 		A602AAEA2B16A8B600E6C965 /* DraggableNSBox.swift in Sources */ = {isa = PBXBuildFile; fileRef = A602AAE92B16A8B600E6C965 /* DraggableNSBox.swift */; };
 		A6038307294305EA00FE11C2 /* DebugLogging.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DD39B19180B82F5004E56D5 /* DebugLogging.m */; };
 		A6038309294306BA00FE11C2 /* iTermSandboxedWorkerClient.m in Sources */ = {isa = PBXBuildFile; fileRef = 7577E2A02593B88700905402 /* iTermSandboxedWorkerClient.m */; };
-		A603830A294306C400FE11C2 /* iTermAdvancedSettingsModel.m in Sources */ = {isa = PBXBuildFile; fileRef = A697100A18D94CDA007E901D /* iTermAdvancedSettingsModel.m */; };
-		A603830B294306D800FE11C2 /* iTermUserDefaultsObserver.m in Sources */ = {isa = PBXBuildFile; fileRef = A6EF57D021994DDC00C76698 /* iTermUserDefaultsObserver.m */; };
 		A603831E294BBA9200FE11C2 /* iTermNSKeyBindingEmulator.m in Sources */ = {isa = PBXBuildFile; fileRef = A60014FA18552BDF00CE38D8 /* iTermNSKeyBindingEmulator.m */; };
 		A6038320294D062A00FE11C2 /* iTermCopyModeKeyBindings.dict in Resources */ = {isa = PBXBuildFile; fileRef = A603831F294D062A00FE11C2 /* iTermCopyModeKeyBindings.dict */; };
 		A6038321294D062A00FE11C2 /* iTermCopyModeKeyBindings.dict in Resources */ = {isa = PBXBuildFile; fileRef = A603831F294D062A00FE11C2 /* iTermCopyModeKeyBindings.dict */; };
@@ -18568,12 +18566,10 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				A603830B294306D800FE11C2 /* iTermUserDefaultsObserver.m in Sources */,
 				759637A12593AE0700E278CC /* main.m in Sources */,
 				A60D20C92597F496004AC979 /* iTermImage+ImageWithData.m in Sources */,
 				756C32AD2597AC2E0047B3A9 /* iTermImage+Sixel.m in Sources */,
 				A6038309294306BA00FE11C2 /* iTermSandboxedWorkerClient.m in Sources */,
-				A603830A294306C400FE11C2 /* iTermAdvancedSettingsModel.m in Sources */,
 				7596379F2593AE0700E278CC /* iTerm2SandboxedWorker.m in Sources */,
 				A60D20D22597F4DF004AC979 /* iTermImage.m in Sources */,
 			);

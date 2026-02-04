@@ -8,11 +8,12 @@
 
 #import "PointerController.h"
 
-#import "iTerm2SharedARC-Swift.h"
-#import "iTermApplicationDelegate.h"
 #import "NSEvent+iTerm.h"
 #import "PointerPrefsController.h"
 #import "PreferencePanel.h"
+#import "iTerm2SharedARC-Swift.h"
+#import "iTermApplicationDelegate.h"
+#import "iTermUserDefaults.h"
 
 @implementation PointerController {
     int mouseDownButton_;
@@ -206,7 +207,7 @@ compatibilityEscaping:(BOOL)compatibilityEscaping {
         return NO;
     }
 
-    NSNumber *number = [[NSUserDefaults standardUserDefaults] objectForKey:@"com.apple.trackpad.threeFingerTapGesture"];
+    NSNumber *number = [[iTermUserDefaults userDefaults] objectForKey:@"com.apple.trackpad.threeFingerTapGesture"];
     if (number.integerValue == 2) {
         [self performAction:kQuickLookAction forEvent:event withArgument:nil compatibilityEscaping:NO];
         return YES;
@@ -270,7 +271,7 @@ compatibilityEscaping:(BOOL)compatibilityEscaping {
                 [self performAction:action forEvent:event withArgument:argument compatibilityEscaping:compatibilityEscaping];
                 return YES;
             } else {
-                NSNumber *number = [[NSUserDefaults standardUserDefaults] objectForKey:@"com.apple.trackpad.forceClick"];
+                NSNumber *number = [[iTermUserDefaults userDefaults] objectForKey:@"com.apple.trackpad.forceClick"];
                 if (number && number.boolValue) {
                     // This hack stolen from Firefox: https://searchfox.org/mozilla-central/source/widget/cocoa/nsChildView.mm
                     // I have no idea why -quicklookWithEvent: doesn't get called, but at least I'm in good company.

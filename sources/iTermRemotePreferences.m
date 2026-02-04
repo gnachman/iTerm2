@@ -5,17 +5,18 @@
 #import "iTermRemotePreferences.h"
 
 #import "DebugLogging.h"
-#import "iTermAdvancedSettingsModel.h"
-#import "iTermDynamicProfileManager.h"
-#import "iTermPreferences.h"
-#import "iTermProfilePreferences.h"
-#import "iTermUserDefaultsObserver.h"
-#import "iTermWarning.h"
 #import "NSDictionary+iTerm.h"
 #import "NSFileManager+iTerm.h"
 #import "NSStringITerm.h"
 #import "NSURL+iTerm.h"
 #import "PreferencePanel.h"
+#import "iTermAdvancedSettingsModel.h"
+#import "iTermDynamicProfileManager.h"
+#import "iTermPreferences.h"
+#import "iTermProfilePreferences.h"
+#import "iTermUserDefaults.h"
+#import "iTermUserDefaultsObserver.h"
+#import "iTermWarning.h"
 
 static NSString *iTermRemotePreferencesPromptBeforeLoadingPrefsFromURL = @"NoSyncPromptBeforeLoadingPrefsFromURL";
 
@@ -177,7 +178,7 @@ respectingTimeoutSetting:(BOOL)respectingTimeoutSetting
     NSDictionary *remotePrefs;
     if ([filename stringIsUrlLike]) {
         DLog(@"Is URL");
-        NSString *promptURL = [[NSUserDefaults standardUserDefaults] objectForKey:iTermRemotePreferencesPromptBeforeLoadingPrefsFromURL];
+        NSString *promptURL = [[iTermUserDefaults userDefaults] objectForKey:iTermRemotePreferencesPromptBeforeLoadingPrefsFromURL];
         if ([promptURL isEqual:filename]) {
             DLog(@"Prompting");
             NSString *theTitle = [NSString stringWithFormat:
@@ -197,12 +198,12 @@ respectingTimeoutSetting:(BOOL)respectingTimeoutSetting
                 case kiTermWarningSelection1:
                     DLog(@"Disable url");
                     [iTermPreferences setBool:NO forKey:kPreferenceKeyLoadPrefsFromCustomFolder];
-                    [[NSUserDefaults standardUserDefaults] setObject:nil
+                    [[iTermUserDefaults userDefaults] setObject:nil
                                                               forKey:iTermRemotePreferencesPromptBeforeLoadingPrefsFromURL];
                     return nil;
                 case kiTermWarningSelection2:
                     DLog(@"Discard local");
-                    [[NSUserDefaults standardUserDefaults] setObject:nil
+                    [[iTermUserDefaults userDefaults] setObject:nil
                                                               forKey:iTermRemotePreferencesPromptBeforeLoadingPrefsFromURL];
                     break;
                 default:
@@ -281,7 +282,7 @@ respectingTimeoutSetting:(BOOL)respectingTimeoutSetting
         }
     }
 
-    [[NSUserDefaults standardUserDefaults] synchronize];
+    [[iTermUserDefaults userDefaults] synchronize];
 
     NSString *folder = [self expandedCustomFolderOrURL];
     if ([folder stringIsUrlLike]) {
@@ -330,7 +331,7 @@ respectingTimeoutSetting:(BOOL)respectingTimeoutSetting
 }
 
 static NSDictionary *iTermUserDefaultsDictionary(NSArray<NSString *> *preservedKeys) {
-    NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
+    NSUserDefaults *userDefaults = [iTermUserDefaults userDefaults];
     NSDictionary *myDict =
         [userDefaults persistentDomainForName:[[NSBundle mainBundle] bundleIdentifier]];
     return [myDict filteredWithBlock:^BOOL(id key, id value) {
@@ -414,21 +415,21 @@ static NSDictionary *iTermRemotePreferencesSave(NSDictionary *myDict, NSString *
         return;
     }
     DLog(@"Load local prefs");
-    NSDictionary *localPrefs = [[NSUserDefaults standardUserDefaults] persistentDomainForName:[[NSBundle mainBundle] bundleIdentifier]];
+    NSDictionary *localPrefs = [[iTermUserDefaults userDefaults] persistentDomainForName:[[NSBundle mainBundle] bundleIdentifier]];
     // Empty out the current prefs
     DLog(@"Remove non-syncable values");
     int count = 0;
     for (NSString *key in localPrefs) {
         if ([self preferenceKeyIsSyncable:key]) {
             count += 1;
-            [[NSUserDefaults standardUserDefaults] removeObjectForKey:key];
+            [[iTermUserDefaults userDefaults] removeObjectForKey:key];
         }
     }
     DLog(@"Removed %d keys", count);
     DLog(@"Copy remote values to user defaults");
     for (NSString *key in remotePrefs) {
         if ([self preferenceKeyIsSyncable:key]) {
-            [[NSUserDefaults standardUserDefaults] setObject:[remotePrefs objectForKey:key]
+            [[iTermUserDefaults userDefaults] setObject:[remotePrefs objectForKey:key]
                                                       forKey:key];
         }
     }
@@ -457,7 +458,7 @@ static NSDictionary *iTermRemotePreferencesSave(NSDictionary *myDict, NSString *
     NSDictionary *saved = [self removeDynamicProfiles:self.savedRemotePrefs];
     if (saved && [saved count]) {
         // Grab all prefs from our bundle only (no globals, etc.).
-        NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
+        NSUserDefaults *userDefaults = [iTermUserDefaults userDefaults];
         NSDictionary *localPrefs =
             [userDefaults persistentDomainForName:[[NSBundle mainBundle] bundleIdentifier]];
         localPrefs = [self removeDynamicProfiles:localPrefs];
@@ -528,7 +529,7 @@ static NSDictionary *iTermRemotePreferencesSave(NSDictionary *myDict, NSString *
     if ([self localPrefsDifferFromSavedRemotePrefs]) {
         if (self.remoteLocationIsURL) {
             // If the setting is always copy, then ask. Copying isn't an option.
-            [[NSUserDefaults standardUserDefaults] setObject:[self remotePrefsLocation] forKey:iTermRemotePreferencesPromptBeforeLoadingPrefsFromURL];
+            [[iTermUserDefaults userDefaults] setObject:[self remotePrefsLocation] forKey:iTermRemotePreferencesPromptBeforeLoadingPrefsFromURL];
         } else {
             // Not a URL
             NSString *theTitle = [NSString stringWithFormat:
@@ -549,7 +550,7 @@ static NSDictionary *iTermRemotePreferencesSave(NSDictionary *myDict, NSString *
             }
         }
     } else if(self.savedRemotePrefs != nil) {
-        [[NSUserDefaults standardUserDefaults] setObject:nil
+        [[iTermUserDefaults userDefaults] setObject:nil
                                                   forKey:iTermRemotePreferencesPromptBeforeLoadingPrefsFromURL];
     }
 }

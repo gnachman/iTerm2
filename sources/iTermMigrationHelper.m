@@ -9,14 +9,15 @@
 
 #import "DebugLogging.h"
 #import "ITAddressBookMgr.h"
+#import "NSArray+iTerm.h"
+#import "NSFileManager+iTerm.h"
+#import "NSWorkspace+iTerm.h"
 #import "iTerm2SharedARC-Swift.h"
 #import "iTermDisclosableView.h"
 #import "iTermPreferences.h"
 #import "iTermProfilePreferences.h"
+#import "iTermUserDefaults.h"
 #import "iTermWarning.h"
-#import "NSArray+iTerm.h"
-#import "NSFileManager+iTerm.h"
-#import "NSWorkspace+iTerm.h"
 
 @implementation iTermMigrationHelper
 
@@ -50,7 +51,7 @@
 }
 
 + (void)migrateOpenAIKeyIfNeeded {
-    NSString *key = [[NSUserDefaults standardUserDefaults] stringForKey:kPreferenceKeyOpenAIAPIKey];
+    NSString *key = [[iTermUserDefaults userDefaults] stringForKey:kPreferenceKeyOpenAIAPIKey];
     if (!key) {
         return;
     }
@@ -69,7 +70,7 @@
     if (selection == kiTermWarningSelection0) {
         [self addOpenAIKeyToKeychain:key];
     }
-    [[NSUserDefaults standardUserDefaults] removeObjectForKey:kPreferenceKeyOpenAIAPIKey];
+    [[iTermUserDefaults userDefaults] removeObjectForKey:kPreferenceKeyOpenAIAPIKey];
 }
 
 + (void)addOpenAIKeyToKeychain:(NSString *)key {
@@ -170,7 +171,7 @@
     NSString* plistFile = [[NSBundle bundleForClass:[self class]] pathForResource:@"MigrationMap"
                                                                            ofType:@"plist"];
     NSDictionary* fileDict = [NSDictionary dictionaryWithContentsOfFile: plistFile];
-    NSUserDefaults* prefs = [NSUserDefaults standardUserDefaults];
+    NSUserDefaults* prefs = [iTermUserDefaults userDefaults];
     NSDictionary* keybindingProfiles = [prefs objectForKey: @"KeyBindings"];
     NSDictionary* displayProfiles =  [prefs objectForKey: @"Displays"];
     NSDictionary* terminalProfiles = [prefs objectForKey: @"Terminals"];
@@ -247,7 +248,7 @@
 static NSString *const iTermMigrationHelperRemoveDeprecatedKeyMappingsUserDefaultKey = @"NoSyncRemoveDeprecatedKeyMappings";
 
 + (iTermMigrationHelperShouldRemoveDeprecatedKeyMappings)shouldRemoveDeprecatedKeyMappings {
-    NSUserDefaults *ud = [NSUserDefaults standardUserDefaults];
+    NSUserDefaults *ud = [iTermUserDefaults userDefaults];
     NSNumber *n = [NSNumber castFrom:[ud objectForKey:iTermMigrationHelperRemoveDeprecatedKeyMappingsUserDefaultKey]];
     if (!n) {
         // User hasn't been prompted.
@@ -257,7 +258,7 @@ static NSString *const iTermMigrationHelperRemoveDeprecatedKeyMappingsUserDefaul
 }
 
 + (void)setShouldRemoveDeprecatedKeyMappings:(iTermMigrationHelperShouldRemoveDeprecatedKeyMappings)value {
-    NSUserDefaults *ud = [NSUserDefaults standardUserDefaults];
+    NSUserDefaults *ud = [iTermUserDefaults userDefaults];
     [ud setObject:@(value)
            forKey:iTermMigrationHelperRemoveDeprecatedKeyMappingsUserDefaultKey];
 }
@@ -418,7 +419,7 @@ static NSString *const iTermMigrationHelperRemoveDeprecatedKeyMappingsUserDefaul
     if ([iTermSecureUserDefaults.instance enableAI]) {
         // A default configuration has no model or URL set.
         iTermAIModel *model;
-        NSUserDefaults *ud = [NSUserDefaults standardUserDefaults];
+        NSUserDefaults *ud = [iTermUserDefaults userDefaults];
         NSString *originalModelName = [ud stringForKey:kPreferenceKeyAIModel];
         NSString *originalURL = [iTermPreferences stringForKey:kPreferenceKeyAITermURL];
         const BOOL originalLegacy = [ud boolForKey:kPreferenceKeyAITermUseLegacyAPI];

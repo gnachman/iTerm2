@@ -7,12 +7,13 @@
 
 #import "iTermCopyModeHandler.h"
 
+#import "NSEvent+iTerm.h"
+#import "NSFileManager+iTerm.h"
 #import "iTermCopyModeState.h"
 #import "iTermNSKeyBindingEmulator.h"
 #import "iTermNotificationController.h"
 #import "iTermPreferences.h"
-#import "NSEvent+iTerm.h"
-#import "NSFileManager+iTerm.h"
+#import "iTermUserDefaults.h"
 
 #import <Cocoa/Cocoa.h>
 
@@ -184,10 +185,10 @@ iTermCopyModeAction iTermCopyModeActionFromName(NSString *name, BOOL *ok) {
 - (void)setEnabledWithoutCleverness:(BOOL)copyMode {
     if (copyMode) {
         NSString *const key = @"NoSyncHaveUsedCopyMode";
-        if ([[NSUserDefaults standardUserDefaults] objectForKey:key] == nil) {
+        if ([[iTermUserDefaults userDefaults] objectForKey:key] == nil) {
             [self educateAboutCopyMode];
         }
-        [[NSUserDefaults standardUserDefaults] setBool:YES forKey:key];
+        [[iTermUserDefaults userDefaults] setBool:YES forKey:key];
     }
 
     _enabled = copyMode;

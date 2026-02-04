@@ -7,6 +7,8 @@
 
 #import "iTermUserDefaultsObserver.h"
 
+#import "iTermUserDefaults.h"
+
 static char iTermAdvancedSettingsModelKVOKey;
 
 @implementation iTermUserDefaultsObserver {
@@ -24,7 +26,7 @@ static char iTermAdvancedSettingsModelKVOKey;
 
 - (void)dealloc {
     for (NSString *key in _blocks) {
-        [[NSUserDefaults standardUserDefaults] removeObserver:self
+        [[iTermUserDefaults userDefaults] removeObserver:self
                                                    forKeyPath:key
                                                       context:(void *)&iTermAdvancedSettingsModelKVOKey];
     }
@@ -32,7 +34,7 @@ static char iTermAdvancedSettingsModelKVOKey;
 
 - (void)observeKey:(NSString *)key block:(void (^)(void))block {
     _blocks[key] = [block copy];
-    [[NSUserDefaults standardUserDefaults] addObserver:self
+    [[iTermUserDefaults userDefaults] addObserver:self
                                             forKeyPath:key
                                                options:NSKeyValueObservingOptionNew
                                                context:(void *)&iTermAdvancedSettingsModelKVOKey];

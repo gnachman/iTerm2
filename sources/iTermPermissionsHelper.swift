@@ -32,7 +32,7 @@ class AccessibilityPermissionsHelper: PermissionsHelperProtocol {
         let key = userDefaultsKeyPrefix + name
 
         let thisVersion = Bundle.main.infoDictionary?[kCFBundleVersionKey as String] as? String
-        let lastVersion = UserDefaults.standard.string(forKey: key)
+        let lastVersion = iTermUserDefaults.userDefaults().string(forKey: key)
 
         guard let thisVersion else {
             return status
@@ -42,7 +42,7 @@ class AccessibilityPermissionsHelper: PermissionsHelperProtocol {
         }
         let options = [kAXTrustedCheckOptionPrompt.takeUnretainedValue(): true] as CFDictionary
         let value = AXIsProcessTrustedWithOptions(options)
-        UserDefaults.standard.set(thisVersion, forKey: key)
+        iTermUserDefaults.userDefaults().set(thisVersion, forKey: key)
         return value
     }
 
