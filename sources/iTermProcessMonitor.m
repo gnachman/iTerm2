@@ -17,9 +17,9 @@
 @end
 
 @implementation iTermProcessMonitor {
-    dispatch_source_t _source;
-    NSMutableArray<iTermProcessMonitor *> *_children;
-    BOOL _isPaused;
+    dispatch_source_t _source;  // Access on _queue only
+    NSMutableArray<iTermProcessMonitor *> *_children;  // Access on _queue only
+    BOOL _isPaused;  // Access on _queue only
 }
 
 - (instancetype)initWithQueue:(dispatch_queue_t)queue
@@ -40,10 +40,12 @@
     return [self initWithQueue:queue callback:callback trackedRootPID:0];
 }
 
+// Called on _queue
 - (BOOL)setProcessInfo:(iTermProcessInfo *)processInfo {
     return [self setProcessInfo:processInfo depth:0];
 }
 
+// Called on _queue
 - (BOOL)setProcessInfo:(iTermProcessInfo *)processInfo depth:(NSInteger)depth {
     if (![iTermAdvancedSettingsModel fastForegroundJobUpdates]) {
         return NO;
@@ -81,7 +83,11 @@
         dispatch_source_set_event_handler(_source, ^{
             [weakSelf handleEvent];
         });
-        dispatch_resume(_source);
+        // Only resume if not paused. pauseMonitoring may have been called before
+        // we had a source, in which case _isPaused is already set.
+        if (!_isPaused) {
+            dispatch_resume(_source);
+        }
     }
 
     NSMutableArray<iTermProcessMonitor *> *childrenToAdd = [NSMutableArray array];
@@ -126,6 +132,7 @@
     return changed;
 }
 
+// Called on _queue
 - (iTermProcessMonitor *)childForProcessInfo:(iTermProcessInfo *)info {
     const pid_t pid = info.processID;
     return [_children objectPassingTest:^BOOL(iTermProcessMonitor *element, NSUInteger index, BOOL *stop) {
@@ -166,32 +173,38 @@
 
 // Called on _queue
 - (void)pauseMonitoring {
-    if (_source == nil || _isPaused) {
+    if (_isPaused) {
+        return;
+    }
+    _isPaused = YES;
+    // Recursively pause children (do this even if _source is nil, since children may have sources)
+    for (iTermProcessMonitor *child in _children) {
+        [child pauseMonitoring];
+    }
+    if (_source == nil) {
+        // No source yet; _isPaused is recorded so setProcessInfo: won't auto-resume.
         return;
     }
     DLog(@"Pause monitoring process %@", _processInfo);
     dispatch_suspend(_source);
-    _isPaused = YES;
-
-    // Recursively pause children
-    for (iTermProcessMonitor *child in _children) {
-        [child pauseMonitoring];
-    }
 }
 
 // Called on _queue
 - (void)resumeMonitoring {
-    if (_source == nil || !_isPaused) {
+    if (!_isPaused) {
+        return;
+    }
+    _isPaused = NO;
+    // Recursively resume children (do this even if _source is nil, since children may have sources)
+    for (iTermProcessMonitor *child in _children) {
+        [child resumeMonitoring];
+    }
+    if (_source == nil) {
+        // No source yet; _isPaused is cleared so setProcessInfo: will resume normally.
         return;
     }
     DLog(@"Resume monitoring process %@", _processInfo);
     dispatch_resume(_source);
-    _isPaused = NO;
-
-    // Recursively resume children
-    for (iTermProcessMonitor *child in _children) {
-        [child resumeMonitoring];
-    }
 }
 
 // Called on _queue

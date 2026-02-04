@@ -219,6 +219,91 @@ final class iTermProcessMonitorTests: XCTestCase {
         XCTAssertEqual(parentInfo.children.count, 2)
     }
 
+    func testSetProcessInfo_RemovesChild_InvalidatesChildMonitor() {
+        // Given: A monitor, first set process info without children, then add a child
+        let parentPID = getpid()
+        let childPID: pid_t = 99991
+
+        dataSource.processNames[parentPID] = "xctest"
+
+        // First: set up monitor with no children
+        let initialCollection = makeProcessCollection(dataSource: dataSource, processes: [
+            (parentPID, getppid())
+        ])
+
+        guard let initialInfo = initialCollection.info(forProcessID: parentPID) else {
+            XCTFail("Failed to create initial process info")
+            return
+        }
+
+        let monitor = iTermProcessMonitor(queue: testQueue, callback: makeCallback(), trackedRootPID: parentPID)
+
+        testQueue.sync {
+            _ = monitor.setProcessInfo(initialInfo)
+        }
+
+        // Pause the monitor (required for child monitors to be properly tracked with fake PIDs)
+        testQueue.sync {
+            monitor.pauseMonitoring()
+        }
+
+        // Then: add a child
+        dataSource.processNames[childPID] = "child"
+
+        let withChildCollection = makeProcessCollection(dataSource: dataSource, processes: [
+            (parentPID, getppid()),
+            (childPID, parentPID)
+        ])
+
+        guard let withChildInfo = withChildCollection.info(forProcessID: parentPID) else {
+            XCTFail("Failed to create process info with child")
+            return
+        }
+
+        testQueue.sync {
+            _ = monitor.setProcessInfo(withChildInfo)
+        }
+
+        // Verify child was created while still paused
+        var childMonitor: iTermProcessMonitor?
+        testQueue.sync {
+            let children = childMonitors(for: monitor)
+            XCTAssertEqual(children.count, 1, "Should have one child monitor")
+            childMonitor = children.first as? iTermProcessMonitor
+        }
+
+        guard let capturedChild = childMonitor else {
+            XCTFail("Expected child monitor")
+            return
+        }
+
+        // Resume for the rest of the test
+        testQueue.sync {
+            monitor.resumeMonitoring()
+        }
+
+        // When: Update process info to remove the child
+        let withoutChildCollection = makeProcessCollection(dataSource: dataSource, processes: [
+            (parentPID, getppid())
+        ])
+
+        guard let withoutChildInfo = withoutChildCollection.info(forProcessID: parentPID) else {
+            XCTFail("Failed to create process info without child")
+            return
+        }
+
+        testQueue.sync {
+            _ = monitor.setProcessInfo(withoutChildInfo)
+        }
+
+        // Then: Removed child should be invalidated (processInfo cleared)
+        XCTAssertNil(capturedChild.processInfo, "Removed child monitor should be invalidated")
+
+        testQueue.sync {
+            monitor.invalidate()
+        }
+    }
+
     func testSetProcessInfo_TrackedRootPID_PropagatedToChildren() {
         // Given: A process tree
         let rootPID: pid_t = 12345
@@ -648,6 +733,255 @@ final class iTermProcessMonitorTests: XCTestCase {
         }
     }
 
+    // MARK: - 5b. Pre-Source Pause Tests (pauseMonitoring before setProcessInfo)
+    // These tests verify the fix for the bug where pauseMonitoring called before
+    // setProcessInfo: (i.e., before a dispatch source exists) would not record the
+    // paused state, causing the source to auto-resume when created.
+
+    func testPauseBeforeSetProcessInfo_SourceStartsPaused() {
+        // This tests the core fix: calling pauseMonitoring before setProcessInfo:
+        // should record the paused state, and the dispatch source should NOT auto-resume.
+
+        // Given: A monitor with NO process info yet (no dispatch source)
+        let monitor = iTermProcessMonitor(queue: testQueue, callback: makeCallback(), trackedRootPID: 0)
+
+        // When: Pause BEFORE setProcessInfo creates a dispatch source
+        testQueue.sync {
+            monitor.pauseMonitoring()
+        }
+
+        // Verify isPaused is true even without a source
+        var pausedBeforeSource = false
+        testQueue.sync {
+            pausedBeforeSource = isMonitorPaused(monitor)
+        }
+        XCTAssertTrue(pausedBeforeSource, "isPaused should be true even before dispatch source exists")
+
+        // Now set process info to create the dispatch source
+        let pid = getpid()
+        dataSource.processNames[pid] = "xctest"
+        let collection = makeProcessCollection(dataSource: dataSource, processes: [(pid, getppid())])
+        guard let processInfo = collection.info(forProcessID: pid) else {
+            XCTFail("Failed to create process info")
+            return
+        }
+
+        testQueue.sync {
+            _ = monitor.setProcessInfo(processInfo)
+        }
+
+        // Then: Monitor should STILL be paused after source creation
+        var pausedAfterSource = false
+        testQueue.sync {
+            pausedAfterSource = isMonitorPaused(monitor)
+        }
+        XCTAssertTrue(pausedAfterSource, "Monitor should remain paused after setProcessInfo creates source")
+
+        // Cleanup
+        testQueue.sync {
+            monitor.invalidate()
+        }
+    }
+
+    func testPauseBeforeSetProcessInfo_ResumeWorks() {
+        // Verifies that after pausing before source creation, resumeMonitoring works correctly.
+
+        // Given: A monitor paused before setProcessInfo
+        let monitor = iTermProcessMonitor(queue: testQueue, callback: makeCallback(), trackedRootPID: 0)
+
+        testQueue.sync {
+            monitor.pauseMonitoring()
+        }
+
+        // Set process info to create source (remains paused)
+        let pid = getpid()
+        dataSource.processNames[pid] = "xctest"
+        let collection = makeProcessCollection(dataSource: dataSource, processes: [(pid, getppid())])
+        guard let processInfo = collection.info(forProcessID: pid) else {
+            XCTFail("Failed to create process info")
+            return
+        }
+
+        testQueue.sync {
+            _ = monitor.setProcessInfo(processInfo)
+        }
+
+        // When: Resume the monitor
+        testQueue.sync {
+            monitor.resumeMonitoring()
+        }
+
+        // Then: Should no longer be paused
+        var pausedAfterResume = false
+        testQueue.sync {
+            pausedAfterResume = isMonitorPaused(monitor)
+        }
+        XCTAssertFalse(pausedAfterResume, "Monitor should be running after resumeMonitoring")
+
+        // Cleanup
+        testQueue.sync {
+            monitor.invalidate()
+        }
+    }
+
+    func testResumeBeforeSetProcessInfo_ClearsPausedState() {
+        // Verifies that calling resume before setProcessInfo clears the paused state,
+        // so the source will auto-resume when created (normal behavior).
+
+        // Given: A monitor that was paused then resumed, all before setProcessInfo
+        let monitor = iTermProcessMonitor(queue: testQueue, callback: makeCallback(), trackedRootPID: 0)
+
+        testQueue.sync {
+            monitor.pauseMonitoring()
+            monitor.resumeMonitoring()
+        }
+
+        // Verify isPaused is false before source creation
+        var pausedBeforeSource = false
+        testQueue.sync {
+            pausedBeforeSource = isMonitorPaused(monitor)
+        }
+        XCTAssertFalse(pausedBeforeSource, "isPaused should be false after resume (before source)")
+
+        // When: Set process info to create source
+        let pid = getpid()
+        dataSource.processNames[pid] = "xctest"
+        let collection = makeProcessCollection(dataSource: dataSource, processes: [(pid, getppid())])
+        guard let processInfo = collection.info(forProcessID: pid) else {
+            XCTFail("Failed to create process info")
+            return
+        }
+
+        testQueue.sync {
+            _ = monitor.setProcessInfo(processInfo)
+        }
+
+        // Then: Monitor should NOT be paused (source auto-resumed)
+        var pausedAfterSource = false
+        testQueue.sync {
+            pausedAfterSource = isMonitorPaused(monitor)
+        }
+        XCTAssertFalse(pausedAfterSource, "Monitor should be running after setProcessInfo (was not pre-paused)")
+
+        // Cleanup
+        testQueue.sync {
+            monitor.invalidate()
+        }
+    }
+
+    func testPauseBeforeSetProcessInfo_ChildrenAlsoPaused() {
+        // Verifies that when a monitor is pre-paused (before source creation),
+        // any children created by setProcessInfo are also paused.
+
+        // Given: A monitor paused before setProcessInfo
+        let parentPID = getpid()
+        let childPID: pid_t = 99991
+
+        let monitor = iTermProcessMonitor(queue: testQueue, callback: makeCallback(), trackedRootPID: parentPID)
+
+        testQueue.sync {
+            monitor.pauseMonitoring()
+        }
+
+        // When: Set process info with children
+        dataSource.processNames[parentPID] = "xctest"
+        dataSource.processNames[childPID] = "child"
+
+        let collection = makeProcessCollection(dataSource: dataSource, processes: [
+            (parentPID, getppid()),
+            (childPID, parentPID)
+        ])
+
+        guard let parentInfo = collection.info(forProcessID: parentPID) else {
+            XCTFail("Failed to create parent process info")
+            return
+        }
+
+        testQueue.sync {
+            _ = monitor.setProcessInfo(parentInfo)
+        }
+
+        // Then: Both parent and children should be paused
+        testQueue.sync {
+            XCTAssertTrue(isMonitorPaused(monitor), "Parent should be paused")
+
+            let children = childMonitors(for: monitor)
+            XCTAssertEqual(children.count, 1, "Should have one child")
+
+            if let child = children.first {
+                XCTAssertTrue(isMonitorPaused(child), "Child should also be paused when parent was pre-paused")
+            }
+        }
+
+        // When: Resume
+        testQueue.sync {
+            monitor.resumeMonitoring()
+        }
+
+        // Then: Both should be running
+        testQueue.sync {
+            XCTAssertFalse(isMonitorPaused(monitor), "Parent should be running after resume")
+
+            let children = childMonitors(for: monitor)
+            if let child = children.first {
+                XCTAssertFalse(isMonitorPaused(child), "Child should be running after resume")
+            }
+        }
+
+        // Cleanup
+        testQueue.sync {
+            monitor.invalidate()
+        }
+    }
+
+    func testPauseBeforeSetProcessInfo_MultiplePauseResumeBeforeSource() {
+        // Edge case: multiple pause/resume cycles before source creation.
+
+        // Given: A monitor with no process info
+        let monitor = iTermProcessMonitor(queue: testQueue, callback: makeCallback(), trackedRootPID: 0)
+
+        // When: Multiple pause/resume cycles
+        testQueue.sync {
+            monitor.pauseMonitoring()  // paused
+            monitor.resumeMonitoring() // not paused
+            monitor.pauseMonitoring()  // paused
+            monitor.pauseMonitoring()  // still paused (idempotent)
+            monitor.resumeMonitoring() // not paused
+            monitor.resumeMonitoring() // still not paused (idempotent)
+            monitor.pauseMonitoring()  // paused (final state)
+        }
+
+        // Then: Final state should be paused
+        var isPaused = false
+        testQueue.sync {
+            isPaused = isMonitorPaused(monitor)
+        }
+        XCTAssertTrue(isPaused, "Final state should be paused")
+
+        // When: Create source
+        let pid = getpid()
+        dataSource.processNames[pid] = "xctest"
+        let collection = makeProcessCollection(dataSource: dataSource, processes: [(pid, getppid())])
+        guard let processInfo = collection.info(forProcessID: pid) else {
+            XCTFail("Failed to create process info")
+            return
+        }
+
+        testQueue.sync {
+            _ = monitor.setProcessInfo(processInfo)
+        }
+
+        // Then: Should still be paused
+        testQueue.sync {
+            XCTAssertTrue(isMonitorPaused(monitor), "Should remain paused after source creation")
+        }
+
+        // Cleanup
+        testQueue.sync {
+            monitor.invalidate()
+        }
+    }
+
     // MARK: - 6. Invalidation Tests
 
     func testInvalidate_ClearsProcessInfo() {
@@ -825,4 +1159,5 @@ final class iTermProcessMonitorTests: XCTestCase {
             monitor.invalidate()
         }
     }
+
 }
