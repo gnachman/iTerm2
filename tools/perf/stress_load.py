@@ -7,7 +7,7 @@ Usage:
 
 This script generates various types of terminal output to exercise
 iTerm2's rendering and text processing code paths. It does NOT run
-a profiler - use this with run_multi_tab_stress_test.sh for multi-tab
+a profiler - use this with run_stress_test.sh for multi-tab
 profiled stress testing, or profile_stress_test.py for single-tab use.
 
 With --sync-dir, the script signals readiness and waits for a "go"

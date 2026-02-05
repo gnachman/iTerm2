@@ -6,35 +6,35 @@ Scripts for stress testing and profiling iTerm2 builds with latency instrumentat
 
 ```bash
 # Basic test (10 tabs, 20 seconds, normal mode)
-./run_multi_tab_stress_test.sh /path/to/iTerm2.app
+./run_stress_test.sh /path/to/iTerm2.app
 
 # Compare behavior across tab counts
-./run_multi_tab_stress_test.sh --tabs=1,3,10 /path/to/iTerm2.app
+./run_stress_test.sh --tabs=1,3,10 /path/to/iTerm2.app
 
 # With title injection (exercises OSC 0 handling)
-./run_multi_tab_stress_test.sh --title /path/to/iTerm2.app
+./run_stress_test.sh --title /path/to/iTerm2.app
 
 # With DTrace metrics (requires sudo)
-./run_multi_tab_stress_test.sh --dtrace /path/to/iTerm2.app
+./run_stress_test.sh --dtrace /path/to/iTerm2.app
 
 # With tmux wrapping (cleanup attempted)
-./run_multi_tab_stress_test.sh --tmux /path/to/iTerm2.app
+./run_stress_test.sh --tmux /path/to/iTerm2.app
 
 # htop-style dashboard load
-./run_multi_tab_stress_test.sh --mode=htop /path/to/iTerm2.app
+./run_stress_test.sh --mode=htop /path/to/iTerm2.app
 
 # Progress bars stress test
-./run_multi_tab_stress_test.sh --mode=progress /path/to/iTerm2.app
+./run_stress_test.sh --mode=progress /path/to/iTerm2.app
 
 # Status grid with tmux wrapping
-./run_multi_tab_stress_test.sh --tmux --mode=status /path/to/iTerm2.app
+./run_stress_test.sh --tmux --mode=status /path/to/iTerm2.app
 ```
 
 ## Scripts
 
 | Script | Purpose |
 |--------|---------|
-| `run_multi_tab_stress_test.sh` | Main test harness - opens iTerm2, creates tabs, runs stress load, profiles |
+| `run_stress_test.sh` | Main test harness - opens iTerm2, creates tabs, runs stress load, profiles |
 | `stress_load.py` | Unified load generator - terminal output stress and dashboard modes |
 | `analyze_profile.py` | Analyzes `sample` profiler output for hotspots |
 | `analyze_self_time.py` | Analyzes self-time profiler output, filters non-actionable symbols |
@@ -96,13 +96,13 @@ and will run sequentially, time-sliced within a single test.
 
 ```bash
 # All dashboard modes at 120fps
-./run_multi_tab_stress_test.sh --mode=htop,watch,progress,table,status --fps=120 -t 50 /path/to/iTerm2.app
+./run_stress_test.sh --mode=htop,watch,progress,table,status --fps=120 -t 50 /path/to/iTerm2.app
 
 # Mix stress and dashboard modes
-./run_multi_tab_stress_test.sh --mode=normal,htop,buffer -t 30 /path/to/iTerm2.app
+./run_stress_test.sh --mode=normal,htop,buffer -t 30 /path/to/iTerm2.app
 
 # Dashboard unthrottled (as fast as possible)
-./run_multi_tab_stress_test.sh --mode=htop --fps=0 /path/to/iTerm2.app
+./run_stress_test.sh --mode=htop --fps=0 /path/to/iTerm2.app
 ```
 
 ## Responsiveness Testing
@@ -120,13 +120,13 @@ under load. This exercises the latency instrumentation code paths throughout the
 
 ```bash
 # Run stress test with responsiveness injection
-./run_multi_tab_stress_test.sh --inject /path/to/iTerm2.app
+./run_stress_test.sh --inject /path/to/iTerm2.app
 
 # Combined with title injection for OSC handling
-./run_multi_tab_stress_test.sh --inject --title /path/to/iTerm2.app
+./run_stress_test.sh --inject --title /path/to/iTerm2.app
 
 # Full instrumentation with DTrace
-sudo ./run_multi_tab_stress_test.sh --inject --dtrace /path/to/iTerm2.app
+sudo ./run_stress_test.sh --inject --dtrace /path/to/iTerm2.app
 ```
 
 The injection summary is printed at test completion showing event counts.
@@ -145,10 +145,10 @@ This is more actionable than total/inclusive time because:
 
 ```bash
 # Run stress test with self-time profiling
-sudo ./run_multi_tab_stress_test.sh --self-time /path/to/iTerm2.app
+sudo ./run_stress_test.sh --self-time /path/to/iTerm2.app
 
 # Combined with other options
-sudo ./run_multi_tab_stress_test.sh --self-time --dtrace --tabs=5,10 /path/to/iTerm2.app
+sudo ./run_stress_test.sh --self-time --dtrace --tabs=5,10 /path/to/iTerm2.app
 ```
 
 ### Output
@@ -203,13 +203,13 @@ cp tools/perf/suites/com.iterm2.fairness.plist ~/Library/Preferences/
 
 ```bash
 # Test with fairness scheduler enabled
-./run_multi_tab_stress_test.sh --suite=com.iterm2.fairness /path/to/iTerm2.app
+./run_stress_test.sh --suite=com.iterm2.fairness /path/to/iTerm2.app
 
 # Test with clean defaults
-./run_multi_tab_stress_test.sh --suite=com.iterm2.defaults /path/to/iTerm2.app
+./run_stress_test.sh --suite=com.iterm2.defaults /path/to/iTerm2.app
 
 # Default: com.iterm2.defaults (auto-created empty suite for isolation)
-./run_multi_tab_stress_test.sh /path/to/iTerm2.app
+./run_stress_test.sh /path/to/iTerm2.app
 ```
 
 Suite plists are stored separately from your normal iTerm2 preferences (`com.googlecode.iterm2.plist`),

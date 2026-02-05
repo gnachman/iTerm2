@@ -12,7 +12,7 @@ script_dir_early="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 usage() {
   cat <<'USAGE'
-Usage: run_multi_tab_stress_test.sh [OPTIONS] /path/to/iTerm2.app
+Usage: run_stress_test.sh [OPTIONS] /path/to/iTerm2.app
 
 Opens iTerm2, starts a single profiler, creates N tabs running a stress load
 for the specified duration (default 20 seconds), waits for completion, then
