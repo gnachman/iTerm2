@@ -10,9 +10,11 @@
  * Usage: sudo dtrace -p PID -s iterm_self_time.d [DURATION_SECONDS]
  *        Duration defaults to 0 (run until Ctrl-C)
  *
- * Output:
- *   - Top self-time functions (functions spending the most CPU time themselves)
- *   - Top call stacks (for understanding execution context)
+ * Output format (machine-parseable):
+ *   Section markers: ===SECTION_NAME===
+ *   Each entry: stack frames (one per line), then count on its own line
+ *   Frame format: module`symbol+offset
+ *   Count format: whitespace + number
  */
 
 #pragma D option quiet
@@ -65,31 +67,20 @@ dtrace:::END
     duration_sec = duration_ns / 1000000000;
 
     printf("\n\n");
-    printf("============================================================\n");
-    printf("iTerm2 Self-Time Profile\n");
-    printf("============================================================\n");
-    printf("Duration: %d seconds (997Hz sampling)\n", duration_sec);
-    printf("\n");
+    printf("===HEADER===\n");
+    printf("duration_sec=%d\n", duration_sec);
+    printf("sample_hz=997\n");
+    printf("===END_HEADER===\n");
 
-    printf("--- TOP SELF-TIME FUNCTIONS ---\n");
-    printf("(Functions that spend the most CPU time in their own code,\n");
-    printf(" not counting time in functions they call)\n\n");
-
-    /* Show top 40 self-time entries */
-    trunc(@self_time, 40);
+    printf("\n===SELF_TIME===\n");
+    /* Show top 50 self-time entries */
+    trunc(@self_time, 50);
     printa(@self_time);
+    printf("===END_SELF_TIME===\n");
 
-    printf("\n--- TOP CALL STACKS ---\n");
-    printf("(Most frequent execution paths for context)\n\n");
-
-    /* Show top 15 full stacks */
-    trunc(@stacks, 15);
+    printf("\n===STACKS===\n");
+    /* Show top 20 full stacks */
+    trunc(@stacks, 20);
     printa(@stacks);
-
-    printf("\n============================================================\n");
-    printf("Interpretation:\n");
-    printf("  - High self-time = function does significant work itself\n");
-    printf("  - Filter out: objc_msgSend, malloc/free (see analyze_self_time.py)\n");
-    printf("  - Focus on: iTerm2/PTY/VT100/Metal symbols for optimization\n");
-    printf("============================================================\n");
+    printf("===END_STACKS===\n");
 }

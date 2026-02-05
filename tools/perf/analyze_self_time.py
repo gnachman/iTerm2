@@ -77,11 +77,11 @@ def is_system_symbol(symbol: str) -> bool:
     if symbol in SYSTEM_SYMBOLS:
         return True
 
-    # Check prefix patterns
+    # Check prefix patterns (runtime/kernel symbols only, not framework prefixes)
+    # NS/CF prefixes removed - those are now handled by module-based classification
     system_prefixes = [
         'objc_', '_objc_', 'malloc_', 'szone_', 'nanov2_',
         '_dispatch_', '__pthread_', '_pthread_', 'pthread_',
-        'CF', '_CF', 'NS', '_NS',
         'mach_', '__mach_', 'dyld_', '_dyld_',
         '__ulock_', '__psynch_', '__semwait_',
     ]
@@ -122,10 +122,31 @@ def is_iterm2_module(module: str) -> bool:
     return normalize_module(module) == 'iTerm2'
 
 
-def parse_dtrace_output(lines: List[str]) -> Tuple[Dict[str, int], Dict[str, int]]:
-    """Parse DTrace output and return self-time counts and iTerm2-attributed counts."""
+# Known system frameworks/libraries (module names after normalization)
+SYSTEM_MODULES = {
+    'CoreFoundation', 'Foundation', 'AppKit', 'CoreGraphics',
+    'CoreText', 'QuartzCore', 'Metal', 'MetalPerformanceShaders',
+    'IOKit', 'Security', 'SystemConfiguration',
+}
+
+
+def is_system_module(module: str) -> bool:
+    """Check if a module is a known system library/framework.
+
+    Assumes module is already normalized.
+    """
+    if module.startswith('lib'):
+        return True
+    if module in SYSTEM_MODULES:
+        return True
+    return False
+
+
+def parse_dtrace_output(lines: List[str]) -> Tuple[Dict[str, int], Dict[str, int], int]:
+    """Parse DTrace output and return self-time counts, iTerm2-attributed counts, and unattributed stack samples."""
     self_time_counts: Dict[str, int] = defaultdict(int)
     iterm_attributed: Dict[str, int] = defaultdict(int)
+    unattributed_stacks: int = 0
     current_section = None
 
     # Regex to match DTrace stack frame output
@@ -141,15 +162,22 @@ def parse_dtrace_output(lines: List[str]) -> Tuple[Dict[str, int], Dict[str, int
     for line in lines:
         line = line.rstrip()
 
-        # Track sections
-        if 'TOP SELF-TIME FUNCTIONS' in line:
+        # Track sections using markers
+        if line == '===SELF_TIME===':
             current_section = 'self_time'
+            current_frames = []
             continue
-        elif 'TOP CALL STACKS' in line:
-            current_section = 'stacks'
-            continue
-        elif 'Interpretation:' in line:
+        elif line == '===END_SELF_TIME===':
             current_section = None
+            current_frames = []
+            continue
+        elif line == '===STACKS===':
+            current_section = 'stacks'
+            current_frames = []
+            continue
+        elif line == '===END_STACKS===':
+            current_section = None
+            current_frames = []
             continue
 
         if current_section not in ('self_time', 'stacks'):
@@ -158,7 +186,7 @@ def parse_dtrace_output(lines: List[str]) -> Tuple[Dict[str, int], Dict[str, int
         # Match frame lines
         frame_match = frame_pattern.match(line)
         if frame_match:
-            module = frame_match.group(1)
+            module = normalize_module(frame_match.group(1))
             symbol = frame_match.group(2)
             current_frames.append((module, symbol))
             continue
@@ -177,10 +205,14 @@ def parse_dtrace_output(lines: List[str]) -> Tuple[Dict[str, int], Dict[str, int
             elif current_section == 'stacks':
                 # For stacks, find the iTerm2 frame closest to leaf and attribute to it.
                 # DTrace prints leaf first, so first iTerm2 match is closest to leaf.
+                attributed = False
                 for module, symbol in current_frames:
                     if is_iterm2_module(module) and 'DYLD-STUB' not in symbol:
                         iterm_attributed[symbol] += count
+                        attributed = True
                         break
+                if not attributed:
+                    unattributed_stacks += count
 
             current_frames = []
             continue
@@ -189,10 +221,10 @@ def parse_dtrace_output(lines: List[str]) -> Tuple[Dict[str, int], Dict[str, int
         if not line.strip():
             current_frames = []
 
-    return self_time_counts, iterm_attributed
+    return self_time_counts, iterm_attributed, unattributed_stacks
 
 
-def analyze_and_report(self_time_counts: Dict[str, int], iterm_attributed: Dict[str, int]) -> None:
+def analyze_and_report(self_time_counts: Dict[str, int], iterm_attributed: Dict[str, int], unattributed_stacks: int) -> None:
     """Analyze counts and print actionable report."""
     if not self_time_counts and not iterm_attributed:
         print("No self-time data found in input.")
@@ -221,9 +253,14 @@ def analyze_and_report(self_time_counts: Dict[str, int], iterm_attributed: Dict[
                 system_symbols.append((symbol, count))
             else:
                 iterm_symbols.append((symbol, count))
-        elif is_system_symbol(symbol) or module.startswith('lib') or module in ('CoreFoundation', 'Foundation', 'AppKit', 'CoreGraphics'):
+        elif is_system_module(module):
+            # Known system module
+            system_symbols.append((symbol, count))
+        elif is_system_symbol(symbol):
+            # Unknown module but symbol looks like system code
             system_symbols.append((symbol, count))
         elif is_iterm_symbol(symbol):
+            # Unknown module but symbol looks like iTerm2 code
             iterm_symbols.append((symbol, count))
         else:
             other_symbols.append((symbol, count))
@@ -245,8 +282,9 @@ def analyze_and_report(self_time_counts: Dict[str, int], iterm_attributed: Dict[
     print()
 
     # First show iTerm2-attributed samples (most actionable)
-    if iterm_attributed:
+    if iterm_attributed or unattributed_stacks:
         attributed_total = sum(iterm_attributed.values())
+        stacks_total = attributed_total + unattributed_stacks
         attributed_sorted = sorted(iterm_attributed.items(), key=lambda x: x[1], reverse=True)
 
         print("-" * 70)
@@ -258,11 +296,13 @@ def analyze_and_report(self_time_counts: Dict[str, int], iterm_attributed: Dict[
         print(f"{'-'*10}  {'-'*6}  {'-'*50}")
 
         for symbol, count in attributed_sorted[:25]:
-            pct = 100 * count / attributed_total
+            pct = 100 * count / attributed_total if attributed_total else 0
             print(f"{count:>10,}  {pct:>5.1f}%  {symbol}")
 
         print()
-        print(f"Total attributed samples: {attributed_total:,}")
+        print(f"Stack samples: {stacks_total:,} total")
+        print(f"  Attributed to iTerm2: {attributed_total:,} ({100*attributed_total/stacks_total:.1f}%)")
+        print(f"  No iTerm2 frame:      {unattributed_stacks:,} ({100*unattributed_stacks/stacks_total:.1f}%)")
         print()
 
     print("-" * 70)
@@ -326,8 +366,8 @@ def main():
         print("   or: dtrace ... | python3 analyze_self_time.py")
         sys.exit(1)
 
-    self_time_counts, iterm_attributed = parse_dtrace_output(lines)
-    analyze_and_report(self_time_counts, iterm_attributed)
+    self_time_counts, iterm_attributed, unattributed_stacks = parse_dtrace_output(lines)
+    analyze_and_report(self_time_counts, iterm_attributed, unattributed_stacks)
 
 
 if __name__ == '__main__':
