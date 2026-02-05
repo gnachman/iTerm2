@@ -678,7 +678,6 @@ static void SwapInt(int *a, int *b) {
         if (screenMark) {
             const int width = self.width;
             const VT100GridCoordRange commandRange = [self safeCoordRange:VT100GridCoordRangeFromAbsCoordRange(screenMark.commandRange, overflow)];
-#warning TODO: Deal with this problem better. We should not have out of range commandRange to begin with.
             if (commandRange.start.x >= 0 && commandRange.start.x < width && commandRange.end.x <= width) {
                 VT100GridCoordRange converted;
                 if ([self convertRange:commandRange
