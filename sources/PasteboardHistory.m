@@ -29,6 +29,7 @@
 #include <wctype.h>
 #import "DebugLogging.h"
 #import "NSDateFormatterExtras.h"
+#import "NSFileManager+iTerm.h"
 #import "NSStringITerm.h"
 #import "PasteboardHistory.h"
 #import "PopupModel.h"
@@ -89,12 +90,7 @@
         maxEntries_ = maxEntries;
         entries_ = [[NSMutableArray alloc] init];
 
-
-        path_ = [NSSearchPathForDirectoriesInDomains(NSApplicationSupportDirectory, NSUserDomainMask, YES) lastObject];
-        NSString *appname = [[NSBundle mainBundle] objectForInfoDictionaryKey:(NSString *)kCFBundleNameKey];
-        path_ = [path_ stringByAppendingPathComponent:appname];
-        [[NSFileManager defaultManager] createDirectoryAtPath:path_ withIntermediateDirectories:YES attributes:nil error:NULL];
-        path_ = [[path_ stringByAppendingPathComponent:@"pbhistory.plist"] copy];
+        path_ = [[[NSFileManager defaultManager] applicationSupportDirectory] stringByAppendingPathComponent:@"pbhistory.plist"];
 
         [self _loadHistoryFromDisk];
     }

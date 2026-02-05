@@ -11,8 +11,14 @@
 
 #include <unistd.h>
 
-// The part of the filename between the directory and the process ID in a socket path.
-extern const char *iTermFileDescriptorSocketNamePrefix;
+// Returns the part of the filename between the directory and the process ID in a socket path.
+// Default is "iTerm2.socket." but can be changed via iTermFileDescriptorSetSocketNamePrefix().
+const char *iTermFileDescriptorSocketNamePrefix(void);
+
+// Sets a custom socket name prefix. Call this before any sockets are created.
+// The prefix should end with a period (e.g., "com.example.socket.").
+// The string is copied internally.
+void iTermFileDescriptorSetSocketNamePrefix(const char *prefix);
 
 // Fills in |buffer| with the path to a file descriptor server socket for process id |pid|.
 void iTermFileDescriptorSocketPath(char *buffer, size_t buffer_size, pid_t pid);

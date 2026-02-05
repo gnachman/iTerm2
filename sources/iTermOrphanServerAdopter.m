@@ -42,7 +42,7 @@ static void iTermOrphanServerAdopterFindMonoServers(void (^completion)(NSArray<N
         NSMutableArray *array = [NSMutableArray array];
         NSString *dir = [NSString stringWithUTF8String:iTermFileDescriptorDirectory()];
         for (NSString *filename in [[NSFileManager defaultManager] contentsOfDirectoryAtPath:dir error:nil]) {
-            NSString *prefix = [NSString stringWithUTF8String:iTermFileDescriptorSocketNamePrefix];
+            NSString *prefix = [NSString stringWithUTF8String:iTermFileDescriptorSocketNamePrefix()];
             if ([filename hasPrefix:prefix]) {
                 [array addObject:[dir stringByAppendingPathComponent:filename]];
             }

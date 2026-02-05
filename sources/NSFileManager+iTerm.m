@@ -31,6 +31,7 @@
 #import "iTermOpenDirectory.h"
 #import "iTermPreferences.h"
 #import "iTermSlowOperationGateway.h"
+#import "iTermUserDefaults.h"
 #import "iTermWarning.h"
 #import "RegexKitLite.h"
 #include <sys/param.h>
@@ -130,8 +131,8 @@ NSString * const DirectoryLocationDomain = @"DirectoryLocationDomain";
 // exist).
 //
 - (NSString *)applicationSupportDirectory {
-    NSString *executableName =
-        [[[NSBundle mainBundle] infoDictionary] objectForKey:(id)kCFBundleExecutableKey];
+    NSString *suiteName = [iTermUserDefaults customSuiteName];
+    NSString *executableName = suiteName ?: [[[NSBundle mainBundle] infoDictionary] objectForKey:(id)kCFBundleExecutableKey];
     NSError *error;
     DLog(@"Want app support directory");
     NSString *result = [self findOrCreateDirectory:NSApplicationSupportDirectory
@@ -156,7 +157,8 @@ NSString * const DirectoryLocationDomain = @"DirectoryLocationDomain";
 
 - (NSString *)applicationSupportDirectoryWithoutCreating {
     NSString *base = [NSSearchPathForDirectoriesInDomains(NSApplicationSupportDirectory, NSUserDomainMask, YES) lastObject];
-    NSString *appname = [[NSBundle mainBundle] objectForInfoDictionaryKey:(NSString *)kCFBundleNameKey];
+    NSString *suiteName = [iTermUserDefaults customSuiteName];
+    NSString *appname = suiteName ?: [[NSBundle mainBundle] objectForInfoDictionaryKey:(NSString *)kCFBundleNameKey];
     return [base stringByAppendingPathComponent:appname];
 }
 
@@ -356,10 +358,14 @@ NSString * const DirectoryLocationDomain = @"DirectoryLocationDomain";
 
 - (NSString *)_homeDirectoryDotDir {
     NSString *homedir = NSHomeDirectory();
+    NSString *suiteName = [iTermUserDefaults customSuiteName];
+    NSString *baseName = suiteName ?: @"iterm2";
+
     __block NSString *xdgConfigHome = [homedir stringByAppendingPathComponent:@".config"];
-    NSString *dotConfigIterm2 = [xdgConfigHome stringByAppendingPathComponent:@"iterm2"];
-    NSString *dotIterm2 = [homedir stringByAppendingPathComponent:@".iterm2"];
-    NSArray<NSString *> *options = @[ dotConfigIterm2, dotIterm2, @".iterm2-1" ];
+    NSString *dotConfigDir = [xdgConfigHome stringByAppendingPathComponent:baseName];
+    NSString *dotDir = [homedir stringByAppendingPathComponent:[NSString stringWithFormat:@".%@", baseName]];
+    NSString *dotDirFallback = [NSString stringWithFormat:@".%@-1", baseName];
+    NSArray<NSString *> *options = @[ dotConfigDir, dotDir, dotDirFallback ];
     NSString *preferred = [iTermAdvancedSettingsModel preferredBaseDir];
     if (preferred.length > 0) {
         options = [@[preferred.stringByExpandingTildeInPath] arrayByAddingObjectsFromArray:options];

@@ -65,6 +65,12 @@
             ReferencedContainer = "container:iTerm2.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
+      <CommandLineArguments>
+         <CommandLineArgument
+            argument = "-suite iterm2-dev"
+            isEnabled = "YES">
+         </CommandLineArgument>
+      </CommandLineArguments>
       <EnvironmentVariables>
          <EnvironmentVariable
             key = "CG_NUMERICS_SHOW_BACKTRACE"

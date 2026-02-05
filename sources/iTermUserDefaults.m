@@ -43,6 +43,10 @@ static NSString *const iTermUserDefaultsKeyShouldSendReturnAfterPassword = @"Sho
     gCustomSuiteName = [suiteName copy];
 }
 
++ (NSString *)customSuiteName {
+    return gCustomSuiteName;
+}
+
 static NSArray *iTermUserDefaultsGetTypedArray(NSUserDefaults *userDefaults, Class objectClass, NSString *key) {
     return [[NSArray castFrom:[userDefaults objectForKey:iTermUserDefaultsKeySearchHistory]] mapWithBlock:^id(id anObject) {
         return [objectClass castFrom:anObject];

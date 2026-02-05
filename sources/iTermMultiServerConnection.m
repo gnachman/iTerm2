@@ -11,6 +11,7 @@
 #import "iTermNotificationCenter.h"
 #import "iTermProcessCache.h"
 #import "iTermThreadSafety.h"
+#import "iTermUserDefaults.h"
 #import "NSArray+iTerm.h"
 #import "NSFileManager+iTerm.h"
 #import "TaskNotifier.h"
@@ -254,21 +255,29 @@
     // Normally use application support for the socket because that's where we keep everything
     // else. But for some users the path may be too long to fit in sockaddr_un.sun_path, in which
     // case we'll fall back to their home directory.
+    NSString *suiteName = [iTermUserDefaults customSuiteName];
+    NSString *daemonPrefix = suiteName
+        ? [NSString stringWithFormat:@"%@-daemon", suiteName]
+        : @"iterm2-daemon";
+
     NSString *appSupportPath = [[NSFileManager defaultManager] applicationSupportDirectory];
-    NSString *normalFilename = [NSString stringWithFormat:@"iterm2-daemon-%d.socket", number];
+    NSString *normalFilename = [NSString stringWithFormat:@"%@-%d.socket", daemonPrefix, number];
     NSURL *normalURL = [[NSURL fileURLWithPath:appSupportPath] URLByAppendingPathComponent:normalFilename];
     if ([self pathIsSafe:normalURL.path] && [[NSFileManager defaultManager] directoryIsWritable:appSupportPath]) {
         return normalURL.path;
     }
 
     NSString *homedir = NSHomeDirectory();
-    NSString *dotdir = [homedir stringByAppendingPathComponent:@".iterm2"];
+    NSString *dotdirName = suiteName
+        ? [NSString stringWithFormat:@".%@", suiteName]
+        : @".iterm2";
+    NSString *dotdir = [homedir stringByAppendingPathComponent:dotdirName];
     NSString *shortFilename = [NSString stringWithFormat:@"%d.socket", number];
     NSURL *shortURL = [[NSURL fileURLWithPath:dotdir] URLByAppendingPathComponent:shortFilename];
 
     BOOL isdir = NO;
 
-    // Try to create ~/.iterm2
+    // Try to create the dot directory (e.g., ~/.iterm2 or ~/.{suite})
     // NOTE: If this fails we return the known-to-be-too-long normal path. It is important to check
     // that the path is legal before using it.
     if (![[NSFileManager defaultManager] fileExistsAtPath:dotdir isDirectory:&isdir]) {

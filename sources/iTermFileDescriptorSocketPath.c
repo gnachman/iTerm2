@@ -11,7 +11,23 @@
 #include <stdlib.h>
 #include <string.h>
 
-const char *iTermFileDescriptorSocketNamePrefix = "iTerm2.socket.";
+static char gSocketNamePrefix[128] = "iTerm2.socket.";
+
+const char *iTermFileDescriptorSocketNamePrefix(void) {
+    return gSocketNamePrefix;
+}
+
+void iTermFileDescriptorSetSocketNamePrefix(const char *prefix) {
+    if (prefix == NULL) {
+        return;
+    }
+    size_t len = strlen(prefix);
+    if (len >= sizeof(gSocketNamePrefix)) {
+        len = sizeof(gSocketNamePrefix) - 1;
+    }
+    memcpy(gSocketNamePrefix, prefix, len);
+    gSocketNamePrefix[len] = '\0';
+}
 
 
 // From http://apple.stackexchange.com/questions/22694/private-tmp-vs-private-var-tmp-vs-tmpdir
@@ -52,7 +68,7 @@ const char *iTermFileDescriptorSocketNamePrefix = "iTerm2.socket.";
 
 void iTermFileDescriptorSocketPath(char *buffer, size_t buffer_size, pid_t pid) {
     const char *tmp = iTermFileDescriptorDirectory();
-    snprintf(buffer, buffer_size, "%s%s%d", tmp, iTermFileDescriptorSocketNamePrefix, (int)pid);
+    snprintf(buffer, buffer_size, "%s%s%d", tmp, iTermFileDescriptorSocketNamePrefix(), (int)pid);
 }
 
 // Note: this must end in /

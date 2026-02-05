@@ -16,6 +16,9 @@ extern NSString *const kSelectionRespectsSoftBoundariesKey;
 // Call this before any access to +userDefaults to use a custom suite instead of standardUserDefaults.
 + (void)setCustomSuiteName:(nullable NSString *)suiteName;
 
+// Returns the custom suite name if one was set via setCustomSuiteName:, otherwise nil.
++ (nullable NSString *)customSuiteName;
+
 // Returns the custom suite if set, otherwise standardUserDefaults.
 + (NSUserDefaults *)userDefaults;
 
