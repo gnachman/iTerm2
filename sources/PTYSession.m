@@ -222,7 +222,7 @@ NSString *const PTYCommandDidExitUserInfoKeyCommand = @"Command";
 NSString *const PTYCommandDidExitUserInfoKeyExitCode = @"Code";
 NSString *const PTYCommandDidExitUserInfoKeyRemoteHost = @"Host";
 NSString *const PTYCommandDidExitUserInfoKeyDirectory = @"Directory";
-NSString *const PTYCommandDidExitUserInfoKeySnapshot = @"Snapshot";
+NSString *const PTYCommandDidExitUserInfoKeyDataSource = @"Data Source";
 NSString *const PTYCommandDidExitUserInfoKeyStartLine = @"Line";
 NSString *const PTYCommandDidExitUserInfoKeyLineCount = @"Count";
 NSString *const PTYCommandDidExitUserInfoKeyURL = @"URL";
@@ -15994,7 +15994,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     NSDictionary *userInfo = @{
         PTYCommandDidExitUserInfoKeyRemoteHost: (id)[_screen remoteHostOnLine:line] ?: (id)[NSNull null],
         PTYCommandDidExitUserInfoKeyDirectory: (id)[_screen workingDirectoryOnLine:line] ?: (id)[NSNull null],
-        PTYCommandDidExitUserInfoKeySnapshot: [self contentSnapshot],
+        PTYCommandDidExitUserInfoKeyDataSource: self.screen,
         PTYCommandDidExitUserInfoKeyStartLine: @(outputRange.start.y),
         PTYCommandDidExitUserInfoKeyLineCount: @(outputRange.end.y - outputRange.start.y + 1),
         PTYCommandDidExitUserInfoKeyCommand: (id)command ?: (id)[NSNull null],
@@ -16028,13 +16028,12 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
         const VT100GridRange lineRange = [_screen lineNumberRangeOfInterval:maybeMark.entry.interval];
         const int line = lineRange.location;
         const VT100GridCoordRange outputRange = [_screen rangeOfOutputForCommandMark:maybeMark];
-#warning TODO: It is rather wasteful to make a snapshot here. Only do it if someone wants it.
         NSDictionary *userInfo = @{
             PTYCommandDidExitUserInfoKeyCommand: maybeMark.command ?: (id)[NSNull null],
             PTYCommandDidExitUserInfoKeyExitCode: @(maybeMark.code),
             PTYCommandDidExitUserInfoKeyRemoteHost: (id)[_screen remoteHostOnLine:line] ?: (id)[NSNull null],
             PTYCommandDidExitUserInfoKeyDirectory: (id)[_screen workingDirectoryOnLine:line] ?: (id)[NSNull null],
-            PTYCommandDidExitUserInfoKeySnapshot: [self contentSnapshot],
+            PTYCommandDidExitUserInfoKeyDataSource: self.screen,
             PTYCommandDidExitUserInfoKeyStartLine: @(outputRange.start.y),
             PTYCommandDidExitUserInfoKeyLineCount: @(outputRange.end.y - outputRange.start.y + 1),
             PTYCommandDidExitUserInfoKeyURL: [self urlForPromptMark:maybeMark] };

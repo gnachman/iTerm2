@@ -1441,8 +1441,8 @@ extension ChatViewController {
         let remoteHost = userInfo[PTYCommandDidExitUserInfoKeyRemoteHost] as? VT100RemoteHostReading
         let startLine = userInfo[PTYCommandDidExitUserInfoKeyStartLine] as! Int32
         let lineCount = userInfo[PTYCommandDidExitUserInfoKeyLineCount] as! Int32
-        let snapshot = userInfo[PTYCommandDidExitUserInfoKeySnapshot] as! TerminalContentSnapshot
-        let extractor = iTermTextExtractor(dataSource: snapshot)
+        let dataSource = userInfo[PTYCommandDidExitUserInfoKeyDataSource] as! iTermTextDataSource
+        let extractor = iTermTextExtractor(dataSource: dataSource)
         let url = userInfo[PTYCommandDidExitUserInfoKeyURL] as! URL
         let content = extractor.content(
             in: VT100GridWindowedRange(

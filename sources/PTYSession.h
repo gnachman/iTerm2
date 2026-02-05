@@ -47,7 +47,7 @@ extern NSString *const PTYCommandDidExitUserInfoKeyCommand;
 extern NSString *const PTYCommandDidExitUserInfoKeyExitCode;
 extern NSString *const PTYCommandDidExitUserInfoKeyRemoteHost;
 extern NSString *const PTYCommandDidExitUserInfoKeyDirectory;
-extern NSString *const PTYCommandDidExitUserInfoKeySnapshot;
+extern NSString *const PTYCommandDidExitUserInfoKeyDataSource;
 extern NSString *const PTYCommandDidExitUserInfoKeyStartLine;
 extern NSString *const PTYCommandDidExitUserInfoKeyLineCount;
 extern NSString *const PTYCommandDidExitUserInfoKeyURL;

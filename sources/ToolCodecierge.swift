@@ -204,9 +204,9 @@ class ToolCodecierge: NSView, ToolbeltTool {
                 let remoteHost = userInfo[PTYCommandDidExitUserInfoKeyRemoteHost] as? VT100RemoteHostReading
                 let startLine = userInfo[PTYCommandDidExitUserInfoKeyStartLine] as! Int32
                 let lineCount = userInfo[PTYCommandDidExitUserInfoKeyLineCount] as! Int32
-                let snapshot = userInfo[PTYCommandDidExitUserInfoKeySnapshot] as! TerminalContentSnapshot
+                let dataSource = userInfo[PTYCommandDidExitUserInfoKeyDataSource] as! iTermTextDataSource
                 let url = userInfo[PTYCommandDidExitUserInfoKeyURL] as! URL
-                let extractor = iTermTextExtractor(dataSource: snapshot)
+                let extractor = iTermTextExtractor(dataSource: dataSource)
                 let content = extractor.content(
                     in: VT100GridWindowedRange(
                         coordRange: VT100GridCoordRange(
