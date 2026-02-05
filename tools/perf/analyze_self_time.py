@@ -101,6 +101,27 @@ def is_iterm_symbol(symbol: str) -> bool:
     return False
 
 
+def normalize_module(module: str) -> str:
+    """Normalize module name to handle path and architecture variations.
+
+    DTrace may report modules as:
+      - "iTerm2"
+      - "iTerm2.app/Contents/MacOS/iTerm2"
+      - "iTerm2 (x86_64)"
+    """
+    # Strip path components
+    module = module.split('/')[-1]
+    # Strip architecture suffix like " (x86_64)"
+    if ' (' in module:
+        module = module.split(' (')[0]
+    return module
+
+
+def is_iterm2_module(module: str) -> bool:
+    """Check if a module is the iTerm2 binary."""
+    return normalize_module(module) == 'iTerm2'
+
+
 def parse_dtrace_output(lines: List[str]) -> Tuple[Dict[str, int], Dict[str, int]]:
     """Parse DTrace output and return self-time counts and iTerm2-attributed counts."""
     self_time_counts: Dict[str, int] = defaultdict(int)
@@ -108,10 +129,11 @@ def parse_dtrace_output(lines: List[str]) -> Tuple[Dict[str, int], Dict[str, int
     current_section = None
 
     # Regex to match DTrace stack frame output
-    # Format: "  iTerm2`symbolname+0x123"
+    # Format: "  iTerm2`symbolname+0x123" or "  iTerm2`symbolname+123"
     # or "  libsystem_malloc.dylib`malloc+0x45"
     # Note: Objective-C symbols can have spaces, e.g. "-[Foo bar:baz:]"
-    frame_pattern = re.compile(r'^\s+([^`]+)`(.+?)(?:\+0x[0-9a-fA-F]+)?$')
+    # Offset can be hex (+0x...) or decimal (+...) or absent
+    frame_pattern = re.compile(r'^\s+([^`]+)`(.+?)(?:\+(?:0x)?[0-9a-fA-F]+)?$')
     count_pattern = re.compile(r'^\s+(\d+)$')
 
     current_frames = []
@@ -147,17 +169,18 @@ def parse_dtrace_output(lines: List[str]) -> Tuple[Dict[str, int], Dict[str, int
             count = int(count_match.group(1))
 
             if current_section == 'self_time':
-                # For self-time, there should be only one frame
-                module, symbol = current_frames[-1]
+                # For self-time, take the leaf frame (first in DTrace output)
+                module, symbol = current_frames[0]
                 key = f"{module}:{symbol}"
                 self_time_counts[key] += count
 
             elif current_section == 'stacks':
-                # For stacks, find the deepest iTerm2 frame and attribute to it
+                # For stacks, find the iTerm2 frame closest to leaf and attribute to it.
+                # DTrace prints leaf first, so first iTerm2 match is closest to leaf.
                 for module, symbol in current_frames:
-                    if module == 'iTerm2' and 'DYLD-STUB' not in symbol:
+                    if is_iterm2_module(module) and 'DYLD-STUB' not in symbol:
                         iterm_attributed[symbol] += count
-                        break  # Only count once per stack, at deepest iTerm2 frame
+                        break
 
             current_frames = []
             continue
@@ -192,7 +215,7 @@ def analyze_and_report(self_time_counts: Dict[str, int], iterm_attributed: Dict[
             module, symbol = '', key
 
         # Categorize by module first (most reliable)
-        if module == 'iTerm2':
+        if is_iterm2_module(module):
             # iTerm2 module, but filter out DYLD stubs which are system calls
             if 'DYLD-STUB' in symbol:
                 system_symbols.append((symbol, count))
@@ -227,9 +250,9 @@ def analyze_and_report(self_time_counts: Dict[str, int], iterm_attributed: Dict[
         attributed_sorted = sorted(iterm_attributed.items(), key=lambda x: x[1], reverse=True)
 
         print("-" * 70)
-        print("iTerm2 HOTSPOTS (attributed from call stacks)")
+        print("iTerm2 CALLERS (attributed from call stacks)")
         print("-" * 70)
-        print("Which iTerm2 functions are responsible for CPU usage:")
+        print("iTerm2 functions whose call stacks lead to CPU usage:")
         print()
         print(f"{'Samples':>10}  {'%':>6}  Function")
         print(f"{'-'*10}  {'-'*6}  {'-'*50}")
@@ -267,7 +290,7 @@ def analyze_and_report(self_time_counts: Dict[str, int], iterm_attributed: Dict[
 
     print()
     print("-" * 70)
-    print("SYSTEM HOTSPOTS (for awareness)")
+    print("SYSTEM FUNCTIONS (exclusive leaf samples)")
     print("-" * 70)
     print(f"{'Samples':>10}  {'Self%':>6}  Function")
     print(f"{'-'*10}  {'-'*6}  {'-'*50}")
@@ -278,7 +301,7 @@ def analyze_and_report(self_time_counts: Dict[str, int], iterm_attributed: Dict[
 
     print()
     print("-" * 70)
-    print("OTHER CODE (libraries, frameworks)")
+    print("OTHER LEAF FUNCTIONS (libraries, frameworks)")
     print("-" * 70)
     print(f"{'Samples':>10}  {'Self%':>6}  Function")
     print(f"{'-'*10}  {'-'*6}  {'-'*50}")
