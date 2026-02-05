@@ -4,7 +4,7 @@
  * iTerm2 UX Metrics - User-focused performance measurement
  *
  * Measures:
- * 1. Apparent frame rate - frames where content actually changed
+ * 1. Update cadence - UI refresh rate from cadence controller
  * 2. Latency - time from PTY read to refresh (approximate)
  * 3. Lock contention - time in performBlockWithJoinedThreads
  *
@@ -30,11 +30,11 @@ tick-1sec
 }
 
 /* ============================================================
- * 1. APPARENT FRAME RATE
- * Count frames where content actually changed vs total refreshes
+ * 1. UPDATE CADENCE
+ * Count content changes vs cadence-driven refreshes
  * ============================================================ */
 
-/* Content actually changed - this is "apparent frame rate" */
+/* Content actually changed (lines marked dirty) */
 objc$target:PTYTextView:-setNeedsDisplayOnLine*:entry {
     @content_frames = count();
 }
@@ -125,6 +125,24 @@ objc$target:VT100Screen*:-synchronize*:entry {
 }
 
 /* ============================================================
+ * 6. FAIRNESS SCHEDULER
+ * These only fire when FairnessScheduler is active (not legacy path)
+ * Swift methods require pid provider, not objc provider
+ * ============================================================ */
+
+pid$target:iTerm2:*FairnessScheduler?register*:entry {
+    @fairness_register = count();
+}
+
+pid$target:iTerm2:*FairnessScheduler?sessionDidEnqueueWork*:entry {
+    @fairness_enqueue = count();
+}
+
+pid$target:iTerm2:*TokenExecutor?executeTurn*:entry {
+    @fairness_execute_turn = count();
+}
+
+/* ============================================================
  * OUTPUT
  * ============================================================ */
 
@@ -137,7 +155,7 @@ dtrace:::END {
     printf("iTerm2 UX Metrics (duration: %d sec)\n", duration_sec);
     printf("============================================================\n");
 
-    printf("\n--- APPARENT FRAME RATE ---\n");
+    printf("\n--- UPDATE CADENCE ---\n");
     printa("  Content frames (setNeedsDisplay): %@d\n", @content_frames);
     printa("  Total refreshes (cadence):        %@d\n", @refreshes);
     printa("  Metal frames (GPU):               %@d\n", @metal_frames);
@@ -159,6 +177,11 @@ dtrace:::END {
 
     printf("\n--- SYNC OPERATIONS ---\n");
     printa("  Syncs: %@d\n", @syncs);
+
+    printf("\n--- FAIRNESS SCHEDULER (0 = legacy path) ---\n");
+    printa("  Register calls:         %@d\n", @fairness_register);
+    printa("  SessionDidEnqueueWork:  %@d\n", @fairness_enqueue);
+    printa("  ExecuteTurn calls:      %@d\n", @fairness_execute_turn);
 
     printf("\n--- RATES ---\n");
     normalize(@content_frames, duration_sec);

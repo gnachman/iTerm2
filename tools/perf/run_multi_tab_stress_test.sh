@@ -25,13 +25,15 @@ Options:
                  overhead from the actual stress test.
                  Values: true/false, yes/no, 1/0 (default: true)
 
-  --inject       Enable interaction injection during stress test. Performs
-                 tab switches, focus toggles, and keyboard input to exercise
-                 latency instrumentation code paths. Requires synchronized
-                 start (the default).
+  --inject       Enable continuous interaction injection during stress test.
+                 Exercises latency instrumentation with periodic events:
+                   - Keyboard input every 500ms (single character)
+                   - Scroll events every 2s (Page Up/Down alternating)
+                   - Tab switches every 3s (cycles through all tabs)
+                 Requires synchronized start (the default).
 
   --dtrace       Enable enhanced DTrace UX metrics collection. Measures:
-                   - Apparent frame rate (content updates vs cadence refreshes)
+                   - Update cadence (UI refresh rate from cadence controller)
                    - Adaptive frame rate mode (60fps/30fps/1fps)
                    - Lock contention (joined thread time)
                  Requires root privileges.
@@ -82,15 +84,22 @@ Options:
                  Use a custom load generator script instead of the built-in ones.
                  The script must accept: duration label --sync-dir DIR [--mode=X]
 
-  --config=PATH  Use custom iTerm2 preferences from PATH instead of defaults.
-                 PATH must exist and be accessible.
-                 Mutually exclusive with --use-default-config.
+  --suite=NAME   Use a custom UserDefaults suite for isolated preferences.
+                 Default: com.iterm2.defaults (reproducible test environment)
+                 Use --suite=user to use your normal preferences (com.googlecode.iterm2)
+                 Use --suite=none to explicitly disable suite isolation
+                 Example: --suite=com.mytest creates fresh preferences
+                 Note: Passed to iTerm2 as "-suite NAME" (single dash, space-separated)
 
-  --use-default-config[=BOOL]
-                 Use iTerm2's built-in defaults instead of user preferences.
-                 Values: true/false, yes/no, 1/0 (default: true if flag present)
-                 If neither --config nor --use-default-config is specified,
-                 defaults to --use-default-config=true for reproducible tests.
+  --video[=DIR]  Record the screen during each test iteration.
+                 Videos are saved as MOV files with timestamps.
+                 Optional DIR specifies output directory (default: /tmp).
+                 Uses macOS screencapture; screen recording permission required.
+
+  --self-time    Run self-time profiling using DTrace profile provider.
+                 Shows which functions actually burn CPU (not just call count).
+                 Requires sudo. Output is analyzed to filter non-actionable symbols.
+                 Results show iTerm2 code hotspots for optimization.
 
 USAGE
 }
@@ -99,6 +108,7 @@ USAGE
 synchronized_start=true  # Default to synchronized (better for profiling)
 inject_mode=false
 dtrace_mode=false
+self_time_mode=false  # self-time profiling with profile provider
 forever_mode=false
 tmux_mode=false
 title_arg=""  # empty = disabled, value = milliseconds
@@ -108,9 +118,9 @@ speed_arg="normal"
 fps_arg=""  # empty = use default 30fps
 load_script_arg=""  # empty = use default stress_load.py
 duration_arg=""  # empty = use default 20s
-config_arg=""  # empty = no custom config path
-use_default_config=true  # default to true for reproducible tests
-use_default_config_explicit=false  # track if explicitly specified
+suite_name="com.iterm2.defaults"  # default suite for reproducible tests
+video_mode=false
+video_output_dir="/tmp"  # default video output directory
 positional_args=()
 
 while [[ $# -gt 0 ]]; do
@@ -145,24 +155,26 @@ while [[ $# -gt 0 ]]; do
       load_script_arg="${1#--load-script=}"
       shift
       ;;
-    --config=*)
-      config_arg="${1#--config=}"
-      shift
-      ;;
-    --use-default-config)
-      use_default_config=true
-      use_default_config_explicit=true
-      shift
-      ;;
-    --use-default-config=*)
-      val="${1#--use-default-config=}"
-      val_lower=$(echo "$val" | tr '[:upper:]' '[:lower:]')
-      case "$val_lower" in
-        false|no|0) use_default_config=false ;;
-        true|yes|1) use_default_config=true ;;
-        *) echo "Error: --use-default-config requires true/false/yes/no/1/0, got '$val'" >&2; exit 1 ;;
+    --suite=*)
+      suite_val="${1#--suite=}"
+      case "$suite_val" in
+        user) suite_name="com.googlecode.iterm2" ;;  # Use normal iTerm2 prefs
+        none|"") suite_name="" ;;  # No suite isolation
+        *) suite_name="$suite_val" ;;  # Custom suite name
       esac
-      use_default_config_explicit=true
+      shift
+      ;;
+    --video)
+      video_mode=true
+      shift
+      ;;
+    --video=*)
+      video_mode=true
+      video_output_dir="${1#--video=}"
+      shift
+      ;;
+    --self-time)
+      self_time_mode=true
       shift
       ;;
     --title)
@@ -252,52 +264,17 @@ fi
 
 app_path="$1"
 
-# Validate: --config and explicit --use-default-config=true conflict
-if [[ -n "$config_arg" && "$use_default_config_explicit" == true && "$use_default_config" == true ]]; then
-  echo "Error: --config and --use-default-config=true are mutually exclusive" >&2
-  exit 1
-fi
-
-# If --config is specified, don't pass --use-default-config to the app
-if [[ -n "$config_arg" ]]; then
-  use_default_config=false
-fi
-
-# Validate config path if specified
-if [[ -n "$config_arg" ]]; then
-  # Expand tilde for validation
-  config_path_expanded="${config_arg/#\~/$HOME}"
-
-  # Check if it's a URL (skip validation)
-  if [[ "$config_arg" =~ ^https?:// ]]; then
-    echo "Using config from URL: $config_arg"
+# Display suite configuration
+if [[ -n "$suite_name" ]]; then
+  if [[ "$suite_name" == "com.iterm2.defaults" ]]; then
+    echo "Using test suite: $suite_name (isolated preferences for reproducible tests)"
+  elif [[ "$suite_name" == "com.googlecode.iterm2" ]]; then
+    echo "Using user's normal preferences (--suite=user)"
   else
-    # Local path - must exist
-    if [[ ! -e "$config_path_expanded" ]]; then
-      echo "Error: Config path does not exist: $config_arg" >&2
-      echo "  Expanded to: $config_path_expanded" >&2
-      exit 1
-    fi
-
-    # Check if it's a directory (should contain com.googlecode.iterm2.plist)
-    if [[ -d "$config_path_expanded" ]]; then
-      if [[ ! -f "$config_path_expanded/com.googlecode.iterm2.plist" ]]; then
-        echo "Error: Config directory must contain com.googlecode.iterm2.plist" >&2
-        echo "  Directory: $config_path_expanded" >&2
-        exit 1
-      fi
-      echo "Using config from directory: $config_arg"
-    elif [[ -f "$config_path_expanded" ]]; then
-      echo "Using config from file: $config_arg"
-    else
-      echo "Error: Config path is not a file or directory: $config_arg" >&2
-      exit 1
-    fi
+    echo "Using custom suite: $suite_name"
   fi
-elif [[ "$use_default_config" == true ]]; then
-  echo "Using default iTerm2 config (--use-default-config)"
 else
-  echo "Using user's normal preferences (no config flags)"
+  echo "Using user's normal preferences (no suite isolation)"
 fi
 
 # Duration: prefer --time/-t, then positional arg, then default
@@ -371,6 +348,22 @@ fi
 if [[ ! -f "$analyze_script" ]]; then
   echo "Error: analyze script not found at '$analyze_script'" >&2
   exit 1
+fi
+
+# Video mode validation
+if [[ "$video_mode" == true ]]; then
+  # Check for GetWindowID tool
+  if ! command -v GetWindowID &>/dev/null; then
+    echo "Error: --video requires GetWindowID (brew install smokris/getwindowid/getwindowid)" >&2
+    exit 1
+  fi
+  # Validate output directory
+  video_output_dir="${video_output_dir/#\~/$HOME}"
+  if [[ ! -d "$video_output_dir" ]]; then
+    echo "Error: Video output directory does not exist: $video_output_dir" >&2
+    exit 1
+  fi
+  echo "Video recording enabled (output: $video_output_dir)"
 fi
 
 # DTrace requires root
@@ -634,18 +627,10 @@ run_single_test() {
   local run_start_epoch
   run_start_epoch=$(date +%s)
 
-  # Launch iTerm2 with appropriate config flag
-  if [[ -n "$config_arg" ]]; then
-    # Convert to absolute path for iTerm2 (unless it's a URL)
-    local config_launch_path="$config_arg"
-    if [[ ! "$config_arg" =~ ^https?:// ]]; then
-      config_launch_path="$(cd "$(dirname "${config_arg/#\~/$HOME}")" 2>/dev/null && pwd)/$(basename "${config_arg/#\~/$HOME}")" || echo "${config_arg/#\~/$HOME}"
-    fi
-    open -a "$app_path" --args --config="$config_launch_path"
-  elif [[ "$use_default_config" == true ]]; then
-    open -a "$app_path" --args --use-default-config
+  # Launch iTerm2 with suite isolation
+  if [[ -n "$suite_name" ]]; then
+    open -a "$app_path" --args -suite "$suite_name"
   else
-    # No config flags - use user's normal preferences
     open -a "$app_path"
   fi
   sleep 2
@@ -668,11 +653,34 @@ run_single_test() {
 
   echo "Found iTerm2 PID: $iterm_pid"
 
+  # Size and position window consistently (needed before video capture)
+  osascript -e 'tell application "iTerm2" to set bounds of current window to {864, 34, 1728, 1117}'
+
   # Set up profile output file
   local timestamp
   timestamp=$(date +%Y%m%d_%H%M%S)
   local profile_output="/tmp/iterm2_multi_tab_profile_${timestamp}.txt"
   local dtrace_output="/tmp/iterm2_dtrace_${timestamp}.txt"
+  local self_time_output="/tmp/iterm2_self_time_${timestamp}.txt"
+
+  # Start video recording if enabled
+  local video_pid=""
+  local video_file=""
+  if [[ "$video_mode" == true ]]; then
+    video_file="${video_output_dir}/iterm2_perf_${tab_count}tabs_${timestamp}.mov"
+    local video_duration=$((duration + 10))  # Add buffer for startup/shutdown
+    # Get window ID (first non-empty title - safe since we ensure single instance)
+    local window_id
+    window_id=$(GetWindowID iTerm2 --list | grep -v '^""' | head -1 | sed 's/.*id=//')
+    if [[ -z "$window_id" ]]; then
+      echo "Warning: Could not get iTerm2 window ID, skipping video recording"
+    else
+      echo "Starting video recording (window $window_id): $video_file"
+      screencapture -v -V "$video_duration" -l"$window_id" "$video_file" &
+      video_pid=$!
+      sleep 1  # Give screencapture time to initialize
+    fi
+  fi
 
   # Calculate profiler duration (load duration + buffer)
   local profiler_duration=$((duration + 5))
@@ -681,13 +689,14 @@ run_single_test() {
   # In non-sync mode, we start profiler before launching tabs
   local profiler_pid=""
   local dtrace_pid=""
+  local self_time_pid=""
   if [[ "$synchronized_start" != true ]]; then
     echo "Starting profiler for ${profiler_duration} seconds..."
     sample "$iterm_pid" "$profiler_duration" -f "$profile_output" &>/dev/null &
     profiler_pid=$!
     # Start DTrace if enabled (with timeout matching profiler duration)
     if [[ "$dtrace_mode" == true ]]; then
-      timeout "$((profiler_duration + 30))" dtrace -p "$iterm_pid" -s "$dtrace_script" $profiler_duration > "$dtrace_output" 2>&1 &
+      timeout "$((profiler_duration + 30))" dtrace -Z -p "$iterm_pid" -s "$dtrace_script" $profiler_duration > "$dtrace_output" 2>&1 &
       dtrace_pid=$!
       # Wait for dtrace to attach (it prints "Tracing" when ready)
       echo "Waiting for DTrace to attach..."
@@ -703,6 +712,14 @@ run_single_test() {
       fi
     else
       sleep 1
+    fi
+    # Start self-time profiling if enabled
+    if [[ "$self_time_mode" == true ]]; then
+      local self_time_script="$script_dir/iterm_self_time.d"
+      echo "Starting self-time profiler for ${profiler_duration} seconds..."
+      timeout "$((profiler_duration + 30))" dtrace -Z -p "$iterm_pid" -s "$self_time_script" $profiler_duration > "$self_time_output" 2>&1 &
+      self_time_pid=$!
+      sleep 1  # Give dtrace time to attach
     fi
   fi
 
@@ -741,7 +758,7 @@ run_single_test() {
     profiler_pid=$!
     # Start DTrace if enabled (with timeout matching profiler duration)
     if [[ "$dtrace_mode" == true ]]; then
-      timeout "$((profiler_duration + 30))" dtrace -p "$iterm_pid" -s "$dtrace_script" $profiler_duration > "$dtrace_output" 2>&1 &
+      timeout "$((profiler_duration + 30))" dtrace -Z -p "$iterm_pid" -s "$dtrace_script" $profiler_duration > "$dtrace_output" 2>&1 &
       dtrace_pid=$!
       # Wait for dtrace to attach (it prints "Tracing" when ready)
       echo "Waiting for DTrace to attach..."
@@ -758,31 +775,75 @@ run_single_test() {
     else
       sleep 1  # Brief pause for profiler to attach
     fi
+    # Start self-time profiling if enabled
+    if [[ "$self_time_mode" == true ]]; then
+      local self_time_script="$script_dir/iterm_self_time.d"
+      echo "Starting self-time profiler for ${profiler_duration} seconds..."
+      timeout "$((profiler_duration + 30))" dtrace -Z -p "$iterm_pid" -s "$self_time_script" $profiler_duration > "$self_time_output" 2>&1 &
+      self_time_pid=$!
+      sleep 1  # Give dtrace time to attach
+    fi
 
     echo "Sending go signal..."
     touch "$sync_dir/go"
 
     # Start interaction injection if enabled (runs in background)
     if [[ "$inject_mode" == true ]]; then
-      echo "Starting interaction injection..."
+      echo "Starting interaction injection (keyboard, scroll, tab switch)..."
       (
         sleep 2  # Let stress_load.py get going
 
-        # Tab switches - spread across duration
-        local switch_delay=$((duration / tab_count / 2))
-        [[ $switch_delay -lt 1 ]] && switch_delay=1
-        for i in $(seq 1 "$tab_count"); do
-          osascript -e "tell application \"iTerm2\" to tell current window to select tab $i" 2>/dev/null || true
-          sleep "$switch_delay"
+        # Timing configuration (in 100ms ticks)
+        local tick=0
+        local keyboard_ticks=5    # every 500ms - keyboard input
+        local scroll_ticks=20     # every 2s - scroll events
+        local tab_ticks=30        # every 3s - tab switches
+        local current_tab=1
+        local scroll_direction=1  # 1 = down, -1 = up
+
+        # Calculate end time (stop 2s before test ends)
+        local inject_end=$((SECONDS + duration - 2))
+
+        # Counters for summary
+        local keyboard_count=0
+        local scroll_count=0
+        local tab_switch_count=0
+
+        while [[ $SECONDS -lt $inject_end ]]; do
+          tick=$((tick + 1))
+
+          # Periodic keyboard input (every 500ms)
+          # Send a single character to exercise keyboard input latency path
+          if (( tick % keyboard_ticks == 0 )); then
+            osascript -e 'tell application "iTerm2" to tell current session of current window to write text "."' 2>/dev/null || true
+            keyboard_count=$((keyboard_count + 1))
+          fi
+
+          # Periodic scroll events (every 2s)
+          # Alternate between Page Down and Page Up to stay in view
+          if (( tick % scroll_ticks == 0 )); then
+            if (( scroll_direction == 1 )); then
+              # Page Down (key code 121)
+              osascript -e 'tell application "System Events" to tell process "iTerm2" to key code 121' 2>/dev/null || true
+            else
+              # Page Up (key code 116)
+              osascript -e 'tell application "System Events" to tell process "iTerm2" to key code 116' 2>/dev/null || true
+            fi
+            scroll_direction=$((scroll_direction * -1))
+            scroll_count=$((scroll_count + 1))
+          fi
+
+          # Periodic tab switches (every 3s)
+          if (( tick % tab_ticks == 0 )); then
+            current_tab=$(( (current_tab % tab_count) + 1 ))
+            osascript -e "tell application \"iTerm2\" to tell current window to select tab $current_tab" 2>/dev/null || true
+            tab_switch_count=$((tab_switch_count + 1))
+          fi
+
+          sleep 0.1
         done
 
-        # Focus toggle mid-test
-        osascript -e 'tell application "Finder" to activate' 2>/dev/null || true
-        sleep 0.5
-        osascript -e 'tell application "iTerm2" to activate' 2>/dev/null || true
-
-        # Keyboard input to current session
-        osascript -e 'tell application "iTerm2" to tell current session of current window to write text "latency_test_input"' 2>/dev/null || true
+        echo "Injection complete: keyboard=$keyboard_count scroll=$scroll_count tabs=$tab_switch_count"
       ) &
       local inject_pid=$!
     fi
@@ -845,6 +906,16 @@ run_single_test() {
   echo ""
   python3 "$analyze_script" "$profile_output"
 
+  # Stop video recording if it was started
+  if [[ -n "$video_pid" ]]; then
+    echo "Stopping video recording..."
+    kill -INT "$video_pid" 2>/dev/null || true
+    wait "$video_pid" 2>/dev/null || true
+    if [[ -f "$video_file" ]]; then
+      echo "Video saved: $video_file"
+    fi
+  fi
+
   # Quit the test iTerm2 instance cleanly via AppleScript (Command-Q)
   echo ""
   echo "Shutting down test iTerm2..."
@@ -889,6 +960,11 @@ run_single_test() {
     local mode_30fps=$(awk '/30fps mode calls:/ {for(i=1;i<=NF;i++) if($i ~ /^[0-9]+$/) {print $i; exit}}' "$dtrace_output")
     local mode_1fps=$(awk '/1fps mode calls:/ {for(i=1;i<=NF;i++) if($i ~ /^[0-9]+$/) {print $i; exit}}' "$dtrace_output")
 
+    # Parse FairnessScheduler metrics (0 = legacy path)
+    local fairness_register=$(awk '/Register calls:/ {for(i=1;i<=NF;i++) if($i ~ /^[0-9]+$/) {print $i; exit}}' "$dtrace_output")
+    local fairness_enqueue=$(awk '/SessionDidEnqueueWork:/ {for(i=1;i<=NF;i++) if($i ~ /^[0-9]+$/) {print $i; exit}}' "$dtrace_output")
+    local fairness_execute=$(awk '/ExecuteTurn calls:/ {for(i=1;i<=NF;i++) if($i ~ /^[0-9]+$/) {print $i; exit}}' "$dtrace_output")
+
     [[ -z "$content_frames" ]] && content_frames="0"
     [[ -z "$refreshes" ]] && refreshes="0"
     [[ -z "$metal_frames" ]] && metal_frames="0"
@@ -900,6 +976,9 @@ run_single_test() {
     [[ -z "$mode_60fps" ]] && mode_60fps="0"
     [[ -z "$mode_30fps" ]] && mode_30fps="0"
     [[ -z "$mode_1fps" ]] && mode_1fps="0"
+    [[ -z "$fairness_register" ]] && fairness_register="0"
+    [[ -z "$fairness_enqueue" ]] && fairness_enqueue="0"
+    [[ -z "$fairness_execute" ]] && fairness_execute="0"
 
     # Convert join time to microseconds
     if [[ "$join_time_ns" -gt 0 ]]; then
@@ -925,13 +1004,38 @@ run_single_test() {
       printf "  Refreshes (cadence):    %s\n" "$refreshes"
       printf "  Metal frames (GPU):     %s\n" "$metal_frames"
       echo "  ---"
-      printf "  Apparent frame rate:    %s fps (refreshes/sec)\n" "$refresh_fps"
+      printf "  Update cadence:         %s fps (refreshes/sec)\n" "$refresh_fps"
       printf "  Metal frame rate:       %s fps\n" "$metal_fps"
       echo "  ---"
       printf "  Join calls:             %s\n" "$join_calls"
       printf "  Join time:              %s us (total)\n" "$join_time_us"
+      echo "  ---"
+      if [[ "$fairness_execute" -gt 0 ]]; then
+        printf "  FairnessScheduler:      ACTIVE\n"
+        printf "    Enqueue calls:        %s\n" "$fairness_enqueue"
+        printf "    ExecuteTurn calls:    %s\n" "$fairness_execute"
+      else
+        printf "  FairnessScheduler:      INACTIVE (legacy path)\n"
+      fi
       echo "============================================================"
     fi
+  fi
+
+  # Display self-time analysis if enabled
+  if [[ "$self_time_mode" == true && -f "$self_time_output" ]]; then
+    echo ""
+    echo "============================================================"
+    echo "Self-Time Analysis (functions that burn CPU directly)"
+    echo "============================================================"
+    local self_time_analyze_script="$script_dir/analyze_self_time.py"
+    if [[ -f "$self_time_analyze_script" ]]; then
+      python3 "$self_time_analyze_script" "$self_time_output"
+    else
+      echo "Warning: analyze_self_time.py not found, showing raw output:"
+      cat "$self_time_output"
+    fi
+    echo ""
+    echo "Raw self-time output: $self_time_output"
   fi
 
   # Store iteration stats in result arrays
@@ -1314,19 +1418,19 @@ run_forever() {
     echo ""
   fi
 
+  # Video mode not supported with forever mode
+  if [[ "$video_mode" == true ]]; then
+    echo ""
+    echo "WARNING: --video is not supported with --forever mode (requires fixed duration)."
+    echo "         Use macOS screen recording (Cmd-Shift-5) for manual recording."
+    echo ""
+  fi
+
   # Open iTerm2 and wait for it to launch
-  # Launch iTerm2 with appropriate config flag
-  if [[ -n "$config_arg" ]]; then
-    # Convert to absolute path for iTerm2 (unless it's a URL)
-    local config_launch_path="$config_arg"
-    if [[ ! "$config_arg" =~ ^https?:// ]]; then
-      config_launch_path="$(cd "$(dirname "${config_arg/#\~/$HOME}")" 2>/dev/null && pwd)/$(basename "${config_arg/#\~/$HOME}")" || echo "${config_arg/#\~/$HOME}"
-    fi
-    open -a "$app_path" --args --config="$config_launch_path"
-  elif [[ "$use_default_config" == true ]]; then
-    open -a "$app_path" --args --use-default-config
+  # Launch iTerm2 with suite isolation
+  if [[ -n "$suite_name" ]]; then
+    open -a "$app_path" --args -suite "$suite_name"
   else
-    # No config flags - use user's normal preferences
     open -a "$app_path"
   fi
   sleep 2
@@ -1386,22 +1490,28 @@ fi
 echo "Power Source: $power_source"
 echo "Energy Mode: $energy_mode"
 
-# Warn if not on AC power, not in high performance mode, or not using default config
-if [[ "$power_source" != "AC Power" || "$energy_mode" != "High Power/High Performance" || "$use_default_config" == false ]]; then
+# Check if using isolated suite (not user's normal prefs)
+using_isolated_suite=false
+if [[ -n "$suite_name" && "$suite_name" != "com.googlecode.iterm2" ]]; then
+  using_isolated_suite=true
+fi
+
+# Warn if not on AC power, not in high performance mode, or not using isolated suite
+if [[ "$power_source" != "AC Power" || "$energy_mode" != "High Power/High Performance" || "$using_isolated_suite" == false ]]; then
   echo ""
   echo "WARNING: Performance testing should use standard conditions for reliable results!"
   echo ""
   echo "         Current issues:"
   [[ "$power_source" != "AC Power" ]] && echo "           - Running on $power_source (not AC Power)"
   [[ "$energy_mode" != "High Power/High Performance" ]] && echo "           - Energy Mode: $energy_mode (not High Power/High Performance)"
-  [[ "$use_default_config" == false ]] && echo "           - Not using default config (results may vary)"
+  [[ "$using_isolated_suite" == false ]] && echo "           - Not using isolated suite (user prefs may affect results)"
   echo ""
   echo "         These conditions may produce unreliable or unexpected performance results."
   echo ""
   echo "         Recommendations:"
   [[ "$power_source" != "AC Power" ]] && echo "           - Connect to AC Power"
   [[ "$energy_mode" != "High Power/High Performance" ]] && echo "           - Set Energy Mode to High Power/High Performance"
-  [[ "$use_default_config" == false ]] && echo "           - Use default config (remove --use-default-config=false)"
+  [[ "$using_isolated_suite" == false ]] && echo "           - Use isolated suite (default: --suite=com.iterm2.defaults)"
   echo ""
 fi
 
@@ -1414,20 +1524,15 @@ echo "Tab counts: ${tab_counts[*]}"
 echo "Synchronized start: $synchronized_start"
 echo "Inject interactions: $inject_mode"
 echo "DTrace mode: $dtrace_mode"
+echo "Self-time profiling: $self_time_mode"
 echo "Tmux wrapped: $tmux_mode"
+echo "Video recording: $video_mode"
+[[ "$video_mode" == true ]] && echo "Video output dir: $video_output_dir"
 echo "Speed: $speed_arg"
-if [[ -n "$config_arg" ]]; then
-  # Show full expanded path
-  if [[ "$config_arg" =~ ^https?:// ]]; then
-    echo "Config: $config_arg"
-  else
-    config_full_path="$(cd "$(dirname "${config_arg/#\~/$HOME}")" 2>/dev/null && pwd)/$(basename "${config_arg/#\~/$HOME}")" || echo "${config_arg/#\~/$HOME}"
-    echo "Config: $config_full_path"
-  fi
-elif [[ "$use_default_config" == true ]]; then
-  echo "Config: Default"
+if [[ -n "$suite_name" ]]; then
+  echo "Suite: $suite_name"
 else
-  echo "Config: User preferences"
+  echo "Suite: (none - using user preferences)"
 fi
 if [[ -n "$stress_mode" ]]; then
   echo "Mode: ${stress_mode#--mode=}"
@@ -1451,8 +1556,8 @@ else
     print_summary_table
   fi
 
-  # Repeat warning at end if not on AC power, not in high performance mode, or not using default config
-  if [[ "$power_source" != "AC Power" || "$energy_mode" != "High Power/High Performance" || "$use_default_config" == false ]]; then
+  # Repeat warning at end if not on AC power, not in high performance mode, or not using isolated suite
+  if [[ "$power_source" != "AC Power" || "$energy_mode" != "High Power/High Performance" || "$using_isolated_suite" == false ]]; then
     echo ""
     echo "============================================================"
     echo "WARNING: These results may not reflect optimal performance!"
@@ -1461,7 +1566,7 @@ else
     echo "Issues detected:"
     [[ "$power_source" != "AC Power" ]] && echo "  - Power Source: $power_source (not AC Power)"
     [[ "$energy_mode" != "High Power/High Performance" ]] && echo "  - Energy Mode: $energy_mode (not High Power/High Performance)"
-    [[ "$use_default_config" == false ]] && echo "  - Not using default config (results may vary)"
+    [[ "$using_isolated_suite" == false ]] && echo "  - Not using isolated suite (user prefs may affect results)"
     echo ""
     echo "Performance testing should use standard conditions for reliable results."
     echo "Current configuration may produce unreliable or unexpected performance."
@@ -1469,7 +1574,7 @@ else
     echo "Recommendations:"
     [[ "$power_source" != "AC Power" ]] && echo "  - Connect to AC Power"
     [[ "$energy_mode" != "High Power/High Performance" ]] && echo "  - Set Energy Mode to High Power/High Performance"
-    [[ "$use_default_config" == false ]] && echo "  - Use default config (remove --use-default-config=false)"
+    [[ "$using_isolated_suite" == false ]] && echo "  - Use isolated suite (default: --suite=com.iterm2.defaults)"
     echo "============================================================"
   fi
 fi

@@ -33,6 +33,22 @@ objc$target:VT100ScreenMutableState:-performBlockWithJoinedThreads*:entry
     @joined_blocks = count();
 }
 
+/* FairnessScheduler probes - these fire only when FairnessScheduler is active */
+objc$target:iTermFairnessScheduler:-register*:entry
+{
+    @fairness_register = count();
+}
+
+objc$target:iTermFairnessScheduler:-sessionDidEnqueueWork*:entry
+{
+    @fairness_enqueue = count();
+}
+
+objc$target:iTermTokenExecutor:-executeTurnWithTokenBudget*:entry
+{
+    @fairness_execute_turn = count();
+}
+
 dtrace:::END
 {
     duration_sec = (timestamp - start) / 1000000000;
@@ -45,6 +61,11 @@ dtrace:::END
     printa("  PTYTextView refresh:    %@d calls\n", @textview_refreshes);
     printa("  VT100Screen sync:       %@d calls\n", @syncs);
     printa("  joinedThreads blocks:   %@d calls\n", @joined_blocks);
+
+    printf("\nFairnessScheduler (0 = legacy path):\n");
+    printa("  register:               %@d calls\n", @fairness_register);
+    printa("  sessionDidEnqueueWork:  %@d calls\n", @fairness_enqueue);
+    printa("  executeTurn:            %@d calls\n", @fairness_execute_turn);
 
     normalize(@updates, duration_sec);
     normalize(@refreshes, duration_sec);

@@ -1222,9 +1222,6 @@ void TurnOnDebugLoggingAutomatically(void) {
 
     // Fix up various user defaults settings.
     DLog(@"initializeUserDefaults");
-#ifdef ITERM_DEBUG
-    [self applyDebugConfigArguments];
-#endif
     [iTermPreferences initializeUserDefaults];
     DLog(@"performMigrations");
     [iTermUserDefaults performMigrations];
@@ -1334,67 +1331,6 @@ void TurnOnDebugLoggingAutomatically(void) {
 
     return nil;
 }
-
-#ifdef ITERM_DEBUG
-- (NSString *)parseConfigPathFromArguments {
-    NSArray *arguments = [[NSProcessInfo processInfo] arguments];
-    NSString *configPrefix = @"--config=";
-
-    for (NSString *arg in arguments) {
-        if ([arg hasPrefix:configPrefix]) {
-            return [arg substringFromIndex:[configPrefix length]];
-        }
-    }
-    return nil;
-}
-
-- (BOOL)shouldUseDefaultConfigFromArguments {
-    NSArray *arguments = [[NSProcessInfo processInfo] arguments];
-    return [arguments containsObject:@"--use-default-config"];
-}
-
-- (void)applyDebugConfigArguments {
-    NSString *configPath = [self parseConfigPathFromArguments];
-    BOOL useDefaultConfig = [self shouldUseDefaultConfigFromArguments];
-
-    // Enforce mutual exclusivity
-    if (useDefaultConfig && configPath != nil) {
-        NSLog(@"Error: --use-default-config and --config= are mutually exclusive. Ignoring both.");
-        return;
-    }
-
-    // Apply --config=<path>
-    if (configPath != nil) {
-        // Validate path/URL
-        if ([configPath length] == 0) {
-            NSLog(@"Error: --config= requires a non-empty path. Ignoring.");
-            return;
-        }
-
-        // Check if it's a URL
-        BOOL isURL = [configPath rangeOfString:@"://"].location != NSNotFound;
-
-        // Warn if local path doesn't exist
-        if (!isURL) {
-            NSString *expandedPath = [configPath stringByExpandingTildeInPath];
-            if (![[NSFileManager defaultManager] fileExistsAtPath:expandedPath]) {
-                NSLog(@"Warning: Config path does not exist: %@", expandedPath);
-                NSLog(@"         Will attempt to load anyway...");
-            }
-        }
-
-        [[NSUserDefaults standardUserDefaults] setObject:@YES forKey:@"LoadPrefsFromCustomFolder"];
-        [[NSUserDefaults standardUserDefaults] setObject:configPath forKey:@"PrefsCustomFolder"];
-        NSLog(@"Debug: Loading preferences from: %@", configPath);
-    }
-
-    // Apply --use-default-config
-    if (useDefaultConfig) {
-        [[NSUserDefaults standardUserDefaults] setObject:@NO forKey:@"LoadPrefsFromCustomFolder"];
-        NSLog(@"Debug: Using default configuration (custom prefs disabled)");
-    }
-}
-#endif
 
 - (void)applicationDidFinishLaunching:(NSNotification *)aNotification {
     if (@available(macOS 12, *)) {
