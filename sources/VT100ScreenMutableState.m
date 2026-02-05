@@ -1389,6 +1389,15 @@ static const int64_t VT100ScreenMutableStateSideEffectFlagLineBufferDidDropLines
         return;
     }
     if (self.currentGrid.cursor.y > 0) {
+        // If the previous line has content reaching the right edge, the soft
+        // wrap is still valid. This handles the common case where shells like
+        // zsh erase and redraw wrapped command lines: the erase removes the
+        // continuation content temporarily, but the previous line is still full
+        // and will wrap again after the redraw.
+        const screen_char_t *prevLine = [self.currentGrid immutableScreenCharsAtLineNumber:self.currentGrid.cursor.y - 1];
+        if (prevLine[self.currentGrid.size.width - 1].code != 0) {
+            return;
+        }
         [self.currentGrid setContinuationMarkOnLine:self.currentGrid.cursor.y - 1 to:EOL_HARD];
     } else {
         [self.linebuffer setPartial:NO];

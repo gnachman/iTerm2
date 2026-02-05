@@ -285,8 +285,33 @@ static void SwapInt(int *a, int *b) {
     // Use the predecessor of endx,endy so it will have a legal position in the line buffer.
     if (range.end.x == self.width) {
         VLog(@"positionRangeForCoordRange: x=width");
-        const screen_char_t *line = [self getLineAtIndex:range.end.y];
-        if (line[range.end.x - 1].code == 0 && line[range.end.x].code == EOL_HARD) {
+        // Get the line data and continuation mark. We use wrappedLineAtIndex for lines in the
+        // scrollback buffer to avoid the showBlockBoundaries debug feature which would corrupt
+        // the data by filling it with 'X' characters. For lines on the grid, we access directly.
+        const int numLinesInLineBuffer = [lineBuffer numLinesWithWidth:self.width];
+        const screen_char_t *line;
+        int continuationCode;
+        int lineLength = 0;  // Length of actual content on the line
+        if (range.end.y < numLinesInLineBuffer) {
+            // Line is in scrollback buffer - use wrappedLineAtIndex to get raw data
+            screen_char_t continuation;
+            ScreenCharArray *sca = [lineBuffer wrappedLineAtIndex:range.end.y
+                                                            width:self.width
+                                                     continuation:&continuation];
+            line = sca.line;
+            lineLength = sca.length;
+            continuationCode = continuation.code;
+        } else {
+            // Line is on the visible grid
+            line = [self.currentGrid immutableScreenCharsAtLineNumber:(range.end.y - numLinesInLineBuffer)];
+            lineLength = [self.currentGrid lengthOfLineNumber:(range.end.y - numLinesInLineBuffer)];
+            continuationCode = line[self.width].code;
+        }
+        // Check if the selection extends to the end of a line that has a hard newline.
+        // For this to be true, either the line is shorter than the width (so range.end.x - 1 is
+        // past the content), OR the last character of the line content is a null.
+        const BOOL endsWithNull = (lineLength < range.end.x) || (line[range.end.x - 1].code == 0);
+        if (endsWithNull && continuationCode == EOL_HARD) {
             VLog(@"positionRangeForCoordRange: has hard newline, set endExtends=YES");
             // The selection goes all the way to the end of the line and there is a null at the
             // end of the line, so it extends to the end of the line. The linebuffer can't recover
@@ -673,7 +698,7 @@ static void SwapInt(int *a, int *b) {
             promptRange.end.y += promptRange.start.x / self.width;
             promptRange.start.x %= self.width;
             promptRange.end.y += promptRange.end.x / self.width;
-            promptRange.end.x %= promptRange.end.x;
+            promptRange.end.x %= self.width;
             if (promptRange.start.x >= 0) {
                 VT100GridCoordRange converted;
                 if ([self convertRange:promptRange
@@ -714,7 +739,7 @@ static void SwapInt(int *a, int *b) {
 
 - (VT100GridCoordRange)safeCoordRange:(VT100GridCoordRange)unsafeRange {
     const int width = self.width;
-    if (unsafeRange.start.x >= 0 && unsafeRange.end.x < width &&
+    if (unsafeRange.start.x >= 0 && unsafeRange.start.x < width &&
         unsafeRange.end.x >= 0 && unsafeRange.end.x < width) {
         return unsafeRange;
     }
@@ -1063,6 +1088,77 @@ static void SwapInt(int *a, int *b) {
             object.entry = nil;
             object.doppelganger.entry = nil;
             [self.mutableSavedIntervalTree addObject:object withInterval:newInterval];
+
+            // Update VT100ScreenMark's internal coordinate properties.
+            VT100ScreenMark *screenMark = [VT100ScreenMark castFrom:object];
+            if (screenMark) {
+                const long long overflow = self.cumulativeScrollbackOverflow;
+                const int width = self.width;
+                const long long yOffset = overflow - numLinesDroppedFromTop;
+
+                // Update commandRange
+                const VT100GridCoordRange commandRange = [self safeCoordRange:VT100GridCoordRangeFromAbsCoordRange(screenMark.commandRange, overflow)];
+                if (commandRange.start.x >= 0 && commandRange.start.x < width && commandRange.end.x <= width) {
+                    VT100GridCoordRange converted;
+                    if ([self convertRange:commandRange
+                                   toWidth:newWidth
+                                        to:&converted
+                              inLineBuffer:altScreenLineBuffer
+                             tolerateEmpty:NO]) {
+                        converted.start.y += yOffset;
+                        converted.end.y += yOffset;
+                        [self.mutableSavedIntervalTree mutateObject:object block:^(id<IntervalTreeObject> mutableMark) {
+                            [VT100ScreenMark castFrom:mutableMark].commandRange = VT100GridAbsCoordRangeFromCoordRange(converted, 0);
+                        }];
+                    }
+                }
+
+                // Update promptRange
+                VT100GridCoordRange promptRange = [self safeCoordRange:VT100GridCoordRangeFromAbsCoordRange(screenMark.promptRange, overflow)];
+                promptRange.start.y += promptRange.start.x / width;
+                promptRange.end.y += promptRange.start.x / width;
+                promptRange.start.x %= width;
+                promptRange.end.y += promptRange.end.x / width;
+                promptRange.end.x %= width;
+                if (promptRange.start.x >= 0) {
+                    VT100GridCoordRange converted;
+                    if ([self convertRange:promptRange
+                                   toWidth:newWidth
+                                        to:&converted
+                              inLineBuffer:altScreenLineBuffer
+                             tolerateEmpty:NO]) {
+                        converted.start.y += yOffset;
+                        converted.end.y += yOffset;
+                        [self.mutableSavedIntervalTree mutateObject:object block:^(id<IntervalTreeObject> mutableMark) {
+                            [VT100ScreenMark castFrom:mutableMark].promptRange = VT100GridAbsCoordRangeFromCoordRange(converted, 0);
+                        }];
+                    }
+                }
+
+                // Update outputStart
+                if (screenMark.outputStart.x != -1) {
+                    BOOL ok = NO;
+                    const VT100GridCoord outputStart = VT100GridCoordFromAbsCoord(screenMark.outputStart, overflow, &ok);
+                    if (!ok) {
+                        screenMark.outputStart = VT100GridAbsCoordMake(-1, -1);
+                    } else {
+                        VT100GridCoordRange converted;
+                        if ([self convertRange:VT100GridCoordRangeMake(outputStart.x,
+                                                                       outputStart.y,
+                                                                       outputStart.x + 1,
+                                                                       outputStart.y)
+                                       toWidth:newWidth
+                                            to:&converted
+                                  inLineBuffer:altScreenLineBuffer
+                                 tolerateEmpty:NO]) {
+                            converted.start.y += yOffset;
+                            [self.mutableSavedIntervalTree mutateObject:object block:^(id<IntervalTreeObject> mutableMark) {
+                                [VT100ScreenMark castFrom:mutableMark].outputStart = VT100GridAbsCoordFromCoord(converted.start, 0);
+                            }];
+                        }
+                    }
+                }
+            }
         } else {
             DLog(@"Failed to convert");
         }
