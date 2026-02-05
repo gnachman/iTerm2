@@ -668,4 +668,14 @@ const double SmartSelectionVeryHighPrecision = 1000000.0;
     return MAX(2, length + 1);
 }
 
+- (BOOL)isFirstLineOfBlock:(int)lineNumber { 
+    return NO;
+}
+
+
+- (int)numberOfLines { 
+    return [[self componentsSeparatedByString:@"\n"] count];
+}
+
+
 @end
