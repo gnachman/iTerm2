@@ -25,16 +25,17 @@
 #import "iTermProfilesWindowController.h"
 
 #import "DebugLogging.h"
+#import "NSEvent+iTerm.h"
+#import "PTYTab.h"
+#import "PreferencePanel.h"
 #import "ProfileModel.h"
+#import "PseudoTerminal.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermApplication.h"
 #import "iTermApplicationDelegate.h"
 #import "iTermController.h"
 #import "iTermSessionLauncher.h"
-#import "NSEvent+iTerm.h"
-#import "PreferencePanel.h"
-#import "PseudoTerminal.h"
-#import "PTYTab.h"
+#import "iTermUserDefaults.h"
 
 static NSString *const kCloseBookmarksWindowAfterOpeningKey = @"CloseBookmarksWindowAfterOpening";
 static NSString *const iTermProfilesWindowTagsOpen = @"NoSyncProfilesWindowTagsOpen";
@@ -149,7 +150,7 @@ typedef enum {
         [tableView_ allowMultipleSelections];
         [tableView_ multiColumns];
 
-        NSUserDefaults* prefs = [NSUserDefaults standardUserDefaults];
+        NSUserDefaults* prefs = [iTermUserDefaults userDefaults];
         NSNumber* n = [prefs objectForKey:kCloseBookmarksWindowAfterOpeningKey];
         [closeAfterOpeningBookmark_ setState:[n boolValue] ? NSControlStateValueOn : NSControlStateValueOff];
 
@@ -168,7 +169,7 @@ typedef enum {
 }
 
 - (void)awakeFromNib {
-    NSNumber *n = [NSNumber castFrom:[[NSUserDefaults standardUserDefaults] objectForKey:iTermProfilesWindowTagsOpen]];
+    NSNumber *n = [NSNumber castFrom:[[iTermUserDefaults userDefaults] objectForKey:iTermProfilesWindowTagsOpen]];
     if (n.boolValue) {
         [tableView_ setTagsOpen:NO animated:NO];
         [tableView_ setTagsOpen:YES animated:NO];
@@ -249,7 +250,7 @@ typedef enum {
 }
 
 - (IBAction)toggleTags:(id)sender {
-    [[NSUserDefaults standardUserDefaults] setBool:!tableView_.tagsVisible
+    [[iTermUserDefaults userDefaults] setBool:!tableView_.tagsVisible
                                               forKey:iTermProfilesWindowTagsOpen];
     [tableView_ toggleTags];
     [[self window] invalidateRestorableState];
@@ -391,7 +392,7 @@ typedef enum {
 
 - (IBAction)closeAfterOpeningChanged:(id)sender
 {
-    NSUserDefaults* prefs = [NSUserDefaults standardUserDefaults];
+    NSUserDefaults* prefs = [iTermUserDefaults userDefaults];
     [prefs setObject:[NSNumber numberWithBool:[closeAfterOpeningBookmark_ state] == NSControlStateValueOn]
               forKey:kCloseBookmarksWindowAfterOpeningKey];
 }

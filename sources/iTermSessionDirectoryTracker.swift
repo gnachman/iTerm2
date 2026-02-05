@@ -10,6 +10,7 @@ import Foundation
 /// Protocol for objects that can provide an SSH identity.
 /// Conductor conforms to this protocol.
 @objc(iTermSSHIdentityProvider)
+@MainActor
 protocol SSHIdentityProvider: AnyObject {
     var sshIdentity: SSHIdentity { get }
 }

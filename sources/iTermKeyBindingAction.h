@@ -129,18 +129,18 @@ typedef NS_ENUM(int, KEY_ACTION) {
 @property (nonatomic, readonly) iTermSendTextEscaping vimEscaping;
 @property (nonatomic, readonly) iTermActionApplyMode applyMode;
 
-+ (instancetype)withDictionary:(NSDictionary *)dictionary;
++ (instancetype _Nullable)withDictionary:(NSDictionary *)dictionary;
 
-+ (instancetype)withAction:(KEY_ACTION)action
-                 parameter:(NSString *)parameter
-                  escaping:(iTermSendTextEscaping)escaping
-                 applyMode:(iTermActionApplyMode)applyMode;
++ (instancetype _Nullable)withAction:(KEY_ACTION)action
+                           parameter:(NSString *)parameter
+                            escaping:(iTermSendTextEscaping)escaping
+                           applyMode:(iTermActionApplyMode)applyMode;
 
-+ (instancetype)withAction:(KEY_ACTION)action
-                 parameter:(NSString *)parameter
-                     label:(NSString *)label
-                  escaping:(iTermSendTextEscaping)escaping
-                 applyMode:(iTermActionApplyMode)applyMode;
++ (instancetype _Nullable)withAction:(KEY_ACTION)action
+                           parameter:(NSString *)parameter
+                               label:(NSString *)label
+                            escaping:(iTermSendTextEscaping)escaping
+                           applyMode:(iTermActionApplyMode)applyMode;
 
 + (instancetype _Nullable)fromString:(NSString *)string;
 

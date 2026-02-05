@@ -1,20 +1,63 @@
-#import "PTYTextView.h"
 #import "PTYTextView+MouseHandler.h"
+#import "PTYTextView.h"
 
-#import "charmaps.h"
 #import "FileTransferManager.h"
 #import "FontSizeEstimator.h"
 #import "FutureMethods.h"
 #import "FutureMethods.h"
 #import "ITAddressBookMgr.h"
-#import "iTerm2SharedARC-Swift.h"
+#import "MovePaneController.h"
+#import "MovingAverage.h"
+#import "NSAppearance+iTerm.h"
+#import "NSArray+iTerm.h"
+#import "NSCharacterSet+iTerm.h"
+#import "NSColor+iTerm.h"
+#import "NSData+iTerm.h"
+#import "NSDictionary+iTerm.h"
+#import "NSEvent+iTerm.h"
+#import "NSFileManager+iTerm.h"
+#import "NSImage+iTerm.h"
+#import "NSMutableAttributedString+iTerm.h"
+#import "NSObject+iTerm.h"
+#import "NSPasteboard+iTerm.h"
+#import "NSResponder+iTerm.h"
+#import "NSSavePanel+iTerm.h"
+#import "NSStringITerm.h"
+#import "NSURL+iTerm.h"
+#import "NSWindow+PSM.h"
+#import "PTYMouseHandler.h"
+#import "PTYNoteView.h"
+#import "PTYNoteViewController.h"
+#import "PTYScrollView.h"
+#import "PTYTab.h"
+#import "PTYTask.h"
+#import "PTYTextView+ARC.h"
+#import "PTYTextView+Private.h"
+#import "PTYWindow.h"
+#import "PasteboardHistory.h"
+#import "PointerController.h"
+#import "PointerPrefsController.h"
+#import "PreferencePanel.h"
+#import "RegexKitLite.h"
+#import "SCPPath.h"
+#import "SearchResult.h"
+#import "SmartMatch.h"
+#import "SmartSelectionController.h"
+#import "SolidColorView.h"
+#import "ThreeFingerTapGestureRecognizer.h"
+#import "ToastWindowController.h"
+#import "VT100RemoteHost.h"
+#import "VT100ScreenMark.h"
+#import "WindowControllerInterface.h"
+#import "charmaps.h"
 #import "iTerm.h"
+#import "iTerm2SharedARC-Swift.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermApplicationDelegate.h"
 #import "iTermBadgeLabel.h"
+#import "iTermCPS.h"
 #import "iTermColorMap.h"
 #import "iTermController.h"
-#import "iTermCPS.h"
 #import "iTermFindCursorView.h"
 #import "iTermFindOnPageHelper.h"
 #import "iTermFindPasteboard.h"
@@ -40,52 +83,10 @@
 #import "iTermTextViewAccessibilityHelper.h"
 #import "iTermURLActionHelper.h"
 #import "iTermURLStore.h"
+#import "iTermUserDefaults.h"
 #import "iTermVirtualOffset.h"
-#import "iTermWebViewWrapperViewController.h"
 #import "iTermWarning.h"
-#import "MovePaneController.h"
-#import "MovingAverage.h"
-#import "NSAppearance+iTerm.h"
-#import "NSArray+iTerm.h"
-#import "NSCharacterSet+iTerm.h"
-#import "NSColor+iTerm.h"
-#import "NSData+iTerm.h"
-#import "NSDictionary+iTerm.h"
-#import "NSEvent+iTerm.h"
-#import "NSFileManager+iTerm.h"
-#import "NSImage+iTerm.h"
-#import "NSMutableAttributedString+iTerm.h"
-#import "NSObject+iTerm.h"
-#import "NSPasteboard+iTerm.h"
-#import "NSResponder+iTerm.h"
-#import "NSSavePanel+iTerm.h"
-#import "NSStringITerm.h"
-#import "NSURL+iTerm.h"
-#import "NSWindow+PSM.h"
-#import "PasteboardHistory.h"
-#import "PointerController.h"
-#import "PointerPrefsController.h"
-#import "PreferencePanel.h"
-#import "PTYMouseHandler.h"
-#import "PTYNoteView.h"
-#import "PTYNoteViewController.h"
-#import "PTYScrollView.h"
-#import "PTYTab.h"
-#import "PTYTask.h"
-#import "PTYTextView+ARC.h"
-#import "PTYTextView+Private.h"
-#import "PTYWindow.h"
-#import "RegexKitLite.h"
-#import "SCPPath.h"
-#import "SearchResult.h"
-#import "SmartMatch.h"
-#import "SmartSelectionController.h"
-#import "SolidColorView.h"
-#import "ThreeFingerTapGestureRecognizer.h"
-#import "ToastWindowController.h"
-#import "VT100RemoteHost.h"
-#import "VT100ScreenMark.h"
-#import "WindowControllerInterface.h"
+#import "iTermWebViewWrapperViewController.h"
 
 #import <CoreServices/CoreServices.h>
 #import <QuartzCore/QuartzCore.h>
@@ -184,9 +185,9 @@ const CGFloat PTYTextViewMarginClickGraceWidth = 2.0;
 
     NSTimer *_selectCommandTimer;
 
-    iTermTerminalCopyButton *_hoverBlockCopyButton NS_AVAILABLE_MAC(11);
-    iTermTerminalFoldBlockButton *_hoverBlockFoldButton NS_AVAILABLE_MAC(11);
-    NSMutableArray<iTermTerminalButton *> *_buttons NS_AVAILABLE_MAC(11);
+    iTermTerminalCopyButton *_hoverBlockCopyButton;
+    iTermTerminalFoldBlockButton *_hoverBlockFoldButton;
+    NSMutableArray<iTermTerminalButton *> *_buttons;
 
     NSRect _previousCursorFrame;
     BOOL _ignoreMomentumScroll;
@@ -1213,12 +1214,50 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
             buttons = [buttons arrayByAddingObject:_hoverBlockCopyButton];
         }
         DLog(@"Mouse at %@", NSStringFromPoint(point));
-        return [buttons anyWithBlock:^BOOL(iTermTerminalButton *button) {
+        // Check direct button hits
+        BOOL directHit = [buttons anyWithBlock:^BOOL(iTermTerminalButton *button) {
             DLog(@"Button %@ at %@", button, NSStringFromRect(button.desiredFrame));
             return NSPointInRect(point, button.desiredFrame);
         }];
+        if (directHit) {
+            return YES;
+        }
+        // Also check pill container areas
+        return [self buttonInPillContainerAtPoint:point] != nil;
     }
     return NO;
+}
+
+// Find the button that should handle a click at the given point if it's within a pill container
+- (iTermTerminalButton *)buttonInPillContainerAtPoint:(NSPoint)point {
+    NSArray<iTermButtonPillInfo *> *pillInfos = [_drawingHelper buttonPillInfos];
+    for (iTermButtonPillInfo *pillInfo in pillInfos) {
+        // Expand the hit test rect vertically to cover the full button area
+        // The visual pill rect may be smaller for alignment purposes
+        NSRect hitTestRect = NSInsetRect(pillInfo.rect, 0, -4);
+        if (!NSPointInRect(point, hitTestRect)) {
+            continue;
+        }
+        // Point is in this pill container. Find the appropriate button based on x position.
+        NSArray<iTermTerminalButton *> *buttons = pillInfo.buttons;
+        if (buttons.count == 0) {
+            continue;
+        }
+        if (buttons.count == 1) {
+            return buttons.firstObject;
+        }
+        // Find which button region contains this x coordinate using divider positions
+        CGFloat relativeX = point.x - pillInfo.rect.origin.x;
+        NSArray<NSNumber *> *dividers = pillInfo.dividerXPositions;
+        for (NSUInteger i = 0; i < dividers.count; i++) {
+            if (relativeX < dividers[i].doubleValue) {
+                return buttons[i];
+            }
+        }
+        // Past all dividers, return the last button
+        return buttons.lastObject;
+    }
+    return nil;
 }
 
 // If this changes also update -wantsMouseMovementEvents.
@@ -2840,7 +2879,7 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
     }
 }
 
-- (void)makeBlockCopyButtonForLine:(int)line block:(NSString *)block NS_AVAILABLE_MAC(11) {
+- (void)makeBlockCopyButtonForLine:(int)line block:(NSString *)block {
     int i = line;
     while (i > 0 && [[self blockIDsOnLine:i - 1] containsObject:block]) {
         i -= 1;
@@ -2861,7 +2900,7 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
 - (void)makeOrUpdateBlockFoldButtonForLine:(int)line
                                      block:(NSString *)block
                               absLineRange:(NSRange)absLineRange
-                                   changed:(out BOOL *)changedPtr NS_AVAILABLE_MAC(11) {
+                                   changed:(out BOOL *)changedPtr {
     id<iTermFoldMarkReading> foldMark = [[self.dataSource foldMarksInRange:VT100GridRangeMake(line, 1)] firstObject];
     const BOOL wasFolded = foldMark != nil;
     int i = line;
@@ -3627,7 +3666,7 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
     [timestampsButton setButtonType:NSButtonTypeSwitch];
     timestampsButton.title = @"Include timestamps";
     NSString *userDefaultsKey = @"NoSyncSaveWithTimestamps";
-    timestampsButton.state = [[NSUserDefaults standardUserDefaults] boolForKey:userDefaultsKey] ? NSControlStateValueOn : NSControlStateValueOff;
+    timestampsButton.state = [[iTermUserDefaults userDefaults] boolForKey:userDefaultsKey] ? NSControlStateValueOn : NSControlStateValueOff;
     [timestampsButton sizeToFit];
     [aSavePanel setAccessoryView:timestampsButton];
 
@@ -3660,7 +3699,7 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
             return;
         }
         const BOOL wantTimestamps = timestampsButton.state == NSControlStateValueOn;
-        [[NSUserDefaults standardUserDefaults] setBool:wantTimestamps forKey:userDefaultsKey];
+        [[iTermUserDefaults userDefaults] setBool:wantTimestamps forKey:userDefaultsKey];
         [[self dataToSaveWithTimestamps:wantTimestamps] writeToSaveItem:item completionHandler:^(NSError *error) {
             if (error) {
                 DLog(@"Beep: can't write to %@", item);
@@ -5487,6 +5526,10 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
     return [self.dataSource bidiInfoForLine:line];
 }
 
+- (BOOL)drawingHelperIsFirstLineOfBlock:(int)line {
+    return [self.dataSource isFirstLineOfBlock:line];
+}
+
 - (VT100GridAbsCoord)absCoordForButton:(iTermTerminalButton *)button API_AVAILABLE(macos(11)) {
     if (!button.mark) {
         NSInteger y = button.transientAbsY;
@@ -5521,7 +5564,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
 }
 
 // Does not include hover buttons.
-- (NSArray<iTermTerminalButton *> *)terminalButtons NS_AVAILABLE_MAC(11) {
+- (NSArray<iTermTerminalButton *> *)terminalButtons {
     NSMutableArray<iTermTerminalButton *> *updated = [NSMutableArray array];
     if (_hoverBlockFoldButton) {
         [updated addObject:_hoverBlockFoldButton];
@@ -5555,7 +5598,9 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
         NSInteger i = [_buttons indexOfObjectPassingTest:^BOOL(iTermTerminalButton * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
             return (obj.id == place.id);
         }];
-        if (i == NSNotFound || !VT100GridAbsCoordEquals([self absCoordForButton:_buttons[i]], place.coord)) {
+        if (i == NSNotFound ||
+            !VT100GridAbsCoordEquals([self absCoordForButton:_buttons[i]], place.coord) ||
+            ![_buttons[i] matchesMark:place.mark]) {
             if (place.mark.copyBlockID) {
                 iTermTerminalButton *button = [[[iTermTerminalCopyButton alloc] initWithID:place.id
                                                                                    blockID:place.mark.copyBlockID
@@ -5568,6 +5613,19 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
                     [weakSelf copyBlock:blockID
                                 absLine:-1
                        screenCoordinate:[weakSelf.window convertPointToScreen:locationInWindow]];
+                };
+                [updated addObject:button];
+            } else if (place.mark.code) {
+                iTermTerminalButton *button = [[[iTermTerminalCustomButton alloc] initWithID:place.id
+                                                                                        code:place.mark.code
+                                                                                        icon:place.mark.icon
+                                                                                        mark:place.mark
+                                                                                        absY:nil
+                                                                                       valid:place.mark.valid] autorelease];
+                const int code = place.mark.code;
+
+                button.action = ^(NSPoint locationInWindow) {
+                    [weakSelf.delegate textViewSendCustomButtonCode:code];
                 };
                 [updated addObject:button];
             } else if (place.mark.channelUID) {
@@ -5615,7 +5673,8 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
     const long long offset = self.dataSource.totalScrollbackOverflow;
     __weak __typeof(self) weakSelf = self;
     NSMutableArray<iTermTerminalButton *> *updated = [NSMutableArray array];
-    __block int x = width - 2;
+    // Start 3 cells from right edge to leave room for pill padding.
+    __block int x = width - 3;
 
     // Helper block to add a button, reusing cached instance if available.
     void (^addButtonForClass)(Class, void(^)(NSPoint, id)) = ^(Class buttonClass, void(^actionBlock)(NSPoint, id)){
@@ -5806,7 +5865,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
 }
 
 - (iTermTerminalMarkButton *)cachedTerminalButtonForMark:(id<VT100ScreenMarkReading>)mark
-                                                 ofClass:(Class)desiredClass NS_AVAILABLE_MAC(11) {
+                                                 ofClass:(Class)desiredClass {
     return [iTermTerminalMarkButton castFrom:[_buttons objectPassingTest:^BOOL(iTermTerminalButton *genericButton, NSUInteger index, BOOL *stop) {
         iTermTerminalMarkButton *button = [iTermTerminalMarkButton castFrom:genericButton];
         if (!button) {
@@ -5862,8 +5921,20 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
     DLog(@"updateHover location=%@ pressed=%@", NSStringFromPoint(locationInWindow), @(pressed));
     if (@available(macOS 11, *)) {
         BOOL changed = NO;
+        // Find which button the mouse is over (including pill container areas)
+        iTermTerminalButton *buttonUnderMouse = nil;
         for (iTermTerminalButton *button in self.terminalButtons) {
             if (NSPointInRect(point, button.desiredFrame)) {
+                buttonUnderMouse = button;
+                break;
+            }
+        }
+        if (!buttonUnderMouse) {
+            buttonUnderMouse = [self buttonInPillContainerAtPoint:point];
+        }
+
+        for (iTermTerminalButton *button in self.terminalButtons) {
+            if (button == buttonUnderMouse) {
                 DLog(@"mouse is over %@", button);
                 // Mouse over button
                 if (pressed) {
@@ -7110,6 +7181,7 @@ dragSemanticHistoryWithEvent:(NSEvent *)event
         return NO;
     }
     if (@available(macOS 11, *)) {
+        // First check direct button hits
         for (iTermTerminalButton *button in self.terminalButtons) {
             if (NSPointInRect(point, button.desiredFrame)) {
                 if ([button mouseDownInside]) {
@@ -7118,6 +7190,14 @@ dragSemanticHistoryWithEvent:(NSEvent *)event
                 return YES;
             }
             DLog(@"TextView handling mouseDown: not in %@ with frame %@", button.description, NSStringFromRect(button.desiredFrame));
+        }
+        // Check if click is within a pill container but between buttons
+        iTermTerminalButton *buttonInPill = [self buttonInPillContainerAtPoint:point];
+        if (buttonInPill) {
+            if ([buttonInPill mouseDownInside]) {
+                [self requestDelegateRedraw];
+            }
+            return YES;
         }
     }
     DLog(@"TextView handling mouseDown: not in anything");

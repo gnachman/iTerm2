@@ -71,9 +71,13 @@ class TerminalContentSnapshot: NSObject, iTermTextDataSource {
         return Date(timeIntervalSinceReferenceDate: timestamp)
     }
 
-    func commandMark(at coord: VT100GridCoord, 
+    func commandMark(at coord: VT100GridCoord,
                      mustHaveCommand: Bool,
                      range: UnsafeMutablePointer<VT100GridWindowedRange>?) -> VT100ScreenMarkReading? {
         return nil
+    }
+
+    func isFirstLine(ofBlock lineNumber: Int32) -> Bool {
+        return lineBuffer.isFirstLine(ofBlock: lineNumber, width: _width)
     }
 }

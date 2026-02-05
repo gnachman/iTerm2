@@ -7,13 +7,14 @@
 
 #import "iTermGlobalScopeController.h"
 
-#import "iTermObject.h"
-#import "iTermPreferences.h"
-#import "iTermVariableScope.h"
-#import "iTermVariableScope+Global.h"
 #import "NSAppearance+iTerm.h"
 #import "NSHost+iTerm.h"
 #import "NSUserDefaults+iTerm.h"
+#import "iTermObject.h"
+#import "iTermPreferences.h"
+#import "iTermUserDefaults.h"
+#import "iTermVariableScope+Global.h"
+#import "iTermVariableScope.h"
 
 static char iTermGlobalScopeControllerKVOContext;
 
@@ -74,7 +75,7 @@ NS_CLASS_AVAILABLE_MAC(10_14)
     self = [super init];
     if (self) {
         __weak __typeof(self) weakSelf = self;
-        [[NSUserDefaults standardUserDefaults] it_addObserverForKey:kPreferenceKeyTabStyle
+        [[iTermUserDefaults userDefaults] it_addObserverForKey:kPreferenceKeyTabStyle
                                                               block:^(id _Nonnull newValue) {
                                                                   [weakSelf themeDidChange];
                                                               }];

@@ -488,9 +488,9 @@ class LastPassUtils {
 
     static func showLoginUI() throws {
         let alert = ModalPasswordAlert("Please log in to LastPass")
-        alert.username = UserDefaults.standard.string(forKey: usernameUserDefaultsKey) ?? ""
+        alert.username = iTermUserDefaults.userDefaults().string(forKey: usernameUserDefaultsKey) ?? ""
         if let password = alert.run(window: nil), let username = alert.username {
-            UserDefaults.standard.set(alert.username, forKey: usernameUserDefaultsKey)
+            iTermUserDefaults.userDefaults().set(alert.username, forKey: usernameUserDefaultsKey)
             var request = CommandLinePasswordDataSource.InteractiveCommandRequest(command: pathToCLI,
                                                                                   args: ["login", "--color=never", username],
                                                                                   env: basicEnvironment)
@@ -516,7 +516,7 @@ class LastPassUtils {
 
     static func showNotLoggedInMessage() {
         let alert = NSAlert()
-        let email = UserDefaults.standard.string(forKey: usernameUserDefaultsKey) ?? "your@email.address"
+        let email = iTermUserDefaults.userDefaults().string(forKey: usernameUserDefaultsKey) ?? "your@email.address"
         alert.messageText = "Authentication Failed"
         alert.informativeText = "You can also try opening a terminal window and running `lpass login \(email)`."
         alert.addButton(withTitle: "Open Terminal Window")

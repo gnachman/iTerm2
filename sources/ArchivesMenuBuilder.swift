@@ -29,7 +29,7 @@ class ArchivesMenuBuilder: NSObject {
     }
 
     private func loadFromUserDefaults() {
-        let objects = UserDefaults.standard.object(forKey: userDefaultsKey)
+        let objects = iTermUserDefaults.userDefaults().object(forKey: userDefaultsKey)
         let paths = objects as? [String] ?? []
         items = paths.map {
             (menuItem(for: $0), $0)
@@ -66,7 +66,7 @@ class ArchivesMenuBuilder: NSObject {
         if paths.count > maxRecents {
             save(Array(paths.dropFirst(paths.count - maxRecents)))
         } else {
-            UserDefaults.standard.set(paths, forKey: userDefaultsKey)
+            iTermUserDefaults.userDefaults().set(paths, forKey: userDefaultsKey)
         }
     }
 

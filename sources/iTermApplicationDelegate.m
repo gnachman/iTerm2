@@ -30,13 +30,42 @@
 #import "AppearancePreferencesViewController.h"
 #import "ColorsMenuItemView.h"
 #import "FileTransferManager.h"
-#import "iTerm2SharedARC-Swift.h"
-#import "iTermAPIHelper.h"
 #import "ITAddressBookMgr.h"
+#import "MovePaneController.h"
+#import "NSAppearance+iTerm.h"
+#import "NSApplication+iTerm.h"
+#import "NSArray+iTerm.h"
+#import "NSBundle+iTerm.h"
+#import "NSData+GZIP.h"
+#import "NSFileManager+iTerm.h"
+#import "NSFont+iTerm.h"
+#import "NSObject+iTerm.h"
+#import "NSResponder+iTerm.h"
+#import "NSStringITerm.h"
+#import "NSUserDefaults+iTerm.h"
+#import "NSView+RecursiveDescription.h"
+#import "NSView+iTerm.h"
+#import "NSWindow+iTerm.h"
+#import "NSWorkspace+iTerm.h"
+#import "PTYSession.h"
+#import "PTYTab.h"
+#import "PTYTextView.h"
+#import "PTYWindow.h"
+#import "PreferencePanel.h"
+#import "PseudoTerminal.h"
+#import "PseudoTerminalRestorer.h"
+#import "QLPreviewPanel+iTerm.h"
+#import "TmuxControllerRegistry.h"
+#import "TmuxDashboardController.h"
+#import "ToastWindowController.h"
+#import "VT100Terminal.h"
+#import "iTerm2SharedARC-Swift.h"
 #import "iTermAPIConnectionIdentifierController.h"
+#import "iTermAPIHelper.h"
 #import "iTermAboutWindowController.h"
-#import "iTermAppHotKeyProvider.h"
 #import "iTermAdvancedSettingsModel.h"
+#import "iTermAdvancedSettingsModel.h"
+#import "iTermAppHotKeyProvider.h"
 #import "iTermBuiltInFunctions.h"
 #import "iTermBuriedSessions.h"
 #import "iTermColorPresets.h"
@@ -51,82 +80,53 @@
 #import "iTermHotKeyController.h"
 #import "iTermHotKeyProfileBindingController.h"
 #import "iTermIntegerNumberFormatter.h"
+#import "iTermLSOF.h"
 #import "iTermLaunchExperienceController.h"
 #import "iTermLaunchServices.h"
 #import "iTermLoggingHelper.h"
-#import "iTermLSOF.h"
 #import "iTermMenuBarObserver.h"
 #import "iTermMigrationHelper.h"
 #import "iTermModifierRemapper.h"
 #import "iTermNotificationController.h"
 #import "iTermOnboardingWindowController.h"
-#import "iTermPreferences.h"
-#import "iTermProfileModelJournal.h"
-#import "iTermPythonRuntimeDownloader.h"
-#import "iTermRestorableStateController.h"
-#import "iTermScriptHistory.h"
-#import "iTermScriptImporter.h"
-#import "iTermSessionFactory.h"
-#import "iTermAdvancedSettingsModel.h"
 #import "iTermOpenQuicklyWindowController.h"
 #import "iTermOrphanServerAdopter.h"
 #import "iTermPasswordManagerWindowController.h"
 #import "iTermPasteHelper.h"
 #import "iTermPreciseTimer.h"
 #import "iTermPreferences.h"
-#import "iTermProfilesMenuController.h"
-#import "iTermPromptOnCloseReason.h"
+#import "iTermPreferences.h"
+#import "iTermProfileModelJournal.h"
 #import "iTermProfilePreferences.h"
+#import "iTermProfilesMenuController.h"
 #import "iTermProfilesWindowController.h"
-#import "iTermRecordingCodec.h"
-#import "iTermScriptConsole.h"
-#import "iTermScriptFunctionCall.h"
-#import "iTermSecureKeyboardEntryController.h"
-#import "iTermServiceProvider.h"
-#import "iTermSessionLauncher.h"
+#import "iTermPromptOnCloseReason.h"
+#import "iTermPythonRuntimeDownloader.h"
 #import "iTermQuickLookController.h"
+#import "iTermRecordingCodec.h"
+#import "iTermRemotePreferences.h"
 #import "iTermRemotePreferences.h"
 #import "iTermRestorableSession.h"
-#import "iTermRemotePreferences.h"
+#import "iTermRestorableStateController.h"
+#import "iTermScriptConsole.h"
+#import "iTermScriptFunctionCall.h"
+#import "iTermScriptHistory.h"
+#import "iTermScriptImporter.h"
 #import "iTermScriptsMenuController.h"
+#import "iTermSecureKeyboardEntryController.h"
+#import "iTermServiceProvider.h"
+#import "iTermSessionFactory.h"
+#import "iTermSessionLauncher.h"
+#import "iTermSubpixelModelBuilder.h"
 #import "iTermSystemVersion.h"
 #import "iTermTipController.h"
 #import "iTermTipWindowController.h"
 #import "iTermToolbeltView.h"
-#import "iTermUntitledWindowStateMachine.h"
 #import "iTermURLStore.h"
+#import "iTermUntitledWindowStateMachine.h"
 #import "iTermUserDefaults.h"
 #import "iTermWarning.h"
 #import "iTermWebSocketCookieJar.h"
-#import "MovePaneController.h"
-#import "NSAppearance+iTerm.h"
-#import "NSApplication+iTerm.h"
-#import "NSArray+iTerm.h"
-#import "NSBundle+iTerm.h"
-#import "NSData+GZIP.h"
-#import "NSFileManager+iTerm.h"
-#import "NSFont+iTerm.h"
-#import "NSObject+iTerm.h"
-#import "NSResponder+iTerm.h"
-#import "NSStringITerm.h"
-#import "NSUserDefaults+iTerm.h"
-#import "NSWindow+iTerm.h"
-#import "NSWorkspace+iTerm.h"
-#import "NSView+iTerm.h"
-#import "NSView+RecursiveDescription.h"
-#import "PreferencePanel.h"
-#import "PseudoTerminal.h"
-#import "PseudoTerminalRestorer.h"
-#import "PTYSession.h"
-#import "PTYTab.h"
-#import "PTYTextView.h"
-#import "PTYWindow.h"
-#import "QLPreviewPanel+iTerm.h"
-#import "TmuxControllerRegistry.h"
-#import "TmuxDashboardController.h"
-#import "ToastWindowController.h"
-#import "VT100Terminal.h"
-#import "iTermSubpixelModelBuilder.h"
 #import <Quartz/Quartz.h>
 #import <objc/runtime.h>
 
@@ -612,7 +612,7 @@ static BOOL hasBecomeActive = NO;
 }
 
 - (NSString *)markAlertAction {
-    NSString *action = [[NSUserDefaults standardUserDefaults] objectForKey:kMarkAlertAction];
+    NSString *action = [[iTermUserDefaults userDefaults] objectForKey:kMarkAlertAction];
     if (!action) {
         return kMarkAlertActionPostNotification;
     } else {
@@ -629,7 +629,7 @@ static BOOL hasBecomeActive = NO;
 }
 
 - (BOOL)useBackgroundPatternIndicator {
-    return [[NSUserDefaults standardUserDefaults] boolForKey:kUseBackgroundPatternIndicatorKey];
+    return [[iTermUserDefaults userDefaults] boolForKey:kUseBackgroundPatternIndicatorKey];
 }
 
 - (NSMenu *)downloadsMenu {
@@ -984,7 +984,7 @@ static BOOL hasBecomeActive = NO;
     [iTermController releaseSharedInstance];
 
     // save preferences
-    [[NSUserDefaults standardUserDefaults] synchronize];
+    [[iTermUserDefaults userDefaults] synchronize];
     if (![[iTermRemotePreferences sharedInstance] customFolderChanged]) {
         [[iTermRemotePreferences sharedInstance] applicationWillTerminate];
     }
@@ -1171,7 +1171,7 @@ void TurnOnDebugLoggingAutomatically(void) {
       static NSString *const iTermDisableDebugLoggingNotificationName = @"iTermDisableDebugLoggingNotificationName";
         [[NSNotificationCenter defaultCenter] addObserverForName:iTermDisableDebugLoggingNotificationName object:nil queue:nil usingBlock:^(NSNotification * _Nonnull note) {
             TurnOffDebugLoggingSilently();
-            [[NSUserDefaults standardUserDefaults] setBool:NO forKey:@"StartDebugLoggingAutomatically"];
+            [[iTermUserDefaults userDefaults] setBool:NO forKey:@"StartDebugLoggingAutomatically"];
         }];
       [[iTermNotificationController sharedInstance] postNotificationWithTitle:@"Debug logging turned on"
                                                                        detail:@"You may notice worse performance while debug logging is on."
@@ -1195,7 +1195,7 @@ void TurnOnDebugLoggingAutomatically(void) {
     }
     [iTermMenuBarObserver sharedInstance];
     // Cleanly crash on uncaught exceptions, such as during actions.
-    [[NSUserDefaults standardUserDefaults] registerDefaults:@{ @"NSApplicationCrashOnExceptions": @YES }];
+    [[iTermUserDefaults userDefaults] registerDefaults:@{ @"NSApplicationCrashOnExceptions": @YES }];
 
     [iTermLaunchExperienceController applicationWillFinishLaunching];
     // Start automatic debug logging if it's enabled.
@@ -1231,14 +1231,14 @@ void TurnOnDebugLoggingAutomatically(void) {
 
     // Enable restoring windows to their original Spaces if needed.
     // This has to happen after -initializeUserDefaults and before this method returns.
-    const BOOL restoreWorkspace = ([[NSUserDefaults standardUserDefaults] boolForKey:@"NoSyncWindowRestoresWorkspaceAtLaunch"] ||
+    const BOOL restoreWorkspace = ([[iTermUserDefaults userDefaults] boolForKey:@"NoSyncWindowRestoresWorkspaceAtLaunch"] ||
                                    [iTermPreferences boolForKey:kPreferenceKeyRestoreWindowsToSameSpaces]);
     if (restoreWorkspace) {
         DLog(@"Set NSWindowRestoresWorkspaceAtLaunch=YES");
         // Based on https://chromium.googlesource.com/chromium/src/+/refs/heads/main/chrome/browser/chrome_browser_main_mac.mm#128:
         // Windows don't go back to their original workspaces, except on restart. When Sparkle
         // upgrades, treat it like a system restart.
-        [[NSUserDefaults standardUserDefaults] registerDefaults:@{ @"NSWindowRestoresWorkspaceAtLaunch": @YES }];
+        [[iTermUserDefaults userDefaults] registerDefaults:@{ @"NSWindowRestoresWorkspaceAtLaunch": @YES }];
     }
 
     // This sets up bonjour and migrates bookmarks if needed.
@@ -1312,13 +1312,13 @@ void TurnOnDebugLoggingAutomatically(void) {
 
 - (void)turnOffMetalCaptureEnabledIfNeeded {
     NSString *key = @"MetalCaptureEnabledDate";
-    NSNumber *n = [[NSUserDefaults standardUserDefaults] objectForKey:key];
+    NSNumber *n = [[iTermUserDefaults userDefaults] objectForKey:key];
     if (!n) {
         return;
     }
     if (n.doubleValue < [NSDate timeIntervalSinceReferenceDate]) {
-        [[NSUserDefaults standardUserDefaults] setBool:NO forKey:@"MetalCaptureEnabled"];
-        [[NSUserDefaults standardUserDefaults] removeObjectForKey:key];
+        [[iTermUserDefaults userDefaults] setBool:NO forKey:@"MetalCaptureEnabled"];
+        [[iTermUserDefaults userDefaults] removeObjectForKey:key];
     }
 }
 
@@ -2978,21 +2978,21 @@ static iTermKeyEventReplayer *gReplayer;
 - (IBAction)toggleUseBackgroundPatternIndicator:(id)sender {
     BOOL value = [self useBackgroundPatternIndicator];
     value = !value;
-    [[NSUserDefaults standardUserDefaults] setBool:value forKey:kUseBackgroundPatternIndicatorKey];
+    [[iTermUserDefaults userDefaults] setBool:value forKey:kUseBackgroundPatternIndicatorKey];
     [[NSNotificationCenter defaultCenter] postNotificationName:kUseBackgroundPatternIndicatorChangedNotification
                                                         object:nil];
 }
 
 - (IBAction)enableMarkAlertShowsModalAlert:(id)sender {
-    [[NSUserDefaults standardUserDefaults] setObject:kMarkAlertActionModalAlert forKey:kMarkAlertAction];
+    [[iTermUserDefaults userDefaults] setObject:kMarkAlertActionModalAlert forKey:kMarkAlertAction];
 }
 
 - (IBAction)enableMarkAlertPostsNotification:(id)sender {
-    [[NSUserDefaults standardUserDefaults] setObject:kMarkAlertActionPostNotification forKey:kMarkAlertAction];
+    [[iTermUserDefaults userDefaults] setObject:kMarkAlertActionPostNotification forKey:kMarkAlertAction];
 }
 
 - (IBAction)enableMarkAlertRingsBell:(id)sender {
-    [[NSUserDefaults standardUserDefaults] setObject:kMarkAlertActionRingBell
+    [[iTermUserDefaults userDefaults] setObject:kMarkAlertActionRingBell
                                               forKey:kMarkAlertAction];
 }
 
@@ -3123,7 +3123,7 @@ static iTermKeyEventReplayer *gReplayer;
               defaultBytes:(int)defaultBytes
                   delayKey:(NSString *)delayKey
               defaultDelay:(float)defaultDelay {
-    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+    NSUserDefaults *defaults = [iTermUserDefaults userDefaults];
     int bytes = [defaults integerForKey:bytesKey];
     if (!bytes) {
         bytes = defaultBytes;

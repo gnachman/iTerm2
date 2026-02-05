@@ -197,6 +197,7 @@
 #define KEY_TRANSPARENCY_AFFECTS_ONLY_DEFAULT_BACKGROUND_COLOR @"Only The Default BG Color Uses Transparency"
 #define KEY_OPEN_TOOLBELT                     @"Open Toolbelt"
 #define KEY_HIDE_AFTER_OPENING                @"Hide After Opening"
+#define KEY_LOCK_WINDOW_SIZE_AUTOMATICALLY    @"Lock Window Size Automatically"
 #define KEY_SYNC_TITLE_DEPRECATED             @"Sync Title"  // DEPRECATED
 #define KEY_SESSION_END_ACTION                @"Close Sessions On End"  // iTermSessionEndAction
 #define KEY_TREAT_NON_ASCII_AS_DOUBLE_WIDTH   @"Non Ascii Double Width"  // DEPRECATED
@@ -258,6 +259,7 @@ extern NSString *const iTermProgressBarColorSchemeOrange;
 #define KEY_PLACE_PROMPT_AT_FIRST_COLUMN      @"Place Prompt at First Column"
 #define KEY_SHOW_MARK_INDICATORS              @"Show Mark Indicators"
 #define KEY_SHOW_OFFSCREEN_COMMANDLINE        @"Show Offscreen Command line"
+#define KEY_SHOW_OFFSCREEN_COMMANDLINE_FOR_CURRENT_COMMAND @"Show Offscreen Command line for Current Command"
 #define KEY_TMUX_NEWLINE                      @"Tmux Newline"
 #define KEY_PROMPT_PATH_CLICK_OPENS_NAVIGATOR @"Prompt Path Click Opens Navigator"
 // Session

@@ -5,8 +5,9 @@
 //  Created by George Nachman on 9/19/18.
 //
 
-#import "NSUserDefaults+iTerm.h"
 #import "NSDictionary+iTerm.h"
+#import "NSUserDefaults+iTerm.h"
+#import "iTermUserDefaults.h"
 
 static char iTermUserDefaultsKVOKey;
 typedef void (^iTermUserDefaultsBlock)(id);
@@ -25,7 +26,7 @@ static NSMutableDictionary<NSString *, NSMutableArray<iTermUserDefaultsBlock> *>
 - (void)it_addObserverForKey:(NSString *)key
                        block:(void (^)(id newValue))block {
     [iTermUserDefaultsObserverBlocks() it_addObject:block toMutableArrayForKey:key];
-    [[NSUserDefaults standardUserDefaults] addObserver:self
+    [[iTermUserDefaults userDefaults] addObserver:self
                                             forKeyPath:key
                                                options:NSKeyValueObservingOptionNew
                                                context:(void *)&iTermUserDefaultsKVOKey];

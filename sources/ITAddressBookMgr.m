@@ -28,6 +28,11 @@
 #import "ITAddressBookMgr.h"
 
 #import "DebugLogging.h"
+#import "NSColor+iTerm.h"
+#import "NSDictionary+iTerm.h"
+#import "NSFont+iTerm.h"
+#import "PreferencePanel.h"
+#import "ProfileModel.h"
 #import "iTerm2SharedARC-Swift.h"
 #import "iTermDynamicProfileManager.h"
 #import "iTermExpressionEvaluator.h"
@@ -37,13 +42,9 @@
 #import "iTermKeyMappings.h"
 #import "iTermMigrationHelper.h"
 #import "iTermPreferences.h"
-#import "iTermProfilesMenuController.h"
 #import "iTermProfilePreferences.h"
-#import "PreferencePanel.h"
-#import "ProfileModel.h"
-#import "NSColor+iTerm.h"
-#import "NSDictionary+iTerm.h"
-#import "NSFont+iTerm.h"
+#import "iTermProfilesMenuController.h"
+#import "iTermUserDefaults.h"
 #include <arpa/inet.h>
 
 NSString *const iTermUnicodeVersionDidChangeNotification = @"iTermUnicodeVersionDidChangeNotification";
@@ -198,7 +199,7 @@ iTermPercentage iTermPercentageFromProfile(Profile *profile) {
 - (instancetype)init {
     self = [super init];
     if (self) {
-        NSUserDefaults* prefs = [NSUserDefaults standardUserDefaults];
+        NSUserDefaults* prefs = [iTermUserDefaults userDefaults];
         _dynamicProfileManager = [iTermDynamicProfileManager sharedInstance];
         if ([prefs objectForKey:KEY_DEPRECATED_BOOKMARKS] &&
             [[prefs objectForKey:KEY_DEPRECATED_BOOKMARKS] isKindOfClass:[NSDictionary class]] &&
@@ -380,7 +381,7 @@ iTermPercentage iTermPercentageFromProfile(Profile *profile) {
 }
 
 - (BOOL)verbose {
-    return [[NSUserDefaults standardUserDefaults] boolForKey:@"iTermDebugBonjour"];
+    return [[iTermUserDefaults userDefaults] boolForKey:@"iTermDebugBonjour"];
 }
 
 // NSNetServiceBrowser delegate methods

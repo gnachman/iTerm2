@@ -106,7 +106,7 @@ extension MultiCursorTextView {
     }
 
     private var caretOnTime: TimeInterval {
-        let ud = UserDefaults.standard.double(forKey: "NSTextInsertionPointBlinkPeriodOn")
+        let ud = iTermUserDefaults.userDefaults().double(forKey: "NSTextInsertionPointBlinkPeriodOn")
         if ud == 0 {
             return 0.56
         }
@@ -114,7 +114,7 @@ extension MultiCursorTextView {
     }
 
     private var caretOffTime: TimeInterval {
-        let ud = UserDefaults.standard.double(forKey: "NSTextInsertionPointBlinkPeriodOff")
+        let ud = iTermUserDefaults.userDefaults().double(forKey: "NSTextInsertionPointBlinkPeriodOff")
         if ud == 0 {
             return 0.56
         }

@@ -11,6 +11,7 @@
 #import "DebugLogging.h"
 #import "ITAddressBookMgr.h"
 #import "NSWorkspace+iTerm.h"
+#import "iTermUserDefaults.h"
 
 static NSString *const kUrlHandlersUserDefaultsKey = @"URLHandlersByGuid";
 static NSString *const kOldStyleUrlHandlersUserDefaultsKey = @"URLHandlers";
@@ -35,7 +36,7 @@ static NSString *const kOldStyleUrlHandlersUserDefaultsKey = @"URLHandlers";
 - (instancetype)init {
     self = [super init];
     if (self) {
-        NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
+        NSUserDefaults *userDefaults = [iTermUserDefaults userDefaults];
         ProfileModel *profileModel = [ProfileModel sharedInstance];
 
         // read in the handlers by converting the index back to bookmarks
@@ -120,7 +121,7 @@ static NSString *const kOldStyleUrlHandlersUserDefaultsKey = @"URLHandlers";
 }
 
 - (void)updateUserDefaults {
-    [[NSUserDefaults standardUserDefaults] setObject:_urlHandlersByGuid
+    [[iTermUserDefaults userDefaults] setObject:_urlHandlersByGuid
                                               forKey:kUrlHandlersUserDefaultsKey];
 }
 

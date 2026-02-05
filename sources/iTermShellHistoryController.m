@@ -9,21 +9,22 @@
 #import "iTermShellHistoryController.h"
 
 #import "DebugLogging.h"
-#import "iTermCommandHistoryEntryMO+Additions.h"
-#import "iTermDirectoryTree.h"
-#import "iTermHostRecordMO.h"
-#import "iTermHostRecordMO+Additions.h"
-#import "iTermPreferences.h"
-#import "iTermRecentDirectoryMO.h"
-#import "iTermRecentDirectoryMO+Additions.h"
 #import "NSArray+iTerm.h"
 #import "NSDictionary+iTerm.h"
 #import "NSStringITerm.h"
 #import "NSWorkspace+iTerm.h"
-#import "iTermCommandHistoryEntryMO.h"
 #import "PreferencePanel.h"
 #import "VT100RemoteHost.h"
 #import "VT100ScreenMark.h"
+#import "iTermCommandHistoryEntryMO+Additions.h"
+#import "iTermCommandHistoryEntryMO.h"
+#import "iTermDirectoryTree.h"
+#import "iTermHostRecordMO+Additions.h"
+#import "iTermHostRecordMO.h"
+#import "iTermPreferences.h"
+#import "iTermRecentDirectoryMO+Additions.h"
+#import "iTermRecentDirectoryMO.h"
+#import "iTermUserDefaults.h"
 #include <sys/stat.h>
 
 NSString *const kCommandHistoryDidChangeNotificationName = @"kCommandHistoryDidChangeNotificationName";
@@ -464,7 +465,7 @@ static NSString *iTermShellIntegrationRemoteHostKey(id<VT100RemoteHostReading> s
        inDirectory:(NSString *)directory
           withMark:(id<VT100ScreenMarkReading>)mark {
     DLog(@"addCommand:%@ onHost:%@ inDirectory:%@ withMark:%@", command, host, directory, mark);
-    [[NSUserDefaults standardUserDefaults] setBool:YES forKey:kCommandHistoryHasEverBeenUsed];
+    [[iTermUserDefaults userDefaults] setBool:YES forKey:kCommandHistoryHasEverBeenUsed];
 
     iTermHostRecordMO *hostRecord = [self recordForHost:host];
     if (!hostRecord) {
@@ -525,7 +526,7 @@ static NSString *iTermShellIntegrationRemoteHostKey(id<VT100RemoteHostReading> s
 
 - (BOOL)commandHistoryHasEverBeenUsed {
     return (_records.count > 0 ||
-            [[NSUserDefaults standardUserDefaults] boolForKey:kCommandHistoryHasEverBeenUsed]);
+            [[iTermUserDefaults userDefaults] boolForKey:kCommandHistoryHasEverBeenUsed]);
 }
 
 - (NSArray<iTermCommandHistoryEntryMO *> *)commandHistoryEntriesWithPrefix:(NSString *)partialCommand

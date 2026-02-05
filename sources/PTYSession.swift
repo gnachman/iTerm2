@@ -505,7 +505,6 @@ extension PTYSession {
             "The contents of the shell prompt could not be provided because it appears the session is not currently at a prompt.")
             return
         }
-        #warning("TODO: Test this")
         try completion(currentCommandUpToCursor, "Current command provided to AI.")
 
     }
@@ -1213,6 +1212,7 @@ extension PTYSession {
             KEY_PLACE_PROMPT_AT_FIRST_COLUMN: nullValue,
             KEY_SHOW_MARK_INDICATORS: nullValue,
             KEY_SHOW_OFFSCREEN_COMMANDLINE: nullValue,
+            KEY_SHOW_OFFSCREEN_COMMANDLINE_FOR_CURRENT_COMMAND: nullValue,
             KEY_TMUX_NEWLINE: nullValue,
             KEY_PROMPT_PATH_CLICK_OPENS_NAVIGATOR: nullValue,
             KEY_AUTOLOG: nullValue,

@@ -412,5 +412,9 @@ extension TextClipDrawing: iTermTextDrawingHelperDelegate {
         padding.pointee = Self.padding
         return true
     }
+
+    func drawingHelperIsFirstLine(ofBlock line: Int32) -> Bool {
+        return false
+    }
 }
 

@@ -78,7 +78,7 @@ class UserDefaultsUnsavedController: NSTitlebarAccessoryViewController {
     private static let hideKey = "NoSyncHideUnsavedSettingsNotification"
 
     @objc static var allowed: Bool {
-        return !UserDefaults.standard.bool(forKey: hideKey)
+        return !iTermUserDefaults.userDefaults().bool(forKey: hideKey)
     }
 
     init() {
@@ -153,7 +153,7 @@ class UserDefaultsUnsavedController: NSTitlebarAccessoryViewController {
     }
 
     private func disableRemotePrefs() {
-        UserDefaults.standard.set(false, forKey: kPreferenceKeyLoadPrefsFromCustomFolder)
+        iTermUserDefaults.userDefaults().set(false, forKey: kPreferenceKeyLoadPrefsFromCustomFolder)
     }
 
     private func save() {
@@ -163,9 +163,9 @@ class UserDefaultsUnsavedController: NSTitlebarAccessoryViewController {
 
     private func enableAutosave() {
         save()
-        UserDefaults.standard.setValue(true, 
+        iTermUserDefaults.userDefaults().setValue(true, 
                                        forKey: kPreferenceKeyNeverRemindPrefsChangesLostForFileHaveSelection)
-        UserDefaults.standard.setValue(iTermPreferenceSavePrefsMode.always.rawValue,
+        iTermUserDefaults.userDefaults().setValue(iTermPreferenceSavePrefsMode.always.rawValue,
                                        forKey: kPreferenceKeyNeverRemindPrefsChangesLostForFileSelection)
         NotificationCenter.default.post(name: NSNotification.Name(rawValue: kPreferenceDidChangeFromOtherPanel),
                                         object: nil,
@@ -173,7 +173,7 @@ class UserDefaultsUnsavedController: NSTitlebarAccessoryViewController {
     }
 
     private func hideNotification() {
-        UserDefaults.standard.setValue(true, forKey: Self.hideKey)
+        iTermUserDefaults.userDefaults().setValue(true, forKey: Self.hideKey)
         if let window = view.window,
            window.styleMask.contains(.titled),
            let i = window.titlebarAccessoryViewControllers.firstIndex(of: self) {

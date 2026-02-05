@@ -814,6 +814,10 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
     return _configuration->_buttonsBackgroundRects;
 }
 
+- (NSArray<iTermButtonPillInfo *> *)buttonPillInfos NS_AVAILABLE_MAC(11) {
+    return _configuration->_buttonPillInfos;
+}
+
 - (BOOL)shouldDrawCursorGuideBelowText {
     return !_configuration->_useNativePowerlineGlyphs || _configuration->_cursorGuideColor.alphaComponent > iTermCursorGuideAlphaThreshold;
 }

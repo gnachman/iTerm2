@@ -10,6 +10,7 @@
 
 #import "NSArray+iTerm.h"
 #import "NSDictionary+iTerm.h"
+#import "iTermUserDefaults.h"
 
 const int kMaxInputBufferSize = 1024;
 const int kMaxOutputBufferSize = 1024;
@@ -45,7 +46,7 @@ static NSString *const iTermCoprocessCommandsToIgnoreErrorOutputPrefsKey = @"NoS
     if (!command) {
         return;
     }
-    NSArray *oldMru = [[NSUserDefaults standardUserDefaults] stringArrayForKey:kCoprocessMruKey];
+    NSArray *oldMru = [[iTermUserDefaults userDefaults] stringArrayForKey:kCoprocessMruKey];
     NSMutableArray *newMru;
     if (oldMru) {
         newMru = [oldMru mutableCopy];
@@ -58,11 +59,11 @@ static NSString *const iTermCoprocessCommandsToIgnoreErrorOutputPrefsKey = @"NoS
     while (newMru.count > kMaxMru) {
         [newMru removeLastObject];
     }
-    [[NSUserDefaults standardUserDefaults] setObject:newMru forKey:kCoprocessMruKey];
+    [[iTermUserDefaults userDefaults] setObject:newMru forKey:kCoprocessMruKey];
 }
 
 + (NSArray *)mostRecentlyUsedCommands {
-    return [[NSUserDefaults standardUserDefaults] stringArrayForKey:kCoprocessMruKey];
+    return [[iTermUserDefaults userDefaults] stringArrayForKey:kCoprocessMruKey];
 }
 
 + (Coprocess *)launchedCoprocessWithCommand:(NSString *)command
@@ -164,21 +165,21 @@ static NSString *const iTermCoprocessCommandsToIgnoreErrorOutputPrefsKey = @"NoS
 }
 
 + (void)setSilentlyIgnoreErrors:(BOOL)shouldIgnore fromCommand:(NSString *)command {
-    NSArray *array = [[NSUserDefaults standardUserDefaults] objectForKey:iTermCoprocessCommandsToIgnoreErrorOutputPrefsKey] ?: @[];
+    NSArray *array = [[iTermUserDefaults userDefaults] objectForKey:iTermCoprocessCommandsToIgnoreErrorOutputPrefsKey] ?: @[];
     if (shouldIgnore) {
         array = [array arrayByAddingObject:command];
         array = [[NSSet setWithArray:array] allObjects];
     } else {
         array = [array arrayByRemovingObject:command];
     }
-    [[NSUserDefaults standardUserDefaults] setObject:array forKey:iTermCoprocessCommandsToIgnoreErrorOutputPrefsKey];
+    [[iTermUserDefaults userDefaults] setObject:array forKey:iTermCoprocessCommandsToIgnoreErrorOutputPrefsKey];
 }
 
 + (BOOL)shouldIgnoreErrorsFromCommand:(NSString *)command {
     if (!command) {
         return YES;
     }
-    return ([[[NSUserDefaults standardUserDefaults] objectForKey:iTermCoprocessCommandsToIgnoreErrorOutputPrefsKey] containsObject:command]);
+    return ([[[iTermUserDefaults userDefaults] objectForKey:iTermCoprocessCommandsToIgnoreErrorOutputPrefsKey] containsObject:command]);
 }
 
 - (instancetype)init {

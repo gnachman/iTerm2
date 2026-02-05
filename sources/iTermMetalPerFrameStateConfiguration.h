@@ -14,6 +14,7 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
+@class iTermButtonPillInfo;
 @class iTermColorMap;
 @class iTermFontTable;
 @protocol iTermMetalPerFrameStateDelegate;
@@ -97,9 +98,10 @@ NS_ASSUME_NONNULL_BEGIN
     BOOL _blinkingItemsVisible;
     PTYFontInfo *_timestampFontInfo;
     NSTimeInterval _timestampBaseline;
-    NSArray<iTermTerminalButton *> *_terminalButtons NS_AVAILABLE_MAC(11);
+    NSArray<iTermTerminalButton *> *_terminalButtons;
     long long _totalScrollbackOverflow;
     iTermRectArray *_buttonsBackgroundRects;
+    NSArray<iTermButtonPillInfo *> *_buttonPillInfos;
     BOOL _softAlternateScreenMode;
 
     // Offscreen command line

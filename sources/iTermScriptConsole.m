@@ -149,6 +149,13 @@ typedef NS_ENUM(NSInteger, iTermScriptFilterControlTag) {
     [self makeTextViewHorizontallyScrollable:_callsView];
 }
 
+- (void)windowWillClose:(NSNotification *)notification {
+    [self removeObserver];
+    _logsView.string = @"";
+    _callsView.string = @"";
+    [_tableView deselectAll:nil];
+}
+
 - (void)dealloc {
     [[NSNotificationCenter defaultCenter] removeObserver:self];
     [self removeObserver];

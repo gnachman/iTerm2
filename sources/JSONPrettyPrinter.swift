@@ -23,7 +23,7 @@ class JSONPrettyPrinter: NSObject {
         if string.count < 200 || string.count > 100_000 {
             return
         }
-        if UserDefaults.standard.bool(forKey: userDefaultsKey) {
+        if iTermUserDefaults.userDefaults().bool(forKey: userDefaultsKey) {
             return
         }
         if string.prefix(20).range(of: "^ *[\\[{]", options: [.regularExpression]) == nil {
@@ -51,7 +51,7 @@ class JSONPrettyPrinter: NSObject {
                     if actualNumberOfLines > desiredNumberOfLines / 4 {
                         return
                     }
-                    UserDefaults.standard.set(true, forKey: userDefaultsKey)
+                    iTermUserDefaults.userDefaults().set(true, forKey: userDefaultsKey)
                     callback()
                 }
             }

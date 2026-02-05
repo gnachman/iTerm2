@@ -2,11 +2,12 @@
 
 #import "DebugLogging.h"
 #import "ITAddressBookMgr.h"
-#import "iTermProfilePreferences.h"
 #import "NSArray+iTerm.h"
 #import "NSColor+iTerm.h"
 #import "NSDictionary+iTerm.h"
 #import "NSStringITerm.h"
+#import "iTermProfilePreferences.h"
+#import "iTermUserDefaults.h"
 
 NSString *const kCustomColorPresetsKey = @"Custom Color Presets";
 NSString *const kRebuildColorPresetsMenuNotification = @"kRebuildColorPresetsMenuNotification";
@@ -14,7 +15,7 @@ NSString *const kRebuildColorPresetsMenuNotification = @"kRebuildColorPresetsMen
 @implementation iTermColorPresets
 
 + (iTermColorPresetDictionary *)customColorPresets {
-    return [[NSUserDefaults standardUserDefaults] objectForKey:kCustomColorPresetsKey];
+    return [[iTermUserDefaults userDefaults] objectForKey:kCustomColorPresetsKey];
 }
 
 + (iTermColorPresetDictionary *)builtInColorPresets {
@@ -64,7 +65,7 @@ NSString *const kRebuildColorPresetsMenuNotification = @"kRebuildColorPresetsMen
     NSDictionary* customPresets = [iTermColorPresets customColorPresets];
     NSMutableDictionary* newCustom = [NSMutableDictionary dictionaryWithDictionary:customPresets];
     [newCustom removeObjectForKey:name];
-    [[NSUserDefaults standardUserDefaults] setObject:newCustom
+    [[iTermUserDefaults userDefaults] setObject:newCustom
                                               forKey:kCustomColorPresetsKey];
     [[NSNotificationCenter defaultCenter] postNotificationName:kRebuildColorPresetsMenuNotification
                                                         object:nil];
@@ -88,7 +89,7 @@ NSString *const kRebuildColorPresetsMenuNotification = @"kRebuildColorPresetsMen
 }
 
 + (NSString *)nameOfPresetsEqualTo:(NSDictionary *)dict {
-    NSDictionary *presets = [[NSUserDefaults standardUserDefaults] objectForKey:kCustomColorPresetsKey];
+    NSDictionary *presets = [[iTermUserDefaults userDefaults] objectForKey:kCustomColorPresetsKey];
     for (NSString *name in presets) {
         if ([presets[name] isEqualTo:dict]) {
             return name;
@@ -99,7 +100,7 @@ NSString *const kRebuildColorPresetsMenuNotification = @"kRebuildColorPresetsMen
 
 + (void)addColorPreset:(NSString *)presetName withColors:(NSDictionary *)theDict {
     DLog(@"Add color preset with name %@ and dictionary %@", presetName, theDict);
-    NSDictionary *presets = [[NSUserDefaults standardUserDefaults] objectForKey:kCustomColorPresetsKey];
+    NSDictionary *presets = [[iTermUserDefaults userDefaults] objectForKey:kCustomColorPresetsKey];
     NSMutableDictionary* customPresets = [NSMutableDictionary dictionaryWithDictionary:presets];
     if (!customPresets) {
         customPresets = [NSMutableDictionary dictionaryWithCapacity:1];
@@ -111,7 +112,7 @@ NSString *const kRebuildColorPresetsMenuNotification = @"kRebuildColorPresetsMen
         temp = [NSString stringWithFormat:@"%@ (%d)", presetName, i];
     }
     [customPresets setObject:theDict forKey:temp];
-    [[NSUserDefaults standardUserDefaults] setObject:customPresets forKey:kCustomColorPresetsKey];
+    [[iTermUserDefaults userDefaults] setObject:customPresets forKey:kCustomColorPresetsKey];
 
     [[NSNotificationCenter defaultCenter] postNotificationName:kRebuildColorPresetsMenuNotification
                                                         object:nil];

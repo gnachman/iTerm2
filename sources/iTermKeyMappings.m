@@ -9,12 +9,13 @@
 
 #import "DebugLogging.h"
 #import "ITAddressBookMgr.h"
+#import "NSArray+iTerm.h"
+#import "ProfileModel.h"
 #import "iTermKeyBindingAction.h"
 #import "iTermKeystroke.h"
 #import "iTermPresetKeyMappings.h"
+#import "iTermUserDefaults.h"
 #import "iTermUserDefaultsObserver.h"
-#import "NSArray+iTerm.h"
-#import "ProfileModel.h"
 
 NSString *const kKeyBindingsChangedNotification = @"kKeyBindingsChangedNotification";
 static NSInteger iTermKeyMappingsNotificationSupressionCount = 0;
@@ -90,7 +91,7 @@ NSString *const iTermKeyMappingsLeaderDidChange = @"iTermKeyMappingsLeaderDidCha
 }
 
 + (iTermKeystroke *)leader {
-    NSString *string = [[NSUserDefaults standardUserDefaults] objectForKey:@"Leader"];
+    NSString *string = [[iTermUserDefaults userDefaults] objectForKey:@"Leader"];
     if (!string) {
         return nil;
     }
@@ -99,9 +100,9 @@ NSString *const iTermKeyMappingsLeaderDidChange = @"iTermKeyMappingsLeaderDidCha
 
 + (void)setLeader:(iTermKeystroke *)keystroke {
     if (!keystroke) {
-        [[NSUserDefaults standardUserDefaults] removeObjectForKey:@"Leader"];
+        [[iTermUserDefaults userDefaults] removeObjectForKey:@"Leader"];
     } else {
-        [[NSUserDefaults standardUserDefaults] setObject:[keystroke serialized] forKey:@"Leader"];
+        [[iTermUserDefaults userDefaults] setObject:[keystroke serialized] forKey:@"Leader"];
     }
     [[NSNotificationCenter defaultCenter] postNotificationName:iTermKeyMappingsLeaderDidChange object:nil];
 }
@@ -186,7 +187,7 @@ NSString *const iTermKeyMappingsLeaderDidChange = @"iTermKeyMappingsLeaderDidCha
 #pragma mark - Mutation
 
 + (void)removeAllGlobalKeyMappings {
-    [[NSUserDefaults standardUserDefaults] setObject:@{} forKey:@"GlobalKeyMap"];
+    [[iTermUserDefaults userDefaults] setObject:@{} forKey:@"GlobalKeyMap"];
 }
 
 + (void)setMappingAtIndex:(int)rowIndex
@@ -272,14 +273,14 @@ NSString *const iTermKeyMappingsLeaderDidChange = @"iTermKeyMappingsLeaderDidCha
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
         NSString *const key = @"GlobalKeyMap";
-        gGlobalKeyMapping = [[NSUserDefaults standardUserDefaults] objectForKey:key];
+        gGlobalKeyMapping = [[iTermUserDefaults userDefaults] objectForKey:key];
         if (!gGlobalKeyMapping) {
             gGlobalKeyMapping = [iTermPresetKeyMappings defaultGlobalKeyMap];
         }
         static iTermUserDefaultsObserver *observer;
         observer = [[iTermUserDefaultsObserver alloc] init];
         [observer observeKey:key block:^{
-            gGlobalKeyMapping = [[NSUserDefaults standardUserDefaults] objectForKey:key] ?: [iTermPresetKeyMappings defaultGlobalKeyMap];
+            gGlobalKeyMapping = [[iTermUserDefaults userDefaults] objectForKey:key] ?: [iTermPresetKeyMappings defaultGlobalKeyMap];
             if (iTermKeyMappingsNotificationSupressionCount == 0) {
                 [[NSNotificationCenter defaultCenter] postNotificationName:kKeyBindingsChangedNotification
                                                                     object:nil
@@ -296,7 +297,7 @@ NSString *const iTermKeyMappingsLeaderDidChange = @"iTermKeyMappingsLeaderDidCha
 }
 
 + (void)setGlobalKeyMap:(NSDictionary *)src {
-    [[NSUserDefaults standardUserDefaults] setObject:src forKey:@"GlobalKeyMap"];
+    [[iTermUserDefaults userDefaults] setObject:src forKey:@"GlobalKeyMap"];
     assert([self.globalKeyMap isEqual:src]);
 }
 

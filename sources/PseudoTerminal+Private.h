@@ -46,6 +46,7 @@ extern NSString *const TERMINAL_ARRANGEMENT_TITLE_OVERRIDE;
 extern NSString *const TERMINAL_ARRANGEMENT_TOOLBELT;
 extern NSString *const TERMINAL_ARRANGEMENT_SCROLLER_WIDTH;
 extern NSString *const TERMINAL_ARRANGEMENT_MINIATURIZED;
+extern NSString *const TERMINAL_ARRANGEMENT_SIZE_LOCKED;
 
 @interface PseudoTerminal() {
     // Is this a full screen window?
@@ -106,6 +107,9 @@ extern NSString *const TERMINAL_ARRANGEMENT_MINIATURIZED;
     BOOL _settingStyleMask;
     iTermTitlebarAccessoryNanny *_titlebarAccessoryNanny;
     iTermWindowInitialPositioner *_windowPositioner;
+
+    // When YES, the window cannot be resized by the user.
+    BOOL _sizeLocked;
 }
 
 @property (nonatomic, retain) NSCustomTouchBarItem *tabsTouchBarItem;

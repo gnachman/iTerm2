@@ -6,15 +6,16 @@
 //
 //
 
-#import "iTermSavePanel.h"
 #import "DebugLogging.h"
-#import "iTerm2SharedARC-Swift.h"
-#import "iTermSavePanelFileFormatAccessory.h"
-#import "iTermWarning.h"
-#import "NSStringITerm.h"
 #import "NSArray+iTerm.h"
 #import "NSFileManager+iTerm.h"
 #import "NSObject+iTerm.h"
+#import "NSStringITerm.h"
+#import "iTerm2SharedARC-Swift.h"
+#import "iTermSavePanel.h"
+#import "iTermSavePanelFileFormatAccessory.h"
+#import "iTermUserDefaults.h"
+#import "iTermWarning.h"
 #import <UniformTypeIdentifiers/UniformTypeIdentifiers.h>
 
 static NSString *const kInitialDirectoryKey = @"Initial Directory";
@@ -77,7 +78,7 @@ static NSString *const iTermSavePanelLoggingStyleUserDefaultsKey = @"NoSyncLoggi
                                  allowedFileTypes:(NSArray<NSString *> *)allowedFileTypes
                                          delegate:(iTermSavePanel *)delegate {
     NSString *key = [self keyForIdentifier:identifier];
-    NSDictionary *savedSettings = [[NSUserDefaults standardUserDefaults] objectForKey:key];
+    NSDictionary *savedSettings = [[iTermUserDefaults userDefaults] objectForKey:key];
     if (savedSettings) {
         initialDirectory = savedSettings[kInitialDirectoryKey] ?: initialDirectory;
     }
@@ -127,7 +128,7 @@ static NSString *const iTermSavePanelLoggingStyleUserDefaultsKey = @"NoSyncLoggi
             [button.menu addItem:item];
         }
 
-        [button selectItemWithTag:[[NSUserDefaults standardUserDefaults] integerForKey:iTermSavePanelLoggingStyleUserDefaultsKey]];
+        [button selectItemWithTag:[[iTermUserDefaults userDefaults] integerForKey:iTermSavePanelLoggingStyleUserDefaultsKey]];
         [button sizeToFit];
 
         NSView *container = [[NSView alloc] init];
@@ -220,13 +221,13 @@ static NSString *const iTermSavePanelLoggingStyleUserDefaultsKey = @"NoSyncLoggi
         NSString *key = [iTermSavePanel keyForIdentifier:self.identifier];
         NSDictionary *settings =
             @{ kInitialDirectoryKey: [savePanel.item.filename stringByDeletingLastPathComponent] };
-        [[NSUserDefaults standardUserDefaults] setObject:settings forKey:key];
+        [[iTermUserDefaults userDefaults] setObject:settings forKey:key];
     }
     if (self) {
         self->_loggingStyle = (iTermLoggingStyle)self.accessoryButton.selectedTag;
     }
     if (self.item) {
-        [[NSUserDefaults standardUserDefaults] setInteger:self.accessoryButton.selectedTag
+        [[iTermUserDefaults userDefaults] setInteger:self.accessoryButton.selectedTag
                                                    forKey:iTermSavePanelLoggingStyleUserDefaultsKey];
     }
 

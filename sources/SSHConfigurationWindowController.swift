@@ -221,7 +221,7 @@ class SSHConfigurationWindowController: NSWindowController {
 
             // Use the last directory if available; default to /usr/bin.
             let key = "NoSyncLastSSHDirectory"
-            let lastDirectory = UserDefaults.standard.string(forKey: key) ?? "/usr/bin"
+            let lastDirectory = iTermUserDefaults.userDefaults().string(forKey: key) ?? "/usr/bin"
             openPanel.directoryURL = URL(fileURLWithPath: lastDirectory)
             openPanel.nameFieldStringValue = "ssh"
 
@@ -233,7 +233,7 @@ class SSHConfigurationWindowController: NSWindowController {
 
                 // Save the directory for subsequent openings.
                 let directory = selectedURL.deletingLastPathComponent()
-                UserDefaults.standard.set(directory.path, forKey: key)
+                iTermUserDefaults.userDefaults().set(directory.path, forKey: key)
 
                 // Since the delegate validated the selection, the file is a valid executable.
                 self?.completion?(selectedURL.path)

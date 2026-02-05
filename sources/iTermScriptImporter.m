@@ -98,7 +98,6 @@ static BOOL sInstallingScript;
         NSString *tempDir = [[NSFileManager defaultManager] it_temporaryDirectory];
 
         DLog(@"Unzip %@", url);
-#warning TODO: Test this. It used to run the callback on the main queue.
         [iTermCommandRunner unzipURL:url
                        withArguments:@[ @"-q" ]
                          destination:tempDir

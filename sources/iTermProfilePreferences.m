@@ -7,16 +7,12 @@
 //
 
 #import "iTermProfilePreferences.h"
+#import "iTermUserDefaults.h"
 
 #define ENABLE_DEPRECATED_ADVANCED_SETTINGS
 
 #import "DebugLogging.h"
 #import "ITAddressBookMgr.h"
-#import "iTermAdvancedSettingsModel.h"
-#import "iTermCursor.h"
-#import "iTermPreferences.h"
-#import "iTermScriptHistory.h"
-#import "iTermStatusBarLayout.h"
 #import "NSArray+iTerm.h"
 #import "NSColor+iTerm.h"
 #import "NSDictionary+iTerm.h"
@@ -24,6 +20,11 @@
 #import "NSJSONSerialization+iTerm.h"
 #import "PreferencePanel.h"
 #import "Trigger.h"
+#import "iTermAdvancedSettingsModel.h"
+#import "iTermCursor.h"
+#import "iTermPreferences.h"
+#import "iTermScriptHistory.h"
+#import "iTermStatusBarLayout.h"
 
 #define PROFILE_BLOCK(x) [^id(Profile *profile) { return [self x:profile]; } copy]
 
@@ -319,6 +320,7 @@ typedef struct {
             KEY_APPLICATION_KEYPAD_ALLOWED, KEY_ALLOW_MODIFY_OTHER_KEYS,
             KEY_LEFT_OPTION_KEY_CHANGEABLE, KEY_RIGHT_OPTION_KEY_CHANGEABLE,
             KEY_PLACE_PROMPT_AT_FIRST_COLUMN, KEY_SHOW_MARK_INDICATORS, KEY_SHOW_OFFSCREEN_COMMANDLINE,
+            KEY_SHOW_OFFSCREEN_COMMANDLINE_FOR_CURRENT_COMMAND,
 
             KEY_TMUX_NEWLINE, KEY_PROMPT_PATH_CLICK_OPENS_NAVIGATOR,
             KEY_POWERLINE, KEY_TRIGGERS_USE_INTERPOLATED_STRINGS,
@@ -326,7 +328,7 @@ typedef struct {
             KEY_SMART_SELECTION_ACTIONS_USE_INTERPOLATED_STRINGS,
 
             KEY_AUTOLOG, KEY_ARCHIVE, KEY_HAS_HOTKEY,
-            KEY_HIDE_AFTER_OPENING,
+            KEY_HIDE_AFTER_OPENING, KEY_LOCK_WINDOW_SIZE_AUTOMATICALLY,
             KEY_HOTKEY_AUTOHIDE, KEY_HOTKEY_REOPEN_ON_ACTIVATION, KEY_HOTKEY_ANIMATE,
             KEY_HOTKEY_FLOAT, KEY_OPEN_TOOLBELT, KEY_PREVENT_TAB,
             KEY_HOTKEY_ACTIVATE_WITH_MODIFIER,
@@ -669,6 +671,7 @@ typedef struct {
             KEY_COLUMNS:                                            @"Initial number of columns in terminal",
             KEY_ROWS:                                               @"Initial number of rows in terminal",
             KEY_HIDE_AFTER_OPENING:                                 @"Whether to hide window immediately after opening",
+            KEY_LOCK_WINDOW_SIZE_AUTOMATICALLY:                     @"Whether to lock window size immediately after opening",
             KEY_WINDOW_TYPE:                                        @"Window style: normal, fullscreen, maximized, etc.",
             KEY_USE_CUSTOM_WINDOW_TITLE:                            @"Whether to use a custom window title",
             KEY_CUSTOM_WINDOW_TITLE:                                @"Custom window title template",
@@ -752,6 +755,7 @@ typedef struct {
             KEY_SHOW_MARK_INDICATORS:                               @"Whether to show shell integration mark indicators",
             KEY_PROMPT_PATH_CLICK_OPENS_NAVIGATOR:                  @"Whether clicking path in prompt opens file navigator",
             KEY_SHOW_OFFSCREEN_COMMANDLINE:                         @"Whether to show command line when scrolled up",
+            KEY_SHOW_OFFSCREEN_COMMANDLINE_FOR_CURRENT_COMMAND:     @"Whether to show command line over the top of the screen for the running command",
             KEY_TMUX_NEWLINE:                                       @"Whether to send newline instead of carriage return in tmux",
             KEY_HAS_HOTKEY:                                         @"Whether this profile has a dedicated hotkey window",
             KEY_HOTKEY_MODIFIER_FLAGS:                              @"Modifier flags for the hotkey",
@@ -986,6 +990,7 @@ typedef struct {
                   KEY_WIDTH_PERCENTAGE: @100,
                   KEY_HEIGHT_PERCENTAGE: @100,
                   KEY_HIDE_AFTER_OPENING: @NO,
+                  KEY_LOCK_WINDOW_SIZE_AUTOMATICALLY: @NO,
                   KEY_WINDOW_TYPE: @(WINDOW_TYPE_NORMAL),
                   KEY_USE_CUSTOM_WINDOW_TITLE: @NO,
                   KEY_CUSTOM_WINDOW_TITLE: @"",
@@ -1069,6 +1074,7 @@ typedef struct {
                   KEY_SHOW_MARK_INDICATORS: @YES,
                   KEY_PROMPT_PATH_CLICK_OPENS_NAVIGATOR: @NO,
                   KEY_SHOW_OFFSCREEN_COMMANDLINE: @YES,
+                  KEY_SHOW_OFFSCREEN_COMMANDLINE_FOR_CURRENT_COMMAND: @NO,
                   KEY_TMUX_NEWLINE: @NO,
                   KEY_HAS_HOTKEY: @NO,
                   KEY_HOTKEY_MODIFIER_FLAGS: @0,
@@ -1103,7 +1109,7 @@ typedef struct {
                   KEY_OPEN_PASSWORD_MANAGER_AUTOMATICALLY: @NO,
                   KEY_TIMESTAMPS_STYLE: @(iTermTimestampsModeOverlap),
                   // Migration path for former advanced setting
-                  KEY_TIMESTAMPS_VISIBLE: [[NSUserDefaults standardUserDefaults] objectForKey:@"ShowTimestampsByDefault"] ?: @NO,
+                  KEY_TIMESTAMPS_VISIBLE: [[iTermUserDefaults userDefaults] objectForKey:@"ShowTimestampsByDefault"] ?: @NO,
                   KEY_USE_SEPARATE_COLORS_FOR_LIGHT_AND_DARK_MODE: @NO,
                   KEY_SNIPPETS_FILTER: @[],
 
@@ -1307,7 +1313,7 @@ typedef struct {
     }
 
     // If the user set a preference with the now-removed advanced setting, use it.
-    NSNumber *legacyDefault = [[NSUserDefaults standardUserDefaults] objectForKey:@"AntiIdleTimerPeriod"];
+    NSNumber *legacyDefault = [[iTermUserDefaults userDefaults] objectForKey:@"AntiIdleTimerPeriod"];
     if (legacyDefault) {
         return legacyDefault;
     }
@@ -1474,7 +1480,7 @@ typedef struct {
     }
 
     // If there was an old setting in advanced prefs, use that. Fall back to the default value.
-    NSNumber *number = [NSNumber castFrom:[[NSUserDefaults standardUserDefaults] objectForKey:@"OptionIsMetaForSpecialChars"]];
+    NSNumber *number = [NSNumber castFrom:[[iTermUserDefaults userDefaults] objectForKey:@"OptionIsMetaForSpecialChars"]];
     if (number){
         return @(!number.boolValue);
     }
@@ -1537,9 +1543,9 @@ typedef struct {
     }
 
     // Respect any existing now-deprecated settings.
-    NSNumber *stickyNumber = [[NSUserDefaults standardUserDefaults] objectForKey:KEY_SYNC_TITLE_DEPRECATED];
-    NSNumber *showJobNumber = [[NSUserDefaults standardUserDefaults] objectForKey:kPreferenceKeyShowJobName_Deprecated];
-    NSNumber *showProfileNameNumber = [[NSUserDefaults standardUserDefaults] objectForKey:kPreferenceKeyShowProfileName_Deprecated];
+    NSNumber *stickyNumber = [[iTermUserDefaults userDefaults] objectForKey:KEY_SYNC_TITLE_DEPRECATED];
+    NSNumber *showJobNumber = [[iTermUserDefaults userDefaults] objectForKey:kPreferenceKeyShowJobName_Deprecated];
+    NSNumber *showProfileNameNumber = [[iTermUserDefaults userDefaults] objectForKey:kPreferenceKeyShowProfileName_Deprecated];
 
     if (!stickyNumber && !showJobNumber && !showProfileNameNumber) {
         // No deprecated settings; use the modern default.

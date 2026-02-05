@@ -218,6 +218,7 @@ extern NSString *const kPreferenceKeyStatusBarPosition;
 extern NSString *const kPreferenceKeyHideTabBar;
 extern NSString *const kPreferenceKeyHideTabNumber;
 extern NSString *const kPreferenceKeyPreserveWindowSizeWhenTabBarVisibilityChanges;
+extern NSString *const kPreferenceKeyPreserveWindowSizeToKeepOnScreenWhenTabBarVisibilityChanges;
 extern NSString *const kPreferenceKeyHideTabCloseButton;  // DEPRECATED
 extern NSString *const kPreferenceKeyTabsHaveCloseButton;
 extern NSString *const kPreferenceKeyHideTabActivityIndicator;

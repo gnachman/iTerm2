@@ -164,8 +164,11 @@ typedef void(^iTermWarningActionBlock)(iTermWarningSelection);
 // Optional. Changes the bold heading on the warning.
 @property(nonatomic, copy) NSString * _Nullable heading;
 
-// Optional. An action whose string is equal to `cancelLabel`
+// Optional. An action whose string is equal to `cancelLabel` won't be remembered.
 @property(nonatomic, copy) NSString * _Nullable cancelLabel;
+
+// Optional. Actions whose strings are in `doNotRememberLabels` won't be remembered.
+@property(nonatomic, copy) NSArray<NSString *> * _Nullable doNotRememberLabels;
 
 // If set then a "help" button is added to the alert box and this block is invoked when it is clicked.
 @property(nullable, nonatomic, copy) void (^showHelpBlock)(void);

@@ -31,6 +31,8 @@
 #import "NSWorkspace+iTerm.h"
 #import "PreferencePanel.h"
 
+#import "iTerm2SharedARC-Swift.h"
+
 static NSString *const kDeleteKeyString = @"0x7f-0x0";
 
 @interface ProfilesKeysPreferencesViewController () <iTermKeyMappingViewControllerDelegate>
@@ -70,6 +72,8 @@ static NSString *const kDeleteKeyString = @"0x7f-0x0";
 
     iTermHotkeyPreferencesWindowController *_hotkeyPanel;
     NSInteger _posting;
+
+    IBOutlet NSButton *_repairKeyMappingsButton;
 }
 
 - (void)dealloc {
@@ -178,7 +182,7 @@ static NSString *const kDeleteKeyString = @"0x7f-0x0";
                           type:kPreferenceInfoTypeCheckbox];
     info.customSettingChangedHandler = ^(id sender) {
         if ([[self stringForKey:KEY_HOTKEY_CHARACTERS_IGNORING_MODIFIERS] length]) {
-            [self setBool:([sender state] == NSControlStateValueOn) forKey:KEY_HAS_HOTKEY];
+            [self setBool:([(NSButton *)sender state] == NSControlStateValueOn) forKey:KEY_HAS_HOTKEY];
         } else {
             [self openHotKeyPanel:nil];
         }
@@ -232,6 +236,7 @@ static NSString *const kDeleteKeyString = @"0x7f-0x0";
 - (void)reloadProfile {
     [super reloadProfile];
     [self postKeyBindingsChangedNotification];
+    [self updateRepairKeyMappingsButtonVisibility];
 }
 
 - (void)postKeyBindingsChangedNotification {
@@ -421,6 +426,74 @@ static NSString *const kDeleteKeyString = @"0x7f-0x0";
     }];
 }
 
+- (IBAction)repairKeyMappings:(id)sender {
+    Profile *profile = [self.delegate profilePreferencesCurrentProfile];
+    if (!profile) {
+        return;
+    }
+    NSString *guid = profile[KEY_GUID];
+    NSDictionary *keyMappings = profile[KEY_KEYBOARD_MAP];
+    if (![iTermKeyMappingRepair confirmRepairWithKeyMappings:keyMappings window:self.view.window]) {
+        return;
+    }
+
+    NSDictionary *repaired = [iTermKeyMappingRepair repairedKeyMappings:keyMappings];
+
+    NSMutableDictionary *updatedProfile = [profile mutableCopy];
+    updatedProfile[KEY_KEYBOARD_MAP] = repaired;
+
+    [[self.delegate profilePreferencesCurrentModel] setBookmark:updatedProfile withGuid:guid];
+    [[self.delegate profilePreferencesCurrentModel] flush];
+
+    // Disable the mitigation now that we've repaired
+    [iTermKeyMappingRepair setMitigationDisabled:YES suffix:guid];
+
+    // Hide the button
+    _repairKeyMappingsButton.hidden = YES;
+
+    // Notify that key bindings changed
+    [[NSNotificationCenter defaultCenter] postNotificationName:kReloadAllProfiles object:nil];
+
+    // Reload the key mapping view
+    [_keyMappingViewController reloadData];
+}
+
+#pragma mark - Corrupted Key Mapping Repair
+
+- (void)updateRepairKeyMappingsButtonVisibility {
+    if (!_repairKeyMappingsButton) {
+        return;
+    }
+
+    // Only offer repair for profiles in the shared instance (not session-specific temporary profiles)
+    if ([self.delegate profilePreferencesCurrentModel] != [ProfileModel sharedInstance]) {
+        _repairKeyMappingsButton.hidden = YES;
+        return;
+    }
+
+    Profile *profile = [self.delegate profilePreferencesCurrentProfile];
+    if (!profile) {
+        _repairKeyMappingsButton.hidden = YES;
+        return;
+    }
+
+    NSString *guid = profile[KEY_GUID];
+    if ([iTermKeyMappingRepair isMitigationDisabledWithSuffix:guid]) {
+        _repairKeyMappingsButton.hidden = YES;
+        return;
+    }
+
+    NSDictionary *keyMappings = profile[KEY_KEYBOARD_MAP];
+    NSArray<NSString *> *corrupted = [iTermKeyMappingRepair corruptedKeyBindingsIn:keyMappings];
+    BOOL hasCorrupted = corrupted.count > 0;
+    _repairKeyMappingsButton.hidden = !hasCorrupted;
+
+    // If no corrupted bindings found, disable the mitigation so we don't check again
+    if (!hasCorrupted) {
+        [iTermKeyMappingRepair setMitigationDisabled:YES suffix:guid];
+    }
+}
+
 #pragma mark - Notifications
 
 - (void)keyBindingDidChange {
@@ -435,7 +508,7 @@ static NSString *const kDeleteKeyString = @"0x7f-0x0";
 - (IBAction)deleteSendsCtrlHDidChange:(id)sender {
     // Resolve any conflict between key mappings and delete sends ^h by
     // modifying key mappings.
-    BOOL sendCtrlH = ([sender state] == NSControlStateValueOn);
+    BOOL sendCtrlH = ([(NSButton *)sender state] == NSControlStateValueOn);
     NSMutableDictionary *mutableProfile =
         [[self.delegate profilePreferencesCurrentProfile] mutableCopy];
     if (sendCtrlH) {

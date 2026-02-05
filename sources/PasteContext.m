@@ -7,8 +7,9 @@
 //
 
 #import "PasteContext.h"
-#import "iTermAdvancedSettingsModel.h"
 #import "PasteEvent.h"
+#import "iTermAdvancedSettingsModel.h"
+#import "iTermUserDefaults.h"
 
 @interface PasteContext ()
 @property(nonatomic, copy) NSString *bytesPerCallKey;
@@ -54,25 +55,25 @@
         _delayBetweenCalls = 0.01;
         return;
     }
-    if (_bytesPerCallKey && [[NSUserDefaults standardUserDefaults] objectForKey:_bytesPerCallKey]) {
-        _bytesPerCall = [[NSUserDefaults standardUserDefaults] integerForKey:_bytesPerCallKey];
+    if (_bytesPerCallKey && [[iTermUserDefaults userDefaults] objectForKey:_bytesPerCallKey]) {
+        _bytesPerCall = [[iTermUserDefaults userDefaults] integerForKey:_bytesPerCallKey];
     }
-    if (_delayBetweenCallsKey && [[NSUserDefaults standardUserDefaults] objectForKey:_delayBetweenCallsKey]) {
-        _delayBetweenCalls = [[NSUserDefaults standardUserDefaults] floatForKey:_delayBetweenCallsKey];
+    if (_delayBetweenCallsKey && [[iTermUserDefaults userDefaults] objectForKey:_delayBetweenCallsKey]) {
+        _delayBetweenCalls = [[iTermUserDefaults userDefaults] floatForKey:_delayBetweenCallsKey];
     }
 }
 
 - (void)setBytesPerCall:(int)newBytesPerCall {
     _bytesPerCall = newBytesPerCall;
     if (_bytesPerCallKey) {
-        [[NSUserDefaults standardUserDefaults] setInteger:_bytesPerCall forKey:_bytesPerCallKey];
+        [[iTermUserDefaults userDefaults] setInteger:_bytesPerCall forKey:_bytesPerCallKey];
     }
 }
 
 - (void)setDelayBetweenCalls:(float)newDelayBetweenCalls {
     _delayBetweenCalls = newDelayBetweenCalls;
     if (_delayBetweenCallsKey) {
-        [[NSUserDefaults standardUserDefaults] setFloat:newDelayBetweenCalls
+        [[iTermUserDefaults userDefaults] setFloat:newDelayBetweenCalls
                                                  forKey:_delayBetweenCallsKey];
     }
 }

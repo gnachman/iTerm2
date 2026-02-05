@@ -7,7 +7,6 @@
 
 import Foundation
 
-@available(macOS 11, *)
 @objc(iTermTerminalButton)
 class TerminalButton: NSObject {
     @objc var wantsFrame: Bool { true }
@@ -44,6 +43,10 @@ class TerminalButton: NSObject {
     @objc var shift = CGFloat(0)
     var selected: Bool { false }
 
+    // When true (default), buttons draw their own background. Set to false when the button
+    // is inside a pill container that provides the background.
+    @objc var drawsBackground: Bool = true
+
     // If the icon depends on internal state of a subclass, this should expose a key that can be
     // used to cache the icon.
     @objc var extraIdentifyingInfoForIcon: AnyHashable? { nil }
@@ -69,6 +72,7 @@ class TerminalButton: NSObject {
         enclosingSessionWidth = original.enclosingSessionWidth
         shift = original.shift
         self.tooltip = original.tooltip
+        drawsBackground = original.drawsBackground
     }
 
     @objc func clone() -> Self {
@@ -77,16 +81,20 @@ class TerminalButton: NSObject {
 
     var useRoundedRectForBackground: Bool { true }
 
-    private func images(backgroundColor: NSColor,
-                        foregroundColor: NSColor,
-                        size: NSSize) -> (NSImage, NSImage) {
-        let bg = if useRoundedRectForBackground {
-            NSImage.roundedRect(size: size,
-                                radius: 2,
-                                color: backgroundColor)
+    fileprivate func images(backgroundColor: NSColor,
+                            foregroundColor: NSColor,
+                            size: NSSize) -> (NSImage, NSImage) {
+        let bg: NSImage
+        if !drawsBackground {
+            // Transparent background - icon only (for buttons inside pill containers)
+            bg = NSImage(size: size, flipped: false) { _ in true }
+        } else if useRoundedRectForBackground {
+            bg = NSImage.roundedRect(size: size,
+                                     radius: 2,
+                                     color: backgroundColor)
         } else {
-            tintedBackgroundImage.tintedImage(color: backgroundColor,
-                                              size: size)
+            bg = tintedBackgroundImage.tintedImage(color: backgroundColor,
+                                                   size: size)
         }
         return (tintedForegroundImage.tintedImage(color: foregroundColor,
                                                   size: size),
@@ -101,6 +109,10 @@ class TerminalButton: NSObject {
             result.width *= scale
             result.height *= scale
         }
+        // Scale down icons to provide more vertical padding
+        let iconScale: CGFloat = 0.7
+        result.width *= iconScale
+        result.height *= iconScale
         return result.retinaRound(2.0)
     }
 
@@ -125,19 +137,48 @@ class TerminalButton: NSObject {
               selectedColor: NSColor,
               frame rect: NSRect,
               virtualOffset: CGFloat) {
-        
-        let (foregroundImage, backgroundImage) = switch state {
+
+        let foregroundImage: NSImage
+        let backgroundImage: NSImage
+        switch state {
         case .normal, .pressedOutside:
-            images(backgroundColor: selected ? selectedColor : backgroundColor,
-                   foregroundColor: selected ? backgroundColor : foregroundColor,
-                   size: rect.size)
+            (foregroundImage, backgroundImage) = images(
+                backgroundColor: selected ? selectedColor : backgroundColor,
+                foregroundColor: selected ? backgroundColor : foregroundColor,
+                size: rect.size)
         case .pressedInside:
-            images(backgroundColor: foregroundColor, 
-                   foregroundColor: backgroundColor,
-                   size: rect.size)
+            // When inside a pill (drawsBackground=false), the pill handles the segment highlight.
+            // When standalone (drawsBackground=true), we still draw our own pressed background.
+            if drawsBackground {
+                let intenseBg = Self.intensifyColor(backgroundColor, towards: foregroundColor)
+                (foregroundImage, backgroundImage) = images(
+                    backgroundColor: intenseBg,
+                    foregroundColor: foregroundColor,
+                    size: rect.size)
+            } else {
+                // Pill handles the pressed highlight, just draw normal foreground
+                (foregroundImage, backgroundImage) = images(
+                    backgroundColor: backgroundColor,
+                    foregroundColor: foregroundColor,
+                    size: rect.size)
+            }
         }
         backgroundImage.it_draw(in: rect, virtualOffset: virtualOffset)
         foregroundImage.it_draw(in: rect, virtualOffset: virtualOffset)
+    }
+
+    /// Create a more intense version of a color by blending it towards another color
+    private static func intensifyColor(_ color: NSColor, towards targetColor: NSColor) -> NSColor {
+        guard let rgbColor = color.usingColorSpace(.sRGB),
+              let rgbTarget = targetColor.usingColorSpace(.sRGB) else {
+            return color
+        }
+        // Blend 40% towards the target color to make it more intense/visible
+        let blendFactor: CGFloat = 0.4
+        let r = rgbColor.redComponent + (rgbTarget.redComponent - rgbColor.redComponent) * blendFactor
+        let g = rgbColor.greenComponent + (rgbTarget.greenComponent - rgbColor.greenComponent) * blendFactor
+        let b = rgbColor.blueComponent + (rgbTarget.blueComponent - rgbColor.blueComponent) * blendFactor
+        return NSColor(srgbRed: r, green: g, blue: b, alpha: rgbColor.alphaComponent)
     }
 
     func image(backgroundColor: NSColor,
@@ -206,9 +247,16 @@ class TerminalButton: NSObject {
             state = .normal
         }
     }
+
+    // Override this and return false if the button is no longer a correct representation of the
+    // mark (i.e., the mark changed but the button hasn't been updated yet, such as a button that
+    // can be invalidated)
+    @objc(matchesMark:)
+    func matchesMark(_ mark: ButtonMarkReading?) -> Bool {
+        return true
+    }
 }
 
-@available(macOS 11, *)
 extension TerminalButton: NSViewToolTipOwner {
     func view(_ view: NSView,
               stringForToolTip tag: NSView.ToolTipTag,
@@ -219,7 +267,6 @@ extension TerminalButton: NSViewToolTipOwner {
     }
 }
 
-@available(macOS 11, *)
 @objc
 class GenericBlockButton: TerminalButton {
     @objc let blockID: String
@@ -259,7 +306,6 @@ class GenericBlockButton: TerminalButton {
     }
 }
 
-@available(macOS 11, *)
 @objc(iTermTerminalCopyButton)
 class TerminalCopyButton: GenericBlockButton {
     @objc(initWithID:blockID:mark:absY:tooltip:)
@@ -278,7 +324,130 @@ class TerminalCopyButton: GenericBlockButton {
     }
 }
 
-@available(macOS 11, *)
+@objc(iTermTerminalCustomButton)
+class TerminalCustomButton: TerminalButton {
+    @objc let code: Int32
+    @objc let valid: Bool
+    let icon: String
+    @objc var absY: NSNumber?
+    override var transientAbsY: Int {
+        if let absY {
+            return absY.intValue
+        }
+        return -1
+    }
+    @objc var isFloating = false
+    override var floating: Bool { isFloating }
+
+    required init?(_ original: TerminalButton) {
+        let downcast = original as! TerminalCustomButton
+        self.icon = downcast.icon
+        self.code = downcast.code
+        self.valid = downcast.valid
+        self.absY = downcast.absY
+        isFloating = downcast.isFloating
+        super.init(original)
+    }
+
+    override func clone() -> Self {
+        return Self(self)!
+    }
+
+    @objc(initWithID:code:icon:mark:absY:valid:)
+    init?(id: Int, code: Int32, icon: String, mark: iTermMarkProtocol?, absY: NSNumber?, valid: Bool) {
+        guard let fg = NSImage(systemSymbolName: icon, accessibilityDescription: nil) else {
+            return nil
+        }
+        self.icon = icon
+        self.code = code
+        self.absY = absY
+        self.valid = valid
+        super.init(id: id,
+                   backgroundImage: fg,
+                   foregroundImage: fg,
+                   mark: mark,
+                   tooltip: "")
+    }
+
+    override var extraIdentifyingInfoForIcon: AnyHashable? {
+        [icon, String(valid)]
+    }
+
+    override func matchesMark(_ mark: ButtonMarkReading?) -> Bool {
+        return mark == nil || valid == mark?.valid
+    }
+
+    override func mouseDownInside() -> Bool {
+        if !valid {
+            return false
+        }
+        return super.mouseDownInside()
+    }
+
+    override func mouseDownOutside() -> Bool {
+        if !valid {
+            return false
+        }
+        return super.mouseDownOutside()
+    }
+
+    override func mouseUp(locationInWindow: NSPoint) -> Bool {
+        if !valid {
+            return false
+        }
+        return super.mouseUp(locationInWindow: locationInWindow)
+    }
+
+    override func mouseExited() {
+        if !valid {
+            return
+        }
+        super.mouseExited()
+    }
+
+    override var highlighted: Bool {
+        if !valid {
+            return false
+        }
+        return super.highlighted
+    }
+
+    override func draw(backgroundColor: NSColor,
+                       foregroundColor: NSColor,
+                       selectedColor: NSColor,
+                       frame rect: NSRect,
+                       virtualOffset: CGFloat) {
+        if valid {
+            super.draw(backgroundColor: backgroundColor,
+                       foregroundColor: foregroundColor,
+                       selectedColor: selectedColor,
+                       frame: rect,
+                       virtualOffset: virtualOffset)
+            return
+        }
+        let (foregroundImage, backgroundImage) = images(
+            backgroundColor: selected ? selectedColor : backgroundColor,
+            foregroundColor: selected ? backgroundColor : foregroundColor,
+            size: rect.size)
+
+
+        backgroundImage.it_draw(in: rect,
+                                from: .zero,
+                                operation: .sourceOver,
+                                fraction: 0.4,
+                                respectFlipped: true,
+                                hints: nil,
+                                virtualOffset: virtualOffset)
+        foregroundImage.it_draw(in: rect,
+                                from: .zero,
+                                operation: .sourceOver,
+                                fraction: 0.4,
+                                respectFlipped: true,
+                                hints: nil,
+                                virtualOffset: virtualOffset)
+    }
+}
+
 @objc(iTermTerminalRevealChannelButton)
 class TerminalRevealChannelButton: TerminalButton {
     override var wantsFrame: Bool { false }
@@ -310,7 +479,6 @@ class TerminalRevealChannelButton: TerminalButton {
     }
 }
 
-@available(macOS 11, *)
 @objc(iTermTerminalFoldBlockButton)
 class TerminalFoldBlockButton: GenericBlockButton {
     @objc let absLineRange: NSRange
@@ -345,7 +513,6 @@ class TerminalFoldBlockButton: GenericBlockButton {
 }
 
 
-@available(macOS 11, *)
 @objc(iTermTerminalMarkButton)
 class TerminalMarkButton: TerminalButton {
     @objc let screenMark: VT100ScreenMarkReading
@@ -383,7 +550,6 @@ class TerminalMarkButton: TerminalButton {
     }
 }
 
-@available(macOS 11, *)
 @objc(iTermTerminalCopyCommandButton)
 class TerminalCopyCommandButton: TerminalMarkButton {
 
@@ -398,7 +564,6 @@ class TerminalCopyCommandButton: TerminalMarkButton {
 }
 
 
-@available(macOS 11, *)
 @objc(iTermTerminalBookmarkButton)
 class TerminalBookmarkButton: TerminalMarkButton {
     override var selected: Bool {
@@ -413,7 +578,6 @@ class TerminalBookmarkButton: TerminalMarkButton {
     }
 }
 
-@available(macOS 11, *)
 @objc(iTermTerminalShareButton)
 class TerminalShareButton: TerminalMarkButton {
     @objc(initWithMark:dx:)
@@ -425,7 +589,6 @@ class TerminalShareButton: TerminalMarkButton {
     }
 }
 
-@available(macOS 11, *)
 @objc(iTermCommandInfoButton)
 class TerminalCommandInfoButton: TerminalMarkButton {
     @objc(initWithMark:dx:)
@@ -437,7 +600,6 @@ class TerminalCommandInfoButton: TerminalMarkButton {
     }
 }
 
-@available(macOS 11, *)
 @objc(iTermTerminalFoldButton)
 class TerminalFoldButton: TerminalMarkButton {
     @objc(initWithMark:dx:)
@@ -449,7 +611,6 @@ class TerminalFoldButton: TerminalMarkButton {
     }
 }
 
-@available(macOS 11, *)
 @objc(iTermTerminalUnfoldButton)
 class TerminalUnfoldButton: TerminalMarkButton {
     @objc(initWithMark:dx:)
@@ -461,7 +622,6 @@ class TerminalUnfoldButton: TerminalMarkButton {
     }
 }
 
-@available(macOS 11, *)
 @objc(iTermTerminalSettingsButton)
 class TerminalSettingsButton: TerminalMarkButton {
     @objc(initWithMark:dx:)

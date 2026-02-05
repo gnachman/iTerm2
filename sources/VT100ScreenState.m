@@ -1448,6 +1448,15 @@ static NSRange NSRangeFromBounds(NSInteger lowerBound, NSInteger upperBound) {
     return [NSDate dateWithTimeIntervalSinceReferenceDate:timestamp];
 }
 
+- (BOOL)isFirstLineOfBlock:(int)line {
+    const NSInteger numLinesInLineBuffer = [self.linebuffer numLinesWithWidth:self.currentGrid.size.width];
+    if (line >= numLinesInLineBuffer) {
+        // Lines in the current grid are not part of any block.
+        return NO;
+    }
+    return [self.linebuffer isFirstLineOfBlock:line width:self.currentGrid.size.width];
+}
+
 #pragma mark - VT100GridDelgate
 
 - (iTermUnicodeNormalization)gridUnicodeNormalizationForm {

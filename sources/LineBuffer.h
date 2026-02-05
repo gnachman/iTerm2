@@ -211,6 +211,9 @@ NS_ASSUME_NONNULL_BEGIN
 - (iTermBidiDisplayInfo * _Nullable)bidiInfoForLine:(int)line width:(int)width;
 
 - (NSInteger)numberOfUnwrappedLinesInRange:(VT100GridRange)range width:(int)width;
+
+// Returns YES if the given line number is the first line of a LineBlock.
+- (BOOL)isFirstLineOfBlock:(int)lineNumber width:(int)width;
 @end
 
 // A LineBuffer represents an ordered collection of strings of screen_char_t. Each string forms a

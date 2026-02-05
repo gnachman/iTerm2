@@ -459,10 +459,10 @@ extension ChatViewController {
     // The last value selected in the model picker, but it might be invalid so check it with modelIsValid before use.
     private var preferredModel: String? {
         get {
-            UserDefaults.standard.string(forKey: Self.preferredModelDefaultsKey)
+            iTermUserDefaults.userDefaults().string(forKey: Self.preferredModelDefaultsKey)
         }
         set {
-            UserDefaults.standard.set(newValue, forKey: Self.preferredModelDefaultsKey)
+            iTermUserDefaults.userDefaults().set(newValue, forKey: Self.preferredModelDefaultsKey)
         }
     }
 
@@ -1745,12 +1745,12 @@ extension ChatViewController: ChatToolbarDataSource {
                 return false
             }
             if #available(macOS 11, *) {
-                return UserDefaults.standard.bool(forKey: Self.webSearchUserDefaultsKey)
+                return iTermUserDefaults.userDefaults().bool(forKey: Self.webSearchUserDefaultsKey)
             }
             return false
         }
         set {
-            return UserDefaults.standard.set(newValue, forKey: Self.webSearchUserDefaultsKey)
+            return iTermUserDefaults.userDefaults().set(newValue, forKey: Self.webSearchUserDefaultsKey)
         }
     }
     var thinkingEnabled: Bool {
@@ -1761,10 +1761,10 @@ extension ChatViewController: ChatToolbarDataSource {
             if !model.features.contains(.configurableThinking) {
                 return false
             }
-            return UserDefaults.standard.bool(forKey: Self.thinkUserDefaultsKey)
+            return iTermUserDefaults.userDefaults().bool(forKey: Self.thinkUserDefaultsKey)
         }
         set {
-            return UserDefaults.standard.set(newValue, forKey: Self.thinkUserDefaultsKey)
+            return iTermUserDefaults.userDefaults().set(newValue, forKey: Self.thinkUserDefaultsKey)
         }
     }
 

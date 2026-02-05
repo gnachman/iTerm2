@@ -1621,7 +1621,7 @@ extension SSHFilePanel {
             return
         }
 
-        let defaults = UserDefaults.standard
+        let defaults = iTermUserDefaults.userDefaults()
 
         // Save window frame
         let frameString = NSStringFromRect(window.frame)
@@ -1639,7 +1639,7 @@ extension SSHFilePanel {
 
     // MARK: - Restore State
     private func restoreWindowState() {
-        let defaults = UserDefaults.standard
+        let defaults = iTermUserDefaults.userDefaults()
 
         // Restore window frame
         if let frameString = defaults.string(forKey: RestorationKeys.windowFrame) {
@@ -1668,7 +1668,7 @@ extension SSHFilePanel {
     }
 
     private func savedPath(for identity: SSHIdentity) -> String? {
-        let defaults = UserDefaults.standard
+        let defaults = iTermUserDefaults.userDefaults()
         return defaults.string(forKey: RestorationKeys.currentPathPrefix + identity.stringIdentifier)
     }
 }

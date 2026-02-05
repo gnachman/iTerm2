@@ -80,25 +80,25 @@ typedef NS_ENUM(NSUInteger, iTermLaunchExperienceChoice) {
 }
 
 + (void)quellAnnoyancesForDays:(NSInteger)days {
-    [[NSUserDefaults standardUserDefaults] setDouble:[NSDate timeIntervalSinceReferenceDate] + days * 24 * 60 * 60
+    [[iTermUserDefaults userDefaults] setDouble:[NSDate timeIntervalSinceReferenceDate] + days * 24 * 60 * 60
                                               forKey:iTermLaunchExperienceControllerNextAnnoyanceTime];
 }
 
 + (BOOL)quelled {
-    const NSTimeInterval quelledUntil = [[NSUserDefaults standardUserDefaults] doubleForKey:iTermLaunchExperienceControllerNextAnnoyanceTime];
+    const NSTimeInterval quelledUntil = [[iTermUserDefaults userDefaults] doubleForKey:iTermLaunchExperienceControllerNextAnnoyanceTime];
     const NSTimeInterval now = [NSDate timeIntervalSinceReferenceDate];
     return quelledUntil > now;
 }
 
 + (NSInteger)runCount {
-    return [[NSUserDefaults standardUserDefaults] integerForKey:iTermLaunchExperienceControllerRunCount];
+    return [[iTermUserDefaults userDefaults] integerForKey:iTermLaunchExperienceControllerRunCount];
 }
 
 // Returns the number of times the app has launched since iTermLaunchExperienceController was
 // invented (or first install of 3.3+), including the current launch.
 + (NSInteger)incrementRunCount {
     const NSInteger runCount = [self runCount] + 1;
-    [[NSUserDefaults standardUserDefaults] setInteger:runCount
+    [[iTermUserDefaults userDefaults] setInteger:runCount
                                                forKey:iTermLaunchExperienceControllerRunCount];
     return runCount;
 }
@@ -124,8 +124,8 @@ typedef NS_ENUM(NSUInteger, iTermLaunchExperienceChoice) {
             // Normal code path.
             _choice = [iTermLaunchExperienceController preferredChoice];
             if (_choice == iTermLaunchExperienceChoiceTipOfTheDay &&
-                ![[NSUserDefaults standardUserDefaults] objectForKey:iTermLaunchExperienceControllerTipOfTheDayEligibilityBeganTime]) {
-                [[NSUserDefaults standardUserDefaults] setDouble:[NSDate timeIntervalSinceReferenceDate]
+                ![[iTermUserDefaults userDefaults] objectForKey:iTermLaunchExperienceControllerTipOfTheDayEligibilityBeganTime]) {
+                [[iTermUserDefaults userDefaults] setDouble:[NSDate timeIntervalSinceReferenceDate]
                                                           forKey:iTermLaunchExperienceControllerTipOfTheDayEligibilityBeganTime];
                 // The first time we're able to show the tip of the day we'll quell for 2 days so
                 // you get a break.
@@ -258,7 +258,7 @@ typedef NS_ENUM(NSUInteger, iTermLaunchExperienceChoice) {
 }
 
 + (BOOL)willWarnAboutChangeToDefaultPasteBehavior {
-    if ([[NSUserDefaults standardUserDefaults] boolForKey:kHaveWarnedAboutPasteConfirmationChange]) {
+    if ([[iTermUserDefaults userDefaults] boolForKey:kHaveWarnedAboutPasteConfirmationChange]) {
         return NO;
     }
     NSString *identifier = [iTermAdvancedSettingsModel noSyncDoNotWarnBeforeMultilinePasteUserDefaultsKey];
@@ -281,7 +281,7 @@ typedef NS_ENUM(NSUInteger, iTermLaunchExperienceChoice) {
                            silenceable:kiTermWarningTypePersistent
                                heading:@"Important Change"
                                 window:nil];
-    [[NSUserDefaults standardUserDefaults] setBool:YES forKey:kHaveWarnedAboutPasteConfirmationChange];
+    [[iTermUserDefaults userDefaults] setBool:YES forKey:kHaveWarnedAboutPasteConfirmationChange];
 }
 
 @end

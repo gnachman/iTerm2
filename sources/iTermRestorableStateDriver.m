@@ -8,9 +8,10 @@
 #import "iTermRestorableStateDriver.h"
 
 #import "DebugLogging.h"
-#import "iTermWarning.h"
 #import "NSArray+iTerm.h"
 #import "PTYWindow.h"
+#import "iTermUserDefaults.h"
+#import "iTermWarning.h"
 
 static NSString *const iTermRestorableStateControllerUserDefaultsKeyCount = @"NoSyncRestoreWindowsCount";
 
@@ -84,7 +85,7 @@ static NSString *const iTermRestorableStateControllerUserDefaultsKeyCount = @"No
                    ready:(void (^)(void))ready
               completion:(void (^)(void))completion {
     DLog(@"Have an index. Proceeding to restore windows.");
-    const NSInteger count = [[NSUserDefaults standardUserDefaults] integerForKey:iTermRestorableStateControllerUserDefaultsKeyCount];
+    const NSInteger count = [[iTermUserDefaults userDefaults] integerForKey:iTermRestorableStateControllerUserDefaultsKeyCount];
     if (count > 1) {
         const iTermWarningSelection selection =
         [iTermWarning showWarningWithTitle:@"Some windows had trouble restoring last time iTerm2 launched. Try again?"
@@ -96,7 +97,7 @@ static NSString *const iTermRestorableStateControllerUserDefaultsKeyCount = @"No
                                     window:nil];
         if (selection == kiTermWarningSelection1) {
             [index restorableStateIndexUnlink];
-            [[NSUserDefaults standardUserDefaults] setInteger:0
+            [[iTermUserDefaults userDefaults] setInteger:0
                                                        forKey:iTermRestorableStateControllerUserDefaultsKeyCount];
             DLog(@"Ready after warning");
             ready();
@@ -104,7 +105,7 @@ static NSString *const iTermRestorableStateControllerUserDefaultsKeyCount = @"No
             return;
         }
     }
-    [[NSUserDefaults standardUserDefaults] setInteger:count + 1
+    [[iTermUserDefaults userDefaults] setInteger:count + 1
                                                forKey:iTermRestorableStateControllerUserDefaultsKeyCount];
     DLog(@"set restoring to YES");
     _restoring = YES;
@@ -120,7 +121,7 @@ static NSString *const iTermRestorableStateControllerUserDefaultsKeyCount = @"No
 - (void)didRestoreFromIndex:(id<iTermRestorableStateIndex>)index {
     DLog(@"set restoring to NO");
     _restoring = NO;
-    [[NSUserDefaults standardUserDefaults] setInteger:0
+    [[iTermUserDefaults userDefaults] setInteger:0
                                                forKey:iTermRestorableStateControllerUserDefaultsKeyCount];
     [index restorableStateIndexUnlink];
 }

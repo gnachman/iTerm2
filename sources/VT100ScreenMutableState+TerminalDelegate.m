@@ -3192,6 +3192,12 @@ willExecuteToken:(VT100Token *)token
     } name:@"open url"];
 }
 
+- (void)terminalUpdateBlock:(NSString *)blockID action:(iTermUpdateBlockAction)action {
+    [self addPausedSideEffect:^(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser) {
+        [delegate screenUpdateBlock:blockID action:action];
+        [unpauser unpause];
+    } name:@"Update block"];
+}
 - (void)terminalBlock:(NSString *)blockID
                 start:(BOOL)start
                  type:(NSString *)type
@@ -3267,7 +3273,31 @@ willExecuteToken:(VT100Token *)token
         iTermButtonMark *mark = (iTermButtonMark *)obj;
         mark.copyBlockID = blockID;
     }];
-    [self appendStringAtCursor:@"  "];
+    [self advanceCursorAfterAddingButton];
+}
+
+- (void)terminalInsertCustomButtonWithCode:(int)code icon:(NSString *)icon {
+    iTermButtonMark *mark = (iTermButtonMark *)[self addMarkOnLine:self.numberOfScrollbackLines + self.currentGrid.cursorY
+                                                            column:self.currentGrid.cursorX
+                                                           ofClass:[iTermButtonMark class]];
+    [self.mutableIntervalTree mutateObject:mark block:^(id<IntervalTreeObject> _Nonnull obj) {
+        iTermButtonMark *mark = (iTermButtonMark *)obj;
+        [mark makeCustomWithCode:code icon:icon];
+    }];
+    [self advanceCursorAfterAddingButton];
+}
+
+- (void)terminalInvalidateCustomButtons {
+    NSArray<id<IntervalTreeImmutableObject>> *buttonMarks = [[self.intervalTree allObjects] filteredArrayUsingBlock:^BOOL(id<IntervalTreeImmutableObject> object) {
+        return [object isKindOfClass:[iTermButtonMark class]];
+    }];
+    [self.mutableIntervalTree bulkMutateObjects:buttonMarks block:^(id<IntervalTreeObject> obj) {
+        [[iTermButtonMark castFrom:obj] invalidate];
+    }];
+}
+
+- (void)advanceCursorAfterAddingButton {
+    [self appendStringAtCursor:@"    "];
 }
 
 - (void)terminalSetPointerShape:(NSString *)pointerShape {

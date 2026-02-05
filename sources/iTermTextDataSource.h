@@ -30,6 +30,10 @@ NS_ASSUME_NONNULL_BEGIN
                                                 range:(out nullable VT100GridWindowedRange *)range;
 - (iTermImmutableMetadata)metadataOnLine:(int)lineNumber;
 
+// Returns YES if the given line is the first line of a LineBuffer block.
+// For lines in the current grid (not in scrollback), this returns NO.
+- (BOOL)isFirstLineOfBlock:(int)lineNumber;
+
 @end
 
 NS_ASSUME_NONNULL_END

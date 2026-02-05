@@ -13,6 +13,12 @@ extern NSString *const kSelectionRespectsSoftBoundariesKey;
 
 @interface iTermUserDefaults : NSObject
 
+// Call this before any access to +userDefaults to use a custom suite instead of standardUserDefaults.
++ (void)setCustomSuiteName:(nullable NSString *)suiteName;
+
+// Returns the custom suite if set, otherwise standardUserDefaults.
++ (NSUserDefaults *)userDefaults;
+
 + (void)performMigrations;
 
 @property (class, nonatomic, copy) NSArray<NSString *> *searchHistory;

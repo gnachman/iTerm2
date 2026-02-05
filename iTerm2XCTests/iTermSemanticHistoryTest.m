@@ -510,40 +510,25 @@
     XCTAssert(lineNumber.length == 0);
 }
 
-- (void)testGetFullPathStripsLeadingASlash {
-    NSString *lineNumber = nil;
-    NSString *columnNumber = nil;
-    static NSString *const kRelativeFilename = @"path/to/file";
-    static NSString *const kWorkingDirectory = @"/working/directory";
-    NSString *kAbsoluteFilename =
-        [kWorkingDirectory stringByAppendingPathComponent:kRelativeFilename];
-    [_semanticHistoryController.fakeFileManager.files addObject:kAbsoluteFilename];
-    NSString *actual = [_semanticHistoryController cleanedUpPathFromPath:[@"a/" stringByAppendingString:kRelativeFilename]
-                                                                  suffix:nil
-                                                        workingDirectory:kWorkingDirectory
-                                                     extractedLineNumber:&lineNumber
-                                                            columnNumber:&columnNumber];
-    NSString *expected = kAbsoluteFilename;
-    XCTAssert([expected isEqualToString:actual]);
-    XCTAssert(lineNumber.length == 0);
-}
-
-- (void)testGetFullPathStripsLeadingBSlash {
-    NSString *lineNumber = nil;
-    NSString *columnNumber = nil;
-    static NSString *const kRelativeFilename = @"path/to/file";
-    static NSString *const kWorkingDirectory = @"/working/directory";
-    NSString *kAbsoluteFilename =
-        [kWorkingDirectory stringByAppendingPathComponent:kRelativeFilename];
-    [_semanticHistoryController.fakeFileManager.files addObject:kAbsoluteFilename];
-    NSString *actual = [_semanticHistoryController cleanedUpPathFromPath:[@"b/" stringByAppendingString:kRelativeFilename]
-                                                                  suffix:nil
-                                                        workingDirectory:kWorkingDirectory
-                                                     extractedLineNumber:&lineNumber
-                                                            columnNumber:&columnNumber];
-    NSString *expected = kAbsoluteFilename;
-    XCTAssert([expected isEqualToString:actual]);
-    XCTAssert(lineNumber.length == 0);
+- (void)testGetFullPathStripsLeadingGitDiffPrefixes {
+    // Test all git diff prefixes: a/, b/, i/, w/, c/, o/
+    for (NSString *prefix in @[ @"a/", @"b/", @"i/", @"w/", @"c/", @"o/" ]) {
+        NSString *lineNumber = nil;
+        NSString *columnNumber = nil;
+        static NSString *const kRelativeFilename = @"path/to/file";
+        static NSString *const kWorkingDirectory = @"/working/directory";
+        NSString *kAbsoluteFilename =
+            [kWorkingDirectory stringByAppendingPathComponent:kRelativeFilename];
+        [_semanticHistoryController.fakeFileManager.files addObject:kAbsoluteFilename];
+        NSString *actual = [_semanticHistoryController cleanedUpPathFromPath:[prefix stringByAppendingString:kRelativeFilename]
+                                                                      suffix:nil
+                                                            workingDirectory:kWorkingDirectory
+                                                         extractedLineNumber:&lineNumber
+                                                                columnNumber:&columnNumber];
+        NSString *expected = kAbsoluteFilename;
+        XCTAssert([expected isEqualToString:actual], @"Failed to strip prefix: %@", prefix);
+        XCTAssert(lineNumber.length == 0);
+    }
 }
 
 - (void)testGetFullPathRejectsNetworkPaths {

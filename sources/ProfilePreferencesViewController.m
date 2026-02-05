@@ -6,13 +6,30 @@
 //
 //
 
-#import "ProfilePreferencesViewController.h"
 #import "BulkCopyProfilePreferencesWindowController.h"
 #import "DebugLogging.h"
+#import "ITAddressBookMgr.h"
+#import "NSArray+iTerm.h"
+#import "NSDictionary+Profile.h"
+#import "NSDictionary+iTerm.h"
+#import "NSJSONSerialization+iTerm.h"
+#import "NSObject+iTerm.h"
+#import "NSView+iTerm.h"
+#import "PreferencePanel.h"
+#import "ProfileListView.h"
+#import "ProfileModelWrapper.h"
+#import "ProfilePreferencesViewController.h"
+#import "ProfilesAdvancedPreferencesViewController.h"
+#import "ProfilesColorsPreferencesViewController.h"
+#import "ProfilesGeneralPreferencesViewController.h"
+#import "ProfilesKeysPreferencesViewController.h"
+#import "ProfilesSessionPreferencesViewController.h"
+#import "ProfilesTerminalPreferencesViewController.h"
+#import "ProfilesTextPreferencesViewController.h"
+#import "ProfilesWindowPreferencesViewController.h"
+#import "iTerm2SharedARC-Swift.h"
 #import "iTerm2SharedARC-Swift.h"
 #import "iTermAdvancedSettingsModel.h"
-#import "ITAddressBookMgr.h"
-#import "iTerm2SharedARC-Swift.h"
 #import "iTermController.h"
 #import "iTermDynamicProfileManager.h"
 #import "iTermFlippedView.h"
@@ -20,25 +37,9 @@
 #import "iTermProfilePreferencesTabViewWrapperView.h"
 #import "iTermSavePanel.h"
 #import "iTermSizeRememberingView.h"
+#import "iTermUserDefaults.h"
 #import "iTermVariableScope.h"
 #import "iTermWarning.h"
-#import "NSArray+iTerm.h"
-#import "NSDictionary+iTerm.h"
-#import "NSDictionary+Profile.h"
-#import "NSJSONSerialization+iTerm.h"
-#import "NSObject+iTerm.h"
-#import "NSView+iTerm.h"
-#import "PreferencePanel.h"
-#import "ProfileListView.h"
-#import "ProfileModelWrapper.h"
-#import "ProfilesAdvancedPreferencesViewController.h"
-#import "ProfilesGeneralPreferencesViewController.h"
-#import "ProfilesColorsPreferencesViewController.h"
-#import "ProfilesKeysPreferencesViewController.h"
-#import "ProfilesTextPreferencesViewController.h"
-#import "ProfilesTerminalPreferencesViewController.h"
-#import "ProfilesWindowPreferencesViewController.h"
-#import "ProfilesSessionPreferencesViewController.h"
 
 @interface NSWindow(LazyHacks)
 - (void)safeMakeFirstResponder:(id)view;
@@ -764,7 +765,7 @@ andEditComponentWithIdentifier:(NSString *)identifier
                                                       userInfo:nil];
 
     // Update user defaults
-    [[NSUserDefaults standardUserDefaults] setObject:[[ProfileModel sharedInstance] rawData]
+    [[iTermUserDefaults userDefaults] setObject:[[ProfileModel sharedInstance] rawData]
                                               forKey: @"New Bookmarks"];
 }
 
@@ -1177,14 +1178,16 @@ andEditComponentWithIdentifier:(NSString *)identifier
     }
     NSString *profileName = [profile objectForKey:KEY_NAME] ?: @"(unknown name)";
     NSString *message = [NSString stringWithFormat:@"The selected profile, “%@”, is a dynamic profile. These are generally only edited by hand.\n\niTerm2 is now able to write changes back to dynamic profiles when they are marked as “rewritable“. Rewriting can cause the order of values to change.", profileName];
-    const iTermWarningSelection selection =
-    [iTermWarning showWarningWithTitle:message
-                               actions:@[ @"Mark as Rewritable", @"Reveal in Finder", @"Cancel" ]
-                             accessory:nil
-                            identifier:@"NoSyncDynamicProfileChangeWillBeLost"
-                           silenceable:kiTermWarningTypeTemporarilySilenceable
-                               heading:@"Changes Will Be Lost"
-                                window:self.view.window];
+    // "Reveal in Finder" is a one-time navigation action and shouldn't be remembered.
+    iTermWarning *warning = [[iTermWarning alloc] init];
+    warning.title = message;
+    warning.actionLabels = @[ @"Mark as Rewritable", @"Reveal in Finder", @"Cancel" ];
+    warning.identifier = @"NoSyncDynamicProfileChangeWillBeLost";
+    warning.warningType = kiTermWarningTypeTemporarilySilenceable;
+    warning.heading = @"Changes Will Be Lost";
+    warning.window = self.view.window;
+    warning.doNotRememberLabels = @[ @"Reveal in Finder" ];
+    const iTermWarningSelection selection = [warning runModal];
     switch (selection) {
         case kiTermWarningSelection0:
             [[iTermDynamicProfileManager sharedInstance] markProfileRewritableWithGuid:guid];

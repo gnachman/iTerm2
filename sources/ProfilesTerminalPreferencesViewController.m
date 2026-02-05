@@ -49,6 +49,7 @@
     IBOutlet NSButton *_showMarkIndicators;
     IBOutlet NSButton *_promptPathClickOpensNavigator;
     IBOutlet NSButton *_showOffscreenCommandLine;
+    IBOutlet NSButton *_showOffscreenCommandLineForCurrentCommand;
     IBOutlet NSButton *_shellIntegrationRequiredButton;
     IBOutlet NSButton *_allowCursorBlinkControlSequence;
 
@@ -300,6 +301,14 @@
     if ([[iTermShellHistoryController sharedInstance] commandHistoryHasEverBeenUsed]) {
         _shellIntegrationRequiredButton.hidden = YES;
     }
+    info = [self defineControl:_showOffscreenCommandLineForCurrentCommand
+                    key:KEY_SHOW_OFFSCREEN_COMMANDLINE_FOR_CURRENT_COMMAND
+            relatedView:nil
+                   type:kPreferenceInfoTypeCheckbox];
+    [info addShouldBeEnabledDependencyOnSetting:KEY_SHOW_OFFSCREEN_COMMANDLINE controller:self];
+    info.shouldBeEnabled = ^BOOL{
+        return [weakSelf boolForKey:KEY_SHOW_OFFSCREEN_COMMANDLINE];
+    };
 
     [self defineControl:_tmuxNewline
                     key:KEY_TMUX_NEWLINE
@@ -312,6 +321,7 @@
                        phrases:@[ @"bell", @"idle", @"session ended", @"new output"]
                            key:nil];
     [self updateEnabledState];
+    [self commitControls];
 }
 
 - (void)layoutSubviewsForEditCurrentSessionMode {

@@ -7,17 +7,18 @@
 
 #import "iTermOnboardingWindowController.h"
 
-#import "iTerm2SharedARC-Swift.h"
 #import "ITAddressBookMgr.h"
+#import "PTYSession.h"
+#import "PreferencePanel.h"
+#import "ProfileModel.h"
+#import "SessionView.h"
+#import "iTerm2SharedARC-Swift.h"
 #import "iTermClickableTextField.h"
 #import "iTermController.h"
 #import "iTermPreferences.h"
 #import "iTermProfilePreferences.h"
 #import "iTermSessionLauncher.h"
-#import "PTYSession.h"
-#import "PreferencePanel.h"
-#import "ProfileModel.h"
-#import "SessionView.h"
+#import "iTermUserDefaults.h"
 
 static NSString *const iTermOnboardingWindowControllerHasBeenShown = @"NoSyncOnboardingWindowHasBeenShown34";
 
@@ -112,11 +113,11 @@ static void iTermOpenWhatsNewURL(NSString *path, NSWindow *window) {
 }
 
 + (BOOL)hasBeenShown {
-    return [[NSUserDefaults standardUserDefaults] boolForKey:iTermOnboardingWindowControllerHasBeenShown];
+    return [[iTermUserDefaults userDefaults] boolForKey:iTermOnboardingWindowControllerHasBeenShown];
 }
 
 + (void)suppressFutureShowings {
-    [[NSUserDefaults standardUserDefaults] setBool:YES forKey:iTermOnboardingWindowControllerHasBeenShown];
+    [[iTermUserDefaults userDefaults] setBool:YES forKey:iTermOnboardingWindowControllerHasBeenShown];
 }
 
 + (BOOL)previousLaunchVersionImpliesShouldBeShown {

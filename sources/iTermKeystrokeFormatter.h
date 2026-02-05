@@ -19,6 +19,10 @@ NS_ASSUME_NONNULL_BEGIN
 // character embedded in the keystroke.
 + (NSString *)stringForKeystroke:(iTermKeystroke *)keystroke;
 
+// Like stringForKeystroke: but always uses the character, ignoring the keycode.
+// Useful when the keycode is known to be incorrect.
++ (NSString *)stringForKeystrokeIgnoringKeycode:(iTermKeystroke *)keystroke;
+
 @end
 
 NS_ASSUME_NONNULL_END

@@ -1,10 +1,10 @@
-#import "PseudoTerminal.h"
 #import "PseudoTerminal+Private.h"
 #import "PseudoTerminal+TouchBar.h"
 #import "PseudoTerminal+WindowStyle.h"
+#import "PseudoTerminal.h"
 
-#import "CapturedOutput.h"
 #import "CaptureTrigger.h"
+#import "CapturedOutput.h"
 #import "ColorsMenuItemView.h"
 #import "CommandHistoryPopup.h"
 #import "Coprocess.h"
@@ -13,6 +13,59 @@
 #import "FutureMethods.h"
 #import "FutureMethods.h"
 #import "ITAddressBookMgr.h"
+#import "MovePaneController.h"
+#import "NSAlert+iTerm.h"
+#import "NSAppearance+iTerm.h"
+#import "NSArray+iTerm.h"
+#import "NSColor+iTerm.h"
+#import "NSDate+iTerm.h"
+#import "NSEvent+iTerm.h"
+#import "NSImage+iTerm.h"
+#import "NSResponder+iTerm.h"
+#import "NSScreen+iTerm.h"
+#import "NSScreen+iTerm.h"
+#import "NSScroller+iTerm.h"
+#import "NSSet+iTerm.h"
+#import "NSStringITerm.h"
+#import "NSView+RecursiveDescription.h"
+#import "NSView+iTerm.h"
+#import "NSWindow+PSM.h"
+#import "NSWindow+iTerm.h"
+#import "NSWorkspace+iTerm.h"
+#import "PSMDarkHighContrastTabStyle.h"
+#import "PSMDarkTabStyle.h"
+#import "PSMLightHighContrastTabStyle.h"
+#import "PSMMinimalTabStyle.h"
+#import "PSMTabStyle.h"
+#import "PSMYosemiteTabStyle.h"
+#import "PTYScrollView.h"
+#import "PTYSession.h"
+#import "PTYSession.h"
+#import "PTYTab.h"
+#import "PTYTabView.h"
+#import "PTYTask.h"
+#import "PTYTextView+ARC.h"
+#import "PTYTextView.h"
+#import "PTYWindow.h"
+#import "PasteboardHistory.h"
+#import "PopupModel.h"
+#import "PopupWindow.h"
+#import "PreferencePanel.h"
+#import "PseudoTerminalRestorer.h"
+#import "SessionView.h"
+#import "SplitPanel.h"
+#import "TemporaryNumberAllocator.h"
+#import "TmuxControllerRegistry.h"
+#import "TmuxDashboardController.h"
+#import "TmuxLayoutParser.h"
+#import "ToolCapturedOutputView.h"
+#import "ToolCommandHistoryView.h"
+#import "ToolDirectoriesView.h"
+#import "ToolJobs.h"
+#import "VT100RemoteHost.h"
+#import "VT100Screen.h"
+#import "VT100ScreenMutableState.h"
+#import "VT100Terminal.h"
 #import "iTerm.h"
 #import "iTermAPIHelper.h"
 #import "iTermAboutWindow.h"
@@ -35,15 +88,15 @@
 #import "iTermFontPanel.h"
 #import "iTermFunctionCallTextFieldDelegate.h"
 #import "iTermGraphEncoder.h"
-#import "iTermImageView.h"
-#import "iTermNotificationCenter.h"
-#import "iTermNotificationController.h"
 #import "iTermHotKeyController.h"
 #import "iTermHotKeyMigrationHelper.h"
+#import "iTermImageView.h"
 #import "iTermInstantReplayWindowController.h"
 #import "iTermKeyMappings.h"
 #import "iTermMenuBarObserver.h"
 #import "iTermMetalDriver.h"
+#import "iTermNotificationCenter.h"
+#import "iTermNotificationController.h"
 #import "iTermObject.h"
 #import "iTermOpenQuicklyWindow.h"
 #import "iTermOrderEnforcer.h"
@@ -56,7 +109,6 @@
 #import "iTermRateLimitedUpdate.h"
 #import "iTermRecordingCodec.h"
 #import "iTermRestorableStateController.h"
-#import "iTermSessionRestorationStatusProtocol.h"
 #import "iTermRootTerminalView.h"
 #import "iTermSavePanel.h"
 #import "iTermScriptFunctionCall.h"
@@ -64,6 +116,7 @@
 #import "iTermSelection.h"
 #import "iTermSessionFactory.h"
 #import "iTermSessionLauncher.h"
+#import "iTermSessionRestorationStatusProtocol.h"
 #import "iTermSessionTitleBuiltInFunction.h"
 #import "iTermShellHistoryController.h"
 #import "iTermSquash.h"
@@ -73,72 +126,20 @@
 #import "iTermTabBarAccessoryViewController.h"
 #import "iTermTabBarControlView.h"
 #import "iTermTheme.h"
-#import "iTermToolbeltView.h"
 #import "iTermToolSnippets.h"
+#import "iTermToolbeltView.h"
 #import "iTermTouchBarButton.h"
+#import "iTermUserDefaults.h"
 #import "iTermVariableReference.h"
-#import "iTermVariableScope.h"
 #import "iTermVariableScope+Global.h"
 #import "iTermVariableScope+Session.h"
 #import "iTermVariableScope+Tab.h"
 #import "iTermVariableScope+Window.h"
+#import "iTermVariableScope.h"
 #import "iTermWarning.h"
 #import "iTermWindowHacks.h"
 #import "iTermWindowOcclusionChangeMonitor.h"
 #import "iTermWindowShortcutLabelTitlebarAccessoryViewController.h"
-#import "MovePaneController.h"
-#import "NSAlert+iTerm.h"
-#import "NSAppearance+iTerm.h"
-#import "NSArray+iTerm.h"
-#import "NSColor+iTerm.h"
-#import "NSDate+iTerm.h"
-#import "NSEvent+iTerm.h"
-#import "NSImage+iTerm.h"
-#import "NSScreen+iTerm.h"
-#import "NSStringITerm.h"
-#import "NSResponder+iTerm.h"
-#import "NSScreen+iTerm.h"
-#import "NSScroller+iTerm.h"
-#import "NSSet+iTerm.h"
-#import "NSView+iTerm.h"
-#import "NSView+RecursiveDescription.h"
-#import "NSWindow+iTerm.h"
-#import "NSWindow+PSM.h"
-#import "NSWorkspace+iTerm.h"
-#import "PasteboardHistory.h"
-#import "PopupModel.h"
-#import "PopupWindow.h"
-#import "PreferencePanel.h"
-#import "PseudoTerminalRestorer.h"
-#import "PSMDarkTabStyle.h"
-#import "PSMDarkHighContrastTabStyle.h"
-#import "PSMLightHighContrastTabStyle.h"
-#import "PSMMinimalTabStyle.h"
-#import "PSMTabStyle.h"
-#import "PSMYosemiteTabStyle.h"
-#import "PTYScrollView.h"
-#import "PTYSession.h"
-#import "PTYSession.h"
-#import "PTYTab.h"
-#import "PTYTabView.h"
-#import "PTYTask.h"
-#import "PTYTextView.h"
-#import "PTYTextView+ARC.h"
-#import "PTYWindow.h"
-#import "SessionView.h"
-#import "SplitPanel.h"
-#import "TemporaryNumberAllocator.h"
-#import "TmuxControllerRegistry.h"
-#import "TmuxDashboardController.h"
-#import "TmuxLayoutParser.h"
-#import "ToolCapturedOutputView.h"
-#import "ToolCommandHistoryView.h"
-#import "ToolDirectoriesView.h"
-#import "ToolJobs.h"
-#import "VT100RemoteHost.h"
-#import "VT100Screen.h"
-#import "VT100ScreenMutableState.h"
-#import "VT100Terminal.h"
 #include "iTermFileDescriptorClient.h"
 #import <QuartzCore/QuartzCore.h>
 #include <unistd.h>
@@ -199,6 +200,7 @@ NSString *const TERMINAL_ARRANGEMENT_SCROLLER_WIDTH = @"Scroller Width";
 // Only present in arrangements created by the window restoration system, not (for example) saved arrangements in the UI.
 // Boolean NSNumber.
 NSString *const TERMINAL_ARRANGEMENT_MINIATURIZED = @"miniaturized";
+NSString *const TERMINAL_ARRANGEMENT_SIZE_LOCKED = @"Size Locked";
 
 static void iTermPercentageSanitize(iTermPercentage *percentage) {
     if (percentage->width >= 0) {
@@ -427,6 +429,7 @@ typedef NS_ENUM(int, iTermShouldHaveTitleSeparator) {
     BOOL _needsCanonicalize;
 
     iTermIdempotentOperationJoiner *_rightExtraJoiner;
+    BOOL _excursionPrevented;
 }
 
 @synthesize scope = _scope;
@@ -573,6 +576,7 @@ typedef NS_ENUM(int, iTermShouldHaveTitleSeparator) {
     _toggleFullScreenModeCompletionBlocks = [[NSMutableArray alloc] init];
     _windowWasJustCreated = YES;
     _deferSetAppearance = YES;
+    _sizeLocked = [iTermProfilePreferences boolForKey:KEY_LOCK_WINDOW_SIZE_AUTOMATICALLY inProfile:profile];
     __weak __typeof(self) weakSelf = self;
     dispatch_async(dispatch_get_main_queue(), ^{
         [weakSelf disableDeferSetAppearance];
@@ -3613,6 +3617,7 @@ ITERM_WEAKLY_REFERENCEABLE
     if (arrangement[TERMINAL_ARRANGEMENT_USE_TRANSPARENCY]) {
         useTransparency_ = [arrangement[TERMINAL_ARRANGEMENT_USE_TRANSPARENCY] boolValue];
     }
+    _sizeLocked = [arrangement[TERMINAL_ARRANGEMENT_SIZE_LOCKED] boolValue];
     self.scope.windowTitleOverrideFormat = arrangement[TERMINAL_ARRANGEMENT_TITLE_OVERRIDE];
 
     _contentView.shouldShowToolbelt = [arrangement[TERMINAL_ARRANGEMENT_HAS_TOOLBELT] boolValue];
@@ -5058,6 +5063,32 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     return _fullScreen || lionFullScreen_;
 }
 
+- (BOOL)windowTypeSupportsSizeLock {
+    switch (self.windowType) {
+        case WINDOW_TYPE_NORMAL:
+        case WINDOW_TYPE_NO_TITLE_BAR:
+        case WINDOW_TYPE_COMPACT:
+        case WINDOW_TYPE_ACCESSORY:
+        case WINDOW_TYPE_CENTERED:
+        case WINDOW_TYPE_TOP_PERCENTAGE:
+        case WINDOW_TYPE_BOTTOM_PERCENTAGE:
+        case WINDOW_TYPE_LEFT_PERCENTAGE:
+        case WINDOW_TYPE_RIGHT_PERCENTAGE:
+        case WINDOW_TYPE_BOTTOM_CELLS:
+        case WINDOW_TYPE_TOP_CELLS:
+        case WINDOW_TYPE_LEFT_CELLS:
+        case WINDOW_TYPE_RIGHT_CELLS:
+            return YES;
+
+        case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
+        case WINDOW_TYPE_LION_FULL_SCREEN:
+        case WINDOW_TYPE_MAXIMIZED:
+        case WINDOW_TYPE_COMPACT_MAXIMIZED:
+            return NO;
+    }
+    return NO;
+}
+
 - (BOOL)lionFullScreen {
     return lionFullScreen_;
 }
@@ -5113,6 +5144,11 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
         DLog( @"Blocking resize" );
         self.timeOfLastResize = [NSDate timeIntervalSinceReferenceDate];
         return self.window.screen.visibleFrameIgnoringHiddenDock.size;
+    }
+    if (_sizeLocked && self.windowTypeSupportsSizeLock) {
+        DLog(@"Blocking resize because size is locked");
+        self.timeOfLastResize = [NSDate timeIntervalSinceReferenceDate];
+        return self.window.frame.size;
     }
      NSSize originalProposal = proposedFrameSize;
     // Find the session for the current pane of the current tab.
@@ -5935,6 +5971,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
 
     [self clearForceFrame];
     liveResize_ = YES;
+    _excursionPrevented = NO;
     if ([self windowTitleIsVisible]) {
         switch (self.windowType) {
             case WINDOW_TYPE_LION_FULL_SCREEN:
@@ -7069,6 +7106,9 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     const BOOL willShowTabBar = ([iTermPreferences boolForKey:kPreferenceKeyHideTabBar] &&
                                  [_contentView.tabView numberOfTabViewItems] > 1 &&
                                  ([_contentView.tabBarControl isHidden] || [self rootTerminalViewShouldLeaveEmptyAreaAtTop]));
+    const BOOL willHideTabBar = ([iTermPreferences boolForKey:kPreferenceKeyHideTabBar] &&
+                                 [_contentView.tabView numberOfTabViewItems] == 1 &&
+                                 !([_contentView.tabBarControl isHidden] || [self rootTerminalViewShouldLeaveEmptyAreaAtTop]));
     // check window size in case tabs have to be hidden or shown
     if (([_contentView.tabView numberOfTabViewItems] == 1) ||  // just decreased to 1 or increased above 1 and is hidden
         willShowTabBar) {
@@ -7105,7 +7145,15 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
         if (willShowTabBar && [iTermPreferences intForKey:kPreferenceKeyTabPosition] == PSMTab_LeftTab) {
             [_contentView willShowTabBar];
         }
-        if (_windowNeedsInitialSize || ![iTermPreferences boolForKey:kPreferenceKeyPreserveWindowSizeWhenTabBarVisibilityChanges]) {
+        const BOOL generallyPreserveWindowSize = [iTermPreferences boolForKey:kPreferenceKeyPreserveWindowSizeWhenTabBarVisibilityChanges];
+        const BOOL preserveOnlyIfExcursion = [iTermPreferences boolForKey:kPreferenceKeyPreserveWindowSizeToKeepOnScreenWhenTabBarVisibilityChanges];
+        const BOOL wouldCauseExcursion = willShowTabBar && [self fittingWindowToTabsWouldCauseExcursion];
+        const BOOL preserveDueToShowing = generallyPreserveWindowSize && (!preserveOnlyIfExcursion || wouldCauseExcursion);
+        const BOOL preserveDueToHiding = willHideTabBar && _excursionPrevented;
+        const BOOL actuallyPreserve = preserveDueToHiding || preserveDueToShowing;
+        const BOOL shouldResizeWindow = _windowNeedsInitialSize || !actuallyPreserve;
+
+        if (shouldResizeWindow) {
             const BOOL neededInitialSize = _windowNeedsInitialSize;
             const NSRect frameBefore = self.window.frame;
             if (_windowNeedsInitialSize) {
@@ -7121,6 +7169,15 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
                 // Minimal theme.
                 [self fitTabsToWindow];
             }
+        } else if (!_windowNeedsInitialSize &&
+                   wouldCauseExcursion &&
+                   preserveDueToShowing &&
+                   preserveOnlyIfExcursion) {
+            DLog(@"Prevented due to excursion.");
+            // Set this flag because if the tab bar goes away later we don't want it to shrink.
+            _excursionPrevented = YES;
+        } else if (preserveDueToHiding) {
+            _excursionPrevented = NO;
         }
         // May need to enter or exit being a titlebar accessory if its visibility changed.
         [self updateTabBarControlIsTitlebarAccessory];
@@ -7186,6 +7243,33 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
         // Hiding tabbar in fullscreen on 10.14 is extra work because it's a titlebar accessory.
         [self updateTabBarStyle];
     }
+}
+
+- (BOOL)fittingWindowToTabsWouldCauseExcursion {
+    const NSRect proposedFrame = [self frameFittingWindowToTabs];
+    if (isnan(proposedFrame.origin.x) ||
+        isnan(proposedFrame.origin.y) ||
+        isnan(proposedFrame.size.width) ||
+        isnan(proposedFrame.size.height)) {
+        return NO;
+    }
+    const NSRect screenFrame = self.window.screen.visibleFrame;
+    DLog(@"Proposed frame is %@, current frame is %@, screen is %@ with visible frame %@",
+         NSStringFromRect(proposedFrame),
+         NSStringFromRect(self.window.frame),
+         self.window.screen,
+         NSStringFromRect(screenFrame));
+    if (!NSContainsRect(screenFrame, self.window.frame)) {
+        // Window didn't start in visible frame
+        return NO;
+    }
+    if (NSContainsRect(screenFrame, proposedFrame)) {
+        // End frame is in visible frame
+        return NO;
+    }
+
+    DLog(@"Frame would leave the screen");
+    return YES;
 }
 
 - (NSMenu *)tabView:(NSTabView *)tabView menuForTabViewItem:(NSTabViewItem *)tabViewItem
@@ -8287,8 +8371,8 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
                            silenceable:kiTermWarningTypePersistent
                                 window:self.window];
     if (selection == kiTermWarningSelection0) {
-        [[NSUserDefaults standardUserDefaults] setBool:YES forKey:@"MetalCaptureEnabled"];
-        [[NSUserDefaults standardUserDefaults] setDouble:[NSDate timeIntervalSinceReferenceDate] + 24 * 60 * 60
+        [[iTermUserDefaults userDefaults] setBool:YES forKey:@"MetalCaptureEnabled"];
+        [[iTermUserDefaults userDefaults] setDouble:[NSDate timeIntervalSinceReferenceDate] + 24 * 60 * 60
                                                   forKey:@"MetalCaptureEnabledDate"];
         [NSApp relaunch];
     }
@@ -8297,7 +8381,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
 - (BOOL)isMetalCaptureEnabled {
     NSDictionary *infoPlist = [[NSBundle mainBundle] infoDictionary];
     NSNumber *metalCaptureEnabled = infoPlist[@"MetalCaptureEnabled"];
-    return metalCaptureEnabled.boolValue || [[NSUserDefaults standardUserDefaults] boolForKey:@"MetalCaptureEnabled"];
+    return metalCaptureEnabled.boolValue || [[iTermUserDefaults userDefaults] boolForKey:@"MetalCaptureEnabled"];
 }
 
 - (IBAction)captureNextMetalFrame:(id)sender {
@@ -9265,8 +9349,15 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     [self updateTabProgress];
 }
 
+- (NSRect)frameFittingWindowToTabs {
+    return [self frameFittingWindowToTabsExcludingTmuxTabs:NO preservingHeight:NO];
+}
 - (void)fitWindowToTabs {
     [self fitWindowToTabsExcludingTmuxTabs:NO preservingHeight:NO];
+}
+
+- (NSRect)frameFittingWindowToTabsExcludingTmuxTabs:(BOOL)excludeTmux {
+    return [self frameFittingWindowToTabsExcludingTmuxTabs:excludeTmux preservingHeight:NO];
 }
 
 - (void)fitWindowToTabsExcludingTmuxTabs:(BOOL)excludeTmux {
@@ -9322,10 +9413,29 @@ typedef NS_ENUM(NSUInteger, PseudoTerminalTabSizeExclusion) {
     return maxTabSize;
 }
 
+- (NSRect)frameFittingWindowToTabsExcludingTmuxTabs:(BOOL)excludeTmux preservingHeight:(BOOL)preserveHeight {
+    return [self frameFittingWindowToTabsExcludingTmuxTabs:excludeTmux
+                                          preservingHeight:preserveHeight
+                                          sizeOfLargestTab:[self sizeOfLargestTabWithExclusion:excludeTmux ? PseudoTerminalTabSizeExclusionTmux : PseudoTerminalTabSizeExclusionNone]];
+}
+
 - (void)fitWindowToTabsExcludingTmuxTabs:(BOOL)excludeTmux preservingHeight:(BOOL)preserveHeight {
     [self fitWindowToTabsExcludingTmuxTabs:excludeTmux
                           preservingHeight:preserveHeight
                           sizeOfLargestTab:[self sizeOfLargestTabWithExclusion:excludeTmux ? PseudoTerminalTabSizeExclusionTmux : PseudoTerminalTabSizeExclusionNone]];
+}
+
+- (NSRect)frameFittingWindowToTabsExcludingTmuxTabs:(BOOL)excludeTmux
+                                   preservingHeight:(BOOL)preserveHeight
+                                   sizeOfLargestTab:(NSSize)maxTabSize {
+    if (togglingFullScreen_) {
+        return NSMakeRect(NAN, NAN, NAN, NAN);
+    }
+    if (NSEqualSizes(NSZeroSize, maxTabSize)) {
+        return NSMakeRect(NAN, NAN, NAN, NAN);
+    }
+    NSNumber *preferredHeight = preserveHeight ? @(self.window.frame.size.height) : nil;
+    return [self frameFittingWindowToTabSize:maxTabSize preferredHeight:preferredHeight];
 }
 
 - (void)fitWindowToTabsExcludingTmuxTabs:(BOOL)excludeTmux
@@ -9352,6 +9462,10 @@ typedef NS_ENUM(NSUInteger, PseudoTerminalTabSizeExclusion) {
         // the scrollbar.
         [self repositionWidgets];
     }
+}
+
+- (NSRect)frameFittingWindowToTabSize:(NSSize)tabSize {
+    return [self frameFittingWindowToTabSize:tabSize preferredHeight:nil];
 }
 
 - (BOOL)fitWindowToTabSize:(NSSize)tabSize {
@@ -9490,6 +9604,15 @@ typedef struct {
     if (shouldResize) {
         [self fitWindowToTabSize:tabSize preferredHeight:nil];
     }
+}
+
+- (NSRect)frameFittingWindowToTabSize:(NSSize)tabSize preferredHeight:(NSNumber *)preferredHeight {
+    PseudoTerminalWindowFrameInfo frameInfo = [self windowFrameForTabSize:tabSize
+                                                          preferredHeight:preferredHeight];
+    if (!frameInfo.ok) {
+        return NSMakeRect(NAN, NAN, NAN, NAN);
+    }
+    return frameInfo.frame;
 }
 
 // NOTE: The preferred height is respected only if it would be larger than the height the window would
@@ -10386,6 +10509,9 @@ static BOOL iTermApproximatelyEqualRects(NSRect lhs, NSRect rhs, double epsilon)
 }
 
 - (NSString *)rootTerminalViewWindowSizeViewDetailString {
+    if (_sizeLocked && [self windowTypeSupportsSizeLock]) {
+        return @"Window size locked";
+    }
     switch (self.windowType) {
         case WINDOW_TYPE_NORMAL:
         case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
@@ -10778,6 +10904,10 @@ static BOOL iTermApproximatelyEqualRects(NSRect lhs, NSRect rhs, double epsilon)
                   withSize:size];
 }
 
+- (IBAction)toggleSizeLocked:(id)sender {
+    _sizeLocked = !_sizeLocked;
+}
+
 - (IBAction)moveSessionToWindow:(id)sender {
     [[MovePaneController sharedInstance] moveSessionToNewWindow:[self currentSession]
                                                         atPoint:[[self window] pointToScreenCoords:NSMakePoint(10, -10)]];
@@ -11144,6 +11274,9 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
     } else if ([item action] == @selector(toggleToolbeltVisibility:)) {
         [item setState:_contentView.shouldShowToolbelt ? NSControlStateValueOn : NSControlStateValueOff];
         return [[iTermToolbeltView availableConfiguredToolsForProfileType:self.currentSession.profile.profileType] count] > 0;
+    } else if ([item action] == @selector(toggleSizeLocked:)) {
+        [item setState:_sizeLocked ? NSControlStateValueOn : NSControlStateValueOff];
+        return self.windowTypeSupportsSizeLock;
     } else if ([item action] == @selector(moveSessionToWindow:)) {
         if (self.currentSession.locked) {
             return NO;
@@ -13197,6 +13330,7 @@ backgroundColor:(NSColor *)backgroundColor {
                                         includingContents:includeContents
                                                   encoder:adapter];
     [encoder encodeNumber:@(self.window.miniaturized) forKey:TERMINAL_ARRANGEMENT_MINIATURIZED];
+    [encoder encodeNumber:@(_sizeLocked) forKey:TERMINAL_ARRANGEMENT_SIZE_LOCKED];
     return commit;
 }
 

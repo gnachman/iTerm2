@@ -199,14 +199,16 @@
 
         container = [[iTermAlertAccessoryButtonUnfucker alloc] initWithButton:button];
     }
-    const iTermWarningSelection selection =
-    [iTermWarning showWarningWithTitle:message
-                               actions:@[ @"OK", @"View Log" ]
-                             accessory:container
-                            identifier:@"NoSyncDynamicProfilesWarning"
-                           silenceable:kiTermWarningTypeTemporarilySilenceable
-                               heading:@"Dynamic Profiles Error"
-                                window:nil];
+    // "View Log" is a one-time navigation action and shouldn't be remembered.
+    iTermWarning *warning = [[iTermWarning alloc] init];
+    warning.title = message;
+    warning.actionLabels = @[ @"OK", @"View Log" ];
+    warning.accessory = container;
+    warning.identifier = @"NoSyncDynamicProfilesWarning";
+    warning.warningType = kiTermWarningTypeTemporarilySilenceable;
+    warning.heading = @"Dynamic Profiles Error";
+    warning.doNotRememberLabels = @[ @"View Log" ];
+    const iTermWarningSelection selection = [warning runModal];
     if (selection == 1) {
         [[iTermScriptConsole sharedInstance] revealTailOfHistoryEntry:[iTermScriptHistoryEntry dynamicProfilesEntry]];
     }

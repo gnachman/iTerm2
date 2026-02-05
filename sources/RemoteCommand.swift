@@ -237,8 +237,8 @@ struct RemoteCommand: Codable {
             if #available(macOS 26, *) {
                 if AIAvailabilityProbe.check() {
                     let nagKey = "NoSyncAISafetyCheckNagComplete"
-                    if UserDefaults.standard.object(forKey: kPreferenceKeyAISafetyCheck) == nil &&
-                        !UserDefaults.standard.bool(forKey: nagKey) {
+                    if iTermUserDefaults.userDefaults().object(forKey: kPreferenceKeyAISafetyCheck) == nil &&
+                        !iTermUserDefaults.userDefaults().bool(forKey: nagKey) {
                         let selection = iTermWarning.show(
                             withTitle: "iTerm2 can use Apple Intelligence to check the safety of commands suggested by your AI agent. Would you like to enable safety checking?\n\nWhen enabled, commands may be sent to Apple’s servers for safety checking.",
                             actions: ["OK", "Cancel"],

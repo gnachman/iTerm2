@@ -9,18 +9,19 @@
 #import "SmartSelectionController.h"
 
 #import "DebugLogging.h"
-#import "ProfileModel.h"
-#import "ITAddressBookMgr.h"
 #import "FutureMethods.h"
-#import "iTermTextExtractor.h"
+#import "ITAddressBookMgr.h"
 #import "NSArray+iTerm.h"
 #import "NSMutableAttributedString+iTerm.h"
 #import "NSObject+iTerm.h"
 #import "NSTableView+iTerm.h"
 #import "NSTextField+iTerm.h"
 #import "NSWorkspace+iTerm.h"
+#import "ProfileModel.h"
 #import "iTerm2SharedARC-Swift.h"
 #import "iTermProfilePreferences.h"
+#import "iTermTextExtractor.h"
+#import "iTermUserDefaults.h"
 
 NSString *const kRegexKey = @"regex";
 NSString *const kNotesKey = @"notes";
@@ -454,12 +455,12 @@ const double SmartSelectionVeryHighPrecision = 1000000.0;
 }
 
 - (IBAction)logDebugInfoChanged:(id)sender {
-    [[NSUserDefaults standardUserDefaults] setObject:[NSNumber numberWithInt:logDebugInfo_.state]
+    [[iTermUserDefaults userDefaults] setObject:[NSNumber numberWithInt:logDebugInfo_.state]
                                               forKey:kLogDebugInfoKey];
 }
 
 + (BOOL)logDebugInfo {
-    NSNumber *n = [[NSUserDefaults standardUserDefaults] valueForKey:kLogDebugInfoKey];
+    NSNumber *n = [[iTermUserDefaults userDefaults] valueForKey:kLogDebugInfoKey];
     if (n) {
         return [n intValue] == NSControlStateValueOn;
     } else {

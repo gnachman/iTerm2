@@ -6,6 +6,7 @@
 //
 
 #import "iTermSavePanelFileFormatAccessory.h"
+#import "iTermUserDefaults.h"
 
 NSString *iTermSaveWithTimestampsUserDefaultsKey = @"NoSyncSaveWithTimestamps";
 
@@ -46,7 +47,7 @@ NSString *iTermSaveWithTimestampsUserDefaultsKey = @"NoSyncSaveWithTimestamps";
         view.frame = frame;
     }];
 
-    _timestampsButton.state = [[NSUserDefaults standardUserDefaults] boolForKey:iTermSaveWithTimestampsUserDefaultsKey] ? NSControlStateValueOn : NSControlStateValueOff;
+    _timestampsButton.state = [[iTermUserDefaults userDefaults] boolForKey:iTermSaveWithTimestampsUserDefaultsKey] ? NSControlStateValueOn : NSControlStateValueOff;
 }
 
 - (void)popupButtonDidChange:(id)sender {
@@ -58,6 +59,6 @@ NSString *iTermSaveWithTimestampsUserDefaultsKey = @"NoSyncSaveWithTimestamps";
 }
 
 - (IBAction)timestampsDidChange:(id)sender {
-    [[NSUserDefaults standardUserDefaults] setBool:_timestampsButton.state == NSControlStateValueOn forKey:iTermSaveWithTimestampsUserDefaultsKey];
+    [[iTermUserDefaults userDefaults] setBool:_timestampsButton.state == NSControlStateValueOn forKey:iTermSaveWithTimestampsUserDefaultsKey];
 }
 @end

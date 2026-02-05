@@ -1490,14 +1490,17 @@ extension Conductor {
                 download(path: path)
                 return
             }
-            switch iTermWarning.show(
-                withTitle: "Download \(path.path.lastPathComponent) or view in browser?",
-                actions: ["Download", "View", "Cancel"],
-                accessory: nil,
-                identifier: "DownloadOrViewInBrowser_" + mimeType + " " + path.usernameHostnameString,
-                silenceable: .kiTermWarningTypePermanentlySilenceable,
-                heading: "Download or View File?",
-                window: window) {
+            // Only "View" should be remembered. Remembering "Download" could cause
+            // repeated download prompts if the download fails or isn't handled.
+            let warning = iTermWarning()
+            warning.title = "Download \(path.path.lastPathComponent) or view in browser?"
+            warning.actionLabels = ["Download", "View", "Cancel"]
+            warning.identifier = "DownloadOrViewInBrowser_" + mimeType + " " + path.usernameHostnameString
+            warning.warningType = .kiTermWarningTypePermanentlySilenceable
+            warning.heading = "Download or View File?"
+            warning.window = window
+            warning.doNotRememberLabels = ["Download", "Cancel"]
+            switch warning.runModal() {
             case .kiTermWarningSelection0:  // Download
                 download(path: path)
             case .kiTermWarningSelection1:  // View

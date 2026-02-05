@@ -250,7 +250,9 @@ static const char *iTermApplicationKVOKey = "iTermApplicationKVOKey";
 }
 
 - (NSEvent *)eventByRemappingForSecureInput:(NSEvent *)event {
-    if (IsSecureEventInputEnabled() || ![[iTermModifierRemapper sharedInstance] isRemappingModifiers]) {
+    const BOOL secureInput = IsSecureEventInputEnabled();
+    const BOOL remapping = [[iTermModifierRemapper sharedInstance] isRemappingModifiers];
+    if (secureInput || !remapping) {
         // The event tap is not working, but we can still remap modifiers for non-system
         // keys. Only things like cmd-tab will not be remapped in this case. Otherwise,
         // the event tap performs the remapping.
@@ -573,6 +575,18 @@ static const char *iTermApplicationKVOKey = "iTermApplicationKVOKey";
     _previousFlags = event.it_modifierFlags;
     if (event.keyCode == kVK_Function) {
         _functionPressed = event.modifierFlags & NSEventModifierFlagFunction;
+        iTermFlagsChangedEventTap *flagsTap = [iTermFlagsChangedEventTap sharedInstanceCreatingIfNeeded:NO];
+        BOOL eventTapHandlesFn = (flagsTap &&
+                                  [flagsTap isEnabled] &&
+                                  flagsTap.remappingDelegate == (id)[iTermModifierRemapper sharedInstance]);
+        if (!eventTapHandlesFn) {
+            // Only update physicalFnKeyDown here when the flagsChanged event tap is
+            // not actively delegating to iTermModifierRemapper. When it is, it already
+            // set physicalFnKeyDown from the original (pre-remapping) event. The event
+            // arriving here may have been remapped by the event tap (Fn flag stripped),
+            // so its flags no longer reflect the physical key state.
+            [iTermModifierRemapper sharedInstance].physicalFnKeyDown = _functionPressed;
+        }
     }
     event.it_functionModifierPressed = _functionPressed;
 

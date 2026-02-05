@@ -344,6 +344,7 @@ extern const CGFloat PTYTextViewMarginClickGraceWidth;
 - (BOOL)textViewCanUseSSHIntegrationFor:(SCPPath *)path;
 - (BOOL)textViewPerformTextReplacement;
 - (void)textViewSaveArchive:(iTermSavePanelItem *)location;
+- (void)textViewSendCustomButtonCode:(int)code;
 @end
 
 @interface iTermHighlightedRow : NSObject
@@ -790,6 +791,8 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
 - (NSDictionary *(^)(screen_char_t, iTermExternalAttribute *))attributeProviderUsingProcessedColors:(BOOL)processed
                                                                         elideDefaultBackgroundColor:(BOOL)elideDefaultBackgroundColor;
 - (BOOL)copyBlock:(NSString *)block includingAbsLine:(long long)absLine;
+- (void)foldBlock:(NSString *)blockID;
+- (void)unfoldBlock:(NSString *)blockID;
 - (void)setNeedsDisplay:(BOOL)needsDisplay NS_UNAVAILABLE;
 - (void)setNeedsDisplayInRect:(NSRect)invalidRect NS_UNAVAILABLE;  // Use this instead of setNeedsDisplay:
 - (void)requestDelegateRedraw;  // Use this instead of setNeedsDisplay:

@@ -1,6 +1,18 @@
 #import "iTermToolbeltView.h"
 
 #import "FutureMethods.h"
+#import "NSAppearance+iTerm.h"
+#import "NSArray+iTerm.h"
+#import "NSImage+iTerm.h"
+#import "NSObject+iTerm.h"
+#import "ToolCapturedOutputView.h"
+#import "ToolCommandHistoryView.h"
+#import "ToolDirectoriesView.h"
+#import "ToolJobs.h"
+#import "ToolNotes.h"
+#import "ToolPasteHistory.h"
+#import "ToolProfiles.h"
+#import "ToolWebView.h"
 #import "iTerm2SharedARC-Swift.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermApplication.h"
@@ -14,18 +26,7 @@
 #import "iTermToolWrapper.h"
 #import "iTermToolbeltSplitView.h"
 #import "iTermTuple.h"
-#import "NSAppearance+iTerm.h"
-#import "NSArray+iTerm.h"
-#import "NSImage+iTerm.h"
-#import "NSObject+iTerm.h"
-#import "ToolCapturedOutputView.h"
-#import "ToolCommandHistoryView.h"
-#import "ToolDirectoriesView.h"
-#import "ToolJobs.h"
-#import "ToolNotes.h"
-#import "ToolPasteHistory.h"
-#import "ToolProfiles.h"
-#import "ToolWebView.h"
+#import "iTermUserDefaults.h"
 #import <QuartzCore/QuartzCore.h>
 
 NSString *const kActionsToolName = @"Actions";
@@ -91,7 +92,7 @@ static NSString *const kDynamicToolURL = @"URL";
     [iTermToolbeltView registerToolWithName:kSnippetsToolName withClass:[iTermToolSnippets class]];
     [iTermToolbeltView registerToolWithName:kCodeciergeToolName withClass:[iTermToolCodecierge class]];
 
-    NSDictionary<NSString *, NSDictionary *> *dynamicTools = [[NSUserDefaults standardUserDefaults] objectForKey:kDynamicToolsKey];
+    NSDictionary<NSString *, NSDictionary *> *dynamicTools = [[iTermUserDefaults userDefaults] objectForKey:kDynamicToolsKey];
     [dynamicTools enumerateKeysAndObjectsUsingBlock:^(NSString * _Nonnull identifier, NSDictionary * _Nonnull dict, BOOL * _Nonnull stop) {
         [iTermToolbeltView registerToolWithName:dict[kDynamicToolName] withClass:[ToolWebView class]];
     }];
@@ -105,7 +106,7 @@ static NSString *const kDynamicToolURL = @"URL";
 }
 
 + (NSArray<NSString *> *)dynamicToolNames {
-    NSDictionary<NSString *, NSDictionary *> *dynamicTools = [[NSUserDefaults standardUserDefaults] objectForKey:kDynamicToolsKey];
+    NSDictionary<NSString *, NSDictionary *> *dynamicTools = [[iTermUserDefaults userDefaults] objectForKey:kDynamicToolsKey];
     return [dynamicTools.allValues mapWithBlock:^id(NSDictionary *dict) {
         return dict[kDynamicToolName];
     }];
@@ -116,7 +117,7 @@ static NSString *const kDynamicToolURL = @"URL";
     if (!url) {
         return;
     }
-    NSDictionary *registry = [[NSUserDefaults standardUserDefaults] objectForKey:kDynamicToolsKey];
+    NSDictionary *registry = [[iTermUserDefaults userDefaults] objectForKey:kDynamicToolsKey];
     NSString *oldName = registry[identifier][kDynamicToolName];
     if ([registry[identifier][kDynamicToolURL] isEqualToString:url] &&
         [registry[identifier][kDynamicToolName] isEqualToString:name]) {
@@ -131,7 +132,7 @@ static NSString *const kDynamicToolURL = @"URL";
     NSMutableDictionary *mutableRegistry = [registry mutableCopy] ?: [NSMutableDictionary dictionary];
     mutableRegistry[identifier] = @{ kDynamicToolName: name,
                                      kDynamicToolURL: url };
-    [[NSUserDefaults standardUserDefaults] setObject:mutableRegistry forKey:kDynamicToolsKey];
+    [[iTermUserDefaults userDefaults] setObject:mutableRegistry forKey:kDynamicToolsKey];
 
     if (oldName && [[iTermToolbeltView configuredTools] containsObject:oldName]) {
         [self toggleShouldShowTool:oldName];
@@ -151,7 +152,7 @@ static NSString *const kDynamicToolURL = @"URL";
 }
 
 + (NSArray *)configuredTools {
-    NSArray *tools = [[NSUserDefaults standardUserDefaults] objectForKey:kToolbeltPrefKey];
+    NSArray *tools = [[iTermUserDefaults userDefaults] objectForKey:kToolbeltPrefKey];
     if (!tools) {
         return [iTermToolbeltView defaultTools];
     }
@@ -208,7 +209,7 @@ static NSString *const kDynamicToolURL = @"URL";
     } else {
         [tools removeObject:theName];
     }
-    [[NSUserDefaults standardUserDefaults] setObject:tools forKey:kToolbeltPrefKey];
+    [[iTermUserDefaults userDefaults] setObject:tools forKey:kToolbeltPrefKey];
 
     [[NSNotificationCenter defaultCenter] postNotificationName:@"iTermToolToggled"
                                                         object:theName
@@ -268,7 +269,7 @@ static NSString *const kDynamicToolURL = @"URL";
         NSArray *items = [iTermToolbeltView availableConfiguredToolsForProfileType:profileType];
         if (!items) {
             items = [iTermToolbeltView defaultTools];
-            [[NSUserDefaults standardUserDefaults] setObject:items forKey:kToolbeltPrefKey];
+            [[iTermUserDefaults userDefaults] setObject:items forKey:kToolbeltPrefKey];
         }
 
         _splitter = [[iTermToolbeltSplitView alloc] initWithFrame:NSMakeRect(0,
@@ -391,7 +392,7 @@ static NSString *const kDynamicToolURL = @"URL";
 #pragma mark - APIs
 
 + (NSDictionary *)savedProportions {
-    return [[NSUserDefaults standardUserDefaults] objectForKey:iTermToolbeltProportionsUserDefaultsKey];
+    return [[iTermUserDefaults userDefaults] objectForKey:iTermToolbeltProportionsUserDefaultsKey];
 }
 
 - (void)shutdown {
@@ -546,7 +547,7 @@ static NSString *const kDynamicToolURL = @"URL";
                                   wrapper.container.frame.size.height);
 
         if ([self classIsDynamic:c]) {
-            NSDictionary *registry = [[NSUserDefaults standardUserDefaults] objectForKey:kDynamicToolsKey];
+            NSDictionary *registry = [[iTermUserDefaults userDefaults] objectForKey:kDynamicToolsKey];
             NSString *identifier = [registry.allKeys objectPassingTest:^BOOL(NSString *key, NSUInteger index, BOOL *stop) {
                 NSDictionary *dict = registry[key];
                 return [dict[kDynamicToolName] isEqualToString:toolName];
@@ -902,7 +903,7 @@ static NSString *const kDynamicToolURL = @"URL";
 draggingDidEndOfSplit:(int)clickedOnSplitterIndex
            pixels:(NSSize)changePx {
     _proportions = [self proportions];
-    [[NSUserDefaults standardUserDefaults] setObject:_proportions
+    [[iTermUserDefaults userDefaults] setObject:_proportions
                                               forKey:iTermToolbeltProportionsUserDefaultsKey];
 }
 

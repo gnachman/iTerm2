@@ -9,11 +9,12 @@
 #import "iTermTipController.h"
 #import <Cocoa/Cocoa.h>
 
+#import "NSApplication+iTerm.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermTip.h"
 #import "iTermTipData.h"
 #import "iTermTipWindowController.h"
-#import "NSApplication+iTerm.h"
+#import "iTermUserDefaults.h"
 
 static NSString *const kUnshowableTipsKey = @"NoSyncTipsToNotShow";
 static NSString *const kLastTipTimeKey = @"NoSyncLastTipTime";
@@ -95,7 +96,7 @@ static NSString *const kPermissionToShowTip = @"NoSyncPermissionToShowTip";
 
 - (BOOL)willAskPermission {
     if (![self haveAskedForPermission] &&
-        ![[NSUserDefaults standardUserDefaults] boolForKey:kTipsDisabledKey]) {
+        ![[iTermUserDefaults userDefaults] boolForKey:kTipsDisabledKey]) {
         return YES;
     }
     return NO;
@@ -112,11 +113,11 @@ static NSString *const kPermissionToShowTip = @"NoSyncPermissionToShowTip";
 }
 
 - (BOOL)havePermission {
-    return [[NSUserDefaults standardUserDefaults] boolForKey:kPermissionToShowTip];
+    return [[iTermUserDefaults userDefaults] boolForKey:kPermissionToShowTip];
 }
 
 - (BOOL)haveAskedForPermission {
-    return [[NSUserDefaults standardUserDefaults] objectForKey:kPermissionToShowTip] != nil;
+    return [[iTermUserDefaults userDefaults] objectForKey:kPermissionToShowTip] != nil;
 }
 
 - (void)askForPermission {
@@ -126,7 +127,7 @@ static NSString *const kPermissionToShowTip = @"NoSyncPermissionToShowTip";
     [alert addButtonWithTitle:@"Yes"];
     [alert addButtonWithTitle:@"No"];
     BOOL havePermission = ([alert runModal] == NSAlertFirstButtonReturn);
-    [[NSUserDefaults standardUserDefaults] setBool:havePermission forKey:kPermissionToShowTip];
+    [[iTermUserDefaults userDefaults] setBool:havePermission forKey:kPermissionToShowTip];
 }
 
 - (void)tryToShowTip {
@@ -137,7 +138,7 @@ static NSString *const kPermissionToShowTip = @"NoSyncPermissionToShowTip";
     if (![self havePermission]) {
         return;
     }
-    if ([[NSUserDefaults standardUserDefaults] boolForKey:kTipsDisabledKey]) {
+    if ([[iTermUserDefaults userDefaults] boolForKey:kTipsDisabledKey]) {
         return;
     }
     if (![[NSApplication sharedApplication] isActive]) {
@@ -160,7 +161,7 @@ static NSString *const kPermissionToShowTip = @"NoSyncPermissionToShowTip";
     }
 
     // Try to show the last-seen tip.
-    NSArray *unshowableTips = [[NSUserDefaults standardUserDefaults] objectForKey:kUnshowableTipsKey];
+    NSArray *unshowableTips = [[iTermUserDefaults userDefaults] objectForKey:kUnshowableTipsKey];
     NSString *key = [unshowableTips lastObject];
     if (!key) {
         // You've never seen it before? Then show the first one.
@@ -173,7 +174,7 @@ static NSString *const kPermissionToShowTip = @"NoSyncPermissionToShowTip";
 
 - (BOOL)haveShownTipRecently {
     NSTimeInterval now = [NSDate timeIntervalSinceReferenceDate];
-    NSTimeInterval previous = [[NSUserDefaults standardUserDefaults] doubleForKey:kLastTipTimeKey];
+    NSTimeInterval previous = [[iTermUserDefaults userDefaults] doubleForKey:kLastTipTimeKey];
     return (now - previous) < [self timeBetweenTips];
 }
 
@@ -182,7 +183,7 @@ static NSString *const kPermissionToShowTip = @"NoSyncPermissionToShowTip";
 }
 
 - (NSString *)tipKeyAfter:(NSString *)prev respectUnshowable:(BOOL)respectUnshowable {
-    NSArray *unshowableTips = [[NSUserDefaults standardUserDefaults] objectForKey:kUnshowableTipsKey];
+    NSArray *unshowableTips = [[iTermUserDefaults userDefaults] objectForKey:kUnshowableTipsKey];
 #if ALWAYS_SHOW_TIP
     unshowableTips = @[];
 #endif
@@ -225,13 +226,13 @@ static NSString *const kPermissionToShowTip = @"NoSyncPermissionToShowTip";
 
 - (void)willShowTipWithIdentifier:(NSString *)tipKey {
     _showingTip = YES;
-    [[NSUserDefaults standardUserDefaults] setDouble:[NSDate timeIntervalSinceReferenceDate]
+    [[iTermUserDefaults userDefaults] setDouble:[NSDate timeIntervalSinceReferenceDate]
                                               forKey:kLastTipTimeKey];
     self.currentTipName = tipKey;
 }
 
 - (void)doNotShowCurrentTipAgain {
-    NSArray *unshowableTips = [[NSUserDefaults standardUserDefaults] objectForKey:kUnshowableTipsKey];
+    NSArray *unshowableTips = [[iTermUserDefaults userDefaults] objectForKey:kUnshowableTipsKey];
     if (!unshowableTips) {
         unshowableTips = @[];
     }
@@ -239,7 +240,7 @@ static NSString *const kPermissionToShowTip = @"NoSyncPermissionToShowTip";
     unshowableTips = [[NSSet setWithArray:unshowableTips] allObjects];
     // And append the last one because we use it to decide which tip to show next.
     unshowableTips = [unshowableTips arrayByAddingObject:_currentTipName];
-    [[NSUserDefaults standardUserDefaults] setObject:unshowableTips forKey:kUnshowableTipsKey];
+    [[iTermUserDefaults userDefaults] setObject:unshowableTips forKey:kUnshowableTipsKey];
 }
 
 #pragma mark - iTermTipWindowDelegate
@@ -254,16 +255,16 @@ static NSString *const kPermissionToShowTip = @"NoSyncPermissionToShowTip";
 }
 
 - (void)tipWindowRequestsDisable {
-    [[NSUserDefaults standardUserDefaults] setBool:YES forKey:kTipsDisabledKey];
+    [[iTermUserDefaults userDefaults] setBool:YES forKey:kTipsDisabledKey];
     _showingTip = NO;
 }
 
 - (void)tipWindowRequestsEnable {
-    [[NSUserDefaults standardUserDefaults] setBool:NO forKey:kTipsDisabledKey];
+    [[iTermUserDefaults userDefaults] setBool:NO forKey:kTipsDisabledKey];
 }
 
 - (BOOL)tipWindowTipsAreDisabled {
-    return [[NSUserDefaults standardUserDefaults] boolForKey:kTipsDisabledKey];
+    return [[iTermUserDefaults userDefaults] boolForKey:kTipsDisabledKey];
 }
 
 - (iTermTip *)tipWindowTipAfterTipWithIdentifier:(NSString *)previousId {

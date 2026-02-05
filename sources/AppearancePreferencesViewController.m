@@ -35,6 +35,7 @@ NSString *const iTermProcessTypeDidChangeNotification = @"iTermProcessTypeDidCha
     IBOutlet NSButton *_hideTab;
 
     IBOutlet NSButton *_preserveWindowSizeWhenTabBarVisibilityChanges;
+    IBOutlet NSButton *_preserveWindowSizeToKeepOnScreenWhenTabBarVisibilityChanges;
 
     // Remove tab number from tabs.
     IBOutlet NSButton *_hideTabNumber;
@@ -179,6 +180,16 @@ NSString *const iTermProcessTypeDidChangeNotification = @"iTermProcessTypeDidCha
                     key:kPreferenceKeyPreserveWindowSizeWhenTabBarVisibilityChanges
             relatedView:nil
                    type:kPreferenceInfoTypeCheckbox];
+    
+    info = [self defineControl:_preserveWindowSizeToKeepOnScreenWhenTabBarVisibilityChanges
+                    key:kPreferenceKeyPreserveWindowSizeToKeepOnScreenWhenTabBarVisibilityChanges
+            relatedView:nil
+                   type:kPreferenceInfoTypeCheckbox];
+    info.shouldBeEnabled = ^BOOL {
+        return [weakSelf boolForKey:kPreferenceKeyPreserveWindowSizeWhenTabBarVisibilityChanges];
+    };
+    [info addShouldBeEnabledDependencyOnSetting:kPreferenceKeyPreserveWindowSizeWhenTabBarVisibilityChanges
+                                     controller:self];
 
     info = [self defineControl:_hideTabNumber
                            key:kPreferenceKeyHideTabNumber

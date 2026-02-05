@@ -24,6 +24,7 @@
 * DEALINGS IN THE SOFTWARE.
 */
 
+#import <Carbon/Carbon.h>
 #import <Cocoa/Cocoa.h>
 
 #import "iTermModifierRemapper.h"
@@ -210,6 +211,152 @@
     return [self _nxMaskForLeftMod:[[iTermModifierRemapper sharedInstance] functionRemapping]];
 }
 
+// Fn key remapping and reverse keycode translation
+//
+// There are two paths for key events:
+//
+// 1. Event tap path (ET=Y): The event tap at kCGTailAppendEventTap intercepts CGEvents.
+//    On modern macOS (Sequoia+), the event tap sees events AFTER macOS applies Fn
+//    keycode translation (e.g., Up is already PageUp when Fn is held).
+//    remapModifiersInCGEvent: strips SecondaryFn and adds the remapped modifier, then
+//    reverseFnKeyTranslationIfNeeded: reverses the keycode translation when Fn is
+//    remapped (e.g., PageUp back to Up).
+//
+// 2. Application path (ET=N): When the event tap is not running (e.g., secure keyboard
+//    entry is on), events arrive at -[NSApp sendEvent:] with Fn translation already
+//    applied (e.g., keycode is PageUp, not Up). remapModifiersInCGEvent: handles
+//    the flags, and reverseFnKeyTranslationIfNeeded: reverses the keycode translation
+//    the same way as in the event tap path.
+//
+// In both paths, reverseFnKeyTranslationIfNeeded: is called unconditionally after
+// remapModifiersInCGEvent:. It is a no-op when physicalFnKeyDown is NO or when Fn
+// is not remapped (kPreferenceModifierTagFunction).
+//
+// physicalFnKeyDown tracks whether the physical Fn key is held, via kCGEventFlagsChanged
+// events with keycode kVK_Function. It is set by the flagsChanged event tap (which
+// runs even with secure keyboard entry). When the flagsChanged event tap is running,
+// handleFlagsChangedEvent: in iTermApplication defers to it and does not overwrite
+// the value. External keyboards lack a Fn key, so physicalFnKeyDown is always NO
+// for them.
+//
+// The following table enumerates all 2^5 = 32 combinations of:
+//   ET:  Event tap runs (Y) or not (N)
+//   KB:  Internal laptop keyboard (I) or External keyboard (E)
+//   Fn:  Physical Fn key is held (Y) or not (N)
+//   Key: Pressed key is in the function area and sets SecondaryFn, e.g., arrow (F)
+//        or is a normal key, e.g., a letter (L)
+//   Rmp: Fn is remapped to another modifier like Control (Y) or not (N)
+//
+// Columns show the keycode and flags at each stage. Example fn-area key: Up Arrow
+// (Fn-translated form: PageUp). Example normal key: 'a'.
+//   Tap: CGEvent arriving at the key-down event tap (kCGTailAppendEventTap).
+//        On modern macOS, Fn translation has already been applied.
+//   SE:  NSEvent arriving at -[NSApp sendEvent:]
+//   Out: CGEvent returned by -[iTermModifierRemapper eventByRemappingEvent:eventTap:]
+//        when called from -[iTermApplication eventByRemappingEvent:]
+//
+// Flags: SF = kCGEventFlagMaskSecondaryFn, C = remapped modifier (e.g., Control)
+// "—" means this stage is not reached for the given path.
+// "n/a" means the combination is impossible (external keyboards have no Fn key).
+//
+// For each configuration the result (SE when ET=Y, Out when ET=N) should be
+// identical, ensuring consistent behavior regardless of whether the event tap runs.
+//
+//  #  ET KB Fn Key Rmp   Tap         SE          Out         Result
+// --  -- -- -- --- ---   ----------  ----------  ----------  ----------
+//  1  Y  I  N  F   N    Up+SF       Up+SF       —           Up+SF
+//  2  Y  I  N  F   Y    Up+SF       Up+SF       —           Up+SF
+//  3  Y  I  N  L   N    'a'         'a'         —           'a'
+//  4  Y  I  N  L   Y    'a'         'a'         —           'a'
+//  5  Y  I  Y  F   N    PgUp+SF     PgUp+SF     —           PgUp+SF
+//  6  Y  I  Y  F   Y    PgUp+SF     Up+C        —           Up+C
+//  7  Y  I  Y  L   N    'a'+SF      'a'+SF      —           'a'+SF
+//  8  Y  I  Y  L   Y    'a'+SF      'a'+C       —           'a'+C
+//  9  Y  E  N  F   N    Up+SF       Up+SF       —           Up+SF
+// 10  Y  E  N  F   Y    Up+SF       Up+SF       —           Up+SF
+// 11  Y  E  N  L   N    'a'         'a'         —           'a'
+// 12  Y  E  N  L   Y    'a'         'a'         —           'a'
+// 13  Y  E  Y  F   N    n/a         n/a         n/a         n/a
+// 14  Y  E  Y  F   Y    n/a         n/a         n/a         n/a
+// 15  Y  E  Y  L   N    n/a         n/a         n/a         n/a
+// 16  Y  E  Y  L   Y    n/a         n/a         n/a         n/a
+// 17  N  I  N  F   N    —           Up+SF       Up+SF       Up+SF
+// 18  N  I  N  F   Y    —           Up+SF       Up+SF       Up+SF
+// 19  N  I  N  L   N    —           'a'         'a'         'a'
+// 20  N  I  N  L   Y    —           'a'         'a'         'a'
+// 21  N  I  Y  F   N    —           PgUp+SF     PgUp+SF     PgUp+SF
+// 22  N  I  Y  F   Y    —           PgUp+SF     Up+C        Up+C
+// 23  N  I  Y  L   N    —           'a'+SF      'a'+SF      'a'+SF
+// 24  N  I  Y  L   Y    —           'a'+SF      'a'+C       'a'+C
+// 25  N  E  N  F   N    —           Up+SF       Up+SF       Up+SF
+// 26  N  E  N  F   Y    —           Up+SF       Up+SF       Up+SF
+// 27  N  E  N  L   N    —           'a'         'a'         'a'
+// 28  N  E  N  L   Y    —           'a'         'a'         'a'
+// 29  N  E  Y  F   N    n/a         n/a         n/a         n/a
+// 30  N  E  Y  F   Y    n/a         n/a         n/a         n/a
+// 31  N  E  Y  L   N    n/a         n/a         n/a         n/a
+// 32  N  E  Y  L   Y    n/a         n/a         n/a         n/a
+//
+// Key rows: #6 vs #22 (Fn+Arrow with Fn remapped) — both produce Up+C.
+//           #5 vs #21 (Fn+Arrow, Fn not remapped) — both produce PgUp+SF.
+//
+// reverseFnKeyTranslationIfNeeded: is responsible for rows 6, 8, 22, and 24: it
+// reverses the Fn keycode translation (PgUp->Up, etc.) only when physicalFnKeyDown=YES
+// AND Fn is remapped. Row 5/21 shows why both conditions are needed: Fn+Arrow with
+// Fn NOT remapped must produce PageUp.
+//
+// Note on Fn+letter (rows 7, 8, 23, 24): Starting in macOS Sequoia, the system
+// intercepts Fn+letter combinations for Globe key shortcuts (e.g., Fn+A opens the
+// Finder in the Dock) before any event tap or application receives the keyDown.
+// As a result, Fn+letter events may never reach iTerm2 at all, making rows 7/8/23/24
+// impossible to fulfill for letters that have Globe shortcuts. Fn+arrow and other
+// function-area keys are not affected by this.
+
++ (void)reverseFnKeyTranslationIfNeeded:(CGEventRef)event {
+    const BOOL fnDown = [[iTermModifierRemapper sharedInstance] physicalFnKeyDown];
+    iTermPreferencesModifierTag remap = [[iTermModifierRemapper sharedInstance] functionRemapping];
+    DLog(@"reverseFnKeyTranslationIfNeeded: physicalFnKeyDown=%d functionRemapping=%d keycode=0x%llx",
+         fnDown, (int)remap,
+         CGEventGetIntegerValueField(event, kCGKeyboardEventKeycode));
+    if (!fnDown) {
+        return;
+    }
+    if (remap == kPreferenceModifierTagFunction) {
+        // Fn is not remapped, so preserve macOS's Fn translation (e.g., Fn+Up = PageUp).
+        return;
+    }
+    CGKeyCode keyCode = (CGKeyCode)CGEventGetIntegerValueField(event, kCGKeyboardEventKeycode);
+    CGKeyCode newKeyCode;
+    UniChar newChar;
+    switch (keyCode) {
+        case kVK_PageUp:
+            newKeyCode = kVK_UpArrow;
+            newChar = NSUpArrowFunctionKey;
+            break;
+        case kVK_PageDown:
+            newKeyCode = kVK_DownArrow;
+            newChar = NSDownArrowFunctionKey;
+            break;
+        case kVK_Home:
+            newKeyCode = kVK_LeftArrow;
+            newChar = NSLeftArrowFunctionKey;
+            break;
+        case kVK_End:
+            newKeyCode = kVK_RightArrow;
+            newChar = NSRightArrowFunctionKey;
+            break;
+        case kVK_ForwardDelete:
+            newKeyCode = kVK_Delete;
+            newChar = 0x7F;
+            break;
+        default:
+            return;
+    }
+    DLog(@"Reversing Fn key translation: keycode 0x%x -> 0x%x", (int)keyCode, (int)newKeyCode);
+    CGEventSetIntegerValueField(event, kCGKeyboardEventKeycode, newKeyCode);
+    CGEventKeyboardSetUnicodeString(event, 1, &newChar);
+}
+
 + (CGEventRef)remapModifiersInCGEvent:(CGEventRef)cgEvent {
     // This function copied from cmd-key happy. See copyright notice at top.
     CGEventFlags flags = CGEventGetFlags(cgEvent);
@@ -292,11 +439,17 @@
             }
         }
     }
-#warning TODO: I think this is broken. I have to watch FlagsChanged. SecondaryFn is set when I press an arrow key.
-    if (flags & kCGEventFlagMaskSecondaryFn) {
-        andMask &= ~kCGEventFlagMaskSecondaryFn;
-        orMask |= [self _cgMaskForFunctionKey];
-        orMask |= [self _nxMaskForFunctionKey];
+    {
+        BOOL hasFnFlag = (flags & kCGEventFlagMaskSecondaryFn) != 0;
+        BOOL fnDown = [[iTermModifierRemapper sharedInstance] physicalFnKeyDown];
+        DLog(@"remapModifiersInCGEvent: Fn check: hasFnFlag=%d physicalFnKeyDown=%d keycode=0x%llx",
+             hasFnFlag, fnDown,
+             CGEventGetIntegerValueField(cgEvent, kCGKeyboardEventKeycode));
+        if (hasFnFlag && fnDown) {
+            andMask &= ~kCGEventFlagMaskSecondaryFn;
+            orMask |= [self _cgMaskForFunctionKey];
+            orMask |= [self _nxMaskForFunctionKey];
+        }
     }
     DLog(@"On output CGEventFlags=%@", @((flags & andMask) | orMask));
 
@@ -439,6 +592,14 @@
         DLog(@"Flags changed remapping disabled by advanced setting");
         return event;
     }
+    if (type == kCGEventFlagsChanged) {
+        int64_t keycode = CGEventGetIntegerValueField(event, kCGKeyboardEventKeycode);
+        CGEventFlags tapFlags = CGEventGetFlags(event);
+        if (keycode == kVK_Function) {
+            self.physicalFnKeyDown = (tapFlags & kCGEventFlagMaskSecondaryFn) != 0;
+            DLog(@"eventTap: set physicalFnKeyDown=%d", self.physicalFnKeyDown);
+        }
+    }
     if ([NSApp isActive]) {
         DLog(@"App is active, performing remapping");
         // Remap modifier keys only while iTerm2 is active; otherwise you could just use the
@@ -506,6 +667,7 @@
         case KEY_ACTION_REMAP_LOCALLY:
             DLog(@"Calling sendEvent:");
             [self.class remapModifiersInCGEvent:event];
+            [self.class reverseFnKeyTranslationIfNeeded:event];
             if (eventTap != nil) {
                 // Only re-send through sendEvent when coming from the event tap
                 [NSApp sendEvent:[NSEvent eventWithCGEvent:event]];
@@ -524,6 +686,7 @@
         default:
             DLog(@"Remapping as usual");
             [self.class remapModifiersInCGEvent:event];
+            [self.class reverseFnKeyTranslationIfNeeded:event];
             _remapped = YES;
             return event;
     }

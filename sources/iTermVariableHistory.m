@@ -8,12 +8,13 @@
 #import "iTermVariableHistory.h"
 
 #import "DebugLogging.h"
-#import "iTermRecordedVariable.h"
-#import "iTermVariables.h"
 #import "NSArray+iTerm.h"
 #import "NSDictionary+iTerm.h"
 #import "NSObject+iTerm.h"
 #import "NSStringITerm.h"
+#import "iTermRecordedVariable.h"
+#import "iTermUserDefaults.h"
+#import "iTermVariables.h"
 
 @implementation iTermVariableHistory
 
@@ -181,7 +182,7 @@
     static NSMutableDictionary<NSNumber *, NSMutableSet<iTermRecordedVariable *> *> *records;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
-        NSDictionary *dict = [[NSUserDefaults standardUserDefaults] dictionaryForKey:@"NoSyncRecordedVariables"] ?: @{};
+        NSDictionary *dict = [[iTermUserDefaults userDefaults] dictionaryForKey:@"NoSyncRecordedVariables"] ?: @{};
         records = [NSMutableDictionary dictionary];
         for (id key in dict) {
             NSString *stringContext = [NSString castFrom:key];
@@ -210,7 +211,7 @@
     plist = [plist mapKeysWithBlock:^id(id key, id object) {
         return [key stringValue];
     }];
-    [[NSUserDefaults standardUserDefaults] setObject:plist forKey:@"NoSyncRecordedVariables"];
+    [[iTermUserDefaults userDefaults] setObject:plist forKey:@"NoSyncRecordedVariables"];
 }
 
 + (NSMutableSet<iTermRecordedVariable *> *)mutableRecordedVariableNamesInContext:(iTermVariablesSuggestionContext)context {

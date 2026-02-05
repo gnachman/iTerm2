@@ -6,6 +6,7 @@
 //
 
 #import "NSSavePanel+iTerm.h"
+#import "iTermUserDefaults.h"
 
 static NSString *const iTermSaveDocumentAsDefaultPathSetPrefix = @"NoSyncSaveDocumentAsPathSet_";
 
@@ -15,8 +16,8 @@ static NSString *const iTermSaveDocumentAsDefaultPathSetPrefix = @"NoSyncSaveDoc
               onceForID:(NSString *)identifier
               savePanel:(id<iTermDirectoryURLSetting>)savePanel {
     NSString *key = [iTermSaveDocumentAsDefaultPathSetPrefix stringByAppendingString:identifier];
-    if (![[NSUserDefaults standardUserDefaults] boolForKey:key]) {
-        [[NSUserDefaults standardUserDefaults] setBool:YES forKey:key];
+    if (![[iTermUserDefaults userDefaults] boolForKey:key]) {
+        [[iTermUserDefaults userDefaults] setBool:YES forKey:key];
         [savePanel setDirectoryURL:url];
     }
 }

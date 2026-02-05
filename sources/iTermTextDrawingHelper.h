@@ -17,6 +17,7 @@
 #import "VT100GridTypes.h"
 
 @class iTermAttributedStringBuilder;
+@class iTermButtonPillInfo;
 @class iTermColorMap;
 @class iTermExternalAttribute;
 @class iTermExternalAttributeIndex;
@@ -424,8 +425,9 @@ extern const CGFloat iTermCursorGuideAlphaThreshold;
 - (NSRange)underlinedRangeOnLine:(long long)row;
 
 - (void)updateCachedMetrics;
-- (NSArray<iTermTerminalButton *> *)updateButtonFrames NS_AVAILABLE_MAC(11);
+- (NSArray<iTermTerminalButton *> *)updateButtonFrames;
 - (iTermRectArray *)buttonsBackgroundRects;
+- (NSArray<iTermButtonPillInfo *> *)buttonPillInfos;
 - (NSRange)rangeOfVisibleRows;
 - (VT100GridCoord)coordinateByTransformingScreenCoordinateForRTL:(VT100GridCoord)nominal;
 - (void)didFinishSetup;

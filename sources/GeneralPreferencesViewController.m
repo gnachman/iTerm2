@@ -7,6 +7,13 @@
 //
 
 #import "GeneralPreferencesViewController.h"
+#import "NSBundle+iTerm.h"
+#import "NSImage+iTerm.h"
+#import "NSTextField+iTerm.h"
+#import "NSWorkspace+iTerm.h"
+#import "PasteboardHistory.h"
+#import "RegexKitLite.h"
+#import "WindowArrangements.h"
 #import "iTerm2SharedARC-Swift.h"
 #import "iTermAPIHelper.h"
 #import "iTermAdvancedGPUSettingsViewController.h"
@@ -18,15 +25,9 @@
 #import "iTermRemotePreferences.h"
 #import "iTermScriptsMenuController.h"
 #import "iTermShellHistoryController.h"
+#import "iTermUserDefaults.h"
 #import "iTermUserDefaultsObserver.h"
 #import "iTermWarning.h"
-#import "NSBundle+iTerm.h"
-#import "NSTextField+iTerm.h"
-#import "NSWorkspace+iTerm.h"
-#import "PasteboardHistory.h"
-#import "RegexKitLite.h"
-#import "WindowArrangements.h"
-#import "NSImage+iTerm.h"
 #import <SSKeychain/SSKeychain.h>
 
 enum {
@@ -545,8 +546,8 @@ enum {
         if (!strongSelf) {
             return;
         }
-        [[NSUserDefaults standardUserDefaults] setBool:YES forKey:kPreferenceKeyNeverRemindPrefsChangesLostForFileHaveSelection];
-        [[NSUserDefaults standardUserDefaults] setObject:@([strongSelf->_saveChanges selectedTag])
+        [[iTermUserDefaults userDefaults] setBool:YES forKey:kPreferenceKeyNeverRemindPrefsChangesLostForFileHaveSelection];
+        [[iTermUserDefaults userDefaults] setObject:@([strongSelf->_saveChanges selectedTag])
                                                   forKey:kPreferenceKeyNeverRemindPrefsChangesLostForFileSelection];
     };
 
@@ -557,7 +558,7 @@ enum {
         if (!strongSelf) {
             return NO;
         }
-        NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
+        NSUserDefaults *userDefaults = [iTermUserDefaults userDefaults];
         NSUInteger tag = iTermPreferenceSavePrefsModeNever;
         if ([userDefaults boolForKey:kPreferenceKeyNeverRemindPrefsChangesLostForFileHaveSelection]) {
             tag = [userDefaults integerForKey:kPreferenceKeyNeverRemindPrefsChangesLostForFileSelection];
@@ -1213,7 +1214,7 @@ enum {
     _evenIfThereAreNoWindows.enabled = [self boolForKey:kPreferenceKeyPromptOnQuit];
     const BOOL useSystemWindowRestoration = (![self boolForKey:kPreferenceKeyOpenArrangementAtStartup] &&
                                              ![self boolForKey:kPreferenceKeyOpenNoWindowsAtStartup]);
-    const BOOL systemRestorationEnabled = [[NSUserDefaults standardUserDefaults] boolForKey:@"NSQuitAlwaysKeepsWindows"];
+    const BOOL systemRestorationEnabled = [[iTermUserDefaults userDefaults] boolForKey:@"NSQuitAlwaysKeepsWindows"];
     _warningButton.hidden = (!useSystemWindowRestoration || systemRestorationEnabled);
     _alwaysOpenWindowAtStartup.enabled = [self shouldEnableAlwaysOpenWindowAtStartup];
     _restoreWindowsToSameSpaces.enabled = systemRestorationEnabled && useSystemWindowRestoration;

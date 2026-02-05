@@ -458,6 +458,10 @@ additionalWordCharacters:(NSString *)additionalWordCharacters
     return [_state metadataOnLine:lineNumber];
 }
 
+- (BOOL)isFirstLineOfBlock:(int)lineNumber {
+    return [_state isFirstLineOfBlock:lineNumber];
+}
+
 - (iTermImmutableMetadata)metadataAtScreenIndex:(int)index {
     return [_state.currentGrid immutableMetadataAtLineNumber:index];
 }
@@ -772,7 +776,7 @@ additionalWordCharacters:(NSString *)additionalWordCharacters
     if (!mark) {
         return nil;
     }
-    if (!mark.hasCode) {
+    if (!mark.hasCode && ![self.delegate screenOffscreenCommandLineShouldBeVisibleForCurrentCommand]) {
         return nil;
     }
     const long long absLine = mark.commandRange.start.y;

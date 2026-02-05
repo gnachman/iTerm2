@@ -26,16 +26,17 @@
 
 #import "DebugLogging.h"
 #import "ITAddressBookMgr.h"
-#import "iTerm2SharedARC-Swift.h"
-#import "iTermAdvancedSettingsModel.h"
-#import "iTermProfileModelJournal.h"
-#import "iTermProfileSearchToken.h"
 #import "NSArray+iTerm.h"
 #import "NSDictionary+iTerm.h"
 #import "NSObject+iTerm.h"
 #import "NSStringITerm.h"
 #import "NSThread+iTerm.h"
 #import "PreferencePanel.h"
+#import "iTerm2SharedARC-Swift.h"
+#import "iTermAdvancedSettingsModel.h"
+#import "iTermProfileModelJournal.h"
+#import "iTermProfileSearchToken.h"
+#import "iTermUserDefaults.h"
 
 NSString *const kReloadAddressBookNotification = @"iTermReloadAddressBook";
 NSString *const kReloadAllProfiles = @"kReloadAllProfiles";
@@ -87,7 +88,7 @@ static NSMutableArray<NSString *> *_combinedLog;
                                                       userInfo:nil];
 
     // Update user defaults
-    [[NSUserDefaults standardUserDefaults] setObject:[[ProfileModel sharedInstance] rawData]
+    [[iTermUserDefaults userDefaults] setObject:[[ProfileModel sharedInstance] rawData]
                                               forKey:@"New Bookmarks"];
 }
 
@@ -131,7 +132,7 @@ static NSMutableArray<NSString *> *_combinedLog;
 
     if (!shared) {
         shared = [[ProfileModel alloc] initWithName:@"Shared"];
-        shared->prefs_ = [NSUserDefaults standardUserDefaults];
+        shared->prefs_ = [iTermUserDefaults userDefaults];
         shared->postChanges_ = YES;
     }
 
@@ -448,8 +449,8 @@ static NSMutableArray<NSString *> *_combinedLog;
         }
     }
     if (![dict objectForKey:KEY_PROMPT_CLOSE]) {
-        BOOL promptOnClose = [[[NSUserDefaults standardUserDefaults] objectForKey:@"PromptOnClose"] boolValue];
-        NSNumber *onlyWhenNumber = [[NSUserDefaults standardUserDefaults] objectForKey:@"OnlyWhenMoreTabs"];
+        BOOL promptOnClose = [[[iTermUserDefaults userDefaults] objectForKey:@"PromptOnClose"] boolValue];
+        NSNumber *onlyWhenNumber = [[iTermUserDefaults userDefaults] objectForKey:@"OnlyWhenMoreTabs"];
         if (!onlyWhenNumber || [onlyWhenNumber boolValue]) {
             promptOnClose = NO;
         }
@@ -769,7 +770,7 @@ static NSMutableArray<NSString *> *_combinedLog;
 }
 
 - (Profile *)defaultBrowserProfileCreatingIfNeeded {
-    NSString *guid = [[NSUserDefaults standardUserDefaults] stringForKey:KEY_DEFAULT_BROWSER_GUID];
+    NSString *guid = [[iTermUserDefaults userDefaults] stringForKey:KEY_DEFAULT_BROWSER_GUID];
     {
         Profile *profile = [self bookmarkWithGuid:guid];
         if (profile) {
@@ -781,7 +782,7 @@ static NSMutableArray<NSString *> *_combinedLog;
     profile[KEY_GUID] = ProfileModel.freshGuid;
     profile[KEY_SCROLLBACK_LINES] = @0;
     profile[KEY_CUSTOM_COMMAND] = kProfilePreferenceCommandTypeBrowserValue;
-    [[NSUserDefaults standardUserDefaults] setObject:profile[KEY_GUID]
+    [[iTermUserDefaults userDefaults] setObject:profile[KEY_GUID]
                                               forKey:KEY_DEFAULT_BROWSER_GUID];
     [self addBookmark:profile];
     [self postChangeNotification];
@@ -789,7 +790,7 @@ static NSMutableArray<NSString *> *_combinedLog;
 }
 
 - (Profile *)defaultBrowserProfile {
-    NSString *guid = [[NSUserDefaults standardUserDefaults] stringForKey:KEY_DEFAULT_BROWSER_GUID];
+    NSString *guid = [[iTermUserDefaults userDefaults] stringForKey:KEY_DEFAULT_BROWSER_GUID];
     Profile *profile = [self bookmarkWithGuid:guid];
     if (!profile.profileIsBrowser) {
         return nil;

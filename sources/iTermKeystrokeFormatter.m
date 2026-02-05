@@ -30,6 +30,18 @@
     return result;
 }
 
++ (NSString *)stringForKeystrokeIgnoringKeycode:(iTermKeystroke *)keystroke {
+    BOOL isArrow = NO;
+    NSString *charactersAsString = [self stringForCharacter:keystroke.character isArrow:&isArrow];
+
+    NSMutableString *result = [[NSString stringForModifiersWithMask:keystroke.modifierFlags] mutableCopy];
+    if ((keystroke.modifierFlags & NSEventModifierFlagNumericPad) && !isArrow) {
+        [result appendString: @"num-"];
+    }
+    [result appendString:charactersAsString];
+    return result;
+}
+
 + (NSString *)stringForKeyCode:(CGKeyCode)virtualKeyCode
                     hasKeyCode:(BOOL)hasKeyCode
                      character:(unichar)character

@@ -272,7 +272,7 @@ class iTermBrowserSettingsHandler: NSObject, iTermBrowserPageHandler {
     
     private func sendAdblockStats(to webView: iTermBrowserWebView) {
         let ruleCount = iTermBrowserAdblockManager.shared.getRuleCount()
-        let lastUpdate = UserDefaults.standard.object(forKey: "NoSyncAdblockLastUpdate") as? Date
+        let lastUpdate = iTermUserDefaults.userDefaults().object(forKey: "NoSyncAdblockLastUpdate") as? Date
         
         let stats = [
             "ruleCount": ruleCount,

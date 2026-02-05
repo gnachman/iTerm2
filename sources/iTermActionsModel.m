@@ -5,12 +5,13 @@
 //  Created by George Nachman on 3/21/19.
 //
 
-#import "iTermActionsModel.h"
-#import "iTermNotificationCenter+Protected.h"
-#import "iTermPreferences.h"
 #import "NSArray+iTerm.h"
 #import "NSIndexSet+iTerm.h"
 #import "NSObject+iTerm.h"
+#import "iTermActionsModel.h"
+#import "iTermNotificationCenter+Protected.h"
+#import "iTermPreferences.h"
+#import "iTermUserDefaults.h"
 
 @implementation iTermAction {
     NSDictionary *_dictionary;
@@ -112,7 +113,7 @@
 - (instancetype)init {
     self = [super init];
     if (self) {
-        _actions = [[[NSArray castFrom:[[NSUserDefaults standardUserDefaults] objectForKey:kPreferenceKeyActions]] mapWithBlock:^id(id anObject) {
+        _actions = [[[NSArray castFrom:[[iTermUserDefaults userDefaults] objectForKey:kPreferenceKeyActions]] mapWithBlock:^id(id anObject) {
             NSDictionary *dict = [NSDictionary castFrom:anObject];
             if (!dict) {
                 return nil;
@@ -195,7 +196,7 @@
 #pragma mark - Private
 
 - (void)save {
-    [[NSUserDefaults standardUserDefaults] setObject:[self arrayOfDictionaries]
+    [[iTermUserDefaults userDefaults] setObject:[self arrayOfDictionaries]
                                               forKey:kPreferenceKeyActions];
 }
 

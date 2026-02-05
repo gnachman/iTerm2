@@ -9,14 +9,15 @@
 
 #import "DebugLogging.h"
 #import "FindContext.h"
+#import "NSArray+iTerm.h"
+#import "NSObject+iTerm.h"
+#import "NSStringITerm.h"
 #import "iTerm2SharedARC-Swift.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermFindPasteboard.h"
 #import "iTermSearchHistory.h"
 #import "iTermTuple.h"
-#import "NSArray+iTerm.h"
-#import "NSStringITerm.h"
-#import "NSObject+iTerm.h"
+#import "iTermUserDefaults.h"
 
 static iTermFindMode gFindMode;
 static iTermFindMode gFilterMode;
@@ -69,12 +70,12 @@ static NSString *gSearchString;
 
 + (void)loadUserDefaults {
     {
-        NSNumber *mode = [[NSUserDefaults standardUserDefaults] objectForKey:@"findMode_iTerm"];
+        NSNumber *mode = [[iTermUserDefaults userDefaults] objectForKey:@"findMode_iTerm"];
         if (!mode) {
             // Migrate legacy value.
-            NSNumber *ignoreCase = [[NSUserDefaults standardUserDefaults] objectForKey:@"findIgnoreCase_iTerm"];
+            NSNumber *ignoreCase = [[iTermUserDefaults userDefaults] objectForKey:@"findIgnoreCase_iTerm"];
             BOOL caseSensitive = ignoreCase ? ![ignoreCase boolValue] : NO;
-            BOOL isRegex = [[NSUserDefaults standardUserDefaults] boolForKey:@"findRegex_iTerm"];
+            BOOL isRegex = [[iTermUserDefaults userDefaults] boolForKey:@"findRegex_iTerm"];
 
             if (caseSensitive && isRegex) {
                 gFindMode = iTermFindModeCaseSensitiveRegex;
@@ -91,7 +92,7 @@ static NSString *gSearchString;
         }
     }
     {
-        NSNumber *mode = [[NSUserDefaults standardUserDefaults] objectForKey:@"NoSyncFilterMode"];
+        NSNumber *mode = [[iTermUserDefaults userDefaults] objectForKey:@"NoSyncFilterMode"];
         if (!mode) {
             gFilterMode = iTermFindModeSmartCaseSensitivity;
         } else {
@@ -545,7 +546,7 @@ static NSString *gSearchString;
         gFindMode = set;
         // The user defaults key got recycled to make it clear whether the legacy (number) or modern value (dict) is
         // in use, but the key doesn't reflect its true meaning any more.
-        [[NSUserDefaults standardUserDefaults] setObject:@(set) forKey:@"findMode_iTerm"];
+        [[iTermUserDefaults userDefaults] setObject:@(set) forKey:@"findMode_iTerm"];
     }
 }
 
@@ -554,7 +555,7 @@ static NSString *gSearchString;
         gFilterMode = set;
         // The user defaults key got recycled to make it clear whether the legacy (number) or modern value (dict) is
         // in use, but the key doesn't reflect its true meaning any more.
-        [[NSUserDefaults standardUserDefaults] setObject:@(set) forKey:@"NoSyncFilterMode"];
+        [[iTermUserDefaults userDefaults] setObject:@(set) forKey:@"NoSyncFilterMode"];
     }
 }
 

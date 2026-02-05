@@ -6,6 +6,8 @@
 #import "iTerm2SharedARC-Swift.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermParser.h"
+#import "iTermModifierRemapper.h"
+#import "iTermPreferences.h"
 #import "iTermPromise.h"
 #import "iTermTerminfo.h"
 #import "iTermURLStore.h"
@@ -4108,11 +4110,27 @@ static NSString *VT100GetURLParamForKey(NSString *params, NSString *key) {
                 [_delegate terminalBlock:blockID start:NO type:nil render:[dict[@"render"] isEqual:@"1"]];
             }
         }
+    } else if ([key isEqualToString:@"UpdateBlock"]) {
+        NSDictionary<NSString *, NSString *> *dict = [value it_keyValuePairsSeparatedBy:@";"];
+        NSString *blockID = dict[@"id"];
+        NSString *action = dict[@"action"];
+        if (blockID) {
+            if ([action isEqualToString:@"fold"]) {
+                [_delegate terminalUpdateBlock:blockID action:iTermUpdateBlockActionFold];
+            } else if ([action isEqualToString:@"unfold"]) {
+                [_delegate terminalUpdateBlock:blockID action:iTermUpdateBlockActionUnfold];
+            }
+        }
     } else if ([key isEqualToString:@"Button"]) {
         NSDictionary<NSString *, NSString *> *dict = [value it_keyValuePairsSeparatedBy:@";"];
         NSString *type = dict[@"type"];
         if ([type isEqualToString:@"copy"] && dict[@"block"]) {
             [_delegate terminalInsertCopyButtonForBlock:dict[@"block"]];
+        } else if ([type isEqualToString:@"custom"] && [dict[@"code"] intValue] > 0 && dict[@"icon"]) {
+            [_delegate terminalInsertCustomButtonWithCode:[dict[@"code"] intValue]
+                                                     icon:dict[@"icon"]];
+        } else if ([type isEqualToString:@"custom"]) {
+            [_delegate terminalInvalidateCustomButtons];
         }
     } else if ([key isEqualToString:@"FilePart"]) {
         if ([_delegate terminalIsTrusted]) {
@@ -4330,6 +4348,29 @@ static NSString *VT100GetURLParamForKey(NSString *params, NSString *key) {
                 }
             }
         }
+#if DEBUG
+    } else if ([key isEqualToString:@"Debug"]) {
+        if ([value hasPrefix:@"RemapFn="]) {
+            int tag = [[value substringFromIndex:@"RemapFn=".length] intValue];
+            [iTermPreferences setInt:tag forKey:kPreferenceKeyFunctionRemapping];
+            dispatch_async(dispatch_get_main_queue(), ^{
+                if ([[iTermModifierRemapper sharedInstance] isAnyModifierRemapped]) {
+                    [[iTermModifierRemapper sharedInstance] setRemapModifiers:YES];
+                }
+            });
+            NSString *ack = [NSString stringWithFormat:@"\033]1337;DebugAck=FnRemap=%d\007", tag];
+            [_delegate terminalSendReport:[ack dataUsingEncoding:NSUTF8StringEncoding]];
+        } else if ([value isEqualToString:@"QueryFnState"]) {
+            BOOL fnDown = [[iTermModifierRemapper sharedInstance] physicalFnKeyDown];
+            int remap = [iTermPreferences intForKey:kPreferenceKeyFunctionRemapping];
+            BOOL anyRemapped = [[iTermModifierRemapper sharedInstance] isAnyModifierRemapped];
+            BOOL remapping = [[iTermModifierRemapper sharedInstance] isRemappingModifiers];
+            NSString *report = [NSString stringWithFormat:
+                @"\033]1337;DebugAck=FnState=%d;Remap=%d;Any=%d;ET=%d\007",
+                fnDown, remap, anyRemapped, remapping];
+            [_delegate terminalSendReport:[report dataUsingEncoding:NSUTF8StringEncoding]];
+        }
+#endif
     } else if ([key isEqualToString:@"ExecFailed"]) {
         [_delegate terminalExecDidFail];
     }

@@ -1,12 +1,13 @@
 #import "iTermWarning.h"
 
 #import "DebugLogging.h"
-#import "iTermAdvancedSettingsModel.h"
-#import "iTermDisclosableView.h"
 #import "NSAlert+iTerm.h"
 #import "NSArray+iTerm.h"
 #import "NSObject+iTerm.h"
 #import "NSStringITerm.h"
+#import "iTermAdvancedSettingsModel.h"
+#import "iTermDisclosableView.h"
+#import "iTermUserDefaults.h"
 
 static const NSTimeInterval kTemporarySilenceTime = 600;
 static const NSTimeInterval kOneMonthTime = 30 * 24 * 60 * 60;
@@ -231,7 +232,7 @@ static BOOL gShowingWarning;
 + (void)unsilenceIdentifier:(NSString *)identifier ifSelectionEquals:(iTermWarningSelection)problemSelection {
     if ([self identifierIsSilenced:identifier] &&
         [self savedSelectionForIdentifier:identifier] == problemSelection) {
-        NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
+        NSUserDefaults *userDefaults = [iTermUserDefaults userDefaults];
         NSString *theKey = [self permanentlySilenceKeyForIdentifier:identifier];
         [userDefaults removeObjectForKey:theKey];
     }
@@ -241,19 +242,19 @@ static BOOL gShowingWarning;
     if (![self identifierIsSilenced:identifier]) {
         return;
     }
-    NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
+    NSUserDefaults *userDefaults = [iTermUserDefaults userDefaults];
     NSString *theKey = [self permanentlySilenceKeyForIdentifier:identifier];
     [userDefaults removeObjectForKey:theKey];
 }
 
 + (void)setIdentifier:(NSString *)identifier isSilenced:(BOOL)silenced {
-    NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
+    NSUserDefaults *userDefaults = [iTermUserDefaults userDefaults];
     NSString *theKey = [self permanentlySilenceKeyForIdentifier:identifier];
     [userDefaults removeObjectForKey:theKey];
 }
 
 + (void)setIdentifier:(NSString *)identifier permanentSelection:(iTermWarningSelection)selection {
-    NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
+    NSUserDefaults *userDefaults = [iTermUserDefaults userDefaults];
     {
         NSString *theKey = [self permanentlySilenceKeyForIdentifier:identifier];
         [userDefaults setBool:YES forKey:theKey];
@@ -390,11 +391,33 @@ static BOOL gShowingWarning;
     return alert;
 }
 
+- (NSString *)labelForSelection:(iTermWarningSelection)selection {
+    if (_actionToSelectionMap) {
+        // Find which action index maps to this selection
+        for (NSUInteger i = 0; i < _actionToSelectionMap.count && i < _warningActions.count; i++) {
+            if (_actionToSelectionMap[i].integerValue == selection) {
+                return _warningActions[i].label;
+            }
+        }
+    } else {
+        // No mapping, selection index equals action index
+        if (selection >= 0 && selection < _warningActions.count) {
+            return _warningActions[selection].label;
+        }
+    }
+    return nil;
+}
+
 - (BOOL)preempt:(out iTermWarningSelection *)selectionPtr {
     if (!gWarningHandler &&
         _warningType != kiTermWarningTypePersistent &&
         [self.class identifierIsSilenced:_identifier]) {
         const iTermWarningSelection selection = [self.class savedSelectionForIdentifier:_identifier];
+        NSString *label = [self labelForSelection:selection];
+        if (!label || ![self shouldRememberLabel:label]) {
+            DLog(@"%@ has saved selection %@ but label %@ should not be remembered", self, @(selection), label);
+            return NO;
+        }
         DLog(@"%@ is silenced with saved selection %@", self, @(selection));
         *selectionPtr = selection;
         return YES;
@@ -429,25 +452,35 @@ static BOOL gShowingWarning;
     return [self handleResult:result alert:alert];
 }
 
+- (BOOL)shouldRememberLabel:(NSString *)label {
+    if ([label isEqualToString:_cancelLabel]) {
+        return NO;
+    }
+    if ([_doNotRememberLabels containsObject:label]) {
+        return NO;
+    }
+    return YES;
+}
+
 - (iTermWarningSelection)handleResult:(NSInteger)result alert:(NSAlert *)alert {
     BOOL remember = NO;
     iTermWarningSelection selection;
     switch (result) {
         case NSAlertFirstButtonReturn:
             selection = [self.class remapSelection:kiTermWarningSelection0 withMapping:_actionToSelectionMap];
-            remember = ![_warningActions[0].label isEqualToString:_cancelLabel];
+            remember = [self shouldRememberLabel:_warningActions[0].label];
             break;
         case NSAlertSecondButtonReturn:
             selection = [self.class remapSelection:kiTermWarningSelection1 withMapping:_actionToSelectionMap];
-            remember = ![_warningActions[1].label isEqualToString:_cancelLabel];
+            remember = [self shouldRememberLabel:_warningActions[1].label];
             break;
         case NSAlertThirdButtonReturn:
             selection = [self.class remapSelection:kiTermWarningSelection2 withMapping:_actionToSelectionMap];
-            remember = ![_warningActions[2].label isEqualToString:_cancelLabel];
+            remember = [self shouldRememberLabel:_warningActions[2].label];
             break;
         case NSAlertThirdButtonReturn + 1:
             selection = [self.class remapSelection:kiTermWarningSelection3 withMapping:_actionToSelectionMap];
-            remember = ![_warningActions[3].label isEqualToString:_cancelLabel];
+            remember = [self shouldRememberLabel:_warningActions[3].label];
             break;
         default:
             selection = kItermWarningSelectionError;
@@ -456,7 +489,7 @@ static BOOL gShowingWarning;
     // Save info if suppression was enabled.
     if (remember && alert.suppressionButton.state == NSControlStateValueOn) {
         DLog(@"Remember selection for %@", self);
-        NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
+        NSUserDefaults *userDefaults = [iTermUserDefaults userDefaults];
         if (_warningType == kiTermWarningTypeTemporarilySilenceable) {
             NSString *theKey = [self.class temporarySilenceKeyForIdentifier:_identifier];
             [userDefaults setDouble:[NSDate timeIntervalSinceReferenceDate] + kTemporarySilenceTime
@@ -469,7 +502,7 @@ static BOOL gShowingWarning;
             NSString *theKey = [self.class permanentlySilenceKeyForIdentifier:_identifier];
             [userDefaults setBool:YES forKey:theKey];
         }
-        [[NSUserDefaults standardUserDefaults] setObject:@(selection)
+        [[iTermUserDefaults userDefaults] setObject:@(selection)
                                                   forKey:[self.class selectionKeyForIdentifier:_identifier]];
     }
     DLog(@"Return selection %@ for %@", @(selection), self);
@@ -502,7 +535,7 @@ static BOOL gShowingWarning;
     if (!identifier) {
         return NO;
     }
-    NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
+    NSUserDefaults *userDefaults = [iTermUserDefaults userDefaults];
     NSString *theKey = [self permanentlySilenceKeyForIdentifier:identifier];
     if ([userDefaults boolForKey:theKey]) {
         return YES;
@@ -531,7 +564,7 @@ static BOOL gShowingWarning;
 
 + (iTermWarningSelection)savedSelectionForIdentifier:(NSString *)identifier {
     NSString *theKey = [self selectionKeyForIdentifier:identifier];
-    return [[NSUserDefaults standardUserDefaults] integerForKey:theKey];
+    return [[iTermUserDefaults userDefaults] integerForKey:theKey];
 }
 
 + (BOOL)showingWarning {

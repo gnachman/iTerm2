@@ -12,6 +12,7 @@
 #import "NSTimer+iTerm.h"
 #import "iTermGCD.h"
 #import "iTermGCDTimer.h"
+#import "iTermUserDefaults.h"
 
 @implementation iTermRateLimitedUpdate {
     // While nonnil, block will not be performed.
@@ -185,14 +186,14 @@ static NSString *const iTermPersistentRateLimitedUpdateUserDefaultsKey = @"NoSyn
 }
 
 + (NSTimeInterval)nextDateForName:(NSString *)name {
-    NSDictionary<NSString *, NSNumber *> *dict = [[NSUserDefaults standardUserDefaults] dictionaryForKey:iTermPersistentRateLimitedUpdateUserDefaultsKey];
+    NSDictionary<NSString *, NSNumber *> *dict = [[iTermUserDefaults userDefaults] dictionaryForKey:iTermPersistentRateLimitedUpdateUserDefaultsKey];
     return [dict[name] doubleValue];
 }
 
 + (void)setNextDate:(NSTimeInterval)nextDate forName:(NSString *)name {
-    NSMutableDictionary<NSString *, NSNumber *> *dict = [[[NSUserDefaults standardUserDefaults] dictionaryForKey:iTermPersistentRateLimitedUpdateUserDefaultsKey] ?: @{} mutableCopy];
+    NSMutableDictionary<NSString *, NSNumber *> *dict = [[[iTermUserDefaults userDefaults] dictionaryForKey:iTermPersistentRateLimitedUpdateUserDefaultsKey] ?: @{} mutableCopy];
     dict[name] = @(nextDate);
-    [[NSUserDefaults standardUserDefaults] setObject:dict forKey:iTermPersistentRateLimitedUpdateUserDefaultsKey];
+    [[iTermUserDefaults userDefaults] setObject:dict forKey:iTermPersistentRateLimitedUpdateUserDefaultsKey];
 }
 
 - (instancetype)initWithName:(NSString *)name minimumInterval:(NSTimeInterval)minimumInterval {

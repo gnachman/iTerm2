@@ -402,7 +402,7 @@ class SecureUserDefault<T: SecureUserDefaultStringTranscodable & Codable & Equat
         // iTermAdvancedSettingsModel because this is called during
         // iTermAdvancedSettingsModel.initialize, so its values may not be
         // loaded yet.
-        let pathsToIgnore = UserDefaults.standard.string(forKey: "PathsToIgnore")?.components(
+        let pathsToIgnore = iTermUserDefaults.userDefaults().string(forKey: "PathsToIgnore")?.components(
             separatedBy: ",") ?? []
         DLog("pathsToIgnore=\(pathsToIgnore)")
         let isLocal = FileManager.default.fileIsLocal(
