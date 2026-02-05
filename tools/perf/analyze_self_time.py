@@ -287,28 +287,6 @@ def analyze_and_report(self_time_counts: Dict[str, int], iterm_attributed: Dict[
         pct = 100 * count / total_samples
         print(f"{count:>10,}  {pct:>5.1f}%  {symbol}")
 
-    print()
-    print("=" * 70)
-    print("Interpretation Guide")
-    print("=" * 70)
-    print()
-    print("High self-time in iTerm2 code = direct optimization opportunities")
-    print()
-
-    # Provide specific guidance based on what we see
-    if system_total > total_samples * 0.4:
-        print("NOTE: High system overhead detected (>40%)")
-        print("  - High objc_msgSend: Consider batching operations or caching")
-        print("  - High malloc/free: Consider object pooling or reuse")
-        print("  - High dispatch_*: Consider reducing queue switching")
-        print()
-
-    if iterm_symbols and iterm_symbols[0][1] > total_samples * 0.1:
-        top_symbol = iterm_symbols[0][0]
-        print(f"TOP HOTSPOT: {top_symbol}")
-        print(f"  This function accounts for >{iterm_symbols[0][1]*100/total_samples:.0f}% of CPU time")
-        print("  Consider profiling this function in detail with Instruments")
-        print()
 
 
 def main():
