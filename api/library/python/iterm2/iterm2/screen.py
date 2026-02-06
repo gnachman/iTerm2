@@ -82,10 +82,10 @@ class CellStyle:
 
     class Color:
         def __init__(self,
-                     standard: int = None,
-                     alternate: 'CellStyle.AlternateColor' = None,
-                     rgb: 'CellStyle.RGBColor' = None,
-                     placement: int = None):
+                     standard: typing.Optional[int] = None,
+                     alternate: typing.Optional['CellStyle.AlternateColor'] = None,
+                     rgb: typing.Optional['CellStyle.RGBColor'] = None,
+                     placement: typing.Optional[int] = None):
             """Represents a color that can be standard, alternate, or RGB.
 
             A standard color is part of the 256-color pallete with ANSI colors

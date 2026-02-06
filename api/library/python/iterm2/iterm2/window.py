@@ -71,8 +71,8 @@ class Window:
     @staticmethod
     async def async_create(
             connection: iterm2.connection.Connection,
-            profile: str = None,
-            command: str = None,
+            profile: typing.Optional[str] = None,
+            command: typing.Optional[str] = None,
             profile_customizations:
             iterm2.profile.LocalWriteOnlyProfile = None) -> typing.Optional[
                 'Window']:
