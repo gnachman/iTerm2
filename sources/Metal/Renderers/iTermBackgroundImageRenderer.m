@@ -359,9 +359,24 @@ NS_ASSUME_NONNULL_BEGIN
     textureFrame.size.width /= nativeTextureSize.width;
     textureFrame.origin.y /= nativeTextureSize.height;
     textureFrame.size.height /= nativeTextureSize.height;
-    tState.vertexBuffer = [_metalRenderer newQuadWithFrame:quadFrame
-                                              textureFrame:textureFrame
-                                               poolContext:tState.poolContext];
+
+    // Create vertex buffer without checkIfChanged optimization to work around a possible
+    // Metal driver bug where background images occasionally render only the bottom-right
+    // triangle. See issue XXXX. Force a fresh write every frame rather than relying on
+    // cached buffer contents.
+    const iTermVertex vertices[] = {
+        // Pixel Positions                                      Texture Coordinates
+        { { CGRectGetMaxX(quadFrame), CGRectGetMinY(quadFrame) }, { CGRectGetMaxX(textureFrame), textureFrame.origin.y } },
+        { { CGRectGetMinX(quadFrame), CGRectGetMinY(quadFrame) }, { CGRectGetMinX(textureFrame), textureFrame.origin.y } },
+        { { CGRectGetMinX(quadFrame), CGRectGetMaxY(quadFrame) }, { CGRectGetMinX(textureFrame), textureFrame.origin.y + textureFrame.size.height } },
+
+        { { CGRectGetMaxX(quadFrame), CGRectGetMinY(quadFrame) }, { CGRectGetMaxX(textureFrame), textureFrame.origin.y } },
+        { { CGRectGetMinX(quadFrame), CGRectGetMaxY(quadFrame) }, { CGRectGetMinX(textureFrame), textureFrame.origin.y + textureFrame.size.height } },
+        { { CGRectGetMaxX(quadFrame), CGRectGetMaxY(quadFrame) }, { CGRectGetMaxX(textureFrame), textureFrame.origin.y + textureFrame.size.height } },
+    };
+    tState.vertexBuffer = [_metalRenderer.verticesPool requestBufferFromContext:tState.poolContext
+                                                                      withBytes:vertices
+                                                                 checkIfChanged:NO];
 }
 
 @end
