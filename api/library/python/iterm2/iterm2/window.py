@@ -74,7 +74,7 @@ class Window:
             profile: typing.Optional[str] = None,
             command: typing.Optional[str] = None,
             profile_customizations:
-            iterm2.profile.LocalWriteOnlyProfile = None) -> typing.Optional[
+            typing.Optional[iterm2.profile.LocalWriteOnlyProfile] = None) -> typing.Optional[
                 'Window']:
         """Creates a new window.
 
