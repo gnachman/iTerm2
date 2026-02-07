@@ -4912,12 +4912,17 @@ lengthExcludingInBandSignaling:data.length
     }
 }
 
-- (void)performSynchroDanceWithBlock:(void (^)(void))block {
+// Performs a synchronous join with the mutation queue.
+// whilePaused: will crash (it_fatalError) if the join times out, so this method
+// always returns YES if it returns at all. The BOOL return is kept for API clarity.
+- (BOOL)performSynchroDanceWithBlock:(void (^)(void))block {
     assert(dispatch_queue_get_label(DISPATCH_CURRENT_QUEUE_LABEL) == dispatch_queue_get_label(dispatch_get_main_queue()));
     DLog(@"begin");
     [iTermGCD setMainQueueSafe:YES];
 
     // Stop the token executor while we run `block`.
+    // Note: whilePaused: crashes on timeout since skipping the joined block would
+    // leave mutable state inconsistent. If this returns, the join succeeded.
     DLog(@"Calling whilePaused:");
     [_tokenExecutor whilePaused:^{
         // The token executor is now stopped. This runs on the main thread.
@@ -4928,6 +4933,7 @@ lengthExcludingInBandSignaling:data.length
         DLog(@"unblock executor");
     }];
     DLog(@"returning");
+    return YES;
 }
 
 // This runs on the main queue while the mutation queue waits on `group`.
