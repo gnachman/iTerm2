@@ -94,10 +94,10 @@ class FocusUpdate:
     `selected_tab_changed`, or `active_session_changed` will not be `None`."""
     def __init__(
             self,
-            application_active: FocusUpdateApplicationActive = None,
-            window_changed: FocusUpdateWindowChanged = None,
-            selected_tab_changed: FocusUpdateSelectedTabChanged = None,
-            active_session_changed: FocusUpdateActiveSessionChanged = None):
+            application_active: typing.Optional[FocusUpdateApplicationActive] = None,
+            window_changed: typing.Optional[FocusUpdateWindowChanged] = None,
+            selected_tab_changed: typing.Optional[FocusUpdateSelectedTabChanged] = None,
+            active_session_changed: typing.Optional[FocusUpdateActiveSessionChanged] = None):
         self.__application_active = application_active
         self.__window_changed = window_changed
         self.__selected_tab_changed = selected_tab_changed

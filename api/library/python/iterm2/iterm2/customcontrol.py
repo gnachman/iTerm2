@@ -38,7 +38,7 @@ class CustomControlSequenceMonitor:
             connection: iterm2.connection.Connection,
             identity: str,
             regex: str,
-            session_id: str = None):
+            session_id: typing.Optional[str] = None):
         self.__connection = connection
         self.__regex = regex
         self.__identity = identity

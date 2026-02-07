@@ -284,7 +284,7 @@ class PolyModalAlert:
         self.__checkbox_defaults.append(item_default)
         self.__checkboxes.append(item_text)
 
-    def add_combobox(self, items: typing.List[str], default: str = None):
+    def add_combobox(self, items: typing.List[str], default: typing.Optional[str] = None):
         """
         Adds multiple items to the combobox list and sets the default value.
 
