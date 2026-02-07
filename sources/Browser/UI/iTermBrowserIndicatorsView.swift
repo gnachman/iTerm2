@@ -19,13 +19,22 @@ class iTermBrowserIndicatorsView: NSView {
     override init(frame frameRect: NSRect) {
         super.init(frame: frameRect)
         setupScrollView()
+        setupTransparentBackground()
     }
-    
+
     required init?(coder: NSCoder) {
         super.init(coder: coder)
         setupScrollView()
+        setupTransparentBackground()
     }
-    
+
+    private func setupTransparentBackground() {
+        wantsLayer = true
+        if let layer = layer {
+            layer.backgroundColor = NSColor.clear.cgColor
+        }
+    }
+
     private func setupScrollView() {
         scrollView = NSScrollView()
         scrollView.hasVerticalScroller = false
@@ -34,9 +43,14 @@ class iTermBrowserIndicatorsView: NSView {
         scrollView.horizontalScrollElasticity = .none
         scrollView.verticalScrollElasticity = .none
         scrollView.borderType = .noBorder
+        scrollView.drawsBackground = false
         addSubview(scrollView)
-        
+
         containerView = NSView()
+        containerView.wantsLayer = true
+        if let layer = containerView.layer {
+            layer.backgroundColor = NSColor.clear.cgColor
+        }
         scrollView.documentView = containerView
     }
     

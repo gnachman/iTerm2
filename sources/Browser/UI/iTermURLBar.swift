@@ -210,20 +210,24 @@ class iTermURLBarGuts: NSView {
 
     // MARK: - Setup
     private func setupUI() {
-        // Configure this view
+        // Configure this view with transparent background
         wantsLayer = true
-        
+        if let layer = layer {
+            layer.backgroundColor = NSColor.clear.cgColor
+        }
+
         // Use NSVisualEffectView for proper system appearance integration
         visualEffectView = NSVisualEffectView()
-        visualEffectView.material = .contentBackground
+        visualEffectView.material = .underWindowBackground
         visualEffectView.blendingMode = .behindWindow
         visualEffectView.state = .active
+        visualEffectView.alphaValue = 0.0  // Fully transparent
         visualEffectView.wantsLayer = true
-        visualEffectView.layer?.cornerRadius = Self.cornerRadius
-        visualEffectView.layer?.masksToBounds = true
-        // Put the border on the visual effect view itself
-        visualEffectView.layer?.borderWidth = 1
-        visualEffectView.layer?.borderColor = NSColor(white: 0.85, alpha: 1.0).cgColor
+        if let effectLayer = visualEffectView.layer {
+            effectLayer.cornerRadius = Self.cornerRadius
+            effectLayer.masksToBounds = true
+            effectLayer.borderWidth = 0  // Remove border for transparency
+        }
         addSubview(visualEffectView)
         visualEffectView.frame = bounds
         visualEffectView.autoresizingMask = [.width, .height]
