@@ -444,6 +444,14 @@ DEFINE_BOOL(showPinnedIndicator, NO, SECTION_HOTKEY @"Show indicator for pinned 
 
 #define SECTION_GENERAL @"General: "
 
+DEFINE_BOOL(useFairnessScheduler, NO, SECTION_GENERAL @"Use round-robin fair scheduling for terminal output.\nWhen enabled, all sessions get equal CPU time for token processing. Requires restart.");
+
+#if DEBUG
++ (void)setUseFairnessSchedulerForTesting:(BOOL)value {
+    sAdvancedSetting_useFairnessScheduler = @(value);
+}
+#endif
+
 DEFINE_SETTABLE_STRING(searchCommand, SearchCommand, @"https://google.com/search?q=%@", SECTION_GENERAL @"Template for URL of search engine.\niTerm2 replaces the string “%@” with the text to search for. Query parameter percent escaping is used.");
 DEFINE_SETTABLE_STRING(searchSuggestURL, SearchSuggestURL, @"https://suggestqueries.google.com/complete/search?client=firefox&q=%@", SECTION_GENERAL @"Template of URL for typeahead search suggestions.\niTerm replaces the string “%@” with the text to search for. Query parameter percent escaping is used.");
 DEFINE_INT(autocompleteMaxOptions, 20, SECTION_GENERAL @"Number of autocomplete options to present.\nA value less than 100 is recommended.");
