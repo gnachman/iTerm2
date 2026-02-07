@@ -20,13 +20,28 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly) dispatch_queue_t queue;
 @property (nullable, nonatomic, weak, readonly) iTermProcessMonitor *parent;
 
+// The root PID that this monitor (or its ancestor) was created to track.
+// Set at creation time and propagated to children for O(1) lookup in callbacks.
+@property (nonatomic, readonly) pid_t trackedRootPID;
+
 - (instancetype)initWithQueue:(dispatch_queue_t)queue
-                     callback:(void (^)(iTermProcessMonitor *, dispatch_source_proc_flags_t))callback NS_DESIGNATED_INITIALIZER;
+                     callback:(void (^)(iTermProcessMonitor *, dispatch_source_proc_flags_t))callback
+               trackedRootPID:(pid_t)trackedRootPID NS_DESIGNATED_INITIALIZER;
+
+// Legacy initializer - creates a monitor without trackedRootPID (defaults to 0)
+- (instancetype)initWithQueue:(dispatch_queue_t)queue
+                     callback:(void (^)(iTermProcessMonitor *, dispatch_source_proc_flags_t))callback;
 
 - (instancetype)init NS_UNAVAILABLE;
 
-// Stops monitoring.
+// Stops monitoring permanently.
 - (void)invalidate;
+
+// Temporarily pauses monitoring (dispatch source suspended). Call resumeMonitoring to resume.
+- (void)pauseMonitoring;
+
+// Resumes monitoring after pauseMonitoring was called.
+- (void)resumeMonitoring;
 
 - (void)addChild:(iTermProcessMonitor *)child;
 

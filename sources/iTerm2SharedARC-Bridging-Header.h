@@ -66,6 +66,8 @@
 #import "iTermPreciseTimer.h"
 #import "iTermPreferences.h"
 #import "iTermProcess.h"
+#import "iTermProcessCacheTestHelper.h"
+#import "iTermProcessMonitor.h"
 #import "iTermProfilePreferencesBaseViewController.h"
 #import "iTermPromise.h"
 #import "iTermRemotePreferences.h"

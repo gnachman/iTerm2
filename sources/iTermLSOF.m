@@ -246,6 +246,50 @@
     }
 }
 
+// Returns direct child PIDs for a given parent PID.
+// Note: proc_listchildpids returns PID count (not bytes like proc_listpids).
++ (NSArray<NSNumber *> *)childPidsForPid:(pid_t)parentPid {
+    int count = proc_listchildpids(parentPid, NULL, 0);
+    if (count <= 0) {
+        return @[];
+    }
+
+    pid_t *pids = NULL;
+    int returnedCount = 0;
+
+    // Retry loop: child list can change between size query and fetch
+    for (int attempt = 0; attempt < 3; attempt++) {
+        int capacity = count + 16;  // Headroom for new children
+        size_t bufferSize = capacity * sizeof(pid_t);
+        pids = (pid_t *)iTermMalloc(bufferSize);
+
+        returnedCount = proc_listchildpids(parentPid, pids, (int)bufferSize);
+        if (returnedCount < 0) {
+            free(pids);
+            return @[];
+        }
+        if (returnedCount <= capacity) {
+            break;
+        }
+        // Buffer too small, retry with larger capacity
+        free(pids);
+        pids = NULL;
+        count = returnedCount;
+    }
+
+    // If all retries exhausted (child count kept growing faster than we could allocate), bail out
+    if (pids == NULL) {
+        return @[];
+    }
+
+    NSMutableArray<NSNumber *> *result = [NSMutableArray arrayWithCapacity:returnedCount];
+    for (int i = 0; i < returnedCount; i++) {
+        [result addObject:@(pids[i])];
+    }
+    free(pids);
+    return result;
+}
+
 // Use sysctl magic to get the name of a process and whether it is controlling
 // the tty. This code was adapted from ps, here:
 // http://opensource.apple.com/source/adv_cmds/adv_cmds-138.1/ps/
