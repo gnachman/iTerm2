@@ -113,6 +113,9 @@ TriggerDelegate> {
 @property(nonatomic, retain) iTermPasteHelper *pasteHelper;
 @property(nonatomic, copy) NSString *lastCommand;
 @property(nonatomic, retain) iTermExpectation *pasteBracketingOopsieExpectation;
+// Reference count for pending bracketed paste first-chunk writes. When > 0,
+// subsequent writes are queued in _dataQueue to prevent out-of-order delivery.
+@property(nonatomic, assign) NSInteger bracketedPastePending;
 @property(nonatomic, copy) NSString *cookie;
 @property(nonatomic, strong) NSDate *lastNonFocusReportingWrite;
 @property(nonatomic, strong) NSDate *lastFocusReportDate;
@@ -122,5 +125,7 @@ TriggerDelegate> {
                identifier:(NSString *)identifier;
 - (void)removeAnnouncementWithIdentifier:(NSString *)identifier;
 - (BOOL)haveAutoComposer;
+- (void)sendDataQueue;
+- (void)bracketedPasteDidExpect;
 
 @end

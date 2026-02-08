@@ -3600,7 +3600,7 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
             [_sshWriteQueue appendData:data];
             return;
         }
-        if ((_buffering || _screen.sendingIsBlocked) && !reporting) {
+        if ((_buffering || _screen.sendingIsBlocked || _bracketedPastePending > 0) && !reporting) {
             DLog(@"Defer write of %@", [data stringWithEncoding:NSUTF8StringEncoding]);
             if (!_dataQueue) {
                 _dataQueue = [[NSMutableArray alloc] init];
@@ -14135,11 +14135,22 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 }
 
 - (void)sendDataQueue {
+    DLog(@"called");
     for (NSData *data in _dataQueue) {
         DLog(@"Send deferred write of %@", [data stringWithEncoding:NSUTF8StringEncoding]);
         [self writeData:data];
     }
     [_dataQueue removeAllObjects];
+}
+
+// Called when the expectation for the first chunk of a bracketed paste is ready.
+// The first chunk was already queued synchronously; now we can flush if conditions allow.
+- (void)bracketedPasteDidExpect {
+    _bracketedPastePending -= 1;
+    DLog(@"new count=%@", @(_bracketedPastePending));
+    if (_bracketedPastePending == 0 && !_buffering && !_screen.sendingIsBlocked) {
+        [self sendDataQueue];
+    }
 }
 
 - (NSRect)screenWindowFrame {
@@ -17716,10 +17727,12 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     if (_pasteHelper.pasteContext.bytesWritten == 0 &&
         (_pasteHelper.pasteContext.pasteEvent.flags & kPasteFlagsBracket) &&
         _screen.terminalBracketedPasteMode) {
+        DLog(@"Will write first chunk of bracketed paste: %@", string);
         NSString *prefix = [_pasteHelper.pasteContext.pasteEvent.originalString it_substringToIndex:4];
         [self watchForPasteBracketingOopsieWithPrefix:prefix
                                              andWrite:string];
     } else {
+        DLog(@"Writing regular chunk");
         [self writeTask:string];
     }
 }

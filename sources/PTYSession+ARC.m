@@ -181,14 +181,24 @@ extern NSString *const SESSION_ARRANGEMENT_SERVER_DICT;
         [self writeTask:string];
         return;
     }
+
+    // Queue subsequent writes until the expectation is ready.
+    // Use reference counting to handle overlapping pastes correctly.
+    self.bracketedPastePending += 1;
+
+    // Add first chunk to queue synchronously, before dispatching sync.
+    // This ensures it's in the queue before any subsequent chunks from the paste timer.
+    [self writeTask:string];
+
+    DLog(@"Creating expectation for new bracketed paste");
     __weak __typeof(self) weakSelf = self;
     self.pasteBracketingOopsieExpectation =
     [_expect expectRegularExpression:[NSString stringWithFormat:@"(%@)?%@", redflag, prefix.it_escapedForRegex]
                                after:nil
                             deadline:[NSDate dateWithTimeIntervalSinceNow:0.5]
                           willExpect:^{
-        DLog(@"Write task");
-        [weakSelf writeTask:string];
+        // Expectation is now installed in mutation thread. Flush the queue if conditions allow.
+        [weakSelf bracketedPasteDidExpect];
     }
                           completion:^(NSArray<NSString *> * _Nonnull captureGroups) {
         if ([captureGroups[1] isEqualToString:redflag]) {
