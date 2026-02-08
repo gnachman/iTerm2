@@ -249,7 +249,7 @@ typedef struct {
                             KEY_ANSI_9_COLOR, KEY_ANSI_10_COLOR, KEY_ANSI_11_COLOR, KEY_ANSI_12_COLOR,
                             KEY_ANSI_13_COLOR, KEY_ANSI_14_COLOR, KEY_ANSI_15_COLOR,
                             KEY_CURSOR_GUIDE_COLOR, KEY_BADGE_COLOR, KEY_TAB_COLOR,
-                            KEY_UNDERLINE_COLOR ];
+                            KEY_UNDERLINE_COLOR, KEY_ACTIVE_PANE_BORDER_COLOR ];
         color = [color flatMapWithBlock:^NSArray *(NSString *key) {
             return @[ key,
                       [key stringByAppendingString:COLORS_LIGHT_MODE_SUFFIX],
@@ -272,6 +272,10 @@ typedef struct {
             KEY_USE_UNDERLINE_COLOR COLORS_LIGHT_MODE_SUFFIX,
             KEY_USE_UNDERLINE_COLOR COLORS_DARK_MODE_SUFFIX,
             KEY_USE_UNDERLINE_COLOR,
+
+            KEY_USE_ACTIVE_PANE_BORDER COLORS_LIGHT_MODE_SUFFIX,
+            KEY_USE_ACTIVE_PANE_BORDER COLORS_DARK_MODE_SUFFIX,
+            KEY_USE_ACTIVE_PANE_BORDER,
 
             KEY_SMART_CURSOR_COLOR COLORS_LIGHT_MODE_SUFFIX,
             KEY_SMART_CURSOR_COLOR COLORS_DARK_MODE_SUFFIX,
@@ -538,6 +542,7 @@ typedef struct {
             KEY_ANSI_15_COLOR COLORS_LIGHT_MODE_SUFFIX:             @"ANSI bright white color in light mode",
             KEY_CURSOR_GUIDE_COLOR COLORS_LIGHT_MODE_SUFFIX:        @"Cursor Guide color in light mode",
             KEY_BADGE_COLOR COLORS_LIGHT_MODE_SUFFIX:               @"Color of the badge overlay in light mode",
+            KEY_ACTIVE_PANE_BORDER_COLOR COLORS_LIGHT_MODE_SUFFIX:  @"Border color for active pane in light mode",
             KEY_FOREGROUND_COLOR COLORS_DARK_MODE_SUFFIX:           @"Default text color in dark mode",
             KEY_BACKGROUND_COLOR COLORS_DARK_MODE_SUFFIX:           @"Terminal background color in dark mode",
             KEY_BOLD_COLOR COLORS_DARK_MODE_SUFFIX:                 @"Color for bold text in dark mode",
@@ -565,6 +570,7 @@ typedef struct {
             KEY_ANSI_15_COLOR COLORS_DARK_MODE_SUFFIX:              @"ANSI bright white color in dark mode",
             KEY_CURSOR_GUIDE_COLOR COLORS_DARK_MODE_SUFFIX:         @"Cursor Guide color in dark mode",
             KEY_BADGE_COLOR COLORS_DARK_MODE_SUFFIX:                @"Color of the badge overlay in dark mode",
+            KEY_ACTIVE_PANE_BORDER_COLOR COLORS_DARK_MODE_SUFFIX:   @"Border color for active pane in dark mode",
             KEY_USE_CURSOR_GUIDE COLORS_LIGHT_MODE_SUFFIX:          @"Whether to show the Cursor Guide in light mode",
             KEY_USE_CURSOR_GUIDE COLORS_DARK_MODE_SUFFIX:           @"Whether to show the Cursor Guide in dark mode",
             KEY_TAB_COLOR COLORS_LIGHT_MODE_SUFFIX:                 @"Tab Color in light mode",
@@ -577,6 +583,8 @@ typedef struct {
             KEY_UNDERLINE_COLOR COLORS_DARK_MODE_SUFFIX:            @"Color for underlined text in dark mode",
             KEY_USE_UNDERLINE_COLOR COLORS_LIGHT_MODE_SUFFIX:       @"Whether to use a custom underline color in light mode",
             KEY_USE_UNDERLINE_COLOR COLORS_DARK_MODE_SUFFIX:        @"Whether to use a custom underline color in dark mode",
+            KEY_USE_ACTIVE_PANE_BORDER COLORS_LIGHT_MODE_SUFFIX:    @"Whether to show a border around the active pane in light mode",
+            KEY_USE_ACTIVE_PANE_BORDER COLORS_DARK_MODE_SUFFIX:     @"Whether to show a border around the active pane in dark mode",
             KEY_SMART_CURSOR_COLOR COLORS_LIGHT_MODE_SUFFIX:        @"Whether cursor color is based on underlying text in light mode",
             KEY_SMART_CURSOR_COLOR COLORS_DARK_MODE_SUFFIX:         @"Whether cursor color is based on underlying text in dark mode",
             KEY_MINIMUM_CONTRAST COLORS_LIGHT_MODE_SUFFIX:          @"Minimum contrast ratio between text and background in light mode",
@@ -638,6 +646,8 @@ typedef struct {
             KEY_USE_SELECTED_TEXT_COLOR:                            @"Whether to use a custom color for selected text",
             KEY_UNDERLINE_COLOR:                                    @"Color for underlined text",
             KEY_USE_UNDERLINE_COLOR:                                @"Whether to use a custom underline color",
+            KEY_ACTIVE_PANE_BORDER_COLOR:                           @"Border color for active pane",
+            KEY_USE_ACTIVE_PANE_BORDER:                             @"Whether to show a border around the active pane",
             KEY_SMART_CURSOR_COLOR:                                 @"Whether cursor color is based on underlying text",
             KEY_MINIMUM_CONTRAST:                                   @"Minimum contrast ratio between text and background",
             KEY_FAINT_TEXT_ALPHA:                                   @"Opacity of faint (dim) text",
@@ -853,6 +863,7 @@ typedef struct {
                   KEY_ANSI_15_COLOR:       [[NSColor colorWithCalibratedRed:1.000 green:1.000 blue:1.000 alpha:1] dictionaryValue],
                   KEY_CURSOR_GUIDE_COLOR:  [[NSColor colorWithCalibratedRed:0.650 green:0.910 blue:1.000 alpha:0.25] dictionaryValue],
                   KEY_BADGE_COLOR:         [[NSColor colorWithCalibratedRed:1.0 green:0.000 blue:0.000 alpha:0.5] dictionaryValue],
+                  KEY_ACTIVE_PANE_BORDER_COLOR: [[NSColor colorWithCalibratedRed:0.0 green:0.5 blue:1.0 alpha:1.0] dictionaryValue],
 
                   // The light and dark variants are used.
                   KEY_FOREGROUND_COLOR COLORS_LIGHT_MODE_SUFFIX:    [[NSColor colorWithCalibratedRed:0.733 green:0.733 blue:0.733 alpha:1] dictionaryValue],
@@ -882,6 +893,7 @@ typedef struct {
                   KEY_ANSI_15_COLOR COLORS_LIGHT_MODE_SUFFIX:       [[NSColor colorWithCalibratedRed:1.000 green:1.000 blue:1.000 alpha:1] dictionaryValue],
                   KEY_CURSOR_GUIDE_COLOR COLORS_LIGHT_MODE_SUFFIX:  [[NSColor colorWithCalibratedRed:0.650 green:0.910 blue:1.000 alpha:0.25] dictionaryValue],
                   KEY_BADGE_COLOR COLORS_LIGHT_MODE_SUFFIX:         [[NSColor colorWithCalibratedRed:1.0 green:0.000 blue:0.000 alpha:0.5] dictionaryValue],
+                  KEY_ACTIVE_PANE_BORDER_COLOR COLORS_LIGHT_MODE_SUFFIX: [[NSColor colorWithCalibratedRed:0.0 green:0.5 blue:1.0 alpha:1.0] dictionaryValue],
 
                   KEY_FOREGROUND_COLOR COLORS_DARK_MODE_SUFFIX:    [[NSColor colorWithCalibratedRed:0.733 green:0.733 blue:0.733 alpha:1] dictionaryValue],
                   KEY_BACKGROUND_COLOR COLORS_DARK_MODE_SUFFIX:    [[NSColor colorWithCalibratedRed:0.000 green:0.000 blue:0.000 alpha:1] dictionaryValue],
@@ -910,6 +922,7 @@ typedef struct {
                   KEY_ANSI_15_COLOR COLORS_DARK_MODE_SUFFIX:       [[NSColor colorWithCalibratedRed:1.000 green:1.000 blue:1.000 alpha:1] dictionaryValue],
                   KEY_CURSOR_GUIDE_COLOR COLORS_DARK_MODE_SUFFIX:  [[NSColor colorWithCalibratedRed:0.650 green:0.910 blue:1.000 alpha:0.25] dictionaryValue],
                   KEY_BADGE_COLOR COLORS_DARK_MODE_SUFFIX:         [[NSColor colorWithCalibratedRed:1.0 green:0.000 blue:0.000 alpha:0.5] dictionaryValue],
+                  KEY_ACTIVE_PANE_BORDER_COLOR COLORS_DARK_MODE_SUFFIX: [[NSColor colorWithCalibratedRed:0.0 green:0.5 blue:1.0 alpha:1.0] dictionaryValue],
 
 
                   KEY_USE_CURSOR_GUIDE: @NO,
@@ -935,6 +948,10 @@ typedef struct {
                   KEY_USE_UNDERLINE_COLOR: @NO,
                   KEY_USE_UNDERLINE_COLOR COLORS_LIGHT_MODE_SUFFIX: @NO,
                   KEY_USE_UNDERLINE_COLOR COLORS_DARK_MODE_SUFFIX: @NO,
+
+                  KEY_USE_ACTIVE_PANE_BORDER: @NO,
+                  KEY_USE_ACTIVE_PANE_BORDER COLORS_LIGHT_MODE_SUFFIX: @NO,
+                  KEY_USE_ACTIVE_PANE_BORDER COLORS_DARK_MODE_SUFFIX: @NO,
 
                   KEY_SMART_CURSOR_COLOR: @NO,
                   KEY_SMART_CURSOR_COLOR COLORS_LIGHT_MODE_SUFFIX: @NO,

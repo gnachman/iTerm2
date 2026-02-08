@@ -128,6 +128,8 @@
 #define KEY_USE_CURSOR_GUIDE       @"Use Cursor Guide"
 #define KEY_CURSOR_GUIDE_COLOR     @"Cursor Guide Color"
 #define KEY_BADGE_COLOR            @"Badge Color"
+#define KEY_USE_ACTIVE_PANE_BORDER @"Use Active Pane Border"
+#define KEY_ACTIVE_PANE_BORDER_COLOR @"Active Pane Border Color"
 
 // End of key swith light and dark variants
 #define KEY_USE_SEPARATE_COLORS_FOR_LIGHT_AND_DARK_MODE @"Use Separate Colors for Light and Dark Mode"

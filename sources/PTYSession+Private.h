@@ -100,6 +100,8 @@ TriggerDelegate> {
 @property(nonatomic, readonly) id<VT100RemoteHostReading> lastRemoteHost;  // last remote host at time of setting current directory
 @property(nonatomic, strong) iTermSessionDirectoryTracker *directoryTracker;
 @property(nonatomic, retain) NSColor *cursorGuideColor;
+@property(nonatomic, assign) BOOL useActivePaneBorder;
+@property(nonatomic, retain) NSColor *activePaneBorderColor;
 @property(nonatomic, copy) NSString *badgeFormat;
 
 // Info about what happens when the program is run so it can be restarted after

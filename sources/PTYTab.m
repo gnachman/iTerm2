@@ -864,6 +864,13 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
       }
     }
 
+    // Update active pane borders for all sessions in this tab
+    if (changed) {
+        for (PTYSession *aSession in [self sessions]) {
+            [aSession.view updateActivePaneBorder];
+        }
+    }
+
     [realParentWindow_ invalidateRestorableState];
 
     if (changed) {

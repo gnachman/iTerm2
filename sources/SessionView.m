@@ -160,6 +160,9 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
     int _colorsSettingsVisible;
 
     iTermProgressBarView *_progressBar;
+
+    // Border view for active pane indication (used for browser sessions)
+    NSView *_activePaneBorderView;
 }
 
 + (double)titleHeight {
@@ -300,6 +303,14 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
                                                   selector:@selector(colorPreferencesDidAppear:)
                                                       name:iTermColorPreferencesDidAppear
                                                     object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(windowKeyStatusDidChange:)
+                                                     name:NSWindowDidBecomeKeyNotification
+                                                   object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(windowKeyStatusDidChange:)
+                                                     name:NSWindowDidResignKeyNotification
+                                                   object:nil];
 
     }
     return self;
@@ -1004,6 +1015,12 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
     [self updateDim];
 }
 
+- (void)windowKeyStatusDidChange:(NSNotification *)notification {
+    if (notification.object == self.window) {
+        [self updateActivePaneBorder];
+    }
+}
+
 - (void)sessionSelectorStatusDidChange:(NSNotification *)notification {
     [self updateSessionSelectorButton];
 }
@@ -1066,6 +1083,7 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
         if (_browserViewController) {
             [self updateBrowserViewFrame];
         }
+        [self updateActivePaneBorder];
     } else {
         DLog(@"Keep everything top aligned.");
         // Don't resize anything but do keep it all top-aligned.
@@ -1104,6 +1122,7 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
         _smearView.frame = frame;
         _legacyScrollerBackgroundView.frame = [self frameForLegacyScroller];
         [CATransaction commit];
+        [self updateActivePaneBorder];
     }
     [CATransaction begin];
     [CATransaction setDisableActions:YES];
@@ -2221,6 +2240,38 @@ typedef NS_ENUM(NSInteger, SessionViewTrackingMode) {
                                      self.frame.size.height - titleHeight - reservedSpaceOnBottom);
     
     _browserViewController.view.frame = browserFrame;
+}
+
+- (void)updateActivePaneBorder {
+    const BOOL isActiveSession = [_delegate sessionViewIsActiveSession];
+    const BOOL shouldShow = ([_delegate sessionViewUseActivePaneBorder] && isActiveSession);
+
+    if (!shouldShow) {
+        _activePaneBorderView.hidden = YES;
+        return;
+    }
+
+    if (!_activePaneBorderView) {
+        _activePaneBorderView = [[NSView alloc] initWithFrame:self.bounds];
+        _activePaneBorderView.wantsLayer = YES;
+        _activePaneBorderView.layer.borderWidth = 2.0;
+        [self addSubview:_activePaneBorderView positioned:NSWindowAbove relativeTo:nil];
+    }
+
+    NSColor *borderColor = [_delegate sessionViewActivePaneBorderColor];
+    // Use 50% alpha when window is not key
+    if (!self.window.isKeyWindow) {
+        borderColor = [borderColor colorWithAlphaComponent:borderColor.alphaComponent * 0.5];
+    }
+    _activePaneBorderView.layer.borderColor = borderColor.CGColor;
+
+    // Use the appropriate content frame based on session type
+    if (self.isBrowser) {
+        _activePaneBorderView.frame = _browserViewController.view.frame;
+    } else {
+        _activePaneBorderView.frame = _scrollview.frame;
+    }
+    _activePaneBorderView.hidden = NO;
 }
 
 - (void)updateMinimapFrameAnimated:(BOOL)animated {

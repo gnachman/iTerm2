@@ -1616,6 +1616,7 @@ CA
         <customObject id="Cct-nR-QI7" userLabel="Prefs&gt;Profiles&gt;General&gt;Advanced Working Dir Window Controller" customClass="AdvancedWorkingDirectoryWindowController"/>
         <customObject id="p8i-eM-oBc" userLabel="Prefs&gt;Profiles&gt;Colors View Controller" customClass="ProfilesColorsPreferencesViewController">
             <connections>
+                <outlet property="_activePaneBorderColor" destination="z7z-HP-SD4" id="SsM-0U-IwT"/>
                 <outlet property="_ansi0Color" destination="2297" id="Naq-Zb-19H"/>
                 <outlet property="_ansi0ColorLabel" destination="2344" id="aGx-am-kfT"/>
                 <outlet property="_ansi10Color" destination="2300" id="Wzc-Vc-Wl8"/>
@@ -1677,6 +1678,7 @@ CA
                 <outlet property="_selectionColorLabel" destination="2275" id="C8S-bl-P5q"/>
                 <outlet property="_tabColor" destination="Wzz-9B-zqB" id="gfq-Eg-jc0"/>
                 <outlet property="_underlineColor" destination="rSL-fL-hpc" id="gfq-Eg-xxx"/>
+                <outlet property="_useActivePaneBorder" destination="WA9-p4-qS7" id="CBB-7N-8CN"/>
                 <outlet property="_useBrightBold" destination="X0w-pC-g9j" id="Ixo-W9-Ngf"/>
                 <outlet property="_useGuide" destination="Rpk-o3-4ec" id="nKd-1M-jBQ"/>
                 <outlet property="_useSeparateColorsForLightAndDarkMode" destination="2Zz-se-prd" id="NvI-G3-t4w"/>
@@ -2551,11 +2553,11 @@ CA
             <point key="canvasLocation" x="1041" y="-815"/>
         </customView>
         <customView id="SCN-fS-hNB" userLabel="Prefs - Profiles - Colors" customClass="iTermSizeRememberingView">
-            <rect key="frame" x="0.0" y="0.0" width="560" height="846"/>
+            <rect key="frame" x="0.0" y="0.0" width="560" height="874"/>
             <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
             <subviews>
                 <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="ngh-on-CNe" customClass="iTermTerminalModeEnclosure">
-                    <rect key="frame" x="18" y="49" width="522" height="721"/>
+                    <rect key="frame" x="18" y="77" width="522" height="721"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <subviews>
                         <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="NXm-yR-tAj" userLabel="Regular">
@@ -3134,7 +3136,7 @@ CA
                     </subviews>
                 </customView>
                 <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="RVN-iv-hsG">
-                    <rect key="frame" x="18" y="807" width="132" height="16"/>
+                    <rect key="frame" x="18" y="835" width="132" height="16"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" lineBreakMode="clipping" alignment="right" title="Modes:" id="zwF-JP-GLA">
                         <font key="font" metaFont="system"/>
@@ -3143,7 +3145,7 @@ CA
                     </textFieldCell>
                 </textField>
                 <popUpButton verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="3x1-gZ-174">
-                    <rect key="frame" x="152" y="775" width="161" height="25"/>
+                    <rect key="frame" x="152" y="803" width="161" height="25"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <popUpButtonCell key="cell" type="push" title="Light Mode" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" selectedItem="xFU-tm-alS" id="jfH-m9-DvC">
                         <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
@@ -3160,7 +3162,7 @@ CA
                     </connections>
                 </popUpButton>
                 <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="ZNy-wl-Zrf">
-                    <rect key="frame" x="18" y="780" width="132" height="16"/>
+                    <rect key="frame" x="18" y="808" width="132" height="16"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" lineBreakMode="clipping" alignment="right" title="Editing:" id="O5b-oW-Jw9">
                         <font key="font" metaFont="system"/>
@@ -3169,7 +3171,7 @@ CA
                     </textFieldCell>
                 </textField>
                 <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="2Zz-se-prd" customClass="iTermSettingsCheckbox">
-                    <rect key="frame" x="159" y="806" width="301" height="18"/>
+                    <rect key="frame" x="159" y="834" width="301" height="18"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <buttonCell key="cell" type="check" title="Use separate colors for light and dark mode" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="ZF1-Nv-83x">
                         <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -3180,7 +3182,7 @@ CA
                     </connections>
                 </button>
                 <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="57d-0i-P0T">
-                    <rect key="frame" x="468" y="804" width="27" height="23"/>
+                    <rect key="frame" x="468" y="832" width="27" height="23"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <buttonCell key="cell" type="square" title="⚠️" bezelStyle="shadowlessSquare" alignment="center" imageScaling="proportionallyDown" inset="2" id="VRh-tL-KgN">
                         <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
@@ -3191,11 +3193,11 @@ CA
                     </connections>
                 </button>
                 <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Wzz-9B-zqB" customClass="iTermSettingsColorWell">
-                    <rect key="frame" x="332" y="20" width="32" height="21"/>
+                    <rect key="frame" x="352" y="48" width="32" height="21"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                 </customView>
                 <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="j7F-r8-oes" customClass="iTermSettingsCheckbox">
-                    <rect key="frame" x="159" y="20" width="165" height="18"/>
+                    <rect key="frame" x="159" y="48" width="165" height="18"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <buttonCell key="cell" type="check" title="Use custom tab color" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="k6J-9z-fqf">
                         <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -3207,7 +3209,7 @@ CA
                     </connections>
                 </button>
                 <textField focusRingType="none" verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="g7n-RV-Wvu">
-                    <rect key="frame" x="50" y="21" width="100" height="16"/>
+                    <rect key="frame" x="50" y="49" width="100" height="16"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="right" title="Tab:" id="M1T-M4-4jC">
                         <font key="font" metaFont="system"/>
@@ -3215,9 +3217,34 @@ CA
                         <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
                 </textField>
+                <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="z7z-HP-SD4" customClass="iTermSettingsColorWell">
+                    <rect key="frame" x="352" y="20" width="32" height="21"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                </customView>
+                <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="WA9-p4-qS7" customClass="iTermSettingsCheckbox">
+                    <rect key="frame" x="159" y="20" width="183" height="18"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <buttonCell key="cell" type="check" title="Border around active pane" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="tav-Hu-1g6">
+                        <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                        <font key="font" metaFont="system"/>
+                    </buttonCell>
+                    <connections>
+                        <action selector="settingChanged:" target="p8i-eM-oBc" id="gNq-PJ-6dq"/>
+                        <outlet property="nextKeyView" destination="4896" id="GaU-Np-Ixe"/>
+                    </connections>
+                </button>
+                <textField focusRingType="none" verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="gxX-AT-Xux">
+                    <rect key="frame" x="50" y="21" width="100" height="16"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="right" title="Pane:" id="j1N-Vw-Xig">
+                        <font key="font" metaFont="system"/>
+                        <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                        <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                    </textFieldCell>
+                </textField>
             </subviews>
             <accessibility identifier="prefsProfilesColors"/>
-            <point key="canvasLocation" x="2346" y="816"/>
+            <point key="canvasLocation" x="2346" y="830"/>
         </customView>
         <customView id="G2G-W6-kWa" userLabel="Prefs - Profiles - Text" customClass="iTermSizeRememberingView">
             <rect key="frame" x="0.0" y="0.0" width="694" height="635"/>

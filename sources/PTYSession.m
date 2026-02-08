@@ -4929,6 +4929,11 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
                                                                   inProfile:aDict];
     }
 
+    self.useActivePaneBorder = [iTermProfilePreferences boolForKey:iTermAmendedColorKey(KEY_USE_ACTIVE_PANE_BORDER, aDict, dark)
+                                                         inProfile:aDict];
+    self.activePaneBorderColor = [[iTermProfilePreferences objectForKey:iTermAmendedColorKey(KEY_ACTIVE_PANE_BORDER_COLOR, aDict, dark)
+                                                              inProfile:aDict] colorValueForKey:iTermAmendedColorKey(KEY_ACTIVE_PANE_BORDER_COLOR, aDict, dark)];
+
     [self setSmartCursorColor:[iTermProfilePreferences boolForKey:iTermAmendedColorKey(KEY_SMART_CURSOR_COLOR, aDict, dark)
                                                         inProfile:aDict]];
 
@@ -18328,6 +18333,18 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
 
 - (NSColor *)sessionViewTabColor {
     return self.tabColor;
+}
+
+- (BOOL)sessionViewUseActivePaneBorder {
+    return _useActivePaneBorder;
+}
+
+- (NSColor *)sessionViewActivePaneBorderColor {
+    return _activePaneBorderColor;
+}
+
+- (BOOL)sessionViewIsActiveSession {
+    return [_delegate sessionIsActiveInTab:self];
 }
 
 - (NSMenu *)sessionViewContextMenu {
