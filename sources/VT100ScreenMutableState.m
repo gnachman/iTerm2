@@ -3185,6 +3185,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
                                 onAbsLine:(long long)cursorAbsLine
                                completion:(void (^)(void))completion {
     DLog(@"currentDirectoryReallyDidChangeTo:%@ onAbsLine:%@", dir, @(cursorAbsLine));
+    self.shouldExpectWorkingDirectoryUpdates = YES;
     BOOL willChange = ![dir isEqualToString:[self workingDirectoryOnLine:cursorAbsLine - self.cumulativeScrollbackOverflow]];
     [self setWorkingDirectory:dir
                     onAbsLine:cursorAbsLine

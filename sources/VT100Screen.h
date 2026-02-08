@@ -215,6 +215,7 @@ extern const NSInteger VT100ScreenBigFileDownloadThreshold;
 - (void)userDidPressReturn;
 
 - (BOOL)shouldExpectPromptMarks;
+- (BOOL)shouldExpectWorkingDirectoryUpdates;
 
 - (NSString *)commandInRange:(VT100GridCoordRange)range;
 - (BOOL)haveCommandInRange:(VT100GridCoordRange)range;

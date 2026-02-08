@@ -366,6 +366,16 @@ class iTermSessionDirectoryTracker: NSObject {
         pwdPoller.poll()
     }
 
+    /// Poll for the local working directory and update lastLocalDirectory only.
+    /// Does not affect lastDirectory, shell history, or path variable.
+    /// Used when OSC 7/shell integration is providing directory updates but we still
+    /// want to track the local directory for session restoration.
+    @objc
+    func pollLocalDirectoryOnly() {
+        DLog("\(d(delegate)): pollLocalDirectoryOnly")
+        updateLocalDirectoryWithCompletion { _ in }
+    }
+
     /// Called when a line feed is received.
     @objc
     func didReceiveLineFeed() {

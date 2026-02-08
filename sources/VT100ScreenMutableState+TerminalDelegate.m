@@ -896,6 +896,18 @@ typedef struct {
         DLog(@"Already have a remote host so not updating working directory because of title change");
         return;
     }
+    // If OSC 7 or shell integration has provided working directory updates, don't update the
+    // interval tree or shell history from window title changes. This prevents the local pwd from
+    // overwriting the remote directory when SSHed with a shell like fish that sends OSC 7 without
+    // a hostname. However, we still poll for the local directory so it can be used when creating
+    // new sessions that reuse the previous pwd.
+    if (self.shouldExpectWorkingDirectoryUpdates) {
+        DLog(@"Shell integration/OSC 7 is providing working directory updates, polling local directory only");
+        [self addSideEffect:^(id<VT100ScreenDelegate> delegate) {
+            [delegate screenPollLocalDirectoryOnly];
+        } name:@"poll local directory only"];
+        return;
+    }
     DLog(@"Don't have a remote host, so changing working directory");
     // TODO: There's a bug here where remote host can scroll off the end of history, causing the
     // working directory to come from PTYTask (which is what happens when nil is passed here).

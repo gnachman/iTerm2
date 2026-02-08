@@ -15679,6 +15679,11 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     [_directoryTracker screenDidChangeCurrentDirectory];
 }
 
+- (void)screenPollLocalDirectoryOnly {
+    DLog(@"screenPollLocalDirectoryOnly");
+    [_directoryTracker pollLocalDirectoryOnly];
+}
+
 - (void)screenDidReceiveCustomEscapeSequenceWithParameters:(NSDictionary<NSString *, NSString *> *)parameters
                                                    payload:(NSString *)payload {
     ITMNotification *notification = [[[ITMNotification alloc] init] autorelease];

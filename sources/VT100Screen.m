@@ -110,6 +110,10 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     return _state.shouldExpectPromptMarks;
 }
 
+- (BOOL)shouldExpectWorkingDirectoryUpdates {
+    return _state.shouldExpectWorkingDirectoryUpdates;
+}
+
 - (void)userDidPressReturn {
     DLog(@"userDidPressReturn");
     [self mutateAsynchronously:^(VT100Terminal * _Nonnull terminal,

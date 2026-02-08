@@ -321,6 +321,12 @@ typedef NS_ENUM(NSUInteger, PTYSessionResizePermission) {
 - (void)screenCurrentDirectoryDidChangeTo:(NSString * _Nullable)newPath
                                remoteHost:(id<VT100RemoteHostReading> _Nullable)remoteHost;
 
+// Poll for the local working directory and update lastLocalDirectory only.
+// Does not affect the interval tree, shell history, or path variable.
+// Used when OSC 7/shell integration is providing directory updates but we still
+// want to track the local directory for session restoration.
+- (void)screenPollLocalDirectoryOnly;
+
 - (void)screenDidReceiveCustomEscapeSequenceWithParameters:(NSDictionary<NSString *, NSString *> * _Nonnull)parameters
                                                    payload:(NSString * _Nonnull)payload;
 - (void)screenReportVariableNamed:(NSString * _Nonnull)name;

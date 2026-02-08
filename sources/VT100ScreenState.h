@@ -156,6 +156,11 @@ extern NSString *const kScreenStateProgressKey;
 // Did we get FinalTerm codes that report info about prompt? Used to decide if advanced paste
 // can wait for prompts.
 @property (nonatomic, readonly) BOOL shouldExpectPromptMarks;
+
+// Did we get OSC 7 or shell integration working directory updates? Used to prevent window title
+// triggered directory polling from overriding shell-provided directories.
+@property (nonatomic, readonly) BOOL shouldExpectWorkingDirectoryUpdates;
+
 @property (nonatomic, readonly) BOOL echoProbeIsActive;
 
 // From VT100Terminal - no mutable equivalents provided.
@@ -240,6 +245,7 @@ extern NSString *const kScreenStateProgressKey;
 @property (nonatomic, readwrite) long long fakePromptDetectedAbsLine;
 @property (nonatomic, readwrite) long long lastPromptLine;
 @property (nonatomic, readwrite) BOOL shouldExpectPromptMarks;
+@property (nonatomic, readwrite) BOOL shouldExpectWorkingDirectoryUpdates;
 @property (nonatomic, copy, readwrite) id<VT100ScreenConfiguration> config;
 @property (nullable, nonatomic, strong, readwrite) NSArray<iTermTuple<NSString *, NSString *> *> *exfiltratedEnvironment;
 @property (nonatomic, readwrite, copy) NSMutableDictionary<NSString *, NSNumber *> *blockStartAbsLine;
