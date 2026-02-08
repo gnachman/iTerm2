@@ -122,7 +122,7 @@ class AIMetadata: NSObject {
     }
 
     static var recommendedOpenAIModel: Model {
-        return AIMetadata.gpt5_1
+        return AIMetadata.gpt5_2
     }
 
     static var recommendedDeepSeekModel: Model {
@@ -130,7 +130,7 @@ class AIMetadata: NSObject {
     }
 
     static var recommendedGeminiModel: Model {
-        return AIMetadata.gemini_2_5_flash
+        return AIMetadata.gemini_3_flash
     }
 
     static var recommendedLlamaModel: Model {
@@ -138,7 +138,7 @@ class AIMetadata: NSObject {
     }
 
     static var recommendedAnthropicModel: Model {
-        return AIMetadata.claude_4_5_sonnet
+        return AIMetadata.claude_4_6_opus
     }
 
     static var alternateOpenAIModels: [Model] {
@@ -171,6 +171,24 @@ class AIMetadata: NSObject {
         }
     }
 
+    private static let gpt5_2 = Model(
+        name: "gpt-5.2",
+        contextWindowTokens: 400_000,
+        maxResponseTokens: 128_000,
+        url: "https://api.openai.com/v1/responses",
+        api: .responses,
+        features: [.functionCalling, .hostedFileSearch, .hostedWebSearch, .streaming, .hostedCodeInterpreter, .configurableThinking],
+        vendor: .openAI
+    )
+    private static let gpt5_2_pro = Model(
+        name: "gpt-5.2-pro",
+        contextWindowTokens: 400_000,
+        maxResponseTokens: 128_000,
+        url: "https://api.openai.com/v1/responses",
+        api: .responses,
+        features: [.functionCalling, .hostedFileSearch, .hostedWebSearch, .streaming, .hostedCodeInterpreter, .configurableThinking],
+        vendor: .openAI
+    )
     private static let gpt5_1 = Model(
         name: "gpt-5.1",
         contextWindowTokens: 400_000,
@@ -291,7 +309,7 @@ class AIMetadata: NSObject {
     )
     private static let deepseek_chat = Model(
         name: "deepseek-chat",
-        contextWindowTokens: 65_536,
+        contextWindowTokens: 128_000,
         maxResponseTokens: 8_000,
         url: "https://api.deepseek.com/v1/chat/completions",
         api: .deepSeek,
@@ -334,17 +352,28 @@ class AIMetadata: NSObject {
         features: [.functionCalling, .streaming],
         vendor: .gemini
     )
-    private static let gemini_1_5_pro = Model(
-        name: "gemini-1.5-pro",
+    private static let gemini_2_5_pro = Model(
+        name: "gemini-2.5-pro",
         contextWindowTokens: 1_048_576,
-        maxResponseTokens: 8_192,
+        maxResponseTokens: 65_536,
         url: "https://generativelanguage.googleapis.com/v1beta/models/{{MODEL}}",
         api: .gemini,
         features: [.functionCalling, .streaming],
         vendor: .gemini
     )
-    private static let gemini_2_5_pro = Model(
-        name: "gemini-2.5-pro",
+
+    private static let gemini_3_pro = Model(
+        name: "gemini-3-pro-preview",
+        contextWindowTokens: 1_048_576,
+        maxResponseTokens: 65_536,
+        url: "https://generativelanguage.googleapis.com/v1beta/models/{{MODEL}}",
+        api: .gemini,
+        features: [.functionCalling, .streaming],
+        vendor: .gemini
+    )
+
+    private static let gemini_3_flash = Model(
+        name: "gemini-3-flash-preview",
         contextWindowTokens: 1_048_576,
         maxResponseTokens: 65_536,
         url: "https://generativelanguage.googleapis.com/v1beta/models/{{MODEL}}",
@@ -374,8 +403,26 @@ class AIMetadata: NSObject {
     )
 
 
+    private static let claude_4_6_opus = Model(
+        name: "claude-opus-4-6",
+        contextWindowTokens: 200_000,
+        maxResponseTokens: 128_000,
+        url: "https://api.anthropic.com/v1/messages",
+        api: .anthropic,
+        features: [.functionCalling, .streaming],
+        vendor: .anthropic
+    )
     private static let claude_4_5_sonnet = Model(
         name: "claude-sonnet-4-5",
+        contextWindowTokens: 200_000,
+        maxResponseTokens: 64_000,
+        url: "https://api.anthropic.com/v1/messages",
+        api: .anthropic,
+        features: [.functionCalling, .streaming],
+        vendor: .anthropic
+    )
+    private static let claude_4_5_haiku = Model(
+        name: "claude-haiku-4-5",
         contextWindowTokens: 200_000,
         maxResponseTokens: 64_000,
         url: "https://api.anthropic.com/v1/messages",
@@ -431,6 +478,8 @@ class AIMetadata: NSObject {
     )
     let models: [Model] = [
         // The first model will be the default.
+        AIMetadata.gpt5_2,
+        AIMetadata.gpt5_2_pro,
         AIMetadata.gpt5_1,
         AIMetadata.gpt5_1_codex,
         AIMetadata.gpt5,
@@ -445,12 +494,13 @@ class AIMetadata: NSObject {
         AIMetadata.o4_mini,
 
         // MARK: - Google Models
+        AIMetadata.gemini_3_pro,
+        AIMetadata.gemini_3_flash,
         AIMetadata.gemini_2_5_flash_lite,
         AIMetadata.gemini_2_5_flash,
         AIMetadata.gemini_2_5_pro,
         AIMetadata.geimini_2_0_flash_lite,
         AIMetadata.gemini_2_0_flash,
-        AIMetadata.gemini_1_5_pro,
 
         // MARK: - DeepSeek Models
         AIMetadata.deepseek_chat,
@@ -459,7 +509,9 @@ class AIMetadata: NSObject {
 
 
         // MARK: - Anthropic Models
+        AIMetadata.claude_4_6_opus,
         AIMetadata.claude_4_5_sonnet,
+        AIMetadata.claude_4_5_haiku,
         AIMetadata.claude_4_sonnet,
         AIMetadata.claude_4_1_opus,
         AIMetadata.claude_4_opus,
