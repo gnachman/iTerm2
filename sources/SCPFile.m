@@ -442,6 +442,10 @@ static NSError *SCPFileError(NSString *description) {
                         NSString *prompt = [NSString stringWithFormat:@"passphrase for private key “%@”:",
                                             keyPath];
                         password = [self keyboardInteractiveRequest:prompt];
+                        if (!password) {
+                            self.stopped = YES;
+                            break;
+                        }
                     }
                     XLog(@"Attempting to authenticate with key %@", keyPath);
                     NSString *publicKeyPath = [keyPath stringByAppendingString:@".pub"];
