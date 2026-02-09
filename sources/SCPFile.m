@@ -494,34 +494,55 @@ static NSError *SCPFileError(NSString *description) {
                         XLog(@"No key file at %@", keyPath);
                         continue;
                     }
+                    const BOOL keyIsEncrypted = [self privateKeyIsEncrypted:keyPath];
                     NSString *password = nil;
-                    if ([self privateKeyIsEncrypted:keyPath]) {
-                        NSString *prompt = [NSString stringWithFormat:@"passphrase for private key “%@”:",
-                                            keyPath];
-                        password = [self keyboardInteractiveRequest:prompt];
-                        if (!password) {
-                            self.stopped = YES;
+                    BOOL firstAttempt = YES;
+
+                    // Loop to allow retry on wrong passphrase
+                    while (!self.stopped && self.session.session) {
+                        if (keyIsEncrypted) {
+                            NSString *prompt;
+                            if (firstAttempt) {
+                                prompt = [NSString stringWithFormat:@"passphrase for private key “%@”:",
+                                          keyPath];
+                            } else {
+                                prompt = [NSString stringWithFormat:@"correct passphrase for “%@”:",
+                                          keyPath];
+                            }
+                            password = [self keyboardInteractiveRequest:prompt];
+                            if (!password) {
+                                self.stopped = YES;
+                                break;
+                            }
+                            firstAttempt = NO;
+                        }
+
+                        XLog(@"Attempting to authenticate with key %@", keyPath);
+                        NSString *publicKeyPath = [keyPath stringByAppendingString:@".pub"];
+                        if (![[NSFileManager defaultManager] fileExistsAtPath:publicKeyPath]) {
+                            XLog(@"Warning: no public key at %@. Trying to authenticate with only a private key.", publicKeyPath);
+                            publicKeyPath = nil;
+                        }
+                        [self.session authenticateByPublicKey:publicKeyPath
+                                                   privateKey:keyPath
+                                                  andPassword:password];
+
+                        if (self.session.isAuthorized) {
+                            XLog(@"Authorized!");
                             break;
                         }
-                    }
-                    XLog(@"Attempting to authenticate with key %@", keyPath);
-                    NSString *publicKeyPath = [keyPath stringByAppendingString:@".pub"];
-                    if (![[NSFileManager defaultManager] fileExistsAtPath:publicKeyPath]) {
-                        XLog(@"Warning: no public key at %@. Trying to authenticate with only a private key.", publicKeyPath);
-                        publicKeyPath = nil;
-                    }
-                    [self.session authenticateByPublicKey:publicKeyPath
-                                               privateKey:keyPath
-                                              andPassword:password];
 
-                    if (self.session.isAuthorized) {
-                        XLog(@"Authorized!");
-                        break;
-                    }
+                        if (!self.session.session) {
+                            XLog(@"Disconnected!");
+                            break;
+                        }
 
-                    if (!self.session.session) {
-                        XLog(@"Disconnected!");
-                        break;
+                        // If key is not encrypted, don't retry - the key itself wasn't accepted
+                        if (!keyIsEncrypted) {
+                            break;
+                        }
+                        // For encrypted keys, loop back to ask for passphrase again
+                        XLog(@"Wrong passphrase for %@, prompting again", keyPath);
                     }
                 }
                 if (self.session.isAuthorized) {
