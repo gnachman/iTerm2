@@ -28,6 +28,8 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, weak) id<iTermRestorableStateControllerDelegate> delegate;
 @property (nonatomic, readonly) NSInteger numberOfWindowsRestored;
 @property (nonatomic, class) BOOL forceSaveState;
+// Returns YES if window restoration is still in progress (not yet complete).
+@property (nonatomic, readonly) BOOL restoring;
 
 + (instancetype)sharedInstance;
 

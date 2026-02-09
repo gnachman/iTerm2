@@ -819,6 +819,13 @@ static BOOL hasBecomeActive = NO;
 - (BOOL)applicationShouldTerminateAfterLastWindowClosed:(NSApplication *)app
 {
     DLog(@"applicationShouldTerminateAfterLastWindowClosed called");
+    if (_restorableStateController.restoring) {
+        // Don't quit while restoring windows. This can happen if a modal dialog
+        // (like the database integrity check timeout alert) is dismissed before
+        // any terminal windows have been restored. Issue 12674.
+        DLog(@"Not quitting because window restoration is in progress");
+        return NO;
+    }
     NSArray *terminals = [[iTermController sharedInstance] terminals];
     if (terminals.count > 0) {
         // The last window wasn't really closed, it was just the hotkey window getting ordered out or a window entering fullscreen.
