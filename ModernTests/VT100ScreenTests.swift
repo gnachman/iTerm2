@@ -1090,7 +1090,7 @@ struct SeededGenerator: RandomNumberGenerator {
     }
 }
 
-fileprivate class FakeSession: NSObject, VT100ScreenDelegate {
+class FakeSession: NSObject, VT100ScreenDelegate {
     var screen: VT100Screen?
     var configuration = VT100MutableScreenConfiguration()
     var selection = iTermSelection()
@@ -1879,5 +1879,8 @@ fileprivate class FakeSession: NSObject, VT100ScreenDelegate {
     }
 
     func screenUpdateBlock(_ blockID: String?, action: iTermUpdateBlockAction) {
+    }
+
+    func screenPollLocalDirectoryOnly() {
     }
 }
