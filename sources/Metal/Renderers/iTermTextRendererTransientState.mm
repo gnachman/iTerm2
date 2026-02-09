@@ -16,7 +16,6 @@
 
 #include <map>
 
-const vector_float4 iTermIMEColor = simd_make_float4(1, 1, 0, 1);
 const vector_float4 iTermAnnotationUnderlineColor = simd_make_float4(1, 1, 0, 1);
 
 namespace iTerm2 {

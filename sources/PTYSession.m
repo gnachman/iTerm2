@@ -4970,6 +4970,7 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
                               @(kColorMapMatch): k(KEY_MATCH_COLOR),
                               @(kColorMapCursor): k(KEY_CURSOR_COLOR),
                               @(kColorMapCursorText): k(KEY_CURSOR_TEXT_COLOR),
+                              @(kColorMapIMECursor): k(KEY_IME_CURSOR_COLOR),
                               @(kColorMapUnderline): (useUnderline ? k(KEY_UNDERLINE_COLOR) : [NSNull null])
     };
     return keyMap;

@@ -637,6 +637,7 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
     }
 
     _imeInfo = [[iTermMetalIMEInfo alloc] init];
+    _imeInfo.cursorColor = [_configuration->_colorMap colorForKey:kColorMapIMECursor];
     // i indexes into buf.
     for (int i = 0; i < len; i++) {
         if (coord.y >= 0 && coord.y < _rows.count) {

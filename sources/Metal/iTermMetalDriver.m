@@ -1291,10 +1291,7 @@ legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth
     if (imeInfo) {
         iTermCursorRendererTransientState *tState = [frameData transientStateForRenderer:_imeCursorRenderer];
         tState.coord = imeInfo.cursorCoord;
-        tState.color = [NSColor it_colorInDefaultColorSpaceWithRed:iTermIMEColor.x
-                                                             green:iTermIMEColor.y
-                                                              blue:iTermIMEColor.z
-                                                             alpha:iTermIMEColor.w];
+        tState.color = imeInfo.cursorColor;
     }
 }
 

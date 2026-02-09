@@ -3526,10 +3526,7 @@ iTermKittyImageDraw *iTermFindKittyImageDrawForVirtualPlaceholder(NSArray<iTermK
                                         cursorHeight);
         _imeCursorLastPos = cursorFrame.origin;
         [self.delegate drawingHelperUpdateFindCursorView];
-        [[colorMap processedBackgroundColorForBackgroundColor:[NSColor colorWithCalibratedRed:1.0
-                                                                                        green:1.0
-                                                                                         blue:0
-                                                                                        alpha:1.0]] set];
+        [[colorMap processedBackgroundColorForBackgroundColor:[colorMap colorForKey:kColorMapIMECursor]] set];
         iTermRectFill(cursorFrame, virtualOffset);
 
         return YES;

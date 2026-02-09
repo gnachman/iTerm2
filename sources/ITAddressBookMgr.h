@@ -99,6 +99,7 @@
 #define KEY_SELECTED_TEXT_COLOR    @"Selected Text Color"
 #define KEY_CURSOR_COLOR           @"Cursor Color"
 #define KEY_CURSOR_TEXT_COLOR      @"Cursor Text Color"
+#define KEY_IME_CURSOR_COLOR       @"IME Cursor Color"
 #define KEY_ANSI_0_COLOR           @"Ansi 0 Color"   // Black
 #define KEY_ANSI_1_COLOR           @"Ansi 1 Color"   // Red
 #define KEY_ANSI_2_COLOR           @"Ansi 2 Color"   // Green

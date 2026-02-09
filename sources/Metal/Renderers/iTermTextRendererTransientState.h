@@ -12,8 +12,6 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-extern const vector_float4 iTermIMEColor;
-
 @class iTermCharacterBitmap;
 
 NS_CLASS_AVAILABLE(10_11, NA)

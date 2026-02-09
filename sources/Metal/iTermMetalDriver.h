@@ -50,6 +50,7 @@ NS_CLASS_AVAILABLE(10_11, NA)
 
 @property (nonatomic) VT100GridCoord cursorCoord;
 @property (nonatomic) VT100GridCoordRange markedRange;
+@property (nonatomic, strong) NSColor *cursorColor;
 
 - (void)setRangeStart:(VT100GridCoord)start;
 - (void)setRangeEnd:(VT100GridCoord)end;
