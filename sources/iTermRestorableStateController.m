@@ -135,6 +135,10 @@ static BOOL gForceSaveState;
     return _driver.numberOfWindowsRestored;
 }
 
+- (BOOL)restoring {
+    return !_ready;
+}
+
 - (void)saveRestorableState {
     assert([NSThread isMainThread]);
     if (![iTermRestorableStateController stateRestorationEnabled]) {
