@@ -35,6 +35,7 @@ static NSString *const iTermUserDefaultsKeyLastSystemPythonVersionRequirement = 
 static NSString *const iTermUserDefaultsKeyProbeForPassword = @"ProbeForPassword";
 static NSString *const iTermUserDefaultsKeyImportPath = @"ImportPath";
 static NSString *const iTermUserDefaultsKeyShouldSendReturnAfterPassword = @"ShouldSendReturnAfterPassword";
+static NSString *const iTermUserDefaultsKeyWindowCornerRadiusCache = @"NoSyncWindowCornerRadiusCache";
 
 @implementation iTermUserDefaults
 
@@ -265,6 +266,15 @@ static NSUserDefaults *iTermPrivateUserDefaults(void) {
 + (void)setShouldSendReturnAfterPassword:(BOOL)shouldSendReturnAfterPassword {
     [self.userDefaults setBool:shouldSendReturnAfterPassword
                         forKey:iTermUserDefaultsKeyShouldSendReturnAfterPassword];
+}
+
++ (NSDictionary<NSString *, NSNumber *> *)windowCornerRadiusCache {
+    return [self.userDefaults objectForKey:iTermUserDefaultsKeyWindowCornerRadiusCache];
+}
+
++ (void)setWindowCornerRadiusCache:(NSDictionary<NSString *, NSNumber *> *)windowCornerRadiusCache {
+    [self.userDefaults setObject:windowCornerRadiusCache
+                          forKey:iTermUserDefaultsKeyWindowCornerRadiusCache];
 }
 
 @end

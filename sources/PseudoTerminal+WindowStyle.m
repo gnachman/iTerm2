@@ -480,6 +480,11 @@ iTermWindowType iTermWindowTypeNormalized(iTermWindowType windowType) {
 
     if (changed) {
         [self forceFrame:frame];
+        // Title bar visibility may have changed, so update active pane borders
+        // to recalculate which corners should be rounded.
+        for (PTYSession *session in self.allSessions) {
+            [session.view updateActivePaneBorder];
+        }
     }
 }
 
@@ -616,6 +621,11 @@ iTermWindowType iTermWindowTypeNormalized(iTermWindowType windowType) {
     [self.contentView constrainToolbeltWidth];
     [self.contentView updateToolbeltForWindow:self.window];
     [self updateUseTransparency];
+
+    // Update active pane borders since title bar visibility may have changed
+    for (PTYSession *session in self.allSessions) {
+        [session.view updateActivePaneBorder];
+    }
 
     if (_fullScreen) {
         DLog(@"toggleFullScreenMode - call adjustFullScreenWindowForBottomBarChange");

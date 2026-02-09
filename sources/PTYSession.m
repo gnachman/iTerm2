@@ -18347,6 +18347,10 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     return [_delegate sessionIsActiveInTab:self];
 }
 
+- (BOOL)sessionViewIsInTraditionalFullScreen {
+    return [[_delegate realParentWindow] fullScreen];
+}
+
 - (NSMenu *)sessionViewContextMenu {
     return [_textview titleBarMenu];
 }

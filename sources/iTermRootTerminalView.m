@@ -1641,6 +1641,7 @@ NS_CLASS_AVAILABLE_MAC(10_14)
         [self.tabBarControl updateFlashing];
     }
     DLog(@"After:\n%@", [self iterm_recursiveDescription]);
+    [self.delegate rootTerminalViewDidLayoutSubviews];
 }
 
 - (CGFloat)minimumTabBarWidth {

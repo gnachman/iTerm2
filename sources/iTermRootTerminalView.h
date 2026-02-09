@@ -57,6 +57,7 @@
 - (VT100GridSize)rootTerminalViewCurrentSessionSize;
 - (NSString *)rootTerminalViewWindowSizeViewDetailString;
 - (void)rootTerminalViewWillLayoutSubviews;
+- (void)rootTerminalViewDidLayoutSubviews;
 - (NSString *)rootTerminalViewCurrentTabSubtitle;
 @end
 

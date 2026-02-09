@@ -47,6 +47,7 @@ typedef NS_ENUM(NSUInteger, iTermAppleWindowTabbingMode) {
 @property (class, nonatomic) BOOL probeForPassword;
 @property (class, nonatomic, copy, nullable) NSString *importPath;
 @property (class, nonatomic) BOOL shouldSendReturnAfterPassword;
+@property (class, nonatomic, copy, nullable) NSDictionary<NSString *, NSNumber *> *windowCornerRadiusCache;
 
 @end
 

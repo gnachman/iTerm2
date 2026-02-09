@@ -108,6 +108,7 @@ extern NSString *const SessionViewWasSelectedForInspectionNotification;
 - (BOOL)sessionViewUseActivePaneBorder;
 - (NSColor *)sessionViewActivePaneBorderColor;
 - (BOOL)sessionViewIsActiveSession;
+- (BOOL)sessionViewIsInTraditionalFullScreen;
 
 // Gives the hamburger menu.
 - (NSMenu *)sessionViewContextMenu;
