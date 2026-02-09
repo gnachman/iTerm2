@@ -366,17 +366,18 @@ class MainMenuMangler: NSObject {
     }
 
     @objc func start(web: NSMenuItem) {
+        self.web = web
+
+        // Remove from menu initially if browser not allowed
         if !iTermBrowserGateway.browserAllowed(checkIfNo: false) {
             if NSApp.mainMenu?.items.contains(web) ?? false {
                 NSApp.mainMenu?.removeItem(web)
             }
-            return
         }
-        self.web = web
-        
+
         // Store original web menu key equivalents and scan for conflicts
         scanForKeyEquivalentConflicts()
-        
+
         // Watch for any window becoming or resigning key
         NotificationCenter.default.addObserver(
             self,
@@ -393,7 +394,17 @@ class MainMenuMangler: NSObject {
             selector: #selector(currentSessionDidChange(_:)),
             name: Notification.Name(kCurrentSessionDidChange),
             object: nil)
+        // Re-check when browser plugin state changes (e.g., user installs plugin)
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(browserStateDidChange(_:)),
+            name: iTermBrowserGateway.didChange,
+            object: nil)
         update()
+    }
+
+    @objc private func browserStateDidChange(_ note: Notification) {
+        updateMainMenu()
     }
 
     deinit {
@@ -557,7 +568,8 @@ class MainMenuMangler: NSObject {
             DLog("updateMainMenu: no currentTerminal")
         }
 
-        if currentSessionIsWeb {
+        // Only show web menu if browser is allowed (plugin installed) and current session is a browser
+        if currentSessionIsWeb && iTermBrowserGateway.browserAllowed(checkIfNo: false) {
             if existingWebIndex == nil, let menu = NSApp.mainMenu {
                 DLog("Show web menu")
                 // Clear conflicting key equivalents before adding web menu
