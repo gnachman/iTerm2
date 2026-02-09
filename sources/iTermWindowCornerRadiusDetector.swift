@@ -306,100 +306,74 @@ class iTermWindowCornerRadiusDetector: NSObject {
 
         // Sample points along the curved edge by scanning each row.
         // For each row y, find the x where the content becomes opaque.
+        // Use a threshold to skip antialiased pixels at the corner edge.
+        let alphaThreshold: UInt8 = 180
         var edgePoints: [(x: Double, y: Double)] = []
 
+        // Scan rows (for each y, find first x with alpha >= threshold)
         for y in 0..<cornerSize {
             for x in 0..<cornerSize {
                 let offset = (y * cornerSize + x) * 4
                 let alpha = buffer[offset + 3]
-                if alpha > 0 {
+                if alpha >= alphaThreshold {
+                    DLog("row scan: y=\(y) x=\(x) alpha=\(alpha)")
                     edgePoints.append((x: Double(x), y: Double(y)))
                     break
                 }
+            }
+            // Stop when we reach x=0 - we've passed the curved portion
+            if let lastPoint = edgePoints.last, lastPoint.x == 0 {
+                break
             }
         }
 
         guard edgePoints.count >= 3 else {
             DLog("detectRadius failed - only \(edgePoints.count) edge points found (need >= 3)")
             saveImageToTmp(image, windowID: windowID, suffix: "full")
-            saveCroppedImageToTmp(croppedImage, windowID: windowID)
             return nil
         }
 
-        // Fit a circle with center at (r, r) using least squares.
-        // For a circle tangent to both axes: (x - r)² + (y - r)² = r²
-        // Rearranging: r² - 2r(x + y) + (x² + y²) = 0
-        // In practice it will often be close to but not exactly 0. The
-        // deviation from 0 gives a residual.
-        // We want to find a value of r that minimizes the sum of squared residuals.
-        // Each residual is quadratic in r. Squaring it gives a quartic, but
-        // since we're trying to find the minimum we're working with its
-        // derivative, which is cubic. The squared residual can be written as:
-        // e_i(r)² = r⁴ - 4*(x_i + y_i)*r³ + (4*(x_i + y_i)² + 2*(x_i² + y_i²))*r² - 4*(x_i + y_i) * (x_i² + y_i²)*r + (x_i² + y_i²)²
-        // We want to minimize Σe_i(r)².
-        //
-        // To minimize sum of squared errors, we find the root of the derivative of the sum of squared errors:
-        // N·r³ - 3·S·r² + (2·S2 + P)·r - SP = 0
-        // where S = Σ(x+y), S2 = Σ(x+y)², P = Σ(x²+y²), SP = Σ(x+y)(x²+y²)
-        //
-        // Since a cubic could have three roots it is possible that this will do something insane if the window's border
-        // doesn't resemble a quarter circle. Constraining 0<=r<=maxRadius hopefully excludes the most insane outcomes.
-        // In the expected case, the the residual function is nearly convex.
+        // Find the radius that minimizes geometric error by trying all integer radii.
+        // For a circle tangent to both axes, center is at (r, r) and radius is r.
+        let radiusPixels = findBestRadius(points: edgePoints, maxRadius: cornerSize)
+        DLog("radiusPixels=\(radiusPixels) edgePoints.count=\(edgePoints.count)")
 
-        let n = Double(edgePoints.count)
-        var S = 0.0, S2 = 0.0, P = 0.0, SP = 0.0
-
-        for point in edgePoints {
-            let s = point.x + point.y
-            let p = point.x * point.x + point.y * point.y
-            S += s
-            S2 += s * s
-            P += p
-            SP += s * p
-        }
-
-        // Solve cubic: n·r³ - 3S·r² + (2S2 + P)·r - SP = 0
-        let radiusPixels = solveCubicForRadius(n: n, S: S, S2: S2, P: P, SP: SP,
-                                                maxRadius: Double(cornerSize))
+        saveImageToTmp(image, windowID: windowID, suffix: "radius-\(radiusPixels)")
 
         return CGFloat(radiusPixels) / actualScaleFactor
     }
 
-    /// Solve the cubic equation n·r³ - 3S·r² + (2S2 + P)·r - SP = 0 for the radius.
-    /// Uses Newton-Raphson iteration with an initial estimate from the first point.
-    private static func solveCubicForRadius(n: Double,
-                                            S: Double,
-                                            S2: Double,
-                                            P: Double,
-                                            SP: Double,
-                                            maxRadius: Double) -> Double {
-        // Initial estimate: use average of (x+y) values divided by 2
-        let avgS = S / n
-        var r = avgS / 2
+    /// Calculate sum of squared geometric errors for a given radius.
+    /// For a circle centered at (r, r), the error for each point is |distance - r|.
+    private static func sumOfSquaredErrors(points: [(x: Double, y: Double)],
+                                           radius: Double) -> Double {
+        var sse = 0.0
+        for point in points {
+            let dx = point.x - radius
+            let dy = point.y - radius
+            let dist = sqrt(dx * dx + dy * dy)
+            let error = dist - radius
+            sse += error * error
+        }
+        return sse
+    }
 
-        // Newton-Raphson iteration
-        // f(r) = n·r³ - 3S·r² + (2S2 + P)·r - SP
-        // f'(r) = 3n·r² - 6S·r + (2S2 + P)
-        let coeff1 = 2 * S2 + P
+    /// Find the radius that minimizes geometric SSE by trying all integer radii.
+    private static func findBestRadius(points: [(x: Double, y: Double)],
+                                       maxRadius: Int) -> Double {
+        var bestRadius = 1.0
+        var bestSSE = Double.infinity
 
-        for _ in 0..<20 {
-            let f = n * r * r * r - 3 * S * r * r + coeff1 * r - SP
-            let fPrime = 3 * n * r * r - 6 * S * r + coeff1
-
-            if abs(fPrime) < 1e-10 {
-                break
+        for r in 1...maxRadius {
+            let radius = Double(r)
+            let sse = sumOfSquaredErrors(points: points, radius: radius)
+            if sse < bestSSE {
+                bestSSE = sse
+                bestRadius = radius
             }
-
-            let rNew = r - f / fPrime
-
-            if abs(rNew - r) < 0.001 {
-                r = rNew
-                break
-            }
-            r = rNew
         }
 
-        return max(0, min(r, maxRadius))
+        return bestRadius
     }
 
     // Separate function to isolate the deprecation warning
@@ -426,20 +400,20 @@ class iTermWindowCornerRadiusDetector: NSObject {
     }
 
     private static func saveImageToTmp(_ image: CGImage, windowID: CGWindowID, suffix: String) {
-//      let url = URL(fileURLWithPath: "/tmp/corner_debug_\(windowID)_\(suffix).png")
-//      guard let dest = CGImageDestinationCreateWithURL(url as CFURL, kUTTypePNG, 1, nil) else {
-//          DLog("failed to create image destination for \(url.path)")
-//          return
-//      }
-//      CGImageDestinationAddImage(dest, image, nil)
-//      if CGImageDestinationFinalize(dest) {
-//          DLog("saved debug image to \(url.path)")
-//      } else {
-//          DLog("failed to save debug image to \(url.path)")
-//      }
+//    let url = URL(fileURLWithPath: "/tmp/corner_debug_\(windowID)_\(suffix).png")
+//    guard let dest = CGImageDestinationCreateWithURL(url as CFURL, kUTTypePNG, 1, nil) else {
+//        DLog("failed to create image destination for \(url.path)")
+//        return
+//    }
+//    CGImageDestinationAddImage(dest, image, nil)
+//    if CGImageDestinationFinalize(dest) {
+//        DLog("saved debug image to \(url.path)")
+//    } else {
+//        DLog("failed to save debug image to \(url.path)")
+//    }
     }
 
     private static func saveCroppedImageToTmp(_ image: CGImage, windowID: CGWindowID) {
-//        saveImageToTmp(image, windowID: windowID, suffix: "cropped")
+//      saveImageToTmp(image, windowID: windowID, suffix: "cropped")
     }
 }
