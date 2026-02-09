@@ -232,13 +232,70 @@ static NSError *SCPFileError(NSString *description) {
         NSString *privateKey = [NSString stringWithContentsOfFile:filename
                                                          encoding:NSUTF8StringEncoding
                                                             error:nil];
-        for (NSString *string in @[@"-----BEGIN OPENSSH PRIVATE KEY-----", @"ENCRYPTED"]) {
-            if ([privateKey rangeOfString:string].location != NSNotFound) {
-                return YES;
-            }
+        if (!privateKey) {
+            return NO;  // Can't read file; auth will fail anyway
         }
+
+        // Traditional PEM format: check for ENCRYPTED header
+        if ([privateKey rangeOfString:@"ENCRYPTED"].location != NSNotFound) {
+            return YES;
+        }
+
+        // OpenSSH new format: parse the cipher field
+        NSString *beginMarker = @"-----BEGIN OPENSSH PRIVATE KEY-----";
+        NSString *endMarker = @"-----END OPENSSH PRIVATE KEY-----";
+        NSRange beginRange = [privateKey rangeOfString:beginMarker];
+        if (beginRange.location == NSNotFound) {
+            return NO;  // Unknown format, assume unencrypted
+        }
+
+        NSRange endRange = [privateKey rangeOfString:endMarker];
+        if (endRange.location == NSNotFound) {
+            return NO;
+        }
+
+        // Extract and decode base64 content
+        NSUInteger start = NSMaxRange(beginRange);
+        NSString *b64 = [privateKey substringWithRange:NSMakeRange(start, endRange.location - start)];
+        b64 = [[b64 componentsSeparatedByCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]]
+               componentsJoinedByString:@""];
+
+        NSData *decoded = [[NSData alloc] initWithBase64EncodedString:b64 options:0];
+        if (!decoded || decoded.length < 20) {
+            return NO;
+        }
+
+        const char *bytes = decoded.bytes;
+
+        // Verify AUTH_MAGIC: "openssh-key-v1" + null byte (15 bytes total)
+        if (strncmp(bytes, "openssh-key-v1", 14) != 0 || bytes[14] != '\0') {
+            return NO;
+        }
+
+        // Read cipher name (length-prefixed string at offset 15)
+        NSUInteger offset = 15;
+        if (offset + 4 > decoded.length) {
+            return NO;
+        }
+
+        // Length is 4 bytes big-endian
+        uint32_t cipherLen = ((uint32_t)(uint8_t)bytes[offset] << 24) |
+                             ((uint32_t)(uint8_t)bytes[offset + 1] << 16) |
+                             ((uint32_t)(uint8_t)bytes[offset + 2] << 8) |
+                             ((uint32_t)(uint8_t)bytes[offset + 3]);
+        offset += 4;
+
+        if (offset + cipherLen > decoded.length) {
+            return NO;
+        }
+
+        // If cipher is "none", key is unencrypted
+        if (cipherLen == 4 && strncmp(bytes + offset, "none", 4) == 0) {
+            return NO;
+        }
+
+        return YES;  // Encrypted with some cipher
     }
-    return NO;
 }
 
 
