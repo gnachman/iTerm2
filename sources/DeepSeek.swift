@@ -100,9 +100,40 @@ struct DeepSeekRequestBuilder {
         let maybeDecls = functions.isEmpty ? nil : functions.map {
             Tool(function: $0.decl)
         }
+        let convertedMessages = messages.compactMap { Message($0) }
+
+        // Log tool_calls and tool responses in the request for debugging #12707
+        var toolCallCount = 0
+        var toolResponseCount = 0
+        var toolCallIDs = [String]()
+        var toolResponseIDs = [String]()
+        for msg in convertedMessages {
+            if let toolCalls = msg.tool_calls {
+                toolCallCount += toolCalls.count
+                toolCallIDs.append(contentsOf: toolCalls.compactMap { $0.id })
+            }
+            if msg.role == .tool, let callID = msg.tool_call_id {
+                toolResponseCount += 1
+                toolResponseIDs.append(callID)
+            }
+        }
+        if toolCallCount > 0 || toolResponseCount > 0 {
+            NSLog("DeepSeek request message summary:")
+            NSLog("  Total messages: %d", convertedMessages.count)
+            NSLog("  Tool calls: %d with IDs: %@", toolCallCount, toolCallIDs.description)
+            NSLog("  Tool responses: %d with IDs: %@", toolResponseCount, toolResponseIDs.description)
+            if toolCallCount != toolResponseCount {
+                NSLog("  WARNING: Mismatch! %d tool_calls but %d tool responses", toolCallCount, toolResponseCount)
+            }
+            let missingResponses = Set(toolCallIDs).subtracting(Set(toolResponseIDs))
+            if !missingResponses.isEmpty {
+                NSLog("  WARNING: Missing tool responses for call IDs: %@", missingResponses.description)
+            }
+        }
+
         let body = Body(
             model: provider.dynamicModelsSupported ? provider.model.name : nil,
-            messages: messages.compactMap { Message($0) },
+            messages: convertedMessages,
             max_tokens: provider.maxTokens(functions: functions, messages: messages),
             tools: maybeDecls,
             function_call: functions.isEmpty ? nil : "auto",
@@ -181,22 +212,32 @@ struct DeepSeekStreamingResponseParser: LLMStreamingResponseParser {
                     return nil
                 }
 
-                if let call = choice.delta.tool_calls?.first {
-                    let function = call.function
-                    let functionCall = LLM.FunctionCall(
-                        name: function?.name,
-                        arguments: function?.arguments,
-                        id: call.id)
-                    return LLM.Message(
-                        role: .assistant,
-                        content: choice.delta.content,
-                        functionCallID: call.id.map { .init(callID: $0, itemID: "") },
-                        function_call: functionCall)
-                } else {
-                    return LLM.Message(
-                        role: .assistant,
-                        content: choice.delta.content)
+                if let toolCalls = choice.delta.tool_calls {
+                    // Log all tool_calls received from DeepSeek
+                    if toolCalls.count > 1 {
+                        NSLog("WARNING: DeepSeek sent %d parallel tool_calls in this chunk:", toolCalls.count)
+                        for (i, tc) in toolCalls.enumerated() {
+                            NSLog("  tool_call[%d]: id=%@, name=%@", i, tc.id ?? "nil", tc.function?.name ?? "nil")
+                        }
+                        NSLog("  Only processing the first one due to .first - this may cause 'insufficient tool messages' errors!")
+                    }
+
+                    if let call = toolCalls.first {
+                        let function = call.function
+                        let functionCall = LLM.FunctionCall(
+                            name: function?.name,
+                            arguments: function?.arguments,
+                            id: call.id)
+                        return LLM.Message(
+                            role: .assistant,
+                            content: choice.delta.content,
+                            functionCallID: call.id.map { .init(callID: $0, itemID: "") },
+                            function_call: functionCall)
+                    }
                 }
+                return LLM.Message(
+                    role: .assistant,
+                    content: choice.delta.content)
             }
         }
     }

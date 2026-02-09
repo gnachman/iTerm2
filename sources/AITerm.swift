@@ -831,6 +831,8 @@ class AITermController {
     }
 
     private func doFunctionCall(_ message: Message, call functionCall: LLM.FunctionCall) {
+        NSLog("doFunctionCall: Called with function name=\(functionCall.name ?? "nil"), id=\(functionCall.id ?? "nil")")
+        NSLog("doFunctionCall: Available functions: \(functions.map { $0.decl.name })")
         guard llmProvider != nil else {
             handle(event: .error(AIError("No AI model configured in settings.")))
             return
@@ -838,13 +840,14 @@ class AITermController {
         switch state {
         case .ground, .initialized, .initializedMessages, .creatingVectorStore,
                 .uploadingFile, .addingFileToVectorStore:
-            DLog("Unexpected function call in state \(state)")
+            NSLog("doFunctionCall: Unexpected function call in state \(state)")
             return
         case .querySent(let messages, let streamParserState):
             let shouldStream = streamParserState != nil
             var amended = messages
             amended.append(message)
             if let impl = functions.first(where: { $0.decl.name == functionCall.name }) {
+                NSLog("doFunctionCall: Found matching function implementation")
                 DLog("Invoke function with arguments \(functionCall.arguments ?? "")")
                 delegate?.aitermController(self, willInvokeFunction: impl)
                 impl.invoke(message: message,
@@ -861,9 +864,17 @@ class AITermController {
                                                content: response,
                                                name: functionCall.name,
                                                functionCallID: message.functionCallID))
+                        NSLog("doFunctionCall: Before truncation, amended has \(amended.count) messages:")
+                        for (i, msg) in amended.enumerated() {
+                            let roleStr = msg.role?.rawValue ?? "nil"
+                            let hasToolCall = msg.function_call != nil ? "YES" : "NO"
+                            let bodyStr = String(describing: msg.body).prefix(100)
+                            NSLog("  [\(i)] role=\(roleStr), hasToolCall=\(hasToolCall), body=\(bodyStr)")
+                        }
                         DLog("Set state to querySent with accumulting message:\n\(message)")
                         if let truncate {
                             amended = truncate(amended)
+                            NSLog("doFunctionCall: After truncation, amended has \(amended.count) messages")
                         }
                         DLog("Will send request with function call output, stream=\(shouldStream)")
                         request(messages: amended, stream: shouldStream)
@@ -876,6 +887,7 @@ class AITermController {
                 }
                 return
             }
+            NSLog("doFunctionCall: Function '\(functionCall.name ?? "nil")' not found! Sending error message back.")
             amended.append(Message(role: .user,
                                    content: "There is no registered function by that name. Try again."))
             request(messages: amended, stream: shouldStream)

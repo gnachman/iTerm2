@@ -12,18 +12,34 @@ NS_ASSUME_NONNULL_BEGIN
 
 @class iTermHistogram;
 @protocol MTLBuffer;
+@protocol MTLBlitCommandEncoder;
+
+// Represents a staging/private buffer pair that needs to be blitted
+NS_CLASS_AVAILABLE(10_11, NA)
+@interface iTermStagingBufferPair : NSObject
+@property (nonatomic, strong, readonly) id<MTLBuffer> staging;
+@property (nonatomic, strong, readonly) id<MTLBuffer> privateBuffer;
+- (instancetype)initWithStaging:(id<MTLBuffer>)staging privateBuffer:(id<MTLBuffer>)privateBuffer;
+@end
 
 NS_CLASS_AVAILABLE(10_11, NA)
 @interface iTermMetalBufferPoolContext : NSObject
 @property (nonatomic, readonly) iTermHistogram *histogram;
 @property (nonatomic, readonly) iTermHistogram *textureHistogram;
 @property (nonatomic, readonly) iTermHistogram *wasteHistogram;
+@property (nonatomic, readonly) NSArray<iTermStagingBufferPair *> *pendingBlits;
 
 - (NSString *)summaryStatisticsWithName:(NSString *)name;
 - (void)didAddTextureOfSize:(double)size;
 
 // Relinquished buffers will not automatically be returned to the pool after the frame is done.
 - (void)relinquishOwnershipOfBuffer:(id<MTLBuffer>)buffer;
+
+// Queue a staging buffer to be blitted to a private buffer
+- (void)addStagingBuffer:(id<MTLBuffer>)staging privateBuffer:(id<MTLBuffer>)privateBuffer;
+
+// Encode all pending blits using the provided encoder
+- (void)encodeBlitsWithEncoder:(id<MTLBlitCommandEncoder>)blitEncoder;
 @end
 
 // Creating a new buffer can be very slow. Try to reuse them.

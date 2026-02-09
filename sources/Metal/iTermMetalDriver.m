@@ -23,6 +23,7 @@
 #import "iTermIndicatorRenderer.h"
 #import "iTermLineStyleMarkRenderer.h"
 #import "iTermMetalDebugInfo.h"
+#import "iTermMetalBufferPool.h"
 #import "iTermMetalFrameData.h"
 #import "iTermMarkRenderer.h"
 #import "iTermMetalRowData.h"
@@ -947,6 +948,14 @@ legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth
 - (void)enqueueDrawCallsForFrameData:(iTermMetalFrameData *)frameData
                        commandBuffer:(id<MTLCommandBuffer>)commandBuffer {
     DLog(@"  enqueueDrawCallsForFrameData %@", frameData);
+
+    // Blit all staging buffers to private buffers before rendering
+    if (frameData.framePoolContext.pendingBlits.count > 0) {
+        id<MTLBlitCommandEncoder> blitter = [commandBuffer blitCommandEncoder];
+        blitter.label = @"Staging buffer copy";
+        [frameData.framePoolContext encodeBlitsWithEncoder:blitter];
+        [blitter endEncoding];
+    }
 
     NSString *firstLabel;
     if (frameData.intermediateRenderPassDescriptor) {

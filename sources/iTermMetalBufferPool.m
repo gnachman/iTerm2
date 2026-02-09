@@ -34,23 +34,42 @@ static NSString *const iTermMetalBufferPoolContextStackKey = @"iTermMetalBufferP
 @implementation iTermMetalBufferPoolContextEntry
 @end
 
+@implementation iTermStagingBufferPair
+
+- (instancetype)initWithStaging:(id<MTLBuffer>)staging privateBuffer:(id<MTLBuffer>)privateBuffer {
+    self = [super init];
+    if (self) {
+        _staging = staging;
+        _privateBuffer = privateBuffer;
+    }
+    return self;
+}
+
+@end
+
 @interface iTermMetalBufferPoolContext()
 - (void)addBuffer:(id<MTLBuffer>)buffer pool:(id<iTermMetalBufferPool>)pool;
 @end
 
 @implementation iTermMetalBufferPoolContext {
     NSMutableArray<iTermMetalBufferPoolContextEntry *> *_entries;
+    NSMutableArray<iTermStagingBufferPair *> *_pendingBlits;
 }
 
 - (instancetype)init {
     self = [super init];
     if (self) {
         _entries = [NSMutableArray array];
+        _pendingBlits = [NSMutableArray array];
         _histogram = [[iTermHistogram alloc] init];
         _textureHistogram = [[iTermHistogram alloc] init];
         _wasteHistogram = [[iTermHistogram alloc] init];
     }
     return self;
+}
+
+- (NSArray<iTermStagingBufferPair *> *)pendingBlits {
+    return _pendingBlits;
 }
 
 - (void)dealloc {
@@ -96,6 +115,23 @@ static NSString *const iTermMetalBufferPoolContextStackKey = @"iTermMetalBufferP
     return string;
 }
 
+- (void)addStagingBuffer:(id<MTLBuffer>)staging privateBuffer:(id<MTLBuffer>)privateBuffer {
+    iTermStagingBufferPair *pair = [[iTermStagingBufferPair alloc] initWithStaging:staging
+                                                                     privateBuffer:privateBuffer];
+    [_pendingBlits addObject:pair];
+}
+
+- (void)encodeBlitsWithEncoder:(id<MTLBlitCommandEncoder>)blitEncoder {
+    for (iTermStagingBufferPair *pair in _pendingBlits) {
+        [blitEncoder copyFromBuffer:pair.staging
+                       sourceOffset:0
+                           toBuffer:pair.privateBuffer
+                  destinationOffset:0
+                               size:pair.staging.length];
+    }
+    [_pendingBlits removeAllObjects];
+}
+
 @end
 
 @implementation iTermMetalMixedSizeBufferPool {
@@ -130,7 +166,7 @@ static NSString *const iTermMetalBufferPoolContextStackKey = @"iTermMetalBufferP
             [_buffers removeObject:bestMatch];
             buffer = bestMatch;
         } else {
-            buffer = [_device newBufferWithLength:size options:MTLResourceStorageModeShared];
+            buffer = [_device newBufferWithLength:size options:MTLResourceStorageModePrivate];
         }
         [context addBuffer:buffer pool:self];
         [context addWastedSpace:buffer.length - size];
@@ -170,12 +206,20 @@ static NSString *const iTermMetalBufferPoolContextStackKey = @"iTermMetalBufferP
             id<MTLBuffer> bestMatch = _buffers[index];
             [_buffers removeObjectAtIndex:index];
             buffer = bestMatch;
-            memcpy(buffer.contents, bytes, size);
         } else {
             // size was larger than the largest item
             DLog(@"%@ allocating a new buffer of size %d (%d outstanding)", _name, (int)size, (int)_numberOutstanding);
-            buffer = [_device newBufferWithBytes:bytes length:size options:MTLResourceStorageModeShared];
+            buffer = [_device newBufferWithLength:size options:MTLResourceStorageModePrivate];
         }
+
+        // Create a staging buffer with the CPU data (temporary, per-frame)
+        id<MTLBuffer> staging = [_device newBufferWithBytes:bytes
+                                                     length:size
+                                                    options:MTLResourceStorageModeShared];
+
+        // Queue the blit operation (actual copy happens later via blit encoder)
+        [context addStagingBuffer:staging privateBuffer:buffer];
+
         [context addBuffer:buffer pool:self];
         [context addWastedSpace:buffer.length - size];
         _numberOutstanding++;
@@ -230,7 +274,7 @@ static NSString *const iTermMetalBufferPoolContextStackKey = @"iTermMetalBufferP
             buffer = _buffers.lastObject;
             [_buffers removeLastObject];
         } else {
-            buffer = [_device newBufferWithLength:_bufferSize options:MTLResourceStorageModeShared];
+            buffer = [_device newBufferWithLength:_bufferSize options:MTLResourceStorageModePrivate];
         }
         [context addBuffer:buffer pool:self];
         return buffer;
@@ -242,20 +286,23 @@ static NSString *const iTermMetalBufferPoolContextStackKey = @"iTermMetalBufferP
                            checkIfChanged:(BOOL)checkIfChanged {
     assert(context);
     @synchronized(self) {
+        // Get or create a private buffer (GPU-only)
         id<MTLBuffer> buffer;
         if (_buffers.count) {
             buffer = _buffers.lastObject;
             [_buffers removeLastObject];
-            if (checkIfChanged) {
-                if (memcmp(bytes, buffer.contents, _bufferSize)) {
-                    memcpy(buffer.contents, bytes, _bufferSize);
-                }
-            } else {
-                memcpy(buffer.contents, bytes, _bufferSize);
-            }
         } else {
-            buffer = [_device newBufferWithBytes:bytes length:_bufferSize options:MTLResourceStorageModeShared];
+            buffer = [_device newBufferWithLength:_bufferSize options:MTLResourceStorageModePrivate];
         }
+
+        // Create a staging buffer with the CPU data (temporary, per-frame)
+        id<MTLBuffer> staging = [_device newBufferWithBytes:bytes
+                                                     length:_bufferSize
+                                                    options:MTLResourceStorageModeShared];
+
+        // Queue the blit operation (actual copy happens later via blit encoder)
+        [context addStagingBuffer:staging privateBuffer:buffer];
+
         [context addBuffer:buffer pool:self];
         ITAssertWithMessage(buffer != nil, @"Failed to allocate buffer of size %@", @(_bufferSize));
         return buffer;
