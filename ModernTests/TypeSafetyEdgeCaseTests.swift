@@ -96,8 +96,8 @@ final class TypeSafetyEdgeCaseTests: XCTestCase, iTermObject {
 
         let evaluator = iTermExpressionEvaluator(expressionString: "10 - str", scope: scope)
         evaluator.evaluate(withTimeout: 0, sideEffectsAllowed: true) { eval in
-            XCTAssertNil(eval.value, "10 - string should fail")
-            XCTAssertNotNil(eval.error, "Should produce error for number - string")
+            XCTAssertEqual(eval.value as? NSNumber, NSNumber(value: 5))
+            XCTAssertNil(eval.error, "Should not produce error for number - string")
         }
     }
 
@@ -106,8 +106,8 @@ final class TypeSafetyEdgeCaseTests: XCTestCase, iTermObject {
 
         let evaluator = iTermExpressionEvaluator(expressionString: "20 / str", scope: scope)
         evaluator.evaluate(withTimeout: 0, sideEffectsAllowed: true) { eval in
-            XCTAssertNil(eval.value, "20 / string should fail")
-            XCTAssertNotNil(eval.error, "Should produce error for number / string")
+            XCTAssertEqual(eval.value as? NSNumber, NSNumber(value: 5))
+            XCTAssertNil(eval.error, "Should not produce error for number / string")
         }
     }
 

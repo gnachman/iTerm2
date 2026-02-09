@@ -793,25 +793,25 @@ final class SubexpressionTests: XCTestCase, iTermObject {
     }
 
     func testEqualityDifferentTypes() {
-        // 3 == "3" should return false (different types)
+        // 3 == "3" are both interpreted as the number 3
         scope.setValue(NSNumber(value: 3), forVariableNamed: "x")
         scope.setValue("3" as NSString, forVariableNamed: "y")
         let xExpr = Subexpression(indirectValue: IndirectValue(path: "x"))
         let yExpr = Subexpression(indirectValue: IndirectValue(path: "y"))
         let expr = Subexpression(lhs: xExpr, equalTo: yExpr)
         let result = try! expr.synchronousValue(sideEffectsAllowed: false, scope: scope)
-        XCTAssertEqual(result.boolValue, false)
+        XCTAssertEqual(result.boolValue, true)
     }
 
     func testInequalityDifferentTypes() {
-        // 3 != "3" should return true (different types)
+        // 3 != "3" are both interpreted as the number 3
         scope.setValue(NSNumber(value: 3), forVariableNamed: "x")
         scope.setValue("3" as NSString, forVariableNamed: "y")
         let xExpr = Subexpression(indirectValue: IndirectValue(path: "x"))
         let yExpr = Subexpression(indirectValue: IndirectValue(path: "y"))
         let expr = Subexpression(lhs: xExpr, notEqualTo: yExpr)
         let result = try! expr.synchronousValue(sideEffectsAllowed: false, scope: scope)
-        XCTAssertEqual(result.boolValue, true)
+        XCTAssertEqual(result.boolValue, false)
     }
 
     func testEqualityNull() {
@@ -945,7 +945,7 @@ final class SubexpressionTests: XCTestCase, iTermObject {
         let xExpr = Subexpression(indirectValue: IndirectValue(path: "x"))
         let yExpr = Subexpression(indirectValue: IndirectValue(path: "y"))
         let expr = Subexpression(lhs: xExpr, lessThan: yExpr)
-        XCTAssertThrowsError(try expr.synchronousValue(sideEffectsAllowed: false, scope: scope))
+        XCTAssertEqual(try expr.synchronousValue(sideEffectsAllowed: false, scope: scope), NSNumber(value: true))
     }
 
     func testLessThanNaN() {
