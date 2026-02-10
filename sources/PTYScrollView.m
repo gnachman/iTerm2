@@ -226,6 +226,8 @@
         [self setVerticalScroller:aScroller];
         self.verticalScrollElasticity = NSScrollElasticityNone;
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(it_scrollViewDidScroll:) name:NSScrollViewDidLiveScrollNotification object:self];
+        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(it_scrollViewWillStartLiveScroll:) name:NSScrollViewWillStartLiveScrollNotification object:self];
+        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(it_scrollViewDidEndLiveScroll:) name:NSScrollViewDidEndLiveScrollNotification object:self];
     }
 
     return self;
@@ -242,6 +244,32 @@
 
 - (void)it_scrollViewDidScroll:(id)sender {
     [self detectUserScroll];
+}
+
+// Support for dictation on macOS 14+. Issue 5715.
+- (void)it_scrollViewWillStartLiveScroll:(id)sender {
+    if (@available(macOS 14.0, *)) {
+        NSView<NSTextInputClient> *textInputClient = [self findTextInputClient];
+        [textInputClient.inputContext textInputClientWillStartScrollingOrZooming];
+    }
+}
+
+// Support for dictation on macOS 14+. Issue 5715.
+- (void)it_scrollViewDidEndLiveScroll:(id)sender {
+    if (@available(macOS 14.0, *)) {
+        NSView<NSTextInputClient> *textInputClient = [self findTextInputClient];
+        [textInputClient.inputContext textInputClientDidEndScrollingOrZooming];
+    }
+}
+
+// Find the PTYTextView (which conforms to NSTextInputClient) within our document view hierarchy.
+- (NSView<NSTextInputClient> *)findTextInputClient {
+    for (NSView *subview in self.documentView.subviews) {
+        if ([subview conformsToProtocol:@protocol(NSTextInputClient)]) {
+            return (NSView<NSTextInputClient> *)subview;
+        }
+    }
+    return nil;
 }
 
 - (CGFloat)accumulateVerticalScrollFromEvent:(NSEvent *)theEvent {

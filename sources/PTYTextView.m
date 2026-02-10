@@ -4662,6 +4662,21 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
     return [self firstRectForCharacterRange:theRange actualRange:NULL];
 }
 
+// Returns the rect covering the selected text in screen coordinates.
+// Required for dictation support on macOS 14+. Issue 5715.
+- (NSRect)unionRectInVisibleSelectedRange {
+    NSRange range = [self selectedRange];
+    return [self firstRectForCharacterRange:range actualRange:NULL];
+}
+
+// Returns the visible document rect in screen coordinates.
+// Required for dictation support on macOS 14+. Issue 5715.
+- (NSRect)documentVisibleRect {
+    NSRect visibleRect = self.enclosingScrollView.documentVisibleRect;
+    NSRect windowRect = [self convertRect:visibleRect toView:nil];
+    return [self.window convertRectToScreen:windowRect];
+}
+
 #pragma mark - Find on page
 
 - (IBAction)performFindPanelAction:(id)sender {
