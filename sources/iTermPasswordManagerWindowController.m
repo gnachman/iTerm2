@@ -336,6 +336,7 @@ static NSArray<NSString *> *gTerminalCachedCombinedAccountNames;
 }
 
 - (void)updateWithAvailability:(BOOL)available {
+    DLog(@"Selected rows: %@ from %@", _tableView.selectedRowIndexes.description, [[NSThread callStackSymbols] componentsJoinedByString:@" ; "]);
     _broadcastButton.enabled = [self.delegate iTermPasswordManagerCanBroadcast];
     const BOOL shouldEnableButtons = ([_tableView selectedRow] >= 0 &&
                                       [_delegate iTermPasswordManagerCanEnterPassword]);
