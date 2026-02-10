@@ -794,7 +794,7 @@ DEFINE_STRING(fontsForGenerousRounding, @"consolas", SECTION_EXPERIMENTAL @"List
 // Experimental features that are mostly dead:
 // This causes problems like issue 6052, where repeats cause the IME to swallow subsequent keypresses.
 DEFINE_BOOL(experimentalKeyHandling, NO, SECTION_EXPERIMENTAL @"Improved support for input method editors like AquaSKK.");
-DEFINE_BOOL(allowSendingFunctionKeysToCocoa, NO, SECTION_EXPERIMENTAL @"Allow function keys to be handled by macOS text input system.\nThis supports using function keys with modifiers as compose/dead keys in custom keyboard layouts.");
+DEFINE_BOOL(allowSendingFunctionKeysToCocoa, YES_IF_BETA_ELSE_NO, SECTION_EXPERIMENTAL @"Allow function keys to be handled by macOS text input system.\nThis supports using function keys with modifiers as compose/dead keys in custom keyboard layouts.");
 // This is just a bad idea because of the latency it adds. It was also maybe related to crashes, but I never did figure it out.
 DEFINE_BOOL(disableMetalWhenIdle, NO, SECTION_EXPERIMENTAL @"Disable metal renderer when idle to save CPU utilization?\nRequires Metal renderer");
 // This never proved itself.
