@@ -52,8 +52,7 @@ struct DeepSeekRequestBuilder {
             case .text(let text):
                 content = text
             case .functionCall(let call, id: let id):
-                // Use FunctionCallID.callID if available, otherwise fall back to FunctionCall.id
-                tool_calls = [ToolCall(id: id?.callID ?? call.id, function: call)]
+                tool_calls = [ToolCall(id: id?.callID, function: call)]
             case .functionOutput(name: _, output: let output, id: let id):
                 tool_call_id = id?.callID
                 content = output
@@ -101,11 +100,9 @@ struct DeepSeekRequestBuilder {
         let maybeDecls = functions.isEmpty ? nil : functions.map {
             Tool(function: $0.decl)
         }
-        let convertedMessages = messages.compactMap { Message($0) }
-
         let body = Body(
             model: provider.dynamicModelsSupported ? provider.model.name : nil,
-            messages: convertedMessages,
+            messages: messages.compactMap { Message($0) },
             max_tokens: provider.maxTokens(functions: functions, messages: messages),
             tools: maybeDecls,
             function_call: functions.isEmpty ? nil : "auto",
@@ -184,25 +181,22 @@ struct DeepSeekStreamingResponseParser: LLMStreamingResponseParser {
                     return nil
                 }
 
-                if let toolCalls = choice.delta.tool_calls {
-                    // Only process chunks for the first tool call (index == 0).
-                    // Ignore chunks for parallel tool calls (index > 0) to keep conversation consistent.
-                    if let call = toolCalls.first(where: { $0.index == 0 }) {
-                        let function = call.function
-                        let functionCall = LLM.FunctionCall(
-                            name: function?.name,
-                            arguments: function?.arguments,
-                            id: call.id)
-                        return LLM.Message(
-                            role: .assistant,
-                            content: choice.delta.content,
-                            functionCallID: call.id.map { .init(callID: $0, itemID: "") },
-                            function_call: functionCall)
-                    }
+                if let call = choice.delta.tool_calls?.first {
+                    let function = call.function
+                    let functionCall = LLM.FunctionCall(
+                        name: function?.name,
+                        arguments: function?.arguments,
+                        id: call.id)
+                    return LLM.Message(
+                        role: .assistant,
+                        content: choice.delta.content,
+                        functionCallID: call.id.map { .init(callID: $0, itemID: "") },
+                        function_call: functionCall)
+                } else {
+                    return LLM.Message(
+                        role: .assistant,
+                        content: choice.delta.content)
                 }
-                return LLM.Message(
-                    role: .assistant,
-                    content: choice.delta.content)
             }
         }
     }
@@ -210,14 +204,8 @@ struct DeepSeekStreamingResponseParser: LLMStreamingResponseParser {
 
     mutating func parse(data: Data) throws -> LLM.AnyStreamingResponse? {
         let decoder = JSONDecoder()
-        let response = try decoder.decode(DeepSeekStreamingResponse.self, from: data)
+        let response =  try decoder.decode(DeepSeekStreamingResponse.self, from: data)
         DLog("RESPONSE:\n\(response)")
-
-        // Note: If DeepSeek sends multiple parallel tool_calls in one chunk, we only
-        // process the first one (see choiceMessages which uses .first). The others are
-        // silently ignored. This is fine because we only store one tool_call in our
-        // conversation history, so the history remains consistent.
-
         parsedResponse = response
         return response
     }

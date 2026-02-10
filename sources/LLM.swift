@@ -189,17 +189,10 @@ enum LLM {
                         return true
                     }
                 case .functionCall(let original, id: let originalID):
-                    // Only compare item IDs because OpenAI doesn't give a call ID for arguments when streaming.
-                    // DeepSeek does not provide any IDs after the first streaming response for a particular function call.
-                    // Also check callID to prevent concatenating different parallel tool calls (which we don't support).
+                    // Only compare item IDs because OpenAI doesn't give a call ID for arguments when streaming. Deep seek does not provide any IDs after the first streaming response for a particular function call.
                     switch additionalContent {
                     case let .functionCall(content, id):
-                        // Check if this is a continuation of the same function call or a different one
-                        let sameItemID = (id?.itemID == originalID?.itemID || id == nil)
-                        let sameCallID = (id?.callID == nil || originalID?.callID == nil ||
-                                          id?.callID == originalID?.callID ||
-                                          id?.callID == "" || originalID?.callID == "")
-                        if sameItemID && sameCallID {
+                        if (id?.itemID == originalID?.itemID || id == nil) {
                             let combinedName = (original.name ?? "") + (content.name ?? "")
                             let combinedArgs = (original.arguments ?? "") + (content.arguments ?? "")
                             let combinedID: String? = if original.id != nil || content.id != nil {

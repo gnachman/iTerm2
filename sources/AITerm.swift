@@ -731,20 +731,8 @@ class AITermController {
                 accumulatingMessage.body = .uninitialized
             case .functionOutput:
                 it_fatalError("Server should not send function output")
-            case .multipart(let parts):
-                // This can happen when the model tries to make parallel tool calls.
-                // We only support one tool call at a time, so just process the first one.
-                if let firstFunctionCall = parts.compactMap({ part -> (LLM.FunctionCall, LLM.Message.FunctionCallID?)? in
-                    if case .functionCall(let call, let id) = part { return (call, id) }
-                    return nil
-                }).first {
-                    DLog("Multipart response with function call - processing first one only")
-                    accumulatingMessage.body = .functionCall(firstFunctionCall.0, id: firstFunctionCall.1)
-                    self.doFunctionCall(accumulatingMessage, call: firstFunctionCall.0)
-                } else {
-                    // No function calls in multipart, just ignore
-                    DLog("Multipart response with no function calls - ignoring")
-                }
+            case .multipart:
+                it_fatalError("Should not accumulate multipart")
             }
             accumulatingMessage.body = .uninitialized
         }
@@ -850,14 +838,13 @@ class AITermController {
         switch state {
         case .ground, .initialized, .initializedMessages, .creatingVectorStore,
                 .uploadingFile, .addingFileToVectorStore:
-            DLog("doFunctionCall: Unexpected function call in state \(state)")
+            DLog("Unexpected function call in state \(state)")
             return
         case .querySent(let messages, let streamParserState):
             let shouldStream = streamParserState != nil
             var amended = messages
             amended.append(message)
             if let impl = functions.first(where: { $0.decl.name == functionCall.name }) {
-                DLog("doFunctionCall: Found matching function implementation")
                 DLog("Invoke function with arguments \(functionCall.arguments ?? "")")
                 delegate?.aitermController(self, willInvokeFunction: impl)
                 impl.invoke(message: message,
@@ -874,17 +861,9 @@ class AITermController {
                                                content: response,
                                                name: functionCall.name,
                                                functionCallID: message.functionCallID))
-                        DLog("doFunctionCall: Before truncation, amended has \(amended.count) messages:")
-                        for (i, msg) in amended.enumerated() {
-                            let roleStr = msg.role?.rawValue ?? "nil"
-                            let hasToolCall = msg.function_call != nil ? "YES" : "NO"
-                            let bodyStr = String(describing: msg.body).prefix(100)
-                            DLog("  [\(i)] role=\(roleStr), hasToolCall=\(hasToolCall), body=\(bodyStr)")
-                        }
                         DLog("Set state to querySent with accumulting message:\n\(message)")
                         if let truncate {
                             amended = truncate(amended)
-                            DLog("doFunctionCall: After truncation, amended has \(amended.count) messages")
                         }
                         DLog("Will send request with function call output, stream=\(shouldStream)")
                         request(messages: amended, stream: shouldStream)
@@ -897,7 +876,6 @@ class AITermController {
                 }
                 return
             }
-            DLog("doFunctionCall: Function '\(functionCall.name ?? "nil")' not found! Sending error message back.")
             amended.append(Message(role: .user,
                                    content: "There is no registered function by that name. Try again."))
             request(messages: amended, stream: shouldStream)

@@ -1796,7 +1796,6 @@ struct ResponsesBodyRequestBuilder {
             input: .itemList(itemList),
             model: provider.model.name,
             maxOutputTokens: provider.maxTokens(functions: functions, messages: messages),
-            parallelToolCalls: false,
             previousResponseID: previousResponseID,
             stream: stream,
             toolChoice: tools.isEmpty ? ResponsesRequestBody.ToolChoice.none : .auto,
