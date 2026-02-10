@@ -8,6 +8,7 @@
 #import "iTermMetalBufferPool.h"
 
 #import "DebugLogging.h"
+#import "iTermAdvancedSettingsModel.h"
 #import "iTermHistogram.h"
 #import "NSArray+iTerm.h"
 #import <Metal/Metal.h>
@@ -241,11 +242,32 @@ static NSString *const iTermMetalBufferPoolContextStackKey = @"iTermMetalBufferP
                                 withBytes:(const void *)bytes
                            checkIfChanged:(BOOL)checkIfChanged {
     assert(context);
+
+    // Flag: Disable pooling entirely - always allocate fresh buffers
+    if ([iTermAdvancedSettingsModel metalDisableVertexBufferPooling]) {
+        id<MTLBuffer> buffer = [_device newBufferWithBytes:bytes
+                                                    length:_bufferSize
+                                                   options:MTLResourceStorageModeShared];
+        [context addBuffer:buffer pool:self];
+        if ([iTermAdvancedSettingsModel metalLogVertexBufferActivity]) {
+            DLog(@"BufferPool: Fresh allocation (pooling disabled) size=%zu ptr=%p", _bufferSize, buffer);
+        }
+        ITAssertWithMessage(buffer != nil, @"Failed to allocate buffer of size %@", @(_bufferSize));
+        return buffer;
+    }
+
+    // Flag: Disable checkIfChanged optimization - always write fresh data
+    if ([iTermAdvancedSettingsModel metalAlwaysWriteVertexBuffers]) {
+        checkIfChanged = NO;
+    }
+
     @synchronized(self) {
         id<MTLBuffer> buffer;
+        BOOL reused = NO;
         if (_buffers.count) {
             buffer = _buffers.lastObject;
             [_buffers removeLastObject];
+            reused = YES;
             if (checkIfChanged) {
                 if (memcmp(bytes, buffer.contents, _bufferSize)) {
                     memcpy(buffer.contents, bytes, _bufferSize);
@@ -258,6 +280,10 @@ static NSString *const iTermMetalBufferPoolContextStackKey = @"iTermMetalBufferP
         }
         [context addBuffer:buffer pool:self];
         ITAssertWithMessage(buffer != nil, @"Failed to allocate buffer of size %@", @(_bufferSize));
+
+        if ([iTermAdvancedSettingsModel metalLogVertexBufferActivity]) {
+            DLog(@"BufferPool: %@ size=%zu ptr=%p", reused ? @"Reused" : @"Allocated", _bufferSize, buffer);
+        }
         return buffer;
     }
 }

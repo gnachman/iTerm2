@@ -595,6 +595,13 @@ DEFINE_BOOL(logToSyslog, NO, SECTION_DEBUGGING @"Debug logs also write to the sy
 DEFINE_STRING(alternateSSHIntegrationScript, @"", SECTION_DEBUGGING @"Alternate SSH integration python script");
 #endif
 
+// GPU debugging flags for triangle artifacts (issue 12604)
+DEFINE_BOOL(metalValidateVertexBuffers, NO, SECTION_DEBUGGING @"Validate vertex buffer contents before GPU copy-to-drawable operations. Shows alert on mismatch.");
+DEFINE_BOOL(metalDisableVertexBufferPooling, NO, SECTION_DEBUGGING @"Disable vertex buffer pooling - always allocate fresh Metal buffers.");
+DEFINE_BOOL(metalAlwaysWriteVertexBuffers, NO, SECTION_DEBUGGING @"Always write vertex data even if buffer contents appear unchanged.");
+DEFINE_BOOL(metalLogVertexBufferActivity, NO, SECTION_DEBUGGING @"Log vertex buffer allocation and reuse to debug log.");
+DEFINE_BOOL(metalUseBlitForCopyToDrawable, NO, SECTION_DEBUGGING @"Use blit encoder instead of quad for copy-to-drawable (bypasses vertex buffers).");
+
 #pragma mark - Session
 
 #define SECTION_SESSION @"Session: "
