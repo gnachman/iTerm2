@@ -524,6 +524,10 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (BOOL)zeroWidthSpaceAdvancesCursor;
 + (BOOL)zippyTextDrawing;
 
-
+// GPU debugging flags for triangle artifacts (issue 12604)
++ (BOOL)metalValidateVertexBuffers;
++ (BOOL)metalDisableVertexBufferPooling;
++ (BOOL)metalAlwaysWriteVertexBuffers;
++ (BOOL)metalLogVertexBufferActivity;
 
 @end
