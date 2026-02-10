@@ -1651,6 +1651,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     SessionView* oldView = [replaySession view];
     SessionView* newView = [liveSession view];
     NSSplitView* parentSplit = (NSSplitView*)[oldView superview];
+    newView.frame = oldView.frame;
     [parentSplit replaceSubview:oldView with:newView];
     [hiddenLiveViews_ removeObject:newView];
     activeSession_ = liveSession;
@@ -1666,6 +1667,8 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     for (NSNumber *key in idMap_) {
         if (idMap_[key] == oldView) {
             idMap_[key] = newView;
+            // Copy the saved size so unmaximize restores to the correct pre-maximize size.
+            [newView setSavedSize:oldView.savedSize];
             break;
         }
     }
@@ -1943,7 +1946,10 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 - (void)removeSession:(PTYSession*)aSession {
     SessionView *theView = aSession.view;
 
-    if (idMap_) {
+    // Only unmaximize if the session's view is actually in idMap_. When a synthetic session
+    // (e.g., filter) is terminated, its view may have already been replaced by the live session's
+    // view in idMap_, so we shouldn't unmaximize in that case.
+    if (idMap_ && [[idMap_ allValues] containsObject:theView]) {
         [self unmaximize];
     }
     PtyLog(@"PTYTab removeSession:%p", aSession);
@@ -5224,7 +5230,10 @@ typedef struct {
     [temp removeFromSuperview];
     [root_ addSubview:temp];
 
-    [[root_ window] makeFirstResponder:[activeSession_ mainResponder]];
+    NSView *responder = [activeSession_ mainResponder];
+    if (responder.window == [root_ window]) {
+        [[root_ window] makeFirstResponder:responder];
+    }
     [realParentWindow_ invalidateRestorableState];
 
     if ([self isTmuxTab]) {

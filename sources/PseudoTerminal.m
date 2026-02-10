@@ -8512,9 +8512,14 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     PTYTab *theTab = [self tabForSession:syntheticSession];
     [_instantReplayWindowController updateInstantReplayView];
 
-    [self sessionInitiatedResize:syntheticSession
-                           width:[[liveSession screen] width]
-                          height:[[liveSession screen] height]];
+    // When the tab is maximized, the live session's screen size is stale (pre-maximize size).
+    // Don't resize the window to match it. The live session will be resized to fit the
+    // maximized view, and the proper layout will be restored when unmaximizing.
+    if (!theTab.hasMaximizedPane) {
+        [self sessionInitiatedResize:syntheticSession
+                               width:[[liveSession screen] width]
+                              height:[[liveSession screen] height]];
+    }
 
     [syntheticSession retain];
     [theTab showLiveSession:liveSession inPlaceOf:syntheticSession];
