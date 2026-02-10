@@ -9,6 +9,8 @@
 #import <Foundation/Foundation.h>
 #import "VT100GridTypes.h"
 
+NS_ASSUME_NONNULL_BEGIN
+
 @class MutableResultRange;
 
 // When receiving search results, you'll get an array of this class. Positions
@@ -90,3 +92,4 @@
 
 @end
 
+NS_ASSUME_NONNULL_END
