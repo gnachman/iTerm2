@@ -375,8 +375,16 @@ struct AIConversation {
 
     private var truncatedMessages: [AITermController.Message] {
         if controller.previousResponseID != nil, let lastMessage = messages.last {
+            // Log if we're dropping tool_call history
+            let hasToolCalls = messages.contains { $0.function_call != nil }
+            let hasToolResponses = messages.contains { if case .functionOutput = $0.body { return true } else { return false } }
+            if hasToolCalls || hasToolResponses {
+                DLog("  WARNING: Truncating conversation that contains tool_calls/responses!")
+                DLog("  This may cause 'insufficient tool messages' errors with non-Responses APIs like DeepSeek")
+            }
             return truncate(messages: [lastMessage], maxTokens: maxTokens)
         }
+        DLog("truncatedMessages: previousResponseID is nil, sending full conversation (\(messages.count) messages)")
         return truncate(messages: messages, maxTokens: maxTokens)
     }
 }
