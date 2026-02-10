@@ -151,7 +151,9 @@ extern const NSInteger VT100ScreenBigFileDownloadThreshold;
 
 - (id<VT100ScreenMarkReading>)lastMark;
 - (id<VT100ScreenMarkReading>)lastPromptMark;
+- (id<VT100ScreenMarkReading>)lastScreenMark;
 - (id<VT100ScreenMarkReading>)firstPromptMark;
+- (id<VT100ScreenMarkReading>)firstScreenMark;
 - (id<VT100RemoteHostReading>)lastRemoteHost;
 - (id<VT100ScreenMarkReading>)promptMarkWithGUID:(NSString *)guid;
 - (id<VT100ScreenMarkReading>)namedMarkWithGUID:(NSString *)guid;
@@ -182,7 +184,8 @@ extern const NSInteger VT100ScreenBigFileDownloadThreshold;
 - (NSArray *)annotationsAfter:(Interval *)location;
 
 - (id<VT100ScreenMarkReading>)commandMarkAtOrBeforeLine:(int)line;
-- (id<VT100ScreenMarkReading>)promptMarkAfterPromptMark:(id<VT100ScreenMarkReading>)predecessor;
+- (id<VT100ScreenMarkReading>)screenMarkAfterScreenMark:(id<VT100ScreenMarkReading>)predecessor;
+- (id<VT100ScreenMarkReading>)promptMarkAfterScreenMark:(id<VT100ScreenMarkReading>)predecessor;
 
 - (BOOL)containsMark:(id<iTermMark>)mark;
 - (void)clearToLastMark;

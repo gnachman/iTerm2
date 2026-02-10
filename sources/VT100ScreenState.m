@@ -1085,7 +1085,7 @@ static NSRange NSRangeFromBounds(NSInteger lowerBound, NSInteger upperBound) {
     }];
 }
 
-- (id<VT100ScreenMarkReading>)promptMarkAfterPromptMark:(id<VT100ScreenMarkReading>)predecessor {
+- (id<VT100ScreenMarkReading>)promptMarkAfterScreenMark:(id<VT100ScreenMarkReading>)predecessor {
     if (!predecessor) {
         return nil;
     }
@@ -1106,7 +1106,24 @@ static NSRange NSRangeFromBounds(NSInteger lowerBound, NSInteger upperBound) {
     return nil;
 }
 
-- (id<VT100ScreenMarkReading> _Nullable)promptMarkBeforePromptMark:(id<VT100ScreenMarkReading>)successor {
+- (id<VT100ScreenMarkReading>)screenMarkAfterScreenMark:(id<VT100ScreenMarkReading>)predecessor {
+    if (!predecessor) {
+        return nil;
+    }
+    const long long pos = MAX(0, predecessor.entry.interval.limit);
+
+    for (NSArray *objects in [self.intervalTree forwardLocationEnumeratorAt:pos]) {
+        id<VT100ScreenMarkReading> mark = [objects objectPassingTest:^BOOL(id element, NSUInteger index, BOOL *stop) {
+            return [element conformsToProtocol:@protocol(VT100ScreenMarkReading)];
+        }];
+        if (mark) {
+            return mark;
+        }
+    }
+    return nil;
+}
+
+- (id<VT100ScreenMarkReading> _Nullable)screenMarkBeforeScreenMark:(id<VT100ScreenMarkReading>)successor {
     if (!successor) {
         return nil;
     }
@@ -1114,11 +1131,7 @@ static NSRange NSRangeFromBounds(NSInteger lowerBound, NSInteger upperBound) {
 
     for (NSArray *objects in [self.intervalTree reverseEnumeratorAt:pos]) {
         id<VT100ScreenMarkReading> mark = [objects objectPassingTest:^BOOL(id element, NSUInteger index, BOOL *stop) {
-            if (![element conformsToProtocol:@protocol(VT100ScreenMarkReading)]) {
-                return NO;
-            }
-            id<VT100ScreenMarkReading> temp = element;
-            return temp.isPrompt;
+            return [element conformsToProtocol:@protocol(VT100ScreenMarkReading)];
         }];
         if (mark) {
             return mark;
@@ -1244,6 +1257,14 @@ static NSRange NSRangeFromBounds(NSInteger lowerBound, NSInteger upperBound) {
 
 - (id<VT100ScreenMarkReading>)firstPromptMark {
     return (id<VT100ScreenMarkReading>)[self firstMarkMustBePrompt:YES class:[VT100ScreenMark class]];
+}
+
+- (id<VT100ScreenMarkReading>)firstScreenMark {
+    return (id<VT100ScreenMarkReading>)[self firstMarkMustBePrompt:NO class:[VT100ScreenMark class]];
+}
+
+- (id<VT100ScreenMarkReading>)lastScreenMark {
+    return (id<VT100ScreenMarkReading>)[self lastMarkMustBePrompt:NO class:[VT100ScreenMark class]];
 }
 
 #pragma mark - Colors

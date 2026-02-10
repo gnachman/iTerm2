@@ -646,7 +646,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTurdType) {
     BOOL _connectingSSH;
     NSMutableData *_queuedConnectingSSH;
 
-    __weak id<VT100ScreenMarkReading> _selectedCommandMark;
+    __weak id<VT100ScreenMarkReading> _selectedScreenMark;
     NSMutableArray<PTYSessionHostState *> *_hostStack;
     NSDictionary *_originatingArrangement;
     NSString *_originatingArrangementName;
@@ -7602,7 +7602,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
         [weakSelf setFilterProgress:progress];
     }];
     if (sourceSession.textview.findOnPageHelper.absLineRange.length == 0 ||
-        (_selectedCommandMark == [_screen lastPromptMark] && sourceSession.selectedCommandMark.isRunning)) {
+        (_selectedScreenMark == [_screen lastPromptMark] && sourceSession.selectedCommandMark.isRunning)) {
         [self.liveSession addContentSubscriber:_asyncFilter];
     }
     if (replacingFilter) {
@@ -7618,7 +7618,10 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
 }
 
 - (id<VT100ScreenMarkReading>)selectedCommandMark {
-    return _selectedCommandMark;
+    if (!_selectedScreenMark.isPrompt) {
+        return nil;
+    }
+    return _selectedScreenMark;
 }
 
 - (void)setFilterProgress:(double)progress {
@@ -9024,7 +9027,8 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
             if (mark.command != nil) {
                 [self selectCommandWithMarkIfSafe:mark];
             } else {
-                [self selectCommandWithMark:nil];
+                // Remove the selected command (and its abs line range)
+                [self selectScreenMark:mark];
             }
         }
         [_textview highlightMarkOnLine:VT100GridRangeMax([_screen lineNumberRangeOfInterval:obj.entry.interval])
@@ -9063,8 +9067,8 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 
 - (void)previousMarkOrNote:(BOOL)annotationsOnly {
     NSArray *objects = nil;
-    if (_selectedCommandMark && !annotationsOnly) {
-        [self selectPreviousCommandMark];
+    if (_selectedScreenMark && !annotationsOnly) {
+        [self selectPreviousScreenMark];
         return;
     }
     if (self.currentMarkOrNotePosition == nil) {
@@ -9101,25 +9105,25 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
             [mark isKindOfClass:[PTYAnnotation class]]);
 }
 
-- (void)selectPreviousCommandMark {
-    id<VT100ScreenMarkReading> mark = [_screen promptMarkBeforePromptMark:_selectedCommandMark] ?: [_screen lastPromptMark];
+- (void)selectPreviousScreenMark {
+    id<VT100ScreenMarkReading> mark = [_screen screenMarkBeforeScreenMark:_selectedScreenMark] ?: [_screen lastScreenMark];
     if (mark) {
-        [self selectCommandWithMark:mark];
+        [self selectScreenMark:mark];
         [self setCurrentMarkOrNote:mark];
     }
 }
 
-- (void)selectNextCommandMark {
-    id<VT100ScreenMarkReading> mark = [_screen promptMarkAfterPromptMark:_selectedCommandMark] ?: [_screen firstPromptMark];
+- (void)selectNextScreenMark {
+    id<VT100ScreenMarkReading> mark = [_screen screenMarkAfterScreenMark:_selectedScreenMark] ?: [_screen firstScreenMark];
     if (mark) {
-        [self selectCommandWithMark:mark];
+        [self selectScreenMark:mark];
         [self setCurrentMarkOrNote:mark];
     }
 }
 
 - (void)nextMarkOrNote:(BOOL)annotationsOnly {
-    if (_selectedCommandMark && !annotationsOnly) {
-        [self selectNextCommandMark];
+    if (_selectedScreenMark && !annotationsOnly) {
+        [self selectNextScreenMark];
         return;
     }
     NSArray<id<IntervalTreeImmutableObject>> *objects = nil;
@@ -18143,7 +18147,7 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     if (_textview.selection.hasSelection) {
         return _textview.selection;
     }
-    id<VT100ScreenMarkReading> mark = _selectedCommandMark ?: _screen.lastCommandMark;
+    id<VT100ScreenMarkReading> mark = self.selectedCommandMark ?: _screen.lastCommandMark;
     if (mark) {
         if (truncated) {
             *truncated = NO;
@@ -18184,7 +18188,7 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
         }
         return nil;
     }
-    id<VT100ScreenMarkReading> mark = _selectedCommandMark ?: _screen.lastCommandMark;
+    id<VT100ScreenMarkReading> mark = self.selectedCommandMark ?: _screen.lastCommandMark;
     return mark.command;
 }
 
@@ -18192,9 +18196,9 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     if (_textview.selection.hasSelection) {
         return [[_textview selectedText] ellipsizedDescriptionNoLongerThan:16];
     }
-    if (_selectedCommandMark) {
-        if (_selectedCommandMark.command.length) {
-            return _selectedCommandMark.command;
+    if (self.selectedCommandMark) {
+        if (self.selectedCommandMark.command.length) {
+            return self.selectedCommandMark.command;
         }
         return @"Command output";
     }
@@ -18211,9 +18215,9 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     if (_textview.selection.hasSelection) {
         return [[_textview selectedText] ellipsizedDescriptionNoLongerThan:16].stringEnclosedInMarkdownInlineCode ?: @"some selected text";
     }
-    if (_selectedCommandMark) {
-        if (_selectedCommandMark.command.length) {
-            return _selectedCommandMark.command.stringEnclosedInMarkdownInlineCode;
+    if (self.selectedCommandMark) {
+        if (self.selectedCommandMark.command.length) {
+            return self.selectedCommandMark.command.stringEnclosedInMarkdownInlineCode;
         }
         return @"the selected command";
     }
@@ -18521,12 +18525,14 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
 }
 
 - (id<VT100ScreenMarkReading>)textViewSelectedCommandMark {
-    return _selectedCommandMark;
+    return self.selectedCommandMark;
 }
 
 - (void)textViewReloadSelectedCommand {
     if ([iTermPreferences boolForKey:kPreferenceKeyClickToSelectCommand] == NO) {
-        _selectedCommandMark = nil;
+        if (self.selectedCommandMark) {
+            _selectedScreenMark = nil;
+        }
     }
     [self updateSearchRange];
 }
@@ -18537,7 +18543,7 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
 
 - (void)textViewSelectCommandRegionAtCoord:(VT100GridCoord)coord {
     id<VT100ScreenMarkReading> mark = [_screen commandMarkAtOrBeforeLine:coord.y];
-    if (mark == _selectedCommandMark) {
+    if (mark == _selectedScreenMark) {
         mark = nil;
     }
     const BOOL allowed = [iTermPreferences boolForKey:kPreferenceKeyClickToSelectCommand];
@@ -18567,15 +18573,27 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
             return;
         }
     }
-    [self selectCommandWithMark:mark];
+    if (!mark || mark.isPrompt) {
+        [self selectCommandWithMark:mark];
+    }
+}
+
+- (void)selectScreenMark:(id<VT100ScreenMarkReading>)mark {
+    if (_selectedScreenMark.isPrompt && (mark == nil || mark.isPrompt)) {
+        [self selectCommandWithMark:mark];
+    } else {
+        [self selectCommandWithMark:nil];
+        _selectedScreenMark = mark;
+    }
 }
 
 - (void)selectCommandWithMark:(id<VT100ScreenMarkReading>)mark {
-    id<VT100ScreenMarkReading> previous = _selectedCommandMark;
-    _selectedCommandMark = mark;
+    assert(mark == nil || mark.isPrompt);
+    id<VT100ScreenMarkReading> previous = _selectedScreenMark;
+    _selectedScreenMark = mark;
     [self updateSearchRange];
     _screen.savedFindContextAbsPos = 0;
-    if (previous != _selectedCommandMark) {
+    if (previous != _selectedScreenMark) {
         [_textview requestDelegateRedraw];
     }
 }
@@ -18636,7 +18654,7 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
 }
 
 - (void)textViewRemoveSelectedCommand {
-    if (!_selectedCommandMark) {
+    if (![self selectedCommandMark]) {
         return;
     }
     [self removeSelectedCommandRange];
@@ -18716,24 +18734,24 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
 }
 
 - (void)removeSelectedCommandRange {
-    if (!_selectedCommandMark) {
+    if (!self.selectedCommandMark) {
         return;
     }
-    _selectedCommandMark = nil;
+    _selectedScreenMark = nil;
     [self updateSearchRange];
     _screen.savedFindContextAbsPos = 0;
     [_textview requestDelegateRedraw];
 }
 
 - (void)updateSearchRange {
-    if (!_selectedCommandMark) {
+    if (!self.selectedCommandMark) {
         _textview.findOnPageHelper.absLineRange = NSMakeRange(0, 0);
         _view.findDriver.viewController.hasLineRange = NO;
         return;
     }
-    VT100GridAbsCoordRange range = [self rangeOfCommandAndOutputForMark:_selectedCommandMark
+    VT100GridAbsCoordRange range = [self rangeOfCommandAndOutputForMark:self.selectedCommandMark
                                                  includeSucessorDivider:YES];
-    if (_selectedCommandMark.lineStyle) {
+    if (self.selectedCommandMark.lineStyle) {
         _textview.findOnPageHelper.absLineRange = NSMakeRange(MAX(0, range.start.y - 1),
                                                               range.end.y - range.start.y + 1);
     } else {
