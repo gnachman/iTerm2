@@ -1660,6 +1660,15 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     fakeParentWindow_ = nil;
 
     [self.viewToSessionMap removeObjectForKey:replaySession.view];
+
+    // Update idMap_ to replace the synthetic session's view with the live session's view.
+    // This is needed when the tab was maximized while a synthetic session was active.
+    for (NSNumber *key in idMap_) {
+        if (idMap_[key] == oldView) {
+            idMap_[key] = newView;
+            break;
+        }
+    }
 }
 
 - (void)_dumpView:(__kindof NSView *)view withPrefix:(NSString *)prefix {
