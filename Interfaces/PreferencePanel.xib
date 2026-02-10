@@ -2417,7 +2417,7 @@ CA
                                 <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="iWk-HJ-EKg">
                                     <rect key="frame" x="128" y="133" width="241" height="18"/>
                                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                    <string key="toolTip">Available for zsh, fish, and bash. This is an alternative to installing shell integration via other methods (such as the iTerm2 &gt; Install Shell Integration menu item).</string>
+                                    <string key="toolTip">Available for bash, fish, tcsh, xonsh and zsh. This is an alternative to installing shell integration via other methods (such as the iTerm2 &gt; Install Shell Integration menu item).</string>
                                     <buttonCell key="cell" type="check" title="Load shell integration automatically" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="jcT-vU-VZU">
                                         <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                                         <font key="font" metaFont="system"/>

@@ -1841,7 +1841,7 @@ extension Conductor {
     }
 
     private func shellSupportsInjection(_ shell: String, _ version: String) -> Bool {
-        let alwaysSupported = ["zsh", "fish"]
+        let alwaysSupported = ["fish", "xonsh", "zsh"]
         if alwaysSupported.contains(shell.lastPathComponent) {
             return true
         }
