@@ -1486,7 +1486,10 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
         NSArray<SessionView *> *sessionViews = [idMap_ allValues];
         NSMutableArray* result = [NSMutableArray arrayWithCapacity:[sessionViews count]];
         for (SessionView* sessionView in sessionViews) {
-            [result addObject:[self sessionForSessionView:sessionView]];
+            PTYSession *session = [self sessionForSessionView:sessionView];
+            if (session) {
+                [result addObject:session];
+            }
         }
         return result;
     } else {
