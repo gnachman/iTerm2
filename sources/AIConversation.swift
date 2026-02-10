@@ -374,7 +374,8 @@ struct AIConversation {
     }
 
     private var truncatedMessages: [AITermController.Message] {
-        if controller.previousResponseID != nil, let lastMessage = messages.last {
+        if controller.supportsPreviousResponseID && controller.previousResponseID != nil,
+           let lastMessage = messages.last {
             return truncate(messages: [lastMessage], maxTokens: maxTokens)
         }
         return truncate(messages: messages, maxTokens: maxTokens)

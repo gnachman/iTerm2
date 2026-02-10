@@ -131,6 +131,10 @@ class AITermController {
         return llmProvider?.supportsStreaming ?? false
     }
 
+    var supportsPreviousResponseID: Bool {
+        return llmProvider?.supportsPreviousResponseID ?? false
+    }
+
     func request(query: String, stream: Bool = false) {
         state = .initialized(query: .completion(query), stream: stream)
         handle(event: .begin)

@@ -132,6 +132,10 @@ struct LLMProvider {
         return model.features.contains(.streaming)
     }
 
+    var supportsPreviousResponseID: Bool {
+        return model.api == .responses
+    }
+
     func shouldSendAttachmentInline(mimeType: String) -> Bool {
         return MIMETypeIsTextual(mimeType)
     }
