@@ -202,6 +202,11 @@
     if (result) {
         *rangePtr = VT100GridAbsWindowedRangeFromWindowedRange(relativeRange,
                                                                totalScrollbackOverflow);
+    } else if (relativeRange.coordRange.start.x >= 0 &&
+               coord.x >= [extractor lengthOfLine:coord.y]) {
+        // In trailing nulls - use word selection fallback result
+        *rangePtr = VT100GridAbsWindowedRangeFromWindowedRange(relativeRange,
+                                                               totalScrollbackOverflow);
     } else {
         *rangePtr = VT100GridAbsWindowedRangeMake(VT100GridAbsCoordRangeMake(-1, -1, -1, -1), -1, -1);
     }
