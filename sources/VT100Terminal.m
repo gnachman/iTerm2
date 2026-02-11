@@ -547,8 +547,11 @@ static const int kMaxScreenRows = 4096;
 }
 
 - (void)setCharset:(int)charset {
-    self.dirty = YES;
-    _charset = charset;
+    if (_charset != charset) {
+        self.dirty = YES;
+        _charset = charset;
+        [_delegate terminalActiveCharsetDidChangeTo:charset];
+    }
 }
 
 - (void)setCursorMode:(BOOL)cursorMode {

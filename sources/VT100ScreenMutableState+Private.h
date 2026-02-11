@@ -57,6 +57,9 @@ iTermTriggerScopeProvider> {
     iTermKittyImageController *_kittyImageController;
     // When YES, terminal input is collected into printBuffer for ANSI print commands.
     BOOL _collectInputForPrinting;
+    // Precomputed fast-path eligibility. Recomputed at each state-mutation point.
+    // Access on mutation queue only
+    BOOL _fastPathEligible;
 }
 
 @property (atomic) BOOL hadCommand;
@@ -66,6 +69,9 @@ iTermTriggerScopeProvider> {
 // VT100ScreenMutableState objects (for example, when detaching in tmux mode).
 @property (class, atomic, readwrite) BOOL performingJoinedBlock;
 @property (nonatomic) BOOL allowNextReport;
+
+- (BOOL)_computeFastPathEligible;
+- (void)_recomputeFastPathEligible;
 
 - (iTermEventuallyConsistentIntervalTree *)mutableIntervalTree;
 - (iTermEventuallyConsistentIntervalTree *)mutableSavedIntervalTree;
