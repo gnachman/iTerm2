@@ -206,6 +206,7 @@ static const int64_t VT100ScreenMutableStateSideEffectFlagLineBufferDidDropLines
         self.ansi = self.terminal.isAnsi;
         self.wraparoundMode = self.terminal.wraparoundMode;
         self.insert = self.terminal.insertMode;
+        [self _recomputeFastPathEligible];
         _commandRangeChangeJoiner = [iTermIdempotentOperationJoiner joinerWithScheduler:_tokenExecutor];
         _terminal.delegate = self;
         _tokenExecutor.delegate = self;
@@ -983,6 +984,7 @@ static const int64_t VT100ScreenMutableStateSideEffectFlagLineBufferDidDropLines
     return [self.charsetUsesLineDrawingMode containsObject:@(terminal.charset)];
 }
 
+// Mutation queue only
 - (BOOL)_computeFastPathEligible {
     return (!_collectInputForPrinting &&
             !_triggerEvaluator.haveTriggersOrExpectations &&
@@ -997,6 +999,7 @@ static const int64_t VT100ScreenMutableStateSideEffectFlagLineBufferDidDropLines
             self.currentGrid == self.primaryGrid);
 }
 
+// Mutation queue only
 - (void)_recomputeFastPathEligible {
     _fastPathEligible = [self _computeFastPathEligible];
 }
@@ -4615,6 +4618,7 @@ lengthExcludingInBandSignaling:data.length
 
 - (void)evaluateTriggers:(void (^ NS_NOESCAPE)(PTYTriggerEvaluator *triggerEvaluator))block {
     block(_triggerEvaluator);
+    [self _recomputeFastPathEligible];
     if (_tokenExecutor.isExecutingToken) {
         return;
     }
@@ -4886,6 +4890,7 @@ lengthExcludingInBandSignaling:data.length
     DLog(@"Update expect %@", source);
     _triggerEvaluator.expect = [source copy];
     DLog(@"Mutation thread expectations are now %@", _triggerEvaluator.expect);
+    [self _recomputeFastPathEligible];
 }
 
 - (void)performLightweightBlockWithJoinedThreads:(void (^ NS_NOESCAPE)(VT100ScreenMutableState *mutableState))block {

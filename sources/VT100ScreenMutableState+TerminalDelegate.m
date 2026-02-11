@@ -232,6 +232,12 @@ typedef struct {
 }
 
 - (void)terminalAppendMixedAsciiGang:(NSArray<VT100Token *> *)tokens {
+    // Self-healing recompute: catch staleness from lazy expiry of expectations
+    // (deadlines pass without notification). Only runs on the slow path so
+    // the fast path stays a single ivar read.
+    if (!_fastPathEligible) {
+        [self _recomputeFastPathEligible];
+    }
 #if DEBUG
     ITAssertWithMessage(_fastPathEligible == [self _computeFastPathEligible],
                         @"Stale _fastPathEligible: cached=%d computed=%d",
