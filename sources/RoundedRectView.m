@@ -15,10 +15,7 @@
     if (self) {
         [self setWantsLayer:YES];
         self.layer = [[CALayer alloc] init];
-        self.layer.backgroundColor = [[[NSColor darkGrayColor] colorWithAlphaComponent:0.8] CGColor];
-        self.layer.borderColor = [[NSColor whiteColor] CGColor];
-        self.layer.borderWidth = 1.0;
-        self.layer.cornerRadius = 5.0;
+        self.layer.backgroundColor = [[NSColor clearColor] CGColor];
         self.layer.opaque = NO;
     }
 

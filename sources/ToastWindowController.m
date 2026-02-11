@@ -7,6 +7,7 @@
 //
 
 #import "ToastWindowController.h"
+#import <QuartzCore/QuartzCore.h>
 #import "NSScreen+iTerm.h"
 #import "PseudoTerminal.h"
 #import "RoundedRectView.h"
@@ -60,15 +61,20 @@ static NSMutableArray *visibleToast;
     NSTextField *textField = [[NSTextField alloc] init];
     [textField setTextColor:[NSColor whiteColor]];
     [textField setBackgroundColor:[NSColor clearColor]];
-    [textField setFont:[NSFont boldSystemFontOfSize:pointSize]];
+    [textField setFont:[NSFont systemFontOfSize:pointSize weight:NSFontWeightMedium]];
     [textField setBordered:NO];
     [textField setStringValue:message];
     [textField setEditable:NO];
+    NSShadow *textShadow = [[NSShadow alloc] init];
+    textShadow.shadowColor = [[NSColor blackColor] colorWithAlphaComponent:0.3];
+    textShadow.shadowOffset = NSMakeSize(0, -1);
+    textShadow.shadowBlurRadius = 2.0;
+    [textField setShadow:textShadow];
     [textField sizeToFit];
 
     RoundedRectView *roundedRect = [[RoundedRectView alloc] init];
-    const int hPadding = 20;
-    const int vPadding = 10;
+    const int hPadding = 28;
+    const int vPadding = 14;
     [roundedRect setFrame:NSMakeRect(0,
                                      0,
                                      textField.frame.size.width + hPadding * 2,
@@ -82,46 +88,106 @@ static NSMutableArray *visibleToast;
     if (!screen) {
         return;
     }
+
+    const CGFloat cornerRadius = 10.0;
+    NSSize contentSize = roundedRect.frame.size;
+
+    // Make window larger to accommodate spring overshoot (20% extra on each side)
+    const CGFloat overshootPadding = 0.2;
+    CGFloat windowWidth = contentSize.width * (1.0 + overshootPadding * 2);
+    CGFloat windowHeight = contentSize.height * (1.0 + overshootPadding * 2);
+    CGFloat contentInset = contentSize.width * overshootPadding;
+    CGFloat contentInsetY = contentSize.height * overshootPadding;
+
     NSPanel *panel = [[NSPanel alloc] initWithContentRect:NSZeroRect
                                                  styleMask:NSWindowStyleMaskBorderless
                                                    backing:NSBackingStoreBuffered
                                                      defer:NO
                                                    screen:screen];
     [panel setOpaque:NO];
-    NSRect rect;
+    NSRect windowRect;
     if (center) {
-        rect = NSMakeRect(screenCoordinate.x - roundedRect.frame.size.width / 2,
-                          screenCoordinate.y - roundedRect.frame.size.height / 2,
-                          roundedRect.frame.size.width,
-                          roundedRect.frame.size.height);
+        windowRect = NSMakeRect(screenCoordinate.x - windowWidth / 2,
+                                screenCoordinate.y - windowHeight / 2,
+                                windowWidth,
+                                windowHeight);
     } else {
-        rect = NSMakeRect(screenCoordinate.x,
-                          screenCoordinate.y,
-                          roundedRect.frame.size.width,
-                          roundedRect.frame.size.height);
+        windowRect = NSMakeRect(screenCoordinate.x - contentInset,
+                                screenCoordinate.y - contentInsetY,
+                                windowWidth,
+                                windowHeight);
     }
-    [panel setFrame:rect display:YES];
+    [panel setFrame:windowRect display:YES];
+    panel.backgroundColor = [NSColor clearColor];
 
-    NSVisualEffectView *vev = [[NSVisualEffectView alloc] init];
+    // Create container view centered in the window
+    NSView *container = [[NSView alloc] initWithFrame:NSMakeRect(contentInset, contentInsetY, contentSize.width, contentSize.height)];
+    container.wantsLayer = YES;
+    [panel.contentView addSubview:container];
+
+    // Create a mask image for rounded corners
+    NSImage *maskImage = [NSImage imageWithSize:contentSize flipped:NO drawingHandler:^BOOL(NSRect dstRect) {
+        NSBezierPath *path = [NSBezierPath bezierPathWithRoundedRect:dstRect xRadius:cornerRadius yRadius:cornerRadius];
+        [[NSColor blackColor] setFill];
+        [path fill];
+        return YES;
+    }];
+    maskImage.capInsets = NSEdgeInsetsMake(cornerRadius, cornerRadius, cornerRadius, cornerRadius);
+
+    NSVisualEffectView *vev = [[NSVisualEffectView alloc] initWithFrame:container.bounds];
     vev.wantsLayer = YES;
     vev.blendingMode = NSVisualEffectBlendingModeBehindWindow;
     vev.state = NSVisualEffectStateActive;
-    vev.material = NSVisualEffectMaterialContentBackground;
-    [panel.contentView addSubview:vev];
-    vev.frame = roundedRect.bounds;
+    vev.material = NSVisualEffectMaterialHUDWindow;
+    vev.appearance = [NSAppearance appearanceNamed:NSAppearanceNameVibrantDark];
     vev.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
-    vev.layer.cornerRadius = 5.0;
+    vev.maskImage = maskImage;
+    [container addSubview:vev];
 
-    [panel.contentView addSubview:roundedRect];
-    panel.contentView.autoresizesSubviews = YES;
-    panel.backgroundColor = [NSColor clearColor];
-    roundedRect.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
-    roundedRect.frame = panel.contentView.bounds;
+    [vev addSubview:textField];
+    textField.frame = NSMakeRect((vev.bounds.size.width - textField.frame.size.width) / 2,
+                                  (vev.bounds.size.height - textField.frame.size.height) / 2,
+                                  textField.frame.size.width,
+                                  textField.frame.size.height);
 
-    [roundedRect addSubview:textField];
+    // Set up spring animation on the container
+    // Create scale-from-center transform by combining translate + scale + translate
+    CGFloat startScale = 0.3;
+    CGFloat centerX = contentSize.width / 2;
+    CGFloat centerY = contentSize.height / 2;
+    CATransform3D toOrigin = CATransform3DMakeTranslation(-centerX, -centerY, 0);
+    CATransform3D scale = CATransform3DMakeScale(startScale, startScale, 1.0);
+    CATransform3D fromOrigin = CATransform3DMakeTranslation(centerX, centerY, 0);
+    CATransform3D fromTransform = CATransform3DConcat(CATransform3DConcat(toOrigin, scale), fromOrigin);
 
+    CALayer *animLayer = vev.layer;
 
+    animLayer.transform = fromTransform;
+    panel.alphaValue = 0.0;
     [panel orderFrontRegardless];
+
+    CASpringAnimation *scaleAnimation = [CASpringAnimation animationWithKeyPath:@"transform"];
+    scaleAnimation.fromValue = [NSValue valueWithCATransform3D:fromTransform];
+    scaleAnimation.toValue = [NSValue valueWithCATransform3D:CATransform3DIdentity];
+    scaleAnimation.mass = 1.0;
+    scaleAnimation.stiffness = 300.0;
+    scaleAnimation.damping = 18.0;
+    scaleAnimation.initialVelocity = 0.0;
+    scaleAnimation.duration = scaleAnimation.settlingDuration;
+
+    [CATransaction begin];
+    [CATransaction setDisableActions:YES];
+    animLayer.transform = CATransform3DIdentity;
+    [CATransaction commit];
+
+    [animLayer addAnimation:scaleAnimation forKey:@"springScale"];
+
+    // Fade in
+    [NSAnimationContext runAnimationGroup:^(NSAnimationContext *context) {
+        context.duration = 0.15;
+        panel.animator.alphaValue = 1.0;
+    } completionHandler:nil];
+
     [toast setWindow:panel];
     [toast hideAfterDelay:duration];
     for (ToastWindowController *other in visibleToast) {
@@ -152,6 +218,5 @@ static NSMutableArray *visibleToast;
                        withObject:self
                        afterDelay:[[NSAnimationContext currentContext] duration]];
 }
-
 
 @end
