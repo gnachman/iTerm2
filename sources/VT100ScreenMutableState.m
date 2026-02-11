@@ -132,6 +132,7 @@ static const int64_t VT100ScreenMutableStateSideEffectFlagLineBufferDidDropLines
         _promptStateMachine.delegate = self;
         _kittyImageController = [[iTermKittyImageController alloc] init];
         _kittyImageController.delegate = self;
+        [self _recomputeFastPathEligible];
     }
     return self;
 }
@@ -476,6 +477,7 @@ static const int64_t VT100ScreenMutableStateSideEffectFlagLineBufferDidDropLines
         [_promptStateMachine revealOrDismissComposerAgain];
     }
     _tokenExecutor.isBackgroundSession = !config.sessionIsVisible;
+    [self _recomputeFastPathEligible];
 }
 
 - (void)movePromptUnderComposerIfNeeded {
@@ -979,6 +981,24 @@ static const int64_t VT100ScreenMutableStateSideEffectFlagLineBufferDidDropLines
 
 - (BOOL)shouldConvertCharactersToGraphicsCharacterSetInTerminal:(VT100Terminal *)terminal {
     return [self.charsetUsesLineDrawingMode containsObject:@(terminal.charset)];
+}
+
+- (BOOL)_computeFastPathEligible {
+    return (!_collectInputForPrinting &&
+            !_triggerEvaluator.haveTriggersOrExpectations &&
+            !self.config.loggingEnabled &&
+            _postTriggerActions.count == 0 &&
+            ![self shouldConvertCharactersToGraphicsCharacterSetInTerminal:self.terminal] &&
+            !self.config.publishing &&
+            self.commandStartCoord.x == -1 &&
+            self.wraparoundMode &&
+            !self.ansi &&
+            !self.insert &&
+            self.currentGrid == self.primaryGrid);
+}
+
+- (void)_recomputeFastPathEligible {
+    _fastPathEligible = [self _computeFastPathEligible];
 }
 
 - (void)reverseIndex {
@@ -1945,6 +1965,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     [self hideOnScreenNotesAndTruncateSpanners];
     self.currentGrid = self.altGrid;
     self.currentGrid.cursor = self.primaryGrid.cursor;
+    [self _recomputeFastPathEligible];
 
     [self swapOnscreenIntervalTreeObjects];
     [self reloadMarkCache];
@@ -1965,6 +1986,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     [self.temporaryDoubleBuffer reset];
     [self hideOnScreenNotesAndTruncateSpanners];
     self.currentGrid = self.primaryGrid;
+    [self _recomputeFastPathEligible];
     [self invalidateCommandStartCoordWithoutSideEffects];
     [self swapOnscreenIntervalTreeObjects];
     [self reloadMarkCache];
@@ -2214,6 +2236,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     } else {
         [self.charsetUsesLineDrawingMode removeObject:@(charset)];
     }
+    [self _recomputeFastPathEligible];
 }
 
 #pragma mark - Tabs
@@ -3320,6 +3343,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
 
 - (void)setCoordinateOfCommandStart:(VT100GridAbsCoord)coord {
     self.commandStartCoord = coord;
+    [self _recomputeFastPathEligible];
     [self didUpdatePromptLocation];
     [self commandRangeDidChange];
 }
@@ -3406,6 +3430,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
 
 - (void)setCommandStartCoordWithoutSideEffects:(VT100GridAbsCoord)coord {
     self.commandStartCoord = coord;
+    [self _recomputeFastPathEligible];
 }
 
 - (void)invalidateCommandStartCoordWithoutSideEffects {
@@ -4602,6 +4627,7 @@ lengthExcludingInBandSignaling:data.length
     }
     NSArray<void (^)(void)> *actions = [_postTriggerActions copy];
     [_postTriggerActions removeAllObjects];
+    [self _recomputeFastPathEligible];
     for (void (^block)(void) in actions) {
         block();
     }
@@ -5137,6 +5163,7 @@ lengthExcludingInBandSignaling:data.length
             }
             DLog(@"------------ end -----------");
         }
+        [self _recomputeFastPathEligible];
     }
 }
 
@@ -5341,6 +5368,7 @@ lengthExcludingInBandSignaling:data.length
     if (path) {
         [self setPathFromURL:path];
     }
+    [self _recomputeFastPathEligible];
 }
 
 #pragma mark - iTermMarkDelegate
@@ -6065,6 +6093,7 @@ launchCoprocessWithCommand:(NSString *)command
     [_postTriggerActions addObject:[^{
         [weakSelf handleTriggerDetectedPromptAt:range];
     } copy]];
+    [self _recomputeFastPathEligible];
     if (_tokenExecutor.isExecutingToken) {
         self.terminal.wantsDidExecuteCallback = YES;
     }

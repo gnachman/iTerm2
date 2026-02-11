@@ -435,6 +435,7 @@ typedef NS_ENUM(NSUInteger, VT100TerminalProtectedMode) {
 - (void)terminalWraparoundModeDidChangeTo:(BOOL)newValue;
 - (void)terminalTypeDidChange;
 - (void)terminalInsertModeDidChangeTo:(BOOL)newValue;
+- (void)terminalActiveCharsetDidChangeTo:(int)charset;
 
 - (NSString *)terminalProfileName;
 

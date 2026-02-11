@@ -232,17 +232,13 @@ typedef struct {
 }
 
 - (void)terminalAppendMixedAsciiGang:(NSArray<VT100Token *> *)tokens {
-    VT100Terminal *terminal = self.terminal;
-    BOOL canTakeFastPath = (!_collectInputForPrinting &&
-                            ![self shouldEvaluateTriggers] &&
-                            ![self shouldConvertCharactersToGraphicsCharacterSetInTerminal:terminal] &&
-                            !self.config.publishing &&
-                            self.commandStartCoord.x == -1 &&
+#if DEBUG
+    ITAssertWithMessage(_fastPathEligible == [self _computeFastPathEligible],
+                        @"Stale _fastPathEligible: cached=%d computed=%d",
+                        _fastPathEligible, [self _computeFastPathEligible]);
+#endif
+    BOOL canTakeFastPath = (_fastPathEligible &&
                             tokens.count > 0 &&
-                            self.wraparoundMode &&
-                            !self.ansi &&
-                            !self.insert &&
-                            self.currentGrid == self.primaryGrid &&
                             self.currentGrid.canTakeFastPath);
     if (!canTakeFastPath) {
         const int numLines = [self appendGangSlowPath:tokens];
@@ -840,6 +836,7 @@ typedef struct {
     DLog(@"string is: %@", string);
     self.printBuffer = nil;
     _collectInputForPrinting = NO;
+    [self _recomputeFastPathEligible];
     // Pause so that attributes like colors don't change until printing (which is async) can begin.
     [self addPausedSideEffect:^(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser) {
         DLog(@"begin side-effect");
@@ -855,6 +852,7 @@ typedef struct {
     // Print out the whole screen
     self.printBuffer = nil;
     _collectInputForPrinting = NO;
+    [self _recomputeFastPathEligible];
 
     // Pause so we print the current state and not future updates.
     [self addPausedSideEffect:^(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser) {
@@ -874,6 +872,7 @@ typedef struct {
     // allocate a string for the stuff to be printed
     self.printBuffer = [[NSMutableString alloc] init];
     _collectInputForPrinting = YES;
+    [self _recomputeFastPathEligible];
 }
 
 - (void)terminalSetWindowTitle:(NSString *)title {
@@ -2106,16 +2105,23 @@ typedef struct {
 - (void)terminalWraparoundModeDidChangeTo:(BOOL)newValue {
     DLog(@"begin %@", @(newValue));
     self.wraparoundMode = newValue;
+    [self _recomputeFastPathEligible];
 }
 
 - (void)terminalTypeDidChange {
     DLog(@"begin");
     self.ansi = [self.terminal isAnsi];
+    [self _recomputeFastPathEligible];
 }
 
 - (void)terminalInsertModeDidChangeTo:(BOOL)newValue {
     DLog(@"begin %@", @(newValue));
     self.insert = newValue;
+    [self _recomputeFastPathEligible];
+}
+
+- (void)terminalActiveCharsetDidChangeTo:(int)charset {
+    [self _recomputeFastPathEligible];
 }
 
 - (int)terminalChecksumInRectangle:(VT100GridRect)rect {

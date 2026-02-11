@@ -1371,7 +1371,7 @@ static void SwapInt(int *a, int *b) {
                    newTop:newTop
                  delegate:delegate];
     [altScreenLineBuffer endResizing];
-    self.commandStartCoord = [self startCoordOfCurrentCommand];
+    [self setCommandStartCoordWithoutSideEffects:[self startCoordOfCurrentCommand]];
     [self sanityCheckIntervalsFrom:oldSize note:@"post-hoc"];
     DLog(@"After:\n%@", [self.currentGrid compactLineDumpWithContinuationMarks]);
     DLog(@"Cursor at %d,%d", self.currentGrid.cursorX, self.currentGrid.cursorY);
