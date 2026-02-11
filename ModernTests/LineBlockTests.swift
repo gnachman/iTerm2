@@ -43,7 +43,7 @@ class LineBlockTests: XCTestCase {
     func testInitWithRawBufferSizeCreatesEmptyBlock() {
         // Given a raw buffer size and absolute block number
         let size = Int32(1024)
-        let block = LineBlock(rawBufferSize: size, absoluteBlockNumber: 0)!
+        let block = LineBlock(rawBufferSize: size, absoluteBlockNumber: 0)
 
         // Then it should have no raw lines
         XCTAssertEqual(block.numRawLines(), 0, "Block should start with zero raw lines")
@@ -74,7 +74,7 @@ class LineBlockTests: XCTestCase {
     func testAppendLineStringSucceedsWithinCapacityHardEOL() {
         // Given a block with sufficient capacity (e.g. capacity = 10)
         let capacity: Int32 = 10
-        let block = LineBlock(rawBufferSize: capacity, absoluteBlockNumber: 1)!
+        let block = LineBlock(rawBufferSize: capacity, absoluteBlockNumber: 1)
 
         // And a lineString shorter than capacity with a hard EOL
         // Implementer note: create a mock or real iTermLineStringReading instance
@@ -106,7 +106,7 @@ class LineBlockTests: XCTestCase {
         // Verify they merge into one raw line and is_partial stays true until hard EOL.
         // Given a block with sufficient capacity (e.g. capacity = 10)
         let capacity: Int32 = 10
-        let block = LineBlock(rawBufferSize: capacity, absoluteBlockNumber: 1)!
+        let block = LineBlock(rawBufferSize: capacity, absoluteBlockNumber: 1)
 
         // And a lineString shorter than capacity with a soft EOL
         let lineString = makeLineString("abc", eol: EOL_SOFT)
@@ -138,7 +138,7 @@ class LineBlockTests: XCTestCase {
 
         // Given a block with limited capacity (e.g. capacity = 2)
         let capacity: Int32 = 2
-        let block = LineBlock(rawBufferSize: capacity, absoluteBlockNumber: 1)!
+        let block = LineBlock(rawBufferSize: capacity, absoluteBlockNumber: 1)
 
         // And a lineString longer than capacity
         let lineString = makeLineString("abcd", eol: EOL_HARD)
@@ -162,7 +162,7 @@ class LineBlockTests: XCTestCase {
 
         // Given a block with sufficient capacity
         let capacity: Int32 = 20
-        let block = LineBlock(rawBufferSize: capacity, absoluteBlockNumber: 1)!
+        let block = LineBlock(rawBufferSize: capacity, absoluteBlockNumber: 1)
 
         // Append an initial partial line (no hard EOL)
         let firstPart = makeLineString("Hello", eol: EOL_SOFT)
@@ -214,7 +214,7 @@ class LineBlockTests: XCTestCase {
         // Verify that wrapping around DWC yields EOL_DWC when split across boundary, else EOL_SOFT/EOL_HARD.
         // Given a block with capacity to hold one raw line of length 5
         let capacity: Int32 = 10
-        let block = LineBlock(rawBufferSize: capacity, absoluteBlockNumber: 1)!
+        let block = LineBlock(rawBufferSize: capacity, absoluteBlockNumber: 1)
 
         // And a single raw line "ABCDE" with a hard EOL
         let raw = "ABCDE"
@@ -265,7 +265,7 @@ class LineBlockTests: XCTestCase {
 
         // Given a block with content that wraps across multiple lines at a specific width
         let capacity: Int32 = 10
-        let block = LineBlock(rawBufferSize: capacity, absoluteBlockNumber: 1)!
+        let block = LineBlock(rawBufferSize: capacity, absoluteBlockNumber: 1)
         let lineString = makeLineString("ABCDEFG", eol: EOL_HARD)
         let wrapWidth: Int32 = 3
         // Precondition: appending "ABCDEFG" should succeed
@@ -299,7 +299,7 @@ class LineBlockTests: XCTestCase {
 
         // Given a block with content that wraps across multiple lines at a specific width
         let capacity: Int32 = 10
-        let block = LineBlock(rawBufferSize: capacity, absoluteBlockNumber: 1)!
+        let block = LineBlock(rawBufferSize: capacity, absoluteBlockNumber: 1)
 
         // And a single raw line "ABCDEFG" with a hard EOL
         let lineString = makeLineString("ABCDEFG", eol: EOL_HARD)
@@ -332,7 +332,7 @@ class LineBlockTests: XCTestCase {
 
         // Given a block with capacity sufficient for one raw line
         let capacity: Int32 = 10
-        let block = LineBlock(rawBufferSize: capacity, absoluteBlockNumber: 1)!
+        let block = LineBlock(rawBufferSize: capacity, absoluteBlockNumber: 1)
 
         // And a raw line "ABCDEFG" that will wrap at width 3 into 3 segments
         let lineString = makeLineString("ABCDEFG", eol: EOL_HARD)
@@ -366,7 +366,7 @@ class LineBlockTests: XCTestCase {
 
         // Given a block with capacity to hold the full raw line
         let capacity: Int32 = 12
-        let block = LineBlock(rawBufferSize: capacity, absoluteBlockNumber: 1)!
+        let block = LineBlock(rawBufferSize: capacity, absoluteBlockNumber: 1)
 
         // And a single raw line "ABCDEFGHIJ" (10 chars) with a hard EOL
         let original = "ABCDEFGHIJ"
@@ -422,7 +422,7 @@ class LineBlockTests: XCTestCase {
 
         // Given a block with capacity at least as large as the content
         let capacity: Int32 = 10
-        let block = LineBlock(rawBufferSize: capacity, absoluteBlockNumber: 1)!
+        let block = LineBlock(rawBufferSize: capacity, absoluteBlockNumber: 1)
 
         // And a single raw line "Hello" (5 chars) with a hard EOL
         let original = "Hello"
@@ -475,7 +475,7 @@ class LineBlockTests: XCTestCase {
 
         // Given a block with capacity to hold one raw line that will wrap into multiple segments
         let capacity: Int32 = 20
-        let block = LineBlock(rawBufferSize: capacity, absoluteBlockNumber: 1)!
+        let block = LineBlock(rawBufferSize: capacity, absoluteBlockNumber: 1)
 
         // And a single raw line "ABCDEFGHIJ" (10 chars) with a hard EOL
         let raw = "ABCDEFGHIJ"
@@ -523,7 +523,7 @@ class LineBlockTests: XCTestCase {
 
         // Given a block containing a single raw line that wraps into multiple segments
         let capacity: Int32 = 20
-        let block = LineBlock(rawBufferSize: capacity, absoluteBlockNumber: 1)!
+        let block = LineBlock(rawBufferSize: capacity, absoluteBlockNumber: 1)
 
         // And that raw line is "ABCDEFGHIJ" (10 chars) with a hard EOL
         let raw = "ABCDEFGHIJ"
@@ -559,7 +559,7 @@ class LineBlockTests: XCTestCase {
 
         // Given a block with capacity to hold multiple raw lines
         let capacity: Int32 = 20
-        let block = LineBlock(rawBufferSize: capacity, absoluteBlockNumber: 1)!
+        let block = LineBlock(rawBufferSize: capacity, absoluteBlockNumber: 1)
         let width: Int32 = 10
 
         // And two hard-EOL raw lines appended in sequence
@@ -610,7 +610,7 @@ class LineBlockTests: XCTestCase {
 
         // Given a block with capacity to hold one raw line
         let capacity: Int32 = 10
-        let block = LineBlock(rawBufferSize: capacity, absoluteBlockNumber: 1)!
+        let block = LineBlock(rawBufferSize: capacity, absoluteBlockNumber: 1)
         let width: Int32 = 8
 
         // And a single hard-EOL raw line appended
@@ -646,7 +646,7 @@ class LineBlockTests: XCTestCase {
 
         // Given a block with capacity to hold multiple raw lines
         let capacity: Int32 = 20
-        let block = LineBlock(rawBufferSize: capacity, absoluteBlockNumber: 1)!
+        let block = LineBlock(rawBufferSize: capacity, absoluteBlockNumber: 1)
         let width: Int32 = 15
 
         // And two hard-EOL raw lines appended in sequence
@@ -675,7 +675,7 @@ class LineBlockTests: XCTestCase {
         //
         // Given a block with enough capacity for a 10‐character raw line
         let capacity: Int32 = 20
-        let block = LineBlock(rawBufferSize: capacity, absoluteBlockNumber: 1)!
+        let block = LineBlock(rawBufferSize: capacity, absoluteBlockNumber: 1)
 
         // And a hard-EOL raw line "ABCDEFGHIJ" (10 chars)
         let raw = "ABCDEFGHIJ"
@@ -712,7 +712,7 @@ class LineBlockTests: XCTestCase {
 
         // Given a block whose single raw line wraps into multiple segments
         let capacity: Int32 = 20
-        let block = LineBlock(rawBufferSize: capacity, absoluteBlockNumber: 1)!
+        let block = LineBlock(rawBufferSize: capacity, absoluteBlockNumber: 1)
 
         // And a hard‐EOL raw line "ABCDEFGHIJ" (10 chars)
         let raw = "ABCDEFGHIJ"
@@ -767,7 +767,7 @@ class LineBlockTests: XCTestCase {
 
         // Given a block whose single raw line wraps into multiple segments
         let capacity: Int32 = 20
-        let block = LineBlock(rawBufferSize: capacity, absoluteBlockNumber: 1)!
+        let block = LineBlock(rawBufferSize: capacity, absoluteBlockNumber: 1)
 
         // And a hard-EOL raw line "ABCDEFGHIJ" (10 chars) appended
         let raw = "ABCDEFGHIJ"
@@ -816,7 +816,7 @@ class LineBlockTests: XCTestCase {
 
         // Given a block whose single raw line wraps into multiple segments
         let capacity: Int32 = 20
-        let block = LineBlock(rawBufferSize: capacity, absoluteBlockNumber: 1)!
+        let block = LineBlock(rawBufferSize: capacity, absoluteBlockNumber: 1)
 
         // And a hard-EOL raw line "ABCDEFGHIJ" (10 chars) appended
         let raw = "ABCDEFGHIJ"
@@ -866,7 +866,7 @@ class LineBlockTests: XCTestCase {
 
         // Given a newly initialized LineBlock with no entries
         let capacity: Int32 = 10
-        let block = LineBlock(rawBufferSize: capacity, absoluteBlockNumber: 0)!
+        let block = LineBlock(rawBufferSize: capacity, absoluteBlockNumber: 0)
 
         // Then it should report as empty
         XCTAssertTrue(block.isEmpty(), "isEmpty should be true for a newly initialized block with no entries")
@@ -881,7 +881,7 @@ class LineBlockTests: XCTestCase {
 
         // Given a block initialized with some capacity
         let capacity: Int32 = 10
-        let block = LineBlock(rawBufferSize: capacity, absoluteBlockNumber: 0)!
+        let block = LineBlock(rawBufferSize: capacity, absoluteBlockNumber: 0)
         let width: Int32 = 5
 
         // Precondition: block is empty before any appends
@@ -919,7 +919,7 @@ class LineBlockTests: XCTestCase {
 
         // Given a LineBlock with ample capacity
         let capacity: Int32 = 100
-        let block = LineBlock(rawBufferSize: capacity, absoluteBlockNumber: 1)!
+        let block = LineBlock(rawBufferSize: capacity, absoluteBlockNumber: 1)
         let width: Int32 = 80
 
         // And three hard‐EOL lines appended in sequence
@@ -956,15 +956,13 @@ class LineBlockTests: XCTestCase {
         // Finally, rawLine(i) should return the correct ScreenCharArray content
         let raw0 = block.screenCharArray(forRawLine: 0)
         XCTAssertNotNil(raw0)
-        XCTAssertEqual(raw0?.stringValue, firstText,
+        XCTAssertEqual(raw0.stringValue, firstText,
                        "rawLine(0) should return the first appended string")
         let raw1 = block.screenCharArray(forRawLine: 1)
-        XCTAssertNotNil(raw1)
-        XCTAssertEqual(raw1?.stringValue, secondText,
+        XCTAssertEqual(raw1.stringValue, secondText,
                        "rawLine(1) should return the second appended string")
         let raw2 = block.screenCharArray(forRawLine: 2)
-        XCTAssertNotNil(raw2)
-        XCTAssertEqual(raw2?.stringValue, thirdText,
+        XCTAssertEqual(raw2.stringValue, thirdText,
                        "rawLine(2) should return the third appended string")
     }
 
@@ -976,7 +974,7 @@ class LineBlockTests: XCTestCase {
 
         // Given a LineBlock with a specific rawBufferSize and absoluteBlockNumber
         let capacity: Int32 = 50
-        let originalBlock = LineBlock(rawBufferSize: capacity, absoluteBlockNumber: 123)!
+        let originalBlock = LineBlock(rawBufferSize: capacity, absoluteBlockNumber: 123)
         let ea = iTermExternalAttribute.init(underlineColor: VT100TerminalColorValue(), url: nil, blockIDList: "Test", controlCode: nil)
 
         // And some raw lines appended with mixed EOL types
@@ -1021,14 +1019,14 @@ class LineBlockTests: XCTestCase {
         for i in 0..<count {
             let originalScreen = originalBlock.screenCharArray(forRawLine: i)
             let roundTripScreen = roundTripBlock.screenCharArray(forRawLine: i)
-            XCTAssertEqual(roundTripScreen?.stringValue,
-                           originalScreen?.stringValue,
+            XCTAssertEqual(roundTripScreen.stringValue,
+                           originalScreen.stringValue,
                            "Raw line \(i) content should match after round-trip")
             XCTAssertTrue(
                 iTermExternalAttributeIndex.externalAttributeIndex(
-                    roundTripScreen?.eaIndex,
-                    isEqualToIndex: originalScreen?.eaIndex),
-                "\((roundTripScreen?.eaIndex).d) != \((originalScreen?.eaIndex).d)")
+                    roundTripScreen.eaIndex,
+                    isEqualToIndex: originalScreen.eaIndex),
+                "\((roundTripScreen.eaIndex).d) != \((originalScreen.eaIndex).d)")
         }
     }
 
@@ -1039,7 +1037,7 @@ class LineBlockTests: XCTestCase {
 
         // Given a fresh LineBlock and a wrap width
         let capacity: Int32 = 10
-        let block = LineBlock(rawBufferSize: capacity, absoluteBlockNumber: 1)!
+        let block = LineBlock(rawBufferSize: capacity, absoluteBlockNumber: 1)
         let width: Int32 = 5
 
         // When we append two empty (zero‐length) raw lines...
@@ -1073,7 +1071,7 @@ class LineBlockTests: XCTestCase {
         // Append content then empty/raw lines. Verify numberOfTrailingEmptyLines correct.
         // Given a block with capacity and a wrap width
         let capacity: Int32 = 10
-        let block = LineBlock(rawBufferSize: capacity, absoluteBlockNumber: 1)!
+        let block = LineBlock(rawBufferSize: capacity, absoluteBlockNumber: 1)
         let width: Int32 = 5
         // Append a non-empty raw line
         XCTAssertTrue(block.appendLineString(makeLineString("abc", eol: EOL_HARD), width: width),
@@ -1103,7 +1101,7 @@ class LineBlockTests: XCTestCase {
 
         // Given a new block with no entries
         let capacity: Int32 = 10
-        let block = LineBlock(rawBufferSize: capacity, absoluteBlockNumber: 0)!
+        let block = LineBlock(rawBufferSize: capacity, absoluteBlockNumber: 0)
         let width: Int32 = 5
 
         // Initially, with zero entries, there should be no non‐empty lines
@@ -1146,7 +1144,7 @@ class LineBlockTests: XCTestCase {
 
         // Given an original LineBlock with some raw lines
         let capacity: Int32 = 20
-        let original = LineBlock(rawBufferSize: capacity, absoluteBlockNumber: 42)!
+        let original = LineBlock(rawBufferSize: capacity, absoluteBlockNumber: 42)
         let width: Int32 = 10
 
         // Append some lines
@@ -1164,7 +1162,7 @@ class LineBlockTests: XCTestCase {
         let originalGen = original.generation
 
         // When we deep-copy the block
-        let copy = original.copy(withAbsoluteBlockNumber: 0)!
+        let copy = original.copy(withAbsoluteBlockNumber: 0)
 
         // Then the copy should start with the same content and state
         XCTAssertEqual(copy.numRawLines(), originalRawCount,
@@ -1225,14 +1223,14 @@ class LineBlockTests: XCTestCase {
 
         // Given a fresh LineBlock
         let capacity: Int32 = 16
-        let original = LineBlock(rawBufferSize: capacity, absoluteBlockNumber: 0)!
+        let original = LineBlock(rawBufferSize: capacity, absoluteBlockNumber: 0)
 
         // Precondition: hasBeenCopied should start false on a new block
         XCTAssertFalse(original.hasBeenCopied,
                        "A newly initialized block should not yet be marked as having been copied")
 
         // When we perform a copy-on-write copy
-        let copy = original.cowCopy()!
+        let copy = original.cowCopy()
 
         // Then both the original and the copy should now report hasBeenCopied == true
         XCTAssertTrue(original.hasBeenCopied,
@@ -1254,7 +1252,7 @@ class LineBlockTests: XCTestCase {
 
         // Given a block with enough capacity for one raw line
         let capacity: Int32 = 20
-        let block = LineBlock(rawBufferSize: capacity, absoluteBlockNumber: 1)!
+        let block = LineBlock(rawBufferSize: capacity, absoluteBlockNumber: 1)
 
         // And a single raw line "ABCDEFGHIJ" (10 chars) with a hard EOL
         let raw = "ABCDEFGHIJ"
@@ -1276,7 +1274,7 @@ class LineBlockTests: XCTestCase {
             // Then it should equal startOffset + n * wrapWidth
             let expected = startOffset + n * wrapWidth
             let rawLength = Int32(block.length(ofRawLine: 0))
-            let actual = OffsetOfWrappedLine(block.rawLine(0),
+            let actual = OffsetOfWrappedLine(block.rawLine(0)!,
                                              n,
                                              rawLength,
                                              wrapWidth,
@@ -1290,7 +1288,7 @@ class LineBlockTests: XCTestCase {
         let bigCount = block.getNumLines(withWrapWidth: bigWidth)
         XCTAssertEqual(bigCount, 1,
                        "At width \(bigWidth) there should be a single wrapped line")
-        let bigActual = OffsetOfWrappedLine(block.rawLine(0),
+        let bigActual = OffsetOfWrappedLine(block.rawLine(0)!,
                                             0,
                                             Int32(raw.count),
                                             bigWidth,
@@ -1315,7 +1313,7 @@ class LineBlockTests: XCTestCase {
 
         // Given a block and enable DWC path
         let capacity: Int32 = 10
-        let block = LineBlock(rawBufferSize: capacity, absoluteBlockNumber: 1)!
+        let block = LineBlock(rawBufferSize: capacity, absoluteBlockNumber: 1)
         block.mayHaveDoubleWidthCharacter = true
 
         // And a line containing a double-width character
@@ -1334,7 +1332,7 @@ class LineBlockTests: XCTestCase {
         let rawLength = Int32(block.length(ofRawLine: 0))
 
         // Segment 0: no DWC splitting
-        let off0 = OffsetOfWrappedLine(block.rawLine(0),
+        let off0 = OffsetOfWrappedLine(block.rawLine(0)!,
                                        0,
                                        rawLength,
                                        wrapWidth,
@@ -1343,7 +1341,7 @@ class LineBlockTests: XCTestCase {
                        "First segment should start at startOffset")
 
         // Segment 1: DWC falls at cell 2–3, so it must be moved intact → offset = startOffset + 2
-        let off1 = OffsetOfWrappedLine(block.rawLine(0),
+        let off1 = OffsetOfWrappedLine(block.rawLine(0)!,
                                        1,
                                        rawLength,
                                        wrapWidth,
@@ -1352,7 +1350,7 @@ class LineBlockTests: XCTestCase {
                        "Second segment must skip the DWC group and start at cell 2")
 
         // Segment 2: follows segment1’s 3 cells → offset = startOffset + 2 + 3 = startOffset + 5
-        let off2 = OffsetOfWrappedLine(block.rawLine(0),
+        let off2 = OffsetOfWrappedLine(block.rawLine(0)!,
                                        2,
                                        rawLength,
                                        wrapWidth,
@@ -1367,7 +1365,7 @@ class LineBlockTests: XCTestCase {
         // width > length or mayHaveDWC=false: (length-1)/width.
 
         // Given a LineBlock (the rope content is irrelevant for this calculation)
-        let block = LineBlock(rawBufferSize: 0, absoluteBlockNumber: 0)!
+        let block = LineBlock(rawBufferSize: 0, absoluteBlockNumber: 0)
         // Ensure we take the “simple division” path by disabling DWC handling
         block.mayHaveDoubleWidthCharacter = false
 
@@ -1410,7 +1408,7 @@ class LineBlockTests: XCTestCase {
         //
         // Therefore we expect numberOfFullLines = 1.
         let capacity: Int32 = 10
-        let block = LineBlock(rawBufferSize: capacity, absoluteBlockNumber: 0)!
+        let block = LineBlock(rawBufferSize: capacity, absoluteBlockNumber: 0)
 
         // Enable the double-width–aware path
         block.mayHaveDoubleWidthCharacter = true
@@ -1442,7 +1440,7 @@ class LineBlockTests: XCTestCase {
 
         // Given a block with several raw lines of varying lengths
         let capacity: Int32 = 100
-        let block = LineBlock(rawBufferSize: capacity, absoluteBlockNumber: 1)!
+        let block = LineBlock(rawBufferSize: capacity, absoluteBlockNumber: 1)
         let wrapWidth: Int32 = 3
 
         // Append three hard‐EOL raw lines:
@@ -1501,7 +1499,7 @@ class LineBlockTests: XCTestCase {
 
         // Given a block with ample capacity
         let capacity: Int32 = 100
-        let block = LineBlock(rawBufferSize: capacity, absoluteBlockNumber: 1)!
+        let block = LineBlock(rawBufferSize: capacity, absoluteBlockNumber: 1)
         let wrapWidth: Int32 = capacity
 
         // Append two empty raw lines
@@ -1560,7 +1558,7 @@ class LineBlockTests: XCTestCase {
 
         // Given a block with sufficient capacity for a single raw line
         let capacity: Int32 = 20
-        let block = LineBlock(rawBufferSize: capacity, absoluteBlockNumber: 1)!
+        let block = LineBlock(rawBufferSize: capacity, absoluteBlockNumber: 1)
 
         // And a hard‐EOL raw line "ABCDEFGHIJ" (10 chars) appended
         let text = "ABCDEFGHIJ"
@@ -1598,7 +1596,7 @@ class LineBlockTests: XCTestCase {
         // Given a block with a single hard-EOL raw line
         let text = "Hello"
         let capacity: Int32 = 10
-        let block = LineBlock(rawBufferSize: capacity, absoluteBlockNumber: 0)!
+        let block = LineBlock(rawBufferSize: capacity, absoluteBlockNumber: 0)
         let wrapWidth: Int32 = 10
         let lineString = makeLineString(text, eol: EOL_HARD)
         XCTAssertTrue(block.appendLineString(lineString, width: wrapWidth),
@@ -1631,7 +1629,7 @@ class LineBlockTests: XCTestCase {
         // Given a block with a single hard-EOL raw line
         let text = "Hello"
         let capacity: Int32 = 10
-        let block = LineBlock(rawBufferSize: capacity, absoluteBlockNumber: 0)!
+        let block = LineBlock(rawBufferSize: capacity, absoluteBlockNumber: 0)
         let wrapWidth: Int32 = 10
         let lineString = makeLineString(text, eol: EOL_HARD)
         XCTAssertTrue(block.appendLineString(lineString, width: wrapWidth),
@@ -1820,7 +1818,7 @@ class LineBlockTests: XCTestCase {
         // Given a block whose single raw line wraps into multiple segments
         // For example, content "ABCDE" with wrapWidth = 2 → wrapped segments: ["AB","CD","E"]
         let capacity: Int32 = 10
-        let block = LineBlock(rawBufferSize: capacity, absoluteBlockNumber: 0)!
+        let block = LineBlock(rawBufferSize: capacity, absoluteBlockNumber: 0)
         let wrapWidth: Int32 = 2
         let content = "ABCDE"
         let lineString = makeLineString(content, eol: EOL_HARD)
@@ -1906,7 +1904,7 @@ class LineBlockTests: XCTestCase {
             }
         }
 
-        let block = LineBlock(rawBufferSize: 1000, absoluteBlockNumber: 0)!
+        let block = LineBlock(rawBufferSize: 1000, absoluteBlockNumber: 0)
         let base = Array(repeating: "ABCDEFGHIJKLMNOPRQSTUVWXYZ", count: 500).joined()
         let hardEOL = unichar(EOL_HARD)
         let softEOL = unichar(EOL_SOFT)
@@ -2024,7 +2022,7 @@ class LineBlockTests: XCTestCase {
     func testFindSubstringPlainForwardSingleResult() {
         // Plain substring search forwards with multipleResults = false.
         // Given a block containing a single raw line "hello world"
-        let block = LineBlock(rawBufferSize: 100, absoluteBlockNumber: 0)!
+        let block = LineBlock(rawBufferSize: 100, absoluteBlockNumber: 0)
         let width: Int32 = 80
         let text = "hello world"
         let lineString = makeLineString(text, eol: EOL_HARD)
@@ -2060,7 +2058,7 @@ class LineBlockTests: XCTestCase {
     func testFindSubstringPlainBackwardMultipleResults() {
         // Plain substring search backwards with multipleResults=true.
         // Given a block containing a single raw line with three occurrences of "foo"
-        let block = LineBlock(rawBufferSize: 100, absoluteBlockNumber: 0)!
+        let block = LineBlock(rawBufferSize: 100, absoluteBlockNumber: 0)
         let width: Int32 = 80
         let text = "foo bar foo baz foo"
         let lineString = makeLineString(text, eol: EOL_HARD)
@@ -2104,7 +2102,7 @@ class LineBlockTests: XCTestCase {
         // Regex mode case-insensitive search; include special chars $ and ^ in needle.
 
         // Given a block containing a single raw line whose text has mixed case
-        let block = LineBlock(rawBufferSize: 100, absoluteBlockNumber: 0)!
+        let block = LineBlock(rawBufferSize: 100, absoluteBlockNumber: 0)
         let width: Int32 = 100
         let text = "FoObAr"
         let lineString = makeLineString(text, eol: EOL_HARD)
@@ -2146,7 +2144,7 @@ class LineBlockTests: XCTestCase {
 
         // Given a block containing two raw lines "foo" (hard EOL) and "bar" (hard EOL),
         // which in the rope appear as "foobar".
-        let block = LineBlock(rawBufferSize: 100, absoluteBlockNumber: 0)!
+        let block = LineBlock(rawBufferSize: 100, absoluteBlockNumber: 0)
         let width: Int32 = 80
         XCTAssertTrue(block.appendLineString(makeLineString("foo", eol: EOL_HARD), width: width),
                       "Precondition: appending 'foo' should succeed")
@@ -2191,7 +2189,7 @@ class LineBlockTests: XCTestCase {
 
         // Given a LineBlock with capacity for several raw lines
         let capacity: Int32 = 50
-        let block = LineBlock(rawBufferSize: capacity, absoluteBlockNumber: 1)!
+        let block = LineBlock(rawBufferSize: capacity, absoluteBlockNumber: 1)
         let width: Int32 = 10
 
         // When we append two hard-EOL raw lines
@@ -2225,7 +2223,7 @@ class LineBlockTests: XCTestCase {
 
         // Given a fresh LineBlock with some content so that invalidation has something to mark
         let capacity: Int32 = 10
-        let block = LineBlock(rawBufferSize: capacity, absoluteBlockNumber: 1)!
+        let block = LineBlock(rawBufferSize: capacity, absoluteBlockNumber: 1)
         let width: Int32 = 5
         XCTAssertTrue(block.appendLineString(makeLineString("abc", eol: EOL_HARD), width: width),
                       "Precondition: appending a hard-EOL line should succeed")
@@ -2251,7 +2249,7 @@ class LineBlockTests: XCTestCase {
         //
         // Given a block with capacity to hold at least one raw line
         let capacity: Int32 = 10
-        let block = LineBlock(rawBufferSize: capacity, absoluteBlockNumber: 1)!
+        let block = LineBlock(rawBufferSize: capacity, absoluteBlockNumber: 1)
         let wrapWidth: Int32 = 4
 
         // And an initial raw line "ABCDEFG" (7 chars) with a hard EOL
@@ -2310,7 +2308,7 @@ class LineBlockTests: XCTestCase {
         // When we try to append one more raw line,
         // Then appendLineString(_:width:) should return false.
         let capacity: Int32 = 20000
-        let block = LineBlock(rawBufferSize: capacity, absoluteBlockNumber: 1)!
+        let block = LineBlock(rawBufferSize: capacity, absoluteBlockNumber: 1)
         let ls = makeLineString("")
         for _ in 0..<10000 {
             XCTAssertTrue(block.appendLineString(ls, width: 80))
@@ -2327,7 +2325,7 @@ class LineBlockTests: XCTestCase {
 
         // Given a new LineBlock
         let capacity: Int32 = 10
-        let block = LineBlock(rawBufferSize: capacity, absoluteBlockNumber: 0)!
+        let block = LineBlock(rawBufferSize: capacity, absoluteBlockNumber: 0)
 
         // And a lineString whose metadata.rtlFound == true
         let rtlMeta = iTermLineStringMetadata(timestamp: 0, rtlFound: true)
@@ -2353,7 +2351,7 @@ class LineBlockTests: XCTestCase {
         // When sizeFromLine(0, width: 5) is called,
         // Then it should return 0.
         let capacity: Int32 = 10
-        let block = LineBlock(rawBufferSize: capacity, absoluteBlockNumber: 0)!
+        let block = LineBlock(rawBufferSize: capacity, absoluteBlockNumber: 0)
 
         // Call sizeFromLine on an empty block
         let result = block.size(fromLine: 0, width: 5)
@@ -2375,7 +2373,7 @@ class LineBlockTests: XCTestCase {
         //  segment 2 starts at offset 8 → remaining = 10 - 8 = 2
 
         let capacity: Int32 = 20
-        let block = LineBlock(rawBufferSize: capacity, absoluteBlockNumber: 1)!
+        let block = LineBlock(rawBufferSize: capacity, absoluteBlockNumber: 1)
         let wrapWidth: Int32 = 4
 
         // Append the 10-char hard-EOL line
@@ -2408,7 +2406,7 @@ class LineBlockTests: XCTestCase {
         //
         // Given a LineBlock with two hard-EOL raw lines "Hello" (5 chars) and "World" (5 chars)
         let capacity: Int32 = 20
-        let block = LineBlock(rawBufferSize: capacity, absoluteBlockNumber: 1)!
+        let block = LineBlock(rawBufferSize: capacity, absoluteBlockNumber: 1)
         let wrapWidth: Int32 = 10
 
         let line1 = makeLineString("Hello", eol: EOL_HARD)
@@ -2439,7 +2437,7 @@ class LineBlockTests: XCTestCase {
         //
         // Given a LineBlock with two hard-EOL raw lines "Hello" (5 chars) and "World" (5 chars)
         let capacity: Int32 = 20
-        let block = LineBlock(rawBufferSize: capacity, absoluteBlockNumber: 1)!
+        let block = LineBlock(rawBufferSize: capacity, absoluteBlockNumber: 1)
         let wrapWidth: Int32 = 10
 
         let line1 = makeLineString("Hello", eol: EOL_HARD)
@@ -2471,7 +2469,7 @@ class LineBlockTests: XCTestCase {
         //
         // Given a LineBlock with two hard-EOL raw lines "Hello" (5 chars) and "World" (5 chars)
         let capacity: Int32 = 20
-        let block = LineBlock(rawBufferSize: capacity, absoluteBlockNumber: 1)!
+        let block = LineBlock(rawBufferSize: capacity, absoluteBlockNumber: 1)
         let wrapWidth: Int32 = 10
 
         let line1 = makeLineString("Hello", eol: EOL_HARD)
@@ -2501,7 +2499,7 @@ class LineBlockTests: XCTestCase {
         //
         // Given a LineBlock containing a single raw line "XYZ" (3 chars, hard EOL)
         let capacity: Int32 = 10
-        let block = LineBlock(rawBufferSize: capacity, absoluteBlockNumber: 1)!
+        let block = LineBlock(rawBufferSize: capacity, absoluteBlockNumber: 1)
         let wrapWidth: Int32 = 3
         let paddedSize: Int32 = 6  // we want to pad the wrapped line to 6 cells
 
@@ -2551,7 +2549,7 @@ class LineBlockTests: XCTestCase {
         //  • "ABC" (3 chars) wraps at width=2 into segments [ "AB", "C" ] → wrapped indices 0,1 map to rawLine 0
         //  • "DEFG" (4 chars) wraps at width=2 into segments [ "DE", "FG" ] → wrapped indices 2,3 map to rawLine 1
         let capacity: Int32 = 10
-        let block = LineBlock(rawBufferSize: capacity, absoluteBlockNumber: 1)!
+        let block = LineBlock(rawBufferSize: capacity, absoluteBlockNumber: 1)
         let wrapWidth: Int32 = 2
 
         // Append the first raw line "ABC" (hard EOL)
@@ -2586,7 +2584,7 @@ class LineBlockTests: XCTestCase {
         // rawLine(atWrappedLineOffset:width:) should always return the full raw line
         // (not just the wrapped segment) and ignore any metadata.
         let capacity: Int32 = 100
-        let block = LineBlock(rawBufferSize: capacity, absoluteBlockNumber: 1)!
+        let block = LineBlock(rawBufferSize: capacity, absoluteBlockNumber: 1)
         let wrapWidth: Int32 = 2
 
         // Append first raw line "One"
@@ -2642,7 +2640,7 @@ class LineBlockTests: XCTestCase {
         //     • The returned metadata.rtlFound equals the one we set.
         //     • The returned eaIndex, when asked via ScreenCharArray.prototype, matches the input externalAttribute.
         let capacity: Int32 = 100
-        let block = LineBlock(rawBufferSize: capacity, absoluteBlockNumber: 1)!
+        let block = LineBlock(rawBufferSize: capacity, absoluteBlockNumber: 1)
         let wrapWidth: Int32 = 80
 
         // Prepare two distinct lines with different metadata
@@ -2709,7 +2707,7 @@ class LineBlockTests: XCTestCase {
 
         // Given a block with enough capacity
         let capacity: Int32 = 20
-        let block = LineBlock(rawBufferSize: capacity, absoluteBlockNumber: 1)!
+        let block = LineBlock(rawBufferSize: capacity, absoluteBlockNumber: 1)
 
         // Prepare two distinct metadata stamps so we can tell them apart
         let metaA = iTermLineStringMetadata(timestamp: 12345, rtlFound: false)
@@ -2755,7 +2753,7 @@ class LineBlockTests: XCTestCase {
     func testReloadBidiInfoPopulatesBidiDisplayInfo() {
         // Given a LineBlock and a line containing right-to-left text (e.g. Hebrew letters)
         let capacity: Int32 = 10
-        let block = LineBlock(rawBufferSize: capacity, absoluteBlockNumber: 1)!
+        let block = LineBlock(rawBufferSize: capacity, absoluteBlockNumber: 1)
 
         // Hebrew letters Alef-Bet-Gimel
         let rtlText = "\u{05D0}\u{05D1}\u{05D2}"
@@ -2783,7 +2781,7 @@ class LineBlockTests: XCTestCase {
     func testSetBidiForLastRawLineOverridesMetadata() {
         // Given a LineBlock and a line containing right-to-left text (e.g. Hebrew letters)
         let capacity: Int32 = 10
-        let block = LineBlock(rawBufferSize: capacity, absoluteBlockNumber: 1)!
+        let block = LineBlock(rawBufferSize: capacity, absoluteBlockNumber: 1)
 
         // Hebrew letters Alef-Bet-Gimel
         let rtlText = "\u{05D0}\u{05D1}\u{05D2}"
@@ -2810,7 +2808,7 @@ class LineBlockTests: XCTestCase {
     func testEraseRTLStatusInAllCharactersClearsRTLStatusInChars() {
         // Given a LineBlock and a line containing right-to-left text (e.g. Hebrew letters)
         let capacity: Int32 = 10
-        let block = LineBlock(rawBufferSize: capacity, absoluteBlockNumber: 1)!
+        let block = LineBlock(rawBufferSize: capacity, absoluteBlockNumber: 1)
 
         // Hebrew letters Alef-Bet-Gimel
         let rtlText = "\u{05D0}\u{05D1}\u{05D2}"
@@ -2826,28 +2824,22 @@ class LineBlockTests: XCTestCase {
         block.reloadBidiInfo()
 
         // Sanity: each character’s rtlStatus should now be RTL or LTR, not Unknown
-        if let raw = block.screenCharArray(forRawLine: 0) {
-            for i in 0..<raw.length {
-                let ch = raw.line[Int(i)]
-                XCTAssertNotEqual(ch.rtlStatus, RTLStatus.unknown,
-                                  "After reloadBidiInfo, character at index \(i) must not have Unknown rtlStatus")
-            }
-        } else {
-            XCTFail("Could not retrieve raw ScreenCharArray before erasing RTL status")
+        let raw = block.screenCharArray(forRawLine: 0)
+        for i in 0..<raw.length {
+            let ch = raw.line[Int(i)]
+            XCTAssertNotEqual(ch.rtlStatus, RTLStatus.unknown,
+                              "After reloadBidiInfo, character at index \(i) must not have Unknown rtlStatus")
         }
 
         // When we clear RTL status on all characters
         block.eraseRTLStatusInAllCharacters()
 
         // Then each character’s rtlStatus should be reset to Unknown
-        if let rawAfter = block.screenCharArray(forRawLine: 0) {
-            for i in 0..<rawAfter.length {
-                let ch = rawAfter.line[Int(i)]
-                XCTAssertEqual(ch.rtlStatus, RTLStatus.unknown,
-                               "After eraseRTLStatusInAllCharacters, character at index \(i) must have rtlStatus == Unknown")
-            }
-        } else {
-            XCTFail("Could not retrieve raw ScreenCharArray after erasing RTL status")
+        let rawAfter = block.screenCharArray(forRawLine: 0)
+        for i in 0..<rawAfter.length {
+            let ch = rawAfter.line[Int(i)]
+            XCTAssertEqual(ch.rtlStatus, RTLStatus.unknown,
+                           "After eraseRTLStatusInAllCharacters, character at index \(i) must have rtlStatus == Unknown")
         }
     }
 
@@ -2878,7 +2870,7 @@ class LineBlockTests: XCTestCase {
         // Note: do not implement the line‐by‐line assertions here; leave placeholders for the implementer.
 
         // GIVEN
-        let progenitor = LineBlock(rawBufferSize: 100, absoluteBlockNumber: 0)!
+        let progenitor = LineBlock(rawBufferSize: 100, absoluteBlockNumber: 0)
         let width: Int32 = 80
         // Append four hard-EOL lines to the progenitor
         XCTAssertTrue(progenitor.appendLineString(makeLineString("One",   eol: EOL_HARD), width: width))
@@ -2887,7 +2879,7 @@ class LineBlockTests: XCTestCase {
         XCTAssertTrue(progenitor.appendLineString(makeLineString("Four",  eol: EOL_HARD), width: width))
 
         // Create a client via copy-on-write
-        let client = progenitor.cowCopy()!
+        let client = progenitor.cowCopy()
 
         // Simulate dropping the first two raw lines on the client
         var charsDropped: Int32 = 0
@@ -2910,16 +2902,16 @@ class LineBlockTests: XCTestCase {
         // 2. The first remaining raw line in the client should be "Three"
         XCTAssertEqual(client.numRawLines(), progenitor.numRawLines(),
                        "Client should now have same number of raw lines as progenitor")
-        let firstRemaining = client.screenCharArray(forRawLine: client.firstEntry)?.stringValue
+        let firstRemaining = client.screenCharArray(forRawLine: client.firstEntry).stringValue
         XCTAssertEqual(firstRemaining, "Three",
                        "After mirroring, the first raw line should be 'Three'")
 
         // 3. No extra lines beyond the progenitor's content are dropped
-        let allClientLines = (0..<client.numRawLines()).compactMap { idx in
-            client.screenCharArray(forRawLine: client.firstEntry + idx)?.stringValue
+        let allClientLines = (0..<client.numRawLines()).map { idx in
+            client.screenCharArray(forRawLine: client.firstEntry + idx).stringValue
         }
-        let allProgenitorLines = (0..<progenitor.numRawLines()).compactMap { idx in
-            progenitor.screenCharArray(forRawLine: progenitor.firstEntry + idx)?.stringValue
+        let allProgenitorLines = (0..<progenitor.numRawLines()).map { idx in
+            progenitor.screenCharArray(forRawLine: progenitor.firstEntry + idx).stringValue
         }
         XCTAssertEqual(allClientLines, allProgenitorLines,
                        "Client's remaining lines should exactly match progenitor's lines after mirroring")
@@ -2936,7 +2928,7 @@ class LineBlockTests: XCTestCase {
         // Given a block containing a single raw line with three numeric tokens:
         //   "item1 item2 item3"
         // We will search for the regex pattern "item\\d" (matches "item" followed by a digit).
-        let block = LineBlock(rawBufferSize: 100, absoluteBlockNumber: 0)!
+        let block = LineBlock(rawBufferSize: 100, absoluteBlockNumber: 0)
         let width: Int32 = 80
         let text = "item1 item2 item3"
         let lineString = makeLineString(text, eol: EOL_HARD)
@@ -2987,7 +2979,7 @@ class LineBlockTests: XCTestCase {
         // Given a block containing two raw lines, each with two occurrences of "foo":
         //   Line 0: "foo X foo"
         //   Line 1: "foo Y foo"
-        let block = LineBlock(rawBufferSize: 100, absoluteBlockNumber: 0)!
+        let block = LineBlock(rawBufferSize: 100, absoluteBlockNumber: 0)
         let width: Int32 = 80
         let line0 = "foo X foo"
         let line1 = "foo Y foo"
@@ -3059,7 +3051,7 @@ class LineBlockTests: XCTestCase {
         //
         // We pick an offset that lies in segment1 (e.g. the 'B' at absolute cell index 3),
         // so that `numberOfFullLinesFromOffset` returns > 0 and the branch is taken.
-        let block = LineBlock(rawBufferSize: 10, absoluteBlockNumber: 0)!
+        let block = LineBlock(rawBufferSize: 10, absoluteBlockNumber: 0)
         block.mayHaveDoubleWidthCharacter = true
 
         // Append the line "A中BC" with a hard EOL
@@ -3076,7 +3068,7 @@ class LineBlockTests: XCTestCase {
             var x: Int32
             var y: Int32
         }
-        let convert = { targetOffset in
+        let convert = { (targetOffset: Int32) in
             var x: Int32 = -1
             var y: Int32 = -1
             let success = block.convertPosition(
