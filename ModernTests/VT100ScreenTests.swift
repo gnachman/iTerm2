@@ -1336,6 +1336,59 @@ class VT100ScreenTests: XCTestCase {
         XCTAssert(actual.contains("verify"), "Expected 'verify' in output: \(actual)")
     }
 
+    // MARK: - Gang fast-path performance
+
+    func testGang_fastPathPerformance() {
+        // Use a wide, tall screen with plenty of scrollback so we don't hit
+        // edge cases like block drops during the measured loop.
+        let screen = self.screen(width: 120, height: 50)
+        screen.performBlock(joinedThreads: { _, ms, _ in
+            ms!.maxScrollbackLines = 100_000
+        })
+
+        // Pre-build tokens: 100 lines of 80-char ASCII + CRLF per gang call.
+        // This simulates a burst of plain text output (e.g. `cat` of a file).
+        let lines = (0..<100).map { i -> String in
+            let ch = Character(UnicodeScalar(65 + (i % 26))!)
+            return String(repeating: ch, count: 80) + "\r\n"
+        }
+        let tokens = lines.map { makeMixedToken($0) }
+
+        measure {
+            // Each iteration sends 100 gang calls of 100 lines each = 10,000 lines.
+            screen.performBlock(joinedThreads: { _, ms, _ in
+                for _ in 0..<100 {
+                    ms!.terminalAppendMixedAsciiGang(tokens)
+                }
+            })
+        }
+    }
+
+    func testGang_charAtATimePerformance() {
+        // Same workload but using character-at-a-time appendString/CRLF
+        // (the pre-gang-optimization path). This is the baseline to beat.
+        let screen = self.screen(width: 120, height: 50)
+        screen.performBlock(joinedThreads: { _, ms, _ in
+            ms!.maxScrollbackLines = 100_000
+        })
+
+        let lines = (0..<100).map { i -> String in
+            let ch = Character(UnicodeScalar(65 + (i % 26))!)
+            return String(repeating: ch, count: 80)
+        }
+
+        measure {
+            screen.performBlock(joinedThreads: { _, ms, _ in
+                for _ in 0..<100 {
+                    for line in lines {
+                        ms!.appendString(atCursor: line)
+                        ms!.appendCarriageReturnLineFeed()
+                    }
+                }
+            })
+        }
+    }
+
     func testDropFirstBlock() {
         let screen = self.screen(width: 8, height: 8)
         session.configuration.maxScrollbackLines = 6
