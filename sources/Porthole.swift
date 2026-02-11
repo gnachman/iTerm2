@@ -93,7 +93,7 @@ protocol PortholeDelegate: AnyObject {
 }
 
 @objc(Porthole)
-protocol ObjCPorthole: AnyObject {
+public protocol ObjCPorthole: AnyObject {
     @objc var view: NSView { get }
     @objc var uniqueIdentifier: String { get }
     @objc var dictionaryValue: [String: AnyObject] { get }

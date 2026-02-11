@@ -915,6 +915,420 @@ class VT100ScreenTests: XCTestCase {
         }
     }
 
+    // MARK: - Gang slow-path correctness tests
+
+    /// Helper that tests gang output with a state mutation that forces the slow path.
+    /// 1. Applies `setup` to force slow path, sends firstTokens, verifies output.
+    /// 2. Applies `restore` to re-enable fast path, sends secondTokens, verifies output.
+    private func gangTestWithSetup(
+        width: Int32 = 10,
+        height: Int32 = 4,
+        initialLines: [String] = [],
+        firstTokens: [String],
+        secondTokens: [String],
+        setup: @escaping (VT100ScreenMutableState) -> Void,
+        restore: @escaping (VT100ScreenMutableState) -> Void,
+        file: StaticString = #filePath,
+        line: UInt = #line
+    ) {
+        // Compute expected output after setup + firstTokens via character-at-a-time
+        let expectedAfterSetup: String = {
+            let s = self.screen(width: width, height: height)
+            s.performBlock(joinedThreads: { _, ms, _ in ms!.maxScrollbackLines = 1000 })
+            appendLines(initialLines, screen: s)
+            s.performBlock(joinedThreads: { _, ms, _ in
+                setup(ms!)
+                for token in firstTokens {
+                    var i = token.startIndex
+                    while i < token.endIndex {
+                        let nl = token.range(of: "\r\n", range: i..<token.endIndex)
+                        if let nl {
+                            ms!.appendString(atCursor: String(token[i..<nl.lowerBound]))
+                            ms!.appendCarriageReturnLineFeed()
+                            i = nl.upperBound
+                        } else {
+                            ms!.appendString(atCursor: String(token[i..<token.endIndex]))
+                            i = token.endIndex
+                        }
+                    }
+                }
+            })
+            return s.compactLineDumpWithDividedHistoryAndContinuationMarks()
+        }()
+
+        // Compute expected output after restore + secondTokens via character-at-a-time
+        let expectedAfterRestore: String = {
+            let s = self.screen(width: width, height: height)
+            s.performBlock(joinedThreads: { _, ms, _ in ms!.maxScrollbackLines = 1000 })
+            appendLines(initialLines, screen: s)
+            s.performBlock(joinedThreads: { _, ms, _ in
+                setup(ms!)
+                for token in firstTokens {
+                    var i = token.startIndex
+                    while i < token.endIndex {
+                        let nl = token.range(of: "\r\n", range: i..<token.endIndex)
+                        if let nl {
+                            ms!.appendString(atCursor: String(token[i..<nl.lowerBound]))
+                            ms!.appendCarriageReturnLineFeed()
+                            i = nl.upperBound
+                        } else {
+                            ms!.appendString(atCursor: String(token[i..<token.endIndex]))
+                            i = token.endIndex
+                        }
+                    }
+                }
+                restore(ms!)
+                for token in secondTokens {
+                    var i = token.startIndex
+                    while i < token.endIndex {
+                        let nl = token.range(of: "\r\n", range: i..<token.endIndex)
+                        if let nl {
+                            ms!.appendString(atCursor: String(token[i..<nl.lowerBound]))
+                            ms!.appendCarriageReturnLineFeed()
+                            i = nl.upperBound
+                        } else {
+                            ms!.appendString(atCursor: String(token[i..<token.endIndex]))
+                            i = token.endIndex
+                        }
+                    }
+                }
+            })
+            return s.compactLineDumpWithDividedHistoryAndContinuationMarks()
+        }()
+
+        // Now test the gang path
+        let screen = self.screen(width: width, height: height)
+        screen.performBlock(joinedThreads: { _, ms, _ in ms!.maxScrollbackLines = 1000 })
+        appendLines(initialLines, screen: screen)
+
+        // Phase 1: setup + gang (should take slow path)
+        screen.performBlock(joinedThreads: { _, ms, _ in
+            setup(ms!)
+            ms!.terminalAppendMixedAsciiGang(firstTokens.map { self.makeMixedToken($0) })
+        })
+        let actualAfterSetup = screen.compactLineDumpWithDividedHistoryAndContinuationMarks()
+        XCTAssertEqual(actualAfterSetup, expectedAfterSetup,
+                       "After setup",
+                       file: file, line: line)
+
+        // Phase 2: restore + gang (should re-enable fast path)
+        screen.performBlock(joinedThreads: { _, ms, _ in
+            restore(ms!)
+            ms!.terminalAppendMixedAsciiGang(secondTokens.map { self.makeMixedToken($0) })
+        })
+        let actualAfterRestore = screen.compactLineDumpWithDividedHistoryAndContinuationMarks()
+        XCTAssertEqual(actualAfterRestore, expectedAfterRestore,
+                       "After restore",
+                       file: file, line: line)
+    }
+
+    func testGang_insertMode() {
+        gangTestWithSetup(
+            firstTokens: ["hello\r\nworld\r\n"],
+            secondTokens: ["back\r\n"],
+            setup: { $0.insert = true },
+            restore: { $0.insert = false }
+        )
+    }
+
+    func testGang_wraparoundModeOff() {
+        gangTestWithSetup(
+            firstTokens: ["hello\r\nworld\r\n"],
+            secondTokens: ["back\r\n"],
+            setup: { $0.wraparoundMode = false },
+            restore: { $0.wraparoundMode = true }
+        )
+    }
+
+    func testGang_ansiMode() {
+        gangTestWithSetup(
+            firstTokens: ["hello\r\nworld\r\n"],
+            secondTokens: ["back\r\n"],
+            setup: { $0.ansi = true },
+            restore: { $0.ansi = false }
+        )
+    }
+
+    func testGang_altBuffer() {
+        gangTestWithSetup(
+            firstTokens: ["hello\r\nworld\r\n"],
+            secondTokens: ["back\r\n"],
+            setup: { $0.showAltBuffer() },
+            restore: { $0.showPrimaryBuffer() }
+        )
+    }
+
+    func testGang_commandStartCoord() {
+        gangTestWithSetup(
+            firstTokens: ["hello\r\nworld\r\n"],
+            secondTokens: ["back\r\n"],
+            setup: { ms in
+                ms.setCoordinateOfCommandStart(VT100GridAbsCoord(x: 0, y: 0))
+            },
+            restore: { ms in
+                ms.setCommandStartCoordWithoutSideEffects(VT100GridAbsCoord(x: -1, y: 0))
+            }
+        )
+    }
+
+    func testGang_lineDrawingMode() {
+        // Line drawing mode converts ASCII to graphics characters via a different
+        // code path than appendString(atCursor:), so we can't use the standard
+        // reference-comparison helper. Instead we verify that graphics characters
+        // appear correctly and that normal text resumes after leaving line drawing mode.
+        let screen = self.screen(width: 10, height: 4)
+        screen.performBlock(joinedThreads: { _, ms, _ in
+            ms!.maxScrollbackLines = 1000
+        })
+
+        // Enter line drawing mode, send a gang (should take slow path)
+        screen.performBlock(joinedThreads: { _, ms, _ in
+            ms!.setCharacterSet(0, usesLineDrawingMode: true)
+            ms!.terminalAppendMixedAsciiGang(["jklmn\r\n"].map { self.makeMixedToken($0) })
+        })
+        // j,k,l,m,n in line drawing mode should produce box drawing characters
+        let afterSetup = screen.compactLineDumpWithDividedHistoryAndContinuationMarks()!
+        // These ASCII chars map to specific box drawing chars in line drawing mode
+        XCTAssert(!afterSetup.contains("jklmn"),
+                  "Line drawing mode should convert characters: \(afterSetup)")
+
+        // Exit line drawing mode, send another gang (should re-enable fast path)
+        screen.performBlock(joinedThreads: { _, ms, _ in
+            ms!.setCharacterSet(0, usesLineDrawingMode: false)
+            ms!.terminalAppendMixedAsciiGang(["back\r\n"].map { self.makeMixedToken($0) })
+        })
+        // "back" should appear as normal text
+        let afterRestore = screen.compactLineDumpWithDividedHistoryAndContinuationMarks()!
+        XCTAssert(afterRestore.contains("back"),
+                  "Expected 'back' on screen after leaving line drawing mode: \(afterRestore)")
+    }
+
+    func testGang_loggingEnabled() {
+        gangTestWithSetup(
+            firstTokens: ["hello\r\nworld\r\n"],
+            secondTokens: ["back\r\n"],
+            setup: { ms in
+                let config = VT100MutableScreenConfiguration()
+                config.loggingEnabled = true
+                ms.setConfig(config)
+            },
+            restore: { ms in
+                let config = VT100MutableScreenConfiguration()
+                config.loggingEnabled = false
+                ms.setConfig(config)
+            }
+        )
+    }
+
+    func testGang_publishing() {
+        gangTestWithSetup(
+            firstTokens: ["hello\r\nworld\r\n"],
+            secondTokens: ["back\r\n"],
+            setup: { ms in
+                let config = VT100MutableScreenConfiguration()
+                config.publishing = true
+                ms.setConfig(config)
+            },
+            restore: { ms in
+                let config = VT100MutableScreenConfiguration()
+                config.publishing = false
+                ms.setConfig(config)
+            }
+        )
+    }
+
+    func testGang_expectations() {
+        gangTestWithSetup(
+            firstTokens: ["hello\r\nworld\r\n"],
+            secondTokens: ["back\r\n"],
+            setup: { ms in
+                let expect = iTermExpect(dry: false)
+                _ = expect.expectRegularExpression("never_match_this_xyz",
+                                                   after: nil,
+                                                   deadline: nil,
+                                                   willExpect: nil,
+                                                   completion: nil)
+                ms.updateExpect(from: expect)
+            },
+            restore: { ms in
+                let expect = iTermExpect(dry: false)
+                ms.updateExpect(from: expect)
+            }
+        )
+    }
+
+    func testGang_printBuffer() {
+        // Print buffer mode redirects output to a buffer instead of the screen,
+        // so we can't use the standard reference-comparison helper. Instead we
+        // verify screen output resumes correctly after leaving print buffer mode.
+        let screen = self.screen(width: 10, height: 4)
+        screen.performBlock(joinedThreads: { _, ms, _ in
+            ms!.maxScrollbackLines = 1000
+            // Enable printing so terminalBeginRedirectingToPrintBuffer works
+            let config = VT100MutableScreenConfiguration()
+            config.printingAllowed = true
+            ms!.setConfig(config)
+        })
+
+        // Enter print buffer mode, send a gang (should take slow path)
+        screen.performBlock(joinedThreads: { _, ms, _ in
+            ms!.terminalBeginRedirectingToPrintBuffer()
+            ms!.terminalAppendMixedAsciiGang(["hello\r\nworld\r\n"].map { self.makeMixedToken($0) })
+        })
+        // Nothing should appear on screen since output went to print buffer
+        let afterPrint = screen.compactLineDumpWithDividedHistoryAndContinuationMarks()!
+        XCTAssert(!afterPrint.contains("hello"),
+                  "Print buffer output should not appear on screen: \(afterPrint)")
+
+        // Exit print buffer mode, send another gang (should re-enable fast path)
+        screen.performBlock(joinedThreads: { _, ms, _ in
+            ms!.terminalPrintBuffer()
+            ms!.terminalAppendMixedAsciiGang(["back\r\n"].map { self.makeMixedToken($0) })
+        })
+        // "back" should now appear on screen
+        let afterRestore = screen.compactLineDumpWithDividedHistoryAndContinuationMarks()!
+        XCTAssert(afterRestore.contains("back"),
+                  "Expected 'back' on screen after leaving print mode: \(afterRestore)")
+    }
+
+    func testGang_multipleConditions() {
+        gangTestWithSetup(
+            firstTokens: ["hello\r\nworld\r\n"],
+            secondTokens: ["back\r\n"],
+            setup: { ms in
+                ms.insert = true
+                ms.ansi = true
+                let config = VT100MutableScreenConfiguration()
+                config.publishing = true
+                ms.setConfig(config)
+            },
+            restore: { ms in
+                ms.insert = false
+                ms.ansi = false
+                let config = VT100MutableScreenConfiguration()
+                config.publishing = false
+                ms.setConfig(config)
+            }
+        )
+    }
+
+    func testGang_expectationConsumedByMatch() {
+        // Tests that when an expectation matches during trigger evaluation,
+        // it's removed from the expectations list, and subsequent gangs
+        // can take the fast path.
+        let screen = self.screen(width: 10, height: 4)
+        screen.performBlock(joinedThreads: { _, ms, _ in
+            ms!.maxScrollbackLines = 1000
+        })
+
+        // Install an expectation that matches "hello"
+        screen.performBlock(joinedThreads: { _, ms, _ in
+            let expect = iTermExpect(dry: false)
+            _ = expect.expectRegularExpression("hello",
+                                               after: nil,
+                                               deadline: nil,
+                                               willExpect: nil,
+                                               completion: nil)
+            ms!.updateExpect(from: expect)
+        })
+
+        // Send text that matches the expectation via the slow path.
+        // The slow path evaluates triggers, which matches and consumes the expectation.
+        screen.performBlock(joinedThreads: { _, ms, _ in
+            ms!.terminalAppendMixedAsciiGang(["hello\r\n"].map { self.makeMixedToken($0) })
+        })
+
+        // Send another gang. Should work correctly now that expectation is consumed.
+        screen.performBlock(joinedThreads: { _, ms, _ in
+            ms!.terminalAppendMixedAsciiGang(["world\r\n"].map { self.makeMixedToken($0) })
+        })
+
+        let actual = screen.compactLineDumpWithDividedHistoryAndContinuationMarks()!
+        // Both "hello" and "world" should appear on the grid.
+        XCTAssert(actual.contains("hello"), "Expected 'hello' in grid: \(actual)")
+        XCTAssert(actual.contains("world"), "Expected 'world' in grid: \(actual)")
+    }
+
+    func testGang_expectationExpiredByDeadline() {
+        // Tests that when an expectation expires by deadline (not by matching),
+        // the gang mechanism still works correctly.
+        let screen = self.screen(width: 10, height: 4)
+        screen.performBlock(joinedThreads: { _, ms, _ in
+            ms!.maxScrollbackLines = 1000
+        })
+
+        // Install an expectation with a deadline in the past
+        screen.performBlock(joinedThreads: { _, ms, _ in
+            let expect = iTermExpect(dry: false)
+            let pastDeadline = Date(timeIntervalSinceNow: -1)
+            _ = expect.expectRegularExpression("never_match_xyz",
+                                               after: nil,
+                                               deadline: pastDeadline,
+                                               willExpect: nil,
+                                               completion: nil)
+            ms!.updateExpect(from: expect)
+        })
+
+        // The deadline has already passed but expiry hasn't been processed yet.
+        screen.performBlock(joinedThreads: { _, ms, _ in
+            ms!.terminalAppendMixedAsciiGang(["hello\r\n"].map { self.makeMixedToken($0) })
+        })
+
+        // Send a second gang to confirm processing continues correctly after expiry.
+        screen.performBlock(joinedThreads: { _, ms, _ in
+            ms!.terminalAppendMixedAsciiGang(["world\r\n"].map { self.makeMixedToken($0) })
+        })
+
+        let actual = screen.compactLineDumpWithDividedHistoryAndContinuationMarks()!
+        XCTAssert(actual.contains("hello"), "Expected 'hello' in grid: \(actual)")
+        XCTAssert(actual.contains("world"), "Expected 'world' in grid: \(actual)")
+    }
+
+    func testGang_postTriggerActions() {
+        // Tests that _postTriggerActions going non-empty (via a prompt-detecting trigger)
+        // and then being drained works correctly with gang processing.
+        let screen = self.screen(width: 10, height: 4)
+        screen.performBlock(joinedThreads: { _, ms, _ in
+            ms!.maxScrollbackLines = 1000
+        })
+
+        // Configure a prompt-detecting trigger that matches "prompt>"
+        let triggerDict: [String: Any] = [
+            "regex": "prompt>",
+            "action": "iTermShellPromptTrigger"
+        ]
+        screen.performBlock(joinedThreads: { _, ms, _ in
+            let config = VT100MutableScreenConfiguration()
+            config.triggerProfileDicts = [triggerDict]
+            ms!.setConfig(config)
+        })
+
+        // Send text matching the trigger.
+        screen.performBlock(joinedThreads: { _, ms, _ in
+            ms!.terminalAppendMixedAsciiGang(["prompt>\r\n"].map { self.makeMixedToken($0) })
+        })
+
+        // Remove triggers so only _postTriggerActions state matters for eligibility.
+        screen.performBlock(joinedThreads: { _, ms, _ in
+            let config = VT100MutableScreenConfiguration()
+            config.triggerProfileDicts = []
+            ms!.setConfig(config)
+        })
+
+        // Send more gangs to verify processing continues correctly.
+        screen.performBlock(joinedThreads: { _, ms, _ in
+            ms!.terminalAppendMixedAsciiGang(["after\r\n"].map { self.makeMixedToken($0) })
+        })
+
+        screen.performBlock(joinedThreads: { _, ms, _ in
+            ms!.terminalAppendMixedAsciiGang(["verify\r\n"].map { self.makeMixedToken($0) })
+        })
+
+        let actual = screen.compactLineDumpWithDividedHistoryAndContinuationMarks()!
+        XCTAssert(actual.contains("after"), "Expected 'after' in output: \(actual)")
+        XCTAssert(actual.contains("verify"), "Expected 'verify' in output: \(actual)")
+    }
+
     func testDropFirstBlock() {
         let screen = self.screen(width: 8, height: 8)
         session.configuration.maxScrollbackLines = 6

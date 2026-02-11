@@ -88,7 +88,7 @@ extension SavedColors {
 
 @objcMembers
 @objc(VT100SavedColorsSlot)
-class SavedColorsSlot: NSObject, Codable {
+public class SavedColorsSlot: NSObject, Codable {
     private static let numberOfIndexedColors = 256
 
     private let _text: CodableColor
@@ -114,7 +114,7 @@ class SavedColorsSlot: NSObject, Codable {
         }
         return result
     }
-    override var debugDescription: String {
+    override public var debugDescription: String {
         return "<Slot text=\(text) background=\(background) selectionText=\(selectionText) selectionBackground=\(selectionBackground) indexedColors=\(indexedColors.map { $0.debugDescription }.joined(separator: ","))>"
     }
 

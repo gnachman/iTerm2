@@ -8,7 +8,7 @@
 import Foundation
 
 @objc(iTermConductorRecovery)
-class ConductorRecovery: NSObject {
+public class ConductorRecovery: NSObject {
     @objc let pid: pid_t
     @objc let dcsID: String
     @objc let tree: NSDictionary

@@ -5149,6 +5149,13 @@
 			remoteGlobalIDString = 1DFA7C661923E83500DF1410;
 			remoteInfo = SSKeychain;
 		};
+		69D89B58C881DE661DF12C0A /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 0464AB0C006CD2EC7F000001 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 874206460564169600CFC3F1;
+			remoteInfo = iTerm2;
+		};
 		7577E27F2593B77F00905402 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 0464AB0C006CD2EC7F000001 /* Project object */;
@@ -5905,6 +5912,7 @@
 		20D5CC6404E7AA0500000106 /* iTermApplicationDelegate.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; lineEnding = 0; path = iTermApplicationDelegate.m; sourceTree = "<group>"; tabWidth = 4; xcLanguageSpecificationIdentifier = xcode.lang.objc; };
 		20E74F4804E9089700000106 /* ITAddressBookMgr.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = ITAddressBookMgr.h; sourceTree = "<group>"; tabWidth = 4; };
 		20E74F4904E9089700000106 /* ITAddressBookMgr.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = ITAddressBookMgr.m; sourceTree = "<group>"; tabWidth = 4; };
+		2205C1FAE857001EC8A263E4 /* PerformanceTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = PerformanceTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		49A6E4081211CC6000D9AD6F /* Compatability.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Compatability.h; sourceTree = "<group>"; };
 		5300984A2259365B00A69348 /* iTermHapticActuator.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermHapticActuator.h; sourceTree = "<group>"; };
 		5300984B2259365B00A69348 /* iTermHapticActuator.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermHapticActuator.m; sourceTree = "<group>"; };
@@ -9143,6 +9151,7 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
+		9C0F690213C696BCC28C2EDF /* PerformanceTests */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = PerformanceTests; sourceTree = "<group>"; };
 		A6A723AF2DC04C2200A8115D /* ModernTests */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = ModernTests; sourceTree = "<group>"; };
 /* End PBXFileSystemSynchronizedRootGroup section */
 
@@ -9310,6 +9319,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		BB285A1CF66CAEC00CEA40E2 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -9335,6 +9351,7 @@
 				A6822778280E26CD005DF0B4 /* SwiftyMarkdown */,
 				A6A5BDF82A070C3C00F5FD44 /* iTerm2ImportStatus */,
 				A6A723AF2DC04C2200A8115D /* ModernTests */,
+				9C0F690213C696BCC28C2EDF /* PerformanceTests */,
 				A616E6782EA9544D000C0C18 /* pwmplugin */,
 				1DD39AD5180B8118004E56D5 /* Frameworks */,
 				0464AB32006CD2EC7F000001 /* Products */,
@@ -9768,6 +9785,7 @@
 				7596379A2593AE0700E278CC /* iTerm2SandboxedWorker.xpc */,
 				A6A5BDF72A070C3800F5FD44 /* iTerm2ImportStatus.app */,
 				A6A723AE2DC04C2200A8115D /* ModernTests.xctest */,
+				2205C1FAE857001EC8A263E4 /* PerformanceTests.xctest */,
 				A69FEEBA2E123B8700AFF7A8 /* iTermSwiftPackages.framework */,
 			);
 			name = Products;
@@ -15946,6 +15964,29 @@
 			productReference = 1DFA7C671923E83500DF1410 /* libSSKeychain.a */;
 			productType = "com.apple.product-type.library.static";
 		};
+		2549E8A336D6EEDF5F73151F /* PerformanceTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = AFE316DC78A36A80F9745F35 /* Build configuration list for PBXNativeTarget "PerformanceTests" */;
+			buildPhases = (
+				02DFDB5F1CE596C1BB2E6FF3 /* Sources */,
+				BB285A1CF66CAEC00CEA40E2 /* Frameworks */,
+				5ABD906D9F58A2FB375A934F /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				CC48416BE7001BC48B0F9368 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				9C0F690213C696BCC28C2EDF /* PerformanceTests */,
+			);
+			name = PerformanceTests;
+			packageProductDependencies = (
+			);
+			productName = PerformanceTests;
+			productReference = 2205C1FAE857001EC8A263E4 /* PerformanceTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 		759637992593AE0700E278CC /* iTerm2SandboxedWorker */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 759637AA2593AE0700E278CC /* Build configuration list for PBXNativeTarget "iTerm2SandboxedWorker" */;
@@ -16190,6 +16231,10 @@
 					1DFA7C661923E83500DF1410 = {
 						DevelopmentTeam = H7V7XYVQ7D;
 					};
+					2549E8A336D6EEDF5F73151F = {
+						CreatedOnToolsVersion = 16.1;
+						TestTargetID = 874206460564169600CFC3F1;
+					};
 					759637992593AE0700E278CC = {
 						CreatedOnToolsVersion = 12.3;
 						DevelopmentTeam = H7V7XYVQ7D;
@@ -16277,6 +16322,7 @@
 				759637992593AE0700E278CC /* iTerm2SandboxedWorker */,
 				A6A5BDF62A070C3800F5FD44 /* iTerm2ImportStatus */,
 				A6A723AD2DC04C2200A8115D /* ModernTests */,
+				2549E8A336D6EEDF5F73151F /* PerformanceTests */,
 				A69FEEB92E123B8700AFF7A8 /* iTermSwiftPackages */,
 			);
 		};
@@ -17398,6 +17444,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		5ABD906D9F58A2FB375A934F /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		759637982593AE0700E278CC /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -18499,6 +18552,13 @@
 /* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		02DFDB5F1CE596C1BB2E6FF3 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		1D6ED9ED19AEA20D005A7799 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -20284,6 +20344,11 @@
 			isa = PBXTargetDependency;
 			productRef = A6EC804D281BBBE100493544 /* SwiftyMarkdown */;
 		};
+		CC48416BE7001BC48B0F9368 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 874206460564169600CFC3F1 /* iTerm2 */;
+			targetProxy = 69D89B58C881DE661DF12C0A /* PBXContainerItemProxy */;
+		};
 /* End PBXTargetDependency section */
 
 /* Begin PBXVariantGroup section */
@@ -20322,6 +20387,70 @@
 /* End PBXVariantGroup section */
 
 /* Begin XCBuildConfiguration section */
+		01C2D3E4F5061829394A5B6C /* Beta */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_IDENTITY = "-";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = H7V7XYVQ7D;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(SRCROOT)/build/Development",
+					"$(SRCROOT)",
+					"$(SRCROOT)/ColorPicker",
+					"$(SRCROOT)/ThirdParty",
+					"$(SRCROOT)/SearchableComboListView",
+					"$(SRCROOT)/BetterFontPicker",
+				);
+				GENERATE_INFOPLIST_FILE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 15.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.iterm2.PerformanceTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_OBJC_BRIDGING_HEADER = "$(SRCROOT)/PerformanceTests/PerformanceTests-Bridging-Header.h";
+				SWIFT_VERSION = 5.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/iTerm2.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/iTerm2";
+				USER_HEADER_SEARCH_PATHS = (
+					"$(SRCROOT)/sources",
+					"$(SRCROOT)/ThirdParty",
+					"$(PROJECT_DIR)/ThirdParty/adblock-rust/include",
+				);
+			};
+			name = Beta;
+		};
+		12D3E4F5061829394A5B6C7D /* Nightly */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_IDENTITY = "-";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = H7V7XYVQ7D;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(SRCROOT)/build/Development",
+					"$(SRCROOT)",
+					"$(SRCROOT)/ColorPicker",
+					"$(SRCROOT)/ThirdParty",
+					"$(SRCROOT)/SearchableComboListView",
+					"$(SRCROOT)/BetterFontPicker",
+				);
+				GENERATE_INFOPLIST_FILE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 15.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.iterm2.PerformanceTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_OBJC_BRIDGING_HEADER = "$(SRCROOT)/PerformanceTests/PerformanceTests-Bridging-Header.h";
+				SWIFT_VERSION = 5.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/iTerm2.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/iTerm2";
+				USER_HEADER_SEARCH_PATHS = (
+					"$(SRCROOT)/sources",
+					"$(SRCROOT)/ThirdParty",
+					"$(PROJECT_DIR)/ThirdParty/adblock-rust/include",
+				);
+			};
+			name = Nightly;
+		};
 		1809E7B01665E2CB0069C439 /* Nightly */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -23645,6 +23774,7 @@
 				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "-";
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
 				CURRENT_PROJECT_VERSION = 1;
@@ -23732,6 +23862,7 @@
 				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "-";
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
 				CURRENT_PROJECT_VERSION = 1;
@@ -23811,6 +23942,7 @@
 				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "-";
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
 				CURRENT_PROJECT_VERSION = 1;
@@ -23890,6 +24022,7 @@
 				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "-";
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
 				CURRENT_PROJECT_VERSION = 1;
@@ -24637,6 +24770,70 @@
 			};
 			name = Deployment;
 		};
+		E9A1B2C3D4E5F60718293A4B /* Development */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_IDENTITY = "-";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = H7V7XYVQ7D;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(SRCROOT)/build/Development",
+					"$(SRCROOT)",
+					"$(SRCROOT)/ColorPicker",
+					"$(SRCROOT)/ThirdParty",
+					"$(SRCROOT)/SearchableComboListView",
+					"$(SRCROOT)/BetterFontPicker",
+				);
+				GENERATE_INFOPLIST_FILE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 15.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.iterm2.PerformanceTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_OBJC_BRIDGING_HEADER = "$(SRCROOT)/PerformanceTests/PerformanceTests-Bridging-Header.h";
+				SWIFT_VERSION = 5.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/iTerm2.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/iTerm2";
+				USER_HEADER_SEARCH_PATHS = (
+					"$(SRCROOT)/sources",
+					"$(SRCROOT)/ThirdParty",
+					"$(PROJECT_DIR)/ThirdParty/adblock-rust/include",
+				);
+			};
+			name = Development;
+		};
+		F0B1C2D3E4F5061728394A5B /* Deployment */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_IDENTITY = "-";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = H7V7XYVQ7D;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(SRCROOT)/build/Development",
+					"$(SRCROOT)",
+					"$(SRCROOT)/ColorPicker",
+					"$(SRCROOT)/ThirdParty",
+					"$(SRCROOT)/SearchableComboListView",
+					"$(SRCROOT)/BetterFontPicker",
+				);
+				GENERATE_INFOPLIST_FILE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 15.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.iterm2.PerformanceTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_OBJC_BRIDGING_HEADER = "$(SRCROOT)/PerformanceTests/PerformanceTests-Bridging-Header.h";
+				SWIFT_VERSION = 5.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/iTerm2.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/iTerm2";
+				USER_HEADER_SEARCH_PATHS = (
+					"$(SRCROOT)/sources",
+					"$(SRCROOT)/ThirdParty",
+					"$(PROJECT_DIR)/ThirdParty/adblock-rust/include",
+				);
+			};
+			name = Deployment;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -24782,6 +24979,17 @@
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Development;
+		};
+		AFE316DC78A36A80F9745F35 /* Build configuration list for PBXNativeTarget "PerformanceTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				E9A1B2C3D4E5F60718293A4B /* Development */,
+				F0B1C2D3E4F5061728394A5B /* Deployment */,
+				01C2D3E4F5061829394A5B6C /* Beta */,
+				12D3E4F5061829394A5B6C7D /* Nightly */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Deployment;
 		};
 		BB024D35096EE4080021E793 /* Build configuration list for PBXNativeTarget "iTerm2" */ = {
 			isa = XCConfigurationList;

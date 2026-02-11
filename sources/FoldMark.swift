@@ -16,7 +16,7 @@ protocol FoldMarkReading: AnyObject, iTermMarkProtocol {
 }
 
 @objc(iTermSavedIntervalTreeObject)
-class SavedIntervalTreeObject: NSObject {
+public class SavedIntervalTreeObject: NSObject {
     @objc var object: IntervalTreeObject
     
     struct ReflowableCoordinate {
