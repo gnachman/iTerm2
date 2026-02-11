@@ -1549,17 +1549,21 @@ extension iTermBrowserViewController: iTermBrowserActionPerforming {
         guard let window = view.window else {
             return
         }
-        
+
         Task {
             let webUrls = await browserManager.webView.urls(atPointInWindow: point)
             guard !webUrls.isEmpty else {
                 return
             }
-            
+
             let screenRect = window.convertToScreen(NSRect(origin: point, size: NSSize(width: 1, height: 1)))
             let helper = QuickLookHelper()
             helper.showQuickLookWithDownloads(for: webUrls, from: screenRect)
         }
+    }
+
+    func actionPerformingCopyLinkAddress(atPointInWindow point: NSPoint) {
+        browserManager.webView.copyLinkAddress(atPointInWindow: point)
     }
 
     func actionPerformingPasteSpecial(config: String, fromSelection: Bool) {

@@ -142,30 +142,59 @@ extension iTermBrowserWebView {
     func openLink(atPointInWindow point: NSPoint,
                   inNewTab: Bool) {
         Task {
-            let jsPoint = convertToJavaScriptCoordinates(point)
-            
-            let script = iTermBrowserTemplateLoader.loadTemplate(
-                named: "open-link-at-point",
-                type: "js",
-                substitutions: [
-                    "X": "\(jsPoint.x)",
-                    "Y": "\(jsPoint.y)"
-                ]
-            )
-            
-            guard let result = try? await safelyEvaluateJavaScript(script, contentWorld: .page),
-                  let linkInfo = result as? [String: Any],
-                  let urlString = linkInfo["url"] as? String,
-                  let url = URL(string: urlString) else {
+            guard let url = await linkURL(atPointInWindow: point) else {
                 return
             }
-            
+
             await MainActor.run {
                 if inNewTab {
                     browserDelegate?.webViewOpenURLInNewTab(self, url: url)
                 } else {
                     self.load(URLRequest(url: url))
                 }
+            }
+        }
+    }
+
+    @MainActor
+    func linkURL(atPointInWindow point: NSPoint) async -> URL? {
+        let jsPoint = convertToJavaScriptCoordinates(point)
+
+        let script = iTermBrowserTemplateLoader.loadTemplate(
+            named: "open-link-at-point",
+            type: "js",
+            substitutions: [
+                "X": "\(jsPoint.x)",
+                "Y": "\(jsPoint.y)"
+            ]
+        )
+
+        guard let result = try? await safelyEvaluateJavaScript(script, contentWorld: .page),
+              let linkInfo = result as? [String: Any],
+              let urlString = linkInfo["url"] as? String,
+              let url = URL(string: urlString) else {
+            return nil
+        }
+
+        return url
+    }
+
+    @MainActor
+    func copyLinkAddress(atPointInWindow point: NSPoint) {
+        Task {
+            guard let url = await linkURL(atPointInWindow: point) else {
+                return
+            }
+
+            await MainActor.run {
+                let pasteboard = NSPasteboard.general
+                pasteboard.clearContents()
+                pasteboard.setString(url.absoluteString, forType: .string)
+                PasteboardHistory.sharedInstance().save(url.absoluteString)
+                ToastWindowController.showToast(withMessage: "Copied",
+                                                duration: 1,
+                                                screenCoordinate: NSEvent.mouseLocation,
+                                                pointSize: 12)
             }
         }
     }

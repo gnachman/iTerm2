@@ -157,4 +157,8 @@ class iTermBrowserPointerActionPerformer: NSObject, PointerControllerDelegate {
     func quickLook(with event: NSEvent) {
         delegate?.actionPerformingOpenQuickLook(atPointInWindow: event.locationInWindow)
     }
+
+    func copyLinkAddress(with event: NSEvent) {
+        delegate?.actionPerformingCopyLinkAddress(atPointInWindow: event.locationInWindow)
+    }
 }

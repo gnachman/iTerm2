@@ -111,4 +111,7 @@ protocol PointerControllerDelegate: AnyObject {
     @objc(invokeScriptFunction:withEvent:)
     func invokeScriptFunction(_ function: String,
                               withEvent event: NSEvent)
+
+    @objc(copyLinkAddressWithEvent:)
+    func copyLinkAddress(with event: NSEvent)
 }

@@ -39,6 +39,7 @@ extern NSString *kExtendSelectionPointerAction;
 extern NSString *kQuickLookAction;
 extern NSString *kIgnoreAction;
 extern NSString *kSelectMenuItemPointerAction;
+extern NSString *kCopyLinkAddressPointerAction;
 
 extern NSString *kThreeFingerClickGesture;
 extern NSString *kThreeFingerSwipeRight;

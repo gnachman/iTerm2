@@ -7324,6 +7324,30 @@ dragSemanticHistoryWithEvent:(NSEvent *)event
     [self handleQuickLookWithEvent:event];
 }
 
+- (void)copyLinkAddressWithEvent:(NSEvent *)event {
+    NSPoint clickPoint = [self clickPoint:event allowRightMarginOverflow:NO];
+    VT100GridCoord coord = VT100GridCoordMake(clickPoint.x, clickPoint.y);
+
+    if (coord.x < 0 || coord.y < 0) {
+        return;
+    }
+
+    iTermTextExtractor *extractor = [iTermTextExtractor textExtractorWithDataSource:_dataSource];
+    NSURL *url = [extractor urlOfHypertextLinkAt:coord urlId:nil target:nil];
+
+    if (url) {
+        NSPasteboard *pasteboard = [NSPasteboard generalPasteboard];
+        [pasteboard declareTypes:@[ NSPasteboardTypeString ] owner:self];
+        NSString *copyString = url.absoluteString;
+        [pasteboard setString:copyString forType:NSPasteboardTypeString];
+        [[PasteboardHistory sharedInstance] save:copyString];
+        [ToastWindowController showToastWithMessage:@"Copied"
+                                           duration:1
+                                   screenCoordinate:[NSEvent mouseLocation]
+                                          pointSize:12];
+    }
+}
+
 - (void)nextTabWithEvent:(NSEvent *)event {
     [_delegate textViewSelectNextTab];
 }
