@@ -233,6 +233,7 @@ typedef NS_ENUM(NSUInteger, iTermSessionViewFindDriver) {
                  restorableState:(NSDictionary *)restorableState NS_AVAILABLE_MAC(11_0);
 
 - (void)setTerminalBackgroundColor:(NSColor *)color;
+- (void)setProgressBarDarkModeFromBackgroundColor:(NSColor *)unprocessedColor;
 
 - (void)showFindUI;
 - (void)createFindDriverIfNeeded;

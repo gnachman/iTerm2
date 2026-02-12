@@ -145,6 +145,7 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
     iTermGenericStatusBarContainer *_genericStatusBarContainer;
     iTermImageView *_imageView NS_AVAILABLE_MAC(10_14);
     NSColor *_terminalBackgroundColor;
+    NSColor *_unprocessedBackgroundColor;
 
     // For macOS 10.14+ when subpixel AA is turned on and the scroller style is legacy, this draws
     // some blended default background color under the vertical scroller. In all other conditions
@@ -437,7 +438,13 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
     [self setNeedsDisplay:YES];
     [CATransaction commit];
     [self updateMinimapAlpha];
-    _progressBar.darkMode = color.isDark;
+}
+
+- (void)setProgressBarDarkModeFromBackgroundColor:(NSColor *)unprocessedColor {
+    _unprocessedBackgroundColor = unprocessedColor;
+    if (_progressBar && unprocessedColor) {
+        _progressBar.darkMode = unprocessedColor.isDark;
+    }
 }
 
 - (void)setTransparencyAlpha:(CGFloat)transparencyAlpha
@@ -1906,7 +1913,8 @@ typedef NS_ENUM(NSInteger, SessionViewTrackingMode) {
 - (void)updateProgressBar {
     if (!_progressBar) {
         _progressBar = [[iTermProgressBarView alloc] init];
-        _progressBar.darkMode = _terminalBackgroundColor.isDark;
+        NSColor *colorForDarkMode = _unprocessedBackgroundColor ?: _terminalBackgroundColor;
+        _progressBar.darkMode = colorForDarkMode.isDark;
         _progressBar.heightValue = _progressBarHeight;
         _progressBar.colorScheme = _progressBarColorScheme;
         [self addSubviewBelowFindView:_progressBar];

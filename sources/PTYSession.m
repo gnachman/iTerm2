@@ -5844,10 +5844,12 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
         self.view.image = _backgroundImage;
         [self.view setImageMode:_backgroundImageMode];
         [self.view setTerminalBackgroundColor:[self effectiveProcessedBackgroundColor]];
+        [self.view setProgressBarDarkModeFromBackgroundColor:[self effectiveUnprocessedBackgroundColor]];
         return;
     }
     self.view.image = nil;
     [self.view setTerminalBackgroundColor:[self processedBackgroundColor]];
+    [self.view setProgressBarDarkModeFromBackgroundColor:[self.screen.colorMap colorForKey:kColorMapBackground]];
     [self invalidateBlend];
     [self.delegate session:self
         setBackgroundImage:_backgroundImage
@@ -12659,6 +12661,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     // In issue 8843 we see that sometimes the background color can get out of sync. I can't
     // figure it out. This patches the problem until I can collect more info.
     [_view setTerminalBackgroundColor:[self processedBackgroundColor]];
+    [_view setProgressBarDarkModeFromBackgroundColor:[self.screen.colorMap colorForKey:kColorMapBackground]];
     return !_textview.suppressDrawing;
 }
 
