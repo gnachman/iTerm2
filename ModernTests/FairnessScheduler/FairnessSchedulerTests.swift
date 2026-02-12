@@ -1422,10 +1422,8 @@ final class FairnessSchedulerSessionRestorationTests: XCTestCase {
 
         XCTAssertEqual(mockDelegate.willExecuteCount, 0)
 
-        #if ITERM_DEBUG
         let tokensBeforeUnregister = executor.testQueuedTokenCount
         XCTAssertGreaterThan(tokensBeforeUnregister, 0)
-        #endif
 
         scheduler.unregister(sessionId: sessionId1)
         executor.isRegistered = false
@@ -1433,10 +1431,8 @@ final class FairnessSchedulerSessionRestorationTests: XCTestCase {
 
         waitForMutationQueue()
 
-        #if ITERM_DEBUG
         let tokensAfterUnregister = executor.testQueuedTokenCount
         XCTAssertEqual(tokensAfterUnregister, tokensBeforeUnregister)
-        #endif
 
         let sessionId2 = scheduler.register(executor)
         executor.fairnessSessionId = sessionId2
@@ -1469,6 +1465,7 @@ final class FairnessSchedulerSessionRestorationTests: XCTestCase {
                                       slownessDetector: SlownessDetector(),
                                       queue: iTermGCD.mutationQueue())
         executor.delegate = mockDelegate
+        executor.testSkipNotifyScheduler = true
 
         let sessionId1 = scheduler.register(executor)
         executor.fairnessSessionId = sessionId1
@@ -1502,10 +1499,8 @@ final class FairnessSchedulerSessionRestorationTests: XCTestCase {
 
         waitForMutationQueue()
 
-        #if ITERM_DEBUG
         let tokensAfterUnregister = executor.testQueuedTokenCount
         XCTAssertGreaterThan(tokensAfterUnregister, 0)
-        #endif
 
         let sessionId2 = scheduler.register(executor)
         executor.fairnessSessionId = sessionId2
@@ -1549,26 +1544,20 @@ final class FairnessSchedulerSessionRestorationTests: XCTestCase {
 
         waitForMutationQueue()
 
-        #if ITERM_DEBUG
         let tokensBeforeUnregister = executor.testQueuedTokenCount
         XCTAssertGreaterThan(tokensBeforeUnregister, 0)
-        #endif
 
         scheduler.unregister(sessionId: sessionId1)
         waitForMutationQueue()
 
-        #if ITERM_DEBUG
         let tokensAfterFirstUnregister = executor.testQueuedTokenCount
         XCTAssertEqual(tokensAfterFirstUnregister, tokensBeforeUnregister)
-        #endif
 
         scheduler.unregister(sessionId: sessionId1)
         waitForMutationQueue()
 
-        #if ITERM_DEBUG
         let tokensAfterSecondUnregister = executor.testQueuedTokenCount
         XCTAssertEqual(tokensAfterSecondUnregister, tokensAfterFirstUnregister)
-        #endif
 
         let sessionId2 = scheduler.register(executor)
         executor.fairnessSessionId = sessionId2

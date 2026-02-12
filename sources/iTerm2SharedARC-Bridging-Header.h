@@ -200,6 +200,7 @@
 #import "SessionView.h"
 #import "SessionView+Nullability.h"
 #import "SolidColorView.h"
+#import "Coprocess.h"
 #import "TaskNotifier.h"
 #import "TemporaryNumberAllocator.h"
 #import "ToastWindowController.h"

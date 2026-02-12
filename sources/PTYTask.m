@@ -438,6 +438,11 @@ static void HandleSigChld(int n) {
     @synchronized(self) {
         brokenPipe_ = YES;
     }
+    // Stop dispatch sources immediately to prevent handlers firing on a dead fd.
+    // In fairness mode, tasks aren't in TaskNotifier._tasks so deregisterTask:
+    // won't stop I/O — this is the only teardown path.
+    // No-op in legacy mode (sources are nil).
+    [self teardownDispatchSources];
     [[TaskNotifier sharedInstance] deregisterTask:self];
     [self.delegate threadedTaskBrokenPipe];
 }
@@ -633,11 +638,9 @@ static void HandleSigChld(int n) {
 
 // Helper to get effective ioAllowed, considering test override
 - (BOOL)effectiveIoAllowed {
-#if ITERM_DEBUG
     if (_testIoAllowedOverride != nil) {
         return _testIoAllowedOverride.boolValue;
     }
-#endif
     return self.jobManager.ioAllowed;
 }
 
@@ -709,6 +712,7 @@ static void HandleSigChld(int n) {
     // to reduce dispatch overhead while maintaining responsiveness.
     int iterations = 4;
     int totalBytesRead = 0;
+    BOOL gotEOF = NO;
     char buffer[MAXRW * iterations];
 
     for (int i = 0; i < iterations; ++i) {
@@ -722,7 +726,9 @@ static void HandleSigChld(int n) {
             break;
         }
         if (n == 0) {
-            // EOF
+            // EOF - PTY slave side closed (child exited).
+            // Deliver any buffered bytes before signaling broken pipe.
+            gotEOF = YES;
             break;
         }
         totalBytesRead += n;
@@ -732,25 +738,27 @@ static void HandleSigChld(int n) {
         }
     }
 
-    if (totalBytesRead == 0) {
-        return;
-    }
+    if (totalBytesRead > 0) {
+        hasOutput = YES;
 
-    hasOutput = YES;
+        // Send data to delegate via non-blocking path
+        // (addTokens internally calls notifyScheduler which kicks FairnessScheduler)
+        [self.delegate threadedReadTask:buffer length:totalBytesRead];
 
-    // Send data to delegate via non-blocking path
-    // (addTokens internally calls notifyScheduler which kicks FairnessScheduler)
-    [self.delegate threadedReadTask:buffer length:totalBytesRead];
-
-    // Route PTY output to coprocess (same as readTask:length:)
-    @synchronized (self) {
-        if (coprocess_ && !self.sshIntegrationActive) {
-            [self writeToCoprocess:[NSData dataWithBytes:buffer length:totalBytesRead]];
+        // Route PTY output to coprocess (same as readTask:length:)
+        @synchronized (self) {
+            if (coprocess_ && !self.sshIntegrationActive) {
+                [self writeToCoprocess:[NSData dataWithBytes:buffer length:totalBytesRead]];
+            }
         }
+
+        // Re-check state after read (backpressure may have increased)
+        [self updateReadSourceState];
     }
 
-    // Re-check state after read (backpressure may have increased)
-    [self updateReadSourceState];
+    if (gotEOF) {
+        [self brokenPipe];
+    }
 }
 
 - (void)handleWriteEvent {
@@ -1453,7 +1461,6 @@ static void HandleSigChld(int n) {
 
 @end
 
-#if ITERM_DEBUG
 @implementation PTYTask (Testing)
 
 - (BOOL)testHasReadSource {
@@ -1534,4 +1541,3 @@ static void HandleSigChld(int n) {
 }
 
 @end
-#endif

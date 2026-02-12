@@ -97,6 +97,8 @@ PTYTASK_TEST_CLASSES=(
     "PTYTaskEdgeCaseTests"
     "PTYTaskReadHandlerPipelineTests"
     "PTYTaskWritePathRoundTripTests"
+    "PTYTaskEOFTests"
+    "PTYTaskBrokenPipeSourceTeardownTests"
 )
 
 # Milestone 4: TaskNotifier Changes (Checkpoint 4)
@@ -241,8 +243,8 @@ if [[ -n "$FILTER" ]]; then
 fi
 echo ""
 
-# Clean up previous test results
-rm -rf "TestResults/FairnessSchedulerTests.xcresult"
+# Use timestamped result bundle to avoid conflicts with stale results
+RESULT_BUNDLE="TestResults/FairnessSchedulerTests-$(date +%Y%m%d-%H%M%S).xcresult"
 
 # Run tests (with code signing disabled for command-line builds)
 SIGNING_FLAGS="CODE_SIGN_IDENTITY=- CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO"
@@ -257,7 +259,7 @@ if [[ $VERBOSE -eq 1 ]]; then
         -scheme ModernTests \
         $ONLY_TESTING_ARGS \
         -parallel-testing-enabled NO \
-        -resultBundlePath "TestResults/FairnessSchedulerTests.xcresult" \
+        -resultBundlePath "$RESULT_BUNDLE" \
         $SIGNING_FLAGS \
         2>&1 | tee "$TEST_OUTPUT" | tee test_output.log
     XCODE_EXIT=${PIPESTATUS[0]}
@@ -267,7 +269,7 @@ else
         -scheme ModernTests \
         $ONLY_TESTING_ARGS \
         -parallel-testing-enabled NO \
-        -resultBundlePath "TestResults/FairnessSchedulerTests.xcresult" \
+        -resultBundlePath "$RESULT_BUNDLE" \
         $SIGNING_FLAGS \
         2>&1 | tee "$TEST_OUTPUT" | grep -E "(Test Case|passed|failed|error:|\*\*)"
     XCODE_EXIT=${PIPESTATUS[0]}

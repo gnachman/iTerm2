@@ -114,7 +114,6 @@ func waitForMainQueue() {
     }
 }
 
-#if ITERM_DEBUG
 /// Waits for scheduler to become quiescent using iteration count instead of wall-clock time.
 /// This is deterministic and avoids flaky timeout-based tests.
 /// - Parameter maxIterations: Maximum number of queue sync iterations before giving up
@@ -122,7 +121,6 @@ func waitForMainQueue() {
 func waitForSchedulerQuiescence(maxIterations: Int = 100) -> Int {
     return FairnessScheduler.shared.waitForQuiescenceIterative(maxIterations: maxIterations)
 }
-#endif
 
 // MARK: - XCTestCase Extensions
 
@@ -159,7 +157,6 @@ extension XCTestCase {
 
 // MARK: - FairnessScheduler Test Helpers
 
-#if ITERM_DEBUG
 extension FairnessScheduler {
 
     /// Test helper: Wait for all scheduled executions to complete.
@@ -188,7 +185,6 @@ extension FairnessScheduler {
         return testBusySessionCount == 0 ? iterations : -1
     }
 }
-#endif
 
 // MARK: - TokenExecutor Test Helpers
 

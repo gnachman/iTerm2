@@ -55,9 +55,7 @@ final class TokenExecutorNonBlockingTests: XCTestCase {
             queue: iTermGCD.mutationQueue()
         )
         executor.delegate = mockDelegate
-        #if ITERM_DEBUG
         executor.testSkipNotifyScheduler = true
-        #endif
     }
 
     override func tearDown() {
@@ -286,12 +284,8 @@ final class TokenExecutorAccountingTests: XCTestCase {
         // Step 1: Add enough tokens to reach heavy backpressure
         // Heavy = < 25% slots available, so we need to consume > 75% of slots
         // Default bufferDepth is 40, so we need > 30 token arrays
-        #if ITERM_DEBUG
         let totalSlots = executor.testTotalSlots
         let targetTokenArrays = Int(Double(totalSlots) * 0.80)  // 80% to ensure heavy
-        #else
-        let targetTokenArrays = 35  // Safe default assuming 40 slots
-        #endif
 
         for _ in 0..<targetTokenArrays {
             let vector = createTestTokenVector(count: 1)
@@ -1320,7 +1314,6 @@ final class TokenExecutorLegacyRemovalTests: XCTestCase {
         // 7. Verify the execution order shows proper round-robin
         try XCTSkipUnless(isDebugBuild, "Test requires ITERM_DEBUG hooks for execution history tracking")
 
-        #if ITERM_DEBUG
         // Create 3 sessions with delegates that initially BLOCK execution
         var executors: [(executor: TokenExecutor, delegate: MockTokenExecutorDelegate, id: UInt64)] = []
 
@@ -1416,7 +1409,6 @@ final class TokenExecutorLegacyRemovalTests: XCTestCase {
             XCTAssertEqual(uniqueInFirstRound.count, sessionCount,
                            "First round should include all \(sessionCount) sessions. First \(sessionCount): \(firstRound)")
         }
-        #endif
     }
 }
 
@@ -2257,10 +2249,8 @@ final class TokenExecutorAvailableSlotsBoundaryTests: XCTestCase {
             queue: iTermGCD.mutationQueue()
         )
         executor.delegate = mockDelegate
-        #if ITERM_DEBUG
         // Prevent auto-execution so we can verify accounting precisely
         executor.testSkipNotifyScheduler = true
-        #endif
 
         // Block execution so tokens accumulate even if scheduler fires
         mockDelegate.shouldQueueTokens = true
@@ -2270,11 +2260,9 @@ final class TokenExecutorAvailableSlotsBoundaryTests: XCTestCase {
         executor.fairnessSessionId = sessionId
         executor.isRegistered = true
 
-        #if ITERM_DEBUG
         let initialSlots = executor.testAvailableSlots
         let totalSlots = executor.testTotalSlots
         XCTAssertEqual(initialSlots, totalSlots, "Fresh executor should have all slots available")
-        #endif
 
         // Add more token groups than totalSlots to verify negative slots work.
         // With non-blocking addTokens, this returns immediately without blocking.
@@ -2287,13 +2275,11 @@ final class TokenExecutorAvailableSlotsBoundaryTests: XCTestCase {
         // Wait for mutation queue to process all didAddTokens calls
         waitForMutationQueue()
 
-        #if ITERM_DEBUG
         // Verify accounting: 40 - 50 = -10 (negative is allowed)
         let afterAddSlots = executor.testAvailableSlots
         let expectedSlots = totalSlots - addCount
         XCTAssertEqual(afterAddSlots, expectedSlots,
                        "availableSlots should track total pending tokens")
-        #endif
 
         // Backpressure should be blocked when availableSlots <= 0
         let level = executor.backpressureLevel
@@ -2320,12 +2306,10 @@ final class TokenExecutorAvailableSlotsBoundaryTests: XCTestCase {
         FairnessScheduler.shared.unregister(sessionId: sessionId)
         waitForMutationQueue()
 
-        #if ITERM_DEBUG
         // After processing all, slots should return to totalSlots
         let finalSlots = executor.testAvailableSlots
         XCTAssertEqual(finalSlots, totalSlots,
                        "After processing all tokens, slots should return to maximum (\(totalSlots)), got \(finalSlots)")
-        #endif
 
         // After processing and cleanup, should return to none
         XCTAssertEqual(executor.backpressureLevel, .none,
@@ -2353,9 +2337,7 @@ final class TokenExecutorAvailableSlotsBoundaryTests: XCTestCase {
         executor.fairnessSessionId = sessionId
         executor.isRegistered = true
 
-        #if ITERM_DEBUG
         let totalSlots = executor.testTotalSlots
-        #endif
 
         let group = DispatchGroup()
         let addCount = 50
@@ -2400,7 +2382,6 @@ final class TokenExecutorAvailableSlotsBoundaryTests: XCTestCase {
         // Wait for cleanup to complete (unregister dispatches async to mutation queue)
         waitForMutationQueue()
 
-        #if ITERM_DEBUG
         // Verify accounting is consistent (not corrupted by concurrent operations)
         let finalSlots = executor.testAvailableSlots
         let queuedTokens = executor.testQueuedTokenCount
@@ -2418,7 +2399,6 @@ final class TokenExecutorAvailableSlotsBoundaryTests: XCTestCase {
             XCTAssertTrue(executor.backpressureLevel == .none,
                           "Backpressure should be .none when no tokens remain")
         }
-        #endif
     }
 
     func testRapidAddConsumeAddCycle() {
@@ -2435,23 +2415,19 @@ final class TokenExecutorAvailableSlotsBoundaryTests: XCTestCase {
         let sessionId = FairnessScheduler.shared.register(executor)
         executor.fairnessSessionId = sessionId
 
-        #if ITERM_DEBUG
         let totalSlots = executor.testTotalSlots
         let initialSlots = executor.testAvailableSlots
         XCTAssertEqual(initialSlots, totalSlots, "Should start with all slots available")
-        #endif
 
         for cycle in 0..<20 {
             // Add
             let vector = createTestTokenVector(count: 5)
             executor.addTokens(vector, lengthTotal: 50, lengthExcludingInBandSignaling: 50)
 
-            #if ITERM_DEBUG
             // After add, slots should decrease by 1
             let afterAdd = executor.testAvailableSlots
             XCTAssertEqual(afterAdd, totalSlots - 1,
                            "After add in cycle \(cycle), should have one fewer slot")
-            #endif
 
             // Immediately trigger consume
             let expectation = XCTestExpectation(description: "Cycle \(cycle)")
@@ -2460,22 +2436,18 @@ final class TokenExecutorAvailableSlotsBoundaryTests: XCTestCase {
             }
             wait(for: [expectation], timeout: 1.0)
 
-            #if ITERM_DEBUG
             // After consume, slots should return to totalSlots
             let afterConsume = executor.testAvailableSlots
             XCTAssertEqual(afterConsume, totalSlots,
                            "After consume in cycle \(cycle), slots should return to max")
-            #endif
         }
 
         FairnessScheduler.shared.unregister(sessionId: sessionId)
 
-        #if ITERM_DEBUG
         // Verify no drift after many cycles
         let finalSlots = executor.testAvailableSlots
         XCTAssertEqual(finalSlots, totalSlots,
                        "After \(20) add/consume cycles, slots should equal totalSlots (no drift)")
-        #endif
 
         // After many cycles, should be back to none
         XCTAssertEqual(executor.backpressureLevel, .none,
@@ -2979,10 +2951,8 @@ final class TokenExecutorSessionReviveTests: XCTestCase {
 
         waitForMutationQueue()
 
-        #if ITERM_DEBUG
         let tokensBeforeUnregister = executor.testQueuedTokenCount
         XCTAssertGreaterThan(tokensBeforeUnregister, 0)
-        #endif
 
         FairnessScheduler.shared.unregister(sessionId: sessionId)
         executor.fairnessSessionId = 0
@@ -2990,10 +2960,8 @@ final class TokenExecutorSessionReviveTests: XCTestCase {
 
         waitForMutationQueue()
 
-        #if ITERM_DEBUG
         let tokensAfterUnregister = executor.testQueuedTokenCount
         XCTAssertEqual(tokensAfterUnregister, tokensBeforeUnregister)
-        #endif
 
         XCTAssertEqual(executor.fairnessSessionId, 0)
         XCTAssertFalse(executor.isRegistered)
@@ -3068,10 +3036,8 @@ final class TokenExecutorSessionReviveTests: XCTestCase {
 
         waitForMutationQueue()
 
-        #if ITERM_DEBUG
         let tokensBeforeUnregister = executor.testQueuedTokenCount
         XCTAssertGreaterThan(tokensBeforeUnregister, 0, "Should have queued tokens")
-        #endif
 
         // Unregister (preserve tokens)
         FairnessScheduler.shared.unregister(sessionId: sessionId1)
@@ -3080,11 +3046,9 @@ final class TokenExecutorSessionReviveTests: XCTestCase {
 
         waitForMutationQueue()
 
-        #if ITERM_DEBUG
         let tokensAfterUnregister = executor.testQueuedTokenCount
         XCTAssertEqual(tokensAfterUnregister, tokensBeforeUnregister,
                        "Tokens should be preserved after unregister")
-        #endif
 
         // Re-register
         let sessionId2 = FairnessScheduler.shared.register(executor)
@@ -3169,9 +3133,7 @@ final class TokenExecutorSessionReviveTests: XCTestCase {
         executor.delegate = mockDelegate
         mockDelegate.shouldQueueTokens = true
 
-        #if ITERM_DEBUG
         executor.testSkipNotifyScheduler = true
-        #endif
 
         let sessionId = FairnessScheduler.shared.register(executor)
         executor.fairnessSessionId = sessionId
@@ -3185,10 +3147,8 @@ final class TokenExecutorSessionReviveTests: XCTestCase {
 
         waitForMutationQueue()
 
-        #if ITERM_DEBUG
         let tokensBefore = executor.testQueuedTokenCount
         XCTAssertGreaterThan(tokensBefore, 0, "Should have queued tokens")
-        #endif
 
         // Simulate setTerminalEnabled:NO during a joined block:
         // delegate is niled and isRegistered is cleared, but the async
@@ -3209,11 +3169,9 @@ final class TokenExecutorSessionReviveTests: XCTestCase {
         wait(for: [turnExpectation], timeout: 2.0)
 
         // Tokens must be preserved — not discarded by the nil-delegate path.
-        #if ITERM_DEBUG
         let tokensAfter = executor.testQueuedTokenCount
         XCTAssertEqual(tokensAfter, tokensBefore,
                        "executeTurn with nil delegate after disable must not discard tokens")
-        #endif
 
         // Clean up
         FairnessScheduler.shared.unregister(sessionId: sessionId)

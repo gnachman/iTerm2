@@ -21,7 +21,7 @@
 @protocol PTYTaskDelegate <NSObject>
 // Runs in a background thread. Should do as much work as possible in this
 // thread before kicking off a possibly async task in the main thread.
-- (void)threadedReadTask:(char *)buffer length:(int)length;
+- (void)threadedReadTask:(char * _Nonnull)buffer length:(int)length;
 
 // Runs in the same background task as -threadedReadTask:length:.
 - (void)threadedTaskBrokenPipe;
@@ -263,7 +263,6 @@ typedef NS_OPTIONS(NSUInteger, iTermJobManagerAttachResults) {
 
 @end
 
-#if ITERM_DEBUG
 // Test-only interface for verifying dispatch source state in unit tests.
 // These accessors provide visibility into private ivar state for testing
 // dispatch source lifecycle, suspend/resume transitions, and teardown.
@@ -319,7 +318,6 @@ typedef NS_OPTIONS(NSUInteger, iTermJobManagerAttachResults) {
 
 /// Write data as if it came from a coprocess (for testing coprocess → PTY bridge).
 /// This calls writeTask:coprocess:YES internally.
-- (void)testWriteFromCoprocess:(NSData *)data;
+- (void)testWriteFromCoprocess:(NSData * _Nonnull)data;
 
 @end
-#endif

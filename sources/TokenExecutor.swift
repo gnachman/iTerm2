@@ -158,7 +158,6 @@ class TokenExecutor: NSObject {
         set { impl.isRegistered = newValue }
     }
 
-#if ITERM_DEBUG
     /// Test hook: when true, notifyScheduler() becomes a no-op.
     /// Allows unit tests to call executeTurn() directly without interference.
     var testSkipNotifyScheduler: Bool {
@@ -183,7 +182,17 @@ class TokenExecutor: NSObject {
     @objc var testAvailableSlots: Int {
         return Int(iTermAtomicInt64Get(availableSlots))
     }
-#endif
+
+    /// Test hook: Number of executeTurn calls that ran to completion.
+    /// Thread-safe via atomic counter.
+    @objc var testExecuteTurnCompletedCount: Int64 {
+        return impl.testExecuteTurnCompletedCount
+    }
+
+    /// Test hook: Reset all test counters to zero for clean measurement.
+    @objc func testResetCounters() {
+        impl.testResetCounters()
+    }
 
     @objc var isBackgroundSession = false {
         didSet {
@@ -616,7 +625,6 @@ private class TokenExecutorImpl {
 
     // MARK: - Scheduler Notification
 
-#if ITERM_DEBUG
     /// Test hook: when true, notifyScheduler() becomes a no-op.
     /// Allows unit tests to call executeTurn() directly without interference.
     var testSkipNotifyScheduler = false
@@ -626,7 +634,17 @@ private class TokenExecutorImpl {
     var testQueuedTokenCount: Int {
         return tokenQueue.count
     }
-#endif
+
+    /// Test hook: Number of executeTurn calls that ran to completion.
+    private var _testExecuteTurnCompletedCount = iTermAtomicInt64Create()
+    var testExecuteTurnCompletedCount: Int64 {
+        return iTermAtomicInt64Get(_testExecuteTurnCompletedCount)
+    }
+
+    /// Test hook: Reset all test counters to zero.
+    func testResetCounters() {
+        _ = iTermAtomicInt64GetAndReset(_testExecuteTurnCompletedCount)
+    }
 
     /// Notify the FairnessScheduler that this session has work, or execute directly if scheduler disabled.
     /// Must be called on mutation queue.
@@ -635,9 +653,7 @@ private class TokenExecutorImpl {
 #if DEBUG
         assertQueue()
 #endif
-#if ITERM_DEBUG
         if testSkipNotifyScheduler { return }
-#endif
         if useFairnessScheduler {
             guard isRegistered else {
                 // Not yet registered - tokens accumulate, processed on registration
@@ -765,6 +781,7 @@ private class TokenExecutorImpl {
         }
 
         // defer has fired — high-priority tasks completed before completion callback
+        iTermAtomicInt64Add(_testExecuteTurnCompletedCount, 1)
         completion(turnResult)
     }
 
