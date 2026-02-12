@@ -1,0 +1,82 @@
+name: Tests
+
+on:
+  push:
+    branches: [master, ci-test]
+  pull_request:
+    branches: [master]
+
+jobs:
+  test:
+    runs-on: macos-15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Select Xcode 26
+        run: sudo xcode-select -s /Applications/Xcode_26.2.app/Contents/Developer
+
+      - name: Show Xcode version
+        run: xcodebuild -version
+
+      - name: Kill orphan Xcode processes
+        run: |
+          killall ibtoold 2>/dev/null || true
+          killall AssetCatalogSimulatorAgent 2>/dev/null || true
+
+      - name: Run tests
+        run: |
+          # Retry up to 3 times, but only for flaky ibtoold/asset catalog crashes
+          for attempt in 1 2 3; do
+            echo "::group::Attempt $attempt of 3"
+            rm -rf TestResults.xcresult build_output.txt
+
+            # Run xcodebuild and capture output
+            set +e
+            xcodebuild test \
+              -project iTerm2.xcodeproj \
+              -scheme ModernTests \
+              -parallel-testing-enabled NO \
+              -resultBundlePath TestResults.xcresult \
+              CODE_SIGN_IDENTITY="" \
+              CODE_SIGNING_REQUIRED=NO \
+              CODE_SIGNING_ALLOWED=NO 2>&1 | tee build_output.txt
+            exit_code=$?
+            set -e
+            echo "::endgroup::"
+
+            if [ $exit_code -eq 0 ]; then
+              echo "Tests passed on attempt $attempt"
+              exit 0
+            fi
+
+            # Check if this is a flaky ibtoold/asset catalog crash
+            if grep -q "CompileAssetCatalogVariant failed\|IBPlatformToolFailureException\|The tool closed the connection" build_output.txt; then
+              echo "::warning::Attempt $attempt failed due to flaky ibtoold crash (known Xcode 26.2 issue)"
+              if [ $attempt -lt 3 ]; then
+                echo "Retrying..."
+                killall ibtoold 2>/dev/null || true
+                killall AssetCatalogSimulatorAgent 2>/dev/null || true
+                sleep 5
+                continue
+              else
+                echo "::error::All 3 attempts failed due to flaky ibtoold crashes"
+                exit 1
+              fi
+            else
+              # Real test failure - don't retry
+              echo "::error::Tests failed (not a flaky ibtoold issue)"
+              exit 1
+            fi
+          done
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results
+          path: TestResults.xcresult
+          retention-days: 7

@@ -727,14 +727,14 @@ private class iTermTestHTTPServer {
     func start() {
         let task = Process()
         task.executableURL = URL(fileURLWithPath: "/usr/bin/python3")
-        task.arguments = ["-m", "http.server", String(port)]
+        task.arguments = ["-m", "http.server", "--bind", "127.0.0.1", String(port)]
         task.currentDirectoryURL = documentRoot
-        
+
         try! task.run()
         server = task
-        
-        // Give the server a moment to start
-        Thread.sleep(forTimeInterval: 0.5)
+
+        // Give the server a moment to start (longer for CI environments)
+        Thread.sleep(forTimeInterval: 1.0)
     }
     
     func stop() {
