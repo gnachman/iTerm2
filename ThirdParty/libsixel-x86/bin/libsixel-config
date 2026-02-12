@@ -3,7 +3,7 @@
 # Author: Hayaki Saito, 2015
 #
 
-prefix=/Users/gnachman/git/iterm2-alt/ThirdParty/libsixel-x86
+prefix=/Users/gnachman/git/iterm2/ThirdParty/libsixel-x86
 exec_prefix=${prefix}
 libdir=${exec_prefix}/lib
 include_dir=${prefix}/include
