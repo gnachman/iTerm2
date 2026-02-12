@@ -222,7 +222,12 @@ class FairnessScheduler: NSObject {
     /// Must be called on mutationQueue.
     private func sessionFinishedTurn(_ sessionId: SessionID, result: TurnResult) {
         dispatchPrecondition(condition: .onQueue(iTermGCD.mutationQueue()))
-        guard var state = sessions[sessionId] else { return }
+        guard var state = sessions[sessionId] else {
+            // Session was unregistered while its turn was executing.
+            // Still need to pump the scheduler so other sessions in busyQueue make progress.
+            ensureExecutionScheduled()
+            return
+        }
 
         state.isExecuting = false
         let workArrived = state.workArrivedWhileExecuting

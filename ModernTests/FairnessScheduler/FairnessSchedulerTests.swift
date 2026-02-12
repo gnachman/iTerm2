@@ -969,6 +969,57 @@ final class FairnessSchedulerLifecycleEdgeCaseTests: XCTestCase {
                        "Session should be unregistered")
     }
 
+    func testUnregisterDuringExecuteTurnDoesNotStallOtherSessions() {
+        // REGRESSION: If session A is unregistered while its executeTurn is running,
+        // sessionFinishedTurn must still call ensureExecutionScheduled() so that
+        // session B (waiting in busyQueue) gets its turn. Without this, session B
+        // stalls indefinitely until some external event triggers scheduling.
+
+        let scheduler = self.scheduler!
+
+        let executorA = MockFairnessSchedulerExecutor()
+        let executorB = MockFairnessSchedulerExecutor()
+        let sessionA = scheduler.register(executorA)
+        let sessionB = scheduler.register(executorB)
+
+        var completionA: ((TurnResult) -> Void)?
+        let executionAStarted = XCTestExpectation(description: "A started")
+        let executionBStarted = XCTestExpectation(description: "B executed")
+
+        executorA.executeTurnHandler = { _, completion in
+            // Hold A's completion so we can unregister before calling it
+            completionA = completion
+            executionAStarted.fulfill()
+        }
+
+        executorB.executeTurnHandler = { _, completion in
+            executionBStarted.fulfill()
+            completion(.completed)
+        }
+
+        // Enqueue work for both sessions
+        scheduler.sessionDidEnqueueWork(sessionA)
+        scheduler.sessionDidEnqueueWork(sessionB)
+
+        // Wait for A to start executing
+        wait(for: [executionAStarted], timeout: 2.0)
+
+        // Unregister A while its turn is in progress, then complete the turn
+        iTermGCD.mutationQueue().async {
+            scheduler.unregister(sessionId: sessionA)
+            // Complete A's turn after unregister — sessionFinishedTurn must still
+            // pump the scheduler so B gets scheduled
+            completionA?(.yielded)
+        }
+
+        // B must get its turn despite A's mid-flight unregister
+        wait(for: [executionBStarted], timeout: 2.0)
+
+        // Cleanup
+        scheduler.unregister(sessionId: sessionB)
+        waitForMutationQueue()
+    }
+
     func testUnregisterAfterYieldedBeforeNextTurn() {
         // This test verifies that unregister cleans up properly after yielding.
         // NOTE: Due to async scheduling, the second turn may already be queued
