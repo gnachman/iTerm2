@@ -32,6 +32,14 @@ extern BOOL gDebugLogging;
 #define ITDebugAssert(condition) ((void)(condition))
 #endif
 
+// Assert that we're currently executing on the specified dispatch queue.
+// Uses dispatch_assert_queue() which provides clear error messages.
+#if ITERM_DEBUG
+#define ITAssertOnQueue(queue) dispatch_assert_queue(queue)
+#else
+#define ITAssertOnQueue(queue) ((void)(queue))
+#endif
+
 #if !ITERM_DEBUG && USE_STOPWATCH
 #define STOPWATCH_START(name) \
   NSTimeInterval start_##name = [NSDate timeIntervalSinceReferenceDate]; \

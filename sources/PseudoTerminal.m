@@ -102,6 +102,7 @@
 #import "iTermOrderEnforcer.h"
 #import "iTermPasswordManagerWindowController.h"
 #import "iTermPreferences.h"
+#import "iTermProcessCache.h"
 #import "iTermProfilePreferences.h"
 #import "iTermProfilesWindowController.h"
 #import "iTermPromptOnCloseReason.h"
@@ -4409,6 +4410,16 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
         [aSession.view setNeedsDisplay:YES];
         [aSession useTransparencyDidChange];
     }
+
+    // Update process cache with foreground root PIDs for the current tab
+    NSMutableSet<NSNumber *> *foregroundPIDs = [NSMutableSet set];
+    for (PTYSession *session in [self.currentTab sessions]) {
+        pid_t pid = session.shell.pid;
+        if (pid > 0) {
+            [foregroundPIDs addObject:@(pid)];
+        }
+    }
+    [[iTermProcessCache sharedInstance] setForegroundRootPIDs:foregroundPIDs];
     // Some users report that the first responder isn't always set properly. Let's try to fix that.
     // This attempt (4/20/13) is to fix bug 2431.
     if (!self.window.firstResponder.it_preferredFirstResponder) {
@@ -6725,6 +6736,17 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     [_contentView setCurrentSessionAlpha:self.currentSession.textview.transparencyAlpha];
     [tab didSelectTab];
     [[NSNotificationCenter defaultCenter] postNotificationName:iTermSelectedTabDidChange object:tab];
+
+    // Update process cache with foreground root PIDs for this window
+    NSMutableSet<NSNumber *> *foregroundPIDs = [NSMutableSet set];
+    for (PTYSession *session in [tab sessions]) {
+        pid_t pid = session.shell.pid;
+        if (pid > 0) {
+            [foregroundPIDs addObject:@(pid)];
+        }
+    }
+    [[iTermProcessCache sharedInstance] setForegroundRootPIDs:foregroundPIDs];
+
     DLog(@"Finished");
 }
 

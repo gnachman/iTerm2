@@ -17,26 +17,38 @@
 @end
 
 @implementation iTermProcessMonitor {
-    dispatch_source_t _source;
-    NSMutableArray<iTermProcessMonitor *> *_children;
+    dispatch_source_t _source;  // Access on _queue only
+    NSMutableArray<iTermProcessMonitor *> *_children;  // Access on _queue only
+    BOOL _isPaused;  // Access on _queue only
 }
 
 - (instancetype)initWithQueue:(dispatch_queue_t)queue
-                     callback:(void (^)(iTermProcessMonitor *, dispatch_source_proc_flags_t))callback {
+                     callback:(void (^)(iTermProcessMonitor *, dispatch_source_proc_flags_t))callback
+               trackedRootPID:(pid_t)trackedRootPID {
     self = [super init];
     if (self) {
         _callback = [callback copy];
         _queue = queue;
         _children = [NSMutableArray array];
+        _trackedRootPID = trackedRootPID;
     }
     return self;
 }
 
+- (instancetype)initWithQueue:(dispatch_queue_t)queue
+                     callback:(void (^)(iTermProcessMonitor *, dispatch_source_proc_flags_t))callback {
+    return [self initWithQueue:queue callback:callback trackedRootPID:0];
+}
+
+// Called on _queue
 - (BOOL)setProcessInfo:(iTermProcessInfo *)processInfo {
+    ITAssertOnQueue(_queue);
     return [self setProcessInfo:processInfo depth:0];
 }
 
+// Called on _queue
 - (BOOL)setProcessInfo:(iTermProcessInfo *)processInfo depth:(NSInteger)depth {
+    ITAssertOnQueue(_queue);
     if (![iTermAdvancedSettingsModel fastForegroundJobUpdates]) {
         return NO;
     }
@@ -73,7 +85,11 @@
         dispatch_source_set_event_handler(_source, ^{
             [weakSelf handleEvent];
         });
-        dispatch_resume(_source);
+        // Only resume if not paused. pauseMonitoring may have been called before
+        // we had a source, in which case _isPaused is already set.
+        if (!_isPaused) {
+            dispatch_resume(_source);
+        }
     }
 
     NSMutableArray<iTermProcessMonitor *> *childrenToAdd = [NSMutableArray array];
@@ -92,15 +108,23 @@
             return;
         }
 
-        // Create a new one.
-        child = [[iTermProcessMonitor alloc] initWithQueue:_queue callback:_callback];
+        // Create a new one. Propagate trackedRootPID from parent.
+        child = [[iTermProcessMonitor alloc] initWithQueue:_queue
+                                                  callback:_callback
+                                            trackedRootPID:_trackedRootPID];
         [child setProcessInfo:childInfo depth:depth + 1];
+        // If this monitor is paused, immediately pause the new child so it
+        // doesn't generate callbacks while the parent is in the background.
+        if (_isPaused) {
+            [child pauseMonitoring];
+        }
         [childrenToAdd addObject:child];
     }];
     [childrenToAdd enumerateObjectsUsingBlock:^(iTermProcessMonitor * _Nonnull child, NSUInteger idx, BOOL * _Nonnull stop) {
         [self addChild:child];
     }];
     [childrenToRemove enumerateObjectsUsingBlock:^(iTermProcessMonitor * _Nonnull child, NSUInteger idx, BOOL * _Nonnull stop) {
+        [child invalidate];
         [self removeChild:child];
     }];
     if (childrenToAdd.count || childrenToRemove.count) {
@@ -110,7 +134,9 @@
     return changed;
 }
 
+// Called on _queue
 - (iTermProcessMonitor *)childForProcessInfo:(iTermProcessInfo *)info {
+    ITAssertOnQueue(_queue);
     const pid_t pid = info.processID;
     return [_children objectPassingTest:^BOOL(iTermProcessMonitor *element, NSUInteger index, BOOL *stop) {
         return element.processInfo.processID == pid;
@@ -119,6 +145,7 @@
 
 // Called on _queue
 - (void)handleEvent {
+    ITAssertOnQueue(_queue);
     const dispatch_source_proc_flags_t flags = (dispatch_source_proc_flags_t)dispatch_source_get_data(_source);
     _callback(self, flags);
     if (flags & DISPATCH_PROC_EXIT) {
@@ -128,10 +155,16 @@
 
 // Called on _queue
 - (void)invalidate {
+    ITAssertOnQueue(_queue);
     if (_source == nil) {
         return;
     }
     DLog(@"Stop monitoring process %@", _processInfo);
+    // If paused, need to resume before canceling (dispatch sources must be resumed before cancel)
+    if (_isPaused) {
+        dispatch_resume(_source);
+        _isPaused = NO;
+    }
     dispatch_source_cancel(_source);
     _source = nil;
     [_parent removeChild:self];
@@ -144,13 +177,53 @@
 }
 
 // Called on _queue
+- (void)pauseMonitoring {
+    ITAssertOnQueue(_queue);
+    if (_isPaused) {
+        return;
+    }
+    _isPaused = YES;
+    // Recursively pause children (do this even if _source is nil, since children may have sources)
+    for (iTermProcessMonitor *child in _children) {
+        [child pauseMonitoring];
+    }
+    if (_source == nil) {
+        // No source yet; _isPaused is recorded so setProcessInfo: won't auto-resume.
+        return;
+    }
+    DLog(@"Pause monitoring process %@", _processInfo);
+    dispatch_suspend(_source);
+}
+
+// Called on _queue
+- (void)resumeMonitoring {
+    ITAssertOnQueue(_queue);
+    if (!_isPaused) {
+        return;
+    }
+    _isPaused = NO;
+    // Recursively resume children (do this even if _source is nil, since children may have sources)
+    for (iTermProcessMonitor *child in _children) {
+        [child resumeMonitoring];
+    }
+    if (_source == nil) {
+        // No source yet; _isPaused is cleared so setProcessInfo: will resume normally.
+        return;
+    }
+    DLog(@"Resume monitoring process %@", _processInfo);
+    dispatch_resume(_source);
+}
+
+// Called on _queue
 - (void)addChild:(iTermProcessMonitor *)child {
+    ITAssertOnQueue(_queue);
     [_children addObject:child];
     child.parent = self;
 }
 
 // Called on _queue
 - (void)removeChild:(iTermProcessMonitor *)child {
+    ITAssertOnQueue(_queue);
     if (child.parent == self) {
         [_children removeObject:child];
         child.parent = nil;
