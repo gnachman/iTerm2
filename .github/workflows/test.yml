@@ -16,14 +16,18 @@ jobs:
         with:
           submodules: recursive
 
-      - name: Select Xcode
-        run: sudo xcode-select -s /Applications/Xcode.app/Contents/Developer
+      - name: Select Xcode 26
+        run: sudo xcode-select -s /Applications/Xcode_26.2.app/Contents/Developer
 
       - name: Show Xcode version
         run: xcodebuild -version
 
-      - name: Build
-        run: make Development
-
       - name: Run tests
-        run: xcodebuild test -project iTerm2.xcodeproj -scheme ModernTests -parallel-testing-enabled NO
+        run: |
+          xcodebuild test \
+            -project iTerm2.xcodeproj \
+            -scheme ModernTests \
+            -parallel-testing-enabled NO \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO
