@@ -233,6 +233,7 @@ typedef NS_ENUM(int, iTermShouldHaveTitleSeparator) {
 };
 
 @interface PseudoTerminal () <
+    ColorsMenuItemViewDelegate,
     iTermBroadcastInputHelperDelegate,
     iTermGraphCodable,
     iTermObject,
@@ -430,6 +431,13 @@ typedef NS_ENUM(int, iTermShouldHaveTitleSeparator) {
 
     iTermIdempotentOperationJoiner *_rightExtraJoiner;
     BOOL _excursionPrevented;
+
+    // Tab whose color is being changed via the color picker panel.
+    NSTabViewItem *_tabViewItemForColorPicker;
+
+    // Debounce timer for saving colors to recents while dragging in the picker.
+    NSTimer *_colorPickerDebounceTimer;
+    NSColor *_pendingRecentColor;
 }
 
 @synthesize scope = _scope;
@@ -1052,6 +1060,13 @@ ITERM_WEAKLY_REFERENCEABLE
     if ([[iTermController sharedInstance] currentTerminal] == self) {
         NSLog(@"Red alert! Current terminal is being freed!");
         [[iTermController sharedInstance] setCurrentTerminal:nil];
+    }
+    [_colorPickerDebounceTimer invalidate];
+    [_pendingRecentColor release];
+    if ([NSColorPanel sharedColorPanelExists] &&
+        [NSColorPanel sharedColorPanel].target == self) {
+        [NSColorPanel sharedColorPanel].target = nil;
+        [NSColorPanel sharedColorPanel].action = nil;
     }
     [_broadcastInputHelper release];
     [_windowPositioner release];
@@ -7389,11 +7404,13 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
                                               initWithFrame:NSMakeRect(0, 0, tabColorViewSize.width, tabColorViewSize.height)] autorelease];
     PTYTab *tab = [tabViewItem identifier];
     labelTrackView.currentColor = tab.activeSession.tabColor;
+    labelTrackView.delegate = self;
     item = [[[NSMenuItem alloc] initWithTitle:@"Tab Color"
                                        action:@selector(changeTabColorToMenuAction:)
                                 keyEquivalent:@""] autorelease];
     [item setView:labelTrackView];
     [item setRepresentedObject:tabViewItem];
+    _tabViewItemForColorPicker = tabViewItem;
     [rootMenu addItem:item];
 
     for (NSMenuItem *item in rootMenu.itemArray) {
@@ -11925,7 +11942,140 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
     for (PTYSession *aSession in [aTab sessions]) {
         [aSession setTabColor:color];
     }
+    if (color) {
+        [[iTermRecentTabColors shared] addColor:color];
+    }
     [self updateTabColors];
+}
+
+#pragma mark - ColorsMenuItemViewDelegate
+
+- (void)colorsMenuItemViewDidRequestColorPicker:(ColorsMenuItemView *)view {
+    NSColorPanel *panel = [NSColorPanel sharedColorPanel];
+    panel.showsAlpha = NO;
+
+    // Pre-fill with the tab's current color if any
+    PTYTab *tab = [_tabViewItemForColorPicker identifier];
+    NSColor *currentColor = tab.activeSession.tabColor;
+    if (currentColor) {
+        panel.color = currentColor;
+    }
+
+    panel.target = self;
+    panel.action = @selector(tabColorPanelDidSelectColor:);
+    [panel orderFront:nil];
+
+    // Populate recent tab colors as an accessory view in the color panel.
+    // Dispatch to allow the panel to be fully laid out before setting the accessory view.
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [self populateColorPanelSwatchesWithRecentColors];
+    });
+}
+
+- (void)populateColorPanelSwatchesWithRecentColors {
+    NSColorPanel *panel = [NSColorPanel sharedColorPanel];
+    NSArray<NSColor *> *recentColors = [[iTermRecentTabColors shared] recentColors];
+
+    if (recentColors.count == 0) {
+        panel.accessoryView = nil;
+        return;
+    }
+
+    // Build an accessory view showing recent tab colors as clickable swatches.
+    const CGFloat swatchSize = 14;
+    const CGFloat spacing = 2;
+    const CGFloat hPadding = 12;
+    const CGFloat vPadding = 6;
+    const CGFloat labelHeight = 14;
+    const CGFloat totalHeight = vPadding + labelHeight + 4 + swatchSize + vPadding;
+    const CGFloat containerWidth = MAX(panel.contentView.bounds.size.width, 300);
+
+    NSView *container = [[[NSView alloc] initWithFrame:NSMakeRect(0, 0, containerWidth, totalHeight)] autorelease];
+    container.autoresizingMask = NSViewWidthSizable;
+
+    NSTextField *label = [NSTextField labelWithString:@"Recent Tab Colors"];
+    label.font = [NSFont systemFontOfSize:10 weight:NSFontWeightMedium];
+    label.textColor = [NSColor secondaryLabelColor];
+    [label sizeToFit];
+    label.frame = NSMakeRect(hPadding,
+                             totalHeight - vPadding - labelHeight,
+                             label.frame.size.width,
+                             labelHeight);
+    [container addSubview:label];
+
+    const CGFloat swatchY = vPadding;
+    for (NSInteger i = 0; i < (NSInteger)recentColors.count; i++) {
+        CGFloat x = hPadding + i * (swatchSize + spacing);
+        NSButton *button = [[[NSButton alloc] initWithFrame:NSMakeRect(x, swatchY, swatchSize, swatchSize)] autorelease];
+        button.bordered = NO;
+        button.title = @"";
+        button.wantsLayer = YES;
+        button.layer.backgroundColor = recentColors[i].CGColor;
+        button.layer.cornerRadius = 3;
+        button.layer.borderWidth = 1;
+        button.layer.borderColor = [NSColor tertiaryLabelColor].CGColor;
+        button.tag = i;
+        button.target = self;
+        button.action = @selector(recentColorSwatchClicked:);
+        [container addSubview:button];
+    }
+
+    panel.accessoryView = container;
+}
+
+- (void)recentColorSwatchClicked:(NSButton *)sender {
+    NSArray<NSColor *> *recentColors = [[iTermRecentTabColors shared] recentColors];
+    if (sender.tag >= (NSInteger)recentColors.count) return;
+
+    NSColor *color = recentColors[sender.tag];
+    [NSColorPanel sharedColorPanel].color = color;
+
+    // Apply immediately — this is a deliberate click, not a drag.
+    PTYTab *tab = [_tabViewItemForColorPicker identifier];
+    if (!tab) {
+        tab = [self currentTab];
+    }
+    for (PTYSession *aSession in [tab sessions]) {
+        [aSession setTabColor:color];
+    }
+    [[iTermRecentTabColors shared] addColor:color];
+    [self updateTabColors];
+}
+
+- (void)tabColorPanelDidSelectColor:(NSColorPanel *)panel {
+    PTYTab *tab = [_tabViewItemForColorPicker identifier];
+    if (!tab) {
+        tab = [self currentTab];
+    }
+    NSColor *color = panel.color;
+
+    // Apply immediately for live preview.
+    for (PTYSession *aSession in [tab sessions]) {
+        [aSession setTabColor:color];
+    }
+    [self updateTabColors];
+
+    // Debounce saving to recents — only save after the user stops dragging.
+    [_colorPickerDebounceTimer invalidate];
+    [_pendingRecentColor release];
+    _pendingRecentColor = [color retain];
+    _colorPickerDebounceTimer = [NSTimer scheduledTimerWithTimeInterval:0.8
+                                                                target:self
+                                                              selector:@selector(commitPendingRecentColor:)
+                                                              userInfo:nil
+                                                               repeats:NO];
+}
+
+- (void)commitPendingRecentColor:(NSTimer *)timer {
+    _colorPickerDebounceTimer = nil;
+    if (_pendingRecentColor) {
+        [[iTermRecentTabColors shared] addColor:_pendingRecentColor];
+        [_pendingRecentColor release];
+        _pendingRecentColor = nil;
+
+        // Refresh the accessory view to show the newly saved color.
+        [self populateColorPanelSwatchesWithRecentColors];
+    }
 }
 
 - (IBAction)compose:(id)sender {
