@@ -450,12 +450,14 @@ static void HandleSigChld(int n) {
 // Main queue
 - (void)didRegister {
     DLog(@"didRegister %@", self);
-    // Activate dispatch sources for per-PTY I/O handling (fairness scheduler only)
-    // This is called for all paths: launch, attach, and restore
+    // Wire up backpressure dependencies BEFORE starting dispatch sources.
+    // taskDidRegister: sets task.tokenExecutor so shouldRead can apply
+    // backpressure. Starting sources first would allow unconditional reads
+    // via the executor==nil fallback path in shouldRead.
+    [self.delegate taskDidRegister:self];
     if ([iTermAdvancedSettingsModel useFairnessScheduler]) {
         [self setupDispatchSources];
     }
-    [self.delegate taskDidRegister:self];
 }
 
 // I did extensive benchmarking in May of 2025 when using the VT100_GANG optimization fully.
