@@ -320,6 +320,72 @@ final class PTYTaskBackpressureIntegrationTests: XCTestCase {
         task.testTeardownDispatchSourcesForTesting()
     }
 
+    func testDidRegisterWithPreloadedDataDoesNotLeakReads() {
+        // REQUIREMENT: When data is already readable on the fd at registration time
+        // and backpressure is heavy, no threadedReadTask callback should fire.
+        //
+        // setupDispatchSources does dispatch_resume then dispatch_suspend on the read
+        // source (required to transition from "created" to "suspended" state in GCD).
+        // If a read event slips through that window, it would bypass backpressure.
+        // This test preloads data on the pipe before calling didRegister, then verifies
+        // zero delegate callbacks under heavy backpressure.
+
+        guard let task = PTYTask() else {
+            XCTFail("Failed to create PTYTask")
+            return
+        }
+
+        guard let pipe = createTestPipe() else {
+            XCTFail("Failed to create test pipe")
+            return
+        }
+        defer { closeTestPipe(pipe) }
+
+        task.testSetFd(pipe.readFd)
+        task.paused = false
+
+        let mockDelegate = MockPTYTaskDelegate()
+
+        // Wire heavy backpressure in the taskDidRegister callback (same as production)
+        let terminal = VT100Terminal()
+        let executor = TokenExecutor(terminal, slownessDetector: SlownessDetector(), queue: DispatchQueue.main)
+        executor.testSkipNotifyScheduler = true
+
+        mockDelegate.onTaskDidRegister = { registeredTask in
+            registeredTask.tokenExecutor = executor
+            executor.addMultipleTokenArrays(count: 35, tokensPerArray: 5)
+        }
+
+        task.delegate = mockDelegate
+
+        // Preload data on the pipe BEFORE registration so the fd is already readable
+        let preloadData = "preloaded data that should not leak through".data(using: .utf8)!
+        preloadData.withUnsafeBytes { bufferPointer in
+            _ = Darwin.write(pipe.writeFd, bufferPointer.baseAddress!, preloadData.count)
+        }
+
+        // Call didRegister — wires backpressure, then sets up dispatch sources
+        task.perform(NSSelectorFromString("didRegister"))
+
+        // Wait for IO queue to drain any pending events from the resume/suspend window
+        task.testWaitForIOQueue()
+
+        // Wait again — if a read event was queued during the brief resume, it would
+        // have dispatched back to IO queue by now
+        task.testWaitForIOQueue()
+
+        // The critical assertion: no data should have been delivered to the delegate.
+        // The read source should be suspended due to heavy backpressure, and the brief
+        // resume/suspend window in setupDispatchSources must not leak events.
+        XCTAssertEqual(mockDelegate.readCallCount, 0,
+                       "No threadedReadTask should fire when data is preloaded but backpressure is heavy at registration")
+
+        XCTAssertTrue(task.testIsReadSourceSuspended,
+                      "Read source should remain suspended under heavy backpressure")
+
+        task.testTeardownDispatchSourcesForTesting()
+    }
+
     func testHeavyBackpressureStopsDataFlow() {
         // REQUIREMENT: When backpressure becomes heavy, the read source should be suspended
         // AND data should actually stop being delivered to the delegate.
