@@ -121,15 +121,19 @@ class TokenArray: IteratorProtocol, CustomDebugStringConvertible {
         signalAndRelease()
     }
 
-    /// Signals the semaphore and invokes the callback, if present.
+    /// Signals the semaphore (if present) and invokes the slot-release callback.
+    /// The callback fires for all non-high-priority tokens regardless of semaphore:
+    /// - Legacy path: semaphore present, callback increments availableSlots
+    /// - Fairness path: no semaphore, callback still increments availableSlots
     /// Captures the callback before niling to avoid footguns if the
     /// callback assigns to onSemaphoreSignaled.
     private func signalAndRelease() {
-        guard let sem = semaphore else { return }
+        guard semaphore != nil || onSemaphoreSignaled != nil else { return }
+        let sem = semaphore
         let closure = onSemaphoreSignaled
         semaphore = nil
         onSemaphoreSignaled = nil
-        sem.signal()
+        sem?.signal()
         closure?()
     }
 

@@ -127,6 +127,7 @@ class TokenExecutor: NSObject {
     private let semaphore = DispatchSemaphore(value: Int(iTermAdvancedSettingsModel.bufferDepth()))
     private let impl: TokenExecutorImpl
     private let queue: DispatchQueue
+    private let useFairnessScheduler: Bool
     private static let isTokenExecutorSpecificKey = DispatchSpecificKey<Bool>()
     private var onExecutorQueue: Bool {
         return DispatchQueue.getSpecific(key: Self.isTokenExecutorSpecificKey) == true
@@ -207,12 +208,13 @@ class TokenExecutor: NSObject {
          slownessDetector: SlownessDetector,
          queue: DispatchQueue) {
         self.queue = queue
+        self.useFairnessScheduler = iTermAdvancedSettingsModel.useFairnessScheduler()
         queue.setSpecific(key: Self.isTokenExecutorSpecificKey, value: true)
         impl = TokenExecutorImpl(terminal,
                                  slownessDetector: slownessDetector,
                                  semaphore: semaphore,
                                  queue: queue,
-                                 useFairnessScheduler: iTermAdvancedSettingsModel.useFairnessScheduler())
+                                 useFairnessScheduler: useFairnessScheduler)
     }
 
     // Returns the current backpressure level based on available slots.
@@ -258,12 +260,14 @@ class TokenExecutor: NSObject {
     }()
     // Flip this to true to measure how much time the TaskNotifier thread spends busy (reading,
     // parsing, and in select()) vs idle (blocked on TokenExecutor's semaphore).
+    // Only relevant for the legacy (non-fairness-scheduler) path.
     private let enableTimingStats = false
 
     // This takes ownership of vector.
     // You can call this on any queue when not high priority.
     // If high priority, then you must be on the main queue or have joined the main & mutation queue.
-    // This blocks when the queue of tokens gets too large.
+    // Legacy path: blocks on semaphore when the queue of tokens gets too large.
+    // Fairness path: returns immediately; backpressure is handled by dispatch source suspend/resume.
     @objc
     func addTokens(_ vector: CVector,
                    lengthTotal: Int,
@@ -288,7 +292,22 @@ class TokenExecutor: NSObject {
             impl.notifyScheduler()
             return
         }
-        // Normal code path for tokens from PTY. Use the semaphore to give backpressure to reading.
+        if useFairnessScheduler {
+            // Dispatch source model: PTYTask suspends the read source when
+            // backpressureLevel >= .heavy, so blocking here is unnecessary.
+            // Blocking _ioQueue would stall writes and coprocess I/O for this PTY.
+            iTermAtomicInt64Add(availableSlots, -1)
+            reallyAddTokens(vector,
+                            lengthTotal: lengthTotal,
+                            lengthExcludingInBandSignaling: lengthExcludingInBandSignaling,
+                            highPriority: highPriority,
+                            semaphore: nil)
+            queue.async { [weak self] in
+                self?.impl.didAddTokens()
+            }
+            return
+        }
+        // Legacy path: block on semaphore for backpressure to the TaskNotifier read thread.
         let semaphore = self.semaphore
         if enableTimingStats {
             TokenExecutor.addTokensTimingStats.recordEnd()
@@ -356,10 +375,12 @@ class TokenExecutor: NSObject {
                                  lengthExcludingInBandSignaling: Int,
                                  highPriority: Bool,
                                  semaphore: DispatchSemaphore?) {
-        // When semaphore is signaled (slot released), increment the available slots counter
-        // and notify if backpressure has eased
+        // When a slot is released (token array consumed), increment the available slots counter
+        // and notify if backpressure has eased. This fires for all non-high-priority tokens
+        // regardless of whether a semaphore is used (legacy path) or not (fairness path).
+        // High-priority tokens bypass backpressure accounting entirely.
         let onSemaphoreSignaled: (() -> Void)?
-        if semaphore != nil {
+        if !highPriority {
             onSemaphoreSignaled = { [weak self, availableSlots] in
                 guard let self = self else { return }
                 let newValue = iTermAtomicInt64Add(availableSlots, 1)
@@ -658,7 +679,13 @@ private class TokenExecutorImpl {
             executeHighPriorityTasks()
 
             guard let delegate = delegate else {
-                tokenQueue.removeAll()
+                // Only discard tokens if we're still registered. When unregistered,
+                // tokens are preserved so they can drain on revive (re-registration).
+                // A nil delegate with isRegistered==false means setTerminalEnabled:NO
+                // already ran; discarding here would race with the async unregister.
+                if isRegistered {
+                    tokenQueue.removeAll()
+                }
                 turnResult = .completed
                 break execution
             }

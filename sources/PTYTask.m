@@ -80,6 +80,12 @@ static void HandleSigChld(int n) {
     BOOL _readSourceSuspended;
     BOOL _writeSourceSuspended;
 
+    // Dispatch sources for coprocess I/O (fairness scheduler integration)
+    dispatch_source_t _coprocessReadSource;   // reads coprocess stdout
+    dispatch_source_t _coprocessWriteSource;  // flushes outputBuffer to coprocess stdin
+    BOOL _coprocessReadSourceSuspended;
+    BOOL _coprocessWriteSourceSuspended;
+
     // Test hook to override shouldWrite for testing write source resume
     BOOL _testShouldWriteOverride;
 
@@ -222,13 +228,25 @@ static void HandleSigChld(int n) {
     return nil;
 }
 
-// This runs on the task notifier thread
+// This runs on the task notifier thread (legacy) or main thread
 - (void)setCoprocess:(Coprocess *)coprocess {
     DLog(@"Set coprocess of %@ to %@", self, coprocess);
+
+    // Tear down old coprocess dispatch sources before swapping the ivar.
+    if ([self useDispatchSource] && _coprocessReadSource) {
+        [self teardownCoprocessDispatchSources];
+    }
+
     @synchronized (self) {
         coprocess_ = coprocess;
         self.hasMuteCoprocess = coprocess_.mute;
     }
+
+    // Set up dispatch sources for the new coprocess (if using dispatch source path).
+    if ([self useDispatchSource] && coprocess) {
+        [self setupCoprocessDispatchSources:coprocess];
+    }
+
     __weak __typeof(self) weakSelf = self;
     dispatch_async(dispatch_get_main_queue(), ^{
         [weakSelf.delegate taskMuteCoprocessDidChange:self hasMuteCoprocess:self.hasMuteCoprocess];
@@ -542,6 +560,9 @@ static void HandleSigChld(int n) {
 
 // TEARDOWN: Must resume suspended sources before canceling to avoid crash
 - (void)teardownDispatchSources {
+    // Also tear down coprocess sources — they share _ioQueue.
+    [self teardownCoprocessDispatchSources];
+
     dispatch_queue_t ioQueue = _ioQueue;
     dispatch_source_t readSource = _readSource;
     dispatch_source_t writeSource = _writeSource;
@@ -737,6 +758,10 @@ static void HandleSigChld(int n) {
 
     // Re-check state after write (buffer may now be empty)
     [self updateWriteSourceState];
+
+    // Write buffer shrank — coprocess read source may now be eligible to resume
+    // (it suspends when writeBufferHasRoom returns NO).
+    [self updateCoprocessReadSourceState];
 }
 
 // Called when data is added to writeBuffer
@@ -744,7 +769,217 @@ static void HandleSigChld(int n) {
     [self updateWriteSourceState];
 }
 
+#pragma mark - Coprocess Dispatch Sources (Fairness Scheduler)
+
+- (void)setupCoprocessDispatchSources:(Coprocess *)coprocess {
+    NSAssert(_ioQueue != nil, @"setupCoprocessDispatchSources called before _ioQueue created");
+
+    int readFd = [coprocess readFileDescriptor];
+    int writeFd = [coprocess writeFileDescriptor];
+    if (readFd < 0 || writeFd < 0) {
+        return;
+    }
+
+    __weak typeof(self) weakSelf = self;
+
+    // Read source — reads coprocess stdout, feeds data back as PTY input
+    _coprocessReadSource = dispatch_source_create(DISPATCH_SOURCE_TYPE_READ,
+                                                   readFd, 0, _ioQueue);
+    dispatch_source_set_event_handler(_coprocessReadSource, ^{
+        [weakSelf handleCoprocessReadEvent];
+    });
+    dispatch_resume(_coprocessReadSource);
+    dispatch_suspend(_coprocessReadSource);
+    _coprocessReadSourceSuspended = YES;
+
+    // Write source — flushes outputBuffer to coprocess stdin
+    _coprocessWriteSource = dispatch_source_create(DISPATCH_SOURCE_TYPE_WRITE,
+                                                    writeFd, 0, _ioQueue);
+    dispatch_source_set_event_handler(_coprocessWriteSource, ^{
+        [weakSelf handleCoprocessWriteEvent];
+    });
+    dispatch_resume(_coprocessWriteSource);
+    dispatch_suspend(_coprocessWriteSource);
+    _coprocessWriteSourceSuspended = YES;
+
+    [self updateCoprocessReadSourceState];
+    [self updateCoprocessWriteSourceState];
+}
+
+- (void)teardownCoprocessDispatchSources {
+    dispatch_source_t readSource = _coprocessReadSource;
+    dispatch_source_t writeSource = _coprocessWriteSource;
+
+    _coprocessReadSource = nil;
+    _coprocessWriteSource = nil;
+
+    if (!_ioQueue) {
+        return;
+    }
+
+    // Check if we're already on ioQueue to avoid deadlock.
+    const char *currentLabel = dispatch_queue_get_label(DISPATCH_CURRENT_QUEUE_LABEL);
+    const char *ioQueueLabel = dispatch_queue_get_label(_ioQueue);
+    BOOL onIOQueue = (currentLabel != NULL && ioQueueLabel != NULL &&
+                      strcmp(currentLabel, ioQueueLabel) == 0);
+
+    if (onIOQueue) {
+        if (readSource) {
+            if (_coprocessReadSourceSuspended) {
+                dispatch_resume(readSource);
+            }
+            dispatch_source_cancel(readSource);
+        }
+        if (writeSource) {
+            if (_coprocessWriteSourceSuspended) {
+                dispatch_resume(writeSource);
+            }
+            dispatch_source_cancel(writeSource);
+        }
+        _coprocessReadSourceSuspended = NO;
+        _coprocessWriteSourceSuspended = NO;
+    } else {
+        __block BOOL readSuspended = NO;
+        __block BOOL writeSuspended = NO;
+        dispatch_sync(_ioQueue, ^{
+            readSuspended = self->_coprocessReadSourceSuspended;
+            writeSuspended = self->_coprocessWriteSourceSuspended;
+        });
+        dispatch_sync(_ioQueue, ^{
+            if (readSource) {
+                if (readSuspended) {
+                    dispatch_resume(readSource);
+                }
+                dispatch_source_cancel(readSource);
+            }
+            if (writeSource) {
+                if (writeSuspended) {
+                    dispatch_resume(writeSource);
+                }
+                dispatch_source_cancel(writeSource);
+            }
+            self->_coprocessReadSourceSuspended = NO;
+            self->_coprocessWriteSourceSuspended = NO;
+        });
+    }
+}
+
+#pragma mark - Coprocess Event Handlers
+
+- (void)handleCoprocessReadEvent {
+    Coprocess *coprocess;
+    @synchronized (self) {
+        coprocess = coprocess_;
+    }
+    if (!coprocess || [coprocess eof]) {
+        return;
+    }
+
+    [coprocess read];
+
+    if ([coprocess eof]) {
+        [self handleCoprocessEOF];
+        return;
+    }
+
+    NSData *data = [coprocess.inputBuffer copy];
+    [coprocess.inputBuffer setLength:0];
+    if (data.length > 0) {
+        [self writeTask:data coprocess:YES];
+    }
+
+    [self updateCoprocessReadSourceState];
+}
+
+- (void)handleCoprocessWriteEvent {
+    Coprocess *coprocess;
+    @synchronized (self) {
+        coprocess = coprocess_;
+    }
+    if (!coprocess || [coprocess eof]) {
+        return;
+    }
+
+    @synchronized (self) {
+        [coprocess write];
+    }
+
+    [self updateCoprocessWriteSourceState];
+}
+
+- (void)handleCoprocessEOF {
+    Coprocess *coprocess;
+    @synchronized (self) {
+        coprocess = coprocess_;
+    }
+    if (!coprocess) {
+        return;
+    }
+
+    pid_t pid = coprocess.pid;
+    [coprocess terminate];
+
+    @synchronized (self) {
+        coprocess_ = nil;
+        self.hasMuteCoprocess = NO;
+    }
+
+    [self teardownCoprocessDispatchSources];
+
+    if (pid > 0) {
+        [[TaskNotifier sharedInstance] waitForPid:pid];
+    }
+
+    __weak typeof(self) weakSelf = self;
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [weakSelf.delegate taskMuteCoprocessDidChange:weakSelf hasMuteCoprocess:NO];
+        [[TaskNotifier sharedInstance] notifyCoprocessChange];
+    });
+}
+
+#pragma mark - Coprocess Source State Management
+
+- (void)updateCoprocessReadSourceState {
+    if (!_ioQueue || !_coprocessReadSource) {
+        return;
+    }
+    BOOL shouldResume;
+    @synchronized (self) {
+        shouldResume = coprocess_ && ![coprocess_ eof] && [self writeBufferHasRoom];
+    }
+    dispatch_async(_ioQueue, ^{
+        if (shouldResume && self->_coprocessReadSourceSuspended && self->_coprocessReadSource) {
+            dispatch_resume(self->_coprocessReadSource);
+            self->_coprocessReadSourceSuspended = NO;
+        } else if (!shouldResume && !self->_coprocessReadSourceSuspended && self->_coprocessReadSource) {
+            dispatch_suspend(self->_coprocessReadSource);
+            self->_coprocessReadSourceSuspended = YES;
+        }
+    });
+}
+
+- (void)updateCoprocessWriteSourceState {
+    if (!_ioQueue || !_coprocessWriteSource) {
+        return;
+    }
+    BOOL shouldResume;
+    @synchronized (self) {
+        shouldResume = coprocess_ && [coprocess_ wantToWrite];
+    }
+    dispatch_async(_ioQueue, ^{
+        if (shouldResume && self->_coprocessWriteSourceSuspended && self->_coprocessWriteSource) {
+            dispatch_resume(self->_coprocessWriteSource);
+            self->_coprocessWriteSourceSuspended = NO;
+        } else if (!shouldResume && !self->_coprocessWriteSourceSuspended && self->_coprocessWriteSource) {
+            dispatch_suspend(self->_coprocessWriteSource);
+            self->_coprocessWriteSourceSuspended = YES;
+        }
+    });
+}
+
 - (void)stopCoprocess {
+    [self teardownCoprocessDispatchSources];
+
     pid_t thePid = 0;
     @synchronized (self) {
         if (coprocess_.pid > 0) {
@@ -1153,6 +1388,8 @@ static void HandleSigChld(int n) {
     @synchronized (self) {
         [coprocess_.outputBuffer appendData:data];
     }
+    // Wake the coprocess write source so the buffer gets drained.
+    [self updateCoprocessWriteSourceState];
 }
 
 // The bytes in data were just read from the fd.

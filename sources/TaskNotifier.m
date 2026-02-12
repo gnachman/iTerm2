@@ -339,7 +339,9 @@ void UnblockTaskNotifier(void) {
                 // else: Task uses dispatch_source - skip FD_SET for task's main FD
             }
 
-            // Coprocess handling continues for ALL tasks (including dispatch_source tasks)
+            // Coprocess handling for legacy (non-dispatch-source) tasks only.
+            // Dispatch-source tasks handle their own coprocess I/O via PTYTask's
+            // coprocess dispatch sources (setupCoprocessDispatchSources:).
             @synchronized (task) {
                 Coprocess *coprocess = [task coprocess];
                 if (coprocess) {
@@ -436,7 +438,7 @@ void UnblockTaskNotifier(void) {
                         iter = [_tasks objectEnumerator];
                     }
                 }
-                // Coprocess handling continues for ALL tasks (below)
+                // Coprocess handling for legacy tasks (dispatch-source tasks handle their own)
                 if ([task fd] >= 0 && ![task hasBrokenPipe]) {  // Make sure the pipe wasn't just broken.
                     @synchronized (task) {
                         Coprocess *coprocess = [task coprocess];
