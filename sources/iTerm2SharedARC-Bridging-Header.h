@@ -214,4 +214,5 @@
 #import "VT100Terminal.h"
 #import "charmaps.h"
 #import "SSKeychain.h"
+#import "ColorsMenuItemView.h"
 #import "librailroad_dsl/include/railroad_dsl.h"

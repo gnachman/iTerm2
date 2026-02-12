@@ -261,7 +261,7 @@ const CGFloat iTermColorsMenuItemViewDisabledAlpha = 0.3;
     const CGFloat perceivedBrightness = color.perceivedBrightness;
     const CGFloat outlineBrightness = brightness * (1 - 0.025 * pow(40, perceivedBrightness));
     return [NSColor colorWithHue:color.hueComponent
-                      saturation:MAX(1, color.saturationComponent * 1.1)
+                      saturation:MIN(1, color.saturationComponent * 1.1)
                       brightness:outlineBrightness
                            alpha:enabled ? 1 : iTermColorsMenuItemViewDisabledAlpha];
 }

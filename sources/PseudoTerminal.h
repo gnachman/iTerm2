@@ -111,6 +111,9 @@ extern NSString *const iTermDidCreateTerminalWindowNotification;
 @property(nonatomic) BOOL automaticallySelectNewTabs;
 @property(nonatomic, readonly) iTermTerminalWindowSizeHelper *windowSizeHelper;
 
+// Tab whose color is being changed via the color picker.
+@property(nonatomic, weak) NSTabViewItem *tabViewItemForColorPicker;
+
 // Draws a mock-up of a window arrangement into the current graphics context.
 // |frames| gives an array of NSValue's having NSRect values for each screen,
 // giving the screens' coordinates in the model.

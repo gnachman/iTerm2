@@ -6,7 +6,7 @@ class iTermRecentTabColors: NSObject {
     @objc static let shared = iTermRecentTabColors()
 
     private let userDefaultsKey = "NoSyncRecentTabColors"
-    @objc let maxRecents = 12
+    @objc let maxRecents = 14
 
     private override init() {
         super.init()
