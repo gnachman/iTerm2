@@ -1571,6 +1571,10 @@ class FakeSession: NSObject, VT100ScreenDelegate {
     func screenSendReport(_ data: Data) {
 
     }
+
+    func screenSendTmuxOSC4Report(_ data: Data) {
+
+    }
     
     func screenDidSendAllPendingReports() {
 
