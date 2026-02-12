@@ -3316,6 +3316,7 @@
 		A6B6A4FE23CEE6E80016B1AE /* iTermOrderEnforcer.m in Sources */ = {isa = PBXBuildFile; fileRef = A6B6A4FC23CEE6E80016B1AE /* iTermOrderEnforcer.m */; };
 		A6B6C8A02F392BE3006AB7BE /* iTermWindowCornerRadiusDetector.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6B6C89F2F392BE3006AB7BE /* iTermWindowCornerRadiusDetector.swift */; };
 		A6B6C8A22F392BEB006AB7BE /* iTermActivePaneBorderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6B6C8A12F392BEB006AB7BE /* iTermActivePaneBorderView.swift */; };
+		A6B6C9402F3BD942006AB7BE /* iTermTmuxClientTracker.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6B6C93F2F3BD942006AB7BE /* iTermTmuxClientTracker.swift */; };
 		A6B70FBB19830C37007A4284 /* dead.png in Resources */ = {isa = PBXBuildFile; fileRef = A6B70FB919830C37007A4284 /* dead.png */; };
 		A6B70FBC19830C37007A4284 /* dead.png in Resources */ = {isa = PBXBuildFile; fileRef = A6B70FB919830C37007A4284 /* dead.png */; };
 		A6B70FBD19830C37007A4284 /* dead@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A6B70FBA19830C37007A4284 /* dead@2x.png */; };
@@ -8088,6 +8089,7 @@
 		A6B6A4FC23CEE6E80016B1AE /* iTermOrderEnforcer.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermOrderEnforcer.m; sourceTree = "<group>"; };
 		A6B6C89F2F392BE3006AB7BE /* iTermWindowCornerRadiusDetector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermWindowCornerRadiusDetector.swift; sourceTree = "<group>"; };
 		A6B6C8A12F392BEB006AB7BE /* iTermActivePaneBorderView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermActivePaneBorderView.swift; sourceTree = "<group>"; };
+		A6B6C93F2F3BD942006AB7BE /* iTermTmuxClientTracker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermTmuxClientTracker.swift; sourceTree = "<group>"; };
 		A6B70FB919830C37007A4284 /* dead.png */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; name = dead.png; path = images/dead.png; sourceTree = "<group>"; };
 		A6B70FBA19830C37007A4284 /* dead@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; name = "dead@2x.png"; path = "images/dead@2x.png"; sourceTree = "<group>"; };
 		A6B70FBF19830F0D007A4284 /* NewOutput.png */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; name = NewOutput.png; path = images/NewOutput.png; sourceTree = "<group>"; };
@@ -10335,6 +10337,7 @@
 				A62C8FC1248033C000E22E95 /* iTermTmuxJobManager.m */,
 				A620041C248B7CFC007D349C /* iTermTmuxBufferSizeMonitor.h */,
 				A620041D248B7CFC007D349C /* iTermTmuxBufferSizeMonitor.m */,
+				A6B6C93F2F3BD942006AB7BE /* iTermTmuxClientTracker.swift */,
 			);
 			name = tmux;
 			sourceTree = "<group>";
@@ -19143,6 +19146,7 @@
 				A6A4866E20B67A0300493302 /* iTermRemotePreferences.m in Sources */,
 				A6F3DA8C24540A20001D50C9 /* iTermUntitledWindowStateMachine.m in Sources */,
 				A6D4C27521E1A75B009CF11B /* iTermRegisteredFunctionsTableViewDelegate.m in Sources */,
+				A6B6C9402F3BD942006AB7BE /* iTermTmuxClientTracker.swift in Sources */,
 				A67960D31F81FCBB008A42BC /* iTermBroadcastStripesRenderer.m in Sources */,
 				5387013E23629EE8005FDB65 /* iTermPasswordManagerWindowController.m in Sources */,
 				A60464202E0DEE48002C7986 /* ProfilesWebPreferencesViewController.swift in Sources */,

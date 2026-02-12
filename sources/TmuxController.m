@@ -23,6 +23,7 @@
 #import "iTermProfilePreferences.h"
 #import "iTermShortcut.h"
 #import "iTermTmuxBufferSizeMonitor.h"
+#import "iTermTmuxOptionMonitor.h"
 #import "iTermTuple.h"
 #import "NSArray+iTerm.h"
 #import "NSData+iTerm.h"
@@ -213,6 +214,13 @@ static NSString *const kAggressiveResize = @"aggressive-resize";
     // font size changes are finished happening.
     NSMutableDictionary<NSString *, NSValue *> *_savedFrames;
     BOOL _phonyCommandOutstanding;
+
+    // OSC query support for tmux 3.6+
+    iTermTmuxClientTracker *_clientTracker;
+    iTermTmuxOptionMonitor *_getClipboardMonitor;
+    iTermTmuxOptionMonitor *_setClipboardMonitor;
+    NSInteger _getClipboardValue;  // >= 2 means we should respond to OSC 52 queries (tmux > 3.6)
+    NSInteger _setClipboardValue;  // < 2 means we should respond to OSC 52 queries (tmux 3.6)
 }
 
 @synthesize gateway = gateway_;
@@ -630,6 +638,11 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
         _wantsOpenWindowsInitial = YES;
         return;
     }
+    // Initialize client tracker for OSC query support (tmux 3.6+)
+    [self initializeClientTracker];
+    [self initializeGetClipboardMonitor];
+    [self initializeSetClipboardMonitor];
+
     NSString *command = [NSString stringWithFormat:@"show -v -q -t $%d @iterm2_size", sessionId_];
     [gateway_ sendCommand:command
            responseTarget:self
@@ -880,6 +893,10 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
     self.sessionGuid = nil;
     [listSessionsTimer_ invalidate];
     listSessionsTimer_ = nil;
+    [_getClipboardMonitor invalidate];
+    _getClipboardMonitor = nil;
+    [_setClipboardMonitor invalidate];
+    _setClipboardMonitor = nil;
     detached_ = YES;
     [self closeAllPanes];
     gateway_ = nil;
@@ -1654,6 +1671,152 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
 
 - (BOOL)versionAtLeastDecimalNumberWithString:(NSString *)string {
     return [gateway_ versionAtLeastDecimalNumberWithString:string];
+}
+
+#pragma mark - OSC Query Support (tmux 3.6+)
+
+- (BOOL)shouldHandleOSC4Queries {
+    // tmux 3.6+ requires iTerm2 to respond to OSC 4 color queries
+    return [self versionAtLeastDecimalNumberWithString:@"3.6"];
+}
+
+- (BOOL)shouldHandleOSC52Queries {
+    if (![self isResponsibleForOSCQueries]) {
+        DLog(@"Not responsible");
+        return NO;
+    }
+    if ([self versionAtLeastDecimalNumberWithString:@"3.7"]) {
+        // tmux > 3.6: respond if get-clipboard >= 2 ("request" or "both")
+        // OR if set-clipboard < 2 (tmux passes through raw OSC 52)
+        DLog(@"Is 3.7 _getClipboardValue=%@ _setClipboardValue=%@", @(_getClipboardValue), @(_setClipboardValue));
+        return _getClipboardValue >= 2 || _setClipboardValue < 2;
+    }
+    if ([self versionAtLeastDecimalNumberWithString:@"3.6"]) {
+        // tmux 3.6: respond if set-clipboard < 2
+        DLog(@"Is 3.6 _setClipboardValue=%@", @(_setClipboardValue));
+        return _setClipboardValue < 2;
+    }
+    DLog(@"Version too old");
+    return NO;
+}
+
+- (BOOL)isResponsibleForOSCQueries {
+    return _clientTracker.isResponsibleForQueries;
+}
+
+- (iTermTmuxClientTracker *)clientTracker {
+    return _clientTracker;
+}
+
+- (void)updateAttachedClientsWithCompletion:(void (^)(void))completion {
+    if (_clientTracker) {
+        [_clientTracker updateClientsWithCompletion:completion ?: ^{}];
+    } else if (completion) {
+        completion();
+    }
+}
+
+- (void)clientSessionChanged:(NSString *)clientName {
+    [_clientTracker handleClientSessionChanged:clientName];
+}
+
+- (void)clientDetached:(NSString *)clientName {
+    [_clientTracker handleClientDetached:clientName];
+}
+
+- (void)initializeClientTracker {
+    if (!_clientTracker && [self shouldHandleOSC4Queries]) {
+        DLog(@"Initialize client tracker");
+        // Query our tmux client name first, then create the tracker
+        [gateway_ sendCommand:@"display-message -p '#{client_name}'"
+               responseTarget:self
+             responseSelector:@selector(didGetTmuxClientName:)
+               responseObject:nil
+                        flags:kTmuxGatewayCommandShouldTolerateErrors];
+    }
+}
+
+- (void)didGetTmuxClientName:(NSString *)response {
+    NSString *tmuxClientName = [response stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+ DLog(@"didGetTmuxClientName: %@", tmuxClientName);
+    if (tmuxClientName.length == 0) {
+        return;
+    }
+    _clientTracker = [[iTermTmuxClientTracker alloc] initWithGateway:gateway_
+                                                           sessionID:sessionId_
+                                                      tmuxClientName:tmuxClientName];
+    [_clientTracker updateClientsWithCompletion:^{}];
+}
+
+- (void)initializeGetClipboardMonitor {
+    // Only needed for tmux > 3.6
+    if (![self versionAtLeastDecimalNumberWithString:@"3.7"]) {
+        DLog(@"Too old");
+        return;
+    }
+    DLog(@"Make get-clipboard monitor");
+    __weak __typeof(self) weakSelf = self;
+    _getClipboardMonitor = [[iTermTmuxOptionMonitor alloc]
+        initWithGateway:gateway_
+                 format:@"#{T:get-clipboard}"
+                 target:@""
+                  block:^(NSString *value) {
+        [weakSelf didGetClipboardValue:value];
+    }];
+
+    [_getClipboardMonitor updateOnce];
+}
+
+- (void)didGetClipboardValue:(NSString *)value {
+    DLog(@"Clipboard value is %@", value);
+    // The value will be "off", "buffer", "request", or "both"
+    // "off" = 0, "buffer" = 1, "request" = 2, "both" = 3
+    if ([value hasPrefix:@"both"]) {
+        _getClipboardValue = 3;
+    } else if ([value hasPrefix:@"request"]) {
+        _getClipboardValue = 2;
+    } else if ([value hasPrefix:@"buffer"]) {
+        _getClipboardValue = 1;
+    } else {
+        _getClipboardValue = 0;
+    }
+}
+
+- (void)initializeSetClipboardMonitor {
+    // Needed for tmux >= 3.6
+    if (![self versionAtLeastDecimalNumberWithString:@"3.6"]) {
+        DLog(@"Too old");
+        return;
+    }
+
+    DLog(@"Monitor set-clipboard");
+    __weak __typeof(self) weakSelf = self;
+    _setClipboardMonitor = [[iTermTmuxOptionMonitor alloc]
+        initWithGateway:gateway_
+                  scope:nil
+   fallbackVariableName:nil
+                 format:@"#{T:set-clipboard}"
+                 target:@""
+           variableName:nil
+                  block:^(NSString *value) {
+        [weakSelf didSetClipboardValue:value];
+    }];
+
+    [_setClipboardMonitor updateOnce];
+    [_setClipboardMonitor startTimerIfSubscriptionsUnsupported];
+}
+
+- (void)didSetClipboardValue:(NSString *)value {
+    DLog(@"set-clipboard is %@", value);
+    // The value will be "off", "external", or "on"
+    // "off" = 0, "external" = 1, "on" = 2
+    if ([value hasPrefix:@"on"]) {
+        _setClipboardValue = 2;
+    } else if ([value hasPrefix:@"external"]) {
+        _setClipboardValue = 1;
+    } else {
+        _setClipboardValue = 0;
+    }
 }
 
 - (BOOL)recyclingSupported {

@@ -9534,6 +9534,16 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     [session setTmuxPaused:YES allowAutomaticUnpause:notification];
 }
 
+- (void)tmuxClientSessionChanged:(NSString *)clientName {
+    DLog(@"Client session changed for %@", clientName);
+    [_tmuxController clientSessionChanged:clientName];
+}
+
+- (void)tmuxClientDetached:(NSString *)clientName {
+    DLog(@"Client detached: %@", clientName);
+    [_tmuxController clientDetached:clientName];
+}
+
 - (void)setTmuxPaused:(BOOL)paused allowAutomaticUnpause:(BOOL)allowAutomaticUnpause {
     if (_tmuxPaused == paused) {
         return;
@@ -14142,6 +14152,19 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 
 - (void)screenDidSendAllPendingReports {
     [self sendDataQueue];
+}
+
+- (void)screenSendTmuxOSC4Report:(NSData *)report {
+    if (!_tmuxController.shouldHandleOSC4Queries) {
+        DLog(@"Not handling osc 4 queries");
+        return;  // tmux < 3.6, tmux handles it
+    }
+    if (!_tmuxController.isResponsibleForOSCQueries) {
+        DLog(@"Not responsible for OSC queries");
+        return;  // Another client will respond
+    }
+    DLog(@"Sending OSC 4 report");
+    [self writeLatin1EncodedData:report broadcastAllowed:NO reporting:YES];
 }
 
 - (void)sendDataQueue {
@@ -21961,7 +21984,18 @@ getOptionKeyBehaviorLeft:(iTermOptionKeyBehavior *)left
 - (void)pasteboardReporter:(iTermPasteboardReporter *)sender reportPasteboard:(NSString *)pasteboard {
     NSData *data = [_screen.terminalOutput reportPasteboard:pasteboard
                                                    contents:[NSString stringFromPasteboard] ?: @""];
-    [self screenSendReportData:data];
+    if (_tmuxController.shouldHandleOSC52Queries) {
+        // tmux > 3.6 with get-clipboard >= 2 or tmux 3.6 with set-clipboard < 2
+        DLog(@"Handling OSC 52 query");
+        [self writeLatin1EncodedData:data broadcastAllowed:NO reporting:YES];
+    } else if (!self.isTmuxClient) {
+        // Non-tmux.
+        DLog(@"Non-tmux");
+        [self screenSendReportData:data];
+    } else {
+        DLog(@"Ignore");
+        return;
+    }
     [_view showUnobtrusiveMessage:[NSString stringWithFormat:@"Clipboard contents reported"]
                          duration:3];
 }

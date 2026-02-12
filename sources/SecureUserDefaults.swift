@@ -484,7 +484,10 @@ class SecureUserDefault<T: SecureUserDefaultStringTranscodable & Codable & Equat
         DLog("delete \(key)")
         let filename = try path(key, create: false)
         DLog("Remove \(filename)")
-        try FileManager.default.removeItem(at: filename)
+        if (FileManager.default.fileExists(atPath: filename.path)) {
+            DLog("Item exists, remove it")
+            try FileManager.default.removeItem(at: filename)
+        }
 
         NotificationCenter.default.post(name: secureUserDefaultDidChange, object: key)
     }

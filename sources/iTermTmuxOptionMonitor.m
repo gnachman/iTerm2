@@ -54,6 +54,19 @@
     return self;
 }
 
+- (instancetype)initWithGateway:(TmuxGateway *)gateway
+                         format:(NSString *)format
+                         target:(NSString *)tmuxTarget
+                          block:(void (^ _Nullable)(NSString *))block {
+    return [self initWithGateway:gateway
+                           scope:nil
+            fallbackVariableName:nil
+                          format:format
+                          target:tmuxTarget
+                    variableName:nil
+                           block:block];
+}
+
 - (void)dealloc {
     [_gateway unsubscribe:_subscriptionHandle];
 }

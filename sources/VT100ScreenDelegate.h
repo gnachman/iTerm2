@@ -174,6 +174,9 @@ typedef NS_ENUM(NSUInteger, PTYSessionResizePermission) {
 - (void)screenSendReportData:(NSData * _Nonnull)data;
 - (void)screenDidSendAllPendingReports;
 
+// Send tmux-aware OSC 4 color report (for tmux 3.6+)
+- (void)screenSendTmuxOSC4Report:(NSData * _Nonnull)data;
+
 // Returns the visible frame of the display the screen's window is in.
 - (NSRect)screenWindowScreenFrame;
 

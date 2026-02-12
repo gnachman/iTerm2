@@ -67,6 +67,9 @@ extern NSString * const kTmuxGatewayErrorDomain;
 - (void)tmuxSessionWindowDidChangeTo:(int)windowID;
 - (void)tmuxWindowPaneDidPause:(int)wp notification:(BOOL)notification;
 - (void)tmuxSessionPasteDidChange:(NSString *)pasteBufferName;
+// Client tracking for OSC query support (tmux 3.6+)
+- (void)tmuxClientSessionChanged:(NSString *)clientName;
+- (void)tmuxClientDetached:(NSString *)clientName;
 @end
 
 typedef NS_ENUM(NSInteger, ControlCommand) {

@@ -13,6 +13,7 @@
 #import "WindowControllerInterface.h"
 
 @class iTermFontTable;
+@class iTermTmuxClientTracker;
 @class iTermVariableScope;
 @class PTYSession;
 @class PTYTab;
@@ -73,6 +74,12 @@ extern NSString *const kTmuxControllerDidChangeHiddenWindows;
 @property(nonatomic) NSRect initialWindowHint;
 @property(nonatomic, readonly) BOOL detached;
 @property(nonatomic, readonly) NSArray<NSNumber *> *windowPaneIDs;
+
+// OSC query handling properties (tmux 3.6+)
+@property(nonatomic, readonly) BOOL shouldHandleOSC4Queries;  // tmux >= 3.6
+@property(nonatomic, readonly) BOOL shouldHandleOSC52Queries; // tmux > 3.6 and get-clipboard >= 2 or tmux.36 and set-clipboard < 2
+@property(nonatomic, readonly) BOOL isResponsibleForOSCQueries;  // Are we the designated responder?
+@property(nonatomic, strong, readonly) iTermTmuxClientTracker *clientTracker;
 
 - (instancetype)initWithGateway:(TmuxGateway *)gateway
                      clientName:(NSString *)clientName
@@ -260,5 +267,12 @@ extern NSString *const kTmuxControllerDidChangeHiddenWindows;
 - (void)setCurrentLatency:(NSTimeInterval)latency forPane:(int)wp;
 - (void)copyBufferToLocalPasteboard:(NSString *)bufferName;
 - (void)restoreWindowFrame:(PseudoTerminal *)term;
+
+// Called when a client attaches or changes session
+- (void)clientSessionChanged:(NSString *)clientName;
+// Called when a client detaches
+- (void)clientDetached:(NSString *)clientName;
+// Call this after attaching to initialize client tracker state
+- (void)updateAttachedClientsWithCompletion:(void (^)(void))completion;
 
 @end

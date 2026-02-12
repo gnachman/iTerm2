@@ -100,6 +100,10 @@ typedef NS_ENUM(NSUInteger, VT100TerminalProtectedMode) {
 // Sends a report.
 - (void)terminalSendReport:(NSData *)report;
 
+// Sends an OSC 4 color query report (tmux-aware).
+// For tmux clients running 3.6+, this routes through the tmux controller.
+- (void)terminalSendOSC4Report:(NSData *)report;
+
 - (VT100OutputOptionalDeviceAttributes)terminalOptionalDeviceAttributes;
 
 // Replaces the screen contents with a test pattern.

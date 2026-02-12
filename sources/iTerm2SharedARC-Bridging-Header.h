@@ -212,6 +212,8 @@
 #import "VT100ScreenMutableState+Resizing.h"
 #import "VT100ScreenMutableState+TerminalDelegate.h"
 #import "VT100Terminal.h"
+#import "TmuxGateway.h"
+#import "TmuxController.h"
 #import "charmaps.h"
 #import "SSKeychain.h"
 #import "librailroad_dsl/include/railroad_dsl.h"

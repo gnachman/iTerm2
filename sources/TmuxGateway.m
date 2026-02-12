@@ -485,6 +485,28 @@ static NSString *kCommandTimestamp = @"timestamp";
     [_subscriptions[sid] setValue:value arguments:parts];
 }
 
+// %client-session-changed <client_name> $<session_id> <session_name>
+- (void)parseClientSessionChangedCommand:(NSString *)command {
+    NSArray<NSString *> *components = [command captureComponentsMatchedByRegex:@"^%client-session-changed ([^ ]+) \\$([0-9]+) .*$"];
+    if (components.count >= 2) {
+        NSString *clientName = components[1];
+        [delegate_ tmuxClientSessionChanged:clientName];
+    } else {
+        DLog(@"Unexpected client-session-changed syntax: %@", command);
+    }
+}
+
+// %client-detached <client_name>
+- (void)parseClientDetachedCommand:(NSString *)command {
+    NSArray<NSString *> *components = [command captureComponentsMatchedByRegex:@"^%client-detached ([^ ]+)$"];
+    if (components.count >= 2) {
+        NSString *clientName = components[1];
+        [delegate_ tmuxClientDetached:clientName];
+    } else {
+        DLog(@"Unexpected client-detached syntax: %@", command);
+    }
+}
+
 - (void)forceDetach {
     [self hostDisconnected];
 }
@@ -783,8 +805,11 @@ static NSString *kCommandTimestamp = @"timestamp";
         // New in tmux 3.2. Don't care.
     } else if ([command hasPrefix:@"%session-window-changed"]) {
         if (acceptNotifications_) [self parseSessionWindowChangedCommand:command];
-    } else if ([command hasPrefix:@"%client-session-changed"] ||  // client is now attached to a new session
-               [command hasPrefix:@"%pane-mode-changed"]) {  // copy mode, etc
+    } else if ([command hasPrefix:@"%client-session-changed "]) {
+        if (acceptNotifications_) [self parseClientSessionChangedCommand:command];
+    } else if ([command hasPrefix:@"%client-detached "]) {
+        if (acceptNotifications_) [self parseClientDetachedCommand:command];
+    } else if ([command hasPrefix:@"%pane-mode-changed"]) {  // copy mode, etc
         // New in tmux 2.5. Don't care.
         TmuxLog(@"Ignore %@", command);
     } else if ([command hasPrefix:@"%paste-buffer-changed "]) {

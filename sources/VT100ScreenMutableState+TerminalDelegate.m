@@ -543,6 +543,27 @@ typedef struct {
     }
 }
 
+- (void)terminalSendOSC4Report:(NSData *)report {
+    DLog(@"begin OSC 4 report %@", report);
+    if (!report) {
+        return;
+    }
+    if (!self.config.isTmuxClient) {
+        DLog(@"non-tmux");
+        // Non-tmux: use normal report path
+        [self terminalSendReport:report];
+        return;
+    }
+    DLog(@"Sending report");
+    // tmux: dispatch to session for tmux-specific handling (3.6+)
+    [self willSendReport];
+    __weak __typeof(self) weakSelf = self;
+    [self addSideEffect:^(id<VT100ScreenDelegate> delegate) {
+        [delegate screenSendTmuxOSC4Report:report];
+        [weakSelf didSendReport:delegate];
+    } name:@"OSC 4 tmux report"];
+}
+
 - (void)terminalShowTestPattern {
     DLog(@"begin");
     screen_char_t ch = [self.currentGrid defaultChar];

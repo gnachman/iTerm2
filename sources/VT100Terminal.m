@@ -2581,7 +2581,7 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
                 NSString *decoded = [self decodedBase64PasteCommand:token.string query:&query];
                 if (decoded) {
                     [_delegate terminalCopyStringToPasteboard:decoded];
-                } else if (query && [_delegate terminalShouldSendReport:NO]) {
+                } else if (query && [_delegate terminalShouldSendReport:YES]) {
                     [_delegate terminalReportPasteboard:query];
                 }
             }
@@ -3789,7 +3789,10 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
                                                        color:theColor];
             } else if ([part isEqualToString:@"?"]) {
                 NSColor *theColor = [_delegate terminalColorForIndex:theIndex];
-                [_delegate terminalSendReport:[self.output reportColor:theColor atIndex:theIndex prefix:@"4;"]];
+                // Use tmux-aware method for OSC 4 queries (tmux 3.6+)
+                if ([_delegate terminalShouldSendReport:YES]) {
+                      [_delegate terminalSendOSC4Report:[self.output reportColor:theColor atIndex:theIndex prefix:@"4;"]];
+                }
             }
         }
     }
