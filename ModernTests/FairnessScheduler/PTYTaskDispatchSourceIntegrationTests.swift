@@ -262,6 +262,64 @@ final class PTYTaskBackpressureIntegrationTests: XCTestCase {
         task.testTeardownDispatchSourcesForTesting()
     }
 
+    func testDidRegisterWiresBackpressureBeforeStartingSources() {
+        // REQUIREMENT: didRegister must call taskDidRegister: (which wires tokenExecutor)
+        // BEFORE setupDispatchSources. If sources start first, shouldRead sees executor==nil
+        // and skips backpressure checks, allowing unconditional reads.
+        //
+        // This test wires heavy backpressure in the taskDidRegister: callback.
+        // If ordering is correct: sources see the executor with heavy backpressure → suspended.
+        // If ordering is wrong: sources see executor==nil → no backpressure → resumed.
+
+        guard let task = PTYTask() else {
+            XCTFail("Failed to create PTYTask")
+            return
+        }
+
+        guard let pipe = createTestPipe() else {
+            XCTFail("Failed to create test pipe")
+            return
+        }
+        defer { closeTestPipe(pipe) }
+
+        task.testSetFd(pipe.readFd)
+        task.paused = false
+
+        let mockDelegate = MockPTYTaskDelegate()
+
+        // In taskDidRegister:, wire up a tokenExecutor with heavy backpressure.
+        // This simulates what PTYSession.taskDidRegister: does in production.
+        let terminal = VT100Terminal()
+        let executor = TokenExecutor(terminal, slownessDetector: SlownessDetector(), queue: DispatchQueue.main)
+        executor.testSkipNotifyScheduler = true
+
+        mockDelegate.onTaskDidRegister = { registeredTask in
+            registeredTask.tokenExecutor = executor
+            // Create .heavy backpressure (35 of 40 slots consumed → ratio 0.125 → .heavy)
+            executor.addMultipleTokenArrays(count: 35, tokensPerArray: 5)
+        }
+
+        task.delegate = mockDelegate
+
+        // Call didRegister — this triggers taskDidRegister: then setupDispatchSources
+        task.perform(NSSelectorFromString("didRegister"))
+        task.testWaitForIOQueue()
+
+        // Verify executor was wired
+        XCTAssertNotNil(task.tokenExecutor, "tokenExecutor should be wired by taskDidRegister:")
+        XCTAssertEqual(executor.backpressureLevel, .heavy,
+                       "Backpressure should be heavy after registration callback")
+
+        // The critical assertion: read source should be SUSPENDED because backpressure
+        // was already heavy when setupDispatchSources evaluated shouldRead.
+        // If didRegister had the wrong order (sources before wiring), the read source
+        // would be RESUMED because shouldRead with nil executor skips backpressure.
+        XCTAssertTrue(task.testIsReadSourceSuspended,
+                      "Read source should start suspended when backpressure is heavy at registration time")
+
+        task.testTeardownDispatchSourcesForTesting()
+    }
+
     func testHeavyBackpressureStopsDataFlow() {
         // REQUIREMENT: When backpressure becomes heavy, the read source should be suspended
         // AND data should actually stop being delivered to the delegate.

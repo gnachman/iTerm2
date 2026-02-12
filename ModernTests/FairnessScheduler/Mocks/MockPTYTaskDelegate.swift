@@ -18,6 +18,10 @@ final class MockPTYTaskDelegate: NSObject, PTYTaskDelegate {
     /// Use this to fulfill expectations or capture data in tests.
     var onThreadedRead: ((Data) -> Void)?
 
+    /// Callback invoked when taskDidRegister is called.
+    /// Use this to wire up tokenExecutor or other dependencies during registration.
+    var onTaskDidRegister: ((PTYTask) -> Void)?
+
     // MARK: - Call Tracking
 
     private let lock = NSLock()
@@ -110,7 +114,7 @@ final class MockPTYTaskDelegate: NSObject, PTYTaskDelegate {
     }
 
     func taskDidRegister(_ task: PTYTask) {
-        // Not used in these tests
+        onTaskDidRegister?(task)
     }
 
     func taskDidChangePaused(_ task: PTYTask, paused: Bool) {
