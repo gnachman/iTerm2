@@ -73,23 +73,31 @@ static void HandleSigChld(int n) {
     dispatch_queue_t _jobManagerQueue;
     BOOL _isTmuxTask;
 
-    // Dispatch sources for per-PTY I/O (fairness scheduler integration)
+    // Dispatch sources for per-PTY I/O (fairness scheduler integration).
+    // Created on main queue in setupDispatchSources; nil'd on any queue in teardownDispatchSources.
+    // Handlers run on _ioQueue.
     dispatch_source_t _readSource;
     dispatch_source_t _writeSource;
+    // Created on main queue in setupDispatchSources, constant after setup.
     dispatch_queue_t _ioQueue;
+    // Access on _ioQueue only (suspend/resume state tracking)
     BOOL _readSourceSuspended;
+    // Access on _ioQueue only
     BOOL _writeSourceSuspended;
 
-    // Dispatch sources for coprocess I/O (fairness scheduler integration)
+    // Dispatch sources for coprocess I/O (fairness scheduler integration).
+    // Created/destroyed on main queue or _ioQueue; handlers run on _ioQueue.
     dispatch_source_t _coprocessReadSource;   // reads coprocess stdout
     dispatch_source_t _coprocessWriteSource;  // flushes outputBuffer to coprocess stdin
+    // Access on _ioQueue only
     BOOL _coprocessReadSourceSuspended;
+    // Access on _ioQueue only
     BOOL _coprocessWriteSourceSuspended;
 
-    // Test hook to override shouldWrite for testing write source resume
+    // Test hook to override shouldWrite for testing write source resume. Any queue.
     BOOL _testShouldWriteOverride;
 
-    // Test hook to override jobManager.ioAllowed for predicate tests
+    // Test hook to override jobManager.ioAllowed for predicate tests. Any queue.
     // nil = use real value, @YES = force true, @NO = force false
     NSNumber *_testIoAllowedOverride;
 }
@@ -533,7 +541,7 @@ static void HandleSigChld(int n) {
 
 #pragma mark - Dispatch Source Management (Fairness Scheduler)
 
-// LIFECYCLE: Only call after fd >= 0 (i.e., after process launch succeeds)
+// Main queue. Only call after fd >= 0 (i.e., after process launch succeeds).
 - (void)setupDispatchSources {
     NSAssert(self.fd >= 0, @"setupDispatchSources called with invalid fd");
 
@@ -565,7 +573,7 @@ static void HandleSigChld(int n) {
     [self updateWriteSourceState];
 }
 
-// TEARDOWN: Must resume suspended sources before canceling to avoid crash
+// Any queue. Must resume suspended sources before canceling to avoid crash.
 - (void)teardownDispatchSources {
     // Also tear down coprocess sources — they share _ioQueue.
     [self teardownCoprocessDispatchSources];
@@ -638,7 +646,7 @@ static void HandleSigChld(int n) {
 
 #pragma mark - Unified State Check
 
-// Helper to get effective ioAllowed, considering test override
+// Any queue. Helper to get effective ioAllowed, considering test override.
 - (BOOL)effectiveIoAllowed {
     if (_testIoAllowedOverride != nil) {
         return _testIoAllowedOverride.boolValue;
@@ -646,7 +654,7 @@ static void HandleSigChld(int n) {
     return self.jobManager.ioAllowed;
 }
 
-// All conditions that affect whether we should read
+// Any queue. Snapshot of whether reading should be enabled.
 - (BOOL)shouldRead {
     iTermTokenExecutor *executor = (iTermTokenExecutor *)self.tokenExecutor;
     if (!executor) {
@@ -658,7 +666,7 @@ static void HandleSigChld(int n) {
            executor.backpressureLevel < BackpressureLevelHeavy;
 }
 
-// All conditions that affect whether we should write
+// Any queue. Snapshot of whether writing should be enabled.
 - (BOOL)shouldWrite {
     if (self.paused) {
         return NO;
@@ -673,7 +681,7 @@ static void HandleSigChld(int n) {
     return hasData;
 }
 
-// Called whenever ANY condition affecting read state changes
+// Any queue. Captures shouldRead snapshot, then dispatches to _ioQueue for source suspend/resume.
 - (void)updateReadSourceState {
     if (!_ioQueue || !_readSource) {
         return;
@@ -690,7 +698,7 @@ static void HandleSigChld(int n) {
     });
 }
 
-// Called whenever ANY condition affecting write state changes
+// Any queue. Captures shouldWrite snapshot, then dispatches to _ioQueue for source suspend/resume.
 - (void)updateWriteSourceState {
     if (!_ioQueue || !_writeSource) {
         return;
@@ -709,7 +717,10 @@ static void HandleSigChld(int n) {
 
 #pragma mark - Dispatch Source Event Handlers
 
+// _ioQueue (dispatch source event handler)
 - (void)handleReadEvent {
+    ITDebugAssert(strcmp(dispatch_queue_get_label(DISPATCH_CURRENT_QUEUE_LABEL),
+                         dispatch_queue_get_label(_ioQueue)) == 0);
     // Match processRead's batching: read up to 4KB (4 * MAXRW) per event
     // to reduce dispatch overhead while maintaining responsiveness.
     int iterations = 4;
@@ -763,7 +774,10 @@ static void HandleSigChld(int n) {
     }
 }
 
+// _ioQueue (dispatch source event handler)
 - (void)handleWriteEvent {
+    ITDebugAssert(strcmp(dispatch_queue_get_label(DISPATCH_CURRENT_QUEUE_LABEL),
+                         dispatch_queue_get_label(_ioQueue)) == 0);
     [self processWrite];  // Existing method - drains writeBuffer
 
     // Re-check state after write (buffer may now be empty)
@@ -774,13 +788,14 @@ static void HandleSigChld(int n) {
     [self updateCoprocessReadSourceState];
 }
 
-// Called when data is added to writeBuffer
+// Any queue. Called when data is added to writeBuffer.
 - (void)writeBufferDidChange {
     [self updateWriteSourceState];
 }
 
 #pragma mark - Coprocess Dispatch Sources (Fairness Scheduler)
 
+// Main queue or _ioQueue (setCoprocess: can be called from either)
 - (void)setupCoprocessDispatchSources:(Coprocess *)coprocess {
     NSAssert(_ioQueue != nil, @"setupCoprocessDispatchSources called before _ioQueue created");
 
@@ -816,6 +831,7 @@ static void HandleSigChld(int n) {
     [self updateCoprocessWriteSourceState];
 }
 
+// Any queue (handles both main and _ioQueue internally)
 - (void)teardownCoprocessDispatchSources {
     dispatch_source_t readSource = _coprocessReadSource;
     dispatch_source_t writeSource = _coprocessWriteSource;
@@ -876,7 +892,10 @@ static void HandleSigChld(int n) {
 
 #pragma mark - Coprocess Event Handlers
 
+// _ioQueue (dispatch source event handler)
 - (void)handleCoprocessReadEvent {
+    ITDebugAssert(strcmp(dispatch_queue_get_label(DISPATCH_CURRENT_QUEUE_LABEL),
+                         dispatch_queue_get_label(_ioQueue)) == 0);
     Coprocess *coprocess;
     @synchronized (self) {
         coprocess = coprocess_;
@@ -901,7 +920,10 @@ static void HandleSigChld(int n) {
     [self updateCoprocessReadSourceState];
 }
 
+// _ioQueue (dispatch source event handler)
 - (void)handleCoprocessWriteEvent {
+    ITDebugAssert(strcmp(dispatch_queue_get_label(DISPATCH_CURRENT_QUEUE_LABEL),
+                         dispatch_queue_get_label(_ioQueue)) == 0);
     Coprocess *coprocess;
     @synchronized (self) {
         coprocess = coprocess_;
@@ -917,6 +939,7 @@ static void HandleSigChld(int n) {
     [self updateCoprocessWriteSourceState];
 }
 
+// _ioQueue
 - (void)handleCoprocessEOF {
     Coprocess *coprocess;
     @synchronized (self) {
@@ -949,6 +972,7 @@ static void HandleSigChld(int n) {
 
 #pragma mark - Coprocess Source State Management
 
+// Any queue. Captures coprocess state, then dispatches to _ioQueue for source suspend/resume.
 - (void)updateCoprocessReadSourceState {
     if (!_ioQueue || !_coprocessReadSource) {
         return;
@@ -968,6 +992,7 @@ static void HandleSigChld(int n) {
     });
 }
 
+// Any queue. Captures coprocess state, then dispatches to _ioQueue for source suspend/resume.
 - (void)updateCoprocessWriteSourceState {
     if (!_ioQueue || !_coprocessWriteSource) {
         return;
@@ -1383,7 +1408,7 @@ static void HandleSigChld(int n) {
     return self.jobManager.ioAllowed;
 }
 
-// iTermTask @optional protocol method
+// Any queue. iTermTask @optional protocol method.
 // Returns YES to indicate PTYTask uses dispatch_source for I/O instead of select().
 // TaskNotifier will skip adding this task's FD to select() fd_sets.
 - (BOOL)useDispatchSource {

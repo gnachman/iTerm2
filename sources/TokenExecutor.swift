@@ -127,6 +127,7 @@ class TokenExecutor: NSObject {
     private let semaphore = DispatchSemaphore(value: Int(iTermAdvancedSettingsModel.bufferDepth()))
     private let impl: TokenExecutorImpl
     private let queue: DispatchQueue
+    // Set at init, immutable after. Cached from iTermAdvancedSettingsModel.
     private let useFairnessScheduler: Bool
     private static let isTokenExecutorSpecificKey = DispatchSpecificKey<Bool>()
     private var onExecutorQueue: Bool {
@@ -482,6 +483,7 @@ private class TokenExecutorImpl {
     private let queue: DispatchQueue
     private let slownessDetector: SlownessDetector
     private let semaphore: DispatchSemaphore
+    // Set at init, immutable after. Cached from iTermAdvancedSettingsModel.
     private let useFairnessScheduler: Bool
     // Thread-safe: iTermTaskQueue uses internal locking
     private var taskQueue = iTermTaskQueue()

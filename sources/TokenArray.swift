@@ -26,7 +26,7 @@ class TokenArray: IteratorProtocol, CustomDebugStringConvertible {
         return DispatchQueue(label: "com.iterm2.token-destroyer")
     }()
     private var semaphore: DispatchSemaphore?
-    // Called when the semaphore is signaled (slot released back to backpressure pool).
+    // Called on mutation queue when last token is consumed (slot released back to backpressure pool).
     private var onSemaphoreSignaled: (() -> Void)?
 
     var hasNext: Bool {

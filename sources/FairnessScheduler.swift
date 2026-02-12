@@ -74,6 +74,7 @@ class FairnessScheduler: NSObject {
     #endif
 
     /// Coalesces multiple ensureExecutionScheduled() calls into a single async dispatch.
+    /// Called from any queue; dispatches work to mutation queue.
     private let executionJoiner = IdempotentOperationJoiner.asyncJoiner(iTermGCD.mutationQueue())
 
     private struct SessionState {

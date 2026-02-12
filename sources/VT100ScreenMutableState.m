@@ -70,6 +70,7 @@ static const int64_t VT100ScreenMutableStateSideEffectFlagLineBufferDidDropLines
     BOOL _runSideEffectAfterTopJoinFinishes;
     NSMutableArray<void (^)(void)> *_postTriggerActions;
     void (^_nextPromptBlock)(void);
+    // Access on mutation queue only
     uint64_t _fairnessSessionId;
 }
 
