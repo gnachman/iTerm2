@@ -1,0 +1,11 @@
+// Signing-Release.xcconfig
+// Code signing configuration for release builds (Deployment, Beta, Nightly)
+//
+// This inherits from Signing.xcconfig but overrides the identity for release signing.
+//
+
+#include "Signing.xcconfig"
+
+// For release builds, use Developer ID (manual signing)
+CODE_SIGN_IDENTITY = Developer ID Application: GEORGE NACHMAN (H7V7XYVQ7D)
+CODE_SIGN_STYLE = Manual

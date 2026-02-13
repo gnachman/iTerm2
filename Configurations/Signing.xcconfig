@@ -1,0 +1,21 @@
+// Signing.xcconfig
+// Base code signing configuration for iTerm2 (used by Development builds)
+//
+// To override these settings for local development (e.g., to use ad-hoc signing),
+// create a file named Signing.local.xcconfig in this directory with your overrides.
+// That file is gitignored and will not be committed.
+//
+// Example Signing.local.xcconfig for ad-hoc signing:
+//   CODE_SIGN_IDENTITY = -
+//   DEVELOPMENT_TEAM =
+//
+
+// Default team ID
+DEVELOPMENT_TEAM = H7V7XYVQ7D
+
+// For Development builds, use Apple Development (automatic signing)
+CODE_SIGN_IDENTITY = Apple Development
+
+// Include local overrides if they exist (the ? makes this optional)
+// This MUST come after the defaults so local settings take precedence
+#include? "Signing.local.xcconfig"

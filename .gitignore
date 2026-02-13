@@ -62,3 +62,7 @@ iTermBrowserPlugin/iTermBrowserPlugin.xcodeproj/project.xcworkspace/xcuserdata/g
 
 # Claude Code local settings
 .claude/*.local.json
+
+# Local signing configuration (for external developers)
+Configurations/Signing.local.xcconfig
+iTerm2.xcodeproj/project.pbxproj.signing-backup

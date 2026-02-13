@@ -1,0 +1,13 @@
+// Signing.local.xcconfig.example
+// Copy this file to Signing.local.xcconfig and uncomment the lines below
+// to use ad-hoc signing for local development.
+//
+// This file is gitignored, so your local settings won't be committed.
+
+// Uncomment these lines for ad-hoc signing (no Apple Developer account required):
+// CODE_SIGN_IDENTITY = -
+// DEVELOPMENT_TEAM =
+
+// Or set your own team ID if you have one:
+// CODE_SIGN_IDENTITY = Apple Development
+// DEVELOPMENT_TEAM = YOUR_TEAM_ID_HERE
