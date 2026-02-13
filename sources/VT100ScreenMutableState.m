@@ -218,6 +218,30 @@ static const int64_t VT100ScreenMutableStateSideEffectFlagLineBufferDidDropLines
     }
 }
 
+- (void)setAnsi:(BOOL)ansi {
+    if (_ansi == ansi) {
+        return;
+    }
+    _ansi = ansi;
+    [self _recomputeFastPathEligible];
+}
+
+- (void)setWraparoundMode:(BOOL)wraparoundMode {
+    if (_wraparoundMode == wraparoundMode) {
+        return;
+    }
+    _wraparoundMode = wraparoundMode;
+    [self _recomputeFastPathEligible];
+}
+
+- (void)setInsert:(BOOL)insert {
+    if (_insert == insert) {
+        return;
+    }
+    _insert = insert;
+    [self _recomputeFastPathEligible];
+}
+
 - (id)copyWithZone:(NSZone *)zone {
     return [[VT100ScreenState alloc] initWithState:self
                                        predecessor:self.mainThreadCopy];

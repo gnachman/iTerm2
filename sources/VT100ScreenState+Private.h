@@ -20,6 +20,9 @@ extern NSString *VT100ScreenTerminalStateKeyPath;
 @protected
     VT100Grid *_primaryGrid;
     VT100Grid *_altGrid;
+    BOOL _ansi;
+    BOOL _wraparoundMode;
+    BOOL _insert;
 }
 - (instancetype _Nonnull)initForMutationOnQueue:(dispatch_queue_t _Nonnull)queue;
 - (instancetype _Nonnull)initWithState:(VT100ScreenMutableState * _Nonnull)source
