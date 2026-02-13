@@ -6,140 +6,185 @@
 
 import Foundation
 
-enum PasswordManagerProtocol {
+public enum PasswordManagerProtocol {
     // MARK: - Handshake
 
-    struct HandshakeRequest: Codable {
-        var iTermVersion: String
-        var minProtocolVersion: Int
-        var maxProtocolVersion: Int
+    public struct HandshakeRequest: Codable {
+        public var iTermVersion: String
+        public var minProtocolVersion: Int
+        public var maxProtocolVersion: Int
     }
 
-    struct HandshakeResponse: Codable {
-        var protocolVersion: Int
-        var name: String
-        var requiresMasterPassword: Bool
-        var canSetPasswords: Bool
-        var userAccounts: [UserAccount]?
-        var needsPathToDatabase: Bool
-        var databaseExtension: String?
-        var needsPathToExecutable: String?
+    public struct HandshakeResponse: Codable {
+        public var protocolVersion: Int
+        public var name: String
+        public var requiresMasterPassword: Bool
+        public var canSetPasswords: Bool
+        public var userAccounts: [UserAccount]?
+        public var needsPathToDatabase: Bool
+        public var databaseExtension: String?
+        public var needsPathToExecutable: String?
+
+        public init(protocolVersion: Int, name: String, requiresMasterPassword: Bool, canSetPasswords: Bool, userAccounts: [UserAccount]?, needsPathToDatabase: Bool, databaseExtension: String?, needsPathToExecutable: String?) {
+            self.protocolVersion = protocolVersion
+            self.name = name
+            self.requiresMasterPassword = requiresMasterPassword
+            self.canSetPasswords = canSetPasswords
+            self.userAccounts = userAccounts
+            self.needsPathToDatabase = needsPathToDatabase
+            self.databaseExtension = databaseExtension
+            self.needsPathToExecutable = needsPathToExecutable
+        }
     }
 
-    struct RequestHeader: Codable {
-        var pathToDatabase: String?
-        var pathToExecutable: String?
-        var mode: Mode
+    public struct RequestHeader: Codable {
+        public var pathToDatabase: String?
+        public var pathToExecutable: String?
+        public var mode: Mode
 
-        enum Mode: String, Codable {
+        public enum Mode: String, Codable {
             case terminal
             case browser
         }
     }
 
-    struct UserAccount: Codable {
-        var name: String
-        var identifier: String
+    public struct UserAccount: Codable {
+        public var name: String
+        public var identifier: String
     }
 
     // MARK: - Login
 
-    struct LoginRequest: Codable {
-        var header: RequestHeader
+    public struct LoginRequest: Codable {
+        public var header: RequestHeader
 
-        var userAccountID: String?
-        var masterPassword: String?
+        public var userAccountID: String?
+        public var masterPassword: String?
     }
 
-    struct LoginResponse: Codable {
-        var token: String?
+    public struct LoginResponse: Codable {
+        public var token: String?
+
+        public init(token: String?) {
+            self.token = token
+        }
     }
 
     // MARK: - List Accounts
 
-    struct ListAccountsRequest: Codable {
-        var header: RequestHeader
+    public struct ListAccountsRequest: Codable {
+        public var header: RequestHeader
 
-        var userAccountID: String?
-        var token: String?
+        public var userAccountID: String?
+        public var token: String?
     }
 
-    struct ListAccountsResponse: Codable {
-        var accounts: [Account]
+    public struct ListAccountsResponse: Codable {
+        public var accounts: [Account]
+
+        public init(accounts: [Account]) {
+            self.accounts = accounts
+        }
     }
 
-    struct AccountIdentifier: Codable {
-        var accountID: String
+    public struct AccountIdentifier: Codable {
+        public var accountID: String
+
+        public init(accountID: String) {
+            self.accountID = accountID
+        }
     }
 
-    struct Account: Codable {
-        var identifier: AccountIdentifier
-        var userName: String
-        var accountName: String
-        var hasOTP: Bool
+    public struct Account: Codable {
+        public var identifier: AccountIdentifier
+        public var userName: String
+        public var accountName: String
+        public var hasOTP: Bool
+
+        public init(identifier: AccountIdentifier, userName: String, accountName: String, hasOTP: Bool) {
+            self.identifier = identifier
+            self.userName = userName
+            self.accountName = accountName
+            self.hasOTP = hasOTP
+        }
     }
 
     // MARK: - Get Password
 
-    struct GetPasswordRequest: Codable {
-        var header: RequestHeader
+    public struct GetPasswordRequest: Codable {
+        public var header: RequestHeader
 
-        var userAccountID: String?
-        var token: String?
-        var accountIdentifier: AccountIdentifier
+        public var userAccountID: String?
+        public var token: String?
+        public var accountIdentifier: AccountIdentifier
     }
 
-    struct Password: Codable {
-        var password: String
-        var otp: String?
+    public struct Password: Codable {
+        public var password: String
+        public var otp: String?
+
+        public init(password: String, otp: String?) {
+            self.password = password
+            self.otp = otp
+        }
     }
 
     // MARK: - Set Password
 
-    struct SetPasswordRequest: Codable {
-        var header: RequestHeader
+    public struct SetPasswordRequest: Codable {
+        public var header: RequestHeader
 
-        var userAccountID: String?
-        var token: String?
-        var accountIdentifier: AccountIdentifier
-        var newPassword: String?
+        public var userAccountID: String?
+        public var token: String?
+        public var accountIdentifier: AccountIdentifier
+        public var newPassword: String?
     }
 
-    struct SetPasswordResponse: Codable {
+    public struct SetPasswordResponse: Codable {
+        public init() {}
     }
 
     // MARK: - Delete Account
 
-    struct DeleteAccountRequest: Codable {
-        var header: RequestHeader
+    public struct DeleteAccountRequest: Codable {
+        public var header: RequestHeader
 
-        var userAccountID: String?
-        var token: String?
-        var accountIdentifier: AccountIdentifier
+        public var userAccountID: String?
+        public var token: String?
+        public var accountIdentifier: AccountIdentifier
     }
 
-    struct DeleteAccountResponse: Codable {
+    public struct DeleteAccountResponse: Codable {
+        public init() {}
     }
 
     // MARK: - Add Account
 
-    struct AddAccountRequest: Codable {
-        var header: RequestHeader
+    public struct AddAccountRequest: Codable {
+        public var header: RequestHeader
 
-        var userAccountID: String?
-        var token: String?
-        var userName: String
-        var accountName: String
-        var password: String?
+        public var userAccountID: String?
+        public var token: String?
+        public var userName: String
+        public var accountName: String
+        public var password: String?
     }
 
-    struct AddAccountResponse: Codable {
-        var accountIdentifier: AccountIdentifier
+    public struct AddAccountResponse: Codable {
+        public var accountIdentifier: AccountIdentifier
+
+        public init(accountIdentifier: AccountIdentifier) {
+            self.accountIdentifier = accountIdentifier
+        }
     }
 
     // MARK: - Error Handling
 
-    struct ErrorResponse: Codable {
-        var error: String
+    public struct ErrorResponse: Codable {
+        public var error: String
+
+        public init(error: String) {
+            self.error = error
+        }
     }
 }
