@@ -6,7 +6,7 @@ VERSION="0.$COMPACTDATE-adhoc"
 echo "$VERSION" > version.txt
 NAME=$(echo $VERSION | sed -e "s/\\./_/g")
 make clean
-make release
+make SIGNED=1 UNIVERSAL=1 release
 rm -rf build/Deployment/iTerm.app
 mv build/Deployment/iTerm2.app build/Deployment/iTerm.app
 pushd build/Deployment

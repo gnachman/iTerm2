@@ -90,7 +90,7 @@ ORIG_DIR=`pwd`
 
 echo "Build deployment release"
 make clean
-make preview
+make SIGNED=1 UNIVERSAL=1 preview
 
 BUILDTYPE=Deployment
 
