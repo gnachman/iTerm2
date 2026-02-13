@@ -9,7 +9,13 @@ if {$argc < 1} {
 set test_name [lindex $argv 0]
 set timeout -1
 
-spawn xcodebuild test -project iTerm2.xcodeproj -scheme ModernTests -only-testing:$test_name -parallel-testing-enabled NO
+if {[info exists env(SIGNED)] && $env(SIGNED) eq "1"} {
+    set signing_flags {}
+} else {
+    set signing_flags {CODE_SIGN_IDENTITY= CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO}
+}
+
+spawn xcodebuild test -project iTerm2.xcodeproj -scheme ModernTests -only-testing:$test_name -parallel-testing-enabled NO {*}$signing_flags
 
 expect {
     "Program crashed" {

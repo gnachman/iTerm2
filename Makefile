@@ -9,57 +9,95 @@ COMPACTDATE=$(shell date +"%Y%m%d")
 VERSION = $(shell cat version.txt | sed -e "s/%(extra)s/$(COMPACTDATE)/")
 NAME=$(shell echo $(VERSION) | sed -e "s/\\./_/g")
 CMAKE ?= /opt/homebrew/bin/cmake
+RUSTUP ?= $(shell PATH="$(ORIG_PATH):$(HOME)/.cargo/bin" which rustup 2>/dev/null)
 DEPLOYMENT_TARGET=12.0
+
+# Build product directory: defaults to xcodebuild's SYMROOT.
+# Override with BUILD_DIR=/path/to/dir on the command line.
+ifndef BUILD_DIR
+  BUILD_DIR := $(shell xcodebuild -scheme iTerm2 -showBuildSettings 2>/dev/null | awk -F ' = ' '/^ *SYMROOT/{print $$2; exit}')
+endif
+ifeq ($(strip $(BUILD_DIR)),)
+  $(error Could not determine BUILD_DIR from xcodebuild -showBuildSettings. Is Xcode installed? Set BUILD_DIR explicitly to override.)
+endif
+ifeq ($(patsubst /%,%,$(BUILD_DIR)),$(BUILD_DIR))
+  $(error BUILD_DIR is not an absolute path: $(BUILD_DIR))
+endif
+ifneq ($(shell d='$(BUILD_DIR)'; while [ ! -d "$$d" ]; do d=$$(dirname "$$d"); done; [ -w "$$d" ] && echo ok),ok)
+  $(error BUILD_DIR is not writable: $(BUILD_DIR))
+endif
+
+# Code signing: disabled by default (contributor-friendly).
+# Use SIGNED=1 to build with the project's signing identity.
+ifndef SIGNED
+  SIGNING_FLAGS = CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO
+endif
+
+# Architecture: native-only by default (faster builds).
+# Use UNIVERSAL=1 to build universal (arm64 + x86_64) binaries for release.
+NATIVE_ARCH := $(shell uname -m)
+ifndef UNIVERSAL
+  ARCH_FLAGS = ARCHS="$(NATIVE_ARCH)" ONLY_ACTIVE_ARCH=YES
+endif
+
+# Architecture for cmake-based deps.
+ifdef UNIVERSAL
+  CMAKE_ARCHS = x86_64;arm64
+else
+  CMAKE_ARCHS = $(NATIVE_ARCH)
+endif
+
+# Rust target triple for the native architecture.
+ifeq ($(NATIVE_ARCH),arm64)
+  RUST_NATIVE_TARGET = aarch64-apple-darwin
+else
+  RUST_NATIVE_TARGET = x86_64-apple-darwin
+endif
 
 .PHONY: clean all backup-old-iterm restart
 
 all: Development
 dev: Development
 prod: Deployment
-debug: Development
-	/Developer/usr/bin/gdb build/Development/iTerm2.app/Contents/MacOS/iTerm
 
 TAGS:
 	find . -name "*.[mhMH]" -exec etags -o ./TAGS -a '{}' +
 
 install: | Deployment backup-old-iterm
-	cp -R build/Deployment/iTerm2.app $(APPS)
+	cp -R $(BUILD_DIR)/Deployment/iTerm2.app $(APPS)
 
 Development:
 	echo "Using PATH for build: $(PATH)"
-	xcodebuild -scheme iTerm2 -configuration Development -destination 'platform=macOS' -skipPackagePluginValidation && \
-	chmod -R go+rX build/Development
-
-Dep:
-	xcodebuild -scheme iTerm2 -configuration Deployment -destination 'platform=macOS' -skipPackagePluginValidation
+	xcodebuild -scheme iTerm2 -configuration Development -destination 'platform=macOS' -skipPackagePluginValidation $(SIGNING_FLAGS) $(ARCH_FLAGS) SYMROOT="$(BUILD_DIR)" && \
+	chmod -R go+rX $(BUILD_DIR)/Development
 
 Beta:
 	cp plists/beta-iTerm2.plist plists/iTerm2.plist
-	xcodebuild -scheme iTerm2 -configuration Beta -destination 'platform=macOS' -skipPackagePluginValidation ENABLE_ADDRESS_SANITIZER=NO && \
-	chmod -R go+rX build/Beta
+	xcodebuild -scheme iTerm2 -configuration Beta -destination 'platform=macOS' -skipPackagePluginValidation $(SIGNING_FLAGS) $(ARCH_FLAGS) SYMROOT="$(BUILD_DIR)" ENABLE_ADDRESS_SANITIZER=NO && \
+	chmod -R go+rX $(BUILD_DIR)/Beta
 
 Deployment:
-	xcodebuild -scheme iTerm2 -configuration Deployment -destination 'platform=macOS' -skipPackagePluginValidation ENABLE_ADDRESS_SANITIZER=NO && \
-	chmod -R go+rX build/Deployment
+	xcodebuild -scheme iTerm2 -configuration Deployment -destination 'platform=macOS' -skipPackagePluginValidation $(SIGNING_FLAGS) $(ARCH_FLAGS) SYMROOT="$(BUILD_DIR)" ENABLE_ADDRESS_SANITIZER=NO && \
+	chmod -R go+rX $(BUILD_DIR)/Deployment
 
 Nightly: force
 	cp plists/nightly-iTerm2.plist plists/iTerm2.plist
-	xcodebuild -scheme iTerm2 -configuration Nightly -destination 'platform=macOS' -skipPackagePluginValidation ENABLE_ADDRESS_SANITIZER=NO
-	chmod -R go+rX build/Nightly
+	xcodebuild -scheme iTerm2 -configuration Nightly -destination 'platform=macOS' -skipPackagePluginValidation $(SIGNING_FLAGS) $(ARCH_FLAGS) SYMROOT="$(BUILD_DIR)" ENABLE_ADDRESS_SANITIZER=NO
+	chmod -R go+rX $(BUILD_DIR)/Nightly
 
 run: Development
-	build/Development/iTerm2.app/Contents/MacOS/iTerm2
+	$(BUILD_DIR)/Development/iTerm2.app/Contents/MacOS/iTerm2
 
 devzip: Development
-	cd build/Development && \
+	cd $(BUILD_DIR)/Development && \
 	zip -r iTerm2-$(NAME).zip iTerm2.app
 
 zip: Deployment
-	cd build/Deployment && \
+	cd $(BUILD_DIR)/Deployment && \
 	zip -r iTerm2-$(NAME).zip iTerm2.app
 
 clean:
-	rm -rf build
+	rm -rf "$(BUILD_DIR)"
 	rm -rf submodules/*/build
 	rm -rf submodules/*/build-*
 	rm -rf submodules/*/build_*
@@ -84,11 +122,6 @@ restart:
 	PATH=$(ORIG_PATH) /usr/bin/open /Applications/iTerm2.app &
 	/bin/kill -TERM $(ITERM_PID)
 
-canary:
-	cp canary-iTerm2.plist iTerm2.plist
-	make Deployment
-	./canary.sh
-
 release:
 	cp plists/release-iTerm2.plist plists/iTerm2.plist
 	make Deployment
@@ -105,9 +138,20 @@ armsixel: force
 	mkdir -p submodules/libsixel/build-arm
 	cd submodules/libsixel/build-arm && PKG_CONFIG=/opt/homebrew/bin/pkg-config CC="/usr/bin/clang -target arm64-apple-macos$(DEPLOYMENT_TARGET)" LDFLAGS="-target arm64-apple-macos$(DEPLOYMENT_TARGET)" CFLAGS="-target arm64-apple-macos$(DEPLOYMENT_TARGET)" LIBTOOLFLAGS="-target arm64-apple-macos$(DEPLOYMENT_TARGET)" ../configure --host=aarch64-apple-darwin --prefix=${PWD}/ThirdParty/libsixel-arm --without-libcurl --without-jpeg --without-png --disable-python --disable-shared && $(MAKE) && $(MAKE) install
 
+ifdef UNIVERSAL
 # Usage: go to an intel mac and run make x86libsixel and commit it. Go to an arm mac and run make armsixel && make libsixel.
 fatlibsixel: force armsixel x86libsixel
 	lipo -create -output ThirdParty/libsixel/lib/libsixel.a ThirdParty/libsixel-arm/lib/libsixel.a ThirdParty/libsixel-x86/lib/libsixel.a
+else
+fatlibsixel: force
+ifeq ($(NATIVE_ARCH),arm64)
+	$(MAKE) armsixel
+	cp ThirdParty/libsixel-arm/lib/libsixel.a ThirdParty/libsixel/lib/libsixel.a
+else
+	$(MAKE) x86libsixel
+	cp ThirdParty/libsixel-x86/lib/libsixel.a ThirdParty/libsixel/lib/libsixel.a
+endif
+endif
 
 armopenssl: force
 	echo Begin building configure-armopenssl
@@ -129,6 +173,7 @@ x86openssl: force
 	mkdir submodules/openssl/build-x86
 	cp submodules/openssl/*.a submodules/openssl/build-x86
 
+ifdef UNIVERSAL
 fatopenssl: force
 	echo Begin building fatopenssl
 	$(MAKE) armopenssl
@@ -138,6 +183,21 @@ fatopenssl: force
 	cd submodules/openssl; rm -rf build-fat; mkdir build-fat; mkdir build-fat/lib; cp -R include/ build-fat/include/
 	cp submodules/openssl/libcrypto.a submodules/openssl/libssl.a submodules/NMSSH/NMSSH-OSX/Libraries/lib
 	cp submodules/openssl/*a submodules/openssl/build-fat/lib
+else
+fatopenssl: force
+	echo Begin building openssl for $(NATIVE_ARCH)
+ifeq ($(NATIVE_ARCH),arm64)
+	$(MAKE) armopenssl
+	cd submodules/openssl; rm -rf build-fat; mkdir -p build-fat/lib; cp -R include/ build-fat/include/
+	cp submodules/openssl/build-arm/*.a submodules/openssl/build-fat/lib
+	cp submodules/openssl/build-arm/libcrypto.a submodules/openssl/build-arm/libssl.a submodules/NMSSH/NMSSH-OSX/Libraries/lib
+else
+	$(MAKE) x86openssl
+	cd submodules/openssl; rm -rf build-fat; mkdir -p build-fat/lib; cp -R include/ build-fat/include/
+	cp submodules/openssl/build-x86/*.a submodules/openssl/build-fat/lib
+	cp submodules/openssl/build-x86/libcrypto.a submodules/openssl/build-x86/libssl.a submodules/NMSSH/NMSSH-OSX/Libraries/lib
+endif
+endif
 
 x86libssh2: force
 	echo Begin building x86libssh2
@@ -153,85 +213,100 @@ armlibssh2: force
 	# -DCMAKE_C_FLAGS="-DLIBSSH2DEBUG"
 	cd submodules/libssh2/build_arm64 && $(CMAKE) -DCMAKE_POLICY_VERSION_MINIMUM=3.5 -DCMAKE_IGNORE_PREFIX_PATH=/opt/homebrew -DCMAKE_OSX_SYSROOT=/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk -DOPENSSL_INCLUDE_DIR=${PWD}/submodules/openssl/include -DOPENSSL_ROOT_DIR=${PWD}/submodules/openssl -DBUILD_EXAMPLES=NO -DBUILD_TESTING=NO -DCMAKE_OSX_ARCHITECTURES=arm64 -DCRYPTO_BACKEND=OpenSSL -DCMAKE_OSX_DEPLOYMENT_TARGET=$(DEPLOYMENT_TARGET) .. && $(MAKE) libssh2_static
 
+ifdef UNIVERSAL
 fatlibssh2: force fatopenssl
 	echo Begin building fatlibssh2
 	$(MAKE) x86libssh2
 	$(MAKE) armlibssh2
 	cd submodules/libssh2 && lipo -create -output libssh2.a build_arm64/src/libssh2.a build_x86_64/src/libssh2.a
 	cp submodules/libssh2/libssh2.a submodules/NMSSH/NMSSH-OSX/Libraries/lib/libssh2.a
+else
+fatlibssh2: force fatopenssl
+	echo Begin building libssh2 for $(NATIVE_ARCH)
+ifeq ($(NATIVE_ARCH),arm64)
+	$(MAKE) armlibssh2
+	cp submodules/libssh2/build_arm64/src/libssh2.a submodules/NMSSH/NMSSH-OSX/Libraries/lib/libssh2.a
+else
+	$(MAKE) x86libssh2
+	cp submodules/libssh2/build_x86_64/src/libssh2.a submodules/NMSSH/NMSSH-OSX/Libraries/lib/libssh2.a
+endif
+endif
 
 CoreParse: force
 	rm -rf ThirdParty/CoreParse.framework
-	cd submodules/CoreParse && xcodebuild -target CoreParse -configuration Release CONFIGURATION_BUILD_DIR=../../ThirdParty VALID_ARCHS="arm64 x86_64"
+	cd submodules/CoreParse && xcodebuild -target CoreParse -configuration Release CONFIGURATION_BUILD_DIR=../../ThirdParty VALID_ARCHS="arm64 x86_64" $(SIGNING_FLAGS) $(ARCH_FLAGS)
 	cp "submodules/CoreParse//CoreParse/Tokenisation/Token Recognisers/CPRegexpRecogniser.h" ThirdParty/CoreParse.framework/Versions/A/Headers/CPRegexpRecogniser.h
 
 NMSSH: force fatlibssh2
 	echo Begin building NMSSH
 	rm -rf ThirdParty/NMSSH.framework
 	cp submodules/libssh2/include/* submodules/NMSSH/NMSSH-OSX/Libraries/include/libssh2
-	cd submodules/NMSSH && xcodebuild -target NMSSH -project NMSSH.xcodeproj -configuration Release CONFIGURATION_BUILD_DIR=../../ThirdParty
+	cd submodules/NMSSH && xcodebuild -target NMSSH -project NMSSH.xcodeproj -configuration Release CONFIGURATION_BUILD_DIR=../../ThirdParty $(SIGNING_FLAGS) $(ARCH_FLAGS)
 
-paranoidNMSSH: force
+paranoid-NMSSH: force
 	/usr/bin/sandbox-exec -f deps.sb $(MAKE) NMSSH
 
+ifdef UNIVERSAL
 librailroad_dsl: force
-	/opt/homebrew/bin/rustup target add x86_64-apple-darwin
-	/opt/homebrew/bin/rustup target add aarch64-apple-darwin
-	cd submodules/railroad_dsl && /opt/homebrew/bin/rustup run stable cargo build --release --target aarch64-apple-darwin && /opt/homebrew/bin/rustup run stable cargo build --release --target x86_64-apple-darwin && lipo -create target/aarch64-apple-darwin/release/librailroad_dsl.dylib target/x86_64-apple-darwin/release/librailroad_dsl.dylib -output ../../ThirdParty/librailroad_dsl/lib/librailroad_dsl.dylib && cp include/railroad_dsl.h ../../ThirdParty/librailroad_dsl/include && install_name_tool -id @rpath/librailroad_dsl.dylib ../../ThirdParty/librailroad_dsl/lib/librailroad_dsl.dylib
+	$(RUSTUP) target add x86_64-apple-darwin
+	$(RUSTUP) target add aarch64-apple-darwin
+	cd submodules/railroad_dsl && $(RUSTUP) run stable cargo build --release --target aarch64-apple-darwin && $(RUSTUP) run stable cargo build --release --target x86_64-apple-darwin && lipo -create target/aarch64-apple-darwin/release/librailroad_dsl.dylib target/x86_64-apple-darwin/release/librailroad_dsl.dylib -output ../../ThirdParty/librailroad_dsl/lib/librailroad_dsl.dylib && cp include/railroad_dsl.h ../../ThirdParty/librailroad_dsl/include && install_name_tool -id @rpath/librailroad_dsl.dylib ../../ThirdParty/librailroad_dsl/lib/librailroad_dsl.dylib
+else
+librailroad_dsl: force
+	$(RUSTUP) target add $(RUST_NATIVE_TARGET)
+	cd submodules/railroad_dsl && $(RUSTUP) run stable cargo build --release --target $(RUST_NATIVE_TARGET) && cp target/$(RUST_NATIVE_TARGET)/release/librailroad_dsl.dylib ../../ThirdParty/librailroad_dsl/lib/librailroad_dsl.dylib && cp include/railroad_dsl.h ../../ThirdParty/librailroad_dsl/include && install_name_tool -id @rpath/librailroad_dsl.dylib ../../ThirdParty/librailroad_dsl/lib/librailroad_dsl.dylib
+endif
 
 pwmadapters: force
-	cd pwmplugin/ && ./build.sh
-
-paranoidrailroad: force
-	/usr/bin/sandbox-exec -f deps.sb $(MAKE) librailroad_dsl
+	cd pwmplugin/ && UNIVERSAL=$(UNIVERSAL) ./build.sh
 
 libgit2: force
 	mkdir -p submodules/libgit2/build
-	PATH=/usr/local/bin:${PATH} cd submodules/libgit2/build && ${CMAKE} -DBUILD_CLAR=OFF -DCMAKE_IGNORE_PREFIX_PATH=/opt/homebrew -DBUILD_SHARED_LIBS=OFF -DCMAKE_OSX_ARCHITECTURES="x86_64;arm64" -DCMAKE_OSX_DEPLOYMENT_TARGET="$(DEPLOYMENT_TARGET)" -DCMAKE_INSTALL_PREFIX=../../../ThirdParty/libgit2 -DUSE_SSH=OFF -DUSE_ICONV=OFF ..
+	PATH=/usr/local/bin:${PATH} cd submodules/libgit2/build && ${CMAKE} -DBUILD_CLAR=OFF -DCMAKE_IGNORE_PREFIX_PATH=/opt/homebrew -DBUILD_SHARED_LIBS=OFF -DCMAKE_OSX_ARCHITECTURES="$(CMAKE_ARCHS)" -DCMAKE_OSX_DEPLOYMENT_TARGET="$(DEPLOYMENT_TARGET)" -DCMAKE_INSTALL_PREFIX=../../../ThirdParty/libgit2 -DUSE_SSH=OFF -DUSE_ICONV=OFF ..
 	PATH=/usr/local/bin:${PATH} cd submodules/libgit2/build && ${CMAKE} --build . --target install --parallel "$$(sysctl -n hw.ncpu)"
 
 sparkle: force
 	rm -rf ThirdParty/Sparkle.framework
-	cd submodules/Sparkle && xcodebuild -scheme Sparkle -configuration Release 'CONFIGURATION_BUILD_DIR=$$(SRCROOT)/Build/$$(CONFIGURATION)'
+	cd submodules/Sparkle && xcodebuild -scheme Sparkle -configuration Release 'CONFIGURATION_BUILD_DIR=$$(SRCROOT)/Build/$$(CONFIGURATION)' $(SIGNING_FLAGS) $(ARCH_FLAGS)
 	mv submodules/Sparkle/Build/Release/Sparkle.framework ThirdParty/Sparkle.framework
 
-paranoid-coreparse: force
+paranoid-CoreParse: force
 	/usr/bin/sandbox-exec -f deps.sb $(MAKE) CoreParse
 
-paranoid-swiftymarkdown: force
+paranoid-SwiftyMarkdown: force
 	/usr/bin/sandbox-exec -f deps.sb $(MAKE) SwiftyMarkdown
 
-paranoiddeps: force
+paranoid-deps: force
 	/usr/bin/sandbox-exec -f deps.sb $(MAKE) deps
 
-paranoidlibssh2: force
+paranoid-fatlibssh2: force
 	/usr/bin/sandbox-exec -f deps.sb $(MAKE) fatlibssh2
 
-paranoidbetterfontpicker: force
+paranoid-BetterFontPicker: force
 	/usr/bin/sandbox-exec -f deps.sb $(MAKE) BetterFontPicker
 
-paranoidbetterfontpicker-dev: force
+paranoid-BetterFontPicker-Dev: force
 	/usr/bin/sandbox-exec -f deps.sb $(MAKE) BetterFontPicker-Dev
 
-paranoidlibgit2: force
+paranoid-libgit2: force
 	/usr/bin/sandbox-exec -f deps.sb $(MAKE) libgit2
 
-paranoidsparkle: force
+paranoid-sparkle: force
 	/usr/bin/sandbox-exec -f deps.sb $(MAKE) sparkle
 
-paranoidlibsixel: force
+paranoid-fatlibsixel: force
 	/usr/bin/sandbox-exec -f deps.sb $(MAKE) fatlibsixel
 
-paranoidlibrailroad: force
+paranoid-librailroad_dsl: force
 	/usr/bin/sandbox-exec -f deps.sb $(MAKE) librailroad_dsl
 
-paranoid-colorpicker: force
+paranoid-ColorPicker: force
 	/usr/bin/sandbox-exec -f deps.sb $(MAKE) ColorPicker
 	
 paranoid-SearchableComboListView: force
 	/usr/bin/sandbox-exec -f deps.sb $(MAKE) SearchableComboListView
 
-# You probably want make paranoiddeps to avoid depending on Hombrew stuff.
+# You probably want make paranoid-deps to avoid depending on Homebrew stuff.
 deps: force fatlibsixel CoreParse NMSSH bindeps libgit2 sparkle librailroad_dsl sfsymbolenum pwmadapters
 
 sfsymbolenum:
@@ -261,16 +336,13 @@ bindeps: SwiftyMarkdown Highlightr BetterFontPicker
 SearchableComboListView: force
 	cd SearchableComboListView && $(MAKE)
 
-paranoidsclv: force
-	/usr/bin/sandbox-exec -f deps.sb $(MAKE) SearchableComboListView
-
 SwiftyMarkdown: force
-	cd submodules/SwiftyMarkdown && xcodebuild -configuration Release 'CONFIGURATION_BUILD_DIR=$$(SRCROOT)/Build/$$(CONFIGURATION)'
+	cd submodules/SwiftyMarkdown && xcodebuild -configuration Release 'CONFIGURATION_BUILD_DIR=$$(SRCROOT)/Build/$$(CONFIGURATION)' $(SIGNING_FLAGS) $(ARCH_FLAGS)
 	rm -rf ThirdParty/SwiftyMarkdown.framework
 	mv submodules/SwiftyMarkdown/build/Release/SwiftyMarkdown.framework ThirdParty/SwiftyMarkdown.framework
 
 Highlightr: force
-	cd submodules/Highlightr && xcodebuild -project Highlightr.xcodeproj -target Highlightr-macOS 'CONFIGURATION_BUILD_DIR=$$(SRCROOT)/Build/$$(CONFIGURATION)'
+	cd submodules/Highlightr && xcodebuild -project Highlightr.xcodeproj -target Highlightr-macOS 'CONFIGURATION_BUILD_DIR=$$(SRCROOT)/Build/$$(CONFIGURATION)' $(SIGNING_FLAGS) $(ARCH_FLAGS)
 	rm -rf ThirdParty/Highlightr.framework
 	mv submodules/Highlightr/build/Release/Highlightr.framework ThirdParty/Highlightr.framework
 
