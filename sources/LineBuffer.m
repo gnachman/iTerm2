@@ -601,6 +601,12 @@ static int RawNumLines(LineBuffer* buffer, int width) {
     [self sanityCheck];
 #endif
         first += 1;
+        // After continuing the existing partial line in the current block,
+        // break to the bulk initWithItems: path. Without this, when all items
+        // are partial (e.g., input with no CRLFs), the loop processes every
+        // item one-at-a-time into a single ever-growing LineBlock, causing
+        // O(n^2) COW clone storms during periodic syncs.
+        break;
     }
 
 
