@@ -1153,6 +1153,57 @@ class LineBufferTests: XCTestCase {
         XCTAssertTrue(context.includesPartialLastLine,
                       "includesPartialLastLine should be true when cross-block match touches partial last line")
     }
+
+    // MARK: - Bulk partial append
+
+    /// Verify that appending many all-partial items via appendLines:width:
+    /// distributes them across multiple blocks rather than concentrating them
+    /// in a single ever-growing block. This guards against a regression where
+    /// the one-at-a-time loop in appendLines: processed every partial item
+    /// into one block, causing O(n^2) COW clone cost.
+    func testBulkPartialAppendCreatesMultipleBlocks() {
+        let buffer = LineBuffer()
+        let width: Int32 = 80
+
+        // Seed the buffer with a partial line so lastBlock.hasPartial is true.
+        buffer.append(screenCharArrayWithDefaultStyle("seed", eol: EOL_SOFT),
+                      width: width)
+        XCTAssertEqual(buffer.testOnlyNumberOfBlocks, 1)
+
+        // Append 100 partial items through the bulk path.
+        buffer.testOnlyAppendPartialItems(100, ofLength: 40, width: width)
+
+        // With the fix, the first item continues the existing partial in block 0,
+        // and the remaining 99 go to a new block via initWithItems:.
+        // Without the fix, all 100 would be appended one-at-a-time into block 0.
+        XCTAssertGreaterThan(buffer.testOnlyNumberOfBlocks, 1,
+                             "Bulk partial items should create a new block, not grow one block indefinitely")
+
+        // Verify data integrity: total character count should match.
+        // seed = 4 chars, 100 items × 40 chars = 4004 total.
+        let totalChars = (0..<buffer.numLines(withWidth: width)).reduce(0) { sum, i in
+            sum + Int(buffer.wrappedLine(at: i, width: width).length)
+        }
+        XCTAssertEqual(totalChars, 4 + 100 * 40)
+    }
+
+    /// Verify that the bulk path correctly handles a mix of partial and
+    /// non-partial items (the common CRLF case should not regress).
+    func testBulkAppendWithNonPartialItemsPreservesLineBreaks() {
+        let buffer = LineBuffer()
+        let width: Int32 = 80
+
+        // Append a partial line followed by a hard line to seed.
+        buffer.append(screenCharArrayWithDefaultStyle("partial", eol: EOL_SOFT),
+                      width: width)
+        buffer.append(screenCharArrayWithDefaultStyle("complete", eol: EOL_HARD),
+                      width: width)
+
+        XCTAssertEqual(buffer.numberOfUnwrappedLines(), 1)
+        // The single raw line should contain "partialcomplete".
+        let line = buffer.unwrappedLine(at: 0)
+        XCTAssertEqual(line.stringValue, "partialcomplete")
+    }
 }
 
 extension LineBuffer {

@@ -2099,6 +2099,35 @@ NS_INLINE int TotalNumberOfRawLines(LineBuffer *self) {
     return _lineBlocks[i];
 }
 
+- (int)testOnlyNumberOfBlocks {
+    return (int)_lineBlocks.count;
+}
+
+- (void)testOnlyAppendPartialItems:(int)count
+                          ofLength:(int)itemLength
+                             width:(int)width {
+    screen_char_t *buf = (screen_char_t *)calloc(count * itemLength, sizeof(screen_char_t));
+    for (int i = 0; i < count * itemLength; i++) {
+        buf[i].code = 'A' + (i % 26);
+    }
+    CTVector(iTermAppendItem) items;
+    CTVectorCreate(&items, count);
+    for (int i = 0; i < count; i++) {
+        iTermAppendItem item = {
+            .buffer = buf + i * itemLength,
+            .length = itemLength,
+            .partial = 1,
+            .metadata = iTermImmutableMetadataDefault(),
+            .continuation = { 0 }
+        };
+        item.continuation.code = EOL_SOFT;
+        CTVectorAppend(&items, item);
+    }
+    [self appendLines:&items width:width];
+    CTVectorDestroy(&items);
+    free(buf);
+}
+
 - (unsigned int)numberOfUnwrappedLines {
     unsigned int sum = 0;
     for (LineBlock *block in _lineBlocks.blocks) {
