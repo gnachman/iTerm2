@@ -19,16 +19,18 @@ let package = Package(
         ),
     ],
     targets: [
+        .target(
+            name: "PasswordManagerProtocol",
+            path: "Sources/PasswordManagerProtocol"
+        ),
         .executableTarget(
             name: "iterm2-keepassxc-adapter",
-            path: "Sources",
-            sources: [
-                "iterm2-keepassxc-adapter/main.swift",
-                "PasswordManagerProtocol/PasswordManagerProtocol.swift"
-            ]
+            dependencies: ["PasswordManagerProtocol"],
+            path: "Sources/iterm2-keepassxc-adapter"
         ),
         .executableTarget(
             name: "iterm2-bitwarden-adapter",
+            dependencies: ["PasswordManagerProtocol"],
             path: "Sources/iterm2-bitwarden-adapter"
         ),
         .testTarget(
