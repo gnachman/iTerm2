@@ -3,6 +3,7 @@
 // Protocol data structures are in the PasswordManagerProtocol module
 
 import Foundation
+import PasswordManagerProtocol
 
 // MARK: - Type Aliases
 
