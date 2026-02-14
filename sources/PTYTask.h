@@ -21,7 +21,7 @@
 @protocol PTYTaskDelegate <NSObject>
 // Runs in a background thread. Should do as much work as possible in this
 // thread before kicking off a possibly async task in the main thread.
-- (void)threadedReadTask:(char *)buffer length:(int)length;
+- (void)threadedReadTask:(char * _Nonnull)buffer length:(int)length;
 
 // Runs in the same background task as -threadedReadTask:length:.
 - (void)threadedTaskBrokenPipe;
@@ -187,6 +187,17 @@ typedef NS_OPTIONS(NSUInteger, iTermJobManagerAttachResults) {
 // This is used by channels. It takes care of handling IO and this is the one strong reference to the ioBuffer.
 @property(nonatomic, strong) iTermIOBuffer *ioBuffer;
 
+// Any queue (atomic weak read; set on main queue by PTYSession.taskDidRegister:).
+// TokenExecutor for backpressure monitoring.
+// Used by dispatch sources to determine when to suspend/resume reading.
+// Typed as `id` to avoid requiring Swift header import in this header.
+// Implementation casts to TokenExecutor after importing Swift header.
+@property(nonatomic, weak) id tokenExecutor;
+
+// Any queue. Captures shouldRead snapshot, then dispatches to _ioQueue for source suspend/resume.
+// Called when backpressure changes or other read-affecting state changes.
+- (void)updateReadSourceState;
+
 + (NSMutableDictionary *)mutableEnvironmentDictionary;
 
 - (instancetype)init;
@@ -249,5 +260,64 @@ typedef NS_OPTIONS(NSUInteger, iTermJobManagerAttachResults) {
 - (iTermJobManagerAttachResults)finishAttachingToMultiserver:(id<iTermJobManagerPartialResult>)partialResult
                                                   jobManager:(id<iTermJobManager>)jobManager
                                                        queue:(dispatch_queue_t)queue;
+
+@end
+
+// Test-only interface for verifying dispatch source state in unit tests.
+// These accessors provide visibility into private ivar state for testing
+// dispatch source lifecycle, suspend/resume transitions, and teardown.
+@interface PTYTask (Testing)
+
+/// Returns YES if a read dispatch source has been created.
+@property(nonatomic, readonly) BOOL testHasReadSource;
+
+/// Returns YES if a write dispatch source has been created.
+@property(nonatomic, readonly) BOOL testHasWriteSource;
+
+/// Returns YES if the read source is currently suspended.
+/// Only meaningful if testHasReadSource is YES.
+@property(nonatomic, readonly) BOOL testIsReadSourceSuspended;
+
+/// Returns YES if the write source is currently suspended.
+/// Only meaningful if testHasWriteSource is YES.
+@property(nonatomic, readonly) BOOL testIsWriteSourceSuspended;
+
+/// Returns YES if the write buffer has data waiting to be written.
+@property(nonatomic, readonly) BOOL testWriteBufferHasData;
+
+/// Set the file descriptor for testing purposes.
+/// This sets the fd via the jobManager.
+- (void)testSetFd:(int)fd;
+
+/// Set up dispatch sources for testing with a pre-configured fd.
+/// Requires fd >= 0 to be set before calling.
+- (void)testSetupDispatchSourcesForTesting;
+
+/// Tear down dispatch sources for testing cleanup.
+- (void)testTeardownDispatchSourcesForTesting;
+
+/// Add data to the write buffer for testing write source behavior.
+- (void)testAppendDataToWriteBuffer:(NSData *)data;
+
+/// Override shouldWrite to return YES for testing write source resume.
+/// When set to YES, shouldWrite will return YES regardless of jobManager state
+/// (but still requires buffer to have data and not be paused).
+/// Reset to NO to restore normal behavior.
+@property(nonatomic, assign) BOOL testShouldWriteOverride;
+
+/// Override jobManager.ioAllowed for predicate testing.
+/// nil = use real jobManager.ioAllowed value
+/// @YES = force ioAllowed to return true
+/// @NO = force ioAllowed to return false
+/// This affects both shouldRead and shouldWrite predicates.
+@property(nonatomic, strong, nullable) NSNumber *testIoAllowedOverride;
+
+/// Synchronously wait for the ioQueue to drain all pending work.
+/// Use this instead of Thread.sleep to avoid flaky timing-dependent tests.
+- (void)testWaitForIOQueue;
+
+/// Write data as if it came from a coprocess (for testing coprocess → PTY bridge).
+/// This calls writeTask:coprocess:YES internally.
+- (void)testWriteFromCoprocess:(NSData * _Nonnull)data;
 
 @end

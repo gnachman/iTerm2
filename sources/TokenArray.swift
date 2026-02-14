@@ -26,6 +26,8 @@ class TokenArray: IteratorProtocol, CustomDebugStringConvertible {
         return DispatchQueue(label: "com.iterm2.token-destroyer")
     }()
     private var semaphore: DispatchSemaphore?
+    // Called on mutation queue when last token is consumed (slot released back to backpressure pool).
+    private var onSemaphoreSignaled: (() -> Void)?
 
     var hasNext: Bool {
         return nextIndex < count
@@ -53,16 +55,18 @@ class TokenArray: IteratorProtocol, CustomDebugStringConvertible {
                                       nextToken?.asciiData.pointee.buffer[0] == 13)
     }
 
-    // length is byte length ofinputs
+    // length is byte length of inputs
     init(_ cvector: CVector,
          lengthTotal: Int,
          lengthExcludingInBandSignaling: Int,
-         semaphore: DispatchSemaphore?) {
+         semaphore: DispatchSemaphore?,
+         onSemaphoreSignaled: (() -> Void)? = nil) {
         precondition(lengthTotal > 0 && lengthExcludingInBandSignaling >= 0)
         self.cvector = cvector
         self.lengthTotal = lengthTotal
         self.lengthExcludingInBandSignaling = lengthExcludingInBandSignaling
         self.semaphore = semaphore
+        self.onSemaphoreSignaled = onSemaphoreSignaled
         count = CVectorCount(&self.cvector)
     }
 
@@ -72,9 +76,8 @@ class TokenArray: IteratorProtocol, CustomDebugStringConvertible {
         }
         defer {
             nextIndex += 1
-            if nextIndex == count, let semaphore = semaphore {
-                semaphore.signal()
-                self.semaphore = nil
+            if nextIndex == count {
+                signalAndRelease()
             }
         }
         return (CVectorGetObject(&cvector, nextIndex) as! VT100Token)
@@ -97,9 +100,8 @@ class TokenArray: IteratorProtocol, CustomDebugStringConvertible {
     // Returns whether there is another token.
     func consume() -> Bool {
         nextIndex += 1
-        if nextIndex == count, let semaphore = semaphore {
-            semaphore.signal()
-            self.semaphore = nil
+        if nextIndex == count {
+            signalAndRelease()
         }
         return hasNext
     }
@@ -110,17 +112,29 @@ class TokenArray: IteratorProtocol, CustomDebugStringConvertible {
             return
         }
         nextIndex = count
-        if let semaphore = semaphore {
-            semaphore.signal()
-            self.semaphore = nil
-        }
+        signalAndRelease()
     }
 
     private var dirty = true
 
     func didFinish() {
-        semaphore?.signal()
+        signalAndRelease()
+    }
+
+    /// Signals the semaphore (if present) and invokes the slot-release callback.
+    /// The callback fires for all non-high-priority tokens regardless of semaphore:
+    /// - Legacy path: semaphore present, callback increments availableSlots
+    /// - Fairness path: no semaphore, callback still increments availableSlots
+    /// Captures the callback before niling to avoid footguns if the
+    /// callback assigns to onSemaphoreSignaled.
+    private func signalAndRelease() {
+        guard semaphore != nil || onSemaphoreSignaled != nil else { return }
+        let sem = semaphore
+        let closure = onSemaphoreSignaled
         semaphore = nil
+        onSemaphoreSignaled = nil
+        sem?.signal()
+        closure?()
     }
 
     func cleanup(asyncFree: Bool) {
@@ -128,7 +142,7 @@ class TokenArray: IteratorProtocol, CustomDebugStringConvertible {
             return
         }
         dirty = false
-        semaphore?.signal()
+        signalAndRelease()
         if asyncFree {
             TokenArray.destroyQueue.async { [cvector] in
                 CVectorReleaseObjectsAndDestroy(cvector)
