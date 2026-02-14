@@ -43,10 +43,9 @@ extension PseudoTerminal {
 
 // MARK: - Tab Color Picker (ColorsMenuItemViewDelegate)
 
-/// Private helper that holds mutable state for the tab color picker.
-/// Attached to PseudoTerminal via an associated object so Swift extensions
-/// can have stored properties without touching the ObjC ivar layout.
-private class TabColorPickerState: NSObject {
+/// Holds mutable state for the tab color picker.
+/// Stored as a property on PseudoTerminal (declared in PseudoTerminal.h).
+@objc class TabColorPickerState: NSObject {
     var popover: CPKPopover?
     var debounceTimer: Timer?
     var pendingRecentColor: NSColor?
@@ -72,16 +71,14 @@ private let kTabColorAccessoryViewID = NSUserInterfaceItemIdentifier("iTermTabCo
 /// Mirrors the kCPKUseSystemColorPicker constant from CPKControlsView.h (not public).
 private let kUseSystemColorPickerKey = "kCPKUseSystemColorPicker"
 
-private var tabColorPickerStateKey: UInt8 = 0
-
 extension PseudoTerminal: ColorsMenuItemViewDelegate {
 
     private var pickerState: TabColorPickerState {
-        if let state = objc_getAssociatedObject(self, &tabColorPickerStateKey) as? TabColorPickerState {
+        if let state = tabColorPickerState {
             return state
         }
         let state = TabColorPickerState()
-        objc_setAssociatedObject(self, &tabColorPickerStateKey, state, .OBJC_ASSOCIATION_RETAIN_NONATOMIC)
+        tabColorPickerState = state
         return state
     }
 
@@ -150,7 +147,7 @@ extension PseudoTerminal: ColorsMenuItemViewDelegate {
         panel.orderFront(nil)
     }
 
-    /// Builds the accessory view for NSColorPanel with a \u{201C}Default Picker\u{201D} button and recent color swatches.
+    /// Builds the accessory view for NSColorPanel with a “Default Picker” button and recent color swatches.
     private func buildSystemPickerAccessoryView(panelWidth: CGFloat) -> NSView {
         let kBottomMargin: CGFloat = 8
         let kSectionSpacing: CGFloat = 12
@@ -198,7 +195,7 @@ extension PseudoTerminal: ColorsMenuItemViewDelegate {
             totalHeight = labelY + labelHeight + vPadding
         }
 
-        // \u{201C}Default Picker\u{201D} button above the recent colors
+        // “Default Picker” button above the recent colors
         let cpkBundle = Bundle(for: CPKPopover.self)
         let image = cpkBundle.image(forResource: "ActiveEscapeHatch")
         let buttonY = totalHeight + kSectionSpacing
@@ -278,7 +275,7 @@ extension PseudoTerminal: ColorsMenuItemViewDelegate {
         }
     }
 
-    /// Finds the frame of the target tab\u{2019}s cell in the tab bar for popover anchoring.
+    /// Finds the frame of the target tab’s cell in the tab bar for popover anchoring.
     private func rectOfTab(in tabBar: PSMTabBarControl) -> NSRect {
         let targetItem = tabViewItemForColorPicker ?? currentTab()?.tabViewItem
         guard targetItem != nil else { return tabBar.bounds }

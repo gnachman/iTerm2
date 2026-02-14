@@ -23,6 +23,7 @@
 
 @class PTYSession;
 @class PSMTabBarControl;
+@class TabColorPickerState;
 @class iTermBrowserWebView;
 @class iTermPromptOnCloseReason;
 @class iTermSessionFactory;
@@ -113,6 +114,9 @@ extern NSString *const iTermDidCreateTerminalWindowNotification;
 
 // Tab whose color is being changed via the color picker.
 @property(nonatomic, weak) NSTabViewItem *tabViewItemForColorPicker;
+
+// Mutable state for the tab color picker (popover, debounce timer, etc.).
+@property(nonatomic, strong) TabColorPickerState *tabColorPickerState;
 
 // Draws a mock-up of a window arrangement into the current graphics context.
 // |frames| gives an array of NSValue's having NSRect values for each screen,
