@@ -2837,6 +2837,43 @@ class LineBufferTests: XCTestCase {
         }
     }
 
+    /// Regression: continuation stitching must still run when block B's first
+    /// raw line is empty but hard-terminated.
+    /// Expected to FAIL before fixing stitchedLineFromBlockAtIndex's
+    /// rawHeadLength<=0 early-return.
+    func testBoundaryStitchEmptyContinuationHeadHardEOLParity() {
+        let width: Int32 = 80
+
+        let fragmented = LineBuffer(blockSize: 1000)
+        fragmented.append(
+            screenCharArrayWithDefaultStyle(String(repeating: "X", count: 5), eol: EOL_SOFT),
+            width: width)
+
+        // The alignment loop consumes three 30-char partial items into block A
+        // (95 chars total, misaligned). The remaining first item is an empty
+        // hard-EOL append, which becomes block B's first raw line.
+        let lengths: [NSNumber] = [30, 30, 30, 0]
+        let partials: [NSNumber] = [true, true, true, false]
+        fragmented.testOnlyAppendItems(withLengths: lengths, partials: partials, width: width)
+
+        XCTAssertGreaterThan(fragmented.testOnlyNumberOfBlocks, 1)
+        let contBlock = fragmented.testOnlyBlock(at: 1)
+        XCTAssertTrue(contBlock.startsWithContinuation)
+        XCTAssertEqual(contBlock.continuationPrefixCharacters, 95)
+        XCTAssertEqual(contBlock.length(ofRawLine: 0), 0,
+                       "Fixture must create an empty continuation head raw line")
+        XCTAssertEqual(contBlock.continuationWrappedLineAdjustment(forWidth: width), -1)
+
+        // Monolithic equivalent: one 95-char raw line hard-terminated.
+        let monolithic = LineBuffer(blockSize: 100_000)
+        let monoRaw0 = String(repeating: "X", count: 5) + Self.alphabetRun(length: 90)
+        monolithic.append(screenCharArrayWithDefaultStyle(monoRaw0, eol: EOL_HARD),
+                          width: width)
+
+        assertWrappedLineParity(fragmented, monolithic, width: width,
+                                context: "empty continuation head hard-EOL parity")
+    }
+
     // MARK: - Shared parity assertion helper
 
     /// Compare all wrapped lines between two buffers. Always checks stringValue,

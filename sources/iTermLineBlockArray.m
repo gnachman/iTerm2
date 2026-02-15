@@ -569,7 +569,9 @@ static NSUInteger iTermLineBlockArrayNextUniqueID;
     // cacheAwareOffsetOfWrappedLineInBuffer.
     const screen_char_t *rawHead = [nextBlock rawLine:nextBlock.firstEntry];
     const int rawHeadLength = [nextBlock lengthOfRawLine:nextBlock.firstEntry];
-    if (!rawHead || rawHeadLength <= 0) {
+    // A zero-length first raw line is valid (e.g., immediate hard-EOL append).
+    // We still need to stitch so the predecessor tail gets correct EOL semantics.
+    if (rawHeadLength < 0 || (rawHeadLength > 0 && !rawHead)) {
         return nil;
     }
 
@@ -578,7 +580,9 @@ static NSUInteger iTermLineBlockArrayNextUniqueID;
     const int usedLength = MIN(headNeeded, rawHeadLength);
     screen_char_t *buf = (screen_char_t *)malloc(sizeof(screen_char_t) * width);
     memcpy(buf, tail, sizeof(screen_char_t) * tailLength);
-    memcpy(buf + tailLength, rawHead, sizeof(screen_char_t) * usedLength);
+    if (usedLength > 0) {
+        memcpy(buf + tailLength, rawHead, sizeof(screen_char_t) * usedLength);
+    }
     for (int i = tailLength + usedLength; i < width; i++) {
         buf[i] = tailContinuation;
         buf[i].code = 0;

@@ -1925,18 +1925,21 @@ NS_INLINE int TotalNumberOfRawLines(LineBuffer *self) {
     int x = coord.x;
     int y = coord.y;
     int line = y;
-    NSInteger index = [_lineBlocks indexOfBlockContainingLineNumber:y width:width remainder:&line];
-    if (index == NSNotFound) {
-        VLog(@"positionForCoord returning nil because indexOfBlockCOntainingLineNumber returned NSNotFound");
+    NSInteger index;
+    LineBlock *block = [_lineBlocks blockContainingLineNumber:y
+                                                       width:width
+                                                   remainder:&line
+                                                  blockIndex:&index];
+    if (!block) {
+        VLog(@"positionForCoord returning nil because blockContainingLineNumber returned nil");
         return nil;
     }
-
-    LineBlock *block = _lineBlocks[index];
     long long absolutePosition = droppedChars + [_lineBlocks rawSpaceUsedInRangeOfBlocks:NSMakeRange(0, index)];
     VLog(@"positionForCoord: Absolute position of block %@ is %@", @(index), @(absolutePosition));
     int pos;
     int yOffset = 0;  // Number of lines from start of block to coord
     BOOL extends = NO;
+    const int localWrappedLineIndex = line;
     pos = [block getPositionOfLine:&line
                                atX:x
                          withWidth:width
@@ -1946,6 +1949,58 @@ NS_INLINE int TotalNumberOfRawLines(LineBuffer *self) {
         VLog(@"positionForCoordinate: returning nil because getPositionOfLine returned a negative value");
         DLog(@"failed to get position of line %@", @(line));
         return nil;
+    }
+
+    // Stitch-boundary fixup: when the coordinate is on a stitched line and
+    // x falls in the head (block B's contribution), recompute pos to point
+    // into block B rather than past the end of block A's tail.
+    if (index + 1 < (NSInteger)_lineBlocks.count) {
+        LineBlock *nextBlock = _lineBlocks[index + 1];
+        if (nextBlock.startsWithContinuation) {
+            const int pCol = nextBlock.continuationPrefixCharacters % width;
+            if (pCol > 0 && localWrappedLineIndex == [block getNumLinesWithWrapWidth:width] - 1) {
+                // Get actual tail length from block A's last wrapped line.
+                int tailLineNum = localWrappedLineIndex;
+                int tailLength = 0;
+                int tailEOL = 0;
+                const screen_char_t *tailP = [block getWrappedLineWithWrapWidth:width
+                                                                        lineNum:&tailLineNum
+                                                                     lineLength:&tailLength
+                                                              includesEndOfLine:&tailEOL
+                                                                        yOffset:NULL
+                                                                   continuation:NULL
+                                                           isStartOfWrappedLine:NULL
+                                                                       metadata:NULL];
+                // Get actual head contribution from block B's wrapped line 0.
+                int headLineNum = 0;
+                int headLine0Length = 0;
+                int headEOL = 0;
+                const screen_char_t *headP = [nextBlock getWrappedLineWithWrapWidth:width
+                                                                            lineNum:&headLineNum
+                                                                         lineLength:&headLine0Length
+                                                                  includesEndOfLine:&headEOL
+                                                                            yOffset:NULL
+                                                                       continuation:NULL
+                                                               isStartOfWrappedLine:NULL
+                                                                           metadata:NULL];
+                const int headUsed = MIN(width - tailLength, headLine0Length);
+                const int stitchedLength = tailLength + headUsed;
+
+                if (tailP && headP && headUsed > 0 && x >= tailLength) {
+                    VLog(@"positionForCoord: stitch boundary at block %@, tailLength=%@, headUsed=%@, x=%@",
+                         @(index), @(tailLength), @(headUsed), @(x));
+                    if (x < stitchedLength) {
+                        pos = [block rawSpaceUsed] + (x - tailLength);
+                        extends = NO;
+                    } else {
+                        pos = [block rawSpaceUsed] + headUsed;
+                        extends = YES;
+                    }
+                    yOffset = 0;
+                    VLog(@"positionForCoord: stitch fixup: pos=%@, extends=%@", @(pos), @(extends));
+                }
+            }
+        }
     }
 
     absolutePosition += pos + offset;
@@ -2772,36 +2827,24 @@ NS_INLINE int TotalNumberOfRawLines(LineBuffer *self) {
 
 - (NSInteger)numberOfCellsUsedInWrappedLineRange:(VT100GridRange)wrappedLineRange
                                            width:(int)width {
-    if (wrappedLineRange.length <= 0) {
+    // Stitch-aware per-line summation. Preserves existing semantics:
+    // returns cells from start of first line to start of last line
+    // (exclusive of last line). A 1-line range returns 0.
+    if (wrappedLineRange.length <= 1) {
         return 0;
     }
-    const int y1 = wrappedLineRange.location;
-    const int y2 = VT100GridRangeMax(wrappedLineRange);
-    
-    int startLine = y1;
-    const NSInteger firstBlockIndex = [_lineBlocks indexOfBlockContainingLineNumber:y1
-                                                                              width:width
-                                                                          remainder:&startLine];
-    if (firstBlockIndex == NSNotFound) {
-        return 0;
-    }
-
-    int lastLine = y2;
-    const NSInteger lastBlockIndex = [_lineBlocks indexOfBlockContainingLineNumber:y2
-                                                                             width:width
-                                                                         remainder:&lastLine];
-    if (lastBlockIndex == NSNotFound) {
-        return 0;
-    }
-
+    const int start = wrappedLineRange.location;
+    const int endExclusive = wrappedLineRange.location + wrappedLineRange.length - 1;
     NSInteger sum = 0;
-    for (NSInteger i = firstBlockIndex; i <= lastBlockIndex; i++) {
-        NSInteger size = [_lineBlocks[i] sizeFromLine:startLine width:width];
-        startLine = 0;
-        if (i == lastBlockIndex) {
-            size -= [_lineBlocks[i] sizeFromLine:lastLine width:width];
+    for (int y = start; y < endExclusive; y++) {
+        ScreenCharArray *line = [self wrappedLineAtIndex:y width:width continuation:NULL];
+        ITAssertWithMessage(line != nil,
+                            @"wrappedLineAtIndex:%d returned nil in range [%d, %d) width=%d",
+                            y, start, endExclusive, width);
+        if (!line) {
+            break;
         }
-        sum += size;
+        sum += line.length;
     }
     return sum;
 }
