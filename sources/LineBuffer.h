@@ -202,6 +202,9 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)testOnlyAppendPartialItems:(int)count
                           ofLength:(int)itemLength
                              width:(int)width;
+- (void)testOnlyAppendItemsWithLengths:(NSArray<NSNumber *> *)lengths
+                              partials:(NSArray<NSNumber *> *)partials
+                                 width:(int)width;
 
 - (unsigned int)numberOfUnwrappedLines;
 - (BOOL)isEqual:(LineBuffer *)other;

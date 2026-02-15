@@ -68,6 +68,13 @@ extern dispatch_queue_t _Nullable gDeallocQueue;
                         width:(int)width
           absoluteBlockNumber:(long long)absoluteBlockNumber;
 
+- (instancetype)initWithItems:(CTVector(iTermAppendItem) *)items
+                    fromIndex:(int)startIndex
+                        width:(int)width
+          absoluteBlockNumber:(long long)absoluteBlockNumber
+    continuationPrefixCharacters:(int)prefixCharacters
+                 prefixHasDWC:(BOOL)prefixHasDWC;
+
 - (instancetype)init NS_UNAVAILABLE;
 
 // Try to append a line to the end of the buffer. Returns false if it does not fit. If length > buffer_size it will never succeed.
@@ -118,6 +125,15 @@ extern dispatch_queue_t _Nullable gDeallocQueue;
 
 // Returns true if the last line is incomplete.
 - (BOOL)hasPartial;
+
+// When >= 0, this block's first raw line is a continuation of the previous
+// block's last (partial) raw line. The value is the total number of
+// characters in the combined raw line that precede this block's portion.
+// -1 means no continuation.
+@property(nonatomic, readonly) int continuationPrefixCharacters;
+
+// YES when continuationPrefixCharacters >= 0.
+@property(nonatomic, readonly) BOOL startsWithContinuation;
 
 // Remove the last line. Returns false if there was none.
 - (BOOL)popLastLineInto:(screen_char_t const * _Nullable * _Nullable)ptr
