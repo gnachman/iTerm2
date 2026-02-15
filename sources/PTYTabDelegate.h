@@ -77,4 +77,5 @@ backgroundColor:(NSColor *)backgroundColor;
 - (void)tabProcessInfoProviderDidChange:(PTYTab *)tab;
 - (BOOL)tabBelongsToHotkeyWindow:(PTYTab *)tab;
 - (void)tab:(PTYTab *)tab progressDidChange:(VT100ScreenProgress)progress;
+- (void)tab:(PTYTab *)tab didChangePinnedState:(BOOL)pinned;
 @end

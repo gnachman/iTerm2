@@ -221,8 +221,11 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
     }
     
     @objc func closeButtonRect(forTabCell cell: PSMTabBarCell) -> NSRect {
+        if cell.isPinned {
+            return NSZeroRect
+        }
         let cellFrame = cell.frame
-        
+
         if !cell.hasCloseButton {
             return NSZeroRect
         }
@@ -293,13 +296,19 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
     
     @objc
     func minimumWidth(ofTabCell cell: PSMTabBarCell!) -> Float {
+        if cell.isPinned {
+            return 64.0
+        }
         return Float(ceil(widthOfLeftMatterInCell(cell) +
                           kPSMMinimumTitleWidth +
                           widthOfRightMatterInCell(cell)))
     }
-    
+
     @objc
     func desiredWidth(ofTabCell cell: PSMTabBarCell!) -> Float {
+        if cell.isPinned {
+            return 64.0
+        }
         return Float(ceil(widthOfLeftMatterInCell(cell) +
                           widthOfAttributedStringInCell(cell) +
                           widthOfRightMatterInCell(cell)))
@@ -1424,7 +1433,7 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
         }
 
         // Close button
-        if cell.hasCloseButton, let image = _closeButton {
+        if cell.hasCloseButton, !cell.isPinned, let image = _closeButton {
             objects.append(FixedSpacerLO(name: "Leading Spacer", width: edgePadding, priority: Priority.required.rawValue, gravity: .left))
             
             let closeButton = tintedCloseButtonImage(cell: cell)
