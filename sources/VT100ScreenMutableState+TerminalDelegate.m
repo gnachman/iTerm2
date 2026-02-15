@@ -24,6 +24,16 @@
 #import <stdatomic.h>
 #import <time.h>
 
+static BOOL gAppendGangPerfCountersEnabled = NO;
+
+static inline BOOL iTermAppendGangPerfEnabled(void) {
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        gAppendGangPerfCountersEnabled = [iTermAdvancedSettingsModel appendGangPerfCounters];
+    });
+    return gAppendGangPerfCountersEnabled;
+}
+
 static atomic_bool gAppendGangPerfRegistered = false;
 static atomic_ullong gAppendGangFastCalls = 0;
 static atomic_ullong gAppendGangFastNanos = 0;
@@ -293,7 +303,7 @@ typedef struct {
 }
 
 - (void)appendGangFastPath:(NSArray<VT100Token *> *)tokens {
-    const BOOL perfEnabled = [iTermAdvancedSettingsModel appendGangPerfCounters];
+    const BOOL perfEnabled = iTermAppendGangPerfEnabled();
     uint64_t fastStart = 0;
     if (perfEnabled) {
         iTermAppendGangPerfRegisterIfNeeded();
@@ -435,7 +445,7 @@ typedef struct {
 }
 
 - (int)appendGangSlowPath:(NSArray<VT100Token *> *)tokens {
-    const BOOL perfEnabled = [iTermAdvancedSettingsModel appendGangPerfCounters];
+    const BOOL perfEnabled = iTermAppendGangPerfEnabled();
     uint64_t slowStart = 0;
     if (perfEnabled) {
         iTermAppendGangPerfRegisterIfNeeded();

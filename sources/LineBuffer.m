@@ -62,6 +62,8 @@ static const NSInteger kUnicodeVersion = 9;
 
 #pragma mark - Deterministic Perf Counters
 
+static BOOL gLineBufferPerfCountersEnabled = NO;
+
 static atomic_bool gLineBufferPerfRegistered = false;
 static atomic_ullong gLineBufferAppendLinesCalls = 0;
 static atomic_ullong gLineBufferAppendLinesNanos = 0;
@@ -266,6 +268,10 @@ NS_INLINE int iTermSumWrappedLineLengths(LineBlock *block,
 }
 
 - (void)commonInit {
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        gLineBufferPerfCountersEnabled = [iTermAdvancedSettingsModel lineBufferPerfCounters];
+    });
     _lineBlocks = [[iTermLineBlockArray alloc] init];
 #if DEBUG
     _lineBlocks.delegate = self;
@@ -743,7 +749,7 @@ static BOOL iTermAppendItemsHaveDWC(CTVector(iTermAppendItem) *items, int fromIn
 }
 
 - (void)appendLines:(CTVector(iTermAppendItem) *)items width:(int)width {
-    const BOOL perfEnabled = [iTermAdvancedSettingsModel lineBufferPerfCounters];
+    const BOOL perfEnabled = gLineBufferPerfCountersEnabled;
     uint64_t appendLinesStart = 0;
     if (perfEnabled) {
         iTermLineBufferPerfRegisterIfNeeded();
@@ -923,7 +929,7 @@ static BOOL iTermAppendItemsHaveDWC(CTVector(iTermAppendItem) *items, int fromIn
                    width:(int)width
                 metadata:(iTermImmutableMetadata)metadataObj
             continuation:(screen_char_t)continuation {
-    const BOOL perfEnabled = [iTermAdvancedSettingsModel lineBufferPerfCounters];
+    const BOOL perfEnabled = gLineBufferPerfCountersEnabled;
     uint64_t reallyAppendStart = 0;
     if (perfEnabled) {
         reallyAppendStart = iTermPerfNowNanos();
