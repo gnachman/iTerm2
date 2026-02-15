@@ -474,36 +474,13 @@ static CVReturn DisplayLinkCallback(CVDisplayLinkRef displayLink,
         destinationIndex = [[[self destinationTabBar] cells] count] - 1;
     }
 
-    // Enforce pinned/unpinned boundary on the final drop index.
-    if ([self draggedCell]) {
-        NSArray *destCells = [[self destinationTabBar] cells];
-        BOOL draggedIsPinned = [[self draggedCell] isPinned];
-        if (draggedIsPinned) {
-            // Insert at end of pinned section at most.
-            int lastPinned = -1;
-            for (int ci = 0; ci < (int)[destCells count]; ci++) {
-                PSMTabBarCell *c = destCells[ci];
-                if (!c.isPlaceholder && c.isPinned && c != [self draggedCell]) {
-                    lastPinned = ci;
-                }
-            }
-            if (destinationIndex > lastPinned + 1) {
-                destinationIndex = lastPinned + 1;
-            }
-        } else {
-            // Insert at start of unpinned section at earliest.
-            int firstUnpinned = (int)[destCells count];
-            for (int ci = 0; ci < (int)[destCells count]; ci++) {
-                PSMTabBarCell *c = destCells[ci];
-                if (!c.isPlaceholder && !c.isPinned && c != [self draggedCell]) {
-                    firstUnpinned = ci;
-                    break;
-                }
-            }
-            if (destinationIndex < firstUnpinned) {
-                destinationIndex = firstUnpinned;
-            }
-        }
+    // Clamp to valid range. The pinned/unpinned boundary is enforced below
+    // for same-tab-bar drags (after placeholders are removed).
+    int cellCount = (int)[[[self destinationTabBar] cells] count];
+    if (destinationIndex < 0) {
+        destinationIndex = 0;
+    } else if (destinationIndex >= cellCount) {
+        destinationIndex = cellCount - 1;
     }
 
     if (![self draggedCell]) {
@@ -600,6 +577,28 @@ static CVReturn DisplayLinkCallback(CVDisplayLinkRef displayLink,
 
             //find the index of where the dragged cell was just dropped
             for (theIndex = 0; theIndex < [cells count] && [cells objectAtIndex:theIndex] != [self draggedCell]; theIndex++);
+
+            // Enforce pinned/unpinned boundary (placeholders are already removed here).
+            {
+                int pinnedCount = 0;
+                for (PSMTabBarCell *c in cells) {
+                    if (c.isPinned) pinnedCount++;
+                }
+                if (pinnedCount > 0 && pinnedCount < (int)[cells count]) {
+                    int clampedIndex = theIndex;
+                    if ([[self draggedCell] isPinned]) {
+                        if (clampedIndex >= pinnedCount) clampedIndex = pinnedCount - 1;
+                    } else {
+                        if (clampedIndex < pinnedCount) clampedIndex = pinnedCount;
+                    }
+                    if (clampedIndex != theIndex) {
+                        NSMutableArray *mutCells = [[self sourceTabBar] cells];
+                        [mutCells removeObjectAtIndex:theIndex];
+                        [mutCells insertObject:[self draggedCell] atIndex:clampedIndex];
+                        theIndex = clampedIndex;
+                    }
+                }
+            }
 
             if ([[[self sourceTabBar] cells] indexOfObject:[self draggedCell]] != _draggedCellIndex &&
                 [[[self sourceTabBar] delegate] respondsToSelector:@selector(tabView:willDropTabViewItem:inTabBar:)]) {
@@ -1241,42 +1240,6 @@ static CVReturn DisplayLinkCallback(CVDisplayLinkRef displayLink,
                     if (mouseLoc.y > NSMaxY(proposedFrame) - hysteresis) {
                         proposedTarget = currentTarget;
                     }
-                }
-            }
-        }
-
-        // Enforce pinned/unpinned boundary: pinned tabs stay in the pinned zone,
-        // unpinned tabs stay in the unpinned zone.
-        if (proposedTarget && [self draggedCell]) {
-            BOOL draggedIsPinned = [[self draggedCell] isPinned];
-            NSInteger proposedIndex = [cells indexOfObject:proposedTarget];
-
-            // Find boundary: last pinned index and first unpinned index.
-            NSInteger lastPinnedIndex = -1;
-            NSInteger firstUnpinnedIndex = (NSInteger)[cells count];
-            for (NSInteger ci = 0; ci < (NSInteger)[cells count]; ci++) {
-                PSMTabBarCell *c = cells[ci];
-                if (!c.isPlaceholder && c.isPinned) {
-                    lastPinnedIndex = ci;
-                }
-                if (!c.isPlaceholder && !c.isPinned && firstUnpinnedIndex == (NSInteger)[cells count]) {
-                    firstUnpinnedIndex = ci;
-                }
-            }
-
-            if (draggedIsPinned) {
-                // Clamp to pinned zone: [0, lastPinnedIndex].
-                // The placeholder for the dragged cell is in cells, so use lastPinnedIndex + 1
-                // to allow dropping at the end of pinned section.
-                NSInteger maxIndex = lastPinnedIndex + 1;
-                if (maxIndex < (NSInteger)[cells count] && proposedIndex > maxIndex) {
-                    proposedTarget = cells[maxIndex];
-                }
-            } else {
-                // Clamp to unpinned zone: [firstUnpinnedIndex, end].
-                NSInteger minIndex = firstUnpinnedIndex > 0 ? firstUnpinnedIndex - 1 : 0;
-                if (proposedIndex < minIndex) {
-                    proposedTarget = cells[minIndex];
                 }
             }
         }
