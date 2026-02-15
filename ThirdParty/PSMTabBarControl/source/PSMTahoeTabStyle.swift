@@ -20,6 +20,7 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
     private var _closeButton: NSImage?
     private var _closeButtonDown: NSImage?
     private var _closeButtonOver: NSImage?
+    private var _pinImage: NSImage?
     private var _orientation: PSMTabBarOrientation = .horizontalOrientation
     
     // MARK: - PSMTabStyle Properties
@@ -119,6 +120,13 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
             return true
         })
         _closeButtonOver?.isTemplate = true
+
+        // Load pin indicator
+        let pinConfig = NSImage.SymbolConfiguration(pointSize: 9, weight: .medium, scale: .medium)
+        if let basePin = NSImage(systemSymbolName: SFSymbol.pinFill.rawValue, accessibilityDescription: "Pinned") {
+            _pinImage = basePin.withSymbolConfiguration(pinConfig) ?? basePin
+            _pinImage?.isTemplate = true
+        }
     }
 
     // MARK: - PSMTabStyle Protocol
@@ -221,8 +229,11 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
     }
     
     @objc func closeButtonRect(forTabCell cell: PSMTabBarCell) -> NSRect {
+        if cell.isPinned {
+            return NSZeroRect
+        }
         let cellFrame = cell.frame
-        
+
         if !cell.hasCloseButton {
             return NSZeroRect
         }
@@ -293,13 +304,19 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
     
     @objc
     func minimumWidth(ofTabCell cell: PSMTabBarCell!) -> Float {
+        if cell.isPinned {
+            return Float(tabBar?.pinnedTabWidth ?? 0)
+        }
         return Float(ceil(widthOfLeftMatterInCell(cell) +
                           kPSMMinimumTitleWidth +
                           widthOfRightMatterInCell(cell)))
     }
-    
+
     @objc
     func desiredWidth(ofTabCell cell: PSMTabBarCell!) -> Float {
+        if cell.isPinned {
+            return Float(tabBar?.pinnedTabWidth ?? 0)
+        }
         return Float(ceil(widthOfLeftMatterInCell(cell) +
                           widthOfAttributedStringInCell(cell) +
                           widthOfRightMatterInCell(cell)))
@@ -1423,10 +1440,10 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
             0.0
         }
 
-        // Close button
-        if cell.hasCloseButton, let image = _closeButton {
+        // Close button or pin indicator
+        if cell.hasCloseButton, !cell.isPinned, let image = _closeButton {
             objects.append(FixedSpacerLO(name: "Leading Spacer", width: edgePadding, priority: Priority.required.rawValue, gravity: .left))
-            
+
             let closeButton = tintedCloseButtonImage(cell: cell)
             let closeButtonAlpha = self.closeButtonAlpha(cell: cell, highlightAmount: highlightAmount)
             objects.append(GroupLO(name: Name.closeButton.rawValue, priority: Priority.closeButton.rawValue, gravity: .left, members: [
@@ -1440,6 +1457,33 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
                                           operation: .sourceOver,
                                           fraction: closeButtonAlpha)
                     }
+                },
+            ]))
+        } else if cell.isPinned, let pinImage = _pinImage, cell.cachedTitle?.inputs.graphic == nil {
+            objects.append(FixedSpacerLO(name: "Leading Spacer", width: edgePadding, priority: Priority.required.rawValue, gravity: .left))
+
+            let tintColor: NSColor
+            let colorKey: UnsafeRawPointer
+            if tabColorBrightness(cell) < 0.5 {
+                colorKey = PSMTabStyleLightColorKey
+                tintColor = NSColor.white
+            } else {
+                colorKey = PSMTabStyleDarkColorKey
+                tintColor = NSColor.black
+            }
+            let tintedPin = pinImage.it_cachingImage(withTintColor: tintColor, key: colorKey)
+            let pinAlpha: CGFloat = windowIsMainAndAppIsActive ? 0.6 : 0.3
+
+            objects.append(GroupLO(name: "Pin Indicator", priority: Priority.required.rawValue, gravity: .left, members: [
+                ImageLO(name: "Pin Icon", image: pinImage, priority: Priority.required.rawValue, gravity: .left) { resolved in
+                    var pinRect = resolved.frame
+                    pinRect.origin.y = cell.frame.minY + floor((cell.frame.height - pinRect.height) / 2.0) + orientationShift
+                    tintedPin.draw(in: pinRect,
+                                   from: NSZeroRect,
+                                   operation: .sourceOver,
+                                   fraction: pinAlpha,
+                                   respectFlipped: true,
+                                   hints: nil)
                 },
             ]))
         } else {
@@ -1469,11 +1513,14 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
         
         
         // Label and subtitle
+        // For pinned tabs: skip title if a graphic icon is present.
+        let skipLabel = cell.isPinned && cell.cachedTitle?.inputs.graphic != nil
         let subtitleWidth = subtitleWidth(cell: cell, orientation: orientation)
         let labelWidth = max(widthOfAttributedStringInCell(cell), subtitleWidth)
         let supportsMultiLineLabels = self.supportsMultiLineLabels
         // Amount to shift text down from vertically centered so that it matches the OS's rendering
         let textShift = 1.0 + orientationShift
+        if !skipLabel {
         objects.append(TextLO(name: Name.label.rawValue,
                               priority: Priority.required.rawValue,
                               minWidth: 8,
@@ -1483,23 +1530,36 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
             let mainLabelHeight: CGFloat
             if let cachedTitle = cell.cachedTitle,
                !cachedTitle.isEmpty {
-                let attributedString = cachedTitle.attributedStringForcingLeftAlignment(
-                    orientation == .verticalOrientation,
-                    truncatedForWidth: resolved.frame.size.width)
+                let drawString: NSAttributedString
+                if cell.isPinned && orientation == .horizontalOrientation {
+                    // For pinned tabs, show only the first character.
+                    let title = cachedTitle.inputs.title ?? ""
+                    let firstChar = title.isEmpty ? "" : String(title.prefix(1))
+                    let fullString = cachedTitle.attributedStringForcingLeftAlignment(
+                        true, truncatedForWidth: resolved.frame.size.width)
+                    let attrs: [NSAttributedString.Key: Any] = fullString.length > 0
+                        ? fullString.attributes(at: 0, effectiveRange: nil)
+                        : [:]
+                    drawString = NSAttributedString(string: firstChar, attributes: attrs)
+                } else {
+                    drawString = cachedTitle.attributedStringForcingLeftAlignment(
+                        orientation == .verticalOrientation,
+                        truncatedForWidth: resolved.frame.size.width)
+                }
                 var rect = resolved.frame
                 let boundingSize = cachedTitle.boundingRect(with: NSSize(width: resolved.frame.width, height: cell.frame.height)).size
                 mainLabelHeight = boundingSize.height
                 labelOffset = PSMTahoeTabStyle.willDrawSubtitle(cell.cachedSubtitle) ? PSMTahoeTabStyle.verticalOffsetForTitleWhenSubtitlePresent : 0
                 rect.origin.y = cell.frame.origin.y + floor((cell.frame.size.height - boundingSize.height) / 2.0) + labelOffset + textShift
                 rect.size.height = boundingSize.height
-                attributedString.draw(in: rect)
+                drawString.draw(in: rect)
             } else {
                 labelOffset = 0
                 mainLabelHeight = 0
             }
             
-            // Draw subtitle
-            if supportsMultiLineLabels {
+            // Draw subtitle (never for pinned tabs).
+            if supportsMultiLineLabels && !cell.isPinned {
                 self.drawSubtitle(cell: cell,
                                   orientation: orientation,
                                   xOrigin: resolved.frame.minX,
@@ -1508,6 +1568,7 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
                                   mainLabelHeight: mainLabelHeight)
             }
         })
+        } // !skipLabel
 
         // Icon
         if cell.hasIcon, let icon = icon(cell: cell) {

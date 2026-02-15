@@ -1923,6 +1923,9 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 
     BOOL mustAsk = NO;
+    if (aTab.isPinned) {
+        mustAsk = YES;
+    }
     if (numClosing > 0 && [aTab promptOnCloseReason].hasReason) {
         mustAsk = YES;
     }
@@ -7354,7 +7357,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     [item setRepresentedObject:tabViewItem];
     [rootMenu addItem:item];
 
-    if ([_contentView.tabView numberOfTabViewItems] > 1) {
+    if ([_contentView.tabView numberOfTabViewItems] > 1 && !theTab.isPinned) {
         item = [[[NSMenuItem alloc] initWithTitle:@"Move to New Window"
                                            action:@selector(moveTabToNewWindowContextualMenuAction:)
                                     keyEquivalent:@""] autorelease];
@@ -7362,23 +7365,53 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
         [rootMenu addItem:item];
     }
 
-    if ([_contentView.tabView numberOfTabViewItems] > 1) {
-        item = [[[NSMenuItem alloc] initWithTitle:@"Close Other Tabs"
-                                           action:@selector(closeOtherTabs:)
-                                    keyEquivalent:@""] autorelease];
-        [item setRepresentedObject:tabViewItem];
-        [rootMenu addItem:item];
+    {
+        // Check if there are unpinned tabs eligible for "Close Other" / "Close to the Right".
+        BOOL hasUnpinnedOther = NO;
+        BOOL hasUnpinnedToRight = NO;
+        BOOL pastTarget = NO;
+        for (PTYTab *t in self.tabs) {
+            if (t == theTab) {
+                pastTarget = YES;
+                continue;
+            }
+            if (!t.isPinned) {
+                hasUnpinnedOther = YES;
+                if (pastTarget) {
+                    hasUnpinnedToRight = YES;
+                }
+            }
+        }
+
+        if (hasUnpinnedOther) {
+            item = [[[NSMenuItem alloc] initWithTitle:@"Close Other Tabs"
+                                               action:@selector(closeOtherTabs:)
+                                        keyEquivalent:@""] autorelease];
+            [item setRepresentedObject:tabViewItem];
+            [rootMenu addItem:item];
+        }
+
+        if (hasUnpinnedToRight) {
+            NSString *title;
+            if ([iTermPreferences intForKey:kPreferenceKeyTabPosition] == PSMTab_LeftTab) {
+                title = @"Close Tabs Below";
+            } else {
+                title = @"Close Tabs to the Right";
+            }
+            item = [[[NSMenuItem alloc] initWithTitle:title
+                                               action:@selector(closeTabsToTheRight:)
+                                        keyEquivalent:@""] autorelease];
+            [item setRepresentedObject:tabViewItem];
+            [rootMenu addItem:item];
+        }
     }
 
-    if ([_contentView.tabView numberOfTabViewItems] > 1) {
-        NSString *title;
-        if ([iTermPreferences intForKey:kPreferenceKeyTabPosition] == PSMTab_LeftTab) {
-            title = @"Close Tabs Below";
-        } else {
-            title = @"Close Tabs to the Right";
-        }
-        item = [[[NSMenuItem alloc] initWithTitle:title
-                                           action:@selector(closeTabsToTheRight:)
+    // pin/unpin tab (not available for tmux tabs)
+    if (![theTab tmuxController]) {
+        [rootMenu addItem:[NSMenuItem separatorItem]];
+        NSString *pinTitle = theTab.isPinned ? @"Unpin Tab" : @"Pin Tab";
+        item = [[[NSMenuItem alloc] initWithTitle:pinTitle
+                                           action:@selector(togglePinTab:)
                                     keyEquivalent:@""] autorelease];
         [item setRepresentedObject:tabViewItem];
         [rootMenu addItem:item];
@@ -7673,6 +7706,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     [_contentView.tabBarControl setIsProcessing:tab.isProcessing forTabWithIdentifier:tab];
     [_contentView.tabBarControl setIcon:tab.icon forTabWithIdentifier:tab];
     [_contentView.tabBarControl setObjectCount:tab.objectCount forTabWithIdentifier:tab];
+    [_contentView.tabBarControl setIsPinned:tab.isPinned forTabViewItem:tabViewItem];
 }
 
 // This updates the window's background color and title text color as well as the tab bar's color.
@@ -9945,6 +9979,33 @@ typedef struct {
     if (selectedIndex == destinationIndex) {
         return;
     }
+
+    // Enforce pinned/unpinned boundary.
+    NSArray<PTYTab *> *tabs = self.tabs;
+    if (selectedIndex >= 0 && selectedIndex < (NSInteger)tabs.count) {
+        PTYTab *movingTab = tabs[selectedIndex];
+        NSInteger lastPinnedIndex = -1;
+        for (NSInteger i = 0; i < (NSInteger)tabs.count; i++) {
+            if (tabs[i].isPinned) {
+                lastPinnedIndex = i;
+            }
+        }
+        if (movingTab.isPinned) {
+            // Pinned tab cannot move past the unpinned zone.
+            if (destinationIndex > lastPinnedIndex) {
+                destinationIndex = lastPinnedIndex;
+            }
+        } else {
+            // Unpinned tab cannot move into the pinned zone.
+            if (destinationIndex <= lastPinnedIndex) {
+                destinationIndex = lastPinnedIndex + 1;
+            }
+        }
+        if (selectedIndex == destinationIndex) {
+            return;
+        }
+    }
+
     [_contentView.tabBarControl moveTabAtIndex:selectedIndex toIndex:destinationIndex];
     [self setNeedsUpdateTabObjectCounts:YES];
     [self tabsDidReorder];
@@ -11770,6 +11831,8 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
     }
 }
 
+// togglePinTab: is in PseudoTerminal.swift
+
 - (IBAction)newTabToTheRight:(id)sender {
     PTYTab *tab = [PTYTab castFrom:[[sender representedObject] identifier]];
     if (!tab) {
@@ -11889,6 +11952,9 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
     NSMutableArray *tabsToRemove = [[[self tabs] mutableCopy] autorelease];
     [tabsToRemove removeObject:tabToKeep];
     for (PTYTab *tab in tabsToRemove) {
+        if (tab.isPinned) {
+            continue;
+        }
         [self closeTab:tab];
     }
 }
@@ -11906,6 +11972,9 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
     } while (current != tabToKeep);
 
     for (PTYTab *tab in tabsToRemove) {
+        if (tab.isPinned) {
+            continue;
+        }
         [self closeTab:tab];
     }
 }
@@ -12795,6 +12864,8 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
     [self updateToolbeltAppearance];
     [self updateForTransparency:self.ptyWindow];
 }
+
+// tab:didChangePinnedState: is in PseudoTerminal.swift
 
 - (void)tab:(PTYTab *)tab didChangeToState:(PTYTabState)newState {
     if (self.numberOfTabs == 1) {

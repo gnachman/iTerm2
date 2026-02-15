@@ -342,6 +342,10 @@ static CVReturn DisplayLinkCallback(CVDisplayLinkRef displayLink,
                                                     userInfo:nil
                                                      repeats:YES];
     } else if (_dragTabWindow) {
+        if ([self draggedCell].isPinned) {
+            // Pinned tabs cannot be dragged out to a new window. Unpin first.
+            return;
+        }
         if (![control.delegate tabViewDragShouldExitWindow:control.tabView]) {
             return;
         }
@@ -474,6 +478,18 @@ static CVReturn DisplayLinkCallback(CVDisplayLinkRef displayLink,
         destinationIndex = [[[self destinationTabBar] cells] count] - 1;
     }
 
+    // Clamp to valid range. The pinned/unpinned boundary is enforced below
+    // for same-tab-bar drags (after placeholders are removed).
+    int cellCount = (int)[[[self destinationTabBar] cells] count];
+    if (cellCount == 0) {
+        return;
+    }
+    if (destinationIndex < 0) {
+        destinationIndex = 0;
+    } else if (destinationIndex >= cellCount) {
+        destinationIndex = cellCount - 1;
+    }
+
     if (![self draggedCell]) {
         // Find the index of where the dragged object was just dropped.
         int i;
@@ -569,6 +585,28 @@ static CVReturn DisplayLinkCallback(CVDisplayLinkRef displayLink,
             //find the index of where the dragged cell was just dropped
             for (theIndex = 0; theIndex < [cells count] && [cells objectAtIndex:theIndex] != [self draggedCell]; theIndex++);
 
+            // Enforce pinned/unpinned boundary (placeholders are already removed here).
+            {
+                int pinnedCount = 0;
+                for (PSMTabBarCell *c in cells) {
+                    if (c.isPinned) pinnedCount++;
+                }
+                if (pinnedCount > 0 && pinnedCount < (int)[cells count]) {
+                    int clampedIndex = theIndex;
+                    if ([[self draggedCell] isPinned]) {
+                        if (clampedIndex >= pinnedCount) clampedIndex = pinnedCount - 1;
+                    } else {
+                        if (clampedIndex < pinnedCount) clampedIndex = pinnedCount;
+                    }
+                    if (clampedIndex != theIndex) {
+                        NSMutableArray *mutCells = [[self sourceTabBar] cells];
+                        [mutCells removeObjectAtIndex:theIndex];
+                        [mutCells insertObject:[self draggedCell] atIndex:clampedIndex];
+                        theIndex = clampedIndex;
+                    }
+                }
+            }
+
             if ([[[self sourceTabBar] cells] indexOfObject:[self draggedCell]] != _draggedCellIndex &&
                 [[[self sourceTabBar] delegate] respondsToSelector:@selector(tabView:willDropTabViewItem:inTabBar:)]) {
 
@@ -612,6 +650,9 @@ static CVReturn DisplayLinkCallback(CVDisplayLinkRef displayLink,
 }
 
 - (BOOL)shouldCreateNewWindowOnDrop:(BOOL *)moveWindow {
+    if ([self draggedCell].isPinned) {
+        return NO;
+    }
     id sourceDelegate = [[self sourceTabBar] delegate];
     return ([self destinationTabBar] == nil &&
             [sourceDelegate respondsToSelector:@selector(tabView:shouldDropTabViewItem:inTabBar:moveSourceWindow:)] &&
@@ -857,6 +898,17 @@ static CVReturn DisplayLinkCallback(CVDisplayLinkRef displayLink,
 
     NSPoint windowOrigin = NSMakePoint(mouseLocation.x - _dragTabOffset.width,
                                        mouseLocation.y - _dragTabOffset.height);
+
+    // Pinned tabs use infinite threshold so they can never be dragged out to a new window.
+    if ([[self draggedCell] isPinned]) {
+        // Clamp to initial position along the cross-axis (never exceed threshold).
+        if ([[self sourceTabBar] orientation] == PSMTabBarHorizontalOrientation) {
+            mouseLocation.y = _initialDragWindowOrigin.y + _dragTabOffset.height;
+        } else {
+            mouseLocation.x = _initialDragWindowOrigin.x + _dragTabOffset.width;
+        }
+        return mouseLocation;
+    }
 
     const NSSize kDragThreshold = { .width = 40.0, .height = 20.0 };
     CGFloat deviation;
@@ -1213,6 +1265,31 @@ static CVReturn DisplayLinkCallback(CVDisplayLinkRef displayLink,
             }
         }
 
+        // Enforce pinned/unpinned boundary: don't show a drop spot in a prohibited zone.
+        if (proposedTarget && ![proposedTarget isPlaceholder]) {
+            NSInteger proposedIndex = [cells indexOfObject:proposedTarget];
+            PSMTabBarCell *draggedCell = [self draggedCell];
+            if (proposedIndex != NSNotFound && draggedCell) {
+                // Find the last pinned cell index.
+                NSInteger lastPinnedIndex = -1;
+                for (NSInteger idx = 0; idx < (NSInteger)[cells count]; idx++) {
+                    if ([[cells objectAtIndex:idx] isPinned]) {
+                        lastPinnedIndex = idx;
+                    }
+                }
+                if ([draggedCell isPinned]) {
+                    // Pinned tab: clamp to the pinned zone.
+                    if (proposedIndex > lastPinnedIndex + 1) {
+                        proposedTarget = [cells objectAtIndex:lastPinnedIndex + 1];
+                    }
+                } else {
+                    // Unpinned tab: keep out of the pinned zone.
+                    if (lastPinnedIndex >= 0 && proposedIndex <= lastPinnedIndex) {
+                        proposedTarget = [cells objectAtIndex:lastPinnedIndex + 1];
+                    }
+                }
+            }
+        }
         [self setTargetCell:proposedTarget];
     } else {
         [self setTargetCell:nil];
