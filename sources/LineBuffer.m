@@ -270,7 +270,7 @@ NS_INLINE int iTermSumWrappedLineLengths(LineBlock *block,
 - (void)commonInit {
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
-        gLineBufferPerfCountersEnabled = [iTermAdvancedSettingsModel lineBufferPerfCounters];
+        gLineBufferPerfCountersEnabled = [iTermAdvancedSettingsModel bulkAppendPerfCounters];
     });
     _lineBlocks = [[iTermLineBlockArray alloc] init];
 #if DEBUG
@@ -944,10 +944,6 @@ static BOOL iTermAppendItemsHaveDWC(CTVector(iTermAppendItem) *items, int fromIn
     }
 
     LineBlock *block = _lineBlocks.lastBlock;
-    const BOOL wasPartialContinuation = (block.hasPartial &&
-                                          block.startsWithContinuation &&
-                                          [block numRawLines] == 1);
-
     int beforeLines = [block getNumLinesWithWrapWidth:width];
     if (![block appendLine:buffer
                     length:length
@@ -1031,12 +1027,6 @@ static BOOL iTermAppendItemsHaveDWC(CTVector(iTermAppendItem) *items, int fromIn
         // Width change. Invalidate the wrapped lines cache.
         num_wrapped_lines_width = -1;
     }
-
-    // Disabled for throughput investigation: this backward walk is O(chain length)
-    // on every append and can dominate bulk throughput.
-    (void)wasPartialContinuation;
-    (void)metadataObj;
-    (void)length;
 
     if (_wantsSeal) {
         _wantsSeal = NO;

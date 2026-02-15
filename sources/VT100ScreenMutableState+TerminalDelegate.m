@@ -29,7 +29,7 @@ static BOOL gAppendGangPerfCountersEnabled = NO;
 static inline BOOL iTermAppendGangPerfEnabled(void) {
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
-        gAppendGangPerfCountersEnabled = [iTermAdvancedSettingsModel appendGangPerfCounters];
+        gAppendGangPerfCountersEnabled = [iTermAdvancedSettingsModel bulkAppendPerfCounters];
     });
     return gAppendGangPerfCountersEnabled;
 }
