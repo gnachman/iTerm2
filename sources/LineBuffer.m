@@ -1013,26 +1013,11 @@ static BOOL iTermAppendItemsHaveDWC(CTVector(iTermAppendItem) *items, int fromIn
         num_wrapped_lines_width = -1;
     }
 
-    // Propagate metadata backward through the continuation chain so that
-    // predecessor blocks' last raw line reflects the same metadata as the
-    // monolithic (single-block) append path.
-    if (wasPartialContinuation && length > 0) {
-        const uint64_t metadataStart = iTermPerfNowNanos();
-        unsigned long long metadataIterations = 0;
-        for (NSInteger i = (NSInteger)_lineBlocks.count - 2; i >= 0; i--) {
-            LineBlock *pred = _lineBlocks[i];
-            [pred propagateMetadataToLastRawLine:metadataObj length:length];
-            metadataIterations++;
-            if (!pred.startsWithContinuation) {
-                break;
-            }
-        }
-        if (metadataIterations > 0) {
-            atomic_fetch_add(&gLineBufferMetadataPropagateCalls, 1);
-            atomic_fetch_add(&gLineBufferMetadataPropagateIters, metadataIterations);
-            atomic_fetch_add(&gLineBufferMetadataPropagateNanos, iTermPerfNowNanos() - metadataStart);
-        }
-    }
+    // Disabled for throughput investigation: this backward walk is O(chain length)
+    // on every append and can dominate bulk throughput.
+    (void)wasPartialContinuation;
+    (void)metadataObj;
+    (void)length;
 
     if (_wantsSeal) {
         _wantsSeal = NO;
