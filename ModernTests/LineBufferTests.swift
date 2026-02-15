@@ -2106,6 +2106,61 @@ class LineBufferTests: XCTestCase {
         XCTAssertEqual(Self.readWrappedCellCount(buffer: buffer, width: width), expectedString.count)
     }
 
+    /// Regression test: retroactive DWC flag on an existing continuation block.
+    /// Build misaligned ASCII continuation (seed=5, itemLength=30, width=80),
+    /// verify adjustment=-1 baseline, then set mayHaveDoubleWidthCharacter=true
+    /// and assert the continuation block still reports -1 (not the DWC-guarded 0).
+    /// Expected to fail until the DWC guard is fixed.
+    func testDWCFlagWithNonZeroPColContinuationAdjustment() {
+        let width: Int32 = 80
+        let buffer = LineBuffer(blockSize: 1000)
+
+        // Seed: 5-char partial line.
+        buffer.append(screenCharArrayWithDefaultStyle(String(repeating: "X", count: 5),
+                                                      eol: EOL_SOFT),
+                      width: width)
+
+        // Bulk: 5 items of length 30 → 150 alphabet chars.
+        buffer.testOnlyAppendPartialItems(5, ofLength: 30, width: width)
+
+        // --- Structural assertions ---
+        XCTAssertGreaterThan(buffer.testOnlyNumberOfBlocks, 1)
+        let continuation = buffer.testOnlyBlock(at: 1)
+        XCTAssertTrue(continuation.startsWithContinuation,
+                      "Second block must be a continuation")
+
+        // --- Geometry assertions ---
+        XCTAssertEqual(continuation.continuationPrefixCharacters, 95,
+                       "continuationPrefix must be 95 (seed 5 + 3×30)")
+        XCTAssertEqual(continuation.length(ofRawLine: 0), 60,
+                       "First raw line in continuation must be 60 chars (2×30)")
+
+        // --- Baseline: adjustment=-1 without DWC flag ---
+        XCTAssertEqual(continuation.continuationWrappedLineAdjustment(forWidth: width), -1,
+                       "Baseline adjustment must be -1 before DWC flag is set")
+
+        // --- Retroactively set DWC flag (simulates a later DWC event) ---
+        buffer.mayHaveDoubleWidthCharacter = true
+
+        // --- Key assertion: adjustment must still be -1 after DWC flag ---
+        XCTAssertEqual(continuation.continuationWrappedLineAdjustment(forWidth: width), -1,
+                       "DWC guard should not clobber correct adjustment=-1 for pure-ASCII data")
+
+        // --- Monolithic parity ---
+        let expectedString = String(repeating: "X", count: 5) + Self.alphabetRun(length: 150)
+        let reference = LineBuffer(blockSize: 1_000_000)
+        reference.mayHaveDoubleWidthCharacter = true
+        reference.append(screenCharArrayWithDefaultStyle(expectedString, eol: EOL_SOFT),
+                         width: width)
+        assertWrappedLineParity(buffer, reference, width: width,
+                                context: "DWC flag + pCol!=0")
+
+        // --- Readback completeness ---
+        let totalChars = 5 + 150  // 155
+        XCTAssertEqual(Self.readWrappedCellCount(buffer: buffer, width: width), totalChars,
+                       "All 155 characters must be readable")
+    }
+
     /// Boundary regression test with double-width glyphs crossing many block boundaries.
     /// Reconstruct wrapped output and compare with a monolithic reference buffer.
     /// Deterministic fuzzing for bulk partial append reconstruction. For each

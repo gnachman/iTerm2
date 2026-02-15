@@ -180,15 +180,16 @@ static inline void ModifyLineBlock(LineBlock *self,
                                                  width:width] + 1;
     const int fullLinesPrefixPlusCont = LineBlockNumberOfFullLinesFastPath(P + C, width);
     const int fullLinesPrefix = LineBlockNumberOfFullLinesFastPath(P, width);
-    // DWC blocks should never have continuations. The alignment loop in
-    // appendLines:width: consumes all partial items one-at-a-time for DWC
-    // content because column-based wrapping makes the continuation adjustment
-    // unreliable. If we somehow get here with DWC, return 0 (no adjustment)
-    // as a safe default — overcounting by 1 is preferable to undercounting.
-    if (_mayHaveDoubleWidthCharacter) {
-        ITAssertWithMessage(!_mayHaveDoubleWidthCharacter,
-                            @"DWC block should not have continuation (prefix=%d)",
-                            _continuationPrefixCharacters);
+    // Guard on boundary-specific DWC presence, not the sticky buffer-level
+    // _mayHaveDoubleWidthCharacter flag (which can be true for an all-ASCII
+    // continuation block created after a DWC was appended elsewhere).
+    // _prefixHasDWC: the virtual prefix chars may contain DWC.
+    // firstRawLineHasDWC: compare DWC-aware naive with fast-path result.
+    const BOOL firstRawLineHasDWC = (naive - 1) != LineBlockNumberOfFullLinesFastPath(C, width);
+    if (_prefixHasDWC || firstRawLineHasDWC) {
+        ITAssertWithMessage(!_prefixHasDWC && !firstRawLineHasDWC,
+                            @"DWC at continuation boundary (prefix=%d, prefixHasDWC=%d, firstLineDWC=%d)",
+                            _continuationPrefixCharacters, _prefixHasDWC, firstRawLineHasDWC);
         return 0;
     }
     const int correct = fullLinesPrefixPlusCont - fullLinesPrefix;
@@ -1611,6 +1612,50 @@ int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BO
             return;
         }
     }
+}
+
+- (void)removeLastCells:(int)count {
+    ModifyLineBlock(self, [self, count](id<iTermLineBlockMutationCertificate> cert) {
+        if (cll_entries == _firstEntry || count <= 0) {
+            return;
+        }
+        _numberOfFullLinesCache.clear();
+        int remaining = count;
+        while (remaining > 0 && cll_entries > _firstEntry) {
+            int start;
+            if (cll_entries == _firstEntry + 1) {
+                start = 0;
+            } else {
+                start = cumulative_line_lengths[cll_entries - 2] - self.bufferStartOffset;
+            }
+            const int end = cumulative_line_lengths[cll_entries - 1] - self.bufferStartOffset;
+            const int available = end - start;
+            if (remaining < available) {
+                // Partial truncation of last raw line.
+                cert.mutableCumulativeLineLengths[cll_entries - 1] -= remaining;
+                [_metadataArray eraseLastLineCache];
+                id<iTermExternalAttributeIndexReading> attrs = [_metadataArray lastExternalAttributeIndex];
+                const int keepLen = available - remaining;
+                [_metadataArray setLastExternalAttributeIndex:[attrs subAttributesToIndex:keepLen]];
+                is_partial = YES;
+                remaining = 0;
+            } else {
+                // Remove entire raw line entry.
+                [_metadataArray removeLast];
+                --cll_entries;
+                remaining -= available;
+                is_partial = NO;
+            }
+        }
+        if (cll_entries == _firstEntry) {
+            [self setBufferStartOffset:0];
+            _firstEntry = 0;
+            cll_entries = 0;
+            [_metadataArray reset];
+        }
+        cached_numlines_width = -1;
+        iTermLineBlockDidChange(self, "removeLastCells");
+    });
 }
 
 - (void)removeLastRawLine {
