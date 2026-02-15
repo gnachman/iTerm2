@@ -48,7 +48,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (nullable LineBlock *)blockContainingLineNumber:(int)lineNumber
                                             width:(int)width
                                         remainder:(out int *)remainderPtr
-                                       blockIndex:(out NSInteger *)blockIndexPtr;
+                                       blockIndex:(out nullable NSInteger *)blockIndexPtr;
 - (int)numberOfWrappedLinesForWidth:(int)width;
 - (void)enumerateLinesInRange:(NSRange)range
                         width:(int)width

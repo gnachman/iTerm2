@@ -1985,6 +1985,57 @@ class LineBufferTests: XCTestCase {
                        "Should have one fewer line after removal")
     }
 
+    /// Regression: continuation-path partial removal must use actual wrapped
+    /// line lengths when hidden head lines exist. If kept lines include a short
+    /// hard-EOL line, assuming keptLines * width can under-remove.
+    func testRemoveLastWrappedLinesContinuationWithShortHardEOLKeepsCorrectCells() {
+        let width: Int32 = 80
+
+        let fragmented = LineBuffer(blockSize: 1000)
+        fragmented.append(
+            screenCharArrayWithDefaultStyle(String(repeating: "X", count: 5), eol: EOL_SOFT),
+            width: width)
+        // Alignment loop consumes first 3 partial 30-char items into block A.
+        // Continuation block then starts with:
+        //  - 20 chars hard-EOL (hidden by adjustment=-1),
+        //  - 8 chars hard-EOL (visible, short kept line),
+        //  - 90 chars partial (80 + 10 visible wrapped cells).
+        let lengths: [NSNumber] = [30, 30, 30, 20, 8, 90]
+        let partials: [NSNumber] = [true, true, true, false, false, true]
+        fragmented.testOnlyAppendItems(withLengths: lengths, partials: partials, width: width)
+
+        XCTAssertGreaterThan(fragmented.testOnlyNumberOfBlocks, 1)
+        let continuation = fragmented.testOnlyBlock(at: 1)
+        XCTAssertTrue(continuation.startsWithContinuation)
+        XCTAssertEqual(continuation.continuationWrappedLineAdjustment(forWidth: width), -1,
+                       "Fixture requires hidden continuation head lines")
+
+        let monolithic = LineBuffer(blockSize: 100_000)
+        let raw0 = String(repeating: "X", count: 5) + Self.alphabetRun(length: 110)
+        monolithic.append(screenCharArrayWithDefaultStyle(raw0, eol: EOL_HARD), width: width)
+        let raw1 = Self.alphabetRun(length: 8, startingAt: 110)
+        monolithic.append(screenCharArrayWithDefaultStyle(raw1, eol: EOL_HARD), width: width)
+        let raw2 = Self.alphabetRun(length: 90, startingAt: 118)
+        monolithic.append(screenCharArrayWithDefaultStyle(raw2, eol: EOL_SOFT), width: width)
+
+        assertWrappedLineParity(fragmented, monolithic, width: width,
+                                context: "before removal")
+
+        // Remove one wrapped line from the tail. Old logic could no-op here.
+        fragmented.removeLastWrappedLines(1, width: width)
+        monolithic.removeLastWrappedLines(1, width: width)
+        assertWrappedLineParity(fragmented, monolithic, width: width,
+                                context: "after removeLastWrappedLines(1)")
+
+        let fragPopped = fragmented.popLastLine(withWidth: width)
+        let monoPopped = monolithic.popLastLine(withWidth: width)
+        XCTAssertEqual(fragPopped?.stringValue, monoPopped?.stringValue,
+                       "pop after continuation-tail removal should match monolithic")
+        XCTAssertEqual(fragPopped?.eol, monoPopped?.eol)
+        assertWrappedLineParity(fragmented, monolithic, width: width,
+                                context: "after remove+pop")
+    }
+
     /// Verify that DWC content does NOT create continuation blocks.
     /// When mayHaveDoubleWidthCharacter is true, the alignment loop must
     /// consume all partial items one-at-a-time (no bulk path) because
@@ -3100,6 +3151,102 @@ class LineBufferTests: XCTestCase {
         let line0 = fragmented.wrappedLine(at: 0, width: width)
         XCTAssertEqual(line0.metadata.timestamp, 1000.0,
                        "Line 0 metadata timestamp should be preserved")
+    }
+
+    /// Mixed-metadata boundary case: block A tail has metaA, block B head
+    /// has metaB, stitch consumes chars from both. Metadata must match a
+    /// monolithic reference that applies the same metadata transitions.
+    func testMetadataMixedAcrossBoundaryMatchesMonolithic() {
+        let width: Int32 = 80
+
+        var metaA = iTermMetadataTemporaryWithTimestamp(1000.0)
+        let immutableMetaA = iTermMetadataMakeImmutable(metaA)
+        var metaB = iTermMetadataTemporaryWithTimestamp(2000.0)
+        metaB.rtlFound = true
+        let immutableMetaB = iTermMetadataMakeImmutable(metaB)
+        let cont = screen_char_t.defaultForeground.with(code: unichar(EOL_SOFT))
+
+        // Fragmented: seed(5, metaA) + first bulk(10×30, metaA) + second bulk(10×30, metaB).
+        // First bulk creates block A + continuation block B (both metaA).
+        // Second bulk's alignment loop updates block B to metaB; remainder → block C.
+        let fragmented = LineBuffer(blockSize: 200)
+        let seedText = String(repeating: "X", count: 5)
+        let seedSCA = screenCharArrayWithDefaultStyle(seedText, eol: EOL_SOFT)
+        fragmented.appendLine(seedSCA.line, length: seedSCA.length, partial: true,
+                              width: width, metadata: immutableMetaA, continuation: cont)
+        fragmented.testOnlyAppendPartialItems(10, ofLength: 30, width: width,
+                                              metadata: immutableMetaA,
+                                              continuation: cont)
+        fragmented.testOnlyAppendPartialItems(10, ofLength: 30, width: width,
+                                              metadata: immutableMetaB,
+                                              continuation: cont)
+
+        XCTAssertGreaterThan(fragmented.testOnlyNumberOfBlocks, 2,
+                             "Fixture must create multiple continuation blocks")
+
+        // Monolithic reference: same content and metadata transitions via
+        // appendLine into a single block.
+        let monolithic = LineBuffer(blockSize: 1_000_000)
+        monolithic.appendLine(seedSCA.line, length: seedSCA.length, partial: true,
+                              width: width, metadata: immutableMetaA, continuation: cont)
+        for i in 0..<10 {
+            let chunk = Self.alphabetRun(length: 30, startingAt: i * 30)
+            let sca = screenCharArrayWithDefaultStyle(chunk, eol: EOL_SOFT)
+            monolithic.appendLine(sca.line, length: sca.length, partial: true,
+                                  width: width, metadata: immutableMetaA, continuation: cont)
+        }
+        for i in 0..<10 {
+            let chunk = Self.alphabetRun(length: 30, startingAt: i * 30)
+            let sca = screenCharArrayWithDefaultStyle(chunk, eol: EOL_SOFT)
+            monolithic.appendLine(sca.line, length: sca.length, partial: true,
+                                  width: width, metadata: immutableMetaB, continuation: cont)
+        }
+
+        assertWrappedLineParity(fragmented, monolithic, width: width,
+                                checkMetadata: false,
+                                context: "mixed metadata content parity")
+
+        assertWrappedLineParity(fragmented, monolithic, width: width,
+                                checkMetadata: true,
+                                context: "mixed metadata across boundary")
+    }
+
+    /// Metadata propagation through the continuation chain: line 0 is
+    /// entirely inside block A, but after a second bulk append with metaB
+    /// lands in block B, block A's metadata must reflect metaB.
+    func testPredecessorMetadataPropagatesOnBulkAppend() {
+        let width: Int32 = 80
+
+        var metaA = iTermMetadataTemporaryWithTimestamp(1000.0)
+        let immutableMetaA = iTermMetadataMakeImmutable(metaA)
+        var metaB = iTermMetadataTemporaryWithTimestamp(2000.0)
+        metaB.rtlFound = true
+        let immutableMetaB = iTermMetadataMakeImmutable(metaB)
+        let cont = screen_char_t.defaultForeground.with(code: unichar(EOL_SOFT))
+
+        let buffer = LineBuffer(blockSize: 200)
+        let seedSCA = screenCharArrayWithDefaultStyle(String(repeating: "X", count: 5),
+                                                      eol: EOL_SOFT)
+        buffer.appendLine(seedSCA.line, length: seedSCA.length, partial: true,
+                          width: width, metadata: immutableMetaA, continuation: cont)
+        buffer.testOnlyAppendPartialItems(10, ofLength: 30, width: width,
+                                          metadata: immutableMetaA, continuation: cont)
+
+        // Line 0 is entirely in block A; metadata should be metaA.
+        let before = buffer.wrappedLine(at: 0, width: width)
+        XCTAssertEqual(before.metadata.timestamp, 1000.0)
+        XCTAssertFalse(before.metadata.rtlFound.boolValue)
+
+        // Second bulk with metaB lands in block B.
+        buffer.testOnlyAppendPartialItems(10, ofLength: 30, width: width,
+                                          metadata: immutableMetaB, continuation: cont)
+
+        // Line 0 is still in block A, but metadata must now reflect metaB.
+        let after = buffer.wrappedLine(at: 0, width: width)
+        XCTAssertEqual(after.metadata.timestamp, 2000.0,
+                       "Block A line 0 timestamp must propagate from continuation")
+        XCTAssertTrue(after.metadata.rtlFound.boolValue,
+                      "Block A line 0 rtlFound must propagate from continuation")
     }
 
     // MARK: - 5. EOL matrix coverage

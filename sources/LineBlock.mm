@@ -962,6 +962,19 @@ static int iTermLineBlockNumberOfFullLinesImpl(const screen_char_t *buffer,
     return YES;
 }
 
+- (void)propagateMetadataToLastRawLine:(iTermImmutableMetadata)metadata
+                              length:(int)additionalLength {
+    ModifyLineBlock(self, [metadata, additionalLength, &self](id<iTermLineBlockMutationCertificate> cert) -> void {
+        ITAssertWithMessage(cll_entries > self->_firstEntry, @"propagateMetadata: no raw lines");
+        const int originalLength = [self lengthOfLastLine];
+        screen_char_t cont = [self->_metadataArray metadataAtIndex:cll_entries - 1]->continuation;
+        [self->_metadataArray appendToLastLine:&metadata
+                                originalLength:originalLength
+                              additionalLength:additionalLength
+                                  continuation:cont];
+    });
+}
+
 - (void)didFindRTLInLine:(int)line cert:(id<iTermLineBlockMutationCertificate>)cert {
     const LineBlockMetadata *existing = [_metadataArray metadataAtIndex:line];
     if (!existing->lineMetadata.rtlFound) {

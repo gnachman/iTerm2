@@ -76,26 +76,6 @@ static inline VT100GridCoord LineBufferNormalizeWrappedCoord(int x, int y, int w
     return VT100GridCoordMake(x, y);
 }
 
-// Task 5: EOL/continuation normalization after stitching.
-// When the head portion was fully consumed, use the head's EOL/continuation.
-// Otherwise the line continues → EOL_SOFT.
-typedef struct {
-    int eol;
-    screen_char_t continuation;
-} iTermStitchedEOL;
-
-static inline iTermStitchedEOL LineBufferStitchedEOL(BOOL consumedEntireHead,
-                                                      int headEOL,
-                                                      screen_char_t headContinuation,
-                                                      screen_char_t tailContinuation) {
-    if (consumedEntireHead) {
-        return (iTermStitchedEOL){ .eol = headEOL, .continuation = headContinuation };
-    }
-    screen_char_t cont = tailContinuation;
-    cont.code = EOL_SOFT;
-    return (iTermStitchedEOL){ .eol = EOL_SOFT, .continuation = cont };
-}
-
 // Task 2: Result of fetching a wrapped line with full metadata.
 typedef struct {
     const screen_char_t *chars;
@@ -125,6 +105,28 @@ NS_INLINE iTermBlockLineInfo iTermBlockContributedLines(LineBlock *block, int wi
     int hidden = MAX(0, -adj);
     int contributed = naive + adj;
     return (iTermBlockLineInfo){ naive, adj, hidden, contributed };
+}
+
+NS_INLINE int iTermSumWrappedLineLengths(LineBlock *block,
+                                         int width,
+                                         int startLocalWrappedLine,
+                                         int count) {
+    int sum = 0;
+    for (int i = 0; i < count; i++) {
+        int lineNum = startLocalWrappedLine + i;
+        int lineLength = 0;
+        int eol = EOL_SOFT;
+        const screen_char_t *chars = [block getWrappedLineWithWrapWidth:width
+                                                                 lineNum:&lineNum
+                                                              lineLength:&lineLength
+                                                       includesEndOfLine:&eol
+                                                            continuation:NULL];
+        if (!chars) {
+            break;
+        }
+        sum += lineLength;
+    }
+    return sum;
 }
 
 // The way in which LineBuffer objects are shared is kinda complicated. Each LineBuffer is meant
@@ -863,6 +865,9 @@ static BOOL iTermAppendItemsHaveDWC(CTVector(iTermAppendItem) *items, int fromIn
     }
 
     LineBlock *block = _lineBlocks.lastBlock;
+    const BOOL wasPartialContinuation = (block.hasPartial &&
+                                          block.startsWithContinuation &&
+                                          [block numRawLines] == 1);
 
     int beforeLines = [block getNumLinesWithWrapWidth:width];
     if (![block appendLine:buffer
@@ -947,6 +952,20 @@ static BOOL iTermAppendItemsHaveDWC(CTVector(iTermAppendItem) *items, int fromIn
         // Width change. Invalidate the wrapped lines cache.
         num_wrapped_lines_width = -1;
     }
+
+    // Propagate metadata backward through the continuation chain so that
+    // predecessor blocks' last raw line reflects the same metadata as the
+    // monolithic (single-block) append path.
+    if (wasPartialContinuation && length > 0) {
+        for (NSInteger i = (NSInteger)_lineBlocks.count - 2; i >= 0; i--) {
+            LineBlock *pred = _lineBlocks[i];
+            [pred propagateMetadataToLastRawLine:metadataObj length:length];
+            if (!pred.startsWithContinuation) {
+                break;
+            }
+        }
+    }
+
     if (_wantsSeal) {
         _wantsSeal = NO;
         [self ensureLastBlockUncopied];
@@ -1374,15 +1393,23 @@ static BOOL iTermAppendItemsHaveDWC(CTVector(iTermAppendItem) *items, int fromIn
         if (info.contributed > linesToRemoveRemaining) {
             // Partial remove — block has more visible lines than we need to remove.
             if (info.hidden > 0) {
-                // Continuation block: remove by exact cell count to avoid
-                // pCol drift from naive wrapped-line removal.
-                const int pCol = block.continuationPrefixCharacters % width;
-                const int hiddenHead = width - pCol;
-                const int totalCells = [block nonDroppedSpaceUsed];
-                const int visibleContent = totalCells - hiddenHead;
+                // Continuation block: remove by exact visible wrapped-line
+                // lengths. Do not assume kept lines are full width (hard-EOL
+                // short lines can appear in continuation blocks).
                 const int keptLines = info.contributed - linesToRemoveRemaining;
-                const int cellsToRemove = visibleContent - keptLines * width;
-                [block removeLastCells:cellsToRemove];
+                const int firstVisibleLocalLine = info.hidden;
+                const int totalVisibleCells = iTermSumWrappedLineLengths(block,
+                                                                         width,
+                                                                         firstVisibleLocalLine,
+                                                                         info.contributed);
+                const int keptVisibleCells = iTermSumWrappedLineLengths(block,
+                                                                        width,
+                                                                        firstVisibleLocalLine,
+                                                                        keptLines);
+                const int cellsToRemove = MAX(0, totalVisibleCells - keptVisibleCells);
+                if (cellsToRemove > 0) {
+                    [block removeLastCells:cellsToRemove];
+                }
             } else {
                 [block removeLastWrappedLines:linesToRemoveRemaining width:width];
             }
@@ -1392,11 +1419,14 @@ static BOOL iTermAppendItemsHaveDWC(CTVector(iTermAppendItem) *items, int fromIn
             // Block's visible lines exactly match what remains, but hidden
             // lines exist at the head. Do a partial remove so the block
             // object survives, preserving predecessor boundary content.
-            const int pCol = block.continuationPrefixCharacters % width;
-            const int hiddenHead = width - pCol;
-            const int totalCells = [block nonDroppedSpaceUsed];
-            const int cellsToRemove = totalCells - hiddenHead;
-            [block removeLastCells:cellsToRemove];
+            const int firstVisibleLocalLine = info.hidden;
+            const int totalVisibleCells = iTermSumWrappedLineLengths(block,
+                                                                     width,
+                                                                     firstVisibleLocalLine,
+                                                                     info.contributed);
+            if (totalVisibleCells > 0) {
+                [block removeLastCells:totalVisibleCells];
+            }
             return;
         }
         // contributed <= linesToRemoveRemaining: remove whole block.

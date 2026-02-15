@@ -390,7 +390,7 @@ static NSUInteger iTermLineBlockArrayNextUniqueID;
 - (LineBlock *)blockContainingLineNumber:(int)lineNumber
                                    width:(int)width
                                remainder:(out nonnull int *)remainderPtr
-                              blockIndex:(out NSInteger *)blockIndexPtr {
+                              blockIndex:(out nullable NSInteger *)blockIndexPtr {
     int remainder = 0;
     NSInteger i = [self indexOfBlockContainingLineNumber:lineNumber
                                                    width:width
@@ -604,11 +604,33 @@ static NSUInteger iTermLineBlockArrayNextUniqueID;
     } else {
         stitchedContinuation.code = EOL_SOFT;
     }
-    return [[ScreenCharArray alloc] initWithLine:buf
-                                          length:tailLength + usedLength
-                                        metadata:tailMetadata
-                                    continuation:stitchedContinuation
-                                   freeOnRelease:YES];
+    // Merge metadata in display order: tail then head, using the same
+    // append semantics as the monolithic appendToLastLine path.
+    ScreenCharArray *result;
+    if (usedLength > 0) {
+        iTermImmutableMetadata headRawMeta = [nextBlock screenCharArrayForRawLine:nextBlock.firstEntry].metadata;
+        iTermMetadata headSlice;
+        iTermMetadataInitCopyingSubrange(&headSlice, &headRawMeta, 0, usedLength);
+        iTermImmutableMetadata immutableHeadSlice = iTermMetadataMakeImmutable(headSlice);
+
+        iTermMetadata merged = iTermImmutableMetadataMutableCopy(tailMetadata);
+        iTermMetadataAppend(&merged, tailLength, &immutableHeadSlice, usedLength);
+
+        result = [[ScreenCharArray alloc] initWithLine:buf
+                                                length:tailLength + usedLength
+                                              metadata:iTermMetadataMakeImmutable(merged)
+                                          continuation:stitchedContinuation
+                                         freeOnRelease:YES];
+        iTermMetadataRelease(headSlice);
+        iTermMetadataRelease(merged);
+    } else {
+        result = [[ScreenCharArray alloc] initWithLine:buf
+                                                length:tailLength + usedLength
+                                              metadata:tailMetadata
+                                          continuation:stitchedContinuation
+                                         freeOnRelease:YES];
+    }
+    return result;
 }
 
 - (NSInteger)numberOfRawLines {
@@ -1012,8 +1034,13 @@ static NSUInteger iTermLineBlockArrayNextUniqueID;
         }
         // The num lines cache entries need recomputation.
         // The head's wrapped count was adjusted down; restore to unadjusted.
+        __weak __typeof(self) weakSelf = self;
         [_numLinesCaches setFirstValueWithBlock:^NSInteger(int width) {
-            return [self->_head getNumLinesWithWrapWidth:width];
+            __strong __typeof(weakSelf) strongSelf = weakSelf;
+            if (!strongSelf) {
+                return 0;
+            }
+            return [strongSelf->_head getNumLinesWithWrapWidth:width];
         }];
         (void)oldPrefixCharacters;
     }

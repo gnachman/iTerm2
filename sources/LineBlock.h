@@ -86,6 +86,13 @@ extern dispatch_queue_t _Nullable gDeallocQueue;
           metadata:(iTermImmutableMetadata)metadata
       continuation:(screen_char_t)continuation;
 
+// Update the last raw line's metadata scalars (timestamp, rtlFound) by
+// appending `metadata` using iTermMetadataAppend semantics. Does NOT
+// reset wrapped-line caches or DWC/bidi info—use this only for
+// cross-block metadata propagation where the character data is unchanged.
+- (void)propagateMetadataToLastRawLine:(iTermImmutableMetadata)metadata
+                              length:(int)additionalLength;
+
 // Try to get a line that is lineNum after the first line in this block after wrapping them to a given width.
 // If the line is present, return a pointer to its start and fill in *lineLength with the number of bytes in the line.
 // If the line is not present, decrement *lineNum by the number of lines in this block and return NULL.
