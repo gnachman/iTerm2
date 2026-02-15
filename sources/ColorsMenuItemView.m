@@ -67,6 +67,7 @@ static const int kColorAreaDimension = 12;
 static const int kColorAreaBorder = 1;
 static const int kDefaultColorStokeWidth = 2;
 static const int kMenuFontSize = 14;
+static const int kSeparatorGap = 8;           // gap containing the | separator
 
 const int kMenuLabelOffsetY = 20;
 
@@ -91,12 +92,48 @@ const CGFloat iTermColorsMenuItemViewDisabledAlpha = 0.3;
     [self addTrackingArea:_trackingArea];
 }
 
+#pragma mark - Cell indices
+
+// Cell index layout:
+//   0           = reset (X)
+//   1..N        = preset colors
+//   N+1         = picker (eyedropper icon)
+//   N+2         = current custom color (only when hasCustomColor)
+- (BOOL)hasCustomColor {
+    if (!self.currentColor) return NO;
+    const NSInteger count = [self displayedColorCount];
+    for (NSInteger i = 1; i <= count; i++) {
+        if ([self.currentColor isApproximatelyEqualToColor:[self colorAtIndex:i enabled:YES] epsilon:1/65535.0]) {
+            return NO;
+        }
+    }
+    return YES;
+}
+
+- (NSInteger)pickerCellIndex {
+    return 1 + [self displayedColorCount];
+}
+
+- (NSInteger)customColorCellIndex {
+    return [self pickerCellIndex] + 1;
+}
+
 - (NSInteger)indexForPoint:(NSPoint)p {
-    // Iterate all visible cells: index 0 is reset, followed by up to 31 colors.
-    const NSInteger totalCells = [self totalCellCount];
-    for (NSInteger i = 0; i < totalCells; i++) {
+    // Check preset cells (index 0 = reset, followed by colors)
+    const NSInteger presetCount = 1 + [self displayedColorCount];
+    for (NSInteger i = 0; i < presetCount; i++) {
         if (NSPointInRect(p, [self rectForCellIndex:i enlarged:YES])) {
             return i;
+        }
+    }
+    // Check the picker cell
+    if (NSPointInRect(p, [self rectForCellIndex:[self pickerCellIndex] enlarged:YES])) {
+        return [self pickerCellIndex];
+    }
+    // Check the custom color cell
+    if ([self hasCustomColor]) {
+        if (NSPointInRect(p, [self rectForCellIndex:[self customColorCellIndex] enlarged:YES])) {
+            return [self customColorCellIndex];
         }
     }
     return NSNotFound;
@@ -157,20 +194,46 @@ const CGFloat iTermColorsMenuItemViewDisabledAlpha = 0.3;
     return kOffsetX_PreBigSur;
 }
 
+#pragma mark - Cell positioning
+
 - (NSRect)rectForCellIndex:(NSInteger)cellIndex enlarged:(BOOL)enlarged {
     if (cellIndex == NSNotFound) {
         return NSZeroRect;
     }
     CGFloat growth = enlarged ? 2 : 0;
-    // Compute row/column for multi-row layout with 8 columns per row.
+    const NSInteger presetCellCount = 1 + [self displayedColorCount];
+    const NSInteger presetRowCount = (presetCellCount + (kColumnsPerRow - 1)) / kColumnsPerRow;
+
+    // Right group: [separator] [picker] [custom?]
+    // Positioned right after the last preset cell.
+    NSInteger lastPresetIndex = presetCellCount - 1;
+    NSInteger lastColumn = lastPresetIndex % kColumnsPerRow;
+    const CGFloat rightGroupBaseX = self.colorXOffset + kColorAreaDistanceX * (lastColumn + 1) + kSeparatorGap;
+    const CGFloat rightGroupY = kOffsetY;
+
+    // Picker cell (eyedropper icon, right after separator)
+    if (cellIndex == [self pickerCellIndex]) {
+        return NSMakeRect(rightGroupBaseX - growth,
+                          rightGroupY - growth,
+                          kColorAreaDimension + growth * 2,
+                          kColorAreaDimension + growth * 2);
+    }
+
+    // Custom color cell (right after picker)
+    if ([self hasCustomColor] && cellIndex == [self customColorCellIndex]) {
+        CGFloat customX = rightGroupBaseX + kColorAreaDistanceX;
+        return NSMakeRect(customX - growth,
+                          rightGroupY - growth,
+                          kColorAreaDimension + growth * 2,
+                          kColorAreaDimension + growth * 2);
+    }
+
+    // Preset cells (including reset at index 0)
     NSInteger column = cellIndex % kColumnsPerRow;
-    const NSInteger totalCells = [self totalCellCount];
-    const NSInteger rowCount = (totalCells + (kColumnsPerRow - 1)) / kColumnsPerRow;
-    NSInteger row = rowCount - (cellIndex / kColumnsPerRow) - 1;
+    NSInteger row = presetRowCount - (cellIndex / kColumnsPerRow) - 1;
     const CGFloat x = self.colorXOffset + kColorAreaDistanceX * column - growth;
     const CGFloat y = kOffsetY + (kRowDistanceY * row) - growth;
-    return NSMakeRect(x,
-                      y,
+    return NSMakeRect(x, y,
                       kColorAreaDimension + growth * 2,
                       kColorAreaDimension + growth * 2);
 }
@@ -180,13 +243,12 @@ const CGFloat iTermColorsMenuItemViewDisabledAlpha = 0.3;
     return MIN((NSInteger)self.colors.count, 31);
 }
 
-// Total cells including the reset cell
+// Total cells including the reset cell (presets only)
 - (NSInteger)totalCellCount {
     return 1 + [self displayedColorCount];
 }
 
-- (NSColor *)outlineColorAtIndex:(NSInteger)i enabled:(BOOL)enabled {
-    NSColor *color = [self colorAtIndex:i enabled:enabled];
+- (NSColor *)outlineColorForColor:(NSColor *)color enabled:(BOOL)enabled {
     if (self.effectiveAppearance.it_isDark) {
         const CGFloat perceivedBrightness = color.perceivedBrightness;
         const CGFloat outlineBrightness = color.brightnessComponent + 0.1 + (0.05 * pow(20, perceivedBrightness));
@@ -195,15 +257,20 @@ const CGFloat iTermColorsMenuItemViewDisabledAlpha = 0.3;
                           brightness:outlineBrightness
                                alpha:enabled ? 1 : iTermColorsMenuItemViewDisabledAlpha];
     }
-    const CGFloat brightness = color.brightnessComponent; //color.perceivedBrightness;
+    const CGFloat brightness = color.brightnessComponent;
     const CGFloat perceivedBrightness = color.perceivedBrightness;
     const CGFloat outlineBrightness = brightness * (1 - 0.025 * pow(40, perceivedBrightness));
-    color = [NSColor colorWithHue:color.hueComponent
-                       saturation:MAX(1, color.saturationComponent * 1.1)
-                       brightness:outlineBrightness
-                            alpha:enabled ? 1 : iTermColorsMenuItemViewDisabledAlpha];
-    return color;
+    return [NSColor colorWithHue:color.hueComponent
+                      saturation:MIN(1, color.saturationComponent * 1.1)
+                      brightness:outlineBrightness
+                           alpha:enabled ? 1 : iTermColorsMenuItemViewDisabledAlpha];
 }
+
+- (NSColor *)outlineColorAtIndex:(NSInteger)i enabled:(BOOL)enabled {
+    return [self outlineColorForColor:[self colorAtIndex:i enabled:enabled] enabled:enabled];
+}
+
+#pragma mark - Drawing
 
 // Draw the menu item (label and colors)
 - (void)drawRect:(NSRect)rect {
@@ -231,49 +298,20 @@ const CGFloat iTermColorsMenuItemViewDisabledAlpha = 0.3;
                               toPoint:NSMakePoint(NSMinX(noColorRect), NSMaxY(noColorRect))];
 
     [NSBezierPath setDefaultLineWidth:kDefaultColorStokeWidth];
-    // draw the colors (indices 1..displayedColorCount)
+    // draw the preset colors (indices 1..displayedColorCount)
     const NSInteger colorCount = [self displayedColorCount];
     for (NSInteger i = 1; i <= colorCount; i++) {
-        const BOOL highlighted = enabled && i == _selectedIndex;
-        const NSRect outlineArea = [self rectForCellIndex:i enlarged:highlighted];
-        // draw the outline
-        [[self outlineColorAtIndex:i enabled:enabled] set];
-        NSRectFill(outlineArea);
-
-        // draw the color
-        const NSRect colorArea = NSInsetRect(outlineArea, kColorAreaBorder, kColorAreaBorder);
-        NSColor *color = [self colorAtIndex:i enabled:enabled];
-        [color set];
-        NSRectFill(colorArea);
-
-        BOOL showCheck;
-        if (_mouseDown && _selectedIndex != NSNotFound) {
-            showCheck = highlighted;
-        } else {
-            // Use an approximate check so it can round-trip through tmux.
-            showCheck = [self.currentColor isApproximatelyEqualToColor:[self colorAtIndex:i enabled:YES] epsilon:1/65535.0];
-            if (_mouseDown) {
-                showCheck = NO;
-            }
-        }
-        if (enabled && showCheck) {
-            static NSImage *lightImage;
-            static NSImage *darkImage;
-            static dispatch_once_t onceToken;
-            dispatch_once(&onceToken, ^{
-                lightImage = [[NSImage imageNamed:NSImageNameMenuOnStateTemplate] it_imageWithTintColor:[NSColor whiteColor]];
-                darkImage = [[NSImage imageNamed:NSImageNameMenuOnStateTemplate] it_imageWithTintColor:[NSColor blackColor]];
-            });
-            CGFloat threshold = self.effectiveAppearance.it_isDark ? 0.0 : 0.7;
-            NSImage *image = color.perceivedBrightness < threshold ? lightImage : darkImage;
-            const NSSize checkSize = NSInsetRect(colorArea, 1, 1).size;
-            NSRect rect = NSMakeRect(NSMidX(outlineArea) - checkSize.width / 2,
-                                     NSMidY(outlineArea) - checkSize.height / 2,
-                                     checkSize.width,
-                                     checkSize.height);
-            [image drawInRect:rect];
-        }
+        [self drawPresetColorCell:i enabled:enabled];
     }
+
+    // Draw the separator line between presets and the right group
+    [self drawSeparator:enabled];
+
+    // Draw the color picker cell (eyedropper icon)
+    [self drawPickerCell:enabled];
+
+    // Draw the current custom color cell (if present)
+    [self drawCustomColorCell:enabled];
 
     // draw the menu label
     NSMutableDictionary *attributes = [NSMutableDictionary dictionary];
@@ -297,6 +335,140 @@ const CGFloat iTermColorsMenuItemViewDisabledAlpha = 0.3;
     [labelTitle drawAtPoint:NSMakePoint(x, [ColorsMenuItemView preferredSize].height - kMenuLabelOffsetY) withAttributes:attributes];
     [NSBezierPath setDefaultLineWidth:savedWidth];
 }
+
+- (void)drawSeparator:(BOOL)enabled {
+    const NSInteger presetCellCount = 1 + [self displayedColorCount];
+    NSInteger lastColumn = (presetCellCount - 1) % kColumnsPerRow;
+    const CGFloat sepX = self.colorXOffset + kColorAreaDistanceX * (lastColumn + 1) + kSeparatorGap / 2.0;
+    const CGFloat sepTop = kOffsetY + kColorAreaDimension;
+    const CGFloat sepBottom = kOffsetY;
+
+    NSColor *sepColor;
+    if (self.effectiveAppearance.it_isDark) {
+        sepColor = [NSColor colorWithWhite:1.0 alpha:enabled ? 0.2 : 0.1];
+    } else {
+        sepColor = [NSColor colorWithWhite:0.0 alpha:enabled ? 0.15 : 0.08];
+    }
+    [sepColor set];
+    [NSBezierPath setDefaultLineWidth:1];
+    [NSBezierPath strokeLineFromPoint:NSMakePoint(sepX, sepBottom)
+                              toPoint:NSMakePoint(sepX, sepTop)];
+}
+
+- (void)drawPresetColorCell:(NSInteger)i enabled:(BOOL)enabled {
+    const BOOL highlighted = enabled && i == _selectedIndex;
+    const NSRect outlineArea = [self rectForCellIndex:i enlarged:highlighted];
+    // draw the outline
+    [[self outlineColorAtIndex:i enabled:enabled] set];
+    NSRectFill(outlineArea);
+
+    // draw the color
+    const NSRect colorArea = NSInsetRect(outlineArea, kColorAreaBorder, kColorAreaBorder);
+    NSColor *color = [self colorAtIndex:i enabled:enabled];
+    [color set];
+    NSRectFill(colorArea);
+
+    BOOL showCheck;
+    if (_mouseDown && _selectedIndex != NSNotFound) {
+        showCheck = highlighted;
+    } else {
+        // Use an approximate check so it can round-trip through tmux.
+        showCheck = [self.currentColor isApproximatelyEqualToColor:[self colorAtIndex:i enabled:YES] epsilon:1/65535.0];
+        if (_mouseDown) {
+            showCheck = NO;
+        }
+    }
+    if (enabled && showCheck) {
+        [self drawCheckmarkInRect:outlineArea colorArea:colorArea color:color];
+    }
+}
+
+- (void)drawPickerCell:(BOOL)enabled {
+    const NSInteger pickerIndex = [self pickerCellIndex];
+    const BOOL highlighted = enabled && pickerIndex == _selectedIndex;
+    const NSRect cellRect = [self rectForCellIndex:pickerIndex enlarged:highlighted];
+
+    static NSImage *cachedEyedropper;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        cachedEyedropper = [NSImage imageWithSystemSymbolName:@"eyedropper"
+                                     accessibilityDescription:@"Color Picker"];
+        if (!cachedEyedropper) {
+            cachedEyedropper = [NSImage imageNamed:NSImageNameColorPanel];
+        }
+        NSImageSymbolConfiguration *config = [NSImageSymbolConfiguration configurationWithPointSize:kColorAreaDimension weight:NSFontWeightRegular];
+        cachedEyedropper = [cachedEyedropper imageWithSymbolConfiguration:config];
+    });
+
+    NSColor *tintColor;
+    if (highlighted) {
+        tintColor = self.effectiveAppearance.it_isDark ? [NSColor whiteColor] : [NSColor blackColor];
+    } else {
+        tintColor = self.effectiveAppearance.it_isDark ? [NSColor lightGrayColor] : [NSColor colorWithWhite:0.35 alpha:1];
+    }
+    if (!enabled) {
+        tintColor = [tintColor colorWithAlphaComponent:iTermColorsMenuItemViewDisabledAlpha];
+    }
+
+    NSImage *tinted = [cachedEyedropper it_imageWithTintColor:tintColor];
+    NSSize imageSize = tinted.size;
+    NSRect drawRect = NSMakeRect(NSMidX(cellRect) - imageSize.width / 2,
+                                 NSMidY(cellRect) - imageSize.height / 2,
+                                 imageSize.width,
+                                 imageSize.height);
+    [tinted drawInRect:drawRect];
+}
+
+- (void)drawCustomColorCell:(BOOL)enabled {
+    if (![self hasCustomColor]) return;
+
+    const NSInteger cellIndex = [self customColorCellIndex];
+    const BOOL highlighted = enabled && cellIndex == _selectedIndex;
+    const NSRect outlineArea = [self rectForCellIndex:cellIndex enlarged:highlighted];
+
+    NSColor *customColor = self.currentColor;
+
+    // Draw outline
+    [[self outlineColorForColor:customColor enabled:enabled] set];
+    NSRectFill(outlineArea);
+
+    // Draw fill
+    const NSRect colorArea = NSInsetRect(outlineArea, kColorAreaBorder, kColorAreaBorder);
+    NSColor *fillColor = enabled ? customColor : [customColor colorWithAlphaComponent:iTermColorsMenuItemViewDisabledAlpha];
+    [fillColor set];
+    NSRectFill(colorArea);
+
+    // Always show checkmark on custom cell since it IS the current color
+    BOOL showCheck;
+    if (_mouseDown && _selectedIndex != NSNotFound) {
+        showCheck = highlighted;
+    } else {
+        showCheck = !_mouseDown;
+    }
+    if (enabled && showCheck) {
+        [self drawCheckmarkInRect:outlineArea colorArea:colorArea color:fillColor];
+    }
+}
+
+- (void)drawCheckmarkInRect:(NSRect)outlineArea colorArea:(NSRect)colorArea color:(NSColor *)color {
+    static NSImage *lightImage;
+    static NSImage *darkImage;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        lightImage = [[NSImage imageNamed:NSImageNameMenuOnStateTemplate] it_imageWithTintColor:[NSColor whiteColor]];
+        darkImage = [[NSImage imageNamed:NSImageNameMenuOnStateTemplate] it_imageWithTintColor:[NSColor blackColor]];
+    });
+    CGFloat threshold = self.effectiveAppearance.it_isDark ? 0.0 : 0.7;
+    NSImage *image = color.perceivedBrightness < threshold ? lightImage : darkImage;
+    const NSSize checkSize = NSInsetRect(colorArea, 1, 1).size;
+    NSRect rect = NSMakeRect(NSMidX(outlineArea) - checkSize.width / 2,
+                             NSMidY(outlineArea) - checkSize.height / 2,
+                             checkSize.width,
+                             checkSize.height);
+    [image drawInRect:rect];
+}
+
+#pragma mark - Helpers
 
 - (BOOL)anySiblingIsChecked {
     return [self.enclosingMenuItem.parentItem.submenu.itemArray anyWithBlock:^BOOL(NSMenuItem *item) {
@@ -333,14 +505,16 @@ const CGFloat iTermColorsMenuItemViewDisabledAlpha = 0.3;
 }
 
 + (NSSize)preferredSize {
-    // Use existing width, grow height per required rows
     ColorsMenuItemView *tmp = [[ColorsMenuItemView alloc] initWithFrame:NSZeroRect];
-    const NSInteger totalCells = [tmp totalCellCount];
-    const NSInteger rowCount = (totalCells + (kColumnsPerRow - 1)) / kColumnsPerRow;
-    const CGFloat baseHeight = 50; // current single-row height used in callers
-    const CGFloat height = baseHeight + (MAX(1, rowCount) - 1) * kRowDistanceY;
-    return NSMakeSize(180, height);
+    const NSInteger presetCellCount = [tmp totalCellCount];
+    const NSInteger presetRowCount = (presetCellCount + (kColumnsPerRow - 1)) / kColumnsPerRow;
+    const CGFloat baseHeight = 50;
+    const CGFloat height = baseHeight + (MAX(1, presetRowCount) - 1) * kRowDistanceY;
+    // presets + separator gap + picker + custom cell space
+    return NSMakeSize(180 + kSeparatorGap + kColorAreaDistanceX * 2 + kColorAreaDimension, height);
 }
+
+#pragma mark - Mouse handling
 
 - (void)mouseUp:(NSEvent*) event {
     if (!self.enabled) {
@@ -355,6 +529,25 @@ const CGFloat iTermColorsMenuItemViewDisabledAlpha = 0.3;
         return;
     }
 
+    // Picker cell — open color picker via delegate
+    if (i == [self pickerCellIndex]) {
+        NSMenuItem *enclosingMenuItem = [self enclosingMenuItem];
+        NSMenu *menu = [enclosingMenuItem menu];
+        [menu cancelTracking];
+        [self.delegate colorsMenuItemViewDidRequestColorPicker:self];
+        return;
+    }
+
+    // Custom color cell — also open color picker (color is already applied)
+    if ([self hasCustomColor] && i == [self customColorCellIndex]) {
+        NSMenuItem *enclosingMenuItem = [self enclosingMenuItem];
+        NSMenu *menu = [enclosingMenuItem menu];
+        [menu cancelTracking];
+        [self.delegate colorsMenuItemViewDidRequestColorPicker:self];
+        return;
+    }
+
+    // Preset color or reset cell
     NSMenuItem *enclosingMenuItem = [self enclosingMenuItem];
     NSMenu *menu = [enclosingMenuItem menu];
     NSInteger menuIndex = [menu indexOfItem:enclosingMenuItem];

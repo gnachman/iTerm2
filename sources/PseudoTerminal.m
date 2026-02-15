@@ -430,11 +430,13 @@ typedef NS_ENUM(int, iTermShouldHaveTitleSeparator) {
 
     iTermIdempotentOperationJoiner *_rightExtraJoiner;
     BOOL _excursionPrevented;
+
 }
 
 @synthesize scope = _scope;
 @synthesize variables = _variables;
 @synthesize windowTitleOverrideSwiftyString = _windowTitleOverrideSwiftyString;
+@synthesize tabViewItemForColorPicker = _tabViewItemForColorPicker;
 
 + (void)registerSessionsInArrangement:(NSDictionary *)arrangement {
     for (NSDictionary *tabArrangement in arrangement[TERMINAL_ARRANGEMENT_TABS]) {
@@ -1053,6 +1055,7 @@ ITERM_WEAKLY_REFERENCEABLE
         NSLog(@"Red alert! Current terminal is being freed!");
         [[iTermController sharedInstance] setCurrentTerminal:nil];
     }
+    [self cleanUpTabColorPicker];
     [_broadcastInputHelper release];
     [_windowPositioner release];
     [autocompleteView shutdown];
@@ -7389,11 +7392,13 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
                                               initWithFrame:NSMakeRect(0, 0, tabColorViewSize.width, tabColorViewSize.height)] autorelease];
     PTYTab *tab = [tabViewItem identifier];
     labelTrackView.currentColor = tab.activeSession.tabColor;
+    labelTrackView.delegate = self;
     item = [[[NSMenuItem alloc] initWithTitle:@"Tab Color"
                                        action:@selector(changeTabColorToMenuAction:)
                                 keyEquivalent:@""] autorelease];
     [item setView:labelTrackView];
     [item setRepresentedObject:tabViewItem];
+    _tabViewItemForColorPicker = tabViewItem;
     [rootMenu addItem:item];
 
     for (NSMenuItem *item in rootMenu.itemArray) {
@@ -11924,6 +11929,9 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
     NSColor *color = menuItem.color;
     for (PTYSession *aSession in [aTab sessions]) {
         [aSession setTabColor:color];
+    }
+    if (color) {
+        [[iTermRecentTabColors shared] addColor:color];
     }
     [self updateTabColors];
 }

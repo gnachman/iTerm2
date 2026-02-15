@@ -26,10 +26,16 @@
 
 #import <Cocoa/Cocoa.h>
 
+@class ColorsMenuItemView;
+
+@protocol ColorsMenuItemViewDelegate <NSObject>
+- (void)colorsMenuItemViewDidRequestColorPicker:(ColorsMenuItemView *)view;
+@end
+
 @interface ColorsMenuItemView : NSView
 @property(nonatomic, strong) NSColor *currentColor;
 @property(nonatomic, readonly) NSColor *color;
-
+@property(nonatomic, weak) id<ColorsMenuItemViewDelegate> delegate;
 
 + (NSSize)preferredSize;
 
