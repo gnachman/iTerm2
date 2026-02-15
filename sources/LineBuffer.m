@@ -2819,14 +2819,12 @@ NS_INLINE int TotalNumberOfRawLines(LineBuffer *self) {
 
 - (NSInteger)numberOfCellsUsedInWrappedLineRange:(VT100GridRange)wrappedLineRange
                                            width:(int)width {
-    // Stitch-aware per-line summation. Preserves existing semantics:
-    // returns cells from start of first line to start of last line
-    // (exclusive of last line). A 1-line range returns 0.
-    if (wrappedLineRange.length <= 1) {
+    // Stitch-aware per-line summation over [location, location + length).
+    if (wrappedLineRange.length <= 0) {
         return 0;
     }
     const int start = wrappedLineRange.location;
-    const int endExclusive = wrappedLineRange.location + wrappedLineRange.length - 1;
+    const int endExclusive = wrappedLineRange.location + wrappedLineRange.length;
     NSInteger sum = 0;
     for (int y = start; y < endExclusive; y++) {
         ScreenCharArray *line = [self wrappedLineAtIndex:y width:width continuation:NULL];

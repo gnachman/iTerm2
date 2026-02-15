@@ -3928,6 +3928,41 @@ class LineBufferTests: XCTestCase {
         }
     }
 
+    func testNumberOfCellsUsedInWrappedLineRangeIncludesLastLine() {
+        let buffer = LineBuffer()
+        let width: Int32 = 4
+
+        let lines = [
+            screenCharArrayWithDefaultStyle("abcd", eol: EOL_HARD),   // wrapped line 0
+            screenCharArrayWithDefaultStyle("efghij", eol: EOL_HARD), // wrapped lines 1,2
+            screenCharArrayWithDefaultStyle("k", eol: EOL_HARD)       // wrapped line 3
+        ]
+        for line in lines {
+            buffer.append(line, width: width)
+        }
+
+        XCTAssertEqual(buffer.numLines(withWidth: width), 4)
+
+        func expectedCells(start: Int32, length: Int32) -> Int {
+            let end = Int(start + length)
+            return (Int(start)..<end).reduce(0) { partial, y in
+                partial + Int(buffer.wrappedLine(at: Int32(y), width: width).length)
+            }
+        }
+
+        for range in [VT100GridRange(location: 0, length: 1),
+                      VT100GridRange(location: 1, length: 1),
+                      VT100GridRange(location: 3, length: 1),
+                      VT100GridRange(location: 0, length: 2),
+                      VT100GridRange(location: 1, length: 2),
+                      VT100GridRange(location: 0, length: 4)] {
+            let actual = Int(buffer.numberOfCellsUsed(inWrappedLineRange: range, width: width))
+            let expected = expectedCells(start: range.location, length: range.length)
+            XCTAssertEqual(actual, expected,
+                           "Incorrect cell count for range (\(range.location), \(range.length))")
+        }
+    }
+
     /// Round-trip coordinate conversion parity: convert a coordinate to a
     /// position and back. On an adjustment == -1 boundary, the fragmented
     /// buffer must reproduce the original coordinate exactly as monolithic does.
