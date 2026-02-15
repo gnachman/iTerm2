@@ -744,10 +744,14 @@ static BOOL iTermAppendItemsHaveDWC(CTVector(iTermAppendItem) *items, int fromIn
 }
 
 - (void)appendLines:(CTVector(iTermAppendItem) *)items width:(int)width {
-    iTermLineBufferPerfRegisterIfNeeded();
-    const uint64_t appendLinesStart = iTermPerfNowNanos();
-    atomic_fetch_add(&gLineBufferAppendLinesCalls, 1);
-    atomic_fetch_add(&gLineBufferAppendLinesItems, CTVectorCount(items));
+    const BOOL perfEnabled = [iTermAdvancedSettingsModel lineBufferPerfCounters];
+    uint64_t appendLinesStart = 0;
+    if (perfEnabled) {
+        iTermLineBufferPerfRegisterIfNeeded();
+        appendLinesStart = iTermPerfNowNanos();
+        atomic_fetch_add(&gLineBufferAppendLinesCalls, 1);
+        atomic_fetch_add(&gLineBufferAppendLinesItems, CTVectorCount(items));
+    }
     self.dirty = YES;
 #ifdef LOG_MUTATIONS
     NSLog(@"Append: %@\n", ScreenCharArrayToStringDebug(buffer, length));
@@ -779,7 +783,7 @@ static BOOL iTermAppendItemsHaveDWC(CTVector(iTermAppendItem) *items, int fromIn
             }
         }
     }
-    if (bulkPathDisabledByDWC) {
+    if (bulkPathDisabledByDWC && perfEnabled) {
         atomic_fetch_add(&gLineBufferAppendLinesDWCDisabledCalls, 1);
     }
     while (first < CTVectorCount(items)) {
@@ -796,7 +800,9 @@ static BOOL iTermAppendItemsHaveDWC(CTVector(iTermAppendItem) *items, int fromIn
                     metadata:item.metadata
                 continuation:item.continuation];
             charsAppendedInLoop += item.length;
-            atomic_fetch_add(&gLineBufferAppendLinesLoopAppends, 1);
+            if (perfEnabled) {
+                atomic_fetch_add(&gLineBufferAppendLinesLoopAppends, 1);
+            }
 #if DEBUG
     [self sanityCheck];
 #endif
@@ -850,8 +856,10 @@ static BOOL iTermAppendItemsHaveDWC(CTVector(iTermAppendItem) *items, int fromIn
 
 
     if (first < CTVectorCount(items)) {
-        atomic_fetch_add(&gLineBufferAppendLinesBulkInitCalls, 1);
-        atomic_fetch_add(&gLineBufferAppendLinesBulkInitItems, CTVectorCount(items) - first);
+        if (perfEnabled) {
+            atomic_fetch_add(&gLineBufferAppendLinesBulkInitCalls, 1);
+            atomic_fetch_add(&gLineBufferAppendLinesBulkInitItems, CTVectorCount(items) - first);
+        }
         [self removeTrailingEmptyBlocks];
 #if DEBUG
     [self sanityCheck];
@@ -905,7 +913,9 @@ static BOOL iTermAppendItemsHaveDWC(CTVector(iTermAppendItem) *items, int fromIn
         [self ensureLastBlockUncopied];
     }
     [self sanityCheck];
-    atomic_fetch_add(&gLineBufferAppendLinesNanos, iTermPerfNowNanos() - appendLinesStart);
+    if (perfEnabled) {
+        atomic_fetch_add(&gLineBufferAppendLinesNanos, iTermPerfNowNanos() - appendLinesStart);
+    }
 }
 
 - (void)reallyAppendLine:(const screen_char_t *)buffer
@@ -914,8 +924,12 @@ static BOOL iTermAppendItemsHaveDWC(CTVector(iTermAppendItem) *items, int fromIn
                    width:(int)width
                 metadata:(iTermImmutableMetadata)metadataObj
             continuation:(screen_char_t)continuation {
-    const uint64_t reallyAppendStart = iTermPerfNowNanos();
-    atomic_fetch_add(&gLineBufferReallyAppendLineCalls, 1);
+    const BOOL perfEnabled = [iTermAdvancedSettingsModel lineBufferPerfCounters];
+    uint64_t reallyAppendStart = 0;
+    if (perfEnabled) {
+        reallyAppendStart = iTermPerfNowNanos();
+        atomic_fetch_add(&gLineBufferReallyAppendLineCalls, 1);
+    }
     self.dirty = YES;
 #ifdef LOG_MUTATIONS
     NSLog(@"Append: %@\n", ScreenCharArrayToStringDebug(buffer, length));
@@ -1023,7 +1037,9 @@ static BOOL iTermAppendItemsHaveDWC(CTVector(iTermAppendItem) *items, int fromIn
         _wantsSeal = NO;
         [self ensureLastBlockUncopied];
     }
-    atomic_fetch_add(&gLineBufferReallyAppendLineNanos, iTermPerfNowNanos() - reallyAppendStart);
+    if (perfEnabled) {
+        atomic_fetch_add(&gLineBufferReallyAppendLineNanos, iTermPerfNowNanos() - reallyAppendStart);
+    }
 }
 
 - (iTermImmutableMetadata)metadataByProjectingContinuationForBlock:(LineBlock *)block
