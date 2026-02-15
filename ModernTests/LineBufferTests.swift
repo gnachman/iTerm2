@@ -1449,6 +1449,87 @@ class LineBufferTests: XCTestCase {
         XCTAssertEqual(buffer.numberOfUnwrappedLines(), 1)
     }
 
+    /// Clearing continuation on a dropped-head successor must not mutate
+    /// shared blocks in another LineBuffer copy.
+    func testDropFirstBlockClearsContinuationCopyOnWrite() {
+        let original = LineBuffer()
+        let width: Int32 = 80
+
+        // Reuse the same fixture shape as testDropFirstBlockClearsContinuation:
+        // seed partial + bulk append creates a continuation second block.
+        original.append(screenCharArrayWithDefaultStyle(String(repeating: "X", count: 60), eol: EOL_SOFT),
+                        width: width)
+        original.testOnlyAppendPartialItems(5, ofLength: 100, width: width)
+
+        XCTAssertGreaterThan(original.testOnlyNumberOfBlocks, 1)
+        XCTAssertTrue(original.testOnlyBlock(at: 1).startsWithContinuation)
+
+        let copied = original.copy()
+        XCTAssertGreaterThan(copied.testOnlyNumberOfBlocks, 1)
+        XCTAssertTrue(copied.testOnlyBlock(at: 1).startsWithContinuation)
+        XCTAssertFalse(original.testOnlyBlock(at: 1) === copied.testOnlyBlock(at: 1),
+                       "LineBuffer.copy() must COW-copy block objects")
+
+        let originalWrappedBefore = original.numLines(withWidth: width)
+        let copiedWrappedBefore = copied.numLines(withWidth: width)
+        XCTAssertEqual(originalWrappedBefore, copiedWrappedBefore)
+
+        // Drop the first block only in copied. This calls removeFirstBlock(),
+        // which clears continuation on its new head.
+        copied.setMaxLines(copiedWrappedBefore - 2)
+        _ = copied.dropExcessLines(withWidth: width)
+        XCTAssertFalse(copied.testOnlyBlock(at: 0).startsWithContinuation)
+
+        // Original must remain unchanged; if shared blocks were mutated in place,
+        // block 1 here would incorrectly lose continuation.
+        XCTAssertGreaterThan(original.testOnlyNumberOfBlocks, 1)
+        XCTAssertTrue(original.testOnlyBlock(at: 1).startsWithContinuation,
+                      "Dropping from a copy must not clear continuation in the original")
+        XCTAssertEqual(original.numLines(withWidth: width), originalWrappedBefore)
+    }
+
+    /// copyWithMinimumLines drops head blocks on a cheap copy; this must not
+    /// clear continuation state in the original's shared successor block.
+    func testCopyWithMinimumLinesDoesNotMutateOriginalContinuation() {
+        let original = LineBuffer()
+        let width: Int32 = 80
+
+        original.append(screenCharArrayWithDefaultStyle(String(repeating: "X", count: 60), eol: EOL_SOFT),
+                        width: width)
+        original.testOnlyAppendPartialItems(5, ofLength: 100, width: width)
+
+        XCTAssertGreaterThan(original.testOnlyNumberOfBlocks, 1)
+
+        var continuationIndex: Int32?
+        for i in 1..<original.testOnlyNumberOfBlocks {
+            if original.testOnlyBlock(at: i).startsWithContinuation {
+                continuationIndex = i
+                break
+            }
+        }
+        guard let continuationIndex else {
+            XCTFail("Fixture did not produce a continuation block")
+            return
+        }
+
+        let originalWrappedBefore = original.numLines(withWidth: width)
+        let originalPrefixBefore = original.testOnlyBlock(at: continuationIndex).continuationPrefixCharacters
+        XCTAssertTrue(original.testOnlyBlock(at: continuationIndex).startsWithContinuation)
+
+        let trimmed = original.copy(withMinimumLines: 0, atWidth: width)
+        XCTAssertGreaterThanOrEqual(trimmed.testOnlyNumberOfBlocks, 1)
+        XCTAssertFalse(trimmed.testOnlyBlock(at: 0).startsWithContinuation,
+                       "Trimmed copy head should have continuation cleared")
+        XCTAssertFalse(original.testOnlyBlock(at: continuationIndex) === trimmed.testOnlyBlock(at: 0),
+                       "copyWithMinimumLines must not share LineBlock object identity")
+
+        XCTAssertTrue(original.testOnlyBlock(at: continuationIndex).startsWithContinuation,
+                      "copyWithMinimumLines must not mutate continuation state in original")
+        XCTAssertEqual(original.testOnlyBlock(at: continuationIndex).continuationPrefixCharacters,
+                       originalPrefixBefore)
+        XCTAssertEqual(original.numLines(withWidth: width), originalWrappedBefore)
+    }
+
     /// Verify that dropping the head block with a continuing successor
     /// produces correct raw-line and wrapped-line counts.
     /// Bug: totalRawLinesDropped used block.numRawLines directly without
