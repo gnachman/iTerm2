@@ -91,6 +91,7 @@ static NSString* TAB_ARRANGEMENT_TMUX_WINDOW_PANE = @"tmux window pane";
 static NSString* TAB_ARRANGEMENT_COLOR = @"Tab color";  // DEPRECATED - Each PTYSession has its own tab color now
 static NSString* TAB_ARRANGEMENT_TITLE_OVERRIDE = @"Title Override";
 static NSString* TAB_GUID = @"Tab GUID";
+static NSString* TAB_ARRANGEMENT_PINNED = @"Pinned";
 
 static const BOOL USE_THIN_SPLITTERS = YES;
 
@@ -233,6 +234,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     NSArray<NSString *> *_orderedGUIDs;
     iTermBuiltInFunctions *_methods;
     iTermTmuxOptionMonitor *_tmuxTitleMonitor;
+    BOOL _pinned;
 }
 
 @synthesize parentWindow = parentWindow_;
@@ -3346,6 +3348,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
                                             partialAttachments:partialAttachments
                                                        options:options]];
     theTab.titleOverride = [arrangement[TAB_ARRANGEMENT_TITLE_OVERRIDE] nilIfNull];
+    theTab->_pinned = [arrangement[TAB_ARRANGEMENT_PINNED] boolValue];
     NSString *guid = arrangement[TAB_GUID];
     if (guid) {
         if ([[iTermController sharedInstance] tabWithGUID:guid] ||
@@ -3680,6 +3683,7 @@ NSString *const PTYTabArrangementOptionsPendingJumps = @"PTYTabArrangementOption
                    encoder:(id<iTermEncoderAdapter>)encoder
                    options:(NSDictionary *)options {
     DLog(@"Encode tab %@", self);
+    encoder[TAB_ARRANGEMENT_PINNED] = @(self.isPinned);
     return [PTYTab encodeWithContents:contents
                        constructIdMap:constructIdMap
                               encoder:encoder
@@ -5663,6 +5667,18 @@ typedef struct {
             }
         }
     }
+}
+
+- (void)setPinned:(BOOL)pinned {
+    if (_pinned == pinned) {
+        return;
+    }
+    _pinned = pinned;
+    [_delegate tab:self didChangePinnedState:pinned];
+}
+
+- (BOOL)isPinned {
+    return _pinned;
 }
 
 - (void)setTitleOverride:(NSString *)titleOverride {
