@@ -108,7 +108,6 @@ static inline void iTermLineBufferPerfRegisterIfNeeded(void) {
 
 #pragma mark - Inline Helpers
 
-// Task 6: Position normalization for wrapped coordinates.
 // Ensures 0 <= x < width by carrying overflow/underflow into y.
 static inline VT100GridCoord LineBufferNormalizeWrappedCoord(int x, int y, int width) {
     if (x < 0) {
@@ -123,7 +122,7 @@ static inline VT100GridCoord LineBufferNormalizeWrappedCoord(int x, int y, int w
     return VT100GridCoordMake(x, y);
 }
 
-// Task 2: Result of fetching a wrapped line with full metadata.
+// Result of fetching a wrapped line with full metadata.
 typedef struct {
     const screen_char_t *chars;
     int length;
@@ -1282,7 +1281,7 @@ static BOOL iTermAppendItemsHaveDWC(CTVector(iTermAppendItem) *items, int fromIn
     }
 }
 
-// Task 2: Fetch a wrapped line from a block with all metadata in one call.
+// Fetch a wrapped line from a block with all metadata in one call.
 // Returns YES if the line was found, NO otherwise. On success, result is filled in.
 - (BOOL)getWrappedLineFromBlock:(LineBlock *)block
                           width:(int)width
