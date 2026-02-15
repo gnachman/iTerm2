@@ -43,6 +43,7 @@
 #import "NSSet+iTerm.h"
 #import "RegexKitLite.h"
 #import <stdatomic.h>
+#import <time.h>
 
 static NSString *const kLineBufferVersionKey = @"Version";
 static NSString *const kLineBufferBlocksKey = @"Blocks";
@@ -58,6 +59,52 @@ static NSString *const kLineBufferBlockWrapperKey = @"Block Wrapper";
 
 static const int kLineBufferVersion = 1;
 static const NSInteger kUnicodeVersion = 9;
+
+#pragma mark - Deterministic Perf Counters
+
+static atomic_bool gLineBufferPerfRegistered = false;
+static atomic_ullong gLineBufferAppendLinesCalls = 0;
+static atomic_ullong gLineBufferAppendLinesNanos = 0;
+static atomic_ullong gLineBufferAppendLinesItems = 0;
+static atomic_ullong gLineBufferAppendLinesBulkInitCalls = 0;
+static atomic_ullong gLineBufferAppendLinesBulkInitItems = 0;
+static atomic_ullong gLineBufferAppendLinesLoopAppends = 0;
+static atomic_ullong gLineBufferAppendLinesDWCDisabledCalls = 0;
+static atomic_ullong gLineBufferReallyAppendLineCalls = 0;
+static atomic_ullong gLineBufferReallyAppendLineNanos = 0;
+static atomic_ullong gLineBufferMetadataPropagateCalls = 0;
+static atomic_ullong gLineBufferMetadataPropagateIters = 0;
+static atomic_ullong gLineBufferMetadataPropagateNanos = 0;
+
+static inline uint64_t iTermPerfNowNanos(void) {
+    return clock_gettime_nsec_np(CLOCK_UPTIME_RAW);
+}
+
+static void iTermLineBufferPerfDump(void) {
+    NSLog(@"ITERM_PERF_LINEBUFFER calls_appendLines=%llu ns_appendLines=%llu items_appendLines=%llu "
+          @"bulkInit_calls=%llu bulkInit_items=%llu loopAppends=%llu dwcDisabled_calls=%llu "
+          @"calls_reallyAppendLine=%llu ns_reallyAppendLine=%llu "
+          @"metadataPropagate_calls=%llu metadataPropagate_iters=%llu ns_metadataPropagate=%llu",
+          (unsigned long long)atomic_load(&gLineBufferAppendLinesCalls),
+          (unsigned long long)atomic_load(&gLineBufferAppendLinesNanos),
+          (unsigned long long)atomic_load(&gLineBufferAppendLinesItems),
+          (unsigned long long)atomic_load(&gLineBufferAppendLinesBulkInitCalls),
+          (unsigned long long)atomic_load(&gLineBufferAppendLinesBulkInitItems),
+          (unsigned long long)atomic_load(&gLineBufferAppendLinesLoopAppends),
+          (unsigned long long)atomic_load(&gLineBufferAppendLinesDWCDisabledCalls),
+          (unsigned long long)atomic_load(&gLineBufferReallyAppendLineCalls),
+          (unsigned long long)atomic_load(&gLineBufferReallyAppendLineNanos),
+          (unsigned long long)atomic_load(&gLineBufferMetadataPropagateCalls),
+          (unsigned long long)atomic_load(&gLineBufferMetadataPropagateIters),
+          (unsigned long long)atomic_load(&gLineBufferMetadataPropagateNanos));
+}
+
+static inline void iTermLineBufferPerfRegisterIfNeeded(void) {
+    bool expected = false;
+    if (atomic_compare_exchange_strong(&gLineBufferPerfRegistered, &expected, true)) {
+        atexit(iTermLineBufferPerfDump);
+    }
+}
 
 #pragma mark - Inline Helpers
 
@@ -697,6 +744,10 @@ static BOOL iTermAppendItemsHaveDWC(CTVector(iTermAppendItem) *items, int fromIn
 }
 
 - (void)appendLines:(CTVector(iTermAppendItem) *)items width:(int)width {
+    iTermLineBufferPerfRegisterIfNeeded();
+    const uint64_t appendLinesStart = iTermPerfNowNanos();
+    atomic_fetch_add(&gLineBufferAppendLinesCalls, 1);
+    atomic_fetch_add(&gLineBufferAppendLinesItems, CTVectorCount(items));
     self.dirty = YES;
 #ifdef LOG_MUTATIONS
     NSLog(@"Append: %@\n", ScreenCharArrayToStringDebug(buffer, length));
@@ -728,6 +779,9 @@ static BOOL iTermAppendItemsHaveDWC(CTVector(iTermAppendItem) *items, int fromIn
             }
         }
     }
+    if (bulkPathDisabledByDWC) {
+        atomic_fetch_add(&gLineBufferAppendLinesDWCDisabledCalls, 1);
+    }
     while (first < CTVectorCount(items)) {
         LineBlock *lastBlock = _lineBlocks.lastBlock;
         if (!lastBlock.hasPartial) {
@@ -742,6 +796,7 @@ static BOOL iTermAppendItemsHaveDWC(CTVector(iTermAppendItem) *items, int fromIn
                     metadata:item.metadata
                 continuation:item.continuation];
             charsAppendedInLoop += item.length;
+            atomic_fetch_add(&gLineBufferAppendLinesLoopAppends, 1);
 #if DEBUG
     [self sanityCheck];
 #endif
@@ -795,6 +850,8 @@ static BOOL iTermAppendItemsHaveDWC(CTVector(iTermAppendItem) *items, int fromIn
 
 
     if (first < CTVectorCount(items)) {
+        atomic_fetch_add(&gLineBufferAppendLinesBulkInitCalls, 1);
+        atomic_fetch_add(&gLineBufferAppendLinesBulkInitItems, CTVectorCount(items) - first);
         [self removeTrailingEmptyBlocks];
 #if DEBUG
     [self sanityCheck];
@@ -848,6 +905,7 @@ static BOOL iTermAppendItemsHaveDWC(CTVector(iTermAppendItem) *items, int fromIn
         [self ensureLastBlockUncopied];
     }
     [self sanityCheck];
+    atomic_fetch_add(&gLineBufferAppendLinesNanos, iTermPerfNowNanos() - appendLinesStart);
 }
 
 - (void)reallyAppendLine:(const screen_char_t *)buffer
@@ -856,6 +914,8 @@ static BOOL iTermAppendItemsHaveDWC(CTVector(iTermAppendItem) *items, int fromIn
                    width:(int)width
                 metadata:(iTermImmutableMetadata)metadataObj
             continuation:(screen_char_t)continuation {
+    const uint64_t reallyAppendStart = iTermPerfNowNanos();
+    atomic_fetch_add(&gLineBufferReallyAppendLineCalls, 1);
     self.dirty = YES;
 #ifdef LOG_MUTATIONS
     NSLog(@"Append: %@\n", ScreenCharArrayToStringDebug(buffer, length));
@@ -957,12 +1017,20 @@ static BOOL iTermAppendItemsHaveDWC(CTVector(iTermAppendItem) *items, int fromIn
     // predecessor blocks' last raw line reflects the same metadata as the
     // monolithic (single-block) append path.
     if (wasPartialContinuation && length > 0) {
+        const uint64_t metadataStart = iTermPerfNowNanos();
+        unsigned long long metadataIterations = 0;
         for (NSInteger i = (NSInteger)_lineBlocks.count - 2; i >= 0; i--) {
             LineBlock *pred = _lineBlocks[i];
             [pred propagateMetadataToLastRawLine:metadataObj length:length];
+            metadataIterations++;
             if (!pred.startsWithContinuation) {
                 break;
             }
+        }
+        if (metadataIterations > 0) {
+            atomic_fetch_add(&gLineBufferMetadataPropagateCalls, 1);
+            atomic_fetch_add(&gLineBufferMetadataPropagateIters, metadataIterations);
+            atomic_fetch_add(&gLineBufferMetadataPropagateNanos, iTermPerfNowNanos() - metadataStart);
         }
     }
 
@@ -970,6 +1038,7 @@ static BOOL iTermAppendItemsHaveDWC(CTVector(iTermAppendItem) *items, int fromIn
         _wantsSeal = NO;
         [self ensureLastBlockUncopied];
     }
+    atomic_fetch_add(&gLineBufferReallyAppendLineNanos, iTermPerfNowNanos() - reallyAppendStart);
 }
 
 - (iTermImmutableMetadata)metadataForLineNumber:(int)lineNumber width:(int)width {
