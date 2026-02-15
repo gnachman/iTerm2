@@ -1373,14 +1373,30 @@ static BOOL iTermAppendItemsHaveDWC(CTVector(iTermAppendItem) *items, int fromIn
 
         if (info.contributed > linesToRemoveRemaining) {
             // Partial remove — block has more visible lines than we need to remove.
-            [block removeLastWrappedLines:linesToRemoveRemaining width:width];
+            if (info.hidden > 0) {
+                // Continuation block: remove by exact cell count to avoid
+                // pCol drift from naive wrapped-line removal.
+                const int pCol = block.continuationPrefixCharacters % width;
+                const int hiddenHead = width - pCol;
+                const int totalCells = [block nonDroppedSpaceUsed];
+                const int visibleContent = totalCells - hiddenHead;
+                const int keptLines = info.contributed - linesToRemoveRemaining;
+                const int cellsToRemove = visibleContent - keptLines * width;
+                [block removeLastCells:cellsToRemove];
+            } else {
+                [block removeLastWrappedLines:linesToRemoveRemaining width:width];
+            }
             return;
         }
         if (info.contributed == linesToRemoveRemaining && info.hidden > 0) {
             // Block's visible lines exactly match what remains, but hidden
             // lines exist at the head. Do a partial remove so the block
             // object survives, preserving predecessor boundary content.
-            [block removeLastWrappedLines:linesToRemoveRemaining width:width];
+            const int pCol = block.continuationPrefixCharacters % width;
+            const int hiddenHead = width - pCol;
+            const int totalCells = [block nonDroppedSpaceUsed];
+            const int cellsToRemove = totalCells - hiddenHead;
+            [block removeLastCells:cellsToRemove];
             return;
         }
         // contributed <= linesToRemoveRemaining: remove whole block.
@@ -2459,6 +2475,32 @@ NS_INLINE int TotalNumberOfRawLines(LineBuffer *self) {
             .continuation = { 0 }
         };
         item.continuation.code = EOL_SOFT;
+        CTVectorAppend(&items, item);
+    }
+    [self appendLines:&items width:width];
+    CTVectorDestroy(&items);
+    free(buf);
+}
+
+- (void)testOnlyAppendPartialItems:(int)count
+                          ofLength:(int)itemLength
+                             width:(int)width
+                          metadata:(iTermImmutableMetadata)metadata
+                      continuation:(screen_char_t)continuation {
+    screen_char_t *buf = (screen_char_t *)calloc(count * itemLength, sizeof(screen_char_t));
+    for (int i = 0; i < count * itemLength; i++) {
+        buf[i].code = 'A' + (i % 26);
+    }
+    CTVector(iTermAppendItem) items;
+    CTVectorCreate(&items, count);
+    for (int i = 0; i < count; i++) {
+        iTermAppendItem item = {
+            .buffer = buf + i * itemLength,
+            .length = itemLength,
+            .partial = 1,
+            .metadata = metadata,
+            .continuation = continuation
+        };
         CTVectorAppend(&items, item);
     }
     [self appendLines:&items width:width];

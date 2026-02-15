@@ -202,6 +202,11 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)testOnlyAppendPartialItems:(int)count
                           ofLength:(int)itemLength
                              width:(int)width;
+- (void)testOnlyAppendPartialItems:(int)count
+                          ofLength:(int)itemLength
+                             width:(int)width
+                          metadata:(iTermImmutableMetadata)metadata
+                      continuation:(screen_char_t)continuation;
 - (void)testOnlyAppendItemsWithLengths:(NSArray<NSNumber *> *)lengths
                               partials:(NSArray<NSNumber *> *)partials
                                  width:(int)width;

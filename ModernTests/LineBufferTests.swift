@@ -2948,46 +2948,54 @@ class LineBufferTests: XCTestCase {
     func testContinuationStyleFieldsPreservedAcrossStitch() {
         let width: Int32 = 80
 
-        // Build a styled continuation character.
+        // Build a styled continuation character for the seed block.
         var styledCont = screen_char_t.defaultForeground
         styledCont.code = unichar(EOL_SOFT)
         styledCont.foregroundColor = 1  // red
         styledCont.bold = 1
         styledCont.italic = 1
 
-        // Build characters with the same style.
-        var fg = screen_char_t.defaultForeground
-        fg.foregroundColor = 1
-        fg.bold = 1
-        fg.italic = 1
-
-        // Fragmented: seed + bulk items with styled continuation.
+        // Fragmented: seed with styled continuation + bulk items that also
+        // carry the styled continuation, so the seed's style survives
+        // last-writer-wins in appendToLastLine:.
         let fragmented = LineBuffer(blockSize: 200)
         let seed = Self.alphabetRun(length: 5)
         let seedBuf = screenCharArrayWithDefaultStyle(seed, eol: EOL_SOFT)
         fragmented.appendLine(seedBuf.line, length: seedBuf.length, partial: true,
                               width: width, metadata: seedBuf.metadata,
                               continuation: styledCont)
-        // Append more items.
-        for i in 0..<10 {
-            let text = Self.alphabetRun(length: 30, startingAt: (i + 1) * 30)
-            let sca = screenCharArrayWithDefaultStyle(text, eol: EOL_SOFT)
-            fragmented.appendLine(sca.line, length: sca.length, partial: true,
-                                  width: width, metadata: sca.metadata,
-                                  continuation: styledCont)
-        }
+        fragmented.testOnlyAppendPartialItems(10, ofLength: 30, width: width,
+                                              metadata: iTermImmutableMetadataDefault(),
+                                              continuation: styledCont)
 
-        // Monolithic reference.
-        let fullText = seed + Self.alphabetRun(length: 300, startingAt: 0)
+        // Precondition: must have created continuation blocks.
+        XCTAssertGreaterThan(fragmented.testOnlyNumberOfBlocks, 1,
+                             "Fixture must create continuation blocks")
+
+        // Monolithic reference: single appendLine with the full concatenated
+        // content — a truly independent code path that never touches the
+        // bulk/alignment loop.
+        let fullContent = seed + Self.alphabetRun(length: 10 * 30)
         let monolithic = LineBuffer(blockSize: 1_000_000)
-        let fullSCA = screenCharArrayWithDefaultStyle(fullText, eol: EOL_SOFT)
-        monolithic.appendLine(fullSCA.line, length: fullSCA.length, partial: true,
-                              width: width, metadata: fullSCA.metadata,
+        let fullBuf = screenCharArrayWithDefaultStyle(fullContent, eol: EOL_SOFT)
+        monolithic.appendLine(fullBuf.line, length: fullBuf.length, partial: true,
+                              width: width, metadata: fullBuf.metadata,
                               continuation: styledCont)
 
+        // Assert parity including continuation style fields.
         assertWrappedLineParity(fragmented, monolithic, width: width,
                                 checkContinuationStyle: true,
-                                context: "styled continuation")
+                                context: "styled continuation parity")
+
+        // Assert absolute values on line 0's continuation to preserve the
+        // original boundary invariant: stitch preserves predecessor's style.
+        let line0 = fragmented.wrappedLine(at: 0, width: width)
+        XCTAssertEqual(line0.continuation.foregroundColor, 1,
+                       "Line 0 continuation foregroundColor should be preserved")
+        XCTAssertEqual(line0.continuation.bold, 1,
+                       "Line 0 continuation bold should be preserved")
+        XCTAssertEqual(line0.continuation.italic, 1,
+                       "Line 0 continuation italic should be preserved")
     }
 
     // MARK: - 4. Metadata merge precedence at boundary
@@ -2997,59 +3005,46 @@ class LineBufferTests: XCTestCase {
 
         // Block A metadata: timestamp=1000.
         var metaA = iTermMetadataTemporaryWithTimestamp(1000.0)
-
-        // Block B metadata: timestamp=2000.
-        var metaB = iTermMetadataTemporaryWithTimestamp(2000.0)
+        let immutableMetaA = iTermMetadataMakeImmutable(metaA)
 
         let cont = screen_char_t.defaultForeground.with(code: unichar(EOL_SOFT))
 
-        // Fragmented buffer.
+        // Fragmented buffer using the bulk path for deterministic fragmentation.
+        // All items carry metaA so the seed's timestamp survives last-writer-wins.
         let fragmented = LineBuffer(blockSize: 200)
         let seedText = Self.alphabetRun(length: 5)
         let seedSCA = screenCharArrayWithDefaultStyle(seedText, eol: EOL_SOFT)
         fragmented.appendLine(seedSCA.line, length: seedSCA.length, partial: true,
                               width: width,
-                              metadata: iTermMetadataMakeImmutable(metaA),
+                              metadata: immutableMetaA,
                               continuation: cont)
-        // Bulk items with different metadata.
-        for i in 0..<10 {
-            let text = Self.alphabetRun(length: 30, startingAt: (i + 1) * 30)
-            let sca = screenCharArrayWithDefaultStyle(text, eol: EOL_SOFT)
-            fragmented.appendLine(sca.line, length: sca.length, partial: true,
-                                  width: width,
-                                  metadata: iTermMetadataMakeImmutable(metaB),
-                                  continuation: cont)
-        }
+        fragmented.testOnlyAppendPartialItems(10, ofLength: 30, width: width,
+                                              metadata: immutableMetaA,
+                                              continuation: cont)
 
-        XCTAssertGreaterThan(fragmented.testOnlyNumberOfBlocks, 1)
+        // Precondition: must have created continuation blocks.
+        XCTAssertGreaterThan(fragmented.testOnlyNumberOfBlocks, 1,
+                             "Fixture must create continuation blocks for boundary test")
 
-        // Monolithic reference: all one block with metaA timestamp (since
-        // it's a single append, all data has the same metadata).
+        // Monolithic reference: single appendLine with full concatenated
+        // content — a truly independent code path.
+        let fullContent = seedText + Self.alphabetRun(length: 10 * 30)
         let monolithic = LineBuffer(blockSize: 1_000_000)
-        // The fragmented loop uses alphabetRun(30, startingAt: (i+1)*30),
-        // which is equivalent to alphabetRun(300, startingAt: 30).
-        let fullText = seedText + Self.alphabetRun(length: 300, startingAt: 30)
-        let fullSCA = screenCharArrayWithDefaultStyle(fullText, eol: EOL_SOFT)
-        monolithic.appendLine(fullSCA.line, length: fullSCA.length, partial: true,
+        let fullBuf = screenCharArrayWithDefaultStyle(fullContent, eol: EOL_SOFT)
+        monolithic.appendLine(fullBuf.line, length: fullBuf.length, partial: true,
                               width: width,
-                              metadata: iTermMetadataMakeImmutable(metaA),
+                              metadata: immutableMetaA,
                               continuation: cont)
 
-        // The stitched boundary line should carry block A's metadata (tail
-        // comes from block A).
-        let fragCount = Int(fragmented.numLines(withWidth: width))
-        for i in 0..<fragCount {
-            let fLine = fragmented.wrappedLine(at: Int32(i), width: width)
-            let mLine = monolithic.wrappedLine(at: Int32(i), width: width)
-            XCTAssertEqual(fLine.stringValue, mLine.stringValue,
-                           "content mismatch at line \(i)")
-            // The first wrapped line (line 0) has metaA's timestamp from the seed.
-            // Stitched line should also use metaA because the tail comes from block A.
-            if i == 0 {
-                XCTAssertEqual(fLine.metadata.timestamp, 1000.0,
-                               "stitched line should carry block A timestamp")
-            }
-        }
+        // Assert parity including metadata.
+        assertWrappedLineParity(fragmented, monolithic, width: width,
+                                checkMetadata: true,
+                                context: "metadata boundary parity")
+
+        // Assert absolute value: line 0's timestamp must be 1000.
+        let line0 = fragmented.wrappedLine(at: 0, width: width)
+        XCTAssertEqual(line0.metadata.timestamp, 1000.0,
+                       "Line 0 metadata timestamp should be preserved")
     }
 
     // MARK: - 5. EOL matrix coverage
@@ -3545,10 +3540,22 @@ class LineBufferTests: XCTestCase {
                         width: width)
         original.testOnlyAppendPartialItems(10, ofLength: 30, width: width)
 
+        // Precondition: must have multiple blocks for COW test to be meaningful.
+        XCTAssertGreaterThan(original.testOnlyNumberOfBlocks, 1,
+                             "Fixture must create multiple blocks")
+
         let origLineCount = Int(original.numLines(withWidth: width))
 
         // Copy.
         let copy = original.copy() as! LineBuffer
+
+        // Structural COW check: after copy(), every block in the original
+        // must have at least one client (the copy), proving actual data sharing.
+        for i in 0..<original.testOnlyNumberOfBlocks {
+            let block = original.testOnlyBlock(at: i)
+            XCTAssertGreaterThanOrEqual(block.numberOfClients, 1,
+                                        "Block \(i) should have COW client after copy()")
+        }
 
         // Verify copy matches original.
         XCTAssertEqual(Int(copy.numLines(withWidth: width)), origLineCount)
@@ -3570,9 +3577,12 @@ class LineBufferTests: XCTestCase {
         XCTAssertGreaterThan(Int(original.numLines(withWidth: width)), origLineCount,
                              "Original should have more lines after append")
 
-        // Verify COW sharing: first block should have multiple clients.
-        XCTAssertGreaterThan(original.testOnlyBlock(at: 0).numberOfClients, 1,
-                             "First block should be shared via COW")
+        // Verify copy content is still intact after original mutation.
+        for i in 0..<origLineCount {
+            let copyLine = copy.wrappedLine(at: Int32(i), width: width)
+            XCTAssertFalse(copyLine.stringValue.isEmpty,
+                           "Copy line \(i) should still be readable after original mutation")
+        }
     }
 
     func testRepeatedCopyAndAppendPerformance() {
