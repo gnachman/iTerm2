@@ -130,7 +130,7 @@ ORIG_DIR=`pwd`
 
 echo "Build beta release"
 make clean
-make -j8 Beta
+make -j8 SIGNED=1 UNIVERSAL=1 Beta
 
 BUILDTYPE=Beta
 

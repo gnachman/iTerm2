@@ -18547,7 +18547,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "#!/bin/bash\nset -euo pipefail\n\nversion_file=\"${SRCROOT}/last-xcode-version\"\ncurrent=\"$(xcodebuild -version)\"\nlast=\"$(< \"$version_file\")\"\nif [[ \"$current\" == \"$last\" ]]; then\n    # versions match → OK\n    exit 0\nfi\n\n# versions differ → block\necho 'You must run `make paranoiddeps` before you can build because your xcode version is out of sync with the prebuild dependencies in the repo'\necho \"Your version is:\"\nprintf '%s\\n' \"$current\"\necho \"The last-built-for version is:\"\nprintf '%s\\n' \"$last\"\nexit 1\n";
+			shellScript = "#!/bin/bash\nset -euo pipefail\n\nversion_file=\"${SRCROOT}/last-xcode-version\"\ncurrent=\"$(xcodebuild -version)\"\nlast=\"$(< \"$version_file\")\"\nif [[ \"$current\" == \"$last\" ]]; then\n    # versions match → OK\n    exit 0\nfi\n\n# versions differ → block\necho 'You must run `make paranoid-deps` before you can build because your xcode version is out of sync with the prebuild dependencies in the repo'\necho \"Your version is:\"\nprintf '%s\\n' \"$current\"\necho \"The last-built-for version is:\"\nprintf '%s\\n' \"$last\"\nexit 1\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 

@@ -131,7 +131,7 @@ ORIG_DIR=`pwd`
 
 echo "Build deployment release"
 make clean
-make release
+make SIGNED=1 UNIVERSAL=1 release
 
 BUILDTYPE=Deployment
 
