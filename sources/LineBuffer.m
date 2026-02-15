@@ -1971,22 +1971,14 @@ NS_INLINE int TotalNumberOfRawLines(LineBuffer *self) {
                                                                    continuation:NULL
                                                            isStartOfWrappedLine:NULL
                                                                        metadata:NULL];
-                // Get actual head contribution from block B's wrapped line 0.
-                int headLineNum = 0;
-                int headLine0Length = 0;
-                int headEOL = 0;
-                const screen_char_t *headP = [nextBlock getWrappedLineWithWrapWidth:width
-                                                                            lineNum:&headLineNum
-                                                                         lineLength:&headLine0Length
-                                                                  includesEndOfLine:&headEOL
-                                                                            yOffset:NULL
-                                                                       continuation:NULL
-                                                               isStartOfWrappedLine:NULL
-                                                                           metadata:NULL];
-                const int headUsed = MIN(width - tailLength, headLine0Length);
+                // The stitched boundary consumes from block B's first *raw* line.
+                // Wrapped line 0 can start after this consumed head segment when
+                // continuation adjustment is 0, so it cannot be used to size headUsed.
+                const int rawHeadLength = [nextBlock lengthOfRawLine:nextBlock.firstEntry];
+                const int headUsed = MIN(width - tailLength, MAX(0, rawHeadLength));
                 const int stitchedLength = tailLength + headUsed;
 
-                if (tailP && headP && headUsed > 0 && x >= tailLength) {
+                if (tailP && x >= tailLength) {
                     VLog(@"positionForCoord: stitch boundary at block %@, tailLength=%@, headUsed=%@, x=%@",
                          @(index), @(tailLength), @(headUsed), @(x));
                     if (x < stitchedLength) {
