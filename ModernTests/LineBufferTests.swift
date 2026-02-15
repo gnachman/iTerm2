@@ -3805,6 +3805,131 @@ class LineBufferTests: XCTestCase {
                           "100 copy+append cycles took \(elapsed)s — possible COW regression")
     }
 
+    // MARK: - 12. Remainder normalization for continuation adjustment
+
+    /// Builds a fragmented buffer where block B has
+    /// continuationWrappedLineAdjustment == -1 (hidden head line) and a
+    /// monolithic single-block reference with identical content.
+    /// Width=80, seed=5 partial, then mixed items to force:
+    /// - block A: 5 + 3*30 = 95 chars
+    /// - block B starts with continuation, first raw line length 20 (hard EOL)
+    /// With pCol=15, the continuation adjustment is -1.
+    private func makeAdjustmentMinusOneFixture() -> (fragmented: LineBuffer, monolithic: LineBuffer, width: Int32) {
+        let width: Int32 = 80
+        let cont = screen_char_t.defaultForeground.with(code: unichar(EOL_SOFT))
+
+        let fragmented = LineBuffer(blockSize: 64)
+        let seedSCA = screenCharArrayWithDefaultStyle(String(repeating: "A", count: 5), eol: EOL_SOFT)
+        fragmented.appendLine(seedSCA.line, length: seedSCA.length, partial: true,
+                              width: width, metadata: seedSCA.metadata, continuation: cont)
+        let lengths: [NSNumber] = [30, 30, 30, 20, 30, 30, 30, 30, 30, 30]
+        let partials: [NSNumber] = [true, true, true, false, true, true, true, true, true, true]
+        fragmented.testOnlyAppendItems(withLengths: lengths, partials: partials, width: width)
+
+        let monolithic = LineBuffer(blockSize: 1_000_000)
+        // Logical raw line 0: seed + items 0..3 = 5 + (90 + 20) = 115, hard.
+        let raw0 = String(repeating: "A", count: 5) + Self.alphabetRun(length: 110)
+        monolithic.append(screenCharArrayWithDefaultStyle(raw0, eol: EOL_HARD), width: width)
+        // Logical raw line 1: items 4..9 = 180, partial.
+        let raw1 = Self.alphabetRun(length: 180, startingAt: 110)
+        monolithic.append(screenCharArrayWithDefaultStyle(raw1, eol: EOL_SOFT), width: width)
+
+        // Verify fixture invariants.
+        XCTAssertGreaterThan(fragmented.testOnlyNumberOfBlocks, 1,
+                             "Fixture must create multiple blocks")
+        XCTAssertEqual(monolithic.testOnlyNumberOfBlocks, 1,
+                       "Monolithic reference must be a single block")
+        XCTAssertEqual(fragmented.numLines(withWidth: width), monolithic.numLines(withWidth: width),
+                       "Fixture line counts must match")
+        XCTAssertGreaterThanOrEqual(fragmented.numLines(withWidth: width), 5,
+                                    "Fixture should have enough wrapped lines for range tests")
+
+        // The key invariant: block B (index 1) must have adjustment == -1.
+        let blockB = fragmented.testOnlyBlock(at: 1)
+        XCTAssertEqual(blockB.continuationWrappedLineAdjustment(forWidth: width), -1,
+                       "Continuation block must have adjustment == -1")
+
+        return (fragmented, monolithic, width)
+    }
+
+    /// positionForCoordinate parity: on an adjustment == -1 continuation
+    /// boundary, the fragmented buffer must return the same absolute
+    /// positions as the monolithic reference.
+    func testPositionForCoordinateParityWithContinuationAdjustment() {
+        let (fragmented, monolithic, width) = makeAdjustmentMinusOneFixture()
+        let numLines = Int(fragmented.numLines(withWidth: width))
+
+        for y in 0..<Int32(numLines) {
+            for x: Int32 in [0, width - 1] {
+                let coord = VT100GridCoord(x: x, y: y)
+                let fragPos = fragmented.position(forCoordinate: coord, width: width, offset: 0)
+                let monoPos = monolithic.position(forCoordinate: coord, width: width, offset: 0)
+                XCTAssertNotNil(fragPos, "fragmented position nil at (\(x),\(y))")
+                XCTAssertNotNil(monoPos, "monolithic position nil at (\(x),\(y))")
+                XCTAssertEqual(fragPos?.absolutePosition, monoPos?.absolutePosition,
+                               "positionForCoordinate mismatch at (\(x),\(y))")
+            }
+        }
+    }
+
+    /// numberOfCellsUsedInWrappedLineRange parity: ranges that cross or
+    /// sit on an adjustment == -1 continuation boundary must match
+    /// monolithic cell counts.
+    func testNumberOfCellsUsedParityWithContinuationAdjustment() {
+        let (fragmented, monolithic, width) = makeAdjustmentMinusOneFixture()
+        let numLines = Int(fragmented.numLines(withWidth: width))
+
+        // Test a sliding window of various sizes across all lines.
+        for rangeLength in [1, 2, 3, 5] {
+            for start in 0..<(numLines - rangeLength + 1) {
+                let range = VT100GridRange(location: Int32(start), length: Int32(rangeLength))
+                let fragCells = fragmented.numberOfCellsUsed(inWrappedLineRange: range, width: width)
+                let monoCells = monolithic.numberOfCellsUsed(inWrappedLineRange: range, width: width)
+                XCTAssertEqual(fragCells, monoCells,
+                               "numberOfCellsUsed mismatch for range (\(start), \(rangeLength))")
+            }
+        }
+    }
+
+    /// Round-trip coordinate conversion parity: convert a coordinate to a
+    /// position and back. On an adjustment == -1 boundary, the fragmented
+    /// buffer must reproduce the original coordinate exactly as monolithic does.
+    func testCoordinateRoundTripParityWithContinuationAdjustment() {
+        let (fragmented, monolithic, width) = makeAdjustmentMinusOneFixture()
+        let numLines = Int(fragmented.numLines(withWidth: width))
+
+        for y in 0..<Int32(numLines) {
+            for x: Int32 in [0, width / 2, width - 1] {
+                let coord = VT100GridCoord(x: x, y: y)
+
+                let monoPos = monolithic.position(forCoordinate: coord, width: width, offset: 0)
+                guard let monoPos else {
+                    XCTFail("monolithic position nil at (\(x),\(y))")
+                    continue
+                }
+                var monoOk = ObjCBool(false)
+                let monoCoord = monolithic.coordinate(for: monoPos, width: width,
+                                                      extendsRight: false, ok: &monoOk)
+
+                let fragPos = fragmented.position(forCoordinate: coord, width: width, offset: 0)
+                guard let fragPos else {
+                    XCTFail("fragmented position nil at (\(x),\(y))")
+                    continue
+                }
+                var fragOk = ObjCBool(false)
+                let fragCoord = fragmented.coordinate(for: fragPos, width: width,
+                                                      extendsRight: false, ok: &fragOk)
+
+                XCTAssertTrue(monoOk.boolValue, "monolithic round-trip failed at (\(x),\(y))")
+                XCTAssertTrue(fragOk.boolValue, "fragmented round-trip failed at (\(x),\(y))")
+                XCTAssertEqual(fragCoord.x, monoCoord.x,
+                               "round-trip x mismatch at (\(x),\(y))")
+                XCTAssertEqual(fragCoord.y, monoCoord.y,
+                               "round-trip y mismatch at (\(x),\(y))")
+            }
+        }
+    }
+
     func testSearchOnCopiedBufferMatchesOriginal() {
         let width: Int32 = 80
 
