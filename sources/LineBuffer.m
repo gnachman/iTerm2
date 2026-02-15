@@ -1026,12 +1026,77 @@ static BOOL iTermAppendItemsHaveDWC(CTVector(iTermAppendItem) *items, int fromIn
     atomic_fetch_add(&gLineBufferReallyAppendLineNanos, iTermPerfNowNanos() - reallyAppendStart);
 }
 
+- (iTermImmutableMetadata)metadataByProjectingContinuationForBlock:(LineBlock *)block
+                                                         blockIndex:(NSInteger)blockIndex
+                                                   localWrappedLine:(int)localWrappedLine
+                                                              width:(int)width
+                                                           fallback:(iTermImmutableMetadata)fallback {
+    if (!block || width <= 0 || blockIndex < 0) {
+        return fallback;
+    }
+    const NSArray<LineBlock *> *blocks = _lineBlocks.blocks;
+    if (blockIndex >= (NSInteger)blocks.count) {
+        return fallback;
+    }
+
+    const NSInteger nextIndex = blockIndex + 1;
+    if (nextIndex >= (NSInteger)blocks.count) {
+        return fallback;
+    }
+    LineBlock *nextBlock = blocks[nextIndex];
+    if (!nextBlock.startsWithContinuation) {
+        return fallback;
+    }
+
+    NSNumber *rawLineNumber = [block rawLineNumberAtWrappedLineOffset:localWrappedLine width:width];
+    if (!rawLineNumber) {
+        return fallback;
+    }
+    if (rawLineNumber.intValue != [block numRawLines] - 1) {
+        return fallback;
+    }
+
+    // The predecessor's boundary stitched line has explicitly merged metadata.
+    // Keep its existing metadata path and only project metadata for non-stitched
+    // predecessor wrapped lines.
+    if (nextBlock.continuationPrefixCharacters % width != 0) {
+        const int naiveLines = [block getNumLinesWithWrapWidth:width];
+        if (localWrappedLine == naiveLines - 1) {
+            return fallback;
+        }
+    }
+
+    iTermImmutableMetadata projected = fallback;
+    NSInteger candidateIndex = nextIndex;
+    while (candidateIndex < (NSInteger)blocks.count) {
+        LineBlock *candidate = blocks[candidateIndex];
+        if (!candidate.startsWithContinuation) {
+            break;
+        }
+        projected = [candidate metadataForRawLineAtWrappedLineOffset:0 width:width];
+        // A continuation chain for the same logical line can only extend
+        // through blocks whose first raw line is also their last raw line.
+        if ([candidate numRawLines] != 1) {
+            break;
+        }
+        candidateIndex += 1;
+    }
+    return projected;
+}
+
 - (iTermImmutableMetadata)metadataForLineNumber:(int)lineNumber width:(int)width {
     int remainder = 0;
+    NSInteger blockIndex = 0;
     LineBlock *block = [_lineBlocks blockContainingLineNumber:lineNumber
                                                         width:width
-                                                    remainder:&remainder];
-    return [block metadataForLineNumber:remainder width:width];
+                                                    remainder:&remainder
+                                                   blockIndex:&blockIndex];
+    iTermImmutableMetadata metadata = [block metadataForLineNumber:remainder width:width];
+    return [self metadataByProjectingContinuationForBlock:block
+                                               blockIndex:blockIndex
+                                         localWrappedLine:remainder
+                                                    width:width
+                                                 fallback:metadata];
 }
 
 - (iTermBidiDisplayInfo * _Nullable)bidiInfoForLine:(int)lineNumber width:(int)width {
@@ -1055,8 +1120,17 @@ static BOOL iTermAppendItemsHaveDWC(CTVector(iTermAppendItem) *items, int fromIn
 
 - (iTermImmutableMetadata)metadataForRawLineWithWrappedLineNumber:(int)lineNum width:(int)width {
     int remainder = 0;
-    LineBlock *block = [_lineBlocks blockContainingLineNumber:lineNum width:width remainder:&remainder];
-    return [block metadataForRawLineAtWrappedLineOffset:remainder width:width];
+    NSInteger blockIndex = 0;
+    LineBlock *block = [_lineBlocks blockContainingLineNumber:lineNum
+                                                        width:width
+                                                    remainder:&remainder
+                                                   blockIndex:&blockIndex];
+    iTermImmutableMetadata metadata = [block metadataForRawLineAtWrappedLineOffset:remainder width:width];
+    return [self metadataByProjectingContinuationForBlock:block
+                                               blockIndex:blockIndex
+                                         localWrappedLine:remainder
+                                                    width:width
+                                                 fallback:metadata];
 }
 
 // Copy a line into the buffer. If the line is shorter than 'width' then only
@@ -1126,6 +1200,11 @@ static BOOL iTermAppendItemsHaveDWC(CTVector(iTermAppendItem) *items, int fromIn
         return EOL_HARD;
     }
     ITAssertWithMessage(r.length >= 0, @"Length is negative %@", @(r.length));
+    r.metadata = [self metadataByProjectingContinuationForBlock:block
+                                                     blockIndex:blockIndex
+                                               localWrappedLine:requestedLine
+                                                          width:width
+                                                       fallback:r.metadata];
 
     if (continuationPtr) {
         *continuationPtr = r.continuation;
@@ -1246,7 +1325,7 @@ static BOOL iTermAppendItemsHaveDWC(CTVector(iTermAppendItem) *items, int fromIn
 - (ScreenCharArray *)screenCharArrayForLine:(int)line
                                       width:(int)width
                                    paddedTo:(int)paddedSize
-                             eligibleForDWC:(BOOL)eligibleForDWC {
+                                 eligibleForDWC:(BOOL)eligibleForDWC {
     int remainder = 0;
     NSInteger blockIndex = 0;
     LineBlock *block = [_lineBlocks blockContainingLineNumber:line width:width remainder:&remainder blockIndex:&blockIndex];
@@ -1260,6 +1339,11 @@ static BOOL iTermAppendItemsHaveDWC(CTVector(iTermAppendItem) *items, int fromIn
     if (![self getWrappedLineFromBlock:block width:width remainder:remainder result:&r]) {
         return nil;
     }
+    r.metadata = [self metadataByProjectingContinuationForBlock:block
+                                                     blockIndex:blockIndex
+                                               localWrappedLine:localWrappedLineIndex
+                                                          width:width
+                                                       fallback:r.metadata];
     ScreenCharArray *stitched = [self stitchedLineFromBlockAtIndex:blockIndex
                                                              width:width
                                                 localWrappedLineIndex:localWrappedLineIndex];
@@ -1288,6 +1372,11 @@ static BOOL iTermAppendItemsHaveDWC(CTVector(iTermAppendItem) *items, int fromIn
     if (![self getWrappedLineFromBlock:block width:width remainder:remainder result:&r]) {
         return nil;
     }
+    r.metadata = [self metadataByProjectingContinuationForBlock:block
+                                                     blockIndex:blockIndex
+                                               localWrappedLine:localWrappedLineIndex
+                                                          width:width
+                                                       fallback:r.metadata];
     ScreenCharArray *stitched = [self stitchedLineFromBlockAtIndex:blockIndex
                                                              width:width
                                              localWrappedLineIndex:localWrappedLineIndex];
@@ -1328,6 +1417,11 @@ static BOOL iTermAppendItemsHaveDWC(CTVector(iTermAppendItem) *items, int fromIn
     if (continuationPtr) {
         *continuationPtr = r.continuation;
     }
+    r.metadata = [self metadataByProjectingContinuationForBlock:block
+                                                     blockIndex:blockIndex
+                                               localWrappedLine:localWrappedLineIndex
+                                                          width:width
+                                                       fallback:r.metadata];
     ScreenCharArray *stitched = [self stitchedLineFromBlockAtIndex:blockIndex
                                                              width:width
                                              localWrappedLineIndex:localWrappedLineIndex];
@@ -1410,7 +1504,9 @@ static BOOL iTermAppendItemsHaveDWC(CTVector(iTermAppendItem) *items, int fromIn
         ScreenCharArray *array = [[ScreenCharArray alloc] initWithLine:chars
                                                                 length:length
                                                           continuation:continuation];
-        block(count++, array, metadata, stop);
+        const int lineNumber = count++;
+        const iTermImmutableMetadata projected = [self metadataForLineNumber:lineNumber width:width];
+        block(lineNumber, array, projected, stop);
     }];
 }
 

@@ -197,9 +197,12 @@ static inline void ModifyLineBlock(LineBlock *self,
 }
 
 - (void)clearContinuation {
-    _continuationPrefixCharacters = -1;
-    _prefixHasDWC = NO;
-    cached_numlines_width = -1;
+    ModifyLineBlock(self, [&self](id<iTermLineBlockMutationCertificate> cert) -> void {
+        self->_continuationPrefixCharacters = -1;
+        self->_prefixHasDWC = NO;
+        self->cached_numlines_width = -1;
+        iTermLineBlockDidChange(self, "clear continuation");
+    });
 }
 
 static std::atomic<NSInteger> nextGeneration(1);
