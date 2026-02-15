@@ -144,6 +144,7 @@ extern dispatch_queue_t _Nullable gDeallocQueue;
 
 - (void)removeLastWrappedLines:(int)numberOfLinesToRemove
                          width:(int)width;
+- (void)removeLastCells:(int)count;
 - (void)removeLastRawLine;
 - (int)lengthOfLastLine;
 - (int)numberOfWrappedLinesForLastRawLineWrappedToWidth:(int)width;
