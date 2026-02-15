@@ -2819,23 +2819,41 @@ NS_INLINE int TotalNumberOfRawLines(LineBuffer *self) {
 
 - (NSInteger)numberOfCellsUsedInWrappedLineRange:(VT100GridRange)wrappedLineRange
                                            width:(int)width {
-    // Stitch-aware per-line summation over [location, location + length).
     if (wrappedLineRange.length <= 0) {
         return 0;
     }
-    const int start = wrappedLineRange.location;
-    const int endExclusive = wrappedLineRange.location + wrappedLineRange.length;
-    NSInteger sum = 0;
-    for (int y = start; y < endExclusive; y++) {
-        ScreenCharArray *line = [self wrappedLineAtIndex:y width:width continuation:NULL];
-        ITAssertWithMessage(line != nil,
-                            @"wrappedLineAtIndex:%d returned nil in range [%d, %d) width=%d",
-                            y, start, endExclusive, width);
-        if (!line) {
-            break;
-        }
-        sum += line.length;
+    const int firstWrappedLine = wrappedLineRange.location;
+    const int lastWrappedLine = wrappedLineRange.location + wrappedLineRange.length - 1;
+    int remainder = 0;
+    const NSInteger firstBlockIndex = [_lineBlocks indexOfBlockContainingLineNumber:firstWrappedLine
+                                                                              width:width
+                                                                          remainder:&remainder];
+    if (firstBlockIndex == NSNotFound) {
+        return 0;
     }
+    const NSInteger lastBlockIndex = [_lineBlocks indexOfBlockContainingLineNumber:lastWrappedLine
+                                                                             width:width
+                                                                         remainder:&remainder];
+    if (lastBlockIndex == NSNotFound) {
+        return 0;
+    }
+
+    __block NSInteger sum = 0;
+    [_lineBlocks enumerateLinesInRange:NSMakeRange(firstWrappedLine, wrappedLineRange.length)
+                                 width:width
+                                 block:^(const screen_char_t * _Nonnull chars,
+                                         int length,
+                                         int eol,
+                                         screen_char_t continuation,
+                                         iTermImmutableMetadata metadata,
+                                         BOOL * _Nullable stop) {
+        (void)chars;
+        (void)eol;
+        (void)continuation;
+        (void)metadata;
+        (void)stop;
+        sum += length;
+    }];
     return sum;
 }
 
