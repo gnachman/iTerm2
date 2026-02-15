@@ -907,7 +907,7 @@ static NSUInteger iTermLineBlockArrayNextUniqueID;
         return 0;
     }
 
-    // Step 1: Find which blocks contain your wrapped lines
+    // Find which blocks contain the wrapped lines.
     int startWrappedLineInBlock = 0;
     NSInteger startBlockIndex = [self indexOfBlockContainingLineNumber:range.location
                                                                         width:width
@@ -922,7 +922,7 @@ static NSUInteger iTermLineBlockArrayNextUniqueID;
         return 0;
     }
 
-    // Step 2: Convert wrapped line offsets to raw line numbers within their blocks
+    // Convert wrapped line offsets to raw line numbers within their blocks.
     LineBlock *startBlock = self[startBlockIndex];
     NSNumber *startRawLineNum = [startBlock rawLineNumberAtWrappedLineOffset:[self localWrappedOffset:startWrappedLineInBlock forBlock:startBlock width:width]
                                                                        width:width];
@@ -931,7 +931,7 @@ static NSUInteger iTermLineBlockArrayNextUniqueID;
     NSNumber *endRawLineNum = [endBlock rawLineNumberAtWrappedLineOffset:[self localWrappedOffset:endWrappedLineInBlock forBlock:endBlock width:width]
                                                                    width:width];
 
-    // Step 3: Count raw lines
+    // Count raw lines.
     if (startBlockIndex == endBlockIndex) {
         // Same block - simple subtraction
         return [endRawLineNum intValue] - [startRawLineNum intValue] + 1;

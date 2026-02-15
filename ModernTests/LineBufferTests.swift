@@ -3654,13 +3654,13 @@ class LineBufferTests: XCTestCase {
         monolithic.append(screenCharArrayWithDefaultStyle(fullText, eol: EOL_SOFT),
                           width: width)
 
-        // Step 1: Remove last 3 wrapped lines.
+        // Remove last 3 wrapped lines.
         fragmented.removeLastWrappedLines(3, width: width)
         monolithic.removeLastWrappedLines(3, width: width)
         assertWrappedLineParity(fragmented, monolithic, width: width,
                                 context: "after removeLastWrappedLines")
 
-        // Step 2: Append more content.
+        // Append more content.
         let moreText = Self.alphabetRun(length: 50, startingAt: 10)
         fragmented.append(screenCharArrayWithDefaultStyle(moreText, eol: EOL_SOFT),
                           width: width)
@@ -3669,7 +3669,7 @@ class LineBufferTests: XCTestCase {
         assertWrappedLineParity(fragmented, monolithic, width: width,
                                 context: "after append more")
 
-        // Step 3: Set max lines and drop excess.
+        // Set max lines and drop excess.
         fragmented.setMaxLines(3)
         monolithic.setMaxLines(3)
         fragmented.dropExcessLines(withWidth: width)
@@ -3964,6 +3964,80 @@ class LineBufferTests: XCTestCase {
                 XCTAssertEqual(fragCoord.y, monoCoord.y,
                                "round-trip y mismatch at (\(x),\(y))")
             }
+        }
+    }
+
+    /// Builds a fragmented buffer where block B has
+    /// continuationWrappedLineAdjustment == 0 with pCol > 0 and the first
+    /// raw line length chosen so wrapped line 0 is short (5 chars), while the
+    /// stitched boundary still consumes 65 head chars.
+    /// This catches bugs that derive stitched head usage from wrapped line 0.
+    private func makeAdjustmentZeroFixture() -> (fragmented: LineBuffer,
+                                                 monolithic: LineBuffer,
+                                                 width: Int32,
+                                                 boundaryY: Int32) {
+        let width: Int32 = 80
+        let cont = screen_char_t.defaultForeground.with(code: unichar(EOL_SOFT))
+
+        let fragmented = LineBuffer(blockSize: 64)
+        let seed = screenCharArrayWithDefaultStyle(String(repeating: "X", count: 5), eol: EOL_SOFT)
+        fragmented.appendLine(seed.line, length: seed.length, partial: true,
+                              width: width, metadata: seed.metadata, continuation: cont)
+
+        // Alignment loop consumes items 0..2 (3x30=90) into block A.
+        // Block B starts with continuationPrefix=95 (pCol=15).
+        // First raw line in B is 70 hard, so:
+        //   headNeeded = 65
+        //   stitched head contribution = 65
+        //   B wrapped line 0 length = 5  (starts after stitched head)
+        //   adjustment == 0
+        let lengths: [NSNumber] = [30, 30, 30, 70, 30]
+        let partials: [NSNumber] = [true, true, true, false, true]
+        fragmented.testOnlyAppendItems(withLengths: lengths, partials: partials, width: width)
+
+        let monolithic = LineBuffer(blockSize: 1_000_000)
+        // Logical raw line 0: 5 + 90 + 70 = 165 hard.
+        let raw0 = String(repeating: "X", count: 5) + Self.alphabetRun(length: 160)
+        monolithic.append(screenCharArrayWithDefaultStyle(raw0, eol: EOL_HARD), width: width)
+        // Logical raw line 1: trailing 30 partial.
+        let raw1 = Self.alphabetRun(length: 30, startingAt: 160)
+        monolithic.append(screenCharArrayWithDefaultStyle(raw1, eol: EOL_SOFT), width: width)
+
+        XCTAssertGreaterThan(fragmented.testOnlyNumberOfBlocks, 1,
+                             "Fixture must create multiple blocks")
+        let blockB = fragmented.testOnlyBlock(at: 1)
+        XCTAssertTrue(blockB.startsWithContinuation, "Block B must be continuation")
+        XCTAssertEqual(blockB.continuationPrefixCharacters, 95)
+        XCTAssertEqual(blockB.continuationPrefixCharacters % width, 15)
+        XCTAssertEqual(blockB.length(ofRawLine: 0), 70,
+                       "Block B first raw line must be 70 chars")
+        XCTAssertEqual(blockB.continuationWrappedLineAdjustment(forWidth: width), 0,
+                       "Fixture must exercise adjustment==0 with pCol>0")
+
+        XCTAssertEqual(fragmented.numLines(withWidth: width), monolithic.numLines(withWidth: width),
+                       "Fixture line counts must match")
+
+        // Boundary line is the predecessor's second wrapped line (80 + 15 tail).
+        let boundaryY: Int32 = 1
+        return (fragmented, monolithic, width, boundaryY)
+    }
+
+    /// positionForCoordinate parity at adjustment==0 continuation boundary.
+    /// With pCol>0 and short wrapped line 0 in block B, deriving stitched head
+    /// usage from wrapped line 0 undercounts and mislabels in-range x as extends.
+    func testPositionForCoordinateParityWithContinuationAdjustmentZero() {
+        let (fragmented, monolithic, width, boundaryY) = makeAdjustmentZeroFixture()
+        for x: Int32 in [15, 20, 40, 79] {
+            let coord = VT100GridCoord(x: x, y: boundaryY)
+            let fragPos = fragmented.position(forCoordinate: coord, width: width, offset: 0)
+            let monoPos = monolithic.position(forCoordinate: coord, width: width, offset: 0)
+
+            XCTAssertNotNil(fragPos, "fragmented position nil at (\(x),\(boundaryY))")
+            XCTAssertNotNil(monoPos, "monolithic position nil at (\(x),\(boundaryY))")
+            XCTAssertEqual(fragPos?.absolutePosition, monoPos?.absolutePosition,
+                           "absolute position mismatch at (\(x),\(boundaryY))")
+            XCTAssertEqual(fragPos?.extendsToEndOfLine, monoPos?.extendsToEndOfLine,
+                           "extends mismatch at (\(x),\(boundaryY))")
         }
     }
 
