@@ -505,14 +505,19 @@ def stress_test(duration, label="", modes=None, title_interval_ms=0, speed="norm
     # Flood mode: run 'yes' directly for maximum throughput
     if modes == ["flood"]:
         print(f"{prefix}Running flood mode for {duration} seconds (using 'yes')...")
+        proc = None
         try:
             proc = subprocess.Popen(["yes"], stdout=sys.stdout, stderr=subprocess.DEVNULL)
             time.sleep(duration)
             proc.terminate()
             proc.wait()
+        except FileNotFoundError:
+            print(f"{prefix}Error: 'yes' command not found", file=sys.stderr)
+            return 0, None
         except KeyboardInterrupt:
-            proc.terminate()
-            proc.wait()
+            if proc:
+                proc.terminate()
+                proc.wait()
         print(f"{prefix}Flood mode complete")
         return 0, None
 
@@ -576,27 +581,34 @@ def stress_test(duration, label="", modes=None, title_interval_ms=0, speed="norm
 
     current_mode_idx = 0
     current_patterns = pattern_sets[modes[current_mode_idx]]
+    mode_start_iteration = 0
 
     if len(modes) > 1:
         time_slice = duration / len(modes)
-        mode_iterations = {mode: 0 for mode in modes}
+        mode_iterations = {}
     else:
         time_slice = duration
 
     # Title injection via timer thread
     title_count = [0]
     title_timer = [None]
+    title_lock = threading.Lock()
     title_interval_sec = title_interval_ms / 1000.0 if title_interval_ms > 0 else 0
 
     def inject_title():
-        title_count[0] += 1
-        elapsed = time.time() - start
-        print(f"\033]0;{prefix}Title {title_count[0]} @ {elapsed:.1f}s\007", flush=True)
-        remaining = duration - (time.time() - start)
-        if remaining >= 4.0:
-            title_timer[0] = threading.Timer(title_interval_sec, inject_title)
-            title_timer[0].daemon = True
-            title_timer[0].start()
+        with title_lock:
+            if title_timer[0] is None:  # Already cancelled
+                return
+            title_count[0] += 1
+            elapsed = time.time() - start
+            print(f"\033]0;{prefix}Title {title_count[0]} @ {elapsed:.1f}s\007", flush=True)
+            remaining = duration - (time.time() - start)
+            if remaining >= 4.0:
+                title_timer[0] = threading.Timer(title_interval_sec, inject_title)
+                title_timer[0].daemon = True
+                title_timer[0].start()
+            else:
+                title_timer[0] = None
 
     if title_interval_ms > 0 and duration > 4:
         title_timer[0] = threading.Timer(title_interval_sec, inject_title)
@@ -608,9 +620,8 @@ def stress_test(duration, label="", modes=None, title_interval_ms=0, speed="norm
             elapsed = time.time() - start
             expected_mode_idx = min(int(elapsed / time_slice), len(modes) - 1)
             if expected_mode_idx != current_mode_idx:
-                mode_iterations[modes[current_mode_idx]] = iteration - sum(
-                    v for k, v in mode_iterations.items() if k != modes[current_mode_idx]
-                )
+                mode_iterations[modes[current_mode_idx]] = iteration - mode_start_iteration
+                mode_start_iteration = iteration
                 current_mode_idx = expected_mode_idx
                 current_patterns = pattern_sets[modes[current_mode_idx]]
                 print(f"{prefix}Switching to mode: {modes[current_mode_idx]} (at {elapsed:.1f}s)")
@@ -624,16 +635,14 @@ def stress_test(duration, label="", modes=None, title_interval_ms=0, speed="norm
 
         if speed == "slow":
             time.sleep(0.1)
-        elif iteration % 100 == 0:
-            time.sleep(0.001)
 
-    if title_timer[0]:
-        title_timer[0].cancel()
+    with title_lock:
+        if title_timer[0]:
+            title_timer[0].cancel()
+            title_timer[0] = None
 
     if len(modes) > 1:
-        mode_iterations[modes[current_mode_idx]] = iteration - sum(
-            v for k, v in mode_iterations.items() if k != modes[current_mode_idx]
-        )
+        mode_iterations[modes[current_mode_idx]] = iteration - mode_start_iteration
 
     title_info = f", {title_count[0]} title updates" if title_interval_ms > 0 else ""
     print(f"{prefix}Stress test complete: {iteration} iterations{title_info}")

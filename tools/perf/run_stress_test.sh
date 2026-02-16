@@ -85,7 +85,7 @@ Options:
                  The script must accept: duration label --sync-dir DIR [--mode=X]
 
   --suite=NAME   Use a custom UserDefaults suite for isolated preferences.
-                 Default: com.iterm2.defaults (reproducible test environment)
+                 Default: com.iterm2.stress-test (reproducible test environment)
                  Use --suite=user to use your normal preferences (com.googlecode.iterm2)
                  Use --suite=none to explicitly disable suite isolation
                  Example: --suite=com.mytest creates fresh preferences
@@ -118,7 +118,7 @@ speed_arg="normal"
 fps_arg=""  # empty = use default 30fps
 load_script_arg=""  # empty = use default stress_load.py
 duration_arg=""  # empty = use default 20s
-suite_name="com.iterm2.defaults"  # default suite for reproducible tests
+suite_name="com.iterm2.stress-test"  # default suite for reproducible tests
 video_mode=false
 video_output_dir="/tmp"  # default video output directory
 positional_args=()
@@ -266,7 +266,7 @@ app_path="$1"
 
 # Display suite configuration
 if [[ -n "$suite_name" ]]; then
-  if [[ "$suite_name" == "com.iterm2.defaults" ]]; then
+  if [[ "$suite_name" == "com.iterm2.stress-test" ]]; then
     echo "Using test suite: $suite_name (isolated preferences for reproducible tests)"
   elif [[ "$suite_name" == "com.googlecode.iterm2" ]]; then
     echo "Using user's normal preferences (--suite=user)"
@@ -582,6 +582,8 @@ get_energy_mode() {
 # Track tmux session prefix for cleanup (set per-run when --tmux is used)
 tmux_session_prefix=""
 tmux_tab_count=0
+# Track iTerm2 PID for cleanup (set when test instance is launched)
+test_iterm_pid=""
 
 cleanup() {
   # Clean up tmux sessions if we created any
@@ -600,8 +602,10 @@ cleanup() {
   if [[ -n "${applescript_forever_file:-}" && -f "${applescript_forever_file:-}" ]]; then
     rm -f "$applescript_forever_file"
   fi
-  # Try to quit iTerm2 if it's running (best effort)
-  osascript -e 'tell application "iTerm2" to quit' 2>/dev/null || true
+  # Try to quit the test iTerm2 by PID if we have it (best effort)
+  if [[ -n "$test_iterm_pid" ]]; then
+    kill -TERM "$test_iterm_pid" 2>/dev/null || true
+  fi
 }
 trap cleanup EXIT INT TERM
 
@@ -626,6 +630,15 @@ run_single_test() {
   # Open iTerm2 and wait for it to launch
   local run_start_epoch
   run_start_epoch=$(date +%s)
+
+  # Remove restorable state for isolated suites to ensure clean startup
+  if [[ -n "$suite_name" && "$suite_name" != "com.googlecode.iterm2" ]]; then
+    local state_dir="$HOME/Library/Application Support/$suite_name"
+    if [[ -d "$state_dir" ]]; then
+      echo "Removing state restoration data: $state_dir"
+      rm -rf "$state_dir"
+    fi
+  fi
 
   # Launch iTerm2 with suite isolation
   if [[ -n "$suite_name" ]]; then
@@ -652,6 +665,7 @@ run_single_test() {
   fi
 
   echo "Found iTerm2 PID: $iterm_pid"
+  test_iterm_pid="$iterm_pid"  # Store globally for cleanup
 
   # Size and position window consistently (needed before video capture)
   osascript -e 'tell application "iTerm2" to set bounds of current window to {864, 34, 1728, 1117}'
@@ -916,10 +930,10 @@ run_single_test() {
     fi
   fi
 
-  # Quit the test iTerm2 instance cleanly via AppleScript (Command-Q)
+  # Quit the test iTerm2 instance cleanly using its PID
   echo ""
-  echo "Shutting down test iTerm2..."
-  osascript -e 'tell application "iTerm2" to quit' 2>/dev/null || true
+  echo "Shutting down test iTerm2 (PID $iterm_pid)..."
+  kill -TERM "$iterm_pid" 2>/dev/null || true
 
   # Wait for app to fully terminate (needed for MTPerfWriteToFile to complete)
   for _ in {1..30}; do
@@ -1427,6 +1441,15 @@ run_forever() {
   fi
 
   # Open iTerm2 and wait for it to launch
+  # Remove restorable state for isolated suites to ensure clean startup
+  if [[ -n "$suite_name" && "$suite_name" != "com.googlecode.iterm2" ]]; then
+    local state_dir="$HOME/Library/Application Support/$suite_name"
+    if [[ -d "$state_dir" ]]; then
+      echo "Removing state restoration data: $state_dir"
+      rm -rf "$state_dir"
+    fi
+  fi
+
   # Launch iTerm2 with suite isolation
   if [[ -n "$suite_name" ]]; then
     open -a "$app_path" --args -suite "$suite_name"
@@ -1451,6 +1474,7 @@ run_forever() {
   fi
 
   echo "Found iTerm2 PID: $iterm_pid"
+  test_iterm_pid="$iterm_pid"  # Store globally for cleanup
   echo "Launching $tab_count tabs with stress load..."
 
   # Generate unique tmux session prefix if --tmux mode
@@ -1511,7 +1535,7 @@ if [[ "$power_source" != "AC Power" || "$energy_mode" != "High Power/High Perfor
   echo "         Recommendations:"
   [[ "$power_source" != "AC Power" ]] && echo "           - Connect to AC Power"
   [[ "$energy_mode" != "High Power/High Performance" ]] && echo "           - Set Energy Mode to High Power/High Performance"
-  [[ "$using_isolated_suite" == false ]] && echo "           - Use isolated suite (default: --suite=com.iterm2.defaults)"
+  [[ "$using_isolated_suite" == false ]] && echo "           - Use isolated suite (default: --suite=com.iterm2.stress-test)"
   echo ""
 fi
 
@@ -1574,7 +1598,7 @@ else
     echo "Recommendations:"
     [[ "$power_source" != "AC Power" ]] && echo "  - Connect to AC Power"
     [[ "$energy_mode" != "High Power/High Performance" ]] && echo "  - Set Energy Mode to High Power/High Performance"
-    [[ "$using_isolated_suite" == false ]] && echo "  - Use isolated suite (default: --suite=com.iterm2.defaults)"
+    [[ "$using_isolated_suite" == false ]] && echo "  - Use isolated suite (default: --suite=com.iterm2.stress-test)"
     echo "============================================================"
   fi
 fi
