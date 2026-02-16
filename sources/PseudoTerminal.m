@@ -1927,6 +1927,9 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 
     BOOL mustAsk = NO;
+    if (aTab.isPinned) {
+        mustAsk = YES;
+    }
     if (numClosing > 0 && [aTab promptOnCloseReason].hasReason) {
         mustAsk = YES;
     }
@@ -7385,6 +7388,18 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
         [rootMenu addItem:item];
     }
 
+    // pin/unpin tab
+    [rootMenu addItem:[NSMenuItem separatorItem]];
+    {
+        PTYTab *pinTab = [tabViewItem identifier];
+        NSString *pinTitle = pinTab.isPinned ? @"Unpin Tab" : @"Pin Tab";
+        item = [[[NSMenuItem alloc] initWithTitle:pinTitle
+                                           action:@selector(togglePinTab:)
+                                    keyEquivalent:@""] autorelease];
+        [item setRepresentedObject:tabViewItem];
+        [rootMenu addItem:item];
+    }
+
     // add label
     [rootMenu addItem: [NSMenuItem separatorItem]];
     NSSize tabColorViewSize = [ColorsMenuItemView preferredSize];
@@ -7674,6 +7689,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     [_contentView.tabBarControl setIsProcessing:tab.isProcessing forTabWithIdentifier:tab];
     [_contentView.tabBarControl setIcon:tab.icon forTabWithIdentifier:tab];
     [_contentView.tabBarControl setObjectCount:tab.objectCount forTabWithIdentifier:tab];
+    [_contentView.tabBarControl setIsPinned:tab.isPinned forTabViewItem:tabViewItem];
 }
 
 // This updates the window's background color and title text color as well as the tab bar's color.
@@ -9943,6 +9959,33 @@ typedef struct {
     if (selectedIndex == destinationIndex) {
         return;
     }
+
+    // Enforce pinned/unpinned boundary.
+    NSArray<PTYTab *> *tabs = self.tabs;
+    if (selectedIndex >= 0 && selectedIndex < (NSInteger)tabs.count) {
+        PTYTab *movingTab = tabs[selectedIndex];
+        NSInteger lastPinnedIndex = -1;
+        for (NSInteger i = 0; i < (NSInteger)tabs.count; i++) {
+            if (tabs[i].isPinned) {
+                lastPinnedIndex = i;
+            }
+        }
+        if (movingTab.isPinned) {
+            // Pinned tab cannot move past the unpinned zone.
+            if (destinationIndex > lastPinnedIndex) {
+                destinationIndex = lastPinnedIndex;
+            }
+        } else {
+            // Unpinned tab cannot move into the pinned zone.
+            if (destinationIndex <= lastPinnedIndex) {
+                destinationIndex = lastPinnedIndex + 1;
+            }
+        }
+        if (selectedIndex == destinationIndex) {
+            return;
+        }
+    }
+
     [_contentView.tabBarControl moveTabAtIndex:selectedIndex toIndex:destinationIndex];
     [self setNeedsUpdateTabObjectCounts:YES];
     [self tabsDidReorder];
@@ -11733,6 +11776,12 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
     }
 }
 
+- (void)togglePinTab:(id)sender {
+    NSTabViewItem *tabViewItem = [sender representedObject];
+    PTYTab *tab = [tabViewItem identifier];
+    tab.pinned = !tab.isPinned;
+}
+
 - (IBAction)newTabToTheRight:(id)sender {
     PTYTab *tab = [PTYTab castFrom:[[sender representedObject] identifier]];
     if (!tab) {
@@ -11852,6 +11901,9 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
     NSMutableArray *tabsToRemove = [[[self tabs] mutableCopy] autorelease];
     [tabsToRemove removeObject:tabToKeep];
     for (PTYTab *tab in tabsToRemove) {
+        if (tab.isPinned) {
+            continue;
+        }
         [self closeTab:tab];
     }
 }
@@ -11869,6 +11921,9 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
     } while (current != tabToKeep);
 
     for (PTYTab *tab in tabsToRemove) {
+        if (tab.isPinned) {
+            continue;
+        }
         [self closeTab:tab];
     }
 }
@@ -12757,6 +12812,49 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
     }
     [self updateToolbeltAppearance];
     [self updateForTransparency:self.ptyWindow];
+}
+
+- (void)tab:(PTYTab *)tab didChangePinnedState:(BOOL)pinned {
+    NSTabViewItem *tabViewItem = tab.tabViewItem;
+    if (!tabViewItem) {
+        return;
+    }
+
+    // Sync the pinned state to the tab bar cell.
+    [_contentView.tabBarControl setIsPinned:pinned forTabViewItem:tabViewItem];
+
+    // Reorder the tab to maintain pinned-left / unpinned-right invariant.
+    NSInteger currentIndex = [_contentView.tabView indexOfTabViewItem:tabViewItem];
+    if (currentIndex == NSNotFound) {
+        return;
+    }
+
+    NSArray<PTYTab *> *tabs = self.tabs;
+    if (pinned) {
+        // Move to the end of the pinned section.
+        NSInteger lastPinnedIndex = -1;
+        for (NSInteger i = 0; i < (NSInteger)tabs.count; i++) {
+            if (tabs[i].isPinned && tabs[i] != tab) {
+                lastPinnedIndex = i;
+            }
+        }
+        NSInteger targetIndex = lastPinnedIndex + 1;
+        if (currentIndex != targetIndex) {
+            [self moveTabAtIndex:currentIndex toIndex:targetIndex];
+        }
+    } else {
+        // Move to the start of the unpinned section.
+        NSInteger firstUnpinnedIndex = tabs.count;
+        for (NSInteger i = 0; i < (NSInteger)tabs.count; i++) {
+            if (!tabs[i].isPinned) {
+                firstUnpinnedIndex = i;
+                break;
+            }
+        }
+        if (currentIndex < firstUnpinnedIndex - 1) {
+            [self moveTabAtIndex:currentIndex toIndex:firstUnpinnedIndex - 1];
+        }
+    }
 }
 
 - (void)tab:(PTYTab *)tab didChangeToState:(PTYTabState)newState {

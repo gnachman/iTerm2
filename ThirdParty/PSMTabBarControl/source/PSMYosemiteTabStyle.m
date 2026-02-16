@@ -170,6 +170,9 @@
 }
 
 - (NSRect)closeButtonRectForTabCell:(PSMTabBarCell *)cell {
+    if (cell.isPinned) {
+        return NSZeroRect;
+    }
     NSRect cellFrame = [cell frame];
 
     if ([cell hasCloseButton] == NO) {
@@ -376,6 +379,9 @@
 }
 
 - (float)minimumWidthOfTabCell:(PSMTabBarCell *)cell {
+    if (cell.isPinned) {
+        return 64.0;
+    }
     return ceil([self widthOfLeftMatterInCell:cell] +
                 kPSMMinimumTitleWidth +
                 [self widthOfRightMatterInCell:cell]);
@@ -394,6 +400,9 @@
 }
 
 - (float)desiredWidthOfTabCell:(PSMTabBarCell *)cell {
+    if (cell.isPinned) {
+        return 64.0;
+    }
     return ceil([self widthOfLeftMatterInCell:cell] +
                 [self widthOfAttributedStringInCell:cell] +
                 [self widthOfRightMatterInCell:cell]);
@@ -843,6 +852,7 @@ const void *PSMTabStyleDarkColorKey = "dark";
     NSSize closeButtonSize = NSZeroSize;
     NSRect closeButtonRect = [cell closeButtonRectForFrame:cellFrame];
     NSImage *closeButton = nil;
+    const BOOL showCloseButton = !cell.isPinned;
 
     closeButton = _closeButton;
     if ([cell closeButtonOver]) {
@@ -867,7 +877,7 @@ const void *PSMTabStyleDarkColorKey = "dark";
     closeButtonSize = [closeButton size];
     PSMCachedTitle *cachedTitle = cell.cachedTitle;
 
-    if ([cell hasCloseButton]) {
+    if ([cell hasCloseButton] && showCloseButton) {
         if (cell.isCloseButtonSuppressed && _orientation == PSMTabBarHorizontalOrientation) {
             // Do not use this much space on the left for the label, but the label is centered as
             // though it is not reserved if it's not too long.
@@ -884,7 +894,7 @@ const void *PSMTabStyleDarkColorKey = "dark";
 
     // Draw close button
     CGFloat closeButtonAlpha = 0;
-    if ([cell hasCloseButton] && [cell closeButtonVisible]) {
+    if ([cell hasCloseButton] && [cell closeButtonVisible] && showCloseButton) {
         if (cell.isCloseButtonSuppressed) {
             closeButtonAlpha = highlightAmount;
         } else {

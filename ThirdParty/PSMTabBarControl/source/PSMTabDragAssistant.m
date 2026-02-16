@@ -474,6 +474,15 @@ static CVReturn DisplayLinkCallback(CVDisplayLinkRef displayLink,
         destinationIndex = [[[self destinationTabBar] cells] count] - 1;
     }
 
+    // Clamp to valid range. The pinned/unpinned boundary is enforced below
+    // for same-tab-bar drags (after placeholders are removed).
+    int cellCount = (int)[[[self destinationTabBar] cells] count];
+    if (destinationIndex < 0) {
+        destinationIndex = 0;
+    } else if (destinationIndex >= cellCount) {
+        destinationIndex = cellCount - 1;
+    }
+
     if (![self draggedCell]) {
         // Find the index of where the dragged object was just dropped.
         int i;
@@ -568,6 +577,28 @@ static CVReturn DisplayLinkCallback(CVDisplayLinkRef displayLink,
 
             //find the index of where the dragged cell was just dropped
             for (theIndex = 0; theIndex < [cells count] && [cells objectAtIndex:theIndex] != [self draggedCell]; theIndex++);
+
+            // Enforce pinned/unpinned boundary (placeholders are already removed here).
+            {
+                int pinnedCount = 0;
+                for (PSMTabBarCell *c in cells) {
+                    if (c.isPinned) pinnedCount++;
+                }
+                if (pinnedCount > 0 && pinnedCount < (int)[cells count]) {
+                    int clampedIndex = theIndex;
+                    if ([[self draggedCell] isPinned]) {
+                        if (clampedIndex >= pinnedCount) clampedIndex = pinnedCount - 1;
+                    } else {
+                        if (clampedIndex < pinnedCount) clampedIndex = pinnedCount;
+                    }
+                    if (clampedIndex != theIndex) {
+                        NSMutableArray *mutCells = [[self sourceTabBar] cells];
+                        [mutCells removeObjectAtIndex:theIndex];
+                        [mutCells insertObject:[self draggedCell] atIndex:clampedIndex];
+                        theIndex = clampedIndex;
+                    }
+                }
+            }
 
             if ([[[self sourceTabBar] cells] indexOfObject:[self draggedCell]] != _draggedCellIndex &&
                 [[[self sourceTabBar] delegate] respondsToSelector:@selector(tabView:willDropTabViewItem:inTabBar:)]) {

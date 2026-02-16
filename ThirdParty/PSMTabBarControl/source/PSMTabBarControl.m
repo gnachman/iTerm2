@@ -1202,12 +1202,19 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionDarkModeInactiveTabDarkness = @"
 
 // Tab widths may vary. Calculate the widths and see if this will work. Only allow sizes to
 // vary if all tabs fit in the allotted space.
+static const CGFloat kPSMPinnedTabWidth = 64.0;
+
 - (NSArray<NSNumber *> *)variableCellWidthsWithOverflow:(BOOL)withOverflow {
     const CGFloat availableWidth = [self availableCellWidthWithOverflow:withOverflow];
     CGFloat totalDesiredWidth = 0.0;
     NSMutableArray *desiredWidths = [NSMutableArray array];
     for (PSMTabBarCell *cell in _cells) {
-        const CGFloat width = MAX(_cellMinWidth, MIN([cell desiredWidthOfCell], _cellMaxWidth));
+        CGFloat width;
+        if (cell.isPinned) {
+            width = kPSMPinnedTabWidth;
+        } else {
+            width = MAX(_cellMinWidth, MIN([cell desiredWidthOfCell], _cellMaxWidth));
+        }
         [desiredWidths addObject:@(width)];
         totalDesiredWidth += width;
         if (totalDesiredWidth > availableWidth) {
@@ -1215,7 +1222,7 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionDarkModeInactiveTabDarkness = @"
             break;
         }
     }
-    
+
     // If all cells get their "desired" width, do they fit?
     if (totalDesiredWidth <= availableWidth) {
         return desiredWidths;
@@ -1226,50 +1233,118 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionDarkModeInactiveTabDarkness = @"
 
 - (BOOL)shouldUseOptimalWidthWithOverflow:(BOOL)withOverflow {
     const CGFloat availableWidth = [self availableCellWidthWithOverflow:withOverflow];
-    // If all cells are the client-specified optimum size, do they fit?
-    BOOL canFitAllCellsOptimally = (self.cellOptimumWidth * _cells.count <= availableWidth);
+    NSUInteger pinnedCount = 0;
+    for (PSMTabBarCell *cell in _cells) {
+        if (cell.isPinned) {
+            pinnedCount++;
+        }
+    }
+    const NSUInteger unpinnedCount = _cells.count - pinnedCount;
+    const CGFloat pinnedSpace = pinnedCount * kPSMPinnedTabWidth +
+        (pinnedCount > 0 && unpinnedCount > 0 ? pinnedCount : MAX(0, (NSInteger)pinnedCount - 1)) * _style.intercellSpacing;
+    const CGFloat unpinnedAvailable = availableWidth - pinnedSpace;
+    BOOL canFitAllCellsOptimally = (self.cellOptimumWidth * unpinnedCount <= unpinnedAvailable);
     return !self.stretchCellsToFit && canFitAllCellsOptimally;
 }
 
 - (NSArray<NSNumber *> *)cellWidthsForHorizontalArrangementWithOverflow:(BOOL)withOverflow {
     const NSUInteger cellCount = _cells.count;
     const CGFloat availableWidth = [self availableCellWidthWithOverflow:withOverflow];
-    
+    const CGFloat intercellSpacing = _style.intercellSpacing;
+
+    // Count pinned cells.
+    NSUInteger pinnedCount = 0;
+    for (PSMTabBarCell *cell in _cells) {
+        if (cell.isPinned) {
+            pinnedCount++;
+        }
+    }
+    const NSUInteger unpinnedCount = cellCount - pinnedCount;
+
     if (self.sizeCellsToFit) {
         NSArray<NSNumber *> *widths = [self variableCellWidthsWithOverflow:withOverflow];
         if (widths) {
             return widths;
         }
     }
-    
-    NSMutableArray<NSNumber *> *newWidths = [NSMutableArray array];
-    if ([self shouldUseOptimalWidthWithOverflow:withOverflow]) {
-        // Use the client-specified size, even if that leaves unused space on the right.
-        for (int i = 0; i < cellCount; i++) {
-            [newWidths addObject:@(_cellOptimumWidth)];
-        }
-    } else {
-        // Divide up the space evenly, but don't allow cells to be smaller than the minimum
-        // width.
-        // If all cells are the smallest allowed size, do they fit?
-        const CGFloat intercellSpacing = _style.intercellSpacing;
-        const BOOL canFitAllCellsMinimally = (self.cellMinWidth * cellCount + intercellSpacing * MAX(0, (cellCount - 1)) <= availableWidth);
-        NSInteger numberOfVisibleCells;
-        if (canFitAllCellsMinimally) {
-            numberOfVisibleCells = cellCount;
-        } else {
-            numberOfVisibleCells = availableWidth / _cellMinWidth;
-            while (numberOfVisibleCells >= 0 && numberOfVisibleCells * _cellMinWidth + intercellSpacing > availableWidth) {
-                numberOfVisibleCells -= 1;
+
+    if (pinnedCount == 0) {
+        // No pinned cells - use the original algorithm.
+        NSMutableArray<NSNumber *> *newWidths = [NSMutableArray array];
+        if ([self shouldUseOptimalWidthWithOverflow:withOverflow]) {
+            for (int i = 0; i < cellCount; i++) {
+                [newWidths addObject:@(_cellOptimumWidth)];
             }
+        } else {
+            const BOOL canFitAllCellsMinimally = (self.cellMinWidth * cellCount + intercellSpacing * MAX(0, (cellCount - 1)) <= availableWidth);
+            NSInteger numberOfVisibleCells;
+            if (canFitAllCellsMinimally) {
+                numberOfVisibleCells = cellCount;
+            } else {
+                numberOfVisibleCells = availableWidth / _cellMinWidth;
+                while (numberOfVisibleCells >= 0 && numberOfVisibleCells * _cellMinWidth + intercellSpacing > availableWidth) {
+                    numberOfVisibleCells -= 1;
+                }
+            }
+            [self computeCellFramesInContainerOfWidth:availableWidth
+                                 numberOfVisibleCells:numberOfVisibleCells
+                                     intercellSpacing:intercellSpacing
+                                                scale:2.0
+                                               frames:newWidths];
         }
-        [self computeCellFramesInContainerOfWidth:availableWidth
-                             numberOfVisibleCells:numberOfVisibleCells
-                                 intercellSpacing:intercellSpacing
-                                            scale:2.0
-                                           frames:newWidths];
+        return newWidths;
     }
-    return newWidths;
+
+    // There are pinned cells. Give them fixed width and distribute remaining space to unpinned.
+    // Pinned cells consume: pinnedCount * kPSMPinnedTabWidth plus spacing.
+    // Total spacing between all cells = (cellCount - 1) * intercellSpacing.
+    // Of this, (unpinnedCount - 1) spacing goes between unpinned cells (handled by computeCellFrames).
+    // The remaining pinnedCount spacings are between pinned cells and the pinned-unpinned boundary.
+    const CGFloat pinnedSpaceWithSpacing = pinnedCount * kPSMPinnedTabWidth +
+        pinnedCount * intercellSpacing;
+    const CGFloat unpinnedContainerWidth = availableWidth - pinnedSpaceWithSpacing;
+
+    NSMutableArray<NSNumber *> *unpinnedWidths = [NSMutableArray array];
+    NSInteger numberOfVisibleUnpinned = unpinnedCount;
+
+    if (unpinnedCount > 0) {
+        if ([self shouldUseOptimalWidthWithOverflow:withOverflow]) {
+            for (NSUInteger i = 0; i < unpinnedCount; i++) {
+                [unpinnedWidths addObject:@(_cellOptimumWidth)];
+            }
+        } else {
+            const BOOL canFitAllUnpinned = (self.cellMinWidth * unpinnedCount +
+                intercellSpacing * MAX(0, (NSInteger)(unpinnedCount - 1)) <= unpinnedContainerWidth);
+            if (canFitAllUnpinned) {
+                numberOfVisibleUnpinned = unpinnedCount;
+            } else {
+                numberOfVisibleUnpinned = unpinnedContainerWidth / _cellMinWidth;
+                while (numberOfVisibleUnpinned >= 0 &&
+                       numberOfVisibleUnpinned * _cellMinWidth + intercellSpacing > unpinnedContainerWidth) {
+                    numberOfVisibleUnpinned -= 1;
+                }
+            }
+            [self computeCellFramesInContainerOfWidth:unpinnedContainerWidth
+                                 numberOfVisibleCells:numberOfVisibleUnpinned
+                                     intercellSpacing:intercellSpacing
+                                                scale:2.0
+                                               frames:unpinnedWidths];
+        }
+    }
+
+    // Build the result: pinned cells get fixed width, unpinned get computed widths.
+    NSMutableArray<NSNumber *> *result = [NSMutableArray array];
+    NSUInteger unpinnedIndex = 0;
+    for (PSMTabBarCell *cell in _cells) {
+        if (cell.isPinned) {
+            [result addObject:@(kPSMPinnedTabWidth)];
+        } else if (unpinnedIndex < (NSUInteger)numberOfVisibleUnpinned) {
+            [result addObject:unpinnedWidths[unpinnedIndex]];
+            unpinnedIndex++;
+        }
+        // Unpinned cells beyond numberOfVisibleUnpinned are omitted (go to overflow).
+    }
+    return result;
 }
 
 - (void)computeCellFramesInContainerOfWidth:(CGFloat)containerWidth
@@ -1358,7 +1433,7 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionDarkModeInactiveTabDarkness = @"
             [currentCell setFrame:cellFrame];
         }
 
-        _animationDelta += 3.0f;
+        _animationDelta += 4.0f;
     }
 
     if (!updated) {
@@ -1432,7 +1507,7 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionDarkModeInactiveTabDarkness = @"
             [cell setFrame:cellRect];
 
             // close button tracking rect
-            if ([cell hasCloseButton] &&
+            if ([cell hasCloseButton] && !cell.isPinned &&
                 ([[cell representedObject] isEqualTo:[_tabView selectedTabViewItem]] ||
                  [self allowsBackgroundTabClosing])) {
                     NSPoint mousePoint =
@@ -1505,6 +1580,10 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionDarkModeInactiveTabDarkness = @"
             // next...
             cellRect.origin.x += [[newValues objectAtIndex:i] floatValue] + intercellSpacing;
 
+        } else if (cell.isPinned) {
+            // Pinned cells are never in the overflow menu. This shouldn't normally happen
+            // since pinned cells are always at the start, but guard against it.
+            continue;
         } else {
             // set up menu items
             NSMenuItem *menuItem;
@@ -2511,6 +2590,32 @@ static CFAbsoluteTime gDragMoveFirstTime = 0;
         }
     }
     return nil;
+}
+
+- (void)setIsPinned:(BOOL)pinned forTabViewItem:(NSTabViewItem *)tabViewItem {
+    BOOL updated = NO;
+
+    for (PSMTabBarCell *cell in _cells) {
+        if ([cell representedObject] == tabViewItem) {
+            if ([cell isPinned] != pinned) {
+                updated = YES;
+                [cell setIsPinned:pinned];
+            }
+        }
+    }
+
+    if (updated) {
+        [self update:YES];
+    }
+}
+
+- (BOOL)isPinnedForTabViewItem:(NSTabViewItem *)tabViewItem {
+    for (PSMTabBarCell *cell in _cells) {
+        if ([cell representedObject] == tabViewItem) {
+            return [cell isPinned];
+        }
+    }
+    return NO;
 }
 
 - (void)modifierChanged:(NSNotification *)aNotification {
