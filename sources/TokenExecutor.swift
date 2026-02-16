@@ -180,7 +180,7 @@ class TokenExecutor: NSObject {
                             lengthTotal: lengthTotal,
                             lengthExcludingInBandSignaling: lengthExcludingInBandSignaling,
                             highPriority: highPriority,
-                            semaphore: nil)
+                            semaphore: nil as DispatchSemaphore?)
             return
         }
         // Normal code path for tokens from PTY. Use the semaphore to give backpressure to reading.
@@ -660,8 +660,11 @@ private class TokenExecutorImpl {
             }
             if isBackgroundSession && !Self.activeSessionsWithTokens.value.isEmpty {
                 // Avoid blocking the active session. If there were multiple mutation threads this
-                // would be unnecessary.
+                // would be unnecessary. Reschedule to resume processing once active sessions drain.
                 DLog("Stop processing early because active session has tokens")
+                queue.async { [weak self] in
+                    self?.execute()
+                }
                 return false
             }
         }
