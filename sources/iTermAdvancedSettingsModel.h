@@ -341,6 +341,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (BOOL)performDictionaryLookupOnQuickLook;
 + (BOOL)performSQLiteIntegrityCheck;
 + (BOOL)pinEditSession;
++ (int)pinnedTabWidth;
 + (BOOL)pinchToChangeFontSizeDisabled;
 + (BOOL)placeTabsInTitlebarAccessoryInFullScreen;
 + (BOOL)pollForTmuxForegroundJob;

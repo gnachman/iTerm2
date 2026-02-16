@@ -7357,7 +7357,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     [item setRepresentedObject:tabViewItem];
     [rootMenu addItem:item];
 
-    if ([_contentView.tabView numberOfTabViewItems] > 1) {
+    if ([_contentView.tabView numberOfTabViewItems] > 1 && !theTab.isPinned) {
         item = [[[NSMenuItem alloc] initWithTitle:@"Move to New Window"
                                            action:@selector(moveTabToNewWindowContextualMenuAction:)
                                     keyEquivalent:@""] autorelease];
@@ -12881,15 +12881,16 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
         }
     } else {
         // Move to the start of the unpinned section.
-        NSInteger firstUnpinnedIndex = tabs.count;
+        // Find the last pinned tab (skipping the tab being unpinned) to determine the boundary.
+        NSInteger lastPinnedIndex = -1;
         for (NSInteger i = 0; i < (NSInteger)tabs.count; i++) {
-            if (!tabs[i].isPinned) {
-                firstUnpinnedIndex = i;
-                break;
+            if (tabs[i].isPinned && tabs[i] != tab) {
+                lastPinnedIndex = i;
             }
         }
-        if (currentIndex < firstUnpinnedIndex - 1) {
-            [self moveTabAtIndex:currentIndex toIndex:firstUnpinnedIndex - 1];
+        NSInteger targetIndex = lastPinnedIndex + 1;
+        if (currentIndex != targetIndex) {
+            [self moveTabAtIndex:currentIndex toIndex:targetIndex];
         }
     }
 }

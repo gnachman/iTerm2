@@ -20,6 +20,7 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
     private var _closeButton: NSImage?
     private var _closeButtonDown: NSImage?
     private var _closeButtonOver: NSImage?
+    private var _pinImage: NSImage?
     private var _orientation: PSMTabBarOrientation = .horizontalOrientation
     
     // MARK: - PSMTabStyle Properties
@@ -119,6 +120,11 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
             return true
         })
         _closeButtonOver?.isTemplate = true
+
+        // Load pin indicator
+        let pinConfig = NSImage.SymbolConfiguration(pointSize: 9, weight: .medium, scale: .medium)
+        _pinImage = NSImage(systemSymbolName: "pin.fill", accessibilityDescription: "Pinned")?.withSymbolConfiguration(pinConfig)
+        _pinImage?.isTemplate = true
     }
 
     // MARK: - PSMTabStyle Protocol
@@ -297,7 +303,7 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
     @objc
     func minimumWidth(ofTabCell cell: PSMTabBarCell!) -> Float {
         if cell.isPinned {
-            return 64.0
+            return Float(tabBar?.pinnedTabWidth ?? 64)
         }
         return Float(ceil(widthOfLeftMatterInCell(cell) +
                           kPSMMinimumTitleWidth +
@@ -307,7 +313,7 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
     @objc
     func desiredWidth(ofTabCell cell: PSMTabBarCell!) -> Float {
         if cell.isPinned {
-            return 64.0
+            return Float(tabBar?.pinnedTabWidth ?? 64)
         }
         return Float(ceil(widthOfLeftMatterInCell(cell) +
                           widthOfAttributedStringInCell(cell) +
@@ -1432,10 +1438,10 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
             0.0
         }
 
-        // Close button
+        // Close button or pin indicator
         if cell.hasCloseButton, !cell.isPinned, let image = _closeButton {
             objects.append(FixedSpacerLO(name: "Leading Spacer", width: edgePadding, priority: Priority.required.rawValue, gravity: .left))
-            
+
             let closeButton = tintedCloseButtonImage(cell: cell)
             let closeButtonAlpha = self.closeButtonAlpha(cell: cell, highlightAmount: highlightAmount)
             objects.append(GroupLO(name: Name.closeButton.rawValue, priority: Priority.closeButton.rawValue, gravity: .left, members: [
@@ -1449,6 +1455,33 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
                                           operation: .sourceOver,
                                           fraction: closeButtonAlpha)
                     }
+                },
+            ]))
+        } else if cell.isPinned, let pinImage = _pinImage {
+            objects.append(FixedSpacerLO(name: "Leading Spacer", width: edgePadding, priority: Priority.required.rawValue, gravity: .left))
+
+            let tintColor: NSColor
+            let colorKey: UnsafeRawPointer
+            if tabColorBrightness(cell) < 0.5 {
+                colorKey = PSMTabStyleLightColorKey
+                tintColor = NSColor.white
+            } else {
+                colorKey = PSMTabStyleDarkColorKey
+                tintColor = NSColor.black
+            }
+            let tintedPin = pinImage.it_cachingImage(withTintColor: tintColor, key: colorKey)
+            let pinAlpha: CGFloat = windowIsMainAndAppIsActive ? 0.6 : 0.3
+
+            objects.append(GroupLO(name: "Pin Indicator", priority: Priority.closeButton.rawValue, gravity: .left, members: [
+                ImageLO(name: "Pin Icon", image: pinImage, priority: Priority.required.rawValue, gravity: .left) { resolved in
+                    var pinRect = resolved.frame
+                    pinRect.origin.y = cell.frame.minY + floor((cell.frame.height - pinRect.height) / 2.0) + orientationShift
+                    tintedPin.draw(in: pinRect,
+                                   from: NSZeroRect,
+                                   operation: .sourceOver,
+                                   fraction: pinAlpha,
+                                   respectFlipped: true,
+                                   hints: nil)
                 },
             ]))
         } else {

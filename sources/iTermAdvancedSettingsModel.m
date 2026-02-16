@@ -289,6 +289,7 @@ DEFINE_BOOL(tabTitlesUseSmartTruncation, YES, SECTION_TABS @"Use “smart trunca
 DEFINE_BOOL(middleClickClosesTab, YES, SECTION_TABS @"Should middle-click on a tab in the tab bar close the tab?");
 DEFINE_FLOAT(coloredSelectedTabOutlineStrength, 0.5, SECTION_TABS @"How prominent should the outline around the selected tab be drawn when there are colored tabs in a window?\nTakes a value in 0 to 3, where 0 means no outline and 3 means a very prominent outline.");
 DEFINE_FLOAT(minimalEdgeDragSize, 12, SECTION_TABS @"In the Minimal theme, you can move the window by dragging starting in a region on the edge near the window border. This gives the size of that region.");
+DEFINE_INT(pinnedTabWidth, 64, SECTION_TABS @"Width of pinned tabs in pixels.");
 DEFINE_FLOAT(compactEdgeDragSize, 10, SECTION_TABS @"In the Compact theme, you can move the window by dragging starting in a region on the edge near the window border. This gives the size of that region.");
 DEFINE_FLOAT(minimalTabStyleBackgroundColorDifference, 0.05, SECTION_TABS @"In the Minimal theme, how different should the background color of the selected tab be from the others?\nTakes a value in 0 to 1, where 0 is no difference and 1 very different.");
 DEFINE_FLOAT(minimalTabStyleOutlineStrength, 0.2, SECTION_TABS @"In the Minimal theme, how prominent should the tab outline be?\nTakes a value in 0 to 1, where 0 is invisible and 1 is very prominent");

@@ -189,6 +189,7 @@ typedef NS_ENUM(int, PSMTabPosition) {
 @property(nonatomic, assign) int cellMinWidth;
 @property(nonatomic, assign) int cellMaxWidth;
 @property(nonatomic, assign) int cellOptimumWidth;
+@property(nonatomic, assign) int pinnedTabWidth;
 @property(nonatomic, assign) BOOL sizeCellsToFit;
 @property(nonatomic, assign) BOOL stretchCellsToFit;
 @property(nonatomic, assign) BOOL useOverflowMenu;

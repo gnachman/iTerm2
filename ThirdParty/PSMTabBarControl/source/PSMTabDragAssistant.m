@@ -342,6 +342,10 @@ static CVReturn DisplayLinkCallback(CVDisplayLinkRef displayLink,
                                                     userInfo:nil
                                                      repeats:YES];
     } else if (_dragTabWindow) {
+        if ([self draggedCell].isPinned) {
+            // Pinned tabs cannot be dragged out to a new window. Unpin first.
+            return;
+        }
         if (![control.delegate tabViewDragShouldExitWindow:control.tabView]) {
             return;
         }
@@ -477,6 +481,9 @@ static CVReturn DisplayLinkCallback(CVDisplayLinkRef displayLink,
     // Clamp to valid range. The pinned/unpinned boundary is enforced below
     // for same-tab-bar drags (after placeholders are removed).
     int cellCount = (int)[[[self destinationTabBar] cells] count];
+    if (cellCount == 0) {
+        return;
+    }
     if (destinationIndex < 0) {
         destinationIndex = 0;
     } else if (destinationIndex >= cellCount) {
@@ -643,6 +650,9 @@ static CVReturn DisplayLinkCallback(CVDisplayLinkRef displayLink,
 }
 
 - (BOOL)shouldCreateNewWindowOnDrop:(BOOL *)moveWindow {
+    if ([self draggedCell].isPinned) {
+        return NO;
+    }
     id sourceDelegate = [[self sourceTabBar] delegate];
     return ([self destinationTabBar] == nil &&
             [sourceDelegate respondsToSelector:@selector(tabView:shouldDropTabViewItem:inTabBar:moveSourceWindow:)] &&

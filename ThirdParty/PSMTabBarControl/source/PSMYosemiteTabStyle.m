@@ -60,6 +60,7 @@
     NSImage *_addTabButtonImage;
     NSImage *_addTabButtonPressedImage;
     NSImage *_addTabButtonRolloverImage;
+    NSImage *_pinImage;
 }
 
 @synthesize tabBar = _tabBar;
@@ -80,6 +81,16 @@
         _closeButtonDown.template = YES;
         _closeButtonOver = [[NSBundle bundleForClass:self.class] imageForResource:@"TabClose_Front_Rollover"];
         _closeButtonOver.template = YES;
+
+        // Load pin indicator
+        NSImageSymbolConfiguration *pinConfig =
+            [NSImageSymbolConfiguration configurationWithPointSize:9
+                                                            weight:NSFontWeightMedium
+                                                             scale:NSImageSymbolScaleMedium];
+        _pinImage = [NSImage imageWithSystemSymbolName:@"pin.fill"
+                              accessibilityDescription:@"Pinned"];
+        _pinImage = [_pinImage imageWithSymbolConfiguration:pinConfig];
+        _pinImage.template = YES;
 
         // Load "new tab" buttons
         NSString *addTabImageName = @"YosemiteAddTab";
@@ -380,7 +391,7 @@
 
 - (float)minimumWidthOfTabCell:(PSMTabBarCell *)cell {
     if (cell.isPinned) {
-        return 64.0;
+        return self.tabBar.pinnedTabWidth;
     }
     return ceil([self widthOfLeftMatterInCell:cell] +
                 kPSMMinimumTitleWidth +
@@ -401,7 +412,7 @@
 
 - (float)desiredWidthOfTabCell:(PSMTabBarCell *)cell {
     if (cell.isPinned) {
-        return 64.0;
+        return self.tabBar.pinnedTabWidth;
     }
     return ceil([self widthOfLeftMatterInCell:cell] +
                 [self widthOfAttributedStringInCell:cell] +
@@ -890,6 +901,10 @@ const void *PSMTabStyleDarkColorKey = "dark";
         } else {
             labelPosition += closeButtonSize.width + kPSMTabBarCellPadding;
         }
+    } else if (cell.isPinned && _orientation != PSMTabBarHorizontalOrientation) {
+        // In vertical orientation, reserve close button space for pinned tabs so text
+        // aligns with unpinned tabs that have a visible close button.
+        labelPosition += closeButtonSize.width + kPSMTabBarCellPadding;
     }
 
     // Draw close button
@@ -909,6 +924,23 @@ const void *PSMTabStyleDarkColorKey = "dark";
                        operation:NSCompositingOperationSourceOver
                         fraction:closeButtonAlpha];
 
+    }
+    // Draw pin indicator for pinned tabs
+    if (cell.isPinned && _pinImage) {
+        NSImage *pinIcon = [_pinImage it_cachingImageWithTintColor:closeButtonTintColor
+                                                               key:colorKey];
+        NSSize pinSize = [pinIcon size];
+        NSRect pinRect;
+        pinRect.size = pinSize;
+        pinRect.origin.x = cellFrame.origin.x + kSPMTabBarCellInternalXMargin;
+        pinRect.origin.y = cellFrame.origin.y + floor((cellFrame.size.height - pinSize.height) / 2.0);
+        CGFloat pinAlpha = self.windowIsMainAndAppIsActive ? 0.6 : 0.3;
+        [pinIcon drawInRect:pinRect
+                   fromRect:NSZeroRect
+                  operation:NSCompositingOperationSourceOver
+                   fraction:pinAlpha
+             respectFlipped:YES
+                      hints:nil];
     }
     // Draw graphic icon (i.e., the app icon, not new-output indicator icon) over close button.
     if (cachedTitle.inputs.graphic) {
