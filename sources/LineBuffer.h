@@ -198,6 +198,18 @@ NS_ASSUME_NONNULL_BEGIN
 
 // Tests only!
 - (LineBlock * _Nonnull)testOnlyBlockAtIndex:(int)i;
+@property (nonatomic, readonly) int testOnlyNumberOfBlocks;
+- (void)testOnlyAppendPartialItems:(int)count
+                          ofLength:(int)itemLength
+                             width:(int)width;
+- (void)testOnlyAppendPartialItems:(int)count
+                          ofLength:(int)itemLength
+                             width:(int)width
+                          metadata:(iTermImmutableMetadata)metadata
+                      continuation:(screen_char_t)continuation;
+- (void)testOnlyAppendItemsWithLengths:(NSArray<NSNumber *> *)lengths
+                              partials:(NSArray<NSNumber *> *)partials
+                                 width:(int)width;
 
 - (unsigned int)numberOfUnwrappedLines;
 - (BOOL)isEqual:(LineBuffer *)other;

@@ -51,6 +51,8 @@ NSString *const kLineBlockCLLKey = @"Cumulative Line Lengths";
 NSString *const kLineBlockIsPartialKey = @"Is Partial";
 NSString *const kLineBlockMetadataKey = @"Metadata";
 NSString *const kLineBlockMayHaveDWCKey = @"May Have Double Width Character";
+NSString *const kLineBlockContinuationPrefixColumnsKey = @"Continuation Prefix Columns";
+NSString *const kLineBlockPrefixHasDWCKey = @"Prefix Has DWC";
 NSString *const kLineBlockGuid = @"GUID";
 dispatch_queue_t gDeallocQueue;
 
@@ -154,6 +156,54 @@ static inline void ModifyLineBlock(LineBlock *self,
 
 @synthesize progenitor = _progenitor;
 @synthesize absoluteBlockNumber = _absoluteBlockNumber;
+@synthesize continuationPrefixCharacters = _continuationPrefixCharacters;
+@synthesize prefixHasDWC = _prefixHasDWC;
+
+- (BOOL)startsWithContinuation {
+    return _continuationPrefixCharacters >= 0;
+}
+
+- (int)continuationWrappedLineAdjustmentForWidth:(int)width {
+    if (_continuationPrefixCharacters < 0) {
+        return 0;
+    }
+    const int P = _continuationPrefixCharacters % width;
+    if (P == 0) {
+        return 0;
+    }
+    // The first raw line's naive count is numberOfFullLines(C, W) + 1.
+    // The correct count is numberOfFullLines(P + C, W) - numberOfFullLines(P, W).
+    // Return the delta.
+    const int C = [self _lineLength:_firstEntry];
+    const int naive = [self numberOfFullLinesFromOffset:self.bufferStartOffset
+                                                length:C
+                                                 width:width] + 1;
+    const int fullLinesPrefixPlusCont = LineBlockNumberOfFullLinesFastPath(P + C, width);
+    const int fullLinesPrefix = LineBlockNumberOfFullLinesFastPath(P, width);
+    // Guard on boundary-specific DWC presence, not the sticky buffer-level
+    // _mayHaveDoubleWidthCharacter flag (which can be true for an all-ASCII
+    // continuation block created after a DWC was appended elsewhere).
+    // _prefixHasDWC: the virtual prefix chars may contain DWC.
+    // firstRawLineHasDWC: compare DWC-aware naive with fast-path result.
+    const BOOL firstRawLineHasDWC = (naive - 1) != LineBlockNumberOfFullLinesFastPath(C, width);
+    if (_prefixHasDWC || firstRawLineHasDWC) {
+        ITAssertWithMessage(!_prefixHasDWC && !firstRawLineHasDWC,
+                            @"DWC at continuation boundary (prefix=%d, prefixHasDWC=%d, firstLineDWC=%d)",
+                            _continuationPrefixCharacters, _prefixHasDWC, firstRawLineHasDWC);
+        return 0;
+    }
+    const int correct = fullLinesPrefixPlusCont - fullLinesPrefix;
+    return correct - naive;
+}
+
+- (void)clearContinuation {
+    ModifyLineBlock(self, [&self](id<iTermLineBlockMutationCertificate> cert) -> void {
+        self->_continuationPrefixCharacters = -1;
+        self->_prefixHasDWC = NO;
+        self->cached_numlines_width = -1;
+        iTermLineBlockDidChange(self, "clear continuation");
+    });
+}
 
 static std::atomic<NSInteger> nextGeneration(1);
 
@@ -201,6 +251,20 @@ NS_INLINE void iTermLineBlockDidChange(__unsafe_unretained LineBlock *lineBlock,
                     fromIndex:(int)startIndex
                         width:(int)width
           absoluteBlockNumber:(long long)absoluteBlockNumber {
+    return [self initWithItems:items
+                     fromIndex:startIndex
+                         width:width
+           absoluteBlockNumber:absoluteBlockNumber
+     continuationPrefixCharacters:-1
+                  prefixHasDWC:NO];
+}
+
+- (instancetype)initWithItems:(CTVector(iTermAppendItem) *)items
+                    fromIndex:(int)startIndex
+                        width:(int)width
+          absoluteBlockNumber:(long long)absoluteBlockNumber
+    continuationPrefixCharacters:(int)prefixCharacters
+                 prefixHasDWC:(BOOL)prefixHasDWC {
     self = [super init];
     if (self) {
         _absoluteBlockNumber = absoluteBlockNumber;
@@ -217,8 +281,24 @@ NS_INLINE void iTermLineBlockDidChange(__unsafe_unretained LineBlock *lineBlock,
         cll_capacity = lineCount;
         iTermAssignToConstPointer((void **)&cumulative_line_lengths, iTermMalloc(sizeof(int) * cll_capacity));
         [self commonInit];
+        _continuationPrefixCharacters = prefixCharacters;
+        _prefixHasDWC = prefixHasDWC;
         screen_char_t *outPtr = _characterBuffer.mutablePointer;
         cached_numlines_width = -1;
+
+        // When this block continues a partial line from the previous block,
+        // seed with an empty first entry so the first item appends to it.
+        if (prefixCharacters >= 0) {
+            screen_char_t defaultCont = { 0 };
+            defaultCont.code = EOL_SOFT;
+            iTermImmutableMetadata emptyMeta;
+            iTermImmutableMetadataInit(&emptyMeta, 0, NO, nil);
+            cll_entries = 1;
+            cumulative_line_lengths[0] = 0;
+            [_metadataArray append:emptyMeta continuation:defaultCont];
+            is_partial = YES;
+        }
+
         int cll = 0;
         for (int i = startIndex; i < CTVectorCount(items); i++) {
             const iTermAppendItem &item = CTVectorGet(items, i);
@@ -259,6 +339,7 @@ NS_INLINE void iTermLineBlockDidChange(__unsafe_unretained LineBlock *lineBlock,
         _guid = [[NSUUID UUID] UUIDString];
     }
     cached_numlines_width = -1;
+    _continuationPrefixCharacters = -1;
     _metadataArray = [[LineBlockMetadataArray alloc] initWithCapacity:cll_capacity
                                                           useDWCCache:gEnableDoubleWidthCharacterLineCache];
     assert(_metadataArray != nil);
@@ -344,6 +425,9 @@ NS_INLINE void iTermLineBlockDidChange(__unsafe_unretained LineBlock *lineBlock,
 
         is_partial = [dictionary[kLineBlockIsPartialKey] boolValue];
         _mayHaveDoubleWidthCharacter = [dictionary[kLineBlockMayHaveDWCKey] boolValue];
+        NSNumber *prefixCharsNumber = dictionary[kLineBlockContinuationPrefixColumnsKey];
+        _continuationPrefixCharacters = prefixCharsNumber ? [prefixCharsNumber intValue] : -1;
+        _prefixHasDWC = [dictionary[kLineBlockPrefixHasDWCKey] boolValue];
     }
     return self;
 }
@@ -450,6 +534,8 @@ NS_INLINE void iTermLineBlockDidChange(__unsafe_unretained LineBlock *lineBlock,
         assert(theCopy->_metadataArray.first == _firstEntry);
 
         theCopy->is_partial = is_partial;
+        theCopy->_continuationPrefixCharacters = _continuationPrefixCharacters;
+        theCopy->_prefixHasDWC = _prefixHasDWC;
         theCopy->cached_numlines = cached_numlines;
         theCopy->cached_numlines_width = cached_numlines_width;
         // Don't copy the cache because doing so is expensive. I blame C++.
@@ -480,6 +566,8 @@ NS_INLINE void iTermLineBlockDidChange(__unsafe_unretained LineBlock *lineBlock,
     assert(theCopy->_metadataArray.first == _firstEntry);
     assert(theCopy->_metadataArray.numEntries == cll_entries);
     theCopy->is_partial = is_partial;
+    theCopy->_continuationPrefixCharacters = _continuationPrefixCharacters;
+    theCopy->_prefixHasDWC = _prefixHasDWC;
     theCopy->cached_numlines = cached_numlines;
     theCopy->cached_numlines_width = cached_numlines_width;
     theCopy->_generation = _generation;
@@ -510,6 +598,12 @@ NS_INLINE void iTermLineBlockDidChange(__unsafe_unretained LineBlock *lineBlock,
         return NO;
     }
     if (is_partial != other->is_partial) {
+        return NO;
+    }
+    if (_continuationPrefixCharacters != other->_continuationPrefixCharacters) {
+        return NO;
+    }
+    if (_prefixHasDWC != other->_prefixHasDWC) {
         return NO;
     }
     for (int i = 0; i < cll_entries; i++) {
@@ -871,6 +965,19 @@ static int iTermLineBlockNumberOfFullLinesImpl(const screen_char_t *buffer,
     return YES;
 }
 
+- (void)propagateMetadataToLastRawLine:(iTermImmutableMetadata)metadata
+                              length:(int)additionalLength {
+    ModifyLineBlock(self, [metadata, additionalLength, &self](id<iTermLineBlockMutationCertificate> cert) -> void {
+        ITAssertWithMessage(cll_entries > self->_firstEntry, @"propagateMetadata: no raw lines");
+        const int originalLength = [self lengthOfLastLine];
+        screen_char_t cont = [self->_metadataArray metadataAtIndex:cll_entries - 1]->continuation;
+        [self->_metadataArray appendToLastLine:&metadata
+                                originalLength:originalLength
+                              additionalLength:additionalLength
+                                  continuation:cont];
+    });
+}
+
 - (void)didFindRTLInLine:(int)line cert:(id<iTermLineBlockMutationCertificate>)cert {
     const LineBlockMetadata *existing = [_metadataArray metadataAtIndex:line];
     if (!existing->lineMetadata.rtlFound) {
@@ -1122,6 +1229,42 @@ int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BO
 - (int)cacheAwareOffsetOfWrappedLineInBuffer:(LineBlockLocation)location
                            wrappedLineNumber:(int)lineNum
                                        width:(int)width {
+    // Prefix-aware offset for continuation blocks' first raw line.
+    // The block's first raw line is a suffix of a logical raw line that
+    // began in a prior block. Its chars start at column (P % width),
+    // so wrapped line boundaries are shifted by that amount.
+    //
+    // The first (width - pCol) chars are the "head" that gets stitched with the
+    // predecessor block's tail. Contributed lines start after that head.
+    //
+    // When adj == -1: localWrappedOffset adds 1, so lineNum = contributed + 1.
+    //   Formula: lineNum * width - pCol = (contributed+1)*width - pCol. ✓
+    //   Guard: lineNum=0 is the hidden head (offset 0), skip this path.
+    //
+    // When adj == 0: lineNum = contributed (no shift).
+    //   Formula: (lineNum+1)*width - pCol = (contributed+1)*width - pCol. ✓
+    //   Guard: lineNum=0 should enter this path (offset = width - pCol).
+    //
+    // Unified: (lineNum + shift) * width - pCol where shift = MAX(0, 1 + adj).
+    // Guard: lineNum + adj >= 0.
+    if (_continuationPrefixCharacters > 0 &&
+        location.index == _firstEntry) {
+        const int pCol = _continuationPrefixCharacters % width;
+        if (pCol > 0) {
+            const int adj = [self continuationWrappedLineAdjustmentForWidth:width];
+            if (lineNum + adj >= 0) {
+                const int shift = MAX(0, 1 + adj);
+                const int adjusted = (lineNum + shift) * width - pCol;
+                ITAssertWithMessage(adjusted >= 0 && adjusted <= location.length,
+                                    @"prefix-aware offset %@ out of range [0, %@], "
+                                    @"lineNum=%@, width=%@, pCol=%@, prefix=%@, adj=%@",
+                                    @(adjusted), @(location.length),
+                                    @(lineNum), @(width), @(pCol),
+                                    @(_continuationPrefixCharacters), @(adj));
+                return adjusted;
+            }
+        }
+    }
     if (gEnableDoubleWidthCharacterLineCache) {
         return [self offsetOfWrappedLineInBufferAtOffset:location.prev
                                        wrappedLineNumber:lineNum
@@ -1487,6 +1630,50 @@ int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BO
     }
 }
 
+- (void)removeLastCells:(int)count {
+    ModifyLineBlock(self, [self, count](id<iTermLineBlockMutationCertificate> cert) {
+        if (cll_entries == _firstEntry || count <= 0) {
+            return;
+        }
+        _numberOfFullLinesCache.clear();
+        int remaining = count;
+        while (remaining > 0 && cll_entries > _firstEntry) {
+            int start;
+            if (cll_entries == _firstEntry + 1) {
+                start = 0;
+            } else {
+                start = cumulative_line_lengths[cll_entries - 2] - self.bufferStartOffset;
+            }
+            const int end = cumulative_line_lengths[cll_entries - 1] - self.bufferStartOffset;
+            const int available = end - start;
+            if (remaining < available) {
+                // Partial truncation of last raw line.
+                cert.mutableCumulativeLineLengths[cll_entries - 1] -= remaining;
+                [_metadataArray eraseLastLineCache];
+                id<iTermExternalAttributeIndexReading> attrs = [_metadataArray lastExternalAttributeIndex];
+                const int keepLen = available - remaining;
+                [_metadataArray setLastExternalAttributeIndex:[attrs subAttributesToIndex:keepLen]];
+                is_partial = YES;
+                remaining = 0;
+            } else {
+                // Remove entire raw line entry.
+                [_metadataArray removeLast];
+                --cll_entries;
+                remaining -= available;
+                is_partial = NO;
+            }
+        }
+        if (cll_entries == _firstEntry) {
+            [self setBufferStartOffset:0];
+            _firstEntry = 0;
+            cll_entries = 0;
+            [_metadataArray reset];
+        }
+        cached_numlines_width = -1;
+        iTermLineBlockDidChange(self, "removeLastCells");
+    });
+}
+
 - (void)removeLastRawLine {
     if (cll_entries == _firstEntry) {
         return;
@@ -1642,6 +1829,33 @@ int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BO
     }
     const int index = cll_entries - 1;
     return [self lengthOfRawLine:index];
+}
+
+// Scans the last raw line for DWC_RIGHT. Authoritative regardless of the
+// block's _mayHaveDoubleWidthCharacter flag (which can be set globally by
+// setAllBlocksMayHaveDoubleWidthCharacters even when the block's actual
+// data has no DWC).
+// Invariant: DWC content is always marked with DWC_RIGHT in the
+// screen_char_t buffer by StringToScreenChars upstream.
+- (BOOL)lastRawLineHasDWC {
+    if (cll_entries == 0) {
+        return NO;
+    }
+    const int linenum = cll_entries - 1;
+    int startOffset;
+    if (linenum == _firstEntry) {
+        startOffset = _startOffset;
+    } else {
+        startOffset = cumulative_line_lengths[linenum - 1];
+    }
+    const int length = cumulative_line_lengths[linenum] - startOffset;
+    const screen_char_t *p = _characterBuffer.pointer + startOffset;
+    for (int i = 0; i < length; i++) {
+        if (p[i].code == DWC_RIGHT) {
+            return YES;
+        }
+    }
+    return NO;
 }
 
 - (int)numberOfWrappedLinesForLastRawLineWrappedToWidth:(int)width {
@@ -2543,6 +2757,8 @@ crossBlockResultCount:(NSInteger *)crossBlockResultCount {
               kLineBlockIsPartialKey: @(is_partial),
               kLineBlockMetadataKey: [self metadataArray],
               kLineBlockMayHaveDWCKey: @(_mayHaveDoubleWidthCharacter),
+              kLineBlockContinuationPrefixColumnsKey: @(_continuationPrefixCharacters),
+              kLineBlockPrefixHasDWCKey: @(_prefixHasDWC),
               kLineBlockGuid: _guid };
 }
 

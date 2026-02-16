@@ -45,6 +45,10 @@ NS_ASSUME_NONNULL_BEGIN
 - (nullable LineBlock *)blockContainingLineNumber:(int)lineNumber
                                             width:(int)width
                                         remainder:(out int *)remainderPtr;
+- (nullable LineBlock *)blockContainingLineNumber:(int)lineNumber
+                                            width:(int)width
+                                        remainder:(out int *)remainderPtr
+                                       blockIndex:(out nullable NSInteger *)blockIndexPtr;
 - (int)numberOfWrappedLinesForWidth:(int)width;
 - (void)enumerateLinesInRange:(NSRange)range
                         width:(int)width
@@ -71,6 +75,13 @@ NS_ASSUME_NONNULL_BEGIN
 - (NSInteger)numberOfWrappedLinesForWidth:(int)width
                           upToBlockAtIndex:(NSInteger)limit;
 - (NSInteger)numberOfRawLinesInRange:(NSRange)range width:(int)width;
+
+// Stitch the boundary wrapped line spanning blocks[blockIndex] and blocks[blockIndex+1].
+// Returns nil when no stitch applies (not a boundary, no continuation, or pCol == 0).
+// `localWrappedLineIndex` is the local wrapped line index within blocks[blockIndex].
+- (ScreenCharArray * _Nullable)stitchedLineFromBlockAtIndex:(NSInteger)blockIndex
+                                                       width:(int)width
+                                       localWrappedLineIndex:(int)localWrappedLineIndex;
 
 @end
 

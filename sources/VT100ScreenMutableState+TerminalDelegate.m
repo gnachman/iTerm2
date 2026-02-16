@@ -21,6 +21,54 @@
 #import "iTerm2SharedARC-Swift.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermHistogram.h"
+#import <stdatomic.h>
+#import <time.h>
+
+static BOOL gAppendGangPerfCountersEnabled = NO;
+
+static inline BOOL iTermAppendGangPerfEnabled(void) {
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        gAppendGangPerfCountersEnabled = [iTermAdvancedSettingsModel bulkAppendPerfCounters];
+    });
+    return gAppendGangPerfCountersEnabled;
+}
+
+static atomic_bool gAppendGangPerfRegistered = false;
+static atomic_ullong gAppendGangFastCalls = 0;
+static atomic_ullong gAppendGangFastNanos = 0;
+static atomic_ullong gAppendGangFastTokens = 0;
+static atomic_ullong gAppendGangFastBytes = 0;
+static atomic_ullong gAppendGangFastItems = 0;
+static atomic_ullong gAppendGangSlowCalls = 0;
+static atomic_ullong gAppendGangSlowNanos = 0;
+static atomic_ullong gAppendGangSlowTokens = 0;
+static atomic_ullong gAppendGangSlowBytes = 0;
+
+static inline uint64_t iTermAppendGangNowNanos(void) {
+    return clock_gettime_nsec_np(CLOCK_UPTIME_RAW);
+}
+
+static void iTermAppendGangPerfDump(void) {
+    NSLog(@"ITERM_PERF_APPEND_GANG fast_calls=%llu fast_ns=%llu fast_tokens=%llu fast_bytes=%llu fast_items=%llu "
+          @"slow_calls=%llu slow_ns=%llu slow_tokens=%llu slow_bytes=%llu",
+          (unsigned long long)atomic_load(&gAppendGangFastCalls),
+          (unsigned long long)atomic_load(&gAppendGangFastNanos),
+          (unsigned long long)atomic_load(&gAppendGangFastTokens),
+          (unsigned long long)atomic_load(&gAppendGangFastBytes),
+          (unsigned long long)atomic_load(&gAppendGangFastItems),
+          (unsigned long long)atomic_load(&gAppendGangSlowCalls),
+          (unsigned long long)atomic_load(&gAppendGangSlowNanos),
+          (unsigned long long)atomic_load(&gAppendGangSlowTokens),
+          (unsigned long long)atomic_load(&gAppendGangSlowBytes));
+}
+
+static inline void iTermAppendGangPerfRegisterIfNeeded(void) {
+    bool expected = false;
+    if (atomic_compare_exchange_strong(&gAppendGangPerfRegistered, &expected, true)) {
+        atexit(iTermAppendGangPerfDump);
+    }
+}
 
 @implementation VT100ScreenMutableState (TerminalDelegate)
 
@@ -255,10 +303,20 @@ typedef struct {
 }
 
 - (void)appendGangFastPath:(NSArray<VT100Token *> *)tokens {
+    const BOOL perfEnabled = iTermAppendGangPerfEnabled();
+    uint64_t fastStart = 0;
+    if (perfEnabled) {
+        iTermAppendGangPerfRegisterIfNeeded();
+        fastStart = iTermAppendGangNowNanos();
+        atomic_fetch_add(&gAppendGangFastCalls, 1);
+    }
     if (tokens.count == 1 && tokens[0].asciiData->length < self.height * 2) {
         // Quick check if this is tiny.
         DLog(@"Take slow path for tiny data");
         [self appendGangSlowPath:tokens];
+        if (perfEnabled) {
+            atomic_fetch_add(&gAppendGangFastNanos, iTermAppendGangNowNanos() - fastStart);
+        }
         return;
     }
 
@@ -271,10 +329,21 @@ typedef struct {
     tokens = [tokens filteredArrayUsingBlock:^BOOL(VT100Token *token) {
         return token.type != VT100CC_CR;
     }];
+    unsigned long long totalTokenBytes = 0;
+    for (VT100Token *token in tokens) {
+        totalTokenBytes += token.asciiData->length;
+    }
+    if (perfEnabled) {
+        atomic_fetch_add(&gAppendGangFastTokens, tokens.count);
+        atomic_fetch_add(&gAppendGangFastBytes, totalTokenBytes);
+    }
     const VT100ScreenMutableStateAppendInfo info = [self appendInfoForTokens:tokens];
     const VT100GridCoord coord = info.cursor;
     if (coord.y < self.height * 2) {
         [self appendGangSlowPath:tokens];
+        if (perfEnabled) {
+            atomic_fetch_add(&gAppendGangFastNanos, iTermAppendGangNowNanos() - fastStart);
+        }
         return;
     }
 
@@ -345,6 +414,9 @@ typedef struct {
             start = control + 2;
         }
     }
+    if (perfEnabled) {
+        atomic_fetch_add(&gAppendGangFastItems, CTVectorCount(&items));
+    }
     [self.linebuffer appendLines:&items
                            width:width];
     CTVectorDestroy(&items);
@@ -367,12 +439,33 @@ typedef struct {
         [self incrementOverflowBy:self.unlimitedScrollback ? 0 : numDropped];
     }
     [self.currentGrid setCursorWithoutInvalidatingDWCFreeLineCount:VT100GridCoordMake(coord.x, self.height - 1)];
+    if (perfEnabled) {
+        atomic_fetch_add(&gAppendGangFastNanos, iTermAppendGangNowNanos() - fastStart);
+    }
 }
 
 - (int)appendGangSlowPath:(NSArray<VT100Token *> *)tokens {
+    const BOOL perfEnabled = iTermAppendGangPerfEnabled();
+    uint64_t slowStart = 0;
+    if (perfEnabled) {
+        iTermAppendGangPerfRegisterIfNeeded();
+        slowStart = iTermAppendGangNowNanos();
+        atomic_fetch_add(&gAppendGangSlowCalls, 1);
+    }
+    unsigned long long totalTokenBytes = 0;
+    for (VT100Token *token in tokens) {
+        totalTokenBytes += token.asciiData->length;
+    }
+    if (perfEnabled) {
+        atomic_fetch_add(&gAppendGangSlowTokens, tokens.count);
+        atomic_fetch_add(&gAppendGangSlowBytes, totalTokenBytes);
+    }
     int numLines = 0;
     for (VT100Token *token in tokens) {
         numLines += [self appendMixedAsciiCRLFData:token.asciiData crlfs:token.crlfs startOffset:0];
+    }
+    if (perfEnabled) {
+        atomic_fetch_add(&gAppendGangSlowNanos, iTermAppendGangNowNanos() - slowStart);
     }
     return numLines;
 }
@@ -3377,4 +3470,3 @@ willExecuteToken:(VT100Token *)token
 }
 
 @end
-

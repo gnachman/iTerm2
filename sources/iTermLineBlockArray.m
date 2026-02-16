@@ -10,7 +10,7 @@
 #import "DebugLogging.h"
 #import "iTermCumulativeSumCache.h"
 #import "iTermTuple.h"
-#import "LineBlock.h"
+#import "LineBlock+Private.h"
 #import "NSArray+iTerm.h"
 
 //#define DEBUG_LINEBUFFER_MERGE 1
@@ -267,7 +267,13 @@ static NSUInteger iTermLineBlockArrayNextUniqueID;
     _rawLinesCache = [[iTermCumulativeSumCache alloc] init];
     for (LineBlock *block in _blocks) {
         [_rawSpaceCache appendValue:[block rawSpaceUsed]];
-        [_rawLinesCache appendValue:[block numRawLines]];
+        int rawLines = [block numRawLines];
+        // A continuation block's first raw line is logically part of the
+        // previous block's last raw line, so don't double-count it.
+        if (block.startsWithContinuation) {
+            rawLines -= 1;
+        }
+        [_rawLinesCache appendValue:rawLines];
     }
 }
 
@@ -280,7 +286,14 @@ static NSUInteger iTermLineBlockArrayNextUniqueID;
 
     numLinesCache = [[iTermCumulativeSumCache alloc] init];
     for (LineBlock *block in _blocks) {
-        const int block_lines = [block getNumLinesWithWrapWidth:width];
+        int block_lines = [block getNumLinesWithWrapWidth:width];
+        if (block.startsWithContinuation) {
+            // The continuation block adjusts its first raw line's wrapped
+            // count to account for prefix characters in the previous block.
+            // The previous block keeps its full count (including its partial
+            // last wrapped line).
+            block_lines += [block continuationWrappedLineAdjustmentForWidth:width];
+        }
         [numLinesCache appendValue:block_lines];
     }
     [_numLinesCaches setNumLinesCache:numLinesCache forWidth:width];
@@ -356,7 +369,28 @@ static NSUInteger iTermLineBlockArrayNextUniqueID;
     return index;
 }
 
+// Converts a "contributed" wrapped-line offset (from the cache) to a
+// block-local wrapped-line index suitable for LineBlock APIs.
+// When continuationWrappedLineAdjustmentForWidth: is negative, the
+// continuation block has hidden wrapped lines at the start that overlap
+// with the predecessor block. Add those back when reading.
+- (int)localWrappedOffset:(int)contributedOffset forBlock:(LineBlock *)block width:(int)width {
+    if (!block.startsWithContinuation) {
+        return contributedOffset;
+    }
+    const int adjustment = [block continuationWrappedLineAdjustmentForWidth:width];
+    // adjustment is <= 0. When -1, we need to skip 1 hidden line.
+    return contributedOffset + MAX(0, -adjustment);
+}
+
 - (LineBlock *)blockContainingLineNumber:(int)lineNumber width:(int)width remainder:(out nonnull int *)remainderPtr {
+    return [self blockContainingLineNumber:lineNumber width:width remainder:remainderPtr blockIndex:NULL];
+}
+
+- (LineBlock *)blockContainingLineNumber:(int)lineNumber
+                                   width:(int)width
+                               remainder:(out nonnull int *)remainderPtr
+                              blockIndex:(out nullable NSInteger *)blockIndexPtr {
     int remainder = 0;
     NSInteger i = [self indexOfBlockContainingLineNumber:lineNumber
                                                    width:width
@@ -367,11 +401,14 @@ static NSUInteger iTermLineBlockArrayNextUniqueID;
     LineBlock *block = _blocks[i];
 
     if (remainderPtr) {
-        *remainderPtr = remainder;
+        *remainderPtr = [self localWrappedOffset:remainder forBlock:block width:width];
         int nl = [block getNumLinesWithWrapWidth:width];
         if (!block.isEmpty) {
             assert(*remainderPtr < nl);
         }
+    }
+    if (blockIndexPtr) {
+        *blockIndexPtr = i;
     }
     return block;
 }
@@ -394,24 +431,51 @@ static NSUInteger iTermLineBlockArrayNextUniqueID;
     int remainder;
     NSInteger startIndex = [self indexOfBlockContainingLineNumber:range.location width:width remainder:&remainder];
     ITAssertWithMessage(startIndex != NSNotFound, @"Line %@ not found", @(range.location));
-    
+
     int numberLeft = range.length;
     ITAssertWithMessage(numberLeft >= 0, @"Invalid length in range %@", NSStringFromRange(range));
     for (NSInteger i = startIndex; i < _blocks.count; i++) {
         LineBlock *block = _blocks[i];
-        // getNumLinesWithWrapWidth caches its result for the last-used width so
-        // this is usually faster than calling getWrappedLineWithWrapWidth since
-        // most calls to the latter will just decrement line and return NULL.
-        int block_lines = [block getNumLinesWithWrapWidth:width];
-        if (block_lines <= remainder) {
-            remainder -= block_lines;
+        // Use the contributed (adjusted) line count for skipping blocks and
+        // bounding the inner loop. The naive getNumLinesWithWrapWidth: count
+        // can differ from the contributed count for continuation blocks.
+        int contributed_lines = [block getNumLinesWithWrapWidth:width];
+        if (block.startsWithContinuation) {
+            const int adj = [block continuationWrappedLineAdjustmentForWidth:width];
+            contributed_lines += adj;
+#if DEBUG
+            // Hidden-line invariant: when adjustment == -1, the predecessor
+            // must be able to produce a boundary stitch (short soft tail).
+            if (adj == -1 && i > 0) {
+                LineBlock *pred = _blocks[i - 1];
+                const int predLines = [pred getNumLinesWithWrapWidth:width];
+                int predLastLineNum = predLines - 1;
+                int predLength = 0;
+                int predEOL = EOL_HARD;
+                [pred getWrappedLineWithWrapWidth:width
+                                          lineNum:&predLastLineNum
+                                       lineLength:&predLength
+                                includesEndOfLine:&predEOL
+                                     continuation:NULL];
+                ITAssertWithMessage(predLength < width && predEOL == EOL_SOFT,
+                                    @"Hidden-line invariant violated: predecessor block %@ "
+                                    @"last line has length=%@ eol=%@ at width=%@, "
+                                    @"expected short soft tail for stitch",
+                                    @(i - 1), @(predLength), @(predEOL), @(width));
+            }
+#endif
+        }
+        if (contributed_lines <= remainder) {
+            remainder -= contributed_lines;
             continue;
         }
 
         // Grab lines from this block until we're done or reach the end of the block.
         BOOL stop = NO;
-        int line = remainder;
-        do {
+        const int localLine = [self localWrappedOffset:remainder forBlock:block width:width];
+        const int naiveLines = [block getNumLinesWithWrapWidth:width];
+        int line = localLine;
+        while (numberLeft > 0 && line < naiveLines) {
             int length, eol;
             screen_char_t continuation;
             int temp = line;
@@ -425,22 +489,152 @@ static NSUInteger iTermLineBlockArrayNextUniqueID;
                                                        isStartOfWrappedLine:NULL
                                                                    metadata:&metadata];
             if (chars == NULL) {
-                return;
+                break;
             }
             ITAssertWithMessage(length <= width, @"Length too long");
+
+            // Use the shared stitch helper for boundary-spanning wrapped lines.
+            ScreenCharArray *stitched = [self stitchedLineFromBlockAtIndex:i
+                                                                     width:width
+                                                     localWrappedLineIndex:line];
+            if (stitched) {
+                callback(stitched.line, stitched.length, stitched.eol,
+                         stitched.continuation, stitched.metadata, &stop);
+                if (stop) {
+                    return;
+                }
+                numberLeft--;
+                line++;
+                continue;
+            }
+
             callback(chars, length, eol, continuation, metadata, &stop);
             if (stop) {
                 return;
             }
             numberLeft--;
             line++;
-        } while (numberLeft > 0 && block_lines >= remainder);
-        remainder = line;
+        }
+        remainder = 0;
         if (numberLeft == 0) {
             break;
         }
     }
     ITAssertWithMessage(numberLeft == 0, @"not all lines available in range %@. Have %@ remaining.", NSStringFromRange(range), @(numberLeft));
+}
+
+- (ScreenCharArray *)stitchedLineFromBlockAtIndex:(NSInteger)blockIndex
+                                            width:(int)width
+                            localWrappedLineIndex:(int)localWrappedLineIndex {
+    if (blockIndex + 1 >= (NSInteger)_blocks.count) {
+        return nil;
+    }
+    LineBlock *currentBlock = _blocks[blockIndex];
+    LineBlock *nextBlock = _blocks[blockIndex + 1];
+    if (!nextBlock.startsWithContinuation) {
+        return nil;
+    }
+    const int pCol = nextBlock.continuationPrefixCharacters % width;
+    if (pCol == 0) {
+        return nil;
+    }
+    // Verify this is the predecessor's last local wrapped line.
+    const int naiveLines = [currentBlock getNumLinesWithWrapWidth:width];
+    if (localWrappedLineIndex != naiveLines - 1) {
+        return nil;
+    }
+
+    // Re-fetch the tail (predecessor's last wrapped line) at explicit index.
+    int tailLineNum = naiveLines - 1;
+    int tailLength = 0;
+    int tailEOL = EOL_SOFT;
+    screen_char_t tailContinuation = { 0 };
+    iTermImmutableMetadata tailMetadata;
+    const screen_char_t *tail = [currentBlock getWrappedLineWithWrapWidth:width
+                                                                  lineNum:&tailLineNum
+                                                               lineLength:&tailLength
+                                                        includesEndOfLine:&tailEOL
+                                                                  yOffset:NULL
+                                                             continuation:&tailContinuation
+                                                     isStartOfWrappedLine:NULL
+                                                                 metadata:&tailMetadata];
+    if (!tail || tailLength >= width || tailLength == 0 || tailEOL != EOL_SOFT) {
+        return nil;
+    }
+
+    // Get the head directly from the next block's first raw line.
+    // This works for both adjustment==-1 (hidden head at offset 0) and
+    // adjustment==0 (head chars at offset 0 that aren't part of any
+    // contributed line). Using rawLine avoids depending on
+    // cacheAwareOffsetOfWrappedLineInBuffer.
+    const screen_char_t *rawHead = [nextBlock rawLine:nextBlock.firstEntry];
+    const int rawHeadLength = [nextBlock lengthOfRawLine:nextBlock.firstEntry];
+    // A zero-length first raw line is valid (e.g., immediate hard-EOL append).
+    // We still need to stitch so the predecessor tail gets correct EOL semantics.
+    if (rawHeadLength < 0 || (rawHeadLength > 0 && !rawHead)) {
+        return nil;
+    }
+
+    const int headNeeded = width - tailLength;
+    const BOOL consumedEntireHead = (rawHeadLength <= headNeeded);
+    const int usedLength = MIN(headNeeded, rawHeadLength);
+    screen_char_t *buf = (screen_char_t *)malloc(sizeof(screen_char_t) * width);
+    memcpy(buf, tail, sizeof(screen_char_t) * tailLength);
+    if (usedLength > 0) {
+        memcpy(buf + tailLength, rawHead, sizeof(screen_char_t) * usedLength);
+    }
+    for (int i = tailLength + usedLength; i < width; i++) {
+        buf[i] = tailContinuation;
+        buf[i].code = 0;
+        buf[i].complexChar = NO;
+    }
+    // Preserve the tail's style fields (fg/bg color, bold, italic, etc.)
+    // in the stitched continuation. Only update the EOL code based on
+    // whether the head was fully consumed.
+    screen_char_t stitchedContinuation = tailContinuation;
+    if (consumedEntireHead) {
+        // Get the EOL from the next block's first wrapped line to determine
+        // whether the stitched line ends (EOL_HARD) or wraps (EOL_SOFT).
+        int tempLineNum = 0;
+        int tempLength = 0;
+        int tempEOL = EOL_SOFT;
+        screen_char_t tempCont = { 0 };
+        [nextBlock getWrappedLineWithWrapWidth:width
+                                       lineNum:&tempLineNum
+                                    lineLength:&tempLength
+                             includesEndOfLine:&tempEOL
+                                  continuation:&tempCont];
+        stitchedContinuation.code = tempEOL;
+    } else {
+        stitchedContinuation.code = EOL_SOFT;
+    }
+    // Merge metadata in display order: tail then head, using the same
+    // append semantics as the monolithic appendToLastLine path.
+    ScreenCharArray *result;
+    if (usedLength > 0) {
+        iTermImmutableMetadata headRawMeta = [nextBlock screenCharArrayForRawLine:nextBlock.firstEntry].metadata;
+        iTermMetadata headSlice;
+        iTermMetadataInitCopyingSubrange(&headSlice, &headRawMeta, 0, usedLength);
+        iTermImmutableMetadata immutableHeadSlice = iTermMetadataMakeImmutable(headSlice);
+
+        iTermMetadata merged = iTermImmutableMetadataMutableCopy(tailMetadata);
+        iTermMetadataAppend(&merged, tailLength, &immutableHeadSlice, usedLength);
+
+        result = [[ScreenCharArray alloc] initWithLine:buf
+                                                length:tailLength + usedLength
+                                              metadata:iTermMetadataMakeImmutable(merged)
+                                          continuation:stitchedContinuation
+                                         freeOnRelease:YES];
+        iTermMetadataRelease(headSlice);
+        iTermMetadataRelease(merged);
+    } else {
+        result = [[ScreenCharArray alloc] initWithLine:buf
+                                                length:tailLength + usedLength
+                                              metadata:tailMetadata
+                                          continuation:stitchedContinuation
+                                         freeOnRelease:YES];
+    }
+    return result;
 }
 
 - (NSInteger)numberOfRawLines {
@@ -457,6 +651,9 @@ static NSUInteger iTermLineBlockArrayNextUniqueID;
     NSInteger sum = 0;
     for (LineBlock *block in _blocks) {
         int n = [block numRawLines];
+        if (block.startsWithContinuation) {
+            n -= 1;
+        }
         sum += n;
     }
     return sum;
@@ -649,12 +846,20 @@ static NSUInteger iTermLineBlockArrayNextUniqueID;
             // It's definitely not in this block.
             p -= used;
             if (blockOffsetPtr) {
-                yoffset += [block getNumLinesWithWrapWidth:width];
+                int lines = [block getNumLinesWithWrapWidth:width];
+                if (block.startsWithContinuation) {
+                    lines += [block continuationWrappedLineAdjustmentForWidth:width];
+                }
+                yoffset += lines;
             }
         } else if (p == used) {
             // It might be in this block!
             if (blockOffsetPtr) {
-                yoffset += [block getNumLinesWithWrapWidth:width];
+                int lines = [block getNumLinesWithWrapWidth:width];
+                if (block.startsWithContinuation) {
+                    lines += [block continuationWrappedLineAdjustmentForWidth:width];
+                }
+                yoffset += lines;
             }
             const int numTrailingEmptyLines = [block numberOfTrailingEmptyLines];
             if (numTrailingEmptyLines < emptyLinesLeftToSkip) {
@@ -702,7 +907,7 @@ static NSUInteger iTermLineBlockArrayNextUniqueID;
         return 0;
     }
 
-    // Step 1: Find which blocks contain your wrapped lines
+    // Find which blocks contain the wrapped lines.
     int startWrappedLineInBlock = 0;
     NSInteger startBlockIndex = [self indexOfBlockContainingLineNumber:range.location
                                                                         width:width
@@ -717,16 +922,16 @@ static NSUInteger iTermLineBlockArrayNextUniqueID;
         return 0;
     }
 
-    // Step 2: Convert wrapped line offsets to raw line numbers within their blocks
+    // Convert wrapped line offsets to raw line numbers within their blocks.
     LineBlock *startBlock = self[startBlockIndex];
-    NSNumber *startRawLineNum = [startBlock rawLineNumberAtWrappedLineOffset:startWrappedLineInBlock
+    NSNumber *startRawLineNum = [startBlock rawLineNumberAtWrappedLineOffset:[self localWrappedOffset:startWrappedLineInBlock forBlock:startBlock width:width]
                                                                        width:width];
 
     LineBlock *endBlock = self[endBlockIndex];
-    NSNumber *endRawLineNum = [endBlock rawLineNumberAtWrappedLineOffset:endWrappedLineInBlock
+    NSNumber *endRawLineNum = [endBlock rawLineNumberAtWrappedLineOffset:[self localWrappedOffset:endWrappedLineInBlock forBlock:endBlock width:width]
                                                                    width:width];
 
-    // Step 3: Count raw lines
+    // Count raw lines.
     if (startBlockIndex == endBlockIndex) {
         // Same block - simple subtraction
         return [endRawLineNum intValue] - [startRawLineNum intValue] + 1;
@@ -739,11 +944,22 @@ static NSUInteger iTermLineBlockArrayNextUniqueID;
 
         // All raw lines in intermediate blocks
         for (NSInteger i = startBlockIndex + 1; i < endBlockIndex; i++) {
-            count += _blocks[i].numRawLines;
+            int n = _blocks[i].numRawLines;
+            if (_blocks[i].startsWithContinuation) {
+                n -= 1;
+            }
+            count += n;
         }
 
-        // Raw lines from start of last block to end position
-        count += [endRawLineNum intValue] + 1;
+        // Raw lines from start of last block to end position.
+        // If the end block starts with continuation, its raw line 0 is
+        // the same raw line as the previous block's last line, which
+        // was already counted.
+        int endRawLines = [endRawLineNum intValue] + 1;
+        if (endBlock.startsWithContinuation) {
+            endRawLines -= 1;
+        }
+        count += endRawLines;
         return count;
     }
 }
@@ -809,6 +1025,29 @@ static NSUInteger iTermLineBlockArrayNextUniqueID;
     [_rawLinesCache removeFirstValue];
     [_blocks removeObjectAtIndex:0];
     _head = _blocks.firstObject;
+    // If the new head was a continuation of the removed block, clear its
+    // continuation status and recompute its cached values since it's now
+    // a standalone block.
+    if (_head.startsWithContinuation) {
+        const int oldPrefixCharacters = _head.continuationPrefixCharacters;
+        [_head clearContinuation];
+        // The raw lines cache entry needs +1 (was decremented for continuation).
+        if (_rawLinesCache) {
+            const NSInteger rawValue = [_rawLinesCache valueAtIndex:0];
+            [_rawLinesCache setFirstValue:rawValue + 1];
+        }
+        // The num lines cache entries need recomputation.
+        // The head's wrapped count was adjusted down; restore to unadjusted.
+        __weak __typeof(self) weakSelf = self;
+        [_numLinesCaches setFirstValueWithBlock:^NSInteger(int width) {
+            __strong __typeof(weakSelf) strongSelf = weakSelf;
+            if (!strongSelf) {
+                return 0;
+            }
+            return [strongSelf->_head getNumLinesWithWrapWidth:width];
+        }];
+        (void)oldPrefixCharacters;
+    }
     _lastHeadGeneration = [self generationOf:_head];
     _tail = _blocks.lastObject;
     _lastTailGeneration = [self generationOf:_tail];
@@ -858,11 +1097,18 @@ static NSUInteger iTermLineBlockArrayNextUniqueID;
     if (block == _blocks.firstObject) {
         _lastHeadGeneration = [self generationOf:_head];
         [_numLinesCaches setFirstValueWithBlock:^NSInteger(int width) {
-            const int value = [block getNumLinesWithWrapWidth:width];
+            int value = [block getNumLinesWithWrapWidth:width];
+            if (block.startsWithContinuation) {
+                value += [block continuationWrappedLineAdjustmentForWidth:width];
+            }
             return value;
         }];
         [_rawSpaceCache setFirstValue:[block rawSpaceUsed]];
-        [_rawLinesCache setFirstValue:[block numRawLines]];
+        int rawLines = [block numRawLines];
+        if (block.startsWithContinuation) {
+            rawLines -= 1;
+        }
+        [_rawLinesCache setFirstValue:rawLines];
         if (block == _blocks.lastObject) {
             _lastTailGeneration = [self generationOf:_tail];
         }
@@ -870,11 +1116,18 @@ static NSUInteger iTermLineBlockArrayNextUniqueID;
         // NOTE: If you modify this also modify addBlock:hints:
         _lastTailGeneration = [self generationOf:_tail];
         [_numLinesCaches setLastValueWithBlock:^NSInteger(int width) {
-            const int value = [block getNumLinesWithWrapWidth:width];
+            int value = [block getNumLinesWithWrapWidth:width];
+            if (block.startsWithContinuation) {
+                value += [block continuationWrappedLineAdjustmentForWidth:width];
+            }
             return value;
         }];
         [_rawSpaceCache setLastValue:[block rawSpaceUsed]];
-        [_rawLinesCache setLastValue:[block numRawLines]];
+        int rawLines = [block numRawLines];
+        if (block.startsWithContinuation) {
+            rawLines -= 1;
+        }
+        [_rawLinesCache setLastValue:rawLines];
     } else {
         ITAssertWithMessage(block == _blocks.firstObject || block == _blocks.lastObject,
                             @"Block with index %@/%@ changed", @([_blocks indexOfObject:block]), @(_blocks.count));
@@ -893,9 +1146,17 @@ static NSUInteger iTermLineBlockArrayNextUniqueID;
     const int w = [[[self cachedWidths] anyObject] intValue];
     for (int i = 0; i < _blocks.count; i++) {
         LineBlock *block = _blocks[i];
-        BOOL ok = [block numRawLines] == [_rawLinesCache valueAtIndex:i];
+        int expectedRawLines = [block numRawLines];
+        if (block.startsWithContinuation) {
+            expectedRawLines -= 1;
+        }
+        BOOL ok = expectedRawLines == [_rawLinesCache valueAtIndex:i];
         if (ok && w > 0) {
-            ok = [block totallyUncachedNumLinesWithWrapWidth:w] == [[_numLinesCaches numLinesCacheForWidth:w] valueAtIndex:i];
+            int expectedWrappedLines = [block totallyUncachedNumLinesWithWrapWidth:w];
+            if (block.startsWithContinuation) {
+                expectedWrappedLines += [block continuationWrappedLineAdjustmentForWidth:w];
+            }
+            ok = expectedWrappedLines == [[_numLinesCaches numLinesCacheForWidth:w] valueAtIndex:i];
         }
         if (!ok) {
             [self oopsWithWidth:0 droppedChars:droppedChars block:^{

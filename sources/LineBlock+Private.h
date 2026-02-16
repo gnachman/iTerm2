@@ -50,6 +50,17 @@ NS_ASSUME_NONNULL_BEGIN
 
     NSString *_guid;
 
+    // When >= 0 this block's first raw line is a continuation of the previous
+    // block's last (partial) raw line. The value is the total number of
+    // characters in the combined raw line that precede this block's portion.
+    // -1 means no continuation.
+    int _continuationPrefixCharacters;
+
+    // YES when the logical prefix (characters before this block's portion of
+    // the continued raw line) contains any DWC. Propagated through the
+    // continuation chain so the check is O(1).
+    BOOL _prefixHasDWC;
+
     NSObject *_cachedMutationCert;  // DON'T USE DIRECTLY THIS UNLESS YOU LOVE PAIN. Only -validMutationCertificate should touch it.
 
     __weak LineBlock *_progenitor;
@@ -194,6 +205,24 @@ typedef struct {
 
 - (LineBlockLocation)locationOfRawLineForWidth:(int)width
                                        lineNum:(int *)lineNum;
+
+// Returns the adjustment to apply to this block's wrapped line count
+// when the block starts with a continuation. Accounts for the column
+// offset from the prefix block so lines aren't double-counted.
+- (int)continuationWrappedLineAdjustmentForWidth:(int)width;
+
+// Clears this block's continuation status, making it a standalone block.
+// Used when the block that preceded this one is dropped.
+- (void)clearContinuation;
+
+// YES when the logical prefix (characters in prior blocks of the continued
+// raw line) contains DWC. Propagated through the continuation chain.
+@property (nonatomic, readonly) BOOL prefixHasDWC;
+
+// Scans the last raw line for DWC_RIGHT. Authoritative regardless of the
+// block's _mayHaveDoubleWidthCharacter flag. Used to decide whether a
+// continuation block can safely use the character-count adjustment formula.
+- (BOOL)lastRawLineHasDWC;
 
 // Search for a multi-line pattern starting at the given entry.
 // Returns a state object indicating the result:
