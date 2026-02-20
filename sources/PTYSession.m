@@ -4039,6 +4039,19 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
 // Main thread
 - (void)taskDidRegister:(PTYTask *)task {
     [self updateTTYSize];
+
+    // Wire up backpressure integration for dispatch sources path.
+    // Must happen before PTYTask starts its dispatch sources so that
+    // shouldRead can apply backpressure from the first read.
+    if ([iTermAdvancedSettingsModel usePerPTYDispatchSources]) {
+        iTermTokenExecutor *executor = _screen.mutableState.tokenExecutor;
+        task.tokenExecutor = executor;
+
+        __weak PTYTask *weakTask = task;
+        executor.backpressureReleaseHandler = ^{
+            [weakTask updateReadSourceState];
+        };
+    }
 }
 
 - (void)tmuxDidDisconnect {

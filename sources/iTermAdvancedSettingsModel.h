@@ -375,6 +375,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (BOOL)revealExportedSettingsAndData;
 + (BOOL)rightJustifyRTLLines;
 + (BOOL)runJobsInServers;
++ (BOOL)usePerPTYDispatchSources;
 + (BOOL)saveToPasteHistoryWhenSecureInputEnabled;
 + (double)scrollWheelAcceleration;
 + (NSString *)searchCommand;

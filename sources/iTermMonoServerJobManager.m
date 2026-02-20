@@ -14,6 +14,7 @@
 #import "iTermProcessCache.h"
 #import "NSArray+iTerm.h"
 #import "NSWorkspace+iTerm.h"
+#import "PTYTask.h"
 #import "PTYTask+MRR.h"
 #import "TaskNotifier.h"
 
@@ -95,7 +96,7 @@
                                                                       NSNumber *optionalErrorCode) {
         if (status == iTermJobManagerForkAndExecStatusSuccess) {
             DLog(@"Register %@ after fork and exec", @(task.pid));
-            [[TaskNotifier sharedInstance] registerTask:task];
+            [PTYTask registerTaskWithNotifier:task];
         }
         completion(status, optionalErrorCode);
     };
@@ -281,7 +282,7 @@
         [self queueAttachToServer:serverConnection task:task];
     });
     DLog(@"Register task for %@", pidNumber);
-    [[TaskNotifier sharedInstance] registerTask:task];
+    [PTYTask registerTaskWithNotifier:task];
     if (pidNumber == nil) {
         return results;
     }

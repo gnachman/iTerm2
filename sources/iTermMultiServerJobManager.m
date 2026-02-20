@@ -16,6 +16,7 @@
 #import "NSArray+iTerm.h"
 #import "NSFileManager+iTerm.h"
 #import "NSObject+iTerm.h"
+#import "PTYTask.h"
 #import "TaskNotifier.h"
 
 NSString *const iTermMultiServerRestorationKeyType = @"Type";
@@ -180,7 +181,7 @@ typedef struct {
             dispatch_async(dispatch_get_main_queue(), ^{
                 [[iTermProcessCache sharedInstance] registerTrackedPID:child.pid];
                 DLog(@"Register %@ after server successfully execs job", @(child.pid));
-                [[TaskNotifier sharedInstance] registerTask:task];
+                [PTYTask registerTaskWithNotifier:task];
                 [[iTermProcessCache sharedInstance] setNeedsUpdate:YES];
                 completion(iTermJobManagerForkAndExecStatusSuccess, nil);
             });
@@ -430,7 +431,7 @@ typedef struct {
 
     [[iTermProcessCache sharedInstance] registerTrackedPID:pid];
     DLog(@"Register task %@ after attaching", @(pid));
-    [[TaskNotifier sharedInstance] registerTask:task];
+    [PTYTask registerTaskWithNotifier:task];
     [[iTermProcessCache sharedInstance] setNeedsUpdate:YES];
 }
 
