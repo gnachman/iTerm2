@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="23504" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES">
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="24506" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES">
     <dependencies>
         <deployment identifier="macosx"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="23504"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="24506"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <objects>
@@ -19,7 +19,7 @@
             <windowStyleMask key="styleMask" titled="YES" closable="YES" fullSizeContentView="YES"/>
             <windowPositionMask key="initialPositionMask" leftStrut="YES" rightStrut="YES" topStrut="YES" bottomStrut="YES"/>
             <rect key="contentRect" x="386" y="524" width="588" height="413"/>
-            <rect key="screenRect" x="0.0" y="0.0" width="1512" height="944"/>
+            <rect key="screenRect" x="0.0" y="0.0" width="3008" height="1662"/>
             <view key="contentView" id="Y6E-dl-YZS" customClass="iTermAboutWindowContentView">
                 <rect key="frame" x="0.0" y="0.0" width="588" height="413"/>
                 <autoresizingMask key="autoresizingMask"/>
@@ -114,15 +114,15 @@
                         <rect key="frame" x="22" y="223" width="546" height="20"/>
                         <autoresizingMask key="autoresizingMask" flexibleMinY="YES"/>
                         <clipView key="contentView" drawsBackground="NO" id="Y1k-vx-Mfh">
-                            <rect key="frame" x="0.0" y="0.0" width="531" height="20"/>
+                            <rect key="frame" x="0.0" y="0.0" width="546" height="20"/>
                             <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                             <subviews>
                                 <textView wantsLayer="YES" importsGraphics="NO" richText="NO" verticallyResizable="NO" spellingCorrection="YES" smartInsertDelete="YES" id="XqE-kC-hnW">
-                                    <rect key="frame" x="0.0" y="0.0" width="531" height="20"/>
+                                    <rect key="frame" x="0.0" y="0.0" width="546" height="20"/>
                                     <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                     <color key="textColor" name="textColor" catalog="System" colorSpace="catalog"/>
                                     <color key="backgroundColor" red="1" green="1" blue="1" alpha="0.0" colorSpace="custom" customColorSpace="sRGB"/>
-                                    <size key="minSize" width="531" height="20"/>
+                                    <size key="minSize" width="546" height="20"/>
                                     <size key="maxSize" width="553" height="10000000"/>
                                     <attributedString key="textStorage">
                                         <fragment>
@@ -151,17 +151,17 @@
                             <autoresizingMask key="autoresizingMask"/>
                         </scroller>
                         <scroller key="verticalScroller" wantsLayer="YES" verticalHuggingPriority="750" horizontal="NO" id="n20-ME-3Ey">
-                            <rect key="frame" x="531" y="0.0" width="15" height="20"/>
+                            <rect key="frame" x="529" y="0.0" width="17" height="20"/>
                             <autoresizingMask key="autoresizingMask"/>
                         </scroller>
                     </scrollView>
                     <imageView horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="gnK-jE-EbY">
-                        <rect key="frame" x="275" y="174" width="200" height="48"/>
+                        <rect key="frame" x="157" y="174" width="200" height="48"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                         <imageCell key="cell" refusesFirstResponder="YES" alignment="left" imageScaling="proportionallyDown" image="coderabbitai" id="K26-aE-Qae"/>
                     </imageView>
                     <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="QLQ-ce-ZLX" userLabel="Whitebox">
-                        <rect key="frame" x="144" y="174" width="123" height="48"/>
+                        <rect key="frame" x="22" y="174" width="123" height="48"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                         <subviews>
                             <imageView horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="r4H-cK-fWg">
@@ -180,10 +180,16 @@
                             </textField>
                         </subviews>
                     </customView>
+                    <imageView horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="8Uw-GU-xTT" userLabel="SerpApi">
+                        <rect key="frame" x="368" y="174" width="200" height="48"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                        <imageCell key="cell" refusesFirstResponder="YES" alignment="left" animates="YES" imageScaling="proportionallyDown" image="SerpApi" id="hZP-ku-ZlD"/>
+                    </imageView>
                 </subviews>
                 <connections>
                     <outlet property="_bottomAlignedScrollView" destination="cIi-Dh-gHn" id="3ge-23-X50"/>
                     <outlet property="_codeRabbit" destination="gnK-jE-EbY" id="yQl-H9-nhG"/>
+                    <outlet property="_serpApi" destination="8Uw-GU-xTT" id="soS-ht-Xbn"/>
                     <outlet property="_sponsorsHeading" destination="XqE-kC-hnW" id="pQL-Be-gdx"/>
                     <outlet property="_whitebox" destination="QLQ-ce-ZLX" id="mCk-Eh-gWM"/>
                     <outlet property="_whiteboxText" destination="Yn8-g8-sO4" id="i36-xm-S0G"/>
@@ -194,6 +200,7 @@
     </objects>
     <resources>
         <image name="NSApplicationIcon" width="32" height="32"/>
+        <image name="SerpApi" width="395" height="97"/>
         <image name="coderabbitai" width="214" height="48"/>
         <image name="whitebox_logo" width="22.079999923706055" height="22.079999923706055"/>
     </resources>

@@ -2825,6 +2825,9 @@
 		A6971F3620D8D3CB0075CFD4 /* iTermAdvancedGPUSettingsWindowController.xib in Resources */ = {isa = PBXBuildFile; fileRef = A6971F3220D8D3C30075CFD4 /* iTermAdvancedGPUSettingsWindowController.xib */; };
 		A6971F3720D8D3CE0075CFD4 /* iTermAdvancedGPUSettingsWindowController.xib in Resources */ = {isa = PBXBuildFile; fileRef = A6971F3220D8D3C30075CFD4 /* iTermAdvancedGPUSettingsWindowController.xib */; };
 		A6971F3820DA295A0075CFD4 /* ToolWebView.m in Sources */ = {isa = PBXBuildFile; fileRef = 53AFFC911DD38F1500E6CEC6 /* ToolWebView.m */; };
+		A6976AEE2F47EFD3002875A1 /* SerpApi.png in Resources */ = {isa = PBXBuildFile; fileRef = A6976AED2F47EFD3002875A1 /* SerpApi.png */; };
+		A6976AEF2F47EFD3002875A1 /* SerpApi.png in Resources */ = {isa = PBXBuildFile; fileRef = A6976AED2F47EFD3002875A1 /* SerpApi.png */; };
+		A6976AF02F47EFD3002875A1 /* SerpApi.png in Resources */ = {isa = PBXBuildFile; fileRef = A6976AED2F47EFD3002875A1 /* SerpApi.png */; };
 		A697CD712D973E3B0031583F /* iTermApplicationDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = A697CD702D973E370031583F /* iTermApplicationDelegate.swift */; };
 		A697CEB82D987C5A0031583F /* OpenQuicklyNamedMark.png in Resources */ = {isa = PBXBuildFile; fileRef = A697CEB62D987C5A0031583F /* OpenQuicklyNamedMark.png */; };
 		A697CEB92D987C5A0031583F /* OpenQuicklyNamedMark@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A697CEB72D987C5A0031583F /* OpenQuicklyNamedMark@2x.png */; };
@@ -3838,6 +3841,7 @@
 		A6D1A3F72C7E9B2000FECDF2 /* KittyImageCommand.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6D1A3F62C7E9B2000FECDF2 /* KittyImageCommand.swift */; };
 		A6D1C41E2861430D00B68526 /* FindIndicatorWindow.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6D1C41D2861430D00B68526 /* FindIndicatorWindow.swift */; };
 		A6D1C420286192F600B68526 /* TextClipDrawing.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6D1C41F286192F600B68526 /* TextClipDrawing.swift */; };
+		A6D1CC022F0B00000099AA01 /* iTermRecentTabColors.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6D1CC012F0B00000099AA01 /* iTermRecentTabColors.swift */; };
 		A6D20C67287CC51F0007F479 /* iTermProcessInfo.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6D20C66287CC51F0007F479 /* iTermProcessInfo.swift */; };
 		A6D22A431BC8BE6B004084E0 /* Model.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = A6D22A411BC8BE6B004084E0 /* Model.xcdatamodeld */; };
 		A6D22A441BC8BE6B004084E0 /* Model.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = A6D22A411BC8BE6B004084E0 /* Model.xcdatamodeld */; };
@@ -7723,6 +7727,7 @@
 		A6971F3020D8D3C30075CFD4 /* iTermAdvancedGPUSettingsViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermAdvancedGPUSettingsViewController.h; sourceTree = "<group>"; };
 		A6971F3120D8D3C30075CFD4 /* iTermAdvancedGPUSettingsViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermAdvancedGPUSettingsViewController.m; sourceTree = "<group>"; };
 		A6971F3220D8D3C30075CFD4 /* iTermAdvancedGPUSettingsWindowController.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = iTermAdvancedGPUSettingsWindowController.xib; sourceTree = "<group>"; };
+		A6976AED2F47EFD3002875A1 /* SerpApi.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = SerpApi.png; path = images/sponsors/SerpApi.png; sourceTree = "<group>"; };
 		A697CD702D973E370031583F /* iTermApplicationDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermApplicationDelegate.swift; sourceTree = "<group>"; };
 		A697CEB62D987C5A0031583F /* OpenQuicklyNamedMark.png */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; name = OpenQuicklyNamedMark.png; path = images/icons/OpenQuicklyNamedMark.png; sourceTree = "<group>"; };
 		A697CEB72D987C5A0031583F /* OpenQuicklyNamedMark@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; name = "OpenQuicklyNamedMark@2x.png"; path = "images/icons/OpenQuicklyNamedMark@2x.png"; sourceTree = "<group>"; };
@@ -8337,6 +8342,7 @@
 		A6D1C41D2861430D00B68526 /* FindIndicatorWindow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FindIndicatorWindow.swift; sourceTree = "<group>"; };
 		A6D1C41F286192F600B68526 /* TextClipDrawing.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TextClipDrawing.swift; sourceTree = "<group>"; };
 		A6D1C42128619E4800B68526 /* iTermTextDrawingHelperDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermTextDrawingHelperDelegate.h; sourceTree = "<group>"; };
+		A6D1CC012F0B00000099AA01 /* iTermRecentTabColors.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermRecentTabColors.swift; sourceTree = "<group>"; };
 		A6D20C66287CC51F0007F479 /* iTermProcessInfo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermProcessInfo.swift; sourceTree = "<group>"; };
 		A6D22A421BC8BE6B004084E0 /* Model.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = Model.xcdatamodel; sourceTree = "<group>"; };
 		A6D22B431BC9D368004084E0 /* iTermShellHistoryTest.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = iTermShellHistoryTest.m; sourceTree = "<group>"; };
@@ -9755,6 +9761,7 @@
 		1D093C131217412B0029F9AD /* Images */ = {
 			isa = PBXGroup;
 			children = (
+				A6976AED2F47EFD3002875A1 /* SerpApi.png */,
 				A6A479B62E6E58C000DCF16F /* AppIcon.png */,
 				A69EB7262E68CE0C00BD3181 /* iTerm2 App Icon for Beta.icon */,
 				A69EB7272E68CE0C00BD3181 /* iTerm2 App Icon for Nightly.icon */,
@@ -16019,6 +16026,7 @@
 				A6F18B492AE2F39C006C08EE /* uniE0C0_flame-thick.pdf in Resources */,
 				A6E7AE57214394CA00DE9F3B /* graphic_bq.png in Resources */,
 				A65DF4A72849C11D00AA29AB /* bash-si-loader in Resources */,
+				A6976AF02F47EFD3002875A1 /* SerpApi.png in Resources */,
 				A66F52C92106F6F100571168 /* gitdirty.png in Resources */,
 				A67D0D491A2EE12A003A8B35 /* CommandHistoryPopup.xib in Resources */,
 				A6F7A736213CB143004DE961 /* StatusBarIconLoupe@2x.png in Resources */,
@@ -17038,6 +17046,7 @@
 				A6C4352221D1C64800346910 /* iterm2Invoke.js in Resources */,
 				A6CBB80F2E0A023A00B2CCCB /* password-demo.html in Resources */,
 				A67D0D5A1A2EE12A003A8B35 /* iTerm.strings in Resources */,
+				A6976AEF2F47EFD3002875A1 /* SerpApi.png in Resources */,
 				A66A1FAF1A3A230A00F4A3A7 /* iTermWindowShortcutAccessoryView.xib in Resources */,
 				A6CBB8F12E0A6C9F00B2CCCB /* load-readability.js in Resources */,
 				53BBA0F9214236AC0074D061 /* iterm2_git_poll.sh in Resources */,
@@ -17227,6 +17236,7 @@
 				A61BB46822001E650027F47D /* iTermRecordingIcon.icns in Resources */,
 				A6C7DE5919A459E9001E5C75 /* iTerm2.sdef in Resources */,
 				A6F31A3E295BC61F00C1A51E /* uniE0D0_PowerlineExtraSymbols.pdf in Resources */,
+				A6976AEE2F47EFD3002875A1 /* SerpApi.png in Resources */,
 				1DE922EA1AC370DC00965876 /* BackgroundStripes@2x.png in Resources */,
 				A69B457B1967B03B00F5444D /* BrokenPipeDivider.png in Resources */,
 				53AA7649237E35A50094D75A /* OpenQuicklyActionIcon.png in Resources */,

@@ -68,6 +68,7 @@ static NSString *iTermAboutWindowControllerWhatsNewURLString = @"iterm2://whats-
     IBOutlet NSTextField *_whiteboxText;
 
     IBOutlet NSView *_codeRabbit;
+    IBOutlet NSView *_serpApi;
 
     NSArray<iTermSponsor *> *_sponsors;
 }
@@ -97,7 +98,11 @@ static NSString *iTermAboutWindowControllerWhatsNewURLString = @"iterm2://whats-
                    [iTermSponsor sponsorWithView:_codeRabbit
                                        textField:nil
                                        container:self
-                                             url:@"https://coderabbit.ai/"]];
+                                             url:@"https://coderabbit.ai/"],
+                   [iTermSponsor sponsorWithView:_serpApi
+                                       textField:nil
+                                       container:self
+                                             url:@"https://serpapi.com/?utm_source=iterm"]];
 }
 
 
