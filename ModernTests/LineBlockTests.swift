@@ -2778,6 +2778,35 @@ class LineBlockTests: XCTestCase {
         // XCTAssertTrue(bidiInfo!.runs.count > 0, "BidiDisplayInfo should contain at least one visual run")
     }
 
+    func testHebrewBidiVisualOrderingIsNotMirrored() {
+        let oldBidi = iTermPreferences.bool(forKey: kPreferenceKeyBidi)
+        iTermPreferences.setBool(true, forKey: kPreferenceKeyBidi)
+        defer {
+            iTermPreferences.setBool(oldBidi, forKey: kPreferenceKeyBidi)
+        }
+
+        let block = LineBlock(rawBufferSize: 16, absoluteBlockNumber: 1)
+        let rtlText = "\u{05E9}\u{05DC}\u{05D5}\u{05DD}"  // שלום
+        let lineString = makeLineString(rtlText,
+                                        eol: EOL_HARD,
+                                        lineStringMetadata: iTermLineStringMetadata(timestamp: 0,
+                                                                                    rtlFound: true))
+
+        let width = Int32(rtlText.utf16.count)
+        XCTAssertTrue(block.appendLineString(lineString, width: width))
+        block.reloadBidiInfo()
+
+        guard let bidi = block.bidiInfo(forLineNumber: 0, width: width) else {
+            XCTFail("Expected bidi info for Hebrew line")
+            return
+        }
+
+        XCTAssertEqual(bidi.visualForLogical(0), 3)
+        XCTAssertEqual(bidi.visualForLogical(1), 2)
+        XCTAssertEqual(bidi.visualForLogical(2), 1)
+        XCTAssertEqual(bidi.visualForLogical(3), 0)
+    }
+
     func testSetBidiForLastRawLineOverridesMetadata() {
         // Given a LineBlock and a line containing right-to-left text (e.g. Hebrew letters)
         let capacity: Int32 = 10

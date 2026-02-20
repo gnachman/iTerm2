@@ -367,7 +367,7 @@ preferSpeedToFullLigatureSupport:(BOOL)preferSpeedToFullLigatureSupport
                 // complicating its ASCII fastpath.
                 int lastCellDraw;
                 if (bidiLUT && i - 1 < bidiLUTLength) {
-                    lastCellDraw = bidiLUT[i - i];
+                    lastCellDraw = bidiLUT[i - 1];
                 } else {
                     lastCellDraw = i - 1;
                 }
