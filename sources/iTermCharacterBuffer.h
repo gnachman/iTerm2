@@ -18,6 +18,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property(nonatomic, readonly) const screen_char_t *pointer;
 @property(nonatomic, readonly) NSData *data;
 @property(nonatomic, readonly) NSString *shortDescription;
+@property(nonatomic, readonly) BOOL wasRelocated;
 
 - (instancetype)initWithSize:(int)size;
 - (instancetype)initWithData:(NSData *)data;
@@ -25,6 +26,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)resize:(int)newSize;
 - (iTermCharacterBuffer *)clone;
 - (BOOL)deepIsEqual:(id)object;
+- (void)clearRelocationFlag;
 
 @end
 

@@ -11,6 +11,7 @@
 @implementation iTermCharacterBuffer {
     screen_char_t *_buffer;
     int _size;
+    BOOL _wasRelocated;
 }
 
 - (void)dealloc {
@@ -70,12 +71,20 @@
 }
 
 - (void)resize:(int)newSize {
+    screen_char_t *oldBuffer = _buffer;
     _buffer = iTermRealloc(_buffer, newSize, sizeof(screen_char_t));
+    if (_buffer != oldBuffer) {
+        _wasRelocated = YES;
+    }
     _size = newSize;
 }
 
 - (iTermCharacterBuffer *)clone {
     return [[iTermCharacterBuffer alloc] initWithChars:_buffer size:_size];
+}
+
+- (void)clearRelocationFlag {
+    _wasRelocated = NO;
 }
 
 - (BOOL)deepIsEqual:(id)object {

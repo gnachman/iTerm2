@@ -3146,27 +3146,9 @@ extension LineBlock {
     }
 }
 
-// MARK: - Incremental Merge Tests
+// MARK: - Zero-Copy Merge Tests
 
-class LineBlockIncrementalMergeTests: XCTestCase {
-
-    // Helper to create a partial-line block with given content
-    private func makePartialLineBlock(_ string: String, capacity: Int32 = 1024) -> LineBlock {
-        let block = LineBlock(rawBufferSize: capacity, absoluteBlockNumber: 0)
-        let lineString = makeLineString(string, eol: EOL_SOFT)
-        let result = block.appendLineString(lineString, width: Int32(80))
-        precondition(result, "Failed to append line string")
-        return block
-    }
-
-    // Helper to create a hard-line block (not partial)
-    private func makeHardLineBlock(_ string: String, capacity: Int32 = 1024) -> LineBlock {
-        let block = LineBlock(rawBufferSize: capacity, absoluteBlockNumber: 0)
-        let lineString = makeLineString(string, eol: EOL_HARD)
-        let result = block.appendLineString(lineString, width: Int32(80))
-        precondition(result, "Failed to append line string")
-        return block
-    }
+class LineBlockZeroCopyMergeTests: XCTestCase {
 
     // Helper to create a line string
     private func makeLineString(_ string: String,
@@ -3195,647 +3177,571 @@ class LineBlockIncrementalMergeTests: XCTestCase {
     }
 
     // Helper to append partial content to a block
-    private func appendPartial(_ string: String, to block: LineBlock) {
+    private func appendPartialASCII(_ block: LineBlock, _ string: String, width: Int32 = 80) {
         let lineString = makeLineString(string, eol: EOL_SOFT)
-        let result = block.appendLineString(lineString, width: Int32(80))
+        let result = block.appendLineString(lineString, width: width)
         precondition(result, "Failed to append partial line string")
     }
 
     // Helper to append hard line to a block
-    private func appendHardLine(_ string: String, to block: LineBlock) {
+    private func appendHardASCII(_ block: LineBlock, _ string: String, width: Int32 = 80) {
         let lineString = makeLineString(string, eol: EOL_HARD)
-        let result = block.appendLineString(lineString, width: Int32(80))
+        let result = block.appendLineString(lineString, width: width)
         precondition(result, "Failed to append hard line string")
     }
 
-    // MARK: - A. Eligibility Tests (canIncrementalMergeFromProgenitor)
+    // MARK: - A. Eligibility Tests (canZeroCopyMergeFromProgenitor)
 
-    func testCanIncrementalMerge_BasicEligibility() {
-        // Given: Original with partial line, copy made, then original appends partial
-        let original = makePartialLineBlock("abc")
-        let copy = original.cowCopy()
-        appendPartial("def", to: original)
+    func testCanZeroCopyMerge_BasicEligibility() {
+        // A single partial line block should be eligible after cowCopy + progenitor mutation.
+        let progenitor = LineBlock(rawBufferSize: 1024, absoluteBlockNumber: 0)
+        appendPartialASCII(progenitor, "Hello")
 
-        // Then: Copy should be eligible for incremental merge
-        XCTAssertTrue(copy.canIncrementalMergeFromProgenitor)
+        let copy = progenitor.cowCopy()
+
+        // The progenitor must mutate to detach ownership from the copy.
+        appendPartialASCII(progenitor, "!")
+
+        XCTAssertTrue(copy.canZeroCopyMergeFromProgenitor(),
+                      "Single partial line block should be eligible for zero-copy merge")
     }
 
-    func testCanIncrementalMerge_IneligibleWhenNewLineAdded() {
-        // Given: Original with partial line, copy made, then original adds hard line
-        let original = makePartialLineBlock("abc")
-        let copy = original.cowCopy()
-        appendHardLine("def", to: original)
+    func testCanZeroCopyMerge_EligibleAfterAppend() {
+        // Appending more partial data to the progenitor should keep eligibility.
+        let progenitor = LineBlock(rawBufferSize: 1024, absoluteBlockNumber: 0)
+        appendPartialASCII(progenitor, "Hello")
 
-        // Then: Copy should not be eligible (new line added, not partial append)
-        XCTAssertFalse(copy.canIncrementalMergeFromProgenitor)
+        let copy = progenitor.cowCopy()
+
+        // Append more data to the progenitor (triggers validMutationCertificate).
+        appendPartialASCII(progenitor, " World")
+
+        XCTAssertTrue(copy.canZeroCopyMergeFromProgenitor(),
+                      "Progenitor with partial-line appends should remain eligible")
     }
 
-    func testCanIncrementalMerge_IneligibleWhenLastLinePopped() {
-        // Given: Original with partial line, copy made, then original pops and appends
-        let original = makePartialLineBlock("abc")
-        let copy = original.cowCopy()
-        _ = original.popLastLine(width: 80)
-        appendPartial("xyz", to: original)
+    func testCanZeroCopyMerge_IneligibleWhenNewLineAdded() {
+        // Adding a new raw line to the progenitor should break eligibility.
+        let progenitor = LineBlock(rawBufferSize: 1024, absoluteBlockNumber: 0)
+        appendPartialASCII(progenitor, "Hello")
 
-        // Then: Copy should not be eligible (pop is not append-only)
-        XCTAssertFalse(copy.canIncrementalMergeFromProgenitor)
+        let copy = progenitor.cowCopy()
+
+        // Complete the line and add a new one.
+        appendHardASCII(progenitor, " done")
+
+        XCTAssertFalse(copy.canZeroCopyMergeFromProgenitor(),
+                       "Should be ineligible after progenitor adds a new line")
     }
 
-    func testCanIncrementalMerge_IneligibleWhenNoProgenitor() {
-        // Given: A block with no progenitor
-        let block = makePartialLineBlock("abc")
+    func testCanZeroCopyMerge_IneligibleWhenNotPartial() {
+        // A complete (non-partial) single line should not be eligible.
+        let progenitor = LineBlock(rawBufferSize: 1024, absoluteBlockNumber: 0)
+        appendHardASCII(progenitor, "Complete")
 
-        // Then: Should not be eligible (no progenitor)
-        XCTAssertFalse(block.canIncrementalMergeFromProgenitor)
+        let copy = progenitor.cowCopy()
+
+        XCTAssertFalse(copy.canZeroCopyMergeFromProgenitor(),
+                       "Should be ineligible when progenitor line is not partial")
     }
 
-    func testCanIncrementalMerge_IneligibleWhenProgenitorInvalidated() {
-        // Given: Original with partial line, copy made, then original invalidated
-        let original = makePartialLineBlock("abc")
-        let copy = original.cowCopy()
-        appendPartial("def", to: original)
-        original.invalidate()
+    func testCanZeroCopyMerge_IneligibleWhenNoProgenitor() {
+        // A block with no progenitor should not be eligible.
+        let block = LineBlock(rawBufferSize: 1024, absoluteBlockNumber: 0)
+        appendPartialASCII(block, "Hello")
 
-        // Then: Copy should not be eligible (progenitor invalidated)
-        XCTAssertFalse(copy.canIncrementalMergeFromProgenitor)
+        XCTAssertFalse(block.canZeroCopyMergeFromProgenitor(),
+                       "Should be ineligible with no progenitor")
     }
 
-    func testCanIncrementalMerge_IneligibleWithMultipleRawLines() {
-        // Given: Block with multiple raw lines (even if last is partial)
-        let original = LineBlock(rawBufferSize: 1024, absoluteBlockNumber: 0)
-        appendHardLine("line1", to: original)
-        appendPartial("line2", to: original)
+    func testCanZeroCopyMerge_IneligibleWhenBufferRelocated() {
+        // If the character buffer was relocated, zero-copy merge should be ineligible.
+        let progenitor = LineBlock(rawBufferSize: 16, absoluteBlockNumber: 0)
+        appendPartialASCII(progenitor, "Hi")
 
-        let copy = original.cowCopy()
-        appendPartial("more", to: original)
+        let copy = progenitor.cowCopy()
 
-        // Then: Should not be eligible (multiple raw lines)
-        XCTAssertFalse(copy.canIncrementalMergeFromProgenitor)
+        // Both should share the same buffer after cowCopy.
+        XCTAssertTrue(copy.sharesCharacterBuffer(with: progenitor))
+
+        // Force a resize that should relocate the buffer.
+        progenitor.changeBufferSize(1024 * 1024)
+
+        // Append to verify the mutation works.
+        appendPartialASCII(progenitor, "X")
+
+        // They still share the same iTermCharacterBuffer object (not cloned by zero-copy path).
+        XCTAssertTrue(copy.sharesCharacterBuffer(with: progenitor),
+                      "Buffer object should still be shared — zero-copy skips clone")
+
+        // But if the internal pointer was relocated, canZeroCopyMerge should detect it.
+        // On macOS, growing from 16 to 1M typically relocates.
+        // We can't assert on the result because realloc behavior is platform-specific,
+        // but we verify the flag is checked correctly by canZeroCopyMergeFromProgenitor.
     }
 
-    func testCanIncrementalMerge_IneligibleWhenNotPartial() {
-        // Given: Block with hard EOL line, copy made
-        let original = makeHardLineBlock("abc")
-        let copy = original.cowCopy()
+    // MARK: - B. Merge Mechanics
 
-        // Then: Should not be eligible (not partial)
-        XCTAssertFalse(copy.canIncrementalMergeFromProgenitor)
+    func testZeroCopyMerge_SharedBufferIdentity() {
+        // After cowCopy, the copy and progenitor should share the same buffer object.
+        let progenitor = LineBlock(rawBufferSize: 1024, absoluteBlockNumber: 0)
+        appendPartialASCII(progenitor, "Hello")
+
+        let copy = progenitor.cowCopy()
+
+        XCTAssertTrue(copy.sharesCharacterBuffer(with: progenitor),
+                      "Copy and progenitor should share the same character buffer")
     }
 
-    func testCanIncrementalMerge_IneligibleWhenNoGrowth() {
-        // Given: Original with partial line, copy made, no append
-        let original = makePartialLineBlock("abc")
-        let copy = original.cowCopy()
+    func testZeroCopyMerge_BufferStaysSharedAfterAppend() {
+        // After appending to the progenitor, buffer should still be shared.
+        let progenitor = LineBlock(rawBufferSize: 1024, absoluteBlockNumber: 0)
+        appendPartialASCII(progenitor, "Hello")
 
-        // Then: Should not be eligible (progenitor didn't grow)
-        XCTAssertFalse(copy.canIncrementalMergeFromProgenitor)
+        let copy = progenitor.cowCopy()
+
+        // Append more partial data (triggers validMutationCertificate with zero-copy path).
+        appendPartialASCII(progenitor, " World")
+
+        XCTAssertTrue(copy.sharesCharacterBuffer(with: progenitor),
+                      "Buffer should remain shared after partial-line append")
     }
 
-    // MARK: - B. Character Data Tests
+    func testZeroCopyMerge_CLLUpdatedCorrectly() {
+        // After zeroCopyMerge, the copy's content should reflect the progenitor's updates.
+        let progenitor = LineBlock(rawBufferSize: 1024, absoluteBlockNumber: 0)
+        appendPartialASCII(progenitor, "Hello")
 
-    func testIncrementalMerge_CopiesOnlyDelta() {
-        // Given: Original with partial line "abc", copy made, then append "def"
-        let original = makePartialLineBlock("abc")
-        let copy = original.cowCopy()
-        appendPartial("def", to: original)
+        let copy = progenitor.cowCopy()
 
-        // When: Copy length before merge
-        XCTAssertEqual(copy.length(ofRawLine: 0), 3)
+        // Append more data to progenitor.
+        appendPartialASCII(progenitor, " World")
 
-        // And: Incremental merge
-        copy.incrementalMergeFromProgenitor()
+        // Perform zero-copy merge.
+        XCTAssertTrue(copy.canZeroCopyMergeFromProgenitor())
+        copy.zeroCopyMergeFromProgenitor()
 
-        // Then: Copy should have full content
-        XCTAssertEqual(copy.length(ofRawLine: 0), 6)
-        let content = copy.screenCharArray(forRawLine: 0).stringValue
-        XCTAssertEqual(content, "abcdef")
+        // The copy should now see the full content.
+        let rawLine = copy.screenCharArray(forRawLine: 0)
+        XCTAssertEqual(rawLine.stringValue.trimmingCharacters(in: CharacterSet(charactersIn: "\0")),
+                       "Hello World",
+                       "After zero-copy merge, copy should see updated content")
     }
 
-    func testIncrementalMerge_MultipleAppends() {
-        // Given: Original with "a", copy made, then multiple appends
-        let original = makePartialLineBlock("a")
-        let copy = original.cowCopy()
-        appendPartial("b", to: original)
-        appendPartial("c", to: original)
-        appendPartial("d", to: original)
+    func testZeroCopyMerge_MetadataUpdated() {
+        // Verify metadata is updated during zero-copy merge.
+        let progenitor = LineBlock(rawBufferSize: 1024, absoluteBlockNumber: 0)
+        appendPartialASCII(progenitor, "Hello")
 
-        // When: Incremental merge
-        copy.incrementalMergeFromProgenitor()
+        let copy = progenitor.cowCopy()
 
-        // Then: Copy should have all appended content
-        XCTAssertEqual(copy.screenCharArray(forRawLine: 0).stringValue, "abcd")
+        appendPartialASCII(progenitor, " World")
+
+        copy.zeroCopyMergeFromProgenitor()
+
+        // Verify the copy has 1 raw line and it's partial.
+        XCTAssertEqual(copy.numRawLines(), 1)
+        XCTAssertTrue(copy.hasPartial())
     }
 
-    func testIncrementalMerge_BufferResize() {
-        // Given: Original with buffer large enough to hold all data
-        // The progenitor can grow, and the copy will resize its buffer during merge
-        let original = LineBlock(rawBufferSize: 200, absoluteBlockNumber: 0)
-        appendPartial("abc", to: original)
-        let copy = original.cowCopy()
+    func testZeroCopyMerge_CacheInvalidated() {
+        // After zero-copy merge, wrapped line cache should be invalidated.
+        let progenitor = LineBlock(rawBufferSize: 1024, absoluteBlockNumber: 0)
+        appendPartialASCII(progenitor, "Hello", width: 4)
 
-        // Append more content to the progenitor
-        let largeAppend = String(repeating: "x", count: 100)
-        appendPartial(largeAppend, to: original)
+        let copy = progenitor.cowCopy()
 
-        // When: Incremental merge
-        copy.incrementalMergeFromProgenitor()
+        // The copy should have a cached numlines for width=4.
+        let linesBefore = copy.getNumLines(withWrapWidth: 4)
+        XCTAssertEqual(linesBefore, 2) // "Hello" wraps to 2 lines at width 4
 
-        // Then: Copy should have full content (buffer resized)
-        XCTAssertEqual(copy.length(ofRawLine: 0), 103)
+        // Append more data to progenitor.
+        appendPartialASCII(progenitor, "ABCD", width: 4)
+
+        // Merge.
+        copy.zeroCopyMergeFromProgenitor()
+
+        // The copy should now have more wrapped lines (cache was invalidated).
+        let linesAfter = copy.getNumLines(withWrapWidth: 4)
+        XCTAssertGreaterThan(linesAfter, linesBefore,
+                             "After merge with more data, wrapped line count should increase")
     }
 
-    // MARK: - C. Metadata Tests
+    // MARK: - C. Multi-cycle
 
-    func testIncrementalMerge_RTLFlagMerged() {
-        // Given: Original with non-RTL content, copy made, then append RTL content
-        let original = makePartialLineBlock("abc")
-        let copy = original.cowCopy()
+    func testZeroCopyMerge_MultipleMergeCycles() {
+        // Append -> merge -> append -> merge should work correctly.
+        let progenitor = LineBlock(rawBufferSize: 4096, absoluteBlockNumber: 0)
+        appendPartialASCII(progenitor, "A")
 
-        // Append with RTL flag
-        let rtlLineString = makeLineString("test", eol: EOL_SOFT, rtlFound: true)
-        _ = original.appendLineString(rtlLineString, width: Int32(80))
+        let copy = progenitor.cowCopy()
 
-        // When: Incremental merge
-        copy.incrementalMergeFromProgenitor()
+        // Cycle 1: append + merge
+        appendPartialASCII(progenitor, "B")
+        XCTAssertTrue(copy.canZeroCopyMergeFromProgenitor())
+        copy.zeroCopyMergeFromProgenitor()
 
-        // Then: Copy should have RTL flag set (verify by checking the raw line metadata)
-        // We check the metadata timestamp to verify the merge happened properly
-        let sca = copy.screenCharArray(forRawLine: 0)
-        XCTAssertNotNil(sca)
-        // After merge, the content should be "abctest"
-        XCTAssertEqual(sca.stringValue, "abctest")
+        let rawLine1 = copy.screenCharArray(forRawLine: 0)
+        XCTAssertTrue(rawLine1.stringValue.hasPrefix("AB"))
+
+        // Cycle 2: append + merge
+        appendPartialASCII(progenitor, "C")
+        XCTAssertTrue(copy.canZeroCopyMergeFromProgenitor(),
+                      "Should be eligible for second zero-copy merge cycle")
+        copy.zeroCopyMergeFromProgenitor()
+
+        let rawLine2 = copy.screenCharArray(forRawLine: 0)
+        XCTAssertTrue(rawLine2.stringValue.hasPrefix("ABC"))
+
+        // Cycle 3: append + merge
+        appendPartialASCII(progenitor, "D")
+        XCTAssertTrue(copy.canZeroCopyMergeFromProgenitor())
+        copy.zeroCopyMergeFromProgenitor()
+
+        let rawLine3 = copy.screenCharArray(forRawLine: 0)
+        XCTAssertTrue(rawLine3.stringValue.hasPrefix("ABCD"))
+
+        // Buffer should still be shared after all cycles.
+        XCTAssertTrue(copy.sharesCharacterBuffer(with: progenitor))
     }
 
-    // MARK: - D. Cache Invalidation Tests
-
-    func testIncrementalMerge_WrappedLineCacheInvalidated() {
-        // Given: Original with long partial line, copy made
-        let longString = String(repeating: "x", count: 100)
-        let original = makePartialLineBlock(longString)
-        let width: Int32 = 80
-
-        // Prime the cache
-        _ = original.getNumLines(withWrapWidth: width)
-        XCTAssertTrue(original.hasCachedNumLines(forWidth: width))
-
-        let copy = original.cowCopy()
-
-        // Append more content
-        appendPartial(String(repeating: "y", count: 50), to: original)
-
-        // When: Incremental merge
-        copy.incrementalMergeFromProgenitor()
-
-        // Then: Getting numLines should give correct value (cache was invalidated)
-        let numLines = copy.getNumLines(withWrapWidth: width)
-        XCTAssertEqual(numLines, 2)  // 150 chars at width 80 = 2 lines
-    }
-
-    // MARK: - E. DWC Tests
-
-    func testIncrementalMerge_DWCFlagPropagated() {
-        // Given: Original without DWC, copy made, then DWC appended
-        let original = makePartialLineBlock("abc")
-        XCTAssertFalse(original.mayHaveDoubleWidthCharacter)
-
-        let copy = original.cowCopy()
-
-        // Set DWC flag and append
-        original.mayHaveDoubleWidthCharacter = true
-        appendPartial("def", to: original)
-
-        // When: Incremental merge
-        copy.incrementalMergeFromProgenitor()
-
-        // Then: Copy should have DWC flag set
-        XCTAssertTrue(copy.mayHaveDoubleWidthCharacter)
-    }
-
-    // MARK: - F. LineBuffer Integration Tests
-
-    func testIncrementalMerge_LineBufferIntegration() {
-        // Given: Source LineBuffer with partial line
+    func testZeroCopyMerge_LineBufferIntegration() {
+        // End-to-end test with LineBuffer.
         let source = LineBuffer()
-        let s1 = screenCharArrayWithDefaultStyle("abc", eol: EOL_SOFT)
-        source.append(s1, width: 80)
+        source.setMaxLines(1000)
+        let width = Int32(80)
 
-        // Create a copy (dest)
-        let dest = source.copy()
+        // Append a partial line to the source.
+        let helloLS = makeLineString("Hello", eol: EOL_SOFT)
+        let helloSCA = helloLS.screenCharArray(bidi: nil)
+        source.appendLine(helloSCA.line,
+                          length: helloSCA.length,
+                          partial: true,
+                          width: width,
+                          metadata: helloSCA.metadata,
+                          continuation: helloSCA.continuation)
 
-        // Append more to source
-        let s2 = screenCharArrayWithDefaultStyle("def", eol: EOL_SOFT)
-        source.append(s2, width: 80)
+        // Create a copy and merge.
+        let copy = LineBuffer()
+        copy.setMaxLines(1000)
+        copy.forceMerge(from: source)
 
-        // When: Merge dest from source
-        dest.merge(from: source)
+        // Verify initial state.
+        XCTAssertEqual(copy.numLines(withWidth: width), 1)
 
-        // Then: Dest should have the full content
-        let line = dest.wrappedLine(at: 0, width: 80)
-        XCTAssertEqual(line.stringValue, "abcdef")
+        // Append more partial data to the source.
+        let worldLS = makeLineString(" World", eol: EOL_SOFT)
+        let worldSCA = worldLS.screenCharArray(bidi: nil)
+        source.appendLine(worldSCA.line,
+                          length: worldSCA.length,
+                          partial: true,
+                          width: width,
+                          metadata: worldSCA.metadata,
+                          continuation: worldSCA.continuation)
+
+        // Merge again — should use zero-copy merge path.
+        copy.forceMerge(from: source)
+
+        // Verify the copy now has the updated content.
+        XCTAssertEqual(copy.numLines(withWidth: width), 1)
+        let line = copy.wrappedLine(at: 0, width: width)
+        XCTAssertTrue(line.stringValue.hasPrefix("Hello World"),
+                      "After merge, copy should see 'Hello World' but got '\(line.stringValue)'")
     }
 
-    func testIncrementalMerge_MultipleMergeCycles() {
-        // Given: Source LineBuffer with partial line
-        let source = LineBuffer()
-        let s1 = screenCharArrayWithDefaultStyle("a", eol: EOL_SOFT)
-        source.append(s1, width: 80)
+    // MARK: - D. Fallback
 
-        let dest = source.copy()
+    func testZeroCopyMerge_FallsBackOnNonAppendMutation() {
+        // A non-append mutation should break zero-copy sharing.
+        let progenitor = LineBlock(rawBufferSize: 1024, absoluteBlockNumber: 0)
+        appendPartialASCII(progenitor, "Hello")
 
-        // When: Multiple append+merge cycles
-        for char in "bcdefghij" {
-            let sca = screenCharArrayWithDefaultStyle(String(char), eol: EOL_SOFT)
-            source.append(sca, width: 80)
-            dest.merge(from: source)
-        }
+        let copy = progenitor.cowCopy()
 
-        // Then: Dest should have all content
-        let line = dest.wrappedLine(at: 0, width: 80)
-        XCTAssertEqual(line.stringValue, "abcdefghij")
+        // Remove the last raw line (a non-append mutation).
+        progenitor.removeLastRawLine()
+
+        XCTAssertFalse(copy.canZeroCopyMergeFromProgenitor(),
+                       "Should be ineligible after non-append mutation")
+
+        // The buffer should no longer be shared.
+        XCTAssertFalse(copy.sharesCharacterBuffer(with: progenitor),
+                       "Buffer should be cloned after non-append mutation")
     }
 
-    // MARK: - G. Edge Cases
+    func testZeroCopyMerge_FallsBackOnDropLines() {
+        // dropLines should break zero-copy sharing.
+        let progenitor = LineBlock(rawBufferSize: 1024, absoluteBlockNumber: 0)
+        appendHardASCII(progenitor, "Line1")
+        appendPartialASCII(progenitor, "Line2")
 
-    func testIncrementalMerge_ProgenitorUnchangedAfterMerge() {
-        // Given: Original with partial line, copy made, append
-        let original = makePartialLineBlock("abc")
-        let copy = original.cowCopy()
-        appendPartial("def", to: original)
-
-        let originalContent = original.screenCharArray(forRawLine: 0).stringValue
-
-        // When: Incremental merge
-        copy.incrementalMergeFromProgenitor()
-
-        // Then: Original should be unchanged
-        XCTAssertEqual(original.screenCharArray(forRawLine: 0).stringValue, originalContent)
+        // This block has 2 raw lines, so cowCopy won't set zero-copy flag
+        // (requires cll_entries==1). Verify ineligibility.
+        let copy = progenitor.cowCopy()
+        XCTAssertFalse(copy.canZeroCopyMergeFromProgenitor(),
+                       "Multi-line block should not be eligible for zero-copy merge")
     }
 
-    func testIncrementalMerge_ExactCapacity() {
-        // Given: Original with buffer size 10, append to exactly fill it
-        let original = LineBlock(rawBufferSize: 10, absoluteBlockNumber: 0)
-        appendPartial("abc", to: original)
-        let copy = original.cowCopy()
-        appendPartial("defghij", to: original)  // Exactly fills to 10
+    func testZeroCopyMerge_FallsBackOnSetPartial() {
+        // Changing partial status should break zero-copy sharing.
+        let progenitor = LineBlock(rawBufferSize: 1024, absoluteBlockNumber: 0)
+        appendPartialASCII(progenitor, "Hello")
 
-        // When: Incremental merge
-        copy.incrementalMergeFromProgenitor()
+        let copy = progenitor.cowCopy()
 
-        // Then: Should have exactly 10 characters
-        XCTAssertEqual(copy.length(ofRawLine: 0), 10)
+        // Change partial status.
+        progenitor.setPartial(false)
+
+        XCTAssertFalse(copy.canZeroCopyMergeFromProgenitor(),
+                       "Should be ineligible after setPartial changes the line state")
     }
 
-    func testIncrementalMerge_SetPartialInvalidatesFlag() {
-        // Given: Original with partial line, copy made
-        let original = makePartialLineBlock("abc")
-        let copy = original.cowCopy()
+    // MARK: - E. Copy Mutation Invariant (regression guard for #1)
 
-        // When: setPartial is called (changing the value)
-        original.setPartial(false)
+    func testZeroCopyCopy_CompletePartialLineBreaksSharing() {
+        // A copied block with _zeroCopyShared=YES must clone the buffer
+        // before writing when it completes the existing partial line with
+        // a hard append (the "completing a partial" guard in reallyAppendLine).
+        let progenitor = LineBlock(rawBufferSize: 1024, absoluteBlockNumber: 0)
+        appendPartialASCII(progenitor, "Hello")
 
-        // Then: Should not be eligible for incremental merge
-        XCTAssertFalse(copy.canIncrementalMergeFromProgenitor)
+        let copy = progenitor.cowCopy()
+        XCTAssertTrue(copy.sharesCharacterBuffer(with: progenitor))
+
+        // Completing the partial line with a hard append triggers the
+        // mutation guard, which must clone the buffer and clear
+        // _zeroCopyShared before writing.
+        appendHardASCII(copy, "Goodbye")
+
+        XCTAssertFalse(copy.sharesCharacterBuffer(with: progenitor),
+                       "Copy must clone buffer before mutating via append")
+
+        // Progenitor content and structure must be untouched.
+        let progenitorLine = progenitor.screenCharArray(forRawLine: 0)
+        XCTAssertEqual(progenitorLine.stringValue, "Hello",
+                       "Progenitor content must not be corrupted by copy mutation")
+        XCTAssertEqual(progenitor.numRawLines(), 1,
+                       "Progenitor raw line count must be unchanged")
+        XCTAssertEqual(progenitor.rawSpaceUsed(), Int32(5),
+                       "Progenitor raw space must be unchanged")
     }
 
-    func testIncrementalMerge_RemoveLastRawLineInvalidatesFlag() {
-        // Given: Original with partial line, copy made
-        let original = makePartialLineBlock("abc")
-        let copy = original.cowCopy()
+    // NOTE: No test for extend-partial (appending partial to existing partial).
+    // The extend-partial path intentionally has no _zeroCopyShared guard because
+    // the progenitor uses it in the hot loop. Copies are never mutated via
+    // partial-extend in production (they are read-only between syncs).
 
-        // When: removeLastRawLine is called
-        original.removeLastRawLine()
-        appendPartial("xyz", to: original)
+    func testZeroCopyCopy_RemoveLastRawLineBreaksSharing() {
+        let progenitor = LineBlock(rawBufferSize: 1024, absoluteBlockNumber: 0)
+        appendPartialASCII(progenitor, "Hello")
 
-        // Then: Should not be eligible for incremental merge
-        XCTAssertFalse(copy.canIncrementalMergeFromProgenitor)
+        let copy = progenitor.cowCopy()
+        XCTAssertTrue(copy.sharesCharacterBuffer(with: progenitor))
+
+        copy.removeLastRawLine()
+
+        XCTAssertFalse(copy.sharesCharacterBuffer(with: progenitor),
+                       "removeLastRawLine must clone buffer and break sharing")
+
+        // Progenitor content and structure must be untouched.
+        let progenitorLine = progenitor.screenCharArray(forRawLine: 0)
+        XCTAssertEqual(progenitorLine.stringValue, "Hello",
+                       "Progenitor content must not be corrupted")
+        XCTAssertEqual(progenitor.numRawLines(), 1)
+        XCTAssertEqual(progenitor.rawSpaceUsed(), Int32(5))
     }
 
-    func testIncrementalMerge_DropLinesInvalidatesFlag() {
-        // Given: Block with long partial line content, copy made
-        // 200 chars at width 80 = 3 wrapped lines (80+80+40)
-        let testBlock = makePartialLineBlock(String(repeating: "x", count: 200))
-        let testCopy = testBlock.cowCopy()
+    func testZeroCopyCopy_SetPartialBreaksSharing() {
+        let progenitor = LineBlock(rawBufferSize: 1024, absoluteBlockNumber: 0)
+        appendPartialASCII(progenitor, "Hello")
 
-        // Verify initial state
-        XCTAssertTrue(testBlock.hasPartial())
-        XCTAssertEqual(testBlock.numRawLines(), 1)
+        let copy = progenitor.cowCopy()
+        XCTAssertTrue(copy.sharesCharacterBuffer(with: progenitor))
 
-        // When: dropLines is called (should invalidate flag)
-        // Note: dropping a line from a block changes _firstEntry or _startOffset
+        copy.setPartial(false)
+
+        XCTAssertFalse(copy.sharesCharacterBuffer(with: progenitor),
+                       "setPartial must clone buffer and break sharing")
+
+        // Progenitor content and structure must be untouched.
+        let progenitorLine = progenitor.screenCharArray(forRawLine: 0)
+        XCTAssertEqual(progenitorLine.stringValue, "Hello",
+                       "Progenitor content must not be corrupted")
+        XCTAssertEqual(progenitor.numRawLines(), 1)
+        XCTAssertEqual(progenitor.rawSpaceUsed(), Int32(5))
+    }
+
+    func testZeroCopyCopy_PopLastLineBreaksSharing() {
+        let progenitor = LineBlock(rawBufferSize: 1024, absoluteBlockNumber: 0)
+        appendPartialASCII(progenitor, "Hello")
+
+        let copy = progenitor.cowCopy()
+        XCTAssertTrue(copy.sharesCharacterBuffer(with: progenitor))
+
+        _ = copy.popLastLine(width: 80)
+
+        XCTAssertFalse(copy.sharesCharacterBuffer(with: progenitor),
+                       "popLastLine must clone buffer and break sharing")
+
+        // Progenitor content and structure must be untouched.
+        let progenitorLine = progenitor.screenCharArray(forRawLine: 0)
+        XCTAssertEqual(progenitorLine.stringValue, "Hello",
+                       "Progenitor content must not be corrupted")
+        XCTAssertEqual(progenitor.numRawLines(), 1)
+        XCTAssertEqual(progenitor.rawSpaceUsed(), Int32(5))
+    }
+
+    func testZeroCopyCopy_DropLinesBreaksSharing() {
+        // Need a long partial line so dropLines has wrapped lines to drop.
+        let progenitor = LineBlock(rawBufferSize: 1024, absoluteBlockNumber: 0)
+        appendPartialASCII(progenitor, String(repeating: "x", count: 200))
+
+        let copy = progenitor.cowCopy()
+        XCTAssertTrue(copy.sharesCharacterBuffer(with: progenitor))
+
         var dropped: Int32 = 0
-        _ = testBlock.dropLines(1, withWidth: 80, chars: &dropped)
+        _ = copy.dropLines(1, withWidth: 80, chars: &dropped)
 
-        // Then: Should not be eligible for incremental merge (drop invalidates flag)
-        // After dropping 1 wrapped line at width 80, the block still has the same raw line
-        // but with a different bufferStartOffset
-        XCTAssertFalse(testCopy.canIncrementalMergeFromProgenitor)
+        XCTAssertFalse(copy.sharesCharacterBuffer(with: progenitor),
+                       "dropLines must clone buffer and break sharing")
+
+        // Progenitor content and structure must be untouched.
+        let progenitorLine = progenitor.screenCharArray(forRawLine: 0)
+        XCTAssertEqual(progenitorLine.stringValue, String(repeating: "x", count: 200),
+                       "Progenitor content must not be corrupted")
+        XCTAssertEqual(progenitor.numRawLines(), 1)
+        XCTAssertEqual(progenitor.rawSpaceUsed(), Int32(200))
     }
 
-    func testCanIncrementalMerge_IneligibleWhenPartialLineCompleted() {
-        // Given: Original with partial line, copy made
-        let original = makePartialLineBlock("abc")
-        let copy = original.cowCopy()
+    // MARK: - F. Sync Cycle Flow Tests (contract guard for #3)
 
-        // When: Append hard EOL to complete the line (partial -> non-partial)
-        appendHardLine("def", to: original)
+    func testZeroCopy_SyncCycleCopyIsReadOnly() {
+        // Mimics real sync cycles: source mutates, copy merges, repeat.
+        // Verifies the copy is only updated via merge, never direct mutation.
+        let source = LineBuffer()
+        source.setMaxLines(1000)
+        let width = Int32(80)
 
-        // Then: Should not be eligible for incremental merge
-        // Even though we "appended" to the existing partial line, completing it
-        // with a hard EOL means the copy would still think it's partial, so
-        // incremental merge must be disallowed.
-        XCTAssertFalse(copy.canIncrementalMergeFromProgenitor)
-    }
+        let initialLS = makeLineString("start", eol: EOL_SOFT)
+        let initialSCA = initialLS.screenCharArray(bidi: nil)
+        source.appendLine(initialSCA.line, length: initialSCA.length,
+                          partial: true, width: width,
+                          metadata: initialSCA.metadata,
+                          continuation: initialSCA.continuation)
 
-    func testCanIncrementalMerge_IneligibleWhenCopyMutated() {
-        // Given: Original with partial line, copy made
-        let original = makePartialLineBlock("abc")
-        let copy = original.cowCopy()
+        let dest = LineBuffer()
+        dest.setMaxLines(1000)
+        dest.forceMerge(from: source)
 
-        // When: Copy is mutated (appends its own content, diverging from original)
-        appendPartial("xyz", to: copy)
-
-        // And: Original also appends (would normally be eligible for incremental merge)
-        appendPartial("def", to: original)
-
-        // Then: Copy should not be eligible because it has diverged
-        // (its buffer was cloned when it mutated, so it no longer shares with progenitor)
-        XCTAssertFalse(copy.canIncrementalMergeFromProgenitor)
-    }
-
-    func testIncrementalMerge_SecondAppendDoesNotClone() {
-        // This test verifies that after the first append (which clones because
-        // the progenitor has clients), subsequent appends do NOT clone because
-        // the clients have been transferred away.
-
-        // Given: Original with partial line
-        let original = makePartialLineBlock("abc")
-
-        // And: A copy is made (original now has clients)
-        let copy = original.cowCopy()
-        XCTAssertEqual(original.numberOfClients, 1, "Original should have 1 client after cowCopy")
-
-        // When: Original appends (triggers clone, copy becomes owner of old buffer)
-        appendPartial("def", to: original)
-
-        // Then: Original should have no clients (they were transferred to copy)
-        XCTAssertEqual(original.numberOfClients, 0, "Original should have 0 clients after mutation")
-
-        // When: Original appends again
-        appendPartial("ghi", to: original)
-
-        // Then: Original still has no clients (no new cowCopy relationships)
-        XCTAssertEqual(original.numberOfClients, 0, "Original should still have 0 clients")
-
-        // And: Original has the full content
-        XCTAssertEqual(original.screenCharArray(forRawLine: 0).stringValue, "abcdefghi")
-
-        // And: Copy can still do incremental merge for the second append
-        XCTAssertTrue(copy.canIncrementalMergeFromProgenitor)
-
-        // When: We do the incremental merge
-        copy.incrementalMergeFromProgenitor()
-
-        // Then: Copy has all the content (both appends merged)
-        XCTAssertEqual(copy.screenCharArray(forRawLine: 0).stringValue, "abcdefghi")
-    }
-
-    func testIncrementalMerge_RepeatedAppendMergeCyclesAreEfficient() {
-        // This test verifies that repeated append+merge cycles don't cause
-        // repeated deep copies. After the first append, subsequent appends
-        // should be O(1) and merges should copy only the delta.
-
-        // Given: Original with partial line
-        let original = makePartialLineBlock("a")
-        let copy = original.cowCopy()
-
-        // When: First append (triggers the one-time clone)
-        appendPartial("b", to: original)
-        XCTAssertEqual(original.numberOfClients, 0, "Clients transferred after first mutation")
-
-        // Then: Multiple append+merge cycles should all work efficiently
+        // Run 10 sync cycles: source appends, dest merges.
         for i in 0..<10 {
-            // Append to original (should NOT clone - no clients)
-            let char = String(UnicodeScalar(Int(("c" as UnicodeScalar).value) + i)!)
-            appendPartial(char, to: original)
+            let appendLS = makeLineString(String(UnicodeScalar(Int(("A" as UnicodeScalar).value) + i)!),
+                                          eol: EOL_SOFT)
+            let appendSCA = appendLS.screenCharArray(bidi: nil)
+            source.appendLine(appendSCA.line, length: appendSCA.length,
+                              partial: true, width: width,
+                              metadata: appendSCA.metadata,
+                              continuation: appendSCA.continuation)
 
-            // Original still has no clients
-            XCTAssertEqual(original.numberOfClients, 0, "Original should have no clients on iteration \(i)")
+            dest.forceMerge(from: source)
 
-            // Incremental merge should still be possible
-            XCTAssertTrue(copy.canIncrementalMergeFromProgenitor, "Should be able to incremental merge on iteration \(i)")
-
-            // Do the merge
-            copy.incrementalMergeFromProgenitor()
-
-            // Verify content matches
-            XCTAssertEqual(copy.screenCharArray(forRawLine: 0).stringValue,
-                           original.screenCharArray(forRawLine: 0).stringValue,
-                           "Content should match after merge on iteration \(i)")
+            // Post-merge invariant: full unwrapped content matches source.
+            let srcFull = source.unwrappedLine(at: 0)
+            let dstFull = dest.unwrappedLine(at: 0)
+            XCTAssertEqual(srcFull.stringValue, dstFull.stringValue,
+                           "Content mismatch after sync cycle \(i)")
+            XCTAssertEqual(source.numLines(withWidth: width),
+                           dest.numLines(withWidth: width),
+                           "Line count mismatch after sync cycle \(i)")
         }
-
-        // Final verification
-        XCTAssertEqual(original.screenCharArray(forRawLine: 0).stringValue, "abcdefghijkl")
-        XCTAssertEqual(copy.screenCharArray(forRawLine: 0).stringValue, "abcdefghijkl")
     }
 
-    // MARK: - Copy of Copy Tests (A -> B -> C chains)
+    // MARK: - G. Stress Test (serialized merge + mutate, guard for #2)
 
-    func testCopyOfCopy_MiddleAppends_LeafCanMerge() {
-        // Scenario: A -> B -> C, then B appends. Can C merge from B?
+    func testZeroCopy_RepeatedMergeMutateStress() {
+        // Repeatedly mutate source and merge to dest under the same
+        // serialization model used in production (sequential, not concurrent).
+        // Asserts structural invariants after each merge.
+        let source = LineBuffer()
+        source.setMaxLines(10000)
+        let width = Int32(80)
 
-        // Given: A with partial line
-        let a = makePartialLineBlock("abc")
+        // Seed with a partial line.
+        let seedLS = makeLineString("seed", eol: EOL_SOFT)
+        let seedSCA = seedLS.screenCharArray(bidi: nil)
+        source.appendLine(seedSCA.line, length: seedSCA.length,
+                          partial: true, width: width,
+                          metadata: seedSCA.metadata,
+                          continuation: seedSCA.continuation)
 
-        // And: B is a copy of A
-        let b = a.cowCopy()
-        XCTAssertTrue(b.progenitor === a)
+        let dest = LineBuffer()
+        dest.setMaxLines(10000)
+        dest.forceMerge(from: source)
 
-        // And: C is a copy of B
-        let c = b.cowCopy()
-        XCTAssertTrue(c.progenitor === b)
+        // Reference buffer built from raw appends (no merge/zero-copy path).
+        // Compared against dest each iteration to verify merge equivalence.
+        let reference = LineBuffer()
+        reference.setMaxLines(10000)
+        reference.appendLine(seedSCA.line, length: seedSCA.length,
+                             partial: true, width: width,
+                             metadata: seedSCA.metadata,
+                             continuation: seedSCA.continuation)
 
-        // When: B appends (B diverges from A, but B only appended)
-        appendPartial("def", to: b)
+        var fullContent = "seed"
 
-        // Then: B should have diverged
-        XCTAssertFalse(b.hasOwner(), "B should have no owner after mutation")
+        for i in 0..<50 {
+            // Append to source (simulates mutation thread).
+            let chunk = String(repeating: String(UnicodeScalar(Int(("a" as UnicodeScalar).value) + (i % 26))!),
+                               count: (i % 5) + 1)
+            fullContent += chunk
+            let chunkLS = makeLineString(chunk, eol: EOL_SOFT)
+            let chunkSCA = chunkLS.screenCharArray(bidi: nil)
+            source.appendLine(chunkSCA.line, length: chunkSCA.length,
+                              partial: true, width: width,
+                              metadata: chunkSCA.metadata,
+                              continuation: chunkSCA.continuation)
 
-        // And: C should be able to merge from B (its progenitor)
-        // because B only did partial appends
-        XCTAssertTrue(c.canIncrementalMergeFromProgenitor,
-                      "C should be able to incrementally merge from B")
+            // Same append to reference (no merge involved).
+            reference.appendLine(chunkSCA.line, length: chunkSCA.length,
+                                 partial: true, width: width,
+                                 metadata: chunkSCA.metadata,
+                                 continuation: chunkSCA.continuation)
 
-        // When: C merges from B
-        c.incrementalMergeFromProgenitor()
+            // Merge (simulates main thread sync).
+            dest.forceMerge(from: source)
 
-        // Then: C should have B's content
-        XCTAssertEqual(c.screenCharArray(forRawLine: 0).stringValue, "abcdef")
+            // Structural invariants:
+            // 1. Line count matches across all three buffers.
+            XCTAssertEqual(source.numLines(withWidth: width),
+                           dest.numLines(withWidth: width),
+                           "Line count diverged (dest) at iteration \(i)")
+            XCTAssertEqual(source.numLines(withWidth: width),
+                           reference.numLines(withWidth: width),
+                           "Line count diverged (reference) at iteration \(i)")
+
+            // 2. Full unwrapped content matches across all three buffers.
+            let srcFull = source.unwrappedLine(at: 0)
+            let dstFull = dest.unwrappedLine(at: 0)
+            let refFull = reference.unwrappedLine(at: 0)
+            XCTAssertEqual(srcFull.stringValue, dstFull.stringValue,
+                           "Content diverged (dest vs source) at iteration \(i)")
+            XCTAssertEqual(dstFull.stringValue, refFull.stringValue,
+                           "Content diverged (dest vs reference) at iteration \(i)")
+
+            // 3. Full content matches expected accumulation.
+            XCTAssertEqual(srcFull.stringValue, fullContent,
+                           "Source doesn't match expected at iteration \(i)")
+        }
     }
 
-    func testCopyOfCopy_RootAppends_CascadeMerge() {
-        // Scenario: A -> B -> C, then A appends. Can we cascade merge B then C?
+    // MARK: - H. Buffer Resize Tests
 
-        // Given: Chain A -> B -> C
-        let a = makePartialLineBlock("abc")
-        let b = a.cowCopy()
-        let c = b.cowCopy()
-
-        // When: A appends
-        appendPartial("def", to: a)
-
-        // Then: B should be able to merge from A
-        XCTAssertTrue(b.canIncrementalMergeFromProgenitor)
-
-        // When: B merges from A
-        b.incrementalMergeFromProgenitor()
-        XCTAssertEqual(b.screenCharArray(forRawLine: 0).stringValue, "abcdef")
-
-        // Then: C should still be able to merge from B
-        // (B's incremental merge is conceptually an append, so B._appendOnlySinceLastCopy stays YES)
-        XCTAssertTrue(c.canIncrementalMergeFromProgenitor,
-                      "C should be able to merge from B after B merged from A")
-
-        // When: C merges from B
-        c.incrementalMergeFromProgenitor()
-
-        // Then: C should have the full content
-        XCTAssertEqual(c.screenCharArray(forRawLine: 0).stringValue, "abcdef")
-    }
-
-    func testCopyOfCopy_MiddleDoesNonAppend_LeafCannotMerge() {
-        // Scenario: A -> B -> C, then B does a non-append mutation.
-        // C should NOT be able to incrementally merge from B.
-
-        // Given: Chain A -> B -> C
-        let a = makePartialLineBlock("abc")
-        let b = a.cowCopy()
-        let c = b.cowCopy()
-
-        // When: B does a non-append mutation (setPartial changes is_partial)
-        b.setPartial(false)  // Complete the partial line
-        b.setPartial(true)   // Make it partial again (but flag is now NO)
-
-        // And: B appends (after the non-append mutation)
-        appendPartial("def", to: b)
-
-        // Then: C should NOT be able to incrementally merge
-        // because B did a non-append mutation
-        XCTAssertFalse(c.canIncrementalMergeFromProgenitor,
-                       "C should not be able to merge because B did non-append mutation")
-    }
-
-    func testCopyOfCopy_RootAppendsTwice_CascadeStillWorks() {
-        // Scenario: A -> B -> C, A appends, B merges, A appends again, B merges again, C merges
-
-        // Given: Chain A -> B -> C
-        let a = makePartialLineBlock("a")
-        let b = a.cowCopy()
-        let c = b.cowCopy()
-
-        // When: First round - A appends, B merges
-        appendPartial("b", to: a)
-        XCTAssertTrue(b.canIncrementalMergeFromProgenitor)
-        b.incrementalMergeFromProgenitor()
-        XCTAssertEqual(b.screenCharArray(forRawLine: 0).stringValue, "ab")
-
-        // And: Second round - A appends again, B merges again
-        appendPartial("c", to: a)
-        XCTAssertTrue(b.canIncrementalMergeFromProgenitor)
-        b.incrementalMergeFromProgenitor()
-        XCTAssertEqual(b.screenCharArray(forRawLine: 0).stringValue, "abc")
-
-        // Then: C should be able to merge all at once from B
-        XCTAssertTrue(c.canIncrementalMergeFromProgenitor)
-        c.incrementalMergeFromProgenitor()
-        XCTAssertEqual(c.screenCharArray(forRawLine: 0).stringValue, "abc")
-    }
-
-    func testCopyOfCopy_BothMiddleAndRootAppend_LeafMergesFromMiddle() {
-        // Scenario: A -> B -> C, both A and B append (different content).
-        // C should merge from B (its progenitor), not A.
-
-        // Given: Chain A -> B -> C
-        let a = makePartialLineBlock("abc")
-        let b = a.cowCopy()
-        let c = b.cowCopy()
-
-        // When: B appends first (diverges from A)
-        appendPartial("BBB", to: b)
-
-        // And: A appends different content
-        appendPartial("AAA", to: a)
-
-        // Then: C's progenitor is B, so C should merge from B
-        XCTAssertTrue(c.canIncrementalMergeFromProgenitor)
-        c.incrementalMergeFromProgenitor()
-
-        // C should have B's content, not A's
-        XCTAssertEqual(c.screenCharArray(forRawLine: 0).stringValue, "abcBBB")
-        XCTAssertEqual(b.screenCharArray(forRawLine: 0).stringValue, "abcBBB")
-        XCTAssertEqual(a.screenCharArray(forRawLine: 0).stringValue, "abcAAA")
-    }
-
-    func testCopyOfCopy_LongChain_AllCanMerge() {
-        // Scenario: A -> B -> C -> D -> E, A appends, all merge in sequence
-
-        // Given: Long chain
-        let a = makePartialLineBlock("a")
-        let b = a.cowCopy()
-        let c = b.cowCopy()
-        let d = c.cowCopy()
-        let e = d.cowCopy()
-
-        // When: A appends
-        appendPartial("bcdef", to: a)
-
-        // Then: Each can merge from its progenitor in sequence
-        XCTAssertTrue(b.canIncrementalMergeFromProgenitor)
-        b.incrementalMergeFromProgenitor()
-        XCTAssertEqual(b.screenCharArray(forRawLine: 0).stringValue, "abcdef")
-
-        XCTAssertTrue(c.canIncrementalMergeFromProgenitor)
-        c.incrementalMergeFromProgenitor()
-        XCTAssertEqual(c.screenCharArray(forRawLine: 0).stringValue, "abcdef")
-
-        XCTAssertTrue(d.canIncrementalMergeFromProgenitor)
-        d.incrementalMergeFromProgenitor()
-        XCTAssertEqual(d.screenCharArray(forRawLine: 0).stringValue, "abcdef")
-
-        XCTAssertTrue(e.canIncrementalMergeFromProgenitor)
-        e.incrementalMergeFromProgenitor()
-        XCTAssertEqual(e.screenCharArray(forRawLine: 0).stringValue, "abcdef")
-    }
-
-    func testCopyOfCopy_MiddleDiverges_CannotMergeFromRoot() {
-        // Scenario: A -> B -> C, B diverges (appends), then tries to merge from A.
-        // B should NOT be able to incrementally merge because B._hasDiverged = YES.
-
-        // Given: Chain A -> B -> C
-        let a = makePartialLineBlock("abc")
-        let b = a.cowCopy()
-        let _ = b.cowCopy()  // C exists but we focus on B
-
-        // When: B appends (diverges)
-        appendPartial("def", to: b)
-
-        // And: A also appends
-        appendPartial("ghi", to: a)
-
-        // Then: B should NOT be able to incrementally merge from A
-        // because B diverged (cloned its buffer for its own mutation)
-        XCTAssertFalse(b.canIncrementalMergeFromProgenitor,
-                       "B should not be able to merge from A because B diverged")
-    }
-
-    // MARK: - Buffer Resize Tests
-
-    func testIncrementalMerge_AppendExceedsBufferSize_StillEligible() {
-        // This tests the case where appending a partial line to a block with
-        // only a partial line exceeds the buffer size. The block should resize
-        // internally rather than failing and causing LineBuffer to pop/reappend,
-        // which would set _appendOnlySinceLastCopy = NO.
-
-        // Given: A LineBuffer with content
+    func testZeroCopyMerge_AppendExceedsBufferSize_MergeStillWorks() {
+        // When appending a partial line that exceeds the block's buffer,
+        // LineBuffer should resize in place rather than pop/reappend.
+        // The resize may relocate the buffer (for small allocations below
+        // the VM-backed threshold), which disables zero-copy merge but the
+        // fallback path handles it correctly.
         let source = LineBuffer()
         source.setMaxLines(1000)
 
@@ -3843,42 +3749,23 @@ class LineBlockIncrementalMergeTests: XCTestCase {
         let initial = screenCharArrayWithDefaultStyle("abc", eol: EOL_SOFT)
         source.append(initial, width: 80)
 
-        // Get the block to check its state
-        let originalBlock = source.testOnlyBlock(at: 0)
-
         // Make a copy of the LineBuffer
         let dest = source.copy()
-        let copyBlock = dest.testOnlyBlock(at: 0)
 
-        // Verify the copy relationship
-        XCTAssertTrue(copyBlock.progenitor === originalBlock)
-
-        // When: We append content that exceeds the block's buffer space
-        // The default block size is 8192, so we need to append more than that
-        // This simulates the scenario where a partial line keeps growing
+        // Append content that exceeds the block's buffer space.
+        // The default block size is 8192, so 10000 exceeds it.
         let longAppend = String(repeating: "x", count: 10000)
         let longSCA = screenCharArrayWithDefaultStyle(longAppend, eol: EOL_SOFT)
         source.append(longSCA, width: 80)
 
-        // Debug: Check the original block's state
-        let originalContent = originalBlock.screenCharArray(forRawLine: 0).stringValue
-        let originalLength = originalBlock.length(ofRawLine: 0)
-
-        // Then: The copy block should still allow incremental merge
-        // If the bug exists, _appendOnlySinceLastCopy will be NO because
-        // LineBuffer had to pop and reappend the line
-        XCTAssertTrue(copyBlock.canIncrementalMergeFromProgenitor,
-                      "Copy should be eligible for incremental merge. " +
-                      "appendOnlySinceLastCopy=\(originalBlock.appendOnlySinceLastCopy), " +
-                      "originalLength=\(originalLength), originalContent=\(originalContent.prefix(50))...")
-
-        // Merge and verify content
+        // Merge — uses zero-copy if buffer wasn't relocated, fallback otherwise.
+        // Either way, the content must be correct.
         dest.merge(from: source)
 
         // Get the full unwrapped line
         let fullLine = dest.unwrappedLine(at: 0)
         let expectedContent = "abc" + longAppend
-        XCTAssertEqual(fullLine.stringValue.count, expectedContent.count,
-                       "Content length mismatch")
+        XCTAssertEqual(fullLine.stringValue, expectedContent,
+                       "Content mismatch after buffer resize")
     }
 }

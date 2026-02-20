@@ -662,6 +662,28 @@ static int RawNumLines(LineBuffer* buffer, int width) {
                      width:width
                   metadata:metadataObj
               continuation:continuation]) {
+        // Fast path: resize in place for single partial line blocks.
+        // This avoids the O(N) pop+reappend which would set _appendOnlySinceLastCopy = NO
+        // and break zero-copy merge eligibility.
+        if ([block hasPartial] &&
+            [block startOffset] == 0 &&
+            [block numRawLines] == 1) {
+            num_wrapped_lines_width = -1;
+            int space_used = [block rawSpaceUsed];
+            if (partial) {
+                [block changeBufferSize:space_used + length + block_size];
+            } else {
+                [block changeBufferSize:space_used + length];
+            }
+            BOOL ok __attribute__((unused)) =
+            [block appendLine:buffer
+                       length:length
+                      partial:partial
+                        width:width
+                     metadata:metadataObj
+                 continuation:continuation];
+            ITAssertWithMessage(ok, @"append after resize-in-place can't fail");
+        } else {
         // It's going to be complicated. Invalidate the number of wrapped lines
         // cache.
         num_wrapped_lines_width = -1;
@@ -729,6 +751,7 @@ static int RawNumLines(LineBuffer* buffer, int width) {
                  metadata:metadataObj
              continuation:continuation];
         ITAssertWithMessage(ok, @"append can't fail here");
+        }
     } else if (num_wrapped_lines_width == width) {
         // Straightforward addition of a line to an existing block. Update the
         // wrapped lines cache.
@@ -2192,48 +2215,53 @@ NS_INLINE int TotalNumberOfRawLines(LineBuffer *self) {
         stage1 = [_lineBlocks dumpWidths:commonWidths];
     }
 
-    // Drop blocks from the end until we get to one that is in sync or can be incrementally merged.
-    // Note that if the first block has experienced drops but not appends then it will still have
-    // its progenitor as its owner and be considered "synchronized".
-    while (_lineBlocks.count > 0) {
-        LineBlock *lastBlock = _lineBlocks.lastBlock;
-
-        if ([lastBlock isSynchronizedWithProgenitor]) {
-            break;  // Already in sync
+    // Try zero-copy merge for the last block before falling back to drop-and-replace.
+    if (_lineBlocks.count > 0 &&
+        _lineBlocks.count == source->_lineBlocks.count &&
+        [_lineBlocks.lastBlock canZeroCopyMergeFromProgenitor]) {
+        DLog(@"zero-copy merge last block");
+        [_lineBlocks.lastBlock zeroCopyMergeFromProgenitor];
+        if (_lineBlocks.count > 0) {
+            [_lineBlocks.firstBlock dropMirroringProgenitor:source->_lineBlocks.firstBlock];
         }
+    } else {
+        // Drop blocks from the end until we get to one that is in sync.
+        // Note that if the first block has experienced drops but not appends then it will still have
+        // its progenitor as its owner and be considered "synchronized".
+        while (_lineBlocks.count > 0) {
+            LineBlock *lastBlock = _lineBlocks.lastBlock;
 
-        if ([lastBlock canIncrementalMergeFromProgenitor]) {
-            DLog(@"incremental merge");
-            [lastBlock incrementalMergeFromProgenitor];
-            break;  // Now caught up
-        }
+            if ([lastBlock isSynchronizedWithProgenitor]) {
+                break;  // Already in sync
+            }
 
-        DLog(@"remove last");
-        [_lineBlocks removeLastBlock];
-    }
-    if (gDebugLogging) {
-        stage2 = [_lineBlocks dumpWidths:commonWidths];
-    }
-
-    if (_lineBlocks.count > 0) {
-        DLog(@"mirror first");
-        [_lineBlocks.firstBlock dropMirroringProgenitor:source->_lineBlocks.firstBlock];
-    }
-    if (gDebugLogging) {
-        stage3 = [_lineBlocks dumpWidths:commonWidths];
-    }
-
-    // Add copies of terminal blocks.
-    while (_lineBlocks.count < source->_lineBlocks.count) {
-        DLog(@"append");
-        LineBlock *sourceBlock = source->_lineBlocks[_lineBlocks.count];
-        LineBlock *theCopy = [sourceBlock cowCopy];
-        [_lineBlocks addBlock:theCopy];
-        if (_lineBlocks.count < source->_lineBlocks.count) {
-            [self commitLastBlock];
+            DLog(@"remove last");
+            [_lineBlocks removeLastBlock];
         }
         if (gDebugLogging) {
-            [_lineBlocks sanityCheck:droppedChars];
+            stage2 = [_lineBlocks dumpWidths:commonWidths];
+        }
+
+        if (_lineBlocks.count > 0) {
+            DLog(@"mirror first");
+            [_lineBlocks.firstBlock dropMirroringProgenitor:source->_lineBlocks.firstBlock];
+        }
+        if (gDebugLogging) {
+            stage3 = [_lineBlocks dumpWidths:commonWidths];
+        }
+
+        // Add copies of terminal blocks.
+        while (_lineBlocks.count < source->_lineBlocks.count) {
+            DLog(@"append");
+            LineBlock *sourceBlock = source->_lineBlocks[_lineBlocks.count];
+            LineBlock *theCopy = [sourceBlock cowCopy];
+            [_lineBlocks addBlock:theCopy];
+            if (_lineBlocks.count < source->_lineBlocks.count) {
+                [self commitLastBlock];
+            }
+            if (gDebugLogging) {
+                [_lineBlocks sanityCheck:droppedChars];
+            }
         }
     }
 

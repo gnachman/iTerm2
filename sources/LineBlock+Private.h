@@ -59,10 +59,9 @@ NS_ASSUME_NONNULL_BEGIN
     // Reset to YES on cowCopy, set to NO on any non-append mutation.
     BOOL _appendOnlySinceLastCopy;
 
-    // In copy: YES if this copy has been mutated (cloned its buffer).
-    // Set when validMutationCertificate clones buffer for a copy (self.owner != nil).
-    // Used to prevent incremental merge for diverged copies.
-    BOOL _hasDiverged;
+    // In progenitor: YES if character buffer is shared with a copy via zero-copy.
+    // Append-only mutations are safe; non-append mutations must clone first.
+    BOOL _zeroCopyShared;
 }
 
 // These are synchronized on [LineBlock class]. Sample graph:
