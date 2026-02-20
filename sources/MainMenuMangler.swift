@@ -422,7 +422,7 @@ class MainMenuMangler: NSObject {
     }
 
     private func update() {
-        let currentTerminalWindow = iTermController.sharedInstance().currentTerminal?.window()
+        let currentTerminalWindow = iTermController.sharedInstance()?.currentTerminal?.window()
         if currentTerminalWindow == observedWindow {
             return
         }
@@ -560,9 +560,10 @@ class MainMenuMangler: NSObject {
             return
         }
         let currentSessionIsWeb: Bool
-        if let term = iTermController.sharedInstance().currentTerminal {
+        if let controller = iTermController.sharedInstance(),
+           let term = controller.currentTerminal {
             currentSessionIsWeb = term.currentSession()?.isBrowserSession() ?? false
-            DLog("updateMainMenu: currentTerminal=\(term), currentSession=\(term.currentSession().d), isBrowser=\(currentSessionIsWeb)")
+            DLog("updateMainMenu: currentTerminal=\(term), currentSession=\(term.currentSession()?.description ?? "(nil)"), isBrowser=\(currentSessionIsWeb)")
         } else {
             currentSessionIsWeb = false
             DLog("updateMainMenu: no currentTerminal")
