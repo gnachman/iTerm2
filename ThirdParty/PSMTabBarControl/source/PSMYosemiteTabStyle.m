@@ -901,9 +901,8 @@ const void *PSMTabStyleDarkColorKey = "dark";
         } else {
             labelPosition += closeButtonSize.width + kPSMTabBarCellPadding;
         }
-    } else if (cell.isPinned && _orientation != PSMTabBarHorizontalOrientation) {
-        // In vertical orientation, reserve close button space for pinned tabs so text
-        // aligns with unpinned tabs that have a visible close button.
+    } else if (cell.isPinned) {
+        // Reserve space for pin indicator icon so it doesn't overlap the title.
         labelPosition += closeButtonSize.width + kPSMTabBarCellPadding;
     }
 

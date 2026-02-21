@@ -1472,7 +1472,7 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
             let tintedPin = pinImage.it_cachingImage(withTintColor: tintColor, key: colorKey)
             let pinAlpha: CGFloat = windowIsMainAndAppIsActive ? 0.6 : 0.3
 
-            objects.append(GroupLO(name: "Pin Indicator", priority: Priority.closeButton.rawValue, gravity: .left, members: [
+            objects.append(GroupLO(name: "Pin Indicator", priority: Priority.required.rawValue, gravity: .left, members: [
                 ImageLO(name: "Pin Icon", image: pinImage, priority: Priority.required.rawValue, gravity: .left) { resolved in
                     var pinRect = resolved.frame
                     pinRect.origin.y = cell.frame.minY + floor((cell.frame.height - pinRect.height) / 2.0) + orientationShift

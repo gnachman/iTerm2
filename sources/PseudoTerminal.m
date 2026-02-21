@@ -11814,8 +11814,17 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
 }
 
 - (void)togglePinTab:(id)sender {
-    NSTabViewItem *tabViewItem = [sender representedObject];
-    PTYTab *tab = [tabViewItem identifier];
+    PTYTab *tab = nil;
+    if ([sender respondsToSelector:@selector(representedObject)]) {
+        NSTabViewItem *tabViewItem = [sender representedObject];
+        tab = [tabViewItem identifier];
+    }
+    if (!tab) {
+        tab = self.currentTab;
+    }
+    if (!tab) {
+        return;
+    }
     tab.pinned = !tab.isPinned;
 }
 

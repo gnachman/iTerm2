@@ -5675,6 +5675,7 @@ typedef struct {
     }
     _pinned = pinned;
     [_delegate tab:self didChangePinnedState:pinned];
+    [realParentWindow_ invalidateRestorableState];
 }
 
 - (BOOL)isPinned {

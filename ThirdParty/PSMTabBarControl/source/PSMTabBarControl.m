@@ -1184,8 +1184,7 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionDarkModeInactiveTabDarkness = @"
 
         for (int i = 0; i < cellCount; ++i) {
             PSMTabBarCell *cell = [_cells objectAtIndex:i];
-            // Pinned tabs are always visible - never go to overflow.
-            if (cell.isPinned || currentOrigin + cellRect.size.height <= [self frame].size.height) {
+            if (currentOrigin + cellRect.size.height <= [self frame].size.height) {
                 [newOrigins addObject:[NSNumber numberWithFloat:currentOrigin]];
                 currentOrigin += cellRect.size.height;
             } else {
@@ -1596,10 +1595,6 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionDarkModeInactiveTabDarkness = @"
             // next...
             cellRect.origin.x += [[newValues objectAtIndex:i] floatValue] + intercellSpacing;
 
-        } else if (cell.isPinned) {
-            // Pinned cells are never in the overflow menu. This shouldn't normally happen
-            // since pinned cells are always at the start, but guard against it.
-            continue;
         } else {
             // set up menu items
             NSMenuItem *menuItem;
