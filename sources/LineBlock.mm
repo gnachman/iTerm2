@@ -1749,8 +1749,8 @@ int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BO
 }
 
 - (int)offsetOfRawLine:(int)linenum {
-    if (linenum == 0) {
-        return 0;
+    if (linenum == _firstEntry) {
+        return self.bufferStartOffset;
     } else {
         return cumulative_line_lengths[linenum - 1];
     }
@@ -1766,8 +1766,8 @@ int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BO
 
 - (const screen_char_t*)rawLine:(int)linenum {
     int start;
-    if (linenum == 0) {
-        start = 0;
+    if (linenum == _firstEntry) {
+        start = self.bufferStartOffset;
     } else {
         start = cumulative_line_lengths[linenum - 1];
     }
