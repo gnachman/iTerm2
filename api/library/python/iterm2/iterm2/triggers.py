@@ -711,7 +711,7 @@ class HighlightTrigger(Trigger):
         self.param = self._param
 
     @property
-    def background_color(self, value: typing.Optional[iterm2.Color]):
+    def background_color(self) -> typing.Optional[iterm2.Color]:
         return self.__background_color
 
     @background_color.setter
