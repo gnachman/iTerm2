@@ -67,7 +67,7 @@ class CellStyle:
             return self._url.url
 
         @property
-        def identifier(self) -> str:
+        def identifier(self) -> typing.Optional[str]:
             """
             Returns the optional identifier associated with the URL, if present.
 
@@ -172,7 +172,7 @@ class CellStyle:
         return self._proto.repeats
 
     @property
-    def fg_color(self) -> 'CellStyle.Color':
+    def fg_color(self) -> typing.Optional['CellStyle.Color']:
         """
         Returns the foreground color as a CellStyle.Color object.
 
@@ -188,7 +188,7 @@ class CellStyle:
             return CellStyle.Color(placement=self._proto.fgAlternatePlacementX)
 
     @property
-    def bg_color(self) -> 'CellStyle.Color':
+    def bg_color(self) -> typing.Optional['CellStyle.Color']:
         """
         Returns the background color as a CellStyle.Color object.
 
