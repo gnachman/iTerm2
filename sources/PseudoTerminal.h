@@ -27,6 +27,7 @@
 @class iTermBrowserWebView;
 @class iTermPromptOnCloseReason;
 @class iTermSessionFactory;
+@class iTermTabGroup;
 @class iTermToolbeltView;
 @protocol iTermWindowScope;
 @class iTermController;
@@ -320,6 +321,12 @@ extern NSString *const iTermDidCreateTerminalWindowNotification;
 
 // All tabs in this window.
 - (NSArray<PTYTab *> *)tabs;
+
+// Tab groups for inline tab organization.
+@property(nonatomic, readonly) NSArray<iTermTabGroup *> *tabGroups;
+- (void)addTabToNewGroup:(id)sender;
+- (void)moveTabToGroup:(id)sender;
+- (void)removeTabFromGroup:(id)sender;
 
 // Updates the window when screen parameters (number of screens, resolutions,
 // etc.) change.

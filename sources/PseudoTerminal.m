@@ -2100,6 +2100,7 @@ ITERM_WEAKLY_REFERENCEABLE
 // tab, and closes the window if there are no tabs left.
 - (void)removeTab:(PTYTab *)aTab {
     DLog(@"Remove tab %@", aTab);
+    [self tabWillBeRemoved:aTab];
     if (![aTab isTmuxTab]) {
         iTermRestorableSession *restorableSession = [[[iTermRestorableSession alloc] init] autorelease];
         restorableSession.sessions = [aTab sessions];
@@ -3786,6 +3787,10 @@ ITERM_WEAKLY_REFERENCEABLE
         return NO;
     }
     [self updateUseTransparency];
+    NSArray *groupDicts = arrangement[@"Tab Groups"];
+    if (groupDicts) {
+        [self restoreTabGroupsFromArrangement:groupDicts];
+    }
     return YES;
 }
 
@@ -3905,34 +3910,53 @@ ITERM_WEAKLY_REFERENCEABLE
                         encoder:(id<iTermEncoderAdapter>)result {
     NSRect rect = [[self window] frame];
 
-    return [PseudoTerminal populateArrangementWith:tabsOrSession
-                                 includingContents:includeContents
-                                           encoder:result
-                                      terminalGuid:self.terminalGuid
-                                              rect:rect
-                                   useTransparency:useTransparency_
-                                shouldShowToolbelt:_contentView.shouldShowToolbelt
-                               toolbeltProportions:_contentView.toolbelt.proportions
-                           toolbeltRestorableState:_contentView.toolbelt.restorableState
-                         windowTitleOverrideFormat:self.scope.windowTitleOverrideFormat
-                  hidingToolbeltShouldResizeWindow:hidingToolbeltShouldResizeWindow_
-                                     anyFullScreen:[self anyFullScreen]
-                                    lionFullScreen:[self lionFullScreen]
-                                          oldFrame:oldFrame_
-                                        windowType:self.windowType
-                                   savedWindowType:self.savedWindowType
-                                        percentage:_percentage
-                                    initialProfile:[self expurgatedInitialProfile]
-                                    isHotKeyWindow:self.isHotKeyWindow
-                                  hotkeyWindowType:_hotkeyWindowType
-                                       screenIndex:[[NSScreen screens] indexOfObjectIdenticalTo:[[self window] screen]]
-                      screenNumberFromFirstProfile:_windowPositioner.screenNumberFromFirstProfile
-                                  windowSizeHelper:_windowSizeHelper
-                                  hideAfterOpening:hideAfterOpening_
-                                  selectedTabIndex:[_contentView.tabView indexOfTabViewItem:[_contentView.tabView selectedTabViewItem]]
-                                               tab:nil
-                                       profileGuid:[[[[iTermHotKeyController sharedInstance] profileHotKeyForWindowController:self] profile] objectForKey:KEY_GUID]
-                                       isMaximized:[self isMaximized]];
+    NSMutableArray<iTermTabGroup *> *collapsedGroups = [NSMutableArray array];
+    for (iTermTabGroup *group in self.tabGroups) {
+        if (group.isCollapsed) {
+            [collapsedGroups addObject:group];
+            [self toggleCollapseGroup:group];
+        }
+    }
+
+    const BOOL ok = [PseudoTerminal populateArrangementWith:tabsOrSession
+                                          includingContents:includeContents
+                                                    encoder:result
+                                               terminalGuid:self.terminalGuid
+                                                       rect:rect
+                                            useTransparency:useTransparency_
+                                         shouldShowToolbelt:_contentView.shouldShowToolbelt
+                                        toolbeltProportions:_contentView.toolbelt.proportions
+                                    toolbeltRestorableState:_contentView.toolbelt.restorableState
+                                  windowTitleOverrideFormat:self.scope.windowTitleOverrideFormat
+                           hidingToolbeltShouldResizeWindow:hidingToolbeltShouldResizeWindow_
+                                              anyFullScreen:[self anyFullScreen]
+                                             lionFullScreen:[self lionFullScreen]
+                                                   oldFrame:oldFrame_
+                                                 windowType:self.windowType
+                                            savedWindowType:self.savedWindowType
+                                                 percentage:_percentage
+                                             initialProfile:[self expurgatedInitialProfile]
+                                             isHotKeyWindow:self.isHotKeyWindow
+                                           hotkeyWindowType:_hotkeyWindowType
+                                                screenIndex:[[NSScreen screens] indexOfObjectIdenticalTo:[[self window] screen]]
+                               screenNumberFromFirstProfile:_windowPositioner.screenNumberFromFirstProfile
+                                           windowSizeHelper:_windowSizeHelper
+                                           hideAfterOpening:hideAfterOpening_
+                                           selectedTabIndex:[_contentView.tabView indexOfTabViewItem:[_contentView.tabView selectedTabViewItem]]
+                                                        tab:nil
+                                                profileGuid:[[[[iTermHotKeyController sharedInstance] profileHotKeyForWindowController:self] profile] objectForKey:KEY_GUID]
+                                                isMaximized:[self isMaximized]];
+    for (iTermTabGroup *group in collapsedGroups) {
+        [self toggleCollapseGroup:group];
+    }
+
+    if (ok) {
+        NSArray *groupDicts = [self encodeTabGroupsForArrangement];
+        if (groupDicts.count > 0) {
+            result[@"Tab Groups"] = groupDicts;
+        }
+    }
+    return ok;
 }
 
 + (BOOL)populateArrangementWith:(iTermOr<NSArray<PTYTab *> *, PTYSession *> *)tabsOrSession
@@ -6728,6 +6752,13 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     [_contentView setCurrentSessionAlpha:self.currentSession.textview.transparencyAlpha];
     [tab didSelectTab];
     [[NSNotificationCenter defaultCenter] postNotificationName:iTermSelectedTabDidChange object:tab];
+
+    iTermTabGroup *selectedTabGroup = [self tabGroupForTab:tab];
+    if (selectedTabGroup != nil &&
+        selectedTabGroup.isCollapsed &&
+        [selectedTabGroup.memberTabIDs.firstObject intValue] == tab.uniqueId) {
+        [self toggleCollapseGroup:selectedTabGroup];
+    }
     DLog(@"Finished");
 }
 
@@ -7400,6 +7431,41 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     [item setRepresentedObject:tabViewItem];
     _tabViewItemForColorPicker = tabViewItem;
     [rootMenu addItem:item];
+
+    [rootMenu addItem:[NSMenuItem separatorItem]];
+    NSMenuItem *addToGroupItem = [[[NSMenuItem alloc] initWithTitle:@"Add to New Group\u2026"
+                                                             action:@selector(addTabToNewGroup:)
+                                                      keyEquivalent:@""] autorelease];
+    [addToGroupItem setRepresentedObject:tabViewItem];
+    [addToGroupItem setTarget:self];
+    [rootMenu addItem:addToGroupItem];
+
+    if (self.tabGroups.count > 0) {
+        NSMenu *moveMenu = [[[NSMenu alloc] initWithTitle:@""] autorelease];
+        for (iTermTabGroup *group in self.tabGroups) {
+            NSMenuItem *groupItem = [[[NSMenuItem alloc] initWithTitle:group.name
+                                                               action:@selector(moveTabToGroup:)
+                                                        keyEquivalent:@""] autorelease];
+            [groupItem setRepresentedObject:@{@"tabViewItem": tabViewItem, @"group": group}];
+            [groupItem setTarget:self];
+            [moveMenu addItem:groupItem];
+        }
+        NSMenuItem *moveItem = [[[NSMenuItem alloc] initWithTitle:@"Move to Group"
+                                                           action:nil
+                                                    keyEquivalent:@""] autorelease];
+        [rootMenu addItem:moveItem];
+        [rootMenu setSubmenu:moveMenu forItem:moveItem];
+    }
+
+    PTYTab *contextMenuTab = [tabViewItem identifier];
+    if ([self tabGroupForTab:contextMenuTab] != nil) {
+        NSMenuItem *removeItem = [[[NSMenuItem alloc] initWithTitle:@"Remove from Group"
+                                                             action:@selector(removeTabFromGroup:)
+                                                      keyEquivalent:@""] autorelease];
+        [removeItem setRepresentedObject:tabViewItem];
+        [removeItem setTarget:self];
+        [rootMenu addItem:removeItem];
+    }
 
     for (NSMenuItem *item in rootMenu.itemArray) {
         item.target = self;

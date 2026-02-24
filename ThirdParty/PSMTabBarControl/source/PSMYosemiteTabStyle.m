@@ -394,9 +394,13 @@
 }
 
 - (float)desiredWidthOfTabCell:(PSMTabBarCell *)cell {
-    return ceil([self widthOfLeftMatterInCell:cell] +
-                [self widthOfAttributedStringInCell:cell] +
-                [self widthOfRightMatterInCell:cell]);
+    CGFloat base = ceil([self widthOfLeftMatterInCell:cell] +
+                        [self widthOfAttributedStringInCell:cell] +
+                        [self widthOfRightMatterInCell:cell]);
+    if (cell.isGroupHeader) {
+        base += 28.0;
+    }
+    return base;
 }
 
 #pragma mark - Cell Values
@@ -763,6 +767,60 @@
                                                   isLast:cell == _tabBar.cells.lastObject
                                          highlightAmount:highlightAmount];
     [self drawInteriorWithTabCell:cell inView:[cell controlView] highlightAmount:highlightAmount];
+    if (cell.isGroupHeader && cell.groupColor) {
+        [self drawGroupHeaderDecorations:cell];
+    }
+    if (cell.isGroupMember && cell.groupColor) {
+        [self drawGroupMemberSidebar:cell];
+    }
+}
+
+- (void)drawGroupHeaderDecorations:(PSMTabBarCell *)cell {
+    NSRect cellFrame = cell.frame;
+    const CGFloat circleDiameter = 8.0;
+    const CGFloat leftInset = kSPMTabBarCellInternalXMargin;
+    NSRect circleRect = NSMakeRect(cellFrame.origin.x + leftInset,
+                                   NSMidY(cellFrame) - circleDiameter / 2.0,
+                                   circleDiameter,
+                                   circleDiameter);
+
+    NSBezierPath *circlePath = [NSBezierPath bezierPathWithOvalInRect:circleRect];
+    [cell.groupColor set];
+    [circlePath fill];
+
+    NSString *chevron = cell.isGroupCollapsed ? @"\u25B6" : @"\u25BC";
+    NSDictionary *chevronAttrs = @{
+        NSFontAttributeName: [NSFont systemFontOfSize:7.0],
+        NSForegroundColorAttributeName: [self textColorForCell:cell]
+    };
+    NSSize chevronSize = [chevron sizeWithAttributes:chevronAttrs];
+    NSPoint chevronPoint = NSMakePoint(NSMaxX(circleRect) + 4.0,
+                                      NSMidY(cellFrame) - chevronSize.height / 2.0);
+    [chevron drawAtPoint:chevronPoint withAttributes:chevronAttrs];
+
+    if (cell.isGroupCollapsed && cell.groupMemberCount > 0) {
+        NSString *badge = [NSString stringWithFormat:@"(%ld)", (long)cell.groupMemberCount];
+        NSDictionary *badgeAttrs = @{
+            NSFontAttributeName: [NSFont systemFontOfSize:9.0],
+            NSForegroundColorAttributeName: [self textColorForCell:cell]
+        };
+        NSSize badgeSize = [badge sizeWithAttributes:badgeAttrs];
+        CGFloat labelEnd = NSMaxX(cellFrame) - kSPMTabBarCellInternalXMargin;
+        NSPoint badgePoint = NSMakePoint(labelEnd - badgeSize.width,
+                                         NSMidY(cellFrame) - badgeSize.height / 2.0);
+        [badge drawAtPoint:badgePoint withAttributes:badgeAttrs];
+    }
+}
+
+- (void)drawGroupMemberSidebar:(PSMTabBarCell *)cell {
+    NSRect cellFrame = cell.frame;
+    const CGFloat barWidth = 2.0;
+    NSRect barRect = NSMakeRect(cellFrame.origin.x,
+                                cellFrame.origin.y,
+                                barWidth,
+                                cellFrame.size.height);
+    [cell.groupColor set];
+    NSRectFill(barRect);
 }
 
 - (CGFloat)tabColorBrightness:(PSMTabBarCell *)cell {
