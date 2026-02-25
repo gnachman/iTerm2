@@ -20,6 +20,7 @@ class PasswordManagerDataSourceProvider: NSObject {
     private var _lastPass: LastPassDataSource
     private var _keePassXC: AdapterPasswordDataSource
     private var _bitwarden: AdapterPasswordDataSource
+    private var _keeper: KeeperDataSource
     private let browser: Bool
     private var dataSourceNameUserDefaultsKey: String {
         "NoSyncPasswordManagerDataSourceName" + (browser ? "Browser" : "")
@@ -31,6 +32,7 @@ class PasswordManagerDataSourceProvider: NSObject {
         case lastPass = "LastPass"
         case keePassXC = "KeePassXC"
         case bitwarden = "Bitwarden"
+        case keeper = "Keeper"
 
         static let defaultValue = DataSource.keychain
     }
@@ -49,6 +51,8 @@ class PasswordManagerDataSourceProvider: NSObject {
         _bitwarden = AdapterPasswordDataSource(browser: browser,
                                                adapterPath: bitwardenPath,
                                                identifier: "Bitwarden")
+
+        _keeper = KeeperDataSource(browser: browser)
 
         self.browser = browser
 
@@ -85,6 +89,8 @@ class PasswordManagerDataSourceProvider: NSObject {
                     return keePassXC!
                 case .bitwarden:
                     return bitwarden!
+                case .keeper:
+                    return keeper!
                 }
             }()
             _dataSource = fresh
@@ -133,6 +139,14 @@ class PasswordManagerDataSourceProvider: NSObject {
         return preferredDataSource == .lastPass
     }
 
+    @objc func enableKeeper() {
+        preferredDataSource = .keeper
+    }
+
+    @objc var keeperEnabled: Bool {
+        return preferredDataSource == .keeper
+    }
+
     @objc var keychain: PasswordManagerDataSource? {
         if !authenticated {
             return nil
@@ -166,6 +180,13 @@ class PasswordManagerDataSourceProvider: NSObject {
             return nil
         }
         return _bitwarden
+    }
+
+    private var keeper: KeeperDataSource? {
+        if !authenticated {
+            return nil
+        }
+        return _keeper
     }
 
     @objc func revokeAuthentication() {
