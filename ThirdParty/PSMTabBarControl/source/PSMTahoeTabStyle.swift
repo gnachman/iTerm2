@@ -123,8 +123,10 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
 
         // Load pin indicator
         let pinConfig = NSImage.SymbolConfiguration(pointSize: 9, weight: .medium, scale: .medium)
-        _pinImage = NSImage(systemSymbolName: "pin.fill", accessibilityDescription: "Pinned")?.withSymbolConfiguration(pinConfig)
-        _pinImage?.isTemplate = true
+        if let basePin = NSImage(systemSymbolName: "pin.fill", accessibilityDescription: "Pinned") {
+            _pinImage = basePin.withSymbolConfiguration(pinConfig) ?? basePin
+            _pinImage?.isTemplate = true
+        }
     }
 
     // MARK: - PSMTabStyle Protocol
@@ -303,7 +305,7 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
     @objc
     func minimumWidth(ofTabCell cell: PSMTabBarCell!) -> Float {
         if cell.isPinned {
-            return Float(tabBar?.pinnedTabWidth ?? 64)
+            return Float(tabBar?.pinnedTabWidth ?? 0)
         }
         return Float(ceil(widthOfLeftMatterInCell(cell) +
                           kPSMMinimumTitleWidth +
@@ -313,7 +315,7 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
     @objc
     func desiredWidth(ofTabCell cell: PSMTabBarCell!) -> Float {
         if cell.isPinned {
-            return Float(tabBar?.pinnedTabWidth ?? 64)
+            return Float(tabBar?.pinnedTabWidth ?? 0)
         }
         return Float(ceil(widthOfLeftMatterInCell(cell) +
                           widthOfAttributedStringInCell(cell) +
@@ -1511,11 +1513,14 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
         
         
         // Label and subtitle
+        // For pinned tabs: skip title if a graphic icon is present.
+        let skipLabel = cell.isPinned && cell.cachedTitle?.inputs.graphic != nil
         let subtitleWidth = subtitleWidth(cell: cell, orientation: orientation)
         let labelWidth = max(widthOfAttributedStringInCell(cell), subtitleWidth)
         let supportsMultiLineLabels = self.supportsMultiLineLabels
         // Amount to shift text down from vertically centered so that it matches the OS's rendering
         let textShift = 1.0 + orientationShift
+        if !skipLabel {
         objects.append(TextLO(name: Name.label.rawValue,
                               priority: Priority.required.rawValue,
                               minWidth: 8,
@@ -1525,23 +1530,36 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
             let mainLabelHeight: CGFloat
             if let cachedTitle = cell.cachedTitle,
                !cachedTitle.isEmpty {
-                let attributedString = cachedTitle.attributedStringForcingLeftAlignment(
-                    orientation == .verticalOrientation,
-                    truncatedForWidth: resolved.frame.size.width)
+                let drawString: NSAttributedString
+                if cell.isPinned && orientation == .horizontalOrientation {
+                    // For pinned tabs, show only the first character.
+                    let title = cachedTitle.inputs.title ?? ""
+                    let firstChar = title.isEmpty ? "" : String(title.prefix(1))
+                    let fullString = cachedTitle.attributedStringForcingLeftAlignment(
+                        true, truncatedForWidth: resolved.frame.size.width)
+                    let attrs: [NSAttributedString.Key: Any] = fullString.length > 0
+                        ? fullString.attributes(at: 0, effectiveRange: nil)
+                        : [:]
+                    drawString = NSAttributedString(string: firstChar, attributes: attrs)
+                } else {
+                    drawString = cachedTitle.attributedStringForcingLeftAlignment(
+                        orientation == .verticalOrientation,
+                        truncatedForWidth: resolved.frame.size.width)
+                }
                 var rect = resolved.frame
                 let boundingSize = cachedTitle.boundingRect(with: NSSize(width: resolved.frame.width, height: cell.frame.height)).size
                 mainLabelHeight = boundingSize.height
                 labelOffset = PSMTahoeTabStyle.willDrawSubtitle(cell.cachedSubtitle) ? PSMTahoeTabStyle.verticalOffsetForTitleWhenSubtitlePresent : 0
                 rect.origin.y = cell.frame.origin.y + floor((cell.frame.size.height - boundingSize.height) / 2.0) + labelOffset + textShift
                 rect.size.height = boundingSize.height
-                attributedString.draw(in: rect)
+                drawString.draw(in: rect)
             } else {
                 labelOffset = 0
                 mainLabelHeight = 0
             }
             
-            // Draw subtitle
-            if supportsMultiLineLabels {
+            // Draw subtitle (never for pinned tabs).
+            if supportsMultiLineLabels && !cell.isPinned {
                 self.drawSubtitle(cell: cell,
                                   orientation: orientation,
                                   xOrigin: resolved.frame.minX,
@@ -1550,6 +1568,7 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
                                   mainLabelHeight: mainLabelHeight)
             }
         })
+        } // !skipLabel
 
         // Icon
         if cell.hasIcon, let icon = icon(cell: cell) {

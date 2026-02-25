@@ -11813,20 +11813,7 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
     }
 }
 
-- (void)togglePinTab:(id)sender {
-    PTYTab *tab = nil;
-    if ([sender respondsToSelector:@selector(representedObject)]) {
-        NSTabViewItem *tabViewItem = [sender representedObject];
-        tab = [tabViewItem identifier];
-    }
-    if (!tab) {
-        tab = self.currentTab;
-    }
-    if (!tab) {
-        return;
-    }
-    tab.pinned = !tab.isPinned;
-}
+// togglePinTab: is in PseudoTerminal.swift
 
 - (IBAction)newTabToTheRight:(id)sender {
     PTYTab *tab = [PTYTab castFrom:[[sender representedObject] identifier]];
@@ -12860,49 +12847,7 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
     [self updateForTransparency:self.ptyWindow];
 }
 
-- (void)tab:(PTYTab *)tab didChangePinnedState:(BOOL)pinned {
-    NSTabViewItem *tabViewItem = tab.tabViewItem;
-    if (!tabViewItem) {
-        return;
-    }
-
-    // Sync the pinned state to the tab bar cell.
-    [_contentView.tabBarControl setIsPinned:pinned forTabViewItem:tabViewItem];
-
-    // Reorder the tab to maintain pinned-left / unpinned-right invariant.
-    NSInteger currentIndex = [_contentView.tabView indexOfTabViewItem:tabViewItem];
-    if (currentIndex == NSNotFound) {
-        return;
-    }
-
-    NSArray<PTYTab *> *tabs = self.tabs;
-    if (pinned) {
-        // Move to the end of the pinned section.
-        NSInteger lastPinnedIndex = -1;
-        for (NSInteger i = 0; i < (NSInteger)tabs.count; i++) {
-            if (tabs[i].isPinned && tabs[i] != tab) {
-                lastPinnedIndex = i;
-            }
-        }
-        NSInteger targetIndex = lastPinnedIndex + 1;
-        if (currentIndex != targetIndex) {
-            [self moveTabAtIndex:currentIndex toIndex:targetIndex];
-        }
-    } else {
-        // Move to the start of the unpinned section.
-        // Find the last pinned tab (skipping the tab being unpinned) to determine the boundary.
-        NSInteger lastPinnedIndex = -1;
-        for (NSInteger i = 0; i < (NSInteger)tabs.count; i++) {
-            if (tabs[i].isPinned && tabs[i] != tab) {
-                lastPinnedIndex = i;
-            }
-        }
-        NSInteger targetIndex = lastPinnedIndex + 1;
-        if (currentIndex != targetIndex) {
-            [self moveTabAtIndex:currentIndex toIndex:targetIndex];
-        }
-    }
-}
+// tab:didChangePinnedState: is in PseudoTerminal.swift
 
 - (void)tab:(PTYTab *)tab didChangeToState:(PTYTabState)newState {
     if (self.numberOfTabs == 1) {

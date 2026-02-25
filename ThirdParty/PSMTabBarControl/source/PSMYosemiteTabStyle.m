@@ -1008,7 +1008,9 @@ const void *PSMTabStyleDarkColorKey = "dark";
     CGFloat mainLabelHeight = 0;
     PSMCachedTitle *cachedSubtitle = cell.cachedSubtitle;
     const CGFloat labelOffset = [self willDrawSubtitle:cachedSubtitle] ? [self verticalOffsetForTitleWhenSubtitlePresent] : 0;
-    if (!cachedTitle.isEmpty) {
+    // For pinned tabs: skip title if a graphic icon is present, otherwise show first character only.
+    BOOL skipLabel = cell.isPinned && cachedTitle.inputs.graphic != nil;
+    if (!cachedTitle.isEmpty && !skipLabel) {
         NSRect labelRect;
         labelRect.origin.x = labelPosition;
         NSSize boundingSize;
@@ -1024,8 +1026,25 @@ const void *PSMTabStyleDarkColorKey = "dark";
         labelRect.origin.y = cellFrame.origin.y + floor((cellFrame.size.height - boundingSize.height) / 2.0) + labelOffset;
         labelRect.size.height = boundingSize.height;
 
-        NSAttributedString *attributedString = [cachedTitle attributedStringForcingLeftAlignment:truncate
-                                                                               truncatedForWidth:labelRect.size.width];
+        NSAttributedString *attributedString;
+        if (cell.isPinned && _orientation == PSMTabBarHorizontalOrientation) {
+            // For pinned tabs, show only the first character to keep the tab compact.
+            NSString *title = cachedTitle.inputs.title;
+            NSString *firstChar = @"";
+            if (title.length > 0) {
+                NSRange range = [title rangeOfComposedCharacterSequenceAtIndex:0];
+                firstChar = [title substringWithRange:range];
+            }
+            NSAttributedString *fullString = [cachedTitle attributedStringForcingLeftAlignment:YES
+                                                                             truncatedForWidth:labelRect.size.width];
+            NSDictionary *attrs = fullString.length > 0
+                ? [fullString attributesAtIndex:0 effectiveRange:NULL]
+                : @{};
+            attributedString = [[NSAttributedString alloc] initWithString:firstChar attributes:attrs];
+        } else {
+            attributedString = [cachedTitle attributedStringForcingLeftAlignment:truncate
+                                                               truncatedForWidth:labelRect.size.width];
+        }
         if (truncate) {
             labelRect.origin.x += reservedSpace;
         }
@@ -1034,7 +1053,7 @@ const void *PSMTabStyleDarkColorKey = "dark";
         mainLabelHeight = NSHeight(labelRect);
     }
 
-    if ([self supportsMultiLineLabels]) {
+    if ([self supportsMultiLineLabels] && !skipLabel && !cell.isPinned) {
         [self drawSubtitle:cachedSubtitle
                          x:labelPosition
                       cell:cell

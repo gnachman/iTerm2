@@ -1342,12 +1342,21 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionDarkModeInactiveTabDarkness = @"
         }
     }
 
-    // Build the result: pinned cells always get a width, unpinned get computed widths or go to overflow.
+    // Build the result: include pinned cells only if they fit, then unpinned cells.
+    // Pinned tabs that don't fit go to overflow like any other tab.
     NSMutableArray<NSNumber *> *result = [NSMutableArray array];
     NSUInteger unpinnedIndex = 0;
+    CGFloat usedWidth = 0;
+    NSUInteger pinnedVisible = 0;
     for (PSMTabBarCell *cell in _cells) {
         if (cell.isPinned) {
-            [result addObject:@((CGFloat)_pinnedTabWidth)];
+            CGFloat needed = _pinnedTabWidth + (result.count > 0 ? intercellSpacing : 0);
+            if (usedWidth + needed <= availableWidth) {
+                [result addObject:@((CGFloat)_pinnedTabWidth)];
+                usedWidth += needed;
+                pinnedVisible++;
+            }
+            // Pinned tabs that don't fit are omitted (go to overflow).
         } else if (unpinnedIndex < (NSUInteger)numberOfVisibleUnpinned && unpinnedIndex < unpinnedWidths.count) {
             [result addObject:unpinnedWidths[unpinnedIndex]];
             unpinnedIndex++;

@@ -297,4 +297,38 @@ extension PseudoTerminal: ColorsMenuItemViewDelegate {
         }
         return tabBar.bounds
     }
+
+    // MARK: - Pinned Tabs
+
+    @objc func togglePinTab(_ sender: Any?) {
+        var tab: PTYTab?
+        if let menuItem = sender as? NSMenuItem,
+           let tabViewItem = menuItem.representedObject as? NSTabViewItem {
+            tab = tabViewItem.identifier as? PTYTab
+        }
+        if tab == nil {
+            tab = currentTab()
+        }
+        guard let tab else { return }
+        tab.isPinned = !tab.isPinned
+    }
+
+    @objc func tab(_ tab: PTYTab, didChangePinnedState pinned: Bool) {
+        guard let tabViewItem = tab.tabViewItem else { return }
+        tabBarControl()?.setIsPinned(pinned, for: tabViewItem)
+
+        // Reorder the tab to maintain pinned-left / unpinned-right invariant.
+        guard let allTabs = tabs() else { return }
+        guard let currentIndex = allTabs.firstIndex(where: { $0 === tab }) else { return }
+
+        // Find the boundary: last pinned tab (excluding the tab being toggled).
+        var lastPinnedIndex = -1
+        for (i, t) in allTabs.enumerated() where t.isPinned && t !== tab {
+            lastPinnedIndex = i
+        }
+        let targetIndex = lastPinnedIndex + 1
+        if currentIndex != targetIndex {
+            moveTab(at: currentIndex, to: targetIndex)
+        }
+    }
 }
