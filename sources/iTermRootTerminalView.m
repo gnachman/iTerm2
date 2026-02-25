@@ -1316,10 +1316,13 @@ NS_CLASS_AVAILABLE_MAC(10_14)
     } else {
         DLog(@"Not leaving an empty area on top");
     }
-    const NSRect frame = NSMakeRect([self leftBorderInset],
-                                    decorationHeights.bottom,
-                                    [self tabviewWidth],
-                                    [[thisWindow contentView] frame].size.height - decorationHeights.top - decorationHeights.bottom);
+    NSRect frame = NSMakeRect([self leftBorderInset],
+                              decorationHeights.bottom,
+                              [self tabviewWidth],
+                              [[thisWindow contentView] frame].size.height - decorationHeights.top - decorationHeights.bottom);
+    if ([self tabBarShouldBeVisibleEvenWhenOnLoan]) {
+        frame = [self tabViewFrameByShrinkingForFullScreenTabBar:frame window:thisWindow];
+    }
     [self layoutStatusBar:&decorationHeights window:thisWindow frame:frame];
     NSRect tabViewFrame =
         NSMakeRect([self leftBorderInset],
