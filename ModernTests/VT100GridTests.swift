@@ -3927,6 +3927,93 @@ class VT100GridTests: XCTestCase {
         lineBuffer.removeLastRawLine()
         XCTAssertEqual(lineBuffer.lineStrings, [])
     }
+
+    // MARK: - BCE (Background Color Erase) Tests
+
+    /// Test for issue 12723: When scrolling, newly cleared lines should use
+    /// the grid's defaultChar background color (BCE behavior).
+    func testBCE_ScrollingUsesDefaultCharBackgroundColor() {
+        let width: Int32 = 10
+        let height: Int32 = 4
+        let grid = VT100Grid(size: VT100GridSize(width: width, height: height), delegate: nil)!
+        let lineBuffer = LineBuffer(blockSize: 1000)
+
+        // Fill the grid with text
+        let initialLines = [
+            "line1\n",
+            "line2\n",
+            "line3\n",
+            "line4"
+        ]
+        append(strings: initialLines, toGrid: grid, lineBuffer: lineBuffer)
+
+        // Set up a custom defaultChar with orange 24-bit background color
+        var orangeDefaultChar = screen_char_t()
+        orangeDefaultChar.code = 0
+        orangeDefaultChar.backgroundColorMode = UInt32(ColorMode24bit.rawValue)
+        orangeDefaultChar.backgroundColor = 255  // red
+        orangeDefaultChar.bgGreen = 165
+        orangeDefaultChar.bgBlue = 0
+        grid.defaultChar = orangeDefaultChar
+
+        // Scroll the grid down (which clears the bottom line)
+        grid.cursorX = 0
+        grid.cursorY = 3  // bottom line
+        grid.moveCursorDownOneLineScrolling(into: lineBuffer,
+                                            unlimitedScrollback: true,
+                                            useScrollbackWithRegion: false,
+                                            willScroll: nil,
+                                            sentToLineBuffer: nil)
+
+        // The newly scrolled-in line (line 3, 0-indexed) should have the orange background
+        let line = grid.immutableScreenChars(atLineNumber: 3)!
+
+        // Check that the empty cells have 24-bit orange background
+        XCTAssertEqual(line[0].backgroundColorMode, UInt32(ColorMode24bit.rawValue),
+                       "BCE: scrolled-in line should have 24-bit background color mode from defaultChar")
+        XCTAssertEqual(line[0].backgroundColor, 255,
+                       "BCE: scrolled-in line should have red=255 from defaultChar")
+        XCTAssertEqual(line[0].bgGreen, 165,
+                       "BCE: scrolled-in line should have green=165 from defaultChar")
+        XCTAssertEqual(line[0].bgBlue, 0,
+                       "BCE: scrolled-in line should have blue=0 from defaultChar")
+    }
+
+    /// Test for issue 12723: scrollRect:downBy: should use defaultChar for cleared regions.
+    func testBCE_ScrollRectUsesDefaultCharBackgroundColor() {
+        let grid = gridFromCompactLinesWithContinuationMarks(
+            "abcdef!\n" +
+            "ghijkl!\n" +
+            "mnopqr!\n" +
+            "stuvwx!"
+        )
+
+        // Set up a custom defaultChar with orange 24-bit background color
+        var orangeDefaultChar = screen_char_t()
+        orangeDefaultChar.code = 0
+        orangeDefaultChar.backgroundColorMode = UInt32(ColorMode24bit.rawValue)
+        orangeDefaultChar.backgroundColor = 255  // red
+        orangeDefaultChar.bgGreen = 165
+        orangeDefaultChar.bgBlue = 0
+        grid.defaultChar = orangeDefaultChar
+
+        // Scroll the entire rect up by 1 (this clears the bottom line)
+        let rect = VT100GridRect(origin: VT100GridCoord(x: 0, y: 0),
+                                 size: VT100GridSize(width: grid.size.width, height: grid.size.height))
+        grid.scroll(rect, downBy: -1, softBreak: false)
+
+        // The newly cleared bottom line should have the orange background
+        let line = grid.immutableScreenChars(atLineNumber: 3)!
+
+        XCTAssertEqual(line[0].backgroundColorMode, UInt32(ColorMode24bit.rawValue),
+                       "BCE: scrollRect cleared line should have 24-bit background color mode")
+        XCTAssertEqual(line[0].backgroundColor, 255,
+                       "BCE: scrollRect cleared line should have red=255")
+        XCTAssertEqual(line[0].bgGreen, 165,
+                       "BCE: scrollRect cleared line should have green=165")
+        XCTAssertEqual(line[0].bgBlue, 0,
+                       "BCE: scrollRect cleared line should have blue=0")
+    }
 }
 
 extension VT100Grid {

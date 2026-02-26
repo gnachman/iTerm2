@@ -671,6 +671,97 @@ class VT100ScreenTests: XCTestCase {
                            "........")
         })
     }
+
+    // MARK: - removeSoftEOLBeforeCursor
+
+    func testEraseLineAfterCursorPreservesSoftEOLWhenPreviousLineIsFull() {
+        // When text wraps (setting EOL_SOFT) and then an erase-after-cursor
+        // happens at column 0 on the next line (as zsh does when redrawing),
+        // the soft wrap should be preserved because the previous line is full.
+        let screen = screen(width: 5, height: 4)
+        screen.performBlock(joinedThreads: { _, mutableState, _ in
+            // "abcdefgh" wraps: "abcde" on line 0 (EOL_SOFT), "fgh" on line 1
+            mutableState!.appendString(atCursor: "abcdefgh")
+        })
+        // Verify initial state: line 0 has EOL_SOFT
+        XCTAssertEqual(screen.immutableState.currentGrid.compactLineDumpWithContinuationMarks(),
+                       "abcde+\n" +
+                       "fgh..!\n" +
+                       ".....!\n" +
+                       ".....!")
+        screen.performBlock(joinedThreads: { _, mutableState, _ in
+            // Simulate zsh redraw: CR to column 0, then erase from cursor to end of line
+            mutableState!.carriageReturn()
+            mutableState!.eraseLine(beforeCursor: false, afterCursor: true, decProtect: false)
+        })
+        // Line 0 should still have EOL_SOFT because it's full to the right edge
+        XCTAssertEqual(screen.immutableState.currentGrid.compactLineDumpWithContinuationMarks(),
+                       "abcde+\n" +
+                       ".....!\n" +
+                       ".....!\n" +
+                       ".....!")
+    }
+
+    func testEraseLineAfterCursorRemovesSoftEOLWhenPreviousLineIsNotFull() {
+        // When the previous line is NOT full to the right edge, the soft wrap
+        // should be removed because the line didn't genuinely wrap.
+        let screen = screen(width: 5, height: 4)
+        screen.performBlock(joinedThreads: { _, mutableState, _ in
+            // Write text that wraps
+            mutableState!.appendString(atCursor: "abcdefgh")
+            // Now erase some characters at the end of line 0 to make it not full.
+            // Move cursor to position 4 on line 0 and erase to end of line.
+            mutableState!.currentGrid.cursorX = 4
+            mutableState!.currentGrid.cursorY = 0
+            mutableState!.eraseLine(beforeCursor: false, afterCursor: true, decProtect: false)
+        })
+        // After erasing end of line 0, it should now have EOL_HARD
+        // (setCharsFrom:to:toChar: sets EOL_HARD when erasing to right edge)
+        // and "fgh" should still be on line 1.
+        XCTAssertEqual(screen.immutableState.currentGrid.compactLineDumpWithContinuationMarks(),
+                       "abcd.!\n" +
+                       "fgh..!\n" +
+                       ".....!\n" +
+                       ".....!")
+        screen.performBlock(joinedThreads: { _, mutableState, _ in
+            // Now set line 0 back to EOL_SOFT artificially (simulating an edge case)
+            mutableState!.currentGrid.setContinuationMarkOnLine(0, to: unichar(EOL_SOFT))
+            // Move cursor to (0, 1) and erase after cursor
+            mutableState!.currentGrid.cursorX = 0
+            mutableState!.currentGrid.cursorY = 1
+            mutableState!.eraseLine(beforeCursor: false, afterCursor: true, decProtect: false)
+        })
+        // Line 0 should now have EOL_HARD because position 4 is null (line not full)
+        XCTAssertEqual(screen.immutableState.currentGrid.compactLineDumpWithContinuationMarks(),
+                       "abcd.!\n" +
+                       ".....!\n" +
+                       ".....!\n" +
+                       ".....!")
+    }
+
+    func testEraseInDisplayAfterCursorPreservesSoftEOLWhenPreviousLineIsFull() {
+        // Same as the EL test but for ED (erase in display).
+        let screen = screen(width: 5, height: 4)
+        screen.performBlock(joinedThreads: { _, mutableState, _ in
+            mutableState!.appendString(atCursor: "abcdefgh")
+        })
+        XCTAssertEqual(screen.immutableState.currentGrid.compactLineDumpWithContinuationMarks(),
+                       "abcde+\n" +
+                       "fgh..!\n" +
+                       ".....!\n" +
+                       ".....!")
+        screen.performBlock(joinedThreads: { _, mutableState, _ in
+            // CR to column 0 on line 1, then erase display from cursor to end
+            mutableState!.carriageReturn()
+            mutableState!.eraseInDisplay(beforeCursor: false, afterCursor: true, decProtect: false)
+        })
+        // Line 0 should still have EOL_SOFT
+        XCTAssertEqual(screen.immutableState.currentGrid.compactLineDumpWithContinuationMarks(),
+                       "abcde+\n" +
+                       ".....!\n" +
+                       ".....!\n" +
+                       ".....!")
+    }
 }
 
 // a very simple LCG-based RNG
