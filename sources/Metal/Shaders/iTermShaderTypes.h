@@ -12,6 +12,7 @@ typedef enum iTermVertexInputIndex {
     iTermVertexInputIndexDefaultBackgroundColorInfo,  // Points at iTermMetalBackgroundColorInfo
     iTermVertexTextInfo,
     iTermVertexColorArray,  // Points at per-quad vector_float4 color
+    iTermVertexInputIndexValidationFlag,  // Issue 12604: uint32 where bit 0 = CPU validation failed
 } iTermVertexInputIndex;
 
 typedef enum iTermTextureIndex {
