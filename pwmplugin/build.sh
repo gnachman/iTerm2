@@ -6,11 +6,11 @@ echo "Building password manager adapters as universal binaries..."
 
 # Build for arm64
 echo "Building for arm64..."
-swift build -c release --arch arm64 --scratch-path .build-arm64
+swift build -c release --arch arm64 --scratch-path .build-arm64 --disable-sandbox
 
 # Build for x86_64
 echo "Building for x86_64..."
-swift build -c release --arch x86_64 --scratch-path .build-x86_64
+swift build -c release --arch x86_64 --scratch-path .build-x86_64 --disable-sandbox
 
 # Create output directory
 mkdir -p .build/release
