@@ -414,12 +414,19 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
                           width:(int)width
                   numberOfLines:(int)numberOfLines
              overflowAdjustment:(long long)overflowAdjustment {
+    DLog(@"selectNextResultForward:%@ offset:%d width:%d numberOfLines:%d overflowAdjustment:%lld",
+         forward ? @"YES" : @"NO", offset, width, numberOfLines, overflowAdjustment);
+    DLog(@"findCursor type=%@ coord=(%lld,%lld) searchResults.count=%lu",
+         @(_findCursor.type), (long long)_findCursor.coord.x, (long long)_findCursor.coord.y,
+         (unsigned long)_searchResults.count);
+
     // Range of positions before backwards find cursor or after forwards find cursor. Stays empty if no cursor.
     NSRange range = NSMakeRange(NSNotFound, 0);
     int start;
     int stride;
     const NSInteger bottomLimitPos = (1 + numberOfLines + overflowAdjustment) * width;
     const NSInteger topLimitPos = overflowAdjustment * width;
+    DLog(@"bottomLimitPos=%ld topLimitPos=%ld", (long)bottomLimitPos, (long)topLimitPos);
     if (forward) {
         start = [_searchResults count] - 1;
         stride = -1;
@@ -437,6 +444,9 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
             range = NSMakeRange(topLimitPos, MAX(0, bottomLimitPos - topLimitPos));
         }
     }
+    DLog(@"Search range: location=%lu length=%lu (end=%lu)",
+         (unsigned long)range.location, (unsigned long)range.length,
+         (unsigned long)(range.location + range.length));
     BOOL found = NO;
     VT100GridCoordRange selectedRange = VT100GridCoordRangeMake(0, 0, 0, 0);
     iTermExternalSearchResult *external = nil;
@@ -448,6 +458,8 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
     SearchResult *wrapAroundResult = nil;
     BOOL haveFoundExternalCursor = NO;
     NSRange validRange = [self validRangeForOverflow:overflowAdjustment];
+    DLog(@"validRange: location=%lu length=%lu, initial start=%d",
+         (unsigned long)validRange.location, (unsigned long)validRange.length, start);
     if (start >= NSMaxRange(validRange)) {
         if (stride > 0) {
             start = 0;
@@ -489,6 +501,9 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
             found = haveFoundExternalCursor && r.externalResult != _findCursor.external && r.externalResult.isVisible;
         } else {
             found = NSLocationInRange(pos, range);
+            DLog(@"Checking result %@ pos=%ld inRange=%@ (range.loc=%lu range.end=%lu)",
+                 r, (long)pos, found ? @"YES" : @"NO",
+                 (unsigned long)range.location, (unsigned long)(range.location + range.length));
         }
         if (found) {
             DLog(@"Result %@ is in the desired range", r);
@@ -705,9 +720,12 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
 
 - (void)updateCachedCounts {
     _cachedCounts.overflowAdjustment = [self.delegate findOnPageOverflowAdjustment];
+    DLog(@"updateCachedCounts: overflowAdjustment=%lld searchResults.count=%lu",
+         _cachedCounts.overflowAdjustment, (unsigned long)_searchResults.count);
 
     _cachedCounts.valid = YES;
     if (!_searchResults.count) {
+        DLog(@"updateCachedCounts: no results, setting count=0 index=0");
         _cachedCounts.count = 0;
         _cachedCounts.index = 0;
         return;
@@ -716,17 +734,23 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
     if (_searchResults.lastObject.safeAbsEndY >= _cachedCounts.overflowAdjustment) {
         // All search results are valid.
         _cachedCounts.count = _searchResults.count;
+        DLog(@"updateCachedCounts: all results valid, count=%ld", (long)_cachedCounts.count);
     } else {
         const NSRange validRange = [self validRangeForOverflow:_cachedCounts.overflowAdjustment];
+        DLog(@"updateCachedCounts: validRange=%@ lastObject.safeAbsEndY=%lld",
+             NSStringFromRange(validRange), _searchResults.lastObject.safeAbsEndY);
         if (validRange.length == 0) {
+            DLog(@"updateCachedCounts: no valid results");
             _cachedCounts.count = 0;
             _cachedCounts.index = 0;
             return;
         }
         _cachedCounts.count = NSMaxRange(validRange);
+        DLog(@"updateCachedCounts: count=%ld (from validRange)", (long)_cachedCounts.count);
     }
-    
+
     if (self.selectedResult == nil) {
+        DLog(@"updateCachedCounts: no selected result, index=0");
         _cachedCounts.index = 0;
         return;
     }
@@ -735,6 +759,8 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
     _cachedCounts.index = [_searchResults indexOfObject:self.selectedResult
                                           inSortedRange:NSMakeRange(0, _searchResults.count)
                                                 options:NSBinarySearchingFirstEqual];
+    DLog(@"updateCachedCounts: selectedResult=%@ foundAtIndex=%ld",
+         self.selectedResult, (long)_cachedCounts.index);
 
     // Rewrite the index to be 1-based for valid results and 0 if none is selected.
     if (_cachedCounts.index == NSNotFound) {
@@ -742,6 +768,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
     } else {
         _cachedCounts.index += 1;
     }
+    DLog(@"updateCachedCounts: final index=%ld count=%ld", (long)_cachedCounts.index, (long)_cachedCounts.count);
 }
 
 #pragma mark - iTermSearchResultsMinimapViewDelegate

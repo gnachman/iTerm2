@@ -4741,11 +4741,16 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
 }
 
 - (BOOL)continueFind:(double *)progress range:(NSRange *)rangePtr {
+    const long long totalOverflow = [_dataSource totalScrollbackOverflow];
+    const long long currentOverflow = [_dataSource scrollbackOverflow];
+    const int numLines = [_dataSource numberOfLines];
+    DLog(@"continueFind: numberOfLines=%d totalScrollbackOverflow=%lld scrollbackOverflow=%lld overflowAdjustment=%lld",
+         numLines, totalOverflow, currentOverflow, totalOverflow - currentOverflow);
     return [_findOnPageHelper continueFind:progress
                                   rangeOut:rangePtr
                                      width:[_dataSource width]
-                             numberOfLines:[_dataSource numberOfLines]
-                        overflowAdjustment:[_dataSource totalScrollbackOverflow] - [_dataSource scrollbackOverflow]];
+                             numberOfLines:numLines
+                        overflowAdjustment:totalOverflow - currentOverflow];
 }
 
 - (void)findOnPageHelperSearchExternallyFor:(NSString *)query mode:(iTermFindMode)mode {
@@ -4857,7 +4862,11 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
 }
 
 - (long long)findOnPageOverflowAdjustment {
-    return [_dataSource totalScrollbackOverflow] - [_dataSource scrollbackOverflow];
+    const long long total = [_dataSource totalScrollbackOverflow];
+    const long long current = [_dataSource scrollbackOverflow];
+    DLog(@"findOnPageOverflowAdjustment: totalScrollbackOverflow=%lld scrollbackOverflow=%lld result=%lld",
+         total, current, total - current);
+    return total - current;
 }
 
 - (void)resetFindCursor {
