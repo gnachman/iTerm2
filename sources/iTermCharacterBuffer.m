@@ -11,7 +11,7 @@
 @implementation iTermCharacterBuffer {
     screen_char_t *_buffer;
     int _size;
-    BOOL _wasRelocated;
+    int _shareCount;
 }
 
 - (void)dealloc {
@@ -51,6 +51,7 @@
     if (self) {
         _buffer = iTermUninitializedCalloc(size, sizeof(screen_char_t));
         _size = size;
+        _shareCount = 1;
     }
     return self;
 }
@@ -66,25 +67,18 @@
     if (self) {
         _buffer = iTermMemdup(source, size, sizeof(screen_char_t));
         _size = size;
+        _shareCount = 1;
     }
     return self;
 }
 
 - (void)resize:(int)newSize {
-    screen_char_t *oldBuffer = _buffer;
     _buffer = iTermRealloc(_buffer, newSize, sizeof(screen_char_t));
-    if (_buffer != oldBuffer) {
-        _wasRelocated = YES;
-    }
     _size = newSize;
 }
 
 - (iTermCharacterBuffer *)clone {
     return [[iTermCharacterBuffer alloc] initWithChars:_buffer size:_size];
-}
-
-- (void)clearRelocationFlag {
-    _wasRelocated = NO;
 }
 
 - (BOOL)deepIsEqual:(id)object {
@@ -96,6 +90,29 @@
         return NO;
     }
     return _size == other->_size && !memcmp(_buffer, other->_buffer, _size * sizeof(screen_char_t));
+}
+
+- (BOOL)isShared {
+    return _shareCount > 1;
+}
+
+- (int)testShareCount {
+    return _shareCount;
+}
+
+- (void)incrementShareCount {
+    _shareCount++;
+}
+
+- (iTermCharacterBuffer *)cloneAndDecrementShareCount {
+    assert(_shareCount > 1);
+    _shareCount--;
+    return [self clone];
+}
+
+- (void)decrementShareCount {
+    assert(_shareCount > 1);
+    _shareCount--;
 }
 
 @end

@@ -348,8 +348,18 @@ NS_INLINE void iTermLineBlockDidChange(__unsafe_unretained LineBlock *lineBlock,
     return self;
 }
 
-// NOTE: You must not acquire a lock in dealloc. Assume it is reentrant.
+// NOTE: dealloc may be called reentrantly (releasing the lock can trigger another dealloc).
+// gLineBlockMutex is a recursive_mutex, so reentrant acquisition is safe.
 - (void)dealloc {
+    // If this block shares a character buffer with another block (shareCount > 1),
+    // decrement the count so the surviving block knows it is the sole owner
+    // and can skip unnecessary clones on mutation.
+    if (_characterBuffer.isShared) {
+        std::lock_guard<std::recursive_mutex> lock(gLineBlockMutex);
+        if (_characterBuffer.isShared) {
+            [_characterBuffer decrementShareCount];
+        }
+    }
     if ([self deinitializeClients]) {
         if (cumulative_line_lengths) {
             free((void *)cumulative_line_lengths);
@@ -778,6 +788,16 @@ static int iTermLineBlockNumberOfFullLinesImpl(const screen_char_t *buffer,
     return result;
 }
 
+// Clone the character buffer if it is shared (shareCount > 1), ensuring
+// exclusive ownership before a non-append mutation. The check-and-clone
+// is atomic under gLineBlockMutex.
+- (void)cloneCharacterBufferIfZeroCopyShared {
+    std::lock_guard<std::recursive_mutex> lock(gLineBlockMutex);
+    if (_characterBuffer.isShared) {
+        _characterBuffer = [_characterBuffer cloneAndDecrementShareCount];
+    }
+}
+
 - (BOOL)reallyAppendLine:(const screen_char_t *)buffer
                   length:(int)length
                  partial:(BOOL)partial
@@ -817,10 +837,7 @@ static int iTermLineBlockNumberOfFullLinesImpl(const screen_char_t *buffer,
         // If completing the line (hard EOL), the copy still thinks it's partial,
         // so zero-copy sharing must end and append tracking is invalidated.
         if (!partial) {
-            if (_zeroCopyShared) {
-                _characterBuffer = [_characterBuffer clone];
-                _zeroCopyShared = NO;
-            }
+            [self cloneCharacterBufferIfZeroCopyShared];
             _appendOnlySinceLastCopy = NO;
         }
         // update the numlines cache with the new number of full lines that the updated line has.
@@ -855,10 +872,7 @@ static int iTermLineBlockNumberOfFullLinesImpl(const screen_char_t *buffer,
 #endif
     } else {
         // add a new line
-        if (_zeroCopyShared) {
-            _characterBuffer = [_characterBuffer clone];
-            _zeroCopyShared = NO;
-        }
+        [self cloneCharacterBufferIfZeroCopyShared];
         _appendOnlySinceLastCopy = NO;
         didFindRTL = lineMetadata.rtlFound;
         [self _appendCumulativeLineLength:(space_used + length)
@@ -1502,10 +1516,7 @@ int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BO
 }
 
 - (void)removeLastRawLine {
-    if (_zeroCopyShared) {
-        _characterBuffer = [_characterBuffer clone];
-        _zeroCopyShared = NO;
-    }
+    [self cloneCharacterBufferIfZeroCopyShared];
     _appendOnlySinceLastCopy = NO;
     if (cll_entries == _firstEntry) {
         return;
@@ -1554,10 +1565,7 @@ int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BO
                      metadata:(out iTermImmutableMetadata *)metadataPtr
                  continuation:(screen_char_t *)continuationPtr
                          cert:(id<iTermLineBlockMutationCertificate>)cert {
-    if (_zeroCopyShared) {
-        _characterBuffer = [_characterBuffer clone];
-        _zeroCopyShared = NO;
-    }
+    [self cloneCharacterBufferIfZeroCopyShared];
     _appendOnlySinceLastCopy = NO;
     if (cll_entries == _firstEntry) {
         // There is no last line to pop.
@@ -1753,8 +1761,8 @@ int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BO
 }
 
 - (int)offsetOfRawLine:(int)linenum {
-    if (linenum == 0) {
-        return 0;
+    if (linenum == _firstEntry) {
+        return self.bufferStartOffset;
     } else {
         return cumulative_line_lengths[linenum - 1];
     }
@@ -1770,8 +1778,8 @@ int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BO
 
 - (const screen_char_t*)rawLine:(int)linenum {
     int start;
-    if (linenum == 0) {
-        start = 0;
+    if (linenum == _firstEntry) {
+        start = self.bufferStartOffset;
     } else {
         start = cumulative_line_lengths[linenum - 1];
     }
@@ -1805,6 +1813,14 @@ int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BO
 - (void)changeBufferSize:(int)capacity cert:(id<iTermLineBlockMutationCertificate>)cert {
     ITAssertWithMessage(capacity >= [self rawSpaceUsed], @"Truncating used space");
     capacity = MAX(1, capacity);
+    // realloc may relocate the buffer at any size. Neither the C standard,
+    // POSIX, nor Apple's libmalloc guarantee in-place extension — even for
+    // large VM-backed allocations (large_try_realloc_in_place can fail when
+    // adjacent VM is already mapped). Clone before resize to avoid a
+    // use-after-free for concurrent readers (e.g., search) holding raw
+    // pointers into the old buffer. Resizes are logarithmic, so the total
+    // copy cost is bounded by O(final_size).
+    [self cloneCharacterBufferIfZeroCopyShared];
     [cert setRawBufferCapacity:capacity];
     cached_numlines_width = -1;
 }
@@ -1817,10 +1833,7 @@ int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BO
     if (partial == is_partial) {
         return;
     }
-    if (_zeroCopyShared) {
-        _characterBuffer = [_characterBuffer clone];
-        _zeroCopyShared = NO;
-    }
+    [self cloneCharacterBufferIfZeroCopyShared];
     _appendOnlySinceLastCopy = NO;
     is_partial = partial;
     iTermLineBlockDidChange(self, "set partial");
@@ -1840,10 +1853,7 @@ int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BO
 }
 
 - (int)dropLines:(int)orig_n withWidth:(int)width chars:(int *)charsDropped {
-    if (_zeroCopyShared) {
-        _characterBuffer = [_characterBuffer clone];
-        _zeroCopyShared = NO;
-    }
+    [self cloneCharacterBufferIfZeroCopyShared];
     _appendOnlySinceLastCopy = NO;
     // Note that there's no mutation certificate because we aren't touching the character buffer.
     [_metadataArray willMutate];
@@ -1928,6 +1938,8 @@ int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BO
 }
 
 - (void)eraseRTLStatusInAllCharacters {
+    ITAssertWithMessage(!self.hasBeenCopied,
+                        @"eraseRTLStatusInAllCharacters called after copy — not CoW safe");
     if (cll_entries == 0) {
         return;
     }
@@ -1987,6 +1999,7 @@ int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BO
 }
 
 - (BOOL)canZeroCopyMergeFromProgenitor {
+    std::lock_guard<std::recursive_mutex> lock(gLineBlockMutex);
     if (!_progenitor || _progenitor.invalidated) {
         return NO;
     }
@@ -2017,18 +2030,11 @@ int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BO
     if (!_progenitor->_appendOnlySinceLastCopy) {
         return NO;
     }
-    if ([_progenitor->_characterBuffer wasRelocated]) {
-        return NO;
-    }
     return YES;
 }
 
 - (void)zeroCopyMergeFromProgenitor {
-    // Merge is thread-confined to the main thread and intentionally does not
-    // take gLineBlockMutex. The mutex protects the COW ownership graph
-    // (cowCopy/validMutationCertificate on the mutation thread); the merge
-    // path is serialized with mutations at a higher level (screen lock).
-    ITAssertWithMessage(NSThread.isMainThread, @"Zero-copy merge must run on the main thread");
+    std::lock_guard<std::recursive_mutex> lock(gLineBlockMutex);
     ITAssertWithMessage(self.owner == nil, @"Zero-copy merge requires ownership detach (owner should be nil)");
     ITAssertWithMessage(self.clients.count == 0, @"Zero-copy merge requires no clients (CLL must be unshared)");
 
@@ -2050,13 +2056,24 @@ int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BO
 
     // Reset progenitor tracking
     _progenitor->_appendOnlySinceLastCopy = YES;
-    [_progenitor->_characterBuffer clearRelocationFlag];
 
     iTermLineBlockDidChange(self, "zero-copy merge");
 }
 
 - (BOOL)sharesCharacterBufferWith:(LineBlock *)other {
     return _characterBuffer == other->_characterBuffer;
+}
+
+- (int)testCharacterBufferShareCount {
+    return _characterBuffer.testShareCount;
+}
+
+- (BOOL)testCharacterBufferIsShared {
+    return _characterBuffer.isShared;
+}
+
+- (NSUInteger)testCharacterBufferIdentity {
+    return (NSUInteger)_characterBuffer;
 }
 
 - (int)_lineRawOffset:(int) anIndex {
@@ -2723,16 +2740,14 @@ crossBlockResultCount:(NSInteger *)crossBlockResultCount {
         const NSUInteger numberOfClients = myClients.count;
 
         // Perform copy-on-write copying.
-        if (_zeroCopyShared) {
-            // Zero-copy path: buffer stays shared, only clone the CLL.
-            // In production, only the progenitor enters this branch (copies
-            // are read-only between syncs). If a copy does enter here, the
-            // buffer clone is deferred to the mutation guard in the calling
-            // method (reallyAppendLine, removeLastRawLine, etc.).
-            // Invariant enforced by "Copy Mutation Invariant" tests in
-            // LineBlockZeroCopyMergeTests.
+        if (_characterBuffer.isShared) {
+            // Zero-copy path: buffer is shared with a copy (shareCount > 1).
+            // Keep sharing — only clone the CLL. The buffer clone is deferred
+            // to the mutation guard (cloneCharacterBufferIfZeroCopyShared) in
+            // the calling method if a non-append mutation occurs.
             iTermAssignToConstPointer((void **)&cumulative_line_lengths, iTermMemdup(self->cumulative_line_lengths, cll_capacity, sizeof(int)));
         } else {
+            // Standard COW: clone buffer + CLL.
             const ptrdiff_t offset = self.bufferStartOffset;
             _characterBuffer = [_characterBuffer clone];
             [self setBufferStartOffset:offset];
@@ -2804,12 +2819,11 @@ crossBlockResultCount:(NSInteger *)crossBlockResultCount {
     _appendOnlySinceLastCopy = YES;
 
     // Enable zero-copy sharing when eligible: single partial line, no drops.
-    // Both progenitor and copy get the flag so that mutation guards on either
-    // side will clone the buffer before writing.
+    // Increment the buffer's shareCount so mutation guards on either side
+    // know to clone before writing. The copy already holds the same
+    // _characterBuffer pointer (from copyDeep:NO).
     if (cll_entries == 1 && is_partial && _firstEntry == 0 && self.bufferStartOffset == 0) {
-        _zeroCopyShared = YES;
-        copy->_zeroCopyShared = YES;
-        [_characterBuffer clearRelocationFlag];
+        [_characterBuffer incrementShareCount];
     }
 
     return copy;

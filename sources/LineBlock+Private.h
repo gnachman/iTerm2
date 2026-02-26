@@ -58,10 +58,6 @@ NS_ASSUME_NONNULL_BEGIN
     // In progenitor: YES if only partial-line appends occurred since last cowCopy.
     // Reset to YES on cowCopy, set to NO on any non-append mutation.
     BOOL _appendOnlySinceLastCopy;
-
-    // In progenitor: YES if character buffer is shared with a copy via zero-copy.
-    // Append-only mutations are safe; non-append mutations must clone first.
-    BOOL _zeroCopyShared;
 }
 
 // These are synchronized on [LineBlock class]. Sample graph:

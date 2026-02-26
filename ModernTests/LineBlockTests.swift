@@ -3153,7 +3153,8 @@ class LineBlockZeroCopyMergeTests: XCTestCase {
     // Helper to create a line string
     private func makeLineString(_ string: String,
                                 eol: Int32 = EOL_HARD,
-                                rtlFound: Bool = false) -> iTermLineString {
+                                rtlFound: Bool = false,
+                                lineStringMetadata: iTermLineStringMetadata? = nil) -> iTermLineString {
         let content = { () -> any iTermString in
             if let data = string.data(using: .ascii) {
                 return iTermASCIIString(data: data, style: screen_char_t(), ea: nil)
@@ -3171,7 +3172,8 @@ class LineBlockZeroCopyMergeTests: XCTestCase {
         return iTermLineString(content: content,
                                eol: eol,
                                continuation: continuation,
-                               metadata: iTermLineStringMetadata(timestamp: 0, rtlFound: ObjCBool(rtlFound)),
+                               metadata: lineStringMetadata ?? iTermLineStringMetadata(timestamp: 0,
+                                                                                       rtlFound: ObjCBool(rtlFound)),
                                bidi: nil,
                                dirty: false)
     }
@@ -3221,28 +3223,55 @@ class LineBlockZeroCopyMergeTests: XCTestCase {
     }
 
     func testCanZeroCopyMerge_IneligibleWhenNewLineAdded() {
-        // Adding a new raw line to the progenitor should break eligibility.
+        // Adding a second raw line to the progenitor should break eligibility
+        // (canZeroCopyMergeFromProgenitor requires cll_entries == 1).
         let progenitor = LineBlock(rawBufferSize: 1024, absoluteBlockNumber: 0)
         appendPartialASCII(progenitor, "Hello")
 
         let copy = progenitor.cowCopy()
 
-        // Complete the line and add a new one.
-        appendHardASCII(progenitor, " done")
+        // Use append-only operations: close the first line with a hard append,
+        // then start a second raw line with a partial append.
+        appendHardASCII(progenitor, "!")
+        appendPartialASCII(progenitor, "Next")
 
+        XCTAssertEqual(progenitor.numRawLines(), 2,
+                       "Progenitor must have 2 raw lines after append-only newline creation")
+        XCTAssertTrue(progenitor.hasPartial(),
+                      "Second raw line should be partial after append")
         XCTAssertFalse(copy.canZeroCopyMergeFromProgenitor(),
-                       "Should be ineligible after progenitor adds a new line")
+                       "Should be ineligible when progenitor has more than 1 raw line")
     }
 
     func testCanZeroCopyMerge_IneligibleWhenNotPartial() {
-        // A complete (non-partial) single line should not be eligible.
+        // Verifies that setPartial(false) breaks zero-copy eligibility.
+        // setPartial(false) calls cloneCharacterBufferIfZeroCopyShared (because
+        // shareCount > 1), which clones the buffer and resets
+        // _appendOnlySinceLastCopy to NO. Both conditions are checked before
+        // the is_partial flag in canZeroCopyMergeFromProgenitor, so the
+        // ineligibility is driven by buffer-identity divergence. The buffer
+        // sharing assertion below pins this safety-critical side-effect.
         let progenitor = LineBlock(rawBufferSize: 1024, absoluteBlockNumber: 0)
-        appendHardASCII(progenitor, "Complete")
+        appendPartialASCII(progenitor, "Complete")
 
         let copy = progenitor.cowCopy()
+        XCTAssertTrue(copy.hasOwner(), "Copy should start with owner linkage")
+
+        // Progenitor append clears copy.owner through mutation certificate flow.
+        appendPartialASCII(progenitor, "!")
+        XCTAssertFalse(copy.hasOwner(), "Owner linkage must be cleared before eligibility check")
+
+        // setPartial(false) clones the shared buffer and resets _appendOnlySinceLastCopy.
+        progenitor.setPartial(false)
+        XCTAssertFalse(progenitor.sharesCharacterBuffer(with: copy),
+                       "setPartial(false) must clone the shared buffer")
+        XCTAssertEqual(progenitor.numRawLines(), 1,
+                       "Progenitor should still have exactly one raw line")
+        XCTAssertFalse(progenitor.hasPartial(),
+                       "Progenitor line must be complete after setPartial(false)")
 
         XCTAssertFalse(copy.canZeroCopyMergeFromProgenitor(),
-                       "Should be ineligible when progenitor line is not partial")
+                       "setPartial(false) must break zero-copy eligibility")
     }
 
     func testCanZeroCopyMerge_IneligibleWhenNoProgenitor() {
@@ -3254,30 +3283,82 @@ class LineBlockZeroCopyMergeTests: XCTestCase {
                        "Should be ineligible with no progenitor")
     }
 
-    func testCanZeroCopyMerge_IneligibleWhenBufferRelocated() {
-        // If the character buffer was relocated, zero-copy merge should be ineligible.
+    func testCanZeroCopyMerge_IneligibleWhenOwnerNotDetached() {
+        // canZeroCopyMergeFromProgenitor checks self.owner != nil first.
+        // A fresh cowCopy still has owner == progenitor; the progenitor must
+        // mutate (via validMutationCertificate) to detach ownership before a
+        // merge is safe. Verify that an undetached copy is rejected.
+        let progenitor = LineBlock(rawBufferSize: 1024, absoluteBlockNumber: 0)
+        appendPartialASCII(progenitor, "Hello")
+
+        let copy = progenitor.cowCopy()
+        XCTAssertTrue(copy.hasOwner(), "Fresh cowCopy must have owner linkage")
+
+        // No progenitor mutation — owner is still attached.
+        XCTAssertFalse(copy.canZeroCopyMergeFromProgenitor(),
+                       "Must be ineligible while copy.owner != nil")
+    }
+
+    func testCanZeroCopyMerge_IneligibleWhenCopyHasClients() {
+        // canZeroCopyMergeFromProgenitor also checks self.clients.count > 0.
+        // If the copy has itself been cowCopied (acquiring clients), it holds
+        // a CLL shared with its own clients, so zero-copy merge into it is unsafe.
+        let progenitor = LineBlock(rawBufferSize: 1024, absoluteBlockNumber: 0)
+        appendPartialASCII(progenitor, "Hello")
+
+        let copy = progenitor.cowCopy()
+        // Detach owner so that check doesn't fire first.
+        appendPartialASCII(progenitor, "!")
+        XCTAssertFalse(copy.hasOwner(), "Owner must be detached before eligibility check")
+
+        // Give the copy a client by cowCopying it.
+        let grandchild = copy.cowCopy()
+        _ = grandchild  // keep alive
+
+        XCTAssertFalse(copy.canZeroCopyMergeFromProgenitor(),
+                       "Must be ineligible when copy has clients (clients.count > 0)")
+    }
+
+    func testCanZeroCopyMerge_IneligibleWhenProgenitorInvalidated() {
+        // A progenitor that has been invalidated (removed from the line buffer)
+        // must make its copies ineligible for zero-copy merge.
+        let progenitor = LineBlock(rawBufferSize: 1024, absoluteBlockNumber: 0)
+        appendPartialASCII(progenitor, "Hello")
+
+        let copy = progenitor.cowCopy()
+        // Detach owner so that check doesn't fire first.
+        appendPartialASCII(progenitor, "!")
+        XCTAssertFalse(copy.hasOwner(), "Owner must be detached before eligibility check")
+        XCTAssertTrue(copy.canZeroCopyMergeFromProgenitor(),
+                      "Precondition: must be eligible before invalidation")
+
+        progenitor.invalidate()
+
+        XCTAssertFalse(copy.canZeroCopyMergeFromProgenitor(),
+                       "Must be ineligible when progenitor has been invalidated")
+    }
+
+    func testCanZeroCopyMerge_ResizeClonesBeforeRealloc() {
+        // realloc may relocate the buffer at any size (no in-place guarantee
+        // exists in the C standard, POSIX, or Apple's libmalloc).
+        // changeBufferSize clones the shared buffer first to avoid a
+        // use-after-free for concurrent readers. This breaks sharing.
         let progenitor = LineBlock(rawBufferSize: 16, absoluteBlockNumber: 0)
         appendPartialASCII(progenitor, "Hi")
 
         let copy = progenitor.cowCopy()
-
-        // Both should share the same buffer after cowCopy.
         XCTAssertTrue(copy.sharesCharacterBuffer(with: progenitor))
 
-        // Force a resize that should relocate the buffer.
-        progenitor.changeBufferSize(1024 * 1024)
+        // Any resize on a shared buffer triggers clone-before-resize.
+        progenitor.changeBufferSize(1024)
 
-        // Append to verify the mutation works.
-        appendPartialASCII(progenitor, "X")
+        XCTAssertFalse(copy.sharesCharacterBuffer(with: progenitor),
+                       "Resize must clone shared buffer to avoid use-after-free")
 
-        // They still share the same iTermCharacterBuffer object (not cloned by zero-copy path).
-        XCTAssertTrue(copy.sharesCharacterBuffer(with: progenitor),
-                      "Buffer object should still be shared — zero-copy skips clone")
-
-        // But if the internal pointer was relocated, canZeroCopyMerge should detect it.
-        // On macOS, growing from 16 to 1M typically relocates.
-        // We can't assert on the result because realloc behavior is platform-specific,
-        // but we verify the flag is checked correctly by canZeroCopyMergeFromProgenitor.
+        // Progenitor content must be intact after clone + resize.
+        let progenitorLine = progenitor.screenCharArray(forRawLine: 0)
+        XCTAssertEqual(progenitorLine.stringValue, "Hi",
+                       "Progenitor content must survive clone + resize")
     }
 
     // MARK: - B. Merge Mechanics
@@ -3323,9 +3404,10 @@ class LineBlockZeroCopyMergeTests: XCTestCase {
 
         // The copy should now see the full content.
         let rawLine = copy.screenCharArray(forRawLine: 0)
-        XCTAssertEqual(rawLine.stringValue.trimmingCharacters(in: CharacterSet(charactersIn: "\0")),
-                       "Hello World",
+        XCTAssertEqual(rawLine.stringValue, "Hello World",
                        "After zero-copy merge, copy should see updated content")
+        XCTAssertFalse(rawLine.stringValue.contains("\0"),
+                       "Merged content must not contain hidden NULs")
     }
 
     func testZeroCopyMerge_MetadataUpdated() {
@@ -3334,14 +3416,34 @@ class LineBlockZeroCopyMergeTests: XCTestCase {
         appendPartialASCII(progenitor, "Hello")
 
         let copy = progenitor.cowCopy()
+        let before = copy.screenCharArray(forRawLine: 0).metadata
+        XCTAssertEqual(before.timestamp, 0,
+                       "Baseline metadata timestamp should be default value")
+        XCTAssertFalse(before.rtlFound.boolValue,
+                       "Baseline metadata rtlFound should be false")
 
-        appendPartialASCII(progenitor, " World")
+        let updatedMetadata = iTermLineStringMetadata(timestamp: 4242, rtlFound: true)
+        let update = makeLineString(" World",
+                                    eol: EOL_SOFT,
+                                    lineStringMetadata: updatedMetadata)
+        XCTAssertTrue(progenitor.appendLineString(update, width: 80),
+                      "Precondition: appending metadata update should succeed")
 
         copy.zeroCopyMergeFromProgenitor()
 
-        // Verify the copy has 1 raw line and it's partial.
+        // Verify structure, content, and metadata were updated.
         XCTAssertEqual(copy.numRawLines(), 1)
         XCTAssertTrue(copy.hasPartial())
+        let afterSCA = copy.screenCharArray(forRawLine: 0)
+        XCTAssertEqual(afterSCA.stringValue, "Hello World",
+                       "Merged raw line content must reflect progenitor append")
+        XCTAssertEqual(afterSCA.eol, EOL_SOFT,
+                       "Merged line EOL must match progenitor continuation type")
+        let after = afterSCA.metadata
+        XCTAssertEqual(after.timestamp, updatedMetadata.timestamp,
+                       "Merged metadata timestamp must match progenitor update")
+        XCTAssertEqual(after.rtlFound.boolValue, updatedMetadata.rtlFound.boolValue,
+                       "Merged metadata rtlFound must match progenitor update")
     }
 
     func testZeroCopyMerge_CacheInvalidated() {
@@ -3361,10 +3463,12 @@ class LineBlockZeroCopyMergeTests: XCTestCase {
         // Merge.
         copy.zeroCopyMergeFromProgenitor()
 
-        // The copy should now have more wrapped lines (cache was invalidated).
+        // "HelloABCD" at width 4 wraps as Hell|oABC|D = 3 lines.
         let linesAfter = copy.getNumLines(withWrapWidth: 4)
-        XCTAssertGreaterThan(linesAfter, linesBefore,
-                             "After merge with more data, wrapped line count should increase")
+        XCTAssertEqual(linesAfter, 3,
+                       "\"HelloABCD\" at width 4 must wrap to exactly 3 lines")
+        XCTAssertEqual(linesAfter - linesBefore, 1,
+                       "Cache must reflect the 1-line increase from appending \"ABCD\"")
     }
 
     // MARK: - C. Multi-cycle
@@ -3382,7 +3486,8 @@ class LineBlockZeroCopyMergeTests: XCTestCase {
         copy.zeroCopyMergeFromProgenitor()
 
         let rawLine1 = copy.screenCharArray(forRawLine: 0)
-        XCTAssertTrue(rawLine1.stringValue.hasPrefix("AB"))
+        XCTAssertEqual(rawLine1.stringValue, "AB")
+        XCTAssertFalse(rawLine1.stringValue.contains("\0"))
 
         // Cycle 2: append + merge
         appendPartialASCII(progenitor, "C")
@@ -3391,7 +3496,8 @@ class LineBlockZeroCopyMergeTests: XCTestCase {
         copy.zeroCopyMergeFromProgenitor()
 
         let rawLine2 = copy.screenCharArray(forRawLine: 0)
-        XCTAssertTrue(rawLine2.stringValue.hasPrefix("ABC"))
+        XCTAssertEqual(rawLine2.stringValue, "ABC")
+        XCTAssertFalse(rawLine2.stringValue.contains("\0"))
 
         // Cycle 3: append + merge
         appendPartialASCII(progenitor, "D")
@@ -3399,10 +3505,130 @@ class LineBlockZeroCopyMergeTests: XCTestCase {
         copy.zeroCopyMergeFromProgenitor()
 
         let rawLine3 = copy.screenCharArray(forRawLine: 0)
-        XCTAssertTrue(rawLine3.stringValue.hasPrefix("ABCD"))
+        XCTAssertEqual(rawLine3.stringValue, "ABCD")
+        XCTAssertFalse(rawLine3.stringValue.contains("\0"))
 
         // Buffer should still be shared after all cycles.
         XCTAssertTrue(copy.sharesCharacterBuffer(with: progenitor))
+    }
+
+    func testZeroCopyMerge_50CyclesExactEquality() {
+        // 50 append→merge cycles at the LineBlock level with exact equality
+        // checked after each. Bridges the gap between the 3-cycle test above
+        // and the 50/100-cycle LineBuffer-level tests in sections G and I.11.
+        let progenitor = LineBlock(rawBufferSize: 4096, absoluteBlockNumber: 0)
+        appendPartialASCII(progenitor, "0")
+
+        let copy = progenitor.cowCopy()
+        var expected = "0"
+
+        for i in 0..<50 {
+            let ch = String(UnicodeScalar(Int(("A" as UnicodeScalar).value) + (i % 26))!)
+            appendPartialASCII(progenitor, ch)
+            expected += ch
+
+            XCTAssertTrue(copy.canZeroCopyMergeFromProgenitor(),
+                          "Cycle \(i): must be eligible")
+            copy.zeroCopyMergeFromProgenitor()
+
+            let line = copy.screenCharArray(forRawLine: 0)
+            XCTAssertEqual(line.stringValue, expected,
+                           "Cycle \(i): content mismatch")
+            XCTAssertFalse(line.stringValue.contains("\0"),
+                           "Cycle \(i): hidden NULs")
+        }
+
+        XCTAssertTrue(copy.sharesCharacterBuffer(with: progenitor),
+                      "Buffer must remain shared across all 50 cycles")
+        XCTAssertEqual(copy.testCharacterBufferShareCount(), 2)
+        XCTAssertEqual(copy.numRawLines(), 1)
+        XCTAssertTrue(copy.hasPartial())
+    }
+
+    func testZeroCopyMerge_StressWithResizeAndDropFallbacks() {
+        // Five phases of 10 zero-copy cycles each, separated by resize
+        // fallbacks that break sharing. After each resize, a fresh
+        // cowCopy re-enters zero-copy mode. A final dropLines fallback
+        // permanently breaks eligibility. Exact content at every step.
+        let progenitor = LineBlock(rawBufferSize: 2048, absoluteBlockNumber: 0)
+        appendPartialASCII(progenitor, "0")
+        var expected = "0"
+        var nextBufferSize: Int32 = 3072
+
+        for phase in 0..<5 {
+            autoreleasepool {
+                let copy = progenitor.cowCopy()
+
+                // Detach: append triggers validMutationCertificate which
+                // clears copy.owner via the zero-copy path.
+                let tag = String(phase)
+                appendPartialASCII(progenitor, tag)
+                expected += tag
+
+                // 10 zero-copy merge cycles
+                for step in 0..<10 {
+                    let ch = String(UnicodeScalar(
+                        Int(("a" as UnicodeScalar).value) + ((phase * 10 + step) % 26))!)
+                    appendPartialASCII(progenitor, ch)
+                    expected += ch
+
+                    XCTAssertTrue(copy.canZeroCopyMergeFromProgenitor(),
+                                  "Phase \(phase) step \(step): must be eligible")
+                    copy.zeroCopyMergeFromProgenitor()
+
+                    let line = copy.screenCharArray(forRawLine: 0)
+                    XCTAssertEqual(line.stringValue, expected,
+                                   "Phase \(phase) step \(step): content mismatch")
+                    XCTAssertFalse(line.stringValue.contains("\0"),
+                                   "Phase \(phase) step \(step): hidden NULs")
+                }
+
+                XCTAssertTrue(copy.sharesCharacterBuffer(with: progenitor),
+                              "Phase \(phase): must share after zero-copy cycles")
+
+                // Force resize fallback — clone-before-realloc breaks sharing.
+                progenitor.changeBufferSize(nextBufferSize)
+                nextBufferSize += 1024
+
+                XCTAssertFalse(copy.sharesCharacterBuffer(with: progenitor),
+                               "Phase \(phase): resize must break sharing")
+                XCTAssertEqual(copy.screenCharArray(forRawLine: 0).stringValue, expected,
+                               "Phase \(phase): copy content preserved after resize")
+                // copy goes out of scope — next phase creates a fresh one
+            }
+        }
+
+        // Final phase: dropLines permanently breaks eligibility.
+        // Content is now 56 chars: "0" + 5x(tag + 10 letters).
+        autoreleasepool {
+            let copy = progenitor.cowCopy()
+            appendPartialASCII(progenitor, "!")
+            expected += "!"
+
+            XCTAssertTrue(copy.canZeroCopyMergeFromProgenitor(),
+                          "Final: must be eligible before dropLines")
+            copy.zeroCopyMergeFromProgenitor()
+            XCTAssertEqual(copy.screenCharArray(forRawLine: 0).stringValue, expected,
+                           "Final: content before drop")
+
+            // Drop 1 wrapped line at width 5 (drops first 5 chars: "00abc").
+            var charsDropped: Int32 = 0
+            let dropped = progenitor.dropLines(1, withWidth: 5, chars: &charsDropped)
+            XCTAssertEqual(dropped, 1, "Must drop exactly 1 wrapped line")
+            XCTAssertEqual(charsDropped, 5, "Must drop 5 chars at width 5")
+
+            let postDropExpected = String(expected.dropFirst(Int(charsDropped)))
+
+            XCTAssertFalse(copy.sharesCharacterBuffer(with: progenitor),
+                           "dropLines must break sharing")
+            XCTAssertFalse(copy.canZeroCopyMergeFromProgenitor(),
+                           "dropLines must permanently break eligibility")
+            XCTAssertEqual(copy.screenCharArray(forRawLine: 0).stringValue, expected,
+                           "Copy must retain full pre-drop content")
+            XCTAssertEqual(progenitor.screenCharArray(forRawLine: 0).stringValue,
+                           postDropExpected,
+                           "Progenitor must have exact post-drop content")
+        }
     }
 
     func testZeroCopyMerge_LineBufferIntegration() {
@@ -3439,14 +3665,29 @@ class LineBlockZeroCopyMergeTests: XCTestCase {
                           metadata: worldSCA.metadata,
                           continuation: worldSCA.continuation)
 
+        // Verify that the pending update is eligible for zero-copy merge.
+        let sourceBlock = source.testOnlyBlock(at: 0)
+        let copyBlockBefore = copy.testOnlyBlock(at: 0)
+        XCTAssertTrue(copyBlockBefore.canZeroCopyMergeFromProgenitor(),
+                      "Second merge should be zero-copy eligible before forceMerge")
+        XCTAssertTrue(copyBlockBefore.sharesCharacterBuffer(with: sourceBlock),
+                      "Source/copy should share the character buffer before second merge")
+
         // Merge again — should use zero-copy merge path.
         copy.forceMerge(from: source)
 
         // Verify the copy now has the updated content.
         XCTAssertEqual(copy.numLines(withWidth: width), 1)
         let line = copy.wrappedLine(at: 0, width: width)
-        XCTAssertTrue(line.stringValue.hasPrefix("Hello World"),
-                      "After merge, copy should see 'Hello World' but got '\(line.stringValue)'")
+        XCTAssertEqual(line.stringValue, "Hello World",
+                       "After merge, copy should exactly match merged content")
+        XCTAssertFalse(line.stringValue.contains("\0"),
+                       "Merged line must not contain embedded NULs")
+
+        // After zero-copy merge, sharing should remain intact.
+        let copyBlockAfter = copy.testOnlyBlock(at: 0)
+        XCTAssertTrue(copyBlockAfter.sharesCharacterBuffer(with: sourceBlock),
+                      "Zero-copy merge should preserve shared character buffer")
     }
 
     // MARK: - D. Fallback
@@ -3470,38 +3711,67 @@ class LineBlockZeroCopyMergeTests: XCTestCase {
     }
 
     func testZeroCopyMerge_FallsBackOnDropLines() {
-        // dropLines should break zero-copy sharing.
+        // dropLines on the progenitor must break zero-copy sharing and
+        // eligibility. Start with a single partial line (zero-copy eligible),
+        // then drop wrapped lines to exercise the fallback.
         let progenitor = LineBlock(rawBufferSize: 1024, absoluteBlockNumber: 0)
-        appendHardASCII(progenitor, "Line1")
-        appendPartialASCII(progenitor, "Line2")
+        // "HelloWorld" at width 5 wraps to 2 wrapped lines: Hello|World
+        appendPartialASCII(progenitor, "HelloWorld", width: 5)
 
-        // This block has 2 raw lines, so cowCopy won't set zero-copy flag
-        // (requires cll_entries==1). Verify ineligibility.
         let copy = progenitor.cowCopy()
+
+        // Progenitor must mutate first to detach copy from owner graph.
+        appendPartialASCII(progenitor, "!", width: 5)
+
+        XCTAssertTrue(copy.sharesCharacterBuffer(with: progenitor),
+                      "Must share buffer before dropLines")
+        XCTAssertTrue(copy.canZeroCopyMergeFromProgenitor(),
+                      "Must be eligible before dropLines")
+
+        // Drop 1 wrapped line from the progenitor.
+        var charsDropped: Int32 = 0
+        let linesDropped = progenitor.dropLines(1, withWidth: 5, chars: &charsDropped)
+        XCTAssertEqual(linesDropped, 1, "Must drop exactly 1 wrapped line")
+        XCTAssertEqual(charsDropped, 5, "Must drop 5 chars (\"Hello\")")
+
+        // Sharing and eligibility must be broken.
+        XCTAssertFalse(copy.sharesCharacterBuffer(with: progenitor),
+                       "dropLines must clone shared buffer")
         XCTAssertFalse(copy.canZeroCopyMergeFromProgenitor(),
-                       "Multi-line block should not be eligible for zero-copy merge")
+                       "Must be ineligible after dropLines (bufferStartOffset != 0)")
+
+        // Copy still reflects the pre-drop content.
+        XCTAssertEqual(copy.screenCharArray(forRawLine: 0).stringValue, "HelloWorld",
+                       "Copy must retain pre-drop content")
     }
 
     func testZeroCopyMerge_FallsBackOnSetPartial() {
-        // Changing partial status should break zero-copy sharing.
+        // setPartial(false) on a progenitor with a shared buffer calls
+        // cloneCharacterBufferIfZeroCopyShared, cloning the buffer and
+        // resetting _appendOnlySinceLastCopy to NO. The buffer sharing
+        // assertion below pins this safety-critical side-effect.
         let progenitor = LineBlock(rawBufferSize: 1024, absoluteBlockNumber: 0)
         appendPartialASCII(progenitor, "Hello")
 
         let copy = progenitor.cowCopy()
+        XCTAssertTrue(copy.sharesCharacterBuffer(with: progenitor),
+                      "Must share buffer before setPartial(false)")
 
-        // Change partial status.
+        // setPartial(false) clones the shared buffer and resets _appendOnlySinceLastCopy.
         progenitor.setPartial(false)
+        XCTAssertFalse(progenitor.sharesCharacterBuffer(with: copy),
+                       "setPartial(false) must clone the shared buffer")
 
         XCTAssertFalse(copy.canZeroCopyMergeFromProgenitor(),
-                       "Should be ineligible after setPartial changes the line state")
+                       "setPartial(false) must break zero-copy eligibility")
     }
 
     // MARK: - E. Copy Mutation Invariant (regression guard for #1)
 
     func testZeroCopyCopy_CompletePartialLineBreaksSharing() {
-        // A copied block with _zeroCopyShared=YES must clone the buffer
-        // before writing when it completes the existing partial line with
-        // a hard append (the "completing a partial" guard in reallyAppendLine).
+        // A copied block sharing a buffer (shareCount > 1) must clone before
+        // writing when it completes the existing partial line with a hard
+        // append (the "completing a partial" guard in reallyAppendLine).
         let progenitor = LineBlock(rawBufferSize: 1024, absoluteBlockNumber: 0)
         appendPartialASCII(progenitor, "Hello")
 
@@ -3509,8 +3779,8 @@ class LineBlockZeroCopyMergeTests: XCTestCase {
         XCTAssertTrue(copy.sharesCharacterBuffer(with: progenitor))
 
         // Completing the partial line with a hard append triggers the
-        // mutation guard, which must clone the buffer and clear
-        // _zeroCopyShared before writing.
+        // mutation guard, which clones the buffer (decrementing shareCount)
+        // before writing.
         appendHardASCII(copy, "Goodbye")
 
         XCTAssertFalse(copy.sharesCharacterBuffer(with: progenitor),
@@ -3527,9 +3797,9 @@ class LineBlockZeroCopyMergeTests: XCTestCase {
     }
 
     // NOTE: No test for extend-partial (appending partial to existing partial).
-    // The extend-partial path intentionally has no _zeroCopyShared guard because
-    // the progenitor uses it in the hot loop. Copies are never mutated via
-    // partial-extend in production (they are read-only between syncs).
+    // The extend-partial path has no mutation guard because the progenitor uses
+    // it in the hot loop. Copies are never mutated via partial-extend in
+    // production (they are read-only between syncs).
 
     func testZeroCopyCopy_RemoveLastRawLineBreaksSharing() {
         let progenitor = LineBlock(rawBufferSize: 1024, absoluteBlockNumber: 0)
@@ -3611,6 +3881,100 @@ class LineBlockZeroCopyMergeTests: XCTestCase {
                        "Progenitor content must not be corrupted")
         XCTAssertEqual(progenitor.numRawLines(), 1)
         XCTAssertEqual(progenitor.rawSpaceUsed(), Int32(200))
+    }
+
+    func testZeroCopyCopy_NoUnnecessaryCloneAfterOtherSideClones() {
+        // Regression test for reviewer feedback: with a boolean flag, both
+        // sides would clone even when only one needed to. With refcounting,
+        // once one side clones (dropping shareCount to 1), the other side
+        // sees shareCount == 1 and skips the clone.
+        let progenitor = LineBlock(rawBufferSize: 1024, absoluteBlockNumber: 0)
+        appendPartialASCII(progenitor, "Hello")
+
+        let copy = progenitor.cowCopy()
+        XCTAssertTrue(copy.sharesCharacterBuffer(with: progenitor),
+                      "After cowCopy, buffer should be shared")
+
+        // Copy clones away (e.g., via removeLastRawLine).
+        copy.removeLastRawLine()
+        XCTAssertFalse(copy.sharesCharacterBuffer(with: progenitor),
+                       "After copy mutation, buffers should differ")
+
+        // Now the progenitor is the sole owner of the original buffer.
+        // A mutation on the progenitor should NOT clone — it already owns
+        // the buffer exclusively (shareCount == 1). Pin the buffer identity
+        // before and after to prove no unnecessary clone occurred.
+        let identityBefore = progenitor.testCharacterBufferIdentity()
+        progenitor.removeLastRawLine()
+        XCTAssertEqual(progenitor.testCharacterBufferIdentity(), identityBefore,
+                       "Progenitor must not clone when it is the sole buffer owner (shareCount == 1)")
+        XCTAssertEqual(progenitor.numRawLines(), 0,
+                       "Progenitor should be empty after removeLastRawLine")
+    }
+
+    func testZeroCopyCopy_DeallocWithoutMutationDecrementsShareCount() {
+        // When a copy is deallocated without ever mutating, shareCount must
+        // be decremented so the progenitor doesn't clone unnecessarily.
+        let progenitor = LineBlock(rawBufferSize: 1024, absoluteBlockNumber: 0)
+        appendPartialASCII(progenitor, "Hello")
+
+        // Create and immediately discard a copy (simulates a sync copy that
+        // is replaced before it ever mutates).
+        autoreleasepool {
+            let copy = progenitor.cowCopy()
+            XCTAssertTrue(copy.sharesCharacterBuffer(with: progenitor),
+                          "After cowCopy, buffer should be shared")
+            XCTAssertEqual(progenitor.testCharacterBufferShareCount(), 2,
+                           "shareCount must be 2 while copy exists")
+            // copy goes out of scope here — dealloc should decrement shareCount.
+        }
+
+        // The progenitor is now the sole owner — shareCount must be back to 1.
+        XCTAssertEqual(progenitor.testCharacterBufferShareCount(), 1,
+                       "After copy dealloc, shareCount must return to 1")
+
+        // removeLastRawLine is a structural edit that consults
+        // cloneCharacterBufferIfZeroCopyShared. At shareCount == 1 it must
+        // operate in-place (no clone). Buffer identity proves this.
+        let identityBefore = progenitor.testCharacterBufferIdentity()
+        progenitor.removeLastRawLine()
+        XCTAssertEqual(progenitor.testCharacterBufferIdentity(), identityBefore,
+                       "Guarded structural edit must not clone at shareCount == 1")
+        XCTAssertEqual(progenitor.numRawLines(), 0,
+                       "removeLastRawLine must have taken effect")
+    }
+
+    func testZeroCopyCopy_MultipleDeallocsDecrementShareCount() {
+        // Creating one copy at a time, then deallocating it, exercises
+        // shareCount going 1→2→1 five times. After each dealloc the
+        // progenitor must be sole owner.
+        let progenitor = LineBlock(rawBufferSize: 1024, absoluteBlockNumber: 0)
+        appendPartialASCII(progenitor, "Hello")
+
+        let baselineIdentity = progenitor.testCharacterBufferIdentity()
+
+        for i in 0..<5 {
+            autoreleasepool {
+                let copy = progenitor.cowCopy()
+                XCTAssertTrue(copy.sharesCharacterBuffer(with: progenitor))
+                XCTAssertEqual(progenitor.testCharacterBufferShareCount(), 2,
+                               "Round \(i): shareCount must be 2 while copy exists")
+                // copy deallocated here — shareCount should decrement.
+            }
+            // After each dealloc: sole owner, buffer identity unchanged.
+            XCTAssertEqual(progenitor.testCharacterBufferShareCount(), 1,
+                           "Round \(i): shareCount must be 1 after copy dealloc")
+            XCTAssertEqual(progenitor.testCharacterBufferIdentity(), baselineIdentity,
+                           "Round \(i): buffer must not be cloned by dealloc")
+        }
+
+        // Final proof: a guarded structural edit operates in-place (not clone)
+        // because no shareCount leaked across the five cycles.
+        progenitor.removeLastRawLine()
+        XCTAssertEqual(progenitor.testCharacterBufferIdentity(), baselineIdentity,
+                       "Guarded edit must not clone at shareCount == 1")
+        XCTAssertEqual(progenitor.numRawLines(), 0,
+                       "removeLastRawLine must have taken effect")
     }
 
     // MARK: - F. Sync Cycle Flow Tests (contract guard for #3)
@@ -3738,10 +4102,10 @@ class LineBlockZeroCopyMergeTests: XCTestCase {
 
     func testZeroCopyMerge_AppendExceedsBufferSize_MergeStillWorks() {
         // When appending a partial line that exceeds the block's buffer,
-        // LineBuffer should resize in place rather than pop/reappend.
-        // The resize may relocate the buffer (for small allocations below
-        // the VM-backed threshold), which disables zero-copy merge but the
-        // fallback path handles it correctly.
+        // LineBuffer resizes in place. The shared buffer is cloned before
+        // resize to avoid use-after-free from concurrent readers (realloc
+        // has no in-place guarantee). This breaks zero-copy sharing for
+        // that cycle, but the fallback path handles it correctly.
         let source = LineBuffer()
         source.setMaxLines(1000)
 
@@ -3758,8 +4122,8 @@ class LineBlockZeroCopyMergeTests: XCTestCase {
         let longSCA = screenCharArrayWithDefaultStyle(longAppend, eol: EOL_SOFT)
         source.append(longSCA, width: 80)
 
-        // Merge — uses zero-copy if buffer wasn't relocated, fallback otherwise.
-        // Either way, the content must be correct.
+        // Merge — clone-before-resize broke sharing, so this uses the
+        // fallback COW path. Content must still be correct.
         dest.merge(from: source)
 
         // Get the full unwrapped line
@@ -3767,5 +4131,682 @@ class LineBlockZeroCopyMergeTests: XCTestCase {
         let expectedContent = "abc" + longAppend
         XCTAssertEqual(fullLine.stringValue, expectedContent,
                        "Content mismatch after buffer resize")
+    }
+
+    // MARK: - I. Adversarial ShareCount & Buffer Integrity Tests
+
+    // These tests act as an abusive consumer that does obscene things to shared
+    // buffers: hammering shareCount transitions, interleaving mutations on both
+    // sides, forcing reallocs while shared, creating deep copy chains, and
+    // verifying that every invariant holds even when treated with total contempt.
+
+    // MARK: I.1 — ShareCount Accounting
+
+    func testShareCount_FreshBlockStartsAtOne() {
+        let block = LineBlock(rawBufferSize: 1024, absoluteBlockNumber: 0)
+        appendPartialASCII(block, "Hello")
+
+        XCTAssertEqual(block.testCharacterBufferShareCount(), 1,
+                       "Fresh block must have shareCount == 1")
+        XCTAssertFalse(block.testCharacterBufferIsShared())
+    }
+
+    func testShareCount_CowCopyIncrementsToTwo() {
+        let block = LineBlock(rawBufferSize: 1024, absoluteBlockNumber: 0)
+        appendPartialASCII(block, "Hello")
+
+        let copy = block.cowCopy()
+
+        // Both point at the same buffer with shareCount == 2.
+        XCTAssertEqual(block.testCharacterBufferShareCount(), 2)
+        XCTAssertEqual(copy.testCharacterBufferShareCount(), 2)
+        XCTAssertTrue(block.testCharacterBufferIsShared())
+    }
+
+    func testShareCount_MultipleCopiesAccumulate() {
+        let block = LineBlock(rawBufferSize: 1024, absoluteBlockNumber: 0)
+        appendPartialASCII(block, "Hello")
+
+        var copies = [LineBlock]()
+        for _ in 0..<10 {
+            copies.append(block.cowCopy())
+        }
+
+        // Original + 10 copies = shareCount 11.
+        XCTAssertEqual(block.testCharacterBufferShareCount(), 11,
+                       "shareCount must equal 1 + number of zero-copy copies")
+
+        // Every copy sees the same count (they share the same buffer object).
+        for (i, copy) in copies.enumerated() {
+            XCTAssertEqual(copy.testCharacterBufferShareCount(), 11,
+                           "Copy \(i) must agree on shareCount")
+            XCTAssertTrue(copy.sharesCharacterBuffer(with: block))
+        }
+    }
+
+    func testShareCount_DeallocDecrementsExactly() {
+        // cowCopy returns an autoreleased object (name doesn't match
+        // alloc/new/copy/mutableCopy), so dealloc is deferred until the
+        // autorelease pool drains. Create each copy inside its own
+        // autoreleasepool scope so ARC can reclaim it deterministically.
+        let block = LineBlock(rawBufferSize: 1024, absoluteBlockNumber: 0)
+        appendPartialASCII(block, "Hello")
+
+        // Create 5 copies, each in its own autoreleasepool so the
+        // autorelease entry is drained when the pool ends.
+        var copies = [LineBlock]()
+        for _ in 0..<5 {
+            autoreleasepool {
+                copies.append(block.cowCopy())
+            }
+        }
+        XCTAssertEqual(block.testCharacterBufferShareCount(), 6)
+
+        // Destroy them one by one. We must drain each copy's scope.
+        while !copies.isEmpty {
+            let expected = Int32(copies.count) // after removing one
+            autoreleasepool {
+                copies.removeLast()
+            }
+            XCTAssertEqual(block.testCharacterBufferShareCount(), expected,
+                           "After removing a copy, shareCount should be \(expected)")
+        }
+
+        XCTAssertEqual(block.testCharacterBufferShareCount(), 1,
+                       "After all copies destroyed, shareCount must be 1")
+        XCTAssertFalse(block.testCharacterBufferIsShared())
+    }
+
+    func testShareCount_MutationOnCopyDecrementsAndClones() {
+        let block = LineBlock(rawBufferSize: 1024, absoluteBlockNumber: 0)
+        appendPartialASCII(block, "Hello")
+
+        let copy = block.cowCopy()
+        XCTAssertEqual(block.testCharacterBufferShareCount(), 2)
+
+        // Mutating the copy clones its buffer (decrementing the shared one).
+        copy.removeLastRawLine()
+
+        // Original's buffer: shareCount back to 1.
+        XCTAssertEqual(block.testCharacterBufferShareCount(), 1)
+        // Copy has a fresh buffer with shareCount == 1.
+        XCTAssertEqual(copy.testCharacterBufferShareCount(), 1)
+        XCTAssertFalse(block.sharesCharacterBuffer(with: copy))
+    }
+
+    func testShareCount_MutationOnOriginalDecrementsAndClones() {
+        let block = LineBlock(rawBufferSize: 1024, absoluteBlockNumber: 0)
+        appendPartialASCII(block, "Hello")
+
+        let copy = block.cowCopy()
+        let originalBufferIdentity = block.testCharacterBufferIdentity()
+
+        // A non-append mutation on the original should clone.
+        block.setPartial(false)
+
+        // The original got a new buffer.
+        XCTAssertNotEqual(block.testCharacterBufferIdentity(), originalBufferIdentity,
+                          "Original must have cloned its buffer")
+        XCTAssertEqual(block.testCharacterBufferShareCount(), 1)
+        // The copy retains the original buffer, now sole owner.
+        XCTAssertEqual(copy.testCharacterBufferShareCount(), 1)
+    }
+
+    // MARK: I.2 — Interleaved Mutations (Both Sides)
+
+    func testShareCount_BothSidesMutate_NeitherCorrupted() {
+        let block = LineBlock(rawBufferSize: 1024, absoluteBlockNumber: 0)
+        appendPartialASCII(block, "AAAA")
+
+        let copy = block.cowCopy()
+        XCTAssertTrue(copy.sharesCharacterBuffer(with: block))
+
+        // Mutate the copy first (gets a clone).
+        appendHardASCII(copy, "BBBB")
+        XCTAssertFalse(copy.sharesCharacterBuffer(with: block))
+
+        // Now mutate the original (should NOT clone — it's sole owner now).
+        let identityBefore = block.testCharacterBufferIdentity()
+        block.setPartial(false)
+        let identityAfter = block.testCharacterBufferIdentity()
+        XCTAssertEqual(identityBefore, identityAfter,
+                       "Original must not clone when it's the sole owner")
+
+        // Verify content isolation.
+        let originalLine = block.screenCharArray(forRawLine: 0)
+        XCTAssertEqual(originalLine.stringValue, "AAAA",
+                       "Original content must be untouched")
+
+        let copyLine = copy.screenCharArray(forRawLine: 0)
+        XCTAssertEqual(copyLine.stringValue, "AAAABBBB",
+                       "Copy must contain original partial + hard append")
+        XCTAssertEqual(copy.numRawLines(), 1,
+                       "Copy should have 1 raw line (partial extended with hard)")
+    }
+
+    func testShareCount_OriginalMutatesFirst_CopyMutatesSecond() {
+        let block = LineBlock(rawBufferSize: 1024, absoluteBlockNumber: 0)
+        appendPartialASCII(block, "XXXX")
+
+        let copy = block.cowCopy()
+
+        // Original mutates first — clones away from the shared buffer.
+        block.removeLastRawLine()
+        XCTAssertEqual(block.testCharacterBufferShareCount(), 1)
+        XCTAssertEqual(copy.testCharacterBufferShareCount(), 1)
+
+        // Copy mutates second — it's sole owner, no clone needed.
+        let copyIdentityBefore = copy.testCharacterBufferIdentity()
+        copy.setPartial(false)
+        XCTAssertEqual(copy.testCharacterBufferIdentity(), copyIdentityBefore,
+                       "Copy must not clone when sole owner")
+    }
+
+    // MARK: I.3 — Realloc Under Sharing (the scary one)
+
+    func testShareCount_ResizeWhileShared_ClonesBeforeRealloc() {
+        // This is the scenario where realloc could relocate memory out from
+        // under a concurrent reader. The mutation guard must clone first.
+        let block = LineBlock(rawBufferSize: 16, absoluteBlockNumber: 0)
+        appendPartialASCII(block, "Hi")
+
+        let copy = block.cowCopy()
+        let sharedBufferIdentity = block.testCharacterBufferIdentity()
+
+        XCTAssertEqual(block.testCharacterBufferShareCount(), 2)
+
+        // Force a resize on the original. This MUST clone before realloc.
+        block.changeBufferSize(8192)
+
+        // The original got a new buffer (cloned then resized).
+        XCTAssertNotEqual(block.testCharacterBufferIdentity(), sharedBufferIdentity,
+                          "Original must have a new buffer after clone+resize")
+        XCTAssertEqual(block.testCharacterBufferShareCount(), 1)
+
+        // The copy retains the original small buffer, untouched.
+        XCTAssertEqual(copy.testCharacterBufferIdentity(), sharedBufferIdentity)
+        XCTAssertEqual(copy.testCharacterBufferShareCount(), 1)
+
+        // Both have correct content.
+        XCTAssertEqual(block.screenCharArray(forRawLine: 0).stringValue, "Hi")
+        XCTAssertEqual(copy.screenCharArray(forRawLine: 0).stringValue, "Hi")
+    }
+
+    func testShareCount_ShrinkToFitWhileShared_ClonesBeforeRealloc() {
+        // Use a buffer just over rawSpaceUsed so the difference is <= 100:
+        // "Tiny" occupies 4 cells, so 104 - 4 = 100, which is not > 100.
+        // shouldOptimizeOutBufferSizeChangeTo: skips the resize only when
+        // (existing - desired) > 100, so the resize proceeds at this size.
+        let block = LineBlock(rawBufferSize: 104, absoluteBlockNumber: 0)
+        appendPartialASCII(block, "Tiny")
+
+        let copy = block.cowCopy()
+        XCTAssertTrue(copy.sharesCharacterBuffer(with: block))
+
+        // shrinkToFit calls changeBufferSize which must clone first.
+        block.shrinkToFit()
+
+        XCTAssertFalse(copy.sharesCharacterBuffer(with: block),
+                       "shrinkToFit must clone shared buffer before resize")
+        XCTAssertEqual(block.screenCharArray(forRawLine: 0).stringValue, "Tiny")
+        XCTAssertEqual(copy.screenCharArray(forRawLine: 0).stringValue, "Tiny")
+    }
+
+    func testShareCount_RepeatedResizeGrowShrinkCycle() {
+        // Grow the buffer repeatedly while copies exist. Each resize clones
+        // the shared buffer before realloc, breaking sharing.
+        let block = LineBlock(rawBufferSize: 64, absoluteBlockNumber: 0)
+        appendPartialASCII(block, "seed")
+
+        for i in 0..<20 {
+            let copy = block.cowCopy()
+            XCTAssertTrue(copy.sharesCharacterBuffer(with: block),
+                          "Iteration \(i): fresh copy must share buffer")
+
+            // Grow — must clone shared buffer before realloc.
+            block.changeBufferSize(Int32(128 + i * 64))
+            XCTAssertFalse(copy.sharesCharacterBuffer(with: block),
+                           "Iteration \(i): resize must break sharing")
+            XCTAssertEqual(block.testCharacterBufferShareCount(), 1,
+                           "Iteration \(i): original must be sole owner of new buffer")
+            XCTAssertEqual(copy.testCharacterBufferShareCount(), 1,
+                           "Iteration \(i): copy must be sole owner of old buffer")
+
+            // Verify content survived.
+            XCTAssertEqual(block.screenCharArray(forRawLine: 0).stringValue, "seed",
+                           "Iteration \(i): content corrupted after resize")
+        }
+    }
+
+    // MARK: I.4 — Deep Copy Chains
+
+    func testShareCount_CopyOfCopy_IndependentShareCounts() {
+        // cowCopy of a cowCopy: the second copy shares the buffer with
+        // the original owner, not the intermediate copy.
+        let original = LineBlock(rawBufferSize: 1024, absoluteBlockNumber: 0)
+        appendPartialASCII(original, "Root")
+
+        let copy1 = original.cowCopy()
+        XCTAssertEqual(original.testCharacterBufferShareCount(), 2)
+
+        // copy1 hasn't mutated, so its buffer is still the original's.
+        // Making a cowCopy of copy1 should also share the same buffer.
+        let copy2 = copy1.cowCopy()
+
+        // All three share the same buffer.
+        XCTAssertTrue(copy1.sharesCharacterBuffer(with: original))
+        XCTAssertTrue(copy2.sharesCharacterBuffer(with: original))
+        XCTAssertEqual(original.testCharacterBufferShareCount(), 3)
+    }
+
+    func testShareCount_CopyChain_MutateMiddle_IsolatesCorrectly() {
+        let original = LineBlock(rawBufferSize: 1024, absoluteBlockNumber: 0)
+        appendPartialASCII(original, "Root")
+
+        let copy1 = original.cowCopy()
+        let copy2 = copy1.cowCopy()
+        XCTAssertEqual(original.testCharacterBufferShareCount(), 3)
+
+        // Mutate copy1 — it clones away.
+        copy1.removeLastRawLine()
+
+        // copy1 has its own buffer now.
+        XCTAssertFalse(copy1.sharesCharacterBuffer(with: original))
+        XCTAssertEqual(copy1.testCharacterBufferShareCount(), 1)
+
+        // original and copy2 still share.
+        XCTAssertTrue(copy2.sharesCharacterBuffer(with: original))
+        XCTAssertEqual(original.testCharacterBufferShareCount(), 2)
+
+        // Content check.
+        XCTAssertEqual(original.screenCharArray(forRawLine: 0).stringValue, "Root")
+        XCTAssertEqual(copy2.screenCharArray(forRawLine: 0).stringValue, "Root")
+        XCTAssertEqual(copy1.numRawLines(), 0)
+    }
+
+    // MARK: I.5 — Rapid Create/Destroy Churn
+
+    func testShareCount_RapidCreateDestroyCycle_NoLeaks() {
+        // Hammer the shareCount up and down by creating bursts of copies
+        // that each mutate (forcing clone + shareCount decrement) and then
+        // dealloc. This catches off-by-one errors in the count logic.
+        let block = LineBlock(rawBufferSize: 1024, absoluteBlockNumber: 0)
+        appendPartialASCII(block, "Stable")
+
+        for round in 0..<5 {
+            let burstSize = (round + 1) * 3  // 3, 6, 9, 12, 15
+
+            // Create a burst of copies.
+            var burst = [LineBlock]()
+            for _ in 0..<burstSize {
+                autoreleasepool {
+                    burst.append(block.cowCopy())
+                }
+            }
+            XCTAssertEqual(block.testCharacterBufferShareCount(), Int32(burstSize + 1),
+                           "Round \(round): shareCount must be burst + 1")
+
+            // Mutate each copy to force clone (decrements shareCount).
+            for (i, copy) in burst.enumerated() {
+                copy.setPartial(false)
+                XCTAssertEqual(block.testCharacterBufferShareCount(), Int32(burstSize - i),
+                               "Round \(round), mutation \(i): shareCount incorrect")
+            }
+
+            XCTAssertEqual(block.testCharacterBufferShareCount(), 1,
+                           "Round \(round): must be sole owner after all copies mutated")
+            burst.removeAll()
+        }
+
+        // Original content must be perfectly intact after all the abuse.
+        XCTAssertEqual(block.screenCharArray(forRawLine: 0).stringValue, "Stable")
+    }
+
+    // MARK: I.6 — Content Integrity Under Every Mutation Path
+
+    func testShareCount_EveryMutationPath_ClonesAndPreservesContent() {
+        // For each mutation that should trigger cloneCharacterBufferIfZeroCopyShared,
+        // verify: (a) sharing breaks, (b) shareCount is correct, (c) content is intact.
+        let mutations: [(String, (LineBlock) -> Void)] = [
+            ("setPartial(false)", { $0.setPartial(false) }),
+            ("removeLastRawLine", { $0.removeLastRawLine() }),
+            ("appendHard", { [self] block in appendHardASCII(block, "X") }),
+            ("appendNewLine", { [self] block in
+                // Complete the existing partial, then add a fresh raw line.
+                // This exercises the "add a new line" branch in
+                // reallyAppendLine (distinct from appendHard which extends
+                // the existing partial with a hard EOL).
+                let rawLinesBefore = block.numRawLines()
+                block.setPartial(false)
+                appendPartialASCII(block, "new")
+                XCTAssertEqual(block.numRawLines(), rawLinesBefore + 1,
+                               "appendNewLine must create a new raw line")
+            }),
+            ("dropLines", { block in
+                // Need wrapped lines to drop. "Hello" at width 2 wraps.
+                var dropped: Int32 = 0
+                _ = block.dropLines(1, withWidth: 2, chars: &dropped)
+            }),
+            ("changeBufferSize", { $0.changeBufferSize(4096) }),
+            // shrinkToFit is tested separately — it goes through ModifyLineBlock
+            // which uses the zero-copy COW path before changeBufferSize clones.
+        ]
+
+        for (name, mutation) in mutations {
+            autoreleasepool {
+                let block = LineBlock(rawBufferSize: 1024, absoluteBlockNumber: 0)
+                appendPartialASCII(block, "Hello")
+
+                let copy = block.cowCopy()
+                XCTAssertTrue(copy.sharesCharacterBuffer(with: block),
+                              "\(name): must share before mutation")
+                XCTAssertEqual(block.testCharacterBufferShareCount(), 2,
+                               "\(name): shareCount must be 2 before mutation")
+
+                // Apply the mutation to the original.
+                mutation(block)
+
+                // Sharing must be broken.
+                XCTAssertFalse(copy.sharesCharacterBuffer(with: block),
+                               "\(name): must break sharing after mutation")
+
+                // Both sides have shareCount == 1.
+                XCTAssertEqual(block.testCharacterBufferShareCount(), 1,
+                               "\(name): original shareCount must be 1 after mutation")
+                XCTAssertEqual(copy.testCharacterBufferShareCount(), 1,
+                               "\(name): copy shareCount must be 1 after mutation")
+
+                // Copy content is untouched.
+                XCTAssertEqual(copy.screenCharArray(forRawLine: 0).stringValue, "Hello",
+                               "\(name): copy content must be preserved")
+            }
+        }
+    }
+
+    // MARK: I.7 — Append-Only Path (the zero-copy hot path)
+
+    func testShareCount_AppendPartialToSharedBuffer_NoClone() {
+        // The whole point of zero-copy: appending partial data to the progenitor
+        // must NOT clone. It extends the buffer in-place and the copy sees the
+        // new data via zeroCopyMerge. Verify no clone happens.
+        let block = LineBlock(rawBufferSize: 4096, absoluteBlockNumber: 0)
+        appendPartialASCII(block, "Start")
+
+        let copy = block.cowCopy()
+        let sharedIdentity = block.testCharacterBufferIdentity()
+
+        // Append more partial data.
+        appendPartialASCII(block, " more")
+        appendPartialASCII(block, " data")
+        appendPartialASCII(block, " here")
+
+        // Buffer must STILL be shared — no clone on the append-only path.
+        XCTAssertTrue(copy.sharesCharacterBuffer(with: block),
+                      "Partial appends must not clone the shared buffer")
+        XCTAssertEqual(block.testCharacterBufferIdentity(), sharedIdentity,
+                       "Buffer identity must be unchanged after partial appends")
+        XCTAssertEqual(block.testCharacterBufferShareCount(), 2)
+    }
+
+    // MARK: I.8 — The Dealloc Race
+
+    func testShareCount_DeallocWhileOtherSideHoldsReference() {
+        // cowCopy sets copy.owner = progenitor (strong), so the progenitor
+        // cannot dealloc while the copy lives. To actually exercise the
+        // progenitor's dealloc: mutate the copy through ModifyLineBlock
+        // (which clears owner), then let the progenitor's scope end.
+        var copy: LineBlock!
+        weak var weakBlock: LineBlock?
+
+        autoreleasepool {
+            let block = LineBlock(rawBufferSize: 1024, absoluteBlockNumber: 0)
+            appendPartialASCII(block, "Ephemeral")
+            weakBlock = block
+
+            copy = block.cowCopy()
+            XCTAssertEqual(block.testCharacterBufferShareCount(), 2)
+            XCTAssertTrue(copy.hasOwner(),
+                          "Copy must have owner before mutation")
+
+            // changeBufferSize goes through ModifyLineBlock →
+            // validMutationCertificate which clears copy.owner, breaking
+            // the strong retention path. The zero-copy path in
+            // validMutationCertificate keeps the buffer shared; then
+            // changeBufferSize:cert: calls cloneCharacterBufferIfZeroCopyShared
+            // which clones it.
+            copy.changeBufferSize(2048)
+            XCTAssertFalse(copy.hasOwner(),
+                           "Mutation must clear owner relationship")
+            // block's scope ends here; no strong refs remain → dealloc.
+        }
+
+        // The original must actually be deallocated.
+        XCTAssertNil(weakBlock,
+                     "Original must be deallocated after owner cleared and scope ended")
+
+        // Copy survives with its own independent buffer.
+        XCTAssertEqual(copy.testCharacterBufferShareCount(), 1,
+                       "Surviving copy must be sole owner of its buffer")
+        XCTAssertEqual(copy.screenCharArray(forRawLine: 0).stringValue, "Ephemeral",
+                       "Content must survive progenitor dealloc")
+
+        // A guarded mutation on the survivor must operate in-place.
+        let identityBefore = copy.testCharacterBufferIdentity()
+        copy.removeLastRawLine()
+        XCTAssertEqual(copy.testCharacterBufferIdentity(), identityBefore,
+                       "Guarded edit must not clone on sole-owner survivor")
+    }
+
+    func testShareCount_AllCopiesDieThenOriginalMutates() {
+        let block = LineBlock(rawBufferSize: 1024, absoluteBlockNumber: 0)
+        appendPartialASCII(block, "Survivor")
+
+        // Create copies that each mutate (cloning their buffer) and then dealloc.
+        // This exercises the shareCount going up and back down repeatedly.
+        for i in 0..<100 {
+            autoreleasepool {
+                let copy = block.cowCopy()
+                // Mutate to force clone (decrements shareCount on shared buffer).
+                copy.setPartial(false)
+                XCTAssertEqual(block.testCharacterBufferShareCount(), 1,
+                               "Iteration \(i): after copy mutation, original must be sole owner")
+                // copy deallocs at end of autoreleasepool.
+            }
+        }
+
+        XCTAssertEqual(block.testCharacterBufferShareCount(), 1,
+                       "After 100 copy-mutate-destroy cycles, must be sole owner")
+
+        // Original content must be perfectly intact.
+        XCTAssertEqual(block.screenCharArray(forRawLine: 0).stringValue, "Survivor")
+    }
+
+    // MARK: I.9 — Mixed Sharing Modes (zero-copy eligible vs. not)
+
+    func testShareCount_MultiLineBlock_NeverIncrementsShareCount() {
+        // Zero-copy sharing only applies to single-partial-line blocks.
+        // A multi-line block's cowCopy must NOT increment shareCount.
+        // Note: copyDeep:NO always shares the buffer *object*, but shareCount
+        // is only incremented for the zero-copy eligible case.
+        let block = LineBlock(rawBufferSize: 1024, absoluteBlockNumber: 0)
+        appendHardASCII(block, "Line1")
+        appendPartialASCII(block, "Line2")
+
+        XCTAssertEqual(block.testCharacterBufferShareCount(), 1)
+
+        let copy = block.cowCopy()
+
+        // shareCount stays at 1 — zero-copy sharing not active.
+        XCTAssertEqual(block.testCharacterBufferShareCount(), 1,
+                       "Multi-line cowCopy must not increment shareCount")
+        // The buffer objects are the same (copyDeep:NO shares). Standard COW
+        // handles mutation through the mutation certificate, not shareCount.
+        XCTAssertTrue(copy.sharesCharacterBuffer(with: block),
+                      "cowCopy always shares buffer object initially")
+
+        // Mutations that don't touch the buffer (like removeLastRawLine)
+        // may keep the buffer shared — they only modify CLL/metadata.
+        // Mutations that go through ModifyLineBlock (like changeBufferSize)
+        // trigger the full COW clone via validMutationCertificate.
+        copy.changeBufferSize(2048)
+        XCTAssertFalse(copy.sharesCharacterBuffer(with: block),
+                       "After ModifyLineBlock mutation, standard COW must clone the buffer")
+        // shareCount never changed — standard COW doesn't use it.
+        XCTAssertEqual(block.testCharacterBufferShareCount(), 1)
+    }
+
+    func testShareCount_CompletedLineBlock_NeverIncrementsShareCount() {
+        // A block with a single hard (complete) line is not eligible for
+        // zero-copy. shareCount stays at 1, but buffer is shared initially
+        // via copyDeep:NO.
+        let block = LineBlock(rawBufferSize: 1024, absoluteBlockNumber: 0)
+        appendHardASCII(block, "Done")
+
+        let copy = block.cowCopy()
+
+        XCTAssertEqual(block.testCharacterBufferShareCount(), 1,
+                       "Hard-EOL block's cowCopy must not increment shareCount")
+        // Buffer is shared initially (copyDeep:NO), but standard COW
+        // will clone on first mutation.
+        XCTAssertTrue(copy.sharesCharacterBuffer(with: block),
+                      "cowCopy always shares buffer object initially")
+    }
+
+    // MARK: I.10 — Stress: Alternating Copy/Mutate/Copy
+
+    func testShareCount_AlternatingCopyAndMutate_ShareCountStaysCorrect() {
+        // The pattern: copy, mutate original (clone), copy again (re-share),
+        // mutate copy (clone), repeat. ShareCount bounces between 1 and 2.
+        let block = LineBlock(rawBufferSize: 4096, absoluteBlockNumber: 0)
+        appendPartialASCII(block, "base")
+
+        for i in 0..<25 {
+            autoreleasepool {
+                // Step 1: Make a copy (shareCount -> 2).
+                let copy = block.cowCopy()
+                XCTAssertEqual(block.testCharacterBufferShareCount(), 2,
+                               "Iteration \(i) after cowCopy: shareCount must be 2")
+
+                // Step 2: Mutate the copy (clone away, both -> 1).
+                copy.setPartial(false)
+                XCTAssertEqual(block.testCharacterBufferShareCount(), 1,
+                               "Iteration \(i) after copy mutation: original shareCount must be 1")
+                XCTAssertEqual(copy.testCharacterBufferShareCount(), 1,
+                               "Iteration \(i) after copy mutation: copy shareCount must be 1")
+
+                // copy deallocs here — it has its own buffer, so no effect on original.
+            }
+            XCTAssertEqual(block.testCharacterBufferShareCount(), 1,
+                           "Iteration \(i) after copy dealloc: must be sole owner")
+        }
+
+        XCTAssertEqual(block.screenCharArray(forRawLine: 0).stringValue, "base",
+                       "Content must survive 25 rounds of copy/mutate/destroy")
+    }
+
+    // MARK: I.11 — Zero-Copy Merge Under Adversarial Conditions
+
+    func testZeroCopyMerge_MergeAfterResizeFallsBackCorrectly() {
+        // Exercise fallback through the real LineBuffer merge path.
+        let width = Int32(80)
+        let source = LineBuffer()
+        source.setMaxLines(1000)
+        let dest = LineBuffer()
+        dest.setMaxLines(1000)
+
+        let xSCA = screenCharArrayWithDefaultStyle("x", eol: EOL_SOFT)
+        source.append(xSCA, width: width)
+        dest.forceMerge(from: source)
+
+        // Append keeps the source's last block zero-copy mergeable.
+        let ySCA = screenCharArrayWithDefaultStyle("y", eol: EOL_SOFT)
+        source.append(ySCA, width: width)
+
+        let sourceBlock = source.testOnlyBlock(at: 0)
+        let destBlock = dest.testOnlyBlock(at: 0)
+        XCTAssertTrue(destBlock.canZeroCopyMergeFromProgenitor(),
+                      "Must be zero-copy eligible before resize")
+
+        // Resize source block; force a guaranteed grow so the resize is not
+        // optimized out.
+        sourceBlock.changeBufferSize(sourceBlock.rawBufferSize + 1)
+        XCTAssertFalse(destBlock.canZeroCopyMergeFromProgenitor(),
+                       "Resize must force fallback merge path")
+
+        // Perform merge and verify fallback correctness.
+        dest.forceMerge(from: source)
+        let merged = dest.unwrappedLine(at: 0)
+        XCTAssertEqual(merged.stringValue, "xy",
+                       "Fallback merge must preserve full appended content")
+        XCTAssertFalse(merged.stringValue.contains("\0"),
+                       "Fallback merge output must not contain NULs")
+    }
+
+    func testZeroCopyMerge_ManyMergeCyclesWithGrowingContent() {
+        // Hammer the merge path with many cycles, each appending enough
+        // to require buffer growth. Alternates between zero-copy and fallback.
+        let source = LineBuffer()
+        source.setMaxLines(100000)
+        let width = Int32(80)
+
+        let seedLS = makeLineString(".", eol: EOL_SOFT)
+        let seedSCA = seedLS.screenCharArray(bidi: nil)
+        source.appendLine(seedSCA.line, length: seedSCA.length,
+                          partial: true, width: width,
+                          metadata: seedSCA.metadata,
+                          continuation: seedSCA.continuation)
+
+        let dest = LineBuffer()
+        dest.setMaxLines(100000)
+        dest.forceMerge(from: source)
+
+        var expected = "."
+        var zeroCopyEligibleCycles = 0
+        var fallbackIneligibleCycles = 0
+
+        for i in 0..<100 {
+            // Vary chunk size: sometimes small (zero-copy stays), sometimes huge (forces resize).
+            let chunkSize = (i % 10 == 0) ? 5000 : (i % 3 + 1)
+            let chunk = String(repeating: Character(UnicodeScalar(Int(("a" as UnicodeScalar).value) + (i % 26))!),
+                               count: chunkSize)
+            expected += chunk
+
+            let chunkLS = makeLineString(chunk, eol: EOL_SOFT)
+            let chunkSCA = chunkLS.screenCharArray(bidi: nil)
+            source.appendLine(chunkSCA.line, length: chunkSCA.length,
+                              partial: true, width: width,
+                              metadata: chunkSCA.metadata,
+                              continuation: chunkSCA.continuation)
+
+            // Track which merge path is eligible this cycle.
+            let destBlock = dest.testOnlyBlock(at: 0)
+            if destBlock.canZeroCopyMergeFromProgenitor() {
+                zeroCopyEligibleCycles += 1
+            } else {
+                fallbackIneligibleCycles += 1
+            }
+
+            dest.forceMerge(from: source)
+
+            let line = dest.unwrappedLine(at: 0)
+            XCTAssertEqual(line.stringValue, expected,
+                           "Content mismatch at merge cycle \(i)")
+        }
+
+        XCTAssertGreaterThan(zeroCopyEligibleCycles, 0,
+                             "Expected at least one zero-copy-eligible cycle")
+        XCTAssertGreaterThan(fallbackIneligibleCycles, 0,
+                             "Expected at least one fallback-ineligible cycle")
+    }
+
+    // MARK: I.12 — eraseRTLStatusInAllCharacters Enforcement
+
+    func testEraseRTLStatus_BeforeCopy_Succeeds() {
+        // Calling before any copy should not assert.
+        let block = LineBlock(rawBufferSize: 1024, absoluteBlockNumber: 0)
+        appendPartialASCII(block, "Hello")
+
+        // This must not crash.
+        block.eraseRTLStatusInAllCharacters()
     }
 }

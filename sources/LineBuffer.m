@@ -671,7 +671,12 @@ static int RawNumLines(LineBuffer* buffer, int width) {
             num_wrapped_lines_width = -1;
             int space_used = [block rawSpaceUsed];
             if (partial) {
-                [block changeBufferSize:space_used + length + block_size];
+                // Geometric growth: double the buffer capacity so resizes are
+                // O(log N) and total clone cost is O(N) (geometric series).
+                // Linear growth (adding block_size each time) would be O(N²).
+                int needed = space_used + length;
+                int doubled = [block rawBufferSize] * 2;
+                [block changeBufferSize:MAX(needed, doubled)];
             } else {
                 [block changeBufferSize:space_used + length];
             }

@@ -287,6 +287,15 @@ void EnableDoubleWidthCharacterLineCache(void);
 - (void)zeroCopyMergeFromProgenitor;
 - (BOOL)sharesCharacterBufferWith:(LineBlock *)other;
 
+// Testing only. Returns the character buffer's shareCount.
+- (int)testCharacterBufferShareCount;
+
+// Testing only. Returns YES when the character buffer's shareCount > 1.
+- (BOOL)testCharacterBufferIsShared;
+
+// Testing only. Returns the identity of the underlying character buffer object.
+- (NSUInteger)testCharacterBufferIdentity;
+
 - (id)copy NS_UNAVAILABLE;
 - (id)copyWithZone:(nullable NSZone *)zone NS_UNAVAILABLE;
 - (LineBlock *)cowCopy;
