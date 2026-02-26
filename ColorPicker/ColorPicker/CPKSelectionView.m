@@ -120,6 +120,8 @@ typedef NS_ENUM(NSInteger, CPKRGBViewMode) {
                         color:(CPKColor *)color
                    colorSpace:(NSColorSpace *)colorSpace
                  alphaAllowed:(BOOL)alphaAllowed {
+    CPKLog(@"CPKSelectionView.initWithFrame: colorSpace=%@ color=%@ color.colorSpace=%@",
+           colorSpace, color, color.color.colorSpace);
     NSAssert(colorSpace != nil, @"CPKSelectionView initWithFrame: colorSpace must not be nil");
     self = [super initWithFrame:frameRect];
     if (self) {
@@ -131,6 +133,7 @@ typedef NS_ENUM(NSInteger, CPKRGBViewMode) {
         [self createSubviews];
 
         self.block = block;
+        CPKLog(@"CPKSelectionView.initWithFrame: initialized with _colorSpace=%@", _colorSpace);
     }
     return self;
 }
@@ -724,6 +727,7 @@ typedef NS_ENUM(NSInteger, CPKRGBViewMode) {
 }
 
 - (void)toggleColorSpace:(id)sender {
+    CPKLog(@"CPKSelectionView.toggleColorSpace: called. Current colorSpace=%@", self.colorSpace);
     NSColorSpace *newColorSpace;
     if ([self.colorSpace isEqual:[NSColorSpace deviceRGBColorSpace]]) {
         newColorSpace = [NSColorSpace displayP3ColorSpace];
@@ -732,15 +736,20 @@ typedef NS_ENUM(NSInteger, CPKRGBViewMode) {
     } else {
         newColorSpace = [NSColorSpace deviceRGBColorSpace];
     }
+    CPKLog(@"CPKSelectionView.toggleColorSpace: changing to newColorSpace=%@", newColorSpace);
     [self setColorSpace:newColorSpace];
 }
 
 - (void)setColorSpace:(NSColorSpace *)colorSpace {
+    CPKLog(@"CPKSelectionView.setColorSpace: called with colorSpace=%@ (current=%@)", colorSpace, _colorSpace);
+    CPKLog(@"CPKSelectionView.setColorSpace: call stack:\n%@", [NSThread callStackSymbols]);
     NSAssert(colorSpace != nil, @"setColorSpace: called with nil colorSpace");
     if ([_colorSpace isEqual:colorSpace]) {
+        CPKLog(@"CPKSelectionView.setColorSpace: colorSpace unchanged, returning early");
         return;
     }
 
+    CPKLog(@"CPKSelectionView.setColorSpace: CHANGING colorSpace from %@ to %@", _colorSpace, colorSpace);
     _colorSpace = colorSpace;
 
     // Update button title
@@ -950,6 +959,8 @@ typedef NS_ENUM(NSInteger, CPKRGBViewMode) {
 }
 
 - (void)setColorFromGradient:(CPKColor *)newColor {
+    CPKLog(@"CPKSelectionView.setColorFromGradient: newColor=%@ newColor.colorSpace=%@ self.colorSpace=%@",
+           newColor, newColor.color.colorSpace, self.colorSpace);
     if (self.alphaAllowed && _selectedColor) {
         _selectedColor =
             [newColor colorWithAlphaComponent:_selectedColor.alphaComponent];
@@ -960,16 +971,19 @@ typedef NS_ENUM(NSInteger, CPKRGBViewMode) {
     self.alphaSliderView.color = newColor;
     [self.alphaSliderView setNeedsDisplay:YES];
     [self updateTextFieldsForColor:_selectedColor];
+    CPKLog(@"CPKSelectionView.setColorFromGradient: calling block (self.colorSpace=%@)", self.colorSpace);
     self.block(_selectedColor);
 }
 
 - (void)setSelectedColor:(CPKColor *)selectedColor {
-    CPKLog(@"CPKSelectionView.setSelectedColor(%@)", selectedColor);
+    CPKLog(@"CPKSelectionView.setSelectedColor: color=%@ color.colorSpace=%@ self.colorSpace=%@",
+           selectedColor, selectedColor.color.colorSpace, self.colorSpace);
     if (!self.alphaAllowed) {
         selectedColor = [selectedColor colorWithAlphaComponent:1];
     }
     _selectedColor = selectedColor;
     if (selectedColor) {
+        CPKLog(@"CPKSelectionView.setSelectedColor: updating gradient view (gradient.colorSpace=%@)", self.gradientView.colorSpace);
         [self.gradientView setSelectedColor:selectedColor];
         self.colorComponentSliderView.color = selectedColor;
         self.alphaSliderView.color = selectedColor;
@@ -990,7 +1004,9 @@ typedef NS_ENUM(NSInteger, CPKRGBViewMode) {
         [self updateTextFieldsForColor:self.selectedColor];
     }
 
+    CPKLog(@"CPKSelectionView.setSelectedColor: calling block with color (self.colorSpace=%@)", self.colorSpace);
     self.block(selectedColor);
+    CPKLog(@"CPKSelectionView.setSelectedColor: after block (self.colorSpace=%@)", self.colorSpace);
 }
 
 - (void)updateTextFieldsForColor:(CPKColor *)color {
@@ -1036,13 +1052,27 @@ typedef NS_ENUM(NSInteger, CPKRGBViewMode) {
 
 - (void)controlTextDidChange:(NSNotification *)obj {
     NSTextField *textField = [obj object];
+    CPKLog(@"CPKSelectionView.controlTextDidChange: textField=%@ value=%@ currentColorSpace=%@",
+           textField == self.hexTextField ? @"hexTextField" :
+           textField == self.redTextField ? @"redTextField" :
+           textField == self.greenTextField ? @"greenTextField" :
+           textField == self.blueTextField ? @"blueTextField" :
+           textField == self.hueTextField ? @"hueTextField" :
+           textField == self.saturationTextField ? @"saturationTextField" :
+           textField == self.brightnessTextField ? @"brightnessTextField" :
+           textField == self.alphaTextField ? @"alphaTextField" : @"unknown",
+           textField.stringValue, self.colorSpace);
     NSScanner *scanner = [NSScanner scannerWithString:textField.stringValue];
     int i;
     BOOL isInteger = [scanner scanInt:&i] && i >= 0 && i < 256;
     if (textField == self.hexTextField) {
+        CPKLog(@"CPKSelectionView.controlTextDidChange: parsing hex string '%@' with colorSpace=%@", self.hexTextField.stringValue, self.colorSpace);
         CPKColor *color = [self colorWithHexString:self.hexTextField.stringValue];
+        CPKLog(@"CPKSelectionView.controlTextDidChange: parsed color=%@ colorSpace=%@", color, color.color.colorSpace);
         if (color) {
+            CPKLog(@"CPKSelectionView.controlTextDidChange: setting selectedColor (colorSpace before=%@)", self.colorSpace);
             self.selectedColor = color;
+            CPKLog(@"CPKSelectionView.controlTextDidChange: after setting selectedColor (colorSpace after=%@)", self.colorSpace);
         }
     } else if (textField == self.redTextField) {
         if (isInteger) {
@@ -1104,9 +1134,11 @@ typedef NS_ENUM(NSInteger, CPKRGBViewMode) {
 }
 
 - (CPKColor *)colorWithHexString:(NSString *)hexString {
+    CPKLog(@"CPKSelectionView.colorWithHexString: '%@' using self.colorSpace=%@", hexString, self.colorSpace);
     NSScanner *scanner = [NSScanner scannerWithString:hexString];
     unsigned int value;
     if (![scanner scanHexInt:&value]) {
+        CPKLog(@"CPKSelectionView.colorWithHexString: failed to parse hex, returning nil");
         return nil;
     }
     int r;
@@ -1117,14 +1149,18 @@ typedef NS_ENUM(NSInteger, CPKRGBViewMode) {
         g = (value >> 8) & 0xff;
         b = (value >> 0) & 0xff;
     } else {
+        CPKLog(@"CPKSelectionView.colorWithHexString: hex length != 6, returning nil");
         return nil;
     }
 
-    return [[CPKColor alloc] initWithRed:r / 255.0
+    CPKLog(@"CPKSelectionView.colorWithHexString: creating CPKColor with r=%d g=%d b=%d colorSpace=%@", r, g, b, self.colorSpace);
+    CPKColor *result = [[CPKColor alloc] initWithRed:r / 255.0
                                    green:g / 255.0
                                     blue:b / 255.0
                                    alpha:_selectedColor.alphaComponent
                               colorSpace:self.colorSpace];
+    CPKLog(@"CPKSelectionView.colorWithHexString: created color=%@ NSColor.colorSpace=%@", result, result.color.colorSpace);
+    return result;
 }
 
 - (void)showGradientAndColorComponentSlider {

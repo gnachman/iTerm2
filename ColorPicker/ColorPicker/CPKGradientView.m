@@ -1,6 +1,7 @@
 #import "CPKGradientView.h"
 
 #import "CPKColor.h"
+#import "CPKLogging.h"
 #import "NSColor+CPK.h"
 #import "NSObject+CPK.h"
 
@@ -17,6 +18,7 @@
                          type:(CPKGradientViewType)type
                    colorSpace:(NSColorSpace *)colorSpace
                         block:(void (^)(CPKColor *))block {
+    CPKLog(@"CPKGradientView.initWithFrame: colorSpace=%@", colorSpace);
     self = [super initWithFrame:frameRect];
     if (self) {
         _colorSpace = colorSpace;
@@ -26,14 +28,18 @@
         self.indicatorView.frame = self.indicatorFrame;
         self.type = type;
         [self addSubview:self.indicatorView];
+        CPKLog(@"CPKGradientView.initWithFrame: initialized with _colorSpace=%@", _colorSpace);
     }
     return self;
 }
 
 - (void)setColorSpace:(NSColorSpace *)colorSpace {
+    CPKLog(@"CPKGradientView.setColorSpace: called with colorSpace=%@ (current=%@)", colorSpace, _colorSpace);
     if ([_colorSpace isEqual:colorSpace]) {
+        CPKLog(@"CPKGradientView.setColorSpace: colorSpace unchanged, returning early");
         return;
     }
+    CPKLog(@"CPKGradientView.setColorSpace: CHANGING colorSpace from %@ to %@", _colorSpace, colorSpace);
     _colorSpace = colorSpace;
     [self setNeedsDisplay:YES];
 }
@@ -206,18 +212,25 @@
     self.selectedX = [self xValueAtPoint:pointInView];
     self.selectedY = [self yValueAtPoint:pointInView];
 
-    self.hue = self.selectedColor.hueComponent;
-    self.saturation = self.selectedColor.saturationComponent;
-    self.brightness = self.selectedColor.brightnessComponent;
-    self.red = self.selectedColor.redComponent;
-    self.green = self.selectedColor.greenComponent;
-    self.blue = self.selectedColor.blueComponent;
+    CPKColor *newColor = self.selectedColor;
+    CPKLog(@"CPKGradientView.setColorFromPointInWindow: created color=%@ color.colorSpace=%@ self.colorSpace=%@",
+           newColor, newColor.color.colorSpace, self.colorSpace);
+
+    self.hue = newColor.hueComponent;
+    self.saturation = newColor.saturationComponent;
+    self.brightness = newColor.brightnessComponent;
+    self.red = newColor.redComponent;
+    self.green = newColor.greenComponent;
+    self.blue = newColor.blueComponent;
 
     self.indicatorView.frame = self.indicatorFrame;
-    self.block(self.selectedColor);
+    CPKLog(@"CPKGradientView.setColorFromPointInWindow: calling block with color");
+    self.block(newColor);
 }
 
 - (void)setSelectedColor:(CPKColor *)selectedColor {
+    CPKLog(@"CPKGradientView.setSelectedColor: color=%@ color.colorSpace=%@ self.colorSpace=%@",
+           selectedColor, selectedColor.color.colorSpace, self.colorSpace);
     switch (self.type) {
         case kCPKGradientViewTypeSaturationBrightness:
             self.selectedX = selectedColor.saturationComponent;

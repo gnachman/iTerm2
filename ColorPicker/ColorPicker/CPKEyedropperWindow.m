@@ -1,5 +1,6 @@
 #import "CPKEyedropperWindow.h"
 #import "CPKEyedropperView.h"
+#import "CPKLogging.h"
 #import "CPKScreenshot.h"
 #import "NSColor+CPK.h"
 #import "NSColorSpace+CPK.h"
@@ -263,16 +264,20 @@ const NSTimeInterval kUpdateInterval = 1.0 / 60.0;
     NSColor *nativeColor = [screenshot colorAtX:point.x y:point.y];
     if (nativeColor) {
         NSColorSpace *nativeColorSpace = screenshot.colorSpace;
+        CPKLog(@"CPKEyedropperWindow: picked nativeColor=%@ nativeColorSpace=%@", nativeColor, nativeColorSpace);
 
         // Map the native colorspace to one of the supported colorspaces
         NSColorSpace *supportedColorSpace = [NSColorSpace cpk_supportedColorSpaceForColorSpace:nativeColorSpace];
+        CPKLog(@"CPKEyedropperWindow: mapped to supportedColorSpace=%@", supportedColorSpace);
 
         // Convert the color to the supported colorspace
         NSColor *convertedColor = [nativeColor colorUsingColorSpace:supportedColorSpace];
+        CPKLog(@"CPKEyedropperWindow: convertedColor=%@ convertedColor.colorSpace=%@", convertedColor, convertedColor.colorSpace);
 
         self.selectedColor = convertedColor;
         _colorSpace = supportedColorSpace;
     } else {
+        CPKLog(@"CPKEyedropperWindow: no color at point, defaulting to P3");
         self.selectedColor = nil;
         self.colorSpace = [NSColorSpace displayP3ColorSpace];
     }

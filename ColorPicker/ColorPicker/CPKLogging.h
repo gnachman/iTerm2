@@ -6,7 +6,7 @@
 //  Copyright © 2024 Google. All rights reserved.
 //
 
-#define CPK_VERBOSE_LOGGING 0
+#define CPK_VERBOSE_LOGGING 1
 
 #if CPK_VERBOSE_LOGGING
 #define CPKLog(format...) NSLog(format)

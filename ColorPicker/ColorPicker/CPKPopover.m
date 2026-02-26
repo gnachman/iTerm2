@@ -16,6 +16,8 @@
                               options:(CPKMainViewControllerOptions)options
                    selectionDidChange:(void (^)(NSColor *))block
                  useSystemColorPicker:(void (^)(void))useSystemColorPicker {
+    CPKLog(@"CPKPopover.presentRelativeToRect: color=%@ color.colorSpace=%@ colorSpace=%@",
+           color, color.colorSpace, colorSpace);
     CPKPopover *popover = [[CPKPopover alloc] init];
     __weak __typeof(popover) weakPopover = popover;
     popover.mainViewController = [[CPKMainViewController alloc] initWithBlock:block
@@ -24,6 +26,7 @@
                                                                       options:options
                                                                    colorSpace:colorSpace];
     popover.mainViewController.colorSpaceDidChangeBlock = ^(NSColorSpace *newColorSpace) {
+        CPKLog(@"CPKPopover: mainViewController.colorSpaceDidChangeBlock called with newColorSpace=%@", newColorSpace);
         if (weakPopover.colorSpaceDidChange) {
             weakPopover.colorSpaceDidChange(newColorSpace);
         }
@@ -56,8 +59,11 @@
 }
 
 - (void)setColorSpace:(NSColorSpace *)colorSpace {
+    CPKLog(@"CPKPopover.setColorSpace: called with colorSpace=%@ (current=%@)", colorSpace, self.mainViewController.colorSpace);
+    CPKLog(@"CPKPopover.setColorSpace: call stack:\n%@", [NSThread callStackSymbols]);
     self.mainViewController.colorSpace = colorSpace;
     if (self.colorSpaceDidChange) {
+        CPKLog(@"CPKPopover.setColorSpace: calling colorSpaceDidChange callback");
         self.colorSpaceDidChange(colorSpace);
     }
 }

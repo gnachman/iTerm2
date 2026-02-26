@@ -323,6 +323,8 @@ static BOOL CPKColorHasValidColorSpace(NSColor *color) {
         options |= CPKMainViewControllerOptionsNoColor;
     }
     NSAssert(self.colorSpace != nil, @"CPKColorWellView colorSpace must not be nil when opening popover");
+    CPKLog(@"CPKColorWellView.openPopOverRelativeToRect: opening popover with colorSpace=%@ initialColor=%@ initialColor.colorSpace=%@",
+           self.colorSpace, self.color, self.color.colorSpace);
     self.popover =
         [CPKPopover presentRelativeToRect:presentationRect
                                    ofView:presentingView
@@ -331,10 +333,14 @@ static BOOL CPKColorHasValidColorSpace(NSColor *color) {
                                colorSpace:self.colorSpace
                                   options:options
                        selectionDidChange:^(NSColor *color) {
+                           CPKLog(@"CPKColorWellView: selectionDidChange called with color=%@ color.colorSpace=%@ self.colorSpace=%@",
+                                  color, color.colorSpace, weakSelf.colorSpace);
                            weakSelf.selectedColor = color;
                            if (weakSelf.delegate.isContinuous) {
+                               CPKLog(@"CPKColorWellView: isContinuous=YES, setting view.color");
                                weakSelf.color = color;
                                if (weakSelf.colorDidChange) {
+                                   CPKLog(@"CPKColorWellView: calling colorDidChange callback");
                                    weakSelf.colorDidChange(color);
                                }
                            }
@@ -345,15 +351,19 @@ static BOOL CPKColorHasValidColorSpace(NSColor *color) {
                          [self showSystemColorPicker];
                      }];
     self.popover.colorSpaceDidChange = ^(NSColorSpace *newColorSpace) {
+        CPKLog(@"CPKColorWellView: popover.colorSpaceDidChange called with newColorSpace=%@", newColorSpace);
         weakSelf.colorSpace = newColorSpace;
     };
     self.open = YES;
     self.popover.willClose = ^() {
+        CPKLog(@"CPKColorWellView: popover.willClose called. view.colorSpace=%@ view.selectedColor.colorSpace=%@",
+               weakSelf.colorSpace, weakSelf.selectedColor.colorSpace);
         if (weakSelf.willClosePopover) {
             weakSelf.willClosePopover(weakSelf.color);
         }
         weakSelf.color = weakSelf.selectedColor;
         // Update color space - the view's colorSpace should already be up to date from the popover
+        CPKLog(@"CPKColorWellView: popover.willClose: setting delegate.colorSpace=%@", weakSelf.colorSpace);
         weakSelf.delegate.colorSpace = weakSelf.colorSpace;
         weakSelf.open = NO;
         weakSelf.popover = nil;
@@ -459,13 +469,18 @@ static NSColorSpace *gDefaultColorSpace;
 }
 
 - (void)setColorSpace:(NSColorSpace *)colorSpace {
+    CPKLog(@"CPKColorWell.setColorSpace: called with colorSpace=%@ (current=%@)", colorSpace, _colorSpace);
+    CPKLog(@"CPKColorWell.setColorSpace: call stack:\n%@", [NSThread callStackSymbols]);
     if ([_colorSpace isEqual:colorSpace]) {
+        CPKLog(@"CPKColorWell.setColorSpace: colorSpace unchanged, returning early");
         return;
     }
+    CPKLog(@"CPKColorWell.setColorSpace: CHANGING colorSpace from %@ to %@", _colorSpace, colorSpace);
     _colorSpace = colorSpace;
     [self load];
     _view.colorSpace = colorSpace;
     if (_view.popover && !_view.popover.closing) {
+        CPKLog(@"CPKColorWell.setColorSpace: updating popover.colorSpace");
         _view.popover.colorSpace = colorSpace;
     }
 }
@@ -475,12 +490,14 @@ static NSColorSpace *gDefaultColorSpace;
 }
 
 - (void)setColor:(NSColor *)color {
-    CPKLog(@"setColor:%@", color);
+    CPKLog(@"CPKColorWell.setColor: color=%@ color.colorSpace=%@ self.colorSpace=%@", color, color.colorSpace, _colorSpace);
     if (color) {
         if (!CPKColorHasValidColorSpace(color)) {
             // Pattern colors and some catalog colors don't support colorSpace
+            CPKLog(@"CPKColorWell.setColor: color has invalid colorSpace, returning");
             return;
         }
+        CPKLog(@"CPKColorWell.setColor: adopting colorSpace from color: %@", color.colorSpace);
         self.colorSpace = color.colorSpace;
     }
     self.view.color = color;
@@ -519,7 +536,8 @@ static NSColorSpace *gDefaultColorSpace;
 }
 
 - (void)colorChangedByDrag:(NSColor *)color {
-    CPKLog(@"colorChangedByDrag:%@", color);
+    CPKLog(@"CPKColorWell.colorChangedByDrag: color=%@ color.colorSpace=%@ self.colorSpace=%@",
+           color, color.colorSpace, _colorSpace);
     [self setColor:color];
     [self sendAction:self.action to:self.target];
     [_view pushColor:color];

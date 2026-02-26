@@ -48,6 +48,8 @@ static const CGFloat kBottomMargin = 8;
                         color:(NSColor *)color
                       options:(CPKMainViewControllerOptions)options
                    colorSpace:(NSColorSpace *)colorSpace {
+    CPKLog(@"CPKMainViewController.initWithBlock: color=%@ color.colorSpace=%@ colorSpace=%@",
+           color, color.colorSpace, colorSpace);
     NSAssert(colorSpace != nil, @"colorSpace must not be nil");
     self = [super initWithNibName:nil bundle:nil];
     if (self) {
@@ -63,9 +65,12 @@ static const CGFloat kBottomMargin = 8;
             color = [color colorWithAlphaComponent:1];
         }
         color = [color colorUsingColorSpace:self.colorSpace];
+        CPKLog(@"CPKMainViewController.initWithBlock: after colorSpace conversion, color=%@ color.colorSpace=%@",
+               color, color.colorSpace);
         _selectedColor = color;
         self.alphaAllowed = alphaAllowed;
         self.noColorAllowed = noColorAllowed;
+        CPKLog(@"CPKMainViewController.initWithBlock: initialized with _colorSpace=%@", _colorSpace);
     }
     return self;
 }
@@ -90,9 +95,11 @@ static const CGFloat kBottomMargin = 8;
                                                     alphaAllowed:self.alphaAllowed];
     self.selectionView.delegate = self;
     self.selectionView.colorSpaceDidChangeBlock = ^(NSColorSpace *newColorSpace) {
+        CPKLog(@"CPKMainViewController: selectionView.colorSpaceDidChangeBlock called with newColorSpace=%@", newColorSpace);
         NSCAssert(newColorSpace != nil, @"colorSpaceDidChangeBlock received nil colorSpace");
         weakSelf.colorSpace = newColorSpace;
         if (weakSelf.colorSpaceDidChangeBlock) {
+            CPKLog(@"CPKMainViewController: propagating colorSpaceDidChangeBlock to parent");
             weakSelf.colorSpaceDidChangeBlock(newColorSpace);
         }
     };
@@ -131,10 +138,13 @@ static const CGFloat kBottomMargin = 8;
         [weakSelf.favoritesView removeSelectedFavorites];
     };
     self.controlsView.startPickingBlock = ^() {
+        CPKLog(@"CPKMainViewController: eyedropper startPickingBlock called");
         [CPKEyedropperWindow pickColorWithCompletion:^(NSColor *color, NSColorSpace *colorSpace) {
+            CPKLog(@"CPKMainViewController: eyedropper completion: color=%@ colorSpace=%@", color, colorSpace);
             if (color) {
                 // Adopt the colorspace from the eyedropper if available
                 if (colorSpace) {
+                    CPKLog(@"CPKMainViewController: eyedropper: adopting colorSpace=%@", colorSpace);
                     weakSelf.colorSpace = colorSpace;
                 }
                 weakSelf.selectionView.selectedColor = [[CPKColor alloc] initWithColor:color];
@@ -153,8 +163,10 @@ static const CGFloat kBottomMargin = 8;
                                                            [self favoritesViewHeight])
                                      colorSpace:self.colorSpace];
     self.favoritesView.selectionDidChangeBlock = ^(NSColor *newColor) {
+        CPKLog(@"CPKMainViewController: favoritesView.selectionDidChangeBlock called with newColor=%@ newColor.colorSpace=%@", newColor, newColor.colorSpace);
         if (newColor) {
             weakSelf.selectionView.selectedColor = [[CPKColor alloc] initWithColor:newColor];
+            CPKLog(@"CPKMainViewController: favoritesView: adopting colorSpace from favorite: %@", newColor.colorSpace);
             [weakSelf setColorSpace:newColor.colorSpace];
             weakSelf.controlsView.removeEnabled = YES;
         } else {
@@ -186,15 +198,19 @@ static const CGFloat kBottomMargin = 8;
 }
 
 - (void)selectColor:(NSColor *)color {
-    CPKLog(@"CPKMainViewController.selectColor(%@)", color);
+    CPKLog(@"CPKMainViewController.selectColor: color=%@ color.colorSpace=%@ self.colorSpace=%@",
+           color, color.colorSpace, self.colorSpace);
     [self selectColor:color updateSelectionView:YES];
 }
 
 - (void)selectColor:(NSColor *)color updateSelectionView:(BOOL)updateSelectionView {
-    CPKLog(@"CPKMainViewController.selectColor(%@, updateSelectionView:%@)", color, @(updateSelectionView));
+    CPKLog(@"CPKMainViewController.selectColor:updateSelectionView: color=%@ color.colorSpace=%@ updateSelectionView=%@ self.colorSpace=%@",
+           color, color.colorSpace, @(updateSelectionView), self.colorSpace);
     self.selectedColor = color;
     self.controlsView.swatchColor = color;
+    CPKLog(@"CPKMainViewController.selectColor:updateSelectionView: calling _block (self.colorSpace=%@)", self.colorSpace);
     _block(color);
+    CPKLog(@"CPKMainViewController.selectColor:updateSelectionView: after _block (self.colorSpace=%@)", self.colorSpace);
     [self.favoritesView selectColor:color];
     if (updateSelectionView) {
         [self.selectionView setSelectedColor:[[CPKColor alloc] initWithColor:color]];
@@ -202,15 +218,21 @@ static const CGFloat kBottomMargin = 8;
 }
 
 - (void)setColorSpace:(NSColorSpace *)colorSpace {
+    CPKLog(@"CPKMainViewController.setColorSpace: called with colorSpace=%@ (current=%@)", colorSpace, _colorSpace);
+    CPKLog(@"CPKMainViewController.setColorSpace: call stack:\n%@", [NSThread callStackSymbols]);
     NSAssert(colorSpace != nil, @"setColorSpace: called with nil colorSpace");
     if ([_colorSpace isEqual:colorSpace]) {
+        CPKLog(@"CPKMainViewController.setColorSpace: colorSpace unchanged, returning early");
         return;
     }
+    CPKLog(@"CPKMainViewController.setColorSpace: CHANGING colorSpace from %@ to %@", _colorSpace, colorSpace);
     _colorSpace = colorSpace;
     if (self.selectionView) {
+        CPKLog(@"CPKMainViewController.setColorSpace: updating selectionView.colorSpace");
         self.selectionView.colorSpace = colorSpace;
     }
     if (self.favoritesView) {
+        CPKLog(@"CPKMainViewController.setColorSpace: updating favoritesView.colorSpace");
         self.favoritesView.colorSpace = colorSpace;
     }
 }

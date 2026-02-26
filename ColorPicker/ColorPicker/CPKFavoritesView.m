@@ -1,5 +1,6 @@
 #import "CPKFavoritesView.h"
 #import "CPKFavorite.h"
+#import "CPKLogging.h"
 #import "CPKSwatchView.h"
 #import "NSColor+CPK.h"
 
@@ -65,9 +66,12 @@ NSString *const kCPFavoritesUserDefaultsKey = @"kCPFavoritesUserDefaultsKey";
 @implementation CPKFavoritesView
 
 - (void)setColorSpace:(NSColorSpace *)colorSpace {
+    CPKLog(@"CPKFavoritesView.setColorSpace: called with colorSpace=%@ (current=%@)", colorSpace, _colorSpace);
     if ([_colorSpace isEqual:colorSpace]) {
+        CPKLog(@"CPKFavoritesView.setColorSpace: colorSpace unchanged, returning early");
         return;
     }
+    CPKLog(@"CPKFavoritesView.setColorSpace: CHANGING colorSpace from %@ to %@", _colorSpace, colorSpace);
     _colorSpace = colorSpace;
     [self.tableView reloadData];
 }
@@ -368,6 +372,8 @@ NSString *const kCPFavoritesUserDefaultsKey = @"kCPFavoritesUserDefaultsKey";
     if (_selectionDidChangeBlock) {
         NSInteger row = self.tableView.selectedRow;
         CPKFavorite *favorite = [self favoriteForRow:row];
+        CPKLog(@"CPKFavoritesView.tableViewSelectionDidChange: row=%ld color=%@ color.colorSpace=%@",
+               (long)row, favorite.color, favorite.color.colorSpace);
         _selectionDidChangeBlock(favorite.color);
     }
 }
