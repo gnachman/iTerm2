@@ -1395,9 +1395,7 @@ const CGFloat commandRegionOutlineThickness = 2.0;
 
             CGFloat maxX = MIN(_frame.size.width - [iTermPreferences sideMargins], range.length * _cellSize.width + x);
             CGFloat w = maxX - x;
-            iTermRectFill(NSMakeRect(x, y + _cellSize.height - 1.5, w, 1), virtualOffset);
-            [[NSColor orangeColor] set];
-            iTermRectFill(NSMakeRect(x, y + _cellSize.height - 1, w, 1), virtualOffset);
+            iTermRectFill(NSMakeRect(x, y + _cellSize.height - 2, w, 1), virtualOffset);
         }
 
     }
