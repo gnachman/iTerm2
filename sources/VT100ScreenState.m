@@ -636,6 +636,46 @@ static NSRange NSRangeFromBounds(NSInteger lowerBound, NSInteger upperBound) {
     return [self marksInRange:absLineRange max:maxCount ofClass:[iTermImageMark class]];
 }
 
+- (id<VT100ScreenMarkReading>)firstCommandMarkWithCommandInRange:(NSRange)absLineRange {
+    Interval *interval = [self intervalForGridAbsCoordRange:VT100GridAbsCoordRangeMake(0,
+                                                                                       absLineRange.location,
+                                                                                       0,
+                                                                                       NSMaxRange(absLineRange))];
+    const long long stopLocation = interval.limit;
+    for (NSArray<id<IntervalTreeObject>> *objects in [self.intervalTree forwardLocationEnumeratorAt:interval.location]) {
+        if (objects.firstObject.entry.interval.location >= stopLocation) {
+            break;
+        }
+        for (id<IntervalTreeObject> obj in objects) {
+            VT100ScreenMark *mark = [VT100ScreenMark castFrom:obj];
+            if (mark && mark.command != nil) {
+                return mark;
+            }
+        }
+    }
+    return nil;
+}
+
+- (id<VT100ScreenMarkReading>)lastCommandMarkWithCommandInRange:(NSRange)absLineRange {
+    Interval *interval = [self intervalForGridAbsCoordRange:VT100GridAbsCoordRangeMake(0,
+                                                                                       absLineRange.location,
+                                                                                       0,
+                                                                                       NSMaxRange(absLineRange))];
+    const long long startLocation = interval.location;
+    for (NSArray<id<IntervalTreeObject>> *objects in [self.intervalTree reverseEnumeratorAt:interval.limit]) {
+        if (objects.firstObject.entry.interval.location < startLocation) {
+            break;
+        }
+        for (id<IntervalTreeObject> obj in objects) {
+            VT100ScreenMark *mark = [VT100ScreenMark castFrom:obj];
+            if (mark && mark.command != nil) {
+                return mark;
+            }
+        }
+    }
+    return nil;
+}
+
 - (NSArray *)marksInRange:(NSRange)absLineRange
                       max:(NSUInteger)maxCount
                   ofClass:(Class)theClass {

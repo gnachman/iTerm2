@@ -852,6 +852,12 @@ DQ
                                     <action selector="foldSelection:" target="-1" id="hgD-pz-qFa"/>
                                 </connections>
                             </menuItem>
+                            <menuItem title="Fold All" keyEquivalent="L" identifier="Fold All Above Cursor" id="fAC-xy-123">
+                                <modifierMask key="keyEquivalentModifierMask" command="YES" option="YES" shift="YES"/>
+                                <connections>
+                                    <action selector="foldAll:" target="-1" id="fAC-cn-456"/>
+                                </connections>
+                            </menuItem>
                             <menuItem isSeparatorItem="YES" id="Tkg-kg-CnW">
                                 <modifierMask key="keyEquivalentModifierMask" command="YES"/>
                                 <menu key="submenu" id="Sgf-ct-nyp">

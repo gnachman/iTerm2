@@ -186,6 +186,8 @@ extern const NSInteger VT100ScreenBigFileDownloadThreshold;
 - (id<VT100ScreenMarkReading>)commandMarkAtOrBeforeLine:(int)line;
 - (id<VT100ScreenMarkReading>)screenMarkAfterScreenMark:(id<VT100ScreenMarkReading>)predecessor;
 - (id<VT100ScreenMarkReading>)promptMarkAfterScreenMark:(id<VT100ScreenMarkReading>)predecessor;
+- (id<VT100ScreenMarkReading>)firstCommandMarkWithCommandInRange:(NSRange)absLineRange;
+- (id<VT100ScreenMarkReading>)lastCommandMarkWithCommandInRange:(NSRange)absLineRange;
 
 - (BOOL)containsMark:(id<iTermMark>)mark;
 - (void)clearToLastMark;

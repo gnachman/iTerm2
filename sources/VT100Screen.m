@@ -803,6 +803,10 @@ additionalWordCharacters:(NSString *)additionalWordCharacters
     }
     const int commandLineNumber = absLine - _state.totalScrollbackOverflow;
     ScreenCharArray *sca = [_state screenCharArrayForLine:commandLineNumber];
+    if (sca.lengthExcludingTrailingWhitespaceAndNulls == 0) {
+        DLog(@"Empty offscreen command line at absY=%@", @(commandLineNumber));
+        return nil;
+    }
     NSDate *date = nil;
     const NSTimeInterval timestamp = [_state metadataOnLine:commandLineNumber].timestamp;
     if (timestamp) {
@@ -1115,6 +1119,14 @@ additionalWordCharacters:(NSString *)additionalWordCharacters
 
 - (id<VT100ScreenMarkReading>)promptMarkAfterScreenMark:(id<VT100ScreenMarkReading>)predecessor {
     return [_state promptMarkAfterScreenMark:predecessor];
+}
+
+- (id<VT100ScreenMarkReading>)firstCommandMarkWithCommandInRange:(NSRange)absLineRange {
+    return [_state firstCommandMarkWithCommandInRange:absLineRange];
+}
+
+- (id<VT100ScreenMarkReading>)lastCommandMarkWithCommandInRange:(NSRange)absLineRange {
+    return [_state lastCommandMarkWithCommandInRange:absLineRange];
 }
 
 - (id<VT100ScreenMarkReading>)screenMarkBeforeScreenMark:(id<VT100ScreenMarkReading>)predecessor {

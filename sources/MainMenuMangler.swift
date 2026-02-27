@@ -151,6 +151,7 @@ class MainMenuMangler: NSObject {
         "Clear to Last Mark": "bookmark",
         "Clear Scrollback Buffer": "xmark.diamond",
         "Fold Selected Lines": "text.line.first.and.arrowtriangle.forward",
+        "Fold All Above Cursor": "text.line.first.and.arrowtriangle.forward",
 
         // View menu
         "Show Tabs in Fullscreen": "macwindow",

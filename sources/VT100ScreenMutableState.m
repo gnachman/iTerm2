@@ -4367,6 +4367,35 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     const long long newLength = replacementLines.count;
     const long long delta = newLength - originalLength;
     [self shiftCommandRangesBelowAbsLine:absRange.start.y + 1 by:delta];
+
+    // Also adjust absolute coordinate state that tracks the current command/prompt.
+    // These are separate from the command ranges stored in marks.
+    if (self.commandStartCoord.x >= 0 && self.commandStartCoord.y > absRange.start.y) {
+        VT100GridAbsCoord newCoord = self.commandStartCoord;
+        newCoord.y += delta;
+        self.commandStartCoord = newCoord;
+    }
+    if (self.currentPromptRange.start.x >= 0 && self.currentPromptRange.start.y > absRange.start.y) {
+        VT100GridAbsCoordRange newRange = self.currentPromptRange;
+        newRange.start.y += delta;
+        newRange.end.y += delta;
+        self.currentPromptRange = newRange;
+    }
+    if (self.startOfRunningCommandOutput.x >= 0 && self.startOfRunningCommandOutput.y > absRange.start.y) {
+        VT100GridAbsCoord newCoord = self.startOfRunningCommandOutput;
+        newCoord.y += delta;
+        self.startOfRunningCommandOutput = newCoord;
+    }
+    if (self.lastCommandOutputRange.start.x >= 0 && self.lastCommandOutputRange.start.y > absRange.start.y) {
+        VT100GridAbsCoordRange newRange = self.lastCommandOutputRange;
+        newRange.start.y += delta;
+        newRange.end.y += delta;
+        self.lastCommandOutputRange = newRange;
+    }
+    if (self.lastPromptLine > absRange.start.y) {
+        self.lastPromptLine += delta;
+    }
+
     [self reloadMarkCache];
 
     [self.linebuffer setMaxLines:savedMaxLines];

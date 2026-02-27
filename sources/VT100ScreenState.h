@@ -327,6 +327,8 @@ extern NSString *const kScreenStateProgressKey;
 - (NSIndexSet *)foldsInRange:(VT100GridRange)gridRange;
 - (NSArray<id<iTermFoldMarkReading>> *)foldMarksInRange:(VT100GridRange)range;
 - (NSArray<id<iTermImageMarkReading>> *)imageMarksInRange:(VT100GridRange)range;
+- (id<VT100ScreenMarkReading>)firstCommandMarkWithCommandInRange:(NSRange)absLineRange;
+- (id<VT100ScreenMarkReading>)lastCommandMarkWithCommandInRange:(NSRange)absLineRange;
 
 // WARNING - If you add any new APIs that return interval tree objects update VT100ScreenStateSanitizingAdapter
 
