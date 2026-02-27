@@ -170,9 +170,9 @@ static const CGFloat iTermDisclosableViewTextViewWidth = 300;
             [self addSubview:_textView];
         }
 
+        [_disclosureButton.leadingAnchor constraintEqualToAnchor:self.leadingAnchor].active = YES;
         [_disclosureButton.centerYAnchor constraintEqualToAnchor:_labelField.centerYAnchor].active = YES;
         [_labelField.leadingAnchor constraintEqualToAnchor:_disclosureButton.trailingAnchor constant:4].active = YES;
-        [_labelField.centerXAnchor constraintEqualToAnchor:self.centerXAnchor].active = YES;
         [_labelField.topAnchor constraintEqualToAnchor:self.topAnchor].active = YES;
         if (_scrollView) {
             [_scrollView.leadingAnchor constraintEqualToAnchor:self.leadingAnchor constant:8].active = YES;
