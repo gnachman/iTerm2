@@ -614,8 +614,8 @@ final class iTermSessionDirectoryTrackerTests: XCTestCase, @preconcurrency iTerm
     // MARK: - 7. Async Directory Fetching Tests
 
     func testAsyncCurrentLocalWorkingDirectory_CachedValue() {
-        // Given
-        tracker.setLastDirectory("/Users/cached", remote: false, pushed: true)
+        // Given: Simulate a poller result to set polledLocalDirectory
+        tracker.workingDirectoryPollerDidFindWorkingDirectory("/Users/cached", invalidated: false)
         let provider = MockWorkingDirectoryProvider()
         mockDelegate.workingDirectoryProvider = provider
 
@@ -623,7 +623,7 @@ final class iTermSessionDirectoryTrackerTests: XCTestCase, @preconcurrency iTerm
 
         // When
         tracker.asyncCurrentLocalWorkingDirectory { pwd in
-            // Then
+            // Then: Should use polledLocalDirectory, not fetch again
             XCTAssertEqual(pwd, "/Users/cached")
             XCTAssertFalse(provider.getWorkingDirectoryAsyncCalled)
             expectation.fulfill()
@@ -684,15 +684,15 @@ final class iTermSessionDirectoryTrackerTests: XCTestCase, @preconcurrency iTerm
     }
 
     func testAsyncInitialDirectory_NoConductor_UsesLocalDirectory() {
-        // Given
+        // Given: Simulate a poller result to set polledLocalDirectory
         mockDelegate.sshIdentityProvider = nil
-        tracker.setLastDirectory("/Users/local", remote: false, pushed: true)
+        tracker.workingDirectoryPollerDidFindWorkingDirectory("/Users/local", invalidated: false)
 
         let expectation = self.expectation(description: "completion called")
 
         // When
         tracker.asyncInitialDirectoryForNewSessionBasedOnCurrentDirectory(sshIdentity: nil) { pwd in
-            // Then
+            // Then: Should use polledLocalDirectory for new local sessions
             XCTAssertEqual(pwd, "/Users/local")
             expectation.fulfill()
         }
@@ -784,16 +784,39 @@ final class iTermSessionDirectoryTrackerTests: XCTestCase, @preconcurrency iTerm
     }
 
     func testAsyncInitialDirectory_LocalSessionToLocalSession_ReturnsDirectory() {
-        // Given: Current session is local with a local directory
+        // Given: Simulate a poller result to set polledLocalDirectory
         mockDelegate.sshIdentityProvider = nil
-        tracker.setLastDirectory("/Users/local", remote: false, pushed: true)
+        tracker.workingDirectoryPollerDidFindWorkingDirectory("/Users/local", invalidated: false)
 
         let expectation = self.expectation(description: "completion called")
 
         // When: Creating a local session (nil SSH identity)
         tracker.asyncInitialDirectoryForNewSessionBasedOnCurrentDirectory(sshIdentity: nil) { pwd in
-            // Then: Should return the local directory
+            // Then: Should return the polled local directory
             XCTAssertEqual(pwd, "/Users/local")
+            expectation.fulfill()
+        }
+
+        waitForExpectations(timeout: 1.0)
+    }
+
+    func testAsyncInitialDirectory_OSC7WithoutHostname_UsesPolledNotPushed() {
+        // This tests the bug fix for issue 12616: When SSHed to a remote server
+        // and the remote shell sends OSC 7 without a hostname (e.g., fish),
+        // new local sessions should use the polled local directory, not the
+        // pushed (remote) directory that was incorrectly treated as local.
+
+        // Given: Remote shell pushed a directory via OSC 7 (treated as local because no hostname)
+        tracker.setLastDirectory("/home/remote/path", remote: false, pushed: true)
+        // But the poller knows the real local directory
+        tracker.workingDirectoryPollerDidFindWorkingDirectory("/Users/local/path", invalidated: false)
+
+        let expectation = self.expectation(description: "completion called")
+
+        // When: Creating a new local session
+        tracker.asyncInitialDirectoryForNewSessionBasedOnCurrentDirectory(sshIdentity: nil) { pwd in
+            // Then: Should use the polled local directory, not the pushed remote one
+            XCTAssertEqual(pwd, "/Users/local/path")
             expectation.fulfill()
         }
 

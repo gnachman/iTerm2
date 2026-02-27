@@ -104,6 +104,11 @@ class iTermSessionDirectoryTracker: NSObject {
     /// Whether lastLocalDirectory came from shell integration (pushed) or polling (not pushed).
     @objc private(set) var lastLocalDirectoryWasPushed: Bool = false
 
+    /// The true local directory from the pwd poller, always updated regardless of pushed state.
+    /// Used when creating new local sessions to avoid using a remote path that was pushed
+    /// via OSC 7 without a hostname (which looks local but isn't).
+    @objc private(set) var polledLocalDirectory: String?
+
     /// The last remote host at the time of setting the current directory.
     @objc private(set) var lastRemoteHost: (any VT100RemoteHostReading)?
 
@@ -318,19 +323,20 @@ class iTermSessionDirectoryTracker: NSObject {
     }
 
     /// Get the current local working directory asynchronously.
+    /// Returns the polled local directory (the true local pwd) for use when creating new local sessions.
     @objc
     func asyncCurrentLocalWorkingDirectory(completion: @escaping (String?) -> Void) {
         DLog("\(d(delegate)): asyncCurrentLocalWorkingDirectory requested")
-        if let localDir = lastLocalDirectory {
-            DLog("\(d(delegate)): Using cached value \(localDir)")
+        if let localDir = polledLocalDirectory {
+            DLog("\(d(delegate)): Using polled local directory \(localDir)")
             completion(localDir)
             return
         }
-        DLog("\(d(delegate)): No cached value, polling")
+        DLog("\(d(delegate)): No polled value yet, polling")
 
         updateLocalDirectoryWithCompletion { [weak self] pwd in
             DLog("\(d(self?.delegate)): updateLocalDirectory finished with \(pwd ?? "nil")")
-            completion(self?.lastLocalDirectory)
+            completion(self?.polledLocalDirectory)
         }
     }
 
@@ -511,6 +517,11 @@ class iTermSessionDirectoryTracker: NSObject {
         // path variable if the session is ssh'ed somewhere.
         DLog("\(d(delegate)): didGetWorkingDirectory finished with \(pwd ?? "nil")")
 
+        // Always track the polled local directory for new session creation.
+        if let pwd {
+            polledLocalDirectory = pwd
+        }
+
         if lastLocalDirectoryWasPushed, lastLocalDirectory != nil {
             DLog("\(d(delegate)): Looks like there was a race because there is now a last local directory of \(d(lastLocalDirectory)). Use it")
             completion(lastLocalDirectory)
@@ -573,6 +584,13 @@ extension iTermSessionDirectoryTracker: iTermWorkingDirectoryPollerDelegate {
 
     private func handlePollerResult(_ pwd: String?, invalidated: Bool) {
         DLog("\(d(delegate)): workingDirectoryPollerDidFindWorkingDirectory:\(pwd ?? "nil") invalidated:\(invalidated)")
+
+        // Always track the polled local directory, regardless of pushed state or invalidation.
+        // This is used when creating new local sessions to ensure we use the true local directory,
+        // not a remote path that was pushed via OSC 7 without a hostname.
+        if let pwd {
+            polledLocalDirectory = pwd
+        }
 
         if invalidated && lastLocalDirectoryWasPushed && lastLocalDirectory != nil {
             DLog("\(d(delegate)): Ignore local directory poller's invalidated result when we have a pushed last local directory")
