@@ -534,7 +534,13 @@ NS_CLASS_AVAILABLE_MAC(10_14)
         insets.bottom = -[self.delegate rootTerminalViewStoplightButtonsOffset:self];
         switch (preferredStyle) {
             case TAB_STYLE_MINIMAL:
-                insets.left = insets.right = MAX(0, -insets.bottom);
+                if (@available(macOS 26, *)) {
+                    // Use fixed value on macOS 26 regardless of tab bar height.
+                    // This matches the default tab bar height of 38: (38-25)/2 = 6.5
+                    insets.left = insets.right = 6.5;
+                } else {
+                    insets.left = insets.right = MAX(0, -insets.bottom);
+                }
                 break;
             case TAB_STYLE_COMPACT:
                 insets.left = insets.right = 0;
