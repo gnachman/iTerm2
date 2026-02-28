@@ -1,6 +1,6 @@
 """Tests for iterm2.color module."""
 import pytest
-from iterm2.color import Color, ColorSpace
+from iterm2.color import Color, ColorSpace, MissingDependency
 
 
 class TestColor:
@@ -147,6 +147,24 @@ class TestColorHex:
         """Test hex representation for white."""
         color = Color(r=255, g=255, b=255)
         assert color.hex == "#ffffff"
+
+
+class TestMissingDependency:
+    """Tests for MissingDependency exception."""
+
+    def test_is_subclass_of_import_error(self):
+        """Test that MissingDependency is a subclass of ImportError."""
+        assert issubclass(MissingDependency, ImportError)
+
+    def test_from_cocoa_without_pyobjc(self):
+        """Test that from_cocoa raises MissingDependency without pyobjc."""
+        with pytest.raises(MissingDependency):
+            Color.from_cocoa("dGVzdA==")
+
+    def test_from_legacy_trigger_without_pyobjc(self):
+        """Test that from_legacy_trigger raises MissingDependency without pyobjc."""
+        with pytest.raises(MissingDependency):
+            Color.from_legacy_trigger("0")
 
 
 class TestColorRepr:
