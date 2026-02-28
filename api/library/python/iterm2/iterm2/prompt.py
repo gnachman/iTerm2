@@ -246,7 +246,7 @@ class PromptMonitor:
             return triple
         return (triple[0], triple[1])
 
-    async def _async_get(self) -> typing.Tuple['PromptMonitor.Mode', typing.Any]:
+    async def _async_get(self) -> typing.Tuple['PromptMonitor.Mode', typing.Any, typing.Optional[str]]:
         message = await self.__queue.get()
         if not iterm2.capabilities.supports_prompt_monitor_modes(
                 self.connection):
