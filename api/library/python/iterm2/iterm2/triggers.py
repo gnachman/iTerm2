@@ -136,6 +136,10 @@ class Trigger:
     def enabled(self, value: bool):
         self.__enabled = value
 
+    @staticmethod
+    def _name():
+        return "Trigger"
+
     @property
     def encode(self) -> dict:
         return { "regex":  self.regex,
