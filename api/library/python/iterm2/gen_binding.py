@@ -710,7 +710,7 @@ class PasteConfiguration:
          base64: bool,
          wait_for_prompts: bool,
          tab_transform: 'TabTransform',
-         tab_stop_size: bool,
+         tab_stop_size: int,
          delay: float,
          chunk_size: int,
          convert_newlines: bool,
@@ -762,7 +762,7 @@ class PasteConfiguration:
     @property
     def base64(self) -> bool:
         "Returns whether to base64-encode when pasting."
-        return __base64
+        return self.__base64
 
     @base64.setter
     def base64(self, value: bool):
@@ -772,7 +772,7 @@ class PasteConfiguration:
     @property
     def wait_for_prompts(self) -> bool:
         "Returns whether to wait for a shell prompt before pasting."
-        return __wait_for_prompts
+        return self.__wait_for_prompts
 
     @wait_for_prompts.setter
     def wait_for_prompts(self, value: bool):
@@ -782,7 +782,7 @@ class PasteConfiguration:
     @property
     def tab_transform(self) -> 'TabTransform':
         "Returns how to convert tabs to strings when pasting."
-        return __tab_transform
+        return self.__tab_transform
 
     @tab_transform.setter
     def tab_transform(self, value: 'TabTransform'):
@@ -792,7 +792,7 @@ class PasteConfiguration:
     @property
     def tab_stop_size(self) -> int:
         "When converting tabs to spaces, this gives the number of spaces per tab."
-        return __tab_stop_size
+        return self.__tab_stop_size
 
     @tab_stop_size.setter
     def tab_stop_size(self, value: int):
@@ -802,7 +802,7 @@ class PasteConfiguration:
     @property
     def delay(self) -> float:
         "How long to wait between chunks (seconds)."
-        return __delay
+        return self.__delay
 
     @delay.setter
     def delay(self, value: float):
@@ -810,19 +810,19 @@ class PasteConfiguration:
         self.__delay = value
 
     @property
-    def chunk_size(self) -> bool:
+    def chunk_size(self) -> int:
         "Chunk size to send."
-        return __chunk_size
+        return self.__chunk_size
 
     @chunk_size.setter
-    def chunk_size(self, value: bool):
+    def chunk_size(self, value: int):
         "Chunk size to send."
         self.__chunk_size = value
 
     @property
     def convert_newlines(self) -> bool:
         "Convert CRLF and LF to CR?"
-        return __convert_newlines
+        return self.__convert_newlines
 
     @convert_newlines.setter
     def convert_newlines(self, value: bool):
@@ -832,7 +832,7 @@ class PasteConfiguration:
     @property
     def remove_newlines(self) -> bool:
         "Remove all newlines?"
-        return __remove_newlines
+        return self.__remove_newlines
 
     @remove_newlines.setter
     def remove_newlines(self, value: bool):
@@ -842,7 +842,7 @@ class PasteConfiguration:
     @property
     def convert_unicode_punctuation(self) -> bool:
         "Returns whether to convert non-ASCII puncutation to ASCII equivalents when pasting."
-        return __convert_unicode_punctuation
+        return self.__convert_unicode_punctuation
 
     @convert_unicode_punctuation.setter
     def convert_unicode_punctuation(self, value: bool):
@@ -852,7 +852,7 @@ class PasteConfiguration:
     @property
     def escape_for_shell(self) -> bool:
         "Returns whether to escape control characters for input to a shell when pasting."
-        return __escape_for_shell
+        return self.__escape_for_shell
 
     @escape_for_shell.setter
     def escape_for_shell(self, value: bool):
@@ -862,7 +862,7 @@ class PasteConfiguration:
     @property
     def remove_controls(self) -> bool:
         "Returns whether to remove control characters when pasting."
-        return __remove_controls
+        return self.__remove_controls
 
     @remove_controls.setter
     def remove_controls(self, value: bool):
@@ -872,7 +872,7 @@ class PasteConfiguration:
     @property
     def bracket_allowed(self) -> bool:
         "Returns whether to allow bracketed paste."
-        return __bracket_allowed
+        return self.__bracket_allowed
 
     @bracket_allowed.setter
     def bracket_allowed(self, value: bool):
@@ -882,7 +882,7 @@ class PasteConfiguration:
     @property
     def use_regex_substitution(self) -> bool:
         "Returns whether to perform regular expression substitution. See regex and substitution."
-        return __use_regex_substitution
+        return self.__use_regex_substitution
 
     @use_regex_substitution.setter
     def use_regex_substitution(self, value: bool):
@@ -890,22 +890,22 @@ class PasteConfiguration:
         self.__use_regex_substitution = value
 
     @property
-    def regex(self) -> bool:
+    def regex(self) -> str:
         "The regular expression pattern to match. See use_regex_substitution."
-        return __regex
+        return self.__regex
 
     @regex.setter
-    def regex(self, value: bool):
+    def regex(self, value: str):
         "The regular expression pattern to match. See use_regex_substitution."
         self.__regex = value
 
     @property
-    def substitution(self) -> bool:
+    def substitution(self) -> str:
         "Replaces matches found by regex. See use_regex_substitution."
-        return __substitution
+        return self.__substitution
 
     @substitution.setter
-    def substitution(self, value: bool):
+    def substitution(self, value: str):
         "Replaces matches found by regex. See use_regex_substitution."
         self.__substitution = value
 
@@ -932,11 +932,11 @@ class SnippetIdentifier:
         :param value: Legacy prefs have a snippet title here. New identifiers
             have a dictionary of {'guid': 'unique identifier'}.
         \"\"\"
+        self.__title: typing.Optional[str] = None
+        self.__guid: typing.Optional[str] = None
         if isinstance(value, str):
             self.__title = value
-            self.__guid = None
         else:
-            self.__title = None
             self.__guid = value['guid']
 
     def _encode(self) -> typing.Union[str,dict]:
@@ -981,7 +981,7 @@ class KeyBinding:
     def __init__(
           self,
           character: int,
-          modifiers: [iterm2.keyboard.Modifier],
+          modifiers: typing.List[iterm2.keyboard.Modifier],
           keycode: typing.Optional[iterm2.keyboard.Keycode],
           action: 'BindingAction',
           param,
@@ -1081,7 +1081,7 @@ class KeyBinding:
 
 GLOBAL_KEY_MAP_USER_DEFAULTS_KEY = 'GlobalKeyMap'
 
-async def async_get_global_key_bindings(connection: iterm2.connection.Connection) -> [KeyBinding]:
+async def async_get_global_key_bindings(connection: iterm2.connection.Connection) -> typing.List['KeyBinding']:
     \"\"\"Fetches the global key binding.
 
     :param connection: The :class:`~iterm2.Connection` to use.
@@ -1098,7 +1098,7 @@ async def async_get_global_key_bindings(connection: iterm2.connection.Connection
         result.append(binding)
     return result
 
-async def async_set_global_key_bindings(connection: iterm2.connection.Connection, bindings: [KeyBinding]):
+async def async_set_global_key_bindings(connection: iterm2.connection.Connection, bindings: typing.List['KeyBinding']):
     \"\"\"Sets the global key bindings.
 
     :param connection: The :class:`~iterm2.Connection` to use.
