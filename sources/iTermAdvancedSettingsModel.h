@@ -529,5 +529,6 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (BOOL)metalDisableVertexBufferPooling;
 + (BOOL)metalAlwaysWriteVertexBuffers;
 + (BOOL)metalLogVertexBufferActivity;
++ (BOOL)metalWaitUntilScheduled;
 
 @end

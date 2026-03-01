@@ -595,6 +595,25 @@ int iTermBitsPerSampleForPixelFormat(MTLPixelFormat format) {
                  vertexBuffers:(NSDictionary<NSNumber *, id<MTLBuffer>> *)clientVertexBuffers
                fragmentBuffers:(NSDictionary<NSNumber *, id<MTLBuffer>> *)fragmentBuffers
                       textures:(NSDictionary<NSNumber *, id<MTLTexture>> *)textures {
+    [self drawWithTransientState:tState
+                   renderEncoder:renderEncoder
+                     vertexStart:0
+                numberOfVertices:numberOfVertices
+                    numberOfPIUs:numberOfPIUs
+                   vertexBuffers:clientVertexBuffers
+                 fragmentBuffers:fragmentBuffers
+                        textures:textures];
+}
+
+// Issue 12604: Variant that supports vertexStart for drawing subsets of vertices
+- (void)drawWithTransientState:(iTermMetalRendererTransientState *)tState
+                 renderEncoder:(id<MTLRenderCommandEncoder>)renderEncoder
+                   vertexStart:(NSInteger)vertexStart
+              numberOfVertices:(NSInteger)numberOfVertices
+                  numberOfPIUs:(NSInteger)numberOfPIUs
+                 vertexBuffers:(NSDictionary<NSNumber *, id<MTLBuffer>> *)clientVertexBuffers
+               fragmentBuffers:(NSDictionary<NSNumber *, id<MTLBuffer>> *)fragmentBuffers
+                      textures:(NSDictionary<NSNumber *, id<MTLTexture>> *)textures {
     iTermMetalDebugDrawInfo *debugDrawInfo = [tState.debugInfo newDrawWithFormatter:self];
     debugDrawInfo.name = NSStringFromClass(tState.class);
 
@@ -643,12 +662,12 @@ int iTermBitsPerSampleForPixelFormat(MTLPixelFormat format) {
     [debugDrawInfo drawWithVertexCount:numberOfVertices instanceCount:numberOfPIUs];
     if (numberOfPIUs > 0) {
         [renderEncoder drawPrimitives:MTLPrimitiveTypeTriangle
-                          vertexStart:0
+                          vertexStart:vertexStart
                           vertexCount:numberOfVertices
                         instanceCount:numberOfPIUs];
     } else {
         [renderEncoder drawPrimitives:MTLPrimitiveTypeTriangle
-                          vertexStart:0
+                          vertexStart:vertexStart
                           vertexCount:numberOfVertices];
     }
     if (tState.suppressedBottomHeight > 0 || tState.suppressedTopHeight > 0) {

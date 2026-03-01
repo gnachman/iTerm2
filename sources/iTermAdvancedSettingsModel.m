@@ -600,6 +600,7 @@ DEFINE_BOOL(metalValidateVertexBuffers, NO, SECTION_DEBUGGING @"[Issue 12604] Va
 DEFINE_BOOL(metalDisableVertexBufferPooling, NO, SECTION_DEBUGGING @"[Issue 12604] Disable vertex buffer pooling - always allocate fresh Metal buffers.");
 DEFINE_BOOL(metalAlwaysWriteVertexBuffers, NO, SECTION_DEBUGGING @"[Issue 12604] Always write vertex data even if buffer contents appear unchanged.");
 DEFINE_BOOL(metalLogVertexBufferActivity, NO, SECTION_DEBUGGING @"[Issue 12604] Log vertex buffer allocation and reuse to debug log.");
+DEFINE_BOOL(metalWaitUntilScheduled, NO, SECTION_DEBUGGING @"[Issue 12604] Wait for Metal command buffer to be scheduled before continuing. Significant performance impact.");
 
 #pragma mark - Session
 

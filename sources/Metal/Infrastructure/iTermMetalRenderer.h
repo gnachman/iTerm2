@@ -159,6 +159,16 @@ NS_CLASS_AVAILABLE(10_11, NA)
                fragmentBuffers:(NSDictionary<NSNumber *, id<MTLBuffer>> *)fragmentBuffers
                       textures:(NSDictionary<NSNumber *, id<MTLTexture>> *)textures;
 
+// Issue 12604: Variant that supports vertexStart for drawing subsets of vertices
+- (void)drawWithTransientState:(iTermMetalRendererTransientState *)tState
+                 renderEncoder:(id <MTLRenderCommandEncoder>)renderEncoder
+                   vertexStart:(NSInteger)vertexStart
+              numberOfVertices:(NSInteger)numberOfVertices
+                  numberOfPIUs:(NSInteger)numberOfPIUs
+                 vertexBuffers:(NSDictionary<NSNumber *, id<MTLBuffer>> *)vertexBuffers
+               fragmentBuffers:(NSDictionary<NSNumber *, id<MTLBuffer>> *)fragmentBuffers
+                      textures:(NSDictionary<NSNumber *, id<MTLTexture>> *)textures;
+
 - (nullable id<MTLTexture>)textureFromImage:(iTermImageWrapper *)image context:(nullable iTermMetalBufferPoolContext *)context colorSpace:(NSColorSpace *)colorSpace;
 - (nullable id<MTLTexture>)textureFromImage:(iTermImageWrapper *)image context:(nullable iTermMetalBufferPoolContext *)context pool:(nullable iTermTexturePool *)pool colorSpace:(NSColorSpace *)colorSpace;
 
