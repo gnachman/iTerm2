@@ -2556,6 +2556,12 @@ extraIdentifyingInfoForIcon:button.extraIdentifyingInfoForIcon];
 
         DLog(@"  commit %@", frameData);
         [commandBuffer commit];
+
+        // Issue 12604: Optional synchronization to rule out timing issues as a cause of the
+        // missing triangle bug. This has significant performance impact.
+        if ([iTermAdvancedSettingsModel metalWaitUntilScheduled]) {
+            [commandBuffer waitUntilScheduled];
+        }
     }];
 }
 

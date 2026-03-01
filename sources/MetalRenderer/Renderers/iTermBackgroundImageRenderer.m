@@ -325,14 +325,40 @@ NS_ASSUME_NONNULL_BEGIN
 #endif
 
     tState.pipelineState = _metalRenderer.pipelineState;
+
+    // Issue 12604: Explicitly disable backface culling to guard against state leakage
+    [frameData.renderEncoder setCullMode:MTLCullModeNone];
+
+    // Issue 12604: Add memory barrier to ensure vertex buffer data is visible to GPU
+    [frameData.renderEncoder memoryBarrierWithScope:MTLBarrierScopeBuffers
+                                        afterStages:MTLRenderStageVertex
+                                       beforeStages:MTLRenderStageVertex];
+
+    // Issue 12604: Draw as two separate triangles instead of one 6-vertex draw.
+    // This works around a suspected GPU driver bug where one triangle sometimes fails to render.
+    NSDictionary *vertexBuffers = @{ @(iTermVertexInputIndexVertices): tState.vertexBuffer,
+                                     @(iTermVertexInputIndexValidationFlag): validationBuffer };
+    NSDictionary *textures = @{ @(iTermTextureIndexPrimary): tState.texture };
+
+    // Draw triangle 1 (vertices 0-2)
     [_metalRenderer drawWithTransientState:tState
                              renderEncoder:frameData.renderEncoder
-                          numberOfVertices:6
+                               vertexStart:0
+                          numberOfVertices:3
                               numberOfPIUs:0
-                             vertexBuffers:@{ @(iTermVertexInputIndexVertices): tState.vertexBuffer,
-                                              @(iTermVertexInputIndexValidationFlag): validationBuffer }
+                             vertexBuffers:vertexBuffers
                            fragmentBuffers:fragmentBuffers
-                                  textures:@{ @(iTermTextureIndexPrimary): tState.texture }];
+                                  textures:textures];
+
+    // Draw triangle 2 (vertices 3-5)
+    [_metalRenderer drawWithTransientState:tState
+                             renderEncoder:frameData.renderEncoder
+                               vertexStart:3
+                          numberOfVertices:3
+                              numberOfPIUs:0
+                             vertexBuffers:vertexBuffers
+                           fragmentBuffers:fragmentBuffers
+                                  textures:textures];
 
     if (tState.box1) {
         assert(tState.box2);
