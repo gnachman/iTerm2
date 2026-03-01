@@ -112,6 +112,11 @@ typedef NS_ENUM(NSUInteger, iTermWindowPlacement) {
     iTermWindowPlacementPosition,
 };
 
+typedef NS_ENUM(NSInteger, iTermWordSelectionDefinitionMode) {
+    iTermWordSelectionDefinitionModeList = 0,
+    iTermWordSelectionDefinitionModeRegex = 1,
+};
+
 // General
 extern NSString *const kPreferenceKeyOpenBookmark;
 extern NSString *const kPreferenceKeyOpenArrangementAtStartup;
@@ -155,6 +160,8 @@ extern NSString *const kPreferenceKeySelectionCopiesText;
 extern NSString *const kPreferenceKeyCopyLastNewline;
 extern NSString *const kPreferenceKeyAllowClipboardAccessFromTerminal;
 extern NSString *const kPreferenceKeyCharactersConsideredPartOfAWordForSelection;
+extern NSString *const kPreferenceKeyWordSelectionDefinitionMode;
+extern NSString *const kPreferenceKeyWordSelectionRegex;
 extern NSString *const kPreferenceKeySmartWindowPlacement_Deprecated;
 extern NSString *const kPreferenceKeyUseAutoSaveFrames_Deprecated;
 extern NSString *const kPreferenceKeyWindowPlacement;
@@ -391,6 +398,7 @@ extern NSString *const iTermDefaultAIPrompt;
 + (void)addObserverForKey:(NSString *)key block:(void (^)(id before, id after))block;
 
 + (NSUInteger)maskForModifierTag:(iTermPreferencesModifierTag)tag;
++ (BOOL)wordSelectionRegexIsValid:(NSString *)regex;
 
 + (NSString *)warningIdentifierForNeverWarnAboutShortLivedSessions:(NSString *)guid;
 #if DEBUG

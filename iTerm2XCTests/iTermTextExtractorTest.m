@@ -8,18 +8,23 @@
 
 #import <XCTest/XCTest.h>
 
-#import "iTerm2SharedARC-Swift.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermFakeUserDefaults.h"
 #import "iTermMalloc.h"
 #import "iTermPreferences.h"
 #import "iTermSelectorSwizzler.h"
 #import "iTermTextExtractor.h"
+#import "iTermUserDefaults.h"
 #import "NSStringITerm.h"
 #import "ScreenChar.h"
 #import "SmartSelectionController.h"
 
 static const NSInteger kUnicodeVersion = 9;
+
+@interface iTermGridCoordArray : NSObject
+@property(nonatomic, readonly) NSInteger count;
+- (VT100GridCoord)coordAt:(NSInteger)i;
+@end
 
 @interface iTermTextExtractorTest : XCTestCase<iTermTextDataSource>
 
@@ -116,29 +121,219 @@ static const NSInteger kUnicodeVersion = 9;
                            extraWordCharacters:@"-"];
 }
 
+- (void)testRegexModeSelectsConfiguredPatternContainingClick {
+    [self assertWordSelectionUsingLine:@"prefix token@v1 suffix"
+                               clickAt:14
+                   extraWordCharacters:@"-"
+                                  mode:iTermWordSelectionDefinitionModeRegex
+                                 regex:@"token@v[0-9]+"
+                              expected:@"token@v1"];
+}
+
+- (void)testRegexModeSelectsOverlappingMatchContainingClick {
+    [self assertWordSelectionUsingLine:@"abcde"
+                               clickAt:3
+                   extraWordCharacters:@"-"
+                                  mode:iTermWordSelectionDefinitionModeRegex
+                                 regex:@"[a-z]{3}"
+                              expected:@"bcd"];
+}
+
+- (void)testRegexModeSelectsNonASCIIPatternContainingClick {
+    [self assertWordSelectionUsingLine:@"föo bar"
+                               clickAt:1
+                   extraWordCharacters:@"-"
+                                  mode:iTermWordSelectionDefinitionModeRegex
+                                 regex:@"föo"
+                              expected:@"föo"];
+}
+
+- (void)testRegexModeFallsBackToListSelectionWhenNoRegexMatchContainsClick {
+    [self assertWordSelectionUsingLine:@"plain-text"
+                               clickAt:2
+                   extraWordCharacters:@"-"
+                                  mode:iTermWordSelectionDefinitionModeRegex
+                                 regex:@"token@v[0-9]+"
+                              expected:@"plain-text"];
+}
+
+- (void)testRegexModeFallsBackToListSelectionForInvalidRegex {
+    [self assertWordSelectionUsingLine:@"plain-text"
+                               clickAt:2
+                   extraWordCharacters:@"-"
+                                  mode:iTermWordSelectionDefinitionModeRegex
+                                 regex:@"("
+                              expected:@"plain-text"];
+}
+
+- (void)testRegexModeEmptyRegexUsesDefaultListDerivedPattern {
+    [self assertWordSelectionUsingLine:@"prefix https://example.com/path suffix"
+                               clickAt:20
+                   extraWordCharacters:[self defaultWordCharacters]
+                                  mode:iTermWordSelectionDefinitionModeRegex
+                                 regex:@""
+                              expected:@"//example.com/path"];
+}
+
+- (void)testRegexModeEmptyRegexPreservesDefaultListCharactersLikePlus {
+    [self assertWordSelectionUsingLine:@"prefix git+ssh://example.com/path suffix"
+                               clickAt:10
+                   extraWordCharacters:[self defaultWordCharacters]
+                                  mode:iTermWordSelectionDefinitionModeRegex
+                                 regex:@""
+                              expected:@"git+ssh"];
+}
+
+- (void)testRegexModeEmptyRegexPreservesBackslashFromDefaultList {
+    [self assertWordSelectionUsingLine:@"prefix a\\b suffix"
+                               clickAt:8
+                   extraWordCharacters:[self defaultWordCharacters]
+                                  mode:iTermWordSelectionDefinitionModeRegex
+                                 regex:@""
+                              expected:@"a\\b"];
+}
+
+- (void)testRegexModeEmptyRegexKeepsLegacyListBoundariesForBrokenURL {
+    [self assertWordSelectionUsingLine:@"prefix http:/broken suffix"
+                               clickAt:9
+                   extraWordCharacters:[self defaultWordCharacters]
+                                  mode:iTermWordSelectionDefinitionModeRegex
+                                 regex:@""
+                              expected:@"http"];
+}
+
+- (void)testListModeIgnoresRegexAndKeepsClassicBehavior {
+    [self assertWordSelectionUsingLine:@"prefix token@v1 suffix"
+                               clickAt:14
+                   extraWordCharacters:@"-"
+                                  mode:iTermWordSelectionDefinitionModeList
+                                 regex:@"token@v[0-9]+"
+                              expected:@"v1"];
+}
+
+- (void)testListModeKeepsLegacyURLBehaviorWithDefaultWordCharacters {
+    [self assertWordSelectionUsingLine:@"prefix https://example.com/path suffix"
+                               clickAt:20
+                   extraWordCharacters:[self defaultWordCharacters]
+                                  mode:iTermWordSelectionDefinitionModeList
+                                 regex:@"token@v[0-9]+"
+                              expected:@"//example.com/path"];
+}
+
+- (void)testWordSelectionRegexValidation {
+    XCTAssertTrue([iTermPreferences wordSelectionRegexIsValid:@"token@v[0-9]+"]);
+    XCTAssertFalse([iTermPreferences wordSelectionRegexIsValid:@"("]);
+    XCTAssertFalse([iTermPreferences wordSelectionRegexIsValid:@""]);
+}
+
+- (NSString *)defaultWordCharacters {
+    return [iTermPreferences defaultObjectForKey:kPreferenceKeyCharactersConsideredPartOfAWordForSelection] ?: @"";
+}
+
 - (void)performTestForWordSelectionUsingLine:(NSString *)line
                         wordForEachCharacter:(NSArray<NSString *> *)expected
                          extraWordCharacters:(NSString *)extraWordCharacters {
     iTermFakeUserDefaults *fakeDefaults = [[[iTermFakeUserDefaults alloc] init] autorelease];
     [fakeDefaults setFakeObject:extraWordCharacters forKey:kPreferenceKeyCharactersConsideredPartOfAWordForSelection];
+    [fakeDefaults setFakeObject:@(iTermWordSelectionDefinitionModeList) forKey:kPreferenceKeyWordSelectionDefinitionMode];
+    [fakeDefaults setFakeObject:@"" forKey:kPreferenceKeyWordSelectionRegex];
     _lines = @[ line ];
     iTermTextExtractor *extractor = [iTermTextExtractor textExtractorWithDataSource:self];
+    [self withWordSelectionMode:iTermWordSelectionDefinitionModeList
+                  wordCharacters:extraWordCharacters
+                           regex:@""
+                           block:^{
+        [iTermSelectorSwizzler swizzleSelector:@selector(standardUserDefaults)
+                                     fromClass:[NSUserDefaults class]
+                                     withBlock:^ id { return fakeDefaults; }
+                                      forBlock:^{
+                                          [iTermAdvancedSettingsModel loadAdvancedSettingsFromUserDefaults];
+                                          VT100GridWindowedRange range;
+                                          for (int i = 0; i < line.length; i++) {
+                                              range = [extractor rangeForWordAt:VT100GridCoordMake(i, 0)
+                                                                  maximumLength:kReasonableMaximumWordLength];
+                                              NSString *actual = [self stringForRange:range];
+                                              XCTAssertEqualObjects(actual, expected[i],
+                                                                    @"For click at %@ got a range of %@ giving “%@”, while I expected “%@”",
+                                                                    @(i), VT100GridWindowedRangeDescription(range), actual, expected[i]);
+                                          }
+                                      }];
+    }];
+}
 
-    [iTermSelectorSwizzler swizzleSelector:@selector(standardUserDefaults)
-                                 fromClass:[NSUserDefaults class]
-                                 withBlock:^ id { return fakeDefaults; }
-                                  forBlock:^{
-                                      [iTermAdvancedSettingsModel loadAdvancedSettingsFromUserDefaults];
-                                      VT100GridWindowedRange range;
-                                      for (int i = 0; i < line.length; i++) {
-                                          range = [extractor rangeForWordAt:VT100GridCoordMake(i, 0)
-                                                              maximumLength:kReasonableMaximumWordLength];
+- (void)assertWordSelectionUsingLine:(NSString *)line
+                              clickAt:(int)clickAt
+                  extraWordCharacters:(NSString *)extraWordCharacters
+                                 mode:(iTermWordSelectionDefinitionMode)mode
+                                regex:(NSString *)regex
+                             expected:(NSString *)expected {
+    iTermFakeUserDefaults *fakeDefaults = [[[iTermFakeUserDefaults alloc] init] autorelease];
+    [fakeDefaults setFakeObject:extraWordCharacters forKey:kPreferenceKeyCharactersConsideredPartOfAWordForSelection];
+    [fakeDefaults setFakeObject:@(mode) forKey:kPreferenceKeyWordSelectionDefinitionMode];
+    [fakeDefaults setFakeObject:regex ?: @"" forKey:kPreferenceKeyWordSelectionRegex];
+    _lines = @[ line ];
+    iTermTextExtractor *extractor = [iTermTextExtractor textExtractorWithDataSource:self];
+    [self withWordSelectionMode:mode
+                  wordCharacters:extraWordCharacters
+                           regex:regex
+                           block:^{
+        [iTermSelectorSwizzler swizzleSelector:@selector(standardUserDefaults)
+                                     fromClass:[NSUserDefaults class]
+                                     withBlock:^ id { return fakeDefaults; }
+                                      forBlock:^{
+                                          [iTermAdvancedSettingsModel loadAdvancedSettingsFromUserDefaults];
+                                          VT100GridWindowedRange range = [extractor rangeForWordAt:VT100GridCoordMake(clickAt, 0)
+                                                                                      maximumLength:kReasonableMaximumWordLength];
                                           NSString *actual = [self stringForRange:range];
-                                          XCTAssertEqualObjects(actual, expected[i],
+                                          XCTAssertEqualObjects(actual,
+                                                                expected,
                                                                 @"For click at %@ got a range of %@ giving “%@”, while I expected “%@”",
-                                                                @(i), VT100GridWindowedRangeDescription(range), actual, expected[i]);
-                                      }
-                                  }];
+                                                                @(clickAt),
+                                                                VT100GridWindowedRangeDescription(range),
+                                                                actual,
+                                                                expected);
+                                                              }];
+    }];
+}
+
+- (void)withWordSelectionMode:(iTermWordSelectionDefinitionMode)mode
+               wordCharacters:(NSString *)wordCharacters
+                        regex:(NSString *)regex
+                        block:(void (^NS_NOESCAPE)(void))block {
+    NSUserDefaults *userDefaults = [iTermUserDefaults userDefaults];
+    id oldWordCharacters = [userDefaults objectForKey:kPreferenceKeyCharactersConsideredPartOfAWordForSelection];
+    id oldMode = [userDefaults objectForKey:kPreferenceKeyWordSelectionDefinitionMode];
+    id oldRegex = [userDefaults objectForKey:kPreferenceKeyWordSelectionRegex];
+    if (wordCharacters) {
+        [userDefaults setObject:wordCharacters forKey:kPreferenceKeyCharactersConsideredPartOfAWordForSelection];
+    } else {
+        [userDefaults removeObjectForKey:kPreferenceKeyCharactersConsideredPartOfAWordForSelection];
+    }
+    [userDefaults setObject:@(mode) forKey:kPreferenceKeyWordSelectionDefinitionMode];
+    if (regex) {
+        [userDefaults setObject:regex forKey:kPreferenceKeyWordSelectionRegex];
+    } else {
+        [userDefaults removeObjectForKey:kPreferenceKeyWordSelectionRegex];
+    }
+    @try {
+        block();
+    } @finally {
+        if (oldWordCharacters) {
+            [userDefaults setObject:oldWordCharacters forKey:kPreferenceKeyCharactersConsideredPartOfAWordForSelection];
+        } else {
+            [userDefaults removeObjectForKey:kPreferenceKeyCharactersConsideredPartOfAWordForSelection];
+        }
+        if (oldMode) {
+            [userDefaults setObject:oldMode forKey:kPreferenceKeyWordSelectionDefinitionMode];
+        } else {
+            [userDefaults removeObjectForKey:kPreferenceKeyWordSelectionDefinitionMode];
+        }
+        if (oldRegex) {
+            [userDefaults setObject:oldRegex forKey:kPreferenceKeyWordSelectionRegex];
+        } else {
+            [userDefaults removeObjectForKey:kPreferenceKeyWordSelectionRegex];
+        }
+    }
 }
 
 - (void)testSmartSelectionRulesPlistParseable {
@@ -377,7 +572,8 @@ static const NSInteger kUnicodeVersion = 9;
                         NULL,
                         NO,
                         kUnicodeVersion,
-                        NO);
+                        NO,
+                        NULL);
     screen_char_t *buffer = data.mutableBytes;
     // Turn replacement characters into tab fillers. StringToScreenChars removes private range codes.
     buffer[1].code = TAB_FILLER;
@@ -418,7 +614,8 @@ static const NSInteger kUnicodeVersion = 9;
                         NULL,
                         NO,
                         kUnicodeVersion,
-                        NO);
+                        NO,
+                        NULL);
     screen_char_t *buffer = data.mutableBytes;
     // Turn replacement characters into tab fillers. StringToScreenChars removes private range codes.
     buffer[2].code = TAB_FILLER;
@@ -477,7 +674,8 @@ static const NSInteger kUnicodeVersion = 9;
                         NULL,
                         NO,
                         kUnicodeVersion,
-                        NO);
+                        NO,
+                        NULL);
     screen_char_t *buffer = (screen_char_t *)data.mutableBytes;
     buffer[width].code = eol;
     if (!_lines) {
@@ -651,7 +849,8 @@ static const NSInteger kUnicodeVersion = 9;
                             NULL,
                             NO,
                             kUnicodeVersion,
-                            NO);
+                            NO,
+                            NULL);
         return len;
     }
 }
@@ -700,7 +899,8 @@ static const NSInteger kUnicodeVersion = 9;
                             NULL,
                             NO,
                             kUnicodeVersion,
-                            NO);
+                            NO,
+                            NULL);
         _buffer[len].code = EOL_SOFT;
     }
 

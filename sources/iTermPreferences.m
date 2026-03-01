@@ -66,6 +66,9 @@ NSString *const kPreferenceKeySelectionCopiesText = @"CopySelection";
 NSString *const kPreferenceKeyCopyLastNewline = @"CopyLastNewline";
 NSString *const kPreferenceKeyAllowClipboardAccessFromTerminal = @"AllowClipboardAccess";
 NSString *const kPreferenceKeyCharactersConsideredPartOfAWordForSelection = @"WordCharacters";
+NSString *const kPreferenceKeyWordSelectionDefinitionMode = @"WordSelectionDefinitionMode";
+NSString *const kPreferenceKeyWordSelectionRegex = @"WordSelectionRegex";
+static NSString *const iTermDefaultWordCharacters = @"/-+\\~_.";
 NSString *const kPreferenceKeySmartWindowPlacement_Deprecated = @"SmartPlacement";
 NSString *const kPreferenceKeyUseAutoSaveFrames_Deprecated = @"RememberWindowPositions";
 NSString *const kPreferenceKeyWindowPlacement = @"WindowPlacement";
@@ -273,6 +276,31 @@ NSString *iTermDefaultAIPromptAIChatReadWriteTerminalBrowser = @"You are an assi
 
 static NSMutableDictionary *gObservers;
 static NSString *sPreviousVersion;
+
+static NSString *iTermEscapedRegexCharacterClass(NSString *characters) {
+    NSMutableString *escaped = [NSMutableString string];
+    for (NSUInteger i = 0; i < characters.length; i++) {
+        unichar c = [characters characterAtIndex:i];
+        switch (c) {
+            case '\\':
+            case '[':
+            case ']':
+            case '^':
+            case '-':
+                [escaped appendFormat:@"\\%C", c];
+                break;
+            default:
+                [escaped appendFormat:@"%C", c];
+                break;
+        }
+    }
+    return escaped;
+}
+
+static NSString *iTermDefaultWordSelectionRegex(void) {
+    NSString *escapedWordCharacters = iTermEscapedRegexCharacterClass(iTermDefaultWordCharacters);
+    return [NSString stringWithFormat:@"[\\p{L}\\p{N}%@]+", escapedWordCharacters];
+}
 
 @implementation iTermPreferences
 
@@ -489,7 +517,9 @@ static NSString *sPreviousVersion;
                   kPreferenceKeySelectionCopiesText: @YES,
                   kPreferenceKeyCopyLastNewline: @NO,
                   kPreferenceKeyAllowClipboardAccessFromTerminal: @NO,
-                  kPreferenceKeyCharactersConsideredPartOfAWordForSelection: @"/-+\\~_.",
+                  kPreferenceKeyCharactersConsideredPartOfAWordForSelection: iTermDefaultWordCharacters,
+                  kPreferenceKeyWordSelectionDefinitionMode: @(iTermWordSelectionDefinitionModeList),
+                  kPreferenceKeyWordSelectionRegex: @"",
                   kPreferenceKeySmartWindowPlacement_Deprecated: @NO,
                   kPreferenceKeyUseAutoSaveFrames_Deprecated: @NO,
                   kPreferenceKeyWindowPlacement: @(iTermWindowPlacementPosition),
@@ -738,6 +768,7 @@ static NSString *sPreviousVersion;
                   kPreferenceKeyCustomFolder: BLOCK(computedCustomFolder),
                   kPreferenceKeyCustomScriptsFolder: BLOCK(computedCustomScriptsFolder),
                   kPreferenceKeyCharactersConsideredPartOfAWordForSelection: BLOCK(computedWordChars),
+                  kPreferenceKeyWordSelectionRegex: BLOCK(computedWordSelectionRegex),
                   kPreferenceKeyTabStyle: BLOCK(computedTabStyle),
                   kPreferenceKeyUseMetal: BLOCK(computedUseMetal),
                   kPreferenceKeyTabsHaveCloseButton: BLOCK(computedTabsHaveCloseButton),
@@ -908,6 +939,19 @@ static NSString *sPreviousVersion;
     }
 }
 
++ (BOOL)wordSelectionRegexIsValid:(NSString *)regex {
+    if (!regex.length) {
+        return NO;
+    }
+    NSError *error = nil;
+    [@"x" rangeOfRegex:regex
+               options:0
+               inRange:NSMakeRange(0, 1)
+               capture:0
+                 error:&error];
+    return error == nil;
+}
+
 #pragma mark - Value Computation Methods
 
 + (NSNumber *)computedOpenArrangementAtStartup {
@@ -934,6 +978,11 @@ static NSString *sPreviousVersion;
     NSString *wordChars =
         [self uncomputedObjectForKey:kPreferenceKeyCharactersConsideredPartOfAWordForSelection];
     return wordChars ?: @"";
+}
+
++ (NSString *)computedWordSelectionRegex {
+    NSString *regex = [self uncomputedObjectForKey:kPreferenceKeyWordSelectionRegex];
+    return regex.length > 0 ? regex : iTermDefaultWordSelectionRegex();
 }
 
 // Migrates all pre-10.14 users now on 10.14 to automatic, since anything else looks bad.

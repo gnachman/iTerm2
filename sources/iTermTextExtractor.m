@@ -248,6 +248,74 @@ const NSInteger kLongMaximumWordLength = 100000;
     return [wordExtractor windowedRangeForBigWord];
 }
 
+- (BOOL)usingRegexForWordSelection {
+    return [iTermPreferences integerForKey:kPreferenceKeyWordSelectionDefinitionMode] == iTermWordSelectionDefinitionModeRegex;
+}
+
+- (VT100GridWindowedRange)invalidWordRange {
+    return VT100GridWindowedRangeMake(VT100GridCoordRangeMake(-1, -1, -1, -1),
+                                      _logicalWindow.location,
+                                      _logicalWindow.length);
+}
+
+- (VT100GridWindowedRange)rangeForRegexWordAt:(VT100GridCoord)location {
+    NSString *regex = [iTermPreferences stringForKey:kPreferenceKeyWordSelectionRegex];
+    if (![iTermPreferences wordSelectionRegexIsValid:regex]) {
+        return [self invalidWordRange];
+    }
+
+    NSMutableArray<NSValue *> *coords = [NSMutableArray array];
+    int targetOffset = -1;
+    NSString *textWindow = [self textAround:location
+                                     radius:[iTermAdvancedSettingsModel smartSelectionRadius]
+                               targetOffset:&targetOffset
+                                     coords:coords
+                           ignoringNewlines:[self hasLogicalWindow]];
+    if (targetOffset < 0 || targetOffset >= textWindow.length || coords.count == 0) {
+        return [self invalidWordRange];
+    }
+
+    NSUInteger searchLocation = 0;
+    while (searchLocation < textWindow.length) {
+        NSError *regexError = nil;
+        NSRange searchRange = NSMakeRange(searchLocation, textWindow.length - searchLocation);
+        NSRange match = [textWindow rangeOfRegex:regex
+                                         options:0
+                                         inRange:searchRange
+                                         capture:0
+                                           error:&regexError];
+        if (regexError || match.location == NSNotFound) {
+            return [self invalidWordRange];
+        }
+        if (match.length == 0) {
+            searchLocation = match.location + 1;
+            continue;
+        }
+
+        const NSUInteger matchEnd = match.location + match.length;
+        if (match.location <= (NSUInteger)targetOffset && (NSUInteger)targetOffset < matchEnd) {
+            if (matchEnd > coords.count) {
+                return [self invalidWordRange];
+            }
+            VT100GridCoord startCoord = [coords[match.location] gridCoordValue];
+            VT100GridCoord endCoord = [coords[matchEnd - 1] gridCoordValue];
+            endCoord = [self successorOfCoord:endCoord];
+            return [self windowedRangeWithRange:VT100GridCoordRangeMake(startCoord.x,
+                                                                        startCoord.y,
+                                                                        endCoord.x,
+                                                                        endCoord.y)];
+        }
+
+        if (match.location > (NSUInteger)targetOffset) {
+            return [self invalidWordRange];
+        }
+        // Advance by one character so we also consider overlapping matches.
+        searchLocation = match.location + 1;
+    }
+
+    return [self invalidWordRange];
+}
+
 // The maximum length is a rough guideline. You might get a word up to twice as long.
 - (VT100GridWindowedRange)rangeForWordAt:(VT100GridCoord)visualLocation
                            maximumLength:(NSInteger)maximumLength
@@ -270,6 +338,12 @@ const NSInteger kLongMaximumWordLength = 100000;
     }
     wordExtractor.dataSource = self;
     VT100GridWindowedRange range = [wordExtractor windowedRange];
+    if (!big && [self usingRegexForWordSelection]) {
+        VT100GridWindowedRange regexRange = [self rangeForRegexWordAt:location];
+        if (regexRange.coordRange.start.x >= 0) {
+            range = regexRange;
+        }
+    }
     if (bidi) {
         // TODO: This is wrong. When a word wraps, we need to select characters from the left side of the start line and the right side of the end line. Selections don't know how to do this currently.
         return [self visualWindowedRangeForLogical:range];

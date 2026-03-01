@@ -122,6 +122,8 @@ enum {
     // Characters considered part of word
     IBOutlet NSTextField *_wordChars;
     IBOutlet NSTextField *_wordCharsLabel;
+    NSPopUpButton *_wordSelectionDefinitionMode;
+    BOOL _changingWordSelectionMode;
 
     // Smart window placement
     IBOutlet NSButton *_smartPlacement;
@@ -269,10 +271,105 @@ enum {
     return self;
 }
 
+- (BOOL)usingRegexModeForWordSelection {
+    return [iTermPreferences integerForKey:kPreferenceKeyWordSelectionDefinitionMode] == iTermWordSelectionDefinitionModeRegex;
+}
+
+- (void)persistWordSelectionValue:(NSString *)value forMode:(iTermWordSelectionDefinitionMode)mode {
+    NSString *nonNullValue = value ?: @"";
+    if (mode == iTermWordSelectionDefinitionModeRegex) {
+        if (nonNullValue.length == 0 || [iTermPreferences wordSelectionRegexIsValid:nonNullValue]) {
+            [iTermPreferences setString:nonNullValue forKey:kPreferenceKeyWordSelectionRegex];
+        }
+        return;
+    }
+    [iTermPreferences setString:nonNullValue forKey:kPreferenceKeyCharactersConsideredPartOfAWordForSelection];
+}
+
+- (void)changeWordSelectionModeToTag:(NSInteger)tag preservingCurrentText:(NSString *)currentText {
+    iTermWordSelectionDefinitionMode oldMode = [self usingRegexModeForWordSelection]
+        ? iTermWordSelectionDefinitionModeRegex
+        : iTermWordSelectionDefinitionModeList;
+    iTermWordSelectionDefinitionMode newMode = (tag == iTermWordSelectionDefinitionModeRegex)
+        ? iTermWordSelectionDefinitionModeRegex
+        : iTermWordSelectionDefinitionModeList;
+
+    [self persistWordSelectionValue:currentText forMode:oldMode];
+    [iTermPreferences setInteger:newMode forKey:kPreferenceKeyWordSelectionDefinitionMode];
+}
+
+- (NSString *)wordSelectionValueForCurrentMode {
+    if ([self usingRegexModeForWordSelection]) {
+        NSString *storedRegex = [[iTermUserDefaults userDefaults] stringForKey:kPreferenceKeyWordSelectionRegex];
+        if (storedRegex) {
+            return storedRegex;
+        }
+        return [iTermPreferences defaultObjectForKey:kPreferenceKeyWordSelectionRegex] ?: @"";
+    }
+    return [iTermPreferences stringForKey:kPreferenceKeyCharactersConsideredPartOfAWordForSelection] ?: @"";
+}
+
+- (BOOL)setWordSelectionValueFromString:(NSString *)value {
+    NSString *nonNullValue = value ?: @"";
+    if ([self usingRegexModeForWordSelection]) {
+        if (nonNullValue.length > 0 && ![iTermPreferences wordSelectionRegexIsValid:nonNullValue]) {
+            return NO;
+        }
+        [iTermPreferences setString:nonNullValue forKey:kPreferenceKeyWordSelectionRegex];
+    } else {
+        [iTermPreferences setString:nonNullValue forKey:kPreferenceKeyCharactersConsideredPartOfAWordForSelection];
+    }
+    return YES;
+}
+
+- (void)configureWordSelectionModePopup {
+    if (_wordSelectionDefinitionMode) {
+        return;
+    }
+    const CGFloat inputShift = 70;
+    const CGFloat popupShift = 75;
+    NSRect originalFieldFrame = _wordChars.frame;
+    NSRect fieldFrame = originalFieldFrame;
+    fieldFrame.origin.x += inputShift;
+    fieldFrame.size.width = MAX(120, fieldFrame.size.width - inputShift + 20);
+    _wordChars.frame = fieldFrame;
+    const CGFloat popupWidth = 77;
+    const CGFloat popupSpacing = 8;
+    CGFloat popupX = originalFieldFrame.origin.x - popupWidth - popupSpacing + popupShift;
+    for (NSView *subview in _wordChars.superview.subviews) {
+        if (subview == _wordCharsLabel || ![subview isKindOfClass:[NSTextField class]]) {
+            continue;
+        }
+        NSRect candidateFrame = subview.frame;
+        if (fabs(candidateFrame.origin.y - _wordCharsLabel.frame.origin.y) <= 1 &&
+            NSMaxX(candidateFrame) <= _wordCharsLabel.frame.origin.x) {
+            subview.hidden = YES;
+            break;
+        }
+    }
+    _wordSelectionDefinitionMode = [[NSPopUpButton alloc] initWithFrame:NSMakeRect(popupX,
+                                                                                    fieldFrame.origin.y - 2,
+                                                                                    popupWidth,
+                                                                                    fieldFrame.size.height + 4)
+                                                              pullsDown:NO];
+    _wordSelectionDefinitionMode.autoenablesItems = NO;
+    _wordSelectionDefinitionMode.font = [NSFont systemFontOfSize:[NSFont smallSystemFontSize]];
+    [_wordSelectionDefinitionMode addItemWithTitle:@"List"];
+    _wordSelectionDefinitionMode.lastItem.tag = iTermWordSelectionDefinitionModeList;
+    [_wordSelectionDefinitionMode addItemWithTitle:@"Regex"];
+    _wordSelectionDefinitionMode.lastItem.tag = iTermWordSelectionDefinitionModeRegex;
+    _wordSelectionDefinitionMode.target = self;
+    _wordSelectionDefinitionMode.action = @selector(settingChanged:);
+    _wordSelectionDefinitionMode.translatesAutoresizingMaskIntoConstraints = YES;
+    _wordSelectionDefinitionMode.autoresizingMask = _wordChars.autoresizingMask & ~NSViewWidthSizable;
+    [_wordChars.superview addSubview:_wordSelectionDefinitionMode];
+}
+
 - (void)awakeFromNib {
     PreferenceInfo *info;
 
     __weak __typeof(self) weakSelf = self;
+    [self configureWordSelectionModePopup];
     [self defineControl:_openBookmark
                     key:kPreferenceKeyOpenBookmark
             relatedView:nil
@@ -598,10 +695,86 @@ enum {
             relatedView:nil
                    type:kPreferenceInfoTypeCheckbox];
 
-    [self defineControl:_wordChars
-                    key:kPreferenceKeyCharactersConsideredPartOfAWordForSelection
-            relatedView:_wordCharsLabel
-                   type:kPreferenceInfoTypeStringTextField];
+    __block PreferenceInfo *wordCharsInfo = nil;
+    info = [self defineControl:_wordSelectionDefinitionMode
+                           key:kPreferenceKeyWordSelectionDefinitionMode
+                   relatedView:nil
+                          type:kPreferenceInfoTypePopup];
+    info.customSettingChangedHandler = ^(id sender) {
+        __strong __typeof(self) strongSelf = weakSelf;
+        if (!strongSelf) {
+            return;
+        }
+        strongSelf->_changingWordSelectionMode = YES;
+        [strongSelf changeWordSelectionModeToTag:[sender selectedTag]
+                              preservingCurrentText:strongSelf->_wordChars.stringValue];
+        dispatch_async(dispatch_get_main_queue(), ^{
+            strongSelf->_changingWordSelectionMode = NO;
+        });
+    };
+    info.observer = ^{
+        __strong __typeof(self) strongSelf = weakSelf;
+        if (!strongSelf) {
+            return;
+        }
+        if (wordCharsInfo) {
+            [strongSelf updateValueForInfo:wordCharsInfo];
+        }
+    };
+
+    wordCharsInfo = [self defineControl:_wordChars
+                                    key:kPreferenceKeyCharactersConsideredPartOfAWordForSelection
+                            relatedView:_wordCharsLabel
+                                   type:kPreferenceInfoTypeStringTextField];
+    wordCharsInfo.onUpdate = ^BOOL{
+        __strong __typeof(self) strongSelf = weakSelf;
+        if (!strongSelf) {
+            return YES;
+        }
+        strongSelf->_wordChars.stringValue = [strongSelf wordSelectionValueForCurrentMode];
+        return YES;
+    };
+    wordCharsInfo.customSettingChangedHandler = ^(id sender) {
+        __strong __typeof(self) strongSelf = weakSelf;
+        if (!strongSelf) {
+            return;
+        }
+        if (strongSelf->_changingWordSelectionMode) {
+            return;
+        }
+        if (![strongSelf setWordSelectionValueFromString:[sender stringValue]]) {
+            // Keep temporary invalid regex text while typing; only persist valid regex values.
+            return;
+        }
+    };
+    wordCharsInfo.hasDefaultValue = ^BOOL{
+        __strong __typeof(self) strongSelf = weakSelf;
+        if (!strongSelf) {
+            return YES;
+        }
+        if ([strongSelf usingRegexModeForWordSelection]) {
+            NSString *defaultRegex = [iTermPreferences defaultObjectForKey:kPreferenceKeyWordSelectionRegex] ?: @"";
+            NSString *storedRegex = [[iTermUserDefaults userDefaults] stringForKey:kPreferenceKeyWordSelectionRegex];
+            if (!storedRegex) {
+                storedRegex = defaultRegex;
+            }
+            return [storedRegex isEqualToString:defaultRegex];
+        }
+        return [strongSelf valueOfKeyEqualsDefaultValue:kPreferenceKeyCharactersConsideredPartOfAWordForSelection];
+    };
+    wordCharsInfo.observer = ^{
+        __strong __typeof(self) strongSelf = weakSelf;
+        if (!strongSelf) {
+            return;
+        }
+        strongSelf->_wordChars.placeholderString = nil;
+    };
+    if (wordCharsInfo.onUpdate) {
+        wordCharsInfo.onUpdate();
+    }
+    if (wordCharsInfo.observer) {
+        wordCharsInfo.observer();
+    }
 
     [self defineControl:_tripleClickSelectsFullLines
                     key:kPreferenceKeyTripleClickSelectsFullWrappedLines
@@ -618,7 +791,11 @@ enum {
         }
         strongSelf->_wordChars.enabled = ![strongSelf boolForKey:kPreferenceKeyDoubleClickPerformsSmartSelection];
         strongSelf->_wordCharsLabel.labelEnabled = ![strongSelf boolForKey:kPreferenceKeyDoubleClickPerformsSmartSelection];
+        strongSelf->_wordSelectionDefinitionMode.enabled = ![strongSelf boolForKey:kPreferenceKeyDoubleClickPerformsSmartSelection];
     };
+    if (info.observer) {
+        info.observer();
+    }
     [self defineControl:_enterCopyModeAutomatically
                     key:kPreferenceKeyEnterCopyModeAutomatically
             relatedView:nil
