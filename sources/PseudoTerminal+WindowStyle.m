@@ -1108,6 +1108,12 @@ BOOL iTermWindowTypeIsCompact(iTermWindowType windowType) {
     _settingStyleMask = YES;
     self.window.styleMask = styleMask;
     _settingStyleMask = NO;
+
+    // macOS 26 may reset titleVisibility when style mask changes.
+    // Ensure it remains correct for the current window type.
+    if (@available(macOS 26, *)) {
+        self.window.titleVisibility = [PseudoTerminal shouldHideWindowTitleForWindowType:self.windowType] ? NSWindowTitleHidden : NSWindowTitleVisible;
+    }
 }
 
 #pragma mark - Force Frame
