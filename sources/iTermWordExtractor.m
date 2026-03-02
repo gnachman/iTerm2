@@ -19,6 +19,7 @@ typedef NS_ENUM(NSUInteger, iTermAlphaNumericDefinition) {
 
 @implementation iTermWordExtractor {
     VT100GridRange _logicalWindow;
+    iTermSelectionWordMode _wordMode;
     NSString *_additionalWordCharacters;
 }
 
@@ -30,6 +31,7 @@ typedef NS_ENUM(NSUInteger, iTermAlphaNumericDefinition) {
         _location = location;
         _maximumLength = maximumLength;
         _big = big;
+        _wordMode = [iTermPreferences unsignedIntegerForKey:kPreferenceKeyCharactersConsideredPartOfAWordForSelectionMode];
         _additionalWordCharacters = [iTermPreferences stringForKey:kPreferenceKeyCharactersConsideredPartOfAWordForSelection];
     }
     return self;
@@ -94,8 +96,9 @@ typedef NS_ENUM(NSUInteger, iTermAlphaNumericDefinition) {
 
     DLog(@"Compute range for word at %@, max length %@",
          VT100GridCoordDescription(_location), @(_maximumLength));
-    DLog(@"These special chars will be treated as alphanumeric: %@",
-         [iTermPreferences stringForKey:kPreferenceKeyCharactersConsideredPartOfAWordForSelection]);
+    DLog(@"These special chars will be treated as alphanumeric: %@, mode=%@",
+         [iTermPreferences stringForKey:kPreferenceKeyCharactersConsideredPartOfAWordForSelection],
+         @([iTermPreferences unsignedIntegerForKey:kPreferenceKeyCharactersConsideredPartOfAWordForSelectionMode]));
 
     VT100GridCoord location = [self coordLockedToWindow:_location];
 
@@ -605,6 +608,7 @@ typedef struct {
                       definitionOfAlphanumeric:(iTermAlphaNumericDefinition)definition {
     switch (definition) {
         case iTermAlphaNumericDefinitionUserDefined: {
+            assert(_wordMode == iTermSelectionWordModeCharacterList);
             NSRange range = [_additionalWordCharacters rangeOfString:characterAsString];
             return (range.length == characterAsString.length);
         }

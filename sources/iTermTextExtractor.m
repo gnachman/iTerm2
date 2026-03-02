@@ -15,6 +15,7 @@
 #import "iTermPreferences.h"
 #import "iTermSystemVersion.h"
 #import "iTermURLStore.h"
+#import "iTermUserDefaults.h"
 #import "iTermWordExtractor.h"
 #import "NSStringITerm.h"
 #import "NSMutableAttributedString+iTerm.h"
@@ -229,7 +230,18 @@ const NSInteger kLongMaximumWordLength = 100000;
 
 - (VT100GridWindowedRange)rangeForWordAt:(VT100GridCoord)location
                            maximumLength:(NSInteger)maximumLength {
-    return [self rangeForWordAt:location maximumLength:maximumLength big:NO additionalWordCharacters:nil];
+    iTermSelectionWordMode mode = [iTermPreferences unsignedIntegerForKey:kPreferenceKeyCharactersConsideredPartOfAWordForSelectionMode];
+    NSString *wordChars;
+    if (mode == iTermSelectionWordModeRegularExpression) {
+        wordChars = [iTermPreferences stringForKey:kPreferenceKeyWordSelectionRegexPattern];
+    } else {
+        wordChars = [iTermPreferences stringForKey:kPreferenceKeyCharactersConsideredPartOfAWordForSelection];
+    }
+    return [self rangeForWordAt:location
+                  maximumLength:maximumLength
+                            big:NO
+       additionalWordCharacters:wordChars
+                           mode:mode];
 }
 
 - (VT100GridAbsWindowedRange)rangeForBigWordAtAbsCoord:(VT100GridAbsCoord)location
@@ -252,7 +264,34 @@ const NSInteger kLongMaximumWordLength = 100000;
 - (VT100GridWindowedRange)rangeForWordAt:(VT100GridCoord)visualLocation
                            maximumLength:(NSInteger)maximumLength
                                      big:(BOOL)big
-                additionalWordCharacters:(NSString *)additionalWordCharacters {
+                additionalWordCharacters:(NSString *)additionalWordCharacters
+                                    mode:(iTermSelectionWordMode)mode {
+    NSArray<NSString *> *regexPatterns = nil;
+    NSString *effectiveAdditionalWordCharacters = nil;
+
+    if (mode == iTermSelectionWordModeRegularExpression) {
+        // In regex mode, treat the string as a regex pattern
+        if (additionalWordCharacters.length > 0) {
+            regexPatterns = @[additionalWordCharacters];
+        }
+    } else {
+        // In character list mode, use as additional word characters
+        effectiveAdditionalWordCharacters = additionalWordCharacters;
+    }
+
+    return [self rangeForWordAt:visualLocation
+                  maximumLength:maximumLength
+                            big:big
+       additionalWordCharacters:effectiveAdditionalWordCharacters
+                  regexPatterns:regexPatterns];
+}
+
+// Version that accepts custom regex patterns (for testing)
+- (VT100GridWindowedRange)rangeForWordAt:(VT100GridCoord)visualLocation
+                           maximumLength:(NSInteger)maximumLength
+                                     big:(BOOL)big
+                additionalWordCharacters:(NSString *)additionalWordCharacters
+                           regexPatterns:(NSArray<NSString *> *)regexPatterns {
     VT100GridCoord location = visualLocation;
     iTermBidiDisplayInfo *bidi = nil;
     if (_supportBidi) {
@@ -267,6 +306,9 @@ const NSInteger kLongMaximumWordLength = 100000;
                                                                                  big:big];
     if (additionalWordCharacters) {
         wordExtractor.additionalWordCharacters = additionalWordCharacters;
+    }
+    if (regexPatterns.count > 0) {
+        wordExtractor.regexPatterns = regexPatterns;
     }
     wordExtractor.dataSource = self;
     VT100GridWindowedRange range = [wordExtractor windowedRange];
@@ -819,110 +861,177 @@ const NSInteger kLongMaximumWordLength = 100000;
             targetOffset:(int *)targetOffset
                   coords:(NSMutableArray *)coords
         ignoringNewlines:(BOOL)ignoringNewlines {
+    return [self textAround:coord
+                     radius:radius
+                 radiusType:iTermTextRadiusTypeLines
+               targetOffset:targetOffset
+                     coords:coords
+           ignoringNewlines:ignoringNewlines];
+}
+
+- (NSString *)textAround:(VT100GridCoord)coord
+                  radius:(int)radius
+              radiusType:(iTermTextRadiusType)radiusType
+            targetOffset:(int *)targetOffset
+                  coords:(NSMutableArray<NSValue *> *)coords
+        ignoringNewlines:(BOOL)ignoringNewlines {
     BOOL ignoreContinuations = (_logicalWindow.length > 0);
     int xLimit = [self xLimit];
     int trueWidth = [_dataSource width];
-    VT100GridCoordRange theRange = VT100GridCoordRangeMake(0,
-                                                           coord.y - radius,
-                                                           coord.x,
-                                                           coord.y);
-    NSMutableString* joinedLines =
-        [NSMutableString stringWithCapacity:radius * _logicalWindow.length];
-    VT100GridWindowedRange windowedRange = VT100GridWindowedRangeMake(theRange,
-                                                                      _logicalWindow.location,
-                                                                      _logicalWindow.length);
-    [self enumerateInReverseCharsInRange:windowedRange
+    int numberOfLines = [_dataSource numberOfLines];
+    const BOOL countCharacters = (radiusType == iTermTextRadiusTypeCharacters);
+
+    // Calculate the line range based on radius type
+    int beforeTargetLine, afterTargetLine;
+    if (countCharacters) {
+        // For character-based radius, estimate lines needed based on width
+        beforeTargetLine = MAX(0, coord.y - (radius / trueWidth + 1));
+        afterTargetLine = MIN(numberOfLines - 1, coord.y + (radius / trueWidth + 1));
+    } else {
+        // For line-based radius, use radius directly as line count
+        beforeTargetLine = coord.y - radius;
+        afterTargetLine = coord.y + radius;
+    }
+
+    NSMutableString *result = [NSMutableString stringWithCapacity:radius * (countCharacters ? 2 : _logicalWindow.length)];
+    NSMutableString *beforeString = countCharacters ? [NSMutableString string] : result;
+    NSMutableArray<NSValue *> *beforeCoords = countCharacters ? [NSMutableArray array] : coords;
+
+    __block int charsCollected = 0;
+
+    // First, search backwards from coord to collect text before
+    VT100GridCoordRange beforeRange = VT100GridCoordRangeMake(0,
+                                                              beforeTargetLine,
+                                                              coord.x,
+                                                              coord.y);
+    VT100GridWindowedRange beforeWindowedRange = VT100GridWindowedRangeMake(beforeRange,
+                                                                            _logicalWindow.location,
+                                                                            _logicalWindow.length);
+
+    [self enumerateInReverseCharsInRange:beforeWindowedRange
                                charBlock:^BOOL(screen_char_t theChar,
                                                VT100GridCoord logicalCoord,
                                                VT100GridCoord charCoord) {
-                                   if (!theChar.code) {
-                                       return YES;
-                                   }
-                                   if (ignoreContinuations &&
-                                       windowedRange.columnWindow.length > 0 &&
-                                       charCoord.x == windowedRange.columnWindow.location + windowedRange.columnWindow.length - 1 &&
-                                       theChar.code == '\\' &&
-                                       !theChar.complexChar) {
-                                       // Is a backslash at the right edge of a window.
-                                       // no-op
-                                   } else if (theChar.image) {
-                                       // Treat images as nulls.
-                                       return YES;
-                                   } else if (theChar.complexChar ||
-                                              theChar.code < ITERM2_PRIVATE_BEGIN ||
-                                              theChar.code > ITERM2_PRIVATE_END) {
-                                       NSString* string = CharToStr(theChar.code, theChar.complexChar) ?: @"";
-                                       [joinedLines insertString:string atIndex:0];
-                                       for (int i = 0; i < [string length]; i++) {
-                                         [coords insertObject:[NSValue valueWithGridCoord:charCoord] atIndex:0];
-                                       }
-                                   }
-                                   return NO;
-                               }
+        if (countCharacters && charsCollected >= radius) {
+            return YES;
+        }
+        if (!theChar.code) {
+            // For line-based: stop on null. For character-based: skip but continue.
+            return !countCharacters;
+        }
+        if (ignoreContinuations &&
+            beforeWindowedRange.columnWindow.length > 0 &&
+            charCoord.x == beforeWindowedRange.columnWindow.location + beforeWindowedRange.columnWindow.length - 1 &&
+            theChar.code == '\\' &&
+            !theChar.complexChar) {
+            // Is a backslash at the right edge of a window - skip
+            return NO;
+        }
+        if (theChar.image) {
+            // For line-based: treat images as nulls (stop). For character-based: skip.
+            return !countCharacters;
+        }
+        if (theChar.complexChar ||
+            theChar.code < ITERM2_PRIVATE_BEGIN ||
+            theChar.code > ITERM2_PRIVATE_END) {
+            NSString *string = CharToStr(theChar.code, theChar.complexChar) ?: @"";
+            [beforeString insertString:string atIndex:0];
+            for (int i = 0; i < (int)[string length]; i++) {
+                [beforeCoords insertObject:[NSValue valueWithGridCoord:charCoord] atIndex:0];
+            }
+            if (countCharacters) {
+                charsCollected += string.length;
+            }
+        }
+        return NO;
+    }
                                 eolBlock:^BOOL(unichar code, int numPrecedingNulls, int line) {
-                                    return [self shouldStopEnumeratingWithCode:code
-                                                                      numNulls:numPrecedingNulls
-                                                       windowTouchesLeftMargin:(self->_logicalWindow.location == 0)
-                                                      windowTouchesRightMargin:xLimit == trueWidth
-                                                              ignoringNewlines:ignoringNewlines];
-                                }];
+        return [self shouldStopEnumeratingWithCode:code
+                                          numNulls:numPrecedingNulls
+                           windowTouchesLeftMargin:(self->_logicalWindow.location == 0)
+                          windowTouchesRightMargin:xLimit == trueWidth
+                                  ignoringNewlines:ignoringNewlines];
+    }];
 
-    theRange = VT100GridCoordRangeMake(coord.x,
-                                       coord.y,
-                                       [_dataSource width],
-                                       coord.y + radius);
-    windowedRange = VT100GridWindowedRangeMake(theRange,
-                                               _logicalWindow.location,
-                                               _logicalWindow.length);
+    // For character-based counting, merge beforeString/beforeCoords into result/coords now
+    // and record the target offset
+    if (countCharacters) {
+        *targetOffset = (int)[beforeString length];
+        [result appendString:beforeString];
+        [coords addObjectsFromArray:beforeCoords];
+    }
 
-    [self enumerateCharsInRange:windowedRange
+    // Now search forwards from coord to collect text after
+    charsCollected = 0;
+    VT100GridCoordRange afterRange = VT100GridCoordRangeMake(coord.x,
+                                                             coord.y,
+                                                             [_dataSource width],
+                                                             afterTargetLine);
+    VT100GridWindowedRange afterWindowedRange = VT100GridWindowedRangeMake(afterRange,
+                                                                           _logicalWindow.location,
+                                                                           _logicalWindow.length);
+
+    [self enumerateCharsInRange:afterWindowedRange
                     supportBidi:NO
                       charBlock:^BOOL(const screen_char_t *currentLine,
                                       screen_char_t theChar,
                                       iTermExternalAttribute *ea,
                                       VT100GridCoord logicalCoord,
                                       VT100GridCoord charCoord) {
-                          if (!theChar.code) {
-                              return YES;
-                          }
-                          if (ignoreContinuations &&
-                              windowedRange.columnWindow.length > 0 &&
-                              charCoord.x == windowedRange.columnWindow.location + windowedRange.columnWindow.length - 1 &&
-                              theChar.code == '\\' &&
-                              !theChar.complexChar) {
-                              // Is a backslash at the right edge of a window.
-                              // no-op
-                          } else if (theChar.image) {
-                              // Treat images as nulls.
-                              return YES;
-                          } else if (theChar.complexChar ||
-                                     theChar.code < ITERM2_PRIVATE_BEGIN ||
-                                     theChar.code > ITERM2_PRIVATE_END) {
-                              NSString* string = CharToStr(theChar.code, theChar.complexChar) ?: @"";
-                              [joinedLines appendString:string];
-                              for (int i = 0; i < [string length]; i++) {
-                                  [coords addObject:[NSValue valueWithGridCoord:charCoord]];
-                              }
-                          }
-                          return NO;
-                      }
+        if (countCharacters && charsCollected >= radius) {
+            return YES;
+        }
+        if (!theChar.code) {
+            // For line-based: stop on null. For character-based: skip but continue.
+            return !countCharacters;
+        }
+        if (ignoreContinuations &&
+            afterWindowedRange.columnWindow.length > 0 &&
+            charCoord.x == afterWindowedRange.columnWindow.location + afterWindowedRange.columnWindow.length - 1 &&
+            theChar.code == '\\' &&
+            !theChar.complexChar) {
+            // Is a backslash at the right edge of a window - skip
+            return NO;
+        }
+        if (theChar.image) {
+            // For line-based: treat images as nulls (stop). For character-based: skip.
+            return !countCharacters;
+        }
+        if (theChar.complexChar ||
+            theChar.code < ITERM2_PRIVATE_BEGIN ||
+            theChar.code > ITERM2_PRIVATE_END) {
+            NSString *string = CharToStr(theChar.code, theChar.complexChar) ?: @"";
+            [result appendString:string];
+            for (int i = 0; i < (int)[string length]; i++) {
+                [coords addObject:[NSValue valueWithGridCoord:charCoord]];
+            }
+            if (countCharacters) {
+                charsCollected += string.length;
+            }
+        }
+        return NO;
+    }
                        eolBlock:^BOOL(unichar code, int numPrecedingNulls, int line) {
-                           return [self shouldStopEnumeratingWithCode:code
-                                                             numNulls:numPrecedingNulls
-                                              windowTouchesLeftMargin:(_logicalWindow.location == 0)
-                                             windowTouchesRightMargin:xLimit == trueWidth
-                                                     ignoringNewlines:ignoringNewlines];
-                       }];
+        return [self shouldStopEnumeratingWithCode:code
+                                          numNulls:numPrecedingNulls
+                           windowTouchesLeftMargin:(self->_logicalWindow.location == 0)
+                          windowTouchesRightMargin:xLimit == trueWidth
+                                  ignoringNewlines:ignoringNewlines];
+    }];
 
-    *targetOffset = -1;
-    for (int i = 0; i < coords.count; i++) {
-        NSComparisonResult order = VT100GridCoordOrder(coord, [coords[i] gridCoordValue]);
-        if (order != NSOrderedDescending) {
-            *targetOffset = i;
-            break;
+    // For line-based counting, calculate targetOffset by searching through coords array
+    if (!countCharacters) {
+        *targetOffset = -1;
+        for (int i = 0; i < (int)coords.count; i++) {
+            NSComparisonResult order = VT100GridCoordOrder(coord, [coords[i] gridCoordValue]);
+            if (order != NSOrderedDescending) {
+                *targetOffset = i;
+                break;
+            }
         }
     }
-    return joinedLines;
+
+    return result;
 }
 
 - (void)enumerateWrappedLinesIntersectingRange:(VT100GridRange)range
@@ -1971,6 +2080,86 @@ static NSRange NSMakeRangeFromHalfOpenInterval(NSUInteger lowerBound, NSUInteger
 
 - (int)wordExtractroNumberOfLines {
     return _dataSource.numberOfLines;
+}
+
+- (NSString *)textAroundCoord:(VT100GridCoord)coord
+                       radius:(int)radius
+                 targetOffset:(int *)targetOffset
+                       coords:(NSMutableArray<NSValue *> *)coords {
+    return [self textAround:coord
+                     radius:radius
+                 radiusType:iTermTextRadiusTypeCharacters
+               targetOffset:targetOffset
+                     coords:coords
+           ignoringNewlines:YES];
+}
+
+- (iTermLocatedString *)locatedStringForWrappedLineEncompassing:(VT100GridCoord)coord
+                                                   targetOffset:(int *)targetOffset {
+    // Get the range of the wrapped line containing this coordinate.
+    // Use a large maxChars to ensure we get the full line.
+    VT100GridWindowedRange lineRange = [self rangeForWrappedLineEncompassing:coord
+                                                        respectContinuations:YES
+                                                                    maxChars:INT_MAX];
+
+    BOOL ignoreContinuations = (_logicalWindow.length > 0);
+    int xLimit = [self xLimit];
+    int trueWidth = [_dataSource width];
+
+    iTermLocatedString *result = [[iTermLocatedString alloc] init];
+    __block int targetCharIndex = -1;
+
+    // Enumerate all characters in the wrapped line range
+    [self enumerateCharsInRange:lineRange
+                    supportBidi:NO
+                      charBlock:^BOOL(const screen_char_t *currentLine,
+                                      screen_char_t theChar,
+                                      iTermExternalAttribute *ea,
+                                      VT100GridCoord logicalCoord,
+                                      VT100GridCoord charCoord) {
+        if (!theChar.code) {
+            return NO;  // Skip nulls but continue
+        }
+        if (ignoreContinuations &&
+            lineRange.columnWindow.length > 0 &&
+            charCoord.x == lineRange.columnWindow.location + lineRange.columnWindow.length - 1 &&
+            theChar.code == '\\' &&
+            !theChar.complexChar) {
+            // Is a backslash at the right edge of a window - skip
+            return NO;
+        }
+        if (theChar.image) {
+            return NO;  // Skip images
+        }
+        if (theChar.complexChar ||
+            theChar.code < ITERM2_PRIVATE_BEGIN ||
+            theChar.code > ITERM2_PRIVATE_END) {
+            // Record target offset when we reach the clicked coordinate
+            if (charCoord.x == coord.x && charCoord.y == coord.y) {
+                targetCharIndex = (int)result.length;
+            }
+
+            NSString *string = CharToStr(theChar.code, theChar.complexChar) ?: @"";
+            [result appendString:string at:charCoord];
+        }
+        return NO;
+    }
+                       eolBlock:^BOOL(unichar code, int numPrecedingNulls, int line) {
+        return [self shouldStopEnumeratingWithCode:code
+                                          numNulls:numPrecedingNulls
+                           windowTouchesLeftMargin:(self->_logicalWindow.location == 0)
+                          windowTouchesRightMargin:xLimit == trueWidth
+                                  ignoringNewlines:NO];  // Stop at hard newlines
+    }];
+
+    // If we didn't find the exact coordinate, estimate based on position
+    if (targetCharIndex < 0) {
+        targetCharIndex = 0;
+    }
+
+    *targetOffset = targetCharIndex;
+
+    return result;
 }
 
 @end

@@ -225,12 +225,14 @@ additionalWordCharacters:(NSString *)additionalWordCharacters
    additionalWordCharacters:(NSString *)additionalWordCharacters
                       range:(VT100GridWindowedRange *)rangePtr {
     iTermTextExtractor *extractor = [iTermTextExtractor textExtractorWithDataSource:self];
+    iTermSelectionWordMode mode = [iTermPreferences unsignedIntegerForKey:kPreferenceKeyCharactersConsideredPartOfAWordForSelectionMode];
 
     const VT100GridCoord adjustedCoord = predecessor ? [extractor predecessorOfCoord:coord] : coord;
     const VT100GridWindowedRange range = [extractor rangeForWordAt:adjustedCoord
                                                      maximumLength:kReasonableMaximumWordLength
                                                                big:NO
-                                          additionalWordCharacters:additionalWordCharacters];
+                                          additionalWordCharacters:additionalWordCharacters
+                                                              mode:mode];
 
     if (rangePtr) {
         *rangePtr = range;

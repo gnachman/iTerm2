@@ -8,6 +8,7 @@
 
 #import <Foundation/Foundation.h>
 #import "iTermLocatedString.h"
+#import "iTermPreferences.h"
 #import "iTermWordExtractor.h"
 #import "ScreenChar.h"
 #import "SmartMatch.h"
@@ -23,6 +24,11 @@ typedef NS_ENUM(NSInteger, iTermTextExtractorNullPolicy) {
     kiTermTextExtractorNullPolicyFromLastToEnd,  // Ignore content after last null
     kiTermTextExtractorNullPolicyTreatAsSpace,  // Treat midline nulls as spaces and a range of terminal nulls as a single space
     kiTermTextExtractorNullPolicyMidlineAsSpaceIgnoreTerminal,  // Treat midline nulls as space and strip terminal nulls
+};
+
+typedef NS_ENUM(NSInteger, iTermTextRadiusType) {
+    iTermTextRadiusTypeLines,       // Radius is measured in number of lines
+    iTermTextRadiusTypeCharacters   // Radius is measured in number of characters
 };
 
 // Suggested word lengths for rangeForWordAt:maximumLength:
@@ -250,7 +256,15 @@ typedef NS_ENUM(NSUInteger, iTermTextExtractorTrimTrailingWhitespace) {
 - (VT100GridWindowedRange)rangeForWordAt:(VT100GridCoord)visualLocation
                            maximumLength:(NSInteger)maximumLength
                                      big:(BOOL)big
-                additionalWordCharacters:(NSString * _Nullable)additionalWordCharacters;
+                additionalWordCharacters:(NSString * _Nullable)additionalWordCharacters
+                                    mode:(iTermSelectionWordMode)mode;
+
+// Version that accepts custom regex patterns (for testing)
+- (VT100GridWindowedRange)rangeForWordAt:(VT100GridCoord)visualLocation
+                           maximumLength:(NSInteger)maximumLength
+                                     big:(BOOL)big
+                additionalWordCharacters:(NSString * _Nullable)additionalWordCharacters
+                           regexPatterns:(NSArray<NSString *> * _Nullable)regexPatterns;
 
 #pragma mark - For tests
 

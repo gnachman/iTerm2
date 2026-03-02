@@ -112,6 +112,11 @@ typedef NS_ENUM(NSUInteger, iTermWindowPlacement) {
     iTermWindowPlacementPosition,
 };
 
+typedef NS_ENUM(NSUInteger, iTermSelectionWordMode) {
+    iTermSelectionWordModeCharacterList,
+    iTermSelectionWordModeRegularExpression
+};
+
 // General
 extern NSString *const kPreferenceKeyOpenBookmark;
 extern NSString *const kPreferenceKeyOpenArrangementAtStartup;
@@ -155,6 +160,8 @@ extern NSString *const kPreferenceKeySelectionCopiesText;
 extern NSString *const kPreferenceKeyCopyLastNewline;
 extern NSString *const kPreferenceKeyAllowClipboardAccessFromTerminal;
 extern NSString *const kPreferenceKeyCharactersConsideredPartOfAWordForSelection;
+extern NSString *const kPreferenceKeyCharactersConsideredPartOfAWordForSelectionMode;
+extern NSString *const kPreferenceKeyWordSelectionRegexPattern;
 extern NSString *const kPreferenceKeySmartWindowPlacement_Deprecated;
 extern NSString *const kPreferenceKeyUseAutoSaveFrames_Deprecated;
 extern NSString *const kPreferenceKeyWindowPlacement;

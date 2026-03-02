@@ -13,6 +13,7 @@
 NS_ASSUME_NONNULL_BEGIN
 
 @class iTermExternalAttribute;
+@class iTermLocatedString;
 
 typedef NS_ENUM(NSInteger, iTermTextExtractorClass) {
     // Any kind of white space.
@@ -75,25 +76,33 @@ typedef NS_ENUM(NSInteger, iTermTextExtractorClass) {
            searchingForwardFrom:(NSInteger)startIndex;
 
 - (BOOL)haveDoubleWidthExtensionAt:(VT100GridCoord)coord;
+
+/// Extract text around a coordinate for regex matching.
+/// - Parameters:
+///   - coord: The coordinate to center the extraction around
+///   - radius: Number of characters to extract before and after the coordinate
+///   - targetOffset: On return, contains the offset in the returned string where the coordinate is located
+///   - coords: On return, contains VT100GridCoord values (wrapped in NSValue) for each character in the returned string
+/// - Returns: The extracted text
+- (NSString *)textAroundCoord:(VT100GridCoord)coord
+                       radius:(int)radius
+                 targetOffset:(int *)targetOffset
+                       coords:(NSMutableArray<NSValue *> *)coords;
+
+/// Extract a located string for the entire wrapped line containing a coordinate.
+/// This extends to the start and end of the logical line (respecting soft wraps),
+/// which provides more stable regex matching than a fixed radius.
+/// Returns an iTermLocatedString with 1:1 mapping between UTF-16 code units and grid coordinates.
+/// - Parameters:
+///   - coord: The coordinate within the wrapped line
+///   - targetOffset: On return, contains the offset in the returned string where the coordinate is located
+/// - Returns: A located string for the entire wrapped line
+- (iTermLocatedString *)locatedStringForWrappedLineEncompassing:(VT100GridCoord)coord
+                                                   targetOffset:(int *)targetOffset;
 @end
 
-@interface iTermWordExtractor: NSObject
-@property (nonatomic) VT100GridCoord location;
-@property (nonatomic) NSInteger maximumLength;
-@property (nonatomic) BOOL big;
-@property (nonatomic, weak) id<iTermWordExtractorDataSource> dataSource;
-@property (nonatomic, copy) NSString *additionalWordCharacters;
-
-- (instancetype)initWithLocation:(VT100GridCoord)location
-                   maximumLength:(NSInteger)maximumLength
-                             big:(BOOL)big NS_DESIGNATED_INITIALIZER;
-
-- (instancetype)init NS_UNAVAILABLE;
-
-- (VT100GridWindowedRange)windowedRange;
-- (NSString * _Nullable)fastString;
-- (VT100GridWindowedRange)windowedRangeForBigWord;
-
-@end
+// iTermWordExtractor class is now defined in Swift (iTermWordExtractor.swift)
+// Forward declaration for ObjC compatibility
+@class iTermWordExtractor;
 
 NS_ASSUME_NONNULL_END

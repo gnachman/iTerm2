@@ -121,7 +121,9 @@ enum {
 
     // Characters considered part of word
     IBOutlet NSTextField *_wordChars;
+    IBOutlet NSTextField *_wordCharsRegex;
     IBOutlet NSTextField *_wordCharsLabel;
+    IBOutlet NSPopUpButton *_wordMode;
 
     // Smart window placement
     IBOutlet NSButton *_smartPlacement;
@@ -598,10 +600,37 @@ enum {
             relatedView:nil
                    type:kPreferenceInfoTypeCheckbox];
 
+    info = [self defineControl:_wordMode
+                            key:kPreferenceKeyCharactersConsideredPartOfAWordForSelectionMode
+                    relatedView:nil
+                           type:kPreferenceInfoTypePopup];
+    info.observer = ^{
+        __strong __typeof(self) strongSelf = weakSelf;
+        if (!strongSelf) {
+            return;
+        }
+        BOOL isRegexMode = ([strongSelf unsignedIntegerForKey:kPreferenceKeyCharactersConsideredPartOfAWordForSelectionMode] == iTermSelectionWordModeRegularExpression);
+        // Show/hide the appropriate text field based on mode
+        strongSelf->_wordChars.hidden = isRegexMode;
+        strongSelf->_wordCharsRegex.hidden = !isRegexMode;
+    };
+
     [self defineControl:_wordChars
                     key:kPreferenceKeyCharactersConsideredPartOfAWordForSelection
             relatedView:_wordCharsLabel
                    type:kPreferenceInfoTypeStringTextField];
+
+    [self defineControl:_wordCharsRegex
+                    key:kPreferenceKeyWordSelectionRegexPattern
+            relatedView:_wordCharsLabel
+                   type:kPreferenceInfoTypeStringTextField];
+
+    // Set initial visibility based on current mode
+    {
+        BOOL isRegexMode = ([self unsignedIntegerForKey:kPreferenceKeyCharactersConsideredPartOfAWordForSelectionMode] == iTermSelectionWordModeRegularExpression);
+        _wordChars.hidden = isRegexMode;
+        _wordCharsRegex.hidden = !isRegexMode;
+    }
 
     [self defineControl:_tripleClickSelectsFullLines
                     key:kPreferenceKeyTripleClickSelectsFullWrappedLines
@@ -616,8 +645,11 @@ enum {
         if (!strongSelf) {
             return;
         }
-        strongSelf->_wordChars.enabled = ![strongSelf boolForKey:kPreferenceKeyDoubleClickPerformsSmartSelection];
-        strongSelf->_wordCharsLabel.labelEnabled = ![strongSelf boolForKey:kPreferenceKeyDoubleClickPerformsSmartSelection];
+        BOOL enabled = ![strongSelf boolForKey:kPreferenceKeyDoubleClickPerformsSmartSelection];
+        strongSelf->_wordChars.enabled = enabled;
+        strongSelf->_wordCharsRegex.enabled = enabled;
+        strongSelf->_wordCharsLabel.labelEnabled = enabled;
+        strongSelf->_wordMode.enabled = enabled;
     };
     [self defineControl:_enterCopyModeAutomatically
                     key:kPreferenceKeyEnterCopyModeAutomatically

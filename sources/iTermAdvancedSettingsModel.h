@@ -420,6 +420,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (double)smartCursorColorFgThreshold;
 + (BOOL)smartLoggingWithAutoComposer;
 + (int)smartSelectionRadius;
++ (int)wordSelectionRegexRadius;
 + (BOOL)solidUnderlines;
 + (NSString *)splitPaneColor;
 + (NSString *)splitPaneSourceFillColor;
