@@ -175,7 +175,7 @@ class Session:
     Represents an iTerm2 session.
     """
 
-    class Delegate:
+    class Delegate(abc.ABC):
         """
         Provides callbacks for Session.
         """
@@ -183,16 +183,19 @@ class Session:
         def session_delegate_get_tab(
                 self, session) -> typing.Optional['iterm2.Tab']:
             """Returns the tab for a session."""
+            ...
 
         @abc.abstractmethod
         def session_delegate_get_window(
                 self, session) -> typing.Optional['iterm2.Window']:
             """Returns the window for a session."""
+            ...
 
         @abc.abstractmethod
         async def session_delegate_create_session(
                 self, session_id: str) -> typing.Optional['iterm2.session.Session']:
             """Creates a new Session object given a session ID."""
+            ...
 
     delegate: typing.Optional[Delegate] = None
 
