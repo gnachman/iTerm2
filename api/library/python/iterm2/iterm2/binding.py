@@ -86,7 +86,7 @@ class PasteConfiguration:
          base64: bool,
          wait_for_prompts: bool,
          tab_transform: 'TabTransform',
-         tab_stop_size: bool,
+         tab_stop_size: int,
          delay: float,
          chunk_size: int,
          convert_newlines: bool,
@@ -186,12 +186,12 @@ class PasteConfiguration:
         self.__delay = value
 
     @property
-    def chunk_size(self) -> bool:
+    def chunk_size(self) -> int:
         "Chunk size to send."
         return self.__chunk_size
 
     @chunk_size.setter
-    def chunk_size(self, value: bool):
+    def chunk_size(self, value: int):
         "Chunk size to send."
         self.__chunk_size = value
 
@@ -266,22 +266,22 @@ class PasteConfiguration:
         self.__use_regex_substitution = value
 
     @property
-    def regex(self) -> bool:
+    def regex(self) -> str:
         "The regular expression pattern to match. See use_regex_substitution."
         return self.__regex
 
     @regex.setter
-    def regex(self, value: bool):
+    def regex(self, value: str):
         "The regular expression pattern to match. See use_regex_substitution."
         self.__regex = value
 
     @property
-    def substitution(self) -> bool:
+    def substitution(self) -> str:
         "Replaces matches found by regex. See use_regex_substitution."
         return self.__substitution
 
     @substitution.setter
-    def substitution(self, value: bool):
+    def substitution(self, value: str):
         "Replaces matches found by regex. See use_regex_substitution."
         self.__substitution = value
 
@@ -308,11 +308,11 @@ class SnippetIdentifier:
         :param value: Legacy prefs have a snippet title here. New identifiers
             have a dictionary of {'guid': 'unique identifier'}.
         """
+        self.__title: typing.Optional[str] = None
+        self.__guid: typing.Optional[str] = None
         if isinstance(value, str):
             self.__title = value
-            self.__guid = None
         else:
-            self.__title = None
             self.__guid = value['guid']
 
     def _encode(self) -> typing.Union[str,dict]:
@@ -608,7 +608,7 @@ class KeyBinding:
     def __init__(
           self,
           character: int,
-          modifiers: [iterm2.keyboard.Modifier],
+          modifiers: typing.List[iterm2.keyboard.Modifier],
           keycode: typing.Optional[iterm2.keyboard.Keycode],
           action: 'BindingAction',
           param,
@@ -708,7 +708,7 @@ class KeyBinding:
 
 GLOBAL_KEY_MAP_USER_DEFAULTS_KEY = 'GlobalKeyMap'
 
-async def async_get_global_key_bindings(connection: iterm2.connection.Connection) -> [KeyBinding]:
+async def async_get_global_key_bindings(connection: iterm2.connection.Connection) -> typing.List['KeyBinding']:
     """Fetches the global key binding.
 
     :param connection: The :class:`~iterm2.Connection` to use.
@@ -725,7 +725,7 @@ async def async_get_global_key_bindings(connection: iterm2.connection.Connection
         result.append(binding)
     return result
 
-async def async_set_global_key_bindings(connection: iterm2.connection.Connection, bindings: [KeyBinding]):
+async def async_set_global_key_bindings(connection: iterm2.connection.Connection, bindings: typing.List['KeyBinding']):
     """Sets the global key bindings.
 
     :param connection: The :class:`~iterm2.Connection` to use.

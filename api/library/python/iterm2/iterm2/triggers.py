@@ -37,7 +37,7 @@ def decode_trigger(encoded: dict) -> 'Trigger':
 
     :returns: A :class:`~Trigger`.
     """
-    classes = {
+    classes: typing.Dict[str, typing.Type[Trigger]] = {
         AlertTrigger._name(): AlertTrigger,
         AnnotateTrigger._name(): AnnotateTrigger,
         BellTrigger._name(): BellTrigger,
@@ -139,6 +139,8 @@ class Trigger:
     @staticmethod
     def _name():
         return "Trigger"
+    def deserialize(regex: str, param: str, instant: bool, enabled: bool) -> 'Trigger':
+        return Trigger(regex, param, instant, enabled)
 
     @property
     def encode(self) -> dict:
