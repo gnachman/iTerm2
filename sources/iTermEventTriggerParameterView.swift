@@ -76,6 +76,11 @@ class EventTriggerParameterView: NSView, NSTextFieldDelegate {
         return stackView.fittingSize
     }
 
+    override var firstBaselineAnchor: NSLayoutYAxisAnchor {
+        // Return the first baseline of the stackView, which will be the first row's baseline
+        return stackView.firstBaselineAnchor
+    }
+
     // MARK: - Public Methods
 
     /// Configure the view for a specific event type
@@ -300,7 +305,7 @@ class EventTriggerParameterView: NSView, NSTextFieldDelegate {
         let row = NSStackView()
         row.translatesAutoresizingMaskIntoConstraints = false
         row.orientation = .horizontal
-        row.alignment = .centerY
+        row.alignment = .firstBaseline
         row.spacing = 6
 
         let labelView = NSTextField(labelWithString: label)

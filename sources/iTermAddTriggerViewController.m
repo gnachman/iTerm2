@@ -1023,10 +1023,10 @@ static const CGFloat kLabelWidth = 124;
                                                    multiplier:1.0
                                                      constant:kLabelWidth]];
     [row addConstraint:[NSLayoutConstraint constraintWithItem:label
-                                                    attribute:NSLayoutAttributeTop
+                                                    attribute:NSLayoutAttributeFirstBaseline
                                                     relatedBy:NSLayoutRelationEqual
-                                                       toItem:row
-                                                    attribute:NSLayoutAttributeTop
+                                                       toItem:_eventParamView
+                                                    attribute:NSLayoutAttributeFirstBaseline
                                                    multiplier:1.0
                                                      constant:0]];
 
