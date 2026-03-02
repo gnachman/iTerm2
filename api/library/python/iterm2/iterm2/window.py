@@ -46,25 +46,28 @@ class Window:
     :meth:`async_create`.
     """
 
-    class Delegate:
+    class Delegate(abc.ABC):
         """Delegate for Window"""
         @abc.abstractmethod
         async def window_delegate_get_window_with_session_id(
                 self,
                 session_id: str) -> typing.Optional['Window']:
             """Gets the Window that contains a Session by ID."""
+            ...
 
         @abc.abstractmethod
         async def window_delegate_get_tab_by_id(
                 self,
                 tab_id: str) -> typing.Optional[iterm2.tab.Tab]:
             """Gets a Tab by ID."""
+            ...
 
         @abc.abstractmethod
         async def window_delegate_get_tab_with_session_id(
                 self,
                 session_id: str) -> typing.Optional[iterm2.tab.Tab]:
             """Returns the Tab containing a Session by ID."""
+            ...
 
     delegate: typing.Optional[Delegate] = None
 
