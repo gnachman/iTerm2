@@ -9,23 +9,34 @@
 import Foundation
 import AppKit
 
-private let keeperServiceHost = "127.0.0.1"
-private let keeperServicePort = 8900
 private let keeperKeychainService = "iTerm2-Keeper"
-private let keeperKeychainAccount = "api-key"
+private let keeperKeychainAccountAPIKey = "api-key"
+private let keeperKeychainAccountAPIURL = "api-url"
+/// Default Keeper Commander service URL when none is stored.
+private let keeperDefaultAPIURL = "http://127.0.0.1:8900"
 
 // MARK: - API Key storage (macOS Keychain)
 
 private func keeperAPIKeyFromKeychain() -> String? {
-    try? SSKeychain.password(forService: keeperKeychainService, account: keeperKeychainAccount)
+    try? SSKeychain.password(forService: keeperKeychainService, account: keeperKeychainAccountAPIKey)
 }
 
 private func keeperStoreAPIKeyInKeychain(_ key: String) {
-    _ = try? SSKeychain.setPassword(key, forService: keeperKeychainService, account: keeperKeychainAccount)
+    _ = try? SSKeychain.setPassword(key, forService: keeperKeychainService, account: keeperKeychainAccountAPIKey)
 }
 
 private func keeperDeleteAPIKeyFromKeychain() {
-    try? SSKeychain.deletePassword(forService: keeperKeychainService, account: keeperKeychainAccount)
+    try? SSKeychain.deletePassword(forService: keeperKeychainService, account: keeperKeychainAccountAPIKey)
+}
+
+// MARK: - API URL storage (macOS Keychain)
+
+private func keeperAPIURLFromKeychain() -> String? {
+    try? SSKeychain.password(forService: keeperKeychainService, account: keeperKeychainAccountAPIURL)
+}
+
+private func keeperStoreAPIURLInKeychain(_ url: String) {
+    _ = try? SSKeychain.setPassword(url, forService: keeperKeychainService, account: keeperKeychainAccountAPIURL)
 }
 
 // MARK: - API key prompt (with optional existing key)
@@ -167,12 +178,33 @@ private struct KeeperV2StatusResponse: Decodable {
     let command: String?
 }
 
+private let _keeperBaseURLLock = NSLock()
+private var _cachedKeeperBaseURL: URL?
+
+/// Clear the cached base URL so the next API call reads from Keychain again (e.g. after user updates URL in settings).
+private func keeperClearBaseURLCache() {
+    _keeperBaseURLLock.lock()
+    _cachedKeeperBaseURL = nil
+    _keeperBaseURLLock.unlock()
+}
+
 private func keeperBaseURL() -> URL {
-    var c = URLComponents()
-    c.host = keeperServiceHost
-    c.port = keeperServicePort
-    c.scheme = "http"
-    return c.url!
+    _keeperBaseURLLock.lock()
+    if let cached = _cachedKeeperBaseURL {
+        let url = cached
+        _keeperBaseURLLock.unlock()
+        return url
+    }
+    let urlString = keeperAPIURLFromKeychain() ?? keeperDefaultAPIURL
+    let parsed: URL
+    if let url = URL(string: urlString.trimmingCharacters(in: .whitespacesAndNewlines)), url.scheme != nil, url.host != nil {
+        parsed = url
+    } else {
+        parsed = URL(string: keeperDefaultAPIURL)!
+    }
+    _cachedKeeperBaseURL = parsed
+    _keeperBaseURLLock.unlock()
+    return parsed
 }
 
 private func keeperV1ExecuteCommandURL() -> URL {
@@ -410,26 +442,83 @@ private class KeeperAccount: NSObject, PasswordManagerAccount {
     }
 }
 
+// MARK: - Keeper credentials request (sheet shown by window controller)
+
+@objc public protocol KeeperCredentialsRequestDelegate: AnyObject {
+    func keeperDataSourceRequestCredentials(forWindow window: NSWindow, completion: @escaping (String?) -> Void)
+}
+
 // MARK: - KeeperDataSource
 
 class KeeperDataSource: NSObject, PasswordManagerDataSource {
     private let browser: Bool
+    private let _apiKeyLoadLock = NSLock()
     private var _apiKey: String?
+    /// In-memory only: used to pre-fill the settings sheet. Never read from Keychain for the sheet so we don't trigger a second Mac password prompt after PM authentication.
+    private var _cachedSettingsKey: String?
+    private var _cachedSettingsURL: String?
+
+    @objc public weak var credentialsDelegate: KeeperCredentialsRequestDelegate?
 
     init(browser: Bool) {
         self.browser = browser
     }
 
+    /// True if we already have an API key in memory (from this session). Used when switching back to Keeper so we don’t show the settings sheet again.
+    @objc func keeperHasAPIKeyInMemory() -> Bool {
+        if let k = _apiKey, !k.isEmpty { return true }
+        if let k = _cachedSettingsKey, !k.isEmpty { return true }
+        return false
+    }
+
     private func ensureAPIKey(context: RecipeExecutionContext, completion: @escaping (String?) -> Void) {
-        // If we already have a key from this session (user already confirmed), use it.
         if let key = _apiKey, !key.isEmpty {
             completion(key)
             return
         }
-        // Show the API key dialog without reading from Keychain, so the user is not asked for
-        // macOS password again (they already authenticated to open the Password Manager).
-        // Pass nil for existingKey to avoid Keychain read; user can re-enter or paste their key.
-        func showDialogAndContinue() {
+        if let key = _cachedSettingsKey, !key.isEmpty {
+            _apiKey = key
+            completion(key)
+            return
+        }
+        // Use Keychain for API calls: read when in-memory is empty. Only one thread does the read (lock) so we get at most one prompt.
+        _apiKeyLoadLock.lock()
+        if let key = _apiKey, !key.isEmpty {
+            let k = key
+            _apiKeyLoadLock.unlock()
+            completion(k)
+            return
+        }
+        if let key = _cachedSettingsKey, !key.isEmpty {
+            _apiKey = key
+            let k = key
+            _apiKeyLoadLock.unlock()
+            completion(k)
+            return
+        }
+        if let key = keeperAPIKeyFromKeychain(), !key.isEmpty {
+            _apiKey = key
+            _cachedSettingsKey = key
+            let k = key
+            _apiKeyLoadLock.unlock()
+            completion(k)
+            return
+        }
+        _apiKeyLoadLock.unlock()
+        // No key in Keychain; show the settings sheet.
+        func showUIAndContinue() {
+            if let delegate = credentialsDelegate, let window = context.window {
+                delegate.keeperDataSourceRequestCredentials(forWindow: window) { [weak self] key in
+                    guard let self = self else { return }
+                    if let key = key, !key.isEmpty {
+                        self._apiKey = key
+                        completion(key)
+                    } else {
+                        completion(nil)
+                    }
+                }
+                return
+            }
             keeperShowAPIKeyDialog(existingKey: nil, window: context.window) { promptResult in
                 guard let promptResult = promptResult else {
                     completion(nil)
@@ -437,7 +526,6 @@ class KeeperDataSource: NSObject, PasswordManagerDataSource {
                 }
                 switch promptResult {
                 case .useExisting:
-                    // No pre-fill path; treat as use of key they just entered
                     if let key = self._apiKey, !key.isEmpty {
                         completion(key)
                     } else {
@@ -454,9 +542,9 @@ class KeeperDataSource: NSObject, PasswordManagerDataSource {
             }
         }
         if Thread.isMainThread {
-            showDialogAndContinue()
+            showUIAndContinue()
         } else {
-            DispatchQueue.main.async { showDialogAndContinue() }
+            DispatchQueue.main.async { showUIAndContinue() }
         }
     }
 
@@ -465,6 +553,9 @@ class KeeperDataSource: NSObject, PasswordManagerDataSource {
     @objc func resetConfiguration() {
         keeperDeleteAPIKeyFromKeychain()
         _apiKey = nil
+        _cachedSettingsKey = nil
+        _cachedSettingsURL = nil
+        keeperClearBaseURLCache()
     }
 
     var autogeneratedPasswordsOnly: Bool { false }
@@ -791,5 +882,46 @@ class KeeperDataSource: NSObject, PasswordManagerDataSource {
 
     func toggleShouldSendOTP(context: RecipeExecutionContext, account: PasswordManagerAccount, completion: @escaping (PasswordManagerAccount?, Error?) -> ()) {
         completion(nil, NSError(domain: "KeeperDataSource", code: -1, userInfo: [NSLocalizedDescriptionKey: "OTP not supported"]))
+    }
+
+    // MARK: - Keeper settings (for settings button in Password Manager)
+    /// Returns the API key only from in-memory cache (never reads Keychain). Used when opening the sheet from “select Keeper” so we don’t prompt again.
+    @objc func keeperSettingsAPIKey() -> String? {
+        return _cachedSettingsKey
+    }
+    /// Returns the API URL from in-memory cache or the default. Used when opening the sheet from “select Keeper” so we don’t prompt again.
+    @objc func keeperSettingsAPIURL() -> String {
+        let u = _cachedSettingsURL
+        return (u != nil && !u!.isEmpty) ? u! : keeperDefaultAPIURL
+    }
+    /// Returns the API key from Keychain for the “update” (gear) dialog. May prompt for Mac password once when the user explicitly opens settings to edit.
+    @objc func keeperSettingsAPIKeyForEditing() -> String? {
+        return keeperAPIKeyFromKeychain()
+    }
+    /// Returns the API URL from Keychain for the “update” (gear) dialog. May prompt for Mac password once when the user explicitly opens settings to edit.
+    @objc func keeperSettingsAPIURLForEditing() -> String {
+        return keeperAPIURLFromKeychain() ?? keeperDefaultAPIURL
+    }
+    @objc func setKeeperSettingsAPIKey(_ key: String) {
+        if key.isEmpty {
+            keeperDeleteAPIKeyFromKeychain()
+            _apiKey = nil
+            _cachedSettingsKey = nil
+        } else {
+            keeperStoreAPIKeyInKeychain(key)
+            _apiKey = key
+            _cachedSettingsKey = key
+        }
+    }
+    @objc func setKeeperSettingsAPIURL(_ url: String) {
+        let trimmed = url.trimmingCharacters(in: .whitespacesAndNewlines)
+        if trimmed.isEmpty {
+            try? SSKeychain.deletePassword(forService: keeperKeychainService, account: keeperKeychainAccountAPIURL)
+            _cachedSettingsURL = nil
+        } else {
+            keeperStoreAPIURLInKeychain(trimmed)
+            _cachedSettingsURL = trimmed
+        }
+        keeperClearBaseURLCache()
     }
 }

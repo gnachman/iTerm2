@@ -8,6 +8,8 @@
 
 #import "iTermPasswordManagerWindowController.h"
 
+#import <objc/runtime.h>
+
 #import "DebugLogging.h"
 #import "iTerm2SharedARC-Swift.h"
 #import "iTermAdvancedSettingsModel.h"
@@ -25,6 +27,34 @@ static NSString *const kPasswordManagersShouldReloadData = @"kPasswordManagersSh
 // Looks nice and is unlikely to be used already
 static NSString *const iTermPasswordManagerAccountNameUserNameSeparator = @"\u2002—\u2002";
 NSString *const iTermPasswordManagerDidLoadAccounts = @"iTermPasswordManagerDidLoadAccounts";
+
+static void *const kKeeperSettingsAccessoryContextKey = (void *)&kKeeperSettingsAccessoryContextKey;
+
+@interface iTermKeeperSettingsAccessoryContext : NSObject
+@property (nonatomic, weak) NSSecureTextField *secureField;
+@property (nonatomic, weak) NSTextField *plainField;
+@property (nonatomic, weak) NSButton *revealButton;
+- (void)toggleReveal:(id)sender;
+@end
+
+@implementation iTermKeeperSettingsAccessoryContext
+- (void)toggleReveal:(id)sender {
+    if (_plainField.hidden) {
+        _plainField.stringValue = _secureField.stringValue ?: @"";
+        _secureField.hidden = YES;
+        _plainField.hidden = NO;
+        _plainField.nextKeyView = _secureField.nextKeyView;
+        [_plainField.window makeFirstResponder:_plainField];
+        _revealButton.image = [NSImage imageWithSystemSymbolName:@"eye.slash" accessibilityDescription:@"Hide API key"];
+    } else {
+        _secureField.stringValue = _plainField.stringValue ?: @"";
+        _plainField.hidden = YES;
+        _secureField.hidden = NO;
+        [_secureField.window makeFirstResponder:_secureField];
+        _revealButton.image = [NSImage imageWithSystemSymbolName:@"eye" accessibilityDescription:@"Show API key"];
+    }
+}
+@end
 
 typedef NS_ENUM(NSUInteger, iTermPasswordManagerReload) {
     iTermPasswordManagerReloadUnlimited,
@@ -45,6 +75,7 @@ typedef NS_ENUM(NSUInteger, iTermPasswordManagerReload) {
 @end
 
 @interface iTermPasswordManagerWindowController () <
+    KeeperCredentialsRequestDelegate,
     NSTableViewDataSource,
     NSTableViewDelegate,
     NSControlTextEditingDelegate,
@@ -60,6 +91,7 @@ typedef NS_ENUM(NSUInteger, iTermPasswordManagerReload) {
     IBOutlet NSButton *_removeButton;
     IBOutlet NSButton *_editButton;
     IBOutlet NSButton *_addButton;
+    IBOutlet NSButton *_keeperSettingsButton;
 
     // I have to do this becuase you can't change the default button (the one whose key equivalent is Enter)
     IBOutlet NSButton *_defaultButton;  // generally "enter password"
@@ -205,6 +237,13 @@ static NSArray<NSString *> *gTerminalCachedCombinedAccountNames;
     self.window.backgroundColor = [NSColor clearColor];
     self.window.contentView.layer.cornerRadius = 4;
     [_searchField setArrowHandler:_tableView];
+    if (_keeperSettingsButton) {
+        NSImage *gearImage = [NSImage imageWithSystemSymbolName:@"gearshape" accessibilityDescription:@"Keeper Settings"];
+        if (gearImage) {
+            gearImage = [gearImage imageWithSymbolConfiguration:[NSImageSymbolConfiguration configurationWithScale:NSImageSymbolScaleMedium]];
+            _keeperSettingsButton.image = gearImage;
+        }
+    }
     __weak __typeof(self) weakSelf = self;
 
     // Only create event monitor once. This is out of paranioa because there are weird cases where
@@ -357,6 +396,23 @@ static NSArray<NSString *> *gTerminalCachedCombinedAccountNames;
     [_removeButton setEnabled:([_tableView selectedRow] != -1)];
     _addButton.enabled = available;
     _twoFactorCode.enabled = !self.selectedAccount.sendOTP;
+    const BOOL showKeeperSettings = [self.currentDataSource.name isEqualToString:@"Keeper Security"];
+    _keeperSettingsButton.hidden = !showKeeperSettings;
+    if (showKeeperSettings) {
+        [(id)self.currentDataSource setCredentialsDelegate:self];
+    }
+}
+
+- (void)keeperDataSourceRequestCredentialsForWindow:(NSWindow *)window
+                                         completion:(void (^)(NSString * _Nullable))completion {
+    [self showKeeperSettingsSheetWithEmptyAPIKey:YES
+                                       forWindow:window
+                                            onOK:nil
+                                    keyCompletion:^(NSString * _Nullable key) {
+        if (completion) {
+            completion(key);
+        }
+    }];
 }
 
 - (id<PasswordManagerAccount>)selectedAccount {
@@ -541,7 +597,16 @@ static NSArray<NSString *> *gTerminalCachedCombinedAccountNames;
         [self useKeychain:nil];
     }
     [self update];
-    [self updateConfiguration];
+    // Only show the settings sheet when the user doesn’t already have an API key in memory (e.g. switching back from macOS Keychain).
+    if ([(id)self.currentDataSource keeperHasAPIKeyInMemory]) {
+        [self updateConfiguration];
+    } else {
+        __weak __typeof(self) weakSelf = self;
+        [self showKeeperSettingsSheetWithEmptyAPIKey:YES
+                                           forWindow:nil
+                                                onOK:^{ [weakSelf updateConfiguration]; }
+                                        keyCompletion:nil];
+    }
 }
 
 - (IBAction)closeCurrentSession:(id)sender {
@@ -828,6 +893,129 @@ static NSArray<NSString *> *gTerminalCachedCombinedAccountNames;
         return;
     }
     [_tableView editColumn:0 row:row withEvent:nil select:YES];
+}
+
+- (void)showKeeperSettingsSheetWithEmptyAPIKey:(BOOL)emptyAPIKey
+                                     forWindow:(NSWindow *)window
+                                          onOK:(void (^)(void))onOK
+                                  keyCompletion:(void (^)(NSString * _Nullable))keyCompletion {
+    if (![self.currentDataSource.name isEqualToString:@"Keeper Security"]) {
+        return;
+    }
+    NSWindow *sheetParent = window ?: self.window;
+    if (!sheetParent) {
+        if (keyCompletion) keyCompletion(nil);
+        return;
+    }
+    id ds = self.currentDataSource;
+    // When opening from the gear (edit): fetch from Keychain so user can see/update saved values. When opening from “select Keeper”: no Keychain read, empty key and default URL.
+    NSString *savedKey = emptyAPIKey ? @"" : ([(id)ds keeperSettingsAPIKeyForEditing] ?: @"");
+    NSString *savedURL = emptyAPIKey ? ([ds keeperSettingsAPIURL] ?: @"") : ([(id)ds keeperSettingsAPIURLForEditing] ?: @"");
+
+    NSAlert *alert = [[NSAlert alloc] init];
+    alert.messageText = @"Keeper Security Settings";
+    alert.informativeText = @"Add or update your Keeper Commander API key and service URL. Both are stored in macOS Keychain.";
+    [alert addButtonWithTitle:@"OK"];
+    [alert addButtonWithTitle:@"Cancel"];
+
+    const CGFloat width = 360;
+    const CGFloat rowHeight = 22;
+    const CGFloat labelWidth = 70;
+    const CGFloat margin = 12;
+    NSView *accessory = [[NSView alloc] initWithFrame:NSMakeRect(0, 0, width, 2 * rowHeight + margin)];
+    accessory.frame = NSMakeRect(0, 0, width, 2 * rowHeight + margin);
+
+    NSTextField *keyLabel = [[NSTextField alloc] initWithFrame:NSMakeRect(0, rowHeight + margin, labelWidth, rowHeight)];
+    keyLabel.stringValue = @"API Key:";
+    keyLabel.bezeled = NO;
+    keyLabel.drawsBackground = NO;
+    keyLabel.editable = NO;
+    keyLabel.selectable = NO;
+    keyLabel.font = [NSFont systemFontOfSize:[NSFont systemFontSize]];
+    [accessory addSubview:keyLabel];
+
+    const CGFloat eyeButtonWidth = 28;
+    const CGFloat keyFieldWidth = width - labelWidth - 8 - eyeButtonWidth - 4;
+    const NSRect keyFieldFrame = NSMakeRect(labelWidth + 8, rowHeight + margin, keyFieldWidth, rowHeight);
+
+    NSSecureTextField *keyFieldSecure = [[NSSecureTextField alloc] initWithFrame:keyFieldFrame];
+    keyFieldSecure.placeholderString = @"Enter Keeper Commander API key";
+    keyFieldSecure.stringValue = savedKey ?: @"";
+    keyFieldSecure.font = [NSFont systemFontOfSize:[NSFont systemFontSize]];
+    [accessory addSubview:keyFieldSecure];
+
+    NSTextField *keyFieldPlain = [[NSTextField alloc] initWithFrame:keyFieldFrame];
+    keyFieldPlain.placeholderString = @"Enter Keeper Commander API key";
+    keyFieldPlain.stringValue = savedKey ?: @"";
+    keyFieldPlain.font = [NSFont systemFontOfSize:[NSFont systemFontSize]];
+    keyFieldPlain.hidden = YES;
+    [accessory addSubview:keyFieldPlain];
+
+    NSButton *revealButton = [[NSButton alloc] initWithFrame:NSMakeRect(labelWidth + 8 + keyFieldWidth + 4, rowHeight + margin, eyeButtonWidth, rowHeight)];
+    revealButton.bezelStyle = NSBezelStyleRegularSquare;
+    revealButton.bordered = YES;
+    revealButton.image = [NSImage imageWithSystemSymbolName:@"eye" accessibilityDescription:@"Show API key"];
+    revealButton.imagePosition = NSImageOnly;
+    revealButton.buttonType = NSButtonTypeMomentaryPushIn;
+    [accessory addSubview:revealButton];
+
+    iTermKeeperSettingsAccessoryContext *context = [[iTermKeeperSettingsAccessoryContext alloc] init];
+    context.secureField = keyFieldSecure;
+    context.plainField = keyFieldPlain;
+    context.revealButton = revealButton;
+    objc_setAssociatedObject(accessory, kKeeperSettingsAccessoryContextKey, context, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+    revealButton.target = context;
+    revealButton.action = @selector(toggleReveal:);
+
+    NSTextField *urlLabel = [[NSTextField alloc] initWithFrame:NSMakeRect(0, 0, labelWidth, rowHeight)];
+    urlLabel.stringValue = @"API URL:";
+    urlLabel.bezeled = NO;
+    urlLabel.drawsBackground = NO;
+    urlLabel.editable = NO;
+    urlLabel.selectable = NO;
+    urlLabel.font = [NSFont systemFontOfSize:[NSFont systemFontSize]];
+    [accessory addSubview:urlLabel];
+
+    NSTextField *urlField = [[NSTextField alloc] initWithFrame:NSMakeRect(labelWidth + 8, 0, width - labelWidth - 8, rowHeight)];
+    urlField.placeholderString = @"e.g. http://127.0.0.1:8900";
+    urlField.stringValue = savedURL ?: @"";
+    urlField.font = [NSFont systemFontOfSize:[NSFont systemFontSize]];
+    [accessory addSubview:urlField];
+
+    alert.accessoryView = accessory;
+    [alert layout];
+
+    __weak __typeof(self) weakSelf = self;
+    [alert beginSheetModalForWindow:sheetParent completionHandler:^(NSModalResponse response) {
+        objc_setAssociatedObject(accessory, kKeeperSettingsAccessoryContextKey, nil, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+        if (response != NSAlertFirstButtonReturn) {
+            if (keyCompletion) {
+                keyCompletion(nil);
+            }
+            return;
+        }
+        if (!keyFieldPlain.hidden) {
+            keyFieldSecure.stringValue = keyFieldPlain.stringValue ?: @"";
+        }
+        NSString *key = [keyFieldSecure.stringValue stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+        NSString *url = [urlField.stringValue stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+        [ds setKeeperSettingsAPIKey:key];
+        [ds setKeeperSettingsAPIURL:url];
+        if (keyCompletion) {
+            keyCompletion(key.length ? key : nil);
+        }
+        if (onOK) {
+            onOK();
+        }
+    }];
+}
+
+- (IBAction)keeperSettings:(id)sender {
+    __weak __typeof(self) weakSelf = self;
+    [self showKeeperSettingsSheetWithEmptyAPIKey:NO
+                                       forWindow:nil
+                                            onOK:^{ [weakSelf reloadItems:nil]; }
+                                    keyCompletion:nil];
 }
 
 - (id<PasswordManagerAccount>)clickedAccount {
