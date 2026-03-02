@@ -186,6 +186,7 @@ class CellStyle:
             return CellStyle.Color(rgb=CellStyle.RGBColor(self._proto.fgRgb))
         elif self._proto.HasField('fgAlternatePlacementX'):
             return CellStyle.Color(placement=self._proto.fgAlternatePlacementX)
+        return None
 
     @property
     def bg_color(self) -> typing.Optional['CellStyle.Color']:
@@ -202,6 +203,7 @@ class CellStyle:
             return CellStyle.Color(rgb=CellStyle.RGBColor(self._proto.bgRgb))
         elif self._proto.HasField('bgAlternatePlacementY'):
             return CellStyle.Color(placement=self._proto.bgAlternatePlacementY)
+        return None
 
     @property
     def bold(self) -> bool:
