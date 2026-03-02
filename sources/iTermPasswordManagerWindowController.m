@@ -29,6 +29,70 @@ static NSString *const iTermPasswordManagerAccountNameUserNameSeparator = @"\u20
 NSString *const iTermPasswordManagerDidLoadAccounts = @"iTermPasswordManagerDidLoadAccounts";
 
 static void *const kKeeperSettingsAccessoryContextKey = (void *)&kKeeperSettingsAccessoryContextKey;
+static void *const kKeeperSettingsSyncContextKey = (void *)&kKeeperSettingsSyncContextKey;
+
+@interface iTermKeeperSettingsSyncContext : NSObject
+@property (nonatomic, weak) NSSecureTextField *secureField;
+@property (nonatomic, weak) NSTextField *plainField;
+@property (nonatomic, weak) NSTextField *urlField;
+@property (nonatomic, weak) id dataSource;
+@property (nonatomic, copy) void (^onSyncStarted)(void);   // Dismiss sheet and show loading
+@property (nonatomic, copy) void (^onSyncComplete)(void); // Hide loading (called on success or failure)
+@property (nonatomic, copy) void (^onSyncSuccess)(void);  // Reload list (called only on success)
+@property (nonatomic, weak) NSButton *syncButton;
+- (void)syncTapped:(id)sender;
+@end
+
+@implementation iTermKeeperSettingsSyncContext
+- (void)syncTapped:(id)sender {
+    NSString *key = _plainField.hidden ? (_secureField.stringValue ?: @"") : (_plainField.stringValue ?: @"");
+    NSString *url = _urlField.stringValue ?: @"";
+    key = [key stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+    url = [url stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+    if (key.length == 0) {
+        NSAlert *alert = [[NSAlert alloc] init];
+        alert.messageText = @"API Key Required";
+        alert.informativeText = @"Enter your Keeper Commander API key above before syncing.";
+        [alert runModal];
+        return;
+    }
+    // Save key/URL to data source so the reload after sync uses the same credentials
+    [(id)_dataSource setKeeperSettingsAPIKey:key];
+    [(id)_dataSource setKeeperSettingsAPIURL:url];
+
+    // Dismiss the settings sheet immediately
+    NSWindow *sheetWindow = _syncButton.window;
+    NSWindow *parent = sheetWindow.sheetParent;
+    if (parent) {
+        [parent endSheet:sheetWindow returnCode:NSModalResponseCancel];
+    }
+
+    // Show loading (scrim + spinner)
+    if (_onSyncStarted) {
+        _onSyncStarted();
+    }
+
+    void (^onComplete)(void) = _onSyncComplete;
+    void (^onSuccess)(void) = _onSyncSuccess;
+    [(id)_dataSource runKeeperSyncDownWithApiKey:key apiURL:url completion:^(BOOL success, NSString * _Nullable errorMessage) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            if (onComplete) {
+                onComplete();
+            }
+            if (success) {
+                if (onSuccess) {
+                    onSuccess();
+                }
+            } else {
+                NSAlert *alert = [[NSAlert alloc] init];
+                alert.messageText = @"Sync Failed";
+                alert.informativeText = errorMessage ?: @"The sync-down command failed.";
+                [alert runModal];
+            }
+        });
+    }];
+}
+@end
 
 @interface iTermKeeperSettingsAccessoryContext : NSObject
 @property (nonatomic, weak) NSSecureTextField *secureField;
@@ -922,10 +986,14 @@ static NSArray<NSString *> *gTerminalCachedCombinedAccountNames;
     const CGFloat rowHeight = 22;
     const CGFloat labelWidth = 70;
     const CGFloat margin = 12;
-    NSView *accessory = [[NSView alloc] initWithFrame:NSMakeRect(0, 0, width, 2 * rowHeight + margin)];
-    accessory.frame = NSMakeRect(0, 0, width, 2 * rowHeight + margin);
+    const CGFloat rowSpacing = 10;  // Vertical gap between API Key, API URL, and Sync rows
+    const CGFloat accessoryHeight = margin + (3 * rowHeight) + (2 * rowSpacing) + margin;
+    NSView *accessory = [[NSView alloc] initWithFrame:NSMakeRect(0, 0, width, accessoryHeight)];
+    accessory.frame = NSMakeRect(0, 0, width, accessoryHeight);
 
-    NSTextField *keyLabel = [[NSTextField alloc] initWithFrame:NSMakeRect(0, rowHeight + margin, labelWidth, rowHeight)];
+    // Row 0 (top): API Key
+    const CGFloat keyRowY = margin + (2 * rowHeight) + (2 * rowSpacing);
+    NSTextField *keyLabel = [[NSTextField alloc] initWithFrame:NSMakeRect(0, keyRowY, labelWidth, rowHeight)];
     keyLabel.stringValue = @"API Key:";
     keyLabel.bezeled = NO;
     keyLabel.drawsBackground = NO;
@@ -936,7 +1004,7 @@ static NSArray<NSString *> *gTerminalCachedCombinedAccountNames;
 
     const CGFloat eyeButtonWidth = 28;
     const CGFloat keyFieldWidth = width - labelWidth - 8 - eyeButtonWidth - 4;
-    const NSRect keyFieldFrame = NSMakeRect(labelWidth + 8, rowHeight + margin, keyFieldWidth, rowHeight);
+    const NSRect keyFieldFrame = NSMakeRect(labelWidth + 8, keyRowY, keyFieldWidth, rowHeight);
 
     NSSecureTextField *keyFieldSecure = [[NSSecureTextField alloc] initWithFrame:keyFieldFrame];
     keyFieldSecure.placeholderString = @"Enter Keeper Commander API key";
@@ -951,7 +1019,7 @@ static NSArray<NSString *> *gTerminalCachedCombinedAccountNames;
     keyFieldPlain.hidden = YES;
     [accessory addSubview:keyFieldPlain];
 
-    NSButton *revealButton = [[NSButton alloc] initWithFrame:NSMakeRect(labelWidth + 8 + keyFieldWidth + 4, rowHeight + margin, eyeButtonWidth, rowHeight)];
+    NSButton *revealButton = [[NSButton alloc] initWithFrame:NSMakeRect(labelWidth + 8 + keyFieldWidth + 4, keyRowY, eyeButtonWidth, rowHeight)];
     revealButton.bezelStyle = NSBezelStyleRegularSquare;
     revealButton.bordered = YES;
     revealButton.image = [NSImage imageWithSystemSymbolName:@"eye" accessibilityDescription:@"Show API key"];
@@ -967,7 +1035,9 @@ static NSArray<NSString *> *gTerminalCachedCombinedAccountNames;
     revealButton.target = context;
     revealButton.action = @selector(toggleReveal:);
 
-    NSTextField *urlLabel = [[NSTextField alloc] initWithFrame:NSMakeRect(0, 0, labelWidth, rowHeight)];
+    // Row 1 (middle): API URL
+    const CGFloat urlRowY = margin + rowHeight + rowSpacing;
+    NSTextField *urlLabel = [[NSTextField alloc] initWithFrame:NSMakeRect(0, urlRowY, labelWidth, rowHeight)];
     urlLabel.stringValue = @"API URL:";
     urlLabel.bezeled = NO;
     urlLabel.drawsBackground = NO;
@@ -976,18 +1046,46 @@ static NSArray<NSString *> *gTerminalCachedCombinedAccountNames;
     urlLabel.font = [NSFont systemFontOfSize:[NSFont systemFontSize]];
     [accessory addSubview:urlLabel];
 
-    NSTextField *urlField = [[NSTextField alloc] initWithFrame:NSMakeRect(labelWidth + 8, 0, width - labelWidth - 8, rowHeight)];
+    NSTextField *urlField = [[NSTextField alloc] initWithFrame:NSMakeRect(labelWidth + 8, urlRowY, width - labelWidth - 8, rowHeight)];
     urlField.placeholderString = @"e.g. http://127.0.0.1:8900";
     urlField.stringValue = savedURL ?: @"";
     urlField.font = [NSFont systemFontOfSize:[NSFont systemFontSize]];
     [accessory addSubview:urlField];
 
+    // Row 2 (bottom): Sync button — spaced below API URL
+    const CGFloat syncRowY = margin;
+    NSButton *syncButton = [[NSButton alloc] initWithFrame:NSMakeRect(labelWidth + 8, syncRowY, 80, rowHeight)];
+    syncButton.title = @"Sync";
+    syncButton.bezelStyle = NSBezelStyleRounded;
+    [syncButton setButtonType:NSButtonTypeMomentaryPushIn];
+    [accessory addSubview:syncButton];
+
+    __weak __typeof(self) weakSelf = self;
+    iTermKeeperSettingsSyncContext *syncContext = [[iTermKeeperSettingsSyncContext alloc] init];
+    syncContext.secureField = keyFieldSecure;
+    syncContext.plainField = keyFieldPlain;
+    syncContext.urlField = urlField;
+    syncContext.dataSource = ds;
+    syncContext.onSyncStarted = ^{
+        [weakSelf incrBusy];
+    };
+    syncContext.onSyncComplete = ^{
+        [weakSelf decrBusy];
+    };
+    syncContext.onSyncSuccess = ^{
+        [weakSelf reloadItems:nil];
+    };
+    syncContext.syncButton = syncButton;
+    objc_setAssociatedObject(accessory, kKeeperSettingsSyncContextKey, syncContext, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+    syncButton.target = syncContext;
+    syncButton.action = @selector(syncTapped:);
+
     alert.accessoryView = accessory;
     [alert layout];
 
-    __weak __typeof(self) weakSelf = self;
     [alert beginSheetModalForWindow:sheetParent completionHandler:^(NSModalResponse response) {
         objc_setAssociatedObject(accessory, kKeeperSettingsAccessoryContextKey, nil, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+        objc_setAssociatedObject(accessory, kKeeperSettingsSyncContextKey, nil, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
         if (response != NSAlertFirstButtonReturn) {
             if (keyCompletion) {
                 keyCompletion(nil);

@@ -207,23 +207,23 @@ private func keeperBaseURL() -> URL {
     return parsed
 }
 
-private func keeperV1ExecuteCommandURL() -> URL {
-    keeperBaseURL().appendingPathComponent("api/v1/executecommand")
+private func keeperV1ExecuteCommandURL(baseURL: URL? = nil) -> URL {
+    (baseURL ?? keeperBaseURL()).appendingPathComponent("api/v1/executecommand")
 }
 
-private func keeperV2AsyncURL() -> URL {
-    keeperBaseURL().appendingPathComponent("api/v2/executecommand-async")
+private func keeperV2AsyncURL(baseURL: URL? = nil) -> URL {
+    (baseURL ?? keeperBaseURL()).appendingPathComponent("api/v2/executecommand-async")
 }
 
-private func keeperV2StatusURL(requestId: String) -> URL {
-    keeperBaseURL().appendingPathComponent("api/v2/status/\(requestId)")
+private func keeperV2StatusURL(requestId: String, baseURL: URL? = nil) -> URL {
+    (baseURL ?? keeperBaseURL()).appendingPathComponent("api/v2/status/\(requestId)")
 }
 
-private func keeperV2ResultURL(requestId: String) -> URL {
-    keeperBaseURL().appendingPathComponent("api/v2/result/\(requestId)")
+private func keeperV2ResultURL(requestId: String, baseURL: URL? = nil) -> URL {
+    (baseURL ?? keeperBaseURL()).appendingPathComponent("api/v2/result/\(requestId)")
 }
 
-private func keeperExecute(apiKey: String, command: String, completion: @escaping (Result<Data, Error>) -> Void) {
+private func keeperExecute(apiKey: String, command: String, baseURL: URL? = nil, completion: @escaping (Result<Data, Error>) -> Void) {
     let body = (try? JSONEncoder().encode(KeeperExecuteRequest(command: command))) ?? Data()
     // Try API v1 (sync) first; if 404, use API v2 (queue) async.
     let v1Completion: (Result<Data, Error>) -> Void = { result in
@@ -233,14 +233,14 @@ private func keeperExecute(apiKey: String, command: String, completion: @escapin
         case .failure(let err):
             let nsErr = err as NSError
             if nsErr.domain == "KeeperDataSource", nsErr.code == 404 {
-                keeperExecuteV2(apiKey: apiKey, command: command, completion: completion)
+                keeperExecuteV2(apiKey: apiKey, command: command, baseURL: baseURL, completion: completion)
             } else {
                 completion(.failure(err))
             }
         }
     }
 
-    var request = URLRequest(url: keeperV1ExecuteCommandURL())
+    var request = URLRequest(url: keeperV1ExecuteCommandURL(baseURL: baseURL))
     request.httpMethod = "POST"
     request.setValue("application/json", forHTTPHeaderField: "Content-Type")
     request.setValue(apiKey, forHTTPHeaderField: "api-key")
@@ -256,7 +256,7 @@ private func keeperExecute(apiKey: String, command: String, completion: @escapin
         }
         let http = response as? HTTPURLResponse
         if http?.statusCode == 404 {
-            keeperExecuteV2(apiKey: apiKey, command: command, completion: completion)
+            keeperExecuteV2(apiKey: apiKey, command: command, baseURL: baseURL, completion: completion)
             return
         }
         if http?.statusCode != 200 {
@@ -269,9 +269,9 @@ private func keeperExecute(apiKey: String, command: String, completion: @escapin
 }
 
 /// Keeper Commander API v2 (queue): submit async, poll status, then fetch result.
-private func keeperExecuteV2(apiKey: String, command: String, completion: @escaping (Result<Data, Error>) -> Void) {
+private func keeperExecuteV2(apiKey: String, command: String, baseURL: URL? = nil, completion: @escaping (Result<Data, Error>) -> Void) {
     let body = (try? JSONEncoder().encode(KeeperExecuteRequest(command: command))) ?? Data()
-    var request = URLRequest(url: keeperV2AsyncURL())
+    var request = URLRequest(url: keeperV2AsyncURL(baseURL: baseURL))
     request.httpMethod = "POST"
     request.setValue("application/json", forHTTPHeaderField: "Content-Type")
     request.setValue(apiKey, forHTTPHeaderField: "api-key")
@@ -295,11 +295,11 @@ private func keeperExecuteV2(apiKey: String, command: String, completion: @escap
             completion(.failure(NSError(domain: "KeeperDataSource", code: -1, userInfo: [NSLocalizedDescriptionKey: "No request_id in v2 response"])))
             return
         }
-        keeperV2PollForResult(apiKey: apiKey, requestId: requestId, completion: completion)
+        keeperV2PollForResult(apiKey: apiKey, requestId: requestId, baseURL: baseURL, completion: completion)
     }.resume()
 }
 
-private func keeperV2PollForResult(apiKey: String, requestId: String, completion: @escaping (Result<Data, Error>) -> Void) {
+private func keeperV2PollForResult(apiKey: String, requestId: String, baseURL: URL? = nil, completion: @escaping (Result<Data, Error>) -> Void) {
     let pollInterval: TimeInterval = 0.4
     let deadline = Date().addingTimeInterval(120)
     let maxPolls = 90  // ~36s at 0.4s interval; prevents infinite polling if service never returns "completed"
@@ -315,7 +315,7 @@ private func keeperV2PollForResult(apiKey: String, requestId: String, completion
             completion(.failure(NSError(domain: "KeeperDataSource", code: -1, userInfo: [NSLocalizedDescriptionKey: "Keeper service did not complete the request in time"])))
             return
         }
-        var request = URLRequest(url: keeperV2StatusURL(requestId: requestId))
+        var request = URLRequest(url: keeperV2StatusURL(requestId: requestId, baseURL: baseURL))
         request.setValue(apiKey, forHTTPHeaderField: "api-key")
         URLSession.shared.dataTask(with: request) { data, response, error in
             if let error = error {
@@ -336,7 +336,7 @@ private func keeperV2PollForResult(apiKey: String, requestId: String, completion
             consecutiveUnparseable = 0
             switch status {
             case "completed":
-                keeperV2FetchResult(apiKey: apiKey, requestId: requestId, completion: completion)
+                keeperV2FetchResult(apiKey: apiKey, requestId: requestId, baseURL: baseURL, completion: completion)
             case "failed", "expired":
                 completion(.failure(NSError(domain: "KeeperDataSource", code: -1, userInfo: [NSLocalizedDescriptionKey: "Keeper command \(status)"])))
             default:
@@ -347,8 +347,8 @@ private func keeperV2PollForResult(apiKey: String, requestId: String, completion
     poll()
 }
 
-private func keeperV2FetchResult(apiKey: String, requestId: String, completion: @escaping (Result<Data, Error>) -> Void) {
-    var request = URLRequest(url: keeperV2ResultURL(requestId: requestId))
+private func keeperV2FetchResult(apiKey: String, requestId: String, baseURL: URL? = nil, completion: @escaping (Result<Data, Error>) -> Void) {
+    var request = URLRequest(url: keeperV2ResultURL(requestId: requestId, baseURL: baseURL))
     request.setValue(apiKey, forHTTPHeaderField: "api-key")
     URLSession.shared.dataTask(with: request) { data, response, error in
         if let error = error {
@@ -923,5 +923,32 @@ class KeeperDataSource: NSObject, PasswordManagerDataSource {
             _cachedSettingsURL = trimmed
         }
         keeperClearBaseURLCache()
+    }
+
+    /// Runs Keeper Commander "sync-down" (download, sync, and decrypt vault) with the given API key and URL.
+    /// Use this from the settings sheet so the user can sync with the credentials in the sheet without saving first.
+    /// Completion is called on the main thread with success and optional error message.
+    @objc func runKeeperSyncDown(apiKey: String, apiURL: String, completion: @escaping (Bool, String?) -> Void) {
+        let key = apiKey.trimmingCharacters(in: .whitespacesAndNewlines)
+        let urlString = apiURL.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !key.isEmpty else {
+            DispatchQueue.main.async { completion(false, "API key is empty.") }
+            return
+        }
+        let baseURL: URL
+        if let parsed = URL(string: urlString), parsed.scheme != nil, parsed.host != nil {
+            baseURL = parsed
+        } else {
+            baseURL = URL(string: keeperDefaultAPIURL)!
+        }
+        keeperExecute(apiKey: key, command: "sync-down", baseURL: baseURL) { result in
+            switch result {
+            case .success:
+                DispatchQueue.main.async { completion(true, nil) }
+            case .failure(let error):
+                let message = (error as NSError).localizedDescription
+                DispatchQueue.main.async { completion(false, message) }
+            }
+        }
     }
 }
