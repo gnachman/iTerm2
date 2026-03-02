@@ -8,7 +8,7 @@ import traceback
 import typing
 import websockets
 
-gDisconnectCallbacks = []
+gDisconnectCallbacks: typing.List[typing.Callable[[], None]] = []
 
 # websockets 9.0 moved client into legacy.client and didn't document how to
 # migrate to the new API :(. Stick with the old one until I have time to deal
