@@ -137,6 +137,8 @@ class Trigger:
         self.__enabled = value
 
     @staticmethod
+    def _name():
+        return "Trigger"
     def deserialize(regex: str, param: str, instant: bool, enabled: bool) -> 'Trigger':
         return Trigger(regex, param, instant, enabled)
 
