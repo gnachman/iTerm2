@@ -54,7 +54,7 @@ def _futureproof(param, obj):
     obj.param = param
     return obj
 
-def decode_trigger(encoded: dict) -> 'Trigger':
+def decode_trigger(encoded: dict) -> typing.Union['Trigger', 'EventTrigger']:
     """Create a trigger.
 
     Use this to convert the dictionary representation of a trigger gotten from
@@ -317,7 +317,7 @@ class BellTrigger(Trigger):
         return _futureproof(param, BellTrigger(regex, instant, enabled))
 
     @property
-    def _param(self) -> None:
+    def _param(self) -> str:
         return ""
 
 class BounceTrigger(Trigger):
@@ -325,7 +325,7 @@ class BounceTrigger(Trigger):
         BOUNCE_UNTIL_ACTIVATED = 0
         BOUNCE_ONCE = 1
 
-    def __init__(self, regex: str, action: 'iterm2.Trigger.BounceTrigger.Action', instant: bool, enabled: bool):
+    def __init__(self, regex: str, action: 'BounceTrigger.Action', instant: bool, enabled: bool):
         self.__action = action
         super().__init__(regex, self._param, instant, enabled)
 
@@ -338,11 +338,11 @@ class BounceTrigger(Trigger):
         return _futureproof(param, BounceTrigger(regex, BounceTrigger.Action(param), instant, enabled))
 
     @property
-    def action(self) -> 'iterm2.Trigger.BounceTrigger.Action':
+    def action(self) -> 'BounceTrigger.Action':
         return self.__action
 
     @action.setter
-    def action(self, value: 'iterm2.Trigger.BounceTrigger.Action'):
+    def action(self, value: 'BounceTrigger.Action'):
         self.__action = value
         self.param = self._param
 
@@ -882,7 +882,7 @@ class PasswordTrigger(Trigger):
         self.param = self._param
 
     @property
-    def user_name(self) -> str:
+    def user_name(self) -> typing.Optional[str]:
         return self.__user_name
 
     @user_name.setter
@@ -1197,7 +1197,7 @@ class CommandFinishedEventTrigger(EventTrigger):
             enabled: bool,
             event_params: typing.Optional[dict],
             action_classes: typing.Dict[str, typing.Type[Trigger]]) -> 'CommandFinishedEventTrigger':
-        exit_code_filter = ExitCodeFilter.ANY
+        exit_code_filter: typing.Union[ExitCodeFilter, int] = ExitCodeFilter.ANY
         if event_params:
             filter_str = event_params.get("exitCodeFilter", "*")
             if filter_str == "*" or filter_str == "":
@@ -1525,7 +1525,7 @@ class LongRunningCommandEventTrigger(EventTrigger):
             enabled: bool,
             threshold: float = 60.0,
             command_regex: typing.Optional[str] = None):
-        event_params = {"threshold": threshold}
+        event_params: typing.Dict[str, typing.Any] = {"threshold": threshold}
         if command_regex:
             event_params["commandRegex"] = command_regex
         super().__init__(
