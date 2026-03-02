@@ -15,6 +15,11 @@ private let keeperKeychainAccountAPIURL = "api-url"
 /// Default Keeper Commander service URL when none is stored.
 private let keeperDefaultAPIURL = "http://127.0.0.1:8900"
 
+/// Posted when Keeper connection fails (e.g. no API key, service unreachable). userInfo[@"error"] = error message (String).
+public let iTerm2KeeperConnectionDidFailNotification = Notification.Name("iTerm2KeeperConnectionDidFail")
+/// Posted when Keeper fetch succeeds after a connection attempt.
+public let iTerm2KeeperConnectionDidSucceedNotification = Notification.Name("iTerm2KeeperConnectionDidSucceed")
+
 // MARK: - API Key storage (macOS Keychain)
 
 private func keeperAPIKeyFromKeychain() -> String? {
@@ -223,6 +228,15 @@ private func keeperV2ResultURL(requestId: String, baseURL: URL? = nil) -> URL {
     (baseURL ?? keeperBaseURL()).appendingPathComponent("api/v2/result/\(requestId)")
 }
 
+/// Extracts a human-readable error message from API response data (e.g. {"error":"Please provide a valid api key","status":"error"}).
+private func keeperHumanReadableError(fromResponseData data: Data?) -> String? {
+    guard let data = data,
+          let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else { return nil }
+    if let error = json["error"] as? String, !error.isEmpty { return error }
+    if let message = json["message"] as? String, !message.isEmpty { return message }
+    return nil
+}
+
 private func keeperExecute(apiKey: String, command: String, baseURL: URL? = nil, completion: @escaping (Result<Data, Error>) -> Void) {
     let body = (try? JSONEncoder().encode(KeeperExecuteRequest(command: command))) ?? Data()
     // Try API v1 (sync) first; if 404, use API v2 (queue) async.
@@ -260,7 +274,9 @@ private func keeperExecute(apiKey: String, command: String, baseURL: URL? = nil,
             return
         }
         if http?.statusCode != 200 {
-            let msg = String(data: data, encoding: .utf8) ?? "HTTP \(http?.statusCode ?? -1)"
+            let msg = keeperHumanReadableError(fromResponseData: data)
+                ?? String(data: data, encoding: .utf8)
+                ?? "HTTP \(http?.statusCode ?? -1)"
             v1Completion(.failure(NSError(domain: "KeeperDataSource", code: http?.statusCode ?? -1, userInfo: [NSLocalizedDescriptionKey: msg])))
             return
         }
@@ -286,7 +302,9 @@ private func keeperExecuteV2(apiKey: String, command: String, baseURL: URL? = ni
             return
         }
         guard let http = response as? HTTPURLResponse, http.statusCode == 202 else {
-            let msg = String(data: data, encoding: .utf8) ?? "Unexpected response"
+            let msg = keeperHumanReadableError(fromResponseData: data)
+                ?? String(data: data, encoding: .utf8)
+                ?? "Unexpected response"
             completion(.failure(NSError(domain: "KeeperDataSource", code: -1, userInfo: [NSLocalizedDescriptionKey: msg])))
             return
         }
@@ -300,9 +318,10 @@ private func keeperExecuteV2(apiKey: String, command: String, baseURL: URL? = ni
 }
 
 private func keeperV2PollForResult(apiKey: String, requestId: String, baseURL: URL? = nil, completion: @escaping (Result<Data, Error>) -> Void) {
-    let pollInterval: TimeInterval = 0.4
+    // Poll at most once per 2 seconds to stay under service rate limit (60 status requests per minute).
+    let pollInterval: TimeInterval = 2.0
     let deadline = Date().addingTimeInterval(120)
-    let maxPolls = 90  // ~36s at 0.4s interval; prevents infinite polling if service never returns "completed"
+    let maxPolls = 60  // 120s at 2s interval
     var pollCount = 0
     var consecutiveUnparseable = 0
     func poll() {
@@ -322,12 +341,24 @@ private func keeperV2PollForResult(apiKey: String, requestId: String, baseURL: U
                 completion(.failure(error))
                 return
             }
+            let http = response as? HTTPURLResponse
+            let responseData = data
+            // If status endpoint returned an HTTP error (e.g. 429 rate limit), surface that message immediately.
+            if let code = http?.statusCode, code != 200 {
+                let msg = keeperHumanReadableError(fromResponseData: responseData)
+                    ?? String(data: responseData ?? Data(), encoding: .utf8)
+                    ?? "HTTP \(code)"
+                completion(.failure(NSError(domain: "KeeperDataSource", code: code, userInfo: [NSLocalizedDescriptionKey: msg])))
+                return
+            }
             guard let data = data,
                   let statusResp = try? JSONDecoder().decode(KeeperV2StatusResponse.self, from: data),
                   let status = statusResp.status else {
                 consecutiveUnparseable += 1
                 if consecutiveUnparseable >= 15 {
-                    completion(.failure(NSError(domain: "KeeperDataSource", code: -1, userInfo: [NSLocalizedDescriptionKey: "Keeper service returned an invalid status response"])))
+                    let msg = keeperHumanReadableError(fromResponseData: responseData)
+                        ?? "Keeper service returned an invalid status response"
+                    completion(.failure(NSError(domain: "KeeperDataSource", code: -1, userInfo: [NSLocalizedDescriptionKey: msg])))
                     return
                 }
                 DispatchQueue.global(qos: .utility).asyncAfter(deadline: .now() + pollInterval) { poll() }
@@ -360,7 +391,9 @@ private func keeperV2FetchResult(apiKey: String, requestId: String, baseURL: URL
             return
         }
         if let http = response as? HTTPURLResponse, http.statusCode != 200 {
-            let msg = String(data: data, encoding: .utf8) ?? "HTTP \(http.statusCode)"
+            let msg = keeperHumanReadableError(fromResponseData: data)
+                ?? String(data: data, encoding: .utf8)
+                ?? "HTTP \(http.statusCode)"
             completion(.failure(NSError(domain: "KeeperDataSource", code: http.statusCode, userInfo: [NSLocalizedDescriptionKey: msg])))
             return
         }
@@ -570,7 +603,15 @@ class KeeperDataSource: NSObject, PasswordManagerDataSource {
 
     func fetchAccounts(context: RecipeExecutionContext, completion: @escaping ([PasswordManagerAccount]) -> ()) {
         ensureAPIKey(context: context) { [weak self] apiKey in
-            guard let self = self, let apiKey = apiKey else {
+            guard let self = self else { return }
+            guard let apiKey = apiKey else {
+                DispatchQueue.main.async {
+                    NotificationCenter.default.post(
+                        name: iTerm2KeeperConnectionDidFailNotification,
+                        object: nil,
+                        userInfo: ["error": "No API key entered or configuration was cancelled."]
+                    )
+                }
                 completion([])
                 return
             }
@@ -663,7 +704,10 @@ class KeeperDataSource: NSObject, PasswordManagerDataSource {
                         NSLog("[iTerm2 Keeper] No records parsed from response (length=%d). Preview: %@", data.count, String(preview.prefix(500)))
                     }
                     guard let records = records, !records.isEmpty else {
-                        DispatchQueue.main.async { completion([]) }
+                        DispatchQueue.main.async {
+                            NotificationCenter.default.post(name: iTerm2KeeperConnectionDidSucceedNotification, object: nil)
+                            completion([])
+                        }
                         return
                     }
                     // Exclude records that are in trash (deleted).
@@ -684,13 +728,32 @@ class KeeperDataSource: NSObject, PasswordManagerDataSource {
                             let desc = rec.description ?? ""
                             return KeeperAccount(uid: uid, accountName: title, userName: desc, hasOTP: false, sendOTP: false, dataSource: self)
                         }
-                        DispatchQueue.main.async { completion(accounts) }
+                        DispatchQueue.main.async {
+                            NotificationCenter.default.post(name: iTerm2KeeperConnectionDidSucceedNotification, object: nil)
+                            completion(accounts)
+                        }
                     }
                 } catch {
-                    DispatchQueue.main.async { completion([]) }
+                    let message = (error as NSError).localizedDescription
+                    DispatchQueue.main.async {
+                        NotificationCenter.default.post(
+                            name: iTerm2KeeperConnectionDidFailNotification,
+                            object: nil,
+                            userInfo: ["error": message]
+                        )
+                        completion([])
+                    }
                 }
-            case .failure:
-                DispatchQueue.main.async { completion([]) }
+            case .failure(let error):
+                let message = (error as NSError).localizedDescription
+                DispatchQueue.main.async {
+                    NotificationCenter.default.post(
+                        name: iTerm2KeeperConnectionDidFailNotification,
+                        object: nil,
+                        userInfo: ["error": message]
+                    )
+                    completion([])
+                }
             }
         }
         }
@@ -805,8 +868,9 @@ class KeeperDataSource: NSObject, PasswordManagerDataSource {
                     if let response = try? JSONDecoder().decode(KeeperExecuteResponse.self, from: data), response.status == "success" {
                         DispatchQueue.main.async { completion(nil) }
                     } else {
-                        let msg = (try? JSONSerialization.jsonObject(with: data) as? [String: Any])?["message"] as? [String] ?? []
-                        let detail = msg.first ?? "Update failed"
+                        let detail = keeperHumanReadableError(fromResponseData: data)
+                            ?? (try? JSONSerialization.jsonObject(with: data) as? [String: Any]).flatMap { ($0["message"] as? [String])?.first }
+                            ?? "Update failed"
                         DispatchQueue.main.async { completion(NSError(domain: "KeeperDataSource", code: -1, userInfo: [NSLocalizedDescriptionKey: detail])) }
                     }
                 case .failure(let error):
@@ -828,7 +892,8 @@ class KeeperDataSource: NSObject, PasswordManagerDataSource {
                     if let response = try? JSONDecoder().decode(KeeperExecuteResponse.self, from: data), response.status == "success" {
                         DispatchQueue.main.async { completion(nil) }
                     } else {
-                        DispatchQueue.main.async { completion(NSError(domain: "KeeperDataSource", code: -1, userInfo: [NSLocalizedDescriptionKey: "Delete failed"])) }
+                        let detail = keeperHumanReadableError(fromResponseData: data) ?? "Delete failed"
+                        DispatchQueue.main.async { completion(NSError(domain: "KeeperDataSource", code: -1, userInfo: [NSLocalizedDescriptionKey: detail])) }
                     }
                 case .failure(let error):
                     DispatchQueue.main.async { completion(error) }
@@ -861,13 +926,15 @@ class KeeperDataSource: NSObject, PasswordManagerDataSource {
                     }
                     let response = try JSONDecoder().decode(RecordAddResponse.self, from: data)
                     guard response.status == "success", let uid = response.data?.record_uid, !uid.isEmpty else {
-                        DispatchQueue.main.async { completion(nil, NSError(domain: "KeeperDataSource", code: -1, userInfo: [NSLocalizedDescriptionKey: "Add failed"])) }
+                        let detail = keeperHumanReadableError(fromResponseData: data) ?? "Add failed"
+                        DispatchQueue.main.async { completion(nil, NSError(domain: "KeeperDataSource", code: -1, userInfo: [NSLocalizedDescriptionKey: detail])) }
                         return
                     }
                     let account = KeeperAccount(uid: uid, accountName: accountName, userName: userName, hasOTP: false, sendOTP: false, dataSource: self)
                     DispatchQueue.main.async { completion(account, nil) }
                 } catch {
-                    DispatchQueue.main.async { completion(nil, error) }
+                    let detail = keeperHumanReadableError(fromResponseData: data) ?? (error as NSError).localizedDescription
+                    DispatchQueue.main.async { completion(nil, NSError(domain: "KeeperDataSource", code: -1, userInfo: [NSLocalizedDescriptionKey: detail])) }
                 }
             case .failure(let error):
                 DispatchQueue.main.async { completion(nil, error) }

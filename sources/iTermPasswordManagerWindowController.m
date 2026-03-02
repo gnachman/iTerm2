@@ -28,6 +28,9 @@ static NSString *const kPasswordManagersShouldReloadData = @"kPasswordManagersSh
 static NSString *const iTermPasswordManagerAccountNameUserNameSeparator = @"\u2002—\u2002";
 NSString *const iTermPasswordManagerDidLoadAccounts = @"iTermPasswordManagerDidLoadAccounts";
 
+static NSString *const iTerm2KeeperConnectionDidFailNotification = @"iTerm2KeeperConnectionDidFail";
+static NSString *const iTerm2KeeperConnectionDidSucceedNotification = @"iTerm2KeeperConnectionDidSucceed";
+
 static void *const kKeeperSettingsAccessoryContextKey = (void *)&kKeeperSettingsAccessoryContextKey;
 static void *const kKeeperSettingsSyncContextKey = (void *)&kKeeperSettingsSyncContextKey;
 
@@ -181,6 +184,7 @@ typedef NS_ENUM(NSUInteger, iTermPasswordManagerReload) {
     NSInteger _cancelCount;
     BOOL _awakeFromNibAvailabilityCheckFailed;
     iTermPasswordManagerReload _reloadPolicy;
+    BOOL _keeperConfigurationAttemptInProgress;  // Show connection success/failure alert only after config attempt
 
     @protected
     NSString *_accountNameToSelectAfterAuthentication;
@@ -253,6 +257,14 @@ static NSArray<NSString *> *gTerminalCachedCombinedAccountNames;
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(reloadAccountsNotification:)
                                                      name:kPasswordManagersShouldReloadData
+                                                   object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(keeperConnectionDidFail:)
+                                                     name:iTerm2KeeperConnectionDidFailNotification
+                                                   object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(keeperConnectionDidSucceed:)
+                                                     name:iTerm2KeeperConnectionDidSucceedNotification
                                                    object:nil];
     }
     return self;
@@ -765,9 +777,11 @@ static NSArray<NSString *> *gTerminalCachedCombinedAccountNames;
         if (index != NSNotFound) {
             [_tableView selectRowIndexes:[NSIndexSet indexSetWithIndex:index] byExtendingSelection:NO];
         }
+        [self showRecordAddedSuccessForAccountName:newAccount.accountName];
     }
     if (error) {
         DLog(@"%@", error);
+        [self showKeeperOperationErrorWithTitle:@"Add failed" error:error];
     }
 }
 
@@ -783,15 +797,18 @@ static NSArray<NSString *> *gTerminalCachedCombinedAccountNames;
         [_tableView reloadData];
         __weak __typeof(self) weakSelf = self;
         const NSInteger cancelCount = [self incrBusy];
+        NSString *accountName = [self accountNameForRow:selectedRow] ?: @"";
         [_entries[selectedRow] deleteWithContext:self.recipeExecutionContext
                                       completion:^(NSError * _Nullable error) {
             [weakSelf ifCancelCountUnchanged:cancelCount perform:^{
                 [weakSelf decrBusy];
                 if (error) {
                     DLog(@"%@", error);
+                    [weakSelf showKeeperOperationErrorWithTitle:@"Delete failed" error:error];
                     return;
                 }
                 [weakSelf didRemoveEntry];
+                [weakSelf showRecordDeletedSuccessForAccountName:accountName];
             }];
         }];
     }
@@ -846,6 +863,7 @@ static NSArray<NSString *> *gTerminalCachedCombinedAccountNames;
     switch (response) {
         case NSAlertFirstButtonReturn: {
             const NSInteger cancelCount = [self incrBusy];
+            NSString *accountName = [self accountNameForRow:row] ?: @"";
             [_entries[row] setPasswordWithContext:self.recipeExecutionContext
                                          password:newPassword.stringValue
                                        completion:^(NSError * _Nullable error) {
@@ -853,9 +871,11 @@ static NSArray<NSString *> *gTerminalCachedCombinedAccountNames;
                     [weakSelf decrBusy];
                     if (error) {
                         DLog(@"%@", error);
+                        [weakSelf showKeeperOperationErrorWithTitle:@"Update failed" error:error];
                         return;
                     }
                     [weakSelf passwordsDidChange];
+                    [weakSelf showPasswordUpdateSuccessForAccountName:accountName];
                 }];
             }];
             break;
@@ -863,6 +883,7 @@ static NSArray<NSString *> *gTerminalCachedCombinedAccountNames;
         case NSAlertSecondButtonReturn: {
             __weak __typeof(self) weakSelf = self;
             const NSInteger cancelCount = [self incrBusy];
+            NSString *accountName = [self accountNameForRow:row] ?: @"";
             [_entries[row] setPasswordWithContext:self.recipeExecutionContext
                                          password:[iTermPasswordManagerWindowController randomPassword]
                                        completion:^(NSError * _Nullable error) {
@@ -870,9 +891,11 @@ static NSArray<NSString *> *gTerminalCachedCombinedAccountNames;
                     [weakSelf decrBusy];
                     if (error) {
                         DLog(@"%@", error);
+                        [weakSelf showKeeperOperationErrorWithTitle:@"Update failed" error:error];
                         return;
                     }
                     [weakSelf passwordsDidChange];
+                    [weakSelf showPasswordUpdateSuccessForAccountName:accountName];
                 }];
             }];
             break;
@@ -1099,6 +1122,8 @@ static NSArray<NSString *> *gTerminalCachedCombinedAccountNames;
         NSString *url = [urlField.stringValue stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
         [ds setKeeperSettingsAPIKey:key];
         [ds setKeeperSettingsAPIURL:url];
+        // This sheet is only shown when current data source is Keeper Security (checked at method start).
+        self->_keeperConfigurationAttemptInProgress = YES;
         if (keyCompletion) {
             keyCompletion(key.length ? key : nil);
         }
@@ -1114,6 +1139,108 @@ static NSArray<NSString *> *gTerminalCachedCombinedAccountNames;
                                        forWindow:nil
                                             onOK:^{ [weakSelf reloadItems:nil]; }
                                     keyCompletion:nil];
+}
+
+// If the error message is JSON (e.g. {"error":"Please provide a valid api key","status":"error"}), extract the "error" value for display.
+static NSString *keeperDisplayMessageFromErrorString(NSString *message) {
+    if (!message.length) { return nil; }
+    if (![message containsString:@"{\""] && ![message containsString:@"\"error\""]) {
+        return message;
+    }
+    NSData *data = [message dataUsingEncoding:NSUTF8StringEncoding];
+    if (!data) { return message; }
+    id json = [NSJSONSerialization JSONObjectWithData:data options:0 error:NULL];
+    if (![json isKindOfClass:[NSDictionary class]]) { return message; }
+    NSString *error = [(NSDictionary *)json objectForKey:@"error"];
+    if ([error isKindOfClass:[NSString class]] && error.length > 0) {
+        return error;
+    }
+    NSString *msg = [(NSDictionary *)json objectForKey:@"message"];
+    if ([msg isKindOfClass:[NSString class]] && msg.length > 0) {
+        return msg;
+    }
+    return message;
+}
+
+- (void)showKeeperOperationErrorWithTitle:(NSString *)title error:(NSError *)error {
+    NSString *message = error.localizedDescription ?: @"";
+    message = keeperDisplayMessageFromErrorString(message) ?: message;
+    if (!message.length) {
+        message = @"An error occurred.";
+    }
+    NSAlert *alert = [[NSAlert alloc] init];
+    alert.messageText = title;
+    alert.informativeText = message;
+    [alert addButtonWithTitle:@"OK"];
+    [alert runSheetModalForWindow:self.window];
+}
+
+- (void)showPasswordUpdateSuccessForAccountName:(NSString *)accountName {
+    NSString *name = accountName.length ? accountName : @"Unknown";
+    NSAlert *alert = [[NSAlert alloc] init];
+    alert.messageText = @"Password updated";
+    alert.informativeText = [NSString stringWithFormat:@"The password for “%@” was updated successfully.", name];
+    [alert addButtonWithTitle:@"OK"];
+    [alert runSheetModalForWindow:self.window];
+}
+
+- (void)showRecordAddedSuccessForAccountName:(NSString *)accountName {
+    NSString *name = accountName.length ? accountName : @"Unknown";
+    NSAlert *alert = [[NSAlert alloc] init];
+    alert.messageText = @"Record added";
+    alert.informativeText = [NSString stringWithFormat:@"The record “%@” was added successfully.", name];
+    [alert addButtonWithTitle:@"OK"];
+    [alert runSheetModalForWindow:self.window];
+}
+
+- (void)showRecordDeletedSuccessForAccountName:(NSString *)accountName {
+    NSString *name = accountName.length ? accountName : @"Unknown";
+    NSAlert *alert = [[NSAlert alloc] init];
+    alert.messageText = @"Record deleted";
+    alert.informativeText = [NSString stringWithFormat:@"The record “%@” was deleted successfully.", name];
+    [alert addButtonWithTitle:@"OK"];
+    [alert runSheetModalForWindow:self.window];
+}
+
+- (void)keeperConnectionDidFail:(NSNotification *)notification {
+    if (![self.currentDataSource.name isEqualToString:@"Keeper Security"]) {
+        return;
+    }
+    _keeperConfigurationAttemptInProgress = NO;
+    NSString *message = notification.userInfo[@"error"];
+    message = keeperDisplayMessageFromErrorString(message) ?: message;
+    if (!message.length) {
+        message = @"Could not connect to Keeper. Check your API key and service URL, and ensure the Keeper Commander service is running.";
+    }
+    NSAlert *alert = [[NSAlert alloc] init];
+    alert.messageText = @"Keeper Connection Failed";
+    alert.informativeText = message;
+    [alert addButtonWithTitle:@"Reconfigure"];
+    [alert addButtonWithTitle:@"Cancel"];
+    const NSModalResponse response = [alert runModal];
+    if (response == NSAlertFirstButtonReturn) {
+        __weak __typeof(self) weakSelf = self;
+        [self showKeeperSettingsSheetWithEmptyAPIKey:NO
+                                           forWindow:self.window
+                                                onOK:^{ [weakSelf updateConfiguration]; }
+                                        keyCompletion:nil];
+    }
+    // Cancel: leave password manager selection unchanged; user can switch provider manually.
+}
+
+- (void)keeperConnectionDidSucceed:(NSNotification *)notification {
+    if (![self.currentDataSource.name isEqualToString:@"Keeper Security"]) {
+        return;
+    }
+    if (!_keeperConfigurationAttemptInProgress) {
+        return;  // Only show success alert after a configuration attempt (e.g. OK on settings sheet).
+    }
+    _keeperConfigurationAttemptInProgress = NO;
+    NSAlert *alert = [[NSAlert alloc] init];
+    alert.messageText = @"Keeper Connected";
+    alert.informativeText = @"Connected to Keeper successfully. Your records are now available.";
+    [alert addButtonWithTitle:@"OK"];
+    [alert runModal];
 }
 
 - (id<PasswordManagerAccount>)clickedAccount {
