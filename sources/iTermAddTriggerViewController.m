@@ -66,6 +66,9 @@ static const CGFloat kLabelWidth = 124;
     NSPopover *_popover;
     NSPopover *_contentRegexPopover;
     NSString *_contentRegex;
+    iTermEventTriggerParameterView *_eventParamView;
+    NSView *_regexRow;
+    NSView *_eventParamRow;
 }
 
 + (void)addTriggerForText:(NSString *)text
@@ -218,14 +221,20 @@ static const CGFloat kLabelWidth = 124;
     _regexTextField.stringValue = _regex;
     _contentRegexTextField.stringValue = _contentRegex ?: @"";
     _nameTextField.stringValue = trigger.name ?: @"";
-    const NSInteger i = [_prototypes indexOfObjectPassingTest:^BOOL(Trigger * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+    const NSInteger prototypeIndex = [_prototypes indexOfObjectPassingTest:^BOOL(Trigger * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
         return [obj isKindOfClass:trigger.class];
     }];
     _enabledButton.state = trigger.disabled ? NSControlStateValueOff : NSControlStateValueOn;
     _instantButton.state = trigger.partialLine ? NSControlStateValueOn : NSControlStateValueOff;
-    // i == NSNotFound can happen if you have a trigger of the wrong browser/terminal mode or a trigger from a future version of the app.
-    if (i != NSNotFound) {
-        [_actionButton selectItemAtIndex:i];
+    // prototypeIndex == NSNotFound can happen if you have a trigger of the wrong browser/terminal mode or a trigger from a future version of the app.
+    if (prototypeIndex != NSNotFound) {
+        // Find the menu item with matching tag (since filtering may cause popup indices to differ from prototype indices)
+        NSInteger itemIndex = [_actionButton.itemArray indexOfObjectPassingTest:^BOOL(NSMenuItem *item, NSUInteger idx, BOOL *stop) {
+            return item.tag == prototypeIndex;
+        }];
+        if (itemIndex != NSNotFound) {
+            [_actionButton selectItemAtIndex:itemIndex];
+        }
     }
     _currentTrigger = [Trigger triggerFromUntrustedDict:trigger.dictionaryValue];
     ITAssertWithMessage(_currentTrigger != nil, @"Failed with %@", trigger.dictionaryValue);  // If this fails then a trigger is not round-tripping to its dictionary representation.
@@ -233,12 +242,33 @@ static const CGFloat kLabelWidth = 124;
     _visualizationViewController.regex = _regex ?: @"";
     _contentRegexVisualizationViewController.regex = _contentRegex ?: @"";
     _matchType = trigger.matchType;
+
+    // Update match type button with types allowed by this trigger
+    [self updateMatchTypeButtonForTrigger:trigger];
+
+    [_matchTypeButton selectItemWithTag:_matchType];
     if (_browserMode) {
-        [_matchTypeButton selectItemWithTag:_matchType];
         [self updateContentRegexVisibility];
         _matchTypeButton.enabled = (trigger.allowedMatchTypes.count > 1);
+    } else {
+        [self updateEventTriggerVisibility];
+        // Filter action popup based on current match type
+        [self updateActionButtonForMatchType];
+        // Re-select the correct action after filtering
+        if (prototypeIndex != NSNotFound) {
+            NSInteger itemIndex = [_actionButton.itemArray indexOfObjectPassingTest:^BOOL(NSMenuItem *item, NSUInteger idx, BOOL *stop) {
+                return item.tag == prototypeIndex;
+            }];
+            if (itemIndex != NSNotFound) {
+                [_actionButton selectItemAtIndex:itemIndex];
+            }
+        }
+        // Set the event params if this is an event trigger
+        if (iTermTriggerMatchTypeIsEvent(_matchType) && trigger.eventParams) {
+            _eventParamView.eventParams = trigger.eventParams;
+        }
     }
-    
+
     // Show or hide the performance graph row based on whether the trigger has a performance histogram
     BOOL shouldShowGraph = trigger.performanceHistogram.count > 0;
 
@@ -290,18 +320,21 @@ static const CGFloat kLabelWidth = 124;
     stackView.orientation = NSUserInterfaceLayoutOrientationVertical;
     stackView.alignment = NSLayoutAttributeLeading;
     stackView.spacing = 8;
+    stackView.detachesHiddenViews = YES;
     [mainView addSubview:stackView];
     
-    // Match type selector row (browser mode only)
-    // I'm removing this for now because we don't have a trigger that allows multiple match types.
-    //   if (_browserMode) {
-    //        NSView *matchTypeRow = [self createMatchTypeRow];
-    //        [stackView addArrangedSubview:matchTypeRow];
-    //    }
+    // Match type selector row
+    NSView *matchTypeRow = [self createMatchTypeRow];
+    [stackView addArrangedSubview:matchTypeRow];
 
     // Regular Expression row
-    NSView *regexRow = [self createRowWithLabelText:@"Regular Expression:" hasVisualizationButton:YES];
-    [stackView addArrangedSubview:regexRow];
+    _regexRow = [self createRowWithLabelText:@"Regular Expression:" hasVisualizationButton:YES];
+    [stackView addArrangedSubview:_regexRow];
+
+    // Event parameter row (hidden by default)
+    _eventParamRow = [self createEventParamRow];
+    _eventParamRow.hidden = YES;
+    [stackView addArrangedSubview:_eventParamRow];
     
     // Content Regular Expression row (browser mode only)
     if (_browserMode) {
@@ -736,8 +769,27 @@ static const CGFloat kLabelWidth = 124;
     // Create popup button for match type
     _matchTypeButton = [[NSPopUpButton alloc] init];
     _matchTypeButton.translatesAutoresizingMaskIntoConstraints = NO;
-    [_matchTypeButton it_addItemWithTitle:@"URL" tag:iTermTriggerMatchTypeURLRegex];
-    [_matchTypeButton it_addItemWithTitle:@"Page Content" tag:iTermTriggerMatchTypePageContentRegex];
+    [_matchTypeButton it_addItemWithTitle:@"Regular Expression" tag:iTermTriggerMatchTypeRegex];
+
+    if (_browserMode) {
+        // Browser-specific match types
+        [_matchTypeButton it_addItemWithTitle:@"URL" tag:iTermTriggerMatchTypeURLRegex];
+        [_matchTypeButton it_addItemWithTitle:@"Page Content" tag:iTermTriggerMatchTypePageContentRegex];
+    } else {
+        // Terminal-specific event types, sorted alphabetically by display name
+        [[_matchTypeButton menu] addItem:[NSMenuItem separatorItem]];
+        NSArray<NSNumber *> *sortedEventTypes = [[iTermEventTriggerMatchTypeHelper allEventTypes] sortedArrayUsingComparator:^NSComparisonResult(NSNumber *a, NSNumber *b) {
+            NSString *titleA = [iTermEventTriggerMatchTypeHelper displayNameFor:(iTermTriggerMatchType)a.integerValue];
+            NSString *titleB = [iTermEventTriggerMatchTypeHelper displayNameFor:(iTermTriggerMatchType)b.integerValue];
+            return [titleA localizedCaseInsensitiveCompare:titleB];
+        }];
+        for (NSNumber *typeNum in sortedEventTypes) {
+            iTermTriggerMatchType type = (iTermTriggerMatchType)typeNum.integerValue;
+            NSString *title = [iTermEventTriggerMatchTypeHelper displayNameFor:type];
+            [_matchTypeButton it_addItemWithTitle:title tag:type];
+        }
+    }
+
     _matchTypeButton.target = self;
     _matchTypeButton.action = @selector(matchTypeDidChange:);
     [row addSubview:_matchTypeButton];
@@ -924,6 +976,89 @@ static const CGFloat kLabelWidth = 124;
                                                   multiplier:1.0
                                                     constant:28]];
     
+    return row;
+}
+
+- (NSView *)createEventParamRow {
+    NSView *row = [[NSView alloc] init];
+    row.translatesAutoresizingMaskIntoConstraints = NO;
+
+    // Create label
+    NSTextField *label = [[NSTextField alloc] init];
+    label.translatesAutoresizingMaskIntoConstraints = NO;
+    label.stringValue = @"Parameters:";
+    label.editable = NO;
+    label.bordered = NO;
+    label.backgroundColor = [NSColor clearColor];
+    label.alignment = NSTextAlignmentRight;
+    label.lineBreakMode = NSLineBreakByClipping;
+    label.usesSingleLineMode = YES;
+    [row addSubview:label];
+
+    // Create event parameter view
+    _eventParamView = [[iTermEventTriggerParameterView alloc] initWithFrame:NSZeroRect];
+    _eventParamView.translatesAutoresizingMaskIntoConstraints = NO;
+    __weak __typeof(self) weakSelf = self;
+    _eventParamView.onParametersChanged = ^{
+        __typeof(self) strongSelf = weakSelf;
+        if (strongSelf && strongSelf->_didChange) {
+            strongSelf->_didChange();
+        }
+    };
+    [row addSubview:_eventParamView];
+
+    // Constraints
+    [row addConstraint:[NSLayoutConstraint constraintWithItem:label
+                                                    attribute:NSLayoutAttributeLeading
+                                                    relatedBy:NSLayoutRelationEqual
+                                                       toItem:row
+                                                    attribute:NSLayoutAttributeLeading
+                                                   multiplier:1.0
+                                                     constant:0]];
+    [row addConstraint:[NSLayoutConstraint constraintWithItem:label
+                                                    attribute:NSLayoutAttributeWidth
+                                                    relatedBy:NSLayoutRelationEqual
+                                                       toItem:nil
+                                                    attribute:NSLayoutAttributeNotAnAttribute
+                                                   multiplier:1.0
+                                                     constant:kLabelWidth]];
+    [row addConstraint:[NSLayoutConstraint constraintWithItem:label
+                                                    attribute:NSLayoutAttributeTop
+                                                    relatedBy:NSLayoutRelationEqual
+                                                       toItem:row
+                                                    attribute:NSLayoutAttributeTop
+                                                   multiplier:1.0
+                                                     constant:0]];
+
+    [row addConstraint:[NSLayoutConstraint constraintWithItem:_eventParamView
+                                                    attribute:NSLayoutAttributeLeading
+                                                    relatedBy:NSLayoutRelationEqual
+                                                       toItem:label
+                                                    attribute:NSLayoutAttributeTrailing
+                                                   multiplier:1.0
+                                                     constant:6]];
+    [row addConstraint:[NSLayoutConstraint constraintWithItem:_eventParamView
+                                                    attribute:NSLayoutAttributeTrailing
+                                                    relatedBy:NSLayoutRelationEqual
+                                                       toItem:row
+                                                    attribute:NSLayoutAttributeTrailing
+                                                   multiplier:1.0
+                                                     constant:0]];
+    [row addConstraint:[NSLayoutConstraint constraintWithItem:_eventParamView
+                                                    attribute:NSLayoutAttributeTop
+                                                    relatedBy:NSLayoutRelationEqual
+                                                       toItem:row
+                                                    attribute:NSLayoutAttributeTop
+                                                   multiplier:1.0
+                                                     constant:0]];
+    [row addConstraint:[NSLayoutConstraint constraintWithItem:_eventParamView
+                                                    attribute:NSLayoutAttributeBottom
+                                                    relatedBy:NSLayoutRelationEqual
+                                                       toItem:row
+                                                    attribute:NSLayoutAttributeBottom
+                                                   multiplier:1.0
+                                                     constant:0]];
+
     return row;
 }
 
@@ -1203,6 +1338,7 @@ static const CGFloat kLabelWidth = 124;
     [_prototypes enumerateObjectsUsingBlock:^(Trigger *_Nonnull trigger, NSUInteger idx, BOOL * _Nonnull stop) {
         [trigger reloadData];
         [_actionButton addItemWithTitle:[trigger.class title]];
+        _actionButton.lastItem.tag = idx;  // Store prototype index in tag for later lookup
     }];
 
     // Select highlight with colors based on text.
@@ -1276,10 +1412,21 @@ static const CGFloat kLabelWidth = 124;
 }
 
 - (IBAction)selectionDidChange:(id)sender {
+    // Preserve the current match type and event params - action change doesn't affect match type options
+    NSDictionary *savedEventParams = nil;
+    if (iTermTriggerMatchTypeIsEvent(_matchType) && _eventParamView) {
+        savedEventParams = [_eventParamView.eventParams copy];
+    }
+
     Trigger *prototype = [self currentPrototype];
+
     NSMutableDictionary *dict = prototype.dictionaryValue.mutableCopy;
     dict[kTriggerRegexKey] = _regexTextField.stringValue ?: @"";
     dict[kTriggerNameKey] = _nameTextField.stringValue ?: @"";
+    dict[kTriggerMatchTypeKey] = @(_matchType);
+    if (savedEventParams.count > 0) {
+        dict[kTriggerEventParamsKey] = savedEventParams;
+    }
     prototype = [Trigger triggerFromUntrustedDict:dict];
     assert(prototype != nil);
     [self setTrigger:prototype];
@@ -1291,27 +1438,124 @@ static const CGFloat kLabelWidth = 124;
 - (IBAction)matchTypeDidChange:(id)sender {
     _matchType = (iTermTriggerMatchType)_matchTypeButton.selectedTag;
     [self updateContentRegexVisibility];
+    [self updateEventTriggerVisibility];
+    [self updateActionButtonForMatchType];
     if (_didChange) {
         _didChange();
     }
+}
+
+- (void)updateActionButtonForMatchType {
+    if (_browserMode) {
+        return;
+    }
+
+    // Remember the currently selected action class
+    Trigger *currentPrototype = [self currentPrototype];
+    Class currentClass = currentPrototype.class;
+
+    // Rebuild the action popup with only compatible actions
+    [_actionButton removeAllItems];
+
+    NSInteger indexToSelect = 0;
+    NSInteger currentIndex = 0;
+
+    for (Trigger *prototype in _prototypes) {
+        NSSet<NSNumber *> *allowedTypes = prototype.allowedMatchTypes;
+        if ([allowedTypes containsObject:@(_matchType)]) {
+            [_actionButton addItemWithTitle:[prototype.class title]];
+            // Track the index of the item
+            NSMenuItem *item = _actionButton.lastItem;
+            item.tag = currentIndex;
+
+            if (prototype.class == currentClass) {
+                indexToSelect = _actionButton.numberOfItems - 1;
+            }
+        }
+        currentIndex++;
+    }
+
+    // Select the appropriate action
+    if (_actionButton.numberOfItems > 0) {
+        [_actionButton selectItemAtIndex:indexToSelect];
+
+        // Update the trigger view for the selected action
+        Trigger *selectedPrototype = _prototypes[_actionButton.selectedItem.tag];
+        // If we already have a current trigger of the same class, preserve its param value
+        id paramValue = ([_currentTrigger isKindOfClass:selectedPrototype.class]) ? _currentTrigger.param : selectedPrototype.param;
+        [self updateCustomViewForTrigger:selectedPrototype value:paramValue];
+        if (![_currentTrigger isKindOfClass:selectedPrototype.class]) {
+            _currentTrigger = [Trigger triggerFromUntrustedDict:selectedPrototype.dictionaryValue];
+        }
+    }
+}
+
+- (void)updateEventTriggerVisibility {
+    BOOL isEventTrigger = iTermTriggerMatchTypeIsEvent(_matchType);
+    _regexRow.hidden = isEventTrigger;
+    _eventParamRow.hidden = !isEventTrigger;
+
+    // Instant (partial line) doesn't apply to event triggers
+    _instantButton.enabled = !isEventTrigger;
+    if (isEventTrigger) {
+        _instantButton.state = NSControlStateValueOff;
+        [_eventParamView configureForMatchType:_matchType];
+    }
+}
+
+- (void)updateMatchTypeButtonForTrigger:(Trigger *)trigger {
+    if (_browserMode) {
+        // Browser mode doesn't change match types based on action
+        return;
+    }
+
+    // Clear the popup
+    [_matchTypeButton removeAllItems];
+
+    // Always add regex
+    [_matchTypeButton it_addItemWithTitle:@"Regular Expression" tag:iTermTriggerMatchTypeRegex];
+
+    // Add all event types, sorted alphabetically by display name
+    NSArray<NSNumber *> *sortedEventTypes = [[iTermEventTriggerMatchTypeHelper allEventTypes] sortedArrayUsingComparator:^NSComparisonResult(NSNumber *a, NSNumber *b) {
+        NSString *titleA = [iTermEventTriggerMatchTypeHelper displayNameFor:(iTermTriggerMatchType)a.integerValue];
+        NSString *titleB = [iTermEventTriggerMatchTypeHelper displayNameFor:(iTermTriggerMatchType)b.integerValue];
+        return [titleA localizedCaseInsensitiveCompare:titleB];
+    }];
+
+    [[_matchTypeButton menu] addItem:[NSMenuItem separatorItem]];
+    for (NSNumber *typeNum in sortedEventTypes) {
+        iTermTriggerMatchType type = (iTermTriggerMatchType)typeNum.integerValue;
+        NSString *title = [iTermEventTriggerMatchTypeHelper displayNameFor:type];
+        [_matchTypeButton it_addItemWithTitle:title tag:type];
+    }
+
+    [_matchTypeButton selectItemWithTag:_matchType];
+    [self updateEventTriggerVisibility];
 }
 
 - (IBAction)ok:(id)sender {
     Trigger *trigger = _currentTrigger;
     const BOOL instant = _instantButton.state == NSControlStateValueOn;
     const BOOL updateProfile = _updateProfileButton.state == NSControlStateValueOn;
+    const BOOL isEventTrigger = iTermTriggerMatchTypeIsEvent(_matchType);
+
     NSMutableDictionary *mutableTriggerDictionary = [@{ kTriggerActionKey: trigger.action,
-                                                        kTriggerRegexKey: _regexTextField.stringValue,
+                                                        kTriggerRegexKey: isEventTrigger ? @"" : _regexTextField.stringValue,
                                                         kTriggerContentRegexKey: _contentRegexTextField.stringValue ?: @"",
                                                         kTriggerParameterKey: [trigger param] ?: @0,
                                                         kTriggerPartialLineKey: @(instant),
                                                         kTriggerDisabledKey: @NO,
+                                                        kTriggerMatchTypeKey: @(_matchType),
                                                         kTriggerNameKey: _nameTextField.stringValue ?: [NSNull null] } mutableCopy];
-    
-    if (_browserMode) {
-        mutableTriggerDictionary[kTriggerMatchTypeKey] = @(_matchType);
+
+    // Add event params for event triggers
+    if (isEventTrigger && _eventParamView) {
+        NSDictionary *eventParams = _eventParamView.eventParams;
+        if (eventParams.count > 0) {
+            mutableTriggerDictionary[kTriggerEventParamsKey] = eventParams;
+        }
     }
-    
+
     NSDictionary *triggerDictionary = [mutableTriggerDictionary dictionaryByRemovingNullValues];
     [iTermUserDefaults setAddTriggerInstant:instant];
     [iTermUserDefaults setAddTriggerUpdateProfile:updateProfile];
@@ -1323,8 +1567,17 @@ static const CGFloat kLabelWidth = 124;
 }
 
 - (Trigger *)currentPrototype {
+    // Use tag which stores the index into _prototypes (may differ from popup index due to filtering)
+    NSMenuItem *selectedItem = _actionButton.selectedItem;
+    if (selectedItem && selectedItem.tag >= 0 && selectedItem.tag < (NSInteger)_prototypes.count) {
+        return _prototypes[selectedItem.tag];
+    }
+    // Fallback to index (for initial state or browser mode)
     const NSInteger index = [_actionButton indexOfSelectedItem];
-    return _prototypes[index];
+    if (index >= 0 && index < (NSInteger)_prototypes.count) {
+        return _prototypes[index];
+    }
+    return _prototypes.firstObject;
 }
 
 - (void)updateCustomViewForTrigger:(Trigger *)trigger value:(id)value {
@@ -1450,6 +1703,13 @@ static const CGFloat kLabelWidth = 124;
 
 - (iTermTriggerMatchType)matchType {
     return _matchType;
+}
+
+- (NSDictionary<NSString *, id> *)eventParams {
+    if (iTermTriggerMatchTypeIsEvent(_matchType) && _eventParamView) {
+        return _eventParamView.eventParams;
+    }
+    return nil;
 }
 
 - (void)willHide {

@@ -2010,5 +2010,263 @@ additionalWordCharacters:(NSString *)additionalWordCharacters
     return _state.intervalTreeObserver;
 }
 
+#pragma mark - Event Triggers
+
+- (void)fireEventTrigger:(Trigger *)trigger
+         capturedStrings:(NSArray<NSString *> *)capturedStrings
+        useInterpolation:(BOOL)useInterpolation {
+    [iTermGCD assertMainQueueSafe];
+    DLog(@"[%@] fireEventTrigger: %@ capturedStrings=%@ useInterpolation=%@",
+         self.delegate, trigger.action, capturedStrings, @(useInterpolation));
+
+    // Use values from _state (immutable, safe to read from main thread)
+    long long absoluteLineNumber = _state.numberOfScrollbackLines +
+                                   _state.cursorY - 1 +
+                                   _state.cumulativeScrollbackOverflow;
+
+    long long startAbsLineNumber = 0;
+    iTermStringLine *stringLine = [_state stringLineAsStringAtAbsoluteLineNumber:absoluteLineNumber
+                                                                        startPtr:&startAbsLineNumber];
+    if (!stringLine) {
+        DLog(@"[%@] No string line at absoluteLineNumber %lld, using empty string", self.delegate, absoluteLineNumber);
+        stringLine = [iTermStringLine stringLineWithString:@""];
+    }
+
+    // Build captured ranges (all at position 0 since there's no real match)
+    NSRange ranges[capturedStrings.count ?: 1];
+    for (NSUInteger i = 0; i < (capturedStrings.count ?: 1); i++) {
+        ranges[i] = NSMakeRange(0, 0);
+    }
+
+    BOOL stop = NO;
+    DLog(@"[%@] Performing event trigger action at absLine %lld", self.delegate, startAbsLineNumber);
+    [trigger performActionWithCapturedStrings:capturedStrings.count ? capturedStrings : @[@""]
+                               capturedRanges:ranges
+                                    inSession:self
+                                     onString:stringLine
+                         atAbsoluteLineNumber:startAbsLineNumber
+                             useInterpolation:useInterpolation
+                                         stop:&stop];
+    DLog(@"[%@] Event trigger action completed, stop=%@", self.delegate, @(stop));
+}
+
+#pragma mark - iTermTriggerSession (Event Triggers)
+
+// Event triggers run entirely on the main thread. These methods implement iTermTriggerSession
+// by either calling the delegate directly or using mutateAsynchronously: for state changes.
+
+- (void)triggerSessionRingBell:(Trigger *)trigger {
+    [self.delegate screenActivateBellAudibly:YES visibly:YES showIndicator:YES quell:NO];
+}
+
+- (void)triggerSessionShowCapturedOutputTool:(Trigger *)trigger {
+    ITCriticalError(NO, @"triggerSessionShowCapturedOutputTool: should not be called for event triggers");
+}
+
+- (BOOL)triggerSessionIsShellIntegrationInstalled:(Trigger *)trigger {
+    return _state.shellIntegrationInstalled;
+}
+
+- (void)triggerSessionShowShellIntegrationRequiredAnnouncement:(Trigger *)trigger {
+    [self.delegate triggerSideEffectShowShellIntegrationRequiredAnnouncement];
+}
+
+- (void)triggerSession:(Trigger *)trigger didCaptureOutput:(CapturedOutput *)capturedOutput {
+    ITCriticalError(NO, @"triggerSession:didCaptureOutput: should not be called for event triggers");
+}
+
+- (void)triggerSessionShowCapturedOutputToolNotVisibleAnnouncementIfNeeded:(Trigger *)trigger {
+    ITCriticalError(NO, @"triggerSessionShowCapturedOutputToolNotVisibleAnnouncementIfNeeded: should not be called for event triggers");
+}
+
+- (void)triggerSession:(Trigger *)trigger
+launchCoprocessWithCommand:(NSString *)command
+            identifier:(NSString * _Nullable)identifier
+                silent:(BOOL)silent {
+    NSString *triggerTitle = [NSString stringWithFormat:@"%@ trigger", [[trigger.class title] stringByRemovingSuffix:@"…"]];
+    [self.delegate triggerSideEffectLaunchCoprocessWithCommand:command
+                                                    identifier:identifier
+                                                        silent:silent
+                                                  triggerTitle:triggerTitle];
+}
+
+- (id<iTermTriggerScopeProvider>)triggerSessionVariableScopeProvider:(Trigger *)trigger {
+    return self;
+}
+
+#pragma mark - iTermTriggerScopeProvider
+
+- (void)performBlockWithScope:(void (^)(iTermVariableScope *scope, id<iTermObject> object))block {
+    // For event triggers on main thread, we can call directly
+    block([self.delegate triggerSideEffectVariableScope], (id<iTermObject>)self.delegate);
+}
+
+- (id<iTermTriggerCallbackScheduler>)triggerCallbackScheduler {
+    return self;
+}
+
+#pragma mark - iTermTriggerCallbackScheduler
+
+- (void)scheduleTriggerCallback:(void (^)(void))block {
+    // For event triggers on main thread, execute immediately
+    block();
+}
+
+- (BOOL)triggerSessionShouldUseInterpolatedStrings:(Trigger *)trigger {
+    return _state.config.triggerParametersUseInterpolatedStrings;
+}
+
+- (void)triggerSession:(Trigger *)trigger postUserNotificationWithMessage:(NSString *)message rateLimit:(iTermRateLimitedUpdate *)rateLimit {
+    [rateLimit performRateLimitedBlock:^{
+        [self.delegate triggerSideEffectPostUserNotificationWithMessage:message];
+    }];
+}
+
+- (void)triggerSession:(Trigger *)trigger
+  highlightTextInRange:(NSRange)rangeInScreenChars
+          absoluteLine:(long long)lineNumber
+                colors:(NSDictionary<NSString *, NSColor *> *)colors {
+    ITCriticalError(NO, @"triggerSession:highlightTextInRange:absoluteLine:colors: should not be called for event triggers");
+}
+
+- (void)triggerSession:(Trigger *)trigger
+              setRange:(NSRange)range
+          absoluteLine:(long long)absoluteLineNumber
+                   sgr:(CSIParam)csi {
+    ITCriticalError(NO, @"triggerSession:setRange:absoluteLine:sgr: should not be called for event triggers");
+}
+
+- (void)triggerSession:(Trigger *)trigger saveCursorLineAndStopScrolling:(BOOL)stopScrolling {
+    const long long line = _state.cumulativeScrollbackOverflow + _state.numberOfScrollbackLines + _state.currentGrid.cursorY;
+    [self mutateAsynchronously:^(VT100Terminal *terminal,
+                                  VT100ScreenMutableState *mutableState,
+                                  id<VT100ScreenDelegate> delegate) {
+        [mutableState saveCursorLine];
+    }];
+    if (stopScrolling) {
+        [self.delegate triggerSideEffectStopScrollingAtLine:line];
+    }
+}
+
+- (void)triggerSession:(Trigger *)trigger openPasswordManagerToAccountName:(NSString *)accountName {
+    [self.delegate triggerSideEffectOpenPasswordManagerToAccountName:accountName];
+}
+
+- (void)triggerSession:(Trigger *)trigger
+            runCommand:(NSString *)command
+        withRunnerPool:(iTermBackgroundCommandRunnerPool *)pool {
+    [self.delegate triggerSideEffectRunBackgroundCommand:command pool:pool];
+}
+
+- (void)triggerSession:(Trigger *)trigger writeText:(NSString *)text {
+    [self.delegate triggerWriteTextWithoutBroadcasting:text];
+}
+
+- (void)triggerSession:(Trigger *)trigger setRemoteHostName:(NSString *)remoteHost {
+    ITCriticalError(NO, @"triggerSession:setRemoteHostName: should not be called for event triggers");
+}
+
+- (void)triggerSession:(Trigger *)trigger setCurrentDirectory:(NSString *)currentDirectory {
+    ITCriticalError(NO, @"triggerSession:setCurrentDirectory: should not be called for event triggers");
+}
+
+- (void)triggerSession:(Trigger *)trigger didChangeNameTo:(NSString *)newName {
+    [self.delegate triggerSideEffectSetTitle:newName];
+}
+
+- (void)triggerSession:(Trigger *)trigger didDetectPromptAtAbsLine:(long long)lineNumber range:(NSRange)wrappedRange {
+    ITCriticalError(NO, @"triggerSession:didDetectPromptAtAbsLine:range: should not be called for event triggers");
+}
+
+- (void)triggerSession:(Trigger *)trigger
+    makeHyperlinkToURL:(NSURL *)url
+               inRange:(NSRange)rangeInString
+                  line:(long long)lineNumber {
+    ITCriticalError(NO, @"triggerSession:makeHyperlinkToURL:inRange:line: should not be called for event triggers");
+}
+
+- (void)triggerSession:(Trigger *)trigger
+                invoke:(NSString *)invocation
+         withVariables:(NSDictionary *)temporaryVariables
+              captures:(NSArray<NSString *> *)captureStringArray {
+    [self.delegate triggerSideEffectInvokeFunctionCall:invocation
+                                         withVariables:temporaryVariables
+                                              captures:captureStringArray
+                                               trigger:trigger];
+}
+
+- (id<PTYAnnotationReading>)triggerSession:(Trigger *)trigger
+                     makeAnnotationInRange:(NSRange)rangeInScreenChars
+                                      line:(long long)lineNumber {
+    ITCriticalError(NO, @"triggerSession:makeAnnotationInRange:line: should not be called for event triggers");
+    return nil;
+}
+
+- (void)triggerSession:(Trigger *)trigger
+         setAnnotation:(id<PTYAnnotationReading>)annotation
+              stringTo:(NSString *)stringValue {
+    ITCriticalError(NO, @"triggerSession:setAnnotation:stringTo: should not be called for event triggers");
+}
+
+- (void)triggerSession:(Trigger *)trigger
+       highlightLineAt:(VT100GridAbsCoord)absCoord
+                colors:(NSDictionary *)colors {
+    [self mutateAsynchronously:^(VT100Terminal *terminal,
+                                  VT100ScreenMutableState *mutableState,
+                                  id<VT100ScreenDelegate> delegate) {
+        id<iTermTriggerSession> session = (id<iTermTriggerSession>)mutableState;
+        [session triggerSession:trigger highlightLineAt:absCoord colors:colors];
+    }];
+}
+
+- (void)triggerSession:(Trigger *)trigger injectData:(NSData *)data {
+    [self mutateAsynchronously:^(VT100Terminal *terminal,
+                                  VT100ScreenMutableState *mutableState,
+                                  id<VT100ScreenDelegate> delegate) {
+        [mutableState injectData:data];
+    }];
+}
+
+- (void)triggerSession:(Trigger *)trigger setVariableNamed:(NSString *)name toValue:(id)value {
+    [self.delegate triggerSideEffectSetValue:value forVariableNamed:name];
+}
+
+- (void)triggerSession:(Trigger *)trigger
+  showAlertWithMessage:(NSString *)message
+             rateLimit:(iTermRateLimitedUpdate *)rateLimit
+               disable:(void (^)(void))disable {
+    [self.delegate triggerSideEffectShowAlertWithMessage:message
+                                               rateLimit:rateLimit
+                                                 disable:disable];
+}
+
+- (BOOL)triggerSessionIsInAlternateScreen {
+    return _state.currentGrid == _state.altGrid;
+}
+
+- (void)triggerSession:(Trigger *)trigger
+  addNamedMarkWithName:(NSString *)identifier
+        atAbsoluteLine:(long long)absLine {
+    [self mutateAsynchronously:^(VT100Terminal *terminal,
+                                  VT100ScreenMutableState *mutableState,
+                                  id<VT100ScreenDelegate> delegate) {
+        id<iTermTriggerSession> session = (id<iTermTriggerSession>)mutableState;
+        [session triggerSession:trigger addNamedMarkWithName:identifier atAbsoluteLine:absLine];
+    }];
+}
+
+- (void)triggerSession:(Trigger *)trigger foldFromNamedMark:(NSString *)identifier toAbsoluteLine:(long long)absLine {
+    [self mutateAsynchronously:^(VT100Terminal *terminal,
+                                  VT100ScreenMutableState *mutableState,
+                                  id<VT100ScreenDelegate> delegate) {
+        id<iTermTriggerSession> session = (id<iTermTriggerSession>)mutableState;
+        [session triggerSession:trigger foldFromNamedMark:identifier toAbsoluteLine:absLine];
+    }];
+}
+
+- (void)triggerSetBufferInput:(Trigger *)trigger shouldBuffer:(BOOL)shouldBuffer {
+    [self.delegate triggerSessionSetBufferInput:shouldBuffer];
+}
+
 @end
 

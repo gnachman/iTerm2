@@ -21,6 +21,13 @@ class InjectTrigger: Trigger {
         return true
     }
 
+    // Requires a live session to inject data
+    override var allowedMatchTypes: Set<NSNumber> {
+        var set: Set<NSNumber> = [NSNumber(value: iTermTriggerMatchType.regex.rawValue)]
+        set.formUnion(EventTriggerMatchTypeHelper.allEventTypesExceptSessionEndedSet)
+        return set
+    }
+
     override func triggerOptionalParameterPlaceholder(withInterpolation interpolation: Bool) -> String? {
         return "Use \\e for esc, \\a for ^G."
     }

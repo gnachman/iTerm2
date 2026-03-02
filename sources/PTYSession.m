@@ -604,6 +604,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTurdType) {
 
     iTermActivityInfo _activityInfo;
     TriggerController *_triggerWindowController;
+    iTermEventTriggerEvaluator *_eventTriggerEvaluator;
 
     // If positive focus reports will not be sent.
     NSInteger _disableFocusReporting;
@@ -837,6 +838,11 @@ typedef NS_ENUM(NSUInteger, PTYSessionTurdType) {
             });
         }];
         _expect = [[iTermExpect alloc] initDry:YES];
+        _eventTriggerEvaluator = [[iTermEventTriggerEvaluator alloc] initWithSessionDescription:_guid];
+        __weak VT100Screen *weakScreen = _screen;
+        _eventTriggerEvaluator.fireTriggerHandler = ^(Trigger *trigger, NSArray<NSString *> *capturedStrings, BOOL useInterpolation) {
+            [weakScreen fireEventTrigger:trigger capturedStrings:capturedStrings useInterpolation:useInterpolation];
+        };
         _sshState = iTermSSHStateNone;
         _hostStack = [[NSMutableArray alloc] init];
         [iTermCPUUtilization instanceForSessionID:_guid];
@@ -3449,6 +3455,11 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
 }
 
 - (void)setExited:(BOOL)exited {
+    if (exited && !_exited) {
+        if (_eventTriggerEvaluator.hasSessionEndedTrigger) {
+            [_eventTriggerEvaluator sessionEnded];
+        }
+    }
     _exited = exited;
     [_screen mutateAsynchronously:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
         mutableState.exited = exited;
@@ -3884,7 +3895,20 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
 - (NSArray<iTermTuple<NSString *, NSNumber *> *> *)triggerTuples {
     NSArray<NSDictionary *> *triggers = self.profile[KEY_TRIGGERS];
     return [triggers mapWithBlock:^id(NSDictionary *dict) {
-        return [iTermTuple tupleWithObject:dict[kTriggerNameKey] ?: dict[kTriggerRegexKey]
+        NSString *title = dict[kTriggerNameKey];
+        if (title.length == 0) {
+            // Try the regex
+            title = dict[kTriggerRegexKey];
+        }
+        if (title.length == 0) {
+            // Synthesize a title from the trigger's description (e.g., "Send Text 'hello'")
+            Trigger *trigger = [Trigger triggerFromUntrustedDict:dict];
+            title = trigger.description;
+        }
+        if (title.length == 0) {
+            title = @"(Unnamed trigger)";
+        }
+        return [iTermTuple tupleWithObject:title
                                  andObject:@(![dict[kTriggerDisabledKey] boolValue])];
     }];
 }
@@ -14520,6 +14544,9 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 }
 
 - (void)screenPromptDidEndWithMark:(id<VT100ScreenMarkReading>)mark {
+    if (_eventTriggerEvaluator.hasPromptDetectedTrigger) {
+        [_eventTriggerEvaluator promptDetected];
+    }
     _composerManager.haveShellProvidedText = NO;
     [_promptSubscriptions enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, ITMNotificationRequest * _Nonnull obj, BOOL * _Nonnull stop) {
         if (obj.argumentsOneOfCase == ITMNotificationRequest_Arguments_OneOfCase_GPBUnsetOneOfCase ||
@@ -15456,6 +15483,17 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
                                ssh:(BOOL)ssh {
     DLog(@"Current host did change to %@, pwd=%@, ssh=%@. %@", host, workingDirectory, @(ssh), self);
     NSString *previousHostName = _currentHost.hostname;
+    NSString *previousUsername = _currentHost.username;
+
+    // Fire event triggers for host/user changes
+    if (_eventTriggerEvaluator.hasHostChangedTrigger && host.hostname &&
+        ![host.hostname isEqualToString:previousHostName]) {
+        [_eventTriggerEvaluator hostChangedTo:host.hostname];
+    }
+    if (_eventTriggerEvaluator.hasUserChangedTrigger && host.username &&
+        ![host.username isEqualToString:previousUsername]) {
+        [_eventTriggerEvaluator userChangedTo:host.username];
+    }
 
     NSNull *null = [NSNull null];
     NSDictionary *variablesUpdate = @{ iTermVariableKeySessionHostname: host.hostname ?: null,
@@ -15734,6 +15772,9 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 - (void)screenCurrentDirectoryDidChangeTo:(NSString *)newPath
                                remoteHost:(id<VT100RemoteHostReading> _Nullable)remoteHost {
     DLog(@"%@\n%@", newPath, [NSThread callStackSymbols]);
+    if (_eventTriggerEvaluator.hasDirectoryChangedTrigger && newPath) {
+        [_eventTriggerEvaluator directoryChangedTo:newPath];
+    }
     [_directoryTracker screenWillChangeCurrentDirectoryTo:newPath remoteHost:remoteHost];
     [self.variablesScope setValue:newPath forVariableNamed:iTermVariableKeySessionPath];
 
@@ -15753,6 +15794,12 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 
 - (void)screenDidReceiveCustomEscapeSequenceWithParameters:(NSDictionary<NSString *, NSString *> *)parameters
                                                    payload:(NSString *)payload {
+    if (_eventTriggerEvaluator.hasCustomEscapeSequenceTrigger) {
+        NSString *identifier = parameters[@"id"] ?: @"";
+        iTermEventCustomEscapeSequenceInfo *info = [[iTermEventCustomEscapeSequenceInfo alloc] initWithIdentifier:identifier
+                                                                                                          payload:payload ?: @""];
+        [_eventTriggerEvaluator customEscapeSequenceWithInfo:info];
+    }
     ITMNotification *notification = [[[ITMNotification alloc] init] autorelease];
     notification.customEscapeSequenceNotification = [[[ITMCustomEscapeSequenceNotification alloc] init] autorelease];
     notification.customEscapeSequenceNotification.session = self.guid;
@@ -16017,6 +16064,9 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
                     inDirectory:(NSString *)directory
                            mark:(id<VT100ScreenMarkReading>)mark
                          paused:(BOOL)paused {
+    if (_eventTriggerEvaluator.hasLongRunningCommandTrigger) {
+        [_eventTriggerEvaluator commandStartedWithCommand:command];
+    }
     if (IsSecureEventInputEnabled()) {
         [[self appSwitchingPreventionDetector] didExecuteCommand:command];
     }
@@ -16097,6 +16147,16 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 }
 
 - (void)screenCommandDidExitWithCode:(int)code mark:(id<VT100ScreenMarkReading>)maybeMark {
+    if (_eventTriggerEvaluator.hasCommandFinishedTrigger) {
+        NSTimeInterval duration = 0;
+        if (maybeMark.startDate) {
+            duration = -[maybeMark.startDate timeIntervalSinceNow];
+        }
+        iTermEventCommandFinishedInfo *info = [[iTermEventCommandFinishedInfo alloc] initWithExitCode:code
+                                                                                              command:maybeMark.command
+                                                                                             duration:duration];
+        [_eventTriggerEvaluator commandFinishedWithInfo:info];
+    }
     [_appSwitchingPreventionDetector commandDidFinishWithStatus:code];
     [_promptSubscriptions enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, ITMNotificationRequest * _Nonnull obj, BOOL * _Nonnull stop) {
         if ([obj.promptMonitorRequest.modesArray it_contains:ITMPromptMonitorMode_CommandEnd]) {
@@ -16260,6 +16320,8 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
         _config.triggerParametersUseInterpolatedStrings = [iTermProfilePreferences boolForKey:KEY_TRIGGERS_USE_INTERPOLATED_STRINGS
                                                                                     inProfile:self.profile];
         _config.triggerProfileDicts = [iTermProfilePreferences objectForKey:KEY_TRIGGERS inProfile:self.profile];
+        [_eventTriggerEvaluator loadFromProfileArray:_config.triggerProfileDicts];
+        _eventTriggerEvaluator.triggerParametersUseInterpolatedStrings = _config.triggerParametersUseInterpolatedStrings;
         _config.useSeparateColorsForLightAndDarkMode = [iTermProfilePreferences boolForKey:KEY_USE_SEPARATE_COLORS_FOR_LIGHT_AND_DARK_MODE
                                                                                  inProfile:self.profile];
         DLog(@"Set min contrast in config to %f using key %@",
@@ -16462,6 +16524,9 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     if ([self shouldIgnoreBellWhichIsAudible:audibleBell
                                      visible:flashBell]) {
         return;
+    }
+    if (_eventTriggerEvaluator.hasBellReceivedTrigger) {
+        [_eventTriggerEvaluator bellReceived];
     }
     BOOL notified = NO;
     if (quell) {
@@ -17428,6 +17493,9 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
         // jiggle but we shouldn't count that as activity.
         if (self.shell.winSizeController.timeSinceLastJiggle > 0.25) {
             _newOutput = YES;
+            if (_eventTriggerEvaluator.hasIdleTrigger || _eventTriggerEvaluator.hasActivityAfterIdleTrigger) {
+                [_eventTriggerEvaluator outputReceived];
+            }
         }
 
         // Make sure the screen gets redrawn soonish

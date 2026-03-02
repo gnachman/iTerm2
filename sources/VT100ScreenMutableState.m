@@ -4612,6 +4612,7 @@ lengthExcludingInBandSignaling:lengthExcludingInBandSignaling
         lengthTotal:data.length
 lengthExcludingInBandSignaling:data.length
        highPriority:YES];
+    [self scheduleTokenExecution];
 }
 
 #pragma mark - Triggers

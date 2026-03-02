@@ -29,6 +29,11 @@
     return @"Enter annotation";
 }
 
+// Annotations require captured text ranges, so not compatible with event triggers
+- (NSSet<NSNumber *> *)allowedMatchTypes {
+    return [NSSet setWithArray:@[ @(iTermTriggerMatchTypeRegex) ]];
+}
+
 
 - (BOOL)performActionWithCapturedStrings:(NSArray<NSString *> *)stringArray
                           capturedRanges:(const NSRange *)capturedRanges

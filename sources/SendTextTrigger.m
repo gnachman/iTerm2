@@ -7,6 +7,7 @@
 
 #import "SendTextTrigger.h"
 #import "PTYSession.h"
+#import "iTerm2SharedARC-Swift.h"
 
 @implementation SendTextTrigger
 
@@ -26,6 +27,13 @@
 
 - (NSString *)triggerOptionalParameterPlaceholderWithInterpolation:(BOOL)interpolation {
     return @"Enter text to send";
+}
+
+// Requires a live session to send text to
+- (NSSet<NSNumber *> *)allowedMatchTypes {
+    NSMutableSet *set = [NSMutableSet setWithObject:@(iTermTriggerMatchTypeRegex)];
+    [set unionSet:[iTermEventTriggerMatchTypeHelper allEventTypesExceptSessionEndedSet]];
+    return set;
 }
 
 

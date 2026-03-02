@@ -7,6 +7,7 @@
 
 #import "iTermUserNotificationTrigger.h"
 #import "iTermAdvancedSettingsModel.h"
+#import "iTerm2SharedARC-Swift.h"
 #import "iTermNotificationController.h"
 #import "iTermRateLimitedUpdate.h"
 #import "PTYSession.h"
@@ -44,6 +45,12 @@
 
 - (NSString *)triggerOptionalParameterPlaceholderWithInterpolation:(BOOL)interpolation {
     return @"Enter Message";
+}
+
+- (NSSet<NSNumber *> *)allowedMatchTypes {
+    NSMutableSet *set = [NSMutableSet setWithObject:@(iTermTriggerMatchTypeRegex)];
+    [set unionSet:[iTermEventTriggerMatchTypeHelper allEventTypesSet]];
+    return set;
 }
 
 - (BOOL)performActionWithCapturedStrings:(NSArray<NSString *> *)stringArray

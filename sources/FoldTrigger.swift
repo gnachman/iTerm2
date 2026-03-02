@@ -19,6 +19,12 @@ class FoldTrigger: Trigger {
         return true
     }
 
+    override var allowedMatchTypes: Set<NSNumber> {
+        var set: Set<NSNumber> = [NSNumber(value: iTermTriggerMatchType.regex.rawValue)]
+        set.formUnion(EventTriggerMatchTypeHelper.allEventTypesSet)
+        return set
+    }
+
     override func triggerOptionalParameterPlaceholder(withInterpolation interpolation: Bool) -> String? {
         return "Name of Mark"
     }

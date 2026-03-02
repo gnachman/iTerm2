@@ -7,6 +7,7 @@
 #import "PTYAnnotation.h"
 #import "PTYTextViewDataSource.h"
 #import "PTYTriggerEvaluator.h"
+#import "Trigger.h"
 #import "SCPPath.h"
 #import "ScreenCharArray.h"
 #import "VT100ScreenDelegate.h"
@@ -51,7 +52,10 @@ extern const NSInteger VT100ScreenBigFileDownloadThreshold;
 
 @interface VT100Screen : NSObject <
     PTYTextViewDataSource,
-    PTYTriggerEvaluatorDataSource>
+    PTYTriggerEvaluatorDataSource,
+    iTermTriggerSession,
+    iTermTriggerScopeProvider,
+    iTermTriggerCallbackScheduler>
 
 @property(nonatomic) BOOL terminalEnabled;
 @property(atomic, weak) id<VT100ScreenDelegate> delegate;
@@ -281,5 +285,10 @@ typedef NS_ENUM(NSUInteger, VT100ScreenTriggerCheckType) {
 - (NSString *)wordBefore:(VT100GridCoord)coord
 additionalWordCharacters:(NSString *)additionalWordCharacters
                    range:(VT100GridWindowedRange *)rangePtr;
+
+// Fire an event trigger action. Must be called on the main queue.
+- (void)fireEventTrigger:(Trigger *)trigger
+         capturedStrings:(NSArray<NSString *> *)capturedStrings
+        useInterpolation:(BOOL)useInterpolation;
 
 @end

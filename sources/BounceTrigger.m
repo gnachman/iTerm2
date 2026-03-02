@@ -6,6 +6,7 @@
 //
 
 #import "BounceTrigger.h"
+#import "iTerm2SharedARC-Swift.h"
 
 // How to bounce. The parameter takes an integer value equal to one of these. This is the tag.
 typedef NS_ENUM(int, BounceTriggerParamTag) {
@@ -41,6 +42,12 @@ typedef NS_ENUM(int, BounceTriggerParamTag) {
 
 - (BOOL)isIdempotent {
     return YES;
+}
+
+- (NSSet<NSNumber *> *)allowedMatchTypes {
+    NSMutableSet *set = [NSMutableSet setWithObject:@(iTermTriggerMatchTypeRegex)];
+    [set unionSet:[iTermEventTriggerMatchTypeHelper allEventTypesSet]];
+    return set;
 }
 
 - (NSInteger)indexForObject:(id)object {

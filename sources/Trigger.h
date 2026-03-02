@@ -38,6 +38,7 @@ extern NSString * const kTriggerParameterKey;
 extern NSString * const kTriggerPartialLineKey;
 extern NSString * const kTriggerDisabledKey;
 extern NSString * const kTriggerNameKey;
+extern NSString * const kTriggerEventParamsKey;
 
 @protocol iTermTriggerDelegate<NSObject>
 - (void)triggerDidChangeParameterOptions:(Trigger *)trigger;
@@ -126,6 +127,8 @@ extern NSString * const kTriggerNameKey;
 @property (nullable, nonatomic, copy) id param;
 @property (nonatomic, assign) BOOL partialLine;
 @property (nonatomic, assign) BOOL disabled;
+// Event-specific parameters for event-based triggers (match type >= 100)
+@property (nullable, nonatomic, copy, readonly) NSDictionary<NSString *, id> *eventParams;
 // A non-cryptographic hash for content addressed triggers (helpful for letting serialized data
 // reference a trigger).
 @property (nullable, nonatomic, readonly) NSData *digest;

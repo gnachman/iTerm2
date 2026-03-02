@@ -8,6 +8,7 @@
 #import "iTermHighlightLineTrigger.h"
 
 #import "iTermTextExtractor.h"
+#import "iTerm2SharedARC-Swift.h"
 #import "NSColor+iTerm.h"
 #import "NSDictionary+iTerm.h"
 #import "NSImage+iTerm.h"
@@ -45,6 +46,13 @@
 
 - (BOOL)isIdempotent {
     return YES;
+}
+
+// Requires a live session to highlight a line
+- (NSSet<NSNumber *> *)allowedMatchTypes {
+    NSMutableSet *set = [NSMutableSet setWithObject:@(iTermTriggerMatchTypeRegex)];
+    [set unionSet:[iTermEventTriggerMatchTypeHelper allEventTypesExceptSessionEndedSet]];
+    return set;
 }
 
 - (NSString *)stringValue {

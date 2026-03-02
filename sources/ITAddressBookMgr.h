@@ -554,10 +554,28 @@ static inline iTermLoggingStyle iTermLoggingStyleFromUserDefaultsValue(NSUIntege
 }
 
 typedef NS_ENUM(NSInteger, iTermTriggerMatchType) {
+    // Regex-based (0-99)
     iTermTriggerMatchTypeRegex = 0,
     iTermTriggerMatchTypeURLRegex = 1,
-    iTermTriggerMatchTypePageContentRegex = 2
+    iTermTriggerMatchTypePageContentRegex = 2,
+
+    // Event-based (100+)
+    iTermTriggerMatchTypeEventPromptDetected = 100,
+    iTermTriggerMatchTypeEventCommandFinished = 101,
+    iTermTriggerMatchTypeEventDirectoryChanged = 102,
+    iTermTriggerMatchTypeEventHostChanged = 103,
+    iTermTriggerMatchTypeEventUserChanged = 104,
+    iTermTriggerMatchTypeEventIdle = 105,
+    iTermTriggerMatchTypeEventActivityAfterIdle = 106,
+    iTermTriggerMatchTypeEventSessionEnded = 107,
+    iTermTriggerMatchTypeEventBellReceived = 108,
+    iTermTriggerMatchTypeEventLongRunningCommand = 109,
+    iTermTriggerMatchTypeEventCustomEscapeSequence = 110
 };
+
+static inline BOOL iTermTriggerMatchTypeIsEvent(iTermTriggerMatchType type) {
+    return type >= 100;
+}
 
 typedef struct {
     double width;

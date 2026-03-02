@@ -9,6 +9,7 @@
 #import "CoprocessTrigger.h"
 #import "iTermAnnouncementViewController.h"
 #import "PTYSession.h"
+#import "iTerm2SharedARC-Swift.h"
 
 static NSString *const kSuppressCoprocessTriggerWarning = @"NoSyncSuppressCoprocessTriggerWarning";
 
@@ -28,6 +29,13 @@ static NSString *const kSuppressCoprocessTriggerWarning = @"NoSyncSuppressCoproc
 
 - (NSString *)triggerOptionalParameterPlaceholderWithInterpolation:(BOOL)interpolation {
     return @"Enter coprocess command to run";
+}
+
+// Requires a live session to launch a coprocess
+- (NSSet<NSNumber *> *)allowedMatchTypes {
+    NSMutableSet *set = [NSMutableSet setWithObject:@(iTermTriggerMatchTypeRegex)];
+    [set unionSet:[iTermEventTriggerMatchTypeHelper allEventTypesExceptSessionEndedSet]];
+    return set;
 }
 
 - (BOOL)performActionWithCapturedStrings:(NSArray<NSString *> *)stringArray

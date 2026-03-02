@@ -7,6 +7,7 @@
 
 #import "iTermRPCTrigger.h"
 #import "iTermFunctionCallTextFieldDelegate.h"
+#import "iTerm2SharedARC-Swift.h"
 #import "iTermScriptFunctionCall.h"
 #import "iTermVariableScope.h"
 #import "NSArray+iTerm.h"
@@ -34,6 +35,12 @@ static NSString *const iTermRPCTriggerPathLineNumber = @"trigger.line_number";
 
 - (BOOL)takesParameter {
     return YES;
+}
+
+- (NSSet<NSNumber *> *)allowedMatchTypes {
+    NSMutableSet *set = [NSMutableSet setWithObject:@(iTermTriggerMatchTypeRegex)];
+    [set unionSet:[iTermEventTriggerMatchTypeHelper allEventTypesSet]];
+    return set;
 }
 
 - (NSArray<NSString *> *)allPaths {
