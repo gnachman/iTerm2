@@ -5,6 +5,7 @@ import iterm2.auth
 import os
 import sys
 import traceback
+import types
 import typing
 import websockets
 
@@ -13,13 +14,14 @@ gDisconnectCallbacks: typing.List[typing.Callable[[], None]] = []
 # websockets 9.0 moved client into legacy.client and didn't document how to
 # migrate to the new API :(. Stick with the old one until I have time to deal
 # with this.
+websockets_client: types.ModuleType
 try:
   import websockets.legacy.client
   websockets_client = websockets.legacy.client
   from websockets.legacy.client import connect as websockets_connect
 except:
   websockets_client = websockets.client
-  from websockets import connect as websockets_connect
+  from websockets import connect as websockets_connect  # type: ignore[assignment]
 
 import iterm2.api_pb2
 from iterm2._version import __version__
@@ -112,7 +114,7 @@ class Connection:
                     connection._async_dispatch_forever(
                         connection, asyncio.get_running_loop()))
                 return connection
-            except websockets.exceptions.InvalidStatusCode as status_code_exception:
+            except websockets.exceptions.InvalidStatusCode as status_code_exception:  # type: ignore[attr-defined]
                 if status_code_exception.status_code == 401:
                     if have_fresh_cookie:
                         raise
@@ -427,7 +429,7 @@ class Connection:
                     except Exception as _err:
                         traceback.print_exc()
                         sys.exit(1)
-            except websockets.exceptions.InvalidStatusCode as exception:
+            except websockets.exceptions.InvalidStatusCode as exception:  # type: ignore[attr-defined]
                 if exception.status_code == 401:
                     # Auth failure.
                     if retry:
