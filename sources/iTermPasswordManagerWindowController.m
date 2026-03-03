@@ -225,7 +225,9 @@ static NSArray<NSString *> *gTerminalCachedCombinedAccountNames;
 
 + (void)fetchAccountsWithWindow:(NSWindow *)window
                      completion:(void (^)(NSArray<id<PasswordManagerAccount>> *))completion {
-    [[self dataSource] fetchAccountsWithContext:[[RecipeExecutionContext alloc] initWithWindow:window]
+    RecipeExecutionContext *context = [[RecipeExecutionContext alloc] initWithWindow:window];
+    context.skipKeeperTouchIDGate = YES;
+    [[self dataSource] fetchAccountsWithContext:context
                                      completion:^(NSArray<id<PasswordManagerAccount>> * _Nonnull accounts) {
         // Sort accounts
         NSArray<id<PasswordManagerAccount>> *result =
@@ -1001,7 +1003,7 @@ static NSArray<NSString *> *gTerminalCachedCombinedAccountNames;
 
     NSAlert *alert = [[NSAlert alloc] init];
     alert.messageText = @"Keeper Security Settings";
-    alert.informativeText = @"Add or update your Keeper Commander API key and service URL. Both are stored in macOS Keychain.";
+    alert.informativeText = @"Add or update your Keeper Commander API key and service URL. Both are stored in macOS Keychain; the API key is protected by Touch ID, Face ID, or device passcode when available.";
     [alert addButtonWithTitle:@"OK"];
     [alert addButtonWithTitle:@"Cancel"];
 
@@ -1565,7 +1567,7 @@ static NSString *keeperDisplayMessageFromErrorString(NSString *message) {
                 NSAlert *alert = [[NSAlert alloc] init];
                 NSString *message;
                 if ([error.domain isEqualToString:@"KeeperDataSource"]) {
-                    message = [NSString stringWithFormat:@"Could not get password. %@", error.localizedDescription];
+                    message = [NSString stringWithFormat:@"Could not get password, Make sure you have Password created in keeper for this record. %@", error.localizedDescription];
                 } else {
                     message = [NSString stringWithFormat:@"Could not get password. Keychain query failed: %@",
                                error.localizedDescription];
@@ -1679,6 +1681,9 @@ static NSString *keeperDisplayMessageFromErrorString(NSString *message) {
 
     NSString *filter = [_searchField stringValue];
     if (self.dataSourceProvider.authenticated) {
+        if ([self.currentDataSource.name isEqualToString:@"Keeper Security"]) {
+            [(id)self.currentDataSource setCredentialsDelegate:self];
+        }
         __weak __typeof(self) weakSelf = self;
         const NSInteger cancelCount = [self incrBusy];
         [self.class fetchAccountsWithWindow:self.window

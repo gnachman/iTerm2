@@ -98,6 +98,8 @@ protocol CommandLinePasswordDataSourceExecutableCommand {
 @objc
 class RecipeExecutionContext: NSObject {
     var window: NSWindow?
+    /// When true, Keeper skips its "Unlock Keeper API key" Touch ID prompt (user already authenticated to open the password manager).
+    @objc var skipKeeperTouchIDGate: Bool = false
     @objc init(window: NSWindow?) {
         self.window = window
     }
