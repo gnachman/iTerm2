@@ -86,7 +86,7 @@ Nightly: force
 	chmod -R go+rX $(BUILD_DIR)/Nightly
 
 run: Development
-	$(BUILD_DIR)/Development/iTerm2.app/Contents/MacOS/iTerm2
+	$(BUILD_DIR)/Development/iTerm2.app/Contents/MacOS/iTerm2 -suite iterm2-dev
 
 devzip: Development
 	cd $(BUILD_DIR)/Development && \
