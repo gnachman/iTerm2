@@ -31,27 +31,9 @@ function is_fish_4_1_or_later
     end
 end
 
-function is_fish_4_3_or_later
-    if test -z "$FISH_VERSION"
-        # Not fish
-        return 1
-    end
-
-    set -l parts (string split . $FISH_VERSION)
-    set -l major $parts[1]
-    set -l minor $parts[2]
-
-    if test $major -gt 4
-        return 0
-    else if test $major -eq 4 -a $minor -ge 3
-        return 0
-    else
-        return 1
-    end
-end
 
 if begin; status --is-interactive; and not functions -q -- iterm2_status; and test "$ITERM_ENABLE_SHELL_INTEGRATION_WITH_TMUX""$TERM" != screen; and test "$ITERM_ENABLE_SHELL_INTEGRATION_WITH_TMUX""$TERM" != screen-256color; and test "$ITERM_ENABLE_SHELL_INTEGRATION_WITH_TMUX""$TERM" != tmux-256color; and test "$TERM" != dumb; and test "$TERM" != linux; end
-  if not is_fish_4_3_or_later
+  begin
     function iterm2_status
         if not is_fish_4_1_or_later
           printf "\033]133;D;%s\007" $argv
@@ -170,5 +152,3 @@ if begin; status --is-interactive; and not functions -q -- iterm2_status; and te
   end
   printf "\033]1337;ShellIntegrationVersion=21;shell=fish\007"
 end
-
-functions -e is_fish_4_3_or_later
