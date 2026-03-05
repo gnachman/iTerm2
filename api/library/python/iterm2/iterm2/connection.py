@@ -5,23 +5,11 @@ import iterm2.auth
 import os
 import sys
 import traceback
-import types
 import typing
 import websockets
+import websockets.exceptions
 
 gDisconnectCallbacks: typing.List[typing.Callable[[], None]] = []
-
-# websockets 9.0 moved client into legacy.client and didn't document how to
-# migrate to the new API :(. Stick with the old one until I have time to deal
-# with this.
-websockets_client: types.ModuleType
-try:
-  import websockets.legacy.client
-  websockets_client = websockets.legacy.client
-  from websockets.legacy.client import connect as websockets_connect
-except:
-  websockets_client = websockets.client
-  from websockets import connect as websockets_connect  # type: ignore[assignment]
 
 import iterm2.api_pb2
 from iterm2._version import __version__
@@ -114,8 +102,8 @@ class Connection:
                     connection._async_dispatch_forever(
                         connection, asyncio.get_running_loop()))
                 return connection
-            except websockets.exceptions.InvalidStatusCode as status_code_exception:  # type: ignore[attr-defined]
-                if status_code_exception.status_code == 401:
+            except websockets.exceptions.InvalidStatus as status_exception:
+                if status_exception.response.status_code == 401:
                     if have_fresh_cookie:
                         raise
                     # Force request a cookie and try one more time.
@@ -124,7 +112,7 @@ class Connection:
                     if not have_fresh_cookie:
                         # Didn't get a cookie, so no point trying again.
                         raise
-                elif status_code_exception.status_code == 406:
+                elif status_exception.response.status_code == 406:
                     print("This version of the iterm2 module is too old for " +
                           "the current version of iTerm2. Please upgrade.")
                     sys.exit(1)
@@ -328,9 +316,9 @@ class Connection:
         version of iTerm2 that doesn't report its version or it's unknown.
         """
         key = "X-iTerm2-Protocol-Version"
-        if key not in self.websocket.response_headers:
+        if key not in self.websocket.response.headers:
             return (0, 0)
-        header_value = self.websocket.response_headers[key]
+        header_value = self.websocket.response.headers[key]
         parts = header_value.split(".")
         if len(parts) != 2:
             return (0, 0)
@@ -358,23 +346,23 @@ class Connection:
     def _get_unix_connect_coro(self):
         """Experimental: connect with unix domain socket."""
         path = self._unix_domain_socket_path()
-        return websockets_client.unix_connect(
+        return websockets.unix_connect(
             path,
             "ws://localhost/",
             ping_interval=None,
             close_timeout=0,
-            extra_headers=_headers(),
+            additional_headers=_headers(),
             subprotocols=_subprotocols(),
             max_size=None)
 
 
     def _get_tcp_connect_coro(self):
-        """Legacy: connect with tcp socket."""
-        return websockets_connect(_uri(),
-                                        ping_interval=None,
-                                        close_timeout=0,
-                                        extra_headers=_headers(),
-                                        subprotocols=_subprotocols())
+        """Connect with tcp socket."""
+        return websockets.connect(_uri(),
+                                  ping_interval=None,
+                                  close_timeout=0,
+                                  additional_headers=_headers(),
+                                  subprotocols=_subprotocols())
 
     def authenticate(self, force):
         """
@@ -429,8 +417,8 @@ class Connection:
                     except Exception as _err:
                         traceback.print_exc()
                         sys.exit(1)
-            except websockets.exceptions.InvalidStatusCode as exception:  # type: ignore[attr-defined]
-                if exception.status_code == 401:
+            except websockets.exceptions.InvalidStatus as exception:
+                if exception.response.status_code == 401:
                     # Auth failure.
                     if retry:
                         # Sleep and try to authenticate until successful.
@@ -449,7 +437,7 @@ class Connection:
                         if not have_fresh_cookie:
                             # Failed to get a cookie. Give up.
                             raise
-                elif exception.status_code == 406:
+                elif exception.response.status_code == 406:
                     print("This version of the iterm2 module is too old " +
                           "for the current version of iTerm2. Please upgrade.")
                     sys.exit(1)
