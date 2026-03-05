@@ -200,10 +200,27 @@ class NerdFontInstaller {
         return Set(Array(fontCollection))
     }
 
+    private static var fontsDirectory: URL {
+        URL(fileURLWithPath: FileManager.default.fontsDirectory())
+    }
+
     private func install(from tempDir: String) {
         let fileManager = FileManager.default
+        let fontsDir = Self.fontsDirectory
+
+        // Copy fonts to permanent location and create descriptors from there
         let fontDescriptors = fileManager.flatMapRegularFiles(in: tempDir) { itemURL in
-            if let descriptors = CTFontManagerCreateFontDescriptorsFromURL(itemURL as CFURL) {
+            let destURL = fontsDir.appendingPathComponent(itemURL.lastPathComponent)
+            do {
+                if fileManager.fileExists(atPath: destURL.path) {
+                    try fileManager.removeItem(at: destURL)
+                }
+                try fileManager.copyItem(at: itemURL, to: destURL)
+            } catch {
+                DLog("Failed to copy font \(itemURL.lastPathComponent): \(error)")
+                return [CTFontDescriptor]()
+            }
+            if let descriptors = CTFontManagerCreateFontDescriptorsFromURL(destURL as CFURL) {
                 return Array<CTFontDescriptor>(descriptors)
             }
             return []

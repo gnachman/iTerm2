@@ -58,6 +58,9 @@ extern NSNotificationName iTermScriptsFolderDidChange;
 - (NSString *)scriptsPathWithoutSpaces;
 - (BOOL)customScriptsFolderIsValid:(NSString *)candidate;
 
+// Directory where fonts installed by iTerm2 live (e.g., Nerd Font Bundle).
+- (NSString *)fontsDirectory;
+
 // Path to special auto-launch script that is run at startup.
 - (NSString *)legacyAutolaunchScriptPath;  // applescript
 - (NSString *)autolaunchScriptPath;  // scripting API

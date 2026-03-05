@@ -259,6 +259,15 @@ NSString * const DirectoryLocationDomain = @"DirectoryLocationDomain";
     return modernPath;
 }
 
+- (NSString *)fontsDirectory {
+    NSString *path = [[self applicationSupportDirectory] stringByAppendingPathComponent:@"Fonts"];
+    NSError *error = nil;
+    if (![self fileExistsAtPath:path]) {
+        [self createDirectoryAtPath:path withIntermediateDirectories:YES attributes:nil error:&error];
+    }
+    return path;
+}
+
 - (NSString *)legacyAutolaunchScriptPath {
     return [[self scriptsPath] stringByAppendingPathComponent:@"AutoLaunch.scpt"];
 }
