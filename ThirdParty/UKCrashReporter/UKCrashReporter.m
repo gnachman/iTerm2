@@ -74,86 +74,93 @@ static NSString *UKReadErrorLog(void) {
 
 void    UKCrashReporterCheckForCrash(void)
 {
-    NSAutoreleasePool*    pool = [[NSAutoreleasePool alloc] init];
+    // Perform crash log search on a background thread to avoid blocking app
+    // startup if the user has many files in their DiagnosticReports folder.
+    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+        @autoreleasepool {
+            @try {
+                // Try whether the classes we need to talk to the CGI are present:
+                Class            NSMutableURLRequestClass = NSClassFromString( @"NSMutableURLRequest" );
+                Class            NSURLConnectionClass = NSClassFromString( @"NSURLConnection" );
+                if( NSMutableURLRequestClass == Nil || NSURLConnectionClass == Nil )
+                {
+                    return;
+                }
 
-    NS_DURING
-        // Try whether the classes we need to talk to the CGI are present:
-        Class            NSMutableURLRequestClass = NSClassFromString( @"NSMutableURLRequest" );
-        Class            NSURLConnectionClass = NSClassFromString( @"NSURLConnection" );
-        if( NSMutableURLRequestClass == Nil || NSURLConnectionClass == Nil )
-        {
-            [pool release];
-            NS_VOIDRETURN;
-        }
-        
-        // Get the log file, its last change date and last report date:
-        NSString*        appName = [[[NSBundle mainBundle] infoDictionary] objectForKey: @"CFBundleExecutable"];
-        NSArray *folders = @[ [@"~/Library/Logs/DiagnosticReports/" stringByExpandingTildeInPath],
-                              [@"~/Library/Logs/CrashReporter/" stringByExpandingTildeInPath] ];
-        NSString*        crashLogPath = UKCrashReporterFindTenFiveCrashReportPath( appName, folders );
-        NSDictionary*    fileAttrs = [[NSFileManager defaultManager] 
-                                     attributesOfItemAtPath: crashLogPath error: nil];
-        NSDate*            lastTimeCrashLogged = (fileAttrs == nil) ? nil : [fileAttrs fileModificationDate];
-        NSTimeInterval    lastCrashReportInterval = [[NSUserDefaults standardUserDefaults] floatForKey: @"UKCrashReporterLastCrashReportDate"];
-        NSDate*            lastTimeCrashReported = [NSDate dateWithTimeIntervalSince1970: lastCrashReportInterval];
+                // Get the log file, its last change date and last report date:
+                NSString*        appName = [[[NSBundle mainBundle] infoDictionary] objectForKey: @"CFBundleExecutable"];
+                NSArray *folders = @[ [@"~/Library/Logs/DiagnosticReports/" stringByExpandingTildeInPath],
+                                      [@"~/Library/Logs/CrashReporter/" stringByExpandingTildeInPath] ];
+                NSString*        crashLogPath = UKCrashReporterFindTenFiveCrashReportPath( appName, folders );
+                NSDictionary*    fileAttrs = [[NSFileManager defaultManager]
+                                             attributesOfItemAtPath: crashLogPath error: nil];
+                NSDate*            lastTimeCrashLogged = (fileAttrs == nil) ? nil : [fileAttrs fileModificationDate];
+                NSTimeInterval    lastCrashReportInterval = [[NSUserDefaults standardUserDefaults] floatForKey: @"UKCrashReporterLastCrashReportDate"];
+                NSDate*            lastTimeCrashReported = [NSDate dateWithTimeIntervalSince1970: lastCrashReportInterval];
 
-        NSString *errorLog = nil;
-        @try {
-            errorLog = UKReadErrorLog();
-        } @catch (NSException *exception) {
-            errorLog = [exception debugDescription];
-        }
+                NSUserDefaults *d = [NSUserDefaults standardUserDefaults];
 
-        if( lastTimeCrashLogged )    // We have a crash log file and its mod date? Means we crashed sometime in the past.
-        {
-            // If we never before reported a crash or the last report lies before the last crash:
-            if( [lastTimeCrashReported compare: lastTimeCrashLogged] == NSOrderedAscending )
-            {
-                // Fetch the newest report from the log:
-                NSString*            crashLog = [NSString stringWithContentsOfFile:crashLogPath
-                                                                 encoding:NSUTF8StringEncoding
-                                                                    error:nil];
-                NSString *const ERROR_LOG_HEADER = @"~~ Error Logs ~~\n";
-                if (![crashLog containsString:ERROR_LOG_HEADER]) {
-                    crashLog = [crashLog stringByAppendingString:ERROR_LOG_HEADER];
-                    if (errorLog != nil) {
-                        crashLog = [crashLog stringByAppendingString:errorLog];
+                NSString *errorLog = nil;
+                @try {
+                    errorLog = UKReadErrorLog();
+                } @catch (NSException *exception) {
+                    errorLog = [exception debugDescription];
+                }
+
+                if( lastTimeCrashLogged )    // We have a crash log file and its mod date? Means we crashed sometime in the past.
+                {
+                    // If we never before reported a crash or the last report lies before the last crash:
+                    if( [lastTimeCrashReported compare: lastTimeCrashLogged] == NSOrderedAscending )
+                    {
+                        // Fetch the newest report from the log:
+                        NSString*            crashLog = [NSString stringWithContentsOfFile:crashLogPath
+                                                                         encoding:NSUTF8StringEncoding
+                                                                            error:nil];
+                        NSString *const ERROR_LOG_HEADER = @"~~ Error Logs ~~\n";
+                        if (![crashLog containsString:ERROR_LOG_HEADER]) {
+                            crashLog = [crashLog stringByAppendingString:ERROR_LOG_HEADER];
+                            if (errorLog != nil) {
+                                crashLog = [crashLog stringByAppendingString:errorLog];
+                            }
+                            [crashLog writeToFile:crashLogPath atomically:NO encoding:NSUTF8StringEncoding error:nil];
+                        }
+                        NSArray*            separateReports = [crashLog componentsSeparatedByString: @"\n\n**********\n\n"];
+                        NSString*            currentReport = [separateReports count] > 0 ? [separateReports objectAtIndex: [separateReports count] -1] : @"*** Couldn't read Report ***";    // 1 since report 0 is empty (file has a delimiter at the top).
+                        unsigned            numCores = UKCountCores();
+                        NSString*            numCPUsString = (numCores == 1) ? @"" : [NSString stringWithFormat: @"%dx ",numCores];
+
+                        // Create a string containing Mac and CPU info, crash log and prefs:
+                        NSString *finalReport;
+                        if (@available(macOS 12.0, *)) {
+                            NSString *shortVersionString = [[[NSBundle mainBundle] infoDictionary] objectForKey:@"CFBundleShortVersionString"];
+                            NSString *version = [[[NSBundle mainBundle] infoDictionary] objectForKey:@"CFBundleVersion"];
+                            finalReport = [NSString stringWithFormat:
+                                             @"Version: %@ (%@)\n"
+                                             @"Model: %@\n"
+                                             @"CPU Speed: %@%.2f GHz\n"
+                                             @"%@\n",
+                                             shortVersionString, version,
+                                             UKMachineName(),
+                                             numCPUsString, ((float)UKClockSpeed()) / 1000.0f,
+                                             currentReport];
+                        } else {
+                            finalReport = [NSString stringWithFormat:
+                                                @"Model: %@\nCPU Speed: %@%.2f GHz\n%@\n",
+                                                UKMachineName(), numCPUsString, ((float)UKClockSpeed()) / 1000.0f,
+                                                currentReport];
+                        }
+                        // Show crash reporter window on main thread:
+                        dispatch_async(dispatch_get_main_queue(), ^{
+                            [[UKCrashReporter alloc] initWithLogString: finalReport];
+                        });
                     }
-                    [crashLog writeToFile:crashLogPath atomically:NO encoding:NSUTF8StringEncoding error:nil];
                 }
-                NSArray*            separateReports = [crashLog componentsSeparatedByString: @"\n\n**********\n\n"];
-                NSString*            currentReport = [separateReports count] > 0 ? [separateReports objectAtIndex: [separateReports count] -1] : @"*** Couldn't read Report ***";    // 1 since report 0 is empty (file has a delimiter at the top).
-                unsigned            numCores = UKCountCores();
-                NSString*            numCPUsString = (numCores == 1) ? @"" : [NSString stringWithFormat: @"%dx ",numCores];
-                
-                // Create a string containing Mac and CPU info, crash log and prefs:
-                if (@available(macOS 12.0, *)) {
-                    NSString *shortVersionString = [[[NSBundle mainBundle] infoDictionary] objectForKey:@"CFBundleShortVersionString"];
-                    NSString *version = [[[NSBundle mainBundle] infoDictionary] objectForKey:@"CFBundleVersion"];
-                    currentReport = [NSString stringWithFormat:
-                                     @"Version: %@ (%@)\n"
-                                     @"Model: %@\n"
-                                     @"CPU Speed: %@%.2f GHz\n"
-                                     @"%@\n",
-                                     shortVersionString, version,
-                                     UKMachineName(),
-                                     numCPUsString, ((float)UKClockSpeed()) / 1000.0f,
-                                     currentReport];
-                } else {
-                    currentReport = [NSString stringWithFormat:
-                                        @"Model: %@\nCPU Speed: %@%.2f GHz\n%@\n",
-                                        UKMachineName(), numCPUsString, ((float)UKClockSpeed()) / 1000.0f,
-                                        currentReport];
-                }
-                // Now show a crash reporter window so the user can edit the info to send:
-                [[UKCrashReporter alloc] initWithLogString: currentReport];
+            }
+            @catch (NSException *exception) {
+                NSLog(@"Error during check for crash: %@", exception);
             }
         }
-    NS_HANDLER
-        NSLog(@"Error during check for crash: %@",localException);
-    NS_ENDHANDLER
-    
-    [pool release];
+    });
 }
 
 NSString* UKCrashReporterFindTenFiveCrashReportPath(NSString* appName, NSArray *folders)
