@@ -743,10 +743,10 @@ typedef NS_OPTIONS(NSUInteger, iTermPowerlineDrawingOptions) {
             [self drawPDFWithName:@"PowerlineSolidLeftArrow" options:iTermPowerlineDrawingOptionsFullBleedRight cellSize:cellSize stretch:YES color:color antialiased:YES offset:offset];
             break;
         case 0xE0B1:
-            [self drawPDFWithName:@"PowerlineLineRightArrow" options:iTermPowerlineDrawingOptionsFullBleedLeft cellSize:cellSize stretch:YES color:color antialiased:YES offset:offset];
+            [self drawPDFWithName:@"PowerlineLineRightArrow" options:0 cellSize:cellSize stretch:YES color:color antialiased:YES offset:offset];
             break;
         case 0xE0B3:
-            [self drawPDFWithName:@"PowerlineLineLeftArrow" options:iTermPowerlineDrawingOptionsFullBleedRight cellSize:cellSize stretch:YES color:color antialiased:YES offset:offset];
+            [self drawPDFWithName:@"PowerlineLineLeftArrow" options:0 cellSize:cellSize stretch:YES color:color antialiased:YES offset:offset];
             break;
         case 0xE0B9:  // (Extended) Negative slope diagonal line
         case 0xE0BF:
