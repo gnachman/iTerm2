@@ -2078,7 +2078,7 @@ static NSRange NSMakeRangeFromHalfOpenInterval(NSUInteger lowerBound, NSUInteger
     return _dataSource.width;
 }
 
-- (int)wordExtractroNumberOfLines {
+- (int)wordExtractorNumberOfLines {
     return _dataSource.numberOfLines;
 }
 

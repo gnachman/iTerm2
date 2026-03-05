@@ -130,7 +130,7 @@ typedef NS_ENUM(NSUInteger, iTermAlphaNumericDefinition) {
     const int width = [_dataSource wordExtractorWidth];
     const BOOL windowTouchesLeftMargin = (_logicalWindow.location == 0);
     const BOOL windowTouchesRightMargin = (xLimit == width);
-    int numberOfLines = [_dataSource wordExtractroNumberOfLines];
+    int numberOfLines = [_dataSource wordExtractorNumberOfLines];
     if (location.y >= numberOfLines) {
         return VT100GridWindowedRangeMake(VT100GridCoordRangeMake(-1, -1, -1, -1),
                                           _logicalWindow.location, _logicalWindow.length);
@@ -459,7 +459,7 @@ typedef struct {
     iTermTextExtractorClass theClass = [self classForCharacter:[_dataSource characterAt:location]];
     const int xLimit = [_dataSource xLimit];
     const int width = [_dataSource wordExtractorWidth];
-    int numberOfLines = [_dataSource wordExtractroNumberOfLines];
+    int numberOfLines = [_dataSource wordExtractorNumberOfLines];
     if (location.y >= numberOfLines) {
         return nil;
     }

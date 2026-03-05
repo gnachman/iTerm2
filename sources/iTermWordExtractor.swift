@@ -262,7 +262,7 @@ class WordExtractor: NSObject {
             return errorLocation()
         }
 
-        let numberOfLines = Int(ds.wordExtractroNumberOfLines())
+        let numberOfLines = Int(ds.wordExtractorNumberOfLines())
         if Int(location.y) >= numberOfLines {
             return VT100GridWindowedRangeMake(
                 VT100GridCoordRangeMake(-1, -1, -1, -1),
@@ -411,7 +411,7 @@ class WordExtractor: NSObject {
         let atomIterator = getAtomIterator(for: ds)
         let xLimit = Int(ds.xLimit())
         let width = Int(ds.wordExtractorWidth())
-        let numberOfLines = Int(ds.wordExtractroNumberOfLines())
+        let numberOfLines = Int(ds.wordExtractorNumberOfLines())
         let windowTouchesLeftMargin = logicalWindow.location == 0
         let windowTouchesRightMargin = xLimit == width
 
@@ -762,7 +762,7 @@ class WordExtractor: NSObject {
         let theClass = classForCharacter(ds.character(at: location))
         let xLimit = Int(ds.xLimit())
         let width = Int(ds.wordExtractorWidth())
-        let numberOfLines = Int(ds.wordExtractroNumberOfLines())
+        let numberOfLines = Int(ds.wordExtractorNumberOfLines())
 
         if Int(location.y) >= numberOfLines {
             return nil
@@ -936,16 +936,10 @@ class WordExtractor: NSObject {
         switch definition {
         case .userDefined:
             let additionalChars = additionalWordCharacters ?? internalAdditionalWordCharacters ?? ""
-            if let range = additionalChars.range(of: characterAsString) {
-                return additionalChars.distance(from: range.lowerBound, to: range.upperBound) == characterAsString.count
-            }
-            return false
+            return additionalChars.contains(characterAsString)
 
         case .unixCommands:
-            if let range = "_-".range(of: characterAsString) {
-                return "_-".distance(from: range.lowerBound, to: range.upperBound) == characterAsString.count
-            }
-            return false
+            return "_-".contains(characterAsString)
 
         case .narrow:
             return characterAsString == "-"

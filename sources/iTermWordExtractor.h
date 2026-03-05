@@ -42,7 +42,7 @@ typedef NS_ENUM(NSInteger, iTermTextExtractorClass) {
 - (VT100GridWindowedRange)windowedRangeWithRange:(VT100GridCoordRange)range;
 - (int)xLimit;
 - (int)wordExtractorWidth;
-- (int)wordExtractroNumberOfLines;
+- (int)wordExtractorNumberOfLines;
 
 - (void)enumerateCharsInRange:(VT100GridWindowedRange)range
                   supportBidi:(BOOL)logicalOrder

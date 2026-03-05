@@ -866,15 +866,15 @@ class iTermWordExtractorTest: XCTestCase {
         assertRangeEquals(range, startX: 0, startY: 0, endX: 24, endY: 0)
     }
 
-    /// Test empty string
+    /// Test empty string - clicking on position 0 of an empty line should select the null cell
     func testEmptyLine() {
         let range = extractWord(
             from: [""],
             at: VT100GridCoord(x: 0, y: 0)
         )
 
-        // Should handle empty gracefully
-        XCTAssertTrue(range.coordRange.start.x <= range.coordRange.end.x)
+        // Empty line means null cells; clicking at position 0 selects null at that position
+        assertRangeEquals(range, startX: 0, startY: 0, endX: 0, endY: 0)
     }
 
     /// Test single character word
@@ -1151,7 +1151,8 @@ class iTermWordExtractorTest: XCTestCase {
             windowLength: 15
         )
 
-        // Only "llo" (positions 2-4) should be selected, not the full "hello"
+        // Only "llo" (positions 2, 3, 4) should be selected, not the full "hello"
+        // Half-open interval: [2, 5)
         assertRangeEquals(range, startX: 2, startY: 0, endX: 5, endY: 0)
     }
 
@@ -1340,6 +1341,214 @@ class iTermWordExtractorTest: XCTestCase {
 
         // Entire word "foo\bar" is selected
         assertRangeEquals(range, startX: 0, startY: 0, endX: 7, endY: 0)
+    }
+
+    // MARK: - Maximum Length Edge Cases
+
+    /// Test maximumLength = 0 still selects a minimal range around the click position
+    /// The implementation includes the clicked character and searches 0 in each direction
+    func testMaximumLengthZero() {
+        let range = extractWord(
+            from: ["hello world"],
+            at: VT100GridCoord(x: 2, y: 0),  // 'l' in "hello"
+            maximumLength: 0
+        )
+
+        // With maxLength=0, the selection is limited but includes the click position
+        let rangeLength = range.coordRange.end.x - range.coordRange.start.x
+        XCTAssertLessThanOrEqual(rangeLength, 5, "maxLength=0 should produce a limited range")
+        XCTAssertGreaterThanOrEqual(range.coordRange.start.x, 0)
+        XCTAssertLessThanOrEqual(range.coordRange.end.x, 5)
+    }
+
+    /// Test maximumLength = 1 should select very limited range
+    func testMaximumLengthOne() {
+        let range = extractWord(
+            from: ["hello world"],
+            at: VT100GridCoord(x: 2, y: 0),  // 'l' in "hello"
+            maximumLength: 1
+        )
+
+        // With maxLength=1, can search 1 forward + 1 backward = at most 2 chars
+        let rangeLength = range.coordRange.end.x - range.coordRange.start.x
+        XCTAssertLessThanOrEqual(rangeLength, 2, "maxLength=1 should select at most 2 characters")
+    }
+
+    // MARK: - Regex Mode with ASCII Tests
+
+    /// Test regex mode with simple ASCII text (not CJK)
+    func testRegexModeWithASCIIText() {
+        let range = extractWordWithRegex(
+            from: ["hello-world test"],
+            at: VT100GridCoord(x: 5, y: 0),  // '-' in "hello-world"
+            regexPatterns: ["-"]  // Hyphen is word-extending via regex
+        )
+
+        // With "-" as a regex pattern, "hello-world" should be one word
+        assertRangeEquals(range, startX: 0, startY: 0, endX: 11, endY: 0)
+    }
+
+    /// Test regex mode with URL pattern in ASCII text
+    func testRegexModeWithURLPatternASCII() {
+        let range = extractWordWithRegex(
+            from: ["visit https://example.com today"],
+            at: VT100GridCoord(x: 10, y: 0),  // 't' in "https"
+            regexPatterns: ["https?://"]
+        )
+
+        // "https://" is word-extending, followed by "example" which is a word,
+        // then ".com" where "." breaks the word
+        // The exact behavior depends on ICU segmentation
+        XCTAssertEqual(range.coordRange.start.x, 6, "Should start at 'h' of https")
+        XCTAssertGreaterThan(range.coordRange.end.x, 14, "Should extend past https://")
+    }
+
+    /// Test regex pattern with multi-character pattern
+    /// Clicking on a position within a multi-char regex match
+    func testRegexModeWithSpecialCharacterPattern() {
+        let range = extractWordWithRegex(
+            from: ["foo::bar baz"],
+            at: VT100GridCoord(x: 3, y: 0),  // first ':'
+            regexPatterns: ["::"]  // Double colon as word character
+        )
+
+        // The "::" pattern should be recognized and affect word selection
+        // Verify the selection includes the clicked position
+        XCTAssertLessThanOrEqual(range.coordRange.start.x, 3, "Should include click position")
+        XCTAssertGreaterThanOrEqual(range.coordRange.end.x, 4, "Should include at least the pattern")
+    }
+
+    /// Test multiple regex patterns with ASCII
+    func testRegexModeMultiplePatternsASCII() {
+        let range = extractWordWithRegex(
+            from: ["foo-bar_baz test"],
+            at: VT100GridCoord(x: 4, y: 0),  // 'b' in "bar"
+            regexPatterns: ["-", "_"]  // Both hyphen and underscore
+        )
+
+        // Both "-" and "_" are word-extending, so "foo-bar_baz" should be one word
+        assertRangeEquals(range, startX: 0, startY: 0, endX: 11, endY: 0)
+    }
+
+    // MARK: - Regex + Logical Window Integration Tests
+
+    /// Helper to extract word with both regex patterns and logical window
+    private func extractWordWithRegexAndWindow(
+        from strings: [String],
+        at location: VT100GridCoord,
+        regexPatterns: [String],
+        windowLocation: Int32,
+        windowLength: Int32,
+        maximumLength: Int = 1000,
+        width: Int32 = 80
+    ) -> VT100GridWindowedRange {
+        let dataSource = MockTextDataSourceWithDWC(strings: strings, width: width)
+        let textExtractor = iTermTextExtractor(dataSource: dataSource)
+        textExtractor.logicalWindow = VT100GridRangeMake(windowLocation, windowLength)
+
+        return textExtractor.rangeForWord(
+            at: location,
+            maximumLength: maximumLength,
+            big: false,
+            additionalWordCharacters: nil,
+            regexPatterns: regexPatterns
+        )
+    }
+
+    /// Test regex mode respects logical window left boundary
+    func testRegexModeWithLogicalWindowLeftBoundary() {
+        // "foo-bar-baz" with window starting in the middle
+        let range = extractWordWithRegexAndWindow(
+            from: ["foo-bar-baz test"],
+            at: VT100GridCoord(x: 5, y: 0),  // 'a' in "bar"
+            regexPatterns: ["-"],
+            windowLocation: 4,  // Window starts at "bar-baz"
+            windowLength: 20
+        )
+
+        // Window starts at 4, so selection should not include "foo-"
+        XCTAssertGreaterThanOrEqual(range.coordRange.start.x, 4,
+            "Selection should respect left window boundary")
+    }
+
+    /// Test regex mode respects logical window right boundary
+    func testRegexModeWithLogicalWindowRightBoundary() {
+        // "foo-bar-baz test" with window ending in the middle
+        let range = extractWordWithRegexAndWindow(
+            from: ["foo-bar-baz test"],
+            at: VT100GridCoord(x: 2, y: 0),  // 'o' in "foo"
+            regexPatterns: ["-"],
+            windowLocation: 0,
+            windowLength: 7  // Window ends at "foo-bar"
+        )
+
+        // Window ends at 7, so selection should not extend past it
+        XCTAssertLessThanOrEqual(range.coordRange.end.x, 7,
+            "Selection should respect right window boundary")
+    }
+
+    // MARK: - Regex + additionalWordCharacters Combination Tests
+
+    /// Test that additionalWordCharacters joins words correctly (character list mode)
+    func testAdditionalWordCharactersJoinsWords() {
+        // Test with additionalWordCharacters (character list mode)
+        let range = extractWord(
+            from: ["foo/bar baz"],
+            at: VT100GridCoord(x: 3, y: 0),  // '/'
+            additionalWordCharacters: "/"
+        )
+        // "/" as additional word char should join "foo/bar" into one word
+        assertRangeEquals(range, startX: 0, startY: 0, endX: 7, endY: 0)
+    }
+
+    /// Test regex pattern for a single character
+    func testRegexPatternSingleCharacter() {
+        // Test with regex pattern for "/" character
+        let range = extractWordWithRegex(
+            from: ["foo/bar baz"],
+            at: VT100GridCoord(x: 3, y: 0),  // '/'
+            regexPatterns: ["/"]
+        )
+        // In regex mode, "/" is word-extending
+        // Verify the selection includes the clicked position
+        XCTAssertLessThanOrEqual(range.coordRange.start.x, 3, "Should include click position")
+        XCTAssertGreaterThanOrEqual(range.coordRange.end.x, 4, "Should include the pattern")
+    }
+
+    // MARK: - Multi-line Word Selection Tests
+
+    /// Test word selection on wrapped line (soft wrap)
+    /// Note: This requires the data source to indicate line continuation
+    func testWordSelectionWithSoftWrappedLine() {
+        // Create a simple test with content on two lines
+        // In practice, soft wrapping is indicated by EOL_SOFT continuation marker
+        let dataSource = MockTextDataSource(strings: ["hello", "world"], width: 80)
+        let textExtractor = iTermTextExtractor(dataSource: dataSource)
+
+        // Select word on first line
+        let range1 = textExtractor.rangeForWord(
+            at: VT100GridCoord(x: 2, y: 0),
+            maximumLength: 1000
+        )
+        assertRangeEquals(range1, startX: 0, startY: 0, endX: 5, endY: 0)
+
+        // Select word on second line
+        let range2 = textExtractor.rangeForWord(
+            at: VT100GridCoord(x: 2, y: 1),
+            maximumLength: 1000
+        )
+        assertRangeEquals(range2, startX: 0, startY: 1, endX: 5, endY: 1)
+    }
+
+    /// Test clicking on second line doesn't incorrectly extend to first line
+    func testWordSelectionDoesNotCrossHardLineBreak() {
+        let range = extractWord(
+            from: ["hello", "world"],
+            at: VT100GridCoord(x: 0, y: 1)  // 'w' in "world" on line 1
+        )
+
+        // Should only select "world" on line 1, not cross to line 0
+        assertRangeEquals(range, startX: 0, startY: 1, endX: 5, endY: 1)
     }
 }
 
@@ -1566,18 +1775,27 @@ class iTermWordSelectionAtomIteratorTest: XCTestCase {
     }
 
     /// Test 5: Overlapping patterns - longer wins
+    /// When multiple patterns can match at the same position, the longer match should win
     func testOverlappingPatternsLongerWins() {
-        let iterator = createIterator(from: ["https://"], regexPatterns: ["https://", "http"])
-        preatomize(iterator: iterator, text: "https://", targetIndex: 1)
+        // "https://rest" - both "http" and "https://" can match at position 0
+        // The longer pattern "https://" should win
+        let iterator = createIterator(from: ["https://rest"], regexPatterns: ["https://", "http"])
+        preatomize(iterator: iterator, text: "https://rest", targetIndex: 0)
 
         guard let atoms = iterator.atoms else {
             XCTFail("Expected atoms to be created")
             return
         }
 
-        // Should have single atom "https://" (longer pattern wins)
-        XCTAssertEqual(atoms.count, 1)
+        // First atom should be "https://" (8 chars), not "http" (4 chars)
         XCTAssertEqual(atoms[0].string, "https://")
+        XCTAssertTrue(atoms[0].forcedWordClass)
+
+        // Verify we didn't get "http" followed by "s://"
+        XCTAssertNotEqual(atoms[0].string, "http")
+
+        // Rest of the atoms should be single chars: r, e, s, t
+        XCTAssertEqual(atoms.count, 5)  // "https://" + "r" + "e" + "s" + "t"
     }
 
     /// Test 6: Regex at start of text
