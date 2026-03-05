@@ -5663,7 +5663,7 @@ CA
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <clipView key="contentView" id="ArV-0K-qze">
                                 <rect key="frame" x="1" y="1" width="450" height="95"/>
-                                <autoresizingMask key="autoresizingMask"/>
+                                <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                 <subviews>
                                     <tableView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="lastColumnOnly" alternatingRowBackgroundColors="YES" columnReordering="NO" columnResizing="NO" multipleSelection="NO" autosaveColumns="NO" id="5661">
                                         <rect key="frame" x="0.0" y="0.0" width="450" height="95"/>
@@ -8063,11 +8063,11 @@ You can choose to define the characters considered part of a word with a regular
                         </tabViewItem>
                         <tabViewItem label="Settings" identifier="" id="A3y-3j-WQF">
                             <view key="view" id="NGW-1C-GwI">
-                                <rect key="frame" x="10" y="33" width="755" height="693"/>
+                                <rect key="frame" x="10" y="33" width="755" height="513"/>
                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                 <subviews>
                                     <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="pnz-ME-DBf" customClass="iTermPreferencesInnerTabContainerView">
-                                        <rect key="frame" x="27" y="524" width="701" height="176"/>
+                                        <rect key="frame" x="27" y="344" width="701" height="176"/>
                                         <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxX="YES" flexibleMinY="YES"/>
                                         <subviews>
                                             <textField focusRingType="none" verticalHuggingPriority="750" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="5616">
@@ -8110,7 +8110,7 @@ You can choose to define the characters considered part of a word with a regular
                                                 </connections>
                                             </button>
                                             <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="YYR-pl-zPM">
-                                                <rect key="frame" x="162" y="83" width="88" height="16"/>
+                                                <rect key="frame" x="162" y="81" width="88" height="16"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <textFieldCell key="cell" lineBreakMode="clipping" title="Save changes" id="6Dp-co-GtB">
                                                     <font key="font" metaFont="system"/>
@@ -9868,7 +9868,7 @@ instead of the system keyboard.</string>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <clipView key="contentView" id="N1C-ir-dI5">
                         <rect key="frame" x="1" y="1" width="238" height="377"/>
-                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <autoresizingMask key="autoresizingMask"/>
                         <subviews>
                             <tableView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="lastColumnOnly" columnReordering="NO" columnResizing="NO" autosaveColumns="NO" typeSelect="NO" id="5562">
                                 <rect key="frame" x="0.0" y="0.0" width="238" height="377"/>
