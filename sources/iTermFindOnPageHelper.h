@@ -119,6 +119,11 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
 // Remove highlights in a range of lines.
 - (void)removeHighlightsInRange:(NSRange)range;
 - (void)removeSearchResultsInRange:(NSRange)range;
+// Remove search results within a coordinate range. Unlike removeSearchResultsInRange:,
+// this respects the x-coordinates on boundary lines. Results on the start line are only
+// removed if their startX >= range.start.x. Results on the end line are only removed
+// if their startX <= range.end.x. Results on middle lines are always removed.
+- (void)removeSearchResultsWithAbsCoordRange:(VT100GridAbsCoordRange)range;
 - (void)removeAllSearchResults;
 
 // Sets the location to start searching. TODO: Currently this only works for find next/prev.

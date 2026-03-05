@@ -4733,7 +4733,7 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
 }
 
 - (void)removeSearchResultsInRange:(VT100GridAbsCoordRange)range {
-    [_findOnPageHelper removeSearchResultsInRange:NSMakeRange(range.start.y, range.end.y - range.start.y)];
+    [_findOnPageHelper removeSearchResultsWithAbsCoordRange:range];
 }
 
 - (void)addSearchResult:(SearchResult *)searchResult {

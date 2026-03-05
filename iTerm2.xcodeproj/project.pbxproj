@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		02BBB9199A50961FFEAC2D6D /* iTermFindOnPageHelperTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 98E9463133DCF8311E0E5B6E /* iTermFindOnPageHelperTests.swift */; };
 		06E0C88E1DF9695400AA061B /* iTermServiceProvider.h in Headers */ = {isa = PBXBuildFile; fileRef = 06E0C88C1DF9695400AA061B /* iTermServiceProvider.h */; };
 		10AAA7668EA8FBDD64696AB7 /* iTermEventTriggerParameterView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DE7B0AE10E1598EDE1E01795 /* iTermEventTriggerParameterView.swift */; };
 		1D027C111CD1867000B0FBFF /* iTermColorPresets.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D027C0F1CD1867000B0FBFF /* iTermColorPresets.h */; };
@@ -6219,6 +6220,7 @@
 		90A1E139186F9EA4003EC3E8 /* AppleScriptTest.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AppleScriptTest.h; sourceTree = "<group>"; };
 		90A1E13A186F9EA4003EC3E8 /* AppleScriptTest.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = AppleScriptTest.m; sourceTree = "<group>"; };
 		93EDFB853885460AA504C6B9 /* iTermLayoutCalculator.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermLayoutCalculator.h; sourceTree = "<group>"; };
+		98E9463133DCF8311E0E5B6E /* iTermFindOnPageHelperTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = iTermFindOnPageHelperTests.swift; sourceTree = "<group>"; };
 		9D737D5D17495B4100B3334D /* PrefsGeneral.png */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; name = PrefsGeneral.png; path = images/PrefsGeneral.png; sourceTree = "<group>"; };
 		9D737D5E17495B4100B3334D /* PrefsGeneral@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; name = "PrefsGeneral@2x.png"; path = "images/PrefsGeneral@2x.png"; sourceTree = "<group>"; };
 		9DB3D6DE176C8F0B0071CCF8 /* PrefsAppearance.png */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; name = PrefsAppearance.png; path = images/PrefsAppearance.png; sourceTree = "<group>"; };
@@ -9855,8 +9857,8 @@
 			isa = PBXGroup;
 			children = (
 				002CB9657AA29AC459CE35D1 /* iTermWordExtractorTest.swift */,
+				98E9463133DCF8311E0E5B6E /* iTermFindOnPageHelperTests.swift */,
 			);
-			name = ModernTests;
 			path = ModernTests;
 			sourceTree = "<group>";
 		};
@@ -20041,6 +20043,7 @@
 			files = (
 				A6C811F42DCFD5E40088E628 /* SearchEngineTests.swift in Sources */,
 				F54DF58519DE131885375D3F /* iTermWordExtractorTest.swift in Sources */,
+				02BBB9199A50961FFEAC2D6D /* iTermFindOnPageHelperTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
