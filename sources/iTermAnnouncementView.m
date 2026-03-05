@@ -17,6 +17,7 @@
 #import "NSWindow+iTerm.h"
 
 static const CGFloat kMargin = 8;
+const CGFloat iTermAnnouncementViewHeightPadding = 29;
 
 @interface iTermAnnouncementView ()
 @property(nonatomic, assign) iTermAnnouncementViewStyle style;
@@ -45,6 +46,19 @@ static const CGFloat kMargin = 8;
     [view setTitle:title];
     [view createButtonsFromActions:actions block:block];
     return view;
+}
+
++ (NSFont *)announcementFont {
+    return [NSFont systemFontOfSize:12];
+}
+
++ (CGFloat)estimatedHeightForWidth:(CGFloat)width text:(NSString *)text {
+    NSDictionary *attributes = @{ NSFontAttributeName: [self announcementFont] };
+    CGFloat minHeight = [@"x" heightWithAttributes:attributes constrainedToWidth:width];
+    CGFloat maxHeight = [@"x\nx\nx" heightWithAttributes:attributes constrainedToWidth:width];
+    CGFloat textHeight = [text heightWithAttributes:attributes constrainedToWidth:width];
+    CGFloat clampedHeight = MAX(minHeight, MIN(textHeight, maxHeight));
+    return clampedHeight + iTermAnnouncementViewHeightPadding;
 }
 
 + (id)announcementViewWithTitle:(NSString *)title
@@ -287,7 +301,7 @@ static const CGFloat kMargin = 8;
 
         rect.size.width -= _buttonWidth;
         iTermAutoResizingTextView *textView = [[iTermAutoResizingTextView alloc] initWithFrame:rect];
-        NSDictionary *attributes = @{ NSFontAttributeName: [NSFont systemFontOfSize:12],
+        NSDictionary *attributes = @{ NSFontAttributeName: [[self class] announcementFont],
                                       NSForegroundColorAttributeName: [NSColor textColor] };
         NSAttributedString *attributedString;
         if (self.isMarkdown) {
@@ -360,7 +374,7 @@ static const CGFloat kMargin = 8;
 }
 
 - (NSDictionary *)attributesForHeightMeasurement {
-    return @{ NSFontAttributeName: [NSFont systemFontOfSize:12] };
+    return @{ NSFontAttributeName: [[self class] announcementFont] };
 }
 
 - (CGFloat)maximumHeightForWidth:(CGFloat)width {
@@ -431,7 +445,7 @@ static const CGFloat kMargin = 8;
 - (void)sizeToFit {
     [self updateTextViewFrame];
     NSRect frame = self.frame;
-    frame.size.height = _textView.frame.size.height + 29;
+    frame.size.height = _textView.frame.size.height + iTermAnnouncementViewHeightPadding;
     self.frame = frame;
 }
 

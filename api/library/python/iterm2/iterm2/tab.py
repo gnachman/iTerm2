@@ -25,18 +25,20 @@ class Tab:
     Don't create this yourself. Instead, use :class:`~iterm2.App`."""
 
     # pylint: disable=too-few-public-methods
-    class Delegate:
+    class Delegate(abc.ABC):
         """Delegate for Tab."""
         @abc.abstractmethod
         def tab_delegate_get_window(
                 self, tab: 'Tab') -> typing.Optional['iterm2.window.Window']:
             """Returns the Window for a Tab."""
+            ...
 
         @abc.abstractmethod
         async def tab_delegate_get_window_by_id(
                 self,
                 window_id: str) -> typing.Optional['iterm2.window.Window']:
             """Returns the Window with the given ID."""
+            ...
     # pylint: enable=too-few-public-methods
 
     delegate: typing.Optional[Delegate] = None

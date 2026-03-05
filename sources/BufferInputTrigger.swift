@@ -37,6 +37,13 @@ class BufferInputTrigger: Trigger {
         return true
     }
 
+    // Requires a live session to buffer input
+    override var allowedMatchTypes: Set<NSNumber> {
+        var set: Set<NSNumber> = [NSNumber(value: iTermTriggerMatchType.regex.rawValue)]
+        set.formUnion(EventTriggerMatchTypeHelper.allEventTypesExceptSessionEndedSet)
+        return set
+    }
+
     override func paramIsPopupButton() -> Bool {
         true
     }

@@ -633,7 +633,7 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
         if leftCell.isHighlighted || rightCell.isHighlighted || leftCell.state == .on || rightCell.state == .on {
             return
         }
-        guard let cells = tabBar?.cells() as? [PSMTabBarCell], cells.count >= 4 else {
+        guard let cells = tabBar?.cells() as? [PSMTabBarCell], cells.count >= 3 else {
             return
         }
         dividerColor.set()
@@ -1712,8 +1712,8 @@ class PSMTahoeDarkTabStyle: PSMTahoeTabStyle {
         Bundle(for: PSMTahoeTabStyle.self).image(forResource: "TahoeDarkMidTab")!
     }()
     
-    override func reallyDrawDivider(rect: NSRect) {
-        rect.fill(using: .clear)
+    override var dividerColor: NSColor {
+        NSColor(displayP3Red: 0.271, green: 0.292, blue: 0.301, alpha: 1.0)
     }
 
     override func useLightControls() -> Bool {

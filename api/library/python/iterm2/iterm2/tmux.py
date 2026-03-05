@@ -11,19 +11,24 @@ import iterm2.tab
 import iterm2.window
 
 
-@abc.abstractmethod
-class Delegate:
+class Delegate(abc.ABC):
     """Delegate interface for tmux."""
+    @abc.abstractmethod
     async def tmux_delegate_async_get_window_for_tab_id(
             self, tab_id: str) -> typing.Optional[iterm2.window.Window]:
         """Refreshes and gets the window for the specified tab."""
+        ...
 
+    @abc.abstractmethod
     def tmux_delegate_get_session_by_id(
             self, session_id: str) -> typing.Optional[iterm2.session.Session]:
         """Returns the session with the given ID."""
+        ...
 
+    @abc.abstractmethod
     def tmux_delegate_get_connection(self) -> iterm2.connection.Connection:
         """Returns the connection."""
+        ...
 
 
 DELEGATE: typing.Optional[Delegate] = None

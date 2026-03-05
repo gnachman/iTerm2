@@ -34,6 +34,14 @@ void iTermFunctionCallSplitFullyQualifiedName(NSString *fqName, NSString **names
                            retainSelf:(BOOL)retainSelf  // YES to keep it alive until it's complete
                            completion:(void (^)(id, NSError *, NSSet<NSString *> *))completion;
 
++ (iTermParsedExpression *)callMethod:(NSString *)invocation
+                             receiver:(NSString *)receiver
+                              timeout:(NSTimeInterval)timeout
+                   sideEffectsAllowed:(BOOL)sideEffectsAllowed
+                           retainSelf:(BOOL)retainSelf
+                        connectionKey:(id)connectionKey
+                           completion:(void (^)(id, NSError *, NSSet<NSString *> *))completion;
+
 + (void)executeFunctionCalls:(NSArray<iTermScriptFunctionCall *> *)calls
                   invocation:(NSString *)invocation
                     receiver:(NSString *)receiver

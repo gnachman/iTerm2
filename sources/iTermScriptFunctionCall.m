@@ -93,11 +93,29 @@ void iTermFunctionCallSplitFullyQualifiedName(NSString *fqName, NSString **names
                    sideEffectsAllowed:(BOOL)sideEffectsAllowed
                            retainSelf:(BOOL)retainSelf  // YES to keep it alive until it's complete
                            completion:(void (^)(id, NSError *, NSSet<NSString *> *))completion {
-    return [self callFunction:invocation receiver:receiver
+    return [self callMethod:invocation
+                   receiver:receiver
+                    timeout:timeout
+         sideEffectsAllowed:sideEffectsAllowed
+                 retainSelf:retainSelf
+              connectionKey:nil
+                 completion:completion];
+}
+
++ (iTermParsedExpression *)callMethod:(NSString *)invocation
+                             receiver:(NSString *)receiver
+                              timeout:(NSTimeInterval)timeout
+                   sideEffectsAllowed:(BOOL)sideEffectsAllowed
+                           retainSelf:(BOOL)retainSelf
+                        connectionKey:(id)connectionKey
+                           completion:(void (^)(id, NSError *, NSSet<NSString *> *))completion {
+    return [self callFunction:invocation
+                     receiver:receiver
                       timeout:timeout
            sideEffectsAllowed:sideEffectsAllowed
                         scope:nil
                    retainSelf:retainSelf
+                connectionKey:connectionKey
                    completion:completion];
 }
 
@@ -123,6 +141,24 @@ void iTermFunctionCallSplitFullyQualifiedName(NSString *fqName, NSString **names
                                   scope:(iTermVariableScope *)scope
                              retainSelf:(BOOL)retainSelf
                              completion:(void (^)(id, NSError *, NSSet<NSString *> *))completion {
+    return [self callFunction:invocation
+                     receiver:receiver
+                      timeout:timeout
+           sideEffectsAllowed:sideEffectsAllowed
+                        scope:scope
+                   retainSelf:retainSelf
+                connectionKey:nil
+                   completion:completion];
+}
+
++ (iTermParsedExpression *)callFunction:(NSString *)invocation
+                               receiver:(NSString *)receiver
+                                timeout:(NSTimeInterval)timeout
+                     sideEffectsAllowed:(BOOL)sideEffectsAllowed
+                                  scope:(iTermVariableScope *)scope
+                             retainSelf:(BOOL)retainSelf
+                          connectionKey:(id)connectionKey
+                             completion:(void (^)(id, NSError *, NSSet<NSString *> *))completion {
     static dispatch_once_t onceToken;
     static NSMutableArray<iTermParsedExpression *> *array;
     dispatch_once(&onceToken, ^{
@@ -135,6 +171,7 @@ void iTermFunctionCallSplitFullyQualifiedName(NSString *fqName, NSString **names
                             timeout:timeout
                  sideEffectsAllowed:sideEffectsAllowed
                               scope:scope
+                      connectionKey:connectionKey
                          completion:^(id result, NSError *error, NSSet<NSString *> *missing) {
                              completion(result, error, missing);
                              if (expression) {
@@ -153,6 +190,22 @@ void iTermFunctionCallSplitFullyQualifiedName(NSString *fqName, NSString **names
                                 timeout:(NSTimeInterval)timeout
                      sideEffectsAllowed:(BOOL)sideEffectsAllowed
                                   scope:(iTermVariableScope *)scope
+                             completion:(void (^)(id, NSError *, NSSet<NSString *> *))completion {
+    return [self callFunction:invocation
+                     receiver:receiver
+                      timeout:timeout
+           sideEffectsAllowed:sideEffectsAllowed
+                        scope:scope
+                connectionKey:nil
+                   completion:completion];
+}
+
++ (iTermParsedExpression *)callFunction:(NSString *)invocation
+                               receiver:(NSString *)receiver
+                                timeout:(NSTimeInterval)timeout
+                     sideEffectsAllowed:(BOOL)sideEffectsAllowed
+                                  scope:(iTermVariableScope *)scope
+                          connectionKey:(id)connectionKey
                              completion:(void (^)(id, NSError *, NSSet<NSString *> *))completion {
     iTermVariableScope *placeholderScope = scope ? nil : [[iTermVariablePlaceholderScope alloc] init];
     iTermParsedExpression *expression = [[iTermExpressionParser callParser] parse:invocation
@@ -196,6 +249,7 @@ void iTermFunctionCallSplitFullyQualifiedName(NSString *fqName, NSString **names
                                timeout:timeout
                     sideEffectsAllowed:sideEffectsAllowed
                                  scope:scope
+                         connectionKey:connectionKey
                             completion:completion];
             return expression;
         case iTermParsedExpressionTypeFunctionCalls:
@@ -205,6 +259,7 @@ void iTermFunctionCallSplitFullyQualifiedName(NSString *fqName, NSString **names
                                timeout:timeout
                     sideEffectsAllowed:sideEffectsAllowed
                                  scope:scope
+                         connectionKey:connectionKey
                             completion:completion];
             return expression;
         case iTermParsedExpressionTypeInterpolatedString: {
@@ -228,11 +283,31 @@ void iTermFunctionCallSplitFullyQualifiedName(NSString *fqName, NSString **names
           sideEffectsAllowed:(BOOL)sideEffectsAllowed
                        scope:(iTermVariableScope *)scope
                   completion:(void (^)(id, NSError *, NSSet<NSString *> *))completion {
+    [self executeFunctionCalls:calls
+                    invocation:invocation
+                      receiver:receiver
+                       timeout:timeout
+            sideEffectsAllowed:sideEffectsAllowed
+                         scope:scope
+                 connectionKey:nil
+                    completion:completion];
+}
+
++ (void)executeFunctionCalls:(NSArray<iTermScriptFunctionCall *> *)calls
+                  invocation:(NSString *)invocation
+                    receiver:(NSString *)receiver
+                     timeout:(NSTimeInterval)timeout
+          sideEffectsAllowed:(BOOL)sideEffectsAllowed
+                       scope:(iTermVariableScope *)scope
+               connectionKey:(id)connectionKey
+                  completion:(void (^)(id, NSError *, NSSet<NSString *> *))completion {
     if (calls.count == 0) {
         completion(nil, nil, nil);
         return;
     }
     iTermScriptFunctionCall *call = calls[0];
+    // Set the connectionKey on the call object so it's available during execution
+    call.connectionKey = connectionKey;
     __weak __typeof(self) weakSelf = self;
     if (receiver) {
         [call performMethodCallFromInvocation:invocation
@@ -254,6 +329,7 @@ void iTermFunctionCallSplitFullyQualifiedName(NSString *fqName, NSString **names
                                    timeout:timeout
                         sideEffectsAllowed:sideEffectsAllowed
                                      scope:scope
+                             connectionKey:connectionKey
                                 completion:completion];
         }];
     } else {
@@ -277,6 +353,7 @@ void iTermFunctionCallSplitFullyQualifiedName(NSString *fqName, NSString **names
                                    timeout:timeout
                         sideEffectsAllowed:sideEffectsAllowed
                                      scope:scope
+                             connectionKey:connectionKey
                                 completion:completion];
         }];
     }
@@ -429,12 +506,13 @@ void iTermFunctionCallSplitFullyQualifiedName(NSString *fqName, NSString **names
         return;
     }
     if (receiver) {
-        iTermCallMethodByIdentifier(receiver,
-                                    self.fullyQualifiedName,
-                                    parameterValues,
-                                    ^(id object, NSError *error) {
-                                        completion(object, error, nil);
-                                    });
+        iTermCallMethodByIdentifierWithConnectionKey(receiver,
+                                                     self.fullyQualifiedName,
+                                                     parameterValues,
+                                                     self.connectionKey,
+                                                     ^(id object, NSError *error) {
+                                                         completion(object, error, nil);
+                                                     });
         return;
     }
     if (self.isBuiltinFunction) {

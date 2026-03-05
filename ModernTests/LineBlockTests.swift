@@ -966,6 +966,53 @@ class LineBlockTests: XCTestCase {
                        "rawLine(2) should return the third appended string")
     }
 
+    func testRawLineAndOffsetAfterPartialDrop() {
+        // Regression test: rawLine: and offsetOfRawLine: must use _firstEntry/bufferStartOffset,
+        // not hardcode linenum==0 → start=0.
+        //
+        // Setup: 3 raw lines appended at width 80, then drop 4 wrapped lines at width 3.
+        // This advances _firstEntry to 2 and sets bufferStartOffset to 9,
+        // which differs from cumulative_line_lengths[1] = 6.
+        // The buggy code would return 6 (CLL boundary) instead of 9 (actual start).
+
+        let block = LineBlock(rawBufferSize: 100, absoluteBlockNumber: 1)
+        let appendWidth: Int32 = 80
+
+        // Append three raw lines: "AB" (2), "CDEF" (4), "GHIJKLMN" (8)
+        // cumulative_line_lengths will be [2, 6, 14]
+        XCTAssertTrue(block.appendLineString(makeLineString("AB", eol: EOL_HARD), width: appendWidth))
+        XCTAssertTrue(block.appendLineString(makeLineString("CDEF", eol: EOL_HARD), width: appendWidth))
+        XCTAssertTrue(block.appendLineString(makeLineString("GHIJKLMN", eol: EOL_HARD), width: appendWidth))
+
+        // Drop 4 wrapped lines at width 3:
+        //   Raw 0 ("AB", len 2): spans=0 → 1 wrapped line consumed, n: 4→3
+        //   Raw 1 ("CDEF", len 4): spans=1 → 2 wrapped lines consumed, n: 3→1
+        //   Raw 2 ("GHIJKLMN", len 8): spans=2, n=1 ≤ 2 → partial drop of 3 chars.
+        //     bufferStartOffset = 6 + 3 = 9, _firstEntry = 2
+        var charsDropped: Int32 = 0
+        let dropped = block.dropLines(4, withWidth: 3, chars: &charsDropped)
+        XCTAssertEqual(dropped, 4, "Should drop exactly 4 wrapped lines")
+
+        // Verify post-drop state
+        XCTAssertEqual(block.firstEntry, 2,
+                       "firstEntry should be 2 after consuming raw lines 0 and 1")
+        XCTAssertEqual(block.startOffset(), 9,
+                       "bufferStartOffset should be 9 (CLL[1]=6 + 3 partial), not 6 or 0")
+
+        // offsetOfRawLine: must return bufferStartOffset for _firstEntry
+        XCTAssertEqual(block.offset(ofRawLine: 2), 9,
+                       "offsetOfRawLine(2) should return bufferStartOffset=9, not CLL[1]=6")
+
+        // lengthOfRawLine: is already correct (uses _firstEntry) — sanity check
+        XCTAssertEqual(block.length(ofRawLine: 2), 5,
+                       "Remaining portion of raw line 2 should be 5 chars (14 - 9)")
+
+        // rawLine:/screenCharArrayForRawLine: must return content starting at bufferStartOffset
+        let remaining = block.screenCharArray(forRawLine: 2)
+        XCTAssertEqual(remaining.stringValue, "JKLMN",
+                       "rawLine(2) should return the 5 surviving chars, not start 3 chars too early")
+    }
+
     // MARK: - Serialization
 
     func testDictionaryRoundTripPreservesContents() {

@@ -66,6 +66,8 @@ NSString *const kPreferenceKeySelectionCopiesText = @"CopySelection";
 NSString *const kPreferenceKeyCopyLastNewline = @"CopyLastNewline";
 NSString *const kPreferenceKeyAllowClipboardAccessFromTerminal = @"AllowClipboardAccess";
 NSString *const kPreferenceKeyCharactersConsideredPartOfAWordForSelection = @"WordCharacters";
+NSString *const kPreferenceKeyCharactersConsideredPartOfAWordForSelectionMode = @"WordSelectionMode";
+NSString *const kPreferenceKeyWordSelectionRegexPattern = @"WordSelectionRegexPattern";
 NSString *const kPreferenceKeySmartWindowPlacement_Deprecated = @"SmartPlacement";
 NSString *const kPreferenceKeyUseAutoSaveFrames_Deprecated = @"RememberWindowPositions";
 NSString *const kPreferenceKeyWindowPlacement = @"WindowPlacement";
@@ -490,6 +492,8 @@ static NSString *sPreviousVersion;
                   kPreferenceKeyCopyLastNewline: @NO,
                   kPreferenceKeyAllowClipboardAccessFromTerminal: @NO,
                   kPreferenceKeyCharactersConsideredPartOfAWordForSelection: @"/-+\\~_.",
+                  kPreferenceKeyCharactersConsideredPartOfAWordForSelectionMode: @(iTermSelectionWordModeCharacterList),
+                  kPreferenceKeyWordSelectionRegexPattern: @"-|\\+|\\\\|~|_",
                   kPreferenceKeySmartWindowPlacement_Deprecated: @NO,
                   kPreferenceKeyUseAutoSaveFrames_Deprecated: @NO,
                   kPreferenceKeyWindowPlacement: @(iTermWindowPlacementPosition),

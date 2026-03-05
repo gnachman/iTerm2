@@ -351,6 +351,10 @@ static BOOL iTermAPIHelperLastApplescriptAuthRequiredSetting;
     // WARNING: These can exist after the block has been removed from
     // _serverOriginatedRPCCompletionBlocks if it times out.
     NSMutableDictionary<NSString *, NSMutableSet<NSString *> *> *_outstandingRPCs;
+
+    // Per-connection approved domains for load_url API method.
+    // When adding a new dictionary of subscriptions update -removeAllSubscriptionsForConnectionKey: and -stop.
+    NSMutableDictionary<id, NSMutableSet<NSString *> *> *_loadURLApprovedDomains;
 }
 
 + (instancetype)sharedInstance {
@@ -659,6 +663,7 @@ static BOOL iTermAPIHelperLastApplescriptAuthRequiredSetting;
         _outstandingRPCs = [NSMutableDictionary dictionary];
         _allSessionsSubscriptions = [NSMutableArray array];
         _allWindowsSubscriptions = [NSMutableArray array];
+        _loadURLApprovedDomains = [NSMutableDictionary dictionary];
 
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(sessionDidTerminate:)
@@ -808,6 +813,7 @@ static BOOL iTermAPIHelperLastApplescriptAuthRequiredSetting;
 
     [_serverOriginatedRPCCompletionBlocks removeAllObjects];
     [_outstandingRPCs removeAllObjects];
+    [_loadURLApprovedDomains removeAllObjects];
     [[NSNotificationCenter defaultCenter] postNotificationName:iTermAPIHelperDidStopNotification object:nil];
 }
 
@@ -1408,6 +1414,29 @@ static BOOL iTermAPIHelperLastApplescriptAuthRequiredSetting;
     NSString *key = connectionKey ? [_apiServer websocketKeyForConnectionKey:connectionKey] : nil;
     iTermScriptHistoryEntry *entry = key ? [[iTermScriptHistory sharedInstance] entryWithIdentifier:key] : nil;
     return entry;
+}
+
+#pragma mark - Per-Connection URL Allowlist
+
+
+- (BOOL)isDomainApprovedForLoadURL:(NSString *)domain connectionKey:(id)connectionKey {
+    if (!connectionKey || !domain) {
+        return NO;
+    }
+    NSMutableSet<NSString *> *approved = _loadURLApprovedDomains[connectionKey];
+    return [approved containsObject:domain];
+}
+
+- (void)approveDomainForLoadURL:(NSString *)domain connectionKey:(id)connectionKey {
+    if (!connectionKey || !domain) {
+        return;
+    }
+    NSMutableSet<NSString *> *approved = _loadURLApprovedDomains[connectionKey];
+    if (!approved) {
+        approved = [NSMutableSet set];
+        _loadURLApprovedDomains[connectionKey] = approved;
+    }
+    [approved addObject:domain];
 }
 
 - (void)logToConnectionWithKey:(NSString *)connectionKey string:(NSString *)string {
@@ -2085,6 +2114,7 @@ static BOOL iTermAPIHelperLastApplescriptAuthRequiredSetting;
     [_allWindowsSubscriptions removeObjectsPassingTest:^BOOL(iTermAllObjectsSubscription *sub) {
         return [sub.connectionKey isEqual:connectionKey];
     }];
+    [_loadURLApprovedDomains removeObjectForKey:connectionKey];
     if (rpcsRemoved) {
         [[NSNotificationCenter defaultCenter] postNotificationName:iTermAPIRegisteredFunctionsDidChangeNotification
                                                             object:nil];
@@ -4123,6 +4153,7 @@ static BOOL iTermCheckSplitTreesIsomorphic(ITMSplitTreeNode *node1, ITMSplitTree
                                 timeout:timeout >= 0 ? timeout : 30
                      sideEffectsAllowed:YES
                              retainSelf:YES
+                          connectionKey:_apiServer.currentKey
                              completion:^(id object, NSError *error, NSSet<NSString *> *missing) {
                                  [self functionInvocationDidCompleteWithObject:object error:error completion:completion];
                              }];

@@ -27,10 +27,22 @@ void iTermCallMethodByIdentifier(NSString *identifier,
                                  NSDictionary *args,
                                  void (^completion)(id, NSError *));
 
+void iTermCallMethodByIdentifierWithConnectionKey(NSString *identifier,
+                                                  NSString *name,
+                                                  NSDictionary *args,
+                                                  id _Nullable connectionKey,
+                                                  void (^completion)(id, NSError *));
+
 void iTermCallMethodOnObject(id<iTermObject> object,
                              NSString *name,
                              NSDictionary *args,
                              void (^completion)(id, NSError *));
+
+void iTermCallMethodOnObjectWithConnectionKey(id<iTermObject> object,
+                                              NSString *name,
+                                              NSDictionary *args,
+                                              id _Nullable connectionKey,
+                                              void (^completion)(id, NSError *));
 
 
 NS_ASSUME_NONNULL_END

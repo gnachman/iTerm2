@@ -461,8 +461,11 @@ NSString *iTermNamespaceFromSignature(NSString *signature) {
     if (!argDict) {
         return nil;
     }
+    // Remove connectionKey from the public signature - it's injected internally, not passed by callers
+    NSMutableDictionary *publicArgDict = [argDict mutableCopy];
+    [publicArgDict removeObjectForKey:@"connectionKey"];
     self = [super initWithName:name
-                     arguments:argDict
+                     arguments:publicArgDict
              optionalArguments:[NSSet set]
                  defaultValues:defaultValues
                        context:context
@@ -511,6 +514,12 @@ NSString *iTermNamespaceFromSignature(NSString *signature) {
 
 - (void)callWithArguments:(NSDictionary<NSString *, id> *)parameters
                completion:(iTermBuiltInFunctionCompletionBlock)completion {
+    [self callWithArguments:parameters connectionKey:nil completion:completion];
+}
+
+- (void)callWithArguments:(NSDictionary<NSString *, id> *)parameters
+            connectionKey:(id)connectionKey
+               completion:(iTermBuiltInFunctionCompletionBlock)completion {
     NSMethodSignature *signature = [[(NSObject *)_target class] instanceMethodSignatureForSelector:_action];
     NSInvocation *invocation = [NSInvocation invocationWithMethodSignature:signature];
     invocation.target = _target;
@@ -520,6 +529,9 @@ NSString *iTermNamespaceFromSignature(NSString *signature) {
         iTermReflectionMethodArgument *arg = _args[i];
         if ([arg.argumentName hasSuffix:@"WithCompletion"]) {
             temp[i] = [completion copy];
+        } else if ([arg.argumentName isEqualToString:@"connectionKey"]) {
+            // Special handling for connectionKey - injected by the caller, not from parameters
+            temp[i] = connectionKey;
         } else {
             if (!parameters[arg.argumentName]) {
                 assert([_optionalArguments containsObject:arg.argumentName]);

@@ -3,6 +3,12 @@ generate: force
 	make iterm2/binding.py
 	make iterm2/mainmenu.py
 
+test: force
+	python3 -m pytest tests/ -v
+
+test-cov: force
+	python3 -m pytest tests/ -v --cov=iterm2 --cov-report=term-missing
+
 install-local: force
 	python3 setup.py install
 

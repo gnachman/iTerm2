@@ -23,7 +23,7 @@ class Modifier(enum.Enum):
     NUMPAD = iterm2.api_pb2.Modifiers.Value("NUMPAD")  #: Indicates the key is on the numeric keypad.
 
     @staticmethod
-    def from_cocoa(value: int) -> ['Modifier']:
+    def from_cocoa(value: int) -> typing.List['Modifier']:
         result = []
         if value & (1 << 18):
             result.append(Modifier.CONTROL)

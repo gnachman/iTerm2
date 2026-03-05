@@ -1,0 +1,4 @@
+# Development and testing dependencies
+pytest>=7.0.0
+pytest-cov>=4.0.0
+pytest-asyncio>=0.21.0

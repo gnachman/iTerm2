@@ -7,6 +7,7 @@
 
 #import "AlertTrigger.h"
 #import "PTYSession.h"
+#import "iTerm2SharedARC-Swift.h"
 #import "PTYTab.h"
 #import "PseudoTerminal.h"
 #import "iTermAdvancedSettingsModel.h"
@@ -33,6 +34,12 @@
 - (BOOL)takesParameter
 {
     return YES;
+}
+
+- (NSSet<NSNumber *> *)allowedMatchTypes {
+    NSMutableSet *set = [NSMutableSet setWithObject:@(iTermTriggerMatchTypeRegex)];
+    [set unionSet:[iTermEventTriggerMatchTypeHelper allEventTypesSet]];
+    return set;
 }
 
 - (BOOL)performActionWithCapturedStrings:(NSArray<NSString *> *)stringArray

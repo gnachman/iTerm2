@@ -50,6 +50,31 @@ void iTermCallMethodOnObject(id<iTermObject> object,
                              NSString *name,
                              NSDictionary *args,
                              void (^completion)(id, NSError *)) {
+    iTermCallMethodOnObjectWithConnectionKey(object, name, args, nil, completion);
+}
+
+void iTermCallMethodByIdentifierWithConnectionKey(NSString *identifier,
+                                                  NSString *name,
+                                                  NSDictionary *args,
+                                                  id connectionKey,
+                                                  void (^completion)(id, NSError *)) {
+    id<iTermObject> object = [[iTermVariablesIndex sharedInstance] variablesForKey:identifier].owner;
+    if (!object) {
+        completion(nil,
+                   iTermMethodCallError(iTermAPIHelperErrorCodeInvalidIdentifier,
+                                        @"No object with ID %@",
+                                        identifier));
+        return;
+    }
+
+    iTermCallMethodOnObjectWithConnectionKey(object, name, args, connectionKey, completion);
+}
+
+void iTermCallMethodOnObjectWithConnectionKey(id<iTermObject> object,
+                                              NSString *name,
+                                              NSDictionary *args,
+                                              id connectionKey,
+                                              void (^completion)(id, NSError *)) {
     NSString *const signature = iTermFunctionSignatureFromNamespaceAndNameAndArguments(nil, name, args.allKeys);
     iTermBuiltInMethod *const method = [object.objectMethodRegistry methodWithSignature:signature];
     if (!method) {
@@ -61,6 +86,6 @@ void iTermCallMethodOnObject(id<iTermObject> object,
         return;
     }
 
-    [method callWithArguments:args completion:completion ?: ^(id result, NSError *error){}];
+    [method callWithArguments:args connectionKey:connectionKey completion:completion];
 }
 

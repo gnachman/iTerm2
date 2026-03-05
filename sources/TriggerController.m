@@ -257,33 +257,34 @@ NSString *const kTwoPraramValueColumnIdentifier = @"kTwoPraramValueColumnIdentif
 + (NSArray<Class> *)triggerClassesForTerminal:(BOOL)terminal {
     NSArray *allClasses;
     if (terminal) {
-        allClasses = @[ [AlertTrigger class],
-                        [AnnotateTrigger class],
-                        [BellTrigger class],
-                        [BounceTrigger class],
-                        [iTermRPCTrigger class],
-                        [CaptureTrigger class],
-                        [iTermBufferInputTrigger class],
-                        [iTermFoldTrigger class],
-                        [iTermInjectTrigger class],
-                        [iTermHighlightLineTrigger class],
-                        [iTermUserNotificationTrigger class],
-                        [iTermSetUserVariableTrigger class],
-                        [iTermShellPromptTrigger class],
-                        [iTermSetTitleTrigger class],
-                        [iTermSetNamedMarkTrigger class],
-                        [iTermSGRTrigger class],
-                        [SendTextTrigger class],
-                        [ScriptTrigger class],
-                        [CoprocessTrigger class],
-                        [MuteCoprocessTrigger class],
-                        [HighlightTrigger class],
-                        [MarkTrigger class],
-                        [PasswordTrigger class],
-                        [iTermHyperlinkTrigger class],
-                        [SetDirectoryTrigger class],
-                        [SetHostnameTrigger class],
-                        [StopTrigger class] ];
+        allClasses = @[
+            [AlertTrigger class],
+            [AnnotateTrigger class],
+            [BellTrigger class],
+            [BounceTrigger class],
+            [iTermRPCTrigger class],
+            [CaptureTrigger class],
+            [iTermBufferInputTrigger class],
+            [iTermFoldTrigger class],
+            [iTermInjectTrigger class],
+            [iTermHighlightLineTrigger class],
+            [iTermUserNotificationTrigger class],
+            [iTermSetUserVariableTrigger class],
+            [iTermShellPromptTrigger class],
+            [iTermSetTitleTrigger class],
+            [iTermSetNamedMarkTrigger class],
+            [iTermSGRTrigger class],
+            [SendTextTrigger class],
+            [ScriptTrigger class],
+            [CoprocessTrigger class],
+            [MuteCoprocessTrigger class],
+            [HighlightTrigger class],
+            [MarkTrigger class],
+            [PasswordTrigger class],
+            [iTermHyperlinkTrigger class],
+            [SetDirectoryTrigger class],
+            [SetHostnameTrigger class],
+            [StopTrigger class] ];
     } else {
         allClasses = @[ [ReaderModeBrowserTrigger class],
                         [HighlightBrowserTrigger class],
@@ -1131,6 +1132,12 @@ NSString *const kTwoPraramValueColumnIdentifier = @"kTwoPraramValueColumnIdentif
     triggerDictionary[kTriggerPartialLineKey] = @(_detailViewController.instant);
     if (_detailViewController.name) {
         triggerDictionary[kTriggerNameKey] = _detailViewController.name;
+    }
+    NSDictionary *eventParams = _detailViewController.eventParams;
+    if (eventParams.count > 0) {
+        triggerDictionary[kTriggerEventParamsKey] = eventParams;
+    } else {
+        [triggerDictionary removeObjectForKey:kTriggerEventParamsKey];
     }
 
     [self setTriggerDictionary:triggerDictionary forRow:row reloadData:NO];

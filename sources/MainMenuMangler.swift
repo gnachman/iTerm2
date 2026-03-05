@@ -14,9 +14,12 @@ class MainMenuMangler: NSObject {
     private weak var observedWindow: NSWindow?
     private var web: NSMenuItem?
 
+    // Track if the application is terminating to avoid accessing deallocated objects
+    private var isTerminating = false
+
     // Store original key equivalents for web menu items
     private var originalWebKeyEquivalents: [(String, NSEvent.ModifierFlags)] = []
-    
+
     // Store conflicting menu items that need their key equivalents restored
     private var conflictingMenuItems: [(menuItem: NSMenuItem, keyEquivalent: String, modifierMask: NSEvent.ModifierFlags)] = []
 
@@ -148,6 +151,7 @@ class MainMenuMangler: NSObject {
         "Clear to Last Mark": "bookmark",
         "Clear Scrollback Buffer": "xmark.diamond",
         "Fold Selected Lines": "text.line.first.and.arrowtriangle.forward",
+        "Fold All Above Cursor": "text.line.first.and.arrowtriangle.forward",
 
         // View menu
         "Show Tabs in Fullscreen": "macwindow",
@@ -405,7 +409,18 @@ class MainMenuMangler: NSObject {
             selector: #selector(browserStateDidChange(_:)),
             name: iTermBrowserGateway.didChange,
             object: nil)
+        // Stop observing before iTermController is released during app termination
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(applicationWillTerminate(_:)),
+            name: Notification.Name(rawValue: iTermApplicationWillTerminate),
+            object: nil)
         update()
+    }
+
+    @objc private func applicationWillTerminate(_ note: Notification) {
+        isTerminating = true
+        stopObserving()
     }
 
     @objc private func browserStateDidChange(_ note: Notification) {
@@ -427,6 +442,9 @@ class MainMenuMangler: NSObject {
     }
 
     private func update() {
+        // Don't access iTermController during app termination - it may be deallocated
+        guard !isTerminating else { return }
+
         let currentTerminalWindow = iTermController.sharedInstance().currentTerminal?.window()
         if currentTerminalWindow == observedWindow {
             return
@@ -560,6 +578,9 @@ class MainMenuMangler: NSObject {
     }
 
     func updateMainMenu() {
+        // Don't access iTermController during app termination - it may be deallocated
+        guard !isTerminating else { return }
+
         guard let web else {
             DLog("updateMainMenu: web is nil, returning early")
             return

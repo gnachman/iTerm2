@@ -86,9 +86,9 @@ static void PTYNoteViewControllerIncrementVisibleCount(NSInteger delta) {
     self.noteView.autoresizesSubviews = YES;
     self.noteView.delegate = self;
     NSShadow *shadow = [[NSShadow alloc] init];
-    shadow.shadowColor = [[NSColor blackColor] colorWithAlphaComponent:0.5];
-    shadow.shadowOffset = NSMakeSize(1, -1);
-    shadow.shadowBlurRadius = 1.0;
+    shadow.shadowColor = [[NSColor blackColor] colorWithAlphaComponent:0.15];
+    shadow.shadowOffset = NSMakeSize(0, -2);
+    shadow.shadowBlurRadius = 8.0;
     self.noteView.wantsLayer = YES;
     self.noteView.shadow = shadow;
 
@@ -117,7 +117,6 @@ static void PTYNoteViewControllerIncrementVisibleCount(NSInteger delta) {
     textView_.textContainer.containerSize = NSMakeSize(scrollView_.frame.size.width, FLT_MAX);
     textView_.textContainer.widthTracksTextView = YES;
     textView_.delegate = self;
-    textView_.appearance = [NSAppearance appearanceNamed:NSAppearanceNameAqua];
     scrollView_.documentView = textView_;
 
     // Put the scrollview in a wrapper so we can have a few pixels of padding
@@ -142,12 +141,31 @@ static void PTYNoteViewControllerIncrementVisibleCount(NSInteger delta) {
     anchor_ = anchor;
 
     NSRect superViewFrame = noteView_.superview.frame;
-    CGFloat xOffset = 0;
-    if (anchor_.x + noteView_.frame.size.width > superViewFrame.size.width) {
-        xOffset = anchor_.x + noteView_.frame.size.width - superViewFrame.size.width;
-    }
-    noteView_.tipEdge = kPTYNoteViewTipEdgeTop;
     NSSize size = [noteView_ sizeThatFitsContentView];
+
+    // Position the bubble so the pointer is roughly centered, making it more vertical.
+    // xOffset is how far the pointer tip is from the left edge of the bubble.
+    const CGFloat pointerInset = 40;
+    CGFloat xOffset;
+
+    // Ideal bubble position: pointer at pointerInset from left edge.
+    CGFloat idealBubbleX = anchor_.x - pointerInset;
+
+    if (idealBubbleX < 0) {
+        // Bubble would go off left edge - align to left edge.
+        xOffset = anchor_.x;
+    } else if (idealBubbleX + size.width > superViewFrame.size.width) {
+        // Bubble would go off right edge - align to right edge.
+        xOffset = anchor_.x - (superViewFrame.size.width - size.width);
+    } else {
+        // Bubble fits with ideal positioning.
+        xOffset = pointerInset;
+    }
+
+    // Clamp xOffset to valid range (pointer must be within bubble).
+    xOffset = MAX(0, MIN(xOffset, size.width));
+
+    noteView_.tipEdge = kPTYNoteViewTipEdgeTop;
     noteView_.point = NSMakePoint(xOffset, 0);
     noteView_.frame = NSMakeRect(anchor_.x - xOffset,
                                  anchor_.y,
@@ -333,7 +351,7 @@ static void PTYNoteViewControllerIncrementVisibleCount(NSInteger delta) {
     alpha = alpha * alpha;
 
     NSColor *defaultBg = [self.noteView defaultBackgroundColor];
-    CGFloat highlightComponents[] = { 0.9, 0.8, 0 };
+    CGFloat highlightComponents[] = { 0.85, 0.92, 1.0 };
     CGFloat components[3] = {
         [defaultBg redComponent] * alpha + (1 - alpha) * highlightComponents[0],
         [defaultBg greenComponent] * alpha + (1 - alpha) * highlightComponents[1],

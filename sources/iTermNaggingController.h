@@ -52,6 +52,7 @@ extern NSString *const kTurnOffBracketedPasteOnHostChangeAnnouncementIdentifier;
 - (void)naggingControllerPrettyPrintJSON;
 - (NSWindow * _Nullable)naggingControllerWindow;
 - (void)naggingControllerSetProfileProperties:(NSDictionary *)dict;
+- (BOOL)naggingControllerAnnouncementWouldObscureCursorForText:(NSString *)text;
 
 @end
 
@@ -105,6 +106,8 @@ extern NSString *const kTurnOffBracketedPasteOnHostChangeAnnouncementIdentifier;
 - (void)offerTextReplacement:(void (^NS_NOESCAPE)(void))perform;
 - (void)cancelTextReplacementOffer;
 - (void)offerToSetProfileProperties:(NSDictionary *)dict;
+- (void)offerToEnableTouchIDForSudo;
+- (void)removeTouchIDForSudoOffer;
 
 @end
 

@@ -51,7 +51,17 @@
 - (BOOL)rootTerminalViewShouldDrawStoplightButtons;
 - (BOOL)rootTerminalViewShouldRevealStandardWindowButtons;
 - (iTermStatusBarViewController *)rootTerminalViewSharedStatusBarViewController;
-- (BOOL)rootTerminalViewWindowHasFullSizeContentView;
+
+// Returns YES when the tab bar is a titlebar accessory in fullscreen AND the window
+// uses NSWindowStyleMaskFullSizeContentView, meaning the content view extends under
+// the title bar. In this case, the tab bar accessory overlaps the content area and
+// we must shrink frames to compensate.
+- (BOOL)rootTerminalViewFullScreenTabBarAccessoryOverlapsContent;
+
+// Returns YES when we should leave empty space at the top of the content area for
+// where the tab bar WILL be, even though it's not currently visible or positioned there.
+// This handles the transitional state when the tab bar is "on loan" to the titlebar
+// accessory system but hasn't yet been positioned as an accessory.
 - (BOOL)rootTerminalViewShouldLeaveEmptyAreaAtTop;
 - (BOOL)rootTerminalViewShouldHideTabBarBackingWhenTabBarIsHidden;
 - (VT100GridSize)rootTerminalViewCurrentSessionSize;
@@ -96,8 +106,6 @@ extern const NSInteger iTermRootTerminalViewWindowNumberLabelWidth;
 
 @property(nonatomic, readonly) BOOL tabBarShouldBeVisible;
 @property(nonatomic, readonly) BOOL tabBarShouldBeVisibleEvenWhenOnLoan;
-
-@property(nonatomic, readonly) CGFloat tabviewWidth;
 
 @property(nonatomic, readonly) CGFloat leftTabBarWidth;
 @property(nonatomic, readonly) CGFloat leftTabBarPreferredWidth;

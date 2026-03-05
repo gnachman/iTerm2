@@ -2110,6 +2110,60 @@ static CFAbsoluteTime gDragMoveFirstTime = 0;
     [self setNeedsDisplay:YES];
 }
 
+- (void)updateTrackingAreas {
+    [super updateTrackingAreas];
+
+    // Rebuild tracking areas for all visible cells based on their current frames.
+    // This ensures tracking areas stay valid after view lifecycle events like
+    // moving to a different window, display sleep/wake, etc.
+    const NSPoint mousePoint = [self convertPoint:[[self window] pointFromScreenCoords:[NSEvent mouseLocation]]
+                                         fromView:nil];
+
+    for (PSMTabBarCell *cell in _cells) {
+        if ([cell isInOverflowMenu]) {
+            continue;
+        }
+
+        const NSRect cellFrame = [cell frame];
+
+        // Rebuild cell tracking rect.
+        [cell removeCellTrackingRectFrom:self];
+        [cell setCellTrackingRect:cellFrame userData:nil assumeInside:NO view:self];
+
+        // Update highlight state based on current mouse position.
+        // This clears highlight if cursor is no longer in cell.
+        [cell updateHighlight];
+        if (NSMouseInRect(mousePoint, cellFrame, [self isFlipped])) {
+            [cell setHighlighted:YES];
+        }
+
+        // Always remove close button tracking rect first.
+        [cell removeCloseButtonTrackingRectFrom:self];
+
+        // Rebuild close button tracking rect if applicable.
+        if ([cell hasCloseButton] &&
+            ([[cell representedObject] isEqualTo:[_tabView selectedTabViewItem]] ||
+             [self allowsBackgroundTabClosing])) {
+            const NSRect closeRect = [cell closeButtonRectForFrame:cellFrame];
+
+            [cell setCloseButtonTrackingRect:closeRect userData:nil assumeInside:NO view:self];
+
+            // Update close button highlight state for the selected tab only.
+            if ([[cell representedObject] isEqualTo:[_tabView selectedTabViewItem]] &&
+                [[NSApp currentEvent] type] != NSEventTypeLeftMouseDown &&
+                NSMouseInRect(mousePoint, closeRect, [self isFlipped])) {
+                [cell setCloseButtonOver:YES];
+            } else {
+                [cell setCloseButtonOver:NO];
+            }
+        } else {
+            [cell setCloseButtonOver:NO];
+        }
+    }
+
+    [self setNeedsDisplay:YES];
+}
+
 - (void)windowDidMove:(NSNotification *)aNotification {
     [self setNeedsDisplay:YES];
 }

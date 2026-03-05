@@ -8,6 +8,7 @@
 
 #import "PasswordTrigger.h"
 #import "iTermPasswordManagerWindowController.h"
+#import "iTerm2SharedARC-Swift.h"
 #import "NSArray+iTerm.h"
 
 static NSString *PasswordTriggerPlaceholderString = @"Open Password Manager to Unlock";
@@ -83,6 +84,12 @@ static NSString *PasswordTriggerPlaceholderString = @"Open Password Manager to U
 
 - (BOOL)paramIsPopupButton {
     return YES;
+}
+
+- (NSSet<NSNumber *> *)allowedMatchTypes {
+    NSMutableSet *set = [NSMutableSet setWithObject:@(iTermTriggerMatchTypeRegex)];
+    [set unionSet:[iTermEventTriggerMatchTypeHelper allEventTypesSet]];
+    return set;
 }
 
 - (NSArray *)sortedAccountNames {

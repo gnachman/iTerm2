@@ -1156,10 +1156,6 @@ ITERM_WEAKLY_REFERENCEABLE
     [self fitTabsToWindow];
 }
 
-- (CGFloat)tabviewWidth {
-    return _contentView.tabviewWidth;
-}
-
 - (void)toggleBroadcastingToCurrentSession:(id)sender {
     [_broadcastInputHelper toggleSession:self.currentSession.guid];
 }
@@ -5031,7 +5027,10 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
 }
 
 - (NSEdgeInsets)tabBarInsetsForCompactWindow NS_AVAILABLE_MAC(10_14) {
-    const CGFloat stoplightButtonsWidth = 75;
+    CGFloat stoplightButtonsWidth = 75;
+    if (@available(macOS 26, *)) {
+        stoplightButtonsWidth += 3;
+    }
     switch ([iTermPreferences intForKey:kPreferenceKeyTabPosition]) {
         case PSMTab_TopTab: {
             const CGFloat extraSpace = MAX(0, [iTermAdvancedSettingsModel extraSpaceBeforeCompactTopTabBar]);
@@ -10456,10 +10455,29 @@ static BOOL iTermApproximatelyEqualRects(NSRect lhs, NSRect rhs, double epsilon)
     return self.currentSession.statusBarViewController;
 }
 
-- (BOOL)rootTerminalViewWindowHasFullSizeContentView {
-    return [PseudoTerminal windowTypeHasFullSizeContentView:self.windowType];
+// Returns YES when the tab bar accessory in fullscreen overlaps the content area.
+// This happens when the window uses NSWindowStyleMaskFullSizeContentView, which
+// causes the content view to extend under the title bar area.
+//
+// This is used by tabViewFrameByShrinkingForFullScreenTabBar to determine if
+// frame shrinking is needed. It is mutually exclusive with
+// rootTerminalViewShouldLeaveEmptyAreaAtTop, which handles the transitional state.
+- (BOOL)rootTerminalViewFullScreenTabBarAccessoryOverlapsContent {
+    // Check the actual window's styleMask rather than savedWindowType, because
+    // during window transitions the styleMask is the authoritative source.
+    return (self.window.styleMask & NSWindowStyleMaskFullSizeContentView) == NSWindowStyleMaskFullSizeContentView;
 }
 
+// Returns YES when empty space should be reserved at the top of the content area
+// for a tab bar that is "on loan" to the titlebar accessory system but is not
+// yet positioned as an accessory.
+//
+// This handles the transitional state during fullscreen entry/exit when:
+// 1. The tab bar control has been borrowed (tabBarControlOnLoan == YES)
+// 2. But it's not yet (or no longer) being shown as a titlebar accessory
+//
+// This is mutually exclusive with tabViewFrameByShrinkingForFullScreenTabBar,
+// which handles the case when the tab bar IS a functioning accessory.
 - (BOOL)rootTerminalViewShouldLeaveEmptyAreaAtTop {
     if ([PseudoTerminal windowTypeHasFullSizeContentView:self.windowType]) {
         DLog(@"YES because window type %@ has full size content view", @(self.windowType));
@@ -10732,7 +10750,23 @@ static BOOL iTermApproximatelyEqualRects(NSRect lhs, NSRect rhs, double epsilon)
     return _contentView.tabBarControlOnLoan;
 }
 
-// See the note in windowDecorationSize about this hack.
+// Returns YES during the transitional state when the tab bar is about to stop
+// being a titlebar accessory.
+//
+// This happens when:
+// 1. tabBarShouldBeAccessory returns NO (tab bar should NOT be an accessory)
+// 2. BUT tabBarControlOnLoan is YES (tab bar IS currently loaned to accessory system)
+//
+// This transitional state occurs when:
+// - Going from 2+ tabs to 1 tab in fullscreen (tab bar will hide)
+// - Exiting fullscreen (tab bar will return to normal position)
+//
+// During this state, we need to compensate in window size calculations because
+// the tab bar is still physically present as an accessory but should not be
+// counted in the window's decoration size.
+//
+// See also: rootTerminalViewShouldLeaveEmptyAreaAtTop (handles layout during transition)
+// See also: windowDecorationSize (uses this to adjust decoration height)
 - (BOOL)shouldCompensateForDisappearingTabBarAccessory {
     return (!self.tabBarShouldBeAccessory && _contentView.tabBarControlOnLoan);
 }

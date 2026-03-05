@@ -19,6 +19,7 @@ typedef NS_ENUM(NSUInteger, iTermAlphaNumericDefinition) {
 
 @implementation iTermWordExtractor {
     VT100GridRange _logicalWindow;
+    iTermSelectionWordMode _wordMode;
     NSString *_additionalWordCharacters;
 }
 
@@ -30,6 +31,7 @@ typedef NS_ENUM(NSUInteger, iTermAlphaNumericDefinition) {
         _location = location;
         _maximumLength = maximumLength;
         _big = big;
+        _wordMode = [iTermPreferences unsignedIntegerForKey:kPreferenceKeyCharactersConsideredPartOfAWordForSelectionMode];
         _additionalWordCharacters = [iTermPreferences stringForKey:kPreferenceKeyCharactersConsideredPartOfAWordForSelection];
     }
     return self;
@@ -94,8 +96,9 @@ typedef NS_ENUM(NSUInteger, iTermAlphaNumericDefinition) {
 
     DLog(@"Compute range for word at %@, max length %@",
          VT100GridCoordDescription(_location), @(_maximumLength));
-    DLog(@"These special chars will be treated as alphanumeric: %@",
-         [iTermPreferences stringForKey:kPreferenceKeyCharactersConsideredPartOfAWordForSelection]);
+    DLog(@"These special chars will be treated as alphanumeric: %@, mode=%@",
+         [iTermPreferences stringForKey:kPreferenceKeyCharactersConsideredPartOfAWordForSelection],
+         @([iTermPreferences unsignedIntegerForKey:kPreferenceKeyCharactersConsideredPartOfAWordForSelectionMode]));
 
     VT100GridCoord location = [self coordLockedToWindow:_location];
 
@@ -127,7 +130,7 @@ typedef NS_ENUM(NSUInteger, iTermAlphaNumericDefinition) {
     const int width = [_dataSource wordExtractorWidth];
     const BOOL windowTouchesLeftMargin = (_logicalWindow.location == 0);
     const BOOL windowTouchesRightMargin = (xLimit == width);
-    int numberOfLines = [_dataSource wordExtractroNumberOfLines];
+    int numberOfLines = [_dataSource wordExtractorNumberOfLines];
     if (location.y >= numberOfLines) {
         return VT100GridWindowedRangeMake(VT100GridCoordRangeMake(-1, -1, -1, -1),
                                           _logicalWindow.location, _logicalWindow.length);
@@ -456,7 +459,7 @@ typedef struct {
     iTermTextExtractorClass theClass = [self classForCharacter:[_dataSource characterAt:location]];
     const int xLimit = [_dataSource xLimit];
     const int width = [_dataSource wordExtractorWidth];
-    int numberOfLines = [_dataSource wordExtractroNumberOfLines];
+    int numberOfLines = [_dataSource wordExtractorNumberOfLines];
     if (location.y >= numberOfLines) {
         return nil;
     }
@@ -605,6 +608,7 @@ typedef struct {
                       definitionOfAlphanumeric:(iTermAlphaNumericDefinition)definition {
     switch (definition) {
         case iTermAlphaNumericDefinitionUserDefined: {
+            assert(_wordMode == iTermSelectionWordModeCharacterList);
             NSRange range = [_additionalWordCharacters rangeOfString:characterAsString];
             return (range.length == characterAsString.length);
         }

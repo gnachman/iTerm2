@@ -9,6 +9,7 @@
 #import "iTermRootTerminalView.h"
 
 #import "DebugLogging.h"
+#import "iTermLayoutCalculator.h"
 
 #import "NSAppearance+iTerm.h"
 #import "NSEvent+iTerm.h"
@@ -478,6 +479,7 @@ NS_CLASS_AVAILABLE_MAC(10_14)
             case TAB_STYLE_MINIMAL:
                 return 2.5;
             case TAB_STYLE_COMPACT:
+                return 6 + 3;
             case TAB_STYLE_DARK:
             case TAB_STYLE_LIGHT:
             case TAB_STYLE_AUTOMATIC:
@@ -487,6 +489,24 @@ NS_CLASS_AVAILABLE_MAC(10_14)
         }
     }
     return 6;
+}
+
+- (CGFloat)widthForStandardButtonsView {
+    if (@available(macOS 26, *)) {
+        const iTermPreferencesTabStyle preferredStyle = [iTermPreferences intForKey:kPreferenceKeyTabStyle];
+        switch (preferredStyle) {
+            case TAB_STYLE_COMPACT:
+                return iTermStandardButtonsViewWidth + 3;
+            case TAB_STYLE_MINIMAL:
+            case TAB_STYLE_DARK:
+            case TAB_STYLE_LIGHT:
+            case TAB_STYLE_AUTOMATIC:
+            case TAB_STYLE_DARK_HIGH_CONTRAST:
+            case TAB_STYLE_LIGHT_HIGH_CONTRAST:
+                break;
+        }
+    }
+    return iTermStandardButtonsViewWidth;
 }
 
 - (CGFloat)strideForWindowButtons {
@@ -514,7 +534,13 @@ NS_CLASS_AVAILABLE_MAC(10_14)
         insets.bottom = -[self.delegate rootTerminalViewStoplightButtonsOffset:self];
         switch (preferredStyle) {
             case TAB_STYLE_MINIMAL:
-                insets.left = insets.right = MAX(0, -insets.bottom);
+                if (@available(macOS 26, *)) {
+                    // Use fixed value on macOS 26 regardless of tab bar height.
+                    // This matches the default tab bar height of 38: (38-25)/2 = 6.5
+                    insets.left = insets.right = 6.5;
+                } else {
+                    insets.left = insets.right = MAX(0, -insets.bottom);
+                }
                 break;
             case TAB_STYLE_COMPACT:
                 insets.left = insets.right = 0;
@@ -536,7 +562,7 @@ NS_CLASS_AVAILABLE_MAC(10_14)
         return insets;
     }
 
-    const CGFloat hotboxSideInset = (iTermStoplightHotboxWidth - iTermStandardButtonsViewWidth) / 2.0;
+    const CGFloat hotboxSideInset = (iTermStoplightHotboxWidth - [self widthForStandardButtonsView]) / 2.0;
     const CGFloat hotboxVerticalInset = (iTermStoplightHotboxHeight - iTermStandardButtonsViewHeight) / 2.0;
     return NSEdgeInsetsMake(hotboxVerticalInset, hotboxSideInset, hotboxVerticalInset, hotboxSideInset);
 }
@@ -551,7 +577,7 @@ NS_CLASS_AVAILABLE_MAC(10_14)
     }
     NSRect frame = NSMakeRect(insets.left,
                               self.frame.size.height - height + insets.bottom + 1,
-                              iTermStandardButtonsViewWidth,
+                              [self widthForStandardButtonsView],
                               iTermStandardButtonsViewHeight);
     return [self retinaRoundRect:frame];
 }
@@ -1103,20 +1129,9 @@ NS_CLASS_AVAILABLE_MAC(10_14)
 }
 
 - (NSRect)toolbeltFrameInWindow:(NSWindow *)thisWindow {
-    CGFloat width = floor(_toolbeltWidth);
-    CGFloat top = [self topBorderInset] + [self notchInset];
-    CGFloat bottom = [self bottomBorderInset];
-    CGFloat right = [self rightBorderInset];
-    NSRect toolbeltFrame = NSMakeRect(self.bounds.size.width - width - right,
-                                      bottom,
-                                      width,
-                                      self.bounds.size.height - top - bottom);
-    if ([self shouldLeaveEmptyAreaAtTop]) {
-        toolbeltFrame.size.height -= _tabBarControl.height;
-    }
-
-    return [self tabViewFrameByShrinkingForFullScreenTabBar:toolbeltFrame
-                                                     window:thisWindow];
+    // Use calculator for toolbelt frame calculation
+    iTermLayoutInputs inputs = [self layoutInputsForWindow:thisWindow];
+    return [iTermLayoutCalculator toolbeltFrameWithInputs:inputs];
 }
 
 - (void)setShouldShowToolbelt:(BOOL)shouldShowToolbelt {
@@ -1178,20 +1193,6 @@ NS_CLASS_AVAILABLE_MAC(10_14)
     const BOOL result = [self.tabView numberOfTabViewItems] + numberOfAdditionalTabs > 1;
     DLog(@"returning %@", @(result));
     return result;
-}
-
-- (CGFloat)tabviewWidth {
-    assert([iTermPreferences intForKey:kPreferenceKeyTabPosition] != PSMTab_LeftTab ||
-           ![self tabBarShouldBeVisible]);
-
-    CGFloat width;
-    if (self.shouldShowToolbelt && !_delegate.exitingLionFullscreen) {
-        width = _delegate.window.frame.size.width - floor(self.toolbeltWidth);
-    } else {
-        width = _delegate.window.frame.size.width;
-    }
-    width -= [self leftBorderInset] + [self rightBorderInset];
-    return width;
 }
 
 - (void)removeLeftTabBarDragHandle {
@@ -1259,22 +1260,6 @@ NS_CLASS_AVAILABLE_MAC(10_14)
     return YES;
 }
 
-- (CGFloat)leftBorderInset {
-    return 0;
-}
-
-- (CGFloat)rightBorderInset {
-    return 0;
-}
-
-- (CGFloat)bottomBorderInset {
-    return 0;
-}
-
-- (CGFloat)topBorderInset {
-    return 0;
-}
-
 - (CGFloat)notchInset {
     if (![_delegate fullScreen]) {
         return 0;
@@ -1296,6 +1281,66 @@ NS_CLASS_AVAILABLE_MAC(10_14)
     return 0;
 }
 
+#pragma mark - Layout Calculator Integration
+
+- (iTermLayoutInputs)layoutInputsForWindow:(NSWindow *)thisWindow {
+    iTermLayoutInputs inputs = {0};
+
+    // Content view dimensions - fall back to self.bounds if window is nil
+    // (e.g., during initialization before window is set)
+    NSRect contentFrame;
+    if (thisWindow) {
+        contentFrame = [[thisWindow contentView] frame];
+    } else {
+        contentFrame = self.bounds;
+    }
+    inputs.contentViewWidth = contentFrame.size.width;
+    inputs.contentViewHeight = contentFrame.size.height;
+
+    // Tab bar dimensions
+    inputs.tabBarHeight = _tabBarControl.height;
+    inputs.leftTabBarWidth = _leftTabBarWidth;
+
+    // Toolbelt
+    inputs.toolbeltWidth = floor(self.toolbeltWidth);
+    inputs.shouldShowToolbelt = self.shouldShowToolbelt;
+
+    // Status bar
+    iTermStatusBarViewController *statusBarViewController = [_delegate rootTerminalViewSharedStatusBarViewController];
+    inputs.statusBarHeight = statusBarViewController ? iTermGetStatusBarHeight() : 0;
+    inputs.hasStatusBar = (statusBarViewController != nil);
+    inputs.statusBarOnTop = ([iTermPreferences unsignedIntegerForKey:kPreferenceKeyStatusBarPosition] == iTermStatusBarPositionTop);
+
+    // Tab bar state
+    inputs.tabBarVisible = [self tabBarShouldBeVisibleWithAdditionalTabs:0];
+    inputs.tabBarOnLoan = _tabBarControlOnLoan;
+    inputs.tabBarFlashing = _tabBarControl.flashing;
+    inputs.tabBarShouldBeAccessory = [self tabBarShouldBeVisibleEvenWhenOnLoan];
+    inputs.tabBarAccessoryOverlapsContent = [self.delegate rootTerminalViewFullScreenTabBarAccessoryOverlapsContent];
+
+    // Fullscreen state
+    inputs.enteringFullscreen = [self.delegate enteringLionFullscreen];
+    inputs.inFullscreen = [self.delegate fullScreen] || [self.delegate lionFullScreen];
+
+    // Tab position
+    inputs.tabPosition = [iTermPreferences intForKey:kPreferenceKeyTabPosition];
+
+    // Division view
+    inputs.divisionViewVisible = self.delegate.divisionViewShouldBeVisible;
+    inputs.divisionViewHeight = kDivisionViewHeight;
+
+    // Notch inset
+    inputs.notchInset = [self notchInset];
+
+    // Transitional state
+    inputs.shouldLeaveEmptyAreaAtTop = [self shouldLeaveEmptyAreaAtTop];
+
+    // Title in tab bar
+    inputs.drawWindowTitleInPlaceOfTabBar = [self.delegate rootTerminalViewShouldDrawWindowTitleInPlaceOfTabBar];
+
+    return inputs;
+}
+
 - (void)layoutSubviewsWithHiddenTabBarForWindow:(NSWindow *)thisWindow {
     if (!_tabBarControlOnLoan) {
         self.tabBarControl.hidden = YES;
@@ -1306,33 +1351,19 @@ NS_CLASS_AVAILABLE_MAC(10_14)
     }
 
     [self removeLeftTabBarDragHandle];
-    iTermDecorationHeights decorationHeights = {
-        .bottom = [self bottomBorderInset],
-        .top = (_delegate.divisionViewShouldBeVisible ? kDivisionViewHeight : 0) + [self notchInset]
-    };
-    decorationHeights.top += [self topBorderInset];
-    if ([self shouldLeaveEmptyAreaAtTop]) {
-        DLog(@"Add tabbar control height to decoration height to leave an empty area at the top.");
-        decorationHeights.top += _tabBarControl.height;
-    } else {
-        DLog(@"Not leaving an empty area on top");
-    }
-    const NSRect frame = NSMakeRect([self leftBorderInset],
-                                    decorationHeights.bottom,
-                                    [self tabviewWidth],
-                                    [[thisWindow contentView] frame].size.height - decorationHeights.top - decorationHeights.bottom);
-    [self layoutStatusBar:&decorationHeights window:thisWindow frame:frame];
-    NSRect tabViewFrame =
-        NSMakeRect([self leftBorderInset],
-                   decorationHeights.bottom,
-                   [self tabviewWidth],
-                   [[thisWindow contentView] frame].size.height - decorationHeights.top - decorationHeights.bottom);
-    if ([self tabBarShouldBeVisibleEvenWhenOnLoan]) {
-        tabViewFrame = [self tabViewFrameByShrinkingForFullScreenTabBar:tabViewFrame
-                                                                 window:thisWindow];
-    }
-    DLog(@"repositionWidgets - Set tab view frame to %@", NSStringFromRect(tabViewFrame));
-    [self.tabView setFrame:tabViewFrame];
+
+    // Build inputs and calculate layout using the calculator
+    iTermLayoutInputs inputs = [self layoutInputsForWindow:thisWindow];
+    inputs.tabBarVisible = NO;  // Force hidden for this method
+    iTermLayoutOutputs outputs = [iTermLayoutCalculator calculateLayoutWithInputs:inputs];
+
+    // Apply tab view frame
+    DLog(@"repositionWidgets - Set tab view frame to %@", NSStringFromRect(outputs.tabViewFrame));
+    [self.tabView setFrame:outputs.tabViewFrame];
+
+    // Layout status bar using calculator outputs
+    [self layoutStatusBarWithOutputs:outputs window:thisWindow];
+
     [self updateDivisionViewAndWindowNumberLabel];
 
     // Even though it's not visible it needs an accurate number so we can compute the proper
@@ -1347,50 +1378,25 @@ NS_CLASS_AVAILABLE_MAC(10_14)
 
 - (void)layoutSubviewsTopTabBarVisible:(BOOL)topTabBarVisible forWindow:(NSWindow *)thisWindow {
     [self removeLeftTabBarDragHandle];
-    iTermDecorationHeights decorationHeights = {
-        .bottom = [self bottomBorderInset],
-        .top = [self notchInset]
-    };
-    if (!_tabBarControlOnLoan) {
-        if (!self.tabBarControl.flashing) {
-            decorationHeights.top += _tabBarControl.height;
-        }
-    }
-    if (![self.delegate rootTerminalViewShouldDrawWindowTitleInPlaceOfTabBar]) {
-        decorationHeights.top += [self topBorderInset];
-    }
-    if (_delegate.divisionViewShouldBeVisible) {
-        decorationHeights.top += kDivisionViewHeight;
-    }
-    const NSRect frame = NSMakeRect([self leftBorderInset],
-                                    decorationHeights.bottom,
-                                    [self tabviewWidth],
-                                    [[thisWindow contentView] frame].size.height - decorationHeights.bottom - decorationHeights.top);
-    iTermDecorationHeights temp = decorationHeights;
-    [self layoutStatusBar:&temp window:thisWindow frame:frame];
 
-    NSRect tabViewFrame = NSMakeRect([self leftBorderInset],
-                                     temp.bottom,
-                                     [self tabviewWidth],
-                                     [[thisWindow contentView] frame].size.height - temp.bottom - temp.top);
-    tabViewFrame = [self tabViewFrameByShrinkingForFullScreenTabBar:tabViewFrame
-                                                             window:thisWindow];
-    DLog(@"repositionWidgets - Set tab view frame to %@", NSStringFromRect(tabViewFrame));
-    [self.tabView setFrame:tabViewFrame];
+    // Build inputs and calculate layout using the calculator
+    iTermLayoutInputs inputs = [self layoutInputsForWindow:thisWindow];
+    inputs.tabBarVisible = topTabBarVisible;
+    inputs.tabPosition = kLayoutTabPositionTop;
+    iTermLayoutOutputs outputs = [iTermLayoutCalculator calculateLayoutWithInputs:inputs];
 
-    CGFloat tabBarOffset = 0;
-    if (!_tabBarControlOnLoan && self.tabBarControl.flashing) {
-        tabBarOffset = _tabBarControl.height;
-    }
-    NSRect tabBarFrame = NSMakeRect(tabViewFrame.origin.x,
-                                    NSMaxY(frame) - tabBarOffset,
-                                    tabViewFrame.size.width,
-                                    _tabBarControl.height);
+    // Apply tab view frame
+    DLog(@"repositionWidgets - Set tab view frame to %@", NSStringFromRect(outputs.tabViewFrame));
+    [self.tabView setFrame:outputs.tabViewFrame];
+
+    // Layout status bar using calculator outputs
+    [self layoutStatusBarWithOutputs:outputs window:thisWindow];
 
     [self updateDivisionViewAndWindowNumberLabel];
+
     if (!_tabBarControlOnLoan) {
         self.tabBarControl.insets = [self.delegate tabBarInsets];
-        [self setTabBarFrame:tabBarFrame];
+        [self setTabBarFrame:outputs.tabBarFrame];
         [self setTabBarControlAutoresizingMask:(NSViewWidthSizable | NSViewMinYMargin)];
     }
 }
@@ -1405,74 +1411,26 @@ NS_CLASS_AVAILABLE_MAC(10_14)
     assert(!_tabBarControlOnLoan);
     DLog(@"repositionWidgets - putting tabs at bottom");
     [self removeLeftTabBarDragHandle];
-    // setup aRect to make room for the tabs at the bottom.
-    NSRect tabBarFrame = NSMakeRect([self leftBorderInset],
-                                    [self bottomBorderInset],
-                                    [self tabviewWidth],
-                                    _tabBarControl.height);
-    self.tabBarControl.insets = [self.delegate tabBarInsets];
-    [self setTabBarFrame:tabBarFrame];
-    [self setTabBarControlAutoresizingMask:(NSViewWidthSizable | NSViewMaxYMargin)];
-    iTermDecorationHeights decorationHeights = {
-        .top = [self notchInset],
-        .bottom = tabBarFrame.origin.y
-    };
-    decorationHeights.top += [self topBorderInset];
-    if (_delegate.divisionViewShouldBeVisible) {
-        decorationHeights.top += kDivisionViewHeight;
-    }
-    if (!self.tabBarControl.flashing) {
-        decorationHeights.bottom += _tabBarControl.height;
-    }
-    NSRect frame = NSMakeRect(tabBarFrame.origin.x,
-                              decorationHeights.bottom,
-                              tabBarFrame.size.width,
-                              [thisWindow.contentView frame].size.height - decorationHeights.top - decorationHeights.bottom);
-    [self layoutStatusBar:&decorationHeights window:thisWindow frame:frame];
-    NSRect tabViewFrame = NSMakeRect(tabBarFrame.origin.x,
-                                     decorationHeights.bottom,
-                                     tabBarFrame.size.width,
-                                     [thisWindow.contentView frame].size.height - decorationHeights.top - decorationHeights.bottom);
-    DLog(@"repositionWidgets - Set tab view frame to %@", NSStringFromRect(tabViewFrame));
-    self.tabView.frame = [self tabViewFrameByShrinkingForFullScreenTabBar:tabViewFrame
-                                                                   window:thisWindow];
-    [self updateDivisionViewAndWindowNumberLabel];
-}
 
-- (NSRect)tabViewFrameByShrinkingForFullScreenTabBar:(NSRect)frame
-                                              window:(NSWindow *)thisWindow {
-    if (!thisWindow) {
-        return frame;
-    }
-    if ((thisWindow.styleMask & NSWindowStyleMaskFullSizeContentView) != NSWindowStyleMaskFullSizeContentView) {
-        return frame;
-    }
-    if (![self tabBarShouldBeVisibleEvenWhenOnLoan]) {
-        return frame;
-    }
-    if (![self.delegate enteringLionFullscreen] &&
-        !(thisWindow.styleMask & NSWindowStyleMaskFullScreen)) {
-        return frame;
-    }
-    switch ([iTermPreferences intForKey:kPreferenceKeyTabPosition]) {
-        case PSMTab_TopTab:
-            if (self.tabBarControl.flashing) {
-                // Overlaps content
-                return frame;
-            }
-            if (!_tabBarControlOnLoan && !self.tabBarControl.flashing) {
-                // Already accounted for this before calling this function.
-                return frame;
-            }
-            break;
-        case PSMTab_LeftTab:
-        case PSMTab_BottomTab:
-            return frame;
-    }
-    NSRect tabViewFrame = frame;
-    const CGFloat offset = _tabBarControl.height;
-    tabViewFrame.size.height -= offset;
-    return tabViewFrame;
+    // Build inputs and calculate layout using the calculator
+    iTermLayoutInputs inputs = [self layoutInputsForWindow:thisWindow];
+    inputs.tabBarVisible = YES;
+    inputs.tabPosition = kLayoutTabPositionBottom;
+    iTermLayoutOutputs outputs = [iTermLayoutCalculator calculateLayoutWithInputs:inputs];
+
+    // Apply tab bar frame and settings
+    self.tabBarControl.insets = [self.delegate tabBarInsets];
+    [self setTabBarFrame:outputs.tabBarFrame];
+    [self setTabBarControlAutoresizingMask:(NSViewWidthSizable | NSViewMaxYMargin)];
+
+    // Apply tab view frame
+    DLog(@"repositionWidgets - Set tab view frame to %@", NSStringFromRect(outputs.tabViewFrame));
+    self.tabView.frame = outputs.tabViewFrame;
+
+    // Layout status bar using calculator outputs
+    [self layoutStatusBarWithOutputs:outputs window:thisWindow];
+
+    [self updateDivisionViewAndWindowNumberLabel];
 }
 
 - (void)setTabBarControlAutoresizingMask:(NSAutoresizingMaskOptions)mask {
@@ -1488,51 +1446,42 @@ NS_CLASS_AVAILABLE_MAC(10_14)
 - (void)layoutSubviewsWithVisibleLeftTabBarAndInlineToolbelt:(BOOL)showToolbeltInline forWindow:(NSWindow *)thisWindow {
     assert(!_tabBarControlOnLoan);
     [self setLeftTabBarWidthFromPreferredWidth];
-    iTermDecorationHeights decorationHeights = {
-        .top = [self notchInset],
-        .bottom = 0
-    };
-    decorationHeights.bottom += [self bottomBorderInset];
-    decorationHeights.top += [self topBorderInset];
-    if (_delegate.divisionViewShouldBeVisible) {
-        decorationHeights.top += kDivisionViewHeight;
-    }
-    NSRect tabBarFrame = NSMakeRect([self leftBorderInset],
-                                    decorationHeights.bottom,
-                                    _leftTabBarWidth,
-                                    [thisWindow.contentView frame].size.height - decorationHeights.bottom - decorationHeights.top);
+
+    // Build inputs and calculate layout using the calculator
+    iTermLayoutInputs inputs = [self layoutInputsForWindow:thisWindow];
+    inputs.tabBarVisible = YES;
+    inputs.tabPosition = kLayoutTabPositionLeft;
+    iTermLayoutOutputs outputs = [iTermLayoutCalculator calculateLayoutWithInputs:inputs];
+
+    // Apply tab bar frame and settings
     self.tabBarControl.insets = [self.delegate tabBarInsets];
-    [self setTabBarFrame:tabBarFrame];
+    [self setTabBarFrame:outputs.tabBarFrame];
     [self setTabBarControlAutoresizingMask:(NSViewHeightSizable | NSViewMaxXMargin)];
 
-    // Can't have a left border.
-    CGFloat widthAdjustment = [self rightBorderInset];
-    CGFloat xOffset = 0;
-    if (self.tabBarControl.flashing) {
-        xOffset = -NSMaxX(tabBarFrame);
-        widthAdjustment -= NSWidth(tabBarFrame);
-    }
-    if (self.shouldShowToolbelt) {
-        widthAdjustment += floor(self.toolbeltWidth);
-    }
-    const NSRect frame = NSMakeRect(NSMaxX(tabBarFrame) + xOffset,
-                                    decorationHeights.bottom,
-                                    [thisWindow.contentView frame].size.width - NSWidth(tabBarFrame) - widthAdjustment,
-                                    [thisWindow.contentView frame].size.height - decorationHeights.bottom - decorationHeights.top);
-    [self layoutStatusBar:&decorationHeights window:thisWindow frame:frame];
-    NSRect tabViewFrame = NSMakeRect(NSMaxX(tabBarFrame) + xOffset,
-                                     decorationHeights.bottom,
-                                     [thisWindow.contentView frame].size.width - NSWidth(tabBarFrame) - widthAdjustment,
-                                     [thisWindow.contentView frame].size.height - decorationHeights.bottom - decorationHeights.top);
-    self.tabView.frame = [self tabViewFrameByShrinkingForFullScreenTabBar:tabViewFrame
-                                                                   window:thisWindow];
+    // Apply tab view frame
+    DLog(@"repositionWidgets - Set tab view frame to %@", NSStringFromRect(outputs.tabViewFrame));
+    self.tabView.frame = outputs.tabViewFrame;
+
+    // Layout status bar using calculator outputs
+    [self layoutStatusBarWithOutputs:outputs window:thisWindow];
+
     [self updateDivisionViewAndWindowNumberLabel];
 
+    // Handle left tab bar drag handle
+    [self updateLeftTabBarDragHandleForTabBarFrame:outputs.tabBarFrame];
+}
+
+- (void)updateLeftTabBarDragHandleForTabBarFrame:(CGRect)tabBarFrame {
+    if (CGRectIsEmpty(tabBarFrame)) {
+        [self removeLeftTabBarDragHandle];
+        return;
+    }
+
     const CGFloat dragHandleWidth = 3;
-    NSRect leftTabBarDragHandleFrame = NSMakeRect(NSMaxX(self.tabBarControl.frame) - dragHandleWidth,
+    NSRect leftTabBarDragHandleFrame = NSMakeRect(NSMaxX(tabBarFrame) - dragHandleWidth,
                                                   0,
                                                   dragHandleWidth,
-                                                  NSHeight(self.tabBarControl.frame));
+                                                  NSHeight(tabBarFrame));
     if (!self.leftTabBarDragHandle) {
         self.leftTabBarDragHandle = [[iTermDragHandleView alloc] initWithFrame:leftTabBarDragHandleFrame];
         self.leftTabBarDragHandle.delegate = self;
@@ -1739,6 +1688,41 @@ NS_CLASS_AVAILABLE_MAC(10_14)
     if (statusBarViewController) {
         [self updateDecorationHeightsForStatusBar:decorationHeights];
     }
+    if (_statusBarViewController.view != statusBarViewController.view ||
+        _statusBarViewController.view.superview != _statusBarContainer) {
+        if (!_statusBarContainer) {
+            _statusBarContainer = [[iTermGenericStatusBarContainer alloc] initWithFrame:statusBarFrame];
+            _statusBarContainer.autoresizesSubviews = YES;
+            _statusBarContainer.delegate = self;
+            NSInteger index = [self.subviews indexOfObject:_stoplightHotbox];
+            if (index == NSNotFound) {
+                [self addSubview:_statusBarContainer];
+            } else {
+                [self insertSubview:_statusBarContainer atIndex:index];
+            }
+        }
+        if (_statusBarViewController.view.superview == _statusBarContainer) {
+            [_statusBarViewController.view removeFromSuperview];
+        }
+        if (statusBarViewController.view.superview != _statusBarContainer) {
+            [_statusBarContainer addSubview:statusBarViewController.view];
+            statusBarViewController.view.autoresizingMask = (NSViewWidthSizable | NSViewHeightSizable);
+            statusBarViewController.view.frame = _statusBarContainer.bounds;
+        }
+    }
+    _statusBarContainer.autoresizingMask = [self statusBarContainerAutoresizingMask];
+    _statusBarContainer.hidden = (statusBarViewController == nil);
+    _statusBarViewController = statusBarViewController;
+    _statusBarContainer.frame = statusBarFrame;
+}
+
+/// Layout status bar using pre-calculated outputs from iTermLayoutCalculator.
+/// This is the new path that uses the calculator outputs directly.
+- (void)layoutStatusBarWithOutputs:(iTermLayoutOutputs)outputs
+                            window:(NSWindow *)thisWindow {
+    iTermStatusBarViewController *statusBarViewController = [_delegate rootTerminalViewSharedStatusBarViewController];
+    NSRect statusBarFrame = outputs.statusBarFrame;
+
     if (_statusBarViewController.view != statusBarViewController.view ||
         _statusBarViewController.view.superview != _statusBarContainer) {
         if (!_statusBarContainer) {

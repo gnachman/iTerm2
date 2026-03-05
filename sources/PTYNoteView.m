@@ -7,18 +7,18 @@
 //
 
 #import "PTYNoteView.h"
+#import "NSAppearance+iTerm.h"
 #import "SFSymbolEnum/SFSymbolEnum.h"
 #import "iTermMouseCursor.h"
 #import "NSImage+iTerm.h"
 
 static const CGFloat kMinWidth = 50;
-static const CGFloat kMinHeight = 33;
+static const CGFloat kMinHeight = 39;
 
-static const CGFloat kLeftMargin = 5;
-static const CGFloat kRightMargin = 14;
-static const CGFloat kTopMargin = 4;
-static const CGFloat kBottomMargin = 0;
-static const CGFloat kKillButtonTopMargin = 2;
+static const CGFloat kLeftMargin = 8;
+static const CGFloat kRightMargin = 20;
+static const CGFloat kTopMargin = 6;
+static const CGFloat kBottomMargin = 2;
 
 static const CGFloat kInset = 5;
 static const CGFloat kRadius = 5;
@@ -41,26 +41,31 @@ const CGFloat kDragAreaSize = 5;
     self = [super initWithFrame:frame];
     if (self) {
         backgroundColor_ = [[self defaultBackgroundColor] retain];
-        NSImage *closeImage;
-        if (@available(macOS 11.0, *)) {
-            closeImage = [NSImage imageWithSystemSymbolName:SFSymbolGetString(SFSymbolTrash)
-                                   accessibilityDescription:@"Delete annotation"];
-            closeImage = [closeImage it_imageWithTintColor:[NSColor blackColor]];
-        } else {
-            closeImage = [NSImage it_imageNamed:@"closebutton" forClass:self.class];
-        }
         killButton_ = [[NSButton alloc] initWithFrame:NSMakeRect(0, 0, kButtonSize, kButtonSize)];
         [killButton_ setButtonType:NSButtonTypeMomentaryPushIn];
-        [killButton_ setImage:closeImage];
         [killButton_ setTarget:self];
         [killButton_ setAction:@selector(kill:)];
         [killButton_ setBordered:NO];
         [[killButton_ cell] setHighlightsBy:NSContentsCellMask];
         [killButton_ setTitle:@""];
         [self addSubview:killButton_];
+        [self updateKillButtonImage];
         [killButton_ release];
     }
     return self;
+}
+
+- (void)updateKillButtonImage {
+    NSImage *closeImage;
+    if (@available(macOS 11.0, *)) {
+        closeImage = [NSImage imageWithSystemSymbolName:SFSymbolGetString(SFSymbolTrash)
+                               accessibilityDescription:@"Delete annotation"];
+        NSColor *tintColor = self.effectiveAppearance.it_isDark ? [NSColor whiteColor] : [NSColor blackColor];
+        closeImage = [closeImage it_imageWithTintColor:tintColor];
+    } else {
+        closeImage = [NSImage it_imageNamed:@"closebutton" forClass:self.class];
+    }
+    [killButton_ setImage:closeImage];
 }
 
 - (void)dealloc {
@@ -70,17 +75,29 @@ const CGFloat kDragAreaSize = 5;
 }
 
 - (NSColor *)defaultBackgroundColor {
-    return [NSColor colorWithCalibratedRed:252.0/255.0
+    if (self.effectiveAppearance.it_isDark) {
+        return [NSColor colorWithCalibratedRed:50.0/255.0
+                                         green:50.0/255.0
+                                          blue:52.0/255.0
+                                         alpha:1];
+    }
+    return [NSColor colorWithCalibratedRed:250.0/255.0
                                      green:250.0/255.0
-                                      blue:198.0/255.0
+                                      blue:250.0/255.0
                                      alpha:1];
 }
 
 - (NSColor *)borderColor {
-    return [NSColor colorWithCalibratedRed:255.0/255.0
-                                     green:229.0/255.0
-                                      blue:114.0/255.0
-                                     alpha:0.95];
+    if (self.effectiveAppearance.it_isDark) {
+        return [NSColor colorWithCalibratedRed:1
+                                         green:1
+                                          blue:1
+                                         alpha:0.4];
+    }
+    return [NSColor colorWithCalibratedRed:0
+                                     green:0
+                                      blue:0
+                                     alpha:0.1];
 }
 
 static NSPoint FlipPoint(NSPoint p, CGFloat height) {
@@ -312,9 +329,19 @@ static NSRect FlipRect(NSRect rect, CGFloat height) {
 - (void)viewDidMoveToSuperview {
     [super viewDidMoveToSuperview];
 
+    [self updateKillButtonImage];
+
     NSClickGestureRecognizer *clickRecognizer = [[NSClickGestureRecognizer alloc] initWithTarget:self action:@selector(handleClick:)];
     clickRecognizer.delegate = self;
     [self addGestureRecognizer:clickRecognizer];
+}
+
+- (void)viewDidChangeEffectiveAppearance {
+    [super viewDidChangeEffectiveAppearance];
+    [backgroundColor_ release];
+    backgroundColor_ = [[self defaultBackgroundColor] retain];
+    [self updateKillButtonImage];
+    [self setNeedsDisplay:YES];
 }
 
 - (void)handleClick:(NSClickGestureRecognizer *)recognizer {
@@ -487,8 +514,12 @@ static NSRect FlipRect(NSRect rect, CGFloat height) {
                                                  bubbleFrame.size.width - kLeftMargin - kRightMargin,
                                                  bubbleFrame.size.height - kTopMargin - kBottomMargin),
                                       self.frame.size.height);
+    // Calculate what the centered position would be at minimum height to avoid jumps
+    CGFloat minBubbleHeight = kMinHeight - kPointerLength - kInset;
+    CGFloat centeredMarginAtMinHeight = (minBubbleHeight - kButtonSize) / 2.0;
+    CGFloat killButtonY = NSMinY(bubbleFrame) + centeredMarginAtMinHeight;
     killButton_.frame = FlipRect(NSMakeRect(NSMaxX(bubbleFrame) - kButtonSize,
-                                            NSMinY(bubbleFrame) + kKillButtonTopMargin,
+                                            killButtonY,
                                             kButtonSize,
                                             kButtonSize),
                                  self.frame.size.height);
@@ -496,19 +527,26 @@ static NSRect FlipRect(NSRect rect, CGFloat height) {
 }
 
 - (NSSize)sizeThatFitsContentView {
+    CGFloat width;
+    CGFloat height;
     switch (tipEdge_) {
         case kPTYNoteViewTipEdgeBottom:
         case kPTYNoteViewTipEdgeTop:
-            return NSMakeSize(contentView_.frame.size.width + kLeftMargin + kRightMargin + kInset,
-                              contentView_.frame.size.height + kBottomMargin + kTopMargin + kPointerLength + kInset);
+            width = contentView_.frame.size.width + kLeftMargin + kRightMargin + kInset;
+            height = contentView_.frame.size.height + kBottomMargin + kTopMargin + kPointerLength + kInset;
+            break;
 
         case kPTYNoteViewTipEdgeLeft:
         case kPTYNoteViewTipEdgeRight:
-            return NSMakeSize(contentView_.frame.size.width + kLeftMargin + kRightMargin + kPointerLength + kInset,
-                              contentView_.frame.size.height + kBottomMargin + kTopMargin + kInset);
+            width = contentView_.frame.size.width + kLeftMargin + kRightMargin + kPointerLength + kInset;
+            height = contentView_.frame.size.height + kBottomMargin + kTopMargin + kInset;
+            break;
+
+        default:
+            assert(false);
+            return NSMakeSize(0, 0);
     }
-    assert(false);
-    return NSMakeSize(0, 0);
+    return NSMakeSize(MAX(width, kMinWidth), MAX(height, kMinHeight));
 }
 
 - (void)kill:(id)sender {

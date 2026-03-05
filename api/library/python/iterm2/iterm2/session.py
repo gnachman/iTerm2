@@ -175,7 +175,7 @@ class Session:
     Represents an iTerm2 session.
     """
 
-    class Delegate:
+    class Delegate(abc.ABC):
         """
         Provides callbacks for Session.
         """
@@ -183,16 +183,19 @@ class Session:
         def session_delegate_get_tab(
                 self, session) -> typing.Optional['iterm2.Tab']:
             """Returns the tab for a session."""
+            ...
 
         @abc.abstractmethod
         def session_delegate_get_window(
                 self, session) -> typing.Optional['iterm2.Window']:
             """Returns the window for a session."""
+            ...
 
         @abc.abstractmethod
         async def session_delegate_create_session(
                 self, session_id: str) -> typing.Optional['iterm2.session.Session']:
             """Creates a new Session object given a session ID."""
+            ...
 
     delegate: typing.Optional[Delegate] = None
 
@@ -1002,6 +1005,28 @@ class Session:
         return bool(
             await iterm2.rpc.async_invoke_method(
                 self.connection, self.session_id, invocation, -1))
+
+    async def async_load_url(self, url: str) -> None:
+        """
+        Load a URL in a browser session.
+
+        The first time a domain is loaded, the user will be prompted to approve
+        it. Subsequent loads to the same domain within the same script
+        connection will not prompt again.
+
+        :param url: The URL to load.
+
+        :raises: :class:`~iterm2.rpc.RPCException` if the session is not a
+            browser session, the URL is invalid, or the user denies permission.
+
+        .. seealso:: Example ":ref:`browser_function_example`"
+        """
+        iterm2.capabilities.check_supports_load_url(self.connection)
+        invocation = iterm2.util.invocation_string(
+            "iterm2.load_url",
+            {"url": url})
+        await iterm2.rpc.async_invoke_method(
+            self.connection, self.session_id, invocation, -1)
 
 
 class InvalidSessionId(Exception):

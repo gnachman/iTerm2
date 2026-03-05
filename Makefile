@@ -86,7 +86,7 @@ Nightly: force
 	chmod -R go+rX $(BUILD_DIR)/Nightly
 
 run: Development
-	$(BUILD_DIR)/Development/iTerm2.app/Contents/MacOS/iTerm2
+	$(BUILD_DIR)/Development/iTerm2.app/Contents/MacOS/iTerm2 -suite iterm2-dev
 
 devzip: Development
 	cd $(BUILD_DIR)/Development && \
@@ -305,6 +305,9 @@ paranoid-ColorPicker: force
 	
 paranoid-SearchableComboListView: force
 	/usr/bin/sandbox-exec -f deps.sb $(MAKE) SearchableComboListView
+
+paranoid-pwmadapters: force
+	/usr/bin/sandbox-exec -f deps.sb $(MAKE) pwmadapters
 
 # You probably want make paranoid-deps to avoid depending on Homebrew stuff.
 deps: force fatlibsixel CoreParse NMSSH bindeps libgit2 sparkle librailroad_dsl sfsymbolenum pwmadapters

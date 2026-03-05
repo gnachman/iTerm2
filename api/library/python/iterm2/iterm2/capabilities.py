@@ -156,3 +156,15 @@ def check_supports_move_session(connection):
         raise AppVersionTooOld(
             "This version of iTerm2 is too old to move sessions to split panes. " +
             "You should upgrade to run this script.")
+
+def supports_load_url(connection):
+    """Can you use load_url() in browser sessions?"""
+    min_ver = (1, 12)
+    return ge(connection.iterm2_protocol_version, min_ver)
+
+def check_supports_load_url(connection):
+    """Die if you can't use load_url()."""
+    if not supports_load_url(connection):
+        raise AppVersionTooOld(
+            "This version of iTerm2 is too old to load URLs in browser sessions. " +
+            "You should upgrade to run this script.")

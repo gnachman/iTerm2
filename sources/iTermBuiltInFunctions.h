@@ -65,6 +65,11 @@ NS_SWIFT_NAME(iTermBuiltInFunctionProtocol)
 - (void)callWithArguments:(NSDictionary<NSString *, id> *)arguments
                completion:(iTermBuiltInFunctionCompletionBlock)block;
 
+// Call with connectionKey - if the method has a connectionKey: parameter, it will be passed.
+- (void)callWithArguments:(NSDictionary<NSString *, id> *)arguments
+            connectionKey:(nullable id)connectionKey
+               completion:(iTermBuiltInFunctionCompletionBlock)block;
+
 - (BOOL)matchedBySignature:(NSString *)signature inNamespace:(NSString *)namespace_;
 
 @end

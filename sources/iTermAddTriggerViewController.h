@@ -24,6 +24,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly) BOOL enabled;
 @property (nonatomic, readonly) BOOL instant;
 @property (nonatomic, readonly) iTermTriggerMatchType matchType;
+@property (nonatomic, readonly, nullable) NSDictionary<NSString *, id> *eventParams;
 @property (nonatomic, strong) NSColor *defaultTextColor;
 @property (nonatomic, strong) NSColor *defaultBackgroundColor;
 @property (nonatomic) BOOL browserMode;

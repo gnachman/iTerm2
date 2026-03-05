@@ -952,7 +952,7 @@ class VT100GridTests: XCTestCase {
         grid.markAllCharsDirty(false, updateTimestamps: false)
 
         let rect = VT100GridRect(x: 1, y: 1, width: 2, height: 2)
-        grid.scroll(rect, downBy: 0, softBreak: false, fill: .zero)
+        grid.scroll(rect, downBy: 0, softBreak: false)
 
         // Content should be unchanged
         let expectedGrid = [
@@ -981,7 +981,7 @@ class VT100GridTests: XCTestCase {
         grid.markAllCharsDirty(false, updateTimestamps: false)
 
         let rect = VT100GridRect(x: 1, y: 1, width: 2, height: 2)
-        grid.scroll(rect, downBy: 1, softBreak: false, fill: .zero)
+        grid.scroll(rect, downBy: 1, softBreak: false)
 
         let expectedContent = [
             "abcd\n",
@@ -1013,7 +1013,7 @@ class VT100GridTests: XCTestCase {
         grid.markAllCharsDirty(false, updateTimestamps: false)
 
         let rect = VT100GridRect(x: 1, y: 1, width: 2, height: 2)
-        grid.scroll(rect, downBy: -1, softBreak: false, fill: .zero)
+        grid.scroll(rect, downBy: -1, softBreak: false)
 
         let expected = [
             "abcd\n",
@@ -1045,7 +1045,7 @@ class VT100GridTests: XCTestCase {
         grid.markAllCharsDirty(false, updateTimestamps: false)
 
         let rect = VT100GridRect(x: 1, y: 1, width: 3, height: 3)
-        grid.scroll(rect, downBy: 2, softBreak: false, fill: .zero)
+        grid.scroll(rect, downBy: 2, softBreak: false)
 
         let expectedContent = [
             "abcde\n",
@@ -1075,7 +1075,7 @@ class VT100GridTests: XCTestCase {
         grid.markAllCharsDirty(false, updateTimestamps: false)
 
         let rect = VT100GridRect(x: 1, y: 1, width: 3, height: 3)
-        grid.scroll(rect, downBy: -2, softBreak: false, fill: .zero)
+        grid.scroll(rect, downBy: -2, softBreak: false)
 
         let expected = [
             "abcde\n",
@@ -1103,7 +1103,7 @@ class VT100GridTests: XCTestCase {
         grid.markAllCharsDirty(false, updateTimestamps: false)
 
         let rect = VT100GridRect(x: 1, y: 1, width: 3, height: 3)
-        grid.scroll(rect, downBy: 3, softBreak: false, fill: .zero)
+        grid.scroll(rect, downBy: 3, softBreak: false)
 
         let expected = [
             "abcde\n",
@@ -1131,7 +1131,7 @@ class VT100GridTests: XCTestCase {
         grid.markAllCharsDirty(false, updateTimestamps: false)
 
         let rect = VT100GridRect(x: 1, y: 1, width: 3, height: 3)
-        grid.scroll(rect, downBy: -3, softBreak: false, fill: .zero)
+        grid.scroll(rect, downBy: -3, softBreak: false)
 
         let expected = [
             "abcde\n",
@@ -1159,7 +1159,7 @@ class VT100GridTests: XCTestCase {
         grid.markAllCharsDirty(false, updateTimestamps: false)
 
         let rect = VT100GridRect(x: 1, y: 1, width: 3, height: 3)
-        grid.scroll(rect, downBy: 4, softBreak: false, fill: .zero)
+        grid.scroll(rect, downBy: 4, softBreak: false)
 
         let expected = [
             "abcde\n",
@@ -1187,7 +1187,7 @@ class VT100GridTests: XCTestCase {
         grid.markAllCharsDirty(false, updateTimestamps: false)
 
         let rect = VT100GridRect(x: 1, y: 1, width: 3, height: 3)
-        grid.scroll(rect, downBy: -4, softBreak: false, fill: .zero)
+        grid.scroll(rect, downBy: -4, softBreak: false)
 
         let expectedContent = [
             "abcde\n",
@@ -1213,7 +1213,7 @@ class VT100GridTests: XCTestCase {
         grid.markAllCharsDirty(false, updateTimestamps: false)
 
         let rect = VT100GridRect(x: 0, y: 1, width: 3, height: 2)
-        grid.scroll(rect, downBy: -1, softBreak: false, fill: .zero)
+        grid.scroll(rect, downBy: -1, softBreak: false)
 
         // The broken EOL_DWC placeholders at rows 0 and 1 should be cleaned up ('.'),
         // blank row inserted at row 2, and the intact DWC_RIGHT at row 3 should remain.
@@ -1250,7 +1250,7 @@ class VT100GridTests: XCTestCase {
 
         // Scroll rectangle x=0,y=1,width=3,height=2 down by 1
         let rect = VT100GridRect(x: 0, y: 1, width: 3, height: 2)
-        grid.scroll(rect, downBy: 1, softBreak: false, fill: .zero)
+        grid.scroll(rect, downBy: 1, softBreak: false)
 
         // After scroll:
         // Row 0: the broken split‐DWC at top is cleaned up → "ab."
@@ -1289,7 +1289,7 @@ class VT100GridTests: XCTestCase {
 
         // Scroll the entire 3×3 region up by 1 (downBy: -1)
         let rect = VT100GridRect(x: 0, y: 0, width: 3, height: 3)
-        grid.scroll(rect, downBy: -1, softBreak: false, fill: .zero)
+        grid.scroll(rect, downBy: -1, softBreak: false)
 
         // After scroll:
         // Row 0 <- old Row 1 ("de>\n")
@@ -1325,7 +1325,7 @@ class VT100GridTests: XCTestCase {
         grid.markAllCharsDirty(false, updateTimestamps: false)
 
         let rect = VT100GridRect(x: 1, y: 0, width: 3, height: 6)
-        grid.scroll(rect, downBy: -1, softBreak: false, fill: .zero)
+        grid.scroll(rect, downBy: -1, softBreak: false)
 
         let expectedContent = [
             "a\0g\0e\n",
@@ -1356,7 +1356,7 @@ class VT100GridTests: XCTestCase {
         grid.markAllCharsDirty(false, updateTimestamps: false)
 
         let rect = VT100GridRect(x: 0, y: 1, width: 5, height: 3)
-        grid.scroll(rect, downBy: -1, softBreak: false, fill: .zero)
+        grid.scroll(rect, downBy: -1, softBreak: false)
 
         let expectedContent = [
             "abcd\n",
@@ -1392,7 +1392,7 @@ class VT100GridTests: XCTestCase {
         grid.markAllCharsDirty(false, updateTimestamps: false)
 
         let rect = VT100GridRect(x: 1, y: 0, width: 4, height: 5)
-        grid.scroll(rect, downBy: -1, softBreak: false, fill: .zero)
+        grid.scroll(rect, downBy: -1, softBreak: false)
 
         let expectedContent = [
             "a\0fgh\n",
@@ -1423,7 +1423,7 @@ class VT100GridTests: XCTestCase {
         grid.markAllCharsDirty(false, updateTimestamps: false)
 
         let rect = VT100GridRect(x: 0, y: 0, width: 4, height: 5)
-        grid.scroll(rect, downBy: -1, softBreak: false, fill: .zero)
+        grid.scroll(rect, downBy: -1, softBreak: false)
 
         let expectedContent = [
             "e-fg\n",
@@ -1454,7 +1454,7 @@ class VT100GridTests: XCTestCase {
 
         // Empty rect → no-op
         let rect = VT100GridRect(x: 1, y: 1, width: 0, height: 0)
-        grid.scroll(rect, downBy: 1, softBreak: false, fill: .zero)
+        grid.scroll(rect, downBy: 1, softBreak: false)
 
         // Content unchanged
         let expectedContent = [
@@ -1485,7 +1485,7 @@ class VT100GridTests: XCTestCase {
         grid.markAllCharsDirty(false, updateTimestamps: false)
 
         let rect = VT100GridRect(x: 0, y: 1, width: 3, height: 2)
-        grid.scroll(rect, downBy: -1, softBreak: false, fill: .zero)
+        grid.scroll(rect, downBy: -1, softBreak: false)
 
         let expectedContent = [
             "ab\n",
@@ -1514,7 +1514,7 @@ class VT100GridTests: XCTestCase {
         grid.markAllCharsDirty(false, updateTimestamps: false)
 
         let rect = VT100GridRect(x: 0, y: 1, width: 3, height: 3)
-        grid.scroll(rect, downBy: 1, softBreak: false, fill: .zero)
+        grid.scroll(rect, downBy: 1, softBreak: false)
 
         let expectedContent = [
             "ab\n",
@@ -1543,7 +1543,7 @@ class VT100GridTests: XCTestCase {
         grid.markAllCharsDirty(false, updateTimestamps: false)
 
         let rect = VT100GridRect(x: 0, y: 1, width: 3, height: 3)
-        grid.scroll(rect, downBy: -1, softBreak: false, fill: .zero)
+        grid.scroll(rect, downBy: -1, softBreak: false)
 
         let expectedContent = [
             "ab\n",
@@ -1572,7 +1572,7 @@ class VT100GridTests: XCTestCase {
         grid.markAllCharsDirty(false, updateTimestamps: false)
 
         let rect = VT100GridRect(x: 0, y: 1, width: 4, height: 3)
-        grid.scroll(rect, downBy: 1, softBreak: false, fill: .zero)
+        grid.scroll(rect, downBy: 1, softBreak: false)
 
         let expectedContent = [
             "abcd\n",
@@ -1602,7 +1602,7 @@ class VT100GridTests: XCTestCase {
         grid.markAllCharsDirty(false, updateTimestamps: false)
 
         let rect = VT100GridRect(x: 0, y: 1, width: 4, height: 3)
-        grid.scroll(rect, downBy: 2, softBreak: false, fill: .zero)
+        grid.scroll(rect, downBy: 2, softBreak: false)
 
         let expectedContent = [
             "abcd\n",
@@ -1630,7 +1630,7 @@ class VT100GridTests: XCTestCase {
         grid.markAllCharsDirty(false, updateTimestamps: false)
 
         let rect = VT100GridRect(x: 0, y: 1, width: 4, height: 3)
-        grid.scroll(rect, downBy: -1, softBreak: false, fill: .zero)
+        grid.scroll(rect, downBy: -1, softBreak: false)
 
         let expectedContent = [
             "abcd\n",
@@ -1658,7 +1658,7 @@ class VT100GridTests: XCTestCase {
         grid.markAllCharsDirty(false, updateTimestamps: false)
 
         let rect = VT100GridRect(x: 0, y: 1, width: 4, height: 3)
-        grid.scroll(rect, downBy: -2, softBreak: false, fill: .zero)
+        grid.scroll(rect, downBy: -2, softBreak: false)
 
         let expectedContent = [
             "abcd\n",
@@ -1686,7 +1686,7 @@ class VT100GridTests: XCTestCase {
         grid.markAllCharsDirty(false, updateTimestamps: false)
 
         let rect = VT100GridRect(x: 1, y: 1, width: 3, height: 3)
-        grid.scroll(rect, downBy: 1, softBreak: false, fill: .zero)
+        grid.scroll(rect, downBy: 1, softBreak: false)
 
         let expectedContent = [
             "abcd",
@@ -1714,7 +1714,7 @@ class VT100GridTests: XCTestCase {
         grid.markAllCharsDirty(false, updateTimestamps: false)
 
         let rect = VT100GridRect(x: 1, y: 1, width: 3, height: 3)
-        grid.scroll(rect, downBy: 2, softBreak: false, fill: .zero)
+        grid.scroll(rect, downBy: 2, softBreak: false)
 
         let expectedContent = [
             "abcd",
@@ -1745,7 +1745,7 @@ class VT100GridTests: XCTestCase {
         grid.markAllCharsDirty(false, updateTimestamps: false)
 
         let rect = VT100GridRect(x: 1, y: 1, width: 3, height: 3)
-        grid.scroll(rect, downBy: 1, softBreak: false, fill: .zero)
+        grid.scroll(rect, downBy: 1, softBreak: false)
 
         let expectedContent = [
             "abcd",
@@ -1773,7 +1773,7 @@ class VT100GridTests: XCTestCase {
         grid.markAllCharsDirty(false, updateTimestamps: false)
 
         let rect = VT100GridRect(x: 1, y: 1, width: 3, height: 3)
-        grid.scroll(rect, downBy: -1, softBreak: false, fill: .zero)
+        grid.scroll(rect, downBy: -1, softBreak: false)
 
         let expectedContent = [
             "abcd",
@@ -1803,7 +1803,7 @@ class VT100GridTests: XCTestCase {
         grid.markAllCharsDirty(false, updateTimestamps: false)
 
         let rect = VT100GridRect(x: 1, y: 1, width: 3, height: 3)
-        grid.scroll(rect, downBy: -1, softBreak: false, fill: .zero)
+        grid.scroll(rect, downBy: -1, softBreak: false)
 
         let expectedContent = [
             "abc\n",
@@ -1831,7 +1831,7 @@ class VT100GridTests: XCTestCase {
         grid.markAllCharsDirty(false, updateTimestamps: false)
 
         let rect = VT100GridRect(x: 1, y: 1, width: 3, height: 3)
-        grid.scroll(rect, downBy: -2, softBreak: false, fill: .zero)
+        grid.scroll(rect, downBy: -2, softBreak: false)
 
         let expectedContent = [
             "abcd",
@@ -2194,6 +2194,77 @@ class VT100GridTests: XCTestCase {
         ])
         XCTAssertEqual(grid4.cursorX, 0)
         XCTAssertEqual(grid4.cursorY, 1)
+    }
+
+    func testRestoreScreenFromLineBufferCursorAfterPartialDropWithDWC() {
+        // This test verifies correct cursor restoration after a partial line drop
+        // involving double-width characters. It exercises the fix for the rawLine: bug
+        // through the production code path:
+        //   restoreScreenFromLineBuffer: → getCursorInLastLineWithWidth: → rawLine:
+        //
+        // The bug: rawLine: checked "linenum == 0" instead of "linenum == _firstEntry",
+        // causing it to return cumulative_line_lengths[_firstEntry - 1] instead of
+        // bufferStartOffset when there's been a partial drop with _firstEntry > 0.
+        //
+        // Setup:
+        // - Line 0: "ABCDEFGH" (8 chars, no DWC)
+        // - Line 1: "IJKW-NOP" (8 chars, DWC W- at positions 3-4)
+        // - Width 4
+        // - Cursor at position 3 in line 1
+        //
+        // At width 4, line 1 wraps as: [IJK>][W-NO][P] (DWC causes wrap, > is DWC_SKIP)
+        //
+        // After dropping 3 wrapped lines:
+        // - _firstEntry = 1, bufferStartOffset = 11
+        // - Remaining content: "W-NOP" (5 chars), wraps as [W-NO][P]
+        //
+        // Bug behavior: rawLine:1 returned position 8 (cumulative_line_lengths[0]),
+        // reading "IJKW-" instead of "W-NOP". The DWC_RIGHT at position 4 in the wrong
+        // data caused OffsetOfWrappedLine to return 3 instead of 4, shifting min_x and
+        // causing the cursor to be found in the FIRST iteration at wrong position (0, 1).
+        //
+        // Fixed behavior: rawLine:1 returns position 11 (bufferStartOffset), reading
+        // correct "W-NOP" data. Cursor is found in the SECOND iteration (after popping
+        // [P]) at correct position (3, 0).
+
+        let width: Int32 = 4
+
+        let lineBuffer = LineBuffer(blockSize: 1000)
+        lineBuffer.mayHaveDoubleWidthCharacter = true
+
+        // Line 0: "ABCDEFGH"
+        let line0 = screenCharLine(forString: "ABCDEFGH")
+        lineBuffer.appendLine(line0, length: 8, partial: false, width: width,
+                              metadata: iTermImmutableMetadataDefault(), continuation: screen_char_t())
+
+        // Set cursor at position 3 BEFORE appending line 1
+        lineBuffer.setCursor(3)
+
+        // Line 1: "IJKW-NOP" where W- is a DWC
+        let line1 = screenCharLine(forString: "IJKW-NOP")
+        lineBuffer.appendLine(line1, length: 8, partial: false, width: width,
+                              metadata: iTermImmutableMetadataDefault(), continuation: screen_char_t())
+
+        // Verify initial state
+        XCTAssertEqual(lineBuffer.numLines(withWidth: width), 5)
+
+        // Drop 3 wrapped lines to trigger partial drop
+        lineBuffer.setMaxLines(2)
+        let dropped = lineBuffer.dropExcessLines(withWidth: width)
+        XCTAssertEqual(dropped, 3)
+        XCTAssertEqual(lineBuffer.numLines(withWidth: width), 2)
+
+        // Restore screen - this exercises getCursorInLastLineWithWidth which uses rawLine:
+        let grid = VT100Grid(size: VT100GridSize(width: width, height: 4), delegate: nil)!
+        let foundCursor = grid.restoreScreen(from: lineBuffer,
+                                              withDefaultChar: grid.defaultChar,
+                                              maxLinesToRestore: 10)
+
+        // With the fix, cursor is found at (3, 0)
+        // Before the fix, cursor was incorrectly found at (0, 1) due to wrong data
+        XCTAssertTrue(foundCursor, "Cursor should be found")
+        XCTAssertEqual(grid.cursorX, 3, "Cursor X should be 3")
+        XCTAssertEqual(grid.cursorY, 0, "Cursor Y should be 0")
     }
 
     func testRectsForRun() {
@@ -3926,6 +3997,93 @@ class VT100GridTests: XCTestCase {
 
         lineBuffer.removeLastRawLine()
         XCTAssertEqual(lineBuffer.lineStrings, [])
+    }
+
+    // MARK: - BCE (Background Color Erase) Tests
+
+    /// Test for issue 12723: When scrolling, newly cleared lines should use
+    /// the grid's defaultChar background color (BCE behavior).
+    func testBCE_ScrollingUsesDefaultCharBackgroundColor() {
+        let width: Int32 = 10
+        let height: Int32 = 4
+        let grid = VT100Grid(size: VT100GridSize(width: width, height: height), delegate: nil)!
+        let lineBuffer = LineBuffer(blockSize: 1000)
+
+        // Fill the grid with text
+        let initialLines = [
+            "line1\n",
+            "line2\n",
+            "line3\n",
+            "line4"
+        ]
+        append(strings: initialLines, toGrid: grid, lineBuffer: lineBuffer)
+
+        // Set up a custom defaultChar with orange 24-bit background color
+        var orangeDefaultChar = screen_char_t()
+        orangeDefaultChar.code = 0
+        orangeDefaultChar.backgroundColorMode = UInt32(ColorMode24bit.rawValue)
+        orangeDefaultChar.backgroundColor = 255  // red
+        orangeDefaultChar.bgGreen = 165
+        orangeDefaultChar.bgBlue = 0
+        grid.defaultChar = orangeDefaultChar
+
+        // Scroll the grid down (which clears the bottom line)
+        grid.cursorX = 0
+        grid.cursorY = 3  // bottom line
+        grid.moveCursorDownOneLineScrolling(into: lineBuffer,
+                                            unlimitedScrollback: true,
+                                            useScrollbackWithRegion: false,
+                                            willScroll: nil,
+                                            sentToLineBuffer: nil)
+
+        // The newly scrolled-in line (line 3, 0-indexed) should have the orange background
+        let line = grid.immutableScreenChars(atLineNumber: 3)!
+
+        // Check that the empty cells have 24-bit orange background
+        XCTAssertEqual(line[0].backgroundColorMode, UInt32(ColorMode24bit.rawValue),
+                       "BCE: scrolled-in line should have 24-bit background color mode from defaultChar")
+        XCTAssertEqual(line[0].backgroundColor, 255,
+                       "BCE: scrolled-in line should have red=255 from defaultChar")
+        XCTAssertEqual(line[0].bgGreen, 165,
+                       "BCE: scrolled-in line should have green=165 from defaultChar")
+        XCTAssertEqual(line[0].bgBlue, 0,
+                       "BCE: scrolled-in line should have blue=0 from defaultChar")
+    }
+
+    /// Test for issue 12723: scrollRect:downBy: should use defaultChar for cleared regions.
+    func testBCE_ScrollRectUsesDefaultCharBackgroundColor() {
+        let grid = gridFromCompactLinesWithContinuationMarks(
+            "abcdef!\n" +
+            "ghijkl!\n" +
+            "mnopqr!\n" +
+            "stuvwx!"
+        )
+
+        // Set up a custom defaultChar with orange 24-bit background color
+        var orangeDefaultChar = screen_char_t()
+        orangeDefaultChar.code = 0
+        orangeDefaultChar.backgroundColorMode = UInt32(ColorMode24bit.rawValue)
+        orangeDefaultChar.backgroundColor = 255  // red
+        orangeDefaultChar.bgGreen = 165
+        orangeDefaultChar.bgBlue = 0
+        grid.defaultChar = orangeDefaultChar
+
+        // Scroll the entire rect up by 1 (this clears the bottom line)
+        let rect = VT100GridRect(origin: VT100GridCoord(x: 0, y: 0),
+                                 size: VT100GridSize(width: grid.size.width, height: grid.size.height))
+        grid.scroll(rect, downBy: -1, softBreak: false)
+
+        // The newly cleared bottom line should have the orange background
+        let line = grid.immutableScreenChars(atLineNumber: 3)!
+
+        XCTAssertEqual(line[0].backgroundColorMode, UInt32(ColorMode24bit.rawValue),
+                       "BCE: scrollRect cleared line should have 24-bit background color mode")
+        XCTAssertEqual(line[0].backgroundColor, 255,
+                       "BCE: scrollRect cleared line should have red=255")
+        XCTAssertEqual(line[0].bgGreen, 165,
+                       "BCE: scrollRect cleared line should have green=165")
+        XCTAssertEqual(line[0].bgBlue, 0,
+                       "BCE: scrollRect cleared line should have blue=0")
     }
 }
 

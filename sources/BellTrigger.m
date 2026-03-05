@@ -9,6 +9,7 @@
 
 #import "DebugLogging.h"
 #import "VT100Screen.h"
+#import "iTerm2SharedARC-Swift.h"
 
 @implementation BellTrigger
 
@@ -24,6 +25,12 @@
 - (BOOL)takesParameter
 {
     return NO;
+}
+
+- (NSSet<NSNumber *> *)allowedMatchTypes {
+    NSMutableSet *set = [NSMutableSet setWithObject:@(iTermTriggerMatchTypeRegex)];
+    [set unionSet:[iTermEventTriggerMatchTypeHelper allEventTypesSet]];
+    return set;
 }
 
 - (BOOL)performActionWithCapturedStrings:(NSArray<NSString *> *)stringArray

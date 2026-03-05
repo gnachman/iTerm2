@@ -330,23 +330,27 @@ NS_ASSUME_NONNULL_BEGIN
         const CGFloat scale = tState.configuration.scale;
         y += cellSize.height - MAX(0, round(((cellSize.height - cellSizeWithoutSpacing.height) / 2) / scale) * scale) - tState.cursorHeight;
     }
+    // Convert color to the target color space before extracting components.
+    // This ensures the filled cursor matches the frame cursor, which goes through
+    // AppKit's color space conversion when drawing into an NSImage.
+    NSColor *color = [tState.color colorUsingColorSpace:tState.configuration.colorSpace];
     iTermCursorDescription description = {
         .origin = {
             tState.cellConfiguration.cellSize.width * tState.coord.x,
             y
         },
         .color = {
-            tState.color.redComponent,
-            tState.color.greenComponent,
-            tState.color.blueComponent,
+            color.redComponent,
+            color.greenComponent,
+            color.blueComponent,
             1
         }
     };
     if ([iTermAdvancedSettingsModel hdrCursor] &&
-        tState.color.redComponent == 1 &&
-        tState.color.greenComponent == 1 &&
-        tState.color.blueComponent == 1 &&
-        tState.color.alphaComponent == 1) {
+        color.redComponent == 1 &&
+        color.greenComponent == 1 &&
+        color.blueComponent == 1 &&
+        color.alphaComponent == 1) {
         CGFloat maxValue = tState.configuration.maximumExtendedDynamicRangeColorComponentValue;
         description.color = simd_make_float4(maxValue, maxValue, maxValue, 1);
     }

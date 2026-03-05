@@ -9,8 +9,11 @@
 class LLMMetadata: NSObject {
     @objc(openAIModelIsLegacy:)
     static func openAIModelIsLegacy(model: String) -> Bool {
-        for prefix in iTermAdvancedSettingsModel.aiModernModelPrefixes().components(separatedBy: " ") {
-            if model.hasPrefix(prefix) {
+        // Check if any modern model identifier appears anywhere in the model name.
+        // This handles OpenRouter-style names like "openai/gpt-4o" where the
+        // provider prefix comes before the model name.
+        for identifier in iTermAdvancedSettingsModel.aiModernModelPrefixes().components(separatedBy: " ") {
+            if model.contains(identifier) {
                 return false
             }
         }

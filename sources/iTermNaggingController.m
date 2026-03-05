@@ -859,6 +859,52 @@ static NSString *const iTermNaggingControllerArrangementSetProfileProperty = @"S
     }];
 }
 
+#pragma mark - Touch ID for Sudo
+
+static NSString *const iTermNaggingControllerTouchIDForSudoIdentifier = @"TouchIDForSudo";
+static NSString *const iTermNaggingControllerTouchIDForSudoUserDefaultsKey = @"NoSyncOfferTouchIDForSudo";
+
+- (void)offerToEnableTouchIDForSudo {
+    if (![self.delegate naggingControllerCanShowMessageWithIdentifier:iTermNaggingControllerTouchIDForSudoIdentifier]) {
+        DLog(@"Can't show Touch ID for sudo offer");
+        return;
+    }
+    NSNumber *setting = [[iTermUserDefaults userDefaults] objectForKey:iTermNaggingControllerTouchIDForSudoUserDefaultsKey];
+    if (setting != nil) {
+        DLog(@"Touch ID for sudo offer disabled by user default: %@", setting);
+        return;
+    }
+    if ([iTermTouchIDHelper isTouchIDEnabledForSudo]) {
+        DLog(@"Touch ID for sudo already enabled");
+        return;
+    }
+    NSString *message = @"Would you like to enable Touch ID for sudo?";
+    if ([self.delegate naggingControllerAnnouncementWouldObscureCursorForText:message]) {
+        DLog(@"Announcement would obscure cursor");
+        return;
+    }
+    [self.delegate naggingControllerShowMessage:message
+                                     isQuestion:YES
+                                      important:YES
+                                     identifier:iTermNaggingControllerTouchIDForSudoIdentifier
+                                        options:@[ @"_Enable", @"Don't Ask Again" ]
+                                     completion:^(int selection) {
+        switch (selection) {
+            case 0:  // Enable
+                (void)[iTermTouchIDHelper enableTouchIDForSudo];
+                break;
+            case 1:  // Don't ask again
+                [[iTermUserDefaults userDefaults] setBool:NO
+                                                   forKey:iTermNaggingControllerTouchIDForSudoUserDefaultsKey];
+                break;
+        }
+    }];
+}
+
+- (void)removeTouchIDForSudoOffer {
+    [self.delegate naggingControllerRemoveMessageWithIdentifier:iTermNaggingControllerTouchIDForSudoIdentifier];
+}
+
 #pragma mark - Variable Reporting
 
 - (NSArray<NSString *> *)variablesToReportEntries {

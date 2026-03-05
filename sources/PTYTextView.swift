@@ -863,6 +863,26 @@ extension PTYTextView {
         } else if item.action == #selector(toggleBufferInput(_:)) {
             item.state = (delegate?.textViewIsBufferingInput() ?? false) ? .on : .off
             return true
+        } else if item.action == #selector(foldAll(_:)) {
+            guard let dataSource else { return false }
+            if dataSource.terminalSoftAlternateScreenMode() {
+                return false
+            }
+            let cursorLine = dataSource.lineNumberOfCursor()
+            // Disabled if cursor on first visible line
+            if cursorLine <= 0 {
+                return false
+            }
+            // Disabled if all lines above cursor are already folds. But only
+            // check for smallish ranges to avoid this taking too long. If you
+            // want to fold 100 folds go for it I guess.
+            if cursorLine < 100 {
+                let rangeAbove = VT100GridRange(location: 0, length: cursorLine)
+                if dataSource.folds(in: rangeAbove).count == cursorLine {
+                    return false
+                }
+            }
+            return true
         }
         return false
     }
@@ -912,5 +932,141 @@ extension PTYTextView {
     @objc(toggleBufferInput:)
     func toggleBufferInput(_ sender: Any) {
         delegate?.textViewToggleBufferInput()
+    }
+}
+
+// MARK: - Fold All
+
+extension PTYTextView {
+    @IBAction
+    @objc(foldAll:)
+    func foldAll(_ sender: Any) {
+        foldAllAboveCursor()
+    }
+
+    @objc
+    func foldAllAboveCursor() {
+        guard let dataSource else { return }
+
+        let cursorLine = dataSource.lineNumberOfCursor()
+        guard cursorLine > 0 else { return }
+
+        // Skip consecutive folds starting at line 0
+        var startLine: Int32 = 0
+        while startLine < cursorLine {
+            let lineRange = VT100GridRange(location: startLine, length: 1)
+            if (dataSource.folds(in: lineRange)?.count ?? 0) == 0 {
+                break
+            }
+            startLine += 1
+        }
+
+        // If all lines are folds, nothing to do
+        guard startLine < cursorLine else { return }
+
+        // Range is from first non-fold line to cursorLine - 1
+        let overflow = dataSource.totalScrollbackOverflow()
+        let absStart = Int64(startLine) + overflow
+        let absEnd = Int64(cursorLine) + overflow
+        let range = absStart..<absEnd
+
+        let placeholder = createFoldAllPlaceholder(range: range, dataSource: dataSource)
+        let promptLength = self.promptLength(at: absStart)
+
+        foldAllWithPlaceholder(range: range, promptLength: Int(promptLength), placeholder: placeholder)
+    }
+
+    private func createFoldAllPlaceholder(range: Range<Int64>, dataSource: PTYTextViewDataSource) -> ScreenCharArray {
+        let width = dataSource.width()
+
+        // Find first and last command marks with commands
+        let (firstMark, lastMark) = findFirstAndLastCommandMarks(in: range, dataSource: dataSource)
+
+        // Build placeholder text
+        var parts: [String] = []
+
+        // Localized compact date from first command's start date
+        if let startDate = firstMark?.startDate {
+            let formatter = DateFormatter()
+            formatter.locale = Locale.current
+            formatter.dateStyle = .medium
+            formatter.timeStyle = .short
+            parts.append(formatter.string(from: startDate))
+            parts.append("—")  // em dash
+        }
+
+        // First command (truncated)
+        if let cmd = firstMark?.command, !cmd.isEmpty {
+            parts.append(String(cmd.prefix(20)))
+        }
+
+        // Line count
+        let lineCount = Int(range.upperBound - range.lowerBound)
+        parts.append("…\(lineCount) line\(lineCount > 1 ? "s" : "")…")
+
+        // Last command if different
+        if let lastCmd = lastMark?.command,
+           !lastCmd.isEmpty,
+           lastMark !== firstMark {
+            parts.append(String(lastCmd.prefix(20)))
+        }
+
+        let text = parts.joined(separator: " ")
+        return createStyledPlaceholderLine(text: text, width: width)
+    }
+
+    private func findFirstAndLastCommandMarks(
+        in range: Range<Int64>,
+        dataSource: PTYTextViewDataSource
+    ) -> (first: VT100ScreenMarkReading?, last: VT100ScreenMarkReading?) {
+        let absRange = NSRange(location: Int(range.lowerBound), length: Int(range.upperBound - range.lowerBound))
+        return (dataSource.firstCommandMarkWithCommand(in: absRange),
+                dataSource.lastCommandMarkWithCommand(in: absRange))
+    }
+
+    private func createStyledPlaceholderLine(text: String, width: Int32) -> ScreenCharArray {
+        let result = MutableScreenCharArray()
+        result.append(text, fg: screen_char_t(), bg: screen_char_t())
+
+        // Pad to width
+        let currentLength = Int32(result.lengthExcludingTrailingWhitespaceAndNulls)
+        if currentLength < width {
+            result.append(ScreenCharArray.emptyLine(ofLength: width - currentLength))
+        }
+
+        // Apply faint italic styling (same as existing fold style)
+        var bg = screen_char_t()
+        bg.backgroundColorMode = ColorModeAlternate.rawValue
+        bg.backgroundColor = UInt32(ALTSEM_DEFAULT)
+        result.setBackground(bg, in: NSRange(location: 0, length: Int(width)))
+
+        var fg = screen_char_t()
+        fg.foregroundColorMode = ColorModeAlternate.rawValue
+        fg.foregroundColor = UInt32(ALTSEM_DEFAULT)
+        fg.faint = 1
+        fg.italic = 1
+        result.setForeground(fg, in: NSRange(location: 0, length: Int(width)))
+
+        var continuation = bg
+        continuation.code = UInt16(EOL_HARD)
+        result.continuation = continuation
+        return result
+    }
+
+    private func foldAllWithPlaceholder(range: Range<Int64>, promptLength: Int, placeholder: ScreenCharArray) {
+        guard let dataSource else { return }
+
+        let absRange = VT100GridAbsCoordRange(
+            start: VT100GridAbsCoord(x: 0, y: range.lowerBound),
+            end: VT100GridAbsCoord(x: dataSource.width(), y: range.upperBound - 1)
+        )
+
+        let blockMarks = dataSource.blockMarkDictionary(onLine: range.lowerBound)
+        dataSource.replace(absRange,
+                           withLines: [placeholder.clone()],
+                           promptLength: promptLength,
+                           blockMarks: blockMarks)
+        requestDelegateRedraw()
+        didFoldOrUnfold()
     }
 }

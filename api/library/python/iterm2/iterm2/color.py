@@ -11,6 +11,11 @@ import json
 import typing
 
 
+class MissingDependency(ImportError):
+    """Raised when an optional dependency (e.g. pyobjc) is not installed."""
+    pass
+
+
 class ColorSpace(enum.Enum):
     """Describes the color space of a :class:`Color`."""
     SRGB = "sRGB"  #: SRGB color space
@@ -87,8 +92,8 @@ class Color:
              round(nscolor.alphaComponent() * 255))
 
     @staticmethod
-    def from_legacy_trigger(s: str) -> ('Color', 'Color'):
-        i = int(str)
+    def from_legacy_trigger(s: str) -> typing.Tuple[typing.Optional['Color'], typing.Optional['Color']]:
+        i = int(s)
         if not gAppKitAvailable:
             raise MissingDependency("Colors cannot be parsed unless the pyobjc package is installed")
 

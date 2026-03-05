@@ -9,6 +9,7 @@
 #import "iTermSetTitleTrigger.h"
 
 #import "iTermSessionNameController.h"
+#import "iTerm2SharedARC-Swift.h"
 
 @implementation iTermSetTitleTrigger
 
@@ -32,6 +33,12 @@
 - (BOOL)takesParameter
 {
     return YES;
+}
+
+- (NSSet<NSNumber *> *)allowedMatchTypes {
+    NSMutableSet *set = [NSMutableSet setWithObject:@(iTermTriggerMatchTypeRegex)];
+    [set unionSet:[iTermEventTriggerMatchTypeHelper allEventTypesSet]];
+    return set;
 }
 
 - (BOOL)performActionWithCapturedStrings:(NSArray<NSString *> *)stringArray

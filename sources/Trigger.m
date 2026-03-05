@@ -27,6 +27,7 @@ NSString * const kTriggerPartialLineKey = @"partial";
 NSString * const kTriggerDisabledKey = @"disabled";
 NSString * const kTriggerNameKey = @"name";
 NSString * const kTriggerPerformanceKey = @"performance";
+NSString * const kTriggerEventParamsKey = @"eventParams";
 
 @interface Trigger()
 @end
@@ -38,6 +39,7 @@ NSString * const kTriggerPerformanceKey = @"performance";
     NSString *regex_;
     NSString *contentRegex_;
     id param_;
+    NSDictionary<NSString *, id> *_eventParams;
     iTermSwiftyStringWithBackreferencesEvaluator *_evaluator;
     NSRegularExpression *_compiledRegex;
     iTermMovingHistogram *_stats;
@@ -46,6 +48,7 @@ NSString * const kTriggerPerformanceKey = @"performance";
 @synthesize regex = regex_;
 @synthesize param = param_;
 @synthesize contentRegex = contentRegex_;
+@synthesize eventParams = _eventParams;
 
 + (NSSet<NSString *> *)synonyms {
     return [NSSet set];
@@ -77,6 +80,7 @@ NSString * const kTriggerPerformanceKey = @"performance";
     trigger.disabled = [[NSNumber coerceFrom:dict[kTriggerDisabledKey]] boolValue];
     trigger->_matchType = [[NSNumber coerceFrom:dict[kTriggerMatchTypeKey]] unsignedIntegerValue];
     trigger->_name = [NSString castFrom:dict[kTriggerNameKey]];
+    trigger->_eventParams = [NSDictionary castFrom:dict[kTriggerEventParamsKey]];
     if ([NSDictionary castFrom:dict[kTriggerPerformanceKey]]) {
         iTermHistogram *histogram = [[iTermHistogram alloc] initWithDictionary:[NSDictionary castFrom:dict[kTriggerPerformanceKey]]];
         trigger.performanceHistogram = histogram;
@@ -468,7 +472,8 @@ NSString * const kTriggerPerformanceKey = @"performance";
                kTriggerParameterKey: self.param ?: @"",
                kTriggerPartialLineKey: @(self.partialLine),
                kTriggerDisabledKey: @(self.disabled),
-               kTriggerNameKey: self.name ?: [NSNull null] } dictionaryByRemovingNullValues];
+               kTriggerNameKey: self.name ?: [NSNull null],
+               kTriggerEventParamsKey: self.eventParams ?: [NSNull null] } dictionaryByRemovingNullValues];
 }
 
 - (NSData *)digest {
@@ -516,7 +521,13 @@ NSString * const kTriggerPerformanceKey = @"performance";
 
 - (NSAttributedString *)attributedString {
     NSAttributedString *newline = [[NSAttributedString alloc] initWithString:@"\n" attributes:self.regularAttributes];
-    id regexAttributedString = self.regex.length > 0 ? [self regexAttributedString] : [NSNull null];
+    // For event triggers, always show the event info; for regex triggers, show regex if non-empty
+    id matchInfoAttributedString;
+    if (iTermTriggerMatchTypeIsEvent(self.matchType)) {
+        matchInfoAttributedString = [self regexAttributedString];  // This returns event info for event triggers
+    } else {
+        matchInfoAttributedString = self.regex.length > 0 ? [self regexAttributedString] : [NSNull null];
+    }
     NSArray *lines = nil;
     NSString *instantEmoji = self.partialLine ? @"⚡︎ " : nil;
     if ([self.name stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]].length > 0) {
@@ -527,7 +538,7 @@ NSString * const kTriggerPerformanceKey = @"performance";
         NSAttributedString *nameAttributedString = [[NSAttributedString alloc] initWithString:name
                                                                                    attributes:self.nameAttributes];
         NSAttributedString *functionAttributedString = [self functionAttributedString];
-        lines = @[nameAttributedString, regexAttributedString, functionAttributedString];
+        lines = @[nameAttributedString, matchInfoAttributedString, functionAttributedString];
     } else {
         NSAttributedString *line2;
         if (instantEmoji) {
@@ -536,7 +547,7 @@ NSString * const kTriggerPerformanceKey = @"performance";
         } else {
             line2 = self.functionAttributedString;
         }
-        lines = @[regexAttributedString, line2];
+        lines = @[matchInfoAttributedString, line2];
     }
     lines = [lines filteredArrayUsingBlock:^BOOL(id anObject) {
         return [anObject isKindOfClass:[NSAttributedString class]];
@@ -554,6 +565,20 @@ NSString * const kTriggerPerformanceKey = @"performance";
         NSParagraphStyleAttributeName: paragraphStyle,
         NSFontAttributeName: [NSFont systemFontOfSize:[NSFont systemFontSize] weight:NSFontWeightRegular]
     };
+
+    // Handle event-based triggers
+    if (iTermTriggerMatchTypeIsEvent(self.matchType)) {
+        NSString *eventName = [iTermEventTriggerMatchTypeHelper displayNameFor:self.matchType];
+        NSString *paramInfo = [self eventParamsDescription];
+        NSString *displayString;
+        if (paramInfo.length > 0) {
+            displayString = [NSString stringWithFormat:@"%@ (%@)", eventName, paramInfo];
+        } else {
+            displayString = eventName;
+        }
+        return [[NSAttributedString alloc] initWithString:displayString attributes:plainAttributes];
+    }
+
     switch (self.matchType) {
         case iTermTriggerMatchTypeRegex:
         case iTermTriggerMatchTypeURLRegex:
@@ -565,7 +590,75 @@ NSString * const kTriggerPerformanceKey = @"performance";
                       [[NSAttributedString alloc] initWithString:@" URL: " attributes: plainAttributes],
                       [[NSAttributedString alloc] initWithString:[NSString stringWithFormat:@"/%@/", self.regex ?: @""] attributes:monospacedAttributes]
                     ] attributedComponentsJoinedByAttributedString:nil];
+        default:
+            return [[NSAttributedString alloc] initWithString:@"" attributes:plainAttributes];
     }
+}
+
+- (NSString *)eventParamsDescription {
+    if (!self.eventParams || self.eventParams.count == 0) {
+        return nil;
+    }
+
+    NSMutableArray *parts = [NSMutableArray array];
+
+    // Exit code filter
+    NSString *exitCodeFilter = self.eventParams[@"exitCodeFilter"];
+    if (exitCodeFilter) {
+        if ([exitCodeFilter isEqualToString:@"*"]) {
+            // Don't add anything for "any" - it's the default
+        } else if ([exitCodeFilter isEqualToString:@"0"]) {
+            [parts addObject:@"exit code 0"];
+        } else if ([exitCodeFilter isEqualToString:@"!0"]) {
+            [parts addObject:@"non-zero exit code"];
+        } else {
+            [parts addObject:[NSString stringWithFormat:@"exit code %@", exitCodeFilter]];
+        }
+    }
+
+    // Timeout (for idle triggers)
+    NSNumber *timeout = self.eventParams[@"timeout"];
+    if (timeout) {
+        [parts addObject:[NSString stringWithFormat:@"after %@ seconds", timeout]];
+    }
+
+    // Threshold (for long-running command triggers)
+    NSNumber *threshold = self.eventParams[@"threshold"];
+    if (threshold) {
+        [parts addObject:[NSString stringWithFormat:@"after %@ seconds", threshold]];
+    }
+
+    // Sequence ID (for custom escape sequence triggers)
+    NSString *sequenceId = self.eventParams[@"sequenceId"];
+    if (sequenceId && sequenceId.length > 0) {
+        [parts addObject:[NSString stringWithFormat:@"id: %@", sequenceId]];
+    }
+
+    // Directory regex (for directory changed triggers)
+    NSString *directoryRegex = self.eventParams[@"directoryRegex"];
+    if (directoryRegex && directoryRegex.length > 0) {
+        [parts addObject:[NSString stringWithFormat:@"matching /%@/", directoryRegex]];
+    }
+
+    // Host regex (for host changed triggers)
+    NSString *hostRegex = self.eventParams[@"hostRegex"];
+    if (hostRegex && hostRegex.length > 0) {
+        [parts addObject:[NSString stringWithFormat:@"matching /%@/", hostRegex]];
+    }
+
+    // User regex (for user changed triggers)
+    NSString *userRegex = self.eventParams[@"userRegex"];
+    if (userRegex && userRegex.length > 0) {
+        [parts addObject:[NSString stringWithFormat:@"matching /%@/", userRegex]];
+    }
+
+    // Command regex (for long-running command triggers)
+    NSString *commandRegex = self.eventParams[@"commandRegex"];
+    if (commandRegex && commandRegex.length > 0) {
+        [parts addObject:[NSString stringWithFormat:@"command /%@/", commandRegex]];
+    }
+
+    return [parts componentsJoinedByString:@", "];
 }
 
 - (NSAttributedString *)functionAttributedString {

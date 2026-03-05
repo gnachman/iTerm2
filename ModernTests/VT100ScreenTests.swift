@@ -1480,6 +1480,7 @@ class VT100ScreenTests: XCTestCase {
                        ".....!\n" +
                        ".....!")
     }
+
 }
 
 // a very simple LCG-based RNG

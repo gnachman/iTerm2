@@ -7,7 +7,29 @@ on:
     branches: [master]
 
 jobs:
-  test:
+  python-api-tests:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        working-directory: api/library/python/iterm2
+        run: |
+          pip install -r requirements-dev.txt
+          pip install -e .
+
+      - name: Run tests
+        working-directory: api/library/python/iterm2
+        run: python -m pytest tests/ -v
+
+  xcode-tests:
     runs-on: macos-15
 
     steps:

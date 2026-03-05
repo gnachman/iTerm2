@@ -15,7 +15,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @property (nonatomic, copy) NSString *namespace;
 @property (nonatomic, copy) NSString *name;
-@property (nonatomic, readonly) NSString *connectionKey;
+@property (nonatomic, copy) NSString *connectionKey;
 
 - (void)performFunctionCallFromInvocation:(NSString *)invocation
                                  receiver:(NSString * _Nullable)receiver

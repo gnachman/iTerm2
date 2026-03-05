@@ -40,6 +40,8 @@ api/library/python/iterm2/*.egg-info
 api/library/python/iterm2/.mypy_cache
 api/library/python/iterm2/_unstubbed
 api/library/python/iterm2/docs/_build
+api/library/python/iterm2/.coverage
+api/library/python/iterm2/.pytest_cache
 
 # Better font picker
 BetterFontPicker/BetterFontPicker.xcodeproj/project.xcworkspace/xcuserdata/gnachman.xcuserdatad/UserInterfaceState.xcuserstate

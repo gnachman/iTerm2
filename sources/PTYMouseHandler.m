@@ -802,6 +802,15 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     if (!wasMakingThreeFingerSelection &&
         _makingThreeFingerSelection) {
         DLog(@"Just started a three finger selection in mouseDragged (because of macOS bugs)");
+
+        // If setting enabled and mouse event was reported, skip selection
+        if ([iTermAdvancedSettingsModel threeFingerDragSendsMouseReports] &&
+            [self reportMouseEvent:event]) {
+            DLog(@"Reported 3-finger drag as mouse event");
+            _committedToDrag = YES;
+            return iTermClickSideEffectsReport;
+        }
+
         const BOOL shiftPressed = ([event it_modifierFlags] & NSEventModifierFlagShift) != 0;
         const BOOL isExtension = ([self.selection hasSelection] && shiftPressed);
         const BOOL altPressed = ([event it_modifierFlags] & NSEventModifierFlagOption) != 0;
@@ -829,6 +838,15 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             self.selection.resumable = YES;
         }
     } else {
+        // If continuing a 3-finger drag and mouse event was reported, skip selection
+        if (_makingThreeFingerSelection &&
+            [iTermAdvancedSettingsModel threeFingerDragSendsMouseReports] &&
+            [self reportMouseEvent:event]) {
+            DLog(@"Reported continued 3-finger drag as mouse event");
+            _committedToDrag = YES;
+            return iTermClickSideEffectsReport;
+        }
+
         DLog(@"Update live selection during drag");
         if ([self.mouseDelegate mouseHandler:self moveSelectionToGridCoord:VT100GridCoordMake(x, y)
                                    viewCoord:locationInTextView]) {

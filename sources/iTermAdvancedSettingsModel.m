@@ -367,6 +367,7 @@ DEFINE_BOOL(naturalScrollingAffectsHorizontalMouseReporting, NO, SECTION_MOUSE @
 DEFINE_FLOAT(horizontalScrollingSensitivity, 0.1, SECTION_MOUSE @"Sensitivity of mouse wheel for horizontal scrolling.\nUse 0 to disable. Value should be between 0 and 1. Changes to this setting only affect new sessions.");
 DEFINE_BOOL(useDoubleClickDelayForCommandSelection, NO, SECTION_MOUSE @"Wait to be sure it's not a double click before selecting a command");
 DEFINE_BOOL(requireOptionToDragSplitPaneTitleBar, NO, SECTION_MOUSE @"Require Option to be pressed to drag a split pane by its title bar?\nThis helps prevent accidental drags.");
+DEFINE_BOOL(threeFingerDragSendsMouseReports, NO, SECTION_MOUSE @"Three-finger drag sends mouse reports when mouse reporting is enabled.\nWhen enabled, three-finger drags will send mouse events to terminal applications like vim, tmux, or zellij instead of performing iTerm2 text selection.");
 
 #pragma mark Terminal
 
@@ -496,6 +497,7 @@ DEFINE_FLOAT(gitTimeout, 4, SECTION_GENERAL @"Timeout in seconds when running gi
 DEFINE_STRING(preferredBaseDir, @"", SECTION_GENERAL @"Folder for config files. There must not be a space in the path.\nIf empty, then ~/.config/iterm2 will be the default location.");
 DEFINE_INT(maximumNumberOfTriggerCommands, 16, SECTION_GENERAL @"Maximum number of trigger-launched commands that can run at once.\nIf too many “Run Command…” triggers fire their commands will be queued. You must restart iTerm2 for changes to this setting to take effect.");
 DEFINE_INT(smartSelectionRadius, 2, SECTION_GENERAL @"Maximum number of lines before and after the click location to include in smart selection.");
+DEFINE_INT(wordSelectionRegexRadius, 500, SECTION_GENERAL @"Maximum number of characters before and after the click location to search when applying word selection regex patterns.");
 DEFINE_FLOAT(alertTriggerRateLimit, 1, SECTION_GENERAL @"Rate limit for Alert triggers.\nIf the same trigger fires with less than this time interval (in seconds) between firings, it will be suppressed.")
 DEFINE_FLOAT(userNotificationTriggerRateLimit, 0, SECTION_GENERAL @"Rate limit for Notification triggers.\nIf the same trigger fires with less than this time interval (in seconds) between firings, it will be suppressed.")
 DEFINE_FLOAT(notificationOcclusionThreshold, 0.4, SECTION_GENERAL @"Foreground tabs will post user notifications if their window is partially hidden (for example, it is partially offscreen). This value, in 0 to 1, gives the fraction that must be occluded for a notification be posted.");
@@ -833,7 +835,7 @@ DEFINE_BOOL(supportDecsetMetaSendsEscape, YES_IF_BETA_ELSE_NO, SECTION_EXPERIMEN
 DEFINE_BOOL(fastTriggerRegexes, YES, SECTION_EXPERIMENTAL @"Fast regular expression evaluation for triggers.\nThis is experimental because it could potentially change how regular expressions are interpreted.");
 DEFINE_BOOL(postFakeFlagsChangedEvents, NO, SECTION_EXPERIMENTAL @"Post fake flags-changed events when remapping modifiers with an event tap.\nThis is an attempt to work around incompatibilities with AltTab in issue 10220.");
 DEFINE_BOOL(fullWidthFlags, YES, SECTION_EXPERIMENTAL @"Flag emoji render full-width");
-DEFINE_STRING(aiModernModelPrefixes, @"gpt-", SECTION_EXPERIMENTAL @"AI model name prefixes that use the modern “completions” API.\nPrefixes should be space-delimited. Note that o1 models use a different API and have hard-coded behavior.");
+DEFINE_STRING(aiModernModelPrefixes, @"gpt-", SECTION_EXPERIMENTAL @"AI model name substrings that use the modern 'completions' API.\nSubstrings should be space-delimited. This handles OpenRouter-style names like 'openai/gpt-4o'. Note that o1 models use a different API and have hard-coded behavior.");
 DEFINE_STRING(aiProxy, @"", SECTION_EXPERIMENTAL @"Host and port for proxy for AI requests.\ni.e., example.com:8080")
 DEFINE_BOOL(addUtilitiesToPATH, YES, SECTION_EXPERIMENTAL @"Add path to iTerm2 utilities to $PATH for new sessions?");
 DEFINE_BOOL(autoSearch, NO, SECTION_EXPERIMENTAL @"Automatically search for selected text after making a selection?");

@@ -8,6 +8,7 @@
 
 #import "MarkTrigger.h"
 #import "PTYScrollView.h"
+#import "iTerm2SharedARC-Swift.h"
 #import "SessionView.h"
 
 // Whether to stop scrolling.
@@ -40,6 +41,12 @@ typedef enum {
 
 - (BOOL)isIdempotent {
     return YES;
+}
+
+- (NSSet<NSNumber *> *)allowedMatchTypes {
+    NSMutableSet *set = [NSMutableSet setWithObject:@(iTermTriggerMatchTypeRegex)];
+    [set unionSet:[iTermEventTriggerMatchTypeHelper allEventTypesSet]];
+    return set;
 }
 
 - (NSInteger)indexForObject:(id)object {
