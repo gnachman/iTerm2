@@ -159,6 +159,7 @@ typedef NS_ENUM(NSUInteger, iTermPasswordManagerReload) {
     IBOutlet NSButton *_editButton;
     IBOutlet NSButton *_addButton;
     IBOutlet NSButton *_keeperSettingsButton;
+    NSButton *_keeperSyncButton;  // Created in code, placed next to settings button; refresh icon only
 
     // I have to do this becuase you can't change the default button (the one whose key equivalent is Enter)
     IBOutlet NSButton *_defaultButton;  // generally "enter password"
@@ -316,11 +317,36 @@ static NSArray<NSString *> *gTerminalCachedCombinedAccountNames;
     self.window.contentView.layer.cornerRadius = 4;
     [_searchField setArrowHandler:_tableView];
     if (_keeperSettingsButton) {
+        _keeperSettingsButton.bezelStyle = NSBezelStyleRounded;
         NSImage *gearImage = [NSImage imageWithSystemSymbolName:@"gearshape" accessibilityDescription:@"Keeper Settings"];
         if (gearImage) {
             gearImage = [gearImage imageWithSymbolConfiguration:[NSImageSymbolConfiguration configurationWithScale:NSImageSymbolScaleMedium]];
             _keeperSettingsButton.image = gearImage;
         }
+        // Sync button (refresh icon only) placed after (to the right of) settings button — same rounded style
+        const CGFloat gap = 6;
+        const CGFloat btnWidth = 28;
+        const CGFloat btnHeight = 24;
+        NSRect settingsFrame = _keeperSettingsButton.frame;
+        CGFloat syncX = settingsFrame.origin.x + settingsFrame.size.width + gap;
+        NSRect syncFrame = NSMakeRect(syncX, settingsFrame.origin.y, btnWidth, btnHeight);
+        _keeperSyncButton = [[NSButton alloc] initWithFrame:syncFrame];
+        _keeperSyncButton.bezelStyle = NSBezelStyleRounded;
+        _keeperSyncButton.bordered = YES;
+        _keeperSyncButton.imagePosition = NSImageOnly;
+        _keeperSyncButton.buttonType = NSButtonTypeMomentaryPushIn;
+        NSImage *refreshImage = [NSImage imageWithSystemSymbolName:@"arrow.clockwise" accessibilityDescription:@"Sync from Keeper"];
+        if (refreshImage) {
+            refreshImage = [refreshImage imageWithSymbolConfiguration:[NSImageSymbolConfiguration configurationWithScale:NSImageSymbolScaleMedium]];
+            _keeperSyncButton.image = refreshImage;
+        }
+        _keeperSyncButton.toolTip = @"Sync from Keeper";
+        _keeperSyncButton.target = self;
+        _keeperSyncButton.action = @selector(keeperSyncDown:);
+        _keeperSyncButton.enabled = YES;
+        _keeperSyncButton.autoresizingMask = _keeperSettingsButton.autoresizingMask;
+        [_keeperSettingsButton.superview addSubview:_keeperSyncButton positioned:NSWindowAbove relativeTo:nil];
+        _keeperSyncButton.hidden = YES;
     }
     __weak __typeof(self) weakSelf = self;
 
@@ -476,6 +502,9 @@ static NSArray<NSString *> *gTerminalCachedCombinedAccountNames;
     _twoFactorCode.enabled = !self.selectedAccount.sendOTP;
     const BOOL showKeeperSettings = [self.currentDataSource.name isEqualToString:@"Keeper Security"];
     _keeperSettingsButton.hidden = !showKeeperSettings;
+    if (_keeperSyncButton) {
+        _keeperSyncButton.hidden = !showKeeperSettings;
+    }
     if (showKeeperSettings) {
         [(id)self.currentDataSource setCredentialsDelegate:self];
     }
@@ -999,25 +1028,42 @@ static NSArray<NSString *> *gTerminalCachedCombinedAccountNames;
     id ds = self.currentDataSource;
     // When opening from the gear (edit): fetch from Keychain so user can see/update saved values. When opening from “select Keeper”: no Keychain read, empty key and default URL.
     NSString *savedKey = emptyAPIKey ? @"" : ([(id)ds keeperSettingsAPIKeyForEditing] ?: @"");
-    NSString *savedURL = emptyAPIKey ? ([ds keeperSettingsAPIURL] ?: @"") : ([(id)ds keeperSettingsAPIURLForEditing] ?: @"");
+    NSString *savedURL = emptyAPIKey ? @"" : ([(id)ds keeperSettingsAPIURLForEditing] ?: @"");
 
     NSAlert *alert = [[NSAlert alloc] init];
     alert.messageText = @"Keeper Security Settings";
     alert.informativeText = @"Add or update your Keeper Commander API key and service URL. Both are stored in macOS Keychain; the API key is protected by Touch ID, Face ID, or device passcode when available.";
-    [alert addButtonWithTitle:@"OK"];
+    [alert addButtonWithTitle:@"Connect"];
     [alert addButtonWithTitle:@"Cancel"];
 
-    const CGFloat width = 360;
+    const CGFloat width = 560;
     const CGFloat rowHeight = 22;
     const CGFloat labelWidth = 70;
-    const CGFloat margin = 12;
-    const CGFloat rowSpacing = 10;  // Vertical gap between API Key, API URL, and Sync rows
-    const CGFloat accessoryHeight = margin + (3 * rowHeight) + (2 * rowSpacing) + margin;
+    const CGFloat margin = 20;
+    const CGFloat rowSpacing = 18;  // Vertical gap between API URL and API Key rows
+    const CGFloat accessoryHeight = margin + (2 * rowHeight) + rowSpacing + margin;
     NSView *accessory = [[NSView alloc] initWithFrame:NSMakeRect(0, 0, width, accessoryHeight)];
     accessory.frame = NSMakeRect(0, 0, width, accessoryHeight);
 
-    // Row 0 (top): API Key
-    const CGFloat keyRowY = margin + (2 * rowHeight) + (2 * rowSpacing);
+    // Row 0 (top): API URL
+    const CGFloat urlRowY = margin + rowHeight + rowSpacing;
+    NSTextField *urlLabel = [[NSTextField alloc] initWithFrame:NSMakeRect(0, urlRowY, labelWidth, rowHeight)];
+    urlLabel.stringValue = @"API URL:";
+    urlLabel.bezeled = NO;
+    urlLabel.drawsBackground = NO;
+    urlLabel.editable = NO;
+    urlLabel.selectable = NO;
+    urlLabel.font = [NSFont systemFontOfSize:[NSFont systemFontSize]];
+    [accessory addSubview:urlLabel];
+
+    NSTextField *urlField = [[NSTextField alloc] initWithFrame:NSMakeRect(labelWidth + 8, urlRowY, width - labelWidth - 8, rowHeight)];
+    urlField.placeholderString = @"e.g. http://127.0.0.1:8900";
+    urlField.stringValue = savedURL ?: @"";
+    urlField.font = [NSFont systemFontOfSize:[NSFont systemFontSize]];
+    [accessory addSubview:urlField];
+
+    // Row 1 (bottom): API Key
+    const CGFloat keyRowY = margin;
     NSTextField *keyLabel = [[NSTextField alloc] initWithFrame:NSMakeRect(0, keyRowY, labelWidth, rowHeight)];
     keyLabel.stringValue = @"API Key:";
     keyLabel.bezeled = NO;
@@ -1060,57 +1106,11 @@ static NSArray<NSString *> *gTerminalCachedCombinedAccountNames;
     revealButton.target = context;
     revealButton.action = @selector(toggleReveal:);
 
-    // Row 1 (middle): API URL
-    const CGFloat urlRowY = margin + rowHeight + rowSpacing;
-    NSTextField *urlLabel = [[NSTextField alloc] initWithFrame:NSMakeRect(0, urlRowY, labelWidth, rowHeight)];
-    urlLabel.stringValue = @"API URL:";
-    urlLabel.bezeled = NO;
-    urlLabel.drawsBackground = NO;
-    urlLabel.editable = NO;
-    urlLabel.selectable = NO;
-    urlLabel.font = [NSFont systemFontOfSize:[NSFont systemFontSize]];
-    [accessory addSubview:urlLabel];
-
-    NSTextField *urlField = [[NSTextField alloc] initWithFrame:NSMakeRect(labelWidth + 8, urlRowY, width - labelWidth - 8, rowHeight)];
-    urlField.placeholderString = @"e.g. http://127.0.0.1:8900";
-    urlField.stringValue = savedURL ?: @"";
-    urlField.font = [NSFont systemFontOfSize:[NSFont systemFontSize]];
-    [accessory addSubview:urlField];
-
-    // Row 2 (bottom): Sync button — spaced below API URL
-    const CGFloat syncRowY = margin;
-    NSButton *syncButton = [[NSButton alloc] initWithFrame:NSMakeRect(labelWidth + 8, syncRowY, 80, rowHeight)];
-    syncButton.title = @"Sync";
-    syncButton.bezelStyle = NSBezelStyleRounded;
-    [syncButton setButtonType:NSButtonTypeMomentaryPushIn];
-    [accessory addSubview:syncButton];
-
-    __weak __typeof(self) weakSelf = self;
-    iTermKeeperSettingsSyncContext *syncContext = [[iTermKeeperSettingsSyncContext alloc] init];
-    syncContext.secureField = keyFieldSecure;
-    syncContext.plainField = keyFieldPlain;
-    syncContext.urlField = urlField;
-    syncContext.dataSource = ds;
-    syncContext.onSyncStarted = ^{
-        [weakSelf incrBusy];
-    };
-    syncContext.onSyncComplete = ^{
-        [weakSelf decrBusy];
-    };
-    syncContext.onSyncSuccess = ^{
-        [weakSelf reloadItems:nil];
-    };
-    syncContext.syncButton = syncButton;
-    objc_setAssociatedObject(accessory, kKeeperSettingsSyncContextKey, syncContext, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
-    syncButton.target = syncContext;
-    syncButton.action = @selector(syncTapped:);
-
     alert.accessoryView = accessory;
     [alert layout];
 
     [alert beginSheetModalForWindow:sheetParent completionHandler:^(NSModalResponse response) {
         objc_setAssociatedObject(accessory, kKeeperSettingsAccessoryContextKey, nil, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
-        objc_setAssociatedObject(accessory, kKeeperSettingsSyncContextKey, nil, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
         if (response != NSAlertFirstButtonReturn) {
             if (keyCompletion) {
                 keyCompletion(nil);
@@ -1141,6 +1141,43 @@ static NSArray<NSString *> *gTerminalCachedCombinedAccountNames;
                                        forWindow:nil
                                             onOK:^{ [weakSelf reloadItems:nil]; }
                                     keyCompletion:nil];
+}
+
+- (IBAction)keeperSyncDown:(id)sender {
+    if (![self.currentDataSource.name isEqualToString:@"Keeper Security"]) {
+        return;
+    }
+    id ds = self.currentDataSource;
+    if (![ds respondsToSelector:@selector(keeperSettingsAPIKeyForEditing)] ||
+        ![ds respondsToSelector:@selector(runKeeperSyncDownWithApiKey:apiURL:completion:)]) {
+        return;
+    }
+    NSString *key = [(id)ds keeperSettingsAPIKeyForEditing];
+    NSString *url = [(id)ds keeperSettingsAPIURLForEditing] ?: ([ds respondsToSelector:@selector(keeperSettingsAPIURL)] ? [ds keeperSettingsAPIURL] : nil) ?: @"";
+    key = [(key ?: @"") stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+    url = [(url ?: @"") stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+    if (!key.length) {
+        NSAlert *alert = [[NSAlert alloc] init];
+        alert.messageText = @"API Key Required";
+        alert.informativeText = @"Open Keeper Settings (gear) and enter your API key before syncing.";
+        [alert runModal];
+        return;
+    }
+    [self incrBusy];
+    __weak __typeof(self) weakSelf = self;
+    [(id)ds runKeeperSyncDownWithApiKey:key apiURL:url completion:^(BOOL success, NSString * _Nullable errorMessage) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [weakSelf decrBusy];
+            if (success) {
+                [weakSelf reloadItems:nil];
+            } else {
+                NSAlert *alert = [[NSAlert alloc] init];
+                alert.messageText = @"Sync Failed";
+                alert.informativeText = errorMessage ?: @"The sync-down command failed.";
+                [alert runModal];
+            }
+        });
+    }];
 }
 
 // If the error message is JSON (e.g. {"error":"Please provide a valid api key","status":"error"}), extract the "error" value for display.
