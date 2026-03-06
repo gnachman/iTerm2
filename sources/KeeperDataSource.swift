@@ -20,8 +20,7 @@ private let keeperLegacyKeychainService = "iTerm2-Keeper"
 /// UserDefaults keys for one-time migration of legacy token storage.
 private let keeperLegacyUserDefaultsAPIKeyKey = "NoSyncKeeperCommanderAPIKey"
 private let keeperLegacyUserDefaultsAPIURLKey = "NoSyncKeeperCommanderAPIURL"
-/// Default Keeper Commander service URL when none is stored.
-private let keeperDefaultAPIURL = "http://127.0.0.1:8900"
+/// No default API URL: user must set API URL in Keeper Security Settings.
 
 /// Posted when Keeper connection fails (e.g. no API key, service unreachable). userInfo[@"error"] = error message (String).
 public let iTerm2KeeperConnectionDidFailNotification = Notification.Name("iTerm2KeeperConnectionDidFail")
@@ -320,39 +319,39 @@ private func keeperClearBaseURLCache() {
     _keeperBaseURLLock.unlock()
 }
 
-private func keeperBaseURL() -> URL {
+private func keeperBaseURL() -> URL? {
     _keeperBaseURLLock.lock()
     if let cached = _cachedKeeperBaseURL {
         let url = cached
         _keeperBaseURLLock.unlock()
         return url
     }
-    let urlString = keeperAPIURLFromStorage() ?? keeperDefaultAPIURL
-    let parsed: URL
-    if let url = URL(string: urlString.trimmingCharacters(in: .whitespacesAndNewlines)), url.scheme != nil, url.host != nil {
+    let parsed: URL?
+    if let urlString = keeperAPIURLFromStorage()?.trimmingCharacters(in: .whitespacesAndNewlines), !urlString.isEmpty,
+       let url = URL(string: urlString), url.scheme != nil, url.host != nil {
         parsed = url
     } else {
-        parsed = URL(string: keeperDefaultAPIURL)!
+        parsed = nil
     }
     _cachedKeeperBaseURL = parsed
     _keeperBaseURLLock.unlock()
     return parsed
 }
 
-private func keeperV1ExecuteCommandURL(baseURL: URL? = nil) -> URL {
-    (baseURL ?? keeperBaseURL()).appendingPathComponent("api/v1/executecommand")
+private func keeperV1ExecuteCommandURL(baseURL: URL) -> URL {
+    baseURL.appendingPathComponent("api/v1/executecommand")
 }
 
-private func keeperV2AsyncURL(baseURL: URL? = nil) -> URL {
-    (baseURL ?? keeperBaseURL()).appendingPathComponent("api/v2/executecommand-async")
+private func keeperV2AsyncURL(baseURL: URL) -> URL {
+    baseURL.appendingPathComponent("api/v2/executecommand-async")
 }
 
-private func keeperV2StatusURL(requestId: String, baseURL: URL? = nil) -> URL {
-    (baseURL ?? keeperBaseURL()).appendingPathComponent("api/v2/status/\(requestId)")
+private func keeperV2StatusURL(requestId: String, baseURL: URL) -> URL {
+    baseURL.appendingPathComponent("api/v2/status/\(requestId)")
 }
 
-private func keeperV2ResultURL(requestId: String, baseURL: URL? = nil) -> URL {
-    (baseURL ?? keeperBaseURL()).appendingPathComponent("api/v2/result/\(requestId)")
+private func keeperV2ResultURL(requestId: String, baseURL: URL) -> URL {
+    baseURL.appendingPathComponent("api/v2/result/\(requestId)")
 }
 
 /// Extracts a human-readable error message from API response data (e.g. {"error":"Please provide a valid api key","status":"error"}).
@@ -365,6 +364,10 @@ private func keeperHumanReadableError(fromResponseData data: Data?) -> String? {
 }
 
 private func keeperExecute(apiKey: String, command: String, baseURL: URL? = nil, completion: @escaping (Result<Data, Error>) -> Void) {
+    guard let resolvedBase = baseURL ?? keeperBaseURL() else {
+        completion(.failure(NSError(domain: "KeeperDataSource", code: -1, userInfo: [NSLocalizedDescriptionKey: "API URL is required. Please set it in Keeper Security Settings."])))
+        return
+    }
     let body = (try? JSONEncoder().encode(KeeperExecuteRequest(command: command))) ?? Data()
     // Try API v1 (sync) first; if 404, use API v2 (queue) async.
     let v1Completion: (Result<Data, Error>) -> Void = { result in
@@ -374,14 +377,14 @@ private func keeperExecute(apiKey: String, command: String, baseURL: URL? = nil,
         case .failure(let err):
             let nsErr = err as NSError
             if nsErr.domain == "KeeperDataSource", nsErr.code == 404 {
-                keeperExecuteV2(apiKey: apiKey, command: command, baseURL: baseURL, completion: completion)
+                keeperExecuteV2(apiKey: apiKey, command: command, baseURL: resolvedBase, completion: completion)
             } else {
                 completion(.failure(err))
             }
         }
     }
 
-    var request = URLRequest(url: keeperV1ExecuteCommandURL(baseURL: baseURL))
+    var request = URLRequest(url: keeperV1ExecuteCommandURL(baseURL: resolvedBase))
     request.httpMethod = "POST"
     request.setValue("application/json", forHTTPHeaderField: "Content-Type")
     request.setValue(apiKey, forHTTPHeaderField: "api-key")
@@ -397,7 +400,7 @@ private func keeperExecute(apiKey: String, command: String, baseURL: URL? = nil,
         }
         let http = response as? HTTPURLResponse
         if http?.statusCode == 404 {
-            keeperExecuteV2(apiKey: apiKey, command: command, baseURL: baseURL, completion: completion)
+            keeperExecuteV2(apiKey: apiKey, command: command, baseURL: resolvedBase, completion: completion)
             return
         }
         if http?.statusCode != 200 {
@@ -412,7 +415,7 @@ private func keeperExecute(apiKey: String, command: String, baseURL: URL? = nil,
 }
 
 /// Keeper Commander API v2 (queue): submit async, poll status, then fetch result.
-private func keeperExecuteV2(apiKey: String, command: String, baseURL: URL? = nil, completion: @escaping (Result<Data, Error>) -> Void) {
+private func keeperExecuteV2(apiKey: String, command: String, baseURL: URL, completion: @escaping (Result<Data, Error>) -> Void) {
     let body = (try? JSONEncoder().encode(KeeperExecuteRequest(command: command))) ?? Data()
     var request = URLRequest(url: keeperV2AsyncURL(baseURL: baseURL))
     request.httpMethod = "POST"
@@ -444,7 +447,7 @@ private func keeperExecuteV2(apiKey: String, command: String, baseURL: URL? = ni
     }.resume()
 }
 
-private func keeperV2PollForResult(apiKey: String, requestId: String, baseURL: URL? = nil, completion: @escaping (Result<Data, Error>) -> Void) {
+private func keeperV2PollForResult(apiKey: String, requestId: String, baseURL: URL, completion: @escaping (Result<Data, Error>) -> Void) {
     // Poll at most once per 2 seconds to stay under service rate limit (60 status requests per minute).
     let pollInterval: TimeInterval = 2.0
     let deadline = Date().addingTimeInterval(120)
@@ -505,7 +508,7 @@ private func keeperV2PollForResult(apiKey: String, requestId: String, baseURL: U
     poll()
 }
 
-private func keeperV2FetchResult(apiKey: String, requestId: String, baseURL: URL? = nil, completion: @escaping (Result<Data, Error>) -> Void) {
+private func keeperV2FetchResult(apiKey: String, requestId: String, baseURL: URL, completion: @escaping (Result<Data, Error>) -> Void) {
     var request = URLRequest(url: keeperV2ResultURL(requestId: requestId, baseURL: baseURL))
     request.setValue(apiKey, forHTTPHeaderField: "api-key")
     URLSession.shared.dataTask(with: request) { data, response, error in
@@ -1107,11 +1110,11 @@ class KeeperDataSource: NSObject, PasswordManagerDataSource {
     @objc func keeperSettingsAPIKey() -> String? {
         return _cachedSettingsKey
     }
-    /// Returns the API URL from in-memory cache, then UserDefaults, or the default. Used when opening the sheet from “select Keeper” so we don’t prompt again.
+    /// Returns the API URL from in-memory cache, then UserDefaults. No default; empty if not set. Used when opening the sheet from “select Keeper” so we don’t prompt again.
     @objc func keeperSettingsAPIURL() -> String {
         let u = _cachedSettingsURL
         if let u = u, !u.isEmpty { return u }
-        return keeperAPIURLFromStorage() ?? keeperDefaultAPIURL
+        return keeperAPIURLFromStorage() ?? ""
     }
     /// Returns the API key from Keychain for the “update” (gear) dialog. May prompt for Mac password once when the user explicitly opens settings to edit.
     @objc func keeperSettingsAPIKeyForEditing() -> String? {
@@ -1119,7 +1122,7 @@ class KeeperDataSource: NSObject, PasswordManagerDataSource {
     }
     /// Returns the API URL from Keychain for the “update” (gear) dialog. May prompt for Mac password once when the user explicitly opens settings to edit.
     @objc func keeperSettingsAPIURLForEditing() -> String {
-        return keeperAPIURLFromStorage() ?? keeperDefaultAPIURL
+        return keeperAPIURLFromStorage() ?? ""
     }
     @objc func setKeeperSettingsAPIKey(_ key: String) {
         if key.isEmpty {
@@ -1156,11 +1159,13 @@ class KeeperDataSource: NSObject, PasswordManagerDataSource {
             DispatchQueue.main.async { completion(false, "API key is empty.") }
             return
         }
-        let baseURL: URL
-        if let parsed = URL(string: urlString), parsed.scheme != nil, parsed.host != nil {
-            baseURL = parsed
-        } else {
-            baseURL = URL(string: keeperDefaultAPIURL)!
+        guard !urlString.isEmpty else {
+            DispatchQueue.main.async { completion(false, "API URL is required.") }
+            return
+        }
+        guard let baseURL = URL(string: urlString), baseURL.scheme != nil, baseURL.host != nil else {
+            DispatchQueue.main.async { completion(false, "Invalid API URL.") }
+            return
         }
         keeperExecute(apiKey: key, command: "sync-down", baseURL: baseURL) { result in
             switch result {
