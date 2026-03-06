@@ -528,6 +528,24 @@ private func keeperV2FetchResult(apiKey: String, requestId: String, baseURL: URL
     }.resume()
 }
 
+/// Parses a single line from Keeper "ls -R -l" data.records[].title (table row).
+/// Format: "number  record_uid  type  title  description" (columns separated by two+ spaces).
+/// Returns nil for header/separator lines (starting with # or ---).
+private func parseLsRecordLine(_ line: String) -> KeeperRecord? {
+    let trimmed = line.trimmingCharacters(in: .whitespaces)
+    if trimmed.hasPrefix("#") || trimmed.hasPrefix("---") { return nil }
+    let parts = trimmed.components(separatedBy: "  ").map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }
+    guard parts.count >= 4,
+          let num = Int(parts[0]),
+          parts[1].count >= 15,
+          parts[1].allSatisfy({ $0.isLetter || $0.isNumber || $0 == "_" || $0 == "-" }) else { return nil }
+    let uid = parts[1]
+    let type = parts[2]
+    let title = parts[3]
+    let description = parts.count > 4 ? parts.suffix(from: 4).joined(separator: " ") : ""
+    return KeeperRecord(number: num, uid: nil, record_uid: uid, type: type, title: title.isEmpty ? "Untitled" : title, description: description)
+}
+
 /// Parses a Keeper "list" or "trash list" response and returns record UIDs from the message table.
 private func parseMessageTableRecordUids(from data: Data) -> Set<String> {
     var payloadsToTry: [Data] = [data]
@@ -747,14 +765,15 @@ class KeeperDataSource: NSObject, PasswordManagerDataSource {
                 completion([])
                 return
             }
-            keeperExecute(apiKey: apiKey, command: "list") { [weak self] result in
+            // Single API call: "ls -R -l" returns all records (and folders) recursively; no separate "trash list" needed.
+            keeperExecute(apiKey: apiKey, command: "ls -R -l") { [weak self] result in
             guard let self = self else { return }
             switch result {
             case .success(let data):
                 // Log raw response for debugging (visible in Xcode console and Console.app when filtering iTerm2).
                 if let raw = String(data: data, encoding: .utf8) {
                     let preview = String(raw.prefix(1500))
-                    NSLog("[iTerm2 Keeper] list response length=%d body=%@", data.count, preview)
+                    NSLog("[iTerm2 Keeper] ls -R -l response length=%d body=%@", data.count, preview)
                 }
                 do {
                     // v2 result endpoint returns { "status": "success", "result": "<command output as string>" }.
@@ -778,6 +797,18 @@ class KeeperDataSource: NSObject, PasswordManagerDataSource {
                         }
                     }
                     for jsonData in payloadsToTry {
+                        // Try "ls -R -l" format first. Its response has "command":"ls" and data.records[].title = full table line.
+                        // If we try KeeperExecuteResponse first, the decoder fills data.records but each item only has number+title (no uid), so we'd get 0 accounts.
+                        if let parsed = try? JSONSerialization.jsonObject(with: jsonData) as? [String: Any],
+                           parsed["command"] as? String == "ls",
+                           let dataObj = parsed["data"] as? [String: Any],
+                           let rawRecords = dataObj["records"] as? [[String: Any]], !rawRecords.isEmpty {
+                            records = rawRecords.compactMap { dict -> KeeperRecord? in
+                                guard let line = dict["title"] as? String else { return nil }
+                                return parseLsRecordLine(line)
+                            }
+                            if !(records?.isEmpty ?? true) { break }
+                        }
                         if let response = try? JSONDecoder().decode(KeeperExecuteResponse.self, from: jsonData), response.status == "success", let recs = response.data?.records, !recs.isEmpty {
                             records = recs
                             break
@@ -832,8 +863,8 @@ class KeeperDataSource: NSObject, PasswordManagerDataSource {
                     }
                     if (records == nil || records?.isEmpty == true), let raw = String(data: data, encoding: .utf8) {
                         let preview = String(raw.prefix(800))
-                        DLog("Keeper list response (no records parsed), preview: \(preview)")
-                        NSLog("[iTerm2 Keeper] No records parsed from response (length=%d). Preview: %@", data.count, String(preview.prefix(500)))
+                        DLog("Keeper ls -R -l response (no records parsed), preview: \(preview)")
+                        NSLog("[iTerm2 Keeper] No records parsed from ls -R -l response (length=%d). Preview: %@", data.count, String(preview.prefix(500)))
                     }
                     guard let records = records, !records.isEmpty else {
                         DispatchQueue.main.async {
@@ -842,28 +873,16 @@ class KeeperDataSource: NSObject, PasswordManagerDataSource {
                         }
                         return
                     }
-                    // Exclude records that are in trash (deleted).
-                    keeperExecute(apiKey: apiKey, command: "trash list") { trashResult in
-                        let trashUids: Set<String>
-                        if case .success(let trashData) = trashResult {
-                            trashUids = parseMessageTableRecordUids(from: trashData)
-                        } else {
-                            trashUids = []
-                        }
-                        let filtered = records.filter { rec in
-                            guard let uid = rec.effectiveUid else { return true }
-                            return !trashUids.contains(uid)
-                        }
-                        let accounts: [PasswordManagerAccount] = filtered.compactMap { rec in
-                            guard let uid = rec.effectiveUid, !uid.isEmpty else { return nil }
-                            let title = rec.title ?? "Untitled"
-                            let desc = rec.description ?? ""
-                            return KeeperAccount(uid: uid, accountName: title, userName: desc, hasOTP: false, sendOTP: false, dataSource: self)
-                        }
-                        DispatchQueue.main.async {
-                            NotificationCenter.default.post(name: iTerm2KeeperConnectionDidSucceedNotification, object: nil)
-                            completion(accounts)
-                        }
+                    // Build accounts from parsed records (ls -R -l does not include trashed records).
+                    let accounts: [PasswordManagerAccount] = records.compactMap { rec in
+                        guard let uid = rec.effectiveUid, !uid.isEmpty else { return nil }
+                        let title = rec.title ?? "Untitled"
+                        let desc = rec.description ?? ""
+                        return KeeperAccount(uid: uid, accountName: title, userName: desc, hasOTP: false, sendOTP: false, dataSource: self)
+                    }
+                    DispatchQueue.main.async {
+                        NotificationCenter.default.post(name: iTerm2KeeperConnectionDidSucceedNotification, object: nil)
+                        completion(accounts)
                     }
                 } catch {
                     let message = (error as NSError).localizedDescription
