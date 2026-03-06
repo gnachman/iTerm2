@@ -571,6 +571,7 @@ NSString *const iTermPreferencesDidToggleIndicateNonDefaultValues = @"iTermPrefe
     [alert addButtonWithTitle:@"OK"];
     [alert setAlertStyle:NSAlertStyleCritical];
     [alert runModal];
+    exit(1);
 }
 - (PreferenceInfo *)unsafeDefineControl:(NSView *)control
                                     key:(NSString *)key
