@@ -493,7 +493,7 @@ extension iTermMetalView {
                     if CVDisplayLinkSetCurrentCGDisplay(displayLink, CGMainDisplayID()) ==  kCVReturnSuccess {
                         CVDisplayLinkStart(displayLink)
                         NotificationCenter.default.addObserver(self, selector: #selector(_windowWillClose(_:)), name: NSWindow.willCloseNotification, object: window)
-                        preferredFramesPerSecond = 60
+                        preferredFramesPerSecond = calculateRefreshesPerSecond()
                         return
                     }
                 }
@@ -551,12 +551,10 @@ extension iTermMetalView {
     }
 
     private func calculateRefreshesPerSecond() -> Int {
-        if let displayLink {
-            let cvtime = CVDisplayLinkGetNominalOutputVideoRefreshPeriod(displayLink)
-            return Int(round(Double(cvtime.timeScale) / Double(cvtime.timeValue)))
-        } else {
-            return 60
+        if let screen = window?.screen ?? NSScreen.main {
+            return screen.maximumFramesPerSecond
         }
+        return 60
     }
 
     private func colorTexturesForceUpdate(_ force: Bool) -> [MTLTexture?]? {
