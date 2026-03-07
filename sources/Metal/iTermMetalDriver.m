@@ -519,7 +519,7 @@ legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth
             DLog(@"  abort: busy (dropped %@%%, number in flight: %d)", @((_dropped * 100)/_total), (int)framesInFlight);
             DLog(@"  current frames:\n%@", _currentFrames);
             _dropped++;
-            self.needsDrawAfterDuration = MIN(self.needsDrawAfterDuration, 1/60.0);
+            [self rescheduleAfterFailure];
             return NO;
         }
     }
@@ -539,7 +539,7 @@ legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth
     if (!frameData.deferCurrentDrawable) {
         if (frameData.destinationTexture == nil || frameData.renderPassDescriptor == nil) {
             DLog(@"  abort: failed to get drawable or RPD");
-            self.needsDrawAfterDuration = MIN(self.needsDrawAfterDuration, 1/60.0);
+            [self rescheduleAfterFailure];
             return NO;
         }
     }
@@ -683,7 +683,7 @@ legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth
     if (!frameData.deferCurrentDrawable) {
         if (frameData.destinationTexture == nil || frameData.renderPassDescriptor == nil) {
             DLog(@"  abort: failed to get drawable or RPD");
-            self.needsDrawAfterDuration = MIN(self.needsDrawAfterDuration, 1/60.0);
+            [self rescheduleAfterFailure];
             [self complete:frameData];
             return;
         }
@@ -694,6 +694,10 @@ legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth
         [self enqueueDrawCallsForFrameData:frameData
                              commandBuffer:commandBuffer];
     }];
+}
+
+- (void)rescheduleAfterFailure {
+    self.needsDrawAfterDuration = MIN(self.needsDrawAfterDuration, 1/120.0);
 }
 
 - (void)addRowDataToFrameData:(iTermMetalFrameData *)frameData {
@@ -2172,7 +2176,7 @@ extraIdentifyingInfoForIcon:button.extraIdentifyingInfoForIcon];
         }
         if (frameData.destinationTexture == nil) {
             DLog(@"  abort: failed to get drawable or RPD %@", frameData);
-            self.needsDrawAfterDuration = MIN(self.needsDrawAfterDuration, 1/60.0);
+            [self rescheduleAfterFailure];
             [frameData.renderEncoder endEncoding];
             [commandBuffer commit];
             [self didComplete:NO withFrameData:frameData];
