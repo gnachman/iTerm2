@@ -310,6 +310,7 @@ extension PseudoTerminal: ColorsMenuItemViewDelegate {
             tab = currentTab()
         }
         guard let tab else { return }
+        if tab.tmuxController() != nil { return }
         tab.isPinned = !tab.isPinned
     }
 

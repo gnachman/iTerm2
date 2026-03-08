@@ -123,7 +123,7 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
 
         // Load pin indicator
         let pinConfig = NSImage.SymbolConfiguration(pointSize: 9, weight: .medium, scale: .medium)
-        if let basePin = NSImage(systemSymbolName: "pin.fill", accessibilityDescription: "Pinned") {
+        if let basePin = NSImage(systemSymbolName: SFSymbol.pinFill.rawValue, accessibilityDescription: "Pinned") {
             _pinImage = basePin.withSymbolConfiguration(pinConfig) ?? basePin
             _pinImage?.isTemplate = true
         }
@@ -1459,7 +1459,7 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
                     }
                 },
             ]))
-        } else if cell.isPinned, let pinImage = _pinImage {
+        } else if cell.isPinned, let pinImage = _pinImage, cell.cachedTitle?.inputs.graphic == nil {
             objects.append(FixedSpacerLO(name: "Leading Spacer", width: edgePadding, priority: Priority.required.rawValue, gravity: .left))
 
             let tintColor: NSColor

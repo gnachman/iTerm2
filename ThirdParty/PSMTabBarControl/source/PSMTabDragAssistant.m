@@ -899,6 +899,17 @@ static CVReturn DisplayLinkCallback(CVDisplayLinkRef displayLink,
     NSPoint windowOrigin = NSMakePoint(mouseLocation.x - _dragTabOffset.width,
                                        mouseLocation.y - _dragTabOffset.height);
 
+    // Pinned tabs use infinite threshold so they can never be dragged out to a new window.
+    if ([[self draggedCell] isPinned]) {
+        // Clamp to initial position along the cross-axis (never exceed threshold).
+        if ([[self sourceTabBar] orientation] == PSMTabBarHorizontalOrientation) {
+            mouseLocation.y = _initialDragWindowOrigin.y + _dragTabOffset.height;
+        } else {
+            mouseLocation.x = _initialDragWindowOrigin.x + _dragTabOffset.width;
+        }
+        return mouseLocation;
+    }
+
     const NSSize kDragThreshold = { .width = 40.0, .height = 20.0 };
     CGFloat deviation;
     CGFloat threshold;
@@ -1254,6 +1265,31 @@ static CVReturn DisplayLinkCallback(CVDisplayLinkRef displayLink,
             }
         }
 
+        // Enforce pinned/unpinned boundary: don't show a drop spot in a prohibited zone.
+        if (proposedTarget && ![proposedTarget isPlaceholder]) {
+            NSInteger proposedIndex = [cells indexOfObject:proposedTarget];
+            PSMTabBarCell *draggedCell = [self draggedCell];
+            if (proposedIndex != NSNotFound && draggedCell) {
+                // Find the last pinned cell index.
+                NSInteger lastPinnedIndex = -1;
+                for (NSInteger idx = 0; idx < (NSInteger)[cells count]; idx++) {
+                    if ([[cells objectAtIndex:idx] isPinned]) {
+                        lastPinnedIndex = idx;
+                    }
+                }
+                if ([draggedCell isPinned]) {
+                    // Pinned tab: clamp to the pinned zone.
+                    if (proposedIndex > lastPinnedIndex + 1) {
+                        proposedTarget = [cells objectAtIndex:lastPinnedIndex + 1];
+                    }
+                } else {
+                    // Unpinned tab: keep out of the pinned zone.
+                    if (lastPinnedIndex >= 0 && proposedIndex <= lastPinnedIndex) {
+                        proposedTarget = [cells objectAtIndex:lastPinnedIndex + 1];
+                    }
+                }
+            }
+        }
         [self setTargetCell:proposedTarget];
     } else {
         [self setTargetCell:nil];

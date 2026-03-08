@@ -15,6 +15,7 @@
 #import "PSMTabBarCell.h"
 #import "PSMTabBarControl.h"
 #import <objc/runtime.h>
+#import "SFSymbolEnum/SFSymbolEnum.h"
 
 #define kPSMMetalObjectCounterRadius 7.0
 #define kPSMMetalCounterMinWidth 20
@@ -87,7 +88,7 @@
             [NSImageSymbolConfiguration configurationWithPointSize:9
                                                             weight:NSFontWeightMedium
                                                              scale:NSImageSymbolScaleMedium];
-        _pinImage = [NSImage imageWithSystemSymbolName:@"pin.fill"
+        _pinImage = [NSImage imageWithSystemSymbolName:SFSymbolGetString(SFSymbolPinFill)
                               accessibilityDescription:@"Pinned"];
         _pinImage = [_pinImage imageWithSymbolConfiguration:pinConfig];
         _pinImage.template = YES;
@@ -924,8 +925,8 @@ const void *PSMTabStyleDarkColorKey = "dark";
                         fraction:closeButtonAlpha];
 
     }
-    // Draw pin indicator for pinned tabs
-    if (cell.isPinned && _pinImage) {
+    // Draw pin indicator for pinned tabs (skip when graphic icon is present to avoid overlap).
+    if (cell.isPinned && _pinImage && !cachedTitle.inputs.graphic) {
         NSImage *pinIcon = [_pinImage it_cachingImageWithTintColor:closeButtonTintColor
                                                                key:colorKey];
         NSSize pinSize = [pinIcon size];

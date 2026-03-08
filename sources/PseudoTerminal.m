@@ -7365,33 +7365,51 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
         [rootMenu addItem:item];
     }
 
-    if ([_contentView.tabView numberOfTabViewItems] > 1) {
-        item = [[[NSMenuItem alloc] initWithTitle:@"Close Other Tabs"
-                                           action:@selector(closeOtherTabs:)
-                                    keyEquivalent:@""] autorelease];
-        [item setRepresentedObject:tabViewItem];
-        [rootMenu addItem:item];
-    }
-
-    if ([_contentView.tabView numberOfTabViewItems] > 1) {
-        NSString *title;
-        if ([iTermPreferences intForKey:kPreferenceKeyTabPosition] == PSMTab_LeftTab) {
-            title = @"Close Tabs Below";
-        } else {
-            title = @"Close Tabs to the Right";
-        }
-        item = [[[NSMenuItem alloc] initWithTitle:title
-                                           action:@selector(closeTabsToTheRight:)
-                                    keyEquivalent:@""] autorelease];
-        [item setRepresentedObject:tabViewItem];
-        [rootMenu addItem:item];
-    }
-
-    // pin/unpin tab
-    [rootMenu addItem:[NSMenuItem separatorItem]];
     {
-        PTYTab *pinTab = [tabViewItem identifier];
-        NSString *pinTitle = pinTab.isPinned ? @"Unpin Tab" : @"Pin Tab";
+        // Check if there are unpinned tabs eligible for "Close Other" / "Close to the Right".
+        BOOL hasUnpinnedOther = NO;
+        BOOL hasUnpinnedToRight = NO;
+        BOOL pastTarget = NO;
+        for (PTYTab *t in self.tabs) {
+            if (t == theTab) {
+                pastTarget = YES;
+                continue;
+            }
+            if (!t.isPinned) {
+                hasUnpinnedOther = YES;
+                if (pastTarget) {
+                    hasUnpinnedToRight = YES;
+                }
+            }
+        }
+
+        if (hasUnpinnedOther) {
+            item = [[[NSMenuItem alloc] initWithTitle:@"Close Other Tabs"
+                                               action:@selector(closeOtherTabs:)
+                                        keyEquivalent:@""] autorelease];
+            [item setRepresentedObject:tabViewItem];
+            [rootMenu addItem:item];
+        }
+
+        if (hasUnpinnedToRight) {
+            NSString *title;
+            if ([iTermPreferences intForKey:kPreferenceKeyTabPosition] == PSMTab_LeftTab) {
+                title = @"Close Tabs Below";
+            } else {
+                title = @"Close Tabs to the Right";
+            }
+            item = [[[NSMenuItem alloc] initWithTitle:title
+                                               action:@selector(closeTabsToTheRight:)
+                                        keyEquivalent:@""] autorelease];
+            [item setRepresentedObject:tabViewItem];
+            [rootMenu addItem:item];
+        }
+    }
+
+    // pin/unpin tab (not available for tmux tabs)
+    if (![theTab tmuxController]) {
+        [rootMenu addItem:[NSMenuItem separatorItem]];
+        NSString *pinTitle = theTab.isPinned ? @"Unpin Tab" : @"Pin Tab";
         item = [[[NSMenuItem alloc] initWithTitle:pinTitle
                                            action:@selector(togglePinTab:)
                                     keyEquivalent:@""] autorelease];

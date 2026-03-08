@@ -236,7 +236,7 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionDarkModeInactiveTabDarkness = @"
         _cellMinWidth = 100;
         _cellMaxWidth = 280;
         _cellOptimumWidth = 130;
-        _pinnedTabWidth = 64;
+        _pinnedTabWidth = [iTermAdvancedSettingsModel pinnedTabWidth];
         _minimumTabDragDistance = 10;
         _hasCloseButton = YES;
         _tabLocation = PSMTab_TopTab;
@@ -1342,26 +1342,27 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionDarkModeInactiveTabDarkness = @"
         }
     }
 
-    // Build the result: include pinned cells only if they fit, then unpinned cells.
-    // Pinned tabs that don't fit go to overflow like any other tab.
+    // Build the result array.  _setupCells: maps result[i] to _cells[i], so the
+    // array must be a contiguous prefix of _cells.  Once any cell doesn't fit we
+    // must stop; everything after that goes to the overflow menu.
     NSMutableArray<NSNumber *> *result = [NSMutableArray array];
     NSUInteger unpinnedIndex = 0;
     CGFloat usedWidth = 0;
-    NSUInteger pinnedVisible = 0;
     for (PSMTabBarCell *cell in _cells) {
         if (cell.isPinned) {
             CGFloat needed = _pinnedTabWidth + (result.count > 0 ? intercellSpacing : 0);
-            if (usedWidth + needed <= availableWidth) {
-                [result addObject:@((CGFloat)_pinnedTabWidth)];
-                usedWidth += needed;
-                pinnedVisible++;
+            if (usedWidth + needed > availableWidth) {
+                break;  // No room for this pinned tab; stop here.
             }
-            // Pinned tabs that don't fit are omitted (go to overflow).
-        } else if (unpinnedIndex < (NSUInteger)numberOfVisibleUnpinned && unpinnedIndex < unpinnedWidths.count) {
+            [result addObject:@((CGFloat)_pinnedTabWidth)];
+            usedWidth += needed;
+        } else {
+            if (unpinnedIndex >= (NSUInteger)numberOfVisibleUnpinned || unpinnedIndex >= unpinnedWidths.count) {
+                break;  // No room for more unpinned tabs.
+            }
             [result addObject:unpinnedWidths[unpinnedIndex]];
             unpinnedIndex++;
         }
-        // Unpinned cells beyond numberOfVisibleUnpinned are omitted (go to overflow).
     }
     return result;
 }
