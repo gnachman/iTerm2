@@ -246,6 +246,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (BOOL)logTimestampsWithPlainText;
 + (BOOL)logToSyslog;
 + (BOOL)lowFiCombiningMarks;
++ (double)lowPowerModeFrameRate;
 + (BOOL)makeSomePowerlineSymbolsWide;
 + (int)maxURLLength;
 + (double)maximumFrameRate;

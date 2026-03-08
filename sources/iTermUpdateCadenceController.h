@@ -22,6 +22,7 @@ typedef struct {
     BOOL liveResizing;
     BOOL proMotion;
     NSInteger estimatedThroughput;
+    BOOL lowPowerMode;
 } iTermUpdateCadenceState;
 
 @protocol iTermUpdateCadenceControllerDelegate<NSObject>
@@ -33,6 +34,9 @@ typedef struct {
 - (iTermUpdateCadenceState)updateCadenceControllerState;
 
 - (void)cadenceControllerActiveStateDidChange:(BOOL)active;
+
+- (void)cadenceController:(iTermUpdateCadenceController *)controller
+          didChangeCadence:(iTermUpdateCadenceState)state;
 
 - (BOOL)updateCadenceControllerWindowHasSheet;
 

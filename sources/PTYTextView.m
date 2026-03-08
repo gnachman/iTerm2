@@ -2456,10 +2456,12 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
                 // TODO: It would be more correct to remove all search results from this point down and reset the cursor location to the start of the first dirty line. VT100Screen.savedFindContextAbsPos can be after some of the dirty cells causing them not to be searched.
                 [_findOnPageHelper removeHighlightsInRange:NSMakeRange(y + totalScrollbackOverflow, 1)];
                 [_findOnPageHelper removeSearchResultsInRange:NSMakeRange(y + totalScrollbackOverflow, 1)];
-                [self setNeedsDisplayOnLine:y inRange:range];
             } else if (!haveScrolled) {
                 [cleanLines addIndex:y - lineStart];
             }
+        }
+        if (foundDirty) {
+            [self requestDelegateRedraw];
         }
     }
 

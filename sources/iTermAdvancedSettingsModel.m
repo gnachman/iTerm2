@@ -533,6 +533,7 @@ DEFINE_FLOAT(metalSlowFrameRate, 30.0, SECTION_DRAWING @"When adaptive framerate
 DEFINE_FLOAT(activeUpdateCadence, 60.0, SECTION_DRAWING @"Maximum frame rate (FPS) when adaptive framerate is disabled.\nNote: this is doubled on ARM Macs for displays that support at least 120hz. Modifications to this setting will not affect existing sessions.");
 DEFINE_INT(adaptiveFrameRateThroughputThreshold, 10000, SECTION_DRAWING @"Throughput threshold for adaptive frame rate.\nIf more than this many bytes per second are received, use the lower frame rate of 30 fps.");
 DEFINE_FLOAT(maximumFrameRate, 60.0, SECTION_DRAWING @"Frame rate (FPS) when adaptive framerate is enabled and throughput is low but not 0.");
+DEFINE_FLOAT(lowPowerModeFrameRate, 30.0, SECTION_DRAWING @"Maximum frame rate (FPS) when low power mode is enabled.");
 DEFINE_BOOL(dwcLineCache, YES, SECTION_DRAWING @"Enable cache of double-width character locations?\nThis should improve performance. It is always on in nightly builds. You must restart iTerm2 for this setting to take effect.");
 DEFINE_BOOL(useGCDUpdateTimer, YES, SECTION_DRAWING @"Use GCD-based update timer instead of NSTimer.\nThis should cause more regular screen updates. Restart iTerm2 after changing this setting.");
 DEFINE_BOOL(drawOutlineAroundCursor, NO, SECTION_DRAWING @"Draw outline around underline and vertical bar cursors using background color.");

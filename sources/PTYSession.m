@@ -19168,11 +19168,21 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     state.liveResizing = _inLiveResize;
     state.proMotion = [NSProcessInfo it_hasARMProcessor] && [_textview.window.screen it_supportsHighFrameRates];
     state.estimatedThroughput = _estimatedThroughput;
+    state.lowPowerMode = [[NSProcessInfo processInfo] isLowPowerModeEnabled];
     return state;
 }
 
 - (void)cadenceControllerActiveStateDidChange:(BOOL)active {
     [self.delegate sessionUpdateMetalAllowed];
+}
+
+- (void)cadenceController:(iTermUpdateCadenceController *)controller
+          didChangeCadence:(iTermUpdateCadenceState)state {
+    if (state.lowPowerMode) {
+        _view.metalView.maxFrameRate = [iTermAdvancedSettingsModel lowPowerModeFrameRate];
+    } else {
+        _view.metalView.maxFrameRate = 0;
+    }
 }
 
 - (BOOL)updateCadenceControllerWindowHasSheet {

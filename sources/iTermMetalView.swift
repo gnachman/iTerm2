@@ -84,6 +84,15 @@ public class iTermMetalView: NSView {
     private var _preferredFramesPerSecond = 60
     private nonisolated let _enableSetNeedsDisplay = MutableAtomicObject(false)
 
+    /// Maximum frame rate limit. Used to throttle frame rate in low power mode.
+    private var _maxFrameRate: Int?
+
+    /// Maximum frame rate limit (0 means no limit). Used to throttle frame rate in low power mode.
+    @objc public var maxFrameRate: Int {
+        get { _maxFrameRate ?? 0 }
+        set { _maxFrameRate = newValue > 0 ? newValue : nil }
+    }
+
     @objc
     public var autoResizeDrawable: Bool = true
 
@@ -768,6 +777,9 @@ extension iTermMetalView {
     open override var needsDisplay: Bool {
         get { _needsDisplay }
         set {
+            if newValue == _needsDisplay {
+                return
+            }
             _needsDisplay = newValue
             if newValue {
                 triggerDrawOrSchedule()
@@ -776,8 +788,10 @@ extension iTermMetalView {
     }
 
     private func triggerDrawOrSchedule() {
-        // This can be called quickly between frames. We throttle draws to the refresh rate of the display.
-        let fps = calculateRefreshesPerSecond()
+        // This can be called quickly between frames. We throttle draws to the refresh rate of the display,
+        // or to maxFrameRate if set (e.g., for low power mode), but never exceeding the display's refresh rate.
+        let displayFps = calculateRefreshesPerSecond()
+        let fps = min(_maxFrameRate ?? displayFps, displayFps)
         let minimumInterval = 1.0 / Double(fps)
         let elapsed = timeSinceDrawTriggered
         if elapsed < minimumInterval {
