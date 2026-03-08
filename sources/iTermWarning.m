@@ -14,6 +14,7 @@ static const NSTimeInterval kOneMonthTime = 30 * 24 * 60 * 60;
 static NSString *const kCancel = @"Cancel";
 static id<iTermWarningHandler> gWarningHandler;
 static BOOL gShowingWarning;
+BOOL gShowRememberedAlerts = NO;
 
 @interface iTermWarningAction()
 @property (nonatomic) NSRange shortcutRange;
@@ -253,6 +254,23 @@ static BOOL gShowingWarning;
     [userDefaults removeObjectForKey:theKey];
 }
 
++ (void)toggleShowRememberedAlerts {
+    gShowRememberedAlerts = !gShowRememberedAlerts;
+}
+
++ (void)clearSavedSelectionForIdentifier:(NSString *)identifier {
+    NSUserDefaults *userDefaults = [iTermUserDefaults userDefaults];
+    // Remove the silence key (permanent)
+    NSString *permanentKey = [self permanentlySilenceKeyForIdentifier:identifier];
+    [userDefaults removeObjectForKey:permanentKey];
+    // Remove the temporary silence key
+    NSString *temporaryKey = [self temporarySilenceKeyForIdentifier:identifier];
+    [userDefaults removeObjectForKey:temporaryKey];
+    // Remove the selection key
+    NSString *selectionKey = [self selectionKeyForIdentifier:identifier];
+    [userDefaults removeObjectForKey:selectionKey];
+}
+
 + (void)setIdentifier:(NSString *)identifier permanentSelection:(iTermWarningSelection)selection {
     NSUserDefaults *userDefaults = [iTermUserDefaults userDefaults];
     {
@@ -300,7 +318,14 @@ static BOOL gShowingWarning;
 - (NSAlert *)makeAlert {
     NSAlert *alert = [[NSAlert alloc] init];
     alert.messageText = _heading ?: @"Warning";
-    alert.informativeText = _title;
+
+    // If this warning is being shown due to "Always Show Alerts with Remembered Selections" mode,
+    // prepend explanatory text.
+    if (_shownDueToRememberedAlertsMode && _savedSelectionLabel) {
+        alert.informativeText = [NSString stringWithFormat:@"%@\n\nThis alert had a saved selection of “%@”. It is being shown because “Always Show Alerts with Remembered Selections” is enabled.", _title, _savedSelectionLabel];
+    } else {
+        alert.informativeText = _title;
+    }
 
     for (iTermWarningAction *action in _warningActions) {
         [alert addButtonWithTitle:action.label];
@@ -332,6 +357,10 @@ static BOOL gShowingWarning;
         }
     }];
 
+    // Add "Permanently Forget Saved Selection" button when in remembered alerts mode.
+    if (_shownDueToRememberedAlertsMode && _identifier) {
+        [alert addButtonWithTitle:@"Permanently Forget Saved Selection"];
+    }
 
     int numNonCancelActions = [_warningActions count];
     for (iTermWarningAction *warningAction in _warningActions) {
@@ -418,6 +447,13 @@ static BOOL gShowingWarning;
             DLog(@"%@ has saved selection %@ but label %@ should not be remembered", self, @(selection), label);
             return NO;
         }
+        // When "Always Show Alerts with Remembered Selections" is enabled, show the dialog instead of preempting.
+        if (gShowRememberedAlerts) {
+            DLog(@"%@ would be silenced but gShowRememberedAlerts is YES", self);
+            self.shownDueToRememberedAlertsMode = YES;
+            self.savedSelectionLabel = label;
+            return NO;  // Don't preempt - show the dialog
+        }
         DLog(@"%@ is silenced with saved selection %@", self, @(selection));
         *selectionPtr = selection;
         return YES;
@@ -463,6 +499,21 @@ static BOOL gShowingWarning;
 }
 
 - (iTermWarningSelection)handleResult:(NSInteger)result alert:(NSAlert *)alert {
+    // Check if "Permanently Forget Saved Selection" button was clicked.
+    // This button is added after all the regular action buttons.
+    if (_shownDueToRememberedAlertsMode && _identifier) {
+        NSInteger forgetButtonIndex = NSAlertFirstButtonReturn + _warningActions.count;
+        if (result == forgetButtonIndex) {
+            DLog(@"Permanently forget saved selection for %@", _identifier);
+            [self.class clearSavedSelectionForIdentifier:_identifier];
+            // Re-show the alert without the remembered alerts mode explanatory text.
+            // Create a fresh warning with the same parameters but without the remembered mode flag.
+            self.shownDueToRememberedAlertsMode = NO;
+            self.savedSelectionLabel = nil;
+            return [self runModalImpl];
+        }
+    }
+
     BOOL remember = NO;
     iTermWarningSelection selection;
     switch (result) {

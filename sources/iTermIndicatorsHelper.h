@@ -29,6 +29,7 @@ extern NSString *const kiTermIndicatorAIChatLinked;
 extern NSString *const kiTermIndicatorAIChatStreaming;
 extern NSString *const kiTermIndicatorChannel;
 extern NSString *const kiTermIndicatorBufferingInput;
+extern NSString *const kiTermIndicatorShowRememberedAlerts;
 
 extern CGFloat kiTermIndicatorStandardHeight;
 

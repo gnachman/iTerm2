@@ -36,6 +36,7 @@ NSString *const kiTermIndicatorAIChatLinked = @"kiTermIndicatorAIChatLinked";
 NSString *const kiTermIndicatorAIChatStreaming = @"kiTermIndicatorAIChatStreaming";
 NSString *const kiTermIndicatorChannel = @"kiTermIndicatorChannel";
 NSString *const kiTermIndicatorBufferingInput = @"kiTermIndicatorBufferingInput";
+NSString *const kiTermIndicatorShowRememberedAlerts = @"kiTermIndicatorShowRememberedAlerts";
 
 static const NSTimeInterval kFullScreenFlashDuration = 0.3;
 static const NSTimeInterval kFlashDuration = 0.3;
@@ -110,7 +111,8 @@ CGFloat kiTermIndicatorStandardHeight = 20;
             kiTermIndicatorAIChatLinked: SFSymbolGetString(SFSymbolBrain),
             kiTermIndicatorAIChatStreaming: SFSymbolGetString(SFSymbolDotRadiowavesRight),
             kiTermIndicatorChannel: SFSymbolGetString(SFSymbolRectangleStack),
-            kiTermIndicatorBufferingInput: SFSymbolGetString(SFSymbolPauseCircle)
+            kiTermIndicatorBufferingInput: SFSymbolGetString(SFSymbolPauseCircle),
+            kiTermIndicatorShowRememberedAlerts: SFSymbolGetString(SFSymbolBellBadge)
         };
     });
     return symbolMap;
@@ -312,7 +314,8 @@ CGFloat kiTermIndicatorStandardHeight = 20;
               kiTermIndicatorAIChatLinked,
               kiTermIndicatorAIChatStreaming,
               kiTermIndicatorChannel,
-              kiTermIndicatorBufferingInput];
+              kiTermIndicatorBufferingInput,
+              kiTermIndicatorShowRememberedAlerts];
 }
 
 - (void)enumerateTopRightIndicatorsInFrame:(NSRect)frame andDraw:(BOOL)shouldDraw block:(void (^)(NSString *, NSImage *, NSRect, BOOL))block {
@@ -365,7 +368,8 @@ CGFloat kiTermIndicatorStandardHeight = 20;
         kiTermIndicatorAIChatStreaming: [NSString stringWithFormat:@"Commands run in this session are automatically sent to an AI chat, along with their output. [Stop sending](iterm2:disable-streaming-session-chat?s=%@&t=%@)",
                                          sessionID, [[NSWorkspace sharedWorkspace] it_newToken]],
         kiTermIndicatorChannel: [NSString stringWithFormat:@"This command is running within another session.\n * [Return to Enclosing Session](iterm2:pop-channel?s=%@&t=%@)", sessionID, [[NSWorkspace sharedWorkspace] it_newToken]],
-        kiTermIndicatorBufferingInput: @"Keyboard input is being buffered and will be sent when a trigger stops buffering."
+        kiTermIndicatorBufferingInput: @"Keyboard input is being buffered and will be sent when a trigger stops buffering.",
+        kiTermIndicatorShowRememberedAlerts: @"Showing alerts with remembered selections. Disable via View > Always Show Alerts with Remembered Selections."
     };
     return messages[name];
 }

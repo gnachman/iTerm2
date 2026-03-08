@@ -2,6 +2,8 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
+extern BOOL gShowRememberedAlerts;
+
 @protocol iTermWarningHandler <NSObject>
 
 - (NSModalResponse)warningWouldShowAlert:(NSAlert *)alert identifier:(NSString * _Nullable)identifier;
@@ -64,6 +66,11 @@ typedef void(^iTermWarningActionBlock)(iTermWarningSelection);
 + (void)setIdentifier:(NSString * _Nullable)identifier permanentSelection:(iTermWarningSelection)selection;
 + (BOOL)identifierIsSilenced:(NSString * _Nullable)identifier;
 + (void)setIdentifier:(NSString *)identifier isSilenced:(BOOL)silenced;
+
+// Toggle the mode that shows alerts even when they have a remembered selection.
++ (void)toggleShowRememberedAlerts;
+// Remove the saved selection for a specific identifier.
++ (void)clearSavedSelectionForIdentifier:(NSString *)identifier;
 
 // Tests can use this to prevent warning popups.
 + (void)setWarningHandler:(id<iTermWarningHandler>)handler;
@@ -175,6 +182,11 @@ typedef void(^iTermWarningActionBlock)(iTermWarningSelection);
 
 @property(nonatomic, retain) NSWindow * _Nullable window;
 @property(nonatomic, retain) NSView * _Nullable initialFirstResponder;
+
+// Set to YES when this warning is being shown because "Always Show Alerts with Remembered Selections" is enabled.
+@property(nonatomic) BOOL shownDueToRememberedAlertsMode;
+// The label of the saved selection (set when shownDueToRememberedAlertsMode is YES).
+@property(nonatomic, copy) NSString * _Nullable savedSelectionLabel;
 
 // Modally show the alert. Returns the selection.
 - (iTermWarningSelection)runModal;
