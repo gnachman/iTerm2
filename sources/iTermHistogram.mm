@@ -387,7 +387,22 @@ static double iTermSaneDouble(const double d) {
     const double minimum = _sampler->value_for_percentile(0);
     const double range = _sampler->value_for_percentile(1) - minimum;
     const double binWidth = range / buckets.size();
-    for (int i = 0; i < buckets.size(); i++) {
+
+    // Find where the tail starts: consecutive buckets from the end that are each <= 3%
+    int tailStart = (int)buckets.size();
+    for (int i = (int)buckets.size() - 1; i >= 0; i--) {
+        double percent = 100.0 * static_cast<double>(buckets[i]) / static_cast<double>(total);
+        if (percent > 3.0) {
+            break;
+        }
+        tailStart = i;
+    }
+
+    // Only compress if we have at least 2 consecutive tail buckets
+    const bool compressTail = (tailStart < (int)buckets.size() - 1);
+    const int normalEnd = compressTail ? tailStart : (int)buckets.size();
+
+    for (int i = 0; i < normalEnd; i++) {
         [string appendString:[self stringForBucket:i
                                              count:buckets[i]
                                       largestCount:largestCount
@@ -396,6 +411,22 @@ static double iTermSaneDouble(const double d) {
                                   bucketUpperBound:minimum + (i + 1) * binWidth]];
         [string appendString:@"\n"];
     }
+
+    // Combine tail buckets into one row
+    if (compressTail) {
+        int tailCount = 0;
+        for (int i = tailStart; i < buckets.size(); i++) {
+            tailCount += buckets[i];
+        }
+        [string appendString:[self stringForBucket:tailStart
+                                             count:tailCount
+                                      largestCount:largestCount
+                                             total:total
+                                  bucketLowerBound:minimum + tailStart * binWidth
+                                  bucketUpperBound:minimum + buckets.size() * binWidth]];
+        [string appendString:@"\n"];
+    }
+
     const double mean = (double)_sum / (double)_count;
     const double p50 = iTermSaneDouble(_sampler->value_for_percentile(0.5));
     const double p95 = iTermSaneDouble(_sampler->value_for_percentile(0.95));
