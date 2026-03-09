@@ -4092,8 +4092,9 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
 
         case iTermSessionEndActionRestart:
         case iTermSessionEndActionDefault:
-            if (_tmuxWindowClosingByClientRequest ||
-                [self.naggingController tmuxWindowsShouldCloseAfterDetach]) {
+            if ((_tmuxWindowClosingByClientRequest ||
+                 [self.naggingController tmuxWindowsShouldCloseAfterDetach]) &&
+                [_delegate sessionShouldAutoClose:self]) {
                 [_delegate softCloseSession:self];
                 return;
             }
@@ -4152,7 +4153,8 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
         [[iTermBuriedSessions sharedInstance] restoreSession:self];
         [self appendBrokenPipeMessage:@"Finished"];
         // restart is not respected here because it doesn't make sense and would make for an awful bug.
-        if (self.endAction == iTermSessionEndActionClose) {
+        if (self.endAction == iTermSessionEndActionClose &&
+            [_delegate sessionShouldAutoClose:self]) {
             [_delegate closeSession:self];
         }
         return;
