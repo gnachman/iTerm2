@@ -10,13 +10,16 @@ import Foundation
 @objc(iTermCyclicLog)
 class CyclicLog: NSObject {
     private var messages = [String]()
+    private let mutex = Mutex()
     @objc var maxCount = 100
 
     @objc(log:)
     func log(_ message: String) {
-        messages.append(message)
-        if messages.count > maxCount {
-            messages.removeFirst(messages.count - maxCount)
+        mutex.sync {
+            messages.append(message)
+            if messages.count > maxCount {
+                messages.removeFirst(messages.count - maxCount)
+            }
         }
     }
 
@@ -26,7 +29,9 @@ class CyclicLog: NSObject {
     }
 
     private var value: String {
-        return messages.joined(separator: "\n")
+        return mutex.sync {
+            messages.joined(separator: "\n")
+        }
     }
 
     private var compressed: String {
