@@ -678,7 +678,8 @@ class KeeperDataSource: NSObject, PasswordManagerDataSource {
             return
         }
         keeperMigrateLegacyKeeperTokenIfNeeded()
-        if let key = keeperAPIKeyFromSecureKeychain(), !key.isEmpty {
+        // Try secure (Touch ID/passcode) keychain first, then standard keychain fallback for devices without biometric/entitlement.
+        if let key = keeperAPIKeyFromKeychain(), !key.isEmpty {
             _apiKey = key
             _cachedSettingsKey = key
             let k = key
@@ -687,7 +688,7 @@ class KeeperDataSource: NSObject, PasswordManagerDataSource {
             return
         }
         _apiKeyLoadLock.unlock()
-        // Do not read from the login (standard) keychain here — that triggers the system keychain password dialog. Show the settings sheet the first time each session instead; user can paste the key and we store it in memory and keychain for the rest of the session.
+        // No key in keychain; show credentials sheet so user can enter API key.
         if Thread.isMainThread {
             showUIAndContinue()
         } else {
