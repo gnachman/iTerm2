@@ -23,7 +23,8 @@ import Metal
 @objc(iTermMetalView)
 public class iTermMetalView: NSView {
     private static let getDrawableQueue = DispatchQueue(label: "com.iterm2.get-drawable")
-
+    private var _needsDisplay = false
+    private var lastDrawTriggerTime: CFTimeInterval = 0
     private var metalLayerBox: iTermMetalLayerBox? = nil
     private var frameInterval: Int = 0
     private var sizeDirty: Bool = false
@@ -83,12 +84,23 @@ public class iTermMetalView: NSView {
     private var _preferredFramesPerSecond = 60
     private nonisolated let _enableSetNeedsDisplay = MutableAtomicObject(false)
 
+    /// Maximum frame rate limit. Used to throttle frame rate in low power mode.
+    private var _maxFrameRate: Int?
+
+    /// Maximum frame rate limit (0 means no limit). Used to throttle frame rate in low power mode.
+    @objc public var maxFrameRate: Int {
+        get { _maxFrameRate ?? 0 }
+        set { _maxFrameRate = newValue > 0 ? newValue : nil }
+    }
+
     @objc
     public var autoResizeDrawable: Bool = true
 
     private var _drawableSize = CGSize.zero
-    @objc
-    public var paused: Bool = false {
+
+    private var pendingDrawWorkItem: DispatchWorkItem?
+
+    @objc public var paused: Bool = false {
         didSet {
             if paused {
                 if let displayLink {
@@ -493,7 +505,7 @@ extension iTermMetalView {
                     if CVDisplayLinkSetCurrentCGDisplay(displayLink, CGMainDisplayID()) ==  kCVReturnSuccess {
                         CVDisplayLinkStart(displayLink)
                         NotificationCenter.default.addObserver(self, selector: #selector(_windowWillClose(_:)), name: NSWindow.willCloseNotification, object: window)
-                        preferredFramesPerSecond = 60
+                        preferredFramesPerSecond = calculateRefreshesPerSecond()
                         return
                     }
                 }
@@ -551,12 +563,10 @@ extension iTermMetalView {
     }
 
     private func calculateRefreshesPerSecond() -> Int {
-        if let displayLink {
-            let cvtime = CVDisplayLinkGetNominalOutputVideoRefreshPeriod(displayLink)
-            return Int(round(Double(cvtime.timeScale) / Double(cvtime.timeValue)))
-        } else {
-            return 60
+        if let screen = window?.screen ?? NSScreen.main {
+            return screen.maximumFramesPerSecond
         }
+        return 60
     }
 
     private func colorTexturesForceUpdate(_ force: Bool) -> [MTLTexture?]? {
@@ -645,6 +655,7 @@ extension iTermMetalView {
 
     @objc
     public func draw() {
+        needsDisplay = false
         frameNum += 1
         if !paused {
             guard it_canDraw else { return }
@@ -664,7 +675,7 @@ extension iTermMetalView {
         } else {
             delegate?.draw(in: self)
         }
-
+        
         _currentDrawable = nil
         _colorTextures[Int(_drawableAttachmentIndex)] = nil
     }
@@ -761,6 +772,57 @@ extension iTermMetalView {
         if autoResizeDrawable && window != nil {
             resizeDrawable()
         }
+    }
+
+    open override var needsDisplay: Bool {
+        get { _needsDisplay }
+        set {
+            if newValue == _needsDisplay {
+                return
+            }
+            _needsDisplay = newValue
+            if newValue {
+                triggerDrawOrSchedule()
+            }
+        }
+    }
+
+    private func triggerDrawOrSchedule() {
+        // This can be called quickly between frames. We throttle draws to the refresh rate of the display,
+        // or to maxFrameRate if set (e.g., for low power mode), but never exceeding the display's refresh rate.
+        let displayFps = calculateRefreshesPerSecond()
+        let fps = min(_maxFrameRate ?? displayFps, displayFps)
+        let minimumInterval = 1.0 / Double(fps)
+        let elapsed = timeSinceDrawTriggered
+        if elapsed < minimumInterval {
+            // Too soon - schedule for when the interval expires (if not already scheduled)
+            scheduleDrawTriggerIfNeeded(elapsed: elapsed, minimumInterval: minimumInterval)
+            return
+        }
+
+        triggerDraw()
+    }
+
+    private func scheduleDrawTriggerIfNeeded(elapsed: TimeInterval, minimumInterval: TimeInterval) {
+        guard pendingDrawWorkItem == nil else { return }
+        let delay = minimumInterval - elapsed
+        let workItem = DispatchWorkItem { [weak self] in
+            self?.pendingDrawWorkItem = nil
+            self?.triggerDraw()
+        }
+        pendingDrawWorkItem = workItem
+        DispatchQueue.main.asyncAfter(deadline: .now() + delay, execute: workItem)
+    }
+
+    private var timeSinceDrawTriggered: TimeInterval {
+        let now = CACurrentMediaTime()
+        let elapsed = now - lastDrawTriggerTime
+        return elapsed
+    }
+
+    private func triggerDraw() {
+        lastDrawTriggerTime = CACurrentMediaTime()
+        displaySource.value?.add(data: 1)
     }
 }
 

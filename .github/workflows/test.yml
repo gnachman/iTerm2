@@ -29,6 +29,10 @@ jobs:
         working-directory: api/library/python/iterm2
         run: python -m pytest tests/ -v
 
+      - name: Run mypy
+        working-directory: api/library/python/iterm2
+        run: python -m mypy iterm2/
+
   xcode-tests:
     runs-on: macos-15
 

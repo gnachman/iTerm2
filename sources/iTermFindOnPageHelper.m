@@ -661,6 +661,48 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
     }
 }
 
+- (void)removeSearchResultsWithAbsCoordRange:(VT100GridAbsCoordRange)range {
+    if (!VT100GridAbsCoordRangeIsValid(range)) {
+        return;
+    }
+
+    // Collect indexes of results to remove
+    NSMutableIndexSet *indexesToRemove = [NSMutableIndexSet indexSet];
+    NSMutableIndexSet *locationsToRemove = [NSMutableIndexSet indexSet];
+
+    const long long minY = MIN(range.start.y, range.end.y);
+    const long long maxY = MAX(range.start.y, range.end.y);
+
+    [_searchResults enumerateObjectsUsingBlock:^(SearchResult * _Nonnull result, NSUInteger idx, BOOL * _Nonnull stop) {
+        BOOL shouldRemove = NO;
+
+        if (result.isExternal) {
+            // External results are full-line, so just check if the line is within the y-range.
+            const long long resultY = result.externalAbsY;
+            shouldRemove = (resultY >= minY && resultY <= maxY);
+        } else {
+            // Check if the result's start position falls within the searched coordinate range.
+            // VT100GridAbsCoordRangeContainsAbsCoord handles both forward and backward ranges
+            // by normalizing to min/max coordinates.
+            const VT100GridAbsCoord resultCoord = VT100GridAbsCoordMake(result.internalStartX,
+                                                                         result.internalAbsStartY);
+            shouldRemove = VT100GridAbsCoordRangeContainsAbsCoord(range, resultCoord);
+        }
+
+        if (shouldRemove) {
+            [indexesToRemove addIndex:idx];
+            [locationsToRemove addIndex:result.safeAbsStartY];
+        }
+    }];
+
+    if (indexesToRemove.count > 0) {
+        [_searchResults removeObjectsAtIndexes:indexesToRemove];
+        [_locations removeIndexes:locationsToRemove];
+        [self locationsDidChange];
+        _cachedCounts.valid = NO;
+    }
+}
+
 - (void)setStartPoint:(VT100GridAbsCoord)startPoint {
     _findCursor.coord = startPoint;
     _findCursor.type = FindCursorTypeCoord;

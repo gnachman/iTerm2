@@ -122,7 +122,7 @@ class AIMetadata: NSObject {
     }
 
     static var recommendedOpenAIModel: Model {
-        return AIMetadata.gpt5_2
+        return AIMetadata.gpt5_4
     }
 
     static var recommendedDeepSeekModel: Model {
@@ -171,6 +171,24 @@ class AIMetadata: NSObject {
         }
     }
 
+    private static let gpt5_4 = Model(
+        name: "gpt-5.4",
+        contextWindowTokens: 1_050_000,
+        maxResponseTokens: 128_000,
+        url: "https://api.openai.com/v1/responses",
+        api: .responses,
+        features: [.functionCalling, .hostedFileSearch, .hostedWebSearch, .streaming, .hostedCodeInterpreter, .configurableThinking],
+        vendor: .openAI
+    )
+    private static let gpt5_3_codex = Model(
+        name: "gpt-5.3-codex",
+        contextWindowTokens: 400_000,
+        maxResponseTokens: 128_000,
+        url: "https://api.openai.com/v1/responses",
+        api: .responses,
+        features: [.functionCalling, .hostedFileSearch, .hostedWebSearch, .streaming, .hostedCodeInterpreter, .configurableThinking],
+        vendor: .openAI
+    )
     private static let gpt5_2 = Model(
         name: "gpt-5.2",
         contextWindowTokens: 400_000,
@@ -478,6 +496,8 @@ class AIMetadata: NSObject {
     )
     let models: [Model] = [
         // The first model will be the default.
+        AIMetadata.gpt5_4,
+        AIMetadata.gpt5_3_codex,
         AIMetadata.gpt5_2,
         AIMetadata.gpt5_2_pro,
         AIMetadata.gpt5_1,

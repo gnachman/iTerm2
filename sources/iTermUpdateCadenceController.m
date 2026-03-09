@@ -148,6 +148,7 @@ static const NSTimeInterval kBackgroundUpdateCadence = 1;
         // if the app itself is active because there's nothing to do so use the background update cadence.
         DLog(@"select background update cadence because the session is idle");
         [self setUpdateCadence:kBackgroundUpdateCadence liveResizing:state.liveResizing force:force];
+        [_delegate cadenceController:self didChangeCadence:state];
         return;
     }
 
@@ -158,6 +159,7 @@ static const NSTimeInterval kBackgroundUpdateCadence = 1;
         [self setUpdateCadence:[self backgroundInterval]
                   liveResizing:state.liveResizing
                          force:force];
+        [_delegate cadenceController:self didChangeCadence:state];
         return;
     }
 
@@ -167,6 +169,7 @@ static const NSTimeInterval kBackgroundUpdateCadence = 1;
         [self setUpdateCadence:[self foregroundNonadaptiveInterval:&state]
                   liveResizing:state.liveResizing
                          force:force];
+        [_delegate cadenceController:self didChangeCadence:state];
         return;
     }
 
@@ -175,7 +178,7 @@ static const NSTimeInterval kBackgroundUpdateCadence = 1;
     const NSInteger estimatedThroughput = state.estimatedThroughput;
     if (estimatedThroughput < kThroughputLimit && estimatedThroughput > 0) {
         DLog(@"select fast cadence");
-        [self setUpdateCadence:[self fastAdaptiveInterval]
+        [self setUpdateCadence:[self fastAdaptiveInterval:&state]
                   liveResizing:state.liveResizing
                          force:force];
     } else {
@@ -184,6 +187,7 @@ static const NSTimeInterval kBackgroundUpdateCadence = 1;
                   liveResizing:state.liveResizing
                          force:force];
     }
+    [_delegate cadenceController:self didChangeCadence:state];
 }
 
 - (double)proMotionAdjustment:(const iTermUpdateCadenceState *)statePtr {
@@ -193,17 +197,29 @@ static const NSTimeInterval kBackgroundUpdateCadence = 1;
     return 1;
 }
 
+// In low power mode, limit frame rate to save energy.
+- (NSTimeInterval)lowPowerModeAdjustedInterval:(NSTimeInterval)interval
+                                         state:(const iTermUpdateCadenceState *)statePtr {
+    if (!statePtr->lowPowerMode) {
+        return interval;
+    }
+    const NSTimeInterval lowPowerMinInterval = 1.0 / MAX(1, [iTermAdvancedSettingsModel lowPowerModeFrameRate]);
+    return MAX(interval, lowPowerMinInterval);
+}
+
 // When adaptive framerate is enabled and throughput is low, update with this period.
-- (NSTimeInterval)fastAdaptiveInterval {
+- (NSTimeInterval)fastAdaptiveInterval:(const iTermUpdateCadenceState *)statePtr {
     // Note I do not do a ProMotion adjustment because this is used outside interactive apps when
     // maximizing throughput. That is where frequent updates limit throughput the most.
-    return 1.0 / MAX(1, [iTermAdvancedSettingsModel maximumFrameRate]);
+    const NSTimeInterval interval = 1.0 / MAX(1, [iTermAdvancedSettingsModel maximumFrameRate]);
+    return [self lowPowerModeAdjustedInterval:interval state:statePtr];
 }
 
 // When adaptive framerate is enabled and throughput is high, update with this period.
 - (NSTimeInterval)slowAdaptiveInterval:(const iTermUpdateCadenceState *)statePtr {
     // Maximize throughput and drop frame rate to free up CPU.
-    return 1.0 / statePtr->slowFrameRate;
+    const NSTimeInterval interval = 1.0 / statePtr->slowFrameRate;
+    return [self lowPowerModeAdjustedInterval:interval state:statePtr];
 }
 
 // When the view is not visible, update with this period.
@@ -214,7 +230,8 @@ static const NSTimeInterval kBackgroundUpdateCadence = 1;
 // When adaptive framerate is disabled and the view is visible, update with this period.
 - (NSTimeInterval)foregroundNonadaptiveInterval:(const iTermUpdateCadenceState *)statePtr {
     // This is critical for good performance in interactive apps.
-    return _activeUpdateCadence / [self proMotionAdjustment:statePtr];
+    const NSTimeInterval interval = _activeUpdateCadence / [self proMotionAdjustment:statePtr];
+    return [self lowPowerModeAdjustedInterval:interval state:statePtr];
 }
 
 // During live resize, update with this period.

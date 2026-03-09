@@ -1984,6 +1984,9 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
     [_indicatorsHelper setIndicator:kiTermIndicatorBufferingInput
                             visible:[_delegate textViewIsBufferingInput]
                      darkBackground:isDark];
+    [_indicatorsHelper setIndicator:kiTermIndicatorShowRememberedAlerts
+                            visible:gShowRememberedAlerts
+                     darkBackground:isDark];
     const BOOL secureByUser = [[iTermSecureKeyboardEntryController sharedInstance] enabledByUserDefault];
     const BOOL secure = [[iTermSecureKeyboardEntryController sharedInstance] isEnabled];
     const BOOL allowSecureKeyboardEntryIndicator = [iTermAdvancedSettingsModel showSecureKeyboardEntryIndicator];
@@ -2456,10 +2459,12 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
                 // TODO: It would be more correct to remove all search results from this point down and reset the cursor location to the start of the first dirty line. VT100Screen.savedFindContextAbsPos can be after some of the dirty cells causing them not to be searched.
                 [_findOnPageHelper removeHighlightsInRange:NSMakeRange(y + totalScrollbackOverflow, 1)];
                 [_findOnPageHelper removeSearchResultsInRange:NSMakeRange(y + totalScrollbackOverflow, 1)];
-                [self setNeedsDisplayOnLine:y inRange:range];
             } else if (!haveScrolled) {
                 [cleanLines addIndex:y - lineStart];
             }
+        }
+        if (foundDirty) {
+            [self requestDelegateRedraw];
         }
     }
 
@@ -4733,7 +4738,7 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
 }
 
 - (void)removeSearchResultsInRange:(VT100GridAbsCoordRange)range {
-    [_findOnPageHelper removeSearchResultsInRange:NSMakeRange(range.start.y, range.end.y - range.start.y)];
+    [_findOnPageHelper removeSearchResultsWithAbsCoordRange:range];
 }
 
 - (void)addSearchResult:(SearchResult *)searchResult {

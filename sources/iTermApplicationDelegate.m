@@ -469,6 +469,9 @@ static BOOL hasBecomeActive = NO;
     } else if (menuItem.action == @selector(debugLogging:)) {
         menuItem.state = gDebugLogging ? NSControlStateValueOn : NSControlStateValueOff;
         return YES;
+    } else if (menuItem.action == @selector(toggleShowAlertsWithRememberedSelections:)) {
+        menuItem.state = gShowRememberedAlerts ? NSControlStateValueOn : NSControlStateValueOff;
+        return YES;
     } else if (menuItem.action == @selector(arrangeSplitPanesEvenly:)) {
         PTYTab *tab = [[[iTermController sharedInstance] currentTerminal] currentTab];
         return (tab.sessions.count > 0 && !tab.isMaximized);
@@ -2696,6 +2699,10 @@ static iTermKeyEventReplayer *gReplayer;
 
 - (IBAction)debugLogging:(id)sender {
     ToggleDebugLogging();
+}
+
+- (IBAction)toggleShowAlertsWithRememberedSelections:(id)sender {
+    [iTermWarning toggleShowRememberedAlerts];
 }
 
 - (IBAction)openQuickly:(id)sender {

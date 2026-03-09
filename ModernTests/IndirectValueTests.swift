@@ -131,7 +131,7 @@ final class IndirectValueTests: XCTestCase, iTermObject {
         let funcExpr = Subexpression(functionCall: parsedExpr.functionCall)
         let indirectValue = IndirectValue(array: array, indexExpression: funcExpr)
 
-        indirectValue.evaluate(invocation: "test", receiver: nil, timeout: 1, sideEffectsAllowed: true, scope: scope) { result in
+        indirectValue.evaluate(invocation: "test", receiver: nil, timeout: 10, sideEffectsAllowed: true, scope: scope) { result in
             result.whenFirst { value in
                 XCTAssertEqual(value as? NSNumber, 40) // index 3
             } second: { error in

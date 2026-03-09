@@ -543,7 +543,11 @@ NS_CLASS_AVAILABLE_MAC(10_14)
                 }
                 break;
             case TAB_STYLE_COMPACT:
-                insets.left = insets.right = 0;
+                if (@available(macOS 26, *)) {
+                    insets.left = insets.right = 3;
+                } else {
+                    insets.left = insets.right = 0;
+                }
                 break;
             case TAB_STYLE_DARK:
             case TAB_STYLE_LIGHT:

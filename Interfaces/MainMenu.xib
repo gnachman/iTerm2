@@ -853,7 +853,7 @@ DQ
                                 </connections>
                             </menuItem>
                             <menuItem title="Fold All" keyEquivalent="L" identifier="Fold All Above Cursor" id="fAC-xy-123">
-                                <modifierMask key="keyEquivalentModifierMask" command="YES" option="YES" shift="YES"/>
+                                <modifierMask key="keyEquivalentModifierMask" shift="YES" option="YES" command="YES"/>
                                 <connections>
                                     <action selector="foldAll:" target="-1" id="fAC-cn-456"/>
                                 </connections>
@@ -1073,6 +1073,17 @@ DQ
                                 <modifierMask key="keyEquivalentModifierMask" option="YES" command="YES"/>
                                 <connections>
                                     <action selector="irPrev:" target="-1" id="982"/>
+                                </connections>
+                            </menuItem>
+                            <menuItem isSeparatorItem="YES" id="zLk-Jm-8pQ">
+                                <modifierMask key="keyEquivalentModifierMask" command="YES"/>
+                            </menuItem>
+                            <menuItem title="Always Show Alerts with Remembered Selections" identifier="Always Show Alerts with Remembered Selections" id="fRa-4w-9Nh">
+                                <string key="keyEquivalent" base64-UTF8="YES">
+CQ
+</string>
+                                <connections>
+                                    <action selector="toggleShowAlertsWithRememberedSelections:" target="201" id="gKp-3x-7Lm"/>
                                 </connections>
                             </menuItem>
                         </items>

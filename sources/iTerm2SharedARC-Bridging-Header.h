@@ -199,6 +199,7 @@
 #import "ScreenChar.h"
 #import "ScreenCharArray.h"
 #import "SearchResult.h"
+#import "iTermFindOnPageHelper.h"
 #import "SessionView.h"
 #import "SessionView+Nullability.h"
 #import "SolidColorView.h"
