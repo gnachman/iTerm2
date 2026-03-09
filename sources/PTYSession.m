@@ -457,6 +457,14 @@ typedef NS_ENUM(NSUInteger, PTYSessionTurdType) {
 
     VT100GridAbsCoordRange _lastOrCurrentlyRunningCommandAbsRange;
 
+    // Key reporting flags when the most recent command started executing.
+    // Used to detect when an app enables CSI u mode but fails to clean up.
+    VT100TerminalKeyReportingFlags _keyReportingFlagsAtCommandStart;
+
+    // True after screenDidExecuteCommand: is called. Used to avoid false positives
+    // in maybeOfferToResetKeyReportingMode when a shell sends OSC 133;D before OSC 133;C.
+    BOOL _haveCommandStart;
+
     NSTimeInterval _timeOfLastScheduling;
 
     dispatch_semaphore_t _executionSemaphore;
@@ -15752,6 +15760,35 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     [self.naggingController offerToRestoreIconName:iconName windowName:windowName];
 }
 
+- (void)maybeOfferToResetKeyReportingMode {
+    // Don't offer if the profile has CSI u mode enabled
+    if ([iTermProfilePreferences boolForKey:KEY_USE_LIBTICKIT_PROTOCOL inProfile:self.profile]) {
+        return;
+    }
+    // Check if key reporting flags are non-zero
+    if (_screen.terminalKeyReportingFlags == 0) {
+        return;
+    }
+    // Only check if we've seen a command start - otherwise _keyReportingFlagsAtCommandStart
+    // is just the uninitialized default value (0), not the actual flags at command start.
+    // This avoids false positives when Fish sends OSC 133;D before OSC 133;C on startup.
+    if (!_haveCommandStart) {
+        return;
+    }
+    // Only warn if flags were off when the command started but are on now.
+    // This avoids false positives for shells like Fish 4.0+ that legitimately use progressive enhancements.
+    if (_keyReportingFlagsAtCommandStart != 0) {
+        return;
+    }
+    // Reset so we require a new command start before checking again
+    _haveCommandStart = NO;
+
+    // Ask nagging controller - it handles user defaults and showing the nag
+    if ([self.naggingController shouldResetKeyReportingMode]) {
+        [self naggingControllerResetKeyReportingMode];
+    }
+}
+
 - (void)tryAutoProfileSwitchWithHostname:(NSString *)hostname
                                 username:(NSString *)username
                                     path:(NSString *)path
@@ -16064,6 +16101,9 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
                     inDirectory:(NSString *)directory
                            mark:(id<VT100ScreenMarkReading>)mark
                          paused:(BOOL)paused {
+    // Save key reporting flags at command start to detect apps that enable CSI u but don't clean up
+    _haveCommandStart = YES;
+    _keyReportingFlagsAtCommandStart = _screen.terminalKeyReportingFlags;
     if (_eventTriggerEvaluator.hasLongRunningCommandTrigger) {
         [_eventTriggerEvaluator commandStartedWithCommand:command];
     }
@@ -16147,6 +16187,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 }
 
 - (void)screenCommandDidExitWithCode:(int)code mark:(id<VT100ScreenMarkReading>)maybeMark {
+    [self maybeOfferToResetKeyReportingMode];
     if (_eventTriggerEvaluator.hasCommandFinishedTrigger) {
         NSTimeInterval duration = 0;
         if (maybeMark.startDate) {
@@ -17031,6 +17072,9 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
         [self screenSendModifiersDidChange];
         return;
     }
+    // If key reporting mode was just enabled (e.g., by the shell after SSH ended),
+    // dismiss any pending offer to reset it since it's now legitimately enabled.
+    [self.naggingController dismissKeyReportingModeOffer];
     const BOOL profileWantsTickit = [iTermProfilePreferences boolForKey:KEY_USE_LIBTICKIT_PROTOCOL
                                                               inProfile:self.profile];
     if ((_screen.terminalKeyReportingFlags & VT100TerminalKeyReportingFlagsDisambiguateEscape) || profileWantsTickit) {
@@ -20893,6 +20937,17 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
                                              id<VT100ScreenDelegate> delegate) {
         terminal.bracketedPasteMode = NO;
     }];
+}
+
+- (void)naggingControllerResetKeyReportingMode {
+    // Dispatch to avoid reentrant performBlockWithJoinedThreads when this runs from a side effect.
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [_screen performBlockWithJoinedThreads:^(VT100Terminal *terminal,
+                                                 VT100ScreenMutableState *mutableState,
+                                                 id<VT100ScreenDelegate> delegate) {
+            [terminal resetSendModifiersWithSideEffects:YES];
+        }];
+    });
 }
 
 - (void)naggingControllerRestoreIconNameTo:(NSString *)iconName windowName:(NSString *)windowName {
