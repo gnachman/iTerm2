@@ -913,27 +913,77 @@ class KeeperDataSource: NSObject, PasswordManagerDataSource {
         }
     }
 
+    /// Extract password from a Keeper "get --format=json" response (record has "password" as a string value → exact vault value).
+    private static func passwordFromGetJSONResponse(_ data: Data) -> String? {
+        func trim(_ s: String) -> String { s.trimmingCharacters(in: .whitespacesAndNewlines) }
+        guard let parsed = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else { return nil }
+        func fromRecord(_ rec: [String: Any]) -> String? {
+            if let p = rec["password"] as? String { let t = trim(p); return t.isEmpty ? nil : t }
+            // Typed records may nest fields under "fields" or similar.
+            if let fields = rec["fields"] as? [[String: Any]] {
+                for f in fields {
+                    guard (f["type"] as? String) == "password" else { continue }
+                    if let v = f["value"] as? [String], let first = v.first { let t = trim(first); return t.isEmpty ? nil : t }
+                    if let v = f["value"] as? String { let t = trim(v); return t.isEmpty ? nil : t }
+                }
+            }
+            return nil
+        }
+        if let dataVal = parsed["data"] {
+            if let str = dataVal as? String,
+               let record = try? JSONSerialization.jsonObject(with: Data(str.utf8)) as? [String: Any],
+               let p = fromRecord(record) { return p }
+            if let obj = dataVal as? [String: Any], let p = fromRecord(obj) { return p }
+        }
+        if let rec = parsed["record"] as? [String: Any], let p = fromRecord(rec) { return p }
+        return nil
+    }
+
     fileprivate func fetchPassword(recordUid: String, context: RecipeExecutionContext, completion: @escaping (String?, String?, Error?) -> ()) {
         ensureAPIKey(context: context) { [weak self] apiKey in
             guard let apiKey = apiKey else {
                 DispatchQueue.main.async { completion(nil, nil, NSError(domain: "KeeperDataSource", code: -1, userInfo: [NSLocalizedDescriptionKey: "No API key"])) }
                 return
             }
-            let cmd = "get \(recordUid) --format=password"
-            keeperExecute(apiKey: apiKey, command: cmd) { result in
-            switch result {
+            // Prefer get --format=json so password comes as a string value (exact from vault). Fall back to --format=password.
+            let jsonCmd = "get \(recordUid) --format=json"
+            keeperExecute(apiKey: apiKey, command: jsonCmd) { result in
+                switch result {
+                case .success(let data):
+                    if let exact = KeeperDataSource.passwordFromGetJSONResponse(data) {
+                        DispatchQueue.main.async { completion(exact, nil, nil) }
+                        return
+                    }
+                case .failure:
+                    break
+                }
+                let cmd = "get \(recordUid) --format=password"
+                keeperExecute(apiKey: apiKey, command: cmd) { result2 in
+            switch result2 {
             case .success(let data):
                 var password: String?
                 func trim(_ s: String) -> String { s.trimmingCharacters(in: .whitespacesAndNewlines) }
                 let isJSON = (try? JSONSerialization.jsonObject(with: data)) != nil
+                // Response may be a single JSON-encoded string (password with special chars).
+                if password == nil, let decoded = try? JSONDecoder().decode(String.self, from: data) {
+                    let t = trim(decoded)
+                    if !t.isEmpty { password = t }
+                }
                 // v2 result wrapper: { "status": "success"|"completed", "result": "<password>" }
-                if let wrapper = try? JSONDecoder().decode(KeeperV2ResultWrapper.self, from: data),
+                if password == nil, let wrapper = try? JSONDecoder().decode(KeeperV2ResultWrapper.self, from: data),
                    (wrapper.status == "success" || wrapper.status == "completed"),
                    let resultStr = wrapper.result {
                     let t = trim(resultStr)
                     if !t.isEmpty { password = t }
+                    // If result looks like a JSON-encoded string (e.g. double-encoded), decode it.
+                    if password == nil, resultStr.count >= 2, resultStr.hasPrefix("\""), resultStr.hasSuffix("\""),
+                       let strData = resultStr.data(using: .utf8),
+                       let inner = try? JSONDecoder().decode(String.self, from: strData) {
+                        let t = trim(inner)
+                        if !t.isEmpty { password = t }
+                    }
                 }
-                // Direct or inner response: result, message[], or data (string or object with password key)
+                // Direct or inner response: result, output, message[], or data (string or object with password/output key)
                 if password == nil, let parsed = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
                     if let resultStr = parsed["result"] as? String {
                         let t = trim(resultStr)
@@ -943,19 +993,46 @@ class KeeperDataSource: NSObject, PasswordManagerDataSource {
                         if let p = (resultObj["password"] as? String).map({ trim($0) }), !p.isEmpty { password = p }
                         else if let p = (resultObj["output"] as? String).map({ trim($0) }), !p.isEmpty { password = p }
                     }
+                    if password == nil, let outputStr = parsed["output"] as? String {
+                        let t = trim(outputStr)
+                        if !t.isEmpty { password = t }
+                    }
                     if password == nil, let messageArr = parsed["message"] as? [String], let first = messageArr.first {
                         let t = trim(first)
                         // Do not use status messages as password (e.g. "Command executed successfully but produced no output")
-                        let ignoredPrefixes = ["command executed successfully", "no output", "produced no output"]
-                        let isStatusMessage = ignoredPrefixes.contains { t.lowercased().contains($0) }
+                        let lower = t.lowercased()
+                        let isStatusMessage = lower.hasPrefix("command executed successfully") || lower.hasPrefix("no output") || lower.hasPrefix("produced no output") || lower == "no output" || lower.contains("produced no output")
                         if !t.isEmpty, !isStatusMessage { password = t }
                     }
                     if password == nil, let dataVal = parsed["data"] {
                         if let str = dataVal as? String {
                             let t = trim(str)
+                            // When data is a JSON-encoded string (e.g. "\"70MOC#4(0.QzGt/:m|9s\""), decode it first
+                            if t.count >= 2, t.hasPrefix("\""), t.hasSuffix("\""),
+                               let strData = t.data(using: .utf8),
+                               let decoded = try? JSONDecoder().decode(String.self, from: strData) {
+                                let t2 = trim(decoded)
+                                if !t2.isEmpty { password = t2 }
+                            }
+                            if password == nil, !t.isEmpty { password = t }
+                        } else if let obj = dataVal as? [String: Any] {
+                            for key in ["password", "output", "result", "value", "stdout"] {
+                                if let p = obj[key] as? String { let t = trim(p); if !t.isEmpty { password = t; break } }
+                                if password != nil { break }
+                            }
+                            // Some Keeper Commander responses put the password as the single key of data (e.g. {"70MOC#4(0.QzGt/:m|9s": null}).
+                            // The key can be truncated (e.g. at "|") with the remainder in the value; concatenate key + value to get the full password.
+                            if password == nil, obj.count == 1, let singleKey = obj.keys.first {
+                                let keyPart = trim(singleKey)
+                                let valPart = (obj[singleKey] as? String).map(trim) ?? ""
+                                let combined = valPart.isEmpty ? keyPart : (keyPart + valPart)
+                                if !combined.isEmpty { password = combined }
+                            }
+                        } else if let arr = dataVal as? [String], let first = arr.first {
+                            let t = trim(first)
                             if !t.isEmpty { password = t }
-                        } else if let obj = dataVal as? [String: Any], let p = obj["password"] as? String {
-                            let t = trim(p)
+                        } else if let arr = dataVal as? [Any], let first = arr.first as? String {
+                            let t = trim(first)
                             if !t.isEmpty { password = t }
                         }
                     }
@@ -964,7 +1041,6 @@ class KeeperDataSource: NSObject, PasswordManagerDataSource {
                     if let r = response.result { let t = trim(r); if !t.isEmpty { password = t } }
                 }
                 // Plain text body only when response is NOT JSON (e.g. raw stdout from get --format=password).
-                // Never use the full JSON response body as the password.
                 if password == nil, !isJSON, let raw = String(data: data, encoding: .utf8) {
                     let trimmed = trim(raw)
                     if !trimmed.isEmpty {
@@ -984,7 +1060,11 @@ class KeeperDataSource: NSObject, PasswordManagerDataSource {
                         let p = trim(s)
                         if p.isEmpty { return "(empty)" }
                         if let parsed = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
-                            return "keys: \(parsed.keys.sorted().joined(separator: ", "))"
+                            var out = "keys: \(parsed.keys.sorted().joined(separator: ", "))"
+                            if let dataVal = parsed["data"], let obj = dataVal as? [String: Any] {
+                                out += " | data keys: \(obj.keys.sorted().joined(separator: ", "))"
+                            }
+                            return out
                         }
                         return "(\(p.count) chars, not JSON)"
                     } ?? "(invalid UTF-8)"
@@ -1005,6 +1085,7 @@ class KeeperDataSource: NSObject, PasswordManagerDataSource {
                 DispatchQueue.main.async { completion(nil, nil, error) }
             }
         }
+            }
         }
     }
 
