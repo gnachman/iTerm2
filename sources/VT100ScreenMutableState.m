@@ -4560,7 +4560,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 #pragma mark - Token Execution
 
 // WARNING: This is called on PTYTask's thread.
-- (void)threadedReadTask:(char *)buffer length:(int)length {
+- (void)threadedReadTask:(char *)buffer length:(int)length semaphore:(dispatch_semaphore_t)semaphore {
     // Pass the input stream to the parser.
     [self.terminal.parser putStreamData:buffer length:length];
 
@@ -4571,26 +4571,31 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 
     if (CVectorCount(&vector) == 0) {
         CVectorDestroy(&vector);
+        if (semaphore) {
+            dispatch_semaphore_signal(semaphore);
+        }
         return;
     }
 
     [self addTokens:vector
         lengthTotal:length
 lengthExcludingInBandSignaling:nonSignalingLength
-       highPriority:NO];
+       highPriority:NO
+          semaphore:semaphore];
 }
 
 // WARNING: This is called on PTYTask's thread.
-// This blocks when the queue of tokens gets too large.
 - (void)addTokens:(CVector)vector
       lengthTotal:(int)lengthTotal
 lengthExcludingInBandSignaling:(int)lengthExcludingInBandSignaling
-     highPriority:(BOOL)highPriority {
+     highPriority:(BOOL)highPriority
+        semaphore:(dispatch_semaphore_t)semaphore {
     [_echoProbe updateEchoProbeStateWithTokenCVector:&vector];
     [_tokenExecutor addTokens:vector
                   lengthTotal:lengthTotal
 lengthExcludingInBandSignaling:lengthExcludingInBandSignaling
-                 highPriority:highPriority];
+                 highPriority:highPriority
+                    semaphore:semaphore];
 }
 
 - (void)scheduleTokenExecution {
@@ -4611,7 +4616,8 @@ lengthExcludingInBandSignaling:lengthExcludingInBandSignaling
     [self addTokens:vector
         lengthTotal:data.length
 lengthExcludingInBandSignaling:data.length
-       highPriority:YES];
+       highPriority:YES
+          semaphore:nil];
     [self scheduleTokenExecution];
 }
 

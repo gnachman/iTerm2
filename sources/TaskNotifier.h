@@ -23,6 +23,9 @@ extern NSString *const kCoprocessStatusChangeNotification;
 @property (nonatomic, readonly) BOOL hasBrokenPipe;
 @property (atomic, readonly) BOOL sshIntegrationActive;
 
+// Set by TaskNotifier before processRead; consumed by the read path and passed to TokenArray.
+@property (atomic, strong, nullable) dispatch_semaphore_t currentReadSemaphore;
+
 - (void)processRead;
 - (void)processWrite;
 // Called on any thread

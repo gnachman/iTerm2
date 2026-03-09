@@ -1714,8 +1714,8 @@ additionalWordCharacters:(NSString *)additionalWordCharacters
 }
 
 // Warning: this is called on PTYTask's thread.
-- (void)threadedReadTask:(char *)buffer length:(int)length {
-    [_mutableState threadedReadTask:buffer length:length];
+- (void)threadedReadTask:(char *)buffer length:(int)length semaphore:(dispatch_semaphore_t)semaphore {
+    [_mutableState threadedReadTask:buffer length:length semaphore:semaphore];
 }
 
 - (long long)lastPromptLine {

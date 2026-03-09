@@ -363,11 +363,12 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 @property (nonatomic) BOOL hasMuteCoprocess;
 @property (nonatomic) BOOL suppressAllOutput;
 
-- (void)threadedReadTask:(char *)buffer length:(int)length;
+- (void)threadedReadTask:(char *)buffer length:(int)length semaphore:(nullable dispatch_semaphore_t)semaphore;
 - (void)addTokens:(CVector)vector
       lengthTotal:(int)lengthTotal
 lengthExcludingInBandSignaling:(int)lengthExcludingInBandSignaling
-     highPriority:(BOOL)highPriority;
+     highPriority:(BOOL)highPriority
+        semaphore:(nullable dispatch_semaphore_t)semaphore;
 
 - (void)scheduleTokenExecution;
 - (void)injectData:(NSData *)data;
