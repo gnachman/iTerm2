@@ -82,7 +82,8 @@ import Foundation
                 shellIntegrationDir: shellIntegrationDir,
                 env: env,
                 argv: [shell])
-            return (newEnv, Array(argv + newArgs.dropFirst()))
+            // "-" is a placeholder meaning "use $SHELL", followed by extra args (e.g., "--posix")
+            return (newEnv, Array(argv + ["-"] + newArgs.dropFirst()))
         }
     }
 
