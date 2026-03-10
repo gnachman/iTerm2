@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="24127" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES">
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="24506" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES">
     <dependencies>
         <deployment identifier="macosx"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="24127"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="24506"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <objects>
@@ -135,7 +135,7 @@
             <windowStyleMask key="styleMask" titled="YES" utility="YES" documentModal="YES"/>
             <windowPositionMask key="initialPositionMask" leftStrut="YES" rightStrut="YES" topStrut="YES" bottomStrut="YES"/>
             <rect key="contentRect" x="196" y="132" width="451" height="246"/>
-            <rect key="screenRect" x="0.0" y="0.0" width="3008" height="1661"/>
+            <rect key="screenRect" x="0.0" y="0.0" width="3008" height="1662"/>
             <view key="contentView" id="6180">
                 <rect key="frame" x="0.0" y="0.0" width="451" height="246"/>
                 <autoresizingMask key="autoresizingMask"/>
@@ -390,7 +390,7 @@ Gw
         <window title="Preferences" allowsToolTipsWhenApplicationIsInactive="NO" autorecalculatesKeyViewLoop="NO" releasedWhenClosed="NO" visibleAtLaunch="NO" animationBehavior="default" id="1923" userLabel="Main Preferences Window" customClass="iTermPrefsPanel">
             <windowStyleMask key="styleMask" titled="YES" closable="YES" miniaturizable="YES"/>
             <rect key="contentRect" x="269" y="110" width="924" height="463"/>
-            <rect key="screenRect" x="0.0" y="0.0" width="3008" height="1661"/>
+            <rect key="screenRect" x="0.0" y="0.0" width="3008" height="1662"/>
             <view key="contentView" id="1924" customClass="iTermPreferencesPanelRootView">
                 <rect key="frame" x="0.0" y="0.0" width="924" height="463"/>
                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
@@ -699,7 +699,7 @@ Gw
             <windowStyleMask key="styleMask" titled="YES" closable="YES" miniaturizable="YES" resizable="YES" utility="YES" documentModal="YES"/>
             <windowPositionMask key="initialPositionMask" leftStrut="YES" rightStrut="YES" topStrut="YES" bottomStrut="YES"/>
             <rect key="contentRect" x="162" y="156" width="805" height="448"/>
-            <rect key="screenRect" x="0.0" y="0.0" width="3008" height="1661"/>
+            <rect key="screenRect" x="0.0" y="0.0" width="3008" height="1662"/>
             <value key="minSize" type="size" width="805" height="358"/>
             <view key="contentView" id="5911">
                 <rect key="frame" x="0.0" y="0.0" width="805" height="448"/>
@@ -1026,7 +1026,7 @@ DQ
             <windowStyleMask key="styleMask" titled="YES" closable="YES" miniaturizable="YES" resizable="YES" utility="YES" documentModal="YES"/>
             <windowPositionMask key="initialPositionMask" leftStrut="YES" rightStrut="YES" topStrut="YES" bottomStrut="YES"/>
             <rect key="contentRect" x="162" y="229" width="808" height="518"/>
-            <rect key="screenRect" x="0.0" y="0.0" width="3008" height="1661"/>
+            <rect key="screenRect" x="0.0" y="0.0" width="3008" height="1662"/>
             <value key="minSize" type="size" width="575" height="100"/>
             <view key="contentView" id="6275">
                 <rect key="frame" x="0.0" y="0.0" width="808" height="518"/>
@@ -2264,6 +2264,41 @@ CA
                             <rect key="frame" x="0.0" y="20" width="650" height="151"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <subviews>
+                                <matrix verticalHuggingPriority="750" fixedFrame="YES" allowsEmptySelection="NO" translatesAutoresizingMaskIntoConstraints="NO" id="2190" userLabel="Working Directory Radio Buttons">
+                                    <rect key="frame" x="127" y="20" width="240" height="78"/>
+                                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                    <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                                    <size key="cellSize" width="240" height="18"/>
+                                    <size key="intercellSpacing" width="4" height="2"/>
+                                    <buttonCell key="prototype" type="radio" title="Radio" imagePosition="left" alignment="left" inset="2" id="2191">
+                                        <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                                        <font key="font" metaFont="system"/>
+                                    </buttonCell>
+                                    <cells>
+                                        <column>
+                                            <buttonCell type="radio" title="Home directory" imagePosition="left" alignment="left" state="on" tag="1" inset="2" id="2193">
+                                                <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                                                <font key="font" metaFont="system"/>
+                                            </buttonCell>
+                                            <buttonCell type="radio" title="Reuse previous session's directory" imagePosition="left" alignment="left" tag="2" inset="2" id="2192">
+                                                <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                                                <font key="font" metaFont="system"/>
+                                            </buttonCell>
+                                            <buttonCell type="radio" title="Directory:" imagePosition="left" alignment="left" inset="2" id="3472">
+                                                <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                                                <font key="font" metaFont="system"/>
+                                            </buttonCell>
+                                            <buttonCell type="radio" title="Advanced Configuration" imagePosition="left" alignment="left" tag="3" inset="2" id="5974">
+                                                <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                                                <font key="font" metaFont="system"/>
+                                            </buttonCell>
+                                        </column>
+                                    </cells>
+                                    <connections>
+                                        <action selector="settingChanged:" target="dVg-Ac-SiZ" id="EvS-uC-TVU"/>
+                                        <outlet property="nextKeyView" destination="2189" id="5216"/>
+                                    </connections>
+                                </matrix>
                                 <imageView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="G1r-AP-exF">
                                     <rect key="frame" x="372" y="135" width="16" height="16"/>
                                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
@@ -2315,41 +2350,6 @@ CA
                                         <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                                     </textFieldCell>
                                 </textField>
-                                <matrix verticalHuggingPriority="750" fixedFrame="YES" allowsEmptySelection="NO" translatesAutoresizingMaskIntoConstraints="NO" id="2190" userLabel="Working Directory Radio Buttons">
-                                    <rect key="frame" x="127" y="20" width="240" height="78"/>
-                                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                    <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
-                                    <size key="cellSize" width="240" height="18"/>
-                                    <size key="intercellSpacing" width="4" height="2"/>
-                                    <buttonCell key="prototype" type="radio" title="Radio" imagePosition="left" alignment="left" inset="2" id="2191">
-                                        <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
-                                        <font key="font" metaFont="system"/>
-                                    </buttonCell>
-                                    <cells>
-                                        <column>
-                                            <buttonCell type="radio" title="Home directory" imagePosition="left" alignment="left" state="on" tag="1" inset="2" id="2193">
-                                                <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
-                                                <font key="font" metaFont="system"/>
-                                            </buttonCell>
-                                            <buttonCell type="radio" title="Reuse previous session's directory" imagePosition="left" alignment="left" tag="2" inset="2" id="2192">
-                                                <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
-                                                <font key="font" metaFont="system"/>
-                                            </buttonCell>
-                                            <buttonCell type="radio" title="Directory:" imagePosition="left" alignment="left" inset="2" id="3472">
-                                                <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
-                                                <font key="font" metaFont="system"/>
-                                            </buttonCell>
-                                            <buttonCell type="radio" title="Advanced Configuration" imagePosition="left" alignment="left" tag="3" inset="2" id="5974">
-                                                <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
-                                                <font key="font" metaFont="system"/>
-                                            </buttonCell>
-                                        </column>
-                                    </cells>
-                                    <connections>
-                                        <action selector="settingChanged:" target="dVg-Ac-SiZ" id="EvS-uC-TVU"/>
-                                        <outlet property="nextKeyView" destination="2189" id="5216"/>
-                                    </connections>
-                                </matrix>
                                 <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="5975" userLabel="Edit advanced configuration push button">
                                     <rect key="frame" x="306" y="13" width="58" height="28"/>
                                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
@@ -5424,7 +5424,7 @@ CA
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <clipView key="contentView" id="ArV-0K-qze">
                                 <rect key="frame" x="1" y="1" width="450" height="95"/>
-                                <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                                <autoresizingMask key="autoresizingMask"/>
                                 <subviews>
                                     <tableView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="lastColumnOnly" alternatingRowBackgroundColors="YES" columnReordering="NO" columnResizing="NO" multipleSelection="NO" autosaveColumns="NO" id="5661">
                                         <rect key="frame" x="0.0" y="0.0" width="450" height="95"/>
@@ -10257,7 +10257,7 @@ instead of the system keyboard.</string>
         <window title="Filter Alerts" allowsToolTipsWhenApplicationIsInactive="NO" autorecalculatesKeyViewLoop="NO" restorable="NO" hidesOnDeactivate="YES" releasedWhenClosed="NO" visibleAtLaunch="NO" animationBehavior="default" id="u39-OD-7hu" customClass="NSPanel">
             <windowPositionMask key="initialPositionMask" leftStrut="YES" rightStrut="YES" topStrut="YES" bottomStrut="YES"/>
             <rect key="contentRect" x="120" y="138" width="406" height="145"/>
-            <rect key="screenRect" x="0.0" y="0.0" width="3008" height="1661"/>
+            <rect key="screenRect" x="0.0" y="0.0" width="3008" height="1662"/>
             <view key="contentView" id="dXn-d7-O8o">
                 <rect key="frame" x="0.0" y="0.0" width="406" height="145"/>
                 <autoresizingMask key="autoresizingMask"/>
