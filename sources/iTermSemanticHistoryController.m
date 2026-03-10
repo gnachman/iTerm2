@@ -96,10 +96,16 @@ NSString *const kSemanticHistoryColumnNumberKey = @"semanticHistory.columnNumber
     return cleaner.cleanPath;
 }
 
+// Safely gets the action from prefs. Handles the case where the value might not be a string
+// (e.g., due to corrupted profile data).
+- (NSString *)action {
+    return [NSString castFrom:prefs_[kSemanticHistoryActionKey]];
+}
+
 - (NSString *)preferredEditorIdentifier {
-    if ([prefs_[kSemanticHistoryActionKey] isEqualToString:kSemanticHistoryBestEditorAction]) {
+    if ([[self action] isEqualToString:kSemanticHistoryBestEditorAction]) {
         return [iTermSemanticHistoryPrefsController bestEditor];
-    } else if ([prefs_[kSemanticHistoryActionKey] isEqualToString:kSemanticHistoryEditorAction]) {
+    } else if ([[self action] isEqualToString:kSemanticHistoryEditorAction]) {
         return [iTermSemanticHistoryPrefsController schemeForEditor:prefs_[kSemanticHistoryEditorKey]] ?
             prefs_[kSemanticHistoryEditorKey] : nil;
     } else {
@@ -628,7 +634,7 @@ NSString *const kSemanticHistoryColumnNumberKey = @"semanticHistory.columnNumber
 }
 
 - (BOOL)activatesOnAnyString {
-    return [prefs_[kSemanticHistoryActionKey] isEqualToString:kSemanticHistoryRawCommandAction];
+    return [[self action] isEqualToString:kSemanticHistoryRawCommandAction];
 }
 
 - (void)launchTaskWithPath:(NSString *)path
@@ -773,7 +779,7 @@ NSString *const kSemanticHistoryColumnNumberKey = @"semanticHistory.columnNumber
          cleanedUpPath, rawFileName, substitutions, lineNumber, columnNumber);
 
     NSString *path;
-    BOOL isRawAction = [prefs_[kSemanticHistoryActionKey] isEqualToString:kSemanticHistoryRawCommandAction];
+    BOOL isRawAction = [[self action] isEqualToString:kSemanticHistoryRawCommandAction];
     if (isRawAction) {
         path = rawFileName;
         lineNumber = @"";
@@ -823,7 +829,7 @@ NSString *const kSemanticHistoryColumnNumberKey = @"semanticHistory.columnNumber
         return;
     }
 
-    if ([prefs_[kSemanticHistoryActionKey] isEqualToString:kSemanticHistoryCommandAction]) {
+    if ([[self action] isEqualToString:kSemanticHistoryCommandAction]) {
         __weak __typeof(self) weakSelf = self;
         [_expressionEvaluator evaluateWithTimeout:self.evaluationTimeout completion:^(iTermExpressionEvaluator * _Nonnull evaluator) {
             DLog(@"Running /bin/sh -c %@", evaluator.value);
@@ -840,7 +846,7 @@ NSString *const kSemanticHistoryColumnNumberKey = @"semanticHistory.columnNumber
         return;
     }
 
-    if ([prefs_[kSemanticHistoryActionKey] isEqualToString:kSemanticHistoryCoprocessAction]) {
+    if ([[self action] isEqualToString:kSemanticHistoryCoprocessAction]) {
         __weak __typeof(self) weakSelf = self;
         [_expressionEvaluator evaluateWithTimeout:self.evaluationTimeout completion:^(iTermExpressionEvaluator * _Nonnull evaluator) {
             DLog(@"Launch coprocess with script %@", evaluator.value);
@@ -854,7 +860,7 @@ NSString *const kSemanticHistoryColumnNumberKey = @"semanticHistory.columnNumber
         return;
     }
 
-    if ([prefs_[kSemanticHistoryActionKey] isEqualToString:kSemanticHistorySendTextAction]) {
+    if ([[self action] isEqualToString:kSemanticHistorySendTextAction]) {
         __weak __typeof(self) weakSelf = self;
         [_expressionEvaluator evaluateWithTimeout:self.evaluationTimeout completion:^(iTermExpressionEvaluator * _Nonnull evaluator) {
             DLog(@"Send text %@", evaluator.value);
@@ -875,7 +881,7 @@ NSString *const kSemanticHistoryColumnNumberKey = @"semanticHistory.columnNumber
         return;
     }
 
-    if ([prefs_[kSemanticHistoryActionKey] isEqualToString:kSemanticHistoryUrlAction]) {
+    if ([[self action] isEqualToString:kSemanticHistoryUrlAction]) {
         NSString *url = prefs_[kSemanticHistoryTextKey];
         // Replace the path with a non-shell-escaped path since we perform escaping later in this code path.
         [scope setValue:path ?: @"" forVariableNamed:kSemanticHistoryPathSubstitutionKey];
@@ -906,7 +912,7 @@ NSString *const kSemanticHistoryColumnNumberKey = @"semanticHistory.columnNumber
         return;
     }
 
-    if ([prefs_[kSemanticHistoryActionKey] isEqualToString:kSemanticHistoryEditorAction] &&
+    if ([[self action] isEqualToString:kSemanticHistoryEditorAction] &&
         [self preferredEditorIdentifier]) {
         // Action is to open in a specific editor, so open it in the editor.
         [self openFileInEditor:path lineNumber:lineNumber columnNumber:columnNumber];
