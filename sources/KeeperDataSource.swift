@@ -1199,8 +1199,14 @@ class KeeperDataSource: NSObject, PasswordManagerDataSource {
         return keeperAPIURLFromStorage() ?? ""
     }
     /// Returns the API key from Keychain for the “update” (gear) dialog. May prompt for Mac password once when the user explicitly opens settings to edit.
+    /// Returns the API key for the settings (gear) dialog. Uses in-memory cache first; on first read from Keychain, caches the value so ensureAPIKey and other callers do not trigger a second biometric/keychain prompt.
     @objc func keeperSettingsAPIKeyForEditing() -> String? {
-        return _cachedSettingsKey ?? _apiKey ?? keeperAPIKeyFromSecureKeychain()
+        if let k = _cachedSettingsKey, !k.isEmpty { return k }
+        if let k = _apiKey, !k.isEmpty { return k }
+        guard let key = keeperAPIKeyFromKeychain(), !key.isEmpty else { return nil }
+        _apiKey = key
+        _cachedSettingsKey = key
+        return key
     }
     /// Returns the API URL from Keychain for the “update” (gear) dialog. May prompt for Mac password once when the user explicitly opens settings to edit.
     @objc func keeperSettingsAPIURLForEditing() -> String {
