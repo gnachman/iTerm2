@@ -9096,9 +9096,12 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     for (PTYSession *session in self.currentTab.sessions) {
         [session.view updateDim];
     }
-    if ([[ProfileModel sessionsInstance] bookmarkWithGuid:newSession.profile[KEY_GUID]]) {
+    if ([[ProfileModel sessionsInstance] bookmarkWithGuid:newSession.profile[KEY_GUID]] &&
+        targetSession.isDivorced) {
         // We know the GUID is unique and in sessions instance and the original guid is already set.
         // This might be possible to do earlier, but I'm afraid of introducing bugs.
+        // Only inherit if targetSession is actually divorced - otherwise we'd clear newSession's
+        // overriddenFields, breaking the invariant that a divorced session's GUID is in sessionsInstance.
         [newSession inheritDivorceFrom:targetSession
                                 decree:[NSString stringWithFormat:@"Split vertically with guid %@",
                                         newSession.profile[KEY_GUID]]];
