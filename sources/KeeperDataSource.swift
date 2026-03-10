@@ -274,7 +274,7 @@ private struct KeeperFolder: Decodable {
     let flags: String?
 }
 
-private struct KeeperRecord: Decodable {
+internal struct KeeperRecord: Decodable {
     let number: Int?
     let uid: String?
     /// Some API responses use record_uid instead of uid.
@@ -354,8 +354,8 @@ private func keeperV2ResultURL(requestId: String, baseURL: URL) -> URL {
     baseURL.appendingPathComponent("api/v2/result/\(requestId)")
 }
 
-/// Extracts a human-readable error message from API response data (e.g. {"error":"Please provide a valid api key","status":"error"}).
-private func keeperHumanReadableError(fromResponseData data: Data?) -> String? {
+/// Extracts a human-readable error message from API response data (e.g. {"error":"Please provide a valid api key","status":"error"}). Exposed internal for unit tests.
+internal func keeperHumanReadableError(fromResponseData data: Data?) -> String? {
     guard let data = data,
           let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else { return nil }
     if let error = json["error"] as? String, !error.isEmpty { return error }
@@ -363,7 +363,7 @@ private func keeperHumanReadableError(fromResponseData data: Data?) -> String? {
     return nil
 }
 
-private func keeperExecute(apiKey: String, command: String, baseURL: URL? = nil, completion: @escaping (Result<Data, Error>) -> Void) {
+private func keeperExecute(apiKey: String, command: String, baseURL: URL? = nil, session: URLSession = .shared, completion: @escaping (Result<Data, Error>) -> Void) {
     guard let resolvedBase = baseURL ?? keeperBaseURL() else {
         completion(.failure(NSError(domain: "KeeperDataSource", code: -1, userInfo: [NSLocalizedDescriptionKey: "API URL is required. Please set it in Keeper Security Settings."])))
         return
@@ -377,7 +377,7 @@ private func keeperExecute(apiKey: String, command: String, baseURL: URL? = nil,
         case .failure(let err):
             let nsErr = err as NSError
             if nsErr.domain == "KeeperDataSource", nsErr.code == 404 {
-                keeperExecuteV2(apiKey: apiKey, command: command, baseURL: resolvedBase, completion: completion)
+                keeperExecuteV2(apiKey: apiKey, command: command, baseURL: resolvedBase, session: session, completion: completion)
             } else {
                 completion(.failure(err))
             }
@@ -389,7 +389,7 @@ private func keeperExecute(apiKey: String, command: String, baseURL: URL? = nil,
     request.setValue("application/json", forHTTPHeaderField: "Content-Type")
     request.setValue(apiKey, forHTTPHeaderField: "api-key")
     request.httpBody = body
-    URLSession.shared.dataTask(with: request) { data, response, error in
+    session.dataTask(with: request) { data, response, error in
         if let error = error {
             v1Completion(.failure(error))
             return
@@ -400,7 +400,7 @@ private func keeperExecute(apiKey: String, command: String, baseURL: URL? = nil,
         }
         let http = response as? HTTPURLResponse
         if http?.statusCode == 404 {
-            keeperExecuteV2(apiKey: apiKey, command: command, baseURL: resolvedBase, completion: completion)
+            keeperExecuteV2(apiKey: apiKey, command: command, baseURL: resolvedBase, session: session, completion: completion)
             return
         }
         if http?.statusCode != 200 {
@@ -415,14 +415,14 @@ private func keeperExecute(apiKey: String, command: String, baseURL: URL? = nil,
 }
 
 /// Keeper Commander API v2 (queue): submit async, poll status, then fetch result.
-private func keeperExecuteV2(apiKey: String, command: String, baseURL: URL, completion: @escaping (Result<Data, Error>) -> Void) {
+private func keeperExecuteV2(apiKey: String, command: String, baseURL: URL, session: URLSession = .shared, completion: @escaping (Result<Data, Error>) -> Void) {
     let body = (try? JSONEncoder().encode(KeeperExecuteRequest(command: command))) ?? Data()
     var request = URLRequest(url: keeperV2AsyncURL(baseURL: baseURL))
     request.httpMethod = "POST"
     request.setValue("application/json", forHTTPHeaderField: "Content-Type")
     request.setValue(apiKey, forHTTPHeaderField: "api-key")
     request.httpBody = body
-    URLSession.shared.dataTask(with: request) { data, response, error in
+    session.dataTask(with: request) { data, response, error in
         if let error = error {
             completion(.failure(error))
             return
@@ -443,11 +443,11 @@ private func keeperExecuteV2(apiKey: String, command: String, baseURL: URL, comp
             completion(.failure(NSError(domain: "KeeperDataSource", code: -1, userInfo: [NSLocalizedDescriptionKey: "No request_id in v2 response"])))
             return
         }
-        keeperV2PollForResult(apiKey: apiKey, requestId: requestId, baseURL: baseURL, completion: completion)
+        keeperV2PollForResult(apiKey: apiKey, requestId: requestId, baseURL: baseURL, session: session, completion: completion)
     }.resume()
 }
 
-private func keeperV2PollForResult(apiKey: String, requestId: String, baseURL: URL, completion: @escaping (Result<Data, Error>) -> Void) {
+private func keeperV2PollForResult(apiKey: String, requestId: String, baseURL: URL, session: URLSession = .shared, completion: @escaping (Result<Data, Error>) -> Void) {
     // Poll at most once per 2 seconds to stay under service rate limit (60 status requests per minute).
     let pollInterval: TimeInterval = 2.0
     let deadline = Date().addingTimeInterval(120)
@@ -466,7 +466,7 @@ private func keeperV2PollForResult(apiKey: String, requestId: String, baseURL: U
         }
         var request = URLRequest(url: keeperV2StatusURL(requestId: requestId, baseURL: baseURL))
         request.setValue(apiKey, forHTTPHeaderField: "api-key")
-        URLSession.shared.dataTask(with: request) { data, response, error in
+        session.dataTask(with: request) { data, response, error in
             if let error = error {
                 completion(.failure(error))
                 return
@@ -497,7 +497,7 @@ private func keeperV2PollForResult(apiKey: String, requestId: String, baseURL: U
             consecutiveUnparseable = 0
             switch status {
             case "completed":
-                keeperV2FetchResult(apiKey: apiKey, requestId: requestId, baseURL: baseURL, completion: completion)
+                keeperV2FetchResult(apiKey: apiKey, requestId: requestId, baseURL: baseURL, session: session, completion: completion)
             case "failed", "expired":
                 completion(.failure(NSError(domain: "KeeperDataSource", code: -1, userInfo: [NSLocalizedDescriptionKey: "Keeper command \(status)"])))
             default:
@@ -508,10 +508,10 @@ private func keeperV2PollForResult(apiKey: String, requestId: String, baseURL: U
     poll()
 }
 
-private func keeperV2FetchResult(apiKey: String, requestId: String, baseURL: URL, completion: @escaping (Result<Data, Error>) -> Void) {
+private func keeperV2FetchResult(apiKey: String, requestId: String, baseURL: URL, session: URLSession = .shared, completion: @escaping (Result<Data, Error>) -> Void) {
     var request = URLRequest(url: keeperV2ResultURL(requestId: requestId, baseURL: baseURL))
     request.setValue(apiKey, forHTTPHeaderField: "api-key")
-    URLSession.shared.dataTask(with: request) { data, response, error in
+    session.dataTask(with: request) { data, response, error in
         if let error = error {
             completion(.failure(error))
             return
@@ -534,7 +534,7 @@ private func keeperV2FetchResult(apiKey: String, requestId: String, baseURL: URL
 /// Parses a single line from Keeper "ls -R -l" data.records[].title (table row).
 /// Format: "number  record_uid  type  title  description" (columns separated by two+ spaces).
 /// Returns nil for header/separator lines (starting with # or ---).
-private func parseLsRecordLine(_ line: String) -> KeeperRecord? {
+internal func parseLsRecordLine(_ line: String) -> KeeperRecord? {
     let trimmed = line.trimmingCharacters(in: .whitespaces)
     if trimmed.hasPrefix("#") || trimmed.hasPrefix("---") { return nil }
     let parts = trimmed.components(separatedBy: "  ").map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }
@@ -550,7 +550,7 @@ private func parseLsRecordLine(_ line: String) -> KeeperRecord? {
 }
 
 /// Parses a Keeper "list" or "trash list" response and returns record UIDs from the message table.
-private func parseMessageTableRecordUids(from data: Data) -> Set<String> {
+internal func parseMessageTableRecordUids(from data: Data) -> Set<String> {
     var payloadsToTry: [Data] = [data]
     if let wrapper = try? JSONDecoder().decode(KeeperV2ResultWrapper.self, from: data),
        wrapper.status == "success",
@@ -641,18 +641,49 @@ class KeeperDataSource: NSObject, PasswordManagerDataSource {
 
     @objc public weak var credentialsDelegate: KeeperCredentialsRequestDelegate?
 
+    /// Test-only: when set, ensureAPIKey uses this instead of Keychain; API calls use this base URL and session. Not used in production.
+    internal var injectedAPIKey: String?
+    internal var injectedBaseURL: URL?
+    internal var injectedURLSession: URLSession?
+    /// Test-only: when set, used instead of keeperBaseURL() so tests can simulate URL-from-storage without UserDefaults.
+    internal var injectedBaseURLFromStorage: URL?
+    /// Test-only: when set, keeperSettingsAPIURL() returns this instead of reading storage.
+    internal var injectedAPIURLFromStorage: String?
+    /// Test-only: when set, keychain read in ensureAPIKey uses this instead of real Keychain.
+    internal var injectedKeychainGetAPIKey: (() -> String?)?
+    /// Test-only: when set, keychain store (ensureAPIKey .useNew and setKeeperSettingsAPIKey) calls this instead of real Keychain.
+    internal var injectedKeychainSetAPIKey: ((String) -> Void)?
+    /// Test-only: when set, keychain delete (resetConfiguration and setKeeperSettingsAPIKey(empty)) calls this instead of real Keychain.
+    internal var injectedKeychainDeleteAPIKey: (() -> Void)?
+    /// Test-only: when set, setKeeperSettingsAPIURL calls this instead of writing to UserDefaults/Keychain.
+    internal var injectedStoreAPIURL: ((String) -> Void)?
+
     init(browser: Bool) {
         self.browser = browser
     }
 
     /// True if we already have an API key in memory (from this session). Used when switching back to Keeper so we don’t show the settings sheet again.
     @objc func keeperHasAPIKeyInMemory() -> Bool {
+        if let k = injectedAPIKey, !k.isEmpty { return true }
         if let k = _apiKey, !k.isEmpty { return true }
         if let k = _cachedSettingsKey, !k.isEmpty { return true }
         return false
     }
 
     private func ensureAPIKey(context: RecipeExecutionContext, completion: @escaping (String?) -> Void) {
+        if let key = injectedAPIKey {
+            if !key.isEmpty {
+                completion(key)
+                return
+            }
+            // Test-only: injectedAPIKey == "" means "explicitly no key"; skip Keychain and go straight to delegate/UI.
+            if Thread.isMainThread {
+                showUIAndContinue()
+            } else {
+                DispatchQueue.main.async { showUIAndContinue() }
+            }
+            return
+        }
         if let key = _apiKey, !key.isEmpty {
             completion(key)
             return
@@ -678,6 +709,15 @@ class KeeperDataSource: NSObject, PasswordManagerDataSource {
             return
         }
         keeperMigrateLegacyKeeperTokenIfNeeded()
+        // Test-only: use injected keychain reader when set so tests don't touch real Keychain.
+        if let get = injectedKeychainGetAPIKey, let key = get(), !key.isEmpty {
+            _apiKey = key
+            _cachedSettingsKey = key
+            let k = key
+            _apiKeyLoadLock.unlock()
+            completion(k)
+            return
+        }
         // Try secure (Touch ID/passcode) keychain first, then standard keychain fallback for devices without biometric/entitlement.
         if let key = keeperAPIKeyFromKeychain(), !key.isEmpty {
             _apiKey = key
@@ -696,7 +736,7 @@ class KeeperDataSource: NSObject, PasswordManagerDataSource {
         }
         return
 
-        // No key in memory or data-protection keychain; show the settings sheet (API key + API URL).
+        // No key in memory or data-protection keychain. Prefer the Settings sheet (API key + API URL) when the window controller provides a delegate and a window; otherwise show the simple "Keeper Security API Key" dialog.
         func showUIAndContinue() {
             if let delegate = credentialsDelegate, let window = context.window {
                 delegate.keeperDataSourceRequestCredentials(forWindow: window) { [weak self] key in
@@ -724,9 +764,15 @@ class KeeperDataSource: NSObject, PasswordManagerDataSource {
                     }
                 case .useNew(let key):
                     guard !key.isEmpty else { completion(nil); return }
-                    keeperStoreAPIKeyInKeychain(key)
-                    self._apiKey = key
-                    completion(key)
+                    if let set = self.injectedKeychainSetAPIKey {
+                        set(key)
+                        self._apiKey = key
+                        completion(key)
+                    } else {
+                        keeperStoreAPIKeyInKeychain(key)
+                        self._apiKey = key
+                        completion(key)
+                    }
                 case .cancel:
                     completion(nil)
                 }
@@ -737,6 +783,15 @@ class KeeperDataSource: NSObject, PasswordManagerDataSource {
     @objc var name: String { "Keeper Security" }
     @objc var canResetConfiguration: Bool { true }
     @objc func resetConfiguration() {
+        if let delete = injectedKeychainDeleteAPIKey {
+            delete()
+            _apiKey = nil
+            _cachedSettingsKey = nil
+            _cachedSettingsURL = nil
+            iTermUserDefaults.userDefaults().removeObject(forKey: keeperLegacyUserDefaultsAPIURLKey)
+            keeperClearBaseURLCache()
+            return
+        }
         keeperDeleteAPIKeyFromKeychain()
         _apiKey = nil
         _cachedSettingsKey = nil
@@ -765,12 +820,12 @@ class KeeperDataSource: NSObject, PasswordManagerDataSource {
                         object: nil,
                         userInfo: ["error": "No API key entered or configuration was cancelled."]
                     )
+                    completion([])
                 }
-                completion([])
                 return
             }
             // Single API call: "ls -R -l" returns all records (and folders) recursively; no separate "trash list" needed.
-            keeperExecute(apiKey: apiKey, command: "ls -R -l") { [weak self] result in
+            keeperExecute(apiKey: apiKey, command: "ls -R -l", baseURL: self.injectedBaseURL ?? self.injectedBaseURLFromStorage ?? keeperBaseURL(), session: self.injectedURLSession ?? .shared) { [weak self] result in
             guard let self = self else { return }
             switch result {
             case .success(let data):
@@ -915,7 +970,7 @@ class KeeperDataSource: NSObject, PasswordManagerDataSource {
     }
 
     /// Extract password from a Keeper "get --format=json" response (record has "password" as a string value → exact vault value).
-    private static func passwordFromGetJSONResponse(_ data: Data) -> String? {
+    internal static func passwordFromGetJSONResponse(_ data: Data) -> String? {
         func trim(_ s: String) -> String { s.trimmingCharacters(in: .whitespacesAndNewlines) }
         guard let parsed = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else { return nil }
         func fromRecord(_ rec: [String: Any]) -> String? {
@@ -940,15 +995,16 @@ class KeeperDataSource: NSObject, PasswordManagerDataSource {
         return nil
     }
 
-    fileprivate func fetchPassword(recordUid: String, context: RecipeExecutionContext, completion: @escaping (String?, String?, Error?) -> ()) {
+    internal func fetchPassword(recordUid: String, context: RecipeExecutionContext, completion: @escaping (String?, String?, Error?) -> ()) {
         ensureAPIKey(context: context) { [weak self] apiKey in
+            guard let self = self else { return }
             guard let apiKey = apiKey else {
                 DispatchQueue.main.async { completion(nil, nil, NSError(domain: "KeeperDataSource", code: -1, userInfo: [NSLocalizedDescriptionKey: "No API key"])) }
                 return
             }
             // Prefer get --format=json so password comes as a string value (exact from vault). Fall back to --format=password.
             let jsonCmd = "get \(recordUid) --format=json"
-            keeperExecute(apiKey: apiKey, command: jsonCmd) { result in
+            keeperExecute(apiKey: apiKey, command: jsonCmd, baseURL: self.injectedBaseURL ?? self.injectedBaseURLFromStorage ?? keeperBaseURL(), session: self.injectedURLSession ?? .shared) { result in
                 switch result {
                 case .success(let data):
                     if let exact = KeeperDataSource.passwordFromGetJSONResponse(data) {
@@ -959,7 +1015,7 @@ class KeeperDataSource: NSObject, PasswordManagerDataSource {
                     break
                 }
                 let cmd = "get \(recordUid) --format=password"
-                keeperExecute(apiKey: apiKey, command: cmd) { result2 in
+                keeperExecute(apiKey: apiKey, command: cmd, baseURL: self.injectedBaseURL ?? self.injectedBaseURLFromStorage ?? keeperBaseURL(), session: self.injectedURLSession ?? .shared) { result2 in
             switch result2 {
             case .success(let data):
                 var password: String?
@@ -1090,7 +1146,7 @@ class KeeperDataSource: NSObject, PasswordManagerDataSource {
         }
     }
 
-    fileprivate func setPassword(recordUid: String, password: String, context: RecipeExecutionContext, completion: @escaping (Error?) -> ()) {
+    internal func setPassword(recordUid: String, password: String, context: RecipeExecutionContext, completion: @escaping (Error?) -> ()) {
         ensureAPIKey(context: context) { apiKey in
             guard let apiKey = apiKey else {
                 DispatchQueue.main.async { completion(NSError(domain: "KeeperDataSource", code: -1, userInfo: [NSLocalizedDescriptionKey: "No API key"])) }
@@ -1098,7 +1154,7 @@ class KeeperDataSource: NSObject, PasswordManagerDataSource {
             }
             let escaped = password.replacingOccurrences(of: "\\", with: "\\\\").replacingOccurrences(of: "\"", with: "\\\"")
             let cmd = "record-update -r \(recordUid) password=\"\(escaped)\""
-            keeperExecute(apiKey: apiKey, command: cmd) { result in
+            keeperExecute(apiKey: apiKey, command: cmd, baseURL: self.injectedBaseURL ?? self.injectedBaseURLFromStorage ?? keeperBaseURL(), session: self.injectedURLSession ?? .shared) { result in
                 switch result {
                 case .success(let data):
                     if let response = try? JSONDecoder().decode(KeeperExecuteResponse.self, from: data), response.status == "success" {
@@ -1116,13 +1172,13 @@ class KeeperDataSource: NSObject, PasswordManagerDataSource {
         }
     }
 
-    fileprivate func deleteRecord(recordUid: String, context: RecipeExecutionContext, completion: @escaping (Error?) -> ()) {
+    internal func deleteRecord(recordUid: String, context: RecipeExecutionContext, completion: @escaping (Error?) -> ()) {
         ensureAPIKey(context: context) { apiKey in
             guard let apiKey = apiKey else {
                 DispatchQueue.main.async { completion(NSError(domain: "KeeperDataSource", code: -1, userInfo: [NSLocalizedDescriptionKey: "No API key"])) }
                 return
             }
-            keeperExecute(apiKey: apiKey, command: "rm -f \(recordUid)") { result in
+            keeperExecute(apiKey: apiKey, command: "rm -f \(recordUid)", baseURL: self.injectedBaseURL ?? self.injectedBaseURLFromStorage ?? keeperBaseURL(), session: self.injectedURLSession ?? .shared) { result in
                 switch result {
                 case .success(let data):
                     if let response = try? JSONDecoder().decode(KeeperExecuteResponse.self, from: data), response.status == "success" {
@@ -1148,7 +1204,7 @@ class KeeperDataSource: NSObject, PasswordManagerDataSource {
             let escapedLogin = userName.replacingOccurrences(of: "\\", with: "\\\\").replacingOccurrences(of: "\"", with: "\\\"")
             let escapedPassword = password.replacingOccurrences(of: "\\", with: "\\\\").replacingOccurrences(of: "\"", with: "\\\"")
             let cmd = "record-add --record-type=login --title=\"\(escapedTitle)\" login=\"\(escapedLogin)\" password=\"\(escapedPassword)\""
-            keeperExecute(apiKey: apiKey, command: cmd) { [weak self] result in
+            keeperExecute(apiKey: apiKey, command: cmd, baseURL: self.injectedBaseURL ?? self.injectedBaseURLFromStorage ?? keeperBaseURL(), session: self.injectedURLSession ?? .shared) { [weak self] result in
             guard let self = self else { return }
             switch result {
             case .success(let data):
@@ -1194,6 +1250,7 @@ class KeeperDataSource: NSObject, PasswordManagerDataSource {
     }
     /// Returns the API URL from in-memory cache, then UserDefaults. No default; empty if not set. Used when opening the sheet from “select Keeper” so we don’t prompt again.
     @objc func keeperSettingsAPIURL() -> String {
+        if let url = injectedAPIURLFromStorage { return url }
         let u = _cachedSettingsURL
         if let u = u, !u.isEmpty { return u }
         return keeperAPIURLFromStorage() ?? ""
@@ -1214,10 +1271,22 @@ class KeeperDataSource: NSObject, PasswordManagerDataSource {
     }
     @objc func setKeeperSettingsAPIKey(_ key: String) {
         if key.isEmpty {
+            if let delete = injectedKeychainDeleteAPIKey {
+                delete()
+                _apiKey = nil
+                _cachedSettingsKey = nil
+                return
+            }
             keeperDeleteAPIKeyFromKeychain()
             _apiKey = nil
             _cachedSettingsKey = nil
         } else {
+            if let set = injectedKeychainSetAPIKey {
+                set(key)
+                _apiKey = key
+                _cachedSettingsKey = key
+                return
+            }
             keeperStoreAPIKeyInKeychain(key)
             _apiKey = key
             _cachedSettingsKey = key
@@ -1225,6 +1294,12 @@ class KeeperDataSource: NSObject, PasswordManagerDataSource {
     }
     @objc func setKeeperSettingsAPIURL(_ url: String) {
         let trimmed = url.trimmingCharacters(in: .whitespacesAndNewlines)
+        if let store = injectedStoreAPIURL {
+            if !trimmed.isEmpty { store(trimmed) }
+            _cachedSettingsURL = trimmed.isEmpty ? nil : trimmed
+            keeperClearBaseURLCache()
+            return
+        }
         if trimmed.isEmpty {
             iTermUserDefaults.userDefaults().removeObject(forKey: keeperLegacyUserDefaultsAPIURLKey)
             try? SSKeychain.deletePassword(forService: keeperKeychainService, account: keeperKeychainAccountAPIURL)
@@ -1255,7 +1330,7 @@ class KeeperDataSource: NSObject, PasswordManagerDataSource {
             DispatchQueue.main.async { completion(false, "Invalid API URL.") }
             return
         }
-        keeperExecute(apiKey: key, command: "sync-down", baseURL: baseURL) { result in
+        keeperExecute(apiKey: key, command: "sync-down", baseURL: baseURL, session: self.injectedURLSession ?? .shared) { result in
             switch result {
             case .success:
                 DispatchQueue.main.async { completion(true, nil) }
