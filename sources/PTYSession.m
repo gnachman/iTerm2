@@ -5204,6 +5204,7 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
     _textview.animateMovement = [iTermProfilePreferences boolForKey:KEY_ANIMATE_MOVEMENT inProfile:aDict];
     _textview.animateMovementOnlyInInteractiveApps = [iTermProfilePreferences boolForKey:KEY_ANIMATE_MOVEMENT_ONLY_IN_INTERACTIVE_APPS
                                                                                inProfile:aDict];
+    _textview.cursorSmoothSlide = [iTermProfilePreferences boolForKey:KEY_CURSOR_SMOOTH_SLIDE inProfile:aDict];
     [_textview setBlinkingCursor:[iTermProfilePreferences boolForKey:KEY_BLINKING_CURSOR inProfile:aDict]];
     [_textview setCursorType:_cursorTypeOverride ? _cursorTypeOverride.integerValue : [iTermProfilePreferences intForKey:KEY_CURSOR_TYPE inProfile:aDict]];
 

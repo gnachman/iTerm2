@@ -3578,6 +3578,14 @@ iTermKittyImageDraw *iTermFindKittyImageDrawForVirtualPlaceholder(NSArray<iTermK
     return [[iTermCursor cursorOfType:_cursorType] isSolidRectangleWithFocused:self.isFocused];
 }
 
+- (BOOL)cursorSupportsSmoothSlide {
+    if (![self cursorIsSolidRectangle]) {
+        return NO;
+    }
+    // Block cursor inverts character colors - doesn't work for smooth slide
+    return _cursorType == CURSOR_UNDERLINE || _cursorType == CURSOR_VERTICAL;
+}
+
 typedef struct {
     NSRect rect;
     BOOL isDoubleWidth;
@@ -3891,6 +3899,12 @@ typedef struct {
     }
 
     if (self.hideCursorWhenUnfocused && !self.isFocused) {
+        return NO;
+    }
+
+    // Hide cursor during smooth slide animation to avoid showing both the real cursor
+    // at the new position and the animated cursor sliding toward it.
+    if ([_delegate drawingHelperSlideAnimationInProgress]) {
         return NO;
     }
 

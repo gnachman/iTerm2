@@ -416,5 +416,9 @@ extension TextClipDrawing: iTermTextDrawingHelperDelegate {
     func drawingHelperIsFirstLine(ofBlock line: Int32) -> Bool {
         return false
     }
+
+    func drawingHelperSlideAnimationInProgress() -> Bool {
+        return false
+    }
 }
 

@@ -57,6 +57,7 @@
 #import "iTermBadgeLabel.h"
 #import "iTermCPS.h"
 #import "iTermColorMap.h"
+#import "iTermCursorSlideAnimator.h"
 #import "iTermController.h"
 #import "iTermFindCursorView.h"
 #import "iTermFindOnPageHelper.h"
@@ -195,6 +196,9 @@ const CGFloat PTYTextViewMarginClickGraceWidth = 2.0;
 
     NSMutableData *_marginColorWidthBuffer;
     NSMutableData *_marginColorTwiceHeightBuffer;
+
+    // Cursor slide animation (handles both legacy and Metal paths)
+    iTermCursorSlideAnimator *_cursorSlideAnimator;
 }
 
 
@@ -273,6 +277,9 @@ const CGFloat PTYTextViewMarginClickGraceWidth = 2.0;
         [_focusFollowsMouse resetMouseLocationToRefuseFirstResponderAt];
         _drawingHelper = [[iTermTextDrawingHelper alloc] init];
         _drawingHelper.delegate = self;
+
+        _cursorSlideAnimator = [[iTermCursorSlideAnimator alloc] init];
+        _cursorSlideAnimator.delegate = self;
 
         [self updateMarkedTextAttributes];
         _cursorVisible = YES;
@@ -426,6 +433,8 @@ const CGFloat PTYTextViewMarginClickGraceWidth = 2.0;
     [_marginColorWidthBuffer release];
     [_marginColorTwiceHeightBuffer release];
     [_focusFollowsMouse release];
+    _cursorSlideAnimator.delegate = nil;
+    [_cursorSlideAnimator release];
 
     [super dealloc];
 }
@@ -1453,13 +1462,46 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
     return virtualOffset;
 }
 
+- (BOOL)shouldSmoothSlideFrom:(NSRect)from to:(NSRect)to {
+    // Only for horizontal moves on same line
+    if (fabs(from.origin.y - to.origin.y) > 1.0) {
+        return NO;
+    }
+    // Only for moves within the configured maximum number of cells
+    const CGFloat dx = fabs(to.origin.x - from.origin.x);
+    const CGFloat cellWidth = self.charWidth;
+    const int maxCells = [iTermAdvancedSettingsModel cursorSlideAnimationMaxCells];
+    return dx > 0 && dx <= cellWidth * (maxCells + 0.5);  // Allow small tolerance
+}
+
 - (void)smearCursorIfNeededWithDrawingHelper:(iTermTextDrawingHelper *)drawingHelper {
-    if (!self.animateMovement) {
-        DLog(@"Movement animation is off");
+    [self smearCursorIfNeededWithDrawingHelper:drawingHelper
+                                    legacyView:nil
+                        startedLegacyAnimation:NULL];
+}
+
+// Returns YES via startedLegacyAnimation if a legacy slide animation was started.
+// The caller should then draw the animated cursor and return early.
+- (void)smearCursorIfNeededWithDrawingHelper:(iTermTextDrawingHelper *)drawingHelper
+                                  legacyView:(NSView *)legacyView
+                      startedLegacyAnimation:(BOOL *)startedLegacyAnimation {
+    if (startedLegacyAnimation) {
+        *startedLegacyAnimation = NO;
+    }
+
+    // Don't start a new animation while capturing the screenshot for the current one
+    if (_cursorSlideAnimator.capturingScreenshot) {
         return;
     }
-    if (self.animateMovementOnlyInInteractiveApps && !self.delegate.textViewInInteractiveApplication) {
-        DLog(@"Not in interactive app");
+
+    const BOOL smearEnabled = (self.animateMovement &&
+                               !(self.animateMovementOnlyInInteractiveApps &&
+                                 !self.delegate.textViewInInteractiveApplication));
+    const BOOL smoothSlideEnabled = self.cursorSmoothSlide;
+    const BOOL isLegacyPath = (legacyView != nil);
+
+    if (!smearEnabled && !smoothSlideEnabled) {
+        DLog(@"No cursor animation enabled");
         return;
     }
     if (!drawingHelper.cursorIsSolidRectangle) {
@@ -1481,11 +1523,59 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
         from.origin.y -= documentVisibleRect.origin.y;
         to.origin.y -= documentVisibleRect.origin.y;
 
-        [self.delegate textViewSmearCursorFrom:from
-                                            to:to
-                                         color:drawingHelper.cursorColor];
+        // Check if this should use smooth slide:
+        // - cursorSmoothSlide preference is enabled
+        // - cursor type supports it (underscore or vertical bar, not block)
+        // - 1-cell horizontal move
+        const BOOL useSmoothSlide = (smoothSlideEnabled &&
+                                     drawingHelper.cursorSupportsSmoothSlide &&
+                                     [self shouldSmoothSlideFrom:from to:to]);
+        if (useSmoothSlide) {
+            DLog(@"Using smooth slide animation");
+            if (isLegacyPath) {
+                // Legacy renderer: use direct drawing approach
+                [_cursorSlideAnimator beginLegacyAnimationFrom:from
+                                                            to:to
+                                                         color:drawingHelper.cursorColor
+                                                        inView:legacyView];
+                if (startedLegacyAnimation) {
+                    *startedLegacyAnimation = YES;
+                }
+            } else {
+                // Metal renderer: track animation state, Metal will draw cursor at interpolated position
+                [_cursorSlideAnimator beginMetalAnimationFrom:from to:to];
+            }
+        } else if (smearEnabled) {
+            [self.delegate textViewSmearCursorFrom:from
+                                                to:to
+                                             color:drawingHelper.cursorColor];
+        }
     }
     _previousCursorFrame = cursorFrame;
+}
+
+#pragma mark - iTermCursorSlideAnimatorDelegate
+
+- (void)cursorSlideAnimatorNeedsRedrawInRect:(NSRect)rect inView:(NSView *)view {
+    [view setNeedsDisplayInRect:rect];
+}
+
+- (void)cursorSlideAnimatorSetAnimated:(BOOL)animated {
+    _drawingHelper.animated = animated;
+}
+
+- (void)cursorSlideAnimatorRequestDelegateRedraw {
+    [self requestDelegateRedraw];
+}
+
+#pragma mark - Cursor Animation Accessors
+
+- (CGPoint)metalCursorAnimationPixelOffset {
+    return [_cursorSlideAnimator cursorPixelOffset];
+}
+
+- (BOOL)slideAnimationInProgress {
+    return _cursorSlideAnimator.animationInProgress;
 }
 
 // Draw in to another view which exactly coincides with the clip view, except it's inset on the top
@@ -1499,6 +1589,13 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
         }
         return;
     }
+
+    // Fast path for cursor slide animation: if we're animating and this is a redraw
+    // of just the animation region, use the cached screenshot + interpolated cursor.
+    if ([_cursorSlideAnimator drawAnimatedCursorInRect:rect]) {
+        return;
+    }
+
     if (_dataSource.width <= 0) {
         ITCriticalError(_dataSource.width < 0, @"Negative datasource width of %@", @(_dataSource.width));
         return;
@@ -1519,6 +1616,7 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
         DLog(@"rectArray[%@]=%@", @(i), NSStringFromRect(rectArray[i]));
     }
 
+    __block BOOL startedLegacyAnimation = NO;
     [self performBlockWithFlickerFixerGrid:^{
         // Initialize drawing helper
         [self drawingHelper];
@@ -1530,6 +1628,13 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
             // This is used by tests to customize the draw helper.
             _drawingHook(_drawingHelper);
         }
+
+        // This must come BEFORE drawing so that the animator's animationInProgress is set
+        // before cursor visibility is determined.
+        // Pass the legacy view so the legacy animation approach is used instead of overlay.
+        [self smearCursorIfNeededWithDrawingHelper:_drawingHelper
+                                        legacyView:view
+                            startedLegacyAnimation:&startedLegacyAnimation];
 
         NSRect virtualRect = rect;
         virtualRect.origin.y += virtualOffset;
@@ -1557,8 +1662,11 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
         }
 
         // Not sure why this is needed, but for some reason this view draws over its subviews.
-        for (NSView *subview in [self subviews]) {
-            [subview setNeedsDisplay:YES];
+        // Don't do this during screenshot capture for animation - it causes unnecessary redraws.
+        if (!_cursorSlideAnimator.capturingScreenshot) {
+            for (NSView *subview in [self subviews]) {
+                [subview setNeedsDisplay:YES];
+            }
         }
 
         if (_drawingHelper.blinkingFound && _blinkAllowed) {
@@ -1567,10 +1675,15 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
             // blinking.
             [self.delegate textViewWillNeedUpdateForBlink];
         }
+
+        // Handle cursor drawing during animation.
+        // The normal draw above didn't draw the cursor because animationInProgress was YES.
+        // Don't draw cursor during screenshot capture - we want the screenshot to be cursor-free.
+        [_cursorSlideAnimator drawCursorAfterNormalDrawInView:view
+                                             startedThisFrame:startedLegacyAnimation];
     }];
     [self maybeInvalidateWindowShadow];
     [self shiftTrackingChildWindows];
-    [self smearCursorIfNeededWithDrawingHelper:_drawingHelper];
 }
 
 // This view is visible only when annotations are revealed. They are subviews, and while macOS does
@@ -1911,7 +2024,10 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
 }
 
 - (BOOL)getAndResetDrawingAnimatedImageFlag {
-    BOOL result = _drawingHelper.animated;
+    // Also return YES if cursor slide animation is in progress, to ensure
+    // Metal keeps rendering at high cadence during the animation
+    BOOL animatorInProgress = _cursorSlideAnimator.animationInProgress;
+    BOOL result = _drawingHelper.animated || animatorInProgress;
     _drawingHelper.animated = NO;
     return result;
 }
@@ -5551,6 +5667,10 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
 
 - (BOOL)drawingHelperIsFirstLineOfBlock:(int)line {
     return [self.dataSource isFirstLineOfBlock:line];
+}
+
+- (BOOL)drawingHelperSlideAnimationInProgress {
+    return _cursorSlideAnimator.animationInProgress;
 }
 
 - (VT100GridAbsCoord)absCoordForButton:(iTermTerminalButton *)button API_AVAILABLE(macos(11)) {

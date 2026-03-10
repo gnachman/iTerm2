@@ -562,6 +562,8 @@ DEFINE_BOOL(alwaysUseLineStyleMarks, NO, SECTION_DRAWING @"Always use line-style
 DEFINE_FLOAT(alphaForDeselectedCommandShade, 0.25, SECTION_DRAWING @"Alpha value for shade that covers areas outside the currently selected command.");
 DEFINE_BOOL(showURLPreviewForSemanticHistory, YES, SECTION_DRAWING @"Show URL preview on cmd-hover for semantic history matches.");
 DEFINE_FLOAT(cursorAnimationMinDistance, 150.0, SECTION_DRAWING @"When animated cursor movement is enabled, only perform animation if the cursor moves at least this distance in points.");
+DEFINE_FLOAT(cursorSlideAnimationDuration, 0.05, SECTION_DRAWING @"Duration in seconds for smooth cursor slide animation.\nThis affects the \"Smooth slide\" cursor movement option.");
+DEFINE_INT(cursorSlideAnimationMaxCells, 1, SECTION_DRAWING @"Maximum horizontal distance in cells for smooth cursor slide animation.\nCursor movements larger than this will not animate.");
 
 #pragma mark - Semantic History
 

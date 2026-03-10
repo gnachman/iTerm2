@@ -7,6 +7,7 @@
 
 #import "PTYTextView.h"
 
+#import "iTermCursorSlideAnimator.h"
 #import "PTYNoteViewController.h"
 #import "iTermTextViewContextMenuHelper.h"
 #import "iTermSelection.h"
@@ -34,6 +35,7 @@
 @interface PTYTextView () <
 PTYNoteViewControllerDelegate,
 iTermBadgeLabelDelegate,
+iTermCursorSlideAnimatorDelegate,
 iTermTextViewAccessibilityHelperDelegate,
 iTermFindCursorViewDelegate,
 iTermFindOnPageHelperDelegate,
