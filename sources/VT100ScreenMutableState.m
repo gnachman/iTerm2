@@ -1557,6 +1557,15 @@ void VT100ScreenEraseCell(screen_char_t *sct,
         VT100GridAbsCoordRange range = [self absCoordRangeForInterval:object.entry.interval];
         range.start.y -= history;
         range.end.y -= history;
+        // Clamp to valid coordinates to prevent negative interval limits.
+        if (range.end.y < 0) {
+            range.end.y = 0;
+            range.end.x = 0;
+        }
+        if (range.start.y < 0) {
+            range.start.y = 0;
+            range.start.x = 0;
+        }
         return [self intervalForGridAbsCoordRange:range];
     }];
 
@@ -1991,8 +2000,8 @@ void VT100ScreenEraseCell(screen_char_t *sct,
         if (note.entry.interval.location < screenInterval.location) {
             // Truncate note so that it ends just before screen.
             // Subtract 1 because end coord is inclusive of y even when x is 0.
-            Interval *newInterval = [[Interval alloc] initWithLocation:note.entry.interval.location
-                                                                length:screenInterval.location - note.entry.interval.location - 1];
+            Interval *newInterval = [Interval intervalWithLocation:note.entry.interval.location
+                                                          length:screenInterval.location - note.entry.interval.location - 1];
             return [iTermTuple tupleWithObject:newInterval andObject:note];
         }
         return nil;
@@ -3428,16 +3437,17 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     DLog(@"  moveNotes: looking in range %@", VT100GridCoordRangeDescription(screenRange));
     Interval *sourceInterval = [self intervalForGridCoordRange:screenRange];
     self.lastCommandMark = nil;
-    NSArray<id<IntervalTreeObject>> *objectsMoved = [source mutableObjectsInInterval:sourceInterval];
-    for (id<IntervalTreeObject> obj in objectsMoved) {
+    NSMutableArray<id<IntervalTreeObject>> *objectsMoved = [NSMutableArray array];
+    for (id<IntervalTreeObject> obj in [source mutableObjectsInInterval:sourceInterval]) {
         Interval *interval = obj.entry.interval;
         DLog(@"  found note with interval %@. Remove %@", interval, obj);
         const BOOL removed = [source removeObject:obj];
         assert(removed);
         Interval *newInterval = [Interval intervalWithLocation:interval.location + offset
                                                         length:interval.length];
-        DLog(@"  new interval is %@", interval);
+        DLog(@"  new interval is %@", newInterval);
         [dest addObject:obj withInterval:newInterval];
+        [objectsMoved addObject:obj];
     }
     return objectsMoved;
 }
@@ -3450,7 +3460,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
                             screenOrigin,
                             self.width,
                             screenOrigin + self.height);
-    DLog(@"  moveNotes: looking in range %@", VT100GridCoordRangeDescription(screenRange));
+    DLog(@"  removeNotes: looking in range %@", VT100GridCoordRangeDescription(screenRange));
     Interval *sourceInterval = [self intervalForGridCoordRange:screenRange];
     self.lastCommandMark = nil;
     NSMutableArray<iTermTuple<id<IntervalTreeObject>, Interval *> *> *objects = [NSMutableArray array];
@@ -3461,7 +3471,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
         assert(removed);
         Interval *newInterval = [Interval intervalWithLocation:interval.location + offset
                                                         length:interval.length];
-        DLog(@"  new interval is %@", interval);
+        DLog(@"  new interval is %@", newInterval);
         [objects addObject:[iTermTuple tupleWithObject:obj andObject:newInterval]];
     }
     return objects;
@@ -4448,6 +4458,15 @@ void VT100ScreenEraseCell(screen_char_t *sct,
             itoRange.start.y += deltaLines;
         }
         itoRange.end.y += deltaLines;
+        // Clamp to valid coordinates to prevent negative interval limits.
+        if (itoRange.end.y < 0) {
+            itoRange.end.y = 0;
+            itoRange.end.x = 0;
+        }
+        if (itoRange.start.y < 0) {
+            itoRange.start.y = 0;
+            itoRange.start.x = 0;
+        }
         DLog(@"        Destination range: %@", VT100GridCoordRangeDescription(itoRange));
         return [self intervalForGridCoordRange:itoRange];
     }];

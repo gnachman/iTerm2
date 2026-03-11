@@ -464,6 +464,15 @@ lengthExcludingInBandSignaling:(int)lengthExcludingInBandSignaling
             metadata:(NSArray<NSArray *> *)metadataArrays
                 info:(DVRFrameInfo)info;
 
+#pragma mark - Testing
+
+// Exposed for testing. Shifts interval tree objects in the given range down by deltaLines.
+// If deltaLines is negative, objects move up. The startingAfter parameter specifies that
+// only the end of intervals moves for objects whose start.y <= startingAfter.
+- (void)shiftIntervalTreeObjectsInRange:(VT100GridCoordRange)range
+                          startingAfter:(int)startingAfter
+                            downByLines:(int)deltaLines;
+
 @end
 
 NS_ASSUME_NONNULL_END

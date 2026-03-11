@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		02BBB9199A50961FFEAC2D6D /* iTermFindOnPageHelperTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 98E9463133DCF8311E0E5B6E /* iTermFindOnPageHelperTests.swift */; };
+		052FA2457F95F63A46C30503 /* IntervalTreeCoordinateClampingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6601DD02DFE3C2480DFDC73 /* IntervalTreeCoordinateClampingTests.swift */; };
 		06E0C88E1DF9695400AA061B /* iTermServiceProvider.h in Headers */ = {isa = PBXBuildFile; fileRef = 06E0C88C1DF9695400AA061B /* iTermServiceProvider.h */; };
 		10AAA7668EA8FBDD64696AB7 /* iTermEventTriggerParameterView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DE7B0AE10E1598EDE1E01795 /* iTermEventTriggerParameterView.swift */; };
 		1D027C111CD1867000B0FBFF /* iTermColorPresets.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D027C0F1CD1867000B0FBFF /* iTermColorPresets.h */; };
@@ -9168,6 +9169,7 @@
 		F6441F6F0E748404000EC682 /* CGSTransitions.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CGSTransitions.h; sourceTree = "<group>"; };
 		F6441F700E748404000EC682 /* CGSWindow.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CGSWindow.h; sourceTree = "<group>"; };
 		F6441F710E748404000EC682 /* CGSWorkspace.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CGSWorkspace.h; sourceTree = "<group>"; };
+		F6601DD02DFE3C2480DFDC73 /* IntervalTreeCoordinateClampingTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = IntervalTreeCoordinateClampingTests.swift; sourceTree = "<group>"; };
 		F69E788C0AB7AC6D001EC0FF /* iTermNotificationController.m */ = {isa = PBXFileReference; fileEncoding = 30; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; lineEnding = 0; path = iTermNotificationController.m; sourceTree = "<group>"; tabWidth = 4; xcLanguageSpecificationIdentifier = xcode.lang.objc; };
 		F69E78910AB7AC85001EC0FF /* iTermNotificationController.h */ = {isa = PBXFileReference; fileEncoding = 30; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = iTermNotificationController.h; sourceTree = "<group>"; tabWidth = 4; };
 		F6E2DED70AE2F67200D20B3B /* Sparkle.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = Sparkle.framework; sourceTree = "<group>"; };
@@ -9862,6 +9864,7 @@
 			children = (
 				002CB9657AA29AC459CE35D1 /* iTermWordExtractorTest.swift */,
 				98E9463133DCF8311E0E5B6E /* iTermFindOnPageHelperTests.swift */,
+				F6601DD02DFE3C2480DFDC73 /* IntervalTreeCoordinateClampingTests.swift */,
 			);
 			path = ModernTests;
 			sourceTree = "<group>";
@@ -20052,6 +20055,7 @@
 				A6C811F42DCFD5E40088E628 /* SearchEngineTests.swift in Sources */,
 				F54DF58519DE131885375D3F /* iTermWordExtractorTest.swift in Sources */,
 				02BBB9199A50961FFEAC2D6D /* iTermFindOnPageHelperTests.swift in Sources */,
+				052FA2457F95F63A46C30503 /* IntervalTreeCoordinateClampingTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
