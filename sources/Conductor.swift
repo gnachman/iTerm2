@@ -1528,11 +1528,67 @@ extension Conductor {
     @available(macOS 11, *)
     @objc(uploadFile:to:)
     func upload(file: String, to destinationPath: SCPPath) {
-        let file = ConductorFileTransfer(path: destinationPath,
-                                         localPath: file,
-                                         data: nil,
-                                         delegate: self)
-        file.upload()
+        _ = upload(file: file, to: destinationPath, completion: { _, _ in })
+    }
+
+    @available(macOS 11, *)
+    @objc(uploadFile:to:withCompletion:)
+    func upload(file: String, to destinationPath: SCPPath, completion: @escaping (Bool, String?) -> Void) -> TransferrableFile? {
+        let localPath: String
+        let remotePath: SCPPath
+        let tempArchivePath: String?
+
+        // Check if it's a directory - create a tgz archive
+        var isDirectory: ObjCBool = false
+        if FileManager.default.fileExists(atPath: file, isDirectory: &isDirectory), isDirectory.boolValue {
+            do {
+                let result = try createArchiveForDirectory(file, destinationPath: destinationPath)
+                localPath = result.localPath
+                remotePath = result.remotePath
+                tempArchivePath = result.tempArchivePath
+            } catch {
+                DLog("Failed to create tgz archive: \(error)")
+                completion(false, error.localizedDescription)
+                return nil
+            }
+        } else {
+            localPath = file
+            remotePath = destinationPath
+            tempArchivePath = nil
+        }
+
+        let transfer = ConductorFileTransfer(path: remotePath,
+                                             localPath: localPath,
+                                             data: nil,
+                                             delegate: self)
+        transfer.completionBlock = { success, error in
+            // Clean up temp archive if we created one
+            if let tempPath = tempArchivePath {
+                try? FileManager.default.removeItem(atPath: tempPath)
+            }
+            completion(success, error)
+        }
+        transfer.upload()
+        return transfer
+    }
+
+    private struct DirectoryArchiveResult {
+        let localPath: String
+        let remotePath: SCPPath
+        let tempArchivePath: String
+    }
+
+    private func createArchiveForDirectory(_ directoryPath: String, destinationPath: SCPPath) throws -> DirectoryArchiveResult {
+        DLog("Converting directory to tgz for conductor upload: \(directoryPath)")
+
+        let tempPath = try NSData.temporaryTGZArchive(ofDirectory: directoryPath)
+
+        let remotePath = SCPPath()
+        remotePath.hostname = destinationPath.hostname
+        remotePath.username = destinationPath.username
+        remotePath.path = destinationPath.path + ".tgz"
+
+        return DirectoryArchiveResult(localPath: tempPath, remotePath: remotePath, tempArchivePath: tempPath)
     }
 
     private var jumpScript: String {

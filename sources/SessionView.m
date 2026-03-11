@@ -151,6 +151,7 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
     // its frame is 0x0.
     iTermScrollerBackgroundColorView *_legacyScrollerBackgroundView;
     iTermUnobtrusiveMessage *_unobtrusiveMessage;
+    iTermUploadIndicator *_uploadIndicator;
     iTermStatusBarFilterComponent *_temporaryFilterComponent;
     iTermCursorSmearView *_smearView;
     NSInteger _contentViewIndex;  // for metal or legacy view - whatever draws terminal content goes at this index.
@@ -1174,7 +1175,18 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
     if (_useMetal) {
         [self updateMetalViewFrame];
     }
+    [self updateUploadIndicatorFrame];
     DLog(@"After:\n%@", [self iterm_recursiveDescription]);
+}
+
+- (void)updateUploadIndicatorFrame {
+    if (!_uploadIndicator) {
+        return;
+    }
+    NSRect frame = _uploadIndicator.frame;
+    frame.origin.x = 20;
+    frame.origin.y = self.bounds.size.height - frame.size.height - 20;
+    _uploadIndicator.frame = frame;
 }
 
 - (NSArray<NSValue *> *)framesForURLPreviewWithPadding:(NSSize)padding {
@@ -2744,6 +2756,23 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
         [self->_unobtrusiveMessage removeFromSuperview];
         self->_unobtrusiveMessage = nil;
     }];
+}
+
+- (void)showUploadIndicatorWithFilename:(NSString *)filename onCancel:(void (^)(void))onCancel {
+    if (_uploadIndicator) {
+        return;
+    }
+    _uploadIndicator = [[iTermUploadIndicator alloc] initWithFilename:filename onCancel:onCancel];
+    [_uploadIndicator animateInFromTopLeftIn:self];
+}
+
+- (void)hideUploadIndicator {
+    if (!_uploadIndicator) {
+        return;
+    }
+    iTermUploadIndicator *indicator = _uploadIndicator;
+    _uploadIndicator = nil;
+    [indicator animateOutWithCompletion:^{}];
 }
 
 #pragma mark - iTermGenericStatusBarContainer

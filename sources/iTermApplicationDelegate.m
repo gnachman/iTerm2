@@ -1348,6 +1348,7 @@ void TurnOnDebugLoggingAutomatically(void) {
                                     window:nil];
     }
     DLog(@"didFinishLaunching");
+
     [iTermLaunchExperienceController applicationDidFinishLaunching];
     [[iTermLaunchServices sharedInstance] registerForiTerm2Scheme];
     if (IsTouchBarAvailable()) {

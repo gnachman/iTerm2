@@ -343,6 +343,14 @@ static const NSTimeInterval kMaximumTimeToKeepFinishedDownload = 24 * 60 * 60;
 
     TransferrableFileMenuItemViewController *controller = [self viewControllerForTransferrableFile:transferrableFile];
     [controller update];
+
+    // Call the completion block if set
+    if (transferrableFile.completionBlock) {
+        BOOL success = (error == nil);
+        NSString *errorMessage = error.localizedDescription;
+        transferrableFile.completionBlock(success, errorMessage);
+        transferrableFile.completionBlock = nil;  // Clear to avoid retain cycles
+    }
 }
 
 - (void)transferrableFileWillStop:(TransferrableFile *)transferrableFile {
@@ -357,6 +365,12 @@ static const NSTimeInterval kMaximumTimeToKeepFinishedDownload = 24 * 60 * 60;
     transferrableFile.status = kTransferrableFileStatusCancelled;
     TransferrableFileMenuItemViewController *controller = [self viewControllerForTransferrableFile:transferrableFile];
     [controller update];
+
+    // Call the completion block if set (transfer was cancelled)
+    if (transferrableFile.completionBlock) {
+        transferrableFile.completionBlock(NO, @"Transfer cancelled");
+        transferrableFile.completionBlock = nil;
+    }
 }
 
 

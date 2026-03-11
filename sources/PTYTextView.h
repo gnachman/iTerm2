@@ -299,6 +299,10 @@ extern const CGFloat PTYTextViewMarginClickGraceWidth;
 - (void)textViewExitShortcutNavigationMode;
 - (void)textViewWillHandleMouseDown:(NSEvent *)event;
 - (BOOL)textViewPasteFiles:(NSArray<NSString *> *)filenames;
+// Returns YES if the current working directory is on localhost (no remote host detected).
+- (BOOL)textViewIsOnLocalhost;
+// Show the non-text paste dialog for dropped files, same as Cmd+V with files on the pasteboard.
+- (void)textViewShowPasteOptionsForDroppedFiles:(NSArray<NSString *> *)filenames;
 - (void)textViewPerformNaturalLanguageQuery;
 - (BOOL)textViewCanExplainOutputWithAI;
 - (void)textViewExplainOutputWithAI;

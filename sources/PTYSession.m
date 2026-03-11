@@ -1007,6 +1007,8 @@ ITERM_WEAKLY_REFERENCEABLE
     [_preEscapeSequenceColors release];
     _pasteHelper.delegate = nil;
     [_pasteHelper release];
+    _nonTextPasteHelper.delegate = nil;
+    [_nonTextPasteHelper release];
     [_backgroundImage release];
     [_antiIdleTimer invalidate];
     [_cadenceController release];
@@ -11485,9 +11487,36 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
         [_composerManager paste:sender];
         return;
     }
+    // Check for file URLs first - even if text is present, we want to offer file options
+    BOOL hasFileURLs = [[NSPasteboard generalPasteboard] hasFileURLs];
+    DLog(@"hasFileURLs=%@", @(hasFileURLs));
+    if (hasFileURLs) {
+        [self attemptNonTextPaste];
+        return;
+    }
     // If this class is used in a non-iTerm2 app (as a library), we might not
     // be called from a menu item so just use no flags in this case.
-    [self pasteString:[PTYSession pasteboardString] flags:[sender isKindOfClass:NSMenuItem.class] ? [sender tag] : 0];
+    NSString *pasteboardString = [PTYSession pasteboardString];
+    DLog(@"pasteboardString length=%@", @(pasteboardString.length));
+    if (pasteboardString.length > 0) {
+        [self pasteString:pasteboardString flags:[sender isKindOfClass:NSMenuItem.class] ? [sender tag] : 0];
+    } else {
+        [self attemptNonTextPaste];
+    }
+}
+
+- (iTermNonTextPasteHelper *)nonTextPasteHelper {
+    if (!_nonTextPasteHelper) {
+        _nonTextPasteHelper = [[iTermNonTextPasteHelper alloc] init];
+        _nonTextPasteHelper.delegate = self;
+    }
+    return _nonTextPasteHelper;
+}
+
+- (void)attemptNonTextPaste {
+    DLog(@"attemptNonTextPaste");
+    BOOL handled = [[self nonTextPasteHelper] pasteNonTextContent];
+    DLog(@"pasteNonTextContent returned %@", @(handled));
 }
 
 // Show advanced paste window.
@@ -13406,6 +13435,8 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 
 - (void)uploadFiles:(NSArray *)localFilenames toPath:(SCPPath *)destinationPath
 {
+    DLog(@"uploadFiles:%@ toPath:%@", localFilenames, destinationPath.path);
+
     SCPFile *previous = nil;
     for (NSString *file in localFilenames) {
         SCPPath *path = [[[SCPPath alloc] init] autorelease];
@@ -13413,16 +13444,20 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
         path.username = destinationPath.username;
         NSString *filename = [file lastPathComponent];
         path.path = [destinationPath.path stringByAppendingPathComponent:filename];
+        DLog(@"Will upload local:%@ to remote:%@", file, path.path);
 
         if (@available(macOS 11, *)) {
             if ([_conductor canTransferFilesTo:path]) {
+                DLog(@"Using conductor for upload");
                 [_conductor uploadFile:file to:path];
                 break;
             }
         }
+        DLog(@"Using SCPFile for upload");
         SCPFile *scpFile = [[[SCPFile alloc] init] autorelease];
         scpFile.path = path;
         scpFile.localPath = file;
+        DLog(@"SCPFile localPath=%@ remotePath=%@", scpFile.localPath, scpFile.path.path);
 
         if (previous) {
             previous.successor = scpFile;
@@ -17978,6 +18013,158 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     return self.variablesScope;
 }
 
+#pragma mark - iTermNonTextPasteHelperDelegate
+
+- (void)nonTextPasteHelper:(iTermNonTextPasteHelper *)sender pasteString:(NSString *)string {
+    [self pasteString:string];
+}
+
+- (NSWindow *)nonTextPasteHelperWindow:(iTermNonTextPasteHelper *)sender {
+    return self.view.window;
+}
+
+- (BOOL)nonTextPasteHelperCanUpload:(iTermNonTextPasteHelper *)sender {
+    // Can upload if we have SSH integration (conductor) in framing mode, or if
+    // shell integration detected we're on a remote host.
+    DLog(@"nonTextPasteHelperCanUpload: conductor=%@ framing=%@ currentHost=%@ isLocalhost=%@",
+         self.conductor, @(self.conductor.framing), self.currentHost, @(self.currentHost.isLocalhost));
+    if (self.conductor.framing) {
+        DLog(@"Can upload via conductor");
+        return YES;
+    }
+    BOOL canUpload = self.currentHost != nil && !self.currentHost.isLocalhost;
+    DLog(@"canUpload=%@", @(canUpload));
+    return canUpload;
+}
+
+// Returns an SCPPath for the current remote host and working directory, or nil if not available.
+- (SCPPath *)scpPathForCurrentRemoteHost {
+    id<VT100RemoteHostReading> remoteHost = self.currentHost;
+    DLog(@"scpPathForCurrentRemoteHost: remoteHost=%@", remoteHost);
+    if (!remoteHost || !remoteHost.username || !remoteHost.hostname) {
+        DLog(@"No remote host or missing username/hostname");
+        return nil;
+    }
+    if (remoteHost.isLocalhost) {
+        DLog(@"Is localhost, returning nil");
+        return nil;
+    }
+    NSString *workingDirectory = self.variablesScope.path;
+    if (!workingDirectory) {
+        DLog(@"No working directory");
+        return nil;
+    }
+    SCPPath *scpPath = [[[SCPPath alloc] init] autorelease];
+    scpPath.path = workingDirectory;
+    scpPath.hostname = remoteHost.hostname;
+    scpPath.username = remoteHost.username;
+    DLog(@"Returning scpPath: hostname=%@ username=%@ path=%@", scpPath.hostname, scpPath.username, scpPath.path);
+    return scpPath;
+}
+
+- (void)nonTextPasteHelper:(iTermNonTextPasteHelper *)sender uploadFiles:(NSArray<NSString *> *)paths {
+    DLog(@"nonTextPasteHelper:uploadFiles: paths=%@", paths);
+    for (NSString *path in paths) {
+        NSDictionary *attrs = [[NSFileManager defaultManager] attributesOfItemAtPath:path error:nil];
+        DLog(@"File %@ attributes: size=%@, type=%@", path, attrs[NSFileSize], attrs[NSFileType]);
+    }
+    SCPPath *scpPath = [self scpPathForCurrentRemoteHost];
+    if (!scpPath) {
+        DLog(@"No scpPath, aborting upload");
+        return;
+    }
+    [self uploadFiles:paths toPath:scpPath];
+}
+
+- (void)nonTextPasteHelper:(iTermNonTextPasteHelper *)sender uploadFileAndPastePath:(NSString *)localPath {
+    DLog(@"nonTextPasteHelper:uploadFileAndPastePath: localPath=%@", localPath);
+    if (_uploadAndPasteTransfer) {
+        DLog(@"Upload already in progress, blocking new upload");
+        NSAlert *alert = [[[NSAlert alloc] init] autorelease];
+        alert.messageText = @"Upload in Progress";
+        alert.informativeText = @"Please wait for the current upload to complete or cancel it before starting another.";
+        alert.alertStyle = NSAlertStyleWarning;
+        [alert addButtonWithTitle:@"OK"];
+        if (self.view.window) {
+            [alert beginSheetModalForWindow:self.view.window completionHandler:nil];
+        } else {
+            [alert runModal];
+        }
+        return;
+    }
+    SCPPath *scpPath = [self scpPathForCurrentRemoteHost];
+    if (!scpPath) {
+        DLog(@"No scpPath, aborting upload");
+        return;
+    }
+
+    // Calculate the remote path
+    NSString *filename = [localPath lastPathComponent];
+    NSString *remotePath = [scpPath.path stringByAppendingPathComponent:filename];
+    DLog(@"Remote path will be: %@", remotePath);
+
+    // Show upload indicator
+    __weak __typeof(self) weakSelf = self;
+    [_view showUploadIndicatorWithFilename:filename onCancel:^{
+        DLog(@"Upload cancelled by user");
+        [weakSelf cancelUploadAndPaste];
+    }];
+
+    // Start the upload with a completion handler
+    _uploadAndPasteTransfer = [self uploadFile:localPath toPath:scpPath completion:^(BOOL success, NSString *error) {
+        DLog(@"Upload completed: success=%d error=%@", success, error);
+        __strong __typeof(self) strongSelf = [[weakSelf retain] autorelease];
+        
+        if (!strongSelf) {
+            return;
+        }
+        strongSelf->_uploadAndPasteTransfer = nil;
+        [strongSelf.view hideUploadIndicator];
+        if (success) {
+            NSString *escapedPath = [remotePath quotedStringForPaste];
+            DLog(@"Pasting escaped path: %@", escapedPath);
+            [strongSelf pasteString:escapedPath flags:0];
+        } else {
+            DLog(@"Upload failed, not pasting path");
+        }
+    }];
+}
+
+- (void)cancelUploadAndPaste {
+    if (_uploadAndPasteTransfer) {
+        DLog(@"Cancelling upload and paste transfer");
+        [_uploadAndPasteTransfer stop];
+        _uploadAndPasteTransfer = nil;
+    }
+    [_view hideUploadIndicator];
+}
+
+- (TransferrableFile *)uploadFile:(NSString *)localPath toPath:(SCPPath *)destinationPath completion:(void (^)(BOOL success, NSString *error))completion {
+    DLog(@"uploadFile:%@ toPath:%@ with completion", localPath, destinationPath.path);
+
+    NSString *filename = [localPath lastPathComponent];
+
+    SCPPath *path = [[[SCPPath alloc] init] autorelease];
+    path.hostname = destinationPath.hostname;
+    path.username = destinationPath.username;
+    path.path = [destinationPath.path stringByAppendingPathComponent:filename];
+    DLog(@"Will upload local:%@ to remote:%@", localPath, path.path);
+
+    if ([_conductor canTransferFilesTo:path]) {
+        DLog(@"Using conductor for upload with completion");
+        return [_conductor uploadFile:localPath to:path withCompletion:completion];
+    }
+
+    DLog(@"Using SCPFile for upload with completion");
+    SCPFile *scpFile = [[[SCPFile alloc] init] autorelease];
+    scpFile.path = path;
+    scpFile.localPath = localPath;
+    scpFile.completionBlock = completion;
+    DLog(@"SCPFile localPath=%@ remotePath=%@", scpFile.localPath, scpFile.path.path);
+    [scpFile upload];
+    return scpFile;
+}
+
 #pragma mark - iTermAutomaticProfileSwitcherDelegate
 
 - (NSString *)automaticProfileSwitcherSessionName {
@@ -18202,6 +18389,16 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
                                         mute:@YES];
     }];
     return YES;
+}
+
+- (BOOL)textViewIsOnLocalhost {
+    // If no remote host detected via shell integration, we're on localhost
+    return self.currentHost == nil || self.currentHost.isLocalhost;
+}
+
+- (void)textViewShowPasteOptionsForDroppedFiles:(NSArray<NSString *> *)filenames {
+    DLog(@"textViewShowPasteOptionsForDroppedFiles: %@", filenames);
+    [[self nonTextPasteHelper] showPasteOptionsForFiles:filenames];
 }
 
 - (void)fetchNaturalLanguageQuery:(void (^)(NSString *input))completion {

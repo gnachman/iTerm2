@@ -533,6 +533,18 @@ BOOL gShowRememberedAlerts = NO;
             selection = [self.class remapSelection:kiTermWarningSelection3 withMapping:_actionToSelectionMap];
             remember = [self shouldRememberLabel:_warningActions[3].label];
             break;
+        case NSAlertThirdButtonReturn + 2:
+            selection = [self.class remapSelection:kiTermWarningSelection4 withMapping:_actionToSelectionMap];
+            remember = [self shouldRememberLabel:_warningActions[4].label];
+            break;
+        case NSAlertThirdButtonReturn + 3:
+            selection = [self.class remapSelection:kiTermWarningSelection5 withMapping:_actionToSelectionMap];
+            remember = [self shouldRememberLabel:_warningActions[5].label];
+            break;
+        case NSAlertThirdButtonReturn + 4:
+            selection = [self.class remapSelection:kiTermWarningSelection6 withMapping:_actionToSelectionMap];
+            remember = [self shouldRememberLabel:_warningActions[6].label];
+            break;
         default:
             selection = kItermWarningSelectionError;
     }

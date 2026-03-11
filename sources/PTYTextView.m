@@ -479,9 +479,16 @@ const CGFloat PTYTextViewMarginClickGraceWidth = 2.0;
         if ([pboard stringForType:NSPasteboardTypeString] != nil) {
             return YES;
         }
-        return [[[NSPasteboard generalPasteboard] pasteboardItems] anyWithBlock:^BOOL(NSPasteboardItem *item) {
+        if ([[[NSPasteboard generalPasteboard] pasteboardItems] anyWithBlock:^BOOL(NSPasteboardItem *item) {
             return [item stringForType:(NSString *)kUTTypeUTF8PlainText] != nil;
-        }];
+        }]) {
+            return YES;
+        }
+        // Allow paste for non-text content (files, images)
+        if ([iTermNonTextPasteHelper pasteboardHasNonTextContent]) {
+            return YES;
+        }
+        return NO;
     }
 
     if ([item action] == @selector(pasteOptions:)) {
@@ -4512,15 +4519,32 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
     DLog(@"Perform drag operation");
     if (dragOperation & (NSDragOperationCopy | NSDragOperationGeneric | NSDragOperationLink)) {
         DLog(@"Drag operation is acceptable");
-        if ([NSEvent modifierFlags] & NSEventModifierFlagOption) {
-            DLog(@"Holding option so doing an upload");
-            NSPoint windowDropPoint = [sender draggingLocation];
-            return [self uploadFilenamesOnPasteboard:draggingPasteboard location:windowDropPoint];
-        } else {
-            DLog(@"No option so pasting filename");
-            return [self pasteValuesOnPasteboard:draggingPasteboard
-                                   cdToDirectory:(dragOperation == NSDragOperationGeneric)];
+        NSArray *types = [draggingPasteboard types];
+        if ([types containsObject:NSPasteboardTypeFileURL]) {
+            NSArray *filenames = [draggingPasteboard filenamesOnPasteboardWithShellEscaping:NO forPaste:NO];
+            if (filenames.count > 0) {
+                if ([NSEvent modifierFlags] & NSEventModifierFlagOption) {
+                    // Option key held - upload files
+                    DLog(@"Option key held, uploading files: %@", filenames);
+                    NSPoint windowDropPoint = [sender draggingLocation];
+                    return [self uploadFilenamesOnPasteboard:draggingPasteboard location:windowDropPoint];
+                } else if ([self.delegate textViewIsOnLocalhost]) {
+                    // On localhost, just paste the paths directly
+                    DLog(@"On localhost, pasting file paths directly: %@", filenames);
+                    return [self pasteValuesOnPasteboard:draggingPasteboard
+                                           cdToDirectory:(dragOperation == NSDragOperationGeneric)];
+                } else {
+                    // On remote host, show paste options dialog
+                    DLog(@"On remote host, showing paste options for dropped files: %@", filenames);
+                    [self.delegate textViewShowPasteOptionsForDroppedFiles:filenames];
+                    return YES;
+                }
+            }
         }
+        // Fall back to pasting text values
+        DLog(@"No files, pasting text values");
+        return [self pasteValuesOnPasteboard:draggingPasteboard
+                               cdToDirectory:(dragOperation == NSDragOperationGeneric)];
     }
     DLog(@"Drag/drop Failing");
     return NO;

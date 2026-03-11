@@ -152,6 +152,50 @@
     return data;
 }
 
++ (NSString *)temporaryTGZArchiveOfDirectory:(NSString *)directoryPath
+                                       error:(NSError **)error {
+    NSString *folderName = [directoryPath lastPathComponent];
+    NSString *parentPath = [directoryPath stringByDeletingLastPathComponent];
+
+    NSError *archiveError = nil;
+    NSData *archiveData = [NSData dataWithTGZContainingFiles:@[folderName]
+                                              relativeToPath:parentPath
+                                        includeExtendedAttrs:NO
+                                                       error:&archiveError];
+    // Note: archiveError may be set even on success (e.g., tar warnings to stderr).
+    // Only fail if we didn't get any data back.
+    if (!archiveData) {
+        DLog(@"Failed to create tgz archive: %@", archiveError);
+        if (error) {
+            *error = archiveError ?: [NSError errorWithDomain:@"com.googlecode.iterm2"
+                                                         code:-1
+                                                     userInfo:@{ NSLocalizedDescriptionKey: @"Failed to create archive of folder." }];
+        }
+        return nil;
+    }
+    if (archiveError) {
+        DLog(@"tgz archive created with warning: %@", archiveError);
+    }
+
+    // Write archive to temp file
+    NSString *tempDir = NSTemporaryDirectory();
+    NSString *archiveName = [folderName stringByAppendingString:@".tgz"];
+    NSString *tempPath = [tempDir stringByAppendingPathComponent:archiveName];
+
+    if (![archiveData writeToFile:tempPath atomically:YES]) {
+        DLog(@"Failed to write temp archive to %@", tempPath);
+        if (error) {
+            *error = [NSError errorWithDomain:@"com.googlecode.iterm2"
+                                         code:-1
+                                     userInfo:@{ NSLocalizedDescriptionKey: @"Failed to write temporary archive file." }];
+        }
+        return nil;
+    }
+    DLog(@"Created temp archive at %@ (%lu bytes)", tempPath, (unsigned long)archiveData.length);
+
+    return tempPath;
+}
+
 - (BOOL)containsAsciiCharacterInSet:(NSCharacterSet *)asciiSet {
     char flags[256];
     for (int i = 0; i < 256; i++) {
