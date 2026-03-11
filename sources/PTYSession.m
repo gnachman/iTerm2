@@ -12477,11 +12477,19 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 }
 
 - (BOOL)textViewIsZoomedIn {
-    return _liveSession && !_dvr && !_filter;
+    return _liveSession && !_dvr && !_filter && !_inScreenshotMode;
 }
 
 - (BOOL)textViewIsFiltered {
     return _liveSession && _filter;
+}
+
+- (BOOL)textViewIsInScreenshotMode {
+    return _inScreenshotMode;
+}
+
+- (BOOL)textViewIsSyntheticSession {
+    return _liveSession != nil;
 }
 
 - (BOOL)textViewSessionIsLinkedToAIChat {
@@ -19178,6 +19186,10 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
         if ([self updateTTYSize]) {
             _shell.ttySizeInitialized = YES;
         }
+    }
+    // If the session is in screenshot mode and its view lost its window, close the screenshot panel
+    if (_inScreenshotMode && _view.window == nil) {
+        [iTermScreenshotPanel closePanelForSession:self];
     }
 }
 

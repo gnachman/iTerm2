@@ -1269,6 +1269,15 @@ CQ
                                     </items>
                                 </menu>
                             </menuItem>
+                            <menuItem isSeparatorItem="YES" id="kkX-dJ-1OS">
+                                <modifierMask key="keyEquivalentModifierMask" command="YES"/>
+                            </menuItem>
+                            <menuItem title="Make Screenshot…" identifier="Make Screenshot" id="scr-Ob-001">
+                                <modifierMask key="keyEquivalentModifierMask"/>
+                                <connections>
+                                    <action selector="makeScreenshot:" target="201" id="scr-Ob-002"/>
+                                </connections>
+                            </menuItem>
                             <menuItem isSeparatorItem="YES" id="vXn-Fa-KDE"/>
                             <menuItem title="Terminal State" id="oeT-w1-6UG">
                                 <modifierMask key="keyEquivalentModifierMask"/>

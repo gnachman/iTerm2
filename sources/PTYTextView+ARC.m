@@ -65,6 +65,53 @@ static const NSUInteger kRectangularSelectionModifierMask = (kRectangularSelecti
 iTermCommandInfoViewControllerDelegate>
 @end
 
+#pragma mark - Batched Render Token
+
+@interface iTermBatchedRenderToken : NSObject
+@property (nonatomic) BOOL cancelled;
+@property (nonatomic, readonly) NSRange lineRange;
+@property (nonatomic, readonly) NSUInteger batchSize;
+@property (nonatomic, readonly, copy) void (^progress)(NSUInteger, NSUInteger);
+@property (nonatomic, readonly, copy) void (^completion)(NSImage *);
+@property (nonatomic) NSUInteger currentLine;
+// Incremental compositing - single image that grows, not an array
+@property (nonatomic, strong) NSImage *compositeImage;
+@property (nonatomic) CGFloat lineHeight;
+@property (nonatomic) CGFloat imageWidth;
+@end
+
+@implementation iTermBatchedRenderToken
+
+- (instancetype)initWithLineRange:(NSRange)lineRange
+                        batchSize:(NSUInteger)batchSize
+                       lineHeight:(CGFloat)lineHeight
+                       imageWidth:(CGFloat)imageWidth
+                         progress:(void (^)(NSUInteger, NSUInteger))progress
+                       completion:(void (^)(NSImage *))completion {
+    self = [super init];
+    if (self) {
+        _lineRange = lineRange;
+        _batchSize = batchSize;
+        _lineHeight = lineHeight;
+        _imageWidth = imageWidth;
+        _progress = [progress copy];
+        _completion = [completion copy];
+        _currentLine = lineRange.location;
+        // Pre-allocate final image at full size
+        const CGFloat totalHeight = lineRange.length * lineHeight;
+        _compositeImage = [[NSImage alloc] initWithSize:NSMakeSize(imageWidth, totalHeight)];
+    }
+    return self;
+}
+
+- (void)setCancelled:(BOOL)cancelled {
+    NSLog(@"setCancelled:%@ for %@", @(cancelled), self);
+    _cancelled = cancelled;
+}
+
+@end
+
+#pragma mark -
 
 @implementation PTYTextView (ARC)
 
@@ -2061,6 +2108,346 @@ toggleAnimationOfImage:(id<iTermImageInfoReading>)imageInfo {
                                                        escaping:iTermSendTextEscapingNone
                                                         version:[iTermSnippet currentVersion]];
     [[iTermSnippetsModel sharedInstance] addSnippet:snippet];
+}
+
+- (iTermBlurredScreenshotSelectionRegion *)blurredScreenshotSelectionRegion {
+    if (!self.selection.hasSelection) {
+        return nil;
+    }
+
+    // Calculate pixel rects for each selected region
+    NSMutableArray<NSValue *> *selectionRects = [NSMutableArray array];
+    const long long overflow = [self.dataSource totalScrollbackOverflow];
+    const NSRect visibleRect = [self visibleRect];
+    const double sideMargins = [iTermPreferences doubleForKey:kPreferenceKeySideMargins];
+
+    for (iTermSubSelection *sub in self.selection.allSubSelections) {
+        VT100GridAbsCoordRange absRange = sub.absRange.coordRange;
+
+        // Convert absolute coordinates to relative (screen) coordinates
+        const long long startY = absRange.start.y - overflow;
+        const long long endY = absRange.end.y - overflow;
+
+        // Skip subselections that are completely outside the visible area
+        const long long firstVisibleLine = (long long)(visibleRect.origin.y / self.lineHeight);
+        const long long lastVisibleLine = (long long)((visibleRect.origin.y + visibleRect.size.height) / self.lineHeight);
+        if (endY < firstVisibleLine || startY > lastVisibleLine) {
+            continue;
+        }
+
+        // Handle box selection vs character selection differently
+        if (sub.selectionMode == kiTermSelectionModeBox) {
+            // Box selection: single rectangle
+            const int leftColumn = sub.absRange.columnWindow.location;
+            const int rightColumn = VT100GridRangeMax(sub.absRange.columnWindow);
+
+            NSRect rect = NSMakeRect(sideMargins + leftColumn * self.charWidth,
+                                     startY * self.lineHeight,
+                                     (rightColumn - leftColumn) * self.charWidth,
+                                     (endY - startY + 1) * self.lineHeight);
+
+            // Intersect with visible rect
+            rect = NSIntersectionRect(rect, visibleRect);
+            if (!NSIsEmptyRect(rect)) {
+                // Convert to window coordinates
+                rect = [self convertRect:rect toView:nil];
+                [selectionRects addObject:[NSValue valueWithRect:rect]];
+            }
+        } else {
+            // Character/line selection: may span multiple lines with different start/end columns
+            for (long long line = startY; line <= endY; line++) {
+                if (line < firstVisibleLine || line > lastVisibleLine) {
+                    continue;
+                }
+
+                int startX, endX;
+                if (line == startY) {
+                    startX = absRange.start.x;
+                } else {
+                    startX = 0;
+                }
+
+                if (line == endY) {
+                    endX = absRange.end.x;
+                } else {
+                    endX = [self.dataSource width];
+                }
+
+                // Skip empty selections
+                if (startX >= endX && line == endY) {
+                    continue;
+                }
+
+                NSRect rect = NSMakeRect(sideMargins + startX * self.charWidth,
+                                         line * self.lineHeight,
+                                         (endX - startX) * self.charWidth,
+                                         self.lineHeight);
+
+                // Intersect with visible rect
+                rect = NSIntersectionRect(rect, visibleRect);
+                if (!NSIsEmptyRect(rect)) {
+                    // Convert to window coordinates
+                    rect = [self convertRect:rect toView:nil];
+                    [selectionRects addObject:[NSValue valueWithRect:rect]];
+                }
+            }
+        }
+    }
+
+    if (selectionRects.count == 0) {
+        return nil;
+    }
+
+    return [[iTermBlurredScreenshotSelectionRegion alloc] initWithWindowRects:selectionRects];
+}
+
+- (NSImage *)renderMinimapWithWidth:(CGFloat)width height:(CGFloat)height {
+    const int totalLines = [self.dataSource numberOfLines];
+
+    if (totalLines == 0 || width <= 0 || height <= 0) {
+        return nil;
+    }
+
+    // Calculate how many output rows and which lines to sample
+    // Each output row represents one or more source lines
+    const int outputRows = MIN(totalLines, (int)ceil(height));
+    const CGFloat linesPerOutputRow = (CGFloat)totalLines / outputRows;
+    const CGFloat outputRowHeight = height / outputRows;
+
+    // Use Retina scale factor
+    const CGFloat scale = self.window.backingScaleFactor ?: 2.0;
+    const NSInteger pixelWidth = (NSInteger)(width * scale);
+    const NSInteger pixelHeight = (NSInteger)(height * scale);
+
+    // Create bitmap for the final minimap
+    NSBitmapImageRep *bitmapRep = [[NSBitmapImageRep alloc]
+                                   initWithBitmapDataPlanes:NULL
+                                   pixelsWide:pixelWidth
+                                   pixelsHigh:pixelHeight
+                                   bitsPerSample:8
+                                   samplesPerPixel:4
+                                   hasAlpha:YES
+                                   isPlanar:NO
+                                   colorSpaceName:NSCalibratedRGBColorSpace
+                                   bytesPerRow:0
+                                   bitsPerPixel:0];
+    bitmapRep.size = NSMakeSize(width, height);
+
+    NSGraphicsContext *context = [NSGraphicsContext graphicsContextWithBitmapImageRep:bitmapRep];
+    if (!context) {
+        return nil;
+    }
+
+    [NSGraphicsContext saveGraphicsState];
+    [NSGraphicsContext setCurrentContext:context];
+
+    // Fill with background color
+    NSColor *bgColor = [self.colorMap colorForKey:kColorMapBackground];
+    [bgColor setFill];
+    NSRectFill(NSMakeRect(0, 0, width, height));
+
+    // Render each sampled line and draw it into the minimap
+    for (int outputRow = 0; outputRow < outputRows; outputRow++) {
+        // Pick the middle line of this output row's range
+        const int sourceLine = MIN((int)((outputRow + 0.5) * linesPerOutputRow), totalLines - 1);
+
+        // Render this single line using the drawing helper
+        NSImage *lineImage = [self renderLinesToImage:NSMakeRange(sourceLine, 1)];
+        if (lineImage) {
+            // Calculate destination rect in the minimap
+            // Y=0 is at bottom in NSImage coordinates, but we want line 0 at top
+            const CGFloat yInOutput = height - (outputRow + 1) * outputRowHeight;
+            const NSRect destRect = NSMakeRect(0, yInOutput, width, outputRowHeight);
+
+            // Draw scaled into the minimap - use fast interpolation for performance
+            [lineImage drawInRect:destRect
+                         fromRect:NSZeroRect
+                        operation:NSCompositingOperationSourceOver
+                         fraction:1.0
+                   respectFlipped:NO
+                            hints:@{NSImageHintInterpolation: @(NSImageInterpolationLow)}];
+        }
+    }
+
+    [NSGraphicsContext restoreGraphicsState];
+
+    // Create the final image
+    NSImage *minimap = [[NSImage alloc] initWithSize:NSMakeSize(width, height)];
+    [minimap addRepresentation:bitmapRep];
+
+    return minimap;
+}
+
+
+- (NSImage *)renderLinesToImage:(NSRange)lineRange {
+    id<iTermTextDataSource> dataSource = self.dataSource;
+    if (!dataSource) {
+        return nil;
+    }
+    const int numberOfLines = [dataSource numberOfLines];
+
+    // Validate range
+    if (lineRange.location >= numberOfLines) {
+        return nil;
+    }
+    const NSUInteger endLine = MIN(lineRange.location + lineRange.length, numberOfLines);
+    const NSUInteger actualLength = endLine - lineRange.location;
+    if (actualLength == 0) {
+        return nil;
+    }
+
+    // Calculate image size
+    const CGFloat lineHeight = self.lineHeight;
+    const CGFloat imageWidth = self.frame.size.width;
+    const CGFloat imageHeight = actualLength * lineHeight;
+
+    if (imageWidth <= 0 || imageHeight <= 0) {
+        return nil;
+    }
+
+    // Use Retina scale factor for high-quality rendering
+    const CGFloat scale = self.window.backingScaleFactor ?: 2.0;
+    const NSInteger pixelWidth = (NSInteger)(imageWidth * scale);
+    const NSInteger pixelHeight = (NSInteger)(imageHeight * scale);
+
+    // Create a bitmap for offscreen rendering
+    NSBitmapImageRep *bitmapRep = [[NSBitmapImageRep alloc]
+                                   initWithBitmapDataPlanes:NULL
+                                   pixelsWide:pixelWidth
+                                   pixelsHigh:pixelHeight
+                                   bitsPerSample:8
+                                   samplesPerPixel:4
+                                   hasAlpha:YES
+                                   isPlanar:NO
+                                   colorSpaceName:NSCalibratedRGBColorSpace
+                                   bytesPerRow:0
+                                   bitsPerPixel:0];
+    bitmapRep.size = NSMakeSize(imageWidth, imageHeight);
+
+    // Create graphics context for the bitmap
+    NSGraphicsContext *context = [NSGraphicsContext graphicsContextWithBitmapImageRep:bitmapRep];
+    if (!context) {
+        return nil;
+    }
+
+    [NSGraphicsContext saveGraphicsState];
+    [NSGraphicsContext setCurrentContext:context];
+
+    // Flip the coordinate system to match PTYTextView's flipped coordinates.
+    // NSBitmapImageRep uses Y=0 at bottom, but the drawing helper expects Y=0 at top.
+    NSAffineTransform *transform = [NSAffineTransform transform];
+    [transform translateXBy:0 yBy:imageHeight];
+    [transform scaleXBy:1.0 yBy:-1.0];
+    [transform concat];
+
+    // The drawing helper draws in content coordinates where y = lineNumber * lineHeight.
+    // We want to draw lines from lineRange.location to endLine.
+    // The virtualOffset translates from content coordinates to our bitmap coordinates.
+    // virtualOffset = lineRange.location * lineHeight makes line lineRange.location draw at y=0.
+    const CGFloat virtualOffset = lineRange.location * lineHeight;
+
+    // Define the rect in content coordinates that we're rendering
+    const NSRect contentRect = NSMakeRect(0, lineRange.location * lineHeight, imageWidth, imageHeight);
+
+    // Create a dedicated drawing helper for offscreen rendering.
+    iTermTextDrawingHelper *helper = [self newDrawingHelperForOffscreenRendering];
+
+    // Configure metrics for offscreen rendering
+    [helper configureForOffscreenRenderingWithFrame:NSMakeRect(0, 0, imageWidth, imageHeight)
+                                        visibleRect:contentRect];
+
+    // Draw the content
+    [helper drawTextViewContentInRect:contentRect
+                             rectsPtr:&contentRect
+                            rectCount:1
+                        virtualOffset:virtualOffset];
+
+    [NSGraphicsContext restoreGraphicsState];
+
+    // Create the final image from the bitmap
+    NSImage *image = [[NSImage alloc] initWithSize:NSMakeSize(imageWidth, imageHeight)];
+    [image addRepresentation:bitmapRep];
+
+    return image;
+}
+
+#pragma mark - Batched Line Rendering
+
+- (id)renderLinesToImageInBatches:(NSRange)lineRange
+                        batchSize:(NSUInteger)batchSize
+                         progress:(void (^)(NSUInteger, NSUInteger))progress
+                       completion:(void (^)(NSImage *))completion {
+    const CGFloat lineHeight = self.lineHeight;
+    const CGFloat imageWidth = self.frame.size.width;
+
+    if (lineHeight <= 0 || imageWidth <= 0) {
+        completion(nil);
+        return nil;
+    }
+
+    iTermBatchedRenderToken *token = [[iTermBatchedRenderToken alloc] initWithLineRange:lineRange
+                                                                              batchSize:batchSize
+                                                                             lineHeight:lineHeight
+                                                                             imageWidth:imageWidth
+                                                                               progress:progress
+                                                                             completion:completion];
+    [self continueRenderingWithToken:token];
+    return token;
+}
+
+- (void)cancelBatchedRender:(id)token {
+    if ([token isKindOfClass:[iTermBatchedRenderToken class]]) {
+        ((iTermBatchedRenderToken *)token).cancelled = YES;
+    }
+}
+
+- (void)continueRenderingWithToken:(iTermBatchedRenderToken *)token {
+    if (token.cancelled) {
+        token.completion(nil);
+        return;
+    }
+
+    const NSUInteger endLine = token.lineRange.location + token.lineRange.length;
+    const NSUInteger batchEnd = MIN(token.currentLine + token.batchSize, endLine);
+    const NSRange batchRange = NSMakeRange(token.currentLine, batchEnd - token.currentLine);
+
+    // Render this batch
+    NSImage *batchImage = [self renderLinesToImage:batchRange];
+    if (batchImage) {
+        // Composite immediately into the pre-allocated final image.
+        // In NSImage coordinates, Y=0 is at bottom. Line 0 of terminal is at TOP of image.
+        // So line N should be drawn at Y = totalHeight - (N + batchHeight).
+        const CGFloat totalHeight = token.lineRange.length * token.lineHeight;
+        const NSUInteger linesRenderedSoFar = token.currentLine - token.lineRange.location;
+        const CGFloat yPosition = totalHeight - (linesRenderedSoFar + batchRange.length) * token.lineHeight;
+
+        [token.compositeImage lockFocus];
+        [batchImage drawAtPoint:NSMakePoint(0, yPosition)
+                       fromRect:NSZeroRect
+                      operation:NSCompositingOperationCopy
+                       fraction:1.0];
+        [token.compositeImage unlockFocus];
+        // batchImage is now released (ARC) - no accumulation in memory
+    }
+
+    token.currentLine = batchEnd;
+
+    // Report progress
+    if (token.progress) {
+        const NSUInteger completed = token.currentLine - token.lineRange.location;
+        token.progress(completed, token.lineRange.length);
+    }
+
+    // Check if done
+    if (token.currentLine >= endLine) {
+        token.completion(token.compositeImage);
+    } else {
+        // Schedule next batch on the main queue to allow run loop to process events
+        __weak typeof(self) weakSelf = self;
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [weakSelf continueRenderingWithToken:token];
+        });
+    }
 }
 
 - (void)contextMenu:(iTermTextViewContextMenuHelper *)contextMenu addTrigger:(NSString *)text {

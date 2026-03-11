@@ -4120,6 +4120,20 @@ typedef struct {
     _asciiLigaturesAvailable = (fontInfo.ligatureLevel > 0 || fontInfo.hasDefaultLigatures) && _asciiLigatures;
 }
 
+- (void)configureForOffscreenRenderingWithFrame:(NSRect)frame
+                                    visibleRect:(NSRect)visibleRect {
+    _frame = frame;
+    _visibleRectExcludingTopMargin = visibleRect;
+    _visibleRectIncludingTopMargin = visibleRect;
+    // Add margins to content size so rangeOfVisibleRows calculates correctly
+    // (it subtracts topBottomMargins * 2 from content height)
+    const CGFloat margins = [iTermPreferences topBottomMargins] * 2;
+    _scrollViewContentSize = NSMakeSize(frame.size.width, frame.size.height + margins);
+    _scrollViewDocumentVisibleRect = visibleRect;
+    _preferSpeedToFullLigatureSupport = [iTermAdvancedSettingsModel preferSpeedToFullLigatureSupport];
+    _asciiLigaturesAvailable = NO;  // Safe default for offscreen rendering
+}
+
 - (void)startTiming {
     iTermPreciseTimerStatsMeasureAndRecordTimer(&_stats[TIMER_BETWEEN_CALLS_TO_DRAW_RECT]);
     iTermPreciseTimerStatsStartTimer(&_stats[TIMER_TOTAL_DRAW_RECT]);

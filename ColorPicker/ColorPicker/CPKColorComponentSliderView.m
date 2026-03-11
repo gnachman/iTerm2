@@ -132,4 +132,8 @@
     [path stroke];
 }
 
+- (BOOL)acceptsFirstMouse:(NSEvent *)event {
+    return YES;
+}
+
 @end

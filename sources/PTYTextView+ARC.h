@@ -18,6 +18,7 @@
 @class URLAction;
 @protocol iTermContentNavigationShortcutView;
 @class iTermProgress;
+@class iTermBlurredScreenshotSelectionRegion;
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -186,6 +187,34 @@ typedef NS_ENUM(NSUInteger, iTermContentNavigationAction) {
 
 - (NSArray<iTermSelectionReplacement *> *)replacementPayloadsForSelection;
 - (void)replaceSelectionWith:(iTermSelectionReplacement *)replacement;
+
+#pragma mark - Blurred Screenshot
+
+// Returns selection region in window coordinates for blurred screenshot feature
+- (iTermBlurredScreenshotSelectionRegion * _Nullable)blurredScreenshotSelectionRegion;
+
+// Renders a minimap image of the terminal content.
+// Intelligently samples lines when there are more lines than output pixels.
+// Uses iTermTextDrawingHelper for accurate rendering of images, box-drawing, etc.
+- (NSImage * _Nullable)renderMinimapWithWidth:(CGFloat)width height:(CGFloat)height;
+
+// Renders the specified range of lines to an image.
+// Lines are 0-based absolute line numbers (including scrollback).
+// Returns nil if the range is invalid.
+- (NSImage * _Nullable)renderLinesToImage:(NSRange)lineRange;
+
+// Renders lines in batches to avoid blocking the main thread.
+// Each batch is rendered, then control returns to the run loop before the next batch.
+// Progress callback is called after each batch with (completed lines, total lines).
+// Completion is called with the final composite image (or nil on error).
+// Returns a cancellation token that can be passed to cancelBatchedRender:.
+- (id)renderLinesToImageInBatches:(NSRange)lineRange
+                        batchSize:(NSUInteger)batchSize
+                         progress:(void (^ _Nullable)(NSUInteger completed, NSUInteger total))progress
+                       completion:(void (^)(NSImage * _Nullable image))completion;
+
+// Cancels a batched render operation.
+- (void)cancelBatchedRender:(id)token;
 
 @end
 

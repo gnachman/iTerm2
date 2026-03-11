@@ -435,6 +435,11 @@ extern const CGFloat iTermCursorGuideAlphaThreshold;
 - (VT100GridCoord)coordinateByTransformingScreenCoordinateForRTL:(VT100GridCoord)nominal;
 - (void)didFinishSetup;
 
+// Configure cached metrics for offscreen rendering without calling delegate methods.
+// Use this when rendering to an offscreen bitmap where the delegate's geometry is different.
+- (void)configureForOffscreenRenderingWithFrame:(NSRect)frame
+                                    visibleRect:(NSRect)visibleRect;
+
 @end
 
 NS_INLINE BOOL iTermTextDrawingHelperIsCharacterDrawable(const screen_char_t *const c,

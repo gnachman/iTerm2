@@ -388,6 +388,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (BOOL)selectsTabsOnMouseDown;
 + (BOOL)sensitiveScrollWheel;
 + (BOOL)serializeOpeningMultipleFullScreenWindows;
++ (int)screenshotMaxPixelHeight;
 + (BOOL)setCookie;
 + (void)setSetCookie:(BOOL)value;
 + (double)shortLivedSessionDuration;

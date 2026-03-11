@@ -399,6 +399,7 @@ static NSUInteger iTermLineBlockArrayNextUniqueID;
     ITAssertWithMessage(numberLeft >= 0, @"Invalid length in range %@", NSStringFromRange(range));
     for (NSInteger i = startIndex; i < _blocks.count; i++) {
         LineBlock *block = _blocks[i];
+        DLog(@"Start block %@", @(i));
         // getNumLinesWithWrapWidth caches its result for the last-used width so
         // this is usually faster than calling getWrappedLineWithWrapWidth since
         // most calls to the latter will just decrement line and return NULL.
@@ -425,7 +426,9 @@ static NSUInteger iTermLineBlockArrayNextUniqueID;
                                                        isStartOfWrappedLine:NULL
                                                                    metadata:&metadata];
             if (chars == NULL) {
-                return;
+                // Start next block at its first line.
+                line = 0;
+                break;
             }
             ITAssertWithMessage(length <= width, @"Length too long");
             callback(chars, length, eol, continuation, metadata, &stop);
@@ -433,6 +436,7 @@ static NSUInteger iTermLineBlockArrayNextUniqueID;
                 return;
             }
             numberLeft--;
+            DLog(@"  Got line at %@ of this block. Remaining: %@", @(line), @(numberLeft));
             line++;
         } while (numberLeft > 0 && block_lines >= remainder);
         remainder = line;

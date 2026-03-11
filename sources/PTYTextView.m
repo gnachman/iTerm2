@@ -101,6 +101,7 @@ NSTimeInterval PTYTextViewHighlightLineAnimationDuration = 0.75;
 
 NSNotificationName iTermPortholesDidChange = @"iTermPortholesDidChange";
 NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChangeFontNotification";
+NSNotificationName PTYTextViewSelectionDidChangeNotification = @"PTYTextViewSelectionDidChangeNotification";
 const CGFloat PTYTextViewMarginClickGraceWidth = 2.0;
 
 @interface iTermHighlightRowView: NSView<iTermMetalDisabling>
@@ -554,7 +555,8 @@ const CGFloat PTYTextViewMarginClickGraceWidth = 2.0;
         return [[NSPasteboard generalPasteboard] dataForFirstFile] != nil;
     }
     if (item.action == @selector(bury:)) {
-        return YES;
+        // Disable bury for synthetic sessions - it doesn't work correctly
+        return ![_delegate textViewIsSyntheticSession];
     }
     if (item.action == @selector(terminalStateToggleAlternateScreen:) ||
         item.action == @selector(terminalStateToggleFocusReporting:) ||
@@ -1793,90 +1795,155 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
     return _drawingHelper.delegate != nil;
 }
 
+// Configures a drawing helper with all necessary properties.
+// If forOffscreen is YES, interactive features (cursor, selection, etc.) are disabled.
+// This is the single source of truth for drawing helper configuration.
+- (void)configureDrawingHelper:(iTermTextDrawingHelper *)helper forOffscreen:(BOOL)forOffscreen {
+    // Rendering settings that apply to both onscreen and offscreen
+    helper.cellSize = NSMakeSize(_charWidth, _lineHeight);
+    helper.cellSizeWithoutSpacing = NSMakeSize(_charWidthWithoutSpacing, _charHeightWithoutSpacing);
+    helper.ambiguousIsDoubleWidth = [_delegate textViewAmbiguousWidthCharsAreDoubleWidth];
+    helper.normalization = [_delegate textViewUnicodeNormalizationForm];
+    helper.hasBackgroundImage = [_delegate textViewHasBackgroundImage];
+    helper.gridSize = VT100GridSizeMake(_dataSource.width, _dataSource.height);
+    helper.numberOfLines = _dataSource.numberOfLines;
+    helper.totalScrollbackOverflow = [_dataSource totalScrollbackOverflow];
+    helper.numberOfScrollbackLines = [_dataSource numberOfScrollbackLines];
+    helper.reverseVideo = _dataSource.terminalReverseVideo;
+    helper.transparencyAlpha = [self transparencyAlpha];
+    helper.now = [NSDate timeIntervalSinceReferenceDate];
+    helper.thinStrokes = _thinStrokes;
+    helper.baselineOffset = [self minimumBaselineOffset];
+    helper.underlineOffset = [self minimumUnderlineOffset];
+    helper.boldAllowed = _useBoldFont;
+    helper.italicAllowed = _useItalicFont;
+    helper.fontProvider = _fontTable.fontProvider;
+    helper.unicodeVersion = [_delegate textViewUnicodeVersion];
+    helper.asciiLigatures = _fontTable.anyASCIIDefaultLigatures || _asciiLigatures;
+    helper.nonAsciiLigatures = _fontTable.anyNonASCIIDefaultLigatures || _nonAsciiLigatures;
+    helper.useNativePowerlineGlyphs = self.useNativePowerlineGlyphs;
+    helper.forceAntialiasingOnRetina = [iTermAdvancedSettingsModel forceAntialiasingOnRetina];
+    helper.blend = MIN(MAX(0.05, [_delegate textViewBlend]), 1);
+    helper.colorMap = _colorMap;
+    helper.fontTable = self.fontTable;
+    helper.kittyImageDraws = [self.dataSource kittyImageDraws];
+    helper.marginColor = _marginColor;
+    helper.extraMargins = forOffscreen ? NSEdgeInsetsZero : self.delegate.textViewExtraMargins;
+
+    // Properties set by setters that affect rendering
+    BOOL isRetina = self.window.backingScaleFactor > 1;
+    helper.isRetina = isRetina;
+    helper.antiAliasedShift = isRetina ? 0.5 : 0;
+    helper.useNonAsciiFont = _useNonAsciiFont;
+    helper.useCustomBoldColor = _useCustomBoldColor;
+    // These properties are only stored in _drawingHelper (no backing ivars), so copy from there
+    helper.asciiAntiAlias = _drawingHelper.asciiAntiAlias;
+    helper.nonAsciiAntiAlias = _drawingHelper.nonAsciiAntiAlias;
+    helper.minimumContrast = _drawingHelper.minimumContrast;
+    helper.transparencyAffectsOnlyDefaultBackgroundColor = _drawingHelper.transparencyAffectsOnlyDefaultBackgroundColor;
+    helper.useSmartCursorColor = _drawingHelper.useSmartCursorColor;
+
+    if (forOffscreen) {
+        // Offscreen rendering: disable all interactive features
+        helper.showStripes = NO;
+        helper.cursorBlinking = NO;
+        helper.excess = 0;
+        helper.selection = nil;
+        helper.cursorGuideColor = nil;
+        helper.cursorCoord = VT100GridCoordMake(-1, -1);
+        helper.textViewIsActiveSession = NO;
+        helper.textViewIsFirstResponder = NO;
+        helper.isInKeyWindow = NO;
+        helper.shouldDrawFilledInCursor = NO;
+        helper.isFrontTextView = NO;
+        helper.drawMarkIndicators = NO;
+        helper.showSearchingCursor = NO;
+        helper.copyMode = NO;
+        helper.copyModeSelecting = NO;
+        helper.copyModeCursorCoord = VT100GridCoordMake(-1, -1);
+        helper.passwordInput = NO;
+        helper.badgeTopMargin = 0;
+        helper.badgeRightMargin = 0;
+        helper.shouldShowTimestamps = NO;
+        helper.softAlternateScreenMode = NO;
+        helper.useSelectedTextColor = NO;
+        helper.isCursorVisible = NO;
+        helper.linesToSuppress = VT100GridRangeMake(-1, 0);
+        helper.pointsOnBottomToSuppressDrawing = 0;
+        helper.forceRegularBottomMargin = NO;
+        helper.selectedCommandRegion = NSMakeRange(NSNotFound, 0);
+        helper.folds = nil;
+        helper.rightExtra = 0;
+        helper.highlightedBlockLineRange = NSMakeRange(NSNotFound, 0);
+        helper.timestampBaseline = 0;
+        helper.offscreenCommandLine = nil;
+        helper.showDropTargets = NO;
+        helper.dropLine = -1;
+        helper.highlightCursorLine = NO;
+        helper.blinkAllowed = NO;
+        helper.blinkingItemsVisible = YES;
+    } else {
+        // Onscreen rendering: use actual values
+        helper.showStripes = (_showStripesWhenBroadcastingInput &&
+                              [_delegate textViewSessionIsBroadcastingInput:YES]);
+        helper.cursorBlinking = [self isCursorBlinking];
+        helper.excess = [self excess];
+        helper.selection = _selection;
+        helper.cursorGuideColor = [_delegate textViewCursorGuideColor];
+        helper.cursorCoord = VT100GridCoordMake(_dataSource.cursorX - 1,
+                                                _dataSource.cursorY - 1);
+        helper.textViewIsActiveSession = [self.delegate textViewIsActiveSession];
+        helper.textViewIsFirstResponder = self.window.firstResponder == self;
+        helper.isInKeyWindow = [self isInKeyWindow];
+        helper.shouldDrawFilledInCursor = ([self.delegate textViewShouldDrawFilledInCursor] || _focusFollowsMouse.haveStolenFocus);
+        helper.isFrontTextView = (self == [[iTermController sharedInstance] frontTextView]);
+        helper.drawMarkIndicators = [_delegate textViewShouldShowMarkIndicators];
+        helper.showSearchingCursor = _showSearchingCursor;
+        helper.copyMode = _delegate.textViewCopyMode;
+        helper.copyModeSelecting = _delegate.textViewCopyModeSelecting;
+        helper.copyModeCursorCoord = _delegate.textViewCopyModeCursorCoord;
+        helper.passwordInput = ([self isInKeyWindow] &&
+                                [_delegate textViewIsActiveSession] &&
+                                _delegate.textViewPasswordInput);
+        helper.badgeTopMargin = [_delegate textViewBadgeTopMargin];
+        helper.badgeRightMargin = [_delegate textViewBadgeRightMargin];
+        helper.shouldShowTimestamps = self.showTimestamps;
+        helper.softAlternateScreenMode = self.dataSource.terminalSoftAlternateScreenMode;
+        helper.useSelectedTextColor = self.delegate.textViewShouldUseSelectedTextColor;
+        const BOOL autoComposerOpen = [self.delegate textViewIsAutoComposerOpen];
+        helper.isCursorVisible = _cursorVisible && !autoComposerOpen;
+        helper.linesToSuppress = self.delegate.textViewLinesToSuppressDrawing;
+        helper.pointsOnBottomToSuppressDrawing = self.delegate.textViewPointsOnBottomToSuppressDrawing;
+        helper.forceRegularBottomMargin = autoComposerOpen;
+        helper.selectedCommandRegion = [self relativeRangeFromAbsLineRange:self.findOnPageHelper.absLineRange];
+        const VT100GridRange range = [self rangeOfVisibleLines];
+        helper.folds = [self.dataSource foldsInRange:range];
+        helper.rightExtra = self.delegate.textViewRightExtra;
+        helper.highlightedBlockLineRange = _hoverBlockFoldButton ? [self relativeRangeFromAbsLineRange:_hoverBlockFoldButton.absLineRange] : NSMakeRange(NSNotFound, 0);
+        helper.timestampBaseline = _timestampBaseline;
+    }
+}
+
 - (iTermTextDrawingHelper *)drawingHelper {
-    _drawingHelper.showStripes = (_showStripesWhenBroadcastingInput &&
-                                  [_delegate textViewSessionIsBroadcastingInput:YES]);
-    _drawingHelper.cursorBlinking = [self isCursorBlinking];
-    _drawingHelper.excess = [self excess];
-    _drawingHelper.selection = _selection;
-    _drawingHelper.ambiguousIsDoubleWidth = [_delegate textViewAmbiguousWidthCharsAreDoubleWidth];
-    _drawingHelper.normalization = [_delegate textViewUnicodeNormalizationForm];
-    _drawingHelper.hasBackgroundImage = [_delegate textViewHasBackgroundImage];
-    _drawingHelper.cursorGuideColor = [_delegate textViewCursorGuideColor];
-    _drawingHelper.gridSize = VT100GridSizeMake(_dataSource.width, _dataSource.height);
-    _drawingHelper.numberOfLines = _dataSource.numberOfLines;
-    _drawingHelper.cursorCoord = VT100GridCoordMake(_dataSource.cursorX - 1,
-                                                    _dataSource.cursorY - 1);
-    _drawingHelper.totalScrollbackOverflow = [_dataSource totalScrollbackOverflow];
-    _drawingHelper.numberOfScrollbackLines = [_dataSource numberOfScrollbackLines];
-    _drawingHelper.reverseVideo = _dataSource.terminalReverseVideo;
-    _drawingHelper.textViewIsActiveSession = [self.delegate textViewIsActiveSession];
-    _drawingHelper.textViewIsFirstResponder = self.window.firstResponder == self;
-    _drawingHelper.isInKeyWindow = [self isInKeyWindow];
-    // Draw the cursor filled in when we're inactive if there's a popup open or key focus was stolen.
-    _drawingHelper.shouldDrawFilledInCursor = ([self.delegate textViewShouldDrawFilledInCursor] || _focusFollowsMouse.haveStolenFocus);
-    _drawingHelper.isFrontTextView = (self == [[iTermController sharedInstance] frontTextView]);
-    _drawingHelper.transparencyAlpha = [self transparencyAlpha];
-    _drawingHelper.now = [NSDate timeIntervalSinceReferenceDate];
-    _drawingHelper.drawMarkIndicators = [_delegate textViewShouldShowMarkIndicators];
-    _drawingHelper.thinStrokes = _thinStrokes;
-    _drawingHelper.showSearchingCursor = _showSearchingCursor;
-    _drawingHelper.baselineOffset = [self minimumBaselineOffset];
-    _drawingHelper.underlineOffset = [self minimumUnderlineOffset];
-    _drawingHelper.boldAllowed = _useBoldFont;
-    _drawingHelper.italicAllowed = _useItalicFont;
-    _drawingHelper.fontProvider = _fontTable.fontProvider;
-    _drawingHelper.unicodeVersion = [_delegate textViewUnicodeVersion];
-    _drawingHelper.asciiLigatures = _fontTable.anyASCIIDefaultLigatures || _asciiLigatures;
-    _drawingHelper.nonAsciiLigatures = _fontTable.anyNonASCIIDefaultLigatures || _nonAsciiLigatures;
-    _drawingHelper.copyMode = _delegate.textViewCopyMode;
-    _drawingHelper.copyModeSelecting = _delegate.textViewCopyModeSelecting;
-    _drawingHelper.copyModeCursorCoord = _delegate.textViewCopyModeCursorCoord;
-    _drawingHelper.passwordInput = ([self isInKeyWindow] &&
-                                    [_delegate textViewIsActiveSession] &&
-                                    _delegate.textViewPasswordInput);
-    _drawingHelper.useNativePowerlineGlyphs = self.useNativePowerlineGlyphs;
-    _drawingHelper.badgeTopMargin = [_delegate textViewBadgeTopMargin];
-    _drawingHelper.badgeRightMargin = [_delegate textViewBadgeRightMargin];
-    _drawingHelper.forceAntialiasingOnRetina = [iTermAdvancedSettingsModel forceAntialiasingOnRetina];
-    _drawingHelper.blend = MIN(MAX(0.05, [_delegate textViewBlend]), 1);
-    _drawingHelper.shouldShowTimestamps = self.showTimestamps;
-    _drawingHelper.colorMap = _colorMap;
-    _drawingHelper.softAlternateScreenMode = self.dataSource.terminalSoftAlternateScreenMode;
-    _drawingHelper.useSelectedTextColor = self.delegate.textViewShouldUseSelectedTextColor;
-    _drawingHelper.fontTable = self.fontTable;
-    const BOOL autoComposerOpen = [self.delegate textViewIsAutoComposerOpen];
-    _drawingHelper.isCursorVisible = _cursorVisible && !autoComposerOpen;
-    _drawingHelper.linesToSuppress = self.delegate.textViewLinesToSuppressDrawing;
-    _drawingHelper.pointsOnBottomToSuppressDrawing = self.delegate.textViewPointsOnBottomToSuppressDrawing;
-    _drawingHelper.extraMargins = self.delegate.textViewExtraMargins;
-    _drawingHelper.forceRegularBottomMargin = autoComposerOpen;
-    // TODO: Don't leave find on page helper as the source of truth for this!
-    _drawingHelper.selectedCommandRegion = [self relativeRangeFromAbsLineRange:self.findOnPageHelper.absLineRange];
-    NSArray<iTermKittyImageDraw *> *kittyDraws = [self.dataSource kittyImageDraws];
-    DLog(@"PTYTextView: setting kittyImageDraws on drawingHelper, count=%lu", (unsigned long)kittyDraws.count);
+    [self configureDrawingHelper:_drawingHelper forOffscreen:NO];
+
+    DLog(@"PTYTextView: setting kittyImageDraws on drawingHelper, count=%lu", (unsigned long)_drawingHelper.kittyImageDraws.count);
     if (gDebugLogging) {
-        for (NSUInteger i = 0; i < kittyDraws.count; i++) {
-            iTermKittyImageDraw *draw = kittyDraws[i];
+        for (NSUInteger i = 0; i < _drawingHelper.kittyImageDraws.count; i++) {
+            iTermKittyImageDraw *draw = _drawingHelper.kittyImageDraws[i];
             DLog(@"  draw[%lu]: imageID=%u (0x%x) placementID=%u virtual=%@ placementSize=%dx%d",
                  (unsigned long)i, draw.imageID, draw.imageID, draw.placementID,
                  draw.virtual ? @"YES" : @"NO",
                  draw.placementSize.width, draw.placementSize.height);
         }
     }
-    _drawingHelper.kittyImageDraws = kittyDraws;
-    const VT100GridRange range = [self rangeOfVisibleLines];
-    _drawingHelper.folds = [self.dataSource foldsInRange:range];
-    _drawingHelper.rightExtra = self.delegate.textViewRightExtra;
-    _drawingHelper.highlightedBlockLineRange = _hoverBlockFoldButton ? [self relativeRangeFromAbsLineRange:_hoverBlockFoldButton.absLineRange] : NSMakeRange(NSNotFound, 0);
-    _drawingHelper.timestampBaseline = _timestampBaseline;
-    _drawingHelper.marginColor = _marginColor;
 
     [_drawingHelper updateCachedMetrics];
     if (@available(macOS 11, *)) {
         [self updateTooltipsForButtons:[_drawingHelper updateButtonFrames]];
     }
 
+    const VT100GridRange range = [self rangeOfVisibleLines];
     const int topBottomMargin = [iTermPreferences topBottomMargins];
     if ([_delegate textViewShouldShowOffscreenCommandLineAt:range.location] &&
         self.enclosingScrollView.contentView.bounds.origin.y > topBottomMargin) {
@@ -1894,6 +1961,16 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
     [_drawingHelper didFinishSetup];
 
     return _drawingHelper;
+}
+
+// Creates a new drawing helper configured for offscreen rendering.
+// This helper is independent of _drawingHelper and can be used without affecting screen rendering.
+- (iTermTextDrawingHelper *)newDrawingHelperForOffscreenRendering {
+    iTermTextDrawingHelper *helper = [[iTermTextDrawingHelper alloc] init];
+    helper.delegate = (id<iTermTextDrawingHelperDelegate>)self;
+    [self configureDrawingHelper:helper forOffscreen:YES];
+    [helper didFinishSetup];
+    return helper;
 }
 
 - (void)updateTooltipsForButtons:(NSArray<iTermTerminalButton *> *)buttons NS_AVAILABLE_MAC(11_0) {
@@ -2109,6 +2186,9 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
                      darkBackground:isDark];
     [_indicatorsHelper setIndicator:kiTermIndicatorShowRememberedAlerts
                             visible:gShowRememberedAlerts
+                     darkBackground:isDark];
+    [_indicatorsHelper setIndicator:kiTermIndicatorScreenshotMode
+                            visible:[_delegate textViewIsInScreenshotMode]
                      darkBackground:isDark];
     const BOOL secureByUser = [[iTermSecureKeyboardEntryController sharedInstance] enabledByUserDefault];
     const BOOL secure = [[iTermSecureKeyboardEntryController sharedInstance] isEnabled];
@@ -5290,6 +5370,8 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
         DLog(@"Not my selection. Ignore it.");
         return;
     }
+    [[NSNotificationCenter defaultCenter] postNotificationName:PTYTextViewSelectionDidChangeNotification
+                                                        object:self];
     if (!_selection.live && selection.hasSelection) {
         iTermPromise<NSString *> *promise = [self recordSelection:selection];
         [promise onQueue:dispatch_get_main_queue() then:^(NSString * _Nonnull value) {

@@ -50,6 +50,8 @@
 #import "PTYSession.h"
 #import "PTYTab.h"
 #import "PTYTextView.h"
+#import "PTYTextView+ARC.h"
+#import "iTermSelection.h"
 #import "PTYWindow.h"
 #import "PreferencePanel.h"
 #import "PseudoTerminal.h"
@@ -475,6 +477,9 @@ static BOOL hasBecomeActive = NO;
     } else if (menuItem.action == @selector(arrangeSplitPanesEvenly:)) {
         PTYTab *tab = [[[iTermController sharedInstance] currentTerminal] currentTab];
         return (tab.sessions.count > 0 && !tab.isMaximized);
+    } else if (menuItem.action == @selector(makeScreenshot:)) {
+        PTYTab *tab = [[[iTermController sharedInstance] currentTerminal] currentTab];
+        return tab != nil;
     } else if (menuItem.action == @selector(promptToConvertTabsToSpacesWhenPasting:)) {
         menuItem.state = [iTermPasteHelper promptToConvertTabsToSpacesWhenPasting] ? NSControlStateValueOn : NSControlStateValueOff;
         return YES;
@@ -2489,6 +2494,77 @@ static iTermKeyEventReplayer *gReplayer;
 
 - (IBAction)arrangeSplitPanesEvenly:(id)sender {
     [[[[iTermController sharedInstance] currentTerminal] currentTab] arrangeSplitPanesEvenly];
+}
+
+- (IBAction)makeScreenshot:(id)sender {
+    PseudoTerminal *term = [[iTermController sharedInstance] currentTerminal];
+    if (!term) {
+        NSBeep();
+        return;
+    }
+
+    NSWindow *window = term.window;
+    if (!window) {
+        NSBeep();
+        return;
+    }
+
+    PTYTab *tab = [term currentTab];
+    PTYSession *liveSession = tab.activeSession;
+    if (!liveSession) {
+        NSBeep();
+        return;
+    }
+
+    PTYTextView *liveTextView = liveSession.textview;
+    if (!liveTextView) {
+        NSBeep();
+        return;
+    }
+
+    // Enter screenshot mode with synthetic session
+    PTYSession *syntheticSession = [tab enterScreenshotModeForSession:liveSession];
+    if (!syntheticSession) {
+        NSBeep();
+        return;
+    }
+
+    PTYTextView *textView = syntheticSession.textview;
+    if (!textView) {
+        [tab exitScreenshotModeForSession:syntheticSession];
+        NSBeep();
+        return;
+    }
+
+    // Get terminal info for line range selection (use synthetic session's text view)
+    id<iTermTextDataSource> dataSource = textView.dataSource;
+    int totalLines = dataSource.numberOfLines;
+    int visibleLines = textView.dataSource.height;
+    NSRect visibleRect = textView.enclosingScrollView.documentVisibleRect;
+    int firstVisibleLine = (int)(visibleRect.origin.y / textView.lineHeight);
+    CGFloat terminalHeight = textView.frame.size.height;
+
+    iTermScreenshotTerminalInfo *terminalInfo =
+        [[iTermScreenshotTerminalInfo alloc] initWithTotalLines:totalLines
+                                                   visibleLines:visibleLines
+                                               firstVisibleLine:firstVisibleLine
+                                                     lineHeight:textView.lineHeight
+                                                 terminalHeight:terminalHeight
+                                                       textView:textView];
+
+    // Show the screenshot panel as a floating panel
+    [iTermScreenshotPanel showForSession:syntheticSession
+                            terminalInfo:terminalInfo
+                                     tab:tab
+                              completion:^(NSURL *url) {
+        // Always exit screenshot mode when panel closes
+        [tab exitScreenshotModeForSession:syntheticSession];
+
+        if (url) {
+            // Reveal file in Finder
+            [[NSWorkspace sharedWorkspace] activateFileViewerSelectingURLs:@[url]];
+        }
+    }];
 }
 
 - (IBAction)newTmuxWindow:(id)sender {

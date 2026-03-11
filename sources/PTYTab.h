@@ -198,6 +198,11 @@ extern NSString *const PTYTabArrangementOptionsPendingJumps;
 - (void)unmaximizeTemporarilyAndActivate:(PTYSession *(^)(void))sessionPicker;
 - (void)setDvrInSession:(PTYSession*)newSession;
 - (void)showLiveSession:(PTYSession*)liveSession inPlaceOf:(PTYSession*)replaySession;
+
+// Screenshot mode: creates synthetic session for interactive redaction selection
+- (PTYSession *)enterScreenshotModeForSession:(PTYSession *)liveSession;
+- (void)exitScreenshotModeForSession:(PTYSession *)syntheticSession;
+
 - (BOOL)hasMultipleSessions;
 - (NSSize)size;
 - (void)setReportIdealSizeAsCurrent:(BOOL)v;

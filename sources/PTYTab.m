@@ -1676,6 +1676,62 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     }
 }
 
+#pragma mark - Screenshot Mode
+
+- (PTYSession *)enterScreenshotModeForSession:(PTYSession *)liveSession {
+    if (!liveSession) {
+        return nil;
+    }
+
+    // Create synthetic session
+    PTYSession *syntheticSession = [self.realParentWindow syntheticSessionForSession:liveSession];
+    if (!syntheticSession) {
+        DLog(@"syntheticSessionForSession:%@ returned nil", liveSession);
+        return nil;
+    }
+
+    const int scrollbackLines = [iTermProfilePreferences intForKey:KEY_SCROLLBACK_LINES inProfile:liveSession.profile];
+    const BOOL unlimitedScrollback = [iTermProfilePreferences boolForKey:KEY_UNLIMITED_SCROLLBACK inProfile:liveSession.profile];
+    [syntheticSession setSessionSpecificProfileValues:@{ KEY_SCROLLBACK_LINES: @(scrollbackLines),
+                                                         KEY_UNLIMITED_SCROLLBACK: @(unlimitedScrollback) }];
+
+    // Hide cursor in synthetic session
+    [syntheticSession.screen performBlockWithJoinedThreads:^(VT100Terminal *terminal,
+                                                              VT100ScreenMutableState *mutableState,
+                                                              id<VT100ScreenDelegate> delegate) {
+        mutableState.cursorVisible = NO;
+    }];
+
+    // Copy all lines from the live session (including scrollback) to the synthetic session
+    int totalLines = liveSession.screen.numberOfLines;
+    NSRange allLines = NSMakeRange(0, totalLines);
+    [syntheticSession appendLinesInRange:allLines fromSession:liveSession];
+
+    [syntheticSession sync];
+
+    // Swap views and set up the live session reference
+    [self replaceActiveSessionWithSyntheticSession:syntheticSession];
+
+    // Mark as screenshot mode so escape doesn't exit the synthetic session
+    syntheticSession.inScreenshotMode = YES;
+
+    return syntheticSession;
+}
+
+- (void)exitScreenshotModeForSession:(PTYSession *)syntheticSession {
+    if (!syntheticSession) {
+        return;
+    }
+
+    PTYSession *liveSession = syntheticSession.liveSession;
+    if (!liveSession) {
+        DLog(@"exitScreenshotModeForSession: no live session found for %@", syntheticSession);
+        return;
+    }
+
+    [self showLiveSession:liveSession inPlaceOf:syntheticSession];
+}
+
 - (void)_dumpView:(__kindof NSView *)view withPrefix:(NSString *)prefix {
     if ([view isKindOfClass:[SessionView class]]) {
         PtyLog(@"%@%@", prefix, NSStringFromSize(view.frame.size));
@@ -3684,19 +3740,42 @@ NSString *const PTYTabArrangementOptionsPendingJumps = @"PTYTabArrangementOption
                    options:(NSDictionary *)options {
     DLog(@"Encode tab %@", self);
     encoder[TAB_ARRANGEMENT_PINNED] = @(self.isPinned);
+    // If in screenshot mode, encode the live session instead of the synthetic one
+    PTYSession *sessionToEncode = self.activeSession;
+    BOOL inScreenshotMode = (sessionToEncode.liveSession != nil);
+    if (inScreenshotMode) {
+        DLog(@"In screenshot mode - encoding live session instead of synthetic");
+        sessionToEncode = sessionToEncode.liveSession;
+    }
     return [PTYTab encodeWithContents:contents
                        constructIdMap:constructIdMap
                               encoder:encoder
                               options:options
-                        activeSession:self.activeSession
+                        activeSession:sessionToEncode
                               tabGuid:_guid
                         titleOverride:self.titleOverride.length ? self.titleOverride : nil
                           isMaximized:isMaximized_
                      savedArrangement:savedArrangement_
                                 idMap:idMap_
                                  root:root_
-                    sessionViewFinder:^SessionView *(NSString *guid) { return [self sessionViewWithGUID:guid]; }
-                        sessionFinder:^PTYSession *(SessionView *sessionView) { return [self sessionForSessionView:sessionView]; }];
+                    sessionViewFinder:^SessionView *(NSString *guid) {
+                        // In screenshot mode, find the live session's view by guid
+                        if (inScreenshotMode) {
+                            PTYSession *liveSession = sessionToEncode;
+                            if ([liveSession.guid isEqualToString:guid]) {
+                                return liveSession.view;
+                            }
+                        }
+                        return [self sessionViewWithGUID:guid];
+                    }
+                        sessionFinder:^PTYSession *(SessionView *sessionView) {
+                            PTYSession *session = [self sessionForSessionView:sessionView];
+                            // In screenshot mode, return the live session instead of the synthetic one
+                            if (session.liveSession != nil) {
+                                return session.liveSession;
+                            }
+                            return session;
+                        }];
 }
 
 

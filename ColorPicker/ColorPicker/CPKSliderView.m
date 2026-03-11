@@ -95,4 +95,8 @@
     self.block(_selectedValue);
 }
 
+- (BOOL)acceptsFirstMouse:(NSEvent *)event {
+    return YES;
+}
+
 @end
