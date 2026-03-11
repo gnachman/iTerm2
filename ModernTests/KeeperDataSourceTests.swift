@@ -22,12 +22,16 @@ private final class MockKeeperCredentialsDelegate: NSObject, KeeperCredentialsRe
     }
 }
 
-// MARK: - Mock URLProtocol for Keeper API (v1 executecommand)
+// MARK: - Mock URLProtocol for Keeper API (v2 executecommand-async)
 
 private final class KeeperMockURLProtocol: URLProtocol {
     /// Command string (from request body JSON) -> (response body, status code). Set by tests.
     static var responseByCommand: [String: (Data, Int)] = [:]
+    /// request_id -> result body (for v2 GET result/<request_id>).
+    static var pendingV2Results: [String: Data] = [:]
     static var lastRequest: URLRequest?
+    /// Last command sent in a v2 POST (so tests can assert on it; lastRequest may be a GET result).
+    static var lastCommand: String?
 
     override class func canInit(with request: URLRequest) -> Bool {
         guard let url = request.url else { return false }
@@ -36,61 +40,68 @@ private final class KeeperMockURLProtocol: URLProtocol {
 
     override class func canonicalRequest(for request: URLRequest) -> URLRequest { request }
 
+    private func readRequestBody(from request: URLRequest) -> Data? {
+        if let data = request.httpBody, !data.isEmpty { return data }
+        guard let stream = request.httpBodyStream else { return nil }
+        stream.open()
+        defer { stream.close() }
+        var data = Data()
+        let bufferSize = 4096
+        let buffer = UnsafeMutablePointer<UInt8>.allocate(capacity: bufferSize)
+        defer { buffer.deallocate() }
+        while stream.hasBytesAvailable {
+            let read = stream.read(buffer, maxLength: bufferSize)
+            guard read > 0 else { break }
+            data.append(buffer, count: read)
+        }
+        return data.isEmpty ? nil : data
+    }
+
     override func startLoading() {
         Self.lastRequest = request
         guard let url = request.url else {
             client?.urlProtocol(self, didFailWithError: NSError(domain: "KeeperMock", code: -1, userInfo: [NSLocalizedDescriptionKey: "No URL"]))
             return
         }
-        // v1 executecommand: parse body to get command (URLSession often provides body via httpBodyStream, not httpBody)
-        if url.path.contains("executecommand") && !url.path.contains("async") && !url.path.contains("status") && !url.path.contains("result") {
+        // v2 POST executecommand-async: queue command, return request_id
+        if url.path.contains("executecommand-async"), request.httpMethod?.uppercased() == "POST" {
             let command: String? = {
-                let body: Data? = {
-                    if let data = request.httpBody, !data.isEmpty { return data }
-                    guard let stream = request.httpBodyStream else { return nil }
-                    stream.open()
-                    defer { stream.close() }
-                    var data = Data()
-                    let bufferSize = 4096
-                    let buffer = UnsafeMutablePointer<UInt8>.allocate(capacity: bufferSize)
-                    defer { buffer.deallocate() }
-                    while stream.hasBytesAvailable {
-                        let read = stream.read(buffer, maxLength: bufferSize)
-                        guard read > 0 else { break }
-                        data.append(buffer, count: read)
-                    }
-                    return data.isEmpty ? nil : data
-                }()
-                guard let body = body,
+                guard let body = readRequestBody(from: request),
                       let json = try? JSONSerialization.jsonObject(with: body) as? [String: Any],
                       let cmd = json["command"] as? String else { return nil }
                 return cmd
             }()
+            Self.lastCommand = command
             let key = command ?? ""
-            if let (data, code) = Self.responseByCommand[key] {
-                let response = HTTPURLResponse(url: url, statusCode: code, httpVersion: nil, headerFields: nil)!
-                client?.urlProtocol(self, didReceive: response, cacheStoragePolicy: .notAllowed)
-                client?.urlProtocol(self, didLoad: data)
-                client?.urlProtocolDidFinishLoading(self)
-                return
-            }
-            // Default 200 with empty success for unknown command
-            let empty = "{\"status\":\"success\"}".data(using: .utf8)!
-            let response = HTTPURLResponse(url: url, statusCode: 200, httpVersion: nil, headerFields: nil)!
+            let (resultData, _) = Self.responseByCommand[key] ?? ("{\"status\":\"success\"}".data(using: .utf8)!, 200)
+            let requestId = UUID().uuidString
+            Self.pendingV2Results[requestId] = resultData
+            let queueResponse = "{\"request_id\":\"\(requestId)\",\"success\":true}".data(using: .utf8)!
+            let response = HTTPURLResponse(url: url, statusCode: 202, httpVersion: nil, headerFields: nil)!
             client?.urlProtocol(self, didReceive: response, cacheStoragePolicy: .notAllowed)
-            client?.urlProtocol(self, didLoad: empty)
+            client?.urlProtocol(self, didLoad: queueResponse)
             client?.urlProtocolDidFinishLoading(self)
             return
         }
-        // status/ or result/ (v2): return success so polling doesn't hang
+        // v2 GET status/<request_id>: return completed so client fetches result
+        if url.path.contains("status/") {
+            let requestId = String(url.path.split(separator: "/").last ?? "")
+            let statusResponse = "{\"status\":\"completed\"}".data(using: .utf8)!
+            let response = HTTPURLResponse(url: url, statusCode: 200, httpVersion: nil, headerFields: nil)!
+            client?.urlProtocol(self, didReceive: response, cacheStoragePolicy: .notAllowed)
+            client?.urlProtocol(self, didLoad: statusResponse)
+            client?.urlProtocolDidFinishLoading(self)
+            return
+        }
+        // v2 GET result/<request_id>: return stored result for that command
         if url.path.contains("result/") {
-            if let (data, code) = Self.responseByCommand["__result__"] {
-                let response = HTTPURLResponse(url: url, statusCode: code, httpVersion: nil, headerFields: nil)!
-                client?.urlProtocol(self, didReceive: response, cacheStoragePolicy: .notAllowed)
-                client?.urlProtocol(self, didLoad: data)
-                client?.urlProtocolDidFinishLoading(self)
-                return
-            }
+            let requestId = String(url.path.split(separator: "/").last ?? "")
+            let resultData = Self.pendingV2Results[requestId] ?? "{\"status\":\"success\"}".data(using: .utf8)!
+            let response = HTTPURLResponse(url: url, statusCode: 200, httpVersion: nil, headerFields: nil)!
+            client?.urlProtocol(self, didReceive: response, cacheStoragePolicy: .notAllowed)
+            client?.urlProtocol(self, didLoad: resultData)
+            client?.urlProtocolDidFinishLoading(self)
+            return
         }
         let empty = "{\"status\":\"success\"}".data(using: .utf8)!
         let response = HTTPURLResponse(url: url, statusCode: 200, httpVersion: nil, headerFields: nil)!
@@ -112,16 +123,21 @@ final class KeeperDataSourceTests: XCTestCase {
         config.protocolClasses = [KeeperMockURLProtocol.self]
         mockSession = URLSession(configuration: config)
         KeeperMockURLProtocol.responseByCommand = [:]
+        KeeperMockURLProtocol.pendingV2Results = [:]
+        KeeperMockURLProtocol.lastCommand = nil
     }
 
     override func tearDown() {
         KeeperMockURLProtocol.responseByCommand = [:]
+        KeeperMockURLProtocol.pendingV2Results = [:]
         KeeperMockURLProtocol.lastRequest = nil
+        KeeperMockURLProtocol.lastCommand = nil
         super.tearDown()
     }
 
-    /// Extracts the "command" string from the last request body (httpBody or httpBodyStream). Returns nil if missing or invalid.
+    /// Extracts the "command" string from the last v2 POST (or request body). Returns nil if missing or invalid.
     private func commandFromLastRequest() -> String? {
+        if let cmd = KeeperMockURLProtocol.lastCommand { return cmd }
         guard let request = KeeperMockURLProtocol.lastRequest else { return nil }
         let body: Data? = {
             if let data = request.httpBody, !data.isEmpty { return data }
@@ -469,7 +485,7 @@ final class KeeperDataSourceTests: XCTestCase {
     }
 
     func testSetPassword_success() {
-        KeeperMockURLProtocol.responseByCommand["record-update -r uid12345678901234 password=\"pwd\""] = ("{\"status\":\"success\"}".data(using: .utf8)!, 200)
+        KeeperMockURLProtocol.responseByCommand["record-update -r uid12345678901234 password=$BASE64:cHdk"] = ("{\"status\":\"success\"}".data(using: .utf8)!, 200)
         let ds = KeeperDataSource(browser: false)
         ds.injectedAPIKey = "test-key"
         ds.injectedBaseURL = URL(string: "https://keeper.test")!
@@ -498,7 +514,7 @@ final class KeeperDataSourceTests: XCTestCase {
 
     func testAdd_recordAddReturnsAccount() {
         let addResponse = "{\"status\":\"success\",\"data\":{\"record_uid\":\"newuid123456789012\"}}"
-        let cmd = "record-add --record-type=login --title=\"My Title\" login=\"user\" password=\"pass\""
+        let cmd = "record-add --record-type=login --title=\"My Title\" login=\"user\" password=$BASE64:cGFzcw=="
         KeeperMockURLProtocol.responseByCommand[cmd] = (addResponse.data(using: .utf8)!, 200)
         let ds = KeeperDataSource(browser: false)
         ds.injectedAPIKey = "test-key"
@@ -624,7 +640,8 @@ final class KeeperDataSourceTests: XCTestCase {
         let userName = "myuser"
         let password = "myp@ss"
         let addResponse = "{\"status\":\"success\",\"data\":{\"record_uid\":\"uid123456789012\"}}"
-        let cmd = "record-add --record-type=login --title=\"Title\" login=\"myuser\" password=\"myp@ss\""
+        let passwordB64 = Data(password.utf8).base64EncodedString()
+        let cmd = "record-add --record-type=login --title=\"Title\" login=\"myuser\" password=$BASE64:\(passwordB64)"
         KeeperMockURLProtocol.responseByCommand[cmd] = (addResponse.data(using: .utf8)!, 200)
         let ds = KeeperDataSource(browser: false)
         ds.injectedAPIKey = "key"
@@ -639,24 +656,28 @@ final class KeeperDataSourceTests: XCTestCase {
         let command = commandFromLastRequest()
         XCTAssertNotNil(command)
         XCTAssertTrue(command?.contains("login=\"myuser\"") ?? false, "command should contain entered username: \(command ?? "")")
-        XCTAssertTrue(command?.contains("password=\"myp@ss\"") ?? false, "command should contain entered password: \(command ?? "")")
+        XCTAssertTrue(command?.contains("password=$BASE64:") ?? false, "command should contain Base64 password: \(command ?? "")")
+        XCTAssertTrue(command?.contains(passwordB64) ?? false, "command should contain Base64-encoded password: \(command ?? "")")
     }
 
     func testSetPassword_sendsPasswordInRequest() {
-        KeeperMockURLProtocol.responseByCommand["record-update -r uid12345678901234 password=\"enteredPwd\""] = ("{\"status\":\"success\"}".data(using: .utf8)!, 200)
+        let password = "enteredPwd"
+        let passwordB64 = Data(password.utf8).base64EncodedString()
+        KeeperMockURLProtocol.responseByCommand["record-update -r uid12345678901234 password=$BASE64:\(passwordB64)"] = ("{\"status\":\"success\"}".data(using: .utf8)!, 200)
         let ds = KeeperDataSource(browser: false)
         ds.injectedAPIKey = "key"
         ds.injectedBaseURL = URL(string: "https://keeper.test")!
         ds.injectedURLSession = mockSession
         let exp = expectation(description: "set")
-        ds.setPassword(recordUid: "uid12345678901234", password: "enteredPwd", context: makeContext()) { error in
+        ds.setPassword(recordUid: "uid12345678901234", password: password, context: makeContext()) { error in
             XCTAssertNil(error)
             exp.fulfill()
         }
         wait(for: [exp], timeout: 5)
         let command = commandFromLastRequest()
         XCTAssertNotNil(command)
-        XCTAssertTrue(command?.contains("password=\"enteredPwd\"") ?? false, "command should contain entered password: \(command ?? "")")
+        XCTAssertTrue(command?.contains("password=$BASE64:") ?? false, "command should contain Base64 password: \(command ?? "")")
+        XCTAssertTrue(command?.contains(passwordB64) ?? false, "command should contain Base64-encoded password: \(command ?? "")")
     }
 
     // MARK: - Sync records (runKeeperSyncDown)

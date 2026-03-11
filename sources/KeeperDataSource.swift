@@ -338,10 +338,6 @@ private func keeperBaseURL() -> URL? {
     return parsed
 }
 
-private func keeperV1ExecuteCommandURL(baseURL: URL) -> URL {
-    baseURL.appendingPathComponent("api/v1/executecommand")
-}
-
 private func keeperV2AsyncURL(baseURL: URL) -> URL {
     baseURL.appendingPathComponent("api/v2/executecommand-async")
 }
@@ -368,50 +364,7 @@ private func keeperExecute(apiKey: String, command: String, baseURL: URL? = nil,
         completion(.failure(NSError(domain: "KeeperDataSource", code: -1, userInfo: [NSLocalizedDescriptionKey: "API URL is required. Please set it in Keeper Security Settings."])))
         return
     }
-    let body = (try? JSONEncoder().encode(KeeperExecuteRequest(command: command))) ?? Data()
-    // Try API v1 (sync) first; if 404, use API v2 (queue) async.
-    let v1Completion: (Result<Data, Error>) -> Void = { result in
-        switch result {
-        case .success(let data):
-            completion(.success(data))
-        case .failure(let err):
-            let nsErr = err as NSError
-            if nsErr.domain == "KeeperDataSource", nsErr.code == 404 {
-                keeperExecuteV2(apiKey: apiKey, command: command, baseURL: resolvedBase, session: session, completion: completion)
-            } else {
-                completion(.failure(err))
-            }
-        }
-    }
-
-    var request = URLRequest(url: keeperV1ExecuteCommandURL(baseURL: resolvedBase))
-    request.httpMethod = "POST"
-    request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-    request.setValue(apiKey, forHTTPHeaderField: "api-key")
-    request.httpBody = body
-    session.dataTask(with: request) { data, response, error in
-        if let error = error {
-            v1Completion(.failure(error))
-            return
-        }
-        guard let data = data else {
-            v1Completion(.failure(NSError(domain: "KeeperDataSource", code: -1, userInfo: [NSLocalizedDescriptionKey: "No data"])))
-            return
-        }
-        let http = response as? HTTPURLResponse
-        if http?.statusCode == 404 {
-            keeperExecuteV2(apiKey: apiKey, command: command, baseURL: resolvedBase, session: session, completion: completion)
-            return
-        }
-        if http?.statusCode != 200 {
-            let msg = keeperHumanReadableError(fromResponseData: data)
-                ?? String(data: data, encoding: .utf8)
-                ?? "HTTP \(http?.statusCode ?? -1)"
-            v1Completion(.failure(NSError(domain: "KeeperDataSource", code: http?.statusCode ?? -1, userInfo: [NSLocalizedDescriptionKey: msg])))
-            return
-        }
-        v1Completion(.success(data))
-    }.resume()
+    keeperExecuteV2(apiKey: apiKey, command: command, baseURL: resolvedBase, session: session, completion: completion)
 }
 
 /// Keeper Commander API v2 (queue): submit async, poll status, then fetch result.
@@ -1152,8 +1105,8 @@ class KeeperDataSource: NSObject, PasswordManagerDataSource {
                 DispatchQueue.main.async { completion(NSError(domain: "KeeperDataSource", code: -1, userInfo: [NSLocalizedDescriptionKey: "No API key"])) }
                 return
             }
-            let escaped = password.replacingOccurrences(of: "\\", with: "\\\\").replacingOccurrences(of: "\"", with: "\\\"")
-            let cmd = "record-update -r \(recordUid) password=\"\(escaped)\""
+            let b64 = Data(password.utf8).base64EncodedString()
+            let cmd = "record-update -r \(recordUid) password=$BASE64:\(b64)"
             keeperExecute(apiKey: apiKey, command: cmd, baseURL: self.injectedBaseURL ?? self.injectedBaseURLFromStorage ?? keeperBaseURL(), session: self.injectedURLSession ?? .shared) { result in
                 switch result {
                 case .success(let data):
@@ -1202,8 +1155,8 @@ class KeeperDataSource: NSObject, PasswordManagerDataSource {
             }
             let escapedTitle = accountName.replacingOccurrences(of: "\\", with: "\\\\").replacingOccurrences(of: "\"", with: "\\\"")
             let escapedLogin = userName.replacingOccurrences(of: "\\", with: "\\\\").replacingOccurrences(of: "\"", with: "\\\"")
-            let escapedPassword = password.replacingOccurrences(of: "\\", with: "\\\\").replacingOccurrences(of: "\"", with: "\\\"")
-            let cmd = "record-add --record-type=login --title=\"\(escapedTitle)\" login=\"\(escapedLogin)\" password=\"\(escapedPassword)\""
+            let passwordB64 = Data(password.utf8).base64EncodedString()
+            let cmd = "record-add --record-type=login --title=\"\(escapedTitle)\" login=\"\(escapedLogin)\" password=$BASE64:\(passwordB64)"
             keeperExecute(apiKey: apiKey, command: cmd, baseURL: self.injectedBaseURL ?? self.injectedBaseURLFromStorage ?? keeperBaseURL(), session: self.injectedURLSession ?? .shared) { [weak self] result in
             guard let self = self else { return }
             switch result {
