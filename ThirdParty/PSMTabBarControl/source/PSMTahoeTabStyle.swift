@@ -1627,11 +1627,15 @@ class PSMTahoeDarkTabStyle: PSMTahoeTabStyle {
                        blue:         0.19,
                        alpha:        1.0)
     }
-    
+
     override func accessoryStrokeColor() -> NSColor {
         return NSColor.darkGray
     }
-    
+
+    override func accessoryTextColor() -> NSColor {
+        return NSColor(srgbRed: 0.958, green: 0.958, blue: 0.958, alpha: 1)
+    }
+
     override func backgroundColorSelected(_ selected: Bool, highlightAmount: CGFloat) -> NSColor {
         if selected {
             if tabBar?.window?.isMainWindow == true && NSApp.isActive {
