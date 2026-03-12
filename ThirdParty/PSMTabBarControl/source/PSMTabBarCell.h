@@ -57,6 +57,12 @@
 @property(nonatomic, readonly) CGFloat highlightAmount;
 @property(nonatomic) PSMProgress progress;
 @property(nonatomic) BOOL isProcessing;
+@property(nonatomic, assign) BOOL isGroupHeader;
+@property(nonatomic, assign) BOOL isGroupMember;
+@property(nonatomic, assign) BOOL isGroupCollapsed;
+@property(nonatomic, copy, nullable) NSString *groupName;
+@property(nonatomic, retain, nullable) NSColor *groupColor;
+@property(nonatomic, assign) NSInteger groupMemberCount;
 
 // creation/destruction
 - (id)initWithControlView:(PSMTabBarControl *)controlView;

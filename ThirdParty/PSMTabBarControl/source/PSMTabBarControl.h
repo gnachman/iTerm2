@@ -222,6 +222,7 @@ typedef NS_ENUM(int, PSMTabPosition) {
 
 // tab information
 - (NSMutableArray *)representedTabViewItems;
+- (NSMutableArray<PSMTabBarCell *> *)cells;
 - (int)numberOfVisibleTabs;
 
 // special effects
