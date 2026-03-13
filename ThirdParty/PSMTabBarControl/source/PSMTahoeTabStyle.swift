@@ -1477,7 +1477,8 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
             objects.append(GroupLO(name: "Pin Indicator", priority: Priority.required.rawValue, gravity: .left, members: [
                 ImageLO(name: "Pin Icon", image: pinImage, priority: Priority.required.rawValue, gravity: .left) { resolved in
                     var pinRect = resolved.frame
-                    pinRect.origin.y = cell.frame.minY + floor((cell.frame.height - pinRect.height) / 2.0) + orientationShift
+                    pinRect.size = pinImage.size
+                    pinRect.origin.y = cell.frame.minY + floor((cell.frame.height - pinRect.height) / 2.0) + orientationShift + 2.0
                     tintedPin.draw(in: pinRect,
                                    from: NSZeroRect,
                                    operation: .sourceOver,
@@ -1485,6 +1486,7 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
                                    respectFlipped: true,
                                    hints: nil)
                 },
+                FixedSpacerLO(name: "Post-pin Spacer", width: 4.0, priority: Priority.required.rawValue, gravity: .left)
             ]))
         } else {
             objects.append(FixedSpacerLO(name: "Leading Spacer", width: edgePadding, priority: Priority.required.rawValue, gravity: .left))
@@ -1521,54 +1523,53 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
         // Amount to shift text down from vertically centered so that it matches the OS's rendering
         let textShift = 1.0 + orientationShift
         if !skipLabel {
-        objects.append(TextLO(name: Name.label.rawValue,
-                              priority: Priority.required.rawValue,
-                              minWidth: 8,
-                              attributedStringWidth: labelWidth,
-                              gravity: orientation == .horizontalOrientation ? .center : .left) { resolved in
-            let labelOffset: CGFloat
-            let mainLabelHeight: CGFloat
-            if let cachedTitle = cell.cachedTitle,
-               !cachedTitle.isEmpty {
-                let drawString: NSAttributedString
-                if cell.isPinned && orientation == .horizontalOrientation {
-                    // For pinned tabs, show only the first character.
-                    let title = cachedTitle.inputs.title ?? ""
-                    let firstChar = title.isEmpty ? "" : String(title.prefix(1))
-                    let fullString = cachedTitle.attributedStringForcingLeftAlignment(
-                        true, truncatedForWidth: resolved.frame.size.width)
-                    let attrs: [NSAttributedString.Key: Any] = fullString.length > 0
-                        ? fullString.attributes(at: 0, effectiveRange: nil)
-                        : [:]
-                    drawString = NSAttributedString(string: firstChar, attributes: attrs)
+            objects.append(TextLO(name: Name.label.rawValue,
+                                  priority: Priority.required.rawValue,
+                                  minWidth: 8,
+                                  attributedStringWidth: labelWidth,
+                                  gravity: orientation == .horizontalOrientation ? .center : .left) { resolved in
+                let labelOffset: CGFloat
+                let mainLabelHeight: CGFloat
+                if let cachedTitle = cell.cachedTitle,
+                   !cachedTitle.isEmpty {
+                    let drawString: NSAttributedString
+                    if cell.isPinned && orientation == .horizontalOrientation {
+                        // For pinned tabs, show only the first character.
+                        let title = cachedTitle.inputs.title
+                        let firstChar = title.isEmpty ? "" : String(title.prefix(1))
+                        let fullString = cachedTitle.attributedStringForcingLeftAlignment(
+                            true,
+                            truncatedForWidth: resolved.frame.size.width)
+                        let attrs = fullString.length > 0 ? fullString.attributes(at: 0, effectiveRange: nil) : [:]
+                        drawString = NSAttributedString(string: firstChar, attributes: attrs)
+                    } else {
+                        drawString = cachedTitle.attributedStringForcingLeftAlignment(
+                            orientation == .verticalOrientation,
+                            truncatedForWidth: resolved.frame.size.width)
+                    }
+                    var rect = resolved.frame
+                    let boundingSize = cachedTitle.boundingRect(with: NSSize(width: resolved.frame.width, height: cell.frame.height)).size
+                    mainLabelHeight = boundingSize.height
+                    labelOffset = PSMTahoeTabStyle.willDrawSubtitle(cell.cachedSubtitle) ? PSMTahoeTabStyle.verticalOffsetForTitleWhenSubtitlePresent : 0
+                    rect.origin.y = cell.frame.origin.y + floor((cell.frame.size.height - boundingSize.height) / 2.0) + labelOffset + textShift
+                    rect.size.height = boundingSize.height
+                    drawString.draw(in: rect)
                 } else {
-                    drawString = cachedTitle.attributedStringForcingLeftAlignment(
-                        orientation == .verticalOrientation,
-                        truncatedForWidth: resolved.frame.size.width)
+                    labelOffset = 0
+                    mainLabelHeight = 0
                 }
-                var rect = resolved.frame
-                let boundingSize = cachedTitle.boundingRect(with: NSSize(width: resolved.frame.width, height: cell.frame.height)).size
-                mainLabelHeight = boundingSize.height
-                labelOffset = PSMTahoeTabStyle.willDrawSubtitle(cell.cachedSubtitle) ? PSMTahoeTabStyle.verticalOffsetForTitleWhenSubtitlePresent : 0
-                rect.origin.y = cell.frame.origin.y + floor((cell.frame.size.height - boundingSize.height) / 2.0) + labelOffset + textShift
-                rect.size.height = boundingSize.height
-                drawString.draw(in: rect)
-            } else {
-                labelOffset = 0
-                mainLabelHeight = 0
-            }
-            
-            // Draw subtitle (never for pinned tabs).
-            if supportsMultiLineLabels && !cell.isPinned {
-                self.drawSubtitle(cell: cell,
-                                  orientation: orientation,
-                                  xOrigin: resolved.frame.minX,
-                                  maxWidth: resolved.frame.width,
-                                  labelOffset: labelOffset,
-                                  mainLabelHeight: mainLabelHeight)
-            }
-        })
-        } // !skipLabel
+
+                // Draw subtitle (never for pinned tabs).
+                if supportsMultiLineLabels && !cell.isPinned {
+                    self.drawSubtitle(cell: cell,
+                                      orientation: orientation,
+                                      xOrigin: resolved.frame.minX,
+                                      maxWidth: resolved.frame.width,
+                                      labelOffset: labelOffset,
+                                      mainLabelHeight: mainLabelHeight)
+                }
+            })
+        }
 
         // Icon
         if cell.hasIcon, let icon = icon(cell: cell) {

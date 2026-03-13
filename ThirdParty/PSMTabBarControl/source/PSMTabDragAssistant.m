@@ -582,21 +582,29 @@ static CVReturn DisplayLinkCallback(CVDisplayLinkRef displayLink,
             int theIndex;
             NSArray *cells = [[self sourceTabBar] cells];
 
-            //find the index of where the dragged cell was just dropped
-            for (theIndex = 0; theIndex < [cells count] && [cells objectAtIndex:theIndex] != [self draggedCell]; theIndex++);
+            // Find the index of where the dragged cell was just dropped
+            for (theIndex = 0; theIndex < [cells count] && cells[theIndex] != [self draggedCell]; theIndex++) {
+                ;
+            }
 
             // Enforce pinned/unpinned boundary (placeholders are already removed here).
             {
                 int pinnedCount = 0;
                 for (PSMTabBarCell *c in cells) {
-                    if (c.isPinned) pinnedCount++;
+                    if (c.isPinned) {
+                        pinnedCount++;
+                    }
                 }
                 if (pinnedCount > 0 && pinnedCount < (int)[cells count]) {
                     int clampedIndex = theIndex;
                     if ([[self draggedCell] isPinned]) {
-                        if (clampedIndex >= pinnedCount) clampedIndex = pinnedCount - 1;
+                        if (clampedIndex >= pinnedCount) {
+                            clampedIndex = pinnedCount - 1;
+                        }
                     } else {
-                        if (clampedIndex < pinnedCount) clampedIndex = pinnedCount;
+                        if (clampedIndex < pinnedCount) {
+                            clampedIndex = pinnedCount;
+                        }
                     }
                     if (clampedIndex != theIndex) {
                         NSMutableArray *mutCells = [[self sourceTabBar] cells];

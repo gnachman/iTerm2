@@ -1183,7 +1183,6 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionDarkModeInactiveTabDarkness = @"
         NSMutableArray *newOrigins = [NSMutableArray arrayWithCapacity:cellCount];
 
         for (int i = 0; i < cellCount; ++i) {
-            PSMTabBarCell *cell = [_cells objectAtIndex:i];
             if (currentOrigin + cellRect.size.height <= [self frame].size.height) {
                 [newOrigins addObject:[NSNumber numberWithFloat:currentOrigin]];
                 currentOrigin += cellRect.size.height;
@@ -1215,10 +1214,12 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionDarkModeInactiveTabDarkness = @"
 }
 
 - (CGFloat)totalPinnedSpaceForPinnedCount:(NSUInteger)pinnedCount unpinnedCount:(NSUInteger)unpinnedCount {
-    if (pinnedCount == 0) return 0;
-    CGFloat spacing = _style.intercellSpacing;
+    if (pinnedCount == 0) {
+        return 0;
+    }
+    const CGFloat spacing = _style.intercellSpacing;
     // Width of pinned tabs themselves
-    CGFloat pinnedWidth = pinnedCount * _pinnedTabWidth;
+    const CGFloat pinnedWidth = pinnedCount * _pinnedTabWidth;
     // Spacing between pinned tabs
     CGFloat pinnedSpacing = (pinnedCount - 1) * spacing;
     // Spacing between pinned and unpinned groups
@@ -1280,7 +1281,7 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionDarkModeInactiveTabDarkness = @"
     }
 
     if (pinnedCount == 0) {
-        // No pinned cells - use the original algorithm.
+        // No pinned cells
         NSMutableArray<NSNumber *> *newWidths = [NSMutableArray array];
         if ([self shouldUseOptimalWidthWithOverflow:withOverflow]) {
             for (int i = 0; i < cellCount; i++) {
@@ -1627,7 +1628,7 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionDarkModeInactiveTabDarkness = @"
             }
 
             if ([cell hasIcon]) {
-                [menuItem setImage:[(id)[[cell representedObject] identifier] icon]];
+                [menuItem setImage:(NSImage *)[(id)[[cell representedObject] identifier] icon]];
             }
 
             if ([cell count] > 0) {

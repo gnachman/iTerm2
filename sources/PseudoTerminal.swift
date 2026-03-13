@@ -309,12 +309,17 @@ extension PseudoTerminal: ColorsMenuItemViewDelegate {
         if tab == nil {
             tab = currentTab()
         }
-        guard let tab else { return }
-        if tab.tmuxController() != nil { return }
+        guard let tab else {
+            return
+        }
+        if tab.tmuxController() != nil {
+            return
+        }
         tab.isPinned = !tab.isPinned
     }
 
-    @objc func tab(_ tab: PTYTab, didChangePinnedState pinned: Bool) {
+    // Delegate method call forwarded from main class.
+    @objc(_tab:didChangePinnedState:) func tab(_ tab: PTYTab, didChangePinnedState pinned: Bool) {
         guard let tabViewItem = tab.tabViewItem else { return }
         tabBarControl()?.setIsPinned(pinned, for: tabViewItem)
 

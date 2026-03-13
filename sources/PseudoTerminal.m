@@ -7407,7 +7407,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     }
 
     // pin/unpin tab (not available for tmux tabs)
-    if (![theTab tmuxController]) {
+    if (![theTab isTmuxTab]) {
         [rootMenu addItem:[NSMenuItem separatorItem]];
         NSString *pinTitle = theTab.isPinned ? @"Unpin Tab" : @"Pin Tab";
         item = [[[NSMenuItem alloc] initWithTitle:pinTitle
@@ -12865,8 +12865,6 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
     [self updateForTransparency:self.ptyWindow];
 }
 
-// tab:didChangePinnedState: is in PseudoTerminal.swift
-
 - (void)tab:(PTYTab *)tab didChangeToState:(PTYTabState)newState {
     if (self.numberOfTabs == 1) {
         [self setWindowTitle];
@@ -12990,7 +12988,7 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
             }
             break;
         }
-
+            
         case TAB_STYLE_AUTOMATIC:
         case TAB_STYLE_LIGHT:
         case TAB_STYLE_LIGHT_HIGH_CONTRAST:
@@ -13227,6 +13225,11 @@ backgroundColor:(NSColor *)backgroundColor {
     [self replaceSyntheticSessionWithLiveSessionIfNeeded:syntheticSession];
 }
 
+- (void)tab:(PTYTab *)tab didChangePinnedState:(BOOL)pinned { 
+    [self _tab:tab didChangePinnedState:pinned];
+}
+
+
 #pragma mark - PSMMinimalTabStyleDelegate
 
 - (NSColor *)minimalTabStyleBackgroundColor {
@@ -13286,7 +13289,7 @@ backgroundColor:(NSColor *)backgroundColor {
     // Update dimming of panes.
     [self refreshTerminal:nil];
     [self setDimmingForSessions];
-
+    
     // Post a notification to reload menus
     [[NSNotificationCenter defaultCenter] postNotificationName:@"iTermWindowBecameKey"
                                                         object:self
@@ -13386,10 +13389,10 @@ backgroundColor:(NSColor *)backgroundColor {
 
 - (id)swipeHandlerBeginSessionAtOffset:(CGFloat)offset identifier:(nonnull id)identifier {
     DLog(@"swipeHandlerBeginSessionAtOffset:%@ identifier:%@", @(offset), identifier);
-
+    
     assert(!_swipeContainerView);
     self.swipeIdentifier = identifier;
-
+    
     NSRect frame = NSZeroRect;
     frame.origin.x = offset;
     frame.size.width = self.tabs.firstObject.realRootView.frame.size.width * self.tabs.count;
@@ -13397,7 +13400,7 @@ backgroundColor:(NSColor *)backgroundColor {
     _swipeContainerView = [[[NSView alloc] initWithFrame:frame] autorelease];
     [self updateUseMetalInAllTabs];
     const CGFloat width = self.swipeHandlerParameters.width;
-
+    
     [self.tabs enumerateObjectsUsingBlock:^(PTYTab * _Nonnull tab, NSUInteger idx, BOOL * _Nonnull stop) {
         NSView *view = tab.realRootView;
         NSRect frame = view.frame;
@@ -13410,7 +13413,7 @@ backgroundColor:(NSColor *)backgroundColor {
         [_swipeContainerView addSubview:clipView];
     }];
     [self.contentView.tabView addSubview:_swipeContainerView];
-
+    
     return @{};
 }
 
@@ -13431,14 +13434,14 @@ backgroundColor:(NSColor *)backgroundColor {
 
 - (void)swipeHandlerSetOffset:(CGFloat)rawOffset forSession:(id)session {
     DLog(@"setOffset:%@ forSession:%@", @(rawOffset), session);
-
+    
     NSRect frame = _swipeContainerView.frame;
     const CGFloat offset = -[self truncatedSwipeOffset:-rawOffset];
     frame.origin.x = offset;
-
+    
     DLog(@"_swipeContainerView.frame=%@", NSStringFromRect(frame));
     _swipeContainerView.frame = frame;
-
+    
     DLog(@"After setting frame:\n%@", [self.window.contentView iterm_recursiveDescription]);
 }
 
@@ -13502,14 +13505,14 @@ backgroundColor:(NSColor *)backgroundColor {
         [self.window setFrame:rect display:YES];
         [self fitTabsToWindow];
     }
-
+    
     DLog(@"Set width adjustment to 0 for %@", self);
     _widthAdjustment = 0;
 }
 
 - (NSRect)rectByAdjustingWidth:(NSRect)rect {
     DLog(@"%@: Computing width adjustment for window type %@ rect %@ widthAdjustment %@",
-          self, @(self.windowType), NSStringFromRect(rect), @(_widthAdjustment));
+         self, @(self.windowType), NSStringFromRect(rect), @(_widthAdjustment));
     switch (self.windowType) {
         case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
         case WINDOW_TYPE_LION_FULL_SCREEN:
@@ -13519,7 +13522,7 @@ backgroundColor:(NSColor *)backgroundColor {
         case WINDOW_TYPE_COMPACT_MAXIMIZED:
             DLog(@"No width adjustment because of window type");
             return rect;
-
+            
         case WINDOW_TYPE_CENTERED:
         case WINDOW_TYPE_NORMAL:
         case WINDOW_TYPE_LEFT_PERCENTAGE:
