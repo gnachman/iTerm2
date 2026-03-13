@@ -36,7 +36,7 @@ class iTermNonTextPasteHelper: NSObject {
         DLog("pasteNonTextContent called")
         let pb = NSPasteboard.general
         if pb.hasFileURLs() {
-            guard let paths = pb.filePaths() as? [String], !paths.isEmpty else {
+            guard let paths = pb.filePaths(), !paths.isEmpty else {
                 DLog("hasFileURLs but no paths found")
                 return false
             }
@@ -253,7 +253,7 @@ class iTermNonTextPasteHelper: NSObject {
 
         // Build actions based on whether we can upload and whether we know the file type
         var actions = [ImagePasteAction]()
-        if let ext = fileExtension {
+        if fileExtension != nil {
             if canUpload {
                 actions.append(.uploadAndPastePath)
                 actions.append(.upload)

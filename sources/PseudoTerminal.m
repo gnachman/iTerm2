@@ -4242,6 +4242,11 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
                     case kiTermWarningSelection3:
                         // Cancel
                         return;
+                    case kiTermWarningSelection4:
+                    case kiTermWarningSelection5:
+                    case kiTermWarningSelection6:
+                        ITAssertWithMessage(NO, @"Unexpected selection %@", @(selection));
+                        break;
                     case kItermWarningSelectionError:
                         return;
                 }

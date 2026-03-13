@@ -55,7 +55,7 @@ class RegexAtomIterator {
     ///   - locatedString: The located string containing text and 1:1 UTF-16 coords
     ///   - targetIndex: The UTF-16 index in text where the user clicked
     func preatomize(locatedString: iTermLocatedString, targetIndex: Int) {
-        let text = locatedString.string ?? ""
+        let text = locatedString.string
         let gridCoords = locatedString.gridCoords
 
         guard !text.isEmpty, gridCoords.count > 0 else {
