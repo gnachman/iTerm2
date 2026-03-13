@@ -7,6 +7,7 @@
 *.perspective
 *.perspectivev3
 build/
+tmp/
 .DS_Store
 canary.xml
 testing.xml

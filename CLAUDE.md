@@ -8,7 +8,7 @@
 - Don't create dependency cycles. Use delegates or closures instead.
 - To run unit tests in ModernTests, use tools/run_tests.expect. It takes an argument naming the test or tests, such as `tools/run_tests.expect ModernTests/iTermScriptFunctionCallTest/testSignature`
 - When renaming a file tracked by git (and almost all of them are) use `git mv` instead of `mv`
-- To make a debug build run `make Development`
+- To make a debug build run `tools/build.sh` (or `tools/build.sh Development`). This saves logs to `tmp/build.log` and shows only errors/warnings on failure.
 - Little scripts or text files that are used for manual testing of features go in tests/
 - The deployment target for iTerm2 is macOS 12. You don't need to perform availability checks for older versions.
 - Don't replace curly quotes with straight quotes. Same for apostrophes and single quotes.
