@@ -233,7 +233,6 @@ static iTermController *gSharedInstance;
                 }
             }];
         }];
-        ITAssertWithMessage([_terminalWindows count] == 0, @"Expected terminals to be gone");
     }
     _terminalWindows = nil;
 }

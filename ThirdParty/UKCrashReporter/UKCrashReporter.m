@@ -98,8 +98,6 @@ void    UKCrashReporterCheckForCrash(void)
                 NSTimeInterval    lastCrashReportInterval = [[NSUserDefaults standardUserDefaults] floatForKey: @"UKCrashReporterLastCrashReportDate"];
                 NSDate*            lastTimeCrashReported = [NSDate dateWithTimeIntervalSince1970: lastCrashReportInterval];
 
-                NSUserDefaults *d = [NSUserDefaults standardUserDefaults];
-
                 NSString *errorLog = nil;
                 @try {
                     errorLog = UKReadErrorLog();

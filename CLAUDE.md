@@ -13,3 +13,5 @@
 - The deployment target for iTerm2 is macOS 12. You don't need to perform availability checks for older versions.
 - Don't replace curly quotes with straight quotes. Same for apostrophes and single quotes.
 - In user-visible strings do not use " except as a shorthand for inch. Prefer curly quotes like “ and ”. I know this goes against your nature, but fight hard here.
+- Never use auto layout in the terminal window. It virally spreads and breaks autoresizing. It is fine to use it in other windows without a lot of existing autoresizing mask-based code (e.g., the AI chat window)
+- The deployment target is macOS 12. Don't add availability checks for 12 and lower.

@@ -314,6 +314,8 @@ typedef NS_ENUM(NSUInteger, iTermSessionViewFindDriver) {
 - (void)didBecomeVisible;
 - (void)showUnobtrusiveMessage:(NSString *)message;
 - (void)showUnobtrusiveMessage:(NSString *)message duration:(NSTimeInterval)duration;
+- (void)showUploadIndicatorWithFilename:(NSString *)filename onCancel:(void (^)(void))onCancel;
+- (void)hideUploadIndicator;
 - (void)setSuppressLegacyDrawing:(BOOL)suppressLegacyDrawing;
 - (void)takeFindDriverFrom:(SessionView *)donorView delegate:(id<iTermFindDriverDelegate>)delegate;
 

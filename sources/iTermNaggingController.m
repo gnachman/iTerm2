@@ -26,10 +26,12 @@ static NSString *const iTermNaggingControllerTmuxSupplementaryPlaneErrorIdentifi
 static NSString *const iTermNaggingControllerAskAboutAlternateMouseScrollIdentifier = @"AskAboutAlternateMouseScroll";
 static NSString *const iTermNaggingControllerAskAboutMouseReportingFrustrationIdentifier = @"AskAboutMouseReportingFrustration";
 NSString *const kTurnOffBracketedPasteOnHostChangeAnnouncementIdentifier = @"TurnOffBracketedPasteOnHostChange";
+static NSString *const kResetKeyReportingModeAnnouncementIdentifier = @"ResetKeyReportingMode";
 NSString *const kRestoreIconAndWindowNameOnHostChangeAnnouncementIdentifier = @"RestoreIconAndWindowName";
 static NSString *const iTermNaggingControllerAskAboutClearingScrollbackHistoryIdentifier = @"ClearScrollbackHistory";
 static NSString *const iTermNaggingControllerWarnAboutSecureKeyboardInputWithOpenCommand = @"WarnAboutSecureKeyboardInputWithOpenCommand";
 NSString *const kTurnOffBracketedPasteOnHostChangeUserDefaultsKey = @"NoSyncTurnOffBracketedPasteOnHostChange";
+static NSString *const kResetKeyReportingModeUserDefaultsKey = @"NoSyncResetKeyReportingModeOnPrompt";
 NSString *const kRestoreIconAndWindowNameOnHostChangeUserDefaultsKey = @"NoSyncRestoreIconAndWindowNameOnHostChange";
 static NSString *const iTermNaggingControllerAskAboutChangingProfileIdentifier = @"AskAboutChangingProfile";
 static NSString *const iTermNaggingControllerTmuxWindowsShouldCloseAfterDetach = @"TmuxWindowsShouldCloseAfterDetach";
@@ -540,6 +542,55 @@ static NSString *const iTermNaggingControllerArrangementSetProfileProperty = @"S
                 break;
         }
     }];
+}
+
+- (BOOL)shouldResetKeyReportingMode {
+    NSNumber *number = [[iTermUserDefaults userDefaults] objectForKey:kResetKeyReportingModeUserDefaultsKey];
+    if (number.boolValue) {
+        // User chose "Always" - caller should reset
+        return YES;
+    }
+    if (number != nil) {
+        // User chose "Never" - do nothing
+        return NO;
+    }
+    // User hasn't chosen yet - show nag
+    NSString *title = @"The key reporting mode may have been left in an unusual setting when an ssh session died or an app crashed. Restore?";
+
+    [self.delegate naggingControllerShowMessage:title
+                                     isQuestion:YES
+                                      important:YES
+                                     identifier:kResetKeyReportingModeAnnouncementIdentifier
+                                        options:@[ @"_Yes", @"Always", @"Never" ]
+                                     completion:^(int selection) {
+        switch (selection) {
+            case -2:  // Dismiss programmatically
+                break;
+
+            case -1: // No
+                break;
+
+            case 0: // Yes
+                [self.delegate naggingControllerResetKeyReportingMode];
+                break;
+
+            case 1: // Always
+                [[iTermUserDefaults userDefaults] setBool:YES
+                                                        forKey:kResetKeyReportingModeUserDefaultsKey];
+                [self.delegate naggingControllerResetKeyReportingMode];
+                break;
+
+            case 2: // Never
+                [[iTermUserDefaults userDefaults] setBool:NO
+                                                        forKey:kResetKeyReportingModeUserDefaultsKey];
+                break;
+        }
+    }];
+    return NO;
+}
+
+- (void)dismissKeyReportingModeOffer {
+    [self.delegate naggingControllerRemoveMessageWithIdentifier:kResetKeyReportingModeAnnouncementIdentifier];
 }
 
 - (void)offerToRestoreIconName:(NSString *)iconName windowName:(NSString *)windowName {

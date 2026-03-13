@@ -39,15 +39,16 @@
 @class iTermComposerManager;
 @class iTermConductor;
 @class AITermControllerObjC;
+@class iTermNonTextPasteHelper;
 
 @interface PTYSession () <
 iTermAutomaticProfileSwitcherDelegate,
 iTermBackgroundDrawingHelperDelegate,
 iTermBadgeLabelDelegate,
+iTermComposerManagerDelegate,
+iTermConductorDelegate,
 iTermCoprocessDelegate,
 iTermCopyModeHandlerDelegate,
-iTermConductorDelegate,
-iTermComposerManagerDelegate,
 iTermFilterDestination,
 iTermHotKeyNavigableSession,
 iTermImmutableColorMapDelegate,
@@ -58,9 +59,11 @@ iTermMetalGlueDelegate,
 iTermModernKeyMapperDelegate,
 iTermModifyOtherKeysMapperDelegate,
 iTermNaggingControllerDelegate,
+iTermNonTextPasteHelperDelegate,
 iTermObject,
 iTermPasteHelperDelegate,
 iTermPasteboardReporterDelegate,
+iTermSessionDirectoryTrackerDelegate,
 iTermSessionNameControllerDelegate,
 iTermSessionViewDelegate,
 iTermShortcutNavigationModeHandlerDelegate,
@@ -68,10 +71,9 @@ iTermStandardKeyMapperDelegate,
 iTermStatusBarViewControllerDelegate,
 iTermTailFindControllerDelegate,
 iTermTermkeyKeyMapperDelegate,
-iTermTriggersDataSource,
 iTermTmuxControllerSession,
+iTermTriggersDataSource,
 iTermUpdateCadenceControllerDelegate,
-iTermSessionDirectoryTrackerDelegate,
 TriggerDelegate> {
     // Changes are made in the main thread to this and it periodically copied to the mutation thread.
     iTermExpect *_expect;
@@ -81,6 +83,8 @@ TriggerDelegate> {
     iTermComposerManager *_composerManager;
     iTermAppSwitchingPreventionDetector *_appSwitchingPreventionDetector;
     AITermControllerObjC *_aiterm;
+    iTermNonTextPasteHelper *_nonTextPasteHelper;
+    TransferrableFile *_uploadAndPasteTransfer;  // Current upload for "upload and paste path" feature
 }
 
 @property(nonatomic, retain) Interval *currentMarkOrNotePosition;

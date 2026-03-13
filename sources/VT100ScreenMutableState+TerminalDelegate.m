@@ -1688,9 +1688,14 @@ typedef struct {
 
 - (void)terminalDisinterSession {
     DLog(@"begin");
-    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+    // Use an unmanaged paused side effect because screenDisinterSession restores a buried
+    // session, which can trigger tab/window creation and session setup. This can lead to
+    // performBlockWithJoinedThreads being called, which is forbidden from regular side effects.
+    [self addUnmanagedPausedSideEffect:^(id<VT100ScreenDelegate> delegate,
+                                         iTermTokenExecutorUnpauser *unpauser) {
         DLog(@"begin side-effect");
         [delegate screenDisinterSession];
+        [unpauser unpause];
     } name:@"disinter session"];
 }
 

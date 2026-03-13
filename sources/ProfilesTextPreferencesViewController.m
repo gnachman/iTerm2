@@ -40,6 +40,7 @@
     IBOutlet NSButton *_hideOnLostFocus;
     IBOutlet NSButton *_animateMovement;
     IBOutlet NSButton *_animateMovementOnlyInInteractiveApps;
+    IBOutlet NSButton *_cursorSmoothSlide;
     IBOutlet NSButton *_useItalicFont;
     IBOutlet NSButton *_ambiguousIsDoubleWidth;
     IBOutlet NSPopUpButton *_normalization;
@@ -102,6 +103,7 @@
                  }];
     info.observer = ^{
         [weakSelf updateShadowEnabled];
+        [weakSelf updateSmoothSlideEnabled];
     };
 
     [self defineControl:_blinkingCursor
@@ -147,6 +149,12 @@
         return [weakSelf boolForKey:KEY_ANIMATE_MOVEMENT];
     };
     [info addShouldBeEnabledDependencyOnSetting:KEY_ANIMATE_MOVEMENT controller:self];
+
+    [self defineControl:_cursorSmoothSlide
+                    key:KEY_CURSOR_SMOOTH_SLIDE
+            relatedView:nil
+                   type:kPreferenceInfoTypeCheckbox];
+    [self updateSmoothSlideEnabled];
 
     [self defineControl:_useItalicFont
                     key:KEY_USE_ITALIC_FONT
@@ -445,6 +453,22 @@
 
 - (void)updateShadowEnabled {
     _shadow.enabled = [self cursorTypeSupportsShadow];
+}
+
+- (BOOL)cursorTypeSupportsSmoothSlide {
+    switch ((ITermCursorType)[self intForKey:KEY_CURSOR_TYPE]) {
+        case CURSOR_UNDERLINE:
+        case CURSOR_VERTICAL:
+            return YES;
+        case CURSOR_BOX:
+        case CURSOR_DEFAULT:
+            return NO;
+    }
+    return NO;
+}
+
+- (void)updateSmoothSlideEnabled {
+    _cursorSmoothSlide.enabled = [self cursorTypeSupportsSmoothSlide];
 }
 
 - (void)updateWarnings {

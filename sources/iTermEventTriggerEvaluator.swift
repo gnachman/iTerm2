@@ -103,7 +103,7 @@ class EventTriggerEvaluator: NSObject {
                 continue
             }
 
-            DLog("[\(sessionDescription)] Loaded event trigger: \(trigger.action ?? "unknown") matchType=\(matchType.rawValue) params=\(trigger.eventParams ?? [:])")
+            DLog("[\(sessionDescription)] Loaded event trigger: \(trigger.action) matchType=\(matchType.rawValue) params=\(trigger.eventParams ?? [:])")
             if eventTriggers[matchType] == nil {
                 eventTriggers[matchType] = []
             }
@@ -211,7 +211,7 @@ class EventTriggerEvaluator: NSObject {
             if matchesExitCodeFilter(trigger: trigger, exitCode: info.exitCode) {
                 fireTrigger(trigger, capturedStrings: ["\(info.exitCode)"])
             } else {
-                DLog("[\(sessionDescription)] Exit code \(info.exitCode) did not match filter for trigger \(trigger.action ?? "unknown")")
+                DLog("[\(sessionDescription)] Exit code \(info.exitCode) did not match filter for trigger \(trigger.action)")
             }
         }
     }
@@ -232,7 +232,7 @@ class EventTriggerEvaluator: NSObject {
             if matchesDirectoryFilter(trigger: trigger, path: path) {
                 fireTrigger(trigger, capturedStrings: [path])
             } else {
-                DLog("[\(sessionDescription)] Path '\(path)' did not match filter for trigger \(trigger.action ?? "unknown")")
+                DLog("[\(sessionDescription)] Path '\(path)' did not match filter for trigger \(trigger.action)")
             }
         }
     }
@@ -253,7 +253,7 @@ class EventTriggerEvaluator: NSObject {
             if matchesHostFilter(trigger: trigger, host: host) {
                 fireTrigger(trigger, capturedStrings: [host])
             } else {
-                DLog("[\(sessionDescription)] Host '\(host)' did not match filter for trigger \(trigger.action ?? "unknown")")
+                DLog("[\(sessionDescription)] Host '\(host)' did not match filter for trigger \(trigger.action)")
             }
         }
     }
@@ -274,7 +274,7 @@ class EventTriggerEvaluator: NSObject {
             if matchesUserFilter(trigger: trigger, user: user) {
                 fireTrigger(trigger, capturedStrings: [user])
             } else {
-                DLog("[\(sessionDescription)] User '\(user)' did not match filter for trigger \(trigger.action ?? "unknown")")
+                DLog("[\(sessionDescription)] User '\(user)' did not match filter for trigger \(trigger.action)")
             }
         }
     }
@@ -288,7 +288,7 @@ class EventTriggerEvaluator: NSObject {
             for trigger in triggers where !trigger.disabled {
                 let triggerId = ObjectIdentifier(trigger)
                 if isIdleForTrigger[triggerId] == true {
-                    DLog("[\(sessionDescription)] Activity after idle detected, firing trigger \(trigger.action ?? "unknown")")
+                    DLog("[\(sessionDescription)] Activity after idle detected, firing trigger \(trigger.action)")
                     isIdleForTrigger[triggerId] = false
                     fireTrigger(trigger, capturedStrings: [])
                 }
@@ -339,14 +339,14 @@ class EventTriggerEvaluator: NSObject {
         for trigger in triggers where !trigger.disabled {
             // Only start timer if command matches the filter (or no filter specified)
             if !matchesCommandFilter(trigger: trigger, command: command ?? "") {
-                DLog("[\(sessionDescription)] Command '\(command ?? "")' did not match filter for long-running trigger \(trigger.action ?? "unknown")")
+                DLog("[\(sessionDescription)] Command '\(command ?? "")' did not match filter for long-running trigger \(trigger.action)")
                 continue
             }
 
             let threshold = (trigger.eventParams?["threshold"] as? NSNumber)?.doubleValue ?? 60.0
             let triggerId = ObjectIdentifier(trigger)
 
-            DLog("[\(sessionDescription)] Starting long-running timer for \(threshold)s for trigger \(trigger.action ?? "unknown")")
+            DLog("[\(sessionDescription)] Starting long-running timer for \(threshold)s for trigger \(trigger.action)")
             longRunningTimers[triggerId]?.invalidate()
             longRunningTimers[triggerId] = Timer.scheduledTimer(
                 withTimeInterval: threshold,
@@ -374,7 +374,7 @@ class EventTriggerEvaluator: NSObject {
             if matchesSequenceIdFilter(trigger: trigger, identifier: info.identifier) {
                 fireTrigger(trigger, capturedStrings: [info.identifier, info.payload])
             } else {
-                DLog("[\(sessionDescription)] Sequence ID '\(info.identifier)' did not match filter for trigger \(trigger.action ?? "unknown")")
+                DLog("[\(sessionDescription)] Sequence ID '\(info.identifier)' did not match filter for trigger \(trigger.action)")
             }
         }
     }
@@ -416,7 +416,7 @@ class EventTriggerEvaluator: NSObject {
         let timeout = (trigger.eventParams?["timeout"] as? NSNumber)?.doubleValue ?? 30.0
         let triggerId = ObjectIdentifier(trigger)
 
-        DLog("[\(sessionDescription)] Starting idle timer for \(timeout)s for trigger \(trigger.action ?? "unknown")")
+        DLog("[\(sessionDescription)] Starting idle timer for \(timeout)s for trigger \(trigger.action)")
         idleTimers[triggerId]?.invalidate()
         idleTimers[triggerId] = Timer.scheduledTimer(
             withTimeInterval: timeout,
@@ -444,7 +444,7 @@ class EventTriggerEvaluator: NSObject {
     }
 
     private func idleTimerFired(for trigger: Trigger) {
-        DLog("[\(sessionDescription)] Idle timer fired for trigger \(trigger.action ?? "unknown")")
+        DLog("[\(sessionDescription)] Idle timer fired for trigger \(trigger.action)")
         let triggerId = ObjectIdentifier(trigger)
         isIdleForTrigger[triggerId] = true
 
@@ -458,7 +458,7 @@ class EventTriggerEvaluator: NSObject {
     }
 
     private func longRunningTimerFired(for trigger: Trigger) {
-        DLog("[\(sessionDescription)] Long-running timer fired for trigger \(trigger.action ?? "unknown")")
+        DLog("[\(sessionDescription)] Long-running timer fired for trigger \(trigger.action)")
         guard !trigger.disabled else {
             DLog("[\(sessionDescription)] Trigger is disabled, not firing")
             return
@@ -493,10 +493,10 @@ class EventTriggerEvaluator: NSObject {
 
     private func fireTrigger(_ trigger: Trigger, capturedStrings: [String]) {
         guard let handler = fireTriggerHandler else {
-            DLog("[\(sessionDescription)] No fireTriggerHandler set, cannot fire trigger \(trigger.action ?? "unknown")")
+            DLog("[\(sessionDescription)] No fireTriggerHandler set, cannot fire trigger \(trigger.action)")
             return
         }
-        DLog("[\(sessionDescription)] Firing trigger \(trigger.action ?? "unknown") with captures: \(capturedStrings)")
+        DLog("[\(sessionDescription)] Firing trigger \(trigger.action) with captures: \(capturedStrings)")
         handler(trigger, capturedStrings, triggerParametersUseInterpolatedStrings)
     }
 

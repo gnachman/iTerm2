@@ -299,6 +299,10 @@ extern const CGFloat PTYTextViewMarginClickGraceWidth;
 - (void)textViewExitShortcutNavigationMode;
 - (void)textViewWillHandleMouseDown:(NSEvent *)event;
 - (BOOL)textViewPasteFiles:(NSArray<NSString *> *)filenames;
+// Returns YES if the current working directory is on localhost (no remote host detected).
+- (BOOL)textViewIsOnLocalhost;
+// Show the non-text paste dialog for dropped files, same as Cmd+V with files on the pasteboard.
+- (void)textViewShowPasteOptionsForDroppedFiles:(NSArray<NSString *> *)filenames;
 - (void)textViewPerformNaturalLanguageQuery;
 - (BOOL)textViewCanExplainOutputWithAI;
 - (void)textViewExplainOutputWithAI;
@@ -529,7 +533,13 @@ typedef void (^PTYTextViewDrawingHookBlock)(iTermTextDrawingHelper *);
 @property (nonatomic, readonly) BOOL canCopy;
 @property (nonatomic) BOOL animateMovement;
 @property (nonatomic) BOOL animateMovementOnlyInInteractiveApps;
+// Smooth slide animation for underscore and vertical bar cursors on 1-cell horizontal moves.
+@property (nonatomic) BOOL cursorSmoothSlide;
 @property (nonatomic) NSTimeInterval timestampBaseline;
+// YES while a smooth slide cursor animation is in progress. Used to hide the real cursor.
+@property (nonatomic, readonly) BOOL slideAnimationInProgress;
+// Returns the pixel offset for cursor animation (Metal path). Returns CGPointZero if not animating.
+- (CGPoint)metalCursorAnimationPixelOffset;
 
 
 // If there is a dominant color around the sides of the view and we are allowed

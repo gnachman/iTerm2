@@ -289,6 +289,7 @@ typedef struct {
             KEY_ASCII_LIGATURES, KEY_NON_ASCII_LIGATURES, KEY_CURSOR_SHADOW,
             KEY_ANIMATE_MOVEMENT, KEY_CURSOR_HIDDEN_WITHOUT_FOCUS,
             KEY_ANIMATE_MOVEMENT_ONLY_IN_INTERACTIVE_APPS,
+            KEY_CURSOR_SMOOTH_SLIDE,
 
             KEY_BRIGHTEN_BOLD_TEXT,
             KEY_BRIGHTEN_BOLD_TEXT COLORS_LIGHT_MODE_SUFFIX,
@@ -667,6 +668,7 @@ typedef struct {
             KEY_CURSOR_HIDDEN_WITHOUT_FOCUS:                        @"Whether to hide cursor when window loses focus",
             KEY_ANIMATE_MOVEMENT:                                   @"Whether to animate cursor movement",
             KEY_ANIMATE_MOVEMENT_ONLY_IN_INTERACTIVE_APPS:          @"Whether to animate cursor movement only in interactive apps",
+            KEY_CURSOR_SMOOTH_SLIDE:                                @"Whether to smoothly slide underscore and vertical bar cursors",
             KEY_USE_BOLD_FONT:                                      @"Whether to use bold font for bold text",
             KEY_THIN_STROKES:                                       @"Anti-aliased text stroke thickness setting",
             KEY_ASCII_LIGATURES:                                    @"Whether to render ligatures in ASCII text",
@@ -989,6 +991,7 @@ typedef struct {
                   KEY_CURSOR_HIDDEN_WITHOUT_FOCUS: @NO,
                   KEY_ANIMATE_MOVEMENT: @NO,
                   KEY_ANIMATE_MOVEMENT_ONLY_IN_INTERACTIVE_APPS: @YES,
+                  KEY_CURSOR_SMOOTH_SLIDE: @NO,
                   KEY_USE_BOLD_FONT: @YES,
                   KEY_THIN_STROKES: @(iTermThinStrokesSettingRetinaOnly),
                   KEY_ASCII_LIGATURES: @NO,

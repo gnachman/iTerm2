@@ -268,6 +268,9 @@ extern const CGFloat iTermCursorGuideAlphaThreshold;
 @property(nonatomic, readonly) NSRect cursorFrameForSolidRectangle;
 @property(nonatomic, readonly) NSColor *cursorColor;
 @property(nonatomic, readonly) BOOL cursorIsSolidRectangle;
+// Returns YES if cursor is underscore or vertical bar (not block) and cursorIsSolidRectangle is YES.
+// Block cursors invert character colors so they can't use smooth slide animation.
+@property(nonatomic, readonly) BOOL cursorSupportsSmoothSlide;
 
 // Draw debug info?
 @property(nonatomic, assign) BOOL debug;

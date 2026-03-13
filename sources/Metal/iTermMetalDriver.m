@@ -1257,11 +1257,13 @@ legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth
                 tState.coord = cursorInfo.coord;
                 tState.color = cursorInfo.cursorColor;
                 tState.doubleWidth = cursorInfo.doubleWidth;
+                tState.pixelOffset = cursorInfo.pixelOffset;
 
                 iTermCursorRendererTransientState *shadowTState = [frameData transientStateForRenderer:_horizontalShadowCursorRenderer];
                 shadowTState.coord = cursorInfo.coord;
                 shadowTState.color = cursorInfo.cursorColor;
                 shadowTState.doubleWidth = cursorInfo.doubleWidth;
+                shadowTState.pixelOffset = cursorInfo.pixelOffset;
                 break;
             }
             case CURSOR_BOX: {
@@ -1280,10 +1282,12 @@ legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth
                 iTermCursorRendererTransientState *tState = [frameData transientStateForRenderer:_barCursorRenderer];
                 tState.coord = cursorInfo.coord;
                 tState.color = cursorInfo.cursorColor;
+                tState.pixelOffset = cursorInfo.pixelOffset;
 
                 iTermCursorRendererTransientState *shadowTState = [frameData transientStateForRenderer:_verticalShadowCursorRenderer];
                 shadowTState.coord = cursorInfo.coord;
                 shadowTState.color = cursorInfo.cursorColor;
+                shadowTState.pixelOffset = cursorInfo.pixelOffset;
                 break;
             }
             case CURSOR_DEFAULT:

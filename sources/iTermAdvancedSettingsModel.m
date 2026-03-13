@@ -289,6 +289,7 @@ DEFINE_BOOL(tabTitlesUseSmartTruncation, YES, SECTION_TABS @"Use “smart trunca
 DEFINE_BOOL(middleClickClosesTab, YES, SECTION_TABS @"Should middle-click on a tab in the tab bar close the tab?");
 DEFINE_FLOAT(coloredSelectedTabOutlineStrength, 0.5, SECTION_TABS @"How prominent should the outline around the selected tab be drawn when there are colored tabs in a window?\nTakes a value in 0 to 3, where 0 means no outline and 3 means a very prominent outline.");
 DEFINE_FLOAT(minimalEdgeDragSize, 12, SECTION_TABS @"In the Minimal theme, you can move the window by dragging starting in a region on the edge near the window border. This gives the size of that region.");
+DEFINE_INT(pinnedTabWidth, 64, SECTION_TABS @"Width of pinned tabs in pixels.");
 DEFINE_FLOAT(compactEdgeDragSize, 10, SECTION_TABS @"In the Compact theme, you can move the window by dragging starting in a region on the edge near the window border. This gives the size of that region.");
 DEFINE_FLOAT(minimalTabStyleBackgroundColorDifference, 0.05, SECTION_TABS @"In the Minimal theme, how different should the background color of the selected tab be from the others?\nTakes a value in 0 to 1, where 0 is no difference and 1 very different.");
 DEFINE_FLOAT(minimalTabStyleOutlineStrength, 0.2, SECTION_TABS @"In the Minimal theme, how prominent should the tab outline be?\nTakes a value in 0 to 1, where 0 is invisible and 1 is very prominent");
@@ -562,6 +563,8 @@ DEFINE_BOOL(alwaysUseLineStyleMarks, NO, SECTION_DRAWING @"Always use line-style
 DEFINE_FLOAT(alphaForDeselectedCommandShade, 0.25, SECTION_DRAWING @"Alpha value for shade that covers areas outside the currently selected command.");
 DEFINE_BOOL(showURLPreviewForSemanticHistory, YES, SECTION_DRAWING @"Show URL preview on cmd-hover for semantic history matches.");
 DEFINE_FLOAT(cursorAnimationMinDistance, 150.0, SECTION_DRAWING @"When animated cursor movement is enabled, only perform animation if the cursor moves at least this distance in points.");
+DEFINE_FLOAT(cursorSlideAnimationDuration, 0.05, SECTION_DRAWING @"Duration in seconds for smooth cursor slide animation.\nThis affects the \"Smooth slide\" cursor movement option.");
+DEFINE_INT(cursorSlideAnimationMaxCells, 1, SECTION_DRAWING @"Maximum horizontal distance in cells for smooth cursor slide animation.\nCursor movements larger than this will not animate.");
 
 #pragma mark - Semantic History
 
@@ -569,7 +572,7 @@ DEFINE_FLOAT(cursorAnimationMinDistance, 150.0, SECTION_DRAWING @"When animated 
 
 DEFINE_BOOL(ignoreHardNewlinesInURLs, NO, SECTION_SEMANTIC_HISTORY @"Ignore hard newlines for the purposes of locating URLs and file names for Semantic History.\nIf a hard newline occurs at the end of a line then ⌘-click will not see it all unless this setting is turned on. This is useful for some interactive applications. Turning this on will remove newlines from the \\3 and \\4 substitutions.");
 // Note: square brackets are included for ipv6 addresses like http://[2600:3c03::f03c:91ff:fe96:6a7a]/
-DEFINE_STRING(URLCharacterSet, @".?\\/:;%=&_-,+~#@!*'(（)）|[]", SECTION_SEMANTIC_HISTORY @"Non-alphanumeric characters considered part of a URL or file name for Semantic History.\nLetters and numbers are always considered part of the URL. These non-alphanumeric characters are used in addition for the purposes of figuring out where a URL begins and ends. You must restart iTerm2 for changes to this setting to take effect.");
+DEFINE_STRING(URLCharacterSet, @".?\\/:;$%=&_-,+~#@!*'(（)）|[]", SECTION_SEMANTIC_HISTORY @"Non-alphanumeric characters considered part of a URL or file name for Semantic History.\nLetters and numbers are always considered part of the URL. These non-alphanumeric characters are used in addition for the purposes of figuring out where a URL begins and ends. You must restart iTerm2 for changes to this setting to take effect.");
 DEFINE_STRING(URLCharacterSetExclusions, @"¬", SECTION_SEMANTIC_HISTORY @"Characters never considered part of a URL.\nThe characters in this string may never occur in a URL; when one is seen that delineates the beginning or end of a URL.");
 DEFINE_STRING(filenameCharacterSet, @"$@", SECTION_SEMANTIC_HISTORY @"Non-alphanumeric characters considered part of a filename. Note that URL characters (a separate advanced setting) are also allowed.\nLetters and numbers are always considered part of the URL. These non-alphanumeric characters are used in addition for the purposes of figuring out where a file begins and ends. You must restart iTerm2 for changes to this setting to take effect.");
 DEFINE_INT(maxSemanticHistoryPrefixOrSuffix, 2000, SECTION_SEMANTIC_HISTORY @"Maximum number of bytes of text before and after click location to take into account.\nThis also limits the size of the \\3 and \\4 substitutions.");

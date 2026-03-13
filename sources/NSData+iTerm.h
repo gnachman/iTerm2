@@ -27,6 +27,11 @@ NS_ASSUME_NONNULL_BEGIN
                             includeExtendedAttrs:(BOOL)includeExtendedAttrs
                                            error:(NSError * _Nullable __autoreleasing * _Nullable)error;
 
+// Creates a .tgz archive of the given directory and writes it to a temp file.
+// Returns the path to the temp file on success, or nil on failure.
++ (NSString * _Nullable)temporaryTGZArchiveOfDirectory:(NSString *)directoryPath
+                                                 error:(NSError * _Nullable __autoreleasing * _Nullable)error;
+
 // returns a string the the data base-64 encoded into 77-column lines divided by lineBreak.
 - (NSString *)stringWithBase64EncodingWithLineBreak:(NSString *)lineBreak;
 

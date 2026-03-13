@@ -42,6 +42,7 @@ extern NSString *const kTurnOffBracketedPasteOnHostChangeAnnouncementIdentifier;
 - (void)naggingControllerSetBackgroundImageToFileWithName:(nullable NSString *)filename;
 - (void)naggingControllerDisableMouseReportingPermanently:(BOOL)permanently;
 - (void)naggingControllerDisableBracketedPasteMode;
+- (void)naggingControllerResetKeyReportingMode;
 - (void)naggingControllerRestoreIconNameTo:(NSString *)iconName windowName:(NSString *)windowName;
 - (void)naggingControllerCloseSession;
 - (void)naggingControllerRepairInitialWorkingDirectoryOfSessionWithGUID:(NSString *)guid
@@ -87,6 +88,11 @@ extern NSString *const kTurnOffBracketedPasteOnHostChangeAnnouncementIdentifier;
 - (void)didDetectMouseReportingFrustration;
 
 - (void)offerToTurnOffBracketedPasteOnHostChange;
+// Returns YES if caller should reset key reporting mode immediately.
+// Returns NO if user chose "Never" or if a nag is being shown.
+- (BOOL)shouldResetKeyReportingMode;
+// Dismiss the key reporting mode nag if it's visible (e.g., because the shell re-enabled it).
+- (void)dismissKeyReportingModeOffer;
 - (void)offerToRestoreIconName:(NSString *)iconName windowName:(NSString *)windowName;
 
 - (BOOL)shouldAskAboutClearingScrollbackHistory;

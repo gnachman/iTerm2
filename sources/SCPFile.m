@@ -12,9 +12,11 @@
 #import <NMSSH/NMSSHConfig.h>
 #import <NMSSH/NMSSHHostConfig.h>
 #import <NMSSH/libssh2.h>
+#include <errno.h>
 
 #import "DebugLogging.h"
 #import "ITAddressBookMgr.h"
+#import "NSData+iTerm.h"
 #import "NSFileManager+iTerm.h"
 #import "NSObject+iTerm.h"
 #import "NSStringITerm.h"
@@ -110,6 +112,7 @@ static NSError *SCPFileError(NSString *description) {
     NSString *_homeDirectory;
     NSString *_userName;
     NSString *_hostName;
+    NSString *_tempArchivePath;  // Path to temp tgz file when uploading a directory
 }
 
 - (instancetype)init {
@@ -182,6 +185,13 @@ static NSError *SCPFileError(NSString *description) {
         [self.session disconnect];
     }
     self.session = nil;
+
+    // Clean up temp archive if we created one for a directory upload
+    if (_tempArchivePath) {
+        DLog(@"Cleaning up temp archive: %@", _tempArchivePath);
+        [[NSFileManager defaultManager] removeItemAtPath:_tempArchivePath error:nil];
+        _tempArchivePath = nil;
+    }
 }
 
 - (NSString *)hostname {
@@ -838,10 +848,57 @@ static NSString *const SCPFileKnownHostsUserDefaultsKey = @"NoSyncKnownHosts";
     }
 }
 
+// If localPath is a directory, creates a tgz archive and updates localPath and path.path.
+// Returns the file attributes on success, or nil on failure (after reporting the error).
+- (NSDictionary *)archiveDirectoryIfNeededWithAttributes:(NSDictionary *)attrs {
+    NSString *fileType = attrs[NSFileType];
+    if (![fileType isEqualToString:NSFileTypeDirectory]) {
+        return attrs;
+    }
+
+    DLog(@"Uploading directory as tgz: %@", self.localPath);
+
+    NSError *error = nil;
+    _tempArchivePath = [NSData temporaryTGZArchiveOfDirectory:self.localPath error:&error];
+    if (!_tempArchivePath) {
+        self.error = error.localizedDescription;
+        [[FileTransferManager sharedInstance] transferrableFile:self
+                                 didFinishTransmissionWithError:error];
+        return nil;
+    }
+
+    // Update paths to use the archive
+    self.localPath = _tempArchivePath;
+    self.path.path = [self.path.path stringByAppendingString:@".tgz"];
+
+    // Return updated attrs for the new file
+    return [[NSFileManager defaultManager] attributesOfItemAtPath:self.localPath error:nil];
+}
+
 - (void)upload {
     _downloading = NO;
     self.status = kTransferrableFileStatusStarting;
-    self.fileSize = [[[NSFileManager defaultManager] attributesOfItemAtPath:self.localPath error:nil] fileSize];
+
+    // Verify the file exists and is readable before starting the upload
+    NSError *attributesError = nil;
+    NSDictionary *attrs = [[NSFileManager defaultManager] attributesOfItemAtPath:self.localPath error:&attributesError];
+    if (attributesError) {
+        DLog(@"Failed to get attributes for %@: %@", self.localPath, attributesError);
+        self.error = [NSString stringWithFormat:@"Cannot read file: %@", attributesError.localizedDescription];
+        [[FileTransferManager sharedInstance] transferrableFile:self
+                                 didFinishTransmissionWithError:attributesError];
+        return;
+    }
+
+    // If it's a directory, create a tgz archive
+    attrs = [self archiveDirectoryIfNeededWithAttributes:attrs];
+    if (!attrs) {
+        return;
+    }
+
+    self.fileSize = [attrs fileSize];
+    DLog(@"upload: localPath=%@ fileSize=%@", self.localPath, @(self.fileSize));
+
     [[[FileTransferManager sharedInstance] files] addObject:self];
     [[FileTransferManager sharedInstance] transferrableFileDidStartTransfer:self];
 

@@ -333,6 +333,7 @@ static NSString *const kIntervalLengthKey = @"Length";
 - (void)boundsCheck {
     assert(_location >= kMinLocation);
     assert(_length >= 0);
+    assert(_location + _length >= 0);  // limit must be non-negative
     if (_location > 0) {
         assert(_location < kMaxLimit - _length);
     } else {

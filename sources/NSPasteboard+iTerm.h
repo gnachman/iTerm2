@@ -13,4 +13,13 @@
 - (NSArray *)filenamesOnPasteboardWithShellEscaping:(BOOL)escape forPaste:(BOOL)forPaste;
 - (NSData *)dataForFirstFile;
 
+// Check for raw image data (not from a file URL)
+- (BOOL)hasRawImageData;
+- (NSData *)rawImageData;
+- (NSString *)rawImageDataUTType;
+
+// Check for file URLs
+- (BOOL)hasFileURLs;
+- (NSArray<NSString *> *)filePaths;
+
 @end

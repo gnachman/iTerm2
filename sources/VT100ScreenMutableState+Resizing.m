@@ -1226,12 +1226,30 @@ static void SwapInt(int *a, int *b) {
         }
         [selection addSubSelections:subSelectionsToAdd];
     }
-    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+    // Use an unmanaged paused side effect because screenNeedsRedraw can trigger a
+    // reentrant resize via: screenNeedsRedraw -> refresh -> textViewResizeFrameIfNeeded ->
+    // frame changes -> splitViewDidResizeSubviews -> fitSessionToCurrentViewSize ->
+    // performBlockWithJoinedThreads. Calling performBlockWithJoinedThreads from a regular
+    // side effect is forbidden (it asserts) because it would cause side effects to run out
+    // of order.
+    //
+    // We use "unmanaged" (dispatched async to main queue) rather than a regular paused side
+    // effect because:
+    // 1. These are UI notification callbacks that don't require strict ordering with other
+    //    token-originated side effects.
+    // 2. The async dispatch ensures any nested performBlockWithJoinedThreads calls happen
+    //    outside the context of side effect execution, avoiding the assertion.
+    // 3. PTYSession.setSize already calls sync (which does refreshAfterSync) after the
+    //    resize completes, so the UI is updated promptly regardless.
+    // 4. This matches the pattern used elsewhere for delegate callbacks that can trigger
+    //    layout changes (e.g., screenDidAddNote, screenCurrentDirectoryDidChangeTo).
+    [self addUnmanagedPausedSideEffect:^(id<VT100ScreenDelegate> delegate,
+                                         iTermTokenExecutorUnpauser *unpauser) {
         DLog(@"Running post-resize side effects");
         [delegate screenNeedsRedraw];
         [delegate screenSizeDidChangeWithNewTopLineAt:newTop];
-    }
-                   name:@"did resize"];
+        [unpauser unpause];
+    } name:@"did resize"];
 }
 
 - (void)reallySetSize:(VT100GridSize)newSize

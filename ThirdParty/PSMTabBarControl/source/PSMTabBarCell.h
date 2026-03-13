@@ -57,6 +57,7 @@
 @property(nonatomic, readonly) CGFloat highlightAmount;
 @property(nonatomic) PSMProgress progress;
 @property(nonatomic) BOOL isProcessing;
+@property(nonatomic, assign) BOOL isPinned;
 
 // creation/destruction
 - (id)initWithControlView:(PSMTabBarControl *)controlView;

@@ -168,6 +168,7 @@
 #import "NSObject+iTerm.h"
 #import "NSMutableAttributedString+iTerm.h"
 #import "NSMutableData+iTerm.h"
+#import "NSPasteboard+iTerm.h"
 #import "NSResponder+iTerm.h"
 #import "NSScreen+iTerm.h"
 #import "NSStringITerm.h"

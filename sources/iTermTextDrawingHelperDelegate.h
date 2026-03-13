@@ -79,6 +79,10 @@ NS_ASSUME_NONNULL_BEGIN
 // Used for debugging block boundaries.
 - (BOOL)drawingHelperIsFirstLineOfBlock:(int)line;
 
+// Returns YES if a smooth slide cursor animation is in progress.
+// Used to hide the real cursor during animation.
+- (BOOL)drawingHelperSlideAnimationInProgress;
+
 @end
 
 NS_ASSUME_NONNULL_END

@@ -310,6 +310,11 @@ static const CGFloat kStandardButtonHeight = 34;
 }
 
 - (void)mouseUp:(NSEvent *)theEvent {
+    // Prevent self from being deallocated during this method. CATransaction commit
+    // below can trigger completion handlers that may release our owner, which would
+    // release us while we're still executing.
+    [[self retain] autorelease];
+
     _isHighlighted = NO;
 
     // Scale up highlight while fading it out.

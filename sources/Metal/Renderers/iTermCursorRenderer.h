@@ -11,6 +11,8 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic) VT100GridCoord coord;
 @property (nonatomic) BOOL doubleWidth;
 @property (nonatomic) BOOL backgroundIsDark;
+// Pixel offset for smooth cursor animation
+@property (nonatomic) CGPoint pixelOffset;
 @end
 
 @interface iTermCursorRenderer : NSObject<iTermMetalCellRenderer>

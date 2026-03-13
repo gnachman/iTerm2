@@ -189,6 +189,7 @@ typedef NS_ENUM(int, PSMTabPosition) {
 @property(nonatomic, assign) int cellMinWidth;
 @property(nonatomic, assign) int cellMaxWidth;
 @property(nonatomic, assign) int cellOptimumWidth;
+@property(nonatomic, assign) int pinnedTabWidth;
 @property(nonatomic, assign) BOOL sizeCellsToFit;
 @property(nonatomic, assign) BOOL stretchCellsToFit;
 @property(nonatomic, assign) BOOL useOverflowMenu;
@@ -240,6 +241,8 @@ typedef NS_ENUM(int, PSMTabPosition) {
 
 - (void)setTabColor:(NSColor *)aColor forTabViewItem:(NSTabViewItem *) tabViewItem;
 - (NSColor*)tabColorForTabViewItem:(NSTabViewItem*)tabViewItem;
+- (void)setIsPinned:(BOOL)pinned forTabViewItem:(NSTabViewItem *)tabViewItem;
+- (BOOL)isPinnedForTabViewItem:(NSTabViewItem *)tabViewItem;
 - (void)setModifier:(NSUInteger)mask;
 - (NSString*)_modifierString;
 - (void)fillPath:(NSBezierPath*)path;

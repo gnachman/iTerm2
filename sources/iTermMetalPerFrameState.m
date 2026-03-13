@@ -206,6 +206,11 @@ typedef struct {
     [self loadLinesWithDrawingHelper:drawingHelper textView:textView screen:screen];
     [self loadBadgeWithDrawingHelper:drawingHelper textView:textView];
     [self loadBlinkingCursorWithTextView:textView glue:glue];
+
+    // This must come BEFORE loadCursorInfo so that slideAnimationInProgress is set
+    // before cursor visibility is determined.
+    [textView smearCursorIfNeededWithDrawingHelper:drawingHelper];
+
     [self loadCursorInfoWithDrawingHelper:drawingHelper textView:textView];
     [self loadBackgroundImageWithGlue:glue];
     [self loadMarkedTextWithDrawingHelper:drawingHelper];
@@ -214,10 +219,6 @@ typedef struct {
     [self loadAnnotationRangesFromTextView:textView];
     [self loadOffscreenCommandLine:textView screen:screen drawingHelper:drawingHelper];
     [self loadImagesFromTextView:textView];
-
-    // This isn't really appropriate here but there isn't a great place for it and we do have
-    // everything we need, and the effect works well.
-    [textView smearCursorIfNeededWithDrawingHelper:drawingHelper];
 }
 
 - (void)loadImagesFromTextView:(PTYTextView *)textView {
@@ -340,6 +341,11 @@ typedef struct {
     const BOOL focused = ((_configuration->_isInKeyWindow && _configuration->_textViewIsActiveSession) || _configuration->_shouldDrawFilledInCursor);
 
     NSInteger lineWithCursor = textView.dataSource.cursorY - 1 + _numberOfScrollbackLines;
+    // Get cursor animation pixel offset (for smooth slide animation)
+    // Scale from points to pixels for Metal coordinate system
+    const CGPoint pointOffset = [textView metalCursorAnimationPixelOffset];
+    _cursorInfo.pixelOffset = CGPointMake(pointOffset.x * _configuration->_scale,
+                                          pointOffset.y * _configuration->_scale);
     if ([self shouldDrawCursor] &&
         (!drawingHelper.hideCursorWhenUnfocused || focused) &&
         _cursorVisible &&

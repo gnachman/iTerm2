@@ -20,6 +20,8 @@ typedef NS_ENUM(NSInteger, TransferrableFileStatus) {
     kTransferrableFileStatusCancelled
 };
 
+typedef void (^TransferrableFileCompletionBlock)(BOOL success, NSString * _Nullable error);
+
 @interface TransferrableFile : NSObject
 
 @property(atomic, assign) BOOL openWhenFinished;
@@ -29,6 +31,7 @@ typedef NS_ENUM(NSInteger, TransferrableFileStatus) {
 @property(atomic, retain) TransferrableFile *successor;
 @property(atomic, assign) BOOL hasPredecessor;
 @property(atomic, assign) BOOL isZipOfFolder;
+@property(atomic, copy, nullable) TransferrableFileCompletionBlock completionBlock;
 
 + (void)lockFileName:(NSString *)name;
 + (void)unlockFileName:(NSString *)name;

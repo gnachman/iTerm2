@@ -30,6 +30,8 @@ NS_CLASS_AVAILABLE(10_11, NA)
 @property (nonatomic, strong) NSColor *cursorColor;
 @property (nonatomic) BOOL doubleWidth;
 @property (nonatomic) BOOL cursorShadow;
+// Pixel offset for smooth cursor animation (applied in addition to coord-based position)
+@property (nonatomic) CGPoint pixelOffset;
 
 // Block cursors care about drawing the character overtop the cursor in a
 // different color than the character would normally be. If this is set, the

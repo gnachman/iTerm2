@@ -336,8 +336,8 @@ NS_ASSUME_NONNULL_BEGIN
     NSColor *color = [tState.color colorUsingColorSpace:tState.configuration.colorSpace];
     iTermCursorDescription description = {
         .origin = {
-            tState.cellConfiguration.cellSize.width * tState.coord.x,
-            y
+            tState.cellConfiguration.cellSize.width * tState.coord.x + tState.pixelOffset.x,
+            y - tState.pixelOffset.y  // Y is flipped in Metal coordinate system
         },
         .color = {
             color.redComponent,

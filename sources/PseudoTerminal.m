@@ -1923,6 +1923,9 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 
     BOOL mustAsk = NO;
+    if (aTab.isPinned) {
+        mustAsk = YES;
+    }
     if (numClosing > 0 && [aTab promptOnCloseReason].hasReason) {
         mustAsk = YES;
     }
@@ -4239,6 +4242,11 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
                     case kiTermWarningSelection3:
                         // Cancel
                         return;
+                    case kiTermWarningSelection4:
+                    case kiTermWarningSelection5:
+                    case kiTermWarningSelection6:
+                        ITAssertWithMessage(NO, @"Unexpected selection %@", @(selection));
+                        break;
                     case kItermWarningSelectionError:
                         return;
                 }
@@ -7354,7 +7362,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     [item setRepresentedObject:tabViewItem];
     [rootMenu addItem:item];
 
-    if ([_contentView.tabView numberOfTabViewItems] > 1) {
+    if ([_contentView.tabView numberOfTabViewItems] > 1 && !theTab.isPinned) {
         item = [[[NSMenuItem alloc] initWithTitle:@"Move to New Window"
                                            action:@selector(moveTabToNewWindowContextualMenuAction:)
                                     keyEquivalent:@""] autorelease];
@@ -7362,23 +7370,53 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
         [rootMenu addItem:item];
     }
 
-    if ([_contentView.tabView numberOfTabViewItems] > 1) {
-        item = [[[NSMenuItem alloc] initWithTitle:@"Close Other Tabs"
-                                           action:@selector(closeOtherTabs:)
-                                    keyEquivalent:@""] autorelease];
-        [item setRepresentedObject:tabViewItem];
-        [rootMenu addItem:item];
+    {
+        // Check if there are unpinned tabs eligible for "Close Other" / "Close to the Right".
+        BOOL hasUnpinnedOther = NO;
+        BOOL hasUnpinnedToRight = NO;
+        BOOL pastTarget = NO;
+        for (PTYTab *t in self.tabs) {
+            if (t == theTab) {
+                pastTarget = YES;
+                continue;
+            }
+            if (!t.isPinned) {
+                hasUnpinnedOther = YES;
+                if (pastTarget) {
+                    hasUnpinnedToRight = YES;
+                }
+            }
+        }
+
+        if (hasUnpinnedOther) {
+            item = [[[NSMenuItem alloc] initWithTitle:@"Close Other Tabs"
+                                               action:@selector(closeOtherTabs:)
+                                        keyEquivalent:@""] autorelease];
+            [item setRepresentedObject:tabViewItem];
+            [rootMenu addItem:item];
+        }
+
+        if (hasUnpinnedToRight) {
+            NSString *title;
+            if ([iTermPreferences intForKey:kPreferenceKeyTabPosition] == PSMTab_LeftTab) {
+                title = @"Close Tabs Below";
+            } else {
+                title = @"Close Tabs to the Right";
+            }
+            item = [[[NSMenuItem alloc] initWithTitle:title
+                                               action:@selector(closeTabsToTheRight:)
+                                        keyEquivalent:@""] autorelease];
+            [item setRepresentedObject:tabViewItem];
+            [rootMenu addItem:item];
+        }
     }
 
-    if ([_contentView.tabView numberOfTabViewItems] > 1) {
-        NSString *title;
-        if ([iTermPreferences intForKey:kPreferenceKeyTabPosition] == PSMTab_LeftTab) {
-            title = @"Close Tabs Below";
-        } else {
-            title = @"Close Tabs to the Right";
-        }
-        item = [[[NSMenuItem alloc] initWithTitle:title
-                                           action:@selector(closeTabsToTheRight:)
+    // pin/unpin tab (not available for tmux tabs)
+    if (![theTab isTmuxTab]) {
+        [rootMenu addItem:[NSMenuItem separatorItem]];
+        NSString *pinTitle = theTab.isPinned ? @"Unpin Tab" : @"Pin Tab";
+        item = [[[NSMenuItem alloc] initWithTitle:pinTitle
+                                           action:@selector(togglePinTab:)
                                     keyEquivalent:@""] autorelease];
         [item setRepresentedObject:tabViewItem];
         [rootMenu addItem:item];
@@ -7673,6 +7711,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     [_contentView.tabBarControl setIsProcessing:tab.isProcessing forTabWithIdentifier:tab];
     [_contentView.tabBarControl setIcon:tab.icon forTabWithIdentifier:tab];
     [_contentView.tabBarControl setObjectCount:tab.objectCount forTabWithIdentifier:tab];
+    [_contentView.tabBarControl setIsPinned:tab.isPinned forTabViewItem:tabViewItem];
 }
 
 // This updates the window's background color and title text color as well as the tab bar's color.
@@ -9133,9 +9172,12 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     for (PTYSession *session in self.currentTab.sessions) {
         [session.view updateDim];
     }
-    if ([[ProfileModel sessionsInstance] bookmarkWithGuid:newSession.profile[KEY_GUID]]) {
+    if ([[ProfileModel sessionsInstance] bookmarkWithGuid:newSession.profile[KEY_GUID]] &&
+        targetSession.isDivorced) {
         // We know the GUID is unique and in sessions instance and the original guid is already set.
         // This might be possible to do earlier, but I'm afraid of introducing bugs.
+        // Only inherit if targetSession is actually divorced - otherwise we'd clear newSession's
+        // overriddenFields, breaking the invariant that a divorced session's GUID is in sessionsInstance.
         [newSession inheritDivorceFrom:targetSession
                                 decree:[NSString stringWithFormat:@"Split vertically with guid %@",
                                         newSession.profile[KEY_GUID]]];
@@ -9942,6 +9984,33 @@ typedef struct {
     if (selectedIndex == destinationIndex) {
         return;
     }
+
+    // Enforce pinned/unpinned boundary.
+    NSArray<PTYTab *> *tabs = self.tabs;
+    if (selectedIndex >= 0 && selectedIndex < (NSInteger)tabs.count) {
+        PTYTab *movingTab = tabs[selectedIndex];
+        NSInteger lastPinnedIndex = -1;
+        for (NSInteger i = 0; i < (NSInteger)tabs.count; i++) {
+            if (tabs[i].isPinned) {
+                lastPinnedIndex = i;
+            }
+        }
+        if (movingTab.isPinned) {
+            // Pinned tab cannot move past the unpinned zone.
+            if (destinationIndex > lastPinnedIndex) {
+                destinationIndex = lastPinnedIndex;
+            }
+        } else {
+            // Unpinned tab cannot move into the pinned zone.
+            if (destinationIndex <= lastPinnedIndex) {
+                destinationIndex = lastPinnedIndex + 1;
+            }
+        }
+        if (selectedIndex == destinationIndex) {
+            return;
+        }
+    }
+
     [_contentView.tabBarControl moveTabAtIndex:selectedIndex toIndex:destinationIndex];
     [self setNeedsUpdateTabObjectCounts:YES];
     [self tabsDidReorder];
@@ -11767,6 +11836,8 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
     }
 }
 
+// togglePinTab: is in PseudoTerminal.swift
+
 - (IBAction)newTabToTheRight:(id)sender {
     PTYTab *tab = [PTYTab castFrom:[[sender representedObject] identifier]];
     if (!tab) {
@@ -11886,6 +11957,9 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
     NSMutableArray *tabsToRemove = [[[self tabs] mutableCopy] autorelease];
     [tabsToRemove removeObject:tabToKeep];
     for (PTYTab *tab in tabsToRemove) {
+        if (tab.isPinned) {
+            continue;
+        }
         [self closeTab:tab];
     }
 }
@@ -11903,6 +11977,9 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
     } while (current != tabToKeep);
 
     for (PTYTab *tab in tabsToRemove) {
+        if (tab.isPinned) {
+            continue;
+        }
         [self closeTab:tab];
     }
 }
@@ -12916,7 +12993,7 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
             }
             break;
         }
-
+            
         case TAB_STYLE_AUTOMATIC:
         case TAB_STYLE_LIGHT:
         case TAB_STYLE_LIGHT_HIGH_CONTRAST:
@@ -13153,6 +13230,11 @@ backgroundColor:(NSColor *)backgroundColor {
     [self replaceSyntheticSessionWithLiveSessionIfNeeded:syntheticSession];
 }
 
+- (void)tab:(PTYTab *)tab didChangePinnedState:(BOOL)pinned { 
+    [self _tab:tab didChangePinnedState:pinned];
+}
+
+
 #pragma mark - PSMMinimalTabStyleDelegate
 
 - (NSColor *)minimalTabStyleBackgroundColor {
@@ -13212,7 +13294,7 @@ backgroundColor:(NSColor *)backgroundColor {
     // Update dimming of panes.
     [self refreshTerminal:nil];
     [self setDimmingForSessions];
-
+    
     // Post a notification to reload menus
     [[NSNotificationCenter defaultCenter] postNotificationName:@"iTermWindowBecameKey"
                                                         object:self
@@ -13312,10 +13394,10 @@ backgroundColor:(NSColor *)backgroundColor {
 
 - (id)swipeHandlerBeginSessionAtOffset:(CGFloat)offset identifier:(nonnull id)identifier {
     DLog(@"swipeHandlerBeginSessionAtOffset:%@ identifier:%@", @(offset), identifier);
-
+    
     assert(!_swipeContainerView);
     self.swipeIdentifier = identifier;
-
+    
     NSRect frame = NSZeroRect;
     frame.origin.x = offset;
     frame.size.width = self.tabs.firstObject.realRootView.frame.size.width * self.tabs.count;
@@ -13323,7 +13405,7 @@ backgroundColor:(NSColor *)backgroundColor {
     _swipeContainerView = [[[NSView alloc] initWithFrame:frame] autorelease];
     [self updateUseMetalInAllTabs];
     const CGFloat width = self.swipeHandlerParameters.width;
-
+    
     [self.tabs enumerateObjectsUsingBlock:^(PTYTab * _Nonnull tab, NSUInteger idx, BOOL * _Nonnull stop) {
         NSView *view = tab.realRootView;
         NSRect frame = view.frame;
@@ -13336,7 +13418,7 @@ backgroundColor:(NSColor *)backgroundColor {
         [_swipeContainerView addSubview:clipView];
     }];
     [self.contentView.tabView addSubview:_swipeContainerView];
-
+    
     return @{};
 }
 
@@ -13357,14 +13439,14 @@ backgroundColor:(NSColor *)backgroundColor {
 
 - (void)swipeHandlerSetOffset:(CGFloat)rawOffset forSession:(id)session {
     DLog(@"setOffset:%@ forSession:%@", @(rawOffset), session);
-
+    
     NSRect frame = _swipeContainerView.frame;
     const CGFloat offset = -[self truncatedSwipeOffset:-rawOffset];
     frame.origin.x = offset;
-
+    
     DLog(@"_swipeContainerView.frame=%@", NSStringFromRect(frame));
     _swipeContainerView.frame = frame;
-
+    
     DLog(@"After setting frame:\n%@", [self.window.contentView iterm_recursiveDescription]);
 }
 
@@ -13428,14 +13510,14 @@ backgroundColor:(NSColor *)backgroundColor {
         [self.window setFrame:rect display:YES];
         [self fitTabsToWindow];
     }
-
+    
     DLog(@"Set width adjustment to 0 for %@", self);
     _widthAdjustment = 0;
 }
 
 - (NSRect)rectByAdjustingWidth:(NSRect)rect {
     DLog(@"%@: Computing width adjustment for window type %@ rect %@ widthAdjustment %@",
-          self, @(self.windowType), NSStringFromRect(rect), @(_widthAdjustment));
+         self, @(self.windowType), NSStringFromRect(rect), @(_widthAdjustment));
     switch (self.windowType) {
         case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
         case WINDOW_TYPE_LION_FULL_SCREEN:
@@ -13445,7 +13527,7 @@ backgroundColor:(NSColor *)backgroundColor {
         case WINDOW_TYPE_COMPACT_MAXIMIZED:
             DLog(@"No width adjustment because of window type");
             return rect;
-
+            
         case WINDOW_TYPE_CENTERED:
         case WINDOW_TYPE_NORMAL:
         case WINDOW_TYPE_LEFT_PERCENTAGE:
