@@ -507,6 +507,17 @@ static NSArray<NSString *> *gTerminalCachedCombinedAccountNames;
     }
     if (showKeeperSettings) {
         [(id)self.currentDataSource setCredentialsDelegate:self];
+        __weak __typeof(self) weakSelf = self;
+        [KeeperDataSource setShowKeeperSettingsSheetHandler:^(NSWindow *window, void (^completion)(NSString * _Nullable)) {
+            __strong __typeof(weakSelf) strongSelf = weakSelf;
+            if (strongSelf) {
+                [strongSelf showKeeperSettingsSheetWithEmptyAPIKey:YES forWindow:window onOK:nil keyCompletion:completion];
+            } else {
+                if (completion) completion(nil);
+            }
+        }];
+    } else {
+        [KeeperDataSource setShowKeeperSettingsSheetHandler:nil];
     }
 }
 
@@ -1720,6 +1731,15 @@ static NSString *keeperDisplayMessageFromErrorString(NSString *message) {
     if (self.dataSourceProvider.authenticated) {
         if ([self.currentDataSource.name isEqualToString:@"Keeper Security"]) {
             [(id)self.currentDataSource setCredentialsDelegate:self];
+            __weak __typeof(self) weakSelf = self;
+            [KeeperDataSource setShowKeeperSettingsSheetHandler:^(NSWindow *window, void (^completion)(NSString * _Nullable)) {
+                __strong __typeof(weakSelf) strongSelf = weakSelf;
+                if (strongSelf) {
+                    [strongSelf showKeeperSettingsSheetWithEmptyAPIKey:YES forWindow:window onOK:nil keyCompletion:completion];
+                } else {
+                    if (completion) completion(nil);
+                }
+            }];
         }
         __weak __typeof(self) weakSelf = self;
         const NSInteger cancelCount = [self incrBusy];
@@ -1934,6 +1954,9 @@ dataCellForTableColumn:(NSTableColumn *)tableColumn
 #pragma mark - NSWindowDelegate
 
 - (void)windowWillClose:(NSNotification *)notification {
+    if ([self.currentDataSource.name isEqualToString:@"Keeper Security"]) {
+        [KeeperDataSource setShowKeeperSettingsSheetHandler:nil];
+    }
     _twoFactorCode.stringValue = @"";
     [_tableView reloadData];
     [self sendWillClose];

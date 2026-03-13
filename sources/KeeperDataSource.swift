@@ -8,166 +8,34 @@
 
 import Foundation
 import AppKit
-import Security
-import LocalAuthentication
 
-/// Keychain service identifier for Keeper API token (Touch ID / passcode protected when available).
-private let keeperKeychainService = "com.iterm2.keeper-service-mode"
-private let keeperKeychainAccountAPIKey = "api-key"
-private let keeperKeychainAccountAPIURL = "api-url"
-/// Legacy Keychain service (migrated from this to keeperKeychainService on first launch).
-private let keeperLegacyKeychainService = "iTerm2-Keeper"
-/// UserDefaults keys for one-time migration of legacy token storage.
-private let keeperLegacyUserDefaultsAPIKeyKey = "NoSyncKeeperCommanderAPIKey"
-private let keeperLegacyUserDefaultsAPIURLKey = "NoSyncKeeperCommanderAPIURL"
-/// No default API URL: user must set API URL in Keeper Security Settings.
+/// No default API URL: user must set API URL in Keeper Security Settings. Keychain/URL constants and helpers live in KeeperKeychain.swift.
 
 /// Posted when Keeper connection fails (e.g. no API key, service unreachable). userInfo[@"error"] = error message (String).
 public let iTerm2KeeperConnectionDidFailNotification = Notification.Name("iTerm2KeeperConnectionDidFail")
 /// Posted when Keeper fetch succeeds after a connection attempt.
 public let iTerm2KeeperConnectionDidSucceedNotification = Notification.Name("iTerm2KeeperConnectionDidSucceed")
 
-// MARK: - API Key storage (secure Keychain with Touch ID / Face ID / passcode, fallback for no biometric)
+// MARK: - Test overrides (Keychain/UI; real implementation in KeeperKeychain.swift / KeeperAPIKeyDialog.swift)
 
-/// Reads API key from data-protection Keychain (triggers Touch ID/passcode once per read). Returns nil if not found or user cancels.
-private func keeperAPIKeyFromSecureKeychain() -> String? {
-    var query: [String: Any] = [
-        kSecClass as String: kSecClassGenericPassword,
-        kSecAttrService as String: keeperKeychainService,
-        kSecAttrAccount as String: keeperKeychainAccountAPIKey,
-        kSecReturnData as String: true,
-        kSecMatchLimit as String: kSecMatchLimitOne,
-    ]
-    if #available(macOS 10.15, *) {
-        query[kSecUseDataProtectionKeychain as String] = true
-    }
-    var result: AnyObject?
-    let status = SecItemCopyMatching(query as CFDictionary, &result)
-    guard status == errSecSuccess, let data = result as? Data, let token = String(data: data, encoding: .utf8), !token.isEmpty else {
-        return nil
-    }
-    return token
-}
-
-/// Reads API key from standard Keychain (fallback when device has no biometric / user presence).
-private func keeperAPIKeyFromStandardKeychain() -> String? {
-    try? SSKeychain.password(forService: keeperKeychainService, account: keeperKeychainAccountAPIKey)
-}
-
-/// Stores API key in Keychain. Prefers data-protection Keychain with .userPresence (Touch ID/Face ID/passcode); falls back to standard Keychain if unavailable.
-private func keeperStoreAPIKeyInKeychain(_ key: String) {
-    let keyData = Data(key.utf8)
-    // Try biometric/passcode-protected storage first (macOS data protection keychain).
-    if #available(macOS 10.15, *) {
-        var error: Unmanaged<CFError>?
-        guard let access = SecAccessControlCreateWithFlags(
-            kCFAllocatorDefault,
-            kSecAttrAccessibleWhenUnlockedThisDeviceOnly,
-            SecAccessControlCreateFlags.userPresence,
-            &error
-        ) else {
-            keeperStoreAPIKeyInStandardKeychain(key)
-            return
-        }
-        keeperDeleteAPIKeyFromKeychain()
-        var addQuery: [String: Any] = [
-            kSecClass as String: kSecClassGenericPassword,
-            kSecAttrService as String: keeperKeychainService,
-            kSecAttrAccount as String: keeperKeychainAccountAPIKey,
-            kSecValueData as String: keyData,
-            kSecAttrAccessControl as String: access,
-            kSecUseDataProtectionKeychain as String: true,
-        ]
-        let status = SecItemAdd(addQuery as CFDictionary, nil)
-        if status == errSecSuccess {
-            return
-        }
-        let msg = SecCopyErrorMessageString(status, nil) as String? ?? "\(status)"
-        DLog("Keeper: biometric keychain add failed (\(status)) \(msg), using standard keychain")
-        NSLog("[iTerm2 Keeper] Data protection keychain add failed: %@ (use standard keychain)", msg)
-    }
-    keeperStoreAPIKeyInStandardKeychain(key)
-}
-
-private func keeperStoreAPIKeyInStandardKeychain(_ key: String) {
-    _ = try? SSKeychain.setPassword(key, forService: keeperKeychainService, account: keeperKeychainAccountAPIKey)
-}
-
-/// Returns API key from secure or standard Keychain (does not run migration; call keeperMigrateLegacyKeeperTokenIfNeeded first).
-/// When the key is found only in the standard Keychain, migrates it to the data-protection Keychain so future reads use Touch ID.
-private func keeperAPIKeyFromKeychain() -> String? {
-    if let key = keeperAPIKeyFromSecureKeychain() {
-        return key
-    }
-    if let key = keeperAPIKeyFromStandardKeychain(), !key.isEmpty {
-        // Migrate to data-protection Keychain so next session prompts with Touch ID instead of login keychain password.
-        keeperStoreAPIKeyInKeychain(key)
-        return key
-    }
-    return nil
-}
-
-private func keeperDeleteAPIKeyFromKeychain() {
-    if #available(macOS 10.15, *) {
-        let query: [String: Any] = [
-            kSecClass as String: kSecClassGenericPassword,
-            kSecAttrService as String: keeperKeychainService,
-            kSecAttrAccount as String: keeperKeychainAccountAPIKey,
-            kSecUseDataProtectionKeychain as String: true,
-        ]
-        SecItemDelete(query as CFDictionary)
-    }
-    try? SSKeychain.deletePassword(forService: keeperKeychainService, account: keeperKeychainAccountAPIKey)
-    try? SSKeychain.deletePassword(forService: keeperLegacyKeychainService, account: keeperKeychainAccountAPIKey)
-    iTermUserDefaults.userDefaults().removeObject(forKey: keeperLegacyUserDefaultsAPIKeyKey)
-}
-
-// MARK: - One-time migration from UserDefaults and legacy Keychain
-
-/// Call once per launch before reading the API key. Migrates token from UserDefaults or legacy Keychain into the new secure Keychain. Does not read from the new Keychain (so no biometric prompt).
-private func keeperMigrateLegacyKeeperTokenIfNeeded() {
-    if let legacyKey = iTermUserDefaults.userDefaults().string(forKey: keeperLegacyUserDefaultsAPIKeyKey)?.trimmingCharacters(in: .whitespacesAndNewlines), !legacyKey.isEmpty {
-        keeperStoreAPIKeyInKeychain(legacyKey)
-        iTermUserDefaults.userDefaults().removeObject(forKey: keeperLegacyUserDefaultsAPIKeyKey)
-        if let legacyURL = iTermUserDefaults.userDefaults().string(forKey: keeperLegacyUserDefaultsAPIURLKey)?.trimmingCharacters(in: .whitespacesAndNewlines), !legacyURL.isEmpty {
-            keeperStoreAPIURLInKeychain(legacyURL)
-        }
-        return
-    }
-    if let legacyKey = try? SSKeychain.password(forService: keeperLegacyKeychainService, account: keeperKeychainAccountAPIKey), !legacyKey.isEmpty {
-        keeperStoreAPIKeyInKeychain(legacyKey)
-        try? SSKeychain.deletePassword(forService: keeperLegacyKeychainService, account: keeperKeychainAccountAPIKey)
-        if let legacyURL = try? SSKeychain.password(forService: keeperLegacyKeychainService, account: keeperKeychainAccountAPIURL), !legacyURL.isEmpty {
-            keeperStoreAPIURLInKeychain(legacyURL)
-            try? SSKeychain.deletePassword(forService: keeperLegacyKeychainService, account: keeperKeychainAccountAPIURL)
-        }
-    }
-}
-
-// MARK: - API URL storage (UserDefaults to avoid triggering Keychain dialog; legacy Keychain migration)
-
-private func keeperAPIURLFromStorage() -> String? {
-    if let url = iTermUserDefaults.userDefaults().string(forKey: keeperLegacyUserDefaultsAPIURLKey)?.trimmingCharacters(in: .whitespacesAndNewlines), !url.isEmpty {
-        return url
-    }
-    if let url = try? SSKeychain.password(forService: keeperLegacyKeychainService, account: keeperKeychainAccountAPIURL), !url.isEmpty {
-        iTermUserDefaults.userDefaults().set(url, forKey: keeperLegacyUserDefaultsAPIURLKey)
-        try? SSKeychain.deletePassword(forService: keeperLegacyKeychainService, account: keeperKeychainAccountAPIURL)
-        return url
-    }
-    if let url = try? SSKeychain.password(forService: keeperKeychainService, account: keeperKeychainAccountAPIURL), !url.isEmpty {
-        iTermUserDefaults.userDefaults().set(url, forKey: keeperLegacyUserDefaultsAPIURLKey)
-        try? SSKeychain.deletePassword(forService: keeperKeychainService, account: keeperKeychainAccountAPIURL)
-        return url
-    }
-    return nil
-}
-
-private func keeperStoreAPIURLInKeychain(_ url: String) {
-    let trimmed = url.trimmingCharacters(in: .whitespacesAndNewlines)
-    iTermUserDefaults.userDefaults().set(trimmed.isEmpty ? nil : trimmed, forKey: keeperLegacyUserDefaultsAPIURLKey)
-    try? SSKeychain.deletePassword(forService: keeperKeychainService, account: keeperKeychainAccountAPIURL)
-    try? SSKeychain.deletePassword(forService: keeperLegacyKeychainService, account: keeperKeychainAccountAPIURL)
+/// Test overrides: when set, production uses these instead of real Keychain/UI. Cleared in production.
+internal enum KeeperTestOverrides {
+    static var apiKeyFromKeychain: (() -> String?)?
+    static var secureKeychainReturns: (() -> String?)?
+    static var standardKeychainReturns: (() -> String?)?
+    static var storeAPIKeyInKeychain: ((String) -> Void)?
+    static var deleteAPIKeyFromKeychain: (() -> Void)?
+    static var showAPIKeyDialogOverride: ((String?, NSWindow?, @escaping (KeeperAPIKeyPromptResult?) -> Void) -> Void)?
+    /// When set, used instead of keeperShowAPIKeyDialogUI so tests can cover the "no showAPIKeyDialogOverride" path without showing real UI.
+    static var showAPIKeyDialogUIOverride: ((String?, NSWindow?, @escaping (KeeperAPIKeyPromptResult?) -> Void) -> Void)?
+    /// When set, used instead of keeperShowAPIKeyDialogUI so the "call dialog" line is covered without showing real UI. When nil, keeperShowAPIKeyDialogUI is called.
+    static var callDialogUI: ((String?, NSWindow?, @escaping (KeeperAPIKeyPromptResult?) -> Void) -> Void)?
+    /// When set, used as fallback when callDialogUI is nil (so tests can cover the "default dialog" path without showing real UI). When nil, keeperShowAPIKeyDialogUI is used.
+    static var defaultDialogUI: ((String?, NSWindow?, @escaping (KeeperAPIKeyPromptResult?) -> Void) -> Void)?
+    /// When set, used after defaultDialogUI so tests can cover the resolver's third branch without showing real UI. When nil, keeperShowAPIKeyDialogUI is used.
+    static var fallbackDialogUIForCoverage: ((String?, NSWindow?, @escaping (KeeperAPIKeyPromptResult?) -> Void) -> Void)?
+    /// When set, keeperAPIURLFromStorage() in KeeperKeychain returns this instead of reading UserDefaults/Keychain. Used by cache test.
+    static var apiURLFromStorage: (() -> String?)?
 }
 
 // MARK: - API key prompt (with optional existing key)
@@ -178,59 +46,33 @@ enum KeeperAPIKeyPromptResult {
     case cancel
 }
 
+/// Returns the dialog function to use (override, default, fallback for tests, or real UI). Named function so all branches are coverable. Internal for tests to cover the real-UI return path without invoking it.
+internal func keeperResolvedDialogFunction() -> (String?, NSWindow?, @escaping (KeeperAPIKeyPromptResult?) -> Void) -> Void {
+    if let fn = KeeperTestOverrides.callDialogUI { return fn }
+    if let fn = KeeperTestOverrides.defaultDialogUI { return fn }
+    if let fn = KeeperTestOverrides.fallbackDialogUIForCoverage { return fn }
+    return keeperShowAPIKeyDialogUI
+}
+
+/// When set by the app (e.g. password manager window), the full “Keeper Security Settings” sheet (API key + API URL) is shown instead of the legacy API-key-only dialog. Set to nil when the sheet is not available (e.g. window closed).
 /// Shows API key dialog. If existingKey is non-nil, shows "Use existing" / "Update" / "Cancel". Otherwise "OK" / "Cancel".
+/// When a settings-sheet handler is registered (see KeeperDataSource.setShowKeeperSettingsSheetHandler), that sheet (API key + API URL) is shown instead of the legacy API-key-only dialog.
 /// Completion is called on the main thread when the user dismisses the dialog. Must be called from the main thread.
 func keeperShowAPIKeyDialog(existingKey: String?, window: NSWindow?, completion: @escaping (KeeperAPIKeyPromptResult?) -> Void) {
     dispatchPrecondition(condition: .onQueue(.main))
-    let alert = NSAlert()
-    alert.messageText = "Keeper Security API Key"
-    if let existing = existingKey, !existing.isEmpty {
-        alert.informativeText = "An API key is already stored (protected by Touch ID, Face ID, or device passcode when available). To update it, enter a new key below and choose Update. To continue with the stored key, choose Use Existing."
-        alert.addButton(withTitle: "Use Existing")
-        alert.addButton(withTitle: "Update")
-        alert.addButton(withTitle: "Cancel")
-    } else {
-        alert.informativeText = "Enter your Keeper Commander API key. The key is stored in macOS Keychain and protected by Touch ID, Face ID, or device passcode when available. If you have stored a key before, enter or paste it again to use or update it."
-        alert.addButton(withTitle: "OK")
-        alert.addButton(withTitle: "Cancel")
-    }
-    let field = NSSecureTextField(frame: NSRect(x: 0, y: 0, width: 280, height: 22))
-    field.placeholderString = (existingKey?.isEmpty ?? true) ? "Enter Keeper Commander service API key" : "API Key"
-    field.stringValue = existingKey ?? ""
-    alert.accessoryView = field
-    let sheetWindow = window ?? NSApp.keyWindow ?? NSApp.mainWindow
-    if let window = sheetWindow, window.isVisible {
-        alert.beginSheetModal(for: window) { response in
-            let result: KeeperAPIKeyPromptResult?
-            if response == .alertFirstButtonReturn {
-                if existingKey != nil, !(existingKey?.isEmpty ?? true) {
-                    result = .useExisting
-                } else {
-                    result = .useNew(field.stringValue.trimmingCharacters(in: .whitespacesAndNewlines))
-                }
-            } else if response == .alertSecondButtonReturn, existingKey != nil, !field.stringValue.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                result = .useNew(field.stringValue.trimmingCharacters(in: .whitespacesAndNewlines))
+    if let fn = KeeperTestOverrides.showAPIKeyDialogOverride { fn(existingKey, window, completion); return }
+    if let fn = KeeperTestOverrides.showAPIKeyDialogUIOverride { fn(existingKey, window, completion); return }
+    if let showSheet = KeeperDataSource.showKeeperSettingsSheetHandler {
+        showSheet(window) { key in
+            if let key = key, !key.isEmpty {
+                completion(.useNew(key))
             } else {
-                result = .cancel
+                completion(.cancel)
             }
-            completion(result)
         }
-    } else {
-        let response = alert.runModal()
-        let result: KeeperAPIKeyPromptResult?
-        if response == .alertFirstButtonReturn {
-            if existingKey != nil, !(existingKey?.isEmpty ?? true) {
-                result = .useExisting
-            } else {
-                result = .useNew(field.stringValue.trimmingCharacters(in: .whitespacesAndNewlines))
-            }
-        } else if response == .alertSecondButtonReturn, existingKey != nil, !field.stringValue.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-            result = .useNew(field.stringValue.trimmingCharacters(in: .whitespacesAndNewlines))
-        } else {
-            result = .cancel
-        }
-        completion(result)
+        return
     }
+    keeperResolvedDialogFunction()(existingKey, window, completion)
 }
 
 // MARK: - Keeper REST client
@@ -338,16 +180,29 @@ private func keeperBaseURL() -> URL? {
     return parsed
 }
 
+/// Returns the base URL for v2 API endpoints (path ends with /api/v2, no trailing slash).
+/// Accepts either origin-only (e.g. http://localhost:8900) or full v2 path (e.g. http://localhost:8900/api/v2/).
+private func keeperV2BaseURL(baseURL: URL) -> URL {
+    var path = baseURL.path
+    while path.hasSuffix("/") { path.removeLast() }
+    if path.hasSuffix("api/v2") {
+        var components = URLComponents(url: baseURL, resolvingAgainstBaseURL: false)!
+        components.path = path
+        return components.url ?? baseURL
+    }
+    return baseURL.appendingPathComponent("api").appendingPathComponent("v2")
+}
+
 private func keeperV2AsyncURL(baseURL: URL) -> URL {
-    baseURL.appendingPathComponent("api/v2/executecommand-async")
+    keeperV2BaseURL(baseURL: baseURL).appendingPathComponent("executecommand-async")
 }
 
 private func keeperV2StatusURL(requestId: String, baseURL: URL) -> URL {
-    baseURL.appendingPathComponent("api/v2/status/\(requestId)")
+    keeperV2BaseURL(baseURL: baseURL).appendingPathComponent("status").appendingPathComponent(requestId)
 }
 
 private func keeperV2ResultURL(requestId: String, baseURL: URL) -> URL {
-    baseURL.appendingPathComponent("api/v2/result/\(requestId)")
+    keeperV2BaseURL(baseURL: baseURL).appendingPathComponent("result").appendingPathComponent(requestId)
 }
 
 /// Extracts a human-readable error message from API response data (e.g. {"error":"Please provide a valid api key","status":"error"}). Exposed internal for unit tests.
@@ -359,57 +214,91 @@ internal func keeperHumanReadableError(fromResponseData data: Data?) -> String? 
     return nil
 }
 
-private func keeperExecute(apiKey: String, command: String, baseURL: URL? = nil, session: URLSession = .shared, completion: @escaping (Result<Data, Error>) -> Void) {
+private func keeperExecute(apiKey: String, command: String, baseURL: URL? = nil, session: URLSession = .shared, pollInterval: TimeInterval? = nil, deadline: TimeInterval? = nil, completion: @escaping (Result<Data, Error>) -> Void) {
     guard let resolvedBase = baseURL ?? keeperBaseURL() else {
         completion(.failure(NSError(domain: "KeeperDataSource", code: -1, userInfo: [NSLocalizedDescriptionKey: "API URL is required. Please set it in Keeper Security Settings."])))
         return
     }
-    keeperExecuteV2(apiKey: apiKey, command: command, baseURL: resolvedBase, session: session, completion: completion)
+    keeperExecuteV2(apiKey: apiKey, command: command, baseURL: resolvedBase, session: session, pollInterval: pollInterval, deadline: deadline, completion: completion)
+}
+
+/// Handles v2 POST response; extracted for testability and coverage.
+private func keeperExecuteV2HandleResponse(data: Data?, response: URLResponse?, error: Error?, apiKey: String, baseURL: URL, session: URLSession, pollInterval: TimeInterval?, deadline: TimeInterval?, completion: @escaping (Result<Data, Error>) -> Void) {
+    if let error = error {
+        completion(.failure(error))
+        return
+    }
+    guard let data = data else {
+        keeperExecuteV2FailNoData(completion: completion)
+        return
+    }
+    guard let http = response as? HTTPURLResponse, http.statusCode == 202 else {
+        keeperExecuteV2FailNon202(data: data, completion: completion)
+        return
+    }
+    guard let queued = try? JSONDecoder().decode(KeeperV2QueuedResponse.self, from: data),
+          let requestId = queued.request_id, !requestId.isEmpty else {
+        keeperExecuteV2FailNoRequestId(completion: completion)
+        return
+    }
+    keeperV2PollForResult(apiKey: apiKey, requestId: requestId, baseURL: baseURL, session: session, pollInterval: pollInterval, deadline: deadline, completion: completion)
+}
+
+/// Named so coverage attributes the "No data" path to this function. Internal so tests can call directly for coverage.
+internal func keeperExecuteV2FailNoData(completion: @escaping (Result<Data, Error>) -> Void) {
+    completion(.failure(NSError(domain: "KeeperDataSource", code: -1, userInfo: [NSLocalizedDescriptionKey: "No data"])))
+}
+
+/// Named for coverage: non-202 response from v2 POST. Internal so tests can call directly for coverage.
+internal func keeperExecuteV2FailNon202(data: Data?, completion: @escaping (Result<Data, Error>) -> Void) {
+    let msg = keeperHumanReadableError(fromResponseData: data)
+        ?? String(data: data ?? Data(), encoding: .utf8)
+        ?? "Unexpected response"
+    completion(.failure(NSError(domain: "KeeperDataSource", code: -1, userInfo: [NSLocalizedDescriptionKey: msg])))
+}
+
+/// Named for coverage: 202 response but no request_id in body. Internal so tests can call directly for coverage.
+internal func keeperExecuteV2FailNoRequestId(completion: @escaping (Result<Data, Error>) -> Void) {
+    completion(.failure(NSError(domain: "KeeperDataSource", code: -1, userInfo: [NSLocalizedDescriptionKey: "No request_id in v2 response"])))
 }
 
 /// Keeper Commander API v2 (queue): submit async, poll status, then fetch result.
-private func keeperExecuteV2(apiKey: String, command: String, baseURL: URL, session: URLSession = .shared, completion: @escaping (Result<Data, Error>) -> Void) {
+private func keeperExecuteV2(apiKey: String, command: String, baseURL: URL, session: URLSession = .shared, pollInterval: TimeInterval? = nil, deadline: TimeInterval? = nil, completion: @escaping (Result<Data, Error>) -> Void) {
     let body = (try? JSONEncoder().encode(KeeperExecuteRequest(command: command))) ?? Data()
     var request = URLRequest(url: keeperV2AsyncURL(baseURL: baseURL))
     request.httpMethod = "POST"
     request.setValue("application/json", forHTTPHeaderField: "Content-Type")
     request.setValue(apiKey, forHTTPHeaderField: "api-key")
     request.httpBody = body
-    session.dataTask(with: request) { data, response, error in
-        if let error = error {
-            completion(.failure(error))
-            return
-        }
-        guard let data = data else {
-            completion(.failure(NSError(domain: "KeeperDataSource", code: -1, userInfo: [NSLocalizedDescriptionKey: "No data"])))
-            return
-        }
-        guard let http = response as? HTTPURLResponse, http.statusCode == 202 else {
-            let msg = keeperHumanReadableError(fromResponseData: data)
-                ?? String(data: data, encoding: .utf8)
-                ?? "Unexpected response"
-            completion(.failure(NSError(domain: "KeeperDataSource", code: -1, userInfo: [NSLocalizedDescriptionKey: msg])))
-            return
-        }
-        guard let queued = try? JSONDecoder().decode(KeeperV2QueuedResponse.self, from: data),
-              let requestId = queued.request_id, !requestId.isEmpty else {
-            completion(.failure(NSError(domain: "KeeperDataSource", code: -1, userInfo: [NSLocalizedDescriptionKey: "No request_id in v2 response"])))
-            return
-        }
-        keeperV2PollForResult(apiKey: apiKey, requestId: requestId, baseURL: baseURL, session: session, completion: completion)
-    }.resume()
+    session.dataTask(with: request) { keeperExecuteV2HandleResponse(data: $0, response: $1, error: $2, apiKey: apiKey, baseURL: baseURL, session: session, pollInterval: pollInterval, deadline: deadline, completion: completion) }.resume()
 }
 
-private func keeperV2PollForResult(apiKey: String, requestId: String, baseURL: URL, session: URLSession = .shared, completion: @escaping (Result<Data, Error>) -> Void) {
-    // Poll at most once per 2 seconds to stay under service rate limit (60 status requests per minute).
-    let pollInterval: TimeInterval = 2.0
-    let deadline = Date().addingTimeInterval(120)
-    let maxPolls = 60  // 120s at 2s interval
+/// State for v2 poll loop; holds mutable counters so the dataTask completion can be a named function.
+private final class KeeperV2PollRunner {
+    let apiKey: String
+    let requestId: String
+    let baseURL: URL
+    let session: URLSession
+    let interval: TimeInterval
+    let deadlineDate: Date
+    let completion: (Result<Data, Error>) -> Void
+    let maxPolls = 60
     var pollCount = 0
     var consecutiveUnparseable = 0
-    func poll() {
+
+    init(apiKey: String, requestId: String, baseURL: URL, session: URLSession, interval: TimeInterval, deadlineDate: Date, completion: @escaping (Result<Data, Error>) -> Void) {
+        self.apiKey = apiKey
+        self.requestId = requestId
+        self.baseURL = baseURL
+        self.session = session
+        self.interval = interval
+        self.deadlineDate = deadlineDate
+        self.completion = completion
+    }
+
+    func doPoll() {
         pollCount += 1
-        if Date() > deadline {
+        if Date() > deadlineDate {
             completion(.failure(NSError(domain: "KeeperDataSource", code: -1, userInfo: [NSLocalizedDescriptionKey: "Keeper service v2 request timed out"])))
             return
         }
@@ -419,69 +308,92 @@ private func keeperV2PollForResult(apiKey: String, requestId: String, baseURL: U
         }
         var request = URLRequest(url: keeperV2StatusURL(requestId: requestId, baseURL: baseURL))
         request.setValue(apiKey, forHTTPHeaderField: "api-key")
-        session.dataTask(with: request) { data, response, error in
-            if let error = error {
-                completion(.failure(error))
-                return
-            }
-            let http = response as? HTTPURLResponse
-            let responseData = data
-            // If status endpoint returned an HTTP error (e.g. 429 rate limit), surface that message immediately.
-            if let code = http?.statusCode, code != 200 {
-                let msg = keeperHumanReadableError(fromResponseData: responseData)
-                    ?? String(data: responseData ?? Data(), encoding: .utf8)
-                    ?? "HTTP \(code)"
-                completion(.failure(NSError(domain: "KeeperDataSource", code: code, userInfo: [NSLocalizedDescriptionKey: msg])))
-                return
-            }
-            guard let data = data,
-                  let statusResp = try? JSONDecoder().decode(KeeperV2StatusResponse.self, from: data),
-                  let status = statusResp.status else {
-                consecutiveUnparseable += 1
-                if consecutiveUnparseable >= 15 {
-                    let msg = keeperHumanReadableError(fromResponseData: responseData)
-                        ?? "Keeper service returned an invalid status response"
-                    completion(.failure(NSError(domain: "KeeperDataSource", code: -1, userInfo: [NSLocalizedDescriptionKey: msg])))
-                    return
-                }
-                DispatchQueue.global(qos: .utility).asyncAfter(deadline: .now() + pollInterval) { poll() }
-                return
-            }
-            consecutiveUnparseable = 0
-            switch status {
-            case "completed":
-                keeperV2FetchResult(apiKey: apiKey, requestId: requestId, baseURL: baseURL, session: session, completion: completion)
-            case "failed", "expired":
-                completion(.failure(NSError(domain: "KeeperDataSource", code: -1, userInfo: [NSLocalizedDescriptionKey: "Keeper command \(status)"])))
-            default:
-                DispatchQueue.global(qos: .utility).asyncAfter(deadline: .now() + pollInterval) { poll() }
-            }
+        session.dataTask(with: request) { [self] data, response, error in
+            handleStatusResponse(data: data, response: response, error: error)
         }.resume()
     }
-    poll()
+
+    func handleStatusResponse(data: Data?, response: URLResponse?, error: Error?) {
+        if let error = error {
+            completion(.failure(error))
+            return
+        }
+        let http = response as? HTTPURLResponse
+        let responseData = data
+        if let code = http?.statusCode, code != 200 {
+            keeperV2PollFailHTTP(code: code, responseData: responseData, completion: completion)
+            return
+        }
+        guard let data = data,
+              let statusResp = try? JSONDecoder().decode(KeeperV2StatusResponse.self, from: data),
+              let status = statusResp.status else {
+            consecutiveUnparseable += 1
+            if consecutiveUnparseable >= 15 {
+                let msg = keeperHumanReadableError(fromResponseData: responseData)
+                    ?? "Keeper service returned an invalid status response"
+                completion(.failure(NSError(domain: "KeeperDataSource", code: -1, userInfo: [NSLocalizedDescriptionKey: msg])))
+                return
+            }
+            DispatchQueue.global(qos: .utility).asyncAfter(deadline: .now() + interval) { [self] in doPoll() }
+            return
+        }
+        consecutiveUnparseable = 0
+        switch status {
+        case "completed":
+            keeperV2FetchResult(apiKey: apiKey, requestId: requestId, baseURL: baseURL, session: session, completion: completion)
+        case "failed", "expired":
+            keeperV2PollFailWithStatus(status, completion: completion)
+        default:
+            DispatchQueue.global(qos: .utility).asyncAfter(deadline: .now() + interval) { [self] in doPoll() }
+        }
+    }
+}
+
+/// Named for coverage: GET status/ returned non-200. Internal so tests can call it directly.
+internal func keeperV2PollFailHTTP(code: Int, responseData: Data?, completion: @escaping (Result<Data, Error>) -> Void) {
+    let msg = keeperHumanReadableError(fromResponseData: responseData)
+        ?? String(data: responseData ?? Data(), encoding: .utf8)
+        ?? "HTTP \(code)"
+    completion(.failure(NSError(domain: "KeeperDataSource", code: code, userInfo: [NSLocalizedDescriptionKey: msg])))
+}
+
+/// Named so coverage attributes the v2 "failed"/"expired" status path.
+private func keeperV2PollFailWithStatus(_ status: String, completion: @escaping (Result<Data, Error>) -> Void) {
+    completion(.failure(NSError(domain: "KeeperDataSource", code: -1, userInfo: [NSLocalizedDescriptionKey: "Keeper command \(status)"])))
+}
+
+private func keeperV2PollForResult(apiKey: String, requestId: String, baseURL: URL, session: URLSession = .shared, pollInterval: TimeInterval? = nil, deadline: TimeInterval? = nil, completion: @escaping (Result<Data, Error>) -> Void) {
+    let interval: TimeInterval = pollInterval ?? 2.0
+    let deadlineOffset: TimeInterval = deadline ?? 120
+    let deadlineDate = Date().addingTimeInterval(deadlineOffset)
+    let runner = KeeperV2PollRunner(apiKey: apiKey, requestId: requestId, baseURL: baseURL, session: session, interval: interval, deadlineDate: deadlineDate, completion: completion)
+    runner.doPoll()
+}
+
+/// Handles v2 GET result response; extracted for coverage.
+private func keeperV2FetchResultHandleResponse(data: Data?, response: URLResponse?, error: Error?, completion: @escaping (Result<Data, Error>) -> Void) {
+    if let error = error {
+        completion(.failure(error))
+        return
+    }
+    guard let data = data, !data.isEmpty else {
+        completion(.failure(NSError(domain: "KeeperDataSource", code: -1, userInfo: [NSLocalizedDescriptionKey: "No data"])))
+        return
+    }
+    if let http = response as? HTTPURLResponse, http.statusCode != 200 {
+        let msg = keeperHumanReadableError(fromResponseData: data)
+            ?? String(data: data, encoding: .utf8)
+            ?? "HTTP \(http.statusCode)"
+        completion(.failure(NSError(domain: "KeeperDataSource", code: http.statusCode, userInfo: [NSLocalizedDescriptionKey: msg])))
+        return
+    }
+    completion(.success(data))
 }
 
 private func keeperV2FetchResult(apiKey: String, requestId: String, baseURL: URL, session: URLSession = .shared, completion: @escaping (Result<Data, Error>) -> Void) {
     var request = URLRequest(url: keeperV2ResultURL(requestId: requestId, baseURL: baseURL))
     request.setValue(apiKey, forHTTPHeaderField: "api-key")
-    session.dataTask(with: request) { data, response, error in
-        if let error = error {
-            completion(.failure(error))
-            return
-        }
-        guard let data = data else {
-            completion(.failure(NSError(domain: "KeeperDataSource", code: -1, userInfo: [NSLocalizedDescriptionKey: "No data"])))
-            return
-        }
-        if let http = response as? HTTPURLResponse, http.statusCode != 200 {
-            let msg = keeperHumanReadableError(fromResponseData: data)
-                ?? String(data: data, encoding: .utf8)
-                ?? "HTTP \(http.statusCode)"
-            completion(.failure(NSError(domain: "KeeperDataSource", code: http.statusCode, userInfo: [NSLocalizedDescriptionKey: msg])))
-            return
-        }
-        completion(.success(data))
-    }.resume()
+    session.dataTask(with: request) { keeperV2FetchResultHandleResponse(data: $0, response: $1, error: $2, completion: completion) }.resume()
 }
 
 /// Parses a single line from Keeper "ls -R -l" data.records[].title (table row).
@@ -502,6 +414,15 @@ internal func parseLsRecordLine(_ line: String) -> KeeperRecord? {
     return KeeperRecord(number: num, uid: nil, record_uid: uid, type: type, title: title.isEmpty ? "Untitled" : title, description: description)
 }
 
+/// Inserts payload from result object (dict or string) for message-table parsing. Internal for coverage of the result-as-string branch.
+internal func keeperParseMessageTableInsertResultPayload(resultObj: Any, into payloadsToTry: inout [Data]) {
+    if let dict = resultObj as? [String: Any], let innerData = try? JSONSerialization.data(withJSONObject: dict) {
+        payloadsToTry.insert(innerData, at: 0)
+    } else if let str = resultObj as? String, let innerData = str.data(using: .utf8) {
+        payloadsToTry.insert(innerData, at: 0)
+    }
+}
+
 /// Parses a Keeper "list" or "trash list" response and returns record UIDs from the message table.
 internal func parseMessageTableRecordUids(from data: Data) -> Set<String> {
     var payloadsToTry: [Data] = [data]
@@ -514,11 +435,7 @@ internal func parseMessageTableRecordUids(from data: Data) -> Set<String> {
     } else if let root = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
               root["status"] as? String == "success",
               let resultObj = root["result"] {
-        if let dict = resultObj as? [String: Any], let innerData = try? JSONSerialization.data(withJSONObject: dict) {
-            payloadsToTry.insert(innerData, at: 0)
-        } else if let str = resultObj as? String, let innerData = str.data(using: .utf8) {
-            payloadsToTry.insert(innerData, at: 0)
-        }
+        keeperParseMessageTableInsertResultPayload(resultObj: resultObj, into: &payloadsToTry)
     }
     for jsonData in payloadsToTry {
         guard let parsed = try? JSONSerialization.jsonObject(with: jsonData) as? [String: Any],
@@ -585,6 +502,14 @@ private class KeeperAccount: NSObject, PasswordManagerAccount {
 // MARK: - KeeperDataSource
 
 class KeeperDataSource: NSObject, PasswordManagerDataSource {
+    /// When set by the app (e.g. password manager window), the full “Keeper Security Settings” sheet (API key + API URL) is shown instead of the legacy API-key-only dialog. Set to nil when the sheet is not available (e.g. window closed).
+    static var showKeeperSettingsSheetHandler: ((NSWindow?, @escaping (String?) -> Void) -> Void)?
+
+    /// Register the handler that shows the full Keeper Security Settings sheet (API key + API URL). Call with a non-nil block when the sheet can be shown (e.g. password manager window with Keeper selected); call with nil to revert to the legacy API-key-only dialog.
+    @objc static func setShowKeeperSettingsSheetHandler(_ handler: ((NSWindow?, @escaping (String?) -> Void) -> Void)?) {
+        showKeeperSettingsSheetHandler = handler
+    }
+
     private let browser: Bool
     private let _apiKeyLoadLock = NSLock()
     private var _apiKey: String?
@@ -610,6 +535,14 @@ class KeeperDataSource: NSObject, PasswordManagerDataSource {
     internal var injectedKeychainDeleteAPIKey: (() -> Void)?
     /// Test-only: when set, setKeeperSettingsAPIURL calls this instead of writing to UserDefaults/Keychain.
     internal var injectedStoreAPIURL: ((String) -> Void)?
+    /// Test-only: v2 poll interval in seconds (default 2). Use with injectedV2Deadline to test timeout quickly.
+    internal var injectedV2PollInterval: TimeInterval?
+    /// Test-only: v2 poll deadline in seconds from now (default 120). Use with injectedV2PollInterval to test timeout quickly.
+    internal var injectedV2Deadline: TimeInterval?
+    /// Test-only: when dialog returns .useExisting, use this as the key so the “use existing key” success branch is covered.
+    internal var injectedUseExistingKeyForDialog: String?
+    /// Test-only: when set, ensureAPIKey (inside the lock) uses this as if _cachedSettingsKey were set, so the 562–565 branch is coverable without a race.
+    internal var injectedCachedSettingsKeyForLockTest: String?
 
     init(browser: Bool) {
         self.browser = browser
@@ -654,7 +587,7 @@ class KeeperDataSource: NSObject, PasswordManagerDataSource {
             completion(k)
             return
         }
-        if let key = _cachedSettingsKey, !key.isEmpty {
+        if let key = injectedCachedSettingsKeyForLockTest ?? _cachedSettingsKey, !key.isEmpty {
             _apiKey = key
             let k = key
             _apiKeyLoadLock.unlock()
@@ -689,46 +622,13 @@ class KeeperDataSource: NSObject, PasswordManagerDataSource {
         }
         return
 
-        // No key in memory or data-protection keychain. Prefer the Settings sheet (API key + API URL) when the window controller provides a delegate and a window; otherwise show the simple "Keeper Security API Key" dialog.
         func showUIAndContinue() {
             if let delegate = credentialsDelegate, let window = context.window {
-                delegate.keeperDataSourceRequestCredentials(forWindow: window) { [weak self] key in
-                    guard let self = self else { return }
-                    if let key = key, !key.isEmpty {
-                        self._apiKey = key
-                        completion(key)
-                    } else {
-                        completion(nil)
-                    }
-                }
+                keeperHandleCredentialsFromDelegate(window: window, completion: completion)
                 return
             }
-            keeperShowAPIKeyDialog(existingKey: nil, window: context.window) { promptResult in
-                guard let promptResult = promptResult else {
-                    completion(nil)
-                    return
-                }
-                switch promptResult {
-                case .useExisting:
-                    if let key = self._apiKey, !key.isEmpty {
-                        completion(key)
-                    } else {
-                        completion(nil)
-                    }
-                case .useNew(let key):
-                    guard !key.isEmpty else { completion(nil); return }
-                    if let set = self.injectedKeychainSetAPIKey {
-                        set(key)
-                        self._apiKey = key
-                        completion(key)
-                    } else {
-                        keeperStoreAPIKeyInKeychain(key)
-                        self._apiKey = key
-                        completion(key)
-                    }
-                case .cancel:
-                    completion(nil)
-                }
+            keeperShowAPIKeyDialog(existingKey: nil, window: context.window) { [weak self] promptResult in
+                self?.keeperHandleDialogResult(promptResult, completion: completion)
             }
         }
     }
@@ -777,20 +677,14 @@ class KeeperDataSource: NSObject, PasswordManagerDataSource {
                 }
                 return
             }
-            // Single API call: "ls -R -l" returns all records (and folders) recursively; no separate "trash list" needed.
-            keeperExecute(apiKey: apiKey, command: "ls -R -l", baseURL: self.injectedBaseURL ?? self.injectedBaseURLFromStorage ?? keeperBaseURL(), session: self.injectedURLSession ?? .shared) { [weak self] result in
-            guard let self = self else { return }
-            switch result {
-            case .success(let data):
-                // Log raw response for debugging (visible in Xcode console and Console.app when filtering iTerm2).
-                if let raw = String(data: data, encoding: .utf8) {
-                    let preview = String(raw.prefix(1500))
-                    NSLog("[iTerm2 Keeper] ls -R -l response length=%d body=%@", data.count, preview)
-                }
-                do {
-                    // v2 result endpoint returns { "status": "success", "result": "<command output as string>" }.
-                    // With -f json, the command output is JSON; try parsing the inner string first.
-                    // Some implementations may return "result" as a nested object.
+            keeperExecute(apiKey: apiKey, command: "ls -R -l", baseURL: self.injectedBaseURL ?? self.injectedBaseURLFromStorage ?? keeperBaseURL(), session: self.injectedURLSession ?? .shared, pollInterval: self.injectedV2PollInterval, deadline: self.injectedV2Deadline) { [weak self] result in
+                guard let self = self else { return }
+                switch result {
+                case .success(let data):
+                    if let raw = String(data: data, encoding: .utf8) {
+                        let preview = String(raw.prefix(1500))
+                        NSLog("[iTerm2 Keeper] ls -R -l response length=%d body=%@", data.count, preview)
+                    }
                     var records: [KeeperRecord]?
                     var payloadsToTry: [Data] = [data]
                     if let wrapper = try? JSONDecoder().decode(KeeperV2ResultWrapper.self, from: data),
@@ -809,8 +703,6 @@ class KeeperDataSource: NSObject, PasswordManagerDataSource {
                         }
                     }
                     for jsonData in payloadsToTry {
-                        // Try "ls -R -l" format first. Its response has "command":"ls" and data.records[].title = full table line.
-                        // If we try KeeperExecuteResponse first, the decoder fills data.records but each item only has number+title (no uid), so we'd get 0 accounts.
                         if let parsed = try? JSONSerialization.jsonObject(with: jsonData) as? [String: Any],
                            parsed["command"] as? String == "ls",
                            let dataObj = parsed["data"] as? [String: Any],
@@ -829,7 +721,6 @@ class KeeperDataSource: NSObject, PasswordManagerDataSource {
                             records = arr
                             break
                         }
-                        // Flexible parse: accept any JSON with "data" (array or object with "records") and "status":"success".
                         if let parsed = try? JSONSerialization.jsonObject(with: jsonData) as? [String: Any],
                            parsed["status"] as? String == "success",
                            let dataPayload = parsed["data"] {
@@ -854,13 +745,11 @@ class KeeperDataSource: NSObject, PasswordManagerDataSource {
                                 if !records!.isEmpty { break }
                             }
                         }
-                        // List command returns {"command":"list","data":null,"message":["#  Record uid  ...","---  ...","1  uid  type  title  description  True",...]}.
                         if let parsed = try? JSONSerialization.jsonObject(with: jsonData) as? [String: Any],
                            let messageLines = parsed["message"] as? [String], messageLines.count >= 3 {
-                            let dataLines = messageLines.dropFirst(2) // skip header and "---" separator
+                            let dataLines = messageLines.dropFirst(2)
                             records = dataLines.compactMap { line -> KeeperRecord? in
                                 let parts = line.components(separatedBy: "  ").map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }
-                                // Require at least 5 columns: number, uid, type, title, shared (description may be missing)
                                 guard parts.count >= 5,
                                       let num = Int(parts[0]),
                                       parts[1].count >= 15, parts[1].allSatisfy({ $0.isLetter || $0.isNumber || $0 == "_" || $0 == "-" }) else { return nil }
@@ -885,7 +774,6 @@ class KeeperDataSource: NSObject, PasswordManagerDataSource {
                         }
                         return
                     }
-                    // Build accounts from parsed records (ls -R -l does not include trashed records).
                     let accounts: [PasswordManagerAccount] = records.compactMap { rec in
                         guard let uid = rec.effectiveUid, !uid.isEmpty else { return nil }
                         let title = rec.title ?? "Untitled"
@@ -896,7 +784,7 @@ class KeeperDataSource: NSObject, PasswordManagerDataSource {
                         NotificationCenter.default.post(name: iTerm2KeeperConnectionDidSucceedNotification, object: nil)
                         completion(accounts)
                     }
-                } catch {
+                case .failure(let error):
                     let message = (error as NSError).localizedDescription
                     DispatchQueue.main.async {
                         NotificationCenter.default.post(
@@ -907,18 +795,7 @@ class KeeperDataSource: NSObject, PasswordManagerDataSource {
                         completion([])
                     }
                 }
-            case .failure(let error):
-                let message = (error as NSError).localizedDescription
-                DispatchQueue.main.async {
-                    NotificationCenter.default.post(
-                        name: iTerm2KeeperConnectionDidFailNotification,
-                        object: nil,
-                        userInfo: ["error": message]
-                    )
-                    completion([])
-                }
             }
-        }
         }
     }
 
@@ -955,9 +832,8 @@ class KeeperDataSource: NSObject, PasswordManagerDataSource {
                 DispatchQueue.main.async { completion(nil, nil, NSError(domain: "KeeperDataSource", code: -1, userInfo: [NSLocalizedDescriptionKey: "No API key"])) }
                 return
             }
-            // Prefer get --format=json so password comes as a string value (exact from vault). Fall back to --format=password.
             let jsonCmd = "get \(recordUid) --format=json"
-            keeperExecute(apiKey: apiKey, command: jsonCmd, baseURL: self.injectedBaseURL ?? self.injectedBaseURLFromStorage ?? keeperBaseURL(), session: self.injectedURLSession ?? .shared) { result in
+            keeperExecute(apiKey: apiKey, command: jsonCmd, baseURL: self.injectedBaseURL ?? self.injectedBaseURLFromStorage ?? keeperBaseURL(), session: self.injectedURLSession ?? .shared, pollInterval: self.injectedV2PollInterval, deadline: self.injectedV2Deadline) { result in
                 switch result {
                 case .success(let data):
                     if let exact = KeeperDataSource.passwordFromGetJSONResponse(data) {
@@ -968,133 +844,124 @@ class KeeperDataSource: NSObject, PasswordManagerDataSource {
                     break
                 }
                 let cmd = "get \(recordUid) --format=password"
-                keeperExecute(apiKey: apiKey, command: cmd, baseURL: self.injectedBaseURL ?? self.injectedBaseURLFromStorage ?? keeperBaseURL(), session: self.injectedURLSession ?? .shared) { result2 in
-            switch result2 {
-            case .success(let data):
-                var password: String?
-                func trim(_ s: String) -> String { s.trimmingCharacters(in: .whitespacesAndNewlines) }
-                let isJSON = (try? JSONSerialization.jsonObject(with: data)) != nil
-                // Response may be a single JSON-encoded string (password with special chars).
-                if password == nil, let decoded = try? JSONDecoder().decode(String.self, from: data) {
-                    let t = trim(decoded)
-                    if !t.isEmpty { password = t }
-                }
-                // v2 result wrapper: { "status": "success"|"completed", "result": "<password>" }
-                if password == nil, let wrapper = try? JSONDecoder().decode(KeeperV2ResultWrapper.self, from: data),
-                   (wrapper.status == "success" || wrapper.status == "completed"),
-                   let resultStr = wrapper.result {
-                    let t = trim(resultStr)
-                    if !t.isEmpty { password = t }
-                    // If result looks like a JSON-encoded string (e.g. double-encoded), decode it.
-                    if password == nil, resultStr.count >= 2, resultStr.hasPrefix("\""), resultStr.hasSuffix("\""),
-                       let strData = resultStr.data(using: .utf8),
-                       let inner = try? JSONDecoder().decode(String.self, from: strData) {
-                        let t = trim(inner)
-                        if !t.isEmpty { password = t }
-                    }
-                }
-                // Direct or inner response: result, output, message[], or data (string or object with password/output key)
-                if password == nil, let parsed = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
-                    if let resultStr = parsed["result"] as? String {
-                        let t = trim(resultStr)
-                        if !t.isEmpty { password = t }
-                    }
-                    if password == nil, let resultObj = parsed["result"] as? [String: Any] {
-                        if let p = (resultObj["password"] as? String).map({ trim($0) }), !p.isEmpty { password = p }
-                        else if let p = (resultObj["output"] as? String).map({ trim($0) }), !p.isEmpty { password = p }
-                    }
-                    if password == nil, let outputStr = parsed["output"] as? String {
-                        let t = trim(outputStr)
-                        if !t.isEmpty { password = t }
-                    }
-                    if password == nil, let messageArr = parsed["message"] as? [String], let first = messageArr.first {
-                        let t = trim(first)
-                        // Do not use status messages as password (e.g. "Command executed successfully but produced no output")
-                        let lower = t.lowercased()
-                        let isStatusMessage = lower.hasPrefix("command executed successfully") || lower.hasPrefix("no output") || lower.hasPrefix("produced no output") || lower == "no output" || lower.contains("produced no output")
-                        if !t.isEmpty, !isStatusMessage { password = t }
-                    }
-                    if password == nil, let dataVal = parsed["data"] {
-                        if let str = dataVal as? String {
-                            let t = trim(str)
-                            // When data is a JSON-encoded string (e.g. "\"70MOC#4(0.QzGt/:m|9s\""), decode it first
-                            if t.count >= 2, t.hasPrefix("\""), t.hasSuffix("\""),
-                               let strData = t.data(using: .utf8),
-                               let decoded = try? JSONDecoder().decode(String.self, from: strData) {
-                                let t2 = trim(decoded)
-                                if !t2.isEmpty { password = t2 }
-                            }
-                            if password == nil, !t.isEmpty { password = t }
-                        } else if let obj = dataVal as? [String: Any] {
-                            for key in ["password", "output", "result", "value", "stdout"] {
-                                if let p = obj[key] as? String { let t = trim(p); if !t.isEmpty { password = t; break } }
-                                if password != nil { break }
-                            }
-                            // Some Keeper Commander responses put the password as the single key of data (e.g. {"70MOC#4(0.QzGt/:m|9s": null}).
-                            // The key can be truncated (e.g. at "|") with the remainder in the value; concatenate key + value to get the full password.
-                            if password == nil, obj.count == 1, let singleKey = obj.keys.first {
-                                let keyPart = trim(singleKey)
-                                let valPart = (obj[singleKey] as? String).map(trim) ?? ""
-                                let combined = valPart.isEmpty ? keyPart : (keyPart + valPart)
-                                if !combined.isEmpty { password = combined }
-                            }
-                        } else if let arr = dataVal as? [String], let first = arr.first {
-                            let t = trim(first)
-                            if !t.isEmpty { password = t }
-                        } else if let arr = dataVal as? [Any], let first = arr.first as? String {
-                            let t = trim(first)
-                            if !t.isEmpty { password = t }
-                        }
-                    }
-                }
-                if password == nil, let response = try? JSONDecoder().decode(KeeperExecuteResponse.self, from: data), (response.status == "success" || response.status == "completed") {
-                    if let r = response.result { let t = trim(r); if !t.isEmpty { password = t } }
-                }
-                // Plain text body only when response is NOT JSON (e.g. raw stdout from get --format=password).
-                if password == nil, !isJSON, let raw = String(data: data, encoding: .utf8) {
-                    let trimmed = trim(raw)
-                    if !trimmed.isEmpty {
-                        if trimmed.hasPrefix("\""), trimmed.hasSuffix("\""), trimmed.count >= 2,
-                           let strData = trimmed.data(using: .utf8),
-                           let decoded = try? JSONDecoder().decode(String.self, from: strData) {
+                keeperExecute(apiKey: apiKey, command: cmd, baseURL: self.injectedBaseURL ?? self.injectedBaseURLFromStorage ?? keeperBaseURL(), session: self.injectedURLSession ?? .shared, pollInterval: self.injectedV2PollInterval, deadline: self.injectedV2Deadline) { result2 in
+                    switch result2 {
+                    case .success(let data):
+                        var password: String?
+                        func trim(_ s: String) -> String { s.trimmingCharacters(in: .whitespacesAndNewlines) }
+                        let isJSON = (try? JSONSerialization.jsonObject(with: data)) != nil
+                        if password == nil, let decoded = try? JSONDecoder().decode(String.self, from: data) {
                             let t = trim(decoded)
                             if !t.isEmpty { password = t }
                         }
-                        if password == nil { password = trimmed }
-                    }
-                }
-                if let p = password, !p.isEmpty {
-                    DispatchQueue.main.async { completion(p, nil, nil) }
-                } else {
-                    let preview = String(data: data, encoding: .utf8).map { s in
-                        let p = trim(s)
-                        if p.isEmpty { return "(empty)" }
-                        if let parsed = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
-                            var out = "keys: \(parsed.keys.sorted().joined(separator: ", "))"
-                            if let dataVal = parsed["data"], let obj = dataVal as? [String: Any] {
-                                out += " | data keys: \(obj.keys.sorted().joined(separator: ", "))"
+                        if password == nil, let wrapper = try? JSONDecoder().decode(KeeperV2ResultWrapper.self, from: data),
+                           (wrapper.status == "success" || wrapper.status == "completed"),
+                           let resultStr = wrapper.result {
+                            let t = trim(resultStr)
+                            if !t.isEmpty { password = t }
+                            if password == nil, resultStr.count >= 2, resultStr.hasPrefix("\""), resultStr.hasSuffix("\""),
+                               let strData = resultStr.data(using: .utf8),
+                               let inner = try? JSONDecoder().decode(String.self, from: strData) {
+                                let t = trim(inner)
+                                if !t.isEmpty { password = t }
                             }
-                            return out
                         }
-                        return "(\(p.count) chars, not JSON)"
-                    } ?? "(invalid UTF-8)"
-                    DLog("Keeper get password: no password in response \(preview)")
-                    NSLog("[iTerm2 Keeper] get password failed: response \(preview)")
-                    let message: String
-                    if let parsed = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-                       let msg = parsed["message"] as? [String],
-                       let first = msg.first?.lowercased(),
-                       first.contains("no output") || first.contains("produced no output") {
-                        message = "This record has no password field (e.g. Address or Contact type)."
-                    } else {
-                        message = "Keeper returned no password for this record."
+                        if password == nil, let parsed = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
+                            if let resultStr = parsed["result"] as? String {
+                                let t = trim(resultStr)
+                                if !t.isEmpty { password = t }
+                            }
+                            if password == nil, let resultObj = parsed["result"] as? [String: Any] {
+                                if let p = (resultObj["password"] as? String).map({ trim($0) }), !p.isEmpty { password = p }
+                                else if let p = (resultObj["output"] as? String).map({ trim($0) }), !p.isEmpty { password = p }
+                            }
+                            if password == nil, let outputStr = parsed["output"] as? String {
+                                let t = trim(outputStr)
+                                if !t.isEmpty { password = t }
+                            }
+                            if password == nil, let messageArr = parsed["message"] as? [String], let first = messageArr.first {
+                                let t = trim(first)
+                                let lower = t.lowercased()
+                                let isStatusMessage = lower.hasPrefix("command executed successfully") || lower.hasPrefix("no output") || lower.hasPrefix("produced no output") || lower == "no output" || lower.contains("produced no output")
+                                if !t.isEmpty, !isStatusMessage { password = t }
+                            }
+                            if password == nil, let dataVal = parsed["data"] {
+                                if let str = dataVal as? String {
+                                    let t = trim(str)
+                                    if t.count >= 2, t.hasPrefix("\""), t.hasSuffix("\""),
+                                       let strData = t.data(using: .utf8),
+                                       let decoded = try? JSONDecoder().decode(String.self, from: strData) {
+                                        let t2 = trim(decoded)
+                                        if !t2.isEmpty { password = t2 }
+                                    }
+                                    if password == nil, !t.isEmpty { password = t }
+                                } else if let obj = dataVal as? [String: Any] {
+                                    for key in ["password", "output", "result", "value", "stdout"] {
+                                        if let p = obj[key] as? String { let t = trim(p); if !t.isEmpty { password = t; break } }
+                                        if password != nil { break }
+                                    }
+                                    if password == nil, obj.count == 1, let singleKey = obj.keys.first {
+                                        let keyPart = trim(singleKey)
+                                        let valPart = (obj[singleKey] as? String).map(trim) ?? ""
+                                        let combined = valPart.isEmpty ? keyPart : (keyPart + valPart)
+                                        if !combined.isEmpty { password = combined }
+                                    }
+                                } else if let arr = dataVal as? [String], let first = arr.first {
+                                    let t = trim(first)
+                                    if !t.isEmpty { password = t }
+                                } else if let arr = dataVal as? [Any], let first = arr.first as? String {
+                                    let t = trim(first)
+                                    if !t.isEmpty { password = t }
+                                }
+                            }
+                        }
+                        if password == nil, let response = try? JSONDecoder().decode(KeeperExecuteResponse.self, from: data), (response.status == "success" || response.status == "completed") {
+                            if let r = response.result { let t = trim(r); if !t.isEmpty { password = t } }
+                        }
+                        if password == nil, !isJSON, let raw = String(data: data, encoding: .utf8) {
+                            let trimmed = trim(raw)
+                            if !trimmed.isEmpty {
+                                if trimmed.hasPrefix("\""), trimmed.hasSuffix("\""), trimmed.count >= 2,
+                                   let strData = trimmed.data(using: .utf8),
+                                   let decoded = try? JSONDecoder().decode(String.self, from: strData) {
+                                    let t = trim(decoded)
+                                    if !t.isEmpty { password = t }
+                                }
+                                if password == nil { password = trimmed }
+                            }
+                        }
+                        if let p = password, !p.isEmpty {
+                            DispatchQueue.main.async { completion(p, nil, nil) }
+                        } else {
+                            let preview = String(data: data, encoding: .utf8).map { s in
+                                let p = trim(s)
+                                if p.isEmpty { return "(empty)" }
+                                if let parsed = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
+                                    var out = "keys: \(parsed.keys.sorted().joined(separator: ", "))"
+                                    if let dataVal = parsed["data"], let obj = dataVal as? [String: Any] {
+                                        out += " | data keys: \(obj.keys.sorted().joined(separator: ", "))"
+                                    }
+                                    return out
+                                }
+                                return "(\(p.count) chars, not JSON)"
+                            } ?? "(invalid UTF-8)"
+                            DLog("Keeper get password: no password in response \(preview)")
+                            NSLog("[iTerm2 Keeper] get password failed: response \(preview)")
+                            let message: String
+                            if let parsed = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+                               let msg = parsed["message"] as? [String],
+                               let first = msg.first?.lowercased(),
+                               first.contains("no output") || first.contains("produced no output") {
+                                message = "This record has no password field (e.g. Address or Contact type)."
+                            } else {
+                                message = "Keeper returned no password for this record."
+                            }
+                            DispatchQueue.main.async { completion(nil, nil, NSError(domain: "KeeperDataSource", code: -1, userInfo: [NSLocalizedDescriptionKey: message])) }
+                        }
+                    case .failure(let error):
+                        DispatchQueue.main.async { completion(nil, nil, error) }
                     }
-                    DispatchQueue.main.async { completion(nil, nil, NSError(domain: "KeeperDataSource", code: -1, userInfo: [NSLocalizedDescriptionKey: message])) }
                 }
-            case .failure(let error):
-                DispatchQueue.main.async { completion(nil, nil, error) }
-            }
-        }
             }
         }
     }
@@ -1107,7 +974,7 @@ class KeeperDataSource: NSObject, PasswordManagerDataSource {
             }
             let b64 = Data(password.utf8).base64EncodedString()
             let cmd = "record-update -r \(recordUid) password=$BASE64:\(b64)"
-            keeperExecute(apiKey: apiKey, command: cmd, baseURL: self.injectedBaseURL ?? self.injectedBaseURLFromStorage ?? keeperBaseURL(), session: self.injectedURLSession ?? .shared) { result in
+            keeperExecute(apiKey: apiKey, command: cmd, baseURL: self.injectedBaseURL ?? self.injectedBaseURLFromStorage ?? keeperBaseURL(), session: self.injectedURLSession ?? .shared, pollInterval: self.injectedV2PollInterval, deadline: self.injectedV2Deadline) { result in
                 switch result {
                 case .success(let data):
                     if let response = try? JSONDecoder().decode(KeeperExecuteResponse.self, from: data), response.status == "success" {
@@ -1131,7 +998,7 @@ class KeeperDataSource: NSObject, PasswordManagerDataSource {
                 DispatchQueue.main.async { completion(NSError(domain: "KeeperDataSource", code: -1, userInfo: [NSLocalizedDescriptionKey: "No API key"])) }
                 return
             }
-            keeperExecute(apiKey: apiKey, command: "rm -f \(recordUid)", baseURL: self.injectedBaseURL ?? self.injectedBaseURLFromStorage ?? keeperBaseURL(), session: self.injectedURLSession ?? .shared) { result in
+            keeperExecute(apiKey: apiKey, command: "rm -f \(recordUid)", baseURL: self.injectedBaseURL ?? self.injectedBaseURLFromStorage ?? keeperBaseURL(), session: self.injectedURLSession ?? .shared, pollInterval: self.injectedV2PollInterval, deadline: self.injectedV2Deadline) { result in
                 switch result {
                 case .success(let data):
                     if let response = try? JSONDecoder().decode(KeeperExecuteResponse.self, from: data), response.status == "success" {
@@ -1157,34 +1024,34 @@ class KeeperDataSource: NSObject, PasswordManagerDataSource {
             let escapedLogin = userName.replacingOccurrences(of: "\\", with: "\\\\").replacingOccurrences(of: "\"", with: "\\\"")
             let passwordB64 = Data(password.utf8).base64EncodedString()
             let cmd = "record-add --record-type=login --title=\"\(escapedTitle)\" login=\"\(escapedLogin)\" password=$BASE64:\(passwordB64)"
-            keeperExecute(apiKey: apiKey, command: cmd, baseURL: self.injectedBaseURL ?? self.injectedBaseURLFromStorage ?? keeperBaseURL(), session: self.injectedURLSession ?? .shared) { [weak self] result in
-            guard let self = self else { return }
-            switch result {
-            case .success(let data):
-                do {
-                    struct RecordAddResponse: Decodable {
-                        let status: String?
-                        let data: RecordAddData?
-                    }
-                    struct RecordAddData: Decodable {
-                        let record_uid: String?
-                    }
-                    let response = try JSONDecoder().decode(RecordAddResponse.self, from: data)
-                    guard response.status == "success", let uid = response.data?.record_uid, !uid.isEmpty else {
-                        let detail = keeperHumanReadableError(fromResponseData: data) ?? "Add failed"
+            keeperExecute(apiKey: apiKey, command: cmd, baseURL: self.injectedBaseURL ?? self.injectedBaseURLFromStorage ?? keeperBaseURL(), session: self.injectedURLSession ?? .shared, pollInterval: self.injectedV2PollInterval, deadline: self.injectedV2Deadline) { [weak self] result in
+                guard let self = self else { return }
+                switch result {
+                case .success(let data):
+                    do {
+                        struct RecordAddResponse: Decodable {
+                            let status: String?
+                            let data: RecordAddData?
+                        }
+                        struct RecordAddData: Decodable {
+                            let record_uid: String?
+                        }
+                        let response = try JSONDecoder().decode(RecordAddResponse.self, from: data)
+                        guard response.status == "success", let uid = response.data?.record_uid, !uid.isEmpty else {
+                            let detail = keeperHumanReadableError(fromResponseData: data) ?? "Add failed"
+                            DispatchQueue.main.async { completion(nil, NSError(domain: "KeeperDataSource", code: -1, userInfo: [NSLocalizedDescriptionKey: detail])) }
+                            return
+                        }
+                        let account = KeeperAccount(uid: uid, accountName: accountName, userName: userName, hasOTP: false, sendOTP: false, dataSource: self)
+                        DispatchQueue.main.async { completion(account, nil) }
+                    } catch {
+                        let detail = keeperHumanReadableError(fromResponseData: data) ?? (error as NSError).localizedDescription
                         DispatchQueue.main.async { completion(nil, NSError(domain: "KeeperDataSource", code: -1, userInfo: [NSLocalizedDescriptionKey: detail])) }
-                        return
                     }
-                    let account = KeeperAccount(uid: uid, accountName: accountName, userName: userName, hasOTP: false, sendOTP: false, dataSource: self)
-                    DispatchQueue.main.async { completion(account, nil) }
-                } catch {
-                    let detail = keeperHumanReadableError(fromResponseData: data) ?? (error as NSError).localizedDescription
-                    DispatchQueue.main.async { completion(nil, NSError(domain: "KeeperDataSource", code: -1, userInfo: [NSLocalizedDescriptionKey: detail])) }
+                case .failure(let error):
+                    DispatchQueue.main.async { completion(nil, error) }
                 }
-            case .failure(let error):
-                DispatchQueue.main.async { completion(nil, error) }
             }
-        }
         }
     }
 
@@ -1254,9 +1121,7 @@ class KeeperDataSource: NSObject, PasswordManagerDataSource {
             return
         }
         if trimmed.isEmpty {
-            iTermUserDefaults.userDefaults().removeObject(forKey: keeperLegacyUserDefaultsAPIURLKey)
-            try? SSKeychain.deletePassword(forService: keeperKeychainService, account: keeperKeychainAccountAPIURL)
-            try? SSKeychain.deletePassword(forService: keeperLegacyKeychainService, account: keeperKeychainAccountAPIURL)
+            keeperClearAPIURLStorage()
             _cachedSettingsURL = nil
         } else {
             keeperStoreAPIURLInKeychain(trimmed)
@@ -1283,7 +1148,7 @@ class KeeperDataSource: NSObject, PasswordManagerDataSource {
             DispatchQueue.main.async { completion(false, "Invalid API URL.") }
             return
         }
-        keeperExecute(apiKey: key, command: "sync-down", baseURL: baseURL, session: self.injectedURLSession ?? .shared) { result in
+        keeperExecute(apiKey: key, command: "sync-down", baseURL: baseURL, session: self.injectedURLSession ?? .shared, pollInterval: self.injectedV2PollInterval, deadline: self.injectedV2Deadline) { result in
             switch result {
             case .success:
                 DispatchQueue.main.async { completion(true, nil) }
@@ -1291,6 +1156,51 @@ class KeeperDataSource: NSObject, PasswordManagerDataSource {
                 let message = (error as NSError).localizedDescription
                 DispatchQueue.main.async { completion(false, message) }
             }
+        }
+    }
+}
+
+/// Named for coverage: delegate and dialog result handling.
+private extension KeeperDataSource {
+    func keeperHandleCredentialsFromDelegate(window: NSWindow, completion: @escaping (String?) -> Void) {
+        guard let delegate = credentialsDelegate else { return }
+        delegate.keeperDataSourceRequestCredentials(forWindow: window) { [weak self] key in
+            guard let self = self else { return }
+            if let key = key, !key.isEmpty {
+                self._apiKey = key
+                completion(key)
+            } else {
+                completion(nil)
+            }
+        }
+    }
+
+    func keeperHandleDialogResult(_ promptResult: KeeperAPIKeyPromptResult?, completion: @escaping (String?) -> Void) {
+        guard let promptResult = promptResult else {
+            completion(nil)
+            return
+        }
+        switch promptResult {
+        case .useExisting:
+            let key = injectedUseExistingKeyForDialog ?? _apiKey
+            if let key = key, !key.isEmpty {
+                completion(key)
+            } else {
+                completion(nil)
+            }
+        case .useNew(let key):
+            guard !key.isEmpty else { completion(nil); return }
+            if let set = injectedKeychainSetAPIKey {
+                set(key)
+                _apiKey = key
+                completion(key)
+            } else {
+                keeperStoreAPIKeyInKeychain(key)
+                _apiKey = key
+                completion(key)
+            }
+        case .cancel:
+            completion(nil)
         }
     }
 }
