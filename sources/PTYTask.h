@@ -17,6 +17,7 @@
 @class iTermWinSizeController;
 @class PTYTab;
 @class PTYTask;
+@class PTYTaskIOHandler;
 
 @protocol PTYTaskDelegate <NSObject>
 // Runs in a background thread. Should do as much work as possible in this
@@ -187,6 +188,13 @@ typedef NS_OPTIONS(NSUInteger, iTermJobManagerAttachResults) {
 // This is used by channels. It takes care of handling IO and this is the one strong reference to the ioBuffer.
 @property(nonatomic, strong) iTermIOBuffer *ioBuffer;
 
+// Typed as `id` to avoid requiring Swift header import in this header.
+// Set by PTYSession in taskDidRegister: for backpressure integration.
+@property(nonatomic, weak) id tokenExecutor;
+
+// Any queue. Captures shouldRead snapshot, then dispatches to ioQueue for source suspend/resume.
+- (void)updateReadSourceState;
+
 + (NSMutableDictionary *)mutableEnvironmentDictionary;
 
 - (instancetype)init;
@@ -239,6 +247,13 @@ typedef NS_OPTIONS(NSUInteger, iTermJobManagerAttachResults) {
 
 - (void)killWithMode:(iTermJobManagerKillingMode)mode;
 
+// Register or deregister a task. When usePerPTYDispatchSources is true,
+// registration triggers didRegister (which creates the PTYTaskIOHandler).
+// Otherwise, registration goes through TaskNotifier for the select() loop.
+// Job managers should call these instead of TaskNotifier directly.
++ (void)registerTaskWithNotifier:(id<iTermTask>)task;
++ (void)deregisterTaskFromNotifier:(id<iTermTask>)task;
+
 - (void)registerTmuxTask;
 
 - (void)getWorkingDirectoryWithCompletion:(void (^)(NSString *pwd))completion;
@@ -250,4 +265,28 @@ typedef NS_OPTIONS(NSUInteger, iTermJobManagerAttachResults) {
                                                   jobManager:(id<iTermJobManager>)jobManager
                                                        queue:(dispatch_queue_t)queue;
 
+@end
+
+@interface PTYTask (Testing)
+- (BOOL)testHasReadSource;
+- (BOOL)testHasWriteSource;
+- (BOOL)testIsReadSourceSuspended;
+- (BOOL)testIsWriteSourceSuspended;
+- (BOOL)testWriteBufferHasData;
+- (void)testSetFd:(int)fd;
+- (void)testSetupDispatchSourcesForTesting;
+- (void)testSetupDispatchSourcesForTestingWithPid:(pid_t)pid;
+- (void)testTeardownDispatchSourcesForTesting;
+- (void)testAppendDataToWriteBuffer:(NSData *)data;
+- (void)testWaitForIOQueue;
+- (void)testSetJobManager:(id<iTermJobManager>)jobManager;
+- (BOOL)testHasCoprocessReadSource;
+- (BOOL)testHasCoprocessWriteSource;
+- (BOOL)testIsCoprocessReadSourceSuspended;
+- (BOOL)testIsCoprocessWriteSourceSuspended;
+- (void)testSetupCoprocessSourcesWithReadFd:(int)readFd writeFd:(int)writeFd;
+- (void)testTeardownCoprocessSources;
+- (void)testSimulateProcessExit;
+@property (nonatomic) BOOL testShouldWriteOverride;
+@property (nonatomic, strong) NSNumber *testIoAllowedOverride;
 @end

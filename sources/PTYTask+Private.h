@@ -17,4 +17,6 @@
 @property(atomic, weak) iTermLoggingHelper *loggingHelper;
 @property(atomic, strong) id<iTermJobManager> jobManager;
 
+- (void)closeFileDescriptorAndDeregisterIfPossible;
+
 @end

@@ -610,6 +610,7 @@ DEFINE_BOOL(runJobsInServers, YES, SECTION_SESSION @"Enable session restoration.
 DEFINE_BOOL(bootstrapDaemon, YES, SECTION_SESSION @"Allow sessions to survive logging out and back in.\nThis breaks the “auth sufficient pam_tid.so” hack some people use to allow sudo to authenticate with Touch ID.");
 
 DEFINE_BOOL(killJobsInServersOnQuit, YES, SECTION_SESSION @"User-initiated Quit (⌘Q) of iTerm2 will kill all running jobs.\nApplies only when session restoration is on.");
+DEFINE_BOOL(usePerPTYDispatchSources, NO, SECTION_SESSION @"Use per-PTY dispatch sources instead of a shared select() loop for I/O.\nThis provides better session isolation but is experimental.\nRequires restart.");
 DEFINE_SETTABLE_BOOL(suppressRestartAnnouncement, SuppressRestartAnnouncement, NO, SECTION_SESSION @"Suppress the Restart Session offer.\nWhen a session terminates, it will offer to restart itself. Turn this on to suppress the offer permanently.");
 DEFINE_BOOL(showSessionRestoredBanner, YES, SECTION_SESSION @"When restoring a session without restoring a running job, draw a banner saying “Session Contents Restored” below the restored contents.");
 DEFINE_DEPRECATED_STRING(autoLogFormat,

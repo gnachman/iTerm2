@@ -1239,6 +1239,7 @@
 		A616839A22F94AEE00661F71 /* GPBEnumArray+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = A616839822F94AEE00661F71 /* GPBEnumArray+iTerm.m */; };
 		A616CF0D284143A300EF82D0 /* ConductorRecovery.swift in Sources */ = {isa = PBXBuildFile; fileRef = A616CF0C284143A300EF82D0 /* ConductorRecovery.swift */; };
 		A616CF112841AA1600EF82D0 /* WinSizeController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A616CF102841AA1600EF82D0 /* WinSizeController.swift */; };
+		337071A3E6EEB42EF211A35D /* PTYTaskIOHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = BFE6B6E4B9840001204A07E1 /* PTYTaskIOHandler.swift */; };
 		A616D78B2EA7F167000C0C18 /* CyclicLog.swift in Sources */ = {isa = PBXBuildFile; fileRef = A616D78A2EA7F167000C0C18 /* CyclicLog.swift */; };
 		A616D78C2EA82E71000C0C18 /* iTermTipWindowController.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DA76A041B30892900CB272A /* iTermTipWindowController.m */; };
 		A616D78E2EA85D9E000C0C18 /* AdapterPasswordDataSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = A616D78D2EA85D9E000C0C18 /* AdapterPasswordDataSource.swift */; };
@@ -8888,6 +8889,7 @@
 		A6EEAEDF28385A090039E850 /* PTYTask+ProcessInfo.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "PTYTask+ProcessInfo.h"; sourceTree = "<group>"; };
 		A6EEAEE028385A090039E850 /* PTYTask+ProcessInfo.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "PTYTask+ProcessInfo.m"; sourceTree = "<group>"; };
 		A6EEAEE328385A3F0039E850 /* PTYTask+Private.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "PTYTask+Private.h"; sourceTree = "<group>"; };
+		BFE6B6E4B9840001204A07E1 /* PTYTaskIOHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PTYTaskIOHandler.swift; sourceTree = "<group>"; };
 		A6EED4612A804A2E006F0DB4 /* InputSourceForcer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InputSourceForcer.swift; sourceTree = "<group>"; };
 		A6EF57CF21994DDC00C76698 /* iTermUserDefaultsObserver.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermUserDefaultsObserver.h; sourceTree = "<group>"; };
 		A6EF57D021994DDC00C76698 /* iTermUserDefaultsObserver.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermUserDefaultsObserver.m; sourceTree = "<group>"; };
@@ -11753,6 +11755,7 @@
 				A6EEAEDF28385A090039E850 /* PTYTask+ProcessInfo.h */,
 				A6EEAEE028385A090039E850 /* PTYTask+ProcessInfo.m */,
 				A6EEAEE328385A3F0039E850 /* PTYTask+Private.h */,
+				BFE6B6E4B9840001204A07E1 /* PTYTaskIOHandler.swift */,
 				A616CF0C284143A300EF82D0 /* ConductorRecovery.swift */,
 				A616CF102841AA1600EF82D0 /* WinSizeController.swift */,
 				A6D1C42128619E4800B68526 /* iTermTextDrawingHelperDelegate.h */,
@@ -19019,6 +19022,7 @@
 				5370678D21C9D2780088D0F3 /* SIGArchiveVerifier.m in Sources */,
 				A61D2A4927555CD000E539F3 /* MenuItemPopupView.swift in Sources */,
 				A616CF112841AA1600EF82D0 /* WinSizeController.swift in Sources */,
+				337071A3E6EEB42EF211A35D /* PTYTaskIOHandler.swift in Sources */,
 				A67960D21F81FCBB008A42BC /* iTermBadgeRenderer.m in Sources */,
 				A653F6A924D00FFE0062377E /* iTermRestorableStateSQLite.m in Sources */,
 				A6E112D725C615B400875D27 /* iTermHighlightLineTrigger.m in Sources */,
