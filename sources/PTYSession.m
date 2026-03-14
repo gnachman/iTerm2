@@ -7580,6 +7580,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
         return;
     }
     [_textview clearHighlights:YES];
+    [_textview.selection clearSelection];
 }
 
 - (void)findViewControllerVisibilityDidChange:(id<iTermFindViewController>)sender {
