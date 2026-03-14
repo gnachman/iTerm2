@@ -65,9 +65,7 @@ cd iTerm2
 make setup
 ```
 
-This installs Homebrew dependencies (cmake, pkg-config), the x86_64 Rust toolchain (required on both Intel and Apple Silicon), initializes all git submodules, and compiles third-party libraries (OpenSSL, libsixel, libgit2, Sparkle, etc.) inside a sandbox for reproducibility.
-
-Re-run `make paranoid-deps` whenever your active Xcode version changes — the file `last-xcode-version` tracks which version was last used.
+This installs Homebrew dependencies (cmake, pkg-config), SF Symbols, the x86_64 Rust toolchain (required on both Intel and Apple Silicon), downloads the Metal Toolchain, initializes all git submodules, and compiles third-party libraries (OpenSSL, libsixel, libgit2, Sparkle, etc.).
 
 #### Build
 
