@@ -1265,8 +1265,21 @@ static NSString *const kIntervalTreeObjectsKey = @"objects";
 - (NSDictionary *)dictionaryValueWithOffset:(long long)offset {
     NSMutableArray *objectDicts = [NSMutableArray array];
     for (id<IntervalTreeObject> object in self.allObjects) {
-        Interval *interval = [Interval intervalWithLocation:object.entry.interval.location + offset
-                                                     length:object.entry.interval.length];
+        // Skip objects that would have negative limits after adjustment - they represent
+        // content that has scrolled off and isn't being saved.
+        const long long adjustedLocation = object.entry.interval.location + offset;
+        long long adjustedLength = object.entry.interval.length;
+        const long long adjustedLimit = adjustedLocation + adjustedLength;
+        if (adjustedLimit < 0) {
+            continue;
+        }
+        // Clip intervals that start before the saved region but extend into it.
+        if (adjustedLocation < 0) {
+            adjustedLength += adjustedLocation;  // Reduce length by the negative offset
+            adjustedLocation = 0;
+        }
+        Interval *interval = [Interval intervalWithLocation:adjustedLocation
+                                                     length:adjustedLength];
         [objectDicts addObject:@{ kIntervalTreeIntervalKey: interval.dictionaryValue,
                                   kIntervalTreeObjectKey: object.dictionaryValue,
                                   kIntervalTreeClassNameKey: NSStringFromClass(object.class) }];
@@ -1278,11 +1291,16 @@ static NSString *const kIntervalTreeObjectsKey = @"objects";
 
 - (void)encodeWithEncoder:(id<iTermEncoderAdapter>)encoder
                    offset:(long long)offset {
-    // Build identifier list from all objects
+    // Build identifier list from all objects, filtering out those that would have negative
+    // limits after adjustment (they represent content that has scrolled off).
     NSMutableArray<NSString *> *identifiers = [NSMutableArray array];
     NSMutableDictionary<NSString *, id<IntervalTreeObject>> *objectsByGuid = [NSMutableDictionary dictionary];
 
     for (id<IntervalTreeObject> object in self.allObjects) {
+        const long long adjustedLimit = object.entry.interval.location + offset + object.entry.interval.length;
+        if (adjustedLimit < 0) {
+            continue;
+        }
         NSString *identifier = object.stableIdentifier;
         [identifiers addObject:identifier];
         objectsByGuid[identifier] = object;
@@ -1298,9 +1316,15 @@ static NSString *const kIntervalTreeObjectsKey = @"objects";
         id<IntervalTreeObject> object = objectsByGuid[identifier];
         Interval *interval = object.entry.interval;
 
-        // Metadata - always encoded (interval and class are needed to reconstruct the object)
-        Interval *adjustedInterval = [Interval intervalWithLocation:interval.location + offset
-                                                             length:interval.length];
+        // Compute adjusted interval, clipping to non-negative location if needed.
+        long long adjustedLocation = interval.location + offset;
+        long long adjustedLength = interval.length;
+        if (adjustedLocation < 0) {
+            adjustedLength += adjustedLocation;  // Reduce length by the negative offset
+            adjustedLocation = 0;
+        }
+        Interval *adjustedInterval = [Interval intervalWithLocation:adjustedLocation
+                                                             length:adjustedLength];
         [subencoder mergeDictionary:@{
             kIntervalTreeIntervalKey: adjustedInterval.dictionaryValue,
             kIntervalTreeClassNameKey: NSStringFromClass(object.class)
