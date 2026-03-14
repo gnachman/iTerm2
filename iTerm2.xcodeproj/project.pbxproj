@@ -5141,6 +5141,7 @@
 		A6FFAE712CF123D10031FB21 /* CoreTextLineRenderingHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6FFAE702CF123CC0031FB21 /* CoreTextLineRenderingHelper.swift */; };
 		A6FFAE732CF682BD0031FB21 /* iTermDoubleWidthCharacterCache.h in Headers */ = {isa = PBXBuildFile; fileRef = A6FFAE722CF682B60031FB21 /* iTermDoubleWidthCharacterCache.h */; };
 		A6FFAE752CF682D60031FB21 /* iTermDoubleWidthCharacterCache.m in Sources */ = {isa = PBXBuildFile; fileRef = A6FFAE742CF682D40031FB21 /* iTermDoubleWidthCharacterCache.m */; };
+		A77D8D50729267B406541654 /* AccessibilityDeletionDetectionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F139DFA4255DC27A1E3E0FF /* AccessibilityDeletionDetectionTests.swift */; };
 		A785F516A64BC93AAF1474B8 /* RegexAtomIterator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 76421C2E762130B690D1ADC5 /* RegexAtomIterator.swift */; };
 		A7E25DCB1956D4A7FA738CB9 /* iTermStreamingPNGWriter.h in Sources */ = {isa = PBXBuildFile; fileRef = CB2F48F836C5732146BCEDD9 /* iTermStreamingPNGWriter.h */; };
 		C04DA64B468EBC474F2B9503 /* iTermWordExtractorTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA0E5946C100538B1183CD07 /* iTermWordExtractorTest.swift */; };
@@ -6217,6 +6218,7 @@
 		53FF984A20967805008688D7 /* iTermMetalDeviceProvider.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermMetalDeviceProvider.m; sourceTree = "<group>"; };
 		5ECE005D1454E59B004861E9 /* PseudoTerminalRestorer.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = PseudoTerminalRestorer.h; sourceTree = "<group>"; tabWidth = 4; };
 		5ECE005E1454E59B004861E9 /* PseudoTerminalRestorer.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = PseudoTerminalRestorer.m; sourceTree = "<group>"; tabWidth = 4; };
+		5F139DFA4255DC27A1E3E0FF /* AccessibilityDeletionDetectionTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AccessibilityDeletionDetectionTests.swift; sourceTree = "<group>"; };
 		625C956DD832F4FD0D8F9715 /* PrivateIPChecker.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = PrivateIPChecker.swift; sourceTree = "<group>"; };
 		698B6ED16A3CD11D402C364B /* iTermUploadIndicator.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = sources/iTermUploadIndicator.swift; sourceTree = SOURCE_ROOT; };
 		756C32AB2597AC2E0047B3A9 /* iTermImage+Sixel.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "iTermImage+Sixel.h"; sourceTree = "<group>"; };
@@ -9893,6 +9895,7 @@
 				002CB9657AA29AC459CE35D1 /* iTermWordExtractorTest.swift */,
 				98E9463133DCF8311E0E5B6E /* iTermFindOnPageHelperTests.swift */,
 				F6601DD02DFE3C2480DFDC73 /* IntervalTreeCoordinateClampingTests.swift */,
+				5F139DFA4255DC27A1E3E0FF /* AccessibilityDeletionDetectionTests.swift */,
 				F78529322C819CAD15A19251 /* IntervalTreeGraphEncodingTests.swift */,
 				86F85D24451C27760B7C75BC /* PrivateIPCheckerTests.swift */,
 			);
@@ -20113,6 +20116,10 @@
 			buildActionMask = 2147483647;
 			files = (
 				A6C811F42DCFD5E40088E628 /* SearchEngineTests.swift in Sources */,
+				F54DF58519DE131885375D3F /* iTermWordExtractorTest.swift in Sources */,
+				02BBB9199A50961FFEAC2D6D /* iTermFindOnPageHelperTests.swift in Sources */,
+				052FA2457F95F63A46C30503 /* IntervalTreeCoordinateClampingTests.swift in Sources */,
+				A77D8D50729267B406541654 /* AccessibilityDeletionDetectionTests.swift in Sources */,
 				92738CD9A08C339E8F473394 /* IntervalTreeGraphEncodingTests.swift in Sources */,
 				EEBDD6CF78595292D0CF8977 /* PrivateIPCheckerTests.swift in Sources */,
 			);

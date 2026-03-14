@@ -935,6 +935,125 @@ extension PTYTextView {
     }
 }
 
+// MARK: - Accessibility Deletion Detection
+
+extension PTYTextView {
+    /// Returns a located string for the current cursor line.
+    /// Each character's grid coordinate is tracked for proper position-based comparison.
+    @objc
+    func accessibilityLocatedStringForCursorLine() -> iTermLocatedString {
+        let result = iTermLocatedString()
+        guard let dataSource else {
+            return result
+        }
+
+        let cursorY = dataSource.cursorY()  // 1-based
+        let lineIndex = dataSource.numberOfScrollbackLines() + cursorY - 1
+        let lines = dataSource.lines(in: NSRange(location: Int(lineIndex), length: 1))
+
+        guard let screenCharArray = lines?.first else {
+            return result
+        }
+
+        let line = screenCharArray.line
+        let length = Int(screenCharArray.length)
+        let privateRange = unichar(ITERM2_PRIVATE_BEGIN)...unichar(ITERM2_PRIVATE_END)
+
+        for x in 0..<length {
+            var theChar = line[x]
+            let coord = VT100GridCoordMake(Int32(x), cursorY - 1)
+
+            if theChar.code == 0 || privateRange.contains(theChar.code) {
+                // Nulls and private chars become spaces
+                result.appendString(" ", at: coord)
+            } else if theChar.image != 0 {
+                // Skip images
+                continue
+            } else {
+                let string = ScreenCharToStr(&theChar) ?? " "
+                result.appendString(string, at: coord)
+            }
+        }
+
+        return result
+    }
+
+    /// Detects text deletion by comparing old and new cursor line content.
+    /// Returns the deleted text to announce, or nil if no deletion detected.
+    @objc
+    func accessibilityDetectDeletion(oldCursorX: Int32,
+                                     newCursorX: Int32,
+                                     oldLocatedString: iTermLocatedString,
+                                     newLocatedString: iTermLocatedString) -> String? {
+        // Grid coordinates use 0-based x values
+        let oldGridX = oldCursorX - 1
+        let newGridX = newCursorX - 1
+
+        let oldCoords = oldLocatedString.gridCoords
+        let oldString = oldLocatedString.string
+        let newCoords = newLocatedString.gridCoords
+        let newString = newLocatedString.string
+
+        if newCursorX < oldCursorX {
+            // Case A: Cursor moved left (backspace, word-delete, Ctrl+U)
+            // Find characters in the old string with x in [newGridX, oldGridX)
+            let oldRange = oldCoords.rangeOfIndices(xFrom: newGridX, to: oldGridX)
+            if oldRange.location != NSNotFound && oldRange.length > 0 {
+                let oldSub = (oldString as NSString).substring(with: oldRange)
+                // Check if the text at those positions actually changed
+                let newRange = newCoords.rangeOfIndices(xFrom: newGridX, to: oldGridX)
+                let newSub = (newRange.location != NSNotFound && newRange.length > 0)
+                    ? (newString as NSString).substring(with: newRange)
+                    : ""
+                if oldSub != newSub {
+                    return oldSub
+                }
+            }
+        } else if newCursorX == oldCursorX && oldString != newString {
+            // Case B: Cursor stayed, line content changed (forward-delete, Ctrl+K)
+            // Find characters at and after cursor position in both strings
+            let oldStartIdx = oldCoords.indexOfFirstCoord(xGreaterOrEqual: newGridX)
+            let newStartIdx = newCoords.indexOfFirstCoord(xGreaterOrEqual: newGridX)
+
+            let oldAfter: String
+            if oldStartIdx != NSNotFound {
+                oldAfter = (oldString as NSString).substring(from: oldStartIdx)
+            } else {
+                oldAfter = ""
+            }
+
+            let newAfter: String
+            if newStartIdx != NSNotFound {
+                newAfter = (newString as NSString).substring(from: newStartIdx)
+            } else {
+                newAfter = ""
+            }
+
+            let whitespace = CharacterSet.whitespaces
+            let oldTrimmed = oldAfter.trimmingCharacters(in: whitespace)
+            let newTrimmed = newAfter.trimmingCharacters(in: whitespace)
+
+            if !oldTrimmed.isEmpty && newTrimmed.isEmpty {
+                // Kill to end (Ctrl+K): all text after cursor gone
+                return oldTrimmed
+            } else if !oldTrimmed.isEmpty && !oldAfter.hasPrefix(newAfter) {
+                // Forward delete or other deletion: find what was removed
+                // For single character forward delete, announce the first character
+                if oldStartIdx != NSNotFound && oldStartIdx < oldString.count {
+                    // Get the character(s) at the cursor position from old string
+                    let cursorCoord = oldCoords.coord(at: oldStartIdx)
+                    let charRange = oldCoords.rangeOfIndices(xFrom: cursorCoord.x, to: cursorCoord.x + 1)
+                    if charRange.location != NSNotFound && charRange.length > 0 {
+                        return (oldString as NSString).substring(with: charRange)
+                    }
+                }
+            }
+        }
+
+        return nil
+    }
+}
+
 // MARK: - Fold All
 
 extension PTYTextView {

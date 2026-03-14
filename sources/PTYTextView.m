@@ -80,6 +80,7 @@
 #import "iTermSetFindStringNotification.h"
 #import "iTermShellHistoryController.h"
 #import "iTermTextDrawingHelper.h"
+#import "iTermLocatedString.h"
 #import "iTermTextExtractor.h"
 #import "iTermTextViewAccessibilityHelper.h"
 #import "iTermURLActionHelper.h"
@@ -154,6 +155,9 @@ const CGFloat PTYTextViewMarginClickGraceWidth = 2.0;
     // Last position that accessibility was read up to.
     int _lastAccessibilityCursorX;
     int _lastAccessibiltyAbsoluteCursorY;
+
+    // Stored cursor line for accessibility deletion detection.
+    iTermLocatedString *_lastAccessibilityCursorLineLocatedString;
 
     // Detects three finger taps (as opposed to clicks).
     ThreeFingerTapGestureRecognizer *threeFingerTapGestureRecognizer_;
@@ -408,6 +412,7 @@ const CGFloat PTYTextViewMarginClickGraceWidth = 2.0;
     _drawingHelper.delegate = nil;
     [_drawingHelper release];
     [_accessibilityHelper release];
+    [_lastAccessibilityCursorLineLocatedString release];
     [_badgeLabel release];
     [_quickLookController close];
     [_quickLookController release];
@@ -2921,21 +2926,73 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
     NSAccessibilityPostNotification(self, NSAccessibilityRowCountChangedNotification);
 }
 
+// Announces deleted text to VoiceOver.
+- (void)accessibilityAnnounceDeletedText:(NSString *)text {
+    NSString *trimmed = [text stringByTrimmingCharactersInSet:
+        [NSCharacterSet characterSetWithCharactersInString:@" \0"]];
+    if (trimmed.length == 0) {
+        return;
+    }
+    AccLog(@"Announcing deleted text: %@", trimmed);
+    NSDictionary *info = @{
+        NSAccessibilityAnnouncementKey: trimmed,
+        NSAccessibilityPriorityKey: @(NSAccessibilityPriorityHigh)
+    };
+    NSAccessibilityPostNotificationWithUserInfo(
+        self,
+        NSAccessibilityAnnouncementRequestedNotification,
+        info);
+}
+
 // Update accessibility, to be called periodically.
 - (void)refreshAccessibility {
-    AccLog(@"Post notification: value changed");
-    NSAccessibilityPostNotification(self, NSAccessibilityValueChangedNotification);
-    long long absCursorY = ([_dataSource cursorY] + [_dataSource numberOfLines] +
-                            [_dataSource totalScrollbackOverflow] - [_dataSource height]);
-    if ([_dataSource cursorX] != _lastAccessibilityCursorX ||
+    const long long absCursorY = ([_dataSource cursorY] - 1 +
+                                  [_dataSource numberOfScrollbackLines] +
+                                  [_dataSource totalScrollbackOverflow]);
+
+    // Detect text deletion and announce for VoiceOver.
+    // This must run BEFORE posting NSAccessibilityValueChangedNotification,
+    // otherwise VoiceOver reads the character at cursor ("space") before
+    // hearing our announcement of the deleted text.
+    BOOL announcedDeletion = NO;
+    const int newCursorX = [_dataSource cursorX];  // 1-based
+    iTermLocatedString *newLocatedString = nil;
+
+    if (_lastAccessibilityCursorLineLocatedString &&
+        _lastAccessibiltyAbsoluteCursorY == absCursorY) {
+        newLocatedString = [self accessibilityLocatedStringForCursorLine];
+        NSString *deletedText = [self accessibilityDetectDeletionWithOldCursorX:_lastAccessibilityCursorX
+                                                                     newCursorX:newCursorX
+                                                              oldLocatedString:_lastAccessibilityCursorLineLocatedString
+                                                              newLocatedString:newLocatedString];
+        if (deletedText) {
+            [self accessibilityAnnounceDeletedText:deletedText];
+            announcedDeletion = YES;
+        }
+    }
+
+    // Skip the generic value-changed notification when we announced deleted
+    // text, so VoiceOver doesn't override our announcement by reading the
+    // character at the cursor position.
+    if (!announcedDeletion) {
+        AccLog(@"Post notification: value changed");
+        NSAccessibilityPostNotification(self, NSAccessibilityValueChangedNotification);
+    }
+
+    if (newCursorX != _lastAccessibilityCursorX ||
         absCursorY != _lastAccessibiltyAbsoluteCursorY) {
-        AccLog(@"Post notification: selected text changed (cursor is now at (%@,%@))", @(_dataSource.cursorX), @(_dataSource.cursorY));
-        NSAccessibilityPostNotification(self, NSAccessibilitySelectedTextChangedNotification);
-        AccLog(@"Post notification: selected row changed");
-        NSAccessibilityPostNotification(self, NSAccessibilitySelectedRowsChangedNotification);
-        AccLog(@"Post notification: selected columns changed");
-        NSAccessibilityPostNotification(self, NSAccessibilitySelectedColumnsChangedNotification);
-        _lastAccessibilityCursorX = [_dataSource cursorX];
+        // Skip cursor-change notifications when we announced deleted text,
+        // because they cause VoiceOver to read the character at the new cursor
+        // position, overriding our deletion announcement.
+        if (!announcedDeletion) {
+            AccLog(@"Post notification: selected text changed (cursor is now at (%@,%@))", @(_dataSource.cursorX), @(_dataSource.cursorY));
+            NSAccessibilityPostNotification(self, NSAccessibilitySelectedTextChangedNotification);
+            AccLog(@"Post notification: selected row changed");
+            NSAccessibilityPostNotification(self, NSAccessibilitySelectedRowsChangedNotification);
+            AccLog(@"Post notification: selected columns changed");
+            NSAccessibilityPostNotification(self, NSAccessibilitySelectedColumnsChangedNotification);
+        }
+        _lastAccessibilityCursorX = newCursorX;
         _lastAccessibiltyAbsoluteCursorY = absCursorY;
         if (UAZoomEnabled()) {
             CGRect selectionRect = NSRectToCGRect(
@@ -2944,6 +3001,13 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
             UAZoomChangeFocus(&selectionRect, &selectionRect, kUAZoomFocusTypeInsertionPoint);
         }
     }
+
+    // Store cursor line for next refresh cycle.
+    if (!newLocatedString) {
+        newLocatedString = [self accessibilityLocatedStringForCursorLine];
+    }
+    [_lastAccessibilityCursorLineLocatedString autorelease];
+    _lastAccessibilityCursorLineLocatedString = [newLocatedString retain];
 }
 
 // This is called periodically. It updates the frame size, scrolls if needed, ensures selections
