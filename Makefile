@@ -8,7 +8,9 @@ ITERM_CONF_PLIST = $(HOME)/Library/Preferences/com.googlecode.iterm2.plist
 COMPACTDATE=$(shell date +"%Y%m%d")
 VERSION = $(shell cat version.txt | sed -e "s/%(extra)s/$(COMPACTDATE)/")
 NAME=$(shell echo $(VERSION) | sed -e "s/\\./_/g")
-CMAKE ?= /opt/homebrew/bin/cmake
+HOMEBREW_PREFIX ?= $(shell brew --prefix 2>/dev/null || echo /opt/homebrew)
+CMAKE ?= $(HOMEBREW_PREFIX)/bin/cmake
+PKG_CONFIG ?= $(HOMEBREW_PREFIX)/bin/pkg-config
 RUSTUP ?= $(shell PATH="$(ORIG_PATH):$(HOME)/.cargo/bin" which rustup 2>/dev/null)
 DEPLOYMENT_TARGET=12.0
 
@@ -54,11 +56,21 @@ else
   RUST_NATIVE_TARGET = x86_64-apple-darwin
 endif
 
-.PHONY: clean all backup-old-iterm restart
+.PHONY: clean all backup-old-iterm restart setup
 
 all: Development
 dev: Development
 prod: Deployment
+
+setup:
+	brew install cmake pkg-config
+	brew install --cask sf-symbols
+	rustup target add x86_64-apple-darwin
+	git submodule update --init --recursive; \
+	test -f submodules/libsixel/configure || \
+		git clone --depth=1 https://github.com/saitoha/libsixel submodules/libsixel
+	xcodebuild -downloadComponent MetalToolchain
+	$(MAKE) deps
 
 TAGS:
 	find . -name "*.[mhMH]" -exec etags -o ./TAGS -a '{}' +
@@ -132,11 +144,11 @@ preview:
 
 x86libsixel: force
 	mkdir -p submodules/libsixel/build-x86
-	cd submodules/libsixel/build-x86 && PKG_CONFIG=/opt/homebrew/bin/pkg-config CC="/usr/bin/clang -target x86_64-apple-macos$(DEPLOYMENT_TARGET)" LDFLAGS="-target x86_64-apple-macos$(DEPLOYMENT_TARGET)" CFLAGS="-target x86_64-apple-macos$(DEPLOYMENT_TARGET)" LIBTOOLFLAGS="-target x86_64-apple-macos$(DEPLOYMENT_TARGET)" ../configure -host=x86_64-apple-darwin --prefix=${PWD}/ThirdParty/libsixel-x86 --without-libcurl --without-jpeg --without-png --disable-python --disable-shared && $(MAKE) && $(MAKE) install
+	cd submodules/libsixel/build-x86 && PKG_CONFIG=$(PKG_CONFIG) CC="/usr/bin/clang -target x86_64-apple-macos$(DEPLOYMENT_TARGET)" LDFLAGS="-target x86_64-apple-macos$(DEPLOYMENT_TARGET)" CFLAGS="-target x86_64-apple-macos$(DEPLOYMENT_TARGET)" LIBTOOLFLAGS="-target x86_64-apple-macos$(DEPLOYMENT_TARGET)" ../configure -host=x86_64-apple-darwin --prefix=${PWD}/ThirdParty/libsixel-x86 --without-libcurl --without-jpeg --without-png --disable-python --disable-shared && $(MAKE) && $(MAKE) install
 
 armsixel: force
 	mkdir -p submodules/libsixel/build-arm
-	cd submodules/libsixel/build-arm && PKG_CONFIG=/opt/homebrew/bin/pkg-config CC="/usr/bin/clang -target arm64-apple-macos$(DEPLOYMENT_TARGET)" LDFLAGS="-target arm64-apple-macos$(DEPLOYMENT_TARGET)" CFLAGS="-target arm64-apple-macos$(DEPLOYMENT_TARGET)" LIBTOOLFLAGS="-target arm64-apple-macos$(DEPLOYMENT_TARGET)" ../configure --host=aarch64-apple-darwin --prefix=${PWD}/ThirdParty/libsixel-arm --without-libcurl --without-jpeg --without-png --disable-python --disable-shared && $(MAKE) && $(MAKE) install
+	cd submodules/libsixel/build-arm && PKG_CONFIG=$(PKG_CONFIG) CC="/usr/bin/clang -target arm64-apple-macos$(DEPLOYMENT_TARGET)" LDFLAGS="-target arm64-apple-macos$(DEPLOYMENT_TARGET)" CFLAGS="-target arm64-apple-macos$(DEPLOYMENT_TARGET)" LIBTOOLFLAGS="-target arm64-apple-macos$(DEPLOYMENT_TARGET)" ../configure --host=aarch64-apple-darwin --prefix=${PWD}/ThirdParty/libsixel-arm --without-libcurl --without-jpeg --without-png --disable-python --disable-shared && $(MAKE) && $(MAKE) install
 
 ifdef UNIVERSAL
 # Usage: go to an intel mac and run make x86libsixel and commit it. Go to an arm mac and run make armsixel && make libsixel.
@@ -281,6 +293,7 @@ ifndef SIGNED
 	$(error SIGNED must be set for paranoid-deps (e.g., make SIGNED=1 paranoid-deps))
 endif
 	/usr/bin/sandbox-exec -f deps.sb $(MAKE) BUILD_DIR="$(BUILD_DIR)" SIGNED=$(SIGNED) deps
+	xcodebuild -version > last-xcode-version
 
 paranoid-fatlibssh2: force
 	/usr/bin/sandbox-exec -f deps.sb $(MAKE) BUILD_DIR="$(BUILD_DIR)" fatlibssh2
