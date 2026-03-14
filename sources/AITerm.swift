@@ -195,12 +195,12 @@ class AITermController {
     }
 
     private var isSelfHosted: Bool {
-        if let provider = llmProvider,
-           let url = NSURL(string: provider.model.url),
-           url.host == "localhost" || url.host == "127.0.0.1" || url.host == "[::1]" {
-            return true
+        guard let provider = llmProvider,
+              let url = NSURL(string: provider.model.url),
+              let host = url.host else {
+            return false
         }
-        return false
+        return PrivateIPChecker.isLocalOrPrivate(host)
     }
 
     private func handle(event: Event) {
