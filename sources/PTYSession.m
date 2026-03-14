@@ -7885,6 +7885,9 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
                                           scaledSize.width * 4,  // bytes per row
                                           [PTYSession metalColorSpace],
                                           kCGImageAlphaPremultipliedFirst | kCGBitmapByteOrder32Host);
+    // Initialize to transparent. Character sources will clear only the
+    // area they draw into after copying pixels, keeping the context clean.
+    CGContextClearRect(_metalContext, CGRectMake(0, 0, scaledSize.width, scaledSize.height));
 }
 
 - (BOOL)metalAllowed {
