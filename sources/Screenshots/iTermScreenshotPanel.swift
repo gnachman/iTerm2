@@ -1314,7 +1314,7 @@ class iTermScreenshotPanel: NSPanel {
     }
 
     private func saveNextPart() {
-        guard var state = multiPartSaveState,
+        guard let state = multiPartSaveState,
               let info = terminalInfo,
               let textView = info.textView else {
             finish(with: nil)

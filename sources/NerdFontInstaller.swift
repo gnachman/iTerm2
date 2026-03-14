@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import CoreText
 
 enum NerdFontInstallerError: LocalizedError {
     case userDeniedPermission
@@ -49,10 +50,11 @@ class NerdFontInstaller {
 
     private var neededFontPostscriptNames: [String] {
         let config = Self.config
-        return config.entries.compactMap { entry in
+        let needed = config.entries.compactMap { entry in
             let needFont = NSFont(name: entry.fontName, size: 10) == nil
             return needFont ? entry.fontName : nil
         }
+        return Array(Set(needed)).sorted()
     }
 
     private enum State: CustomDebugStringConvertible {
@@ -139,7 +141,7 @@ class NerdFontInstaller {
         }
 
         NSLog("Start download task")
-        let url = URL(string: "https://iterm2.com/downloads/assets/nerd-fonts-v1.zip")!
+        let url = URL(string: "https://iterm2.com/downloads/assets/nerd-fonts-v2.zip")!
         task = URLSession.shared.downloadTask(with: url) { [weak self] (location, response, error) in
             self?.downloadDidComplete(location: location, response: response, error: error)
             self?.task = nil
@@ -213,6 +215,8 @@ class NerdFontInstaller {
             let destURL = fontsDir.appendingPathComponent(itemURL.lastPathComponent)
             do {
                 if fileManager.fileExists(atPath: destURL.path) {
+                    // Unregister any existing font at this URL before removing it
+                    CTFontManagerUnregisterFontsForURL(destURL as CFURL, .persistent, nil)
                     try fileManager.removeItem(at: destURL)
                 }
                 try fileManager.copyItem(at: itemURL, to: destURL)
@@ -247,7 +251,13 @@ class NerdFontInstaller {
                                              .persistent,
                                              true) { errors, done in
             let errorsArray = Array<CFError>(errors)
-            if errorsArray.isEmpty {
+            // Filter out "already registered" errors - these are benign
+            // since the fonts are already installed and working.
+            let fatalErrors = errorsArray.filter { error in
+                let code = CFErrorGetCode(error)
+                return code != CTFontManagerError.alreadyRegistered.rawValue
+            }
+            if fatalErrors.isEmpty {
                 if done {
                     DispatchQueue.main.async {
                         completion(nil)
@@ -255,7 +265,7 @@ class NerdFontInstaller {
                 }
                 return true
             }
-            var reason = errorsArray.compactMap { CFErrorCopyDescription($0) as String? }.joined(separator: ", ")
+            var reason = fatalErrors.compactMap { CFErrorCopyDescription($0) as String? }.joined(separator: ", ")
             if reason.isEmpty {
                 reason = "Unknown errors occurred"
             }
