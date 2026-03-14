@@ -14,6 +14,7 @@
 @protocol iTermMark <NSObject, IntervalTreeImmutableObject>
 @property (nonatomic) long long cachedLocation;
 @property (nonatomic, readonly) BOOL isDoppelganger;
+@property (nonatomic, readonly) NSString *guid;
 - (iTermMark *)progenitor;
 - (id<iTermMark>)doppelganger;
 @end
@@ -21,6 +22,8 @@
 // This is a base class for marks but should never be used directly.
 @interface iTermMark : NSObject<iTermMark, IntervalTreeObject, IntervalTreeImmutableObject, NSCopying>
 @property (nonatomic, readonly) BOOL isDoppelganger;
+@property (nonatomic, readonly) NSString *guid;
+@property (nonatomic, readonly) NSString *stableIdentifier;
 
 - (instancetype)initWithDictionary:(NSDictionary *)dict;
 - (NSDictionary *)dictionaryValue;
@@ -34,5 +37,8 @@
 
 // This is here for subclasses to override. They should always call it.
 - (void)becomeDoppelgangerWithProgenitor:(iTermMark *)progenitor;
+
+// For use in copyWithZone: to copy guid to doppelganger
+- (void)copyGuidFrom:(iTermMark *)source;
 
 @end

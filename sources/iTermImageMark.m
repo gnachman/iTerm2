@@ -22,7 +22,7 @@
     if (self) {
         _imageCode = imageCode;
     }
-    DLog(@"New mage mark %@ created", self);
+    DLog(@"New image mark %@ created", self);
     return self;
 }
 
@@ -44,15 +44,19 @@
     if (!imageCode) {
         return nil;
     }
-    return [self initWithImageCode:imageCode];
+    self = [super initWithDictionary:dict];
+    if (self) {
+        _imageCode = imageCode;
+    }
+    return self;
 }
 
 - (NSDictionary *)dictionaryValue {
+    NSMutableDictionary *dict = [[super dictionaryValue] mutableCopy];
     if (_imageCode) {
-        return @{ @"imageCode": _imageCode };
-    } else {
-        return @{};
+        dict[@"imageCode"] = _imageCode;
     }
+    return dict;
 }
 
 - (void)dealloc {

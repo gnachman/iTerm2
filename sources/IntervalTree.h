@@ -5,7 +5,9 @@
 NS_ASSUME_NONNULL_BEGIN
 
 @class IntervalTreeEntry;
+@class iTermGraphEncoder;
 @protocol IntervalTreeObject;
+@protocol iTermEncoderAdapter;
 
 @interface Interval : NSObject<NSCopying>
 // Negative locations have special meaning. Don't use them.
@@ -23,11 +25,17 @@ NS_ASSUME_NONNULL_BEGIN
 // Serialized value.
 - (NSDictionary *)dictionaryValue;
 
+// Deserialize from dictionaryValue.
++ (Interval * _Nullable)intervalWithDictionary:(NSDictionary *)dict;
+
 @end
 
 @protocol IntervalTreeImmutableObject<NSObject>
 @property(nullable, nonatomic, weak, readonly) IntervalTreeEntry *entry;
 @property(nonatomic, readonly) NSString *shortDebugDescription;
+
+// Stable identifier for graph encoding. Used to track object identity across saves.
+@property(nonatomic, readonly) NSString *stableIdentifier;
 
 // Serialized value.
 - (NSDictionary *)dictionaryValue;
@@ -105,6 +113,11 @@ NS_ASSUME_NONNULL_BEGIN
                        block:(void (^)(id<IntervalTreeObject> object, BOOL *stop))block;
 - (NSString *)debugString;
 
+// Graph encoding - encode objects as an array with stable identifiers for delta encoding.
+// Objects that implement -generation will have their content encoded only when changed.
+- (void)encodeWithEncoder:(id<iTermEncoderAdapter>)encoder
+                   offset:(long long)offset;
+
 @end
 
 
@@ -129,6 +142,12 @@ NS_ASSUME_NONNULL_BEGIN
 
 // For subclasses;
 - (void)restoreFromDictionary:(NSDictionary *)dict;
+
+// Graph decoding - restore from a graph-encoded structure.
+// Returns YES if successfully restored from graph format, NO if the dictionary
+// doesn't contain graph-encoded data (falls back to restoreFromDictionary:).
+- (BOOL)restoreFromGraphRecord:(NSDictionary *)dict
+                        offset:(long long)offset;
 
 @end
 

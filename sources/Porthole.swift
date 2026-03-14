@@ -42,7 +42,7 @@ class PortholeMark: iTermMark, PortholeMarkReading {
         }
         self.uniqueIdentifier = uniqueIdentifier
 
-        super.init()
+        super.init(dictionary: dict)
     }
 
     deinit {
@@ -52,7 +52,9 @@ class PortholeMark: iTermMark, PortholeMarkReading {
     }
 
     override func dictionaryValue() -> [AnyHashable : Any]! {
-        return [uniqueIdentifierKey: uniqueIdentifier].compactMapValues { $0 }
+        var dict = super.dictionaryValue() ?? [:]
+        dict[uniqueIdentifierKey] = uniqueIdentifier
+        return dict
     }
 }
 

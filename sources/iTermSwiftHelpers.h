@@ -9,6 +9,10 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
+// Returns a unique, monotonically increasing generation number.
+// This is thread-safe and can be used for delta encoding purposes.
+NSInteger iTermAllocateObjectGeneration(void);
+
 @interface ObjC: NSObject
 
 + (BOOL)catching:(void (^ NS_NOESCAPE)(void))block

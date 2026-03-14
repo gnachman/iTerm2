@@ -21,7 +21,7 @@ NS_ASSUME_NONNULL_BEGIN
 @protocol iTermGenericNamedMarkReading
 @property (nonatomic, readonly, nullable, copy) NSString *name;
 @property (nonatomic, readonly) NSInteger namedMarkSort;
-@property (nonatomic, readonly, copy) NSString *guid;
+@property (nonatomic, readonly) NSString *guid;
 @end
 
 @protocol iTermMarkDelegate <NSObject>
@@ -30,7 +30,6 @@ NS_ASSUME_NONNULL_BEGIN
 
 @protocol VT100ScreenMarkReading<NSObject, IntervalTreeImmutableObject, iTermMark, iTermGenericNamedMarkReading>
 @property(nonatomic, readonly) BOOL isPrompt;
-@property(nonatomic, copy, readonly) NSString *guid;
 @property(nonatomic, readonly) NSInteger clearCount;
 
 // Array of CapturedOutput objects.
@@ -72,7 +71,6 @@ NS_ASSUME_NONNULL_BEGIN
 @interface VT100ScreenMark : iTermMark<VT100ScreenMarkReading, IntervalTreeObject>
 
 @property(nonatomic, readwrite) BOOL isPrompt;
-@property(nonatomic, copy, readwrite) NSString *guid;
 
 @property(nonatomic, weak, readwrite, nullable) id<iTermMarkDelegate> delegate;
 
