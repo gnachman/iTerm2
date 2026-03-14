@@ -4,19 +4,21 @@
 //
 //  Keeper Security integration via Keeper Commander service mode.
 //  Communicates with local Keeper Commander service (e.g. service-create -p 8900 -f json -aip 127.0.0.1).
+//  Keychain/URL storage and API key dialog UI are in this file.
 //
 
 import Foundation
 import AppKit
+import Security
 
-/// No default API URL: user must set API URL in Keeper Security Settings. Keychain/URL constants and helpers live in KeeperKeychain.swift.
+/// No default API URL: user must set API URL in Keeper Security Settings.
 
 /// Posted when Keeper connection fails (e.g. no API key, service unreachable). userInfo[@"error"] = error message (String).
 public let iTerm2KeeperConnectionDidFailNotification = Notification.Name("iTerm2KeeperConnectionDidFail")
 /// Posted when Keeper fetch succeeds after a connection attempt.
 public let iTerm2KeeperConnectionDidSucceedNotification = Notification.Name("iTerm2KeeperConnectionDidSucceed")
 
-// MARK: - Test overrides (Keychain/UI; real implementation in KeeperKeychain.swift / KeeperAPIKeyDialog.swift)
+// MARK: - Test overrides (Keychain/UI; real implementation below in this file)
 
 /// Test overrides: when set, production uses these instead of real Keychain/UI. Cleared in production.
 internal enum KeeperTestOverrides {
@@ -36,6 +38,10 @@ internal enum KeeperTestOverrides {
     static var fallbackDialogUIForCoverage: ((String?, NSWindow?, @escaping (KeeperAPIKeyPromptResult?) -> Void) -> Void)?
     /// When set, keeperAPIURLFromStorage() in KeeperKeychain returns this instead of reading UserDefaults/Keychain. Used by cache test.
     static var apiURLFromStorage: (() -> String?)?
+    /// When true, keeperStoreAPIKeyInKeychain treats access control creation as failed so the guard-else fallback runs (for coverage).
+    static var forceAccessControlCreationToFail: Bool = false
+    /// When true, keeperStoreAPIKeyInKeychain treats SecItemAdd as failed so the DLog/NSLog/standard-keychain fallback runs (for coverage).
+    static var forceSecItemAddToFail: Bool = false
 }
 
 // MARK: - API key prompt (with optional existing key)
@@ -45,6 +51,179 @@ enum KeeperAPIKeyPromptResult {
     case useNew(String)
     case cancel
 }
+
+// MARK: - Keychain and API URL storage (merged from KeeperKeychain.swift)
+
+internal let keeperLegacyUserDefaultsAPIKeyKey = "NoSyncKeeperCommanderAPIKey"
+internal let keeperLegacyUserDefaultsAPIURLKey = "NoSyncKeeperCommanderAPIURL"
+
+private let keeperKeychainService = "com.iterm2.keeper-service-mode"
+private let keeperKeychainAccountAPIKey = "api-key"
+private let keeperKeychainAccountAPIURL = "api-url"
+private let keeperLegacyKeychainService = "iTerm2-Keeper"
+
+/// Reads API key from data-protection Keychain (triggers Touch ID/passcode once per read). Returns nil if not found or user cancels.
+internal func keeperAPIKeyFromSecureKeychain() -> String? {
+    if let fn = KeeperTestOverrides.secureKeychainReturns, let key = fn(), !key.isEmpty { return key }
+    var query: [String: Any] = [
+        kSecClass as String: kSecClassGenericPassword,
+        kSecAttrService as String: keeperKeychainService,
+        kSecAttrAccount as String: keeperKeychainAccountAPIKey,
+        kSecReturnData as String: true,
+        kSecMatchLimit as String: kSecMatchLimitOne,
+    ]
+    if #available(macOS 10.15, *) {
+        query[kSecUseDataProtectionKeychain as String] = true
+    }
+    var result: AnyObject?
+    let status = SecItemCopyMatching(query as CFDictionary, &result)
+    guard status == errSecSuccess, let data = result as? Data, let token = String(data: data, encoding: .utf8), !token.isEmpty else {
+        return nil
+    }
+    return token
+}
+
+/// Reads API key from standard Keychain (fallback when device has no biometric / user presence).
+internal func keeperAPIKeyFromStandardKeychain() -> String? {
+    if let fn = KeeperTestOverrides.standardKeychainReturns, let key = fn(), !key.isEmpty { return key }
+    return try? SSKeychain.password(forService: keeperKeychainService, account: keeperKeychainAccountAPIKey)
+}
+
+/// Stores API key in Keychain. Prefers data-protection Keychain; falls back to standard Keychain if unavailable.
+internal func keeperStoreAPIKeyInKeychain(_ key: String) {
+    if let fn = KeeperTestOverrides.storeAPIKeyInKeychain { fn(key); return }
+    let keyData = Data(key.utf8)
+    if #available(macOS 10.15, *) {
+        var access: SecAccessControl?
+        if KeeperTestOverrides.forceAccessControlCreationToFail {
+            access = nil
+        } else {
+            var error: Unmanaged<CFError>?
+            access = SecAccessControlCreateWithFlags(
+                kCFAllocatorDefault,
+                kSecAttrAccessibleWhenUnlockedThisDeviceOnly,
+                SecAccessControlCreateFlags.userPresence,
+                &error
+            )
+        }
+        guard let access = access else {
+            keeperStoreAPIKeyInStandardKeychain(key)
+            return
+        }
+        keeperDeleteAPIKeyFromKeychain()
+        let addQuery: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: keeperKeychainService,
+            kSecAttrAccount as String: keeperKeychainAccountAPIKey,
+            kSecValueData as String: keyData,
+            kSecAttrAccessControl as String: access,
+            kSecUseDataProtectionKeychain as String: true,
+        ]
+        let status = KeeperTestOverrides.forceSecItemAddToFail ? errSecDuplicateItem : SecItemAdd(addQuery as CFDictionary, nil)
+        if status == errSecSuccess {
+            return
+        }
+        let msg = SecCopyErrorMessageString(status, nil) as String? ?? "\(status)"
+        DLog("Keeper: biometric keychain add failed (\(status)) \(msg), using standard keychain")
+        NSLog("[iTerm2 Keeper] Data protection keychain add failed: %@ (use standard keychain)", msg)
+    }
+    keeperStoreAPIKeyInStandardKeychain(key)
+}
+
+/// Standard keychain store (no data-protection). Internal so tests can cover this path when biometric keychain is unavailable.
+internal func keeperStoreAPIKeyInStandardKeychain(_ key: String) {
+    _ = SSKeychain.setPassword(key, forService: keeperKeychainService, account: keeperKeychainAccountAPIKey)
+}
+
+/// Returns API key from secure or standard Keychain. When found only in standard, migrates to data-protection Keychain.
+internal func keeperAPIKeyFromKeychain() -> String? {
+    if let fn = KeeperTestOverrides.apiKeyFromKeychain, let key = fn(), !key.isEmpty { return key }
+    if let key = keeperAPIKeyFromSecureKeychain() {
+        return key
+    }
+    if let key = keeperAPIKeyFromStandardKeychain(), !key.isEmpty {
+        keeperStoreAPIKeyInKeychain(key)
+        return key
+    }
+    return nil
+}
+
+internal func keeperDeleteAPIKeyFromKeychain() {
+    if let fn = KeeperTestOverrides.deleteAPIKeyFromKeychain { fn(); return }
+    if #available(macOS 10.15, *) {
+        let query: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: keeperKeychainService,
+            kSecAttrAccount as String: keeperKeychainAccountAPIKey,
+            kSecUseDataProtectionKeychain as String: true,
+        ]
+        SecItemDelete(query as CFDictionary)
+    }
+    _ = SSKeychain.deletePassword(forService: keeperKeychainService, account: keeperKeychainAccountAPIKey)
+    _ = SSKeychain.deletePassword(forService: keeperLegacyKeychainService, account: keeperKeychainAccountAPIKey)
+    iTermUserDefaults.userDefaults().removeObject(forKey: keeperLegacyUserDefaultsAPIKeyKey)
+}
+
+/// Call once per launch before reading the API key. Migrates token from UserDefaults or legacy Keychain into the new secure Keychain.
+internal func keeperMigrateLegacyKeeperTokenIfNeeded() {
+    if let legacyKey = iTermUserDefaults.userDefaults().string(forKey: keeperLegacyUserDefaultsAPIKeyKey)?.trimmingCharacters(in: .whitespacesAndNewlines), !legacyKey.isEmpty {
+        keeperStoreAPIKeyInKeychain(legacyKey)
+        iTermUserDefaults.userDefaults().removeObject(forKey: keeperLegacyUserDefaultsAPIKeyKey)
+        if let legacyURL = iTermUserDefaults.userDefaults().string(forKey: keeperLegacyUserDefaultsAPIURLKey)?.trimmingCharacters(in: .whitespacesAndNewlines), !legacyURL.isEmpty {
+            keeperStoreAPIURLInKeychain(legacyURL)
+        }
+        return
+    }
+    if let legacyKey = try? SSKeychain.password(forService: keeperLegacyKeychainService, account: keeperKeychainAccountAPIKey), !legacyKey.isEmpty {
+        keeperStoreAPIKeyInKeychain(legacyKey)
+        _ = SSKeychain.deletePassword(forService: keeperLegacyKeychainService, account: keeperKeychainAccountAPIKey)
+        if let legacyURL = try? SSKeychain.password(forService: keeperLegacyKeychainService, account: keeperKeychainAccountAPIURL), !legacyURL.isEmpty {
+            keeperStoreAPIURLInKeychain(legacyURL)
+            _ = SSKeychain.deletePassword(forService: keeperLegacyKeychainService, account: keeperKeychainAccountAPIURL)
+        }
+    }
+}
+
+internal func keeperAPIURLFromStorage() -> String? {
+    if let fn = KeeperTestOverrides.apiURLFromStorage, let url = fn(), !url.isEmpty { return url }
+    if let url = iTermUserDefaults.userDefaults().string(forKey: keeperLegacyUserDefaultsAPIURLKey)?.trimmingCharacters(in: .whitespacesAndNewlines), !url.isEmpty {
+        return url
+    }
+    if let url = try? SSKeychain.password(forService: keeperLegacyKeychainService, account: keeperKeychainAccountAPIURL), !url.isEmpty {
+        iTermUserDefaults.userDefaults().set(url, forKey: keeperLegacyUserDefaultsAPIURLKey)
+        _ = SSKeychain.deletePassword(forService: keeperLegacyKeychainService, account: keeperKeychainAccountAPIURL)
+        return url
+    }
+    if let url = try? SSKeychain.password(forService: keeperKeychainService, account: keeperKeychainAccountAPIURL), !url.isEmpty {
+        iTermUserDefaults.userDefaults().set(url, forKey: keeperLegacyUserDefaultsAPIURLKey)
+        _ = SSKeychain.deletePassword(forService: keeperKeychainService, account: keeperKeychainAccountAPIURL)
+        return url
+    }
+    return nil
+}
+
+internal func keeperStoreAPIURLInKeychain(_ url: String) {
+    let trimmed = url.trimmingCharacters(in: .whitespacesAndNewlines)
+    iTermUserDefaults.userDefaults().set(trimmed.isEmpty ? nil : trimmed, forKey: keeperLegacyUserDefaultsAPIURLKey)
+    _ = SSKeychain.deletePassword(forService: keeperKeychainService, account: keeperKeychainAccountAPIURL)
+    _ = SSKeychain.deletePassword(forService: keeperLegacyKeychainService, account: keeperKeychainAccountAPIURL)
+}
+
+/// Removes API URL from UserDefaults and Keychain. Used when user clears the URL in settings.
+internal func keeperClearAPIURLStorage() {
+    iTermUserDefaults.userDefaults().removeObject(forKey: keeperLegacyUserDefaultsAPIURLKey)
+    _ = SSKeychain.deletePassword(forService: keeperKeychainService, account: keeperKeychainAccountAPIURL)
+    _ = SSKeychain.deletePassword(forService: keeperLegacyKeychainService, account: keeperKeychainAccountAPIURL)
+}
+
+// MARK: - API key dialog UI (legacy; deprecated)
+
+/// Legacy API-key-only dialog is no longer shown. The app uses the “Keeper Security Settings” sheet (API URL + API Key) when the password manager window is open; otherwise the prompt completes with cancel. This function exists so the resolver has a fallback and completes with cancel without showing UI.
+func keeperShowAPIKeyDialogUI(existingKey: String?, window: NSWindow?, completion: @escaping (KeeperAPIKeyPromptResult?) -> Void) {
+    completion(.cancel)
+}
+
+// MARK: - API key prompt (with optional existing key)
 
 /// Returns the dialog function to use (override, default, fallback for tests, or real UI). Named function so all branches are coverable. Internal for tests to cover the real-UI return path without invoking it.
 internal func keeperResolvedDialogFunction() -> (String?, NSWindow?, @escaping (KeeperAPIKeyPromptResult?) -> Void) -> Void {
@@ -72,7 +251,13 @@ func keeperShowAPIKeyDialog(existingKey: String?, window: NSWindow?, completion:
         }
         return
     }
-    keeperResolvedDialogFunction()(existingKey, window, completion)
+    // Test overrides for the resolver path (so tests can run without showing real UI).
+    if KeeperTestOverrides.callDialogUI != nil || KeeperTestOverrides.defaultDialogUI != nil || KeeperTestOverrides.fallbackDialogUIForCoverage != nil {
+        keeperResolvedDialogFunction()(existingKey, window, completion)
+        return
+    }
+    // No settings sheet and no test override: don't show the legacy API-key-only dialog.
+    completion(.cancel)
 }
 
 // MARK: - Keeper REST client
@@ -154,8 +339,8 @@ private struct KeeperV2StatusResponse: Decodable {
 private let _keeperBaseURLLock = NSLock()
 private var _cachedKeeperBaseURL: URL?
 
-/// Clear the cached base URL so the next API call reads from Keychain again (e.g. after user updates URL in settings).
-private func keeperClearBaseURLCache() {
+/// Clear the cached base URL so the next API call reads from Keychain again (e.g. after user updates URL in settings). Internal for tests.
+internal func keeperClearBaseURLCache() {
     _keeperBaseURLLock.lock()
     _cachedKeeperBaseURL = nil
     _keeperBaseURLLock.unlock()
@@ -181,8 +366,8 @@ private func keeperBaseURL() -> URL? {
 }
 
 /// Returns the base URL for v2 API endpoints (path ends with /api/v2, no trailing slash).
-/// Accepts either origin-only (e.g. http://localhost:8900) or full v2 path (e.g. http://localhost:8900/api/v2/).
-private func keeperV2BaseURL(baseURL: URL) -> URL {
+/// Accepts either origin-only (e.g. http://localhost:8900) or full v2 path (e.g. http://localhost:8900/api/v2/). Internal for tests.
+internal func keeperV2BaseURL(baseURL: URL) -> URL {
     var path = baseURL.path
     while path.hasSuffix("/") { path.removeLast() }
     if path.hasSuffix("api/v2") {
@@ -505,7 +690,7 @@ class KeeperDataSource: NSObject, PasswordManagerDataSource {
     /// When set by the app (e.g. password manager window), the full “Keeper Security Settings” sheet (API key + API URL) is shown instead of the legacy API-key-only dialog. Set to nil when the sheet is not available (e.g. window closed).
     static var showKeeperSettingsSheetHandler: ((NSWindow?, @escaping (String?) -> Void) -> Void)?
 
-    /// Register the handler that shows the full Keeper Security Settings sheet (API key + API URL). Call with a non-nil block when the sheet can be shown (e.g. password manager window with Keeper selected); call with nil to revert to the legacy API-key-only dialog.
+    /// Register the handler that shows the full Keeper Security Settings sheet (API key + API URL). Call with a non-nil block when the sheet can be shown (e.g. password manager window with Keeper selected); call with nil when the sheet is not available (prompt will complete with cancel).
     @objc static func setShowKeeperSettingsSheetHandler(_ handler: ((NSWindow?, @escaping (String?) -> Void) -> Void)?) {
         showKeeperSettingsSheetHandler = handler
     }
@@ -623,7 +808,7 @@ class KeeperDataSource: NSObject, PasswordManagerDataSource {
         return
 
         func showUIAndContinue() {
-            if let delegate = credentialsDelegate, let window = context.window {
+            if credentialsDelegate != nil, let window = context.window {
                 keeperHandleCredentialsFromDelegate(window: window, completion: completion)
                 return
             }

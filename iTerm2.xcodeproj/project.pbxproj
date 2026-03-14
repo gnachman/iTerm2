@@ -3211,8 +3211,6 @@
 		A6A9839D27E7BD7C003319D1 /* OnePasswordTokenRequester.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6A9839C27E7BD7C003319D1 /* OnePasswordTokenRequester.swift */; };
 		A6A983BB27E7F79E003319D1 /* LastPassDataSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6A983BA27E7F79E003319D1 /* LastPassDataSource.swift */; };
 		A6KPRDS2F2582F8008DF9BD /* KeeperDataSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6KPRDS2F2582F8008DF9BC /* KeeperDataSource.swift */; };
-		A6KPRDS322582F8008DF9BD /* KeeperAPIKeyDialog.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6KPRDS302582F8008DF9BD /* KeeperAPIKeyDialog.swift */; };
-		A6KPRDS332582F8008DF9BD /* KeeperKeychain.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6KPRDS312582F8008DF9BD /* KeeperKeychain.swift */; };
 		A6AA2F692E28B257002998B3 /* iTermProfilePreferenceObserver.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6AA2F672E28B257002998B3 /* iTermProfilePreferenceObserver.swift */; };
 		A6AA2F8E2E296849002998B3 /* cert-error.html in Resources */ = {isa = PBXBuildFile; fileRef = A6AA2F8D2E296849002998B3 /* cert-error.html */; };
 		A6AA2F8F2E296849002998B3 /* cert-error.html in Resources */ = {isa = PBXBuildFile; fileRef = A6AA2F8D2E296849002998B3 /* cert-error.html */; };
@@ -5136,8 +5134,6 @@
 		A6FFAE732CF682BD0031FB21 /* iTermDoubleWidthCharacterCache.h in Headers */ = {isa = PBXBuildFile; fileRef = A6FFAE722CF682B60031FB21 /* iTermDoubleWidthCharacterCache.h */; };
 		A6FFAE752CF682D60031FB21 /* iTermDoubleWidthCharacterCache.m in Sources */ = {isa = PBXBuildFile; fileRef = A6FFAE742CF682D40031FB21 /* iTermDoubleWidthCharacterCache.m */; };
 		A6KPRDS2F2582F8008DF9BD /* KeeperDataSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6KPRDS2F2582F8008DF9BC /* KeeperDataSource.swift */; };
-		A6KPRDS342582F8008DF9BD /* KeeperAPIKeyDialog.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6KPRDS302582F8008DF9BD /* KeeperAPIKeyDialog.swift */; };
-		A6KPRDS352582F8008DF9BD /* KeeperKeychain.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6KPRDS312582F8008DF9BD /* KeeperKeychain.swift */; };
 		A785F516A64BC93AAF1474B8 /* RegexAtomIterator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 76421C2E762130B690D1ADC5 /* RegexAtomIterator.swift */; };
 		C04DA64B468EBC474F2B9503 /* iTermWordExtractorTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA0E5946C100538B1183CD07 /* iTermWordExtractorTest.swift */; };
 		C48D7AA2E70B019313C401F3 /* WordSelectionAtom.swift in Sources */ = {isa = PBXBuildFile; fileRef = C08AA4008946722C3F4C67C1 /* WordSelectionAtom.swift */; };
@@ -9121,8 +9117,6 @@
 		A6FFAE722CF682B60031FB21 /* iTermDoubleWidthCharacterCache.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermDoubleWidthCharacterCache.h; sourceTree = "<group>"; };
 		A6FFAE742CF682D40031FB21 /* iTermDoubleWidthCharacterCache.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermDoubleWidthCharacterCache.m; sourceTree = "<group>"; };
 		A6KPRDS2F2582F8008DF9BC /* KeeperDataSource.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeeperDataSource.swift; sourceTree = "<group>"; };
-		A6KPRDS302582F8008DF9BD /* KeeperAPIKeyDialog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeeperAPIKeyDialog.swift; sourceTree = "<group>"; };
-		A6KPRDS312582F8008DF9BD /* KeeperKeychain.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeeperKeychain.swift; sourceTree = "<group>"; };
 		AF19E441FF824539A275D8DA /* iTermLayoutCalculator.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermLayoutCalculator.m; sourceTree = "<group>"; };
 		B231EDB860248C368A511B42 /* iTermEventTriggerEvaluator.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = iTermEventTriggerEvaluator.swift; sourceTree = "<group>"; };
 		C08AA4008946722C3F4C67C1 /* WordSelectionAtom.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WordSelectionAtom.swift; sourceTree = "<group>"; };
@@ -13336,8 +13330,6 @@
 				A6A9839C27E7BD7C003319D1 /* OnePasswordTokenRequester.swift */,
 				A6A983BA27E7F79E003319D1 /* LastPassDataSource.swift */,
 				A6KPRDS2F2582F8008DF9BC /* KeeperDataSource.swift */,
-				A6KPRDS302582F8008DF9BD /* KeeperAPIKeyDialog.swift */,
-				A6KPRDS312582F8008DF9BD /* KeeperKeychain.swift */,
 			);
 			name = "Password Manager";
 			sourceTree = "<group>";
@@ -19667,8 +19659,6 @@
 				A6180D7521A36F730073F219 /* iTermMetalPerFrameStateRow.m in Sources */,
 				A6A9839127E5C427003319D1 /* PasswordManagerDataSourceProvider.swift in Sources */,
 				A6KPRDS2F2582F8008DF9BD /* KeeperDataSource.swift in Sources */,
-				A6KPRDS322582F8008DF9BD /* KeeperAPIKeyDialog.swift in Sources */,
-				A6KPRDS332582F8008DF9BD /* KeeperKeychain.swift in Sources */,
 				A6D693E32E41379E005E9AFE /* iTermBrowserAudioHandler.swift in Sources */,
 				A6A7235C2DB7362D00A8115D /* iTermMutableStringProtocol.swift in Sources */,
 				A66A020A2EBBFA62000CDA81 /* CommandSafetyChecker.swift in Sources */,

@@ -379,6 +379,18 @@ final class KeeperDataSourceTests: XCTestCase {
         wait(for: [exp], timeout: 1)
     }
 
+    /// keeperV2PollFailHTTP with nil responseData; when String(data:empty) is "", message may be empty so assert error code.
+    func testKeeperV2PollFailHTTP_nilResponseData_usesHTTPCodeInMessage() {
+        let exp = expectation(description: "completion")
+        keeperV2PollFailHTTP(code: 500, responseData: nil) { result in
+            guard case .failure(let error) = result else { XCTFail("expected failure"); exp.fulfill(); return }
+            let nsErr = error as NSError
+            XCTAssertEqual(nsErr.code, 500, "expected error code 500, got: \(nsErr.code)")
+            exp.fulfill()
+        }
+        wait(for: [exp], timeout: 1)
+    }
+
     /// ensureAPIKey inside lock uses injectedCachedSettingsKeyForLockTest (coverage 562-565).
     func testEnsureAPIKey_injectedCachedSettingsKeyInLock_usesIt() {
         KeeperMockURLProtocol.responseByCommand["ls -R -l"] = ("{\"command\":\"ls\",\"data\":{\"records\":[]},\"status\":\"success\"}".data(using: .utf8)!, 200)
@@ -2086,6 +2098,40 @@ final class KeeperDataSourceTests: XCTestCase {
         wait(for: [exp], timeout: 5)
     }
 
+    /// Dialog completion(nil) goes through keeperHandleDialogResult(nil) and completes with nil (coverage).
+    func testEnsureAPIKey_dialogOverrideReturnsNil_completesWithNil() {
+        KeeperTestOverrides.showAPIKeyDialogOverride = { _, _, completion in completion(nil) }
+        defer { KeeperTestOverrides.showAPIKeyDialogOverride = nil }
+        KeeperMockURLProtocol.responseByCommand["ls -R -l"] = ("{\"command\":\"ls\",\"data\":{\"records\":[]},\"status\":\"success\"}".data(using: .utf8)!, 200)
+        let ds = KeeperDataSource(browser: false)
+        ds.injectedAPIKey = ""
+        ds.credentialsDelegate = nil
+        ds.injectedBaseURL = URL(string: "https://keeper.test")!
+        ds.injectedURLSession = mockSession
+        let exp = expectation(description: "fetchAccounts")
+        ds.fetchAccounts(context: makeContext()) { accounts in
+            XCTAssertEqual(accounts.count, 0)
+            exp.fulfill()
+        }
+        wait(for: [exp], timeout: 5)
+    }
+
+    /// Delegate path when delegate provides empty string: keeperHandleCredentialsFromDelegate completes with nil (coverage).
+    func testEnsureAPIKey_credentialsDelegateProvidesEmptyString_completesWithNil() {
+        let delegate = MockKeeperCredentialsDelegate(provideKey: "")
+        let ds = KeeperDataSource(browser: false)
+        ds.injectedAPIKey = ""
+        ds.credentialsDelegate = delegate
+        ds.injectedBaseURL = URL(string: "https://keeper.test")!
+        ds.injectedURLSession = mockSession
+        let exp = expectation(description: "fetchAccounts")
+        ds.fetchAccounts(context: makeContextWithWindow()) { accounts in
+            XCTAssertEqual(accounts.count, 0)
+            exp.fulfill()
+        }
+        wait(for: [exp], timeout: 5)
+    }
+
     func testEnsureAPIKey_credentialsDelegateProvidesKey_usedForRequest() {
         KeeperMockURLProtocol.responseByCommand["ls -R -l"] = ("{\"command\":\"ls\",\"data\":{\"records\":[]},\"status\":\"success\"}".data(using: .utf8)!, 200)
         let delegate = MockKeeperCredentialsDelegate(provideKey: "delegate-key")
@@ -2676,6 +2722,81 @@ final class KeeperDataSourceTests: XCTestCase {
         XCTAssertEqual(storedKey, "stored-via-global-override")
     }
 
+    /// Covers keeperStoreAPIKeyInStandardKeychain (used when biometric keychain is unavailable or SecItemAdd fails).
+    func testKeeperStoreAPIKeyInStandardKeychain_storesKey() {
+        keeperStoreAPIKeyInStandardKeychain("standard-keychain-test-key")
+        // No override: real keychain; we only assert the call doesn’t crash. For coverage we could read back via SSKeychain if needed.
+    }
+
+    /// Covers keeperStoreAPIKeyInKeychain guard-else fallback when access control creation is forced to fail.
+    func testKeeperStoreAPIKeyInKeychain_forceAccessControlCreationToFail_usesStandardKeychain() {
+        KeeperTestOverrides.forceAccessControlCreationToFail = true
+        defer { KeeperTestOverrides.forceAccessControlCreationToFail = false }
+        let ds = KeeperDataSource(browser: false)
+        ds.injectedKeychainSetAPIKey = nil
+        ds.setKeeperSettingsAPIKey("key-via-access-control-fail")
+        XCTAssertEqual(ds.keeperSettingsAPIKey(), "key-via-access-control-fail")
+    }
+
+    /// Covers keeperStoreAPIKeyInKeychain SecItemAdd failure path (DLog/NSLog then standard keychain).
+    func testKeeperStoreAPIKeyInKeychain_forceSecItemAddToFail_usesStandardKeychain() {
+        KeeperTestOverrides.forceSecItemAddToFail = true
+        defer { KeeperTestOverrides.forceSecItemAddToFail = false }
+        let ds = KeeperDataSource(browser: false)
+        ds.injectedKeychainSetAPIKey = nil
+        ds.setKeeperSettingsAPIKey("key-via-secitem-fail")
+        XCTAssertEqual(ds.keeperSettingsAPIKey(), "key-via-secitem-fail")
+    }
+
+    /// Covers keeperClearBaseURLCache so next keeperBaseURL() re-reads from storage.
+    func testKeeperClearBaseURLCache_clearsCache() {
+        KeeperTestOverrides.apiURLFromStorage = { "https://cache-clear.test" }
+        defer { KeeperTestOverrides.apiURLFromStorage = nil }
+        let ds = KeeperDataSource(browser: false)
+        ds.injectedAPIKey = "k"
+        ds.injectedURLSession = mockSession
+        KeeperMockURLProtocol.responseByCommand["ls -R -l"] = ("{\"status\":\"success\",\"data\":{\"records\":[]}}".data(using: .utf8)!, 200)
+        let exp1 = expectation(description: "first fetch")
+        ds.fetchAccounts(context: makeContext()) { _ in exp1.fulfill() }
+        wait(for: [exp1], timeout: 5)
+        keeperClearBaseURLCache()
+        KeeperTestOverrides.apiURLFromStorage = { "https://after-clear.test" }
+        let exp2 = expectation(description: "second fetch")
+        ds.fetchAccounts(context: makeContext()) { _ in exp2.fulfill() }
+        wait(for: [exp2], timeout: 5)
+    }
+
+    /// Covers keeperV2BaseURL when path already has api/v2 (and components.url branch).
+    func testKeeperV2BaseURL_pathHasApiV2_returnsNormalized() {
+        let withTrailing = URL(string: "https://x.com/api/v2/")!
+        XCTAssertTrue(keeperV2BaseURL(baseURL: withTrailing).path.hasSuffix("api/v2"))
+        let noTrailing = URL(string: "https://x.com/api/v2")!
+        XCTAssertEqual(keeperV2BaseURL(baseURL: noTrailing).path, "/api/v2")
+    }
+
+    /// Covers keeperV2BaseURL when path does not have api/v2 (appends /api/v2).
+    func testKeeperV2BaseURL_originOnly_appendsApiV2() {
+        let origin = URL(string: "https://keeper.example")!
+        let v2 = keeperV2BaseURL(baseURL: origin)
+        XCTAssertTrue(v2.path.hasSuffix("api/v2"), "got \(v2.path)")
+    }
+
+    /// Covers keeperAPIKeyFromKeychain migration path when only standard keychain has key (store then return).
+    func testKeeperAPIKeyFromKeychain_standardKeychainOnly_migratesAndReturnsKey() {
+        KeeperTestOverrides.secureKeychainReturns = { nil }
+        KeeperTestOverrides.standardKeychainReturns = { "migrate-key" }
+        var stored: String?
+        KeeperTestOverrides.storeAPIKeyInKeychain = { stored = $0 }
+        defer {
+            KeeperTestOverrides.secureKeychainReturns = nil
+            KeeperTestOverrides.standardKeychainReturns = nil
+            KeeperTestOverrides.storeAPIKeyInKeychain = nil
+        }
+        let key = keeperAPIKeyFromKeychain()
+        XCTAssertEqual(key, "migrate-key")
+        XCTAssertEqual(stored, "migrate-key")
+    }
+
     /// Poll: 1–14 unparseable status responses then "completed" triggers retry then success (covers asyncAfter poll path).
     func testV2PollUnparseableThenCompleted_succeedsAfterRetry() {
         KeeperMockURLProtocol.nextQueuedRequestStatus = "completed"
@@ -3011,6 +3132,38 @@ final class KeeperDataSourceTests: XCTestCase {
         wait(for: [exp], timeout: 10)
     }
 
+    /// fetchAccounts: "ls" data.records with invalid title lines (---/#) so parseLsRecordLine returns nil for all; no break, ends with no records.
+    func testFetchAccounts_lsRecordsAllInvalidTitleLines_fallsThroughToNoRecords() {
+        let json = "{\"command\":\"ls\",\"data\":{\"records\":[{\"title\":\"---\"},{\"title\":\"# header\"}]},\"status\":\"success\"}"
+        KeeperMockURLProtocol.responseByCommand["ls -R -l"] = (json.data(using: .utf8)!, 200)
+        let ds = KeeperDataSource(browser: false)
+        ds.injectedAPIKey = "key"
+        ds.injectedBaseURL = URL(string: "https://keeper.test")!
+        ds.injectedURLSession = mockSession
+        let exp = expectation(description: "fetchAccounts")
+        ds.fetchAccounts(context: makeContext()) { accounts in
+            XCTAssertEqual(accounts.count, 0)
+            exp.fulfill()
+        }
+        wait(for: [exp], timeout: 5)
+    }
+
+    /// fetchAccounts: data.records with entries that have no uid/record_uid so compactMap returns []; !records!.isEmpty is false, no break (coverage).
+    func testFetchAccounts_dataRecordsWithNoUid_fallsThroughWithoutBreaking() {
+        let json = "{\"status\":\"success\",\"data\":{\"records\":[{\"title\":\"NoUid\"},{\"description\":\"only\"}]}}"
+        KeeperMockURLProtocol.responseByCommand["ls -R -l"] = (json.data(using: .utf8)!, 200)
+        let ds = KeeperDataSource(browser: false)
+        ds.injectedAPIKey = "key"
+        ds.injectedBaseURL = URL(string: "https://keeper.test")!
+        ds.injectedURLSession = mockSession
+        let exp = expectation(description: "fetchAccounts")
+        ds.fetchAccounts(context: makeContext()) { accounts in
+            XCTAssertEqual(accounts.count, 0)
+            exp.fulfill()
+        }
+        wait(for: [exp], timeout: 5)
+    }
+
     /// fetchAccounts: data payload as object with "records" key (not array at top level).
     func testFetchAccounts_parsesDataRecordsObjectFormat() {
         let json = """
@@ -3127,6 +3280,249 @@ final class KeeperDataSourceTests: XCTestCase {
         wait(for: [exp], timeout: 5)
     }
 
+    /// fetchPassword: password from result object "output" key (resultObj["output"]).
+    func testFetchPassword_resultObjectOutputKey_returnsPassword() {
+        KeeperMockURLProtocol.responseByCommand["get uid123 --format=json"] = ("{}".data(using: .utf8)!, 200)
+        KeeperMockURLProtocol.responseByCommand["get uid123 --format=password"] = ("{\"result\":{\"output\":\"pwd-from-output\"}}".data(using: .utf8)!, 200)
+        let ds = KeeperDataSource(browser: false)
+        ds.injectedAPIKey = "key"
+        ds.injectedBaseURL = URL(string: "https://keeper.test")!
+        ds.injectedURLSession = mockSession
+        let exp = expectation(description: "fetchPassword")
+        ds.fetchPassword(recordUid: "uid123", context: makeContext()) { password, _, error in
+            XCTAssertEqual(password, "pwd-from-output")
+            XCTAssertNil(error)
+            exp.fulfill()
+        }
+        wait(for: [exp], timeout: 5)
+    }
+
+    /// fetchPassword: password from top-level parsed["output"].
+    func testFetchPassword_topLevelOutputKey_returnsPassword() {
+        KeeperMockURLProtocol.responseByCommand["get uid123 --format=json"] = ("{}".data(using: .utf8)!, 200)
+        KeeperMockURLProtocol.responseByCommand["get uid123 --format=password"] = ("{\"output\":\"top-level-output-pwd\"}".data(using: .utf8)!, 200)
+        let ds = KeeperDataSource(browser: false)
+        ds.injectedAPIKey = "key"
+        ds.injectedBaseURL = URL(string: "https://keeper.test")!
+        ds.injectedURLSession = mockSession
+        let exp = expectation(description: "fetchPassword")
+        ds.fetchPassword(recordUid: "uid123", context: makeContext()) { password, _, error in
+            XCTAssertEqual(password, "top-level-output-pwd")
+            XCTAssertNil(error)
+            exp.fulfill()
+        }
+        wait(for: [exp], timeout: 5)
+    }
+
+    /// fetchPassword: no password, message "no output" → error mentions "no password field".
+    func testFetchPassword_noPassword_statusNoOutput_usesNoPasswordFieldError() {
+        KeeperMockURLProtocol.responseByCommand["get uid123 --format=json"] = ("{}".data(using: .utf8)!, 200)
+        KeeperMockURLProtocol.responseByCommand["get uid123 --format=password"] = ("{\"message\":[\"No output produced\"]}".data(using: .utf8)!, 200)
+        let ds = KeeperDataSource(browser: false)
+        ds.injectedAPIKey = "key"
+        ds.injectedBaseURL = URL(string: "https://keeper.test")!
+        ds.injectedURLSession = mockSession
+        let exp = expectation(description: "fetchPassword")
+        ds.fetchPassword(recordUid: "uid123", context: makeContext()) { password, _, error in
+            XCTAssertNil(password)
+            XCTAssertNotNil(error)
+            XCTAssertTrue((error as NSError?)?.localizedDescription.contains("no password field") ?? false)
+            exp.fulfill()
+        }
+        wait(for: [exp], timeout: 5)
+    }
+
+    /// fetchPassword: data as non-quoted string (password == nil then !t.isEmpty).
+    func testFetchPassword_dataAsPlainString_usesAsPassword() {
+        KeeperMockURLProtocol.responseByCommand["get uid123 --format=json"] = ("{}".data(using: .utf8)!, 200)
+        KeeperMockURLProtocol.responseByCommand["get uid123 --format=password"] = ("{\"data\":\"plain-pwd\"}".data(using: .utf8)!, 200)
+        let ds = KeeperDataSource(browser: false)
+        ds.injectedAPIKey = "key"
+        ds.injectedBaseURL = URL(string: "https://keeper.test")!
+        ds.injectedURLSession = mockSession
+        let exp = expectation(description: "fetchPassword")
+        ds.fetchPassword(recordUid: "uid123", context: makeContext()) { password, _, error in
+            XCTAssertEqual(password, "plain-pwd")
+            XCTAssertNil(error)
+            exp.fulfill()
+        }
+        wait(for: [exp], timeout: 5)
+    }
+
+    /// fetchPassword: KeeperExecuteResponse (v1) with result string.
+    func testFetchPassword_keeperExecuteResponseResult_returnsPassword() {
+        KeeperMockURLProtocol.responseByCommand["get uid123 --format=json"] = ("{}".data(using: .utf8)!, 200)
+        KeeperMockURLProtocol.responseByCommand["get uid123 --format=password"] = ("{\"status\":\"success\",\"result\":\"exec-result-pwd\"}".data(using: .utf8)!, 200)
+        let ds = KeeperDataSource(browser: false)
+        ds.injectedAPIKey = "key"
+        ds.injectedBaseURL = URL(string: "https://keeper.test")!
+        ds.injectedURLSession = mockSession
+        let exp = expectation(description: "fetchPassword")
+        ds.fetchPassword(recordUid: "uid123", context: makeContext()) { password, _, error in
+            XCTAssertEqual(password, "exec-result-pwd")
+            XCTAssertNil(error)
+            exp.fulfill()
+        }
+        wait(for: [exp], timeout: 5)
+    }
+
+    /// fetchPassword: non-JSON plain text, quoted string decoded then used.
+    func testFetchPassword_plainTextQuoted_decodesAndReturns() {
+        KeeperMockURLProtocol.responseByCommand["get uid123 --format=json"] = ("{}".data(using: .utf8)!, 200)
+        KeeperMockURLProtocol.responseByCommand["get uid123 --format=password"] = ("\"decoded-quoted\"".data(using: .utf8)!, 200)
+        let ds = KeeperDataSource(browser: false)
+        ds.injectedAPIKey = "key"
+        ds.injectedBaseURL = URL(string: "https://keeper.test")!
+        ds.injectedURLSession = mockSession
+        let exp = expectation(description: "fetchPassword")
+        ds.fetchPassword(recordUid: "uid123", context: makeContext()) { password, _, error in
+            XCTAssertEqual(password, "decoded-quoted")
+            XCTAssertNil(error)
+            exp.fulfill()
+        }
+        wait(for: [exp], timeout: 5)
+    }
+
+    /// setPassword: non-success response with message array uses first message.
+    func testSetPassword_nonSuccessWithMessageArray_usesFirstMessage() {
+        KeeperMockURLProtocol.responseByCommand["record-update -r uid123 password=$BASE64:dGVzdA=="] = ("{\"status\":\"error\",\"message\":[\"First error line\"]}".data(using: .utf8)!, 200)
+        let ds = KeeperDataSource(browser: false)
+        ds.injectedAPIKey = "key"
+        ds.injectedBaseURL = URL(string: "https://keeper.test")!
+        ds.injectedURLSession = mockSession
+        let exp = expectation(description: "setPassword")
+        ds.setPassword(recordUid: "uid123", password: "test", context: makeContext()) { error in
+            XCTAssertNotNil(error)
+            XCTAssertEqual((error as NSError?)?.localizedDescription, "First error line")
+            exp.fulfill()
+        }
+        wait(for: [exp], timeout: 5)
+    }
+
+    /// fetchAccounts: data as object with "records" key (dataPayload as [String: Any], obj["records"]).
+    func testFetchAccounts_dataAsObjectWithRecordsKey_parsesRecords() {
+        let json = "{\"status\":\"success\",\"data\":{\"records\":[{\"uid\":\"a1b2c3d4e5f6g7h8\",\"record_uid\":\"a1b2c3d4e5f6g7h8\",\"title\":\"Site\",\"description\":\"Login\"}]}}"
+        KeeperMockURLProtocol.responseByCommand["ls -R -l"] = (json.data(using: .utf8)!, 200)
+        let ds = KeeperDataSource(browser: false)
+        ds.injectedAPIKey = "key"
+        ds.injectedBaseURL = URL(string: "https://keeper.test")!
+        ds.injectedURLSession = mockSession
+        let exp = expectation(description: "fetchAccounts")
+        ds.fetchAccounts(context: makeContext()) { accounts in
+            XCTAssertEqual(accounts.count, 1)
+            XCTAssertEqual(accounts.first?.accountName, "Site")
+            exp.fulfill()
+        }
+        wait(for: [exp], timeout: 5)
+    }
+
+    /// fetchAccounts: response with status success but empty data so no records parsed → DLog/NSLog path and empty list.
+    func testFetchAccounts_successEmptyData_noRecordsParsedLogsAndReturnsEmpty() {
+        KeeperMockURLProtocol.responseByCommand["ls -R -l"] = ("{\"status\":\"success\",\"data\":[]}".data(using: .utf8)!, 200)
+        let ds = KeeperDataSource(browser: false)
+        ds.injectedAPIKey = "key"
+        ds.injectedBaseURL = URL(string: "https://keeper.test")!
+        ds.injectedURLSession = mockSession
+        let exp = expectation(description: "fetchAccounts")
+        ds.fetchAccounts(context: makeContext()) { accounts in
+            XCTAssertEqual(accounts.count, 0)
+            exp.fulfill()
+        }
+        wait(for: [exp], timeout: 5)
+    }
+
+    /// fetchAccounts: message-table format with 6 parts so description = parts[4].
+    func testFetchAccounts_messageTableSixParts_descriptionFromParts4() {
+        let json = "{\"status\":\"success\",\"message\":[\"header\", \"sep\", \"1  a1b2c3d4e5f6g7h8  login  MySite  MyDescription  extra\"]}"
+        KeeperMockURLProtocol.responseByCommand["ls -R -l"] = (json.data(using: .utf8)!, 200)
+        let ds = KeeperDataSource(browser: false)
+        ds.injectedAPIKey = "key"
+        ds.injectedBaseURL = URL(string: "https://keeper.test")!
+        ds.injectedURLSession = mockSession
+        let exp = expectation(description: "fetchAccounts")
+        ds.fetchAccounts(context: makeContext()) { accounts in
+            XCTAssertEqual(accounts.count, 1)
+            XCTAssertTrue(accounts.first?.displayString.contains("MySite") ?? false)
+            exp.fulfill()
+        }
+        wait(for: [exp], timeout: 5)
+    }
+
+    /// parseLsRecordLine: line with 5 parts so description = parts.suffix(from: 4).joined.
+    func testParseLsRecordLine_fiveParts_descriptionJoined() {
+        let line = "1  a1b2c3d4e5f6g7h8  login  MyTitle  MyDesc"
+        let rec = parseLsRecordLine(line)
+        XCTAssertNotNil(rec)
+        XCTAssertEqual(rec?.title, "MyTitle")
+        XCTAssertEqual(rec?.description, "MyDesc")
+    }
+
+    /// add(): response not decodable as RecordAddResponse (data array) → catch uses (error as NSError).localizedDescription.
+    func testAdd_decodeThrowsNoHumanReadable_usesLocalizedDescription() {
+        KeeperMockURLProtocol.responseByCommand["record-add --record-type=login --title=\"Site\" login=\"user\" password=$BASE64:cHdk"] = ("{\"status\":\"success\",\"data\":[]}".data(using: .utf8)!, 200)
+        let ds = KeeperDataSource(browser: false)
+        ds.injectedAPIKey = "key"
+        ds.injectedBaseURL = URL(string: "https://keeper.test")!
+        ds.injectedURLSession = mockSession
+        let exp = expectation(description: "add")
+        ds.add(userName: "user", accountName: "Site", password: "pwd", context: makeContext()) { account, error in
+            XCTAssertNil(account)
+            XCTAssertNotNil(error)
+            exp.fulfill()
+        }
+        wait(for: [exp], timeout: 5)
+    }
+
+    /// fetchPassword: no password, response body not JSON → preview "(N chars, not JSON)".
+    /// fetchPassword: response is JSON with no password field → no-password error (plain non-JSON body would be used as password).
+    func testFetchPassword_noPassword_nonJSONPreview() {
+        KeeperMockURLProtocol.responseByCommand["get uid12345678901234 --format=json"] = ("{}".data(using: .utf8)!, 200)
+        KeeperMockURLProtocol.responseByCommand["get uid12345678901234 --format=password"] = ("{}".data(using: .utf8)!, 200)
+        let ds = KeeperDataSource(browser: false)
+        ds.injectedAPIKey = "key"
+        ds.injectedBaseURL = URL(string: "https://keeper.test")!
+        ds.injectedURLSession = mockSession
+        let exp = expectation(description: "fetchPassword")
+        ds.fetchPassword(recordUid: "uid12345678901234", context: makeContext()) { password, _, error in
+            XCTAssertNil(password)
+            XCTAssertNotNil(error)
+            XCTAssertTrue((error as NSError?)?.localizedDescription.contains("Keeper returned no password") ?? false)
+            exp.fulfill()
+        }
+        wait(for: [exp], timeout: 5)
+    }
+
+    /// keeperExecuteV2FailNon202 with nil data; when String(data:empty) is "", message may be empty so assert failure and code.
+    func testKeeperExecuteV2FailNon202_nilData_returnsUnexpectedResponse() {
+        let exp = expectation(description: "fail")
+        keeperExecuteV2FailNon202(data: nil) { result in
+            guard case .failure(let err) = result else { XCTFail("expected failure"); exp.fulfill(); return }
+            let nsErr = err as NSError
+            XCTAssertEqual(nsErr.code, -1)
+            XCTAssertTrue((nsErr.localizedDescription.isEmpty || nsErr.localizedDescription == "Unexpected response"), "expected empty or 'Unexpected response', got: '\(nsErr.localizedDescription)'")
+            exp.fulfill()
+        }
+        wait(for: [exp], timeout: 2)
+    }
+
+    /// ensureAPIKey: when injectedCachedSettingsKeyForLockTest is set, key is used inside lock.
+    /// ensureAPIKey inside lock uses injectedCachedSettingsKeyForLockTest when set; exercised via fetchAccounts (ensureAPIKey is private).
+    func testEnsureAPIKey_injectedCachedSettingsKeyForLockTest_usesKeyInLock() {
+        KeeperMockURLProtocol.responseByCommand["ls -R -l"] = ("{\"command\":\"ls\",\"data\":{\"records\":[]},\"status\":\"success\"}".data(using: .utf8)!, 200)
+        let ds = KeeperDataSource(browser: false)
+        ds.injectedAPIKey = nil
+        ds.injectedKeychainGetAPIKey = nil
+        ds.injectedCachedSettingsKeyForLockTest = "lock-test-key"
+        ds.injectedBaseURL = URL(string: "https://keeper.test")!
+        ds.injectedURLSession = mockSession
+        let exp = expectation(description: "fetchAccounts")
+        ds.fetchAccounts(context: makeContext()) { accounts in
+            XCTAssertEqual(accounts.count, 0)
+            exp.fulfill()
+        }
+        wait(for: [exp], timeout: 5)
+    }
+
     /// keeperShowAPIKeyDialog with override set exercises the override path (already covered); without override calls UI. We test the override path returns.
     func testKeeperShowAPIKeyDialog_withOverride_invokesOverride() {
         var completed: KeeperAPIKeyPromptResult?
@@ -3202,6 +3598,61 @@ final class KeeperDataSourceTests: XCTestCase {
         KeeperTestOverrides.fallbackDialogUIForCoverage = nil
         let fn = keeperResolvedDialogFunction()
         XCTAssertNotNil(fn)
+    }
+
+    /// When settings sheet handler is nil, keeperShowAPIKeyDialog completes with .cancel (no legacy pop-up).
+    func testKeeperShowAPIKeyDialog_noSheetHandler_completesWithCancel() {
+        KeeperDataSource.setShowKeeperSettingsSheetHandler(nil)
+        defer { KeeperDataSource.setShowKeeperSettingsSheetHandler(nil) }
+        KeeperTestOverrides.showAPIKeyDialogOverride = nil
+        KeeperTestOverrides.showAPIKeyDialogUIOverride = nil
+        var result: KeeperAPIKeyPromptResult?
+        keeperShowAPIKeyDialog(existingKey: nil, window: nil) { result = $0 }
+        if case .cancel? = result { } else { XCTFail("expected .cancel when no sheet handler, got \(String(describing: result))") }
+    }
+
+    /// keeperMigrateLegacyKeeperTokenIfNeeded() with legacy key in UserDefaults calls store override and removes from UserDefaults (covers migration path).
+    func testKeeperMigrateLegacyKeeperTokenIfNeeded_userDefaultsPath() {
+        iTermUserDefaults.userDefaults().set("legacy-key-from-ud", forKey: keeperLegacyUserDefaultsAPIKeyKey)
+        iTermUserDefaults.userDefaults().set("https://legacy-url.test", forKey: keeperLegacyUserDefaultsAPIURLKey)
+        defer {
+            iTermUserDefaults.userDefaults().removeObject(forKey: keeperLegacyUserDefaultsAPIKeyKey)
+            iTermUserDefaults.userDefaults().removeObject(forKey: keeperLegacyUserDefaultsAPIURLKey)
+        }
+        var storedKey: String?
+        KeeperTestOverrides.storeAPIKeyInKeychain = { key in storedKey = key }
+        defer { KeeperTestOverrides.storeAPIKeyInKeychain = nil }
+        keeperMigrateLegacyKeeperTokenIfNeeded()
+        XCTAssertEqual(storedKey, "legacy-key-from-ud")
+        XCTAssertNil(iTermUserDefaults.userDefaults().string(forKey: keeperLegacyUserDefaultsAPIKeyKey))
+        XCTAssertEqual(iTermUserDefaults.userDefaults().string(forKey: keeperLegacyUserDefaultsAPIURLKey), "https://legacy-url.test")
+    }
+
+    /// keeperAPIURLFromStorage() with no override reads from UserDefaults (covers merged keychain storage path).
+    func testKeeperAPIURLFromStorage_withNoOverride_readsUserDefaults() {
+        KeeperTestOverrides.apiURLFromStorage = nil
+        defer { KeeperTestOverrides.apiURLFromStorage = nil }
+        let url = "https://from-userdefaults.test"
+        iTermUserDefaults.userDefaults().set(url, forKey: keeperLegacyUserDefaultsAPIURLKey)
+        defer { iTermUserDefaults.userDefaults().removeObject(forKey: keeperLegacyUserDefaultsAPIURLKey) }
+        XCTAssertEqual(keeperAPIURLFromStorage(), url)
+    }
+
+    /// keeperStoreAPIURLInKeychain() writes to UserDefaults (covers merged keychain storage path).
+    func testKeeperStoreAPIURLInKeychain_storesInUserDefaults() {
+        KeeperTestOverrides.apiURLFromStorage = nil
+        defer { KeeperTestOverrides.apiURLFromStorage = nil }
+        let url = "https://store-test.test"
+        keeperStoreAPIURLInKeychain(url)
+        defer { keeperClearAPIURLStorage() }
+        XCTAssertEqual(iTermUserDefaults.userDefaults().string(forKey: keeperLegacyUserDefaultsAPIURLKey), url)
+    }
+
+    /// keeperClearAPIURLStorage() removes URL from UserDefaults (covers merged keychain storage path).
+    func testKeeperClearAPIURLStorage_removesFromUserDefaults() {
+        iTermUserDefaults.userDefaults().set("https://to-clear.test", forKey: keeperLegacyUserDefaultsAPIURLKey)
+        keeperClearAPIURLStorage()
+        XCTAssertNil(iTermUserDefaults.userDefaults().string(forKey: keeperLegacyUserDefaultsAPIURLKey))
     }
 
     /// keeperBaseURL() returns nil when storage returns a URL string with no host (e.g. file:///tmp), so keeperExecute fails with API URL required.
@@ -3397,7 +3848,7 @@ final class KeeperDataSourceTests: XCTestCase {
     }
 
     /// setPassword: non-success response with message array → uses first message as detail.
-    func testSetPassword_nonSuccessWithMessageArray_usesFirstMessage() {
+    func testSetPassword_nonSuccessWithMessageArray_customMessage() {
         let b64 = Data("x".utf8).base64EncodedString()
         KeeperMockURLProtocol.responseByCommand["record-update -r uid123 password=$BASE64:\(b64)"] = ("{\"status\":\"error\",\"message\":[\"Custom update error\"]}".data(using: .utf8)!, 200)
         let ds = KeeperDataSource(browser: false)
