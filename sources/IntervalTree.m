@@ -1267,7 +1267,7 @@ static NSString *const kIntervalTreeObjectsKey = @"objects";
     for (id<IntervalTreeObject> object in self.allObjects) {
         // Skip objects that would have negative limits after adjustment - they represent
         // content that has scrolled off and isn't being saved.
-        const long long adjustedLocation = object.entry.interval.location + offset;
+        long long adjustedLocation = object.entry.interval.location + offset;
         long long adjustedLength = object.entry.interval.length;
         const long long adjustedLimit = adjustedLocation + adjustedLength;
         if (adjustedLimit < 0) {
