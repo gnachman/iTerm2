@@ -2217,6 +2217,14 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (void)activeSpaceDidChange:(NSNotification *)notification {
     DLog(@"Active space did change. active=%@ self.window.isOnActiveSpace=%@", @(NSApp.isActive), @(self.window.isOnActiveSpace));
+
+    // Issue 10695: LSUIElement apps can lose their collection behavior when switching spaces.
+    // Refresh it to ensure the window appears on all spaces as configured.
+    if ([(iTermApplication *)NSApp isUIElement]) {
+        DLog(@"Refreshing collection behavior for UIElement app on space change");
+        self.window.collectionBehavior = self.desiredWindowCollectionBehavior;
+    }
+
     if ([(iTermApplication *)NSApp isUIElement] && !NSApp.isActive && self.lionFullScreen && self.window.isOnActiveSpace) {
         DLog(@"Activating app because lion full screen window is on active space. %@", self);
         [NSApp activateIgnoringOtherApps:YES];

@@ -235,7 +235,15 @@ static NSString *const kArrangement = @"Arrangement";
 }
 
 - (void)activeSpaceDidChange:(NSNotification *)notification {
-    DLog(@"activeSpaceDidChangei %@", self.windowController);
+    DLog(@"activeSpaceDidChange %@", self.windowController);
+
+    // Issue 10695: LSUIElement apps can lose their collection behavior when switching spaces.
+    // Refresh it to ensure the window appears on all spaces as configured.
+    if ([[iTermApplication sharedApplication] isUIElement] && self.windowController.window) {
+        DLog(@"Refreshing collection behavior for UIElement app on space change");
+        self.windowController.window.collectionBehavior = self.windowController.desiredWindowCollectionBehavior;
+    }
+
     if (!self.isHotKeyWindowOpen) {
         DLog(@"Not open");
         return;
@@ -662,6 +670,15 @@ static NSString *const kArrangement = @"Arrangement";
         return;
     }
     _rollingIn = YES;
+
+    // Issue 10695: LSUIElement apps can lose their collection behavior under various conditions.
+    // Refresh it before showing the window to ensure CanJoinAllSpaces is respected and we don't
+    // trigger a space switch.
+    if ([[iTermApplication sharedApplication] isUIElement]) {
+        DLog(@"Refreshing collection behavior for UIElement app before roll-in");
+        self.windowController.window.collectionBehavior = self.windowController.desiredWindowCollectionBehavior;
+    }
+
     if (self.windowController.windowType == WINDOW_TYPE_TRADITIONAL_FULL_SCREEN) {
         // This has to be done before making it key or the dock will be hidden based on the
         // display it was last on, not the display it will be on. I think it might be safe to
