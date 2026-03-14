@@ -244,7 +244,7 @@ NMSSH: force fatlibssh2
 	cd submodules/NMSSH && xcodebuild -target NMSSH -project NMSSH.xcodeproj -configuration Release CONFIGURATION_BUILD_DIR=../../ThirdParty $(SIGNING_FLAGS) $(ARCH_FLAGS)
 
 paranoid-NMSSH: force
-	/usr/bin/sandbox-exec -f deps.sb $(MAKE) NMSSH
+	/usr/bin/sandbox-exec -f deps.sb $(MAKE) BUILD_DIR="$(BUILD_DIR)" NMSSH
 
 ifdef UNIVERSAL
 librailroad_dsl: force
@@ -271,43 +271,43 @@ sparkle: force
 	mv submodules/Sparkle/Build/Release/Sparkle.framework ThirdParty/Sparkle.framework
 
 paranoid-CoreParse: force
-	/usr/bin/sandbox-exec -f deps.sb $(MAKE) CoreParse
+	/usr/bin/sandbox-exec -f deps.sb $(MAKE) BUILD_DIR="$(BUILD_DIR)" CoreParse
 
 paranoid-SwiftyMarkdown: force
-	/usr/bin/sandbox-exec -f deps.sb $(MAKE) SwiftyMarkdown
+	/usr/bin/sandbox-exec -f deps.sb $(MAKE) BUILD_DIR="$(BUILD_DIR)" SwiftyMarkdown
 
 paranoid-deps: force
-	/usr/bin/sandbox-exec -f deps.sb $(MAKE) deps
+	/usr/bin/sandbox-exec -f deps.sb $(MAKE) BUILD_DIR="$(BUILD_DIR)" deps
 
 paranoid-fatlibssh2: force
-	/usr/bin/sandbox-exec -f deps.sb $(MAKE) fatlibssh2
+	/usr/bin/sandbox-exec -f deps.sb $(MAKE) BUILD_DIR="$(BUILD_DIR)" fatlibssh2
 
 paranoid-BetterFontPicker: force
-	/usr/bin/sandbox-exec -f deps.sb $(MAKE) BetterFontPicker
+	/usr/bin/sandbox-exec -f deps.sb $(MAKE) BUILD_DIR="$(BUILD_DIR)" BetterFontPicker
 
 paranoid-BetterFontPicker-Dev: force
-	/usr/bin/sandbox-exec -f deps.sb $(MAKE) BetterFontPicker-Dev
+	/usr/bin/sandbox-exec -f deps.sb $(MAKE) BUILD_DIR="$(BUILD_DIR)" BetterFontPicker-Dev
 
 paranoid-libgit2: force
-	/usr/bin/sandbox-exec -f deps.sb $(MAKE) libgit2
+	/usr/bin/sandbox-exec -f deps.sb $(MAKE) BUILD_DIR="$(BUILD_DIR)" libgit2
 
 paranoid-sparkle: force
-	/usr/bin/sandbox-exec -f deps.sb $(MAKE) sparkle
+	/usr/bin/sandbox-exec -f deps.sb $(MAKE) BUILD_DIR="$(BUILD_DIR)" sparkle
 
 paranoid-fatlibsixel: force
-	/usr/bin/sandbox-exec -f deps.sb $(MAKE) fatlibsixel
+	/usr/bin/sandbox-exec -f deps.sb $(MAKE) BUILD_DIR="$(BUILD_DIR)" fatlibsixel
 
 paranoid-librailroad_dsl: force
-	/usr/bin/sandbox-exec -f deps.sb $(MAKE) librailroad_dsl
+	/usr/bin/sandbox-exec -f deps.sb $(MAKE) BUILD_DIR="$(BUILD_DIR)" librailroad_dsl
 
 paranoid-ColorPicker: force
-	/usr/bin/sandbox-exec -f deps.sb $(MAKE) ColorPicker
-	
+	/usr/bin/sandbox-exec -f deps.sb $(MAKE) BUILD_DIR="$(BUILD_DIR)" ColorPicker
+
 paranoid-SearchableComboListView: force
-	/usr/bin/sandbox-exec -f deps.sb $(MAKE) SearchableComboListView
+	/usr/bin/sandbox-exec -f deps.sb $(MAKE) BUILD_DIR="$(BUILD_DIR)" SearchableComboListView
 
 paranoid-pwmadapters: force
-	/usr/bin/sandbox-exec -f deps.sb $(MAKE) pwmadapters
+	/usr/bin/sandbox-exec -f deps.sb $(MAKE) BUILD_DIR="$(BUILD_DIR)" pwmadapters
 
 # You probably want make paranoid-deps to avoid depending on Homebrew stuff.
 deps: force fatlibsixel CoreParse NMSSH bindeps libgit2 sparkle librailroad_dsl sfsymbolenum pwmadapters
