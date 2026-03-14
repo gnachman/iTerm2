@@ -3867,9 +3867,9 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
 }
 
 // This is run in PTYTask's thread. It parses the input here and then queues an async task to run
-// in the main thread to execute the parsed tokens. This blocks when the queue of tokens gets too large.
-- (void)threadedReadTask:(char *)buffer length:(int)length {
-    [_screen threadedReadTask:buffer length:length];
+// in the main thread to execute the parsed tokens.
+- (void)threadedReadTask:(char *)buffer length:(int)length semaphore:(dispatch_semaphore_t)semaphore {
+    [_screen threadedReadTask:buffer length:length semaphore:semaphore];
 }
 
 - (BOOL)haveResizedRecently {

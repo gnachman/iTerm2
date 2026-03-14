@@ -101,7 +101,6 @@ class TokenExecutor: NSObject {
             impl.delegate = delegate
         }
     }
-    private let semaphore = DispatchSemaphore(value: Int(iTermAdvancedSettingsModel.bufferDepth()))
     private let impl: TokenExecutorImpl
     private let queue: DispatchQueue
     private static let isTokenExecutorSpecificKey = DispatchSpecificKey<Bool>()
@@ -134,38 +133,18 @@ class TokenExecutor: NSObject {
         queue.setSpecific(key: Self.isTokenExecutorSpecificKey, value: true)
         impl = TokenExecutorImpl(terminal,
                                  slownessDetector: slownessDetector,
-                                 semaphore: semaphore,
                                  queue: queue)
     }
 
     // This takes ownership of vector.
-    // You can call this on any queue.
-    @objc
-    func addTokens(_ vector: CVector,
-                   lengthTotal: Int,
-                   lengthExcludingInBandSignaling: Int) {
-        addTokens(vector,
-                  lengthTotal: lengthTotal,
-                  lengthExcludingInBandSignaling: lengthExcludingInBandSignaling,
-                  highPriority: false)
-    }
-
-    private static let addTokensTimingStats: TimingStats = {
-        TimingStats(name: "TokenExecutor")
-    }()
-    // Flip this to true to measure how much time the TaskNotifier thread spends busy (reading,
-    // parsing, and in select()) vs idle (blocked on TokenExecutor's semaphore).
-    private let enableTimingStats = false
-
-    // This takes ownership of vector.
     // You can call this on any queue when not high priority.
     // If high priority, then you must be on the main queue or have joined the main & mutation queue.
-    // This blocks when the queue of tokens gets too large.
     @objc
     func addTokens(_ vector: CVector,
                    lengthTotal: Int,
                    lengthExcludingInBandSignaling: Int,
-                   highPriority: Bool) {
+                   highPriority: Bool,
+                   semaphore: DispatchSemaphore?) {
         if gDebugLogging.boolValue { DLog("Add tokens with length \(lengthTotal) (excluding OOB: \(lengthExcludingInBandSignaling)), highpri=\(highPriority)") }
         if lengthTotal == 0 {
             return
@@ -180,18 +159,11 @@ class TokenExecutor: NSObject {
                             lengthTotal: lengthTotal,
                             lengthExcludingInBandSignaling: lengthExcludingInBandSignaling,
                             highPriority: highPriority,
-                            semaphore: nil as DispatchSemaphore?)
+                            semaphore: nil)
             return
         }
-        // Normal code path for tokens from PTY. Use the semaphore to give backpressure to reading.
-        let semaphore = self.semaphore
-        if enableTimingStats {
-            TokenExecutor.addTokensTimingStats.recordEnd()
-        }
-        _ = semaphore.wait(timeout: .distantFuture)
-        if enableTimingStats {
-            TokenExecutor.addTokensTimingStats.recordStart()
-        }
+        // Normal code path for tokens from PTY. The semaphore is provided by the caller:
+        // TaskNotifier for the PTY read path, PTYSession for the channel/mux path.
         reallyAddTokens(vector,
                         lengthTotal: lengthTotal,
                         lengthExcludingInBandSignaling: lengthExcludingInBandSignaling,
@@ -314,7 +286,6 @@ private class TokenExecutorImpl {
     private let terminal: VT100Terminal
     private let queue: DispatchQueue
     private let slownessDetector: SlownessDetector
-    private let semaphore: DispatchSemaphore
     private var taskQueue = iTermTaskQueue()
     private var sideEffects = iTermTaskQueue()
     private let tokenQueue = TwoTierTokenQueue()
@@ -350,12 +321,10 @@ private class TokenExecutorImpl {
 
     init(_ terminal: VT100Terminal,
          slownessDetector: SlownessDetector,
-         semaphore: DispatchSemaphore,
          queue: DispatchQueue) {
         self.terminal = terminal
         self.queue = queue
         self.slownessDetector = slownessDetector
-        self.semaphore = semaphore
         sideEffectScheduler = PeriodicScheduler(DispatchQueue.main, period: 1 / 30.0, action: { [weak self] in
             guard let self = self else {
                 return
