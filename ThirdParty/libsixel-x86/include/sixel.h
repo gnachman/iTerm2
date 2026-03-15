@@ -30,8 +30,8 @@
 # define SIXELAPI
 #endif
 
-#define LIBSIXEL_VERSION "1.9.0"
-#define LIBSIXEL_ABI_VERSION "1:9:0"
+#define LIBSIXEL_VERSION "1.8.7"
+#define LIBSIXEL_ABI_VERSION "1:6:0"
 
 typedef unsigned char sixel_index_t;
 
@@ -354,9 +354,6 @@ typedef int SIXELSTATUS;
                                                     size -> encode to as small sixel
                                                             sequence as possible
                                                 */
-#define SIXEL_OPTFLAG_ORMODE            ('O')  /* -O, --ormode:
-                                                  output ormode sixel image
-                                                */
 #define SIXEL_OPTFLAG_BGCOLOR           ('B')  /* -B BGCOLOR, --bgcolor=BGCOLOR:
                                                   specify background color
                                                   BGCOLOR is represented by the
@@ -647,11 +644,6 @@ sixel_output_set_palette_type(
     sixel_output_t /* in */ *output,      /* output context */
     int            /* in */ palettetype); /* PALETTETYPE_RGB: RGB palette
                                              PALETTETYPE_HLS: HLS palette */
-
-SIXELAPI void
-sixel_output_set_ormode(
-    sixel_output_t /* in */ *output,    /* output context */
-    int /* in */ ormode);
 
 /* set encodeing policy: auto, fast or size */
 SIXELAPI void
@@ -1016,6 +1008,12 @@ typedef SIXELSTATUS (* sixel_load_image_function)(
     sixel_frame_t /* in */     *frame,
     void          /* in/out */ *context);
 
+/* Note: this function returns SIXEL_OK without calling FN_LOAD when the file
+   content is empty or 1-byte LF.  This implies an assumption that CONTEXT is
+   initialized to be the default value for the empty file before calling this
+   function.  If it is not the case, the caller needs to properly detect it and
+   handle this, or otherwise, CONTEXT can be used uninitialized in subsequent
+   codes. */
 SIXELAPI SIXELSTATUS
 sixel_helper_load_image_file(
     char const                /* in */     *filename,     /* source file name */

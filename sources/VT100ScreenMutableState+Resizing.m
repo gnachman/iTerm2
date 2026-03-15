@@ -664,6 +664,29 @@ static void SwapInt(int *a, int *b) {
         VLog(@"Done converting newRange=%@ for %@", VT100GridCoordRangeDescription(newRange), note);
         assert(noteRange.start.y >= 0);
         assert(noteRange.end.y >= 0);
+        // Clamp negative coordinates to valid values to avoid creating bogus intervals.
+        if (newRange.start.y < 0) {
+            newRange.start.y = 0;
+            newRange.start.x = 0;
+        }
+        if (newRange.start.x < 0) {
+            newRange.start.x = 0;
+        }
+        if (newRange.end.y < 0) {
+            // End is before valid region - collapse to empty range at origin.
+            newRange.start.y = 0;
+            newRange.start.x = 0;
+            newRange.end.y = 0;
+            newRange.end.x = 0;
+        }
+        if (newRange.end.x < 0) {
+            newRange.end.x = 0;
+        }
+        // Skip empty ranges after clamping.
+        if (newRange.end.y < newRange.start.y ||
+            (newRange.end.y == newRange.start.y && newRange.end.x <= newRange.start.x)) {
+            return;
+        }
         Interval *newInterval = [self intervalForGridAbsCoordRange:VT100GridAbsCoordRangeFromCoordRange(newRange, overflow)
                                                              width:newWidth];
         [self.mutableIntervalTree addObject:note withInterval:newInterval];
@@ -739,7 +762,8 @@ static void SwapInt(int *a, int *b) {
 - (VT100GridCoordRange)safeCoordRange:(VT100GridCoordRange)unsafeRange {
     const int width = self.width;
     if (unsafeRange.start.x >= 0 && unsafeRange.start.x < width &&
-        unsafeRange.end.x >= 0 && unsafeRange.end.x < width) {
+        unsafeRange.end.x >= 0 && unsafeRange.end.x < width &&
+        unsafeRange.start.y >= 0 && unsafeRange.end.y >= 0) {
         return unsafeRange;
     }
     VT100GridCoordRange safe = unsafeRange;
@@ -748,6 +772,16 @@ static void SwapInt(int *a, int *b) {
     };
     safe.start.x = clamp(0, width, safe.start.x);
     safe.end.x = clamp(0, width, safe.end.x);
+    if (safe.start.y < 0) {
+        safe.start.y = 0;
+        safe.start.x = 0;
+    }
+    if (safe.end.y < 0) {
+        safe.start.y = 0;
+        safe.start.x = 0;
+        safe.end.y = 0;
+        safe.end.x = 0;
+    }
     return safe;
 }
 
@@ -957,6 +991,30 @@ static void SwapInt(int *a, int *b) {
                                                  linesMovedUp:linesMovedUp];
         if (ok) {
             DLog(@"  New range=%@", VT100GridCoordRangeDescription(newRange));
+            // Clamp negative coordinates to valid values to avoid creating bogus intervals.
+            if (newRange.start.y < 0) {
+                newRange.start.y = 0;
+                newRange.start.x = 0;
+            }
+            if (newRange.start.x < 0) {
+                newRange.start.x = 0;
+            }
+            if (newRange.end.y < 0) {
+                // End is before valid region - collapse to empty range at origin.
+                newRange.start.y = 0;
+                newRange.start.x = 0;
+                newRange.end.y = 0;
+                newRange.end.x = 0;
+            }
+            if (newRange.end.x < 0) {
+                newRange.end.x = 0;
+            }
+            // Skip empty ranges after clamping.
+            if (newRange.end.y < newRange.start.y ||
+                (newRange.end.y == newRange.start.y && newRange.end.x <= newRange.start.x)) {
+                DLog(@"  *SKIPPED EMPTY RANGE AFTER CLAMPING*");
+                continue;
+            }
             Interval *interval = [self intervalForGridAbsCoordRange:VT100GridAbsCoordRangeFromCoordRange(newRange, self.cumulativeScrollbackOverflow)
                                                               width:newSize.width];
             [self.mutableIntervalTree addObject:note withInterval:interval];
@@ -1079,6 +1137,20 @@ static void SwapInt(int *a, int *b) {
         if (newRange.start.y < 0) {
             newRange.start.y = 0;
             newRange.start.x = 0;
+        }
+        if (newRange.start.x < 0) {
+            newRange.start.x = 0;
+        }
+        // Clamp negative end coordinates to valid values.
+        if (newRange.end.y < 0) {
+            // End is before valid region - collapse to empty range at origin.
+            newRange.start.y = 0;
+            newRange.start.x = 0;
+            newRange.end.y = 0;
+            newRange.end.x = 0;
+        }
+        if (newRange.end.x < 0) {
+            newRange.end.x = 0;
         }
         DLog(@"  Its new range is %@ including %d lines dropped from top. Remove %@", VT100GridCoordRangeDescription(objectRange), numLinesDroppedFromTop, object);
         if (newRange.end.y > 0 || (newRange.end.y == 0 && newRange.end.x > 0)) {

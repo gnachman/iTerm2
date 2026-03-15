@@ -137,7 +137,6 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
 
     // If true then _isEmoji is valid.
     BOOL _haveTestedForEmoji;
-    NSInteger _nextIterationToDrawBackgroundFor;
     NSInteger _numberOfIterationsNeeded;
     iTermBitmapData *_postprocessedData;
     // These metrics are for _context.
@@ -350,6 +349,19 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
                atOffset:CGPointMake(offset.x, ty)
                    skew:skew];
     _haveDrawn = YES;
+
+#if ENABLE_DEBUG_CHARACTER_SOURCE_ALIGNMENT
+    CGContextSetRGBStrokeColor(_context, 1, 0, 0, 1);
+    for (int x = 0; x < self.maxParts; x++) {
+        for (int y = 0; y < self.maxParts; y++) {
+            CGContextStrokeRect(_context, CGRectMake(x * _descriptor.glyphSize.width,
+                                                     y * _descriptor.glyphSize.height,
+                                                     _descriptor.glyphSize.width,
+                                                     _descriptor.glyphSize.height));
+        }
+    }
+#endif
+
     const NSUInteger length = CGBitmapContextGetBytesPerRow(_context) * CGBitmapContextGetHeight(_context);
     NSMutableData *data = [NSMutableData dataWithBytes:CGBitmapContextGetData(_context)
                                                 length:length];
@@ -379,30 +391,61 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
     }
     CGContextRestoreGState(_context);
     CGContextSetTextMatrix(_context, textMatrix);
-}
 
-- (void)fillBackgroundForIteration:(NSInteger)iteration context:(CGContextRef)context {
-    if (iTermTextIsMonochrome()) {
-        CGContextSetRGBFillColor(context, 0, 0, 0, 0);
-    } else {
-        if (_isEmoji) {
-            CGContextSetRGBFillColor(context, 1, 1, 1, 0);
-        } else {
-            CGContextSetRGBFillColor(context, 1, 1, 1, 1);
+    // Clear exactly the drawn area, ready for next iteration/character.
+    // This is much faster than clearing the entire context (which is 5x5 cells).
+    // Must happen after RestoreGState to ensure no transforms affect the clear.
+    // Use frameFlipped:NO because CGContextClearRect uses native CoreGraphics
+    // coordinates (origin at bottom-left), not flipped coordinates.
+    CGRect drawnRect = [self frameFlipped:NO];
+    CGContextClearRect(_context, drawnRect);
+
+#if DEBUG
+    // Verify the drawn area is actually clear
+    {
+        const unsigned char *data = CGBitmapContextGetData(_context);
+        const size_t bytesPerRow = CGBitmapContextGetBytesPerRow(_context);
+        const int contextWidth = (int)_size.width;
+        const int contextHeight = (int)_size.height;
+
+        // Find actual pixel bounds in the entire context
+        int actualMinX = contextWidth, actualMaxX = 0;
+        int actualMinY = contextHeight, actualMaxY = 0;
+        for (int y = 0; y < contextHeight; y++) {
+            for (int x = 0; x < contextWidth; x++) {
+                const size_t off = y * bytesPerRow + x * 4;
+                if (data[off + 3] != 0) {
+                    if (x < actualMinX) actualMinX = x;
+                    if (x > actualMaxX) actualMaxX = x;
+                    if (y < actualMinY) actualMinY = y;
+                    if (y > actualMaxY) actualMaxY = y;
+                }
+            }
         }
-    }
-    CGRect rect = CGRectMake(0, 0, _size.width, _size.height);
-    CGContextClearRect(context, rect);
-    CGContextFillRect(context, rect);
 
-#if ENABLE_DEBUG_CHARACTER_SOURCE_ALIGNMENT
-    CGContextSetRGBStrokeColor(context, 1, 0, 0, 1);
-    for (int x = 0; x < self.maxParts; x++) {
-        for (int y = 0; y < self.maxParts; y++) {
-            CGContextStrokeRect(context, CGRectMake(x * _descriptor.glyphSize.width,
-                                                    y * _descriptor.glyphSize.height,
-                                                    _descriptor.glyphSize.width,
-                                                    _descriptor.glyphSize.height));
+        BOOL hasRemainingPixels = (actualMinX <= actualMaxX && actualMinY <= actualMaxY);
+        if (hasRemainingPixels) {
+            // Sample the first remaining pixel
+            const size_t sampleOff = actualMinY * bytesPerRow + actualMinX * 4;
+            unsigned char b = data[sampleOff + 0];
+            unsigned char g = data[sampleOff + 1];
+            unsigned char r = data[sampleOff + 2];
+            unsigned char a = data[sampleOff + 3];
+
+            NSLog(@"DEBUG iTermCharacterSource clearing failed for '%@':", self.debugName);
+            NSLog(@"  Context size: %d x %d", contextWidth, contextHeight);
+            NSLog(@"  Clear rect: %@", NSStringFromRect(drawnRect));
+            NSLog(@"  Remaining pixels: (%d,%d) to (%d,%d)", actualMinX, actualMinY, actualMaxX, actualMaxY);
+            NSLog(@"  Sample pixel at (%d,%d): R=%d G=%d B=%d A=%d", actualMinX, actualMinY, r, g, b, a);
+            NSLog(@"  Scale: %f, glyphSize: %@, radius: %d",
+                  _descriptor.scale, NSStringFromSize(_descriptor.glyphSize), _radius);
+            NSLog(@"  baselineOffset: %f", _descriptor.baselineOffset);
+
+            ITAssertWithMessage(NO,
+                                @"Context not fully cleared after drawing '%@'. "
+                                @"Clear rect: %@ Remaining: (%d,%d)-(%d,%d)",
+                                self.debugName, NSStringFromRect(drawnRect),
+                                actualMinX, actualMinY, actualMaxX, actualMaxY);
         }
     }
 #endif
@@ -431,15 +474,6 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
 
     ITAssertWithMessage(_context, @"context is null for size %@", NSStringFromSize(_size));
     _datas = [NSMutableArray array];
-}
-
-- (void)drawBackgroundIfNeededForIteration:(NSInteger)iteration
-                                   context:(CGContextRef)context {
-    if (iteration >= _nextIterationToDrawBackgroundFor) {
-        _nextIterationToDrawBackgroundFor = iteration;
-        [self fillBackgroundForIteration:iteration
-                                 context:context];
-    }
 }
 
 - (void)setTextColorForIteration:(NSInteger)iteration context:(CGContextRef)context {
@@ -499,8 +533,16 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
     [self initializeStateIfNeededWithFont:runFont];
 
     CGContextRef context = _context;
-    [self drawBackgroundIfNeededForIteration:iteration
-                                     context:context];
+    // Non-monochrome non-emoji needs white background for subpixel antialiasing.
+    // The context starts transparent and is cleared to transparent after each
+    // iteration, so we need to fill with white before the first draw.
+    // Use frameFlipped:NO because CGContextFillRect uses native CoreGraphics
+    // coordinates (origin at bottom-left), not flipped coordinates.
+    if (iteration == 0 && !iTermTextIsMonochrome() && !_isEmoji) {
+        CGRect rect = [self frameFlipped:NO];
+        CGContextSetRGBFillColor(context, 1, 1, 1, 1);
+        CGContextFillRect(context, rect);
+    }
     [self setTextColorForIteration:iteration
                            context:context];
     if (!haveInitializedThisIteration) {
@@ -743,10 +785,13 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
         frame.origin.y = _size.height - frame.origin.y - frame.size.height;
     }
 
-    CGPoint min = CGPointMake(floor(CGRectGetMinX(frame)),
-                              floor(CGRectGetMinY(frame)));
-    CGPoint max = CGPointMake(ceil(CGRectGetMaxX(frame)),
-                              ceil(CGRectGetMaxY(frame)));
+    // Add buffer because:
+    // 1. CTLineGetImageBounds doesn't account for antialiasing fringe pixels
+    // 2. CGRect's max coordinates are exclusive, so +2 needed to include boundary pixels
+    CGPoint min = CGPointMake(floor(CGRectGetMinX(frame)) - 1,
+                              floor(CGRectGetMinY(frame)) - 1);
+    CGPoint max = CGPointMake(ceil(CGRectGetMaxX(frame)) + 2,
+                              ceil(CGRectGetMaxY(frame)) + 2);
     frame = CGRectMake(min.x, min.y, max.x - min.x, max.y - min.y);
     DLog(@"%@ Bounding box for character '%@' in font %@ is %@ at scale %@",
          self, self.debugName, _font, NSStringFromRect(frame), @(_descriptor.scale));

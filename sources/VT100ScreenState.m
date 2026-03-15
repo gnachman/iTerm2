@@ -852,7 +852,7 @@ static NSRange NSRangeFromBounds(NSInteger lowerBound, NSInteger upperBound) {
     const int width = self.width;
     while (i < lastLine) {
         if (i < numLinesInLineBuffer) {
-            [self.linebuffer enumerateLinesInRange:NSMakeRange(i, lastLine - i)
+            [self.linebuffer enumerateLinesInRange:NSMakeRange(i, MAX(0, MIN(numLinesInLineBuffer, lastLine) - i))
                                              width:width
                                              block:block];
             i = numLinesInLineBuffer;

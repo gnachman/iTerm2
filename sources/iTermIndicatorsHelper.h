@@ -19,6 +19,7 @@ extern NSString *const kiTermIndicatorCoprocess;
 extern NSString *const kiTermIndicatorAlert;
 extern NSString *const kiTermIndicatorAllOutputSuppressed;
 extern NSString *const kiTermIndicatorZoomedIn;
+extern NSString *const kiTermIndicatorScreenshotMode;
 extern NSString *const kiTermIndicatorCopyMode;
 extern NSString *const kiTermIndicatorDebugLogging;
 extern NSString *const kiTermIndicatorFilter;

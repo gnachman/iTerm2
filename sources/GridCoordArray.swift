@@ -106,5 +106,36 @@ class GridCoordArray: NSObject, Codable {
         }
         coords.replaceSubrange(subrange, with: updated)
     }
+
+    /// Returns the range of indices in this array where x is in [startX, endX).
+    /// If no matching coordinates are found, returns NSNotFound for location.
+    @objc(rangeOfIndicesWithXFrom:to:)
+    func rangeOfIndices(xFrom startX: Int32, to endX: Int32) -> NSRange {
+        var start = NSNotFound
+        var end = 0
+        for (i, coord) in coords.enumerated() {
+            if coord.x >= startX && coord.x < endX {
+                if start == NSNotFound {
+                    start = i
+                }
+                end = i + 1
+            }
+        }
+        if start == NSNotFound {
+            return NSRange(location: NSNotFound, length: 0)
+        }
+        return NSRange(location: start, length: end - start)
+    }
+
+    /// Returns the index of the first coordinate with x >= targetX, or NSNotFound.
+    @objc(indexOfFirstCoordWithXGreaterOrEqual:)
+    func indexOfFirstCoord(xGreaterOrEqual targetX: Int32) -> Int {
+        for (i, coord) in coords.enumerated() {
+            if coord.x >= targetX {
+                return i
+            }
+        }
+        return NSNotFound
+    }
 }
 

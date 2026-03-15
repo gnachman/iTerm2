@@ -37,6 +37,7 @@ NSString *const kiTermIndicatorAIChatStreaming = @"kiTermIndicatorAIChatStreamin
 NSString *const kiTermIndicatorChannel = @"kiTermIndicatorChannel";
 NSString *const kiTermIndicatorBufferingInput = @"kiTermIndicatorBufferingInput";
 NSString *const kiTermIndicatorShowRememberedAlerts = @"kiTermIndicatorShowRememberedAlerts";
+NSString *const kiTermIndicatorScreenshotMode = @"kiTermIndicatorScreenshotMode";
 
 static const NSTimeInterval kFullScreenFlashDuration = 0.3;
 static const NSTimeInterval kFlashDuration = 0.3;
@@ -112,7 +113,8 @@ CGFloat kiTermIndicatorStandardHeight = 20;
             kiTermIndicatorAIChatStreaming: SFSymbolGetString(SFSymbolDotRadiowavesRight),
             kiTermIndicatorChannel: SFSymbolGetString(SFSymbolRectangleStack),
             kiTermIndicatorBufferingInput: SFSymbolGetString(SFSymbolPauseCircle),
-            kiTermIndicatorShowRememberedAlerts: SFSymbolGetString(SFSymbolBellBadge)
+            kiTermIndicatorShowRememberedAlerts: SFSymbolGetString(SFSymbolBellBadge),
+            kiTermIndicatorScreenshotMode: SFSymbolGetString(SFSymbolCamera)
         };
     });
     return symbolMap;
@@ -315,7 +317,8 @@ CGFloat kiTermIndicatorStandardHeight = 20;
               kiTermIndicatorAIChatStreaming,
               kiTermIndicatorChannel,
               kiTermIndicatorBufferingInput,
-              kiTermIndicatorShowRememberedAlerts];
+              kiTermIndicatorShowRememberedAlerts,
+              kiTermIndicatorScreenshotMode];
 }
 
 - (void)enumerateTopRightIndicatorsInFrame:(NSRect)frame andDraw:(BOOL)shouldDraw block:(void (^)(NSString *, NSImage *, NSRect, BOOL))block {
@@ -369,7 +372,8 @@ CGFloat kiTermIndicatorStandardHeight = 20;
                                          sessionID, [[NSWorkspace sharedWorkspace] it_newToken]],
         kiTermIndicatorChannel: [NSString stringWithFormat:@"This command is running within another session.\n * [Return to Enclosing Session](iterm2:pop-channel?s=%@&t=%@)", sessionID, [[NSWorkspace sharedWorkspace] it_newToken]],
         kiTermIndicatorBufferingInput: @"Keyboard input is being buffered and will be sent when a trigger stops buffering.",
-        kiTermIndicatorShowRememberedAlerts: @"Showing alerts with remembered selections. Disable via View > Always Show Alerts with Remembered Selections."
+        kiTermIndicatorShowRememberedAlerts: @"Showing alerts with remembered selections. Disable via View > Always Show Alerts with Remembered Selections.",
+        kiTermIndicatorScreenshotMode: @"In screenshot mode. Close the screenshot panel to return to normal."
     };
     return messages[name];
 }

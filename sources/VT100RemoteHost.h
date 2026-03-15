@@ -27,6 +27,8 @@
 
 @interface VT100RemoteHost : NSObject <IntervalTreeObject, VT100RemoteHostReading>
 
+@property(nonatomic, copy, readonly) NSString *guid;
+
 - (instancetype)init NS_UNAVAILABLE;
 - (instancetype)initWithUsername:(NSString *)username hostname:(NSString *)hostname NS_DESIGNATED_INITIALIZER;
 

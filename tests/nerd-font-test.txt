@@ -1,0 +1,370 @@
+================================================================================
+NERD FONT BUNDLE TEST FILE
+================================================================================
+Legend:
+  [BOTH]     = Should work in both old (v1) and new (v2)
+  [OLD ONLY] = Works in v1, REMOVED in v2 (backward compatibility break)
+  [NEW ONLY] = Added in v2, won't work in v1
+
+================================================================================
+POWERLINE SYMBOLS (PowerlineSymbols) - [BOTH]
+================================================================================
+Branch symbol (U+E0A0 in PowerlineSymbols): 
+Lock symbol (U+E0A1 in PowerlineSymbols): 
+Line number (U+E0A2 in PowerlineSymbols): 
+Right arrow solid (U+E0B0 in PowerlineSymbols): 
+Right arrow hollow (U+E0B1 in PowerlineSymbols): 
+Left arrow solid (U+E0B2 in PowerlineSymbols): 
+Left arrow hollow (U+E0B3 in PowerlineSymbols): 
+
+================================================================================
+POWERLINE EXTRA SYMBOLS (PowerlineExtraSymbols) - [BOTH]
+================================================================================
+Column number (U+E0A3 in PowerlineExtraSymbols): 
+Right hard divider (U+E0B4 in PowerlineExtraSymbols): 
+Right soft divider (U+E0B5 in PowerlineExtraSymbols): 
+Left hard divider (U+E0B6 in PowerlineExtraSymbols): 
+Left soft divider (U+E0B7 in PowerlineExtraSymbols): 
+Right bottom (U+E0B8 in PowerlineExtraSymbols): 
+Right top (U+E0BA in PowerlineExtraSymbols): 
+Left bottom (U+E0BC in PowerlineExtraSymbols): 
+Left top (U+E0BE in PowerlineExtraSymbols): 
+Flame thick (U+E0C0 in PowerlineExtraSymbols): 
+Flame thin (U+E0C2 in PowerlineExtraSymbols): 
+Pixel squares (U+E0C4 in PowerlineExtraSymbols): 
+Lego (U+E0C6 in PowerlineExtraSymbols): 
+Lego thin (U+E0C8 in PowerlineExtraSymbols): 
+Trapezoid top (U+E0CA in PowerlineExtraSymbols): 
+Honeycomb (U+E0CC in PowerlineExtraSymbols): 
+Honeycomb outline (U+E0CD in PowerlineExtraSymbols): 
+[BOTH] (U+E0D0 in PowerlineExtraSymbols): 
+[BOTH] (U+E0D1 in PowerlineExtraSymbols): 
+[NEW ONLY] (U+E0D4 in PowerlineExtraSymbols): 
+[NEW ONLY] (U+E0D6 in PowerlineExtraSymbols): 
+[NEW ONLY] (U+E0D7 in PowerlineExtraSymbols): 
+
+================================================================================
+POMICONS (Pomicons) - [BOTH]
+================================================================================
+Pomodoro clean (U+E000 in Pomicons): 
+Pomodoro ticking (U+E001 in Pomicons): 
+Pomodoro squashed (U+E002 in Pomicons): 
+Internal interruption (U+E003 in Pomicons): 
+External interruption (U+E004 in Pomicons): 
+Pair session (U+E005 in Pomicons): 
+Pomodoro done (U+E006 in Pomicons): 
+Long pause (U+E007 in Pomicons): 
+Short pause (U+E008 in Pomicons): 
+Away (U+E009 in Pomicons): 
+Pomodoro setup (U+E00A in Pomicons): 
+
+================================================================================
+FONT AWESOME - OLD RANGE (FontAwesome/FA-NerdFont-Regular) - [BOTH]
+================================================================================
+Glass (U+F000 in FA-NerdFont-Regular): 
+Music (U+F001 in FA-NerdFont-Regular): 
+Search (U+F002 in FA-NerdFont-Regular): 
+Heart (U+F004 in FA-NerdFont-Regular): 
+Star (U+F005 in FA-NerdFont-Regular): 
+User (U+F007 in FA-NerdFont-Regular): 
+Check (U+F00C in FA-NerdFont-Regular): 
+Close/X (U+F00D in FA-NerdFont-Regular): 
+Cog/Gear (U+F013 in FA-NerdFont-Regular): 
+Home (U+F015 in FA-NerdFont-Regular): 
+File (U+F016 in FA-NerdFont-Regular): 
+Clock (U+F017 in FA-NerdFont-Regular): 
+Download (U+F019 in FA-NerdFont-Regular): 
+Lock (U+F023 in FA-NerdFont-Regular): 
+Flag (U+F024 in FA-NerdFont-Regular): 
+Volume off (U+F026 in FA-NerdFont-Regular): 
+Volume up (U+F028 in FA-NerdFont-Regular): 
+Tag (U+F02B in FA-NerdFont-Regular): 
+Book (U+F02D in FA-NerdFont-Regular): 
+Bookmark (U+F02E in FA-NerdFont-Regular): 
+Camera (U+F030 in FA-NerdFont-Regular): 
+List (U+F03A in FA-NerdFont-Regular): 
+Folder (U+F07B in FA-NerdFont-Regular): 
+Folder open (U+F07C in FA-NerdFont-Regular): 
+GitHub (U+F09B in FA-NerdFont-Regular): 
+Terminal (U+F120 in FA-NerdFont-Regular): 
+Code (U+F121 in FA-NerdFont-Regular): 
+Linux (U+F17C in FA-NerdFont-Regular): 
+Apple (U+F179 in FA-NerdFont-Regular): 
+Git (U+F1D3 in FA-NerdFont-Regular): 
+Wifi (U+F1EB in FA-NerdFont-Regular): 
+Battery full (U+F240 in FA-NerdFont-Regular): 
+Battery empty (U+F244 in FA-NerdFont-Regular): 
+
+================================================================================
+FONT AWESOME - NEW EXTENDED RANGE (FA-NerdFont-Regular) - [NEW ONLY]
+================================================================================
+NEW: ED00 range (U+ED00 in FA-NerdFont-Regular): 
+NEW: ED50 (U+ED50 in FA-NerdFont-Regular): 
+NEW: EDFF (U+EDFF in FA-NerdFont-Regular): 
+NEW: EE0C (U+EE0C in FA-NerdFont-Regular): 
+NEW: EE50 (U+EE50 in FA-NerdFont-Regular): 
+NEW: EF00 (U+EF00 in FA-NerdFont-Regular): 
+NEW: EF50 (U+EF50 in FA-NerdFont-Regular): 
+NEW: EFC0 (U+EFC0 in FA-NerdFont-Regular): 
+
+================================================================================
+*** PROGRESS BAR INDICATORS *** (FA-NerdFont-Regular) - [NEW ONLY]
+================================================================================
+These are the requested progress bar glyphs from issue #12758:
+
+Progress 0 (U+EFC3 in FA-NerdFont-Regular): 
+Progress 1 (U+EFC4 in FA-NerdFont-Regular): 
+Progress 2 (U+EFC5 in FA-NerdFont-Regular): 
+Progress 3 (U+EFC6 in FA-NerdFont-Regular): 
+Progress 4 (U+EFC7 in FA-NerdFont-Regular): 
+Progress 5 (U+EFC8 in FA-NerdFont-Regular): 
+Progress 6 (U+EFC9 in FA-NerdFont-Regular): 
+Progress 7 (U+EFCA in FA-NerdFont-Regular): 
+Progress 8 (U+EFCB in FA-NerdFont-Regular): 
+Progress 9 (U+EFCC in FA-NerdFont-Regular): 
+Progress 10 (U+EFCD in FA-NerdFont-Regular): 
+Progress 11 (U+EFCE in FA-NerdFont-Regular): 
+
+All progress indicators on one line: 
+
+================================================================================
+FONT AWESOME EXTENSION (font-awesome-extension) - [BOTH]
+================================================================================
+FA Ext (U+E200 in font-awesome-extension): 
+FA Ext (U+E210 in font-awesome-extension): 
+FA Ext (U+E250 in font-awesome-extension): 
+FA Ext end (U+E2A9 in font-awesome-extension): 
+
+================================================================================
+DEVICONS (Devicons-NerdFont-Regular, was icomoon) - [BOTH]
+================================================================================
+Note: Font name changed from "icomoon" to "Devicons-NerdFont-Regular"
+Git (U+E702 in Devicons): 
+Git branch (U+E703 in Devicons): 
+GitHub badge (U+E709 in Devicons): 
+NPM (U+E71E in Devicons): 
+HTML5 (U+E736 in Devicons): 
+Java (U+E738 in Devicons): 
+Ruby (U+E739 in Devicons): 
+Python (U+E73C in Devicons): 
+PHP (U+E73D in Devicons): 
+Markdown (U+E73E in Devicons): 
+CSS3 (U+E749 in Devicons): 
+JavaScript (U+E74E in Devicons): 
+Angular (U+E753 in Devicons): 
+Docker (U+E7B0 in Devicons): 
+React (U+E7BA in Devicons): 
+
+================================================================================
+DEVICONS - EXTENDED RANGE - [NEW ONLY]
+================================================================================
+NEW: (U+E7C0 in Devicons): 
+NEW: (U+E800 in Devicons): 
+NEW: end (U+E8EF in Devicons): 
+
+================================================================================
+CODICONS (codicon) - [BOTH]
+================================================================================
+Add (U+EA60 in codicon): 
+Plus (U+EA61 in codicon): 
+Lightbulb (U+EA65 in codicon): 
+Archive (U+EA70 in codicon): 
+Account (U+EA76 in codicon): 
+Code (U+EA77 in codicon): 
+Bug (U+EA87 in codicon): 
+Bell (U+EA8A in codicon): 
+Check (U+EAB2 in codicon): 
+Cloud (U+EBAA in codicon): 
+
+================================================================================
+CODICONS - EXTENDED RANGE - [NEW ONLY]
+================================================================================
+NEW: (U+EB50 in codicon): 
+NEW: (U+EC00 in codicon): 
+NEW: end (U+EC1E in codicon): 
+
+================================================================================
+WEATHER ICONS (WeatherIcons-Regular) - [BOTH]
+================================================================================
+Note: Font name changed from "Weather Icons Regular" to "WeatherIcons-Regular"
+Day sunny (U+E300 in WeatherIcons): 
+Day cloudy (U+E302 in WeatherIcons): 
+Day rain (U+E308 in WeatherIcons): 
+Day snow (U+E30A in WeatherIcons): 
+Day thunderstorm (U+E30E in WeatherIcons): 
+Cloudy (U+E312 in WeatherIcons): 
+Rain (U+E318 in WeatherIcons): 
+Snow (U+E31A in WeatherIcons): 
+Night clear (U+E32B in WeatherIcons): 
+Night cloudy (U+E32E in WeatherIcons): 
+Cloud (U+E33D in WeatherIcons): 
+Celsius (U+E339 in WeatherIcons): 
+Fahrenheit (U+E341 in WeatherIcons): 
+Thermometer (U+E350 in WeatherIcons): 
+Sunrise (U+E34B in WeatherIcons): 
+Sunset (U+E34C in WeatherIcons): 
+
+================================================================================
+OCTICONS (OcticonsNerdFont-Regular) - [BOTH]
+================================================================================
+Note: Font name changed from "Octicons" to "OcticonsNerdFont-Regular"
+Heart (U+2665 in Octicons): ♥
+Zap (U+26A1 in Octicons): ⚡
+Light bulb (U+F400 in Octicons): 
+Repo (U+F401 in Octicons): 
+Repo forked (U+F402 in Octicons): 
+Book (U+F405 in Octicons): 
+Octoface (U+F406 in Octicons): 
+Git pull request (U+F407 in Octicons): 
+GitHub logo (U+F408 in Octicons): 
+File directory (U+F413 in Octicons): 
+Person (U+F415 in Octicons): 
+Git branch (U+F418 in Octicons): 
+Git merge (U+F419 in Octicons): 
+Issue opened (U+F41B in Octicons): 
+Issue closed (U+F41D in Octicons): 
+Star (U+F41E in Octicons): 
+Check (U+F42E in Octicons): 
+X (U+F467 in Octicons): 
+Sync (U+F46A in Octicons): 
+Terminal (U+F489 in Octicons): 
+Markdown (U+F48A in Octicons): 
+
+================================================================================
+OCTICONS - EXTENDED RANGE - [NEW ONLY]
+================================================================================
+NEW: (U+F4C0 in Octicons): 
+NEW: (U+F500 in Octicons): 
+NEW: end range (U+F533 in Octicons): 
+
+================================================================================
+FONT LOGOS (font-logos) - [BOTH]
+================================================================================
+Alma linux (U+F300 in font-logos): 
+Alpine (U+F301 in font-logos): 
+Apple (U+F302 in font-logos): 
+Archlinux (U+F303 in font-logos): 
+Debian (U+F306 in font-logos): 
+Fedora (U+F30A in font-logos): 
+FreeBSD (U+F30C in font-logos): 
+Mint (U+F30E in font-logos): 
+Ubuntu (U+F31B in font-logos): 
+Windows (U+F31A in font-logos): 
+
+================================================================================
+FONT LOGOS - EXTENDED RANGE - [NEW ONLY]
+================================================================================
+NEW: (U+F320 in font-logos): 
+NEW: (U+F350 in font-logos): 
+NEW: end (U+F381 in font-logos): 
+
+================================================================================
+MATERIAL DESIGN ICONS DESKTOP (MaterialDesignIconsDesktop) - [BOTH]
+================================================================================
+Note: v1 had two MDI fonts, v2 consolidates to just MaterialDesignIconsDesktop
+Ab testing (U+F0001 in MDI): 󰀁
+Account (U+F0004 in MDI): 󰀄
+Account circle (U+F0009 in MDI): 󰀉
+Airplane (U+F0010 in MDI): 󰀐
+Alert (U+F0026 in MDI): 󰀦
+Android (U+F0032 in MDI): 󰀲
+Apple (U+F0035 in MDI): 󰀵
+Bell (U+F009A in MDI): 󰂚
+Bluetooth (U+F00AF in MDI): 󰂯
+Book (U+F00BA in MDI): 󰂺
+Bug (U+F00E4 in MDI): 󰃤
+Calendar (U+F00ED in MDI): 󰃭
+Camera (U+F00F6 in MDI): 󰃶
+Cloud (U+F0163 in MDI): 󰅣
+Coffee (U+F0176 in MDI): 󰅶
+Cog (U+F0493 in MDI): 󰒓
+Database (U+F01BC in MDI): 󰆼
+Docker (U+F0868 in MDI): 󰡨
+Download (U+F01DA in MDI): 󰇚
+Email (U+F01EE in MDI): 󰇮
+File (U+F0214 in MDI): 󰈔
+Folder (U+F024B in MDI): 󰉋
+Git (U+F02A2 in MDI): 󰊢
+GitHub (U+F02A4 in MDI): 󰊤
+Home (U+F02DC in MDI): 󰋜
+Lock (U+F033E in MDI): 󰌾
+Terminal (U+F0588 in MDI): 󰖈
+Wifi (U+F05A9 in MDI): 󰖩
+
+================================================================================
+MATERIAL DESIGN ICONS - EXTENDED RANGE - [NEW ONLY]
+================================================================================
+v2 greatly expands MDI coverage (6,896 -> 110,320 glyphs)
+NEW: (U+F1000 in MDI): 󱀀
+NEW: (U+F1200 in MDI): 󱈀
+NEW: (U+F1500 in MDI): 󱔀
+NEW: (U+F1800 in MDI): 󱠀
+NEW: end (U+F1AF0 in MDI): 󱫰
+
+================================================================================
+SETI UI / CUSTOM FILE TYPES (NerdFontFileTypes-Regular) - [BOTH]
+================================================================================
+Note: Font name changed from "Nerd Font File Types Regular" to "NerdFontFileTypes-Regular"
+(U+E5FA in Seti): 
+(U+E5FB in Seti): 
+(U+E5FC in Seti): 
+(U+E600 in Seti): 
+(U+E610 in Seti): 
+(U+E620 in Seti): 
+(U+E628 in Seti): 
+(U+E650 in Seti): 
+(U+E6A0 in Seti): 
+
+================================================================================
+SETI UI - EXTENDED RANGE - [NEW ONLY]
+================================================================================
+NEW: (U+E6B0 in Seti): 
+NEW: end (U+E6B5 in Seti): 
+
+================================================================================
+UNICODE IEC SYMBOLS (UnicodeIECsymbol) - [OLD ONLY - REMOVED IN V2]
+================================================================================
+These symbols are REMOVED in v2 and will no longer render from the bundle:
+Power on-off (U+23FB in UnicodeIECsymbol): ⏻
+Power on (U+23FC in UnicodeIECsymbol): ⏼
+Power off (U+23FD in UnicodeIECsymbol): ⏽
+Power sleep (U+23FE in UnicodeIECsymbol): ⏾
+Toggle power (U+2B58 in UnicodeIECsymbol): ⭘
+
+================================================================================
+MATERIAL DESIGN ICONS (non-Desktop) - [OLD ONLY - REMOVED IN V2]
+================================================================================
+OLD: These were mapped from "Material Design Icons" (not Desktop) font
+OLD: The F4XX-F8FF range is REMOVED in v2. Use F0XXXX range instead.
+(U+F500 - old MDI mapped): 
+(U+F600 - old MDI mapped): 
+(U+F700 - old MDI mapped): 
+(U+F800 - old MDI mapped): 
+
+================================================================================
+SUMMARY OF COMPATIBILITY CHANGES
+================================================================================
+
+REMOVED in v2 (backward compatibility breaks):
+- UnicodeIECsymbol (U+23FB-23FE, U+2B58) - Power symbols
+- Material Design Icons mapped to F4XX-F8FF range
+- Minor PowerlineExtraSymbols gaps
+
+ADDED in v2 (new features):
+- Progress bar indicators (U+EFC3-EFCE) - THE MAIN FEATURE REQUEST!
+- FontAwesome extended range (U+ED00-EDFF, U+EE0C-EFCE)
+- Extended Devicons (U+E7C0-E8EF)
+- Extended Codicons (U+EB50-EC1E)
+- Extended Font Logos (U+F320-F381)
+- Extended Material Design Icons Desktop (much larger range)
+- Extended Octicons range (U+F4C0-F533)
+- Extended Seti UI (U+E6B0-E6B5)
+- PowerlineExtraSymbols U+E0D4, U+E0D6-E0D7
+
+FONT NAME CHANGES (same glyphs, different PostScript name):
+- "FontAwesome" -> "FA-NerdFont-Regular"
+- "icomoon" -> "Devicons-NerdFont-Regular"
+- "Weather Icons Regular" -> "WeatherIcons-Regular"
+- "Octicons" -> "OcticonsNerdFont-Regular"
+- "Material Design Icons Desktop" -> "MaterialDesignIconsDesktop"
+- "Nerd Font File Types Regular" -> "NerdFontFileTypes-Regular"

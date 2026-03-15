@@ -29,6 +29,11 @@ NS_ASSUME_NONNULL_BEGIN
                      generation:(NSInteger)generation
                           block:(BOOL (^ NS_NOESCAPE)(id<iTermEncoderAdapter> encoder))block;
 
+- (BOOL)encodeChildWithKey:(NSString *)key
+                identifier:(NSString *)identifier
+                generation:(NSInteger)generation
+                     block:(BOOL (^ NS_NOESCAPE)(id<iTermEncoderAdapter> encoder))block;
+
 - (void)encodeArrayWithKey:(NSString *)key
                identifiers:(NSArray<NSString *> *)identifiers
                 generation:(NSInteger)generation

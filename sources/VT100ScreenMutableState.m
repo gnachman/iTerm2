@@ -3989,7 +3989,9 @@ void VT100ScreenEraseCell(screen_char_t *sct,
         [self.mutableIntervalTree addObject:commandMark withInterval:commandMarkInterval];
     }
 
-    [self incrementOverflowBy:[self.linebuffer dropExcessLinesWithWidth:self.width]];
+    if (!self.config.unlimitedScrollback) {
+        [self incrementOverflowBy:[self.linebuffer dropExcessLinesWithWidth:self.width]];
+    }
     if (self.config.useLineStyleMarks) {
         [self movePromptUnderComposerIfNeeded];
     }
@@ -5230,7 +5232,11 @@ lengthExcludingInBandSignaling:data.length
         self.shellIntegrationInstalled = [screenState[kScreenStateShellIntegrationInstalledKey] boolValue];
 
 
-        [self.mutableIntervalTree restoreFromDictionary:screenState[kScreenStateIntervalTreeKey]];
+        // Try graph decoding first (new format with delta encoding), fall back to dictionary format
+        NSDictionary *intervalTreeDict = screenState[kScreenStateIntervalTreeKey];
+        if (![self.mutableIntervalTree restoreFromGraphRecord:intervalTreeDict offset:0]) {
+            [self.mutableIntervalTree restoreFromDictionary:intervalTreeDict];
+        }
         [self fixUpDeserializedIntervalTree:self.mutableIntervalTree
                                     visible:YES
                       guidOfLastCommandMark:guidOfLastCommandMark];

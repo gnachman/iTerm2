@@ -8,12 +8,16 @@
 
 #import "iTermMark.h"
 #import "CapturedOutput.h"
+#import "DebugLogging.h"
 #import "NSDictionary+iTerm.h"
+
+static NSString *const kMarkGuidKey = @"Guid";
 
 @implementation iTermMark {
     iTermMark *_doppelganger;
     __weak iTermMark *_progenitor;
     BOOL _isDoppelganger;
+    NSString *_guid;
 }
 
 @synthesize entry;
@@ -21,12 +25,39 @@
 
 #pragma mark - IntervalTreeObject
 
+- (instancetype)init {
+    self = [super init];
+    if (self) {
+        _guid = [[[NSUUID UUID] UUIDString] copy];
+    }
+    return self;
+}
+
 - (instancetype)initWithDictionary:(NSDictionary *)dict {
-    return [super init];
+    self = [super init];
+    if (self) {
+        NSString *savedGuid = dict[kMarkGuidKey];
+        if (savedGuid) {
+            _guid = [savedGuid copy];
+        } else {
+            // Generate new GUID if not present in dictionary (old format or new object)
+            _guid = [[[NSUUID UUID] UUIDString] copy];
+        }
+    }
+    return self;
+}
+
+- (NSString *)guid {
+    return _guid;
+}
+
+- (NSString *)stableIdentifier {
+    return _guid;
 }
 
 - (NSDictionary *)dictionaryValue {
-    return @{};
+    ITAssertWithMessage(_guid != nil, @"guid should never be nil");
+    return @{ kMarkGuidKey: _guid };
 }
 
 - (NSDictionary *)dictionaryValueWithTypeInformation {
@@ -104,6 +135,10 @@
 
 - (BOOL)isVisible {
     return YES;
+}
+
+- (void)copyGuidFrom:(iTermMark *)source {
+    _guid = [source->_guid copy];
 }
 
 #pragma mark - NSCopying

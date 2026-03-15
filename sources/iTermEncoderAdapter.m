@@ -40,7 +40,14 @@
 - (BOOL)encodeDictionaryWithKey:(NSString *)key
                      generation:(NSInteger)generation
                           block:(BOOL (^ NS_NOESCAPE)(id<iTermEncoderAdapter> encoder))block {
-    return [_encoder encodeChildWithKey:key identifier:@"" generation:generation block:^BOOL (iTermGraphEncoder * _Nonnull subencoder) {
+    return [self encodeChildWithKey:key identifier:@"" generation:generation block:block];
+}
+
+- (BOOL)encodeChildWithKey:(NSString *)key
+                identifier:(NSString *)identifier
+                generation:(NSInteger)generation
+                     block:(BOOL (^ NS_NOESCAPE)(id<iTermEncoderAdapter> encoder))block {
+    return [_encoder encodeChildWithKey:key identifier:identifier generation:generation block:^BOOL (iTermGraphEncoder * _Nonnull subencoder) {
         return block([[iTermGraphEncoderAdapter alloc] initWithGraphEncoder:subencoder]);
     }];
 }
@@ -125,6 +132,13 @@
 - (BOOL)encodeDictionaryWithKey:(NSString *)key
                            generation:(NSInteger)generation
                                 block:(BOOL (^ NS_NOESCAPE)(id<iTermEncoderAdapter> encoder))block {
+    return [self encodeChildWithKey:key identifier:@"" generation:generation block:block];
+}
+
+- (BOOL)encodeChildWithKey:(NSString *)key
+                identifier:(NSString *)identifier
+                generation:(NSInteger)generation
+                     block:(BOOL (^ NS_NOESCAPE)(id<iTermEncoderAdapter> encoder))block {
     NSMutableDictionary *dict = [NSMutableDictionary dictionary];
     if (!block([[iTermMutableDictionaryEncoderAdapter alloc] initWithMutableDictionary:dict])) {
         return NO;

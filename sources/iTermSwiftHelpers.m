@@ -6,6 +6,13 @@
 //
 
 #import "iTermSwiftHelpers.h"
+#import <stdatomic.h>
+
+static _Atomic NSInteger gNextObjectGeneration = 1;
+
+NSInteger iTermAllocateObjectGeneration(void) {
+    return atomic_fetch_add(&gNextObjectGeneration, 1);
+}
 
 @implementation ObjC: NSObject
 

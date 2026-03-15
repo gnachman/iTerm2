@@ -17,7 +17,6 @@
 #import "iTermPromise.h"
 
 static NSString *const kScreenMarkIsPrompt = @"Is Prompt";
-static NSString *const kMarkGuidKey = @"Guid";
 static NSString *const kMarkCapturedOutputKey = @"Captured Output";
 static NSString *const kMarkCommandKey = @"Command";
 static NSString *const kMarkCodeKey = @"Code";
@@ -40,7 +39,6 @@ static NSString *const kMarkOutputStart = @"Output Start";
 }
 
 @synthesize isPrompt = _isPrompt;
-@synthesize guid = _guid;
 @synthesize clearCount = _clearCount;
 @synthesize capturedOutput = _capturedOutput;
 @synthesize code = _code;
@@ -114,11 +112,6 @@ static NSString *const kMarkOutputStart = @"Output Start";
             _hasCode = YES;
         }
         _isPrompt = [dict[kScreenMarkIsPrompt] boolValue];
-        if ([dict[kMarkGuidKey] isKindOfClass:[NSString class]]) {
-            _guid = [dict[kMarkGuidKey] copy];
-        } else {
-            _guid = [NSString uuid];
-        }
         _sessionGuid = [dict[kMarkSessionGuidKey] copy];
         NSTimeInterval start = [dict[kMarkStartDateKey] doubleValue];
         if (start > 0) {
@@ -181,7 +174,7 @@ static NSString *const kMarkOutputStart = @"Output Start";
     mark->_lineStyle = _lineStyle;
     mark->_hasCode = _hasCode;
     mark->_isPrompt = _isPrompt;
-    mark->_guid = [_guid copy];
+    [mark copyGuidFrom:self];
     mark->_sessionGuid = [_sessionGuid copy];
     mark->_startDate = _startDate;
     mark->_name = [_name copy];
@@ -202,7 +195,7 @@ static NSString *const kMarkOutputStart = @"Output Start";
     @synchronized([VT100ScreenMark class]) {
         // I think this is not needed because we use weak pointers but I also don't trust
         // NSMapTable to ever remove dead objects. Do this to avoid a possible waste of memory.
-        [[self.class registry] removeObjectForKey:_guid];
+        [[self.class registry] removeObjectForKey:self.guid];
     }
 }
 
@@ -210,7 +203,7 @@ static NSString *const kMarkOutputStart = @"Output Start";
     return [NSString stringWithFormat:@"<%@: %p guid=%@ lineStyle=%@ name=%@ command=%@ name=%@ %@>",
             NSStringFromClass([self class]),
             self,
-            _guid,
+            self.guid,
             @(_lineStyle),
             _name,
             _command,
@@ -222,12 +215,6 @@ static NSString *const kMarkOutputStart = @"Output Start";
     return self.entry.interval.location;
 }
 
-- (NSString *)guid {
-    if (!_guid) {
-        self.guid = [NSString uuid];
-    }
-    return _guid;
-}
 
 - (NSArray *)capturedOutputDictionaries {
     NSMutableArray *array = [NSMutableArray array];
@@ -240,7 +227,6 @@ static NSString *const kMarkOutputStart = @"Output Start";
 - (NSDictionary *)dictionaryValue {
     NSMutableDictionary *dict = [[super dictionaryValue] mutableCopy];
     dict[kScreenMarkIsPrompt] = @(_isPrompt);
-    dict[kMarkGuidKey] = self.guid;
     dict[kMarkCapturedOutputKey] = [self capturedOutputDictionaries];
     dict[kMarkHasCode] = @(_hasCode);
     dict[kMarkCodeKey] = @(_code);

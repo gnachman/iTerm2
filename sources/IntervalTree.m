@@ -1,5 +1,7 @@
 #import "IntervalTree.h"
 #import "DebugLogging.h"
+#import "iTermEncoderAdapter.h"
+#import "iTermGraphEncoder.h"
 #import "NSArray+iTerm.h"
 
 static const long long kMinLocation = LLONG_MIN / 2;
@@ -12,6 +14,9 @@ static NSString *const kIntervalTreeClassNameKey = @"Class";
 
 static NSString *const kIntervalLocationKey = @"Location";
 static NSString *const kIntervalLengthKey = @"Length";
+
+// Graph encoding keys
+static NSString *const kIntervalTreeObjectsKey = @"objects";
 
 @interface IntervalTreeValue : NSObject
 @property(nonatomic, assign) long long maxLimitAtSubtree;
@@ -1260,13 +1265,135 @@ static NSString *const kIntervalLengthKey = @"Length";
 - (NSDictionary *)dictionaryValueWithOffset:(long long)offset {
     NSMutableArray *objectDicts = [NSMutableArray array];
     for (id<IntervalTreeObject> object in self.allObjects) {
-        Interval *interval = [Interval intervalWithLocation:object.entry.interval.location + offset
-                                                     length:object.entry.interval.length];
+        // Skip objects that would have negative limits after adjustment - they represent
+        // content that has scrolled off and isn't being saved.
+        long long adjustedLocation = object.entry.interval.location + offset;
+        long long adjustedLength = object.entry.interval.length;
+        const long long adjustedLimit = adjustedLocation + adjustedLength;
+        if (adjustedLimit < 0) {
+            continue;
+        }
+        // Clip intervals that start before the saved region but extend into it.
+        if (adjustedLocation < 0) {
+            adjustedLength += adjustedLocation;  // Reduce length by the negative offset
+            adjustedLocation = 0;
+        }
+        Interval *interval = [Interval intervalWithLocation:adjustedLocation
+                                                     length:adjustedLength];
         [objectDicts addObject:@{ kIntervalTreeIntervalKey: interval.dictionaryValue,
                                   kIntervalTreeObjectKey: object.dictionaryValue,
                                   kIntervalTreeClassNameKey: NSStringFromClass(object.class) }];
     }
     return @{ kIntervalTreeEntriesKey: objectDicts };
+}
+
+#pragma mark - Graph Encoding
+
+- (void)encodeWithEncoder:(id<iTermEncoderAdapter>)encoder
+                   offset:(long long)offset {
+    // Build identifier list from all objects, filtering out those that would have negative
+    // limits after adjustment (they represent content that has scrolled off).
+    NSMutableArray<NSString *> *identifiers = [NSMutableArray array];
+    NSMutableDictionary<NSString *, id<IntervalTreeObject>> *objectsByGuid = [NSMutableDictionary dictionary];
+
+    for (id<IntervalTreeObject> object in self.allObjects) {
+        const long long adjustedLimit = object.entry.interval.location + offset + object.entry.interval.length;
+        if (adjustedLimit < 0) {
+            continue;
+        }
+        NSString *identifier = object.stableIdentifier;
+        [identifiers addObject:identifier];
+        objectsByGuid[identifier] = object;
+    }
+
+    [encoder encodeArrayWithKey:kIntervalTreeObjectsKey
+                    identifiers:identifiers
+                     generation:iTermGenerationAlwaysEncode
+                          block:^BOOL(id<iTermEncoderAdapter> subencoder,
+                                      NSInteger i,
+                                      NSString *identifier,
+                                      BOOL *stop) {
+        id<IntervalTreeObject> object = objectsByGuid[identifier];
+        Interval *interval = object.entry.interval;
+
+        // Compute adjusted interval, clipping to non-negative location if needed.
+        long long adjustedLocation = interval.location + offset;
+        long long adjustedLength = interval.length;
+        if (adjustedLocation < 0) {
+            adjustedLength += adjustedLocation;  // Reduce length by the negative offset
+            adjustedLocation = 0;
+        }
+        Interval *adjustedInterval = [Interval intervalWithLocation:adjustedLocation
+                                                             length:adjustedLength];
+        [subencoder mergeDictionary:@{
+            kIntervalTreeIntervalKey: adjustedInterval.dictionaryValue,
+            kIntervalTreeClassNameKey: NSStringFromClass(object.class)
+        }];
+
+        // Content - use generation if available (e.g., FoldMark), otherwise always encode.
+        // Objects with a generation property (like FoldMark) have immutable content, so we only
+        // need to encode them once; the delta encoder will skip subsequent saves.
+        NSInteger gen = iTermGenerationAlwaysEncode;
+        if ([object respondsToSelector:@selector(generation)]) {
+            gen = [(id)object generation];
+        }
+
+        return [subencoder encodeDictionaryWithKey:@"content"
+                                       generation:gen
+                                            block:^BOOL(id<iTermEncoderAdapter> contentEncoder) {
+            [contentEncoder mergeDictionary:object.dictionaryValue];
+            return YES;
+        }];
+    }];
+}
+
+- (BOOL)restoreFromGraphRecord:(NSDictionary *)dict
+                        offset:(long long)offset {
+    // Check if this is graph-encoded format (has "objects" key)
+    NSArray *objects = dict[kIntervalTreeObjectsKey];
+    if (!objects) {
+        return NO;
+    }
+
+    for (NSDictionary *entry in objects) {
+        NSDictionary *intervalDict = entry[kIntervalTreeIntervalKey];
+        NSDictionary *contentDict = entry[@"content"];
+        NSString *className = entry[kIntervalTreeClassNameKey];
+
+        if (!intervalDict || !contentDict || !className) {
+            continue;
+        }
+
+        Class theClass = NSClassFromString(className);
+        if (!theClass) {
+            continue;
+        }
+        if (![theClass conformsToProtocol:@protocol(IntervalTreeObject)]) {
+            continue;
+        }
+        if (![theClass instancesRespondToSelector:@selector(initWithDictionary:)]) {
+            continue;
+        }
+
+        id<IntervalTreeObject> object = [[[theClass alloc] initWithDictionary:contentDict] autorelease];
+        if (!object) {
+            continue;
+        }
+
+        Interval *interval = [Interval intervalWithDictionary:intervalDict];
+        if (!interval) {
+            continue;
+        }
+
+        // Adjust for offset (the stored interval has offset baked in, so subtract it)
+        interval = [Interval intervalWithLocation:interval.location - offset
+                                           length:interval.length];
+        if (interval.limit >= 0) {
+            [self addObject:object withInterval:interval];
+        }
+    }
+
+    return YES;
 }
 
 @end
@@ -1392,6 +1519,15 @@ static NSString *const kIntervalLengthKey = @"Length";
     }];
 }
 
+- (void)encodeWithGraphEncoder:(iTermGraphEncoder *)encoder
+                        offset:(long long)offset {
+    [_source encodeWithGraphEncoder:encoder offset:offset];
+}
+
+- (void)encodeWithEncoder:(id<iTermEncoderAdapter>)encoder
+                   offset:(long long)offset {
+    [_source encodeWithEncoder:encoder offset:offset];
+}
 
 @end
 

@@ -94,5 +94,9 @@ NSPopoverDelegate> {
 - (BOOL)mouseIsOverButtonInEvent:(NSEvent *)event;
 - (void)addViewForNote:(id<PTYAnnotationReading>)annotation focus:(BOOL)focus visible:(BOOL)visible;
 
+// Creates a new drawing helper configured for offscreen rendering (screenshots, etc.).
+// Interactive features (cursor, selection, marks) are disabled.
+- (iTermTextDrawingHelper *)newDrawingHelperForOffscreenRendering;
+
 @end
 

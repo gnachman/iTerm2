@@ -85,11 +85,11 @@ def find_or_create_group(project, file_path)
   current_group = project.main_group
 
   components.each do |component|
-    # Look for existing group
-    child = current_group.children.find { |c| c.is_a?(Xcodeproj::Project::Object::PBXGroup) && c.name == component }
-
-    # Also check by path if name doesn't match
-    child ||= current_group.children.find { |c| c.is_a?(Xcodeproj::Project::Object::PBXGroup) && c.path == component }
+    # Look for existing group using display_name, which is how Xcode shows group names
+    # (display_name returns name || path, matching what Xcode displays)
+    child = current_group.children.find { |c|
+      c.is_a?(Xcodeproj::Project::Object::PBXGroup) && c.display_name == component
+    }
 
     if child
       current_group = child

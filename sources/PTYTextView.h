@@ -72,6 +72,7 @@ extern NSTimeInterval PTYTextViewHighlightLineAnimationDuration;
 
 extern NSNotificationName iTermPortholesDidChange;
 extern NSNotificationName PTYTextViewWillChangeFontNotification;
+extern NSNotificationName PTYTextViewSelectionDidChangeNotification;
 extern const CGFloat PTYTextViewMarginClickGraceWidth;
 
 @protocol PTYTextViewDelegate <NSObject, iTermBadgeLabelDelegate, iTermObject>
@@ -204,6 +205,8 @@ extern const CGFloat PTYTextViewMarginClickGraceWidth;
 - (BOOL)textViewSessionIsStreamingToAIChat;
 - (BOOL)textViewSessionHasChannelParent;
 - (BOOL)textViewIsBufferingInput;
+- (BOOL)textViewIsInScreenshotMode;
+- (BOOL)textViewIsSyntheticSession;
 
 // Is it possible to restart this session?
 - (BOOL)isRestartable;

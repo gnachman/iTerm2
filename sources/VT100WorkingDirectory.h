@@ -15,6 +15,8 @@
 
 @interface VT100WorkingDirectory : NSObject <IntervalTreeObject, VT100WorkingDirectoryReading>
 
+@property(nonatomic, copy, readonly) NSString *guid;
+
 - (instancetype)initWithDirectory:(NSString*)directory NS_DESIGNATED_INITIALIZER;
 - (instancetype)init NS_UNAVAILABLE;
 

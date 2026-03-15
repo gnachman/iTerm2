@@ -8,6 +8,7 @@
 #import "DVR.h"
 #import "iTerm2SharedARC-Swift.h"
 #import "iTermAdvancedSettingsModel.h"
+#import "iTermEncoderAdapter.h"
 #import "iTermCapturedOutputMark.h"
 #import "iTermColorMap.h"
 #import "iTermExternalAttributeIndex.h"
@@ -1419,14 +1420,14 @@ additionalWordCharacters:(NSString *)additionalWordCharacters
         NSDictionary *extra;
 
         // Interval tree
+        long long capturedIntervalOffset;
         if ([iTermAdvancedSettingsModel useNewContentFormat]) {
             long long intervalOffset = 0;
             const int linesDroppedForBrevity = [self numberOfLinesDroppedWhenEncodingModernFormatWithEncoder:encoder
                                                                                               intervalOffset:&intervalOffset
                                                                                                    unlimited:unlimited];
-            extra = @{
-                kScreenStateIntervalTreeKey: [_state.intervalTree dictionaryValueWithOffset:intervalOffset] ?: @{},
-            };
+            extra = @{};
+            capturedIntervalOffset = intervalOffset;
             if (linesDroppedOut) {
                 *linesDroppedOut = linesDroppedForBrevity;
             }
@@ -1434,14 +1435,17 @@ additionalWordCharacters:(NSString *)additionalWordCharacters
             long long intervalOffset = 0;
             const int linesDroppedForBrevity = [self numberOfLinesDroppedWhenEncodingLegacyFormatWithEncoder:encoder
                                                                                               intervalOffset:&intervalOffset];
+            capturedIntervalOffset = intervalOffset;
             extra = @{
-                kScreenStateIntervalTreeKey: [_state.intervalTree dictionaryValueWithOffset:intervalOffset] ?: @{},
                 kScreenStateCursorCoord: VT100GridCoordToDictionary(_state.primaryGrid.cursor),
             };
             if (linesDroppedOut) {
                 *linesDroppedOut = linesDroppedForBrevity;
             }
         }
+
+        // Encode interval tree using graph encoding for efficient delta encoding
+        id<IntervalTreeReading> intervalTree = _state.intervalTree;
 
         [encoder encodeDictionaryWithKey:kScreenStateKey
                               generation:iTermGenerationAlwaysEncode
@@ -1474,6 +1478,14 @@ additionalWordCharacters:(NSString *)additionalWordCharacters
             };
             dict = [dict dictionaryByRemovingNullValues];
             [encoder mergeDictionary:dict];
+
+            // Encode interval tree using graph encoding for efficient delta encoding of large marks
+            [encoder encodeDictionaryWithKey:kScreenStateIntervalTreeKey
+                                  generation:iTermGenerationAlwaysEncode
+                                       block:^BOOL(id<iTermEncoderAdapter> subencoder) {
+                [intervalTree encodeWithEncoder:subencoder offset:capturedIntervalOffset];
+                return YES;
+            }];
             return YES;
         }];
     }];

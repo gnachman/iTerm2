@@ -18,6 +18,8 @@ static NSString *const kSelectionSubSelectionsKey = @"Sub selections";
 
 static NSString *const kiTermSubSelectionRange = @"Range";
 static NSString *const kiTermSubSelectionMode = @"Mode";
+static NSString *const kiTermSubSelectionOriginatedFromBoxSelection = @"Originated From Box Selection";
+static NSString *const kiTermSubSelectionBoxColumnBounds = @"Box Column Bounds";
 
 @implementation iTermSubSelection
 
@@ -37,9 +39,14 @@ static NSString *const kiTermSubSelectionMode = @"Mode";
     VT100GridAbsWindowedRange range;
     range = VT100GridAbsWindowedRangeFromWindowedRange([dict[kiTermSubSelectionRange] gridWindowedRange],
                                                        totalScrollbackOverflow);
-    return [self subSelectionWithAbsRange:range
-                                     mode:[dict[kiTermSubSelectionMode] intValue]
-                                    width:width];
+    iTermSubSelection *sub = [self subSelectionWithAbsRange:range
+                                                       mode:[dict[kiTermSubSelectionMode] intValue]
+                                                      width:width];
+    if ([dict[kiTermSubSelectionOriginatedFromBoxSelection] boolValue]) {
+        sub.originatedFromBoxSelection = YES;
+        sub.boxColumnBounds = [dict[kiTermSubSelectionBoxColumnBounds] gridRange];
+    }
+    return sub;
 }
 
 - (NSDictionary *)dictionaryValueWithYOffset:(int)yOffset
@@ -50,8 +57,14 @@ static NSString *const kiTermSubSelectionMode = @"Mode";
 
     const VT100GridWindowedRange range = VT100GridWindowedRangeFromAbsWindowedRange(absrange,
                                                                                     totalScrollbackOverflow);
-    return @{ kiTermSubSelectionRange: [NSDictionary dictionaryWithGridWindowedRange:range],
-              kiTermSubSelectionMode: @(_selectionMode) };
+    NSMutableDictionary *dict = [NSMutableDictionary dictionaryWithDictionary:
+        @{ kiTermSubSelectionRange: [NSDictionary dictionaryWithGridWindowedRange:range],
+           kiTermSubSelectionMode: @(_selectionMode) }];
+    if (_originatedFromBoxSelection) {
+        dict[kiTermSubSelectionOriginatedFromBoxSelection] = @YES;
+        dict[kiTermSubSelectionBoxColumnBounds] = [NSDictionary dictionaryWithGridRange:_boxColumnBounds];
+    }
+    return dict;
 }
 
 - (NSString *)description {
@@ -90,6 +103,8 @@ static NSString *const kiTermSubSelectionMode = @"Mode";
     theCopy.absRange = self.absRange;
     theCopy.selectionMode = self.selectionMode;
     theCopy.connected = self.connected;
+    theCopy.originatedFromBoxSelection = self.originatedFromBoxSelection;
+    theCopy.boxColumnBounds = self.boxColumnBounds;
 
     return theCopy;
 }
@@ -138,7 +153,9 @@ static NSString *const kiTermSubSelectionMode = @"Mode";
     }
     return (VT100GridAbsWindowsRangeEqualsAbsWindowedRange(self.absRange, other.absRange) &&
             self.selectionMode == other.selectionMode &&
-            self.connected == other.connected);
+            self.connected == other.connected &&
+            self.originatedFromBoxSelection == other.originatedFromBoxSelection &&
+            VT100GridRangeEqualsRange(self.boxColumnBounds, other.boxColumnBounds));
 }
 
 - (int)approximateNumberOfLines {
@@ -411,6 +428,8 @@ static NSString *const kiTermSubSelectionMode = @"Mode";
                 [iTermSubSelection subSelectionWithAbsRange:theRange
                                                        mode:kiTermSelectionModeCharacter
                                                       width:self.width];
+            sub.originatedFromBoxSelection = YES;
+            sub.boxColumnBounds = VT100GridRangeMake(left, right - left);
             [_subSelections addObject:sub];
         }
         _resumable = NO;

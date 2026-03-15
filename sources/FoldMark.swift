@@ -243,6 +243,9 @@ class FoldMark: iTermMark, FoldMarkReading {
     let savedITOs: [SavedIntervalTreeObject]?
     private let promptLength: Int
     let imageCodes: Set<Int32>
+    /// Generation number for delta encoding. Returns 0 because savedLines is immutable,
+    /// so the content never changes and should only be encoded once.
+    @objc var generation: Int { 0 }
 
     private static let savedLinesKey = "saved lines"
     private static let savedITOsKey = "saved ITOs"
@@ -282,13 +285,16 @@ class FoldMark: iTermMark, FoldMarkReading {
     }
 
     override func dictionaryValue() -> [AnyHashable : Any]! {
-        let unsafeDict: [String: Any?] = [ Self.savedLinesKey: savedLines?.map { $0.dictionaryValue },
-                                           Self.savedITOsKey: savedITOs?.map { $0.dictionaryValue },
-                                           Self.promptLengthKey: promptLength,
-                                           Self.imageCodesKey: Array(imageCodes) ]
-        return unsafeDict.filter { element in
-            element.value != nil
-        } as [AnyHashable : Any]
+        var result: [AnyHashable: Any] = super.dictionaryValue() ?? [:]
+        if let lines = savedLines?.map({ $0.dictionaryValue }) {
+            result[Self.savedLinesKey] = lines
+        }
+        if let itos = savedITOs?.map({ $0.dictionaryValue }) {
+            result[Self.savedITOsKey] = itos
+        }
+        result[Self.promptLengthKey] = promptLength
+        result[Self.imageCodesKey] = Array(imageCodes)
+        return result
     }
 
     var contentString: String {

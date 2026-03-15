@@ -184,7 +184,7 @@ class FontTable: NSObject, FontProviderProtocol {
     }
 
     struct Config: Codable, Equatable, Hashable {
-        static let latestKnownVersion = 1
+        static let latestKnownVersion = 2
         var entries: [Entry]
         var version = Self.latestKnownVersion
 

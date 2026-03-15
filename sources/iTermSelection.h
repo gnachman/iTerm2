@@ -66,6 +66,8 @@ typedef NS_ENUM(NSInteger, iTermSelectionMode) {
 @property(nonatomic, assign) VT100GridAbsWindowedRange absRange;
 @property(nonatomic, assign) iTermSelectionMode selectionMode;
 @property(nonatomic, assign) BOOL connected;  // If connected, no newline occurs before the next sub
+@property(nonatomic, assign) BOOL originatedFromBoxSelection;  // Decomposed from a box selection
+@property(nonatomic, assign) VT100GridRange boxColumnBounds;  // Original column bounds when originatedFromBoxSelection
 
 + (instancetype)subSelectionWithAbsRange:(VT100GridAbsWindowedRange)range
                                     mode:(iTermSelectionMode)mode
@@ -146,7 +148,7 @@ typedef NS_ENUM(NSInteger, iTermSelectionMode) {
 - (void)beginExtendingSelectionAt:(VT100GridAbsCoord)coord;
 
 // During live selection, adjust the endpoint.
-- (BOOL)moveSelectionEndpointTo:(VT100GridAbsCoord)coord;
+- (BOOL)moveSelectionEndpointTo:(VT100GridAbsCoord)coord NS_SWIFT_NAME(moveEndpoint(to:));
 
 // End live selection.
 - (void)endLiveSelection;
