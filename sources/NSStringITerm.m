@@ -246,10 +246,16 @@
                     [result appendFormat:@"\\x%02x", (unsigned int)cp];
                 } else if (cp >= 0x80 && cp <= 0x9F) {
                     [result appendFormat:@"\\x%02x", (unsigned int)cp];
-                } else if (cp >= 0xA0 && cp <= 0xFFFF) {
+                } else if (cp >= 0xD800 && cp <= 0xDFFF) {
+                    // Lone surrogate (invalid UTF-16) - escape it
                     [result appendFormat:@"\\u%04x", (unsigned int)cp];
                 } else if (cp > 0xFFFF) {
-                    [result appendFormat:@"\\U%08x", (unsigned int)cp];
+                    // Valid supplementary plane character - output directly
+                    uint32_t chars[1] = { cp };
+                    NSString *s = [[NSString alloc] initWithBytes:chars
+                                                           length:sizeof(uint32_t)
+                                                         encoding:NSUTF32LittleEndianStringEncoding];
+                    [result appendString:s];
                 } else {
                     [result appendFormat:@"%C", (unichar)cp];
                 }
