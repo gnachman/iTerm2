@@ -277,7 +277,10 @@ paranoid-SwiftyMarkdown: force
 	/usr/bin/sandbox-exec -f deps.sb $(MAKE) BUILD_DIR="$(BUILD_DIR)" SwiftyMarkdown
 
 paranoid-deps: force
-	/usr/bin/sandbox-exec -f deps.sb $(MAKE) BUILD_DIR="$(BUILD_DIR)" deps
+ifndef SIGNED
+	$(error SIGNED must be set for paranoid-deps (e.g., make SIGNED=1 paranoid-deps))
+endif
+	/usr/bin/sandbox-exec -f deps.sb $(MAKE) BUILD_DIR="$(BUILD_DIR)" SIGNED=$(SIGNED) deps
 
 paranoid-fatlibssh2: force
 	/usr/bin/sandbox-exec -f deps.sb $(MAKE) BUILD_DIR="$(BUILD_DIR)" fatlibssh2
