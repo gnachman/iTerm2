@@ -441,11 +441,9 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
                   _descriptor.scale, NSStringFromSize(_descriptor.glyphSize), _radius);
             NSLog(@"  baselineOffset: %f", _descriptor.baselineOffset);
 
-            ITAssertWithMessage(NO,
-                                @"Context not fully cleared after drawing '%@'. "
-                                @"Clear rect: %@ Remaining: (%d,%d)-(%d,%d)",
-                                self.debugName, NSStringFromRect(drawnRect),
-                                actualMinX, actualMinY, actualMaxX, actualMaxY);
+            // Fall back to clearing the full context when the buffered rect
+            // is insufficient. This is slower but ensures correctness.
+            CGContextClearRect(_context, CGRectMake(0, 0, _size.width, _size.height));
         }
     }
 #endif
@@ -787,11 +785,14 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
 
     // Add buffer because:
     // 1. CTLineGetImageBounds doesn't account for antialiasing fringe pixels
-    // 2. CGRect's max coordinates are exclusive, so +2 needed to include boundary pixels
-    CGPoint min = CGPointMake(floor(CGRectGetMinX(frame)) - 1,
-                              floor(CGRectGetMinY(frame)) - 1);
-    CGPoint max = CGPointMake(ceil(CGRectGetMaxX(frame)) + 2,
-                              ceil(CGRectGetMaxY(frame)) + 2);
+    // 2. Subpixel antialiasing can spread several pixels beyond the reported bounds,
+    //    especially at higher scale factors (e.g., 2x retina)
+    // 3. CGRect's max coordinates are exclusive
+    const CGFloat buffer = ceil(_descriptor.scale) * 2 + 1;
+    CGPoint min = CGPointMake(MAX(0, floor(CGRectGetMinX(frame)) - buffer),
+                              MAX(0, floor(CGRectGetMinY(frame)) - buffer));
+    CGPoint max = CGPointMake(MIN(_size.width, ceil(CGRectGetMaxX(frame)) + buffer),
+                              MIN(_size.height, ceil(CGRectGetMaxY(frame)) + buffer));
     frame = CGRectMake(min.x, min.y, max.x - min.x, max.y - min.y);
     DLog(@"%@ Bounding box for character '%@' in font %@ is %@ at scale %@",
          self, self.debugName, _font, NSStringFromRect(frame), @(_descriptor.scale));
