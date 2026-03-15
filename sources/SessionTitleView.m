@@ -303,6 +303,7 @@ static const CGFloat kLockButtonSize = 14;
     iTermPreferencesTabStyle preferredStyle = [iTermPreferences intForKey:kPreferenceKeyTabStyle];
     if (self.window.ptyWindow.it_terminalWindowUseMinimalStyle) {
         label_.textColor = [self.window.ptyWindow it_terminalWindowDecorationTextColorForBackgroundColor:[delegate_ sessionTitleViewBackgroundColor]];
+        menuButton_.contentTintColor = [NSColor secondaryLabelColor];
         [self setNeedsDisplay:YES];
         return;
     }
@@ -341,6 +342,7 @@ static const CGFloat kLockButtonSize = 14;
             break;
     }
     [label_ setTextColor:[NSColor colorWithCalibratedWhite:whiteLevel alpha:1]];
+    menuButton_.contentTintColor = [NSColor secondaryLabelColor];
     [self setNeedsDisplay:YES];
 }
 
