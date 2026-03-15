@@ -7,6 +7,8 @@
 
 #import "iTermStatusBarVariableBaseComponent.h"
 
+#import "iTermController.h"
+#import "iTermSessionLauncher.h"
 #import "iTermShellHistoryController.h"
 #import "iTermVariableScope.h"
 #import "iTermVariableReference.h"
@@ -16,6 +18,8 @@
 #import "NSImage+iTerm.h"
 #import "NSObject+iTerm.h"
 #import "NSStringITerm.h"
+#import "Profile.h"
+#import "ProfileModel.h"
 #import "VT100RemoteHost.h"
 
 NS_ASSUME_NONNULL_BEGIN
@@ -336,6 +340,44 @@ static NSString *const iTermStatusBarHostnameComponentAbbreviateLocalhost = @"ab
         item.representedObject = directory.path;
         [menu addItem:item];
     }
+
+    NSString *currentPath = self.fullString;
+    if (currentPath.length) {
+        [menu addItem:[NSMenuItem separatorItem]];
+
+        NSMenuItem *copyPath = [[NSMenuItem alloc] initWithTitle:@"Copy Path"
+                                                          action:@selector(copyCurrentPath:)
+                                                   keyEquivalent:@""];
+        copyPath.target = self;
+        [menu addItem:copyPath];
+
+        NSMenuItem *copyBasename = [[NSMenuItem alloc] initWithTitle:@"Copy Folder Name"
+                                                              action:@selector(copyCurrentBasename:)
+                                                       keyEquivalent:@""];
+        copyBasename.target = self;
+        [menu addItem:copyBasename];
+
+        NSMenuItem *openInFinder = [[NSMenuItem alloc] initWithTitle:@"Open in Finder"
+                                                              action:@selector(openCurrentPathInFinder:)
+                                                       keyEquivalent:@""];
+        openInFinder.target = self;
+        [menu addItem:openInFinder];
+
+        [menu addItem:[NSMenuItem separatorItem]];
+
+        NSMenuItem *openInNewWindow = [[NSMenuItem alloc] initWithTitle:@"Open in New Window"
+                                                                 action:@selector(openCurrentPathInNewWindow:)
+                                                          keyEquivalent:@""];
+        openInNewWindow.target = self;
+        [menu addItem:openInNewWindow];
+
+        NSMenuItem *openInNewTab = [[NSMenuItem alloc] initWithTitle:@"Open in New Tab"
+                                                              action:@selector(openCurrentPathInNewTab:)
+                                                       keyEquivalent:@""];
+        openInNewTab.target = self;
+        [menu addItem:openInNewTab];
+    }
+
     [menu popUpMenuPositioningItem:menu.itemArray.firstObject atLocation:NSMakePoint(0, 0) inView:containingView];
 }
 
@@ -349,6 +391,71 @@ static NSString *const iTermStatusBarHostnameComponentAbbreviateLocalhost = @"ab
     VT100RemoteHost *result = [[VT100RemoteHost alloc] initWithUsername:[self.scope valueForVariableName:iTermVariableKeySessionUsername]
                                                                hostname:[self.scope valueForVariableName:iTermVariableKeySessionHostname]];
     return result;
+}
+
+- (void)copyCurrentPath:(NSMenuItem *)sender {
+    NSString *path = self.fullString;
+    if (path.length) {
+        [[NSPasteboard generalPasteboard] clearContents];
+        [[NSPasteboard generalPasteboard] setString:path forType:NSPasteboardTypeString];
+    }
+}
+
+- (void)copyCurrentBasename:(NSMenuItem *)sender {
+    NSString *path = self.fullString;
+    if (path.length) {
+        [[NSPasteboard generalPasteboard] clearContents];
+        [[NSPasteboard generalPasteboard] setString:[path lastPathComponent] forType:NSPasteboardTypeString];
+    }
+}
+
+- (void)openCurrentPathInFinder:(NSMenuItem *)sender {
+    NSString *path = self.fullString;
+    if (path.length) {
+        [[NSWorkspace sharedWorkspace] selectFile:nil inFileViewerRootedAtPath:path];
+    }
+}
+
+- (void)openCurrentPathInNewWindow:(NSMenuItem *)sender {
+    [self launchSessionWithPath:self.fullString style:iTermOpenStyleNewWindow terminal:nil];
+}
+
+- (void)openCurrentPathInNewTab:(NSMenuItem *)sender {
+    NSString *path = self.fullString;
+    PseudoTerminal *currentTerminal = [[iTermController sharedInstance] currentTerminal];
+    if (currentTerminal) {
+        [self launchSessionWithPath:path style:iTermOpenStyleNewTabAtEndOfTabs terminal:currentTerminal];
+    } else {
+        [self launchSessionWithPath:path style:iTermOpenStyleNewWindow terminal:nil];
+    }
+}
+
+- (void)launchSessionWithPath:(NSString *)path
+                        style:(iTermOpenStyle)style
+                     terminal:(nullable PseudoTerminal *)terminal {
+    if (!path.length) {
+        return;
+    }
+    Profile *profile = [[ProfileModel sharedInstance] defaultBookmark];
+    if (!profile) {
+        return;
+    }
+    profile = [profile mutableCopy];
+    profile[KEY_WORKING_DIRECTORY] = path;
+    profile[KEY_CUSTOM_DIRECTORY] = kProfilePreferenceInitialDirectoryCustomValue;
+    [iTermSessionLauncher launchBookmark:profile
+                              inTerminal:terminal
+                                   style:style
+                                 withURL:nil
+                        hotkeyWindowType:iTermHotkeyWindowTypeNone
+                                 makeKey:YES
+                             canActivate:YES
+                      respectTabbingMode:NO
+                                   index:nil
+                                 command:nil
+                             makeSession:nil
+                          didMakeSession:nil
+                              completion:nil];
 }
 
 @end
