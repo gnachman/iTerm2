@@ -3304,6 +3304,13 @@ ITERM_WEAKLY_REFERENCEABLE
     alert.accessoryView = titleTextField;
     [alert addButtonWithTitle:@"OK"];
     [alert addButtonWithTitle:@"Cancel"];
+    BOOL isDark;
+    if ((iTermPreferencesTabStyle)[iTermPreferences intForKey:kPreferenceKeyTabStyle] == TAB_STYLE_MINIMAL) {
+        isDark = self.minimalTabStyleBackgroundColor.isDark;
+    } else {
+        isDark = [self.window.effectiveAppearance bestMatchFromAppearancesWithNames:@[NSAppearanceNameDarkAqua, NSAppearanceNameAqua]] == NSAppearanceNameDarkAqua;
+    }
+    alert.window.appearance = [NSAppearance appearanceNamed:isDark ? NSAppearanceNameDarkAqua : NSAppearanceNameAqua];
     dispatch_async(dispatch_get_main_queue(), ^{
         [titleTextField.window makeFirstResponder:titleTextField];
     });
@@ -7679,6 +7686,13 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     alert.accessoryView = titleTextField;
     [alert addButtonWithTitle:@"OK"];
     [alert addButtonWithTitle:@"Cancel"];
+    BOOL isDark;
+    if ((iTermPreferencesTabStyle)[iTermPreferences intForKey:kPreferenceKeyTabStyle] == TAB_STYLE_MINIMAL) {
+        isDark = self.minimalTabStyleBackgroundColor.isDark;
+    } else {
+        isDark = [self.window.effectiveAppearance bestMatchFromAppearancesWithNames:@[NSAppearanceNameDarkAqua, NSAppearanceNameAqua]] == NSAppearanceNameDarkAqua;
+    }
+    alert.window.appearance = [NSAppearance appearanceNamed:isDark ? NSAppearanceNameDarkAqua : NSAppearanceNameAqua];
     __weak __typeof(self) weakSelf = self;
     [NSApp activateIgnoringOtherApps:YES];
     [alert beginSheetModalForWindow:self.window completionHandler:^(NSModalResponse returnCode) {
