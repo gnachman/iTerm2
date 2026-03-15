@@ -40,25 +40,64 @@ iTerm2 is a powerful terminal emulator for macOS that brings the terminal into t
 ## Installation
 
 ### Download
+
 Get the latest version from [iterm2.com/downloads](https://iterm2.com/downloads.html)
 
 ### Build from Source
-See our [build guide](https://gitlab.com/gnachman/iterm2/wikis/HowToBuild) for detailed instructions.
+
+#### Prerequisites
+
+- Xcode 14 or later (with Command Line Tools)
+- [Homebrew](https://brew.sh)
+- Rust via [rustup.rs](https://rustup.rs)
+- [SF Symbols](https://developer.apple.com/sf-symbols/) (`brew install --cask sf-symbols`)
+
+#### Clone
+
+```bash
+git clone https://github.com/gnachman/iTerm2.git
+cd iTerm2
+```
+
+#### Setup (first time)
+
+```bash
+make setup
+```
+
+This installs Homebrew dependencies (cmake, pkg-config), SF Symbols, the x86_64 Rust toolchain (required on both Intel and Apple Silicon), downloads the Metal Toolchain, initializes all git submodules, and compiles third-party libraries (OpenSSL, libsixel, libgit2, Sparkle, etc.).
+
+#### Build
+
+```bash
+make Development
+```
+
+#### Run
+
+```bash
+make run
+```
+
+#### Architecture
+
+Builds target your native architecture by default. To produce a universal (arm64 + x86_64) binary:
+
+```bash
+UNIVERSAL=1 make Development
+```
+
+#### Code signing
+
+Code signing is disabled by default to keep contributor builds simple. To enable it with the project's signing identity:
+
+```bash
+SIGNED=1 make Development
+```
 
 ---
 
 ## Development
-
-### Building
-
-```bash
-# Clone the repository
-git clone https://github.com/gnachman/iTerm2.git
-cd iTerm2
-
-# Build with Xcode
-xcodebuild -project iTerm2.xcodeproj -scheme iTerm2 -configuration Debug
-```
 
 ### Contributing
 
@@ -77,12 +116,12 @@ We welcome contributions! Please read our [contribution guide](https://gitlab.co
 
 ## Resources
 
-| Resource | Link |
-|----------|------|
-| Official Website | [iterm2.com](https://iterm2.com) |
-| Documentation | [iterm2.com/documentation](https://iterm2.com/documentation.html) |
-| Community | [iTerm2 Discussions](https://gitlab.com/gnachman/iterm2/-/issues) |
-| Downloads | [iterm2.com/downloads](https://iterm2.com/downloads.html) |
+| Resource         | Link                                                              |
+| ---------------- | ----------------------------------------------------------------- |
+| Official Website | [iterm2.com](https://iterm2.com)                                  |
+| Documentation    | [iterm2.com/documentation](https://iterm2.com/documentation.html) |
+| Community        | [iTerm2 Discussions](https://gitlab.com/gnachman/iterm2/-/issues) |
+| Downloads        | [iterm2.com/downloads](https://iterm2.com/downloads.html)         |
 
 ---
 
@@ -95,6 +134,7 @@ iTerm2 is distributed under the [GPLv3](LICENSE) license.
 ## Support
 
 If you love iTerm2, consider:
+
 - Starring this repository
 - Spreading the word
 - [Sponsoring development](https://iterm2.com/donate.html)
