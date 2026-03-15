@@ -3961,13 +3961,11 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
         NSString *dividerChar = [iTermAdvancedSettingsModel sessionEndMessageDividerCharacter];
         int width = (mutableState.width - message.length) / 2;
         if (dividerChar.length == 0) {
-            // Use BrokenPipeDivider by default for security
             if (width > 0) {
                 [mutableState appendNativeImageAtCursorWithName:@"BrokenPipeDivider"
                                                           width:width];
             }
         } else {
-            // Use custom character
             if (width > 0) {
                 NSMutableString *leftDivider = [NSMutableString string];
                 for (int i = 0; i < width; i++) {
