@@ -16,3 +16,8 @@
 - Never use auto layout in the terminal window. It virally spreads and breaks autoresizing. It is fine to use it in other windows without a lot of existing autoresizing mask-based code (e.g., the AI chat window)
 - The deployment target is macOS 12. Don't add availability checks for 12 and lower.
 - Never `git add` submodules without express written permission.
+- Don't split PTYSession.m into many small files — gnachman prefers it monolithic.
+- New settings belong in iTermAdvancedSettingsModel as advanced settings, not new UI panels.
+- Don't include AI-generated markdown files (summaries, plans, etc.) in commits — only ship code.
+- Avoid duplicate expressions; hoist shared computations into a named `const` before branching.
+- Don't change defaults silently: keep BrokenPipeDivider as the default divider, only switch on explicit user config.
