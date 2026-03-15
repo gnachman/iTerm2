@@ -3978,13 +3978,13 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
         }
         message = [iTermAdvancedSettingsModel sessionEndMessageText] ?: message;
         [mutableState appendStringAtCursor:message];
+        const int rightWidth = mutableState.width - mutableState.cursorX + 1;
         if (dividerChar.length == 0) {
-            if (width > 0) {
+            if (rightWidth > 0) {
                 [mutableState appendNativeImageAtCursorWithName:@"BrokenPipeDivider"
-                                                          width:width];
+                                                          width:rightWidth];
             }
         } else {
-            int rightWidth = mutableState.width - mutableState.cursorX + 1;
             if (rightWidth > 0) {
                 NSMutableString *rightDivider = [NSMutableString string];
                 for (int i = 0; i < rightWidth; i++) {
