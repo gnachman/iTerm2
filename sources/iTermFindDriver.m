@@ -58,6 +58,7 @@ static NSString *gSearchString;
     } _delayState;
 
     iTermFindMode _filterMode;
+    NSTimer *_filterDebounceTimer;
 }
 
 + (iTermFindMode)mode {
@@ -125,6 +126,8 @@ static NSString *gSearchString;
 
 - (void)dealloc {
     [[NSNotificationCenter defaultCenter] removeObserver:self];
+    [_filterDebounceTimer invalidate];
+    _filterDebounceTimer = nil;
     [_searchEngine.timer invalidate];
     _searchEngine.timer = nil;
 }
@@ -197,6 +200,8 @@ static NSString *gSearchString;
 }
 
 - (void)close {
+    [_filterDebounceTimer invalidate];
+    _filterDebounceTimer = nil;
     BOOL wasHidden = _viewController.view.isHidden;
     if (!wasHidden) {
         DLog(@"Remove timer");
@@ -234,7 +239,23 @@ static NSString *gSearchString;
 }
 
 - (void)userDidEditFilter:(NSString *)updatedFilter {
-    [_delegate findDriverSetFilter:updatedFilter withSideEffects:YES];
+    [_filterDebounceTimer invalidate];
+    _filterDebounceTimer = nil;
+    if (updatedFilter.length == 0) {
+        [_delegate findDriverSetFilter:updatedFilter withSideEffects:YES];
+        return;
+    }
+    __weak __typeof(self) weakSelf = self;
+    _filterDebounceTimer = [NSTimer scheduledTimerWithTimeInterval:0.5
+                                                          repeats:NO
+                                                            block:^(NSTimer *timer) {
+        __strong __typeof(weakSelf) strongSelf = weakSelf;
+        if (!strongSelf) {
+            return;
+        }
+        [strongSelf->_delegate findDriverSetFilter:updatedFilter withSideEffects:YES];
+        strongSelf->_filterDebounceTimer = nil;
+    }];
 }
 
 - (void)setFilterWithoutSideEffects:(NSString *)filter {

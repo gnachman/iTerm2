@@ -82,6 +82,7 @@ class MiniFilterViewController: NSViewController, NSTextFieldDelegate, iTermFilt
     @IBOutlet var searchField: MiniFilterField!
     @IBOutlet var closeButton: NSButton!
     private var timer: Timer? = nil
+    private var debounceTimer: Timer? = nil
     weak var delegate: MiniFilterViewControllerDelegate? = nil
 
     init() {
@@ -90,6 +91,10 @@ class MiniFilterViewController: NSViewController, NSTextFieldDelegate, iTermFilt
 
     required init?(coder: NSCoder) {
         it_fatalError("init(coder:) has not been implemented")
+    }
+
+    deinit {
+        debounceTimer?.invalidate()
     }
 
     func updateColors(textColor: NSColor) {
@@ -202,8 +207,16 @@ class MiniFilterViewController: NSViewController, NSTextFieldDelegate, iTermFilt
         if field !== searchField {
             return
         }
-        delegate?.searchQueryDidChange(searchField.stringValue,
-                                       editor: obj.userInfo?["NSFieldEditor"] as? NSTextView)
+        let query = searchField.stringValue
+        let editor = obj.userInfo?["NSFieldEditor"] as? NSTextView
+        debounceTimer?.invalidate()
+        if query.isEmpty {
+            delegate?.searchQueryDidChange(query, editor: editor)
+            return
+        }
+        debounceTimer = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: false) { [weak self] _ in
+            self?.delegate?.searchQueryDidChange(query, editor: editor)
+        }
     }
 
     func control(_ control: NSControl, textView: NSTextView, doCommandBy commandSelector: Selector) -> Bool {
