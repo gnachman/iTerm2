@@ -58,11 +58,6 @@ NS_ASSUME_NONNULL_BEGIN
     // In progenitor: YES if only partial-line appends occurred since last cowCopy.
     // Reset to YES on cowCopy, set to NO on any non-append mutation.
     BOOL _appendOnlySinceLastCopy;
-
-    // In copy: YES if this copy has been mutated (cloned its buffer).
-    // Set when validMutationCertificate clones buffer for a copy (self.owner != nil).
-    // Used to prevent incremental merge for diverged copies.
-    BOOL _hasDiverged;
 }
 
 // These are synchronized on [LineBlock class]. Sample graph:

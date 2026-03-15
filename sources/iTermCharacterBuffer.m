@@ -11,6 +11,7 @@
 @implementation iTermCharacterBuffer {
     screen_char_t *_buffer;
     int _size;
+    int _shareCount;
 }
 
 - (void)dealloc {
@@ -50,6 +51,7 @@
     if (self) {
         _buffer = iTermUninitializedCalloc(size, sizeof(screen_char_t));
         _size = size;
+        _shareCount = 1;
     }
     return self;
 }
@@ -65,6 +67,7 @@
     if (self) {
         _buffer = iTermMemdup(source, size, sizeof(screen_char_t));
         _size = size;
+        _shareCount = 1;
     }
     return self;
 }
@@ -87,6 +90,29 @@
         return NO;
     }
     return _size == other->_size && !memcmp(_buffer, other->_buffer, _size * sizeof(screen_char_t));
+}
+
+- (BOOL)isShared {
+    return _shareCount > 1;
+}
+
+- (int)testShareCount {
+    return _shareCount;
+}
+
+- (void)incrementShareCount {
+    _shareCount++;
+}
+
+- (iTermCharacterBuffer *)cloneAndDecrementShareCount {
+    assert(_shareCount > 1);
+    _shareCount--;
+    return [self clone];
+}
+
+- (void)decrementShareCount {
+    assert(_shareCount > 1);
+    _shareCount--;
 }
 
 @end
