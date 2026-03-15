@@ -656,12 +656,11 @@ static NSMutableArray<NSString *> *_combinedLog;
     if (needJournal) {
         [journal_ addObject:[BookmarkJournalEntry journalWithAction:JOURNAL_REMOVE bookmark:[bookmarks_ objectAtIndex:i] model:self identifier:nil]];
     }
-    [[self debugHistoryForGuid:bookmark[KEY_GUID]] addObject:[NSString stringWithFormat:@"%@: Replace bookmark at index %@ (%@) with %@\n%@",
+    [[self debugHistoryForGuid:bookmark[KEY_GUID]] addObject:[NSString stringWithFormat:@"%@: Replace bookmark at index %@ (%@) with %@",
                                                               self,
                                                               @(i),
                                                               bookmarks_[i][KEY_GUID],
-                                                              bookmark[KEY_GUID],
-                                                              [NSThread callStackSymbols]]];
+                                                              bookmark[KEY_GUID]]];
     [bookmarks_ replaceObjectAtIndex:i withObject:bookmark];
     if (needJournal) {
         BookmarkJournalEntry* e = [BookmarkJournalEntry journalWithAction:JOURNAL_ADD
