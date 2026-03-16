@@ -691,6 +691,25 @@ final class KeeperDataSourceTests: XCTestCase {
         XCTAssertNil(keeperHumanReadableError(fromResponseData: "not json".data(using: .utf8)))
     }
 
+    // MARK: - keeperUserFacingPasswordUpdateError
+
+    func testKeeperUserFacingPasswordUpdateError_base64PwdMessage_returnsPasswordRequired() {
+        XCTAssertEqual(keeperUserFacingPasswordUpdateError(apiDetail: "Base64 decoding failed for field pwd."), "Password field is required.")
+    }
+
+    func testKeeperUserFacingPasswordUpdateError_nonPasswordMessage_unchanged() {
+        XCTAssertEqual(keeperUserFacingPasswordUpdateError(apiDetail: "Custom update error"), "Custom update error")
+        XCTAssertEqual(keeperUserFacingPasswordUpdateError(apiDetail: "Update failed"), "Update failed")
+    }
+
+    func testKeeperUserFacingPasswordUpdateError_passwordInvalid_returnsPasswordRequired() {
+        XCTAssertEqual(keeperUserFacingPasswordUpdateError(apiDetail: "password invalid"), "Password field is required.")
+    }
+
+    func testKeeperUserFacingPasswordUpdateError_passwordRequired_returnsPasswordRequired() {
+        XCTAssertEqual(keeperUserFacingPasswordUpdateError(apiDetail: "Password required"), "Password field is required.")
+    }
+
     // MARK: - ensureAPIKey (injected), fetchAccounts, fetchPassword, add, set, delete
 
     private func makeContext() -> RecipeExecutionContext {
@@ -1177,6 +1196,39 @@ final class KeeperDataSourceTests: XCTestCase {
         wait(for: [exp], timeout: 5)
     }
 
+    /// setPassword with empty password returns "Password field is required." without calling the API.
+    func testSetPassword_emptyPassword_returnsPasswordRequired() {
+        let ds = KeeperDataSource(browser: false)
+        ds.injectedAPIKey = "key"
+        ds.injectedBaseURL = URL(string: "https://keeper.test")!
+        ds.injectedURLSession = mockSession
+        let exp = expectation(description: "set")
+        ds.setPassword(recordUid: "uid123", password: "", context: makeContext()) { error in
+            XCTAssertNotNil(error)
+            XCTAssertEqual((error as NSError?)?.localizedDescription, "Password field is required.")
+            exp.fulfill()
+        }
+        wait(for: [exp], timeout: 5)
+    }
+
+    /// setPassword when API returns Base64/pwd error message shows "Password field is required."
+    func testSetPassword_base64ErrorFromAPI_showsPasswordRequired() {
+        let pwdB64 = Data("pwd".utf8).base64EncodedString()
+        let cmd = "record-update -r uid12345678901234 password=$BASE64:\(pwdB64)"
+        KeeperMockURLProtocol.responseByCommand[cmd] = ("{\"status\":\"error\",\"message\":[\"Base64 decoding failed for field pwd.\"]}".data(using: .utf8)!, 200)
+        let ds = KeeperDataSource(browser: false)
+        ds.injectedAPIKey = "key"
+        ds.injectedBaseURL = URL(string: "https://keeper.test")!
+        ds.injectedURLSession = mockSession
+        let exp = expectation(description: "set")
+        ds.setPassword(recordUid: "uid12345678901234", password: "pwd", context: makeContext()) { error in
+            XCTAssertNotNil(error)
+            XCTAssertEqual((error as NSError?)?.localizedDescription, "Password field is required.")
+            exp.fulfill()
+        }
+        wait(for: [exp], timeout: 5)
+    }
+
     func testSetPassword_errorResponse() {
         let pwdB64 = Data("pwd".utf8).base64EncodedString()
         let cmd = "record-update -r uid12345678901234 password=$BASE64:\(pwdB64)"
@@ -1334,6 +1386,67 @@ final class KeeperDataSourceTests: XCTestCase {
             XCTAssertNotNil(account)
             XCTAssertEqual(account?.accountName, "My Title")
             XCTAssertEqual(account?.userName, "user")
+            exp.fulfill()
+        }
+        wait(for: [exp], timeout: 5)
+    }
+
+    /// add() with only accountName (empty userName and password) sends title-only record-add and succeeds.
+    func testAdd_titleOnly_noLoginNoPassword_succeeds() {
+        let addResponse = "{\"status\":\"success\",\"data\":{\"record_uid\":\"title-only-uid\"}}"
+        let cmd = "record-add --record-type=login --title=\"Only Title\""
+        KeeperMockURLProtocol.responseByCommand[cmd] = (addResponse.data(using: .utf8)!, 200)
+        let ds = KeeperDataSource(browser: false)
+        ds.injectedAPIKey = "key"
+        ds.injectedBaseURL = URL(string: "https://keeper.test")!
+        ds.injectedURLSession = mockSession
+        let exp = expectation(description: "add")
+        ds.add(userName: "", accountName: "Only Title", password: "", context: makeContext()) { account, error in
+            XCTAssertNil(error)
+            XCTAssertNotNil(account)
+            XCTAssertEqual(account?.accountName, "Only Title")
+            XCTAssertEqual(account?.userName, "")
+            exp.fulfill()
+        }
+        wait(for: [exp], timeout: 5)
+    }
+
+    /// add() with accountName and userName (no password) sends record-add with login= only and succeeds.
+    func testAdd_titleAndLoginOnly_noPassword_succeeds() {
+        let cmd = "record-add --record-type=login --title=\"Acct\" login=\"loginonly\""
+        let addResponse = "{\"status\":\"success\",\"data\":{\"record_uid\":\"login-only-uid\"}}"
+        KeeperMockURLProtocol.responseByCommand[cmd] = (addResponse.data(using: .utf8)!, 200)
+        let ds = KeeperDataSource(browser: false)
+        ds.injectedAPIKey = "key"
+        ds.injectedBaseURL = URL(string: "https://keeper.test")!
+        ds.injectedURLSession = mockSession
+        let exp = expectation(description: "add")
+        ds.add(userName: "loginonly", accountName: "Acct", password: "", context: makeContext()) { account, error in
+            XCTAssertNil(error)
+            XCTAssertNotNil(account)
+            XCTAssertEqual(account?.accountName, "Acct")
+            XCTAssertEqual(account?.userName, "loginonly")
+            exp.fulfill()
+        }
+        wait(for: [exp], timeout: 5)
+    }
+
+    /// add() with accountName and password (no userName) sends record-add with password=$BASE64 only and succeeds.
+    func testAdd_titleAndPasswordOnly_noUserName_succeeds() {
+        let b64 = Data("secret".utf8).base64EncodedString()
+        let cmd = "record-add --record-type=login --title=\"PwdOnly\" password=$BASE64:\(b64)"
+        let addResponse = "{\"status\":\"success\",\"data\":{\"record_uid\":\"pwd-only-uid\"}}"
+        KeeperMockURLProtocol.responseByCommand[cmd] = (addResponse.data(using: .utf8)!, 200)
+        let ds = KeeperDataSource(browser: false)
+        ds.injectedAPIKey = "key"
+        ds.injectedBaseURL = URL(string: "https://keeper.test")!
+        ds.injectedURLSession = mockSession
+        let exp = expectation(description: "add")
+        ds.add(userName: "", accountName: "PwdOnly", password: "secret", context: makeContext()) { account, error in
+            XCTAssertNil(error)
+            XCTAssertNotNil(account)
+            XCTAssertEqual(account?.accountName, "PwdOnly")
+            XCTAssertEqual(account?.userName, "")
             exp.fulfill()
         }
         wait(for: [exp], timeout: 5)

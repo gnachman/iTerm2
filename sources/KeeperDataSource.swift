@@ -399,6 +399,15 @@ internal func keeperHumanReadableError(fromResponseData data: Data?) -> String? 
     return nil
 }
 
+/// Maps password-update API error messages (e.g. "Base64 decoding failed for field pwd.") to a clear user-facing message. Internal for tests.
+internal func keeperUserFacingPasswordUpdateError(apiDetail: String) -> String {
+    let lower = apiDetail.lowercased()
+    if lower.contains("base64") || lower.contains("pwd") || (lower.contains("password") && (lower.contains("failed") || lower.contains("invalid") || lower.contains("required") || lower.contains("empty"))) {
+        return "Password field is required."
+    }
+    return apiDetail
+}
+
 private func keeperExecute(apiKey: String, command: String, baseURL: URL? = nil, session: URLSession = .shared, pollInterval: TimeInterval? = nil, deadline: TimeInterval? = nil, completion: @escaping (Result<Data, Error>) -> Void) {
     guard let resolvedBase = baseURL ?? keeperBaseURL() else {
         completion(.failure(NSError(domain: "KeeperDataSource", code: -1, userInfo: [NSLocalizedDescriptionKey: "API URL is required. Please set it in Keeper Security Settings."])))
@@ -1152,6 +1161,10 @@ class KeeperDataSource: NSObject, PasswordManagerDataSource {
     }
 
     internal func setPassword(recordUid: String, password: String, context: RecipeExecutionContext, completion: @escaping (Error?) -> ()) {
+        if password.isEmpty {
+            DispatchQueue.main.async { completion(NSError(domain: "KeeperDataSource", code: -1, userInfo: [NSLocalizedDescriptionKey: "Password field is required."])) }
+            return
+        }
         ensureAPIKey(context: context) { apiKey in
             guard let apiKey = apiKey else {
                 DispatchQueue.main.async { completion(NSError(domain: "KeeperDataSource", code: -1, userInfo: [NSLocalizedDescriptionKey: "No API key"])) }
@@ -1165,9 +1178,10 @@ class KeeperDataSource: NSObject, PasswordManagerDataSource {
                     if let response = try? JSONDecoder().decode(KeeperExecuteResponse.self, from: data), response.status == "success" {
                         DispatchQueue.main.async { completion(nil) }
                     } else {
-                        let detail = keeperHumanReadableError(fromResponseData: data)
+                        let rawDetail = keeperHumanReadableError(fromResponseData: data)
                             ?? (try? JSONSerialization.jsonObject(with: data) as? [String: Any]).flatMap { ($0["message"] as? [String])?.first }
                             ?? "Update failed"
+                        let detail = keeperUserFacingPasswordUpdateError(apiDetail: rawDetail)
                         DispatchQueue.main.async { completion(NSError(domain: "KeeperDataSource", code: -1, userInfo: [NSLocalizedDescriptionKey: detail])) }
                     }
                 case .failure(let error):
@@ -1206,9 +1220,15 @@ class KeeperDataSource: NSObject, PasswordManagerDataSource {
                 return
             }
             let escapedTitle = accountName.replacingOccurrences(of: "\\", with: "\\\\").replacingOccurrences(of: "\"", with: "\\\"")
-            let escapedLogin = userName.replacingOccurrences(of: "\\", with: "\\\\").replacingOccurrences(of: "\"", with: "\\\"")
-            let passwordB64 = Data(password.utf8).base64EncodedString()
-            let cmd = "record-add --record-type=login --title=\"\(escapedTitle)\" login=\"\(escapedLogin)\" password=$BASE64:\(passwordB64)"
+            var cmd = "record-add --record-type=login --title=\"\(escapedTitle)\""
+            if !userName.isEmpty {
+                let escapedLogin = userName.replacingOccurrences(of: "\\", with: "\\\\").replacingOccurrences(of: "\"", with: "\\\"")
+                cmd += " login=\"\(escapedLogin)\""
+            }
+            if !password.isEmpty {
+                let passwordB64 = Data(password.utf8).base64EncodedString()
+                cmd += " password=$BASE64:\(passwordB64)"
+            }
             keeperExecute(apiKey: apiKey, command: cmd, baseURL: self.injectedBaseURL ?? self.injectedBaseURLFromStorage ?? keeperBaseURL(), session: self.injectedURLSession ?? .shared, pollInterval: self.injectedV2PollInterval, deadline: self.injectedV2Deadline) { [weak self] result in
                 guard let self = self else { return }
                 switch result {
