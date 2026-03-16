@@ -55,5 +55,5 @@ _it2_inject() {
 _it2_inject
 builtin unset -f _it2_inject
 
-builtin source $(dirname "$it2_saved_env")/iterm2_shell_integration.bash
+builtin source "$(dirname "$it2_saved_env")/iterm2_shell_integration.bash"
 builtin unset -f it2_saved_env
