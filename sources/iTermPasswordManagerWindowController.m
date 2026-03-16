@@ -975,13 +975,24 @@ static NSArray<NSString *> *gTerminalCachedCombinedAccountNames;
 - (void)didFetchPasswordToEnter:(NSString *)password otp:(NSString *)otp {
     DLog(@"didFetchPasswordToEnter giving password to delegate");
     if (self.didSendUserName) {
-        // In send-both mode. First send the username.
-        [self enterUsername];
-
-        // Now run the completion block, which can set focus on the password field.
-        void (^didSendUserName)(void) = self.didSendUserName;
-        self.didSendUserName = nil;
-        didSendUserName();
+        // In send-both mode. First send the username (async for Keeper), then password and close.
+        __weak __typeof(self) weakSelf = self;
+        [self enterUsernameWithCompletion:^{
+            __strong __typeof(weakSelf) strongSelf = weakSelf;
+            if (!strongSelf) {
+                return;
+            }
+            void (^didSendUserName)(void) = strongSelf.didSendUserName;
+            strongSelf.didSendUserName = nil;
+            if (didSendUserName) {
+                didSendUserName();
+            }
+            [strongSelf.delegate iTermPasswordManagerEnterPassword:[strongSelf combinedPassword:password otp:otp]
+                                                         broadcast:strongSelf->_broadcastButton.state == NSControlStateValueOn];
+            DLog(@"enterPassword: closing sheet");
+            [strongSelf closeOrEndSheet];
+        }];
+        return;
     }
     [_delegate iTermPasswordManagerEnterPassword:[self combinedPassword:password otp:otp]
                                        broadcast:_broadcastButton.state == NSControlStateValueOn];
@@ -994,14 +1005,42 @@ static NSArray<NSString *> *gTerminalCachedCombinedAccountNames;
 }
 
 - (void)enterUsername {
+    [self enterUsernameWithCompletion:nil];
+}
+
+- (void)enterUsernameWithCompletion:(void (^)(void))afterSend {
     DLog(@"enterUserName");
-    NSString *userName = [self selectedUserName];
-    if (userName.length > 0) {
-        [_delegate iTermPasswordManagerEnterUserName:userName
-                                           broadcast:_broadcastButton.state == NSControlStateValueOn];
-        DLog(@"enterUsername: closing sheet");
-        [self closeOrEndSheet];
+    id<PasswordManagerAccount> account = [self selectedAccount];
+    if (!account) {
+        if (afterSend) {
+            afterSend();
+        }
+        return;
     }
+    const NSInteger cancelCount = [self incrBusy];
+    RecipeExecutionContext *context = [self recipeExecutionContext];
+    __weak __typeof(self) weakSelf = self;
+    [account usernameForTerminalWithContext:context completion:^(NSString * _Nullable username) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            __strong __typeof(weakSelf) strongSelf = weakSelf;
+            if (!strongSelf) {
+                return;
+            }
+            [strongSelf ifCancelCountUnchanged:cancelCount perform:^{
+                [strongSelf decrBusy];
+                if (username.length > 0) {
+                    [strongSelf.delegate iTermPasswordManagerEnterUserName:username
+                                                                broadcast:strongSelf->_broadcastButton.state == NSControlStateValueOn];
+                    DLog(@"enterUsername: closing sheet");
+                }
+                if (afterSend) {
+                    afterSend();
+                } else {
+                    [strongSelf closeOrEndSheet];
+                }
+            }];
+        });
+    }];
 }
 
 - (void)closeOrEndSheet {

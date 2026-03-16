@@ -59,6 +59,11 @@ class CommandLineProvidedAccount: NSObject, PasswordManagerAccount {
         return accountName.containsCaseInsensitive(filter) || userName.containsCaseInsensitive(filter)
     }
 
+    @objc(usernameForTerminalWithContext:completion:)
+    func usernameForTerminal(context: RecipeExecutionContext, completion: @escaping (String?) -> Void) {
+        completion(userName)
+    }
+
     init(identifier: String,
          accountName: String,
          userName: String,

@@ -685,6 +685,18 @@ private class KeeperAccount: NSObject, PasswordManagerAccount {
     func matches(filter: String) -> Bool {
         _matches(filter: filter)
     }
+
+    /// Fetches the record's login field so "Enter username" sends only the login (e.g. hborase@keepersecurity.com), not host or description (e.g. 127.0.0.1).
+    @objc(usernameForTerminalWithContext:completion:)
+    func usernameForTerminal(context: RecipeExecutionContext, completion: @escaping (String?) -> Void) {
+        guard let dataSource = dataSource else {
+            completion(userName)
+            return
+        }
+        dataSource.fetchLogin(recordUid: uid, context: context) { login in
+            completion(login ?? self.userName)
+        }
+    }
 }
 
 // MARK: - Keeper credentials request (sheet shown by window controller)
@@ -1017,6 +1029,52 @@ class KeeperDataSource: NSObject, PasswordManagerDataSource {
         }
         if let rec = parsed["record"] as? [String: Any], let p = fromRecord(rec) { return p }
         return nil
+    }
+
+    /// Extract login/username from a Keeper "get --format=json" response. Used for "Enter username" so only the login is sent, not host or other fields (e.g. MySQL records).
+    internal static func loginFromGetJSONResponse(_ data: Data) -> String? {
+        func trim(_ s: String) -> String { s.trimmingCharacters(in: .whitespacesAndNewlines) }
+        guard let parsed = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else { return nil }
+        func fromRecord(_ rec: [String: Any]) -> String? {
+            if let login = rec["login"] as? String { let t = trim(login); return t.isEmpty ? nil : t }
+            if let login = rec["username"] as? String { let t = trim(login); return t.isEmpty ? nil : t }
+            if let fields = rec["fields"] as? [[String: Any]] {
+                for f in fields {
+                    guard (f["type"] as? String) == "login" else { continue }
+                    if let v = f["value"] as? [String], let first = v.first { let t = trim(first); return t.isEmpty ? nil : t }
+                    if let v = f["value"] as? String { let t = trim(v); return t.isEmpty ? nil : t }
+                }
+            }
+            return nil
+        }
+        if let dataVal = parsed["data"] {
+            if let str = dataVal as? String,
+               let record = try? JSONSerialization.jsonObject(with: Data(str.utf8)) as? [String: Any],
+               let login = fromRecord(record) { return login }
+            if let obj = dataVal as? [String: Any], let login = fromRecord(obj) { return login }
+        }
+        if let rec = parsed["record"] as? [String: Any], let login = fromRecord(rec) { return login }
+        return nil
+    }
+
+    /// Fetches the record's login field (for "Enter username" so only login is sent, not host/description).
+    internal func fetchLogin(recordUid: String, context: RecipeExecutionContext, completion: @escaping (String?) -> Void) {
+        ensureAPIKey(context: context) { [weak self] apiKey in
+            guard let self = self, let apiKey = apiKey else {
+                DispatchQueue.main.async { completion(nil) }
+                return
+            }
+            let jsonCmd = "get \(recordUid) --format=json"
+            keeperExecute(apiKey: apiKey, command: jsonCmd, baseURL: self.injectedBaseURL ?? self.injectedBaseURLFromStorage ?? keeperBaseURL(), session: self.injectedURLSession ?? .shared, pollInterval: self.injectedV2PollInterval, deadline: self.injectedV2Deadline) { result in
+                switch result {
+                case .success(let data):
+                    let login = KeeperDataSource.loginFromGetJSONResponse(data)
+                    DispatchQueue.main.async { completion(login) }
+                case .failure:
+                    DispatchQueue.main.async { completion(nil) }
+                }
+            }
+        }
     }
 
     internal func fetchPassword(recordUid: String, context: RecipeExecutionContext, completion: @escaping (String?, String?, Error?) -> ()) {

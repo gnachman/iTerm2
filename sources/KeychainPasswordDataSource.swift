@@ -124,6 +124,11 @@ fileprivate class ModernKeychainAccount: NSObject, PasswordManagerAccount {
     func matches(filter: String) -> Bool {
         return _matches(filter: filter)
     }
+
+    @objc(usernameForTerminalWithContext:completion:)
+    func usernameForTerminal(context: RecipeExecutionContext, completion: @escaping (String?) -> Void) {
+        completion(userName)
+    }
 }
 
 // Stores account name and user name together in account name and makes label "iTerm2"
@@ -209,6 +214,11 @@ fileprivate class LegacyKeychainAccount: NSObject, PasswordManagerAccount {
 
     func matches(filter: String) -> Bool {
         return _matches(filter: filter)
+    }
+
+    @objc(usernameForTerminalWithContext:completion:)
+    func usernameForTerminal(context: RecipeExecutionContext, completion: @escaping (String?) -> Void) {
+        completion(userName)
     }
 }
 
