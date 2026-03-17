@@ -450,7 +450,7 @@ final class iTermProjectsOutlineController: NSViewController,
         guard rowRect != .zero else { return }
 
         let previewView = ArrangementPreviewView(frame: NSRect(x: 0, y: 0, width: 320, height: 200))
-        previewView.setArrangement([arrangement])
+        previewView.setArrangement([arrangement as Any])
 
         let vc = NSViewController()
         vc.view = previewView

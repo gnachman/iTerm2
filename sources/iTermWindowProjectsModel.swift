@@ -185,7 +185,7 @@ final class iTermWindowProject: NSObject, Codable {
     func restoreWindow(_ archived: iTermArchivedWindow) {
         guard let arrangement = archived.arrangement else { return }
         iTermController.sharedInstance().tryOpenArrangement(
-            arrangement as? [AnyHashable: Any],
+            arrangement,
             named: nil,
             asTabsInWindow: nil)
     }
