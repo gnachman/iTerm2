@@ -1091,12 +1091,14 @@ static NSArray<NSString *> *gTerminalCachedCombinedAccountNames;
     const CGFloat labelWidth = 70;
     const CGFloat margin = 20;
     const CGFloat rowSpacing = 18;  // Vertical gap between API URL and API Key rows
-    const CGFloat accessoryHeight = margin + (2 * rowHeight) + rowSpacing + margin;
+    const CGFloat noteHeight = 14;
+    const CGFloat noteSpacing = 4;  // Gap between API URL field and note
+    const CGFloat accessoryHeight = margin + (2 * rowHeight) + rowSpacing + noteHeight + noteSpacing + margin;
     NSView *accessory = [[NSView alloc] initWithFrame:NSMakeRect(0, 0, width, accessoryHeight)];
     accessory.frame = NSMakeRect(0, 0, width, accessoryHeight);
 
     // Row 0 (top): API URL
-    const CGFloat urlRowY = margin + rowHeight + rowSpacing;
+    const CGFloat urlRowY = margin + rowHeight + rowSpacing + noteHeight + noteSpacing;
     NSTextField *urlLabel = [[NSTextField alloc] initWithFrame:NSMakeRect(0, urlRowY, labelWidth, rowHeight)];
     urlLabel.stringValue = @"API URL:";
     urlLabel.bezeled = NO;
@@ -1107,10 +1109,22 @@ static NSArray<NSString *> *gTerminalCachedCombinedAccountNames;
     [accessory addSubview:urlLabel];
 
     NSTextField *urlField = [[NSTextField alloc] initWithFrame:NSMakeRect(labelWidth + 8, urlRowY, width - labelWidth - 8, rowHeight)];
-    urlField.placeholderString = @"e.g. http://127.0.0.1:8900";
+    urlField.placeholderString = @"e.g. http://127.0.0.1:8900/api/v2/";
     urlField.stringValue = savedURL ?: @"";
     urlField.font = [NSFont systemFontOfSize:[NSFont systemFontSize]];
     [accessory addSubview:urlField];
+
+    // Note below API URL: suggest using /api/v2
+    const CGFloat noteRowY = margin + rowHeight + rowSpacing;
+    NSTextField *urlNote = [[NSTextField alloc] initWithFrame:NSMakeRect(labelWidth + 8, noteRowY, width - labelWidth - 8, noteHeight)];
+    urlNote.stringValue = @"Note: Use /api/v2 in your API URL.";
+    urlNote.bezeled = NO;
+    urlNote.drawsBackground = NO;
+    urlNote.editable = NO;
+    urlNote.selectable = NO;
+    urlNote.font = [NSFont systemFontOfSize:[NSFont smallSystemFontSize]];
+    urlNote.textColor = [NSColor secondaryLabelColor];
+    [accessory addSubview:urlNote];
 
     // Row 1 (bottom): API Key
     const CGFloat keyRowY = margin;
