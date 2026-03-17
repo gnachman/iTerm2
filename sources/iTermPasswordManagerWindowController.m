@@ -1117,7 +1117,7 @@ static NSArray<NSString *> *gTerminalCachedCombinedAccountNames;
     // Note below API URL: suggest using /api/v2
     const CGFloat noteRowY = margin + rowHeight + rowSpacing;
     NSTextField *urlNote = [[NSTextField alloc] initWithFrame:NSMakeRect(labelWidth + 8, noteRowY, width - labelWidth - 8, noteHeight)];
-    urlNote.stringValue = @"Note: Use /api/v2 in your API URL.";
+    urlNote.stringValue = @"Note: Append /api/v2 in your API URL.";
     urlNote.bezeled = NO;
     urlNote.drawsBackground = NO;
     urlNote.editable = NO;
