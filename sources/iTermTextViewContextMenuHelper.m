@@ -33,6 +33,7 @@
 #import "NSStringITerm.h"
 #import "RegexKitLite.h"
 #import "URLAction.h"
+#import "PTYWindow.h"
 #import "WindowControllerInterface.h"
 
 const int kMaxSelectedTextLengthForCustomActions = 400;
@@ -63,6 +64,17 @@ const int kMaxSelectedTextLengthForCustomActions = 400;
     };
 }
 
+- (void)applyWindowAppearanceToMenu:(NSMenu *)menu {
+    NSWindow *window = [self.delegate contextMenuViewForMenu:self].window;
+    if (window.it_terminalWindowUseMinimalStyle) {
+        NSColor *bgColor = window.it_terminalWindowDecorationBackgroundColor;
+        NSAppearanceName name = bgColor.perceivedBrightness < 0.5 ? NSAppearanceNameDarkAqua : NSAppearanceNameAqua;
+        menu.appearance = [NSAppearance appearanceNamed:name];
+    } else {
+        menu.appearance = window.appearance;
+    }
+}
+
 // This method is called by control-click or by clicking the hamburger icon in the session title bar.
 // Two-finger tap (or presumably right click with a mouse) would go through mouseUp->
 // PointerController->openContextMenuWithEvent.
@@ -78,6 +90,7 @@ const int kMaxSelectedTextLengthForCustomActions = 400;
 
         NSMenu *menu = [self contextMenuWithEvent:theEvent];
         menu.delegate = self;
+        [self applyWindowAppearanceToMenu:menu];
         return menu;
     }
     // Hamburger icon in session title view.
@@ -85,6 +98,7 @@ const int kMaxSelectedTextLengthForCustomActions = 400;
     NSMenu *menu = [self titleBarMenu];
     _savedSelectedText = [self.delegate contextMenuSelectedText:self capped:0].copy;
     menu.delegate = self;
+    [self applyWindowAppearanceToMenu:menu];
     return menu;
 }
 
@@ -92,6 +106,7 @@ const int kMaxSelectedTextLengthForCustomActions = 400;
     _validationClickPoint = clickPoint;
     NSMenu *menu = [self contextMenuWithEvent:event];
     menu.delegate = self;
+    [self applyWindowAppearanceToMenu:menu];
     NSView *view = [self.delegate contextMenuViewForMenu:self];
     [NSMenu popUpContextMenu:menu withEvent:event forView:view];
     _validationClickPoint = VT100GridCoordMake(-1, -1);
