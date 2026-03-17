@@ -9,10 +9,14 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
+@protocol PSMPUAFontProvider;
+
+
 @interface iTermFakeWindowTitleLabel : NSTextField
 @property (nonatomic, copy, readonly) NSString *windowTitle;
 @property (nonatomic, strong, readonly) NSImage *windowIcon;
 @property (nullable, nonatomic, copy, readonly) NSString *subtitle;
+@property (nullable, nonatomic, weak) id<PSMPUAFontProvider> puaFontProvider;
 
 - (instancetype)initWithCoder:(NSCoder *)coder NS_UNAVAILABLE;
 - (instancetype)initWithFrame:(NSRect)frameRect NS_UNAVAILABLE;

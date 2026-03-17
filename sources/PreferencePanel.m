@@ -243,14 +243,11 @@ static PreferencePanel *gSessionsPreferencePanel;
 
 - (NSRect)searchTextRectForBounds:(NSRect)rect {
     NSRect result = [super searchTextRectForBounds:rect];
-    // Adjust vertical position to center the text properly on Tahoe
-    result.origin.y -= 2;
     return result;
 }
 
 - (NSRect)searchButtonRectForBounds:(NSRect)rect {
     NSRect result = [super searchButtonRectForBounds:rect];
-    result.origin.y -= 2;
     return result;
 }
 
@@ -980,6 +977,8 @@ andEditComponentWithIdentifier:(NSString *)identifier
     if (!_bigSurSearchFieldToolbarItem) {
         _bigSurSearchFieldToolbarItem = [[NSSearchToolbarItem alloc] initWithItemIdentifier:iTermPreferencePanelSearchFieldToolbarItemIdentifier];
         _bigSurSearchFieldToolbarItem.label = @"";
+        // Prevent the search field from expanding when focused, which shifts toolbar icons.
+        _bigSurSearchFieldToolbarItem.preferredWidthForSearchField = 180;
         _bigSurSearchFieldToolbarItem.searchField.delegate = self;
 
         // Workaround for macOS 26 bug where text is not vertically centered. Issue 12708.

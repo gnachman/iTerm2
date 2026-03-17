@@ -9,6 +9,7 @@
 #import "PSMYosemiteTabStyle.h"
 
 #import "iTermAdvancedSettingsModel.h"
+#import "PSMCachedTitle.h"
 #import "NSColor+PSM.h"
 #import "PSMOverflowPopUpButton.h"
 #import "PSMRolloverButton.h"
@@ -500,13 +501,15 @@
 
 - (PSMCachedTitleInputs *)cachedTitleInputsForTabCell:(PSMTabBarCell *)cell {
     const BOOL parseHTML = [[_tabBar.delegate tabView:_tabBar valueOfOption:PSMTabBarControlOptionHTMLTabTitles] boolValue];
+    id<PSMPUAFontProvider> puaFontProvider = [_tabBar.delegate tabView:_tabBar valueOfOption:PSMTabBarControlOptionPUAFontProvider];
     PSMCachedTitleInputs *inputs = [[PSMCachedTitleInputs alloc] initWithTitle:cell.stringValue
                                                                truncationStyle:cell.truncationStyle
                                                                          color:[self textColorForCell:cell]
                                                                        graphic:[(id)[[cell representedObject] identifier] psmTabGraphic]
                                                                    orientation:_orientation
                                                                       fontSize:self.fontSize
-                                                                     parseHTML:parseHTML];
+                                                                     parseHTML:parseHTML
+                                                               puaFontProvider:puaFontProvider];
     return inputs;
 }
 
@@ -515,6 +518,7 @@
         return nil;
     }
     const BOOL parseHTML = [[_tabBar.delegate tabView:_tabBar valueOfOption:PSMTabBarControlOptionHTMLTabTitles] boolValue];
+    id<PSMPUAFontProvider> puaFontProvider = [_tabBar.delegate tabView:_tabBar valueOfOption:PSMTabBarControlOptionPUAFontProvider];
     NSColor *color = [self textColorForCell:cell];
     PSMCachedTitleInputs *inputs = [[PSMCachedTitleInputs alloc] initWithTitle:cell.subtitleString ?: @""
                                                                truncationStyle:cell.truncationStyle
@@ -522,7 +526,8 @@
                                                                        graphic:nil
                                                                    orientation:_orientation
                                                                       fontSize:self.subtitleFontSize
-                                                                     parseHTML:parseHTML];
+                                                                     parseHTML:parseHTML
+                                                               puaFontProvider:puaFontProvider];
     return inputs;
 }
 

@@ -14,6 +14,12 @@ typedef NS_ENUM(int, PSMTabBarOrientation) {
     PSMTabBarVerticalOrientation
 };
 
+/// Protocol for looking up fonts for Private Use Area code points.
+/// This allows different PUA ranges to use different fonts (e.g., nerd font bundles).
+@protocol PSMPUAFontProvider <NSObject>
+- (NSFont *)fontForPUACodePoint:(UTF32Char)codePoint;
+@end
+
 
 @interface PSMCachedTitleInputs: NSObject
 @property (nonatomic, strong) NSString *title;
@@ -23,6 +29,7 @@ typedef NS_ENUM(int, PSMTabBarOrientation) {
 @property (nonatomic) PSMTabBarOrientation orientation;
 @property (nonatomic) CGFloat fontSize;
 @property (nonatomic) BOOL parseHTML;
+@property (nullable, nonatomic, weak) id<PSMPUAFontProvider> puaFontProvider;
 
 - (instancetype)initWithTitle:(NSString *)title
               truncationStyle:(NSLineBreakMode)truncationStyle
@@ -30,9 +37,19 @@ typedef NS_ENUM(int, PSMTabBarOrientation) {
                       graphic:(nullable NSImage *)graphic
                   orientation:(PSMTabBarOrientation)orientation
                      fontSize:(CGFloat)fontSize
-                    parseHTML:(BOOL)parseHTML NS_DESIGNATED_INITIALIZER;
+                    parseHTML:(BOOL)parseHTML
+              puaFontProvider:(nullable id<PSMPUAFontProvider>)puaFontProvider NS_DESIGNATED_INITIALIZER;
 - (instancetype)init NS_UNAVAILABLE;
 @end
+
+/// Applies fonts from a PUA font provider to Private Use Area characters in an attributed string.
+/// @param attributedString The attributed string to modify
+/// @param provider The font provider to query for PUA fonts
+/// @param fontSize The point size to use for the PUA fonts
+/// @return A new attributed string with PUA fonts applied, or the original if no changes needed
+NSAttributedString *PSMApplyPUAFonts(NSAttributedString *attributedString,
+                                     id<PSMPUAFontProvider> provider,
+                                     CGFloat fontSize);
 
 @interface PSMCachedTitle: NSObject
 @property (nonatomic, readonly) PSMCachedTitleInputs *inputs;

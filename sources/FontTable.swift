@@ -545,3 +545,14 @@ class DualFontProvider: NSObject, FontProviderProtocol {
                                 nonASCIIFontInfo: nonASCIIFontInfo.copy() as! PTYFontInfo)
     }
 }
+
+// MARK: - PUA Font Support
+
+extension FontTable {
+    /// Returns the font for a Private Use Area code point.
+    @objc
+    func font(forPUACodePoint codePoint: UTF32Char) -> NSFont {
+        var remapped: UTF32Char = 0
+        return font(for: codePoint, remapped: &remapped).font
+    }
+}

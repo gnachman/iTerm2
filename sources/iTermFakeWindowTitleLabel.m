@@ -8,6 +8,7 @@
 #import "iTermFakeWindowTitleLabel.h"
 
 #import "DebugLogging.h"
+#import "PSMCachedTitle.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermPreferences.h"
 #import "NSAttributedString+PSM.h"
@@ -62,7 +63,8 @@
                                                                  icon:(NSImage *)icon
                                                                  font:(NSFont *)font
                                                             textColor:(NSColor *)textColor
-                                                            alignment:(NSTextAlignment)textAlignment {
+                                                            alignment:(NSTextAlignment)textAlignment
+                                                      puaFontProvider:(id<PSMPUAFontProvider>)puaFontProvider {
     NSParagraphStyle *paragraphStyle = [self paragraphStyleWithAlignment:textAlignment];
     NSDictionary *attributes = [self attributesWithParagraphStyle:paragraphStyle
                                                              font:font
@@ -70,6 +72,8 @@
     NSString *amendedTitle = (subtitle.length == 0) ? title : [title stringByAppendingString:@"\n"];
     NSAttributedString *attributedString = [self attributedStringForWindowTitleLabelWithString:amendedTitle
                                                                                     attributes:attributes];
+    attributedString = PSMApplyPUAFonts(attributedString, puaFontProvider, font.pointSize);
+
     NSMutableAttributedString *result;
     if (icon) {
         NSTextAttachment *textAttachment = [self iconTextAttachmentForWindowTitleLabelWithImage:[icon it_imageOfSize:NSMakeSize(16, 16)]
@@ -83,12 +87,14 @@
     [result appendAttributedString:attributedString];
 
     if (subtitle) {
+        CGFloat subtitleFontSize = font.pointSize * 0.7;
         NSDictionary *subtitleAttributes =
             [self attributesWithParagraphStyle:paragraphStyle
-                                          font:[NSFont fontWithName:font.fontName size:font.pointSize * 0.7]
+                                          font:[NSFont fontWithName:font.fontName size:subtitleFontSize]
                                      textColor:[textColor colorWithAlphaComponent:textColor.alphaComponent * 0.7]];
         NSAttributedString *subtitleAttributedString = [self attributedStringForWindowTitleLabelWithString:subtitle
                                                                                                 attributes:subtitleAttributes];
+        subtitleAttributedString = PSMApplyPUAFonts(subtitleAttributedString, puaFontProvider, subtitleFontSize);
         [result appendAttributedString:subtitleAttributedString];
     }
     return result;
@@ -100,14 +106,16 @@
                 icon:(NSImage *)icon
                 font:(NSFont *)font
            textColor:(NSColor *)textColor
-           alignment:(NSTextAlignment)textAlignment {
-    if (icon) {
+           alignment:(NSTextAlignment)textAlignment
+     puaFontProvider:(id<PSMPUAFontProvider>)puaFontProvider {
+    if (icon || puaFontProvider) {
         label.attributedStringValue = [self attributedStringForWindowTitleLabelWithString:title
                                                                                  subtitle:subtitle
                                                                                      icon:icon
                                                                                      font:font
                                                                                 textColor:textColor
-                                                                                alignment:textAlignment];
+                                                                                alignment:textAlignment
+                                                                          puaFontProvider:puaFontProvider];
     } else if (subtitle.length == 0) {
         label.stringValue = title ?: @"";
         label.lineBreakMode = NSLineBreakByTruncatingTail;
@@ -117,7 +125,8 @@
                                                                                      icon:nil
                                                                                      font:font
                                                                                 textColor:textColor
-                                                                                alignment:textAlignment];
+                                                                                alignment:textAlignment
+                                                                          puaFontProvider:puaFontProvider];
     }
     if (subtitle.length == 0) {
         label.maximumNumberOfLines = 1;
@@ -194,7 +203,8 @@ alignmentProvider:(NSTextAlignment (^NS_NOESCAPE)(NSTextField *scratch))alignmen
                                        icon:icon
                                        font:self.font
                                   textColor:self.textColor
-                                  alignment:NSTextAlignmentLeft];
+                                  alignment:NSTextAlignmentLeft
+                            puaFontProvider:self.puaFontProvider];
 }
 
 - (void)setTitleWithAlignment:(NSTextAlignment)textAlignment {
@@ -205,7 +215,8 @@ alignmentProvider:(NSTextAlignment (^NS_NOESCAPE)(NSTextField *scratch))alignmen
                                        icon:self.windowIcon
                                        font:self.font
                                   textColor:self.textColor
-                                  alignment:textAlignment];
+                                  alignment:textAlignment
+                            puaFontProvider:self.puaFontProvider];
 }
 
 @end

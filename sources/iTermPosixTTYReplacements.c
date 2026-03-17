@@ -6,6 +6,7 @@
 //
 
 #import "iTermPosixTTYReplacements.h"
+#import "iTermCLogging.h"
 #import "iTermFileDescriptorServer.h"
 #import "iTermResourceLimitsHelper.h"
 #import "legacy_server.h"
@@ -389,13 +390,22 @@ void iTermSignalSafeWriteInt(int fd, int n) {
 
 #pragma mark - Spawn
 
-static void iTermSpawnFailed(const char *argpath, int errorFd, const char *message) {
+static void iTermSpawnFailed(const char *argpath, int errorFd, const char *where, int rc) {
+    FDLog(LOG_ERR, "## spawn failed ## Program: %s Location: %s Error: %d (%s)",
+          argpath, where, rc, strerror(rc));
+
     iTermSignalSafeWrite(errorFd, "## spawn failed ##\n");
     iTermSignalSafeWrite(errorFd, "Program: ");
     iTermSignalSafeWrite(errorFd, argpath);
     iTermSignalSafeWrite(errorFd, "\n");
-    iTermSignalSafeWrite(errorFd, message);
+    iTermSignalSafeWrite(errorFd, "Location: ");
+    iTermSignalSafeWrite(errorFd, where);
     iTermSignalSafeWrite(errorFd, "\n");
+    iTermSignalSafeWrite(errorFd, "Error: ");
+    iTermSignalSafeWriteInt(errorFd, rc);
+    iTermSignalSafeWrite(errorFd, " (");
+    iTermSignalSafeWrite(errorFd, strerror(rc));
+    iTermSignalSafeWrite(errorFd, ")\n");
 
     sleep(1);
     _exit(1);
@@ -420,17 +430,17 @@ static int iTermSpawnInitializeAttrs(const char *argpath, int errorFd, posix_spa
 
     int rc = posix_spawnattr_init(attrsPtr);
     if (rc != 0) {
-        iTermSpawnFailed(argpath, errorFd, strerror(errno));
+        iTermSpawnFailed(argpath, errorFd, "posix_spawnattr_init", rc);
         return 0;
     }
     rc = posix_spawnattr_setflags(attrsPtr, flags);
     if (rc != 0) {
-        iTermSpawnFailed(argpath, errorFd, strerror(errno));
+        iTermSpawnFailed(argpath, errorFd, "posix_spawnattr_setflags", rc);
         return 0;
     }
     rc = responsibility_spawnattrs_setdisclaim(attrsPtr, 1);
     if (rc != 0) {
-        iTermSpawnFailed(argpath, errorFd, strerror(errno));
+        iTermSpawnFailed(argpath, errorFd, "responsibility_spawnattrs_setdisclaim", rc);
         return 0;
     }
 
@@ -458,17 +468,26 @@ static void iTermSpawnInitializeActions(const char *argpath,
                                         const char *initialPwd) API_AVAILABLE(macosx(10.15)) {
     int rc = posix_spawn_file_actions_init(actionsPtr);
     if (rc != 0) {
-        iTermSpawnFailed(argpath, errorFd, strerror(errno));
+        iTermSpawnFailed(argpath, errorFd, "posix_spawn_file_actions_init", rc);
     }
     for (int i = 0; i < numFds; i++) {
         if (fds[i] != i) {
-            posix_spawn_file_actions_adddup2(actionsPtr, fds[i], i);
+            rc = posix_spawn_file_actions_adddup2(actionsPtr, fds[i], i);
+            if (rc != 0) {
+                iTermSpawnFailed(argpath, errorFd, "posix_spawn_file_actions_adddup2", rc);
+            }
         } else {
-            posix_spawn_file_actions_addinherit_np(actionsPtr, i);
+            rc = posix_spawn_file_actions_addinherit_np(actionsPtr, i);
+            if (rc != 0) {
+                iTermSpawnFailed(argpath, errorFd, "posix_spawn_file_actions_addinherit_np", rc);
+            }
         }
     }
     if (initialPwd) {
-        posix_spawn_file_actions_addchdir_np(actionsPtr, initialPwd);
+        rc = posix_spawn_file_actions_addchdir_np(actionsPtr, initialPwd);
+        if (rc != 0) {
+            iTermSpawnFailed(argpath, errorFd, "posix_spawn_file_actions_addchdir_np", rc);
+        }
     }
 }
 
@@ -507,24 +526,10 @@ pid_t iTermSpawn(const char *argpath,
                          &attrs,
                          argv,
                          newEnviron);
-    } while (rc != 0 && errno == EAGAIN);
+    } while (rc == EAGAIN);
 
     if (rc != 0) {
-        const int e = errno;
-        iTermSignalSafeWrite(errorFd, "## spawn failed ##\n");
-        iTermSignalSafeWrite(errorFd, "Program: ");
-        iTermSignalSafeWrite(errorFd, argpath);
-        iTermSignalSafeWrite(errorFd, "\n");
-        if (e == ENOENT) {
-            iTermSignalSafeWrite(errorFd, "\nNo such file or directory");
-        } else {
-            iTermSignalSafeWrite(errorFd, "\nErrno: ");
-            iTermSignalSafeWriteInt(errorFd, e);
-            iTermSignalSafeWrite(errorFd, "\nMessage: ");
-            iTermSignalSafeWrite(errorFd, strerror(e));
-        }
-        iTermSignalSafeWrite(errorFd, "\n");
-        _exit(1);
+        iTermSpawnFailed(argpath, errorFd, "posix_spawn", rc);
     }
     return pid;
 }

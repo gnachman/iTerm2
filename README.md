@@ -40,25 +40,87 @@ iTerm2 is a powerful terminal emulator for macOS that brings the terminal into t
 ## Installation
 
 ### Download
+
 Get the latest version from [iterm2.com/downloads](https://iterm2.com/downloads.html)
 
+For the bleeding edge without building, try the [nightly build](https://iterm2.com/nightly/latest).
+
 ### Build from Source
-See our [build guide](https://gitlab.com/gnachman/iterm2/wikis/HowToBuild) for detailed instructions.
+
+> **Note:** Development builds may be less stable than official releases.
+
+#### Prerequisites
+
+- The most recent version of Xcode (with Command Line Tools). You can minimize suffering by using the same Xcode that is in the file `last-xcode-version`.
+- [Homebrew](https://brew.sh/)
+- [Rustup](https://rustup.rs)
+
+#### Clone
+
+```bash
+git clone https://github.com/gnachman/iTerm2.git
+```
+
+#### Setup (first time)
+
+```bash
+make setup
+```
+
+This installs Homebrew dependencies (cmake, pkg-config, python3, etc.), SF Symbols, Rust cross-compilation support, downloads the Metal Toolchain, initializes submodules, and compiles third-party libraries (OpenSSL, libsixel, libgit2, Sparkle, etc.) inside a sandbox.
+
+Re-run `make paranoid-deps` whenever your active Xcode version changes — the file `last-xcode-version` tracks which version was last used.
+
+#### Build
+
+```bash
+make Development
+```
+
+#### Run
+
+```bash
+make run
+```
+
+#### Architecture
+
+Builds target your native architecture by default. To produce a universal (arm64 + x86_64) binary:
+
+```bash
+UNIVERSAL=1 make Development
+```
+
+#### Code signing
+
+Code signing is disabled by default to keep contributor builds simple. To enable it with the project's signing identity:
+
+```bash
+SIGNED=1 make Development
+```
+
+#### Building in Xcode
+
+If you prefer building from Xcode instead of the command line:
+
+1. Complete the **Clone** and **Setup** steps above.
+2. Configure code signing with your team ID:
+   ```bash
+   tools/set_team_id.sh YOUR_TEAM_ID
+   ```
+   This script updates `DEVELOPMENT_TEAM` in all Xcode project files (iTerm2 and its dependencies like Sparkle, SwiftyMarkdown, etc.) so code signing works with your identity.
+
+   **To find your team ID:** Open Keychain Access, find your "Apple Development" or "Developer ID" certificate, and look for the 10-character string in parentheses (e.g., "H7V7XYVQ7D").
+
+   **No Developer account?** Skip this step and select "Sign to Run Locally" in Xcode's Signing & Capabilities tab.
+
+3. Open `iTerm2.xcodeproj` in Xcode.
+4. Edit Scheme (Cmd-<) and set Build Configuration to **Development**.
+5. Press Cmd-R to build and run.
 
 ---
 
 ## Development
-
-### Building
-
-```bash
-# Clone the repository
-git clone https://github.com/gnachman/iTerm2.git
-cd iTerm2
-
-# Build with Xcode
-xcodebuild -project iTerm2.xcodeproj -scheme iTerm2 -configuration Debug
-```
 
 ### Contributing
 
@@ -77,12 +139,12 @@ We welcome contributions! Please read our [contribution guide](https://gitlab.co
 
 ## Resources
 
-| Resource | Link |
-|----------|------|
-| Official Website | [iterm2.com](https://iterm2.com) |
-| Documentation | [iterm2.com/documentation](https://iterm2.com/documentation.html) |
-| Community | [iTerm2 Discussions](https://gitlab.com/gnachman/iterm2/-/issues) |
-| Downloads | [iterm2.com/downloads](https://iterm2.com/downloads.html) |
+| Resource         | Link                                                              |
+| ---------------- | ----------------------------------------------------------------- |
+| Official Website | [iterm2.com](https://iterm2.com)                                  |
+| Documentation    | [iterm2.com/documentation](https://iterm2.com/documentation.html) |
+| Community        | [iTerm2 Discussions](https://gitlab.com/gnachman/iterm2/-/issues) |
+| Downloads        | [iterm2.com/downloads](https://iterm2.com/downloads.html)         |
 
 ---
 
@@ -95,6 +157,7 @@ iTerm2 is distributed under the [GPLv3](LICENSE) license.
 ## Support
 
 If you love iTerm2, consider:
+
 - Starring this repository
 - Spreading the word
 - [Sponsoring development](https://iterm2.com/donate.html)

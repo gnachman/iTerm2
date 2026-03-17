@@ -356,11 +356,12 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
     
     @objc func cachedTitleInputs(forTabCell cell: PSMTabBarCell) -> PSMCachedTitleInputs {
         let parseHTML = tabBar?.delegate?.tabView?(tabBar, valueOfOption: PSMTabBarControlOptionKey.htmlTabTitles) as? NSNumber ?? NSNumber(value: false)
-        
+        let puaFontProvider = tabBar?.delegate?.tabView?(tabBar, valueOfOption: PSMTabBarControlOptionKey.puaFontProvider) as? PSMPUAFontProvider
+
         let tabViewItem = cell.representedObject as? NSTabViewItem
         let tab = tabViewItem?.identifier as? PSMTabBarControlRepresentedObjectIdentifierProtocol
         let graphic = tab?.psmTabGraphic?()
-        
+
         return PSMCachedTitleInputs(
             title: cell.stringValue,
             truncationStyle: cell.truncationStyle,
@@ -368,7 +369,8 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
             graphic: graphic,
             orientation: _orientation,
             fontSize: fontSize,
-            parseHTML: parseHTML.boolValue
+            parseHTML: parseHTML.boolValue,
+            puaFontProvider: puaFontProvider
         )
     }
     
@@ -376,10 +378,11 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
         guard let subtitle = cell.subtitleString else {
             return nil
         }
-        
+
         let parseHTML = tabBar?.delegate?.tabView?(tabBar, valueOfOption: PSMTabBarControlOptionKey.htmlTabTitles) as? NSNumber ?? NSNumber(value: false)
+        let puaFontProvider = tabBar?.delegate?.tabView?(tabBar, valueOfOption: PSMTabBarControlOptionKey.puaFontProvider) as? PSMPUAFontProvider
         let color = textColor(for: cell)
-        
+
         return PSMCachedTitleInputs(
             title: subtitle,
             truncationStyle: cell.truncationStyle,
@@ -387,7 +390,8 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
             graphic: nil,
             orientation: _orientation,
             fontSize: subtitleFontSize,
-            parseHTML: parseHTML.boolValue
+            parseHTML: parseHTML.boolValue,
+            puaFontProvider: puaFontProvider
         )
     }
     

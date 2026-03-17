@@ -32,6 +32,7 @@
 #import "NSWindow+PSM.h"
 #import "NSWindow+iTerm.h"
 #import "NSWorkspace+iTerm.h"
+#import "PSMCachedTitle.h"
 #import "PSMDarkHighContrastTabStyle.h"
 #import "PSMDarkTabStyle.h"
 #import "PSMLightHighContrastTabStyle.h"
@@ -3304,6 +3305,13 @@ ITERM_WEAKLY_REFERENCEABLE
     alert.accessoryView = titleTextField;
     [alert addButtonWithTitle:@"OK"];
     [alert addButtonWithTitle:@"Cancel"];
+    BOOL isDark;
+    if ((iTermPreferencesTabStyle)[iTermPreferences intForKey:kPreferenceKeyTabStyle] == TAB_STYLE_MINIMAL) {
+        isDark = self.minimalTabStyleBackgroundColor.isDark;
+    } else {
+        isDark = [self.window.effectiveAppearance bestMatchFromAppearancesWithNames:@[NSAppearanceNameDarkAqua, NSAppearanceNameAqua]] == NSAppearanceNameDarkAqua;
+    }
+    alert.window.appearance = [NSAppearance appearanceNamed:isDark ? NSAppearanceNameDarkAqua : NSAppearanceNameAqua];
     dispatch_async(dispatch_get_main_queue(), ^{
         [titleTextField.window makeFirstResponder:titleTextField];
     });
@@ -7437,6 +7445,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     [item setRepresentedObject:tabViewItem];
     _tabViewItemForColorPicker = tabViewItem;
     [rootMenu addItem:item];
+    rootMenu.minimumWidth = tabColorViewSize.width;
 
     for (NSMenuItem *item in rootMenu.itemArray) {
         item.target = self;
@@ -7679,6 +7688,13 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     alert.accessoryView = titleTextField;
     [alert addButtonWithTitle:@"OK"];
     [alert addButtonWithTitle:@"Cancel"];
+    BOOL isDark;
+    if ((iTermPreferencesTabStyle)[iTermPreferences intForKey:kPreferenceKeyTabStyle] == TAB_STYLE_MINIMAL) {
+        isDark = self.minimalTabStyleBackgroundColor.isDark;
+    } else {
+        isDark = [self.window.effectiveAppearance bestMatchFromAppearancesWithNames:@[NSAppearanceNameDarkAqua, NSAppearanceNameAqua]] == NSAppearanceNameDarkAqua;
+    }
+    alert.window.appearance = [NSAppearance appearanceNamed:isDark ? NSAppearanceNameDarkAqua : NSAppearanceNameAqua];
     __weak __typeof(self) weakSelf = self;
     [NSApp activateIgnoringOtherApps:YES];
     [alert beginSheetModalForWindow:self.window completionHandler:^(NSModalResponse returnCode) {
@@ -8019,6 +8035,10 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
         return @([iTermAdvancedSettingsModel lightModeInactiveTabDarkness]);
     } else if ([option isEqualToString:PSMTabBarControlOptionDarkModeInactiveTabDarkness]) {
         return @([iTermAdvancedSettingsModel darkModeInactiveTabDarkness]);
+    } else if ([option isEqualToString:PSMTabBarControlOptionPUAFontProvider]) {
+        // Return self as the PUA font provider. PseudoTerminal delegates to the current
+        // session's font table, so font table changes are automatically picked up.
+        return self;
     }
     return nil;
 }
@@ -10416,7 +10436,7 @@ static BOOL iTermApproximatelyEqualRects(NSRect lhs, NSRect rhs, double epsilon)
         case WINDOW_TYPE_COMPACT:
         case WINDOW_TYPE_COMPACT_MAXIMIZED:
             return nil;
-            
+
         case WINDOW_TYPE_TOP_PERCENTAGE:
         case WINDOW_TYPE_LEFT_PERCENTAGE:
         case WINDOW_TYPE_RIGHT_PERCENTAGE:
@@ -10434,6 +10454,16 @@ static BOOL iTermApproximatelyEqualRects(NSRect lhs, NSRect rhs, double epsilon)
         case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
             return self.currentSession.subtitle;
     }
+}
+
+- (id<PSMPUAFontProvider>)rootTerminalViewPUAFontProvider {
+    return self;
+}
+
+#pragma mark - PSMPUAFontProvider
+
+- (NSFont *)fontForPUACodePoint:(UTF32Char)codePoint {
+    return [self.currentSession.textview.fontTable fontForPUACodePoint:codePoint];
 }
 
 - (BOOL)rootTerminalViewShouldRevealStandardWindowButtons {

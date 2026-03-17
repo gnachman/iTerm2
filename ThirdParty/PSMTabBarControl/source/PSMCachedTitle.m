@@ -16,7 +16,8 @@
                       graphic:(NSImage *)graphic
                   orientation:(PSMTabBarOrientation)orientation
                      fontSize:(CGFloat)fontSize
-                    parseHTML:(BOOL)parseHTML {
+                    parseHTML:(BOOL)parseHTML
+              puaFontProvider:(id<PSMPUAFontProvider>)puaFontProvider {
     assert(title);
     self = [super init];
     if (self) {
@@ -27,14 +28,15 @@
         _orientation = orientation;
         _fontSize = fontSize;
         _parseHTML = parseHTML;
+        _puaFontProvider = puaFontProvider;
     }
     return self;
 }
 
 - (NSString *)description {
-    return [NSString stringWithFormat:@"<%@: %p title=%@ trunc=%@ color=%@ graphic=%@ orientation=%@ fontSize=%@ parseHTML=%@>",
+    return [NSString stringWithFormat:@"<%@: %p title=%@ trunc=%@ color=%@ graphic=%@ orientation=%@ fontSize=%@ parseHTML=%@ puaFontProvider=%@>",
             NSStringFromClass([self class]), self, self.title, @(self.truncationStyle),
-            self.color, self.graphic, @(self.orientation), @(self.fontSize), @(_parseHTML)];
+            self.color, self.graphic, @(self.orientation), @(self.fontSize), @(_parseHTML), _puaFontProvider];
 }
 
 - (BOOL)isEqual:(id)obj {
@@ -66,10 +68,71 @@
     if (other->_parseHTML != _parseHTML) {
         return NO;
     }
+    if (other->_puaFontProvider != _puaFontProvider) {
+        return NO;
+    }
     return YES;
 }
 
 @end
+
+static BOOL PSMIsPrivateUseAreaCodePoint(UTF32Char c) {
+    // BMP Private Use Area: U+E000 to U+F8FF
+    // Supplementary PUA-A: U+F0000 to U+FFFFD
+    // Supplementary PUA-B: U+100000 to U+10FFFD
+    return (c >= 0xE000 && c <= 0xF8FF) ||
+           (c >= 0xF0000 && c <= 0xFFFFD) ||
+           (c >= 0x100000 && c <= 0x10FFFD);
+}
+
+NSAttributedString *PSMApplyPUAFonts(NSAttributedString *attributedString,
+                                     id<PSMPUAFontProvider> provider,
+                                     CGFloat fontSize) {
+    if (!provider) {
+        return attributedString;
+    }
+    NSString *string = attributedString.string;
+    if (string.length == 0) {
+        return attributedString;
+    }
+
+    // Limit iteration to first 256 characters for performance
+    const NSUInteger limit = MIN(string.length, 256);
+    NSMutableAttributedString *result = nil;
+    NSUInteger i = 0;
+    while (i < limit) {
+        UTF32Char codePoint;
+        unichar c = [string characterAtIndex:i];
+        NSUInteger charLen = 1;
+
+        if (CFStringIsSurrogateHighCharacter(c) && i + 1 < string.length) {
+            unichar low = [string characterAtIndex:i + 1];
+            if (CFStringIsSurrogateLowCharacter(low)) {
+                codePoint = CFStringGetLongCharacterForSurrogatePair(c, low);
+                charLen = 2;
+            } else {
+                codePoint = c;
+            }
+        } else {
+            codePoint = c;
+        }
+
+        if (PSMIsPrivateUseAreaCodePoint(codePoint)) {
+            NSFont *font = [provider fontForPUACodePoint:codePoint];
+            if (font) {
+                // Scale the PUA font to match the title font size
+                NSFont *scaledFont = [NSFont fontWithDescriptor:font.fontDescriptor size:fontSize];
+                if (!result) {
+                    result = [attributedString mutableCopy];
+                }
+                [result addAttribute:NSFontAttributeName value:scaledFont range:NSMakeRange(i, charLen)];
+            }
+        }
+        i += charLen;
+    }
+
+    return result ?: attributedString;
+}
 
 @implementation PSMCachedTitle {
     NSAttributedString *_attributedString;
@@ -122,6 +185,14 @@
         textAttributedString = [[NSAttributedString alloc] initWithString:_inputs.title
                                                                attributes:attributes];
     }
+
+    // Apply PUA fonts to Private Use Area characters if a font provider is available
+    if (_inputs.puaFontProvider) {
+        textAttributedString = PSMApplyPUAFonts(textAttributedString,
+                                                _inputs.puaFontProvider,
+                                                _inputs.fontSize);
+    }
+
     _attributedString = textAttributedString;
     return _attributedString;
 }

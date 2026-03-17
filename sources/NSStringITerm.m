@@ -3039,6 +3039,30 @@ static NSDictionary<NSString *, NSNumber *> *iTermKittyDiacriticIndex(void) {
     return sca;
 }
 
+- (int)screenWidthWithAmbiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
+                              unicodeVersion:(NSInteger)unicodeVersion
+                               normalization:(iTermUnicodeNormalization)normalization {
+    if (self.length == 0) {
+        return 0;
+    }
+    screen_char_t *buf = iTermCalloc(self.length * 3, sizeof(screen_char_t));
+    int len = (int)self.length;
+    StringToScreenChars(self,
+                        buf,
+                        (screen_char_t){0},
+                        (screen_char_t){0},
+                        &len,
+                        ambiguousIsDoubleWidth,
+                        NULL,
+                        NULL,
+                        normalization,
+                        unicodeVersion,
+                        NO,
+                        NULL);
+    free(buf);
+    return len;
+}
+
 + (NSData *)dataForHexCodes:(NSString *)codes {
     NSMutableData *data = [NSMutableData data];
     NSArray* components = [codes componentsSeparatedByString:@" "];

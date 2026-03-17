@@ -1,0 +1,65 @@
+#!/bin/bash
+# Pre-commit hook to ensure set_team_id.sh covers all projects with DEVELOPMENT_TEAM.
+# Install by adding to .git/hooks/pre-commit or using a hook manager.
+
+set -e
+
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+SCRIPT="$REPO_ROOT/tools/set_team_id.sh"
+
+if [ ! -f "$SCRIPT" ]; then
+    echo "Warning: tools/set_team_id.sh not found, skipping check"
+    exit 0
+fi
+
+# Find all project.pbxproj files with DEVELOPMENT_TEAM
+# Exclude: build dirs, Examples, Tests, Demos
+projects_with_team=()
+while IFS= read -r -d '' proj; do
+    # Skip example/test/demo projects in submodules
+    if [[ "$proj" =~ /Example/|/Examples/|/Test/|/Tests/|/Demo/|/Demos/ ]]; then
+        continue
+    fi
+    if grep -q "DEVELOPMENT_TEAM\|DevelopmentTeam" "$proj" 2>/dev/null; then
+        # Get path relative to repo root
+        rel_path="${proj#$REPO_ROOT/}"
+        projects_with_team+=("$rel_path")
+    fi
+done < <(find "$REPO_ROOT" -name "project.pbxproj" -print0 2>/dev/null | grep -z -v "\.build/\|DerivedData\|xcuserdata")
+
+# Get projects listed in set_team_id.sh
+projects_in_script=()
+while IFS= read -r line; do
+    # Extract paths from the PROJECT_FILES array
+    if [[ "$line" =~ \"([^\"]+\.xcodeproj/project\.pbxproj)\" ]]; then
+        projects_in_script+=("${BASH_REMATCH[1]}")
+    fi
+done < "$SCRIPT"
+
+# Check for projects with DEVELOPMENT_TEAM not in the script
+missing=()
+for proj in "${projects_with_team[@]}"; do
+    found=false
+    for scripted in "${projects_in_script[@]}"; do
+        if [[ "$proj" == "$scripted" ]]; then
+            found=true
+            break
+        fi
+    done
+    if [ "$found" = false ]; then
+        missing+=("$proj")
+    fi
+done
+
+if [ ${#missing[@]} -gt 0 ]; then
+    echo "ERROR: The following projects have DEVELOPMENT_TEAM but are not in tools/set_team_id.sh:"
+    echo ""
+    for proj in "${missing[@]}"; do
+        echo "  $proj"
+    done
+    echo ""
+    echo "Please add them to the PROJECT_FILES array in tools/set_team_id.sh"
+    exit 1
+fi
+
+exit 0

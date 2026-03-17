@@ -729,6 +729,23 @@ iTermPercentage iTermPercentageFromProfile(Profile *profile) {
     // by computeArgvForCommand:substitutions:completion:.
     userName = [userName stringByReplacingOccurrencesOfString:@"\\" withString:@"\\\\"];
     userName = [userName stringByReplacingOccurrencesOfString:@"\"" withString:@"\\\""];
+    return [NSString stringWithFormat:@"/usr/bin/login -f%@p \"%@\"", [self hushlogin] ? @"q" : @"",
+            userName];
+}
+
++ (NSString *)legacyStandardLoginCommand {
+    NSString *userName = NSUserName();
+    // Active directory users have backslash in their user name (issue 6999)
+    // Somehow, users can have spaces in their user name (issue 8360)
+    //
+    // Avoid using standard escaping which is wrong for a quoted string. I don't know why
+    // this is in quotes, but I'm afraid to change it because it's been that way for so
+    // long and the original commit message was lost.
+    //
+    // The returned value gets parsed into an argument array using -componentsInShellCommand
+    // by computeArgvForCommand:substitutions:completion:.
+    userName = [userName stringByReplacingOccurrencesOfString:@"\\" withString:@"\\\\"];
+    userName = [userName stringByReplacingOccurrencesOfString:@"\"" withString:@"\\\""];
     return [NSString stringWithFormat:@"login -f%@p \"%@\"", [self hushlogin] ? @"q" : @"",
             userName];
 }

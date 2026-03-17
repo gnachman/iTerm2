@@ -81,6 +81,7 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionMinimalNonSelectedColoredTabAlph
 PSMTabBarControlOptionKey PSMTabBarControlOptionTextColor = @"PSMTabBarControlOptionTextColor";
 PSMTabBarControlOptionKey PSMTabBarControlOptionLightModeInactiveTabDarkness = @" PSMTabBarControlOptionLightModeInactiveTabDarkness";
 PSMTabBarControlOptionKey PSMTabBarControlOptionDarkModeInactiveTabDarkness = @" PSMTabBarControlOptionDarkModeInactiveTabDarkness";
+PSMTabBarControlOptionKey PSMTabBarControlOptionPUAFontProvider = @"PSMTabBarControlOptionPUAFontProvider";
 
 @interface PSMToolTip: NSObject
 @property (nonatomic, readonly) NSRect rect;

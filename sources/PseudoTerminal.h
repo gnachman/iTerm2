@@ -52,6 +52,8 @@ extern NSString *const iTermDidCreateTerminalWindowNotification;
 // This class is 1:1 with windows. It controls the tabs, the window's fullscreen
 // status, and coordinates resizing of sessions (either session-initiated
 // or window-initiated).
+@protocol PSMPUAFontProvider;
+
 @interface PseudoTerminal : NSWindowController <
   iTermInstantReplayDelegate,
   iTermPresentationControllerManagedWindowController,
@@ -61,6 +63,7 @@ extern NSString *const iTermDidCreateTerminalWindowNotification;
   NSWindowDelegate,
   PSMTabBarControlDelegate,
   PSMTabViewDelegate,
+  PSMPUAFontProvider,
   PTYWindowDelegateProtocol,
   WindowControllerInterface>
 

@@ -66,6 +66,7 @@ extern PSMTabBarControlOptionKey PSMTabBarControlOptionMinimalNonSelectedColored
 extern PSMTabBarControlOptionKey PSMTabBarControlOptionTextColor;  // NSColor
 extern PSMTabBarControlOptionKey PSMTabBarControlOptionLightModeInactiveTabDarkness;  // NSNumber in 0-1
 extern PSMTabBarControlOptionKey PSMTabBarControlOptionDarkModeInactiveTabDarkness;  // NSNumber in 0-1
+extern PSMTabBarControlOptionKey PSMTabBarControlOptionPUAFontProvider;  // id<PSMPUAFontProvider> for Private Use Area characters
 
 // Tab views controlled by the tab bar may expect this protocol to be conformed to by their delegate.
 @protocol PSMTabViewDelegate<NSTabViewDelegate>

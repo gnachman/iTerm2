@@ -29,9 +29,10 @@
 
 #import <Foundation/Foundation.h>
 #import <Cocoa/Cocoa.h>
-#import "iTermOpenDirectory.h"
-#import "ProfileModel.h"
 #import "FutureMethods.h"
+#import "iTermOpenDirectory.h"
+#import "iTermUnicodeNormalization.h"
+#import "ProfileModel.h"
 
 // Prefs-level keys
 #define KEY_DEFAULT_GUID                @"Default Bookmark Guid"  // use this instead (not in a bookmark)
@@ -486,13 +487,6 @@ typedef NS_ENUM(NSUInteger, iTermHotKeyModifierActivation) {
     iTermHotKeyModifierActivationCommand = 3,
 };
 
-// Do not renumber. These are tag numbers and also saved in prefs.
-typedef NS_ENUM(NSUInteger, iTermUnicodeNormalization) {
-    iTermUnicodeNormalizationNone = 0,
-    iTermUnicodeNormalizationNFC = 1,
-    iTermUnicodeNormalizationNFD = 2,
-    iTermUnicodeNormalizationHFSPlus = 3,
-};
 
 typedef NS_ENUM(NSUInteger, iTermBackgroundImageMode) {
     iTermBackgroundImageModeStretch = 0,
@@ -597,6 +591,7 @@ NSString *iTermPathToSSH(void);
 + (NSString *)shellLauncherCommandWithCustomShell:(NSString *)customShell;
 // Login command that leaves you in your home directory.
 + (NSString *)standardLoginCommand;
++ (NSString *)legacyStandardLoginCommand;
 + (NSFont *)fontWithDesc:(NSString *)fontDesc ligaturesEnabled:(BOOL)ligaturesEnabled;
 
 // This is deprecated in favor of -[NSString fontValue] and -[NSFont stringValue].

@@ -1,30 +1,33 @@
-PATH := /usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin
-
 ORIG_PATH := $(PATH)
-PATH := /usr/bin:/bin:/usr/sbin:/sbin
+PATH := /usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin
 ITERM_PID=$(shell pgrep "iTerm2")
 APPS := /Applications
 ITERM_CONF_PLIST = $(HOME)/Library/Preferences/com.googlecode.iterm2.plist
 COMPACTDATE=$(shell date +"%Y%m%d")
 VERSION = $(shell cat version.txt | sed -e "s/%(extra)s/$(COMPACTDATE)/")
 NAME=$(shell echo $(VERSION) | sed -e "s/\\./_/g")
-CMAKE ?= /opt/homebrew/bin/cmake
+HOMEBREW_PREFIX ?= $(shell brew --prefix 2>/dev/null || echo /opt/homebrew)
+CMAKE ?= $(HOMEBREW_PREFIX)/bin/cmake
+PKG_CONFIG ?= $(HOMEBREW_PREFIX)/bin/pkg-config
 RUSTUP ?= $(shell PATH="$(ORIG_PATH):$(HOME)/.cargo/bin" which rustup 2>/dev/null)
 DEPLOYMENT_TARGET=12.0
 
 # Build product directory: defaults to xcodebuild's SYMROOT.
 # Override with BUILD_DIR=/path/to/dir on the command line.
+# Skip validation for 'make setup' since xcodebuild may not work yet.
 ifndef BUILD_DIR
   BUILD_DIR := $(shell xcodebuild -scheme iTerm2 -showBuildSettings 2>/dev/null | awk -F ' = ' '/^ *SYMROOT/{print $$2; exit}')
 endif
-ifeq ($(strip $(BUILD_DIR)),)
-  $(error Could not determine BUILD_DIR from xcodebuild -showBuildSettings. Is Xcode installed? Set BUILD_DIR explicitly to override.)
-endif
-ifeq ($(patsubst /%,%,$(BUILD_DIR)),$(BUILD_DIR))
-  $(error BUILD_DIR is not an absolute path: $(BUILD_DIR))
-endif
-ifneq ($(shell d='$(BUILD_DIR)'; while [ ! -d "$$d" ]; do d=$$(dirname "$$d"); done; [ -w "$$d" ] && echo ok),ok)
-  $(error BUILD_DIR is not writable: $(BUILD_DIR))
+ifneq ($(MAKECMDGOALS),setup)
+  ifeq ($(strip $(BUILD_DIR)),)
+    $(error Could not determine BUILD_DIR from xcodebuild -showBuildSettings. Is Xcode installed? Set BUILD_DIR explicitly to override.)
+  endif
+  ifeq ($(patsubst /%,%,$(BUILD_DIR)),$(BUILD_DIR))
+    $(error BUILD_DIR is not an absolute path: $(BUILD_DIR))
+  endif
+  ifneq ($(shell d='$(BUILD_DIR)'; while [ ! -d "$$d" ]; do d=$$(dirname "$$d"); done; [ -w "$$d" ] && echo ok),ok)
+    $(error BUILD_DIR is not writable: $(BUILD_DIR))
+  endif
 endif
 
 # Code signing: disabled by default (contributor-friendly).
@@ -59,6 +62,41 @@ endif
 all: Development
 dev: Development
 prod: Deployment
+
+setup:
+	@if ! PATH="$(ORIG_PATH)" command -v brew >/dev/null 2>&1; then \
+		echo "Error: Homebrew is not installed. Install from https://brew.sh"; \
+		exit 1; \
+	fi
+	@if ! PATH="$(ORIG_PATH)" xcode-select -p 2>/dev/null | grep -q 'Xcode.app'; then \
+		echo "Error: Xcode is not selected. Run: sudo xcode-select -s /Applications/Xcode.app"; \
+		exit 1; \
+	fi
+	@if [ -z "$(RUSTUP)" ]; then \
+		echo "Error: rustup is not installed. Install from https://rustup.rs"; \
+		exit 1; \
+	fi
+	@test -f plists/iTerm2.plist || cp plists/dev-iTerm2.plist plists/iTerm2.plist
+	@PATH="$(ORIG_PATH)" brew list cmake >/dev/null 2>&1 || PATH="$(ORIG_PATH)" brew install cmake
+	@PATH="$(ORIG_PATH)" brew list pkg-config >/dev/null 2>&1 || PATH="$(ORIG_PATH)" brew install pkg-config
+	@PATH="$(ORIG_PATH)" brew list automake >/dev/null 2>&1 || PATH="$(ORIG_PATH)" brew install automake
+	@PATH="$(ORIG_PATH)" brew list perl >/dev/null 2>&1 || PATH="$(ORIG_PATH)" brew install perl
+	@PATH="$(ORIG_PATH)" brew list python3 >/dev/null 2>&1 || PATH="$(ORIG_PATH)" brew install python3
+	@PATH="$(ORIG_PATH)" brew list --cask sf-symbols >/dev/null 2>&1 || PATH="$(ORIG_PATH)" brew install --cask sf-symbols
+	@$(HOMEBREW_PREFIX)/bin/python3 -c "import objc" 2>/dev/null || $(HOMEBREW_PREFIX)/bin/pip3 install --break-system-packages pyobjc
+	@PATH="$(ORIG_PATH)" command -v cbindgen >/dev/null || $(RUSTUP) run stable cargo install cbindgen
+	# Note: this installs arm tooling as well
+	$(RUSTUP) target add x86_64-apple-darwin
+	git submodule update --init --recursive
+	PATH="$(ORIG_PATH)" xcodebuild -downloadComponent MetalToolchain
+	@if tools/check-xcode-version; then \
+		BUILD_DIR=$$(xcodebuild -scheme iTerm2 -showBuildSettings 2>/dev/null | awk -F ' = ' '/^ *SYMROOT/{print $$2; exit}'); \
+		if [ "$$USER" = "gnachman" ]; then \
+			$(MAKE) paranoid-deps SIGNED=1 BUILD_DIR="$$BUILD_DIR"; \
+		else \
+			$(MAKE) paranoid-deps BUILD_DIR="$$BUILD_DIR"; \
+		fi; \
+	fi
 
 TAGS:
 	find . -name "*.[mhMH]" -exec etags -o ./TAGS -a '{}' +
@@ -132,11 +170,11 @@ preview:
 
 x86libsixel: force
 	mkdir -p submodules/libsixel/build-x86
-	cd submodules/libsixel/build-x86 && PKG_CONFIG=/opt/homebrew/bin/pkg-config CC="/usr/bin/clang -target x86_64-apple-macos$(DEPLOYMENT_TARGET)" LDFLAGS="-target x86_64-apple-macos$(DEPLOYMENT_TARGET)" CFLAGS="-target x86_64-apple-macos$(DEPLOYMENT_TARGET)" LIBTOOLFLAGS="-target x86_64-apple-macos$(DEPLOYMENT_TARGET)" ../configure -host=x86_64-apple-darwin --prefix=${PWD}/ThirdParty/libsixel-x86 --without-libcurl --without-jpeg --without-png --disable-python --disable-shared && $(MAKE) && $(MAKE) install
+	cd submodules/libsixel/build-x86 && PKG_CONFIG=$(PKG_CONFIG) CC="/usr/bin/clang -target x86_64-apple-macos$(DEPLOYMENT_TARGET)" LDFLAGS="-target x86_64-apple-macos$(DEPLOYMENT_TARGET)" CFLAGS="-target x86_64-apple-macos$(DEPLOYMENT_TARGET)" LIBTOOLFLAGS="-target x86_64-apple-macos$(DEPLOYMENT_TARGET)" ../configure -host=x86_64-apple-darwin --prefix=${PWD}/ThirdParty/libsixel-x86 --without-libcurl --without-jpeg --without-png --disable-python --disable-shared && $(MAKE) && $(MAKE) install
 
 armsixel: force
 	mkdir -p submodules/libsixel/build-arm
-	cd submodules/libsixel/build-arm && PKG_CONFIG=/opt/homebrew/bin/pkg-config CC="/usr/bin/clang -target arm64-apple-macos$(DEPLOYMENT_TARGET)" LDFLAGS="-target arm64-apple-macos$(DEPLOYMENT_TARGET)" CFLAGS="-target arm64-apple-macos$(DEPLOYMENT_TARGET)" LIBTOOLFLAGS="-target arm64-apple-macos$(DEPLOYMENT_TARGET)" ../configure --host=aarch64-apple-darwin --prefix=${PWD}/ThirdParty/libsixel-arm --without-libcurl --without-jpeg --without-png --disable-python --disable-shared && $(MAKE) && $(MAKE) install
+	cd submodules/libsixel/build-arm && PKG_CONFIG=$(PKG_CONFIG) CC="/usr/bin/clang -target arm64-apple-macos$(DEPLOYMENT_TARGET)" LDFLAGS="-target arm64-apple-macos$(DEPLOYMENT_TARGET)" CFLAGS="-target arm64-apple-macos$(DEPLOYMENT_TARGET)" LIBTOOLFLAGS="-target arm64-apple-macos$(DEPLOYMENT_TARGET)" ../configure --host=aarch64-apple-darwin --prefix=${PWD}/ThirdParty/libsixel-arm --without-libcurl --without-jpeg --without-png --disable-python --disable-shared && $(MAKE) && $(MAKE) install
 
 ifdef UNIVERSAL
 # Usage: go to an intel mac and run make x86libsixel and commit it. Go to an arm mac and run make armsixel && make libsixel.
@@ -277,10 +315,8 @@ paranoid-SwiftyMarkdown: force
 	/usr/bin/sandbox-exec -f deps.sb $(MAKE) BUILD_DIR="$(BUILD_DIR)" SwiftyMarkdown
 
 paranoid-deps: force
-ifndef SIGNED
-	$(error SIGNED must be set for paranoid-deps (e.g., make SIGNED=1 paranoid-deps))
-endif
-	/usr/bin/sandbox-exec -f deps.sb $(MAKE) BUILD_DIR="$(BUILD_DIR)" SIGNED=$(SIGNED) deps
+	/usr/bin/sandbox-exec -f deps.sb $(MAKE) BUILD_DIR="$(BUILD_DIR)" deps
+	xcodebuild -version > last-xcode-version
 
 paranoid-fatlibssh2: force
 	/usr/bin/sandbox-exec -f deps.sb $(MAKE) BUILD_DIR="$(BUILD_DIR)" fatlibssh2

@@ -10,5 +10,5 @@ if [ -f last-xcode-version ]; then
   fi
 else
   # Missing version file so rebuild
-  echo 0
+  exit 0
 fi

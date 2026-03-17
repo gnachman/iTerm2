@@ -19,6 +19,7 @@
 @class iTermToolbeltView;
 @protocol iTermToolbeltViewDelegate;
 @protocol PSMTabBarControlDelegate;
+@protocol PSMPUAFontProvider;
 @class PTYTabView;
 
 @protocol iTermRootTerminalViewDelegate<iTermTabBarControlViewDelegate, iTermSwipeHandler>
@@ -69,6 +70,7 @@
 - (void)rootTerminalViewWillLayoutSubviews;
 - (void)rootTerminalViewDidLayoutSubviews;
 - (NSString *)rootTerminalViewCurrentTabSubtitle;
+- (id<PSMPUAFontProvider>)rootTerminalViewPUAFontProvider;
 @end
 
 extern const NSInteger iTermRootTerminalViewWindowNumberLabelMargin;

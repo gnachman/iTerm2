@@ -397,7 +397,7 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
     // Must happen after RestoreGState to ensure no transforms affect the clear.
     // Use frameFlipped:NO because CGContextClearRect uses native CoreGraphics
     // coordinates (origin at bottom-left), not flipped coordinates.
-    CGRect drawnRect = [self frameFlipped:NO];
+    CGRect drawnRect = CGRectInset([self frameFlipped:NO], -2, -2);
     CGContextClearRect(_context, drawnRect);
 
 #if DEBUG

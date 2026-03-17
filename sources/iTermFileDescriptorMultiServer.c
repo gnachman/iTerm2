@@ -241,7 +241,7 @@ static int LaunchModern(const iTermMultiServerRequestLaunch *launch,
                    forkState->numFileDescriptorsToPreserve,
                    launch->pwd,
                    launch->envp,
-                   fd,
+                   2,  // write errors to stderr
                    0);
     }
     if (forkState->pid == -1) {

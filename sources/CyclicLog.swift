@@ -28,13 +28,13 @@ class CyclicLog: NSObject {
         iTermFatalError(compressed)  // This won't return.
     }
 
-    private var value: String {
+    @objc var value: String {
         return mutex.sync {
             messages.joined(separator: "\n")
         }
     }
 
-    private var compressed: String {
+    @objc var compressed: String {
         if let data = (value.lossyData as NSData).it_compressed() {
             return (data as NSData).stringWithBase64Encoding(withLineBreak: "")
         } else {

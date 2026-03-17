@@ -58,11 +58,17 @@ extern NSString *const iTermProfileDidChange;
 + (ProfileModel *)sharedInstance;
 + (ProfileModel *)sessionsInstance;
 
+// Executes block with reduced debug logging (skips expensive call stack symbolication).
+// Use for high-frequency operations like tmux title updates.
++ (void)performWithLessLogging:(BOOL)lessLogging block:(void (^NS_NOESCAPE)(void))block;
+
+// Returns compressed ProfileModel log for crash reports.
++ (NSString *)compressedLog;
+
 + (void)updateSharedProfileWithGUID:(NSString *)sharedProfileGUID
                           newValues:(NSDictionary *)newValues;
 
 
-- (NSMutableArray<NSString *> *)debugHistoryForGuid:(NSString *)guid;
 + (NSString*)freshGuid;
 // Returns a profile suitable for creating a new session based on the given profile.
 // If the source profile is divorced (its guid exists in the sessions instance),

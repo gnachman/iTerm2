@@ -941,6 +941,7 @@ NS_CLASS_AVAILABLE_MAC(10_14)
 }
 
 - (void)setWindowTitleLabelToString:(NSString *)title subtitle:(NSString *)subtitle icon:(NSImage *)icon {
+    _windowTitleLabel.puaFontProvider = [self.delegate rootTerminalViewPUAFontProvider];
     [_windowTitleLabel setTitle:title subtitle:subtitle icon:icon alignmentProvider:
      ^NSTextAlignment(NSTextField * _Nonnull scratch) {
          BOOL leftAligned = NO;
