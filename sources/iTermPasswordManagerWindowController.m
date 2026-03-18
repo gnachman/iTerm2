@@ -511,7 +511,7 @@ static NSArray<NSString *> *gTerminalCachedCombinedAccountNames;
         [KeeperDataSource setShowKeeperSettingsSheetHandler:^(NSWindow *window, void (^completion)(NSString * _Nullable)) {
             __strong __typeof(weakSelf) strongSelf = weakSelf;
             if (strongSelf) {
-                [strongSelf showKeeperSettingsSheetWithEmptyAPIKey:YES forWindow:window onOK:nil keyCompletion:completion];
+                [strongSelf showKeeperSettingsSheetWithEmptyAPIKey:NO forWindow:window onOK:nil keyCompletion:completion];
             } else {
                 if (completion) completion(nil);
             }
@@ -523,7 +523,7 @@ static NSArray<NSString *> *gTerminalCachedCombinedAccountNames;
 
 - (void)keeperDataSourceRequestCredentialsForWindow:(NSWindow *)window
                                          completion:(void (^)(NSString * _Nullable))completion {
-    [self showKeeperSettingsSheetWithEmptyAPIKey:YES
+    [self showKeeperSettingsSheetWithEmptyAPIKey:NO
                                        forWindow:window
                                             onOK:nil
                                     keyCompletion:^(NSString * _Nullable key) {
@@ -715,12 +715,13 @@ static NSArray<NSString *> *gTerminalCachedCombinedAccountNames;
         [self useKeychain:nil];
     }
     [self update];
-    // Only show the settings sheet when the user doesn’t already have an API key in memory (e.g. switching back from macOS Keychain).
+    // When switching to Keeper: if we already have an API key in memory, just refresh the list.
+    // If not, show the settings sheet and load from Keychain so saved credentials are pre-filled (one biometric prompt); if Keychain is empty, the sheet shows empty fields for first-time setup.
     if ([(id)self.currentDataSource keeperHasAPIKeyInMemory]) {
         [self updateConfiguration];
     } else {
         __weak __typeof(self) weakSelf = self;
-        [self showKeeperSettingsSheetWithEmptyAPIKey:YES
+        [self showKeeperSettingsSheetWithEmptyAPIKey:NO
                                            forWindow:nil
                                                 onOK:^{ [weakSelf updateConfiguration]; }
                                         keyCompletion:nil];
@@ -1788,7 +1789,7 @@ static NSString *keeperDisplayMessageFromErrorString(NSString *message) {
             [KeeperDataSource setShowKeeperSettingsSheetHandler:^(NSWindow *window, void (^completion)(NSString * _Nullable)) {
                 __strong __typeof(weakSelf) strongSelf = weakSelf;
                 if (strongSelf) {
-                    [strongSelf showKeeperSettingsSheetWithEmptyAPIKey:YES forWindow:window onOK:nil keyCompletion:completion];
+                    [strongSelf showKeeperSettingsSheetWithEmptyAPIKey:NO forWindow:window onOK:nil keyCompletion:completion];
                 } else {
                     if (completion) completion(nil);
                 }
