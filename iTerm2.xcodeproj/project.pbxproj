@@ -2873,6 +2873,9 @@
 		A697CED32D9D8E590031583F /* VimKeyParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = A697CED22D9D8E540031583F /* VimKeyParser.swift */; };
 		A697E27B1B42501000E175DA /* iTermMinimumSubsequenceMatcher.h in Headers */ = {isa = PBXBuildFile; fileRef = A697E2791B42501000E175DA /* iTermMinimumSubsequenceMatcher.h */; };
 		A697E27C1B42501000E175DA /* iTermMinimumSubsequenceMatcher.h in Headers */ = {isa = PBXBuildFile; fileRef = A697E2791B42501000E175DA /* iTermMinimumSubsequenceMatcher.h */; };
+		A6982A3B2F69BA5500156A99 /* iterm2_shell_integration.xonsh in Resources */ = {isa = PBXBuildFile; fileRef = A6982A3A2F69BA5500156A99 /* iterm2_shell_integration.xonsh */; };
+		A6982A3C2F69BA5500156A99 /* iterm2_shell_integration.xonsh in Resources */ = {isa = PBXBuildFile; fileRef = A6982A3A2F69BA5500156A99 /* iterm2_shell_integration.xonsh */; };
+		A6982A3D2F69BA5500156A99 /* iterm2_shell_integration.xonsh in Resources */ = {isa = PBXBuildFile; fileRef = A6982A3A2F69BA5500156A99 /* iterm2_shell_integration.xonsh */; };
 		A698BF492A5B8DCE0018EA84 /* MoveSessionBuiltInFunction.swift in Sources */ = {isa = PBXBuildFile; fileRef = A698BF482A5B8DCE0018EA84 /* MoveSessionBuiltInFunction.swift */; };
 		A69941C82331F7C400C76EF2 /* ToolPasteHistory.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DE8DDAC1415648600F83147 /* ToolPasteHistory.m */; };
 		A699507721E33827009916BC /* iTermRawKeyMapper.h in Headers */ = {isa = PBXBuildFile; fileRef = A699507521E33827009916BC /* iTermRawKeyMapper.h */; };
@@ -7822,6 +7825,7 @@
 		A697CED22D9D8E540031583F /* VimKeyParser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VimKeyParser.swift; sourceTree = "<group>"; };
 		A697E2791B42501000E175DA /* iTermMinimumSubsequenceMatcher.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermMinimumSubsequenceMatcher.h; sourceTree = "<group>"; };
 		A697E27A1B42501000E175DA /* iTermMinimumSubsequenceMatcher.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermMinimumSubsequenceMatcher.m; sourceTree = "<group>"; };
+		A6982A3A2F69BA5500156A99 /* iterm2_shell_integration.xonsh */ = {isa = PBXFileReference; lastKnownFileType = text; path = iterm2_shell_integration.xonsh; sourceTree = "<group>"; };
 		A698BF482A5B8DCE0018EA84 /* MoveSessionBuiltInFunction.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MoveSessionBuiltInFunction.swift; sourceTree = "<group>"; };
 		A699507521E33827009916BC /* iTermRawKeyMapper.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermRawKeyMapper.h; sourceTree = "<group>"; };
 		A699507621E33827009916BC /* iTermRawKeyMapper.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermRawKeyMapper.m; sourceTree = "<group>"; };
@@ -9223,28 +9227,8 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		9C0F690213C696BCC28C2EDF /* PerformanceTests */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-			);
-			explicitFileTypes = {
-			};
-			explicitFolders = (
-			);
-			path = PerformanceTests;
-			sourceTree = "<group>";
-		};
-		A6A723AF2DC04C2200A8115D /* ModernTests */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-			);
-			explicitFileTypes = {
-			};
-			explicitFolders = (
-			);
-			path = ModernTests;
-			sourceTree = "<group>";
-		};
+		9C0F690213C696BCC28C2EDF /* PerformanceTests */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = PerformanceTests; sourceTree = "<group>"; };
+		A6A723AF2DC04C2200A8115D /* ModernTests */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = ModernTests; sourceTree = "<group>"; };
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -9421,7 +9405,7 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		0464AB0D006CD2EC7F000001 = {
+		0464AB0D006CD2EC7F000001 /* JTerminal */ = {
 			isa = PBXGroup;
 			children = (
 				A6B1C69D2DC15898008AD3CA /* ModernTests.xctestplan */,
@@ -11374,6 +11358,7 @@
 		A629F57223AF2DD900C2F16B /* shell_integration */ = {
 			isa = PBXGroup;
 			children = (
+				A6982A3A2F69BA5500156A99 /* iterm2_shell_integration.xonsh */,
 				A629F57323AF2DD900C2F16B /* iterm2_shell_integration.bash */,
 				A629F57423AF2DD900C2F16B /* iterm2_shell_integration.tcsh */,
 				A629F57523AF2DD900C2F16B /* iterm2_shell_integration.zsh */,
@@ -16450,7 +16435,7 @@
 				en,
 				Base,
 			);
-			mainGroup = 0464AB0D006CD2EC7F000001;
+			mainGroup = 0464AB0D006CD2EC7F000001 /* JTerminal */;
 			packageReferences = (
 				A62E3BC62E1CC674002DF8C3 /* XCLocalSwiftPackageReference "WebExtensionsFramework" */,
 			);
@@ -17050,6 +17035,7 @@
 				1D6ED9EB19AEA20D005A7799 /* PrefsArrangements.png in Resources */,
 				A67F617D214395A70093940A /* graphic_nodejs.png in Resources */,
 				A6E7AE6C214394CA00DE9F3B /* graphic_bower.png in Resources */,
+				A6982A3C2F69BA5500156A99 /* iterm2_shell_integration.xonsh in Resources */,
 				A6CBB90B2E0A832C00B2CCCB /* distraction-removal.js in Resources */,
 				1D6ED9EC19AEA20D005A7799 /* PrefsArrangements@2x.png in Resources */,
 				A6FE7A7A2E0E120100BEBCE4 /* indexeddb-demo.html in Resources */,
@@ -17558,6 +17544,7 @@
 				A67D0D5A1A2EE12A003A8B35 /* iTerm.strings in Resources */,
 				A6976AEF2F47EFD3002875A1 /* SerpApi.png in Resources */,
 				A66A1FAF1A3A230A00F4A3A7 /* iTermWindowShortcutAccessoryView.xib in Resources */,
+				A6982A3D2F69BA5500156A99 /* iterm2_shell_integration.xonsh in Resources */,
 				A6CBB8F12E0A6C9F00B2CCCB /* load-readability.js in Resources */,
 				53BBA0F9214236AC0074D061 /* iterm2_git_poll.sh in Resources */,
 				A67D0D511A2EE12A003A8B35 /* FindView.xib in Resources */,
@@ -17796,6 +17783,7 @@
 				53FF9820209283BE008688D7 /* template_basic_daemon.py in Resources */,
 				A6DEB2EB267BBE6C00192994 /* write_only_profile_prologue.txt in Resources */,
 				A62DBB9920F47CFA008B63D1 /* GoBack.png in Resources */,
+				A6982A3B2F69BA5500156A99 /* iterm2_shell_integration.xonsh in Resources */,
 				A67F615E214395990093940A /* graphic_monitor@2x.png in Resources */,
 				A69A2FA92E5A3B6F00803E66 /* TahoeTabBarShadow.png in Resources */,
 				A67F617B214395A70093940A /* graphic_nodejs.png in Resources */,

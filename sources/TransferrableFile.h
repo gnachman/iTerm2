@@ -8,6 +8,8 @@
 
 #import <Foundation/Foundation.h>
 
+NS_ASSUME_NONNULL_BEGIN
+
 @class TransferrableFile;
 
 typedef NS_ENUM(NSInteger, TransferrableFileStatus) {
@@ -38,30 +40,32 @@ typedef void (^TransferrableFileCompletionBlock)(BOOL success, NSString * _Nulla
 + (BOOL)fileNameIsLocked:(NSString * _Nonnull)name;
 
 // These two are only needed for keyboard-interactive auth
-- (NSString * _Nullable)protocolName;
-- (NSString * _Nullable)authRequestor;
+- (nullable NSString *)protocolName;
+- (nullable NSString *)authRequestor;
 
-- (NSString * _Nullable)displayName;
-- (NSString * _Nullable)shortName;
-- (NSString * _Nullable)subheading;
+- (nullable NSString *)displayName;
+- (nullable NSString *)shortName;
+- (nullable NSString *)subheading;
 - (void)download;
 - (void)upload;
 - (void)stop;
-- (NSString * _Nullable)localPath;  // For downloads, should be nil until download is complete.
-- (NSString * _Nullable)error;
-- (NSString * _Nullable)destination;
+- (nullable NSString *)localPath;  // For downloads, should be nil until download is complete.
+- (nullable NSString *)error;
+- (nullable NSString *)destination;
 - (NSTimeInterval)timeOfLastStatusChange;
 - (BOOL)isDownloading;
 - (void)didFailWithError:(NSString * _Nullable)error;
 
 #pragma mark - Utility
 
-- (NSString * _Nullable)finalDestinationForPath:(NSString * _Nonnull)baseName
-                 destinationDirectory:(NSString * _Nonnull)destinationDirectory
-                               prompt:(BOOL)prompt;
-- (NSString * _Nullable)downloadsDirectory;
-- (BOOL)quarantine:(NSString * _Nullable)path sourceURL:(NSURL * _Nullable)sourceURL;
-- (void)failedToRemoveUnquarantinedFileAt:(NSString * _Nullable)path;
+- (nullable NSString *)finalDestinationForPath:(NSString *)baseName
+                          destinationDirectory:(NSString *)destinationDirectory
+                                        prompt:(BOOL)prompt;
+- (NSString *)downloadsDirectory;
+- (BOOL)quarantine:(nullable NSString *)path sourceURL:(nullable NSURL *)sourceURL;
+- (void)failedToRemoveUnquarantinedFileAt:(NSString *)path;
 
 @end
+
+NS_ASSUME_NONNULL_END
 

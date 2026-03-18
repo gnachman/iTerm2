@@ -44,7 +44,7 @@ class ConductorFileTransfer: TransferrableFile {
         self.delegate = delegate
     }
 
-    override func displayName() -> String! {
+    override func displayName() -> String? {
         return """
         iTerm2 SSH Integration Protocol
         User name: \(path.username ?? "(unknown)")")
@@ -53,22 +53,22 @@ class ConductorFileTransfer: TransferrableFile {
         """
     }
 
-    override func shortName() -> String! {
+    override func shortName() -> String? {
         return path.path.lastPathComponent
     }
 
-    override func subheading() -> String! {
+    override func subheading() -> String? {
         path.hostname! + " via SSH Integration"
     }
 
-    override func authRequestor() -> String! {
+    override func authRequestor() -> String? {
         if let username = path.username {
             return username + "@" + path.hostname!
         }
         return path.hostname!
     }
 
-    override func protocolName() -> String! {
+    override func protocolName() -> String? {
         return "SSH Integration"
     }
 
@@ -199,7 +199,7 @@ class ConductorFileTransfer: TransferrableFile {
 
     // Name for uploads once established.
     var remoteName: String?
-    override func destination() -> String! {
+    override func destination() -> String? {
         switch state {
         case .downloading, .downloadComplete:
             return _localPath!
@@ -264,11 +264,11 @@ class ConductorFileTransfer: TransferrableFile {
         state = .failed
     }
 
-    override func error() -> String! {
+    override func error() -> String? {
         return _error
     }
 
-    override func localPath() -> String! {
+    override func localPath() -> String? {
         if data != nil {
             return "(In memory)"
         }

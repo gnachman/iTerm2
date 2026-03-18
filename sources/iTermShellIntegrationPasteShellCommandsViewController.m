@@ -64,7 +64,7 @@
         indexToBold = lines.count;
     } else if (stage > 0) {
         if (self.shell == iTermShellIntegrationShellUnknown) {
-            prefix = @"🛑 Your shell is not supported.\n\nOnly bash, fish, tcsh, and zsh work with shell integration";
+            prefix = @"🛑 Your shell is not supported.\n\nOnly bash, fish, tcsh, xonsh, and zsh work with shell integration";
         } else {
             prefix = @"✅ Discovered";
         }
@@ -131,26 +131,40 @@
             [lines addObject:step];
         }
 
-        if (stage < i) {
-            prefix = [NSString stringWithFormat:@"Step %d. Update", i + 1];
-        } else if (stage == i && !_busy) {
-            prefix = [NSString stringWithFormat:@"➡ Select “Continue” to update"];
-            indexToBold = lines.count;
-        } else if (stage == i && _busy) {
-            prefix = self.waitingText;
-            indexToBold = lines.count;
-        } else if (stage > i) {
-            prefix = @"✅ Updated";
-        }
-        if (_busy && stage == i) {
-            step = prefix;
+        // Xonsh auto-loads scripts from rc.d, so no dotfile modification is needed.
+        // Show this step as already complete for xonsh.
+        if (self.shell == iTermShellIntegrationShellXonsh) {
+            if (stage < i) {
+                step = [NSString stringWithFormat:@"Step %d. Xonsh auto-loads scripts from rc.d (no dotfile update needed).", i + 1];
+            } else {
+                step = [NSString stringWithFormat:@"✅ Xonsh auto-loads scripts from rc.d (no dotfile update needed)."];
+            }
+            [lines addObject:step];
         } else {
-            step =
-            [NSString stringWithFormat:@"%@ your shell’s dotfile.", prefix];
+            if (stage < i) {
+                prefix = [NSString stringWithFormat:@"Step %d. Update", i + 1];
+            } else if (stage == i && !_busy) {
+                prefix = [NSString stringWithFormat:@"➡ Select “Continue” to update"];
+                indexToBold = lines.count;
+            } else if (stage == i && _busy) {
+                prefix = self.waitingText;
+                indexToBold = lines.count;
+            } else if (stage > i) {
+                prefix = @"✅ Updated";
+            }
+            if (_busy && stage == i) {
+                step = prefix;
+            } else {
+                step =
+                [NSString stringWithFormat:@"%@ your shell's dotfile.", prefix];
+            }
+            [lines addObject:step];
         }
-        [lines addObject:step];
         
-        if (stage > i) {
+        // For xonsh, stage >= i means we're at the dotfile step which is a no-op,
+        // so treat it as done. For other shells, we need stage > i.
+        BOOL isDone = (stage > i) || (stage >= i && self.shell == iTermShellIntegrationShellXonsh);
+        if (isDone) {
             [lines addObject:@""];
             indexToBold = lines.count;
             [lines addObject:@"Done! Select “Continue” to proceed."];

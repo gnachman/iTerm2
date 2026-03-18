@@ -25,7 +25,8 @@
 @property (nonatomic, readonly) NSString *guid;
 @property (nonatomic, readonly) NSString *stableIdentifier;
 
-- (instancetype)initWithDictionary:(NSDictionary *)dict;
+- (instancetype)init NS_DESIGNATED_INITIALIZER;
+- (instancetype)initWithDictionary:(NSDictionary *)dict NS_DESIGNATED_INITIALIZER;
 - (NSDictionary *)dictionaryValue;
 - (id<iTermMark>)doppelganger;
 

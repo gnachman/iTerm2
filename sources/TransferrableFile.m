@@ -223,6 +223,10 @@ static NSMutableSet<NSString *> *iTermTransferrableFileLockedFileNames(void) {
 }
 
 - (BOOL)quarantine:(NSString *)path sourceURL:(NSURL *)sourceURL {
+    if (!path) {
+        XLog(@"Nil path to quarantine");
+        return NO;
+    }
     NSURL *url = [NSURL fileURLWithPath:path];
 
     NSMutableDictionary *properties = nil;

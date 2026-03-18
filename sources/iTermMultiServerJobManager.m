@@ -48,6 +48,9 @@ static const int iTermMultiServerMaximumSupportedRestorationIdentifierVersion = 
 
 @interface iTermMultiServerJobManager()
 @property (atomic, strong, readwrite) iTermThread<iTermMultiServerJobManagerState *> *thread;
+// Cached copy of state.child for lock-free reads in fd/ioAllowed.
+// Updated on the state's queue whenever state.child changes.
+@property (atomic, strong) iTermFileDescriptorMultiClientChild *cachedChild;
 @end
 
 @implementation iTermMultiServerJobManager
@@ -176,6 +179,7 @@ typedef struct {
          ^(iTermFileDescriptorMultiClientChild * _Nonnull child) {
             DLog(@"Forked and execed %@ OK. Set child to %@", self, child);
             state.child = child;
+            self.cachedChild = child;
             // Happy path
             dispatch_async(dispatch_get_main_queue(), ^{
                 [[iTermProcessCache sharedInstance] registerTrackedPID:child.pid];
@@ -188,6 +192,7 @@ typedef struct {
          ^(NSError * _Nonnull error) {
             DLog(@"Fork and exec %@ failed. Set child to nil", self);
             state.child = nil;
+            self.cachedChild = nil;
             assert([error.domain isEqualToString:iTermFileDescriptorMultiClientErrorDomain]);
             const iTermFileDescriptorMultiClientErrorCode code = (iTermFileDescriptorMultiClientErrorCode)error.code;
             switch (code) {
@@ -220,11 +225,8 @@ typedef struct {
 }
 
 - (int)fd {
-    __block int result = -1;
-    [self.thread dispatchRecursiveSync:^(iTermMultiServerJobManagerState * _Nullable state) {
-        result = state.child ? state.child.fd : -1;
-    }];
-    return result;
+    iTermFileDescriptorMultiClientChild *c = self.cachedChild;
+    return c ? c.fd : -1;
 }
 
 - (BOOL)closeFileDescriptor {
@@ -238,6 +240,7 @@ typedef struct {
         [state.child closeFileDescriptor];
         DLog(@"Set child of %@ to nil", self);
         state.child = nil;
+        self.cachedChild = nil;
         result = YES;
     }];
     return result;
@@ -245,11 +248,8 @@ typedef struct {
 
 
 - (BOOL)ioAllowed {
-    __block BOOL result = NO;
-    [self.thread dispatchRecursiveSync:^(iTermMultiServerJobManagerState * _Nullable state) {
-        result = (state.child != nil && state.child.fd >= 0);
-    }];
-    return result;
+    iTermFileDescriptorMultiClientChild *c = self.cachedChild;
+    return (c != nil && c.fd >= 0);
 }
 
 - (void)setFd:(int)fd {
@@ -459,6 +459,7 @@ typedef struct {
                                                                               iTermFileDescriptorMultiClientChild *child) {
                 DLog(@"Attached OK. Set child of %@ to %@", self, child);
                 state.child = child;
+                self.cachedChild = child;
                 if (!state.child) {
                     [completionCallback invokeWithObject:nil];
                     return;

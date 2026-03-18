@@ -26,6 +26,8 @@ NSString *iTermShellIntegrationShellString(iTermShellIntegrationShell shell) {
             return @"bash";
         case iTermShellIntegrationShellFish:
             return @"fish";
+        case iTermShellIntegrationShellXonsh:
+            return @"xonsh";
         case iTermShellIntegrationShellUnknown:
             return @"an unsupported shell";
     }
@@ -268,6 +270,10 @@ typedef NS_ENUM(NSUInteger, iTermShellIntegrationInstallationState) {
 #pragma mark - String Builders
 
 - (NSString *)shellIntegrationPath {
+    if (self.shell == iTermShellIntegrationShellXonsh) {
+        // Xonsh auto-loads scripts from rc.d, so put it there directly
+        return @"~/.config/xonsh/rc.d/iterm2.xsh";
+    }
     return [NSString stringWithFormat:@"%@/.iterm2_shell_integration.%@",
             self.dotdir, iTermShellIntegrationShellString(self.shell)];
 }
@@ -282,8 +288,14 @@ typedef NS_ENUM(NSUInteger, iTermShellIntegrationInstallationState) {
     if (!self.installUtilities) {
         return string;
     }
-    
-    // Add aliases
+
+    // For xonsh, add utilities directory to PATH instead of aliases
+    if (self.shell == iTermShellIntegrationShellXonsh) {
+        string = [string stringByAppendingString:@"\n"];
+        return [string stringByAppendingString:@"$PATH.insert(0, $HOME + '/.iterm2')"];
+    }
+
+    // Add aliases for other shells
     url = [[NSBundle bundleForClass:self.class] URLForResource:@"utilities-manifest" withExtension:@"txt"];
     NSString *names = [NSString stringWithContentsOfURL:url encoding:NSUTF8StringEncoding error:nil];
     names = [names stringByTrimmingCharactersInSet:[NSCharacterSet newlineCharacterSet]];
@@ -297,6 +309,7 @@ typedef NS_ENUM(NSUInteger, iTermShellIntegrationInstallationState) {
                 return [NSString stringWithFormat:@"alias %@=%@/.iterm2/%@", command, self.dotdir, command];
             case iTermShellIntegrationShellTcsh:
                 return [NSString stringWithFormat:@"alias %@ %@/.iterm2/%@", command, self.dotdir, command];
+            case iTermShellIntegrationShellXonsh:
             case iTermShellIntegrationShellUnknown:
                 return nil;
         }
@@ -318,6 +331,7 @@ typedef NS_ENUM(NSUInteger, iTermShellIntegrationInstallationState) {
         case iTermShellIntegrationShellTcsh:
         case iTermShellIntegrationShellZsh:
         case iTermShellIntegrationShellBash:
+        case iTermShellIntegrationShellXonsh:
             break;
         case iTermShellIntegrationShellFish:
             shell_and=@"; and";
@@ -399,6 +413,10 @@ typedef NS_ENUM(NSUInteger, iTermShellIntegrationInstallationState) {
             [strings addObject:@"mkdir -p ~/.config/fish\n"];
             script = @"~/.config/fish/config.fish";
             break;
+        case iTermShellIntegrationShellXonsh:
+            [strings addObject:@"mkdir -p ~/.config/xonsh/rc.d\n"];
+            script = @"~/.config/xonsh/rc.d/iterm2.xsh";
+            break;
         case iTermShellIntegrationShellUnknown:
             assert(NO);
     }
@@ -440,10 +458,19 @@ typedef NS_ENUM(NSUInteger, iTermShellIntegrationInstallationState) {
 }
 
 - (NSString *)launchBashString {
+    if (self.shell == iTermShellIntegrationShellXonsh) {
+        // For xonsh, use bash -c to set PS1/PS2 properly (env would include literal quotes).
+        // The -c command sets prompts then runs an interactive bash.
+        return @"bash -c 'INPUTRC=/dev/null PS1=\">> \" PS2=\"> \" bash --noprofile --norc'\n";
+    }
     return @"bash --noprofile --norc\nINPUTRC='/dev/null' bash --noprofile --norc\n PS1='>> '; PS2='> '\n";
 }
 
 - (NSString *)exitBashString {
+    if (self.shell == iTermShellIntegrationShellXonsh) {
+        // Only one bash shell for xonsh (see launchBashString)
+        return @"exit\n";
+    }
     return @"exit\nexit\n";
 }
 
@@ -489,6 +516,13 @@ typedef NS_ENUM(NSUInteger, iTermShellIntegrationInstallationState) {
     NSMutableString *result = [NSMutableString string];
     iTermExpectation *expectation = nil;
     [result appendString:[self switchToBash:reallySend expectation:&expectation]];
+    if (self.shell == iTermShellIntegrationShellXonsh) {
+        // Create the rc.d directory for xonsh (scripts there are auto-loaded)
+        [result appendString:[self sendText:@"mkdir -p ~/.config/xonsh/rc.d\n"
+                                 reallySend:reallySend
+                                 afterRegex:@"^>> "
+                                expectation:&expectation]];
+    }
     [result appendString:[self catString:scriptForShell
                                       to:[self shellIntegrationPath]
                               reallySend:reallySend
@@ -572,7 +606,8 @@ typedef NS_ENUM(NSUInteger, iTermShellIntegrationInstallationState) {
     NSDictionary<NSString *, NSNumber *> *map = @{ @"tcsh": @(iTermShellIntegrationShellTcsh),
                                                    @"bash": @(iTermShellIntegrationShellBash),
                                                    @"zsh": @(iTermShellIntegrationShellZsh),
-                                                   @"fish": @(iTermShellIntegrationShellFish) };
+                                                   @"fish": @(iTermShellIntegrationShellFish),
+                                                   @"xonsh": @(iTermShellIntegrationShellXonsh) };
     NSNumber *number = map[shell ?: @""];
     self.dotdir = dotdir;
     if (number) {
@@ -613,6 +648,13 @@ typedef NS_ENUM(NSUInteger, iTermShellIntegrationInstallationState) {
 
 - (NSString *)modifyStartupScriptsAndProceedTo:(int)nextStage
                                     reallySend:(BOOL)reallySend {
+    if (self.shell == iTermShellIntegrationShellXonsh) {
+        // Xonsh auto-loads scripts from rc.d, so no dotfile modification needed
+        if (reallySend) {
+            self.sendShellCommandsViewController.stage = nextStage;
+        }
+        return @"";
+    }
     void (^completion)(void) = ^{
         self.sendShellCommandsViewController.stage = nextStage;
     };
@@ -667,6 +709,11 @@ typedef NS_ENUM(NSUInteger, iTermShellIntegrationInstallationState) {
                 } else {
                     [self modifyStartupScriptsAndProceedTo:stage+1
                                                 reallySend:YES];
+                    // For xonsh, no dotfile modification is needed (rc.d auto-loads),
+                    // so proceed directly to finish.
+                    if (self.shell == iTermShellIntegrationShellXonsh) {
+                        [self finishSendShellCommandsInstall];
+                    }
                 }
                 break;
             }
@@ -674,6 +721,11 @@ typedef NS_ENUM(NSUInteger, iTermShellIntegrationInstallationState) {
                 if (self.installUtilities) {
                     [self modifyStartupScriptsAndProceedTo:stage+1
                                                 reallySend:YES];
+                    // For xonsh, no dotfile modification is needed (rc.d auto-loads),
+                    // so proceed directly to finish.
+                    if (self.shell == iTermShellIntegrationShellXonsh) {
+                        [self finishSendShellCommandsInstall];
+                    }
                 } else {
                     [self finishSendShellCommandsInstall];
                 }

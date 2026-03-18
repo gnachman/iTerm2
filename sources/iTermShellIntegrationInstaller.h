@@ -31,6 +31,7 @@ typedef NS_ENUM(NSUInteger, iTermShellIntegrationShell) {
     iTermShellIntegrationShellTcsh,
     iTermShellIntegrationShellZsh,
     iTermShellIntegrationShellFish,
+    iTermShellIntegrationShellXonsh,
     iTermShellIntegrationShellUnknown
 };
 

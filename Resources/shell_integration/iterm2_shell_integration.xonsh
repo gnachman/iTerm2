@@ -1,0 +1,195 @@
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 2
+# of the License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+
+# ShellIntegrationVersion=1;shell=xonsh
+
+class _iTerm2Xonsh:
+    """iTerm2 integration with Xonsh shell."""
+
+    def __init__(self):
+        self.version = 1
+        self.stdout = @.imp.sys.__stdout__
+
+        self.add_iterm2_to_env()
+        if self.is_iterm2_interactive():
+            self.add_iterm2_to_prompt_fields()
+            self.add_iterm2_to_prompt()  # Wrap prompt immediately for first prompt
+            self.add_iterm2_to_events()
+            self.set_state()
+            self.set_version()
+            $ITERM2_INTEGRATION = True
+        else:
+            $ITERM2_INTEGRATION = False
+
+
+    def add_iterm2_to_env(self):
+        @.env.register('ITERM2_INTEGRATION', type='bool', default=False,
+                       doc="Has `True` if iTerm2 integration was enabled or `False` overwise.")
+        @.env.register('ITERM2_INTEGRATION_DEBUG', type='bool', default=False,
+                       doc="Set to `True` to enable debug messages.")
+        @.env.register('ITERM_ENABLE_SHELL_INTEGRATION_WITH_TMUX', type='bool', default=False,
+                       doc="By default, shell Integration does not work with tmux or screen. "
+                           "If you'd like to use it with tmux, set `True`. "
+                           "Docs: https://iterm2.com/documentation-shell-integration.html")
+
+    def print_err(self, msg):
+        print(msg, file=@.imp.sys.stderr)
+
+    def is_iterm2_interactive(self):
+        if not @.env.get('XONSH_INTERACTIVE', False):
+            if $ITERM2_INTEGRATION_DEBUG:
+                self.print_err('iTerm2 Integration: xonsh is not interactive.')
+            return False
+
+        term = @.env.get('TERM', '')
+        if term in ('linux', 'dumb'):
+            if $ITERM2_INTEGRATION_DEBUG:
+                self.print_err('iTerm2 Integration: $TERM is not supported.')
+            return False
+
+        tmux_enabled = @.env.get('ITERM_ENABLE_SHELL_INTEGRATION_WITH_TMUX')
+        if not tmux_enabled and term in ('screen', 'screen-256color', 'tmux-256color'):
+            if $ITERM2_INTEGRATION_DEBUG:
+                self.print_err('iTerm2 Integration: tmux is not enabled.')
+            return False
+
+        if 'iTerm' not in (term_program := @.env.get('TERM_PROGRAM', '')):
+            if $ITERM2_INTEGRATION_DEBUG:
+                self.print_err(f'iTerm2 Integration: iTerm not in $TERM_PROGRAM {term_program}.')
+            return False
+
+        return True
+
+
+    def _get_hostname(self):
+        if (iterm2_hostname := @.env.get('iterm2_hostname', '')):
+            return iterm2_hostname
+
+        try:
+            if (host := $(hostname -f 2> /dev/null)):
+                return host
+        except Exception:
+            pass
+
+        try:
+            if (host := $(hostname 2> /dev/null)):
+                return host
+        except Exception:
+            pass
+
+        return @.env.get('HOSTNAME', '')
+
+    def set_state(self):
+        if (user := @.env.get('USER', '')) and (host := self._get_hostname()):
+            self.set_var("RemoteHost", f"{user}@{host}")
+
+        if (cwd := @.env.get("PWD", @.imp.os.getcwd())):
+            self.set_var("CurrentDir", cwd)
+
+    def set_var(self, name, value):
+        self.write_osc(f"1337;{name}={value}")
+
+    def set_vars(self, vars):
+        vars_str = ';'.join([f"{k}={v}" for k,v in vars.items()])
+        self.write_osc(f"1337;{vars_str}")
+
+    def set_user_var(self, key, value):
+        b64value = @.imp.base64.b64encode(value.encode("utf-8")).decode("ascii").replace("\n", "")
+        self.set_var("SetUserVar", f"{key}={b64value}")
+
+    def _write_begin_osc(self):
+        self.stdout.write("\033]")
+
+    def _write_end_osc(self):
+        self.stdout.write("\007")
+        self.stdout.flush()
+
+    def write_cr(self):
+        if @.env.get("TERM_PROGRAM",'') == "iTerm.app":
+            self.stdout.write("\r")
+            self.stdout.flush()
+
+    def write_osc(self, msg, cr=False):
+        self._write_begin_osc()
+        self.stdout.write(f"{msg}")
+        if cr:
+            self.write_cr()
+        self._write_end_osc()
+
+    def set_version(self):
+        self.set_vars({"ShellIntegrationVersion": str(self.version), "shell": "xonsh"})
+
+    def write_preexec_osc(self):
+        self.write_osc("133;C;", cr=True)
+
+    def write_return_code_osc(self, return_code):
+        self.write_osc(f"133;D;{return_code}")
+
+    # Integrations
+
+    def add_iterm2_to_prompt_fields(self):
+        """
+        Official prompt-toolkit example:
+        https://github.com/prompt-toolkit/python-prompt-toolkit/blob/c7c629c38b22b5f22a0a5e80a1ae7e758ac595bb/examples/prompts/finalterm-shell-integration.py
+        """
+        $PROMPT_FIELDS['iterm2_prompt_start'] = "\001" + "\033]133;A\a" + "\002"
+        $PROMPT_FIELDS['iterm2_prompt_end'] = "\001" + "\033]133;B\a" + "\002"
+
+    def add_iterm2_to_prompt(self):
+        if isinstance($PROMPT, str) and 'iterm2_prompt_start' not in $PROMPT:
+            $PROMPT = '{iterm2_prompt_start}' + $PROMPT + '{iterm2_prompt_end}'
+
+
+    # Events
+
+    def _is_supported_shell_type(self):
+        """Check SHELL_TYPE at prompt time when it's reliably set."""
+        shell_type = @.env.get('SHELL_TYPE', '')
+        return shell_type in ('prompt_toolkit', 'best', 'random', 'readline')
+
+    def _event_pre_prompt(self, **kwargs):
+        if not self._is_supported_shell_type():
+            if $ITERM2_INTEGRATION_DEBUG:
+                shell_type = @.env.get('SHELL_TYPE', '')
+                self.print_err(f'iTerm2 Integration: SHELL_TYPE {repr(shell_type)} not supported.')
+            return
+        self.add_iterm2_to_prompt()
+        self.set_state()
+
+    def _event_pre_command(self, **kwargs):
+        if not self._is_supported_shell_type():
+            return
+        self.write_preexec_osc()
+
+    def _event_post_command(self, **kwargs):
+        if not self._is_supported_shell_type():
+            return
+        self.write_return_code_osc(kwargs.get('rtn', 0))
+
+    def add_iterm2_to_events(self):
+
+        @events.on_pre_prompt
+        def _iterm2_on_preprompt(**kwargs):
+            self._event_pre_prompt(**kwargs)
+
+        @events.on_precommand
+        def _iterm2_on_precommand(**kwargs):
+            self._event_pre_command(**kwargs)
+
+        @events.on_postcommand
+        def _iterm2_on_postcommand(**kwargs):
+            self._event_post_command(**kwargs)
+
+
+__xonsh__.iterm2 = _iTerm2Xonsh()

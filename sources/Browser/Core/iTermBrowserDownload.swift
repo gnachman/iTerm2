@@ -52,7 +52,7 @@ class iTermBrowserDownload: TransferrableFile {
     
     // MARK: - TransferrableFile Overrides
     
-    override func displayName() -> String! {
+    override func displayName() -> String? {
         return """
         Browser Download
         Source: \(sourceURL.absoluteString)
@@ -60,19 +60,19 @@ class iTermBrowserDownload: TransferrableFile {
         """
     }
     
-    override func shortName() -> String! {
+    override func shortName() -> String? {
         return suggestedFilename
     }
     
-    override func subheading() -> String! {
+    override func subheading() -> String? {
         return sourceURL.host ?? sourceURL.absoluteString
     }
     
-    override func authRequestor() -> String! {
+    override func authRequestor() -> String? {
         return sourceURL.host ?? "Browser"
     }
     
-    override func protocolName() -> String! {
+    override func protocolName() -> String? {
         return "Browser Download"
     }
     
@@ -97,15 +97,15 @@ class iTermBrowserDownload: TransferrableFile {
         status = .cancelling
     }
     
-    override func localPath() -> String! {
+    override func localPath() -> String? {
         return _localPath
     }
     
-    override func error() -> String! {
+    override func error() -> String? {
         return _error
     }
     
-    override func destination() -> String! {
+    override func destination() -> String? {
         return destinationURL?.path ?? _localPath
     }
     

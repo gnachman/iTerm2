@@ -18,7 +18,6 @@
 #import "NSImage+iTerm.h"
 #import "NSObject+iTerm.h"
 #import "NSStringITerm.h"
-#import "Profile.h"
 #import "ProfileModel.h"
 #import "iTermProfilePreferences.h"
 #import "VT100RemoteHost.h"
