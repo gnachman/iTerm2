@@ -94,6 +94,10 @@ final class iTermWindowProject: NSObject, Codable {
 
     private(set) var rootProjects: [iTermWindowProject] = []
 
+    /// Runtime-only mapping: NSWindow.windowNumber → project UUID.
+    /// Not persisted — live associations reset when the app restarts.
+    private var liveAssociations: [Int: UUID] = [:]
+
     private static var saveURL: URL {
         let support = FileManager.default.urls(for: .applicationSupportDirectory,
                                                in: .userDomainMask)[0]
@@ -106,6 +110,11 @@ final class iTermWindowProject: NSObject, Codable {
     private override init() {
         super.init()
         load()
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(windowWillClose(_:)),
+            name: NSWindow.willCloseNotification,
+            object: nil)
     }
 
     // MARK: Persistence
@@ -164,12 +173,95 @@ final class iTermWindowProject: NSObject, Codable {
         return false
     }
 
+    // MARK: Live Window Associations
+
+    /// Marks `terminal` as belonging to `project` without closing it.
+    /// When the window later closes, it will be auto-archived to this project.
+    func associateWindow(_ terminal: PseudoTerminal, with project: iTermWindowProject) {
+        guard let wn = terminal.window()?.windowNumber, wn > 0 else { return }
+        liveAssociations[wn] = project.id
+        NotificationCenter.default.post(name: Self.didChangeNotification, object: self)
+    }
+
+    /// Removes the project association from `terminal`, leaving the window open but untracked.
+    func disassociateWindow(_ terminal: PseudoTerminal) {
+        guard let wn = terminal.window()?.windowNumber, wn > 0,
+              liveAssociations.removeValue(forKey: wn) != nil else { return }
+        NotificationCenter.default.post(name: Self.didChangeNotification, object: self)
+    }
+
+    /// Returns the project `terminal` is currently associated with, or nil.
+    func project(for terminal: PseudoTerminal) -> iTermWindowProject? {
+        guard let wn = terminal.window()?.windowNumber, wn > 0,
+              let pid = liveAssociations[wn] else { return nil }
+        return project(id: pid)
+    }
+
+    /// Returns all currently open windows associated with `project`.
+    func liveWindows(for project: iTermWindowProject) -> [PseudoTerminal] {
+        let all = (iTermController.sharedInstance().terminals as? [PseudoTerminal]) ?? []
+        return all.filter { t in
+            guard let wn = t.window()?.windowNumber, wn > 0 else { return false }
+            return liveAssociations[wn] == project.id
+        }
+    }
+
+    /// True if `project` has at least one open window associated with it.
+    func hasLiveWindows(for project: iTermWindowProject) -> Bool {
+        let all = (iTermController.sharedInstance().terminals as? [PseudoTerminal]) ?? []
+        return all.contains { t in
+            guard let wn = t.window()?.windowNumber, wn > 0 else { return false }
+            return liveAssociations[wn] == project.id
+        }
+    }
+
+    /// Closes and archives every open window currently associated with `project`.
+    func closeProject(_ project: iTermWindowProject) {
+        for terminal in liveWindows(for: project) {
+            guard let wn = terminal.window()?.windowNumber else { continue }
+            let arrangement = terminal.arrangementExcludingTmuxTabs(true, includingContents: false)
+            let title = terminal.window()?.title ?? "Window"
+            project.windows.append(iTermArchivedWindow(name: title, arrangement: arrangement))
+            liveAssociations.removeValue(forKey: wn)
+            terminal.close()
+        }
+        project.lastUsed = Date()
+        save()
+    }
+
+    /// Called when any NSWindow is about to close. Auto-archives the window if it has a
+    /// live association, so the project retains the arrangement for later restoration.
+    @objc private func windowWillClose(_ note: Notification) {
+        guard let window = note.object as? NSWindow else { return }
+        let wn = window.windowNumber
+        guard let projectID = liveAssociations[wn],
+              let project = project(id: projectID) else {
+            liveAssociations.removeValue(forKey: wn)
+            return
+        }
+        let all = (iTermController.sharedInstance().terminals as? [PseudoTerminal]) ?? []
+        guard let terminal = all.first(where: { $0.window()?.windowNumber == wn }) else {
+            liveAssociations.removeValue(forKey: wn)
+            return
+        }
+        let arrangement = terminal.arrangementExcludingTmuxTabs(true, includingContents: false)
+        let title = window.title.isEmpty ? "Window" : window.title
+        project.windows.append(iTermArchivedWindow(name: title, arrangement: arrangement))
+        liveAssociations.removeValue(forKey: wn)
+        project.lastUsed = Date()
+        save()
+    }
+
     // MARK: Window Archiving
 
     /// Saves `terminal`'s arrangement into `project` and optionally closes the window.
+    /// Any existing live association is cleared.
     func archiveWindow(_ terminal: PseudoTerminal,
                        to project: iTermWindowProject,
                        andClose close: Bool) {
+        if let wn = terminal.window()?.windowNumber, wn > 0 {
+            liveAssociations.removeValue(forKey: wn)
+        }
         let arrangement = terminal.arrangementExcludingTmuxTabs(true, includingContents: false)
         let title = terminal.window()?.title ?? "Window"
         let entry = iTermArchivedWindow(name: title, arrangement: arrangement)
@@ -212,7 +304,19 @@ final class iTermWindowProject: NSObject, Codable {
         save()
     }
 
-    // MARK: Helpers
+    // MARK: Lookup Helpers
+
+    func project(id: UUID) -> iTermWindowProject? {
+        findProject(id: id, in: rootProjects)
+    }
+
+    private func findProject(id: UUID, in list: [iTermWindowProject]) -> iTermWindowProject? {
+        for p in list {
+            if p.id == id { return p }
+            if let found = findProject(id: id, in: p.children) { return found }
+        }
+        return nil
+    }
 
     func parentProject(of archived: iTermArchivedWindow) -> iTermWindowProject? {
         findParent(of: archived, in: rootProjects)
@@ -223,6 +327,21 @@ final class iTermWindowProject: NSObject, Codable {
         for p in projects {
             if p.windows.contains(where: { $0.id == archived.id }) { return p }
             if let found = findParent(of: archived, in: p.children) { return found }
+        }
+        return nil
+    }
+
+    /// Finds a specific archived window by UUID anywhere in the tree.
+    func archivedWindow(id: UUID) -> (window: iTermArchivedWindow, project: iTermWindowProject)? {
+        findArchivedWindow(id: id, in: rootProjects)
+    }
+
+    private func findArchivedWindow(id: UUID,
+                                    in projects: [iTermWindowProject]
+    ) -> (window: iTermArchivedWindow, project: iTermWindowProject)? {
+        for p in projects {
+            if let w = p.windows.first(where: { $0.id == id }) { return (w, p) }
+            if let found = findArchivedWindow(id: id, in: p.children) { return found }
         }
         return nil
     }
