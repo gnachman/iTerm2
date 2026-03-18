@@ -336,6 +336,20 @@ static BOOL hasBecomeActive = NO;
 - (void)awakeFromNib {
     [ArchivesMenuBuilder setShared:[[ArchivesMenuBuilder alloc] initWithMenuItem:_archivesMenuItem]];
 
+    // Add "Window Projects…" to the Window menu near the archive items.
+    NSMenu *windowMenu = [self topLevelViewNamed:@"Window"];
+    if (windowMenu) {
+        NSMenuItem *projectsItem = [[[NSMenuItem alloc]
+                                     initWithTitle:@"Window Projects\u2026"
+                                            action:@selector(showWindowProjectsPanel:)
+                                     keyEquivalent:@""] autorelease];
+        [projectsItem setTarget:self];
+        // Insert after the first item so it appears near the top of the Window menu.
+        NSUInteger insertIndex = MIN(1u, (NSUInteger)windowMenu.numberOfItems);
+        [windowMenu insertItem:projectsItem atIndex:insertIndex];
+        [windowMenu insertItem:[NSMenuItem separatorItem] atIndex:insertIndex + 1];
+    }
+
     NSMenu *viewMenu = [self topLevelViewNamed:@"View"];
     [viewMenu addItem:[NSMenuItem separatorItem]];
 
@@ -2976,6 +2990,10 @@ static iTermKeyEventReplayer *gReplayer;
     [self pickArrangement:^(NSString *path) {
         [[iTermController sharedInstance] importWindowArrangementAtPath:path asTabsInTerminal:nil];
     }];
+}
+
+- (IBAction)showWindowProjectsPanel:(id)sender {
+    [[iTermProjectsPanelController shared] showPanel];
 }
 
 - (IBAction)saveWindowArrangement:(id)sender {
