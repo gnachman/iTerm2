@@ -65,7 +65,7 @@ const int kMaxSelectedTextLengthForCustomActions = 400;
 }
 
 - (void)applyWindowAppearanceToMenu:(NSMenu *)menu {
-    NSWindow *window = [self.delegate contextMenuViewForMenu:self].window;
+    PTYWindow *window = (PTYWindow *)[self.delegate contextMenuViewForMenu:self].window;
     if (window.it_terminalWindowUseMinimalStyle) {
         NSColor *bgColor = window.it_terminalWindowDecorationBackgroundColor;
         NSAppearanceName name = bgColor.perceivedBrightness < 0.5 ? NSAppearanceNameDarkAqua : NSAppearanceNameAqua;
