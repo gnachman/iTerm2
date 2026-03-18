@@ -49,15 +49,18 @@ final class iTermWindowProject: NSObject, Codable {
     var name: String
     var children: [iTermWindowProject]
     var windows: [iTermArchivedWindow]
+    /// Updated whenever a window is archived to or restored from this project.
+    var lastUsed: Date
 
     init(name: String) {
         self.id = UUID()
         self.name = name
         self.children = []
         self.windows = []
+        self.lastUsed = Date()
     }
 
-    enum CodingKeys: String, CodingKey { case id, name, children, windows }
+    enum CodingKeys: String, CodingKey { case id, name, children, windows, lastUsed }
 
     required init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
@@ -65,6 +68,7 @@ final class iTermWindowProject: NSObject, Codable {
         name     = try c.decode(String.self,               forKey: .name)
         children = try c.decode([iTermWindowProject].self, forKey: .children)
         windows  = try c.decode([iTermArchivedWindow].self,forKey: .windows)
+        lastUsed = (try? c.decode(Date.self,               forKey: .lastUsed)) ?? .distantPast
     }
 
     func encode(to encoder: Encoder) throws {
@@ -73,6 +77,7 @@ final class iTermWindowProject: NSObject, Codable {
         try c.encode(name,     forKey: .name)
         try c.encode(children, forKey: .children)
         try c.encode(windows,  forKey: .windows)
+        try c.encode(lastUsed, forKey: .lastUsed)
     }
 
     /// Total archived windows in this project and all descendants.
@@ -169,6 +174,7 @@ final class iTermWindowProject: NSObject, Codable {
         let title = terminal.window()?.title ?? "Window"
         let entry = iTermArchivedWindow(name: title, arrangement: arrangement)
         project.windows.append(entry)
+        project.lastUsed = Date()
         save()
         if close {
             terminal.close()
@@ -183,6 +189,10 @@ final class iTermWindowProject: NSObject, Codable {
     // MARK: Restoration
 
     func restoreWindow(_ archived: iTermArchivedWindow) {
+        if let parent = parentProject(of: archived) {
+            parent.lastUsed = Date()
+            save()
+        }
         guard let arrangement = archived.arrangement else { return }
         iTermController.sharedInstance().tryOpenArrangement(
             arrangement,
@@ -191,7 +201,15 @@ final class iTermWindowProject: NSObject, Codable {
     }
 
     func restoreAllWindows(in project: iTermWindowProject) {
-        project.windows.forEach { restoreWindow($0) }
+        project.lastUsed = Date()
+        for archived in project.windows {
+            guard let arrangement = archived.arrangement else { continue }
+            iTermController.sharedInstance().tryOpenArrangement(
+                arrangement,
+                named: nil,
+                asTabsInWindow: nil)
+        }
+        save()
     }
 
     // MARK: Helpers

@@ -8,6 +8,10 @@
 
 import AppKit
 
+// MARK: - Sort Order
+
+enum ProjectSortOrder { case name, recent }
+
 // MARK: - Outline View Item Wrapper
 
 /// NSObject box so archived windows can serve as NSOutlineView items.
@@ -111,6 +115,9 @@ final class iTermProjectsOutlineController: NSViewController,
     private var restoreButton      = NSButton()
     private var restoreAllButton   = NSButton()
 
+    private var sortOrder = ProjectSortOrder.recent
+    private var sortSegment = NSSegmentedControl()
+
     // Hover preview
     private var previewPopover  = NSPopover()
     private var previewTimer: Timer?
@@ -163,7 +170,7 @@ final class iTermProjectsOutlineController: NSViewController,
         sep.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(sep)
 
-        let header = makeSectionHeader("PROJECTS")
+        let header = makeProjectsHeader()
         header.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(header)
 
@@ -191,6 +198,49 @@ final class iTermProjectsOutlineController: NSViewController,
                                       owner: self,
                                       userInfo: nil)
         outlineView.addTrackingArea(tracking)
+    }
+
+    private func makeProjectsHeader() -> NSView {
+        let box = NSView()
+
+        let tf = NSTextField(labelWithString: "PROJECTS")
+        tf.font = NSFont.systemFont(ofSize: 10, weight: .semibold)
+        tf.textColor = .secondaryLabelColor
+        tf.translatesAutoresizingMaskIntoConstraints = false
+
+        sortSegment = NSSegmentedControl(labels: ["Name", "Recent"],
+                                         trackingMode: .selectOne,
+                                         target: self,
+                                         action: #selector(sortOrderChanged(_:)))
+        sortSegment.selectedSegment = 1  // "Recent" by default
+        sortSegment.controlSize = .mini
+        sortSegment.translatesAutoresizingMaskIntoConstraints = false
+
+        box.addSubview(tf)
+        box.addSubview(sortSegment)
+        NSLayoutConstraint.activate([
+            tf.leadingAnchor.constraint(equalTo: box.leadingAnchor, constant: 8),
+            tf.centerYAnchor.constraint(equalTo: box.centerYAnchor),
+            sortSegment.trailingAnchor.constraint(equalTo: box.trailingAnchor, constant: -6),
+            sortSegment.centerYAnchor.constraint(equalTo: box.centerYAnchor),
+        ])
+        return box
+    }
+
+    @objc private func sortOrderChanged(_ sender: NSSegmentedControl) {
+        sortOrder = sender.selectedSegment == 0 ? .name : .recent
+        outlineView.reloadData()
+    }
+
+    private func sortedProjects(_ projects: [iTermWindowProject]) -> [iTermWindowProject] {
+        switch sortOrder {
+        case .name:
+            return projects.sorted {
+                $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending
+            }
+        case .recent:
+            return projects.sorted { $0.lastUsed > $1.lastUsed }
+        }
     }
 
     private func setupBottomBar() {
@@ -263,13 +313,14 @@ final class iTermProjectsOutlineController: NSViewController,
 
     func outlineView(_ outlineView: NSOutlineView, child index: Int, ofItem item: Any?) -> Any {
         if item == nil {
-            return iTermWindowProjectsModel.shared.rootProjects[index]
+            return sortedProjects(iTermWindowProjectsModel.shared.rootProjects)[index]
         }
         let project = item as! iTermWindowProject
-        if index < project.children.count {
-            return project.children[index]
+        let sortedChildren = sortedProjects(project.children)
+        if index < sortedChildren.count {
+            return sortedChildren[index]
         }
-        let win = project.windows[index - project.children.count]
+        let win = project.windows[index - sortedChildren.count]
         return iTermArchivedWindowBox(win, project: project)
     }
 
