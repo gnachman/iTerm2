@@ -476,7 +476,7 @@ final class iTermProjectsOutlineController: NSViewController,
             reload()
         } else if let project = selectedProject {
             let alert = NSAlert()
-            alert.messageText     = "Delete "\(project.name)"?"
+            alert.messageText     = "Delete “\(project.name)“?"
             alert.informativeText = "This removes the project and all its archived windows. Open windows are unaffected."
             alert.addButton(withTitle: "Delete")
             alert.addButton(withTitle: "Cancel")
@@ -501,7 +501,7 @@ final class iTermProjectsOutlineController: NSViewController,
     @objc private func closeSelectedProject(_ sender: Any?) {
         guard let project = selectedProject else { return }
         guard iTermWindowProjectsModel.shared.hasLiveWindows(for: project) else {
-            showAlert("No open windows are associated with "\(project.name)".")
+            showAlert("No open windows are associated with “\(project.name)“.")
             return
         }
         iTermWindowProjectsModel.shared.closeProject(project)
@@ -1071,11 +1071,11 @@ final class iTermOpenWindowsController: NSViewController,
             }
         } else if let group = selectedGroup {
             if let proj = group.project {
-                menu.addItem(NSMenuItem(title: "Close All in "\(proj.name)"",
+                menu.addItem(NSMenuItem(title: "Close All in “\(proj.name)”",
                                        action: #selector(closeSelectedGroup(_:)),
                                        keyEquivalent: ""))
                 menu.addItem(.separator())
-                menu.addItem(NSMenuItem(title: "Disassociate All from "\(proj.name)"",
+                menu.addItem(NSMenuItem(title: "Disassociate All from “\(proj.name)”",
                                        action: #selector(disassociateSelectedGroup(_:)),
                                        keyEquivalent: ""))
             }
