@@ -1153,6 +1153,95 @@ class LineBufferTests: XCTestCase {
         XCTAssertTrue(context.includesPartialLastLine,
                       "includesPartialLastLine should be true when cross-block match touches partial last line")
     }
+
+    // MARK: - stopAt Boundary Tests
+    //
+    // These tests verify the half-open interval semantics of the stopAt parameter:
+    // - Forward search: [start, stopAt) - results at stopAt are EXCLUDED
+    // - Backward search: (stopAt, start] - results at stopAt are INCLUDED
+
+    /// Test that forward search excludes results at exactly the stopAt position.
+    /// This test mirrors the scenario in testHaveMatchBehavior (AsyncFilterTests):
+    /// - Multiple lines in the same block (no forceSeal)
+    /// - Searching for a shorter string that exists on all lines
+    /// - Using stopAt at the exact position of a match
+    /// - The match at stopAt should be EXCLUDED (half-open interval semantics)
+    func testForwardSearchExcludesMatchAtStopAtPosition() {
+        let buffer = LineBuffer()
+        let width = Int32(80)
+
+        // Create three lines in the SAME block (no forceSeal)
+        // This mirrors testHaveMatchBehavior which creates ["hello world", "hello there", "hello world again"]
+        let s1 = screenCharArrayWithDefaultStyle("hello world", eol: EOL_HARD)
+        buffer.append(s1, width: width)
+        let posAfterLine1 = buffer.lastPosition()
+
+        let s2 = screenCharArrayWithDefaultStyle("hello there", eol: EOL_HARD)
+        buffer.append(s2, width: width)
+        let posAfterLine2 = buffer.lastPosition()
+
+        let s3 = screenCharArrayWithDefaultStyle("hello world again", eol: EOL_HARD)
+        buffer.append(s3, width: width)
+
+        // Search for "hello world" starting from line 2's position, with stopAt at line 3's position
+        // This is exactly what haveMatch does: search within the bounds of line 2 for "hello world"
+        // Line 2 is "hello there" which does NOT contain "hello world"
+        // But without the fix, "hello world" from line 3 would be incorrectly found
+        let context = FindContext()
+        buffer.prepareToSearch(for: "hello world",
+                               startingAt: posAfterLine1,
+                               options: [],
+                               mode: .caseSensitiveSubstring,
+                               with: context)
+
+        // Search with stopAt at the start of line 3
+        buffer.findSubstring(context, stopAt: posAfterLine2)
+
+        // Should NOT find a match because "hello there" does not contain "hello world"
+        // The match "hello world" on line 3 starts at posAfterLine2, which is exactly stopAt
+        // With the fix (>= instead of >), this match should be excluded
+        XCTAssertEqual(context.status, .NotFound,
+                       "Forward search should NOT find match at stopAt position")
+    }
+
+    /// Test that backward search includes results at exactly the stopAt position.
+    /// This uses the same pattern as testConvertPositionMultiBlock which validates
+    /// that backward search to firstPosition finds the match at position 0.
+    func testBackwardSearchIncludesMatchAtStopAtPosition() {
+        let buffer = LineBuffer()
+        let width = Int32(80)
+        // Same setup as testConvertPositionMultiBlock
+        let s1 = screenCharArrayWithDefaultStyle("Hello world", eol: EOL_HARD)
+        let s2 = screenCharArrayWithDefaultStyle("Goodbye cruel world", eol: EOL_HARD)
+        buffer.append(s1, width: width)
+        buffer.forceSeal()
+        buffer.append(s2, width: width)
+
+        let context = FindContext()
+        // Search backward for "Hello" starting from lastPosition
+        buffer.prepareToSearch(for: "Hello",
+                               startingAt: buffer.lastPosition(),
+                               options: .optBackwards,
+                               mode: .caseSensitiveSubstring,
+                               with: context)
+
+        // First call searches second block, doesn't find "Hello"
+        buffer.findSubstring(context, stopAt: buffer.firstPosition())
+        XCTAssertEqual(context.status, .Searching)
+
+        // Second call searches first block, finds "Hello" at position 0
+        // which equals firstPosition - this should be INCLUDED in backward search
+        buffer.findSubstring(context, stopAt: buffer.firstPosition())
+        XCTAssertEqual(context.status, .Matched,
+                       "Backward search should include match at firstPosition (position 0)")
+
+        // Verify the match is at position 0
+        if let results = context.results as? [ResultRange], results.count > 0 {
+            let xyRanges = buffer.convertPositions(results, withWidth: width)
+            XCTAssertEqual(xyRanges?.first?.yStart, 0, "Match should be on line 0")
+            XCTAssertEqual(xyRanges?.first?.xStart, 0, "Match should start at column 0")
+        }
+    }
 }
 
 extension LineBuffer {

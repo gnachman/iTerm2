@@ -339,7 +339,59 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
     }
 }
 
+#if DEBUG
+- (void)verifyContextEmptyForIteration:(NSInteger)iteration {
+    const unsigned char *data = CGBitmapContextGetData(_context);
+    const size_t bytesPerRow = CGBitmapContextGetBytesPerRow(_context);
+    const int contextWidth = (int)_size.width;
+    const int contextHeight = (int)_size.height;
+
+    for (int y = 0; y < contextHeight; y++) {
+        for (int x = 0; x < contextWidth; x++) {
+            const size_t off = y * bytesPerRow + x * 4;
+            if (data[off + 3] != 0) {
+                unsigned char r = data[off + 2];
+                unsigned char g = data[off + 1];
+                unsigned char b = data[off + 0];
+                unsigned char a = data[off + 3];
+                NSLog(@"DEBUG: Context not empty before drawing '%@'. "
+           @"Pixel at (%d,%d): R=%d G=%d B=%d A=%d. "
+           @"iteration=%d",
+           self.debugName, x, y, r, g, b, a, (int)iteration);
+
+                // Save image showing pre-existing pixels
+                CGImageRef imageRef = CGBitmapContextCreateImage(_context);
+                if (imageRef) {
+                    NSString *filename = [NSString stringWithFormat:@"/tmp/glyph_predraw_%@_%d.png",
+                             self.debugName, (int)iteration];
+                    NSURL *url = [NSURL fileURLWithPath:filename];
+                    CGImageDestinationRef destination = CGImageDestinationCreateWithURL(
+                                                                                        (__bridge CFURLRef)url,
+                                                                                        (__bridge CFStringRef)UTTypePNG.identifier,
+                                                                                        1, NULL);
+                    if (destination) {
+                        CGImageDestinationAddImage(destination, imageRef, nil);
+                        CGImageDestinationFinalize(destination);
+                        CFRelease(destination);
+                        NSLog(@"  Saved pre-draw image to: %@", filename);
+                    }
+                    CGImageRelease(imageRef);
+                }
+
+                ITAssertWithMessage(NO, @"Context not empty before drawing '%@'. "
+                                    @"Pixel at (%d,%d): R=%d G=%d B=%d A=%d",
+                                    self.debugName, x, y, r, g, b, a);
+            }
+        }
+    }
+}
+#endif
+
 - (void)drawWithOffset:(CGPoint)offset iteration:(NSInteger)iteration {
+#if DEBUG
+    [self verifyContextEmptyForIteration:iteration];
+#endif
+
     CGAffineTransform textMatrix = CGContextGetTextMatrix(_context);
     CGContextSaveGState(_context);
     const CGFloat skew = _fakeItalic ? iTermFakeItalicSkew : 0;
@@ -392,12 +444,14 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
     CGContextRestoreGState(_context);
     CGContextSetTextMatrix(_context, textMatrix);
 
-    // Clear exactly the drawn area, ready for next iteration/character.
-    // This is much faster than clearing the entire context (which is 5x5 cells).
+    // Clear the drawn area, ready for next iteration/character.
+    // For emoji, clear the entire context because CTLineGetImageBounds returns unreliable
+    // bounds. For regular text, clear only the calculated bounds for speed.
     // Must happen after RestoreGState to ensure no transforms affect the clear.
     // Use frameFlipped:NO because CGContextClearRect uses native CoreGraphics
     // coordinates (origin at bottom-left), not flipped coordinates.
-    CGRect drawnRect = CGRectInset([self frameFlipped:NO], -2, -2);
+    CGRect drawnRect = _isEmoji ? CGRectMake(0, 0, _size.width, _size.height) : [self frameFlipped:NO];
+
     CGContextClearRect(_context, drawnRect);
 
 #if DEBUG
@@ -440,7 +494,25 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
             NSLog(@"  Scale: %f, glyphSize: %@, radius: %d",
                   _descriptor.scale, NSStringFromSize(_descriptor.glyphSize), _radius);
             NSLog(@"  baselineOffset: %f", _descriptor.baselineOffset);
+            NSLog(@"  font: %@", _font);
+            NSLog(@"  fakeItalic: %d, fakeBold: %d", _fakeItalic, _fakeBold);
 
+            // Save post-clear image (remaining pixels) for inspection
+            CGImageRef postImageRef = CGBitmapContextCreateImage(_context);
+            if (postImageRef) {
+                NSString *filename = [NSString stringWithFormat:@"/tmp/glyph_debug_%@_after.png", self.debugName];
+                NSURL *url = [NSURL fileURLWithPath:filename];
+                CGImageDestinationRef destination = CGImageDestinationCreateWithURL((__bridge CFURLRef)url,
+                                                                                     (__bridge CFStringRef)UTTypePNG.identifier,
+                                                                                     1, NULL);
+                if (destination) {
+                    CGImageDestinationAddImage(destination, postImageRef, nil);
+                    CGImageDestinationFinalize(destination);
+                    CFRelease(destination);
+                    NSLog(@"  Saved post-clear image to: %@", filename);
+                }
+                CGImageRelease(postImageRef);
+            }
             ITAssertWithMessage(NO,
                                 @"Context not fully cleared after drawing '%@'. "
                                 @"Clear rect: %@ Remaining: (%d,%d)-(%d,%d)",
@@ -768,30 +840,43 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
     if (_fakeItalic) {
         // Unfortunately it looks like CTLineGetImageBounds ignores the context's text matrix so we
         // have to guess what the frame's width would be when skewing it.
-        const CGFloat heightAboveBaseline = NSMaxY(frame) + _descriptor.baselineOffset * _descriptor.scale;
+        // The skew transform shifts x based on y: x' = x + skew * y
+        // Points above baseline (positive y) shift right; points below (descenders) shift left.
         const CGFloat scaledSkew = iTermFakeItalicSkew * _descriptor.scale;
+
+        // Top of glyph shifts right
+        const CGFloat heightAboveBaseline = NSMaxY(frame) + _descriptor.baselineOffset * _descriptor.scale;
         const CGFloat rightExtension = heightAboveBaseline * scaledSkew;
         if (rightExtension > 0) {
             frame.size.width += rightExtension;
+        }
+
+        // Bottom of glyph (descender) shifts left
+        const CGFloat heightBelowBaseline = -(NSMinY(frame) + _descriptor.baselineOffset * _descriptor.scale);
+        const CGFloat leftExtension = heightBelowBaseline * scaledSkew;
+        if (leftExtension > 0) {
+            frame.origin.x -= leftExtension;
+            frame.size.width += leftExtension;
         }
     }
     if (_fakeBold) {
         frame.size.width += self.fakeBoldShift;
     }
 
-    frame.origin.x += radius * _descriptor.glyphSize.width;
-    frame.origin.y += radius * _descriptor.glyphSize.height;
+    CGSize offset = [self desiredOffset];
+    frame.origin.x += radius * _descriptor.glyphSize.width + offset.width;
+    frame.origin.y += radius * _descriptor.glyphSize.height + offset.height;
     if (flipped) {
         frame.origin.y = _size.height - frame.origin.y - frame.size.height;
     }
 
-    // Add buffer because:
-    // 1. CTLineGetImageBounds doesn't account for antialiasing fringe pixels
-    // 2. CGRect's max coordinates are exclusive, so +2 needed to include boundary pixels
-    CGPoint min = CGPointMake(floor(CGRectGetMinX(frame)) - 1,
-                              floor(CGRectGetMinY(frame)) - 1);
-    CGPoint max = CGPointMake(ceil(CGRectGetMaxX(frame)) + 2,
-                              ceil(CGRectGetMaxY(frame)) + 2);
+    // Add buffer for antialiasing fringe pixels and because CGRect's max
+    // coordinates are exclusive.
+    const CGFloat buffer = 2;
+    CGPoint min = CGPointMake(floor(CGRectGetMinX(frame)) - buffer,
+                              floor(CGRectGetMinY(frame)) - buffer);
+    CGPoint max = CGPointMake(ceil(CGRectGetMaxX(frame)) + buffer,
+                              ceil(CGRectGetMaxY(frame)) + buffer);
     frame = CGRectMake(min.x, min.y, max.x - min.x, max.y - min.y);
     DLog(@"%@ Bounding box for character '%@' in font %@ is %@ at scale %@",
          self, self.debugName, _font, NSStringFromRect(frame), @(_descriptor.scale));

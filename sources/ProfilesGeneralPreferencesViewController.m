@@ -730,7 +730,7 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
 - (BOOL)shouldEnableLoadShellIntegration:(NSString **)reasonOut {
     NSInteger tag = _commandType.selectedTag;
     NSString *param = [self stringForKey:KEY_COMMAND_LINE];
-    NSArray<NSString *> *shells = @[ @"bash", @"zsh", @"fish" ];
+    NSArray<NSString *> *shells = @[ @"bash", @"fish", @"xonsh", @"zsh"];
     switch (tag) {
         case iTermGeneralProfilePreferenceCustomCommandTagCustomShell:
         case iTermGeneralProfilePreferenceCustomCommandTagCustom: {

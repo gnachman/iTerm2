@@ -34,6 +34,12 @@
                                                                              italic:NO];
 }
 
++ (iTermCharacterSourceAttributes *)attributesWithBold:(BOOL)bold italic:(BOOL)italic {
+    return [iTermCharacterSourceAttributes characterSourceAttributesWithThinStrokes:NO
+                                                                               bold:bold
+                                                                             italic:italic];
+}
+
 + (nullable iTermCharacterSource *)characterSourceWithCharacter:(NSString *)character
                                                      descriptor:(iTermCharacterSourceDescriptor *)descriptor
                                                      attributes:(iTermCharacterSourceAttributes *)attributes

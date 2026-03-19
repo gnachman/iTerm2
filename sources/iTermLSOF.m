@@ -129,10 +129,14 @@
     // Pull out null terminated argv components
     NSMutableArray<NSString *> *argv = [NSMutableArray array];
     char *start = procargs + offset;
-    while (offset < argmax && argv.count < nargs) {
+    int argsConsumed = 0;
+    while (offset < argmax && argsConsumed < nargs) {
         if (procargs[offset] == 0) {
             NSString *string = [NSString stringWithUTF8String:start];
-            [argv addObject:[self escapedArgument:string] ?: @""];
+            if (string.length > 0) {
+                [argv addObject:[self escapedArgument:string] ?: @""];
+            }
+            argsConsumed++;
             start = procargs + offset + 1;
         }
         offset++;

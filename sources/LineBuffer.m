@@ -1391,7 +1391,11 @@ NS_INLINE int TotalNumberOfRawLines(LineBuffer *self) {
                 range->position += blockPosition;
             }
             resultIndex++;
-            if (context.dir * (range->position - stopAt) > 0 ||
+            // For forward search (dir > 0): filter out results at position >= stopAt
+            // For backward search (dir < 0): filter out results at position < stopAt
+            // Note: >= for forward ensures matches exactly at stopAt are excluded (half-open interval)
+            const BOOL positionOutOfRange = (context.dir > 0) ? (range->position >= stopAt) : (range->position < stopAt);
+            if (positionOutOfRange ||
                 context.dir * (range->position + context.matchLength - stopAt) > 0) {
                 // result was outside the range to be searched
                 haveOutOfRangeResults = YES;

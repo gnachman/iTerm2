@@ -244,7 +244,7 @@ class TextClipDrawing: NSObject {
                 if i == 0 {
                     result.clearBits(0..<range.start.x)
                 }
-                if i + 1 == rows {
+                if i + 1 == rows && range.end.x <= width {
                     result.clearBits(range.end.x..<width)
                 }
             }

@@ -300,4 +300,279 @@ final class iTermCharacterSourceTests: XCTestCase {
     func testClearingBismillah() {
         verifyClearingWorks(forCharacter: "\u{FDFD}", description: "Bismillah ligature")
     }
+
+    // MARK: - Exhaustive Font Tests
+
+    /// Characters to test - alphabet plus challenging glyphs with descenders, ascenders, etc.
+    private static let testCharacters: [(String, String)] = {
+        var chars: [(String, String)] = []
+
+        // Lowercase alphabet (includes descenders: g, j, p, q, y)
+        for c in "abcdefghijklmnopqrstuvwxyz" {
+            chars.append((String(c), "lowercase \(c)"))
+        }
+
+        // Uppercase alphabet
+        for c in "ABCDEFGHIJKLMNOPQRSTUVWXYZ" {
+            chars.append((String(c), "uppercase \(c)"))
+        }
+
+        // Digits
+        for c in "0123456789" {
+            chars.append((String(c), "digit \(c)"))
+        }
+
+        // Common punctuation with varying heights
+        let punctuation = "!@#$%^&*()_+-=[]{}|;':\",./<>?`~"
+        for c in punctuation {
+            chars.append((String(c), "punctuation \(c)"))
+        }
+
+        // Accented Latin characters
+        chars.append(("\u{00E9}", "e-acute"))
+        chars.append(("\u{00E0}", "a-grave"))
+        chars.append(("\u{00F1}", "n-tilde"))
+        chars.append(("\u{00FC}", "u-umlaut"))
+        chars.append(("\u{00E7}", "c-cedilla"))
+        chars.append(("\u{00E5}", "a-ring"))
+
+        // Characters with descenders in various scripts
+        chars.append(("\u{03C1}", "Greek rho"))  // ρ
+        chars.append(("\u{03B7}", "Greek eta"))  // η
+        chars.append(("\u{03BC}", "Greek mu"))   // μ
+        chars.append(("\u{0440}", "Cyrillic er")) // р
+        chars.append(("\u{0443}", "Cyrillic u"))  // у
+
+        // Arabic (can have complex shaping)
+        chars.append(("\u{0639}", "Arabic ain"))
+        chars.append(("\u{0642}", "Arabic qaf"))
+
+        // CJK
+        chars.append(("\u{4E2D}", "Chinese zhong"))
+        chars.append(("\u{3042}", "Hiragana a"))
+        chars.append(("\u{D55C}", "Korean han"))
+
+        // Thai with marks (complex rendering)
+        chars.append(("\u{0E01}\u{0E34}", "Thai with vowel"))
+
+        // Combining marks
+        chars.append(("e\u{0301}", "e with combining acute"))
+        chars.append(("o\u{0302}", "o with combining circumflex"))
+
+        return chars
+    }()
+
+    /// Tests clearing for all characters with a specific font and attributes
+    private func testClearingAllCharacters(
+        fontName: String,
+        fontSize: CGFloat,
+        bold: Bool,
+        italic: Bool
+    ) -> [(character: String, description: String)] {
+        var failures: [(String, String)] = []
+
+        guard let font = NSFont(name: fontName, size: fontSize) else {
+            return failures
+        }
+
+        let fontInfo = PTYFontInfo(font: font)
+        let testFontTable = FontTable(ascii: fontInfo, nonAscii: nil, browserZoom: 1.0)
+
+        let testDescriptor = iTermCharacterSourceTestHelper.descriptor(
+            with: testFontTable,
+            scale: scale,
+            glyphSize: CGSize(width: cellWidth, height: cellHeight)
+        )
+
+        let testAttributes = iTermCharacterSourceTestHelper.attributes(withBold: bold, italic: italic)
+
+        let contextSize = CGSize(width: cellWidth * CGFloat(maxParts),
+                                 height: cellHeight * CGFloat(maxParts))
+
+        for (character, description) in Self.testCharacters {
+            // Clear context before each character
+            context.clear(CGRect(origin: .zero, size: contextSize))
+
+            guard let source = iTermCharacterSourceTestHelper.characterSource(
+                withCharacter: character,
+                descriptor: testDescriptor,
+                attributes: testAttributes,
+                radius: radius,
+                context: context
+            ) else {
+                continue  // Some characters may not be supported by font
+            }
+
+            let isCleared = iTermCharacterSourceTestHelper.drawAndVerifyClearing(
+                for: source,
+                context: context,
+                contextSize: contextSize
+            )
+
+            if !isCleared {
+                let attrDesc = (bold ? "bold " : "") + (italic ? "italic " : "")
+                failures.append((character, "\(attrDesc)\(description) in \(fontName)"))
+            }
+        }
+
+        return failures
+    }
+
+    /// Exhaustive test of all fonts - run manually with:
+    /// tools/run_tests.expect ModernTests/iTermCharacterSourceTests/DISABLED_testClearingWithAllFonts
+    func DISABLED_testClearingWithAllFonts() {
+        let fontManager = NSFontManager.shared
+        let allFonts = fontManager.availableFontFamilies
+
+        var allFailures: [(character: String, description: String)] = []
+        var testedFonts = 0
+
+        for family in allFonts {
+            guard let members = fontManager.availableMembers(ofFontFamily: family) else {
+                continue
+            }
+
+            // Test first member of each family (usually Regular)
+            if let firstMember = members.first,
+               let fontName = firstMember[0] as? String {
+
+                // Test regular
+                let regularFailures = testClearingAllCharacters(
+                    fontName: fontName,
+                    fontSize: 12,
+                    bold: false,
+                    italic: false
+                )
+                allFailures.append(contentsOf: regularFailures)
+
+                // Test with fake italic (the problematic case)
+                let italicFailures = testClearingAllCharacters(
+                    fontName: fontName,
+                    fontSize: 12,
+                    bold: false,
+                    italic: true
+                )
+                allFailures.append(contentsOf: italicFailures)
+
+                // Test with fake bold
+                let boldFailures = testClearingAllCharacters(
+                    fontName: fontName,
+                    fontSize: 12,
+                    bold: true,
+                    italic: false
+                )
+                allFailures.append(contentsOf: boldFailures)
+
+                // Test with both
+                let boldItalicFailures = testClearingAllCharacters(
+                    fontName: fontName,
+                    fontSize: 12,
+                    bold: true,
+                    italic: true
+                )
+                allFailures.append(contentsOf: boldItalicFailures)
+
+                testedFonts += 1
+            }
+        }
+
+        print("Tested \(testedFonts) fonts with \(Self.testCharacters.count) characters each")
+        print("Total combinations: \(testedFonts * Self.testCharacters.count * 4)")
+
+        if !allFailures.isEmpty {
+            print("Failures (\(allFailures.count)):")
+            for (char, desc) in allFailures.prefix(50) {  // Limit output
+                print("  '\(char)': \(desc)")
+            }
+            if allFailures.count > 50 {
+                print("  ... and \(allFailures.count - 50) more")
+            }
+            XCTFail("Found \(allFailures.count) clearing failures across \(testedFonts) fonts")
+        }
+    }
+
+    /// Test specifically for AppleColorEmoji '1' - a known edge case
+    func testClearingAppleColorEmojiDigitOne() {
+        guard let font = NSFont(name: "AppleColorEmoji", size: 12) else {
+            XCTFail("AppleColorEmoji font not available")
+            return
+        }
+
+        let fontInfo = PTYFontInfo(font: font)
+        let testFontTable = FontTable(ascii: fontInfo, nonAscii: nil, browserZoom: 1.0)
+
+        let testDescriptor = iTermCharacterSourceTestHelper.descriptor(
+            with: testFontTable,
+            scale: scale,
+            glyphSize: CGSize(width: cellWidth, height: cellHeight)
+        )
+
+        let contextSize = CGSize(width: cellWidth * CGFloat(maxParts),
+                                 height: cellHeight * CGFloat(maxParts))
+        let bold = false
+        let italic = false
+        let attrName = "regular"
+        // Clear context
+        context.clear(CGRect(origin: .zero, size: contextSize))
+
+        let testAttributes = iTermCharacterSourceTestHelper.attributes(withBold: bold, italic: italic)
+
+        guard let source = iTermCharacterSourceTestHelper.characterSource(
+            withCharacter: "1",
+            descriptor: testDescriptor,
+            attributes: testAttributes,
+            radius: radius,
+            context: context
+        ) else {
+            XCTFail("Failed to create character source for AppleColorEmoji '1' (\(attrName))")
+            return
+        }
+
+        let isCleared = iTermCharacterSourceTestHelper.drawAndVerifyClearing(
+            for: source,
+            context: context,
+            contextSize: contextSize
+        )
+
+        if !isCleared {
+            let remainingBounds = iTermCharacterSourceTestHelper.pixelBounds(
+                in: context,
+                size: contextSize
+            )
+            XCTFail("Context not cleared for AppleColorEmoji '1' (\(attrName)). Remaining pixels at: \(remainingBounds)")
+        }
+    }
+
+    /// Quick test with just a few common fonts for CI
+    func testClearingWithCommonFonts() {
+        let commonFonts = [
+            "Menlo",
+            "Monaco",
+            "SF Mono",
+            "Courier",
+            "Helvetica",
+            "Arial",
+            "Times New Roman"
+        ]
+
+        var allFailures: [(character: String, description: String)] = []
+
+        for fontName in commonFonts {
+            // Test with fake italic specifically (the bug we fixed)
+            let failures = testClearingAllCharacters(
+                fontName: fontName,
+                fontSize: 12,
+                bold: false,
+                italic: true
+            )
+            allFailures.append(contentsOf: failures)
+        }
+
+        if !allFailures.isEmpty {
+            for (char, desc) in allFailures {
+                print("FAIL: '\(char)': \(desc)")
+            }
+            XCTFail("Found \(allFailures.count) clearing failures")
+        }
+    }
 }

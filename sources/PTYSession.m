@@ -2449,6 +2449,12 @@ ITERM_WEAKLY_REFERENCEABLE
     [self updateMetalDriver];
     [self.variablesScope setValuesFromDictionary:@{ iTermVariableKeySessionColumns: @(_screen.width),
                                                     iTermVariableKeySessionRows: @(_screen.height) }];
+
+    // For non-live resizes (zoom, programmatic, etc.), refresh search immediately.
+    // For live resizes, windowDidEndLiveResize: will handle it.
+    if (!self.textview.window.inLiveResize) {
+        [self refreshSearchAfterResize];
+    }
 }
 
 - (void)startTailFindIfVisible {
@@ -7025,11 +7031,49 @@ static NSString *const PTYSessionComposerPrefixUserDataKeyDetectedByTrigger = @"
 }
 
 - (void)windowDidEndLiveResize:(NSNotification *)notification {
-    if ([iTermAdvancedSettingsModel trackingRunloopForLiveResize]) {
-        if (notification.object == self.textview.window) {
+    // Note: Notification is always received; trackingRunloopForLiveResize only affects _inLiveResize flag
+    DLog(@"windowDidEndLiveResize: notification.object=%@ self.textview.window=%@ match=%d",
+         notification.object, self.textview.window, notification.object == self.textview.window);
+    if (notification.object == self.textview.window) {
+        if ([iTermAdvancedSettingsModel trackingRunloopForLiveResize]) {
             _inLiveResize = NO;
             [_cadenceController liveResizeDidEnd];
         }
+        // Refresh search after resize ends - coordinates are now stable
+        [self refreshSearchAfterResize];
+    }
+}
+
+- (void)refreshSearchAfterResize {
+    // Only refresh if a search was actively being displayed.
+    // For permanent status bar, the find component is always visible.
+    // For dropdown/temporary, only refresh if the find driver is currently visible.
+    BOOL searchWasActive = NO;
+    if (_view.findDriverType == iTermSessionViewFindDriverPermanentStatusBar) {
+        // Permanent status bar - search is active if driver has a query
+        searchWasActive = _view.findDriver.findString.length > 0;
+    } else {
+        // Dropdown or temporary status bar - search is active if visible
+        searchWasActive = _view.findDriver.isVisible;
+    }
+
+    if (!searchWasActive) {
+        DLog(@"refreshSearchAfterResize: search was not active, skipping");
+        return;
+    }
+
+    // Use lastQuery/lastMode since query/mode are cleared when cancel() is called during resize
+    NSString *query = _screen.searchEngine.lastQuery;
+    iTermFindMode mode = _screen.searchEngine.lastMode;
+    DLog(@"refreshSearchAfterResize: query=%@ mode=%d", query, (int)mode);
+    if (query.length > 0) {
+        DLog(@"refreshSearchAfterResize: starting search via find driver");
+        // Use the find driver to restart the search - this ensures the timer
+        // is scheduled to consume results and update the UI.
+        // We use refreshSearchResultsForQuery which scrolls to the first result,
+        // selecting it so the count displays properly.
+        [_view createFindDriverIfNeeded];
+        [_view.findDriver refreshSearchResultsForQuery:query mode:mode];
     }
 }
 
@@ -13640,6 +13684,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 
 - (void)tailFindControllerDidFinishAtLocation:(LineBufferPosition *)location {
     _screen.searchEngine.lastStartPosition = location ?: _screen.searchEngine.lastEndOfBufferPosition;
+    [_view.findDriver.viewController countDidChange];
 }
 
 - (iTermSearchEngine *)tailFindControllerMainSearchEngine {

@@ -26,6 +26,9 @@ NS_ASSUME_NONNULL_BEGIN
 /// Creates attributes with default test values.
 + (iTermCharacterSourceAttributes *)defaultAttributes;
 
+/// Creates attributes with specific bold/italic settings.
++ (iTermCharacterSourceAttributes *)attributesWithBold:(BOOL)bold italic:(BOOL)italic;
+
 /// Creates a character source for testing.
 + (nullable iTermCharacterSource *)characterSourceWithCharacter:(NSString *)character
                                                      descriptor:(iTermCharacterSourceDescriptor *)descriptor

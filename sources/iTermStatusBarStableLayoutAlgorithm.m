@@ -52,11 +52,13 @@ haveSpacersOnBothSidesOfIndex:(NSInteger)index
 }
 
 - (CGFloat)minimumWidthOfContainerViews:(NSArray<iTermStatusBarContainerView *> *)views {
+    [self updateMargins:views];
     iTermStatusBarContainerView *viewWithLargestMinimumWidth = [self containerViewWithLargestMinimumWidthFromViews:views];
     const CGFloat largestMinimumSize = viewWithLargestMinimumWidth.minimumWidthIncludingIcon;
     NSArray<iTermStatusBarContainerView *> *viewsExFixedSpacers = [self viewsExcludingFixedSpacers:views];
     const CGFloat widthOfAllFixedSpacers = [self widthOfFixedSpacersAmongViews:views];
-    return largestMinimumSize * viewsExFixedSpacers.count + widthOfAllFixedSpacers;
+    const CGFloat totalMarginWidth = [self totalMarginWidthForViews:views];
+    return largestMinimumSize * viewsExFixedSpacers.count + widthOfAllFixedSpacers + totalMarginWidth;
 }
 
 - (NSArray<iTermStatusBarContainerView *> *)visibleContainerViewsAllowingEqualSpacingFromViews:(NSArray<iTermStatusBarContainerView *> *)visibleContainerViews {

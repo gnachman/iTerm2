@@ -259,6 +259,24 @@ static NSString *gSearchString;
                   force:YES];
 }
 
+- (void)refreshSearchResultsForQuery:(NSString *)string mode:(iTermFindMode)mode {
+    self.findString = string;
+    if (string.length == 0) {
+        DLog(@"refreshSearchResultsForQuery: clear search");
+        [_delegate findViewControllerClearSearch];
+        return;
+    }
+    DLog(@"refreshSearchResultsForQuery: starting search for %@", string);
+    _state.mode = mode;
+    [self setSearchDefaults];
+    [self findSubString:string
+       forwardDirection:![iTermAdvancedSettingsModel swapFindNextPrevious]
+                   mode:mode
+             withOffset:-1
+    scrollToFirstResult:YES
+                  force:YES];
+}
+
 - (void)bottomUpPerformFindPanelAction:(id)sender {
     [self.delegate findDriverBottomUpPerformFindPanelAction:sender];
 }
@@ -523,6 +541,8 @@ static NSString *gSearchString;
         }
         [_viewController setProgress:progress];
     }
+    // Always update the count as results are found
+    [_viewController countDidChange];
     if (!more) {
         [_searchEngine.timer invalidate];
         _searchEngine.timer = nil;

@@ -472,6 +472,83 @@ class SearchEngineTests: XCTestCase {
         }
         expectEquals(expected, results)
     }
+
+    // MARK: - stopAt Boundary Tests
+    //
+    // These tests verify that the absLineRange upper bound is properly excluded
+    // in forward search. The bug being tested: when multiple lines exist in the
+    // same block and a match exists exactly at the stopAt position, it should
+    // be excluded. Prior to the fix, the comparison used `>` instead of `>=`,
+    // which would incorrectly include matches at exactly the boundary.
+
+    /// Test that forward search with absLineRange excludes matches at the upper bound
+    /// when all lines are in a single block (no forceSeal between lines).
+    /// This specifically tests the result-level filtering in findSubstring.
+    func testForwardSearchExcludesUpperBoundInSingleBlock() {
+        let screen = Screen()
+        // Create lines WITHOUT forceSeal() so they're all in the same block.
+        // This exercises the result-level filtering rather than block-level filtering.
+        for i in 0..<10 {
+            screen.appendLn("Test \(i)")
+            // NO forceSeal() here - all lines in same block
+        }
+
+        // Search with absLineRange: 0..<5, meaning we want lines 0, 1, 2, 3, 4 only
+        // Line 5 is at the upper bound and should be EXCLUDED
+        let request = SearchRequest(absLineRange: 0..<5,
+                                    direction: .forwards,
+                                    regex: false,
+                                    query: "test",
+                                    caseSensitivity: .insensitive,
+                                    wantMultipleResults: true,
+                                    limitResultsToOnePerRawLine: false,
+                                    emptyQueryMatches: false,
+                                    spanLines: false,
+                                    cumulativeOverflow: 0,
+                                    initialStart: VT100GridAbsCoord(x: 0, y: 0))
+        let results = performTestSearch(screen: screen, request: request)
+
+        // Should find exactly 5 results (lines 0-4), NOT 6 or more
+        // With the old bug (using > instead of >=), line 5 would be incorrectly included
+        let expected = (0..<5).map { y in
+            SearchResult(fromX: 0, y: y, toX: 3, y: y)!
+        }
+        expectEquals(expected, results)
+    }
+
+    /// Test that forward search properly respects absLineRange when the cursor
+    /// starts exactly at the upper bound. The match at the upper bound should
+    /// still be excluded.
+    func testForwardSearchFromUpperBoundExcludesBoundary() {
+        let screen = Screen()
+        for i in 0..<10 {
+            screen.appendLn("Test \(i)")
+            // NO forceSeal() - single block
+        }
+
+        // Start searching from line 5, with absLineRange: 3..<6
+        // Should find: line 5 (starting point), then wrap to lines 3, 4
+        // Line 6 is at upper bound and should be EXCLUDED
+        let request = SearchRequest(absLineRange: 3..<6,
+                                    direction: .forwards,
+                                    regex: false,
+                                    query: "test",
+                                    caseSensitivity: .insensitive,
+                                    wantMultipleResults: true,
+                                    limitResultsToOnePerRawLine: false,
+                                    emptyQueryMatches: false,
+                                    spanLines: false,
+                                    cumulativeOverflow: 0,
+                                    initialStart: VT100GridAbsCoord(x: 0, y: 5))
+        let results = performTestSearch(screen: screen, request: request)
+
+        // Should find lines 5, 3, 4 (starts at 5, wraps around within range 3..<6)
+        // Line 6 should NOT be found
+        let expected = [5, 3, 4].map { y in
+            SearchResult(fromX: 0, y: y, toX: 3, y: y)!
+        }
+        expectEquals(expected, results)
+    }
 }
 
 // MARK: - Helpers

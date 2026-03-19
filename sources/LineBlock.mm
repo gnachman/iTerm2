@@ -620,7 +620,7 @@ NS_INLINE void iTermLineBlockDidChange(__unsafe_unretained LineBlock *lineBlock,
                                                           length:length
                                                         metadata:iTermMetadataMakeImmutable(lbm->lineMetadata)
                                                     continuation:lbm->continuation];
-    return [sca stringValue];
+    return [sca stringValueIncludingEmbeddedNulls];
 }
 
 - (void)dump:(int)rawOffset droppedChars:(long long)droppedChars toDebugLog:(BOOL)toDebugLog {

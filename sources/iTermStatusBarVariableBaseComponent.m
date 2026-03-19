@@ -18,6 +18,7 @@
 #import "NSImage+iTerm.h"
 #import "NSObject+iTerm.h"
 #import "NSStringITerm.h"
+#import "iTermProfile.h"
 #import "ProfileModel.h"
 #import "iTermProfilePreferences.h"
 #import "VT100RemoteHost.h"
@@ -357,7 +358,7 @@ static NSString *const iTermStatusBarHostnameComponentAbbreviateLocalhost = @"ab
         copyBasename.target = self;
         [menu addItem:copyBasename];
 
-        NSMenuItem *openInFinder = [[NSMenuItem alloc] initWithTitle:@"Open in Finder"
+        NSMenuItem *openInFinder = [[NSMenuItem alloc] initWithTitle:@"Reveal in Finder"
                                                               action:@selector(openCurrentPathInFinder:)
                                                        keyEquivalent:@""];
         openInFinder.target = self;
@@ -365,13 +366,13 @@ static NSString *const iTermStatusBarHostnameComponentAbbreviateLocalhost = @"ab
 
         [menu addItem:[NSMenuItem separatorItem]];
 
-        NSMenuItem *openInNewWindow = [[NSMenuItem alloc] initWithTitle:@"Open in New Window"
+        NSMenuItem *openInNewWindow = [[NSMenuItem alloc] initWithTitle:@"New Session Here in New Window"
                                                                  action:@selector(openCurrentPathInNewWindow:)
                                                           keyEquivalent:@""];
         openInNewWindow.target = self;
         [menu addItem:openInNewWindow];
 
-        NSMenuItem *openInNewTab = [[NSMenuItem alloc] initWithTitle:@"Open in New Tab"
+        NSMenuItem *openInNewTab = [[NSMenuItem alloc] initWithTitle:@"New Session Here in New Tab"
                                                               action:@selector(openCurrentPathInNewTab:)
                                                        keyEquivalent:@""];
         openInNewTab.target = self;
@@ -436,14 +437,13 @@ static NSString *const iTermStatusBarHostnameComponentAbbreviateLocalhost = @"ab
     if (!path.length) {
         return;
     }
-    Profile *profile = [[ProfileModel sharedInstance] defaultBookmark];
+    MutableProfile *profile = [[[ProfileModel sharedInstance] defaultBookmark] mutableCopy];
     if (!profile) {
         return;
     }
-    MutableProfile *mutableProfile = [profile mutableCopy];
-    mutableProfile[KEY_WORKING_DIRECTORY] = path;
-    mutableProfile[KEY_CUSTOM_DIRECTORY] = kProfilePreferenceInitialDirectoryCustomValue;
-    [iTermSessionLauncher launchBookmark:mutableProfile
+    profile[KEY_WORKING_DIRECTORY] = path;
+    profile[KEY_CUSTOM_DIRECTORY] = kProfilePreferenceInitialDirectoryCustomValue;
+    [iTermSessionLauncher launchBookmark:profile
                               inTerminal:terminal
                                    style:style
                                  withURL:nil

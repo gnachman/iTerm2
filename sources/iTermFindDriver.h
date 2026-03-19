@@ -129,6 +129,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
 - (void)filterVisibilityDidChange;
 - (void)setFilterProgress:(double)progress;
 - (void)highlightWithoutSelectingSearchResultsForQuery:(NSString *)string;
+- (void)refreshSearchResultsForQuery:(NSString *)string mode:(iTermFindMode)mode;
 - (void)bottomUpPerformFindPanelAction:(id)sender;
 - (BOOL)bottomUpValidateMenuItem:(NSMenuItem *)menuItem;
 

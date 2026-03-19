@@ -7314,6 +7314,13 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
 {
     NSMenuItem *item;
     NSMenu *rootMenu = [[[NSMenu alloc] init] autorelease];
+    if (self.window.ptyWindow.it_terminalWindowUseMinimalStyle) {
+        NSColor *bgColor = [self.window.ptyWindow it_terminalWindowDecorationBackgroundColor];
+        NSAppearanceName appearanceName = bgColor.perceivedBrightness < 0.5 ? NSAppearanceNameDarkAqua : NSAppearanceNameAqua;
+        rootMenu.appearance = [NSAppearance appearanceNamed:appearanceName];
+    } else {
+        rootMenu.appearance = self.window.appearance;
+    }
 
     // Create a menu with a submenu to navigate between tabs if there are more than one
     if ([_contentView.tabView numberOfTabViewItems] > 1) {

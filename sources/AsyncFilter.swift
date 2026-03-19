@@ -57,7 +57,7 @@ class FilteringUpdater: HexAddressFormatting {
     }
 
     // Lines that have matched. Does not include temporary matches.
-    private(set) var acceptedLines = [AbsResultRange]()
+    var acceptedLines = [AbsResultRange]()
 
     private static func stopPosition(lineBuffer: LineBuffer,
                                      absLineRange: Range<Int64>,
@@ -154,32 +154,22 @@ class FilteringUpdater: HexAddressFormatting {
         }
     }
 
-    // Bring in matching results by using the saved ranges from an existing FilteringUpdater that
-    // had a broader query. This is usually faster than starting from scratch.
-    func catchUp(other: FilteringUpdater) {
-        acceptedLines = other.acceptedLines
+    // Copy state from another updater for refining search.
+    // This allows the new updater to continue from where the previous one left off.
+    func copyStateForRefining(from other: FilteringUpdater) {
         lastPosition = other.lastPosition
         context = other.context.copy()
         stopAt = other.stopAt
         lastY = other.lastY
-
-        let offset = lineBuffer.numberOfDroppedChars
-        for absResultRange in acceptedLines {
-            if let resultRange = absResultRange.resultRange(offset: offset),
-               haveMatch(at: resultRange) {
-                if let range = lineBuffer.convertPositions([resultRange], withWidth: width)?.first {
-                    accept?(range.yStart, false)
-                }
-            }
-        }
+        acceptedLines = other.acceptedLines
     }
 
-    private func haveMatch(at resultRange: ResultRange) -> Bool {
+    func haveMatch(at resultRange: ResultRange) -> Bool {
         let context = FindContext()
         let start = lineBuffer.positionForStart(of: resultRange)
         lineBuffer.prepareToSearch(for: query,
                                    startingAt: start,
-                                   options: [.oneResultPerRawLine, .optEmptyQueryMatches],
+                                   options: [],
                                    mode: mode,
                                    with: context)
         lineBuffer.findSubstring(context, stopAt: start.advanced(by: resultRange.length))
@@ -311,13 +301,72 @@ protocol FilterDestination {
 
 @objc(iTermAsyncFilter)
 class AsyncFilter: NSObject {
+    // MARK: - State Machine Types
+
+    private typealias PendingDeliveries = FIFOQueue<(ScreenCharArray, iTermImmutableMetadata)>
+    private typealias BoxedPendingDeliveries = Box<PendingDeliveries>
+
+    /// Context for the catchUp phase when refining a previous filter.
+    /// During catchUp, we verify that lines accepted by the previous filter
+    /// still match the new (more restrictive) query.
+    private struct CatchUpContext {
+        /// Lines accepted by the previous filter that need to be re-verified.
+        var entries: [FilteringUpdater.AbsResultRange]
+
+        /// Current position in `entries` being processed.
+        var index: Int
+
+        /// Number of characters dropped from the line buffer, used to convert
+        /// absolute positions to relative positions for searching.
+        var offset: Int64
+
+        /// Lines from `entries` that have been verified to match the new query.
+        var verified: [FilteringUpdater.AbsResultRange]
+
+        /// Lines delivered while catchUp is in progress. These are queued and
+        /// processed after catchUp completes to avoid interleaving. Boxed to
+        /// avoid copy-on-write overhead when extracting from enum associated values.
+        var pendingDeliveries: BoxedPendingDeliveries
+
+        var isDone: Bool { index >= entries.count }
+
+        mutating func nextEntry() -> FilteringUpdater.AbsResultRange? {
+            guard index < entries.count else { return nil }
+            let entry = entries[index]
+            index += 1
+            return entry
+        }
+    }
+
+    private enum State: CustomStringConvertible {
+        case idle
+        case catchingUp(CatchUpContext)
+        case drainingPendingDeliveries(BoxedPendingDeliveries)
+        case searching
+        case completed
+        case cancelled
+
+        var description: String {
+            switch self {
+            case .idle: return "idle"
+            case .catchingUp: return "catchingUp"
+            case .drainingPendingDeliveries: return "drainingPendingDeliveries"
+            case .searching: return "searching"
+            case .completed: return "completed"
+            case .cancelled: return "cancelled"
+            }
+        }
+    }
+
+    // MARK: - Properties
+
     private var timer: Timer? = nil
     private let progress: ((Double) -> (Void))?
     private let cadence: TimeInterval
     private let query: String
     @objc let mode: iTermFindMode
     private var updater: FilteringUpdater
-    private var started = false
+    private var state: State = .idle
     private let lineBufferCopy: LineBuffer
     private let width: Int32
     private let destination: FilterDestination
@@ -328,6 +377,17 @@ class AsyncFilter: NSObject {
     // duplicate lines of output.
     private let initialLineBufferGeneration: Int64
     private var refiningUpdater: FilteringUpdater?
+
+    // MARK: - Test Support
+
+    /// Called when the filter transitions to .completed state. For testing only.
+    var onComplete: (() -> Void)?
+
+    /// Synchronously process all pending work until completion. For testing only.
+    /// This bypasses the timer and processes everything immediately.
+    func syncProcessToCompletion() {
+        while callUpdater() { }
+    }
 
     @objc(initWithQuery:lineBuffer:grid:mode:destination:cadence:refining:absLineRange:cumulativeOverflow:progress:)
     init(query: String,
@@ -387,27 +447,57 @@ class AsyncFilter: NSObject {
     }
 
     @objc func start() {
+        guard case .idle = state else {
+            it_fatalError("start() called in state \(state)")
+        }
         DLog("\(it_addressString): AsyncFilter: Start")
-        precondition(!started)
-        started = true
+
         progress?(0)
-        if let refiningUpdater, query.range(of: refiningUpdater.query) != nil {
+
+        // Refinement optimization: if the new query contains the old query as a substring,
+        // we only need to re-verify previously matched lines rather than searching from scratch.
+        // This only works for literal searches - for regex, substring containment doesn't imply
+        // the new pattern matches a subset of the old pattern's matches.
+        let canRefine = !iTermFilterModeIsRegularExpression(mode) &&
+                        refiningUpdater != nil &&
+                        query.range(of: refiningUpdater!.query) != nil
+        if canRefine, let refiningUpdater {
             DLog("\(it_addressString): Catch up")
-            updater.catchUp(other: refiningUpdater)
+            // If the refining filter's last line was temporary, remove it now.
+            // We do this once at the start rather than in addFilterResult because
+            // during catchUp the first line we add isn't necessarily a replacement
+            // for the temporary line.
+            if lastLineIsTemporary {
+                DLog("\(it_addressString): Catch up: removing refining filter's temporary last line")
+                destination.removeLastLine()
+                lastLineIsTemporary = false
+            }
+            updater.copyStateForRefining(from: refiningUpdater)
+
+            let context = CatchUpContext(
+                entries: refiningUpdater.acceptedLines,
+                index: 0,
+                offset: lineBufferCopy.numberOfDroppedChars,
+                verified: [],
+                pendingDeliveries: Box(FIFOQueue())
+            )
+            state = .catchingUp(context)
+        } else {
+            state = .searching
         }
         self.refiningUpdater = nil
-        timer = Timer.scheduledTimer(withTimeInterval: cadence, repeats: true, block: { [weak self] timer in
-            self?.update()
-        })
 
-        update()
+        timer = Timer.scheduledTimer(withTimeInterval: cadence, repeats: true) { [weak self] _ in
+            self?.timerFired()
+        }
+        timerFired()
     }
 
-
     @objc func cancel() {
-        DLog("\(it_addressString): AsyncFilter: Cancel")
+        DLog("\(it_addressString): AsyncFilter: Cancel, was \(state)")
         timer?.invalidate()
         timer = nil
+        state = .cancelled
     }
 
     /// `block` returns whether to keep going. Return true to continue or false to break.
@@ -424,18 +514,23 @@ class AsyncFilter: NSObject {
         return true
     }
 
-    private func update() {
+    private func timerFired() {
+        switch state {
+        case .idle, .completed, .cancelled:
+            return
+        case .catchingUp, .drainingPendingDeliveries, .searching:
+            break
+        }
+
         DLog("\(it_addressString): AsyncFilter: timer fired")
-        DLog("AsyncFilter\(self): Timer fired")
         let needsUpdate = loopForDuration(0.01) {
-            DLog("AsyncFilter: Update")
             return callUpdater()
         }
+
         if !needsUpdate {
             progress?(1)
             timer?.invalidate()
             DLog("\(it_addressString): AsyncFilter: invalidates timer")
-            DLog("don't need an update")
             timer = nil
         } else {
             DLog("\(it_addressString): AsyncFilter: keep timer")
@@ -446,6 +541,38 @@ class AsyncFilter: NSObject {
 
 extension AsyncFilter: ContentSubscriber {
     func deliver(_ array: ScreenCharArray, metadata: iTermImmutableMetadata, lineBufferGeneration: Int64) {
+        switch state {
+        case .idle, .cancelled:
+            return
+
+        case .catchingUp(let context):
+            DLog("\(it_addressString): AsyncFilter: deliver: queuing delivery during catchUp, generation=\(lineBufferGeneration)")
+            context.pendingDeliveries.value.enqueue((array, metadata))
+
+        case .drainingPendingDeliveries(let pending):
+            pending.value.enqueue((array, metadata))
+
+        case .searching, .completed:
+            // In .completed state, we still process new content as it arrives.
+            // The filter keeps running until cancelled.
+            appendToLineBuffer(array, metadata: metadata)
+            DLog("\(it_addressString): AsyncFilter: deliver: append line. Last position is now \(lineBufferCopy.lastPosition().description)")
+            ensureTimerRunning()
+        }
+    }
+
+    private func ensureTimerRunning() {
+        if timer != nil {
+            return
+        }
+        state = .searching
+        timer = Timer.scheduledTimer(withTimeInterval: cadence, repeats: true) { [weak self] _ in
+            self?.timerFired()
+        }
+        timerFired()
+    }
+
+    private func appendToLineBuffer(_ array: ScreenCharArray, metadata: iTermImmutableMetadata) {
         lineBufferCopy.appendLine(array.line,
                                   length: array.length,
                                   partial: array.eol != EOL_HARD,
@@ -453,20 +580,67 @@ extension AsyncFilter: ContentSubscriber {
                                   metadata: metadata,
                                   continuation: array.continuation)
         updater.didAppendToLineBuffer()
-        DLog("\(it_addressString): AsyncFilter: deliver: generation=\(lineBufferGeneration) append line to lineBuffer \(array.debugStringValue). Last position is now \(lineBufferCopy.lastPosition().description)")
-        if timer != nil {
-            return
-        }
-        while callUpdater() { }
     }
 
     private func callUpdater() -> Bool {
         if lastLineIsTemporary {
-            DLog("\(it_addressString): AsyncFilter: update: Removing previous line before updating")
+            DLog("\(it_addressString): AsyncFilter: callUpdater: Removing previous line before updating")
             destination.removeLastLine()
             lastLineIsTemporary = false
         }
-        return updater.update()
+
+        switch state {
+        case .idle, .cancelled:
+            return false
+
+        case .catchingUp(var context):
+            if let absResultRange = context.nextEntry() {
+                // Process one catchUp entry
+                if let resultRange = absResultRange.resultRange(offset: context.offset),
+                   updater.haveMatch(at: resultRange) {
+                    context.verified.append(absResultRange)
+                    if let range = lineBufferCopy.convertPositions([resultRange], withWidth: width)?.first {
+                        addFilterResult(range.yStart, temporary: false)
+                    }
+                }
+                state = .catchingUp(context)
+                return true
+            } else {
+                // CatchUp complete - update acceptedLines with verified matches
+                updater.acceptedLines = context.verified
+
+                // Transition to next state
+                if context.pendingDeliveries.value.isEmpty {
+                    state = .searching
+                } else {
+                    state = .drainingPendingDeliveries(context.pendingDeliveries)
+                }
+                return callUpdater()
+            }
+
+        case .drainingPendingDeliveries(let pending):
+            if let (array, metadata) = pending.value.dequeue() {
+                appendToLineBuffer(array, metadata: metadata)
+                if pending.value.isEmpty {
+                    state = .searching
+                }
+                return true
+            }
+            state = .searching
+            return callUpdater()
+
+        case .searching:
+            let moreWork = updater.update()
+            if !moreWork {
+                state = .completed
+                onComplete?()
+            }
+            return moreWork
+
+        case .completed:
+            // Already completed - no more work to do
+            return false
+        }
     }
 
     func updateMetadata(selectedCommandRange: NSRange, cumulativeOverflow: Int64) {

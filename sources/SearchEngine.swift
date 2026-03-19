@@ -1149,7 +1149,12 @@ class iTermSearchEngine: NSObject, Pausable {
     
     @objc private(set) var progress = Double(0)
     private var lastStart: LineBufferPosition?
-    
+
+    // These preserve the last search parameters even after cancel() clears impl.
+    // This allows searches to be restarted after resize.
+    @objc private(set) var lastQuery: String?
+    @objc private(set) var lastMode: iTermFindMode = .smartCaseSensitivity
+
     @objc
     var query: String? {
         impl?.operation?.request.query
@@ -1198,6 +1203,8 @@ class iTermSearchEngine: NSObject, Pausable {
     func search(request: SearchRequest,
                 snapshot: TerminalContentSnapshot) -> LineBufferPosition? {
         SELog("search request=\(request.debugDescription)")
+        lastQuery = request.query
+        lastMode = request.findMode
         cancel()
         impl = SearchEngine()
         return impl?.beginSearch(snapshot: snapshot, request: request)

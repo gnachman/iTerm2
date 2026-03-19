@@ -527,7 +527,7 @@ extension RemoteCommand.Content {
         case .getTerminalSize(_):
             "Returns (columns, rows) of the terminal window."
         case .getShellType(_):
-            "Detects the shell in use (e.g., bash, zsh, fish)."
+            "Detects the shell in use (e.g., bash, fish, xonsh, zsh)."
         case .detectSSHSession(_):
             "Returns true if the user is SSH’ed into a remote host."
         case .getRemoteHostname(_):

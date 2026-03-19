@@ -1250,6 +1250,13 @@ void TurnOnDebugLoggingAutomatically(void) {
     DLog(@"Make ITAddressBookMgr");
     [ITAddressBookMgr sharedInstance];
 
+    // Prompt for local network permission if this is a new version.
+    // This is needed because macOS doesn't show the permission prompt until the app
+    // actually accesses the local network. Without this, users may find that commands
+    // like `ping 10.0.0.1` fail with "No route to host" until they reboot.
+    DLog(@"Prompt for local network permission");
+    [[iTermLocalNetworkPermissionPrompter shared] promptIfNeeded];
+
     // Bookmarks must be loaded for this to work since it needs to know if the hotkey's profile
     // exists.
     DLog(@"updateProcessType");
