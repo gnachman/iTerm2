@@ -9,6 +9,7 @@
 #import "SessionTitleView.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermHamburgerButton.h"
+#import "iTermPaneTabBarView.h"
 #import "iTermPreferences.h"
 #import "iTermStatusBarViewController.h"
 #import "NSAppearance+iTerm.h"
@@ -36,11 +37,18 @@ static const CGFloat kButtonSize = 17;
 
 @end
 
+@interface SessionTitleView () <iTermPaneTabBarViewDelegate>
+@end
+
+static const CGFloat kAddPaneTabButtonSize = 15;
+
 @implementation SessionTitleView {
     NSTextField *label_;
     NSButton *closeButton_;
     NSButton *lockButton_;
     iTermHamburgerButton *menuButton_;
+    NSButton *_addPaneTabButton;
+    iTermPaneTabBarView *_paneTabBar;
 }
 
 @synthesize title = title_;
@@ -96,6 +104,28 @@ static const CGFloat kLockButtonSize = 14;
         [lockButton_ setHidden:YES]; // Hidden by default until delegate says it's locked
         [self addSubview:lockButton_];
 
+        // Add pane tab button - always visible, to the left of the menu button
+        {
+            NSImage *plusImage = [NSImage imageWithSystemSymbolName:@"plus"
+                                          accessibilityDescription:@"New session in this pane"];
+            NSImageSymbolConfiguration *plusConfig =
+                [NSImageSymbolConfiguration configurationWithPointSize:10
+                                                                weight:NSFontWeightMedium];
+            plusImage = [plusImage imageWithSymbolConfiguration:plusConfig];
+
+            _addPaneTabButton = [[NoFirstResponderButton alloc] initWithFrame:NSMakeRect(0, 0, kAddPaneTabButtonSize, kAddPaneTabButtonSize)];
+            [_addPaneTabButton setButtonType:NSButtonTypeMomentaryPushIn];
+            [_addPaneTabButton setBordered:NO];
+            [_addPaneTabButton setImage:plusImage];
+            [_addPaneTabButton setTitle:@""];
+            [_addPaneTabButton setTarget:self];
+            [_addPaneTabButton setAction:@selector(addPaneTab:)];
+            [_addPaneTabButton setToolTip:@"New session in this pane"];
+            [[_addPaneTabButton cell] setHighlightsBy:NSContentsCellMask];
+            [_addPaneTabButton setAutoresizingMask:NSViewMinXMargin];
+            [self addSubview:_addPaneTabButton];
+        }
+
         label_ = [[NSTextField alloc] initWithFrame:NSMakeRect(0, 0, 100, frame.size.height)];
         label_.lineBreakMode = NSLineBreakByTruncatingTail;
         [label_ setStringValue:@""];
@@ -136,18 +166,29 @@ static const CGFloat kLockButtonSize = 14;
                                    (frame.size.height - menuButton_.image.size.height) / 2,
                                    menuButton_.image.size.width,
                                    menuButton_.image.size.height);
-    lockButton_.frame = NSMakeRect(menuButton_.frame.origin.x - kMargin - kLockButtonSize,
+    _addPaneTabButton.frame = NSMakeRect(menuButton_.frame.origin.x - kMargin - kAddPaneTabButtonSize,
+                                         (frame.size.height - kAddPaneTabButtonSize) / 2,
+                                         kAddPaneTabButtonSize,
+                                         kAddPaneTabButtonSize);
+    lockButton_.frame = NSMakeRect(_addPaneTabButton.frame.origin.x - kMargin - kLockButtonSize,
                                    (frame.size.height - kLockButtonSize) / 2,
                                    kLockButtonSize,
                                    kLockButtonSize);
+
+    CGFloat rightEdge = _addPaneTabButton.frame.origin.x - kMargin;
+    if (!lockButton_.isHidden) {
+        rightEdge -= kMargin + kLockButtonSize;
+    }
+
+    if (_paneTabBar) {
+        _paneTabBar.frame = NSMakeRect(x, 0, rightEdge - x, frame.size.height);
+    }
+
     [label_ sizeToFit];
     NSRect lframe = label_.frame;
     lframe.origin.x = x;
     lframe.origin.y = (frame.size.height - lframe.size.height) / 2 + kBottomMargin;
-    lframe.size.width = menuButton_.frame.origin.x - x - kMargin;
-    if (!lockButton_.isHidden) {
-        lframe.size.width -= kMargin + kLockButtonSize;
-    }
+    lframe.size.width = rightEdge - x;
     label_.frame = lframe;
 }
 
@@ -192,6 +233,12 @@ static const CGFloat kLockButtonSize = 14;
 - (void)close:(id)sender
 {
     [delegate_ close];
+}
+
+- (void)addPaneTab:(id)sender {
+    if ([delegate_ respondsToSelector:@selector(sessionTitleViewDidRequestNewPaneTab)]) {
+        [delegate_ sessionTitleViewDidRequestNewPaneTab];
+    }
 }
 
 - (void)toggleLock:(id)sender {
@@ -373,6 +420,59 @@ static const CGFloat kLockButtonSize = 14;
 
 - (void)modifierShortcutDidChange:(NSNotification *)notification {
     [self updateTitle];
+}
+
+#pragma mark - Pane Tabs
+
+- (void)setPaneTabTitles:(NSArray<NSString *> *)titles activeIndex:(NSUInteger)activeIndex {
+    if (titles.count <= 1) {
+        // Single session: remove pane tab bar, show regular label
+        if (_paneTabBar) {
+            [_paneTabBar removeFromSuperview];
+            _paneTabBar = nil;
+            label_.hidden = (_statusBarViewController != nil);
+            [self layoutSubviews];
+        }
+        return;
+    }
+
+    // Multiple sessions: show pane tab bar, hide label
+    if (!_paneTabBar) {
+        _paneTabBar = [[iTermPaneTabBarView alloc] initWithFrame:NSZeroRect];
+        _paneTabBar.delegate = self;
+        [self addSubview:_paneTabBar];
+    }
+    _paneTabBar.tabTitles = titles;
+    _paneTabBar.selectedIndex = activeIndex;
+    label_.hidden = YES;
+    if (_statusBarViewController) {
+        _statusBarViewController.view.hidden = YES;
+    }
+    [self layoutSubviews];
+}
+
+- (void)setPaneTabHasActivity:(BOOL)hasActivity atIndex:(NSUInteger)index {
+    [_paneTabBar setTabHasActivity:hasActivity atIndex:index];
+}
+
+#pragma mark - iTermPaneTabBarViewDelegate
+
+- (void)paneTabBarView:(iTermPaneTabBarView *)view didSelectTabAtIndex:(NSUInteger)index {
+    if ([delegate_ respondsToSelector:@selector(sessionTitleViewDidSelectPaneTabAtIndex:)]) {
+        [delegate_ sessionTitleViewDidSelectPaneTabAtIndex:index];
+    }
+}
+
+- (void)paneTabBarView:(iTermPaneTabBarView *)view didCloseTabAtIndex:(NSUInteger)index {
+    if ([delegate_ respondsToSelector:@selector(sessionTitleViewDidClosePaneTabAtIndex:)]) {
+        [delegate_ sessionTitleViewDidClosePaneTabAtIndex:index];
+    }
+}
+
+- (void)paneTabBarViewDidRequestNewTab:(iTermPaneTabBarView *)view {
+    if ([delegate_ respondsToSelector:@selector(sessionTitleViewDidRequestNewPaneTab)]) {
+        [delegate_ sessionTitleViewDidRequestNewPaneTab];
+    }
 }
 
 @end

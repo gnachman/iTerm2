@@ -195,6 +195,12 @@ extern NSString *const PTYTabArrangementOptionsPendingJumps;
 - (NSArray*)sessionViews;
 - (void)setFilter:(NSString *)query inSession:(PTYSession *)oldSession;
 - (void)replaceActiveSessionWithSyntheticSession:(PTYSession *)newSession;
+
+// Pane tabs: multiple sessions within a single split pane
+- (void)addSession:(PTYSession *)newSession toPaneOfSession:(PTYSession *)targetSession;
+- (void)removeSessionFromPane:(PTYSession *)session;
+- (void)activatePaneSession:(PTYSession *)session;
+- (NSArray<PTYSession *> *)allSessionsInPaneOfSession:(PTYSession *)session;
 - (void)unmaximizeTemporarilyAndActivate:(PTYSession *(^)(void))sessionPicker;
 - (void)setDvrInSession:(PTYSession*)newSession;
 - (void)showLiveSession:(PTYSession*)liveSession inPlaceOf:(PTYSession*)replaySession;

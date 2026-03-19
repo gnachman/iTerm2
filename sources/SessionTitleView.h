@@ -20,6 +20,11 @@
 - (BOOL)sessionTitleViewIsLocked;
 - (void)sessionTitleViewToggleLock;
 
+@optional
+- (void)sessionTitleViewDidSelectPaneTabAtIndex:(NSUInteger)index;
+- (void)sessionTitleViewDidClosePaneTabAtIndex:(NSUInteger)index;
+- (void)sessionTitleViewDidRequestNewPaneTab;
+
 @end
 
 @interface SessionTitleView : NSView<iTermStatusBarContainer>
@@ -32,5 +37,7 @@
 - (void)updateTextColor;
 - (void)updateBackgroundColor;
 - (void)updateLockButton;
+- (void)setPaneTabTitles:(NSArray<NSString *> *)titles activeIndex:(NSUInteger)activeIndex;
+- (void)setPaneTabHasActivity:(BOOL)hasActivity atIndex:(NSUInteger)index;
 
 @end

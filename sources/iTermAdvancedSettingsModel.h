@@ -387,6 +387,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (void)setSearchSuggestURL:(NSString *)newValue;
 + (BOOL)selectsTabsOnMouseDown;
 + (BOOL)sensitiveScrollWheel;
++ (BOOL)stickyScrollback;
 + (BOOL)serializeOpeningMultipleFullScreenWindows;
 + (int)screenshotMaxPixelHeight;
 + (BOOL)setCookie;

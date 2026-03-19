@@ -11875,6 +11875,10 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
                                                  ready:nil];
 }
 
+- (void)textViewNewSessionInCurrentPane {
+    [[_delegate realParentWindow] newSessionInCurrentPane:self];
+}
+
 - (void)textViewSelectNextTab
 {
     [[_delegate realParentWindow] nextTab:nil];
@@ -19447,6 +19451,24 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
 
 - (void)sessionViewToggleLock {
     self.locked = !_locked;
+}
+
+#pragma mark - Pane Tabs
+
+- (void)retainPaneTabState {
+    // No longer needed — each pane tab session keeps its own SessionView.
+}
+
+- (void)sessionViewPaneTabSelected:(NSUInteger)index {
+    [_delegate session:self paneTabSelected:index];
+}
+
+- (void)sessionViewPaneTabClosed:(NSUInteger)index {
+    [_delegate session:self paneTabClosed:index];
+}
+
+- (void)sessionViewPaneTabRequested {
+    [_delegate sessionDidRequestNewPaneTab:self];
 }
 
 #pragma mark - iTermCoprocessDelegate

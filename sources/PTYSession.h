@@ -327,6 +327,11 @@ backgroundColor:(NSColor *)backgroundColor;
 - (void)swapSession:(PTYSession *)existing withBuriedSession:(PTYSession *)buried;
 - (void)session:(PTYSession *)session progressDidChange:(VT100ScreenProgress)progress;
 
+// Pane tabs
+- (void)session:(PTYSession *)session paneTabSelected:(NSUInteger)index;
+- (void)session:(PTYSession *)session paneTabClosed:(NSUInteger)index;
+- (void)sessionDidRequestNewPaneTab:(PTYSession *)session;
+
 @end
 
 @class SessionView;
@@ -1102,6 +1107,10 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
                     origin:(NSString *)origin;
 - (void)setParentScope:(iTermVariableScope *)parentScope;
 - (void)setOrAppendComposerString:(NSString *)string;
+
+// Retain the wrapper view so it survives being removed from the scrollview
+// when this session is backgrounded as a pane tab.
+- (void)retainPaneTabState;
 
 @end
 

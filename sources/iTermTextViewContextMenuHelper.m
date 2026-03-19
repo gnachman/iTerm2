@@ -289,6 +289,7 @@ const int kMaxSelectedTextLengthForCustomActions = 400;
         [item action] == @selector(clearTextViewBuffer:) ||
         [item action] == @selector(splitTextViewVertically:) ||
         [item action] == @selector(splitTextViewHorizontally:) ||
+        [item action] == @selector(newSessionInCurrentPaneFromMenu:) ||
         [item action] == @selector(reRunCommand:) ||
         [item action] == @selector(saveImageAs:) ||
         [item action] == @selector(copyImage:) ||
@@ -558,6 +559,7 @@ const int kMaxSelectedTextLengthForCustomActions = 400;
     // Split pane options
     add(@"Split Pane Vertically", @selector(splitTextViewVertically:));
     add(@"Split Pane Horizontally", @selector(splitTextViewHorizontally:));
+    add(@"New Session in This Pane", @selector(newSessionInCurrentPaneFromMenu:));
 
     // Separator
     [theMenu addItem:[NSMenuItem separatorItem]];
@@ -1172,6 +1174,10 @@ const int kMaxSelectedTextLengthForCustomActions = 400;
 
 - (void)splitTextViewHorizontally:(id)sender {
     [self.delegate contextMenuSplitHorizontally:self];
+}
+
+- (void)newSessionInCurrentPaneFromMenu:(id)sender {
+    [self.delegate contextMenuNewSessionInCurrentPane:self];
 }
 
 - (void)movePane:(id)sender {

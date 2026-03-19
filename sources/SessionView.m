@@ -2480,6 +2480,34 @@ typedef NS_OPTIONS(NSUInteger, iTermCornerFlags) {
     [_delegate sessionViewToggleLock];
 }
 
+#pragma mark - Pane Tabs
+
+- (void)setPaneTabTitles:(NSArray<NSString *> *)titles activeIndex:(NSUInteger)activeIndex {
+    [_title setPaneTabTitles:titles activeIndex:activeIndex];
+}
+
+- (void)setPaneTabHasActivity:(BOOL)hasActivity atIndex:(NSUInteger)index {
+    [_title setPaneTabHasActivity:hasActivity atIndex:index];
+}
+
+- (void)sessionTitleViewDidSelectPaneTabAtIndex:(NSUInteger)index {
+    if ([_delegate respondsToSelector:@selector(sessionViewPaneTabSelected:)]) {
+        [_delegate sessionViewPaneTabSelected:index];
+    }
+}
+
+- (void)sessionTitleViewDidClosePaneTabAtIndex:(NSUInteger)index {
+    if ([_delegate respondsToSelector:@selector(sessionViewPaneTabClosed:)]) {
+        [_delegate sessionViewPaneTabClosed:index];
+    }
+}
+
+- (void)sessionTitleViewDidRequestNewPaneTab {
+    if ([_delegate respondsToSelector:@selector(sessionViewPaneTabRequested)]) {
+        [_delegate sessionViewPaneTabRequested];
+    }
+}
+
 - (void)addAnnouncement:(iTermAnnouncementViewController *)announcement {
     DLog(@"Add announcement %@ to %@", announcement.title, self.delegate);
     [_announcements addObject:announcement];

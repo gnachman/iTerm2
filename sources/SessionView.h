@@ -166,6 +166,11 @@ extern NSString *const SessionViewWasSelectedForInspectionNotification;
 - (void)sessionViewWillDraw;
 - (BOOL)sessionViewIsLocked;
 - (void)sessionViewToggleLock;
+
+@optional
+- (void)sessionViewPaneTabSelected:(NSUInteger)index;
+- (void)sessionViewPaneTabClosed:(NSUInteger)index;
+- (void)sessionViewPaneTabRequested;
 @end
 
 typedef NS_ENUM(NSUInteger, iTermSessionViewFindDriver) {
@@ -227,6 +232,9 @@ typedef NS_ENUM(NSUInteger, iTermSessionViewFindDriver) {
 @property (nonatomic, copy) NSString *progressBarColorScheme;
 @property (nonatomic, readonly) SessionTitleView *title;
 @property (nonatomic) NSSize savedSize;
+
+- (void)setPaneTabTitles:(NSArray<NSString *> *)titles activeIndex:(NSUInteger)activeIndex;
+- (void)setPaneTabHasActivity:(BOOL)hasActivity atIndex:(NSUInteger)index;
 
 - (void)setBrowserViewController:(iTermBrowserViewController *)browserViewController
                       initialURL:(NSString *)initialURL

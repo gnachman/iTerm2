@@ -141,6 +141,7 @@ extern const CGFloat PTYTextViewMarginClickGraceWidth;
 - (void)textViewWillNeedUpdateForBlink;
 - (BOOL)textViewDelegateHandlesAllKeystrokes;
 - (void)textViewSplitVertically:(BOOL)vertically withProfileGuid:(NSString *)guid;
+- (void)textViewNewSessionInCurrentPane;
 - (void)textViewSelectNextTab;
 - (void)textViewSelectPreviousTab;
 - (void)textViewSelectNextWindow;

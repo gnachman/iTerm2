@@ -283,6 +283,9 @@
 // Do some cleanup after a session is removed.
 - (void)sessionWasRemoved;
 
+// Create a new session in the same pane as the given session (pane tab).
+- (void)newSessionInCurrentPane:(PTYSession *)targetSession;
+
 // Make the window fore (opening the hotkey window if needed), select the right tab, and activate the
 // session. Does nothing if the session does not belong to this window.
 - (void)makeSessionActive:(PTYSession *)session;

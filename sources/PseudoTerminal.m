@@ -9397,6 +9397,58 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     return [self.currentSession profileForSplit] ?: [[ProfileModel sharedInstance] defaultBookmark];
 }
 
+#pragma mark - Pane Tabs
+
+- (void)newSessionInCurrentPane:(PTYSession *)targetSession {
+    Profile *theBookmark = [targetSession profileForSplit] ?: [[ProfileModel sharedInstance] defaultBookmark];
+    if ([targetSession isTmuxClient]) {
+        // Pane tabs not supported for tmux sessions
+        NSBeep();
+        return;
+    }
+
+    PTYSession *newSession = [[self.sessionFactory newSessionWithProfile:theBookmark
+                                                                  parent:targetSession] autorelease];
+    PTYTab *tab = [self tabForSession:targetSession];
+
+    // Create a SessionView for the new session (it needs its own view even though
+    // it will share the pane position)
+    SessionView *newView = [[SessionView alloc] initWithFrame:[targetSession.view frame]];
+    newSession.view = newView;
+
+    NSSize size = [newView frame].size;
+    [self setupSession:newSession withSize:&size];
+
+    [tab addSession:newSession toPaneOfSession:targetSession];
+
+    NSString *oldCWD = [targetSession currentLocalWorkingDirectory];
+    __weak __typeof(self) weakSelf = self;
+    iTermSessionAttachOrLaunchRequest *launchRequest =
+    [iTermSessionAttachOrLaunchRequest launchRequestWithSession:newSession
+                                                      canPrompt:YES
+                                                     objectType:iTermPaneObject
+                                            hasServerConnection:NO
+                                               serverConnection:(iTermGeneralServerConnection){}
+                                                      urlString:nil
+                                                   allowURLSubs:NO
+                                                    environment:@{}
+                                                    customShell:[ITAddressBookMgr customShellForProfile:theBookmark]
+                                                         oldCWD:oldCWD
+                                                 forceUseOldCWD:NO
+                                                        command:nil
+                                                         isUTF8:nil
+                                                  substitutions:nil
+                                               windowController:self
+                                                          ready:^(BOOL ok) {
+        if (!ok) {
+            [newSession terminate];
+            [[weakSelf tabForSession:newSession] removeSessionFromPane:newSession];
+        }
+    }
+                                                     completion:nil];
+    [self.sessionFactory attachOrLaunchWithRequest:launchRequest];
+}
+
 - (IBAction)splitVertically:(id)sender {
     [self asyncSplitVertically:YES
                         before:NO

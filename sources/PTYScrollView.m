@@ -336,8 +336,20 @@
     PTYScroller *verticalScroller = (PTYScroller *)[self verticalScroller];
 
     scrollRect = [self documentVisibleRect];
-    verticalScroller.userScroll =
-        scrollRect.origin.y + scrollRect.size.height < [[self documentView] frame].size.height;
+    BOOL atBottom = scrollRect.origin.y + scrollRect.size.height >= [[self documentView] frame].size.height;
+
+    if ([iTermAdvancedSettingsModel stickyScrollback]) {
+        // Sticky mode: only clear userScroll when the user scrolls to the bottom.
+        // New output won't jump the view while reading scrollback.
+        if (atBottom) {
+            verticalScroller.userScroll = NO;
+        } else if (!verticalScroller.userScroll) {
+            verticalScroller.userScroll = YES;
+        }
+    } else {
+        // Default: userScroll is purely geometric.
+        verticalScroller.userScroll = !atBottom;
+    }
 }
 
 - (BOOL)isLegacyScroller {

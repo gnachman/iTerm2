@@ -1686,6 +1686,10 @@ allowRightMarginOverflow:(BOOL)allowRightMarginOverflow {
     [self.delegate textViewSplitVertically:NO withProfileGuid:nil];
 }
 
+- (void)contextMenuNewSessionInCurrentPane:(iTermTextViewContextMenuHelper *)contextMenu {
+    [self.delegate textViewNewSessionInCurrentPane];
+}
+
 - (void)contextMenuMovePane:(iTermTextViewContextMenuHelper *)contextMenu {
     [self.delegate textViewMovePane];
 }

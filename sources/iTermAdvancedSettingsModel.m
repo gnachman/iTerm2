@@ -350,6 +350,7 @@ DEFINE_BOOL(cmdClickWhenInactiveInvokesSemanticHistory, NO, SECTION_MOUSE @"⌘-
 DEFINE_BOOL(enableUnderlineSemanticHistoryOnCmdHover, YES, SECTION_MOUSE @"Underline Semantic History-selectable items under the cursor while holding ⌘?");
 DEFINE_BOOL(enableCmdClickPromptForShowCommandInfo, YES, SECTION_MOUSE @"⌘-click in the prompt shows the Command Info window");
 DEFINE_BOOL(sensitiveScrollWheel, NO, SECTION_MOUSE @"Scroll on any scroll wheel movement, no matter how small?");
+DEFINE_BOOL(stickyScrollback, NO, SECTION_MOUSE @"Stay in scrollback when new output arrives?\nWhen enabled, new output won\u2019t jump the terminal to the bottom while you\u2019re reading scrollback. Scroll to the bottom manually to resume auto-scrolling.");
 DEFINE_FLOAT(scrollWheelAcceleration, 1, SECTION_MOUSE @"Speed up scroll gestures by this factor.");
 
 // This defines the fraction of a character's width on its right side that is used to

@@ -235,6 +235,10 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     iTermBuiltInFunctions *_methods;
     iTermTmuxOptionMonitor *_tmuxTitleMonitor;
     BOOL _pinned;
+
+    // Maps each SessionView to the ordered list of all sessions in that pane.
+    // When a pane has only one session, the array has one element.
+    NSMapTable<SessionView *, NSMutableArray<PTYSession *> *> *_paneSessionsMap;
 }
 
 @synthesize parentWindow = parentWindow_;
@@ -408,6 +412,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
         session.delegate = self;
         [root_ addSubview:[session view]];
         [self.viewToSessionMap setObject:session forKey:session.view];
+        [_paneSessionsMap setObject:[@[session] mutableCopy] forKey:session.view];
         PtyLog(@"PTYTab initWithSession - end %p", self);
     }
     return self;
@@ -424,7 +429,9 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
         [self setRoot:root];
         [PTYTab _recursiveSetDelegateIn:root_ to:self];
         for (SessionView *sessionView in [self sessionViews]) {
-            [self.viewToSessionMap setObject:[sessions objectForKey:sessionView] forKey:sessionView];
+            PTYSession *session = [sessions objectForKey:sessionView];
+            [self.viewToSessionMap setObject:session forKey:sessionView];
+            [_paneSessionsMap setObject:[@[session] mutableCopy] forKey:sessionView];
         }
         PtyLog(@"PTYTab initWithRoot - end %p", self);
     }
@@ -436,6 +443,9 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     self.viewToSessionMap = [[NSMapTable alloc] initWithKeyOptions:NSPointerFunctionsStrongMemory | NSPointerFunctionsObjectPersonality
                                                       valueOptions:NSPointerFunctionsStrongMemory | NSPointerFunctionsObjectPersonality
                                                           capacity:1];
+    _paneSessionsMap = [[NSMapTable alloc] initWithKeyOptions:NSPointerFunctionsStrongMemory | NSPointerFunctionsObjectPersonality
+                                                 valueOptions:NSPointerFunctionsStrongMemory | NSPointerFunctionsObjectPersonality
+                                                     capacity:1];
     _tabNumberForItermSessionId = -1;
     hiddenLiveViews_ = [[NSMutableArray alloc] init];
     _variables = [[iTermVariables alloc] initWithContext:iTermVariablesSuggestionContextTab
@@ -590,7 +600,16 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     const BOOL anySessionHasTopStatusBar = statusBarsOnTop && [sessions anyWithBlock:^BOOL(PTYSession *session) {
         return [iTermProfilePreferences boolForKey:KEY_SHOW_STATUS_BAR inProfile:session.profile];
     }];
-    const BOOL shouldShowTitles = forceTitles || (showTitles && [sessions count] > 1) || anySessionHasTopStatusBar;
+    // Check if any pane has multiple sessions (pane tabs) — force title bar for those
+    BOOL anyPaneHasMultipleSessions = NO;
+    for (SessionView *sv in _paneSessionsMap) {
+        NSMutableArray<PTYSession *> *paneSessions = [_paneSessionsMap objectForKey:sv];
+        if (paneSessions.count > 1) {
+            anyPaneHasMultipleSessions = YES;
+            break;
+        }
+    }
+    const BOOL shouldShowTitles = forceTitles || (showTitles && [sessions count] > 1) || anySessionHasTopStatusBar || anyPaneHasMultipleSessions;
     for (PTYSession *aSession in sessions) {
         const BOOL shouldShowBottomStatusBar = (perPaneStatusBars &&
                                                 !statusBarsOnTop &&
@@ -735,6 +754,14 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 - (void)nameOfSession:(PTYSession *)session didChangeTo:(NSString*)newName {
     if ([self activeSession] == session) {
         [self updateTabTitleForCurrentSessionName:newName];
+    }
+    // Update pane tab titles if this session is part of a pane tab group
+    for (SessionView *sv in _paneSessionsMap) {
+        NSMutableArray<PTYSession *> *paneSessions = [_paneSessionsMap objectForKey:sv];
+        if (paneSessions.count > 1 && [paneSessions containsObject:session]) {
+            [self updatePaneTabsForView:sv];
+            break;
+        }
     }
 }
 
@@ -1488,9 +1515,14 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
         NSArray<SessionView *> *sessionViews = [idMap_ allValues];
         NSMutableArray* result = [NSMutableArray arrayWithCapacity:[sessionViews count]];
         for (SessionView* sessionView in sessionViews) {
-            PTYSession *session = [self sessionForSessionView:sessionView];
-            if (session) {
-                [result addObject:session];
+            NSMutableArray<PTYSession *> *paneSessions = [_paneSessionsMap objectForKey:sessionView];
+            if (paneSessions) {
+                [result addObjectsFromArray:paneSessions];
+            } else {
+                PTYSession *session = [self sessionForSessionView:sessionView];
+                if (session) {
+                    [result addObject:session];
+                }
             }
         }
         return result;
@@ -1506,9 +1538,14 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
             [self _recursiveSessions:sessions atNode:(NSSplitView*)subview];
         } else {
             SessionView* sessionView = (SessionView*)subview;
-            PTYSession* session = [self sessionForSessionView:sessionView];
-            if (session) {
-                [sessions addObject:session];
+            NSMutableArray<PTYSession *> *paneSessions = [_paneSessionsMap objectForKey:sessionView];
+            if (paneSessions) {
+                [sessions addObjectsFromArray:paneSessions];
+            } else {
+                PTYSession* session = [self sessionForSessionView:sessionView];
+                if (session) {
+                    [sessions addObject:session];
+                }
             }
         }
     }
@@ -2004,6 +2041,13 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 - (void)removeSession:(PTYSession*)aSession {
     SessionView *theView = aSession.view;
 
+    // Check if this session is one of multiple pane tabs — if so, remove just this tab
+    NSMutableArray<PTYSession *> *paneSessions = [_paneSessionsMap objectForKey:theView];
+    if (paneSessions && paneSessions.count > 1) {
+        [self removeSessionFromPane:aSession];
+        return;
+    }
+
     // Only unmaximize if the session's view is actually in idMap_. When a synthetic session
     // (e.g., filter) is terminated, its view may have already been replaced by the live session's
     // view in idMap_, so we shouldn't unmaximize in that case.
@@ -2030,6 +2074,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     [self numberOfSessionsDidChange];
 
     [self.viewToSessionMap removeObjectForKey:theView];
+    [_paneSessionsMap removeObjectForKey:theView];
 }
 
 - (BOOL)canSplitVertically:(BOOL)isVertical withSize:(NSSize)newSessionSize {
@@ -2239,9 +2284,187 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     newSession.delegate = self;
     newSession.view = newView;
     [self.viewToSessionMap setObject:newSession forKey:newView];
+    [_paneSessionsMap setObject:[@[newSession] mutableCopy] forKey:newView];
     [self checkInvariants:@"After splitting"];
     newSession.useMetal = NO;
     [self updateUseMetal];
+}
+
+#pragma mark - Pane Tabs
+
+- (NSArray<PTYSession *> *)allSessionsInPaneOfSession:(PTYSession *)session {
+    for (SessionView *sv in _paneSessionsMap) {
+        NSMutableArray<PTYSession *> *paneSessions = [_paneSessionsMap objectForKey:sv];
+        if ([paneSessions containsObject:session]) {
+            return [paneSessions copy];
+        }
+    }
+    return @[session];
+}
+
+- (void)addSession:(PTYSession *)newSession toPaneOfSession:(PTYSession *)targetSession {
+    SessionView *oldView = targetSession.view;
+    NSMutableArray<PTYSession *> *paneSessions = [_paneSessionsMap objectForKey:oldView];
+    if (!paneSessions) {
+        paneSessions = [@[targetSession] mutableCopy];
+        [_paneSessionsMap setObject:paneSessions forKey:oldView];
+    }
+    [paneSessions addObject:newSession];
+    newSession.delegate = self;
+
+    // Activate the new session — this swaps views in the split hierarchy
+    [self activatePaneSession:newSession inView:oldView];
+
+    // numberOfSessionsDidChange calls updatePaneTitles which may create the
+    // title bar for the first time. We must call updatePaneTabsForView AFTER
+    // so the newly created title bar gets the tab buttons.
+    [self numberOfSessionsDidChange];
+    [self updatePaneTabsForView:newSession.view];
+}
+
+- (void)removeSessionFromPane:(PTYSession *)session {
+    // Find which view key in _paneSessionsMap contains this session
+    SessionView *mapKey = nil;
+    NSMutableArray<PTYSession *> *paneSessions = nil;
+    for (SessionView *sv in _paneSessionsMap) {
+        NSMutableArray<PTYSession *> *arr = [_paneSessionsMap objectForKey:sv];
+        if ([arr containsObject:session]) {
+            mapKey = sv;
+            paneSessions = arr;
+            break;
+        }
+    }
+
+    if (!paneSessions || paneSessions.count <= 1) {
+        // Last session in pane: remove the entire pane
+        [self removeSession:session];
+        return;
+    }
+
+    NSUInteger index = [paneSessions indexOfObject:session];
+    [paneSessions removeObject:session];
+
+    // If the removed session is the currently visible one, switch to another
+    PTYSession *activeInPane = [self.viewToSessionMap objectForKey:mapKey];
+    if (activeInPane == session) {
+        NSUInteger newIndex = (index < paneSessions.count) ? index : paneSessions.count - 1;
+        // activatePaneSession will swap views in the split hierarchy
+        [self activatePaneSession:paneSessions[newIndex] inView:mapKey];
+        mapKey = paneSessions[newIndex].view; // key changed after swap
+    }
+
+    [session terminate];
+    [self numberOfSessionsDidChange];
+    [self updatePaneTabsForView:mapKey];
+}
+
+- (void)activatePaneSession:(PTYSession *)newSession inView:(SessionView *)view {
+    PTYSession *oldSession = [self.viewToSessionMap objectForKey:view];
+    if (oldSession == newSession) {
+        return;
+    }
+
+    // Each session has its own SessionView. Swap them in the split hierarchy,
+    // similar to replaceActiveSessionWithSyntheticSession:.
+    SessionView *oldView = oldSession.view;
+    SessionView *newView = newSession.view;
+    NSSplitView *parentSplit = (NSSplitView *)[oldView superview];
+
+    newView.frame = oldView.frame;
+    [parentSplit replaceSubview:oldView with:newView];
+
+    // Update the pane sessions map: remove oldView key, add newView key
+    NSMutableArray<PTYSession *> *paneSessions = [_paneSessionsMap objectForKey:oldView];
+    if (paneSessions) {
+        [_paneSessionsMap removeObjectForKey:oldView];
+        [_paneSessionsMap setObject:paneSessions forKey:newView];
+    }
+
+    // Update viewToSessionMap
+    [self.viewToSessionMap removeObjectForKey:oldView];
+    [self.viewToSessionMap setObject:newSession forKey:newView];
+
+    // Update active session if needed
+    if (activeSession_ == oldSession) {
+        activeSession_ = newSession;
+    }
+
+    // Make the new session's text view first responder
+    [realParentWindow_.window makeFirstResponder:newSession.mainResponder];
+
+    // Update metal rendering
+    [self updateUseMetal];
+}
+
+- (void)activatePaneSession:(PTYSession *)session {
+    // Find the map key (the currently visible SessionView) that contains this session
+    for (SessionView *sv in _paneSessionsMap) {
+        NSMutableArray<PTYSession *> *paneSessions = [_paneSessionsMap objectForKey:sv];
+        if ([paneSessions containsObject:session]) {
+            [self activatePaneSession:session inView:sv];
+            return;
+        }
+    }
+}
+
+- (void)updatePaneTabsForView:(SessionView *)view {
+    NSMutableArray<PTYSession *> *paneSessions = [_paneSessionsMap objectForKey:view];
+    if (!paneSessions || paneSessions.count <= 1) {
+        [view setPaneTabTitles:@[] activeIndex:0];
+        return;
+    }
+
+    NSMutableArray<NSString *> *titles = [NSMutableArray arrayWithCapacity:paneSessions.count];
+    PTYSession *activeSession = [self.viewToSessionMap objectForKey:view];
+    NSUInteger activeIndex = 0;
+
+    for (NSUInteger i = 0; i < paneSessions.count; i++) {
+        PTYSession *session = paneSessions[i];
+        NSString *title = session.name ?: @"Shell";
+        [titles addObject:title];
+        if (session == activeSession) {
+            activeIndex = i;
+        }
+    }
+
+    // Show pane tabs on all views that belong to this pane group.
+    // Only the active view is in the hierarchy, but we set titles on it.
+    [view setPaneTabTitles:titles activeIndex:activeIndex];
+
+    // Also set pane tabs on all other (hidden) session views in this group
+    // so they'll show correctly when activated.
+    for (PTYSession *session in paneSessions) {
+        if (session.view != view) {
+            [session.view setPaneTabTitles:titles activeIndex:activeIndex];
+        }
+    }
+}
+
+#pragma mark - PTYSessionDelegate (Pane Tabs)
+
+- (void)session:(PTYSession *)session paneTabSelected:(NSUInteger)index {
+    // The calling session is the active one, so its view is the current map key
+    SessionView *view = session.view;
+    NSMutableArray<PTYSession *> *paneSessions = [_paneSessionsMap objectForKey:view];
+    if (paneSessions && index < paneSessions.count) {
+        PTYSession *target = paneSessions[index];
+        if (target != session) {
+            [self activatePaneSession:target inView:view];
+            [self updatePaneTabsForView:target.view];
+        }
+    }
+}
+
+- (void)session:(PTYSession *)session paneTabClosed:(NSUInteger)index {
+    SessionView *view = session.view;
+    NSMutableArray<PTYSession *> *paneSessions = [_paneSessionsMap objectForKey:view];
+    if (paneSessions && index < paneSessions.count) {
+        [self removeSessionFromPane:paneSessions[index]];
+    }
+}
+
+- (void)sessionDidRequestNewPaneTab:(PTYSession *)session {
+    [[self realParentWindow] newSessionInCurrentPane:session];
 }
 
 + (NSSize)_sessionSizeWithCellSize:(NSSize)cellSize

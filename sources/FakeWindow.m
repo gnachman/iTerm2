@@ -239,5 +239,8 @@
     hasPendingClose = YES;  // TODO: This isn't right with panes.
 }
 
+- (void)newSessionInCurrentPane:(PTYSession *)targetSession {
+    // Not supported in fake window (instant replay, etc.)
+}
 
 @end
