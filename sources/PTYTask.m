@@ -44,6 +44,9 @@
 #include <unistd.h>
 #include <util.h>
 
+@interface PTYTask()<PTYTaskIOHandlerDelegate>
+@end
+
 @interface PTYTask(WinSizeControllerDelegate)<iTermWinSizeControllerDelegate>
 @end
 
@@ -72,6 +75,9 @@ static void HandleSigChld(int n) {
 
     dispatch_queue_t _jobManagerQueue;
     BOOL _isTmuxTask;
+    PTYTaskIOHandler *_ioHandler;  // Per-PTY dispatch source handler. nil when usePerPTYDispatchSources is off.
+    BOOL _testShouldWriteOverride;  // Test hook to override shouldWrite. Any queue.
+    NSNumber *_testIoAllowedOverride;  // Test hook to override ioAllowed. Any queue.
 }
 
 - (instancetype)init {
@@ -109,6 +115,7 @@ static void HandleSigChld(int n) {
     }
     [self.ioBuffer invalidate];
 
+    [_ioHandler teardown];
     [self closeFileDescriptorAndDeregisterIfPossible];
 
     @synchronized (self) {
@@ -138,8 +145,14 @@ static void HandleSigChld(int n) {
     @synchronized(self) {
         _paused = paused;
     }
-    // Start/stop selecting on our FD
-    [[TaskNotifier sharedInstance] unblock];
+    // In per-PTY mode the ioHandler manages source state directly;
+    // in legacy mode, unblock wakes select() to re-check wantsRead/wantsWrite.
+    if (_ioHandler) {
+        [_ioHandler updateReadSourceState];
+        [_ioHandler updateWriteSourceState];
+    } else {
+        [[TaskNotifier sharedInstance] unblock];
+    }
     [_delegate taskDidChangePaused:self paused:paused];
 }
 
@@ -215,6 +228,14 @@ static void HandleSigChld(int n) {
         [weakSelf.delegate taskMuteCoprocessDidChange:self hasMuteCoprocess:self.hasMuteCoprocess];
     });
     [[TaskNotifier sharedInstance] unblock];
+    if (_ioHandler) {
+        if (coprocess) {
+            [_ioHandler setupCoprocessSourcesWithReadFd:coprocess.readFileDescriptor
+                                                writeFd:coprocess.writeFileDescriptor];
+        } else {
+            [_ioHandler teardownCoprocessSources];
+        }
+    }
 }
 
 - (BOOL)writeBufferHasRoom {
@@ -314,7 +335,7 @@ static void HandleSigChld(int n) {
     jobManager.fd = readOnlyFileDescriptor;
     DLog(@"Configure %@ as tmux task", self);
     _jobManager = jobManager;
-    [[TaskNotifier sharedInstance] registerTask:self];
+    [PTYTask registerTaskWithNotifier:self];
 }
 
 - (void)setIoBuffer:(iTermIOBuffer *)ioBuffer {
@@ -368,8 +389,12 @@ static void HandleSigChld(int n) {
     assert(!jobManager || !self.jobManager.isReadOnly);
     [writeLock lock];
     [writeBuffer appendData:data];
-    [[TaskNotifier sharedInstance] unblock];
     [writeLock unlock];
+    if (_ioHandler) {
+        [_ioHandler writeBufferDidChange];
+    } else {
+        [[TaskNotifier sharedInstance] unblock];
+    }
 }
 
 - (void)killWithMode:(iTermJobManagerKillingMode)mode {
@@ -397,14 +422,25 @@ static void HandleSigChld(int n) {
     @synchronized(self) {
         brokenPipe_ = YES;
     }
-    [[TaskNotifier sharedInstance] deregisterTask:self];
+    [_ioHandler teardown];
+    [PTYTask deregisterTaskFromNotifier:self];
     [self.delegate threadedTaskBrokenPipe];
 }
 
-// Main queue
+// Main queue. May run after the task has been stopped (registration is
+// dispatched async), so guard against a closed fd.
 - (void)didRegister {
     DLog(@"didRegister %@", self);
     [self.delegate taskDidRegister:self];
+    if ([iTermAdvancedSettingsModel usePerPTYDispatchSources]) {
+        if (self.fd < 0) {
+            DLog(@"didRegister: fd already closed, skipping ioHandler setup");
+            return;
+        }
+        _ioHandler = [[PTYTaskIOHandler alloc] initWithFd:self.fd pid:self.pid];
+        _ioHandler.delegate = self;
+        [_ioHandler start];
+    }
 }
 
 // I did extensive benchmarking in May of 2025 when using the VT100_GANG optimization fully.
@@ -479,6 +515,7 @@ static void HandleSigChld(int n) {
 }
 
 - (void)stopCoprocess {
+    [_ioHandler teardownCoprocessSources];
     pid_t thePid = 0;
     @synchronized (self) {
         if (coprocess_.pid > 0) {
@@ -630,7 +667,7 @@ static void HandleSigChld(int n) {
 - (void)registerTmuxTask {
     _isTmuxTask = YES;
     DLog(@"Register pid %@ as coprocess-only task", @(self.pid));
-    [[TaskNotifier sharedInstance] registerTask:self];
+    [PTYTask registerTaskWithNotifier:self];
 }
 
 #pragma mark - Private
@@ -849,27 +886,47 @@ static void HandleSigChld(int n) {
 
 #pragma mark I/O
 
+- (BOOL)effectiveIoAllowed {
+    if (_testIoAllowedOverride) {
+        return _testIoAllowedOverride.boolValue;
+    }
+    return self.jobManager.ioAllowed;
+}
+
 - (BOOL)wantsRead {
     if (self.paused) {
         return NO;
     }
-    return self.jobManager.ioAllowed;
+    if (![self effectiveIoAllowed]) {
+        return NO;
+    }
+    // Only apply backpressure-gated reads in per-PTY mode, where
+    // backpressureReleaseHandler is wired to wake the read source.
+    // In legacy TaskNotifier mode there is no wake-up path when
+    // backpressure drops, so suppressing reads here would stall output.
+    if (_ioHandler) {
+        iTermTokenExecutor *executor = (iTermTokenExecutor *)self.tokenExecutor;
+        if (executor && executor.backpressureLevel >= BackpressureLevelHeavy) {
+            return NO;
+        }
+    }
+    return YES;
 }
 
 - (BOOL)wantsWrite {
     if (self.paused) {
         return NO;
     }
-    if (self.jobManager.isReadOnly) {
+    if (!_testShouldWriteOverride && self.jobManager.isReadOnly) {
+        return NO;
+    }
+    if (![self effectiveIoAllowed]) {
         return NO;
     }
     [writeLock lock];
-    const BOOL wantsWrite = [writeBuffer length] > 0;
+    BOOL hasData = [writeBuffer length] > 0;
     [writeLock unlock];
-    if (!wantsWrite) {
-        return NO;
-    }
-    return self.jobManager.ioAllowed;
+    return hasData;
 }
 
 - (BOOL)hasOutput {
@@ -880,6 +937,7 @@ static void HandleSigChld(int n) {
     @synchronized (self) {
         [coprocess_.outputBuffer appendData:data];
     }
+    [_ioHandler updateCoprocessWriteSourceState];
 }
 
 // The bytes in data were just read from the fd.
@@ -902,10 +960,13 @@ static void HandleSigChld(int n) {
 
 - (void)closeFileDescriptorAndDeregisterIfPossible {
     assert(self.jobManager);
+    // Tear down dispatch sources before closing the fd. If the fd is closed
+    // first, the sources remain active on a potentially reused descriptor.
+    [_ioHandler teardown];
     const int fd = self.fd;
     if ([self.jobManager closeFileDescriptor]) {
         DLog(@"Deregister file descriptor %d for process %@ after closing it", fd, @(self.pid));
-        [[TaskNotifier sharedInstance] deregisterTask:self];
+        [PTYTask deregisterTaskFromNotifier:self];
     }
 }
 
@@ -918,6 +979,159 @@ static void HandleSigChld(int n) {
 
 - (void)loggingHelperStop:(iTermLoggingHelper *)loggingHelper {
     self.loggingHelper = nil;
+}
+
+#pragma mark - Registration Routing
+
++ (void)registerTaskWithNotifier:(id<iTermTask>)task {
+    if ([iTermAdvancedSettingsModel usePerPTYDispatchSources]) {
+        __weak __typeof(task) weakTask = task;
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [weakTask didRegister];
+        });
+    } else {
+        [[TaskNotifier sharedInstance] registerTask:task];
+    }
+}
+
++ (void)deregisterTaskFromNotifier:(id<iTermTask>)task {
+    if ([iTermAdvancedSettingsModel usePerPTYDispatchSources]) {
+        pid_t pidToWaitOn = task.pidToWaitOn;
+        if (pidToWaitOn > 0) {
+            [[TaskNotifier sharedInstance] waitForPid:pidToWaitOn];
+        }
+        if ([task hasCoprocess]) {
+            [[TaskNotifier sharedInstance] waitForPid:[[task coprocess] pid]];
+        }
+    } else {
+        [[TaskNotifier sharedInstance] deregisterTask:task];
+    }
+}
+
+#pragma mark - Dispatch Source Forwarding
+
+- (void)updateReadSourceState {
+    [_ioHandler updateReadSourceState];
+}
+
+- (void)updateWriteSourceState {
+    [_ioHandler updateWriteSourceState];
+}
+
+- (void)writeBufferDidChange {
+    [_ioHandler writeBufferDidChange];
+}
+
+- (void)teardownDispatchSources {
+    [_ioHandler teardown];
+}
+
+#pragma mark - PTYTaskIOHandlerDelegate
+
+- (BOOL)ioHandlerShouldRead:(PTYTaskIOHandler *)handler {
+    return [self wantsRead];
+}
+
+- (BOOL)ioHandlerShouldWrite:(PTYTaskIOHandler *)handler {
+    return [self wantsWrite];
+}
+
+- (BOOL)ioHandlerShouldResumeCoprocessRead:(PTYTaskIOHandler *)handler {
+    @synchronized (self) {
+        return coprocess_ && ![coprocess_ eof] && [self writeBufferHasRoom];
+    }
+}
+
+- (BOOL)ioHandlerShouldResumeCoprocessWrite:(PTYTaskIOHandler *)handler {
+    @synchronized (self) {
+        return coprocess_ && [coprocess_ wantToWrite];
+    }
+}
+
+- (void)ioHandler:(PTYTaskIOHandler *)handler didReadData:(const char *)buffer length:(int)length {
+    hasOutput = YES;
+    [self readTask:(char *)buffer length:length];
+}
+
+- (void)ioHandlerDidDetectBrokenPipe:(PTYTaskIOHandler *)handler {
+    [self brokenPipe];
+}
+
+- (void)ioHandlerDrainWriteBuffer:(PTYTaskIOHandler *)handler {
+    [self processWrite];
+}
+
+- (void)ioHandlerHandleCoprocessRead:(PTYTaskIOHandler *)handler {
+    Coprocess *coprocess;
+    @synchronized (self) {
+        coprocess = coprocess_;
+    }
+    if (!coprocess || [coprocess eof]) {
+        return;
+    }
+
+    [coprocess read];
+
+    if ([coprocess eof]) {
+        [self handleCoprocessEOF];
+        return;
+    }
+
+    NSData *data = [coprocess.inputBuffer copy];
+    [coprocess.inputBuffer setLength:0];
+    if (data.length > 0) {
+        [self writeTask:data coprocess:YES];
+    }
+}
+
+- (void)ioHandlerHandleCoprocessWrite:(PTYTaskIOHandler *)handler {
+    Coprocess *coprocess;
+    @synchronized (self) {
+        coprocess = coprocess_;
+    }
+    if (!coprocess || [coprocess eof]) {
+        return;
+    }
+
+    @synchronized (self) {
+        [coprocess write];
+    }
+}
+
+// Called on ioQueue when the coprocess read source detects EOF.
+// Similar to stopCoprocess but differs in two ways:
+// 1. Bounces the delegate call to the main queue (we're on ioQueue here,
+//    whereas stopCoprocess runs on the main thread and calls synchronously).
+// 2. Uses weak self for the async dispatch since the task may be deallocated
+//    between dispatch and execution.
+- (void)handleCoprocessEOF {
+    Coprocess *coprocess;
+    @synchronized (self) {
+        coprocess = coprocess_;
+    }
+    if (!coprocess) {
+        return;
+    }
+
+    pid_t pid = coprocess.pid;
+    [coprocess terminate];
+
+    @synchronized (self) {
+        coprocess_ = nil;
+        self.hasMuteCoprocess = NO;
+    }
+
+    [_ioHandler teardownCoprocessSources];
+
+    if (pid > 0) {
+        [[TaskNotifier sharedInstance] waitForPid:pid];
+    }
+
+    __weak typeof(self) weakSelf = self;
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [weakSelf.delegate taskMuteCoprocessDidChange:weakSelf hasMuteCoprocess:NO];
+        [[TaskNotifier sharedInstance] notifyCoprocessChange];
+    });
 }
 
 @end
@@ -939,6 +1153,115 @@ static void HandleSigChld(int n) {
     iTermSetTerminalSize(self.fd, desiredSize);
     [self.delegate taskDidResizeToGridSize:gridSize pixelSize:NSMakeSize(desiredSize.pixelSize.width,
                                                                          desiredSize.pixelSize.height)];
+}
+
+@end
+
+#pragma mark - Testing
+
+@implementation PTYTask (Testing)
+
+- (BOOL)testHasReadSource {
+    return _ioHandler.testHasReadSource;
+}
+
+- (BOOL)testHasWriteSource {
+    return _ioHandler.testHasWriteSource;
+}
+
+- (BOOL)testIsReadSourceSuspended {
+    return _ioHandler.testIsReadSourceSuspended;
+}
+
+- (BOOL)testIsWriteSourceSuspended {
+    return _ioHandler.testIsWriteSourceSuspended;
+}
+
+- (BOOL)testWriteBufferHasData {
+    [writeLock lock];
+    BOOL hasData = [writeBuffer length] > 0;
+    [writeLock unlock];
+    return hasData;
+}
+
+- (void)testSetFd:(int)fd {
+    if (![self.jobManager isKindOfClass:[iTermLegacyJobManager class]]) {
+        self.jobManager = [[iTermLegacyJobManager alloc] initWithQueue:_jobManagerQueue];
+    }
+    self.jobManager.fd = fd;
+}
+
+- (void)testSetupDispatchSourcesForTesting {
+    [self testSetupDispatchSourcesForTestingWithPid:0];
+}
+
+- (void)testSetupDispatchSourcesForTestingWithPid:(pid_t)pid {
+    _ioHandler = [[PTYTaskIOHandler alloc] initWithFd:self.fd pid:pid];
+    _ioHandler.delegate = self;
+    [_ioHandler start];
+}
+
+- (void)testTeardownDispatchSourcesForTesting {
+    [_ioHandler teardown];
+    _ioHandler = nil;
+}
+
+- (void)testAppendDataToWriteBuffer:(NSData *)data {
+    [writeLock lock];
+    [writeBuffer appendData:data];
+    [writeLock unlock];
+}
+
+- (BOOL)testShouldWriteOverride {
+    return _testShouldWriteOverride;
+}
+
+- (void)setTestShouldWriteOverride:(BOOL)testShouldWriteOverride {
+    _testShouldWriteOverride = testShouldWriteOverride;
+}
+
+- (NSNumber *)testIoAllowedOverride {
+    return _testIoAllowedOverride;
+}
+
+- (void)setTestIoAllowedOverride:(NSNumber *)testIoAllowedOverride {
+    _testIoAllowedOverride = testIoAllowedOverride;
+}
+
+- (void)testSetJobManager:(id<iTermJobManager>)jobManager {
+    self.jobManager = jobManager;
+}
+
+- (BOOL)testHasCoprocessReadSource {
+    return _ioHandler.testHasCoprocessReadSource;
+}
+
+- (BOOL)testHasCoprocessWriteSource {
+    return _ioHandler.testHasCoprocessWriteSource;
+}
+
+- (BOOL)testIsCoprocessReadSourceSuspended {
+    return _ioHandler.testIsCoprocessReadSourceSuspended;
+}
+
+- (BOOL)testIsCoprocessWriteSourceSuspended {
+    return _ioHandler.testIsCoprocessWriteSourceSuspended;
+}
+
+- (void)testSetupCoprocessSourcesWithReadFd:(int)readFd writeFd:(int)writeFd {
+    [_ioHandler setupCoprocessSourcesWithReadFd:readFd writeFd:writeFd];
+}
+
+- (void)testTeardownCoprocessSources {
+    [_ioHandler teardownCoprocessSources];
+}
+
+- (void)testWaitForIOQueue {
+    [_ioHandler testWaitForIOQueue];
+}
+
+- (void)testSimulateProcessExit {
+    [_ioHandler testSimulateProcessExit];
 }
 
 @end

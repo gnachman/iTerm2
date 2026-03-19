@@ -189,6 +189,7 @@
 #import "PTYSession.h"
 #import "PTYSession+ARC.h"
 #import "PTYTask.h"
+#import "PTYTask+Private.h"
 #import "PTYTextView+ARC.h"
 #import "PTYTextView.h"
 #import "PTYTextView+Private.h"
