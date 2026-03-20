@@ -58,6 +58,7 @@
 @property(nonatomic) PSMProgress progress;
 @property(nonatomic) BOOL isProcessing;
 @property(nonatomic, assign) BOOL isPinned;
+@property(nonatomic, assign) BOOL isBeingEdited;
 
 // creation/destruction
 - (id)initWithControlView:(PSMTabBarControl *)controlView;

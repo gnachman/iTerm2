@@ -139,7 +139,7 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionPUAFontProvider = @"PSMTabBarCon
 
 @end
 
-@interface PSMTabBarControl ()<PSMTabBarControlProtocol, NSMenuItemValidation, NSViewToolTipOwner>
+@interface PSMTabBarControl ()<PSMTabBarControlProtocol, NSMenuItemValidation, NSViewToolTipOwner, NSTextFieldDelegate>
 @end
 
 @implementation PSMTabBarControl {
@@ -170,6 +170,10 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionPUAFontProvider = @"PSMTabBarCon
     NSPoint _initialDragLocation;
     BOOL _didDrag;
     BOOL _closeClicked;
+
+    // inline tab title editing
+    NSTextField *_inlineEditor;
+    PSMTabBarCell *_editingCell;
 
     // iTerm2 additions
     NSUInteger _modifier;
@@ -1070,6 +1074,10 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionPUAFontProvider = @"PSMTabBarCon
     // This method handles all of the cell layout, and is called when something changes to require
     // the refresh.  This method is not called during drag and drop. See the PSMTabDragAssistant's
     // calculateDragAnimationForTabBar: method, which does layout in that case.
+
+    if (_inlineEditor) {
+        [self endInlineEditing:NO];
+    }
 
     // Make sure all of our tabs are accounted for before updating.
     if ([_tabView numberOfTabViewItems] != [_cells count]) {
@@ -2156,15 +2164,103 @@ static CFAbsoluteTime gDragMoveFirstTime = 0;
 }
 
 - (void)tabDoubleClick:(id)sender {
-    if ([[self delegate] respondsToSelector:@selector(tabView:doubleClickTabViewItem:)]) {
-        [[self delegate] tabView:[self tabView] doubleClickTabViewItem:[sender representedObject]];
-    }
+    [self beginInlineEditingOfCell:sender];
 }
 
 - (void)tabBarDoubleClick {
     if ([[self delegate] respondsToSelector:@selector(tabViewDoubleClickTabBar:)]) {
         [[self delegate] tabViewDoubleClickTabBar:[self tabView]];
     }
+}
+
+#pragma mark - Inline Tab Title Editing
+
+- (void)beginInlineEditingOfCell:(PSMTabBarCell *)cell {
+    NSTabViewItem *tabViewItem = cell.representedObject;
+    if ([self.delegate respondsToSelector:@selector(tabView:shouldBeginInlineEditingOfTabViewItem:)]) {
+        if (![self.delegate tabView:self.tabView shouldBeginInlineEditingOfTabViewItem:tabViewItem]) {
+            return;
+        }
+    } else {
+        return;
+    }
+
+    NSString *currentTitle = @"";
+    if ([self.delegate respondsToSelector:@selector(tabView:editableTitleForTabViewItem:)]) {
+        currentTitle = [self.delegate tabView:self.tabView editableTitleForTabViewItem:tabViewItem] ?: @"";
+    }
+
+    NSRect cellFrame = cell.frame;
+    CGFloat leftInset = kSPMTabBarCellInternalXMargin;
+    if (cell.hasCloseButton) {
+        NSRect closeRect = [cell closeButtonRectForFrame:cellFrame];
+        leftInset = NSMaxX(closeRect) + kPSMTabBarCellPadding;
+    }
+    const CGFloat editorHeight = 22.0;
+    NSRect editorFrame = NSMakeRect(cellFrame.origin.x + leftInset,
+                                    cellFrame.origin.y + floor((cellFrame.size.height - editorHeight) / 2.0),
+                                    cellFrame.size.width - leftInset - kPSMTabBarCellPadding,
+                                    editorHeight);
+
+    NSTextField *editor = [[[NSTextField alloc] initWithFrame:editorFrame] autorelease];
+    editor.bezeled = NO;
+    editor.bordered = NO;
+    editor.drawsBackground = NO;
+    editor.focusRingType = NSFocusRingTypeNone;
+    editor.font = [NSFont systemFontOfSize:[NSFont smallSystemFontSize]];
+    editor.stringValue = currentTitle;
+    editor.textColor = [NSColor labelColor];
+    editor.delegate = self;
+
+    [self addSubview:editor];
+    [self.window makeFirstResponder:editor];
+
+    _inlineEditor = [editor retain];
+    _editingCell = [cell retain];
+    cell.isBeingEdited = YES;
+    [self setNeedsDisplay:YES];
+}
+
+- (void)endInlineEditing:(BOOL)commit {
+    if (!_inlineEditor) {
+        return;
+    }
+    if (commit) {
+        NSString *title = _inlineEditor.stringValue;
+        if ([self.delegate respondsToSelector:@selector(tabView:didFinishInlineEditingTabViewItem:withTitle:)]) {
+            [self.delegate tabView:self.tabView
+                didFinishInlineEditingTabViewItem:_editingCell.representedObject
+                                       withTitle:title];
+        }
+    }
+    _editingCell.isBeingEdited = NO;
+    [_editingCell release];
+    _editingCell = nil;
+    [_inlineEditor removeFromSuperview];
+    [_inlineEditor release];
+    _inlineEditor = nil;
+    [self setNeedsDisplay:YES];
+}
+
+- (BOOL)isInlineEditing {
+    return _inlineEditor != nil;
+}
+
+- (BOOL)control:(NSControl *)control textView:(NSTextView *)textView doCommandBySelector:(SEL)commandSelector {
+    if (commandSelector == @selector(cancelOperation:)) {
+        [self endInlineEditing:NO];
+        return YES;
+    }
+    if (commandSelector == @selector(insertNewline:)) {
+        [self endInlineEditing:YES];
+        return YES;
+    }
+    return NO;
+}
+
+- (void)controlTextDidEndEditing:(NSNotification *)notification {
+    NSInteger movement = [notification.userInfo[NSTextMovement] integerValue];
+    [self endInlineEditing:(movement != NSCancelTextMovement)];
 }
 
 - (void)addTab:(id)sender {

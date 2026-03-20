@@ -7669,9 +7669,20 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
         return;
     }
     [tabView selectTabViewItem:tabViewItem];
-    if ([iTermAdvancedSettingsModel doubleClickTabToEdit]) {
-        [self openEditTabTitleWindow];
-    }
+}
+
+- (BOOL)tabView:(NSTabView *)tabView shouldBeginInlineEditingOfTabViewItem:(NSTabViewItem *)tabViewItem {
+    return [iTermAdvancedSettingsModel doubleClickTabToEdit];
+}
+
+- (NSString *)tabView:(NSTabView *)tabView editableTitleForTabViewItem:(NSTabViewItem *)tabViewItem {
+    PTYTab *tab = tabViewItem.identifier;
+    return tab.variablesScope.tabTitleOverrideFormat ?: @"";
+}
+
+- (void)tabView:(NSTabView *)tabView didFinishInlineEditingTabViewItem:(NSTabViewItem *)tabViewItem withTitle:(NSString *)title {
+    PTYTab *tab = tabViewItem.identifier;
+    [tab setTitleOverride:title];
 }
 
 - (IBAction)editTabTitle:(id)sender {

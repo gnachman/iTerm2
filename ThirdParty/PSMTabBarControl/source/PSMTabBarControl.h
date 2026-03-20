@@ -155,6 +155,11 @@ extern PSMTabBarControlOptionKey PSMTabBarControlOptionPUAFontProvider;  // id<P
 - (BOOL)tabViewShouldAllowDragOnAddTabButton:(NSTabView *)tabView;
 - (CGFloat)tabViewDesiredTabBarHeight:(NSTabView *)tabView;
 
+// Inline tab title editing
+- (BOOL)tabView:(NSTabView *)tabView shouldBeginInlineEditingOfTabViewItem:(NSTabViewItem *)tabViewItem;
+- (NSString *)tabView:(NSTabView *)tabView editableTitleForTabViewItem:(NSTabViewItem *)tabViewItem;
+- (void)tabView:(NSTabView *)tabView didFinishInlineEditingTabViewItem:(NSTabViewItem *)tabViewItem withTitle:(NSString *)title;
+
 @end
 
 enum {
@@ -275,6 +280,10 @@ typedef NS_ENUM(int, PSMTabPosition) {
          cellFrame:(NSRectPointer)outFrame;
 - (void)dragWillExitTabBar;
 - (void)dragDidFinish;
+
+- (void)beginInlineEditingOfCell:(PSMTabBarCell *)cell;
+- (void)endInlineEditing:(BOOL)commit;
+@property(nonatomic, readonly) BOOL isInlineEditing;
 
 @end
 

@@ -1016,7 +1016,7 @@ const void *PSMTabStyleDarkColorKey = "dark";
     const CGFloat labelOffset = [self willDrawSubtitle:cachedSubtitle] ? [self verticalOffsetForTitleWhenSubtitlePresent] : 0;
     // For pinned tabs: skip title if a graphic icon is present, otherwise show first character only.
     BOOL skipLabel = cell.isPinned && cachedTitle.inputs.graphic != nil;
-    if (!cachedTitle.isEmpty && !skipLabel) {
+    if (!cell.isBeingEdited && !cachedTitle.isEmpty && !skipLabel) {
         NSRect labelRect;
         labelRect.origin.x = labelPosition;
         NSSize boundingSize;
@@ -1059,7 +1059,7 @@ const void *PSMTabStyleDarkColorKey = "dark";
         mainLabelHeight = NSHeight(labelRect);
     }
 
-    if ([self supportsMultiLineLabels] && !skipLabel && !cell.isPinned) {
+    if (!cell.isBeingEdited && [self supportsMultiLineLabels] && !skipLabel && !cell.isPinned) {
         [self drawSubtitle:cachedSubtitle
                          x:labelPosition
                       cell:cell
