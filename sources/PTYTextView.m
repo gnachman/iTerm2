@@ -7646,6 +7646,15 @@ dragSemanticHistoryWithEvent:(NSEvent *)event
     }
 }
 
+- (void)copyOrPasteWithEvent:(NSEvent *)event {
+    if ([self canCopy]) {
+        [self copySelectionAccordingToUserPreferences];
+        [self deselect];
+    } else {
+        [self paste:nil];
+    }
+}
+
 - (void)nextTabWithEvent:(NSEvent *)event {
     [_delegate textViewSelectNextTab];
 }

@@ -82,6 +82,7 @@ NSString *kQuickLookAction = @"kQuickLookAction";
 NSString *kIgnoreAction = @"kIgnoreAction";
 NSString *kSelectMenuItemPointerAction = @"kSelectMenuItemPointerAction";
 NSString *kCopyLinkAddressPointerAction = @"kCopyLinkAddressPointerAction";
+NSString *kCopyOrPastePointerAction = @"kCopyOrPastePointerAction";
 
 typedef enum {
     kNoArg,
@@ -437,6 +438,7 @@ typedef enum {
                            @"Copy Link Address", kCopyLinkAddressPointerAction,
                            @"Select Next Pane", kSelectNextPanePointerAction,
                            @"Select Previous Pane", kSelectPreviousPanePointerAction,
+                           @"Copy or Paste", kCopyOrPastePointerAction,
                            nil];
     return names;
 }
