@@ -456,7 +456,8 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler 
         webView.browserDelegate = self
         // Enable back/forward navigation
         webView.allowsBackForwardNavigationGestures = true
-
+        // enable dev tools 'inspect element'
+        webView.configuration.preferences.setValue(true, forKey: "developerExtrasEnabled")
         // Observe title changes
         webView.addObserver(self, forKeyPath: "title", options: [.new], context: nil)
 
