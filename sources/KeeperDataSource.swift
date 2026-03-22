@@ -887,10 +887,7 @@ class KeeperDataSource: NSObject, PasswordManagerDataSource {
                 guard let self = self else { return }
                 switch result {
                 case .success(let data):
-                    if let raw = String(data: data, encoding: .utf8) {
-                        let preview = String(raw.prefix(1500))
-                        NSLog("[iTerm2 Keeper] ls -R -l response length=%d body=%@", data.count, preview)
-                    }
+                    NSLog("[iTerm2 Keeper] ls -R -l response length=%d", data.count)
                     var records: [KeeperRecord]?
                     var payloadsToTry: [Data] = [data]
                     if let wrapper = try? JSONDecoder().decode(KeeperV2ResultWrapper.self, from: data),
@@ -968,10 +965,9 @@ class KeeperDataSource: NSObject, PasswordManagerDataSource {
                             if !(records?.isEmpty ?? true) { break }
                         }
                     }
-                    if (records == nil || records?.isEmpty == true), let raw = String(data: data, encoding: .utf8) {
-                        let preview = String(raw.prefix(800))
-                        DLog("Keeper ls -R -l response (no records parsed), preview: \(preview)")
-                        NSLog("[iTerm2 Keeper] No records parsed from ls -R -l response (length=%d). Preview: %@", data.count, String(preview.prefix(500)))
+                    if records == nil || records?.isEmpty == true {
+                        DLog("Keeper ls -R -l response (no records parsed), length=\(data.count)")
+                        NSLog("[iTerm2 Keeper] No records parsed from ls -R -l response (length=%d)", data.count)
                     }
                     guard let records = records, !records.isEmpty else {
                         DispatchQueue.main.async {
@@ -986,6 +982,7 @@ class KeeperDataSource: NSObject, PasswordManagerDataSource {
                         let desc = rec.description ?? ""
                         return KeeperAccount(uid: uid, accountName: title, userName: desc, hasOTP: false, sendOTP: false, dataSource: self)
                     }
+                    NSLog("[iTerm2 Keeper] ls -R -l parsed record count=%d", accounts.count)
                     DispatchQueue.main.async {
                         NotificationCenter.default.post(name: iTerm2KeeperConnectionDidSucceedNotification, object: nil)
                         completion(accounts)
@@ -1185,20 +1182,8 @@ class KeeperDataSource: NSObject, PasswordManagerDataSource {
                         if let p = password, !p.isEmpty {
                             DispatchQueue.main.async { completion(p, nil, nil) }
                         } else {
-                            let preview = String(data: data, encoding: .utf8).map { s in
-                                let p = trim(s)
-                                if p.isEmpty { return "(empty)" }
-                                if let parsed = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
-                                    var out = "keys: \(parsed.keys.sorted().joined(separator: ", "))"
-                                    if let dataVal = parsed["data"], let obj = dataVal as? [String: Any] {
-                                        out += " | data keys: \(obj.keys.sorted().joined(separator: ", "))"
-                                    }
-                                    return out
-                                }
-                                return "(\(p.count) chars, not JSON)"
-                            } ?? "(invalid UTF-8)"
-                            DLog("Keeper get password: no password in response \(preview)")
-                            NSLog("[iTerm2 Keeper] get password failed: response \(preview)")
+                            DLog("Keeper get password: no password in response")
+                            NSLog("[iTerm2 Keeper] get password failed: no password in response")
                             let message: String
                             if let parsed = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
                                let msg = parsed["message"] as? [String],
