@@ -14,9 +14,10 @@ NS_ASSUME_NONNULL_BEGIN
 
 @class iTermCallback;
 @class iTermThread;
+@protocol iTermLargeContentProvider;
 
 // Manages a SQLite database that holds an encoded graph. Loads it and updates it incrementally.
-@interface iTermGraphDatabase: NSObject
+@interface iTermGraphDatabase: NSObject<iTermLargeContentProvider>
 @property (atomic, readonly) iTermEncoderGraphRecord *record;
 @property (nonatomic, readonly) NSURL *url;
 @property (nonatomic, readonly) iTermThread *thread;
@@ -35,7 +36,11 @@ NS_ASSUME_NONNULL_BEGIN
                  completion:(nullable iTermCallback *)completion;
 - (void)invalidateSynchronously:(BOOL)sync;
 - (void)whenReady:(void (^)(void))readyBlock;
+- (void)waitUntilReady;
 - (void)doHousekeeping;
+
+// Lazy load large data for a specific row. Called during restoration (e.g., unfolding).
+- (NSDictionary<NSString *, id> * _Nullable)loadLargeDataForRowID:(NSNumber *)rowid;
 
 @end
 

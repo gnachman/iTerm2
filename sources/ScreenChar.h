@@ -564,6 +564,7 @@ VT100GridCoord GetPositionOfImageInChar(screen_char_t c);
 // Returns a dictionary of restorable state
 NSDictionary *ScreenCharEncodedRestorableState(void);
 NSInteger ScreenCharGeneration(void);
+void ScreenCharSetMinimumGeneration(NSInteger generation);
 void ScreenCharDecodeRestorableState(NSDictionary *state);
 void ScreenCharGarbageCollectImages(void);
 void ScreenCharClearProvisionalFlagForImageWithCode(int code);

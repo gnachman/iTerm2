@@ -138,14 +138,14 @@ class ButtonMark: iTermMark, ButtonMarkReading {
         super.init()
     }
 
-    required init!(dictionary dict: [AnyHashable : Any]!) {
+    required init?(dictionary dict: [AnyHashable : Any]) {
         buttonType = .fromDictionary(dict)
         buttonID = dict["id"] as? Int ?? Self.generateID()
         super.init(dictionary: dict)
     }
 
-    override func dictionaryValue() -> [AnyHashable : Any]! {
-        var dict = super.dictionaryValue()!
+    override func dictionaryValue() -> [AnyHashable : Any] {
+        var dict = super.dictionaryValue()
         if let local = buttonType?.dictionary as? [AnyHashable: Any] {
             dict.merge(local) { _, _ in
                 it_fatalError()

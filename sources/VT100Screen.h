@@ -38,6 +38,7 @@
 @protocol iTermEchoProbeDelegate;
 @class iTermExpect;
 @protocol iTermFilterDestination;
+@protocol iTermLargeContentProvider;
 @protocol iTermMark;
 @class iTermSlownessDetector;
 @class iTermTerminalContentSnapshot;
@@ -211,7 +212,8 @@ extern const NSInteger VT100ScreenBigFileDownloadThreshold;
 - (void)restoreFromDictionary:(NSDictionary *)dictionary
      includeRestorationBanner:(BOOL)includeRestorationBanner
                    reattached:(BOOL)reattached
-                    isArchive:(BOOL)isArchive;
+                    isArchive:(BOOL)isArchive
+         largeContentProvider:(id<iTermLargeContentProvider>)largeContentProvider;
 
 // Uninitialize timestamps.
 - (void)resetTimestamps;

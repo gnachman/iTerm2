@@ -10,10 +10,12 @@
 #import "DebugLogging.h"
 #import "FMDatabase.h"
 #import "NSArray+iTerm.h"
+#import "NSData+iTerm.h"
 #import "NSObject+iTerm.h"
 #import "iTerm2SharedARC-Swift.h"
 #import "iTermGraphDeltaEncoder.h"
 #import "iTermGraphTableTransformer.h"
+#import "iTermWarning.h"
 #import "iTermPromise.h"
 #import "iTermThreadSafety.h"
 #import <stdatomic.h>
@@ -186,6 +188,10 @@
 
 - (void)whenReady:(void (^)(void))readyBlock {
     [_loadCompletePromise onQueue:dispatch_get_main_queue() then:^(id value){ readyBlock(); }];
+}
+
+- (void)waitUntilReady {
+    [_loadCompletePromise wait];
 }
 
 #pragma mark - Private
@@ -379,8 +385,19 @@
             return;
         }
         if (!before && after) {
-            if (![state.db executeUpdate:@"insert into Node (key, identifier, parent, data) values (?, ?, ?, ?)",
-                  after.key, after.identifier, parent, after.data ?: [NSData data]]) {
+            // Put data in large_data column if key is iTermLargeContentMetadata.largeContentKey (for lazy loading)
+            NSData *nodeData = after.data ?: [NSData data];
+            NSData *smallData = nil;
+            NSData *largeData = nil;
+            BOOL useLargeDataColumn = [after.key isEqualToString:iTermLargeContentMetadata.largeContentKey];
+            if (useLargeDataColumn) {
+                largeData = nodeData;
+            } else {
+                smallData = nodeData;
+            }
+
+            if (![state.db executeUpdate:@"insert into Node (key, identifier, parent, data, generation, large_data) values (?, ?, ?, ?, ?, ?)",
+                  after.key, after.identifier, parent, smallData ?: [NSData data], @(after.generation), largeData ?: [NSNull null]]) {
                 *stop = YES;
                 return;
             }
@@ -411,10 +428,20 @@
                 }
             }
             assert(before.rowid.longLongValue == after.rowid.longLongValue);
-            if ([before.data isEqual:after.data]) {
-                return;
+
+            // Put data in large_data column if key is iTermLargeContentMetadata.largeContentKey (for lazy loading)
+            NSData *nodeData = after.data;
+            NSData *smallData = nil;
+            NSData *largeData = nil;
+            BOOL useLargeDataColumn = [after.key isEqualToString:iTermLargeContentMetadata.largeContentKey];
+            if (useLargeDataColumn) {
+                largeData = nodeData;
+            } else {
+                smallData = nodeData;
             }
-            if (![state.db executeUpdate:@"update Node set data=? where rowid=?", after.data, before.rowid]) {
+
+            if (![state.db executeUpdate:@"update Node set data=?, generation=?, large_data=? where rowid=?",
+                  smallData ?: [NSData data], @(after.generation), largeData ?: [NSNull null], before.rowid]) {
                 *stop = YES;
             }
             return;
@@ -465,6 +492,72 @@
         [state.db close];
         return NO;
     }
+
+    if (![self migrateSchemaIfNeeded:state]) {
+        DLogCyclic(_log, @"Schema migration failed: %@", state.db.lastError);
+        [state.db close];
+        return NO;
+    }
+
+    return YES;
+}
+
+#pragma mark - Schema Migration
+
+// Schema versions:
+// 0: Original schema (key, identifier, parent, data)
+// 1: Added generation column and large_data column
+- (NSInteger)detectSchemaVersion:(iTermGraphDatabaseState *)state {
+    id<iTermDatabaseResultSet> rs = [state.db executeQuery:@"PRAGMA table_info(Node)"];
+    BOOL hasGeneration = NO;
+    BOOL hasLargeData = NO;
+    while ([rs next]) {
+        NSString *name = [rs stringForColumn:@"name"];
+        if ([name isEqualToString:@"generation"]) {
+            hasGeneration = YES;
+        }
+        if ([name isEqualToString:@"large_data"]) {
+            hasLargeData = YES;
+        }
+    }
+    [rs close];
+
+    if (hasGeneration && hasLargeData) {
+        return 1;
+    }
+    return 0;
+}
+
+- (BOOL)migrateSchemaIfNeeded:(iTermGraphDatabaseState *)state {
+    NSInteger version = [self detectSchemaVersion:state];
+    DLogCyclic(_log, @"Current schema version: %@", @(version));
+
+    if (version < 1) {
+        DLogCyclic(_log, @"Migrating schema to version 1: adding generation and large_data columns");
+        if (![state.db executeUpdate:@"ALTER TABLE Node ADD COLUMN generation INTEGER DEFAULT 0"]) {
+            NSString *error = [state.db.lastError localizedDescription] ?: @"Unknown error";
+            dispatch_async(dispatch_get_main_queue(), ^{
+                [iTermWarning showWarningWithTitle:[NSString stringWithFormat:@"Failed to migrate session database (adding generation column): %@", error]
+                                           actions:@[ @"OK" ]
+                                        identifier:@"NoSyncGraphDatabaseMigrationFailed"
+                                       silenceable:kiTermWarningTypePersistent
+                                            window:nil];
+            });
+            return NO;
+        }
+        if (![state.db executeUpdate:@"ALTER TABLE Node ADD COLUMN large_data BLOB"]) {
+            NSString *error = [state.db.lastError localizedDescription] ?: @"Unknown error";
+            dispatch_async(dispatch_get_main_queue(), ^{
+                [iTermWarning showWarningWithTitle:[NSString stringWithFormat:@"Failed to migrate session database (adding large_data column): %@", error]
+                                           actions:@[ @"OK" ]
+                                        identifier:@"NoSyncGraphDatabaseMigrationFailed"
+                                       silenceable:kiTermWarningTypePersistent
+                                            window:nil];
+            });
+            return NO;
+        }
+    }
+
     return YES;
 }
 
@@ -474,21 +567,29 @@
     NSMutableArray<NSArray *> *nodes = [NSMutableArray array];
     {
         DLog(@"select from Node...");
-        FMResultSet *rs = [state.db executeQuery:@"select key, identifier, parent, rowid, data from Node"];
+        // Select generation and check for large_data presence, but do NOT load large_data itself.
+        // This avoids loading large blobs into memory during initial load.
+        // Row format: [key, identifier, parent, rowid, data, generation, has_large_data]
+        FMResultSet *rs = [state.db executeQuery:
+            @"SELECT key, identifier, parent, rowid, data, generation, "
+            @"(large_data IS NOT NULL) as has_large_data FROM Node"];
         while ([rs next]) {
             DLog(@"Read row");
             [nodes addObject:@[ [rs stringForColumn:@"key"],
                                 [rs stringForColumn:@"identifier"],
                                 @([rs longLongIntForColumn:@"parent"]),
                                 @([rs longLongIntForColumn:@"rowid"]),
-                                [rs dataForColumn:@"data"] ?: [NSData data] ]];
+                                [rs dataForColumn:@"data"] ?: [NSData data],
+                                @([rs longLongIntForColumn:@"generation"]),
+                                @([rs boolForColumn:@"has_large_data"]) ]];
         }
         DLog(@"Select done");
         [rs close];
     }
 
     DLog(@"Begin transforming");
-    iTermGraphTableTransformer *transformer = [[iTermGraphTableTransformer alloc] initWithNodeRows:nodes];
+    iTermGraphTableTransformer *transformer = [[iTermGraphTableTransformer alloc] initWithNodeRows:nodes
+                                                                                          database:self];
     iTermEncoderGraphRecord *record = transformer.root;
     DLog(@"Done transforming");
 
@@ -500,6 +601,47 @@
     }
 
     return record;
+}
+
+#pragma mark - Lazy Loading
+
+#pragma mark - iTermLargeContentProvider
+
+- (NSDictionary *)loadLargeContentWithMetadata:(NSDictionary *)metadata {
+    NSNumber *rowid = [iTermLargeContentMetadata rowidFromMetadata:metadata];
+    if (!rowid) {
+        return nil;
+    }
+    return [self loadLargeDataForRowID:rowid];
+}
+
+- (NSDictionary<NSString *, id> *)loadLargeDataForRowID:(NSNumber *)rowid {
+    if (!rowid) {
+        return @{};
+    }
+
+    __block NSDictionary *result = @{};
+    [_thread dispatchSync:^(iTermGraphDatabaseState *state) {
+        if (!state.db) {
+            DLog(@"Database is nil, cannot load large data for rowid %@", rowid);
+            return;
+        }
+        FMResultSet *rs = [state.db executeQuery:@"SELECT large_data FROM Node WHERE rowid = ?", rowid];
+        if ([rs next]) {
+            NSData *data = [rs dataForColumn:@"large_data"];
+            if (data.length > 0) {
+                NSError *error = nil;
+                NSDictionary *pod = [data it_unarchivedObjectOfBasicClassesWithError:&error];
+                if (pod && !error) {
+                    result = pod;
+                } else {
+                    DLog(@"Failed to unarchive large_data for rowid %@: %@", rowid, error);
+                }
+            }
+        }
+        [rs close];
+    }];
+    return result;
 }
 
 @end

@@ -9,7 +9,9 @@
 
 #import "DebugLogging.h"
 #import "iTermChangeTrackingDictionary.h"
+#import "iTermGraphDatabase.h"
 #import "iTermTuple.h"
+#import "iTerm2SharedARC-Swift.h"
 #import "NSArray+iTerm.h"
 #import "NSData+iTerm.h"
 #import "NSDictionary+iTerm.h"
@@ -17,6 +19,8 @@
 
 @implementation iTermEncoderGraphRecord {
     NSMutableDictionary<iTermTuple<NSString *, NSString *> *, iTermEncoderGraphRecord *> *_index;
+    NSDictionary<NSString *, id> *_pod;
+    BOOL _podLoaded;
 }
 
 + (instancetype)withPODs:(NSDictionary<NSString *, id> *)pod
@@ -31,7 +35,28 @@
                            generation:generation
                                   key:key
                            identifier:identifier
-                                rowid:rowid];
+                                rowid:rowid
+                         hasLargeData:NO
+                             database:nil];
+}
+
++ (instancetype)withPODs:(NSDictionary<NSString *, id> *)pod
+                  graphs:(NSArray<iTermEncoderGraphRecord *> *)graphRecords
+              generation:(NSInteger)generation
+                     key:(NSString *)key
+              identifier:(NSString *)identifier
+                   rowid:(NSNumber *_Nullable)rowid
+            hasLargeData:(BOOL)hasLargeData
+                database:(iTermGraphDatabase *)database {
+    assert(identifier);
+    return [[self alloc] initWithPODs:pod
+                               graphs:graphRecords
+                           generation:generation
+                                  key:key
+                           identifier:identifier
+                                rowid:rowid
+                         hasLargeData:hasLargeData
+                             database:database];
 }
 
 - (instancetype)initWithPODs:(NSDictionary<NSString *, id> *)pods
@@ -39,11 +64,14 @@
                   generation:(NSInteger)generation
                          key:(NSString *)key
                   identifier:(NSString *)identifier
-                       rowid:(NSNumber *)rowid {
+                       rowid:(NSNumber *)rowid
+                hasLargeData:(BOOL)hasLargeData
+                    database:(iTermGraphDatabase *)database {
     assert(key);
     self = [super init];
     if (self) {
         _pod = pods;
+        _podLoaded = (pods != nil);
         _graphRecords = graphRecords ?: @[];
         [graphRecords enumerateObjectsUsingBlock:^(iTermEncoderGraphRecord * _Nonnull child, NSUInteger idx, BOOL * _Nonnull stop) {
             child->_parent = self;
@@ -52,8 +80,20 @@
         _identifier = identifier;
         _key = key;
         _rowid = rowid;
+        _hasLargeData = hasLargeData;
+        _database = database;
     }
     return self;
+}
+
+- (NSDictionary<NSString *, id> *)pod {
+    if (!_podLoaded && _hasLargeData && _rowid && _database) {
+        // Lazy load the large data from the database.
+        // This only happens during restoration (e.g., unfolding), not during save.
+        _pod = [_database loadLargeDataForRowID:_rowid];
+        _podLoaded = YES;
+    }
+    return _pod ?: @{};
 }
 
 - (void)dump {
@@ -321,6 +361,11 @@
 }
 
 - (id)propertyListValue {
+    // For large content nodes with unloaded data, return metadata for lazy loading
+    if (_hasLargeData && !_podLoaded && [self.key isEqualToString:iTermLargeContentMetadata.largeContentKey]) {
+        return [iTermLargeContentMetadata metadataForRowID:self.rowid];
+    }
+
     if (self.pod.count == 0 && self.graphRecords.count == 0) {
         return nil;
     }

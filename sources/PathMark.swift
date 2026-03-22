@@ -77,13 +77,13 @@ class PathMark: iTermMark, PathMarkReading {
         super.init()
     }
 
-    required init!(dictionary dict: [AnyHashable : Any]!) {
+    required init?(dictionary dict: [AnyHashable : Any]) {
         state = State(dict)
         super.init(dictionary: dict)
     }
 
-    override func dictionaryValue() -> [AnyHashable : Any]! {
-        var dict = super.dictionaryValue()!
+    override func dictionaryValue() -> [AnyHashable : Any] {
+        var dict = super.dictionaryValue()
         state.update(&dict)
         return dict
     }

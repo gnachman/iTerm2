@@ -31,6 +31,13 @@ extern dispatch_queue_t _Nullable gDeallocQueue;
 // that get wrapped to the next line.
 @property(nonatomic, assign) BOOL mayHaveDoubleWidthCharacter;
 @property(nonatomic, readonly) int numberOfCharacters;
+
+// Monotonically increasing value used for both synchronization among related
+// instances and for delta encoding during state restoration. Allocated from a
+// global counter via iTermAllocateGeneration(). When restoring from a dictionary,
+// the saved generation is restored and the global counter is bumped to ensure
+// future allocations exceed it. This allows the delta encoder to detect changes:
+// if a block's generation equals the database record's generation, it's unchanged.
 @property(nonatomic, readonly) NSInteger generation;
 
 // Block this was copied from.

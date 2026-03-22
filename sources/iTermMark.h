@@ -9,6 +9,8 @@
 #import <Foundation/Foundation.h>
 #import "IntervalTree.h"
 
+NS_ASSUME_NONNULL_BEGIN
+
 @class iTermMark;
 
 @protocol iTermMark <NSObject, IntervalTreeImmutableObject>
@@ -26,7 +28,7 @@
 @property (nonatomic, readonly) NSString *stableIdentifier;
 
 - (instancetype)init NS_DESIGNATED_INITIALIZER;
-- (instancetype)initWithDictionary:(NSDictionary *)dict NS_DESIGNATED_INITIALIZER;
+- (nullable instancetype)initWithDictionary:(NSDictionary *)dict NS_DESIGNATED_INITIALIZER;
 - (NSDictionary *)dictionaryValue;
 - (id<iTermMark>)doppelganger;
 
@@ -34,7 +36,7 @@
 
 // When using this beware of `IntervalTreeObject`s that do not inherit from iTermMark, such as
 // PTYAnnotation (which needs a delegate to function).
-+ (id<IntervalTreeObject>)intervalTreeObjectWithDictionaryWithTypeInformation:(NSDictionary *)dict;
++ (nullable id<IntervalTreeObject>)intervalTreeObjectWithDictionaryWithTypeInformation:(NSDictionary *)dict;
 
 // This is here for subclasses to override. They should always call it.
 - (void)becomeDoppelgangerWithProgenitor:(iTermMark *)progenitor;
@@ -43,3 +45,5 @@
 - (void)copyGuidFrom:(iTermMark *)source;
 
 @end
+
+NS_ASSUME_NONNULL_END

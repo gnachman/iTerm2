@@ -54,6 +54,7 @@ extern NSString *const PTYCommandDidExitUserInfoKeyURL;
 extern NSString *const PTYSessionArrangementOptionsForDuplication;
 extern NSString *const PTYSessionArrangementOptionsUnlimitedHistory;
 extern NSString *const PTYSessionArrangementOptionsArchive;
+extern NSString *const PTYSessionArrangementOptionsLargeContentProvider;
 
 @class CapturedOutput;
 @protocol ExternalSearchResultsController;

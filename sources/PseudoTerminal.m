@@ -3567,13 +3567,15 @@ ITERM_WEAKLY_REFERENCEABLE
     return [self loadArrangement:arrangement
                            named:arrangementName
                         sessions:nil
-              partialAttachments:nil];
+              partialAttachments:nil
+            largeContentProvider:nil];
 }
 
 - (BOOL)loadArrangement:(NSDictionary *)arrangement
                   named:(NSString *)arrangementName
                sessions:(NSArray *)sessions
-     partialAttachments:(NSDictionary *)partialAttachments {
+     partialAttachments:(NSDictionary *)partialAttachments
+   largeContentProvider:(id<iTermLargeContentProvider>)largeContentProvider {
     PtyLog(@"Restore arrangement: %@", arrangement);
     [_windowSizeHelper willLoadArrangement:arrangement];
     iTermPercentage percentage = { .width = -1, .height = -1 };
@@ -3618,7 +3620,8 @@ ITERM_WEAKLY_REFERENCEABLE
     const BOOL restoreTabsOK = [self restoreTabsFromArrangement:arrangement
                                                           named:arrangementName
                                                        sessions:sessions
-                                             partialAttachments:partialAttachments];
+                                             partialAttachments:partialAttachments
+                                           largeContentProvider:largeContentProvider];
     _suppressMakeCurrentTerminal &= ~iTermSuppressMakeCurrentTerminalHotkey;
     _restoringWindow = savedRestoringWindow;
     if (!restoreTabsOK) {
@@ -3771,12 +3774,20 @@ ITERM_WEAKLY_REFERENCEABLE
 - (BOOL)restoreTabsFromArrangement:(NSDictionary *)arrangement
                              named:(NSString *)arrangementName
                           sessions:(NSArray<PTYSession *> *)sessions
-                partialAttachments:(NSDictionary *)partialAttachments {
+                partialAttachments:(NSDictionary *)partialAttachments
+              largeContentProvider:(id<iTermLargeContentProvider>)largeContentProvider {
     BOOL openedAny = NO;
     for (NSDictionary *tabArrangement in arrangement[TERMINAL_ARRANGEMENT_TABS]) {
         NSDictionary<NSString *, PTYSession *> *sessionMap = nil;
         if (sessions) {
             sessionMap = [PTYTab sessionMapWithArrangement:tabArrangement sessions:sessions];
+        }
+        NSMutableDictionary *options = [NSMutableDictionary dictionary];
+        if (arrangement[TERMINAL_ARRANGEMENT_ARCHIVE]) {
+            options[PTYSessionArrangementOptionsArchive] = @YES;
+        }
+        if (largeContentProvider) {
+            options[PTYSessionArrangementOptionsLargeContentProvider] = largeContentProvider;
         }
         if (![self openTabWithArrangement:tabArrangement
                                     named:arrangementName
@@ -3784,7 +3795,7 @@ ITERM_WEAKLY_REFERENCEABLE
                                     viewMap:nil
                                  sessionMap:sessionMap
                        partialAttachments:partialAttachments
-                                  options:arrangement[TERMINAL_ARRANGEMENT_ARCHIVE] != nil ? @{ PTYSessionArrangementOptionsArchive: @YES } : nil]) {
+                                  options:options.count > 0 ? options : nil]) {
             return NO;
         }
         openedAny = YES;
@@ -12474,6 +12485,7 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
                completion:(void (^)(void))completion {
     [self asyncRestoreArrangement:state.arrangement
                           timeout:timeout
+             largeContentProvider:state.largeContentProvider
                        completion:completion];
 }
 
@@ -12482,13 +12494,15 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
     [self loadArrangement:arrangement
                     named:nil
                  sessions:nil
-       partialAttachments:nil];
+       partialAttachments:nil
+     largeContentProvider:nil];
     self.restorableStateDecodePending = NO;
     [self decrementSessionRestorationCount];
 }
 
 - (void)asyncRestoreArrangement:(NSDictionary *)arrangement
                         timeout:(void (^)(NSArray *))timeout
+           largeContentProvider:(id<iTermLargeContentProvider>)largeContentProvider
                      completion:(void (^)(void))completion {
     DLog(@"asyncRestoreArrangement: begin");
     _sessionRestorationCount++;
@@ -12496,7 +12510,11 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
                                        timeout:timeout
                                     completion:^(NSDictionary *partialAttachments) {
         DLog(@"asyncRestoreArrangement: ready:\n%@", partialAttachments);
-        [self loadArrangement:arrangement named:nil sessions:nil partialAttachments:partialAttachments];
+        [self loadArrangement:arrangement
+                        named:nil
+                     sessions:nil
+           partialAttachments:partialAttachments
+         largeContentProvider:largeContentProvider];
         self.restorableStateDecodePending = NO;
         // No more tabs will be restored, and in doing so deminiaturize the window.
         _suppressMakeCurrentTerminal &= ~iTermSuppressMakeCurrentTerminalMiniaturized;

@@ -8,6 +8,7 @@ NS_ASSUME_NONNULL_BEGIN
 @class iTermGraphEncoder;
 @protocol IntervalTreeObject;
 @protocol iTermEncoderAdapter;
+@protocol iTermLargeContentProvider;
 
 @interface Interval : NSObject<NSCopying>
 // Negative locations have special meaning. Don't use them.
@@ -15,7 +16,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property(nonatomic, readonly) long long length;
 @property(nonatomic, readonly) long long limit;
 
-+ (instancetype)intervalWithLocation:(long long)location length:(long long)length;
++ (instancetype _Nullable)intervalWithLocation:(long long)location length:(long long)length;
 - (instancetype)initWithLocation:(long long)location length:(long long)length;
 + (Interval *)maxInterval;
 // One more than the largest value in the interval.
@@ -148,6 +149,12 @@ NS_ASSUME_NONNULL_BEGIN
 // doesn't contain graph-encoded data (falls back to restoreFromDictionary:).
 - (BOOL)restoreFromGraphRecord:(NSDictionary *)dict
                         offset:(long long)offset;
+
+// Graph decoding with lazy loading support for large content.
+// @param provider Provider for lazy loading large content, or nil for immediate loading.
+- (BOOL)restoreFromGraphRecord:(NSDictionary *)dict
+                        offset:(long long)offset
+          largeContentProvider:(id<iTermLargeContentProvider> _Nullable)provider;
 
 @end
 

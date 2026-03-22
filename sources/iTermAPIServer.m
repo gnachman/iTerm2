@@ -133,6 +133,8 @@ NSString *const iTermAPIServerConnectionClosed = @"iTermAPIServerConnectionClose
     NSMutableDictionary<id, iTermWebSocketConnection *> *_connections;  // _queue
     dispatch_queue_t _executionQueue;
     NSMutableArray<iTermHTTPConnection *> *_pendingConnections;  // _queue
+    BOOL _socketReady;  // main queue
+    NSMutableArray<void (^)(void)> *_whenReadyBlocks;  // main queue
 }
 
 + (instancetype)sharedInstance {
@@ -196,7 +198,34 @@ NSString *const iTermAPIServerConnectionClosed = @"iTermAPIServerConnectionClose
         return NO;
     }
 
+    [self setSocketReady];
     return YES;
+}
+
+- (void)setSocketReady {
+    dispatch_async(dispatch_get_main_queue(), ^{
+        self->_socketReady = YES;
+        NSArray<void (^)(void)> *blocks = self->_whenReadyBlocks;
+        self->_whenReadyBlocks = nil;
+        for (void (^block)(void) in blocks) {
+            block();
+        }
+    });
+}
+
+- (BOOL)socketReady {
+    return _socketReady;
+}
+
+- (void)whenReadyRunBlock:(void (^)(void))block {
+    if (_socketReady) {
+        block();
+        return;
+    }
+    if (!_whenReadyBlocks) {
+        _whenReadyBlocks = [NSMutableArray array];
+    }
+    [_whenReadyBlocks addObject:[block copy]];
 }
 
 - (void)postAPINotification:(ITMNotification *)notification toConnectionKey:(NSString *)connectionKey {

@@ -161,6 +161,8 @@ static NSString *const kRestoreDefaultWindowArrangementShortcut = @"R";
 NSString *const iTermApplicationWillTerminate = @"iTermApplicationWillTerminate";
 
 static BOOL gStartupActivitiesPerformed = NO;
+// Generation for app state delta encoding. Initialized from database on restore.
+static NSInteger gAppStateGeneration = 0;
 // Prior to 8/7/11, there was only one window arrangement, always called Default.
 static NSString *LEGACY_DEFAULT_ARRANGEMENT_NAME = @"Default";
 static BOOL hasBecomeActive = NO;
@@ -3436,7 +3438,8 @@ static iTermKeyEventReplayer *gReplayer;
         return;
     }
 
-    PseudoTerminalState *state = [[PseudoTerminalState alloc] initWithDictionary:dict];
+    PseudoTerminalState *state = [[PseudoTerminalState alloc] initWithDictionary:dict
+                                                            largeContentProvider:record.database];
     DLog(@"Will restore window with state %p", state);
     [PseudoTerminalRestorer restoreWindowWithIdentifier:identifier
                                     pseudoTerminalState:state
@@ -3479,15 +3482,14 @@ static iTermKeyEventReplayer *gReplayer;
 // ********
 // If you change this also change -application:willEncodeRestorableState:.
 - (BOOL)encodeGraphWithEncoder:(iTermGraphEncoder *)encoder {
-    static NSInteger generation;
     if ([[iTermApplication sharedApplication] it_restorableStateInvalid] ||
         [[iTermHotKeyController sharedInstance] anyProfileHotkeyWindowHasInvalidState]) {
-        ++generation;
+        ++gAppStateGeneration;
     }
     [iTermApplication sharedApplication].it_restorableStateInvalid = NO;
     return [encoder encodeChildWithKey:@"app"
                             identifier:@""
-                            generation:generation
+                            generation:gAppStateGeneration
                                  block:^BOOL(iTermGraphEncoder * _Nonnull encoder) {
         DLog(@"app encoding restorable state");
         NSTimeInterval start = [NSDate timeIntervalSinceReferenceDate];
@@ -3536,11 +3538,16 @@ static iTermKeyEventReplayer *gReplayer;
         DLog(@"No app record");
         return;
     }
-    NSDictionary *screenCharState = [app objectWithKey:kScreenCharRestorableStateKey
-                                                 class:[NSDictionary class]];
-    [NSDictionary castFrom:[[app childRecordWithKey:kScreenCharRestorableStateKey identifier:@""] propertyListValue]];
-    if (screenCharState) {
-        ScreenCharDecodeRestorableState(screenCharState);
+    // Preserve generation from the record so unchanged state can skip re-encoding.
+    gAppStateGeneration = app.generation;
+
+    iTermEncoderGraphRecord *screenCharRecord = [app childRecordWithKey:kScreenCharRestorableStateKey identifier:@""];
+    if (screenCharRecord) {
+        ScreenCharSetMinimumGeneration(screenCharRecord.generation);
+        NSDictionary *screenCharState = [NSDictionary castFrom:screenCharRecord.propertyListValue];
+        if (screenCharState) {
+            ScreenCharDecodeRestorableState(screenCharState);
+        }
     }
 
     iTermEncoderGraphRecord *portholeRecord = [app childRecordWithKey:kPortholeRestorableStateKey
@@ -3570,7 +3577,7 @@ static iTermKeyEventReplayer *gReplayer;
         [self restoreBuriedSessionsState];
     }
     if ([iTermAdvancedSettingsModel logRestorableStateSize]) {
-        NSDictionary *dict = @{ kScreenCharRestorableStateKey: screenCharState ?: @{},
+        NSDictionary *dict = @{ kScreenCharRestorableStateKey: screenCharRecord.propertyListValue ?: @{},
                                 kPortholeRestorableStateKey: [PortholeRegistry.instance dictionaryValue] ?: @{},
                                 kURLStoreRestorableStateKey: urlStoreRecord.propertyListValue ?: @{},
                                 iTermBuriedSessionState: _buriedSessionsState ?: @[] };

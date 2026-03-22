@@ -8,14 +8,19 @@
 
 #import <Cocoa/Cocoa.h>
 
+@protocol iTermLargeContentProvider;
+
 // Top-level key for restorable window state when using the SQLite restorer.
 extern NSString *const iTermWindowStateKeyGUID;
 
 @interface PseudoTerminalState: NSObject
 @property (nonatomic, readonly) NSDictionary *arrangement;
 @property (nonatomic, readonly) NSCoder *coder;
+@property (nonatomic, readonly, weak) id<iTermLargeContentProvider> largeContentProvider;
 - (instancetype)initWithCoder:(NSCoder *)coder;
 - (instancetype)initWithDictionary:(NSDictionary *)arrangement;
+- (instancetype)initWithDictionary:(NSDictionary *)arrangement
+              largeContentProvider:(id<iTermLargeContentProvider>)provider;
 @end
 
 @interface PseudoTerminalRestorer : NSObject<NSWindowRestoration>

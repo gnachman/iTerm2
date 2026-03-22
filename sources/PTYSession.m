@@ -364,6 +364,7 @@ static NSString *const kTwoCoprocessesCanNotRunAtOnceAnnouncementIdentifier =
 NSString *const PTYSessionArrangementOptionsForDuplication = @"PTYSessionArrangementOptionsForDuplication";
 NSString *const PTYSessionArrangementOptionsUnlimitedHistory = @"PTYSessionArrangementOptionsUnlimitedHistory";
 NSString *const PTYSessionArrangementOptionsArchive = @"PTYSessionArrangementOptionsArchive";
+NSString *const PTYSessionArrangementOptionsLargeContentProvider = @"PTYSessionArrangementOptionsLargeContentProvider";
 
 static char iTermEffectiveAppearanceKey;
 
@@ -2024,7 +2025,8 @@ ITERM_WEAKLY_REFERENCEABLE
             [aSession setContentsFromLineBufferDictionary:contents
                                  includeRestorationBanner:runCommand
                                                reattached:attachedToServer
-                                                isArchive:options[PTYSessionArrangementOptionsArchive] != nil];
+                                                isArchive:options[PTYSessionArrangementOptionsArchive] != nil
+                                     largeContentProvider:options[PTYSessionArrangementOptionsLargeContentProvider]];
             // NOTE: THE SCREEN SIZE IS NOW OUT OF SYNC WITH THE VIEW SIZE. IT MUST BE FIXED!
             // Store browser state for restoration in startProgram:
         }
@@ -2206,11 +2208,13 @@ ITERM_WEAKLY_REFERENCEABLE
 - (void)setContentsFromLineBufferDictionary:(NSDictionary *)dict
                    includeRestorationBanner:(BOOL)includeRestorationBanner
                                  reattached:(BOOL)reattached
-                                  isArchive:(BOOL)isArchive {
+                                  isArchive:(BOOL)isArchive
+                       largeContentProvider:(id<iTermLargeContentProvider>)largeContentProvider {
     [_screen restoreFromDictionary:dict
           includeRestorationBanner:includeRestorationBanner
                         reattached:reattached
-                         isArchive:isArchive];
+                         isArchive:isArchive
+              largeContentProvider:largeContentProvider];
     [_screen enumeratePortholes:^(id<PortholeMarkReading> immutableMark) {
         [[PortholeRegistry instance] registerKey:immutableMark.uniqueIdentifier
                                          forMark:immutableMark];

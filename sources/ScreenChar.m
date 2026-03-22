@@ -643,6 +643,10 @@ NSInteger ScreenCharGeneration(void) {
     return [[iTermScreenCharGeneration counter] value];
 }
 
+void ScreenCharSetMinimumGeneration(NSInteger generation) {
+    [[iTermScreenCharGeneration counter] setMinimum:generation];
+}
+
 NSDictionary *ScreenCharEncodedRestorableState(void) {
     return @{ kScreenCharComplexCharMapKey: [GetComplexCharRegistry() complexCharMap] ?: @{},
               kScreenCharSpacingCombiningMarksKey: [GetComplexCharRegistry() spacingCombiningMarkCodeNumbers].allObjects ?: @[],

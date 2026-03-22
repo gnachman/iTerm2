@@ -396,4 +396,7 @@ cleandeps: force
 	cd submodules/libssh2 && git clean -f -d .
 	cd submodules/openssl && git clean -f -d .
 
+test: force
+	tools/run_tests.expect ModernTests
+
 force:

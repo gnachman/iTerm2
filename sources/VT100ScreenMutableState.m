@@ -5163,7 +5163,8 @@ lengthExcludingInBandSignaling:data.length
 - (void)restoreFromDictionary:(NSDictionary *)dictionary
      includeRestorationBanner:(BOOL)includeRestorationBanner
                    reattached:(BOOL)reattached
-                    isArchive:(BOOL)isArchive {
+                    isArchive:(BOOL)isArchive
+         largeContentProvider:(id<iTermLargeContentProvider>)largeContentProvider {
     const BOOL newFormat = (dictionary[@"PrimaryGrid"] != nil);
     if (!newFormat) {
         return;
@@ -5184,7 +5185,8 @@ lengthExcludingInBandSignaling:data.length
     if (screenState) {
         // New format
         [self restoreFromDictionary:dictionary
-           includeRestorationBanner:includeRestorationBanner];
+           includeRestorationBanner:includeRestorationBanner
+               largeContentProvider:largeContentProvider];
 
         LineBuffer *lineBuffer = [[LineBuffer alloc] initWithDictionary:dictionary[@"LineBuffer"]
                                                        maintainBidiInfo:YES];
@@ -5234,7 +5236,9 @@ lengthExcludingInBandSignaling:data.length
 
         // Try graph decoding first (new format with delta encoding), fall back to dictionary format
         NSDictionary *intervalTreeDict = screenState[kScreenStateIntervalTreeKey];
-        if (![self.mutableIntervalTree restoreFromGraphRecord:intervalTreeDict offset:0]) {
+        if (![self.mutableIntervalTree restoreFromGraphRecord:intervalTreeDict
+                                                       offset:0
+                                         largeContentProvider:largeContentProvider]) {
             [self.mutableIntervalTree restoreFromDictionary:intervalTreeDict];
         }
         [self fixUpDeserializedIntervalTree:self.mutableIntervalTree
@@ -5415,7 +5419,8 @@ lengthExcludingInBandSignaling:data.length
 }
 
 - (void)restoreFromDictionary:(NSDictionary *)dictionary
-     includeRestorationBanner:(BOOL)includeRestorationBanner {
+     includeRestorationBanner:(BOOL)includeRestorationBanner
+         largeContentProvider:(id<iTermLargeContentProvider>)largeContentProvider {
     const BOOL onPrimary = (self.currentGrid == self.primaryGrid);
     self.primaryGrid.delegate = nil;
     self.altGrid.delegate = nil;

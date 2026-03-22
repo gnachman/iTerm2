@@ -11,6 +11,7 @@
 NS_ASSUME_NONNULL_BEGIN
 
 @class iTermChangeTrackingDictionary;
+@class iTermGraphDatabase;
 
 @interface iTermEncoderGraphRecord: NSObject
 @property (nonatomic, readonly) NSDictionary<NSString *, id> *pod;
@@ -24,12 +25,26 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly) NSData *data;  // encoded pod
 @property (nonatomic, readonly) NSString *compactDescription;
 
-+ (instancetype)withPODs:(NSDictionary<NSString *, id> *)pod
-                  graphs:(NSArray<iTermEncoderGraphRecord *> *)graphRecords
+// For lazy loading of large blobs
+@property (nonatomic) BOOL hasLargeData;
+@property (nonatomic, weak, nullable) iTermGraphDatabase *database;
+
++ (instancetype)withPODs:(NSDictionary<NSString *, id> * _Nullable)pod
+                  graphs:(NSArray<iTermEncoderGraphRecord *> * _Nullable)graphRecords
               generation:(NSInteger)generation
                      key:(NSString *)key
               identifier:(NSString *)identifier
                    rowid:(NSNumber *_Nullable)rowid;
+
+// Factory method with support for lazy loading of large data
++ (instancetype)withPODs:(NSDictionary<NSString *, id> * _Nullable)pod
+                  graphs:(NSArray<iTermEncoderGraphRecord *> * _Nullable)graphRecords
+              generation:(NSInteger)generation
+                     key:(NSString *)key
+              identifier:(NSString *)identifier
+                   rowid:(NSNumber *_Nullable)rowid
+            hasLargeData:(BOOL)hasLargeData
+                database:(iTermGraphDatabase *_Nullable)database;
 
 - (NSComparisonResult)compareGraphRecord:(iTermEncoderGraphRecord *)other;
 

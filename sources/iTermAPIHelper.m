@@ -788,6 +788,18 @@ static BOOL iTermAPIHelperLastApplescriptAuthRequiredSetting;
     return [iTermPreferences boolForKey:kPreferenceKeyEnableAPIServer];
 }
 
++ (void)whenSocketReadyRunBlock:(void (^)(BOOL ready))block {
+    iTermAPIHelper *helper = [self sharedInstanceIfEnabled];
+    if (!helper || !helper->_apiServer) {
+        // API disabled, not available, or server failed to start
+        block(NO);
+        return;
+    }
+    [helper->_apiServer whenReadyRunBlock:^{
+        block(YES);
+    }];
+}
+
 - (void)stop {
     [_apiServer stop];
     _apiServer.delegate = nil;

@@ -2,6 +2,8 @@
 #import "DebugLogging.h"
 #import "iTermEncoderAdapter.h"
 #import "iTermGraphEncoder.h"
+#import "iTermLargeContentObject.h"
+#import "iTerm2SharedARC-Swift.h"
 #import "NSArray+iTerm.h"
 
 static const long long kMinLocation = LLONG_MIN / 2;
@@ -294,8 +296,15 @@ static NSString *const kIntervalTreeObjectsKey = @"objects";
     if (!dict[kIntervalLocationKey] || !dict[kIntervalLengthKey]) {
         return nil;
     }
-    return [self intervalWithLocation:[dict[kIntervalLocationKey] longLongValue]
-                               length:[dict[kIntervalLengthKey] longLongValue]];
+    // Use alloc/init directly to avoid assert - deserialization may have corrupted data.
+    Interval *interval = [[[Interval alloc] initWithLocation:[dict[kIntervalLocationKey] longLongValue]
+                                                      length:[dict[kIntervalLengthKey] longLongValue]] autorelease];
+    if (![interval isValid]) {
+        DLog(@"Invalid interval from dictionary: location=%@, length=%@",
+             dict[kIntervalLocationKey], dict[kIntervalLengthKey]);
+        return nil;
+    }
+    return interval;
 }
 
 + (Interval *)intervalWithLocation:(long long)location length:(long long)length {
@@ -335,15 +344,31 @@ static NSString *const kIntervalTreeObjectsKey = @"objects";
     return [NSString stringWithFormat:@"[%lld, %lld)", self.location, self.limit];
 }
 
-- (void)boundsCheck {
-    assert(_location >= kMinLocation);
-    assert(_length >= 0);
-    assert(_location + _length >= 0);  // limit must be non-negative
-    if (_location > 0) {
-        assert(_location < kMaxLimit - _length);
-    } else {
-        assert(_location + _length < kMaxLimit);
+- (BOOL)isValid {
+    if (_location < kMinLocation) {
+        return NO;
     }
+    if (_length < 0) {
+        return NO;
+    }
+    if (_location + _length < 0) {
+        // limit must be non-negative
+        return NO;
+    }
+    if (_location > 0) {
+        if (_location >= kMaxLimit - _length) {
+            return NO;
+        }
+    } else {
+        if (_location + _length >= kMaxLimit) {
+            return NO;
+        }
+    }
+    return YES;
+}
+
+- (void)boundsCheck {
+    assert([self isValid]);
 }
 
 - (BOOL)isEqualToInterval:(Interval *)interval {
@@ -494,7 +519,7 @@ static NSString *const kIntervalTreeObjectsKey = @"objects";
                 id<IntervalTreeObject> object = [[[theClass alloc] initWithDictionary:objectDict] autorelease];
                 if (object) {
                     Interval *interval = [Interval intervalWithDictionary:intervalDict];
-                    if (interval.limit >= 0) {
+                    if (interval && interval.limit >= 0) {
                         [self addObject:object withInterval:interval];
                     }
                 }
@@ -775,7 +800,7 @@ static NSString *const kIntervalTreeObjectsKey = @"objects";
         return nil;
     }
     if (node.left) {
-        return [self objectsWithSmallestLimitFromNode:node.left];
+        return [self objectsWithSmallestLocationFromNode:node.left];
     }
     if (node.data) {
         IntervalTreeValue *nodeValue = (IntervalTreeValue *)node.data;
@@ -787,7 +812,7 @@ static NSString *const kIntervalTreeObjectsKey = @"objects";
             return objects;
         }
     }
-    return [self objectsWithSmallestLimitFromNode:node.right];
+    return [self objectsWithSmallestLocationFromNode:node.right];
 }
 
 - (NSArray *)objectsWithSmallestLimitFromNode:(AATreeNode *)node {
@@ -1338,17 +1363,55 @@ static NSString *const kIntervalTreeObjectsKey = @"objects";
             gen = [(id)object generation];
         }
 
-        return [subencoder encodeDictionaryWithKey:@"content"
-                                       generation:gen
-                                            block:^BOOL(id<iTermEncoderAdapter> contentEncoder) {
+        // Check if object supports split encoding (small + large content)
+        if ([object conformsToProtocol:@protocol(iTermLargeContentObject)]) {
+            id<iTermLargeContentObject> largeObj = (id)object;
+
+            // Encode small content
+            BOOL ok = [subencoder encodeDictionaryWithKey:@"content"
+                                               generation:gen
+                                                    block:^BOOL(id<iTermEncoderAdapter> contentEncoder) {
+                [contentEncoder mergeDictionary:largeObj.smallDictionaryValue];
+                return YES;
+            }];
+            if (!ok) {
+                return NO;
+            }
+
+            // Encode large content separately (computed inside block for efficiency -
+            // the block won't run if the generation is unchanged)
+            [subencoder encodeDictionaryWithKey:iTermLargeContentMetadata.largeContentKey
+                                     generation:gen
+                                          block:^BOOL(id<iTermEncoderAdapter> contentEncoder) {
+                NSDictionary *largeDict = largeObj.largeDictionaryValue;
+                if (largeDict.count == 0) {
+                    return NO;
+                }
+                [contentEncoder mergeDictionary:largeDict];
+                return YES;
+            }];
+            return YES;
+        }
+
+        // Standard encoding - use dictionaryValue
+        BOOL ok = [subencoder encodeDictionaryWithKey:@"content"
+                                           generation:gen
+                                                block:^BOOL(id<iTermEncoderAdapter> contentEncoder) {
             [contentEncoder mergeDictionary:object.dictionaryValue];
             return YES;
         }];
+        return ok;
     }];
 }
 
 - (BOOL)restoreFromGraphRecord:(NSDictionary *)dict
                         offset:(long long)offset {
+    return [self restoreFromGraphRecord:dict offset:offset largeContentProvider:nil];
+}
+
+- (BOOL)restoreFromGraphRecord:(NSDictionary *)dict
+                        offset:(long long)offset
+          largeContentProvider:(id<iTermLargeContentProvider>)provider {
     // Check if this is graph-encoded format (has "objects" key)
     NSArray *objects = dict[kIntervalTreeObjectsKey];
     if (!objects) {
@@ -1358,6 +1421,7 @@ static NSString *const kIntervalTreeObjectsKey = @"objects";
     for (NSDictionary *entry in objects) {
         NSDictionary *intervalDict = entry[kIntervalTreeIntervalKey];
         NSDictionary *contentDict = entry[@"content"];
+        NSDictionary *largeContentDict = entry[iTermLargeContentMetadata.largeContentKey];
         NSString *className = entry[kIntervalTreeClassNameKey];
 
         if (!intervalDict || !contentDict || !className) {
@@ -1371,11 +1435,35 @@ static NSString *const kIntervalTreeObjectsKey = @"objects";
         if (![theClass conformsToProtocol:@protocol(IntervalTreeObject)]) {
             continue;
         }
-        if (![theClass instancesRespondToSelector:@selector(initWithDictionary:)]) {
-            continue;
+
+        id<IntervalTreeObject> object = nil;
+
+        // Check if class supports split encoding with lazy loading
+        if ([theClass conformsToProtocol:@protocol(iTermLargeContentObject)]) {
+            NSDictionary *largeContent = nil;
+            NSDictionary *metadata = nil;
+
+            if ([iTermLargeContentMetadata isLargeContentMetadata:largeContentDict]) {
+                // Lazy loading case - pass metadata and provider
+                metadata = largeContentDict;
+            } else {
+                // Inline data or no large content
+                largeContent = largeContentDict;
+            }
+
+            object = [[(Class)theClass alloc] initWithSmallDictionary:contentDict
+                                                         largeContent:largeContent
+                                                             provider:provider
+                                                             metadata:metadata];
+            [object autorelease];
+        } else {
+            // Standard restoration
+            if (![theClass instancesRespondToSelector:@selector(initWithDictionary:)]) {
+                continue;
+            }
+            object = [[[theClass alloc] initWithDictionary:contentDict] autorelease];
         }
 
-        id<IntervalTreeObject> object = [[[theClass alloc] initWithDictionary:contentDict] autorelease];
         if (!object) {
             continue;
         }
@@ -1517,11 +1605,6 @@ static NSString *const kIntervalTreeObjectsKey = @"objects";
     return [[_source objectsWithSmallestLocationAfter:location] mapWithBlock:^id _Nullable(id<IntervalTreeImmutableObject>  _Nonnull anObject) {
         return [anObject doppelganger];
     }];
-}
-
-- (void)encodeWithGraphEncoder:(iTermGraphEncoder *)encoder
-                        offset:(long long)offset {
-    [_source encodeWithGraphEncoder:encoder offset:offset];
 }
 
 - (void)encodeWithEncoder:(id<iTermEncoderAdapter>)encoder

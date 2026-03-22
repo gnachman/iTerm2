@@ -304,7 +304,8 @@ class VT100ScreenTests: XCTestCase {
         screen.restore(from: state as? [AnyHashable : Any],
                        includeRestorationBanner: false,
                        reattached: false,
-                       isArchive: false)
+                       isArchive: false,
+                       largeContentProvider: nil)
         XCTAssertEqual(screen.compactLineDumpWithHistory()!,
                        ".....\n" +
                        "abcde\n" +
@@ -687,7 +688,8 @@ class VT100ScreenTests: XCTestCase {
         screen.restore(from: state as? [AnyHashable: Any],
                        includeRestorationBanner: false,
                        reattached: true,
-                       isArchive: false)
+                       isArchive: false,
+                       largeContentProvider: nil)
 
         screen.size = VT100GridSizeMake(77, 25)
         var notes = screen.annotations(in: VT100GridCoordRangeMake(0, 0, 80, 25))!

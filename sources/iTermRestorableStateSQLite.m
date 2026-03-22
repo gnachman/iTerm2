@@ -115,6 +115,7 @@
 @implementation iTermRestorableStateSQLite {
     iTermGraphDatabase *_db;
     NSInteger _generation;
+    BOOL _generationInitialized;
     NSURL *_url;
 }
 
@@ -145,7 +146,7 @@
         dispatch_sync(dispatch_get_main_queue(), ^{
             NSAlert *alert = [[NSAlert alloc] init];
             alert.messageText = @"Continue restoring state?";
-            alert.informativeText = @"It’s taking a long time to check the validity of the state restoration database. Keep trying to open it? Select Ok to keep waiting or Delete to lose saved windows.";
+            alert.informativeText = @"It's taking a long time to check the validity of the state restoration database. Keep trying to open it? Select Ok to keep waiting or Delete to lose saved windows.";
             [alert addButtonWithTitle:@"OK"];
             [alert addButtonWithTitle:@"Delete"];
             result = ([alert runModal] == NSAlertSecondButtonReturn);
@@ -154,6 +155,12 @@
     };
     iTermGraphDatabase *db = [[iTermGraphDatabase alloc] initWithDatabase:sqliteDb];
     _db = db;
+
+    // Initialize _generation from the loaded database as soon as it's ready.
+    // This must happen before any save to avoid generation regression.
+    [_db whenReady:^{
+        [self initializeGenerationFromRecord:self->_db.record];
+    }];
 }
 
 - (void)loadRestorableStateIndexWithCompletion:(void (^)(id<iTermRestorableStateIndex>))completion {
@@ -167,6 +174,29 @@
         completion([[iTermRestorableStateSQLiteIndex alloc] initWithGraphRecord:self->_db.record]);
         [self->_db doHousekeeping];
     }];
+}
+
+- (void)initializeGenerationFromRecord:(iTermEncoderGraphRecord *)record {
+    if (_generationInitialized) {
+        return;
+    }
+    _generationInitialized = YES;
+    if (!record) {
+        return;
+    }
+    // Get generation from the windows array container to avoid regression.
+    iTermEncoderGraphRecord *windowsRecord = [record childRecordWithKey:@"__array"
+                                                             identifier:@"windows"];
+    _generation = MAX(_generation, windowsRecord.generation);
+}
+
+- (void)initializeGenerationFromRecordSynchronously {
+    if (_generationInitialized) {
+        return;
+    }
+    // Wait for database to be ready, then initialize generation
+    [_db waitUntilReady];
+    [self initializeGenerationFromRecord:_db.record];
 }
 
 - (void)restoreWindowWithRecord:(id<iTermRestorableStateRecord>)record
@@ -226,6 +256,13 @@
     assert([NSThread isMainThread]);
 
     [self initializeDb];
+
+    // Ensure _generation is initialized from database before incrementing.
+    // This handles the case where save is triggered before restore completes.
+    if (!_generationInitialized) {
+        [self initializeGenerationFromRecordSynchronously];
+    }
+
     _generation += 1;
     const NSInteger generation = _generation;
     NSArray<NSWindow *> *windows = [self.delegate restorableStateWindows];

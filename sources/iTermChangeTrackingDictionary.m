@@ -94,6 +94,8 @@
               keyClass:(Class)keyClass
             valueClass:(Class)valueClass {
     iTermEncoderGraphRecord *root = [record childRecordWithKey:@"changeTrackingDictionary" identifier:@""];
+    // Preserve generation so unchanged state can skip re-encoding.
+    _generation = root.generation;
 
     [root.index enumerateKeysAndObjectsUsingBlock:^(iTermTuple<NSString *,NSString *> * _Nonnull key,
                                                     iTermEncoderGraphRecord * _Nonnull subrecord,

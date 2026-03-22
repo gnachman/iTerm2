@@ -79,6 +79,11 @@ typedef NS_ENUM(NSUInteger, iTermNoAuthStatus) {
 + (BOOL)isEnabled;
 + (void)reportFunctionCallError:(NSError *)error forInvocation:(NSString *)invocation origin:(NSString *)origin window:(NSWindow *)window;
 
+// Waits for the API server socket to be ready before calling the completion block.
+// The completion block is called on the main queue with YES if the socket is ready,
+// or NO if it timed out waiting.
++ (void)whenSocketReadyRunBlock:(void (^)(BOOL ready))block;
+
 - (void)postAPINotification:(ITMNotification *)notification toConnectionKey:(NSString *)connectionKey;
 
 - (void)dispatchRPCWithName:(NSString *)name

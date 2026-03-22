@@ -158,11 +158,23 @@
         @try {
             // Now recurse for their descendants.
             if (ok) {
-                ok = [self enumerateBefore:before
-                                     after:after
-                                    parent:before ? before.rowid : after.rowid
-                                      path:path
-                                     block:block];
+                // Optimization: Skip unchanged subtrees.
+                // If both before and after exist with matching rowids and generations,
+                // the entire subtree is unchanged and we don't need to recurse into it.
+                // This dramatically reduces enumeration for large trees with few changes.
+                BOOL canSkip = (before != nil &&
+                                after != nil &&
+                                before.rowid != nil &&
+                                [before.rowid isEqual:after.rowid] &&
+                                before.generation == after.generation &&
+                                after.generation != iTermGenerationAlwaysEncode);
+                if (!canSkip) {
+                    ok = [self enumerateBefore:before
+                                         after:after
+                                        parent:before ? before.rowid : after.rowid
+                                          path:path
+                                         block:block];
+                }
             }
         } @catch (NSException *exception) {
             ok = NO;

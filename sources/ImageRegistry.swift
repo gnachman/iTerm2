@@ -26,6 +26,16 @@ class MonotonicCounter: NSObject {
     @objc func advance() {
         _ = next
     }
+
+    /// Set the minimum value. If current value is already >= minimum, no change occurs.
+    /// Used to initialize from database during restoration.
+    @objc func setMinimum(_ minimum: Int) {
+        mutex.sync {
+            if _value < minimum {
+                _value = minimum
+            }
+        }
+    }
 }
 
 @objc(iTermScreenCharGeneration)

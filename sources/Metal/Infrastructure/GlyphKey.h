@@ -36,7 +36,6 @@ namespace iTerm2 {
         inline bool operator==(const GlyphKey &other) const {
             if (_repr.type != other._repr.type ||
                 _repr.typeface != other._repr.typeface ||
-                _repr.visualColumn != other._repr.visualColumn ||
                 _repr.thinStrokes != other._repr.thinStrokes) {
                 return false;
             }

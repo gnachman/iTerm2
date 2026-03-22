@@ -1788,14 +1788,16 @@ additionalWordCharacters:(NSString *)additionalWordCharacters
 - (void)restoreFromDictionary:(NSDictionary *)dictionary
      includeRestorationBanner:(BOOL)includeRestorationBanner
                    reattached:(BOOL)reattached
-                    isArchive:(BOOL)isArchive {
+                    isArchive:(BOOL)isArchive
+         largeContentProvider:(id<iTermLargeContentProvider>)largeContentProvider {
     [self performBlockWithJoinedThreads:^(VT100Terminal *terminal,
                                           VT100ScreenMutableState *mutableState,
                                           id<VT100ScreenDelegate> delegate) {
         [mutableState restoreFromDictionary:dictionary
                    includeRestorationBanner:includeRestorationBanner
                                  reattached:reattached
-                                  isArchive:isArchive];
+                                  isArchive:isArchive
+                       largeContentProvider:largeContentProvider];
     }];
 }
 

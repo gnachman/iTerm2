@@ -412,21 +412,26 @@ static NSString *const iTermAPIScriptLauncherScriptDidFailUserNotificationCallba
     entry.path = filename;
     [[iTermScriptHistory sharedInstance] addHistoryEntry:entry];
 
-    @try {
-        [self tryLaunchScript:filename
-                    arguments:arguments
-                 historyEntry:entry
-                          key:key
-               withVirtualEnv:virtualenv
-                pythonVersion:pythonVersion];
-    }
-    @catch (NSException *e) {
-        DLog(@"%@", e);
-        [[iTermScriptHistory sharedInstance] addHistoryEntry:entry];
-        [entry addOutput:[NSString stringWithFormat:@"ERROR: Failed to launch: %@", e.reason]
-              completion:^{}];
-        [self didFailToLaunchScript:filename withException:e];
-    }
+    // Wait for the API server socket to be ready before launching the script.
+    // This avoids a race condition where the script tries to connect before
+    // the server is listening. Issue 12776.
+    [iTermAPIHelper whenSocketReadyRunBlock:^(BOOL ready) {
+        @try {
+            [self tryLaunchScript:filename
+                        arguments:arguments
+                     historyEntry:entry
+                              key:key
+                   withVirtualEnv:virtualenv
+                    pythonVersion:pythonVersion];
+        }
+        @catch (NSException *e) {
+            DLog(@"%@", e);
+            [[iTermScriptHistory sharedInstance] addHistoryEntry:entry];
+            [entry addOutput:[NSString stringWithFormat:@"ERROR: Failed to launch: %@", e.reason]
+                  completion:^{}];
+            [self didFailToLaunchScript:filename withException:e];
+        }
+    }];
 }
 
 // THROWS

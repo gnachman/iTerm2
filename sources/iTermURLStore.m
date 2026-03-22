@@ -202,6 +202,8 @@ static NSString *iTermURLStoreGetParamForKey(NSString *params, NSString *key) {
     [_referenceCounts loadFromRecord:[record childRecordWithKey:@"referenceCounts" identifier:@""]
                             keyClass:[NSNumber class]
                           valueClass:[NSNumber class]];
+    // Preserve generation from the record so unchanged state can skip re-encoding.
+    _generation = record.generation;
 }
 
 - (iTermTuple<NSString *, NSString *> *)migratedKey:(id)unknownKey {

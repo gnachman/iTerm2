@@ -98,8 +98,14 @@ extern NSString *const iTermAPIServerConnectionClosed;
 // Key to the websocket connection. Valid only during delegate callbacks.
 @property (nonatomic, weak, readonly) id currentKey;
 
+// Whether the server socket is listening and ready to accept connections.
+@property (nonatomic, readonly) BOOL socketReady;
+
 - (void)postAPINotification:(ITMNotification *)notification toConnectionKey:(NSString *)connectionKey;
 - (NSString *)websocketKeyForConnectionKey:(NSString *)connectionKey;
+
+// Runs the block when the socket is ready. If already ready, runs immediately.
+- (void)whenReadyRunBlock:(void (^)(void))block;
 
 - (void)stop;
 

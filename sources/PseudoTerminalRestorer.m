@@ -45,9 +45,15 @@ NSString *const iTermWindowStateKeyGUID = @"guid";
 }
 
 - (instancetype)initWithDictionary:(NSDictionary *)arrangement {
+    return [self initWithDictionary:arrangement largeContentProvider:nil];
+}
+
+- (instancetype)initWithDictionary:(NSDictionary *)arrangement
+              largeContentProvider:(id<iTermLargeContentProvider>)provider {
     self = [super init];
     if (self) {
         _arrangement = [arrangement retain];
+        _largeContentProvider = provider;
     }
     return self;
 }

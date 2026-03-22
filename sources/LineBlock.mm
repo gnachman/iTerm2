@@ -52,6 +52,7 @@ NSString *const kLineBlockIsPartialKey = @"Is Partial";
 NSString *const kLineBlockMetadataKey = @"Metadata";
 NSString *const kLineBlockMayHaveDWCKey = @"May Have Double Width Character";
 NSString *const kLineBlockGuid = @"GUID";
+NSString *const kLineBlockGenerationKey = @"Generation";
 dispatch_queue_t gDeallocQueue;
 
 #ifdef DEBUG_SEARCH
@@ -159,6 +160,17 @@ static std::atomic<NSInteger> nextGeneration(1);
 
 NS_INLINE NSInteger iTermAllocateGeneration(void) {
     return nextGeneration.fetch_add(1, std::memory_order_relaxed);
+}
+
+// Ensure nextGeneration is at least minValue so future allocations are higher.
+static void LineBlockSetMinimumGeneration(NSInteger minValue) {
+    NSInteger expected = nextGeneration.load(std::memory_order_relaxed);
+    while (expected < minValue &&
+           !nextGeneration.compare_exchange_weak(expected, minValue,
+                                                 std::memory_order_relaxed,
+                                                 std::memory_order_relaxed)) {
+        // expected is updated by compare_exchange_weak on failure
+    }
 }
 
 NS_INLINE void iTermLineBlockDidChange(__unsafe_unretained LineBlock *lineBlock, const char * reason) {
@@ -299,9 +311,16 @@ NS_INLINE void iTermLineBlockDidChange(__unsafe_unretained LineBlock *lineBlock,
             data = dictionary[kLineBlockRawBufferV3Key];
         } else if (dictionary[kLineBlockRawBufferV2Key]) {
             data = [dictionary[kLineBlockRawBufferV2Key] migrateV2ToV3];
-            _generation = iTermAllocateGeneration();
         } else if (dictionary[kLineBlockRawBufferV1Key]) {
             data = [dictionary[kLineBlockRawBufferV1Key] migrateV1ToV3:&migrationIndex];
+        }
+        // Restore generation if present (for delta encoding optimization), otherwise allocate a new one.
+        NSNumber *savedGeneration = dictionary[kLineBlockGenerationKey];
+        if (savedGeneration) {
+            _generation = savedGeneration.integerValue;
+            // Ensure future allocations are higher than restored values.
+            LineBlockSetMinimumGeneration(_generation + 1);
+        } else {
             _generation = iTermAllocateGeneration();
         }
         if (!data || data.length / sizeof(screen_char_t) >= INT_MAX) {
@@ -2665,7 +2684,8 @@ crossBlockResultCount:(NSInteger *)crossBlockResultCount {
               kLineBlockIsPartialKey: @(is_partial),
               kLineBlockMetadataKey: [self metadataArray],
               kLineBlockMayHaveDWCKey: @(_mayHaveDoubleWidthCharacter),
-              kLineBlockGuid: _guid };
+              kLineBlockGuid: _guid,
+              kLineBlockGenerationKey: @(_generation) };
 }
 
 - (int)numberOfCharacters {
