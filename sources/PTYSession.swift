@@ -1013,12 +1013,15 @@ extension PTYSession {
 
         channelClients.add(channelClient)
         let session = newSession(forChannelID: channelClient.uid, command: command)!
+        let channelSemaphore = DispatchSemaphore(value: Int(iTermAdvancedSettingsModel.bufferDepth()))
         let iobuffer = IOBuffer(fileDescriptor: channelClient.fd,
-                                operationQueue: FileDescriptorMonitor.queue) { [weak session] in
+                                operationQueue: FileDescriptorMonitor.queue) { [weak session, channelSemaphore] in
+            guard let session else { return }
             // receive returns nil if only part of a segmented message is received.
             if var data = channelClient.mux.receive() {
+                channelSemaphore.wait()
                 data.withUnsafeMutableBytes { (ptr: UnsafeMutableRawBufferPointer) in
-                    session?.threadedReadTask(ptr.baseAddress!, length: Int32(ptr.count))
+                    session.threadedReadTask(ptr.baseAddress!, length: Int32(ptr.count), semaphore: channelSemaphore)
                 }
             }
         } writeClosure: { data in

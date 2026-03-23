@@ -9,6 +9,7 @@
 #import "TaskNotifier.h"
 #import "Coprocess.h"
 #import "DebugLogging.h"
+#import "iTermAdvancedSettingsModel.h"
 
 #include <sys/time.h>
 #include <sys/select.h>
@@ -30,6 +31,10 @@ static int unblockPipeW;
 
     // A set of NSNumber*s holding pids of tasks that need to be wait()ed on
     NSMutableSet* deadpool;
+
+    // Per-task backpressure semaphores, keyed by task identity.
+    // Created on register, removed on deregister.
+    NSMapTable<id<iTermTask>, dispatch_semaphore_t> *_backpressureSemaphores;
 }
 
 
@@ -52,6 +57,7 @@ static int unblockPipeW;
         _tasks = [[NSMutableArray alloc] init];
         tasksLock = [[NSRecursiveLock alloc] init];
         tasksChanged = NO;
+        _backpressureSemaphores = [[NSMapTable strongToStrongObjectsMapTable] retain];
 
         int unblockPipe[2];
         if (pipe(unblockPipe) != 0) {
@@ -73,6 +79,7 @@ static int unblockPipeW;
 
 - (void)dealloc {
     [_tasks release];
+    [_backpressureSemaphores release];
     [tasksLock release];
     [deadpool release];
     close(unblockPipeR);
@@ -85,6 +92,8 @@ static int unblockPipeW;
     [tasksLock lock];
     PtyTaskDebugLog(@"Add task at %p\n", (void*)task);
     [_tasks addObject:task];
+    [_backpressureSemaphores setObject:dispatch_semaphore_create([iTermAdvancedSettingsModel bufferDepth])
+                                forKey:task];
     PtyTaskDebugLog(@"There are now %lu tasks\n", (unsigned long)_tasks.count);
     tasksChanged = YES;
     PtyTaskDebugLog(@"registerTask: unlock\n");
@@ -110,6 +119,7 @@ static int unblockPipeW;
         [deadpool addObject:@([[task coprocess] pid])];
     }
     [_tasks removeObject:task];
+    [_backpressureSemaphores removeObjectForKey:task];
     tasksChanged = YES;
     PtyTaskDebugLog(@"End remove task %p. There are now %lu tasks.\n",
                     (void *)task,
@@ -141,10 +151,24 @@ void UnblockTaskNotifier(void) {
 - (BOOL)handleReadOnFileDescriptor:(int)fd task:(id<iTermTask>)task fdSet:(fd_set *)fdSet {
     if (FD_ISSET(fd, fdSet)) {
         PtyTaskDebugLog(@"run/processRead: unlock");
+        // Look up the per-task semaphore while holding the lock. Retain both the task and
+        // semaphore across the unlocked region since this is MRR code and deregisterTask:
+        // could remove them from the map while we're blocked.
+        dispatch_semaphore_t sem = [[_backpressureSemaphores objectForKey:task] retain];
+        [task retain];
         [tasksLock unlock];
+        dispatch_semaphore_wait(sem, DISPATCH_TIME_FOREVER);
+        task.currentReadSemaphore = sem;
         [task processRead];
+        // Signal if the semaphore was not consumed by the read path (e.g., brokenPipe or empty read).
+        if (task.currentReadSemaphore) {
+            dispatch_semaphore_signal(task.currentReadSemaphore);
+            task.currentReadSemaphore = nil;
+        }
         PtyTaskDebugLog(@"run/processRead: lock");
         [tasksLock lock];
+        [sem release];
+        [task release];
         if (tasksChanged) {
             PtyTaskDebugLog(@"Restart iteration\n");
             tasksChanged = NO;

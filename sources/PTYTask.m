@@ -74,6 +74,8 @@ static void HandleSigChld(int n) {
     BOOL _isTmuxTask;
 }
 
+@synthesize currentReadSemaphore = _currentReadSemaphore;
+
 - (instancetype)init {
     self = [super init];
     if (self) {
@@ -890,8 +892,11 @@ static void HandleSigChld(int n) {
     }
 
     // The delegate is responsible for parsing VT100 tokens here and sending them off to the
-    // main thread for execution. If its queues get too large, it can block.
-    [self.delegate threadedReadTask:buffer length:length];
+    // main thread for execution. The semaphore is passed downstream to TokenArray, which
+    // signals it when the batch is consumed.
+    dispatch_semaphore_t semaphore = self.currentReadSemaphore;
+    self.currentReadSemaphore = nil;
+    [self.delegate threadedReadTask:buffer length:length semaphore:semaphore];
 
     @synchronized (self) {
         if (coprocess_ && !self.sshIntegrationActive) {
