@@ -265,7 +265,6 @@ NS_INLINE void iTermLineBlockDidChange(__unsafe_unretained LineBlock *lineBlock,
             gEnableDoubleWidthCharacterLineCache = YES;
             gUseCachingNumberOfLines = YES;
         }
-        gDeallocQueue = dispatch_queue_create("com.iterm2.lineblock-dealloc", DISPATCH_QUEUE_SERIAL);
     });
     if (!_guid) {
         _guid = [[NSUUID UUID] UUIDString];

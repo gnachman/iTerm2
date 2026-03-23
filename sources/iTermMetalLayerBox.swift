@@ -169,4 +169,50 @@ extension iTermMetalLayerBox {
             return layer.nextDrawable()
         }
     }
+
+    func nextContextualizedDrawable() -> (CAMetalDrawable, LayerContext)? {
+        return metalLayer.access { layer in
+            if let drawable = layer.nextDrawable() {
+                // The access to layerContext is not a data race because it is only mutated while
+                // both metalLayer and layerContext are locked.
+                return (drawable, layerContext)
+            }
+            return nil
+        }
+    }
+}
+
+/// Helper class for acquiring Metal drawables with context validation.
+/// Created on the main thread, can be used from any thread to acquire a drawable
+/// and later validate that the layer context hasn't changed since acquisition.
+@objc class iTermDrawableAcquisitionHelper: NSObject {
+    private let box: iTermMetalLayerBox
+    private var capturedContext: iTermMetalLayerBox.LayerContext?
+
+    init(box: iTermMetalLayerBox) {
+        self.box = box
+        super.init()
+    }
+
+    /// Acquires a drawable from the Metal layer and captures the current layer context.
+    /// Can be called from any thread.
+    /// - Returns: The acquired drawable, or nil if unavailable.
+    @objc func acquireDrawable() -> CAMetalDrawable? {
+        if let tuple = box.nextContextualizedDrawable() {
+            capturedContext = tuple.1
+            return tuple.0
+        }
+        return nil
+    }
+
+    /// Checks if the layer context is still the same as when the drawable was acquired.
+    /// This should be called before presenting to ensure the drawable is still compatible
+    /// with the current view state (size, scale factor, etc.).
+    /// - Returns: true if the context matches, false if it has changed.
+    @objc func isContextStillValid() -> Bool {
+        guard let captured = capturedContext else {
+            return false
+        }
+        return captured == box.layerContext
+    }
 }

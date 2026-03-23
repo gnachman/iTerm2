@@ -32,6 +32,7 @@
 #import "BackgroundThread.h"
 #import "DebugLogging.h"
 #import "iTermAdvancedSettingsModel.h"
+#import "iTermGCD.h"
 #import "iTerm2SharedARC-Swift.h"
 #import "iTermLineBlockArray.h"
 #import "iTermMalloc.h"
@@ -383,8 +384,8 @@ static int RawNumLines(LineBuffer* buffer, int width) {
         num_wrapped_lines_cache = total_lines;
     }
     if (blocksToDealloc.count) {
-        dispatch_async(gDeallocQueue, ^{
-            // LineBlock's dealloc is surprsingly slow considering how little it does, taking over
+        dispatch_async([iTermGCD deallocQueue], ^{
+            // LineBlock's dealloc is surprisingly slow considering how little it does, taking over
             // 1% of total time in a benchmark of printing a large ascii file.
             [blocksToDealloc removeAllObjects];
         });

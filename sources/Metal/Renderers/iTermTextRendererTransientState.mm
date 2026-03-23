@@ -8,6 +8,7 @@
 #import "FutureMethods.h"
 #import "iTermTextRendererTransientState.h"
 #import "iTermTextRendererTransientState+Private.h"
+#import "iTermGCD.h"
 #import "iTermPIUArray.h"
 #import "iTermSubpixelModelBuilder.h"
 #import "iTermTexturePage.h"
@@ -44,12 +45,65 @@ static const size_t iTermNumberOfPIUArrays = iTermASCIITextureAttributesMax * 2;
     iTermPreciseTimerStats _stats[iTermTextRendererStatCount];
 }
 
-- (void)dealloc {
-    for (size_t i = 0; i < iTermPIUArraySize; i++) {
-        for (auto it = _pius[i].begin(); it != _pius[i].end(); it++) {
-            delete it->second;
+// Carrier struct for moving PIUArrays to background deallocation queue.
+// The expensive deallocation of the vectors happens when this is deleted.
+namespace {
+    struct PIUArrayDeallocCarrier {
+        iTerm2::PIUArray<iTermTextPIU> asciiArrays[iTermPIUArraySize][iTermNumberOfPIUArrays];
+        iTerm2::PIUArray<iTermTextPIU> overflowArrays[iTermPIUArraySize][iTermNumberOfPIUArrays];
+        std::vector<iTerm2::PIUArray<iTermTextPIU> *> heapArrays;
+
+        ~PIUArrayDeallocCarrier() {
+            for (auto ptr : heapArrays) {
+                delete ptr;
+            }
         }
+    };
+}
+
+- (void)dealloc {
+    // Count total PIUs to decide if background deallocation is worthwhile.
+    // The dispatch overhead isn't free, so for small amounts of data it's
+    // cheaper to just deallocate inline.
+    static const size_t kAsyncDeallocThreshold = 100;
+    size_t totalSize = 0;
+    for (size_t i = 0; i < iTermPIUArraySize && totalSize < kAsyncDeallocThreshold; i++) {
+        for (size_t j = 0; j < iTermNumberOfPIUArrays && totalSize < kAsyncDeallocThreshold; j++) {
+            totalSize += _asciiPIUArrays[i][j].size();
+            totalSize += _asciiOverflowArrays[i][j].size();
+        }
+        totalSize += _pius[i].size();
     }
+
+    if (totalSize < kAsyncDeallocThreshold) {
+        // Small amount - deallocate inline
+        for (size_t i = 0; i < iTermPIUArraySize; i++) {
+            for (auto it = _pius[i].begin(); it != _pius[i].end(); it++) {
+                delete it->second;
+            }
+        }
+        return;
+    }
+
+    // Large amount - move to carrier and delete on background queue.
+    // The move operations are O(1) pointer swaps; the expensive deallocation
+    // of the underlying vectors happens on the background queue.
+    auto *carrier = new PIUArrayDeallocCarrier();
+
+    for (size_t i = 0; i < iTermPIUArraySize; i++) {
+        for (size_t j = 0; j < iTermNumberOfPIUArrays; j++) {
+            carrier->asciiArrays[i][j] = std::move(_asciiPIUArrays[i][j]);
+            carrier->overflowArrays[i][j] = std::move(_asciiOverflowArrays[i][j]);
+        }
+        for (auto it = _pius[i].begin(); it != _pius[i].end(); it++) {
+            carrier->heapArrays.push_back(it->second);
+        }
+        _pius[i].clear();
+    }
+
+    dispatch_async([iTermGCD deallocQueue], ^{
+        delete carrier;
+    });
 }
 
 + (NSString *)formatTextPIU:(iTermTextPIU)a {

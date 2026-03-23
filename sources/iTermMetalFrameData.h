@@ -111,7 +111,7 @@ extern void iTermMetalFrameDataStatsBundleAdd(iTermPreciseTimerStats *dest, iTer
 @class iTermCellRenderConfiguration;
 @class iTermHistogram;
 
-NS_CLASS_AVAILABLE(10_11, NA)
+@class iTermDrawableAcquisitionHelper;
 @protocol iTermMetalDriverDataSourcePerFrameState;
 @class iTermMetalBufferPoolContext;
 @class iTermMetalDebugInfo;
@@ -157,7 +157,10 @@ NS_CLASS_AVAILABLE(10_11, NA)
 @property (nonatomic, strong, nullable) id<MTLCommandBuffer> commandBuffer;
 @property (nonatomic, strong, nullable) id<MTLRenderCommandEncoder> renderEncoder;
 @property (nonatomic, strong, nullable) dispatch_group_t group;  // nonnil implies synchronous
+@property (nonatomic) BOOL useSynchronizedDrawing;  // Cached value of advanced setting
 @property (nonatomic) BOOL deferCurrentDrawable;
+// Helper to acquire drawable from any thread and validate context before presentation.
+@property (nonatomic, strong, nullable) iTermDrawableAcquisitionHelper *drawableAcquisitionHelper;
 @property (nonatomic, strong, nullable) MTLCaptureDescriptor *captureDescriptor NS_AVAILABLE_MAC(10_15);
 #if ENABLE_UNFAMILIAR_TEXTURE_WORKAROUND
 @property (nonatomic) BOOL textureIsFamiliar;

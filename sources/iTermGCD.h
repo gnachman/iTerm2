@@ -55,6 +55,7 @@ NS_ASSUME_NONNULL_BEGIN
 #pragma mark - Queues
 
 + (dispatch_queue_t)mutationQueue;
++ (dispatch_queue_t)deallocQueue;
 + (BOOL)onMutationQueue;
 + (BOOL)onMainQueue;
 

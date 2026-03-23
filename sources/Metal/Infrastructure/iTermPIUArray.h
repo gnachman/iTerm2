@@ -26,6 +26,27 @@ namespace iTerm2 {
             _arrays.back().reserve(_capacity);
         }
 
+        // Move constructor - O(1) transfer of ownership
+        PIUArray(PIUArray&& other) noexcept
+            : _capacity(other._capacity), _size(other._size), _arrays(std::move(other._arrays)) {
+            other._size = 0;
+        }
+
+        // Move assignment - O(1) transfer of ownership
+        PIUArray& operator=(PIUArray&& other) noexcept {
+            if (this != &other) {
+                _capacity = other._capacity;
+                _size = other._size;
+                _arrays = std::move(other._arrays);
+                other._size = 0;
+            }
+            return *this;
+        }
+
+        // Delete copy operations to prevent accidental copies
+        PIUArray(const PIUArray&) = delete;
+        PIUArray& operator=(const PIUArray&) = delete;
+
         T *get_next() {
             if (_arrays.back().size() == _capacity) {
                 _arrays.resize(_arrays.size() + 1);
@@ -67,7 +88,7 @@ namespace iTerm2 {
         }
 
     private:
-        const size_t _capacity;
+        size_t _capacity;
         size_t _size;
         std::vector<std::vector<T>> _arrays;
     };

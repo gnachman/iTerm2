@@ -13,14 +13,6 @@
 // No code point less than this will be an emoji with a default emoji presentation.
 extern unichar iTermMinimumDefaultEmojiPresentationCodePoint;
 
-// See EastAsianWidth.txt in Unicode 6.0.
-
-// Full-width characters.
-+ (instancetype)fullWidthCharacterSetForUnicodeVersion:(NSInteger)version;
-
-// Ambiguous-width characters.
-+ (instancetype)ambiguousWidthCharacterSetForUnicodeVersion:(NSInteger)version;
-
 // Characters with the Default_Ignorable_Code_Point derived property.
 // Includes things like zero-width spaces.
 // See issue 9368.
@@ -36,13 +28,12 @@ extern unichar iTermMinimumDefaultEmojiPresentationCodePoint;
 + (NSCharacterSet *)filenameCharacterSet;
 + (NSCharacterSet *)emojiWithDefaultEmojiPresentation;
 + (NSCharacterSet *)emojiWithDefaultTextPresentation;
-+ (NSCharacterSet *)flagCharactersForUnicodeVersion:(NSInteger)version;
 + (NSCharacterSet *)modifierCharactersForcingFullWidthRendition;
 + (NSCharacterSet *)rtlSmellingCodePoints;
 + (NSCharacterSet *)strongRTLCodePoints;
 + (NSCharacterSet *)strongLTRCodePoints;
 + (NSCharacterSet *)it_unsafeForDisplayCharacters;
 + (NSCharacterSet *)it_base64Characters;
-+ (NSCharacterSet *)it_urlSafeBse64Characters;
++ (NSCharacterSet *)it_urlSafeBase64Characters;
 
 @end

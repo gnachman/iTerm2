@@ -1,16 +1,30 @@
 #!/usr/bin/env python3
-# This program downloads necessary data and prints the code to put in
-# NSCharacterSet+iTerm2.m +fullWidthCharacterSetForUnicodeVersion: and
-# +ambiguousWidthCharacterSetForUnicodeVersion:.
+# This program downloads Unicode data and updates iTermCharacterWidth.c in place.
+#
+# Usage: python3 tools/eastasian.py [unicode_version]
+#
+# Examples:
+#   python3 tools/eastasian.py          # Use latest Unicode version
+#   python3 tools/eastasian.py 16.0.0   # Use Unicode 16.0.0
 #
 # Note that ambiguous characters are unlikely ever to change again, while new
 # emoji cause the full-width set to change every year.
 #
 # See also emoji.py for generators for other code.
 import itertools
+import os
+import re
+import sys
 import requests
 
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+SOURCE_FILE = os.path.join(SCRIPT_DIR, "../sources/iTermCharacterWidth.c")
+
+# Default to latest, or specify version like "16.0.0"
+UNICODE_VERSION = sys.argv[1] if len(sys.argv) > 1 else "latest"
+
 def get_ranges(i):
+    """Convert a list of individual code points to a list of (start, end) ranges."""
     def difference(pair):
         x, y = pair
         return y - x
@@ -19,6 +33,7 @@ def get_ranges(i):
         yield b[0][1], b[-1][1]
 
 def parse(s):
+    """Parse a unicode range like '1F600..1F64F' or '1F600' into (start, count)."""
     parts = s.split("..")
     if len(parts) == 1:
         return (int(parts[0], 16), 1)
@@ -26,446 +41,183 @@ def parse(s):
     high = int(parts[1], 16)
     return (low, high - low + 1)
 
-def output(label, variable, values):
-    print("// " + label)
+def collect_ranges(values):
+    """Convert parsed values into consolidated ranges as (start, end) tuples."""
     nums = []
     for v in values:
         start, count = parse(v)
         for i in range(count):
             nums.append(start + i)
-    for r in get_ranges(nums):
-        start = r[0]
-        count = r[1] - r[0] + 1
-        print("        [%s addCharactersInRange:NSMakeRange(%s, %d)];" % (variable, hex(start), count))
-    print("")
+    nums.sort()
+    return list(get_ranges(nums))
+
+def generate_supp_ranges(var_name, ranges, unicode_version):
+    """Generate C code for supplementary plane range arrays."""
+    supp_ranges = [(s, e) for s, e in ranges if e >= 0x10000]
+
+    # Adjust start for ranges that span BMP and supplementary
+    adjusted = []
+    for s, e in supp_ranges:
+        if s < 0x10000:
+            s = 0x10000
+        adjusted.append((s, e))
+
+    lines = []
+    lines.append(f"// Generated from Unicode {unicode_version} by tools/eastasian.py")
+    lines.append(f"static const CharRange {var_name}[] = {{")
+    for s, e in adjusted:
+        lines.append(f"    {{{hex(s)}, {hex(e)}}},")
+    lines.append("};")
+    lines.append(f"static const int {var_name}Count = sizeof({var_name}) / sizeof({var_name}[0]);")
+    return "\n".join(lines)
+
+def generate_bmp_init(func_name, bitmap_var, ranges, unicode_version):
+    """Generate C code for BMP bitmap initialization function."""
+    lines = []
+    lines.append(f"// Generated from Unicode {unicode_version} by tools/eastasian.py")
+    lines.append(f"static void {func_name}(void) {{")
+    lines.append(f"    memset(&{bitmap_var}, 0, sizeof({bitmap_var}));")
+    lines.append("")
+
+    for start, end in ranges:
+        if start >= 0x10000:
+            continue
+        end = min(end, 0xffff)
+        # Use setBit for single values, setBitRange for ranges
+        if start == end:
+            lines.append(f"    setBit(&{bitmap_var}, {hex(start)});")
+        else:
+            lines.append(f"    setBitRange(&{bitmap_var}, {hex(start)}, {hex(end)});")
+
+    lines.append("}")
+    return "\n".join(lines)
 
 def download_file(url, filename):
-    """
-    Download a file from a given URL and save it locally.
-    """
+    """Download a file from a given URL and save it locally."""
+    print(f"Downloading {url}...")
     response = requests.get(url)
     with open(filename, "wb") as file:
         file.write(response.content)
 
-download_file("https://unicode.org/Public/UNIDATA/EastAsianWidth.txt", "EastAsianWidth.txt")
-f = open("EastAsianWidth.txt", "r")
-wide = []
-ambiguous = []
-for line in f:
-    if line.startswith("#"):
-        continue
-    parts = line.split(";")
-    if len(parts) < 2:
-        continue
-    prop = parts[1].strip()
-    if prop.startswith("F ") or prop.startswith("W "):
-        wide.append(parts[0])
-    elif prop.startswith("A "):
-        ambiguous.append(parts[0])
+def replace_array(content, array_name, replacement):
+    """Replace a CharRange array and its count variable, including any preceding comment."""
+    # Match optional comment line, then: static const CharRange name[] = { ... }; static const int nameCount = ...;
+    pattern = (
+        rf"(// Generated from Unicode [^\n]*\n)?"
+        rf"static const CharRange {array_name}\[\] = \{{\n"
+        rf"(.*?)"
+        rf"\}};\n"
+        rf"static const int {array_name}Count = [^;]+;"
+    )
+    match = re.search(pattern, content, re.DOTALL)
+    if not match:
+        raise ValueError(f"Could not find array: {array_name}")
+    return content[:match.start()] + replacement + content[match.end():]
 
-download_file("https://unicode.org/Public/UCD/latest/ucd/emoji/emoji-data.txt", "emoji-data.txt")
-f = open("emoji-data.txt", "r")
-ranges = []
-for line in f:
-    try:
-        i = line.index("#")
-        line = line[0:i]
-    except:
-        pass
-    parts = line.split(";")
-    if len(parts) < 2:
-        continue
-    flavor = parts[1].strip()
-    if flavor != "Emoji_Presentation":
-        continue
-    ranges.append(parts[0])
-ranges.sort()
+def replace_function(content, func_name, replacement):
+    """Replace a function definition, including any preceding comment."""
+    # First try to match with a preceding comment
+    start_pattern_with_comment = rf"// Generated from Unicode [^\n]*\nstatic void {func_name}\(void\) \{{"
+    match = re.search(start_pattern_with_comment, content)
 
-print("""
-  + (instancetype)fullWidthCharacterSetForUnicodeVersion:(NSInteger)version {
-    static NSMutableCharacterSet *sFullWidth8;
-    static NSMutableCharacterSet *sFullWidth9;
-    static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{
-        sFullWidth8 = [[NSMutableCharacterSet alloc] init];
-        [sFullWidth8 addCharactersInRange:NSMakeRange(0x1100, 0x115f - 0x1100 + 1)];
-        [sFullWidth8 addCharactersInRange:NSMakeRange(0x11a3, 0x11a7 - 0x11a3 + 1)];
-        [sFullWidth8 addCharactersInRange:NSMakeRange(0x11fa, 0x11ff - 0x11fa + 1)];
-        [sFullWidth8 addCharactersInRange:NSMakeRange(0x2329, 0x232a - 0x2329 + 1)];
-        [sFullWidth8 addCharactersInRange:NSMakeRange(0x2e80, 0x2e99 - 0x2e80 + 1)];
-        [sFullWidth8 addCharactersInRange:NSMakeRange(0x2e9b, 0x2ef3 - 0x2e9b + 1)];
-        [sFullWidth8 addCharactersInRange:NSMakeRange(0x2f00, 0x2fd5 - 0x2f00 + 1)];
-        [sFullWidth8 addCharactersInRange:NSMakeRange(0x2ff0, 0x2ffb - 0x2ff0 + 1)];
-        [sFullWidth8 addCharactersInRange:NSMakeRange(0x3000, 0x303e - 0x3000 + 1)];
-        [sFullWidth8 addCharactersInRange:NSMakeRange(0x3041, 0x3096 - 0x3041 + 1)];
-        [sFullWidth8 addCharactersInRange:NSMakeRange(0x3099, 0x30ff - 0x3099 + 1)];
-        [sFullWidth8 addCharactersInRange:NSMakeRange(0x3105, 0x312d - 0x3105 + 1)];
-        [sFullWidth8 addCharactersInRange:NSMakeRange(0x3131, 0x318e - 0x3131 + 1)];
-        [sFullWidth8 addCharactersInRange:NSMakeRange(0x3190, 0x31ba - 0x3190 + 1)];
-        [sFullWidth8 addCharactersInRange:NSMakeRange(0x31c0, 0x31e3 - 0x31c0 + 1)];
-        [sFullWidth8 addCharactersInRange:NSMakeRange(0x31f0, 0x321e - 0x31f0 + 1)];
-        [sFullWidth8 addCharactersInRange:NSMakeRange(0x3220, 0x3247 - 0x3220 + 1)];
-        [sFullWidth8 addCharactersInRange:NSMakeRange(0x3250, 0x32fe - 0x3250 + 1)];
-        [sFullWidth8 addCharactersInRange:NSMakeRange(0x3300, 0x4dbf - 0x3300 + 1)];
-        [sFullWidth8 addCharactersInRange:NSMakeRange(0x4e00, 0xa48c - 0x4e00 + 1)];
-        [sFullWidth8 addCharactersInRange:NSMakeRange(0xa490, 0xa4c6 - 0xa490 + 1)];
-        [sFullWidth8 addCharactersInRange:NSMakeRange(0xa960, 0xa97c - 0xa960 + 1)];
-        [sFullWidth8 addCharactersInRange:NSMakeRange(0xac00, 0xd7a3 - 0xac00 + 1)];
-        [sFullWidth8 addCharactersInRange:NSMakeRange(0xd7b0, 0xd7c6 - 0xd7b0 + 1)];
-        [sFullWidth8 addCharactersInRange:NSMakeRange(0xd7cb, 0xd7fb - 0xd7cb + 1)];
-        [sFullWidth8 addCharactersInRange:NSMakeRange(0xf900, 0xfaff - 0xf900 + 1)];
-        [sFullWidth8 addCharactersInRange:NSMakeRange(0xfe10, 0xfe19 - 0xfe10 + 1)];
-        [sFullWidth8 addCharactersInRange:NSMakeRange(0xfe30, 0xfe52 - 0xfe30 + 1)];
-        [sFullWidth8 addCharactersInRange:NSMakeRange(0xfe54, 0xfe66 - 0xfe54 + 1)];
-        [sFullWidth8 addCharactersInRange:NSMakeRange(0xfe68, 0xfe6b - 0xfe68 + 1)];
-        [sFullWidth8 addCharactersInRange:NSMakeRange(0xff01, 0xff60 - 0xff01 + 1)];
-        [sFullWidth8 addCharactersInRange:NSMakeRange(0xffe0, 0xffe6 - 0xffe0 + 1)];
-        [sFullWidth8 addCharactersInRange:NSMakeRange(0x1b000, 0x1b001 - 0x1b000 + 1)];
-        [sFullWidth8 addCharactersInRange:NSMakeRange(0x1f200, 0x1f202 - 0x1f200 + 1)];
-        [sFullWidth8 addCharactersInRange:NSMakeRange(0x1f210, 0x1f23a - 0x1f210 + 1)];
-        [sFullWidth8 addCharactersInRange:NSMakeRange(0x1f240, 0x1f248 - 0x1f240 + 1)];
-        [sFullWidth8 addCharactersInRange:NSMakeRange(0x1f250, 0x1f251 - 0x1f250 + 1)];
-        [sFullWidth8 addCharactersInRange:NSMakeRange(0x20000, 0x2fffd - 0x20000 + 1)];
-        [sFullWidth8 addCharactersInRange:NSMakeRange(0x30000, 0x3fffd - 0x30000 + 1)];
+    if not match:
+        # Fall back to matching without comment
+        start_pattern = rf"static void {func_name}\(void\) \{{"
+        match = re.search(start_pattern, content)
 
-        sFullWidth9 = [[NSMutableCharacterSet alloc] init];""")
-output("Wide", "sFullWidth9", wide)
-print("""
-    });
+    if not match:
+        raise ValueError(f"Could not find function: {func_name}")
 
-    if (version >= 9) {
-        return sFullWidth9;
-    } else {
-        return sFullWidth8;
-    }
-}""")
+    start = match.start()
+    # Find matching closing brace by counting braces
+    brace_count = 0
+    i = match.end() - 1  # Start at the opening brace
+    while i < len(content):
+        if content[i] == '{':
+            brace_count += 1
+        elif content[i] == '}':
+            brace_count -= 1
+            if brace_count == 0:
+                end = i + 1
+                break
+        i += 1
+    else:
+        raise ValueError(f"Could not find end of function: {func_name}")
 
-print("""
+    return content[:start] + replacement + content[end:]
 
-+ (instancetype)ambiguousWidthCharacterSetForUnicodeVersion:(NSInteger)version {
-    static NSMutableCharacterSet *sAmbiguousWidth8;
-    static NSMutableCharacterSet *sAmbiguousWidth9;
-    static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{
-        sAmbiguousWidth8 = [[NSMutableCharacterSet alloc] init];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x300, 0x36f - 0x300 + 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x391, 0x3a1 - 0x391 + 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x3b1, 0x3c1 - 0x3b1 + 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x410, 0x44f - 0x410 + 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x2160, 0x216b - 0x2160 + 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x2170, 0x2179 - 0x2170 + 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x2190, 0x2199 - 0x2190 + 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x2460, 0x24e9 - 0x2460 + 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x24eb, 0x254b - 0x24eb + 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x2550, 0x2573 - 0x2550 + 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x2580, 0x258f - 0x2580 + 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x26c4, 0x26cd - 0x26c4 + 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x26cf, 0x26e1 - 0x26cf + 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x26e8, 0x26ff - 0x26e8 + 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x2776, 0x277f - 0x2776 + 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x3248, 0x324f - 0x3248 + 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0xe000, 0xf8ff - 0xe000 + 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0xfe00, 0xfe0f - 0xfe00 + 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x1f100, 0x1f10a - 0x1f100 + 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x1f110, 0x1f12d - 0x1f110 + 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x1f130, 0x1f169 - 0x1f130 + 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x1f170, 0x1f19a - 0x1f170 + 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0xe0100, 0xe01ef - 0xe0100 + 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0xf0000, 0xffffd - 0xf0000 + 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x100000, 0x10fffd - 0x100000 + 1)];
+def main():
+    # Build URLs based on version
+    if UNICODE_VERSION == "latest":
+        eaw_url = "https://unicode.org/Public/UNIDATA/EastAsianWidth.txt"
+        emoji_url = "https://unicode.org/Public/UCD/latest/ucd/emoji/emoji-data.txt"
+    else:
+        eaw_url = f"https://unicode.org/Public/{UNICODE_VERSION}/ucd/EastAsianWidth.txt"
+        emoji_url = f"https://unicode.org/Public/{UNICODE_VERSION}/ucd/emoji/emoji-data.txt"
 
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0xa1, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0xa4, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0xa7, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0xa8, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0xaa, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0xad, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0xae, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0xb0, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0xb1, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0xb2, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0xb3, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0xb4, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0xb6, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0xb7, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0xb8, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0xb9, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0xba, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0xbc, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0xbd, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0xbe, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0xbf, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0xc6, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0xd0, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0xd7, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0xd8, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0xde, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0xdf, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0xe0, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0xe1, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0xe6, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0xe8, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0xe9, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0xea, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0xec, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0xed, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0xf0, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0xf2, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0xf3, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0xf7, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0xf8, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0xf9, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0xfa, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0xfc, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0xfe, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x101, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x111, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x113, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x11b, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x126, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x127, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x12b, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x131, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x132, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x133, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x138, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x13f, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x140, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x141, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x142, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x144, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x148, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x149, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x14a, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x14b, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x14d, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x152, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x153, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x166, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x167, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x16b, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x1ce, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x1d0, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x1d2, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x1d4, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x1d6, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x1d8, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x1da, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x1dc, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x251, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x261, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x2c4, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x2c7, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x2c9, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x2ca, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x2cb, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x2cd, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x2d0, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x2d8, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x2d9, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x2da, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x2db, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x2dd, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x2df, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x3a3, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x3a4, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x3a5, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x3a6, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x3a7, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x3a8, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x3a9, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x3c3, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x3c4, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x3c5, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x3c6, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x3c7, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x3c8, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x3c9, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x401, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x451, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x2010, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x2013, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x2014, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x2015, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x2016, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x2018, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x2019, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x201c, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x201d, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x2020, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x2021, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x2022, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x2024, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x2025, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x2026, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x2027, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x2030, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x2032, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x2033, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x2035, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x203b, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x203e, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x2074, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x207f, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x2081, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x2082, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x2083, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x2084, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x20ac, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x2103, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x2105, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x2109, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x2113, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x2116, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x2121, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x2122, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x2126, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x212b, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x2153, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x2154, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x215b, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x215c, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x215d, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x215e, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x2189, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x21b8, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x21b9, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x21d2, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x21d4, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x21e7, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x2200, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x2202, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x2203, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x2207, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x2208, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x220b, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x220f, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x2211, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x2215, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x221a, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x221d, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x221e, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x221f, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x2220, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x2223, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x2225, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x2227, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x2228, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x2229, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x222a, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x222b, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x222c, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x222e, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x2234, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x2235, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x2236, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x2237, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x223c, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x223d, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x2248, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x224c, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x2252, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x2260, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x2261, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x2264, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x2265, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x2266, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x2267, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x226a, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x226b, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x226e, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x226f, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x2282, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x2283, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x2286, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x2287, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x2295, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x2299, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x22a5, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x22bf, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x2312, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x2592, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x2593, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x2594, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x2595, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x25a0, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x25a1, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x25a3, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x25a4, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x25a5, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x25a6, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x25a7, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x25a8, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x25a9, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x25b2, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x25b3, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x25b6, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x25b7, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x25bc, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x25bd, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x25c0, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x25c1, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x25c6, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x25c7, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x25c8, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x25cb, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x25ce, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x25cf, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x25d0, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x25d1, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x25e2, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x25e3, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x25e4, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x25e5, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x25ef, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x2605, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x2606, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x2609, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x260e, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x260f, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x2614, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x2615, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x261c, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x261e, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x2640, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x2642, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x2660, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x2661, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x2663, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x2664, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x2665, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x2667, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x2668, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x2669, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x266a, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x266c, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x266d, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x266f, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x269e, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x269f, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x26be, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x26bf, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x26e3, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x273d, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x2757, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x2b55, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x2b56, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x2b57, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x2b58, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0x2b59, 1)];
-        [sAmbiguousWidth8 addCharactersInRange:NSMakeRange(0xfffd, 1)];
+    # Download Unicode data files
+    print(f"Using Unicode version: {UNICODE_VERSION}")
+    download_file(eaw_url, "/tmp/EastAsianWidth.txt")
+    download_file(emoji_url, "/tmp/emoji-data.txt")
 
-        sAmbiguousWidth9 = [[NSMutableCharacterSet alloc] init];
-""")
-output("Ambiguous", "sAmbiguousWidth9", ambiguous)
-print("""
-    });
+    # Read the version from the downloaded file
+    with open("/tmp/EastAsianWidth.txt", "r") as f:
+        first_line = f.readline().strip()
+        print(f"Downloaded: {first_line}")
 
-    if (version >= 9) {
-        return sAmbiguousWidth9;
-    } else {
-        return sAmbiguousWidth8;
-    }
-}
-""")
+    # Extract version string (e.g., "16.0.0" from "# EastAsianWidth-16.0.0.txt")
+    import re as re_module
+    version_match = re_module.search(r'EastAsianWidth-(\d+\.\d+\.\d+)\.txt', first_line)
+    unicode_version_str = version_match.group(1) if version_match else UNICODE_VERSION
 
+    # Parse EastAsianWidth.txt
+    wide = []
+    ambiguous = []
+    with open("/tmp/EastAsianWidth.txt", "r") as f:
+        for line in f:
+            if line.startswith("#"):
+                continue
+            parts = line.split(";")
+            if len(parts) < 2:
+                continue
+            prop = parts[1].strip()
+            if prop.startswith("F ") or prop.startswith("W "):
+                wide.append(parts[0])
+            elif prop.startswith("A "):
+                ambiguous.append(parts[0])
+
+    # Collect ranges
+    wide_ranges = collect_ranges(wide)
+    ambiguous_ranges = collect_ranges(ambiguous)
+
+    print(f"Found {len(wide_ranges)} full-width ranges")
+    print(f"Found {len(ambiguous_ranges)} ambiguous-width ranges")
+
+    # Read existing source file
+    with open(SOURCE_FILE, "r") as f:
+        content = f.read()
+
+    # Generate new code sections
+    new_fullwidth_supp = generate_supp_ranges("sFullWidthSupp9", wide_ranges, unicode_version_str)
+    new_ambiguous_supp = generate_supp_ranges("sAmbiguousSupp9", ambiguous_ranges, unicode_version_str)
+    new_fullwidth_init = generate_bmp_init("initFullWidth9", "sFullWidthBMP9", wide_ranges, unicode_version_str)
+    new_ambiguous_init = generate_bmp_init("initAmbiguous9", "sAmbiguousBMP9", ambiguous_ranges, unicode_version_str)
+
+    # Replace arrays and functions
+    content = replace_array(content, "sFullWidthSupp9", new_fullwidth_supp)
+    content = replace_array(content, "sAmbiguousSupp9", new_ambiguous_supp)
+    content = replace_function(content, "initFullWidth9", new_fullwidth_init)
+    content = replace_function(content, "initAmbiguous9", new_ambiguous_init)
+
+    # Write updated file
+    with open(SOURCE_FILE, "w") as f:
+        f.write(content)
+
+    print(f"Updated {SOURCE_FILE}")
+    print(f"  Full-width: {len([r for r in wide_ranges if r[0] < 0x10000])} BMP ranges, "
+          f"{len([r for r in wide_ranges if r[1] >= 0x10000])} supplementary ranges")
+    print(f"  Ambiguous: {len([r for r in ambiguous_ranges if r[0] < 0x10000])} BMP ranges, "
+          f"{len([r for r in ambiguous_ranges if r[1] >= 0x10000])} supplementary ranges")
+
+if __name__ == "__main__":
+    main()

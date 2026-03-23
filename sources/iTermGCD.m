@@ -52,6 +52,15 @@ static const char *iTermGCDMutationQueueLabel = "com.iterm2.mutation";
     return [self _mutationQueue];
 }
 
++ (dispatch_queue_t)deallocQueue {
+    static dispatch_queue_t deallocQueue;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        deallocQueue = dispatch_queue_create("com.iterm2.dealloc", DISPATCH_QUEUE_SERIAL);
+    });
+    return deallocQueue;
+}
+
 + (void)assertMainQueueSafe {
     void *addr = dispatch_get_specific(&iTermGCDMainQueueSafeKey);
     assert(addr == &iTermGCDSpecificMainQueueSafe_Yes);

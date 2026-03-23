@@ -203,6 +203,33 @@ namespace iTerm2 {
             return result;
         }
 
+        // Returns histogram with one bucket per integer value
+        std::vector<int> get_discrete_histogram(int *out_min_value) const {
+            std::vector<int> result;
+            if (_values.size() == 0) {
+                *out_min_value = 0;
+                return result;
+            }
+
+            int min_val = static_cast<int>(std::floor(_values[0]));
+            int max_val = min_val;
+            for (const double &v : _values) {
+                int iv = static_cast<int>(std::floor(v));
+                min_val = std::min(min_val, iv);
+                max_val = std::max(max_val, iv);
+            }
+
+            *out_min_value = min_val;
+            const int num_buckets = max_val - min_val + 1;
+            result.resize(num_buckets, 0);
+
+            for (const double &v : _values) {
+                int bucket = static_cast<int>(std::floor(v)) - min_val;
+                result[bucket]++;
+            }
+            return result;
+        }
+
         int weight() const { return _weight; }
     private:
         int clamp(int i, int min, int max) const {
@@ -276,6 +303,7 @@ namespace iTerm2 {
         _min = [dictionary[@"min"] doubleValue];
         _max = [dictionary[@"max"] doubleValue];
         _count = [dictionary[@"count"] longLongValue];
+        _discrete = [dictionary[@"discrete"] boolValue];
 #else
         _reservoirSize = 0;
 #endif
@@ -306,7 +334,8 @@ namespace iTerm2 {
               @"sum": @(_sum),
               @"min": @(_min),
               @"max": @(_max),
-              @"count": @(_count) };
+              @"count": @(_count),
+              @"discrete": @(_discrete) };
 #else
     return @{};
 #endif
@@ -377,6 +406,9 @@ static double iTermSaneDouble(const double d) {
 
 - (NSString *)stringValue {
 #if ENABLE_STATS
+    if (_discrete) {
+        return [self discreteStringValue];
+    }
     std::vector<int> buckets = _sampler->get_histogram();
     if (buckets.size() == 0) {
         return @"No events";
@@ -408,7 +440,8 @@ static double iTermSaneDouble(const double d) {
                                       largestCount:largestCount
                                              total:total
                                   bucketLowerBound:minimum + i * binWidth
-                                  bucketUpperBound:minimum + (i + 1) * binWidth]];
+                                  bucketUpperBound:minimum + (i + 1) * binWidth
+                                          binWidth:binWidth]];
         [string appendString:@"\n"];
     }
 
@@ -423,7 +456,41 @@ static double iTermSaneDouble(const double d) {
                                       largestCount:largestCount
                                              total:total
                                   bucketLowerBound:minimum + tailStart * binWidth
-                                  bucketUpperBound:minimum + buckets.size() * binWidth]];
+                                  bucketUpperBound:minimum + buckets.size() * binWidth
+                                          binWidth:binWidth]];
+        [string appendString:@"\n"];
+    }
+
+    const double mean = (double)_sum / (double)_count;
+    const double p50 = iTermSaneDouble(_sampler->value_for_percentile(0.5));
+    const double p95 = iTermSaneDouble(_sampler->value_for_percentile(0.95));
+
+    [string appendFormat:@"Count=%@ Sum=%@ Mean=%0.3f p_50=%0.3f p_95=%0.3f",
+     @(_count), @(_sum), mean,
+     p50,
+     p95];
+    return string;
+#else
+    return @"Stats disabled";
+#endif
+}
+
+- (NSString *)discreteStringValue {
+#if ENABLE_STATS
+    int minValue = 0;
+    std::vector<int> buckets = _sampler->get_discrete_histogram(&minValue);
+    if (buckets.size() == 0) {
+        return @"No events";
+    }
+    NSMutableString *string = [NSMutableString string];
+    const int largestCount = *std::max_element(buckets.begin(), buckets.end());
+    const int total = std::accumulate(buckets.begin(), buckets.end(), 0);
+
+    for (int i = 0; i < buckets.size(); i++) {
+        [string appendString:[self stringForDiscreteValue:minValue + i
+                                                    count:buckets[i]
+                                             largestCount:largestCount
+                                                    total:total]];
         [string appendString:@"\n"];
     }
 
@@ -555,16 +622,37 @@ static double iTermSaneDouble(const double d) {
                 largestCount:(int)maxCount
                        total:(int)total
             bucketLowerBound:(double)bucketLowerBound
-            bucketUpperBound:(double)bucketUpperBound {
+            bucketUpperBound:(double)bucketUpperBound
+                    binWidth:(double)binWidth {
     NSMutableString *stars = [NSMutableString string];
     const int n = count * iTermHistogramStringWidth / maxCount;
     for (int i = 0; i < n; i++) {
         [stars appendString:@"*"];
     }
     NSString *percent = [NSString stringWithFormat:@"%0.1f%%", 100.0 * static_cast<double>(count) / static_cast<double>(total)];
-    return [NSString stringWithFormat:@"[%12.0f, %12.0f) %8d (%6s) |%@",
+    int precision = (binWidth >= 1.0) ? 0 : (int)ceil(-log10(binWidth));
+    precision = std::min(precision, 3);
+    NSString *format = [NSString stringWithFormat:@"[%%12.%df, %%12.%df) %%8d (%%6s) |%%@", precision, precision];
+    return [NSString stringWithFormat:format,
             bucketLowerBound,
             bucketUpperBound,
+            count,
+            percent.UTF8String,
+            stars];
+}
+
+- (NSString *)stringForDiscreteValue:(int)value
+                               count:(int)count
+                        largestCount:(int)maxCount
+                               total:(int)total {
+    NSMutableString *stars = [NSMutableString string];
+    const int n = count * iTermHistogramStringWidth / maxCount;
+    for (int i = 0; i < n; i++) {
+        [stars appendString:@"*"];
+    }
+    NSString *percent = [NSString stringWithFormat:@"%0.1f%%", 100.0 * static_cast<double>(count) / static_cast<double>(total)];
+    return [NSString stringWithFormat:@"%12d %8d (%6s) |%@",
+            value,
             count,
             percent.UTF8String,
             stars];

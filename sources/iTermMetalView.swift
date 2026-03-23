@@ -417,6 +417,40 @@ extension iTermMetalView {
         _currentDrawable = fetchDrawable(timeout: timeout)
         return _currentDrawable
     }
+
+    // Returns a fresh drawable without caching. Use this when multiple frames
+    // are in flight and each needs its own drawable.
+    @objc
+    func nextDrawable(timeout: TimeInterval) -> CAMetalDrawable? {
+        return fetchDrawable(timeout: timeout)
+    }
+
+    // Creates a render pass descriptor for rendering to a specific drawable's texture.
+    // Use this with nextDrawable() when you need an RPD for a non-cached drawable.
+    @objc
+    func renderPassDescriptor(forDrawable drawable: CAMetalDrawable) -> MTLRenderPassDescriptor {
+        let descriptor = MTLRenderPassDescriptor()
+        descriptor.colorAttachments[0].texture = drawable.texture
+        descriptor.colorAttachments[0].loadAction = .clear
+        descriptor.colorAttachments[0].clearColor = clearColor
+        return descriptor
+    }
+}
+
+// MARK: - Thread-safe drawable acquisition helper
+
+@MainActor
+extension iTermMetalView {
+    /// Creates a helper object that can be used from any thread to acquire a drawable
+    /// and validate that the layer context hasn't changed before presentation.
+    /// Call this method from the main thread, then use the returned helper from any thread.
+    @objc
+    func createDrawableAcquisitionHelper() -> iTermDrawableAcquisitionHelper? {
+        guard let box = metalLayerBox else {
+            return nil
+        }
+        return iTermDrawableAcquisitionHelper(box: box)
+    }
 }
 
 // MARK: - Private Implementation Details

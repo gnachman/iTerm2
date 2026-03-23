@@ -24,6 +24,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly) double min;
 @property (nonatomic, readonly) double max;
 @property (nonatomic, readonly) NSDictionary *dictionaryValue;
+@property (nonatomic) BOOL discrete;
 
 - (void)addValue:(double)value;
 - (void)mergeFrom:(iTermHistogram *)other;

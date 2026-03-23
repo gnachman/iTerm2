@@ -465,6 +465,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (BOOL)tabCloseButtonsAlwaysVisible;
 + (BOOL)threeFingerDragSendsMouseReports;
 + (BOOL)throttleMetalConcurrentFrames;
++ (BOOL)metalSynchronizedDrawing;
 + (double)timeBetweenBlinks;
 + (double)timeBetweenTips;
 + (void)setTimeBetweenTips:(double)time;

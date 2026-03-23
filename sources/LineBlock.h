@@ -19,8 +19,6 @@ NS_ASSUME_NONNULL_BEGIN
 
 @class LineBlock;
 
-extern dispatch_queue_t _Nullable gDeallocQueue;
-
 // LineBlock represents an ordered collection of lines of text. It stores them contiguously
 // in a buffer.
 @interface LineBlock : NSObject <iTermUniquelyIdentifiable>

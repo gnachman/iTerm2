@@ -4664,6 +4664,8 @@
 		A6EB643C2D5D805500481D33 /* AIExplanationResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6EB643B2D5D804F00481D33 /* AIExplanationResponse.swift */; };
 		A6EB647E2D5E8EE400481D33 /* MessageCellView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6EB647D2D5E8EE200481D33 /* MessageCellView.swift */; };
 		A6EB64802D5E906800481D33 /* RemoteCommandExecutor.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6EB647F2D5E906500481D33 /* RemoteCommandExecutor.swift */; };
+		A6EBEC3E2F7061A6009F5D5D /* iTermCharacterWidth.c in Sources */ = {isa = PBXBuildFile; fileRef = A6EBEC3D2F7061A6009F5D5D /* iTermCharacterWidth.c */; };
+		A6EBEC3F2F7061A6009F5D5D /* iTermCharacterWidth.h in Headers */ = {isa = PBXBuildFile; fileRef = A6EBEC3C2F7061A6009F5D5D /* iTermCharacterWidth.h */; };
 		A6EC0B062C87DF5E00598D20 /* uniE0D7_Powerline_normal-left-inverse-cutout.pdf in Resources */ = {isa = PBXBuildFile; fileRef = A6EC0B042C87DF5E00598D20 /* uniE0D7_Powerline_normal-left-inverse-cutout.pdf */; };
 		A6EC0B072C87DF5E00598D20 /* uniE0D7_Powerline_normal-left-inverse-cutout.pdf in Resources */ = {isa = PBXBuildFile; fileRef = A6EC0B042C87DF5E00598D20 /* uniE0D7_Powerline_normal-left-inverse-cutout.pdf */; };
 		A6EC0B082C87DF5E00598D20 /* uniE0D7_Powerline_normal-left-inverse-cutout.pdf in Resources */ = {isa = PBXBuildFile; fileRef = A6EC0B042C87DF5E00598D20 /* uniE0D7_Powerline_normal-left-inverse-cutout.pdf */; };
@@ -8870,6 +8872,8 @@
 		A6EB643B2D5D804F00481D33 /* AIExplanationResponse.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIExplanationResponse.swift; sourceTree = "<group>"; };
 		A6EB647D2D5E8EE200481D33 /* MessageCellView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MessageCellView.swift; sourceTree = "<group>"; };
 		A6EB647F2D5E906500481D33 /* RemoteCommandExecutor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemoteCommandExecutor.swift; sourceTree = "<group>"; };
+		A6EBEC3C2F7061A6009F5D5D /* iTermCharacterWidth.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermCharacterWidth.h; sourceTree = "<group>"; };
+		A6EBEC3D2F7061A6009F5D5D /* iTermCharacterWidth.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = iTermCharacterWidth.c; sourceTree = "<group>"; };
 		A6EC0B042C87DF5E00598D20 /* uniE0D7_Powerline_normal-left-inverse-cutout.pdf */ = {isa = PBXFileReference; lastKnownFileType = image.pdf; name = "uniE0D7_Powerline_normal-left-inverse-cutout.pdf"; path = "ThirdParty/PowerlineExtraSymbols/uniE0D7_Powerline_normal-left-inverse-cutout.pdf"; sourceTree = "<group>"; };
 		A6EC0B052C87DF5E00598D20 /* uniE0D6_Powerline_normal-right-inverse-cutout.pdf */ = {isa = PBXFileReference; lastKnownFileType = image.pdf; name = "uniE0D6_Powerline_normal-right-inverse-cutout.pdf"; path = "ThirdParty/PowerlineExtraSymbols/uniE0D6_Powerline_normal-right-inverse-cutout.pdf"; sourceTree = "<group>"; };
 		A6EC0B0E2C9C9AA800598D20 /* FoldMark.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FoldMark.swift; sourceTree = "<group>"; };
@@ -11635,6 +11639,8 @@
 				A6D463E5240447AF005D073D /* iTermBackgroundColorView.m */,
 				A6E2A6192B8D619A00EC6070 /* iTermCharacterBuffer.h */,
 				A6E2A61A2B8D619A00EC6070 /* iTermCharacterBuffer.m */,
+				A6EBEC3C2F7061A6009F5D5D /* iTermCharacterWidth.h */,
+				A6EBEC3D2F7061A6009F5D5D /* iTermCharacterWidth.c */,
 				A6F1B3BA269379D000546767 /* iTermClickSideEffects.h */,
 				1D407A2714BABE8700BD5035 /* iTermController.h */,
 				E8A66F030272453F03A80106 /* iTermController.m */,
@@ -15449,6 +15455,7 @@
 				A605A2032EB2DB2A0072ED7E /* VT100ScreenProgress.h in Headers */,
 				A66719171DCE36C3000CE608 /* NSDate+iTerm.h in Headers */,
 				A6BCAAD821F6F53E0000CD29 /* iTermTextPopoverViewController.h in Headers */,
+				A6EBEC3F2F7061A6009F5D5D /* iTermCharacterWidth.h in Headers */,
 				A66719181DCE36C3000CE608 /* iTermBaseHotKey.h in Headers */,
 				A6587A4721D82B4200794775 /* iTermStandardKeyMapper.h in Headers */,
 				A6180D7821A883860073F219 /* iTermBroadcastPasswordHelper.h in Headers */,
@@ -19524,6 +19531,7 @@
 				A601F8902328B3E800EEE4DC /* iTermWeakReference.m in Sources */,
 				A640487229BFCBCB0063C34A /* SpecialExceptionsWindowController.swift in Sources */,
 				A6D10E3927F7C2BC0026DB56 /* StringProtocol+MultiCursor.swift in Sources */,
+				A6EBEC3E2F7061A6009F5D5D /* iTermCharacterWidth.c in Sources */,
 				534B6C6923DC20120031FED2 /* PasteEvent.m in Sources */,
 				A6EC0B122C9FA78600598D20 /* Interval+Additions.m in Sources */,
 				A67A500726C73EDA00281693 /* VT100Terminal.m in Sources */,

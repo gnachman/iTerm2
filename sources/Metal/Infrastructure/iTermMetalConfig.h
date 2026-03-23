@@ -9,26 +9,12 @@
 // work when enabled.
 #define ENABLE_PRIVATE_QUEUE 1
 
-// If enabled, the drawable's -present method is called on the main queue after the GPU work is
-// scheduled. This is horrible and slow but is necessary if you set presentsWithTransaction
-// to YES. That should be avoided at all costs.
-#define ENABLE_SYNCHRONOUS_PRESENTATION 0
-
 // It's not clear to me if dispatching to the main queue is actually necessary, but I'm leaving
 // this here so it's easy to switch back to doing so. It adds a ton of latency when enabled.
 #define ENABLE_DISPATCH_TO_MAIN_QUEUE_FOR_ENQUEUEING_DRAW_CALLS 0
 
 #define ENABLE_PER_FRAME_METAL_STATS 0
 #define ENABLE_STATS 1
-
-//I've had to disable this feature because it appears to tickle a race condition. It dies saying:
-//"[CAMetalLayerDrawable texture] should not be called after already presenting this drawable. Get a nextDrawable instead"
-//That gets logged when accessing the texture immediately after getting a drawable and before it
-//has been presented. However, that drawable gets touched in two different threads at different
-// points in time, and another drawable gets presented at about the same time in a different thread.
-// So my theory is that iTermMetalView.currentDrawable can be used in a thread besides the main thread but
-// it always has to be the *same* thread.
-#define ENABLE_DEFER_CURRENT_DRAWABLE 0
 
 // This is not 100% baked, but since the OS appears to be busted I'm not going to invest
 // any more in it. If I ever do figure this out, I need to test the blending modes for various
