@@ -205,6 +205,10 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 
 // Regular expression for finding URLs for Edit>Find>Find URLs
 + (NSString *)findUrlsRegex;
+
+// When finding URLs, extend results across soft boundaries (like tmux pane dividers)
++ (BOOL)findURLsRespectsSoftBoundaries;
+
 + (BOOL)fixMouseWheel;
 + (NSString *)fontsForGenerousRounding;
 + (BOOL)focusNewSplitPaneWithFocusFollowsMouse;

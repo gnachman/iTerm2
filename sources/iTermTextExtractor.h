@@ -52,6 +52,9 @@ extern const NSInteger kLongMaximumWordLength;
 - (instancetype)initWithDataSource:(id<iTermTextDataSource>)dataSource;
 - (void)restrictToLogicalWindowIncludingCoord:(VT100GridCoord)coord;
 
+// Returns YES if the character at coord is a column divider character (|, │, ├, ┤).
+- (BOOL)characterAtCoordIsColumnDivider:(VT100GridCoord)coord;
+
 // Returns the range of a word (string of characters belonging to the same class) at a location. If
 // there is a paren or paren-like character at location, it tries to return the range of the
 // parenthetical, even if there are mixed classes. Returns (-1, -1, -1, -1) if location is out of

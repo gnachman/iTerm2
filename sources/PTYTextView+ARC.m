@@ -2748,6 +2748,9 @@ toggleAnimationOfImage:(id<iTermImageInfoReading>)imageInfo {
     if (results.count == 0) {
         return;
     }
+    if ([iTermAdvancedSettingsModel findURLsRespectsSoftBoundaries]) {
+        [self extendURLSearchResultsAcrossSoftBoundaries:results];
+    }
     [results sortUsingComparator:^NSComparisonResult(SearchResult *lhs, SearchResult *rhs) {
         if (lhs.internalAbsStartY == rhs.internalAbsStartY) {
             return [@(lhs.internalStartX) compare:@(rhs.internalStartX)];

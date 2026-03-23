@@ -281,11 +281,29 @@ NS_INLINE void iTermLineBlockDidChange(__unsafe_unretained LineBlock *lineBlock,
 
 + (instancetype)blockWithDictionary:(NSDictionary *)dictionary
                 absoluteBlockNumber:(long long)absoluteBlockNumber {
-    return [[self alloc] initWithDictionary:dictionary absoluteBlockNumber:absoluteBlockNumber];
+    return [[self alloc] initWithDictionary:dictionary
+                        absoluteBlockNumber:absoluteBlockNumber
+                         fallbackGeneration:nil];
+}
+
++ (instancetype)blockWithDictionary:(NSDictionary *)dictionary
+                absoluteBlockNumber:(long long)absoluteBlockNumber
+                 fallbackGeneration:(NSNumber *)fallbackGeneration {
+    return [[self alloc] initWithDictionary:dictionary
+                        absoluteBlockNumber:absoluteBlockNumber
+                         fallbackGeneration:fallbackGeneration];
 }
 
 - (instancetype)initWithDictionary:(NSDictionary *)dictionary
                absoluteBlockNumber:(long long)absoluteBlockNumber {
+    return [self initWithDictionary:dictionary
+                absoluteBlockNumber:absoluteBlockNumber
+                 fallbackGeneration:nil];
+}
+
+- (instancetype)initWithDictionary:(NSDictionary *)dictionary
+               absoluteBlockNumber:(long long)absoluteBlockNumber
+                fallbackGeneration:(NSNumber *)fallbackGeneration {
     self = [super init];
     if (self) {
         _absoluteBlockNumber = absoluteBlockNumber;
@@ -314,8 +332,10 @@ NS_INLINE void iTermLineBlockDidChange(__unsafe_unretained LineBlock *lineBlock,
         } else if (dictionary[kLineBlockRawBufferV1Key]) {
             data = [dictionary[kLineBlockRawBufferV1Key] migrateV1ToV3:&migrationIndex];
         }
-        // Restore generation if present (for delta encoding optimization), otherwise allocate a new one.
-        NSNumber *savedGeneration = dictionary[kLineBlockGenerationKey];
+        // Restore generation if present (for delta encoding optimization).
+        // If not present, use the fallback (from the wrapper record's generation).
+        // If no fallback, allocate a new one.
+        NSNumber *savedGeneration = dictionary[kLineBlockGenerationKey] ?: fallbackGeneration;
         if (savedGeneration) {
             _generation = savedGeneration.integerValue;
             // Ensure future allocations are higher than restored values.
