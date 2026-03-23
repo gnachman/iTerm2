@@ -194,7 +194,8 @@ extension TailFindController {
                              multipleResults: true,
                              absLineRange: delegate.tailFindControllerFindOnPageHelper().absLineRange,
                              forceMainScreen: false,
-                             startPosition: start)
+                             startPosition: start,
+                             extendResultsAcrossSoftBoundaries: false)
         continueTailFind()
         return true
     }

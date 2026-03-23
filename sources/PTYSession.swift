@@ -1082,7 +1082,8 @@ extension PTYSession {
                                           Int(visibleLines.length))
         var indexes = IndexSet(integersIn: Range(visibleAbsLines)!)
         findDriver?.closeViewAndDoTemporarySearch(for: regex,
-                                                  mode: .caseSensitiveRegex) { [weak self] linesSearched in
+                                                  mode: .caseSensitiveRegex,
+                                                  extendResultsAcrossSoftBoundaries: false) { [weak self] linesSearched in
             guard let textview = self?.textview, !done else {
                 return
             }

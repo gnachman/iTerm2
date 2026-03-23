@@ -3336,6 +3336,7 @@ ITERM_WEAKLY_REFERENCEABLE
     const BOOL browser = session.isBrowserSession;
     [findDriver closeViewAndDoTemporarySearchForString:regex
                                                   mode:iTermFindModeCaseSensitiveRegex
+                    extendResultsAcrossSoftBoundaries:[iTermAdvancedSettingsModel findURLsRespectsSoftBoundaries]
                                               progress:^(NSRange linesSearched) {
         if (browser) {
             if (linesSearched.location == linesSearched.length) {

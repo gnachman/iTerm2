@@ -294,7 +294,7 @@ extern const CGFloat PTYTextViewMarginClickGraceWidth;
 - (void)textViewDidAddOrRemovePorthole;
 - (NSString *)textViewCurrentSSHSessionName;
 - (void)textViewDisconnectSSH;
-- (void)textViewShowFindIndicator:(VT100GridCoordRange)range;
+- (void)textViewShowFindIndicator:(VT100GridWindowedRange)range;
 - (void)textViewOpen:(NSString *)string
     workingDirectory:(NSString *)folder
           remoteHost:(id<VT100RemoteHostReading>)remoteHost;
@@ -667,12 +667,13 @@ typedef void (^PTYTextViewDrawingHookBlock)(iTermTextDrawingHelper *);
 - (void)printContent:(id)aString;
 
 // Begins a new search. You may need to call continueFind repeatedly after this.
-- (void)findString:(NSString*)aString
+- (void)findString:(NSString *)aString
   forwardDirection:(BOOL)direction
-      mode:(iTermFindMode)mode
+              mode:(iTermFindMode)mode
         withOffset:(int)offset
 scrollToFirstResult:(BOOL)scrollToFirstResult
-             force:(BOOL)force;
+             force:(BOOL)force
+extendResultsAcrossSoftBoundaries:(BOOL)extendResultsAcrossSoftBoundaries;
 
 // Remove highlighted terms from previous search.
 // If resetContext is set then the search state will get reset to empty.

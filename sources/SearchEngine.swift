@@ -35,6 +35,7 @@ class iTermSearchRequest: NSObject {
     private var startPosition: LineBufferPosition?
     private var absLineRange: Range<Int64>?
     private var maxQueueSize: Int?
+    private var extendResultsAcrossSoftBoundaries: Bool = false
 
     @objc
     init(query: String,
@@ -119,7 +120,8 @@ class iTermSearchRequest: NSObject {
             initialStart: initialStart,
             offset: offset,
             startPosition: safeStartPosition,
-            maxQueueSize: maxQueueSize)
+            maxQueueSize: maxQueueSize,
+            extendResultsAcrossSoftBoundaries: extendResultsAcrossSoftBoundaries)
     }
 
     @nonobjc
@@ -144,6 +146,10 @@ class iTermSearchRequest: NSObject {
     @objc
     func setMaxQueueSize(_ maxSize: Int) {
         self.maxQueueSize = maxSize
+    }
+
+    func setExtendResultsAcrossSoftBoundaries() {
+        self.extendResultsAcrossSoftBoundaries = true
     }
 }
 
@@ -245,6 +251,10 @@ struct SearchRequest: CustomDebugStringConvertible {
 
     // Limits the number of results outstanding. Useful to avoid blocking the main queue when doing so is slow.
     var maxQueueSize: Int?
+
+    // When true, extend results that end at a soft boundary (e.g., tmux pane divider)
+    // to include continuation on subsequent lines.
+    var extendResultsAcrossSoftBoundaries: Bool = false
 }
 
 fileprivate extension SearchRequest {
@@ -918,6 +928,17 @@ class SearchOperation: Pausable {
             return result
         }
         SELog("handleMatches conveted \(allPositions.count) XYRanges to \(searchResults.count) SearchResults from \(String(describing: allPositions.first))->\(String(describing: searchResults.first)) to \(String(describing: allPositions.last))->\(String(describing: searchResults.last))")
+
+        if request.extendResultsAcrossSoftBoundaries,
+           let regex = try? NSRegularExpression(pattern: request.query, options: []) {
+            for result in searchResults {
+                SearchResultSoftBoundaryExtender.extend(
+                    result: result,
+                    dataSource: snapshot,
+                    regex: regex)
+            }
+        }
+
         if !request.wantMultipleResults && !searchResults.isEmpty {
             context.reset()
             resultQueue.produce(SearchEngineOutput(results: searchResults,
@@ -1317,7 +1338,7 @@ class iTermSearchEngine: NSObject, Pausable {
 @objc
 extension iTermSearchEngine {
     // This is the old, deprecated interface. Use search(_:) instead.
-    @objc(setFindString:forwardDirection:mode:startingAtX:startingAtY:withOffset:multipleResults:absLineRange:forceMainScreen:startPosition:)
+    @objc(setFindString:forwardDirection:mode:startingAtX:startingAtY:withOffset:multipleResults:absLineRange:forceMainScreen:startPosition:extendResultsAcrossSoftBoundaries:)
     func setFind(_ aString: String,
                  forwardDirection direction: Bool,
                  mode: iTermFindMode,
@@ -1327,7 +1348,8 @@ extension iTermSearchEngine {
                  multipleResults: Bool,
                  absLineRange: NSRange,
                  forceMainScreen: Bool,
-                 startPosition: LineBufferPosition?) {
+                 startPosition: LineBufferPosition?,
+                 extendResultsAcrossSoftBoundaries: Bool) {
         SELog("setFindString:\(aString) direction:\(direction) mode:\(mode) starttingAtX:\(x) startingAtY:\(startY) withOffset:\(offset) multipleResults:\(multipleResults) absLineRange:\(absLineRange) forceMainScreen:\(forceMainScreen) startPosition:\(String(describing: startPosition))")
         guard dataSource != nil else {
             lastStartPosition = nil
@@ -1355,6 +1377,9 @@ extension iTermSearchEngine {
                                          startPosition: startPosition)
         if absLineRange.length > 0 {
             builder.setAbsLineRange(absLineRange)
+        }
+        if extendResultsAcrossSoftBoundaries {
+            builder.setExtendResultsAcrossSoftBoundaries()
         }
 
         return search(builder)

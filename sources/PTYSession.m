@@ -7616,9 +7616,10 @@ DLog(args); \
               mode:(iTermFindMode)mode
         withOffset:(int)offset
 scrollToFirstResult:(BOOL)scrollToFirstResult
-             force:(BOOL)force {
+             force:(BOOL)force
+extendResultsAcrossSoftBoundaries:(BOOL)extendResultsAcrossSoftBoundaries {
     DLog(@"self=%@ aString=%@", self, aString);
-    
+
     // Check if we're in browser mode
     if ([_view isBrowser]) {
         [self browserFindString:aString
@@ -7629,13 +7630,14 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
                           force:force];
         return;
     }
-    
+
     [_textview findString:aString
          forwardDirection:direction
                      mode:mode
                withOffset:offset
       scrollToFirstResult:scrollToFirstResult
-                    force:force];
+                    force:force
+  extendResultsAcrossSoftBoundaries:extendResultsAcrossSoftBoundaries];
 }
 
 - (NSString *)unpaddedSelectedText {
@@ -13274,7 +13276,8 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     }];
 }
 
-- (void)textViewShowFindIndicator:(VT100GridCoordRange)range {
+- (void)textViewShowFindIndicator:(VT100GridWindowedRange)windowedRange {
+    VT100GridCoordRange range = windowedRange.coordRange;
     DLog(@"begin %@", VT100GridCoordRangeDescription(range));
     VT100GridCoordRange visibleRange = range;
     VT100GridRange visibleLines = _textview.rangeOfVisibleLines;
@@ -13293,8 +13296,9 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     int minX = visibleRange.start.x;
     int maxX = visibleRange.end.x;
     if (visibleRange.start.y != visibleRange.end.y) {
-        minX = 0;
-        maxX = _screen.width;
+        const BOOL hasWindow = windowedRange.columnWindow.length > 0;
+        minX = hasWindow ? windowedRange.columnWindow.location : 0;
+        maxX = hasWindow ? (windowedRange.columnWindow.location + windowedRange.columnWindow.length) : _screen.width;
     }
     const int hmargin = [iTermPreferences intForKey:kPreferenceKeySideMargins];
     const int vmargin = [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins];

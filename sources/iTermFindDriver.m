@@ -28,6 +28,7 @@ static NSString *gSearchString;
 @property(nonatomic, assign) iTermFindMode mode;
 @property(nonatomic, copy) NSString *string;
 @property(nonatomic, copy) void (^progress)(NSRange);
+@property(nonatomic, assign) BOOL extendResultsAcrossSoftBoundaries;
 @end
 
 @implementation FindState
@@ -218,6 +219,7 @@ static NSString *gSearchString;
 
 - (void)closeViewAndDoTemporarySearchForString:(NSString *)string
                                           mode:(iTermFindMode)mode
+            extendResultsAcrossSoftBoundaries:(BOOL)extendResultsAcrossSoftBoundaries
                                       progress:(void (^)(NSRange linesSearched))progress {
     DLog(@"begin %@", self);
     [_viewController close];
@@ -227,6 +229,7 @@ static NSString *gSearchString;
     _state.mode = mode;
     _state.string = string;
     _state.progress = progress;
+    _state.extendResultsAcrossSoftBoundaries = extendResultsAcrossSoftBoundaries;
     _viewController.findString = string;
     DLog(@"delegate=%@ state=%@ state.mode=%@ state.string=%@", self.delegate, _state, @(_state.mode), _state.string);
     [self.delegate findViewControllerClearSearch];
@@ -256,7 +259,8 @@ static NSString *gSearchString;
                    mode:_state.mode
              withOffset:-1
     scrollToFirstResult:NO
-                  force:YES];
+                  force:YES
+    extendResultsAcrossSoftBoundaries:NO];
 }
 
 - (void)refreshSearchResultsForQuery:(NSString *)string mode:(iTermFindMode)mode {
@@ -274,7 +278,8 @@ static NSString *gSearchString;
                    mode:mode
              withOffset:-1
     scrollToFirstResult:YES
-                  force:YES];
+                  force:YES
+    extendResultsAcrossSoftBoundaries:NO];
 }
 
 - (void)bottomUpPerformFindPanelAction:(id)sender {
@@ -418,7 +423,8 @@ static NSString *gSearchString;
                    mode:_state.mode
              withOffset:-1
     scrollToFirstResult:NO
-                  force:NO];
+                  force:NO
+    extendResultsAcrossSoftBoundaries:NO];
 }
 
 - (NSInteger)numberOfResults {
@@ -594,7 +600,8 @@ static NSString *gSearchString;
                  mode:(iTermFindMode)mode
            withOffset:(int)offset
   scrollToFirstResult:(BOOL)scrollToFirstResult
-                force:(BOOL)force {
+                force:(BOOL)force
+extendResultsAcrossSoftBoundaries:(BOOL)extendResultsAcrossSoftBoundaries {
     DLog(@"begin self=%@ subString=%@ direction=%@ mode=%@ offset=%@ scrollToFirstResult=%@",
          self, subString, @(direction), @(mode), @(offset), @(scrollToFirstResult));
     BOOL ok = NO;
@@ -609,7 +616,8 @@ static NSString *gSearchString;
                              mode:mode
                        withOffset:offset
               scrollToFirstResult:scrollToFirstResult
-                            force:force];
+                            force:force
+  extendResultsAcrossSoftBoundaries:extendResultsAcrossSoftBoundaries];
             ok = YES;
         }
     }
@@ -645,7 +653,8 @@ static NSString *gSearchString;
                    mode:_state.mode
              withOffset:1
     scrollToFirstResult:YES
-                  force:NO];
+                  force:NO
+    extendResultsAcrossSoftBoundaries:_state.extendResultsAcrossSoftBoundaries];
 }
 
 - (void)searchPrevious {
@@ -655,7 +664,8 @@ static NSString *gSearchString;
                    mode:_state.mode
              withOffset:1
     scrollToFirstResult:YES
-                  force:NO];
+                  force:NO
+    extendResultsAcrossSoftBoundaries:_state.extendResultsAcrossSoftBoundaries];
 }
 
 - (void)enterPressedWithShift:(BOOL)shiftPressed {
@@ -720,7 +730,8 @@ static NSString *gSearchString;
                    mode:_state.mode
              withOffset:-1
     scrollToFirstResult:YES
-                  force:NO];
+                  force:NO
+    extendResultsAcrossSoftBoundaries:_state.extendResultsAcrossSoftBoundaries];
 }
 
 - (NSArray<NSString *> *)completionsForText:(NSString *)text

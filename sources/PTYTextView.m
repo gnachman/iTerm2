@@ -5088,22 +5088,28 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
     return extractor;
 }
 
-- (void)findOnPageSelectRange:(VT100GridCoordRange)logicalRange wrapped:(BOOL)wrapped {
+- (void)findOnPageSelectRange:(VT100GridCoordRange)logicalRange
+                logicalWindow:(VT100GridRange)logicalWindow
+                      wrapped:(BOOL)wrapped {
     VT100GridCoordRange range = [self.bidiExtractor visualRangeForLogical:logicalRange];
-    [self selectCoordRange:range];
-    VT100GridAbsCoordRange absRange = VT100GridAbsCoordRangeFromCoordRange(range, _dataSource.totalScrollbackOverflow);
+    const VT100GridWindowedRange windowedRange = VT100GridWindowedRangeMake(range,
+                                                                            logicalWindow.location,
+                                                                            logicalWindow.length);
+    if (logicalWindow.length > 0) {
+        VT100GridAbsWindowedRange absWindowedRange =
+            VT100GridAbsWindowedRangeFromRelative(windowedRange,
+                                                  _dataSource.totalScrollbackOverflow);
+        [self selectAbsWindowedCoordRange:absWindowedRange];
+    } else {
+        [self selectCoordRange:range];
+    }
     // Let the scrollview scroll if needs to before showing the find indicator.
     dispatch_async(dispatch_get_main_queue(), ^{
-        [self showFindIndicator:absRange];
+        [self.delegate textViewShowFindIndicator:windowedRange];
     });
     if (!wrapped) {
         [self requestDelegateRedraw];
     }
-}
-
-- (void)showFindIndicator:(VT100GridAbsCoordRange)absRange {
-    VT100GridCoordRange range = VT100GridCoordRangeFromAbsCoordRange(absRange, _dataSource.totalScrollbackOverflow);
-    [self.delegate textViewShowFindIndicator:range];
 }
 
 - (VT100GridCoordRange)findOnPageSelectExternalResult:(iTermExternalSearchResult *)result {
@@ -5158,7 +5164,8 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
               mode:(iTermFindMode)mode
         withOffset:(int)offset
 scrollToFirstResult:(BOOL)scrollToFirstResult
-             force:(BOOL)force {
+             force:(BOOL)force
+extendResultsAcrossSoftBoundaries:(BOOL)extendResultsAcrossSoftBoundaries {
     DLog(@"begin self=%@ aString=%@", self, aString);
     [_findOnPageHelper findString:aString
                  forwardDirection:direction
@@ -5168,7 +5175,8 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
                     numberOfLines:_dataSource.numberOfLines
           totalScrollbackOverflow:_dataSource.totalScrollbackOverflow
               scrollToFirstResult:scrollToFirstResult
-                            force:force];
+                            force:force
+  extendResultsAcrossSoftBoundaries:extendResultsAcrossSoftBoundaries];
 }
 
 - (void)clearHighlights:(BOOL)resetContext {

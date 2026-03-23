@@ -20,8 +20,11 @@
 
 @protocol iTermFindOnPageHelperDelegate <NSObject>
 
-// Select a range.
-- (void)findOnPageSelectRange:(VT100GridCoordRange)range wrapped:(BOOL)wrapped;
+// Select a range. logicalWindow with nonzero length restricts selection to columns within
+// that range (for results that span soft boundaries like tmux pane dividers).
+- (void)findOnPageSelectRange:(VT100GridCoordRange)range
+                logicalWindow:(VT100GridRange)logicalWindow
+                      wrapped:(BOOL)wrapped;
 - (VT100GridCoordRange)findOnPageSelectExternalResult:(iTermExternalSearchResult *)result;
 
 // Show that the search wrapped.
@@ -67,6 +70,7 @@ typedef NS_ENUM(NSUInteger, FindCursorType) {
 @property(nonatomic, readonly) iTermOrderedSet<SearchResult *> *searchResults;
 @property(nonatomic, readonly) NSInteger numberOfSearchResults;
 @property(nonatomic, readonly) NSInteger currentIndex;
+@property(nonatomic, readonly, nullable) SearchResult *selectedResult;
 // This is used to select which search result should be highlighted. If searching forward, it'll
 // be after the find cursor; if searching backward it will be before the find cursor.
 @property(nonatomic, readonly) FindCursor *findCursor;
@@ -94,7 +98,8 @@ typedef NS_ENUM(NSUInteger, FindCursorType) {
      numberOfLines:(int)numberOfLines
 totalScrollbackOverflow:(long long)totalScrollbackOverflow
 scrollToFirstResult:(BOOL)scrollToFirstResult
-              force:(BOOL)force;
+              force:(BOOL)force
+extendResultsAcrossSoftBoundaries:(BOOL)extendResultsAcrossSoftBoundaries;
 
 // Remove all highlight data.
 - (void)clearHighlights;

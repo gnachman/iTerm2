@@ -2748,9 +2748,6 @@ toggleAnimationOfImage:(id<iTermImageInfoReading>)imageInfo {
     if (results.count == 0) {
         return;
     }
-    if ([iTermAdvancedSettingsModel findURLsRespectsSoftBoundaries]) {
-        [self extendURLSearchResultsAcrossSoftBoundaries:results];
-    }
     [results sortUsingComparator:^NSComparisonResult(SearchResult *lhs, SearchResult *rhs) {
         if (lhs.internalAbsStartY == rhs.internalAbsStartY) {
             return [@(lhs.internalStartX) compare:@(rhs.internalStartX)];
@@ -2768,7 +2765,9 @@ toggleAnimationOfImage:(id<iTermImageInfoReading>)imageInfo {
     for (SearchResult *result in results) {
         VT100GridCoordRange range = VT100GridCoordRangeFromAbsCoordRange(result.internalAbsCoordRange,
                                                                          self.dataSource.totalScrollbackOverflow);
-        VT100GridWindowedRange windowedRange = VT100GridWindowedRangeMake(range, 0, 0);
+        VT100GridWindowedRange windowedRange = VT100GridWindowedRangeMake(range,
+                                                                          result.logicalWindow.location,
+                                                                          result.logicalWindow.length);
         NSString *content = [extractor contentInRange:windowedRange
                                     attributeProvider:nil
                                            nullPolicy:kiTermTextExtractorNullPolicyTreatAsSpace

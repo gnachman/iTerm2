@@ -156,8 +156,9 @@ typedef struct {
       searchEngine:(iTermSearchEngine *)searchEngine
      numberOfLines:(int)numberOfLines
     totalScrollbackOverflow:(long long)totalScrollbackOverflow
-scrollToFirstResult:(BOOL)scrollToFirstResult 
-             force:(BOOL)force {
+scrollToFirstResult:(BOOL)scrollToFirstResult
+             force:(BOOL)force
+extendResultsAcrossSoftBoundaries:(BOOL)extendResultsAcrossSoftBoundaries {
     DLog(@"Initialize search for %@ dir=%@ offset=%@", aString, direction > 0 ? @"forwards" : @"backwards", @(offset));
     _searchingForward = direction;
     _findOffset = offset;
@@ -216,7 +217,8 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
                     multipleResults:YES
                        absLineRange:self.absLineRange
                     forceMainScreen:NO
-                      startPosition:nil];
+                      startPosition:nil
+    extendResultsAcrossSoftBoundaries:extendResultsAcrossSoftBoundaries];
         _searchEngine = searchEngine;
         _findInProgress = YES;
 
@@ -345,34 +347,34 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
 
     // Update highlights.
     if (!searchResult.isExternal) {
+        // When the result has a logical window (from soft boundary extension),
+        // use its bounds for wrapping. Otherwise use the full terminal width.
+        const BOOL hasLogicalWindow = searchResult.logicalWindow.length > 0;
+        const int windowStart = hasLogicalWindow ? searchResult.logicalWindow.location : 0;
+        const int windowEnd = hasLogicalWindow ? (searchResult.logicalWindow.location + searchResult.logicalWindow.length) : width;
+
         for (long long y = searchResult.internalAbsStartY; y <= searchResult.internalAbsEndY; y++) {
-            NSNumber* key = @(y);
+            NSNumber *key = @(y);
             NSMutableData *data = _highlightMap[key];
-            BOOL set = NO;
             if (!data) {
                 data = [NSMutableData dataWithLength:(width / 8 + 1)];
-                char* b = [data mutableBytes];
-                memset(b, 0, (width / 8) + 1);
-                set = YES;
+                _highlightMap[key] = data;
             }
-            char* b = [data mutableBytes];
-            int lineEndX = MIN(searchResult.internalEndX + 1, width);
+            char *b = [data mutableBytes];
             int lineStartX = searchResult.internalStartX;
+            int lineEndX = MIN(searchResult.internalEndX + 1, width);
             if (searchResult.internalAbsEndY > y) {
-                lineEndX = width;
+                lineEndX = MIN(windowEnd, width);
             }
             if (y > searchResult.internalAbsStartY) {
-                lineStartX = 0;
+                lineStartX = windowStart;
             }
             for (int i = lineStartX; i < lineEndX; i++) {
-                const int byteIndex = i/8;
+                const int byteIndex = i / 8;
                 const int bit = 1 << (i & 7);
                 if (byteIndex < [data length]) {
                     b[byteIndex] |= bit;
                 }
-            }
-            if (set) {
-                _highlightMap[key] = data;
             }
         }
     }
@@ -506,7 +508,9 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
                                             r.internalEndX + 1,  // half-open
                                             MAX(0, r.internalAbsEndY - overflowAdjustment));
                 external = nil;
-                [_delegate findOnPageSelectRange:selectedRange wrapped:NO];
+                [_delegate findOnPageSelectRange:selectedRange
+                               logicalWindow:r.logicalWindow
+                                     wrapped:NO];
             }
         } else if (!_haveRevealedSearchResult) {
             if (!r.isExternal || r.externalResult.isVisible) {  // Don't wrap around to invisible result
@@ -541,7 +545,9 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
                                         wrapAroundResult.internalEndX + 1,  // half-open
                                         MAX(0, wrapAroundResult.internalAbsEndY - overflowAdjustment));
             external = nil;
-            [_delegate findOnPageSelectRange:selectedRange wrapped:YES];
+            [_delegate findOnPageSelectRange:selectedRange
+                           logicalWindow:wrapAroundResult.logicalWindow
+                                 wrapped:YES];
         }
         [_delegate findOnPageDidWrapForwards:forward];
     }
