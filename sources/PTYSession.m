@@ -20883,14 +20883,6 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
 
     NSString *domain = url.host;
     iTermAPIHelper *apiHelper = [iTermAPIHelper sharedInstanceIfEnabled];
-
-    // 4. Check if already approved
-    if ([apiHelper isDomainApprovedForLoadURL:domain connectionKey:connectionKey]) {
-        [self performLoadURL:url completion:completion];
-        return;
-    }
-
-    // 5. Show confirmation dialog
     iTermScriptHistoryEntry *entry = [apiHelper scriptHistoryEntryForConnectionKey:connectionKey];
     NSString *scriptName = entry.name ?: @"A script";
 
@@ -20898,24 +20890,22 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
         @"%@ wants to load a URL in this browser session.", scriptName];
     NSString *title = [NSString stringWithFormat:
         @"Allow loading URLs from %@?", domain];
+    NSString *identifier = [@"NoSyncLoadURLAllowed_" stringByAppendingString:domain];
 
     [iTermWarning asyncShowWarningWithTitle:title
-                                    actions:@[ @"Allow", @"Deny" ]
+                                    actions:@[ @"OK", @"Cancel" ]
                               actionMapping:nil
                                   accessory:nil
-                                 identifier:nil
-                                silenceable:kiTermWarningTypePersistent
+                                 identifier:identifier
+                                silenceable:kiTermWarningTypePermanentlySilenceable
                                     heading:heading
                                 cancelLabel:nil
                                      window:self.delegate.realParentWindow.window
                                  completion:^(iTermWarningSelection selection,
                                               iTermWarning *warning) {
         if (selection == kiTermWarningSelection0) {
-            // User approved - remember for this connection
-            [apiHelper approveDomainForLoadURL:domain connectionKey:connectionKey];
             [self performLoadURL:url completion:completion];
         } else {
-            // User denied
             completion(nil, [self loadURLErrorWithCode:4
                                                message:@"User denied permission to load URL"]);
         }

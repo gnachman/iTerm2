@@ -1011,8 +1011,8 @@ class Session:
         Load a URL in a browser session.
 
         The first time a domain is loaded, the user will be prompted to approve
-        it. Subsequent loads to the same domain within the same script
-        connection will not prompt again.
+        it. Once approved, that domain is remembered globally and will not
+        prompt again for any script.
 
         :param url: The URL to load.
 

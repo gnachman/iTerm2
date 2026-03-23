@@ -49,7 +49,7 @@ static NSString *const iTermUserDefaultsKeyWindowCornerRadiusCache = @"NoSyncWin
 }
 
 static NSArray *iTermUserDefaultsGetTypedArray(NSUserDefaults *userDefaults, Class objectClass, NSString *key) {
-    return [[NSArray castFrom:[userDefaults objectForKey:iTermUserDefaultsKeySearchHistory]] mapWithBlock:^id(id anObject) {
+    return [[NSArray castFrom:[userDefaults objectForKey:key]] mapWithBlock:^id(id anObject) {
         return [objectClass castFrom:anObject];
     }];
 }

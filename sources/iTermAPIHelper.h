@@ -115,10 +115,6 @@ typedef NS_ENUM(NSUInteger, iTermNoAuthStatus) {
 - (iTermScriptHistoryEntry *)scriptHistoryEntryForConnectionKey:(NSString *)connectionKey;
 - (NSDictionary<NSString *, iTermTuple<id, ITMNotificationRequest *> *> *)serverOriginatedRPCSubscriptions;
 
-// Per-connection URL allowlist for load_url API method
-- (BOOL)isDomainApprovedForLoadURL:(NSString *)domain connectionKey:(id)connectionKey;
-- (void)approveDomainForLoadURL:(NSString *)domain connectionKey:(id)connectionKey;
-
 @end
 
 @interface ITMRPCRegistrationRequest(Extensions)
