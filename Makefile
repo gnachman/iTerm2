@@ -1,5 +1,5 @@
 ORIG_PATH := $(PATH)
-PATH := /usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin
+PATH := /opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin
 ITERM_PID=$(shell pgrep "iTerm2")
 APPS := /Applications
 ITERM_CONF_PLIST = $(HOME)/Library/Preferences/com.googlecode.iterm2.plist
@@ -14,11 +14,12 @@ DEPLOYMENT_TARGET=12.0
 
 # Build product directory: defaults to xcodebuild's SYMROOT.
 # Override with BUILD_DIR=/path/to/dir on the command line.
-# Skip validation for 'make setup' since xcodebuild may not work yet.
+# Skip validation for targets that don't need a build directory.
 ifndef BUILD_DIR
   BUILD_DIR := $(shell xcodebuild -scheme iTerm2 -showBuildSettings 2>/dev/null | awk -F ' = ' '/^ *SYMROOT/{print $$2; exit}')
 endif
-ifneq ($(MAKECMDGOALS),setup)
+_NEEDS_BUILD_DIR := $(if $(filter-out setup help doctor,$(MAKECMDGOALS)),yes,$(if $(MAKECMDGOALS),,yes))
+ifdef _NEEDS_BUILD_DIR
   ifeq ($(strip $(BUILD_DIR)),)
     $(error Could not determine BUILD_DIR from xcodebuild -showBuildSettings. Is Xcode installed? Set BUILD_DIR explicitly to override.)
   endif
@@ -57,7 +58,42 @@ else
   RUST_NATIVE_TARGET = x86_64-apple-darwin
 endif
 
-.PHONY: clean all backup-old-iterm restart
+.PHONY: clean all backup-old-iterm restart setup help doctor
+
+help:
+	@echo "iTerm2 — $(VERSION) ($(NATIVE_ARCH))"
+	@echo ""
+	@echo "First time:"
+	@echo "  make setup        Install all build dependencies"
+	@echo ""
+	@echo "Build:"
+	@echo "  make              Build Development (default)"
+	@echo "  make dev          Build Development"
+	@echo "  make prod         Build Deployment"
+	@echo "  make run          Build and launch Development build"
+	@echo "  make test         Run unit tests"
+	@echo "  make install      Build Deployment and install to /Applications"
+	@echo ""
+	@echo "Dependencies:"
+	@echo "  make deps         Rebuild all native dependencies"
+	@echo "  make DepsIfNeeded Rebuild deps only if Xcode version changed"
+	@echo "  make clean        Remove build products"
+	@echo "  make cleandeps    Clean submodule build directories"
+	@echo ""
+	@echo "Release:"
+	@echo "  make Beta         Build Beta configuration"
+	@echo "  make Nightly      Build Nightly configuration"
+	@echo "  make Deployment   Build Deployment configuration"
+	@echo ""
+	@echo "Diagnose:"
+	@echo "  make doctor       Check all build dependencies"
+	@echo ""
+	@echo "Options:"
+	@echo "  SIGNED=1          Enable code signing"
+	@echo "  UNIVERSAL=1       Build universal (arm64 + x86_64) binaries"
+	@echo "  BUILD_DIR=/path   Override build output directory"
+	@echo ""
+	@echo "Homebrew: $(HOMEBREW_PREFIX)"
 
 all: Development
 dev: Development
@@ -65,38 +101,71 @@ prod: Deployment
 
 setup:
 	@if ! PATH="$(ORIG_PATH)" command -v brew >/dev/null 2>&1; then \
-		echo "Error: Homebrew is not installed. Install from https://brew.sh"; \
+		echo "Error: Homebrew is required. Install it from https://brew.sh then re-run make setup."; \
 		exit 1; \
 	fi
-	@if ! PATH="$(ORIG_PATH)" xcode-select -p 2>/dev/null | grep -q 'Xcode.app'; then \
-		echo "Error: Xcode is not selected. Run: sudo xcode-select -s /Applications/Xcode.app"; \
-		exit 1; \
+	@if ! PATH="$(ORIG_PATH)" xcode-select -p 2>/dev/null | grep -q 'Xcode'; then \
+		echo "Xcode.app is not selected. Installing xcodes to manage Xcode versions..."; \
+		PATH="$(ORIG_PATH)" brew list aria2 >/dev/null 2>&1 || PATH="$(ORIG_PATH)" brew install aria2; \
+		PATH="$(ORIG_PATH)" brew list xcodesorg/formulae/xcodes >/dev/null 2>&1 || PATH="$(ORIG_PATH)" brew install xcodesorg/formulae/xcodes; \
+		XCODE_APP=$$(ls -d /Applications/Xcode*.app 2>/dev/null | tail -1); \
+		if [ -n "$$XCODE_APP" ]; then \
+			echo "Found $$XCODE_APP, selecting it..."; \
+			sudo xcode-select -s "$$XCODE_APP"; \
+		else \
+			echo "Downloading and installing the latest Xcode (this will take a while)..."; \
+			PATH="$(ORIG_PATH)" xcodes install --latest --experimental-unxip; \
+			XCODE_PATH=$$(PATH="$(ORIG_PATH)" xcodes installed | tail -1 | awk '{print $$NF}'); \
+			sudo xcode-select -s "$$XCODE_PATH"; \
+		fi; \
 	fi
+	@PATH="$(ORIG_PATH)" xcodebuild -license accept 2>/dev/null || true
 	@if [ -z "$(RUSTUP)" ]; then \
-		echo "Error: rustup is not installed. Install from https://rustup.rs"; \
-		exit 1; \
+		echo "Installing rustup..."; \
+		curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y; \
+		export PATH="$$HOME/.cargo/bin:$$PATH"; \
 	fi
 	@test -f plists/iTerm2.plist || cp plists/dev-iTerm2.plist plists/iTerm2.plist
 	@PATH="$(ORIG_PATH)" brew list cmake >/dev/null 2>&1 || PATH="$(ORIG_PATH)" brew install cmake
 	@PATH="$(ORIG_PATH)" brew list pkg-config >/dev/null 2>&1 || PATH="$(ORIG_PATH)" brew install pkg-config
 	@PATH="$(ORIG_PATH)" brew list automake >/dev/null 2>&1 || PATH="$(ORIG_PATH)" brew install automake
-	@PATH="$(ORIG_PATH)" brew list perl >/dev/null 2>&1 || PATH="$(ORIG_PATH)" brew install perl
-	@PATH="$(ORIG_PATH)" brew list python3 >/dev/null 2>&1 || PATH="$(ORIG_PATH)" brew install python3
-	@PATH="$(ORIG_PATH)" brew list --cask sf-symbols >/dev/null 2>&1 || PATH="$(ORIG_PATH)" brew install --cask sf-symbols
+	@PATH="$(ORIG_PATH)" command -v perl >/dev/null 2>&1 || PATH="$(ORIG_PATH)" brew install perl
+	@test -x "$(HOMEBREW_PREFIX)/bin/python3" || (PATH="$(ORIG_PATH)" brew install python3 && PATH="$(ORIG_PATH)" brew link --overwrite python@3)
+	@if ! PATH="$(ORIG_PATH)" brew list --cask sf-symbols >/dev/null 2>&1; then \
+		echo "Installing sf-symbols (requires admin/sudo password)..."; \
+		PATH="$(ORIG_PATH)" brew install --cask sf-symbols || \
+		{ echo ""; echo "⚠️  sf-symbols requires sudo. Ask your admin to run:"; \
+		  echo "     brew install --cask sf-symbols"; echo ""; }; \
+	fi
 	@$(HOMEBREW_PREFIX)/bin/python3 -c "import objc" 2>/dev/null || $(HOMEBREW_PREFIX)/bin/pip3 install --break-system-packages pyobjc
 	@PATH="$(ORIG_PATH)" command -v cbindgen >/dev/null || $(RUSTUP) run stable cargo install cbindgen
 	# Note: this installs arm tooling as well
 	$(RUSTUP) target add x86_64-apple-darwin
 	git submodule update --init --recursive
 	PATH="$(ORIG_PATH)" xcodebuild -downloadComponent MetalToolchain
-	@if tools/check-xcode-version; then \
-		BUILD_DIR=$$(xcodebuild -scheme iTerm2 -showBuildSettings 2>/dev/null | awk -F ' = ' '/^ *SYMROOT/{print $$2; exit}'); \
-		if [ "$$USER" = "gnachman" ]; then \
-			$(MAKE) paranoid-deps SIGNED=1 BUILD_DIR="$$BUILD_DIR"; \
-		else \
-			$(MAKE) paranoid-deps BUILD_DIR="$$BUILD_DIR"; \
-		fi; \
-	fi
+	@echo ""
+	@echo "Setup complete. Run 'make deps' to build native dependencies."
+
+doctor:
+	@echo "iTerm2 build environment — $(NATIVE_ARCH)"
+	@echo ""
+	@printf "  %-18s" "Homebrew:"; (PATH="$(ORIG_PATH)" brew --version 2>/dev/null | head -1) || echo "NOT FOUND"
+	@printf "  %-18s" "Homebrew prefix:"; echo "$(HOMEBREW_PREFIX)"
+	@printf "  %-18s" "Xcode:"; (xcodebuild -version 2>/dev/null | tr '\n' ' ' && echo) || echo "NOT FOUND"
+	@printf "  %-18s" "xcode-select:"; (xcode-select -p 2>/dev/null) || echo "NOT FOUND"
+	@printf "  %-18s" "xcodes:"; (PATH="$(ORIG_PATH)" xcodes version 2>/dev/null) || echo "not installed"
+	@printf "  %-18s" "cmake:"; ($(CMAKE) --version 2>/dev/null | head -1) || echo "NOT FOUND"
+	@printf "  %-18s" "pkg-config:"; ($(PKG_CONFIG) --version 2>/dev/null) || echo "NOT FOUND"
+	@printf "  %-18s" "automake:"; (PATH="$(ORIG_PATH)" automake --version 2>/dev/null | grep -m1 .) || echo "NOT FOUND"
+	@printf "  %-18s" "perl:"; (PATH="$(ORIG_PATH)" perl -e 'print $$]."\n"' 2>/dev/null) || echo "NOT FOUND"
+	@printf "  %-18s" "python3 (brew):"; ver=$$($(HOMEBREW_PREFIX)/bin/python3 --version 2>/dev/null); \
+		if [ -z "$$ver" ]; then echo "NOT FOUND — run make setup"; \
+		elif echo "$$ver" | grep -q "^Python 3"; then echo "$$ver"; \
+		else echo "$$ver (WARNING: needs Python 3)"; fi
+	@printf "  %-18s" "pyobjc:"; ($(HOMEBREW_PREFIX)/bin/python3 -c "import objc; print('installed')" 2>/dev/null) || echo "NOT FOUND"
+	@printf "  %-18s" "rustup:"; (PATH="$(ORIG_PATH):$(HOME)/.cargo/bin" rustup --version 2>/dev/null) || echo "NOT FOUND"
+	@printf "  %-18s" "cbindgen:"; (PATH="$(ORIG_PATH):$(HOME)/.cargo/bin" cbindgen --version 2>/dev/null) || echo "NOT FOUND"
+	@printf "  %-18s" "sf-symbols:"; (PATH="$(ORIG_PATH)" brew list --cask sf-symbols >/dev/null 2>&1 && echo "installed") || echo "NOT FOUND"
 
 TAGS:
 	find . -name "*.[mhMH]" -exec etags -o ./TAGS -a '{}' +
