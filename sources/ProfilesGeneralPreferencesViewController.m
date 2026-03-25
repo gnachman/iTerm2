@@ -102,6 +102,7 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
     IBOutlet NSButton *_loadShellIntegrationAutomatically;
     IBOutlet NSTextField *_reasonShellIntegrationDisabledLabel;
 
+    NSMutableDictionary<NSString *, NSString *> *_cachedCommandLines;  // KEY_COMMAND_LINE per command type
     iTermFunctionCallTextFieldDelegate *_commandDelegate;
     iTermFunctionCallTextFieldDelegate *_sendTextAtStartDelegate;
     iTermFunctionCallTextFieldDelegate *_profileNameFieldDelegate;
@@ -1178,8 +1179,23 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
 
 - (void)commandTypeDidChange {
     NSInteger tag = _commandType.selectedTag;
-    NSString *value = [self setCommandTypeToTag:tag];
     NSString *before = [self stringForKey:KEY_CUSTOM_COMMAND];
+    NSString *value = [self setCommandTypeToTag:tag];
+    if ([before isEqualToString:value]) {
+        return;
+    }
+    // Save the current command line so it can be restored if the user switches back.
+    if (!_cachedCommandLines) {
+        _cachedCommandLines = [NSMutableDictionary dictionary];
+    }
+    NSString *currentCommandLine = [self stringForKey:KEY_COMMAND_LINE];
+    if (currentCommandLine.length > 0) {
+        _cachedCommandLines[before] = currentCommandLine;
+    }
+    // Restore cached command line for the new type, or clear it.
+    NSString *cached = _cachedCommandLines[value];
+    [self setString:(cached ?: @"") forKey:KEY_COMMAND_LINE];
+    _customCommand.stringValue = cached ?: @"";
     [self setString:value forKey:KEY_CUSTOM_COMMAND];
     [self commandTypeDidChangeFrom:before to:value];
 }
@@ -1202,13 +1218,10 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
         case iTermGeneralProfilePreferenceCustomCommandTagSSH:
             value = kProfilePreferenceCommandTypeSSHValue;
             _customCommand.delegate = _commandDelegate;
-            [self setString:@"" forKey:KEY_COMMAND_LINE];
-            _customCommand.stringValue = @"";
             break;
         case iTermGeneralProfilePreferenceCustomCommandTagBrowser:
             value = kProfilePreferenceCommandTypeBrowserValue;
             _customCommand.delegate = _commandDelegate;
-            [self setString:@"" forKey:KEY_COMMAND_LINE];
             break;
     }
     return value;

@@ -1418,6 +1418,7 @@ CA
                 <outlet property="_flashTabBarInFullscreenWhenSwitchingTabs" destination="Esq-U7-Af7" id="PoL-qW-T0f"/>
                 <outlet property="_hideActivityIndicator" destination="5374" id="Q4E-FF-5Zc"/>
                 <outlet property="_hideMenuBarInFullscreen" destination="awA-hH-ziY" id="CDd-B7-fbl"/>
+                <outlet property="_hideMenuItemIcons" destination="8jj-nE-deG" id="Olu-rG-WKK"/>
                 <outlet property="_hideScrollbar" destination="4561" id="I02-gk-NqP"/>
                 <outlet property="_hideTab" destination="4462" id="GTv-bn-7th"/>
                 <outlet property="_hideTabNumber" destination="4446" id="PIE-R6-5sO"/>
@@ -8486,11 +8487,11 @@ You can choose to define the characters considered part of a word with a regular
                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                 <subviews>
                                     <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Wsp-9H-Fsm" customClass="iTermPreferencesInnerTabContainerView">
-                                        <rect key="frame" x="47" y="173" width="496" height="158"/>
+                                        <rect key="frame" x="47" y="147" width="496" height="184"/>
                                         <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxX="YES" flexibleMinY="YES"/>
                                         <subviews>
                                             <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="awA-hH-ziY">
-                                                <rect key="frame" x="144" y="58" width="306" height="18"/>
+                                                <rect key="frame" x="144" y="84" width="306" height="18"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMinY="YES"/>
                                                 <string key="toolTip">For this setting to take effect you must disable "Native full screen windows" in Settings &gt; General. If this setting is enabled, the menu bar will remain visible. This is useful for multi-monitor systems.</string>
                                                 <buttonCell key="cell" type="check" title="Auto-hide menu bar in non-native fullscreen" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="MM6-3I-2ep">
@@ -8502,7 +8503,7 @@ You can choose to define the characters considered part of a word with a regular
                                                 </connections>
                                             </button>
                                             <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="zde-kb-c7t">
-                                                <rect key="frame" x="144" y="38" width="337" height="18"/>
+                                                <rect key="frame" x="144" y="64" width="337" height="18"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMinY="YES"/>
                                                 <string key="toolTip">This is useful if you only use iTerm2 with a hotkey window. The preference is disabled if no dedicated hotkey window is defined since it would be impossible to get to iTerm2 when it has no windows and no hotkey is defined.</string>
                                                 <buttonCell key="cell" type="check" title="Exclude from Dock and ⌘-Tab Application Switcher" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="90f-c6-lvp">
@@ -8514,7 +8515,7 @@ You can choose to define the characters considered part of a word with a regular
                                                 </connections>
                                             </button>
                                             <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="ThU-HR-f8F">
-                                                <rect key="frame" x="90" y="140" width="50" height="16"/>
+                                                <rect key="frame" x="90" y="166" width="50" height="16"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMinY="YES"/>
                                                 <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="right" title="Theme:" id="uhj-9S-l8R">
                                                     <font key="font" metaFont="system"/>
@@ -8523,7 +8524,7 @@ You can choose to define the characters considered part of a word with a regular
                                                 </textFieldCell>
                                             </textField>
                                             <popUpButton verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Cjh-dQ-HBQ">
-                                                <rect key="frame" x="144" y="79" width="191" height="26"/>
+                                                <rect key="frame" x="144" y="105" width="191" height="26"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMinY="YES"/>
                                                 <popUpButtonCell key="cell" type="push" title="Top" bezelStyle="rounded" alignment="left" lineBreakMode="clipping" state="on" borderStyle="borderAndBezel" inset="2" arrowPosition="arrowAtCenter" preferredEdge="maxY" selectedItem="7BM-xw-fbE" id="9o6-qH-zo0" userLabel="Tab Style">
                                                     <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
@@ -8542,7 +8543,7 @@ You can choose to define the characters considered part of a word with a regular
                                                 </connections>
                                             </popUpButton>
                                             <popUpButton verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="4463">
-                                                <rect key="frame" x="144" y="106" width="191" height="26"/>
+                                                <rect key="frame" x="144" y="132" width="191" height="26"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMinY="YES"/>
                                                 <popUpButtonCell key="cell" type="push" bezelStyle="rounded" alignment="left" lineBreakMode="clipping" borderStyle="borderAndBezel" inset="2" arrowPosition="arrowAtCenter" preferredEdge="maxY" id="4495">
                                                     <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
@@ -8561,7 +8562,7 @@ You can choose to define the characters considered part of a word with a regular
                                                 </connections>
                                             </popUpButton>
                                             <popUpButton verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="uFJ-bZ-kag">
-                                                <rect key="frame" x="144" y="133" width="191" height="26"/>
+                                                <rect key="frame" x="144" y="159" width="191" height="26"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMinY="YES"/>
                                                 <popUpButtonCell key="cell" type="push" title="Regular" bezelStyle="rounded" alignment="left" lineBreakMode="clipping" state="on" borderStyle="borderAndBezel" tag="4" inset="2" arrowPosition="arrowAtCenter" preferredEdge="maxY" selectedItem="ZNW-QH-Lff" id="dAw-Fo-tf4" userLabel="Tab Style">
                                                     <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
@@ -8586,7 +8587,7 @@ You can choose to define the characters considered part of a word with a regular
                                                 </connections>
                                             </popUpButton>
                                             <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="ghv-jZ-ql9">
-                                                <rect key="frame" x="18" y="86" width="122" height="16"/>
+                                                <rect key="frame" x="18" y="112" width="122" height="16"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMinY="YES"/>
                                                 <textFieldCell key="cell" lineBreakMode="clipping" alignment="right" title="Status bar location:" id="jtG-zd-rvL">
                                                     <font key="font" metaFont="system"/>
@@ -8595,7 +8596,7 @@ You can choose to define the characters considered part of a word with a regular
                                                 </textFieldCell>
                                             </textField>
                                             <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="sxm-tG-syy">
-                                                <rect key="frame" x="35" y="113" width="105" height="16"/>
+                                                <rect key="frame" x="35" y="139" width="105" height="16"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMinY="YES"/>
                                                 <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="right" title="Tab bar location:" id="jnA-10-c4D">
                                                     <font key="font" metaFont="system"/>
@@ -8604,7 +8605,7 @@ You can choose to define the characters considered part of a word with a regular
                                                 </textFieldCell>
                                             </textField>
                                             <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="wjs-vG-qf2">
-                                                <rect key="frame" x="163" y="18" width="334" height="18"/>
+                                                <rect key="frame" x="163" y="44" width="334" height="18"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMinY="YES"/>
                                                 <string key="toolTip">This is useful if you only use iTerm2 with a hotkey window. The preference is disabled if no dedicated hotkey window is defined since it would be impossible to get to iTerm2 when it has no windows and no hotkey is defined.</string>
                                                 <buttonCell key="cell" type="check" title="…but only if all windows are hotkey windows" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="9Nh-nh-0mQ">
@@ -8614,6 +8615,18 @@ You can choose to define the characters considered part of a word with a regular
                                                 <accessibility description="Exclude from Dock only if all windows are hotkey windows"/>
                                                 <connections>
                                                     <action selector="settingChanged:" target="wvi-ET-SJJ" id="3mP-qK-BRO"/>
+                                                </connections>
+                                            </button>
+                                            <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="8jj-nE-deG">
+                                                <rect key="frame" x="144" y="20" width="306" height="18"/>
+                                                <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMinY="YES"/>
+                                                <string key="toolTip">For this setting to take effect you must disable "Native full screen windows" in Settings &gt; General. If this setting is enabled, the menu bar will remain visible. This is useful for multi-monitor systems.</string>
+                                                <buttonCell key="cell" type="check" title="Hide menu item icons" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="tBM-DH-v7M">
+                                                    <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                                                    <font key="font" metaFont="system"/>
+                                                </buttonCell>
+                                                <connections>
+                                                    <action selector="settingChanged:" target="wvi-ET-SJJ" id="A31-UC-br9"/>
                                                 </connections>
                                             </button>
                                         </subviews>
@@ -9881,7 +9894,7 @@ instead of the system keyboard.</string>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <clipView key="contentView" id="N1C-ir-dI5">
                         <rect key="frame" x="1" y="1" width="238" height="377"/>
-                        <autoresizingMask key="autoresizingMask"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
                             <tableView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="lastColumnOnly" columnReordering="NO" columnResizing="NO" autosaveColumns="NO" typeSelect="NO" id="5562">
                                 <rect key="frame" x="0.0" y="0.0" width="238" height="377"/>

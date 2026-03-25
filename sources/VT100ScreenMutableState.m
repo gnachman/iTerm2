@@ -5820,6 +5820,7 @@ lengthExcludingInBandSignaling:data.length
             o++;
         } while (o < self.altGrid.size.height && length > 0);
     }
+    [self.altGrid markAllCharsDirty:YES updateTimestamps:NO];
 }
 
 
@@ -5843,6 +5844,10 @@ lengthExcludingInBandSignaling:data.length
         id<VT100GridReading> temp = self.altGrid;
         self.altGrid = self.primaryGrid;
         self.primaryGrid = temp;
+        // After swapping grid pointers, the read-only state's grids still reference old copies.
+        // Mark all cells dirty to force a full resync during mergeFrom:.
+        [self.primaryGrid markAllCharsDirty:YES updateTimestamps:NO];
+        [self.altGrid markAllCharsDirty:YES updateTimestamps:NO];
     }
 
     NSNumber *altSavedX = state[kStateDictAltSavedCX];
@@ -5904,7 +5909,7 @@ lengthExcludingInBandSignaling:data.length
     if (mouse && mouse.intValue) {
         [self.terminal setMouseMode:MOUSE_REPORTING_BUTTON_MOTION];
     }
-    mouse = state[kStateDictMouseButtonMode];
+    mouse = state[kStateDictMouseAnyMode];
     if (mouse && mouse.intValue) {
         [self.terminal setMouseMode:MOUSE_REPORTING_ALL_MOTION];
     }
@@ -5952,6 +5957,9 @@ lengthExcludingInBandSignaling:data.length
     } else {
         [self.terminal setMouseFormat:MOUSE_FORMAT_XTERM];
     }
+
+    // Gracefully degrades to NO on tmux versions that lack bracket_paste_flag.
+    [self.terminal setBracketedPasteMode:[state[kStateDictBracketedPasteMode] boolValue]];
 }
 
 #pragma mark - SSH

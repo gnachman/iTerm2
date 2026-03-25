@@ -212,6 +212,7 @@ NSString *const kPreferenceKeySnippets = @"Snippets";
 NSString *const kPreferenceKeyHTMLTabTitles = @"HTMLTabTitles";
 NSString *const kPreferenceKeyDisableTransparencyForKeyWindow = @"DisableTransparencyForKeyWindow";
 NSString *const kPreferenceKeyNeverBlockSystemShutdown = @"NeverBlockSystemShutdown";
+NSString *const kPreferenceKeyMenuActionImages = @"NSMenuEnableActionImages";
 
 NSString *const kPreferenceKeyOpenAIAPIKey = @"NoSyncOpenAIAPIKey";  // deprecated
 NSString *const kPreferenceKeyAIAPIKey = @"NoUserDefaultAIAPIKey";
@@ -668,7 +669,9 @@ static NSString *sPreviousVersion;
                   kPreferenceKeyHTMLTabTitles: @NO,
 
                   kPreferenceKeyDisableTransparencyForKeyWindow: @NO,
-                  kPreferenceKeyNeverBlockSystemShutdown: @NO
+                  kPreferenceKeyNeverBlockSystemShutdown: @NO,
+
+                  kPreferenceKeyMenuActionImages: @YES,
               };
     }
     return dict;

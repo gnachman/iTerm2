@@ -13,6 +13,7 @@ class MainMenuMangler: NSObject {
     @objc static let instance = MainMenuMangler()
     private weak var observedWindow: NSWindow?
     private var web: NSMenuItem?
+    private let defaultsObserver = iTermUserDefaultsObserver()
 
     // Track if the application is terminating to avoid accessing deallocated objects
     private var isTerminating = false
@@ -22,6 +23,10 @@ class MainMenuMangler: NSObject {
 
     // Store conflicting menu items that need their key equivalents restored
     private var conflictingMenuItems: [(menuItem: NSMenuItem, keyEquivalent: String, modifierMask: NSEvent.ModifierFlags)] = []
+
+    @objc static var menuActionImagesEnabled: Bool {
+        iTermPreferences.bool(forKey: kPreferenceKeyMenuActionImages)
+    }
 
     private let iconMap = [
         // iTerm2 menu
@@ -320,9 +325,19 @@ class MainMenuMangler: NSObject {
 
     @available(macOS 26, *)
     @objc func setIcons() {
-        // Find all menu items by traversing the main menu
-        if let mainMenu = NSApp.mainMenu {
+        defaultsObserver.observeKey(kPreferenceKeyMenuActionImages) { [weak self] in
+            self?.updateIcons()
+        }
+        updateIcons()
+    }
+
+    @available(macOS 26, *)
+    private func updateIcons() {
+        guard let mainMenu = NSApp.mainMenu else { return }
+        if MainMenuMangler.menuActionImagesEnabled {
             setIcons(map: iconMap, in: mainMenu)
+        } else {
+            removeIcons(in: mainMenu)
         }
     }
 
@@ -372,6 +387,17 @@ class MainMenuMangler: NSObject {
             }
             if item.hasSubmenu, let submenu = item.submenu {
                 setIcons(map: iconMap, in: submenu)
+            }
+        }
+    }
+
+    private func removeIcons(in menu: NSMenu) {
+        for item in menu.items {
+            if !item.isSeparatorItem {
+                item.image = nil
+            }
+            if item.hasSubmenu, let submenu = item.submenu {
+                removeIcons(in: submenu)
             }
         }
     }

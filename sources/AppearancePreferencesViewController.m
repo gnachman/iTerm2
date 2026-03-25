@@ -111,6 +111,8 @@ NSString *const iTermProcessTypeDidChangeNotification = @"iTermProcessTypeDidCha
     IBOutlet NSTextField *_topBottomMarginsLabel;
     IBOutlet NSTextField *_topBottomMargins;
     IBOutlet NSStepper *_topBottomMarginsStepper;
+
+    IBOutlet NSButton *_hideMenuItemIcons;
 }
 
 - (void)awakeFromNib {
@@ -400,6 +402,13 @@ NSString *const iTermProcessTypeDidChangeNotification = @"iTermProcessTypeDidCha
                           type:kPreferenceInfoTypeCheckbox];
     info.onChange = ^() { [weakSelf postRefreshNotification]; };
 
+    info = [self defineControl:_hideMenuItemIcons
+                           key:kPreferenceKeyMenuActionImages
+                   relatedView:nil
+                          type:kPreferenceInfoTypeInvertedCheckbox];
+    if (@available(macOS 26, *)) {} else {
+        _hideMenuItemIcons.enabled = NO;
+    }
     [self updateProxyIconEnabled];
 }
 

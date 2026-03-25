@@ -52,11 +52,11 @@ class iTermTouchIDHelper: NSObject {
             return true
         }
 
-        // Create file from template if needed, make it writable, enable Touch ID, restore permissions.
-        // We use sed to uncomment the existing line (from template), and fall back to appending if
-        // the line doesn't exist. chmod is needed because sudo_local is read-only by default.
+        // Build the modified file in /tmp, then cp it into place. On macOS 26+, in-place writes
+        // to /etc/pam.d/ (sed -i, shell redirects) fail with "Operation not permitted" even as
+        // root, but cp still works.
         let templatePath = "/etc/pam.d/sudo_local.template"
-        let shellCommand = "test -f \(sudoLocalPath) || cp \(templatePath) \(sudoLocalPath); chmod u+w \(sudoLocalPath); sed -i '' 's/^#auth.*pam_tid.so/\(pamTidLine)/' \(sudoLocalPath); grep -q '^auth.*pam_tid.so' \(sudoLocalPath) || echo '\(pamTidLine)' >> \(sudoLocalPath); chmod u-w \(sudoLocalPath)"
+        let shellCommand = "T=$(mktemp) && { SRC=\(sudoLocalPath); test -f $SRC || SRC=\(templatePath); sed 's/^#auth.*pam_tid.so/\(pamTidLine)/' $SRC > $T && { grep -q '^auth.*pam_tid.so' $T || echo '\(pamTidLine)' >> $T; } && cp -f $T \(sudoLocalPath); R=$?; rm -f $T; exit $R; }"
 
         let code = """
         do shell script "\(shellCommand)" with prompt "iTerm2 wants to enable Touch ID for sudo authentication." with administrator privileges

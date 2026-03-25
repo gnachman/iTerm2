@@ -238,7 +238,7 @@ typedef struct {
                              KEY_DYNAMIC_PROFILE_PARENT_GUID,
                              KEY_DYNAMIC_PROFILE_FILENAME, KEY_TMUX_PANE_TITLE,
                              KEY_SUBTITLE, KEY_CUSTOM_LOCALE, KEY_INITIAL_URL,
-                             KEY_BROWSER_EXTENSIONS_ROOT, KEY_BROWSER_EXTENSION_ACTIVE_IDS,
+                             KEY_BROWSER_EXTENSIONS_ROOT,
                              KEY_PROGRESS_BAR_COLOR_SCHEME];
 
         NSArray *color = @[ KEY_FOREGROUND_COLOR, KEY_BACKGROUND_COLOR, KEY_BOLD_COLOR,
@@ -412,7 +412,8 @@ typedef struct {
 
             KEY_PROFILE_TYPE_PHONY
         ];
-        NSArray *stringArrays = @[ KEY_TAGS, KEY_JOBS, KEY_BOUND_HOSTS, KEY_SNIPPETS_FILTER ];
+        NSArray *stringArrays = @[ KEY_TAGS, KEY_JOBS, KEY_BOUND_HOSTS, KEY_SNIPPETS_FILTER,
+                                    KEY_BROWSER_EXTENSION_ACTIVE_IDS ];
         NSArray *dictArrays = @[ KEY_HOTKEY_ALTERNATE_SHORTCUTS, KEY_TRIGGERS, KEY_SMART_SELECTION_RULES,
                                  ];
         NSArray *dict = @[ KEY_STATUS_BAR_LAYOUT, KEY_SESSION_HOTKEY, KEY_SEMANTIC_HISTORY,
