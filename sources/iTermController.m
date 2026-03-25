@@ -553,7 +553,8 @@ replaceInitialDirectoryForSessionWithGUID:(NSString *)guid
         [term restoreTabsFromArrangement:terminalArrangement
                                    named:arrangementName
                                 sessions:nil
-                      partialAttachments:nil];
+                      partialAttachments:nil
+                    largeContentProvider:nil];
         return;
     }
     const BOOL lionFullScreen = [PseudoTerminal arrangementIsLionFullScreen:terminalArrangement];

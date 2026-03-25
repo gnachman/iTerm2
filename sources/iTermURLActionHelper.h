@@ -88,7 +88,8 @@ launchProfileInCurrentTerminal:(Profile *)profile
 
 - (void)openTargetWithEvent:(NSEvent *)event
                inBackground:(BOOL)openInBackground
-                      style:(iTermOpenStyle)style;
+                      style:(iTermOpenStyle)style
+   smartSelectionActionsOnly:(BOOL)smartSelectionActionsOnly;
 
 - (void)findUrlInString:(NSString *)aURLString andOpenInBackground:(BOOL)background style:(iTermOpenStyle)style;
 

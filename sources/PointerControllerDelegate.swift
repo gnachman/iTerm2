@@ -114,4 +114,7 @@ protocol PointerControllerDelegate: AnyObject {
 
     @objc(copyLinkAddressWithEvent:)
     func copyLinkAddress(with event: NSEvent)
+
+    @objc(copyOrPasteWithEvent:)
+    func copyOrPaste(with event: NSEvent)
 }

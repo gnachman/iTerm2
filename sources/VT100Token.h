@@ -289,13 +289,20 @@ typedef enum {
     VT100_GANG
 } VT100TerminalTokenType;
 
-// A preinitialized array of screen_char_t. When ASCII data is present, it will have the codes
-// populated and all other fields zeroed out.
+// A preinitialized array of screen_char_t for ASCII data.
+// fg/bg colors are pre-baked into the buffer
+// by the parser thread using the shadow SGR state. The mutation thread can
+// check the stamp to skip the color-setting loop (fast path) or detect
+// desync and apply a fixup (medium path).
 #define kStaticScreenCharsCount 16
 typedef struct {
     screen_char_t * _Nullable buffer;
     int length;
     screen_char_t staticBuffer[kStaticScreenCharsCount];
+
+    // Rendition stamp from parser thread shadow SGR state.
+    VT100GraphicRendition rendition;
+    BOOL protectedMode;
 } ScreenChars;
 
 NS_ASSUME_NONNULL_BEGIN
@@ -321,7 +328,8 @@ NS_INLINE NSString *iTermCreateStringFromAsciiData(AsciiData *asciiData) {
                                   encoding:NSASCIIStringEncoding];
 }
 
-void iTermAsciiDataSet(AsciiData *asciiData, const char *bytes, int length, ScreenChars *screenChars);
+void iTermAsciiDataSet(AsciiData *asciiData, const char *bytes, int length, ScreenChars *screenChars,
+                       VT100GraphicRendition rendition, BOOL protectedMode);
 void iTermAsciiDataFree(AsciiData *asciiData);
 
 // Pre-converted screen_char_t array for VT100_STRING tokens.
@@ -439,6 +447,10 @@ NS_INLINE NSString *SSHInfoDescription(SSHInfo info) {
 + (instancetype)newTokenForControlCharacter:(unsigned char)controlCharacter;
 
 - (void)setAsciiBytes:(nonnull char *)bytes length:(int)length;
+- (void)setAsciiBytes:(nonnull char *)bytes
+               length:(int)length
+            rendition:(VT100GraphicRendition)rendition
+        protectedMode:(BOOL)protectedMode;
 
 // Returns a string for |asciiData|, for convenience (this is slow).
 - (NSString *)stringForAsciiData;

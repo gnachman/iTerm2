@@ -484,9 +484,13 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     BOOL isShiftedSingleClick = ([event clickCount] == 1 &&
                                  !mouseDragged &&
                                  ([event it_modifierFlags] & NSEventModifierFlagShift));
+    const BOOL cmdClickOpensURLs = [iTermPreferences boolForKey:kPreferenceKeyCmdClickOpensURLs];
     BOOL willFollowLink = (isUnshiftedSingleClick &&
                            cmdPressed &&
-                           [iTermPreferences boolForKey:kPreferenceKeyCmdClickOpensURLs]);
+                           cmdClickOpensURLs);
+    const BOOL willTrySmartSelectionAction = (isUnshiftedSingleClick &&
+                                              cmdPressed &&
+                                              !cmdClickOpensURLs);
 
     if (event.clickCount > 1) {
         [self.mouseDelegate mouseHandlerCancelSingleClick:self];
@@ -500,7 +504,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     iTermClickSideEffects result = iTermClickSideEffectsNone;
     if ([self reportMouseEvent:event]) {
         result |= iTermClickSideEffectsReport;
-        if (willFollowLink) {
+        if (willFollowLink || willTrySmartSelectionAction) {
             // This is a special case. Cmd-click is treated like alt-click at the protocol
             // level (because we use alt to disable mouse reporting, unfortunately). Few
             // apps interpret alt-clicks specially, and we really want to handle cmd-click
@@ -512,7 +516,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             // may not do anything if the pointer isn't over a clickable string.
             [self.mouseDelegate mouseHandlerOpenTargetWithEvent:event
                                                    inBackground:NO
-                                                          style:iTermOpenStyleTab];
+                                                          style:iTermOpenStyleTab
+                                       smartSelectionActionsOnly:willTrySmartSelectionAction];
             result |= iTermClickSideEffectsOpenTarget;
         }
         DLog(@"Returning from mouseUp because the mouse event was reported.");
@@ -574,12 +579,14 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
         VT100GridCoord clickCoord = VT100GridCoordInvalid;
 
-        if (willFollowLink) {
+        if (willFollowLink || willTrySmartSelectionAction) {
             [self.mouseDelegate mouseHandlerOpenTargetWithEvent:event
                                                    inBackground:altPressed
-                                                          style:iTermOpenStyleTab];
+                                                          style:iTermOpenStyleTab
+                                       smartSelectionActionsOnly:willTrySmartSelectionAction];
             result |= iTermClickSideEffectsOpenTarget;
-        } else {
+        }
+        if (!willFollowLink) {
             clickCoord =
             [self.mouseDelegate mouseHandler:self
                                   clickPoint:event

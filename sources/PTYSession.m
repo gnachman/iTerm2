@@ -10715,6 +10715,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
             [_view createFindDriverIfNeeded];
             [_view.findDriver closeViewAndDoTemporarySearchForString:action.parameter
                                                                 mode:iTermFindModeCaseSensitiveRegex
+                                   extendResultsAcrossSoftBoundaries:NO
                                                             progress:nil];
             break;
         }

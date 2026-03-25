@@ -290,7 +290,7 @@ private final class LazyFoldMarkContent: FoldMarkContentProtocol {
         /// Content dictionary is available inline, just needs parsing.
         case inlineContent([AnyHashable: Any])
         /// Content must be fetched from database via provider.
-        case deferred(provider: LargeContentProvider, metadata: [AnyHashable: Any])
+        case deferred(provider: iTermLargeContentProvider, metadata: [AnyHashable: Any])
         /// Content has been loaded and parsed.
         case loaded(savedLines: [ScreenCharArray]?, savedITOs: [SavedIntervalTreeObject]?)
     }
@@ -306,7 +306,7 @@ private final class LazyFoldMarkContent: FoldMarkContentProtocol {
     }
 
     init(inlineContent: [AnyHashable: Any]?,
-         provider: LargeContentProvider?,
+         provider: iTermLargeContentProvider?,
          metadata: [AnyHashable: Any]?) {
         if let inlineContent {
             self.state = .init(.inlineContent(inlineContent))
@@ -417,7 +417,7 @@ class FoldMark: iTermMark, FoldMarkReading, iTermLargeContentObject {
     // Lazy loading path
     @objc required init?(smallDictionary: [AnyHashable: Any],
                          largeContent: [AnyHashable: Any]?,
-                         provider: LargeContentProvider?,
+                         provider: iTermLargeContentProvider?,
                          metadata: [AnyHashable: Any]?) {
         self.promptLength = (smallDictionary[Self.promptLengthKey] as? Int) ?? 0
         self.imageCodes = Set((smallDictionary[Self.imageCodesKey] as? [Int32]) ?? [])

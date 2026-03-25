@@ -436,9 +436,6 @@ iTermCommandInfoViewControllerDelegate>
     if (VT100GridCoordEquals(coord, VT100GridCoordInvalid)) {
         return NO;
     }
-    if (![iTermPreferences boolForKey:kPreferenceKeyCmdClickOpensURLs]) {
-        return NO;
-    }
     if (coord.y < 0) {
         return NO;
     }
@@ -493,6 +490,13 @@ iTermCommandInfoViewControllerDelegate>
         DLog(@"No action: remove underline");
         [self removeUnderline];
         [self updateCursor:event action:action];
+        return;
+    }
+    if (![iTermPreferences boolForKey:kPreferenceKeyCmdClickOpensURLs] &&
+        action.actionType != kURLActionSmartSelectionAction) {
+        DLog(@"Cmd-click opens URLs is off and action is not a smart selection action; remove underline");
+        [self removeUnderline];
+        [self updateCursor:event action:nil];
         return;
     }
     DLog(@"There is an action");

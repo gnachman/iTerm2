@@ -175,8 +175,9 @@ class iTermSessionDirectoryTracker: NSObject {
 
         if let savedHosts = arrangement[ArrangementKeys.hosts] as? [[String: Any]] {
             for hostDict in savedHosts {
-                let remoteHost = VT100RemoteHost(dictionary: hostDict)
-                hosts.append(remoteHost)
+                if let remoteHost = VT100RemoteHost(dictionary: hostDict) {
+                    hosts.append(remoteHost)
+                }
             }
             trimHostsIfNeeded()
         }

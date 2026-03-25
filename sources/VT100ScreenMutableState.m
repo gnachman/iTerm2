@@ -1099,8 +1099,20 @@ static const int64_t VT100ScreenMutableStateSideEffectFlagLineBufferDidDropLines
     const screen_char_t defaultChar = terminal.processedDefaultChar;
     iTermExternalAttribute *ea = [terminal externalAttributes];
 
-    screen_char_t zero = { 0 };
-    if (memcmp(&defaultChar, &zero, sizeof(defaultChar))) {
+    // Parser thread baked in colors. Check if they match the current terminal state.
+    screen_char_t stampFg = { 0 };
+    screen_char_t stampBg = { 0 };
+    VT100GraphicRendition stampRendition = asciiData->screenChars->rendition;
+    VT100GraphicRenditionUpdateForeground(&stampRendition, YES,
+                                          asciiData->screenChars->protectedMode, &stampFg);
+    VT100GraphicRenditionUpdateBackground(&stampRendition, YES, &stampBg);
+
+    screen_char_t stampCombined = { 0 };
+    CopyForegroundColor(&stampCombined, stampFg);
+    CopyBackgroundColor(&stampCombined, stampBg);
+
+    if (!ScreenCharFGBGEqual(stampCombined, defaultChar)) {
+        // Medium path: colors differ, apply fixup.
         STOPWATCH_START(setUpScreenCharArray);
         for (int i = 0; i < len; i++) {
             CopyForegroundColor(&buffer[i], defaultChar);
@@ -1108,6 +1120,7 @@ static const int64_t VT100ScreenMutableStateSideEffectFlagLineBufferDidDropLines
         }
         STOPWATCH_LAP(setUpScreenCharArray);
     }
+    // else: fast path — colors already correct, skip the loop.
 
     // If a graphics character set was selected then translate buffer
     // characters into graphics characters.

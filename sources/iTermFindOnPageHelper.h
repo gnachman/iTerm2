@@ -12,6 +12,8 @@
 #import "iTermSearchResultsMinimapView.h"
 #import "VT100GridTypes.h"
 
+NS_ASSUME_NONNULL_BEGIN
+
 @class FindContext;
 @class iTermExternalSearchResult;
 @class iTermSearchEngine;
@@ -64,7 +66,7 @@ typedef NS_ENUM(NSUInteger, FindCursorType) {
 @interface iTermFindOnPageHelper : NSObject<iTermSearchResultsMinimapViewDelegate>
 
 @property(nonatomic, readonly) BOOL findInProgress;
-@property(nonatomic, assign) NSView<iTermFindOnPageHelperDelegate> *delegate;
+@property(nonatomic, assign, nullable) NSView<iTermFindOnPageHelperDelegate> *delegate;
 @property(nonatomic, readonly) NSDictionary *highlightMap;
 @property(nonatomic, readonly) FindContext *copiedContext;
 @property(nonatomic, readonly) iTermOrderedSet<SearchResult *> *searchResults;
@@ -142,3 +144,5 @@ extendResultsAcrossSoftBoundaries:(BOOL)extendResultsAcrossSoftBoundaries;
                      width:(int)width;
 
 @end
+
+NS_ASSUME_NONNULL_END

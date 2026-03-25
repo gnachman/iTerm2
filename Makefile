@@ -18,7 +18,7 @@ DEPLOYMENT_TARGET=12.0
 ifndef BUILD_DIR
   BUILD_DIR := $(shell xcodebuild -scheme iTerm2 -showBuildSettings 2>/dev/null | awk -F ' = ' '/^ *SYMROOT/{print $$2; exit}')
 endif
-_NEEDS_BUILD_DIR := $(if $(filter-out setup help doctor,$(MAKECMDGOALS)),yes,$(if $(MAKECMDGOALS),,yes))
+_NEEDS_BUILD_DIR := $(if $(filter-out setup dangerous-setup _setup-main help doctor,$(MAKECMDGOALS)),yes,$(if $(MAKECMDGOALS),,yes))
 ifdef _NEEDS_BUILD_DIR
   ifeq ($(strip $(BUILD_DIR)),)
     $(error Could not determine BUILD_DIR from xcodebuild -showBuildSettings. Is Xcode installed? Set BUILD_DIR explicitly to override.)
@@ -58,13 +58,14 @@ else
   RUST_NATIVE_TARGET = x86_64-apple-darwin
 endif
 
-.PHONY: clean all backup-old-iterm restart setup help doctor
+.PHONY: clean all backup-old-iterm restart setup dangerous-setup _setup-main help doctor
 
 help:
 	@echo "iTerm2 — $(VERSION) ($(NATIVE_ARCH))"
 	@echo ""
 	@echo "First time:"
-	@echo "  make setup        Install all build dependencies"
+	@echo "  make setup            Install all build dependencies (interactive)"
+	@echo "  make dangerous-setup  Same as setup, skip all confirmations"
 	@echo ""
 	@echo "Build:"
 	@echo "  make              Build Development (default)"
@@ -75,8 +76,8 @@ help:
 	@echo "  make install      Build Deployment and install to /Applications"
 	@echo ""
 	@echo "Dependencies:"
-	@echo "  make deps         Rebuild all native dependencies"
-	@echo "  make DepsIfNeeded Rebuild deps only if Xcode version changed"
+	@echo "  make paranoid-deps  Rebuild all native dependencies (sandboxed)"
+	@echo "  make DepsIfNeeded   Rebuild deps only if Xcode version changed"
 	@echo "  make clean        Remove build products"
 	@echo "  make cleandeps    Clean submodule build directories"
 	@echo ""
@@ -100,28 +101,94 @@ dev: Development
 prod: Deployment
 
 setup:
-	@if ! PATH="$(ORIG_PATH)" command -v brew >/dev/null 2>&1; then \
-		echo "Error: Homebrew is required. Install it from https://brew.sh then re-run make setup."; \
-		exit 1; \
+	@BREW_BIN=$$(PATH="/opt/homebrew/bin:/usr/local/bin:$(ORIG_PATH)" command -v brew 2>/dev/null); \
+	if [ -z "$$BREW_BIN" ]; then \
+		echo "Homebrew is not installed."; \
+		if [ "$(SKIP_CONFIRM)" != "1" ]; then \
+			printf "Install Homebrew via its official install script (requires sudo)? [y/N] "; \
+			read ans </dev/tty; case "$$ans" in [yY]) ;; *) echo "Aborted."; exit 1;; esac; \
+		fi; \
+		NONINTERACTIVE=1 /bin/bash -c "$$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"; \
+		BREW_BIN=$$(command -v /opt/homebrew/bin/brew 2>/dev/null || command -v /usr/local/bin/brew 2>/dev/null); \
+		if [ -z "$$BREW_BIN" ]; then \
+			echo "Error: Homebrew installation failed."; \
+			exit 1; \
+		fi; \
+	fi; \
+	if ! PATH="$(ORIG_PATH)" command -v brew >/dev/null 2>&1; then \
+		echo "Restarting setup with Homebrew in PATH..."; \
+		PATH="$$(dirname $$BREW_BIN):$(ORIG_PATH)" \
+			$(MAKE) _setup-main SKIP_CONFIRM="$(SKIP_CONFIRM)"; \
+	else \
+		$(MAKE) _setup-main SKIP_CONFIRM="$(SKIP_CONFIRM)"; \
 	fi
-	@if ! PATH="$(ORIG_PATH)" xcode-select -p 2>/dev/null | grep -q 'Xcode'; then \
-		echo "Xcode.app is not selected. Installing xcodes to manage Xcode versions..."; \
-		PATH="$(ORIG_PATH)" brew list aria2 >/dev/null 2>&1 || PATH="$(ORIG_PATH)" brew install aria2; \
-		PATH="$(ORIG_PATH)" brew list xcodesorg/formulae/xcodes >/dev/null 2>&1 || PATH="$(ORIG_PATH)" brew install xcodesorg/formulae/xcodes; \
-		XCODE_APP=$$(ls -d /Applications/Xcode*.app 2>/dev/null | tail -1); \
+
+dangerous-setup:
+	@$(MAKE) setup SKIP_CONFIRM=1
+
+_setup-main:
+	@XCODE_DEV=$$(PATH="$(ORIG_PATH)" xcode-select -p 2>/dev/null); \
+	if echo "$$XCODE_DEV" | grep -q '/Xcode.*\.app'; then \
+		XCODE_APP=$$(echo "$$XCODE_DEV" | sed 's|/Contents/Developer.*||'); \
+		echo "Xcode already selected: $$XCODE_APP"; \
+	else \
+		echo "Xcode.app is not selected."; \
+		XCODE_APP=$$(ls -d /Applications/Xcode*.app 2>/dev/null | head -1); \
 		if [ -n "$$XCODE_APP" ]; then \
 			echo "Found $$XCODE_APP, selecting it..."; \
+			if [ "$(SKIP_CONFIRM)" != "1" ]; then \
+				printf "This will run: sudo xcode-select -s \"$$XCODE_APP\". Continue? [y/N] "; \
+				read ans </dev/tty; case "$$ans" in [yY]) ;; *) echo "Aborted."; exit 1;; esac; \
+			fi; \
 			sudo xcode-select -s "$$XCODE_APP"; \
 		else \
-			echo "Downloading and installing the latest Xcode (this will take a while)..."; \
-			PATH="$(ORIG_PATH)" xcodes install --latest --experimental-unxip; \
-			XCODE_PATH=$$(PATH="$(ORIG_PATH)" xcodes installed | tail -1 | awk '{print $$NF}'); \
-			sudo xcode-select -s "$$XCODE_PATH"; \
+			echo "No Xcode installation found in /Applications."; \
+			HAS_XCODES=0; \
+			if PATH="$(ORIG_PATH)" command -v xcodes >/dev/null 2>&1; then \
+				HAS_XCODES=1; \
+			else \
+				echo "Installing xcodes to manage Xcode versions..."; \
+				PATH="$(ORIG_PATH)" brew install aria2 2>&1 || true; \
+				if PATH="$(ORIG_PATH)" brew install xcodes 2>&1; then \
+					HAS_XCODES=1; \
+				else \
+					echo "Could not install xcodes. See error above."; \
+				fi; \
+			fi; \
+			if [ "$$HAS_XCODES" = "1" ]; then \
+				echo "Downloading and installing the latest Xcode (this will take a while)..."; \
+				PATH="$(ORIG_PATH)" xcodes install --latest --experimental-unxip; \
+				XCODE_APP=$$(ls -d /Applications/Xcode*.app 2>/dev/null | head -1); \
+				if [ -z "$$XCODE_APP" ]; then \
+					XCODE_APP=$$(PATH="$(ORIG_PATH)" xcodes installed | tail -1 | awk '{print $$NF}'); \
+				fi; \
+			fi; \
+			if [ -z "$$XCODE_APP" ]; then \
+				echo ""; \
+				echo "Please install Xcode from the App Store or https://developer.apple.com/download/"; \
+				echo "then re-run make setup."; \
+				exit 1; \
+			fi; \
+			if [ "$(SKIP_CONFIRM)" != "1" ]; then \
+				printf "This will run: sudo xcode-select -s \"$$XCODE_APP\". Continue? [y/N] "; \
+				read ans </dev/tty; case "$$ans" in [yY]) ;; *) echo "Aborted."; exit 1;; esac; \
+			fi; \
+			sudo xcode-select -s "$$XCODE_APP"; \
 		fi; \
 	fi
-	@PATH="$(ORIG_PATH)" xcodebuild -license accept 2>/dev/null || true
+	@if [ "$(SKIP_CONFIRM)" != "1" ]; then \
+		printf "Accept the Xcode license agreement? [y/N] "; \
+		read ans </dev/tty; \
+		case "$$ans" in [yY]) sudo PATH="$(ORIG_PATH)" xcodebuild -license accept;; *) echo "Skipped license acceptance.";; esac; \
+	else \
+		sudo PATH="$(ORIG_PATH)" xcodebuild -license accept 2>/dev/null || true; \
+	fi
 	@if [ -z "$(RUSTUP)" ]; then \
-		echo "Installing rustup..."; \
+		echo "rustup is not installed."; \
+		if [ "$(SKIP_CONFIRM)" != "1" ]; then \
+			printf "Install rustup via 'curl https://sh.rustup.rs | sh'? [y/N] "; \
+			read ans </dev/tty; case "$$ans" in [yY]) ;; *) echo "Aborted."; exit 1;; esac; \
+		fi; \
 		curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y; \
 		export PATH="$$HOME/.cargo/bin:$$PATH"; \
 	fi
@@ -130,21 +197,39 @@ setup:
 	@PATH="$(ORIG_PATH)" brew list pkg-config >/dev/null 2>&1 || PATH="$(ORIG_PATH)" brew install pkg-config
 	@PATH="$(ORIG_PATH)" brew list automake >/dev/null 2>&1 || PATH="$(ORIG_PATH)" brew install automake
 	@PATH="$(ORIG_PATH)" command -v perl >/dev/null 2>&1 || PATH="$(ORIG_PATH)" brew install perl
-	@test -x "$(HOMEBREW_PREFIX)/bin/python3" || (PATH="$(ORIG_PATH)" brew install python3 && PATH="$(ORIG_PATH)" brew link --overwrite python@3)
+	@if ! test -x "$(HOMEBREW_PREFIX)/bin/python3"; then \
+		PATH="$(ORIG_PATH)" brew install python3; \
+		if ! PATH="$(ORIG_PATH)" brew link python@3 2>/dev/null; then \
+			echo "brew link python@3 would overwrite existing symlinks:"; \
+			PATH="$(ORIG_PATH)" brew link python@3 2>&1 | head -5; \
+			if [ "$(SKIP_CONFIRM)" != "1" ]; then \
+				printf "Overwrite these symlinks? [y/N] "; \
+				read ans </dev/tty; case "$$ans" in [yY]) ;; *) echo "Aborted."; exit 1;; esac; \
+			fi; \
+			PATH="$(ORIG_PATH)" brew link --overwrite python@3; \
+		fi; \
+	fi
 	@if ! PATH="$(ORIG_PATH)" brew list --cask sf-symbols >/dev/null 2>&1; then \
-		echo "Installing sf-symbols (requires admin/sudo password)..."; \
-		PATH="$(ORIG_PATH)" brew install --cask sf-symbols || \
-		{ echo ""; echo "⚠️  sf-symbols requires sudo. Ask your admin to run:"; \
-		  echo "     brew install --cask sf-symbols"; echo ""; }; \
+		INSTALL_SF=1; \
+		if [ "$(SKIP_CONFIRM)" != "1" ]; then \
+			printf "sf-symbols is a .pkg installer that requires sudo. Install it now? [y/N] "; \
+			read ans </dev/tty; case "$$ans" in [yY]) ;; *) INSTALL_SF=0; echo "Skipped sf-symbols.";; esac; \
+		fi; \
+		if [ "$$INSTALL_SF" = "1" ]; then \
+			PATH="$(ORIG_PATH)" brew install --cask sf-symbols || \
+			{ echo ""; echo "WARNING: sf-symbols installation failed (requires sudo)."; \
+			  echo "  Ask your admin to run: brew install --cask sf-symbols"; echo ""; }; \
+		fi; \
 	fi
 	@$(HOMEBREW_PREFIX)/bin/python3 -c "import objc" 2>/dev/null || $(HOMEBREW_PREFIX)/bin/pip3 install --break-system-packages pyobjc
-	@PATH="$(ORIG_PATH)" command -v cbindgen >/dev/null || $(RUSTUP) run stable cargo install cbindgen
+	@PATH="$(ORIG_PATH):$$HOME/.cargo/bin" command -v cbindgen >/dev/null || $(or $(RUSTUP),$$HOME/.cargo/bin/rustup) run stable cargo install cbindgen
 	# Note: this installs arm tooling as well
-	$(RUSTUP) target add x86_64-apple-darwin
+	$(or $(RUSTUP),$$HOME/.cargo/bin/rustup) target add x86_64-apple-darwin
 	git submodule update --init --recursive
-	PATH="$(ORIG_PATH)" xcodebuild -downloadComponent MetalToolchain
+	PATH="$(ORIG_PATH)" xcodebuild -downloadComponent MetalToolchain || \
+		echo "WARNING: Metal Toolchain download failed. You can retry later with: xcodebuild -downloadComponent MetalToolchain"
 	@echo ""
-	@echo "Setup complete. Run 'make deps' to build native dependencies."
+	@echo "Setup complete. Run 'make paranoid-deps' to build native dependencies."
 
 doctor:
 	@echo "iTerm2 build environment — $(NATIVE_ARCH)"

@@ -9,12 +9,12 @@
 
 #import "iTermGraphEncoder.h"
 #import "iTermDatabase.h"
+#import "iTermLargeContentObject.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
 @class iTermCallback;
 @class iTermThread;
-@protocol iTermLargeContentProvider;
 
 // Manages a SQLite database that holds an encoded graph. Loads it and updates it incrementally.
 @interface iTermGraphDatabase: NSObject<iTermLargeContentProvider>

@@ -340,7 +340,10 @@ static _Atomic int64_t sOutstandingPreconvertBytes = 0;
         }
         if (token->type == VT100_ASCIISTRING ||
             token->type == VT100_MIXED_ASCII_CR_LF) {
-            [token setAsciiBytes:(char *)VT100ByteStreamCursorGetPointer(&position) length:length];
+            [token setAsciiBytes:(char *)VT100ByteStreamCursorGetPointer(&position)
+                          length:length
+                       rendition:_shadowRendition
+                   protectedMode:_shadowProtectedMode];
         }
 
         if (gDebugLogging) {

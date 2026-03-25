@@ -3263,7 +3263,8 @@ ITERM_WEAKLY_REFERENCEABLE
     if ([term loadArrangement:arrangement
                         named:arrangementName
                      sessions:sessions
-           partialAttachments:nil]) {
+           partialAttachments:nil
+         largeContentProvider:nil]) {
         return term;
     } else {
         return term;
@@ -5423,7 +5424,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
 
     return [[settings.allKeys mapWithBlock:^id _Nullable(NSString * _Nonnull key) {
         return [NSString stringWithFormat:@"%@=%@", key, settings[key]];
-    }] componentsJoinedByString:@";"];
+    }] componentsJoinedByString:@"&"];
 }
 
 - (void)setTmuxPerWindowSetting:(NSString *)setting 

@@ -55,7 +55,8 @@ void iTermPreconvertedStringDataFree(PreconvertedStringData *data) {
     data->valid = NO;
 }
 
-void iTermAsciiDataSet(AsciiData *asciiData, const char *bytes, int length, ScreenChars *screenChars) {
+void iTermAsciiDataSet(AsciiData *asciiData, const char *bytes, int length, ScreenChars *screenChars,
+                       VT100GraphicRendition rendition, BOOL protectedMode) {
     assert(asciiData->buffer == NULL);
 
     asciiData->length = length;
@@ -72,10 +73,21 @@ void iTermAsciiDataSet(AsciiData *asciiData, const char *bytes, int length, Scre
         screenChars->buffer = screenChars->staticBuffer;
         memset(screenChars->buffer, 0, asciiData->length * sizeof(screen_char_t));
     }
+
+    // Compute fg/bg from the shadow rendition and bake them into the buffer.
+    screen_char_t fg = { 0 };
+    screen_char_t bg = { 0 };
+    VT100GraphicRenditionUpdateForeground(&rendition, YES, protectedMode, &fg);
+    VT100GraphicRenditionUpdateBackground(&rendition, YES, &bg);
+
     for (NSInteger i = 0; i < length; i++) {
         screenChars->buffer[i].code = asciiData->buffer[i];
+        CopyForegroundColor(&screenChars->buffer[i], fg);
+        CopyBackgroundColor(&screenChars->buffer[i], bg);
     }
     screenChars->length = asciiData->length;
+    screenChars->rendition = rendition;
+    screenChars->protectedMode = protectedMode;
     asciiData->screenChars = screenChars;
 }
 
@@ -388,7 +400,16 @@ void iTermAsciiDataSet(AsciiData *asciiData, const char *bytes, int length, Scre
 }
 
 - (void)setAsciiBytes:(char *)bytes length:(int)length {
-    iTermAsciiDataSet(&_asciiData, bytes, length, &_screenChars);
+    VT100GraphicRendition defaultRendition;
+    VT100GraphicRenditionInitialize(&defaultRendition);
+    iTermAsciiDataSet(&_asciiData, bytes, length, &_screenChars, defaultRendition, NO);
+}
+
+- (void)setAsciiBytes:(char *)bytes
+               length:(int)length
+            rendition:(VT100GraphicRendition)rendition
+        protectedMode:(BOOL)protectedMode {
+    iTermAsciiDataSet(&_asciiData, bytes, length, &_screenChars, rendition, protectedMode);
 }
 
 - (AsciiData *)asciiData {

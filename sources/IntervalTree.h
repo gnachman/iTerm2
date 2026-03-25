@@ -48,7 +48,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @protocol IntervalTreeObject <IntervalTreeImmutableObject, NSObject>
 // Deserialize from dictionaryValue.
-- (instancetype)initWithDictionary:(NSDictionary *)dict;
+- (nullable instancetype)initWithDictionary:(NSDictionary *)dict;
 
 @property(nullable, nonatomic, weak) IntervalTreeEntry *entry;
 

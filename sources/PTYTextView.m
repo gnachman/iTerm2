@@ -7131,10 +7131,12 @@ static NSString *iTermStringFromRange(NSRange range) {
 
 - (void)mouseHandlerOpenTargetWithEvent:(NSEvent *)event
                            inBackground:(BOOL)inBackground
-                                  style:(iTermOpenStyle)style {
+                                  style:(iTermOpenStyle)style
+               smartSelectionActionsOnly:(BOOL)smartSelectionActionsOnly {
     [_urlActionHelper openTargetWithEvent:event
                              inBackground:inBackground
-                                    style:style];
+                                    style:style
+                 smartSelectionActionsOnly:smartSelectionActionsOnly];
 }
 
 - (BOOL)mouseHandlerIsScrolledToBottom:(PTYMouseHandler *)handler {
@@ -7588,11 +7590,11 @@ dragSemanticHistoryWithEvent:(NSEvent *)event
 }
 
 - (void)openTargetWithEvent:(NSEvent *)event {
-    [_urlActionHelper openTargetWithEvent:event inBackground:NO style:iTermOpenStyleTab];
+    [_urlActionHelper openTargetWithEvent:event inBackground:NO style:iTermOpenStyleTab smartSelectionActionsOnly:NO];
 }
 
 - (void)openTargetInBackgroundWithEvent:(NSEvent *)event {
-    [_urlActionHelper openTargetWithEvent:event inBackground:YES style:iTermOpenStyleTab];
+    [_urlActionHelper openTargetWithEvent:event inBackground:YES style:iTermOpenStyleTab smartSelectionActionsOnly:NO];
 }
 
 - (void)smartSelectAndMaybeCopyWithEvent:(NSEvent *)event
@@ -7651,6 +7653,15 @@ dragSemanticHistoryWithEvent:(NSEvent *)event
                                            duration:1
                                    screenCoordinate:[NSEvent mouseLocation]
                                           pointSize:12];
+    }
+}
+
+- (void)copyOrPasteWithEvent:(NSEvent *)event {
+    if ([self canCopy]) {
+        [self copySelectionAccordingToUserPreferences];
+        [self deselect];
+    } else {
+        [self paste:nil];
     }
 }
 
