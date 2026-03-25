@@ -40,6 +40,7 @@ NSString *kStateDictMouseButtonMode = @"mouse_button_flag";
 NSString *kStateDictMouseAnyMode = @"mouse_any_flag";
 NSString *kStateDictMouseUTF8Mode = @"mouse_utf8_flag";
 NSString *kStateDictMouseSGRMode = @"mouse_sgr_flag";  // tmux 3.1+
+NSString *kStateDictBracketedPasteMode = @"bracket_paste_flag";  // Requires tmux patch (not yet in any release)
 
 @interface NSString (TmuxStateParser)
 - (NSArray *)intlistValue;
@@ -88,7 +89,8 @@ NSString *kStateDictMouseSGRMode = @"mouse_sgr_flag";  // tmux 3.1+
                          kStateDictInsertMode,
                          kStateDictKCursorMode, kStateDictKKeypadMode, kStateDictWrapMode,
                          kStateDictMouseStandardMode, kStateDictMouseButtonMode,
-                         kStateDictMouseAnyMode, kStateDictMouseUTF8Mode, kStateDictMouseSGRMode ];
+                         kStateDictMouseAnyMode, kStateDictMouseUTF8Mode, kStateDictMouseSGRMode,
+                         kStateDictBracketedPasteMode ];
     for (NSString *value in theModes) {
         [format appendFormat:@"%@=#{%@}", value, value];
         if (value != [theModes lastObject]) {
@@ -134,6 +136,7 @@ NSString *kStateDictMouseSGRMode = @"mouse_sgr_flag";  // tmux 3.1+
                                 uintType, kStateDictMouseAnyMode,
                                 uintType, kStateDictMouseUTF8Mode,
                                 uintType, kStateDictMouseSGRMode,
+                                uintType, kStateDictBracketedPasteMode,
                                 uintType, kStateDictWrapMode,
                                 uintType, kStateDictScrollRegionUpper,
                                 uintType, kStateDictScrollRegionLower,

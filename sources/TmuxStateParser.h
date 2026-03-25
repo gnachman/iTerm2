@@ -26,6 +26,7 @@ extern NSString *kStateDictMouseButtonMode;
 extern NSString *kStateDictMouseAnyMode;
 extern NSString *kStateDictMouseUTF8Mode;
 extern NSString *kStateDictMouseSGRMode;  // tmux 3.1+
+extern NSString *kStateDictBracketedPasteMode;  // Requires tmux patch (not yet in any release)
 
 @interface TmuxStateParser : NSObject
 

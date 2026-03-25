@@ -630,7 +630,7 @@ static double iTermSaneDouble(const double d) {
         [stars appendString:@"*"];
     }
     NSString *percent = [NSString stringWithFormat:@"%0.1f%%", 100.0 * static_cast<double>(count) / static_cast<double>(total)];
-    int precision = (binWidth >= 1.0) ? 0 : (int)ceil(-log10(binWidth));
+    int precision = (binWidth >= 1.0 || binWidth <= 0) ? 0 : (int)ceil(-log10(binWidth));
     precision = std::min(precision, 3);
     NSString *format = [NSString stringWithFormat:@"[%%12.%df, %%12.%df) %%8d (%%6s) |%%@", precision, precision];
     return [NSString stringWithFormat:format,
