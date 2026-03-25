@@ -1751,8 +1751,8 @@ ITERM_WEAKLY_REFERENCEABLE
         NSString *useTabColorKey = iTermAmendedColorKey(KEY_USE_TAB_COLOR, theBookmark, dark);
         if (tabColorDict) {
             // We're restoring a tmux arrangement that specifies a tab color.
-            NSColor *profileTabColorDict = [iTermProfilePreferences objectForColorKey:KEY_TAB_COLOR dark:dark profile:theBookmark];
-            if (![iTermProfilePreferences boolForColorKey:KEY_USE_TAB_COLOR dark:dark profile:theBookmark] ||
+            NSDictionary *profileTabColorDict = [iTermProfilePreferences objectForTabColorKey:KEY_TAB_COLOR dark:dark profile:theBookmark];
+            if (![iTermProfilePreferences boolForTabColorKey:KEY_USE_TAB_COLOR dark:dark profile:theBookmark] ||
                 ![NSObject object:profileTabColorDict isApproximatelyEqualToObject:tabColorDict epsilon:1/255.0]) {
                 // The tmux profile does not specify a tab color or it specifies a different one. Override it and divorce.
                 NSString *tabColorKey = iTermAmendedColorKey(KEY_TAB_COLOR, theBookmark, dark);
@@ -1762,7 +1762,7 @@ ITERM_WEAKLY_REFERENCEABLE
                 [keysToPreserveInCaseOfDivorce addObjectsFromArray:@[ tabColorKey, useTabColorKey ]];
             }
         } else if ([colorString isEqualToString:iTermTmuxTabColorNone] &&
-                   [iTermProfilePreferences boolForColorKey:KEY_USE_TAB_COLOR dark:dark profile:theBookmark]) {
+                   [iTermProfilePreferences boolForTabColorKey:KEY_USE_TAB_COLOR dark:dark profile:theBookmark]) {
             // There was no tab color but the tmux profile specifies one. Disable it and divorce.
             theBookmark = [theBookmark dictionaryBySettingObject:@NO forKey:useTabColorKey];
             [keysToPreserveInCaseOfDivorce addObjectsFromArray:@[ useTabColorKey ]];
@@ -4813,8 +4813,8 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
 
 - (NSColor *)tabColorInProfile:(NSDictionary *)profile {
     const BOOL dark = _screen.colorMap.darkMode;
-    if ([iTermProfilePreferences boolForColorKey:KEY_USE_TAB_COLOR dark:dark profile:profile]) {
-        return [iTermProfilePreferences colorForKey:KEY_TAB_COLOR dark:dark profile:profile];
+    if ([iTermProfilePreferences boolForTabColorKey:KEY_USE_TAB_COLOR dark:dark profile:profile]) {
+        return [iTermProfilePreferences colorForTabColorKey:KEY_TAB_COLOR dark:dark profile:profile];
     }
     return nil;
 }
@@ -5374,8 +5374,8 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
     }
 
     if (self.isTmuxClient) {
-        NSDictionary *tabColorDict = [iTermProfilePreferences objectForColorKey:KEY_TAB_COLOR dark:_screen.colorMap.darkMode profile:aDict];
-        if (![iTermProfilePreferences boolForColorKey:KEY_USE_TAB_COLOR dark:_screen.colorMap.darkMode profile:aDict]) {
+        NSDictionary *tabColorDict = [iTermProfilePreferences objectForTabColorKey:KEY_TAB_COLOR dark:_screen.colorMap.darkMode profile:aDict];
+        if (![iTermProfilePreferences boolForTabColorKey:KEY_USE_TAB_COLOR dark:_screen.colorMap.darkMode profile:aDict]) {
             tabColorDict = nil;
         }
         NSColor *tabColor = [ITAddressBookMgr decodeColor:tabColorDict];
