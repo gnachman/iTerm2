@@ -9,6 +9,8 @@
 #import <Cocoa/Cocoa.h>
 #import "iTermStatusBarViewController.h"
 
+@protocol PSMPUAFontProvider;
+
 @protocol SessionTitleViewDelegate <NSObject>
 
 - (NSMenu *)menu;
@@ -28,9 +30,11 @@
 @property(nonatomic, weak) id<SessionTitleViewDelegate> delegate;
 @property(nonatomic, assign) double dimmingAmount;
 @property(nonatomic, assign) int ordinal;
+@property(nonatomic, weak) id<PSMPUAFontProvider> puaFontProvider;
 
 - (void)updateTextColor;
 - (void)updateBackgroundColor;
 - (void)updateLockButton;
+- (void)invalidateTitleFont;
 
 @end

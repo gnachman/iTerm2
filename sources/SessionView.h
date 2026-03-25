@@ -45,6 +45,7 @@
 @class iTermMetalDriver;
 @protocol iTermBrowserViewControllerDelegate;
 @protocol iTermMetalDriverDataSource;
+@protocol PSMPUAFontProvider;
 @protocol iTermSearchResultsMinimapViewDelegate;
 @class iTermSearchResultsMinimapView;
 @class PTYSession;
@@ -166,6 +167,7 @@ extern NSString *const SessionViewWasSelectedForInspectionNotification;
 - (void)sessionViewWillDraw;
 - (BOOL)sessionViewIsLocked;
 - (void)sessionViewToggleLock;
+- (id<PSMPUAFontProvider>)sessionViewPUAFontProvider;
 @end
 
 typedef NS_ENUM(NSUInteger, iTermSessionViewFindDriver) {

@@ -25,6 +25,7 @@
 #import "VT100Screen.h"
 #import "VT100ScreenMark.h"
 #import "WindowControllerInterface.h"
+#import "PSMCachedTitle.h"
 #import <AppKit/AppKit.h>
 #import <Foundation/Foundation.h>
 #include <sys/time.h>
@@ -338,6 +339,7 @@ backgroundColor:(NSColor *)backgroundColor;
     iTermUniquelyIdentifiable,
     iTermWeaklyReferenceable,
     PopupDelegate,
+    PSMPUAFontProvider,
     PTYTaskDelegate,
     PTYTextViewDelegate,
     TmuxGatewayDelegate,

@@ -1881,6 +1881,7 @@ typedef NS_ENUM(NSInteger, SessionViewTrackingMode) {
             [_title setAutoresizingMask:NSViewWidthSizable | NSViewMinYMargin];
         }
         _title.delegate = self;
+        _title.puaFontProvider = [_delegate sessionViewPUAFontProvider];
         [_title setDimmingAmount:[self adjustedDimmingAmount]];
         [_title updateLockButton];
         [self addSubviewBelowFindView:_title];
