@@ -80,21 +80,21 @@ NSString *const iTermBackgroundImageRotationDidChangeNotification = @"iTermBackg
             [self invalidateStateLockedForGUID:guid];
             return;
         }
+        iTermBackgroundImageRotationState *existingState = self.states[guid];
+        NSString *previousImage = existingState.currentImage;
+        NSString *previousFolder = existingState.folder;
+        NSInteger previousInterval = existingState.interval;
         iTermBackgroundImageRotationState *state = [self stateForProfileLocked:profile];
-        NSString *previousImage = state.currentImage;
-        [self reconfigureTimerLockedForState:state];
-        if (![previousImage isEqualToString:state.currentImage]) {
+        if (!state.timer ||
+            ![previousFolder isEqualToString:state.folder] ||
+            previousInterval != state.interval) {
+            [self reconfigureTimerLockedForState:state];
+        }
+        if (![previousImage isEqualToString:state.currentImage] ||
+            ![previousFolder isEqualToString:state.folder] ||
+            previousInterval != state.interval) {
             [self postDidChangeForGUID:guid];
         }
-    });
-}
-
-- (void)invalidateProfileGUID:(NSString *)guid {
-    if (guid.length == 0) {
-        return;
-    }
-    dispatch_async(self.queue, ^{
-        [self invalidateStateLockedForGUID:guid];
     });
 }
 

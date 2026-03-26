@@ -12,7 +12,6 @@ extern NSString *const iTermBackgroundImageRotationDidChangeNotification;
 
 - (nullable NSString *)backgroundImagePathForProfile:(NSDictionary *)profile;
 - (void)profileDidChange:(NSDictionary *)profile;
-- (void)invalidateProfileGUID:(NSString *)guid;
 
 @end
 

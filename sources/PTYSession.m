@@ -947,6 +947,10 @@ typedef NS_ENUM(NSUInteger, PTYSessionTurdType) {
                                                  selector:@selector(backgroundImageRotationDidChange:)
                                                      name:iTermBackgroundImageRotationDidChangeNotification
                                                    object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(profileDidChange:)
+                                                     name:iTermProfileDidChange
+                                                   object:nil];
         [[[NSWorkspace sharedWorkspace] notificationCenter] addObserver:self
                                                                selector:@selector(activeSpaceDidChange:)
                                                                    name:NSWorkspaceActiveSpaceDidChangeNotification
@@ -4988,7 +4992,39 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
         return;
     }
     NSDictionary *profile = [[ProfileModel sharedInstance] bookmarkWithGuid:profileGUID] ?: self.profile;
-    [self setPreferencesFromAddressBookEntry:profile];
+    if ([iTermProfilePreferences unsignedIntegerForKey:KEY_BACKGROUND_IMAGE_SOURCE_MODE inProfile:profile] != iTermBackgroundImageSourceModeFolderRotation) {
+        return;
+    }
+    NSString *path = [[iTermBackgroundImageRotationManager sharedInstance] backgroundImagePathForProfile:profile];
+    [self setBackgroundImagePath:path];
+}
+
+- (void)profileDidChange:(NSNotification *)notification {
+    NSString *guid = [NSString castFrom:notification.object];
+    if (guid.length == 0) {
+        return;
+    }
+    NSString *sharedProfileGUID = _originalProfile[KEY_GUID];
+    NSString *sessionProfileGUID = _profile[KEY_GUID];
+    BOOL didChange = NO;
+    if (sharedProfileGUID.length > 0 && [guid isEqualToString:sharedProfileGUID]) {
+        [self sharedProfileDidChange];
+        NSDictionary *sharedProfile = [[ProfileModel sharedInstance] bookmarkWithGuid:sharedProfileGUID];
+        if (sharedProfile) {
+            [_originalProfile autorelease];
+            _originalProfile = [sharedProfile copy];
+        }
+        didChange = YES;
+    }
+    if (self.isDivorced &&
+        sessionProfileGUID.length > 0 &&
+        [guid isEqualToString:sessionProfileGUID]) {
+        [self sessionProfileDidChange];
+        didChange = YES;
+    }
+    if (didChange) {
+        [self profileNameDidChangeTo:self.profile[KEY_NAME]];
+    }
 }
 
 - (void)loadColorsFromProfile:(Profile *)aDict {
@@ -5224,11 +5260,11 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
     [self loadColorsFromProfile:aDict];
 
     // background image
+    [[iTermBackgroundImageRotationManager sharedInstance] profileDidChange:aDict];
     if ([iTermProfilePreferences unsignedIntegerForKey:KEY_BACKGROUND_IMAGE_SOURCE_MODE inProfile:aDict] == iTermBackgroundImageSourceModeFolderRotation) {
-        [[iTermBackgroundImageRotationManager sharedInstance] profileDidChange:aDict];
-        [self setBackgroundImagePath:[[iTermBackgroundImageRotationManager sharedInstance] backgroundImagePathForProfile:aDict]];
+        NSString *path = [[iTermBackgroundImageRotationManager sharedInstance] backgroundImagePathForProfile:aDict];
+        [self setBackgroundImagePath:path];
     } else {
-        [[iTermBackgroundImageRotationManager sharedInstance] invalidateProfileGUID:aDict[KEY_GUID]];
         [self setBackgroundImagePath:aDict[KEY_BACKGROUND_IMAGE_LOCATION]];
     }
     [self setBackgroundImageMode:[iTermProfilePreferences unsignedIntegerForKey:KEY_BACKGROUND_IMAGE_MODE
