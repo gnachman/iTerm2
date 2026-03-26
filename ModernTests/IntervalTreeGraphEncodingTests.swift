@@ -13,18 +13,19 @@ class IntervalTreeGraphEncodingTests: XCTestCase {
     // MARK: - iTermMark GUID Tests
 
     func testMarkHasGUID() {
-        guard let mark = iTermMark() else { XCTFail("Failed to create iTermMark"); return }
+        let mark = iTermMark()
         XCTAssertNotNil(mark.guid)
         XCTAssertFalse(mark.guid.isEmpty, "GUID should not be empty")
     }
 
     func testMarkGUIDIsUnique() {
-        guard let mark1 = iTermMark(), let mark2 = iTermMark() else { XCTFail("Failed to create iTermMark"); return }
+        let mark1 = iTermMark()
+        let mark2 = iTermMark()
         XCTAssertNotEqual(mark1.guid, mark2.guid, "Each mark should have a unique GUID")
     }
 
     func testMarkGUIDPersistedInDictionary() {
-        guard let mark = iTermMark() else { XCTFail("Failed to create iTermMark"); return }
+        let mark = iTermMark()
         let originalGuid = mark.guid
 
         let dict = mark.dictionaryValue()
@@ -72,7 +73,8 @@ class IntervalTreeGraphEncodingTests: XCTestCase {
         let tree = IntervalTree()
 
         // Add some marks
-        guard let mark1 = VT100ScreenMark(), let mark2 = VT100ScreenMark() else { XCTFail("Failed to create VT100ScreenMark"); return }
+        let mark1 = VT100ScreenMark()
+        let mark2 = VT100ScreenMark()
 
         let interval1 = Interval(location: 0, length: 100)
         let interval2 = Interval(location: 200, length: 50)
@@ -93,7 +95,9 @@ class IntervalTreeGraphEncodingTests: XCTestCase {
         let tree = IntervalTree()
 
         // Add marks
-        guard let mark1 = VT100ScreenMark(), let mark2 = VT100ScreenMark(), let mark3 = VT100ScreenMark() else { XCTFail("Failed to create VT100ScreenMark"); return }
+        let mark1 = VT100ScreenMark()
+        let mark2 = VT100ScreenMark()
+        let mark3 = VT100ScreenMark()
 
         tree.add(mark1, with: Interval(location: 0, length: 100))
         tree.add(mark2, with: Interval(location: 200, length: 50))
@@ -123,7 +127,7 @@ class IntervalTreeGraphEncodingTests: XCTestCase {
     func testIntervalTreeGraphEncodingPreservesIntervals() {
         let tree = IntervalTree()
 
-        guard let mark = VT100ScreenMark() else { XCTFail("Failed to create VT100ScreenMark"); return }
+        let mark = VT100ScreenMark()
         let originalInterval = Interval(location: 100, length: 50)
         tree.add(mark, with: originalInterval)
 
@@ -187,7 +191,7 @@ class IntervalTreeGraphEncodingTests: XCTestCase {
     func testIntervalTreeGraphEncodingMixedTypes() {
         let tree = IntervalTree()
 
-        guard let mark = VT100ScreenMark() else { XCTFail("Failed to create VT100ScreenMark"); return }
+        let mark = VT100ScreenMark()
         let annotation = PTYAnnotation()
         annotation.stringValue = "Mixed test"
 
@@ -240,7 +244,7 @@ class IntervalTreeGraphEncodingTests: XCTestCase {
         let tree = IntervalTree()
 
         // Add a mark
-        guard let mark = VT100ScreenMark() else { XCTFail("Failed to create VT100ScreenMark"); return }
+        let mark = VT100ScreenMark()
         tree.add(mark, with: Interval(location: 0, length: 100))
 
         // Get dictionary representation
@@ -321,7 +325,7 @@ class IntervalTreeGraphEncodingTests: XCTestCase {
     // MARK: - stableIdentifier Protocol Tests
 
     func testMarkStableIdentifierReturnsGUID() {
-        guard let mark = iTermMark() else { XCTFail("Failed to create iTermMark"); return }
+        let mark = iTermMark()
         XCTAssertEqual(mark.stableIdentifier, mark.guid,
                        "stableIdentifier should return guid for iTermMark")
     }
@@ -333,7 +337,7 @@ class IntervalTreeGraphEncodingTests: XCTestCase {
     }
 
     func testVT100ScreenMarkStableIdentifierReturnsGUID() {
-        guard let mark = VT100ScreenMark() else { XCTFail("Failed to create VT100ScreenMark"); return }
+        let mark = VT100ScreenMark()
         XCTAssertEqual(mark.stableIdentifier, mark.guid,
                        "stableIdentifier should return guid for VT100ScreenMark")
     }
@@ -592,7 +596,7 @@ class IntervalTreeGraphEncodingTests: XCTestCase {
         // adjusts them relative to the saved content start.
         // If we have 10000 lines of history and drop 5000, marks at line 6000+
         // will have positive encoded locations.
-        guard let mark = VT100ScreenMark() else { XCTFail("Failed to create VT100ScreenMark"); return }
+        let mark = VT100ScreenMark()
         // Position 500000 simulates a mark at line ~6000 (500000 / 81 ≈ 6172) with width 80
         let originalInterval = Interval(location: 500000, length: 100)
         tree.add(mark, with: originalInterval)
@@ -632,7 +636,9 @@ class IntervalTreeGraphEncodingTests: XCTestCase {
     func testMultipleMarksWithOffset() {
         let tree = IntervalTree()
 
-        guard let mark1 = VT100ScreenMark(), let mark2 = VT100ScreenMark(), let mark3 = VT100ScreenMark() else { XCTFail("Failed to create VT100ScreenMark"); return }
+        let mark1 = VT100ScreenMark()
+        let mark2 = VT100ScreenMark()
+        let mark3 = VT100ScreenMark()
 
         // Positions simulating marks at different lines
         tree.add(mark1, with: Interval(location: 100000, length: 50))
@@ -709,7 +715,7 @@ class IntervalTreeGraphEncodingTests: XCTestCase {
     // MARK: VT100ScreenMark Round-Trip
 
     func testVT100ScreenMarkRoundTrip() {
-        guard let mark = VT100ScreenMark() else { XCTFail("Failed to create VT100ScreenMark"); return }
+        let mark = VT100ScreenMark()
         mark.isPrompt = true
         mark.command = "ls -la"
         mark.code = 0
@@ -947,7 +953,7 @@ class IntervalTreeGraphEncodingTests: XCTestCase {
 
         // Add one of each Swift-visible type
         // Note: iTermCapturedOutputMark and VT100WorkingDirectory are not in bridging header
-        guard let screenMark = VT100ScreenMark() else { XCTFail("Failed to create VT100ScreenMark"); return }
+        let screenMark = VT100ScreenMark()
         screenMark.command = "echo test"
 
         let annotation = PTYAnnotation()

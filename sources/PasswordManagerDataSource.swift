@@ -73,7 +73,7 @@ extension PasswordManagerAccount {
         }
     }
 
-    /// Default: use userName. Override in KeeperAccount to fetch login from record.
+    /// Default: use userName. Adapters may override to fetch a record’s login field for “Enter username”.
     func usernameForTerminal(context: RecipeExecutionContext, completion: @escaping (String?) -> Void) {
         completion(userName)
     }

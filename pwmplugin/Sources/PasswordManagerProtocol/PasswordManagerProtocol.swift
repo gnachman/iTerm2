@@ -129,6 +129,15 @@ public enum PasswordManagerProtocol {
         }
     }
 
+    /// Response for `get-username` (same request body as `get-password`).
+    public struct GetUsernameResponse: Codable {
+        public var userName: String
+
+        public init(userName: String) {
+            self.userName = userName
+        }
+    }
+
     // MARK: - Set Password
 
     public struct SetPasswordRequest: Codable {

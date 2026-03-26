@@ -57,6 +57,7 @@ if [ "${UNIVERSAL:-0}" = "1" ]; then
 
     build_universal "iterm2-keepassxc-adapter"
     build_universal "iterm2-bitwarden-adapter"
+    build_universal "iterm2-keeper-adapter"
 else
     echo "Building password manager adapters for $NATIVE_ARCH..."
     swift build -c release --arch "$NATIVE_ARCH" --scratch-path ".build-$NATIVE_ARCH" --disable-sandbox
@@ -77,6 +78,7 @@ else
 
     build_native "iterm2-keepassxc-adapter"
     build_native "iterm2-bitwarden-adapter"
+    build_native "iterm2-keeper-adapter"
 fi
 
 echo ""

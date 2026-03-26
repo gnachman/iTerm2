@@ -20,7 +20,7 @@ class PasswordManagerDataSourceProvider: NSObject {
     private var _lastPass: LastPassDataSource
     private var _keePassXC: AdapterPasswordDataSource
     private var _bitwarden: AdapterPasswordDataSource
-    private var _keeper: KeeperDataSource
+    private var _keeper: AdapterPasswordDataSource
     private let browser: Bool
     private var dataSourceNameUserDefaultsKey: String {
         "NoSyncPasswordManagerDataSourceName" + (browser ? "Browser" : "")
@@ -52,7 +52,10 @@ class PasswordManagerDataSourceProvider: NSObject {
                                                adapterPath: bitwardenPath,
                                                identifier: "Bitwarden")
 
-        _keeper = KeeperDataSource(browser: browser)
+        let keeperPath = Bundle(for: Self.self).path(forAuxiliaryExecutable: "iterm2-keeper-adapter")!
+        _keeper = AdapterPasswordDataSource(browser: browser,
+                                            adapterPath: keeperPath,
+                                            identifier: "Keeper Security")
 
         self.browser = browser
 
@@ -182,7 +185,7 @@ class PasswordManagerDataSourceProvider: NSObject {
         return _bitwarden
     }
 
-    private var keeper: KeeperDataSource? {
+    private var keeper: AdapterPasswordDataSource? {
         if !authenticated {
             return nil
         }

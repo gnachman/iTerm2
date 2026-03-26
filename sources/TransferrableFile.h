@@ -35,9 +35,9 @@ typedef void (^TransferrableFileCompletionBlock)(BOOL success, NSString * _Nulla
 @property(atomic, assign) BOOL isZipOfFolder;
 @property(atomic, copy, nullable) TransferrableFileCompletionBlock completionBlock;
 
-+ (void)lockFileName:(NSString * _Nonnull)name;
-+ (void)unlockFileName:(NSString * _Nonnull)name;
-+ (BOOL)fileNameIsLocked:(NSString * _Nonnull)name;
++ (void)lockFileName:(NSString *)name;
++ (void)unlockFileName:(NSString *)name;
++ (BOOL)fileNameIsLocked:(NSString *)name;
 
 // These two are only needed for keyboard-interactive auth
 - (nullable NSString *)protocolName;
@@ -54,7 +54,7 @@ typedef void (^TransferrableFileCompletionBlock)(BOOL success, NSString * _Nulla
 - (nullable NSString *)destination;
 - (NSTimeInterval)timeOfLastStatusChange;
 - (BOOL)isDownloading;
-- (void)didFailWithError:(NSString * _Nullable)error;
+- (void)didFailWithError:(NSString *)error;
 
 #pragma mark - Utility
 
@@ -68,4 +68,3 @@ typedef void (^TransferrableFileCompletionBlock)(BOOL success, NSString * _Nulla
 @end
 
 NS_ASSUME_NONNULL_END
-

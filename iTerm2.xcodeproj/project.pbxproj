@@ -1255,6 +1255,7 @@
 		A616D78E2EA85D9E000C0C18 /* AdapterPasswordDataSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = A616D78D2EA85D9E000C0C18 /* AdapterPasswordDataSource.swift */; };
 		A616D7D92EA94318000C0C18 /* iterm2-keepassxc-adapter in CopyFiles */ = {isa = PBXBuildFile; fileRef = A616D78F2EA86224000C0C18 /* iterm2-keepassxc-adapter */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 		A616D7DA2EA94319000C0C18 /* iterm2-bitwarden-adapter in CopyFiles */ = {isa = PBXBuildFile; fileRef = A616D7902EA86225000C0C18 /* iterm2-bitwarden-adapter */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
+		A616D7DB2EA9431B000C0C18 /* iterm2-keeper-adapter in CopyFiles */ = {isa = PBXBuildFile; fileRef = A616D7912EA86226000C0C18 /* iterm2-keeper-adapter */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 		A616E6792EA9548D000C0C18 /* PasswordManagerProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = A616E6632EA9544D000C0C18 /* PasswordManagerProtocol.swift */; };
 		A6180D6C21A35D5E0073F219 /* iTermMetalPerFrameState.h in Headers */ = {isa = PBXBuildFile; fileRef = A6180D6A21A35D5E0073F219 /* iTermMetalPerFrameState.h */; };
 		A6180D6D21A35D5E0073F219 /* iTermMetalPerFrameState.m in Sources */ = {isa = PBXBuildFile; fileRef = A6180D6B21A35D5E0073F219 /* iTermMetalPerFrameState.m */; };
@@ -3225,7 +3226,6 @@
 		A6A9838C27E5A83C003319D1 /* PasswordManagerDataSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6A9838B27E5A83C003319D1 /* PasswordManagerDataSource.swift */; };
 		A6A9838D27E5B3E5003319D1 /* iTermApplication.m in Sources */ = {isa = PBXBuildFile; fileRef = DDF0FD64062916F70080EF74 /* iTermApplication.m */; };
 		A6A9838F27E5C3DA003319D1 /* KeychainPasswordDataSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6A9838E27E5C3DA003319D1 /* KeychainPasswordDataSource.swift */; };
-		A6KPRDS2F2582F8008DF9BD /* KeeperDataSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6KPRDS2F2582F8008DF9BC /* KeeperDataSource.swift */; };
 		A6A9839127E5C427003319D1 /* PasswordManagerDataSourceProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6A9839027E5C427003319D1 /* PasswordManagerDataSourceProvider.swift */; };
 		A6A9839327E5C450003319D1 /* Array+iTerm.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6A9839227E5C450003319D1 /* Array+iTerm.swift */; };
 		A6A9839527E5C45E003319D1 /* String+iTerm.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6A9839427E5C45E003319D1 /* String+iTerm.swift */; };
@@ -5158,6 +5158,7 @@
 		A6FFAE712CF123D10031FB21 /* CoreTextLineRenderingHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6FFAE702CF123CC0031FB21 /* CoreTextLineRenderingHelper.swift */; };
 		A6FFAE732CF682BD0031FB21 /* iTermDoubleWidthCharacterCache.h in Headers */ = {isa = PBXBuildFile; fileRef = A6FFAE722CF682B60031FB21 /* iTermDoubleWidthCharacterCache.h */; };
 		A6FFAE752CF682D60031FB21 /* iTermDoubleWidthCharacterCache.m in Sources */ = {isa = PBXBuildFile; fileRef = A6FFAE742CF682D40031FB21 /* iTermDoubleWidthCharacterCache.m */; };
+		A6KPRDS2F2582F8008DF9BD /* KeeperDataSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6KPRDS2F2582F8008DF9BC /* KeeperDataSource.swift */; };
 		A7538B418331D32A3C38281F /* FIFOQueue.swift in Sources */ = {isa = PBXBuildFile; fileRef = 20065710A2FC0BE95B224445 /* FIFOQueue.swift */; };
 		A77D8D50729267B406541654 /* AccessibilityDeletionDetectionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F139DFA4255DC27A1E3E0FF /* AccessibilityDeletionDetectionTests.swift */; };
 		A785F516A64BC93AAF1474B8 /* RegexAtomIterator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 76421C2E762130B690D1ADC5 /* RegexAtomIterator.swift */; };
@@ -5432,6 +5433,7 @@
 			files = (
 				A616D7D92EA94318000C0C18 /* iterm2-keepassxc-adapter in CopyFiles */,
 				A616D7DA2EA94319000C0C18 /* iterm2-bitwarden-adapter in CopyFiles */,
+				A616D7DB2EA9431B000C0C18 /* iterm2-keeper-adapter in CopyFiles */,
 				A6A5BE0D2A070D4A00F5FD44 /* iTerm2ImportStatus.app in CopyFiles */,
 				A60593CC257DFAE400CACEE6 /* ShellLauncher in CopyFiles */,
 				A63F2A3923FA5698008DDEA4 /* iTermServer in CopyFiles */,
@@ -6593,6 +6595,7 @@
 		A616D78D2EA85D9E000C0C18 /* AdapterPasswordDataSource.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdapterPasswordDataSource.swift; sourceTree = "<group>"; };
 		A616D78F2EA86224000C0C18 /* iterm2-keepassxc-adapter */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.executable"; name = "iterm2-keepassxc-adapter"; path = "../pwmplugin/binaries/iterm2-keepassxc-adapter"; sourceTree = "<group>"; };
 		A616D7902EA86225000C0C18 /* iterm2-bitwarden-adapter */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.executable"; name = "iterm2-bitwarden-adapter"; path = "../pwmplugin/binaries/iterm2-bitwarden-adapter"; sourceTree = "<group>"; };
+		A616D7912EA86226000C0C18 /* iterm2-keeper-adapter */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.executable"; name = "iterm2-keeper-adapter"; path = "../pwmplugin/binaries/iterm2-keeper-adapter"; sourceTree = "<group>"; };
 		A616E65F2EA9544D000C0C18 /* spec.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = spec.md; sourceTree = "<group>"; };
 		A616E6612EA9544D000C0C18 /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
 		A616E6632EA9544D000C0C18 /* PasswordManagerProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PasswordManagerProtocol.swift; sourceTree = "<group>"; };
@@ -8079,7 +8082,6 @@
 		A6A93F572C49BD2F00F07BAB /* iTermTerminfoHelper.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermTerminfoHelper.m; sourceTree = "<group>"; };
 		A6A9838B27E5A83C003319D1 /* PasswordManagerDataSource.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PasswordManagerDataSource.swift; sourceTree = "<group>"; };
 		A6A9838E27E5C3DA003319D1 /* KeychainPasswordDataSource.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainPasswordDataSource.swift; sourceTree = "<group>"; };
-		A6KPRDS2F2582F8008DF9BC /* KeeperDataSource.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeeperDataSource.swift; sourceTree = "<group>"; };
 		A6A9839027E5C427003319D1 /* PasswordManagerDataSourceProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PasswordManagerDataSourceProvider.swift; sourceTree = "<group>"; };
 		A6A9839227E5C450003319D1 /* Array+iTerm.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Array+iTerm.swift"; sourceTree = "<group>"; };
 		A6A9839427E5C45E003319D1 /* String+iTerm.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "String+iTerm.swift"; sourceTree = "<group>"; };
@@ -9170,6 +9172,7 @@
 		A6FFAE702CF123CC0031FB21 /* CoreTextLineRenderingHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoreTextLineRenderingHelper.swift; sourceTree = "<group>"; };
 		A6FFAE722CF682B60031FB21 /* iTermDoubleWidthCharacterCache.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermDoubleWidthCharacterCache.h; sourceTree = "<group>"; };
 		A6FFAE742CF682D40031FB21 /* iTermDoubleWidthCharacterCache.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermDoubleWidthCharacterCache.m; sourceTree = "<group>"; };
+		A6KPRDS2F2582F8008DF9BC /* KeeperDataSource.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeeperDataSource.swift; sourceTree = "<group>"; };
 		AE6718DDCFD2CA382391CDFD /* iTermScreenshotPreviewOverlay.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = iTermScreenshotPreviewOverlay.swift; sourceTree = "<group>"; };
 		AF19E441FF824539A275D8DA /* iTermLayoutCalculator.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermLayoutCalculator.m; sourceTree = "<group>"; };
 		B231EDB860248C368A511B42 /* iTermEventTriggerEvaluator.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = iTermEventTriggerEvaluator.swift; sourceTree = "<group>"; };
@@ -11361,6 +11364,7 @@
 				A629F57723AF2DD900C2F16B /* utilities */,
 				A616D78F2EA86224000C0C18 /* iterm2-keepassxc-adapter */,
 				A616D7902EA86225000C0C18 /* iterm2-bitwarden-adapter */,
+				A616D7912EA86226000C0C18 /* iterm2-keeper-adapter */,
 			);
 			path = Resources;
 			sourceTree = "<group>";
@@ -16383,10 +16387,6 @@
 				LastSwiftUpdateCheck = 1640;
 				LastUpgradeCheck = 2620;
 				TargetAttributes = {
-					1D6ED85219AEA20D005A7799 = {
-						DevelopmentTeam = H7V7XYVQ7D;
-						ProvisioningStyle = Automatic;
-					};
 					1DD39AD3180B8117004E56D5 = {
 						ProvisioningStyle = Automatic;
 					};
@@ -16399,13 +16399,10 @@
 					};
 					759637992593AE0700E278CC = {
 						CreatedOnToolsVersion = 12.3;
-						DevelopmentTeam = H7V7XYVQ7D;
 						LastSwiftMigration = 1410;
-						ProvisioningStyle = Automatic;
 					};
 					874206460564169600CFC3F1 = {
 						LastSwiftMigration = 1250;
-						ProvisioningStyle = Automatic;
 						SystemCapabilities = {
 							com.apple.HardenedRuntime = {
 								enabled = 1;
@@ -16414,13 +16411,9 @@
 					};
 					A60593B1257DF9A500CACEE6 = {
 						CreatedOnToolsVersion = 12.2;
-						DevelopmentTeam = H7V7XYVQ7D;
-						ProvisioningStyle = Automatic;
 					};
 					A663197722FF349700C502BD = {
 						CreatedOnToolsVersion = 10.2;
-						DevelopmentTeam = H7V7XYVQ7D;
-						ProvisioningStyle = Automatic;
 					};
 					A66717851DCE36C3000CE608 = {
 						DevelopmentTeam = H7V7XYVQ7D;
@@ -16428,8 +16421,6 @@
 					};
 					A6866B6623CAA10A00ACD94C = {
 						CreatedOnToolsVersion = 11.3;
-						DevelopmentTeam = H7V7XYVQ7D;
-						ProvisioningStyle = Automatic;
 					};
 					A69FEEB92E123B8700AFF7A8 = {
 						CreatedOnToolsVersion = 16.4;
@@ -16447,8 +16438,6 @@
 					};
 					A6C7641B1B45CB2800E3C992 = {
 						CreatedOnToolsVersion = 6.3;
-						DevelopmentTeam = H7V7XYVQ7D;
-						ProvisioningStyle = Automatic;
 						TestTargetID = 874206460564169600CFC3F1;
 					};
 				};
@@ -20605,7 +20594,7 @@
 				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = H7V7XYVQ7D;
+				DEVELOPMENT_TEAM = V75A2JBVMH;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(SRCROOT)/build/Development",
@@ -20638,7 +20627,7 @@
 				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = H7V7XYVQ7D;
+				DEVELOPMENT_TEAM = V75A2JBVMH;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(SRCROOT)/build/Development",
@@ -20724,12 +20713,14 @@
 				CLANG_ENABLE_OBJC_WEAK = YES;
 				CLANG_WARN_INT_CONVERSION = YES;
 				CODE_SIGN_ENTITLEMENTS = iTerm2.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_INJECT_BASE_ENTITLEMENTS = NO;
+				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = YES;
 				CURRENT_PROJECT_VERSION = 1;
 				DEAD_CODE_STRIPPING = YES;
-				"DEVELOPMENT_TEAM[sdk=macosx*]" = H7V7XYVQ7D;
+				DEVELOPMENT_TEAM = V75A2JBVMH;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				FRAMEWORK_SEARCH_PATHS = (
@@ -20784,8 +20775,9 @@
 					"-ObjC",
 					"-lc++",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.googlecode.iterm2;
+				PRODUCT_BUNDLE_IDENTIFIER = com.hiteshborase.iterm2.local;
 				PRODUCT_NAME = iTerm2;
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SDKROOT = macosx;
 				SWIFT_OBJC_BRIDGING_HEADER = "";
 				SWIFT_VERSION = 5.0;
@@ -20815,6 +20807,7 @@
 				COPY_PHASE_STRIP = NO;
 				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = V75A2JBVMH;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(SRCROOT)",
@@ -20887,9 +20880,12 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_OBJC_WEAK = YES;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = YES;
 				DEAD_CODE_STRIPPING = YES;
+				DEVELOPMENT_TEAM = V75A2JBVMH;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(SRCROOT)",
@@ -20938,6 +20934,7 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.googlecode.iterm2.applescript;
 				PRODUCT_NAME = iTerm2ForApplescriptTesting;
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SDKROOT = macosx;
 				SWIFT_VERSION = 5.0;
 				VALID_ARCHS = "$(ARCHS_STANDARD)";
@@ -20958,9 +20955,12 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_OBJC_WEAK = YES;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = YES;
 				DEAD_CODE_STRIPPING = YES;
+				DEVELOPMENT_TEAM = V75A2JBVMH;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(SRCROOT)",
@@ -21008,6 +21008,7 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.googlecode.iterm2.applescript;
 				PRODUCT_NAME = iTerm2ForApplescriptTesting;
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SDKROOT = macosx;
 				SWIFT_VERSION = 5.0;
 				VALID_ARCHS = "$(ARCHS_STANDARD)";
@@ -21045,7 +21046,7 @@
 				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = NO;
 				DEAD_CODE_STRIPPING = YES;
-				DEVELOPMENT_TEAM = H7V7XYVQ7D;
+				DEVELOPMENT_TEAM = V75A2JBVMH;
 				ENABLE_HARDENED_RUNTIME = YES;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
@@ -21133,7 +21134,7 @@
 				COPY_PHASE_STRIP = YES;
 				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
-				DEVELOPMENT_TEAM = H7V7XYVQ7D;
+				DEVELOPMENT_TEAM = V75A2JBVMH;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_NS_ASSERTIONS = NO;
 				FRAMEWORK_SEARCH_PATHS = (
@@ -21214,7 +21215,7 @@
 				COPY_PHASE_STRIP = YES;
 				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
-				DEVELOPMENT_TEAM = H7V7XYVQ7D;
+				DEVELOPMENT_TEAM = V75A2JBVMH;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_NS_ASSERTIONS = NO;
 				FRAMEWORK_SEARCH_PATHS = (
@@ -21436,6 +21437,7 @@
 				COPY_PHASE_STRIP = NO;
 				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = V75A2JBVMH;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
@@ -21515,10 +21517,13 @@
 				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = NO;
 				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = V75A2JBVMH;
 				ENABLE_NS_ASSERTIONS = YES;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
@@ -21548,6 +21553,7 @@
 				OTHER_LDFLAGS = "";
 				PRODUCT_BUNDLE_IDENTIFIER = "com.iterm2.sandboxed-worker";
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SDKROOT = macosx;
 				SKIP_INSTALL = YES;
 				SWIFT_OBJC_BRIDGING_HEADER = "iTerm2SandboxedWorker/iTerm2SandboxedWorker-Bridging-Header.h";
@@ -21589,10 +21595,13 @@
 				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = NO;
 				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = V75A2JBVMH;
 				ENABLE_NS_ASSERTIONS = YES;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
@@ -21622,6 +21631,7 @@
 				OTHER_LDFLAGS = "";
 				PRODUCT_BUNDLE_IDENTIFIER = "com.iterm2.sandboxed-worker";
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SDKROOT = macosx;
 				SKIP_INSTALL = YES;
 				SWIFT_OBJC_BRIDGING_HEADER = "iTerm2SandboxedWorker/iTerm2SandboxedWorker-Bridging-Header.h";
@@ -21663,10 +21673,13 @@
 				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = NO;
 				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = V75A2JBVMH;
 				ENABLE_NS_ASSERTIONS = YES;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
@@ -21696,6 +21709,7 @@
 				OTHER_LDFLAGS = "";
 				PRODUCT_BUNDLE_IDENTIFIER = "com.iterm2.sandboxed-worker";
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SDKROOT = macosx;
 				SKIP_INSTALL = YES;
 				SWIFT_OBJC_BRIDGING_HEADER = "iTerm2SandboxedWorker/iTerm2SandboxedWorker-Bridging-Header.h";
@@ -21740,6 +21754,7 @@
 				COPY_PHASE_STRIP = NO;
 				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = V75A2JBVMH;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
@@ -21763,6 +21778,7 @@
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CODE_SIGN_FLAGS = "";
 				OTHER_LDFLAGS = "";
+				PRODUCT_BUNDLE_IDENTIFIER = com.hiteshborase.iterm2.local;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
 				VALID_ARCHS = "$(ARCHS_STANDARD)";
@@ -21802,9 +21818,12 @@
 				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
 				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = V75A2JBVMH;
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
@@ -21820,7 +21839,9 @@
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				OTHER_LDFLAGS = "";
+				PRODUCT_BUNDLE_IDENTIFIER = com.hiteshborase.iterm2.local;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SDKROOT = macosx;
 				VALID_ARCHS = "$(ARCHS_STANDARD)";
 			};
@@ -21859,9 +21880,12 @@
 				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
 				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = V75A2JBVMH;
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
@@ -21877,7 +21901,9 @@
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				OTHER_LDFLAGS = "";
+				PRODUCT_BUNDLE_IDENTIFIER = com.hiteshborase.iterm2.local;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SDKROOT = macosx;
 				VALID_ARCHS = "$(ARCHS_STANDARD)";
 			};
@@ -21916,9 +21942,12 @@
 				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
 				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = V75A2JBVMH;
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
@@ -21934,7 +21963,9 @@
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				OTHER_LDFLAGS = "";
+				PRODUCT_BUNDLE_IDENTIFIER = com.hiteshborase.iterm2.local;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SDKROOT = macosx;
 				VALID_ARCHS = "$(ARCHS_STANDARD)";
 			};
@@ -22001,12 +22032,14 @@
 				CLANG_ENABLE_OBJC_WEAK = YES;
 				CLANG_WARN_INT_CONVERSION = YES;
 				CODE_SIGN_ENTITLEMENTS = iTerm2.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_INJECT_BASE_ENTITLEMENTS = NO;
+				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = YES;
 				CURRENT_PROJECT_VERSION = 1;
 				DEAD_CODE_STRIPPING = YES;
-				"DEVELOPMENT_TEAM[sdk=macosx*]" = H7V7XYVQ7D;
+				DEVELOPMENT_TEAM = V75A2JBVMH;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				FRAMEWORK_SEARCH_PATHS = (
@@ -22057,8 +22090,9 @@
 					"-ObjC",
 					"-lc++",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.googlecode.iterm2;
+				PRODUCT_BUNDLE_IDENTIFIER = com.hiteshborase.iterm2.local;
 				PRODUCT_NAME = iTerm2;
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SDKROOT = macosx;
 				SWIFT_OBJC_BRIDGING_HEADER = "";
 				SWIFT_VERSION = 5.0;
@@ -22102,7 +22136,7 @@
 				COPY_PHASE_STRIP = YES;
 				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
-				DEVELOPMENT_TEAM = H7V7XYVQ7D;
+				DEVELOPMENT_TEAM = V75A2JBVMH;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_NS_ASSERTIONS = NO;
 				FRAMEWORK_SEARCH_PATHS = (
@@ -22204,9 +22238,12 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_OBJC_WEAK = YES;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = YES;
 				DEAD_CODE_STRIPPING = YES;
+				DEVELOPMENT_TEAM = V75A2JBVMH;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(SRCROOT)",
@@ -22254,6 +22291,7 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.googlecode.iterm2.applescript;
 				PRODUCT_NAME = iTerm2ForApplescriptTesting;
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SDKROOT = macosx;
 				SWIFT_VERSION = 5.0;
 				VALID_ARCHS = "$(ARCHS_STANDARD)";
@@ -22352,10 +22390,13 @@
 				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = NO;
 				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = V75A2JBVMH;
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				FRAMEWORK_SEARCH_PATHS = (
@@ -22386,6 +22427,7 @@
 				MTL_ENABLE_DEBUG_INFO = NO;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.iterm2.$(PRODUCT_NAME:rfc1034identifier)";
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SDKROOT = macosx;
 				SWIFT_OBJC_BRIDGING_HEADER = "$PROJECT_DIR/sources/iTerm2SharedARC-Bridging-Header.h";
 				SWIFT_VERSION = 5.0;
@@ -22515,6 +22557,7 @@
 				CODE_SIGN_ENTITLEMENTS = plists/iTermServer.entitlements;
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = V75A2JBVMH;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
@@ -22539,6 +22582,7 @@
 				OTHER_CFLAGS = "-DITERM_SERVER=1";
 				OTHER_CODE_SIGN_FLAGS = "";
 				OTHER_LDFLAGS = "";
+				PRODUCT_BUNDLE_IDENTIFIER = com.hiteshborase.iterm2.local;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
 				VALID_ARCHS = "$(ARCHS_STANDARD)";
@@ -22583,8 +22627,11 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				CODE_SIGN_ENTITLEMENTS = plists/iTermServer.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = V75A2JBVMH;
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
@@ -22601,7 +22648,9 @@
 				MTL_FAST_MATH = YES;
 				OTHER_CFLAGS = "-DITERM_SERVER=1";
 				OTHER_LDFLAGS = "";
+				PRODUCT_BUNDLE_IDENTIFIER = com.hiteshborase.iterm2.local;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SDKROOT = macosx;
 				VALID_ARCHS = "$(ARCHS_STANDARD)";
 				WARNING_CFLAGS = (
@@ -22645,8 +22694,11 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				CODE_SIGN_ENTITLEMENTS = plists/iTermServer.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = V75A2JBVMH;
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
@@ -22663,7 +22715,9 @@
 				MTL_FAST_MATH = YES;
 				OTHER_CFLAGS = "-DITERM_SERVER=1";
 				OTHER_LDFLAGS = "";
+				PRODUCT_BUNDLE_IDENTIFIER = com.hiteshborase.iterm2.local;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SDKROOT = macosx;
 				VALID_ARCHS = "$(ARCHS_STANDARD)";
 				WARNING_CFLAGS = (
@@ -22707,8 +22761,11 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				CODE_SIGN_ENTITLEMENTS = plists/iTermServer.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = V75A2JBVMH;
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
@@ -22725,7 +22782,9 @@
 				MTL_FAST_MATH = YES;
 				OTHER_CFLAGS = "-DITERM_SERVER=1";
 				OTHER_LDFLAGS = "";
+				PRODUCT_BUNDLE_IDENTIFIER = com.hiteshborase.iterm2.local;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SDKROOT = macosx;
 				VALID_ARCHS = "$(ARCHS_STANDARD)";
 				WARNING_CFLAGS = (
@@ -23018,6 +23077,7 @@
 				COPY_PHASE_STRIP = NO;
 				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = V75A2JBVMH;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
@@ -23101,10 +23161,13 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				CODE_SIGN_ENTITLEMENTS = pidinfo/pidinfo.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = NO;
 				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = V75A2JBVMH;
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
@@ -23138,6 +23201,7 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.iterm2.pidinfo;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SDKROOT = macosx;
 				SKIP_INSTALL = YES;
 				SWIFT_VERSION = 5.0;
@@ -23180,10 +23244,13 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				CODE_SIGN_ENTITLEMENTS = pidinfo/pidinfo.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = NO;
 				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = V75A2JBVMH;
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
@@ -23217,6 +23284,7 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.iterm2.pidinfo;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SDKROOT = macosx;
 				SKIP_INSTALL = YES;
 				SWIFT_VERSION = 5.0;
@@ -23259,10 +23327,13 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				CODE_SIGN_ENTITLEMENTS = pidinfo/pidinfo.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = NO;
 				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = V75A2JBVMH;
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
@@ -23296,6 +23367,7 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.iterm2.pidinfo;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SDKROOT = macosx;
 				SKIP_INSTALL = YES;
 				SWIFT_VERSION = 5.0;
@@ -23344,6 +23416,7 @@
 				COPY_PHASE_STRIP = NO;
 				CURRENT_PROJECT_VERSION = 1;
 				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = V75A2JBVMH;
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 1;
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
@@ -23436,6 +23509,7 @@
 				COPY_PHASE_STRIP = NO;
 				CURRENT_PROJECT_VERSION = 1;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = V75A2JBVMH;
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 1;
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
@@ -23520,6 +23594,7 @@
 				COPY_PHASE_STRIP = NO;
 				CURRENT_PROJECT_VERSION = 1;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = V75A2JBVMH;
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 1;
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
@@ -23604,6 +23679,7 @@
 				COPY_PHASE_STRIP = NO;
 				CURRENT_PROJECT_VERSION = 1;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = V75A2JBVMH;
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 1;
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
@@ -23682,10 +23758,13 @@
 				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = NO;
 				CURRENT_PROJECT_VERSION = 1;
 				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = V75A2JBVMH;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
@@ -23721,6 +23800,7 @@
 				OTHER_LDFLAGS = "";
 				PRODUCT_BUNDLE_IDENTIFIER = com.googlecode.iterm2.iTerm2ImportStatus;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SDKROOT = macosx;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -23764,10 +23844,13 @@
 				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = NO;
 				CURRENT_PROJECT_VERSION = 1;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = V75A2JBVMH;
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
@@ -23795,6 +23878,7 @@
 				OTHER_LDFLAGS = "";
 				PRODUCT_BUNDLE_IDENTIFIER = com.googlecode.iterm2.iTerm2ImportStatus;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SDKROOT = macosx;
 				SWIFT_COMPILATION_MODE = wholemodule;
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -23838,10 +23922,13 @@
 				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = NO;
 				CURRENT_PROJECT_VERSION = 1;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = V75A2JBVMH;
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
@@ -23869,6 +23956,7 @@
 				OTHER_LDFLAGS = "";
 				PRODUCT_BUNDLE_IDENTIFIER = com.googlecode.iterm2.iTerm2ImportStatus;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SDKROOT = macosx;
 				SWIFT_COMPILATION_MODE = wholemodule;
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -23912,10 +24000,13 @@
 				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = NO;
 				CURRENT_PROJECT_VERSION = 1;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = V75A2JBVMH;
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
@@ -23943,6 +24034,7 @@
 				OTHER_LDFLAGS = "";
 				PRODUCT_BUNDLE_IDENTIFIER = com.googlecode.iterm2.iTerm2ImportStatus;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SDKROOT = macosx;
 				SWIFT_COMPILATION_MODE = wholemodule;
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -23991,7 +24083,7 @@
 				COPY_PHASE_STRIP = NO;
 				CURRENT_PROJECT_VERSION = 1;
 				DEBUG_INFORMATION_FORMAT = dwarf;
-				DEVELOPMENT_TEAM = H7V7XYVQ7D;
+				DEVELOPMENT_TEAM = V75A2JBVMH;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
@@ -24079,7 +24171,7 @@
 				COPY_PHASE_STRIP = NO;
 				CURRENT_PROJECT_VERSION = 1;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
-				DEVELOPMENT_TEAM = H7V7XYVQ7D;
+				DEVELOPMENT_TEAM = V75A2JBVMH;
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
@@ -24159,7 +24251,7 @@
 				COPY_PHASE_STRIP = NO;
 				CURRENT_PROJECT_VERSION = 1;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
-				DEVELOPMENT_TEAM = H7V7XYVQ7D;
+				DEVELOPMENT_TEAM = V75A2JBVMH;
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
@@ -24239,7 +24331,7 @@
 				COPY_PHASE_STRIP = NO;
 				CURRENT_PROJECT_VERSION = 1;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
-				DEVELOPMENT_TEAM = H7V7XYVQ7D;
+				DEVELOPMENT_TEAM = V75A2JBVMH;
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
@@ -24503,6 +24595,7 @@
 				COPY_PHASE_STRIP = NO;
 				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = V75A2JBVMH;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(DEVELOPER_FRAMEWORKS_DIR)",
@@ -24574,10 +24667,13 @@
 				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = NO;
 				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = V75A2JBVMH;
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				FRAMEWORK_SEARCH_PATHS = (
@@ -24608,6 +24704,7 @@
 				MTL_ENABLE_DEBUG_INFO = NO;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.iterm2.$(PRODUCT_NAME:rfc1034identifier)";
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SDKROOT = macosx;
 				SWIFT_OBJC_BRIDGING_HEADER = "$PROJECT_DIR/sources/iTerm2SharedARC-Bridging-Header.h";
 				SWIFT_VERSION = 5.0;
@@ -24640,10 +24737,13 @@
 				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = NO;
 				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = V75A2JBVMH;
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				FRAMEWORK_SEARCH_PATHS = (
@@ -24674,6 +24774,7 @@
 				MTL_ENABLE_DEBUG_INFO = NO;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.iterm2.$(PRODUCT_NAME:rfc1034identifier)";
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SDKROOT = macosx;
 				SWIFT_OBJC_BRIDGING_HEADER = "$PROJECT_DIR/sources/iTerm2SharedARC-Bridging-Header.h";
 				SWIFT_VERSION = 5.0;
@@ -24704,7 +24805,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = dwarf;
-				DEVELOPMENT_TEAM = H7V7XYVQ7D;
+				DEVELOPMENT_TEAM = V75A2JBVMH;
 				ENABLE_HARDENED_RUNTIME = NO;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				FRAMEWORK_SEARCH_PATHS = (
@@ -24761,7 +24862,7 @@
 					"-ObjC",
 					"-lc++",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.googlecode.iterm2;
+				PRODUCT_BUNDLE_IDENTIFIER = com.hiteshborase.iterm2.local;
 				PRODUCT_NAME = iTerm2;
 				SDKROOT = macosx;
 				SECTORDER_FLAGS = "";
@@ -24796,12 +24897,14 @@
 				CLANG_ENABLE_OBJC_WEAK = YES;
 				CLANG_WARN_INT_CONVERSION = YES;
 				CODE_SIGN_ENTITLEMENTS = iTerm2.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_INJECT_BASE_ENTITLEMENTS = NO;
+				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = YES;
 				CURRENT_PROJECT_VERSION = 1;
 				DEAD_CODE_STRIPPING = YES;
-				"DEVELOPMENT_TEAM[sdk=macosx*]" = H7V7XYVQ7D;
+				DEVELOPMENT_TEAM = V75A2JBVMH;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				FRAMEWORK_SEARCH_PATHS = (
@@ -24852,8 +24955,9 @@
 					"-ObjC",
 					"-lc++",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.googlecode.iterm2;
+				PRODUCT_BUNDLE_IDENTIFIER = com.hiteshborase.iterm2.local;
 				PRODUCT_NAME = iTerm2;
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SDKROOT = macosx;
 				SWIFT_OBJC_BRIDGING_HEADER = "";
 				SWIFT_VERSION = 5.0;
@@ -24990,7 +25094,7 @@
 				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = H7V7XYVQ7D;
+				DEVELOPMENT_TEAM = V75A2JBVMH;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(SRCROOT)/build/Development",
@@ -25023,7 +25127,7 @@
 				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = H7V7XYVQ7D;
+				DEVELOPMENT_TEAM = V75A2JBVMH;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(SRCROOT)/build/Development",

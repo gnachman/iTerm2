@@ -61,7 +61,19 @@ class CommandLineProvidedAccount: NSObject, PasswordManagerAccount {
 
     @objc(usernameForTerminalWithContext:completion:)
     func usernameForTerminal(context: RecipeExecutionContext, completion: @escaping (String?) -> Void) {
-        completion(userName)
+        if let recipe = configuration.getUsernameRecipe {
+            recipe.transformAsync(
+                context: context,
+                inputs: CommandLinePasswordDataSource.AccountIdentifier(value: identifier)) { result, _ in
+                    if let result = result, !result.isEmpty {
+                        completion(result)
+                    } else {
+                        completion(self.userName)
+                    }
+                }
+        } else {
+            completion(userName)
+        }
     }
 
     init(identifier: String,
@@ -934,6 +946,24 @@ class CommandLinePasswordDataSource: NSObject {
         let setPasswordRecipe: AnyRecipe<SetPasswordRequest, Void>
         let deleteRecipe: AnyRecipe<AccountIdentifier, Void>
         let addAccountRecipe: AnyRecipe<AddRequest, AccountIdentifier>
+        /// When set (Keeper adapter), “Enter username” runs Commander `get … --format=json` instead of the list row’s `userName`.
+        let getUsernameRecipe: AnyRecipe<AccountIdentifier, String>?
+
+        init(
+            listAccountsRecipe: AnyRecipe<Void, [Account]>,
+            getPasswordRecipe: AnyRecipe<AccountIdentifier, Password>,
+            setPasswordRecipe: AnyRecipe<SetPasswordRequest, Void>,
+            deleteRecipe: AnyRecipe<AccountIdentifier, Void>,
+            addAccountRecipe: AnyRecipe<AddRequest, AccountIdentifier>,
+            getUsernameRecipe: AnyRecipe<AccountIdentifier, String>? = nil
+        ) {
+            self.listAccountsRecipe = listAccountsRecipe
+            self.getPasswordRecipe = getPasswordRecipe
+            self.setPasswordRecipe = setPasswordRecipe
+            self.deleteRecipe = deleteRecipe
+            self.addAccountRecipe = addAccountRecipe
+            self.getUsernameRecipe = getUsernameRecipe
+        }
     }
 
     func standardAccounts(context: RecipeExecutionContext,

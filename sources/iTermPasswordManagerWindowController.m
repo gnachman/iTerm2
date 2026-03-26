@@ -905,6 +905,16 @@ static NSArray<NSString *> *gTerminalCachedCombinedAccountNames;
     __weak __typeof(self) weakSelf = self;
     switch (response) {
         case NSAlertFirstButtonReturn: {
+            if ([self.currentDataSource.name isEqualToString:@"Keeper Security"] &&
+                newPassword.stringValue.length == 0) {
+                NSError *error = [NSError errorWithDomain:@"KeeperDataSource"
+                                                     code:-1
+                                                 userInfo:@{ NSLocalizedDescriptionKey: @"Password field is required." }];
+                dispatch_async(dispatch_get_main_queue(), ^{
+                    [weakSelf showKeeperOperationErrorWithTitle:@"Update failed" error:error];
+                });
+                return;
+            }
             const NSInteger cancelCount = [self incrBusy];
             NSString *accountName = [self accountNameForRow:row] ?: @"";
             [_entries[row] setPasswordWithContext:self.recipeExecutionContext
@@ -1213,11 +1223,11 @@ static NSArray<NSString *> *gTerminalCachedCombinedAccountNames;
         return;
     }
     id ds = self.currentDataSource;
-    if (![ds respondsToSelector:@selector(keeperSettingsAPIKeyForEditing)] ||
+    if (![ds respondsToSelector:@selector(keeperSettingsAPIKey)] ||
         ![ds respondsToSelector:@selector(runKeeperSyncDownWithApiKey:apiURL:completion:)]) {
         return;
     }
-    NSString *key = [(id)ds keeperSettingsAPIKeyForEditing];
+    NSString *key = [(id)ds keeperSettingsAPIKey];
     NSString *url = [(id)ds keeperSettingsAPIURLForEditing] ?: ([ds respondsToSelector:@selector(keeperSettingsAPIURL)] ? [ds keeperSettingsAPIURL] : nil) ?: @"";
     key = [(key ?: @"") stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
     url = [(url ?: @"") stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
@@ -1321,14 +1331,21 @@ static NSString *keeperDisplayMessageFromErrorString(NSString *message) {
     alert.informativeText = message;
     [alert addButtonWithTitle:@"Reconfigure"];
     [alert addButtonWithTitle:@"Cancel"];
-    const NSModalResponse response = [alert runModal];
-    if (response == NSAlertFirstButtonReturn) {
-        __weak __typeof(self) weakSelf = self;
-        [self showKeeperSettingsSheetWithEmptyAPIKey:NO
-                                           forWindow:self.window
-                                                onOK:^{ [weakSelf updateConfiguration]; }
-                                        keyCompletion:nil];
-    }
+    NSWindow *hostWindow = self.window;
+    __weak __typeof(self) weakSelf = self;
+    [alert beginSheetModalForWindow:hostWindow completionHandler:^(NSModalResponse response) {
+        if (response != NSAlertFirstButtonReturn) {
+            return;
+        }
+        __strong __typeof(weakSelf) strongSelf = weakSelf;
+        if (!strongSelf) {
+            return;
+        }
+        [strongSelf showKeeperSettingsSheetWithEmptyAPIKey:NO
+                                                 forWindow:hostWindow
+                                                      onOK:^{ [weakSelf updateConfiguration]; }
+                                              keyCompletion:nil];
+    }];
     // Cancel: leave password manager selection unchanged; user can switch provider manually.
 }
 
