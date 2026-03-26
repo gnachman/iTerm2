@@ -183,6 +183,9 @@
 #define KEY_USE_NONASCII_FONT      @"Use Non-ASCII Font"
 #define KEY_NONASCII_ANTI_ALIASED  @"Non-ASCII Anti Aliased"
 #define KEY_BACKGROUND_IMAGE_LOCATION @"Background Image Location"
+#define KEY_BACKGROUND_IMAGE_SOURCE_MODE @"Background Image Source Mode"  // iTermBackgroundImageSourceMode enum
+#define KEY_BACKGROUND_IMAGE_FOLDER_LOCATION @"Background Image Folder Location"
+#define KEY_BACKGROUND_IMAGE_FOLDER_INTERVAL @"Background Image Folder Interval"
 #define KEY_BACKGROUND_IMAGE_TILED_DEPRECATED @"Background Image Is Tiled"  // DEPRECATED
 #define KEY_ASCII_LIGATURES        @"ASCII Ligatures"
 #define KEY_NON_ASCII_LIGATURES    @"Non-ASCII Ligatures"
@@ -493,6 +496,11 @@ typedef NS_ENUM(NSUInteger, iTermBackgroundImageMode) {
     iTermBackgroundImageModeTile = 1,
     iTermBackgroundImageModeScaleAspectFill = 2,
     iTermBackgroundImageModeScaleAspectFit = 3
+};
+
+typedef NS_ENUM(NSUInteger, iTermBackgroundImageSourceMode) {
+    iTermBackgroundImageSourceModeSingleImage = 0,
+    iTermBackgroundImageSourceModeFolderRotation = 1
 };
 
 typedef NS_OPTIONS(NSUInteger, iTermTitleComponents) {

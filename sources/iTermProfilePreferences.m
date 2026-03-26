@@ -234,7 +234,8 @@ typedef struct {
                              KEY_ARCHIVEDIR,
                              KEY_ORIGINAL_GUID, KEY_AWDS_WIN_DIRECTORY, KEY_AWDS_TAB_OPTION,
                              KEY_AWDS_TAB_DIRECTORY, KEY_AWDS_PANE_OPTION, KEY_AWDS_PANE_DIRECTORY,
-                             KEY_BACKGROUND_IMAGE_LOCATION, KEY_DYNAMIC_PROFILE_PARENT_NAME,
+                             KEY_BACKGROUND_IMAGE_LOCATION, KEY_BACKGROUND_IMAGE_FOLDER_LOCATION,
+                             KEY_DYNAMIC_PROFILE_PARENT_NAME,
                              KEY_DYNAMIC_PROFILE_PARENT_GUID,
                              KEY_DYNAMIC_PROFILE_FILENAME, KEY_TMUX_PANE_TITLE,
                              KEY_SUBTITLE, KEY_CUSTOM_LOCALE, KEY_INITIAL_URL,
@@ -376,7 +377,8 @@ typedef struct {
             KEY_UNICODE_NORMALIZATION, KEY_HORIZONTAL_SPACING, KEY_VERTICAL_SPACING,
             KEY_TRANSPARENCY,
             KEY_BLUR_RADIUS,
-            KEY_BACKGROUND_IMAGE_MODE, KEY_BLEND,
+            KEY_BACKGROUND_IMAGE_MODE, KEY_BACKGROUND_IMAGE_SOURCE_MODE,
+            KEY_BACKGROUND_IMAGE_FOLDER_INTERVAL, KEY_BLEND,
             KEY_SCROLLBACK_LINES,
             KEY_CHARACTER_ENCODING,
 
@@ -495,6 +497,9 @@ typedef struct {
         for (NSString *key in dict) {
             validationBlocks[key] = ^BOOL(id value) { return [value isKindOfClass:[NSDictionary class]]; };
         }
+        validationBlocks[KEY_BACKGROUND_IMAGE_FOLDER_INTERVAL] = ^BOOL(id value) {
+            return [value isKindOfClass:[NSNumber class]] && [value integerValue] > 0;
+        };
         funcs.validationBlocks = validationBlocks;
         funcs.conversionBlocks = conversionBlocks;
         funcs.typeHelp = typeHelp;
@@ -689,7 +694,10 @@ typedef struct {
             KEY_BLUR:                                               @"Whether to blur the background behind transparent windows",
             KEY_BLUR_RADIUS:                                        @"Radius of background blur effect",
             KEY_BACKGROUND_IMAGE_MODE:                              @"How background image is displayed: stretch, tile, scale, or fill",
+            KEY_BACKGROUND_IMAGE_SOURCE_MODE:                       @"Whether background uses a single image or rotates images from a folder",
             KEY_BACKGROUND_IMAGE_LOCATION:                          @"Path to background image file",
+            KEY_BACKGROUND_IMAGE_FOLDER_LOCATION:                   @"Path to background image folder",
+            KEY_BACKGROUND_IMAGE_FOLDER_INTERVAL:                   @"Seconds between folder background image changes",
             KEY_BLEND:                                              @"Blend level between background image and background color",
             KEY_COLUMNS:                                            @"Initial number of columns in terminal",
             KEY_ROWS:                                               @"Initial number of rows in terminal",
@@ -1022,7 +1030,10 @@ typedef struct {
                   KEY_BLUR: @NO,
                   KEY_BLUR_RADIUS: @2.0,
                   KEY_BACKGROUND_IMAGE_MODE: @(iTermBackgroundImageModeStretch),
+                  KEY_BACKGROUND_IMAGE_SOURCE_MODE: @(iTermBackgroundImageSourceModeSingleImage),
                   KEY_BACKGROUND_IMAGE_LOCATION: [NSNull null],
+                  KEY_BACKGROUND_IMAGE_FOLDER_LOCATION: [NSNull null],
+                  KEY_BACKGROUND_IMAGE_FOLDER_INTERVAL: @300,
                   KEY_BLEND: @0.5,
                   KEY_COLUMNS: @80,
                   KEY_ROWS: @25,
@@ -1639,4 +1650,3 @@ NSString *iTermAmendedColorKey2(NSString *baseKey, BOOL separate, BOOL dark) {
     }
     return [baseKey stringByAppendingString:COLORS_LIGHT_MODE_SUFFIX];
 }
-

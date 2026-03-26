@@ -91,6 +91,7 @@
 #import "iTermAutomaticProfileSwitcher.h"
 #import "iTermBackgroundCommandRunner.h"
 #import "iTermBackgroundDrawingHelper.h"
+#import "iTermBackgroundImageRotationManager.h"
 #import "iTermBadgeLabel.h"
 #import "iTermBuiltInFunctions.h"
 #import "iTermBuriedSessions.h"
@@ -941,6 +942,10 @@ typedef NS_ENUM(NSUInteger, PTYSessionTurdType) {
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(broadcastDomainsDidChange:)
                                                      name:iTermBroadcastDomainsDidChangeNotification
+                                                   object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(backgroundImageRotationDidChange:)
+                                                     name:iTermBackgroundImageRotationDidChangeNotification
                                                    object:nil];
         [[[NSWorkspace sharedWorkspace] notificationCenter] addObserver:self
                                                                selector:@selector(activeSpaceDidChange:)
@@ -4976,6 +4981,16 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
     return didChange;
 }
 
+- (void)backgroundImageRotationDidChange:(NSNotification *)notification {
+    NSString *guid = [NSString castFrom:notification.object];
+    NSString *profileGUID = _originalProfile[KEY_GUID] ?: _profile[KEY_GUID];
+    if (guid.length == 0 || ![guid isEqualToString:profileGUID]) {
+        return;
+    }
+    NSDictionary *profile = [[ProfileModel sharedInstance] bookmarkWithGuid:profileGUID] ?: self.profile;
+    [self setPreferencesFromAddressBookEntry:profile];
+}
+
 - (void)loadColorsFromProfile:(Profile *)aDict {
     const BOOL dark = [NSApp effectiveAppearance].it_isDark;
     NSDictionary<NSNumber *, NSString *> *keyMap = [self colorTableForProfile:aDict darkMode:dark];
@@ -5209,7 +5224,13 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
     [self loadColorsFromProfile:aDict];
 
     // background image
-    [self setBackgroundImagePath:aDict[KEY_BACKGROUND_IMAGE_LOCATION]];
+    if ([iTermProfilePreferences unsignedIntegerForKey:KEY_BACKGROUND_IMAGE_SOURCE_MODE inProfile:aDict] == iTermBackgroundImageSourceModeFolderRotation) {
+        [[iTermBackgroundImageRotationManager sharedInstance] profileDidChange:aDict];
+        [self setBackgroundImagePath:[[iTermBackgroundImageRotationManager sharedInstance] backgroundImagePathForProfile:aDict]];
+    } else {
+        [[iTermBackgroundImageRotationManager sharedInstance] invalidateProfileGUID:aDict[KEY_GUID]];
+        [self setBackgroundImagePath:aDict[KEY_BACKGROUND_IMAGE_LOCATION]];
+    }
     [self setBackgroundImageMode:[iTermProfilePreferences unsignedIntegerForKey:KEY_BACKGROUND_IMAGE_MODE
                                                                       inProfile:aDict]];
 

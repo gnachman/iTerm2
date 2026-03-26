@@ -50,7 +50,14 @@ typedef NS_ENUM(NSUInteger, iTermWindowUnitsTag) {
     IBOutlet NSButton *_initialUseTransparency;
     IBOutlet NSSlider *_blurRadius;
     IBOutlet NSButton *_useBackgroundImage;
+    IBOutlet NSTextField *_backgroundImageSourceLabel;
+    IBOutlet NSPopUpButton *_backgroundImageSourceMode;
+    IBOutlet NSTextField *_backgroundImageLabel;
     IBOutlet NSTextField *_backgroundImageTextField;
+    IBOutlet NSTextField *_backgroundImageFolderLabel;
+    IBOutlet NSTextField *_backgroundImageFolderTextField;
+    IBOutlet NSTextField *_backgroundImageFolderIntervalLabel;
+    IBOutlet NSTextField *_backgroundImageFolderIntervalField;
     IBOutlet NSTextField *_transparencyOverrideNotice;
     iTermFunctionCallTextFieldDelegate *_backgroundImageTextFieldDelegate;
 
@@ -118,8 +125,29 @@ typedef NS_ENUM(NSUInteger, iTermWindowUnitsTag) {
                                                                                     passthrough:self
                                                                                   functionsOnly:NO];
     _backgroundImageTextField.delegate = _backgroundImageTextFieldDelegate;
-    _useBackgroundImage.state = [self stringForKey:KEY_BACKGROUND_IMAGE_LOCATION] != nil ? NSControlStateValueOn : NSControlStateValueOff;
-    _backgroundImageTextField.enabled = _useBackgroundImage.state == NSControlStateValueOn;
+    info = [self defineControl:_backgroundImageSourceMode
+                           key:KEY_BACKGROUND_IMAGE_SOURCE_MODE
+                   displayName:@"Background image source mode"
+                          type:kPreferenceInfoTypePopup];
+    info.observer = ^{
+        [weakSelf synchronizeBackgroundImageEnabledState];
+        [weakSelf updateBackgroundImageUI];
+        [weakSelf loadBackgroundImageForCurrentSource];
+    };
+    info = [self defineControl:_backgroundImageFolderTextField
+                           key:KEY_BACKGROUND_IMAGE_FOLDER_LOCATION
+                   displayName:@"Path to background image folder"
+                          type:kPreferenceInfoTypeStringTextField];
+    info.observer = ^{
+        [weakSelf backgroundImageFolderTextFieldDidChange];
+    };
+    info = [self defineControl:_backgroundImageFolderIntervalField
+                           key:KEY_BACKGROUND_IMAGE_FOLDER_INTERVAL
+                   displayName:@"Background image folder interval"
+                          type:kPreferenceInfoTypeIntegerTextField];
+    info.observer = ^{
+        [weakSelf sanitizeBackgroundImageFolderInterval];
+    };
 
     info = [self defineControl:_transparency
                            key:KEY_TRANSPARENCY
@@ -203,6 +231,8 @@ typedef NS_ENUM(NSUInteger, iTermWindowUnitsTag) {
                     key:KEY_BLEND
             displayName:@"Background image blending"
                    type:kPreferenceInfoTypeSlider];
+    [self updateBackgroundImageUI];
+    [self loadBackgroundImageForCurrentSource];
 
     info = [self defineControl:_columnsField
                            key:KEY_COLUMNS
@@ -349,6 +379,10 @@ typedef NS_ENUM(NSUInteger, iTermWindowUnitsTag) {
 
     [self addViewToSearchIndex:_useBackgroundImage
                    displayName:@"Background image enabled"
+                       phrases:@[]
+                           key:nil];
+    [self addViewToSearchIndex:_backgroundImageSourceMode
+                   displayName:@"Background image source mode"
                        phrases:@[]
                            key:nil];
 }
@@ -688,8 +722,22 @@ typedef NS_ENUM(NSUInteger, iTermWindowUnitsTag) {
 }
 
 - (void)backgroundImageTextFieldDidChange {
-    [self loadBackgroundImageWithFilename:[self stringForKey:KEY_BACKGROUND_IMAGE_LOCATION]];
-    _useBackgroundImage.state = [self stringForKey:KEY_BACKGROUND_IMAGE_LOCATION] != nil ? NSControlStateValueOn : NSControlStateValueOff;
+    [self synchronizeBackgroundImageEnabledState];
+    [self loadBackgroundImageForCurrentSource];
+    [self updateBackgroundImageUI];
+}
+
+- (void)backgroundImageFolderTextFieldDidChange {
+    [self synchronizeBackgroundImageEnabledState];
+    [self loadBackgroundImageForCurrentSource];
+    [self updateBackgroundImageUI];
+}
+
+- (void)sanitizeBackgroundImageFolderInterval {
+    NSInteger interval = [self integerForKey:KEY_BACKGROUND_IMAGE_FOLDER_INTERVAL];
+    if (interval < 1) {
+        [self setInteger:1 forKey:KEY_BACKGROUND_IMAGE_FOLDER_INTERVAL];
+    }
 }
 
 - (void)updateBlurRadiusWarning {
@@ -724,7 +772,10 @@ typedef NS_ENUM(NSUInteger, iTermWindowUnitsTag) {
 // This is also a superclass method.
 - (void)reloadProfile {
     [super reloadProfile];
-    [self loadBackgroundImageWithFilename:[self stringForKey:KEY_BACKGROUND_IMAGE_LOCATION]];
+    [self sanitizeBackgroundImageFolderInterval];
+    [self synchronizeBackgroundImageEnabledState];
+    [self updateBackgroundImageUI];
+    [self loadBackgroundImageForCurrentSource];
     [self updateCustomWindowTitleEnabled];
     [self updateCustomTabTitleEnabled];
     [_customWindowTitle it_removeWarning];
@@ -746,15 +797,27 @@ typedef NS_ENUM(NSUInteger, iTermWindowUnitsTag) {
 // Opens a file picker and updates views and state.
 - (IBAction)useBackgroundImageDidChange:(id)sender {
     if ([_useBackgroundImage state] == NSControlStateValueOn) {
-        [self openFilePicker];
+        [self openBackgroundPathPicker];
     } else {
         [self loadBackgroundImageWithFilename:nil];
-        [self setString:nil forKey:KEY_BACKGROUND_IMAGE_LOCATION];
+        if ([self backgroundImageUsesFolderRotation]) {
+            [self setString:nil forKey:KEY_BACKGROUND_IMAGE_FOLDER_LOCATION];
+        } else {
+            [self setString:nil forKey:KEY_BACKGROUND_IMAGE_LOCATION];
+        }
     }
-    _backgroundImageTextField.enabled = _useBackgroundImage.state == NSControlStateValueOn;
+    [self updateBackgroundImageUI];
 }
 
-- (void)openFilePicker {
+- (void)openBackgroundPathPicker {
+    if ([self backgroundImageUsesFolderRotation]) {
+        [self openBackgroundFolderPicker];
+    } else {
+        [self openBackgroundImagePicker];
+    }
+}
+
+- (void)openBackgroundImagePicker {
     NSOpenPanel *panel = [NSOpenPanel openPanel];
     panel.canChooseDirectories = NO;
     panel.canChooseFiles = YES;
@@ -769,6 +832,8 @@ typedef NS_ENUM(NSUInteger, iTermWindowUnitsTag) {
             [self checkImage:url.path];
             [self loadBackgroundImageWithFilename:[url path]];
             [self setString:self.backgroundImageFilename forKey:KEY_BACKGROUND_IMAGE_LOCATION];
+            [self synchronizeBackgroundImageEnabledState];
+            [self updateBackgroundImageUI];
         } else {
             NSString *previous = [self stringForKey:KEY_BACKGROUND_IMAGE_LOCATION];
             [self loadBackgroundImageWithFilename:previous];
@@ -778,19 +843,118 @@ typedef NS_ENUM(NSUInteger, iTermWindowUnitsTag) {
     [panel beginSheetModalForWindow:self.view.window completionHandler:completion];
 }
 
+- (void)openBackgroundFolderPicker {
+    NSOpenPanel *panel = [NSOpenPanel openPanel];
+    panel.canChooseDirectories = YES;
+    panel.canChooseFiles = NO;
+    panel.allowsMultipleSelection = NO;
+
+    void (^completion)(NSInteger) = ^(NSInteger result) {
+        if (result == NSModalResponseOK) {
+            NSURL *url = [[panel URLs] objectAtIndex:0];
+            if (![self checkFolder:url.path]) {
+                [self loadBackgroundImageForCurrentSource];
+                return;
+            }
+            [self setString:url.path forKey:KEY_BACKGROUND_IMAGE_FOLDER_LOCATION];
+            [self synchronizeBackgroundImageEnabledState];
+            [self loadBackgroundImageForCurrentSource];
+            [self updateBackgroundImageUI];
+        } else {
+            [self loadBackgroundImageForCurrentSource];
+        }
+    };
+
+    [panel beginSheetModalForWindow:self.view.window completionHandler:completion];
+}
+
 #pragma mark - iTermImageWellDelegate
 
 - (void)imageWellDidClick:(iTermImageWell *)imageWell {
-    [self openFilePicker];
+    [self openBackgroundPathPicker];
 }
 
 - (void)imageWellDidPerformDropOperation:(iTermImageWell *)imageWell filename:(NSString *)filename {
-    [self checkImage:filename];
-    [self loadBackgroundImageWithFilename:filename];
-    [self setString:filename forKey:KEY_BACKGROUND_IMAGE_LOCATION];
+    if ([self backgroundImageUsesFolderRotation]) {
+        if (![self checkFolder:filename]) {
+            return;
+        }
+        [self setString:filename forKey:KEY_BACKGROUND_IMAGE_FOLDER_LOCATION];
+        [self synchronizeBackgroundImageEnabledState];
+        [self loadBackgroundImageForCurrentSource];
+        [self updateBackgroundImageUI];
+    } else {
+        [self checkImage:filename];
+        [self loadBackgroundImageWithFilename:filename];
+        [self setString:filename forKey:KEY_BACKGROUND_IMAGE_LOCATION];
+        [self synchronizeBackgroundImageEnabledState];
+        [self updateBackgroundImageUI];
+    }
 }
 
 #pragma mark - Background Image
+
+- (BOOL)backgroundImageUsesFolderRotation {
+    return [self unsignedIntegerForKey:KEY_BACKGROUND_IMAGE_SOURCE_MODE] == iTermBackgroundImageSourceModeFolderRotation;
+}
+
+- (NSString *)backgroundImageConfigurationPathForCurrentSource {
+    if ([self backgroundImageUsesFolderRotation]) {
+        return [self stringForKey:KEY_BACKGROUND_IMAGE_FOLDER_LOCATION];
+    }
+    return [self stringForKey:KEY_BACKGROUND_IMAGE_LOCATION];
+}
+
+- (void)updateBackgroundImageUI {
+    const BOOL usesFolderRotation = [self backgroundImageUsesFolderRotation];
+    const BOOL enabled = _useBackgroundImage.state == NSControlStateValueOn;
+    _backgroundImageLabel.hidden = usesFolderRotation;
+    _backgroundImageTextField.hidden = usesFolderRotation;
+    _backgroundImageTextField.enabled = enabled && !usesFolderRotation;
+    _backgroundImageFolderLabel.hidden = !usesFolderRotation;
+    _backgroundImageFolderTextField.hidden = !usesFolderRotation;
+    _backgroundImageFolderTextField.enabled = enabled && usesFolderRotation;
+    _backgroundImageFolderIntervalLabel.hidden = !usesFolderRotation;
+    _backgroundImageFolderIntervalField.hidden = !usesFolderRotation;
+    _backgroundImageFolderIntervalField.enabled = enabled && usesFolderRotation;
+}
+
+- (void)synchronizeBackgroundImageEnabledState {
+    _useBackgroundImage.state = self.backgroundImageConfigurationPathForCurrentSource.length > 0 ? NSControlStateValueOn : NSControlStateValueOff;
+}
+
+- (void)loadBackgroundImageForCurrentSource {
+    if ([self backgroundImageUsesFolderRotation]) {
+        [self loadBackgroundImageWithFilename:[self firstImageFilenameInFolder:[self stringForKey:KEY_BACKGROUND_IMAGE_FOLDER_LOCATION]]];
+    } else {
+        [self loadBackgroundImageWithFilename:[self stringForKey:KEY_BACKGROUND_IMAGE_LOCATION]];
+    }
+}
+
+- (NSString *)firstImageFilenameInFolder:(NSString *)folderPath {
+    if (folderPath.length == 0) {
+        return nil;
+    }
+    NSURL *folderURL = [NSURL fileURLWithPath:[folderPath stringByExpandingTildeInPath] isDirectory:YES];
+    NSArray<NSURL *> *contents = [[NSFileManager defaultManager] contentsOfDirectoryAtURL:folderURL
+                                                               includingPropertiesForKeys:@[ NSURLIsRegularFileKey ]
+                                                                                  options:NSDirectoryEnumerationSkipsHiddenFiles
+                                                                                    error:nil];
+    NSArray<NSURL *> *sortedContents = [contents sortedArrayUsingComparator:^NSComparisonResult(NSURL *lhs, NSURL *rhs) {
+        return [lhs.lastPathComponent localizedStandardCompare:rhs.lastPathComponent];
+    }];
+    for (NSURL *url in sortedContents) {
+        NSNumber *isRegularFile = nil;
+        [url getResourceValue:&isRegularFile forKey:NSURLIsRegularFileKey error:nil];
+        if (!isRegularFile.boolValue) {
+            continue;
+        }
+        if ([[NSImage alloc] initWithContentsOfFile:url.path]) {
+            return url.path;
+        }
+    }
+    return nil;
+}
 
 // Sets _backgroundImagePreview and _useBackgroundImage.
 - (void)loadBackgroundImageWithFilename:(NSString *)filename {
@@ -844,6 +1008,35 @@ typedef NS_ENUM(NSUInteger, iTermWindowUnitsTag) {
                                 identifier:@"BackgroundImageUnreadable"
                                silenceable:kiTermWarningTypePersistent
                                    heading:@"Problem Loading Image"
+                                    window:self.view.window];
+        return NO;
+    }
+    return YES;
+}
+
+- (BOOL)checkFolder:(NSString *)filename {
+    BOOL isDirectory = NO;
+    if (![[NSFileManager defaultManager] fileExistsAtPath:filename isDirectory:&isDirectory] || !isDirectory) {
+        [iTermWarning showWarningWithTitle:[NSString stringWithFormat:@"The folder “%@” could not be used because it does not exist or is not a directory.", filename.lastPathComponent]
+                                   actions:@[ @"OK" ]
+                                 accessory:nil
+                                identifier:@"BackgroundFolderUnreadable"
+                               silenceable:kiTermWarningTypePersistent
+                                   heading:@"Problem Loading Folder"
+                                    window:self.view.window];
+        return NO;
+    }
+    NSArray<NSURL *> *contents = [[NSFileManager defaultManager] contentsOfDirectoryAtURL:[NSURL fileURLWithPath:filename isDirectory:YES]
+                                                               includingPropertiesForKeys:nil
+                                                                                  options:NSDirectoryEnumerationSkipsHiddenFiles
+                                                                                    error:nil];
+    if (!contents) {
+        [iTermWarning showWarningWithTitle:[NSString stringWithFormat:@"The folder “%@” could not be read.", filename.lastPathComponent]
+                                   actions:@[ @"OK" ]
+                                 accessory:nil
+                                identifier:@"BackgroundFolderUnreadable"
+                               silenceable:kiTermWarningTypePersistent
+                                   heading:@"Problem Loading Folder"
                                     window:self.view.window];
         return NO;
     }

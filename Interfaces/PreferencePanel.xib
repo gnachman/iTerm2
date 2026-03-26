@@ -1742,8 +1742,15 @@ CA
         </viewController>
         <customObject id="BMA-OA-Kzc" userLabel="Prefs&gt;Profiles&gt;Window View Controller" customClass="ProfilesWindowPreferencesViewController">
             <connections>
+                <outlet property="_backgroundImageFolderIntervalField" destination="LPm-4S-0v9" id="e2p-e1-KwQ"/>
+                <outlet property="_backgroundImageFolderIntervalLabel" destination="XxQ-dP-w4N" id="h0t-D9-bkr"/>
+                <outlet property="_backgroundImageFolderLabel" destination="NJe-8x-WhQ" id="V5L-PU-W1j"/>
+                <outlet property="_backgroundImageFolderTextField" destination="N03-Qw-dZn" id="02i-RV-rmR"/>
+                <outlet property="_backgroundImageLabel" destination="6324" id="g6w-iY-7yh"/>
                 <outlet property="_backgroundImageMode" destination="TfM-qR-99a" id="6E7-ta-mrr"/>
                 <outlet property="_backgroundImagePreview" destination="4974" id="zoR-T3-lJq"/>
+                <outlet property="_backgroundImageSourceLabel" destination="a3F-v4-3mH" id="V7u-dR-NcT"/>
+                <outlet property="_backgroundImageSourceMode" destination="d6M-2x-jQp" id="K8O-vK-fjW"/>
                 <outlet property="_backgroundImageTextField" destination="7Cb-jv-S6d" id="NQK-eu-brl"/>
                 <outlet property="_blendAmount" destination="6320" id="FUt-BP-aez"/>
                 <outlet property="_blendAmountLabel" destination="6324" id="TOM-PK-pqI"/>
@@ -4209,13 +4216,49 @@ CA
                             </buttonCell>
                             <connections>
                                 <action selector="useBackgroundImageDidChange:" target="BMA-OA-Kzc" id="NNU-Ka-yQY"/>
-                                <outlet property="nextKeyView" destination="2100" id="5267"/>
+                                <outlet property="nextKeyView" destination="d6M-2x-jQp" id="5267"/>
                             </connections>
                         </button>
-                        <textField focusRingType="none" verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="6324">
-                            <rect key="frame" x="-1" y="261" width="132" height="16"/>
+                        <textField focusRingType="none" verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="a3F-v4-3mH">
+                            <rect key="frame" x="-1" y="233" width="132" height="16"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                            <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="right" title="Background image:" id="6325">
+                            <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="right" title="Source:" id="c5V-L0-e1R">
+                                <font key="font" metaFont="system"/>
+                                <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                                <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                            </textFieldCell>
+                        </textField>
+                        <popUpButton verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="d6M-2x-jQp">
+                            <rect key="frame" x="136" y="226" width="416" height="26"/>
+                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                            <popUpButtonCell key="cell" type="push" title="Single Image" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" selectedItem="uQn-S2-rmT" id="z1P-o0-sUv">
+                                <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
+                                <font key="font" metaFont="message"/>
+                                <menu key="menu" id="cOd-mb-ZuQ">
+                                    <items>
+                                        <menuItem title="Single Image" state="on" id="uQn-S2-rmT"/>
+                                        <menuItem title="Folder Rotation" tag="1" id="J5u-Og-jis"/>
+                                    </items>
+                                </menu>
+                            </popUpButtonCell>
+                            <connections>
+                                <action selector="settingChanged:" target="BMA-OA-Kzc" id="ueD-3D-xrn"/>
+                                <outlet property="nextKeyView" destination="7Cb-jv-S6d" id="mKz-eu-U0A"/>
+                            </connections>
+                        </popUpButton>
+                        <textField focusRingType="none" verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="6324">
+                            <rect key="frame" x="-1" y="205" width="132" height="16"/>
+                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                            <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="right" title="Image:" id="6325">
+                                <font key="font" metaFont="system"/>
+                                <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                                <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                            </textFieldCell>
+                        </textField>
+                        <textField hidden="YES" focusRingType="none" verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="NJe-8x-WhQ">
+                            <rect key="frame" x="-1" y="205" width="132" height="16"/>
+                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                            <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="right" title="Folder:" id="k0f-njy-6Z7">
                                 <font key="font" metaFont="system"/>
                                 <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
                                 <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
@@ -4283,7 +4326,7 @@ CA
                             </textFieldCell>
                         </textField>
                         <textField focusRingType="none" verticalHuggingPriority="750" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="7Cb-jv-S6d">
-                            <rect key="frame" x="139" y="232" width="413" height="21"/>
+                            <rect key="frame" x="139" y="199" width="413" height="21"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" continuous="YES" sendsActionOnEndEditing="YES" state="on" borderStyle="bezel" placeholderString="Path (Interpolated String)" drawsBackground="YES" id="COX-EQ-0ar" customClass="iTermStatusIndicatingTextFieldCell">
                                 <font key="font" metaFont="system"/>
@@ -4292,6 +4335,39 @@ CA
                             </textFieldCell>
                             <connections>
                                 <action selector="settingChanged:" target="BMA-OA-Kzc" id="B3V-R2-idH"/>
+                            </connections>
+                        </textField>
+                        <textField hidden="YES" focusRingType="none" verticalHuggingPriority="750" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="N03-Qw-dZn">
+                            <rect key="frame" x="139" y="199" width="413" height="21"/>
+                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                            <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" continuous="YES" sendsActionOnEndEditing="YES" state="on" borderStyle="bezel" placeholderString="Folder path" drawsBackground="YES" id="U1x-Zh-t2k">
+                                <font key="font" metaFont="system"/>
+                                <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                                <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                            </textFieldCell>
+                            <connections>
+                                <action selector="settingChanged:" target="BMA-OA-Kzc" id="f6q-oR-RXj"/>
+                            </connections>
+                        </textField>
+                        <textField hidden="YES" focusRingType="none" verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="XxQ-dP-w4N">
+                            <rect key="frame" x="-1" y="176" width="132" height="16"/>
+                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                            <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="right" title="Interval (seconds):" id="a9H-nc-K6m">
+                                <font key="font" metaFont="system"/>
+                                <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                                <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                            </textFieldCell>
+                        </textField>
+                        <textField hidden="YES" focusRingType="none" verticalHuggingPriority="750" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="LPm-4S-0v9">
+                            <rect key="frame" x="139" y="170" width="80" height="22"/>
+                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                            <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" continuous="YES" sendsActionOnEndEditing="YES" title="300" state="on" borderStyle="bezel" drawsBackground="YES" id="QkD-2r-f9S">
+                                <font key="font" metaFont="system"/>
+                                <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                                <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                            </textFieldCell>
+                            <connections>
+                                <action selector="settingChanged:" target="BMA-OA-Kzc" id="Wb1-Tt-hK7"/>
                             </connections>
                         </textField>
                         <textField focusRingType="none" verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="y0U-q0-Kwz">
@@ -4304,7 +4380,7 @@ CA
                             </textFieldCell>
                         </textField>
                         <imageView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="4974" customClass="iTermImageWell">
-                            <rect key="frame" x="139" y="91" width="413" height="133"/>
+                            <rect key="frame" x="139" y="91" width="413" height="72"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <imageCell key="cell" selectable="YES" editable="YES" alignment="left" imageScaling="proportionallyDown" id="4987"/>
                             <connections>

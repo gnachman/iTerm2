@@ -55,6 +55,12 @@
 /* NSButton (Background Image) : <title:Background Image> (oid:1137) */
 "Background Image" = "Background Image";
 
+/* NSTextField (Folder:) : <title:Folder:> (oid:k0f-njy-6Z7) */
+"Folder:" = "Folder:";
+
+/* NSMenuItem : <title:Folder Rotation> (oid:J5u-Og-jis) */
+"Folder Rotation" = "Folder Rotation";
+
 /* NSButton (Blinking cursor) : <title:Blinking cursor> (oid:1033) */
 "Blinking cursor" = "Blinking cursor";
 
@@ -124,6 +130,18 @@
 /* NSTextField (Encoding) : <title:Encoding
 > (oid:952) */
 "Encoding\n" = "Encoding\n";
+
+/* NSTextField (Image:) : <title:Image:> (oid:6325) */
+"Image:" = "Image:";
+
+/* NSTextField (Interval (seconds):) : <title:Interval (seconds):> (oid:a9H-nc-K6m) */
+"Interval (seconds):" = "Interval (seconds):";
+
+/* NSMenuItem : <title:Single Image> (oid:uQn-S2-rmT) */
+"Single Image" = "Single Image";
+
+/* NSTextField (Source:) : <title:Source:> (oid:c5V-L0-e1R) */
+"Source:" = "Source:";
 
 /* NSMenuItem : <title:F1> (oid:380) */
 "F1" = "F1";
@@ -484,4 +502,3 @@
 
 /* NSMenuItem : <title:xterm-color> (oid:1207) */
 "xterm-color" = "xterm-color";
-

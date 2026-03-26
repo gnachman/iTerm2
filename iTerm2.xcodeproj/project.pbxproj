@@ -1032,6 +1032,8 @@
 		A60593E9257DFBCC00CACEE6 /* legacy_server.h in Headers */ = {isa = PBXBuildFile; fileRef = A60593E7257DFBCC00CACEE6 /* legacy_server.h */; };
 		A60593F3257DFBDC00CACEE6 /* legacy_server.c in Sources */ = {isa = PBXBuildFile; fileRef = A60593E8257DFBCC00CACEE6 /* legacy_server.c */; };
 		A6059414257DFD0300CACEE6 /* shell_launcher.c in Sources */ = {isa = PBXBuildFile; fileRef = 1D8FC67B17E67FA700A82402 /* shell_launcher.c */; };
+		A60BA0012EE5000100DDC44F /* iTermBackgroundImageRotationManager.h in Headers */ = {isa = PBXBuildFile; fileRef = A60BA0032EE5000100DDC44F /* iTermBackgroundImageRotationManager.h */; };
+		A60BA0022EE5000100DDC44F /* iTermBackgroundImageRotationManager.m in Sources */ = {isa = PBXBuildFile; fileRef = A60BA0042EE5000100DDC44F /* iTermBackgroundImageRotationManager.m */; };
 		A605943E2583305E00CACEE6 /* iTermSharedImageStore.h in Headers */ = {isa = PBXBuildFile; fileRef = A605943C2583305E00CACEE6 /* iTermSharedImageStore.h */; };
 		A605943F2583305E00CACEE6 /* iTermSharedImageStore.m in Sources */ = {isa = PBXBuildFile; fileRef = A605943D2583305E00CACEE6 /* iTermSharedImageStore.m */; };
 		A605A18B2EAD8CAE0072ED7E /* iTermMetalLayerBox.swift in Sources */ = {isa = PBXBuildFile; fileRef = A605A18A2EAD8CAE0072ED7E /* iTermMetalLayerBox.swift */; };
@@ -6446,6 +6448,8 @@
 		A60593B4257DF9A500CACEE6 /* main.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = main.c; sourceTree = "<group>"; };
 		A60593E7257DFBCC00CACEE6 /* legacy_server.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = legacy_server.h; sourceTree = "<group>"; };
 		A60593E8257DFBCC00CACEE6 /* legacy_server.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = legacy_server.c; sourceTree = "<group>"; };
+		A60BA0032EE5000100DDC44F /* iTermBackgroundImageRotationManager.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermBackgroundImageRotationManager.h; sourceTree = "<group>"; };
+		A60BA0042EE5000100DDC44F /* iTermBackgroundImageRotationManager.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermBackgroundImageRotationManager.m; sourceTree = "<group>"; };
 		A605943C2583305E00CACEE6 /* iTermSharedImageStore.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermSharedImageStore.h; sourceTree = "<group>"; };
 		A605943D2583305E00CACEE6 /* iTermSharedImageStore.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermSharedImageStore.m; sourceTree = "<group>"; };
 		A605A18A2EAD8CAE0072ED7E /* iTermMetalLayerBox.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermMetalLayerBox.swift; sourceTree = "<group>"; };
@@ -12885,6 +12889,8 @@
 				A6E7352820EBF3270034FCFD /* iTermSetCurrentTerminalHelper.h */,
 				A6E7352920EBF3270034FCFD /* iTermSetCurrentTerminalHelper.m */,
 				A6D298EC2EE4AAAC00DDC44F /* iTermShape.swift */,
+				A60BA0032EE5000100DDC44F /* iTermBackgroundImageRotationManager.h */,
+				A60BA0042EE5000100DDC44F /* iTermBackgroundImageRotationManager.m */,
 				A605943C2583305E00CACEE6 /* iTermSharedImageStore.h */,
 				A605943D2583305E00CACEE6 /* iTermSharedImageStore.m */,
 				53FF98282093C823008688D7 /* iTermSignatureVerifier.h */,
@@ -15730,6 +15736,7 @@
 				A667193D1DCE36C3000CE608 /* iTermHotkeyPreferencesModel.h in Headers */,
 				A6FD5F9325AC2ADC00006234 /* iTermGitState+MainApp.h in Headers */,
 				A6E5110D24C1729E00D6552D /* iTermAttributedStringProxy.h in Headers */,
+				A60BA0012EE5000100DDC44F /* iTermBackgroundImageRotationManager.h in Headers */,
 				A605943E2583305E00CACEE6 /* iTermSharedImageStore.h in Headers */,
 				A6971F3320D8D3C30075CFD4 /* iTermAdvancedGPUSettingsViewController.h in Headers */,
 				A653F69024D00B9E0062377E /* iTermGraphTableTransformer.h in Headers */,
@@ -19162,6 +19169,7 @@
 				A69D6AE527B649B5006E3991 /* RunLengthEncoder.swift in Sources */,
 				A67F62022143A1650093940A /* iTermGraphicSource.m in Sources */,
 				A6A3EDC42E0CDA2300D711DA /* iTermBrowserPointerActionPerformer.swift in Sources */,
+				A60BA0022EE5000100DDC44F /* iTermBackgroundImageRotationManager.m in Sources */,
 				A605943F2583305E00CACEE6 /* iTermSharedImageStore.m in Sources */,
 				A68ADA0629CCBE420008E092 /* CommandInfoViewController.swift in Sources */,
 				A616E6792EA9548D000C0C18 /* PasswordManagerProtocol.swift in Sources */,
