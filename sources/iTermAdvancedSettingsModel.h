@@ -404,6 +404,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (BOOL)shouldSetLCTerminal;
 + (BOOL)shouldSetTerminfoDirs;
 + (BOOL)showAutomaticProfileSwitchingBanner;
++ (BOOL)preserveFontSizeOnAutomaticProfileSwitch;
 + (BOOL)showBlockBoundaries;
 + (BOOL)showButtonsForSelectedCommand;
 + (BOOL)showHintsInSplitPaneMenuItems;
