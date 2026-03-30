@@ -503,6 +503,9 @@ static NSString *GetProfileName(NSString *guid) {
         case KEY_ACTION_TOGGLE_SETTING:
             actionString = [NSString stringWithFormat:@"Toggle %@", self.toggleSettingLabel];
             break;
+        case KEY_ACTION_TOGGLE_LAST_TAB:
+            actionString = @"Toggle Last Tab";
+            break;
     }
 
     switch (self.applyMode) {
@@ -603,6 +606,7 @@ static NSString *GetProfileName(NSString *guid) {
         case KEY_ACTION_COPY_INTERPOLATED_STRING:
         case KEY_ACTION_COPY_MODE:
         case KEY_ACTION_TOGGLE_SETTING:
+        case KEY_ACTION_TOGGLE_LAST_TAB:
             break;
 
         case KEY_ACTION_SEQUENCE:
@@ -694,6 +698,7 @@ static NSString *GetProfileName(NSString *guid) {
         case KEY_ACTION_COPY_INTERPOLATED_STRING:
         case KEY_ACTION_COPY_MODE:
         case KEY_ACTION_TOGGLE_SETTING:
+        case KEY_ACTION_TOGGLE_LAST_TAB:
             break;
 
         case KEY_ACTION_SEQUENCE:

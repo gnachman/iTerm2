@@ -10606,6 +10606,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
         case KEY_ACTION_SWAP_WITH_PREVIOUS_PANE:
         case KEY_ACTION_ALERT_ON_NEXT_MARK:
         case KEY_ACTION_COPY_MODE:
+        case KEY_ACTION_TOGGLE_LAST_TAB:
             return NO;
 
         case KEY_ACTION_TOGGLE_SETTING:
@@ -10726,6 +10727,9 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
         case KEY_ACTION_PREVIOUS_MRU_TAB:
             [[[_delegate realParentWindow] tabView] cycleKeyDownWithModifiers:[event it_modifierFlags]
                                                                      forwards:NO];
+            break;
+        case KEY_ACTION_TOGGLE_LAST_TAB:
+            [[[_delegate realParentWindow] tabView] toggleLastTab];
             break;
         case KEY_ACTION_NEXT_PANE:
             [_delegate nextSession];

@@ -54,4 +54,7 @@
 - (void)cycleFlagsChanged:(NSUInteger)modifierFlags;
 - (void)cycleForwards:(BOOL)forwards;
 
+// Toggle between the two most recently used tabs.
+- (void)toggleLastTab;
+
 @end

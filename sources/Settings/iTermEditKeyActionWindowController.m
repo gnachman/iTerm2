@@ -396,6 +396,7 @@ const CGFloat sideMarginWidth = 40;
         [[iTermSearchableComboViewGroup alloc] initWithLabel:@"Navigate Tabs" items:@[
             [[iTermSearchableComboViewItem alloc] initWithLabel:@"Next Tab" tag:KEY_ACTION_NEXT_SESSION],
             [[iTermSearchableComboViewItem alloc] initWithLabel:@"Previous Tab" tag:KEY_ACTION_PREVIOUS_SESSION],
+            [[iTermSearchableComboViewItem alloc] initWithLabel:@"Toggle Last Tab" tag:KEY_ACTION_TOGGLE_LAST_TAB],
         ]],
 
         [[iTermSearchableComboViewGroup alloc] initWithLabel:@"Reorder Tabs" items:@[

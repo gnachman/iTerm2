@@ -151,6 +151,7 @@ Tabs, Windows, and UI:
   broadcast.
 - New key binding action to send text without
   broadcasting.
+- New key binding action to toggle last tab.
 - Nerd Font glyphs are now rendered in pane title
   bars and tabs.
 - A unified dock badge combines bell count

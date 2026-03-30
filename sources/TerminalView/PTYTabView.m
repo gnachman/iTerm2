@@ -225,6 +225,13 @@ const NSUInteger kAllModifiers = (NSEventModifierFlagControl |
     }
 }
 
+- (void)toggleLastTab {
+    if (_tabViewItemsInMRUOrder.count < 2) {
+        return;
+    }
+    [self selectTabViewItem:_tabViewItemsInMRUOrder[1]];
+}
+
 - (void)scrollWheel:(NSEvent *)event {
     DLog(@"%@", event);
     if (![_swipeTracker handleEvent:event]) {
