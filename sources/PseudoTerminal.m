@@ -3450,8 +3450,9 @@ ITERM_WEAKLY_REFERENCEABLE
                                  tmuxController:tmuxController];
     [tab setTmuxWindowName:name];
     [tab setReportIdealSizeAsCurrent:YES];
-    DLog(@"loadTmuxLayout invoking fitWindowToTabs.");
-    [self fitWindowToTabs];
+    DLog(@"loadTmuxLayout: window frame before lazyFitWindowToTabs=%@", NSStringFromRect(self.window.frame));
+    [self lazyFitWindowToTabs];
+    DLog(@"loadTmuxLayout: window frame after lazyFitWindowToTabs=%@", NSStringFromRect(self.window.frame));
     [tab setReportIdealSizeAsCurrent:NO];
 
     for (PTYSession *aSession in [tab sessions]) {
@@ -7211,8 +7212,15 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
             if (_windowNeedsInitialSize) {
                 DLog(@"Perform initial fitWindowToTabs");
             }
-            [self fitWindowToTabs];
+            DLog(@"tabViewDidChangeNumberOfTabViewItems: tmuxOriginatedResizeInProgress=%d window frame before=%@",
+                 tmuxOriginatedResizeInProgress_, NSStringFromRect(self.window.frame));
+            if (tmuxOriginatedResizeInProgress_) {
+                [self lazyFitWindowToTabs];
+            } else {
+                [self fitWindowToTabs];
+            }
             const NSRect frameAfter = self.window.frame;
+            DLog(@"tabViewDidChangeNumberOfTabViewItems: window frame after=%@", NSStringFromRect(frameAfter));
             if (NSEqualRects(frameBefore, frameAfter) && neededInitialSize) {
                 // If the initial window frame happened to exactly equal the fitWindowToTabs size
                 // the session will remain at its initial size specified by its profile. It's
@@ -9697,25 +9705,53 @@ typedef struct {
 
 // This is like fitWindowToTabSize but it avoids shrinking the window by less than one cell.
 - (void)lazyFitWindowToTabSize:(NSSize)tabSize cellSize:(NSSize)cellSize {
+    DLog(@"lazyFitWindowToTabSize:%@ cellSize:%@ window frame:%@ from\n%@",
+         NSStringFromSize(tabSize), NSStringFromSize(cellSize),
+         NSStringFromRect(self.window.frame), [NSThread callStackSymbols]);
     PseudoTerminalWindowFrameInfo frameInfo = [self windowFrameForTabSize:tabSize
                                                           preferredHeight:nil];
     if (!frameInfo.ok) {
+        DLog(@"lazyFitWindowToTabSize: frameInfo not ok, bailing");
         return;
     }
     const NSSize currentSize = self.window.frame.size;
-    const NSSize delta = NSMakeSize(frameInfo.frame.size.width - currentSize.width,
-                                    frameInfo.frame.size.height - currentSize.height);
-    BOOL shouldResize = NO;
-    if (delta.width > 0 || delta.height > 0) {
-        // Growing is always allowed
-        shouldResize = YES;
-        // Shrinking by more than once cell is always allowed
-    } else if (-delta.width > cellSize.width || -delta.height > cellSize.height) {
-        shouldResize = YES;
-    }
-    if (shouldResize) {
+    const CGFloat dw = frameInfo.frame.size.width - currentSize.width;
+    const CGFloat dh = frameInfo.frame.size.height - currentSize.height;
+    // Allow the resize if any dimension is growing or shrinking by more than one cell.
+    // Block the resize only when every dimension's change is a sub-cell shrink (or zero).
+    const BOOL widthNeedsResize = (dw > 0 || -dw > cellSize.width);
+    const BOOL heightNeedsResize = (dh > 0 || -dh > cellSize.height);
+    DLog(@"lazyFitWindowToTabSize: proposed frame=%@ dw=%f dh=%f cellSize=%@ widthNeedsResize=%@ heightNeedsResize=%@ -> %@",
+         NSStringFromRect(frameInfo.frame), dw, dh, NSStringFromSize(cellSize),
+         @(widthNeedsResize), @(heightNeedsResize),
+         (widthNeedsResize || heightNeedsResize) ? @"RESIZE" : @"SKIP");
+    if (widthNeedsResize || heightNeedsResize) {
         [self fitWindowToTabSize:tabSize preferredHeight:nil];
     }
+}
+
+// Like fitWindowToTabs but avoids shrinking the window by less than one cell for tmux tabs.
+- (void)lazyFitWindowToTabs {
+    DLog(@"lazyFitWindowToTabs from\n%@", [NSThread callStackSymbols]);
+    NSSize cellSize = NSZeroSize;
+    for (PTYTab *tab in self.tabs) {
+        if (tab.isTmuxTab) {
+            cellSize = [PTYTab cellSizeForBookmark:[tab.tmuxController profileForWindow:tab.tmuxWindow]];
+            break;
+        }
+    }
+    if (NSEqualSizes(cellSize, NSZeroSize)) {
+        DLog(@"lazyFitWindowToTabs: no tmux tabs, falling back to fitWindowToTabs");
+        [self fitWindowToTabs];
+        return;
+    }
+    NSSize maxTabSize = [self sizeOfLargestTabWithExclusion:PseudoTerminalTabSizeExclusionNone];
+    DLog(@"lazyFitWindowToTabs: cellSize=%@ maxTabSize=%@", NSStringFromSize(cellSize), NSStringFromSize(maxTabSize));
+    if (NSEqualSizes(NSZeroSize, maxTabSize)) {
+        DLog(@"lazyFitWindowToTabs: max tab size is zero, bailing");
+        return;
+    }
+    [self lazyFitWindowToTabSize:maxTabSize cellSize:cellSize];
 }
 
 - (NSRect)frameFittingWindowToTabSize:(NSSize)tabSize preferredHeight:(NSNumber *)preferredHeight {
