@@ -46,7 +46,7 @@ class AdapterPasswordDataSource: CommandLinePasswordDataSource {
             }
         }
 
-        var errorDescription: String {
+        var errorDescription: String? {
             reason ?? "Unknown error"
         }
     }
@@ -69,6 +69,8 @@ class AdapterPasswordDataSource: CommandLinePasswordDataSource {
     private typealias AddAccountResponse = PasswordManagerProtocol.AddAccountResponse
     private typealias DeleteAccountRequest = PasswordManagerProtocol.DeleteAccountRequest
     private typealias DeleteAccountResponse = PasswordManagerProtocol.DeleteAccountResponse
+    private typealias CustomCommandRequest = PasswordManagerProtocol.CustomCommandRequest
+    private typealias CustomCommandResponse = PasswordManagerProtocol.CustomCommandResponse
     private typealias ErrorResponse = PasswordManagerProtocol.ErrorResponse
 
     private let browser: Bool
@@ -80,6 +82,7 @@ class AdapterPasswordDataSource: CommandLinePasswordDataSource {
     private let identifier: String
     private var pathToDatabase: String?
     private var pathToExecutable: String?
+    private var masterPassword: String?
     private let userAccountKey = "NoSyncAdapaterPasswordDataSource_"
 
     init(browser: Bool, adapterPath: String, identifier: String) {
@@ -92,7 +95,7 @@ class AdapterPasswordDataSource: CommandLinePasswordDataSource {
         } else {
             self.iTermVersion = "unknown"
         }
-        userAccountID = UserDefaults.standard.string(forKey: userAccountKey + identifier)
+        userAccountID = iTermUserDefaults.userDefaults().string(forKey: userAccountKey + identifier)
     }
 
     // MARK: - Helper Methods
@@ -179,19 +182,29 @@ class AdapterPasswordDataSource: CommandLinePasswordDataSource {
         }
     }
 
-    private func requestPathToDatabase(extension: String?) -> Bool {
-        if let saved = UserDefaults.standard.string(forKey: "PathToDatabase_\(identifier)") {
+    private func requestPathToDatabase(_ handshake: HandshakeResponse) -> Bool {
+        if let saved = iTermUserDefaults.userDefaults().string(forKey: "PathToDatabase_\(identifier)") {
             pathToDatabase = saved
             return true
         }
 
+        let kind = handshake.pathToDatabaseKind ?? .file
+        switch kind {
+        case .file:
+            return requestPathToDatabaseViaFilePanel(handshake: handshake)
+        case .url:
+            return requestPathToDatabaseViaTextField(handshake: handshake)
+        }
+    }
+
+    private func requestPathToDatabaseViaFilePanel(handshake: HandshakeResponse) -> Bool {
         let openPanel = NSOpenPanel()
         openPanel.canChooseDirectories = false
         openPanel.canChooseFiles = true
         openPanel.allowsMultipleSelection = false
-        openPanel.message = "Select a database file for \(identifier)"
+        openPanel.message = handshakeInfo?.pathToDatabasePrompt ?? "Select a database file for \(identifier)"
 
-        if let ext = `extension` {
+        if let ext = handshake.databaseExtension {
             openPanel.allowedContentTypes = [UTType(filenameExtension: ext) ?? .data]
         }
 
@@ -201,12 +214,38 @@ class AdapterPasswordDataSource: CommandLinePasswordDataSource {
         }
 
         pathToDatabase = selectedURL.path
-        UserDefaults.standard.set(selectedURL.path, forKey: "PathToDatabase_\(identifier)")
+        iTermUserDefaults.userDefaults().set(selectedURL.path, forKey: "PathToDatabase_\(identifier)")
+        return true
+    }
+
+    private func requestPathToDatabaseViaTextField(handshake: HandshakeResponse) -> Bool {
+        let alert = NSAlert()
+        alert.messageText = handshake.pathToDatabasePrompt ?? "Enter database URL for \(identifier)"
+        alert.addButton(withTitle: "OK")
+        alert.addButton(withTitle: "Cancel")
+
+        let textField = NSTextField(frame: NSRect(x: 0, y: 0, width: 300, height: 24))
+        textField.placeholderString = handshake.pathToDatabasePlaceholder ?? "https://\u{2026}"
+        alert.accessoryView = textField
+        alert.layout()
+        alert.window.makeFirstResponder(textField)
+
+        let response = alert.runModal()
+        guard response == .alertFirstButtonReturn else {
+            return false
+        }
+        let value = textField.stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !value.isEmpty else {
+            return false
+        }
+
+        pathToDatabase = value
+        iTermUserDefaults.userDefaults().set(value, forKey: "PathToDatabase_\(identifier)")
         return true
     }
 
     private func requestPathToExecutable(_ name: String) -> Bool {
-        if let saved = UserDefaults.standard.string(forKey: "PathToExecutable_\(identifier)") {
+        if let saved = iTermUserDefaults.userDefaults().string(forKey: "PathToExecutable_\(identifier)") {
             pathToExecutable = saved
             return true
         }
@@ -240,15 +279,104 @@ class AdapterPasswordDataSource: CommandLinePasswordDataSource {
             }
 
             pathToExecutable = selectedURL.path
-            UserDefaults.standard.set(selectedURL.path, forKey: "PathToExecutable_\(identifier)")
+            iTermUserDefaults.userDefaults().set(selectedURL.path, forKey: "PathToExecutable_\(identifier)")
             return true
         }
     }
 
     private var standardHeader: PasswordManagerProtocol.RequestHeader {
-        .init(pathToDatabase: pathToDatabase,
-              pathToExecutable: pathToExecutable,
-              mode: browser ? .browser : .terminal)
+        var header = PasswordManagerProtocol.RequestHeader(
+            pathToDatabase: pathToDatabase,
+            pathToExecutable: pathToExecutable,
+            mode: browser ? .browser : .terminal)
+        if let fields = handshakeInfo?.settingsFields, !fields.isEmpty {
+            var settings = [String: String]()
+            for field in fields {
+                if let value = storedSettingsValue(forKey: field.key) {
+                    settings[field.key] = value
+                }
+            }
+            if !settings.isEmpty {
+                header.settings = settings
+            }
+        }
+        return header
+    }
+
+    // MARK: - Credential Persistence
+
+    private var keychainCredentialServiceName: String {
+        "iTerm2-Adapter-\(identifier)"
+    }
+
+    private func persistCredentialsToKeychain(_ password: String) {
+        _ = SSKeychain.setPassword(password,
+                                   forService: keychainCredentialServiceName,
+                                   account: identifier)
+    }
+
+    private func loadPersistedCredentials() -> String? {
+        return try? SSKeychain.password(forService: keychainCredentialServiceName,
+                                        account: identifier)
+    }
+
+    private func deletePersistedCredentials() {
+        _ = SSKeychain.deletePassword(forService: keychainCredentialServiceName,
+                                      account: identifier)
+    }
+
+    private func hydratePersistedCredentialsIfNeeded() {
+        guard handshakeInfo?.persistsCredentials == true else { return }
+        if pathToDatabase == nil {
+            if let u = iTermUserDefaults.userDefaults().string(forKey: "PathToDatabase_\(identifier)"), !u.isEmpty {
+                pathToDatabase = u
+            }
+        }
+        if masterPassword == nil {
+            masterPassword = loadPersistedCredentials()
+        }
+    }
+
+    // MARK: - Settings Field Storage
+
+    private func storedSettingsValue(forKey key: String) -> String? {
+        guard let fields = handshakeInfo?.settingsFields else { return nil }
+        guard let field = fields.first(where: { $0.key == key }) else { return nil }
+        if field.persistInKeychain {
+            return try? SSKeychain.password(forService: keychainCredentialServiceName, account: key)
+        } else {
+            return iTermUserDefaults.userDefaults().string(forKey: "AdapterSetting_\(identifier)_\(key)")
+        }
+    }
+
+    private func storeSettingsValue(_ value: String, forKey key: String) {
+        guard let fields = handshakeInfo?.settingsFields else { return }
+        guard let field = fields.first(where: { $0.key == key }) else { return }
+        let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
+        if field.persistInKeychain {
+            if trimmed.isEmpty {
+                _ = SSKeychain.deletePassword(forService: keychainCredentialServiceName, account: key)
+            } else {
+                _ = SSKeychain.setPassword(trimmed, forService: keychainCredentialServiceName, account: key)
+            }
+        } else {
+            if trimmed.isEmpty {
+                iTermUserDefaults.userDefaults().removeObject(forKey: "AdapterSetting_\(identifier)_\(key)")
+            } else {
+                iTermUserDefaults.userDefaults().set(trimmed, forKey: "AdapterSetting_\(identifier)_\(key)")
+            }
+        }
+    }
+
+    private func deleteAllSettingsFieldStorage() {
+        guard let fields = handshakeInfo?.settingsFields else { return }
+        for field in fields {
+            if field.persistInKeychain {
+                _ = SSKeychain.deletePassword(forService: keychainCredentialServiceName, account: field.key)
+            } else {
+                iTermUserDefaults.userDefaults().removeObject(forKey: "AdapterSetting_\(identifier)_\(field.key)")
+            }
+        }
     }
 
     private func ensureAuthentication(window: NSWindow?, _ completion: @escaping (Error?) -> ()) {
@@ -259,6 +387,9 @@ class AdapterPasswordDataSource: CommandLinePasswordDataSource {
                 completion(error)
                 return
             }
+
+            // Try to restore persisted credentials before prompting.
+            self.hydratePersistedCredentialsIfNeeded()
 
             // If we already have a token, we're done
             if self.authToken != nil {
@@ -273,7 +404,7 @@ class AdapterPasswordDataSource: CommandLinePasswordDataSource {
 
             // Pick database first since the master password depends on which db you're using.
             if handshake.needsPathToDatabase && pathToDatabase == nil {
-                if !requestPathToDatabase(extension: handshake.databaseExtension) {
+                if !requestPathToDatabase(handshake) {
                     completion(AdapterError.canceledByUser)
                     return
                 }
@@ -284,6 +415,19 @@ class AdapterPasswordDataSource: CommandLinePasswordDataSource {
                     completion(AdapterError.canceledByUser)
                     return
                 }
+            }
+
+            // If we restored a master password from keychain, auto-login without prompting.
+            // When masterPassword is nil (e.g., first launch or requiresMasterPassword is false),
+            // this falls through to the normal login() path which prompts the user.
+            if handshake.persistsCredentials == true,
+               let saved = self.masterPassword, !saved.isEmpty {
+                let loginInputs = LoginInputs(window: window,
+                                              name: handshake.name,
+                                              completion: completion,
+                                              requiresMasterPassword: handshake.requiresMasterPassword)
+                self.completeEnsureAuthentication(masterPassword: saved, loginInputs: loginInputs)
+                return
             }
 
             let loginInputs = LoginInputs(window: window,
@@ -311,9 +455,10 @@ class AdapterPasswordDataSource: CommandLinePasswordDataSource {
     }
 
     private func requestPassword(_ loginInputs: LoginInputs) {
-        // Use runAsync because macOS 26 is buggy garbage and doesn't draw an insertion point
+        let label = handshakeInfo?.masterPasswordLabel ?? "master password"
+        // Use runAsync because macOS 26 is buggy garbage and doesn’t draw an insertion point
         // in an alert’s accessory in a sheet modal.
-        ModalPasswordAlert("Enter master password for \(loginInputs.name):")
+        ModalPasswordAlert("Enter \(label) for \(loginInputs.name):")
             .runAsync(window: loginInputs.window) { [weak self] masterPassword in
                 if let masterPassword {
                     self?.completeEnsureAuthentication(masterPassword: masterPassword,
@@ -338,8 +483,16 @@ class AdapterPasswordDataSource: CommandLinePasswordDataSource {
             switch result {
             case .success(let response):
                 self.authToken = response.token
+                if self.handshakeInfo?.persistsCredentials == true, let masterPassword {
+                    self.masterPassword = masterPassword
+                    self.persistCredentialsToKeychain(masterPassword)
+                }
                 loginInputs.completion(nil)
             case .failure(let error):
+                // Clear stale persisted credentials so retries prompt the user.
+                self.masterPassword = nil
+                self.deletePersistedCredentials()
+
                 if case let .runtime(description) = error as? AdapterError {
                     let loginFailed = AdapterError.loginFailed(description)
                     let selection = iTermWarning.show(withTitle: loginFailed.reason ?? description,
@@ -732,8 +885,12 @@ extension AdapterPasswordDataSource {
         pathToDatabase = nil
         pathToExecutable = nil
         authToken = nil
-        UserDefaults.standard.removeObject(forKey: "PathToDatabase_\(identifier)")
-        UserDefaults.standard.removeObject(forKey: "PathToExecutable_\(identifier)")
+        masterPassword = nil
+        iTermUserDefaults.userDefaults().removeObject(forKey: "PathToDatabase_\(identifier)")
+        iTermUserDefaults.userDefaults().removeObject(forKey: "PathToExecutable_\(identifier)")
+        deletePersistedCredentials()
+        deleteAllSettingsFieldStorage()
+        handshakeInfo = nil
     }
 
     var autogeneratedPasswordsOnly: Bool {
@@ -768,7 +925,8 @@ extension AdapterPasswordDataSource {
     }
 
     func resetErrors() {
-        // Clear authentication state to allow retry
+        // Clear the session token to allow retry. When persistsCredentials is true,
+        // the saved masterPassword will auto-login without prompting on the next attempt.
         authToken = nil
     }
 
@@ -794,11 +952,81 @@ extension AdapterPasswordDataSource {
 
     func switchAccount(completion: @escaping () -> ()) {
         let userAccounts = handshakeInfo?.userAccounts ?? []
-        let identifier = AccountPicker.askUserToSelect(from: userAccounts.map {
+        let pickedAccountID = AccountPicker.askUserToSelect(from: userAccounts.map {
             AccountPicker.Account(title: $0.name, accountID: $0.identifier)
         })
-        userAccountID = identifier
-        UserDefaults.standard.set(identifier, forKey: userAccountKey + identifier)
+        userAccountID = pickedAccountID
+        iTermUserDefaults.userDefaults().set(pickedAccountID, forKey: userAccountKey + identifier)
         completion()
+    }
+}
+
+// MARK: - AdapterCapabilities
+
+extension AdapterPasswordDataSource: AdapterCapabilities {
+    @objc var hasSettingsFields: Bool {
+        !(handshakeInfo?.settingsFields ?? []).isEmpty
+    }
+
+    @objc var settingsFieldDescriptions: [[String: Any]]? {
+        handshakeInfo?.settingsFields?.map { field in
+            var dict: [String: Any] = [
+                "key": field.key,
+                "label": field.label,
+                "isSecret": field.isSecret,
+                "persistInKeychain": field.persistInKeychain
+            ]
+            if let p = field.placeholder { dict["placeholder"] = p }
+            if let n = field.note { dict["note"] = n }
+            return dict
+        }
+    }
+
+    @objc var customCommandDescriptions: [[String: String]]? {
+        handshakeInfo?.customCommands?.map { cmd in
+            var dict: [String: String] = ["name": cmd.name, "label": cmd.label]
+            if let icon = cmd.icon { dict["icon"] = icon }
+            return dict
+        }
+    }
+
+    private static let builtInSubcommands: Set<String> = [
+        "handshake", "login", "list-accounts", "get-password",
+        "set-password", "add-account", "delete-account"
+    ]
+
+    @objc func runCustomCommand(_ name: String, window: NSWindow?, completion: @escaping (String?, Error?) -> Void) {
+        if Self.builtInSubcommands.contains(name) {
+            completion(nil, AdapterError.runtime("Cannot run built-in subcommand \u{201c}\(name)\u{201d} as a custom command"))
+            return
+        }
+        ensureAuthentication(window: window) { [weak self] error in
+            guard let self = self else { return }
+            if let error = error {
+                completion(nil, error)
+                return
+            }
+            let request = CustomCommandRequest(
+                header: self.standardHeader,
+                userAccountID: self.userAccountID,
+                token: self.authToken,
+                commandName: name)
+            self.runAdapterCommand(name, request: request) { (result: Result<CustomCommandResponse, Error>) in
+                switch result {
+                case .success(let response):
+                    completion(response.message, nil)
+                case .failure(let error):
+                    completion(nil, error)
+                }
+            }
+        }
+    }
+
+    @objc func settingsValue(forKey key: String) -> String? {
+        return storedSettingsValue(forKey: key)
+    }
+
+    @objc func setSettingsValue(_ value: String, forKey key: String) {
+        storeSettingsValue(value, forKey: key)
     }
 }

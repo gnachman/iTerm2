@@ -59,6 +59,16 @@ protocol PasswordManagerDataSource: AnyObject {
     @objc(switchAccountWithCompletion:) func switchAccount(completion: @escaping () -> ())
 }
 
+@objc(iTermAdapterCapabilities)
+protocol AdapterCapabilities: AnyObject {
+    @objc var hasSettingsFields: Bool { get }
+    @objc var customCommandDescriptions: [[String: String]]? { get }
+    @objc func runCustomCommand(_ name: String, window: NSWindow?, completion: @escaping (String?, Error?) -> Void)
+    @objc func settingsValue(forKey key: String) -> String?
+    @objc func setSettingsValue(_ value: String, forKey key: String)
+    @objc var settingsFieldDescriptions: [[String: Any]]? { get }
+}
+
 extension PasswordManagerAccount {
     func _matches(filter: String) -> Bool {
         if filter.isEmpty {

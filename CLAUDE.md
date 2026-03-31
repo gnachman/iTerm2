@@ -10,3 +10,4 @@
 - To make a debug build run `make Development`
 - Little scripts or text files that are used for manual testing of features go in tests/
 - The deployment target for iTerm2 is macOS 12. You don't need to perform availability checks for older versions.
+- Do not use associated objects (objc_getAssociatedObject or objc_setAssociatedObject) without express written permission.

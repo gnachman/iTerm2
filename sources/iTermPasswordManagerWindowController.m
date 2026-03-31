@@ -49,7 +49,8 @@ typedef NS_ENUM(NSUInteger, iTermPasswordManagerReload) {
     NSTableViewDelegate,
     NSControlTextEditingDelegate,
     NSWindowDelegate,
-    NSMenuItemValidation>
+    NSMenuItemValidation,
+    NSMenuDelegate>
 @property (nonatomic, class, strong) NSArray<NSString *> *cachedCombinedAccountNames;
 @end
 
@@ -94,6 +95,8 @@ typedef NS_ENUM(NSUInteger, iTermPasswordManagerReload) {
     IBOutlet NSMenuItem *_probeMenuItem;
     IBOutlet NSMenuItem *_sendReturnMenuItem;
     IBOutlet NSMenuItem *_separatorMenuItem;
+
+    IBOutlet NSPopUpButton *_settingsButton;
 }
 
 static NSArray<NSString *> *gTerminalCachedCombinedAccountNames;
@@ -205,6 +208,20 @@ static NSArray<NSString *> *gTerminalCachedCombinedAccountNames;
     self.window.backgroundColor = [NSColor clearColor];
     self.window.contentView.layer.cornerRadius = 4;
     [_searchField setArrowHandler:_tableView];
+#if ITERM_DEBUG
+    {
+        NSMenu *menu = _settingsButton.menu;
+        NSInteger index = [menu indexOfItemWithTarget:self andAction:@selector(useBitwarden:)];
+        if (index != -1) {
+            NSMenuItem *item = [[NSMenuItem alloc] initWithTitle:@"Test Adapter (Dev)"
+                                                          action:@selector(useTestAdapter:)
+                                                   keyEquivalent:@""];
+            item.tag = 1;
+            item.target = self;
+            [menu insertItem:item atIndex:index + 1];
+        }
+    }
+#endif
     __weak __typeof(self) weakSelf = self;
 
     // Only create event monitor once. This is out of paranioa because there are weird cases where
@@ -532,6 +549,18 @@ static NSArray<NSString *> *gTerminalCachedCombinedAccountNames;
     [self updateConfiguration];
 }
 
+#if ITERM_DEBUG
+- (IBAction)useTestAdapter:(id)sender {
+    [self.dataSourceProvider enableTestAdapter];
+    [self.currentDataSource resetErrors];
+    if (![self.currentDataSource checkAvailability]) {
+        [self useKeychain:nil];
+    }
+    [self update];
+    [self updateConfiguration];
+}
+#endif
+
 - (IBAction)closeCurrentSession:(id)sender {
     [self orderOutOrEndSheet];
 }
@@ -785,10 +814,13 @@ static NSArray<NSString *> *gTerminalCachedCombinedAccountNames;
 
 - (void)enterUsername {
     DLog(@"enterUserName");
+    if (!self.dataSourceProvider.authenticated) {
+        return;
+    }
     NSString *userName = [self selectedUserName];
     if (userName.length > 0) {
         [_delegate iTermPasswordManagerEnterUserName:userName
-                                           broadcast:_broadcastButton.state == NSControlStateValueOn];
+                                            broadcast:_broadcastButton.state == NSControlStateValueOn];
         if (_sendUserByDefault && !self.didSendUserName) {
             DLog(@"enterPassword: closing sheet");
             [self closeOrEndSheet];
@@ -814,6 +846,208 @@ static NSArray<NSString *> *gTerminalCachedCombinedAccountNames;
         return;
     }
     [_tableView editColumn:0 row:row withEvent:nil select:YES];
+}
+
+// MARK: - Generic Adapter Settings Sheet
+
+- (IBAction)adapterSettings:(id)sender {
+    id<PasswordManagerDataSource> ds = [self currentDataSource];
+    if (![(id)ds conformsToProtocol:@protocol(iTermAdapterCapabilities)]) {
+        return;
+    }
+    id<iTermAdapterCapabilities> adapter = (id<iTermAdapterCapabilities>)ds;
+    if (!adapter.hasSettingsFields) {
+        return;
+    }
+    [self showAdapterSettingsSheet:adapter forWindow:self.window completion:^{
+        [self reloadItems:nil];
+    }];
+}
+
+- (void)showAdapterSettingsSheet:(id<iTermAdapterCapabilities>)adapter
+                       forWindow:(NSWindow *)parentWindow
+                      completion:(void (^)(void))onOK {
+    NSArray<NSDictionary *> *fields = adapter.settingsFieldDescriptions;
+    if (!fields.count) {
+        return;
+    }
+    NSWindow *sheetParent = parentWindow ?: self.window;
+    if (!sheetParent) {
+        return;
+    }
+
+    NSAlert *alert = [[NSAlert alloc] init];
+    alert.messageText = [NSString stringWithFormat:@"%@ Settings", [self currentDataSource].name];
+    [alert addButtonWithTitle:@"OK"];
+    [alert addButtonWithTitle:@"Cancel"];
+
+    const CGFloat width = 560;
+    const CGFloat rowHeight = 22;
+    const CGFloat labelWidth = 90;
+    const CGFloat rowSpacing = 12;
+    const CGFloat noteHeight = 14;
+    const CGFloat noteSpacing = 4;
+    const CGFloat margin = 16;
+    const CGFloat eyeButtonWidth = 28;
+
+    // Calculate total height
+    CGFloat totalHeight = margin;
+    for (NSDictionary *field in fields) {
+        totalHeight += rowHeight + rowSpacing;
+        if (field[@"note"]) {
+            totalHeight += noteHeight + noteSpacing;
+        }
+    }
+    totalHeight += margin;
+
+    NSView *accessory = [[NSView alloc] initWithFrame:NSMakeRect(0, 0, width, totalHeight)];
+    NSMutableDictionary<NSString *, NSTextField *> *textFieldMap = [NSMutableDictionary dictionary];
+    NSMutableDictionary<NSString *, NSSecureTextField *> *secureFieldMap = [NSMutableDictionary dictionary];
+    NSMutableDictionary<NSString *, NSTextField *> *plainFieldMap = [NSMutableDictionary dictionary];
+    // Retained by the accessory view's lifetime via the completion block closure.
+    NSMutableArray *revealHelpers = [NSMutableArray array];
+
+    // Build rows from bottom to top
+    CGFloat y = margin;
+    for (NSDictionary *field in [fields reverseObjectEnumerator].allObjects) {
+        NSString *key = field[@"key"];
+        NSString *label = field[@"label"];
+        BOOL isSecret = [field[@"isSecret"] boolValue];
+        NSString *placeholder = field[@"placeholder"] ?: @"";
+        NSString *note = field[@"note"];
+
+        NSString *savedValue = [adapter settingsValueForKey:key] ?: @"";
+
+        if (note) {
+            NSTextField *noteLabel = [[NSTextField alloc] initWithFrame:NSMakeRect(labelWidth + 8, y, width - labelWidth - 8, noteHeight)];
+            noteLabel.stringValue = note;
+            noteLabel.bezeled = NO;
+            noteLabel.drawsBackground = NO;
+            noteLabel.editable = NO;
+            noteLabel.selectable = NO;
+            noteLabel.font = [NSFont systemFontOfSize:[NSFont smallSystemFontSize]];
+            noteLabel.textColor = [NSColor secondaryLabelColor];
+            [accessory addSubview:noteLabel];
+            y += noteHeight + noteSpacing;
+        }
+
+        NSTextField *fieldLabel = [[NSTextField alloc] initWithFrame:NSMakeRect(0, y, labelWidth, rowHeight)];
+        fieldLabel.stringValue = label;
+        fieldLabel.bezeled = NO;
+        fieldLabel.drawsBackground = NO;
+        fieldLabel.editable = NO;
+        fieldLabel.selectable = NO;
+        fieldLabel.font = [NSFont systemFontOfSize:[NSFont systemFontSize]];
+        [accessory addSubview:fieldLabel];
+
+        if (isSecret) {
+            const CGFloat fieldWidth = width - labelWidth - 8 - eyeButtonWidth - 4;
+            NSRect fieldFrame = NSMakeRect(labelWidth + 8, y, fieldWidth, rowHeight);
+
+            NSSecureTextField *secure = [[NSSecureTextField alloc] initWithFrame:fieldFrame];
+            secure.placeholderString = placeholder;
+            secure.stringValue = savedValue;
+            secure.font = [NSFont systemFontOfSize:[NSFont systemFontSize]];
+            [accessory addSubview:secure];
+            secureFieldMap[key] = secure;
+
+            NSTextField *plain = [[NSTextField alloc] initWithFrame:fieldFrame];
+            plain.placeholderString = placeholder;
+            plain.stringValue = savedValue;
+            plain.font = [NSFont systemFontOfSize:[NSFont systemFontSize]];
+            plain.hidden = YES;
+            [accessory addSubview:plain];
+            plainFieldMap[key] = plain;
+
+            iTermAdapterSettingsRevealHelper *helper = [[iTermAdapterSettingsRevealHelper alloc] initWithSecureField:secure plainField:plain];
+            [revealHelpers addObject:helper];
+
+            NSButton *reveal = [[NSButton alloc] initWithFrame:NSMakeRect(labelWidth + 8 + fieldWidth + 4, y, eyeButtonWidth, rowHeight)];
+            reveal.bezelStyle = NSBezelStyleRegularSquare;
+            reveal.bordered = YES;
+            reveal.image = [NSImage imageWithSystemSymbolName:@"eye" accessibilityDescription:@"Show"];
+            reveal.imagePosition = NSImageOnly;
+            reveal.buttonType = NSButtonTypeMomentaryPushIn;
+            reveal.target = helper;
+            reveal.action = @selector(toggleReveal:);
+            [accessory addSubview:reveal];
+        } else {
+            NSTextField *tf = [[NSTextField alloc] initWithFrame:NSMakeRect(labelWidth + 8, y, width - labelWidth - 8, rowHeight)];
+            tf.placeholderString = placeholder;
+            tf.stringValue = savedValue;
+            tf.font = [NSFont systemFontOfSize:[NSFont systemFontSize]];
+            [accessory addSubview:tf];
+            textFieldMap[key] = tf;
+        }
+
+        y += rowHeight + rowSpacing;
+    }
+
+    alert.accessoryView = accessory;
+    [alert layout];
+
+    [alert beginSheetModalForWindow:sheetParent completionHandler:^(NSModalResponse response) {
+        // Prevent revealHelpers from being deallocated while the sheet is open.
+        (void)revealHelpers;
+        if (response != NSAlertFirstButtonReturn) {
+            return;
+        }
+        for (NSDictionary *field in fields) {
+            NSString *key = field[@"key"];
+            BOOL isSecret = [field[@"isSecret"] boolValue];
+            NSString *value;
+            if (isSecret) {
+                NSSecureTextField *secure = secureFieldMap[key];
+                NSTextField *plain = plainFieldMap[key];
+                value = plain.hidden ? (secure.stringValue ?: @"") : (plain.stringValue ?: @"");
+            } else {
+                value = textFieldMap[key].stringValue ?: @"";
+            }
+            [adapter setSettingsValue:value forKey:key];
+        }
+        if (onOK) {
+            onOK();
+        }
+    }];
+}
+
+// MARK: - Generic Custom Commands
+
+- (void)runAdapterCustomCommand:(NSString *)commandName {
+    id<PasswordManagerDataSource> ds = [self currentDataSource];
+    if (![(id)ds conformsToProtocol:@protocol(iTermAdapterCapabilities)]) {
+        return;
+    }
+    id<iTermAdapterCapabilities> adapter = (id<iTermAdapterCapabilities>)ds;
+    const NSInteger cancelCount = [self incrBusy];
+    __weak __typeof(self) weakSelf = self;
+    [adapter runCustomCommand:commandName window:self.window completion:^(NSString *message, NSError *error) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [weakSelf ifCancelCountUnchanged:cancelCount perform:^{
+                [weakSelf decrBusy];
+                if (error) {
+                    NSMutableString *info = [NSMutableString stringWithString:error.localizedDescription ?: @"An error occurred."];
+                    if (message.length > 0) {
+                        [info appendFormat:@"\n\n%@", message];
+                    }
+                    NSAlert *alert = [[NSAlert alloc] init];
+                    alert.messageText = @"Command Failed";
+                    alert.informativeText = info;
+                    [alert addButtonWithTitle:@"OK"];
+                    [alert runModal];
+                } else {
+                    [weakSelf reloadItems:nil];
+                    if (message.length > 0) {
+                        NSAlert *alert = [[NSAlert alloc] init];
+                        alert.messageText = commandName;
+                        alert.informativeText = message;
+                        [alert addButtonWithTitle:@"OK"];
+                        [alert runModal];
+                    }
+                }
+            }];
+        });
+    }];
 }
 
 - (id<PasswordManagerAccount>)clickedAccount {
@@ -944,6 +1178,84 @@ static NSArray<NSString *> *gTerminalCachedCombinedAccountNames;
     return ([iTermUserDefaults probeForPassword] && [iTermAdvancedSettingsModel echoProbeDuration] > 0);
 }
 
+static NSInteger const kDynamicMenuItemTag = 9999;
+
+- (void)menuNeedsUpdate:(NSMenu *)menu {
+    // Only modify the gear/settings popup menu, not other menus we may be a delegate of.
+    if (menu != _settingsButton.menu) {
+        return;
+    }
+
+    // Remove previously added dynamic items.
+    for (NSMenuItem *item in [menu.itemArray filteredArrayUsingBlock:^BOOL(NSMenuItem *item) {
+        return item.tag == kDynamicMenuItemTag;
+    }]) {
+        [menu removeItem:item];
+    }
+
+    id<PasswordManagerDataSource> ds = [self currentDataSource];
+    if (![(id)ds conformsToProtocol:@protocol(iTermAdapterCapabilities)]) {
+        return;
+    }
+    id<iTermAdapterCapabilities> adapter = (id<iTermAdapterCapabilities>)ds;
+
+    // Insert after "Switch Account".
+    NSInteger insertionIndex = [menu indexOfItemWithTarget:nil andAction:@selector(switchAccount:)];
+    if (insertionIndex == -1) {
+        insertionIndex = menu.numberOfItems;
+    } else {
+        insertionIndex += 1;
+    }
+
+    BOOL addedAny = NO;
+
+    if (adapter.hasSettingsFields) {
+        NSMenuItem *settingsItem = [[NSMenuItem alloc] initWithTitle:@"Settings\u2026"
+                                                              action:@selector(adapterSettings:)
+                                                       keyEquivalent:@""];
+        settingsItem.target = self;
+        settingsItem.tag = kDynamicMenuItemTag;
+        [menu insertItem:settingsItem atIndex:insertionIndex];
+        insertionIndex += 1;
+        addedAny = YES;
+    }
+
+    for (NSDictionary<NSString *, NSString *> *cmd in adapter.customCommandDescriptions) {
+        NSString *label = cmd[@"label"];
+        NSString *name = cmd[@"name"];
+        if (!label || !name) {
+            continue;
+        }
+        NSMenuItem *item = [[NSMenuItem alloc] initWithTitle:label
+                                                      action:@selector(runDynamicCustomCommand:)
+                                               keyEquivalent:@""];
+        item.target = self;
+        item.representedObject = name;
+        item.tag = kDynamicMenuItemTag;
+        [menu insertItem:item atIndex:insertionIndex];
+        insertionIndex += 1;
+        addedAny = YES;
+    }
+
+    if (addedAny) {
+        NSMenuItem *sep = [NSMenuItem separatorItem];
+        sep.tag = kDynamicMenuItemTag;
+        NSInteger firstDynamic = [menu.itemArray indexOfObjectPassingTest:^BOOL(NSMenuItem *item, NSUInteger idx, BOOL *stop) {
+            return item.tag == kDynamicMenuItemTag && !item.isSeparatorItem;
+        }];
+        if (firstDynamic != NSNotFound && firstDynamic > 0) {
+            [menu insertItem:sep atIndex:firstDynamic];
+        }
+    }
+}
+
+- (void)runDynamicCustomCommand:(NSMenuItem *)sender {
+    NSString *commandName = sender.representedObject;
+    if (commandName) {
+        [self runAdapterCustomCommand:commandName];
+    }
+}
+
 - (BOOL)validateMenuItem:(NSMenuItem *)menuItem {
     if (!self.dataSourceProvider.authenticated) {
         return NO;
@@ -969,7 +1281,13 @@ static NSArray<NSString *> *gTerminalCachedCombinedAccountNames;
         menuItem.state = self.dataSourceProvider.keePassXCEnabled ? NSControlStateValueOn : NSControlStateValueOff;
     } else if (menuItem.action == @selector(useBitwarden:)) {
         menuItem.state = self.dataSourceProvider.bitwardenEnabled ? NSControlStateValueOn : NSControlStateValueOff;
-    } else if (menuItem.action == @selector(resetIntegrationConfiguration:)) {
+    }
+#if ITERM_DEBUG
+    else if (menuItem.action == @selector(useTestAdapter:)) {
+        menuItem.state = self.dataSourceProvider.testAdapterEnabled ? NSControlStateValueOn : NSControlStateValueOff;
+    }
+#endif
+    else if (menuItem.action == @selector(resetIntegrationConfiguration:)) {
         const BOOL allowed = [[self currentDataSource] canResetConfiguration];
         if (allowed) {
             menuItem.title = [NSString stringWithFormat:@"Reset %@ Configuration", [[self currentDataSource] name]];
