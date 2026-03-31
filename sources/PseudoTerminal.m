@@ -9736,7 +9736,8 @@ typedef struct {
     NSSize cellSize = NSZeroSize;
     for (PTYTab *tab in self.tabs) {
         if (tab.isTmuxTab) {
-            cellSize = [PTYTab cellSizeForBookmark:[tab.tmuxController profileForWindow:tab.tmuxWindow]];
+            PTYSession *session = tab.activeSession;
+            cellSize = NSMakeSize(session.textview.charWidth, session.textview.lineHeight);
             break;
         }
     }
