@@ -4,6 +4,8 @@
 #import "iTermParser.h"
 #import "CVector.h"
 #import "ScreenChar.h"
+#import "VT100GraphicRendition.h"
+#import "VT100StringConversionConfig.h"
 
 typedef enum {
     // Any control character between 0-0x1f inclusive can by a token type. For these, the value
@@ -287,23 +289,32 @@ typedef enum {
     VT100_GANG
 } VT100TerminalTokenType;
 
-// A preinitialized array of screen_char_t. When ASCII data is present, it will have the codes
-// populated and all other fields zeroed out.
+// A preinitialized array of screen_char_t for ASCII data.
+// fg/bg colors are pre-baked into the buffer
+// by the parser thread using the shadow SGR state. The mutation thread can
+// check the stamp to skip the color-setting loop (fast path) or detect
+// desync and apply a fixup (medium path).
 #define kStaticScreenCharsCount 16
 typedef struct {
-    screen_char_t *buffer;
+    screen_char_t * _Nullable buffer;
     int length;
     screen_char_t staticBuffer[kStaticScreenCharsCount];
+
+    // Rendition stamp from parser thread shadow SGR state.
+    VT100GraphicRendition rendition;
+    BOOL protectedMode;
 } ScreenChars;
+
+NS_ASSUME_NONNULL_BEGIN
 
 // Tokens with type VT100_ASCIISTRING are stored in |asciiData| with this type.
 // |buffer| will point at |staticBuffer| or a malloc()ed buffer, depending on
 // |length|.
 typedef struct {
-    char *buffer;
+    char * _Nullable buffer;
     int length;
     char staticBuffer[128];
-    ScreenChars *screenChars;
+    ScreenChars * _Nullable screenChars;
 } AsciiData;
 
 typedef struct {
@@ -317,8 +328,56 @@ NS_INLINE NSString *iTermCreateStringFromAsciiData(AsciiData *asciiData) {
                                   encoding:NSASCIIStringEncoding];
 }
 
-void iTermAsciiDataSet(AsciiData *asciiData, const char *bytes, int length, ScreenChars *screenChars);
+void iTermAsciiDataSet(AsciiData *asciiData, const char *bytes, int length, ScreenChars *screenChars,
+                       VT100GraphicRendition rendition, BOOL protectedMode);
 void iTermAsciiDataFree(AsciiData *asciiData);
+
+// Pre-converted screen_char_t array for VT100_STRING tokens.
+// Created on the parser thread to exploit parallelism with the mutation thread.
+// The mutation thread checks the rendition/config stamps for desync and either
+// uses the buffer as-is (fast path), applies a color fixup (medium path), or
+// re-runs StringToScreenChars (slow path).
+#define kStaticPreconvertedScreenCharsCount 64
+typedef struct {
+    // The pre-converted screen_char_t buffer. Points to staticBuffer or malloc'd memory.
+    screen_char_t * _Nullable buffer;
+    int length;
+    screen_char_t staticBuffer[kStaticPreconvertedScreenCharsCount];
+
+    // Flags from StringToScreenChars
+    BOOL foundDwc;
+    BOOL rtlFound;
+
+    // Stamp for desync detection: the rendition used during conversion
+    VT100GraphicRendition rendition;
+    BOOL protectedMode;
+
+    // Config snapshot used during conversion
+    VT100StringConversionConfig config;
+
+    // Whether this data is valid and should be considered by the mutation thread
+    BOOL valid;
+} PreconvertedStringData;
+
+void iTermPreconvertedStringDataFree(PreconvertedStringData *data);
+
+// Populate a PreconvertedStringData by running StringToScreenChars.
+@interface iTermStringPreconverter : NSObject
+// Core variant: takes pre-computed fg/bg screen_char_t directly.
+// Does not set rendition/protectedMode stamps.
++ (void)preconvert:(PreconvertedStringData *)pre
+            string:(id)string
+                fg:(screen_char_t)fg
+                bg:(screen_char_t)bg
+            config:(VT100StringConversionConfig)config;
+
+// Rendition variant: computes fg/bg from rendition, then stores stamps for desync detection.
++ (void)preconvert:(PreconvertedStringData *)pre
+            string:(id)string
+         rendition:(VT100GraphicRendition)rendition
+     protectedMode:(BOOL)protectedMode
+            config:(VT100StringConversionConfig)config;
+@end
 
 #define SSH_OUTPUT_AUTOPOLL_PID -1000
 #define SSH_OUTPUT_NOTIF_PID -1001
@@ -338,6 +397,8 @@ NS_INLINE NSString *SSHInfoDescription(SSHInfo info) {
             @(info.channel), @(info.pid), @(info.depth)];
 }
 
+@class iTermAsyncStringConversion;
+
 @interface VT100Token : NSObject {
 @public
     VT100TerminalTokenType type;
@@ -350,15 +411,15 @@ NS_INLINE NSString *SSHInfoDescription(SSHInfo info) {
 }
 
 // For VT100_STRING
-@property(nonatomic, retain) NSString *string;
+@property(nonatomic, retain, nullable) NSString *string;
 @property(nonatomic, readonly) CTVector(int) *crlfs;
 
 // For saved data (when copying to clipboard) or sixel payload.
-@property(nonatomic, retain) NSData *savedData;
+@property(nonatomic, retain, nullable) NSData *savedData;
 
 // For XTERMCC_SET_KVP.
-@property(nonatomic, retain) NSString *kvpKey;
-@property(nonatomic, retain) NSString *kvpValue;
+@property(nonatomic, retain, nullable) NSString *kvpKey;
+@property(nonatomic, retain, nullable) NSString *kvpValue;
 
 // For VT100CSI_ codes that take parameters.
 @property(nonatomic, readonly) CSIParam *csi;
@@ -371,14 +432,25 @@ NS_INLINE NSString *SSHInfoDescription(SSHInfo info) {
 
 // For ascii strings (type==VT100_ASCIISTRING).
 @property(nonatomic, readonly) AsciiData *asciiData;
+
+// For VT100_STRING: pre-converted screen_char_t array from parser thread.
+// If asyncStringConversion is set, this resolves it transparently.
+@property(nonatomic, readonly) PreconvertedStringData *preconvertedStringData;
+
+@property(nonatomic, retain, nullable) iTermAsyncStringConversion *asyncStringConversion;
+
 @property(nonatomic) VT100TerminalTokenType type;
 @property(nonatomic) SSHInfo sshInfo;
-@property(nonatomic, strong) NSArray<VT100Token *> *subtokens;
+@property(nonatomic, strong, nullable) NSArray<VT100Token *> *subtokens;
 
 + (instancetype)token;
 + (instancetype)newTokenForControlCharacter:(unsigned char)controlCharacter;
 
-- (void)setAsciiBytes:(char *)bytes length:(int)length;
+- (void)setAsciiBytes:(nonnull char *)bytes length:(int)length;
+- (void)setAsciiBytes:(nonnull char *)bytes
+               length:(int)length
+            rendition:(VT100GraphicRendition)rendition
+        protectedMode:(BOOL)protectedMode;
 
 // Returns a string for |asciiData|, for convenience (this is slow).
 - (NSString *)stringForAsciiData;
@@ -391,3 +463,5 @@ NS_INLINE NSString *SSHInfoDescription(SSHInfo info) {
 - (void)appendCRLF:(int)value;
 
 @end
+
+NS_ASSUME_NONNULL_END

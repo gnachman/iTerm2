@@ -119,6 +119,34 @@ def format_ranges_with_comments(nums_with_names: dict, variable: str, indent: st
 
 
 # ============================================================================
+# C code formatters (for iTermCharacterSets.c)
+# ============================================================================
+
+def split_bmp_supp(code_points):
+    """Split code points into BMP (< 0x10000) and supplementary (>= 0x10000)."""
+    bmp = [cp for cp in code_points if cp < 0x10000]
+    supp = [cp for cp in code_points if cp >= 0x10000]
+    return sorted(set(bmp)), sorted(set(supp))
+
+
+def format_c_bmp_init(nums, bitmap_name, indent="        "):
+    """Format code points as C setRange calls for BMP bitmap initialization."""
+    lines = []
+    for start, end in get_ranges(nums):
+        count = end - start + 1
+        lines.append(f"{indent}setRange(&{bitmap_name}, {hex(start)}, {count});")
+    return lines
+
+
+def format_c_supp_ranges(nums, indent="    "):
+    """Format supplementary code points as C CharRange array entries."""
+    lines = []
+    for start, end in get_ranges(nums):
+        lines.append(f"{indent}{{{hex(start)}, {hex(end)}}},")
+    return lines
+
+
+# ============================================================================
 # Parsers for Unicode data files
 # ============================================================================
 
@@ -271,34 +299,6 @@ def generate_idn_characters(idn_content: str) -> list[str]:
     return format_ranges(values, "set")
 
 
-def generate_base_characters(derived_props_content: str) -> list[str]:
-    """Generate baseCharactersForUnicodeVersion method (Grapheme_Base - Default_Ignorable)."""
-    grapheme_base = parse_derived_props(derived_props_content, "Grapheme_Base")
-    ignorable = parse_derived_props(derived_props_content, "Default_Ignorable_Code_Point")
-    codes = sorted(grapheme_base - ignorable)
-    return format_ranges(codes, "set")
-
-
-def generate_spacing_combining_marks(unicode_data: dict) -> list[str]:
-    """Generate spacingCombiningMarksForUnicodeVersion method (gc=Mc)."""
-    codes = [code for code, info in unicode_data.items() if info['gc'] == 'Mc']
-    return format_ranges(codes, "set")
-
-
-def generate_modifier_letters(unicode_data: dict) -> list[str]:
-    """Generate modifierLettersForUnicodeVersion method (gc=Lm)."""
-    codes = [code for code, info in unicode_data.items() if info['gc'] == 'Lm']
-    return format_ranges(codes, "set")
-
-
-def generate_ignorable_characters(derived_props_content: str) -> list[str]:
-    """Generate ignorableCharactersForUnicodeVersion method."""
-    ignorable = parse_derived_props(derived_props_content, "Default_Ignorable_Code_Point")
-    # Remove 0x200b as it's handled specially at runtime
-    ignorable.discard(0x200b)
-    return format_ranges(ignorable, "defaultIgnorables")
-
-
 def generate_emoji_default_text_presentation(emoji_data_content: str) -> list[str]:
     """Generate emojiWithDefaultTextPresentation (Emoji - Emoji_Presentation)."""
     all_emoji = parse_emoji_data(emoji_data_content, "Emoji")
@@ -315,32 +315,6 @@ def generate_emoji_default_emoji_presentation(emoji_data_content: str) -> tuple[
     codes = sorted(emoji_presentation)
     min_code = min(codes)
     return format_ranges(codes, "emojiPresentation"), min_code
-
-
-def generate_emoji_accepting_vs16(emoji_sequences_content: str, emoji_data_content: str) -> list[str]:
-    """Generate emojiAcceptingVS16 method."""
-    # Get emoji that have FE0F in sequences
-    vs16_emoji = parse_emoji_sequences_vs16(emoji_sequences_content)
-
-    # Also get emoji with default text presentation (they all accept VS16)
-    all_emoji = parse_emoji_data(emoji_data_content, "Emoji")
-    emoji_presentation = parse_emoji_data(emoji_data_content, "Emoji_Presentation")
-    text_presentation = all_emoji - emoji_presentation
-
-    # Combine both sets
-    combined = vs16_emoji | text_presentation
-    return format_ranges(sorted(combined), "emoji")
-
-
-def generate_rtl_smelling_codes(unicode_data: dict) -> list[str]:
-    """Generate rtlSmellingCodePoints method."""
-    bidi_classes = {"R", "AL", "AN", "RLE", "RLO", "RLI", "FSI", "PDF", "PDI", "LRE", "LRO", "LRI"}
-    codes_with_names = {
-        code: info['name']
-        for code, info in unicode_data.items()
-        if info['bidi'] in bidi_classes
-    }
-    return format_ranges_with_comments(codes_with_names, "mutableCharacterSet")
 
 
 def generate_strong_rtl_codes(unicode_data: dict) -> list[str]:
@@ -371,8 +345,10 @@ def generate_strong_ltr_codes(unicode_data: dict) -> list[str]:
 def main():
     script_dir = Path(__file__).parent
     repo_root = script_dir.parent
-    template_path = script_dir / "NSCharacterSet+iTerm.m.template"
-    output_path = repo_root / "sources" / "NSCharacterSet+iTerm.m"
+    objc_template_path = script_dir / "NSCharacterSet+iTerm.m.template"
+    objc_output_path = repo_root / "sources" / "NSCharacterSet+iTerm.m"
+    c_template_path = script_dir / "iTermCharacterSets.m.template"
+    c_output_path = repo_root / "sources" / "iTermCharacterSets.m"
 
     print("Downloading Unicode data files...")
     unicode_data_content = get_cached_or_fetch(UNICODE_DATA_URL, "UnicodeData.txt")
@@ -386,44 +362,97 @@ def main():
 
     print("Generating character sets...")
 
-    # Generate all character sets
+    # Generate Objective-C character sets (for NSCharacterSet+iTerm.m)
     idn_ranges = generate_idn_characters(idn_content)
-    base_ranges = generate_base_characters(derived_props_content)
-    spacing_combining_ranges = generate_spacing_combining_marks(unicode_data)
-    modifier_letter_ranges = generate_modifier_letters(unicode_data)
-    ignorable_ranges = generate_ignorable_characters(derived_props_content)
     text_presentation_ranges = generate_emoji_default_text_presentation(emoji_data_content)
     emoji_presentation_ranges, min_emoji_code = generate_emoji_default_emoji_presentation(emoji_data_content)
-    vs16_ranges = generate_emoji_accepting_vs16(emoji_sequences_content, emoji_data_content)
-    rtl_smelling_ranges = generate_rtl_smelling_codes(unicode_data)
     strong_rtl_ranges = generate_strong_rtl_codes(unicode_data)
     strong_ltr_ranges = generate_strong_ltr_codes(unicode_data)
 
-    print("Reading template...")
-    template = template_path.read_text(encoding="utf-8")
+    # ---- Generate NSCharacterSet+iTerm.m ----
 
-    print("Substituting values...")
-    replacements = {
+    print("Reading ObjC template...")
+    objc_template = objc_template_path.read_text(encoding="utf-8")
+
+    print("Substituting ObjC values...")
+    objc_replacements = {
         "{{IDN_RANGES}}": "\n".join(idn_ranges),
-        "{{BASE_CHARACTER_RANGES}}": "\n".join(base_ranges),
-        "{{SPACING_COMBINING_MARK_RANGES}}": "\n".join(spacing_combining_ranges),
-        "{{MODIFIER_LETTER_RANGES}}": "\n".join(modifier_letter_ranges),
-        "{{IGNORABLE_CHARACTER_RANGES}}": "\n".join(ignorable_ranges),
         "{{EMOJI_TEXT_PRESENTATION_RANGES}}": "\n".join(text_presentation_ranges),
         "{{EMOJI_PRESENTATION_RANGES}}": "\n".join(emoji_presentation_ranges),
-        "{{EMOJI_VS16_RANGES}}": "\n".join(vs16_ranges),
-        "{{RTL_SMELLING_RANGES}}": "\n".join(rtl_smelling_ranges),
         "{{STRONG_RTL_RANGES}}": "\n".join(strong_rtl_ranges),
         "{{STRONG_LTR_RANGES}}": "\n".join(strong_ltr_ranges),
         "{{MIN_EMOJI_PRESENTATION_CODE}}": hex(min_emoji_code),
     }
 
-    output = template
-    for placeholder, value in replacements.items():
-        output = output.replace(placeholder, value)
+    objc_output = objc_template
+    for placeholder, value in objc_replacements.items():
+        objc_output = objc_output.replace(placeholder, value)
 
-    print(f"Writing {output_path}...")
-    output_path.write_text(output, encoding="utf-8")
+    print(f"Writing {objc_output_path}...")
+    objc_output_path.write_text(objc_output, encoding="utf-8")
+
+    # ---- Generate iTermCharacterSets.c ----
+
+    print("Generating C character set data...")
+
+    # Get raw code point sets for C generation
+    ignorable_codes = sorted(
+        parse_derived_props(derived_props_content, "Default_Ignorable_Code_Point") - {0x200b}
+    )
+    spacing_combining_codes = sorted(
+        code for code, info in unicode_data.items() if info['gc'] == 'Mc'
+    )
+
+    vs16_emoji = parse_emoji_sequences_vs16(emoji_sequences_content)
+    all_emoji = parse_emoji_data(emoji_data_content, "Emoji")
+    emoji_presentation = parse_emoji_data(emoji_data_content, "Emoji_Presentation")
+    emoji_vs16_codes = sorted(vs16_emoji | (all_emoji - emoji_presentation))
+
+    bidi_classes = {"R", "AL", "AN", "RLE", "RLO", "RLI", "FSI", "PDF", "PDI", "LRE", "LRO", "LRI"}
+    rtl_codes = sorted(
+        code for code, info in unicode_data.items() if info['bidi'] in bidi_classes
+    )
+
+    # codePointsWithOwnCell = baseCharacters + spacingCombiningMarks + modifierLetters
+    # baseCharacters = Grapheme_Base - Default_Ignorable_Code_Point
+    grapheme_base = parse_derived_props(derived_props_content, "Grapheme_Base")
+    default_ignorable = parse_derived_props(derived_props_content, "Default_Ignorable_Code_Point")
+    base_codes = grapheme_base - default_ignorable
+    modifier_letter_codes = set(
+        code for code, info in unicode_data.items() if info['gc'] == 'Lm'
+    )
+    own_cell_codes = sorted(base_codes | set(spacing_combining_codes) | modifier_letter_codes)
+
+    # Split into BMP and supplementary for each set
+    ignorable_bmp, ignorable_supp = split_bmp_supp(ignorable_codes)
+    scm_bmp, scm_supp = split_bmp_supp(spacing_combining_codes)
+    vs16_bmp, vs16_supp = split_bmp_supp(emoji_vs16_codes)
+    rtl_bmp, rtl_supp = split_bmp_supp(rtl_codes)
+    own_cell_bmp, own_cell_supp = split_bmp_supp(own_cell_codes)
+
+    print("Reading C template...")
+    c_template = c_template_path.read_text(encoding="utf-8")
+
+    print("Substituting C values...")
+    c_replacements = {
+        "{{IGNORABLE_SUPP_RANGES}}": "\n".join(format_c_supp_ranges(ignorable_supp)),
+        "{{SPACING_COMBINING_MARKS_SUPP_RANGES}}": "\n".join(format_c_supp_ranges(scm_supp)),
+        "{{EMOJI_VS16_SUPP_RANGES}}": "\n".join(format_c_supp_ranges(vs16_supp)),
+        "{{RTL_SUPP_RANGES}}": "\n".join(format_c_supp_ranges(rtl_supp)),
+        "{{CODE_POINTS_WITH_OWN_CELL_SUPP_RANGES}}": "\n".join(format_c_supp_ranges(own_cell_supp)),
+        "{{IGNORABLE_BMP_INIT}}": "\n".join(format_c_bmp_init(ignorable_bmp, "sIgnorableBMP")),
+        "{{SPACING_COMBINING_MARKS_BMP_INIT}}": "\n".join(format_c_bmp_init(scm_bmp, "sSpacingCombiningMarksBMP")),
+        "{{EMOJI_VS16_BMP_INIT}}": "\n".join(format_c_bmp_init(vs16_bmp, "sEmojiAcceptingVS16BMP")),
+        "{{RTL_BMP_INIT}}": "\n".join(format_c_bmp_init(rtl_bmp, "sRTLBMP")),
+        "{{CODE_POINTS_WITH_OWN_CELL_BMP_INIT}}": "\n".join(format_c_bmp_init(own_cell_bmp, "sCodePointsWithOwnCellBMP")),
+    }
+
+    c_output = c_template
+    for placeholder, value in c_replacements.items():
+        c_output = c_output.replace(placeholder, value)
+
+    print(f"Writing {c_output_path}...")
+    c_output_path.write_text(c_output, encoding="utf-8")
 
     print("Done!")
     print(f"\nTo refresh the cache, delete: {CACHE_DIR}")

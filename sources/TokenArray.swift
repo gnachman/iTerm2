@@ -50,7 +50,7 @@ class TokenArray: IteratorProtocol, CustomDebugStringConvertible {
         // next read begins with CR LF. Consecutive CRs are harmless for the purposes of coalescing
         // tokens into a group. The consumer can simply ignore any VT100_CR tokens.
         return type == VT100CC_CR && (nextToken?.type == VT100_MIXED_ASCII_CR_LF &&
-                                      nextToken?.asciiData.pointee.buffer[0] == 13)
+                                      nextToken?.asciiData.pointee.buffer?[0] == 13)
     }
 
     // length is byte length ofinputs

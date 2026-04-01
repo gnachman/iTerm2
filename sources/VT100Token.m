@@ -7,6 +7,7 @@
 //
 
 #import "VT100Token.h"
+#import "iTerm2SharedARC-Swift.h"
 
 #import "DebugLogging.h"
 #import "NSData+iTerm.h"
@@ -23,6 +24,7 @@
     AsciiData _asciiData;
     ScreenChars _screenChars;
     CTVector(int) _crlfs;
+    PreconvertedStringData _preconvertedStringData;
 }
 
 + (instancetype)token {
@@ -45,7 +47,16 @@ void iTermAsciiDataFree(AsciiData *asciiData) {
     }
 }
 
-void iTermAsciiDataSet(AsciiData *asciiData, const char *bytes, int length, ScreenChars *screenChars) {
+void iTermPreconvertedStringDataFree(PreconvertedStringData *data) {
+    if (data->buffer && data->buffer != data->staticBuffer) {
+        free(data->buffer);
+    }
+    data->buffer = NULL;
+    data->valid = NO;
+}
+
+void iTermAsciiDataSet(AsciiData *asciiData, const char *bytes, int length, ScreenChars *screenChars,
+                       VT100GraphicRendition rendition, BOOL protectedMode) {
     assert(asciiData->buffer == NULL);
 
     asciiData->length = length;
@@ -62,10 +73,21 @@ void iTermAsciiDataSet(AsciiData *asciiData, const char *bytes, int length, Scre
         screenChars->buffer = screenChars->staticBuffer;
         memset(screenChars->buffer, 0, asciiData->length * sizeof(screen_char_t));
     }
+
+    // Compute fg/bg from the shadow rendition and bake them into the buffer.
+    screen_char_t fg = { 0 };
+    screen_char_t bg = { 0 };
+    VT100GraphicRenditionUpdateForeground(&rendition, YES, protectedMode, &fg);
+    VT100GraphicRenditionUpdateBackground(&rendition, YES, &bg);
+
     for (NSInteger i = 0; i < length; i++) {
         screenChars->buffer[i].code = asciiData->buffer[i];
+        CopyForegroundColor(&screenChars->buffer[i], fg);
+        CopyBackgroundColor(&screenChars->buffer[i], bg);
     }
     screenChars->length = asciiData->length;
+    screenChars->rendition = rendition;
+    screenChars->protectedMode = protectedMode;
     asciiData->screenChars = screenChars;
 }
 
@@ -83,8 +105,10 @@ void iTermAsciiDataSet(AsciiData *asciiData, const char *bytes, int length, Scre
         CTVectorDestroy(&_crlfs);
     }
     [_subtokens release];
+    [_asyncStringConversion release];
 
     iTermAsciiDataFree(&_asciiData);
+    iTermPreconvertedStringDataFree(&_preconvertedStringData);
 
     [super dealloc];
 }
@@ -376,11 +400,27 @@ void iTermAsciiDataSet(AsciiData *asciiData, const char *bytes, int length, Scre
 }
 
 - (void)setAsciiBytes:(char *)bytes length:(int)length {
-    iTermAsciiDataSet(&_asciiData, bytes, length, &_screenChars);
+    VT100GraphicRendition defaultRendition;
+    VT100GraphicRenditionInitialize(&defaultRendition);
+    iTermAsciiDataSet(&_asciiData, bytes, length, &_screenChars, defaultRendition, NO);
+}
+
+- (void)setAsciiBytes:(char *)bytes
+               length:(int)length
+            rendition:(VT100GraphicRendition)rendition
+        protectedMode:(BOOL)protectedMode {
+    iTermAsciiDataSet(&_asciiData, bytes, length, &_screenChars, rendition, protectedMode);
 }
 
 - (AsciiData *)asciiData {
     return &_asciiData;
+}
+
+- (PreconvertedStringData *)preconvertedStringData {
+    if (_asyncStringConversion) {
+        return [_asyncStringConversion resolve];
+    }
+    return &_preconvertedStringData;
 }
 
 - (NSString *)stringForAsciiData {
@@ -463,6 +503,76 @@ void iTermAsciiDataSet(AsciiData *asciiData, const char *bytes, int length, Scre
 
 - (void)appendCRLF:(int)value {
     CTVectorAppend(&_crlfs, value);
+}
+
+@end
+
+@implementation iTermStringPreconverter
+
++ (void)preconvert:(PreconvertedStringData *)pre
+            string:(id)stringObj
+                fg:(screen_char_t)fg
+                bg:(screen_char_t)bg
+            config:(VT100StringConversionConfig)config {
+    NSString *string = stringObj;
+    // Augment with a space so that a combining mark at the start of the string has a base
+    // character to attach to. On the mutation thread, the predecessor fixup in
+    // appendStringAtCursor:preconvertedData: re-converts just (predecessor + firstChar) to
+    // handle the case where the actual predecessor differs from the space.
+    //
+    // I verified that space augmentation produces identical output to predecessor augmentation
+    // for all characters after the augmented prefix. StringToScreenChars uses
+    // enumerateComposedCharacters: to group characters, which calls
+    // CFStringGetRangeOfComposedCharactersAtIndex and iTermFindFirstCodePointWithOwnCell —
+    // neither of which depends on what the base character is. An exhaustive test over every
+    // non-base character in the BMP (U+0300..U+FFFE from CharacterSet.nonBaseCharacters)
+    // confirmed that the tail of the buffer is byte-identical regardless of whether the
+    // prefix is a space or a real predecessor character.
+    //
+    // Hangul Jamo composition (e.g., L+V → syllable) was also investigated: it only happens
+    // during NFC normalization, which is applied to the string BEFORE the prefix is prepended.
+    // StringToScreenChars does not re-normalize, so composition across the prefix boundary
+    // cannot occur in either the space-augmented or predecessor-augmented path.
+    NSString *normalized = [string normalized:config.normalization];
+    NSString *augmented = [@" " stringByAppendingString:normalized];
+    const int capacity = (int)(augmented.length * 3);
+
+    if (capacity <= kStaticPreconvertedScreenCharsCount) {
+        pre->buffer = pre->staticBuffer;
+        memset(pre->buffer, 0, capacity * sizeof(screen_char_t));
+    } else {
+        pre->buffer = (screen_char_t *)iTermCalloc(capacity, sizeof(screen_char_t));
+    }
+
+    int len = capacity;
+    BOOL dwc = NO;
+    BOOL rtlFound = NO;
+    StringToScreenChars(augmented, pre->buffer, fg, bg, &len,
+                        config.ambiguousIsDoubleWidth, NULL, &dwc,
+                        config.normalization, config.unicodeVersion,
+                        config.softAlternateScreenMode, &rtlFound);
+
+    pre->length = len;
+    pre->foundDwc = dwc;
+    pre->rtlFound = rtlFound;
+    pre->config = config;
+    pre->valid = YES;
+}
+
++ (void)preconvert:(PreconvertedStringData *)pre
+            string:(id)stringObj
+         rendition:(VT100GraphicRendition)rendition
+     protectedMode:(BOOL)protectedMode
+            config:(VT100StringConversionConfig)config {
+    screen_char_t fg = { 0 };
+    screen_char_t bg = { 0 };
+    VT100GraphicRenditionUpdateForeground(&rendition, YES, protectedMode, &fg);
+    VT100GraphicRenditionUpdateBackground(&rendition, YES, &bg);
+
+    [self preconvert:pre string:stringObj fg:fg bg:bg config:config];
+
+    pre->rendition = rendition;
+    pre->protectedMode = protectedMode;
 }
 
 @end

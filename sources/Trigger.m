@@ -292,7 +292,9 @@ NSString * const kTriggerEventParamsKey = @"eventParams";
              lineNumber:(long long)lineNumber
        useInterpolation:(BOOL)useInterpolation {
     __block BOOL stopFutureTriggersFromRunningOnThisLine = NO;
-    NSString *s = stringLine.stringValue;
+    // Grid cells skipped by cursor movement (e.g., CUF) have code=0, which
+    // becomes U+0000 in the string. Treat as spaces for trigger matching.
+    NSString *s = [stringLine.stringValue stringByReplacingOccurrencesOfString:@"\0" withString:@" "];
     DLog(@"Search for regex %@ in string %@", regex_, s);
     if (![iTermAdvancedSettingsModel fastTriggerRegexes]) {
         DLog(@"Use RegexKitLite");

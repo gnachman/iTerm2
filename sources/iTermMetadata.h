@@ -38,8 +38,8 @@ typedef struct {
 NS_INLINE iTermImmutableMetadata iTermMetadataMakeImmutable(iTermMetadata obj) {
     iTermImmutableMetadata result = {
         .timestamp = obj.timestamp,
-        .rtlFound = obj.rtlFound,
-        .externalAttributes = obj.externalAttributes
+        .externalAttributes = obj.externalAttributes,
+        .rtlFound = obj.rtlFound
     };
     return result;
 }

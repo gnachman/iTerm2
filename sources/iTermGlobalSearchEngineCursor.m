@@ -12,7 +12,22 @@
 #import "SessionView.h"
 #import "VT100Screen.h"
 #import "VT100Screen+Search.h"
+#import "iTermGlobalSearchResult.h"
 #import "iTerm2SharedARC-Swift.h"
+
+static NSDictionary *iTermGlobalSearchSnippetMatchAttributes(void) {
+    return @{
+        NSUnderlineStyleAttributeName: @(NSUnderlineStyleSingle),
+        NSBackgroundColorAttributeName: [NSColor colorWithRed:1 green:1 blue:0 alpha:0.35],
+        NSFontAttributeName: [NSFont systemFontOfSize:[NSFont systemFontSize]]
+    };
+}
+
+static NSDictionary *iTermGlobalSearchSnippetRegularAttributes(void) {
+    return @{
+        NSFontAttributeName: [NSFont systemFontOfSize:[NSFont systemFontSize]]
+    };
+}
 
 @interface iTermGlobalSearchEngineCursor()<iTermSearchEngineDelegate>
 @end
@@ -184,6 +199,14 @@ typedef struct iTermGlobalSearchEngineCursorSearchOutput {
         } else {
             result.snippet = [self snippetFromExtractor:extractor
                                                  result:anObject];
+            result.resilientStart =
+                [[iTermResilientCoordinate alloc] initWithDataSource:self.session
+                                                        absCoord:VT100GridAbsCoordMake(anObject.internalStartX,
+                                                                                        anObject.internalAbsStartY)];
+            result.resilientEnd =
+                [[iTermResilientCoordinate alloc] initWithDataSource:self.session
+                                                        absCoord:VT100GridAbsCoordMake(anObject.internalEndX,
+                                                                                        anObject.internalAbsEndY)];
         }
         if (self.pass == iTermGlobalSearchEngineCursorPassMainScreen) {
             result.onMainScreen = YES;
@@ -200,17 +223,11 @@ typedef struct iTermGlobalSearchEngineCursorSearchOutput {
 }
 
 - (NSDictionary *)matchAttributes {
-    return @{
-        NSUnderlineStyleAttributeName: @(NSUnderlineStyleSingle),
-        NSBackgroundColorAttributeName: [NSColor colorWithRed:1 green:1 blue:0 alpha:0.35],
-        NSFontAttributeName: [NSFont systemFontOfSize:[NSFont systemFontSize]]
-    };
+    return iTermGlobalSearchSnippetMatchAttributes();
 }
 
 - (NSDictionary *)regularAttributes {
-    return @{
-        NSFontAttributeName: [NSFont systemFontOfSize:[NSFont systemFontSize]]
-    };
+    return iTermGlobalSearchSnippetRegularAttributes();
 }
 
 - (NSAttributedString *)snippetFromExtractor:(iTermTextExtractor *)extractor result:(SearchResult *)result {
@@ -239,6 +256,156 @@ typedef struct iTermGlobalSearchEngineCursorSearchOutput {
         self.willPause(self);
     }
 }
+@end
+
+@implementation iTermGlobalSearchEngineFoldCursor {
+    iTermFoldSearchEngine *_engine;
+    NSMutableArray<id<iTermGlobalSearchResultProtocol>> *_pendingResults;
+    BOOL _searchComplete;
+    long long _totalFoldLines;
+}
+
+- (instancetype)initWithQuery:(NSString *)query
+                         mode:(iTermFindMode)mode
+                      session:(PTYSession *)session {
+    self = [super init];
+    if (self) {
+        self.query = query;
+        self.mode = mode;
+        self.session = session;
+        _pendingResults = [NSMutableArray array];
+        _engine = [[iTermFoldSearchEngine alloc] init];
+
+        VT100Screen *screen = session.screen;
+        const int width = screen.width;
+        const int totalLines = screen.numberOfLines;
+        VT100GridRange range = VT100GridRangeMake(0, totalLines);
+        NSArray<id<iTermFoldMarkReading>> *foldMarks = [screen foldMarksInRange:range];
+        if (foldMarks.count == 0) {
+            _searchComplete = YES;
+            return self;
+        }
+
+        NSMutableArray<id<iTermFoldMarkReading>> *marks = [NSMutableArray array];
+        NSMutableArray<NSNumber *> *absLines = [NSMutableArray array];
+        for (id<iTermFoldMarkReading> mark in foldMarks) {
+            Interval *interval = mark.entry.interval;
+            if (!interval) {
+                continue;
+            }
+            VT100GridAbsCoordRange absRange = [screen absCoordRangeForInterval:interval];
+            [marks addObject:mark];
+            [absLines addObject:@(absRange.start.y)];
+            _totalFoldLines += mark.savedLines.count;
+        }
+
+        if (marks.count == 0) {
+            _searchComplete = YES;
+            return self;
+        }
+
+        NSDictionary *matchAttributes = iTermGlobalSearchSnippetMatchAttributes();
+        NSDictionary *regularAttributes = iTermGlobalSearchSnippetRegularAttributes();
+
+        __weak __typeof(self) weakSelf = self;
+
+        [_engine searchForQuery:query
+                           mode:mode
+                      foldMarks:marks
+                       absLines:absLines
+                          width:width
+                        results:^(NSArray<iTermExternalSearchResult *> *results) {
+            __typeof(self) strongSelf = weakSelf;
+            if (!strongSelf || results.count == 0) {
+                return;
+            }
+            NSAttributedString *groupSnippet =
+                [[NSAttributedString alloc] initWithString:[NSString stringWithFormat:@"Folded region (%lu matches)", (unsigned long)results.count]
+                                                attributes:regularAttributes];
+            iTermGlobalSearchFoldGroup *group =
+                [[iTermGlobalSearchFoldGroup alloc] initWithSession:strongSelf.session
+                                                             snippet:groupSnippet];
+            for (iTermExternalSearchResult *externalResult in results) {
+                iTermFoldSearchResult *foldResult = (iTermFoldSearchResult *)externalResult;
+                iTermGlobalFoldSearchResult *globalResult = [[iTermGlobalFoldSearchResult alloc] init];
+                globalResult.session = strongSelf.session;
+                globalResult.foldResult = foldResult;
+                globalResult.snippet = [strongSelf snippetFromFoldResult:foldResult
+                                                         matchAttributes:matchAttributes
+                                                       regularAttributes:regularAttributes];
+
+                // Create resilient coordinates anchored to the fold mark.
+                iTermFoldMark *foldMark = (iTermFoldMark *)foldResult.foldMark;
+                if (foldMark) {
+                    globalResult.resilientStart =
+                        [[iTermResilientCoordinate alloc] initWithDataSource:strongSelf.session
+                                                           enclosingFold:foldMark
+                                                                   coord:VT100GridCoordMake(foldResult.startX,
+                                                                                            foldResult.startY)];
+                    globalResult.resilientEnd =
+                        [[iTermResilientCoordinate alloc] initWithDataSource:strongSelf.session
+                                                           enclosingFold:foldMark
+                                                                   coord:VT100GridCoordMake(foldResult.endX,
+                                                                                            foldResult.endY)];
+                }
+
+                [group addResult:globalResult];
+            }
+            [strongSelf->_pendingResults addObject:group];
+        }
+                       finished:^{
+            __typeof(self) strongSelf = weakSelf;
+            if (strongSelf) {
+                strongSelf->_searchComplete = YES;
+            }
+        }];
+    }
+    return self;
+}
+
+- (NSAttributedString *)snippetFromFoldResult:(iTermFoldSearchResult *)foldResult
+                              matchAttributes:(NSDictionary *)matchAttributes
+                            regularAttributes:(NSDictionary *)regularAttributes {
+    NSString *text = foldResult.snippetText;
+    if (text.length == 0) {
+        return [[NSAttributedString alloc] initWithString:@"" attributes:regularAttributes];
+    }
+    NSMutableAttributedString *result = [[NSMutableAttributedString alloc] initWithString:text
+                                                                              attributes:regularAttributes];
+    NSRange matchRange = foldResult.snippetMatchRange;
+    if (matchRange.location + matchRange.length <= result.length) {
+        [result addAttributes:matchAttributes range:matchRange];
+    }
+    return result;
+}
+
+- (long long)expectedLines {
+    return _totalFoldLines;
+}
+
+- (void)drainFully:(void (^ NS_NOESCAPE)(NSArray<id<iTermGlobalSearchResultProtocol>> *, NSUInteger))handler {
+    if (_pendingResults.count > 0) {
+        NSArray *results = [_pendingResults copy];
+        [_pendingResults removeAllObjects];
+        handler(results, _totalFoldLines);
+    }
+}
+
+- (BOOL)consumeAvailable:(void (^ NS_NOESCAPE)(NSArray<id<iTermGlobalSearchResultProtocol>> *, NSUInteger))handler {
+    NSArray *results = [_pendingResults copy];
+    [_pendingResults removeAllObjects];
+    handler(results, _searchComplete ? _totalFoldLines : 0);
+    return !_searchComplete;
+}
+
+- (id<iTermGlobalSearchEngineCursorProtocol>)instanceForNextPass {
+    return nil;
+}
+
+- (long long)approximateLinesSearched {
+    return _searchComplete ? _totalFoldLines : 0;
+}
+
 @end
 
 @implementation iTermGlobalSearchEngineBrowserCursor {
@@ -301,17 +468,11 @@ typedef struct iTermGlobalSearchEngineCursorSearchOutput {
 }
 
 - (NSDictionary *)matchAttributes {
-    return @{
-        NSUnderlineStyleAttributeName: @(NSUnderlineStyleSingle),
-        NSBackgroundColorAttributeName: [NSColor colorWithRed:1 green:1 blue:0 alpha:0.35],
-        NSFontAttributeName: [NSFont systemFontOfSize:[NSFont systemFontSize]]
-    };
+    return iTermGlobalSearchSnippetMatchAttributes();
 }
 
 - (NSDictionary *)regularAttributes {
-    return @{
-        NSFontAttributeName: [NSFont systemFontOfSize:[NSFont systemFontSize]]
-    };
+    return iTermGlobalSearchSnippetRegularAttributes();
 }
 
 

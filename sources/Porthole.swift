@@ -13,11 +13,26 @@ protocol PortholeMarkReading: iTermMarkProtocol {
 }
 
 @objc
-class PortholeMark: iTermMark, PortholeMarkReading {
+class PortholeMark: iTermMark, PortholeMarkReading, iTermWidthSavingMark {
     private static let mutex = Mutex()
     let uniqueIdentifier: String
-
+    private var _savedWidth: Int32?
+    @objc var savedWidth: Int32 {
+        if let _savedWidth {
+            return _savedWidth
+        }
+        if let savedLines, let width = savedLines.lazy.map({ $0.length }).max() {
+            _savedWidth = width
+            return width
+        }
+        _savedWidth = 1
+        return 1
+    }
+    var savedLines: [ScreenCharArray]? {
+        return PortholeRegistry.instance[uniqueIdentifier]?.savedLines
+    }
     private let uniqueIdentifierKey = "PortholeUniqueIdentifier"
+    private let savedWidthKey = "PortholeSavedWidth"
 
     override var shortDebugDescription: String {
         return "[Porthole]"
@@ -28,9 +43,9 @@ class PortholeMark: iTermMark, PortholeMarkReading {
     }
 
     @objc
-    init(_ uniqueIdentifier: String) {
+    init(_ uniqueIdentifier: String, width: Int32) {
         self.uniqueIdentifier = uniqueIdentifier
-
+        _savedWidth = width
         super.init()
 
         PortholeRegistry.instance.set(uniqueIdentifier, mark: doppelganger() as! PortholeMarkReading)
@@ -41,6 +56,7 @@ class PortholeMark: iTermMark, PortholeMarkReading {
             return nil
         }
         self.uniqueIdentifier = uniqueIdentifier
+        _savedWidth = (dict[savedWidthKey] as? NSNumber)?.int32Value
 
         super.init(dictionary: dict)
     }
@@ -54,6 +70,7 @@ class PortholeMark: iTermMark, PortholeMarkReading {
     override func dictionaryValue() -> [AnyHashable : Any] {
         var dict = super.dictionaryValue()
         dict[uniqueIdentifierKey] = uniqueIdentifier
+        dict[savedWidthKey] = NSNumber(value: savedWidth)
         return dict
     }
 }

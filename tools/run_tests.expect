@@ -6,7 +6,10 @@ if {$argc < 1} {
     exit 1
 }
 
-set test_name [lindex $argv 0]
+set only_testing_flags {}
+foreach test_name $argv {
+    lappend only_testing_flags -only-testing:$test_name
+}
 set timeout -1
 
 if {[info exists env(SIGNED)] && $env(SIGNED) eq "1"} {
@@ -15,18 +18,45 @@ if {[info exists env(SIGNED)] && $env(SIGNED) eq "1"} {
     set signing_flags {CODE_SIGN_IDENTITY= CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO}
 }
 
-spawn xcodebuild test -project iTerm2.xcodeproj -scheme ModernTests -only-testing:$test_name -parallel-testing-enabled NO {*}$signing_flags
+proc kill_tree {pid} {
+    catch {
+        set children [exec pgrep -P $pid]
+        foreach child [split $children "\n"] {
+            set child [string trim $child]
+            if {$child ne ""} {
+                kill_tree $child
+            }
+        }
+    }
+    catch {exec kill -9 $pid}
+}
+
+spawn xcodebuild test -project iTerm2.xcodeproj -scheme ModernTests {*}$only_testing_flags -parallel-testing-enabled NO {*}$signing_flags
+set spawned_pid [exp_pid]
+
+proc cleanup_and_exit {code} {
+    global spawned_pid
+    kill_tree $spawned_pid
+    exit $code
+}
+
+trap {
+    send_user "\n\n*** Interrupted, cleaning up ***\n\n"
+    cleanup_and_exit 1
+} {SIGINT SIGTERM}
 
 expect {
     "Program crashed" {
         send_user "\n\n*** Detected interactive debug prompt, killing process ***\n\n"
-        exec kill -9 [exp_pid]
-        exec killall -9 iTerm2
         wait
-        exit 1
+        cleanup_and_exit 1
     }
     eof {
         catch wait result
-        exit [lindex $result 3]
+        set code [lindex $result 3]
+        if {$code != 0} {
+            kill_tree $spawned_pid
+        }
+        exit $code
     }
 }

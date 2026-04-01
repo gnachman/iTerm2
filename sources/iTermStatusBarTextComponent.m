@@ -236,6 +236,10 @@ NS_ASSUME_NONNULL_BEGIN
     return [self backgroundColor];
 }
 
+- (nullable NSString *)statusBarComponentCopyableString {
+    return [self longestStringValue];
+}
+
 - (CGFloat)statusBarComponentVerticalOffset {
     const CGFloat containerHeight = _textField.superview.bounds.size.height;
     const CGFloat capHeight = _textField.font.capHeight;

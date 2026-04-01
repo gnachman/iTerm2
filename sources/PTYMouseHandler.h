@@ -50,7 +50,8 @@ NS_ASSUME_NONNULL_BEGIN
                                     verticalOnly:(out BOOL *)verticalOnly;
 - (void)mouseHandlerOpenTargetWithEvent:(NSEvent *)event
                            inBackground:(BOOL)inBackground
-                                  style:(iTermOpenStyle)style;
+                                  style:(iTermOpenStyle)style
+               smartSelectionActionsOnly:(BOOL)smartSelectionActionsOnly;
 - (BOOL)mouseHandlerIsScrolledToBottom:(PTYMouseHandler *)handler;
 - (VT100GridCoord)mouseHandlerCoordForPointInWindow:(NSPoint)point;
 - (VT100GridCoord)mouseHandlerCoordForPointInView:(NSPoint)point;

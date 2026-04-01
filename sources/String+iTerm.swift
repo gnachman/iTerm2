@@ -334,9 +334,10 @@ extension String {
 
 extension String {
     var mayContainRTL: Bool {
-        let rtlSmellingCodePoints = iTermPreferences.bool(forKey: kPreferenceKeyBidi) ? NSCharacterSet.rtlSmellingCodePoints()! : CharacterSet()
-        let rtlFound = rangeOfCharacter(from: rtlSmellingCodePoints) != nil
-        return rtlFound
+        guard iTermPreferences.bool(forKey: kPreferenceKeyBidi) else {
+            return false
+        }
+        return iTermStringContainsRTL(self as CFString)
     }
 }
 

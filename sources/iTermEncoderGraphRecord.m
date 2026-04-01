@@ -17,6 +17,8 @@
 #import "NSDictionary+iTerm.h"
 #import "NSObject+iTerm.h"
 
+NSString *const iTermEncoderGraphRecordGenerationKeySuffix = @"_Generation";
+
 @implementation iTermEncoderGraphRecord {
     NSMutableDictionary<iTermTuple<NSString *, NSString *> *, iTermEncoderGraphRecord *> *_index;
     NSDictionary<NSString *, id> *_pod;
@@ -347,6 +349,12 @@
                                                     BOOL * _Nonnull stop) {
         if (child.identifier.length == 0) {
             result[child.key] = child.propertyListValue;
+            // Inject generation for migration: older saves may not have persisted the generation
+            // in the POD, but the graph record has it. Consumers can use this as a fallback.
+            if (child.generation != 0) {
+                NSString *genKey = [child.key stringByAppendingString:iTermEncoderGraphRecordGenerationKeySuffix];
+                result[genKey] = @(child.generation);
+            }
             return;
         }
         if ([child.key isEqualToString:@"__array"]) {

@@ -550,6 +550,7 @@ typedef NS_ENUM(int, iTermShouldHaveTitleSeparator) {
     const BOOL disableAutoFrame = [_initialProfile[KEY_DISABLE_AUTO_FRAME] boolValue];
     _windowPositioner = [[iTermWindowInitialPositioner alloc] initWithScreenNumberFromFirstProfile:screenNumber
                                                                                   disableAutoFrame:disableAutoFrame
+                                                                                       profileGUID:profile[KEY_GUID]
                                                                                           delegate:self];
     _titlebarAccessoryNanny = [[iTermTitlebarAccessoryNanny alloc] init];
     _titlebarAccessoryNanny.windowController = self;
@@ -3263,7 +3264,8 @@ ITERM_WEAKLY_REFERENCEABLE
     if ([term loadArrangement:arrangement
                         named:arrangementName
                      sessions:sessions
-           partialAttachments:nil]) {
+           partialAttachments:nil
+         largeContentProvider:nil]) {
         return term;
     } else {
         return term;
@@ -3336,6 +3338,7 @@ ITERM_WEAKLY_REFERENCEABLE
     const BOOL browser = session.isBrowserSession;
     [findDriver closeViewAndDoTemporarySearchForString:regex
                                                   mode:iTermFindModeCaseSensitiveRegex
+                    extendResultsAcrossSoftBoundaries:[iTermAdvancedSettingsModel findURLsRespectsSoftBoundaries]
                                               progress:^(NSRange linesSearched) {
         if (browser) {
             if (linesSearched.location == linesSearched.length) {
@@ -3447,8 +3450,9 @@ ITERM_WEAKLY_REFERENCEABLE
                                  tmuxController:tmuxController];
     [tab setTmuxWindowName:name];
     [tab setReportIdealSizeAsCurrent:YES];
-    DLog(@"loadTmuxLayout invoking fitWindowToTabs.");
-    [self fitWindowToTabs];
+    DLog(@"loadTmuxLayout: window frame before lazyFitWindowToTabs=%@", NSStringFromRect(self.window.frame));
+    [self lazyFitWindowToTabs];
+    DLog(@"loadTmuxLayout: window frame after lazyFitWindowToTabs=%@", NSStringFromRect(self.window.frame));
     [tab setReportIdealSizeAsCurrent:NO];
 
     for (PTYSession *aSession in [tab sessions]) {
@@ -4205,7 +4209,9 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     }
 
     if (shouldClose) {
-        [self killOrHideTmuxWindowForController:nil];
+        if (![self killOrHideTmuxWindowForController:nil]) {
+            shouldClose = NO;
+        }
     }
 
     DLog(@"Return %@", @(shouldClose));
@@ -4213,7 +4219,8 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
 }
 
 // If controller is nil, then do all of them.
-- (void)killOrHideTmuxWindowForController:(TmuxController *)controller {
+// Returns YES if the close should proceed, NO if the user canceled.
+- (BOOL)killOrHideTmuxWindowForController:(TmuxController *)controller {
     int n = 0;
     for (PTYTab *aTab in [self tabs]) {
         if ([aTab isTmuxTab] && !aTab.tmuxController.detached) {
@@ -4260,14 +4267,14 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
                         break;
                     case kiTermWarningSelection3:
                         // Cancel
-                        return;
+                        return NO;
                     case kiTermWarningSelection4:
                     case kiTermWarningSelection5:
                     case kiTermWarningSelection6:
                         ITAssertWithMessage(NO, @"Unexpected selection %@", @(selection));
                         break;
                     case kItermWarningSelectionError:
-                        return;
+                        return NO;
                 }
             }
         }
@@ -4277,6 +4284,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
              [[aSession tmuxController] requestDetach];
          }
     }
+    return YES;
 }
 
 - (void)closeInstantReplayWindow {
@@ -5058,11 +5066,13 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     if (@available(macOS 26, *)) {
         stoplightButtonsWidth += 3;
     }
+    const CGFloat proxyIconWidth = [_contentView compactProxyIconWidthIncludingMargin];
     switch ([iTermPreferences intForKey:kPreferenceKeyTabPosition]) {
         case PSMTab_TopTab: {
             const CGFloat extraSpace = MAX(0, [iTermAdvancedSettingsModel extraSpaceBeforeCompactTopTabBar]);
             if ([self rootTerminalViewWindowNumberLabelShouldBeVisible]) {
                 const CGFloat leftInset = (stoplightButtonsWidth +
+                                           proxyIconWidth +
                                            iTermRootTerminalViewWindowNumberLabelMargin * 2 +
                                            iTermRootTerminalViewWindowNumberLabelWidth +
                                            extraSpace);
@@ -5072,7 +5082,8 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
                                         0);
             } else {
                 // Make room for stoplight buttons when there is no tab title.
-                return NSEdgeInsetsMake(0, stoplightButtonsWidth + extraSpace, 0, 0);
+                const CGFloat proxyIconExtraPadding = proxyIconWidth > 0 ? 4 : 0;
+                return NSEdgeInsetsMake(0, stoplightButtonsWidth + proxyIconWidth + proxyIconExtraPadding + extraSpace, 0, 0);
             }
         }
         case PSMTab_LeftTab:
@@ -5422,7 +5433,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
 
     return [[settings.allKeys mapWithBlock:^id _Nullable(NSString * _Nonnull key) {
         return [NSString stringWithFormat:@"%@=%@", key, settings[key]];
-    }] componentsJoinedByString:@";"];
+    }] componentsJoinedByString:@"&"];
 }
 
 - (void)setTmuxPerWindowSetting:(NSString *)setting 
@@ -6810,6 +6821,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
 - (void)updateProxyIcon {
     if (![self proxyIconIsAllowed]) {
         self.window.representedURL = nil;
+        [_contentView updateProxyIcon];
         return;
     }
     if (self.currentSession.preferredProxyIcon) {
@@ -7208,8 +7220,15 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
             if (_windowNeedsInitialSize) {
                 DLog(@"Perform initial fitWindowToTabs");
             }
-            [self fitWindowToTabs];
+            DLog(@"tabViewDidChangeNumberOfTabViewItems: tmuxOriginatedResizeInProgress=%d window frame before=%@",
+                 tmuxOriginatedResizeInProgress_, NSStringFromRect(self.window.frame));
+            if (tmuxOriginatedResizeInProgress_) {
+                [self lazyFitWindowToTabs];
+            } else {
+                [self fitWindowToTabs];
+            }
             const NSRect frameAfter = self.window.frame;
+            DLog(@"tabViewDidChangeNumberOfTabViewItems: window frame after=%@", NSStringFromRect(frameAfter));
             if (NSEqualRects(frameBefore, frameAfter) && neededInitialSize) {
                 // If the initial window frame happened to exactly equal the fitWindowToTabs size
                 // the session will remain at its initial size specified by its profile. It's
@@ -9694,25 +9713,53 @@ typedef struct {
 
 // This is like fitWindowToTabSize but it avoids shrinking the window by less than one cell.
 - (void)lazyFitWindowToTabSize:(NSSize)tabSize cellSize:(NSSize)cellSize {
+    DLog(@"lazyFitWindowToTabSize:%@ cellSize:%@ window frame:%@ from\n%@",
+         NSStringFromSize(tabSize), NSStringFromSize(cellSize),
+         NSStringFromRect(self.window.frame), [NSThread callStackSymbols]);
     PseudoTerminalWindowFrameInfo frameInfo = [self windowFrameForTabSize:tabSize
                                                           preferredHeight:nil];
     if (!frameInfo.ok) {
+        DLog(@"lazyFitWindowToTabSize: frameInfo not ok, bailing");
         return;
     }
     const NSSize currentSize = self.window.frame.size;
-    const NSSize delta = NSMakeSize(frameInfo.frame.size.width - currentSize.width,
-                                    frameInfo.frame.size.height - currentSize.height);
-    BOOL shouldResize = NO;
-    if (delta.width > 0 || delta.height > 0) {
-        // Growing is always allowed
-        shouldResize = YES;
-        // Shrinking by more than once cell is always allowed
-    } else if (-delta.width > cellSize.width || -delta.height > cellSize.height) {
-        shouldResize = YES;
-    }
-    if (shouldResize) {
+    const CGFloat dw = frameInfo.frame.size.width - currentSize.width;
+    const CGFloat dh = frameInfo.frame.size.height - currentSize.height;
+    // Allow the resize if any dimension is growing or shrinking by more than one cell.
+    // Block the resize only when every dimension's change is a sub-cell shrink (or zero).
+    const BOOL widthNeedsResize = (dw > 0 || -dw > cellSize.width);
+    const BOOL heightNeedsResize = (dh > 0 || -dh > cellSize.height);
+    DLog(@"lazyFitWindowToTabSize: proposed frame=%@ dw=%f dh=%f cellSize=%@ widthNeedsResize=%@ heightNeedsResize=%@ -> %@",
+         NSStringFromRect(frameInfo.frame), dw, dh, NSStringFromSize(cellSize),
+         @(widthNeedsResize), @(heightNeedsResize),
+         (widthNeedsResize || heightNeedsResize) ? @"RESIZE" : @"SKIP");
+    if (widthNeedsResize || heightNeedsResize) {
         [self fitWindowToTabSize:tabSize preferredHeight:nil];
     }
+}
+
+// Like fitWindowToTabs but avoids shrinking the window by less than one cell for tmux tabs.
+- (void)lazyFitWindowToTabs {
+    DLog(@"lazyFitWindowToTabs from\n%@", [NSThread callStackSymbols]);
+    NSSize cellSize = NSZeroSize;
+    for (PTYTab *tab in self.tabs) {
+        if (tab.isTmuxTab) {
+            cellSize = [PTYTab cellSizeForBookmark:[tab.tmuxController profileForWindow:tab.tmuxWindow]];
+            break;
+        }
+    }
+    if (NSEqualSizes(cellSize, NSZeroSize)) {
+        DLog(@"lazyFitWindowToTabs: no tmux tabs, falling back to fitWindowToTabs");
+        [self fitWindowToTabs];
+        return;
+    }
+    NSSize maxTabSize = [self sizeOfLargestTabWithExclusion:PseudoTerminalTabSizeExclusionNone];
+    DLog(@"lazyFitWindowToTabs: cellSize=%@ maxTabSize=%@", NSStringFromSize(cellSize), NSStringFromSize(maxTabSize));
+    if (NSEqualSizes(NSZeroSize, maxTabSize)) {
+        DLog(@"lazyFitWindowToTabs: max tab size is zero, bailing");
+        return;
+    }
+    [self lazyFitWindowToTabSize:maxTabSize cellSize:cellSize];
 }
 
 - (NSRect)frameFittingWindowToTabSize:(NSSize)tabSize preferredHeight:(NSNumber *)preferredHeight {
@@ -10169,6 +10216,7 @@ typedef struct {
     } else {
         [self setWindowTitle];
     }
+    [self repositionWidgets];
 }
 
 static BOOL iTermApproximatelyEqualRects(NSRect lhs, NSRect rhs, double epsilon) {
@@ -10521,6 +10569,7 @@ static BOOL iTermApproximatelyEqualRects(NSRect lhs, NSRect rhs, double epsilon)
     const BOOL hideProxy = ([self proxyIconIsAllowed] &&
                             ![self proxyIconShouldBeVisible]);
     [[self.window standardWindowButton:NSWindowDocumentIconButton] setHidden:hideProxy];
+    [_contentView updateProxyIcon];
 }
 
 - (BOOL)rootTerminalViewShouldDrawStoplightButtons {
@@ -11354,11 +11403,15 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
 - (IBAction)clearToStartOfSelection:(id)sender {
     const long long line = self.currentSession.textview.selection.firstAbsRange.coordRange.start.y;
     [self.currentSession resetMode];
-    [self.currentSession.screen performBlockWithJoinedThreads:^(VT100Terminal *terminal,
-                                                                VT100ScreenMutableState *mutableState,
-                                                                id<VT100ScreenDelegate> delegate) {
-        [mutableState clearFromAbsoluteLineToEnd:line];
-    }];
+    @autoreleasepool {
+        [self.currentSession.screen performBlockWithJoinedThreads:^(VT100Terminal *terminal,
+                                                                    VT100ScreenMutableState *mutableState,
+                                                                    id<VT100ScreenDelegate> delegate) {
+            @autoreleasepool {
+                [mutableState clearFromAbsoluteLineToEnd:line];
+            }
+        }];
+    }
 }
 
 - (IBAction)clearInstantReplay:(id)sender {

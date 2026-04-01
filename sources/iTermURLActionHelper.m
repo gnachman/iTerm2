@@ -111,7 +111,8 @@
 
 - (void)openTargetWithEvent:(NSEvent *)event
                inBackground:(BOOL)openInBackground
-                      style:(iTermOpenStyle)style {
+                      style:(iTermOpenStyle)style
+   smartSelectionActionsOnly:(BOOL)smartSelectionActionsOnly {
     // Command click in place.
     const VT100GridCoord coord = [self.delegate urlActionHelper:self coordForEvent:event allowRightMarginOverflow:NO];
     __weak __typeof(self) weakSelf = self;
@@ -128,7 +129,8 @@
                                                       inBackground:openInBackground
                                                              style:style
                                                             action:action
-                                                        generation:generation];
+                                                        generation:generation
+                                            smartSelectionActionsOnly:smartSelectionActionsOnly];
                         }];
 }
 
@@ -317,7 +319,8 @@ workingDirectory:(NSString *)workingDirectory
                         inBackground:(BOOL)openInBackground
                                style:(iTermOpenStyle)style
                               action:(URLAction *)action
-                          generation:(NSInteger)generation {
+                          generation:(NSInteger)generation
+                smartSelectionActionsOnly:(BOOL)smartSelectionActionsOnly {
     if (generation != _openTargetGeneration) {
         DLog(@"Canceled open target for generation %@", @(generation));
         return;
@@ -329,6 +332,10 @@ workingDirectory:(NSString *)workingDirectory
     }
 
     DLog(@"openTargetWithEvent generation %@ has action=%@", @(generation), action);
+    if (smartSelectionActionsOnly && action.actionType != kURLActionSmartSelectionAction) {
+        DLog(@"Ignoring non-smart-selection action %@ because only smart selection actions are allowed", action);
+        return;
+    }
     if (action) {
         switch (action.actionType) {
             case kURLActionOpenExistingFile: {

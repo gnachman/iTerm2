@@ -190,7 +190,7 @@ extern NSString *const kScreenStateProgressKey;
 @property (nonatomic, readonly) screen_char_t terminalForegroundColorCode;
 @property (nonatomic, readonly) screen_char_t terminalBackgroundColorCode;
 @property (nonatomic, readonly) NSDictionary *terminalState;
-@property (nonatomic, copy, readonly) id<VT100ScreenConfiguration> config;
+@property (nullable, nonatomic, copy, readonly) id<VT100ScreenConfiguration> config;
 @property (nullable, nonatomic, strong, readonly) NSArray<iTermTuple<NSString *, NSString *> *> *exfiltratedEnvironment;
 @property (nonatomic, readonly) NSDictionary *promptStateDictionary;
 @property (nonatomic, readonly) iTermMutableArrayOfWeakObjects *namedMarks;

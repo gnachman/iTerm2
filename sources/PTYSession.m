@@ -219,6 +219,7 @@ NSString *const PTYSessionDidResizeNotification = @"PTYSessionDidResizeNotificat
 NSString *const PTYSessionDidDealloc = @"PTYSessionDidDealloc";
 NSNotificationName const PTYCommandDidExitNotification = @"PTYCommandDidExitNotification";
 
+
 NSString *const PTYCommandDidExitUserInfoKeyCommand = @"Command";
 NSString *const PTYCommandDidExitUserInfoKeyExitCode = @"Code";
 NSString *const PTYCommandDidExitUserInfoKeyRemoteHost = @"Host";
@@ -984,7 +985,9 @@ ITERM_WEAKLY_REFERENCEABLE
     [NSApp removeObserver:self forKeyPath:@"effectiveAppearance"];
     NSString *guid = [_guid copy];
     dispatch_async(dispatch_get_main_queue(), ^{
-        [[NSNotificationCenter defaultCenter] postNotificationName:PTYSessionDidDealloc object:[guid autorelease]];
+        [[NSNotificationCenter defaultCenter] postNotificationName:PTYSessionDidDealloc object:guid];
+        [iTermRCDataSourceDeallocNotification postWithGuid:guid];
+        [guid release];
     });
     if (_textview.delegate == self) {
         _textview.delegate = nil;
@@ -7616,9 +7619,10 @@ DLog(args); \
               mode:(iTermFindMode)mode
         withOffset:(int)offset
 scrollToFirstResult:(BOOL)scrollToFirstResult
-             force:(BOOL)force {
+             force:(BOOL)force
+extendResultsAcrossSoftBoundaries:(BOOL)extendResultsAcrossSoftBoundaries {
     DLog(@"self=%@ aString=%@", self, aString);
-    
+
     // Check if we're in browser mode
     if ([_view isBrowser]) {
         [self browserFindString:aString
@@ -7629,13 +7633,14 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
                           force:force];
         return;
     }
-    
+
     [_textview findString:aString
          forwardDirection:direction
                      mode:mode
                withOffset:offset
       scrollToFirstResult:scrollToFirstResult
-                    force:force];
+                    force:force
+  extendResultsAcrossSoftBoundaries:extendResultsAcrossSoftBoundaries];
 }
 
 - (NSString *)unpaddedSelectedText {
@@ -7932,7 +7937,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
                                         8,
                                         1 * 4,
                                         [self metalColorSpace],
-                                        kCGImageAlphaPremultipliedFirst | kCGBitmapByteOrder32Host);
+                                        CGBitmapInfoMake(kCGImageAlphaPremultipliedFirst, kCGImageComponentInteger, kCGImageByteOrder32Host, kCGImagePixelFormatPacked));
     }
     return context;
 }
@@ -7965,7 +7970,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
                                           8,
                                           scaledSize.width * 4,  // bytes per row
                                           [PTYSession metalColorSpace],
-                                          kCGImageAlphaPremultipliedFirst | kCGBitmapByteOrder32Host);
+                                          CGBitmapInfoMake(kCGImageAlphaPremultipliedFirst, kCGImageComponentInteger, kCGImageByteOrder32Host, kCGImagePixelFormatPacked));
     // Initialize to transparent. Character sources will clear only the
     // area they draw into after copying pixels, keeping the context clean.
     CGContextClearRect(_metalContext, CGRectMake(0, 0, scaledSize.width, scaledSize.height));
@@ -10713,6 +10718,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
             [_view createFindDriverIfNeeded];
             [_view.findDriver closeViewAndDoTemporarySearchForString:action.parameter
                                                                 mode:iTermFindModeCaseSensitiveRegex
+                                   extendResultsAcrossSoftBoundaries:NO
                                                             progress:nil];
             break;
         }
@@ -13274,7 +13280,8 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     }];
 }
 
-- (void)textViewShowFindIndicator:(VT100GridCoordRange)range {
+- (void)textViewShowFindIndicator:(VT100GridWindowedRange)windowedRange {
+    VT100GridCoordRange range = windowedRange.coordRange;
     DLog(@"begin %@", VT100GridCoordRangeDescription(range));
     VT100GridCoordRange visibleRange = range;
     VT100GridRange visibleLines = _textview.rangeOfVisibleLines;
@@ -13293,8 +13300,9 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     int minX = visibleRange.start.x;
     int maxX = visibleRange.end.x;
     if (visibleRange.start.y != visibleRange.end.y) {
-        minX = 0;
-        maxX = _screen.width;
+        const BOOL hasWindow = windowedRange.columnWindow.length > 0;
+        minX = hasWindow ? windowedRange.columnWindow.location : 0;
+        maxX = hasWindow ? (windowedRange.columnWindow.location + windowedRange.columnWindow.length) : _screen.width;
     }
     const int hmargin = [iTermPreferences intForKey:kPreferenceKeySideMargins];
     const int vmargin = [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins];
@@ -14466,6 +14474,19 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 
 - (void)screenRemoveSelection {
     [_textview deselect];
+}
+
+- (void)screenDidClearFromAbsoluteLineToEnd:(long long)absY {
+    // Copy block to the heap. PTYSession.m is MRR, so block literals are stack
+    // blocks. NSDictionary only retains (doesn't copy), which is a no-op for
+    // stack blocks.
+    VT100GridAbsCoordRange (^converter)(id<IntervalTreeImmutableObject>) = [[^VT100GridAbsCoordRange(id<IntervalTreeImmutableObject> obj) {
+        const VT100GridCoordRange range = [self.screen coordRangeForInterval:obj.entry.interval];
+        return VT100GridAbsCoordRangeFromCoordRange(range, self.screen.totalScrollbackOverflow);
+    } copy] autorelease];
+    [iTermRCClearToEndNotification postWithGuid:self.guid
+                                           absY:absY
+                              intervalConverter:converter];
 }
 
 - (void)screenMoveSelectionUpBy:(int)n
@@ -16126,6 +16147,27 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
         return;
     }
     [_screen foldAbsLineRange:range];
+}
+
+- (void)screenDidShiftLinesAtAbsLine:(long long)absLine
+                                  by:(long long)delta
+                                mark:(id<iTermWidthSavingMark>)mark
+                              reason:(iTermLinesShiftedReason)reason
+                       replacedRange:(NSRange)replacedRange
+                           converter:(VT100GridCoord (^)(VT100GridCoord))converter {
+    NSMutableDictionary *userInfo = [@{
+        iTermLinesShiftedNotification.absLineKey: @(absLine),
+        iTermLinesShiftedNotification.deltaKey: @(delta),
+        iTermLinesShiftedNotification.reasonKey: @(reason),
+        iTermLinesShiftedNotification.replacedRangeKey: [NSValue valueWithRange:replacedRange],
+        iTermLinesShiftedNotification.converterKey: [converter copy]
+    } mutableCopy];
+    if (mark) {
+        userInfo[iTermLinesShiftedNotification.markKey] = mark;
+    }
+    [[NSNotificationCenter defaultCenter] postNotificationName:iTermLinesShiftedNotification.name
+                                                        object:self.guid
+                                                      userInfo:userInfo];
 }
 
 - (void)screenStatPath:(NSString *)path
@@ -21514,6 +21556,13 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
         return NO;
     }
     return YES;
+}
+
+- (void)screenResizeResilientCoordinates:(VT100GridAbsCoord(^ _Nonnull)(VT100GridAbsCoord))convert {
+    // Copy the block to the heap. It arrives as a stack block from the ARC caller,
+    // and NSDictionary only retains (doesn't copy), which is a no-op for stack blocks.
+    convert = [[convert copy] autorelease];
+    [iTermRCResizeNotification postWithGuid:self.guid converter:convert];
 }
 
 - (void)screenUpdateBlock:(NSString *)blockID action:(iTermUpdateBlockAction)action {

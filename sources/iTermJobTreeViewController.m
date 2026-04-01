@@ -254,7 +254,7 @@ static int gSignalsToList[] = {
     NSTimer *_timer;
     IBOutlet SignalPicker *signal_;  // TODO - use this
     IBOutlet NSButton *kill_;
-    IBOutlet NSVisualEffectView *_vev;
+    IBOutlet NSView *_vev;
     iTermGraphicSource *_graphicSource;
 }
 
@@ -275,6 +275,14 @@ static int gSignalsToList[] = {
     if (@available(macOS 10.16, *)) {
         kill_.image = [NSImage it_imageForSymbolName:SFSymbolGetString(SFSymbolPlay) accessibilityDescription:@"Clear"];
         _outlineView.style = NSTableViewStyleInset;
+    }
+    _outlineView.backgroundColor = [NSColor clearColor];
+    if (@available(macOS 26, *)) {
+        NSGlassEffectView *glassView = [[NSGlassEffectView alloc] initWithFrame:_vev.frame];
+        glassView.autoresizingMask = _vev.autoresizingMask;
+        NSView *superview = _vev.superview;
+        [superview replaceSubview:_vev with:glassView];
+        _vev = glassView;
     }
     [self updateKillButtonEnabled];
 }
@@ -506,7 +514,8 @@ static int gSignalsToList[] = {
     _outlineView.tableColumns.lastObject.width = pidWidth;
     _outlineView.tableColumns.firstObject.width = totalWidth - pidWidth;
 
-    _outlineView.enclosingScrollView.frame = NSMakeRect(0, NSMaxY(_vev.frame), self.view.frame.size.width, self.view.frame.size.height - NSMaxY(_vev.frame));
+    const CGFloat toolbarHeight = NSMaxY(kill_.frame);
+    _outlineView.enclosingScrollView.frame = NSMakeRect(0, toolbarHeight, self.view.frame.size.width, self.view.frame.size.height - toolbarHeight);
 }
 
 #pragma mark - Actions

@@ -45,6 +45,10 @@ NS_ASSUME_NONNULL_BEGIN
     return @[ self.stringValue ?: @"" ];
 }
 
+- (nullable NSString *)statusBarComponentCopyableString {
+    return nil;
+}
+
 - (BOOL)statusBarComponentHandlesClicks {
     return YES;
 }

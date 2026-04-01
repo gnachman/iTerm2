@@ -111,6 +111,8 @@ NSString *const iTermProcessTypeDidChangeNotification = @"iTermProcessTypeDidCha
     IBOutlet NSTextField *_topBottomMarginsLabel;
     IBOutlet NSTextField *_topBottomMargins;
     IBOutlet NSStepper *_topBottomMarginsStepper;
+
+    IBOutlet NSButton *_hideMenuItemIcons;
 }
 
 - (void)awakeFromNib {
@@ -142,7 +144,6 @@ NSString *const iTermProcessTypeDidChangeNotification = @"iTermProcessTypeDidCha
     info.onChange = ^() {
         [[iTermApplication sharedApplication] updateAppearance];
         [weakSelf postRefreshNotification];
-        [weakSelf updateProxyIconEnabled];
     };
     info.hasDefaultValue = ^BOOL{
         return [weakSelf unsignedIntegerForKey:kPreferenceKeyTabStyle] == TAB_STYLE_AUTOMATIC;
@@ -400,12 +401,13 @@ NSString *const iTermProcessTypeDidChangeNotification = @"iTermProcessTypeDidCha
                           type:kPreferenceInfoTypeCheckbox];
     info.onChange = ^() { [weakSelf postRefreshNotification]; };
 
-    [self updateProxyIconEnabled];
-}
-
-- (void)updateProxyIconEnabled {
-    const iTermPreferencesTabStyle tabStyle = [self intForKey:kPreferenceKeyTabStyle];
-    _enableProxyIcon.enabled = (tabStyle != TAB_STYLE_MINIMAL);
+    info = [self defineControl:_hideMenuItemIcons
+                           key:kPreferenceKeyMenuActionImages
+                   relatedView:nil
+                          type:kPreferenceInfoTypeInvertedCheckbox];
+    if (@available(macOS 26, *)) {} else {
+        _hideMenuItemIcons.enabled = NO;
+    }
 }
 
 - (void)dealloc {

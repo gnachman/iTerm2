@@ -600,11 +600,18 @@ static NSRange iTermMakeRange(NSInteger smallestValueInRange,
 - (BOOL)keyMapperShouldBypassPreCocoaForEvent:(NSEvent *)event {
     const NSEventModifierFlags modifiers = event.it_modifierFlags;
     const BOOL isSpecialKey = !!(modifiers & (NSEventModifierFlagNumericPad | NSEventModifierFlagFunction));
-    if (isSpecialKey && ![iTermAdvancedSettingsModel allowSendingFunctionKeysToCocoa]) {
+    if (isSpecialKey &&
+        (![iTermAdvancedSettingsModel allowSendingFunctionKeysToCocoa] ||
+         (modifiers & NSEventModifierFlagControl) ||
+         (modifiers & NSEventModifierFlagOption))) {
         // Arrow key, function key, etc.
         // When allowSendingFunctionKeysToCocoa is enabled, let these go through
         // Cocoa so keyboard layouts that define function keys as dead/compose
         // keys can work properly. Issue 3578.
+        // Even with allowSendingFunctionKeysToCocoa, bypass Cocoa when ctrl or
+        // option is pressed. Compose/dead keys don't use these modifiers, and
+        // sending modified function keys through Cocoa causes beeps and breaks
+        // third-party shortcut apps like Rectangle. Issue 12787.
         DLog(@"is special key -> bypass pre-cocoa");
         return YES;
     }

@@ -9,6 +9,12 @@ import Foundation
 
 private let UnicodeReplacementString = "\u{fffd}"
 
+private extension NSString {
+    var containsSpacingCombiningMark: Bool {
+        return iTermStringContainsSpacingCombiningMark(self as CFString)
+    }
+}
+
 @objc(iTermComplexCharRegistry)
 class ComplexCharRegistry: NSObject {
     @objc(sharedInstance) static let instance = ComplexCharRegistry()
@@ -283,7 +289,7 @@ private class ComplexCharRegistryImpl: NSObject {
         case .false:
             break
         case .other:
-            if string.rangeOfCharacter(from: NSCharacterSet.spacingCombiningMarks(forUnicodeVersion: 12) as CharacterSet).location != NSNotFound {
+            if string.containsSpacingCombiningMark {
                 spacingCombiningMarkCodeNumbers.insert(number)
             }
         @unknown default:

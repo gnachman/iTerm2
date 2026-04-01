@@ -171,6 +171,9 @@ forInvocation:(NSString *)invocation
 
 @optional
 - (NSFont *)font;
+// Returns a string suitable for copying to the clipboard, or nil if this component
+// does not have meaningful copyable text.
+- (nullable NSString *)statusBarComponentCopyableString;
 
 @end
 NS_ASSUME_NONNULL_END

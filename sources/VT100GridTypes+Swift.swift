@@ -70,6 +70,20 @@ extension VT100GridAbsCoord {
         }
         return VT100GridCoord(x: 0, y: Int32.max - 1)
     }
+
+    static func +(lhs: VT100GridAbsCoord, rhs: VT100GridSize) -> VT100GridAbsCoord {
+        var temp = lhs
+        temp.x += rhs.width
+        temp.y += Int64(rhs.height)
+        return temp
+    }
+
+    static func +(lhs: VT100GridAbsCoord, rhs: VT100GridCoord) -> VT100GridAbsCoord {
+        var temp = lhs
+        temp.x += rhs.x
+        temp.y += Int64(rhs.y)
+        return temp
+    }
 }
 
 extension VT100GridAbsCoordRange {

@@ -38,19 +38,25 @@
         _handler = [handler copy];
         _mode = mode;
         __weak __typeof(self) weakSelf = self;
-        _cursors = [[sessions mapWithBlock:^id(PTYSession *session) {
+        _cursors = [[sessions flatMapWithBlock:^NSArray *(PTYSession *session) {
+            NSMutableArray *cursors = [NSMutableArray array];
             if (session.isBrowserSession) {
                 iTermGlobalSearchEngineBrowserCursor *cursor = [[iTermGlobalSearchEngineBrowserCursor alloc] initWithQuery:query mode:mode session:session];
                 _expectedLines += 1000;
-                return cursor;
+                [cursors addObject:cursor];
             } else {
                 iTermGlobalSearchEngineCursor *cursor = [[iTermGlobalSearchEngineCursor alloc] initWithQuery:query mode:mode session:session];
                 cursor.willPause = ^(iTermGlobalSearchEngineCursor *cursor) {
                     [weakSelf drain:cursor];
                 };
                 _expectedLines += cursor.expectedLines;
-                return cursor;
+                [cursors addObject:cursor];
+
+                iTermGlobalSearchEngineFoldCursor *foldCursor = [[iTermGlobalSearchEngineFoldCursor alloc] initWithQuery:query mode:mode session:session];
+                _expectedLines += foldCursor.expectedLines;
+                [cursors addObject:foldCursor];
             }
+            return cursors;
         }] mutableCopy];
         _timer = [NSTimer scheduledWeakTimerWithTimeInterval:0
                                                       target:self

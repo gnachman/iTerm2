@@ -27,6 +27,11 @@
 
 @property (nonatomic, readonly) VT100GridAbsCoordRange internalAbsCoordRange;
 
+// When nonzero length, indicates this result was extended across a soft boundary
+// (e.g., tmux pane divider) and wrapping occurs within this column range rather
+// than across the full terminal width.
+@property(nonatomic, assign) VT100GridRange logicalWindow;
+
 + (instancetype)searchResultFromX:(int)x y:(long long)y toX:(int)endX y:(long long)endY;
 + (instancetype)searchResultFromExternal:(iTermExternalSearchResult *)externalResult
                                    index:(long long)index;

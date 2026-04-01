@@ -187,6 +187,16 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     }
     result = (id<iTermGlobalSearchResultProtocol>)item;
 
+    // If this is a fold group, just toggle expand — don't reveal/unfold.
+    if ([item isKindOfClass:[iTermGlobalSearchFoldGroup class]]) {
+        if ([_outlineView isItemExpanded:item]) {
+            [_outlineView collapseItem:item];
+        } else {
+            [_outlineView expandItem:item];
+        }
+        return;
+    }
+
     [result.session reveal];
     __weak __typeof(self) weakSelf = self;
     [result revealWithState:_state completion:^(NSRect hull) {
@@ -380,6 +390,51 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         return view;
     }
 
+    iTermGlobalSearchFoldGroup *foldGroup = [iTermGlobalSearchFoldGroup castFrom:item];
+    if (foldGroup) {
+        NSString *identifier = @"GlobalSearchFoldGroupIdentifier";
+        NSTableCellView *view = [outlineView makeViewWithIdentifier:identifier owner:self];
+        if (!view) {
+            view = [[NSTableCellView alloc] init];
+
+            NSImageView *imageView = [NSImageView imageViewWithImage:[NSImage imageWithSystemSymbolName:@"rectangle.compress.vertical"
+                                                                                      accessibilityDescription:@"Folded region"]];
+            imageView.translatesAutoresizingMaskIntoConstraints = NO;
+            imageView.contentTintColor = [NSColor secondaryLabelColor];
+            [imageView setContentHuggingPriority:NSLayoutPriorityRequired forOrientation:NSLayoutConstraintOrientationHorizontal];
+            view.imageView = imageView;
+            [view addSubview:imageView];
+
+            NSTextField *textField = [NSTextField it_textFieldForTableViewWithIdentifier:identifier];
+            textField.translatesAutoresizingMaskIntoConstraints = NO;
+            textField.font = [NSFont systemFontOfSize:[NSFont smallSystemFontSize]];
+            view.textField = textField;
+            [view addSubview:textField];
+
+            NSDictionary *views = @{ @"icon": imageView, @"textField": textField };
+            [view addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"H:|-0-[icon]-4-[textField]-0-|"
+                                                                         options:0
+                                                                         metrics:nil
+                                                                           views:views]];
+            [view addConstraint:[NSLayoutConstraint constraintWithItem:imageView
+                                                             attribute:NSLayoutAttributeCenterY
+                                                             relatedBy:NSLayoutRelationEqual
+                                                                toItem:view
+                                                             attribute:NSLayoutAttributeCenterY
+                                                            multiplier:1
+                                                              constant:0]];
+            [view addConstraint:[NSLayoutConstraint constraintWithItem:textField
+                                                             attribute:NSLayoutAttributeCenterY
+                                                             relatedBy:NSLayoutRelationEqual
+                                                                toItem:view
+                                                             attribute:NSLayoutAttributeCenterY
+                                                            multiplier:1
+                                                              constant:0]];
+        }
+        view.textField.attributedStringValue = foldGroup.snippet;
+        return view;
+    }
+
     ITAssertWithMessage([item conformsToProtocol:@protocol(iTermGlobalSearchResultProtocol)], @"Bad item %@", item);
     id<iTermGlobalSearchResultProtocol> result = item;
 
@@ -439,13 +494,17 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     if ([item isKindOfClass:[NSString class]]) {
         return [_results[item] count];
     }
+    iTermGlobalSearchFoldGroup *group = [iTermGlobalSearchFoldGroup castFrom:item];
+    if (group) {
+        return group.results.count;
+    }
     return 0;
 }
 
 - (NSArray<NSString *> *)sortedNonEmptyResultSessionGUIDs {
     return [self.nonEmptyResults.allKeys sortedArrayUsingSelector:@selector(compare:)];
 }
-// An item is either nil (the root), a string (a session), or a iTermGlobalSearchResult object.
+// An item is either nil (the root), a string (a session), a fold group, or a search result.
 - (id)outlineView:(NSOutlineView *)outlineView child:(NSInteger)index ofItem:(nullable id)item {
     if (item == nil) {
         NSArray<NSString *> *sortedKeys = self.sortedNonEmptyResultSessionGUIDs;
@@ -458,6 +517,10 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         assert(index < results.count);
         return results[index];
     }
+    iTermGlobalSearchFoldGroup *group = [iTermGlobalSearchFoldGroup castFrom:item];
+    if (group) {
+        return group.results[index];
+    }
     assert(false);
     return nil;
 }
@@ -467,6 +530,9 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         return YES;
     }
     if ([item isKindOfClass:[NSString class]]) {
+        return YES;
+    }
+    if ([item isKindOfClass:[iTermGlobalSearchFoldGroup class]]) {
         return YES;
     }
     return NO;

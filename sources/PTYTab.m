@@ -4122,13 +4122,10 @@ typedef struct {
     NSSize rootSize = NSMakeSize([[parseTree objectForKey:kLayoutDictPixelWidthKey] intValue],
                                  [[parseTree objectForKey:kLayoutDictPixelHeightKey] intValue]);
 
-    if ([iTermAdvancedSettingsModel avoidShrinkingTmuxWindows]) {
-        // This could reasonably be default behavior but it is too scary to turn on without
-        // extended beta testing.
-        [term lazyFitWindowToTabSize:rootSize cellSize:[self cellSizeForBookmark:profile]];
-    } else {
-        [term fitWindowToTabSize:rootSize];
-    }
+    DLog(@"openTabWithTmuxLayout: rootSize=%@ window frame before=%@",
+         NSStringFromSize(rootSize), NSStringFromRect([[term window] frame]));
+    [term lazyFitWindowToTabSize:rootSize cellSize:[self cellSizeForBookmark:profile]];
+    DLog(@"openTabWithTmuxLayout: window frame after=%@", NSStringFromRect([[term window] frame]));
     // Now we can make an arrangement and restore it.
     NSDictionary *arrangement = [PTYTab arrangementForDecoratedTmuxParseTree:parseTree
                                                                     bookmark:profile

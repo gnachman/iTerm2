@@ -31,6 +31,7 @@
 #import "iTermBaseWKWebView.h"
 #import "iTermBuriedSessions.h"
 #import "iTermCPUUtilization.h"
+#import "iTermCharacterSets.h"
 #import "iTermContextMenuUtilities.h"
 #import "iTermController.h"
 #import "iTermCopyModeHandler.h"

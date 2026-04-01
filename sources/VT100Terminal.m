@@ -1884,7 +1884,8 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
     switch (token->type) {
         // our special code
         case VT100_STRING:
-            [_delegate terminalAppendString:token.string];
+            [_delegate terminalAppendString:token.string
+                          preconvertedData:token.preconvertedStringData];
             break;
         case VT100_ASCIISTRING:
             [_delegate terminalAppendAsciiData:token.asciiData];

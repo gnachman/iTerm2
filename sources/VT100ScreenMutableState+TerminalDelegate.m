@@ -37,11 +37,16 @@
 }
 
 - (void)terminalAppendString:(NSString *)string {
+    [self terminalAppendString:string preconvertedData:NULL];
+}
+
+- (void)terminalAppendString:(NSString *)string
+          preconvertedData:(PreconvertedStringData *)preconvertedData {
     DLog(@"begin %@", string);
     if (_collectInputForPrinting) {
         [self.printBuffer appendString:string];
     } else {
-        [self appendStringAtCursor:string];
+        [self appendStringAtCursor:string preconvertedData:preconvertedData];
     }
     [self appendStringToTriggerLine:string];
     if (self.config.loggingEnabled) {
@@ -109,7 +114,9 @@
         if (control > start) {
             ScreenChars screenChars = {
                 .buffer = asciiData->screenChars->buffer + start,
-                .length = control - start
+                .length = control - start,
+                .rendition = asciiData->screenChars->rendition,
+                .protectedMode = asciiData->screenChars->protectedMode
             };
             AsciiData temp = {
                 .buffer = asciiData->buffer + start,
@@ -312,7 +319,9 @@ typedef struct {
             const int control = (i < count) ? CTVectorGet(crlfs, i) : asciiData->length;
             ScreenChars screenChars = {
                 .buffer = asciiData->screenChars->buffer + start,
-                .length = control - start
+                .length = control - start,
+                .rendition = asciiData->screenChars->rendition,
+                .protectedMode = asciiData->screenChars->protectedMode
             };
             BOOL stop = (ti == lastTokenIndexToSendToLineBuffer && control > info.characterCount);
             BOOL stoppedEarly = NO;

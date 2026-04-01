@@ -106,6 +106,7 @@ extern NSString *const PTYTabArrangementOptionsPendingJumps;
 // activities, their contents can be rescued.
 + (void)registerSessionsInArrangement:(NSDictionary *)arrangement;
 + (void)registerBuiltInFunctions;
++ (NSSize)cellSizeForBookmark:(Profile *)bookmark;
 
 + (void)drawArrangementPreview:(NSDictionary*)arrangement frame:(NSRect)frame dark:(BOOL)dark;
 

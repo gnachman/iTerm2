@@ -31,6 +31,7 @@
 #import "ScreenChar.h"
 
 #import "DebugLogging.h"
+#import "iTermCharacterSets.h"
 #import "charmaps.h"
 #import "iTerm2SharedARC-Swift.h"
 #import "iTermAdvancedSettingsModel.h"
@@ -468,15 +469,16 @@ void StringToScreenChars(NSString *s,
                          BOOL *rtlFound) {
     __block NSInteger j = 0;
     __block BOOL foundCursor = NO;
-    NSCharacterSet *ignorableCharacters = [NSCharacterSet ignorableCharactersForUnicodeVersion:unicodeVersion];
-    NSCharacterSet *spacingCombiningMarks = [NSCharacterSet spacingCombiningMarksForUnicodeVersion:12];
-    NSCharacterSet *modifierCharactersForcingFullWidthRendition = [NSCharacterSet modifierCharactersForcingFullWidthRendition];
     const BOOL shouldSupportVS16 = [iTermAdvancedSettingsModel vs16Supported] || (!softAlternateScreenMode && [iTermAdvancedSettingsModel vs16SupportedInPrimaryScreen]);
-    NSCharacterSet *emojiAcceptingVS16 = [NSCharacterSet emojiAcceptingVS16];
-    NSCharacterSet *rtlSmellingCodePoints = [iTermPreferences bidiEnabled] ? [NSCharacterSet rtlSmellingCodePoints] : [NSCharacterSet characterSetWithCharactersInString:@""];
     const BOOL fullWidthFlags = [iTermAdvancedSettingsModel fullWidthFlags];
+    const BOOL zeroWidthSpaceAdvancesCursor = [iTermAdvancedSettingsModel zeroWidthSpaceAdvancesCursor];
+    const BOOL aggressiveBaseCharacterDetection = [iTermAdvancedSettingsModel aggressiveBaseCharacterDetection];
     if (rtlFound) {
-        *rtlFound = ([s rangeOfCharacterFromSet:rtlSmellingCodePoints].location != NSNotFound);
+        if ([iTermPreferences bidiEnabled]) {
+            *rtlFound = iTermStringContainsRTL((__bridge CFStringRef)s);
+        } else {
+            *rtlFound = NO;
+        }
     }
 
     [s enumerateComposedCharacters:^(NSRange range,
@@ -501,9 +503,9 @@ void StringToScreenChars(NSString *s,
                 AppendToChar(&buf[j - 1], baseBmpChar);
                 return;
             }
-            if ([ignorableCharacters characterIsMember:baseBmpChar]) {
+            if (iTermIsIgnorableCharacter(baseBmpChar, zeroWidthSpaceAdvancesCursor)) {
                 return;
-            } else if ([spacingCombiningMarks characterIsMember:baseBmpChar]) {
+            } else if (aggressiveBaseCharacterDetection && iTermIsSpacingCombiningMark(baseBmpChar)) {
                 composedOrNonBmpChar = [NSString stringWithLongCharacter:baseBmpChar];
                 baseBmpChar = 0;
                 spacingCombiningMark = YES;
@@ -544,7 +546,7 @@ void StringToScreenChars(NSString *s,
             if (IsHighSurrogate(baseChar) && composedLength > 1) {
                 baseChar = DecodeSurrogatePair(baseChar, [composedOrNonBmpChar characterAtIndex:1]);
                 next += 1;
-                if (composedLength == 2 && [ignorableCharacters longCharacterIsMember:baseChar]) {
+                if (composedLength == 2 && iTermIsIgnorableCharacter(baseChar, zeroWidthSpaceAdvancesCursor)) {
                     return;
                 }
             }
@@ -576,8 +578,8 @@ void StringToScreenChars(NSString *s,
                                                   fullWidthFlags:fullWidthFlags];
                 if (!isDoubleWidth &&
                     shouldSupportVS16 &&
-                    [emojiAcceptingVS16 longCharacterIsMember:baseChar] &&
-                    [composedOrNonBmpChar rangeOfCharacterFromSet:modifierCharactersForcingFullWidthRendition].location != NSNotFound) {
+                    iTermIsEmojiAcceptingVS16(baseChar) &&
+                    iTermStringContainsModifierForcingFullWidth((__bridge CFStringRef)composedOrNonBmpChar)) {
                     isDoubleWidth = YES;
                     disambiguated = YES;
                 }

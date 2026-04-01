@@ -302,6 +302,10 @@ static NSString *const iTermStatusBarHostnameComponentAbbreviateLocalhost = @"ab
     return [parts componentsJoinedByString:@"/"];
 }
 
+- (nullable NSString *)statusBarComponentCopyableString {
+    return self.fullString;
+}
+
 - (BOOL)statusBarComponentHandlesClicks {
     return YES;
 }

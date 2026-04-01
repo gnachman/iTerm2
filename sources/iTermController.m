@@ -553,7 +553,8 @@ replaceInitialDirectoryForSessionWithGUID:(NSString *)guid
         [term restoreTabsFromArrangement:terminalArrangement
                                    named:arrangementName
                                 sessions:nil
-                      partialAttachments:nil];
+                      partialAttachments:nil
+                    largeContentProvider:nil];
         return;
     }
     const BOOL lionFullScreen = [PseudoTerminal arrangementIsLionFullScreen:terminalArrangement];
@@ -877,8 +878,10 @@ replaceInitialDirectoryForSessionWithGUID:(NSString *)guid
                                                action:openAllSelector
                                         keyEquivalent:@""];
         if (@available(macOS 26, *)) {
-            aMenuItem.image = [NSImage imageWithSystemSymbolName:@"person.3.sequence"
-                                        accessibilityDescription:nil];
+            if (iTermMainMenuMangler.menuActionImagesEnabled) {
+                aMenuItem.image = [NSImage imageWithSystemSymbolName:@"person.3.sequence"
+                                            accessibilityDescription:nil];
+            }
         }
         unsigned int modifierMask = NSEventModifierFlagCommand | NSEventModifierFlagControl;
         [aMenuItem setKeyEquivalentModifierMask:modifierMask];

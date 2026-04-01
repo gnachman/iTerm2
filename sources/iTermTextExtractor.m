@@ -1121,7 +1121,7 @@ const NSInteger kLongMaximumWordLength = 100000;
     const NSInteger maxMatchLength = 1024;
     NSString *match = [self contentInRange:VT100GridWindowedRangeMake(relativeRange, _logicalWindow.location, _logicalWindow.length)
                          attributeProvider:nil
-                                nullPolicy:kiTermTextExtractorNullPolicyFromLastToEnd
+                                nullPolicy:kiTermTextExtractorNullPolicyMidlineAsSpaceIgnoreTerminal
                                        pad:NO
                         includeLastNewline:NO
                     trimTrailingWhitespace:NO

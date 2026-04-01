@@ -298,6 +298,15 @@ const CGFloat iTermGetStatusBarHeight(void) {
 
 - (void)showContextMenuForEvent:(NSEvent *)event {
     NSMenu *menu = [[NSMenu alloc] initWithTitle:@"Contextual Menu"];
+    if ([_component respondsToSelector:@selector(statusBarComponentCopyableString)]) {
+        NSString *copyableString = [_component statusBarComponentCopyableString];
+        if (copyableString.length > 0) {
+            [menu addItemWithTitle:@"Copy"
+                            action:@selector(copyComponentValue:)
+                     keyEquivalent:@""];
+            [menu addItem:[NSMenuItem separatorItem]];
+        }
+    }
     if (![_component statusBarComponentIsInternal]) {
         if ([[_component statusBarComponentKnobs] count]) {
             [menu addItemWithTitle:[NSString stringWithFormat:@"Configure %@", [self.component statusBarComponentShortDescription]]
@@ -329,6 +338,16 @@ const CGFloat iTermGetStatusBarHeight(void) {
         }
     }];
     [NSMenu popUpContextMenu:menu withEvent:event forView:self];
+}
+
+- (void)copyComponentValue:(id)sender {
+    if ([_component respondsToSelector:@selector(statusBarComponentCopyableString)]) {
+        NSString *string = [_component statusBarComponentCopyableString];
+        if (string.length > 0) {
+            [[NSPasteboard generalPasteboard] clearContents];
+            [[NSPasteboard generalPasteboard] setString:string forType:NSPasteboardTypeString];
+        }
+    }
 }
 
 - (void)configureComponent:(id)sender {

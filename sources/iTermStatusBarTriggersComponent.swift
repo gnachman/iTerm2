@@ -64,6 +64,10 @@ class StatusBarTriggersComponent: iTermStatusBarTextComponent {
         return [ stringValue ]
     }
 
+    override func statusBarComponentCopyableString() -> String? {
+        return nil
+    }
+
     override func statusBarComponentHandlesClicks() -> Bool {
         return true
     }

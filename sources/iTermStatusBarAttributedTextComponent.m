@@ -290,6 +290,10 @@ NS_ASSUME_NONNULL_BEGIN
     return self.advancedConfiguration.font ?: [iTermStatusBarAdvancedConfiguration defaultFont];
 }
 
+- (nullable NSString *)statusBarComponentCopyableString {
+    return [[self longestAttributedStringValue] string];
+}
+
 - (CGFloat)statusBarComponentVerticalOffset {
     NSFont *font = [self font];
     const CGFloat containerHeight = _textField.superview.bounds.size.height;

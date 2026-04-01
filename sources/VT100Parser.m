@@ -9,11 +9,20 @@
 #import "VT100Parser.h"
 
 #import "DebugLogging.h"
+#import "iTermAdvancedSettingsModel.h"
+#import "iTermHistogram.h"
 #import "iTermMalloc.h"
+#import "iTerm2SharedARC-Swift.h"
 #import "NSStringITerm.h"
 #import "VT100ByteStream.h"
 #import "VT100ControlParser.h"
 #import "VT100StringParser.h"
+
+#include <stdatomic.h>
+
+static const size_t VT100ParserMaxSGRStackEntries = 10;
+static const NSInteger kMinPreconvertStringLength = 4;
+static _Atomic int64_t sOutstandingPreconvertBytes = 0;
 
 @interface VT100Parser()
 // Nested parsers count their depth. This happens with ssh integration.
@@ -33,6 +42,20 @@
     // that marks the first post-recovery token to be parsed.
     BOOL _emitRecoveryToken;
     NSInteger _nextBoundaryNumber;
+
+    // Shadow graphic rendition for pre-converting non-ASCII strings.
+    // Updated on the parser thread as SGR tokens are produced.
+    VT100GraphicRendition _shadowRendition;
+    BOOL _shadowProtectedMode;
+    VT100StringConversionConfig _conversionConfig;  // @synchronized(self)
+
+    // Saved shadow rendition for DECSC/DECRC.
+    VT100GraphicRendition _savedShadowRendition;
+    BOOL _savedShadowProtectedMode;
+
+    // Shadow SGR stack for XTPUSHSGR/XTPOPSGR.
+    VT100GraphicRendition _shadowSGRStack[VT100ParserMaxSGRStackEntries];
+    int _shadowSGRStackSize;
 }
 
 - (instancetype)init {
@@ -43,6 +66,7 @@
         _controlParser = [[VT100ControlParser alloc] init];
         _sshParsers = [[NSMutableDictionary alloc] init];
         _mainSSHParserPID = -1;
+        [self resetShadowState];
     }
     return self;
 }
@@ -316,7 +340,10 @@
         }
         if (token->type == VT100_ASCIISTRING ||
             token->type == VT100_MIXED_ASCII_CR_LF) {
-            [token setAsciiBytes:(char *)VT100ByteStreamCursorGetPointer(&position) length:length];
+            [token setAsciiBytes:(char *)VT100ByteStreamCursorGetPointer(&position)
+                          length:length
+                       rendition:_shadowRendition
+                   protectedMode:_shadowProtectedMode];
         }
 
         if (gDebugLogging) {
@@ -341,6 +368,22 @@
             }
             DLog(@"%@Parsed as %@", prefix, token);
         }
+        // Update shadow rendition for SGR/reset tokens and pre-convert strings.
+        [self updateShadowStateForToken:token];
+        if (token->type == VT100_STRING && token.string.length > 0) {
+            if ([iTermAdvancedSettingsModel logNonASCIIStringLengthHistogram]) {
+                [self recordStringLength:token.string.length];
+            }
+            if ([iTermAdvancedSettingsModel preconvertStringsOnParserThread]) {
+                if ([iTermAdvancedSettingsModel asyncPreconvertStrings] &&
+                    token.string.length >= [iTermAdvancedSettingsModel asyncPreconvertMinStringLength]) {
+                    [self asyncPreconvertStringToken:token];
+                } else if (token.string.length >= kMinPreconvertStringLength) {
+                    [self preconvertStringToken:token];
+                }
+            }
+        }
+
         // Don't append the outer wrapper to the output. Earlier, it was unwrapped and the inner
         // tokens were already added.
         if (token->type != DCS_TMUX_CODE_WRAP &&
@@ -487,6 +530,7 @@
         [self forceUnhookDCS:nil];
         [self clearStream];
         [_sshParsers[@(_mainSSHParserPID)] reset];
+        [self resetShadowState];
     }
 }
 
@@ -498,7 +542,154 @@
             [self clearStream];
             [_sshParsers[@(_mainSSHParserPID)] reset];
         }
+        [self resetShadowState];
     }
+}
+
+- (void)updateStringConversionConfig:(VT100StringConversionConfig)config {
+    @synchronized(self) {
+        _conversionConfig = config;
+    }
+}
+
+- (void)resetShadowState {
+    VT100GraphicRenditionInitialize(&_shadowRendition);
+    VT100GraphicRenditionInitialize(&_savedShadowRendition);
+    _shadowProtectedMode = NO;
+    _savedShadowProtectedMode = NO;
+    _shadowSGRStackSize = 0;
+}
+
+#pragma mark - Shadow SGR Tracking
+
+- (void)applySGRToShadowRendition:(CSIParam *)csi {
+    if (csi->count == 0) {
+        VT100GraphicRenditionInitialize(&_shadowRendition);
+        return;
+    }
+    for (int i = 0; i < csi->count; ++i) {
+        const VT100GraphicRenditionSideEffect sideEffect =
+            VT100GraphicRenditionExecuteSGR(&_shadowRendition, csi, i);
+        switch (sideEffect) {
+            case VT100GraphicRenditionSideEffectReset:
+                VT100GraphicRenditionInitialize(&_shadowRendition);
+                break;
+            case VT100GraphicRenditionSideEffectSkip2:
+            case VT100GraphicRenditionSideEffectSkip2AndUpdateExternalAttributes:
+                i += 2;
+                break;
+            case VT100GraphicRenditionSideEffectSkip4:
+            case VT100GraphicRenditionSideEffectSkip4AndUpdateExternalAttributes:
+                i += 4;
+                break;
+            case VT100GraphicRenditionSideEffectNone:
+            case VT100GraphicRenditionSideEffectUpdateExternalAttributes:
+                break;
+        }
+    }
+}
+
+- (void)applyShadowPushSGR {
+    if (_shadowSGRStackSize >= VT100ParserMaxSGRStackEntries) {
+        return;
+    }
+    _shadowSGRStack[_shadowSGRStackSize] = _shadowRendition;
+    _shadowSGRStackSize += 1;
+}
+
+- (void)applyShadowPopSGR {
+    if (_shadowSGRStackSize == 0) {
+        return;
+    }
+    _shadowSGRStackSize -= 1;
+    _shadowRendition = _shadowSGRStack[_shadowSGRStackSize];
+}
+
+- (void)updateShadowStateForToken:(VT100Token *)token {
+    switch (token->type) {
+        case VT100CSI_SGR:
+            if (token.csi) {
+                [self applySGRToShadowRendition:token.csi];
+            }
+            break;
+        case VT100CSI_RIS:
+        case ANSI_RIS:
+        case VT100CSI_DECSTR:
+            [self resetShadowState];
+            break;
+        case XTERMCC_XTPUSHSGR:
+            [self applyShadowPushSGR];
+            break;
+        case XTERMCC_XTPOPSGR:
+            [self applyShadowPopSGR];
+            break;
+        case VT100CSI_DECSC:
+            _savedShadowRendition = _shadowRendition;
+            _savedShadowProtectedMode = _shadowProtectedMode;
+            break;
+        case VT100CSI_DECRC:
+        case ANSICSI_RCP:
+            _shadowRendition = _savedShadowRendition;
+            _shadowProtectedMode = _savedShadowProtectedMode;
+            break;
+        case VT100CSI_DECSCA:
+            if (token.csi && token.csi->count > 0) {
+                _shadowProtectedMode = (token.csi->p[0] == 1);
+            }
+            break;
+        default:
+            break;
+    }
+}
+
+#pragma mark - String Pre-conversion
+
+- (void)recordStringLength:(NSInteger)length {
+    static iTermHistogram *sHistogram;
+    static CFAbsoluteTime sLastHistogramLog;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        sHistogram = [[iTermHistogram alloc] init];
+    });
+    [sHistogram addValue:(double)length];
+    CFAbsoluteTime now = CFAbsoluteTimeGetCurrent();
+    if (now - sLastHistogramLog > 5.0) {
+        sLastHistogramLog = now;
+        NSLog(@"Non-ASCII string length histogram: %@", sHistogram.stringValue);
+    }
+}
+
+- (void)asyncPreconvertStringToken:(VT100Token *)token {
+    NSString *string = token.string;
+    const int64_t stringBytes = (int64_t)string.length * sizeof(unichar);
+    const int64_t maxBytes = [iTermAdvancedSettingsModel asyncPreconvertMaxOutstandingBytes];
+    const int64_t current = atomic_load(&sOutstandingPreconvertBytes);
+    if (current + stringBytes > maxBytes) {
+        return;
+    }
+    atomic_fetch_add(&sOutstandingPreconvertBytes, stringBytes);
+
+    iTermAsyncStringConversion *conv =
+        [[iTermAsyncStringConversion alloc] initWithString:string
+                                              stringLength:string.length
+                                                 rendition:_shadowRendition
+                                             protectedMode:_shadowProtectedMode
+                                                    config:_conversionConfig];
+    conv.completionHandler = ^{
+        atomic_fetch_sub(&sOutstandingPreconvertBytes, stringBytes);
+    };
+    token.asyncStringConversion = conv;
+    [conv release];
+}
+
+- (void)preconvertStringToken:(VT100Token *)token {
+    PreconvertedStringData *pre = token.preconvertedStringData;
+    iTermPreconvertedStringDataFree(pre);
+    [iTermStringPreconverter preconvert:pre
+                                 string:token.string
+                              rendition:_shadowRendition
+                          protectedMode:_shadowProtectedMode
+                                 config:_conversionConfig];
 }
 
 @end

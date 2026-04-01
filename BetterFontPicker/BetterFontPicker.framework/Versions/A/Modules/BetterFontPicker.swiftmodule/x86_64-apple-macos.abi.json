@@ -671,38 +671,10 @@
         "conformances": [
           {
             "kind": "Conformance",
-            "name": "Copyable",
-            "printedName": "Copyable",
-            "usr": "s:s8CopyableP",
-            "mangledName": "$ss8CopyableP"
-          },
-          {
-            "kind": "Conformance",
-            "name": "Escapable",
-            "printedName": "Escapable",
-            "usr": "s:s9EscapableP",
-            "mangledName": "$ss9EscapableP"
-          },
-          {
-            "kind": "Conformance",
-            "name": "Equatable",
-            "printedName": "Equatable",
-            "usr": "s:SQ",
-            "mangledName": "$sSQ"
-          },
-          {
-            "kind": "Conformance",
-            "name": "Hashable",
-            "printedName": "Hashable",
-            "usr": "s:SH",
-            "mangledName": "$sSH"
-          },
-          {
-            "kind": "Conformance",
-            "name": "CVarArg",
-            "printedName": "CVarArg",
-            "usr": "s:s7CVarArgP",
-            "mangledName": "$ss7CVarArgP"
+            "name": "_KeyValueCodingAndObserving",
+            "printedName": "_KeyValueCodingAndObserving",
+            "usr": "s:10Foundation27_KeyValueCodingAndObservingP",
+            "mangledName": "$s10Foundation27_KeyValueCodingAndObservingP"
           },
           {
             "kind": "Conformance",
@@ -713,10 +685,24 @@
           },
           {
             "kind": "Conformance",
-            "name": "_KeyValueCodingAndObserving",
-            "printedName": "_KeyValueCodingAndObserving",
-            "usr": "s:10Foundation27_KeyValueCodingAndObservingP",
-            "mangledName": "$s10Foundation27_KeyValueCodingAndObservingP"
+            "name": "CVarArg",
+            "printedName": "CVarArg",
+            "usr": "s:s7CVarArgP",
+            "mangledName": "$ss7CVarArgP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Copyable",
+            "printedName": "Copyable",
+            "usr": "s:s8CopyableP",
+            "mangledName": "$ss8CopyableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "CustomDebugStringConvertible",
+            "printedName": "CustomDebugStringConvertible",
+            "usr": "s:s28CustomDebugStringConvertibleP",
+            "mangledName": "$ss28CustomDebugStringConvertibleP"
           },
           {
             "kind": "Conformance",
@@ -727,10 +713,24 @@
           },
           {
             "kind": "Conformance",
-            "name": "CustomDebugStringConvertible",
-            "printedName": "CustomDebugStringConvertible",
-            "usr": "s:s28CustomDebugStringConvertibleP",
-            "mangledName": "$ss28CustomDebugStringConvertibleP"
+            "name": "Equatable",
+            "printedName": "Equatable",
+            "usr": "s:SQ",
+            "mangledName": "$sSQ"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Escapable",
+            "printedName": "Escapable",
+            "usr": "s:s9EscapableP",
+            "mangledName": "$ss9EscapableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Hashable",
+            "printedName": "Hashable",
+            "usr": "s:SH",
+            "mangledName": "$sSH"
           },
           {
             "kind": "Conformance",
@@ -1200,38 +1200,10 @@
         "conformances": [
           {
             "kind": "Conformance",
-            "name": "Copyable",
-            "printedName": "Copyable",
-            "usr": "s:s8CopyableP",
-            "mangledName": "$ss8CopyableP"
-          },
-          {
-            "kind": "Conformance",
-            "name": "Escapable",
-            "printedName": "Escapable",
-            "usr": "s:s9EscapableP",
-            "mangledName": "$ss9EscapableP"
-          },
-          {
-            "kind": "Conformance",
-            "name": "Equatable",
-            "printedName": "Equatable",
-            "usr": "s:SQ",
-            "mangledName": "$sSQ"
-          },
-          {
-            "kind": "Conformance",
-            "name": "Hashable",
-            "printedName": "Hashable",
-            "usr": "s:SH",
-            "mangledName": "$sSH"
-          },
-          {
-            "kind": "Conformance",
-            "name": "CVarArg",
-            "printedName": "CVarArg",
-            "usr": "s:s7CVarArgP",
-            "mangledName": "$ss7CVarArgP"
+            "name": "_KeyValueCodingAndObserving",
+            "printedName": "_KeyValueCodingAndObserving",
+            "usr": "s:10Foundation27_KeyValueCodingAndObservingP",
+            "mangledName": "$s10Foundation27_KeyValueCodingAndObservingP"
           },
           {
             "kind": "Conformance",
@@ -1242,17 +1214,17 @@
           },
           {
             "kind": "Conformance",
-            "name": "_KeyValueCodingAndObserving",
-            "printedName": "_KeyValueCodingAndObserving",
-            "usr": "s:10Foundation27_KeyValueCodingAndObservingP",
-            "mangledName": "$s10Foundation27_KeyValueCodingAndObservingP"
+            "name": "CVarArg",
+            "printedName": "CVarArg",
+            "usr": "s:s7CVarArgP",
+            "mangledName": "$ss7CVarArgP"
           },
           {
             "kind": "Conformance",
-            "name": "CustomStringConvertible",
-            "printedName": "CustomStringConvertible",
-            "usr": "s:s23CustomStringConvertibleP",
-            "mangledName": "$ss23CustomStringConvertibleP"
+            "name": "Copyable",
+            "printedName": "Copyable",
+            "usr": "s:s8CopyableP",
+            "mangledName": "$ss8CopyableP"
           },
           {
             "kind": "Conformance",
@@ -1263,10 +1235,31 @@
           },
           {
             "kind": "Conformance",
-            "name": "__DefaultCustomPlaygroundQuickLookable",
-            "printedName": "__DefaultCustomPlaygroundQuickLookable",
-            "usr": "s:s38__DefaultCustomPlaygroundQuickLookableP",
-            "mangledName": "$ss38__DefaultCustomPlaygroundQuickLookableP"
+            "name": "CustomStringConvertible",
+            "printedName": "CustomStringConvertible",
+            "usr": "s:s23CustomStringConvertibleP",
+            "mangledName": "$ss23CustomStringConvertibleP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Equatable",
+            "printedName": "Equatable",
+            "usr": "s:SQ",
+            "mangledName": "$sSQ"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Escapable",
+            "printedName": "Escapable",
+            "usr": "s:s9EscapableP",
+            "mangledName": "$ss9EscapableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Hashable",
+            "printedName": "Hashable",
+            "usr": "s:SH",
+            "mangledName": "$sSH"
           },
           {
             "kind": "Conformance",
@@ -1281,6 +1274,13 @@
             "printedName": "SendableMetatype",
             "usr": "s:s16SendableMetatypeP",
             "mangledName": "$ss16SendableMetatypeP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "__DefaultCustomPlaygroundQuickLookable",
+            "printedName": "__DefaultCustomPlaygroundQuickLookable",
+            "usr": "s:s38__DefaultCustomPlaygroundQuickLookableP",
+            "mangledName": "$ss38__DefaultCustomPlaygroundQuickLookableP"
           }
         ]
       },
@@ -1952,38 +1952,10 @@
           },
           {
             "kind": "Conformance",
-            "name": "Copyable",
-            "printedName": "Copyable",
-            "usr": "s:s8CopyableP",
-            "mangledName": "$ss8CopyableP"
-          },
-          {
-            "kind": "Conformance",
-            "name": "Escapable",
-            "printedName": "Escapable",
-            "usr": "s:s9EscapableP",
-            "mangledName": "$ss9EscapableP"
-          },
-          {
-            "kind": "Conformance",
-            "name": "Equatable",
-            "printedName": "Equatable",
-            "usr": "s:SQ",
-            "mangledName": "$sSQ"
-          },
-          {
-            "kind": "Conformance",
-            "name": "Hashable",
-            "printedName": "Hashable",
-            "usr": "s:SH",
-            "mangledName": "$sSH"
-          },
-          {
-            "kind": "Conformance",
-            "name": "CVarArg",
-            "printedName": "CVarArg",
-            "usr": "s:s7CVarArgP",
-            "mangledName": "$ss7CVarArgP"
+            "name": "_KeyValueCodingAndObserving",
+            "printedName": "_KeyValueCodingAndObserving",
+            "usr": "s:10Foundation27_KeyValueCodingAndObservingP",
+            "mangledName": "$s10Foundation27_KeyValueCodingAndObservingP"
           },
           {
             "kind": "Conformance",
@@ -1994,17 +1966,17 @@
           },
           {
             "kind": "Conformance",
-            "name": "_KeyValueCodingAndObserving",
-            "printedName": "_KeyValueCodingAndObserving",
-            "usr": "s:10Foundation27_KeyValueCodingAndObservingP",
-            "mangledName": "$s10Foundation27_KeyValueCodingAndObservingP"
+            "name": "CVarArg",
+            "printedName": "CVarArg",
+            "usr": "s:s7CVarArgP",
+            "mangledName": "$ss7CVarArgP"
           },
           {
             "kind": "Conformance",
-            "name": "CustomStringConvertible",
-            "printedName": "CustomStringConvertible",
-            "usr": "s:s23CustomStringConvertibleP",
-            "mangledName": "$ss23CustomStringConvertibleP"
+            "name": "Copyable",
+            "printedName": "Copyable",
+            "usr": "s:s8CopyableP",
+            "mangledName": "$ss8CopyableP"
           },
           {
             "kind": "Conformance",
@@ -2015,10 +1987,31 @@
           },
           {
             "kind": "Conformance",
-            "name": "__DefaultCustomPlaygroundQuickLookable",
-            "printedName": "__DefaultCustomPlaygroundQuickLookable",
-            "usr": "s:s38__DefaultCustomPlaygroundQuickLookableP",
-            "mangledName": "$ss38__DefaultCustomPlaygroundQuickLookableP"
+            "name": "CustomStringConvertible",
+            "printedName": "CustomStringConvertible",
+            "usr": "s:s23CustomStringConvertibleP",
+            "mangledName": "$ss23CustomStringConvertibleP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Equatable",
+            "printedName": "Equatable",
+            "usr": "s:SQ",
+            "mangledName": "$sSQ"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Escapable",
+            "printedName": "Escapable",
+            "usr": "s:s9EscapableP",
+            "mangledName": "$ss9EscapableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Hashable",
+            "printedName": "Hashable",
+            "usr": "s:SH",
+            "mangledName": "$sSH"
           },
           {
             "kind": "Conformance",
@@ -2033,6 +2026,13 @@
             "printedName": "SendableMetatype",
             "usr": "s:s16SendableMetatypeP",
             "mangledName": "$ss16SendableMetatypeP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "__DefaultCustomPlaygroundQuickLookable",
+            "printedName": "__DefaultCustomPlaygroundQuickLookable",
+            "usr": "s:s38__DefaultCustomPlaygroundQuickLookableP",
+            "mangledName": "$ss38__DefaultCustomPlaygroundQuickLookableP"
           }
         ]
       },
@@ -2417,38 +2417,10 @@
         "conformances": [
           {
             "kind": "Conformance",
-            "name": "Copyable",
-            "printedName": "Copyable",
-            "usr": "s:s8CopyableP",
-            "mangledName": "$ss8CopyableP"
-          },
-          {
-            "kind": "Conformance",
-            "name": "Escapable",
-            "printedName": "Escapable",
-            "usr": "s:s9EscapableP",
-            "mangledName": "$ss9EscapableP"
-          },
-          {
-            "kind": "Conformance",
-            "name": "Equatable",
-            "printedName": "Equatable",
-            "usr": "s:SQ",
-            "mangledName": "$sSQ"
-          },
-          {
-            "kind": "Conformance",
-            "name": "Hashable",
-            "printedName": "Hashable",
-            "usr": "s:SH",
-            "mangledName": "$sSH"
-          },
-          {
-            "kind": "Conformance",
-            "name": "CVarArg",
-            "printedName": "CVarArg",
-            "usr": "s:s7CVarArgP",
-            "mangledName": "$ss7CVarArgP"
+            "name": "_KeyValueCodingAndObserving",
+            "printedName": "_KeyValueCodingAndObserving",
+            "usr": "s:10Foundation27_KeyValueCodingAndObservingP",
+            "mangledName": "$s10Foundation27_KeyValueCodingAndObservingP"
           },
           {
             "kind": "Conformance",
@@ -2459,10 +2431,24 @@
           },
           {
             "kind": "Conformance",
-            "name": "_KeyValueCodingAndObserving",
-            "printedName": "_KeyValueCodingAndObserving",
-            "usr": "s:10Foundation27_KeyValueCodingAndObservingP",
-            "mangledName": "$s10Foundation27_KeyValueCodingAndObservingP"
+            "name": "CVarArg",
+            "printedName": "CVarArg",
+            "usr": "s:s7CVarArgP",
+            "mangledName": "$ss7CVarArgP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Copyable",
+            "printedName": "Copyable",
+            "usr": "s:s8CopyableP",
+            "mangledName": "$ss8CopyableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "CustomDebugStringConvertible",
+            "printedName": "CustomDebugStringConvertible",
+            "usr": "s:s28CustomDebugStringConvertibleP",
+            "mangledName": "$ss28CustomDebugStringConvertibleP"
           },
           {
             "kind": "Conformance",
@@ -2473,10 +2459,24 @@
           },
           {
             "kind": "Conformance",
-            "name": "CustomDebugStringConvertible",
-            "printedName": "CustomDebugStringConvertible",
-            "usr": "s:s28CustomDebugStringConvertibleP",
-            "mangledName": "$ss28CustomDebugStringConvertibleP"
+            "name": "Equatable",
+            "printedName": "Equatable",
+            "usr": "s:SQ",
+            "mangledName": "$sSQ"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Escapable",
+            "printedName": "Escapable",
+            "usr": "s:s9EscapableP",
+            "mangledName": "$ss9EscapableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Hashable",
+            "printedName": "Hashable",
+            "usr": "s:SH",
+            "mangledName": "$sSH"
           },
           {
             "kind": "Conformance",
@@ -2713,38 +2713,10 @@
         "conformances": [
           {
             "kind": "Conformance",
-            "name": "Copyable",
-            "printedName": "Copyable",
-            "usr": "s:s8CopyableP",
-            "mangledName": "$ss8CopyableP"
-          },
-          {
-            "kind": "Conformance",
-            "name": "Escapable",
-            "printedName": "Escapable",
-            "usr": "s:s9EscapableP",
-            "mangledName": "$ss9EscapableP"
-          },
-          {
-            "kind": "Conformance",
-            "name": "Equatable",
-            "printedName": "Equatable",
-            "usr": "s:SQ",
-            "mangledName": "$sSQ"
-          },
-          {
-            "kind": "Conformance",
-            "name": "Hashable",
-            "printedName": "Hashable",
-            "usr": "s:SH",
-            "mangledName": "$sSH"
-          },
-          {
-            "kind": "Conformance",
-            "name": "CVarArg",
-            "printedName": "CVarArg",
-            "usr": "s:s7CVarArgP",
-            "mangledName": "$ss7CVarArgP"
+            "name": "_KeyValueCodingAndObserving",
+            "printedName": "_KeyValueCodingAndObserving",
+            "usr": "s:10Foundation27_KeyValueCodingAndObservingP",
+            "mangledName": "$s10Foundation27_KeyValueCodingAndObservingP"
           },
           {
             "kind": "Conformance",
@@ -2755,10 +2727,24 @@
           },
           {
             "kind": "Conformance",
-            "name": "_KeyValueCodingAndObserving",
-            "printedName": "_KeyValueCodingAndObserving",
-            "usr": "s:10Foundation27_KeyValueCodingAndObservingP",
-            "mangledName": "$s10Foundation27_KeyValueCodingAndObservingP"
+            "name": "CVarArg",
+            "printedName": "CVarArg",
+            "usr": "s:s7CVarArgP",
+            "mangledName": "$ss7CVarArgP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Copyable",
+            "printedName": "Copyable",
+            "usr": "s:s8CopyableP",
+            "mangledName": "$ss8CopyableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "CustomDebugStringConvertible",
+            "printedName": "CustomDebugStringConvertible",
+            "usr": "s:s28CustomDebugStringConvertibleP",
+            "mangledName": "$ss28CustomDebugStringConvertibleP"
           },
           {
             "kind": "Conformance",
@@ -2769,10 +2755,24 @@
           },
           {
             "kind": "Conformance",
-            "name": "CustomDebugStringConvertible",
-            "printedName": "CustomDebugStringConvertible",
-            "usr": "s:s28CustomDebugStringConvertibleP",
-            "mangledName": "$ss28CustomDebugStringConvertibleP"
+            "name": "Equatable",
+            "printedName": "Equatable",
+            "usr": "s:SQ",
+            "mangledName": "$sSQ"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Escapable",
+            "printedName": "Escapable",
+            "usr": "s:s9EscapableP",
+            "mangledName": "$ss9EscapableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Hashable",
+            "printedName": "Hashable",
+            "usr": "s:SH",
+            "mangledName": "$sSH"
           },
           {
             "kind": "Conformance",
@@ -3364,17 +3364,17 @@
               },
               {
                 "kind": "Conformance",
-                "name": "Escapable",
-                "printedName": "Escapable",
-                "usr": "s:s9EscapableP",
-                "mangledName": "$ss9EscapableP"
-              },
-              {
-                "kind": "Conformance",
                 "name": "Equatable",
                 "printedName": "Equatable",
                 "usr": "s:SQ",
                 "mangledName": "$sSQ"
+              },
+              {
+                "kind": "Conformance",
+                "name": "Escapable",
+                "printedName": "Escapable",
+                "usr": "s:s9EscapableP",
+                "mangledName": "$ss9EscapableP"
               },
               {
                 "kind": "Conformance",
@@ -4133,38 +4133,10 @@
           },
           {
             "kind": "Conformance",
-            "name": "Copyable",
-            "printedName": "Copyable",
-            "usr": "s:s8CopyableP",
-            "mangledName": "$ss8CopyableP"
-          },
-          {
-            "kind": "Conformance",
-            "name": "Escapable",
-            "printedName": "Escapable",
-            "usr": "s:s9EscapableP",
-            "mangledName": "$ss9EscapableP"
-          },
-          {
-            "kind": "Conformance",
-            "name": "Equatable",
-            "printedName": "Equatable",
-            "usr": "s:SQ",
-            "mangledName": "$sSQ"
-          },
-          {
-            "kind": "Conformance",
-            "name": "Hashable",
-            "printedName": "Hashable",
-            "usr": "s:SH",
-            "mangledName": "$sSH"
-          },
-          {
-            "kind": "Conformance",
-            "name": "CVarArg",
-            "printedName": "CVarArg",
-            "usr": "s:s7CVarArgP",
-            "mangledName": "$ss7CVarArgP"
+            "name": "_KeyValueCodingAndObserving",
+            "printedName": "_KeyValueCodingAndObserving",
+            "usr": "s:10Foundation27_KeyValueCodingAndObservingP",
+            "mangledName": "$s10Foundation27_KeyValueCodingAndObservingP"
           },
           {
             "kind": "Conformance",
@@ -4175,17 +4147,17 @@
           },
           {
             "kind": "Conformance",
-            "name": "_KeyValueCodingAndObserving",
-            "printedName": "_KeyValueCodingAndObserving",
-            "usr": "s:10Foundation27_KeyValueCodingAndObservingP",
-            "mangledName": "$s10Foundation27_KeyValueCodingAndObservingP"
+            "name": "CVarArg",
+            "printedName": "CVarArg",
+            "usr": "s:s7CVarArgP",
+            "mangledName": "$ss7CVarArgP"
           },
           {
             "kind": "Conformance",
-            "name": "CustomStringConvertible",
-            "printedName": "CustomStringConvertible",
-            "usr": "s:s23CustomStringConvertibleP",
-            "mangledName": "$ss23CustomStringConvertibleP"
+            "name": "Copyable",
+            "printedName": "Copyable",
+            "usr": "s:s8CopyableP",
+            "mangledName": "$ss8CopyableP"
           },
           {
             "kind": "Conformance",
@@ -4196,10 +4168,31 @@
           },
           {
             "kind": "Conformance",
-            "name": "__DefaultCustomPlaygroundQuickLookable",
-            "printedName": "__DefaultCustomPlaygroundQuickLookable",
-            "usr": "s:s38__DefaultCustomPlaygroundQuickLookableP",
-            "mangledName": "$ss38__DefaultCustomPlaygroundQuickLookableP"
+            "name": "CustomStringConvertible",
+            "printedName": "CustomStringConvertible",
+            "usr": "s:s23CustomStringConvertibleP",
+            "mangledName": "$ss23CustomStringConvertibleP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Equatable",
+            "printedName": "Equatable",
+            "usr": "s:SQ",
+            "mangledName": "$sSQ"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Escapable",
+            "printedName": "Escapable",
+            "usr": "s:s9EscapableP",
+            "mangledName": "$ss9EscapableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Hashable",
+            "printedName": "Hashable",
+            "usr": "s:SH",
+            "mangledName": "$sSH"
           },
           {
             "kind": "Conformance",
@@ -4214,6 +4207,13 @@
             "printedName": "SendableMetatype",
             "usr": "s:s16SendableMetatypeP",
             "mangledName": "$ss16SendableMetatypeP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "__DefaultCustomPlaygroundQuickLookable",
+            "printedName": "__DefaultCustomPlaygroundQuickLookable",
+            "usr": "s:s38__DefaultCustomPlaygroundQuickLookableP",
+            "mangledName": "$ss38__DefaultCustomPlaygroundQuickLookableP"
           }
         ]
       },
@@ -4516,38 +4516,10 @@
         "conformances": [
           {
             "kind": "Conformance",
-            "name": "Copyable",
-            "printedName": "Copyable",
-            "usr": "s:s8CopyableP",
-            "mangledName": "$ss8CopyableP"
-          },
-          {
-            "kind": "Conformance",
-            "name": "Escapable",
-            "printedName": "Escapable",
-            "usr": "s:s9EscapableP",
-            "mangledName": "$ss9EscapableP"
-          },
-          {
-            "kind": "Conformance",
-            "name": "Equatable",
-            "printedName": "Equatable",
-            "usr": "s:SQ",
-            "mangledName": "$sSQ"
-          },
-          {
-            "kind": "Conformance",
-            "name": "Hashable",
-            "printedName": "Hashable",
-            "usr": "s:SH",
-            "mangledName": "$sSH"
-          },
-          {
-            "kind": "Conformance",
-            "name": "CVarArg",
-            "printedName": "CVarArg",
-            "usr": "s:s7CVarArgP",
-            "mangledName": "$ss7CVarArgP"
+            "name": "_KeyValueCodingAndObserving",
+            "printedName": "_KeyValueCodingAndObserving",
+            "usr": "s:10Foundation27_KeyValueCodingAndObservingP",
+            "mangledName": "$s10Foundation27_KeyValueCodingAndObservingP"
           },
           {
             "kind": "Conformance",
@@ -4558,17 +4530,17 @@
           },
           {
             "kind": "Conformance",
-            "name": "_KeyValueCodingAndObserving",
-            "printedName": "_KeyValueCodingAndObserving",
-            "usr": "s:10Foundation27_KeyValueCodingAndObservingP",
-            "mangledName": "$s10Foundation27_KeyValueCodingAndObservingP"
+            "name": "CVarArg",
+            "printedName": "CVarArg",
+            "usr": "s:s7CVarArgP",
+            "mangledName": "$ss7CVarArgP"
           },
           {
             "kind": "Conformance",
-            "name": "CustomStringConvertible",
-            "printedName": "CustomStringConvertible",
-            "usr": "s:s23CustomStringConvertibleP",
-            "mangledName": "$ss23CustomStringConvertibleP"
+            "name": "Copyable",
+            "printedName": "Copyable",
+            "usr": "s:s8CopyableP",
+            "mangledName": "$ss8CopyableP"
           },
           {
             "kind": "Conformance",
@@ -4579,10 +4551,31 @@
           },
           {
             "kind": "Conformance",
-            "name": "__DefaultCustomPlaygroundQuickLookable",
-            "printedName": "__DefaultCustomPlaygroundQuickLookable",
-            "usr": "s:s38__DefaultCustomPlaygroundQuickLookableP",
-            "mangledName": "$ss38__DefaultCustomPlaygroundQuickLookableP"
+            "name": "CustomStringConvertible",
+            "printedName": "CustomStringConvertible",
+            "usr": "s:s23CustomStringConvertibleP",
+            "mangledName": "$ss23CustomStringConvertibleP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Equatable",
+            "printedName": "Equatable",
+            "usr": "s:SQ",
+            "mangledName": "$sSQ"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Escapable",
+            "printedName": "Escapable",
+            "usr": "s:s9EscapableP",
+            "mangledName": "$ss9EscapableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Hashable",
+            "printedName": "Hashable",
+            "usr": "s:SH",
+            "mangledName": "$sSH"
           },
           {
             "kind": "Conformance",
@@ -4597,6 +4590,13 @@
             "printedName": "SendableMetatype",
             "usr": "s:s16SendableMetatypeP",
             "mangledName": "$ss16SendableMetatypeP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "__DefaultCustomPlaygroundQuickLookable",
+            "printedName": "__DefaultCustomPlaygroundQuickLookable",
+            "usr": "s:s38__DefaultCustomPlaygroundQuickLookableP",
+            "mangledName": "$ss38__DefaultCustomPlaygroundQuickLookableP"
           }
         ]
       },
@@ -5512,38 +5512,10 @@
         "conformances": [
           {
             "kind": "Conformance",
-            "name": "Copyable",
-            "printedName": "Copyable",
-            "usr": "s:s8CopyableP",
-            "mangledName": "$ss8CopyableP"
-          },
-          {
-            "kind": "Conformance",
-            "name": "Escapable",
-            "printedName": "Escapable",
-            "usr": "s:s9EscapableP",
-            "mangledName": "$ss9EscapableP"
-          },
-          {
-            "kind": "Conformance",
-            "name": "Equatable",
-            "printedName": "Equatable",
-            "usr": "s:SQ",
-            "mangledName": "$sSQ"
-          },
-          {
-            "kind": "Conformance",
-            "name": "Hashable",
-            "printedName": "Hashable",
-            "usr": "s:SH",
-            "mangledName": "$sSH"
-          },
-          {
-            "kind": "Conformance",
-            "name": "CVarArg",
-            "printedName": "CVarArg",
-            "usr": "s:s7CVarArgP",
-            "mangledName": "$ss7CVarArgP"
+            "name": "_KeyValueCodingAndObserving",
+            "printedName": "_KeyValueCodingAndObserving",
+            "usr": "s:10Foundation27_KeyValueCodingAndObservingP",
+            "mangledName": "$s10Foundation27_KeyValueCodingAndObservingP"
           },
           {
             "kind": "Conformance",
@@ -5554,10 +5526,24 @@
           },
           {
             "kind": "Conformance",
-            "name": "_KeyValueCodingAndObserving",
-            "printedName": "_KeyValueCodingAndObserving",
-            "usr": "s:10Foundation27_KeyValueCodingAndObservingP",
-            "mangledName": "$s10Foundation27_KeyValueCodingAndObservingP"
+            "name": "CVarArg",
+            "printedName": "CVarArg",
+            "usr": "s:s7CVarArgP",
+            "mangledName": "$ss7CVarArgP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Copyable",
+            "printedName": "Copyable",
+            "usr": "s:s8CopyableP",
+            "mangledName": "$ss8CopyableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "CustomDebugStringConvertible",
+            "printedName": "CustomDebugStringConvertible",
+            "usr": "s:s28CustomDebugStringConvertibleP",
+            "mangledName": "$ss28CustomDebugStringConvertibleP"
           },
           {
             "kind": "Conformance",
@@ -5568,10 +5554,24 @@
           },
           {
             "kind": "Conformance",
-            "name": "CustomDebugStringConvertible",
-            "printedName": "CustomDebugStringConvertible",
-            "usr": "s:s28CustomDebugStringConvertibleP",
-            "mangledName": "$ss28CustomDebugStringConvertibleP"
+            "name": "Equatable",
+            "printedName": "Equatable",
+            "usr": "s:SQ",
+            "mangledName": "$sSQ"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Escapable",
+            "printedName": "Escapable",
+            "usr": "s:s9EscapableP",
+            "mangledName": "$ss9EscapableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Hashable",
+            "printedName": "Hashable",
+            "usr": "s:SH",
+            "mangledName": "$sSH"
           },
           {
             "kind": "Conformance",
@@ -5594,399 +5594,399 @@
   },
   "ConstValues": [
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/SeparatorDataSource.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt8\/BetterFontPicker\/BetterFontPicker\/SeparatorDataSource.swift",
       "kind": "StringLiteral",
       "offset": 255,
       "length": 2,
       "value": "\"\""
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/SeparatorDataSource.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt8\/BetterFontPicker\/BetterFontPicker\/SeparatorDataSource.swift",
       "kind": "BooleanLiteral",
       "offset": 301,
       "length": 4,
       "value": "true"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/SeparatorDataSource.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt8\/BetterFontPicker\/BetterFontPicker\/SeparatorDataSource.swift",
       "kind": "Array",
       "offset": 353,
       "length": 2,
       "value": "[]"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/SizePickerView.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt8\/BetterFontPicker\/BetterFontPicker\/SizePickerView.swift",
       "kind": "FloatLiteral",
       "offset": 552,
       "length": 4,
       "value": "12.0"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/SizePickerView.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt8\/BetterFontPicker\/BetterFontPicker\/SizePickerView.swift",
       "kind": "FloatLiteral",
       "offset": 835,
       "length": 4,
       "value": "54.0"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/SizePickerView.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt8\/BetterFontPicker\/BetterFontPicker\/SizePickerView.swift",
       "kind": "FloatLiteral",
       "offset": 849,
       "length": 4,
       "value": "27.0"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/SystemFontsDataSource.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt8\/BetterFontPicker\/BetterFontPicker\/SystemFontsDataSource.swift",
       "kind": "IntegerLiteral",
       "offset": 619,
       "length": 2,
       "value": "12"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/SystemFontsDataSource.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt8\/BetterFontPicker\/BetterFontPicker\/SystemFontsDataSource.swift",
       "kind": "StringLiteral",
       "offset": 1446,
       "length": 2,
       "value": "\"\""
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/SystemFontsDataSource.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt8\/BetterFontPicker\/BetterFontPicker\/SystemFontsDataSource.swift",
       "kind": "BooleanLiteral",
       "offset": 1675,
       "length": 5,
       "value": "false"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/SeparatorTableViewCell.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt8\/BetterFontPicker\/BetterFontPicker\/SeparatorTableViewCell.swift",
       "kind": "IntegerLiteral",
       "offset": 265,
       "length": 1,
       "value": "2"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/SeparatorTableViewCell.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt8\/BetterFontPicker\/BetterFontPicker\/SeparatorTableViewCell.swift",
       "kind": "IntegerLiteral",
       "offset": 300,
       "length": 1,
       "value": "8"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/SeparatorTableViewCell.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt8\/BetterFontPicker\/BetterFontPicker\/SeparatorTableViewCell.swift",
       "kind": "IntegerLiteral",
       "offset": 348,
       "length": 1,
       "value": "2"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/SystemFontClassifier.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt8\/BetterFontPicker\/BetterFontPicker\/SystemFontClassifier.swift",
       "kind": "StringLiteral",
       "offset": 274,
       "length": 31,
       "value": "\"SystemFontClassifierDidUpdate\""
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/SystemFontClassifier.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt8\/BetterFontPicker\/BetterFontPicker\/SystemFontClassifier.swift",
       "kind": "BooleanLiteral",
       "offset": 336,
       "length": 5,
       "value": "false"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/SystemFontClassifier.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt8\/BetterFontPicker\/BetterFontPicker\/SystemFontClassifier.swift",
       "kind": "Array",
       "offset": 375,
       "length": 2,
       "value": "[]"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/SystemFontClassifier.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt8\/BetterFontPicker\/BetterFontPicker\/SystemFontClassifier.swift",
       "kind": "Array",
       "offset": 410,
       "length": 2,
       "value": "[]"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/SystemFontClassifier.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt8\/BetterFontPicker\/BetterFontPicker\/SystemFontClassifier.swift",
       "kind": "Array",
       "offset": 466,
       "length": 2,
       "value": "[]"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/SystemFontClassifier.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt8\/BetterFontPicker\/BetterFontPicker\/SystemFontClassifier.swift",
       "kind": "Array",
       "offset": 520,
       "length": 2,
       "value": "[]"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/SystemFontClassifier.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt8\/BetterFontPicker\/BetterFontPicker\/SystemFontClassifier.swift",
       "kind": "StringLiteral",
       "offset": 575,
       "length": 28,
       "value": "\"com.iterm2.font-classifier\""
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/SystemFontClassifier.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt8\/BetterFontPicker\/BetterFontPicker\/SystemFontClassifier.swift",
       "kind": "BooleanLiteral",
       "offset": 642,
       "length": 5,
       "value": "false"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/RecentsDataSource.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt8\/BetterFontPicker\/BetterFontPicker\/RecentsDataSource.swift",
       "kind": "StringLiteral",
       "offset": 466,
       "length": 18,
       "value": "\"NoSyncBFPRecents\""
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/RecentsDataSource.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt8\/BetterFontPicker\/BetterFontPicker\/RecentsDataSource.swift",
       "kind": "IntegerLiteral",
       "offset": 512,
       "length": 1,
       "value": "4"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/RecentsDataSource.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt8\/BetterFontPicker\/BetterFontPicker\/RecentsDataSource.swift",
       "kind": "BooleanLiteral",
       "offset": 637,
       "length": 5,
       "value": "false"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/RecentsDataSource.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt8\/BetterFontPicker\/BetterFontPicker\/RecentsDataSource.swift",
       "kind": "StringLiteral",
       "offset": 742,
       "length": 2,
       "value": "\"\""
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/MenuButton.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt8\/BetterFontPicker\/BetterFontPicker\/MenuButton.swift",
       "kind": "StringLiteral",
       "offset": 2320,
       "length": 152,
       "value": "\"<\""
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/MenuButton.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt8\/BetterFontPicker\/BetterFontPicker\/MenuButton.swift",
       "kind": "StringLiteral",
       "offset": 2339,
       "length": 1,
       "value": "\": 0x\""
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/MenuButton.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt8\/BetterFontPicker\/BetterFontPicker\/MenuButton.swift",
       "kind": "StringLiteral",
       "offset": 2360,
       "length": 8,
       "value": "\"%016lx\""
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/MenuButton.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt8\/BetterFontPicker\/BetterFontPicker\/MenuButton.swift",
       "kind": "StringLiteral",
       "offset": 2396,
       "length": 5,
       "value": "\" child=\""
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/MenuButton.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt8\/BetterFontPicker\/BetterFontPicker\/MenuButton.swift",
       "kind": "StringLiteral",
       "offset": 2423,
       "length": 9,
       "value": "\" superview=\""
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/MenuButton.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt8\/BetterFontPicker\/BetterFontPicker\/MenuButton.swift",
       "kind": "StringLiteral",
       "offset": 2462,
       "length": 7,
       "value": "\"(nil)\""
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/MenuButton.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt8\/BetterFontPicker\/BetterFontPicker\/MenuButton.swift",
       "kind": "StringLiteral",
       "offset": 2470,
       "length": 1,
       "value": "\">\""
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/FavoritesDataSource.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt8\/BetterFontPicker\/BetterFontPicker\/FavoritesDataSource.swift",
       "kind": "StringLiteral",
       "offset": 643,
       "length": 20,
       "value": "\"NoSyncBFPFavorites\""
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/FavoritesDataSource.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt8\/BetterFontPicker\/BetterFontPicker\/FavoritesDataSource.swift",
       "kind": "BooleanLiteral",
       "offset": 828,
       "length": 5,
       "value": "false"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/FavoritesDataSource.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt8\/BetterFontPicker\/BetterFontPicker\/FavoritesDataSource.swift",
       "kind": "StringLiteral",
       "offset": 1832,
       "length": 2,
       "value": "\"\""
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/TableViewController.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt8\/BetterFontPicker\/BetterFontPicker\/TableViewController.swift",
       "kind": "StringLiteral",
       "offset": 988,
       "length": 6,
       "value": "\"star\""
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/TableViewController.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt8\/BetterFontPicker\/BetterFontPicker\/TableViewController.swift",
       "kind": "StringLiteral",
       "offset": 1070,
       "length": 11,
       "value": "\"checkmark\""
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/TableViewController.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt8\/BetterFontPicker\/BetterFontPicker\/TableViewController.swift",
       "kind": "StringLiteral",
       "offset": 1156,
       "length": 10,
       "value": "\"fontname\""
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/TableViewController.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt8\/BetterFontPicker\/BetterFontPicker\/TableViewController.swift",
       "kind": "BooleanLiteral",
       "offset": 1477,
       "length": 4,
       "value": "true"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/TableViewController.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt8\/BetterFontPicker\/BetterFontPicker\/TableViewController.swift",
       "kind": "Array",
       "offset": 1542,
       "length": 2,
       "value": "[]"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/TableViewController.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt8\/BetterFontPicker\/BetterFontPicker\/TableViewController.swift",
       "kind": "StringLiteral",
       "offset": 2650,
       "length": 2,
       "value": "\"\""
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/FontPickerPanel.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt8\/BetterFontPicker\/BetterFontPicker\/FontPickerPanel.swift",
       "kind": "BooleanLiteral",
       "offset": 276,
       "length": 4,
       "value": "true"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/StarTableViewCell.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt8\/BetterFontPicker\/BetterFontPicker\/StarTableViewCell.swift",
       "kind": "IntegerLiteral",
       "offset": 413,
       "length": 2,
       "value": "26"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/StarTableViewCell.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt8\/BetterFontPicker\/BetterFontPicker\/StarTableViewCell.swift",
       "kind": "StringLiteral",
       "offset": 516,
       "length": 11,
       "value": "\"EmptyStar\""
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/StarTableViewCell.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt8\/BetterFontPicker\/BetterFontPicker\/StarTableViewCell.swift",
       "kind": "StringLiteral",
       "offset": 632,
       "length": 12,
       "value": "\"FilledStar\""
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/StarTableViewCell.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt8\/BetterFontPicker\/BetterFontPicker\/StarTableViewCell.swift",
       "kind": "IntegerLiteral",
       "offset": 704,
       "length": 1,
       "value": "0"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/StarTableViewCell.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt8\/BetterFontPicker\/BetterFontPicker\/StarTableViewCell.swift",
       "kind": "IntegerLiteral",
       "offset": 764,
       "length": 1,
       "value": "0"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/StarTableViewCell.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt8\/BetterFontPicker\/BetterFontPicker\/StarTableViewCell.swift",
       "kind": "BooleanLiteral",
       "offset": 1017,
       "length": 5,
       "value": "false"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/FontPickerCompositeView.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt8\/BetterFontPicker\/BetterFontPicker\/FontPickerCompositeView.swift",
       "kind": "Array",
       "offset": 702,
       "length": 2,
       "value": "[]"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/FontPickerCompositeView.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt8\/BetterFontPicker\/BetterFontPicker\/FontPickerCompositeView.swift",
       "kind": "IntegerLiteral",
       "offset": 1321,
       "length": 10,
       "value": "1"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/FontFamilyMemberPickerView.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt8\/BetterFontPicker\/BetterFontPicker\/FontFamilyMemberPickerView.swift",
       "kind": "Array",
       "offset": 1097,
       "length": 2,
       "value": "[]"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/FontFamilyMemberPickerView.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt8\/BetterFontPicker\/BetterFontPicker\/FontFamilyMemberPickerView.swift",
       "kind": "IntegerLiteral",
       "offset": 1602,
       "length": 1,
       "value": "4"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/FontFamilyMemberPickerView.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt8\/BetterFontPicker\/BetterFontPicker\/FontFamilyMemberPickerView.swift",
       "kind": "IntegerLiteral",
       "offset": 1709,
       "length": 1,
       "value": "0"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/FontFamilyMemberPickerView.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt8\/BetterFontPicker\/BetterFontPicker\/FontFamilyMemberPickerView.swift",
       "kind": "IntegerLiteral",
       "offset": 1825,
       "length": 1,
       "value": "1"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/FontFamilyMemberPickerView.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt8\/BetterFontPicker\/BetterFontPicker\/FontFamilyMemberPickerView.swift",
       "kind": "IntegerLiteral",
       "offset": 1936,
       "length": 1,
       "value": "2"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/FontFamilyMemberPickerView.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt8\/BetterFontPicker\/BetterFontPicker\/FontFamilyMemberPickerView.swift",
       "kind": "IntegerLiteral",
       "offset": 2049,
       "length": 1,
       "value": "3"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/FontFamilyMemberPickerView.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt8\/BetterFontPicker\/BetterFontPicker\/FontFamilyMemberPickerView.swift",
       "kind": "StringLiteral",
       "offset": 2538,
       "length": 2,
       "value": "\"\""
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/BetterFontPicker\/BetterFontPicker\/MainViewController.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt8\/BetterFontPicker\/BetterFontPicker\/MainViewController.swift",
       "kind": "IntegerLiteral",
       "offset": 306,
       "length": 4,

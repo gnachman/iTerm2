@@ -8,6 +8,27 @@
 import Foundation
 
 private let kWindowNameFormat = "iTerm Window %d"
+private let kProfileWindowNameFormat = "iTerm Profile %@ %d"
+
+/// Allocates sequential numbers scoped to a string key (e.g., profile GUID).
+private class PerKeyNumberAllocator {
+    static let shared = PerKeyNumberAllocator()
+    private var allocated = [String: Set<Int32>]()
+
+    func allocate(forKey key: String) -> Int32 {
+        let used = allocated[key, default: []]
+        var n: Int32 = 0
+        while used.contains(n) {
+            n += 1
+        }
+        allocated[key, default: []].insert(n)
+        return n
+    }
+
+    func deallocate(_ n: Int32, forKey key: String) {
+        allocated[key]?.remove(n)
+    }
+}
 
 @objc(iTermWindowInitialPositionerDelegate)
 @MainActor
@@ -24,16 +45,34 @@ protocol WindowInitialPositionerDelegate: AnyObject {
 class WindowInitialPositioner: NSObject {
     // MARK: - State
 
-    /// Unique window identifier for autosave frame storage (allocated lazily on first access)
+    /// Profile GUID used as key for per-profile autosave frames
+    private let profileGUID: String
+
+    /// Unique window identifier within a profile for autosave frame storage (allocated lazily)
     private var _uniqueNumber: Int32?
-    @objc var uniqueNumber: Int32 {
+    private var uniqueNumber: Int32 {
         if let num = _uniqueNumber {
             return num
         }
-        let num = TemporaryNumberAllocator.sharedInstance().allocateNumber()
+        let num = PerKeyNumberAllocator.shared.allocate(forKey: profileGUID)
         _uniqueNumber = num
         return num
     }
+
+    /// Global number for legacy migration lookups (allocated lazily)
+    private var _globalNumber: Int32?
+    private var globalNumber: Int32 {
+        if let num = _globalNumber {
+            return num
+        }
+        let num = TemporaryNumberAllocator.sharedInstance().allocateNumber()
+        _globalNumber = num
+        return num
+    }
+
+    /// Tracks whether load used a legacy value, so save knows to clean it up.
+    private var loadedLegacyFrame = false
+    private var loadedLegacyPosition = false
 
     /// Initial position preference from profile/screen
     @objc var preferredOrigin: NSPoint = .zero
@@ -65,18 +104,23 @@ class WindowInitialPositioner: NSObject {
 
     // MARK: - Initialization
 
-    @objc(initWithScreenNumberFromFirstProfile:disableAutoFrame:delegate:)
+    @objc(initWithScreenNumberFromFirstProfile:disableAutoFrame:profileGUID:delegate:)
     init(screenNumberFromFirstProfile: Int32,
          disableAutoFrame: Bool,
+         profileGUID: String,
          delegate: WindowInitialPositionerDelegate) {
         self.screenNumberFromFirstProfile = screenNumberFromFirstProfile
         self.disableAutoFrame = disableAutoFrame
+        self.profileGUID = profileGUID
         self.delegate = delegate
         super.init()
     }
 
     deinit {
         if let num = _uniqueNumber {
+            PerKeyNumberAllocator.shared.deallocate(num, forKey: profileGUID)
+        }
+        if let num = _globalNumber {
             TemporaryNumberAllocator.sharedInstance().deallocateNumber(num)
         }
     }
@@ -129,6 +173,7 @@ class WindowInitialPositioner: NSObject {
                 DLog("Move window to preferred origin because it moved to another screen.")
                 window.setFrameOrigin(preferredOrigin)
             }
+            delegate?.canonicalize()
 
         case .position:
             DLog("Restoring position")
@@ -162,8 +207,13 @@ class WindowInitialPositioner: NSObject {
         var positions = savedWindowPositions
         var point = window.frame.origin
         point.y += window.frame.size.height
-        DLog("saveWindowPosition: uniqueNumber=\(uniqueNumber) point=\(NSStringFromPoint(point))")
-        positions[String(uniqueNumber)] = NSStringFromPoint(point)
+        let key = "\(profileGUID) \(uniqueNumber)"
+        DLog("saveWindowPosition: key=\(key) point=\(NSStringFromPoint(point))")
+        positions[key] = NSStringFromPoint(point)
+        if loadedLegacyPosition {
+            positions.removeValue(forKey: String(globalNumber))
+            loadedLegacyPosition = false
+        }
         iTermUserDefaults.userDefaults().set(positions, forKey: kPreferenceKeySavedWindowPositions)
     }
 
@@ -174,9 +224,15 @@ class WindowInitialPositioner: NSObject {
             DLog("saveFrame: no window")
             return
         }
-        let name = String(format: kWindowNameFormat, uniqueNumber)
+        let name = String(format: kProfileWindowNameFormat, profileGUID, uniqueNumber)
         DLog("saveFrame: name=\(name) frame=\(NSStringFromRect(window.frame))")
         window.saveFrame(usingName: name)
+
+        if loadedLegacyFrame {
+            let legacyName = String(format: kWindowNameFormat, globalNumber)
+            NSWindow.removeFrame(usingName: legacyName)
+            loadedLegacyFrame = false
+        }
     }
 
     /// Clears the screen anchor, allowing the window to move freely between screens.
@@ -222,8 +278,19 @@ class WindowInitialPositioner: NSObject {
         guard let window = delegate?.windowForPositioner else { return }
 
         var frame = window.frame
-        let name = String(format: kWindowNameFormat, uniqueNumber)
-        let hadAutoSaveFrame = window.setFrameUsingName(name)
+        let name = String(format: kProfileWindowNameFormat, profileGUID, uniqueNumber)
+        var hadAutoSaveFrame = window.setFrameUsingName(name)
+
+        if !hadAutoSaveFrame {
+            // Migration: try loading from old number-based format using global number.
+            DLog("No per-profile frame, trying legacy format")
+            let legacyName = String(format: kWindowNameFormat, globalNumber)
+            if window.setFrameUsingName(legacyName) {
+                DLog("Migrated from legacy frame \(legacyName)")
+                loadedLegacyFrame = true
+                hadAutoSaveFrame = true
+            }
+        }
 
         if hadAutoSaveFrame {
             DLog("Autosave frame restored (possibly asynchronously! good luck)")
@@ -286,8 +353,19 @@ class WindowInitialPositioner: NSObject {
 
         var frame = window.frame
         let positions = savedWindowPositions
-        DLog("loadAutoSavePosition: uniqueNumber=\(uniqueNumber) positions=\(positions)")
-        if let position = positions[String(uniqueNumber)] {
+        let key = "\(profileGUID) \(uniqueNumber)"
+        DLog("loadAutoSavePosition: key=\(key) positions=\(positions)")
+        // Try per-profile key first, then fall back to legacy number-based key for migration.
+        let position: String?
+        if let p = positions[key] {
+            position = p
+        } else if let p = positions[String(globalNumber)] {
+            position = p
+            loadedLegacyPosition = true
+        } else {
+            position = nil
+        }
+        if let position {
             let point = NSPointFromString(position)
             DLog("loadAutoSavePosition: found saved position \(NSStringFromPoint(point))")
             if canonicalizeAfterPositioning, let screen = NSScreen(containingCoordinate: point) {

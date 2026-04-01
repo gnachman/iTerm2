@@ -51,9 +51,8 @@ For the bleeding edge without building, try the [nightly build](https://iterm2.c
 
 #### Prerequisites
 
-- The most recent version of Xcode (with Command Line Tools). You can minimize suffering by using the same Xcode that is in the file `last-xcode-version`.
-- [Homebrew](https://brew.sh/)
-- [Rustup](https://rustup.rs)
+- No manual prerequisites. `make setup` will install [Homebrew](https://brew.sh/), Xcode,
+  Rust, and all other dependencies, prompting for confirmation before each privileged step.
 
 #### Clone
 
@@ -67,9 +66,38 @@ git clone https://github.com/gnachman/iTerm2.git
 make setup
 ```
 
-This installs Homebrew dependencies (cmake, pkg-config, python3, etc.), SF Symbols, Rust cross-compilation support, downloads the Metal Toolchain, initializes submodules, and compiles third-party libraries (OpenSSL, libsixel, libgit2, Sparkle, etc.) inside a sandbox.
+`make setup` is interactive and will prompt for confirmation before any privileged or
+security-sensitive operation. It performs the following steps:
 
-Re-run `make paranoid-deps` whenever your active Xcode version changes — the file `last-xcode-version` tracks which version was last used.
+- **Homebrew** -- Installs [Homebrew](https://brew.sh/) via its official install script
+  if not already present. Prompts before running the installer (which requires sudo).
+- **Xcode** -- If no Xcode is selected via `xcode-select`, installs
+  [xcodes](https://github.com/XcodesOrg/xcodes) (via Homebrew) and
+  [aria2](https://aria2.github.io/) (for faster downloads), then either selects an
+  existing `/Applications/Xcode*.app` or downloads the latest Xcode automatically.
+  Prompts before running `sudo xcode-select` and before accepting the Xcode license.
+- **Rust** -- Installs [rustup](https://rustup.rs) via the official `curl | sh`
+  installer if not already present. Prompts before executing the script.
+- **Homebrew packages** -- Installs cmake, pkg-config, automake, perl, and python3 if
+  missing. If `brew link python@3` would overwrite existing symlinks, prompts for
+  confirmation before proceeding.
+- **SF Symbols** -- Installs the SF Symbols cask (a `.pkg` installer that requires
+  sudo). Prompts before attempting the install; continues without it if declined.
+- **Python/Rust packages** -- Installs pyobjc (via pip) and cbindgen (via cargo) if not
+  already present.
+- **Submodules and toolchains** -- Initializes git submodules, adds the x86_64 Rust
+  target, and downloads the Metal toolchain.
+
+To skip all confirmation prompts, use `make dangerous-setup` instead.
+
+After setup, compile native dependencies and build:
+
+```bash
+make paranoid-deps   # compile OpenSSL, libsixel, libgit2, Sparkle, etc. (sandboxed)
+make                 # build iTerm2
+```
+
+Re-run `make paranoid-deps` whenever your active Xcode version changes -- the file `last-xcode-version` tracks which version was last used.
 
 #### Build
 

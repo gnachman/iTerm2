@@ -401,6 +401,30 @@ static inline BOOL BackgroundColorsEqual(const screen_char_t a,
     }
 }
 
+// Returns true iff all fields written by CopyForegroundColor and CopyBackgroundColor are equal (aside from unused).
+static inline BOOL ScreenCharFGBGEqual(const screen_char_t a, const screen_char_t b) {
+    return (a.foregroundColor == b.foregroundColor &&
+            a.fgGreen == b.fgGreen &&
+            a.fgBlue == b.fgBlue &&
+            a.foregroundColorMode == b.foregroundColorMode &&
+            a.bold == b.bold &&
+            a.faint == b.faint &&
+            a.italic == b.italic &&
+            a.blink == b.blink &&
+            a.invisible == b.invisible &&
+            a.underline == b.underline &&
+            ScreenCharGetUnderlineStyle(a) == ScreenCharGetUnderlineStyle(b) &&
+            a.strikethrough == b.strikethrough &&
+            a.image == b.image &&
+            a.virtualPlaceholder == b.virtualPlaceholder &&
+            a.inverse == b.inverse &&
+            a.guarded == b.guarded &&
+            a.backgroundColor == b.backgroundColor &&
+            a.bgGreen == b.bgGreen &&
+            a.bgBlue == b.bgBlue &&
+            a.backgroundColorMode == b.backgroundColorMode);
+}
+
 static inline BOOL ScreenCharHasDefaultAttributesAndColors(const screen_char_t s,
                                                            unsigned int urlCode) {
     return (s.backgroundColor == ALTSEM_DEFAULT &&

@@ -436,9 +436,6 @@ iTermCommandInfoViewControllerDelegate>
     if (VT100GridCoordEquals(coord, VT100GridCoordInvalid)) {
         return NO;
     }
-    if (![iTermPreferences boolForKey:kPreferenceKeyCmdClickOpensURLs]) {
-        return NO;
-    }
     if (coord.y < 0) {
         return NO;
     }
@@ -493,6 +490,13 @@ iTermCommandInfoViewControllerDelegate>
         DLog(@"No action: remove underline");
         [self removeUnderline];
         [self updateCursor:event action:action];
+        return;
+    }
+    if (![iTermPreferences boolForKey:kPreferenceKeyCmdClickOpensURLs] &&
+        action.actionType != kURLActionSmartSelectionAction) {
+        DLog(@"Cmd-click opens URLs is off and action is not a smart selection action; remove underline");
+        [self removeUnderline];
+        [self updateCursor:event action:nil];
         return;
     }
     DLog(@"There is an action");
@@ -2765,7 +2769,9 @@ toggleAnimationOfImage:(id<iTermImageInfoReading>)imageInfo {
     for (SearchResult *result in results) {
         VT100GridCoordRange range = VT100GridCoordRangeFromAbsCoordRange(result.internalAbsCoordRange,
                                                                          self.dataSource.totalScrollbackOverflow);
-        VT100GridWindowedRange windowedRange = VT100GridWindowedRangeMake(range, 0, 0);
+        VT100GridWindowedRange windowedRange = VT100GridWindowedRangeMake(range,
+                                                                          result.logicalWindow.location,
+                                                                          result.logicalWindow.length);
         NSString *content = [extractor contentInRange:windowedRange
                                     attributeProvider:nil
                                            nullPolicy:kiTermTextExtractorNullPolicyTreatAsSpace

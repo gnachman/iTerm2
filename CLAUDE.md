@@ -19,3 +19,7 @@
 - Don't include AI-generated markdown files (summaries, plans, etc.) in commits — only ship code.
 - Avoid duplicate expressions; hoist shared computations into a named `const` before branching.
 - Don't change defaults silently.
+- Use [iTermUserDefaults userDefaults] instead of [NSUserDefaults standardUserDefaults]
+- Use `make run` to build and run a debug build.
+- Do not use associated objects (objc_getAssociatedObject or objc_setAssociatedObject) without express written permission.
+- You should treat warnings as errors.

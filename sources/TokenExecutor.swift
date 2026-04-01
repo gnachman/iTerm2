@@ -150,12 +150,13 @@ class TokenExecutor: NSObject {
                   highPriority: false)
     }
 
-    private static let addTokensTimingStats: TimingStats = {
-        TimingStats(name: "TokenExecutor")
+    private static let parserTimingStats: TimingStats = {
+        TimingStats(name: "Parser thread")
     }()
     // Flip this to true to measure how much time the TaskNotifier thread spends busy (reading,
-    // parsing, and in select()) vs idle (blocked on TokenExecutor's semaphore).
-    private let enableTimingStats = false
+    // parsing, and in select()) vs idle (blocked on TokenExecutor's semaphore), and how much
+    // time the mutation thread spends busy (executing tokens) vs idle (waiting for tokens).
+    static let enableTimingStats = false
 
     // This takes ownership of vector.
     // You can call this on any queue when not high priority.
@@ -185,12 +186,12 @@ class TokenExecutor: NSObject {
         }
         // Normal code path for tokens from PTY. Use the semaphore to give backpressure to reading.
         let semaphore = self.semaphore
-        if enableTimingStats {
-            TokenExecutor.addTokensTimingStats.recordEnd()
+        if TokenExecutor.enableTimingStats {
+            TokenExecutor.parserTimingStats.recordEnd()
         }
         _ = semaphore.wait(timeout: .distantFuture)
-        if enableTimingStats {
-            TokenExecutor.addTokensTimingStats.recordStart()
+        if TokenExecutor.enableTimingStats {
+            TokenExecutor.parserTimingStats.recordStart()
         }
         reallyAddTokens(vector,
                         lengthTotal: lengthTotal,
@@ -325,6 +326,9 @@ private class TokenExecutorImpl {
     private let throughputEstimator = iTermThroughputEstimator(historyOfDuration: 5.0 / 30.0,
                                                                secondsPerBucket: 1.0 / 30.0)
     private var commit = true
+    private static let mutationTimingStats: TimingStats = {
+        TimingStats(name: "Mutation thread")
+    }()
     // Access on mutation queue only
     private(set) var isExecutingToken = false
     weak var delegate: TokenExecutorDelegate?
@@ -560,10 +564,16 @@ private class TokenExecutorImpl {
 #if DEBUG
         assertQueue()
 #endif
+        if TokenExecutor.enableTimingStats {
+            Self.mutationTimingStats.recordStart()
+        }
         executingCount += 1
         defer {
             executingCount -= 1
             executeHighPriorityTasks()
+            if TokenExecutor.enableTimingStats {
+                Self.mutationTimingStats.recordEnd()
+            }
         }
         executeHighPriorityTasks()
         guard let delegate = delegate else {

@@ -10,6 +10,12 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
+// Suffix appended to a child record's key in implicitDictionaryValue to inject
+// the record's generation into the resulting dictionary. Consumers can use
+// [key stringByAppendingString:iTermEncoderGraphRecordGenerationKeySuffix]
+// to look up the generation for a child that was converted to a property list.
+extern NSString *const iTermEncoderGraphRecordGenerationKeySuffix;
+
 @class iTermChangeTrackingDictionary;
 @class iTermGraphDatabase;
 

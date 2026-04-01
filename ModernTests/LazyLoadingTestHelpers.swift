@@ -11,7 +11,7 @@ import Foundation
 // MARK: - MockiTermLargeContentProvider
 
 /// Mock implementation of LargeContentProvider for testing lazy loading behavior.
-@objc class MockiTermLargeContentProvider: NSObject, LargeContentProvider {
+@objc class MockiTermLargeContentProvider: NSObject, iTermLargeContentProvider {
     /// Number of times loadLargeContent was called
     var loadCallCount = 0
 
@@ -157,7 +157,7 @@ extension GraphDatabaseTestHelpers {
 
     /// Creates metadata that would be returned for lazy loading
     static func createLazyMetadata(rowid: NSNumber) -> [AnyHashable: Any] {
-        return iTermLargeContentMetadata.metadata(forRowID: rowid) as! [AnyHashable: Any]
+        return iTermLargeContentMetadata.metadata(forRowID: rowid)
     }
 
     /// Verify that metadata is valid lazy loading metadata

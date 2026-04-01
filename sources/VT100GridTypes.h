@@ -867,4 +867,15 @@ NS_INLINE VT100GridCoordRange VT100GridCoordRangeConvexHull(VT100GridCoordRange 
     return VT100GridCoordRangeMake(0, range.start.y, width, range.end.y);
 }
 
+// Helpers for invoking ObjC blocks with C struct params from Swift,
+// where as?-casting the block to a Swift closure type fails.
+VT100GridCoord VT100GridCoordByInvokingConverter(id _Nonnull converter,
+                                                  VT100GridCoord coord);
+VT100GridAbsCoord VT100GridAbsCoordByInvokingConverter(id _Nonnull converter,
+                                                        VT100GridAbsCoord coord);
+@protocol IntervalTreeImmutableObject;
+VT100GridAbsCoordRange VT100GridAbsCoordRangeByInvokingIntervalConverter(
+    id _Nonnull converter,
+    id<IntervalTreeImmutableObject> _Nonnull obj);
+
 NS_ASSUME_NONNULL_END

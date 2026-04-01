@@ -10,7 +10,16 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-@protocol iTermLargeContentProvider;
+/// Protocol for fetching large content data on demand.
+/// iTermGraphDatabase conforms to this protocol.
+@protocol iTermLargeContentProvider <NSObject>
+
+/// Load large content data for a given metadata dictionary.
+/// @param metadata Dictionary containing rowid and other info needed to fetch data.
+/// @return The large content dictionary, or nil if unavailable.
+- (NSDictionary * _Nullable)loadLargeContentWithMetadata:(NSDictionary *)metadata;
+
+@end
 
 /// Protocol for interval tree objects that support split encoding.
 /// Objects conforming to this protocol can have their large data stored separately

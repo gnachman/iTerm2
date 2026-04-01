@@ -813,7 +813,7 @@ static NSBitmapImageRep * iTermCreateBitmapRep(NSSize size,
 
 // Assumes premultiplied alpha and little endian. Floating point must be 16 bit.
 - (MTLPixelFormat)metalPixelFormat {
-    const MTLPixelFormat unsupportedFormatsMask = (NSBitmapFormatAlphaNonpremultiplied |
+    const NSBitmapFormat unsupportedFormatsMask = (NSBitmapFormatAlphaNonpremultiplied |
                                                    NSBitmapFormatSixteenBitBigEndian |
                                                    NSBitmapFormatThirtyTwoBitBigEndian |
                                                    NSBitmapFormatThirtyTwoBitLittleEndian |

@@ -4,6 +4,16 @@
 #import "VT100TerminalDelegate.h"
 #import "VT100Token.h"
 
+@protocol iTermWidthSavingMark;
+
+typedef NS_ENUM(NSInteger, iTermLinesShiftedReason) {
+    iTermLinesShiftedReasonFold,
+    iTermLinesShiftedReasonUnfold,
+    iTermLinesShiftedReasonPortholeAdded,
+    iTermLinesShiftedReasonPortholeRemoved,
+    iTermLinesShiftedReasonPortholeResized
+};
+
 @class ParsedSSHOutput;
 @protocol Porthole;
 @class Trigger;
@@ -230,6 +240,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionResizePermission) {
 
 // PTYTextView deselect
 - (void)screenRemoveSelection;
+- (void)screenDidClearFromAbsoluteLineToEnd:(long long)absY;
 - (void)screenMoveSelectionUpBy:(int)n
                        inRegion:(VT100GridRect)region;
 
@@ -464,6 +475,20 @@ typedef NS_ENUM(NSUInteger, PTYSessionResizePermission) {
 - (void)screenReportWindowTitle;
 - (void)screenSetPointerShape:(NSString * _Nonnull)pointerShape;
 - (void)screenFoldRange:(NSRange)range;
+// Called when lines are inserted or removed (fold/unfold/porthole resize).
+// delta is positive when lines are inserted, negative when removed.
+// mark is the fold mark or porthole mark associated with the change, or nil.
+// reason indicates what caused the shift.
+// replacedRange is the absolute line range that was replaced (before the shift).
+// converter takes a VT100GridCoord relative to the start of the replaced range
+// in the old layout and returns the corresponding coord in the new layout.
+// Returns (-1,-1) if the coord can't be converted.
+- (void)screenDidShiftLinesAtAbsLine:(long long)absLine
+                                  by:(long long)delta
+                                mark:(id<iTermWidthSavingMark> _Nullable)mark
+                              reason:(iTermLinesShiftedReason)reason
+                       replacedRange:(NSRange)replacedRange
+                           converter:(VT100GridCoord (^ _Nonnull)(VT100GridCoord))converter;
 - (void)screenStatPath:(NSString * _Nonnull)path
                  queue:(dispatch_queue_t _Nonnull)queue
             completion:(void (^ _Nonnull)(int32_t, const struct stat * _Nonnull))completion;
@@ -471,5 +496,6 @@ typedef NS_ENUM(NSUInteger, PTYSessionResizePermission) {
 - (void)screenExecDidFail;
 - (BOOL)screenOffscreenCommandLineShouldBeVisibleForCurrentCommand;
 - (void)screenUpdateBlock:(NSString * _Nonnull)blockID action:(iTermUpdateBlockAction)action;
+- (void)screenResizeResilientCoordinates:(VT100GridAbsCoord(^ _Nonnull)(VT100GridAbsCoord))convert;
 
 @end

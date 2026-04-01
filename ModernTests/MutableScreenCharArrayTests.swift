@@ -102,7 +102,7 @@ final class MutableScreenCharArrayTests: XCTestCase {
 
         // Clean up: release msca's hold on eaIndex2 by setting metadata without external attributes
         autoreleasepool {
-            var emptyMetadata = iTermMetadataDefault()
+            let emptyMetadata = iTermMetadataDefault()
             msca.setMetadata(emptyMetadata)
             iTermMetadataRelease(emptyMetadata)
         }
@@ -118,7 +118,7 @@ final class MutableScreenCharArrayTests: XCTestCase {
         msca.append("AB", fg: style, bg: style)
 
         // Start with empty metadata
-        var emptyMetadata = iTermMetadataDefault()
+        let emptyMetadata = iTermMetadataDefault()
         msca.setMetadata(emptyMetadata)
         iTermMetadataRelease(emptyMetadata)
 
@@ -160,7 +160,7 @@ final class MutableScreenCharArrayTests: XCTestCase {
         for i in 0..<5 {
             autoreleasepool {
                 let eaIndex = iTermExternalAttributeIndex()
-                weak var weakEa = eaIndex
+                weak let weakEa = eaIndex
                 weakRefs.append({ weakEa })
 
                 let ea = iTermExternalAttribute(

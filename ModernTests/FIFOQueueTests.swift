@@ -301,7 +301,7 @@ class FIFOQueueTests: XCTestCase {
         XCTAssertEqual(queue.dequeue(), .some(1))
         XCTAssertEqual(queue.dequeue(), .some(nil))
         XCTAssertEqual(queue.dequeue(), .some(3))
-        XCTAssertNil(queue.dequeue())
+        XCTAssertNil(queue.dequeue() as Any?)
     }
 
     // MARK: - Description

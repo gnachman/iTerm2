@@ -308,7 +308,7 @@ final class IntervalTreeCoordinateClampingTests: XCTestCase {
         // Verify interval tree is valid
         var intervalValid = true
         screen.performBlock(joinedThreads: { _, mutableState, _ in
-            for obj in screen.immutableState.intervalTree.allObjects() ?? [] {
+            for obj in screen.immutableState.intervalTree.allObjects() {
                 if let ito = obj as? (any IntervalTreeObject),
                    let entry = ito.entry {
                     if entry.interval.limit < 0 || entry.interval.location < 0 {
@@ -425,7 +425,7 @@ final class IntervalTreeCoordinateClampingTests: XCTestCase {
         // Verify the interval is valid
         var intervalValid = true
         screen.performBlock(joinedThreads: { _, mutableState, _ in
-            for obj in screen.immutableState.intervalTree.allObjects() ?? [] {
+            for obj in screen.immutableState.intervalTree.allObjects() {
                 if let ito = obj as? (any IntervalTreeObject),
                    let entry = ito.entry {
                     if entry.interval.limit < 0 || entry.interval.location < 0 {
@@ -467,7 +467,7 @@ final class IntervalTreeCoordinateClampingTests: XCTestCase {
         var intervalValid = true
         var noteY: Int32 = -1
         screen.performBlock(joinedThreads: { _, mutableState, _ in
-            for obj in screen.immutableState.intervalTree.allObjects() ?? [] {
+            for obj in screen.immutableState.intervalTree.allObjects() {
                 if let ito = obj as? (any IntervalTreeObject),
                    let entry = ito.entry {
                     if entry.interval.limit < 0 || entry.interval.location < 0 {

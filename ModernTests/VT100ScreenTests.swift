@@ -1611,7 +1611,19 @@ class FakeSession: NSObject, VT100ScreenDelegate {
     func screenFold(_ range: NSRange) {
 
     }
-    
+
+    func screenDidShiftLines(atAbsLine absLine: Int64, by delta: Int64, mark: (any iTermWidthSavingMark)?, reason: iTermLinesShiftedReason, replacedRange: NSRange, converter: @escaping (VT100GridCoord) -> VT100GridCoord) {
+
+    }
+
+    func screenDidClearFromAbsoluteLine(toEnd absY: Int64) {
+
+    }
+
+    func screenResizeResilientCoordinates(_ convert: @escaping (VT100GridAbsCoord) -> VT100GridAbsCoord) {
+
+    }
+
     func screenStatPath(_ path: String, queue: dispatch_queue_t, completion: @escaping (Int32, UnsafePointer<stat>) -> Void) {
         var s = stat()
         completion(0, &s)
@@ -2289,7 +2301,7 @@ class FakeSession: NSObject, VT100ScreenDelegate {
 
     func screenExecDidFail() {
     }
-    func screenSetProfileProperties(_ dict: [AnyHashable : Any]!) {
+    func screenSetProfileProperties(_ dict: [AnyHashable : Any]) {
     }
 
     func triggerSessionSetBufferInput(_ shouldBuffer: Bool) {
@@ -2299,7 +2311,7 @@ class FakeSession: NSObject, VT100ScreenDelegate {
         return false
     }
 
-    func screenUpdateBlock(_ blockID: String?, action: iTermUpdateBlockAction) {
+    func screenUpdateBlock(_ blockID: String, action: iTermUpdateBlockAction) {
     }
 
     func screenPollLocalDirectoryOnly() {

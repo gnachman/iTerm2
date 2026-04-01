@@ -155,7 +155,7 @@
         promptLength:(NSInteger)promptLength
           blockMarks:(NSDictionary<NSString *, iTermRange *> *)blockMarks;
 - (NSDictionary<NSString *, iTermRange *> *)blockMarkDictionaryOnLine:(long long)y;
-- (BOOL)removeFoldsInRange:(NSRange)absRange;
+- (BOOL)removeFoldsInRange:(NSRange)absRange completion:(void (^)(BOOL))completion;
 - (NSIndexSet *)foldsInRange:(VT100GridRange)range;
 - (NSArray<id<iTermFoldMarkReading>> *)foldMarksInRange:(VT100GridRange)range;
 

@@ -23,6 +23,7 @@
 #import "PTYTabView.h"
 #import "PTYWindow.h"
 #import "iTermAdvancedSettingsModel.h"
+#import "iTerm2SharedARC-Swift.h"
 #import "iTermApplication.h"
 #import "iTermDragHandleView.h"
 #import "iTermFakeWindowTitleLabel.h"
@@ -52,6 +53,10 @@ const NSInteger iTermRootTerminalViewWindowNumberLabelWidth = 40;
 static const CGFloat kMinimumToolbeltSizeInPoints = 100;
 static const CGFloat kMinimumToolbeltSizeAsFractionOfWindow = 0.05;
 static const CGFloat kMaximumToolbeltSizeAsFractionOfWindow = 0.5;
+
+static const CGFloat iTermCompactProxyIconSize = 16;
+static const CGFloat iTermCompactProxyIconLeftMargin = 4;
+static const CGFloat iTermCompactProxyIconRightMargin = 2;
 
 typedef struct {
     CGFloat top;
@@ -161,6 +166,7 @@ NS_CLASS_AVAILABLE_MAC(10_14)
     iTermImageView *_backgroundImage NS_AVAILABLE_MAC(10_14);
     NSView *_workaroundView;  // 10.14 only. See issue 8701.
     iTermLayerBackedSolidColorView *_notchMask NS_AVAILABLE_MAC(12_0);
+    iTermCompactProxyIconView *_compactProxyIconView;
 }
 
 - (instancetype)initWithFrame:(NSRect)frameRect
@@ -604,7 +610,7 @@ NS_CLASS_AVAILABLE_MAC(10_14)
             shift = 1;  // Move down by 3 points on macOS 26 for minimal theme
         }
     }
-    NSRect rect = NSMakeRect(NSMaxX(standardButtonsFrame) + iTermRootTerminalViewWindowNumberLabelMargin,
+    NSRect rect = NSMakeRect(NSMaxX(standardButtonsFrame) + [self compactProxyIconWidthIncludingMargin] + iTermRootTerminalViewWindowNumberLabelMargin,
                              myHeight - tabBarHeight + (tabBarHeight - capHeight) / 2.0 - baselineOffset - shift,
                              iTermRootTerminalViewWindowNumberLabelWidth,
                              windowNumberHeight);
@@ -705,6 +711,8 @@ NS_CLASS_AVAILABLE_MAC(10_14)
     if (!needCustomButtons) {
         [_standardWindowButtonsView removeFromSuperview];
         _standardWindowButtonsView = nil;
+        [_compactProxyIconView removeFromSuperview];
+        _compactProxyIconView = nil;
         if ([self.delegate rootTerminalViewShouldRevealStandardWindowButtons]) {
             for (int i = 0; i < self.numberOfWindowButtons; i++) {
                 [[self.window standardWindowButton:self.windowButtonTypes[i]] setHidden:NO];
@@ -715,7 +723,7 @@ NS_CLASS_AVAILABLE_MAC(10_14)
     if (_standardWindowButtonsView) {
         return;
     }
-    
+
     // This is a compact window that gets special handling for the stoplights buttons.
     CGFloat x = self.leftInsetForWindowButtons;
     const CGFloat stride = self.strideForWindowButtons;
@@ -766,7 +774,65 @@ NS_CLASS_AVAILABLE_MAC(10_14)
             [button setNeedsDisplay:YES];
         });
     }
+
+    [self createCompactProxyIconButtonIfNeeded];
     [self layoutSubviews];
+}
+
+- (BOOL)shouldShowCompactProxyIcon {
+    return [iTermPreferences boolForKey:kPreferenceKeyEnableProxyIcon];
+}
+
+- (CGFloat)compactProxyIconWidthIncludingMargin {
+    if ([self shouldShowCompactProxyIcon]) {
+        return iTermCompactProxyIconLeftMargin + iTermCompactProxyIconSize + iTermCompactProxyIconRightMargin;
+    }
+    return 0;
+}
+
+- (void)createCompactProxyIconButtonIfNeeded {
+    [_compactProxyIconView removeFromSuperview];
+    _compactProxyIconView = nil;
+
+    if (![self shouldShowCompactProxyIcon]) {
+        return;
+    }
+
+    const NSRect stoplightFrame = [self frameForStandardWindowButtons];
+    // Stoplight buttons are 12pt tall at y=4 within the buttons view.
+    const CGFloat buttonSize = 12;
+    const CGFloat buttonYInView = 4;
+    const CGFloat buttonCenterY = NSMinY(stoplightFrame) + buttonYInView + buttonSize / 2.0;
+    const CGFloat y = buttonCenterY - iTermCompactProxyIconSize / 2.0 + 1;
+    NSRect frame = NSMakeRect(NSMaxX(stoplightFrame) + iTermCompactProxyIconLeftMargin,
+                              y,
+                              iTermCompactProxyIconSize,
+                              iTermCompactProxyIconSize);
+    _compactProxyIconView = [[iTermCompactProxyIconView alloc] initWithFrame:frame];
+    _compactProxyIconView.autoresizingMask = (NSViewMaxXMargin | NSViewMinYMargin);
+    [self addSubview:_compactProxyIconView];
+}
+
+- (void)updateProxyIcon {
+    if (!_compactProxyIconView) {
+        return;
+    }
+    _compactProxyIconView.url = self.window.representedURL;
+}
+
+- (void)updateCompactProxyIconFrame {
+    if (!_compactProxyIconView) {
+        return;
+    }
+    const NSRect stoplightFrame = [self frameForStandardWindowButtons];
+    const CGFloat buttonSize = 12;
+    const CGFloat buttonYInView = 4;
+    const CGFloat buttonCenterY = NSMinY(stoplightFrame) + buttonYInView + buttonSize / 2.0;
+    const CGFloat y = buttonCenterY - iTermCompactProxyIconSize / 2.0 + 1;
+    _compactProxyIconView.frame = NSMakeRect(NSMaxX(stoplightFrame) + iTermCompactProxyIconLeftMargin,
+                                               y,
+                                               iTermCompactProxyIconSize,
+                                               iTermCompactProxyIconSize);
 }
 
 - (void)flagsChanged:(NSEvent *)event {
@@ -1534,6 +1600,11 @@ NS_CLASS_AVAILABLE_MAC(10_14)
     self.window.movableByWindowBackground = !hideWindowTitleLabel;
     _windowNumberLabel.hidden = ![self.delegate rootTerminalViewWindowNumberLabelShouldBeVisible];
     _standardWindowButtonsView.frame = [self frameForStandardWindowButtons];
+    if (_standardWindowButtonsView && !_compactProxyIconView && [self shouldShowCompactProxyIcon]) {
+        [self createCompactProxyIconButtonIfNeeded];
+        [self updateProxyIcon];
+    }
+    [self updateCompactProxyIconFrame];
     [self updateTitleAndBorderViews];
 }
 

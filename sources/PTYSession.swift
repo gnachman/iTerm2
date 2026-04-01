@@ -470,13 +470,27 @@ extension PTYSession {
                        "Command history isn’t available because Shell Integration isn’t installed.")
             return
         }
-        var commands = [String]()
+        var entries = [[String: String]]()
+        let limit = getCommandHistory.limit
         screen.enumeratePrompts(from: nil, to: nil) { mark in
-            if let command = mark?.command {
-                commands.append(command)
+            if entries.count >= limit {
+                return
+            }
+            if let mark, let command = mark.command {
+                var entry: [String: String] = ["command": command]
+                let guid = mark.guid
+                if !guid.isEmpty {
+                    entry["id"] = guid
+                }
+                entries.append(entry)
             }
         }
-        try completion(commands.joined(separator: "\n"), "Command history provided to AI.")
+        if let data = try? JSONSerialization.data(withJSONObject: entries),
+           let json = String(data: data, encoding: .utf8) {
+            try completion(json, "Command history provided to AI.")
+        } else {
+            try completion("[]", "Command history provided to AI.")
+        }
     }
 
     func getLastCommandRemoteCommand(getLastCommand: RemoteCommand.GetLastCommand,
@@ -516,27 +530,44 @@ extension PTYSession {
                        "Command history is not available because Shell Integration isn’t installed.")
             return
         }
-        var commands = [String]()
+        var entries = [[String: String]]()
         screen.enumeratePrompts(from: nil, to: nil) { mark in
-            if let command = mark?.command, command.contains(searchCommandHistory.query) {
-                commands.append(command)
+            if let mark, let command = mark.command, command.contains(searchCommandHistory.query) {
+                var entry: [String: String] = ["command": command]
+                let guid = mark.guid
+                if !guid.isEmpty {
+                    entry["id"] = guid
+                }
+                entries.append(entry)
             }
         }
-        try completion(commands.joined(separator: "\n"), "Command history provided to AI.")
+        if let data = try? JSONSerialization.data(withJSONObject: entries),
+           let json = String(data: data, encoding: .utf8) {
+            try completion(json, "Command history provided to AI.")
+        } else {
+            try completion("[]", "Command history provided to AI.")
+        }
     }
 
     func getCommandOutputRemoteCommand(getCommandOutput: RemoteCommand.GetCommandOutput,
                                        completion: @escaping (String, String) throws -> ()) rethrows {
-        let absRange = textViewRangeOfLastCommandOutput()
-        let range = VT100GridCoordRangeFromAbsCoordRange(absRange, screen.totalScrollbackOverflow())
+        let range: VT100GridCoordRange
+        let id = getCommandOutput.id
+        if !id.isEmpty, let mark = screen.promptMark(withGUID: id) {
+            range = screen.rangeOfOutput(forCommandMark: mark)
+        } else {
+            let absRange = textViewRangeOfLastCommandOutput()
+            range = VT100GridCoordRangeFromAbsCoordRange(absRange, screen.totalScrollbackOverflow())
+        }
         if range.start.x < 0 {
-            try completion("The output is no longer available.", "The output of the last command wasn’t provided because it is no longer available.")
+            try completion("The output is no longer available.",
+                           "The command output wasn’t provided because it is no longer available.")
             return
         }
         let extractor = iTermTextExtractor(dataSource: screen)
         let content = extractor.content(in: VT100GridWindowedRangeMake(range, 0, 0),
                           attributeProvider: nil,
-                          nullPolicy: .kiTermTextExtractorNullPolicyFromLastToEnd,
+                          nullPolicy: .kiTermTextExtractorNullPolicyMidlineAsSpaceIgnoreTerminal,
                           pad: false,
                           includeLastNewline: false,
                           trimTrailingWhitespace: true,
@@ -545,10 +576,10 @@ extension PTYSession {
                           continuationChars: nil,
                           coords: nil)
         if let string = content as? String {
-            try completion(string, "Last command’s output provided to AI.")
+            try completion(string, "Command output provided to AI.")
         } else {
             try completion("The content could not be retrieved because of an unexpected error",
-            "The output of the last command wasn’t provided because of an unexpected error.")
+                           "The command output wasn’t provided because of an unexpected error.")
         }
     }
 
@@ -1082,7 +1113,8 @@ extension PTYSession {
                                           Int(visibleLines.length))
         var indexes = IndexSet(integersIn: Range(visibleAbsLines)!)
         findDriver?.closeViewAndDoTemporarySearch(for: regex,
-                                                  mode: .caseSensitiveRegex) { [weak self] linesSearched in
+                                                  mode: .caseSensitiveRegex,
+                                                  extendResultsAcrossSoftBoundaries: false) { [weak self] linesSearched in
             guard let textview = self?.textview, !done else {
                 return
             }
@@ -1486,6 +1518,20 @@ extension PTYSession {
             }
         }
     }
+}
+
+extension PTYSession: ResilientCoordinateDataSource {
+    var rcScrollbackOverflow: Int64 { screen.totalScrollbackOverflow() }
+    var rcNumberOfLines: Int32 { screen.numberOfLines() }
+    var rcGuid: String { guid }
+    var rcWidth: Int32 { screen.width() }
+}
+
+extension VT100ScreenMutableState: ResilientCoordinateDataSource {
+    var rcScrollbackOverflow: Int64 { cumulativeScrollbackOverflow }
+    var rcNumberOfLines: Int32 { Int32(numberOfLines) }
+    var rcGuid: String { uniqueIdentifier }
+    var rcWidth: Int32 { Int32(width) }
 }
 
 extension PTYSession: AutomaticProfileSwitchingSessionDelegate {

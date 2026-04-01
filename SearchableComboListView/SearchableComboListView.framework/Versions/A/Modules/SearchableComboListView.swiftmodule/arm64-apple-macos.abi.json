@@ -399,38 +399,10 @@
         "conformances": [
           {
             "kind": "Conformance",
-            "name": "Copyable",
-            "printedName": "Copyable",
-            "usr": "s:s8CopyableP",
-            "mangledName": "$ss8CopyableP"
-          },
-          {
-            "kind": "Conformance",
-            "name": "Escapable",
-            "printedName": "Escapable",
-            "usr": "s:s9EscapableP",
-            "mangledName": "$ss9EscapableP"
-          },
-          {
-            "kind": "Conformance",
-            "name": "Equatable",
-            "printedName": "Equatable",
-            "usr": "s:SQ",
-            "mangledName": "$sSQ"
-          },
-          {
-            "kind": "Conformance",
-            "name": "Hashable",
-            "printedName": "Hashable",
-            "usr": "s:SH",
-            "mangledName": "$sSH"
-          },
-          {
-            "kind": "Conformance",
-            "name": "CVarArg",
-            "printedName": "CVarArg",
-            "usr": "s:s7CVarArgP",
-            "mangledName": "$ss7CVarArgP"
+            "name": "_KeyValueCodingAndObserving",
+            "printedName": "_KeyValueCodingAndObserving",
+            "usr": "s:10Foundation27_KeyValueCodingAndObservingP",
+            "mangledName": "$s10Foundation27_KeyValueCodingAndObservingP"
           },
           {
             "kind": "Conformance",
@@ -441,10 +413,24 @@
           },
           {
             "kind": "Conformance",
-            "name": "_KeyValueCodingAndObserving",
-            "printedName": "_KeyValueCodingAndObserving",
-            "usr": "s:10Foundation27_KeyValueCodingAndObservingP",
-            "mangledName": "$s10Foundation27_KeyValueCodingAndObservingP"
+            "name": "CVarArg",
+            "printedName": "CVarArg",
+            "usr": "s:s7CVarArgP",
+            "mangledName": "$ss7CVarArgP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Copyable",
+            "printedName": "Copyable",
+            "usr": "s:s8CopyableP",
+            "mangledName": "$ss8CopyableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "CustomDebugStringConvertible",
+            "printedName": "CustomDebugStringConvertible",
+            "usr": "s:s28CustomDebugStringConvertibleP",
+            "mangledName": "$ss28CustomDebugStringConvertibleP"
           },
           {
             "kind": "Conformance",
@@ -455,10 +441,24 @@
           },
           {
             "kind": "Conformance",
-            "name": "CustomDebugStringConvertible",
-            "printedName": "CustomDebugStringConvertible",
-            "usr": "s:s28CustomDebugStringConvertibleP",
-            "mangledName": "$ss28CustomDebugStringConvertibleP"
+            "name": "Equatable",
+            "printedName": "Equatable",
+            "usr": "s:SQ",
+            "mangledName": "$sSQ"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Escapable",
+            "printedName": "Escapable",
+            "usr": "s:s9EscapableP",
+            "mangledName": "$ss9EscapableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Hashable",
+            "printedName": "Hashable",
+            "usr": "s:SH",
+            "mangledName": "$sSH"
           }
         ]
       },
@@ -872,38 +872,10 @@
         "conformances": [
           {
             "kind": "Conformance",
-            "name": "Copyable",
-            "printedName": "Copyable",
-            "usr": "s:s8CopyableP",
-            "mangledName": "$ss8CopyableP"
-          },
-          {
-            "kind": "Conformance",
-            "name": "Escapable",
-            "printedName": "Escapable",
-            "usr": "s:s9EscapableP",
-            "mangledName": "$ss9EscapableP"
-          },
-          {
-            "kind": "Conformance",
-            "name": "Equatable",
-            "printedName": "Equatable",
-            "usr": "s:SQ",
-            "mangledName": "$sSQ"
-          },
-          {
-            "kind": "Conformance",
-            "name": "Hashable",
-            "printedName": "Hashable",
-            "usr": "s:SH",
-            "mangledName": "$sSH"
-          },
-          {
-            "kind": "Conformance",
-            "name": "CVarArg",
-            "printedName": "CVarArg",
-            "usr": "s:s7CVarArgP",
-            "mangledName": "$ss7CVarArgP"
+            "name": "_KeyValueCodingAndObserving",
+            "printedName": "_KeyValueCodingAndObserving",
+            "usr": "s:10Foundation27_KeyValueCodingAndObservingP",
+            "mangledName": "$s10Foundation27_KeyValueCodingAndObservingP"
           },
           {
             "kind": "Conformance",
@@ -914,10 +886,24 @@
           },
           {
             "kind": "Conformance",
-            "name": "_KeyValueCodingAndObserving",
-            "printedName": "_KeyValueCodingAndObserving",
-            "usr": "s:10Foundation27_KeyValueCodingAndObservingP",
-            "mangledName": "$s10Foundation27_KeyValueCodingAndObservingP"
+            "name": "CVarArg",
+            "printedName": "CVarArg",
+            "usr": "s:s7CVarArgP",
+            "mangledName": "$ss7CVarArgP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Copyable",
+            "printedName": "Copyable",
+            "usr": "s:s8CopyableP",
+            "mangledName": "$ss8CopyableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "CustomDebugStringConvertible",
+            "printedName": "CustomDebugStringConvertible",
+            "usr": "s:s28CustomDebugStringConvertibleP",
+            "mangledName": "$ss28CustomDebugStringConvertibleP"
           },
           {
             "kind": "Conformance",
@@ -928,10 +914,24 @@
           },
           {
             "kind": "Conformance",
-            "name": "CustomDebugStringConvertible",
-            "printedName": "CustomDebugStringConvertible",
-            "usr": "s:s28CustomDebugStringConvertibleP",
-            "mangledName": "$ss28CustomDebugStringConvertibleP"
+            "name": "Equatable",
+            "printedName": "Equatable",
+            "usr": "s:SQ",
+            "mangledName": "$sSQ"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Escapable",
+            "printedName": "Escapable",
+            "usr": "s:s9EscapableP",
+            "mangledName": "$ss9EscapableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Hashable",
+            "printedName": "Hashable",
+            "usr": "s:SH",
+            "mangledName": "$sSH"
           }
         ]
       },
@@ -1173,38 +1173,10 @@
             "conformances": [
               {
                 "kind": "Conformance",
-                "name": "Copyable",
-                "printedName": "Copyable",
-                "usr": "s:s8CopyableP",
-                "mangledName": "$ss8CopyableP"
-              },
-              {
-                "kind": "Conformance",
-                "name": "Escapable",
-                "printedName": "Escapable",
-                "usr": "s:s9EscapableP",
-                "mangledName": "$ss9EscapableP"
-              },
-              {
-                "kind": "Conformance",
-                "name": "Equatable",
-                "printedName": "Equatable",
-                "usr": "s:SQ",
-                "mangledName": "$sSQ"
-              },
-              {
-                "kind": "Conformance",
-                "name": "Hashable",
-                "printedName": "Hashable",
-                "usr": "s:SH",
-                "mangledName": "$sSH"
-              },
-              {
-                "kind": "Conformance",
-                "name": "CVarArg",
-                "printedName": "CVarArg",
-                "usr": "s:s7CVarArgP",
-                "mangledName": "$ss7CVarArgP"
+                "name": "_KeyValueCodingAndObserving",
+                "printedName": "_KeyValueCodingAndObserving",
+                "usr": "s:10Foundation27_KeyValueCodingAndObservingP",
+                "mangledName": "$s10Foundation27_KeyValueCodingAndObservingP"
               },
               {
                 "kind": "Conformance",
@@ -1215,10 +1187,24 @@
               },
               {
                 "kind": "Conformance",
-                "name": "_KeyValueCodingAndObserving",
-                "printedName": "_KeyValueCodingAndObserving",
-                "usr": "s:10Foundation27_KeyValueCodingAndObservingP",
-                "mangledName": "$s10Foundation27_KeyValueCodingAndObservingP"
+                "name": "CVarArg",
+                "printedName": "CVarArg",
+                "usr": "s:s7CVarArgP",
+                "mangledName": "$ss7CVarArgP"
+              },
+              {
+                "kind": "Conformance",
+                "name": "Copyable",
+                "printedName": "Copyable",
+                "usr": "s:s8CopyableP",
+                "mangledName": "$ss8CopyableP"
+              },
+              {
+                "kind": "Conformance",
+                "name": "CustomDebugStringConvertible",
+                "printedName": "CustomDebugStringConvertible",
+                "usr": "s:s28CustomDebugStringConvertibleP",
+                "mangledName": "$ss28CustomDebugStringConvertibleP"
               },
               {
                 "kind": "Conformance",
@@ -1229,10 +1215,24 @@
               },
               {
                 "kind": "Conformance",
-                "name": "CustomDebugStringConvertible",
-                "printedName": "CustomDebugStringConvertible",
-                "usr": "s:s28CustomDebugStringConvertibleP",
-                "mangledName": "$ss28CustomDebugStringConvertibleP"
+                "name": "Equatable",
+                "printedName": "Equatable",
+                "usr": "s:SQ",
+                "mangledName": "$sSQ"
+              },
+              {
+                "kind": "Conformance",
+                "name": "Escapable",
+                "printedName": "Escapable",
+                "usr": "s:s9EscapableP",
+                "mangledName": "$ss9EscapableP"
+              },
+              {
+                "kind": "Conformance",
+                "name": "Hashable",
+                "printedName": "Hashable",
+                "usr": "s:SH",
+                "mangledName": "$sSH"
               },
               {
                 "kind": "Conformance",
@@ -1842,38 +1842,10 @@
         "conformances": [
           {
             "kind": "Conformance",
-            "name": "Copyable",
-            "printedName": "Copyable",
-            "usr": "s:s8CopyableP",
-            "mangledName": "$ss8CopyableP"
-          },
-          {
-            "kind": "Conformance",
-            "name": "Escapable",
-            "printedName": "Escapable",
-            "usr": "s:s9EscapableP",
-            "mangledName": "$ss9EscapableP"
-          },
-          {
-            "kind": "Conformance",
-            "name": "Equatable",
-            "printedName": "Equatable",
-            "usr": "s:SQ",
-            "mangledName": "$sSQ"
-          },
-          {
-            "kind": "Conformance",
-            "name": "Hashable",
-            "printedName": "Hashable",
-            "usr": "s:SH",
-            "mangledName": "$sSH"
-          },
-          {
-            "kind": "Conformance",
-            "name": "CVarArg",
-            "printedName": "CVarArg",
-            "usr": "s:s7CVarArgP",
-            "mangledName": "$ss7CVarArgP"
+            "name": "_KeyValueCodingAndObserving",
+            "printedName": "_KeyValueCodingAndObserving",
+            "usr": "s:10Foundation27_KeyValueCodingAndObservingP",
+            "mangledName": "$s10Foundation27_KeyValueCodingAndObservingP"
           },
           {
             "kind": "Conformance",
@@ -1884,17 +1856,17 @@
           },
           {
             "kind": "Conformance",
-            "name": "_KeyValueCodingAndObserving",
-            "printedName": "_KeyValueCodingAndObserving",
-            "usr": "s:10Foundation27_KeyValueCodingAndObservingP",
-            "mangledName": "$s10Foundation27_KeyValueCodingAndObservingP"
+            "name": "CVarArg",
+            "printedName": "CVarArg",
+            "usr": "s:s7CVarArgP",
+            "mangledName": "$ss7CVarArgP"
           },
           {
             "kind": "Conformance",
-            "name": "CustomStringConvertible",
-            "printedName": "CustomStringConvertible",
-            "usr": "s:s23CustomStringConvertibleP",
-            "mangledName": "$ss23CustomStringConvertibleP"
+            "name": "Copyable",
+            "printedName": "Copyable",
+            "usr": "s:s8CopyableP",
+            "mangledName": "$ss8CopyableP"
           },
           {
             "kind": "Conformance",
@@ -1905,10 +1877,31 @@
           },
           {
             "kind": "Conformance",
-            "name": "__DefaultCustomPlaygroundQuickLookable",
-            "printedName": "__DefaultCustomPlaygroundQuickLookable",
-            "usr": "s:s38__DefaultCustomPlaygroundQuickLookableP",
-            "mangledName": "$ss38__DefaultCustomPlaygroundQuickLookableP"
+            "name": "CustomStringConvertible",
+            "printedName": "CustomStringConvertible",
+            "usr": "s:s23CustomStringConvertibleP",
+            "mangledName": "$ss23CustomStringConvertibleP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Equatable",
+            "printedName": "Equatable",
+            "usr": "s:SQ",
+            "mangledName": "$sSQ"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Escapable",
+            "printedName": "Escapable",
+            "usr": "s:s9EscapableP",
+            "mangledName": "$ss9EscapableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Hashable",
+            "printedName": "Hashable",
+            "usr": "s:SH",
+            "mangledName": "$sSH"
           },
           {
             "kind": "Conformance",
@@ -1923,6 +1916,13 @@
             "printedName": "SendableMetatype",
             "usr": "s:s16SendableMetatypeP",
             "mangledName": "$ss16SendableMetatypeP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "__DefaultCustomPlaygroundQuickLookable",
+            "printedName": "__DefaultCustomPlaygroundQuickLookable",
+            "usr": "s:s38__DefaultCustomPlaygroundQuickLookableP",
+            "mangledName": "$ss38__DefaultCustomPlaygroundQuickLookableP"
           }
         ]
       },
@@ -1961,175 +1961,175 @@
   },
   "ConstValues": [
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt8\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
       "kind": "IntegerLiteral",
       "offset": 2729,
       "length": 1,
       "value": "0"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt8\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
       "kind": "IntegerLiteral",
       "offset": 2800,
       "length": 1,
       "value": "0"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt8\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
       "kind": "BooleanLiteral",
       "offset": 2820,
       "length": 4,
       "value": "true"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt8\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
       "kind": "IntegerLiteral",
       "offset": 2852,
       "length": 1,
       "value": "0"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt8\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
       "kind": "FloatLiteral",
       "offset": 2944,
       "length": 3,
       "value": "0.0"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt8\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
       "kind": "IntegerLiteral",
       "offset": 3452,
       "length": 1,
       "value": "0"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt8\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
       "kind": "IntegerLiteral",
       "offset": 3457,
       "length": 2,
       "value": "16"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt8\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
       "kind": "Array",
       "offset": 6546,
       "length": 2,
       "value": "[]"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt8\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
       "kind": "Array",
       "offset": 6655,
       "length": 2,
       "value": "[]"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt8\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
       "kind": "StringLiteral",
       "offset": 6732,
       "length": 30,
       "value": "\"searchableComboViewCheckmark\""
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt8\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
       "kind": "StringLiteral",
       "offset": 6834,
       "length": 26,
       "value": "\"searchableComboViewLabel\""
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt8\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
       "kind": "BooleanLiteral",
       "offset": 6938,
       "length": 4,
       "value": "true"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt8\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
       "kind": "StringLiteral",
       "offset": 6984,
       "length": 2,
       "value": "\"\""
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt8\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
       "kind": "IntegerLiteral",
       "offset": 7215,
       "length": 1,
       "value": "4"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt8\/SearchableComboListView\/SearchableComboView\/SearchableComboTableViewController.swift",
       "kind": "IntegerLiteral",
       "offset": 7910,
       "length": 1,
       "value": "0"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboView.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt8\/SearchableComboListView\/SearchableComboView\/SearchableComboView.swift",
       "kind": "BooleanLiteral",
       "offset": 1707,
       "length": 4,
       "value": "true"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboView.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt8\/SearchableComboListView\/SearchableComboView\/SearchableComboView.swift",
       "kind": "IntegerLiteral",
       "offset": 2355,
       "length": 2,
       "value": "99"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboView.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt8\/SearchableComboListView\/SearchableComboView\/SearchableComboView.swift",
       "kind": "BooleanLiteral",
       "offset": 2423,
       "length": 5,
       "value": "false"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboTableView.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt8\/SearchableComboListView\/SearchableComboView\/SearchableComboTableView.swift",
       "kind": "StringLiteral",
       "offset": 792,
       "length": 32,
       "value": "\"SearchableComboTableView.Enter\""
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboTableView.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt8\/SearchableComboListView\/SearchableComboView\/SearchableComboTableView.swift",
       "kind": "BooleanLiteral",
       "offset": 865,
       "length": 5,
       "value": "false"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboTableView.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt8\/SearchableComboListView\/SearchableComboView\/SearchableComboTableView.swift",
       "kind": "BooleanLiteral",
       "offset": 974,
       "length": 5,
       "value": "false"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboTableView.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt8\/SearchableComboListView\/SearchableComboView\/SearchableComboTableView.swift",
       "kind": "BooleanLiteral",
       "offset": 1021,
       "length": 5,
       "value": "false"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboTableView.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt8\/SearchableComboListView\/SearchableComboView\/SearchableComboTableView.swift",
       "kind": "BooleanLiteral",
       "offset": 3046,
       "length": 4,
       "value": "true"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboListViewController.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt8\/SearchableComboListView\/SearchableComboView\/SearchableComboListViewController.swift",
       "kind": "BooleanLiteral",
       "offset": 1027,
       "length": 4,
       "value": "true"
     },
     {
-      "filePath": "\/Users\/gnachman\/git\/iterm2-alt3\/SearchableComboListView\/SearchableComboView\/SearchableComboListViewController.swift",
+      "filePath": "\/Users\/gnachman\/git\/iterm2-alt8\/SearchableComboListView\/SearchableComboView\/SearchableComboListViewController.swift",
       "kind": "IntegerLiteral",
       "offset": 1413,
       "length": 2,

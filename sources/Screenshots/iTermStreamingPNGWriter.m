@@ -117,7 +117,7 @@
         32,                         // bits per pixel
         (size_t)_bytesPerRow,
         colorSpace,
-        kCGBitmapByteOrderDefault | kCGImageAlphaLast,
+        CGBitmapInfoMake(kCGImageAlphaLast, kCGImageComponentInteger, kCGImageByteOrderDefault, kCGImagePixelFormatPacked),
         provider,
         NULL,                       // decode array
         NO,                         // should interpolate

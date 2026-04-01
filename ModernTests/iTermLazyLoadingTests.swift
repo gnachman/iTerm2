@@ -310,7 +310,7 @@ class iTermProviderPlumbingTests: XCTestCase {
             XCTFail("iTermGraphDatabase class not found")
             return
         }
-        XCTAssertTrue(dbClass.conforms(to: LargeContentProvider.self),
+        XCTAssertTrue(dbClass.conforms(to: iTermLargeContentProvider.self),
                      "iTermGraphDatabase should conform to LargeContentProvider")
     }
 

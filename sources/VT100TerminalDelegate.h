@@ -60,6 +60,8 @@ typedef NS_ENUM(NSUInteger, VT100TerminalProtectedMode) {
 @protocol VT100TerminalDelegate <NSObject>
 // Append a string at the cursor's position and advance the cursor, scrolling if necessary.
 - (void)terminalAppendString:(NSString *)string;
+- (void)terminalAppendString:(NSString *)string
+          preconvertedData:(PreconvertedStringData *)preconvertedData;
 - (void)terminalAppendAsciiData:(AsciiData *)asciiData;
 - (void)terminalAppendMixedAsciiCRLFData:(AsciiData *)asciiData
                                    crlfs:(CTVector(int) *)crlfs;

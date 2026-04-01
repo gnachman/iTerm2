@@ -2,6 +2,7 @@
 (allow default)
 (deny file* (subpath "/opt/homebrew/Cellar"))
 (deny file* (subpath "/usr/local/Cellar"))
+(allow file-read-metadata (subpath "/opt/homebrew/Cellar"))
 (allow file* (subpath "/opt/homebrew/Cellar/perl/"))
 (allow file* (subpath "/usr/local/Cellar/perl/"))
 (allow file* (subpath "/opt/homebrew/bin/cmake"))

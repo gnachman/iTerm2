@@ -333,7 +333,7 @@ respectingTimeoutSetting:(BOOL)respectingTimeoutSetting
 static NSDictionary *iTermUserDefaultsDictionary(NSArray<NSString *> *preservedKeys) {
     NSUserDefaults *userDefaults = [iTermUserDefaults userDefaults];
     NSDictionary *myDict =
-        [userDefaults persistentDomainForName:[[NSBundle mainBundle] bundleIdentifier]];
+        [userDefaults persistentDomainForName:[iTermUserDefaults customSuiteName] ?: [[NSBundle mainBundle] bundleIdentifier]];
     return [myDict filteredWithBlock:^BOOL(id key, id value) {
         NSString *stringKey = [NSString castFrom:key];
         if (!stringKey) {
@@ -415,7 +415,7 @@ static NSDictionary *iTermRemotePreferencesSave(NSDictionary *myDict, NSString *
         return;
     }
     DLog(@"Load local prefs");
-    NSDictionary *localPrefs = [[iTermUserDefaults userDefaults] persistentDomainForName:[[NSBundle mainBundle] bundleIdentifier]];
+    NSDictionary *localPrefs = [[iTermUserDefaults userDefaults] persistentDomainForName:[iTermUserDefaults customSuiteName] ?: [[NSBundle mainBundle] bundleIdentifier]];
     // Empty out the current prefs
     DLog(@"Remove non-syncable values");
     int count = 0;
@@ -460,7 +460,7 @@ static NSDictionary *iTermRemotePreferencesSave(NSDictionary *myDict, NSString *
         // Grab all prefs from our bundle only (no globals, etc.).
         NSUserDefaults *userDefaults = [iTermUserDefaults userDefaults];
         NSDictionary *localPrefs =
-            [userDefaults persistentDomainForName:[[NSBundle mainBundle] bundleIdentifier]];
+            [userDefaults persistentDomainForName:[iTermUserDefaults customSuiteName] ?: [[NSBundle mainBundle] bundleIdentifier]];
         localPrefs = [self removeDynamicProfiles:localPrefs];
 
         // Iterate over each set of prefs and validate that the other has the same value for each

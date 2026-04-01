@@ -56,7 +56,8 @@
               mode:(iTermFindMode)mode
         withOffset:(int)offset
 scrollToFirstResult:(BOOL)scrollToFirstResult
-             force:(BOOL)force;
+             force:(BOOL)force
+extendResultsAcrossSoftBoundaries:(BOOL)extendResultsAcrossSoftBoundaries;
 
 // The search view became (in)visible.
 - (void)findViewControllerVisibilityDidChange:(id<iTermFindViewController>)sender;
@@ -119,6 +120,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult
 // is restored.
 - (void)closeViewAndDoTemporarySearchForString:(NSString *)string
                                           mode:(iTermFindMode)mode
+            extendResultsAcrossSoftBoundaries:(BOOL)extendResultsAcrossSoftBoundaries
                                       progress:(void (^)(NSRange linesSearched))progress;
 
 - (void)owningViewDidBecomeFirstResponder;

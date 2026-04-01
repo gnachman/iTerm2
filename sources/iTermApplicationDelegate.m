@@ -63,6 +63,7 @@
 #import "VT100Terminal.h"
 #import "iTerm2SharedARC-Swift.h"
 #import "iTermAPIConnectionIdentifierController.h"
+#import "iTermGraphDatabase.h"
 #import "iTermAPIHelper.h"
 #import "iTermAboutWindowController.h"
 #import "iTermAdvancedSettingsModel.h"

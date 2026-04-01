@@ -382,11 +382,16 @@ class Conductor: NSObject, SSHIdentityProvider {
     @objc var currentDirectory: String?
 
     let superVerbose = false
+    // Random prefix prepended to pre-framer command lines to prevent an attacker
+    // from planting executables that match the base64-encoded commands we write.
+    // Empty for restored/recovered sessions (their remote code predates this change).
+    let linePrefix: String
 
     private init(restorableState: RestorableState,
                  restored: Bool) {
         self.restorableState = restorableState
         self.restored = restored
+        self.linePrefix = restored ? "" : UUID().uuidString
         super.init()
         if framedPID != nil {
             ConductorRegistry.instance.addConductor(self, for: sshIdentity)
@@ -479,7 +484,7 @@ class Conductor: NSObject, SSHIdentityProvider {
             uname: nil,
             _terminalConfiguration: nil,
             discoveredHostname: nil),
-                  restored: false)
+                  restored: true)
         _parent = recovery.parent
         framerVersion = .init(rawValue: recovery.version)
         waitingToResynchronize = true
@@ -1446,6 +1451,9 @@ extension Conductor {
     }
 
     @objc func start() {
+        if !linePrefix.isEmpty {
+            write(linePrefix)
+        }
         getshell()
     }
 
@@ -2585,10 +2593,12 @@ extension Conductor {
     }
 
     private func encode(_ pending: Conductor.ExecutionContext) -> String {
+        let prefix = pending.command.isFramer ? "" : linePrefix
         return pending.command.stringValue.components(separatedBy: "\n")
             .map(\.base64Encoded)
             .joined(separator: "\n")
             .chunk(128, continuation: pending.command.isFramer ? "\\" : "")
+            .map { prefix + $0 }
             .joined(separator: "\n") + "\n"
     }
 

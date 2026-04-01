@@ -68,7 +68,7 @@ class iTermFindOnPageHelperTests: XCTestCase {
 
         // Verify the preserved result is the one at (31, 12)
         if helper.searchResults.count > 0 {
-            let remainingResult = helper.searchResults.firstObject as! SearchResult
+            let remainingResult = helper.searchResults.firstObject!
             XCTAssertEqual(remainingResult.internalStartX, 31,
                            "The preserved result should be at x=31")
             XCTAssertEqual(remainingResult.internalAbsStartY, 12,

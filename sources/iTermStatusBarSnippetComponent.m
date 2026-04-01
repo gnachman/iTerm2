@@ -50,6 +50,10 @@
     return @[ self.stringValue ];
 }
 
+- (NSString *)statusBarComponentCopyableString {
+    return nil;
+}
+
 - (BOOL)statusBarComponentHandlesClicks {
     return YES;
 }

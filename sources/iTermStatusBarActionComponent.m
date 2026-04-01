@@ -114,6 +114,10 @@ static NSString *const iTermStatusBarActionKey = @"action";
     return [NSImage it_cacheableImageNamed:@"StatusBarIconAction" forClass:[self class]];
 }
 
+- (NSString *)statusBarComponentCopyableString {
+    return nil;
+}
+
 - (BOOL)statusBarComponentHandlesClicks {
     return YES;
 }
@@ -131,6 +135,10 @@ static NSString *const iTermStatusBarActionKey = @"action";
 @end
 
 @implementation iTermStatusBarActionMenuComponent
+
+- (NSString *)statusBarComponentCopyableString {
+    return nil;
+}
 
 - (nullable NSImage *)statusBarComponentIcon {
     return [NSImage it_cacheableImageNamed:@"StatusBarIconAction" forClass:[self class]];

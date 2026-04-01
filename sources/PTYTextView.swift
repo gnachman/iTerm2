@@ -8,6 +8,23 @@
 import Foundation
 import UniformTypeIdentifiers
 
+// Posted when lines are shifted by fold/unfold. object is the session GUID (String).
+// userInfo keys: absLineKey (NSNumber Int64), deltaKey (NSNumber Int64, positive=insert, negative=remove).
+@objc(iTermLinesShiftedNotification) class LinesShiftedNotification: NSObject {
+    @objc static let name = NSNotification.Name("iTermLinesWereShifted")
+    @objc static let absLineKey = "absLine"
+    @objc static let deltaKey = "delta"
+    @objc static let markKey = "mark"
+    @objc static let reasonKey = "reason"
+    /// NSValue wrapping NSRange. The range of absolute lines that was replaced.
+    @objc static let replacedRangeKey = "replacedRange"
+    /// Block: (VT100GridCoord) -> VT100GridCoord. Converts a coord relative to
+    /// the start of the replaced range from the old layout to the new layout.
+    /// Returns (-1,-1) if the coord can't be converted.
+    @objc static let converterKey = "converter"
+}
+
+
 extension VT100GridAbsCoordRange {
     func relativeRange(overflow: Int64) -> VT100GridCoordRange {
         return VT100GridCoordRangeFromAbsCoordRange(self, overflow)
@@ -522,7 +539,7 @@ extension PTYTextView: ExternalSearchResultsController {
             return
         }
         // If we can remove folds in this range, do so and don't continue.
-        if dataSource.removeFolds(in: nsrange) {
+        if dataSource.removeFolds(in: nsrange, completion: nil) {
             requestDelegateRedraw()
             return
         }
@@ -539,7 +556,7 @@ extension PTYTextView: ExternalSearchResultsController {
             return
         }
         // If we can remove folds in this range, do so and don't continue.
-        if dataSource.removeFolds(in: nsrange) {
+        if dataSource.removeFolds(in: nsrange, completion: nil) {
             requestDelegateRedraw()
             return
         }
@@ -661,15 +678,23 @@ extension PTYTextView: ExternalSearchResultsController {
 
     @objc(unfoldMark:)
     func unfold(mark: FoldMarkReading) {
+        unfold(mark: mark, completion: nil)
+    }
+
+    @objc(unfoldMark:completion:)
+    func unfold(mark: FoldMarkReading, completion: ((Bool) -> ())?) {
         guard let interval = mark.entry?.interval else {
+            completion?(false)
             return
         }
         guard let dataSource = dataSource else {
+            completion?(false)
             return
         }
         DLog("Unfold")
         let coord = dataSource.absCoordRange(for: interval)
-        dataSource.removeFolds(in: NSRange(location: Int(coord.start.y), length: 1))
+        dataSource.removeFolds(in: NSRange(location: Int(coord.start.y), length: 1),
+                               completion: completion)
         requestDelegateRedraw()
         didFoldOrUnfold()
     }
@@ -1189,3 +1214,6 @@ extension PTYTextView {
         didFoldOrUnfold()
     }
 }
+
+// MARK: - Extend URL Search Results Across Soft Boundaries
+

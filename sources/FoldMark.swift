@@ -290,7 +290,7 @@ private final class LazyFoldMarkContent: FoldMarkContentProtocol {
         /// Content dictionary is available inline, just needs parsing.
         case inlineContent([AnyHashable: Any])
         /// Content must be fetched from database via provider.
-        case deferred(provider: LargeContentProvider, metadata: [AnyHashable: Any])
+        case deferred(provider: iTermLargeContentProvider, metadata: [AnyHashable: Any])
         /// Content has been loaded and parsed.
         case loaded(savedLines: [ScreenCharArray]?, savedITOs: [SavedIntervalTreeObject]?)
     }
@@ -306,7 +306,7 @@ private final class LazyFoldMarkContent: FoldMarkContentProtocol {
     }
 
     init(inlineContent: [AnyHashable: Any]?,
-         provider: LargeContentProvider?,
+         provider: iTermLargeContentProvider?,
          metadata: [AnyHashable: Any]?) {
         if let inlineContent {
             self.state = .init(.inlineContent(inlineContent))
@@ -364,11 +364,26 @@ private final class LazyFoldMarkContent: FoldMarkContentProtocol {
 // MARK: - FoldMark
 
 @objc(iTermFoldMark)
-class FoldMark: iTermMark, FoldMarkReading, iTermLargeContentObject {
+class FoldMark: iTermMark, FoldMarkReading, iTermLargeContentObject, iTermWidthSavingMark {
     /// Content is shared between progenitor and doppelganger. It's immutable once created.
     private let content: FoldMarkContentProtocol
     private let promptLength: Int
     let imageCodes: Set<Int32>
+    /// The screen width at the time the fold was created. Needed to convert
+    /// coordinates within the fold when unfolding at a different width.
+    /// Falls back to inferring from the longest saved line when not explicitly set
+    /// (legacy data or lazy-loaded content that predates this field).
+    private var _savedWidth: Int32
+    var savedWidth: Int32 {
+        if _savedWidth > 0 {
+            return _savedWidth
+        }
+        let inferred = Self.inferWidth(from: savedLines)
+        if inferred > 0 {
+            _savedWidth = inferred
+        }
+        return inferred
+    }
 
     /// Indicates this FoldMark is a doppelganger (mutation thread copy).
     /// When true, savedITOs returns doppelganger versions of the ITOs.
@@ -383,6 +398,14 @@ class FoldMark: iTermMark, FoldMarkReading, iTermLargeContentObject {
 
     private static let promptLengthKey = "prompt length"
     private static let imageCodesKey = "image codes"
+    private static let savedWidthKey = "saved width"
+
+    /// Infer the width from saved lines for legacy data that lacks an explicit savedWidth.
+    /// The longest saved line gives the width.
+    private static func inferWidth(from savedLines: [ScreenCharArray]?) -> Int32 {
+        guard let savedLines, !savedLines.isEmpty else { return 0 }
+        return Int32(savedLines.lazy.map { Int($0.length) }.max() ?? 0)
+    }
 
     var savedLines: [ScreenCharArray]? { content.savedLines }
 
@@ -407,6 +430,7 @@ class FoldMark: iTermMark, FoldMarkReading, iTermLargeContentObject {
         var result: [AnyHashable: Any] = super.dictionaryValue()
         result[Self.promptLengthKey] = promptLength
         result[Self.imageCodesKey] = Array(imageCodes)
+        result[Self.savedWidthKey] = NSNumber(value: savedWidth)
         return result
     }
 
@@ -414,13 +438,15 @@ class FoldMark: iTermMark, FoldMarkReading, iTermLargeContentObject {
         return content.largeDictionaryValue()
     }
 
-    // Lazy loading path
+    // Lazy loading path. savedWidth may be absent in old data; it will be
+    // inferred from the saved lines when they're loaded (returns 0 until then).
     @objc required init?(smallDictionary: [AnyHashable: Any],
                          largeContent: [AnyHashable: Any]?,
-                         provider: LargeContentProvider?,
+                         provider: iTermLargeContentProvider?,
                          metadata: [AnyHashable: Any]?) {
         self.promptLength = (smallDictionary[Self.promptLengthKey] as? Int) ?? 0
         self.imageCodes = Set((smallDictionary[Self.imageCodesKey] as? [Int32]) ?? [])
+        self._savedWidth = (smallDictionary[Self.savedWidthKey] as? NSNumber)?.int32Value ?? 0
         self.content = LazyFoldMarkContent(inlineContent: largeContent,
                                            provider: provider,
                                            metadata: metadata)
@@ -429,14 +455,16 @@ class FoldMark: iTermMark, FoldMarkReading, iTermLargeContentObject {
 
     // MARK: - Standard Initializers
 
-    @objc(initWithLines:savedITOs:promptLength:imageCodes:)
+    @objc(initWithLines:savedITOs:promptLength:imageCodes:width:)
     init(savedLines: [ScreenCharArray]?,
          savedITOs: [SavedIntervalTreeObject],
          promptLength: Int,
-         imageCodes: Set<Int32>) {
+         imageCodes: Set<Int32>,
+         width: Int32) {
         self.content = FoldMarkContent(savedLines: savedLines, savedITOs: savedITOs)
         self.promptLength = promptLength
         self.imageCodes = imageCodes
+        self._savedWidth = width
         super.init()
     }
 
@@ -445,14 +473,17 @@ class FoldMark: iTermMark, FoldMarkReading, iTermLargeContentObject {
         self.content = source.content
         self.promptLength = source.promptLength
         self.imageCodes = source.imageCodes
+        self._savedWidth = source._savedWidth
         super.init()
     }
 
     // Non-graph path (archived sessions)
     required init?(dictionary dict: [AnyHashable : Any]) {
-        self.content = FoldMarkContent(dictionary: dict)
+        let content = FoldMarkContent(dictionary: dict)
+        self.content = content
         self.promptLength = (dict[Self.promptLengthKey] as? Int) ?? 0
         self.imageCodes = Set((dict[Self.imageCodesKey] as? [Int32]) ?? [])
+        self._savedWidth = (dict[Self.savedWidthKey] as? NSNumber)?.int32Value ?? 0
         super.init(dictionary: dict)
     }
 
@@ -465,6 +496,7 @@ class FoldMark: iTermMark, FoldMarkReading, iTermLargeContentObject {
         }
         result[Self.promptLengthKey] = promptLength
         result[Self.imageCodesKey] = Array(imageCodes)
+        result[Self.savedWidthKey] = NSNumber(value: savedWidth)
         return result
     }
 

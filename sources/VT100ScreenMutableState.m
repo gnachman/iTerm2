@@ -59,6 +59,7 @@ static const int64_t VT100ScreenMutableStateSideEffectFlagLineBufferDidDropLines
 @end
 
 @implementation VT100ScreenMutableState {
+    NSString *_uniqueIdentifier;
     BOOL _terminalEnabled;
     VT100Terminal *_terminal;
     BOOL _echoProbeShouldSendPassword;
@@ -87,6 +88,7 @@ static const int64_t VT100ScreenMutableStateSideEffectFlagLineBufferDidDropLines
 
     self = [super initForMutationOnQueue:queue];
     if (self) {
+        _uniqueIdentifier = [[NSUUID UUID] UUIDString];
         _queue = queue;
         _executorUpdate = [[VT100ScreenTokenExecutorUpdate alloc] init];
         __weak __typeof(self) weakSelf = self;
@@ -134,6 +136,10 @@ static const int64_t VT100ScreenMutableStateSideEffectFlagLineBufferDidDropLines
         _kittyImageController.delegate = self;
     }
     return self;
+}
+
+- (void)dealloc {
+    [iTermRCDataSourceDeallocNotification postWithGuid:_uniqueIdentifier];
 }
 
 - (NSString *)description {
@@ -476,6 +482,8 @@ static const int64_t VT100ScreenMutableStateSideEffectFlagLineBufferDidDropLines
         [_promptStateMachine revealOrDismissComposerAgain];
     }
     _tokenExecutor.isBackgroundSession = !config.sessionIsVisible;
+
+    [self pushStringConversionConfigWithSoftAlternateScreenMode:self.terminal.softAlternateScreenMode];
 }
 
 - (void)movePromptUnderComposerIfNeeded {
@@ -723,6 +731,8 @@ static const int64_t VT100ScreenMutableStateSideEffectFlagLineBufferDidDropLines
     [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
         [delegate screenSoftAlternateScreenModeDidChangeTo:enabled showingAltScreen:showing];
     }  name:@"soft alternate screen mode did change"];
+
+    [self pushStringConversionConfigWithSoftAlternateScreenMode:enabled];
 }
 
 - (void)performBlockWithoutTriggers:(void (^)(void))block {
@@ -750,7 +760,59 @@ static const int64_t VT100ScreenMutableStateSideEffectFlagLineBufferDidDropLines
     }];
 }
 
+- (VT100StringConversionConfig)stringConversionConfigWithSoftAlternateScreenMode:(BOOL)mode {
+    return (VT100StringConversionConfig){
+        .ambiguousIsDoubleWidth = self.config.treatAmbiguousCharsAsDoubleWidth,
+        .normalization = self.config.normalization,
+        .unicodeVersion = self.config.unicodeVersion,
+        .softAlternateScreenMode = mode,
+    };
+}
+
+- (void)pushStringConversionConfigWithSoftAlternateScreenMode:(BOOL)mode {
+    const VT100StringConversionConfig convConfig = [self stringConversionConfigWithSoftAlternateScreenMode:mode];
+    [self.terminal.parser updateStringConversionConfig:convConfig];
+}
+
 - (void)appendStringAtCursor:(NSString *)string {
+    [self appendStringAtCursor:string preconvertedData:NULL];
+}
+
+- (BOOL)canUsePreconvertedData:(PreconvertedStringData *)pre
+                needColorFixup:(BOOL *)needColorFixup {
+    if (!pre || !pre->valid) {
+        return NO;
+    }
+    // Check config match field-by-field (memcmp is unsafe due to struct padding).
+    const VT100StringConversionConfig currentConfig =
+        [self stringConversionConfigWithSoftAlternateScreenMode:self.terminal.softAlternateScreenMode];
+    if (!VT100StringConversionConfigEquals(&pre->config, &currentConfig)) {
+        return NO;
+    }
+    // Check rendition match
+    screen_char_t actualFg = [self.terminal foregroundColorCode];
+    screen_char_t actualBg = [self.terminal backgroundColorCode];
+    screen_char_t preFg = { 0 };
+    screen_char_t preBg = { 0 };
+    VT100GraphicRendition rendition = pre->rendition;
+    VT100GraphicRenditionUpdateForeground(&rendition, YES, pre->protectedMode, &preFg);
+    VT100GraphicRenditionUpdateBackground(&rendition, YES, &preBg);
+
+    // Combine fg+bg from each side into a single screen_char_t for comparison,
+    // since ScreenCharFGBGEqual checks all fields that CopyForeground/BackgroundColor writes.
+    screen_char_t actual = { 0 };
+    CopyForegroundColor(&actual, actualFg);
+    CopyBackgroundColor(&actual, actualBg);
+    screen_char_t expected = { 0 };
+    CopyForegroundColor(&expected, preFg);
+    CopyBackgroundColor(&expected, preBg);
+
+    *needColorFixup = !ScreenCharFGBGEqual(actual, expected);
+    return YES;
+}
+
+- (void)appendStringAtCursor:(NSString *)string
+          preconvertedData:(PreconvertedStringData *)pre {
     int len = [string length];
     if (len < 1 || !string) {
         return;
@@ -763,107 +825,197 @@ static const int64_t VT100ScreenMutableStateSideEffectFlagLineBufferDidDropLines
          self.currentGrid.cursorY,
          self.currentGrid.cursorY + [self.linebuffer numLinesWithWidth:self.currentGrid.size.width]);
 
-    // Allocate a buffer of screen_char_t and place the new string in it.
-    const int kStaticBufferElements = 1024;
-    screen_char_t staticBuffer[kStaticBufferElements];
-    screen_char_t *dynamicBuffer = 0;
+    assert(self.terminal);
+
+    // Check if we can use the preconverted data from the parser thread.
+    BOOL needColorFixup = NO;
+    const BOOL usePreconverted = [self canUsePreconvertedData:pre needColorFixup:&needColorFixup];
+
     screen_char_t *buffer;
-    string = [string normalized:self.normalization];
-    len = [string length];
-    if (3 * len >= kStaticBufferElements) {
-        buffer = dynamicBuffer = (screen_char_t *) iTermCalloc(3 * len,
-                                                               sizeof(screen_char_t));
-        assert(buffer);
-        if (!buffer) {
-            NSLog(@"%s: Out of memory", __PRETTY_FUNCTION__);
-            return;
+    screen_char_t *dynamicBuffer = NULL;
+    BOOL dwc = NO;
+    BOOL rtlFound = NO;
+
+    if (usePreconverted) {
+        // Fast or medium path: use preconverted buffer (space-augmented).
+        buffer = pre->buffer;
+        len = pre->length;
+        dwc = pre->foundDwc;
+        rtlFound = pre->rtlFound;
+
+        if (needColorFixup) {
+            // Medium path: character codes and DWC_RIGHT markers are correct but colors differ.
+            const screen_char_t actualFg = [self.terminal foregroundColorCode];
+            const screen_char_t actualBg = [self.terminal backgroundColorCode];
+            for (int i = 0; i < len; i++) {
+                CopyForegroundColor(&buffer[i], actualFg);
+                CopyBackgroundColor(&buffer[i], actualBg);
+            }
         }
+
+        // Handle combining mark predecessor fixup.
+        // The preconverted buffer was augmented with a space at index 0.
+        BOOL predecessorIsDoubleWidth = NO;
+        const VT100GridCoord pred = [self.currentGrid coordinateBefore:self.currentGrid.cursor
+                                              movedBackOverDoubleWidth:&predecessorIsDoubleWidth];
+        NSString *predecessorString = pred.x >= 0 ? [self.currentGrid stringOrKittyPlaceholderStringForCharacterAt:pred] : nil;
+        const BOOL hasPredecessor = predecessorString != nil;
+
+        ssize_t bufferOffset = 0;
+        if (hasPredecessor && len > 0) {
+            // Re-do the augmentation with the actual predecessor to check if
+            // a combining mark at the start of the string modifies it.
+            const NSRange firstCharRange = [string rangeOfComposedCharacterSequenceAtIndex:0];
+            NSString *firstChar = [string substringWithRange:firstCharRange];
+            NSString *augmented = [predecessorString stringByAppendingString:firstChar];
+            screen_char_t firstChars[8] = { 0 };
+            int firstLen = 8;
+            BOOL firstDwc = NO;
+            // After color fixup, buffer[0] has correct fg+bg fields.
+            StringToScreenChars(augmented,
+                                firstChars,
+                                buffer[0],
+                                buffer[0],
+                                &firstLen,
+                                self.config.treatAmbiguousCharsAsDoubleWidth,
+                                NULL,
+                                &firstDwc,
+                                self.config.normalization,
+                                self.config.unicodeVersion,
+                                self.terminal.softAlternateScreenMode,
+                                NULL);
+            if (rtlFound) {
+                [[self.currentGrid lineInfoAtLineNumber:pred.y] setRTLFound:YES];
+            }
+            const screen_char_t current = [self.currentGrid characterAt:pred];
+            const unichar predecessorCode = firstChars[0].code;
+            const BOOL predecessorComplexChar = firstChars[0].complexChar;
+            if (current.code != predecessorCode || current.complexChar != predecessorComplexChar) {
+                [self.currentGrid mutateCharactersInRange:VT100GridCoordRangeMake(pred.x, pred.y, pred.x + 1, pred.y)
+                                                  dwcFree:YES
+                                                    block:^(screen_char_t *sct,
+                                                            iTermExternalAttribute *__autoreleasing *eaOut,
+                                                            VT100GridCoord coord,
+                                                            BOOL *stop) {
+                    sct->code = predecessorCode;
+                    sct->complexChar = predecessorComplexChar;
+                }];
+            }
+            bufferOffset++;
+            if (predecessorIsDoubleWidth && len > 1 && ScreenCharIsDWC_RIGHT(buffer[1])) {
+                bufferOffset++;
+            }
+        } else if (!buffer[0].complexChar) {
+            // No predecessor; first char is not a combining mark. Skip the prepended space.
+            bufferOffset++;
+        }
+
+        if (dwc) {
+            self.linebuffer.mayHaveDoubleWidthCharacter = dwc;
+        }
+        [self appendScreenCharArrayAtCursor:buffer + bufferOffset
+                                     length:len - bufferOffset
+                     externalAttributeIndex:[iTermUniformExternalAttributes withAttribute:self.terminal.externalAttributes]
+                                   rtlFound:rtlFound
+                                    dwcFree:!dwc];
     } else {
-        buffer = staticBuffer;
-    }
+        // Slow path: augment with actual predecessor and run StringToScreenChars.
+        const int kStaticBufferElements = 1024;
+        screen_char_t staticBuffer[kStaticBufferElements];
+        string = [string normalized:self.normalization];
+        len = [string length];
+        if (3 * len >= kStaticBufferElements) {
+            buffer = dynamicBuffer = (screen_char_t *) iTermCalloc(3 * len,
+                                                                   sizeof(screen_char_t));
+            assert(buffer);
+            if (!buffer) {
+                NSLog(@"%s: Out of memory", __PRETTY_FUNCTION__);
+                return;
+            }
+        } else {
+            buffer = staticBuffer;
+        }
 
     // `predecessorIsDoubleWidth` will be true if the cursor is over a double-width character
     // but NOT if it's over a DWC_RIGHT.
-    BOOL predecessorIsDoubleWidth = NO;
-    const VT100GridCoord pred = [self.currentGrid coordinateBefore:self.currentGrid.cursor
-                                          movedBackOverDoubleWidth:&predecessorIsDoubleWidth];
-    NSString *augmentedString = string;
-    NSString *predecessorString = pred.x >= 0 ? [self.currentGrid stringOrKittyPlaceholderStringForCharacterAt:pred] : nil;
-    const BOOL augmented = predecessorString != nil;
-    if (augmented) {
-        augmentedString = [predecessorString stringByAppendingString:string];
-    } else {
+        BOOL predecessorIsDoubleWidth = NO;
+        const VT100GridCoord pred = [self.currentGrid coordinateBefore:self.currentGrid.cursor
+                                              movedBackOverDoubleWidth:&predecessorIsDoubleWidth];
+        NSString *augmentedString = string;
+        NSString *predecessorString = pred.x >= 0 ? [self.currentGrid stringOrKittyPlaceholderStringForCharacterAt:pred] : nil;
+        const BOOL augmented = predecessorString != nil;
+        if (augmented) {
+            augmentedString = [predecessorString stringByAppendingString:string];
+        } else {
         // Prepend a space so we can detect if the first character is a combining mark.
-        augmentedString = [@" " stringByAppendingString:string];
-    }
-
-    assert(self.terminal);
-    // Add DWC_RIGHT after each double-width character, build complex characters out of surrogates
-    // and combining marks, replace private codes with replacement characters, swallow zero-
-    // width spaces, and set fg/bg colors and attributes.
-    BOOL dwc = NO;
-    BOOL rtlFound = NO;
-    StringToScreenChars(augmentedString,
-                        buffer,
-                        [self.terminal foregroundColorCode],
-                        [self.terminal backgroundColorCode],
-                        &len,
-                        self.config.treatAmbiguousCharsAsDoubleWidth,
-                        NULL,
-                        &dwc,
-                        self.config.normalization,
-                        self.config.unicodeVersion,
-                        self.terminal.softAlternateScreenMode,
-                        &rtlFound);
-    ssize_t bufferOffset = 0;
-    if (augmented && len > 0) {
-        if (rtlFound) {
-            [[self.currentGrid lineInfoAtLineNumber:pred.y] setRTLFound:YES];
+            augmentedString = [@" " stringByAppendingString:string];
         }
-        const screen_char_t current = [self.currentGrid characterAt:pred];
-        if (current.code != buffer[0].code || current.complexChar != buffer[0].complexChar) {
-            // This handles the rare case where we receive a combining mark at the beginning of
-            // `string` and have to modify the preciding character.
-            [self.currentGrid mutateCharactersInRange:VT100GridCoordRangeMake(pred.x, pred.y, pred.x + 1, pred.y)
-                                              dwcFree:YES
-                                                block:^(screen_char_t *sct,
-                                                        iTermExternalAttribute *__autoreleasing *eaOut,
-                                                        VT100GridCoord coord,
-                                                        BOOL *stop) {
-                sct->code = buffer[0].code;
-                sct->complexChar = buffer[0].complexChar;
-            }];
-        }
-        bufferOffset++;
 
-        // Does the augmented result begin with a double-width character? If so skip over the
-        // DWC_RIGHT when appending. I *think* this is redundant with the `predecessorIsDoubleWidth`
-        // test but I'm reluctant to remove it because it could break something.
-        const BOOL augmentedResultBeginsWithDoubleWidthCharacter = (augmented &&
-                                                                    len > 1 &&
-                                                                    ScreenCharIsDWC_RIGHT(buffer[1]) &&
-                                                                    !buffer[1].complexChar);
-        if ((augmentedResultBeginsWithDoubleWidthCharacter || predecessorIsDoubleWidth) && len > 1 && ScreenCharIsDWC_RIGHT(buffer[1])) {
-            // Skip over a preexisting DWC_RIGHT in the predecessor.
+        // Add DWC_RIGHT after each double-width character, build complex characters out of surrogates
+        // and combining marks, replace private codes with replacement characters, swallow zero-
+        // width spaces, and set fg/bg colors and attributes.
+        StringToScreenChars(augmentedString,
+                            buffer,
+                            [self.terminal foregroundColorCode],
+                            [self.terminal backgroundColorCode],
+                            &len,
+                            self.config.treatAmbiguousCharsAsDoubleWidth,
+                            NULL,
+                            &dwc,
+                            self.config.normalization,
+                            self.config.unicodeVersion,
+                            self.terminal.softAlternateScreenMode,
+                            &rtlFound);
+        ssize_t bufferOffset = 0;
+        if (augmented && len > 0) {
+            if (rtlFound) {
+                [[self.currentGrid lineInfoAtLineNumber:pred.y] setRTLFound:YES];
+            }
+            const screen_char_t current = [self.currentGrid characterAt:pred];
+            if (current.code != buffer[0].code || current.complexChar != buffer[0].complexChar) {
+                // This handles the rare case where we receive a combining mark at the beginning of
+                // `string` and have to modify the preciding character.
+                [self.currentGrid mutateCharactersInRange:VT100GridCoordRangeMake(pred.x, pred.y, pred.x + 1, pred.y)
+                                                  dwcFree:YES
+                                                    block:^(screen_char_t *sct,
+                                                            iTermExternalAttribute *__autoreleasing *eaOut,
+                                                            VT100GridCoord coord,
+                                                            BOOL *stop) {
+                    sct->code = buffer[0].code;
+                    sct->complexChar = buffer[0].complexChar;
+                }];
+            }
+            bufferOffset++;
+
+            // Does the augmented result begin with a double-width character? If so skip over the
+            // DWC_RIGHT when appending. I *think* this is redundant with the `predecessorIsDoubleWidth`
+            // test but I'm reluctant to remove it because it could break something.
+            const BOOL augmentedResultBeginsWithDoubleWidthCharacter = (augmented &&
+                                                                        len > 1 &&
+                                                                        ScreenCharIsDWC_RIGHT(buffer[1]) &&
+                                                                        !buffer[1].complexChar);
+            if ((augmentedResultBeginsWithDoubleWidthCharacter || predecessorIsDoubleWidth) && len > 1 && ScreenCharIsDWC_RIGHT(buffer[1])) {
+                // Skip over a preexisting DWC_RIGHT in the predecessor.
+                bufferOffset++;
+            }
+        } else if (!buffer[0].complexChar) {
+            // We infer that the first character in |string| was not a combining mark. If it were, it
+            // would have combined with the space we added to the start of |augmentedString|. Skip past
+            // the space.
             bufferOffset++;
         }
-    } else if (!buffer[0].complexChar) {
-        // We infer that the first character in |string| was not a combining mark. If it were, it
-        // would have combined with the space we added to the start of |augmentedString|. Skip past
-        // the space.
-        bufferOffset++;
-    }
 
-    if (dwc) {
-        self.linebuffer.mayHaveDoubleWidthCharacter = dwc;
-    }
-    [self appendScreenCharArrayAtCursor:buffer + bufferOffset
-                                 length:len - bufferOffset
-                 externalAttributeIndex:[iTermUniformExternalAttributes withAttribute:self.terminal.externalAttributes]
-                               rtlFound:rtlFound
-                                dwcFree:!dwc];
-    if (buffer == dynamicBuffer) {
-        free(buffer);
+        if (dwc) {
+            self.linebuffer.mayHaveDoubleWidthCharacter = dwc;
+        }
+        [self appendScreenCharArrayAtCursor:buffer + bufferOffset
+                                     length:len - bufferOffset
+                     externalAttributeIndex:[iTermUniformExternalAttributes withAttribute:self.terminal.externalAttributes]
+                                   rtlFound:rtlFound
+                                    dwcFree:!dwc];
+        if (buffer == dynamicBuffer) {
+            free(buffer);
+        }
     }
 }
 
@@ -953,8 +1105,20 @@ static const int64_t VT100ScreenMutableStateSideEffectFlagLineBufferDidDropLines
     const screen_char_t defaultChar = terminal.processedDefaultChar;
     iTermExternalAttribute *ea = [terminal externalAttributes];
 
-    screen_char_t zero = { 0 };
-    if (memcmp(&defaultChar, &zero, sizeof(defaultChar))) {
+    // Parser thread baked in colors. Check if they match the current terminal state.
+    screen_char_t stampFg = { 0 };
+    screen_char_t stampBg = { 0 };
+    VT100GraphicRendition stampRendition = asciiData->screenChars->rendition;
+    VT100GraphicRenditionUpdateForeground(&stampRendition, YES,
+                                          asciiData->screenChars->protectedMode, &stampFg);
+    VT100GraphicRenditionUpdateBackground(&stampRendition, YES, &stampBg);
+
+    screen_char_t stampCombined = { 0 };
+    CopyForegroundColor(&stampCombined, stampFg);
+    CopyBackgroundColor(&stampCombined, stampBg);
+
+    if (!ScreenCharFGBGEqual(stampCombined, defaultChar)) {
+        // Medium path: colors differ, apply fixup.
         STOPWATCH_START(setUpScreenCharArray);
         for (int i = 0; i < len; i++) {
             CopyForegroundColor(&buffer[i], defaultChar);
@@ -962,6 +1126,7 @@ static const int64_t VT100ScreenMutableStateSideEffectFlagLineBufferDidDropLines
         }
         STOPWATCH_LAP(setUpScreenCharArray);
     }
+    // else: fast path — colors already correct, skip the loop.
 
     // If a graphics character set was selected then translate buffer
     // characters into graphics characters.
@@ -1762,8 +1927,23 @@ void VT100ScreenEraseCell(screen_char_t *sct,
         }];
     }
     [self reloadMarkCache];
+
+    // Post immediately for mutation-thread ResilientCoordinates.
+    {
+        const long long overflow = self.cumulativeScrollbackOverflow;
+        VT100GridAbsCoordRange (^intervalConverter)(id<IntervalTreeImmutableObject>) =
+            ^VT100GridAbsCoordRange(id<IntervalTreeImmutableObject> obj) {
+                const VT100GridCoordRange range = [self coordRangeForInterval:obj.entry.interval];
+                return VT100GridAbsCoordRangeFromCoordRange(range, overflow);
+            };
+        [iTermRCClearToEndNotification postWithGuid:self.uniqueIdentifier
+                                               absY:absLine
+                                  intervalConverter:intervalConverter];
+    }
+
     [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
         [delegate screenRemoveSelection];
+        [delegate screenDidClearFromAbsoluteLineToEnd:absLine];
     } name:@"really clear from absline to end 2"];
     [self setNeedsRedraw];
 }
@@ -3976,7 +4156,15 @@ void VT100ScreenEraseCell(screen_char_t *sct,
         return [lb screenCharArrayForLine:line width:self.width paddedTo:self.width eligibleForDWC:NO];
     }];
 
-    [self replaceRange:range withLines:reflowed removedIntervalTreeObjects:nil removedLines:nil];
+    const iTermLinesShiftedReason reason = [PortholeMark castFrom:mark] ? iTermLinesShiftedReasonPortholeRemoved : iTermLinesShiftedReasonUnfold;
+    [self replaceRange:range
+            withLines:reflowed
+            removedIntervalTreeObjects:nil
+            removedLines:nil
+            markProvider:^id<iTermWidthSavingMark> _Nullable{
+        return (id<iTermWidthSavingMark>)mark.doppelganger;
+    }
+            reason:reason];
     if (mark.entry) {
         // Not sure how you could get here since the previous method should have removed it, but
         // better to be safe.
@@ -3995,6 +4183,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     if (self.config.useLineStyleMarks) {
         [self movePromptUnderComposerIfNeeded];
     }
+
     DLog(@"After unfold:");
     DLog(@"%@", [self compactLineDumpWithHistoryAndContinuationMarksAndLineNumbersAndIntervalTreeObjects]);
 }
@@ -4053,10 +4242,15 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     NSArray<iTermSavedIntervalTreeObject *> *savedITOs = nil;
     NSArray<ScreenCharArray *> *savedLines = nil;
     NSSet<NSNumber *> *imageCodes = [self imageCodesUsedInAbsRange:absRange];
+    __block iTermFoldMark *createdFoldMark = nil;
     const VT100GridAbsCoordRange markRange = [self replaceRange:absRange
                                                       withLines:lines
                                      removedIntervalTreeObjects:&savedITOs
-                                                   removedLines:&savedLines];
+                                                   removedLines:&savedLines
+                                                   markProvider:^id<iTermWidthSavingMark> _Nullable{
+        return (id<iTermWidthSavingMark>)createdFoldMark.doppelganger;
+    }
+                                                         reason:iTermLinesShiftedReasonFold];
     if (!VT100GridAbsCoordRangeIsValid(markRange)) {
         return;
     }
@@ -4083,8 +4277,10 @@ void VT100ScreenEraseCell(screen_char_t *sct,
         iTermFoldMark *mark = [[iTermFoldMark alloc] initWithLines:savedLines
                                                          savedITOs:savedITOs
                                                       promptLength:promptLength
-                                                        imageCodes:imageCodes];
+                                                        imageCodes:imageCodes
+                                                             width:self.width];
         [self.mutableIntervalTree addObject:mark withInterval:interval];
+        createdFoldMark = mark;
     }
     if (self.config.useLineStyleMarks) {
         [self movePromptUnderComposerIfNeeded];
@@ -4118,17 +4314,23 @@ void VT100ScreenEraseCell(screen_char_t *sct,
         [lines addObject:[[ScreenCharArray alloc] init]];
     }
     NSArray<iTermSavedIntervalTreeObject *> *savedITOs = nil;
+    __block PortholeMark *createdMark = nil;
     const VT100GridAbsCoordRange markRange = [self replaceRange:absRange
                                                       withLines:lines
                                      removedIntervalTreeObjects:&savedITOs
-                                                   removedLines:nil];
+                                                   removedLines:nil
+                                                   markProvider:^id<iTermWidthSavingMark> _Nullable{
+        return (id<iTermWidthSavingMark>)createdMark.doppelganger;
+    }
+                                                         reason:iTermLinesShiftedReasonPortholeAdded];
     if (!VT100GridAbsCoordRangeIsValid(markRange)) {
         return;
     }
     porthole.savedITOs = savedITOs;
     Interval *interval = [self intervalForGridAbsCoordRange:markRange];
-    PortholeMark *mark = [[PortholeMark alloc] init:porthole.uniqueIdentifier];
+    PortholeMark *mark = [[PortholeMark alloc] init:porthole.uniqueIdentifier width:self.width];
     [self.mutableIntervalTree addObject:mark withInterval:interval];
+    createdMark = mark;
     if (self.config.useLineStyleMarks) {
         [self movePromptUnderComposerIfNeeded];
     }
@@ -4149,7 +4351,14 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     for (int i = 0; i < newHeight; i++) {
         [lines addObject:[[ScreenCharArray alloc] init]];
     }
-    [self replaceRange:range withLines:lines removedIntervalTreeObjects:nil removedLines:nil];
+    [self replaceRange:range
+            withLines:lines
+            removedIntervalTreeObjects:nil
+            removedLines:nil
+            markProvider:^id<iTermWidthSavingMark> _Nullable{
+        return (id<iTermWidthSavingMark>)mark.doppelganger;
+    }
+            reason:iTermLinesShiftedReasonPortholeResized];
 
     replacementAbsRange.end.y = replacementAbsRange.start.y + newHeight - 1;
     replacementAbsRange.start.y = MAX(self.totalScrollbackOverflow, replacementAbsRange.start.y);
@@ -4167,6 +4376,20 @@ void VT100ScreenEraseCell(screen_char_t *sct,
                              withLines:(NSArray<ScreenCharArray *> *)replacementLines
             removedIntervalTreeObjects:(out NSArray<iTermSavedIntervalTreeObject *> **)removedIntervalTreeObjects
                           removedLines:(out NSArray<ScreenCharArray *> **)removedLines {
+    return [self replaceRange:absRange
+                    withLines:replacementLines
+   removedIntervalTreeObjects:removedIntervalTreeObjects
+                 removedLines:removedLines
+                 markProvider:nil
+                       reason:iTermLinesShiftedReasonPortholeResized];
+}
+
+- (VT100GridAbsCoordRange)replaceRange:(VT100GridAbsCoordRange)absRange
+                             withLines:(NSArray<ScreenCharArray *> *)replacementLines
+            removedIntervalTreeObjects:(out NSArray<iTermSavedIntervalTreeObject *> **)removedIntervalTreeObjects
+                          removedLines:(out NSArray<ScreenCharArray *> **)removedLines
+                          markProvider:(id<iTermWidthSavingMark> _Nullable (^ _Nullable)(void))markProvider
+                                reason:(iTermLinesShiftedReason)reason {
     __block VT100GridAbsCoordRange result;
     __block NSArray<iTermSavedIntervalTreeObject *> *removedMarks = nil;
     __block NSArray<ScreenCharArray *> *removedSCAs = nil;
@@ -4174,7 +4397,9 @@ void VT100ScreenEraseCell(screen_char_t *sct,
         result = [self reallyReplaceRange:absRange
                                 withLines:replacementLines
                removedIntervalTreeObjects:&removedMarks
-                             removedLines:&removedSCAs];
+                             removedLines:&removedSCAs
+                             markProvider:markProvider
+                                   reason:reason];
     }];
     if (removedIntervalTreeObjects) {
         *removedIntervalTreeObjects = removedMarks;
@@ -4188,7 +4413,9 @@ void VT100ScreenEraseCell(screen_char_t *sct,
 - (VT100GridAbsCoordRange)reallyReplaceRange:(VT100GridAbsCoordRange)absRange
                                    withLines:(NSArray<ScreenCharArray *> *)replacementLines
                   removedIntervalTreeObjects:(out NSArray<iTermSavedIntervalTreeObject *> **)removedIntervalTreeObjects
-                                removedLines:(out NSArray<ScreenCharArray *> **)removedLines {
+                                removedLines:(out NSArray<ScreenCharArray *> **)removedLines
+                                markProvider:(id<iTermWidthSavingMark> _Nullable (^ _Nullable)(void))markProvider
+                                      reason:(iTermLinesShiftedReason)reason {
     DLog(@"reallyReplaceRange:%@ withLines:%@", VT100GridAbsCoordRangeDescription(absRange), replacementLines);
 
     const long long overflow = self.cumulativeScrollbackOverflow;
@@ -4205,7 +4432,9 @@ void VT100ScreenEraseCell(screen_char_t *sct,
         return [self reallyReplaceRange:fixed
                               withLines:replacementLines
              removedIntervalTreeObjects:removedIntervalTreeObjects
-                           removedLines:removedLines];
+                           removedLines:removedLines
+                           markProvider:markProvider
+                                 reason:reason];
     }
 
     DLog(@"Before replacing range:");
@@ -4419,6 +4648,91 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     DLog(@"Removed %@", objectsToRemove);
     DLog(@"%@", [self compactLineDumpWithHistoryAndContinuationMarksAndLineNumbersAndIntervalTreeObjects]);
     [self.linebuffer sanityCheck];
+
+    if (delta != 0) {
+        const long long absLine = absRange.start.y;
+        const NSRange replacedRange = NSMakeRange((NSUInteger)absRange.start.y,
+                                                   (NSUInteger)(absRange.end.y - absRange.start.y + 1));
+
+        // Block that converts a coord relative to the replaced range from old layout to new layout.
+        // Capture everything by value to avoid retaining self or the mark.
+        const int currentWidth = self.width;
+        __block LineBuffer *removedContent = nil;
+        __block id<iTermWidthSavingMark> cachedMark = nil;
+        __block int cachedOriginalWidth = 0;
+        __block BOOL cachedMarkResolved = NO;
+        VT100GridCoord (^converter)(VT100GridCoord) = ^VT100GridCoord(VT100GridCoord relativeCoord) {
+            // Resolve the mark once and cache for subsequent calls.
+            if (!cachedMarkResolved) {
+                cachedMarkResolved = YES;
+                cachedMark = markProvider();
+                if (cachedMark) {
+                    cachedOriginalWidth = cachedMark.savedWidth;
+                }
+            }
+            if (!cachedMark) {
+                return relativeCoord;
+            }
+            const int originalWidth = cachedOriginalWidth;
+            assert(originalWidth > 0);
+            const int newWidth = currentWidth;
+            if (newWidth == originalWidth) {
+                return relativeCoord;
+            }
+            // Build the LineBuffer lazily on first use and reuse for subsequent calls.
+            if (!removedContent) {
+                removedContent = [[LineBuffer alloc] init];
+                NSArray<ScreenCharArray *> *savedLines = cachedMark.savedLines ?: @[];
+                for (ScreenCharArray *sca in savedLines) {
+                    [removedContent appendScreenCharArray:sca width:currentWidth];
+                }
+            }
+            LineBufferPosition *pos = [removedContent positionForCoordinate:relativeCoord
+                                                                      width:originalWidth
+                                                                     offset:0];
+            if (!pos) {
+                return VT100GridCoordInvalid;
+            }
+            BOOL ok = NO;
+            VT100GridCoord result = [removedContent coordinateForPosition:pos
+                                                                    width:newWidth
+                                                             extendsRight:NO
+                                                                       ok:&ok];
+            if (!ok) {
+                return VT100GridCoordInvalid;
+            }
+            return result;
+        };
+
+        // Post immediately for mutation-thread ResilientCoordinates.
+        {
+            id<iTermWidthSavingMark> mark = markProvider ? markProvider() : nil;
+            NSMutableDictionary *userInfo = [@{
+                iTermLinesShiftedNotification.absLineKey: @(absLine),
+                iTermLinesShiftedNotification.deltaKey: @(delta),
+                iTermLinesShiftedNotification.reasonKey: @(reason),
+                iTermLinesShiftedNotification.replacedRangeKey: [NSValue valueWithRange:replacedRange],
+                iTermLinesShiftedNotification.converterKey: [converter copy]
+            } mutableCopy];
+            if (mark) {
+                userInfo[iTermLinesShiftedNotification.markKey] = mark;
+            }
+            [[NSNotificationCenter defaultCenter] postNotificationName:iTermRCNotificationNames.linesShifted
+                                                                object:self.uniqueIdentifier
+                                                              userInfo:userInfo];
+        }
+
+        [self addSideEffect:^(id<VT100ScreenDelegate> delegate) {
+            id<iTermWidthSavingMark> mark = markProvider ? markProvider() : nil;
+            [delegate screenDidShiftLinesAtAbsLine:absLine
+                                                by:delta
+                                              mark:mark
+                                            reason:reason
+                                     replacedRange:replacedRange
+                                         converter:converter];
+        } name:@"lines shifted"];
+    }
+
     return resultingRange;
 }
 
@@ -5661,6 +5975,7 @@ lengthExcludingInBandSignaling:data.length
             o++;
         } while (o < self.altGrid.size.height && length > 0);
     }
+    [self.altGrid markAllCharsDirty:YES updateTimestamps:NO];
 }
 
 
@@ -5684,6 +5999,10 @@ lengthExcludingInBandSignaling:data.length
         id<VT100GridReading> temp = self.altGrid;
         self.altGrid = self.primaryGrid;
         self.primaryGrid = temp;
+        // After swapping grid pointers, the read-only state's grids still reference old copies.
+        // Mark all cells dirty to force a full resync during mergeFrom:.
+        [self.primaryGrid markAllCharsDirty:YES updateTimestamps:NO];
+        [self.altGrid markAllCharsDirty:YES updateTimestamps:NO];
     }
 
     NSNumber *altSavedX = state[kStateDictAltSavedCX];
@@ -5745,7 +6064,7 @@ lengthExcludingInBandSignaling:data.length
     if (mouse && mouse.intValue) {
         [self.terminal setMouseMode:MOUSE_REPORTING_BUTTON_MOTION];
     }
-    mouse = state[kStateDictMouseButtonMode];
+    mouse = state[kStateDictMouseAnyMode];
     if (mouse && mouse.intValue) {
         [self.terminal setMouseMode:MOUSE_REPORTING_ALL_MOTION];
     }
@@ -5793,6 +6112,9 @@ lengthExcludingInBandSignaling:data.length
     } else {
         [self.terminal setMouseFormat:MOUSE_FORMAT_XTERM];
     }
+
+    // Gracefully degrades to NO on tmux versions that lack bracket_paste_flag.
+    [self.terminal setBracketedPasteMode:[state[kStateDictBracketedPasteMode] boolValue]];
 }
 
 #pragma mark - SSH

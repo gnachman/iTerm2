@@ -82,6 +82,10 @@ NSPopoverDelegate> {
 - (NSRect)adjustedDocumentVisibleRect;
 
 // exposed for tests
++ (NSArray<NSString *> *)accessibilityAnnouncementLinesForTrimmedLines:(NSArray<NSString *> *)trimmedLines
+                                                     firstAbsoluteLine:(long long)firstAbsoluteLine
+                                                       oldAbsoluteCursorY:(long long)oldAbsoluteCursorY
+                                                     oldCursorLineString:(NSString *)oldCursorLineString;
 - (void)setDrawingHelperIsRetina:(BOOL)isRetina;
 - (void)copySelectionWithControlSequences:(iTermSelection *)selection;
 - (void)copySelectionWithStyles:(iTermSelection *)selection;

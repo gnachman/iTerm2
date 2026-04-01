@@ -157,4 +157,19 @@ NSString *VT100GridAbsWindowedRangeDescription(VT100GridAbsWindowedRange range) 
 
 @end
 
+VT100GridCoord VT100GridCoordByInvokingConverter(id converter, VT100GridCoord coord) {
+    VT100GridCoord (^block)(VT100GridCoord) = converter;
+    return block(coord);
+}
+
+VT100GridAbsCoord VT100GridAbsCoordByInvokingConverter(id converter, VT100GridAbsCoord coord) {
+    VT100GridAbsCoord (^block)(VT100GridAbsCoord) = converter;
+    return block(coord);
+}
+
+VT100GridAbsCoordRange VT100GridAbsCoordRangeByInvokingIntervalConverter(id converter, id<IntervalTreeImmutableObject> obj) {
+    VT100GridAbsCoordRange (^block)(id<IntervalTreeImmutableObject>) = converter;
+    return block(obj);
+}
+
 NS_ASSUME_NONNULL_END

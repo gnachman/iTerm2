@@ -458,7 +458,7 @@ static const char *iTermApplicationKVOKey = "iTermApplicationKVOKey";
 }
 
 - (BOOL)handleLeader:(NSEvent *)event {
-    if (event.modifierFlags & iTermLeaderModifierFlag) {
+    if (event.modifierFlags & (NSEventModifierFlags)iTermLeaderModifierFlag) {
         DLog(@"Leader flag unset");
         return NO;
     }
@@ -466,7 +466,7 @@ static const char *iTermApplicationKVOKey = "iTermApplicationKVOKey";
         DLog(@"Re-send event with leader modifier flag set");
         NSEvent *modified = [NSEvent keyEventWithType:NSEventTypeKeyDown
                                              location:event.locationInWindow
-                                        modifierFlags:event.modifierFlags | iTermLeaderModifierFlag
+                                        modifierFlags:event.modifierFlags | (NSEventModifierFlags)iTermLeaderModifierFlag
                                             timestamp:event.timestamp
                                          windowNumber:event.windowNumber
                                               context:nil
@@ -590,11 +590,11 @@ static const char *iTermApplicationKVOKey = "iTermApplicationKVOKey";
     }
     event.it_functionModifierPressed = _functionPressed;
 
-    if (_leader && !(event.modifierFlags & iTermLeaderModifierFlag)) {
+    if (_leader && !(event.modifierFlags & (NSEventModifierFlags)iTermLeaderModifierFlag)) {
         DLog(@"Flags changed while leader on. Rewrite event with leader flag and resend");
         NSEvent *flagChangedPlusHelp = [NSEvent keyEventWithType:NSEventTypeFlagsChanged
                                                         location:event.locationInWindow
-                                                   modifierFlags:event.modifierFlags | iTermLeaderModifierFlag
+                                                   modifierFlags:event.modifierFlags | (NSEventModifierFlags)iTermLeaderModifierFlag
                                                        timestamp:event.timestamp
                                                     windowNumber:event.windowNumber
                                                          context:nil
@@ -630,7 +630,7 @@ static const char *iTermApplicationKVOKey = "iTermApplicationKVOKey";
 
 - (BOOL)handleKeyDownEvent:(NSEvent *)event {
     DLog(@"Received KeyDown event: %@. Key window is %@. First responder is %@", event, [self keyWindow], [[self keyWindow] firstResponder]);
-    if ((event.modifierFlags & iTermLeaderModifierFlag)) {
+    if ((event.modifierFlags & (NSEventModifierFlags)iTermLeaderModifierFlag)) {
         DLog(@"Leader flag set");
     }
     if (event.isARepeat) {
@@ -1026,7 +1026,7 @@ static const char *iTermApplicationKVOKey = "iTermApplicationKVOKey";
         NSEvent *event = [self currentEvent];
         NSEvent *flagUp = [NSEvent keyEventWithType:NSEventTypeFlagsChanged
                                            location:event.locationInWindow
-                                      modifierFlags:event.modifierFlags & ~iTermLeaderModifierFlag
+                                      modifierFlags:event.modifierFlags & ~(NSEventModifierFlags)iTermLeaderModifierFlag
                                           timestamp:event.timestamp
                                        windowNumber:event.windowNumber
                                             context:nil
@@ -1041,7 +1041,7 @@ static const char *iTermApplicationKVOKey = "iTermApplicationKVOKey";
         NSEvent *event = [self currentEvent];
         NSEvent *flagDown = [NSEvent keyEventWithType:NSEventTypeFlagsChanged
                                              location:event.locationInWindow
-                                        modifierFlags:event.modifierFlags | iTermLeaderModifierFlag
+                                        modifierFlags:event.modifierFlags | (NSEventModifierFlags)iTermLeaderModifierFlag
                                             timestamp:event.timestamp
                                          windowNumber:event.windowNumber
                                               context:nil

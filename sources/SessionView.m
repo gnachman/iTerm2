@@ -2691,14 +2691,16 @@ typedef NS_OPTIONS(NSUInteger, iTermCornerFlags) {
               mode:(iTermFindMode)mode
         withOffset:(int)offset
 scrollToFirstResult:(BOOL)scrollToFirstResult
-             force:(BOOL)force {
+             force:(BOOL)force
+extendResultsAcrossSoftBoundaries:(BOOL)extendResultsAcrossSoftBoundaries {
     DLog(@"begin self=%@ aString=%@", self, aString);
     [self.delegate findString:aString
              forwardDirection:direction
                          mode:mode
                    withOffset:offset
           scrollToFirstResult:scrollToFirstResult
-                        force:NO];
+                        force:NO
+  extendResultsAcrossSoftBoundaries:extendResultsAcrossSoftBoundaries];
 }
 
 - (BOOL)findDriverBottomUpValidateMenuItem:(NSMenuItem *)menuItem {

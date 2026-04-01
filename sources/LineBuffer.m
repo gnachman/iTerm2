@@ -189,13 +189,20 @@ static const NSInteger kUnicodeVersion = 9;
         max_lines = [dictionary[kLineBufferMaxLinesKey] intValue];
         num_dropped_blocks = [dictionary[kLineBufferNumDroppedBlocksKey] intValue];
         droppedChars = [dictionary[kLineBufferDroppedCharsKey] longLongValue];
+        // Key for wrapper generation injected by iTermEncoderGraphRecord's implicitDictionaryValue
+        NSString *wrapperGenerationKey = [kLineBufferBlockWrapperKey stringByAppendingString:iTermEncoderGraphRecordGenerationKeySuffix];
         for (NSDictionary *maybeWrapper in dictionary[kLineBufferBlocksKey]) {
             NSDictionary *blockDictionary = maybeWrapper;
+            NSNumber *fallbackGeneration = nil;
             if (maybeWrapper[kLineBufferBlockWrapperKey]) {
                 blockDictionary = maybeWrapper[kLineBufferBlockWrapperKey];
+                // For migration: if the block dictionary lacks a generation key, use the wrapper
+                // record's generation which was injected during graph record conversion.
+                fallbackGeneration = maybeWrapper[wrapperGenerationKey];
             }
             LineBlock *block = [LineBlock blockWithDictionary:blockDictionary
-                                          absoluteBlockNumber:num_dropped_blocks + _lineBlocks.count];
+                                          absoluteBlockNumber:num_dropped_blocks + _lineBlocks.count
+                                           fallbackGeneration:fallbackGeneration];
             if (!block) {
                 return [[LineBuffer alloc] init];
             }

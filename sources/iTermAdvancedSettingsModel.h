@@ -87,7 +87,6 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (NSString *)autoLogFormat;  // Use the per-profile setting instead. This is only around for migrating the default.
 #endif
 + (BOOL)autologAppends;
-+ (BOOL)avoidShrinkingTmuxWindows;
 + (NSString *)badgeFont;
 + (BOOL)badgeFontIsBold;
 + (double)badgeMaxHeightFraction;
@@ -205,6 +204,10 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 
 // Regular expression for finding URLs for Edit>Find>Find URLs
 + (NSString *)findUrlsRegex;
+
+// When finding URLs, extend results across soft boundaries (like tmux pane dividers)
++ (BOOL)findURLsRespectsSoftBoundaries;
+
 + (BOOL)fixMouseWheel;
 + (NSString *)fontsForGenerousRounding;
 + (BOOL)focusNewSplitPaneWithFocusFollowsMouse;
@@ -346,6 +349,11 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (BOOL)placeTabsInTitlebarAccessoryInFullScreen;
 + (BOOL)pollForTmuxForegroundJob;
 + (BOOL)postFakeFlagsChangedEvents;
++ (BOOL)preconvertStringsOnParserThread;
++ (BOOL)asyncPreconvertStrings;
++ (int)asyncPreconvertMinStringLength;
++ (int)asyncPreconvertMaxOutstandingBytes;
++ (BOOL)logNonASCIIStringLengthHistogram;
 + (BOOL)preferSpeedToFullLigatureSupport;
 + (NSString *)preferredBaseDir;
 + (const BOOL *)preventEscapeSequenceFromClearingHistory;

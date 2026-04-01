@@ -386,6 +386,7 @@ DEFINE_STRING(findUrlsRegex,
               @"https?://([a-z0-9A-Z]+(:[a-zA-Z0-9]+)?@)?[a-z0-9A-Z\\-]+(\\.[a-z0-9A-Z\\-]+)*"
               @"((:[0-9]+)?)(/[a-zA-Z0-9;:/\\.\\-_+%~?&amp;@=#\\(\\)]*)?",
               SECTION_TERMINAL @"Regular expression for “Find URLs” command.");
+DEFINE_BOOL(findURLsRespectsSoftBoundaries, YES, SECTION_TERMINAL @"When using “Find URLs”, extend results across soft boundaries like tmux pane dividers.");
 DEFINE_SETTABLE_FLOAT(echoProbeDuration, EchoProbeDuration, 0.5, SECTION_TERMINAL @"Amount of time to wait while testing if echo is on (seconds).\nThis is used by the password manager to ensure you're at a password prompt. Set to 0 to disable echo probe.");
 DEFINE_BOOL(disablePasswordManagerAnimations, NO, SECTION_TERMINAL @"Disable animations for showing/hiding password manager.");
 DEFINE_BOOL(noSyncSilenceAnnoyingBellAutomatically, NO, SECTION_TERMINAL @"Automatically silence bell when it rings too much.");
@@ -843,6 +844,11 @@ DEFINE_BOOL(supportDecsetMetaSendsEscape, YES_IF_BETA_ELSE_NO, SECTION_EXPERIMEN
 DEFINE_BOOL(fastTriggerRegexes, YES, SECTION_EXPERIMENTAL @"Fast regular expression evaluation for triggers.\nThis is experimental because it could potentially change how regular expressions are interpreted.");
 DEFINE_BOOL(postFakeFlagsChangedEvents, NO, SECTION_EXPERIMENTAL @"Post fake flags-changed events when remapping modifiers with an event tap.\nThis is an attempt to work around incompatibilities with AltTab in issue 10220.");
 DEFINE_BOOL(fullWidthFlags, YES, SECTION_EXPERIMENTAL @"Flag emoji render full-width");
+DEFINE_BOOL(preconvertStringsOnParserThread, YES, SECTION_EXPERIMENTAL @"Pre-convert non-ASCII strings to screen characters on the parser thread.\nThis exploits parallelism between parsing and screen mutation for better performance.");
+DEFINE_BOOL(asyncPreconvertStrings, YES, SECTION_EXPERIMENTAL @"Pre-convert long non-ASCII strings on a background queue.\nThis decouples preconversion from the parser thread for better throughput.");
+DEFINE_INT(asyncPreconvertMinStringLength, 128, SECTION_EXPERIMENTAL @"Minimum string length (in UTF-16 code units) to dispatch for async pre-conversion.");
+DEFINE_INT(asyncPreconvertMaxOutstandingBytes, 1048576, SECTION_EXPERIMENTAL @"Maximum bytes of outstanding async pre-conversions.\nWhen this limit is reached, new strings are converted synchronously on the mutation thread.");
+DEFINE_BOOL(logNonASCIIStringLengthHistogram, NO, SECTION_EXPERIMENTAL @"Log a histogram of non-ASCII string lengths periodically.\nUseful for tuning the async pre-conversion minimum string length.");
 DEFINE_STRING(aiModernModelPrefixes, @"gpt-", SECTION_EXPERIMENTAL @"AI model name substrings that use the modern 'completions' API.\nSubstrings should be space-delimited. This handles OpenRouter-style names like 'openai/gpt-4o'. Note that o1 models use a different API and have hard-coded behavior.");
 DEFINE_STRING(aiProxy, @"", SECTION_EXPERIMENTAL @"Host and port for proxy for AI requests.\ni.e., example.com:8080")
 DEFINE_BOOL(addUtilitiesToPATH, YES, SECTION_EXPERIMENTAL @"Add path to iTerm2 utilities to $PATH for new sessions?");
@@ -863,7 +869,6 @@ DEFINE_BOOL(channelsEnabled, NO, SECTION_EXPERIMENTAL @"Enable Channels feature?
 DEFINE_BOOL(rightJustifyRTLLines, YES, SECTION_EXPERIMENTAL @"Right-justify lines in paragraphs with base writing direction of right-to-left?\nRequires BOTH “right-to-left text support” and “auto-detect paragraph writing detection” to be enabled.");
 DEFINE_BOOL(detectParagraphDirection, NO, SECTION_EXPERIMENTAL @"Auto-detect paragraph writing direction based on the first strong directional character?\nRequires right-to-left text support to be enabled.");
 DEFINE_BOOL(browserProfiles, YES, SECTION_EXPERIMENTAL @"Enable browser-style profiles?\nYou must restart iTerm2 for this to take effect.");
-DEFINE_BOOL(avoidShrinkingTmuxWindows, NO, SECTION_EXPERIMENTAL @"Avoid shrinking tmux integration windows by less than one cell when attaching or creating a new tab?");
 
 #pragma mark - Scripting
 #define SECTION_SCRIPTING @"Scripting: "

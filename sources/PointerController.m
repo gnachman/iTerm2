@@ -109,6 +109,8 @@ compatibilityEscaping:(BOOL)compatibilityEscaping {
             NSString *title = parts[1];
             [delegate_ selectMenuItemWithIdentifier:identifier title:title event:event];
         }
+    } else if ([action isEqualToString:kCopyOrPastePointerAction]) {
+        [delegate_ copyOrPasteWithEvent:event];
     } else if ([action isEqualToString:kIgnoreAction]) {
         // Do nothing
     }

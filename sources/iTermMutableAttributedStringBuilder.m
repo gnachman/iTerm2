@@ -151,11 +151,11 @@ NSString *const iTermDrawInCellIndexAttribute = @"iTermDrawInCellIndexAttribute"
         NSMutableIndexSet *ltrIndexes = [NSMutableIndexSet indexSet];
         [ltrIndexes addIndexesInRange:NSMakeRange(0, attributedString.length)];
         [_rtlIndexes enumerateRangesUsingBlock:^(NSRange range, BOOL * _Nonnull stop) {
-            [attributedString addAttribute:NSWritingDirectionAttributeName value:@[@(NSWritingDirectionRightToLeft | NSWritingDirectionOverride)] range:range];
+            [attributedString addAttribute:NSWritingDirectionAttributeName value:@[@(NSWritingDirectionRightToLeft | (NSWritingDirection)NSWritingDirectionOverride)] range:range];
             [ltrIndexes removeIndexesInRange:range];
         }];
         [ltrIndexes enumerateRangesUsingBlock:^(NSRange range, BOOL * _Nonnull stop) {
-            [attributedString addAttribute:NSWritingDirectionAttributeName value:@[@(NSWritingDirectionLeftToRight | NSWritingDirectionOverride)] range:range];
+            [attributedString addAttribute:NSWritingDirectionAttributeName value:@[@(NSWritingDirectionLeftToRight | (NSWritingDirection)NSWritingDirectionOverride)] range:range];
         }];
     }
 }

@@ -677,13 +677,13 @@ typedef struct {
             piu->underlineColor = iTermAnnotationUnderlineColor;
         } else if (state->inMarkedRange) {
             piu->underlineStyle = iTermMetalGlyphAttributesUnderlineSingle;
-            piu->underlineColor = _nonAsciiUnderlineDescriptor.color.w > 1 ? _nonAsciiUnderlineDescriptor.color : piu->textColor;
+            piu->underlineColor = _nonAsciiUnderlineDescriptor.color.w > 0 ? _nonAsciiUnderlineDescriptor.color : piu->textColor;
         } else {
             piu->underlineStyle = attributes[visualIndex].underlineStyle;
             if (attributes[visualIndex].hasUnderlineColor) {
                 piu->underlineColor = attributes[visualIndex].underlineColor;
             } else {
-                piu->underlineColor = _nonAsciiUnderlineDescriptor.color.w > 1 ? _nonAsciiUnderlineDescriptor.color : piu->textColor;
+                piu->underlineColor = _nonAsciiUnderlineDescriptor.color.w > 0 ? _nonAsciiUnderlineDescriptor.color : piu->textColor;
             }
         }
         if (part != iTermTextureMapMiddleCharacterPart &&

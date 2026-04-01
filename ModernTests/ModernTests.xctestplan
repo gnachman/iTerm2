@@ -16,7 +16,15 @@
     "environmentVariableEntries" : [
       {
         "key" : "MallocStackLogging",
-        "value" : "1"
+        "value" : "YES"
+      },
+      {
+        "key" : "MallocStackLoggingDirectory",
+        "value" : "\/tmp"
+      },
+      {
+        "key" : "NSZombieEnabled",
+        "value" : "YES"
       },
       {
         "key" : "MallocStackLoggingNoCompact",
@@ -27,12 +35,16 @@
         "value" : "1"
       },
       {
-        "key" : "MallocScribble = 1\nMallocPreScribble",
+        "key" : "MallocScribble",
         "value" : "1"
       },
       {
         "key" : "MallocPreScribble",
         "value" : "1"
+      },
+      {
+        "key" : "SWIFT_BACKTRACE",
+        "value" : "enable=no"
       }
     ]
   },

@@ -398,6 +398,10 @@ static const NSTimeInterval iTermStatusBarGitComponentDefaultCadence = 2;
     }
 }
 
+- (nullable NSString *)statusBarComponentCopyableString {
+    return self.currentState.branch;
+}
+
 - (BOOL)statusBarComponentHandlesClicks {
     return YES;
 }

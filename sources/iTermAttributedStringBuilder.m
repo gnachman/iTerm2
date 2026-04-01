@@ -779,10 +779,10 @@ preferSpeedToFullLigatureSupport:(BOOL)preferSpeedToFullLigatureSupport
     switch (attributes->rtlStatus) {
         case RTLStatusUnknown:
         case RTLStatusLTR:
-            writingDirection = NSWritingDirectionLeftToRight | NSWritingDirectionOverride;
+            writingDirection = NSWritingDirectionLeftToRight | (NSWritingDirection)NSWritingDirectionOverride;
             break;
         case RTLStatusRTL:
-            writingDirection = NSWritingDirectionRightToLeft | NSWritingDirectionOverride;
+            writingDirection = NSWritingDirectionRightToLeft | (NSWritingDirection)NSWritingDirectionOverride;
             break;
     }
     return @{ (NSString *)kCTLigatureAttributeName: @(attributes->ligatureLevel),

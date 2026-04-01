@@ -27,6 +27,7 @@
 
 #import "DebugLogging.h"
 #import "iTermAdvancedSettingsModel.h"
+#import "iTermCharacterSets.h"
 #import "iTermMalloc.h"
 #import "iTermKeyMappings.h"
 #import "iTermKeystroke.h"
@@ -1234,7 +1235,8 @@ int decode_utf8_char(const unsigned char *datap,
     NSFont *aFont = [NSFont fontWithDescriptor:descriptor textTransform:nil];
     if (aFont == nil) {
         DLog(@"Failed to look up font named %@. Falling back to to user font", fontName);
-        return [NSFont userFixedPitchFontOfSize:0.0] ?: [NSFont systemFontOfSize:[NSFont systemFontSize]];
+        CGFloat fallbackSize = fontSize > 0 ? fontSize : 0.0;
+        return [NSFont userFixedPitchFontOfSize:fallbackSize] ?: [NSFont systemFontOfSize:fallbackSize ?: [NSFont systemFontSize]];
     }
     DLog(@"Font %@ is %@", fontName, aFont);
 
@@ -1744,37 +1746,21 @@ static TECObjectRef CreateTECConverterForUTF8Variants(TextEncodingVariant varian
 }
 
 - (void)enumerateComposedCharacters:(void (^)(NSRange, unichar, NSString *, BOOL *))block {
-    if (self.length == 0) {
+    const CFIndex len = self.length;
+    if (len == 0) {
         return;
     }
-    static dispatch_once_t onceToken;
-    static NSCharacterSet *exceptions;
-    dispatch_once(&onceToken, ^{
-        // These characters are forced to be base characters. Apple's function
-        // is a bit overzealous in its definition of composed characters. For
-        // example, it treats 0b95 0bcd 0b95 0bc1 as a single composed
-        // character. In issue 7788 we see this violates user expectations;
-        // since b95 is a base character, it doesn't make sense. However Apple
-        // has decided to define grapheme cluster, it doesn't match what we
-        // actually want, which is to segment on base characters. It isn't as
-        // simple as simply splitting on base characters because combining
-        // marks can be picky about which preceding characters they'll combine
-        // with. For example, skin tone modifiers don't combine with all emoji.
-        // Apple's function does pick those out properly, so we use it as a
-        // starting point and then segment further where we're sure it's safe
-        // to do so.
-        //
-        // Furthermore, (at least some) combining spacing marks behave better
-        // when they have their own cell. For example, U+0BC6 when combined with
-        // U+0B95. See issue 7788.
-        //
-        // This also came up in issue 6048 for FF9E and FF9F (HALFWIDTH KATAKANA VOICED SOUND MARK)
-        if ([iTermAdvancedSettingsModel aggressiveBaseCharacterDetection]) {
-            exceptions = [NSCharacterSet codePointsWithOwnCell];
-        } else {
-            exceptions = [NSCharacterSet characterSetWithCharactersInString:@"\uff9e\uff9f"];
-        }
-    });
+    const bool aggressive = [iTermAdvancedSettingsModel aggressiveBaseCharacterDetection];
+
+    // Get direct access to UTF-16 buffer for fast scanning.
+    const UniChar *chars = CFStringGetCharactersPtr((CFStringRef)self);
+    UniChar *heapBuf = NULL;
+    if (!chars) {
+        heapBuf = iTermUninitializedCalloc(len, sizeof(UniChar));
+        CFStringGetCharacters((CFStringRef)self, CFRangeMake(0, len), heapBuf);
+        chars = heapBuf;
+    }
+
     CFIndex index = 0;
     NSInteger minimumLocation = 0;
     NSRange range;
@@ -1791,27 +1777,32 @@ static TECObjectRef CreateTECConverterForUTF8Variants(TextEncodingVariant varian
         }
         range = NSMakeRange(tempRange.location, tempRange.length);
         if (range.length > 0) {
-            NSRange rangeOfFirstException = [self rangeOfCharacterFromSet:exceptions
-                                                                  options:NSLiteralSearch
-                                                                    range:NSMakeRange(range.location + 1, range.length - 1)];
-            if (rangeOfFirstException.location != NSNotFound) {
-                const BOOL precededByZWJ = (rangeOfFirstException.location > 0 &&
-                                            [self characterAtIndex:rangeOfFirstException.location - 1] == 0x200d);
+            // Search for "exception" characters that should start their own cell.
+            // See issues 7788 and 6048.
+            CFIndex exceptionIdx = iTermFindFirstCodePointWithOwnCell(chars,
+                                                                      range.location + 1,
+                                                                      range.length - 1,
+                                                                      aggressive);
+            if (exceptionIdx != kCFNotFound) {
+                const BOOL precededByZWJ = (exceptionIdx > 0 &&
+                                            chars[exceptionIdx - 1] == 0x200d);
                 if (!precededByZWJ) {
-                    range.length = rangeOfFirstException.location - range.location;
+                    range.length = exceptionIdx - range.location;
                     minimumLocation = NSMaxRange(range);
                 }
             }
-            unichar simple = range.length == 1 ? [self characterAtIndex:range.location] : 0;
+            unichar simple = range.length == 1 ? chars[range.location] : 0;
             NSString *complexString = range.length == 1 ? nil : [self substringWithRange:range];
             BOOL stop = NO;
             block(range, simple, complexString, &stop);
             if (stop) {
+                free(heapBuf);
                 return;
             }
         }
         index = NSMaxRange(range);
-    } while (NSMaxRange(range) < self.length);
+    } while (NSMaxRange(range) < (NSUInteger)len);
+    free(heapBuf);
 }
 
 - (NSString *)firstComposedCharacter:(NSString **)rest {

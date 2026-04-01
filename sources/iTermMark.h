@@ -12,6 +12,7 @@
 NS_ASSUME_NONNULL_BEGIN
 
 @class iTermMark;
+@class ScreenCharArray;
 
 @protocol iTermMark <NSObject, IntervalTreeImmutableObject>
 @property (nonatomic) long long cachedLocation;
@@ -19,6 +20,14 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly) NSString *guid;
 - (iTermMark *)progenitor;
 - (id<iTermMark>)doppelganger;
+@end
+
+/// A mark that remembers the screen width at the time its content was saved.
+/// Used by ResilientCoordinate to reflow coordinates when the width changes
+/// between fold/porthole creation and removal.
+@protocol iTermWidthSavingMark <iTermMark>
+@property (nonatomic, readonly) int savedWidth;
+@property (nonatomic, readonly, nullable) NSArray<ScreenCharArray *> *savedLines;
 @end
 
 // This is a base class for marks but should never be used directly.

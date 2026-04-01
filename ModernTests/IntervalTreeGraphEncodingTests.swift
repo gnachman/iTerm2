@@ -64,7 +64,7 @@ class IntervalTreeGraphEncodingTests: XCTestCase {
         let dict = annotation.dictionaryValue()
 
         let restoredAnnotation = PTYAnnotation(dictionary: dict)
-        XCTAssertEqual(restoredAnnotation.uniqueID, originalID, "UniqueID should be preserved through serialization")
+        XCTAssertEqual(restoredAnnotation?.uniqueID, originalID, "UniqueID should be preserved through serialization")
     }
 
     // MARK: - IntervalTree Graph Encoding Tests
@@ -264,7 +264,8 @@ class IntervalTreeGraphEncodingTests: XCTestCase {
             savedLines: nil,
             savedITOs: [],
             promptLength: 0,
-            imageCodes: []
+            imageCodes: [],
+            width: 80
         )
 
         let dict = foldMark.dictionaryValue()
@@ -279,7 +280,8 @@ class IntervalTreeGraphEncodingTests: XCTestCase {
             savedLines: nil,
             savedITOs: [],
             promptLength: 0,
-            imageCodes: []
+            imageCodes: [],
+            width: 80
         )
         XCTAssertEqual(foldMark.generation, 0, "FoldMark generation should always be 0")
 
@@ -381,7 +383,7 @@ class IntervalTreeGraphEncodingTests: XCTestCase {
 
         let annotation = PTYAnnotation(dictionary: dict)
         XCTAssertNotNil(annotation)
-        XCTAssertFalse(annotation.uniqueID.isEmpty,
+        XCTAssertFalse(annotation!.uniqueID.isEmpty,
                        "Annotation restored with empty UniqueID should get a new non-empty ID")
     }
 
@@ -393,7 +395,7 @@ class IntervalTreeGraphEncodingTests: XCTestCase {
 
         let annotation = PTYAnnotation(dictionary: dict)
         XCTAssertNotNil(annotation)
-        XCTAssertFalse(annotation.uniqueID.isEmpty,
+        XCTAssertFalse(annotation!.uniqueID.isEmpty,
                        "Annotation restored without UniqueID should get a new non-empty ID")
     }
 
@@ -763,7 +765,7 @@ class IntervalTreeGraphEncodingTests: XCTestCase {
     // MARK: FoldMark Round-Trip
 
     func testFoldMarkRoundTrip() {
-        let foldMark = FoldMark(savedLines: nil, savedITOs: [], promptLength: 5, imageCodes: [])
+        let foldMark = FoldMark(savedLines: nil, savedITOs: [], promptLength: 5, imageCodes: [], width: 80)
 
         verifyRoundTrip(foldMark, interval: Interval(location: 500, length: 200)) { original, restored in
             XCTAssertEqual(restored.guid, original.guid, "GUID should be preserved")
@@ -791,7 +793,7 @@ class IntervalTreeGraphEncodingTests: XCTestCase {
     // MARK: PortholeMark Round-Trip
 
     func testPortholeMarkRoundTrip() {
-        let portholeMark = PortholeMark("unique-porthole-id-123")
+        let portholeMark = PortholeMark("unique-porthole-id-123", width: 80)
 
         verifyRoundTrip(portholeMark, interval: Interval(location: 800, length: 50)) { original, restored in
             XCTAssertEqual(restored.guid, original.guid, "GUID should be preserved")
@@ -964,14 +966,14 @@ class IntervalTreeGraphEncodingTests: XCTestCase {
             return
         }
 
-        let foldMark = FoldMark(savedLines: nil, savedITOs: [], promptLength: 3, imageCodes: [])
+        let foldMark = FoldMark(savedLines: nil, savedITOs: [], promptLength: 3, imageCodes: [], width: 80)
 
         guard let remoteHost = VT100RemoteHost(username: "user", hostname: "host") else {
             XCTFail("Failed to create VT100RemoteHost")
             return
         }
 
-        let portholeMark = PortholeMark("porthole-all-test")
+        let portholeMark = PortholeMark("porthole-all-test", width: 80)
 
         let blockMark = BlockMark()
 

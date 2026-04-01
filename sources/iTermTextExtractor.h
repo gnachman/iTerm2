@@ -20,8 +20,8 @@ NS_ASSUME_NONNULL_BEGIN
 @class iTermProgress;
 
 typedef NS_ENUM(NSInteger, iTermTextExtractorNullPolicy) {
-    kiTermTextExtractorNullPolicyFromStartToFirst,  // Ignore content prior to last null
-    kiTermTextExtractorNullPolicyFromLastToEnd,  // Ignore content after last null
+    kiTermTextExtractorNullPolicyFromStartToFirst,  // Ignore content after first null
+    kiTermTextExtractorNullPolicyFromLastToEnd,  // Ignore content before last null
     kiTermTextExtractorNullPolicyTreatAsSpace,  // Treat midline nulls as spaces and a range of terminal nulls as a single space
     kiTermTextExtractorNullPolicyMidlineAsSpaceIgnoreTerminal,  // Treat midline nulls as space and strip terminal nulls
 };
@@ -51,6 +51,9 @@ extern const NSInteger kLongMaximumWordLength;
 + (instancetype)textExtractorWithDataSource:(id<iTermTextDataSource>)dataSource;
 - (instancetype)initWithDataSource:(id<iTermTextDataSource>)dataSource;
 - (void)restrictToLogicalWindowIncludingCoord:(VT100GridCoord)coord;
+
+// Returns YES if the character at coord is a column divider character (|, │, ├, ┤).
+- (BOOL)characterAtCoordIsColumnDivider:(VT100GridCoord)coord;
 
 // Returns the range of a word (string of characters belonging to the same class) at a location. If
 // there is a paren or paren-like character at location, it tries to return the range of the

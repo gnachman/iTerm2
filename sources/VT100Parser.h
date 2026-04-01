@@ -42,4 +42,8 @@
 // Reset but preserve SSH state.
 - (void)resetExceptSSH;
 
+// Push config from mutation thread for pre-converting non-ASCII strings.
+// Thread-safe: called from mutation thread, read from parser thread.
+- (void)updateStringConversionConfig:(VT100StringConversionConfig)config;
+
 @end

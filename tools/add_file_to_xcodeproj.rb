@@ -39,6 +39,15 @@ def main
     exit 1
   end
 
+  # Check if the file's directory is managed by a PBXFileSystemSynchronizedRootGroup.
+  # If so, Xcode auto-discovers files and no project changes are needed.
+  dir_components = File.dirname(file_path).split(File::SEPARATOR).reject { |c| c == '.' }
+  if synchronized_root_group?(project, dir_components)
+    puts "Directory '#{File.dirname(file_path)}' is a synchronized root group — Xcode manages it automatically."
+    puts "No project changes needed."
+    exit 0
+  end
+
   # Find or create the group hierarchy based on the file path
   group = find_or_create_group(project, file_path)
 
@@ -74,6 +83,22 @@ def find_xcodeproj
     dir = dir.parent
   end
   nil
+end
+
+def synchronized_root_group?(project, components)
+  current = project.main_group
+  components.each do |component|
+    child = current.children.find { |c|
+      c.respond_to?(:display_name) && (c.display_name == component || c.path == component)
+    }
+    return false unless child
+    if child.is_a?(Xcodeproj::Project::Object::PBXFileSystemSynchronizedRootGroup)
+      return true
+    end
+    return false unless child.is_a?(Xcodeproj::Project::Object::PBXGroup)
+    current = child
+  end
+  false
 end
 
 def find_or_create_group(project, file_path)

@@ -65,6 +65,11 @@ NS_ASSUME_NONNULL_BEGIN
 + (nullable instancetype)blockWithDictionary:(NSDictionary *)dictionary
                          absoluteBlockNumber:(long long)absoluteBlockNumber;
 
+// fallbackGeneration is used when the dictionary lacks a generation key (migration from older saves).
++ (nullable instancetype)blockWithDictionary:(NSDictionary *)dictionary
+                         absoluteBlockNumber:(long long)absoluteBlockNumber
+                          fallbackGeneration:(NSNumber * _Nullable)fallbackGeneration;
+
 - (instancetype)initWithRawBufferSize:(int)size
                   absoluteBlockNumber:(long long)absoluteBlockNumber;
 

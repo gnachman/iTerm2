@@ -593,9 +593,12 @@ private class SSHOutputTokenBuilder {
         guard token.csi.pointee.count >= 2 else {
             return nil
         }
+        guard let savedData = token.savedData else {
+            return nil
+        }
         pid = token.csi.pointee.p.0
         channel = token.csi.pointee.p.1
-        data = token.savedData
+        data = savedData
     }
 }
 

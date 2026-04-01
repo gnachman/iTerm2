@@ -194,6 +194,12 @@
     if (_generationInitialized) {
         return;
     }
+    if (!_db) {
+        // Can't initialize without a database (e.g., lock held by another process).
+        // Don't set _generationInitialized so we retry on the next save after
+        // initializeDb successfully creates _db.
+        return;
+    }
     // Wait for database to be ready, then initialize generation
     [_db waitUntilReady];
     [self initializeGenerationFromRecord:_db.record];

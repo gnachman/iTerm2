@@ -412,27 +412,35 @@ fileprivate class ModernKeyMapperImpl {
     func keyMapperShouldBypassPreCocoa(for event: KeyEventInfo) -> Bool {
         DLog("keyMapperShouldBypassPreCocoa \(event)")
 
-        if NSEvent.it_isFunctionOrNumericKeypad(modifierFlags: event.modifiers.excludingBuckyBits.flags) &&
-            !iTermAdvancedSettingsModel.allowSendingFunctionKeysToCocoa() {
-            // The original reason for this clause is in the old iterm codebase (commit f7c8312)
-            // where Ujwal wrote:
-            //   Fixed problem when PTYSession: -keyDown is never called when numeric or
-            //   function keys were pressed. This messes up switching between application and
-            //   numeric keypad modes. Now PTYTextView: -keyDown: invokes PTYSession: -keyDown:
-            //   when numeric or function keys are pressed.
-            // I think the problem this meant to solve is that function keys could cause
-            // insertText: or doCommandBySelector: to be called which bypassed the function
-            // key and application keypad mode handling in -[PTYSession keyDown:].
-            //
-            // This causes the IME to be bypassed, but I still think it's the right thing to
-            // do because we do want the delegate to get first whack at scrolling keys, which
-            // returning true forces to happen here.
-            //
-            // When allowSendingFunctionKeysToCocoa is enabled, let these go through
-            // Cocoa so keyboard layouts that define function keys as dead/compose
-            // keys can work properly. Issue 3578.
-            DLog("true: event is function or numeric keypad")
-            return true
+        if NSEvent.it_isFunctionOrNumericKeypad(modifierFlags: event.modifiers.excludingBuckyBits.flags) {
+            let mods = event.modifiers.excludingBuckyBits.flags
+            if !iTermAdvancedSettingsModel.allowSendingFunctionKeysToCocoa() ||
+                mods.contains(.control) || mods.contains(.option) {
+                // The original reason for this clause is in the old iterm codebase (commit f7c8312)
+                // where Ujwal wrote:
+                //   Fixed problem when PTYSession: -keyDown is never called when numeric or
+                //   function keys were pressed. This messes up switching between application and
+                //   numeric keypad modes. Now PTYTextView: -keyDown: invokes PTYSession: -keyDown:
+                //   when numeric or function keys are pressed.
+                // I think the problem this meant to solve is that function keys could cause
+                // insertText: or doCommandBySelector: to be called which bypassed the function
+                // key and application keypad mode handling in -[PTYSession keyDown:].
+                //
+                // This causes the IME to be bypassed, but I still think it's the right thing to
+                // do because we do want the delegate to get first whack at scrolling keys, which
+                // returning true forces to happen here.
+                //
+                // When allowSendingFunctionKeysToCocoa is enabled, let these go through
+                // Cocoa so keyboard layouts that define function keys as dead/compose
+                // keys can work properly. Issue 3578.
+                //
+                // Even with allowSendingFunctionKeysToCocoa, bypass Cocoa when ctrl or
+                // option is pressed. Compose/dead keys don't use these modifiers, and
+                // sending modified function keys through Cocoa causes beeps and breaks
+                // third-party shortcut apps like Rectangle. Issue 12787.
+                DLog("true: event is function or numeric keypad")
+                return true
+            }
         }
 
         if NSEvent.it_shouldSendOptionModifiedKey(
