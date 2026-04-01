@@ -268,13 +268,32 @@ func decodeToken(_ token: String?) -> String? {
 }
 
 func extractServiceURL(from header: PasswordManagerProtocol.RequestHeader) throws -> URL {
-    guard let raw = header.pathToDatabase?.trimmingCharacters(in: .whitespacesAndNewlines), !raw.isEmpty else {
+    let candidates = [
+        header.settings?["serviceURL"],
+        header.settings?["apiURL"],
+        header.pathToDatabase,
+    ]
+    guard let raw = candidates
+        .compactMap({ $0?.trimmingCharacters(in: .whitespacesAndNewlines) })
+        .first(where: { !$0.isEmpty }) else {
         throw KeeperClientError.message("Commander API URL is required in request header (pathToDatabase).")
     }
     guard let url = URL(string: raw), url.scheme != nil, url.host != nil else {
         throw KeeperClientError.message("Invalid Commander API URL.")
     }
     return url
+}
+
+private let keeperRecordUIDRegex = try! NSRegularExpression(pattern: "^[A-Za-z0-9_-]{15,}$")
+
+private func validatedRecordUID(_ recordUid: String) throws -> String {
+    let uid = recordUid.trimmingCharacters(in: .whitespacesAndNewlines)
+    let range = NSRange(location: 0, length: uid.utf16.count)
+    let match = keeperRecordUIDRegex.firstMatch(in: uid, options: [], range: range)
+    guard !uid.isEmpty, match != nil else {
+        throw KeeperClientError.message("Invalid record identifier.")
+    }
+    return uid
 }
 
 func listAccountsRecords(apiKey: String, client: KeeperCommanderClient) throws -> [PasswordManagerProtocol.Account] {
@@ -330,11 +349,12 @@ func listAccountsRecords(apiKey: String, client: KeeperCommanderClient) throws -
 }
 
 func getPassword(apiKey: String, recordUid: String, client: KeeperCommanderClient) throws -> PasswordManagerProtocol.Password {
-    let jsonData = try client.executeCommand(apiKey: apiKey, command: "get \(recordUid) --format=json")
+    let uid = try validatedRecordUID(recordUid)
+    let jsonData = try client.executeCommand(apiKey: apiKey, command: "get \(uid) --format=json")
     if let exact = passwordFromGetJSONResponse(jsonData) {
         return PasswordManagerProtocol.Password(password: exact, otp: nil)
     }
-    let data = try client.executeCommand(apiKey: apiKey, command: "get \(recordUid) --format=password")
+    let data = try client.executeCommand(apiKey: apiKey, command: "get \(uid) --format=password")
     guard let pwd = extractPasswordFromRawGet(data: data) else {
         throw KeeperClientError.message("Keeper returned no password for this record.")
     }
@@ -342,7 +362,8 @@ func getPassword(apiKey: String, recordUid: String, client: KeeperCommanderClien
 }
 
 func getLogin(apiKey: String, recordUid: String, client: KeeperCommanderClient) throws -> String {
-    let jsonData = try client.executeCommand(apiKey: apiKey, command: "get \(recordUid) --format=json")
+    let uid = try validatedRecordUID(recordUid)
+    let jsonData = try client.executeCommand(apiKey: apiKey, command: "get \(uid) --format=json")
     if let login = loginFromGetJSONResponse(jsonData) {
         return login
     }
@@ -384,8 +405,9 @@ func setPassword(apiKey: String, recordUid: String, newPassword: String?, client
     guard let newPassword = newPassword, !newPassword.isEmpty else {
         throw KeeperClientError.message("Password field is required.")
     }
+    let uid = try validatedRecordUID(recordUid)
     let b64 = Data(newPassword.utf8).base64EncodedString()
-    let cmd = "record-update -r \(recordUid) password=$BASE64:\(b64)"
+    let cmd = "record-update -r \(uid) password=$BASE64:\(b64)"
     let data = try client.executeCommand(apiKey: apiKey, command: cmd)
     if let response = try? JSONDecoder().decode(KeeperExecuteResponse.self, from: data), response.status == "success" {
         return
@@ -395,7 +417,8 @@ func setPassword(apiKey: String, recordUid: String, newPassword: String?, client
 }
 
 func deleteRecord(apiKey: String, recordUid: String, client: KeeperCommanderClient) throws {
-    let data = try client.executeCommand(apiKey: apiKey, command: "rm -f \(recordUid)")
+    let uid = try validatedRecordUID(recordUid)
+    let data = try client.executeCommand(apiKey: apiKey, command: "rm -f \(uid)")
     if let response = try? JSONDecoder().decode(KeeperExecuteResponse.self, from: data), response.status == "success" {
         return
     }

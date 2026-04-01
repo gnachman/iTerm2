@@ -17,6 +17,8 @@ private typealias AddAccountRequest = PasswordManagerProtocol.AddAccountRequest
 private typealias AddAccountResponse = PasswordManagerProtocol.AddAccountResponse
 private typealias DeleteAccountRequest = PasswordManagerProtocol.DeleteAccountRequest
 private typealias DeleteAccountResponse = PasswordManagerProtocol.DeleteAccountResponse
+private typealias CustomCommandRequest = PasswordManagerProtocol.CustomCommandRequest
+private typealias CustomCommandResponse = PasswordManagerProtocol.CustomCommandResponse
 private typealias ErrorResponse = PasswordManagerProtocol.ErrorResponse
 
 private func readStdin() -> Data? {
@@ -44,11 +46,6 @@ private func writeError(_ message: String) {
     writeOutput(ErrorResponse(error: message))
 }
 
-private struct KeeperSyncRequest: Codable {
-    let header: PasswordManagerProtocol.RequestHeader
-    let token: String?
-}
-
 private func handleHandshake() {
     guard let data = readStdin() else {
         writeError("No input provided")
@@ -68,12 +65,53 @@ private func handleHandshake() {
             userAccounts: nil,
             needsPathToDatabase: true,
             databaseExtension: nil,
-            needsPathToExecutable: nil)
+            needsPathToExecutable: nil,
+            pathToDatabaseKind: .url,
+            pathToDatabasePrompt: "Enter Keeper Commander API URL",
+            pathToDatabasePlaceholder: "http://127.0.0.1:8900/api/v2",
+            masterPasswordLabel: "API key",
+            persistsCredentials: true,
+            customCommands: [
+                PasswordManagerProtocol.CustomCommand(name: "sync-down",
+                                                      label: "Sync Down",
+                                                      icon: "arrow.clockwise")
+            ],
+            settingsFields: [
+                PasswordManagerProtocol.SettingsField(
+                    key: "serviceURL",
+                    label: "Commander API URL:",
+                    placeholder: "http://127.0.0.1:8900/api/v2",
+                    isSecret: false,
+                    note: "Optional override. If set, this URL takes precedence over the main URL field.",
+                    persistInKeychain: false),
+                PasswordManagerProtocol.SettingsField(
+                    key: "apiKey",
+                    label: "API key:",
+                    placeholder: "Enter Keeper Commander API key",
+                    isSecret: true,
+                    note: nil,
+                    persistInKeychain: true),
+            ])
         writeOutput(response)
     } catch {
         writeError("Failed to decode handshake: \(error.localizedDescription)")
         exit(1)
     }
+}
+
+private func apiKey(fromHeader header: PasswordManagerProtocol.RequestHeader,
+                    token: String?,
+                    masterPassword: String?) throws -> String {
+    if let key = masterPassword?.trimmingCharacters(in: .whitespacesAndNewlines), !key.isEmpty {
+        return key
+    }
+    if let key = decodeToken(token)?.trimmingCharacters(in: .whitespacesAndNewlines), !key.isEmpty {
+        return key
+    }
+    if let key = header.settings?["apiKey"]?.trimmingCharacters(in: .whitespacesAndNewlines), !key.isEmpty {
+        return key
+    }
+    throw KeeperClientError.message("Invalid or missing API key")
 }
 
 private func handleLogin() {
@@ -84,10 +122,7 @@ private func handleLogin() {
     do {
         let request = try JSONDecoder().decode(LoginRequest.self, from: data)
         let baseURL = try extractServiceURL(from: request.header)
-        guard let key = request.masterPassword, !key.isEmpty else {
-            writeError("API key is required")
-            exit(1)
-        }
+        let key = try apiKey(fromHeader: request.header, token: nil, masterPassword: request.masterPassword)
         let client = KeeperCommanderClient(baseURL: baseURL)
         _ = try listAccountsRecords(apiKey: key, client: client)
         let token = Data(key.utf8).base64EncodedString()
@@ -106,10 +141,7 @@ private func handleListAccounts() {
     do {
         let request = try JSONDecoder().decode(ListAccountsRequest.self, from: data)
         let baseURL = try extractServiceURL(from: request.header)
-        guard let apiKey = decodeToken(request.token) else {
-            writeError("Invalid or missing token")
-            exit(1)
-        }
+        let apiKey = try apiKey(fromHeader: request.header, token: request.token, masterPassword: nil)
         let client = KeeperCommanderClient(baseURL: baseURL)
         let accounts = try listAccountsRecords(apiKey: apiKey, client: client)
         writeOutput(ListAccountsResponse(accounts: accounts))
@@ -127,10 +159,7 @@ private func handleGetPassword() {
     do {
         let request = try JSONDecoder().decode(GetPasswordRequest.self, from: data)
         let baseURL = try extractServiceURL(from: request.header)
-        guard let apiKey = decodeToken(request.token) else {
-            writeError("Invalid or missing token")
-            exit(1)
-        }
+        let apiKey = try apiKey(fromHeader: request.header, token: request.token, masterPassword: nil)
         let client = KeeperCommanderClient(baseURL: baseURL)
         let uid = request.accountIdentifier.accountID
         let pwd = try getPassword(apiKey: apiKey, recordUid: uid, client: client)
@@ -149,10 +178,7 @@ private func handleGetUsername() {
     do {
         let request = try JSONDecoder().decode(GetPasswordRequest.self, from: data)
         let baseURL = try extractServiceURL(from: request.header)
-        guard let apiKey = decodeToken(request.token) else {
-            writeError("Invalid or missing token")
-            exit(1)
-        }
+        let apiKey = try apiKey(fromHeader: request.header, token: request.token, masterPassword: nil)
         let client = KeeperCommanderClient(baseURL: baseURL)
         let uid = request.accountIdentifier.accountID
         let login = try getLogin(apiKey: apiKey, recordUid: uid, client: client)
@@ -171,10 +197,7 @@ private func handleSetPassword() {
     do {
         let request = try JSONDecoder().decode(SetPasswordRequest.self, from: data)
         let baseURL = try extractServiceURL(from: request.header)
-        guard let apiKey = decodeToken(request.token) else {
-            writeError("Invalid or missing token")
-            exit(1)
-        }
+        let apiKey = try apiKey(fromHeader: request.header, token: request.token, masterPassword: nil)
         let client = KeeperCommanderClient(baseURL: baseURL)
         let uid = request.accountIdentifier.accountID
         try setPassword(apiKey: apiKey, recordUid: uid, newPassword: request.newPassword, client: client)
@@ -193,10 +216,7 @@ private func handleAddAccount() {
     do {
         let request = try JSONDecoder().decode(AddAccountRequest.self, from: data)
         let baseURL = try extractServiceURL(from: request.header)
-        guard let apiKey = decodeToken(request.token) else {
-            writeError("Invalid or missing token")
-            exit(1)
-        }
+        let apiKey = try apiKey(fromHeader: request.header, token: request.token, masterPassword: nil)
         let client = KeeperCommanderClient(baseURL: baseURL)
         let uid = try addRecord(
             apiKey: apiKey,
@@ -219,10 +239,7 @@ private func handleDeleteAccount() {
     do {
         let request = try JSONDecoder().decode(DeleteAccountRequest.self, from: data)
         let baseURL = try extractServiceURL(from: request.header)
-        guard let apiKey = decodeToken(request.token) else {
-            writeError("Invalid or missing token")
-            exit(1)
-        }
+        let apiKey = try apiKey(fromHeader: request.header, token: request.token, masterPassword: nil)
         let client = KeeperCommanderClient(baseURL: baseURL)
         try deleteRecord(apiKey: apiKey, recordUid: request.accountIdentifier.accountID, client: client)
         writeOutput(DeleteAccountResponse())
@@ -232,21 +249,24 @@ private func handleDeleteAccount() {
     }
 }
 
-private func handleKeeperSyncDown() {
+private func handleCustomCommand(_ commandName: String) {
     guard let data = readStdin() else {
         writeError("No input provided")
         exit(1)
     }
     do {
-        let request = try JSONDecoder().decode(KeeperSyncRequest.self, from: data)
+        let request = try JSONDecoder().decode(CustomCommandRequest.self, from: data)
         let baseURL = try extractServiceURL(from: request.header)
-        guard let apiKey = decodeToken(request.token), !apiKey.isEmpty else {
-            writeError("Invalid or missing token")
+        let apiKey = try apiKey(fromHeader: request.header, token: request.token, masterPassword: nil)
+        switch commandName {
+        case "sync-down":
+            let client = KeeperCommanderClient(baseURL: baseURL)
+            _ = try client.executeCommand(apiKey: apiKey, command: "sync-down")
+            writeOutput(CustomCommandResponse(message: "Sync completed"))
+        default:
+            writeError("Unknown command: \(commandName)")
             exit(1)
         }
-        let client = KeeperCommanderClient(baseURL: baseURL)
-        _ = try client.executeCommand(apiKey: apiKey, command: "sync-down")
-        writeOutput(LoginResponse(token: nil))
     } catch {
         writeError(error.localizedDescription)
         exit(1)
@@ -269,10 +289,8 @@ private func mainDispatch() {
     case "set-password": handleSetPassword()
     case "add-account": handleAddAccount()
     case "delete-account": handleDeleteAccount()
-    case "keeper-sync-down": handleKeeperSyncDown()
     default:
-        writeError("Unknown command: \(cmd)")
-        exit(1)
+        handleCustomCommand(cmd)
     }
 }
 
