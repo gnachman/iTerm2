@@ -15,6 +15,7 @@ void iTermMetadataInit(iTermMetadata *obj,
                        iTermExternalAttributeIndex *externalAttributes) {
     obj->timestamp = timestamp;
     obj->rtlFound = rtlFound;
+    obj->lineAttribute = iTermLineAttributeSingleWidth;
     obj->externalAttributes = [(id)externalAttributes retain];
 }
 
@@ -45,7 +46,8 @@ iTermMetadata iTermImmutableMetadataMutableCopy(iTermImmutableMetadata obj) {
     return (iTermMetadata) {
         .timestamp = obj.timestamp,
         .rtlFound = obj.rtlFound,
-        .externalAttributes = index
+        .externalAttributes = index,
+        .lineAttribute = obj.lineAttribute
     };
 }
 
@@ -102,7 +104,8 @@ NSArray *iTermImmutableMetadataEncodeToArray(iTermImmutableMetadata obj) {
     // NOTE: None of these may be arrays.
     return @[ @(obj.timestamp),
               [eaIndex dictionaryValue] ?: @{},
-              @(obj.rtlFound) ];
+              @(obj.rtlFound),
+              @(obj.lineAttribute) ];
 }
 
 NSArray *iTermMetadataEncodeToArray(iTermMetadata obj) {
@@ -148,6 +151,9 @@ void iTermMetadataInitFromArray(iTermMetadata *obj, NSArray *array) {
                       [array[0] doubleValue],
                       [array[2] boolValue],
                       [[[iTermExternalAttributeIndex alloc] initWithDictionary:array[1]] autorelease]);
+    if (array.count >= 4) {
+        obj->lineAttribute = (iTermLineAttribute)[array[3] unsignedCharValue];
+    }
 }
 
 void iTermMetadataAppend(iTermMetadata *lhs,
@@ -156,6 +162,8 @@ void iTermMetadataAppend(iTermMetadata *lhs,
                          int rhsLength) {
     lhs->timestamp = rhs->timestamp;
     lhs->rtlFound |= rhs->rtlFound;
+    // Preserve lhs lineAttribute — the line attribute was set on the original
+    // row (start of the logical line); continuations are typically normal-width.
     if (!rhs->externalAttributes) {
         return;
     }
@@ -179,6 +187,7 @@ void iTermMetadataInitByConcatenation(iTermMetadata *obj,
                                                 with:iTermMetadataGetExternalAttributesIndex(*rhs)
                                           length:rhsLength];
     iTermMetadataInit(obj, rhs->timestamp, lhs->rtlFound || rhs->rtlFound, eaIndex);
+    obj->lineAttribute = lhs->lineAttribute;
 }
 
 void iTermMetadataInitCopyingSubrange(iTermMetadata *obj,
@@ -191,12 +200,15 @@ void iTermMetadataInitCopyingSubrange(iTermMetadata *obj,
                       source->timestamp,
                       source->rtlFound,
                       eaIndex);
+    obj->lineAttribute = source->lineAttribute;
 }
 
 iTermMetadata iTermMetadataDefault(void) {
     return (iTermMetadata){ .timestamp = 0,
         .externalAttributes = NULL,
-        .rtlFound = NO };
+        .rtlFound = NO,
+        .lineAttribute = iTermLineAttributeSingleWidth
+    };
 }
 
 iTermImmutableMetadata iTermImmutableMetadataDefault(void) {
@@ -206,14 +218,16 @@ iTermImmutableMetadata iTermImmutableMetadataDefault(void) {
 void iTermMetadataReset(iTermMetadata *obj) {
     obj->timestamp = 0;
     obj->rtlFound = NO;
+    obj->lineAttribute = iTermLineAttributeSingleWidth;
     iTermMetadataSetExternalAttributes(obj, NULL);
 }
 
 NSString *iTermMetadataShortDescription(iTermMetadata metadata, int length) {
-    return [NSString stringWithFormat:@"<timestamp=%@ ea=%@ rtl=%@>",
+    return [NSString stringWithFormat:@"<timestamp=%@ ea=%@ rtl=%@ lineAttr=%d>",
             @(metadata.timestamp),
             iTermMetadataGetExternalAttributesIndex(metadata),
-            @(metadata.rtlFound)];
+            @(metadata.rtlFound),
+            (int)metadata.lineAttribute];
 }
 
 NSArray *iTermMetadataArrayFromData(NSData *data) {
@@ -228,6 +242,10 @@ NSArray *iTermMetadataArrayFromData(NSData *data) {
         return nil;
     }
     [decoder decodeBool:&temp.rtlFound];
+    int lineAttr = 0;
+    if ([decoder decodeInt:&lineAttr]) {
+        temp.lineAttribute = (iTermLineAttribute)lineAttr;
+    }
     iTermExternalAttributeIndex *attr = [iTermExternalAttributeIndex fromData:attrData];
     iTermMetadataSetExternalAttributes(&temp, attr);
     NSArray *result = iTermMetadataEncodeToArray(temp);
@@ -245,6 +263,7 @@ NSData *iTermImmutableMetadataEncodeToData(iTermImmutableMetadata metadata) {
     iTermExternalAttributeIndex *attr = iTermImmutableMetadataGetExternalAttributesIndex(metadata);
     [encoder encodeData:[attr data] ?: [NSData data]];
     [encoder encodeBool:metadata.rtlFound];
+    [encoder encodeInt:(int)metadata.lineAttribute];
     return encoder.data;
 }
 
@@ -260,6 +279,10 @@ iTermMetadata iTermMetadataDecodedFromData(NSData *data) {
         return iTermMetadataDefault();
     }
     [decoder decodeBool:&temp.rtlFound];
+    int lineAttr = 0;
+    if ([decoder decodeInt:&lineAttr]) {
+        temp.lineAttribute = (iTermLineAttribute)lineAttr;
+    }
     iTermExternalAttributeIndex *attr = [iTermExternalAttributeIndex fromData:attrData];
     iTermMetadataSetExternalAttributes(&temp, attr);
     return temp;

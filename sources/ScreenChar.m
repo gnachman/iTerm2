@@ -407,7 +407,7 @@ NSString* ScreenCharArrayToStringDebug(const screen_char_t *screenChars,
             continue;
         }
         const unichar c = screenChars[i].code;
-        if (c != 0 && !ScreenCharIsDWC_RIGHT(screenChars[i])) {
+        if (c != 0 && !ScreenCharIsDWC_RIGHT(screenChars[i]) && !ScreenCharIsDWL_SPACER(screenChars[i])) {
             [result appendString:ScreenCharToStr(&screenChars[i]) ?: @"😮"];
         }
     }

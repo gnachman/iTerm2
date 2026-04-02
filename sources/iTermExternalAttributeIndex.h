@@ -32,6 +32,10 @@ typedef struct {
 @property (atomic, readonly) iTermControlCodeAttribute controlCode;
 @property (atomic, readonly, nullable) NSNumber *controlCodeNumber;
 @property (atomic, readonly, nullable) iTermURL *url;
+// Per-line attribute stored on the first character of a wrapped line in LineBuffer.
+// Used as a signal to re-insert DWL_SPACERs when reading from scrollback.
+// Only set when entering LineBuffer; stripped when reading out.
+@property (atomic, readonly) iTermLineAttribute lineAttribute;
 @property (nonatomic, readonly) BOOL isDefault;
 
 @property(nonatomic, readonly) NSDictionary *dictionaryValue;

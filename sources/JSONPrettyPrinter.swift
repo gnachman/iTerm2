@@ -198,7 +198,7 @@ extension ScreenCharArray {
         var ci = 0
         while sca.length > 0 {
             var i = min(Int(sca.length), maxWidth)
-            if sca.line[i - 1].code == DWC_RIGHT {
+            while i > 1 && (ScreenCharIsDWC_RIGHT(sca.line[i - 1]) || ScreenCharIsDWL_SPACER(sca.line[i - 1])) {
                 i -= 1
             }
             let subsca = sca.subArray(to: Int32(i))

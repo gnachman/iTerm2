@@ -317,6 +317,14 @@ iTermCommandInfoViewControllerDelegate>
     x = MAX(0, MIN(x, limit));
     y = MAX(0, MIN(y, [self.dataSource numberOfLines] - 1));
 
+    // Snap off DWL_SPACER — the cursor should never land on one.
+    if (x > 0) {
+        const screen_char_t *theLine = [self.dataSource screenCharArrayForLine:y].line;
+        if (theLine && ScreenCharIsDWL_SPACER(theLine[x])) {
+            x--;
+        }
+    }
+
     return VT100GridCoordMake(x, y);
 }
 

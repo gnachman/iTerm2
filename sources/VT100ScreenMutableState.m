@@ -1031,34 +1031,68 @@ static const int64_t VT100ScreenMutableStateSideEffectFlagLineBufferDidDropLines
                              rtlFound:(BOOL)rtlFound
                               dwcFree:(BOOL)dwcFree {
     if (len >= 1) {
-        screen_char_t lastCharacter = buffer[len - 1];
+        const int cursorY = self.currentGrid.cursorY;
+        iTermLineAttribute lineAttr = [self.currentGrid lineInfoAtLineNumber:cursorY].metadata.lineAttribute;
+
+        const screen_char_t *actualBuffer = buffer;
+        int actualLen = len;
+        id<iTermExternalAttributeIndexReading> actualExternalAttributes = externalAttributes;
+        NSMutableData *expandedData = nil;
+        iTermExternalAttributeIndex *expandedEA = nil;
+
+        if (iTermLineAttributeIsDoubleWidth(lineAttr)) {
+            // Pre-expand: interleave DWL_SPACERs after each character.
+            expandedData = [NSMutableData dataWithLength:(len * 2) * sizeof(screen_char_t)];
+            screen_char_t *expanded = (screen_char_t *)expandedData.mutableBytes;
+            actualLen = ScreenCharExpandWithDWLSpacers(expanded, buffer, len);
+            // Expand external attributes to match new positions.
+            expandedEA = [[iTermExternalAttributeIndex alloc] init];
+            for (int i = 0; i < len; i++) {
+                iTermExternalAttribute *ea = [externalAttributes attributeAtIndex:i];
+                if (ea) {
+                    [expandedEA setAttributes:ea at:i * 2 count:1];
+                }
+            }
+            actualBuffer = expanded;
+            actualExternalAttributes = expandedEA;
+            dwcFree = NO;
+        }
+
+        screen_char_t lastCharacter = actualBuffer[actualLen - 1];
         if (ScreenCharIsDWC_RIGHT(lastCharacter) && !lastCharacter.complexChar) {
             // Last character is the right half of a double-width character. Use the penultimate character instead.
-            if (len >= 2) {
-                self.lastCharacter = buffer[len - 2];
+            if (actualLen >= 2) {
+                self.lastCharacter = actualBuffer[actualLen - 2];
                 self.lastCharacterIsDoubleWidth = YES;
-                self.lastExternalAttribute = externalAttributes[len - 2];
+                self.lastExternalAttribute = actualExternalAttributes[actualLen - 2];
+            }
+        } else if (ScreenCharIsDWL_SPACER(lastCharacter)) {
+            // Last character is a DWL_SPACER. Use the character before it.
+            if (actualLen >= 2) {
+                self.lastCharacter = actualBuffer[actualLen - 2];
+                self.lastCharacterIsDoubleWidth = NO;
+                self.lastExternalAttribute = actualExternalAttributes[actualLen - 2];
             }
         } else {
             // Record the last character.
-            self.lastCharacter = buffer[len - 1];
+            self.lastCharacter = actualBuffer[actualLen - 1];
             self.lastCharacterIsDoubleWidth = NO;
-            self.lastExternalAttribute = externalAttributes[len];
+            self.lastExternalAttribute = actualExternalAttributes[actualLen];
         }
         LineBuffer *lineBuffer = nil;
         if (self.currentGrid != self.altGrid || self.saveToScrollbackInAlternateScreen) {
             // Not in alt screen or it's ok to scroll into line buffer while in alt screen.k
             lineBuffer = self.linebuffer;
         }
-        [self incrementOverflowBy:[self.currentGrid appendCharsAtCursor:buffer
-                                                                 length:len
+        [self incrementOverflowBy:[self.currentGrid appendCharsAtCursor:actualBuffer
+                                                                 length:actualLen
                                                 scrollingIntoLineBuffer:lineBuffer
                                                     unlimitedScrollback:self.unlimitedScrollback
                                                 useScrollbackWithRegion:self.appendToScrollbackWithStatusBar
                                                              wraparound:self.wraparoundMode
                                                                    ansi:self.ansi
                                                                  insert:self.insert
-                                                 externalAttributeIndex:externalAttributes
+                                                 externalAttributeIndex:actualExternalAttributes
                                                                rtlFound:rtlFound
                                                                 dwcFree:dwcFree]];
 

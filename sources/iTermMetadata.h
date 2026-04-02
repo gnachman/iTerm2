@@ -20,6 +20,7 @@ typedef struct {
     NSTimeInterval timestamp;
     void * _Nullable externalAttributes;
     BOOL rtlFound;
+    iTermLineAttribute lineAttribute;
 } iTermMetadata;
 
 // I'd like to make these const to keep users well-behaved but C++ makes structs with const fields
@@ -33,13 +34,15 @@ typedef struct {
     NSTimeInterval timestamp;
     void * _Nullable externalAttributes;
     BOOL rtlFound;
+    iTermLineAttribute lineAttribute;
 } iTermImmutableMetadata;
 
 NS_INLINE iTermImmutableMetadata iTermMetadataMakeImmutable(iTermMetadata obj) {
     iTermImmutableMetadata result = {
         .timestamp = obj.timestamp,
         .externalAttributes = obj.externalAttributes,
-        .rtlFound = obj.rtlFound
+        .rtlFound = obj.rtlFound,
+        .lineAttribute = obj.lineAttribute
     };
     return result;
 }

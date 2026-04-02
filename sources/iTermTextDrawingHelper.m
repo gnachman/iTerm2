@@ -1904,14 +1904,14 @@ static BOOL NSRangesAdjacent(NSRange lhs, NSRange rhs) {
     CTVector(CGFloat) positions;
     CTVectorCreate(&positions, _gridSize.width);
 
-    if (indexRange.location > 0) {
-        screen_char_t firstCharacter = theLine[indexRange.location];
-        if (ScreenCharIsDWC_RIGHT(firstCharacter)) {
-            // Don't try to start drawing in the middle of a double-width character.
-            indexRange.location -= 1;
-            indexRange.length += 1;
-            initialPoint.x -= _cellSize.width;
-        }
+    while (indexRange.location > 0 &&
+           (ScreenCharIsDWC_RIGHT(theLine[indexRange.location]) ||
+            ScreenCharIsDWL_SPACER(theLine[indexRange.location]))) {
+        // Don't try to start drawing in the middle of a double-width character
+        // or on a DWL_SPACER. Back up over the full sequence.
+        indexRange.location -= 1;
+        indexRange.length += 1;
+        initialPoint.x -= _cellSize.width;
     }
 
     DLog(@"row %f: %@", (initialPoint.y - virtualOffset) / self.cellSize.height, ScreenCharArrayToStringDebug(theLine, _gridSize.width));
@@ -3425,7 +3425,7 @@ iTermKittyImageDraw *iTermFindKittyImageDrawForVirtualPlaceholder(NSArray<iTermK
                                   remainingCharsInBuffer);
             int skipped = 0;
             if (charsInLine + i < len &&
-                ScreenCharIsDWC_RIGHT(buf[charsInLine + i])) {
+                (ScreenCharIsDWC_RIGHT(buf[charsInLine + i]) || ScreenCharIsDWL_SPACER(buf[charsInLine + i]))) {
                 // If we actually drew 'charsInLine' chars then half of a
                 // double-width char would be drawn. Skip it and draw it on the
                 // next line.
@@ -3871,10 +3871,17 @@ typedef struct {
         screenChar.complexChar = NO;
     }
     if (screenChar.code) {
-        if (ScreenCharIsDWC_RIGHT(screenChar)) {
+        if (ScreenCharIsDWC_RIGHT(screenChar) || ScreenCharIsDWL_SPACER(screenChar)) {
             *doubleWidth = NO;
         } else {
-            *doubleWidth = (column < width - 1) && ScreenCharIsDWC_RIGHT(theLine[column+1]);
+            // Check for DWC_RIGHT after the character, possibly with a DWL_SPACER in between.
+            BOOL nextIsDWCRight = (column < width - 1) && ScreenCharIsDWC_RIGHT(theLine[column+1]);
+            if (!nextIsDWCRight && column < width - 2 &&
+                ScreenCharIsDWL_SPACER(theLine[column+1]) &&
+                ScreenCharIsDWC_RIGHT(theLine[column+2])) {
+                nextIsDWCRight = YES;
+            }
+            *doubleWidth = nextIsDWCRight;
         }
     } else {
         *doubleWidth = NO;

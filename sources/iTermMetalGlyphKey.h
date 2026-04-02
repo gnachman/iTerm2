@@ -6,6 +6,7 @@
 //
 
 #include <simd/simd.h>
+#import "ScreenChar.h"
 #import "iTermShaderTypes.h"
 
 // Gives number of bits needed to contain a typeface flag.
@@ -51,6 +52,7 @@ typedef struct iTermMetalGlyphKey {
     BOOL thinStrokes;
     int visualColumn;
     int logicalIndex;
+    iTermLineAttribute lineAttribute;  // Affects glyph rendering size (2x for double-width lines)
 } iTermMetalGlyphKey;
 
 // Features of a cell that do not affect which texture is selected as source material.

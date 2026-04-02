@@ -57,6 +57,7 @@ const NSInteger kLongMaximumWordLength = 100000;
     [complement addCharactersInString:[iTermPreferences stringForKey:kPreferenceKeyCharactersConsideredPartOfAWordForSelection]];
     [complement addCharactersInRange:NSMakeRange(DWC_RIGHT, 1)];
     [complement addCharactersInRange:NSMakeRange(DWC_SKIP, 1)];
+    [complement addCharactersInRange:NSMakeRange(DWL_SPACER, 1)];
     [charset formUnionWithCharacterSet:[complement invertedSet]];
 
     return charset;
@@ -613,7 +614,7 @@ const NSInteger kLongMaximumWordLength = 100000;
     DLog(@"Want successor of %@. xLimit=%@", VT100GridCoordDescription(coord), @(xLimit));
     coord.x++;
     BOOL checkedForDWC = NO;
-    if (coord.x < xLimit && [self haveDoubleWidthExtensionAt:coord]) {
+    while (coord.x < xLimit && [self haveDoubleWidthExtensionAt:coord]) {
         coord.x++;
         checkedForDWC = YES;
     }
@@ -625,9 +626,11 @@ const NSInteger kLongMaximumWordLength = 100000;
             DLog(@"Failed to find successor. numberOfLines=%@", @(_dataSource.numberOfLines));
             return VT100GridCoordMake(xLimit - 1, [_dataSource numberOfLines] - 1);
         }
-        if (!checkedForDWC && [self haveDoubleWidthExtensionAt:coord]) {
-            DLog(@"Skip over DWC extension");
-            coord.x++;
+        if (!checkedForDWC) {
+            while (coord.x < xLimit && [self haveDoubleWidthExtensionAt:coord]) {
+                DLog(@"Skip over DWC extension");
+                coord.x++;
+            }
         }
     }
     DLog(@"Successor is %@", VT100GridCoordDescription(coord));
@@ -677,7 +680,7 @@ const NSInteger kLongMaximumWordLength = 100000;
          VT100GridCoordDescription(coord), @(_logicalWindow.location));
     coord.x--;
     BOOL checkedForDWC = NO;
-    if (coord.x >= 0 && [self haveDoubleWidthExtensionAt:coord]) {
+    while (coord.x >= _logicalWindow.location && [self haveDoubleWidthExtensionAt:coord]) {
         checkedForDWC = YES;
         coord.x--;
     }
@@ -689,9 +692,11 @@ const NSInteger kLongMaximumWordLength = 100000;
             DLog(@"Failed to find predecessor.");
             return VT100GridCoordMake(_logicalWindow.location, 0);
         }
-        if (!checkedForDWC && [self haveDoubleWidthExtensionAt:coord]) {
-            DLog(@"Back up over DWC extension");
-            coord.x--;
+        if (!checkedForDWC) {
+            while (coord.x > 0 && coord.x >= _logicalWindow.location && [self haveDoubleWidthExtensionAt:coord]) {
+                DLog(@"Back up over DWC extension");
+                coord.x--;
+            }
         }
     }
 
@@ -1282,7 +1287,8 @@ trimTrailingWhitespace:(BOOL)trimSelectionTrailingSpaces
                     break;
             }
         } else if (theChar.complexChar || (theChar.code != DWC_RIGHT &&
-                                           theChar.code != DWC_SKIP)) {
+                                           theChar.code != DWC_SKIP &&
+                                           theChar.code != DWL_SPACER)) {
             // Normal character. Add it unless it's a backslash at the right edge
             // of a window.
             if (continuationChars &&
@@ -1505,7 +1511,7 @@ trimTrailingWhitespace:(BOOL)trimSelectionTrailingSpaces
 
 - (BOOL)haveDoubleWidthExtensionAt:(VT100GridCoord)coord {
     screen_char_t sct = [self characterAt:coord];
-    return !sct.complexChar && !sct.image && (sct.code == DWC_RIGHT || sct.code == DWC_SKIP);
+    return !sct.complexChar && !sct.image && (sct.code == DWC_RIGHT || sct.code == DWC_SKIP || sct.code == DWL_SPACER);
 }
 
 - (BOOL)coord:(VT100GridCoord)coord1 isEqualToCoord:(VT100GridCoord)coord2 {
@@ -1515,16 +1521,17 @@ trimTrailingWhitespace:(BOOL)trimSelectionTrailingSpaces
     if (coord1.y != coord2.y) {
         return NO;
     }
-    if (abs(coord1.x - coord2.x) > 1) {
-        return NO;
-    }
-
+    // Check if all cells between the two coordinates are double-width extensions
+    // (DWC_RIGHT, DWL_SPACER). This handles both normal DWC (2 cells) and DWC on
+    // double-width lines (4 cells: [char][DWL][DWC_RIGHT][DWL]).
+    int small = MIN(coord1.x, coord2.x);
     int large = MAX(coord1.x, coord2.x);
-    if ([self haveDoubleWidthExtensionAt:VT100GridCoordMake(large, coord1.y)]) {
-        return YES;
-    } else {
-        return NO;
+    for (int x = small + 1; x <= large; x++) {
+        if (![self haveDoubleWidthExtensionAt:VT100GridCoordMake(x, coord1.y)]) {
+            return NO;
+        }
     }
+    return YES;
 }
 
 #pragma mark - Private

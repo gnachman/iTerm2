@@ -360,11 +360,17 @@ typedef struct {
             const screen_char_t screenChar = _cursorInfo.coord.x < _rows[_cursorInfo.coord.y]->_screenCharLine.length ? line[_cursorInfo.coord.x] : (screen_char_t){0};
             
             if (screenChar.code) {
-                if (ScreenCharIsDWC_RIGHT(screenChar)) {
+                if (ScreenCharIsDWC_RIGHT(screenChar) || ScreenCharIsDWL_SPACER(screenChar)) {
                     _cursorInfo.doubleWidth = NO;
                 } else {
                     const int column = _cursorInfo.coord.x;
-                    _cursorInfo.doubleWidth = (column < _configuration->_gridSize.width - 1) && ScreenCharIsDWC_RIGHT(line[column + 1]);
+                    BOOL nextIsDWCRight = (column < _configuration->_gridSize.width - 1) && ScreenCharIsDWC_RIGHT(line[column + 1]);
+                    if (!nextIsDWCRight && column < _configuration->_gridSize.width - 2 &&
+                        ScreenCharIsDWL_SPACER(line[column + 1]) &&
+                        ScreenCharIsDWC_RIGHT(line[column + 2])) {
+                        nextIsDWCRight = YES;
+                    }
+                    _cursorInfo.doubleWidth = nextIsDWCRight;
                 }
             } else {
                 _cursorInfo.doubleWidth = NO;
@@ -654,7 +660,7 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
 
             const BOOL wouldSplit = (i + 1 < len &&
                                      coord.x == gridWidth - 1 &&
-                                     ScreenCharIsDWC_RIGHT(buf[i+1]) &&
+                                     (ScreenCharIsDWC_RIGHT(buf[i+1]) || ScreenCharIsDWL_SPACER(buf[i+1])) &&
                                      !buf[i+1].complexChar);
             if (wouldSplit) {
                 // Bump DWC to start of next line instead of splitting it
@@ -936,7 +942,8 @@ NS_INLINE int iTermGlyphKeyEmitRegular(iTermCachedGlyphKeysBuffer *buf,
                                        BOOL isBoxDrawingCharacter,
                                        BOOL thinStrokes,
                                        const int *bidiLUT,
-                                       int bidiLUTLength) {
+                                       int bidiLUTLength,
+                                       iTermLineAttribute lineAttribute) {
     iTermCachedGlyphKeysBufferEnsureSize(buf, i);
     iTermMetalGlyphKey *glyphKeys = buf->buffer;
     glyphKeys[i].type = iTermMetalGlyphTypeRegular;
@@ -963,6 +970,7 @@ NS_INLINE int iTermGlyphKeyEmitRegular(iTermCachedGlyphKeysBuffer *buf,
     }
     glyphKeys[i].thinStrokes = thinStrokes;
     glyphKeys[i].logicalIndex = logicalIndex;
+    glyphKeys[i].lineAttribute = lineAttribute;
     iTermGlyphKeySetVisualPosition(buf, i, logicalIndex, bidiLUT, bidiLUTLength);
     return i + 1;
 }
@@ -1450,6 +1458,7 @@ static int iTermEmitGlyphsAndSetAttributes(iTermMetalPerFrameState *self,
                                            NSMutableArray<iTermKittyImageRun *> *kittyImageRuns,
                                            NSArray<iTermKittyImageDraw *> *kittyImageDraws,
                                            NSMutableArray<iTermMetalImageRun *> *imageRuns,
+                                           iTermLineAttribute lineAttribute,
                                            // out parameters:
                                            iTermCachedGlyphKeysBuffer *buf,
                                            iTermMetalGlyphAttributes *attributes,
@@ -1513,12 +1522,13 @@ static int iTermEmitGlyphsAndSetAttributes(iTermMetalPerFrameState *self,
         if (findMatches && !selected) {
             findMatch = CheckFindMatchAtIndex(findMatches, logicalIndex);
         }
-        if (lastSelected && ScreenCharIsDWC_RIGHT(line[logicalIndex])) {
-            // If the left half of a DWC was selected, extend the selection to the right half.
+        if (lastSelected && (ScreenCharIsDWC_RIGHT(line[logicalIndex]) || ScreenCharIsDWL_SPACER(line[logicalIndex]))) {
+            // If the left half of a DWC (or its preceding char) was selected, extend the selection
+            // to the right half and any DWL_SPACERs.
             lastSelected = selected;
             selected = YES;
-        } else if (!lastSelected && selected && ScreenCharIsDWC_RIGHT(line[logicalIndex])) {
-            // If the right half of a DWC is selected but the left half is not, un-select the right half.
+        } else if (!lastSelected && selected && (ScreenCharIsDWC_RIGHT(line[logicalIndex]) || ScreenCharIsDWL_SPACER(line[logicalIndex]))) {
+            // If a DWC_RIGHT or DWL_SPACER is selected but the preceding char is not, un-select it.
             lastSelected = YES;
             selected = NO;
         } else {
@@ -1630,7 +1640,8 @@ static int iTermEmitGlyphsAndSetAttributes(iTermMetalPerFrameState *self,
                                           isBoxDrawingCharacter,
                                           [self useThinStrokesWithAttributes:&attributes[visualX]],
                                           bidiLUT,
-                                          bidiLUTLength);
+                                          bidiLUTLength,
+                                          lineAttribute);
         } else {
             iTermGlyphKeyEmitPlaceholder(buf, gk, logicalIndex, bidiLUT, bidiLUTLength);
         }
@@ -1680,6 +1691,7 @@ static int iTermEmitGlyphsAndSetAttributes(iTermMetalPerFrameState *self,
         annotatedIndexes = nil;
     }
     const screen_char_t *const line = (const screen_char_t *const)lineData.line;
+    const iTermLineAttribute rowLineAttribute = _rows[row]->_screenCharLine.metadata.lineAttribute;
     iTermExternalAttributeIndex *eaIndex = _rows[row]->_eaIndex;
 
     *hoverStatePtr =_rows[row]->_hoverState;
@@ -1761,6 +1773,7 @@ static int iTermEmitGlyphsAndSetAttributes(iTermMetalPerFrameState *self,
                                                         kittyImageRuns,
                                                         _kittyImageDraws,
                                                         imageRuns,
+                                                        rowLineAttribute,
                                                         &buf,
                                                         attributes,
                                                         drawableGlyphsPtr,
@@ -2062,13 +2075,30 @@ static int iTermEmitGlyphsAndSetAttributes(iTermMetalPerFrameState *self,
     const BOOL italic = !!(glyphKey->typeface & iTermMetalGlyphKeyTypefaceItalic);
     const BOOL isAscii = !glyphKey->payload.regular.isComplex && (glyphKey->payload.regular.code < 128);
 
+    // For double-width lines, render glyphs at 2x size.
+    // DECDWL: 2x width. DECDHL: 2x both dimensions (top/bottom half selected by caller).
+    CGSize adjustedSize = size;
+    CGSize adjustedCellSize = _configuration->_cellSize;
+    CGSize adjustedCellSizeWithoutSpacing = _configuration->_cellSizeWithoutSpacing;
+    if (iTermLineAttributeIsDoubleWidth(glyphKey->lineAttribute)) {
+        adjustedSize.width *= 2;
+        adjustedCellSize.width *= 2;
+        adjustedCellSizeWithoutSpacing.width *= 2;
+        if (glyphKey->lineAttribute == iTermLineAttributeDoubleHeightTop ||
+            glyphKey->lineAttribute == iTermLineAttributeDoubleHeightBottom) {
+            adjustedSize.height *= 2;
+            adjustedCellSize.height *= 2;
+            adjustedCellSizeWithoutSpacing.height *= 2;
+        }
+    }
+
     const int radius = iTermTextureMapMaxCharacterParts / 2;
     iTermCharacterSourceDescriptor *descriptor =
     [iTermCharacterSourceDescriptor characterSourceDescriptorWithFontTable:_configuration->_fontTable
                                                                asciiOffset:asciiOffset
-                                                                 glyphSize:size
-                                                                  cellSize:_configuration->_cellSize
-                                                    cellSizeWithoutSpacing:_configuration->_cellSizeWithoutSpacing
+                                                                 glyphSize:adjustedSize
+                                                                  cellSize:adjustedCellSize
+                                                    cellSizeWithoutSpacing:adjustedCellSizeWithoutSpacing
                                                                      scale:scale
                                                                useBoldFont:_configuration->_useBoldFont
                                                              useItalicFont:_configuration->_useItalicFont
@@ -2101,6 +2131,7 @@ static int iTermEmitGlyphsAndSetAttributes(iTermMetalPerFrameState *self,
     }
 
     NSMutableDictionary<NSNumber *, iTermCharacterBitmap *> *result = [NSMutableDictionary dictionary];
+    const iTermLineAttribute glyphLineAttr = glyphKey->lineAttribute;
     [characterSource.parts enumerateObjectsUsingBlock:^(NSNumber * _Nonnull partNumber, NSUInteger idx, BOOL * _Nonnull stop) {
         int part = partNumber.intValue;
         if (isAscii &&
@@ -2108,6 +2139,18 @@ static int iTermEmitGlyphsAndSetAttributes(iTermMetalPerFrameState *self,
             part != iTermImagePartFromDeltas(-1, 0) &&
             part != iTermImagePartFromDeltas(1, 0)) {
             return;
+        }
+        // For DECDHL, only include parts from the relevant vertical half.
+        if (glyphLineAttr == iTermLineAttributeDoubleHeightTop) {
+            const int dy = iTermImagePartDY(part);
+            if (dy > 0) {
+                return;  // Skip bottom-half parts
+            }
+        } else if (glyphLineAttr == iTermLineAttributeDoubleHeightBottom) {
+            const int dy = iTermImagePartDY(part);
+            if (dy < 0) {
+                return;  // Skip top-half parts
+            }
         }
         result[partNumber] = [characterSource bitmapForPart:part];
     }];
