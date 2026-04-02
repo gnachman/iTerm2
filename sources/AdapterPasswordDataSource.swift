@@ -63,6 +63,7 @@ class AdapterPasswordDataSource: CommandLinePasswordDataSource {
     private typealias AccountIdentifierEntry = PasswordManagerProtocol.AccountIdentifier
     private typealias GetPasswordRequest = PasswordManagerProtocol.GetPasswordRequest
     private typealias PasswordResponse = PasswordManagerProtocol.Password
+    private typealias GetUsernameResponse = PasswordManagerProtocol.GetUsernameResponse
     private typealias SetPasswordRequest = PasswordManagerProtocol.SetPasswordRequest
     private typealias SetPasswordResponse = PasswordManagerProtocol.SetPasswordResponse
     private typealias AddAccountRequest = PasswordManagerProtocol.AddAccountRequest
@@ -379,6 +380,39 @@ class AdapterPasswordDataSource: CommandLinePasswordDataSource {
         }
     }
 
+    private func bridgedMasterPasswordSettingsFieldKey() -> String? {
+        guard let handshake = handshakeInfo,
+              handshake.requiresMasterPassword,
+              handshake.persistsCredentials == true,
+              let fields = handshake.settingsFields else {
+            return nil
+        }
+        let candidates = fields.filter { $0.isSecret && $0.persistInKeychain }
+        guard candidates.count == 1 else {
+            return nil
+        }
+        return candidates[0].key
+    }
+
+    private func bridgedPathToDatabaseSettingsFieldKey() -> String? {
+        guard let handshake = handshakeInfo,
+              handshake.needsPathToDatabase,
+              handshake.pathToDatabaseKind == .url,
+              let fields = handshake.settingsFields else {
+            return nil
+        }
+        let candidates = fields.filter { field in
+            guard !field.isSecret else {
+                return false
+            }
+            return field.key.lowercased().contains("url")
+        }
+        guard candidates.count == 1 else {
+            return nil
+        }
+        return candidates[0].key
+    }
+
     private func ensureAuthentication(window: NSWindow?, _ completion: @escaping (Error?) -> ()) {
         ensureHandshake { [weak self] error in
             guard let self = self else { return }
@@ -648,6 +682,66 @@ class AdapterPasswordDataSource: CommandLinePasswordDataSource {
             }))
     }
 
+    private func makeGetUsernameRecipe() -> AnyRecipe<CommandLinePasswordDataSource.AccountIdentifier, String> {
+        return AnyRecipe(AsyncCommandRecipe<CommandLinePasswordDataSource.AccountIdentifier, String>(
+            inputTransformer: { [weak self] context, accountIdentifier, completion in
+                guard let self = self else {
+                    completion(.failure(AdapterError.runtime("Data source deallocated")))
+                    return
+                }
+
+                self.ensureAuthentication(window: context.window) { error in
+                    if let error = error {
+                        completion(.failure(error))
+                        return
+                    }
+
+                    let request = GetPasswordRequest(
+                        header: self.standardHeader,
+                        userAccountID: self.userAccountID,
+                        token: self.authToken,
+                        accountIdentifier: AccountIdentifierEntry(accountID: accountIdentifier.value))
+
+                    let encoder = JSONEncoder()
+                    guard let inputData = try? encoder.encode(request) else {
+                        completion(.failure(AdapterError.badOutput))
+                        return
+                    }
+
+                    let command = CommandRequestWithInput(
+                        command: self.adapterPath,
+                        args: ["get-username"],
+                        env: [:],
+                        input: inputData)
+
+                    completion(.success(command))
+                }
+            },
+            recovery: { [weak self] error, completion in
+                if case AdapterError.needsAuthentication = error {
+                    self?.authToken = nil
+                    completion(nil)
+                } else {
+                    completion(error)
+                }
+            },
+            outputTransformer: { output, completion in
+                let decoder = JSONDecoder()
+
+                if let errorResponse = try? decoder.decode(ErrorResponse.self, from: output.stdout) {
+                    completion(.failure(AdapterError.runtime(errorResponse.error)))
+                    return
+                }
+
+                guard let response = try? decoder.decode(GetUsernameResponse.self, from: output.stdout) else {
+                    completion(.failure(AdapterError.badOutput))
+                    return
+                }
+
+                completion(.success(response.userName))
+            }))
+    }
+
     private func makeSetPasswordRecipe() -> AnyRecipe<CommandLinePasswordDataSource.SetPasswordRequest, Void> {
         return AnyRecipe(AsyncCommandRecipe<CommandLinePasswordDataSource.SetPasswordRequest, Void>(
             inputTransformer: { [weak self] context, setPasswordRequest, completion in
@@ -853,7 +947,8 @@ class AdapterPasswordDataSource: CommandLinePasswordDataSource {
             getPasswordRecipe: makeGetPasswordRecipe(),
             setPasswordRecipe: makeSetPasswordRecipe(),
             deleteRecipe: makeDeleteRecipe(),
-            addAccountRecipe: makeAddAccountRecipe())
+            addAccountRecipe: makeAddAccountRecipe(),
+            getUsernameRecipe: makeGetUsernameRecipe())
     }
 }
 
@@ -1023,10 +1118,42 @@ extension AdapterPasswordDataSource: AdapterCapabilities {
     }
 
     @objc func settingsValue(forKey key: String) -> String? {
-        return storedSettingsValue(forKey: key)
+        if key == bridgedMasterPasswordSettingsFieldKey() {
+            return loadPersistedCredentials() ?? storedSettingsValue(forKey: key)
+        }
+        if key == bridgedPathToDatabaseSettingsFieldKey() {
+            return iTermUserDefaults.userDefaults().string(forKey: "PathToDatabase_\(identifier)")
+                ?? storedSettingsValue(forKey: key)
+        }
+        if let value = storedSettingsValue(forKey: key) {
+            return value
+        }
+        return nil
     }
 
     @objc func setSettingsValue(_ value: String, forKey key: String) {
         storeSettingsValue(value, forKey: key)
+        let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
+        if key == bridgedMasterPasswordSettingsFieldKey() {
+            if trimmed.isEmpty {
+                masterPassword = nil
+                deletePersistedCredentials()
+            } else {
+                masterPassword = trimmed
+                persistCredentialsToKeychain(trimmed)
+            }
+            // Force re-auth so token reflects changed credential.
+            authToken = nil
+        }
+        if key == bridgedPathToDatabaseSettingsFieldKey() {
+            pathToDatabase = trimmed.isEmpty ? nil : trimmed
+            if trimmed.isEmpty {
+                iTermUserDefaults.userDefaults().removeObject(forKey: "PathToDatabase_\(identifier)")
+            } else {
+                iTermUserDefaults.userDefaults().set(trimmed, forKey: "PathToDatabase_\(identifier)")
+            }
+            // Switching endpoint should invalidate current auth token.
+            authToken = nil
+        }
     }
 }

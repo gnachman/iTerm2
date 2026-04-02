@@ -67,7 +67,7 @@ private func handleHandshake() {
             databaseExtension: nil,
             needsPathToExecutable: nil,
             pathToDatabaseKind: .url,
-            pathToDatabasePrompt: "Enter Keeper Commander API URL",
+            pathToDatabasePrompt: "Keeper Commander Service Mode API URL",
             pathToDatabasePlaceholder: "http://127.0.0.1:8900/api/v2",
             masterPasswordLabel: "API key",
             persistsCredentials: true,
@@ -79,10 +79,10 @@ private func handleHandshake() {
             settingsFields: [
                 PasswordManagerProtocol.SettingsField(
                     key: "serviceURL",
-                    label: "Commander API URL:",
+                    label: "API URL:",
                     placeholder: "http://127.0.0.1:8900/api/v2",
                     isSecret: false,
-                    note: "Optional override. If set, this URL takes precedence over the main URL field.",
+                    note: "Note: Append /api/v2 in your API URL",
                     persistInKeychain: false),
                 PasswordManagerProtocol.SettingsField(
                     key: "apiKey",

@@ -664,6 +664,7 @@ static NSArray<NSString *> *gTerminalCachedCombinedAccountNames;
         if (index != NSNotFound) {
             [_tableView selectRowIndexes:[NSIndexSet indexSetWithIndex:index] byExtendingSelection:NO];
         }
+        [self showAddRecordSuccessfullyForAccountName:newAccount.accountName ?: @"selected record"];
     }
     if (error) {
         DLog(@"%@", error);
@@ -676,18 +677,24 @@ static NSArray<NSString *> *gTerminalCachedCombinedAccountNames;
         if (selectedRow < 0 || selectedRow >= _entries.count) {
             return;
         }
+        NSString *accountName = [self accountNameForRow:selectedRow] ?: @"selected record";
         if (![self shouldRemoveSelection]) {
             return;
         }
+        const NSInteger cancelCount = [self incrBusy];
         [_tableView reloadData];
         __weak __typeof(self) weakSelf = self;
         [_entries[selectedRow] deleteWithContext:self.recipeExecutionContext
                                       completion:^(NSError * _Nullable error) {
-            if (error) {
-                DLog(@"%@", error);
-                return;
-            }
-            [weakSelf didRemoveEntry];
+            [weakSelf ifCancelCountUnchanged:cancelCount perform:^{
+                [weakSelf decrBusy];
+                if (error) {
+                    DLog(@"%@", error);
+                    return;
+                }
+                [weakSelf didRemoveEntry];
+                [weakSelf showDeleteRecordSuccessfullyForAccountName:accountName];
+            }];
         }];
     }
 }
@@ -738,11 +745,20 @@ static NSArray<NSString *> *gTerminalCachedCombinedAccountNames;
                                  row:(NSInteger)row
                          newPassword:(NSSecureTextField *)newPassword {
     __weak __typeof(self) weakSelf = self;
+    NSString *accountName = [self accountNameForRow:row] ?: @"selected record";
     switch (response) {
         case NSAlertFirstButtonReturn: {
+            NSString *password = [newPassword.stringValue stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+            if (password.length == 0) {
+                NSAlert *alert = [[NSAlert alloc] init];
+                alert.messageText = @"Password field is empty.";
+                [alert addButtonWithTitle:@"OK"];
+                [alert beginSheetModalForWindow:self.window completionHandler:nil];
+                return;
+            }
             const NSInteger cancelCount = [self incrBusy];
             [_entries[row] setPasswordWithContext:self.recipeExecutionContext
-                                         password:newPassword.stringValue
+                                         password:password
                                        completion:^(NSError * _Nullable error) {
                 [weakSelf ifCancelCountUnchanged:cancelCount perform:^{
                     [weakSelf decrBusy];
@@ -751,6 +767,7 @@ static NSArray<NSString *> *gTerminalCachedCombinedAccountNames;
                         return;
                     }
                     [weakSelf passwordsDidChange];
+                    [weakSelf showPasswordUpdatedSuccessfullyForAccountName:accountName];
                 }];
             }];
             break;
@@ -768,11 +785,36 @@ static NSArray<NSString *> *gTerminalCachedCombinedAccountNames;
                         return;
                     }
                     [weakSelf passwordsDidChange];
+                    [weakSelf showPasswordUpdatedSuccessfullyForAccountName:accountName];
                 }];
             }];
             break;
         }
     }}
+
+- (void)showPasswordUpdatedSuccessfullyForAccountName:(NSString *)accountName {
+    NSAlert *alert = [[NSAlert alloc] init];
+    alert.messageText = [NSString stringWithFormat:@"Password updated successfully for record %@.", accountName ?: @"selected record"];
+    alert.informativeText = @"";
+    [alert addButtonWithTitle:@"OK"];
+    [alert beginSheetModalForWindow:self.window completionHandler:nil];
+}
+
+- (void)showDeleteRecordSuccessfullyForAccountName:(NSString *)accountName {
+    NSAlert *alert = [[NSAlert alloc] init];
+    alert.messageText = [NSString stringWithFormat:@"deleted record %@ successfully", accountName ?: @"selected record"];
+    alert.informativeText = @"";
+    [alert addButtonWithTitle:@"OK"];
+    [alert beginSheetModalForWindow:self.window completionHandler:nil];
+}
+
+- (void)showAddRecordSuccessfullyForAccountName:(NSString *)accountName {
+    NSAlert *alert = [[NSAlert alloc] init];
+    alert.messageText = [NSString stringWithFormat:@"added record %@ successfully", accountName ?: @"selected record"];
+    alert.informativeText = @"";
+    [alert addButtonWithTitle:@"OK"];
+    [alert beginSheetModalForWindow:self.window completionHandler:nil];
+}
 
 - (IBAction)performDefaultAction:(id)sender {
     if (_sendUserByDefault && _didSendUserName == nil) {
@@ -806,7 +848,7 @@ static NSArray<NSString *> *gTerminalCachedCombinedAccountNames;
     DLog(@"didFetchPasswordToEnter giving password to delegate");
     if (self.didSendUserName) {
         // In send-both mode. First send the username.
-        [self enterUsername];
+        [self enterUsernameAndCloseAfterSending:NO];
 
         // Now run the completion block, which can set focus on the password field.
         void (^didSendUserName)(void) = self.didSendUserName;
@@ -820,23 +862,44 @@ static NSArray<NSString *> *gTerminalCachedCombinedAccountNames;
 }
 
 - (IBAction)performSecondaryAction:(id)sender {
-    [self enterUsername];
+    [self enterUsernameAndCloseAfterSending:YES];
 }
 
 - (void)enterUsername {
+    [self enterUsernameAndCloseAfterSending:YES];
+}
+
+- (void)enterUsernameAndCloseAfterSending:(BOOL)closeAfterSending {
     DLog(@"enterUserName");
     if (!self.dataSourceProvider.authenticated) {
         return;
     }
-    NSString *userName = [self selectedUserName];
-    if (userName.length > 0) {
-        [_delegate iTermPasswordManagerEnterUserName:userName
-                                            broadcast:_broadcastButton.state == NSControlStateValueOn];
-        if (_sendUserByDefault && !self.didSendUserName) {
-            DLog(@"enterPassword: closing sheet");
-            [self closeOrEndSheet];
-        }
+    id<PasswordManagerAccount> account = self.selectedAccount;
+    if (!account) {
+        return;
     }
+    const NSInteger cancelCount = [self incrBusy];
+    __weak __typeof(self) weakSelf = self;
+    [account usernameForTerminalWithContext:self.recipeExecutionContext completion:^(NSString *resolvedUserName) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            __strong __typeof(weakSelf) strongSelf = weakSelf;
+            if (!strongSelf) {
+                return;
+            }
+            [strongSelf ifCancelCountUnchanged:cancelCount perform:^{
+                [strongSelf decrBusy];
+                if (resolvedUserName.length == 0) {
+                    return;
+                }
+                [strongSelf.delegate iTermPasswordManagerEnterUserName:resolvedUserName
+                                                              broadcast:strongSelf->_broadcastButton.state == NSControlStateValueOn];
+                if (closeAfterSending) {
+                    DLog(@"enterUsername: closing sheet");
+                    [strongSelf closeOrEndSheet];
+                }
+            }];
+        });
+    }];
 }
 
 - (void)closeOrEndSheet {
