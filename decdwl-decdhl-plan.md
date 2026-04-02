@@ -280,16 +280,18 @@ For DECDHL (where we extract top/bottom halves), the clipping happens during ras
 
 ### Phase 8: Legacy (Core Text) Rendering
 
-**Use the same `iTermCharacterSource` bitmaps for both renderers.**
+**Use Core Text scaling directly in both renderers.**
 
 File: `sources/iTermTextDrawingHelper.m`
 
-For DECDWL/DECDHL lines in the Core Text path:
-1. Render glyphs through `iTermCharacterSource` with the same 2x parameters as Metal
-2. Draw the resulting bitmaps into the CGContext at the correct positions
-3. This ensures pixel-identical output between Metal and Core Text
+Both the Metal path (via `iTermCharacterSource`) and the legacy path use Core Text internally. Apply the same scaling in both:
 
-The key insight: rather than using `CGContextScaleCTM` with `CTLineDraw` (which would use different rendering parameters than Metal), we use the same `iTermCharacterSource` bitmap rendering that Metal uses. When the renderer switches (e.g., entering low power mode), there is no visual glitch because both paths produce the same glyph images.
+For DECDWL/DECDHL lines in the legacy Core Text path:
+1. **DECDWL:** Save graphics state, apply `CGContextScaleCTM(ctx, 2.0, 1.0)` and adjust origin so text renders at double width
+2. **DECDHL top:** Apply `CGContextScaleCTM(ctx, 2.0, 2.0)`, set clip rect to the line's physical rect (one row high), translate so the top half of the scaled text is visible
+3. **DECDHL bottom:** Same as top, but translate so the bottom half is visible
+
+Since both renderers use Core Text with the same font and the same scaling, output is visually consistent when switching between them (e.g., entering/exiting low power mode).
 
 Background colors: draw at 2x cell width for each logical character position.
 

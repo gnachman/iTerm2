@@ -579,6 +579,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTurdType) {
     iTermVariableReference *_jobPidRef;
     iTermCacheableImage *_customIcon;
     CGContextRef _metalContext;
+    CGContextRef _metalContextDoubleWidth;  // 2x size, created on demand for DECDWL/DECDHL
     BOOL _errorCreatingMetalContext;
 
     id<iTermKeyMapper> _keyMapper;
@@ -1079,6 +1080,9 @@ ITERM_WEAKLY_REFERENCEABLE
     [_paneIndexMonitor release];
     if (_metalContext) {
         CGContextRelease(_metalContext);
+    }
+    if (_metalContextDoubleWidth) {
+        CGContextRelease(_metalContextDoubleWidth);
     }
     [[NSNotificationCenter defaultCenter] removeObserver:self];
 
@@ -7944,6 +7948,10 @@ extendResultsAcrossSoftBoundaries:(BOOL)extendResultsAcrossSoftBoundaries {
     return _metalContext;
 }
 
+- (CGContextRef)metalGlueContextDoubleWidth {
+    return _metalContextDoubleWidth;
+}
+
 + (CGColorSpaceRef)metalColorSpace {
     static dispatch_once_t onceToken;
     static CGColorSpaceRef colorSpace;
@@ -7989,17 +7997,37 @@ extendResultsAcrossSoftBoundaries:(BOOL)extendResultsAcrossSoftBoundaries {
         CGContextRelease(_metalContext);
         _metalContext = NULL;
     }
+    if (_metalContextDoubleWidth) {
+        CGContextRelease(_metalContextDoubleWidth);
+        _metalContextDoubleWidth = NULL;
+    }
     DLog(@"allocate new metal context of size %@", NSStringFromSize(scaledSize));
+    const CGBitmapInfo bitmapInfo = CGBitmapInfoMake(kCGImageAlphaPremultipliedFirst,
+                                                     kCGImageComponentInteger,
+                                                     kCGImageByteOrder32Host,
+                                                     kCGImagePixelFormatPacked);
     _metalContext = CGBitmapContextCreate(NULL,
                                           scaledSize.width,
                                           scaledSize.height,
                                           8,
-                                          scaledSize.width * 4,  // bytes per row
+                                          scaledSize.width * 4,
                                           [PTYSession metalColorSpace],
-                                          CGBitmapInfoMake(kCGImageAlphaPremultipliedFirst, kCGImageComponentInteger, kCGImageByteOrder32Host, kCGImagePixelFormatPacked));
-    // Initialize to transparent. Character sources will clear only the
-    // area they draw into after copying pixels, keeping the context clean.
+                                          bitmapInfo);
     CGContextClearRect(_metalContext, CGRectMake(0, 0, scaledSize.width, scaledSize.height));
+
+    // Double-width context uses a larger radius for overflow room.
+    const int dwMaxParts = iTermTextureMapMaxCharacterParts * 2 + 1;
+    CGSize dwSize = CGSizeMake(size.width * scale * dwMaxParts,
+                               size.height * scale * dwMaxParts);
+    _metalContextDoubleWidth = CGBitmapContextCreate(NULL,
+                                                      dwSize.width,
+                                                      dwSize.height,
+                                                      8,
+                                                      dwSize.width * 4,
+                                                      [PTYSession metalColorSpace],
+                                                      bitmapInfo);
+    memset(CGBitmapContextGetData(_metalContextDoubleWidth), 0,
+           CGBitmapContextGetBytesPerRow(_metalContextDoubleWidth) * (size_t)dwSize.height);
 }
 
 - (BOOL)metalAllowed {

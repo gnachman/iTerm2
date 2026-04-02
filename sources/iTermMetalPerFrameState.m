@@ -156,6 +156,7 @@ typedef struct {
 
 @implementation iTermMetalPerFrameState {
     CGContextRef _metalContext;
+    CGContextRef _metalContextDoubleWidth;
 }
 
 @dynamic timestampBaseline;
@@ -164,6 +165,7 @@ typedef struct {
                           screen:(VT100Screen *)screen
                             glue:(id<iTermMetalPerFrameStateDelegate>)glue
                          context:(CGContextRef)context
+              doubleWidthContext:(CGContextRef)doubleWidthContext
          attributedStringBuilder:(iTermAttributedStringBuilder *)attributedStringBuilder {
     assert([NSThread isMainThread]);
     self = [super init];
@@ -172,6 +174,9 @@ typedef struct {
         _rows = [NSMutableArray array];
         _startTime = [NSDate timeIntervalSinceReferenceDate];
         _metalContext = CGContextRetain(context);
+        if (doubleWidthContext) {
+            _metalContextDoubleWidth = CGContextRetain(doubleWidthContext);
+        }
         _attributedStringBuilder = attributedStringBuilder;
         [textView performBlockWithFlickerFixerGrid:^{
             [self loadAllWithTextView:textView screen:screen glue:glue];
@@ -183,6 +188,9 @@ typedef struct {
 - (void)dealloc {
     if (_metalContext) {
         CGContextRelease(_metalContext);
+    }
+    if (_metalContextDoubleWidth) {
+        CGContextRelease(_metalContextDoubleWidth);
     }
 }
 
@@ -983,7 +991,8 @@ NS_INLINE int iTermGlyphKeyEmitDecomposedFromCheap(iTermCachedGlyphKeysBuffer *b
                                                    iTermCheapAttributedString *cheapString,
                                                    BOOL thinStrokes,
                                                    const int *bidiLUT,
-                                                   int bidiLUTLength) {
+                                                   int bidiLUTLength,
+                                                   iTermLineAttribute lineAttribute) {
     CGGlyph glyphs[cheapString.length];
     NSFont *font = cheapString.attributes[NSFontAttributeName];
     BOOL ok = CTFontGetGlyphsForCharacters((CTFontRef)font,
@@ -1010,7 +1019,8 @@ NS_INLINE int iTermGlyphKeyEmitDecomposedFromCheap(iTermCachedGlyphKeysBuffer *b
                                                  cheapString.length,
                                                  thinStrokes,
                                                  bidiLUT,
-                                                 bidiLUTLength);
+                                                 bidiLUTLength,
+                                                 lineAttribute);
 }
 
 NS_INLINE int iTermGlyphKeyEmitDecomposedFromGlyphs(iTermCachedGlyphKeysBuffer *buf,
@@ -1025,7 +1035,8 @@ NS_INLINE int iTermGlyphKeyEmitDecomposedFromGlyphs(iTermCachedGlyphKeysBuffer *
                                                     NSUInteger length,
                                                     BOOL thinStrokes,
                                                     const int *bidiLUT,
-                                                    int bidiLUTLength) {
+                                                    int bidiLUTLength,
+                                                    iTermLineAttribute lineAttribute) {
     for (NSUInteger i = 0; i < length; i++) {
         iTermGlyphKeyEmitDecomposedForSingleGlyph(buf,
                                                   bold,
@@ -1039,7 +1050,8 @@ NS_INLINE int iTermGlyphKeyEmitDecomposedFromGlyphs(iTermCachedGlyphKeysBuffer *
                                                   logicalIndex + i,
                                                   thinStrokes,
                                                   bidiLUT,
-                                                  bidiLUTLength);
+                                                  bidiLUTLength,
+                                                  lineAttribute);
     }
     return gk + length;
 }
@@ -1056,7 +1068,8 @@ NS_INLINE void iTermGlyphKeyEmitDecomposedForSingleGlyph(iTermCachedGlyphKeysBuf
                                                          CFIndex logicalIndex,
                                                          BOOL thinStrokes,
                                                          const int *bidiLUT,
-                                                         int bidiLUTLength) {
+                                                         int bidiLUTLength,
+                                                         iTermLineAttribute lineAttribute) {
     iTermCachedGlyphKeysBufferEnsureSize(buf, gk);
     iTermMetalGlyphKey *glyphKeys = buf->buffer;
     glyphKeys[gk].type = iTermMetalGlyphTypeDecomposed;
@@ -1067,6 +1080,7 @@ NS_INLINE void iTermGlyphKeyEmitDecomposedForSingleGlyph(iTermCachedGlyphKeysBuf
     glyphKeys[gk].payload.decomposed.position = glyphPositionRelativeToCellOrigin;
     glyphKeys[gk].logicalIndex = logicalIndex;
     glyphKeys[gk].thinStrokes = thinStrokes;
+    glyphKeys[gk].lineAttribute = lineAttribute;
     const int boldBit = bold ? (1 << 0) : 0;
     const int italicBit = italic ? (1 << 1) : 0;
     glyphKeys[gk].typeface = (boldBit | italicBit);
@@ -1086,7 +1100,8 @@ NS_INLINE int iTermGlyphKeyEmitDecomposedFromNSAttributedString(iTermCachedGlyph
                                                                 const CTVector(CGFloat) *positions,
                                                                 const int *bidiLUT,
                                                                 int bidiLUTLength,
-                                                                const int *characterIndexToSourceCell) {
+                                                                const int *characterIndexToSourceCell,
+                                                                iTermLineAttribute lineAttribute) {
     NSDictionary *attributes = [attributedString attributesAtIndex:0 effectiveRange:nil];
     if (attributes[iTermImageCodeAttribute] ||
         [attributes[iTermIsBoxDrawingAttribute] boolValue]) {
@@ -1143,7 +1158,8 @@ NS_INLINE int iTermGlyphKeyEmitDecomposedFromNSAttributedString(iTermCachedGlyph
                                                       sourceCell,
                                                       thinStrokes,
                                                       bidiLUT,
-                                                      bidiLUTLength);
+                                                      bidiLUTLength,
+                                                      lineAttribute);
         }
         o += length;
     }];
@@ -1159,7 +1175,8 @@ NS_INLINE int iTermGlyphKeyEmitDecomposed(iTermCachedGlyphKeysBuffer *buf,
                                           BOOL thinStrokes,
                                           const CTVector(CGFloat) *positions,
                                           const int *bidiLUT,
-                                          int bidiLUTLength) {
+                                          int bidiLUTLength,
+                                          iTermLineAttribute lineAttribute) {
     iTermCheapAttributedString *cheapString = [iTermCheapAttributedString castFrom:attributedString];
     NSAttributedString *nsAttributedString = nil;
     if (cheapString) {
@@ -1171,7 +1188,8 @@ NS_INLINE int iTermGlyphKeyEmitDecomposed(iTermCachedGlyphKeysBuffer *buf,
                                                           cheapString,
                                                           thinStrokes,
                                                           bidiLUT,
-                                                          bidiLUTLength);
+                                                          bidiLUTLength,
+                                                          lineAttribute);
         if (result >= 0) {
             return result;
         }
@@ -1203,7 +1221,8 @@ NS_INLINE int iTermGlyphKeyEmitDecomposed(iTermCachedGlyphKeysBuffer *buf,
                                                              positions,
                                                              bidiLUT,
                                                              bidiLUTLength,
-                                                             characterIndexToSourceCell);
+                                                             characterIndexToSourceCell,
+                                                             lineAttribute);
 }
 
 NS_INLINE void iTermGlyphKeyEmitImage(const screen_char_t *const line,
@@ -1626,7 +1645,8 @@ static int iTermEmitGlyphsAndSetAttributes(iTermMetalPerFrameState *self,
                                                  [self useThinStrokesWithAttributes:&attributes[visualX]],
                                                  &positions,
                                                  bidiLUT,
-                                                 bidiLUTLength);
+                                                 bidiLUTLength,
+                                                 lineAttribute);
                 haveEmittedAttributedString = YES;
             }
         } else if (attributes[visualX].underlineStyle != iTermMetalGlyphAttributesUnderlineNone || characterIsDrawable) {
@@ -2025,7 +2045,9 @@ static int iTermEmitGlyphsAndSetAttributes(iTermMetalPerFrameState *self,
                                                                                      emoji:(nonnull BOOL *)emoji {
     const BOOL bold = !!(glyphKey->typeface & iTermMetalGlyphKeyTypefaceBold);
     const BOOL italic = !!(glyphKey->typeface & iTermMetalGlyphKeyTypefaceItalic);
-    const int radius = iTermTextureMapMaxCharacterParts / 2;
+    const BOOL isDoubleWidth = iTermLineAttributeIsDoubleWidth(glyphKey->lineAttribute);
+    // Larger radius for double-width so 2x-scaled glyphs have room to overflow.
+    const int radius = isDoubleWidth ? iTermTextureMapMaxCharacterParts : (iTermTextureMapMaxCharacterParts / 2);
     iTermCharacterSourceDescriptor *descriptor =
     [iTermCharacterSourceDescriptor characterSourceDescriptorWithFontTable:_configuration->_fontTable
                                                                asciiOffset:CGSizeZero
@@ -2042,6 +2064,10 @@ static int iTermEmitGlyphsAndSetAttributes(iTermMetalPerFrameState *self,
     [iTermCharacterSourceAttributes characterSourceAttributesWithThinStrokes:glyphKey->thinStrokes
                                                                         bold:bold
                                                                       italic:italic];
+    CGContextRef ctx = _metalContext;
+    if (isDoubleWidth && _metalContextDoubleWidth) {
+        ctx = _metalContextDoubleWidth;
+    }
     iTermCharacterSource *characterSource =
     [[iTermCharacterSource alloc] initWithFontID:glyphKey->payload.decomposed.fontID
                                         fakeBold:glyphKey->payload.decomposed.fakeBold
@@ -2051,7 +2077,8 @@ static int iTermEmitGlyphsAndSetAttributes(iTermMetalPerFrameState *self,
                                       descriptor:descriptor
                                       attributes:attributes
                                           radius:radius
-                                         context:_metalContext];
+                                   lineAttribute:glyphKey->lineAttribute
+                                         context:ctx];
     if (characterSource == nil) {
         return nil;
     }
@@ -2074,31 +2101,15 @@ static int iTermEmitGlyphsAndSetAttributes(iTermMetalPerFrameState *self,
     const BOOL bold = !!(glyphKey->typeface & iTermMetalGlyphKeyTypefaceBold);
     const BOOL italic = !!(glyphKey->typeface & iTermMetalGlyphKeyTypefaceItalic);
     const BOOL isAscii = !glyphKey->payload.regular.isComplex && (glyphKey->payload.regular.code < 128);
-
-    // For double-width lines, render glyphs at 2x size.
-    // DECDWL: 2x width. DECDHL: 2x both dimensions (top/bottom half selected by caller).
-    CGSize adjustedSize = size;
-    CGSize adjustedCellSize = _configuration->_cellSize;
-    CGSize adjustedCellSizeWithoutSpacing = _configuration->_cellSizeWithoutSpacing;
-    if (iTermLineAttributeIsDoubleWidth(glyphKey->lineAttribute)) {
-        adjustedSize.width *= 2;
-        adjustedCellSize.width *= 2;
-        adjustedCellSizeWithoutSpacing.width *= 2;
-        if (glyphKey->lineAttribute == iTermLineAttributeDoubleHeightTop ||
-            glyphKey->lineAttribute == iTermLineAttributeDoubleHeightBottom) {
-            adjustedSize.height *= 2;
-            adjustedCellSize.height *= 2;
-            adjustedCellSizeWithoutSpacing.height *= 2;
-        }
-    }
-
-    const int radius = iTermTextureMapMaxCharacterParts / 2;
+    const BOOL isDoubleWidth = iTermLineAttributeIsDoubleWidth(glyphKey->lineAttribute);
+    // Larger radius for double-width so 2x-scaled glyphs have room to overflow.
+    const int radius = isDoubleWidth ? iTermTextureMapMaxCharacterParts : (iTermTextureMapMaxCharacterParts / 2);
     iTermCharacterSourceDescriptor *descriptor =
     [iTermCharacterSourceDescriptor characterSourceDescriptorWithFontTable:_configuration->_fontTable
                                                                asciiOffset:asciiOffset
-                                                                 glyphSize:adjustedSize
-                                                                  cellSize:adjustedCellSize
-                                                    cellSizeWithoutSpacing:adjustedCellSizeWithoutSpacing
+                                                                 glyphSize:size
+                                                                  cellSize:_configuration->_cellSize
+                                                    cellSizeWithoutSpacing:_configuration->_cellSizeWithoutSpacing
                                                                      scale:scale
                                                                useBoldFont:_configuration->_useBoldFont
                                                              useItalicFont:_configuration->_useItalicFont
@@ -2118,6 +2129,10 @@ static int iTermEmitGlyphsAndSetAttributes(iTermMetalPerFrameState *self,
             string = [string stringByAppendingString:successorString];
         }
     }
+    CGContextRef ctx = _metalContext;
+    if (isDoubleWidth && _metalContextDoubleWidth) {
+        ctx = _metalContextDoubleWidth;
+    }
     iTermCharacterSource *characterSource =
     [[iTermCharacterSource alloc] initWithCharacter:string
                                          descriptor:descriptor
@@ -2125,32 +2140,19 @@ static int iTermEmitGlyphsAndSetAttributes(iTermMetalPerFrameState *self,
                                          boxDrawing:glyphKey->payload.regular.boxDrawing
                                              radius:radius
                            useNativePowerlineGlyphs:_configuration->_useNativePowerlineGlyphs
-                                            context:_metalContext];
+                                      lineAttribute:glyphKey->lineAttribute
+                                            context:ctx];
     if (characterSource == nil) {
         return nil;
     }
-
     NSMutableDictionary<NSNumber *, iTermCharacterBitmap *> *result = [NSMutableDictionary dictionary];
-    const iTermLineAttribute glyphLineAttr = glyphKey->lineAttribute;
     [characterSource.parts enumerateObjectsUsingBlock:^(NSNumber * _Nonnull partNumber, NSUInteger idx, BOOL * _Nonnull stop) {
         int part = partNumber.intValue;
-        if (isAscii &&
+        if (isAscii && !isDoubleWidth &&
             part != iTermImagePartFromDeltas(0, 0) &&
             part != iTermImagePartFromDeltas(-1, 0) &&
             part != iTermImagePartFromDeltas(1, 0)) {
             return;
-        }
-        // For DECDHL, only include parts from the relevant vertical half.
-        if (glyphLineAttr == iTermLineAttributeDoubleHeightTop) {
-            const int dy = iTermImagePartDY(part);
-            if (dy > 0) {
-                return;  // Skip bottom-half parts
-            }
-        } else if (glyphLineAttr == iTermLineAttributeDoubleHeightBottom) {
-            const int dy = iTermImagePartDY(part);
-            if (dy < 0) {
-                return;  // Skip top-half parts
-            }
         }
         result[partNumber] = [characterSource bitmapForPart:part];
     }];

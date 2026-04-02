@@ -528,7 +528,8 @@ static inline BOOL GlyphKeyCanTakeASCIIFastPath(const iTermMetalGlyphKey &glyphK
             glyphKey.payload.regular.code <= iTermASCIITextureMaximumCharacter &&
             glyphKey.payload.regular.code >= iTermASCIITextureMinimumCharacter &&
             !glyphKey.payload.regular.isComplex &&
-            !glyphKey.payload.regular.boxDrawing);
+            !glyphKey.payload.regular.boxDrawing &&
+            !iTermLineAttributeIsDoubleWidth(glyphKey.lineAttribute));
 }
 
 typedef struct {
@@ -646,6 +647,10 @@ typedef struct {
         }
     } else if (entries->empty()) {
         return;;
+    }
+
+    if (entries->empty()) {
+        return;
     }
 
     const iTermMetalGlyphAttributes *attributes = state->attributes;

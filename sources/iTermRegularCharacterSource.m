@@ -30,6 +30,7 @@
     NSString *_string;
     BOOL _boxDrawing;
     BOOL _useNativePowerlineGlyphs;
+    iTermLineAttribute _lineAttribute;
 
     CTLineRef _lineRefs[4];
 
@@ -46,6 +47,7 @@
                        boxDrawing:(BOOL)boxDrawing
                            radius:(int)radius
          useNativePowerlineGlyphs:(BOOL)useNativePowerlineGlyphs
+                    lineAttribute:(iTermLineAttribute)lineAttribute
                           context:(CGContextRef)context {
     assert(descriptor.glyphSize.width > 0);
     assert(descriptor.glyphSize.height > 0);
@@ -87,6 +89,7 @@
         ITAssertWithMessage(descriptor.fontTable, @"Nil font table for string=%@ attributes=%@", string, attributes);
         _boxDrawing = boxDrawing;
         _useNativePowerlineGlyphs = useNativePowerlineGlyphs;
+        _lineAttribute = lineAttribute;
 
         for (int i = 0; i < 4; i++) {
             _attributedStrings[i] = [[NSAttributedString alloc] initWithString:string attributes:[self attributesForIteration:i]];
@@ -114,7 +117,7 @@
 #pragma mark Lazy Computations
 
 - (CGSize)desiredOffset {
-    if (_isAscii) {
+    if (_isAscii && !iTermLineAttributeIsDoubleWidth(_lineAttribute)) {
         return _descriptor.asciiOffset;
     } else {
         return CGSizeZero;
@@ -152,7 +155,29 @@
 
     CGContextRef cgContext = _context;
     CGRect frame = CTLineGetImageBounds(_lineRefs[0], cgContext);
-    return [self frameForBoundingRect:frame flipped:flipped];
+    CGRect result = [self frameForBoundingRect:frame flipped:flipped];
+    if (iTermLineAttributeIsDoubleWidth(_lineAttribute)) {
+        // Expand around the unshifted text origin for the horizontal DWL
+        // scaling and (for DECDHL) the vertical scaling.
+        const CGFloat pivotX = _descriptor.glyphSize.width * _radius;
+        const CGFloat tyUnflipped = _descriptor.glyphSize.height * _radius - _descriptor.baselineOffset * _descriptor.scale;
+        const CGFloat pivotY = flipped ? (_size.height - tyUnflipped) : tyUnflipped;
+        const CGFloat hScale = 2.0;
+        const CGFloat vScale = (_lineAttribute == iTermLineAttributeDoubleHeightTop ||
+                                _lineAttribute == iTermLineAttributeDoubleHeightBottom) ? 2.0 : 1.0;
+        result = CGRectMake(pivotX + (result.origin.x - pivotX) * hScale,
+                            pivotY + (result.origin.y - pivotY) * vScale,
+                            result.size.width * hScale,
+                            result.size.height * vScale);
+        if (_lineAttribute == iTermLineAttributeDoubleHeightTop) {
+            const CGFloat shift = (_descriptor.cellSize.height + _descriptor.baselineOffset) * _descriptor.scale;
+            result.origin.y += flipped ? shift : -shift;
+        } else if (_lineAttribute == iTermLineAttributeDoubleHeightBottom) {
+            const CGFloat shift = _descriptor.baselineOffset * _descriptor.scale;
+            result.origin.y += flipped ? shift : -shift;
+        }
+    }
+    return result;
 }
 
 #pragma mark Drawing
@@ -254,6 +279,21 @@
                           iteration:iteration
                             context:context];
         } else {
+            if (iTermLineAttributeIsDoubleWidth(_lineAttribute) && length > 0) {
+                // Subtract the glyph's left side bearing so visible pixels
+                // start at the cell boundary. The legacy renderer uses a
+                // CGFont API path where the bearing is handled differently
+                // (visible CTM=2 causes bearing to round to 0 via hinting).
+                // In the GPU atlas, the text matrix has a=scale*hScale which
+                // preserves the bearing. This compensation eliminates the
+                // resulting horizontal shift.
+                CGRect bbox;
+                CTFontGetBoundingRectsForGlyphs(runFont, kCTFontOrientationDefault,
+                                                buffer, &bbox, 1);
+                for (size_t i = 0; i < length; i++) {
+                    positions[i].x -= bbox.origin.x;
+                }
+            }
             CTFontDrawGlyphs(runFont, buffer, (NSPoint *)positions, length, context);
 
             if (_fakeBold) {
@@ -281,6 +321,25 @@
     }
 }
 
+- (iTermLineAttribute)lineAttribute {
+    return _lineAttribute;
+}
+
+- (CGFloat)drawHScale {
+    if (iTermLineAttributeIsDoubleWidth(_lineAttribute)) {
+        return 2.0;
+    }
+    return 1.0;
+}
+
+- (CGFloat)drawVScale {
+    if (_lineAttribute == iTermLineAttributeDoubleHeightTop ||
+        _lineAttribute == iTermLineAttributeDoubleHeightBottom) {
+        return 2.0;
+    }
+    return 1.0;
+}
+
 #pragma mark Core Text Helpers
 
 - (const CGGlyph *)glyphsInRun:(CTRunRef)run length:(size_t)length {
@@ -298,7 +357,6 @@
     _positionsBuffer = [[NSMutableData alloc] initWithLength:sizeof(CGPoint) * length];
     CTRunGetPositions(run, CFRangeMake(0, length), (CGPoint *)_positionsBuffer.mutableBytes);
     return (CGPoint *)_positionsBuffer.mutableBytes;
-
 }
 
 - (NSDictionary *)attributesForIteration:(NSInteger)iteration {

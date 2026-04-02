@@ -6,6 +6,7 @@
 //
 
 #import <Foundation/Foundation.h>
+#import "ScreenChar.h"
 
 @class iTermCharacterBitmap;
 @class iTermFontTable;
@@ -72,6 +73,7 @@
                        boxDrawing:(BOOL)boxDrawing
                            radius:(int)radius
          useNativePowerlineGlyphs:(BOOL)useNativePowerlineGlyphs
+                    lineAttribute:(iTermLineAttribute)lineAttribute
                           context:(CGContextRef)context;
 
 - (instancetype)initWithFontID:(unsigned int)fontID
@@ -82,6 +84,7 @@
                     descriptor:(iTermCharacterSourceDescriptor *)descriptor
                     attributes:(iTermCharacterSourceAttributes *)attributes
                         radius:(int)radius
+                 lineAttribute:(iTermLineAttribute)lineAttribute
                        context:(CGContextRef)context;
 
 - (iTermCharacterBitmap *)bitmapForPart:(int)part;

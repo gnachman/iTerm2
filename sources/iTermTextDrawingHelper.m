@@ -129,6 +129,10 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
 
     BOOL _blinkingFound;
 
+    // Line attribute of the line currently being drawn. Used to apply 2x
+    // scaling for double-width lines in the text drawing methods.
+    iTermLineAttribute _currentLineAttribute;
+
     // Frame of the view we're drawing into.
     NSRect _frame;
 
@@ -1882,7 +1886,8 @@ static BOOL NSRangesAdjacent(NSRange lhs, NSRange rhs) {
                                   matches:matches
                            forceTextColor:nil
                                   context:ctx
-                            virtualOffset:virtualOffset];
+                            virtualOffset:virtualOffset
+                            lineAttribute:metadata.lineAttribute];
     }
 }
 
@@ -1900,7 +1905,8 @@ static BOOL NSRangesAdjacent(NSRange lhs, NSRange rhs) {
                             matches:(NSData *)matches
                      forceTextColor:(NSColor *)forceTextColor  // optional
                             context:(CGContextRef)ctx
-                      virtualOffset:(CGFloat)virtualOffset {
+                      virtualOffset:(CGFloat)virtualOffset
+                      lineAttribute:(iTermLineAttribute)lineAttribute {
     CTVector(CGFloat) positions;
     CTVectorCreate(&positions, _gridSize.width);
 
@@ -1936,13 +1942,41 @@ static BOOL NSRangesAdjacent(NSRange lhs, NSRange rhs) {
     if (_offscreenCommandLine && displayLineNumber == [self rangeOfVisibleRows].location) {
         adjustedPoint.y += iTermOffscreenCommandLineVerticalPadding;
     }
+
+    if (iTermLineAttributeIsDoubleWidth(lineAttribute)) {
+        // Scale the context 2x horizontally. Halve x positions so they end up
+        // correct after the scale. The scale makes each glyph 2x wider while
+        // the halved positions keep them in the right cells.
+        CGContextSaveGState(ctx);
+        if (lineAttribute == iTermLineAttributeDoubleHeightTop ||
+            lineAttribute == iTermLineAttributeDoubleHeightBottom) {
+            // Clip to the row rect to prevent 2x-tall glyphs from bleeding
+            // into adjacent rows. Account for virtualOffset since the actual
+            // drawing position subtracts it from y.
+            CGContextClipToRect(ctx, CGRectMake(0, adjustedPoint.y - virtualOffset, CGFLOAT_MAX, _cellSize.height));
+        }
+        CGContextScaleCTM(ctx, 2.0, 1.0);
+        // Halve the x coordinate of the drawing point.
+        adjustedPoint.x /= 2.0;
+        // Halve all character x positions.
+        for (int i = 0; i < CTVectorCount(&positions); i++) {
+            CGFloat *p = CTVectorElementsFromIndex(&positions, i);
+            *p /= 2.0;
+        }
+    }
+
     [self drawMultipartAttributedString:attributedStrings
                                 atPoint:adjustedPoint
                                  origin:VT100GridCoordMake(indexRange.location, displayLineNumber)
                               positions:&positions
                               inContext:ctx
                         backgroundColor:processedBackgroundColor
-                          virtualOffset:virtualOffset];
+                          virtualOffset:virtualOffset
+                          lineAttribute:lineAttribute];
+
+    if (iTermLineAttributeIsDoubleWidth(lineAttribute)) {
+        CGContextRestoreGState(ctx);
+    }
 
     CTVectorDestroy(&positions);
     iTermPreciseTimerStatsMeasureAndAccumulate(&_stats[TIMER_STAT_DRAW]);
@@ -1954,7 +1988,9 @@ static BOOL NSRangesAdjacent(NSRange lhs, NSRange rhs) {
                             positions:(CTVector(CGFloat) *)positions
                             inContext:(CGContextRef)ctx
                       backgroundColor:(NSColor *)backgroundColor
-                        virtualOffset:(CGFloat)virtualOffset {
+                        virtualOffset:(CGFloat)virtualOffset
+                        lineAttribute:(iTermLineAttribute)lineAttribute {
+    _currentLineAttribute = lineAttribute;
     const NSPoint point = initialPoint;
     VT100GridCoord origin = initialOrigin;
     NSInteger start = 0;
@@ -2164,6 +2200,14 @@ static BOOL NSRangesAdjacent(NSRange lhs, NSRange rhs) {
     }
     CGContextSetFillColor(ctx, components);
     double y = point.y + _cellSize.height + _baselineOffset - virtualOffset;
+    CGFloat vScale = -1.0;
+    if (_currentLineAttribute == iTermLineAttributeDoubleHeightTop) {
+        vScale = -2.0;
+        y += _cellSize.height + _baselineOffset;  // ≈ +ascent
+    } else if (_currentLineAttribute == iTermLineAttributeDoubleHeightBottom) {
+        vScale = -2.0;
+        y += _baselineOffset;  // ≈ -descent
+    }
     int x = point.x + positions[0];
     // Flip vertically and translate to (x, y).
     CGFloat m21 = 0.0;
@@ -2171,7 +2215,7 @@ static BOOL NSRangesAdjacent(NSRange lhs, NSRange rhs) {
         m21 = 0.2;
     }
     CGContextSetTextMatrix(ctx, CGAffineTransformMake(1.0,  0.0,
-                                                      m21, -1.0,
+                                                      m21, vScale,
                                                       x, y));
 
     CGPoint points[length];
@@ -2199,7 +2243,7 @@ static BOOL NSRangesAdjacent(NSRange lhs, NSRange rhs) {
             // If anti-aliased, drawing twice at the same position makes the strokes thicker.
             // If not anti-alised, draw one pixel to the right.
             CGContextSetTextMatrix(ctx, CGAffineTransformMake(1.0,  0.0,
-                                                              m21, -1.0,
+                                                              m21, vScale,
                                                               x + (antiAlias ? _antiAliasedShift : 1),
                                                               y));
 
@@ -2418,9 +2462,21 @@ static BOOL NSRangesAdjacent(NSRange lhs, NSRange rhs) {
                                useThinStrokes:useThinStrokes
                                    antialised:antiAlias];
 
-    const CGFloat ty = origin.y + _baselineOffset + _cellSize.height - virtualOffset;
+    CGFloat ty = origin.y + _baselineOffset + _cellSize.height - virtualOffset;
+    CGFloat vScale = -1.0;
+    if (_currentLineAttribute == iTermLineAttributeDoubleHeightTop) {
+        // Render glyphs at 2x vertical. Shift baseline down by ascent so the
+        // top of the 2x glyph aligns with the normal glyph top.
+        vScale = -2.0;
+        ty += _cellSize.height + _baselineOffset;  // ≈ +ascent
+    } else if (_currentLineAttribute == iTermLineAttributeDoubleHeightBottom) {
+        // Render glyphs at 2x vertical. Shift baseline up by descent so the
+        // bottom of the 2x glyph aligns with the normal glyph bottom.
+        vScale = -2.0;
+        ty += _baselineOffset;  // ≈ -descent
+    }
     CGAffineTransform textMatrix = CGAffineTransformMake(1.0, 0.0,
-                                                         c, -1.0,
+                                                         c, vScale,
                                                          origin.x, ty);
     CGContextSetTextMatrix(cgContext, textMatrix);
     const BOOL verbose = NO;  // turn this on to debug character position problems.
@@ -3456,7 +3512,8 @@ iTermKittyImageDraw *iTermFindKittyImageDrawForVirtualPlaceholder(NSArray<iTermK
                                       matches:nil
                                forceTextColor:[self defaultTextColor]
                                       context:ctx
-                                virtualOffset:virtualOffset];
+                                virtualOffset:virtualOffset
+                                lineAttribute:iTermLineAttributeSingleWidth];
             // Draw an underline.
             BOOL unusedBold = NO;
             BOOL unusedItalic = NO;
@@ -4207,7 +4264,8 @@ typedef struct {
                               matches:nil
                        forceTextColor:overrideColor
                               context:ctx
-                        virtualOffset:virtualOffset];
+                        virtualOffset:virtualOffset
+                        lineAttribute:metadata.lineAttribute];
 
     [context restoreGraphicsState];
 }

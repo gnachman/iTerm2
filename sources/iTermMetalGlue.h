@@ -18,6 +18,7 @@ NS_CLASS_AVAILABLE(10_11, NA)
 @protocol iTermMetalGlueDelegate<NSObject>
 - (void)metalGlueDidDrawFrameAndNeedsRedraw:(BOOL)redrawAsap;
 - (CGContextRef)metalGlueContext;
+- (CGContextRef)metalGlueContextDoubleWidth;
 - (iTermImageWrapper *)metalGlueBackgroundImage;
 - (iTermBackgroundImageMode)metalGlueBackgroundImageMode;
 - (CGFloat)metalGlueBackgroundImageBlend;

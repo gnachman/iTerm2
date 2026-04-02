@@ -122,9 +122,10 @@ class iTermRenderingComparer: NSObject {
             return
         }
 
-        let legacyPath = "/tmp/iterm2-compare-legacy.png"
-        let gpuPath = "/tmp/iterm2-compare-gpu.png"
-        let diffPath = "/tmp/iterm2-compare-diff.png"
+        let cwd = FileManager.default.currentDirectoryPath
+        let legacyPath = (cwd as NSString).appendingPathComponent("iterm2-compare-legacy.png")
+        let gpuPath = (cwd as NSString).appendingPathComponent("iterm2-compare-gpu.png")
+        let diffPath = (cwd as NSString).appendingPathComponent("iterm2-compare-diff.png")
 
         // Render legacy
         let legacyImage: NSImage
