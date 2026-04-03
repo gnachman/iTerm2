@@ -839,17 +839,13 @@ static NSString *sPreviousVersion;
         object = raw ?: [self defaultObjectForKey:key];
     }
     
-    // Update explicit-set tracking
+    // Update explicit-set tracking AND cache the result atomically
     os_unfair_lock_lock(&sPreferenceCacheLock);
     if (explicitlySet) {
         [sPreferenceExplicitlySetKeys addObject:key];
     } else {
         [sPreferenceExplicitlySetKeys removeObject:key];
     }
-    os_unfair_lock_unlock(&sPreferenceCacheLock);
-
-    // Cache the result (including computed preferences)
-    os_unfair_lock_lock(&sPreferenceCacheLock);
     sPreferenceCache[key] = object ?: sPreferenceNullSentinel;
     os_unfair_lock_unlock(&sPreferenceCacheLock);
     return object;
@@ -931,6 +927,7 @@ static NSString *sPreviousVersion;
     os_unfair_lock_lock(&sPreferenceCacheLock);
     sUserDefaultsOverride = userDefaults;
     [sPreferenceCache removeAllObjects];
+    [sPreferenceExplicitlySetKeys removeAllObjects];
     os_unfair_lock_unlock(&sPreferenceCacheLock);
 }
 
