@@ -898,6 +898,8 @@ static NSString *sPreviousVersion;
     [[iTermPreferenceDidChangeNotification notificationWithKey:key value:object] post];
 }
 
+static atomic_uint_fast64_t sLastCacheClearMs;
+
 + (void)preferencesUserDefaultsDidChange:(NSNotification *)notification {
     PreferencesEnsureCacheInitialized();
     NSUserDefaults *defaults = PreferencesUserDefaults();
@@ -910,7 +912,6 @@ static NSString *sPreviousVersion;
         return;
     }
     // Throttle cache clears to avoid excessive invalidation when defaults churn rapidly.
-    static atomic_uint_fast64_t sLastCacheClearMs;
     uint64_t nowMs = (uint64_t)(CFAbsoluteTimeGetCurrent() * 1000.0);
     uint64_t lastMs = atomic_load_explicit(&sLastCacheClearMs, memory_order_relaxed);
     // Allow at most one clear every 50ms (20 Hz), which is far below the prior spam rate but
@@ -933,6 +934,7 @@ static NSString *sPreviousVersion;
 
 + (void)resetPreferenceCacheForTesting {
     PreferencesCacheClear();
+    atomic_store_explicit(&sLastCacheClearMs, 0, memory_order_relaxed);
 }
 
 #pragma mark - APIs
