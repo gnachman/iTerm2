@@ -10,6 +10,7 @@
 @property(nonatomic) NSInteger objectForKeyCount;
 - (void)setRawObject:(id)object forKey:(NSString *)key;
 - (void)simulateExternalChangeValue:(id)object forKey:(NSString *)key;
+- (id)storedObjectForKey:(NSString *)key;
 @end
 
 @implementation CountingUserDefaults {
@@ -27,6 +28,10 @@
 - (id)objectForKey:(NSString *)defaultName {
     self.objectForKeyCount += 1;
     return _storage[defaultName];
+}
+
+- (id)storedObjectForKey:(NSString *)key {
+    return _storage[key];
 }
 
 - (void)setObject:(id)value forKey:(NSString *)defaultName {
@@ -58,11 +63,70 @@
 
 @end
 
+@interface CoordinatedUserDefaults : CountingUserDefaults
+- (void)blockNextReadForKey:(NSString *)key;
+- (BOOL)waitForBlockedReadWithTimeout:(NSTimeInterval)timeout;
+- (void)resumeBlockedRead;
+@end
+
+@implementation CoordinatedUserDefaults {
+    NSString *_blockedKey;
+    dispatch_semaphore_t _snapshotTakenSemaphore;
+    dispatch_semaphore_t _resumeBlockedReadSemaphore;
+}
+
+- (void)blockNextReadForKey:(NSString *)key {
+    _blockedKey = [key copy];
+    _snapshotTakenSemaphore = dispatch_semaphore_create(0);
+    _resumeBlockedReadSemaphore = dispatch_semaphore_create(0);
+}
+
+- (BOOL)waitForBlockedReadWithTimeout:(NSTimeInterval)timeout {
+    return dispatch_semaphore_wait(_snapshotTakenSemaphore,
+                                   dispatch_time(DISPATCH_TIME_NOW,
+                                                 (int64_t)(timeout * NSEC_PER_SEC))) == 0;
+}
+
+- (void)resumeBlockedRead {
+    dispatch_semaphore_signal(_resumeBlockedReadSemaphore);
+}
+
+- (id)objectForKey:(NSString *)defaultName {
+    self.objectForKeyCount += 1;
+    if ([_blockedKey isEqualToString:defaultName]) {
+        id snapshot = [self storedObjectForKey:defaultName];
+        _blockedKey = nil;
+        dispatch_semaphore_signal(_snapshotTakenSemaphore);
+        dispatch_semaphore_wait(_resumeBlockedReadSemaphore, DISPATCH_TIME_FOREVER);
+        return snapshot;
+    }
+    return [self storedObjectForKey:defaultName];
+}
+
+@end
+
 @interface iTermPreferencesCachingTest : XCTestCase
 @property(nonatomic, strong) CountingUserDefaults *testDefaults;
 @end
 
 @implementation iTermPreferencesCachingTest
+
+- (void)writeInteger:(NSInteger)value
+              toSuite:(NSString *)suiteName
+                  key:(NSString *)key {
+    NSTask *task = [[NSTask alloc] init];
+    NSPipe *standardError = [NSPipe pipe];
+    task.launchPath = @"/usr/bin/defaults";
+    task.arguments = @[ @"write", suiteName, key, @"-int", @(value).stringValue ];
+    task.standardError = standardError;
+    [task launch];
+    [task waitUntilExit];
+    if (task.terminationStatus != 0) {
+        NSData *data = [[standardError fileHandleForReading] readDataToEndOfFile];
+        NSString *message = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
+        XCTFail(@"defaults write failed for suite %@ key %@: %@", suiteName, key, message ?: @"");
+    }
+}
 
 - (void)setUp {
     [super setUp];
@@ -244,6 +308,37 @@
     XCTAssertLessThanOrEqual(self.testDefaults.objectForKeyCount, 2, @"Concurrent access should be safe");
 }
 
+- (void)testColdReadDoesNotOverwriteNewerWrite {
+    CoordinatedUserDefaults *defaults = [[CoordinatedUserDefaults alloc] init];
+    [iTermPreferences setUserDefaultsOverrideForTesting:defaults];
+    [iTermPreferences resetPreferenceCacheForTesting];
+    [defaults setRawObject:@5 forKey:kPreferenceKeyTopBottomMargins];
+    [defaults blockNextReadForKey:kPreferenceKeyTopBottomMargins];
+
+    dispatch_group_t group = dispatch_group_create();
+    __block int staleRead = INT_MIN;
+    dispatch_group_async(group, dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+        staleRead = [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins];
+    });
+
+    XCTAssertTrue([defaults waitForBlockedReadWithTimeout:1.0],
+                  @"Timed out waiting for the cold read to capture its snapshot");
+
+    [iTermPreferences setInt:10 forKey:kPreferenceKeyTopBottomMargins];
+    XCTAssertEqualObjects([defaults storedObjectForKey:kPreferenceKeyTopBottomMargins], @10);
+
+    [defaults resumeBlockedRead];
+    XCTAssertEqual(dispatch_group_wait(group,
+                                       dispatch_time(DISPATCH_TIME_NOW,
+                                                     (int64_t)(1 * NSEC_PER_SEC))),
+                   0L,
+                   @"Timed out waiting for the blocked read to finish");
+    XCTAssertEqual(staleRead, 5);
+    XCTAssertEqual([iTermPreferences intForKey:kPreferenceKeyTopBottomMargins],
+                   10,
+                   @"A stale cold read must not overwrite a newer in-process write");
+}
+
 - (void)testMutationDepthPreventsCacheClearDuringInternalWrites {
     // Test that setObject: updates the cache inline and reads don't hit UserDefaults
     [self.testDefaults setRawObject:@5 forKey:kPreferenceKeyTopBottomMargins];
@@ -290,6 +385,27 @@
     int value = [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins];
     XCTAssertEqual(value, 5);
     XCTAssertEqual(self.testDefaults.objectForKeyCount, 0, @"Nil object notification should not clear cache");
+}
+
+- (void)testExternalProcessWriteInvalidatesCache {
+    NSString *suiteName = [@"com.iterm2.prefcache.test." stringByAppendingString:NSUUID.UUID.UUIDString];
+    NSUserDefaults *suiteDefaults = [[NSUserDefaults alloc] initWithSuiteName:suiteName];
+    XCTAssertNotNil(suiteDefaults);
+
+    [suiteDefaults removePersistentDomainForName:suiteName];
+    [iTermPreferences setUserDefaultsOverrideForTesting:suiteDefaults];
+    [iTermPreferences resetPreferenceCacheForTesting];
+
+    [suiteDefaults setInteger:5 forKey:kPreferenceKeyTopBottomMargins];
+    XCTAssertEqual([iTermPreferences intForKey:kPreferenceKeyTopBottomMargins], 5);
+
+    [self writeInteger:8 toSuite:suiteName key:kPreferenceKeyTopBottomMargins];
+    XCTAssertEqualObjects([suiteDefaults objectForKey:kPreferenceKeyTopBottomMargins], @8);
+    XCTAssertEqual([iTermPreferences intForKey:kPreferenceKeyTopBottomMargins],
+                   8,
+                   @"Cache should refresh after the backing defaults domain changes out of process");
+
+    [suiteDefaults removePersistentDomainForName:suiteName];
 }
 
 - (void)testCacheClearClearsBothCacheAndExplicitSetKeys {

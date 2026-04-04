@@ -30,20 +30,106 @@
 #import <stdatomic.h>
 
 static os_unfair_lock sPreferenceCacheLock = OS_UNFAIR_LOCK_INIT;
+static os_unfair_lock sPreferenceObserverLock = OS_UNFAIR_LOCK_INIT;
 static NSMutableDictionary<NSString *, id> *sPreferenceCache;
 static NSMutableSet<NSString *> *sPreferenceExplicitlySetKeys;
 static id sPreferenceNullSentinel;
 static atomic_int sPreferenceMutationDepth;
+static atomic_uint_fast64_t sPreferenceCacheGeneration;
 static NSUserDefaults *sUserDefaultsOverride;
+static NSUserDefaults *sObservedUserDefaults;
+
+@interface iTermPreferencesDefaultsObserver : NSObject
+- (void)userDefaultsDidChange:(NSNotification *)notification;
+@end
+
+@interface iTermPreferences (Private)
++ (NSDictionary<NSString *, id> *)defaultValueMap;
++ (void)preferencesUserDefaultsDidChange:(NSNotification *)notification;
+@end
 
 static NSUserDefaults *PreferencesUserDefaults(void);
 static void PreferencesEnsureCacheInitialized(void);
 static void PreferencesCacheClear(void);
+static NSArray<NSString *> *PreferencesObservedKeys(void);
+static void PreferencesObserveDefaultsObject(NSUserDefaults *defaults);
 
 #define BLOCK(x) [^id() { return [self x]; } copy]
 
 static NSUserDefaults *PreferencesUserDefaults(void) {
     return sUserDefaultsOverride ?: [iTermUserDefaults userDefaults];
+}
+
+static char sPreferenceObserverContext;
+static iTermPreferencesDefaultsObserver *sPreferenceObserver;
+
+@implementation iTermPreferencesDefaultsObserver
+
+- (void)observeValueForKeyPath:(NSString *)keyPath
+                      ofObject:(id)object
+                        change:(NSDictionary *)change
+                       context:(void *)context {
+    if (context != &sPreferenceObserverContext) {
+        [super observeValueForKeyPath:keyPath ofObject:object change:change context:context];
+        return;
+    }
+    if (object != PreferencesUserDefaults()) {
+        return;
+    }
+    if (atomic_load_explicit(&sPreferenceMutationDepth, memory_order_relaxed) > 0) {
+        return;
+    }
+    PreferencesCacheClear();
+}
+
+- (void)userDefaultsDidChange:(NSNotification *)notification {
+    [iTermPreferences preferencesUserDefaultsDidChange:notification];
+}
+
+@end
+
+static NSArray<NSString *> *PreferencesObservedKeys(void) {
+    static NSArray<NSString *> *keys;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        NSMutableOrderedSet<NSString *> *orderedKeys =
+            [NSMutableOrderedSet orderedSetWithArray:[iTermPreferences defaultValueMap].allKeys];
+        [orderedKeys addObjectsFromArray:@[
+            kPreferenceKeyControlRemapping_Deprecated,
+            kPreferenceKeySmartWindowPlacement_Deprecated,
+            kPreferenceKeyUseAutoSaveFrames_Deprecated,
+            @"eliminateCloseButtons",
+        ]];
+        keys = [[orderedKeys array] copy];
+    });
+    return keys;
+}
+
+static void PreferencesObserveDefaultsObject(NSUserDefaults *defaults) {
+    os_unfair_lock_lock(&sPreferenceObserverLock);
+    NSUserDefaults *previous = sObservedUserDefaults;
+    if (previous == defaults) {
+        os_unfair_lock_unlock(&sPreferenceObserverLock);
+        return;
+    }
+    sObservedUserDefaults = defaults;
+    iTermPreferencesDefaultsObserver *observer = sPreferenceObserver;
+    NSArray<NSString *> *keys = PreferencesObservedKeys();
+    os_unfair_lock_unlock(&sPreferenceObserverLock);
+
+    if (previous) {
+        for (NSString *key in keys) {
+            [previous removeObserver:observer forKeyPath:key context:&sPreferenceObserverContext];
+        }
+    }
+    if (defaults) {
+        for (NSString *key in keys) {
+            [defaults addObserver:observer
+                       forKeyPath:key
+                          options:NSKeyValueObservingOptionNew
+                          context:&sPreferenceObserverContext];
+        }
+    }
 }
 
 static void PreferencesEnsureCacheInitialized(void) {
@@ -52,10 +138,12 @@ static void PreferencesEnsureCacheInitialized(void) {
         sPreferenceCache = [[NSMutableDictionary alloc] init];
         sPreferenceExplicitlySetKeys = [[NSMutableSet alloc] init];
         sPreferenceNullSentinel = [[NSObject alloc] init];
-        [[NSNotificationCenter defaultCenter] addObserver:[iTermPreferences class]
-                                                 selector:@selector(preferencesUserDefaultsDidChange:)
+        sPreferenceObserver = [[iTermPreferencesDefaultsObserver alloc] init];
+        [[NSNotificationCenter defaultCenter] addObserver:sPreferenceObserver
+                                                 selector:@selector(userDefaultsDidChange:)
                                                      name:NSUserDefaultsDidChangeNotification
                                                    object:nil];
+        PreferencesObserveDefaultsObject(PreferencesUserDefaults());
     });
 }
 
@@ -64,6 +152,7 @@ static void PreferencesCacheClear(void) {
     os_unfair_lock_lock(&sPreferenceCacheLock);
     [sPreferenceCache removeAllObjects];
     [sPreferenceExplicitlySetKeys removeAllObjects];
+    atomic_fetch_add_explicit(&sPreferenceCacheGeneration, 1, memory_order_relaxed);
     os_unfair_lock_unlock(&sPreferenceCacheLock);
 }
 
@@ -812,6 +901,7 @@ static NSString *sPreviousVersion;
     // Check cache FIRST for ALL preferences (including computed)
     os_unfair_lock_lock(&sPreferenceCacheLock);
     id cached = sPreferenceCache[key];
+    const uint64_t generation = atomic_load_explicit(&sPreferenceCacheGeneration, memory_order_relaxed);
     os_unfair_lock_unlock(&sPreferenceCacheLock);
     if (cached) {
         return cached == sPreferenceNullSentinel ? nil : cached;
@@ -841,6 +931,16 @@ static NSString *sPreviousVersion;
     
     // Update explicit-set tracking AND cache the result atomically
     os_unfair_lock_lock(&sPreferenceCacheLock);
+    const uint64_t currentGeneration = atomic_load_explicit(&sPreferenceCacheGeneration, memory_order_relaxed);
+    if (currentGeneration != generation) {
+        os_unfair_lock_unlock(&sPreferenceCacheLock);
+        return object;
+    }
+    cached = sPreferenceCache[key];
+    if (cached) {
+        os_unfair_lock_unlock(&sPreferenceCacheLock);
+        return cached == sPreferenceNullSentinel ? nil : cached;
+    }
     if (explicitlySet) {
         [sPreferenceExplicitlySetKeys addObject:key];
     } else {
@@ -859,15 +959,19 @@ static NSString *sPreviousVersion;
             DLog(@"Set NSUserDefaults[%@] <- %@", key, object);
             [PreferencesUserDefaults() setObject:object forKey:key];
             os_unfair_lock_lock(&sPreferenceCacheLock);
+            [sPreferenceCache removeAllObjects];
+            [sPreferenceExplicitlySetKeys removeAllObjects];
             sPreferenceCache[key] = object;
             [sPreferenceExplicitlySetKeys addObject:key];
+            atomic_fetch_add_explicit(&sPreferenceCacheGeneration, 1, memory_order_relaxed);
             os_unfair_lock_unlock(&sPreferenceCacheLock);
         } else {
             DLog(@"Delete %@ from NSUserDefaults", key);
             [PreferencesUserDefaults() removeObjectForKey:key];
             os_unfair_lock_lock(&sPreferenceCacheLock);
-            [sPreferenceCache removeObjectForKey:key];
-            [sPreferenceExplicitlySetKeys removeObject:key];
+            [sPreferenceCache removeAllObjects];
+            [sPreferenceExplicitlySetKeys removeAllObjects];
+            atomic_fetch_add_explicit(&sPreferenceCacheGeneration, 1, memory_order_relaxed);
             os_unfair_lock_unlock(&sPreferenceCacheLock);
         }
     } @finally {
@@ -925,10 +1029,12 @@ static atomic_uint_fast64_t sLastCacheClearMs;
 
 + (void)setUserDefaultsOverrideForTesting:(NSUserDefaults *)userDefaults {
     PreferencesEnsureCacheInitialized();
-    os_unfair_lock_lock(&sPreferenceCacheLock);
     sUserDefaultsOverride = userDefaults;
+    PreferencesObserveDefaultsObject(PreferencesUserDefaults());
+    os_unfair_lock_lock(&sPreferenceCacheLock);
     [sPreferenceCache removeAllObjects];
     [sPreferenceExplicitlySetKeys removeAllObjects];
+    atomic_fetch_add_explicit(&sPreferenceCacheGeneration, 1, memory_order_relaxed);
     os_unfair_lock_unlock(&sPreferenceCacheLock);
 }
 
