@@ -15,6 +15,7 @@
                 <outlet property="tableView_" destination="319" id="322"/>
                 <outlet property="toggleTagsButton_" destination="6zs-tn-Vlz" id="1Ao-bA-ziT"/>
                 <outlet property="verticalPaneButton_" destination="350" id="356"/>
+                <outlet property="optionHintLabel_" destination="pQ0-Op-kL9" id="pQ0-Op-kL9-outlet"/>
                 <outlet property="window" destination="5" id="LPA-UV-Ffi"/>
                 <outlet property="windowButton_" destination="329" id="334"/>
             </connections>
@@ -133,6 +134,14 @@ DQ
                             <outlet property="nextKeyView" destination="343" id="361"/>
                         </connections>
                     </button>
+                    <textField focusRingType="none" allowsEditingTextAttributes="NO" drawsBackground="NO" editable="NO" selectable="NO" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" hidden="YES" id="pQ0-Op-kL9">
+                        <rect key="frame" x="15" y="340" width="550" height="17"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMinY="YES"/>
+                        <textFieldCell key="cell" alignment="left" lineBreakMode="tailTruncating" title="Press option to open profiles in a new window" id="pQ0-Op-kL9-cell">
+                            <font key="font" metaFont="system" size="11"/>
+                            <color key="textColor" name="secondaryLabelColor" catalog="System" colorSpace="catalog"/>
+                        </textFieldCell>
+                    </textField>
                     <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="6zs-tn-Vlz">
                         <rect key="frame" x="22" y="55" width="51" height="25"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>

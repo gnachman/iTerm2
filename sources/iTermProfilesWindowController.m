@@ -73,6 +73,15 @@ static NSString *const iTermProfilesWindowTagsOpen = @"NoSyncProfilesWindowTagsO
     return result;
 }
 
+- (BOOL)acceptsFirstResponder {
+    return YES;
+}
+
+- (void)flagsChanged:(NSEvent *)event {
+    [super flagsChanged:event];
+    [self.windowController flagsChanged:event];
+}
+
 @end
 
 typedef enum {
@@ -118,6 +127,9 @@ typedef enum {
     IBOutlet NSButton* closeAfterOpeningBookmark_;
     IBOutlet NSButton* newTabsInNewWindowButton_;
     IBOutlet NSButton* toggleTagsButton_;
+    IBOutlet NSTextField* optionHintLabel_;
+    NSImage *_newWindowIcon;
+    id _flagsChangedMonitor;
 }
 
 @synthesize tabButton = tabButton_;
@@ -166,6 +178,31 @@ typedef enum {
 
 - (void)windowDidLoad {
     ((iTermProfileWindowContentView *)self.window.contentView).windowController = self;
+    __weak typeof(self) weakSelf = self;
+    _flagsChangedMonitor = [NSEvent addLocalMonitorForEventsMatchingMask:NSEventMaskFlagsChanged handler:^NSEvent *(NSEvent *event) {
+        iTermProfilesWindowController *strongSelf = weakSelf;
+        if (strongSelf.window.isKeyWindow) {
+            [strongSelf flagsChanged:event];
+        }
+        return event;
+    }];
+    [self.window makeFirstResponder:self.window.contentView];
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(windowDidResize:)
+                                                 name:NSWindowDidResizeNotification
+                                               object:self.window];
+}
+
+- (void)updateHintPosition {
+    if (optionHintLabel_) {
+        NSRect frame = optionHintLabel_.frame;
+        frame.origin.y = self.window.contentView.frame.size.height - frame.size.height - 5;
+        [optionHintLabel_ setFrame:frame];
+    }
+}
+
+- (void)windowDidResize:(NSNotification *)notification {
+    [self updateHintPosition];
 }
 
 - (void)awakeFromNib {
@@ -173,6 +210,41 @@ typedef enum {
     if (n.boolValue) {
         [tableView_ setTagsOpen:NO animated:NO];
         [tableView_ setTagsOpen:YES animated:NO];
+    }
+    // Load the new window icon for split buttons
+    _newWindowIcon = [NSImage imageNamed:@"open_in_new_window 2"];
+    [horizontalPaneButton_ setImagePosition:NSImageLeft];
+    [verticalPaneButton_ setImagePosition:NSImageLeft];
+    // Position the hint label at the bottom of the window
+    [self updateHintPosition];
+}
+
+- (void)flagsChanged:(NSEvent *)event {
+    [self updateButtonImagesForModifiers:event.modifierFlags];
+}
+
+- (void)updateButtonImagesForModifiers:(NSEventModifierFlags)modifiers {
+    BOOL optionPressed = (modifiers & NSEventModifierFlagOption) != 0;
+    NSImage *image = optionPressed ? _newWindowIcon : nil;
+    [horizontalPaneButton_ setImage:image];
+    [verticalPaneButton_ setImage:image];
+    
+    // Adjust button widths to accommodate the icon
+    CGFloat extraWidth = optionPressed ? 20.0 : 0.0;
+    NSRect hFrame = horizontalPaneButton_.frame;
+    hFrame.size.width = 127.0 + extraWidth;
+    [horizontalPaneButton_ setFrame:hFrame];
+    
+    NSRect vFrame = verticalPaneButton_.frame;
+    vFrame.size.width = 111.0 + extraWidth;
+    [verticalPaneButton_ setFrame:vFrame];
+    
+    // Update window button title based on option and selection count
+    NSSet *guids = [tableView_ selectedGuids];
+    if ([guids count] > 1) {
+        [windowButton_ setTitle:optionPressed ? @"New Window" : @"New Windows"];
+    } else {
+        [windowButton_ setTitle:@"New Window"];
     }
 }
 
@@ -218,7 +290,14 @@ typedef enum {
 
 - (IBAction)openBookmarkInVerticalPane:(id)sender
 {
-    BOOL windowExists = [[iTermController sharedInstance] currentTerminal] != nil;
+    BOOL windowExists;
+    if (([[NSApp currentEvent] modifierFlags] & NSEventModifierFlagOption) != 0) {
+        // Force open in new window when Option key pressed
+        windowExists = NO;
+    }
+    else {
+        windowExists = [[iTermController sharedInstance] currentTerminal] != nil;
+    }
     [self _openBookmarkInTab:YES firstInWindow:!windowExists inPane:VERTICAL_PANE];
     if ([closeAfterOpeningBookmark_ state] == NSControlStateValueOn) {
         [[self window] close];
@@ -227,7 +306,14 @@ typedef enum {
 
 - (IBAction)openBookmarkInHorizontalPane:(id)sender
 {
-    BOOL windowExists = [[iTermController sharedInstance] currentTerminal] != nil;
+    BOOL windowExists;
+    if (([[NSApp currentEvent] modifierFlags] & NSEventModifierFlagOption) != 0) {
+        // Force open in new window when Option key pressed
+        windowExists = NO;
+    }
+    else {
+        windowExists = [[iTermController sharedInstance] currentTerminal] != nil;
+    }
     [self _openBookmarkInTab:YES firstInWindow:!windowExists inPane:HORIZONTAL_PANE];
     if ([closeAfterOpeningBookmark_ state] == NSControlStateValueOn) {
         [[self window] close];
@@ -235,7 +321,9 @@ typedef enum {
 }
 
 - (IBAction)openBookmarkInTab:(id)sender{
-    [self _openBookmarkInTab:YES firstInWindow:NO inPane:NO_PANE];
+    // Move "new tabs in new window" functionality to Opt+new tab
+    BOOL firstInWindow = !(([[NSApp currentEvent] modifierFlags] & NSEventModifierFlagOption) != 0);
+    [self _openBookmarkInTab:YES firstInWindow:firstInWindow inPane:NO_PANE];
     if ([closeAfterOpeningBookmark_ state] == NSControlStateValueOn) {
         [[self window] close];
     }
@@ -291,14 +379,24 @@ typedef enum {
         // don't want to break that.
         [tabButton_ setEnabled:!anySelectionDisablesTabs];
         [windowButton_ setEnabled:YES];
+        [windowButton_ setTitle:([guids count] > 1 ? @"New Windows" : @"New Window")];
         if ([guids count] > 1) {
-            [newTabsInNewWindowButton_ setEnabled:!anySelectionDisablesTabs];
+            [newTabsInNewWindowButton_ setEnabled:NO];  // Eliminated per owner suggestion
             [horizontalPaneButton_ setEnabled:YES];
             [verticalPaneButton_ setEnabled:YES];
+            // Show option hint label when multiple profiles selected
+            if (optionHintLabel_) {
+                [optionHintLabel_ setHidden:NO];
+                [optionHintLabel_ setStringValue:@"Press option to open profiles in a new window"];
+            }
         } else {
             [newTabsInNewWindowButton_ setEnabled:NO];
             [horizontalPaneButton_ setEnabled:windowExists];
             [verticalPaneButton_ setEnabled:windowExists];
+            // Hide option hint label when single profile
+            if (optionHintLabel_) {
+                [optionHintLabel_ setHidden:YES];
+            }
         }
     } else {
         [horizontalPaneButton_ setEnabled:NO];
@@ -311,6 +409,7 @@ typedef enum {
         [actions_ setEnabled:([guids count] > 0) forSegment:i];
     }
     [self updateKeyEquivalents];
+    [self updateButtonImagesForModifiers:[NSEvent modifierFlags]];
 }
 
 - (void)profileTableSelectionWillChange:(id)profileTable
