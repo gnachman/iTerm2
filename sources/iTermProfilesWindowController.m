@@ -212,7 +212,7 @@ typedef enum {
         [tableView_ setTagsOpen:YES animated:NO];
     }
     // Load the new window icon for split buttons
-    _newWindowIcon = [NSImage imageNamed:@"open_in_new_window 2"];
+    _newWindowIcon = [NSImage imageNamed:@"open_in_new_window"];
     [horizontalPaneButton_ setImagePosition:NSImageLeft];
     [verticalPaneButton_ setImagePosition:NSImageLeft];
     // Position the hint label at the bottom of the window
