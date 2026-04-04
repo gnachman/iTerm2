@@ -33,6 +33,7 @@ static os_unfair_lock sPreferenceCacheLock = OS_UNFAIR_LOCK_INIT;
 static os_unfair_lock sPreferenceObserverLock = OS_UNFAIR_LOCK_INIT;
 static NSMutableDictionary<NSString *, id> *sPreferenceCache;
 static NSMutableSet<NSString *> *sPreferenceExplicitlySetKeys;
+static NSMutableDictionary<NSString *, id> *sObservedPreferenceValues;
 static id sPreferenceNullSentinel;
 static atomic_int sPreferenceMutationDepth;
 static atomic_uint_fast64_t sPreferenceCacheGeneration;
@@ -51,7 +52,10 @@ static NSUserDefaults *sObservedUserDefaults;
 static NSUserDefaults *PreferencesUserDefaults(void);
 static void PreferencesEnsureCacheInitialized(void);
 static void PreferencesCacheClear(void);
+static void PreferencesCacheClearWithObservedValues(NSDictionary<NSString *, id> *observedValues);
+static NSDictionary<NSString *, id> *PreferencesCurrentObservedValues(NSUserDefaults *defaults);
 static NSArray<NSString *> *PreferencesObservedKeys(void);
+static BOOL PreferencesIsObservedKey(NSString *key);
 static void PreferencesObserveDefaultsObject(NSUserDefaults *defaults);
 
 #define BLOCK(x) [^id() { return [self x]; } copy]
@@ -105,6 +109,25 @@ static NSArray<NSString *> *PreferencesObservedKeys(void) {
     return keys;
 }
 
+static NSDictionary<NSString *, id> *PreferencesCurrentObservedValues(NSUserDefaults *defaults) {
+    NSArray<NSString *> *keys = PreferencesObservedKeys();
+    NSMutableDictionary<NSString *, id> *observedValues =
+        [NSMutableDictionary dictionaryWithCapacity:keys.count];
+    for (NSString *key in keys) {
+        observedValues[key] = [defaults objectForKey:key] ?: sPreferenceNullSentinel;
+    }
+    return observedValues;
+}
+
+static BOOL PreferencesIsObservedKey(NSString *key) {
+    static NSSet<NSString *> *keySet;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        keySet = [NSSet setWithArray:PreferencesObservedKeys()];
+    });
+    return [keySet containsObject:key];
+}
+
 static void PreferencesObserveDefaultsObject(NSUserDefaults *defaults) {
     os_unfair_lock_lock(&sPreferenceObserverLock);
     NSUserDefaults *previous = sObservedUserDefaults;
@@ -137,23 +160,32 @@ static void PreferencesEnsureCacheInitialized(void) {
     dispatch_once(&onceToken, ^{
         sPreferenceCache = [[NSMutableDictionary alloc] init];
         sPreferenceExplicitlySetKeys = [[NSMutableSet alloc] init];
+        sObservedPreferenceValues = [[NSMutableDictionary alloc] init];
         sPreferenceNullSentinel = [[NSObject alloc] init];
         sPreferenceObserver = [[iTermPreferencesDefaultsObserver alloc] init];
         [[NSNotificationCenter defaultCenter] addObserver:sPreferenceObserver
                                                  selector:@selector(userDefaultsDidChange:)
                                                      name:NSUserDefaultsDidChangeNotification
                                                    object:nil];
-        PreferencesObserveDefaultsObject(PreferencesUserDefaults());
+        NSUserDefaults *defaults = PreferencesUserDefaults();
+        PreferencesObserveDefaultsObject(defaults);
+        [sObservedPreferenceValues addEntriesFromDictionary:PreferencesCurrentObservedValues(defaults)];
     });
 }
 
-static void PreferencesCacheClear(void) {
+static void PreferencesCacheClearWithObservedValues(NSDictionary<NSString *, id> *observedValues) {
     PreferencesEnsureCacheInitialized();
     os_unfair_lock_lock(&sPreferenceCacheLock);
     [sPreferenceCache removeAllObjects];
     [sPreferenceExplicitlySetKeys removeAllObjects];
+    [sObservedPreferenceValues removeAllObjects];
+    [sObservedPreferenceValues addEntriesFromDictionary:observedValues];
     atomic_fetch_add_explicit(&sPreferenceCacheGeneration, 1, memory_order_relaxed);
     os_unfair_lock_unlock(&sPreferenceCacheLock);
+}
+
+static void PreferencesCacheClear(void) {
+    PreferencesCacheClearWithObservedValues(PreferencesCurrentObservedValues(PreferencesUserDefaults()));
 }
 
 NSString *const kPreferenceKeyOpenBookmark = @"OpenBookmark";
@@ -955,24 +987,24 @@ static NSString *sPreviousVersion;
     PreferencesEnsureCacheInitialized();
     atomic_fetch_add_explicit(&sPreferenceMutationDepth, 1, memory_order_relaxed);
     @try {
+        os_unfair_lock_lock(&sPreferenceCacheLock);
+        [sPreferenceCache removeAllObjects];
+        [sPreferenceExplicitlySetKeys removeAllObjects];
+        if (object) {
+            sPreferenceCache[key] = object;
+            [sPreferenceExplicitlySetKeys addObject:key];
+        }
+        if (PreferencesIsObservedKey(key)) {
+            sObservedPreferenceValues[key] = object ?: sPreferenceNullSentinel;
+        }
+        atomic_fetch_add_explicit(&sPreferenceCacheGeneration, 1, memory_order_relaxed);
+        os_unfair_lock_unlock(&sPreferenceCacheLock);
         if (object) {
             DLog(@"Set NSUserDefaults[%@] <- %@", key, object);
             [PreferencesUserDefaults() setObject:object forKey:key];
-            os_unfair_lock_lock(&sPreferenceCacheLock);
-            [sPreferenceCache removeAllObjects];
-            [sPreferenceExplicitlySetKeys removeAllObjects];
-            sPreferenceCache[key] = object;
-            [sPreferenceExplicitlySetKeys addObject:key];
-            atomic_fetch_add_explicit(&sPreferenceCacheGeneration, 1, memory_order_relaxed);
-            os_unfair_lock_unlock(&sPreferenceCacheLock);
         } else {
             DLog(@"Delete %@ from NSUserDefaults", key);
             [PreferencesUserDefaults() removeObjectForKey:key];
-            os_unfair_lock_lock(&sPreferenceCacheLock);
-            [sPreferenceCache removeAllObjects];
-            [sPreferenceExplicitlySetKeys removeAllObjects];
-            atomic_fetch_add_explicit(&sPreferenceCacheGeneration, 1, memory_order_relaxed);
-            os_unfair_lock_unlock(&sPreferenceCacheLock);
         }
     } @finally {
         atomic_fetch_sub_explicit(&sPreferenceMutationDepth, 1, memory_order_relaxed);
@@ -1002,8 +1034,6 @@ static NSString *sPreviousVersion;
     [[iTermPreferenceDidChangeNotification notificationWithKey:key value:object] post];
 }
 
-static atomic_uint_fast64_t sLastCacheClearMs;
-
 + (void)preferencesUserDefaultsDidChange:(NSNotification *)notification {
     PreferencesEnsureCacheInitialized();
     NSUserDefaults *defaults = PreferencesUserDefaults();
@@ -1015,32 +1045,25 @@ static atomic_uint_fast64_t sLastCacheClearMs;
     if (atomic_load_explicit(&sPreferenceMutationDepth, memory_order_relaxed) > 0) {
         return;
     }
-    // Throttle cache clears to avoid excessive invalidation when defaults churn rapidly.
-    uint64_t nowMs = (uint64_t)(CFAbsoluteTimeGetCurrent() * 1000.0);
-    uint64_t lastMs = atomic_load_explicit(&sLastCacheClearMs, memory_order_relaxed);
-    // Allow at most one clear every 50ms (20 Hz), which is far below the prior spam rate but
-    // still responsive to real preference changes.
-    if (lastMs != 0 && nowMs > lastMs && nowMs - lastMs < 50) {
+    NSDictionary<NSString *, id> *observedValues = PreferencesCurrentObservedValues(defaults);
+    os_unfair_lock_lock(&sPreferenceCacheLock);
+    BOOL observedValuesChanged = ![sObservedPreferenceValues isEqualToDictionary:observedValues];
+    os_unfair_lock_unlock(&sPreferenceCacheLock);
+    if (!observedValuesChanged) {
         return;
     }
-    atomic_store_explicit(&sLastCacheClearMs, nowMs, memory_order_relaxed);
-    PreferencesCacheClear();
+    PreferencesCacheClearWithObservedValues(observedValues);
 }
 
 + (void)setUserDefaultsOverrideForTesting:(NSUserDefaults *)userDefaults {
     PreferencesEnsureCacheInitialized();
     sUserDefaultsOverride = userDefaults;
     PreferencesObserveDefaultsObject(PreferencesUserDefaults());
-    os_unfair_lock_lock(&sPreferenceCacheLock);
-    [sPreferenceCache removeAllObjects];
-    [sPreferenceExplicitlySetKeys removeAllObjects];
-    atomic_fetch_add_explicit(&sPreferenceCacheGeneration, 1, memory_order_relaxed);
-    os_unfair_lock_unlock(&sPreferenceCacheLock);
+    PreferencesCacheClear();
 }
 
 + (void)resetPreferenceCacheForTesting {
     PreferencesCacheClear();
-    atomic_store_explicit(&sLastCacheClearMs, 0, memory_order_relaxed);
 }
 
 #pragma mark - APIs
