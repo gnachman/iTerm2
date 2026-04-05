@@ -17,6 +17,7 @@
 #import "iTermSessionLauncher.h"
 #import "iTermSnippetsMenuController.h"
 #import "DebugLogging.h"
+#import "NSAppearance+iTerm.h"
 #import "NSColor+iTerm.h"
 #import "NSObject+iTerm.h"
 #import "NSTextField+iTerm.h"
@@ -141,6 +142,7 @@
 - (void)presentWindow {
     [_model removeAllItems];
     [_table reloadData];
+    self.window.appearance = [NSAppearance it_appearanceForCurrentTheme];
     // Set the window's frame to be table-less initially.
     [self.window setFrame:[self frame] display:YES animate:NO];
     [_textField selectText:nil];
