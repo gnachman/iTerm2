@@ -8,7 +8,10 @@
 
 #import "ToastWindowController.h"
 #import <QuartzCore/QuartzCore.h>
+#import "NSAppearance+iTerm.h"
+#import "NSColor+iTerm.h"
 #import "NSScreen+iTerm.h"
+#import "PTYSession.h"
 #import "PseudoTerminal.h"
 #import "RoundedRectView.h"
 #import "iTermController.h"
@@ -134,12 +137,16 @@ static NSMutableArray *visibleToast;
     }];
     maskImage.capInsets = NSEdgeInsetsMake(cornerRadius, cornerRadius, cornerRadius, cornerRadius);
 
+    PTYSession *session = [[iTermController sharedInstance] currentTerminal].currentSession;
+    NSColor *bgColor = session.effectiveUnprocessedBackgroundColor;
+    BOOL isDark = bgColor ? bgColor.perceivedBrightness < 0.5 : YES;
+
     NSVisualEffectView *vev = [[NSVisualEffectView alloc] initWithFrame:container.bounds];
     vev.wantsLayer = YES;
     vev.blendingMode = NSVisualEffectBlendingModeBehindWindow;
     vev.state = NSVisualEffectStateActive;
-    vev.material = NSVisualEffectMaterialHUDWindow;
-    vev.appearance = [NSAppearance appearanceNamed:NSAppearanceNameVibrantDark];
+    vev.material = isDark ? NSVisualEffectMaterialHUDWindow : NSVisualEffectMaterialSheet;
+    vev.appearance = [NSAppearance appearanceNamed:isDark ? NSAppearanceNameVibrantDark : NSAppearanceNameVibrantLight];
     vev.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
     vev.maskImage = maskImage;
     [container addSubview:vev];
