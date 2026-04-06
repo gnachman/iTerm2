@@ -669,12 +669,16 @@ static _Atomic int64_t sOutstandingPreconvertBytes = 0;
     }
     atomic_fetch_add(&sOutstandingPreconvertBytes, stringBytes);
 
+    VT100StringConversionConfig config;
+    @synchronized (self) {
+        config = _conversionConfig;
+    }
     iTermAsyncStringConversion *conv =
         [[iTermAsyncStringConversion alloc] initWithString:string
                                               stringLength:string.length
                                                  rendition:_shadowRendition
                                              protectedMode:_shadowProtectedMode
-                                                    config:_conversionConfig];
+                                                    config:config];
     conv.completionHandler = ^{
         atomic_fetch_sub(&sOutstandingPreconvertBytes, stringBytes);
     };
@@ -685,11 +689,15 @@ static _Atomic int64_t sOutstandingPreconvertBytes = 0;
 - (void)preconvertStringToken:(VT100Token *)token {
     PreconvertedStringData *pre = token.preconvertedStringData;
     iTermPreconvertedStringDataFree(pre);
+    VT100StringConversionConfig config;
+    @synchronized (self) {
+        config = _conversionConfig;
+    }
     [iTermStringPreconverter preconvert:pre
                                  string:token.string
                               rendition:_shadowRendition
                           protectedMode:_shadowProtectedMode
-                                 config:_conversionConfig];
+                                 config:config];
 }
 
 @end

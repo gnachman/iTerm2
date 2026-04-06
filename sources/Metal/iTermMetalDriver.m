@@ -146,6 +146,9 @@ typedef struct {
     iTermCopyOffscreenRenderer *_copyOffscreenRenderer;
     iTermTexturePool *_fullSizeTexturePool;
 
+    // Written on _queue in didComplete:, read on main thread after dispatch_group_wait.
+    id<MTLTexture> _capturedTexture;
+    BOOL _captureNextFrame;
 
     // The command Queue from which we'll obtain command buffers
     id<MTLCommandQueue> _commandQueue;
@@ -448,6 +451,26 @@ legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth
         DLog(@"Asynchronous draw of %@ completed count=%d", view, thisCount);
         completion(!context.aborted);
     });
+}
+
+- (id<MTLTexture>)drawAndCaptureInView:(iTermMetalView *)view {
+    _capturedTexture = nil;
+    _captureNextFrame = YES;
+
+    iTermMetalDriverAsyncContext *context = [self newContextForDrawInView:view count:0];
+
+    while (dispatch_group_wait(context.group, dispatch_time(DISPATCH_TIME_NOW, 10 * NSEC_PER_MSEC)) != 0) {
+        [[NSRunLoop currentRunLoop] runMode:NSDefaultRunLoopMode
+                                 beforeDate:[NSDate dateWithTimeIntervalSinceNow:0.01]];
+    }
+
+    if (context.aborted) {
+        _capturedTexture = nil;
+        return nil;
+    }
+    id<MTLTexture> result = _capturedTexture;
+    _capturedTexture = nil;
+    return result;
 }
 
 - (void)expireNonASCIIGlyphs {
@@ -906,7 +929,15 @@ legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth
 - (void)acquireScarceResources:(iTermMetalFrameData *)frameData view:(iTermMetalView *)view {
     const NSTimeInterval timeout = 1.0 / 60.0;
 
-    if (frameData.debugInfo) {
+    if (_captureNextFrame) {
+        // Render to an offscreen texture only — no drawable or presentation needed.
+        [frameData measureTimeForStat:iTermMetalFrameDataStatMtGetRenderPassDescriptor ofBlock:^{
+            frameData.renderPassDescriptor = [frameData newRenderPassDescriptorWithLabel:@"Offscreen capture texture"
+                                                                                    fast:NO];
+        }];
+        frameData.destinationTexture = frameData.renderPassDescriptor.colorAttachments[0].texture;
+
+    } else if (frameData.debugInfo) {
         [frameData measureTimeForStat:iTermMetalFrameDataStatMtGetRenderPassDescriptor ofBlock:^{
             frameData.renderPassDescriptor = [frameData newRenderPassDescriptorWithLabel:@"Offscreen debug texture"
                                                                                     fast:NO];
@@ -2288,6 +2319,10 @@ extraIdentifyingInfoForIcon:button.extraIdentifyingInfoForIcon];
 - (BOOL)didComplete:(BOOL)completed withFrameData:(iTermMetalFrameData *)frameData {
     DLog(@"did complete (completed=%@) %@", @(completed), frameData);
     if (!completed) {
+        if (_captureNextFrame && frameData.destinationTexture) {
+            _capturedTexture = frameData.destinationTexture;
+            _captureNextFrame = NO;
+        }
         DLog(@"first time completed %@", frameData);
         if (frameData.debugInfo) {
             DLog(@"have debug info %@", frameData);

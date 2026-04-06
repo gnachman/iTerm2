@@ -170,6 +170,13 @@ extension iTermMetalLayerBox {
         }
     }
 
+    func nextDrawableWithoutTimeout() -> CAMetalDrawable? {
+        return metalLayer.access { layer in
+            layer.allowsNextDrawableTimeout = false
+            return layer.nextDrawable()
+        }
+    }
+
     func nextContextualizedDrawable() -> (CAMetalDrawable, LayerContext)? {
         return metalLayer.access { layer in
             if let drawable = layer.nextDrawable() {

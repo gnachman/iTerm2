@@ -374,14 +374,12 @@ extension iTermMetalView {
         guard let metalLayerBox else {
             return nil
         }
-        metalLayerBox.allowsNextDrawableTimeout = false
-
         let context = metalLayerBox.layerContext
         var timedOut = false
         while !timedOut {
             let promise = pendingDrawablePromise ?? iTermPromise<PendingDrawable> { seal in
                 Self.getDrawableQueue.async {
-                    seal.fulfill(PendingDrawable(context, drawable: metalLayerBox.nextDrawable()))
+                    seal.fulfill(PendingDrawable(context, drawable: metalLayerBox.nextDrawableWithoutTimeout()))
                 }
             }
             var result: CAMetalDrawable?

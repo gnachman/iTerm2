@@ -162,6 +162,7 @@ NS_ASSUME_NONNULL_BEGIN
     iTermJobTreeViewController *viewController = [[iTermJobTreeViewController alloc] initWithProcessID:pid
                                                                                    processInfoProvider:[self.delegate statusBarComponentProcessInfoProvider]];
     viewController.font = [self font];
+    viewController.useGlassEffectView = YES;
     popover.contentViewController = viewController;
     popover.contentSize = viewController.view.frame.size;
     popover.behavior = NSPopoverBehaviorSemitransient;

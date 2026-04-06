@@ -5559,7 +5559,12 @@ lengthExcludingInBandSignaling:data.length
                                     visible:YES
                       guidOfLastCommandMark:guidOfLastCommandMark];
 
-        [self.mutableSavedIntervalTree restoreFromDictionary:screenState[kScreenStateSavedIntervalTreeKey]];
+        NSDictionary *savedIntervalTreeDict = screenState[kScreenStateSavedIntervalTreeKey];
+        if (![self.mutableSavedIntervalTree restoreFromGraphRecord:savedIntervalTreeDict
+                                                             offset:0
+                                               largeContentProvider:largeContentProvider]) {
+            [self.mutableSavedIntervalTree restoreFromDictionary:savedIntervalTreeDict];
+        }
         [self fixUpDeserializedIntervalTree:self.mutableSavedIntervalTree
                                     visible:NO
                       guidOfLastCommandMark:guidOfLastCommandMark];

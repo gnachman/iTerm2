@@ -407,6 +407,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (BOOL)showButtonsForSelectedCommand;
 + (BOOL)showHintsInSplitPaneMenuItems;
 + (BOOL)showMetalFPSmeter;
++ (void)setShowMetalFPSmeter:(BOOL)value;
 + (BOOL)showLocationsInScrollbar;
 + (BOOL)showMarksInScrollbar;
 + (BOOL)showPinnedIndicator;

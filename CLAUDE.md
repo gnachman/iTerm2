@@ -23,3 +23,4 @@
 - Use `make run` to build and run a debug build.
 - Do not use associated objects (objc_getAssociatedObject or objc_setAssociatedObject) without express written permission.
 - You should treat warnings as errors.
+- If you get stuck, ask for help. It's better to ask me to look at something in the debugger than to flail around for a long time.

@@ -1,6 +1,7 @@
 #import "SessionView.h"
 #import "DebugLogging.h"
 #import "FutureMethods.h"
+#import "iTermTexture.h"
 #import "iTerm2SharedARC-Swift.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermAnnouncementViewController.h"
@@ -2807,6 +2808,46 @@ extendResultsAcrossSoftBoundaries:(BOOL)extendResultsAcrossSoftBoundaries {
 
 - (void)legacyView:(iTermLegacyView *)legacyView drawRect:(NSRect)dirtyRect {
     [self.delegate legacyView:legacyView drawRect:dirtyRect];
+}
+
+// Returns a CGImage from the Metal offscreen texture. Caller must CGImageRelease.
+- (CGImageRef)newCGImageFromMetalCapture {
+    id<MTLTexture> texture = [_driver drawAndCaptureInView:_metalView];
+    if (!texture) {
+        return NULL;
+    }
+    NSUInteger width = texture.width;
+    NSUInteger height = texture.height;
+    NSUInteger bytesPerRow = width * 4;
+    NSMutableData *storage = [NSMutableData dataWithLength:bytesPerRow * height];
+    [texture getBytes:storage.mutableBytes
+          bytesPerRow:bytesPerRow
+           fromRegion:MTLRegionMake2D(0, 0, width, height)
+          mipmapLevel:0];
+
+    CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceRGB();
+    CGContextRef ctx = CGBitmapContextCreate(
+        storage.mutableBytes, width, height, 8, bytesPerRow, colorSpace,
+        kCGImageAlphaPremultipliedFirst | kCGBitmapByteOrder32Little);
+    CGColorSpaceRelease(colorSpace);
+    if (!ctx) {
+        return NULL;
+    }
+    CGImageRef cgImage = CGBitmapContextCreateImage(ctx);
+    CGContextRelease(ctx);
+    return cgImage;
+}
+
+- (NSImage *)drawMetalFrameToImage {
+    CGImageRef cgImage = [self newCGImageFromMetalCapture];
+    if (!cgImage) {
+        return nil;
+    }
+    NSImage *image = [[NSImage alloc] initWithCGImage:cgImage
+                                                 size:NSMakeSize(CGImageGetWidth(cgImage) / 2.0,
+                                                                 CGImageGetHeight(cgImage) / 2.0)];
+    CGImageRelease(cgImage);
+    return image;
 }
 
 @end

@@ -53,6 +53,7 @@
 #import "ScreenCharArray.h"
 #import <apr-1/apr_base64.h>
 #import <Carbon/Carbon.h>
+#import <os/lock.h>
 #import <Foundation/Foundation.h>
 #import <NaturalLanguage/NaturalLanguage.h>
 #import <UniformTypeIdentifiers/UniformTypeIdentifiers.h>
@@ -1286,6 +1287,7 @@ static TECObjectRef CreateTECConverterForUTF8Variants(TextEncodingVariant varian
 - (NSString *)_convertBetweenUTF8AndHFSPlusAsPrecomposition:(BOOL)precompose {
     static TECObjectRef gHFSPlusComposed;
     static TECObjectRef gHFSPlusDecomposed;
+    static os_unfair_lock gTECLock = OS_UNFAIR_LOCK_INIT;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
         gHFSPlusComposed = CreateTECConverterForUTF8Variants(kUnicodeHFSPlusCompVariant);
@@ -1312,13 +1314,19 @@ static TECObjectRef CreateTECConverterForUTF8Variants(TextEncodingVariant varian
         return self;
     }
 
-    if (TECConvertText(precompose ? gHFSPlusComposed : gHFSPlusDecomposed,
-                       (TextPtr)in,
-                       in_len,
-                       &in_len,
-                       (TextPtr)out,
-                       out_len,
-                       &out_len) != noErr) {
+    // TECConvertText is not thread-safe: it mutates internal converter state.
+    // Multiple threads (preconversion queue, parser thread, mutation queue) call this concurrently.
+    os_unfair_lock_lock(&gTECLock);
+    OSStatus status = TECConvertText(precompose ? gHFSPlusComposed : gHFSPlusDecomposed,
+                                     (TextPtr)in,
+                                     in_len,
+                                     &in_len,
+                                     (TextPtr)out,
+                                     out_len,
+                                     &out_len);
+    os_unfair_lock_unlock(&gTECLock);
+
+    if (status != noErr) {
         ret = self;
     } else {
         int numCharsOut = out_len / sizeof(unichar);

@@ -218,6 +218,10 @@ legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth
 - (void)drawAsynchronouslyInView:(iTermMetalView *)view completion:(void (^)(BOOL))completion;
 - (void)expireNonASCIIGlyphs;
 
+// Draw a frame and return the rendered texture. Uses the debug/offscreen rendering path
+// so the destination texture is CPU-readable. Blocks until the GPU finishes.
+- (nullable id<MTLTexture>)drawAndCaptureInView:(iTermMetalView *)view;
+
 @end
 
 NS_ASSUME_NONNULL_END

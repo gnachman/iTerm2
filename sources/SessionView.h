@@ -325,4 +325,7 @@ typedef NS_ENUM(NSUInteger, iTermSessionViewFindDriver) {
 - (void)updateForAppearanceChange;
 - (void)smearCursorFrom:(NSRect)from to:(NSRect)to color:(NSColor *)color;
 
+// Uses the Metal debug offscreen rendering path to capture a frame as an NSImage.
+- (nullable NSImage *)drawMetalFrameToImage NS_AVAILABLE_MAC(10_11);
+
 @end

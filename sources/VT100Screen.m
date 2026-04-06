@@ -1465,7 +1465,6 @@ additionalWordCharacters:(NSString *)additionalWordCharacters
                                                   @([_state.charsetUsesLineDrawingMode containsObject:@3]) ],
                kScreenStateNonCurrentGridKey: [self contentsOfNonCurrentGrid] ?: @{},
                kScreenStateCurrentGridIsPrimaryKey: @(_state.primaryGrid == _state.currentGrid),
-               kScreenStateSavedIntervalTreeKey: [_state.savedIntervalTree dictionaryValueWithOffset:0] ?: [NSNull null],
                kScreenStateCommandStartXKey: @(_state.commandStartCoord.x),
                kScreenStateCommandStartYKey: @(_state.commandStartCoord.y),
                kScreenStateNextCommandOutputStartKey: [NSDictionary dictionaryWithGridAbsCoord:_state.startOfRunningCommandOutput],
@@ -1484,13 +1483,22 @@ additionalWordCharacters:(NSString *)additionalWordCharacters
             dict = [dict dictionaryByRemovingNullValues];
             [encoder mergeDictionary:dict];
 
-            // Encode interval tree using graph encoding for efficient delta encoding of large marks
+            // Encode interval trees using graph encoding for efficient delta encoding of large marks
             [encoder encodeDictionaryWithKey:kScreenStateIntervalTreeKey
                                   generation:iTermGenerationAlwaysEncode
                                        block:^BOOL(id<iTermEncoderAdapter> subencoder) {
                 [intervalTree encodeWithEncoder:subencoder offset:capturedIntervalOffset];
                 return YES;
             }];
+            id<IntervalTreeReading> savedIntervalTree = _state.savedIntervalTree;
+            if (savedIntervalTree.allObjects.count > 0) {
+                [encoder encodeDictionaryWithKey:kScreenStateSavedIntervalTreeKey
+                                      generation:iTermGenerationAlwaysEncode
+                                           block:^BOOL(id<iTermEncoderAdapter> subencoder) {
+                    [savedIntervalTree encodeWithEncoder:subencoder offset:0];
+                    return YES;
+                }];
+            }
             return YES;
         }];
     }];

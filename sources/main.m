@@ -21,9 +21,10 @@
 
 int main(int argc, const char *argv[]) {
     if (argc >= 2 && !strcmp(argv[1], "--help")) {
-        fprintf(stderr, "Usage: iTerm2 [--command=command] [-suite suite-name]\n");
+        fprintf(stderr, "Usage: iTerm2 [--command=command] [-suite suite-name] [-compare-rendering string]\n");
         fprintf(stderr, "  --command=command: If given, open a window running `command` using `/usr/bin/login -fpq $USER $SHELL -c command`. Various launch actions are disabled, such as running auto-launch scripts, opening the default window arrangement (if so configured), and opening the profiles window (if so configured).\n");
         fprintf(stderr, "  -suite suite-name: If given, store all user defaults in the specified suite instead of the standard defaults. For example, -suite com.example.test stores preferences in com.example.test.\n");
+        fprintf(stderr, "  -compare-rendering string [-rows N] [-columns N]: Render the given string with both GPU and legacy renderers, compare the output, and exit. Supports \\e for ESC, \\xNN for hex bytes. Default size is 24x80.\n");
 #ifdef ITERM_DEBUG
         fprintf(stderr, "\nDebug options (ITERM_DEBUG build only):\n");
         fprintf(stderr, "  --use-default-config: Skip custom preferences, use built-in defaults\n");

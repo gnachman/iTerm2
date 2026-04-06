@@ -203,6 +203,13 @@ typedef NS_ENUM(NSUInteger, iTermContentNavigationAction) {
 // Returns nil if the range is invalid.
 - (NSImage * _Nullable)renderLinesToImage:(NSRange)lineRange;
 
+// Like renderLinesToImage: but includes top/bottom margins and fills the
+// background with the default background color.
+- (NSImage * _Nullable)renderImageWithLines:(NSRange)lineRange
+                           includeMargins:(BOOL)includeMargins
+                          backgroundColor:(NSColor * _Nullable)backgroundColor
+                               showCursor:(BOOL)showCursor;
+
 // Renders lines in batches to avoid blocking the main thread.
 // Each batch is rendered, then control returns to the run loop before the next batch.
 // Progress callback is called after each batch with (completed lines, total lines).

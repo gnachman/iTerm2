@@ -2375,6 +2375,101 @@ toggleAnimationOfImage:(id<iTermImageInfoReading>)imageInfo {
     return image;
 }
 
+- (NSImage *)renderImageWithLines:(NSRange)lineRange
+                   includeMargins:(BOOL)includeMargins
+                  backgroundColor:(NSColor *)backgroundColor
+                       showCursor:(BOOL)showCursor {
+    id<iTermTextDataSource> dataSource = self.dataSource;
+    if (!dataSource) {
+        return nil;
+    }
+    const int numberOfLines = [dataSource numberOfLines];
+    if (lineRange.location >= numberOfLines) {
+        return nil;
+    }
+    const NSUInteger endLine = MIN(lineRange.location + lineRange.length, numberOfLines);
+    const NSUInteger actualLength = endLine - lineRange.location;
+    if (actualLength == 0) {
+        return nil;
+    }
+
+    const CGFloat lineHeight = self.lineHeight;
+    const CGFloat imageWidth = self.frame.size.width;
+    const CGFloat vmargin = includeMargins ? [iTermPreferences topBottomMargins] : 0;
+    const CGFloat imageHeight = actualLength * lineHeight + vmargin * 2;
+
+    if (imageWidth <= 0 || imageHeight <= 0) {
+        return nil;
+    }
+
+    const CGFloat scale = self.window.backingScaleFactor ?: 2.0;
+    const NSInteger pixelWidth = (NSInteger)(imageWidth * scale);
+    const NSInteger pixelHeight = (NSInteger)(imageHeight * scale);
+
+    NSBitmapImageRep *bitmapRep = [[NSBitmapImageRep alloc]
+                                   initWithBitmapDataPlanes:NULL
+                                   pixelsWide:pixelWidth
+                                   pixelsHigh:pixelHeight
+                                   bitsPerSample:8
+                                   samplesPerPixel:4
+                                   hasAlpha:YES
+                                   isPlanar:NO
+                                   colorSpaceName:NSCalibratedRGBColorSpace
+                                   bytesPerRow:0
+                                   bitsPerPixel:0];
+    bitmapRep.size = NSMakeSize(imageWidth, imageHeight);
+
+    NSGraphicsContext *context = [NSGraphicsContext graphicsContextWithBitmapImageRep:bitmapRep];
+    if (!context) {
+        return nil;
+    }
+
+    [NSGraphicsContext saveGraphicsState];
+    [NSGraphicsContext setCurrentContext:context];
+
+    NSAffineTransform *transform = [NSAffineTransform transform];
+    [transform translateXBy:0 yBy:imageHeight];
+    [transform scaleXBy:1.0 yBy:-1.0];
+    [transform concat];
+
+    const CGFloat virtualOffset = lineRange.location * lineHeight - vmargin;
+
+    const NSRect contentRect = NSMakeRect(0,
+                                          lineRange.location * lineHeight - vmargin,
+                                          imageWidth,
+                                          imageHeight);
+
+    iTermTextDrawingHelper *helper = [self newDrawingHelperForOffscreenRendering];
+    if (showCursor) {
+        helper.isCursorVisible = YES;
+        helper.cursorType = self.drawingHelper.cursorType;
+        helper.cursorCoord = VT100GridCoordMake(self.dataSource.cursorX - 1,
+                                                 self.dataSource.cursorY - 1);
+    }
+    [helper configureForOffscreenRenderingWithFrame:NSMakeRect(0, 0, imageWidth, imageHeight)
+                                        visibleRect:contentRect];
+
+    [helper drawTextViewContentInRect:contentRect
+                             rectsPtr:&contentRect
+                            rectCount:1
+                        virtualOffset:virtualOffset];
+
+    // Fill background behind all existing content. The drawing helper clears
+    // to transparent before drawing cell backgrounds, so margins and any
+    // uncovered areas need to be filled with the background color.
+    if (backgroundColor) {
+        [backgroundColor set];
+        NSRectFillUsingOperation(NSMakeRect(0, 0, imageWidth, imageHeight),
+                                 NSCompositingOperationDestinationOver);
+    }
+
+    [NSGraphicsContext restoreGraphicsState];
+
+    NSImage *image = [[NSImage alloc] initWithSize:NSMakeSize(imageWidth, imageHeight)];
+    [image addRepresentation:bitmapRep];
+    return image;
+}
+
 #pragma mark - Batched Line Rendering
 
 - (id)renderLinesToImageInBatches:(NSRange)lineRange

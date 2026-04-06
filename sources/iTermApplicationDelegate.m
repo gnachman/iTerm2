@@ -1350,6 +1350,26 @@ void TurnOnDebugLoggingAutomatically(void) {
     return nil;
 }
 
+- (NSString *)parseCompareRenderingFromArguments {
+    NSArray *arguments = [[NSProcessInfo processInfo] arguments];
+    for (NSInteger i = 0; i + 1 < arguments.count; i++) {
+        if ([arguments[i] isEqualToString:@"-compare-rendering"]) {
+            return arguments[i + 1];
+        }
+    }
+    return nil;
+}
+
+- (NSInteger)parseIntegerArgument:(NSString *)name defaultValue:(NSInteger)defaultValue {
+    NSArray *arguments = [[NSProcessInfo processInfo] arguments];
+    for (NSInteger i = 0; i + 1 < arguments.count; i++) {
+        if ([arguments[i] isEqualToString:name]) {
+            return [arguments[i + 1] integerValue];
+        }
+    }
+    return defaultValue;
+}
+
 - (void)applicationDidFinishLaunching:(NSNotification *)aNotification {
     if (@available(macOS 12, *)) {
         // ok
@@ -2087,6 +2107,13 @@ static iTermKeyEventReplayer *gReplayer;
     }
     gStartupActivitiesPerformed = YES;
     if (quiet_) {
+        NSString *compareInput = [self parseCompareRenderingFromArguments];
+        if (compareInput) {
+            NSInteger rows = [self parseIntegerArgument:@"-rows" defaultValue:24];
+            NSInteger cols = [self parseIntegerArgument:@"-columns" defaultValue:80];
+            [iTermRenderingComparer compareAndExit:compareInput rows:rows columns:cols];
+            // compareAndExit calls exit() and does not return.
+        }
         DLog(@"Launched in quiet mode. Return early.");
         // iTerm2 was launched with "open file" that turns off startup activities.
         [_untitledWindowStateMachine didFinishInitialization];
@@ -2184,7 +2211,7 @@ static iTermKeyEventReplayer *gReplayer;
 }
 
 - (void)checkForQuietMode {
-    if ([self parseCommandFromArguments]) {
+    if ([self parseCommandFromArguments] || [self parseCompareRenderingFromArguments]) {
         quiet_ = YES;
     }
     if ([self quietFileExists]) {
