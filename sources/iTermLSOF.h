@@ -17,6 +17,7 @@ int iTermProcPidInfoWrapper(int pid, int flavor, uint64_t arg,  void *buffer, in
 
 + (NSArray<NSString *> *)commandLineArgumentsForProcess:(pid_t)pid execName:(NSString **)execName;
 + (NSString *)commandForProcess:(pid_t)pid execName:(NSString **)execName;
++ (NSString *)displayCommandForProcess:(pid_t)pid execName:(NSString **)execName;
 + (NSArray<NSNumber *> *)allPids;
 + (pid_t)ppidForPid:(pid_t)childPid;
 + (NSString *)nameOfProcessWithPid:(pid_t)thePid isForeground:(BOOL *)isForeground;
