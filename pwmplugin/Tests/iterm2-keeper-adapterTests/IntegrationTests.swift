@@ -53,7 +53,10 @@ class H(BaseHTTPRequestHandler):
             req_id = self.path.rsplit("/", 1)[-1]
             cmd = REQUESTS.get(req_id, "")
             if cmd.startswith("ls "):
-                result = {"command": "ls", "data": {"records": [{"title": "1  UID1234567890123  login  Example  user@example.com"}]}}
+                result = {"command": "ls", "data": {"records": [
+                    {"title": "1  UIDAAAAAAAAAAAAAA  login  Web  user@example.com @ https://testbook.com"},
+                    {"title": "2  UID1234567890123  login  Mysql  hborase@keepersecurity.com @ 127.0.0.1:3366"}
+                ]}}
                 _send(self, 200, {"status": "success", "result": json.dumps(result)})
                 return
             if " --format=json" in cmd and cmd.startswith("get "):
@@ -187,7 +190,9 @@ server.serve_forever()
         XCTAssertEqual(result.status, 0, result.output)
         let json = try decodeJSON(result.output)
         let accounts = try XCTUnwrap(json["accounts"] as? [[String: Any]])
-        XCTAssertEqual(accounts.count, 1)
+        XCTAssertEqual(accounts.count, 2)
+        XCTAssertEqual(accounts[0]["userName"] as? String, "user@example.com")
+        XCTAssertEqual(accounts[1]["userName"] as? String, "hborase@keepersecurity.com")
     }
 
     func testGetPasswordSuccess() throws {
@@ -197,15 +202,6 @@ server.serve_forever()
         XCTAssertEqual(result.status, 0, result.output)
         let json = try decodeJSON(result.output)
         XCTAssertEqual(json["password"] as? String, "pw-123")
-    }
-
-    func testGetUsernameSuccess() throws {
-        let server = try MockKeeperServer()
-        let input = #"{"header":\#(header(server.baseURL)),"userAccountID":null,"token":"\#(token())","accountIdentifier":{"accountID":"UID1234567890123"}}"#
-        let result = try run("get-username", input: input)
-        XCTAssertEqual(result.status, 0, result.output)
-        let json = try decodeJSON(result.output)
-        XCTAssertEqual(json["userName"] as? String, "user@example.com")
     }
 
     func testSetPasswordSuccess() throws {
@@ -234,8 +230,8 @@ server.serve_forever()
 
     func testKeeperSyncDownSuccess() throws {
         let server = try MockKeeperServer()
-        let input = #"{"header":\#(header(server.baseURL)),"token":"\#(token())"}"#
-        let result = try run("keeper-sync-down", input: input)
+        let input = #"{"header":\#(header(server.baseURL)),"userAccountID":null,"token":"\#(token())","commandName":"sync-down"}"#
+        let result = try run("sync-down", input: input)
         XCTAssertEqual(result.status, 0, result.output)
     }
 
@@ -245,7 +241,7 @@ server.serve_forever()
         let result = try run("list-accounts", input: input)
         XCTAssertNotEqual(result.status, 0, result.output)
         let json = try decodeJSON(result.output)
-        XCTAssertEqual(json["error"] as? String, "Invalid or missing token")
+        XCTAssertEqual(json["error"] as? String, "Invalid or missing API key")
     }
 
     func testLoginHTTPErrorUsesHumanReadableError() throws {

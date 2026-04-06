@@ -29,10 +29,6 @@ protocol PasswordManagerAccount: AnyObject {
                 _ completion: @escaping (Error?) -> ())
 
     @objc(matchesFilter:) func matches(filter: String) -> Bool
-
-    /// Resolves the string to send when the user clicks "Enter username". Default: userName. Keeper overrides to fetch the record's login field so only login is sent (not host/description).
-    @objc(usernameForTerminalWithContext:completion:)
-    func usernameForTerminal(context: RecipeExecutionContext, completion: @escaping (String?) -> Void)
 }
 
 @objc
@@ -81,11 +77,6 @@ extension PasswordManagerAccount {
         return [accountName, userName].anySatisfies {
             $0.containsCaseInsensitive(filter)
         }
-    }
-
-    /// Default: use userName. Adapters may override to fetch a record’s login field for “Enter username”.
-    func usernameForTerminal(context: RecipeExecutionContext, completion: @escaping (String?) -> Void) {
-        completion(userName)
     }
 }
 

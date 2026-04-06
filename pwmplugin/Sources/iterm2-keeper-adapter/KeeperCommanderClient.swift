@@ -43,6 +43,39 @@ private struct KeeperFolder: Decodable {
     let flags: String?
 }
 
+/// Commander `ls -l` often appends connection info after `login @ …`: `https://…`, or database-style
+/// `host:port` / IPv4. iTerm2 sends `userName` to the terminal as-is, so we keep only the login segment.
+private func loginFromKeeperListDisplayDescription(_ raw: String) -> String {
+    let trimmed = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+    guard let range = trimmed.range(of: " @ ", options: .literal) else {
+        return trimmed
+    }
+    let head = trimmed[..<range.lowerBound].trimmingCharacters(in: .whitespacesAndNewlines)
+    let tail = trimmed[range.upperBound...].trimmingCharacters(in: .whitespacesAndNewlines)
+    if tail.isEmpty { return trimmed }
+    if keeperListDescriptionSuffixIsConnectionInfo(tail) {
+        return head.isEmpty ? trimmed : head
+    }
+    return trimmed
+}
+
+/// True when the part after ` @ ` looks like a URL or server address (not part of the login).
+private func keeperListDescriptionSuffixIsConnectionInfo(_ tail: String) -> Bool {
+    let t = tail.trimmingCharacters(in: .whitespacesAndNewlines)
+    if t.isEmpty { return false }
+    let lower = t.lowercased()
+    if lower.hasPrefix("http://") || lower.hasPrefix("https://") { return true }
+    // IPv4 or IPv4:port (e.g. 127.0.0.1:3366)
+    if t.range(of: #"^(?:\d{1,3}\.){3}\d{1,3}(:\d+)?$"#, options: .regularExpression) != nil {
+        return true
+    }
+    // hostname:port (e.g. db.example.com:3306)
+    if t.range(of: #"^[a-zA-Z0-9][a-zA-Z0-9.-]*:\d{1,5}$"#, options: .regularExpression) != nil {
+        return true
+    }
+    return false
+}
+
 struct KeeperRecord: Decodable {
     let number: Int?
     let uid: String?
@@ -51,14 +84,28 @@ struct KeeperRecord: Decodable {
     let type: String?
     let title: String?
     let description: String?
+    /// Present in some Commander JSON list payloads; avoids N+1 `get` calls (which trigger HTTP 429 rate limits).
+    let login: String?
+    let username: String?
 
-    init(number: Int?, uid: String?, record_uid: String?, type: String?, title: String?, description: String?) {
+    init(number: Int?, uid: String?, record_uid: String?, type: String?, title: String?, description: String?, login: String? = nil, username: String? = nil) {
         self.number = number
         self.uid = uid
         self.record_uid = record_uid
         self.type = type
         self.title = title
         self.description = description
+        self.login = login
+        self.username = username
+    }
+
+    /// Best-effort login/username for the password manager list without extra API round-trips.
+    var listUserName: String {
+        if let l = login?.trimmingCharacters(in: .whitespacesAndNewlines), !l.isEmpty { return l }
+        if let u = username?.trimmingCharacters(in: .whitespacesAndNewlines), !u.isEmpty { return u }
+        let d = description?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        if d.isEmpty { return "" }
+        return loginFromKeeperListDisplayDescription(d)
     }
 }
 
@@ -336,13 +383,15 @@ func listAccountsRecords(apiKey: String, client: KeeperCommanderClient) throws -
         }
     }
     guard let recs = records, !recs.isEmpty else { return [] }
+    // Do not call `get` per record here: each record would add several HTTP calls and Commander
+    // Service Mode often returns HTTP 429 (Too Many Requests). Usernames come from `ls` output
+    // (description column and optional login/username fields in JSON).
     return recs.compactMap { rec -> PasswordManagerProtocol.Account? in
         guard let uid = rec.effectiveUid, !uid.isEmpty else { return nil }
         let title = rec.title ?? "Untitled"
-        let desc = rec.description ?? ""
         return PasswordManagerProtocol.Account(
             identifier: PasswordManagerProtocol.AccountIdentifier(accountID: uid),
-            userName: desc,
+            userName: rec.listUserName,
             accountName: title,
             hasOTP: false)
     }
@@ -416,6 +465,23 @@ func setPassword(apiKey: String, recordUid: String, newPassword: String?, client
     throw KeeperClientError.message(keeperUserFacingPasswordUpdateError(apiDetail: raw))
 }
 
+/// Escape `accountName` / `userName` for `record-add ... --title="..." login="..."`.
+///
+/// Commander receives the command as a string and may evaluate it in a shell-like way. Values are
+/// wrapped in double quotes; inside those quotes, POSIX-ish shells still treat `\`, `"`, `` ` ``,
+/// and `$` specially (command substitution / expansion). We also normalize line breaks and escape
+/// `!` for bash `histexpand` edge cases.
+private func escapeForKeeperDoubleQuotedCommandField(_ s: String) -> String {
+    s
+        .replacingOccurrences(of: "\\", with: "\\\\")
+        .replacingOccurrences(of: "\"", with: "\\\"")
+        .replacingOccurrences(of: "$", with: "\\$")
+        .replacingOccurrences(of: "`", with: "\\`")
+        .replacingOccurrences(of: "!", with: "\\!")
+        .replacingOccurrences(of: "\n", with: " ")
+        .replacingOccurrences(of: "\r", with: " ")
+}
+
 func deleteRecord(apiKey: String, recordUid: String, client: KeeperCommanderClient) throws {
     let uid = try validatedRecordUID(recordUid)
     let data = try client.executeCommand(apiKey: apiKey, command: "rm -f \(uid)")
@@ -426,10 +492,10 @@ func deleteRecord(apiKey: String, recordUid: String, client: KeeperCommanderClie
 }
 
 func addRecord(apiKey: String, userName: String, accountName: String, password: String?, client: KeeperCommanderClient) throws -> String {
-    let escapedTitle = accountName.replacingOccurrences(of: "\\", with: "\\\\").replacingOccurrences(of: "\"", with: "\\\"")
+    let escapedTitle = escapeForKeeperDoubleQuotedCommandField(accountName)
     var cmd = "record-add --record-type=login --title=\"\(escapedTitle)\""
     if !userName.isEmpty {
-        let escapedLogin = userName.replacingOccurrences(of: "\\", with: "\\\\").replacingOccurrences(of: "\"", with: "\\\"")
+        let escapedLogin = escapeForKeeperDoubleQuotedCommandField(userName)
         cmd += " login=\"\(escapedLogin)\""
     }
     if let password = password, !password.isEmpty {

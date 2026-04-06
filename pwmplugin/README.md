@@ -175,13 +175,12 @@ echo '{"header":{"pathToDatabase":"http://127.0.0.1:8900","pathToExecutable":nul
 
 1. **handshake** - Protocol version negotiation
 2. **login** - Authenticate with Keeper API key
-3. **list-accounts** - List Keeper records
+3. **list-accounts** - List Keeper records (`userName` comes from `ls` data: optional JSON `login`/`username`, else the description column — no per-record `get`, to avoid rate limits)
 4. **get-password** - Get password for a record
-5. **get-username** - Get username for a record
-6. **set-password** - Update password for a record
-7. **add-account** - Create a new record
-8. **delete-account** - Delete a record
-9. **keeper-sync-down** - Trigger Keeper `sync-down`
+5. **set-password** - Update password for a record
+6. **add-account** - Create a new record
+7. **delete-account** - Delete a record
+8. **sync-down** (custom command) - Trigger Keeper `sync-down`
 
 ## Testing
 

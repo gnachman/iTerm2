@@ -10,7 +10,6 @@ private typealias LoginResponse = PasswordManagerProtocol.LoginResponse
 private typealias ListAccountsRequest = PasswordManagerProtocol.ListAccountsRequest
 private typealias ListAccountsResponse = PasswordManagerProtocol.ListAccountsResponse
 private typealias GetPasswordRequest = PasswordManagerProtocol.GetPasswordRequest
-private typealias GetUsernameResponse = PasswordManagerProtocol.GetUsernameResponse
 private typealias SetPasswordRequest = PasswordManagerProtocol.SetPasswordRequest
 private typealias SetPasswordResponse = PasswordManagerProtocol.SetPasswordResponse
 private typealias AddAccountRequest = PasswordManagerProtocol.AddAccountRequest
@@ -170,25 +169,6 @@ private func handleGetPassword() {
     }
 }
 
-private func handleGetUsername() {
-    guard let data = readStdin() else {
-        writeError("No input provided")
-        exit(1)
-    }
-    do {
-        let request = try JSONDecoder().decode(GetPasswordRequest.self, from: data)
-        let baseURL = try extractServiceURL(from: request.header)
-        let apiKey = try apiKey(fromHeader: request.header, token: request.token, masterPassword: nil)
-        let client = KeeperCommanderClient(baseURL: baseURL)
-        let uid = request.accountIdentifier.accountID
-        let login = try getLogin(apiKey: apiKey, recordUid: uid, client: client)
-        writeOutput(GetUsernameResponse(userName: login))
-    } catch {
-        writeError(error.localizedDescription)
-        exit(1)
-    }
-}
-
 private func handleSetPassword() {
     guard let data = readStdin() else {
         writeError("No input provided")
@@ -285,7 +265,6 @@ private func mainDispatch() {
     case "login": handleLogin()
     case "list-accounts": handleListAccounts()
     case "get-password": handleGetPassword()
-    case "get-username": handleGetUsername()
     case "set-password": handleSetPassword()
     case "add-account": handleAddAccount()
     case "delete-account": handleDeleteAccount()
