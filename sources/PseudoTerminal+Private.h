@@ -84,6 +84,7 @@ extern NSString *const TERMINAL_ARRANGEMENT_SIZE_LOCKED;
     NSArray *_screenConfigurationAtTimeOfForceFrame;
 
     BOOL _willClose;
+    BOOL _groupCollapseManaging;
 
     // DO NOT ACCESS DIRECTLY - USE ACCESSORS INSTEAD
     iTermWindowType _windowType;
@@ -122,9 +123,10 @@ extern NSString *const TERMINAL_ARRANGEMENT_SIZE_LOCKED;
 // Used to make restoring fullscreen windows work on 10.11.
 @property(nonatomic, copy) void (^didEnterLionFullscreen)(PseudoTerminal *);
 
-// This is a reference to the window's content view, here for convenience because it has
-// the right type.
-@property (nonatomic, readonly) __unsafe_unretained iTermRootTerminalView *contentView;
+@property (nonatomic, readonly) NSMutableArray *mutableTabGroups;
+@property (nonatomic, assign) BOOL groupCollapseManaging;
+@property (nonatomic, readonly) NSColor *minimalTabStyleBackgroundColor;
+@property (nonatomic, readonly) NSAppearance *sheetAppearance;
 
 - (void)returnTabBarToContentView;
 - (void)updateForTransparency:(NSWindow<PTYWindow> *)window;

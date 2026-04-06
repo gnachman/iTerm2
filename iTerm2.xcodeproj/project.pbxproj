@@ -1017,6 +1017,9 @@
 		A6047134213D9E7B009C6C6D /* iTermWorkingDirectoryPoller.h in Headers */ = {isa = PBXBuildFile; fileRef = A6047132213D9E7B009C6C6D /* iTermWorkingDirectoryPoller.h */; };
 		A6047135213D9E7B009C6C6D /* iTermWorkingDirectoryPoller.m in Sources */ = {isa = PBXBuildFile; fileRef = A6047133213D9E7B009C6C6D /* iTermWorkingDirectoryPoller.m */; };
 		A605128F2E38525800507125 /* PseudoTerminal.swift in Sources */ = {isa = PBXBuildFile; fileRef = A605128E2E38525500507125 /* PseudoTerminal.swift */; };
+		A17714DFD103435587C08BD9 /* iTermTabGroup.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5DB87C502F6C487689B2097F /* iTermTabGroup.swift */; };
+		7FBC3462745243A29DDFA417 /* PseudoTerminal+TabGroups.swift in Sources */ = {isa = PBXBuildFile; fileRef = CDEA49D22F054825ADC1D93D /* PseudoTerminal+TabGroups.swift */; };
+		80677E91B8EE4B69B110E4A7 /* iTermCreateTabGroupViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1699941CF15B4DAF95FE803B /* iTermCreateTabGroupViewController.swift */; };
 		A6057C041878CD30004A60AF /* ProfileTagsView.h in Headers */ = {isa = PBXBuildFile; fileRef = A6057C021878CD30004A60AF /* ProfileTagsView.h */; };
 		A6057C09187A1809004A60AF /* TerminalFile.h in Headers */ = {isa = PBXBuildFile; fileRef = A6057C07187A1809004A60AF /* TerminalFile.h */; };
 		A6057C0E187BC4C3004A60AF /* iTermShellHistoryController.h in Headers */ = {isa = PBXBuildFile; fileRef = A6057C0C187BC4C3004A60AF /* iTermShellHistoryController.h */; };
@@ -6435,6 +6438,9 @@
 		A6047132213D9E7B009C6C6D /* iTermWorkingDirectoryPoller.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermWorkingDirectoryPoller.h; sourceTree = "<group>"; };
 		A6047133213D9E7B009C6C6D /* iTermWorkingDirectoryPoller.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermWorkingDirectoryPoller.m; sourceTree = "<group>"; };
 		A605128E2E38525500507125 /* PseudoTerminal.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PseudoTerminal.swift; sourceTree = "<group>"; };
+		5DB87C502F6C487689B2097F /* iTermTabGroup.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermTabGroup.swift; sourceTree = "<group>"; };
+		CDEA49D22F054825ADC1D93D /* PseudoTerminal+TabGroups.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "PseudoTerminal+TabGroups.swift"; sourceTree = "<group>"; };
+		1699941CF15B4DAF95FE803B /* iTermCreateTabGroupViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermCreateTabGroupViewController.swift; sourceTree = "<group>"; };
 		A6057C021878CD30004A60AF /* ProfileTagsView.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = ProfileTagsView.h; sourceTree = "<group>"; tabWidth = 4; };
 		A6057C031878CD30004A60AF /* ProfileTagsView.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = ProfileTagsView.m; sourceTree = "<group>"; tabWidth = 4; };
 		A6057C07187A1809004A60AF /* TerminalFile.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = TerminalFile.h; sourceTree = "<group>"; tabWidth = 4; };
@@ -11636,6 +11642,9 @@
 				A6EB08882F7859D1009F5D5D /* ResilientCoordinate.swift */,
 				A68752482EE61314002EDFCB /* ArchivesMenuBuilder.swift */,
 				A6E2A6172B86DF0E00EC6070 /* AtomicMutableArrayOfWeakObjects.swift */,
+				5DB87C502F6C487689B2097F /* iTermTabGroup.swift */,
+				CDEA49D22F054825ADC1D93D /* PseudoTerminal+TabGroups.swift */,
+				1699941CF15B4DAF95FE803B /* iTermCreateTabGroupViewController.swift */,
 				1D407A2414BABE8700BD5035 /* charmaps.h */,
 				A678C50D279B3C3900C59927 /* charmaps.m */,
 				A678C50A279B32C600C59927 /* ComplexCharRegistry.swift */,
@@ -20066,6 +20075,9 @@
 				A62B36572D24C1A900FDF15E /* SetNamedMarkTrigger.swift in Sources */,
 				A608F22120F07658008E8009 /* iTermImageMark.m in Sources */,
 				A605128F2E38525800507125 /* PseudoTerminal.swift in Sources */,
+				A17714DFD103435587C08BD9 /* iTermTabGroup.swift in Sources */,
+				7FBC3462745243A29DDFA417 /* PseudoTerminal+TabGroups.swift in Sources */,
+				80677E91B8EE4B69B110E4A7 /* iTermCreateTabGroupViewController.swift in Sources */,
 				A61A859524EFA01800B03880 /* iTermBackgroundCommandRunner.m in Sources */,
 				A6C156FA2E6FFAE900815BC1 /* iTermLayoutReportingView.swift in Sources */,
 				A6153D5921F4EF1A002976FC /* iTermStatusBarTightlyPackedLayoutAlgorithm.m in Sources */,

@@ -14,13 +14,13 @@
 @class iTermRootTerminalView;
 @class iTermStatusBarViewController;
 @protocol iTermSwipeHandler;
-@class iTermTabBarControlView;
+#import "iTermTabBarControlView.h"
+#import "PTYTabView.h"
 @protocol iTermTabBarControlViewDelegate;
 @class iTermToolbeltView;
 @protocol iTermToolbeltViewDelegate;
 @protocol PSMTabBarControlDelegate;
 @protocol PSMPUAFontProvider;
-@class PTYTabView;
 
 @protocol iTermRootTerminalViewDelegate<iTermTabBarControlViewDelegate, iTermSwipeHandler>
 - (void)repositionWidgets;
@@ -83,11 +83,11 @@ extern const NSInteger iTermRootTerminalViewWindowNumberLabelWidth;
 
 // The tabview occupies almost the entire window. Each tab has an identifier
 // which is a PTYTab.
-@property(nonatomic, readonly) PTYTabView *tabView;
+@property(nonatomic, readonly, nonnull) PTYTabView *tabView;
 
 // This is a sometimes-visible control that shows the tabs and lets the user
 // change which is visible.
-@property(nonatomic, readonly) iTermTabBarControlView *tabBarControl;
+@property(nonatomic, readonly, nonnull) iTermTabBarControlView *tabBarControl;
 
 // Gray line dividing tab/title bar from content. Will be nil if a division
 // view isn't needed such as for fullscreen windows or windows without a

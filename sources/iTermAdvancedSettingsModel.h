@@ -374,6 +374,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (BOOL)remapModifiersWithoutEventTap;
 + (BOOL)rememberTmuxWindowSizes;
 + (BOOL)removeAddTabButton;
++ (BOOL)tabGroupNeonStyle;
 + (BOOL)reportOnFirstMouse;
 + (BOOL)restrictSemanticHistoryPrefixAndSuffixToLogicalWindow;
 + (BOOL)requireCmdForDraggingText;

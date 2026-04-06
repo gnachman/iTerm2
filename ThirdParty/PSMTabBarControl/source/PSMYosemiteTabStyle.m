@@ -183,7 +183,7 @@
 }
 
 - (NSRect)closeButtonRectForTabCell:(PSMTabBarCell *)cell {
-    if (cell.isPinned) {
+    if (cell.isPinned || cell.isGroupHeader) {
         return NSZeroRect;
     }
     NSRect cellFrame = [cell frame];
@@ -416,6 +416,15 @@
     if (cell.isPinned) {
         return self.tabBar.pinnedTabWidth;
     }
+    if (cell.isGroupHeader) {
+        if (!cell.groupName.length) {
+            return 40.0;
+        }
+        NSDictionary *nameAttrs = @{ NSFontAttributeName: [NSFont systemFontOfSize:self.fontSize weight:NSFontWeightSemibold] };
+        CGFloat nameWidth = ceil([cell.groupName sizeWithAttributes:nameAttrs].width);
+        const CGFloat hPad = 52.0;
+        return ceil(nameWidth + hPad);
+    }
     return ceil([self widthOfLeftMatterInCell:cell] +
                 [self widthOfAttributedStringInCell:cell] +
                 [self widthOfRightMatterInCell:cell]);
@@ -505,7 +514,7 @@
     PSMCachedTitleInputs *inputs = [[PSMCachedTitleInputs alloc] initWithTitle:cell.stringValue
                                                                truncationStyle:cell.truncationStyle
                                                                          color:[self textColorForCell:cell]
-                                                                       graphic:[(id)[[cell representedObject] identifier] psmTabGraphic]
+                                                                       graphic:cell.isGroupHeader ? nil : [(id)[[cell representedObject] identifier] psmTabGraphic]
                                                                    orientation:_orientation
                                                                       fontSize:self.fontSize
                                                                      parseHTML:parseHTML
@@ -780,6 +789,9 @@
 }
 
 - (void)drawTabCell:(PSMTabBarCell *)cell highlightAmount:(CGFloat)highlightAmount {
+    if (cell.isAnimatingCollapse) {
+        return;
+    }
     // TODO: Test hidden control, whose height is less than 2. Maybe it happens while dragging?
     [self drawCellBackgroundAndFrameHorizontallyOriented:(_orientation == PSMTabBarHorizontalOrientation)
                                                   inRect:cell.frame
@@ -787,8 +799,144 @@
                                             withTabColor:[cell tabColor]
                                                  isFirst:cell == _tabBar.cells.firstObject
                                                   isLast:cell == _tabBar.cells.lastObject
-                                         highlightAmount:highlightAmount];
-    [self drawInteriorWithTabCell:cell inView:[cell controlView] highlightAmount:highlightAmount];
+                                         highlightAmount:cell.isGroupHeader ? 0.0 : highlightAmount];
+    if (cell.isGroupHeader && cell.groupColor) {
+        [self drawGroupHeaderDecorations:cell];
+    } else {
+        [self drawInteriorWithTabCell:cell inView:[cell controlView] highlightAmount:highlightAmount];
+        if (cell.isGroupMember && cell.groupColor) {
+            [self drawGroupMemberSidebar:cell];
+        }
+    }
+}
+
+- (NSGradient *)groupGradientForColor:(NSColor *)color {
+    NSColor *hsb = [color colorUsingColorSpace:NSColorSpace.sRGBColorSpace];
+    CGFloat h, s, b, a;
+    [hsb getHue:&h saturation:&s brightness:&b alpha:&a];
+    const CGFloat shift = 0.08;
+    NSColor *start = [NSColor colorWithHue:fmod(h + shift, 1.0)
+                                saturation:MIN(s + 0.1, 1.0)
+                                brightness:MIN(b + 0.1, 1.0)
+                                     alpha:1.0];
+    NSColor *end = [NSColor colorWithHue:fmod(h - shift + 1.0, 1.0)
+                              saturation:MIN(s + 0.1, 1.0)
+                              brightness:MIN(b + 0.05, 1.0)
+                               alpha:1.0];
+    return [[NSGradient alloc] initWithColors:@[start, color, end]];
+}
+
+- (void)drawGroupHeaderDecorations:(PSMTabBarCell *)cell {
+    NSRect cellFrame = cell.frame;
+    BOOL hasName = cell.groupName.length > 0;
+    BOOL neon = [iTermAdvancedSettingsModel tabGroupNeonStyle];
+    const CGFloat effectiveHighlight = MAX(cell.highlightAmount, cell.isGroupActive ? 0.5 : 0.0);
+
+    const CGFloat hMargin = 10.0;
+    const CGFloat vMargin = 5.0;
+    const CGFloat cornerRadius = 4.0;
+
+    if (!hasName) {
+        const CGFloat dotDiameter = 16.0;
+        NSRect dotRect = NSMakeRect(NSMidX(cellFrame) - dotDiameter / 2.0,
+                                    NSMidY(cellFrame) - dotDiameter / 2.0,
+                                    dotDiameter, dotDiameter);
+        if (effectiveHighlight > 0.001) {
+            const CGFloat haloDiameter = dotDiameter + 8.0;
+            NSRect haloRect = NSMakeRect(NSMidX(cellFrame) - haloDiameter / 2.0,
+                                         NSMidY(cellFrame) - haloDiameter / 2.0,
+                                         haloDiameter, haloDiameter);
+            [[cell.groupColor colorWithAlphaComponent:effectiveHighlight * 0.3] set];
+            [[NSBezierPath bezierPathWithOvalInRect:haloRect] fill];
+        }
+        NSBezierPath *dot = [NSBezierPath bezierPathWithOvalInRect:dotRect];
+        if (neon) {
+            [[self groupGradientForColor:cell.groupColor] drawInBezierPath:dot angle:0.0];
+        } else {
+            [cell.groupColor set];
+            [dot fill];
+        }
+        return;
+    }
+
+    NSRect pillRect = NSMakeRect(cellFrame.origin.x + hMargin,
+                                 cellFrame.origin.y + vMargin,
+                                 cellFrame.size.width - hMargin * 2,
+                                 cellFrame.size.height - vMargin * 2);
+    NSBezierPath *outerPill = [NSBezierPath bezierPathWithRoundedRect:pillRect
+                                                             xRadius:cornerRadius
+                                                             yRadius:cornerRadius];
+
+    if (neon) {
+        NSGradient *gradient = [self groupGradientForColor:cell.groupColor];
+        const CGFloat borderWidth = 1.5;
+        NSRect innerRect = NSInsetRect(pillRect, borderWidth, borderWidth);
+        NSBezierPath *innerPill = [NSBezierPath bezierPathWithRoundedRect:innerRect
+                                                                 xRadius:MAX(cornerRadius - borderWidth, 0)
+                                                                 yRadius:MAX(cornerRadius - borderWidth, 0)];
+        CGContextRef ctx = [NSGraphicsContext currentContext].CGContext;
+
+        // Gradient border ring only (even-odd clip punches out the interior)
+        CGContextSaveGState(ctx);
+        CGContextAddPath(ctx, outerPill.CGPath);
+        CGContextAddPath(ctx, innerPill.CGPath);
+        CGContextEOClip(ctx);
+        [gradient drawInBezierPath:outerPill angle:0.0];
+        CGContextRestoreGState(ctx);
+
+        // Interior gradient fill fades in on hover/active
+        if (effectiveHighlight > 0.001) {
+            CGContextSaveGState(ctx);
+            CGContextSetAlpha(ctx, effectiveHighlight);
+            [gradient drawInBezierPath:innerPill angle:0.0];
+            CGContextRestoreGState(ctx);
+        }
+    } else {
+        // Flat: solid group colour, brightness-adaptive text
+        [cell.groupColor set];
+        [outerPill fill];
+
+        // Active state (a member tab is currently selected): persistent inner border
+        if (cell.isGroupActive) {
+            [[NSColor colorWithWhite:1.0 alpha:0.4] set];
+            [outerPill setLineWidth:1.5];
+            [outerPill stroke];
+        }
+
+        // Hover: dark overlay that fades in with mouse position
+        if (cell.highlightAmount > 0.001) {
+            [[NSColor colorWithWhite:0.0 alpha:cell.highlightAmount * 0.25] set];
+            [outerPill fill];
+        }
+    }
+
+    NSColor *srgb = [cell.groupColor colorUsingColorSpace:NSColorSpace.sRGBColorSpace];
+    CGFloat r, g, b, a;
+    [srgb getRed:&r green:&g blue:&b alpha:&a];
+    NSColor *textColor = neon ? [NSColor whiteColor]
+                               : ((0.299 * r + 0.587 * g + 0.114 * b) > 0.55
+                                  ? [NSColor colorWithWhite:0.1 alpha:1.0]
+                                  : [NSColor whiteColor]);
+
+    NSDictionary *nameAttrs = @{
+        NSFontAttributeName: [NSFont systemFontOfSize:self.fontSize weight:NSFontWeightSemibold],
+        NSForegroundColorAttributeName: textColor
+    };
+    NSSize nameSize = [cell.groupName sizeWithAttributes:nameAttrs];
+    [cell.groupName drawAtPoint:NSMakePoint(NSMidX(pillRect) - nameSize.width / 2.0,
+                                            NSMidY(pillRect) - nameSize.height / 2.0)
+                 withAttributes:nameAttrs];
+}
+
+- (void)drawGroupMemberSidebar:(PSMTabBarCell *)cell {
+    NSRect cellFrame = cell.frame;
+    const CGFloat borderHeight = 2.5;
+    NSRect borderRect = NSMakeRect(cellFrame.origin.x,
+                                   cellFrame.origin.y,
+                                   cellFrame.size.width,
+                                   borderHeight);
+    [cell.groupColor set];
+    NSRectFill(borderRect);
 }
 
 - (CGFloat)tabColorBrightness:(PSMTabBarCell *)cell {
@@ -1303,10 +1451,20 @@ const void *PSMTabStyleDarkColorKey = "dark";
         for (PSMTabBarCell *cell in [bar cells]) {
             if (![cell isInOverflowMenu] && NSIntersectsRect(NSInsetRect([cell frame], -1, -1), clipRect)) {
                 if (cell.state == stateToDraw) {
-                    [cell drawWithFrame:[cell frame] inView:bar];
+                    CGContextRef ctx = [NSGraphicsContext currentContext].CGContext;
+                    const NSRect drawFrame = cell.frame;
+                    [cell drawWithFrame:drawFrame inView:bar];
                     if ([self shouldDrawTopLineSelected:(stateToDraw == NSControlStateValueOn) attached:attachedToTitleBar position:bar.tabLocation]) {
                         [topLineColor set];
-                        NSRectFill(NSMakeRect(NSMinX(cell.frame), 0, NSWidth(cell.frame), 1));
+                        NSRectFill(NSMakeRect(NSMinX(drawFrame), 0, NSWidth(drawFrame), 1));
+                    }
+                    if (cell.isMultiSelected) {
+                        CGContextSaveGState(ctx);
+                        [[NSColor colorWithWhite:1.0 alpha:0.08] setFill];
+                        NSRectFillUsingOperation(drawFrame, NSCompositingOperationSourceOver);
+                        [[NSColor colorWithWhite:1.0 alpha:0.25] setFill];
+                        NSRectFillUsingOperation(NSMakeRect(NSMinX(drawFrame), NSMaxY(drawFrame) - 1.0, NSWidth(drawFrame), 1.0), NSCompositingOperationSourceOver);
+                        CGContextRestoreGState(ctx);
                     }
                     if (stateToDraw == NSControlStateValueOn) {
                         // Can quit early since only one can be selected

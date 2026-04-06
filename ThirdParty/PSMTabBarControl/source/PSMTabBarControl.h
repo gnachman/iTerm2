@@ -154,6 +154,11 @@ extern PSMTabBarControlOptionKey PSMTabBarControlOptionPUAFontProvider;  // id<P
 - (BOOL)tabViewShouldDragWindow:(NSTabView *)tabView event:(NSEvent *)event;
 - (BOOL)tabViewShouldAllowDragOnAddTabButton:(NSTabView *)tabView;
 - (CGFloat)tabViewDesiredTabBarHeight:(NSTabView *)tabView;
+- (void)tabView:(NSTabView *)tabView didClickGroupHeaderTabViewItem:(NSTabViewItem *)tabViewItem;
+- (void)tabView:(NSTabView *)tabView doubleClickGroupHeaderTabViewItem:(NSTabViewItem *)tabViewItem;
+- (void)tabView:(NSTabView *)tabView willBeginDraggingGroupHeaderTabViewItem:(NSTabViewItem *)tabViewItem;
+- (NSMenu *)tabView:(NSTabView *)tabView menuForGroupHeaderTabViewItem:(NSTabViewItem *)tabViewItem;
+- (void)tabView:(NSTabView *)tabView groupTabViewItems:(NSArray<NSTabViewItem *> *)tabViewItems;
 
 @end
 
@@ -224,10 +229,15 @@ typedef NS_ENUM(int, PSMTabPosition) {
 
 // tab information
 - (NSMutableArray *)representedTabViewItems;
+- (NSMutableArray<PSMTabBarCell *> *)cells;
 - (int)numberOfVisibleTabs;
 
 // special effects
 - (void)hideTabBar:(BOOL)hide animate:(BOOL)animate;
+- (void)updateAnimated;
+- (void)markNextInsertionsAsAnimated:(NSInteger)count;
+- (void)beginCollapseAnimationForTabViewItems:(NSArray<NSTabViewItem *> *)items completion:(void (^)(void))completion;
+- (void)cancelCollapseAnimation;
 - (BOOL)isTabBarHidden;
 
 // internal bindings methods also used by the tab drag assistant
@@ -239,6 +249,7 @@ typedef NS_ENUM(int, PSMTabPosition) {
 // Internal inset. Ensures nothing but background is drawn in this are.
 @property(nonatomic, assign) NSEdgeInsets insets;
 @property(nonatomic) CGFloat height;
+@property(nonatomic, assign) BOOL lastDragWasGroupHeader;
 
 - (void)setTabColor:(NSColor *)aColor forTabViewItem:(NSTabViewItem *) tabViewItem;
 - (NSColor*)tabColorForTabViewItem:(NSTabViewItem*)tabViewItem;
