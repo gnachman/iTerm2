@@ -57,6 +57,10 @@ isEqualToExternalAttribute:(iTermExternalAttribute * _Nullable)rhs;
 - (instancetype _Nullable)initWithDictionary:(NSDictionary *)dict;
 - (BOOL)isEqualToExternalAttribute:(iTermExternalAttribute *)rhs;
 - (NSData *)data;
+// Returns a copy with lineAttribute set. If the receiver is nil and attr is
+// non-singleWidth, creates a new minimal attribute.
+- (iTermExternalAttribute *)copyWithLineAttribute:(iTermLineAttribute)attr;
++ (iTermExternalAttribute * _Nullable)attributeWithLineAttribute:(iTermLineAttribute)attr;
 @end
 
 @protocol iTermExternalAttributeIndexReading<NSCopying, NSMutableCopying, NSObject>

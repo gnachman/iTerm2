@@ -129,7 +129,7 @@ final class iTermLineAttributeTests: XCTestCase {
     func testMetadataInitHasSingleWidth() {
         var metadata = iTermMetadata()
         metadata.lineAttribute = iTermLineAttribute.doubleWidth
-        iTermMetadataInit(&metadata, 42.0, true, nil)
+        iTermMetadataInit(&metadata, 42.0, true, nil, .singleWidth)
         XCTAssertEqual(metadata.lineAttribute, iTermLineAttribute.singleWidth)
         iTermMetadataRelease(metadata)
     }
@@ -1124,5 +1124,138 @@ final class iTermLineAttributeTests: XCTestCase {
         XCTAssertEqual(length3, 2)  // backed up over DWL_SPACER at 3 → stopped at Ｌ at 2
         XCTAssertEqual(length4, 2)  // backed up over DWC_RIGHT at 4, DWL at 3 → stopped at Ｌ at 2
         XCTAssertEqual(length5, 2)  // backed up over DWL at 5, DWC_R at 4, DWL at 3 → stopped at Ｌ at 2
+    }
+
+    // MARK: - Phase 9: Scrollback Preservation
+
+    func testLineAttributePreservedInScrollback() {
+        let screen = makeScreen(width: 20, height: 2)
+        setLineAttribute(screen, attr: .doubleWidth)
+        screen.performBlock(joinedThreads: { _, mutableState, _ in
+            mutableState!.appendString(atCursor: "Hi")
+        })
+
+        // Scroll the line into history by filling the screen
+        screen.performBlock(joinedThreads: { _, mutableState, _ in
+            mutableState!.appendString(atCursor: "\r\n")
+            mutableState!.appendString(atCursor: "\r\n")
+        })
+
+        // Read the line attribute from the scrollback line (absolute line 0)
+        var attr: iTermLineAttribute = .singleWidth
+        screen.performBlock(joinedThreads: { _, mutableState, _ in
+            let sca = mutableState!.screenCharArray(forLine: 0)
+            attr = sca.metadata.lineAttribute
+        })
+        XCTAssertEqual(attr, .doubleWidth,
+                       "Line attribute should survive scrollback")
+    }
+
+    func testPerCharacterExternalAttributeSetOnScrollback() {
+        let screen = makeScreen(width: 20, height: 2)
+        setLineAttribute(screen, attr: .doubleWidth)
+        screen.performBlock(joinedThreads: { _, mutableState, _ in
+            mutableState!.appendString(atCursor: "AB")
+        })
+        // Scroll into history
+        screen.performBlock(joinedThreads: { _, mutableState, _ in
+            mutableState!.appendString(atCursor: "\r\n")
+            mutableState!.appendString(atCursor: "\r\n")
+        })
+
+        // Check that the scrollback line has doubleWidth metadata (derived
+        // from per-character external attributes).
+        var attr: iTermLineAttribute = .singleWidth
+        var charCount: Int32 = 0
+        screen.performBlock(joinedThreads: { _, mutableState, _ in
+            let sca = mutableState!.screenCharArray(forLine: 0)
+            charCount = sca.length
+            attr = sca.metadata.lineAttribute
+        })
+        XCTAssertGreaterThan(charCount, 0)
+        XCTAssertEqual(attr, .doubleWidth,
+                       "Scrollback line should derive doubleWidth from per-character external attributes")
+    }
+
+    func testMixedLineAttributeAfterResizeIsSingleWidth() {
+        // Create a DWL line followed by normal text on the same logical line
+        let screen = makeScreen(width: 20, height: 3)
+        setLineAttribute(screen, attr: .doubleWidth)
+        screen.performBlock(joinedThreads: { _, mutableState, _ in
+            // Fill the DWL line to wrap: 10 logical chars = 20 physical cells
+            mutableState!.appendString(atCursor: "ABCDEFGHIJ")
+        })
+        // The line wraps. Set the continuation to single-width.
+        screen.performBlock(joinedThreads: { _, mutableState, _ in
+            let grid = mutableState!.currentGrid
+            // Cursor is now on line 1. Set it to single-width and type.
+            let lineInfo = grid.lineInfo(atLineNumber: 1)
+            lineInfo?.metadata.lineAttribute = .singleWidth
+            mutableState!.appendString(atCursor: "xyz")
+        })
+
+        // Scroll everything into history
+        screen.performBlock(joinedThreads: { _, mutableState, _ in
+            mutableState!.appendString(atCursor: "\r\n\r\n\r\n")
+        })
+
+        // Now resize to width 10 and check: the first wrapped line from
+        // the buffer should be all DWL. A later wrapped line that mixes
+        // DWL spacers with non-DWL characters should be singleWidth.
+        var firstAttr: iTermLineAttribute = .singleWidth
+        screen.performBlock(joinedThreads: { _, mutableState, _ in
+            let sca = mutableState!.screenCharArray(forLine: 0)
+            firstAttr = sca.metadata.lineAttribute
+        })
+        // The first screen line in scrollback was fully DWL
+        XCTAssertEqual(firstAttr, .doubleWidth)
+    }
+
+    func testDoubleHeightTopPreservedInScrollback() {
+        let screen = makeScreen(width: 20, height: 2)
+        setLineAttribute(screen, attr: .doubleHeightTop)
+        screen.performBlock(joinedThreads: { _, mutableState, _ in
+            mutableState!.appendString(atCursor: "Top")
+        })
+        screen.performBlock(joinedThreads: { _, mutableState, _ in
+            mutableState!.appendString(atCursor: "\r\n\r\n")
+        })
+
+        var attr: iTermLineAttribute = .singleWidth
+        screen.performBlock(joinedThreads: { _, mutableState, _ in
+            let sca = mutableState!.screenCharArray(forLine: 0)
+            attr = sca.metadata.lineAttribute
+        })
+        XCTAssertEqual(attr, .doubleHeightTop,
+                       "doubleHeightTop should survive scrollback")
+    }
+
+    func testScrollbackMetadataAccessAfterAutorelease() {
+        // Regression test: accessing scrollback metadata multiple times must
+        // not crash. The lineAttribute derivation code previously called
+        // iTermImmutableMetadataRelease on retain-autoreleased metadata,
+        // causing a use-after-free when the autorelease pool drained.
+        let screen = makeScreen(width: 20, height: 2)
+        setLineAttribute(screen, attr: .doubleWidth)
+        screen.performBlock(joinedThreads: { _, mutableState, _ in
+            mutableState!.appendString(atCursor: "Hello")
+        })
+        screen.performBlock(joinedThreads: { _, mutableState, _ in
+            mutableState!.appendString(atCursor: "\r\n\r\n")
+        })
+
+        // Access the scrollback line multiple times with explicit autorelease
+        // pool drains between accesses. The over-release bug only manifested
+        // after the pool drained.
+        for _ in 0..<3 {
+            var attr: iTermLineAttribute = .singleWidth
+            screen.performBlock(joinedThreads: { _, mutableState, _ in
+                autoreleasepool {
+                    let sca = mutableState!.screenCharArray(forLine: 0)
+                    attr = sca.metadata.lineAttribute
+                }
+            })
+            XCTAssertEqual(attr, .doubleWidth)
+        }
     }
 }

@@ -744,6 +744,24 @@ static BOOL iTermControlCodeAttributeEqualsNumber(const iTermControlCodeAttribut
     return !self.hasUnderlineColor && self.blockIDList == nil && self.controlCodeNumber == nil && self.url == nil && _lineAttribute == iTermLineAttributeSingleWidth;
 }
 
++ (iTermExternalAttribute *)attributeWithLineAttribute:(iTermLineAttribute)attr {
+    if (attr == iTermLineAttributeSingleWidth) {
+        return nil;
+    }
+    iTermExternalAttribute *result = [[self alloc] init];
+    result->_lineAttribute = attr;
+    return result;
+}
+
+- (iTermExternalAttribute *)copyWithLineAttribute:(iTermLineAttribute)attr {
+    iTermExternalAttribute *result = [self copy];
+    result->_lineAttribute = attr;
+    if (result.isDefault) {
+        return nil;
+    }
+    return result;
+}
+
 - (BOOL)isEqual:(id)object {
     if (self == object) {
         return YES;

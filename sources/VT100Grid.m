@@ -554,11 +554,21 @@ makeCursorLineSoft:(BOOL)makeCursorLineSoft {
                          self.cursor.y == i &&
                          self.cursor.x == [self lengthOfLineNumber:i]);
         }
+        VT100LineInfo *lineInfo = [self lineInfoAtLineNumber:i];
+        const iTermLineAttribute lineAttr = lineInfo.metadata.lineAttribute;
+        if (iTermLineAttributeIsDoubleWidth(lineAttr) && currentLineLength > 0) {
+            iTermExternalAttributeIndex *eaIndex =
+                [lineInfo externalAttributesCreatingIfNeeded:YES];
+            [eaIndex mutateAttributesFrom:0 to:currentLineLength - 1 block:^iTermExternalAttribute *(iTermExternalAttribute *old) {
+                return old ? [old copyWithLineAttribute:lineAttr]
+                           : [iTermExternalAttribute attributeWithLineAttribute:lineAttr];
+            }];
+        }
         [lineBuffer appendLine:line
                         length:currentLineLength
                        partial:isPartial
                          width:size_.width
-                      metadata:[[self lineInfoAtLineNumber:i] immutableMetadata]
+                      metadata:[lineInfo immutableMetadata]
                   continuation:line[size_.width]];
 #ifdef DEBUG_RESIZEDWIDTH
         NSLog(@"Appended a line. now have %d lines for width %d\n",
@@ -2750,11 +2760,29 @@ static const screen_char_t *VT100GridDefaultLine(VT100Grid *self, int width) {
     if (continuationMark == EOL_DWC && len == size_.width) {
         --len;
     }
+
+    VT100LineInfo *lineInfo = [self lineInfoAtLineNumber:0];
+
+    // For DWL/DHL lines, stamp the lineAttribute onto every character's
+    // external attribute. This preserves the double-width/height flag
+    // per-character so that after rewrapping at a different width, the
+    // lineAttribute can be derived for each wrapped line by checking
+    // whether all characters share the same attribute.
+    const iTermLineAttribute lineAttr = lineInfo.metadata.lineAttribute;
+    if (iTermLineAttributeIsDoubleWidth(lineAttr) && len > 0) {
+        iTermExternalAttributeIndex *eaIndex =
+            [lineInfo externalAttributesCreatingIfNeeded:YES];
+        [eaIndex mutateAttributesFrom:0 to:len - 1 block:^iTermExternalAttribute *(iTermExternalAttribute *old) {
+            return old ? [old copyWithLineAttribute:lineAttr]
+                       : [iTermExternalAttribute attributeWithLineAttribute:lineAttr];
+        }];
+    }
+
     [lineBuffer appendLine:line
                     length:len
                    partial:(continuationMark != EOL_HARD)
                      width:size_.width
-                  metadata:[[self lineInfoAtLineNumber:0] immutableMetadata]
+                  metadata:[lineInfo immutableMetadata]
               continuation:line[size_.width]];
     int dropped;
     if (!unlimitedScrollback) {

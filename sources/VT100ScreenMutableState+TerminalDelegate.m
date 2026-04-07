@@ -298,7 +298,8 @@ typedef struct {
     iTermImmutableMetadataInit(&metadata,
                                self.currentGrid.currentDate,
                                NO,
-                               ea ? [iTermUniformExternalAttributes withAttribute:ea] : nil);
+                               ea ? [iTermUniformExternalAttributes withAttribute:ea] : nil,
+                               iTermLineAttributeSingleWidth);
     [self.currentGrid setCursorWithoutInvalidatingDWCFreeLineCount:VT100GridCoordMake(0, 0)];
 
     const int lastTokenIndexToSendToLineBuffer = info.tokenCount;

@@ -51,12 +51,14 @@ NS_INLINE iTermImmutableMetadata iTermMetadataMakeImmutable(iTermMetadata obj) {
 void iTermMetadataInit(iTermMetadata *obj,
                        NSTimeInterval timestamp,
                        BOOL rtlFound,
-                       iTermExternalAttributeIndex * _Nullable externalAttributes);
+                       iTermExternalAttributeIndex * _Nullable externalAttributes,
+                       iTermLineAttribute lineAttribute);
 
 void iTermImmutableMetadataInit(iTermImmutableMetadata *obj,
                                 NSTimeInterval timestamp,
                                 BOOL rtlFound,
-                                id<iTermExternalAttributeIndexReading> _Nullable externalAttributes);
+                                id<iTermExternalAttributeIndexReading> _Nullable externalAttributes,
+                                iTermLineAttribute lineAttribute);
 
 iTermMetadata iTermMetadataTemporaryWithTimestamp(NSTimeInterval timestamp);
 iTermMetadata iTermMetadataCopy(iTermMetadata obj);

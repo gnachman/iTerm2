@@ -679,8 +679,8 @@ static NSString *const ScreenCharArrayKeyBidiInfo = @"bidi";
     iTermMetadataInit(&combined,
                       _metadata.timestamp,
                       other->_metadata.rtlFound,
-                      eaIndex);
-    combined.lineAttribute = _metadata.lineAttribute;
+                      eaIndex,
+                      _metadata.lineAttribute);
     ScreenCharArray *result = [[ScreenCharArray alloc] initWithLine:copy
                                                              length:combinedLength
                                                            metadata:iTermMetadataMakeImmutable(combined)

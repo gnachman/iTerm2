@@ -1098,7 +1098,7 @@ static const int64_t VT100ScreenMutableStateSideEffectFlagLineBufferDidDropLines
 
         if (self.config.publishing) {
             iTermImmutableMetadata temp;
-            iTermImmutableMetadataInit(&temp, 0, rtlFound, externalAttributes);
+            iTermImmutableMetadataInit(&temp, 0, rtlFound, externalAttributes, iTermLineAttributeSingleWidth);
 
             screen_char_t continuation = buffer[0];
             continuation.code = EOL_SOFT;
@@ -5895,7 +5895,7 @@ lengthExcludingInBandSignaling:data.length
     helper.delegate = self;
     [helper writeToGrid:self.currentGrid];
 }
-
+// TODO: Check what happens with tmux and double width chars
 - (void)setHistory:(TmuxHistory *)history {
     // This is way more complicated than it should be to work around something dumb in tmux.
     // It pads lines in its history with trailing spaces, which we'd like to trim. More importantly,
@@ -5910,7 +5910,7 @@ lengthExcludingInBandSignaling:data.length
     NSTimeInterval now = [NSDate timeIntervalSinceReferenceDate];
     // TODO(externalAttributes): Add support for external attributes here. This is only used by tmux at the moment.
     iTermMetadata metadata;
-    iTermMetadataInit(&metadata, now, NO, nil);
+    iTermMetadataInit(&metadata, now, NO, nil, iTermLineAttributeSingleWidth);
     for (NSData *chars in history.data) {
         screen_char_t *line = (screen_char_t *) [chars bytes];
         const int len = [chars length] / sizeof(screen_char_t);

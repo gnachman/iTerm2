@@ -158,7 +158,8 @@ class iTermLineString: NSObject, iTermLineStringReading {
         iTermImmutableMetadataInit(&_externalMetadata!,
                                    metadata.timestamp,
                                    metadata.rtlFound.boolValue,
-                                   content.externalAttributesIndex() as? iTermExternalAttributeIndex)
+                                   content.externalAttributesIndex() as? iTermExternalAttributeIndex,
+                                   .singleWidth)
         return _externalMetadata!
     }
 
@@ -286,7 +287,8 @@ class iTermMutableLineString: NSObject, iTermLineStringReading {
         iTermMetadataInit(&_externalMetadata!,
                           timestamp,
                           rtlFound,
-                          content.externalAttributesIndex() as? iTermExternalAttributeIndex)
+                          content.externalAttributesIndex() as? iTermExternalAttributeIndex,
+                          .singleWidth)
         return _externalMetadata!
     }
 

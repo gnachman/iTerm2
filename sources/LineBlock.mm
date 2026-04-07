@@ -1417,7 +1417,32 @@ int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BO
                                               bidiInfo:&bidiInfo
                                             lineOffset:NULL];
 
-    ;
+    // Derive lineAttribute from per-character external attributes.
+    // If all characters have the same non-singleWidth lineAttribute, use it.
+    // Optimized: no external attributes → singleWidth (the common case).
+    // Any singleWidth character makes the whole line singleWidth.
+    // Note: metadata is a struct (value type) so we can modify our local
+    // copy's lineAttribute without affecting the LineBlockMetadataArray.
+    id<iTermExternalAttributeIndexReading> eaIndex =
+        iTermImmutableMetadataGetExternalAttributesIndex(metadata);
+    if (eaIndex && !eaIndex.isEmpty && length > 0) {
+        iTermExternalAttribute *firstEA = eaIndex.attributes[@0];
+        const iTermLineAttribute firstAttr = firstEA ? firstEA.lineAttribute : iTermLineAttributeSingleWidth;
+        if (firstAttr != iTermLineAttributeSingleWidth) {
+            BOOL allSame = YES;
+            for (int i = 1; i < length && allSame; i++) {
+                iTermExternalAttribute *ea = eaIndex.attributes[@(i)];
+                iTermLineAttribute charAttr = ea ? ea.lineAttribute : iTermLineAttributeSingleWidth;
+                if (charAttr != firstAttr) {
+                    allSame = NO;
+                }
+            }
+            if (allSame) {
+                ((iTermMetadata *)&metadata)->lineAttribute = firstAttr;
+            }
+        }
+    }
+
     ScreenCharArray *sca = [[ScreenCharArray alloc] initWithLine:chunk + offset
                                                           length:length
                                                         metadata:metadata

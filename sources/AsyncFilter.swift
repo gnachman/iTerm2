@@ -571,7 +571,7 @@ extension AsyncFilter: ContentSubscriber {
         }
         timerFired()
     }
-
+// TODO: Check what happens with double width charas
     private func appendToLineBuffer(_ array: ScreenCharArray, metadata: iTermImmutableMetadata) {
         lineBufferCopy.appendLine(array.line,
                                   length: array.length,

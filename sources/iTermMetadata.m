@@ -12,26 +12,29 @@
 void iTermMetadataInit(iTermMetadata *obj,
                        NSTimeInterval timestamp,
                        BOOL rtlFound,
-                       iTermExternalAttributeIndex *externalAttributes) {
+                       iTermExternalAttributeIndex *externalAttributes,
+                       iTermLineAttribute lineAttribute) {
     obj->timestamp = timestamp;
     obj->rtlFound = rtlFound;
-    obj->lineAttribute = iTermLineAttributeSingleWidth;
+    obj->lineAttribute = lineAttribute;
     obj->externalAttributes = [(id)externalAttributes retain];
 }
 
 void iTermImmutableMetadataInit(iTermImmutableMetadata *obj,
                                 NSTimeInterval timestamp,
                                 BOOL rtlFound,
-                                id<iTermExternalAttributeIndexReading> _Nullable externalAttributes) {
+                                id<iTermExternalAttributeIndexReading> _Nullable externalAttributes,
+                                iTermLineAttribute lineAttribute) {
     iTermMetadataInit((iTermMetadata *)obj,
                       timestamp,
                       rtlFound,
-                      (iTermExternalAttributeIndex *)externalAttributes);
+                      (iTermExternalAttributeIndex *)externalAttributes,
+                      lineAttribute);
 }
 
 iTermMetadata iTermMetadataTemporaryWithTimestamp(NSTimeInterval timestamp) {
     iTermMetadata result;
-    iTermMetadataInit(&result, timestamp, NO, nil);
+    iTermMetadataInit(&result, timestamp, NO, nil, iTermLineAttributeSingleWidth);
     iTermMetadataAutorelease(result);
     return result;
 }
@@ -137,23 +140,25 @@ iTermExternalAttributeIndex *iTermMetadataGetExternalAttributesIndexCreatingIfNe
 
 void iTermMetadataInitFromArray(iTermMetadata *obj, NSArray *array) {
     if (array.count < 2) {
-        iTermMetadataInit(obj, 0, NO, nil);
+        iTermMetadataInit(obj, 0, NO, nil, iTermLineAttributeSingleWidth);
         return;
     }
+    const iTermLineAttribute lineAttr = (array.count >= 4)
+        ? (iTermLineAttribute)[array[3] unsignedCharValue]
+        : iTermLineAttributeSingleWidth;
     if (array.count < 3) {
         iTermMetadataInit(obj,
                           [array[0] doubleValue],
                           NO,
-                          [[[iTermExternalAttributeIndex alloc] initWithDictionary:array[1]] autorelease]);
+                          [[[iTermExternalAttributeIndex alloc] initWithDictionary:array[1]] autorelease],
+                          lineAttr);
         return;
     }
     iTermMetadataInit(obj,
                       [array[0] doubleValue],
                       [array[2] boolValue],
-                      [[[iTermExternalAttributeIndex alloc] initWithDictionary:array[1]] autorelease]);
-    if (array.count >= 4) {
-        obj->lineAttribute = (iTermLineAttribute)[array[3] unsignedCharValue];
-    }
+                      [[[iTermExternalAttributeIndex alloc] initWithDictionary:array[1]] autorelease],
+                      lineAttr);
 }
 
 void iTermMetadataAppend(iTermMetadata *lhs,
@@ -186,8 +191,7 @@ void iTermMetadataInitByConcatenation(iTermMetadata *obj,
                                               length:lhsLength
                                                 with:iTermMetadataGetExternalAttributesIndex(*rhs)
                                           length:rhsLength];
-    iTermMetadataInit(obj, rhs->timestamp, lhs->rtlFound || rhs->rtlFound, eaIndex);
-    obj->lineAttribute = lhs->lineAttribute;
+    iTermMetadataInit(obj, rhs->timestamp, lhs->rtlFound || rhs->rtlFound, eaIndex, lhs->lineAttribute);
 }
 
 void iTermMetadataInitCopyingSubrange(iTermMetadata *obj,
@@ -199,8 +203,8 @@ void iTermMetadataInitCopyingSubrange(iTermMetadata *obj,
     iTermMetadataInit(obj,
                       source->timestamp,
                       source->rtlFound,
-                      eaIndex);
-    obj->lineAttribute = source->lineAttribute;
+                      eaIndex,
+                      source->lineAttribute);
 }
 
 iTermMetadata iTermMetadataDefault(void) {
