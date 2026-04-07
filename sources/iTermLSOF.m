@@ -41,6 +41,10 @@
     return [iTermLSOF commandLineArgumentsForProcess:pid execName:execName];
 }
 
+- (NSArray<NSString *> *)displayCommandLineArgumentsForProcess:(pid_t)pid execName:(NSString *__autoreleasing *)execName {
+    return [iTermLSOF displayCommandLineArgumentsForProcess:pid execName:execName];
+}
+
 - (NSString *)nameOfProcessWithPid:(pid_t)thePid isForeground:(BOOL *)isForeground {
     return [iTermLSOF nameOfProcessWithPid:thePid isForeground:isForeground];
 }
@@ -96,6 +100,10 @@
     return [argv componentsJoinedByString:@" "];
 }
 
++ (NSArray<NSString *> *)displayCommandLineArgumentsForProcess:(pid_t)pid execName:(NSString **)execName {
+    return [self rawCommandLineArgumentsForProcess:pid execName:execName];
+}
+
 + (NSString *)displayCommandForProcess:(pid_t)pid execName:(NSString **)execName {
     NSArray<NSString *> *argv = [self rawCommandLineArgumentsForProcess:pid execName:execName];
     if (!argv) {
@@ -111,15 +119,19 @@
         return nil;
     }
 
+    // Consume argc
     size_t offset = 0;
     int nargs;
     memmove(&nargs, procargs + offset, sizeof(int));
     offset += sizeof(int);
 
+    // Skip exec_path
     char *exec_path = procargs + offset;
     while (offset < argmax && procargs[offset] != 0) {
         ++offset;
     }
+
+    // Skip trailing nulls
     while (offset < argmax && procargs[offset] == 0) {
         ++offset;
     }
@@ -130,6 +142,7 @@
         *execName = [NSString stringWithUTF8String:exec_path];
     }
 
+    // Pull out null terminated argv components
     NSMutableArray<NSString *> *argv = [NSMutableArray array];
     char *start = procargs + offset;
     int argsConsumed = 0;

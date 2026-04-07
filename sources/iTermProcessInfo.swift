@@ -218,7 +218,7 @@ class iTermProcessInfo: NSObject {
             DLog("Making expensive values for \(processID). fg=\(fg) parent.name=\(parent?.name ?? "(nil)")")
             if fg.boolValue || parent?.name == "login" || parent == nil {
                 // Full command line with hacked command name
-                let argv = dataSource.commandLineArguments(forProcess: processID, execName: nil)
+                let argv = dataSource.displayCommandLineArguments(forProcess: processID, execName: nil)
                 DLog("argv=\(argv?.joined(separator: " ") ?? "(nil)")")
                 commandLineValue = argv?.joined(separator: " ")
                 if let argv0 = argv?.first, !argv0.isEmpty {
