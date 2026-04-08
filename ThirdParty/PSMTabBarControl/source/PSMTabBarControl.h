@@ -174,6 +174,8 @@ typedef NS_ENUM(int, PSMTabPosition) {
     PSMTab_LeftTab = 2,
 };
 
+extern const CGFloat PSMTabBarProgressBarHeight;
+
 // This view provides a control interface to manage a regular NSTabView.  It looks and works like
 // the tabbed browsing interface of many popular browsers.
 @interface PSMTabBarControl : NSControl<
@@ -256,6 +258,9 @@ typedef NS_ENUM(int, PSMTabPosition) {
 
 - (void)setIsProcessing:(BOOL)isProcessing forTabWithIdentifier:(id)identifier;
 - (void)setProgress:(PSMProgress)progress forTabWithIdentifier:(id)identifier;
+- (BOOL)shouldShowCustomProgressBarForTabCell:(PSMTabBarCell *)cell;
+- (nullable NSView *)customProgressBarViewForTabCell:(PSMTabBarCell *)cell;
+- (void)configureCustomProgressBarView:(NSView *)view forTabCell:(PSMTabBarCell *)cell;
 - (void)setIcon:(NSImage *)icon forTabWithIdentifier:(id)identifier;
 - (void)setObjectCount:(NSInteger)objectCount forTabWithIdentifier:(id)identifier;
 - (void)graphicDidChangeForTabWithIdentifier:(id)identifier;

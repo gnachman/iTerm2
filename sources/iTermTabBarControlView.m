@@ -29,26 +29,17 @@ typedef NS_ENUM(NSInteger, iTermTabBarFlashState) {
     kFlashFadingOut,
 };
 
-@interface PSMTabBarControl (iTermTabBarControlViewPrivate)
-- (NSMutableArray<PSMTabBarCell *> *)cells;
-- (void)update:(BOOL)animate;
-@end
-
 @interface iTermTabBarControlView ()
 @property(nonatomic, assign) iTermTabBarFlashState flashState;
 @end
 
 @implementation iTermTabBarControlView {
     iTermDelayedPerform *_flashDelayedPerform;  // weak
-    NSMutableDictionary<NSValue *, iTermProgressBarView *> *_tabProgressBars;
 }
-
-static const CGFloat iTermTabProgressBarHeight = 2;
 
 - (instancetype)initWithFrame:(NSRect)frameRect {
     self = [super initWithFrame:frameRect];
     if (self) {
-        _tabProgressBars = [[NSMutableDictionary alloc] init];
         [self setTabsHaveCloseButtons:[iTermPreferences boolForKey:kPreferenceKeyTabsHaveCloseButton]];
         self.minimumTabDragDistance = [iTermAdvancedSettingsModel minimumTabDragDistance];
         // This used to depend on job but it's too difficult to do now that different sessions might
@@ -67,19 +58,6 @@ static const CGFloat iTermTabProgressBarHeight = 2;
         self.selectsTabsOnMouseDown = [iTermAdvancedSettingsModel selectsTabsOnMouseDown];
     }
     return self;
-}
-
-- (void)dealloc {
-    for (iTermProgressBarView *progressBar in _tabProgressBars.allValues) {
-        [progressBar removeFromSuperview];
-    }
-    [_tabProgressBars release];
-    [super dealloc];
-}
-
-- (void)drawRect:(NSRect)dirtyRect {
-    [super drawRect:dirtyRect];
-    [self syncTabProgressBars];
 }
 
 - (void)setCmdPressed:(BOOL)cmdPressed {
@@ -295,34 +273,9 @@ static const CGFloat iTermTabProgressBarHeight = 2;
         self.height = tabBarHeight;
     }
     self.showAddTabButton = ![iTermAdvancedSettingsModel removeAddTabButton] && (orientation == PSMTabBarHorizontalOrientation);
-    [self syncTabProgressBars];
-}
-
-- (void)update:(BOOL)animate {
-    [super update:animate];
-    [self syncTabProgressBars];
-}
-
-- (void)setProgress:(PSMProgress)progress forTabWithIdentifier:(id)identifier {
-    [super setProgress:progress forTabWithIdentifier:identifier];
-    [self syncTabProgressBars];
-}
-
-- (void)removeTabForCell:(PSMTabBarCell *)cell {
-    [self removeProgressBarForCell:cell];
-    [super removeTabForCell:cell];
-}
-
-- (void)removeCell:(PSMTabBarCell *)cell {
-    [self removeProgressBarForCell:cell];
-    [super removeCell:cell];
 }
 
 #pragma mark - Private
-
-- (NSValue *)progressBarKeyForCell:(PSMTabBarCell *)cell {
-    return [NSValue valueWithNonretainedObject:cell];
-}
 
 - (BOOL)cellAllowsTabProgressBar:(PSMTabBarCell *)cell {
     NSTabViewItem *item = (NSTabViewItem *)cell.representedObject;
@@ -365,58 +318,22 @@ static const CGFloat iTermTabProgressBarHeight = 2;
     return tab.activeSession.view.progressBarColorScheme ?: iTermProgressBarColorSchemeDefault;
 }
 
-- (NSRect)frameForProgressBarInCell:(PSMTabBarCell *)cell {
-    return NSMakeRect(cell.frame.origin.x,
-                      cell.frame.origin.y,
-                      cell.frame.size.width,
-                      iTermTabProgressBarHeight);
+- (BOOL)shouldShowCustomProgressBarForTabCell:(PSMTabBarCell *)cell {
+    return [self cellShouldShowTabProgressBar:cell];
 }
 
-- (void)removeProgressBarForCell:(PSMTabBarCell *)cell {
-    NSValue *key = [self progressBarKeyForCell:cell];
-    iTermProgressBarView *progressBar = _tabProgressBars[key];
-    if (!progressBar) {
-        return;
-    }
-    [progressBar removeFromSuperview];
-    [_tabProgressBars removeObjectForKey:key];
+- (NSView *)customProgressBarViewForTabCell:(PSMTabBarCell *)cell {
+    iTermProgressBarView *progressBar = [[[iTermProgressBarView alloc] init] autorelease];
+    progressBar.heightValue = PSMTabBarProgressBarHeight;
+    return progressBar;
 }
 
-- (void)syncTabProgressBars {
-    NSMutableSet<NSValue *> *visibleKeys = [NSMutableSet set];
-    for (PSMTabBarCell *cell in self.cells) {
-        if (![self cellShouldShowTabProgressBar:cell]) {
-            [self removeProgressBarForCell:cell];
-            continue;
-        }
-        NSValue *key = [self progressBarKeyForCell:cell];
-        [visibleKeys addObject:key];
-        iTermProgressBarView *progressBar = _tabProgressBars[key];
-        if (!progressBar) {
-            progressBar = [[[iTermProgressBarView alloc] init] autorelease];
-            progressBar.heightValue = iTermTabProgressBarHeight;
-            _tabProgressBars[key] = progressBar;
-        }
-        progressBar.darkMode = self.style.useLightControls;
-        progressBar.colorScheme = [self tabProgressBarColorSchemeForCell:cell];
-        progressBar.state = (VT100ScreenProgress)cell.progress;
-        progressBar.frame = [self frameForProgressBarInCell:cell];
-        progressBar.hidden = NO;
-        if (progressBar.superview != self) {
-            [self addSubview:progressBar];
-        }
-        cell.indicator.hidden = YES;
-        cell.indicator.animate = NO;
-        [cell.indicator removeFromSuperview];
-    }
-
-    for (NSValue *key in [_tabProgressBars allKeys]) {
-        if (![visibleKeys containsObject:key]) {
-            iTermProgressBarView *progressBar = _tabProgressBars[key];
-            [progressBar removeFromSuperview];
-            [_tabProgressBars removeObjectForKey:key];
-        }
-    }
+- (void)configureCustomProgressBarView:(NSView *)view forTabCell:(PSMTabBarCell *)cell {
+    iTermProgressBarView *progressBar = (iTermProgressBarView *)view;
+    progressBar.heightValue = PSMTabBarProgressBarHeight;
+    progressBar.darkMode = self.style.useLightControls;
+    progressBar.colorScheme = [self tabProgressBarColorSchemeForCell:cell];
+    progressBar.state = (VT100ScreenProgress)cell.progress;
 }
 
 - (void)setFlashState:(iTermTabBarFlashState)flashState {

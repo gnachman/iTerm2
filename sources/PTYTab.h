@@ -66,6 +66,7 @@ extern NSString *const PTYTabArrangementOptionsPendingJumps;
 @property(nonatomic, retain) NSImage *icon;
 // Aggregated tab status from all sessions (highest-priority wins)
 @property(nonatomic, readonly) iTermSessionTabStatus *aggregatedTabStatus;
+@property(nonatomic, readonly) VT100ScreenProgress progress;
 
 // Size we should report to fit the current layout
 @property(nonatomic, readonly) NSSize tmuxSize;

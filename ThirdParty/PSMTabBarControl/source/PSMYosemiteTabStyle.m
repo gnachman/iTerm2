@@ -262,6 +262,14 @@
     return result;
 }
 
+- (NSRect)progressBarRectForTabCell:(PSMTabBarCell *)cell {
+    NSRect cellFrame = [cell frame];
+    return NSMakeRect(cellFrame.origin.x,
+                      cellFrame.origin.y,
+                      cellFrame.size.width,
+                      PSMTabBarProgressBarHeight);
+}
+
 - (NSRect)adjustedCellRect:(NSRect)rect generic:(NSRect)generic {
     return rect;
 }

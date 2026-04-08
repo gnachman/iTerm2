@@ -7283,10 +7283,34 @@ backgroundColor:(NSColor *)backgroundColor {
     [self.delegate tabProcessInfoProviderDidChange:self];
 }
 
-- (void)session:(PTYSession *)session progressDidChange:(VT100ScreenProgress)progress {
-    if (session == self.activeSession) {
-        [self.delegate tab:self progressDidChange:progress];
+static BOOL iTermTabProgressIsVisible(VT100ScreenProgress progress) {
+    if (progress == VT100ScreenProgressError || progress == VT100ScreenProgressIndeterminate) {
+        return YES;
     }
+    return ((progress >= VT100ScreenProgressSuccessBase && progress <= VT100ScreenProgressSuccessBase + 100) ||
+            (progress >= VT100ScreenProgressErrorBase && progress <= VT100ScreenProgressErrorBase + 100) ||
+            (progress >= VT100ScreenProgressWarningBase && progress <= VT100ScreenProgressWarningBase + 100));
+}
+
+- (VT100ScreenProgress)progress {
+    const VT100ScreenProgress activeProgress = self.activeSession.screen.progress;
+    if (iTermTabProgressIsVisible(activeProgress)) {
+        return activeProgress;
+    }
+    for (PTYSession *session in self.sessions) {
+        if (session == self.activeSession) {
+            continue;
+        }
+        const VT100ScreenProgress progress = session.screen.progress;
+        if (iTermTabProgressIsVisible(progress)) {
+            return progress;
+        }
+    }
+    return VT100ScreenProgressStopped;
+}
+
+- (void)session:(PTYSession *)session progressDidChange:(VT100ScreenProgress)progress {
+    [self.delegate tab:self progressDidChange:self.progress];
 }
 
 - (NSScriptObjectSpecifier *)objectSpecifier { 

@@ -6309,6 +6309,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
         DLog(@"tab bar should NOT be accessory, but is on loan.");
         [self returnTabBarToContentView];
     }
+    [self updateSessionProgressBarVisibility];
     DLog(@"Tab bar state after updateTabBarControlIsTitlebarAccessory: hidden=%@ alpha=%@ frame=%@",
          @(_contentView.tabBarControl.isHidden),
          @(_contentView.tabBarControl.alphaValue),
@@ -7759,7 +7760,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
 - (void)tabView:(NSTabView *)tabView updateStateForTabViewItem:(NSTabViewItem *)tabViewItem {
     PTYTab *tab = tabViewItem.identifier;
     [_contentView.tabBarControl setIsProcessing:tab.isProcessing forTabWithIdentifier:tab];
-    [_contentView.tabBarControl setProgress:(PSMProgress)tab.activeSession.screen.progress
+    [_contentView.tabBarControl setProgress:(PSMProgress)tab.progress
                        forTabWithIdentifier:tab];
     [_contentView.tabBarControl setIcon:tab.icon forTabWithIdentifier:tab];
     [_contentView.tabBarControl setObjectCount:tab.objectCount forTabWithIdentifier:tab];
@@ -7793,16 +7794,34 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     [_contentView updateTitleAndBorderViews];
 }
 
+- (BOOL)tabBarProvidesProgressVisibility {
+    if (togglingLionFullScreen_ || self.lionFullScreen) {
+        return self.shouldShowPermanentFullScreenTabBar;
+    }
+    return self.tabBarShouldBeVisible;
+}
+
+- (BOOL)shouldShowInlineProgressBarForSession:(PTYSession *)session tabBarVisible:(BOOL)tabBarVisible {
+    PTYTab *tab = [self tabForSession:session];
+    if (!tab) {
+        return YES;
+    }
+    const BOOL hasSingleTab = (self.numberOfTabs == 1);
+    const BOOL hasSplitPanes = (tab.sessions.count > 1);
+    return (hasSingleTab || hasSplitPanes || !tabBarVisible);
+}
+
 - (void)updateSessionProgressBarVisibility {
-    const BOOL showInlineProgressBar = (self.numberOfTabs == 1);
+    const BOOL tabBarVisible = [self tabBarProvidesProgressVisibility];
     for (PTYSession *session in self.allSessions) {
-        session.view.showInlineProgressBar = showInlineProgressBar;
+        session.view.showInlineProgressBar = [self shouldShowInlineProgressBarForSession:session
+                                                                           tabBarVisible:tabBarVisible];
     }
 }
 
 - (void)updateTabProgress {
     for (PTYTab *tab in [self tabs]) {
-        [_contentView.tabBarControl setProgress:(PSMProgress)tab.activeSession.screen.progress
+        [_contentView.tabBarControl setProgress:(PSMProgress)tab.progress
                            forTabWithIdentifier:tab];
     }
 }
@@ -13015,6 +13034,7 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
 }
 
 - (void)numberOfSessionsDidChangeInTab:(PTYTab *)tab {
+    [self updateSessionProgressBarVisibility];
     if (tab == self.currentTab) {
         [self updateUseTransparency];
     }

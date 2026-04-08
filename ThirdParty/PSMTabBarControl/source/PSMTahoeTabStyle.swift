@@ -413,6 +413,31 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
         frame.size.height = generic.height - 1
         return frame
     }
+
+    private func backgroundRect(for cellFrame: NSRect) -> NSRect {
+        var rect = cellFrame
+        rect.origin.y += 2
+        rect.size.height -= 3
+        return rect
+    }
+
+    @objc func progressBarRect(forTabCell cell: PSMTabBarCell) -> NSRect {
+        let cellFrame = cell.frame
+        guard _orientation == .horizontalOrientation, cell.state == .on else {
+            return NSRect(x: cellFrame.origin.x,
+                          y: cellFrame.origin.y,
+                          width: cellFrame.size.width,
+                          height: PSMTabBarProgressBarHeight)
+        }
+
+        let pillRect = backgroundRect(for: cellFrame)
+        let horizontalInset = CGFloat(4)
+        let verticalInset = CGFloat(1)
+        return NSRect(x: pillRect.origin.x + horizontalInset,
+                      y: pillRect.maxY - PSMTabBarProgressBarHeight - verticalInset,
+                      width: max(CGFloat(0), pillRect.size.width - horizontalInset * 2),
+                      height: PSMTabBarProgressBarHeight)
+    }
     
     // MARK: - Drawing
     
@@ -789,9 +814,7 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
         backgroundColorSelected(selected, highlightAmount: isHighlighted ? 1.0 : 0.0).set()
         
         let radius = barRadius - 2.5
-        var rect = cellFrame
-        rect.origin.y += 2
-        rect.size.height -= 3
+        let rect = backgroundRect(for: cellFrame)
         let path = NSBezierPath(roundedRect: rect, xRadius: radius, yRadius: radius)
         path.fill()
         if selected {
