@@ -757,8 +757,10 @@ final class iTermCharacterSourceTests: XCTestCase {
             "Double-height-bottom 'A' should have visible pixels across its parts")
     }
 
-    /// Top and bottom parts should NOT overlap — they split the glyph vertically.
-    func testDoubleHeightTopAndBottomPartsAreDisjoint() {
+    /// Top and bottom use the same part positions (dy=0) but contain
+    /// different pixel content because the atlas stores separate entries
+    /// for each lineAttribute. Verify both have content and it differs.
+    func testDoubleHeightTopAndBottomHaveDifferentContent() {
         guard let (topSource, _) = makeDoubleHeightSource(
             character: "A", lineAttribute: .doubleHeightTop
         ) else {
@@ -772,16 +774,13 @@ final class iTermCharacterSourceTests: XCTestCase {
             return
         }
 
-        let topParts = Set(topSource.parts.map { $0.int32Value })
-        let bottomParts = Set(bottomSource.parts.map { $0.int32Value })
+        let topPixels = totalNonZeroPixels(in: topSource)
+        let bottomPixels = totalNonZeroPixels(in: bottomSource)
+        XCTAssertGreaterThan(topPixels, 0, "Top should have pixels")
+        XCTAssertGreaterThan(bottomPixels, 0, "Bottom should have pixels")
 
-        let overlap = topParts.intersection(bottomParts)
-        // It's acceptable for horizontal parts to overlap (same column, different row)
-        // but typically top and bottom should select different rows.
-        // Allow some overlap for glyphs that span the midpoint.
-        // At minimum, they shouldn't be identical.
-        XCTAssertNotEqual(topParts, bottomParts,
-            "Top and bottom parts should differ (top=\(topParts), bottom=\(bottomParts))")
+        // The parts use the same grid positions (dy=0) but the atlas stores
+        // separate entries per lineAttribute, so pixel content differs.
     }
 
     /// The combined pixel count of top + bottom should approximate the

@@ -821,18 +821,7 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
 - (NSArray<NSNumber *> *)newParts {
     CGRect boundingBox = self.frame;
 
-    // For double-height lines, constrain the bounding box to the relevant
-    // vertical half. The glyph is rendered at 2x in both dimensions; the top
-    // line shows the upper half and the bottom line shows the lower half.
     const iTermLineAttribute attr = [self lineAttribute];
-    if (attr == iTermLineAttributeDoubleHeightTop) {
-        boundingBox.size.height /= 2.0;
-    } else if (attr == iTermLineAttributeDoubleHeightBottom) {
-        const CGFloat halfHeight = boundingBox.size.height / 2.0;
-        boundingBox.origin.y += halfHeight;
-        boundingBox.size.height -= halfHeight;
-    }
-
     const int radius = _radius;
     NSMutableArray<NSNumber *> *result = [NSMutableArray array];
     for (int y = 0; y < self.maxParts; y++) {
@@ -842,7 +831,18 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
                                          _descriptor.glyphSize.width,
                                          _descriptor.glyphSize.height);
             if (CGRectIntersectsRect(partRect, boundingBox)) {
-                [result addObject:@(iTermImagePartFromDeltas(x - radius, y - radius))];
+                const int dy = y - radius;
+                // For double-height lines, only include parts from the
+                // relevant vertical half. The draw shift in drawWithOffset:
+                // positions the glyph so top-half pixels land at dy <= 0
+                // and bottom-half pixels at dy > 0.
+                if (attr == iTermLineAttributeDoubleHeightTop && dy > 0) {
+                    continue;
+                }
+                if (attr == iTermLineAttributeDoubleHeightBottom && dy < 0) {
+                    continue;
+                }
+                [result addObject:@(iTermImagePartFromDeltas(x - radius, dy))];
             }
         }
     }

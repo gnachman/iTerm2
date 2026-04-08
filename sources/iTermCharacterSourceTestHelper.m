@@ -15,11 +15,14 @@
 + (iTermCharacterSourceDescriptor *)descriptorWithFontTable:(iTermFontTable *)fontTable
                                                       scale:(CGFloat)scale
                                                   glyphSize:(CGSize)glyphSize {
+    // cellSize is in points (matching production), glyphSize is in pixels.
+    const CGSize cellSize = CGSizeMake(glyphSize.width / scale,
+                                       glyphSize.height / scale);
     return [iTermCharacterSourceDescriptor characterSourceDescriptorWithFontTable:fontTable
                                                                        asciiOffset:CGSizeZero
                                                                          glyphSize:glyphSize
-                                                                          cellSize:glyphSize
-                                                            cellSizeWithoutSpacing:glyphSize
+                                                                          cellSize:cellSize
+                                                            cellSizeWithoutSpacing:cellSize
                                                                              scale:scale
                                                                        useBoldFont:NO
                                                                      useItalicFont:NO
