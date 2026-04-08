@@ -18349,6 +18349,23 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
 - (void)automaticProfileSwitcherLoadProfile:(iTermSavedProfile *)savedProfile {
     Profile *underlyingProfile = [[ProfileModel sharedInstance] bookmarkWithGuid:savedProfile.originalProfile[KEY_GUID]];
     Profile *replacementProfile = underlyingProfile ?: savedProfile.originalProfile;
+
+    // Compute the font zoom delta before switching profiles so we can preserve it.
+    // The zoom delta is the difference between the current font size and the
+    // profile\u2019s base font size.
+    CGFloat fontZoomDelta = 0;
+    NSRect savedWindowFrame = NSZeroRect;
+    NSWindow *window = [[_delegate realParentWindow] window];
+    if ([iTermAdvancedSettingsModel preserveFontSizeOnAutomaticProfileSwitch]) {
+        iTermFontTable *originalFontTable = [iTermFontTable fontTableForProfile:_originalProfile];
+        CGFloat currentPointSize = _textview.fontTable.asciiFont.font.pointSize;
+        CGFloat originalPointSize = originalFontTable.asciiFont.font.pointSize;
+        fontZoomDelta = currentPointSize - originalPointSize;
+        if (fontZoomDelta != 0 && window) {
+            savedWindowFrame = window.frame;
+        }
+    }
+
     if (![self setProfile:replacementProfile preservingName:NO adjustWindow:NO]) {
         [_view showUnobtrusiveMessage:[NSString stringWithFormat:@"Can’t switch to profile “%@”—wrong profile type.", underlyingProfile[KEY_NAME]]];
         return;
@@ -18361,8 +18378,29 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
             }
             overrides[key] = savedProfile.profile[key];
         }
+        _windowAdjustmentDisabled = YES;
         [self setSessionSpecificProfileValues:overrides];
+        _windowAdjustmentDisabled = NO;
     }
+
+    // Re-apply the font zoom delta after the profile switch, but only when
+    // switching to a new profile. When restoring a divorced profile from the
+    // stack, the saved overrides already include the zoomed font.
+    if (fontZoomDelta != 0 && !savedProfile.isDivorced) {
+        _windowAdjustmentDisabled = YES;
+        iTermFontTable *zoomedTable = [_textview.fontTable fontTableGrownBy:fontZoomDelta];
+        [self setFontTable:zoomedTable
+         horizontalSpacing:_textview.horizontalSpacing
+           verticalSpacing:_textview.verticalSpacing];
+        _windowAdjustmentDisabled = NO;
+    }
+
+    // Restore the window frame to eliminate any rounding glitches from
+    // intermediate font size changes during the profile switch.
+    if (!NSIsEmptyRect(savedWindowFrame) && window) {
+        [window setFrame:savedWindowFrame display:YES];
+    }
+
     if ([iTermAdvancedSettingsModel showAutomaticProfileSwitchingBanner]) {
         [_view showUnobtrusiveMessage:[NSString stringWithFormat:@"Switched to profile “%@”.", underlyingProfile[KEY_NAME]]];
     }
