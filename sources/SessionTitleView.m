@@ -75,6 +75,10 @@ static const CGFloat kLockButtonSize = 14;
                                                  selector:@selector(modifierShortcutDidChange:)
                                                      name:kPSMModifierChangedNotification
                                                    object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(advancedSettingsDidChange:)
+                                                     name:iTermAdvancedSettingsDidChange
+                                                   object:nil];
 
         // Menu button - positioned at right edge
         [self addSubview:menuButton_];
@@ -318,6 +322,16 @@ static const CGFloat kLockButtonSize = 14;
 }
 
 - (void)updateTextColor {
+    NSString *customText = [iTermAdvancedSettingsModel paneTitleBarTextColor];
+    if ([customText hasPrefix:@"#"]) {
+        NSColor *custom = [NSColor colorFromHexString:customText];
+        if (custom) {
+            label_.textColor = custom;
+            menuButton_.contentTintColor = custom;
+            [self setNeedsDisplay:YES];
+            return;
+        }
+    }
     CGFloat whiteLevel = 0;
     iTermPreferencesTabStyle preferredStyle = [iTermPreferences intForKey:kPreferenceKeyTabStyle];
     if (self.window.ptyWindow.it_terminalWindowUseMinimalStyle) {
@@ -392,6 +406,11 @@ static const CGFloat kLockButtonSize = 14;
 
 - (void)modifierShortcutDidChange:(NSNotification *)notification {
     [self updateTitle];
+}
+
+- (void)advancedSettingsDidChange:(NSNotification *)notification {
+    [self updateTextColor];
+    [self setNeedsDisplay:YES];
 }
 
 @end
