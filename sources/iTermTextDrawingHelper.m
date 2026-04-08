@@ -2102,12 +2102,15 @@ static BOOL NSRangesAdjacent(NSRange lhs, NSRange rhs) {
                                                          backgroundColor:backgroundColor
                                                                    smear:NO
                                                            virtualOffset:virtualOffset];
-    [self drawUnderlineOrStrikethroughForFastPathString:cheapString
-                                          wantUnderline:YES
-                                                atPoint:point
-                                              positions:positions
-                                        backgroundColor:backgroundColor
-                                          virtualOffset:virtualOffset];
+    // Underlines belong on the bottom-half line for DECDHL (below the text).
+    if (_currentLineAttribute != iTermLineAttributeDoubleHeightTop) {
+        [self drawUnderlineOrStrikethroughForFastPathString:cheapString
+                                              wantUnderline:YES
+                                                    atPoint:point
+                                                  positions:positions
+                                            backgroundColor:backgroundColor
+                                              virtualOffset:virtualOffset];
+    }
 
     [self drawUnderlineOrStrikethroughForFastPathString:cheapString
                                           wantUnderline:NO
@@ -2580,11 +2583,13 @@ static BOOL NSRangesAdjacent(NSRange lhs, NSRange rhs) {
                                                       graphicsContext:graphicsContext
                                                                 smear:NO
                                                         virtualOffset:virtualOffset];
-    [self drawUnderlineAndStrikethroughForAttributedString:attributedString
-                                                   atPoint:origin
-                                                 positions:stringPositions
-                                             wantUnderline:YES
-                                             virtualOffset:virtualOffset];
+    if (_currentLineAttribute != iTermLineAttributeDoubleHeightTop) {
+        [self drawUnderlineAndStrikethroughForAttributedString:attributedString
+                                                       atPoint:origin
+                                                     positions:stringPositions
+                                                 wantUnderline:YES
+                                                 virtualOffset:virtualOffset];
+    }
     [self drawUnderlineAndStrikethroughForAttributedString:attributedString
                                                    atPoint:origin
                                                  positions:stringPositions

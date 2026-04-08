@@ -714,12 +714,17 @@ typedef struct {
                                  lineLength:(int)lineLength
                                  inverseLUT:(const int *)inverseLUT
                              inverseLUTLen:(int)inverseLUTLen
+                              lineAttribute:(iTermLineAttribute)lineAttribute
                              underlineSpans:(NSMutableData *)underlineSpans
                          strikethroughSpans:(NSMutableData *)strikethroughSpans {
     BOOL inUnderlineSpan = NO;
     BOOL inStrikethroughSpan = NO;
     iTermMetalUnderlineSpan currentUnderline = {};
     iTermMetalUnderlineSpan currentStrikethrough = {};
+
+    // On DECDHL top-half lines, underlines belong on the bottom half
+    // (below the text). Suppress them here.
+    const BOOL suppressUnderlineForDHL = (lineAttribute == iTermLineAttributeDoubleHeightTop);
 
     for (int col = 0; col < count; col++) {
         iTermMetalGlyphAttributesUnderline rawStyle = attributes[col].underlineStyle;
@@ -729,9 +734,13 @@ typedef struct {
             rawStyle = iTermMetalGlyphAttributesUnderlineSingle;
         }
 
-        const iTermMetalGlyphAttributesUnderline baseStyle =
+        iTermMetalGlyphAttributesUnderline baseStyle =
             (iTermMetalGlyphAttributesUnderline)(rawStyle & iTermMetalGlyphAttributesUnderlineBitmask);
         const BOOL hasStrikethrough = (rawStyle & iTermMetalGlyphAttributesUnderlineStrikethroughFlag) != 0;
+
+        if (suppressUnderlineForDHL) {
+            baseStyle = iTermMetalGlyphAttributesUnderlineNone;
+        }
 
         // Select the correct underline descriptor based on ASCII vs non-ASCII.
         const int logicalIndex = (inverseLUT && col < inverseLUTLen) ? inverseLUT[col] : col;

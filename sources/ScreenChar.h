@@ -712,6 +712,9 @@ NS_INLINE int ScreenCharExpandWithDWLSpacers(screen_char_t *dest,
                                              int sourceLen) {
     for (int i = sourceLen - 1; i >= 0; i--) {
         dest[i * 2] = source[i];
+        // Copy the parent so the spacer inherits SGR attributes (colors,
+        // bold, underline, etc.), then overwrite character-specific fields.
+        dest[i * 2 + 1] = source[i];
         ScreenCharSetDWL_SPACER(&dest[i * 2 + 1]);
     }
     return sourceLen * 2;

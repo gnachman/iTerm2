@@ -1640,6 +1640,7 @@ legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth
                                                    lineLength:(int)rowData.screenCharArray.length
                                                    inverseLUT:bidiInfo ? bidiInfo.inverseLUT : NULL
                                                  inverseLUTLen:bidiInfo ? bidiInfo.inverseLUTCount : 0
+                                                lineAttribute:rowData.lineAttribute
                                                underlineSpans:isOffscreen ? frameData.offscreenUnderlineSpanData : frameData.underlineSpanData
                                            strikethroughSpans:isOffscreen ? frameData.offscreenStrikethroughSpanData : frameData.strikethroughSpanData];
             }
