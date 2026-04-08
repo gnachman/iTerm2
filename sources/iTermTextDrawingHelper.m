@@ -2962,9 +2962,21 @@ BOOL iTermDecodeKittyUnicodePlaceholder(const screen_char_t *c,
     iTermShapeBuilder *shapeBuilder = [[iTermShapeBuilder alloc] init];
     shapeBuilder.enableEndcap = NO;
 
-    const CGFloat y = [self retinaRound:(wantUnderline ?
-                       [self yOriginForUnderlineForFont:font yOffset:rect.origin.y cellHeight:_cellSize.height] :
-                       [self yOriginForStrikethroughForFont:font yOffset:rect.origin.y cellHeight:_cellSize.height])];
+    CGFloat y;
+    if (!wantUnderline && _currentLineAttribute == iTermLineAttributeDoubleHeightTop) {
+        // Strikethrough at the very bottom of the top-half cell.
+        // Position so the line's bottom edge aligns with the cell boundary.
+        const CGFloat scaleFactor = self.isRetina ? 2.0 : 1.0;
+        const CGFloat onePixel = 1.0 / scaleFactor;
+        y = rect.origin.y + _cellSize.height - onePixel;
+    } else if (!wantUnderline && _currentLineAttribute == iTermLineAttributeDoubleHeightBottom) {
+        // Strikethrough at the very top of the bottom-half cell.
+        y = rect.origin.y;
+    } else {
+        y = [self retinaRound:(wantUnderline ?
+                               [self yOriginForUnderlineForFont:font yOffset:rect.origin.y cellHeight:_cellSize.height] :
+                               [self yOriginForStrikethroughForFont:font yOffset:rect.origin.y cellHeight:_cellSize.height])];
+    }
     NSPoint origin = NSMakePoint(rect.origin.x,
                                  y);
     CGFloat dashPattern[] = { 4, 3 };

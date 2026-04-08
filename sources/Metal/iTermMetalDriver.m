@@ -793,6 +793,7 @@ legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth
                                  @"Have %@ drawable glyphs with %@ glyph keys",
                                  @(drawableGlyphs),
                                  @(rowData.keysData.length / sizeof(iTermMetalGlyphKey)));
+        rowData.lineAttribute = rowData.screenCharArray.metadata.lineAttribute;
         rowData.markStyle = markStyle;
         rowData.hoverState = hoverState;
         rowData.lineStyleMark = lineStyleMark;

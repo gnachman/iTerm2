@@ -78,6 +78,7 @@ typedef struct {
     // Base style in low bits, iTermMetalUnderlineSpanASCIIFlag in high bit.
     int style;
     vector_float4 color;
+    iTermLineAttribute lineAttribute;
 } iTermMetalUnderlineSpan;
 
 NS_INLINE NSString *iTermMetalGlyphTypeDecomposedDescription(const iTermDecomposedGlyphPayload *payload) {

@@ -19,6 +19,7 @@ class UnderlineRendererTransientState: iTermMetalCellRendererTransientState {
         var isStrikethrough: Bool
         var isASCII: Bool
         var color: vector_float4
+        var lineAttribute: iTermLineAttribute
     }
 
     var underlineSpans = [Span]()
@@ -61,7 +62,8 @@ class UnderlineRendererTransientState: iTermMetalCellRendererTransientState {
                               style: baseStyle,
                               isStrikethrough: isStrike,
                               isASCII: isASCII,
-                              color: s.color))
+                              color: s.color,
+                              lineAttribute: s.lineAttribute))
         }
         return spans
     }
@@ -153,7 +155,15 @@ class UnderlineRenderer: NSObject, iTermMetalCellRendererProtocol {
             // Positive underline offset moves up visually.
             let underlineOffset: Float
             if span.isStrikethrough {
-                underlineOffset = cellHeight - descriptor.offset * scale
+                if span.lineAttribute == .doubleHeightTop {
+                    // Draw at the very bottom of the top-half cell.
+                    underlineOffset = 0
+                } else if span.lineAttribute == .doubleHeightBottom {
+                    // Draw at the very top of the bottom-half cell.
+                    underlineOffset = cellHeight - underlineThickness
+                } else {
+                    underlineOffset = cellHeight - descriptor.offset * scale
+                }
             } else if span.style == Int32(iTermMetalGlyphAttributesUnderlineDouble.rawValue) ||
                       span.style == Int32(iTermMetalGlyphAttributesUnderlineHyperlink.rawValue) {
                 // Match the legacy double/hyperlink underline position from
