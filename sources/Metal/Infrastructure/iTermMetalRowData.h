@@ -51,6 +51,7 @@ NS_CLASS_AVAILABLE(10_11, NA)
 @property (nonatomic, readonly) NSMutableArray<iTermKittyImageRun *> *kittyImageRuns;
 
 @property (nonatomic, readonly) BOOL hasFold;
+@property (nonatomic) BOOL hasUnderlineOrStrikethrough;
 
 - (void)writeDebugInfoToFolder:(NSURL *)folder;
 

@@ -64,6 +64,20 @@ typedef struct {
     BOOL annotation;  // affects underline color
 } iTermMetalGlyphAttributes;
 
+// Bit flag OR'd into iTermMetalUnderlineSpan.style to indicate the span covers ASCII text.
+// Determines which underline descriptor (offset/thickness) to use.
+#define iTermMetalUnderlineSpanASCIIFlag 0x100
+
+// A contiguous run of cells sharing the same underline (or strikethrough) style and color.
+typedef struct {
+    int row;
+    int startColumn;  // visual column
+    int endColumn;    // visual column (inclusive)
+    // Base style in low bits, iTermMetalUnderlineSpanASCIIFlag in high bit.
+    int style;
+    vector_float4 color;
+} iTermMetalUnderlineSpan;
+
 NS_INLINE NSString *iTermMetalGlyphTypeDecomposedDescription(const iTermDecomposedGlyphPayload *payload) {
     return [NSString stringWithFormat:@"Decomposed: font=%@ fakeBold=%@ fakeItalic=%@ glyph=%@ position=%@",
             @(payload->fontID),

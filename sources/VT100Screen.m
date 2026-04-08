@@ -1747,6 +1747,10 @@ additionalWordCharacters:(NSString *)additionalWordCharacters
     return _state.lastPromptLine;
 }
 
+- (void)setForegroundJobForTriggerFiltering:(NSString *)job {
+    [self.mutableState setForegroundJobForTriggerFiltering:job];
+}
+
 - (void)beginEchoProbeWithBackspace:(NSData *)backspace
                            password:(NSString *)password
                            delegate:(id<iTermEchoProbeDelegate>)echoProbeDelegate {
@@ -2258,6 +2262,10 @@ launchCoprocessWithCommand:(NSString *)command
 
 - (void)triggerSession:(Trigger *)trigger setVariableNamed:(NSString *)name toValue:(id)value {
     [self.delegate triggerSideEffectSetValue:value forVariableNamed:name];
+}
+
+- (void)triggerSession:(Trigger *)trigger setTabStatus:(VT100TabStatusUpdate *)status {
+    [self.delegate screenSetTabStatus:status];
 }
 
 - (void)triggerSession:(Trigger *)trigger

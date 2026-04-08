@@ -187,6 +187,10 @@ replaceInitialDirectoryForSessionWithGUID:(NSString *)guid
 - (void)addTerminalWindow:(PseudoTerminal *)terminalWindow;
 - (PTYSession *)sessionWithGUID:(NSString *)identifier;
 
+// sessionID is of the form "w0t0p0:guid"
+- (void)revealSessionID:(NSString *)sessionID;
+- (void)revealSessionWithGUID:(NSString *)guid;
+
 void OnHotKeyEvent(void);
 
 // Does a serialized fullscreening of the term's window. Slated for production in 3.1.

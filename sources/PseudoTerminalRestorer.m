@@ -135,6 +135,11 @@ NSString *const iTermWindowStateKeyGUID = @"guid";
 + (void)restoreWindowWithIdentifier:(NSString *)identifier
                               state:(NSCoder *)state
                   completionHandler:(void (^)(NSWindow *, NSError *))completionHandler {
+    if ([iTermApplicationDelegate isCompareRenderingMode]) {
+        DLog(@"Skip window restoration in compare-rendering mode");
+        completionHandler(nil, nil);
+        return;
+    }
     [self restoreWindowWithIdentifier:identifier
                   pseudoTerminalState:[[[PseudoTerminalState alloc] initWithCoder:state] autorelease]
                                system:YES

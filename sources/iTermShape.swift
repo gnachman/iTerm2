@@ -93,6 +93,16 @@ class ShapeBuilder: NSObject {
 
     @objc(strokeInContext:color:)
     func stroke(in ctx: CGContext, color: CGColor) {
+        // For axis-aligned lines without dashes, fill pixel-aligned rects instead of
+        // stroking to avoid anti-aliased smearing across pixel boundaries.
+        if lineDash == nil, let rects = axisAlignedRects() {
+            ctx.setFillColor(color)
+            for rect in rects {
+                ctx.fill(pixelAlignedRect(rect, in: ctx))
+            }
+            return
+        }
+
         addPath(to: ctx)
         if let lineDash {
             ctx.setLineDash(phase: lineDash.phase, lengths: lineDash.dashPattern)
@@ -103,6 +113,63 @@ class ShapeBuilder: NSObject {
             ctx.setLineCap(endcap)
         }
         ctx.strokePath()
+    }
+
+    // Returns filled rects equivalent to stroking the path, or nil if any segment
+    // is diagonal or curved.
+    private func axisAlignedRects() -> [CGRect]? {
+        var rects = [CGRect]()
+        var currentPoint: NSPoint?
+        let halfWidth = lineWidth / 2
+        let capExtension = (enableEndcap && endcap == .square) ? halfWidth : 0
+
+        for segment in segments {
+            switch segment {
+            case .moveTo(let p):
+                currentPoint = p
+            case .lineTo(let p):
+                guard let start = currentPoint else { return nil }
+                if start.x == p.x {
+                    // Vertical line
+                    let minY = min(start.y, p.y)
+                    let maxY = max(start.y, p.y)
+                    rects.append(CGRect(x: start.x - halfWidth,
+                                        y: minY - capExtension,
+                                        width: lineWidth,
+                                        height: maxY - minY + 2 * capExtension))
+                } else if start.y == p.y {
+                    // Horizontal line
+                    let minX = min(start.x, p.x)
+                    let maxX = max(start.x, p.x)
+                    rects.append(CGRect(x: minX - capExtension,
+                                        y: start.y - halfWidth,
+                                        width: maxX - minX + 2 * capExtension,
+                                        height: lineWidth))
+                } else {
+                    // Diagonal — can't convert to a rect
+                    return nil
+                }
+                currentPoint = p
+            case .curveTo:
+                return nil
+            }
+        }
+
+        return rects.isEmpty ? nil : rects
+    }
+
+    // Snaps a rect to device-pixel boundaries, ensuring at least 1 device pixel
+    // in each dimension.
+    private func pixelAlignedRect(_ rect: CGRect, in ctx: CGContext) -> CGRect {
+        let deviceRect = ctx.convertToDeviceSpace(rect)
+        let x = round(deviceRect.origin.x)
+        let y = round(deviceRect.origin.y)
+        let maxX = round(deviceRect.maxX)
+        let maxY = round(deviceRect.maxY)
+        let aligned = CGRect(x: x, y: y,
+                             width: max(1, maxX - x),
+                             height: max(1, maxY - y))
+        return ctx.convertToUserSpace(aligned)
     }
 }
 

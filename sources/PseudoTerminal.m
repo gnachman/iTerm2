@@ -4184,9 +4184,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
 // NSWindow delegate methods
 - (void)windowDidDeminiaturize:(NSNotification *)aNotification {
     DLog(@"windowDidDeminiaturize: %@\n%@", self, [NSThread callStackSymbols]);
-    DLog(@"Erase badge label");
-    [self.window.dockTile setBadgeLabel:@""];
-    [self.window.dockTile setShowsApplicationBadge:NO];
+    [[iTermDockBadgeController sharedInstance] resetBellCount];
     if ([[self currentTab] blur]) {
         [self enableBlur:[[self currentTab] blurRadius]];
     } else {
@@ -4452,9 +4450,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
         [[iTermHotKeyController sharedInstance] nonHotKeyWindowDidBecomeKey];
     }
     [[iTermHotKeyController sharedInstance] autoHideHotKeyWindowsExcept:[[iTermHotKeyController sharedInstance] siblingWindowControllersOf:self]];
-    DLog(@"Erase badge label");
-    [[[NSApplication sharedApplication] dockTile] setBadgeLabel:@""];
-    [[[NSApplication sharedApplication] dockTile] setShowsApplicationBadge:NO];
+    [[iTermDockBadgeController sharedInstance] resetBellCount];
 
     [[iTermController sharedInstance] setCurrentTerminal:self];
     iTermApplicationDelegate *itad = [iTermApplication.sharedApplication delegate];
@@ -12426,8 +12422,7 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
     return [dvr firstTimeStamp] + offset;
 }
 
-- (NSArray*)allSessions
-{
+- (NSArray<PTYSession *> *)allSessions {
     NSMutableArray* result = [NSMutableArray arrayWithCapacity:[_contentView.tabView numberOfTabViewItems]];
     for (NSTabViewItem* item in [_contentView.tabView tabViewItems]) {
         PTYTab *tab = [item identifier];
@@ -12446,35 +12441,7 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
 #pragma clang diagnostic pop
 
 - (BOOL)incrementBadge {
-    DLog(@"incrementBadge");
-    if (![iTermAdvancedSettingsModel indicateBellsInDockBadgeLabel]) {
-        DLog(@"Disabled by advanced pref");
-        return NO;
-    }
-
-    NSDockTile *dockTile;
-    if (self.window.isMiniaturized) {
-        DLog(@"Use miniaturized window tile");
-        dockTile = self.window.dockTile;
-    } else {
-        if ([[NSApplication sharedApplication] isActive]) {
-            DLog(@"App is active so don't increment it");
-            return NO;
-        }
-        DLog(@"Use main app dock tile");
-        dockTile = [[NSApplication sharedApplication] dockTile];
-    }
-    int count = [[dockTile badgeLabel] intValue];
-    DLog(@"Old count was %d", count);
-    if (count == 999) {
-        DLog(@"Won't go over 999, so stop early");
-        return NO;
-    }
-    ++count;
-    DLog(@"Set badge label to %@", @(count));
-    [dockTile setBadgeLabel:[NSString stringWithFormat:@"%d", count]];
-    [self.window.dockTile setShowsApplicationBadge:YES];
-    return YES;
+    return [[iTermDockBadgeController sharedInstance] incrementBellCount];
 }
 
 - (void)sessionHostDidChange:(PTYSession *)session to:(id<VT100RemoteHostReading>)host {
@@ -13199,6 +13166,10 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
     }
 }
 
+- (void)tabDidChangeTabStatus:(PTYTab *)tab {
+    [_contentView.tabBarControl setNeedsDisplay:YES];
+}
+
 - (void)tab:(PTYTab *)tab didSetMetalEnabled:(BOOL)useMetal {
     [self updateContentViewExpectsMetal];
 }
@@ -13438,6 +13409,12 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
 
 - (ProfileType)toolbeltProfileType {
     return self.currentSession.profile.profileType;
+}
+
+- (BOOL)toolbeltWindowContainsSessionWithGUID:(NSString *)guid {
+    return [self.allSessions anyWithBlock:^BOOL(PTYSession *session) {
+        return [session.guid isEqualToString:guid];
+    }];
 }
 
 #pragma mark - Quick Look panel support

@@ -35,6 +35,8 @@
 #import "NSJSONSerialization+iTerm.h"
 #import "NSObject+iTerm.h"
 #import "NSWorkspace+iTerm.h"
+#import "iTermWarning.h"
+#import <UniformTypeIdentifiers/UniformTypeIdentifiers.h>
 #import "PasswordTrigger.h"
 #import "ProfileModel.h"
 #import "ScriptTrigger.h"
@@ -55,6 +57,7 @@ NSString *const kTextColorWellIdentifier = @"kTextColorWellIdentifier";
 NSString *const kBackgroundColorWellIdentifier = @"kBackgroundColorWellIdentifier";
 NSString *const kTwoPraramNameColumnIdentifier = @"kTwoPraramNameColumnIdentifier";
 NSString *const kTwoPraramValueColumnIdentifier = @"kTwoPraramValueColumnIdentifier";
+NSString *const kStatusTextComboBoxIdentifier = @"kStatusTextComboBoxIdentifier";
 
 @protocol iTermTriggersPanelViewDelegate
 - (void)viewDidChangeEffectiveAppearance;
@@ -284,7 +287,8 @@ NSString *const kTwoPraramValueColumnIdentifier = @"kTwoPraramValueColumnIdentif
             [iTermHyperlinkTrigger class],
             [SetDirectoryTrigger class],
             [SetHostnameTrigger class],
-            [StopTrigger class] ];
+            [StopTrigger class],
+            [iTermSetTabStatusTrigger class] ];
     } else {
         allClasses = @[ [ReaderModeBrowserTrigger class],
                         [HighlightBrowserTrigger class],
@@ -558,6 +562,99 @@ NSString *const kTwoPraramValueColumnIdentifier = @"kTwoPraramValueColumnIdentif
         }
         return [Trigger triggerFromUntrustedDict:dict];
     }];
+    if (!triggers.count) {
+        return;
+    }
+    NSArray<NSString *> *guids = [self guidsForProfilesToImportTriggersInto:triggers];
+    [guids enumerateObjectsUsingBlock:^(NSString *guid, NSUInteger idx, BOOL * _Nonnull stop) {
+        [self addTriggers:triggers toProfileWithGUID:guid];
+    }];
+    [[NSNotificationCenter defaultCenter] postNotificationName:kReloadAllProfiles object:nil];
+}
+
++ (NSArray<Trigger *> *)triggersFromFile:(NSString *)filename window:(NSWindow *)window {
+    NSError *error = nil;
+    NSString *content = [NSString stringWithContentsOfFile:filename
+                                                 encoding:NSUTF8StringEncoding
+                                                    error:&error];
+    if (!content || error) {
+        [iTermWarning showWarningWithTitle:[NSString stringWithFormat:@"While loading %@: %@",
+                                            filename, error.localizedDescription]
+                                   actions:@[ @"OK" ]
+                                 accessory:nil
+                                identifier:@"NoSyncImportTriggersFailed"
+                               silenceable:kiTermWarningTypePersistent
+                                   heading:@"Import Failed"
+                                    window:window];
+        return nil;
+    }
+
+    id root = [NSJSONSerialization it_objectForJsonString:content error:&error];
+    if (!root) {
+        [iTermWarning showWarningWithTitle:[NSString stringWithFormat:@"While parsing %@: %@",
+                                            filename, error.localizedDescription]
+                                   actions:@[ @"OK" ]
+                                 accessory:nil
+                                identifier:@"NoSyncImportTriggersFailed"
+                               silenceable:kiTermWarningTypePersistent
+                                   heading:@"Import Failed"
+                                    window:window];
+        return nil;
+    }
+
+    // Support both a single dict and an array of dicts.
+    NSArray *array;
+    NSDictionary *singleDict = [NSDictionary castFrom:root];
+    if (singleDict) {
+        array = @[ singleDict ];
+    } else {
+        array = [NSArray castFrom:root];
+    }
+    if (!array) {
+        [iTermWarning showWarningWithTitle:[NSString stringWithFormat:@"Malformed file at %@", filename]
+                                   actions:@[ @"OK" ]
+                                 accessory:nil
+                                identifier:@"NoSyncTriggerEncodingError"
+                               silenceable:kiTermWarningTypePersistent
+                                   heading:@"Import Failed"
+                                    window:window];
+        return nil;
+    }
+
+    NSMutableArray<Trigger *> *triggers = [NSMutableArray array];
+    for (id element in array) {
+        NSDictionary *dict = [NSDictionary castFrom:element];
+        if (!dict) {
+            [iTermWarning showWarningWithTitle:[NSString stringWithFormat:@"Malformed file at %@", filename]
+                                       actions:@[ @"OK" ]
+                                     accessory:nil
+                                    identifier:@"NoSyncTriggerEncodingError"
+                                   silenceable:kiTermWarningTypePersistent
+                                       heading:@"Import Failed"
+                                        window:window];
+            return nil;
+        }
+        Trigger *trigger = [Trigger triggerFromUntrustedDict:dict];
+        if (!trigger) {
+            [iTermWarning showWarningWithTitle:[NSString stringWithFormat:@"Malformed file at %@", filename]
+                                       actions:@[ @"OK" ]
+                                     accessory:nil
+                                    identifier:@"NoSyncTriggerEncodingError"
+                                   silenceable:kiTermWarningTypePersistent
+                                       heading:@"Import Failed"
+                                        window:window];
+            return nil;
+        }
+        [triggers addObject:trigger];
+    }
+    return triggers;
+}
+
++ (void)importTriggersFromFile:(NSString *)filename {
+    NSArray<Trigger *> *triggers = [self triggersFromFile:filename window:nil];
+    if (!triggers.count) {
+        return;
+    }
     NSArray<NSString *> *guids = [self guidsForProfilesToImportTriggersInto:triggers];
     [guids enumerateObjectsUsingBlock:^(NSString *guid, NSUInteger idx, BOOL * _Nonnull stop) {
         [self addTriggers:triggers toProfileWithGUID:guid];
@@ -574,9 +671,15 @@ NSString *const kTwoPraramValueColumnIdentifier = @"kTwoPraramValueColumnIdentif
 
 + (NSArray<NSString *> *)guidsForProfilesToImportTriggersInto:(NSArray<Trigger *> *)triggers {
     NSAlert *alert = [[NSAlert alloc] init];
-    NSArray<NSString *> *descriptions = [triggers mapWithBlock:^id _Nullable(Trigger *trigger) {
+    const NSInteger maxShown = 10;
+    NSArray<Trigger *> *shown = triggers.count > maxShown ? [triggers subarrayWithRange:NSMakeRange(0, maxShown)] : triggers;
+    NSArray<NSString *> *descriptions = [shown mapWithBlock:^id _Nullable(Trigger *trigger) {
         return [@"• " stringByAppendingString:[self importDescriptionForTrigger:trigger]];
     }];
+    if (triggers.count > maxShown) {
+        descriptions = [descriptions arrayByAddingObject:[NSString stringWithFormat:@"…and %@ more",
+                                                          @(triggers.count - maxShown)]];
+    }
     NSString *joined = [descriptions componentsJoinedByString:@"\n"];
     NSString *message = [NSString stringWithFormat:@"Select the profiles into which these triggers should be imported:\n\n%@", joined];
     [alert setMessageText:message];
@@ -601,12 +704,19 @@ NSString *const kTwoPraramValueColumnIdentifier = @"kTwoPraramValueColumnIdentif
     if (!profile) {
         return;
     }
-    MutableProfile *mutableProfile = [profile mutableCopy];
     NSArray *existing = profile[KEY_TRIGGERS] ?: @[];
-    NSArray *updated = [existing arrayByAddingObjectsFromArray:[triggers mapWithBlock:^id _Nullable(Trigger *trigger) {
-        return trigger.dictionaryValue;
-    }]];
-    mutableProfile[KEY_TRIGGERS] = updated;
+    NSArray *existingCanonical = [existing mapWithBlock:^id _Nullable(NSDictionary *dict) {
+        Trigger *t = [Trigger triggerFromUntrustedDict:dict];
+        return t ? t.dictionaryValue : nil;
+    }];
+    NSArray *newDicts = [triggers mapWithBlock:^id _Nullable(Trigger *trigger) {
+        NSDictionary *dict = trigger.dictionaryValue;
+        if ([existingCanonical containsObject:dict]) {
+            return nil;
+        }
+        return dict;
+    }];
+    NSArray *updated = [existing arrayByAddingObjectsFromArray:newDicts];
     [[ProfileModel sharedInstance] setObject:updated forKey:KEY_TRIGGERS inBookmark:profile];
 }
 
@@ -707,7 +817,7 @@ NSString *const kTwoPraramValueColumnIdentifier = @"kTwoPraramValueColumnIdentif
                                                     0,
                                                     kWellWidth,
                                                     size.height),
-                                         trigger.textColor);
+                                         [trigger textColorInParam:value]);
         well.identifier = kTextColorWellIdentifier;
 
         [container addSubview:well];
@@ -721,9 +831,54 @@ NSString *const kTwoPraramValueColumnIdentifier = @"kTwoPraramValueColumnIdentif
                                       0,
                                       kWellWidth,
                                       size.height),
-                           trigger.backgroundColor);
+                           [trigger backgroundColorInParam:value]);
         [container addSubview:well];
         well.identifier = kBackgroundColorWellIdentifier;
+        return container;
+    }
+    if ([trigger paramIsComboBoxAndTwoColorWells]) {
+        NSView *container = [[NSView alloc] initWithFrame:NSMakeRect(0, 0, size.width, size.height)];
+        CGFloat x = 4;
+
+        // Combo box for status text
+        NSComboBox *comboBox = [[NSComboBox alloc] initWithFrame:NSMakeRect(x, 0, 100, size.height)];
+        comboBox.usesDataSource = NO;
+        comboBox.completes = YES;
+        comboBox.editable = YES;
+        comboBox.identifier = kStatusTextComboBoxIdentifier;
+        for (NSString *item in [trigger comboBoxItems]) {
+            [comboBox addItemWithObjectValue:item];
+        }
+        NSString *comboValue = [trigger comboBoxValueInParam:value];
+        comboBox.stringValue = comboValue ?: @"";
+        comboBox.target = receiver;
+        comboBox.action = @selector(parameterPopUpButtonDidChange:);
+        comboBox.delegate = (id)receiver;
+        [container addSubview:comboBox];
+        x += 100 + 6;
+
+        // Dot color well
+        const CGFloat kWellWidth = 30;
+        NSTextField *label = [self labelWithString:@"Dot:" origin:NSMakePoint(x, 0)];
+        [container addSubview:label];
+        x += label.frame.size.width;
+
+        CPKColorWell *well = wellFactory(NSMakeRect(x, 0, kWellWidth, size.height),
+                                         [trigger textColorInParam:value]);
+        well.identifier = kTextColorWellIdentifier;
+        [container addSubview:well];
+        x += kWellWidth + 6;
+
+        // Status text color well
+        label = [self labelWithString:@"Text:" origin:NSMakePoint(x, 0)];
+        [container addSubview:label];
+        x += label.frame.size.width;
+
+        well = wellFactory(NSMakeRect(x, 0, kWellWidth, size.height),
+                           [trigger backgroundColorInParam:value]);
+        well.identifier = kBackgroundColorWellIdentifier;
+        [container addSubview:well];
+
         return container;
     }
     if ([trigger paramIsTwoStrings]) {
@@ -947,7 +1102,76 @@ NSString *const kTwoPraramValueColumnIdentifier = @"kTwoPraramValueColumnIdentif
                             topLeftScreenCoordinate:screenPoint
                                           pointSize:12];
     }];
+    [menu addItemWithTitle:@"Export to File" action:^{
+        [self exportSelectedTriggers];
+    }];
     [menu showInView:_tableView forEvent:[NSApp currentEvent]];
+}
+
+- (void)exportSelectedTriggers {
+    NSIndexSet *indexes = _tableView.selectedRowIndexes;
+    NSArray *allTriggers = [self triggerDictionariesForCurrentProfile];
+    NSMutableArray<NSDictionary *> *array = [NSMutableArray array];
+    [indexes enumerateIndexesUsingBlock:^(NSUInteger i, BOOL * _Nonnull stop) {
+        [array addObject:allTriggers[i]];
+    }];
+    iTermModernSavePanel *panel = [[iTermModernSavePanel alloc] init];
+    panel.allowedContentTypes = @[ [UTType typeWithFilenameExtension:@"it2triggers"] ];
+    panel.preferredSSHIdentity = SSHIdentity.localhost;
+    [panel beginWithFallbackWindow:self.window handler:^(NSModalResponse response, iTermSavePanelItem *item) {
+        if (response != NSModalResponseOK) {
+            return;
+        }
+        NSString *json = [NSJSONSerialization it_jsonStringForObject:array];
+        [json writeToSaveItem:item completionHandler:^(NSError *error) {
+            if (error) {
+                [iTermWarning showWarningWithTitle:[NSString stringWithFormat:@"Error saving to %@: %@",
+                                                    item.displayName, error.localizedDescription]
+                                           actions:@[ @"OK" ]
+                                         accessory:nil
+                                        identifier:@"NoSyncTriggerWritingError"
+                                       silenceable:kiTermWarningTypePersistent
+                                           heading:@"Export Failed"
+                                            window:self.window];
+            } else {
+                [item revealInFinderIfLocal];
+            }
+        }];
+    }];
+}
+
+- (IBAction)import:(id)sender {
+    iTermOpenPanel *panel = [[iTermOpenPanel alloc] init];
+    panel.allowedContentTypes = @[ [UTType typeWithFilenameExtension:@"it2triggers"] ];
+    panel.canChooseFiles = YES;
+    panel.canChooseDirectories = NO;
+    panel.allowsMultipleSelection = YES;
+    panel.preferredSSHIdentity = [SSHIdentity localhost];
+    [panel beginWithFallbackWindow:self.window handler:^(NSModalResponse response, NSArray<NSURL *> *urls) {
+        if (response != NSModalResponseOK) {
+            return;
+        }
+        for (NSURL *url in urls) {
+            [self importTriggersFromFileURL:url];
+        }
+    }];
+}
+
+- (void)importTriggersFromFileURL:(NSURL *)url {
+    NSArray<Trigger *> *triggers = [TriggerController triggersFromFile:url.path window:self.window];
+    if (!triggers.count) {
+        return;
+    }
+    NSSet<NSDictionary *> *existingCanonical = [NSSet setWithArray:[[self triggerDictionariesForCurrentProfile] mapWithBlock:^id _Nullable(NSDictionary *dict) {
+        Trigger *t = [Trigger triggerFromUntrustedDict:dict];
+        return t ? t.dictionaryValue : nil;
+    }]];
+    for (Trigger *trigger in triggers) {
+        NSDictionary *canonicalDict = trigger.dictionaryValue;
+        if (![existingCanonical containsObject:canonicalDict]) {
+            [self setTriggerDictionary:canonicalDict forRow:-1 reloadData:YES];
+        }
+    }
 }
 
 - (IBAction)addTrigger:(id)sender {
@@ -1027,6 +1251,7 @@ NSString *const kTwoPraramValueColumnIdentifier = @"kTwoPraramValueColumnIdentif
     } else {
         [triggerDictionary removeObjectForKey:kTriggerParameterKey];
     }
+    [triggerDictionary removeObjectForKey:kTriggerProvenanceKey];
     // Don't reload data. If this was called because another color picker was opening, reloading the
     // table will cause the presenting view to disappear. That prevents the new popover from
     // appearing correctly.
@@ -1044,6 +1269,7 @@ NSString *const kTwoPraramValueColumnIdentifier = @"kTwoPraramValueColumnIdentif
     NSMutableDictionary *triggerDictionary =
         [[self triggerDictionariesForCurrentProfile][row] mutableCopy];
     triggerDictionary[kTriggerPartialLineKey] = newValue;
+    [triggerDictionary removeObjectForKey:kTriggerProvenanceKey];
     [self setTriggerDictionary:triggerDictionary forRow:row reloadData:NO];
 }
 
@@ -1058,6 +1284,7 @@ NSString *const kTwoPraramValueColumnIdentifier = @"kTwoPraramValueColumnIdentif
     NSMutableDictionary *triggerDictionary =
         [[self triggerDictionariesForCurrentProfile][row] mutableCopy];
     triggerDictionary[kTriggerDisabledKey] = newValue;
+    [triggerDictionary removeObjectForKey:kTriggerProvenanceKey];
     [self setTriggerDictionary:triggerDictionary forRow:row reloadData:NO];
 }
 
@@ -1079,10 +1306,32 @@ NSString *const kTwoPraramValueColumnIdentifier = @"kTwoPraramValueColumnIdentif
     } else if ([triggerObj triggerOptionalDefaultParameterValueWithInterpolation:_interpolatedStringParameters.state == NSControlStateValueOn]) {
         triggerDictionary[kTriggerParameterKey] = [triggerObj triggerOptionalDefaultParameterValueWithInterpolation:_interpolatedStringParameters.state == NSControlStateValueOn];
     }
+    [triggerDictionary removeObjectForKey:kTriggerProvenanceKey];
     [self setTriggerDictionary:triggerDictionary forRow:rowIndex reloadData:NO];
 }
 
-- (void)parameterPopUpButtonDidChange:(NSPopUpButton *)sender {
+- (void)parameterPopUpButtonDidChange:(id)sender {
+    if ([sender isKindOfClass:[NSComboBox class]]) {
+        NSComboBox *comboBox = sender;
+        NSInteger rowIndex = [_tableView rowForView:comboBox];
+        if (rowIndex < 0) {
+            return;
+        }
+        NSMutableDictionary *triggerDictionary =
+            [[self triggerDictionariesForCurrentProfile][rowIndex] mutableCopy];
+        Trigger *triggerObj = [self triggerWithAction:triggerDictionary[kTriggerActionKey]];
+        NSString *value = [comboBox objectValueOfSelectedItem] ?: comboBox.stringValue;
+        id parameter = [triggerObj paramByReplacingComboBoxValue:value
+                                                        inParam:triggerDictionary[kTriggerParameterKey]];
+        if (parameter) {
+            triggerDictionary[kTriggerParameterKey] = parameter;
+        } else {
+            [triggerDictionary removeObjectForKey:kTriggerParameterKey];
+        }
+        [triggerDictionary removeObjectForKey:kTriggerProvenanceKey];
+        [self setTriggerDictionary:triggerDictionary forRow:rowIndex reloadData:NO];
+        return;
+    }
     NSInteger rowIndex = [_tableView rowForView:sender];
     if (rowIndex < 0) {
         return;
@@ -1096,6 +1345,31 @@ NSString *const kTwoPraramValueColumnIdentifier = @"kTwoPraramValueColumnIdentif
     } else {
         [triggerDictionary removeObjectForKey:kTriggerParameterKey];
     }
+    [triggerDictionary removeObjectForKey:kTriggerProvenanceKey];
+    [self setTriggerDictionary:triggerDictionary forRow:rowIndex reloadData:NO];
+}
+
+- (void)comboBoxSelectionDidChange:(NSNotification *)notification {
+    NSComboBox *comboBox = notification.object;
+    NSInteger rowIndex = [_tableView rowForView:comboBox];
+    if (rowIndex < 0) {
+        return;
+    }
+    NSString *value = [comboBox objectValueOfSelectedItem];
+    if (!value) {
+        return;
+    }
+    NSMutableDictionary *triggerDictionary =
+        [[self triggerDictionariesForCurrentProfile][rowIndex] mutableCopy];
+    Trigger *triggerObj = [self triggerWithAction:triggerDictionary[kTriggerActionKey]];
+    id parameter = [triggerObj paramByReplacingComboBoxValue:value
+                                                    inParam:triggerDictionary[kTriggerParameterKey]];
+    if (parameter) {
+        triggerDictionary[kTriggerParameterKey] = parameter;
+    } else {
+        [triggerDictionary removeObjectForKey:kTriggerParameterKey];
+    }
+    [triggerDictionary removeObjectForKey:kTriggerProvenanceKey];
     [self setTriggerDictionary:triggerDictionary forRow:rowIndex reloadData:NO];
 }
 
@@ -1132,6 +1406,13 @@ NSString *const kTwoPraramValueColumnIdentifier = @"kTwoPraramValueColumnIdentif
     triggerDictionary[kTriggerPartialLineKey] = @(_detailViewController.instant);
     if (_detailViewController.name) {
         triggerDictionary[kTriggerNameKey] = _detailViewController.name;
+    }
+    [triggerDictionary removeObjectForKey:kTriggerProvenanceKey];
+    DLog(@"detailViewControllerDidChange: job=%@", _detailViewController.job);
+    if (_detailViewController.job.length > 0) {
+        triggerDictionary[kTriggerJobKey] = _detailViewController.job;
+    } else {
+        [triggerDictionary removeObjectForKey:kTriggerJobKey];
     }
     NSDictionary *eventParams = _detailViewController.eventParams;
     if (eventParams.count > 0) {

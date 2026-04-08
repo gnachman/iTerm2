@@ -498,4 +498,6 @@ typedef NS_ENUM(NSUInteger, PTYSessionResizePermission) {
 - (void)screenUpdateBlock:(NSString * _Nonnull)blockID action:(iTermUpdateBlockAction)action;
 - (void)screenResizeResilientCoordinates:(VT100GridAbsCoord(^ _Nonnull)(VT100GridAbsCoord))convert;
 
+- (void)screenSetTabStatus:(VT100TabStatusUpdate * _Nonnull)status;
+
 @end

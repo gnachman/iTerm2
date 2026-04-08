@@ -54,12 +54,14 @@
 // and FiraCode don't indicate ligature support there.
 // All we do here is mitigate the worst outcomes.
 - (NSInteger)it_ligatureLevel {
-    if ([self.fontName hasPrefix:@"Iosevka"]) {
-        return 2;
-    } else if ([self it_fontIsOnLigatureBlacklist]) {
+    if ([self it_fontIsOnLigatureBlacklist]) {
         return 0;
     } else {
-        return 1;
+        // Use level 2 to enable contextual alternates (calt) in addition to
+        // standard ligatures (liga). Many popular coding fonts such as
+        // Monaspace, Iosevka, and Cascadia Code use calt for their coding
+        // ligatures, which level 1 does not activate.
+        return 2;
     }
 }
 

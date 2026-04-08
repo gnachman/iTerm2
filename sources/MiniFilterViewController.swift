@@ -123,7 +123,17 @@ class MiniFilterViewController: NSViewController, NSTextFieldDelegate, iTermFilt
             searchField.controlSize = .large
             closeButton.controlSize = .large
         }
+        fixSearchMenuTemplateFonts()
         updateSubviews()
+    }
+
+    private func fixSearchMenuTemplateFonts() {
+        guard let menu = searchField.searchMenuTemplate else { return }
+        let menuFont = NSFont.menuFont(ofSize: 0)
+        for item in menu.items where !item.isSeparatorItem {
+            item.attributedTitle = NSAttributedString(string: item.title,
+                                                      attributes: [.font: menuFont])
+        }
     }
 
     private func updateSubviews() {

@@ -278,7 +278,7 @@
 - (void)setDimmingForSessions;
 
 // All sessions in this window.
-- (NSArray*)allSessions;
+- (NSArray<PTYSession *> *)allSessions;
 
 // Do some cleanup after a session is removed.
 - (void)sessionWasRemoved;

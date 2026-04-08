@@ -452,6 +452,10 @@ endif
 pwmadapters: force
 	cd pwmplugin/ && UNIVERSAL=$(UNIVERSAL) ./build.sh
 
+it2cli: force
+	cd it2cli/ && UNIVERSAL=$(UNIVERSAL) ./build.sh
+	cp it2cli/.build/release/it2 it2cli/bin
+
 libgit2: force
 	mkdir -p submodules/libgit2/build
 	PATH=/usr/local/bin:${PATH} cd submodules/libgit2/build && ${CMAKE} -DBUILD_CLAR=OFF -DCMAKE_IGNORE_PREFIX_PATH=/opt/homebrew -DBUILD_SHARED_LIBS=OFF -DCMAKE_OSX_ARCHITECTURES="$(CMAKE_ARCHS)" -DCMAKE_OSX_DEPLOYMENT_TARGET="$(DEPLOYMENT_TARGET)" -DCMAKE_INSTALL_PREFIX=../../../ThirdParty/libgit2 -DUSE_SSH=OFF -DUSE_ICONV=OFF ..

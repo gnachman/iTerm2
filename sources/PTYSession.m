@@ -321,6 +321,7 @@ static NSString *const SESSION_ARRANGEMENT_PENDING_JUMPS = @"Pending Jumps";  //
 static NSString *const SESSION_ARRANGEMENT_CHANNEL_ID = @"Channel ID";  // NSString
 static NSString *const SESSION_ARRANGEMENT_TIMESTAMP_BASELINE = @"Timestamp Baseline"; // NSNumber
 static NSString *const SESSION_ARRANGEMENT_BROWSER_TARGET = @"Browser Target";  // String
+static NSString *const SESSION_ARRANGEMENT_TAB_STATUS = @"Tab Status";  // NSDictionary
 
 // Keys for dictionary in SESSION_ARRANGEMENT_PROGRAM
 static NSString *const kProgramType = @"Type";  // Value will be one of the kProgramTypeXxx constants.
@@ -564,6 +565,8 @@ typedef NS_ENUM(NSUInteger, PTYSessionTurdType) {
     iTermSwiftyString *_subtitleSwiftyString;
     iTermSwiftyString *_backgroundImageSwiftyString;
 
+    iTermSessionTabStatus *_tabStatus;
+
     iTermBackgroundDrawingHelper *_backgroundDrawingHelper;
     iTermMetaFrustrationDetector *_metaFrustrationDetector;
 
@@ -701,6 +704,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTurdType) {
 
 + (void)registerBuiltInFunctions {
     [iTermSessionTitleBuiltInFunction registerBuiltInFunction];
+    [iTermSessionNameBuiltInFunction registerBuiltInFunction];
 }
 
 + (void)registerSessionInArrangement:(NSDictionary *)arrangement {
@@ -1061,6 +1065,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [_badgeSwiftyString release];
     [_backgroundImageSwiftyString release];
     [_subtitleSwiftyString release];
+    [_tabStatus release];
     [_autoNameSwiftyString release];
     [_statusBarViewController release];
     [_backgroundDrawingHelper release];
@@ -1590,6 +1595,14 @@ ITERM_WEAKLY_REFERENCEABLE
         aSession->_sshState = [arrangement[SESSION_ARRANGEMENT_SSH_STATE] unsignedIntegerValue];
     }
     aSession.cursorTypeOverride = arrangement[SESSION_ARRANGEMENT_CURSOR_TYPE_OVERRIDE];
+    NSDictionary *tabStatusDict = arrangement[SESSION_ARRANGEMENT_TAB_STATUS];
+    if (tabStatusDict) {
+        aSession->_tabStatus = [[iTermSessionTabStatus fromArrangementDictionary:tabStatusDict
+                                                                       sessionID:aSession.guid] retain];
+        if (aSession->_tabStatus) {
+            [[iTermSessionStatusController instance] tabStatusDidChange:aSession->_tabStatus];
+        }
+    }
     if (didRestoreContents && attachedToServer) {
         if (arrangement[SESSION_ARRANGEMENT_ALERT_ON_NEXT_MARK]) {
             aSession->_alertOnNextMark = [arrangement[SESSION_ARRANGEMENT_ALERT_ON_NEXT_MARK] boolValue];
@@ -3458,6 +3471,8 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
     dispatch_async(dispatch_get_main_queue(), ^{
         [weakSelf updateDisplayBecause:@"terminate session"];
     });
+
+    [self clearTabStatus];
 
     [[NSNotificationCenter defaultCenter] postNotificationName:iTermSessionWillTerminateNotification
                                                         object:self];
@@ -6444,6 +6459,11 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
 
     NSString *pwd = [self currentLocalWorkingDirectory];
     result[SESSION_ARRANGEMENT_WORKING_DIRECTORY] = pwd ? pwd : @"";
+
+    NSDictionary *tabStatusDict = [_tabStatus arrangementDictionary];
+    if (tabStatusDict) {
+        result[SESSION_ARRANGEMENT_TAB_STATUS] = tabStatusDict;
+    }
     return YES;
 }
 
@@ -6685,6 +6705,12 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
     [self.variablesScope setValue:processTitle forVariableNamed:iTermVariableKeySessionProcessTitle];
     [self.variablesScope setValue:processInfo.commandLine forVariableNamed:iTermVariableKeySessionCommandLine];
     [self.variablesScope setValue:@(processInfo.processID) forVariableNamed:iTermVariableKeySessionJobPid];
+
+    // Update trigger evaluators with current foreground job for job-filtered triggers.
+    // Use processTitle (argv0) rather than name so it matches symlink names like "claude".
+    DLog(@"setCurrentForegroundJobProcessInfo: setting foreground job to %@ for trigger filtering", processTitle);
+    [_screen setForegroundJobForTriggerFiltering:processTitle];
+    _eventTriggerEvaluator.foregroundJob = processTitle;
 
     if ([name isEqualToString:@"sudo"]) {
         [self checkForSudoPasswordPromptToOfferTouchID];
@@ -14700,6 +14726,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 }
 
 - (void)screenPromptDidStartAtLine:(int)line {
+    [self clearTabStatus];
     [_pasteHelper unblock];
 }
 
@@ -22746,6 +22773,52 @@ getOptionKeyBehaviorLeft:(iTermOptionKeyBehavior *)left
             self.variablesScope.uname = _conductor.uname;
             break;
     }
+}
+
+- (iTermSessionTabStatus *)tabStatus {
+    if (!_tabStatus) {
+        _tabStatus = [[iTermSessionTabStatus alloc] initWithSessionID:self.guid];
+    }
+    return _tabStatus;
+}
+
+- (void)screenSetTabStatus:(VT100TabStatusUpdate *)status {
+    DLog(@"%@ screenSetTabStatus: %@", self, status);
+    NSString *previousStatusText = self.tabStatus.statusText;
+    if (![self.tabStatus apply:status]) {
+        DLog(@"No change");
+        return;
+    }
+    [self maybePostTabStatusNotificationWithPreviousStatusText:previousStatusText];
+    [_delegate sessionTabStatusDidChange:self];
+}
+
+- (void)maybePostTabStatusNotificationWithPreviousStatusText:(NSString *)previousStatusText {
+    NSString *newStatusText = self.tabStatus.statusText;
+    if (!newStatusText) {
+        return;
+    }
+    if ([newStatusText isEqualToString:previousStatusText ?: @""]) {
+        return;
+    }
+    if (![[iTermStatusPrioritySettings shared] shouldNotifyFor:newStatusText]) {
+        return;
+    }
+    [[iTermNotificationController sharedInstance]
+        notify:[NSString stringWithFormat:@"Session \u201c%@\u201d", [[self name] removingHTMLFromTabTitleIfNeeded]]
+        withDescription:[NSString stringWithFormat:@"Status changed to \u201c%@\u201d", newStatusText]
+        windowIndex:[self screenWindowIndex]
+        tabIndex:[self screenTabIndex]
+        viewIndex:[self screenViewIndex]];
+}
+
+- (void)clearTabStatus {
+    if (!_tabStatus || !_tabStatus.hasActiveStatus) {
+        return;
+    }
+    [_tabStatus clear];
+    [[iTermDockBadgeController sharedInstance] sessionDidLeaveWaiting:_guid];
+    [_delegate sessionTabStatusDidChange:self];
 }
 
 @end

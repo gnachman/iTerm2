@@ -437,6 +437,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (int)smartSelectionRadius;
 + (int)wordSelectionRegexRadius;
 + (BOOL)solidUnderlines;
++ (BOOL)useMultiPassUnderlineRenderer;
 + (NSString *)splitPaneColor;
 + (NSString *)splitPaneSourceFillColor;
 + (NSString *)splitPaneSourceBorderColor;

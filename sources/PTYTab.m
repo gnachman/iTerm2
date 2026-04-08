@@ -116,6 +116,9 @@ static void SwapPoint(NSPoint* point) {
 //
 // <------grain----->
 
+// Tab status priority is determined by StatusPrioritySettings.shared.
+// Lower values = higher priority. NSIntegerMax means no status.
+
 static CGFloat WithGrainDim(BOOL isVertical, NSSize size) {
     return isVertical ? size.width : size.height;
 }
@@ -169,6 +172,10 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 
     // Does any session have new output?
     BOOL newOutput_;
+
+    // Aggregated tab status from highest-priority session.
+    iTermSessionTabStatus *_aggregatedTabStatus;
+    BOOL _tabStatusWaitingProminent;
 
     // The root view of this tab. May be a SolidColorView for tmux tabs or the
     // same as root_ otherwise (the normal case).
@@ -682,6 +689,14 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 
 - (NSString *)stringByAppendingSubtitleForActiveSession:(NSString *)title {
     NSString *subtitle = self.activeSession.subtitle;
+    NSString *statusText = _aggregatedTabStatus.statusText;
+    if (statusText.length > 0) {
+        if (subtitle.length > 0) {
+            subtitle = [NSString stringWithFormat:@"%@ \u2013 %@", statusText, subtitle];
+        } else {
+            subtitle = statusText;
+        }
+    }
     return [NSString stringWithFormat:@"%@\n%@", title, subtitle];
 }
 
@@ -713,7 +728,9 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 }
 
 - (void)updateIcon {
-    if (_state & kPTYTabDeadState) {
+    if (_aggregatedTabStatus.hasActiveStatus && _aggregatedTabStatus.hasIndicator) {
+        [self setIcon:[self tabStatusDotImage]];
+    } else if (_state & kPTYTabDeadState) {
         [self setIcon:[PTYTab deadImageWithAppearance:self.realParentWindow.window.effectiveAppearance]];
     } else if (_state & kPTYTabBellState) {
         [self setIcon:[PTYTab bellImage]];
@@ -726,6 +743,18 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     } else {
         [self setIcon:nil];
     }
+}
+
+- (NSImage *)tabStatusDotImage {
+    iTermSRGBColor srgb = _aggregatedTabStatus.indicatorColor;
+    NSColor *dotColor = [NSColor colorWithSRGBRed:srgb.r green:srgb.g blue:srgb.b alpha:1];
+    BOOL isDark = [self.realParentWindow.window.effectiveAppearance
+                   bestMatchFromAppearancesWithNames:@[NSAppearanceNameDarkAqua]] != nil;
+    return [iTermSessionTabStatus dotImageWithColor:dotColor
+                                               size:16
+                                        dotDiameter:8
+                                          prominent:_tabStatusWaitingProminent
+                                             isDark:isDark];
 }
 
 - (void)loadTitleFromSession {
@@ -786,6 +815,11 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 
 - (void)didSelectTab {
     DLog(@"didSelectTab %@", self);
+    if (_tabStatusWaitingProminent) {
+        _tabStatusWaitingProminent = NO;
+        [self updateIcon];
+    }
+    [[iTermDockBadgeController sharedInstance] tabWasSelected:self];
     for (PTYSession *session in self.sessions) {
         [session enclosingTabDidBecomeSelected];
     }
@@ -1165,6 +1199,16 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 
 - (NSImage *)psmTabGraphic {
     return self.activeSession.tabGraphic;
+}
+
+- (NSColor *)psmTabStatusSubtitleColor {
+    if (!_aggregatedTabStatus.hasActiveStatus ||
+        !_aggregatedTabStatus.hasStatusTextColor ||
+        _aggregatedTabStatus.statusText.length == 0) {
+        return nil;
+    }
+    iTermSRGBColor c = _aggregatedTabStatus.statusTextColor;
+    return [NSColor colorWithSRGBRed:c.r green:c.g blue:c.b alpha:1];
 }
 
 - (int)objectCount {
@@ -7146,6 +7190,73 @@ backgroundColor:(NSColor *)backgroundColor {
         return;
     }
     [self _refreshLabels:nil];
+}
+
+- (void)sessionTabStatusDidChange:(PTYSession *)session {
+    DLog(@"sessionTabStatusDidChange: %@", session);
+    if ([[iTermStatusPrioritySettings shared] isHighestPriorityFor:session.tabStatus.statusText]) {
+        [[iTermDockBadgeController sharedInstance] sessionDidEnterWaiting:session.guid];
+    } else {
+        [[iTermDockBadgeController sharedInstance] sessionDidLeaveWaiting:session.guid];
+    }
+    [self updateAggregatedTabStatus];
+}
+
+- (iTermSessionTabStatus *)aggregatedTabStatus {
+    return _aggregatedTabStatus;
+}
+
+- (BOOL)tabStatusWaitingProminent {
+    return _tabStatusWaitingProminent;
+}
+
+- (void)updateAggregatedTabStatus {
+    iTermStatusPrioritySettings *settings = [iTermStatusPrioritySettings shared];
+    PTYSession *winner = nil;
+    // Lower priority value = higher priority. NSIntegerMax = no status.
+    NSInteger winnerPriority = NSIntegerMax;
+
+    for (PTYSession *session in [self sessions]) {
+        if (!session.tabStatus.hasActiveStatus) {
+            continue;
+        }
+        NSInteger priority = [settings priorityFor:session.tabStatus.statusText];
+        if (priority < winnerPriority ||
+            (priority == winnerPriority && session == self.activeSession)) {
+            winner = session;
+            winnerPriority = priority;
+        }
+    }
+
+    // If all sessions have unmatched priority, prefer the active session.
+    if (winnerPriority >= settings.unmatchedPriority &&
+        self.activeSession.tabStatus.hasActiveStatus) {
+        winner = self.activeSession;
+    }
+
+    NSInteger oldPriority = NSIntegerMax;
+    if (_aggregatedTabStatus.hasActiveStatus) {
+        oldPriority = [settings priorityFor:_aggregatedTabStatus.statusText];
+    }
+
+    if (winner) {
+        _aggregatedTabStatus = [winner.tabStatus copyStatus];
+    } else {
+        [_aggregatedTabStatus clear];
+    }
+
+    // Update prominent flag — prominent when entering highest priority.
+    if (winnerPriority == 0) {
+        if (oldPriority != 0) {
+            _tabStatusWaitingProminent = YES;
+        }
+    } else {
+        _tabStatusWaitingProminent = NO;
+    }
+
+    [self updateIcon];
+    [self _refreshLabels:nil];
+    [_delegate tabDidChangeTabStatus:self];
 }
 
 - (void)session:(PTYSession *)session setFilter:(NSString *)filter {

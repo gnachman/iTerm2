@@ -1,0 +1,6 @@
+.build/
+.build-*/
+Package.resolved
+Sources/ProtobufRuntime/*.m
+Sources/ProtobufRuntime/*.h
+Sources/ProtobufRuntime/include/*.h

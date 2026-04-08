@@ -1507,6 +1507,28 @@ replaceInitialDirectoryForSessionWithGUID:(NSString *)guid
     [[iTermPresentationController sharedInstance] update];
 }
 
+- (void)revealSessionID:(NSString *)sessionID {
+    NSString *guid = [sessionID it_stringBySplittingOnFirstSubstring:@":"].secondObject;
+    [self revealSessionWithGUID:guid];
+}
+
+- (void)revealSessionWithGUID:(NSString *)guid {
+    for (PseudoTerminal *window in [self terminals]) {
+        for (PTYSession *session in window.allSessions) {
+            if ([session.guid isEqualToString:guid]) {
+                [session reveal];
+                return;
+            }
+        }
+    }
+    for (PTYSession *session in [[iTermBuriedSessions sharedInstance] buriedSessions]) {
+        if ([session.guid isEqualToString:guid]) {
+            [session reveal];
+            return;
+        }
+    }
+}
+
 - (PTYSession *)sessionWithGUID:(NSString *)identifier {
     for (PseudoTerminal *term in [[iTermController sharedInstance] terminals]) {
         for (PTYSession *session in term.allSessions) {

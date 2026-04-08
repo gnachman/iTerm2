@@ -66,8 +66,12 @@ extern NSString *const PTYSessionSlownessEventExecute;
 @property (nonatomic, readonly) BOOL haveTriggersOrExpectations;
 @property (nonatomic, strong, readonly) dispatch_queue_t queue;
 @property (nonatomic) BOOL disableExecution;
+// Set from the main thread by PTYSession when the foreground job changes.
+// Read from the mutation thread during trigger evaluation.
+@property (atomic, copy, nullable) NSString *foregroundJob;
 @property (nonatomic, readonly) BOOL havePromptDetectingTrigger;
 @property (nonatomic, readonly) NSString *stats;
+@property (nonatomic, copy, nullable) NSString *sessionID;
 
 - (instancetype)initWithQueue:(dispatch_queue_t)queue NS_DESIGNATED_INITIALIZER;
 - (instancetype)init NS_UNAVAILABLE;

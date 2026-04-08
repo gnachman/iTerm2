@@ -244,7 +244,7 @@ static const int64_t VT100ScreenMutableStateSideEffectFlagLineBufferDidDropLines
 // you're doing.
 - (void)addPausedSideEffect:(void (^)(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser))sideEffect
                        name:(NSString *)name {
-    DLog(@"[side effects] Add paused side effect %@", name);
+    DLog(@"[side effects] %@ Add paused side effect %@", self.config.sessionGuid, name);
     iTermTokenExecutorUnpauser *unpauser = [_tokenExecutor pause];
     __weak __typeof(self) weakSelf = self;
     [_tokenExecutor addSideEffect:^{
@@ -258,7 +258,7 @@ static const int64_t VT100ScreenMutableStateSideEffectFlagLineBufferDidDropLines
 
 - (void)addDeferredSideEffect:(void (^)(id<VT100ScreenDelegate> delegate))sideEffect
                          name:(NSString *)name {
-    DLog(@"[side effects] Add deferred side effect %@", name);
+    DLog(@"[side effects] %@ Add deferred side effect %@", self.config.sessionGuid, name);
     __weak __typeof(self) weakSelf = self;
     [_tokenExecutor addDeferredSideEffect:^{
         DLog(@"[side effects] Execute deferred side effect %@", name);
@@ -267,17 +267,17 @@ static const int64_t VT100ScreenMutableStateSideEffectFlagLineBufferDidDropLines
 }
 
 - (void)addSideEffect:(void (^)(id<VT100ScreenDelegate> delegate))sideEffect name:(NSString *)name {
-    DLog(@"[side effects] Add side effect %@", name);
+    DLog(@"[side effects] %@ Add side effect %@", self.config.sessionGuid, name);
     __weak __typeof(self) weakSelf = self;
     [_tokenExecutor addSideEffect:^{
-        DLog(@"[side effects] Execute side effect %@", name);
+        DLog(@"[side effects] %@ Execute side effect %@", weakSelf.config.sessionGuid, name);
         [weakSelf performSideEffect:sideEffect name:name];
     }];
 }
 
 
 - (void)addNoDelegateSideEffect:(void (^)(void))sideEffect name:(NSString *)name {
-    DLog(@"[side effects] Add side effect %@", name);
+    DLog(@"[side effects] %@ Add side effect %@", self.config.sessionGuid, name);
     __weak __typeof(self) weakSelf = self;
     [_tokenExecutor addSideEffect:^{
         [weakSelf reallyPerformSideEffect:^(id<VT100ScreenDelegate> delegate) { sideEffect(); }
@@ -288,7 +288,7 @@ static const int64_t VT100ScreenMutableStateSideEffectFlagLineBufferDidDropLines
 
 - (void)addPausedNoDelegateSideEffect:(void (^)(iTermTokenExecutorUnpauser *unpauser))sideEffect
                                  name:(NSString *)name {
-    DLog(@"[side effects] Add side effect %@", name);
+    DLog(@"[side effects] %@ Add side effect %@", self.config.sessionGuid, name);
     __weak __typeof(self) weakSelf = self;
     iTermTokenExecutorUnpauser *unpauser = [_tokenExecutor pause];
     [_tokenExecutor addSideEffect:^{
@@ -302,7 +302,7 @@ static const int64_t VT100ScreenMutableStateSideEffectFlagLineBufferDidDropLines
 
 - (void)addIntervalTreeSideEffect:(void (^)(id<iTermIntervalTreeObserver> observer))sideEffect
                              name:(NSString *)name {
-    DLog(@"[side effects] Add interval tree side effect %@", name);
+    DLog(@"[side effects] %@ Add interval tree side effect %@", self.config.sessionGuid, name);
     __weak __typeof(self) weakSelf = self;
     [_tokenExecutor addSideEffect:^{
         [weakSelf performIntervalTreeSideEffect:sideEffect name:name];
@@ -315,7 +315,7 @@ static const int64_t VT100ScreenMutableStateSideEffectFlagLineBufferDidDropLines
 // The main thread will be stopped while running your side effect and you can safely access both
 // mutation and main-thread data in it.
 - (void)addJoinedSideEffect:(void (^)(id<VT100ScreenDelegate> delegate))sideEffect name:(NSString *)name {
-    DLog(@"[side effects] Add joined side effect %@", name);
+    DLog(@"[side effects] %@ Add joined side effect %@", self.config.sessionGuid, name);
     __weak __typeof(self) weakSelf = self;
     [self addPausedSideEffect:^(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser) {
         __strong __typeof(self) strongSelf = weakSelf;
@@ -423,6 +423,10 @@ static const int64_t VT100ScreenMutableStateSideEffectFlagLineBufferDidDropLines
 
 #pragma mark - Accessors
 
+- (void)setForegroundJobForTriggerFiltering:(NSString *)job {
+    _triggerEvaluator.foregroundJob = job;
+}
+
 - (void)setConfig:(VT100MutableScreenConfiguration *)config {
     DLog(@"%@ begin %@", self, config);
     assert(VT100ScreenMutableState.performingJoinedBlock);
@@ -476,7 +480,9 @@ static const int64_t VT100ScreenMutableStateSideEffectFlagLineBufferDidDropLines
     _terminal.terminfoValues = config.terminfoValues;
     _terminal.output.optionIsMetaForSpecialKeys = config.optionIsMetaForSpecialChars;
     _alertOnNextMark = config.alertOnNextMark;
-
+    if (!_triggerEvaluator.sessionID) {
+        _triggerEvaluator.sessionID = config.sessionGuid;
+    }
     _autoComposerEnabled = config.autoComposerEnabled;
     if ([dirty containsObject:@"desiredComposerRows"]) {
         [_promptStateMachine revealOrDismissComposerAgain];
@@ -1698,6 +1704,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
 - (void)finishResetting {
     [self invalidateCommandStartCoordWithoutSideEffects];
     [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+        [delegate screenSetTabStatus:[VT100TabStatusUpdate clear]];
         [delegate screenSetCursorVisible:YES];
     } name:@"finish resetting"];
     [self.currentGrid markCharDirty:YES at:self.currentGrid.cursor updateTimestamp:NO];
@@ -5407,7 +5414,7 @@ lengthExcludingInBandSignaling:data.length
     //          encodeRestorableState
     //            performJoinedBlock
     //              executeSideEffectsImmediatelySyncingFirst (here)
-    DLog(@"[side effects] Execute side effects without syncing first");
+    DLog(@"[side effects] %@ Execute side effects without syncing first", self.config.sessionGuid);
     [_tokenExecutor executeSideEffectsImmediatelySyncingFirst:NO];
 
     if (block) {
@@ -5416,7 +5423,7 @@ lengthExcludingInBandSignaling:data.length
         DLog(@"finish block");
     }
     // Run any side-effects enqueued by the block, taking advantage of the fact that state is in sync.
-    DLog(@"[side effects] Execute side effects without syncing first (2)");
+    DLog(@"[side effects] %@ Execute side effects without syncing first (2)", self.config.sessionGuid);
     [_tokenExecutor executeSideEffectsImmediatelySyncingFirst:NO];
     if (!wasPerformingJoinedBlock) {
         DLog(@"restore state");
@@ -6610,6 +6617,12 @@ launchCoprocessWithCommand:(NSString *)command
     [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
         [delegate triggerSideEffectSetValue:value forVariableNamed:name];
     } name:@"trigger set variable"];
+}
+
+- (void)triggerSession:(Trigger *)trigger setTabStatus:(VT100TabStatusUpdate *)status {
+    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+        [delegate screenSetTabStatus:status];
+    } name:@"trigger set tab status"];
 }
 
 - (BOOL)triggerSessionIsInAlternateScreen {
