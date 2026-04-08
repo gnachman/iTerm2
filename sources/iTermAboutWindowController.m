@@ -11,64 +11,52 @@
 #import "iTerm2SharedARC-Swift.h"
 #import "iTermLaunchExperienceController.h"
 #import "NSArray+iTerm.h"
+#import "NSColor+iTerm.h"
 #import "NSMutableAttributedString+iTerm.h"
 #import "NSObject+iTerm.h"
 #import "NSStringITerm.h"
 
 static NSString *iTermAboutWindowControllerWhatsNewURLString = @"iterm2://whats-new/";
 
+static const CGFloat kSponsorImageHeight = 32.0;
+static const CGFloat kSponsorPadding = 8.0;
+static const CGFloat kSponsorSpacing = 16.0;
+// Y origin of the sponsor row, matching the original nib position.
+static const CGFloat kSponsorRowY = 170.0;
+
 @interface iTermAboutWindowContentView : NSVisualEffectView
 @end
 
+@interface iTermSponsorBoxView : NSView
+@end
+
+@implementation iTermSponsorBoxView
+- (BOOL)wantsUpdateLayer { return YES; }
+- (void)updateLayer {
+    [super updateLayer];
+    self.layer.cornerRadius = 8.0;
+    self.layer.borderWidth = 0.5;
+    self.layer.borderColor = [NSColor separatorColor].CGColor;
+    self.layer.backgroundColor = [NSColor it_dynamicColorForLightMode:[NSColor colorWithWhite:0.0 alpha:0.04]
+                                                                    darkMode:[NSColor colorWithWhite:1.0 alpha:0.08]].CGColor;
+}
+- (void)resetCursorRects {
+    [super resetCursorRects];
+    [self addCursorRect:self.bounds cursor:[NSCursor pointingHandCursor]];
+}
+@end
+
 @interface iTermSponsor: NSObject
-@property (nonatomic) NSTextField *textField;
-@property (nonatomic) NSTrackingArea *trackingArea;
 @property (nonatomic) NSView *view;
 @property (nonatomic, copy) NSString *url;
-
-+ (instancetype)sponsorWithView:(NSView *)view textField:(NSTextField *)textField container:(NSView *)container url:(NSString *)url;
 @end
 
 @implementation iTermSponsor
-+ (instancetype)sponsorWithView:(NSView *)view textField:(NSTextField *)textField container:(NSView *)container url:(NSString *)url {
-    iTermSponsor *sponsor = [[iTermSponsor alloc] init];
-    sponsor.view = view;
-    sponsor.textField = textField;
-    sponsor.url = url;
-
-    // Create a tracking area for the sponsor's view
-    sponsor.trackingArea = [[NSTrackingArea alloc] initWithRect:view.frame
-                                                        options:NSTrackingMouseEnteredAndExited | NSTrackingActiveAlways
-                                                          owner:container
-                                                       userInfo:nil];
-    [view addTrackingArea:sponsor.trackingArea];
-    if (textField) {
-        NSDictionary *underlineAttribute = @{NSUnderlineStyleAttributeName: @(NSUnderlineStyleSingle)};
-        NSAttributedString *attributedString = [[NSAttributedString alloc] initWithString:[textField stringValue] attributes:underlineAttribute];
-        [textField setAttributedStringValue:attributedString];
-    }
-    return sponsor;
-}
-
-- (void)updateTrackingAreaForContainer:(NSView *)container {
-    [container removeTrackingArea:self.trackingArea];
-    self.trackingArea = [[NSTrackingArea alloc] initWithRect:self.view.frame
-                                                    options:NSTrackingMouseEnteredAndExited | NSTrackingActiveAlways
-                                                      owner:container
-                                                   userInfo:nil];
-    [container addTrackingArea:self.trackingArea];
-}
 @end
 
 @implementation iTermAboutWindowContentView {
     IBOutlet NSScrollView *_bottomAlignedScrollView;
     IBOutlet NSTextView *_sponsorsHeading;
-
-    IBOutlet NSView *_whitebox;
-    IBOutlet NSTextField *_whiteboxText;
-
-    IBOutlet NSView *_codeRabbit;
-    IBOutlet NSView *_serpApi;
 
     NSArray<iTermSponsor *> *_sponsors;
 }
@@ -91,47 +79,95 @@ static NSString *iTermAboutWindowControllerWhatsNewURLString = @"iterm2://whats-
                                                                                               font:_sponsorsHeading.font
                                                                                     paragraphStyle:paragraphStyle]];
 
-    _sponsors = @[ [iTermSponsor sponsorWithView:_whitebox
-                                       textField:_whiteboxText
-                                       container:self
-                                             url:@"https://whitebox.so/?utm_source=iTerm2"],
-                   [iTermSponsor sponsorWithView:_codeRabbit
-                                       textField:nil
-                                       container:self
-                                             url:@"https://coderabbit.ai/"],
-                   [iTermSponsor sponsorWithView:_serpApi
-                                       textField:nil
-                                       container:self
-                                             url:@"https://serpapi.com/?utm_source=iterm"]];
+    _sponsors = [self buildUnifiedSponsorRow];
 }
 
+- (NSView *)makeSponsorBoxWithImageNamed:(NSString *)imageName title:(NSString *)title {
+    NSImage *image = [NSImage imageNamed:imageName];
+    CGFloat aspect = (image && image.size.height > 0)
+        ? (image.size.width / image.size.height) : 1.0;
+    CGFloat imageWidth = ceil(kSponsorImageHeight * aspect);
+    CGFloat boxHeight = kSponsorImageHeight + 2 * kSponsorPadding;
 
-- (void)mouseEntered:(NSEvent *)theEvent {
-    [NSCursor.pointingHandCursor set];
+    NSImageView *imageView = [[NSImageView alloc] initWithFrame:NSMakeRect(kSponsorPadding, kSponsorPadding, imageWidth, kSponsorImageHeight)];
+    imageView.image = image;
+    imageView.imageScaling = NSImageScaleProportionallyUpOrDown;
+
+    CGFloat boxWidth = imageWidth + 2 * kSponsorPadding;
+
+    NSTextField *label = nil;
+    if (title) {
+        label = [NSTextField labelWithString:title];
+        label.font = [NSFont systemFontOfSize:13];
+        label.textColor = [NSColor linkColor];
+        [label sizeToFit];
+        CGFloat labelX = kSponsorPadding + imageWidth + kSponsorPadding;
+        label.frame = NSMakeRect(labelX,
+                                 round((boxHeight - label.frame.size.height) / 2.0),
+                                 label.frame.size.width,
+                                 label.frame.size.height);
+        boxWidth = NSMaxX(label.frame) + kSponsorPadding;
+    }
+
+    iTermSponsorBoxView *box = [[iTermSponsorBoxView alloc] initWithFrame:NSMakeRect(0, 0, boxWidth, boxHeight)];
+    box.wantsLayer = YES;
+    [box addSubview:imageView];
+    if (label) {
+        [box addSubview:label];
+    }
+
+    return box;
 }
 
-- (void)mouseExited:(NSEvent *)theEvent {
-    [NSCursor.arrowCursor set];
+- (NSArray<iTermSponsor *> *)buildUnifiedSponsorRow {
+    NSArray<NSDictionary *> *sponsorData = @[
+        @{ @"image": @"whitebox_logo", @"title": @"Whitebox", @"url": @"https://whitebox.so/?utm_source=iTerm2" },
+        @{ @"image": @"coderabbitai",  @"url": @"https://coderabbit.ai/" },
+        @{ @"image": @"SerpApi",       @"url": @"https://serpapi.com/?utm_source=iterm" },
+    ];
+
+    NSMutableArray<NSView *> *boxes = [NSMutableArray array];
+    for (NSDictionary *data in sponsorData) {
+        [boxes addObject:[self makeSponsorBoxWithImageNamed:data[@"image"] title:data[@"title"]]];
+    }
+
+    // Compute total row width to center the boxes.
+    CGFloat totalWidth = 0;
+    for (NSView *box in boxes) {
+        totalWidth += box.frame.size.width;
+    }
+    totalWidth += kSponsorSpacing * (boxes.count - 1);
+
+    // Place each box with frame-based layout to match the rest of this window.
+    CGFloat x = round((self.bounds.size.width - totalWidth) / 2.0);
+    for (NSView *box in boxes) {
+        box.frame = NSMakeRect(x, kSponsorRowY, box.frame.size.width, box.frame.size.height);
+        // Flexible bottom + left + right: stays centered and pinned to top on resize.
+        box.autoresizingMask = NSViewMinYMargin | NSViewMinXMargin | NSViewMaxXMargin;
+        [self addSubview:box];
+        x += box.frame.size.width + kSponsorSpacing;
+    }
+
+    NSMutableArray<iTermSponsor *> *sponsors = [NSMutableArray array];
+    for (NSUInteger i = 0; i < sponsorData.count; i++) {
+        iTermSponsor *sponsor = [[iTermSponsor alloc] init];
+        sponsor.view = boxes[i];
+        sponsor.url = sponsorData[i][@"url"];
+        [sponsors addObject:sponsor];
+    }
+    return [sponsors copy];
 }
 
 - (void)mouseUp:(NSEvent *)theEvent {
     if (theEvent.clickCount == 1) {
-        NSPoint locationInView = [self convertPoint:theEvent.locationInWindow fromView:nil];
-        [_sponsors enumerateObjectsUsingBlock:^(iTermSponsor * _Nonnull sponsor, NSUInteger idx, BOOL * _Nonnull stop) {
-            if (NSPointInRect(locationInView, sponsor.view.frame)) {
-                // Open the link
+        for (iTermSponsor *sponsor in _sponsors) {
+            NSPoint pt = [sponsor.view convertPoint:theEvent.locationInWindow fromView:nil];
+            if (NSPointInRect(pt, sponsor.view.bounds)) {
                 [[NSWorkspace sharedWorkspace] openURL:[NSURL URLWithString:sponsor.url]];
+                break;
             }
-        }];
+        }
     }
-}
-
-// Don't forget to update the tracking area when the view resizes
-- (void)updateTrackingAreas {
-    [super updateTrackingAreas];
-    [_sponsors enumerateObjectsUsingBlock:^(iTermSponsor * _Nonnull sponsor, NSUInteger idx, BOOL * _Nonnull stop) {
-        [sponsor updateTrackingAreaForContainer:self];
-    }];
 }
 
 @end
