@@ -8,6 +8,7 @@
 
 #import "SessionTitleView.h"
 #import "iTermAdvancedSettingsModel.h"
+#import "PSMCachedTitle.h"
 #import "iTermHamburgerButton.h"
 #import "iTermPreferences.h"
 #import "iTermStatusBarViewController.h"
@@ -277,8 +278,26 @@ static const CGFloat kLockButtonSize = 14;
 }
 
 - (void)updateTitle {
-    [label_ setStringValue:[self titleString]];
+    NSString *titleString = [self titleString];
+    if (_puaFontProvider) {
+        NSFont *font = [NSFont systemFontOfSize:[NSFont smallSystemFontSize]];
+        NSMutableParagraphStyle *paragraphStyle = [[NSMutableParagraphStyle alloc] init];
+        paragraphStyle.lineBreakMode = NSLineBreakByTruncatingTail;
+        NSAttributedString *plain = [[NSAttributedString alloc] initWithString:titleString
+                                                                    attributes:@{NSFontAttributeName: font,
+                                                                                 NSParagraphStyleAttributeName: paragraphStyle}];
+        NSAttributedString *withPUAFonts = PSMApplyPUAFonts(plain,
+                                                             _puaFontProvider,
+                                                             [NSFont smallSystemFontSize]);
+        [label_ setAttributedStringValue:withPUAFonts];
+    } else {
+        [label_ setStringValue:titleString];
+    }
     [self setNeedsDisplay:YES];
+}
+
+- (void)invalidateTitleFont {
+    [self updateTitle];
 }
 
 - (void)setDimmingAmount:(double)value

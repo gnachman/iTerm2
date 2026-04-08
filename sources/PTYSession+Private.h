@@ -7,6 +7,7 @@
 #import "PTYSession.h"
 
 #import "Coprocess.h"
+#import "PSMCachedTitle.h"
 #import "SessionView.h"
 #import "TerminalFile.h"
 #import "TmuxController.h"
@@ -66,6 +67,7 @@ iTermPasteboardReporterDelegate,
 iTermSessionDirectoryTrackerDelegate,
 iTermSessionNameControllerDelegate,
 iTermSessionViewDelegate,
+PSMPUAFontProvider,
 iTermShortcutNavigationModeHandlerDelegate,
 iTermStandardKeyMapperDelegate,
 iTermStatusBarViewControllerDelegate,

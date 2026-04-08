@@ -6841,6 +6841,7 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
     DLog(@"Line height is now %f", [_textview lineHeight]);
     [_delegate sessionDidChangeFontSize:self adjustWindow:!_windowAdjustmentDisabled && !_view.isBrowser];
     [_composerManager updateFont];
+    [_view.title invalidateTitleFont];
     DLog(@"After:\n%@", [window.contentView iterm_recursiveDescription]);
     DLog(@"Window frame: %@", window);
 
@@ -19520,6 +19521,16 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
 
 - (void)sessionViewToggleLock {
     self.locked = !_locked;
+}
+
+- (id<PSMPUAFontProvider>)sessionViewPUAFontProvider {
+    return self;
+}
+
+#pragma mark - PSMPUAFontProvider
+
+- (NSFont *)fontForPUACodePoint:(UTF32Char)codePoint {
+    return [_textview.fontTable fontForPUACodePoint:codePoint];
 }
 
 #pragma mark - iTermCoprocessDelegate
