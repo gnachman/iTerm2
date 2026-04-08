@@ -138,6 +138,18 @@ iTermExternalAttributeIndex *iTermMetadataGetExternalAttributesIndexCreatingIfNe
     return [[(iTermExternalAttributeIndex *)obj->externalAttributes retain] autorelease];
 }
 
+void iTermImmutableMetadataDeriveLineAttributeFromExternalAttributes(iTermImmutableMetadata *metadata) {
+    id<iTermExternalAttributeIndexReading> eaIndex =
+        iTermImmutableMetadataGetExternalAttributesIndex(*metadata);
+    if (!eaIndex) {
+        return;
+    }
+    const iTermLineAttribute derivedAttr = [eaIndex uniformLineAttribute];
+    if (derivedAttr != iTermLineAttributeSingleWidth) {
+        ((iTermMetadata *)metadata)->lineAttribute = derivedAttr;
+    }
+}
+
 void iTermMetadataInitFromArray(iTermMetadata *obj, NSArray *array) {
     if (array.count < 2) {
         iTermMetadataInit(obj, 0, NO, nil, iTermLineAttributeSingleWidth);

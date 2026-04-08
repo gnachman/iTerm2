@@ -89,6 +89,11 @@ iTermMetadataGetExternalAttributesIndexCreatingIfNeeded(iTermMetadata *obj);
 id<iTermExternalAttributeIndexReading> _Nullable
 iTermImmutableMetadataGetExternalAttributesIndex(iTermImmutableMetadata obj);
 
+// Derive lineAttribute from per-character external attributes. If all
+// entries share the same non-singleWidth lineAttribute, set it on the
+// metadata. Safe to call on stack-local metadata structs.
+void iTermImmutableMetadataDeriveLineAttributeFromExternalAttributes(iTermImmutableMetadata *metadata);
+
 void iTermMetadataInitFromArray(iTermMetadata *obj, NSArray *array);
 NSArray *iTermImmutableMetadataEncodeToArray(iTermImmutableMetadata obj);
 NSArray *iTermMetadataEncodeToArray(iTermMetadata obj);

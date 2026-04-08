@@ -1258,4 +1258,252 @@ final class iTermLineAttributeTests: XCTestCase {
             XCTAssertEqual(attr, .doubleWidth)
         }
     }
+
+    /// Regression: a soft-wrapped line that gets DECDHL on its second screen
+    /// line should preserve that attribute through widen→narrow resize.
+    ///
+    /// Scenario:
+    /// 1. Width=20. Write 25 chars → wraps onto line 1 (5 chars on line 1).
+    /// 2. Cursor is on line 1. Send ESC#3 → line 1 becomes doubleHeightTop.
+    /// 3. Widen to 30 → the wrapped text reflows onto one line (no wrap).
+    ///    The doubleHeightTop characters are now at the end of the single line,
+    ///    with their per-character external attributes preserving the flag.
+    /// 4. Narrow back to 20 → the line wraps again. The second screen line
+    ///    should recover doubleHeightTop from the external attributes.
+    func testDoubleHeightRecoveredAfterWidenNarrow() {
+        let screen = makeScreen(width: 20, height: 5)
+
+        // Step 1: write 25 chars to force a soft wrap at column 20.
+        screen.performBlock(joinedThreads: { _, mutableState, _ in
+            mutableState!.appendString(atCursor: "ABCDEFGHIJKLMNOPQRST")  // fills line 0
+            mutableState!.appendString(atCursor: "UVWXY")                 // wraps to line 1
+        })
+
+        // Step 2: cursor is on line 1. Set it to doubleHeightTop.
+        // The cursor should be on line 1 after the wrap.
+        setLineAttribute(screen, attr: .doubleHeightTop)
+        XCTAssertEqual(lineAttribute(screen, line: 1), .doubleHeightTop,
+                       "Line 1 should be doubleHeightTop after ESC#3")
+
+        // Step 3: widen by 1 column — line still wraps but at different position.
+        screen.performBlock(joinedThreads: { _, mutableState, _ in
+            mutableState!.setSize(VT100GridSizeMake(21, 5),
+                                  delegate: screen.delegate)
+        })
+
+        // Step 4: narrow back to original width.
+        screen.performBlock(joinedThreads: { _, mutableState, _ in
+            mutableState!.setSize(VT100GridSizeMake(20, 5),
+                                  delegate: screen.delegate)
+        })
+
+        // Find the line with the DWL content. After reflow, it may be on
+        // the grid or in scrollback. Use screenCharArrayForLine: which
+        // covers both.
+        var foundAttr: iTermLineAttribute = .singleWidth
+        screen.performBlock(joinedThreads: { _, mutableState, _ in
+            // The logical line has 25 chars. At width=20, line 0 has 20
+            // (singleWidth), line 1 has 5 (doubleHeightTop). The absolute
+            // line number depends on how many lines are in scrollback.
+            let numScrollback = mutableState!.numberOfScrollbackLines()
+            // Check each visible line for the DWL attribute.
+            for i in 0..<5 {
+                let sca = mutableState!.screenCharArray(forLine: Int32(numScrollback) + Int32(i))
+                if sca.metadata.lineAttribute == .doubleHeightTop {
+                    foundAttr = .doubleHeightTop
+                    break
+                }
+            }
+        })
+        XCTAssertEqual(foundAttr, .doubleHeightTop,
+                       "doubleHeightTop should survive widen→narrow reflow")
+    }
+
+    /// Pre-existing bug: popAndCopyLastLineInto: assigns subAttributesFromIndex:
+    /// (the popped portion's attrs) to the remaining line instead of
+    /// subAttributesToIndex: (the remaining portion's attrs). This swaps
+    /// ext attrs between the two halves during resize reflow.
+    ///
+    /// This test writes 25 chars at width=20 (wraps to 2 lines), sets a URL
+    /// on the last 5 chars (line 1), resizes to 21 then back to 20, and
+    /// verifies the URL is still on line 1.
+    func testURLExtAttrSurvivesResizeReflow() {
+        let screen = makeScreen(width: 20, height: 5)
+
+        // Write 25 chars — wraps at column 20.
+        screen.performBlock(joinedThreads: { _, mutableState, _ in
+            mutableState!.appendString(atCursor: "ABCDEFGHIJKLMNOPQRST") // line 0
+            mutableState!.appendString(atCursor: "UVWXY")                // line 1
+        })
+
+        // Set a URL on line 1 (the wrapped portion), columns 0-4.
+        let testURL = iTermURL(url: NSURL(string: "https://example.com")! as URL,
+                               identifier: nil,
+                               target: nil)
+        screen.performBlock(joinedThreads: { _, mutableState, _ in
+            let grid = mutableState!.currentGrid
+            grid.setURL(testURL,
+                        inRectFrom: VT100GridCoordMake(0, 1),
+                        to: VT100GridCoordMake(4, 1))
+        })
+
+        // Verify URL is on line 1 before resize.
+        var urlBeforeResize: iTermURL? = nil
+        screen.performBlock(joinedThreads: { _, mutableState, _ in
+            let grid = mutableState!.currentGrid
+            let eaIndex = grid.lineInfo(atLineNumber: 1).externalAttributesCreatingIfNeeded(false)
+            urlBeforeResize = eaIndex?.attributes[NSNumber(value: 0)]?.url
+        })
+        XCTAssertNotNil(urlBeforeResize, "URL should be set on line 1 before resize")
+
+        // Resize: widen to 21, then narrow back to 20.
+        screen.performBlock(joinedThreads: { _, mutableState, _ in
+            mutableState!.setSize(VT100GridSizeMake(21, 5),
+                                  delegate: screen.delegate)
+        })
+        screen.performBlock(joinedThreads: { _, mutableState, _ in
+            mutableState!.setSize(VT100GridSizeMake(20, 5),
+                                  delegate: screen.delegate)
+        })
+
+        // The URL should still be on line 1, not line 0.
+        var urlOnLine0: iTermURL? = nil
+        var urlOnLine1: iTermURL? = nil
+        screen.performBlock(joinedThreads: { _, mutableState, _ in
+            let grid = mutableState!.currentGrid
+            let ea0 = grid.lineInfo(atLineNumber: 0).externalAttributesCreatingIfNeeded(false)
+            let ea1 = grid.lineInfo(atLineNumber: 1).externalAttributesCreatingIfNeeded(false)
+            urlOnLine0 = ea0?.attributes[NSNumber(value: 0)]?.url
+            urlOnLine1 = ea1?.attributes[NSNumber(value: 0)]?.url
+        })
+        XCTAssertNil(urlOnLine0, "Line 0 should NOT have a URL after resize")
+        XCTAssertNotNil(urlOnLine1, "Line 1 should still have the URL after resize")
+    }
+
+    /// URL on the first part of a wrapped line (the remaining portion after
+    /// pop) should NOT leak to the second part (the popped portion).
+    func testURLOnRemainingPortionDoesNotLeakToPopped() {
+        let screen = makeScreen(width: 20, height: 5)
+
+        screen.performBlock(joinedThreads: { _, mutableState, _ in
+            mutableState!.appendString(atCursor: "ABCDEFGHIJKLMNOPQRST")
+            mutableState!.appendString(atCursor: "UVWXY")
+        })
+
+        // Set URL on line 0 (the remaining portion), columns 0-4.
+        let testURL = iTermURL(url: NSURL(string: "https://example.com")! as URL,
+                               identifier: nil,
+                               target: nil)
+        screen.performBlock(joinedThreads: { _, mutableState, _ in
+            mutableState!.currentGrid.setURL(testURL,
+                                              inRectFrom: VT100GridCoordMake(0, 0),
+                                              to: VT100GridCoordMake(4, 0))
+        })
+
+        // Resize: widen then narrow.
+        screen.performBlock(joinedThreads: { _, mutableState, _ in
+            mutableState!.setSize(VT100GridSizeMake(21, 5), delegate: screen.delegate)
+        })
+        screen.performBlock(joinedThreads: { _, mutableState, _ in
+            mutableState!.setSize(VT100GridSizeMake(20, 5), delegate: screen.delegate)
+        })
+
+        // URL should still be on line 0, NOT on line 1.
+        var urlOnLine0: iTermURL? = nil
+        var urlOnLine1: iTermURL? = nil
+        screen.performBlock(joinedThreads: { _, mutableState, _ in
+            let grid = mutableState!.currentGrid
+            urlOnLine0 = grid.lineInfo(atLineNumber: 0).externalAttributesCreatingIfNeeded(false)?.attributes[NSNumber(value: 0)]?.url
+            urlOnLine1 = grid.lineInfo(atLineNumber: 1).externalAttributesCreatingIfNeeded(false)?.attributes[NSNumber(value: 0)]?.url
+        })
+        XCTAssertNotNil(urlOnLine0, "Line 0 should still have the URL")
+        XCTAssertNil(urlOnLine1, "Line 1 should NOT have a URL (it leaked from remaining)")
+    }
+
+    /// URL spanning the wrap boundary should be split: both halves keep
+    /// their portion of the URL.
+    func testURLSpanningSplitBoundaryPreservedOnBothSides() {
+        let screen = makeScreen(width: 20, height: 5)
+
+        screen.performBlock(joinedThreads: { _, mutableState, _ in
+            mutableState!.appendString(atCursor: "ABCDEFGHIJKLMNOPQRST")
+            mutableState!.appendString(atCursor: "UVWXY")
+        })
+
+        // Set URL spanning the wrap: columns 15-24 (line 0 cols 15-19 + line 1 cols 0-4).
+        let testURL = iTermURL(url: NSURL(string: "https://example.com")! as URL,
+                               identifier: nil,
+                               target: nil)
+        screen.performBlock(joinedThreads: { _, mutableState, _ in
+            let grid = mutableState!.currentGrid
+            grid.setURL(testURL,
+                        inRectFrom: VT100GridCoordMake(15, 0),
+                        to: VT100GridCoordMake(19, 0))
+            grid.setURL(testURL,
+                        inRectFrom: VT100GridCoordMake(0, 1),
+                        to: VT100GridCoordMake(4, 1))
+        })
+
+        // Resize: widen then narrow.
+        screen.performBlock(joinedThreads: { _, mutableState, _ in
+            mutableState!.setSize(VT100GridSizeMake(21, 5), delegate: screen.delegate)
+        })
+        screen.performBlock(joinedThreads: { _, mutableState, _ in
+            mutableState!.setSize(VT100GridSizeMake(20, 5), delegate: screen.delegate)
+        })
+
+        // Both lines should still have URLs.
+        var urlOnLine0: iTermURL? = nil
+        var urlOnLine1: iTermURL? = nil
+        screen.performBlock(joinedThreads: { _, mutableState, _ in
+            let grid = mutableState!.currentGrid
+            urlOnLine0 = grid.lineInfo(atLineNumber: 0).externalAttributesCreatingIfNeeded(false)?.attributes[NSNumber(value: 15)]?.url
+            urlOnLine1 = grid.lineInfo(atLineNumber: 1).externalAttributesCreatingIfNeeded(false)?.attributes[NSNumber(value: 0)]?.url
+        })
+        XCTAssertNotNil(urlOnLine0, "Line 0 should have URL at col 15 after resize")
+        XCTAssertNotNil(urlOnLine1, "Line 1 should have URL at col 0 after resize")
+    }
+
+    /// A line wrapping 3+ times should correctly split ext attrs across
+    /// multiple pops.
+    func testExtAttrsSurviveTripleWrapResize() {
+        let screen = makeScreen(width: 10, height: 5)
+
+        // Write 25 chars → wraps to 3 lines at width=10: [0-9] [10-19] [20-24]
+        screen.performBlock(joinedThreads: { _, mutableState, _ in
+            mutableState!.appendString(atCursor: "ABCDEFGHIJKLMNOPQRSTUVWXY")
+        })
+
+        // Set URL on the last 5 chars (line 2, cols 0-4).
+        let testURL = iTermURL(url: NSURL(string: "https://example.com")! as URL,
+                               identifier: nil,
+                               target: nil)
+        screen.performBlock(joinedThreads: { _, mutableState, _ in
+            mutableState!.currentGrid.setURL(testURL,
+                                              inRectFrom: VT100GridCoordMake(0, 2),
+                                              to: VT100GridCoordMake(4, 2))
+        })
+
+        // Resize: widen to 11 then back to 10.
+        screen.performBlock(joinedThreads: { _, mutableState, _ in
+            mutableState!.setSize(VT100GridSizeMake(11, 5), delegate: screen.delegate)
+        })
+        screen.performBlock(joinedThreads: { _, mutableState, _ in
+            mutableState!.setSize(VT100GridSizeMake(10, 5), delegate: screen.delegate)
+        })
+
+        // The URL should be on the last wrapped line (line 2), not elsewhere.
+        var urlOnLine0: iTermURL? = nil
+        var urlOnLine1: iTermURL? = nil
+        var urlOnLine2: iTermURL? = nil
+        screen.performBlock(joinedThreads: { _, mutableState, _ in
+            let grid = mutableState!.currentGrid
+            urlOnLine0 = grid.lineInfo(atLineNumber: 0).externalAttributesCreatingIfNeeded(false)?.attributes[NSNumber(value: 0)]?.url
+            urlOnLine1 = grid.lineInfo(atLineNumber: 1).externalAttributesCreatingIfNeeded(false)?.attributes[NSNumber(value: 0)]?.url
+            urlOnLine2 = grid.lineInfo(atLineNumber: 2).externalAttributesCreatingIfNeeded(false)?.attributes[NSNumber(value: 0)]?.url
+        })
+        XCTAssertNil(urlOnLine0, "Line 0 should not have URL")
+        XCTAssertNil(urlOnLine1, "Line 1 should not have URL")
+        XCTAssertNotNil(urlOnLine2, "Line 2 should still have the URL after triple-wrap resize")
+    }
 }

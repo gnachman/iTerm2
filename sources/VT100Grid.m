@@ -2034,6 +2034,7 @@ externalAttributeIndex:(iTermExternalAttributeIndex *)ea {
                                               metadata:&metadata
                                           continuation:&continuation];
     assert(ok);
+    iTermImmutableMetadataDeriveLineAttributeFromExternalAttributes(&metadata);
     [[self lineInfoAtLineNumber:0] setMetadataFromImmutable:metadata];
     line[width] = continuation;
     line[width].code = eol;
@@ -2091,6 +2092,7 @@ externalAttributeIndex:(iTermExternalAttributeIndex *)ea {
                                 includesEndOfLine:&cont
                                          metadata:&metadata
                                      continuation:&continuation]);
+        iTermImmutableMetadataDeriveLineAttributeFromExternalAttributes(&metadata);
         [[self lineInfoAtLineNumber:destLineNumber] setMetadataFromImmutable:metadata];
         if (cont && dest[size_.width - 1].code == 0 && prevLineStartsWithDoubleWidth) {
             // If you pop a soft-wrapped line that's a character short and the

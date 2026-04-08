@@ -1418,30 +1418,9 @@ int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BO
                                             lineOffset:NULL];
 
     // Derive lineAttribute from per-character external attributes.
-    // If all characters have the same non-singleWidth lineAttribute, use it.
-    // Optimized: no external attributes → singleWidth (the common case).
-    // Any singleWidth character makes the whole line singleWidth.
-    // Note: metadata is a struct (value type) so we can modify our local
-    // copy's lineAttribute without affecting the LineBlockMetadataArray.
-    id<iTermExternalAttributeIndexReading> eaIndex =
-        iTermImmutableMetadataGetExternalAttributesIndex(metadata);
-    if (eaIndex && !eaIndex.isEmpty && length > 0) {
-        iTermExternalAttribute *firstEA = eaIndex.attributes[@0];
-        const iTermLineAttribute firstAttr = firstEA ? firstEA.lineAttribute : iTermLineAttributeSingleWidth;
-        if (firstAttr != iTermLineAttributeSingleWidth) {
-            BOOL allSame = YES;
-            for (int i = 1; i < length && allSame; i++) {
-                iTermExternalAttribute *ea = eaIndex.attributes[@(i)];
-                iTermLineAttribute charAttr = ea ? ea.lineAttribute : iTermLineAttributeSingleWidth;
-                if (charAttr != firstAttr) {
-                    allSame = NO;
-                }
-            }
-            if (allSame) {
-                ((iTermMetadata *)&metadata)->lineAttribute = firstAttr;
-            }
-        }
-    }
+    // metadata is a struct (value type) so modifying our local copy
+    // doesn't affect the LineBlockMetadataArray.
+    iTermImmutableMetadataDeriveLineAttributeFromExternalAttributes(&metadata);
 
     ScreenCharArray *sca = [[ScreenCharArray alloc] initWithLine:chunk + offset
                                                           length:length
@@ -1656,9 +1635,20 @@ int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BO
         [_metadataArray eraseLastLineCache];
         id<iTermExternalAttributeIndexReading> attrs = [_metadataArray lastExternalAttributeIndex];
         const int split_index = available_len - *length;
-        [_metadataArray setLastExternalAttributeIndex:[attrs subAttributesFromIndex:split_index]];
+        // Split ext attrs: remaining line keeps 0..split_index-1,
+        // popped line gets split_index..end (re-indexed to 0-based).
+        iTermExternalAttributeIndex *poppedAttrs = [attrs subAttributesFromIndex:split_index];
+        [_metadataArray setLastExternalAttributeIndex:[attrs subAttributesToIndex:split_index]];
         if (metadataPtr) {
-            *metadataPtr = [_metadataArray immutableLineMetadataAtIndex:cll_entries - 1];
+            // Build popped metadata: same timestamp/lineAttribute as the
+            // logical line, but with the popped portion's ext attrs.
+            iTermImmutableMetadata base = [_metadataArray immutableLineMetadataAtIndex:cll_entries - 1];
+            iTermMetadataInit((iTermMetadata *)metadataPtr,
+                              base.timestamp,
+                              base.rtlFound,
+                              poppedAttrs,
+                              base.lineAttribute);
+            iTermMetadataAutorelease(*(iTermMetadata *)metadataPtr);
         }
 
         is_partial = YES;

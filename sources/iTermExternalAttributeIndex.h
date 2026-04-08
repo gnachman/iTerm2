@@ -80,6 +80,9 @@ isEqualToExternalAttribute:(iTermExternalAttribute * _Nullable)rhs;
 - (void)copyFrom:(id<iTermExternalAttributeIndexReading> _Nullable)destination startOffset:(int)startOffset;
 - (BOOL)isEqualToExternalAttributeIndex:(id<iTermExternalAttributeIndexReading>)other;
 - (iTermExternalAttribute * _Nullable)attributeAtIndex:(int)i;
+// Returns the lineAttribute if all entries share the same non-singleWidth
+// value, or singleWidth if empty/mixed. Efficient for uniform attrs.
+- (iTermLineAttribute)uniformLineAttribute;
 @end
 
 @interface iTermExternalAttributeIndex: NSObject<iTermExternalAttributeIndexReading>

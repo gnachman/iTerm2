@@ -209,6 +209,21 @@ NSString *const iTermExternalAttributeBlockIDDelimiter = @"\uf8ff";
     return _attributes.count == 0;
 }
 
+- (iTermLineAttribute)uniformLineAttribute {
+    __block iTermLineAttribute result = iTermLineAttributeSingleWidth;
+    __block BOOL first = YES;
+    [self enumerateValuesInRange:NSMakeRange(0, NSUIntegerMax)
+                           block:^(NSRange range, iTermExternalAttribute *attr) {
+        if (first) {
+            result = attr.lineAttribute;
+            first = NO;
+        } else if (attr.lineAttribute != result) {
+            result = iTermLineAttributeSingleWidth;
+        }
+    }];
+    return result;
+}
+
 - (void)mutateAttributesFrom:(int)start
                           to:(int)end
                        block:(iTermExternalAttribute * _Nullable(^)(iTermExternalAttribute * _Nullable))block {
@@ -816,6 +831,10 @@ static BOOL iTermControlCodeAttributeEqualsNumber(const iTermControlCodeAttribut
 
 - (BOOL)isEmpty {
     return _attr == nil || _attr.isDefault;
+}
+
+- (iTermLineAttribute)uniformLineAttribute {
+    return _attr ? _attr.lineAttribute : iTermLineAttributeSingleWidth;
 }
 
 - (NSDictionary *)dictionaryValue {

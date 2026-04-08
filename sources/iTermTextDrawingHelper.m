@@ -2498,18 +2498,46 @@ static BOOL NSRangesAdjacent(NSRange lhs, NSRange rhs) {
                                                                    size_t length,
                                                                    BOOL *stop) {
         if (!smear) {
-            CTFontDrawGlyphs(runFont, buffer, (NSPoint *)positions, length, cgContext);
-
-            if (bold && !fakeBold) {
-                // If this text is supposed to be bold, but the font is not, use double-struck text. Issue 4956.
-                CTFontSymbolicTraits traits = CTFontGetSymbolicTraits(runFont);
-                fakeBold = !(traits & kCTFontTraitBold);
-            }
-
-            if (fakeBold && _boldAllowed) {
-                CGContextTranslateCTM(cgContext, antiAlias ? _antiAliasedShift : 1, 0);
+            // Emoji glyphs ignore the text matrix for scaling (they're
+            // color bitmaps). For DECDHL, move the vertical 2x scale from
+            // the text matrix into the CTM so emoji get scaled too.
+            const BOOL isDoubleHeight = (_currentLineAttribute == iTermLineAttributeDoubleHeightTop ||
+                                         _currentLineAttribute == iTermLineAttributeDoubleHeightBottom);
+            NSString *fontName = isDoubleHeight ? CFBridgingRelease(CTFontCopyFamilyName(runFont)) : nil;
+            const BOOL isEmojiOnDHL = isDoubleHeight &&
+                ([fontName isEqualToString:@"AppleColorEmoji"] ||
+                 [fontName isEqualToString:@"Apple Color Emoji"]);
+            if (isEmojiOnDHL) {
+                // Emoji ignore the text matrix for scaling (they're color
+                // bitmaps). For DECDHL, move the vertical 2x from the text
+                // matrix into the CTM. Halve ty to compensate for the CTM
+                // doubling it. Skip fake bold — emoji don't benefit from
+                // double-striking (matching the GPU renderer).
+                CGContextSaveGState(cgContext);
+                CGAffineTransform tm = CGContextGetTextMatrix(cgContext);
+                tm.d /= 2.0;   // -2 → -1
+                tm.ty /= 2.0;  // compensate for CTM 2x
+                CGContextSetTextMatrix(cgContext, tm);
+                CGContextScaleCTM(cgContext, 1.0, 2.0);
                 CTFontDrawGlyphs(runFont, buffer, (NSPoint *)positions, length, cgContext);
-                CGContextTranslateCTM(cgContext, antiAlias ? -_antiAliasedShift : -1, 0);
+                CGContextRestoreGState(cgContext);
+                CGAffineTransform restored = CGAffineTransformMake(1.0, 0.0,
+                                                                    c, vScale,
+                                                                    origin.x, ty);
+                CGContextSetTextMatrix(cgContext, restored);
+            } else {
+                CTFontDrawGlyphs(runFont, buffer, (NSPoint *)positions, length, cgContext);
+
+                if (bold && !fakeBold) {
+                    CTFontSymbolicTraits traits = CTFontGetSymbolicTraits(runFont);
+                    fakeBold = !(traits & kCTFontTraitBold);
+                }
+
+                if (fakeBold && _boldAllowed) {
+                    CGContextTranslateCTM(cgContext, antiAlias ? _antiAliasedShift : 1, 0);
+                    CTFontDrawGlyphs(runFont, buffer, (NSPoint *)positions, length, cgContext);
+                    CGContextTranslateCTM(cgContext, antiAlias ? -_antiAliasedShift : -1, 0);
+                }
             }
         } else {
             const int radius = 1;
