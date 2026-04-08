@@ -508,6 +508,10 @@ private extension iTermProgressBarView {
 // MARK: - NSView overrides
 
 extension iTermProgressBarView {
+    override func hitTest(_ point: NSPoint) -> NSView? {
+        nil
+    }
+
     // Layer frame updates are handled in layoutSublayers(of:), which updates frames based on mode,
     // ensuring the error layer fills its superlayer, the indeterminate layer animates properly,
     // and the determinate layer reflects the current progress percentage.

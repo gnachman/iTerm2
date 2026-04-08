@@ -5316,6 +5316,8 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
                                                                 inProfile:aDict]];
     self.view.enableProgressBars = [iTermProfilePreferences boolForKey:KEY_ENABLE_PROGRESS_BARS
                                                              inProfile:aDict];
+    id<WindowControllerInterface> parentWindow = [_delegate parentWindow];
+    self.view.showInlineProgressBar = (!parentWindow || [parentWindow numberOfTabs] == 1);
     self.view.progressBarHeight = [iTermProfilePreferences floatForKey:KEY_PROGRESS_BAR_HEIGHT
                                                              inProfile:aDict];
     self.view.progressBarColorScheme = [iTermProfilePreferences stringForKey:KEY_PROGRESS_BAR_COLOR_SCHEME

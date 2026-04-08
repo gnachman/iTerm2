@@ -7284,6 +7284,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     }
 
     [self updateTabColors];
+    [self updateSessionProgressBarVisibility];
     [self updateTabProgress];
     [self updateToolbeltAppearance];
     [self setNeedsUpdateTabObjectCounts:YES];
@@ -7758,6 +7759,8 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
 - (void)tabView:(NSTabView *)tabView updateStateForTabViewItem:(NSTabViewItem *)tabViewItem {
     PTYTab *tab = tabViewItem.identifier;
     [_contentView.tabBarControl setIsProcessing:tab.isProcessing forTabWithIdentifier:tab];
+    [_contentView.tabBarControl setProgress:(PSMProgress)tab.activeSession.screen.progress
+                       forTabWithIdentifier:tab];
     [_contentView.tabBarControl setIcon:tab.icon forTabWithIdentifier:tab];
     [_contentView.tabBarControl setObjectCount:tab.objectCount forTabWithIdentifier:tab];
     [_contentView.tabBarControl setIsPinned:tab.isPinned forTabViewItem:tabViewItem];
@@ -7788,6 +7791,13 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
         }
     }
     [_contentView updateTitleAndBorderViews];
+}
+
+- (void)updateSessionProgressBarVisibility {
+    const BOOL showInlineProgressBar = (self.numberOfTabs == 1);
+    for (PTYSession *session in self.allSessions) {
+        session.view.showInlineProgressBar = showInlineProgressBar;
+    }
 }
 
 - (void)updateTabProgress {
