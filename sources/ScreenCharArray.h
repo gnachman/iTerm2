@@ -108,6 +108,12 @@ NS_ASSUME_NONNULL_BEGIN
 
 
 - (BOOL)isEqualToScreenCharArray:(ScreenCharArray *)other;
+// Compares only character identity (code + complexChar + image), ignoring
+// style attributes, eol, continuation, and metadata.
+- (BOOL)hasEqualCharacterContents:(ScreenCharArray *)other;
+// Returns YES if this is a DECDHL bottom-half line that duplicates the
+// given top-half line's character content.
+- (BOOL)isDECDHLDuplicateOf:(ScreenCharArray *)previous;
 - (ScreenCharArray *)screenCharArrayByAppendingScreenCharArray:(ScreenCharArray *)other;
 - (ScreenCharArray *)screenCharArrayByRemovingTrailingNullsAndHardNewline;
 - (ScreenCharArray *)inWindow:(VT100GridRange)window;

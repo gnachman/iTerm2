@@ -417,6 +417,32 @@ static NSString *const ScreenCharArrayKeyBidiInfo = @"bidi";
     return [self isEqualToScreenCharArray:other];
 }
 
+- (BOOL)hasEqualCharacterContents:(ScreenCharArray *)other {
+    if (!other) {
+        return NO;
+    }
+    if (_length != other->_length) {
+        return NO;
+    }
+    for (int i = 0; i < _length; i++) {
+        if (_line[i].image || other->_line[i].image) {
+            return NO;
+        }
+        if (_line[i].code != other->_line[i].code ||
+            _line[i].complexChar != other->_line[i].complexChar) {
+            return NO;
+        }
+    }
+    return YES;
+}
+
+- (BOOL)isDECDHLDuplicateOf:(ScreenCharArray *)previous {
+    return (previous != nil &&
+            _metadata.lineAttribute == iTermLineAttributeDoubleHeightBottom &&
+            previous->_metadata.lineAttribute == iTermLineAttributeDoubleHeightTop &&
+            [self hasEqualCharacterContents:previous]);
+}
+
 - (BOOL)isEqualToScreenCharArray:(ScreenCharArray *)other {
     if (!other) {
         return NO;

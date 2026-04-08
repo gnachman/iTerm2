@@ -157,6 +157,11 @@ class SelectionExtractor: NSObject {
         var cap = maxBytes > 0 ? maxBytes : Int32.max
         var fractionSoFar = Double(0)
         let totalWeight = weight(selection)
+        // DECDHL deduplication: track the previous sub-selection's last
+        // line so we can skip the bottom half of a double-height pair
+        // when it duplicates the top half. This handles box selections
+        // where each line is a separate sub-selection.
+        var prevSCA: ScreenCharArray?
         selection.enumerateSelectedAbsoluteRanges { [unowned self] absRange, stopPtr, eol in
             let subselectionWeight = weight(absRange) / totalWeight
             if _canceled.value {
@@ -192,6 +197,18 @@ class SelectionExtractor: NSObject {
                 }
                 atomicExtractor.set(extractor)
                 extractor.addTimestamps = addTimestamps
+                // DECDHL deduplication: skip the bottom half when it
+                // matches the preceding top half.
+                let lastLineY = range.coordRange.end.y
+                let lastSCA = snapshot.screenCharArray(forLine: lastLineY)
+                defer { prevSCA = lastSCA }
+                let firstSCA = (range.coordRange.start.y == lastLineY)
+                    ? lastSCA
+                    : snapshot.screenCharArray(forLine: range.coordRange.start.y)
+                if let prev = prevSCA, firstSCA.isDECDHLDuplicate(of: prev) {
+                    return
+                }
+
                 let content = content(in: range,
                                       attributeProvider: attributeProvider,
                                       options: options,

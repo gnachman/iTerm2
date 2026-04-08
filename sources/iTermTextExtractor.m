@@ -1233,6 +1233,7 @@ trimTrailingWhitespace:(BOOL)trimSelectionTrailingSpaces
     __block BOOL needsTimestamps = self.addTimestamps;
     [self enumerateCharsInRange:windowedRange
                     supportBidi:YES
+            deduplicateDECDHL:YES
                       charBlock:^BOOL(const screen_char_t *currentLine,
                                       screen_char_t theChar,
                                       iTermExternalAttribute *ea,
@@ -1727,6 +1728,22 @@ trimTrailingWhitespace:(BOOL)trimSelectionTrailingSpaces
                                                    VT100GridCoord logicalCoord,
                                                    VT100GridCoord visualCoord))charBlock
                      eolBlock:(BOOL (^NS_NOESCAPE)(unichar code, int numPrecedingNulls, int line))eolBlock {
+    [self enumerateCharsInRange:range
+                    supportBidi:supportBidi
+              deduplicateDECDHL:NO
+                      charBlock:charBlock
+                       eolBlock:eolBlock];
+}
+
+- (void)enumerateCharsInRange:(VT100GridWindowedRange)range
+                  supportBidi:(BOOL)supportBidi
+            deduplicateDECDHL:(BOOL)deduplicateDECDHL
+                    charBlock:(BOOL (^NS_NOESCAPE)(const screen_char_t *currentLine,
+                                                   screen_char_t theChar,
+                                                   iTermExternalAttribute *,
+                                                   VT100GridCoord logicalCoord,
+                                                   VT100GridCoord visualCoord))charBlock
+                     eolBlock:(BOOL (^NS_NOESCAPE)(unichar code, int numPrecedingNulls, int line))eolBlock {
     int width = [_dataSource width];
 
     int startx = VT100GridWindowedRangeStart(range).x;
@@ -1742,6 +1759,7 @@ trimTrailingWhitespace:(BOOL)trimSelectionTrailingSpaces
     BOOL fullWidth = ((range.columnWindow.location == 0 && range.columnWindow.length == width) ||
                       range.columnWindow.length <= 0);
     int left = range.columnWindow.length ? range.columnWindow.location : 0;
+    ScreenCharArray *prevSCA = nil;
     for (int y = MAX(0, range.coordRange.start.y); y <= MIN(bound, range.coordRange.end.y); y++) {
         if (self.stopAsSoonAsPossible) {
             DLog(@"Aborted");
@@ -1753,6 +1771,18 @@ trimTrailingWhitespace:(BOOL)trimSelectionTrailingSpaces
             endx = MAX(0, MIN(endx, reducedEndX));
         }
         ScreenCharArray *sca = [_dataSource screenCharArrayForLine:y];
+
+        // DECDHL deduplication: skip the bottom half of a double-height
+        // pair when the top half has the same content.
+        if (deduplicateDECDHL) {
+            if ([sca isDECDHLDuplicateOf:prevSCA]) {
+                prevSCA = sca;
+                startx = left;
+                continue;
+            }
+            prevSCA = sca;
+        }
+
         const screen_char_t *theLine = sca.line;
         id<iTermExternalAttributeIndexReading> eaIndex = [_dataSource externalAttributeIndexForLine:y];
 
