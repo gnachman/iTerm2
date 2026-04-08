@@ -14,6 +14,10 @@
     [self close];
 }
 
+- (BOOL)isOpaque {
+    return NO;
+}
+
 - (BOOL)autoHidesHotKeyWindow {
     return NO;
 }

@@ -9,15 +9,22 @@
 #import "iTermAboutWindowController.h"
 
 #import "iTerm2SharedARC-Swift.h"
+#import "iTermController.h"
 #import "iTermLaunchExperienceController.h"
+#import "iTermPreferences.h"
+#import "NSAppearance+iTerm.h"
 #import "NSArray+iTerm.h"
 #import "NSMutableAttributedString+iTerm.h"
 #import "NSObject+iTerm.h"
 #import "NSStringITerm.h"
+#import "PreferencePanel.h"
+#import "PTYWindow.h"
+#import "PseudoTerminal.h"
 
 static NSString *iTermAboutWindowControllerWhatsNewURLString = @"iterm2://whats-new/";
 
 @interface iTermAboutWindowContentView : NSVisualEffectView
+- (void)configureForDark:(BOOL)dark;
 @end
 
 @interface iTermSponsor: NSObject
@@ -71,6 +78,7 @@ static NSString *iTermAboutWindowControllerWhatsNewURLString = @"iterm2://whats-
     IBOutlet NSView *_serpApi;
 
     NSArray<iTermSponsor *> *_sponsors;
+    NSView *_sponsorWrapper;
 }
 
 - (void)resizeSubviewsWithOldSize:(NSSize)oldSize {
@@ -79,10 +87,15 @@ static NSString *iTermAboutWindowControllerWhatsNewURLString = @"iterm2://whats-
     CGFloat topMargin = oldSize.height - NSMaxY(frame);
     frame.origin.y = self.frame.size.height - topMargin - frame.size.height;
     _bottomAlignedScrollView.frame = frame;
+    [self updateSponsorWrapperLayout];
 }
 
 - (void)awakeFromNib {
     [super awakeFromNib];
+    self.material = NSVisualEffectMaterialHUDWindow;
+    self.blendingMode = NSVisualEffectBlendingModeBehindWindow;
+    self.state = NSVisualEffectStateActive;
+
     NSMutableParagraphStyle *paragraphStyle = [[NSMutableParagraphStyle alloc] init];
     paragraphStyle.alignment = NSTextAlignmentCenter;
     _sponsorsHeading.selectable = YES;
@@ -103,6 +116,55 @@ static NSString *iTermAboutWindowControllerWhatsNewURLString = @"iterm2://whats-
                                        textField:nil
                                        container:self
                                              url:@"https://serpapi.com/?utm_source=iterm"]];
+}
+
+- (void)updateSponsorWrapperLayout {
+    if (!_sponsorWrapper) {
+        return;
+    }
+    CGFloat sponsorLogoMinY = MIN(MIN(_whitebox.frame.origin.y, _codeRabbit.frame.origin.y),
+                                  _serpApi.frame.origin.y);
+    CGFloat headingTop = NSMaxY(_sponsorsHeading.frame);
+    if (sponsorLogoMinY == 0 || headingTop == 0) {
+        return;
+    }
+    const CGFloat kWrapperInset = 16;
+    const CGFloat kWrapperGap = 12;
+    CGFloat wrapperY = sponsorLogoMinY - kWrapperGap;
+    CGFloat wrapperHeight = (headingTop + kWrapperGap) - wrapperY;
+    _sponsorWrapper.frame = NSMakeRect(kWrapperInset,
+                                       wrapperY,
+                                       self.frame.size.width - kWrapperInset * 2,
+                                       wrapperHeight);
+}
+
+- (void)configureForDark:(BOOL)dark {
+    _bottomAlignedScrollView.drawsBackground = NO;
+    _bottomAlignedScrollView.contentView.drawsBackground = NO;
+    _bottomAlignedScrollView.hasVerticalScroller = YES;
+    _bottomAlignedScrollView.autohidesScrollers = YES;
+    _bottomAlignedScrollView.wantsLayer = YES;
+    _bottomAlignedScrollView.layer.cornerRadius = 10;
+    _bottomAlignedScrollView.layer.masksToBounds = YES;
+    _bottomAlignedScrollView.layer.backgroundColor = dark
+        ? [NSColor colorWithWhite:0 alpha:0.18].CGColor
+        : [NSColor colorWithWhite:1 alpha:0.22].CGColor;
+
+    if (!_sponsorWrapper) {
+        const CGFloat kWrapperInset = 16;
+        _sponsorWrapper = [[NSView alloc] initWithFrame:NSMakeRect(kWrapperInset, 0,
+                                                                    self.frame.size.width - kWrapperInset * 2,
+                                                                    80)];
+        _sponsorWrapper.wantsLayer = YES;
+        _sponsorWrapper.layer.cornerRadius = 8;
+        _sponsorWrapper.autoresizingMask = NSViewNotSizable;
+        [self addSubview:_sponsorWrapper positioned:NSWindowBelow relativeTo:nil];
+    }
+    _sponsorWrapper.layer.backgroundColor = dark
+        ? [NSColor colorWithWhite:1 alpha:0.07].CGColor
+        : [NSColor colorWithWhite:0 alpha:0.05].CGColor;
+
+    [self updateSponsorWrapperLayout];
 }
 
 
@@ -177,6 +239,12 @@ static NSString *iTermAboutWindowControllerWhatsNewURLString = @"iterm2://whats-
         // Force IBOutlets to be bound by creating window.
         [self window];
 
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(themeDidChange:)
+                                                     name:kRefreshTerminalNotification
+                                                   object:nil];
+        [self applyThemeAppearance];
+
         NSDictionary *versionAttributes = @{ NSForegroundColorAttributeName: [NSColor controlTextColor] };
         NSAttributedString *bullet = [[NSAttributedString alloc] initWithString:@" ∙ "
                                                                      attributes:versionAttributes];
@@ -211,6 +279,25 @@ static NSString *iTermAboutWindowControllerWhatsNewURLString = @"iterm2://whats-
         });
     }
     return self;
+}
+
+- (void)themeDidChange:(NSNotification *)notification {
+    [self applyThemeAppearance];
+}
+
+- (void)applyThemeAppearance {
+    iTermPreferencesTabStyle preferredStyle = [iTermPreferences intForKey:kPreferenceKeyTabStyle];
+    BOOL isDark = (preferredStyle == TAB_STYLE_DARK || preferredStyle == TAB_STYLE_DARK_HIGH_CONTRAST);
+    if (preferredStyle == TAB_STYLE_MINIMAL) {
+        PseudoTerminal *terminal = [[iTermController sharedInstance] currentTerminal];
+        NSColor *bgColor = [terminal.ptyWindow it_terminalWindowDecorationBackgroundColor];
+        isDark = bgColor.perceivedBrightness < 0.5;
+    }
+
+    self.window.backgroundColor = [NSColor clearColor];
+    self.window.appearance = isDark ? [NSAppearance appearanceNamed:NSAppearanceNameVibrantDark] : nil;
+
+    [(iTermAboutWindowContentView *)self.window.contentView configureForDark:isDark];
 }
 
 - (NSDictionary *)linkTextViewAttributes {
