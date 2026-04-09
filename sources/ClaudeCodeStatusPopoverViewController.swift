@@ -23,15 +23,16 @@ class ClaudeCodeStatusPopoverViewController: NSViewController {
         tableView.headerView = nil
         tableView.backgroundColor = .clear
         tableView.rowHeight = 32
+        tableView.selectionHighlightStyle = .none
 
         let nameColumn = NSTableColumn(identifier: NSUserInterfaceItemIdentifier("name"))
-        nameColumn.width = 220
+        nameColumn.width = 210
         nameColumn.minWidth = 100
         tableView.addTableColumn(nameColumn)
 
         let statusColumn = NSTableColumn(identifier: NSUserInterfaceItemIdentifier("status"))
-        statusColumn.width = 84
-        statusColumn.minWidth = 60
+        statusColumn.width = 96
+        statusColumn.minWidth = 70
         tableView.addTableColumn(statusColumn)
 
         tableView.dataSource = self
@@ -92,11 +93,20 @@ class ClaudeCodeStatusPopoverViewController: NSViewController {
     }
 }
 
-// MARK: - Table view with pointing hand cursor
+// MARK: - Table view with pointing hand cursor and no selection highlight
 
 private class ClickableTableView: NSTableView {
-    override func resetCursorRects() {
-        addCursorRect(bounds, cursor: .pointingHand)
+    override func updateTrackingAreas() {
+        super.updateTrackingAreas()
+        for area in trackingAreas { removeTrackingArea(area) }
+        addTrackingArea(NSTrackingArea(rect: bounds,
+                                      options: [.cursorUpdate, .activeInActiveApp, .inVisibleRect],
+                                      owner: self,
+                                      userInfo: nil))
+    }
+
+    override func cursorUpdate(with event: NSEvent) {
+        NSCursor.pointingHand.set()
     }
 }
 
@@ -180,7 +190,7 @@ extension ClaudeCodeStatusPopoverViewController: NSTableViewDelegate {
             cell.addSubview(pill)
             NSLayoutConstraint.activate([
                 pill.centerYAnchor.constraint(equalTo: cell.centerYAnchor),
-                pill.trailingAnchor.constraint(equalTo: cell.trailingAnchor, constant: -8),
+                pill.trailingAnchor.constraint(equalTo: cell.trailingAnchor, constant: -16),
                 pill.widthAnchor.constraint(equalToConstant: 64),
                 pill.heightAnchor.constraint(equalToConstant: 18),
             ])
