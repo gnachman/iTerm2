@@ -58,9 +58,8 @@ class ClaudeCodeStatusPopoverViewController: NSViewController {
     }
 
     private func claudeCodeSessions() -> [iTermSessionTabStatus] {
-        let activeGUIDs = GlobalJobMonitor.instance.sessionGUIDs(runningJob: "claude")
         let filtered = SessionStatusController.instance.statuses.values.filter {
-            activeGUIDs.contains($0.sessionID) && ClaudeCodeSummaryBuilder.isClaudeCodeStatus($0.statusText)
+            ClaudeCodeSummaryBuilder.isClaudeCodeStatus($0.statusText)
         }
         return filtered.sorted { lhs, rhs in
             sortOrder(lhs.statusText) < sortOrder(rhs.statusText)

@@ -107,9 +107,8 @@ class iTermStatusBarClaudeCodeComponent: iTermStatusBarTextComponent {
     }
 
     private func claudeCodeSessions() -> [iTermSessionTabStatus] {
-        let activeGUIDs = GlobalJobMonitor.instance.sessionGUIDs(runningJob: "claude")
         return SessionStatusController.instance.statuses.values.filter {
-            activeGUIDs.contains($0.sessionID) && ClaudeCodeSummaryBuilder.isClaudeCodeStatus($0.statusText)
+            ClaudeCodeSummaryBuilder.isClaudeCodeStatus($0.statusText)
         }
     }
 
