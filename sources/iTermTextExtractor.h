@@ -141,7 +141,7 @@ extern const NSInteger kLongMaximumWordLength;
 // if |maxBytes| is positive then the result will not exceed that size. |truncateTail| determines
 // whether the tail or head of the string is shortened to fit.
 - (id)contentInRange:(VT100GridWindowedRange)range
-   attributeProvider:(NSDictionary *(^ _Nullable)(screen_char_t, iTermExternalAttribute *))attributeProvider
+   attributeProvider:(NSDictionary *(^ _Nullable)(screen_char_t, iTermExternalAttribute *, const iTermImmutableMetadata *))attributeProvider
           nullPolicy:(iTermTextExtractorNullPolicy)nullPolicy
                  pad:(BOOL)pad
   includeLastNewline:(BOOL)includeLastNewline
@@ -153,7 +153,7 @@ extern const NSInteger kLongMaximumWordLength;
 
 // Returns an iTermLocated[Attributed]String
 - (id)locatedStringInRange:(VT100GridWindowedRange)range
-         attributeProvider:(NSDictionary *(^ _Nullable)(screen_char_t, iTermExternalAttribute *))attributeProvider
+         attributeProvider:(NSDictionary *(^ _Nullable)(screen_char_t, iTermExternalAttribute *, const iTermImmutableMetadata *))attributeProvider
                 nullPolicy:(iTermTextExtractorNullPolicy)nullPolicy
                        pad:(BOOL)pad
         includeLastNewline:(BOOL)includeLastNewline

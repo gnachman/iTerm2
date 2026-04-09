@@ -6909,7 +6909,7 @@ static NSString *const PTYSessionComposerPrefixUserDataKeyDetectedByTrigger = @"
         return nil;
     }
     NSDictionary *defaultAttributes = [_textview attributeProviderUsingProcessedColors:YES
-                                                           elideDefaultBackgroundColor:elideDefaultBackgroundColor]((screen_char_t){}, nil);
+                                                           elideDefaultBackgroundColor:elideDefaultBackgroundColor]((screen_char_t){}, nil, NULL);
     NSAttributedString *space = [NSAttributedString attributedStringWithString:@" "
                                                                     attributes:defaultAttributes];
 

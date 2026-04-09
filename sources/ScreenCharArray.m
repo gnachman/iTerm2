@@ -384,7 +384,7 @@ static NSString *const ScreenCharArrayKeyBidiInfo = @"bidi";
     return base;
 }
 
-- (NSAttributedString *)attributedStringValueWithAttributeProvider:(NSDictionary *(^)(screen_char_t, iTermExternalAttribute *))attributeProvider {
+- (NSAttributedString *)attributedStringValueWithAttributeProvider:(NSDictionary *(^)(screen_char_t, iTermExternalAttribute *, const iTermImmutableMetadata *))attributeProvider {
     NSMutableAttributedString *result = [[NSMutableAttributedString alloc] init];
     const screen_char_t *line = self.line;
     id<iTermExternalAttributeIndexReading> eaindex = iTermImmutableMetadataGetExternalAttributesIndex(_metadata);
@@ -407,7 +407,7 @@ static NSString *const ScreenCharArrayKeyBidiInfo = @"bidi";
             string = ScreenCharToStr(&c);
         }
         [result iterm_appendString:string
-                    withAttributes:attributeProvider(c, eaindex[i])];
+                    withAttributes:attributeProvider(c, eaindex[i], &_metadata)];
     }
     return result;
 }

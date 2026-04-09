@@ -142,7 +142,7 @@ NS_ASSUME_NONNULL_BEGIN
 // Ensures that if this object outlives the raw pointer it was initialized with that there won't be a dangling pointer.
 - (void)makeSafe;
 
-- (NSAttributedString *)attributedStringValueWithAttributeProvider:(NSDictionary *(^)(screen_char_t, iTermExternalAttribute *))attributeProvider;
+- (NSAttributedString *)attributedStringValueWithAttributeProvider:(NSDictionary *(^)(screen_char_t, iTermExternalAttribute *, const iTermImmutableMetadata *))attributeProvider;
 
 // Wraps copy for Swift's benefit
 - (instancetype)clone;

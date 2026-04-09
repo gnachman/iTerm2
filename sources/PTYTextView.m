@@ -4076,10 +4076,10 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
     return [self contentWithAttributes:NO timestamps:NO];
 }
 
-- (NSDictionary *(^)(screen_char_t, iTermExternalAttribute *))attributeProviderUsingProcessedColors:(BOOL)processed
+- (NSDictionary *(^)(screen_char_t, iTermExternalAttribute *, const iTermImmutableMetadata *))attributeProviderUsingProcessedColors:(BOOL)processed
                                                                         elideDefaultBackgroundColor:(BOOL)elideDefaultBackgroundColor {
-    return [[^NSDictionary *(screen_char_t theChar, iTermExternalAttribute *ea) {
-        return [self charAttributes:theChar externalAttributes:ea processed:processed elideDefaultBackgroundColor:elideDefaultBackgroundColor];
+    return [[^NSDictionary *(screen_char_t theChar, iTermExternalAttribute *ea, const iTermImmutableMetadata *metadata) {
+        return [self charAttributes:theChar externalAttributes:ea metadata:metadata processed:processed elideDefaultBackgroundColor:elideDefaultBackgroundColor];
     } copy] autorelease];
 }
 
@@ -4090,7 +4090,7 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
                                                            0,
                                                            [_dataSource width],
                                                            [_dataSource numberOfLines] - 1);
-    NSDictionary *(^attributeProvider)(screen_char_t, iTermExternalAttribute *) = nil;
+    NSDictionary *(^attributeProvider)(screen_char_t, iTermExternalAttribute *, const iTermImmutableMetadata *) = nil;
     if (attributes) {
         attributeProvider = [self attributeProviderUsingProcessedColors:NO elideDefaultBackgroundColor:NO];
     }
@@ -4892,8 +4892,8 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
                                                                      [_dataSource width],
                                                                      lineOffset + numLines - 1);
             [self printContent:[extractor contentInRange:VT100GridWindowedRangeMake(coordRange, 0, 0)
-                                       attributeProvider:^NSDictionary *(screen_char_t theChar, iTermExternalAttribute *ea) {
-                return [self charAttributes:theChar externalAttributes:ea processed:NO elideDefaultBackgroundColor:NO];
+                                       attributeProvider:^NSDictionary *(screen_char_t theChar, iTermExternalAttribute *ea, const iTermImmutableMetadata *metadata) {
+                return [self charAttributes:theChar externalAttributes:ea metadata:metadata processed:NO elideDefaultBackgroundColor:NO];
             }
                                               nullPolicy:kiTermTextExtractorNullPolicyTreatAsSpace
                                                      pad:NO

@@ -887,9 +887,10 @@ iTermCommandInfoViewControllerDelegate>
     [extractor rangeForWordAt:VT100GridCoordMake(clickPoint.x, clickPoint.y)
                 maximumLength:kReasonableMaximumWordLength];
     NSAttributedString *word = [extractor contentInRange:range
-                                       attributeProvider:^NSDictionary *(screen_char_t theChar, iTermExternalAttribute *ea) {
+                                       attributeProvider:^NSDictionary *(screen_char_t theChar, iTermExternalAttribute *ea, const iTermImmutableMetadata *metadata) {
         return [self charAttributes:theChar
                  externalAttributes:ea
+                           metadata:metadata
                           processed:NO
         elideDefaultBackgroundColor:NO];
     }
@@ -940,6 +941,7 @@ iTermCommandInfoViewControllerDelegate>
 // Returns a dictionary to pass to NSAttributedString.
 - (NSDictionary *)charAttributes:(screen_char_t)c
               externalAttributes:(iTermExternalAttribute *)ea
+                        metadata:(const iTermImmutableMetadata *)metadata
                        processed:(BOOL)processed
      elideDefaultBackgroundColor:(BOOL)elideDefaultBackgroundColor {
     BOOL isBold = c.bold;
@@ -993,6 +995,9 @@ iTermCommandInfoViewControllerDelegate>
         } else {
             font = [NSFont systemFontOfSize:size];
         }
+    }
+    if (metadata && metadata->lineAttribute == iTermLineAttributeDoubleHeightTop) {
+        font = [NSFont fontWithDescriptor:font.fontDescriptor size:font.pointSize * 2] ?: font;
     }
     if (![iTermAdvancedSettingsModel copyBackgroundColor] || elideDefaultBackgroundColor) {
         if (c.backgroundColorMode == ColorModeAlternate &&

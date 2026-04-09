@@ -152,7 +152,7 @@ class SelectionExtractor: NSObject {
     }
 
     fileprivate func extract(_ result: Destination,
-                             attributeProvider: ((screen_char_t, iTermExternalAttribute) -> [AnyHashable: Any])?) {
+                             attributeProvider: ((screen_char_t, iTermExternalAttribute, UnsafePointer<iTermImmutableMetadata>?) -> [AnyHashable: Any])?) {
         DLog("Begin extracting \(String(describing: selection.allSubSelections)) self=\(self)")
         var cap = maxBytes > 0 ? maxBytes : Int32.max
         var fractionSoFar = Double(0)
@@ -224,7 +224,7 @@ class SelectionExtractor: NSObject {
     }
 
     fileprivate func content(in range: VT100GridWindowedRange,
-                             attributeProvider: ((screen_char_t, iTermExternalAttribute) -> [AnyHashable: Any])?,
+                             attributeProvider: ((screen_char_t, iTermExternalAttribute, UnsafePointer<iTermImmutableMetadata>?) -> [AnyHashable: Any])?,
                              options: iTermSelectionExtractorOptions,
                              cappedAtSize cap: Int32,
                              extractor: iTermTextExtractor) -> Any {
@@ -269,7 +269,7 @@ class SGRSelectionExtractor: StringSelectionExtractor {
             return ""
         }
         let sgrAttribute = NSAttributedString.Key("iTermSGR");
-        let attributeProvider = { (c: screen_char_t, ea: iTermExternalAttribute?) -> [AnyHashable: Any] in
+        let attributeProvider = { (c: screen_char_t, ea: iTermExternalAttribute?, metadata: UnsafePointer<iTermImmutableMetadata>?) -> [AnyHashable: Any] in
             let codes = VT100Terminal.sgrCodes(forCharacter: c, externalAttributes: ea)!
             return [sgrAttribute: codes.array]
         }
@@ -304,8 +304,8 @@ class AttributedStringSelectionExtractor: SelectionExtractor {
             return result
         }
 
-        let attributeProvider = { (c, ea) -> [AnyHashable: Any] in
-            return characterAttributesProvider.attributes(c, externalAttributes: ea)
+        let attributeProvider = { (c: screen_char_t, ea: iTermExternalAttribute, metadata: UnsafePointer<iTermImmutableMetadata>?) -> [AnyHashable: Any] in
+            return characterAttributesProvider.attributes(c, externalAttributes: ea, metadata: metadata)
         }
         super.extract(result, attributeProvider: attributeProvider)
         return result
@@ -331,7 +331,7 @@ class LocatedStringSelectionExtractor: SelectionExtractor {
     }
 
     fileprivate override func content(in range: VT100GridWindowedRange,
-                                      attributeProvider: ((screen_char_t,iTermExternalAttribute) -> [AnyHashable : Any])?,
+                                      attributeProvider: ((screen_char_t, iTermExternalAttribute, UnsafePointer<iTermImmutableMetadata>?) -> [AnyHashable : Any])?,
                                       options: iTermSelectionExtractorOptions,
                                       cappedAtSize cap: Int32,
                                       extractor: iTermTextExtractor) -> Any {
