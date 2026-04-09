@@ -18,10 +18,11 @@ class ClaudeCodeStatusPopoverViewController: NSViewController {
         scrollView.hasVerticalScroller = true
         scrollView.autohidesScrollers = true
 
-        tableView = NSTableView()
+        tableView = ClickableTableView()
         tableView.allowsMultipleSelection = false
         tableView.headerView = nil
         tableView.backgroundColor = .clear
+        tableView.rowHeight = 32
 
         let nameColumn = NSTableColumn(identifier: NSUserInterfaceItemIdentifier("name"))
         nameColumn.width = 220
@@ -84,12 +85,50 @@ class ClaudeCodeStatusPopoverViewController: NSViewController {
         return session.name ?? sessionID
     }
 
-    private func dotColor(for status: iTermSessionTabStatus) -> NSColor? {
-        guard status.hasStatusTextColor else { return nil }
+    private func pillColor(for status: iTermSessionTabStatus) -> NSColor {
+        guard status.hasStatusTextColor else { return .secondaryLabelColor }
         let c = status.statusTextColor
         return NSColor(srgbRed: CGFloat(c.r), green: CGFloat(c.g), blue: CGFloat(c.b), alpha: 1)
     }
 }
+
+// MARK: - Table view with pointing hand cursor
+
+private class ClickableTableView: NSTableView {
+    override func resetCursorRects() {
+        addCursorRect(bounds, cursor: .pointingHand)
+    }
+}
+
+// MARK: - Pill view
+
+private class StatusPillView: NSView {
+    private let label = NSTextField(labelWithString: "")
+
+    init() {
+        super.init(frame: .zero)
+        wantsLayer = true
+        layer?.cornerRadius = 9
+        label.translatesAutoresizingMaskIntoConstraints = false
+        label.font = NSFont.systemFont(ofSize: 11, weight: .medium)
+        label.textColor = .white
+        label.alignment = .center
+        addSubview(label)
+        NSLayoutConstraint.activate([
+            label.centerXAnchor.constraint(equalTo: centerXAnchor),
+            label.centerYAnchor.constraint(equalTo: centerYAnchor),
+        ])
+    }
+
+    required init?(coder: NSCoder) { it_fatalError() }
+
+    func configure(text: String, color: NSColor) {
+        label.stringValue = text
+        layer?.backgroundColor = color.withAlphaComponent(0.85).cgColor
+    }
+}
+
+// MARK: - NSTableViewDataSource
 
 extension ClaudeCodeStatusPopoverViewController: NSTableViewDataSource {
     func numberOfRows(in tableView: NSTableView) -> Int {
@@ -97,45 +136,57 @@ extension ClaudeCodeStatusPopoverViewController: NSTableViewDataSource {
     }
 }
 
+// MARK: - NSTableViewDelegate
+
 extension ClaudeCodeStatusPopoverViewController: NSTableViewDelegate {
     func tableView(_ tableView: NSTableView, viewFor tableColumn: NSTableColumn?, row: Int) -> NSView? {
         let status = sessions[row]
         let identifier = tableColumn?.identifier ?? NSUserInterfaceItemIdentifier("name")
 
-        let cellID = NSUserInterfaceItemIdentifier("ClaudeCell-\(identifier.rawValue)")
-        let cell: NSTableCellView
-        if let reused = tableView.makeView(withIdentifier: cellID, owner: self) as? NSTableCellView {
-            cell = reused
-        } else {
-            cell = NSTableCellView()
-            cell.identifier = cellID
-
-            let textField = NSTextField(labelWithString: "")
-            textField.translatesAutoresizingMaskIntoConstraints = false
-            textField.lineBreakMode = .byTruncatingTail
-            cell.textField = textField
-            cell.addSubview(textField)
-
-            NSLayoutConstraint.activate([
-                textField.leadingAnchor.constraint(equalTo: cell.leadingAnchor, constant: 4),
-                textField.trailingAnchor.constraint(equalTo: cell.trailingAnchor, constant: -4),
-                textField.centerYAnchor.constraint(equalTo: cell.centerYAnchor),
-            ])
-        }
-
         if identifier.rawValue == "name" {
-            cell.textField?.stringValue = sessionName(for: status.sessionID)
-            if let color = dotColor(for: status) {
-                cell.textField?.textColor = color
+            let cellID = NSUserInterfaceItemIdentifier("ClaudeCell-name")
+            let cell: NSTableCellView
+            if let reused = tableView.makeView(withIdentifier: cellID, owner: self) as? NSTableCellView {
+                cell = reused
             } else {
-                cell.textField?.textColor = .labelColor
+                cell = NSTableCellView()
+                cell.identifier = cellID
+                let textField = NSTextField(labelWithString: "")
+                textField.translatesAutoresizingMaskIntoConstraints = false
+                textField.lineBreakMode = .byTruncatingTail
+                cell.textField = textField
+                cell.addSubview(textField)
+                NSLayoutConstraint.activate([
+                    textField.leadingAnchor.constraint(equalTo: cell.leadingAnchor, constant: 8),
+                    textField.trailingAnchor.constraint(equalTo: cell.trailingAnchor, constant: -4),
+                    textField.centerYAnchor.constraint(equalTo: cell.centerYAnchor),
+                ])
             }
-        } else {
-            cell.textField?.stringValue = status.statusText ?? ""
-            cell.textField?.textColor = .secondaryLabelColor
-        }
+            cell.textField?.stringValue = sessionName(for: status.sessionID)
+            cell.textField?.textColor = .labelColor
+            return cell
 
-        return cell
+        } else {
+            let cellID = NSUserInterfaceItemIdentifier("ClaudeCell-status")
+            if let reused = tableView.makeView(withIdentifier: cellID, owner: self) as? NSTableCellView,
+               let pill = reused.subviews.first as? StatusPillView {
+                pill.configure(text: status.statusText ?? "", color: pillColor(for: status))
+                return reused
+            }
+            let cell = NSTableCellView()
+            cell.identifier = cellID
+            let pill = StatusPillView()
+            pill.translatesAutoresizingMaskIntoConstraints = false
+            cell.addSubview(pill)
+            NSLayoutConstraint.activate([
+                pill.centerYAnchor.constraint(equalTo: cell.centerYAnchor),
+                pill.trailingAnchor.constraint(equalTo: cell.trailingAnchor, constant: -8),
+                pill.widthAnchor.constraint(equalToConstant: 64),
+                pill.heightAnchor.constraint(equalToConstant: 18),
+            ])
+            pill.configure(text: status.statusText ?? "", color: pillColor(for: status))
+            return cell
+        }
     }
 
     func tableViewSelectionDidChange(_ notification: Notification) {
