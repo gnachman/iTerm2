@@ -97,11 +97,8 @@ class iTermStatusBarClaudeCodeComponent: iTermStatusBarTextComponent {
 
     override func statusBarComponentDidClick(with view: NSView) {
         let sessions = claudeCodeSessions()
-        if sessions.count == 1, let only = sessions.first {
-            iTermController.sharedInstance()?.revealSession(withGUID: only.sessionID)
-        } else {
-            showPopover(relativeTo: view)
-        }
+        guard !sessions.isEmpty else { return }
+        showPopover(relativeTo: view)
     }
 
     private func rebuildSummary() {
