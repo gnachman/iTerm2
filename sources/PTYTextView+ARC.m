@@ -901,7 +901,8 @@ iTermCommandInfoViewControllerDelegate>
                                             cappedAtSize:self.dataSource.width
                                             truncateTail:YES
                                        continuationChars:nil
-                                                  coords:nil];
+                                                  coords:nil
+                                       deduplicateDECDHL:YES];
     if (word.length) {
         NSPoint point = [self pointForCoord:range.coordRange.start];
         point.y += self.lineHeight;
@@ -2889,7 +2890,8 @@ toggleAnimationOfImage:(id<iTermImageInfoReading>)imageInfo {
                                          cappedAtSize:4096
                                          truncateTail:YES
                                     continuationChars:nil
-                                               coords:nil];
+                                               coords:nil
+                                    deduplicateDECDHL:NO];
         NSString *folder = [self.dataSource workingDirectoryOnLine:range.start.y];
         if (!content.length) {
             return;

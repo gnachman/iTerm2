@@ -629,7 +629,8 @@ fileprivate class Screen: NSObject, iTermSearchEngineDataSource, iTermTextDataSo
                                  cappedAtSize: Int32.max,
                                  truncateTail: false,
                                  continuationChars: nil,
-                                 coords: nil) as! String
+                                 coords: nil,
+                                 deduplicateDECDHL: false) as! String
     }
 
     func moveCursor(to coord: VT100GridCoord) {

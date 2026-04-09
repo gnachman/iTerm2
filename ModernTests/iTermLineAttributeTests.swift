@@ -578,6 +578,7 @@ final class iTermLineAttributeTests: XCTestCase {
         screen.performBlock(joinedThreads: { _, mutableState, _ in
             mutableState?.terminalEnabled = true
             mutableState?.terminal?.termType = "xterm"
+            mutableState?.terminal?.encoding = String.Encoding.utf8.rawValue
             screen.destructivelySetScreenWidth(Int32(width),
                                                 height: Int32(height),
                                                 mutableState: mutableState)
@@ -1896,5 +1897,297 @@ final class iTermLineAttributeTests: XCTestCase {
         XCTAssertEqual(codes[1], unichar(DWL_SPACER))
         XCTAssertEqual(codes[2], unichar(UnicodeScalar("Y").value))
         XCTAssertEqual(codes[3], unichar(DWL_SPACER))
+    }
+
+    /// Copy with Control Sequences should NOT deduplicate DECDHL pairs —
+    /// both ESC#3 (top) and ESC#4 (bottom) lines must be present so pasting
+    /// into another terminal reproduces the double-height effect.
+    func testCopyWithControlSequencesPreservesDECDHLPair() {
+        let screen = makeScreen(width: 20, height: 5)
+
+        screen.performBlock(joinedThreads: { _, mutableState, _ in
+            mutableState!.terminalSetLineAttribute(.doubleHeightTop)
+            mutableState!.appendString(atCursor: "Hi")
+            mutableState!.terminalCarriageReturn()
+            mutableState!.terminalLineFeed()
+            mutableState!.terminalSetLineAttribute(.doubleHeightBottom)
+            mutableState!.appendString(atCursor: "Hi")
+        })
+
+        // Verify grid state
+        var line0Attr: iTermLineAttribute = .singleWidth
+        var line1Attr: iTermLineAttribute = .singleWidth
+        var line0Len: Int32 = 0
+        var line1Len: Int32 = 0
+        screen.performBlock(joinedThreads: { _, mutableState, _ in
+            let grid = mutableState!.currentGrid
+            line0Attr = grid.lineInfo(atLineNumber: 0).metadata.lineAttribute
+            line1Attr = grid.lineInfo(atLineNumber: 1).metadata.lineAttribute
+            line0Len = grid.length(ofLineNumber: 0)
+            line1Len = grid.length(ofLineNumber: 1)
+        })
+        XCTAssertEqual(line0Attr, .doubleHeightTop, "Line 0 should be doubleHeightTop")
+        XCTAssertEqual(line1Attr, .doubleHeightBottom, "Line 1 should be doubleHeightBottom")
+        XCTAssertGreaterThan(line0Len, 0, "Line 0 should have content")
+        XCTAssertGreaterThan(line1Len, 0, "Line 1 should have content")
+
+        // Extract without dedup — both top and bottom should be present
+        var result = ""
+        screen.performBlock(joinedThreads: { _, mutableState, _ in
+            let extractor = iTermTextExtractor(dataSource: mutableState!)
+            let range = VT100GridWindowedRangeMake(
+                VT100GridCoordRangeMake(0, 0, 20, 1),
+                0, 0)
+            let located = extractor.locatedString(
+                in: range,
+                attributeProvider: nil,
+                nullPolicy: .kiTermTextExtractorNullPolicyMidlineAsSpaceIgnoreTerminal,
+                pad: false,
+                includeLastNewline: true,
+                trimTrailingWhitespace: false,
+                cappedAtSize: -1,
+                truncateTail: true,
+                continuationChars: nil,
+                deduplicateDECDHL: false) as! iTermLocatedString
+            result = located.string as String
+        })
+
+        XCTAssertTrue(result.contains("Hi\nHi"),
+                      "Both DECDHL top and bottom text should be present: '\(result)'")
+    }
+
+    /// Unpaired DECDHL top should be preserved in copy.
+    func testCopyPreservesUnpairedDECDHLTop() {
+        let screen = makeScreen(width: 20, height: 5)
+
+        screen.performBlock(joinedThreads: { _, mutableState, _ in
+            mutableState!.terminalSetLineAttribute(.doubleHeightTop)
+            mutableState!.appendString(atCursor: "Top")
+            mutableState!.terminalCarriageReturn()
+            mutableState!.terminalLineFeed()
+            mutableState!.appendString(atCursor: "Normal")
+        })
+
+        var result = ""
+        screen.performBlock(joinedThreads: { _, mutableState, _ in
+            let extractor = iTermTextExtractor(dataSource: mutableState!)
+            let range = VT100GridWindowedRangeMake(
+                VT100GridCoordRangeMake(0, 0, 20, 1),
+                0, 0)
+            let located = extractor.locatedString(
+                in: range,
+                attributeProvider: nil,
+                nullPolicy: .kiTermTextExtractorNullPolicyMidlineAsSpaceIgnoreTerminal,
+                pad: false,
+                includeLastNewline: true,
+                trimTrailingWhitespace: false,
+                cappedAtSize: -1,
+                truncateTail: true,
+                continuationChars: nil,
+                deduplicateDECDHL: false) as! iTermLocatedString
+            result = located.string as String
+        })
+
+        XCTAssertTrue(result.contains("Top") && result.contains("Normal"),
+                      "Unpaired top and normal line should both be present: '\(result)'")
+    }
+
+    /// DECDWL text should be extracted correctly (spacers stripped).
+    func testCopyPreservesDECDWLText() {
+        let screen = makeScreen(width: 20, height: 5)
+
+        screen.performBlock(joinedThreads: { _, mutableState, _ in
+            mutableState!.terminalSetLineAttribute(.doubleWidth)
+            mutableState!.appendString(atCursor: "Wide")
+        })
+
+        var result = ""
+        screen.performBlock(joinedThreads: { _, mutableState, _ in
+            let extractor = iTermTextExtractor(dataSource: mutableState!)
+            let range = VT100GridWindowedRangeMake(
+                VT100GridCoordRangeMake(0, 0, 20, 0),
+                0, 0)
+            let located = extractor.locatedString(
+                in: range,
+                attributeProvider: nil,
+                nullPolicy: .kiTermTextExtractorNullPolicyMidlineAsSpaceIgnoreTerminal,
+                pad: false,
+                includeLastNewline: false,
+                trimTrailingWhitespace: false,
+                cappedAtSize: -1,
+                truncateTail: true,
+                continuationChars: nil,
+                deduplicateDECDHL: false) as! iTermLocatedString
+            result = located.string as String
+        })
+
+        XCTAssertEqual(result, "Wide",
+                       "DECDWL text should have spacers stripped: '\(result)'")
+    }
+
+    /// Plain-text copy with deduplication: a matching DECDHL top+bottom pair
+    /// should produce the text only once.
+    func testPlainCopyDeduplicatesMatchingDECDHLPair() {
+        let screen = makeScreen(width: 20, height: 5)
+
+        screen.performBlock(joinedThreads: { _, mutableState, _ in
+            mutableState!.terminalSetLineAttribute(.doubleHeightTop)
+            mutableState!.appendString(atCursor: "Hello")
+            mutableState!.terminalCarriageReturn()
+            mutableState!.terminalLineFeed()
+            mutableState!.terminalSetLineAttribute(.doubleHeightBottom)
+            mutableState!.appendString(atCursor: "Hello")
+            mutableState!.terminalCarriageReturn()
+            mutableState!.terminalLineFeed()
+            mutableState!.appendString(atCursor: "Normal")
+        })
+
+        var result = ""
+        screen.performBlock(joinedThreads: { _, mutableState, _ in
+            let extractor = iTermTextExtractor(dataSource: mutableState!)
+            let range = VT100GridWindowedRangeMake(
+                VT100GridCoordRangeMake(0, 0, 20, 2),
+                0, 0)
+            let located = extractor.locatedString(
+                in: range,
+                attributeProvider: nil,
+                nullPolicy: .kiTermTextExtractorNullPolicyMidlineAsSpaceIgnoreTerminal,
+                pad: false,
+                includeLastNewline: true,
+                trimTrailingWhitespace: false,
+                cappedAtSize: -1,
+                truncateTail: true,
+                continuationChars: nil,
+                deduplicateDECDHL: true) as! iTermLocatedString
+            result = located.string as String
+        })
+
+        XCTAssertEqual(result, "Hello\nNormal\n",
+                       "Matching DECDHL pair should be deduplicated: '\(result)'")
+    }
+
+    /// Plain-text copy with deduplication: mismatched DECDHL top+bottom
+    /// should preserve both lines.
+    func testPlainCopyPreservesMismatchedDECDHLPair() {
+        let screen = makeScreen(width: 20, height: 5)
+
+        screen.performBlock(joinedThreads: { _, mutableState, _ in
+            mutableState!.terminalSetLineAttribute(.doubleHeightTop)
+            mutableState!.appendString(atCursor: "Top")
+            mutableState!.terminalCarriageReturn()
+            mutableState!.terminalLineFeed()
+            mutableState!.terminalSetLineAttribute(.doubleHeightBottom)
+            mutableState!.appendString(atCursor: "Bottom")
+        })
+
+        var result = ""
+        screen.performBlock(joinedThreads: { _, mutableState, _ in
+            let extractor = iTermTextExtractor(dataSource: mutableState!)
+            let range = VT100GridWindowedRangeMake(
+                VT100GridCoordRangeMake(0, 0, 20, 1),
+                0, 0)
+            let located = extractor.locatedString(
+                in: range,
+                attributeProvider: nil,
+                nullPolicy: .kiTermTextExtractorNullPolicyMidlineAsSpaceIgnoreTerminal,
+                pad: false,
+                includeLastNewline: true,
+                trimTrailingWhitespace: false,
+                cappedAtSize: -1,
+                truncateTail: true,
+                continuationChars: nil,
+                deduplicateDECDHL: true) as! iTermLocatedString
+            result = located.string as String
+        })
+
+        XCTAssertTrue(result.contains("Top") && result.contains("Bottom"),
+                      "Mismatched DECDHL pair should preserve both lines: '\(result)'")
+    }
+
+    private class MinimalSelectionDelegate: NSObject, iTermSelectionDelegate {
+        let width: Int32
+        init(width: Int32) { self.width = width }
+        func selectionDidChange(_ selection: iTermSelection!) {}
+        func liveSelectionDidEnd() {}
+        func selectionAbsRangeForParenthetical(at coord: VT100GridAbsCoord) -> VT100GridAbsWindowedRange { return VT100GridAbsWindowedRangeMake(VT100GridAbsCoordRangeMake(0,0,0,0), 0, 0) }
+        func selectionAbsRangeForWord(at coord: VT100GridAbsCoord) -> VT100GridAbsWindowedRange { return VT100GridAbsWindowedRangeMake(VT100GridAbsCoordRangeMake(0,0,0,0), 0, 0) }
+        func selectionAbsRangeForSmartSelection(at absCoord: VT100GridAbsCoord) -> VT100GridAbsWindowedRange { return VT100GridAbsWindowedRangeMake(VT100GridAbsCoordRangeMake(0,0,0,0), 0, 0) }
+        func selectionAbsRangeForWrappedLine(at absCoord: VT100GridAbsCoord) -> VT100GridAbsWindowedRange { return VT100GridAbsWindowedRangeMake(VT100GridAbsCoordRangeMake(0,0,0,0), 0, 0) }
+        func selectionAbsRangeForLine(at absCoord: VT100GridAbsCoord) -> VT100GridAbsWindowedRange { return VT100GridAbsWindowedRangeMake(VT100GridAbsCoordRangeMake(0,0,0,0), 0, 0) }
+        func selectionRangeOfTerminalNulls(onAbsoluteLine absLineNumber: Int64) -> VT100GridRange { return VT100GridRangeMake(0, 0) }
+        func selectionPredecessor(of absCoord: VT100GridAbsCoord) -> VT100GridAbsCoord { return VT100GridAbsCoordMake(0, 0) }
+        func selectionViewportWidth() -> Int32 { return width }
+        func selectionTotalScrollbackOverflow() -> Int64 { return 0 }
+        func selectionIndexes(onAbsoluteLine line: Int64, containingCharacter c: unichar, in range: NSRange) -> IndexSet { return IndexSet() }
+    }
+
+    /// Use the actual "Copy with Control Sequences" extractor on a screen.
+    private func copyWithControlSequences(from screen: VT100Screen) -> String {
+        var result = ""
+        screen.performBlock(joinedThreads: { _, mutableState, _ in
+            let snapshot = TerminalContentSnapshot(lineBuffer: mutableState!.linebuffer,
+                                                    grid: mutableState!.currentGrid,
+                                                    cumulativeOverflow: mutableState!.cumulativeScrollbackOverflow)
+            let totalLines = Int(mutableState!.numberOfLines())
+            let selDelegate = MinimalSelectionDelegate(width: mutableState!.width)
+            let selection = iTermSelection()
+            selection.delegate = selDelegate
+            let sub = iTermSubSelection.init(
+                absRange: VT100GridAbsWindowedRangeMake(
+                    VT100GridAbsCoordRangeMake(0, 0, Int32(mutableState!.width), Int64(totalLines - 1)),
+                    0, 0),
+                mode: .kiTermSelectionModeCharacter,
+                width: mutableState!.width)
+            selection.add(sub)
+            let extractor = SGRSelectionExtractor(
+                selection: selection,
+                snapshot: snapshot,
+                options: [],
+                maxBytes: -1,
+                minimumLineNumber: 0)!
+            result = extractor.extract() as String
+        })
+        return result
+    }
+
+    /// Strips trailing lines that are empty or contain only ESC[0m (screen padding).
+    private func trimTrailingResetLines(_ s: String) -> String {
+        var lines = s.components(separatedBy: "\n")
+        while let last = lines.last, last.isEmpty || last == "\u{1b}[0m" {
+            lines.removeLast()
+        }
+        return lines.joined(separator: "\n")
+    }
+
+    /// Feed normalized file → Copy with Control Sequences → assert output
+    /// matches the file (fixed point).
+    func testCopyWithControlSequencesRoundtrip() {
+        let bundle = Bundle(for: type(of: self))
+        guard let url = bundle.url(forResource: "decdwl_decdhl_normalized", withExtension: "txt"),
+              let expected = try? String(contentsOf: url, encoding: .utf8) else {
+            XCTFail("Could not load decdwl_decdhl_normalized.txt from test bundle")
+            return
+        }
+
+        let trimmedExpected = trimTrailingResetLines(expected)
+
+        // Replace LF with CRLF since the raw file hasn't been through
+        // the kernel's tty driver.
+        let crlf = expected.replacingOccurrences(of: "\n", with: "\r\n")
+
+        let screen = makeScreen(width: 80, height: 100)
+        screen.performBlock(joinedThreads: { _, mutableState, _ in
+            mutableState!.inject(crlf.data(using: .utf8)!)
+        })
+        let actual = trimTrailingResetLines(copyWithControlSequences(from: screen))
+
+        let expectedLines = trimmedExpected.components(separatedBy: "\n")
+        let actualLines = actual.components(separatedBy: "\n")
+        for i in 0..<max(expectedLines.count, actualLines.count) {
+            let exp = i < expectedLines.count ? expectedLines[i] : "<missing>"
+            let act = i < actualLines.count ? actualLines[i] : "<missing>"
+            XCTAssertEqual(exp, act, "Line \(i) differs")
+        }
+        XCTAssertEqual(expectedLines.count, actualLines.count, "Line count should match")
     }
 }

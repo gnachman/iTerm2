@@ -247,7 +247,8 @@ additionalWordCharacters:(NSString *)additionalWordCharacters
                                cappedAtSize:-1
                                truncateTail:YES
                           continuationChars:nil
-                                     coords:nil];
+                                     coords:nil
+                          deduplicateDECDHL:NO];
     return s;
 }
 

@@ -1133,7 +1133,8 @@ const NSInteger kLongMaximumWordLength = 100000;
                               cappedAtSize:maxMatchLength
                               truncateTail:YES
                          continuationChars:nil
-                                    coords:nil];
+                                    coords:nil
+                         deduplicateDECDHL:YES];
     NSAttributedString *matchString = [[NSAttributedString alloc] initWithString:match
                                                                       attributes:matchAttributes];
     if (match.length == maxMatchLength) {
@@ -1174,7 +1175,8 @@ trimTrailingWhitespace:(BOOL)trimSelectionTrailingSpaces
         cappedAtSize:(int)maxBytes
         truncateTail:(BOOL)truncateTail
    continuationChars:(NSMutableIndexSet *)continuationChars
-              coords:(iTermGridCoordArray *)coordsOut {
+              coords:(iTermGridCoordArray *)coordsOut
+   deduplicateDECDHL:(BOOL)deduplicateDECDHL {
     __kindof iTermLocatedString *locatedString =
     [self locatedStringInRange:windowedRange
              attributeProvider:attributeProvider
@@ -1184,7 +1186,8 @@ trimTrailingWhitespace:(BOOL)trimSelectionTrailingSpaces
         trimTrailingWhitespace:trimSelectionTrailingSpaces
                   cappedAtSize:maxBytes
                   truncateTail:truncateTail
-             continuationChars:continuationChars];
+             continuationChars:continuationChars
+             deduplicateDECDHL:deduplicateDECDHL];
     [coordsOut appendContentsOfArray:locatedString.gridCoords];
     return attributeProvider ? ((iTermLocatedAttributedString *)locatedString).attributedString : locatedString.string;
 }
@@ -1197,7 +1200,8 @@ trimTrailingWhitespace:(BOOL)trimSelectionTrailingSpaces
     trimTrailingWhitespace:(BOOL)trimSelectionTrailingSpaces
               cappedAtSize:(int)maxBytes
               truncateTail:(BOOL)truncateTail
-         continuationChars:(NSMutableIndexSet *)continuationChars {
+         continuationChars:(NSMutableIndexSet *)continuationChars
+         deduplicateDECDHL:(BOOL)deduplicateDECDHL {
     DLog(@"Find selected text in range %@ pad=%d, includeLastNewline=%d, trim=%d",
          VT100GridWindowedRangeDescription(windowedRange), (int)pad, (int)includeLastNewline,
          (int)trimSelectionTrailingSpaces);
@@ -1233,7 +1237,7 @@ trimTrailingWhitespace:(BOOL)trimSelectionTrailingSpaces
     __block BOOL needsTimestamps = self.addTimestamps;
     [self enumerateCharsInRange:windowedRange
                     supportBidi:YES
-            deduplicateDECDHL:YES
+            deduplicateDECDHL:deduplicateDECDHL
                       charBlock:^BOOL(const screen_char_t *currentLine,
                                       screen_char_t theChar,
                                       iTermExternalAttribute *ea,
@@ -1719,7 +1723,8 @@ trimTrailingWhitespace:(BOOL)trimSelectionTrailingSpaces
             trimTrailingWhitespace:NO
                       cappedAtSize:maxChars
                       truncateTail:forward
-                 continuationChars:continuationChars];
+                 continuationChars:continuationChars
+                 deduplicateDECDHL:YES];
     if (!respectHardNewlines) {
         [locatedString removeOcurrencesOfString:@"\n"];
     }

@@ -1240,7 +1240,8 @@ static NSRange NSRangeFromBounds(NSInteger lowerBound, NSInteger upperBound) {
                                      cappedAtSize:-1
                                      truncateTail:YES
                                 continuationChars:nil
-                                           coords:nil];
+                                           coords:nil
+                                deduplicateDECDHL:NO];
     NSRange newline = [command rangeOfString:@"\n"];
     if (newline.location != NSNotFound) {
         command = [command substringToIndex:newline.location];

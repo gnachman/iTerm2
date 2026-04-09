@@ -149,7 +149,8 @@ extern const NSInteger kLongMaximumWordLength;
               cappedAtSize:(int)maxBytes
         truncateTail:(BOOL)truncateTail
    continuationChars:(NSMutableIndexSet * _Nullable)continuationChars
-              coords:(iTermGridCoordArray * _Nullable)coords;
+              coords:(iTermGridCoordArray * _Nullable)coords
+   deduplicateDECDHL:(BOOL)deduplicateDECDHL;
 
 // Returns an iTermLocated[Attributed]String
 - (id)locatedStringInRange:(VT100GridWindowedRange)range
@@ -160,7 +161,8 @@ extern const NSInteger kLongMaximumWordLength;
     trimTrailingWhitespace:(BOOL)trimSelectionTrailingSpaces
               cappedAtSize:(int)maxBytes
               truncateTail:(BOOL)truncateTail
-         continuationChars:(NSMutableIndexSet * _Nullable)continuationChars;
+         continuationChars:(NSMutableIndexSet * _Nullable)continuationChars
+         deduplicateDECDHL:(BOOL)deduplicateDECDHL;
 
 - (NSIndexSet *)indexesOnLine:(int)line containingCharacter:(unichar)c inRange:(NSRange)range;
 

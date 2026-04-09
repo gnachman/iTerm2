@@ -3802,7 +3802,8 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
                         cappedAtSize:-1
                         truncateTail:YES
                    continuationChars:nil
-                              coords:nil];
+                              coords:nil
+                   deduplicateDECDHL:NO];
 }
 
 - (BOOL)liveSelectionRespectsSoftBoundaries {
@@ -4103,7 +4104,8 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
                         cappedAtSize:-1
                         truncateTail:YES
                    continuationChars:nil
-                              coords:nil];
+                              coords:nil
+                   deduplicateDECDHL:YES];
 }
 
 // Save method
@@ -4902,7 +4904,8 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
                                             cappedAtSize:-1
                                             truncateTail:YES
                                        continuationChars:nil
-                                                  coords:nil]];
+                                                  coords:nil
+                                       deduplicateDECDHL:YES]];
             break;
         case 1: // text selection
             [self printContent:[self selectedAttributedTextWithPad:NO]];
@@ -7001,7 +7004,8 @@ static NSString *iTermStringFromRange(NSRange range) {
                               cappedAtSize:-1
                               truncateTail:YES
                          continuationChars:nil
-                                    coords:nil];
+                                    coords:nil
+                         deduplicateDECDHL:YES];
     }
     if (string.length > 0) {
         [self copyString:string];
@@ -7186,7 +7190,8 @@ static NSString *iTermStringFromRange(NSRange range) {
                                                 cappedAtSize:-1
                                                 truncateTail:YES
                                            continuationChars:nil
-                                                      coords:nil];
+                                                      coords:nil
+                                           deduplicateDECDHL:NO];
                 NSURL *url = [NSURL URLWithString:string];
                 if (string.stringIsUrlLike &&
                     url != nil &&
