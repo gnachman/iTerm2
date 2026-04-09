@@ -133,6 +133,16 @@ NS_ASSUME_NONNULL_BEGIN
              continuation:(screen_char_t)continuation
                  rtlFound:(BOOL)rtlFound;
 
+// Like appendScreenChars: but handles DWL/DHL source data: sets the
+// lineAttribute on the current grid line and strips DWL_SPACERs before
+// appending so the append code can re-expand correctly.
+- (void)appendScreenChars:(const screen_char_t *)line
+                   length:(int)length
+   externalAttributeIndex:(id<iTermExternalAttributeIndexReading>)externalAttributeIndex
+             continuation:(screen_char_t)continuation
+                 rtlFound:(BOOL)rtlFound
+            lineAttribute:(iTermLineAttribute)lineAttribute;
+
 - (void)appendBannerMessage:(NSString *)message;
 
 #pragma mark Bidi

@@ -766,6 +766,36 @@ static const int64_t VT100ScreenMutableStateSideEffectFlagLineBufferDidDropLines
     }];
 }
 
+- (void)appendScreenChars:(const screen_char_t *)line
+                   length:(int)length
+   externalAttributeIndex:(id<iTermExternalAttributeIndexReading>)externalAttributeIndex
+             continuation:(screen_char_t)continuation
+                 rtlFound:(BOOL)rtlFound
+            lineAttribute:(iTermLineAttribute)lineAttribute {
+    // Always set the lineAttribute on the target grid line so the append
+    // code uses the correct width class. This is essential when the target
+    // line had a different lineAttribute (e.g., a cleared DWL line that is
+    // being overwritten with singleWidth content).
+    VT100Grid *grid = self.currentGrid;
+    VT100LineInfo *lineInfo = [grid lineInfoAtLineNumber:grid.cursorY];
+    iTermMetadata md = lineInfo.metadata;
+    md.lineAttribute = lineAttribute;
+    lineInfo.metadata = md;
+
+    const screen_char_t *chars = line;
+    int len = length;
+    screen_char_t compactBuf[len];
+    if (iTermLineAttributeIsDoubleWidth(lineAttribute)) {
+        len = ScreenCharCompactRemovingDWLSpacers(compactBuf, chars, len);
+        chars = compactBuf;
+    }
+    [self appendScreenChars:chars
+                     length:len
+     externalAttributeIndex:externalAttributeIndex
+               continuation:continuation
+                   rtlFound:rtlFound];
+}
+
 - (VT100StringConversionConfig)stringConversionConfigWithSoftAlternateScreenMode:(BOOL)mode {
     return (VT100StringConversionConfig){
         .ambiguousIsDoubleWidth = self.config.treatAmbiguousCharsAsDoubleWidth,
@@ -1931,7 +1961,8 @@ void VT100ScreenEraseCell(screen_char_t *sct,
                          length:savedLine.length
          externalAttributeIndex:iTermImmutableMetadataGetExternalAttributesIndex(savedLine.metadata)
                    continuation:savedLine.continuation
-                       rtlFound:savedLine.metadata.rtlFound];
+                       rtlFound:savedLine.metadata.rtlFound
+                  lineAttribute:savedLine.metadata.lineAttribute];
 
         // Restore marks on that line.
         const long long numberOfLinesRemoved = absCursorCoord.y - absLine;

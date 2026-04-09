@@ -1321,33 +1321,17 @@ ITERM_WEAKLY_REFERENCEABLE
                                                ScreenCharArray *sca,
                                                iTermImmutableMetadata metadata,
                                                BOOL *stopPtr) {
-            // For DWL/DHL lines, the source data has DWL_SPACERs
-            // interleaved. Set the lineAttribute on the grid BEFORE
-            // appending, and compact the data (remove spacers) so the
-            // append code can re-expand it correctly.
-            const iTermLineAttribute lineAttr = metadata.lineAttribute;
-            const screen_char_t *chars = sca.line;
-            int len = sca.length;
-            screen_char_t compactBuf[len];
-            if (iTermLineAttributeIsDoubleWidth(lineAttr)) {
-                VT100Grid *grid = mutableState.currentGrid;
-                VT100LineInfo *lineInfo = [grid lineInfoAtLineNumber:grid.cursorY];
-                iTermMetadata md = lineInfo.metadata;
-                md.lineAttribute = lineAttr;
-                lineInfo.metadata = md;
-                len = ScreenCharCompactRemovingDWLSpacers(compactBuf, chars, len);
-                chars = compactBuf;
-            }
             screen_char_t continuation = sca.continuation;
             if (i + 1 == NSMaxRange(rangeOfLines)) {
                 continuation = (screen_char_t){ 0 };
                 continuation.code = EOL_SOFT;
             }
-            [mutableState appendScreenChars:chars
-                                     length:len
+            [mutableState appendScreenChars:sca.line
+                                     length:sca.length
                      externalAttributeIndex:iTermImmutableMetadataGetExternalAttributesIndex(metadata)
                                continuation:continuation
-                                   rtlFound:metadata.rtlFound];
+                                   rtlFound:metadata.rtlFound
+                              lineAttribute:metadata.lineAttribute];
         }];
     }];
 }
@@ -22286,7 +22270,8 @@ getOptionKeyBehaviorLeft:(iTermOptionKeyBehavior *)left
                                              length:sca.length
                              externalAttributeIndex:sca.eaIndex
                                        continuation:sca.continuation
-                                           rtlFound:sca.metadata.rtlFound];
+                                           rtlFound:sca.metadata.rtlFound
+                                      lineAttribute:sca.metadata.lineAttribute];
                 } else {
                     DLog(@"%@: Removing last line from filter results", self);
                     [mutableState removeLastLine];

@@ -1642,21 +1642,23 @@ trimTrailingWhitespace:(BOOL)trimSelectionTrailingSpaces
 }
 
 - (ScreenCharArray *)combinedLinesInWindowedRange:(VT100GridWindowedRange)range {
-    ScreenCharArray *result = [[ScreenCharArray alloc] init];
+    ScreenCharArray *result = nil;
     for (NSInteger i = range.coordRange.start.y; i <= range.coordRange.end.y; i++) {
-        result = [result screenCharArrayByAppendingScreenCharArray:[self screenCharArrayAtLine:i window:range.columnWindow]];
+        ScreenCharArray *line = [self screenCharArrayAtLine:i window:range.columnWindow];
+        result = result ? [result screenCharArrayByAppendingScreenCharArray:line] : line;
     }
-    return result;
+    return result ?: [[ScreenCharArray alloc] init];
 }
 
 - (ScreenCharArray *)combinedLinesInRange:(NSRange)range {
-    ScreenCharArray *result = [[ScreenCharArray alloc] init];
+    ScreenCharArray *result = nil;
     for (NSInteger i = range.location;
          i < NSMaxRange(range);
          i++) {
-        result = [result screenCharArrayByAppendingScreenCharArray:[self screenCharArrayAtLine:i]];
+        ScreenCharArray *line = [self screenCharArrayAtLine:i];
+        result = result ? [result screenCharArrayByAppendingScreenCharArray:line] : line;
     }
-    return result;
+    return result ?: [[ScreenCharArray alloc] init];
 }
 
 - (iTermLocatedString *)wrappedLocatedStringAt:(VT100GridCoord)coord

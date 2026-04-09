@@ -1506,4 +1506,395 @@ final class iTermLineAttributeTests: XCTestCase {
         XCTAssertNil(urlOnLine1, "Line 1 should not have URL")
         XCTAssertNotNil(urlOnLine2, "Line 2 should still have the URL after triple-wrap resize")
     }
+
+    // MARK: - appendScreenChars:lineAttribute: (DWL compaction)
+
+    /// Helper to build a screen_char_t array with DWL_SPACERs interleaved,
+    /// simulating data read from a DWL grid line.
+    private func makeDWLData(_ text: String) -> [screen_char_t] {
+        var result = [screen_char_t]()
+        for scalar in text.unicodeScalars {
+            var ch = screen_char_t()
+            ch.code = unichar(scalar.value)
+            result.append(ch)
+            var spacer = screen_char_t()
+            ScreenCharSetDWL_SPACER(&spacer)
+            result.append(spacer)
+        }
+        return result
+    }
+
+    /// appendScreenChars with a DWL lineAttribute should strip DWL_SPACERs
+    /// from input data, set the lineAttribute on the target grid line, and
+    /// re-expand so the grid contains properly interleaved DWL_SPACERs.
+    func testAppendScreenCharsWithDWLLineAttribute() {
+        let screen = makeScreen(width: 10, height: 4)
+        // Build source data as it would appear on a DWL grid: A|B|C|
+        var sourceData = makeDWLData("ABC")
+        screen.performBlock(joinedThreads: { _, mutableState, _ in
+            var continuation = screen_char_t()
+            continuation.code = unichar(EOL_HARD)
+            mutableState!.appendScreenChars(
+                &sourceData,
+                length: Int32(sourceData.count),
+                externalAttributeIndex: iTermExternalAttributeIndex(),
+                continuation: continuation,
+                rtlFound: false,
+                lineAttribute: .doubleWidth)
+        })
+        // Target grid line 0 should now be DWL with A|B|C|....
+        XCTAssertEqual(lineAttribute(screen, line: 0), .doubleWidth)
+        let codes = lineCodes(screen, line: 0, count: 10)
+        XCTAssertEqual(codes[0], unichar(UnicodeScalar("A").value))
+        XCTAssertEqual(codes[1], unichar(DWL_SPACER))
+        XCTAssertEqual(codes[2], unichar(UnicodeScalar("B").value))
+        XCTAssertEqual(codes[3], unichar(DWL_SPACER))
+        XCTAssertEqual(codes[4], unichar(UnicodeScalar("C").value))
+        XCTAssertEqual(codes[5], unichar(DWL_SPACER))
+        XCTAssertEqual(codes[6], 0)
+    }
+
+    /// appendScreenChars with singleWidth lineAttribute should pass data
+    /// through unchanged (no compaction or expansion).
+    func testAppendScreenCharsWithSingleWidthPassesThrough() {
+        let screen = makeScreen(width: 10, height: 4)
+        screen.performBlock(joinedThreads: { _, mutableState, _ in
+            var chars = [screen_char_t]()
+            for scalar in "ABCDE".unicodeScalars {
+                var ch = screen_char_t()
+                ch.code = unichar(scalar.value)
+                chars.append(ch)
+            }
+            var continuation = screen_char_t()
+            continuation.code = unichar(EOL_HARD)
+            chars.withUnsafeMutableBufferPointer { buf in
+                mutableState!.appendScreenChars(
+                    buf.baseAddress!,
+                    length: Int32(buf.count),
+                    externalAttributeIndex: iTermExternalAttributeIndex(),
+                    continuation: continuation,
+                    rtlFound: false,
+                    lineAttribute: .singleWidth)
+            }
+        })
+        XCTAssertEqual(lineAttribute(screen, line: 0), .singleWidth)
+        let codes = lineCodes(screen, line: 0, count: 10)
+        XCTAssertEqual(codes[0], unichar(UnicodeScalar("A").value))
+        XCTAssertEqual(codes[1], unichar(UnicodeScalar("B").value))
+        XCTAssertEqual(codes[2], unichar(UnicodeScalar("C").value))
+        XCTAssertEqual(codes[3], unichar(UnicodeScalar("D").value))
+        XCTAssertEqual(codes[4], unichar(UnicodeScalar("E").value))
+        XCTAssertEqual(codes[5], 0)
+    }
+
+    /// appendScreenChars with doubleHeightTop lineAttribute should also
+    /// compact and re-expand (all DWL variants share the same code path).
+    func testAppendScreenCharsWithDoubleHeightTop() {
+        let screen = makeScreen(width: 10, height: 4)
+        var sourceData = makeDWLData("XY")
+        screen.performBlock(joinedThreads: { _, mutableState, _ in
+            var continuation = screen_char_t()
+            continuation.code = unichar(EOL_HARD)
+            mutableState!.appendScreenChars(
+                &sourceData,
+                length: Int32(sourceData.count),
+                externalAttributeIndex: iTermExternalAttributeIndex(),
+                continuation: continuation,
+                rtlFound: false,
+                lineAttribute: .doubleHeightTop)
+        })
+        XCTAssertEqual(lineAttribute(screen, line: 0), .doubleHeightTop)
+        let codes = lineCodes(screen, line: 0, count: 6)
+        XCTAssertEqual(codes[0], unichar(UnicodeScalar("X").value))
+        XCTAssertEqual(codes[1], unichar(DWL_SPACER))
+        XCTAssertEqual(codes[2], unichar(UnicodeScalar("Y").value))
+        XCTAssertEqual(codes[3], unichar(DWL_SPACER))
+        XCTAssertEqual(codes[4], 0)
+    }
+
+    // MARK: - clearFromAbsoluteLineToEnd preserves DWL content
+
+    /// When clearFromAbsoluteLineToEnd clears from a line where the cursor
+    /// sits on a DWL line, the DWL content and attribute should be preserved.
+    func testClearFromAbsoluteLineToEndPreservesDWL() {
+        let screen = makeScreen(width: 10, height: 4)
+        // Write DWL content on line 0, then add a line below so we can clear.
+        setLineAttribute(screen, attr: .doubleWidth)
+        screen.performBlock(joinedThreads: { _, mutableState, _ in
+            mutableState!.maxScrollbackLines = 0
+            mutableState!.appendString(atCursor: "AB")
+            mutableState!.appendCarriageReturnLineFeed()
+            mutableState!.appendString(atCursor: "below")
+        })
+
+        // Verify DWL content before clearing
+        XCTAssertEqual(lineAttribute(screen, line: 0), .doubleWidth)
+        let codesBefore = lineCodes(screen, line: 0, count: 6)
+        XCTAssertEqual(codesBefore[0], unichar(UnicodeScalar("A").value))
+        XCTAssertEqual(codesBefore[1], unichar(DWL_SPACER))
+        XCTAssertEqual(codesBefore[2], unichar(UnicodeScalar("B").value))
+        XCTAssertEqual(codesBefore[3], unichar(DWL_SPACER))
+
+        // Clear from line 0 to end. Cursor is on line 1 ("below"), so the
+        // cursor line should be saved and restored at line 0.
+        screen.performBlock(joinedThreads: { _, mutableState, _ in
+            // Cursor is already on line 1 from appendString("below")
+            mutableState!.clearFromAbsoluteLine(toEnd: 0)
+        })
+
+        // The cursor line ("below") should have been restored at line 0.
+        // Line 0 should now be singleWidth with "below".
+        let codesAfter = lineCodes(screen, line: 0, count: 5)
+        XCTAssertEqual(codesAfter[0], unichar(UnicodeScalar("b").value))
+        XCTAssertEqual(codesAfter[1], unichar(UnicodeScalar("e").value))
+        XCTAssertEqual(lineAttribute(screen, line: 0), .singleWidth)
+    }
+
+    /// When clearFromAbsoluteLineToEnd clears from a DWL cursor line, the
+    /// DWL content and attribute should be preserved.
+    func testClearFromAbsoluteLineToEndPreservesDWLAtCursor() {
+        let screen = makeScreen(width: 10, height: 4)
+        setLineAttribute(screen, attr: .doubleWidth)
+        screen.performBlock(joinedThreads: { _, mutableState, _ in
+            mutableState!.maxScrollbackLines = 0
+            mutableState!.appendString(atCursor: "AB")
+        })
+
+        // Verify DWL content before clearing
+        XCTAssertEqual(lineAttribute(screen, line: 0), .doubleWidth)
+
+        // Clear from line 0 to end. Cursor IS on line 0 (the DWL line),
+        // so it should be saved and restored.
+        var attrAfter = iTermLineAttribute.singleWidth
+        var codesAfter = [unichar]()
+        screen.performBlock(joinedThreads: { _, mutableState, _ in
+            mutableState!.currentGrid.cursorY = 0
+            mutableState!.currentGrid.cursorX = 4
+            mutableState!.clearFromAbsoluteLine(toEnd: 0)
+            // Read immediately after clear, inside the same performBlock
+            let grid = mutableState!.currentGrid
+            attrAfter = grid.lineInfo(atLineNumber: 0).metadata.lineAttribute
+            let chars = grid.immutableScreenChars(atLineNumber: 0)!
+            for i in 0..<6 {
+                codesAfter.append(chars[i].code)
+            }
+        })
+
+        // After clearing, line 0 should still have DWL content preserved
+        XCTAssertEqual(attrAfter, .doubleWidth,
+                       "lineAttribute should be preserved after clearFromAbsoluteLineToEnd")
+        XCTAssertEqual(codesAfter[0], unichar(UnicodeScalar("A").value),
+                       "First char should be preserved")
+        XCTAssertEqual(codesAfter[1], unichar(DWL_SPACER),
+                       "DWL_SPACER after first char should be preserved")
+        XCTAssertEqual(codesAfter[2], unichar(UnicodeScalar("B").value),
+                       "Second char should be preserved")
+        XCTAssertEqual(codesAfter[3], unichar(DWL_SPACER),
+                       "DWL_SPACER after second char should be preserved")
+    }
+
+    /// clearFromAbsoluteLineToEnd on a normal (non-DWL) line should work
+    /// as before — no regression from the DWL fix.
+    func testClearFromAbsoluteLineToEndNormalLine() {
+        let screen = makeScreen(width: 10, height: 4)
+        screen.performBlock(joinedThreads: { _, mutableState, _ in
+            mutableState!.maxScrollbackLines = 0
+            mutableState!.appendString(atCursor: "hello")
+            mutableState!.appendCarriageReturnLineFeed()
+            mutableState!.appendString(atCursor: "world")
+        })
+        // Clear from line 0 to end; cursor is on line 1 ("world")
+        screen.performBlock(joinedThreads: { _, mutableState, _ in
+            mutableState!.currentGrid.cursorY = 1
+            mutableState!.currentGrid.cursorX = 5
+            let absLine = mutableState!.cumulativeScrollbackOverflow
+            mutableState!.clearFromAbsoluteLine(toEnd: absLine)
+        })
+
+        // Line 0 should have "world" (cursor line restored)
+        let codes = lineCodes(screen, line: 0, count: 10)
+        XCTAssertEqual(codes[0], unichar(UnicodeScalar("w").value))
+        XCTAssertEqual(codes[1], unichar(UnicodeScalar("o").value))
+        XCTAssertEqual(codes[2], unichar(UnicodeScalar("r").value))
+        XCTAssertEqual(codes[3], unichar(UnicodeScalar("l").value))
+        XCTAssertEqual(codes[4], unichar(UnicodeScalar("d").value))
+        XCTAssertEqual(lineAttribute(screen, line: 0), .singleWidth)
+    }
+
+    /// clearFromAbsoluteLineToEnd preserves doubleHeightBottom content
+    /// when the cursor is on the DHL line.
+    func testClearFromAbsoluteLineToEndPreservesDHLBottom() {
+        let screen = makeScreen(width: 10, height: 4)
+        setLineAttribute(screen, attr: .doubleHeightBottom)
+        screen.performBlock(joinedThreads: { _, mutableState, _ in
+            mutableState!.maxScrollbackLines = 0
+            mutableState!.appendString(atCursor: "QR")
+        })
+
+        XCTAssertEqual(lineAttribute(screen, line: 0), .doubleHeightBottom)
+
+        // Clear from line 0 with cursor on line 0
+        screen.performBlock(joinedThreads: { _, mutableState, _ in
+            mutableState!.currentGrid.cursorY = 0
+            mutableState!.currentGrid.cursorX = 4
+            mutableState!.clearFromAbsoluteLine(toEnd: 0)
+        })
+
+        XCTAssertEqual(lineAttribute(screen, line: 0), .doubleHeightBottom)
+        let codes = lineCodes(screen, line: 0, count: 6)
+        XCTAssertEqual(codes[0], unichar(UnicodeScalar("Q").value))
+        XCTAssertEqual(codes[1], unichar(DWL_SPACER))
+        XCTAssertEqual(codes[2], unichar(UnicodeScalar("R").value))
+        XCTAssertEqual(codes[3], unichar(DWL_SPACER))
+    }
+
+    // MARK: - Regression: combinedLinesInRange loses lineAttribute
+
+    /// combinedLinesInRange: must preserve the lineAttribute from the source
+    /// line. Previously, starting from an empty ScreenCharArray caused the
+    /// first line's lineAttribute to be replaced with singleWidth.
+    func testCombinedLinesInRangePreservesLineAttribute() {
+        let screen = makeScreen(width: 10, height: 4)
+        setLineAttribute(screen, attr: .doubleWidth)
+        screen.performBlock(joinedThreads: { _, mutableState, _ in
+            mutableState!.appendString(atCursor: "AB")
+        })
+
+        var resultAttr = iTermLineAttribute.singleWidth
+        screen.performBlock(joinedThreads: { _, mutableState, _ in
+            let extractor = iTermTextExtractor(dataSource: mutableState!)
+            let sca = extractor.combinedLines(in: NSMakeRange(0, 1))
+            resultAttr = sca.metadata.lineAttribute
+        })
+        XCTAssertEqual(resultAttr, .doubleWidth,
+                       "combinedLinesInRange should preserve DWL lineAttribute from the source line")
+    }
+
+    /// combinedLinesInRange: with doubleHeightTop should also preserve lineAttribute.
+    func testCombinedLinesInRangePreservesDHT() {
+        let screen = makeScreen(width: 10, height: 4)
+        setLineAttribute(screen, attr: .doubleHeightTop)
+        screen.performBlock(joinedThreads: { _, mutableState, _ in
+            mutableState!.appendString(atCursor: "XY")
+        })
+
+        var resultAttr = iTermLineAttribute.singleWidth
+        screen.performBlock(joinedThreads: { _, mutableState, _ in
+            let extractor = iTermTextExtractor(dataSource: mutableState!)
+            let sca = extractor.combinedLines(in: NSMakeRange(0, 1))
+            resultAttr = sca.metadata.lineAttribute
+        })
+        XCTAssertEqual(resultAttr, .doubleHeightTop,
+                       "combinedLinesInRange should preserve DHT lineAttribute")
+    }
+
+    /// combinedLinesInRange: spanning multiple lines should use the first
+    /// line's lineAttribute (since all lines in a wrapped range share it).
+    func testCombinedLinesInRangeMultiLinePreservesFirstLineAttribute() {
+        let screen = makeScreen(width: 10, height: 4)
+        setLineAttribute(screen, attr: .doubleWidth)
+        screen.performBlock(joinedThreads: { _, mutableState, _ in
+            mutableState!.appendString(atCursor: "AB")
+            mutableState!.appendCarriageReturnLineFeed()
+            mutableState!.appendString(atCursor: "normal")
+        })
+
+        var resultAttr = iTermLineAttribute.singleWidth
+        screen.performBlock(joinedThreads: { _, mutableState, _ in
+            let extractor = iTermTextExtractor(dataSource: mutableState!)
+            let sca = extractor.combinedLines(in: NSMakeRange(0, 2))
+            resultAttr = sca.metadata.lineAttribute
+        })
+        XCTAssertEqual(resultAttr, .doubleWidth,
+                       "combinedLinesInRange should use the first line's lineAttribute when combining")
+    }
+
+    // MARK: - Regression: appendScreenChars must reset stale DWL on target
+
+    /// When a grid line has a stale DWL lineAttribute (e.g., after a clear
+    /// that didn't reset metadata), appending singleWidth data via the
+    /// lineAttribute: variant must reset the lineAttribute to singleWidth
+    /// so the append code doesn't try to expand normal text.
+    func testAppendScreenCharsResetsStaleDoubleWidthOnTarget() {
+        let screen = makeScreen(width: 10, height: 4)
+        // Set line 0 to DWL and write content.
+        setLineAttribute(screen, attr: .doubleWidth)
+        screen.performBlock(joinedThreads: { _, mutableState, _ in
+            mutableState!.appendString(atCursor: "AB")
+        })
+        XCTAssertEqual(lineAttribute(screen, line: 0), .doubleWidth)
+
+        // Now overwrite line 0 with singleWidth data using the lineAttribute
+        // variant. This simulates what clearFromAbsoluteLineToEnd does when
+        // restoring a normal-width cursor line onto a formerly-DWL row.
+        screen.performBlock(joinedThreads: { _, mutableState, _ in
+            mutableState!.currentGrid.cursorY = 0
+            mutableState!.currentGrid.cursorX = 0
+
+            var chars = [screen_char_t]()
+            for scalar in "hello".unicodeScalars {
+                var ch = screen_char_t()
+                ch.code = unichar(scalar.value)
+                chars.append(ch)
+            }
+            var continuation = screen_char_t()
+            continuation.code = unichar(EOL_SOFT)
+            chars.withUnsafeMutableBufferPointer { buf in
+                mutableState!.appendScreenChars(
+                    buf.baseAddress!,
+                    length: Int32(buf.count),
+                    externalAttributeIndex: iTermExternalAttributeIndex(),
+                    continuation: continuation,
+                    rtlFound: false,
+                    lineAttribute: .singleWidth)
+            }
+        })
+
+        // Line 0 should now be singleWidth with "hello" — NOT double-expanded.
+        XCTAssertEqual(lineAttribute(screen, line: 0), .singleWidth,
+                       "lineAttribute should be reset from DWL to singleWidth")
+        let codes = lineCodes(screen, line: 0, count: 5)
+        XCTAssertEqual(codes[0], unichar(UnicodeScalar("h").value),
+                       "First char should be 'h', not expanded with DWL_SPACERs")
+        XCTAssertEqual(codes[1], unichar(UnicodeScalar("e").value),
+                       "Second char should be 'e', not a DWL_SPACER")
+        XCTAssertEqual(codes[2], unichar(UnicodeScalar("l").value))
+        XCTAssertEqual(codes[3], unichar(UnicodeScalar("l").value))
+        XCTAssertEqual(codes[4], unichar(UnicodeScalar("o").value))
+    }
+
+    /// appendScreenChars with DWL data onto a line that was previously
+    /// singleWidth should correctly set DWL and expand.
+    func testAppendScreenCharsSetsDWLOnFormerlySingleWidthLine() {
+        let screen = makeScreen(width: 10, height: 4)
+        // Line 0 starts singleWidth.
+        screen.performBlock(joinedThreads: { _, mutableState, _ in
+            mutableState!.appendString(atCursor: "old")
+        })
+        XCTAssertEqual(lineAttribute(screen, line: 0), .singleWidth)
+
+        // Now overwrite with DWL data (as if pasting from a DWL source).
+        var sourceData = makeDWLData("XY")
+        screen.performBlock(joinedThreads: { _, mutableState, _ in
+            mutableState!.currentGrid.cursorY = 0
+            mutableState!.currentGrid.cursorX = 0
+            var continuation = screen_char_t()
+            continuation.code = unichar(EOL_SOFT)
+            mutableState!.appendScreenChars(
+                &sourceData,
+                length: Int32(sourceData.count),
+                externalAttributeIndex: iTermExternalAttributeIndex(),
+                continuation: continuation,
+                rtlFound: false,
+                lineAttribute: .doubleWidth)
+        })
+
+        XCTAssertEqual(lineAttribute(screen, line: 0), .doubleWidth,
+                       "lineAttribute should be set to DWL")
+        let codes = lineCodes(screen, line: 0, count: 6)
+        XCTAssertEqual(codes[0], unichar(UnicodeScalar("X").value))
+        XCTAssertEqual(codes[1], unichar(DWL_SPACER))
+        XCTAssertEqual(codes[2], unichar(UnicodeScalar("Y").value))
+        XCTAssertEqual(codes[3], unichar(DWL_SPACER))
+    }
 }
