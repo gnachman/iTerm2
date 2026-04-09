@@ -57,7 +57,9 @@ class iTermStatusBarClaudeCodeComponent: iTermStatusBarTextComponent {
     }
 
     override func statusBarComponentIcon() -> NSImage {
-        return NSImage(systemSymbolName: "brain", accessibilityDescription: "Claude Code") ?? NSImage()
+        let config = NSImage.SymbolConfiguration(pointSize: 11, weight: .regular)
+        return NSImage(systemSymbolName: "brain", accessibilityDescription: "Claude Code")?
+            .withSymbolConfiguration(config) ?? NSImage()
     }
 
     override func statusBarComponentShortDescription() -> String {
