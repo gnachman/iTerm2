@@ -45,6 +45,14 @@ extension VT100ScreenProgress {
 @objc
 class iTermProgressBarView: NSView {
     @objc var heightValue: CGFloat = 2.0
+    @objc var vertical = false {
+        didSet {
+            if vertical != oldValue {
+                updateGradientDirections()
+                layer?.setNeedsLayout()
+            }
+        }
+    }
     @objc var colorScheme: String = iTermProgressBarColorSchemeDefault {
         didSet {
             updateLayerColors()
@@ -274,7 +282,28 @@ private extension iTermProgressBarView {
         updateLayerColors()
     }
 
+    private func updateGradientDirections() {
+        let startPoint: CGPoint
+        let endPoint: CGPoint
+        if vertical {
+            startPoint = CGPoint(x: 0.5, y: 1)
+            endPoint = CGPoint(x: 0.5, y: 0)
+        } else {
+            startPoint = CGPoint(x: 0, y: 0.5)
+            endPoint = CGPoint(x: 1, y: 0.5)
+        }
+        for layer in [errorLayer, indeterminateLayer1, indeterminateLayer2, determinateLayer] {
+            guard let gradientLayer = layer as? CAGradientLayer else {
+                continue
+            }
+            gradientLayer.startPoint = startPoint
+            gradientLayer.endPoint = endPoint
+        }
+    }
+
     private func updateLayerColors() {
+        updateGradientDirections()
+
         // Update error layer colors
         if let errorGradient = errorLayer as? CAGradientLayer {
             let colors = errorColors(dark: darkMode)
@@ -401,17 +430,15 @@ private extension iTermProgressBarView {
 
     private func setupIndeterminateLayers() {
         let width = layer?.bounds.width ?? bounds.width
-        let height = desiredHeight
-
-        let gradientWidth = width
+        let height = vertical ? (layer?.bounds.height ?? bounds.height) : desiredHeight
 
         // Set up container to clip content
         indeterminateContainer.frame = CGRect(x: 0, y: 0, width: width, height: height)
         indeterminateContainer.masksToBounds = true
 
         // Set up both gradient layers
-        indeterminateLayer1.frame = CGRect(x: 0, y: 0, width: gradientWidth, height: height)
-        indeterminateLayer2.frame = CGRect(x: 0, y: 0, width: gradientWidth, height: height)
+        indeterminateLayer1.frame = CGRect(x: 0, y: 0, width: width, height: height)
+        indeterminateLayer2.frame = CGRect(x: 0, y: 0, width: width, height: height)
 
         indeterminateContainer.addSublayer(indeterminateLayer1)
         indeterminateContainer.addSublayer(indeterminateLayer2)
@@ -430,44 +457,71 @@ private extension iTermProgressBarView {
         indeterminateLayer2.removeAnimation(forKey: animationKey)
 
         let width = layer?.bounds.width ?? bounds.width
-        let gradientWidth = width
-
-        // Calculate the distance to travel (one full cycle)
-        let distance = width + gradientWidth
+        let height = layer?.bounds.height ?? bounds.height
         let duration = darkMode ? 3.0 : 6.0
-
-        // Get current time to synchronize both animations precisely
         let now = CACurrentMediaTime()
 
-        // Layer 1 starts from off-screen left
-        let animation1 = CABasicAnimation(keyPath: "position.x")
-        animation1.fromValue = -gradientWidth / 2
-        animation1.toValue = width + gradientWidth / 2
-        animation1.duration = duration
-        animation1.repeatCount = .infinity
-        animation1.timingFunction = CAMediaTimingFunction(name: .linear)
-        animation1.beginTime = now
-        animation1.isRemovedOnCompletion = false
-        animation1.fillMode = .forwards
+        if vertical {
+            let gradientHeight = height
+            let distance = height + gradientHeight
 
-        indeterminateLayer1.position.x = -gradientWidth / 2
-        indeterminateLayer1.add(animation1, forKey: animationKey)
+            let animation1 = CABasicAnimation(keyPath: "position.y")
+            animation1.fromValue = height + gradientHeight / 2
+            animation1.toValue = -gradientHeight / 2
+            animation1.duration = duration
+            animation1.repeatCount = .infinity
+            animation1.timingFunction = CAMediaTimingFunction(name: .linear)
+            animation1.beginTime = now
+            animation1.isRemovedOnCompletion = false
+            animation1.fillMode = .forwards
 
-        // Layer 2 follows layer 1, offset by half the duration to create wrap-around effect
-        let animation2 = CABasicAnimation(keyPath: "position.x")
-        animation2.fromValue = -gradientWidth / 2
-        animation2.toValue = width + gradientWidth / 2
-        animation2.duration = duration
-        animation2.repeatCount = .infinity
-        animation2.timingFunction = CAMediaTimingFunction(name: .linear)
-        animation2.isRemovedOnCompletion = false
-        animation2.fillMode = .forwards
-        // Start layer 2's animation offset by the time it takes to travel one gradient width
-        let timeOffset = (duration * Double(gradientWidth)) / Double(distance)
-        animation2.beginTime = now - timeOffset
+            indeterminateLayer1.position = CGPoint(x: width / 2, y: height + gradientHeight / 2)
+            indeterminateLayer1.add(animation1, forKey: animationKey)
 
-        indeterminateLayer2.position.x = -gradientWidth / 2
-        indeterminateLayer2.add(animation2, forKey: animationKey)
+            let animation2 = CABasicAnimation(keyPath: "position.y")
+            animation2.fromValue = height + gradientHeight / 2
+            animation2.toValue = -gradientHeight / 2
+            animation2.duration = duration
+            animation2.repeatCount = .infinity
+            animation2.timingFunction = CAMediaTimingFunction(name: .linear)
+            animation2.isRemovedOnCompletion = false
+            animation2.fillMode = .forwards
+            let timeOffset = (duration * Double(gradientHeight)) / Double(distance)
+            animation2.beginTime = now - timeOffset
+
+            indeterminateLayer2.position = CGPoint(x: width / 2, y: height + gradientHeight / 2)
+            indeterminateLayer2.add(animation2, forKey: animationKey)
+        } else {
+            let gradientWidth = width
+            let distance = width + gradientWidth
+
+            let animation1 = CABasicAnimation(keyPath: "position.x")
+            animation1.fromValue = -gradientWidth / 2
+            animation1.toValue = width + gradientWidth / 2
+            animation1.duration = duration
+            animation1.repeatCount = .infinity
+            animation1.timingFunction = CAMediaTimingFunction(name: .linear)
+            animation1.beginTime = now
+            animation1.isRemovedOnCompletion = false
+            animation1.fillMode = .forwards
+
+            indeterminateLayer1.position.x = -gradientWidth / 2
+            indeterminateLayer1.add(animation1, forKey: animationKey)
+
+            let animation2 = CABasicAnimation(keyPath: "position.x")
+            animation2.fromValue = -gradientWidth / 2
+            animation2.toValue = width + gradientWidth / 2
+            animation2.duration = duration
+            animation2.repeatCount = .infinity
+            animation2.timingFunction = CAMediaTimingFunction(name: .linear)
+            animation2.isRemovedOnCompletion = false
+            animation2.fillMode = .forwards
+            let timeOffset = (duration * Double(gradientWidth)) / Double(distance)
+            animation2.beginTime = now - timeOffset
+
+            indeterminateLayer2.position.x = -gradientWidth / 2
+            indeterminateLayer2.add(animation2, forKey: animationKey)
+        }
 
         CATransaction.commit()
     }
@@ -475,8 +529,18 @@ private extension iTermProgressBarView {
     private func setDeterminate(success: Success, percentage: Int32, animated: Bool) {
         let clamped = max(0, min(100, percentage))
         let width = layer?.bounds.width ?? bounds.width
-        let progressWidth = width * CGFloat(clamped) / 100.0
-        let newFrame = CGRect(x: 0, y: 0, width: progressWidth, height: desiredHeight)
+        let height = vertical ? (layer?.bounds.height ?? bounds.height) : desiredHeight
+        let newFrame: CGRect
+        if vertical {
+            let progressHeight = height * CGFloat(clamped) / 100.0
+            newFrame = CGRect(x: 0,
+                              y: height - progressHeight,
+                              width: width,
+                              height: progressHeight)
+        } else {
+            let progressWidth = width * CGFloat(clamped) / 100.0
+            newFrame = CGRect(x: 0, y: 0, width: progressWidth, height: height)
+        }
         if animated {
             let animation = CABasicAnimation(keyPath: "frame")
             animation.fromValue = determinateLayer.presentation()?.frame ?? determinateLayer.frame
@@ -560,7 +624,7 @@ extension iTermProgressBarView: CALayerDelegate {
     // CALayerDelegate method to update sublayer frames appropriately.
     func layoutSublayers(of layer: CALayer) {
         let width = layer.bounds.width
-        let height = desiredHeight
+        let height = vertical ? layer.bounds.height : desiredHeight
         switch mode {
         case .error:
             // Make the error layer fill the entire width and desired height.
@@ -572,9 +636,8 @@ extension iTermProgressBarView: CALayerDelegate {
         case .indeterminate:
             // Update container frame and restart animation if needed.
             indeterminateContainer.frame = CGRect(x: 0, y: 0, width: width, height: height)
-            let gradientWidth = width
-            indeterminateLayer1.frame = CGRect(x: 0, y: 0, width: gradientWidth, height: height)
-            indeterminateLayer2.frame = CGRect(x: 0, y: 0, width: gradientWidth, height: height)
+            indeterminateLayer1.frame = CGRect(x: 0, y: 0, width: width, height: height)
+            indeterminateLayer2.frame = CGRect(x: 0, y: 0, width: width, height: height)
             // Only restart animation if it's not already running
             if indeterminateLayer1.animation(forKey: "indeterminateScroll") == nil {
                 startIndeterminateAnimation()
@@ -582,8 +645,16 @@ extension iTermProgressBarView: CALayerDelegate {
         case let .determinate(success: success, percentage: percentage):
             // Set determinate layer width according to current percentage.
             let clamped = max(0, min(100, percentage))
-            let progressWidth = width * CGFloat(clamped) / 100.0
-            determinateLayer.frame = CGRect(x: 0, y: 0, width: progressWidth, height: height)
+            if vertical {
+                let progressHeight = height * CGFloat(clamped) / 100.0
+                determinateLayer.frame = CGRect(x: 0,
+                                                y: height - progressHeight,
+                                                width: width,
+                                                height: progressHeight)
+            } else {
+                let progressWidth = width * CGFloat(clamped) / 100.0
+                determinateLayer.frame = CGRect(x: 0, y: 0, width: progressWidth, height: height)
+            }
             updateDeterminateColors(success: success)
         case .ground:
             // No visible layer to layout.

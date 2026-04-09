@@ -264,6 +264,12 @@
 
 - (NSRect)progressBarRectForTabCell:(PSMTabBarCell *)cell {
     NSRect cellFrame = [cell frame];
+    if (_orientation == PSMTabBarVerticalOrientation) {
+        return NSMakeRect(cellFrame.origin.x,
+                          cellFrame.origin.y,
+                          PSMTabBarProgressBarHeight,
+                          cellFrame.size.height);
+    }
     return NSMakeRect(cellFrame.origin.x,
                       cellFrame.origin.y,
                       cellFrame.size.width,

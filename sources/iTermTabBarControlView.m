@@ -331,6 +331,7 @@ typedef NS_ENUM(NSInteger, iTermTabBarFlashState) {
 - (void)configureCustomProgressBarView:(NSView *)view forTabCell:(PSMTabBarCell *)cell {
     iTermProgressBarView *progressBar = (iTermProgressBarView *)view;
     progressBar.heightValue = PSMTabBarProgressBarHeight;
+    progressBar.vertical = (self.orientation == PSMTabBarVerticalOrientation);
     progressBar.darkMode = self.style.useLightControls;
     progressBar.colorScheme = [self tabProgressBarColorSchemeForCell:cell];
     progressBar.state = (VT100ScreenProgress)cell.progress;
