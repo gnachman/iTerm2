@@ -1295,16 +1295,26 @@ static const int64_t VT100ScreenMutableStateSideEffectFlagLineBufferDidDropLines
 
 - (void)cursorToX:(int)x Y:(int)y {
     DLog(@"cursorToX:Y");
-    [self cursorToX:x];
+    // Set Y first so cursorToX: can check the target line's attribute.
     [self cursorToY:y];
+    [self cursorToX:x];
 }
 
 - (void)cursorToX:(int)x {
     DLog(@"cursorToX:%d", x);
-    const int leftMargin = [self.currentGrid leftMargin];
-    const int rightMargin = [self.currentGrid rightMargin];
+    int leftMargin = [self.currentGrid leftMargin];
+    int rightMargin = [self.currentGrid rightMargin];
+    const BOOL isDWL = [self.currentGrid currentLineIsDoubleWidth];
 
     int xPos = x - 1;
+
+    if (isDWL) {
+        // Snap margins to character boundaries on double-width lines.
+        leftMargin = (leftMargin + 1) & ~1;   // round up to even
+        rightMargin = rightMargin & ~1;        // round down to even
+        xPos = MIN(xPos, self.currentGrid.size.width / 2 - 1);
+        xPos *= 2;
+    }
 
     if ([self.terminal originMode]) {
         DLog(@"In origin mode. Interpret relative to left margin %d, don't go past right margin %d",
@@ -1586,6 +1596,9 @@ static const int64_t VT100ScreenMutableStateSideEffectFlagLineBufferDidDropLines
     }
     if (j <= 0) {
         return;
+    }
+    if ([self.currentGrid currentLineIsDoubleWidth]) {
+        j *= 2;
     }
 
     switch (self.protectedMode) {
@@ -2694,12 +2707,6 @@ void VT100ScreenEraseCell(screen_char_t *sct,
             // Normal case.
             self.currentGrid.cursorX = cursorX - 1;
         }
-    }
-    if (self.currentGrid.cursorX > 0 &&
-        ScreenCharIsDWL_SPACER([self.currentGrid characterAt:self.currentGrid.cursor]) &&
-        iTermLineAttributeIsDoubleWidth([self.currentGrid lineInfoAtLineNumber:self.currentGrid.cursorY].metadata.lineAttribute)) {
-        // Move back over double-width spacer.
-        self.currentGrid.cursorX = cursorX - 2;
     }
     // It is OK to land on the right half of a double-width character (issue 3475).
 }

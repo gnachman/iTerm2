@@ -1105,10 +1105,11 @@ typedef struct {
 
 - (void)terminalInsertEmptyCharsAtCursor:(int)n {
     DLog(@"begin %@", @(n));
+    const int count = [self.currentGrid currentLineIsDoubleWidth] ? n * 2 : n;
     [self.currentGrid insertChar:[self.currentGrid defaultChar]
               externalAttributes:nil
                               at:self.currentGrid.cursor
-                           times:n];
+                           times:count];
 }
 
 - (void)terminalShiftLeft:(int)n {
@@ -1162,7 +1163,8 @@ typedef struct {
 
 - (void)terminalDeleteCharactersAtCursor:(int)n {
     DLog(@"begin %@", @(n));
-    [self.currentGrid deleteChars:n startingAt:self.currentGrid.cursor];
+    const int count = [self.currentGrid currentLineIsDoubleWidth] ? n * 2 : n;
+    [self.currentGrid deleteChars:count startingAt:self.currentGrid.cursor];
     [self clearTriggerLine];
 }
 

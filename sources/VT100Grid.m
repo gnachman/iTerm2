@@ -396,8 +396,24 @@ NS_INLINE int VT100GridLineInfoIndex(VT100Grid *self, int lineNumber) {
     return cursor_.y;
 }
 
+- (BOOL)currentLineIsDoubleWidth {
+    return iTermLineAttributeIsDoubleWidth([self lineInfoAtLineNumber:cursor_.y].metadata.lineAttribute);
+}
+
+- (BOOL)lineIsDoubleWidth:(int)lineNumber {
+    return iTermLineAttributeIsDoubleWidth([self lineInfoAtLineNumber:lineNumber].metadata.lineAttribute);
+}
+
+// Snap x to an even position on double-width lines.
+- (int)clampedCursorX:(int)x onLine:(int)y {
+    if ([self lineIsDoubleWidth:y] && (x % 2) != 0 && x < size_.width) {
+        return x & ~1;
+    }
+    return x;
+}
+
 - (void)setCursorX:(int)cursorX {
-    int newX = MIN(size_.width, MAX(0, cursorX));
+    int newX = [self clampedCursorX:MIN(size_.width, MAX(0, cursorX)) onLine:cursor_.y];
     if (newX != cursor_.x) {
         DLog(@"Move cursor x to %d (requested %d)", newX, cursorX);
         cursor_.x = newX;
@@ -423,13 +439,17 @@ NS_INLINE int VT100GridLineInfoIndex(VT100Grid *self, int lineNumber) {
 }
 
 - (void)setCursor:(VT100GridCoord)coord {
-    cursor_.x = MIN(size_.width, MAX(0, coord.x));
-    self.cursorY = MIN(size_.height - 1, MAX(0, coord.y));
+    const int y = MIN(size_.height - 1, MAX(0, coord.y));
+    int x = MIN(size_.width, MAX(0, coord.x));
+    x = [self clampedCursorX:x onLine:y];
+    cursor_.x = x;
+    self.cursorY = y;
 }
 
 - (void)setCursorWithoutInvalidatingDWCFreeLineCount:(VT100GridCoord)coord {
-    cursor_.x = MIN(size_.width, MAX(0, coord.x));
-    [self setCursorY:MIN(size_.height - 1, MAX(0, coord.y))
+    const int y = MIN(size_.height - 1, MAX(0, coord.y));
+    cursor_.x = [self clampedCursorX:MIN(size_.width, MAX(0, coord.x)) onLine:y];
+    [self setCursorY:y
        resetDWCCount:NO];
 }
 
@@ -853,11 +873,12 @@ makeCursorLineSoft:(BOOL)makeCursorLineSoft {
 }
 
 - (void)moveCursorLeft:(int)n {
+    const int step = [self currentLineIsDoubleWidth] ? 2 : 1;
     if ([self haveColumnScrollRegion]) {
         // Don't allow cursor to wrap around the left margin when there is a
         // column scroll region. If the cursor begins at/right of the left margin, it stops at the
         // left margin. If the cursor begins left of the left margin, it stops at the left edge.
-        int x = cursor_.x - n;
+        int x = cursor_.x - n * step;
         const int leftMargin = [self leftMargin];
 
         int limit;
@@ -894,16 +915,17 @@ makeCursorLineSoft:(BOOL)makeCursorLineSoft {
             }
         } else {
             // Move as far as the left margin
-            int x = MAX(0, cursor_.x - n);
+            int x = MAX(0, cursor_.x - n * step);
             int moved = self.cursorX - x;
-            n -= moved;
+            n -= moved / step;
             self.cursorX = x;
         }
     }
 }
 
 - (void)moveCursorRight:(int)n {
-    int x = cursor_.x + n;
+    const int step = [self currentLineIsDoubleWidth] ? 2 : 1;
+    int x = cursor_.x + n * step;
     int rightMargin = [self rightMargin];
     if (cursor_.x > rightMargin) {
         rightMargin = size_.width - 1;
@@ -1013,8 +1035,16 @@ makeCursorLineSoft:(BOOL)makeCursorLineSoft {
         [self erasePossibleDoubleWidthCharInLineNumber:y startingAtOffset:to.x withChar:c];
         const int minX = MAX(0, from.x);
         const int maxX = MIN(to.x, size_.width - 1);
+        const BOOL isDWL = [self lineIsDoubleWidth:y];
         for (int x = minX; x <= maxX; x++) {
-            line[x] = c;
+            if (isDWL && (x % 2) != 0) {
+                // Preserve DWL_SPACER on odd cells of double-width lines.
+                screen_char_t spacer = c;
+                ScreenCharSetDWL_SPACER(&spacer);
+                line[x] = spacer;
+            } else {
+                line[x] = c;
+            }
         }
         if (c.code == 0 && to.x == size_.width - 1) {
             line[size_.width] = c;

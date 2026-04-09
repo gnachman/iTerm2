@@ -210,6 +210,9 @@ makeCursorLineSoft:(BOOL)makeCursorLineSoft;
 - (screen_char_t *)dwcFreeScreenCharsAtLineNumber:(int)lineNumber;
 - (iTermMetadata)metadataAtLineNumber:(int)lineNumber;
 
+// Returns YES if the line at the cursor has a double-width attribute (DECDWL/DECDHL).
+- (BOOL)currentLineIsDoubleWidth;
+
 // Set both x and y coord of cursor at once. Cursor positions are clamped to legal values. The cursor
 // may extend into the right edge (cursorX == size.width is allowed).
 - (void)setCursor:(VT100GridCoord)coord;

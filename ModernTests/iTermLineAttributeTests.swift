@@ -1899,6 +1899,301 @@ final class iTermLineAttributeTests: XCTestCase {
         XCTAssertEqual(codes[3], unichar(DWL_SPACER))
     }
 
+    // MARK: - Cursor and Editing on DWL Lines
+
+    /// Helper: get cursor X position
+    private func cursorX(_ screen: VT100Screen) -> Int32 {
+        var result: Int32 = 0
+        screen.performBlock(joinedThreads: { _, mutableState, _ in
+            result = mutableState!.currentGrid.cursorX
+        })
+        return result
+    }
+
+    /// Helper: get cursor Y position
+    private func cursorY(_ screen: VT100Screen) -> Int32 {
+        var result: Int32 = 0
+        screen.performBlock(joinedThreads: { _, mutableState, _ in
+            result = mutableState!.currentGrid.cursorY
+        })
+        return result
+    }
+
+    /// Helper: inject raw bytes into terminal
+    private func inject(_ screen: VT100Screen, _ string: String) {
+        screen.performBlock(joinedThreads: { _, mutableState, _ in
+            mutableState!.inject(string.data(using: .utf8)!)
+        })
+    }
+
+    /// CUF (cursor forward) on a DWL line should advance by 2 physical cells
+    /// per logical step, skipping over DWL_SPACERs.
+    func testCursorForwardOnDWLLine() {
+        let screen = makeScreen(width: 20, height: 5)
+        screen.performBlock(joinedThreads: { _, mutableState, _ in
+            mutableState!.terminalSetLineAttribute(.doubleWidth)
+            mutableState!.appendString(atCursor: "ABCDE")
+        })
+        // Cursor should be at physical 10 (5 chars × 2 cells each)
+        XCTAssertEqual(cursorX(screen), 10)
+
+        // Move cursor to start
+        inject(screen, "\u{1b}[1G") // HPA col 1 (= physical 0)
+        XCTAssertEqual(cursorX(screen), 0, "HPA should position at physical 0")
+
+        // CUF 1 should go to physical 2 (skip spacer at 1)
+        inject(screen, "\u{1b}[C")
+        XCTAssertEqual(cursorX(screen), 2, "CUF 1 should advance to physical 2")
+
+        // CUF 2 should go to physical 6
+        inject(screen, "\u{1b}[2C")
+        XCTAssertEqual(cursorX(screen), 6, "CUF 2 should advance to physical 6")
+    }
+
+    /// CUB (cursor backward) on a DWL line should retreat by 2 physical cells.
+    func testCursorBackwardOnDWLLine() {
+        let screen = makeScreen(width: 20, height: 5)
+        screen.performBlock(joinedThreads: { _, mutableState, _ in
+            mutableState!.terminalSetLineAttribute(.doubleWidth)
+            mutableState!.appendString(atCursor: "ABCDE")
+        })
+        // Cursor at physical 10
+        XCTAssertEqual(cursorX(screen), 10)
+
+        // CUB 1 should go to physical 8
+        inject(screen, "\u{1b}[D")
+        XCTAssertEqual(cursorX(screen), 8, "CUB 1 should retreat to physical 8")
+
+        // CUB 2 should go to physical 4
+        inject(screen, "\u{1b}[2D")
+        XCTAssertEqual(cursorX(screen), 4, "CUB 2 should retreat to physical 4")
+    }
+
+    /// CUP on a DWL line: column parameter is logical, so col 3 should
+    /// map to physical column 4 (0-indexed).
+    func testCursorPositionOnDWLLine() {
+        let screen = makeScreen(width: 20, height: 5)
+        screen.performBlock(joinedThreads: { _, mutableState, _ in
+            mutableState!.terminalSetLineAttribute(.doubleWidth)
+            mutableState!.appendString(atCursor: "ABCDE")
+        })
+
+        // CUP row 1, col 1 → physical (0, 0)
+        inject(screen, "\u{1b}[1;1H")
+        XCTAssertEqual(cursorX(screen), 0, "CUP col 1 should be physical 0")
+
+        // CUP row 1, col 3 → physical column 4
+        inject(screen, "\u{1b}[1;3H")
+        XCTAssertEqual(cursorX(screen), 4, "CUP col 3 should be physical 4")
+
+        // CUP row 1, col 5 → physical column 8
+        inject(screen, "\u{1b}[1;5H")
+        XCTAssertEqual(cursorX(screen), 8, "CUP col 5 should be physical 8")
+    }
+
+    /// HPA on a DWL line should map logical to physical column.
+    func testHorizontalPositionAbsoluteOnDWLLine() {
+        let screen = makeScreen(width: 20, height: 5)
+        screen.performBlock(joinedThreads: { _, mutableState, _ in
+            mutableState!.terminalSetLineAttribute(.doubleWidth)
+            mutableState!.appendString(atCursor: "ABCDE")
+        })
+
+        // HPA col 1 → physical 0
+        inject(screen, "\u{1b}[1G")
+        XCTAssertEqual(cursorX(screen), 0, "HPA col 1 should be physical 0")
+
+        // HPA col 4 → physical 6
+        inject(screen, "\u{1b}[4G")
+        XCTAssertEqual(cursorX(screen), 6, "HPA col 4 should be physical 6")
+    }
+
+    /// setCursorX directly should snap to even position on DWL lines.
+    func testSetCursorXSnapsToEvenOnDWLLine() {
+        let screen = makeScreen(width: 20, height: 5)
+        screen.performBlock(joinedThreads: { _, mutableState, _ in
+            mutableState!.terminalSetLineAttribute(.doubleWidth)
+            mutableState!.appendString(atCursor: "ABCDE")
+            // Try to set cursor to odd physical position
+            mutableState!.currentGrid.cursorX = 3
+        })
+        // Should snap to 2 (round down to even)
+        XCTAssertEqual(cursorX(screen), 2, "setCursorX(3) should snap to 2 on DWL line")
+    }
+
+    /// DCH (delete character) on a DWL line should delete char+spacer pairs
+    /// and preserve the interleaving invariant.
+    func testDeleteCharacterOnDWLLine() {
+        let screen = makeScreen(width: 20, height: 5)
+        screen.performBlock(joinedThreads: { _, mutableState, _ in
+            mutableState!.terminalSetLineAttribute(.doubleWidth)
+            mutableState!.appendString(atCursor: "ABCDE")
+        })
+
+        // Move to position of 'B' (physical 2) and delete 1
+        inject(screen, "\u{1b}[1;2H")  // CUP col 2 → physical 2
+        inject(screen, "\u{1b}[P")     // DCH 1
+
+        // After deleting 'B', line should be A_C_D_E_ (spacers preserved)
+        let codes = lineCodes(screen, line: 0, count: 10)
+        XCTAssertEqual(codes[0], unichar(UnicodeScalar("A").value), "A should remain at 0")
+        XCTAssertEqual(codes[1], unichar(DWL_SPACER), "Spacer at 1")
+        XCTAssertEqual(codes[2], unichar(UnicodeScalar("C").value), "C should shift to 2")
+        XCTAssertEqual(codes[3], unichar(DWL_SPACER), "Spacer at 3")
+        XCTAssertEqual(codes[4], unichar(UnicodeScalar("D").value), "D should shift to 4")
+        XCTAssertEqual(codes[5], unichar(DWL_SPACER), "Spacer at 5")
+        XCTAssertEqual(codes[6], unichar(UnicodeScalar("E").value), "E should shift to 6")
+        XCTAssertEqual(codes[7], unichar(DWL_SPACER), "Spacer at 7")
+    }
+
+    /// ICH (insert character) on a DWL line should insert char+spacer pairs.
+    func testInsertCharacterOnDWLLine() {
+        let screen = makeScreen(width: 20, height: 5)
+        screen.performBlock(joinedThreads: { _, mutableState, _ in
+            mutableState!.terminalSetLineAttribute(.doubleWidth)
+            mutableState!.appendString(atCursor: "ABCDE")
+        })
+
+        // Move to 'C' (physical 4) and insert 1 blank
+        inject(screen, "\u{1b}[1;3H")  // CUP col 3 → physical 4
+        inject(screen, "\u{1b}[@")     // ICH 1
+
+        // After inserting, should be A_B_ _C_D_E (blank+spacer inserted, E may fall off)
+        let codes = lineCodes(screen, line: 0, count: 12)
+        XCTAssertEqual(codes[0], unichar(UnicodeScalar("A").value), "A at 0")
+        XCTAssertEqual(codes[1], unichar(DWL_SPACER), "Spacer at 1")
+        XCTAssertEqual(codes[2], unichar(UnicodeScalar("B").value), "B at 2")
+        XCTAssertEqual(codes[3], unichar(DWL_SPACER), "Spacer at 3")
+        // Inserted blank at physical 4
+        XCTAssertEqual(codes[4], 0, "Blank at 4")
+        XCTAssertEqual(codes[5], unichar(DWL_SPACER), "Spacer at 5")
+        XCTAssertEqual(codes[6], unichar(UnicodeScalar("C").value), "C shifted to 6")
+        XCTAssertEqual(codes[7], unichar(DWL_SPACER), "Spacer at 7")
+    }
+
+    /// ECH (erase character) on a DWL line should erase logical characters
+    /// (char+spacer pairs).
+    func testEraseCharacterOnDWLLine() {
+        let screen = makeScreen(width: 20, height: 5)
+        screen.performBlock(joinedThreads: { _, mutableState, _ in
+            mutableState!.terminalSetLineAttribute(.doubleWidth)
+            mutableState!.appendString(atCursor: "ABCDE")
+        })
+
+        // Move to 'B' and erase 2 characters
+        inject(screen, "\u{1b}[1;2H")  // CUP col 2 → physical 2
+        inject(screen, "\u{1b}[2X")    // ECH 2
+
+        let codes = lineCodes(screen, line: 0, count: 10)
+        XCTAssertEqual(codes[0], unichar(UnicodeScalar("A").value), "A untouched")
+        XCTAssertEqual(codes[1], unichar(DWL_SPACER), "Spacer at 1")
+        // B and C erased (physical 2-5)
+        XCTAssertEqual(codes[2], 0, "B erased at 2")
+        XCTAssertEqual(codes[3], unichar(DWL_SPACER), "Spacer preserved at 3")
+        XCTAssertEqual(codes[4], 0, "C erased at 4")
+        XCTAssertEqual(codes[5], unichar(DWL_SPACER), "Spacer preserved at 5")
+        // D untouched
+        XCTAssertEqual(codes[6], unichar(UnicodeScalar("D").value), "D untouched")
+        XCTAssertEqual(codes[7], unichar(DWL_SPACER), "Spacer at 7")
+    }
+
+    /// Cursor should never land on a DWL_SPACER when moving between lines
+    /// of different types.
+    func testCursorMovingFromNormalToDWLLine() {
+        let screen = makeScreen(width: 20, height: 5)
+        screen.performBlock(joinedThreads: { _, mutableState, _ in
+            // Line 0: normal, cursor at column 5
+            mutableState!.appendString(atCursor: "Hello World")
+            mutableState!.currentGrid.cursorX = 5
+            mutableState!.currentGrid.cursorY = 0
+            // Line 1: double-width
+            mutableState!.currentGrid.cursorY = 1
+            mutableState!.terminalSetLineAttribute(.doubleWidth)
+            mutableState!.appendString(atCursor: "ABCDE")
+        })
+
+        // Position cursor at column 5 on normal line 0
+        screen.performBlock(joinedThreads: { _, mutableState, _ in
+            mutableState!.currentGrid.cursorX = 5
+            mutableState!.currentGrid.cursorY = 0
+        })
+
+        // Move down to DWL line — cursor at physical 5 is a spacer, should snap
+        inject(screen, "\u{1b}[B") // CUD 1
+
+        let x = cursorX(screen)
+        XCTAssertEqual(x % 2, 0, "Cursor should be at even position on DWL line, got \(x)")
+    }
+
+    /// ED (erase in display) from cursor on DWL line should preserve spacer
+    /// structure on lines that aren't fully erased.
+    func testEraseInDisplayOnDWLLine() {
+        let screen = makeScreen(width: 20, height: 5)
+        screen.performBlock(joinedThreads: { _, mutableState, _ in
+            mutableState!.terminalSetLineAttribute(.doubleWidth)
+            mutableState!.appendString(atCursor: "ABCDE")
+        })
+
+        // Move to 'C' and erase from cursor to end of display
+        inject(screen, "\u{1b}[1;3H")  // CUP col 3 → physical 4
+        inject(screen, "\u{1b}[J")     // ED 0 (erase from cursor)
+
+        // A and B should survive, C onwards erased
+        let codes = lineCodes(screen, line: 0, count: 10)
+        XCTAssertEqual(codes[0], unichar(UnicodeScalar("A").value), "A untouched")
+        XCTAssertEqual(codes[1], unichar(DWL_SPACER), "Spacer at 1")
+        XCTAssertEqual(codes[2], unichar(UnicodeScalar("B").value), "B untouched")
+        XCTAssertEqual(codes[3], unichar(DWL_SPACER), "Spacer at 3")
+        XCTAssertEqual(codes[4], 0, "C erased")
+    }
+
+    /// Writing a character at the cursor on a DWL line should overwrite the
+    /// character at the cursor position and its spacer, not corrupt layout.
+    func testCharacterInputOnDWLLinePreservesLayout() {
+        let screen = makeScreen(width: 20, height: 5)
+        screen.performBlock(joinedThreads: { _, mutableState, _ in
+            mutableState!.terminalSetLineAttribute(.doubleWidth)
+            mutableState!.appendString(atCursor: "ABCDE")
+        })
+
+        // Move to 'C' and overwrite with 'X'
+        inject(screen, "\u{1b}[1;3H")  // CUP col 3 → physical 4
+        inject(screen, "X")
+
+        let codes = lineCodes(screen, line: 0, count: 12)
+        XCTAssertEqual(codes[4], unichar(UnicodeScalar("X").value), "X at physical 4")
+        XCTAssertEqual(codes[5], unichar(DWL_SPACER), "Spacer at 5")
+        XCTAssertEqual(codes[6], unichar(UnicodeScalar("D").value), "D still at 6")
+        XCTAssertEqual(codes[7], unichar(DWL_SPACER), "Spacer at 7")
+    }
+
+    /// Backspace on a DWL line should move back by 2 physical cells.
+    func testBackspaceOnDWLLine() {
+        let screen = makeScreen(width: 20, height: 5)
+        screen.performBlock(joinedThreads: { _, mutableState, _ in
+            mutableState!.terminalSetLineAttribute(.doubleWidth)
+            mutableState!.appendString(atCursor: "ABC")
+        })
+        // Cursor at physical 6 (3 chars × 2 cells)
+        XCTAssertEqual(cursorX(screen), 6)
+
+        // Backspace should go to physical 4
+        inject(screen, "\u{08}")
+        XCTAssertEqual(cursorX(screen), 4, "Backspace should retreat to physical 4")
+
+        // Another backspace to physical 2
+        inject(screen, "\u{08}")
+        XCTAssertEqual(cursorX(screen), 2, "Backspace should retreat to physical 2")
+
+        // Another to physical 0
+        inject(screen, "\u{08}")
+        XCTAssertEqual(cursorX(screen), 0, "Backspace should retreat to physical 0")
+
+        // At column 0, backspace should not go negative
+        inject(screen, "\u{08}")
+        XCTAssertEqual(cursorX(screen), 0, "Backspace at column 0 should stay at 0")
+    }
+
     /// Copy with Control Sequences should NOT deduplicate DECDHL pairs —
     /// both ESC#3 (top) and ESC#4 (bottom) lines must be present so pasting
     /// into another terminal reproduces the double-height effect.
