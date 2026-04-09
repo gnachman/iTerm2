@@ -2695,7 +2695,12 @@ void VT100ScreenEraseCell(screen_char_t *sct,
             self.currentGrid.cursorX = cursorX - 1;
         }
     }
-
+    if (self.currentGrid.cursorX > 0 &&
+        ScreenCharIsDWL_SPACER([self.currentGrid characterAt:self.currentGrid.cursor]) &&
+        iTermLineAttributeIsDoubleWidth([self.currentGrid lineInfoAtLineNumber:self.currentGrid.cursorY].metadata.lineAttribute)) {
+        // Move back over double-width spacer.
+        self.currentGrid.cursorX = cursorX - 2;
+    }
     // It is OK to land on the right half of a double-width character (issue 3475).
 }
 
