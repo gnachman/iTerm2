@@ -3697,14 +3697,17 @@ typedef struct {
 - (iTermCursorInfo)cursorInfoForCoord:(VT100GridCoord)cursorCoord {
     // Get the character that's under the cursor.
     const screen_char_t *theLine;
+    const int absoluteLine = cursorCoord.y + _numberOfScrollbackLines;
     if (cursorCoord.y >= 0) {
         theLine = [self lineAtScreenIndex:cursorCoord.y];
     } else {
-        theLine = [self lineAtIndex:cursorCoord.y + _numberOfScrollbackLines isFirst:nil];
+        theLine = [self lineAtIndex:absoluteLine isFirst:nil];
     }
+    iTermImmutableMetadata metadata = [self.delegate drawingHelperMetadataOnLine:absoluteLine];
     BOOL isDoubleWidth;
     screen_char_t screenChar = [self charForCursorAtColumn:cursorCoord.x
                                                     inLine:theLine
+                                             lineAttribute:metadata.lineAttribute
                                                doubleWidth:&isDoubleWidth];
 
     // Update the "find cursor" view.
@@ -3796,14 +3799,17 @@ typedef struct {
 - (NSColor *)blockCursorFillColorRespectingSmartSelection {
     if (_useSmartCursorColor) {
         const screen_char_t *theLine;
+        const int absoluteLine = _cursorCoord.y + _numberOfScrollbackLines;
         if (_cursorCoord.y >= 0) {
             theLine = [self lineAtScreenIndex:_cursorCoord.y];
         } else {
-            theLine = [self lineAtIndex:_cursorCoord.y + _numberOfScrollbackLines isFirst:nil];
+            theLine = [self lineAtIndex:absoluteLine isFirst:nil];
         }
+        iTermImmutableMetadata metadata = [self.delegate drawingHelperMetadataOnLine:absoluteLine];
         BOOL isDoubleWidth;
         screen_char_t screenChar = [self charForCursorAtColumn:_cursorCoord.x
                                                         inLine:theLine
+                                                 lineAttribute:metadata.lineAttribute
                                                    doubleWidth:&isDoubleWidth];
         iTermSmartCursorColor *smartCursorColor = [[iTermSmartCursorColor alloc] init];
         smartCursorColor.delegate = self;
@@ -3964,6 +3970,7 @@ typedef struct {
 
 - (screen_char_t)charForCursorAtColumn:(int)column
                                 inLine:(const screen_char_t *)theLine
+                         lineAttribute:(iTermLineAttribute)lineAttribute
                            doubleWidth:(BOOL *)doubleWidth {
     screen_char_t screenChar = theLine[column];
     int width = _gridSize.width;
@@ -3972,19 +3979,12 @@ typedef struct {
         screenChar.code = 0;
         screenChar.complexChar = NO;
     }
-    if (screenChar.code) {
-        if (ScreenCharIsDWC_RIGHT(screenChar) || ScreenCharIsDWL_SPACER(screenChar)) {
-            *doubleWidth = NO;
-        } else {
-            // Check for DWC_RIGHT after the character, possibly with a DWL_SPACER in between.
-            BOOL nextIsDWCRight = (column < width - 1) && ScreenCharIsDWC_RIGHT(theLine[column+1]);
-            if (!nextIsDWCRight && column < width - 2 &&
-                ScreenCharIsDWL_SPACER(theLine[column+1]) &&
-                ScreenCharIsDWC_RIGHT(theLine[column+2])) {
-                nextIsDWCRight = YES;
-            }
-            *doubleWidth = nextIsDWCRight;
-        }
+    if (ScreenCharIsDWC_RIGHT(screenChar) || ScreenCharIsDWL_SPACER(screenChar)) {
+        *doubleWidth = NO;
+    } else if (iTermLineAttributeIsDoubleWidth(lineAttribute)) {
+        *doubleWidth = YES;
+    } else if (screenChar.code && column < width - 1 && ScreenCharIsDWC_RIGHT(theLine[column + 1])) {
+        *doubleWidth = YES;
     } else {
         *doubleWidth = NO;
     }

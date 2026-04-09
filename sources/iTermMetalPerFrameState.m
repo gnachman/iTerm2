@@ -370,15 +370,12 @@ typedef struct {
             if (screenChar.code) {
                 if (ScreenCharIsDWC_RIGHT(screenChar) || ScreenCharIsDWL_SPACER(screenChar)) {
                     _cursorInfo.doubleWidth = NO;
+                } else if (iTermLineAttributeIsDoubleWidth(_rows[_cursorInfo.coord.y]->_screenCharLine.metadata.lineAttribute)) {
+                    _cursorInfo.doubleWidth = YES;
                 } else {
                     const int column = _cursorInfo.coord.x;
-                    BOOL nextIsDWCRight = (column < _configuration->_gridSize.width - 1) && ScreenCharIsDWC_RIGHT(line[column + 1]);
-                    if (!nextIsDWCRight && column < _configuration->_gridSize.width - 2 &&
-                        ScreenCharIsDWL_SPACER(line[column + 1]) &&
-                        ScreenCharIsDWC_RIGHT(line[column + 2])) {
-                        nextIsDWCRight = YES;
-                    }
-                    _cursorInfo.doubleWidth = nextIsDWCRight;
+                    _cursorInfo.doubleWidth = (column < _configuration->_gridSize.width - 1) &&
+                        ScreenCharIsDWC_RIGHT(line[column + 1]);
                 }
             } else {
                 _cursorInfo.doubleWidth = NO;
