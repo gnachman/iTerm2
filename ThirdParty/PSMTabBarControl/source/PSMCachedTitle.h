@@ -17,7 +17,7 @@ typedef NS_ENUM(int, PSMTabBarOrientation) {
 /// Protocol for looking up fonts for Private Use Area code points.
 /// This allows different PUA ranges to use different fonts (e.g., nerd font bundles).
 @protocol PSMPUAFontProvider <NSObject>
-- (NSFont *)fontForPUACodePoint:(UTF32Char)codePoint;
+- (nullable NSFont *)fontForPUACodePoint:(UTF32Char)codePoint;
 @end
 
 

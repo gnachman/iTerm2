@@ -140,6 +140,8 @@ typedef struct {
     iTermPillBackgroundRenderer *_pillBackgroundRenderer;
     iTermTerminalButtonRenderer *_terminalButtonRenderer;
     iTermRectangleRenderer *_rectangleRenderer;
+    iTermUnderlineRenderer *_underlineRenderer;
+    iTermUnderlineCompositeRenderer *_underlineCompositeRenderer;
     iTermKittyImageRenderer *_kittyImageRenderer;
 
     // This one is special because it's debug only
@@ -236,6 +238,8 @@ typedef struct {
             _terminalButtonRenderer = [[iTermTerminalButtonRenderer alloc] initWithDevice:device];
         }
         _rectangleRenderer = [[iTermRectangleRenderer alloc] initWithDevice:device];
+        _underlineRenderer = [[iTermUnderlineRenderer alloc] initWithDevice:device];
+        _underlineCompositeRenderer = [[iTermUnderlineCompositeRenderer alloc] initWithDevice:device];
         _kittyImageRenderer = [[iTermKittyImageRenderer alloc] initWithDevice:device];
 
         _commandQueue = [device newCommandQueue];
@@ -759,6 +763,7 @@ legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth
         NSDate *date;
         BOOL belongsToBlock;
         NSUInteger glyphKeyCount;
+        BOOL hasUnderlineOrStrikethrough;
         [frameData.perFrameState metalGetGlyphKeysData:rowData.keysData
                                          glyphKeyCount:&glyphKeyCount
                                             attributes:rowData.attributesData.mutableBytes
@@ -775,12 +780,14 @@ legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth
                                               bidiInfo:rowData.screenCharArray.bidiInfo
                                         drawableGlyphs:&drawableGlyphs
                                                   date:&date
-                                        belongsToBlock:&belongsToBlock];
+                                        belongsToBlock:&belongsToBlock
+                           hasUnderlineOrStrikethrough:&hasUnderlineOrStrikethrough];
         rowData.glyphKeyCount = glyphKeyCount;
         rowData.backgroundColorRLEData.length = rles * sizeof(iTermMetalBackgroundColorRLE);
         rowData.date = date;
         rowData.numberOfBackgroundRLEs = rles;
         rowData.belongsToBlock = belongsToBlock;
+        rowData.hasUnderlineOrStrikethrough = hasUnderlineOrStrikethrough;
         rowData.numberOfDrawableGlyphs = drawableGlyphs;
         ITConservativeBetaAssert(drawableGlyphs <= rowData.keysData.length / sizeof(iTermMetalGlyphKey),
                                  @"Have %@ drawable glyphs with %@ glyph keys",
@@ -877,6 +884,8 @@ legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth
         [self populateTerminalButtonRendererTransientStateWithFrameData:frameData];
     }
     [self populateRectangleRendererTransientStateWithFrameData:frameData];
+    [self populateUnderlineRendererTransientStateWithFrameData:frameData];
+    [self populateUnderlineCompositeRendererTransientStateWithFrameData:frameData];
     [self populateKittyImageRendererTransientStateWithFrameData:frameData];
 }
 
@@ -1011,9 +1020,69 @@ legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth
                       stat:iTermMetalFrameDataStatPqEnqueueCopyBackground];
     }
 
+    const BOOL useMultiPassUnderlines = ([iTermAdvancedSettingsModel useMultiPassUnderlineRenderer] &&
+                                         frameData.hasUnderlines);
+    if (useMultiPassUnderlines) {
+        // Ensure the render target preserves its contents when we create new encoders later.
+        // The first encoder may have used loadAction=Clear; subsequent ones must use Load.
+        frameData.renderPassDescriptor.colorAttachments[0].loadAction = MTLLoadActionLoad;
+
+        // Switch to texture T (text offscreen, clear transparent).
+        [frameData.renderEncoder endEncoding];
+        [frameData updateRenderEncoderWithRenderPassDescriptor:frameData.textOffscreenRPD
+                                                          stat:iTermMetalFrameDataStatNA
+                                                         label:@"Draw text to offscreen T"];
+    }
+
     [self drawCellRenderer:_textRenderer
                  frameData:frameData
                       stat:iTermMetalFrameDataStatPqEnqueueDrawText];
+
+    if (useMultiPassUnderlines) {
+        // Switch back to the main render target. Only text should draw to T.
+        [frameData.renderEncoder endEncoding];
+        [self updateRenderEncoderForCurrentPass:frameData label:@"Post-text rendering"];
+
+        iTermUnderlineRendererTransientState *ulState =
+            [frameData transientStateForRenderer:_underlineRenderer];
+
+        // Draw strikethrough directly to render target (no smear subtraction).
+        ulState.drawMode = DrawModeStrikethrough;
+        [self drawCellRenderer:_underlineRenderer
+                     frameData:frameData
+                          stat:iTermMetalFrameDataStatPqEnqueueDrawUnderlines];
+
+        // Switch to texture U (underline offscreen, clear transparent).
+        [frameData.renderEncoder endEncoding];
+        [frameData updateRenderEncoderWithRenderPassDescriptor:frameData.underlineOffscreenRPD
+                                                          stat:iTermMetalFrameDataStatNA
+                                                         label:@"Draw underlines to offscreen U"];
+
+        // Draw underlines to U (will be smeared in composite pass).
+        ulState.drawMode = DrawModeUnderlines;
+        [self drawCellRenderer:_underlineRenderer
+                     frameData:frameData
+                          stat:iTermMetalFrameDataStatPqEnqueueDrawUnderlines];
+
+        // Switch back to the main render target.
+        [frameData.renderEncoder endEncoding];
+        [self updateRenderEncoderForCurrentPass:frameData label:@"Composite underlines"];
+
+        [self drawRenderer:_underlineCompositeRenderer
+                 frameData:frameData
+                      stat:iTermMetalFrameDataStatPqEnqueueDrawUnderlineComposite];
+    } else if ([iTermAdvancedSettingsModel useMultiPassUnderlineRenderer] &&
+               frameData.strikethroughSpanData.length > 0) {
+        // Strikethrough only (no underlines) — draw directly to render target.
+        // Text was rendered directly (useMultiPassUnderlines is NO) but the text
+        // shader suppressed strikethroughs, so draw them here.
+        iTermUnderlineRendererTransientState *ulState =
+            [frameData transientStateForRenderer:_underlineRenderer];
+        ulState.drawMode = DrawModeStrikethrough;
+        [self drawCellRenderer:_underlineRenderer
+                     frameData:frameData
+                          stat:iTermMetalFrameDataStatPqEnqueueDrawUnderlines];
+    }
 
     _kittyImageRenderer.minZ = 1;
     _kittyImageRenderer.maxZ = INT32_MAX;
@@ -1078,9 +1147,110 @@ legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth
     [self drawCellRenderer:_offscreenCommandLineBackgroundColorRenderer
                  frameData:frameData
                       stat:iTermMetalFrameDataStatPqEnqueueDrawOffscreenCommandLineBgColors];
-    [self drawCellRenderer:_offscreenCommandLineTextRenderer
+    const BOOL osclMultiPassUnderlines = ([iTermAdvancedSettingsModel useMultiPassUnderlineRenderer] &&
+                                          frameData.offscreenUnderlineSpanData.length > 0 &&
+                                          frameData.textOffscreenRPD);
+    if (osclMultiPassUnderlines) {
+        // Draw offscreen command line underlines with full smear compositing (matching legacy renderer).
+        iTermUnderlineRendererTransientState *ulState =
+            [frameData transientStateForRenderer:_underlineRenderer];
+        CGFloat savedOffset = ulState.verticalOffset;
+        const CGFloat osclVerticalOffset = frameData.scale * (frameData.vmargin - iTermOffscreenCommandLineVerticalPadding + 1);
+
+        // Swap in offscreen spans and vertical offset.
+        [ulState setSpansWithUnderlineData:frameData.offscreenUnderlineSpanData
+                         strikethroughData:frameData.offscreenStrikethroughSpanData];
+        ulState.verticalOffset = osclVerticalOffset;
+
+        // Draw strikethrough directly to render target (no smear).
+        ulState.drawMode = DrawModeStrikethrough;
+        [self drawCellRenderer:_underlineRenderer
+                     frameData:frameData
+                          stat:iTermMetalFrameDataStatPqEnqueueDrawUnderlines];
+
+        // Reuse T: switch to texture T (clears to transparent), draw offscreen text.
+        [frameData.renderEncoder endEncoding];
+        [frameData updateRenderEncoderWithRenderPassDescriptor:frameData.textOffscreenRPD
+                                                          stat:iTermMetalFrameDataStatNA
+                                                         label:@"Offscreen cmd line text to T"];
+        [self drawCellRenderer:_offscreenCommandLineTextRenderer
+                     frameData:frameData
+                          stat:iTermMetalFrameDataStatPqEnqueueDrawOffscreenCommandLineFg];
+
+        // Reuse U: switch to texture U (clears to transparent), draw offscreen underlines.
+        [frameData.renderEncoder endEncoding];
+        [frameData updateRenderEncoderWithRenderPassDescriptor:frameData.underlineOffscreenRPD
+                                                          stat:iTermMetalFrameDataStatNA
+                                                         label:@"Offscreen cmd line underlines to U"];
+        ulState.drawMode = DrawModeUnderlines;
+        [self drawCellRenderer:_underlineRenderer
+                     frameData:frameData
+                          stat:iTermMetalFrameDataStatPqEnqueueDrawUnderlines];
+
+        // Switch back to render target and composite with scissor rect to avoid processing
+        // the entire viewport for just one row.
+        [frameData.renderEncoder endEncoding];
+        [self updateRenderEncoderForCurrentPass:frameData label:@"Composite offscreen cmd line underlines"];
+
+        // The offscreen command line is at the top of the screen.
+        // In Metal window coordinates, y=0 is at the top.
+        // The viewport dimensions are already in pixels (scaled).
+        const NSUInteger osclPixelHeight = (NSUInteger)([self offscreenCommandLineHeight:frameData] * frameData.scale);
+        MTLScissorRect scissor = {
+            .x = 0,
+            .y = 0,
+            .width = frameData.viewportSize.x,
+            .height = MIN(frameData.viewportSize.y, osclPixelHeight)
+        };
+        [frameData.renderEncoder setScissorRect:scissor];
+
+        iTermUnderlineCompositeRendererTransientState *compositeState =
+            [frameData transientStateForRenderer:_underlineCompositeRenderer];
+        compositeState.textTexture = frameData.textOffscreenRPD.colorAttachments[0].texture;
+        compositeState.underlineTexture = frameData.underlineOffscreenRPD.colorAttachments[0].texture;
+        compositeState.solidMode = [iTermAdvancedSettingsModel solidUnderlines];
+
+        [self drawRenderer:_underlineCompositeRenderer
                  frameData:frameData
-                      stat:iTermMetalFrameDataStatPqEnqueueDrawOffscreenCommandLineFg];
+                      stat:iTermMetalFrameDataStatPqEnqueueDrawUnderlineComposite];
+
+        // Reset scissor to full viewport for subsequent drawing.
+        MTLScissorRect fullViewport = {
+            .x = 0,
+            .y = 0,
+            .width = frameData.viewportSize.x,
+            .height = frameData.viewportSize.y
+        };
+        [frameData.renderEncoder setScissorRect:fullViewport];
+
+        // Restore main grid spans.
+        [ulState setSpansWithUnderlineData:frameData.underlineSpanData
+                         strikethroughData:frameData.strikethroughSpanData];
+        ulState.verticalOffset = savedOffset;
+    } else {
+        // Draw text directly when not doing multi-pass underline compositing.
+        [self drawCellRenderer:_offscreenCommandLineTextRenderer
+                     frameData:frameData
+                          stat:iTermMetalFrameDataStatPqEnqueueDrawOffscreenCommandLineFg];
+
+        if ([iTermAdvancedSettingsModel useMultiPassUnderlineRenderer] &&
+            frameData.offscreenStrikethroughSpanData.length > 0) {
+            // Only strikethrough, no underlines — draw directly.
+            iTermUnderlineRendererTransientState *ulState =
+                [frameData transientStateForRenderer:_underlineRenderer];
+            CGFloat savedOffset = ulState.verticalOffset;
+            [ulState setSpansWithUnderlineData:frameData.offscreenUnderlineSpanData
+                             strikethroughData:frameData.offscreenStrikethroughSpanData];
+            ulState.verticalOffset = frameData.scale * (frameData.vmargin - iTermOffscreenCommandLineVerticalPadding + 1);
+            ulState.drawMode = DrawModeStrikethrough;
+            [self drawCellRenderer:_underlineRenderer
+                         frameData:frameData
+                              stat:iTermMetalFrameDataStatPqEnqueueDrawUnderlines];
+            [ulState setSpansWithUnderlineData:frameData.underlineSpanData
+                             strikethroughData:frameData.strikethroughSpanData];
+            ulState.verticalOffset = savedOffset;
+        }
+    }
 
     if (frameData.perFrameState.haveOffscreenCommandLine) {
         [self drawRenderer:_indicatorRenderer
@@ -1187,6 +1357,7 @@ legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth
     _copyBackgroundRenderer.enabled = (frameData.intermediateRenderPassDescriptor != nil);
     // Enable copy-to-drawable when using deferred drawable acquisition
     _copyToDrawableRenderer.enabled = frameData.deferCurrentDrawable;
+    _underlineCompositeRenderer.enabled = [iTermAdvancedSettingsModel useMultiPassUnderlineRenderer];
 }
 
 - (void)updateBadgeRendererForFrameData:(iTermMetalFrameData *)frameData {
@@ -1386,6 +1557,7 @@ legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth
     textState.asciiUnderlineDescriptor = asciiUnderlineDescriptor;
     textState.nonAsciiUnderlineDescriptor = nonAsciiUnderlineDescriptor;
     textState.strikethroughUnderlineDescriptor = strikethroughUnderlineDescriptor;
+    textState.suppressUnderlines = [iTermAdvancedSettingsModel useMultiPassUnderlineRenderer];
 
     CGSize glyphSize = textState.cellConfiguration.glyphSize;
 
@@ -1452,6 +1624,25 @@ legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth
                                                                                     scale:scale
                                                                                     emoji:emoji];
                                }];
+
+            // Compute underline/strikethrough spans for multi-pass rendering.
+            // Offscreen command line spans go to separate arrays (different vertical offset).
+            if (rowData.hasUnderlineOrStrikethrough || markedRangeOnLine.length > 0) {
+                const BOOL isOffscreen = [drawOffscreenCommandLine isEqual:@YES];
+                const iTermMetalGlyphAttributes *attrs =
+                    (const iTermMetalGlyphAttributes *)rowData.attributesData.bytes;
+                iTermBidiDisplayInfo *bidiInfo = rowData.screenCharArray.bidiInfo;
+                [textState computeUnderlineSpansFromAttributes:attrs
+                                                        count:frameData.gridSize.width
+                                                          row:rowData.y
+                                            markedRangeOnLine:markedRangeOnLine
+                                                         line:rowData.screenCharArray.line
+                                                   lineLength:(int)rowData.screenCharArray.length
+                                                   inverseLUT:bidiInfo ? bidiInfo.inverseLUT : NULL
+                                                 inverseLUTLen:bidiInfo ? bidiInfo.inverseLUTCount : 0
+                                               underlineSpans:isOffscreen ? frameData.offscreenUnderlineSpanData : frameData.underlineSpanData
+                                           strikethroughSpans:isOffscreen ? frameData.offscreenStrikethroughSpanData : frameData.strikethroughSpanData];
+            }
         }
         [rowData.keysData checkForOverrun];
     }];
@@ -1515,6 +1706,13 @@ legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth
 
     [self _populateOffscreenCommandLineBackgroundRendererWithFrameData:frameData];
 
+    // Initialize span data for multi-pass underline rendering.
+    frameData.hasUnderlines = NO;
+    frameData.underlineSpanData = [[NSMutableData alloc] init];
+    frameData.offscreenUnderlineSpanData = [[NSMutableData alloc] init];
+    frameData.offscreenStrikethroughSpanData = [[NSMutableData alloc] init];
+    frameData.strikethroughSpanData = [[NSMutableData alloc] init];
+
     iTermTextRendererTransientState *textState;
     if (frameData.perFrameState.haveOffscreenCommandLine && !_offscreenCommandLineTextRenderer.rendererDisabled) {
         textState = [self _populateTextRenderer:_textRenderer 
@@ -1546,6 +1744,9 @@ legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth
             [textState willDraw];
         }
     }
+
+    frameData.hasUnderlines = (frameData.underlineSpanData.length > 0 ||
+                                frameData.offscreenUnderlineSpanData.length > 0);
     if (!_offscreenCommandLineBackgroundColorRenderer.rendererDisabled &&
         frameData.perFrameState.haveOffscreenCommandLine) {
         iTermBackgroundColorRendererTransientState *osclBottomState = [frameData transientStateForRenderer:_offscreenCommandLineBackgroundColorRenderer];
@@ -1778,6 +1979,40 @@ legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth
                                            MAX(0, frameData.viewportSize.y - y))];
         }
     }
+}
+
+- (void)populateUnderlineRendererTransientStateWithFrameData:(iTermMetalFrameData *)frameData {
+    if (!_underlineRenderer || ![iTermAdvancedSettingsModel useMultiPassUnderlineRenderer]) {
+        return;
+    }
+    iTermUnderlineRendererTransientState *tState = [frameData transientStateForRenderer:_underlineRenderer];
+
+    iTermMetalUnderlineDescriptor asciiUnderlineDescriptor;
+    iTermMetalUnderlineDescriptor nonAsciiUnderlineDescriptor;
+    iTermMetalUnderlineDescriptor strikethroughDescriptor;
+    [frameData.perFrameState metalGetUnderlineDescriptorsForASCII:&asciiUnderlineDescriptor
+                                                        nonASCII:&nonAsciiUnderlineDescriptor
+                                                   strikethrough:&strikethroughDescriptor];
+    tState.asciiUnderlineDescriptor = asciiUnderlineDescriptor;
+    tState.nonAsciiUnderlineDescriptor = nonAsciiUnderlineDescriptor;
+    tState.strikethroughDescriptor = strikethroughDescriptor;
+    tState.asciiOffset = frameData.asciiOffset;
+    [tState setSpansWithUnderlineData:frameData.underlineSpanData
+                    strikethroughData:frameData.strikethroughSpanData];
+}
+
+- (void)populateUnderlineCompositeRendererTransientStateWithFrameData:(iTermMetalFrameData *)frameData {
+    if (!_underlineCompositeRenderer ||
+        ![iTermAdvancedSettingsModel useMultiPassUnderlineRenderer] ||
+        !frameData.hasUnderlines) {
+        return;
+    }
+    [frameData createUnderlineOffscreenRenderPassDescriptors];
+    iTermUnderlineCompositeRendererTransientState *tState =
+        [frameData transientStateForRenderer:_underlineCompositeRenderer];
+    tState.textTexture = frameData.textOffscreenRPD.colorAttachments[0].texture;
+    tState.underlineTexture = frameData.underlineOffscreenRPD.colorAttachments[0].texture;
+    tState.solidMode = [iTermAdvancedSettingsModel solidUnderlines];
 }
 
 - (void)populateTerminalButtonRendererTransientStateWithFrameData:(iTermMetalFrameData *)frameData {
@@ -2427,6 +2662,7 @@ extraIdentifyingInfoForIcon:button.extraIdentifyingInfoForIcon];
                _pillBackgroundRenderer ?: [NSNull null],
                _terminalButtonRenderer ?: [NSNull null],
                _rectangleRenderer,
+               _underlineRenderer,
                _kittyImageRenderer] arrayByRemovingNulls];
 }
 
@@ -2436,6 +2672,7 @@ extraIdentifyingInfoForIcon:button.extraIdentifyingInfoForIcon];
               _offscreenCommandLineBackgroundRenderer,
               _badgeRenderer,
               _copyBackgroundRenderer,
+              _underlineCompositeRenderer,
               _indicatorRenderer,
               _flashRenderer,
               _copyToDrawableRenderer ];

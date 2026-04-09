@@ -1,14 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="24506" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES" customObjectInstantitationMethod="direct">
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="24765" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES" customObjectInstantitationMethod="direct">
     <dependencies>
         <deployment identifier="macosx"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="24506"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="24765"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <objects>
         <customObject id="-2" userLabel="File's Owner" customClass="iTermJobTreeViewController">
             <connections>
                 <outlet property="_outlineView" destination="5Km-gR-LVc" id="uIC-tT-dfP"/>
+                <outlet property="_signalContainer" destination="00j-o7-css" id="AvF-YB-DFV"/>
                 <outlet property="_vev" destination="lBb-Ii-0Mh" id="XXV-ag-7wH"/>
                 <outlet property="kill_" destination="ACM-dM-BU4" id="BHz-uT-9ce"/>
                 <outlet property="signal_" destination="Ykw-0a-zRO" id="cfi-z3-VSa"/>
@@ -92,34 +93,40 @@
                         <autoresizingMask key="autoresizingMask"/>
                     </tableHeaderView>
                 </scrollView>
-                <comboBox focusRingType="none" verticalHuggingPriority="750" id="Ykw-0a-zRO" customClass="SignalPicker">
-                    <rect key="frame" x="163" y="8" width="129" height="22"/>
-                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
-                    <comboBoxCell key="cell" controlSize="small" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" borderStyle="bezel" drawsBackground="YES" completes="NO" numberOfVisibleItems="5" id="lef-nJ-tqb">
-                        <font key="font" metaFont="smallSystem"/>
-                        <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
-                        <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
-                        <objectValues>
-                            <string>Item 1</string>
-                            <string>Item 2</string>
-                            <string>Item 3</string>
-                        </objectValues>
-                    </comboBoxCell>
-                    <connections>
-                        <outlet property="delegate" destination="-2" id="6Qk-Wy-x6q"/>
-                    </connections>
-                </comboBox>
-                <button id="ACM-dM-BU4">
-                    <rect key="frame" x="300" y="12" width="17" height="17"/>
-                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
-                    <buttonCell key="cell" type="square" bezelStyle="shadowlessSquare" image="NSRightFacingTriangleTemplate" imagePosition="only" alignment="center" controlSize="small" imageScaling="proportionallyDown" inset="2" id="D3j-RL-nOt">
-                        <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
-                        <font key="font" metaFont="smallSystem"/>
-                    </buttonCell>
-                    <connections>
-                        <action selector="forceQuit:" target="-2" id="BcP-I5-uqn"/>
-                    </connections>
-                </button>
+                <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="00j-o7-css">
+                    <rect key="frame" x="163" y="8" width="154" height="22"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxX="YES" flexibleMinY="YES" flexibleMaxY="YES"/>
+                    <subviews>
+                        <comboBox focusRingType="none" verticalHuggingPriority="750" id="Ykw-0a-zRO" customClass="SignalPicker">
+                            <rect key="frame" x="0.0" y="0.0" width="129" height="22"/>
+                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                            <comboBoxCell key="cell" controlSize="small" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" borderStyle="bezel" drawsBackground="YES" completes="NO" numberOfVisibleItems="5" id="lef-nJ-tqb">
+                                <font key="font" metaFont="smallSystem"/>
+                                <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                                <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                                <objectValues>
+                                    <string>Item 1</string>
+                                    <string>Item 2</string>
+                                    <string>Item 3</string>
+                                </objectValues>
+                            </comboBoxCell>
+                            <connections>
+                                <outlet property="delegate" destination="-2" id="6Qk-Wy-x6q"/>
+                            </connections>
+                        </comboBox>
+                        <button id="ACM-dM-BU4">
+                            <rect key="frame" x="137" y="4" width="17" height="17"/>
+                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                            <buttonCell key="cell" type="square" bezelStyle="shadowlessSquare" image="NSRightFacingTriangleTemplate" imagePosition="only" alignment="center" controlSize="small" imageScaling="proportionallyDown" inset="2" id="D3j-RL-nOt">
+                                <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
+                                <font key="font" metaFont="smallSystem"/>
+                            </buttonCell>
+                            <connections>
+                                <action selector="forceQuit:" target="-2" id="BcP-I5-uqn"/>
+                            </connections>
+                        </button>
+                    </subviews>
+                </customView>
             </subviews>
             <point key="canvasLocation" x="139" y="151"/>
         </customView>

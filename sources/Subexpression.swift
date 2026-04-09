@@ -12,6 +12,7 @@ class Subexpression: NSObject {
     private enum Expression: CustomDebugStringConvertible {
         case literal(NSNumber)
         case stringLiteral(String)
+        case nullLiteral
         case indirect(IndirectValue)
         case functionCall(iTermScriptFunctionCall)
         case unaryOperation(operand: Subexpression,
@@ -27,7 +28,7 @@ class Subexpression: NSObject {
 
         var requiresAsyncEvaluation: Bool {
             switch self {
-            case .literal, .stringLiteral, .indirect, .error:
+            case .literal, .stringLiteral, .nullLiteral, .indirect, .error:
                 false
             case .functionCall:
                 true
@@ -44,7 +45,7 @@ class Subexpression: NSObject {
 
         var containsAnyFunctionCall: Bool {
             switch self {
-            case .literal, .stringLiteral, .indirect, .error:
+            case .literal, .stringLiteral, .nullLiteral, .indirect, .error:
                 false
             case .functionCall:
                 true
@@ -65,6 +66,8 @@ class Subexpression: NSObject {
                 return number.stringValue
             case .stringLiteral(let string):
                 return "\"\(string)\""
+            case .nullLiteral:
+                return "null"
             case .indirect(let iv):
                 return iv.description
             case .functionCall(let functionCall):
@@ -469,6 +472,12 @@ class Subexpression: NSObject {
         value = .indirect(indirectValue)
     }
 
+    /// Creates a subexpression that evaluates to NSNull (the null literal).
+    @objc(initWithNullValue)
+    init(nullValue: ()) {
+        value = .nullLiteral
+    }
+
     // MARK: - Objective-C Compatible Initializers (nullable, for Obj-C bridge)
 
     @objc(initNegated:)
@@ -658,6 +667,8 @@ class Subexpression: NSObject {
             return number
         case .stringLiteral:
             throw iTermError("Cannot convert string literal to number")
+        case .nullLiteral:
+            throw iTermError("Cannot convert null to number")
         case .indirect(let iv):
             guard let value = iv.synchronousValue(scope: scope) else {
                 throw iTermError("IndirectValue.synchronousValue returned nil")
@@ -690,14 +701,25 @@ class Subexpression: NSObject {
                     sideEffectsAllowed: sideEffectsAllowed,
                     scope: scope).doubleValue)
         case .ternaryOperation(lhs: let lhs, operation: _, mid: let mid, rhs: let rhs):
-            let cond = try lhs.synchronousValue(sideEffectsAllowed: sideEffectsAllowed, scope: scope).boolValue
-            if cond {
+            let condValue = try lhs.synchronousValueAny(sideEffectsAllowed: sideEffectsAllowed, scope: scope)
+            if try Self.isTruthy(condValue) {
                 return try mid.synchronousValue(sideEffectsAllowed: sideEffectsAllowed, scope: scope)
             } else {
                 return try rhs.synchronousValue(sideEffectsAllowed: sideEffectsAllowed, scope: scope)
             }
         case .error(let message):
             throw iTermError("Subexpression error: \(message)")
+        }
+    }
+
+    /// Evaluate truthiness: NSNull is falsy, NSNumber uses boolValue, anything else is a type error.
+    private static func isTruthy(_ value: Any) throws -> Bool {
+        if value is NSNull {
+            return false
+        } else if let number = value as? NSNumber {
+            return number.boolValue
+        } else {
+            throw iTermError("Type mismatch: expected number but got \(type(of: value))")
         }
     }
 
@@ -710,6 +732,8 @@ class Subexpression: NSObject {
             return number
         case let .stringLiteral(string):
             return string as NSString
+        case .nullLiteral:
+            return NSNull()
         case .indirect(let iv):
             // IndirectValue returns nil for NSNull values, treat nil as NSNull
             if let value = iv.synchronousValue(scope: scope) {
@@ -727,9 +751,8 @@ class Subexpression: NSObject {
             let rhsVal = try rhs.synchronousValueAny(sideEffectsAllowed: sideEffectsAllowed, scope: scope)
             return try operation.executeTyped(lhs: lhsVal, rhs: rhsVal)
         case .ternaryOperation(lhs: let lhs, operation: _, mid: let mid, rhs: let rhs):
-            // Ternary needs number for condition
-            let cond = try lhs.synchronousValue(sideEffectsAllowed: sideEffectsAllowed, scope: scope).boolValue
-            if cond {
+            let condValue = try lhs.synchronousValueAny(sideEffectsAllowed: sideEffectsAllowed, scope: scope)
+            if try Self.isTruthy(condValue) {
                 return try mid.synchronousValueAny(sideEffectsAllowed: sideEffectsAllowed, scope: scope)
             } else {
                 return try rhs.synchronousValueAny(sideEffectsAllowed: sideEffectsAllowed, scope: scope)
@@ -745,6 +768,8 @@ class Subexpression: NSObject {
             completion(.first(number))
         case let .stringLiteral(string):
             completion(.first(string as NSString))
+        case .nullLiteral:
+            completion(.first(NSNull()))
         case .indirect(let iv):
             iv.evaluate(invocation: context.invocation,
                         receiver: context.receiver,
@@ -892,11 +917,14 @@ class Subexpression: NSObject {
         var error: NSError?
         lhs.execute(context: context) { result in
             result.whenFirst { condValue in
-                guard let number = condValue as? NSNumber else {
-                    error = iTermError("Type mismatch: expected number but got \(type(of: condValue))") as NSError
+                let condTruthy: Bool
+                do {
+                    condTruthy = try Self.isTruthy(condValue)
+                } catch let e {
+                    error = e as NSError
                     return
                 }
-                if number.boolValue {
+                if condTruthy {
                     group.enter()
                     mid.execute(context: context) { result in
                         result.whenFirst { finalResult in

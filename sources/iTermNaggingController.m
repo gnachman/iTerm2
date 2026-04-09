@@ -46,6 +46,8 @@ static NSString *iTermNaggingControllerUserDefaultAlwaysDenyBackgroundImage = @"
 static NSString *const iTermNaggingControllerDidChangeTmuxWindowsShouldCloseAfterDetach = @"iTermNaggingControllerDidChangeTmuxWindowsShouldCloseAfterDetach";
 static NSString *const iTermNaggingControllerArrangementTextReplacements = @"TextReplacements";
 static NSString *const iTermNaggingControllerArrangementSetProfileProperty = @"SetProfileProperty";
+static NSString *const iTermNaggingControllerClaudeCodeStatusToolIdentifier = @"ClaudeCodeStatusTool";
+static NSString *const iTermNaggingControllerClaudeCodeStatusToolDismissedNotification = @"iTermNaggingControllerClaudeCodeStatusToolDismissed";
 
 @implementation iTermNaggingController {
     BOOL _haveOutstandingTextReplacementOffer;
@@ -57,6 +59,10 @@ static NSString *const iTermNaggingControllerArrangementSetProfileProperty = @"S
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(didChangeTmuxWindowsShouldCloseAfterDetach:)
                                                      name:iTermNaggingControllerDidChangeTmuxWindowsShouldCloseAfterDetach
+                                                   object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(claudeCodeStatusToolDismissed:)
+                                                     name:iTermNaggingControllerClaudeCodeStatusToolDismissedNotification
                                                    object:nil];
     }
     return self;
@@ -1017,6 +1023,39 @@ static NSString *const iTermNaggingControllerTouchIDForSudoUserDefaultsKey = @"N
             [iTermAdvancedSettingsModel setSuppressRestartAnnouncement:YES];
             break;
     }
+}
+
+#pragma mark - Claude Code Status Tool
+
+- (void)offerClaudeCodeStatusTool:(void (^)(iTermClaudeCodeUpsellStatus))completion {
+    if (![self.delegate naggingControllerCanShowMessageWithIdentifier:iTermNaggingControllerClaudeCodeStatusToolIdentifier]) {
+        return;
+    }
+    NSString *message = @"Want to try iTerm2’s Claude Code integration?";
+    [self.delegate naggingControllerShowMessage:message
+                                     isQuestion:YES
+                                      important:NO
+                                     identifier:iTermNaggingControllerClaudeCodeStatusToolIdentifier
+                                        options:@[ @"_Yes", @"Never", @"Ask Later" ]
+                                     completion:^(int selection) {
+        [[NSNotificationCenter defaultCenter] postNotificationName:iTermNaggingControllerClaudeCodeStatusToolDismissedNotification
+                                                            object:nil];
+        switch (selection) {
+            case 0:
+                completion(iTermClaudeCodeUpsellStatusAccept);
+                break;
+            case 1:
+                completion(iTermClaudeCodeUpsellStatusNever);
+                break;
+            case 2:
+                completion(iTermClaudeCodeUpsellStatusAskLater);
+                break;
+        }
+    }];
+}
+
+- (void)claudeCodeStatusToolDismissed:(NSNotification *)notification {
+    [self.delegate naggingControllerRemoveMessageWithIdentifier:iTermNaggingControllerClaudeCodeStatusToolIdentifier];
 }
 
 @end

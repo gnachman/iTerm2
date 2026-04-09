@@ -103,9 +103,18 @@ extern NSString *const kProfilePreferenceInitialDirectoryAdvancedValue;
 + (NSColor * _Nullable)colorForKey:(NSString *)key
                               dark:(BOOL)dark
                            profile:(Profile *)profile;
++ (id _Nullable)objectForTabColorKey:(NSString *)key
+                                dark:(BOOL)dark
+                             profile:(Profile *)profile;
++ (NSColor * _Nullable)colorForTabColorKey:(NSString *)key
+                                      dark:(BOOL)dark
+                                   profile:(Profile *)profile;
 + (BOOL)boolForColorKey:(NSString *)baseKey
                    dark:(BOOL)dark
                 profile:(Profile *)profile;
++ (BOOL)boolForTabColorKey:(NSString *)baseKey
+                      dark:(BOOL)dark
+                   profile:(Profile *)profile;
 + (double)floatForColorKey:(NSString *)baseKey
                       dark:(BOOL)dark
                    profile:(Profile *)profile;
@@ -124,4 +133,3 @@ NSString *iTermAmendedColorKey(NSString *baseKey, Profile *profile, BOOL dark);
 NSString *iTermAmendedColorKey2(NSString *baseKey, BOOL separate, BOOL dark);
 
 NS_ASSUME_NONNULL_END
-

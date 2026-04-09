@@ -156,6 +156,10 @@
     CPTokeniser *tokenizer;
     tokenizer = [[CPTokeniser alloc] init];
 
+    // OptionalPath must come first — matches "name?" (no space before ?)
+    // as a single token, before identifier or ? keyword recognizers can split it.
+    [tokenizer addTokenRecogniser:[iTermOptionalPathRecognizer recognizer]];
+
     // Multi-character operators MUST come before single-character ones
     [tokenizer addTokenRecogniser:[CPKeywordRecogniser recogniserForKeyword:@"=="]];
     [tokenizer addTokenRecogniser:[CPKeywordRecogniser recogniserForKeyword:@"!="]];
@@ -283,11 +287,20 @@
                                                          optional:YES];
     }
 
-    // The fallbackError is used only when value is not legit.
+    // The 'null' literal is a valid Nil expression with no fallback error.
+    if ([indirectValue.path isEqualToString:@"null"] && indirectValue.value == nil) {
+        return [[iTermParsedExpression alloc] initWithExpressionType:iTermParsedExpressionTypeNil
+                                                              object:nil
+                                                            optional:NO];
+    }
+
+    // For undefined variables, set a fallback error but do NOT auto-optionalize.
+    // The user must write "var?" explicitly to treat undefined as null.
+    // The ConditionalExpression '?' rule will optionalize when appropriate.
     NSString *fallbackError;
     fallbackError = [NSString stringWithFormat:@"Reference to undefined variable \"%@\". Change it to \"%@?\" to treat the undefined value as null.", indirectValue.path, indirectValue.path];
-    return [[[iTermParsedExpression alloc] initWithObject:indirectValue.value
-                                              errorReason:fallbackError] optionalized];
+    return [[iTermParsedExpression alloc] initWithObject:indirectValue.value
+                                              errorReason:fallbackError];
 }
 
 + (iTermParsedExpression *)parsedExpressionWithInterpolatedStringParts:(NSArray<iTermParsedExpression *> *)interpolatedParts {
@@ -507,42 +520,31 @@
                            treeTransform:^id(CPSyntaxTree *syntaxTree) {
         return syntaxTree.children[0];
     }];
+    // Rule 1: Passthrough — no trailing ?. Deoptionalize to convert undefined vars to errors.
     [_grammarProcessor addProductionRule:@"ConditionalExpression ::= <LogicalOrExpr>"
                            treeTransform:^id(CPSyntaxTree *syntaxTree) {
-        // Deoptionalize here for expressions without trailing ?.
-        // This converts undefined variables (Nil with fallbackError) to errors.
         return [syntaxTree.children[0] deoptionalized];
     }];
-    // Left-factored to resolve conflict between optional (path?) and ternary (expr ? a : b)
-    // Using EBNF ? syntax: the ternary part (expr : expr) is optional.
-    // When it's absent, we have an optional marker (foo?).
-    // When present, we have a ternary (foo ? bar : baz).
-    [_grammarProcessor addProductionRule:@"ConditionalExpression ::= <LogicalOrExpr> '?' (<ConditionalExpression> ':' <ConditionalExpression>)?"
+
+    // Rule 2: Plain ternary — expr ? trueExpr : falseExpr
+    [_grammarProcessor addProductionRule:@"ConditionalExpression ::= <LogicalOrExpr> '?' <ConditionalExpression> ':' <ConditionalExpression>"
                            treeTransform:^id(CPSyntaxTree *syntaxTree) {
         iTermParsedExpression *condition = syntaxTree.children[0];
-        // When optional group is absent: children = [AddExpr, '?']
-        // When optional group is present: children = [AddExpr, '?', groupSyntaxTree]
-        // where groupSyntaxTree.children = [trueExpr, ':', falseExpr]
-        if (syntaxTree.children.count <= 2) {
-            // Optional case: path?
-            return [condition optionalized];
-        } else {
-            // Check if the optional group is present (non-empty array)
-            NSArray *outerArr = syntaxTree.children[2];
-            if (outerArr.count == 0) {
-                // Optional case: path? (the group was matched but is empty)
-                return [condition optionalized];
-            }
-            // Ternary case: condition ? trueExpr : falseExpr
-            // CoreParse returns [[trueExpr, ':', falseExpr]] - nested array
-            NSArray *innerArr = outerArr[0];
-            iTermParsedExpression *trueExpr = innerArr[0];
-            iTermParsedExpression *falseExpr = innerArr[2];
-            iTermSubexpression *subexpression = [[iTermSubexpression alloc] initCondition:[condition asSubexpression]
-                                                                                             whenTrue:[trueExpr asSubexpression]
-                                                                                            otherwise:[falseExpr asSubexpression]];
-            return [[iTermParsedExpression alloc] initWithSubexpression:subexpression];
-        }
+        iTermParsedExpression *trueExpr = syntaxTree.children[2];
+        iTermParsedExpression *falseExpr = syntaxTree.children[4];
+        iTermSubexpression *subexpression = [[iTermSubexpression alloc] initCondition:[condition asSubexpression]
+                                                                                         whenTrue:[trueExpr asSubexpression]
+                                                                                        otherwise:[falseExpr asSubexpression]];
+        return [[iTermParsedExpression alloc] initWithSubexpression:subexpression];
+    }];
+
+    // Standalone optional with space — expr ? (no ternary branch).
+    // The preferred form is "expr?" (no space), which is handled by the OptionalPath token
+    // at the PrimaryExpression level. This rule provides backward compatibility for "expr ?"
+    // with a space.
+    [_grammarProcessor addProductionRule:@"ConditionalExpression ::= <LogicalOrExpr> '?'"
+                           treeTransform:^id(CPSyntaxTree *syntaxTree) {
+        return [syntaxTree.children[0] optionalized];
     }];
 
     // LogicalOrExpr: handles || operator
@@ -697,7 +699,16 @@
         return syntaxTree.children[1];
     }];
 
-
+    // OptionalPath token: "name?" or "user.path?" (no space before ?).
+    // Handled at PrimaryExpression level so it can participate in ==, !=, etc.
+    [_grammarProcessor addProductionRule:@"PrimaryExpression ::= 'OptionalPath'"
+                           treeTransform:^id(CPSyntaxTree *syntaxTree) {
+        iTermOptionalPathToken *token = syntaxTree.children[0];
+        NSString *path = token.identifier;
+        iTermIndirectValue *indirectValue = [weakSelf indirectValueWithPath:path index:nil];
+        iTermParsedExpression *expr = [weakSelf parsedExpressionWithIndirectValue:indirectValue];
+        return [expr optionalized];
+    }];
 
     [_grammarProcessor addProductionRule:@"NumericLiteral ::= 'Number'"
                            treeTransform:^id(CPSyntaxTree *syntaxTree) {

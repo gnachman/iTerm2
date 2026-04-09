@@ -13,7 +13,7 @@
 - The deployment target for iTerm2 is macOS 12. You don't need to perform availability checks for older versions.
 - Don't replace curly quotes with straight quotes. Same for apostrophes and single quotes. If you need help typing a curly quote, just ask. Here are some you can copy and paste: ‘’“”
 - In user-visible strings do not use " except as a shorthand for inch. Prefer curly quotes like “ and ”. I know this goes against your nature, but fight hard here.
-- Never use auto layout in the terminal window. It virally spreads and breaks autoresizing. It is fine to use it in other windows without a lot of existing autoresizing mask-based code (e.g., the AI chat window)
+- Never use auto layout in the terminal window. This includes the toolbelt. It virally spreads and breaks autoresizing. It is fine to use it in other windows without a lot of existing autoresizing mask-based code (e.g., the AI chat window)
 - The deployment target is macOS 12. Don't add availability checks for 12 and lower.
 - Never `git add` submodules without express written permission.
 - Don't include AI-generated markdown files (summaries, plans, etc.) in commits — only ship code.
@@ -24,3 +24,4 @@
 - Do not use associated objects (objc_getAssociatedObject or objc_setAssociatedObject) without express written permission.
 - You should treat warnings as errors.
 - If you get stuck, ask for help. It's better to ask me to look at something in the debugger than to flail around for a long time.
+- If your changes introduce compiler warnings, fix them.

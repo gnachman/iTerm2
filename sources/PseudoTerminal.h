@@ -351,7 +351,7 @@ extern NSString *const iTermDidCreateTerminalWindowNotification;
 - (void)reloadBookmarks;
 
 // Return all sessions in all tabs.
-- (NSArray*)allSessions;
+- (NSArray<PTYSession *> *)allSessions;
 
 // Create a tab. Is async so it can fetch the current working directory without blocking the main
 // thread.

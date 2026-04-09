@@ -299,6 +299,7 @@ typedef enum {
                @133: @(XTERMCC_FINAL_TERM),
                @134: @(XTERMCC_FRAMER_WRAPPER),
                @1337: @(XTERMCC_SET_KVP),
+               @21337: @(XTERMCC_SET_TAB_STATUS),
            };
         [theMap retain];
     });

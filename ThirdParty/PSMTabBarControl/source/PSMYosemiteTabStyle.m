@@ -520,9 +520,17 @@
     const BOOL parseHTML = [[_tabBar.delegate tabView:_tabBar valueOfOption:PSMTabBarControlOptionHTMLTabTitles] boolValue];
     id<PSMPUAFontProvider> puaFontProvider = [_tabBar.delegate tabView:_tabBar valueOfOption:PSMTabBarControlOptionPUAFontProvider];
     NSColor *color = [self textColorForCell:cell];
+    NSColor *subtitleColor = nil;
+    id tab = [[cell representedObject] identifier];
+    if ([tab respondsToSelector:@selector(psmTabStatusSubtitleColor)]) {
+        subtitleColor = [tab psmTabStatusSubtitleColor];
+    }
+    if (!subtitleColor) {
+        subtitleColor = [color colorWithAlphaComponent:color.alphaComponent * 0.7];
+    }
     PSMCachedTitleInputs *inputs = [[PSMCachedTitleInputs alloc] initWithTitle:cell.subtitleString ?: @""
                                                                truncationStyle:cell.truncationStyle
-                                                                         color:[color colorWithAlphaComponent:color.alphaComponent * 0.7]
+                                                                         color:subtitleColor
                                                                        graphic:nil
                                                                    orientation:_orientation
                                                                       fontSize:self.subtitleFontSize

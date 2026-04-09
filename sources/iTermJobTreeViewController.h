@@ -15,6 +15,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic) pid_t pid;
 @property (nonatomic, strong) NSFont *font;
 @property (nonatomic) BOOL animateChanges;
+@property (nonatomic) BOOL useGlassEffectView;
 @property (nonatomic) id<ProcessInfoProvider> processInfoProvider;
 
 - (instancetype)initWithProcessID:(pid_t)pid

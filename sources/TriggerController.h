@@ -18,6 +18,7 @@ extern NSString *const kTextColorWellIdentifier;
 extern NSString *const kBackgroundColorWellIdentifier;
 extern NSString *const kTwoPraramNameColumnIdentifier;
 extern NSString *const kTwoPraramValueColumnIdentifier;
+extern NSString *const kStatusTextComboBoxIdentifier;
 
 @protocol TriggerDelegate <NSObject>
 - (void)triggerChanged:(TriggerController *)controller newValue:(NSArray *)value;
@@ -51,6 +52,9 @@ extern NSString *const kTwoPraramValueColumnIdentifier;
                            delegateOut:(out id *)delegateOut
                            wellFactory:(CPKColorWell *(^ NS_NOESCAPE)(NSRect, NSColor *))wellFactory;
 + (void)importTriggersFromURL:(NSURL *)url;
++ (void)importTriggersFromFile:(NSString *)filename;
++ (NSArray<Trigger *> *)triggersFromFile:(NSString *)filename window:(NSWindow *)window;
++ (void)addTriggers:(NSArray<Trigger *> *)triggers toProfileWithGUID:(NSString *)guid;
 
 - (void)windowWillOpen;
 - (void)profileDidChange;

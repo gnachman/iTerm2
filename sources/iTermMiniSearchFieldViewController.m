@@ -164,8 +164,20 @@
             _closeButton.controlSize = NSControlSizeLarge;
         }
     }
+    [self fixSearchMenuTemplateFonts];
     [self setTintColor:_tintColor];
     [self updateSubviews];
+}
+
+- (void)fixSearchMenuTemplateFonts {
+    NSFont *menuFont = [NSFont menuFontOfSize:0];
+    for (NSMenuItem *item in _searchField.searchMenuTemplate.itemArray) {
+        if (!item.isSeparatorItem) {
+            item.attributedTitle = [[NSAttributedString alloc]
+                initWithString:item.title
+                    attributes:@{NSFontAttributeName: menuFont}];
+        }
+    }
 }
 
 - (void)performFindPanelAction:(id)sender {

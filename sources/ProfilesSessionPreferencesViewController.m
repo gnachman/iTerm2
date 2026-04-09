@@ -593,12 +593,12 @@ static NSString *const ProfilesSessionPreferencesViewControllerPhonyShortLivedSe
 - (NSColor *)tabColor {
     const BOOL dark = self.view.effectiveAppearance.it_isDark;
     Profile *profile = [self.delegate profilePreferencesCurrentProfile];
-    if (![iTermProfilePreferences boolForColorKey:KEY_USE_TAB_COLOR
-                                            dark:dark
-                                          profile:profile]) {
+    if (![iTermProfilePreferences boolForTabColorKey:KEY_USE_TAB_COLOR
+                                               dark:dark
+                                            profile:profile]) {
         return nil;
     }
-    return [iTermProfilePreferences colorForKey:KEY_TAB_COLOR dark:dark profile:profile];
+    return [iTermProfilePreferences colorForTabColorKey:KEY_TAB_COLOR dark:dark profile:profile];
 }
 
 - (NSAppearance *)appearanceForCurrentTheme {

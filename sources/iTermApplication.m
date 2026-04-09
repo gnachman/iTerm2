@@ -77,6 +77,27 @@ NSNotificationName const iTermApplicationCharacterAccentMenuVisibilityDidChange 
 @end
 
 static const char *iTermApplicationKVOKey = "iTermApplicationKVOKey";
+static BOOL sHandlingException = NO;
+
+static void iTermLogExceptionForCrash(NSException *exception, const char *label) {
+    sHandlingException = YES;
+    NSString *header = nil;
+    @try {
+        header = iTermDebugLogHeaderString();
+    } @catch (NSException *headerException) {
+        header = [@"Exception while generating header: " stringByAppendingString:headerException.debugDescription];
+    }
+    LogForNextCrash(__FILE__, __LINE__, __FUNCTION__,
+                    [NSString stringWithFormat:@"%s: %@\n\n%@", label, exception.debugDescription, header],
+                    YES);
+}
+
+static void iTermUncaughtExceptionHandler(NSException *exception) {
+    if (sHandlingException) {
+        return;
+    }
+    iTermLogExceptionForCrash(exception, "Uncaught exception");
+}
 
 @interface iTermApplication()
 @property(nonatomic, strong, readwrite) NSWindow *it_windowBecomingKey;
@@ -111,6 +132,7 @@ static const char *iTermApplicationKVOKey = "iTermApplicationKVOKey";
     assert([sharedApplication isKindOfClass:[iTermApplication class]]);
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
+        NSSetUncaughtExceptionHandler(&iTermUncaughtExceptionHandler);
         [sharedApplication addObserver:sharedApplication
                             forKeyPath:@"modalWindow"
                                options:NSKeyValueObservingOptionNew | NSKeyValueObservingOptionOld
@@ -1099,13 +1121,7 @@ static const char *iTermApplicationKVOKey = "iTermApplicationKVOKey";
 }
 
 - (void)reportException:(NSException *)exception {
-    NSString *header = nil;
-    @try {
-        header = iTermDebugLogHeaderString();
-    } @catch (NSError *headerException) {
-        header = [@"Exception while generating header: " stringByAppendingString:headerException.debugDescription];
-    }
-    CrashLog(@"reportException: %@\n\n%@", exception.debugDescription, header);
+    iTermLogExceptionForCrash(exception, "reportException");
     [super reportException:exception];
 }
 

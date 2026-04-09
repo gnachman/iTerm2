@@ -10,6 +10,7 @@
 @class ToolDirectoriesView;
 @class ToolJobs;
 @class ToolNamedMarks;
+@class ToolStatus;
 @class ToolbeltSplitView;
 
 extern NSString *const kActionsToolName;
@@ -21,6 +22,7 @@ extern NSString *const kNotesToolName;
 extern NSString *const kPasteHistoryToolName;
 extern NSString *const kProfilesToolName;
 extern NSString *const kDynamicToolsDidChange;
+extern NSString *const kStatusToolName;
 
 extern NSString *const iTermToolbeltDidRegisterDynamicToolNotification;
 

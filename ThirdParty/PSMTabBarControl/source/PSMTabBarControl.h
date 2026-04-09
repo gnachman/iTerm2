@@ -89,6 +89,7 @@ extern PSMTabBarControlOptionKey PSMTabBarControlOptionPUAFontProvider;  // id<P
 - (int)objectCount;
 - (void)setObjectCount:(int)objectCount;
 - (NSImage *)psmTabGraphic;
+- (NSColor *)psmTabStatusSubtitleColor;
 @end
 
 @protocol PSMTabBarControlDelegate<NSTabViewDelegate>

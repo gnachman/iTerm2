@@ -61,6 +61,8 @@ void iTermMetalFrameDataStatsBundleInitialize(iTermPreciseTimerStats *bundle) {
         "offscreen<<<<",
         "margin<<<<",
         "block<<<<",
+        "underline<<<<",
+        "ulComposite<<<<",
         "rectangle<<<<",
         "text<<<<",
         "indicators<<<<",
@@ -82,6 +84,8 @@ void iTermMetalFrameDataStatsBundleInitialize(iTermPreciseTimerStats *bundle) {
         "DrawCursor<<<<",
         "DrawMarks<<<<",
         "DrawBlocks<<<<",
+        "DrawUnderlines<<<<",
+        "DrawULComposite<<<<",
         "DrawRectangle<<<<",
         "DrawCrGuide<<<<",
         "DrawOSCLBgPre<<<<",
@@ -375,6 +379,17 @@ static NSInteger gNextFrameDataNumber;
     }];
 }
 
+- (void)createUnderlineOffscreenRenderPassDescriptors {
+    self.textOffscreenRPD = [self newRenderPassDescriptorWithLabel:@"Text Offscreen (T)" fast:YES];
+    // Must clear to transparent so the smear pass can detect text presence by alpha.
+    self.textOffscreenRPD.colorAttachments[0].loadAction = MTLLoadActionClear;
+    self.textOffscreenRPD.colorAttachments[0].clearColor = MTLClearColorMake(0, 0, 0, 0);
+
+    self.underlineOffscreenRPD = [self newRenderPassDescriptorWithLabel:@"Underline Offscreen (U)" fast:YES];
+    self.underlineOffscreenRPD.colorAttachments[0].loadAction = MTLLoadActionClear;
+    self.underlineOffscreenRPD.colorAttachments[0].clearColor = MTLClearColorMake(0, 0, 0, 0);
+}
+
 - (void)didCompleteWithAggregateStats:(iTermPreciseTimerStats *)aggregateStats
                            histograms:(NSArray<iTermHistogram *> *)aggregateHistograms
                                 owner:(NSString *)owner
@@ -385,6 +400,12 @@ static NSInteger gNextFrameDataNumber;
     }
     if (self.temporaryRenderPassDescriptor) {
         [self.fullSizeTexturePool returnTexture:self.temporaryRenderPassDescriptor.colorAttachments[0].texture];
+    }
+    if (self.textOffscreenRPD) {
+        [self.fullSizeTexturePool returnTexture:self.textOffscreenRPD.colorAttachments[0].texture];
+    }
+    if (self.underlineOffscreenRPD) {
+        [self.fullSizeTexturePool returnTexture:self.underlineOffscreenRPD.colorAttachments[0].texture];
     }
 #if ENABLE_STATS
     double duration;

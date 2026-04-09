@@ -135,7 +135,8 @@ NS_CLASS_AVAILABLE(10_11, NA)
                      bidiInfo:(iTermBidiDisplayInfo *)bidiInfo
                drawableGlyphs:(int *)drawableGlyphsPtr
                          date:(out NSDate * _Nonnull * _Nonnull)date
-               belongsToBlock:(out BOOL * _Nonnull)belongsToBlock;
+               belongsToBlock:(out BOOL * _Nonnull)belongsToBlock
+   hasUnderlineOrStrikethrough:(out BOOL * _Nonnull)hasUnderlineOrStrikethroughPtr;
 
 - (iTermCharacterSourceDescriptor *)characterSourceDescriptorForASCIIWithGlyphSize:(CGSize)glyphSize
                                                                        asciiOffset:(CGSize)asciiOffset;

@@ -1438,4 +1438,431 @@ final class iTermExpressionParserTests: XCTestCase, iTermObject {
         }
         XCTAssertEqual(output as? NSNumber, 1)
     }
+
+    // MARK: - Question Mark Operator Edge Cases
+
+    // MARK: Ternary with unary minus (? followed by -)
+
+    func testTernaryWithNegativeTrueBranch() {
+        // x ? -1 : 0 should parse as ternary with unary minus, not (x?) - 1
+        var output: Any?
+        let evaluator = iTermExpressionEvaluator(expressionString: "1 ? -1 : 0", scope: scope)
+        evaluator.evaluate(withTimeout: 0, sideEffectsAllowed: true) { eval in
+            output = eval.value
+            XCTAssertNil(eval.error)
+        }
+        XCTAssertEqual(output as? NSNumber, -1)
+    }
+
+    func testTernaryWithNegativeFalseBranch() {
+        var output: Any?
+        let evaluator = iTermExpressionEvaluator(expressionString: "0 ? 1 : -5", scope: scope)
+        evaluator.evaluate(withTimeout: 0, sideEffectsAllowed: true) { eval in
+            output = eval.value
+            XCTAssertNil(eval.error)
+        }
+        XCTAssertEqual(output as? NSNumber, -5)
+    }
+
+    func testTernaryWithNegativeBothBranches() {
+        var output: Any?
+        let evaluator = iTermExpressionEvaluator(expressionString: "true ? -10 : -20", scope: scope)
+        evaluator.evaluate(withTimeout: 0, sideEffectsAllowed: true) { eval in
+            output = eval.value
+            XCTAssertNil(eval.error)
+        }
+        XCTAssertEqual(output as? NSNumber, -10)
+    }
+
+    func testTernaryWithVariableConditionAndNegativeBranch() {
+        scope.setValue(NSNumber(value: 1), forVariableNamed: "flag")
+        var output: Any?
+        let evaluator = iTermExpressionEvaluator(expressionString: "flag ? -1 : 0", scope: scope)
+        evaluator.evaluate(withTimeout: 0, sideEffectsAllowed: true) { eval in
+            output = eval.value
+            XCTAssertNil(eval.error)
+        }
+        XCTAssertEqual(output as? NSNumber, -1)
+    }
+
+    // MARK: Ternary with comparison conditions
+
+    func testTernaryWithComparisonCondition() {
+        var output: Any?
+        let evaluator = iTermExpressionEvaluator(expressionString: "(5 > 3) ? 10 : 20", scope: scope)
+        evaluator.evaluate(withTimeout: 0, sideEffectsAllowed: true) { eval in
+            output = eval.value
+            XCTAssertNil(eval.error)
+        }
+        XCTAssertEqual(output as? NSNumber, 10)
+    }
+
+    func testTernaryWithEqualityCondition() {
+        scope.setValue(NSNumber(value: 5), forVariableNamed: "x")
+        var output: Any?
+        let evaluator = iTermExpressionEvaluator(expressionString: "(x == 5) ? 1 : 0", scope: scope)
+        evaluator.evaluate(withTimeout: 0, sideEffectsAllowed: true) { eval in
+            output = eval.value
+            XCTAssertNil(eval.error)
+        }
+        XCTAssertEqual(output as? NSNumber, 1)
+    }
+
+    // MARK: Optional + ternary (name? ? b : c — lexer splits as OptionalPath + ?)
+
+    func testOptionalTernaryWithDefinedVariable() {
+        // x? ? 1 : 0 — x is defined as 5 (truthy), should return 1
+        scope.setValue(NSNumber(value: 5), forVariableNamed: "x")
+        var output: Any?
+        let evaluator = iTermExpressionEvaluator(expressionString: "x? ? 1 : 0", scope: scope)
+        evaluator.evaluate(withTimeout: 0, sideEffectsAllowed: true) { eval in
+            output = eval.value
+            XCTAssertNil(eval.error)
+        }
+        XCTAssertEqual(output as? NSNumber, 1)
+    }
+
+    func testOptionalTernaryWithUndefinedVariable() {
+        // undef? ? 1 : 0 — undef is not defined, optional makes it null (falsy), should return 0
+        var output: Any?
+        let evaluator = iTermExpressionEvaluator(expressionString: "undef? ? 1 : 0", scope: scope)
+        evaluator.evaluate(withTimeout: 0, sideEffectsAllowed: true) { eval in
+            output = eval.value
+            XCTAssertNil(eval.error)
+        }
+        XCTAssertEqual(output as? NSNumber, 0)
+    }
+
+    func testOptionalTernaryWithZeroValueVariable() {
+        // x? ? 1 : 0 — x is 0 (falsy), should return 0
+        scope.setValue(NSNumber(value: 0), forVariableNamed: "x")
+        var output: Any?
+        let evaluator = iTermExpressionEvaluator(expressionString: "x? ? 1 : 0", scope: scope)
+        evaluator.evaluate(withTimeout: 0, sideEffectsAllowed: true) { eval in
+            output = eval.value
+            XCTAssertNil(eval.error)
+        }
+        XCTAssertEqual(output as? NSNumber, 0)
+    }
+
+    // MARK: Null comparisons — no parens needed with lexer-based OptionalPath
+
+    func testOptionalDefinedVarNotEqualNull() {
+        // name? != null — name is defined, should be true (1)
+        scope.setValue("hello" as NSString, forVariableNamed: "name")
+        let parser = iTermExpressionParser.expressionParser()!
+        guard let expression = parser.parse("name? != null", scope: scope) else {
+            XCTFail("Failed to parse name? != null")
+            return
+        }
+
+        var output: Any?
+        let evaluator = iTermExpressionEvaluator(parsedExpression: expression, invocation: "", scope: scope)
+        evaluator.evaluate(withTimeout: 0, sideEffectsAllowed: false) { eval in
+            output = eval.value
+            XCTAssertNil(eval.error, "Unexpected error: \(eval.error?.localizedDescription ?? "")")
+        }
+        XCTAssertEqual(output as? NSNumber, 1)
+    }
+
+    func testOptionalUndefinedVarEqualsNull() {
+        // undef? == null — undef is not defined, optional makes it null, should be true (1)
+        let parser = iTermExpressionParser.expressionParser()!
+        guard let expression = parser.parse("undef? == null", scope: scope) else {
+            XCTFail("Failed to parse undef? == null")
+            return
+        }
+
+        var output: Any?
+        let evaluator = iTermExpressionEvaluator(parsedExpression: expression, invocation: "", scope: scope)
+        evaluator.evaluate(withTimeout: 0, sideEffectsAllowed: false) { eval in
+            output = eval.value
+            XCTAssertNil(eval.error, "Unexpected error: \(eval.error?.localizedDescription ?? "")")
+        }
+        XCTAssertEqual(output as? NSNumber, 1)
+    }
+
+    func testOptionalUndefinedVarNotEqualNull() {
+        // undef? != null — should be false (0)
+        let parser = iTermExpressionParser.expressionParser()!
+        guard let expression = parser.parse("undef? != null", scope: scope) else {
+            XCTFail("Failed to parse undef? != null")
+            return
+        }
+
+        var output: Any?
+        let evaluator = iTermExpressionEvaluator(parsedExpression: expression, invocation: "", scope: scope)
+        evaluator.evaluate(withTimeout: 0, sideEffectsAllowed: false) { eval in
+            output = eval.value
+            XCTAssertNil(eval.error, "Unexpected error: \(eval.error?.localizedDescription ?? "")")
+        }
+        XCTAssertEqual(output as? NSNumber, 0)
+    }
+
+    func testOptionalDefinedVarEqualsNull() {
+        // name? == null — name is defined as "hello", should be false (0)
+        scope.setValue("hello" as NSString, forVariableNamed: "name")
+        let parser = iTermExpressionParser.expressionParser()!
+        guard let expression = parser.parse("name? == null", scope: scope) else {
+            XCTFail("Failed to parse name? == null")
+            return
+        }
+
+        var output: Any?
+        let evaluator = iTermExpressionEvaluator(parsedExpression: expression, invocation: "", scope: scope)
+        evaluator.evaluate(withTimeout: 0, sideEffectsAllowed: false) { eval in
+            output = eval.value
+            XCTAssertNil(eval.error, "Unexpected error: \(eval.error?.localizedDescription ?? "")")
+        }
+        XCTAssertEqual(output as? NSNumber, 0)
+    }
+
+    // MARK: Dotted path optional
+
+    func testDottedPathOptionalEqualsNull() {
+        // myname? == null — myname is defined
+        scope.setValue("George" as NSString, forVariableNamed: "myname")
+        let parser = iTermExpressionParser.expressionParser()!
+        guard let expression = parser.parse("myname? == null", scope: scope) else {
+            XCTFail("Failed to parse myname? == null")
+            return
+        }
+
+        var output: Any?
+        let evaluator = iTermExpressionEvaluator(parsedExpression: expression, invocation: "", scope: scope)
+        evaluator.evaluate(withTimeout: 0, sideEffectsAllowed: false) { eval in
+            output = eval.value
+            XCTAssertNil(eval.error, "Unexpected error: \(eval.error?.localizedDescription ?? "")")
+        }
+        XCTAssertEqual(output as? NSNumber, 0)
+    }
+
+    func testDottedPathOptionalUndefinedEqualsNull() {
+        // myname? == null — myname is NOT defined
+        let parser = iTermExpressionParser.expressionParser()!
+        guard let expression = parser.parse("myname? == null", scope: scope) else {
+            XCTFail("Failed to parse myname? == null")
+            return
+        }
+
+        var output: Any?
+        let evaluator = iTermExpressionEvaluator(parsedExpression: expression, invocation: "", scope: scope)
+        evaluator.evaluate(withTimeout: 0, sideEffectsAllowed: false) { eval in
+            output = eval.value
+            XCTAssertNil(eval.error, "Unexpected error: \(eval.error?.localizedDescription ?? "")")
+        }
+        XCTAssertEqual(output as? NSNumber, 1)
+    }
+
+    // MARK: Null literal comparisons
+
+    func testNullEqualsNull() {
+        // null == null — both are null
+        let parser = iTermExpressionParser.expressionParser()!
+        guard let expression = parser.parse("null == null", scope: scope) else {
+            XCTFail("Failed to parse null == null")
+            return
+        }
+
+        var output: Any?
+        let evaluator = iTermExpressionEvaluator(parsedExpression: expression, invocation: "", scope: scope)
+        evaluator.evaluate(withTimeout: 0, sideEffectsAllowed: false) { eval in
+            output = eval.value
+            XCTAssertNil(eval.error, "Unexpected error: \(eval.error?.localizedDescription ?? "")")
+        }
+        XCTAssertEqual(output as? NSNumber, 1)
+    }
+
+    func testStringNotEqualNull() {
+        let parser = iTermExpressionParser.expressionParser()!
+        guard let expression = parser.parse("\"hello\" != null", scope: scope) else {
+            XCTFail("Failed to parse string != null")
+            return
+        }
+
+        var output: Any?
+        let evaluator = iTermExpressionEvaluator(parsedExpression: expression, invocation: "", scope: scope)
+        evaluator.evaluate(withTimeout: 0, sideEffectsAllowed: false) { eval in
+            output = eval.value
+            XCTAssertNil(eval.error, "Unexpected error: \(eval.error?.localizedDescription ?? "")")
+        }
+        XCTAssertEqual(output as? NSNumber, 1)
+    }
+
+    func testNumberNotEqualNull() {
+        let parser = iTermExpressionParser.expressionParser()!
+        guard let expression = parser.parse("42 != null", scope: scope) else {
+            XCTFail("Failed to parse number != null")
+            return
+        }
+
+        var output: Any?
+        let evaluator = iTermExpressionEvaluator(parsedExpression: expression, invocation: "", scope: scope)
+        evaluator.evaluate(withTimeout: 0, sideEffectsAllowed: false) { eval in
+            output = eval.value
+            XCTAssertNil(eval.error, "Unexpected error: \(eval.error?.localizedDescription ?? "")")
+        }
+        XCTAssertEqual(output as? NSNumber, 1)
+    }
+
+    // MARK: Whitespace distinction — name? vs name ?
+
+    func testSpaceBeforeQuestionMarkIsTernary() {
+        // "flag ? 10 : 20" — space before ? means ternary, NOT optional
+        scope.setValue(NSNumber(value: 1), forVariableNamed: "flag")
+        var output: Any?
+        let evaluator = iTermExpressionEvaluator(expressionString: "flag ? 10 : 20", scope: scope)
+        evaluator.evaluate(withTimeout: 0, sideEffectsAllowed: true) { eval in
+            output = eval.value
+            XCTAssertNil(eval.error)
+        }
+        XCTAssertEqual(output as? NSNumber, 10)
+    }
+
+    func testNoSpaceBeforeQuestionMarkIsOptional() {
+        // "name?" (no space) is the OptionalPath form
+        scope.setValue("hello" as NSString, forVariableNamed: "name")
+        var output: Any?
+        let evaluator = iTermExpressionEvaluator(expressionString: "name?", scope: scope)
+        evaluator.evaluate(withTimeout: 0, sideEffectsAllowed: true) { eval in
+            output = eval.value
+            XCTAssertNil(eval.error)
+        }
+        XCTAssertEqual(output as? String, "hello")
+    }
+
+    func testOptionalPathParseResultForUndefined() {
+        // "bar?" (no space) should use OptionalPath token → Nil/optional, not error
+        let parser = iTermExpressionParser.expressionParser()!
+        let result = parser.parse("bar?", scope: scope)
+        XCTAssertNotNil(result, "Parser should return a result for bar?")
+        if let result = result {
+            XCTAssertNotEqual(result.expressionType, .error,
+                             "bar? should not parse as error, got type=\(result.expressionType.rawValue)")
+            XCTAssertEqual(result.expressionType, .nil,
+                          "bar? should parse as Nil type")
+            XCTAssertTrue(result.optional,
+                         "bar? should be optional")
+        }
+    }
+
+    // MARK: Undefined variable without ? should still error
+
+    func testUndefinedVarWithoutOptionalInEqualityIsError() {
+        // undefinedVar == null (without ?) should be an error
+        let parser = iTermExpressionParser.expressionParser()!
+        let expression = parser.parse("undefinedVar == null", scope: scope)
+        // Should either fail to parse or produce an error expression
+        if let expression = expression {
+            let evaluator = iTermExpressionEvaluator(parsedExpression: expression, invocation: "", scope: scope)
+            evaluator.evaluate(withTimeout: 0, sideEffectsAllowed: false) { eval in
+                XCTAssertNil(eval.value, "Bare undefined var in comparison should not produce a value")
+                XCTAssertNotNil(eval.error, "Bare undefined var in comparison should produce an error")
+            }
+        }
+        // If parse returns nil, that's also acceptable
+    }
+
+    // MARK: Ternary right-associativity
+
+    func testTernaryRightAssociativity() {
+        // a ? b : c ? d : e should parse as a ? b : (c ? d : e)
+        var output: Any?
+        let evaluator = iTermExpressionEvaluator(expressionString: "false ? 1 : true ? 2 : 3", scope: scope)
+        evaluator.evaluate(withTimeout: 0, sideEffectsAllowed: true) { eval in
+            output = eval.value
+            XCTAssertNil(eval.error)
+        }
+        // false ? 1 : (true ? 2 : 3) = (true ? 2 : 3) = 2
+        XCTAssertEqual(output as? NSNumber, 2)
+    }
+
+    // MARK: Ternary with string branches
+
+    func testTernaryWithStringBranches() {
+        var output: Any?
+        let evaluator = iTermExpressionEvaluator(expressionString: "true ? \"yes\" : \"no\"", scope: scope)
+        evaluator.evaluate(withTimeout: 0, sideEffectsAllowed: true) { eval in
+            output = eval.value
+            XCTAssertNil(eval.error)
+        }
+        XCTAssertEqual(output as? String, "yes")
+    }
+
+    func testTernaryFalseWithStringBranches() {
+        var output: Any?
+        let evaluator = iTermExpressionEvaluator(expressionString: "false ? \"yes\" : \"no\"", scope: scope)
+        evaluator.evaluate(withTimeout: 0, sideEffectsAllowed: true) { eval in
+            output = eval.value
+            XCTAssertNil(eval.error)
+        }
+        XCTAssertEqual(output as? String, "no")
+    }
+
+    // MARK: Optional in interpolated strings
+
+    func testOptionalUndefinedInInterpolatedString() {
+        var output: Any?
+        let evaluator = iTermExpressionEvaluator(
+            interpolatedString: "value=\\(undef?)",
+            scope: scope
+        )
+        evaluator.evaluate(withTimeout: 0, sideEffectsAllowed: true) { eval in
+            output = eval.value
+            XCTAssertNil(eval.error)
+        }
+        // Undefined optional should produce empty string in interpolation
+        XCTAssertEqual(output as? String, "value=")
+    }
+
+    func testOptionalDefinedInInterpolatedString() {
+        scope.setValue("hello" as NSString, forVariableNamed: "name")
+        var output: Any?
+        let evaluator = iTermExpressionEvaluator(
+            interpolatedString: "value=\\(name?)",
+            scope: scope
+        )
+        evaluator.evaluate(withTimeout: 0, sideEffectsAllowed: true) { eval in
+            output = eval.value
+            XCTAssertNil(eval.error)
+        }
+        XCTAssertEqual(output as? String, "value=hello")
+    }
+
+    // MARK: Practical null-coalescing pattern with ternary
+
+    func testNullCoalescingPatternWithTernary() {
+        // name? != null ? name : "default" — name is defined
+        scope.setValue("George" as NSString, forVariableNamed: "name")
+        let parser = iTermExpressionParser.expressionParser()!
+        guard let expression = parser.parse("name? != null ? name : \"default\"", scope: scope) else {
+            XCTFail("Failed to parse null-coalescing pattern")
+            return
+        }
+
+        var output: Any?
+        let evaluator = iTermExpressionEvaluator(parsedExpression: expression, invocation: "", scope: scope)
+        evaluator.evaluate(withTimeout: 0, sideEffectsAllowed: false) { eval in
+            output = eval.value
+            XCTAssertNil(eval.error, "Unexpected error: \(eval.error?.localizedDescription ?? "")")
+        }
+        XCTAssertEqual(output as? String, "George")
+    }
+
+    func testNullCoalescingPatternWithTernaryUndefined() {
+        // name? != null ? name? : "default" — name is NOT defined
+        let parser = iTermExpressionParser.expressionParser()!
+        guard let expression = parser.parse("name? != null ? name? : \"default\"", scope: scope) else {
+            XCTFail("Failed to parse null-coalescing pattern")
+            return
+        }
+
+        var output: Any?
+        let evaluator = iTermExpressionEvaluator(parsedExpression: expression, invocation: "", scope: scope)
+        evaluator.evaluate(withTimeout: 0, sideEffectsAllowed: false) { eval in
+            output = eval.value
+            XCTAssertNil(eval.error, "Unexpected error: \(eval.error?.localizedDescription ?? "")")
+        }
+        XCTAssertEqual(output as? String, "default")
+    }
 }

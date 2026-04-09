@@ -1362,7 +1362,9 @@ const int kMaxSelectedTextLengthForCustomActions = 400;
 
 - (NSMenu *)titleBarMenu {
     _validationClickPoint = VT100GridCoordMake(-1, -1);
-    return [self menuAtCoord:VT100GridCoordMake(-1, -1)];
+    NSMenu *menu = [self menuAtCoord:VT100GridCoordMake(-1, -1)];
+    [self applyWindowAppearanceToMenu:menu];
+    return menu;
 }
 
 #pragma mark - NSMenuDelegate

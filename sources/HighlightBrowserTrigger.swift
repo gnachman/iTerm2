@@ -31,6 +31,9 @@ class HighlightBrowserTrigger: Trigger, iTermColorSettable {
         true
     }
     var colors: (String, String) {
+        return self.colors(inParam: param)
+    }
+    private func colors(inParam param: Any?) -> (String, String) {
         if let components = (param as? String)?.components(separatedBy: ";"), components.count >= 2 {
             return (components[0], components[1])
         }
@@ -39,11 +42,7 @@ class HighlightBrowserTrigger: Trigger, iTermColorSettable {
     @objc
     override var textColor: NSColor? {
         get {
-            let c = colors
-            if c.0.isEmpty {
-                return nil
-            }
-            return NSColor(preservingColorspaceFrom: c.0)
+            return textColor(inParam: param)
         }
         set {
             super.textColor = newValue
@@ -53,16 +52,26 @@ class HighlightBrowserTrigger: Trigger, iTermColorSettable {
     @objc
     override var backgroundColor: NSColor? {
         get {
-            let c = colors
-            if c.1.isEmpty {
-                return nil
-            }
-            return NSColor(preservingColorspaceFrom: c.1)
+            return backgroundColor(inParam: param)
         }
         set {
-            super.textColor = newValue
+            super.backgroundColor = newValue
             param = [colors.0, newValue?.hexStringPreservingColorSpace() ?? ""].joined(separator: ";")
         }
+    }
+    override func textColor(inParam param: Any?) -> NSColor? {
+        let c = colors(inParam: param)
+        if c.0.isEmpty {
+            return nil
+        }
+        return NSColor(preservingColorspaceFrom: c.0)
+    }
+    override func backgroundColor(inParam param: Any?) -> NSColor? {
+        let c = colors(inParam: param)
+        if c.1.isEmpty {
+            return nil
+        }
+        return NSColor(preservingColorspaceFrom: c.1)
     }
     override func paramAttributedString() -> NSAttributedString {
         let result = NSMutableAttributedString()

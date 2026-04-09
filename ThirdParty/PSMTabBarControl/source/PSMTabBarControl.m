@@ -39,7 +39,7 @@ NSString *const PSMTabDragDidBeginNotification = @"PSMTabDragDidBeginNotificatio
 const CGFloat kSPMTabBarCellInternalXMargin = 6;
 
 const CGFloat kPSMTabBarCellPadding = 4;
-const CGFloat kPSMTabBarCellIconPadding = 0;
+const CGFloat kPSMTabBarCellIconPadding = 4;
 // fixed size objects
 const CGFloat kPSMMinimumTitleWidth = 30;
 const CGFloat kPSMTabBarIndicatorWidth = 16.0;

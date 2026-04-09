@@ -584,6 +584,10 @@ extension SpecialExceptionsWindowController: CRUDTableViewControllerDelegate {
 }
 
 extension SpecialExceptionsWindowController: CRUDDataProvider {
+    var supportsReorder: Bool { false }
+    func reorder(from sourceIndex: Int, to destinationIndex: Int) {}
+    var supportsInlineEditing: Bool { false }
+
     private struct Row: CRUDRow {
         var entry: FontTable.Entry
 
