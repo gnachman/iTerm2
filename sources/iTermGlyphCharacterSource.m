@@ -131,7 +131,8 @@
                                                           &glyph,
                                                           NULL,
                                                           1);
-    CGRect result = [self frameForBoundingRect:bounds flipped:flipped];
+    const CGRect adjustedBounds = CGRectOffset(bounds, _position.x, _position.y);
+    CGRect result = [self frameForBoundingRect:adjustedBounds flipped:flipped];
     if (iTermLineAttributeIsDoubleWidth(_lineAttribute)) {
         const CGFloat pivotX = _descriptor.glyphSize.width * _radius;
         const CGFloat tyUnflipped = _descriptor.glyphSize.height * _radius - _descriptor.baselineOffset * _descriptor.scale;

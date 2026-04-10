@@ -1279,21 +1279,30 @@ NS_INLINE void iTermGlyphKeyEmitImage(const screen_char_t *const line,
     }
 }
 
-static int iTermGetMetalBackgroundColors(iTermMetalPerFrameState *self,
+static inline void iTermRLEGrowToInclude(unsigned short *origin, unsigned short *count, int visualX) {
+    const int newOrigin = MIN(*origin, visualX);
+    const int newEnd = MAX(*origin + *count, visualX + 1);
+    *origin = newOrigin;
+    *count = newEnd - newOrigin;
+}
+
+int iTermGetMetalBackgroundColors(iTermMetalPerFrameState *self,
                                          const screen_char_t *const line,
                                          iTermMetalBackgroundColorRLE *backgroundRLE,
                                          iTermMetalGlyphAttributes *attributes,
                                          vector_float4 *unprocessedBackgroundColors,
                                          int width,
-                                         NSIndexSet *selectedIndexes,
-                                         NSData *findMatches,
+                                         NSIndexSet * _Nullable selectedIndexes,
+                                         NSData * _Nullable findMatches,
                                          id<iTermColorMapReading> colorMap,
-                                         iTermBidiDisplayInfo *bidiInfo) {
+                                         iTermBidiDisplayInfo * _Nullable bidiInfo,
+                                         iTermLineAttribute lineAttribute) {
     iTermBackgroundColorKey lastBackgroundKey;
     vector_float4 lastUnprocessedBackgroundColor = simd_make_float4(0, 0, 0, 0);
     int rles = 0;
     const int *bidiLUT = [bidiInfo lut];
     const int bidiLUTLength = bidiInfo.numberOfCells;
+    const int adjacentDistance = iTermLineAttributeIsDoubleWidth(lineAttribute) ? 2 : 1;
     int prevVisualX = -1;
 
     // Set background colors
@@ -1301,6 +1310,18 @@ static int iTermGetMetalBackgroundColors(iTermMetalPerFrameState *self,
         int visualX = logicalX;
         if (logicalX < bidiLUTLength) {
             visualX = bidiLUT[logicalX];
+        }
+        if (ScreenCharIsDWL_SPACER(line[logicalX])) {
+            // Spacers inherit background from the preceding character.
+            // Grow the RLE to include this position without updating
+            // prevVisualX, so the next real character can still merge.
+            if (rles > 0) {
+                iTermRLEGrowToInclude(&backgroundRLE[rles - 1].origin,
+                                      &backgroundRLE[rles - 1].count, visualX);
+                attributes[visualX].backgroundColor = backgroundRLE[rles - 1].color;
+                attributes[visualX].unprocessedBackgroundColor = lastUnprocessedBackgroundColor;
+            }
+            continue;
         }
         const BOOL selected = [selectedIndexes containsIndex:visualX];
         BOOL findMatch = NO;
@@ -1322,7 +1343,7 @@ static int iTermGetMetalBackgroundColors(iTermMetalPerFrameState *self,
         vector_float4 backgroundColor;
         vector_float4 unprocessedBackgroundColor;
         if (logicalX > 0 &&
-            abs(visualX - prevVisualX) == 1 &&
+            abs(visualX - prevVisualX) <= adjacentDistance &&
             backgroundKey.bgColor == lastBackgroundKey.bgColor &&
             backgroundKey.bgGreen == lastBackgroundKey.bgGreen &&
             backgroundKey.bgBlue == lastBackgroundKey.bgBlue &&
@@ -1333,10 +1354,9 @@ static int iTermGetMetalBackgroundColors(iTermMetalPerFrameState *self,
             // Extend RLE
             const int previousRLE = rles - 1;
             backgroundColor = backgroundRLE[previousRLE].color;
-            backgroundRLE[previousRLE].count++;
-            if (visualX < prevVisualX) {
-                backgroundRLE[previousRLE].origin -= 1;
-            }
+            iTermRLEGrowToInclude(&backgroundRLE[previousRLE].origin,
+                                  &backgroundRLE[previousRLE].count,
+                                  visualX);
             unprocessedBackgroundColor = lastUnprocessedBackgroundColor;
         } else {
             // Start new RLE
@@ -1629,7 +1649,7 @@ static int iTermEmitGlyphsAndSetAttributes(iTermMetalPerFrameState *self,
                                    &previousImageCoord,
                                    imageRuns);
             gk = iTermGlyphKeyEmitPlaceholder(buf, gk, logicalIndex, bidiLUT, bidiLUTLength);
-        } else if (attributedString && !isBoxDrawingCharacter) {
+        } else if (attributedString && !isBoxDrawingCharacter && !ScreenCharIsDWL_SPACER(line[logicalIndex])) {
             if (!haveEmittedAttributedString) {
                 gk = iTermGlyphKeyEmitDecomposed(buf,
                                                  !!line[logicalIndex].bold,
@@ -1724,7 +1744,8 @@ static int iTermEmitGlyphsAndSetAttributes(iTermMetalPerFrameState *self,
                                              selectedIndexes,
                                              findMatches,
                                              _configuration->_colorMap,
-                                             bidiInfo);
+                                             bidiInfo,
+                                             rowLineAttribute);
     *rleCount = rles;
 
     CTVector(CGFloat) positions;

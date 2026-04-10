@@ -7,6 +7,8 @@
 
 #import <Foundation/Foundation.h>
 #import "iTermMetalDriver.h"
+#import "iTermMetalGlyphKey.h"
+#import "iTermTextRendererCommon.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -44,5 +46,18 @@ NS_ASSUME_NONNULL_BEGIN
 - (instancetype)init NS_UNAVAILABLE;
 
 @end
+
+// Builds background-color RLEs for a screen line. Exposed for testing.
+int iTermGetMetalBackgroundColors(iTermMetalPerFrameState *self,
+                                  const screen_char_t *line,
+                                  iTermMetalBackgroundColorRLE *backgroundRLE,
+                                  iTermMetalGlyphAttributes *attributes,
+                                  vector_float4 *unprocessedBackgroundColors,
+                                  int width,
+                                  NSIndexSet *_Nullable selectedIndexes,
+                                  NSData *_Nullable findMatches,
+                                  id<iTermColorMapReading> colorMap,
+                                  iTermBidiDisplayInfo *_Nullable bidiInfo,
+                                  iTermLineAttribute lineAttribute);
 
 NS_ASSUME_NONNULL_END
