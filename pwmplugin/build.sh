@@ -49,9 +49,10 @@ build_universal() {
     cp .build/release/$name binaries/
 }
 
-# Build both adapters
+# Build all adapters
 build_universal "iterm2-keepassxc-adapter"
 build_universal "iterm2-bitwarden-adapter"
+build_universal "iterm2-keeper-adapter"
 
 echo ""
 echo "✓✓✓ All builds complete! ✓✓✓"

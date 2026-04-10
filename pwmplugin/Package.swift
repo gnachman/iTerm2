@@ -18,6 +18,10 @@ let package = Package(
             targets: ["iterm2-bitwarden-adapter"]
         ),
         .executable(
+            name: "iterm2-keeper-adapter",
+            targets: ["iterm2-keeper-adapter"]
+        ),
+        .executable(
             name: "iterm2-test-adapter",
             targets: ["iterm2-test-adapter"]
         ),
@@ -38,6 +42,11 @@ let package = Package(
             path: "Sources/iterm2-bitwarden-adapter"
         ),
         .executableTarget(
+            name: "iterm2-keeper-adapter",
+            dependencies: ["PasswordManagerProtocol"],
+            path: "Sources/iterm2-keeper-adapter"
+        ),
+        .executableTarget(
             name: "iterm2-test-adapter",
             dependencies: ["PasswordManagerProtocol"],
             path: "Sources/iterm2-test-adapter"
@@ -49,6 +58,10 @@ let package = Package(
         .testTarget(
             name: "iterm2-bitwarden-adapterTests",
             dependencies: []
+        ),
+        .testTarget(
+            name: "iterm2-keeper-adapterTests",
+            dependencies: ["iterm2-keeper-adapter"]
         )
     ]
 )
