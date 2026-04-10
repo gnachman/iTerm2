@@ -1,38 +1,6 @@
 import XCTest
 @testable import iTerm2SharedARC
 
-// MARK: - Mocks
-
-private class MockPerFrameState: NSObject {
-    @objc func unprocessedColorForBackgroundColorKey(_ colorKey: UnsafeMutableRawPointer,
-                                                     isDefault: UnsafeMutablePointer<ObjCBool>) -> SIMD4<Float> {
-        isDefault.pointee = true
-        return SIMD4<Float>(0.1, 0.1, 0.1, 1.0)
-    }
-}
-
-private class MockColorMap: NSObject {
-    @objc func fastProcessedBackgroundColor(forBackgroundColor color: SIMD4<Float>) -> SIMD4<Float> {
-        return color
-    }
-}
-
-private class MockBidiInfo: NSObject {
-    private let _lut: UnsafeMutablePointer<Int32>
-    private let _count: Int32
-
-    init(lut: [Int32]) {
-        _count = Int32(lut.count)
-        _lut = .allocate(capacity: lut.count)
-        _lut.initialize(from: lut, count: lut.count)
-    }
-    deinit { _lut.deallocate() }
-    @objc var lut: UnsafePointer<Int32> { UnsafePointer(_lut) }
-    @objc var numberOfCells: Int32 { _count }
-}
-
-// MARK: - Tests
-
 final class iTermBackgroundColorRLEBuilderTests: XCTestCase {
 
     private struct RLE {
@@ -60,32 +28,26 @@ final class iTermBackgroundColorRLEBuilderTests: XCTestCase {
         lineAttribute: iTermLineAttribute = .singleWidth
     ) -> [RLE] {
         var line = makeLine(width: width, spacerPositions: spacerPositions, bgGroups: bgGroups)
+        let helper = iTermBackgroundColorRLETestHelper()
 
-        var rles = [iTermMetalBackgroundColorRLE](repeating: iTermMetalBackgroundColorRLE(), count: width)
+        var results = [iTermTestBackgroundRLE](repeating: iTermTestBackgroundRLE(), count: width)
 
-        var maxVisual = width
-        if let lut = bidiLUT {
-            for v in lut { maxVisual = max(maxVisual, Int(v) + 1) }
+        let count: Int32
+        if var lut = bidiLUT {
+            count = helper.buildRLEs(forLine: &line, width: Int32(width),
+                                     results: &results, maxResults: Int32(width),
+                                     bidiLUT: &lut, bidiLUTLen: Int32(lut.count),
+                                     lineAttribute: lineAttribute)
+        } else {
+            count = helper.buildRLEs(forLine: &line, width: Int32(width),
+                                     results: &results, maxResults: Int32(width),
+                                     bidiLUT: nil, bidiLUTLen: 0,
+                                     lineAttribute: lineAttribute)
         }
-        var attributes = [iTermMetalGlyphAttributes](repeating: iTermMetalGlyphAttributes(), count: maxVisual)
-        var unprocessed = [SIMD4<Float>](repeating: .zero, count: width)
-
-        let mockSelf = MockPerFrameState()
-        let mockColorMap = MockColorMap()
-        let mockBidi: MockBidiInfo? = bidiLUT.map { MockBidiInfo(lut: $0) }
-
-        let count = iTermGetMetalBackgroundColors(
-            unsafeBitCast(mockSelf, to: iTermMetalPerFrameState.self),
-            &line, &rles, &attributes, &unprocessed,
-            Int32(width), nil, nil,
-            unsafeBitCast(mockColorMap, to: AnyObject.self) as! any iTermColorMapReading,
-            unsafeBitCast(mockBidi, to: iTermBidiDisplayInfo?.self),
-            lineAttribute)
-
         return (0..<Int(count)).map { i in
-            RLE(origin: Int(rles[i].origin),
-                count: Int(rles[i].count),
-                logicalOrigin: Int(rles[i].logicalOrigin))
+            RLE(origin: Int(results[i].origin),
+                count: Int(results[i].count),
+                logicalOrigin: Int(results[i].logicalOrigin))
         }
     }
 

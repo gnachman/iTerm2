@@ -9,6 +9,11 @@
 #6[0;9mStrikethrough double-width[0m[0m
 #6[0;31mRed double-width[0m[0m
 #6[0;31;1;3;4mBold underline italic red[0m[0m
+#6汉语 - non-ASCII[0m
+#6 - PowerLine[0m
+#6لرحيم - RTL[0m
+#6😂 - emoji[0m
+#6q́ẍ - composed characters[0m
 [0m
 === DECDHL top (ESC # 3) + bottom (ESC # 4) ===[0m
 #3Normal double-height[0m
@@ -42,6 +47,15 @@
 #3[0;1mBold emoji 🚀✨[0m[0m
 #4[0;1mBold emoji 🚀✨[0m[0m
 [0m
+=== DECDHL other ===[0m
+#3汉语 - non-ASCII[0m
+#4汉语 - non-ASCII[0m
+#3 - PowerLine[0m
+#4 - PowerLine[0m
+#3لرحيم - RTL[0m
+#4لرحيم - RTL[0m
+#3q́ẍ - composed characters[0m
+#4q́ẍ - composed characters[0m
 === DECSWL (ESC # 5) reset ===[0m
 #6This was double-width[0m
 This is back to normal[0m
