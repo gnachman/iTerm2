@@ -135,13 +135,20 @@
         // ty should equal ty in drawWithOffset:iteration:
         const CGFloat ty = yOffset - _descriptor.baselineOffset * _descriptor.scale;
 
-        // y should equal rect.origin.y in drawBoxAtOffset:iteration:
-        const CGFloat y = ty + _descriptor.baselineOffset * _descriptor.scale - self.verticalShift;
+        // y should equal boxY in drawBoxAtOffset:iteration:
+        CGFloat y = ty + _descriptor.baselineOffset * _descriptor.scale - self.verticalShift;
+        if (_lineAttribute == iTermLineAttributeDoubleHeightTop) {
+            y += (_descriptor.cellSize.height + _descriptor.baselineOffset) * _descriptor.scale;
+            y -= _descriptor.cellSize.height * _descriptor.scale;
+        } else if (_lineAttribute == iTermLineAttributeDoubleHeightBottom) {
+            y += _descriptor.baselineOffset * _descriptor.scale;
+        }
 
+        const CGFloat vScale = [self drawVScale];
         NSRect rect = NSMakeRect(_descriptor.glyphSize.width * _radius,
                                  y,
                                  _descriptor.cellSize.width * _descriptor.scale,
-                                 _descriptor.cellSize.height * _descriptor.scale);
+                                 _descriptor.cellSize.height * _descriptor.scale * vScale);
         if (_string.length > 0 &&
             _useNativePowerlineGlyphs &&
             [iTermBoxDrawingBezierCurveFactory isDoubleWidthPowerlineGlyph:[_string characterAtIndex:0]]) {
@@ -206,9 +213,10 @@
     }
     DLog(@"Draw box %@ at scale %@ with systemScale=%@ mainScreen=%@. descriptor=%@",
          _string, @(_descriptor.scale), @(systemScale), [[NSScreen mainScreen] it_uniqueName], _descriptor);
+    const CGFloat vScale = [self drawVScale];
     [iTermBoxDrawingBezierCurveFactory drawCodeInCurrentContext:[_string longCharacterAtIndex:0]
                                                        cellSize:NSMakeSize(_descriptor.cellSize.width * _descriptor.scale,
-                                                                           _descriptor.cellSize.height * _descriptor.scale)
+                                                                           _descriptor.cellSize.height * _descriptor.scale * vScale)
                                                            scale:_descriptor.scale
                                                        isPoints:NO
                                                           offset:CGPointZero
@@ -232,10 +240,26 @@
     [NSGraphicsContext setCurrentContext:graphicsContext];
     NSAffineTransform *transform = [NSAffineTransform transform];
 
+    const CGFloat vScale = [self drawVScale];
+    // For box drawing, position the rect at the cell boundary rather than
+    // using the DECDHL text-offset. The offset already includes the DECDHL
+    // ty shift meant for text rendering; undo it and use the raw cell origin.
+    // The rect is drawn in a flipped context so the vertical direction is
+    // reversed: shifting the rect DOWN in CG coords shows the TOP half.
+    CGFloat boxY = offset.y + _descriptor.baselineOffset * _descriptor.scale - self.verticalShift;
+    if (_lineAttribute == iTermLineAttributeDoubleHeightTop) {
+        // Undo the top shift, then move down by one cell so the top half
+        // of the 2x box lands in the clipped center row (flipped context).
+        boxY += (_descriptor.cellSize.height + _descriptor.baselineOffset) * _descriptor.scale;
+        boxY -= _descriptor.cellSize.height * _descriptor.scale;
+    } else if (_lineAttribute == iTermLineAttributeDoubleHeightBottom) {
+        // Undo the bottom shift.
+        boxY += _descriptor.baselineOffset * _descriptor.scale;
+    }
     NSRect rect = NSMakeRect(offset.x,
-                             offset.y + _descriptor.baselineOffset * _descriptor.scale - self.verticalShift,
+                             boxY,
                              _descriptor.cellSize.width * _descriptor.scale,
-                             _descriptor.cellSize.height * _descriptor.scale);
+                             _descriptor.cellSize.height * _descriptor.scale * vScale);
     if (_debug) {
         [[NSColor whiteColor] set];
         NSFrameRect(rect);

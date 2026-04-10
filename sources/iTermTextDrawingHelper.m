@@ -2040,8 +2040,20 @@ static BOOL NSRangesAdjacent(NSRange lhs, NSRange rhs) {
     [transform concat];
 
     CGColorRef color = (__bridge CGColorRef)attributes[(__bridge NSString *)kCTForegroundColorAttributeName];
+    NSSize cellSize = _cellSize;
+    if (_currentLineAttribute == iTermLineAttributeDoubleHeightTop ||
+        _currentLineAttribute == iTermLineAttributeDoubleHeightBottom) {
+        cellSize.height *= 2;
+        if (_currentLineAttribute == iTermLineAttributeDoubleHeightBottom) {
+            // Shift the 2x box up by one cell so the bottom half lands in the
+            // clipped row. In flipped screen coords, up = negative y.
+            NSAffineTransform *shift = [NSAffineTransform transform];
+            [shift translateXBy:0 yBy:-_cellSize.height];
+            [shift concat];
+        }
+    }
     [iTermBoxDrawingBezierCurveFactory drawCodeInCurrentContext:theCharacter
-                                                       cellSize:_cellSize
+                                                       cellSize:cellSize
                                                           scale:self.isRetina ? 2.0 : 1.0
                                                        isPoints:YES
                                                          offset:CGPointZero
