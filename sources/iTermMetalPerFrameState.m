@@ -1002,6 +1002,8 @@ NS_INLINE int iTermGlyphKeyEmitDecomposedFromCheap(iTermCachedGlyphKeysBuffer *b
 
     const BOOL fakeBold = [cheapString.attributes[iTermFakeBoldAttribute] boolValue];
     const BOOL fakeItalic = [cheapString.attributes[iTermFakeItalicAttribute] boolValue];
+    NSData *sourceCellData = [NSData castFrom:cheapString.attributes[iTermSourceCellIndexAttribute]];
+    const int *characterIndexToSourceCell = (const int *)sourceCellData.bytes;
     return iTermGlyphKeyEmitDecomposedFromGlyphs(buf,
                                                  bold,
                                                  italic,
@@ -1015,6 +1017,7 @@ NS_INLINE int iTermGlyphKeyEmitDecomposedFromCheap(iTermCachedGlyphKeysBuffer *b
                                                  thinStrokes,
                                                  bidiLUT,
                                                  bidiLUTLength,
+                                                 characterIndexToSourceCell,
                                                  lineAttribute);
 }
 
@@ -1031,8 +1034,10 @@ NS_INLINE int iTermGlyphKeyEmitDecomposedFromGlyphs(iTermCachedGlyphKeysBuffer *
                                                     BOOL thinStrokes,
                                                     const int *bidiLUT,
                                                     int bidiLUTLength,
+                                                    const int *characterIndexToSourceCell,
                                                     iTermLineAttribute lineAttribute) {
     for (NSUInteger i = 0; i < length; i++) {
+        const int sourceCell = characterIndexToSourceCell ? characterIndexToSourceCell[i] : (logicalIndex + (int)i);
         iTermGlyphKeyEmitDecomposedForSingleGlyph(buf,
                                                   bold,
                                                   italic,
@@ -1042,7 +1047,7 @@ NS_INLINE int iTermGlyphKeyEmitDecomposedFromGlyphs(iTermCachedGlyphKeysBuffer *
                                                   glyphs[i],
                                                   CGPointZero,
                                                   gk + i,
-                                                  logicalIndex + i,
+                                                  sourceCell,
                                                   thinStrokes,
                                                   bidiLUT,
                                                   bidiLUTLength,

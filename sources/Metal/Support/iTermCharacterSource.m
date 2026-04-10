@@ -432,6 +432,22 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
 
     const CGFloat hScale = [self drawHScale];
     const CGFloat scale = _descriptor.scale;
+    const iTermLineAttribute attr = [self lineAttribute];
+
+    if (attr == iTermLineAttributeDoubleHeightTop ||
+        attr == iTermLineAttributeDoubleHeightBottom) {
+        // Clip to one cell height at the center row to prevent the 2x-tall
+        // glyph's unwanted half from bleeding, matching the legacy
+        // renderer's CGContextClipToRect(..., _cellSize.height).
+        // The bitmap context is in pixels (no CTM) but draw offsets use
+        // point values; the text matrix applies descriptor.scale. So the
+        // clip height must be cellSize * scale to cover one cell in pixels.
+        CGContextClipToRect(_context,
+                            CGRectMake(0,
+                                       _descriptor.glyphSize.height * _radius,
+                                       _size.width,
+                                       _descriptor.cellSize.height * scale));
+    }
 
     // Apply just the DWL horizontal scale via CTM, matching the legacy
     // renderer's CGContextScaleCTM(ctx, 2.0, 1.0).
@@ -444,7 +460,6 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
     // vertical half of the 2x glyph lands in the parts grid.
     // In CG coordinates (y-up), shifting DOWN means decreasing ty.
     CGFloat ty = offset.y - _descriptor.baselineOffset * scale;
-    const iTermLineAttribute attr = [self lineAttribute];
     if (attr == iTermLineAttributeDoubleHeightTop) {
         // Shift baseline down by ascent so the top of the 2x glyph aligns
         // with where the normal glyph top would be.
