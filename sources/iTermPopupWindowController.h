@@ -35,6 +35,7 @@
 // If the cursor is preceded by whitespace the last word will be empty. Words go in reverse order.
 - (NSArray<NSString *> *)popupWordsBeforeInsertionPoint:(int)count;
 - (BOOL)popupWindowShouldAvoidChangingWindowOrderOnClose;
+- (NSColor *)popupWindowBackgroundColor;
 @end
 
 @protocol iTermPopupWindowHosting

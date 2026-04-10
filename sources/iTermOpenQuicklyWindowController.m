@@ -142,7 +142,10 @@
 - (void)presentWindow {
     [_model removeAllItems];
     [_table reloadData];
-    self.window.appearance = [NSAppearance it_appearanceForCurrentTheme];
+    PTYSession *session = [[iTermController sharedInstance] currentTerminal].currentSession;
+    NSColor *bgColor = session.effectiveUnprocessedBackgroundColor;
+    BOOL isDark = bgColor ? bgColor.perceivedBrightness < 0.5 : [NSAppearance it_appearanceForCurrentTheme].it_isDark;
+    self.window.appearance = [NSAppearance appearanceNamed:isDark ? NSAppearanceNameDarkAqua : NSAppearanceNameAqua];
     // Set the window's frame to be table-less initially.
     [self.window setFrame:[self frame] display:YES animate:NO];
     [_textField selectText:nil];

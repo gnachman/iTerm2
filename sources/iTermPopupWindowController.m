@@ -5,6 +5,7 @@
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermPreferences.h"
 #import "NSAppearance+iTerm.h"
+#import "NSColor+iTerm.h"
 #import "NSObject+iTerm.h"
 #import "NSTextField+iTerm.h"
 #import "NSView+iTerm.h"
@@ -162,7 +163,8 @@
 
     [self.popupWindow setOwningWindow:owningWindow];
 
-    BOOL isDark = owningWindow.effectiveAppearance.it_isDark;
+    NSColor *bgColor = [delegate popupWindowBackgroundColor];
+    BOOL isDark = bgColor ? bgColor.isDark : owningWindow.effectiveAppearance.it_isDark;
     self.window.appearance = [NSAppearance appearanceNamed:isDark ? NSAppearanceNameDarkAqua : NSAppearanceNameAqua];
 
     static const NSTimeInterval kAnimationDuration = 0.15;
