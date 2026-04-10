@@ -744,7 +744,7 @@ static NSArray<NSString *> *gTerminalCachedCombinedAccountNames;
     __weak __typeof(self) weakSelf = self;
     switch (response) {
         case NSAlertFirstButtonReturn: {
-            NSString *password = [newPassword.stringValue stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+            NSString *password = newPassword.stringValue;
             const NSInteger cancelCount = [self incrBusy];
             [_entries[row] setPasswordWithContext:self.recipeExecutionContext
                                          password:password

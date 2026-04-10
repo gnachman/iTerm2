@@ -927,20 +927,6 @@ class CommandLinePasswordDataSource: NSObject {
         let setPasswordRecipe: AnyRecipe<SetPasswordRequest, Void>
         let deleteRecipe: AnyRecipe<AccountIdentifier, Void>
         let addAccountRecipe: AnyRecipe<AddRequest, AccountIdentifier>
-
-        init(
-            listAccountsRecipe: AnyRecipe<Void, [Account]>,
-            getPasswordRecipe: AnyRecipe<AccountIdentifier, Password>,
-            setPasswordRecipe: AnyRecipe<SetPasswordRequest, Void>,
-            deleteRecipe: AnyRecipe<AccountIdentifier, Void>,
-            addAccountRecipe: AnyRecipe<AddRequest, AccountIdentifier>
-        ) {
-            self.listAccountsRecipe = listAccountsRecipe
-            self.getPasswordRecipe = getPasswordRecipe
-            self.setPasswordRecipe = setPasswordRecipe
-            self.deleteRecipe = deleteRecipe
-            self.addAccountRecipe = addAccountRecipe
-        }
     }
 
     func standardAccounts(context: RecipeExecutionContext,

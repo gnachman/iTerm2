@@ -68,3 +68,4 @@ typedef void (^TransferrableFileCompletionBlock)(BOOL success, NSString * _Nulla
 @end
 
 NS_ASSUME_NONNULL_END
+
