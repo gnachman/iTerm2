@@ -153,8 +153,15 @@
         return rect;
     }
 
-    CGContextRef cgContext = _context;
-    CGRect frame = CTLineGetImageBounds(_lineRefs[0], cgContext);
+    // Temporarily remove any CTM scale so CTLineGetImageBounds returns
+    // unscaled bounds. We apply hScale/vScale manually below because the
+    // CTM is only set during drawing, not when newParts calls this.
+    // TODO: Is this step actually needed?
+    CGContextSaveGState(_context);
+    CGContextConcatCTM(_context, CGAffineTransformInvert(CGContextGetCTM(_context)));
+    CGRect frame = CTLineGetImageBounds(_lineRefs[0], _context);
+    CGContextRestoreGState(_context);
+
     CGRect result = [self frameForBoundingRect:frame flipped:flipped];
     if (iTermLineAttributeIsDoubleWidth(_lineAttribute)) {
         // Expand around the unshifted text origin for the horizontal DWL
@@ -279,21 +286,6 @@
                           iteration:iteration
                             context:context];
         } else {
-            if (iTermLineAttributeIsDoubleWidth(_lineAttribute) && length > 0) {
-                // Subtract the glyph's left side bearing so visible pixels
-                // start at the cell boundary. The legacy renderer uses a
-                // CGFont API path where the bearing is handled differently
-                // (visible CTM=2 causes bearing to round to 0 via hinting).
-                // In the GPU atlas, the text matrix has a=scale*hScale which
-                // preserves the bearing. This compensation eliminates the
-                // resulting horizontal shift.
-                CGRect bbox;
-                CTFontGetBoundingRectsForGlyphs(runFont, kCTFontOrientationDefault,
-                                                buffer, &bbox, 1);
-                for (size_t i = 0; i < length; i++) {
-                    positions[i].x -= bbox.origin.x;
-                }
-            }
             CTFontDrawGlyphs(runFont, buffer, (NSPoint *)positions, length, context);
 
             if (_fakeBold) {

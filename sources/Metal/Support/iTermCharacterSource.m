@@ -430,30 +430,47 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
     CGAffineTransform textMatrix = CGContextGetTextMatrix(_context);
     CGContextSaveGState(_context);
 
-    const CGFloat skew = _fakeItalic ? iTermFakeItalicSkew : 0;
-    CGFloat ty = offset.y - _descriptor.baselineOffset * _descriptor.scale;
+    const CGFloat hScale = [self drawHScale];
+    const CGFloat scale = _descriptor.scale;
 
+    // Apply just the DWL horizontal scale via CTM, matching the legacy
+    // renderer's CGContextScaleCTM(ctx, 2.0, 1.0).
+    if (hScale > 1) {
+        CGContextScaleCTM(_context, hScale, 1.0);
+    }
+
+    const CGFloat skew = _fakeItalic ? iTermFakeItalicSkew : 0;
     // For double-height lines, shift the draw origin so only the desired
     // vertical half of the 2x glyph lands in the parts grid.
     // In CG coordinates (y-up), shifting DOWN means decreasing ty.
+    CGFloat ty = offset.y - _descriptor.baselineOffset * scale;
     const iTermLineAttribute attr = [self lineAttribute];
     if (attr == iTermLineAttributeDoubleHeightTop) {
         // Shift baseline down by ascent so the top of the 2x glyph aligns
         // with where the normal glyph top would be.
-        ty -= (_descriptor.cellSize.height + _descriptor.baselineOffset) * _descriptor.scale;
+        ty -= (_descriptor.cellSize.height + _descriptor.baselineOffset) * scale;
     } else if (attr == iTermLineAttributeDoubleHeightBottom) {
         // Shift baseline up by descent so the bottom of the 2x glyph aligns
         // with where the normal glyph bottom would be.
-        ty -= _descriptor.baselineOffset * _descriptor.scale;
+        ty -= _descriptor.baselineOffset * scale;
+    }
+
+    CGFloat ox = offset.x;
+    if (hScale > 1) {
+        ox /= hScale;
     }
 
     [self drawIteration:iteration
-               atOffset:CGPointMake(offset.x, ty)
+               atOffset:CGPointMake(ox, ty)
                    skew:skew];
     _haveDrawn = YES;
 
+    // Restore GState before debug drawing so the CTM is identity.
+    CGContextRestoreGState(_context);
+
 #if ENABLE_DEBUG_CHARACTER_SOURCE_ALIGNMENT
     CGContextSetRGBStrokeColor(_context, 1, 0, 0, 1);
+    CGContextSetLineWidth(_context, 0.5);
     for (int x = 0; x < self.maxParts; x++) {
         for (int y = 0; y < self.maxParts; y++) {
             CGContextStrokeRect(_context, CGRectMake(x * _descriptor.glyphSize.width,
@@ -491,7 +508,6 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
         CFRelease(destination);
         CGImageRelease(imageRef);
     }
-    CGContextRestoreGState(_context);
     CGContextSetTextMatrix(_context, textMatrix);
 
     // Clear the drawn area, ready for next iteration/character.
@@ -513,6 +529,7 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
     }
 
     if ([self drawScale] > 1) {
+        // TODO: This is slow and with just a little math it could be avoided.
         // Use memset for scaled glyphs. Clear the full backing store.
         memset(CGBitmapContextGetData(_context), 0, _bytesPerRow * _numberOfRows);
     } else {
@@ -720,9 +737,15 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
         // Can't use this with emoji.
         const CGFloat hScale = [self drawHScale];
         const CGFloat vScale = [self drawVScale];
-        CGAffineTransform textMatrix = CGAffineTransformMake(_descriptor.scale * hScale,        0.0,
-                                                             skew * _descriptor.scale * hScale, _descriptor.scale * vScale,
-                                                             offset.x,                          offset.y);
+        // For DWL lines, retina + DWL scales are in the CTM, so the text
+        // matrix matches the legacy renderer: a=1, d=vScale.
+        // DWL horizontal scale is in the CTM. Retina scale stays in the
+        // text matrix for both axes.
+        const CGFloat xScale = _descriptor.scale;
+        const CGFloat yScale = _descriptor.scale * vScale;
+        CGAffineTransform textMatrix = CGAffineTransformMake(xScale,        0.0,
+                                                             skew * xScale, yScale,
+                                                             offset.x,      offset.y);
         CGContextSetTextMatrix(cgContext, textMatrix);
     } else {
         CGContextSetTextMatrix(cgContext, CGAffineTransformIdentity);
@@ -735,7 +758,7 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
                       context:(CGContextRef)context {
     CGContextConcatCTM(context, CTFontGetMatrix(runFont));
     CGContextTranslateCTM(context, offset.x, offset.y);
-    CGContextScaleCTM(context, _descriptor.scale * [self drawHScale], _descriptor.scale * [self drawVScale]);
+    CGContextScaleCTM(context, _descriptor.scale, _descriptor.scale * [self drawVScale]);
 }
 
 - (iTermCharacterBitmap *)bitmapForPart:(int)part {

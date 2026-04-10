@@ -2211,7 +2211,7 @@ static BOOL NSRangesAdjacent(NSRange lhs, NSRange rhs) {
         vScale = -2.0;
         y += _baselineOffset;  // ≈ -descent
     }
-    int x = point.x + positions[0];
+    const CGFloat x = point.x + positions[0];
     // Flip vertically and translate to (x, y).
     CGFloat m21 = 0.0;
     if (fakeItalic) {

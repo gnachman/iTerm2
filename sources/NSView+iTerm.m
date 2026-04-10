@@ -17,6 +17,17 @@
 
 static NSInteger gTakingSnapshot;
 
+NSString *CGAffineTransformDescription(CGAffineTransform tm) {
+    return [NSString stringWithFormat:@"[%g %g 0; %g %g 0; %g %g 1]",
+                                      tm.a,
+                                      tm.b,
+                                      tm.c,
+                                      tm.d,
+                                      tm.tx,
+                                      tm.ty];
+}
+
+
 NSRect iTermRectCenteredHorizontallyWithinRect(NSRect frameToCenter, NSRect container) {
     CGFloat centerOfContainer = NSMidX(container);
     CGFloat centerOfFrame = NSMidX(frameToCenter);

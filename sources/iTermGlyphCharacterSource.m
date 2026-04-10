@@ -78,13 +78,6 @@
                       iteration:iteration
                         context:_context];
     } else {
-        if (iTermLineAttributeIsDoubleWidth(_lineAttribute)) {
-            CGRect bbox;
-            CTFontGetBoundingRectsForGlyphs((__bridge CTFontRef)_font,
-                                            kCTFontOrientationDefault,
-                                            &glyph, &bbox, 1);
-            position.x -= bbox.origin.x;
-        }
         CTFontDrawGlyphs((__bridge CTFontRef)_font,
                          &glyph,
                          &position,
