@@ -22,6 +22,7 @@ extern NSString *const iTermAPIHelperFunctionCallErrorUserInfoKeyConnection;
 @class iTermParsedExpression;
 @class iTermScriptHistoryEntry;
 @class iTermVariableScope;
+@class PTYSession;
 @class NSWindow;
 
 typedef NS_ENUM(NSUInteger, iTermAPIHelperErrorCode) {
@@ -114,6 +115,7 @@ typedef NS_ENUM(NSUInteger, iTermNoAuthStatus) {
                                              string:(NSString *)string;
 - (iTermScriptHistoryEntry *)scriptHistoryEntryForConnectionKey:(NSString *)connectionKey;
 - (NSDictionary<NSString *, iTermTuple<id, ITMNotificationRequest *> *> *)serverOriginatedRPCSubscriptions;
+- (PTYSession *)sessionForAPIIdentifier:(NSString *)identifier includeBuriedSessions:(BOOL)includeBuriedSessions;
 
 @end
 

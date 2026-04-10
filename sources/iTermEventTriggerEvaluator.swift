@@ -45,6 +45,7 @@ class EventTriggerEvaluator: NSObject {
 
     @objc var triggerParametersUseInterpolatedStrings = false
     @objc var disabled = false
+    @objc var foregroundJob: String?
 
     /// Description of the owning session for logging purposes
     private let sessionDescription: String
@@ -486,7 +487,13 @@ class EventTriggerEvaluator: NSObject {
         }
 
         DLog("[\(sessionDescription)] Firing \(triggers.filter { !$0.disabled }.count) triggers for matchType \(matchType.rawValue)")
+        let currentJob = foregroundJob
         for trigger in triggers where !trigger.disabled {
+            if let triggerJob = trigger.job, !triggerJob.isEmpty,
+               triggerJob.caseInsensitiveCompare(currentJob ?? "") != .orderedSame {
+                DLog("[\(sessionDescription)] Skip trigger \(trigger.action) because job \(triggerJob) doesn't match foreground job \(currentJob ?? "nil")")
+                continue
+            }
             fireTrigger(trigger, capturedStrings: capturedStrings)
         }
     }

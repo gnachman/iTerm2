@@ -22,6 +22,7 @@
 @class iTermCommandHistoryCommandUseMO;
 @protocol iTermGenericNamedMarkReading;
 @class ToolNamedMarks;
+@class ToolStatus;
 @class iTermToolWrapper;
 @class iTermToolCodecierge;
 
@@ -53,7 +54,7 @@
 - (BOOL)toolbeltCurrentSessionIsBrowser;
 - (NSArray<id<iTermGenericNamedMarkReading>> *)toolbeltNamedMarks;
 - (ProfileType)toolbeltProfileType;
-
+- (BOOL)toolbeltWindowContainsSessionWithGUID:(NSString *)guid;
 @end
 
 @protocol ToolWrapperDelegate <NSObject>

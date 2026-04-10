@@ -41,6 +41,7 @@ typedef NS_OPTIONS(NSUInteger, PTYTabState) {
 - (void)tabInvalidateProxyIcon:(PTYTab *)tab;
 - (void)tabRemoveTab:(PTYTab *)tab;
 - (void)tab:(PTYTab *)tab didChangeToState:(PTYTabState)newState;
+- (void)tabDidChangeTabStatus:(PTYTab *)tab;
 - (void)tabDidChangeTmuxLayout:(PTYTab *)tab;
 - (void)tab:(PTYTab *)tab didSetMetalEnabled:(BOOL)useMetal;
 - (void)tabSessionDidChangeBackgroundColor:(PTYTab *)tab;

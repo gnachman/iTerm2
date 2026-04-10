@@ -9,6 +9,7 @@
 #import "iTermMetalGlyphKey.h"
 #import "iTermMetalRowData.h"
 #import "iTermTextRendererCommon.h"
+#import "ScreenChar.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -22,6 +23,23 @@ NS_CLASS_AVAILABLE(10_11, NA)
 @property (nonatomic) iTermMetalUnderlineDescriptor nonAsciiUnderlineDescriptor;
 @property (nonatomic) iTermMetalUnderlineDescriptor strikethroughUnderlineDescriptor;
 @property (nonatomic) CGFloat verticalOffset;
+
+// When YES, underline styles in PIUs are forced to None (for multi-pass underline rendering).
+@property (nonatomic) BOOL suppressUnderlines;
+
+// Compute underline/strikethrough spans from the attributes array and append to the given data objects.
+// inverseLUT maps visual column -> logical index (from BidiDisplayInfoObjc.inverseLUT).
+// Used to determine ASCII vs non-ASCII per column for descriptor color selection.
+- (void)computeUnderlineSpansFromAttributes:(const iTermMetalGlyphAttributes *)attributes
+                                      count:(int)count
+                                        row:(int)row
+                          markedRangeOnLine:(NSRange)markedRangeOnLine
+                                       line:(const screen_char_t *)line
+                                 lineLength:(int)lineLength
+                                 inverseLUT:(const int * _Nullable)inverseLUT
+                             inverseLUTLen:(int)inverseLUTLen
+                             underlineSpans:(NSMutableData *)underlineSpans
+                         strikethroughSpans:(NSMutableData *)strikethroughSpans;
 
 - (void)setGlyphKeysData:(iTermGlyphKeyData*)glyphKeysData
            glyphKeyCount:(NSUInteger)glyphKeyCount

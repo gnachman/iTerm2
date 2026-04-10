@@ -1215,8 +1215,44 @@ typedef struct {
     return [dict colorValue];
 }
 
++ (NSString *)amendedTabColorKey:(NSString *)baseKey
+                            dark:(BOOL)dark
+                         profile:(Profile *)profile {
+    if (![self boolForKey:KEY_USE_SEPARATE_COLORS_FOR_LIGHT_AND_DARK_MODE inProfile:profile]) {
+        return baseKey;
+    }
+    NSString *key = iTermAmendedColorKey2(baseKey, YES, dark);
+    if (profile[key]) {
+        return key;
+    }
+    NSString *fallbackKey = iTermAmendedColorKey2(baseKey, YES, !dark);
+    if (profile[fallbackKey]) {
+        return fallbackKey;
+    }
+    return baseKey;
+}
+
++ (id)objectForTabColorKey:(NSString *)baseKey
+                      dark:(BOOL)dark
+                   profile:(Profile *)profile {
+    NSString *key = [self amendedTabColorKey:baseKey dark:dark profile:profile];
+    return [self objectForKey:key inProfile:profile];
+}
+
++ (NSColor *)colorForTabColorKey:(NSString *)baseKey
+                            dark:(BOOL)dark
+                         profile:(Profile *)profile {
+    NSDictionary *dict = [NSDictionary castFrom:[self objectForTabColorKey:baseKey dark:dark profile:profile]];
+    return [dict colorValue];
+}
+
 + (BOOL)boolForColorKey:(NSString *)baseKey dark:(BOOL)dark profile:(NSDictionary *)profile {
     NSString *key = [self amendedColorKey:baseKey dark:dark profile:profile];
+    return [self boolForKey:key inProfile:profile];
+}
+
++ (BOOL)boolForTabColorKey:(NSString *)baseKey dark:(BOOL)dark profile:(NSDictionary *)profile {
+    NSString *key = [self amendedTabColorKey:baseKey dark:dark profile:profile];
     return [self boolForKey:key inProfile:profile];
 }
 
@@ -1639,4 +1675,3 @@ NSString *iTermAmendedColorKey2(NSString *baseKey, BOOL separate, BOOL dark) {
     }
     return [baseKey stringByAppendingString:COLORS_LIGHT_MODE_SUFFIX];
 }
-

@@ -437,8 +437,9 @@ static inline int iTermOuterPIUIndex(const bool &annotation, const bool &underli
     iTermASCIITextureParts parts = texture.parts[(size_t)code];
     vector_float4 underlineColor = { 0, 0, 0, 0 };
 
-    const bool &hasAnnotation = attributes[visualColumn].annotation;
-    const bool hasUnderline = attributes[visualColumn].underlineStyle != iTermMetalGlyphAttributesUnderlineNone;
+    const BOOL suppressUnderlines = self.suppressUnderlines;
+    const bool hasAnnotation = suppressUnderlines ? false : attributes[visualColumn].annotation;
+    const bool hasUnderline = suppressUnderlines ? false : attributes[visualColumn].underlineStyle != iTermMetalGlyphAttributesUnderlineNone;
     const int outerPIUIndex = iTermOuterPIUIndex(hasAnnotation, hasUnderline, false);
     if (hasAnnotation) {
         underlineColor = iTermAnnotationUnderlineColor;
@@ -450,9 +451,9 @@ static inline int iTermOuterPIUIndex(const bool &annotation, const bool &underli
         }
     }
 
-    iTermMetalGlyphAttributesUnderline underlineStyle = attributes[visualColumn].underlineStyle;
+    iTermMetalGlyphAttributesUnderline underlineStyle = suppressUnderlines ? iTermMetalGlyphAttributesUnderlineNone : attributes[visualColumn].underlineStyle;
     vector_float4 textColor = attributes[visualColumn].foregroundColor;
-    if (inMarkedRange) {
+    if (!suppressUnderlines && inMarkedRange) {
         // Marked range gets a yellow underline.
         underlineStyle = iTermMetalGlyphAttributesUnderlineSingle;
     }
@@ -648,8 +649,9 @@ typedef struct {
     }
 
     const iTermMetalGlyphAttributes *attributes = state->attributes;
-    const bool &hasAnnotation = attributes[visualIndex].annotation;
-    const bool hasUnderline = attributes[visualIndex].underlineStyle != iTermMetalGlyphAttributesUnderlineNone;
+    const BOOL suppressUnderlines = self.suppressUnderlines;
+    const bool hasAnnotation = suppressUnderlines ? false : attributes[visualIndex].annotation;
+    const bool hasUnderline = suppressUnderlines ? false : attributes[visualIndex].underlineStyle != iTermMetalGlyphAttributesUnderlineNone;
     const iTerm2::GlyphEntry *firstGlyphEntry = (*entries)[0];
     const int outerPIUIndex = iTermOuterPIUIndex(hasAnnotation, hasUnderline, firstGlyphEntry->_is_emoji);
     for (auto entry : *entries) {
@@ -672,7 +674,10 @@ typedef struct {
         piu->textureOffset = simd_make_float2(origin.x * reciprocal_atlas_size.x,
                                               origin.y * reciprocal_atlas_size.y);
         piu->textColor = attributes[visualIndex].foregroundColor;
-        if (attributes[visualIndex].annotation) {
+        if (suppressUnderlines) {
+            piu->underlineStyle = iTermMetalGlyphAttributesUnderlineNone;
+            piu->underlineColor = simd_make_float4(0, 0, 0, 0);
+        } else if (attributes[visualIndex].annotation) {
             piu->underlineStyle = iTermMetalGlyphAttributesUnderlineSingle;
             piu->underlineColor = iTermAnnotationUnderlineColor;
         } else if (state->inMarkedRange) {
@@ -693,6 +698,121 @@ typedef struct {
             // underlines.
             piu->underlineStyle = iTermMetalGlyphAttributesUnderlineNone;
         }
+    }
+}
+
+- (void)computeUnderlineSpansFromAttributes:(const iTermMetalGlyphAttributes *)attributes
+                                      count:(int)count
+                                        row:(int)row
+                          markedRangeOnLine:(NSRange)markedRangeOnLine
+                                       line:(const screen_char_t *)line
+                                 lineLength:(int)lineLength
+                                 inverseLUT:(const int *)inverseLUT
+                             inverseLUTLen:(int)inverseLUTLen
+                             underlineSpans:(NSMutableData *)underlineSpans
+                         strikethroughSpans:(NSMutableData *)strikethroughSpans {
+    BOOL inUnderlineSpan = NO;
+    BOOL inStrikethroughSpan = NO;
+    iTermMetalUnderlineSpan currentUnderline = {};
+    iTermMetalUnderlineSpan currentStrikethrough = {};
+
+    for (int col = 0; col < count; col++) {
+        iTermMetalGlyphAttributesUnderline rawStyle = attributes[col].underlineStyle;
+
+        // IME marked range overrides underline style.
+        if (NSLocationInRange(col, markedRangeOnLine)) {
+            rawStyle = iTermMetalGlyphAttributesUnderlineSingle;
+        }
+
+        const iTermMetalGlyphAttributesUnderline baseStyle =
+            (iTermMetalGlyphAttributesUnderline)(rawStyle & iTermMetalGlyphAttributesUnderlineBitmask);
+        const BOOL hasStrikethrough = (rawStyle & iTermMetalGlyphAttributesUnderlineStrikethroughFlag) != 0;
+
+        // Select the correct underline descriptor based on ASCII vs non-ASCII.
+        const int logicalIndex = (inverseLUT && col < inverseLUTLen) ? inverseLUT[col] : col;
+        const BOOL isASCII = (logicalIndex >= 0 && logicalIndex < lineLength &&
+                              !line[logicalIndex].complexChar &&
+                              !line[logicalIndex].image &&
+                              line[logicalIndex].code < 128);
+
+        // Resolve underline color (same priority as addASCIICellToPIUsForCode / addNonASCII).
+        vector_float4 underlineColor = {};
+        if (attributes[col].annotation) {
+            underlineColor = iTermAnnotationUnderlineColor;
+        } else if (attributes[col].hasUnderlineColor) {
+            underlineColor = attributes[col].underlineColor;
+        } else {
+            const iTermMetalUnderlineDescriptor descriptor = isASCII
+                ? _asciiUnderlineDescriptor
+                : _nonAsciiUnderlineDescriptor;
+            underlineColor = descriptor.color.w > 0
+                ? descriptor.color
+                : attributes[col].foregroundColor;
+        }
+
+        // Pack base style and ASCII flag into the style field.
+        const int asciiFlag = isASCII ? iTermMetalUnderlineSpanASCIIFlag : 0;
+        const int packedStyle = baseStyle | asciiFlag;
+
+        // Handle underline spans. Break on style, color, or ASCII status change.
+        if (baseStyle != iTermMetalGlyphAttributesUnderlineNone) {
+            if (inUnderlineSpan &&
+                currentUnderline.style == packedStyle &&
+                simd_equal(currentUnderline.color, underlineColor)) {
+                currentUnderline.endColumn = col;
+            } else {
+                if (inUnderlineSpan) {
+                    [underlineSpans appendBytes:&currentUnderline length:sizeof(currentUnderline)];
+                }
+                currentUnderline = (iTermMetalUnderlineSpan){
+                    .row = row,
+                    .startColumn = col,
+                    .endColumn = col,
+                    .style = packedStyle,
+                    .color = underlineColor,
+                };
+                inUnderlineSpan = YES;
+            }
+        } else {
+            if (inUnderlineSpan) {
+                [underlineSpans appendBytes:&currentUnderline length:sizeof(currentUnderline)];
+                inUnderlineSpan = NO;
+            }
+        }
+
+        // Handle strikethrough spans. Break on color or ASCII status change.
+        const int packedStrikethroughStyle = iTermMetalGlyphAttributesUnderlineStrikethrough | asciiFlag;
+        if (hasStrikethrough) {
+            if (inStrikethroughSpan &&
+                currentStrikethrough.style == packedStrikethroughStyle &&
+                simd_equal(currentStrikethrough.color, underlineColor)) {
+                currentStrikethrough.endColumn = col;
+            } else {
+                if (inStrikethroughSpan) {
+                    [strikethroughSpans appendBytes:&currentStrikethrough length:sizeof(currentStrikethrough)];
+                }
+                currentStrikethrough = (iTermMetalUnderlineSpan){
+                    .row = row,
+                    .startColumn = col,
+                    .endColumn = col,
+                    .style = packedStrikethroughStyle,
+                    .color = underlineColor,
+                };
+                inStrikethroughSpan = YES;
+            }
+        } else {
+            if (inStrikethroughSpan) {
+                [strikethroughSpans appendBytes:&currentStrikethrough length:sizeof(currentStrikethrough)];
+                inStrikethroughSpan = NO;
+            }
+        }
+    }
+
+    if (inUnderlineSpan) {
+        [underlineSpans appendBytes:&currentUnderline length:sizeof(currentUnderline)];
+    }
+    if (inStrikethroughSpan) {
+        [strikethroughSpans appendBytes:&currentStrikethrough length:sizeof(currentStrikethrough)];
     }
 }
 

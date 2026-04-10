@@ -300,8 +300,32 @@ final class iTermFunctionCallSuggesterTests: XCTestCase {
         let suggester = makeFunctionCallSuggester()
         let suggestions = suggester.suggestions(for: "add(x: foo?")
 
-        // After optional marker, expression is terminated
+        // After optional marker (OptionalPath token), expression is terminated
         XCTAssertEqual(suggestions.count, 0)
+    }
+
+    func testOptionalMarkerWithSpace() {
+        let suggester = makeFunctionCallSuggester()
+        let suggestions = suggester.suggestions(for: "add(x: foo ?")
+
+        // Space before ? uses ConditionalExpression ::= <LogicalOrExpr> '?' rule
+        XCTAssertEqual(suggestions.count, 0)
+    }
+
+    func testOptionalPathInEquality() {
+        let suggester = makeFunctionCallSuggester()
+        let suggestions = suggester.suggestions(for: "add(x: foo? ==")
+
+        // OptionalPath participates in equality — after ==, suggest all paths/functions
+        XCTAssertGreaterThan(suggestions.count, 0)
+    }
+
+    func testOptionalPathFollowedByComma() {
+        let suggester = makeFunctionCallSuggester()
+        let suggestions = suggester.suggestions(for: "add(x: foo?,")
+
+        // Terminated OptionalPath as arg value, comma starts next arg
+        XCTAssertGreaterThan(suggestions.count, 0)
     }
 
     // MARK: - iTermSwiftyStringSuggester: Literal String Tests

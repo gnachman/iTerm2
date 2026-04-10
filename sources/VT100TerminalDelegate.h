@@ -16,6 +16,15 @@
 @class iTermKittyImageCommand;
 @class iTermTokenExecutorUnpauser;
 
+// Per-field presence for VT100TabStatusUpdate. Omitted fields should not be modified.
+typedef NS_ENUM(NSInteger, VT100TabStatusUpdateFieldPresence) {
+    VT100TabStatusUpdateFieldNotSet,   // Field was not in the sequence
+    VT100TabStatusUpdateFieldCleared,  // Field was explicitly cleared (empty value)
+    VT100TabStatusUpdateFieldSet       // Field has a value
+};
+
+@class VT100TabStatusUpdate;
+
 typedef NS_ENUM(NSInteger, MouseMode) {
     MOUSE_REPORTING_NONE = -1,
     MOUSE_REPORTING_NORMAL = 0,
@@ -569,5 +578,7 @@ typedef NS_ENUM(NSUInteger, iTermUpdateBlockAction) {
 - (void)terminalStartWrappedCommand:(NSString *)command channel:(NSString *)uid;
 - (void)terminalExecDidFail;
 - (BOOL)terminalIsInDarkMode;
+
+- (void)terminalSetTabStatus:(VT100TabStatusUpdate *)status;
 
 @end

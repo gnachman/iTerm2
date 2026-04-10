@@ -11,5 +11,10 @@
 
 + (instancetype)parsedString:(NSString *)string;
 
+// Exposed for the parser to construct the null literal expression.
+- (instancetype)initWithExpressionType:(iTermParsedExpressionType)expressionType
+                                object:(nullable id)object
+                              optional:(BOOL)optional;
+
 @end
 

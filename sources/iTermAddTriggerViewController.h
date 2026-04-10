@@ -19,6 +19,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly) NSString *regex;
 @property (nonatomic, readonly, nullable) NSString *contentRegex;
 @property (nonatomic, readonly) NSString *name;
+@property (nonatomic, readonly, nullable) NSString *job;
 @property (nonatomic, readonly) id parameter;
 @property (nonatomic, readonly) NSString *action;
 @property (nonatomic, readonly) BOOL enabled;

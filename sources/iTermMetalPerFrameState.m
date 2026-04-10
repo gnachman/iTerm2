@@ -1376,7 +1376,8 @@ static BOOL iTermColorKeysEqual(const iTermTextColorKey *lhs,
             lhs->isBlock == rhs->isBlock);
 }
 
-static void iTermMetalSetUnderline(iTermMetalPerFrameState *self,
+// Returns YES if this cell has any underline or strikethrough.
+static BOOL iTermMetalSetUnderline(iTermMetalPerFrameState *self,
                                    BOOL annotated,
                                    BOOL inUnderlinedRange,
                                    BOOL underlineHyperlinks,
@@ -1430,6 +1431,7 @@ static void iTermMetalSetUnderline(iTermMetalPerFrameState *self,
     } else {
         attributes[visualX].hasUnderlineColor = NO;
     }
+    return attributes[visualX].underlineStyle != iTermMetalGlyphAttributesUnderlineNone;
 }
 
 static int iTermEmitGlyphsAndSetAttributes(iTermMetalPerFrameState *self,
@@ -1451,7 +1453,8 @@ static int iTermEmitGlyphsAndSetAttributes(iTermMetalPerFrameState *self,
                                            // out parameters:
                                            iTermCachedGlyphKeysBuffer *buf,
                                            iTermMetalGlyphAttributes *attributes,
-                                           int *drawableGlyphsPtr) {
+                                           int *drawableGlyphsPtr,
+                                           BOOL *hasUnderlineOrStrikethroughPtr) {
     const int *bidiLUT = [bidiInfo lut];
     const int bidiLUTLength = bidiInfo.numberOfCells;
     int asIndex = -1;
@@ -1571,17 +1574,19 @@ static int iTermEmitGlyphsAndSetAttributes(iTermMetalPerFrameState *self,
             attributes[visualX].foregroundColor = textColor;
             attributes[visualX].foregroundColor.w = 1;
         }
-        iTermMetalSetUnderline(self,
-                               annotated,
-                               inUnderlinedRange,
-                               underlineHyperlinks,
-                               line,
-                               currentColorKey,
-                               logicalIndex,
-                               visualX,
-                               url,
-                               ea,
-                               attributes);
+        if (iTermMetalSetUnderline(self,
+                                   annotated,
+                                   inUnderlinedRange,
+                                   underlineHyperlinks,
+                                   line,
+                                   currentColorKey,
+                                   logicalIndex,
+                                   visualX,
+                                   url,
+                                   ea,
+                                   attributes)) {
+            *hasUnderlineOrStrikethroughPtr = YES;
+        }
 
         // Swap current and previous
         iTermTextColorKey *temp = currentColorKey;
@@ -1653,7 +1658,8 @@ static int iTermEmitGlyphsAndSetAttributes(iTermMetalPerFrameState *self,
                      bidiInfo:(iTermBidiDisplayInfo *)bidiInfo
                drawableGlyphs:(int *)drawableGlyphsPtr
                          date:(out NSDate **)datePtr
-               belongsToBlock:(out BOOL *)belongsToBlockPtr {
+               belongsToBlock:(out BOOL *)belongsToBlockPtr
+  hasUnderlineOrStrikethrough:(out BOOL *)hasUnderlineOrStrikethroughPtr {
     iTermCachedGlyphKeysBuffer buf = { 0 };
     iTermCachedGlyphKeysBufferInit(&buf, glyphKeysData);
     if (_configuration->_timestampsEnabled) {
@@ -1738,6 +1744,7 @@ static int iTermEmitGlyphsAndSetAttributes(iTermMetalPerFrameState *self,
         }
     }
 
+    *hasUnderlineOrStrikethroughPtr = NO;
     *glyphKeyCountPtr = iTermEmitGlyphsAndSetAttributes(self,
                                                         line,
                                                         row,
@@ -1756,7 +1763,8 @@ static int iTermEmitGlyphsAndSetAttributes(iTermMetalPerFrameState *self,
                                                         imageRuns,
                                                         &buf,
                                                         attributes,
-                                                        drawableGlyphsPtr);
+                                                        drawableGlyphsPtr,
+                                                        hasUnderlineOrStrikethroughPtr);
 
     // Tweak the text color for the cell that has a box cursor.
     if (row == _cursorInfo.coord.y &&

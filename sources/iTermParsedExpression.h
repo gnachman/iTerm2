@@ -90,9 +90,9 @@ typedef NS_ENUM(NSUInteger, iTermParsedExpressionType) {
 - (iTermParsedExpression *)optionalized;
 - (iTermParsedExpression *)deoptionalized;
 
-// Returns subexpression if this is a Subexpression type.
-// Wraps function calls in Subexpression for use in arithmetic.
-// Returns nil for other types (caller should handle error).
+// Returns a Subexpression for types that can participate in binary operations:
+// Subexpression, FunctionCall, String, IndirectValue, and Nil (when optional or null literal).
+// Returns nil for other types or bare undefined variables (caller should handle error).
 - (iTermSubexpression * _Nullable)asSubexpression;
 
 @end

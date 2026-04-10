@@ -99,6 +99,14 @@ make                 # build iTerm2
 
 Re-run `make paranoid-deps` whenever your active Xcode version changes -- the file `last-xcode-version` tracks which version was last used.
 
+If your Xcode version differs from the one committed in `last-xcode-version` (e.g. you're on an older machine), suppress the noise without committing your local version:
+
+```bash
+git update-index --skip-worktree last-xcode-version
+```
+
+To undo: `git update-index --no-skip-worktree last-xcode-version`
+
 #### Build
 
 ```bash
@@ -133,9 +141,11 @@ If you prefer building from Xcode instead of the command line:
 
 1. Complete the **Clone** and **Setup** steps above.
 2. Configure code signing with your team ID:
+
    ```bash
    tools/set_team_id.sh YOUR_TEAM_ID
    ```
+
    This script updates `DEVELOPMENT_TEAM` in all Xcode project files (iTerm2 and its dependencies like Sparkle, SwiftyMarkdown, etc.) so code signing works with your identity.
 
    **To find your team ID:** Open Keychain Access, find your "Apple Development" or "Developer ID" certificate, and look for the 10-character string in parentheses (e.g., "H7V7XYVQ7D").

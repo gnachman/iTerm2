@@ -64,3 +64,16 @@ extension NSView {
         }?.tag ?? defaultValue
     }
 }
+
+@objc
+extension NSView {
+    var it_isVisible: Bool {
+        guard !isHidden, let window, window.isVisible else {
+            return false
+        }
+        if self === window.contentView {
+            return true
+        }
+        return superview?.it_isVisible ?? false
+    }
+}

@@ -2530,12 +2530,12 @@ static BOOL NSRangesAdjacent(NSRange lhs, NSRange rhs) {
         }
         NSDictionary *const attributes = [attributedString attributesAtIndex:range.location
                                                               effectiveRange:nil];
-        CGFloat minX = INFINITY;
-        CGFloat maxX = -INFINITY;
-        for (NSInteger i = 0; i < range.length; i++) {
-            minX = MIN(minX, stringPositions[range.location + i]);
-            maxX = MAX(maxX, stringPositions[range.location + i] + _cellSize.width);
-        }
+        const CGFloat minX = stringPositions[range.location];
+        // Use iTermUnderlineLengthAttribute (cell count) to compute the right edge.
+        // This correctly handles double-width characters which occupy two cells
+        // per character in the attributed string.
+        NSNumber *ulLength = attributes[iTermUnderlineLengthAttribute];
+        const CGFloat maxX = minX + (ulLength ? ulLength.intValue : (int)range.length) * _cellSize.width;
         const NSSize size = NSMakeSize(maxX - minX, _cellSize.height * 2);
         const CGFloat xOrigin = origin.x + minX;
         const NSRect rect = NSMakeRect(xOrigin,

@@ -8,6 +8,7 @@
 #import <Foundation/Foundation.h>
 
 #import "iTermMetalConfig.h"
+#import "iTermMetalGlyphKey.h"
 #import "iTermPreciseTimer.h"
 #import "VT100GridTypes.h"
 
@@ -55,6 +56,8 @@ typedef NS_ENUM(int, iTermMetalFrameDataStat) {
     iTermMetalFrameDataStatPqCreateOffscreenCommandLineTS,
     iTermMetalFrameDataStatPqCreateMarginTS,
     iTermMetalFrameDataStatPqCreateBlockTS,
+    iTermMetalFrameDataStatPqCreateUnderlineTS,
+    iTermMetalFrameDataStatPqCreateUnderlineCompositeTS,
     iTermMetalFrameDataStatPqCreateRectangleTS,
     iTermMetalFrameDataStatPqCreateTextTS,
     iTermMetalFrameDataStatPqCreateIndicatorsTS,
@@ -76,6 +79,8 @@ typedef NS_ENUM(int, iTermMetalFrameDataStat) {
     iTermMetalFrameDataStatPqEnqueueDrawCursor,
     iTermMetalFrameDataStatPqEnqueueDrawMarks,
     iTermMetalFrameDataStatPqEnqueueDrawBlocks,
+    iTermMetalFrameDataStatPqEnqueueDrawUnderlines,
+    iTermMetalFrameDataStatPqEnqueueDrawUnderlineComposite,
     iTermMetalFrameDataStatPqEnqueueDrawRectangles,
     iTermMetalFrameDataStatPqEnqueueDrawCursorGuide,
     iTermMetalFrameDataStatPqEnqueueDrawOffscreenCommandLineBgPre,
@@ -169,6 +174,18 @@ NS_CLASS_AVAILABLE(10_11, NA)
 @property (nonatomic) CGFloat rightExtraPixels;
 @property (nonatomic) CGFloat vmargin;
 
+// Multi-pass underline rendering. Populated during row data setup.
+@property (nonatomic) BOOL hasUnderlines;
+@property (nonatomic, strong, nullable) NSMutableData *underlineSpanData;  // C array of iTermMetalUnderlineSpan
+@property (nonatomic, strong, nullable) NSMutableData *strikethroughSpanData;  // C array of iTermMetalUnderlineSpan
+@property (nonatomic, strong, nullable) NSMutableData *offscreenUnderlineSpanData;  // offscreen command line
+@property (nonatomic, strong, nullable) NSMutableData *offscreenStrikethroughSpanData;  // offscreen command line
+
+// Offscreen textures for multi-pass underline compositing.
+// Created only when hasUnderlines && useMultiPassUnderlineRenderer.
+@property (nonatomic, strong, nullable) MTLRenderPassDescriptor *textOffscreenRPD;       // Texture T: text only
+@property (nonatomic, strong, nullable) MTLRenderPassDescriptor *underlineOffscreenRPD;  // Texture U: underlines only
+
 // When drawing to an intermediate texture there may be two passes (i.e., two render encoders)
 @property (nonatomic) int currentPass;
 
@@ -193,6 +210,7 @@ NS_CLASS_AVAILABLE(10_11, NA)
 #endif
 - (void)createIntermediateRenderPassDescriptor;
 - (void)createTemporaryRenderPassDescriptor;
+- (void)createUnderlineOffscreenRenderPassDescriptors;
 - (void)dispatchToQueue:(dispatch_queue_t)queue forCompletion:(void (^)(void))block;
 - (void)enqueueDrawCallsWithBlock:(void (^)(void))block;
 - (void)didCompleteWithAggregateStats:(iTermPreciseTimerStats *)aggregateStats

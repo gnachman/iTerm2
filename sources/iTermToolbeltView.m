@@ -39,6 +39,7 @@ NSString *const kPasteHistoryToolName = @"Paste History";
 NSString *const kProfilesToolName = @"Profiles";
 NSString *const kSnippetsToolName = @"Snippets";
 NSString *const kNamedMarksToolName = @"Named Marks";
+NSString *const kStatusToolName = @"Session Status";
 NSString *const kCodeciergeToolName = @"Codecierge";
 
 NSString *const kToolbeltShouldHide = @"kToolbeltShouldHide";
@@ -84,6 +85,7 @@ static NSString *const kDynamicToolURL = @"URL";
     [iTermToolbeltView registerToolWithName:kCapturedOutputToolName withClass:[ToolCapturedOutputView class]];
     [iTermToolbeltView registerToolWithName:kCommandHistoryToolName withClass:[ToolCommandHistoryView class]];
     [iTermToolbeltView registerToolWithName:kNamedMarksToolName withClass:[ToolNamedMarks class]];
+    [iTermToolbeltView registerToolWithName:kStatusToolName withClass:[ToolStatus class]];
     [iTermToolbeltView registerToolWithName:kRecentDirectoriesToolName withClass:[ToolDirectoriesView class]];
     [iTermToolbeltView registerToolWithName:kJobsToolName withClass:[ToolJobs class]];
     [iTermToolbeltView registerToolWithName:kNotesToolName withClass:[ToolNotes class]];

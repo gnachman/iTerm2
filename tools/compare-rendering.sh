@@ -32,4 +32,13 @@ fi
 
 FILE_URL="file://$(cd "$(dirname "$FILE")" && pwd)/$(basename "$FILE")"
 
-exec "$APP" -compare-rendering "$FILE_URL" -rows "$ROWS" -columns "$COLS"
+OUTPUT=$("$APP" -suite iterm2-compare-rendering -compare-rendering "$FILE_URL" -rows "$ROWS" -columns "$COLS" 2>&1)
+echo "$OUTPUT"
+
+if echo "$OUTPUT" | grep -q "^RESULT: PASS$"; then
+    exit 0
+elif echo "$OUTPUT" | grep -q "^RESULT: FAIL$"; then
+    exit 1
+else
+    exit 2
+fi

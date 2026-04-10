@@ -1,10 +1,19 @@
 #import <XCTest/XCTest.h>
 #import "PTYSession.h"
 
+#import "ITAddressBookMgr.h"
 #import "iTermPasteHelper.h"
+#import "iTermProfilePreferences.h"
 #import "iTermWarning.h"
 
 typedef NSModalResponse (^WarningBlockType)(NSAlert *alert, NSString *identifier);
+
+static NSDictionary *PTYSessionTestEncodedColor(CGFloat red, CGFloat green, CGFloat blue) {
+    return [ITAddressBookMgr encodeColor:[NSColor colorWithCalibratedRed:red
+                                                                   green:green
+                                                                    blue:blue
+                                                                   alpha:1]];
+}
 
 @interface FakePasteHelper : iTermPasteHelper
 @property(nonatomic, copy) NSString *string;
@@ -133,6 +142,60 @@ typedef NSModalResponse (^WarningBlockType)(NSAlert *alert, NSString *identifier
     XCTAssert(!_fakePasteHelper.slowly);
     XCTAssert(!_fakePasteHelper.escapeShellChars);
     XCTAssert(_fakePasteHelper.spacesPerTab == 8);
+}
+
+- (void)testTabColorFallsBackToOppositeMode {
+    NSDictionary *lightColor = PTYSessionTestEncodedColor(1, 0.25, 0);
+    Profile *profile = @{
+        KEY_USE_SEPARATE_COLORS_FOR_LIGHT_AND_DARK_MODE: @YES,
+        KEY_USE_TAB_COLOR COLORS_LIGHT_MODE_SUFFIX: @YES,
+        KEY_TAB_COLOR COLORS_LIGHT_MODE_SUFFIX: lightColor,
+    };
+
+    XCTAssertTrue([iTermProfilePreferences boolForTabColorKey:KEY_USE_TAB_COLOR dark:YES profile:profile]);
+    XCTAssertEqualObjects([iTermProfilePreferences objectForTabColorKey:KEY_TAB_COLOR dark:YES profile:profile],
+                          lightColor);
+}
+
+- (void)testTabColorPrefersCurrentModeWhenExplicitlySet {
+    NSDictionary *lightColor = PTYSessionTestEncodedColor(1, 0.25, 0);
+    NSDictionary *darkColor = PTYSessionTestEncodedColor(0.1, 0.2, 0.9);
+    Profile *profile = @{
+        KEY_USE_SEPARATE_COLORS_FOR_LIGHT_AND_DARK_MODE: @YES,
+        KEY_USE_TAB_COLOR COLORS_LIGHT_MODE_SUFFIX: @YES,
+        KEY_TAB_COLOR COLORS_LIGHT_MODE_SUFFIX: lightColor,
+        KEY_USE_TAB_COLOR COLORS_DARK_MODE_SUFFIX: @YES,
+        KEY_TAB_COLOR COLORS_DARK_MODE_SUFFIX: darkColor,
+    };
+
+    XCTAssertTrue([iTermProfilePreferences boolForTabColorKey:KEY_USE_TAB_COLOR dark:YES profile:profile]);
+    XCTAssertEqualObjects([iTermProfilePreferences objectForTabColorKey:KEY_TAB_COLOR dark:YES profile:profile],
+                          darkColor);
+}
+
+- (void)testTabColorFallsBackToSharedKey {
+    NSDictionary *sharedColor = PTYSessionTestEncodedColor(0.4, 0.8, 0.2);
+    Profile *profile = @{
+        KEY_USE_SEPARATE_COLORS_FOR_LIGHT_AND_DARK_MODE: @YES,
+        KEY_USE_TAB_COLOR: @YES,
+        KEY_TAB_COLOR: sharedColor,
+    };
+
+    XCTAssertTrue([iTermProfilePreferences boolForTabColorKey:KEY_USE_TAB_COLOR dark:YES profile:profile]);
+    XCTAssertEqualObjects([iTermProfilePreferences objectForTabColorKey:KEY_TAB_COLOR dark:YES profile:profile],
+                          sharedColor);
+}
+
+- (void)testTabColorDoesNotFallBackPastExplicitDisabledMode {
+    NSDictionary *lightColor = PTYSessionTestEncodedColor(1, 0.25, 0);
+    Profile *profile = @{
+        KEY_USE_SEPARATE_COLORS_FOR_LIGHT_AND_DARK_MODE: @YES,
+        KEY_USE_TAB_COLOR COLORS_LIGHT_MODE_SUFFIX: @YES,
+        KEY_TAB_COLOR COLORS_LIGHT_MODE_SUFFIX: lightColor,
+        KEY_USE_TAB_COLOR COLORS_DARK_MODE_SUFFIX: @NO,
+    };
+
+    XCTAssertFalse([iTermProfilePreferences boolForTabColorKey:KEY_USE_TAB_COLOR dark:YES profile:profile]);
 }
 
 #pragma mark - iTermWarningHandler

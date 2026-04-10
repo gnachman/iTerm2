@@ -221,7 +221,7 @@ int decode_utf8_char(const unsigned char * restrict datap,
 - (NSString *)stringWithFirstLetterCapitalized;
 
 // Given a bitmask of modifiers like NSEventModifierFlagOption, return a string indicating those modifiers.
-+ (NSString *)stringForModifiersWithMask:(NSUInteger)mask;
++ (NSString *)stringForModifiersWithMask:(NSUInteger)mask NS_SWIFT_NAME(modifierSymbols(mask:));
 
 // Returns a fresh UUID
 + (NSString *)uuid;

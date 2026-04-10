@@ -258,6 +258,7 @@ typedef NS_ENUM(NSUInteger, VT100ScreenTriggerCheckType) {
 - (void)mutateAsynchronously:(void (^)(VT100Terminal *terminal,
                                        VT100ScreenMutableState *mutableState,
                                        id<VT100ScreenDelegate> delegate))block;
+- (void)setForegroundJobForTriggerFiltering:(nullable NSString *)job;
 - (void)beginEchoProbeWithBackspace:(NSData *)backspace
                            password:(NSString *)password
                            delegate:(id<iTermEchoProbeDelegate>)echoProbeDelegate;
