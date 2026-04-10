@@ -151,6 +151,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (BOOL)disableSmartSelectionActionsOnClick;
 + (BOOL)disableTabBarTooltips;
 + (BOOL)disableTopRightIndicators;
++ (BOOL)leftTabBarProgressBarsAreHorizontal;
 + (BOOL)disableTmuxWindowPositionRestoration;
 + (BOOL)disableTmuxWindowResizing;
 + (BOOL)disableWindowShadowWhenTransparencyOnMojave;

@@ -423,7 +423,9 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
 
     @objc func progressBarRect(forTabCell cell: PSMTabBarCell) -> NSRect {
         let cellFrame = cell.frame
-        if _orientation == .verticalOrientation {
+        let showVerticalProgressBar = (_orientation == .verticalOrientation &&
+                                       !iTermAdvancedSettingsModel.leftTabBarProgressBarsAreHorizontal())
+        if showVerticalProgressBar {
             return NSRect(x: cellFrame.origin.x,
                           y: cellFrame.origin.y,
                           width: PSMTabBarProgressBarHeight,

@@ -305,6 +305,7 @@ DEFINE_BOOL(disregardDockSettingToOpenTabsInsteadOfWindows, YES, SECTION_TABS @"
 DEFINE_BOOL(convertTabDragToWindowDragForSolitaryTabInCompactOrMinimalTheme, YES, SECTION_TABS @"In the Minimal and Compact themes when there is a single tab and the tab bar is visible, should dragging the tab bar move the window?\nThis also affects windows without titlebars in any theme.");
 DEFINE_BOOL(highVisibility, YES, SECTION_TABS @"High Contrast modes maximize visibility.\nWhen enabled, the dark high-contrast theme emphasizes visibility over beauty.");
 DEFINE_BOOL(drawBottomLineForHorizontalTabBar, YES, SECTION_TABS @"Draw bottom line for horizontal tabbar in Regular, Dark and Light theme?");
+DEFINE_BOOL(leftTabBarProgressBarsAreHorizontal, NO, SECTION_TABS @"Draw horizontal progress bars in left-side tab bars?\nWhen disabled, left-side tab bars show vertical progress bars along the leading edge of each tab.");
 DEFINE_BOOL(disableTabBarTooltips, NO, SECTION_TABS @"Disable tab bar tooltips?");
 DEFINE_BOOL(useCustomTabBarFontSize, NO, SECTION_TABS @"Use custom font size for tab labels?\nSee also advanced setting “Custom tab label font size”.");
 DEFINE_FLOAT(customTabBarFontSize, 11.0, SECTION_TABS @"Custom tab label font size\nFor this to take effect, turn on “Use custom font size for tab labels?”.");

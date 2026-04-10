@@ -264,7 +264,9 @@
 
 - (NSRect)progressBarRectForTabCell:(PSMTabBarCell *)cell {
     NSRect cellFrame = [cell frame];
-    if (_orientation == PSMTabBarVerticalOrientation) {
+    const BOOL showVerticalProgressBar = (_orientation == PSMTabBarVerticalOrientation &&
+                                          ![iTermAdvancedSettingsModel leftTabBarProgressBarsAreHorizontal]);
+    if (showVerticalProgressBar) {
         return NSMakeRect(cellFrame.origin.x,
                           cellFrame.origin.y,
                           PSMTabBarProgressBarHeight,

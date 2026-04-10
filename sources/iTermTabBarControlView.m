@@ -22,6 +22,10 @@
 - (NSRect)_opaqueRectForWindowMoveWhenInTitlebar;
 @end
 
+@interface PSMTabBarControl (Private)
+- (void)syncTabProgressBars;
+@end
+
 typedef NS_ENUM(NSInteger, iTermTabBarFlashState) {
     kFlashOff,
     kFlashHolding,  // Regular delay
@@ -56,8 +60,17 @@ typedef NS_ENUM(NSInteger, iTermTabBarFlashState) {
         }
         self.showAddTabButton = ![iTermAdvancedSettingsModel removeAddTabButton];
         self.selectsTabsOnMouseDown = [iTermAdvancedSettingsModel selectsTabsOnMouseDown];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(advancedSettingsDidChange:)
+                                                     name:iTermAdvancedSettingsDidChange
+                                                   object:nil];
     }
     return self;
+}
+
+- (void)dealloc {
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
+    [super dealloc];
 }
 
 - (void)setCmdPressed:(BOOL)cmdPressed {
@@ -322,6 +335,11 @@ typedef NS_ENUM(NSInteger, iTermTabBarFlashState) {
     return [self cellShouldShowTabProgressBar:cell];
 }
 
+- (BOOL)tabProgressBarsShouldBeVertical {
+    return (self.orientation == PSMTabBarVerticalOrientation &&
+            ![iTermAdvancedSettingsModel leftTabBarProgressBarsAreHorizontal]);
+}
+
 - (NSView *)customProgressBarViewForTabCell:(PSMTabBarCell *)cell {
     iTermProgressBarView *progressBar = [[[iTermProgressBarView alloc] init] autorelease];
     progressBar.heightValue = PSMTabBarProgressBarHeight;
@@ -331,10 +349,14 @@ typedef NS_ENUM(NSInteger, iTermTabBarFlashState) {
 - (void)configureCustomProgressBarView:(NSView *)view forTabCell:(PSMTabBarCell *)cell {
     iTermProgressBarView *progressBar = (iTermProgressBarView *)view;
     progressBar.heightValue = PSMTabBarProgressBarHeight;
-    progressBar.vertical = (self.orientation == PSMTabBarVerticalOrientation);
+    progressBar.vertical = [self tabProgressBarsShouldBeVertical];
     progressBar.darkMode = self.style.useLightControls;
     progressBar.colorScheme = [self tabProgressBarColorSchemeForCell:cell];
     progressBar.state = (VT100ScreenProgress)cell.progress;
+}
+
+- (void)advancedSettingsDidChange:(NSNotification *)notification {
+    [self syncTabProgressBars];
 }
 
 - (void)setFlashState:(iTermTabBarFlashState)flashState {
