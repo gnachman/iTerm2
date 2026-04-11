@@ -1158,15 +1158,25 @@ static NSArray<NSString *> *gTerminalCachedCombinedAccountNames;
     __weak __typeof(self) weakSelf = self;
     [self runModal:alert completion:^(NSModalResponse response) {
         if (response == NSAlertSecondButtonReturn) {
-            [weakSelf copy:password];
+            [weakSelf copyPasswordToClipboard:password];
         }
     }];
 }
 
-- (void)copy:(NSString *)password {
+- (void)copyPasswordToClipboard:(NSString *)password {
+    if (!password) {
+        return;
+    }
     NSPasteboard *pasteboard = [NSPasteboard generalPasteboard];
     [pasteboard declareTypes:@[ NSPasteboardTypeString ] owner:self];
     [pasteboard setString:password forType:NSPasteboardTypeString];
+}
+
+// Handle ⌘C. The old `copy:` method expected an NSString argument, but
+// AppKit sends the NSMenuItem as `sender`, causing a crash in
+// -[NSPasteboard setString:forType:].
+- (void)copy:(id)sender {
+    [self copyPassword:sender];
 }
 
 - (IBAction)copyPassword:(id)sender {
@@ -1184,9 +1194,7 @@ static NSArray<NSString *> *gTerminalCachedCombinedAccountNames;
 }
 
 - (void)didFetchPasswordToCopy:(NSString *)password {
-    NSPasteboard *pasteboard = [NSPasteboard generalPasteboard];
-    [pasteboard declareTypes:@[ NSPasteboardTypeString ] owner:self];
-    [pasteboard setString:password forType:NSPasteboardTypeString];
+    [self copyPasswordToClipboard:password];
 }
 
 - (BOOL)shouldProbe {
