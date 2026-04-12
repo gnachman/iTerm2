@@ -89,7 +89,8 @@ from iterm2.triggers import (
     HostChangedEventTrigger, UserChangedEventTrigger, IdleEventTrigger,
     ActivityAfterIdleEventTrigger, SessionEndedEventTrigger,
     BellReceivedEventTrigger, LongRunningCommandEventTrigger,
-    CustomEscapeSequenceEventTrigger)
+    CustomEscapeSequenceEventTrigger,
+    NotificationPostedEventTrigger)
 
 from iterm2.util import (
     frame_str, size_str, Size, Point, Frame, CoordRange, Range,

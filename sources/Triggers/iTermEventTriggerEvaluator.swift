@@ -175,6 +175,10 @@ class EventTriggerEvaluator: NSObject {
         return hasEnabledTrigger(for: .eventCustomEscapeSequence)
     }
 
+    @objc var hasNotificationPostedTrigger: Bool {
+        return hasEnabledTrigger(for: .eventNotificationPosted)
+    }
+
     private func hasEnabledTrigger(for matchType: iTermTriggerMatchType) -> Bool {
         guard let triggers = eventTriggers[matchType] else { return false }
         return triggers.contains { !$0.disabled }
@@ -380,6 +384,29 @@ class EventTriggerEvaluator: NSObject {
         }
     }
 
+    /// Called when a notification is posted by a control sequence.
+    /// `messages` contains the decoded text values from the notification (e.g., title, message, subtitle).
+    /// The trigger fires if any of them matches the filter regex.
+    @objc func notificationPosted(messages: [String]) {
+        DLog("[\(sessionDescription)] Notification posted: \(messages)")
+        guard !disabled else {
+            DLog("[\(sessionDescription)] Disabled, skipping notification posted triggers")
+            return
+        }
+        guard let triggers = eventTriggers[.eventNotificationPosted] else {
+            DLog("[\(sessionDescription)] No notification posted triggers configured")
+            return
+        }
+
+        for trigger in triggers where !trigger.disabled {
+            if matchesNotificationMessageFilter(trigger: trigger, messages: messages) {
+                fireTrigger(trigger, capturedStrings: messages)
+            } else {
+                DLog("[\(sessionDescription)] Messages \(messages) did not match filter for trigger \(trigger.action)")
+            }
+        }
+    }
+
     // MARK: - Timer Management
 
     private func invalidateAllTimers() {
@@ -580,6 +607,13 @@ class EventTriggerEvaluator: NSObject {
 
     private func matchesCommandFilter(trigger: Trigger, command: String) -> Bool {
         return matchesRegexParam(trigger: trigger, paramKey: "commandRegex", value: command)
+    }
+
+    private func matchesNotificationMessageFilter(trigger: Trigger, messages: [String]) -> Bool {
+        guard let pattern = trigger.eventParams?["messageRegex"] as? String, !pattern.isEmpty else {
+            return true
+        }
+        return messages.contains { matchesRegexParam(trigger: trigger, paramKey: "messageRegex", value: $0) }
     }
 }
 

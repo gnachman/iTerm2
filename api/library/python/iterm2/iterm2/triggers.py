@@ -28,6 +28,7 @@ class MatchType(enum.Enum):
     EVENT_BELL_RECEIVED = 108
     EVENT_LONG_RUNNING_COMMAND = 109
     EVENT_CUSTOM_ESCAPE_SEQUENCE = 110
+    EVENT_NOTIFICATION_POSTED = 111
 
     @staticmethod
     def is_event(match_type: 'MatchType') -> bool:
@@ -145,6 +146,7 @@ def _decode_event_trigger(
         MatchType.EVENT_BELL_RECEIVED: BellReceivedEventTrigger,
         MatchType.EVENT_LONG_RUNNING_COMMAND: LongRunningCommandEventTrigger,
         MatchType.EVENT_CUSTOM_ESCAPE_SEQUENCE: CustomEscapeSequenceEventTrigger,
+        MatchType.EVENT_NOTIFICATION_POSTED: NotificationPostedEventTrigger,
     }
 
     if match_type is not None and match_type in event_classes:
@@ -1626,4 +1628,54 @@ class CustomEscapeSequenceEventTrigger(EventTrigger):
             action_classes: typing.Dict[str, typing.Type[Trigger]]) -> 'CustomEscapeSequenceEventTrigger':
         sequence_id = event_params.get("sequenceId") if event_params else None
         return CustomEscapeSequenceEventTrigger(action_name, param, enabled, sequence_id)
+
+
+class NotificationPostedEventTrigger(EventTrigger):
+    """Trigger that fires when a notification is posted by a control sequence (OSC 9).
+
+    :param action_name: The action to perform.
+    :param param: The parameter for the action.
+    :param enabled: Whether the trigger is enabled.
+    :param message_regex: Optional regex pattern to match against the notification
+        message.
+    """
+    def __init__(
+            self,
+            action_name: str,
+            param,
+            enabled: bool,
+            message_regex: typing.Optional[str] = None):
+        event_params = {}
+        if message_regex:
+            event_params["messageRegex"] = message_regex
+        super().__init__(
+            match_type=MatchType.EVENT_NOTIFICATION_POSTED,
+            action_name=action_name,
+            param=param,
+            enabled=enabled,
+            event_params=event_params)
+        self.__message_regex = message_regex
+
+    @property
+    def message_regex(self) -> typing.Optional[str]:
+        """Regex pattern to match against the notification message."""
+        return self.__message_regex
+
+    @message_regex.setter
+    def message_regex(self, value: typing.Optional[str]):
+        self.__message_regex = value
+        if value:
+            self.event_params["messageRegex"] = value
+        elif "messageRegex" in self.event_params:
+            del self.event_params["messageRegex"]
+
+    @staticmethod
+    def deserialize(
+            action_name: str,
+            param,
+            enabled: bool,
+            event_params: typing.Optional[dict],
+            action_classes: typing.Dict[str, typing.Type[Trigger]]) -> 'NotificationPostedEventTrigger':
+        message_regex = event_params.get("messageRegex") if event_params else None
+        return NotificationPostedEventTrigger(action_name, param, enabled, message_regex)
 
