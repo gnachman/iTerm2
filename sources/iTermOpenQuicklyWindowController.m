@@ -18,7 +18,6 @@
 #import "iTermSnippetsMenuController.h"
 #import "DebugLogging.h"
 #import "NSAppearance+iTerm.h"
-#import "NSColor+iTerm.h"
 #import "NSObject+iTerm.h"
 #import "NSTextField+iTerm.h"
 #import "NSWindow+iTerm.h"
@@ -142,10 +141,7 @@
 - (void)presentWindow {
     [_model removeAllItems];
     [_table reloadData];
-    PTYSession *session = [[iTermController sharedInstance] currentTerminal].currentSession;
-    NSColor *bgColor = session.effectiveUnprocessedBackgroundColor;
-    BOOL isDark = bgColor ? bgColor.perceivedBrightness < 0.5 : [NSAppearance it_appearanceForCurrentTheme].it_isDark;
-    self.window.appearance = [NSAppearance appearanceNamed:isDark ? NSAppearanceNameDarkAqua : NSAppearanceNameAqua];
+    self.window.appearance = [NSAppearance it_appearanceForCurrentTheme];
     // Set the window's frame to be table-less initially.
     [self.window setFrame:[self frame] display:YES animate:NO];
     [_textField selectText:nil];

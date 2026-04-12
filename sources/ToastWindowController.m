@@ -9,7 +9,6 @@
 #import "ToastWindowController.h"
 #import <QuartzCore/QuartzCore.h>
 #import "NSAppearance+iTerm.h"
-#import "NSColor+iTerm.h"
 #import "NSScreen+iTerm.h"
 #import "PTYSession.h"
 #import "PseudoTerminal.h"
@@ -62,8 +61,8 @@ static NSMutableArray *visibleToast;
     ToastWindowController *toast = [[ToastWindowController alloc] init];
 
     PTYSession *session = [[iTermController sharedInstance] currentTerminal].currentSession;
-    NSColor *bgColor = session.effectiveUnprocessedBackgroundColor;
-    BOOL isDark = bgColor ? bgColor.perceivedBrightness < 0.5 : [NSAppearance it_appearanceForCurrentTheme].it_isDark;
+    NSAppearance *sessionAppearance = [NSAppearance it_appearanceForCurrentSessionWithBackgroundColor:session.effectiveUnprocessedBackgroundColor];
+    BOOL isDark = sessionAppearance.it_isDark;
 
     NSTextField *textField = [[NSTextField alloc] init];
     [textField setTextColor:isDark ? [NSColor whiteColor] : [NSColor blackColor]];

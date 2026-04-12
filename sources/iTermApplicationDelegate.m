@@ -36,7 +36,6 @@
 #import "NSApplication+iTerm.h"
 #import "NSArray+iTerm.h"
 #import "NSBundle+iTerm.h"
-#import "NSColor+iTerm.h"
 #import "NSData+GZIP.h"
 #import "NSFileManager+iTerm.h"
 #import "NSFont+iTerm.h"
@@ -239,7 +238,6 @@ static BOOL hasBecomeActive = NO;
     id<NSObject> _appNapStoppingActivity;
 
     BOOL _sparkleRestarting;  // Is Sparkle about to restart the app?
-    BOOL _waitingForSparkleWindow;  // Sparkle is about to show a window; apply theme appearance when it does.
 
     BOOL _orphansAdopted;  // Have orphan servers been adopted?
 
@@ -2276,20 +2274,6 @@ static iTermKeyEventReplayer *gReplayer;
     [suUpdater checkForUpdates:(sender)];
 }
 
-#pragma mark - SUUpdaterDelegate
-
-- (void)updater:(SUUpdater *)updater didFindValidUpdate:(SUAppcastItem *)item {
-    _waitingForSparkleWindow = YES;
-}
-
-- (void)updaterWillShowModalAlert:(SUUpdater *)updater {
-    _waitingForSparkleWindow = YES;
-}
-
-- (void)updaterDidShowModalAlert:(SUUpdater *)updater {
-    _waitingForSparkleWindow = NO;
-}
-
 - (IBAction)installClaudeCodeIntegration:(id)sender {
     [iTermClaudeCodeOnboarding show];
 }
@@ -3332,14 +3316,6 @@ static iTermKeyEventReplayer *gReplayer;
 
 - (void)windowDidChangeKeyStatus:(NSNotification *)notification {
     DLog(@"%@:\n%@", notification.name, [NSThread callStackSymbols]);
-    if (_waitingForSparkleWindow && [notification.name isEqualToString:NSWindowDidBecomeKeyNotification]) {
-        _waitingForSparkleWindow = NO;
-        NSWindow *window = notification.object;
-        PTYSession *session = [[iTermController sharedInstance] currentTerminal].currentSession;
-        NSColor *bgColor = session.effectiveUnprocessedBackgroundColor;
-        BOOL isDark = bgColor ? bgColor.perceivedBrightness < 0.5 : [NSAppearance it_appearanceForCurrentTheme].it_isDark;
-        window.appearance = [NSAppearance appearanceNamed:isDark ? NSAppearanceNameDarkAqua : NSAppearanceNameAqua];
-    }
 }
 
 #pragma mark - iTermOrphanServerAdopterDelegate

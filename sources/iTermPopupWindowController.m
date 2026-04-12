@@ -163,9 +163,8 @@
 
     [self.popupWindow setOwningWindow:owningWindow];
 
-    NSColor *bgColor = [delegate popupWindowBackgroundColor];
-    BOOL isDark = bgColor ? bgColor.isDark : owningWindow.effectiveAppearance.it_isDark;
-    self.window.appearance = [NSAppearance appearanceNamed:isDark ? NSAppearanceNameDarkAqua : NSAppearanceNameAqua];
+    NSColor *bgColor = [delegate respondsToSelector:@selector(popupWindowBackgroundColor)] ? [delegate popupWindowBackgroundColor] : nil;
+    self.window.appearance = [NSAppearance it_appearanceForCurrentSessionWithBackgroundColor:bgColor];
 
     static const NSTimeInterval kAnimationDuration = 0.15;
     self.window.alphaValue = 0;

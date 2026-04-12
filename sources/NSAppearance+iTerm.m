@@ -7,6 +7,7 @@
 
 #import "NSAppearance+iTerm.h"
 #import "DebugLogging.h"
+#import "NSColor+iTerm.h"
 #import "iTermPreferences.h"
 
 @implementation NSAppearance (iTerm)
@@ -38,6 +39,25 @@
         case TAB_STYLE_DARK:
         case TAB_STYLE_DARK_HIGH_CONTRAST:
             return [NSAppearance appearanceNamed:NSAppearanceNameDarkAqua];
+    }
+}
+
++ (instancetype)it_appearanceForCurrentSessionWithBackgroundColor:(nullable NSColor *)backgroundColor {
+    iTermPreferencesTabStyle preferredStyle = [iTermPreferences intForKey:kPreferenceKeyTabStyle];
+    switch (preferredStyle) {
+        case TAB_STYLE_MINIMAL:
+        case TAB_STYLE_COMPACT:
+            if (backgroundColor) {
+                BOOL isDark = backgroundColor.perceivedBrightness < 0.5;
+                return [NSAppearance appearanceNamed:isDark ? NSAppearanceNameDarkAqua : NSAppearanceNameAqua];
+            }
+            return NSApp.effectiveAppearance;
+        case TAB_STYLE_AUTOMATIC:
+        case TAB_STYLE_LIGHT:
+        case TAB_STYLE_LIGHT_HIGH_CONTRAST:
+        case TAB_STYLE_DARK:
+        case TAB_STYLE_DARK_HIGH_CONTRAST:
+            return [self it_appearanceForCurrentTheme];
     }
 }
 
