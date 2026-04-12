@@ -39,6 +39,7 @@ class EventTriggerParameterView: NSView, NSTextFieldDelegate {
     private var hostRegexTextField: NSTextField?
     private var userRegexTextField: NSTextField?
     private var commandRegexTextField: NSTextField?
+    private var notificationMessageRegexTextField: NSTextField?
 
     // MARK: - Initialization
 
@@ -103,6 +104,7 @@ class EventTriggerParameterView: NSView, NSTextFieldDelegate {
         hostRegexTextField = nil
         userRegexTextField = nil
         commandRegexTextField = nil
+        notificationMessageRegexTextField = nil
 
         // Add appropriate UI for this event type
         switch matchType {
@@ -120,6 +122,8 @@ class EventTriggerParameterView: NSView, NSTextFieldDelegate {
             addLongRunningCommandUI()
         case .eventCustomEscapeSequence:
             addSequenceIdUI()
+        case .eventNotificationPosted:
+            addNotificationMessageRegexUI()
         default:
             // No parameters needed for other event types
             addNoParametersLabel()
@@ -209,6 +213,26 @@ class EventTriggerParameterView: NSView, NSTextFieldDelegate {
         stackView.addArrangedSubview(row)
 
         let helpLabel = NSTextField(labelWithString: "Regular expression to match the sequence identifier")
+        helpLabel.translatesAutoresizingMaskIntoConstraints = false
+        helpLabel.font = NSFont.systemFont(ofSize: NSFont.smallSystemFontSize)
+        helpLabel.textColor = .secondaryLabelColor
+        stackView.addArrangedSubview(helpLabel)
+    }
+
+    private func addNotificationMessageRegexUI() {
+        let row = createRow(label: "Message:")
+
+        let textField = NSTextField()
+        textField.translatesAutoresizingMaskIntoConstraints = false
+        textField.placeholderString = ".*"
+        textField.widthAnchor.constraint(greaterThanOrEqualToConstant: 150).isActive = true
+        textField.delegate = self
+        notificationMessageRegexTextField = textField
+
+        row.addArrangedSubview(textField)
+        stackView.addArrangedSubview(row)
+
+        let helpLabel = NSTextField(labelWithString: "Regular expression to match the notification message")
         helpLabel.translatesAutoresizingMaskIntoConstraints = false
         helpLabel.font = NSFont.systemFont(ofSize: NSFont.smallSystemFontSize)
         helpLabel.textColor = .secondaryLabelColor
@@ -385,6 +409,12 @@ class EventTriggerParameterView: NSView, NSTextFieldDelegate {
         case .eventCustomEscapeSequence:
             params["sequenceId"] = sequenceIdTextField?.stringValue ?? ""
 
+        case .eventNotificationPosted:
+            let regex = notificationMessageRegexTextField?.stringValue ?? ""
+            if !regex.isEmpty {
+                params["messageRegex"] = regex
+            }
+
         case .eventDirectoryChanged:
             let regex = directoryRegexTextField?.stringValue ?? ""
             if !regex.isEmpty {
@@ -449,6 +479,11 @@ class EventTriggerParameterView: NSView, NSTextFieldDelegate {
                 sequenceIdTextField?.stringValue = sequenceId
             }
 
+        case .eventNotificationPosted:
+            if let regex = params["messageRegex"] as? String {
+                notificationMessageRegexTextField?.stringValue = regex
+            }
+
         case .eventDirectoryChanged:
             if let regex = params["directoryRegex"] as? String {
                 directoryRegexTextField?.stringValue = regex
@@ -500,6 +535,8 @@ class EventTriggerMatchTypeHelper: NSObject {
             return "Long-Running Command"
         case .eventCustomEscapeSequence:
             return "Custom Escape Sequence"
+        case .eventNotificationPosted:
+            return "Notification Posted"
         default:
             return "Unknown Event"
         }
@@ -530,6 +567,8 @@ class EventTriggerMatchTypeHelper: NSObject {
             return "Fires when a command runs longer than the threshold."
         case .eventCustomEscapeSequence:
             return "Fires when a specific OSC escape sequence is received."
+        case .eventNotificationPosted:
+            return "Fires when a notification is posted by a control sequence (OSC 9)."
         default:
             return ""
         }
@@ -548,7 +587,8 @@ class EventTriggerMatchTypeHelper: NSObject {
             NSNumber(value: iTermTriggerMatchType.eventSessionEnded.rawValue),
             NSNumber(value: iTermTriggerMatchType.eventBellReceived.rawValue),
             NSNumber(value: iTermTriggerMatchType.eventLongRunningCommand.rawValue),
-            NSNumber(value: iTermTriggerMatchType.eventCustomEscapeSequence.rawValue)
+            NSNumber(value: iTermTriggerMatchType.eventCustomEscapeSequence.rawValue),
+            NSNumber(value: iTermTriggerMatchType.eventNotificationPosted.rawValue)
         ]
     }
 

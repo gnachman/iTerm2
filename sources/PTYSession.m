@@ -17777,6 +17777,23 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
 }
 
 - (void)screenPostUserNotification:(NSString * _Nonnull)message rich:(BOOL)rich {
+    if (_eventTriggerEvaluator.hasNotificationPostedTrigger) {
+        if (rich) {
+            NSDictionary<NSString *, NSString *> *decoded = [[message it_keyValuePairsSeparatedBy:@";"] mapValuesWithBlock:^id(NSString *key, NSString *encoded) {
+                return [encoded stringByBase64DecodingStringWithEncoding:NSUTF8StringEncoding];
+            }];
+            NSMutableArray<NSString *> *values = [NSMutableArray array];
+            for (NSString *key in @[ @"title", @"message", @"subtitle" ]) {
+                NSString *value = decoded[key];
+                if (value.length > 0) {
+                    [values addObject:value];
+                }
+            }
+            [_eventTriggerEvaluator notificationPostedWithMessages:values];
+        } else {
+            [_eventTriggerEvaluator notificationPostedWithMessages:@[ message ]];
+        }
+    }
     if (![self shouldPostTerminalGeneratedAlert]) {
         DLog(@"Declining to allow terminal to post user notification %@", message);
         return;
