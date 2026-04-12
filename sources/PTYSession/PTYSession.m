@@ -21746,7 +21746,7 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
         BOOL isVisible = VT100ScreenProgressIsVisible(_screen.progress);
         _view.progress = _screen.progress;
         [self.delegate session:self progressDidChange:_screen.progress];
-        if (wasVisible != isVisible) {
+        if (wasVisible != isVisible && _eventTriggerEvaluator.hasProgressBarChangedTrigger) {
             [_eventTriggerEvaluator progressBarChangedWithAppeared:isVisible];
         }
     }
