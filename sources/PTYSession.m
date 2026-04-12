@@ -17777,11 +17777,15 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
 }
 
 - (void)screenPostUserNotification:(NSString * _Nonnull)message rich:(BOOL)rich {
+    NSDictionary<NSString *, NSString *> *decoded = nil;
+    if (rich) {
+        decoded = [[message it_keyValuePairsSeparatedBy:@";"] mapValuesWithBlock:^id(NSString *key, NSString *encoded) {
+            return [encoded stringByBase64DecodingStringWithEncoding:NSUTF8StringEncoding];
+        }];
+    }
+
     if (_eventTriggerEvaluator.hasNotificationPostedTrigger) {
         if (rich) {
-            NSDictionary<NSString *, NSString *> *decoded = [[message it_keyValuePairsSeparatedBy:@";"] mapValuesWithBlock:^id(NSString *key, NSString *encoded) {
-                return [encoded stringByBase64DecodingStringWithEncoding:NSUTF8StringEncoding];
-            }];
             NSMutableArray<NSString *> *values = [NSMutableArray array];
             for (NSString *key in @[ @"title", @"message", @"subtitle" ]) {
                 NSString *value = decoded[key];
@@ -17804,13 +17808,10 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     iTermNotificationController* controller = [iTermNotificationController sharedInstance];
 
     if (rich) {
-        NSDictionary<NSString *, NSString *> *dict = [[message it_keyValuePairsSeparatedBy:@";"] mapValuesWithBlock:^id(NSString *key, NSString *encoded) {
-            return [encoded stringByBase64DecodingStringWithEncoding:NSUTF8StringEncoding];
-        }];
-        NSString *description = dict[@"message"] ?: @"";
-        NSString *title = dict[@"title"];
-        NSString *subtitle = dict[@"subtitle"];
-        NSString *image = [dict[@"image"] stringByTrimmingTrailingCharactersFromCharacterSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+        NSString *description = decoded[@"message"] ?: @"";
+        NSString *title = decoded[@"title"];
+        NSString *subtitle = decoded[@"subtitle"];
+        NSString *image = [decoded[@"image"] stringByTrimmingTrailingCharactersFromCharacterSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
 
         [controller notifyRich:title
                   withSubtitle:subtitle
