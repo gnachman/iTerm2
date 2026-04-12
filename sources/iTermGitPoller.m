@@ -57,11 +57,11 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)startTimer {
     [_timer invalidate];
-    _timer = [NSTimer scheduledWeakTimerWithTimeInterval:_cadence
-                                                  target:self
-                                                selector:@selector(poll)
-                                                userInfo:nil
-                                                 repeats:YES];
+    _timer = [NSTimer it_scheduledWeakTimerWithTimeInterval:_cadence
+                                                     target:self
+                                                   selector:@selector(poll)
+                                                   userInfo:nil
+                                                    repeats:YES];
 }
 
 - (void)bump {

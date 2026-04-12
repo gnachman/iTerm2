@@ -13,18 +13,18 @@ NS_ASSUME_NONNULL_BEGIN
 @interface NSTimer (iTerm)
 
 // Careful, this one isn't scheduled. You have to add it to the runloop yourself.
-+ (instancetype)weakTimerWithTimeInterval:(NSTimeInterval)interval
-                                   target:(id)target
-                                 selector:(SEL)selector
-                                 userInfo:(nullable id)userInfo
-                                  repeats:(BOOL)repeats;
++ (instancetype)it_weakTimerWithTimeInterval:(NSTimeInterval)interval
+                                      target:(id)target
+                                    selector:(SEL)selector
+                                    userInfo:(nullable id)userInfo
+                                     repeats:(BOOL)repeats;
 
 // Like the similarly named NSTimer method but does not retain aTarget.
-+ (instancetype)scheduledWeakTimerWithTimeInterval:(NSTimeInterval)ti
-                                            target:(id)aTarget
-                                          selector:(SEL)aSelector
-                                          userInfo:(nullable id)userInfo
-                                           repeats:(BOOL)yesOrNo;
++ (instancetype)it_scheduledWeakTimerWithTimeInterval:(NSTimeInterval)ti
+                                               target:(id)aTarget
+                                             selector:(SEL)aSelector
+                                             userInfo:(nullable id)userInfo
+                                              repeats:(BOOL)yesOrNo;
 
 // Block based API since the OS's isn't available until 10.12
 + (instancetype)it_scheduledTimerWithTimeInterval:(NSTimeInterval)timeInterval

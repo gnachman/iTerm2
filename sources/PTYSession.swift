@@ -444,7 +444,8 @@ extension PTYSession {
                           cappedAtSize: -1,
                           truncateTail: false,
                           continuationChars: nil,
-                          coords: nil)
+                          coords: nil,
+                          deduplicateDECDHL: true)
         return content as? String
     }
 
@@ -574,7 +575,8 @@ extension PTYSession {
                           cappedAtSize: 16384,
                           truncateTail: false,
                           continuationChars: nil,
-                          coords: nil)
+                          coords: nil,
+                          deduplicateDECDHL: true)
         if let string = content as? String {
             try completion(string, "Command output provided to AI.")
         } else {

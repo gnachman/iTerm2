@@ -38,6 +38,7 @@ NS_CLASS_AVAILABLE(10_11, NA)
                                  lineLength:(int)lineLength
                                  inverseLUT:(const int * _Nullable)inverseLUT
                              inverseLUTLen:(int)inverseLUTLen
+                              lineAttribute:(iTermLineAttribute)lineAttribute
                              underlineSpans:(NSMutableData *)underlineSpans
                          strikethroughSpans:(NSMutableData *)strikethroughSpans;
 

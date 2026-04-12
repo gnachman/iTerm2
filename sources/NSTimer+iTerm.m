@@ -69,7 +69,7 @@
 
 @implementation NSTimer (iTerm)
 
-+ (instancetype)weakTimerWithTimeInterval:(NSTimeInterval)interval target:(id)target selector:(SEL)selector userInfo:(id)userInfo repeats:(BOOL)repeats {
++ (instancetype)it_weakTimerWithTimeInterval:(NSTimeInterval)interval target:(id)target selector:(SEL)selector userInfo:(id)userInfo repeats:(BOOL)repeats {
     iTermTimerProxy *proxy = [[iTermTimerProxy alloc] init];
     proxy.target = target;
     proxy.selector = selector;
@@ -82,7 +82,7 @@
     return timer;
 }
 
-+ (instancetype)scheduledWeakTimerWithTimeInterval:(NSTimeInterval)ti target:(id)aTarget selector:(SEL)aSelector userInfo:(id)userInfo repeats:(BOOL)yesOrNo {
++ (instancetype)it_scheduledWeakTimerWithTimeInterval:(NSTimeInterval)ti target:(id)aTarget selector:(SEL)aSelector userInfo:(id)userInfo repeats:(BOOL)yesOrNo {
     iTermTimerProxy *proxy = [[iTermTimerProxy alloc] init];
     proxy.target = aTarget;
     proxy.selector = aSelector;

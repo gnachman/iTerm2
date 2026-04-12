@@ -205,6 +205,7 @@ NSString *const kPreferenceKeyPasteWarningNumberOfSpacesPerTab = @"PasteTabToStr
 NSString *const kPreferenceKeyNewTabsOpenAtEndOfTabBar = @"AddNewTabAtEndOfTabs";
 NSString *const kPreferenceKeyShowFullscreenTabBar = @"ShowFullScreenTabBar";
 NSString *const kPreferenceKeyHotkeyMigratedFromSingleToMulti = @"HotkeyMigratedFromSingleToMulti";
+NSString *const kPreferenceKeyMigratedDynamicProfileTagToFlag = @"NoSyncMigratedDynamicProfileTagToFlag";
 NSString *const kPreferenceKeyDefaultToolbeltWidth = @"Default Toolbelt Width";
 NSString *const kPreferenceKeySizeChangesAffectProfile = @"Size Changes Affect Profile";
 NSString *const kPreferenceKeyActions = @"Actions";
@@ -663,6 +664,7 @@ static NSString *sPreviousVersion;
                   kPreferenceKeyShowFullscreenTabBar: @YES,
                   kPreferenceKeyNewTabsOpenAtEndOfTabBar: @YES,
                   kPreferenceKeyHotkeyMigratedFromSingleToMulti: @NO,
+                  kPreferenceKeyMigratedDynamicProfileTagToFlag: @NO,
                   kPreferenceKeyLeftTabBarWidth: @150,
                   kPreferenceKeyDefaultToolbeltWidth: @250,
                   kPreferenceKeySizeChangesAffectProfile: @NO,

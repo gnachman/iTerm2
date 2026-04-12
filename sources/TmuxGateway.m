@@ -98,6 +98,8 @@ static NSString *kCommandTimestamp = @"timestamp";
     NSMutableString *_writeQueue;
     NSInteger _unresponsivenessGeneration;
     NSInteger _unresponsivenessBoundary;
+    NSInteger _tokenExecutionPauseCount;
+    NSMutableArray<VT100Token *> *_pausedTokens;
 }
 
 @synthesize delegate = delegate_;
@@ -724,7 +726,34 @@ static NSString *kCommandTimestamp = @"timestamp";
     return ([self.minimumServerVersion compare:version] != NSOrderedAscending);
 }
 
+- (void)pauseTokenExecution {
+    _tokenExecutionPauseCount++;
+    DLog(@"Pause token execution (count=%@)", @(_tokenExecutionPauseCount));
+    if (!_pausedTokens) {
+        _pausedTokens = [[NSMutableArray alloc] init];
+    }
+}
+
+- (void)unpauseTokenExecution {
+    _tokenExecutionPauseCount--;
+    DLog(@"Unpause token execution (count=%@, %@ queued tokens)",
+         @(_tokenExecutionPauseCount), @(_pausedTokens.count));
+    if (_tokenExecutionPauseCount <= 0) {
+        _tokenExecutionPauseCount = 0;
+        NSArray<VT100Token *> *tokens = [_pausedTokens copy];
+        [_pausedTokens removeAllObjects];
+        for (VT100Token *token in tokens) {
+            [self executeToken:token];
+        }
+    }
+}
+
 - (void)executeToken:(VT100Token *)token {
+    if (_tokenExecutionPauseCount > 0) {
+        DLog(@"Token execution paused, queueing: %@", token.string);
+        [_pausedTokens addObject:token];
+        return;
+    }
     NSString *command = token.string;
     NSData *data = token.savedData;
     if (_tmuxLogging) {
@@ -991,6 +1020,11 @@ static NSString *kCommandTimestamp = @"timestamp";
 }
 
 - (void)detach {
+    // Keep self alive across the modal dialog that
+    // tmuxGatewayDidTimeOutDuringInitialization: may run, since the
+    // MRC caller doesn't retain us.
+    NS_VALID_UNTIL_END_OF_SCOPE TmuxGateway *selfRef = self;
+
     NSString *command = @"detach";
     if (detachSent_ && [self isTmuxUnresponsive]) {
         [delegate_ tmuxGatewayDidTimeOutDuringInitialization:NO];
@@ -1103,6 +1137,11 @@ static const NSTimeInterval TmuxUnresponsiveTimeout = 5;
      responseObject:(id)obj
               flags:(int)flags
 {
+    // Keep self alive across the modal dialog that enqueueCommandDict:
+    // may run via tmuxGatewayDidTimeOutDuringInitialization:, since the
+    // MRC caller doesn't retain us.
+    NS_VALID_UNTIL_END_OF_SCOPE TmuxGateway *selfRef = self;
+
     if (detachSent_ || disconnected_) {
         return;
     }

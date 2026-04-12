@@ -68,7 +68,9 @@ extern NSString *const PTYSessionSlownessEventExecute;
 @property (nonatomic) BOOL disableExecution;
 // Set from the main thread by PTYSession when the foreground job changes.
 // Read from the mutation thread during trigger evaluation.
-@property (atomic, copy, nullable) NSString *foregroundJob;
+// Contains lowercased argv0 values for the foreground process and its ancestors
+// (deepest first) up to (but not including) the login shell.
+@property (atomic, copy, nullable) NSArray<NSString *> *foregroundJobAncestors;
 @property (nonatomic, readonly) BOOL havePromptDetectingTrigger;
 @property (nonatomic, readonly) NSString *stats;
 @property (nonatomic, copy, nullable) NSString *sessionID;

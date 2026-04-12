@@ -161,18 +161,19 @@ static const CGFloat kWindowTopMargin = 8;
 
 // Add the standard buttons.
 - (void)addButtonsToCard:(iTermTipCardViewController *)card expanded:(BOOL)expanded {
+    __weak __typeof(self) weakSelf = self;
     if (_tip.url) {
         [card addActionWithTitle:kLearnMoreTitle
                             icon:[NSImage it_imageNamed:@"Navigate" forClass:self.class]
                            block:^(id sendingCard) {
-            [self openURL];
+            [weakSelf openURL];
         }];
     }
     [card addActionWithTitle:kDismissTipTitle
                     shortcut:@"⎋"
                         icon:[NSImage it_imageNamed:@"Dismiss" forClass:self.class]
                        block:^(id sendingCard) {
-        [self dismiss];
+        [weakSelf dismiss];
     }];
 
     NSString *toggleTitle = expanded ? kFewerOptionsTitle : kMoreOptionsTitle;
@@ -180,7 +181,7 @@ static const CGFloat kWindowTopMargin = 8;
     [card addActionWithTitle:toggleTitle
                         icon:[NSImage it_imageNamed:@"ChevronDown" forClass:self.class]
                        block:^(id sendingCard) {
-        [self toggleOptionsInCard:sendingCard];
+        [weakSelf toggleOptionsInCard:sendingCard];
     }];
     [button setIconFlipped:expanded];
 
@@ -188,7 +189,7 @@ static const CGFloat kWindowTopMargin = 8;
     [card addActionWithTitle:kShowThisLaterTitle
                         icon:[NSImage it_imageNamed:@"Later" forClass:self.class]
                        block:^(id sendingCard) {
-        [self showThisLater];
+        [weakSelf showThisLater];
     }];
     if (!expanded) {
         [button setCollapsed:YES];
@@ -209,8 +210,8 @@ static const CGFloat kWindowTopMargin = 8;
     shareImage.template = NO;
 
     button =
-    [card addActionWithTitle:kShareTitle icon:shareImage block:^(id card) {
-        [self shareThis:card];
+    [card addActionWithTitle:kShareTitle icon:shareImage block:^(id sendingCard) {
+        [weakSelf shareThis:sendingCard];
     }];
     if (!expanded) {
         [button setCollapsed:YES];
@@ -226,12 +227,16 @@ static const CGFloat kWindowTopMargin = 8;
     [card addActionWithTitle:frequencyTitle
                         icon:[NSImage it_imageNamed:@"TipCalendar" forClass:self.class]
                        block:^(id sendingCard) {
-        [self->_delegate toggleTipFrequency];
+        iTermTipWindowController *strongSelf = weakSelf;
+        if (!strongSelf) {
+            return;
+        }
+        [strongSelf->_delegate toggleTipFrequency];
         iTermTipCardActionButton *theButton = [[iTermTipCardViewController castFrom:sendingCard] actionWithTitle:kShowTipsWeeklyTitle];
         if (theButton) {
             [theButton setTitle:kShowTipsDailyTitle];
         } else {
-            theButton = [card actionWithTitle:kShowTipsDailyTitle];
+            theButton = [[iTermTipCardViewController castFrom:sendingCard] actionWithTitle:kShowTipsDailyTitle];
             [theButton setTitle:kShowTipsWeeklyTitle];
         }
     }];
@@ -249,11 +254,15 @@ static const CGFloat kWindowTopMargin = 8;
     [card addActionWithTitle:enableOrDisableTitle
                         icon:[NSImage it_imageNamed:@"DisableTips" forClass:self.class]
                        block:^(id sendingCard) {
-        if (![self->_delegate tipWindowTipsAreDisabled]) {
-            [self disableTips];
+        iTermTipWindowController *strongSelf = weakSelf;
+        if (!strongSelf) {
+            return;
+        }
+        if (![strongSelf->_delegate tipWindowTipsAreDisabled]) {
+            [strongSelf disableTips];
         } else {
             iTermTipCardActionButton *theButton = [[iTermTipCardViewController castFrom:sendingCard] actionWithTitle:kEnableTipsTitle];
-            [self enableTips];
+            [strongSelf enableTips];
             [theButton setTitle:kDisableTipsTitle];
         }
     }];
@@ -266,7 +275,7 @@ static const CGFloat kWindowTopMargin = 8;
         [card addActionWithTitle:kShowNextTipTitle
                             icon:[NSImage it_imageNamed:@"NextTip" forClass:self.class]
                            block:^(id sendingCard) {
-            [self showNextTip];
+            [weakSelf showNextTip];
         }];
         if (!expanded) {
             [button setCollapsed:YES];
@@ -277,7 +286,7 @@ static const CGFloat kWindowTopMargin = 8;
         [card addActionWithTitle:kShowPreviousTipTitle
                             icon:[NSImage it_imageNamed:@"NextTip" forClass:self.class]
                            block:^(id sendingCard) {
-            [self showPreviousTip];
+            [weakSelf showPreviousTip];
         }];
         [button setIconFlipped:YES];
         if (!expanded) {
@@ -420,11 +429,11 @@ static const CGFloat kWindowTopMargin = 8;
     [[NSAnimationContext currentContext] setTimingFunction:[CAMediaTimingFunction functionWithName:kCAMediaTimingFunctionEaseOut]];
     self.buttonsEnabled = NO;
     [[NSAnimationContext currentContext] setCompletionHandler:^{
-        self.buttonsEnabled = YES;
         [self close];
-        // Buttons hold references to us.
         for (iTermTipCardActionButton *button in self->_cardViewController.actionButtons) {
             button.block = nil;
+            button.target = nil;
+            button.action = nil;
         }
     }];
     [_cardViewController.view.animator setFrame:newFrame];

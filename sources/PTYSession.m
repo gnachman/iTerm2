@@ -579,6 +579,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTurdType) {
     iTermVariableReference *_jobPidRef;
     iTermCacheableImage *_customIcon;
     CGContextRef _metalContext;
+    CGContextRef _metalContextDoubleWidth;  // 2x size, created on demand for DECDWL/DECDHL
     BOOL _errorCreatingMetalContext;
 
     id<iTermKeyMapper> _keyMapper;
@@ -1080,6 +1081,9 @@ ITERM_WEAKLY_REFERENCEABLE
     if (_metalContext) {
         CGContextRelease(_metalContext);
     }
+    if (_metalContextDoubleWidth) {
+        CGContextRelease(_metalContextDoubleWidth);
+    }
     [[NSNotificationCenter defaultCenter] removeObserver:self];
 
     if (_dvrDecoder) {
@@ -1317,21 +1321,17 @@ ITERM_WEAKLY_REFERENCEABLE
                                                ScreenCharArray *sca,
                                                iTermImmutableMetadata metadata,
                                                BOOL *stopPtr) {
+            screen_char_t continuation = sca.continuation;
             if (i + 1 == NSMaxRange(rangeOfLines)) {
-                screen_char_t continuation = { 0 };
+                continuation = (screen_char_t){ 0 };
                 continuation.code = EOL_SOFT;
-                [mutableState appendScreenChars:sca.line
-                                         length:sca.length
-                         externalAttributeIndex:iTermImmutableMetadataGetExternalAttributesIndex(metadata)
-                                   continuation:continuation
-                                       rtlFound:metadata.rtlFound];
-            } else {
-                [mutableState appendScreenChars:sca.line
-                                         length:sca.length
-                         externalAttributeIndex:iTermImmutableMetadataGetExternalAttributesIndex(metadata)
-                                   continuation:sca.continuation
-                                       rtlFound:metadata.rtlFound];
             }
+            [mutableState appendScreenChars:sca.line
+                                     length:sca.length
+                     externalAttributeIndex:iTermImmutableMetadataGetExternalAttributesIndex(metadata)
+                               continuation:continuation
+                                   rtlFound:metadata.rtlFound
+                              lineAttribute:metadata.lineAttribute];
         }];
     }];
 }
@@ -6706,11 +6706,16 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
     [self.variablesScope setValue:processInfo.commandLine forVariableNamed:iTermVariableKeySessionCommandLine];
     [self.variablesScope setValue:@(processInfo.processID) forVariableNamed:iTermVariableKeySessionJobPid];
 
-    // Update trigger evaluators with current foreground job for job-filtered triggers.
-    // Use processTitle (argv0) rather than name so it matches symlink names like "claude".
-    DLog(@"setCurrentForegroundJobProcessInfo: setting foreground job to %@ for trigger filtering", processTitle);
-    [_screen setForegroundJobForTriggerFiltering:processTitle];
-    _eventTriggerEvaluator.foregroundJob = processTitle;
+    // Collect argv0 values from the foreground process up through its ancestors (deepest first),
+    // stopping before the login shell. This lets triggers and monitors match on the user's command
+    // (e.g. "claude") even when a child process (e.g. caffeinate) is the deepest foreground job.
+    NSArray<NSString *> *ancestorNames = processInfo.foregroundJobAncestorNames;
+    [self.variablesScope setValue:[ancestorNames componentsJoinedByString:@"\n"]
+                forVariableNamed:iTermVariableKeySessionForegroundJobAncestors];
+
+    DLog(@"setCurrentForegroundJobProcessInfo: setting foreground job ancestors to %@ for trigger filtering", ancestorNames);
+    [_screen setForegroundJobAncestorsForTriggerFiltering:ancestorNames];
+    _eventTriggerEvaluator.foregroundJobAncestors = ancestorNames;
 
     if ([name isEqualToString:@"sudo"]) {
         [self checkForSudoPasswordPromptToOfferTouchID];
@@ -6910,7 +6915,7 @@ static NSString *const PTYSessionComposerPrefixUserDataKeyDetectedByTrigger = @"
         return nil;
     }
     NSDictionary *defaultAttributes = [_textview attributeProviderUsingProcessedColors:YES
-                                                           elideDefaultBackgroundColor:elideDefaultBackgroundColor]((screen_char_t){}, nil);
+                                                           elideDefaultBackgroundColor:elideDefaultBackgroundColor]((screen_char_t){}, nil, NULL);
     NSAttributedString *space = [NSAttributedString attributedStringWithString:@" "
                                                                     attributes:defaultAttributes];
 
@@ -7945,6 +7950,10 @@ extendResultsAcrossSoftBoundaries:(BOOL)extendResultsAcrossSoftBoundaries {
     return _metalContext;
 }
 
+- (CGContextRef)metalGlueContextDoubleWidth {
+    return _metalContextDoubleWidth;
+}
+
 + (CGColorSpaceRef)metalColorSpace {
     static dispatch_once_t onceToken;
     static CGColorSpaceRef colorSpace;
@@ -7990,17 +7999,37 @@ extendResultsAcrossSoftBoundaries:(BOOL)extendResultsAcrossSoftBoundaries {
         CGContextRelease(_metalContext);
         _metalContext = NULL;
     }
+    if (_metalContextDoubleWidth) {
+        CGContextRelease(_metalContextDoubleWidth);
+        _metalContextDoubleWidth = NULL;
+    }
     DLog(@"allocate new metal context of size %@", NSStringFromSize(scaledSize));
+    const CGBitmapInfo bitmapInfo = CGBitmapInfoMake(kCGImageAlphaPremultipliedFirst,
+                                                     kCGImageComponentInteger,
+                                                     kCGImageByteOrder32Host,
+                                                     kCGImagePixelFormatPacked);
     _metalContext = CGBitmapContextCreate(NULL,
                                           scaledSize.width,
                                           scaledSize.height,
                                           8,
-                                          scaledSize.width * 4,  // bytes per row
+                                          scaledSize.width * 4,
                                           [PTYSession metalColorSpace],
-                                          CGBitmapInfoMake(kCGImageAlphaPremultipliedFirst, kCGImageComponentInteger, kCGImageByteOrder32Host, kCGImagePixelFormatPacked));
-    // Initialize to transparent. Character sources will clear only the
-    // area they draw into after copying pixels, keeping the context clean.
+                                          bitmapInfo);
     CGContextClearRect(_metalContext, CGRectMake(0, 0, scaledSize.width, scaledSize.height));
+
+    // Double-width context uses a larger radius for overflow room.
+    const int dwMaxParts = iTermTextureMapMaxCharacterParts * 2 + 1;
+    CGSize dwSize = CGSizeMake(size.width * scale * dwMaxParts,
+                               size.height * scale * dwMaxParts);
+    _metalContextDoubleWidth = CGBitmapContextCreate(NULL,
+                                                      dwSize.width,
+                                                      dwSize.height,
+                                                      8,
+                                                      dwSize.width * 4,
+                                                      [PTYSession metalColorSpace],
+                                                      bitmapInfo);
+    memset(CGBitmapContextGetData(_metalContextDoubleWidth), 0,
+           CGBitmapContextGetBytesPerRow(_metalContextDoubleWidth) * (size_t)dwSize.height);
 }
 
 - (BOOL)metalAllowed {
@@ -21824,6 +21853,11 @@ preferredOffsetFromTopDidChange:(CGFloat)offset {
 
 - (id<iTermSyntaxHighlighting>)composerManager:(iTermComposerManager *)composerManager
           syntaxHighlighterForAttributedString:(NSMutableAttributedString *)attributedString {
+    // fontTable is non-optional in Swift. If _textview is nil, ObjC nil messaging
+    // returns nil which would be stored as null in the Swift field, crashing later.
+    if (!_textview) {
+        return nil;
+    }
     return [[[iTermSyntaxHighlighter alloc] init:attributedString
                                         colorMap:_screen.colorMap
                                         fontTable:_textview.fontTable
@@ -22364,7 +22398,8 @@ getOptionKeyBehaviorLeft:(iTermOptionKeyBehavior *)left
                                              length:sca.length
                              externalAttributeIndex:sca.eaIndex
                                        continuation:sca.continuation
-                                           rtlFound:sca.metadata.rtlFound];
+                                           rtlFound:sca.metadata.rtlFound
+                                      lineAttribute:sca.metadata.lineAttribute];
                 } else {
                     DLog(@"%@: Removing last line from filter results", self);
                     [mutableState removeLastLine];

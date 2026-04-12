@@ -36,7 +36,8 @@ namespace iTerm2 {
         inline bool operator==(const GlyphKey &other) const {
             if (_repr.type != other._repr.type ||
                 _repr.typeface != other._repr.typeface ||
-                _repr.thinStrokes != other._repr.thinStrokes) {
+                _repr.thinStrokes != other._repr.thinStrokes ||
+                _repr.lineAttribute != other._repr.lineAttribute) {
                 return false;
             }
 
@@ -89,6 +90,7 @@ namespace iTerm2 {
             hash_combine(seed, _repr.type);
             hash_combine(seed, _repr.thinStrokes);
             hash_combine(seed, _repr.typeface);
+            hash_combine(seed, _repr.lineAttribute);
             switch (_repr.type) {
                 case iTermMetalGlyphTypeRegular:
                     // No need to include _repr.drawable because we just skip those glyphs.

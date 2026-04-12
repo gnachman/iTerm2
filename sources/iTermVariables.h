@@ -50,6 +50,7 @@ extern NSString *const iTermVariableKeySessionTriggerName;
 extern NSString *const iTermVariableKeySessionWindowName;  // set by esc code
 extern NSString *const iTermVariableKeySessionJob;  // job name, not affected by modifying argv[0]
 extern NSString *const iTermVariableKeySessionProcessTitle;  // process title, affected by modifying argv[0]. see issue 4214 for details.
+extern NSString *const iTermVariableKeySessionForegroundJobAncestors;  // Newline-separated lowercased argv0 values of foreground process and its ancestors up to the login shell.
 extern NSString *const iTermVariableKeySessionCommandLine;  // Current foreground job with arguments
 extern NSString *const iTermVariableKeySessionPresentationName;  // What's shown in the session title view
 extern NSString *const iTermVariableKeySessionTmuxPaneTitle;  // #{pane_title} for a particular session

@@ -118,6 +118,16 @@
                                                            dimOnlyText:(BOOL)dimOnlyText
                                                  adjustedDimmingAmount:(CGFloat)adjustedDimmingAmount
                                                      transparencyAlpha:(CGFloat)transparencyAlpha {
+    NSString *customBg = [iTermAdvancedSettingsModel paneTitleBarBackgroundColor];
+    if ([customBg hasPrefix:@"#"]) {
+        NSColor *custom = [NSColor colorFromHexString:customBg];
+        if (custom) {
+            if (!isFirstResponder && [iTermPreferences boolForKey:kPreferenceKeyDimInactiveSplitPanes]) {
+                return [custom it_colorByDimmingByAmount:0.3];
+            }
+            return custom;
+        }
+    }
     iTermPreferencesTabStyle preferredStyle = [iTermPreferences intForKey:kPreferenceKeyTabStyle];
     if (!tabColor || self.useMinimalStyle) {
         return [self dimmedBackgroundColorWithAppearance:effectiveAppearance

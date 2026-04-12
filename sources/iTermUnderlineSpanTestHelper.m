@@ -61,6 +61,7 @@
                                      lineLength:lineLength
                                      inverseLUT:inverseLUT
                                  inverseLUTLen:inverseLUTLen
+                                lineAttribute:iTermLineAttributeSingleWidth
                                  underlineSpans:underlineSpans
                              strikethroughSpans:strikethroughSpans];
 }

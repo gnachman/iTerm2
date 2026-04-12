@@ -25,7 +25,7 @@ typedef NS_ENUM(NSInteger, iTermTextExtractorClass) {
     // Unset character
     kTextExtractorClassNull,
 
-    // DWC_RIGHT or DWC_SKIP
+    // DWC_RIGHT, DWC_SKIP, or DWL_SPACER
     kTextExtractorClassDoubleWidthPlaceholder,
 
     // Non-alphanumeric, non-whitespace, non-word, not double-width filler.

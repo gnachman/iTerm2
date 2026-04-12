@@ -38,8 +38,23 @@
 @class iTermImageInfo;
 @protocol iTermImageInfoReading;
 
+typedef NS_ENUM(int, iTermLineAttribute) {
+    iTermLineAttributeSingleWidth = 0,      // Normal (DECSWL / default)
+    iTermLineAttributeDoubleWidth = 1,      // DECDWL (ESC # 6)
+    iTermLineAttributeDoubleHeightTop = 2,  // DECDHL top (ESC # 3)
+    iTermLineAttributeDoubleHeightBottom = 3 // DECDHL bottom (ESC # 4)
+};
+
+NS_INLINE BOOL iTermLineAttributeIsDoubleWidth(iTermLineAttribute attr) {
+    return attr != iTermLineAttributeSingleWidth;
+}
+
+NS_INLINE int iTermEffectiveLineWidth(int width, iTermLineAttribute attr) {
+    return iTermLineAttributeIsDoubleWidth(attr) ? width / 2 : width;
+}
+
 #define ITERM2_PRIVATE_BEGIN 0x0001
-#define ITERM2_PRIVATE_END 0x0007
+#define ITERM2_PRIVATE_END 0x0008
 
 // This is used in the rightmost column when a double-width character would
 // have been split in half and was wrapped to the next line. It is nonprintable
@@ -67,6 +82,11 @@
 
 // This never occurs in a string.
 #define IMPOSSIBLE_CHAR (ITERM2_PRIVATE_BEGIN + 6)
+
+// Spacer for double-width lines (DECDWL/DECDHL). On double-width lines,
+// each character is followed by a DWL_SPACER to occupy the extra cell.
+// Stripped when entering LineBuffer; re-inserted when reading back for display.
+#define DWL_SPACER (ITERM2_PRIVATE_BEGIN + 7)
 
 // The range of private codes we use, with specific instances defined
 // above here.
@@ -662,4 +682,54 @@ NS_INLINE void ScreenCharSetDWC_RIGHT(screen_char_t *c) {
     c->image = NO;
     c->virtualPlaceholder = NO;
     c->code = DWC_RIGHT;
+}
+
+NS_INLINE BOOL ScreenCharIsDWL_SPACER(screen_char_t c) {
+    if (c.code != DWL_SPACER) {
+        return NO;
+    }
+    if (c.complexChar) {
+        return NO;
+    }
+    if (c.image) {
+        return NO;
+    }
+    return YES;
+}
+
+NS_INLINE void ScreenCharSetDWL_SPACER(screen_char_t *c) {
+    c->complexChar = NO;
+    c->image = NO;
+    c->virtualPlaceholder = NO;
+    c->code = DWL_SPACER;
+}
+
+// Interleave DWL_SPACERs after each character in source, writing to dest.
+// dest must have room for at least sourceLen * 2 characters.
+// Returns the number of characters written to dest (always sourceLen * 2).
+NS_INLINE int ScreenCharExpandWithDWLSpacers(screen_char_t *dest,
+                                             const screen_char_t *source,
+                                             int sourceLen) {
+    for (int i = sourceLen - 1; i >= 0; i--) {
+        dest[i * 2] = source[i];
+        // Copy the parent so the spacer inherits SGR attributes (colors,
+        // bold, underline, etc.), then overwrite character-specific fields.
+        dest[i * 2 + 1] = source[i];
+        ScreenCharSetDWL_SPACER(&dest[i * 2 + 1]);
+    }
+    return sourceLen * 2;
+}
+
+// Remove DWL_SPACERs from source, writing compacted characters to dest.
+// sourceLen is the physical length (including spacers). dest must have room
+// for at least sourceLen / 2 characters. Returns the number of characters
+// written to dest.
+NS_INLINE int ScreenCharCompactRemovingDWLSpacers(screen_char_t *dest,
+                                                  const screen_char_t *source,
+                                                  int sourceLen) {
+    const int effectiveLen = sourceLen / 2;
+    for (int i = 0; i < effectiveLen; i++) {
+        dest[i] = source[i * 2];
+    }
+    return effectiveLen;
 }

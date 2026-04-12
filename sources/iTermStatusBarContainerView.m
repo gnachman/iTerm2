@@ -53,11 +53,11 @@ const CGFloat iTermGetStatusBarHeight(void) {
         _view = component.statusBarComponentView;
         [self addSubview:_view];
         _view.frame = NSMakeRect(self.minX, 0, self.preferredWidthForComponentView, self.frame.size.height);
-        _timer = [NSTimer scheduledWeakTimerWithTimeInterval:_component.statusBarComponentUpdateCadence
-                                                      target:self
-                                                    selector:@selector(reevaluateTimer:)
-                                                    userInfo:nil
-                                                     repeats:YES];
+        _timer = [NSTimer it_scheduledWeakTimerWithTimeInterval:_component.statusBarComponentUpdateCadence
+                                                         target:self
+                                                       selector:@selector(reevaluateTimer:)
+                                                       userInfo:nil
+                                                        repeats:YES];
         [component statusBarComponentUpdate];
 
         if ([component statusBarComponentHandlesClicks]) {

@@ -298,7 +298,8 @@ typedef struct {
     iTermImmutableMetadataInit(&metadata,
                                self.currentGrid.currentDate,
                                NO,
-                               ea ? [iTermUniformExternalAttributes withAttribute:ea] : nil);
+                               ea ? [iTermUniformExternalAttributes withAttribute:ea] : nil,
+                               iTermLineAttributeSingleWidth);
     [self.currentGrid setCursorWithoutInvalidatingDWCFreeLineCount:VT100GridCoordMake(0, 0)];
 
     const int lastTokenIndexToSendToLineBuffer = info.tokenCount;
@@ -571,6 +572,62 @@ typedef struct {
         [delegate screenSendTmuxOSC4Report:report];
         [weakSelf didSendReport:delegate];
     } name:@"OSC 4 tmux report"];
+}
+
+- (void)terminalSetLineAttribute:(iTermLineAttribute)attr {
+    DLog(@"begin");
+    const int y = self.currentGrid.cursorY;
+    const int width = self.currentGrid.size.width;
+    VT100LineInfo *lineInfo = [self.currentGrid lineInfoAtLineNumber:y];
+    iTermLineAttribute oldAttr = lineInfo.metadata.lineAttribute;
+
+    if (iTermLineAttributeIsDoubleWidth(oldAttr) == iTermLineAttributeIsDoubleWidth(attr)) {
+        // Same width class (e.g., doubleWidth → doubleHeightTop). Just update the flag.
+        iTermMetadata metadata = lineInfo.metadata;
+        metadata.lineAttribute = attr;
+        lineInfo.metadata = metadata;
+        return;
+    }
+
+    screen_char_t *line = [self.currentGrid screenCharsAtLineNumber:y];
+
+    if (iTermLineAttributeIsDoubleWidth(attr)) {
+        // Expanding: normal → double-width.
+        // Take the first width/2 characters, interleave DWL_SPACERs.
+        const int effectiveWidth = width / 2;
+        // Find the actual content length (skip trailing nulls).
+        int contentLen = 0;
+        for (int i = effectiveWidth - 1; i >= 0; i--) {
+            if (line[i].code != 0 || line[i].complexChar) {
+                contentLen = i + 1;
+                break;
+            }
+        }
+        // Clear positions beyond where expanded content will go.
+        screen_char_t blank = [self.currentGrid defaultChar];
+        for (int i = contentLen * 2; i < width; i++) {
+            line[i] = blank;
+        }
+        // Expand in-place (works backwards to avoid overwriting source data).
+        ScreenCharExpandWithDWLSpacers(line, line, contentLen);
+    } else {
+        // Compacting: double-width → normal.
+        // Compact in-place (works forwards, safe since dest <= source).
+        const int effectiveWidth = width / 2;
+        ScreenCharCompactRemovingDWLSpacers(line, line, width);
+        // Fill the rest with blanks.
+        screen_char_t blank = [self.currentGrid defaultChar];
+        for (int i = effectiveWidth; i < width; i++) {
+            line[i] = blank;
+        }
+    }
+
+    iTermMetadata metadata = lineInfo.metadata;
+    metadata.lineAttribute = attr;
+    lineInfo.metadata = metadata;
+    [lineInfo setDirty:YES
+               inRange:VT100GridRangeMake(0, width)
+      updateTimestampTo:metadata.timestamp];
 }
 
 - (void)terminalShowTestPattern {
@@ -1048,10 +1105,11 @@ typedef struct {
 
 - (void)terminalInsertEmptyCharsAtCursor:(int)n {
     DLog(@"begin %@", @(n));
+    const int count = [self.currentGrid currentLineIsDoubleWidth] ? n * 2 : n;
     [self.currentGrid insertChar:[self.currentGrid defaultChar]
               externalAttributes:nil
                               at:self.currentGrid.cursor
-                           times:n];
+                           times:count];
 }
 
 - (void)terminalShiftLeft:(int)n {
@@ -1105,7 +1163,8 @@ typedef struct {
 
 - (void)terminalDeleteCharactersAtCursor:(int)n {
     DLog(@"begin %@", @(n));
-    [self.currentGrid deleteChars:n startingAt:self.currentGrid.cursor];
+    const int count = [self.currentGrid currentLineIsDoubleWidth] ? n * 2 : n;
+    [self.currentGrid deleteChars:count startingAt:self.currentGrid.cursor];
     [self clearTriggerLine];
 }
 

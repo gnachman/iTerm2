@@ -208,6 +208,7 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
                                                                                 boxDrawing:NO
                                                                                     radius:0
                                                                   useNativePowerlineGlyphs:NO
+                                                                             lineAttribute:iTermLineAttributeSingleWidth
                                                                                    context:context];
             CGRect frame = [source frameFlipped:NO];
             unionRect = NSUnionRect(unionRect, frame);
@@ -230,6 +231,7 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
                     descriptor:(iTermCharacterSourceDescriptor *)descriptor
                     attributes:(iTermCharacterSourceAttributes *)attributes
                         radius:(int)radius
+                 lineAttribute:(iTermLineAttribute)lineAttribute
                        context:(CGContextRef)context {
     return [[iTermGlyphCharacterSource alloc] initWithFontID:fontID
                                                     fakeBold:fakeBold
@@ -239,6 +241,7 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
                                                   descriptor:descriptor
                                                   attributes:attributes
                                                       radius:radius
+                                               lineAttribute:lineAttribute
                                                      context:context];
 }
 
@@ -248,6 +251,7 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
                        boxDrawing:(BOOL)boxDrawing
                            radius:(int)radius
          useNativePowerlineGlyphs:(BOOL)useNativePowerlineGlyphs
+                    lineAttribute:(iTermLineAttribute)lineAttribute
                           context:(CGContextRef)context {
     return [[iTermRegularCharacterSource alloc] initWithCharacter:string
                                                        descriptor:descriptor
@@ -255,6 +259,7 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
                                                        boxDrawing:boxDrawing
                                                            radius:radius
                                          useNativePowerlineGlyphs:useNativePowerlineGlyphs
+                                                    lineAttribute:lineAttribute
                                                           context:context];
 }
 
@@ -323,6 +328,28 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
     return _radius * 2 + 1;
 }
 
+// Returns the line attribute for this character source. Overridden in
+// iTermRegularCharacterSource to return the actual line attribute.
+- (iTermLineAttribute)lineAttribute {
+    return iTermLineAttributeSingleWidth;
+}
+
+// Returns the horizontal scale factor applied during drawing (for double-width/height lines).
+- (CGFloat)drawHScale {
+    return 1.0;
+}
+
+// Returns the vertical scale factor applied during drawing (for double-height lines).
+- (CGFloat)drawVScale {
+    return 1.0;
+}
+
+// Returns the max of horizontal and vertical scale. Used to decide whether
+// to use the large-context clearing path.
+- (CGFloat)drawScale {
+    return MAX([self drawHScale], [self drawVScale]);
+}
+
 // Subclasses must implement this.
 - (void)drawIfNeeded {
     if (!_haveDrawn) {
@@ -341,6 +368,14 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
 
 #if DEBUG
 - (void)verifyContextEmptyForIteration:(NSInteger)iteration {
+    if ([self drawScale] > 1) {
+        // The double-width context is shared across concurrent render passes.
+        // Pre-clear it fully before each use. Skip the assertion check since
+        // another thread may write between the clear and the verify.
+        memset(CGBitmapContextGetData(_context), 0,
+               CGBitmapContextGetBytesPerRow(_context) * CGBitmapContextGetHeight(_context));
+        return;
+    }
     const unsigned char *data = CGBitmapContextGetData(_context);
     const size_t bytesPerRow = CGBitmapContextGetBytesPerRow(_context);
     const int contextWidth = (int)_size.width;
@@ -394,16 +429,63 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
 
     CGAffineTransform textMatrix = CGContextGetTextMatrix(_context);
     CGContextSaveGState(_context);
+
+    const CGFloat hScale = [self drawHScale];
+    const CGFloat scale = _descriptor.scale;
+    const iTermLineAttribute attr = [self lineAttribute];
+
+    if (attr == iTermLineAttributeDoubleHeightTop ||
+        attr == iTermLineAttributeDoubleHeightBottom) {
+        // Clip to one cell height at the center row to prevent the 2x-tall
+        // glyph's unwanted half from bleeding, matching the legacy
+        // renderer's CGContextClipToRect(..., _cellSize.height).
+        // The bitmap context is in pixels (no CTM) but draw offsets use
+        // point values; the text matrix applies descriptor.scale. So the
+        // clip height must be cellSize * scale to cover one cell in pixels.
+        CGContextClipToRect(_context,
+                            CGRectMake(0,
+                                       _descriptor.glyphSize.height * _radius,
+                                       _size.width,
+                                       _descriptor.cellSize.height * scale));
+    }
+
+    // Apply just the DWL horizontal scale via CTM, matching the legacy
+    // renderer's CGContextScaleCTM(ctx, 2.0, 1.0).
+    if (hScale > 1) {
+        CGContextScaleCTM(_context, hScale, 1.0);
+    }
+
     const CGFloat skew = _fakeItalic ? iTermFakeItalicSkew : 0;
-    const CGFloat ty = offset.y - _descriptor.baselineOffset * _descriptor.scale;
+    // For double-height lines, shift the draw origin so only the desired
+    // vertical half of the 2x glyph lands in the parts grid.
+    // In CG coordinates (y-up), shifting DOWN means decreasing ty.
+    CGFloat ty = offset.y - _descriptor.baselineOffset * scale;
+    if (attr == iTermLineAttributeDoubleHeightTop) {
+        // Shift baseline down by ascent so the top of the 2x glyph aligns
+        // with where the normal glyph top would be.
+        ty -= (_descriptor.cellSize.height + _descriptor.baselineOffset) * scale;
+    } else if (attr == iTermLineAttributeDoubleHeightBottom) {
+        // Shift baseline up by descent so the bottom of the 2x glyph aligns
+        // with where the normal glyph bottom would be.
+        ty -= _descriptor.baselineOffset * scale;
+    }
+
+    CGFloat ox = offset.x;
+    if (hScale > 1) {
+        ox /= hScale;
+    }
 
     [self drawIteration:iteration
-               atOffset:CGPointMake(offset.x, ty)
+               atOffset:CGPointMake(ox, ty)
                    skew:skew];
     _haveDrawn = YES;
 
+    // Restore GState before debug drawing so the CTM is identity.
+    CGContextRestoreGState(_context);
+
 #if ENABLE_DEBUG_CHARACTER_SOURCE_ALIGNMENT
     CGContextSetRGBStrokeColor(_context, 1, 0, 0, 1);
+    CGContextSetLineWidth(_context, 0.5);
     for (int x = 0; x < self.maxParts; x++) {
         for (int y = 0; y < self.maxParts; y++) {
             CGContextStrokeRect(_context, CGRectMake(x * _descriptor.glyphSize.width,
@@ -441,7 +523,6 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
         CFRelease(destination);
         CGImageRelease(imageRef);
     }
-    CGContextRestoreGState(_context);
     CGContextSetTextMatrix(_context, textMatrix);
 
     // Clear the drawn area, ready for next iteration/character.
@@ -450,9 +531,31 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
     // Must happen after RestoreGState to ensure no transforms affect the clear.
     // Use frameFlipped:NO because CGContextClearRect uses native CoreGraphics
     // coordinates (origin at bottom-left), not flipped coordinates.
-    CGRect drawnRect = _isEmoji ? CGRectMake(0, 0, _size.width, _size.height) : [self frameFlipped:NO];
+    CGRect drawnRect;
+    if (_isEmoji) {
+        drawnRect = CGRectMake(0, 0, _size.width, _size.height);
+    } else {
+        drawnRect = [self frameFlipped:NO];
+        if ([self drawScale] > 1) {
+            // Scaled glyphs can overflow beyond _size. Clear the entire context.
+            drawnRect = CGRectMake(0, 0, CGBitmapContextGetWidth(_context),
+                                        CGBitmapContextGetHeight(_context));
+        }
+    }
 
-    CGContextClearRect(_context, drawnRect);
+    if ([self drawScale] > 1) {
+        // TODO: This is slow and with just a little math it could be avoided.
+        // Use memset for scaled glyphs. Clear the full backing store.
+        memset(CGBitmapContextGetData(_context), 0, _bytesPerRow * _numberOfRows);
+    } else {
+        CGContextClearRect(_context, drawnRect);
+    }
+
+    // Skip the post-draw verify for scaled glyphs — the verify bounds don't
+    // correctly account for the scaled drawing area.
+    if ([self drawScale] > 1) {
+        return;
+    }
 
 #if DEBUG
     // Verify the drawn area is actually clear
@@ -647,9 +750,17 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
                                offset:(CGPoint)offset {
     if (!_isEmoji) {
         // Can't use this with emoji.
-        CGAffineTransform textMatrix = CGAffineTransformMake(_descriptor.scale,        0.0,
-                                                             skew * _descriptor.scale, _descriptor.scale,
-                                                             offset.x,                 offset.y);
+        const CGFloat hScale = [self drawHScale];
+        const CGFloat vScale = [self drawVScale];
+        // For DWL lines, retina + DWL scales are in the CTM, so the text
+        // matrix matches the legacy renderer: a=1, d=vScale.
+        // DWL horizontal scale is in the CTM. Retina scale stays in the
+        // text matrix for both axes.
+        const CGFloat xScale = _descriptor.scale;
+        const CGFloat yScale = _descriptor.scale * vScale;
+        CGAffineTransform textMatrix = CGAffineTransformMake(xScale,        0.0,
+                                                             skew * xScale, yScale,
+                                                             offset.x,      offset.y);
         CGContextSetTextMatrix(cgContext, textMatrix);
     } else {
         CGContextSetTextMatrix(cgContext, CGAffineTransformIdentity);
@@ -662,7 +773,7 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
                       context:(CGContextRef)context {
     CGContextConcatCTM(context, CTFontGetMatrix(runFont));
     CGContextTranslateCTM(context, offset.x, offset.y);
-    CGContextScaleCTM(context, _descriptor.scale, _descriptor.scale);
+    CGContextScaleCTM(context, _descriptor.scale, _descriptor.scale * [self drawVScale]);
 }
 
 - (iTermCharacterBitmap *)bitmapForPart:(int)part {
@@ -747,6 +858,8 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
 
 - (NSArray<NSNumber *> *)newParts {
     CGRect boundingBox = self.frame;
+
+    const iTermLineAttribute attr = [self lineAttribute];
     const int radius = _radius;
     NSMutableArray<NSNumber *> *result = [NSMutableArray array];
     for (int y = 0; y < self.maxParts; y++) {
@@ -756,7 +869,18 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
                                          _descriptor.glyphSize.width,
                                          _descriptor.glyphSize.height);
             if (CGRectIntersectsRect(partRect, boundingBox)) {
-                [result addObject:@(iTermImagePartFromDeltas(x - radius, y - radius))];
+                const int dy = y - radius;
+                // For double-height lines, only include parts from the
+                // relevant vertical half. The draw shift in drawWithOffset:
+                // positions the glyph so top-half pixels land at dy <= 0
+                // and bottom-half pixels at dy > 0.
+                if (attr == iTermLineAttributeDoubleHeightTop && dy > 0) {
+                    continue;
+                }
+                if (attr == iTermLineAttributeDoubleHeightBottom && dy < 0) {
+                    continue;
+                }
+                [result addObject:@(iTermImagePartFromDeltas(x - radius, dy))];
             }
         }
     }

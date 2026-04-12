@@ -43,6 +43,9 @@ static const size_t iTermNumberOfPIUArrays = iTermASCIITextureAttributesMax * 2;
     std::map<iTerm2::TexturePage *, iTerm2::PIUArray<iTermTextPIU> *> _pius[iTermPIUArraySize];
 
     iTermPreciseTimerStats _stats[iTermTextRendererStatCount];
+
+    // Set per-row to suppress underlines on DECDHL top-half lines.
+    BOOL _suppressUnderlineForDHL;
 }
 
 // Carrier struct for moving PIUArrays to background deallocation queue.
@@ -437,7 +440,7 @@ static inline int iTermOuterPIUIndex(const bool &annotation, const bool &underli
     iTermASCIITextureParts parts = texture.parts[(size_t)code];
     vector_float4 underlineColor = { 0, 0, 0, 0 };
 
-    const BOOL suppressUnderlines = self.suppressUnderlines;
+    const BOOL suppressUnderlines = self.suppressUnderlines || _suppressUnderlineForDHL;
     const bool hasAnnotation = suppressUnderlines ? false : attributes[visualColumn].annotation;
     const bool hasUnderline = suppressUnderlines ? false : attributes[visualColumn].underlineStyle != iTermMetalGlyphAttributesUnderlineNone;
     const int outerPIUIndex = iTermOuterPIUIndex(hasAnnotation, hasUnderline, false);
@@ -528,7 +531,8 @@ static inline BOOL GlyphKeyCanTakeASCIIFastPath(const iTermMetalGlyphKey &glyphK
             glyphKey.payload.regular.code <= iTermASCIITextureMaximumCharacter &&
             glyphKey.payload.regular.code >= iTermASCIITextureMinimumCharacter &&
             !glyphKey.payload.regular.isComplex &&
-            !glyphKey.payload.regular.boxDrawing);
+            !glyphKey.payload.regular.boxDrawing &&
+            !iTermLineAttributeIsDoubleWidth(glyphKey.lineAttribute));
 }
 
 typedef struct {
@@ -582,6 +586,10 @@ typedef struct {
         .context = context,
         .creation = creation
     };
+    // Suppress underlines on DECDHL top-half lines (underlines belong
+    // on the bottom half, below the text).
+    _suppressUnderlineForDHL = (glyphKeyCount > 0 &&
+                                glyphKeys[0].lineAttribute == iTermLineAttributeDoubleHeightTop);
     int previousLogicalIndex = -1;
     for (state.i = 0; state.i < glyphKeyCount; state.i++) {
         const int logicalIndex = glyphKeys[state.i].logicalIndex;
@@ -648,8 +656,12 @@ typedef struct {
         return;;
     }
 
+    if (entries->empty()) {
+        return;
+    }
+
     const iTermMetalGlyphAttributes *attributes = state->attributes;
-    const BOOL suppressUnderlines = self.suppressUnderlines;
+    const BOOL suppressUnderlines = self.suppressUnderlines || _suppressUnderlineForDHL;
     const bool hasAnnotation = suppressUnderlines ? false : attributes[visualIndex].annotation;
     const bool hasUnderline = suppressUnderlines ? false : attributes[visualIndex].underlineStyle != iTermMetalGlyphAttributesUnderlineNone;
     const iTerm2::GlyphEntry *firstGlyphEntry = (*entries)[0];
@@ -709,12 +721,17 @@ typedef struct {
                                  lineLength:(int)lineLength
                                  inverseLUT:(const int *)inverseLUT
                              inverseLUTLen:(int)inverseLUTLen
+                              lineAttribute:(iTermLineAttribute)lineAttribute
                              underlineSpans:(NSMutableData *)underlineSpans
                          strikethroughSpans:(NSMutableData *)strikethroughSpans {
     BOOL inUnderlineSpan = NO;
     BOOL inStrikethroughSpan = NO;
     iTermMetalUnderlineSpan currentUnderline = {};
     iTermMetalUnderlineSpan currentStrikethrough = {};
+
+    // On DECDHL top-half lines, underlines belong on the bottom half
+    // (below the text). Suppress them here.
+    const BOOL suppressUnderlineForDHL = (lineAttribute == iTermLineAttributeDoubleHeightTop);
 
     for (int col = 0; col < count; col++) {
         iTermMetalGlyphAttributesUnderline rawStyle = attributes[col].underlineStyle;
@@ -724,9 +741,13 @@ typedef struct {
             rawStyle = iTermMetalGlyphAttributesUnderlineSingle;
         }
 
-        const iTermMetalGlyphAttributesUnderline baseStyle =
+        iTermMetalGlyphAttributesUnderline baseStyle =
             (iTermMetalGlyphAttributesUnderline)(rawStyle & iTermMetalGlyphAttributesUnderlineBitmask);
         const BOOL hasStrikethrough = (rawStyle & iTermMetalGlyphAttributesUnderlineStrikethroughFlag) != 0;
+
+        if (suppressUnderlineForDHL) {
+            baseStyle = iTermMetalGlyphAttributesUnderlineNone;
+        }
 
         // Select the correct underline descriptor based on ASCII vs non-ASCII.
         const int logicalIndex = (inverseLUT && col < inverseLUTLen) ? inverseLUT[col] : col;
@@ -770,6 +791,7 @@ typedef struct {
                     .endColumn = col,
                     .style = packedStyle,
                     .color = underlineColor,
+                    .lineAttribute = lineAttribute,
                 };
                 inUnderlineSpan = YES;
             }
@@ -797,6 +819,7 @@ typedef struct {
                     .endColumn = col,
                     .style = packedStrikethroughStyle,
                     .color = underlineColor,
+                    .lineAttribute = lineAttribute,
                 };
                 inStrikethroughSpan = YES;
             }

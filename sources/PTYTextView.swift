@@ -100,7 +100,8 @@ extension PTYTextView: ExternalSearchResultsController {
                                      cappedAtSize: -1,
                                      truncateTail: false,
                                      continuationChars: nil,
-                                     coords: nil) as! String
+                                     coords: nil,
+                                     deduplicateDECDHL: true) as! String
         DLog("Return \(text)")
         return text
     }

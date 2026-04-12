@@ -793,6 +793,7 @@ legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth
                                  @"Have %@ drawable glyphs with %@ glyph keys",
                                  @(drawableGlyphs),
                                  @(rowData.keysData.length / sizeof(iTermMetalGlyphKey)));
+        rowData.lineAttribute = rowData.screenCharArray.metadata.lineAttribute;
         rowData.markStyle = markStyle;
         rowData.hoverState = hoverState;
         rowData.lineStyleMark = lineStyleMark;
@@ -1640,6 +1641,7 @@ legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth
                                                    lineLength:(int)rowData.screenCharArray.length
                                                    inverseLUT:bidiInfo ? bidiInfo.inverseLUT : NULL
                                                  inverseLUTLen:bidiInfo ? bidiInfo.inverseLUTCount : 0
+                                                lineAttribute:rowData.lineAttribute
                                                underlineSpans:isOffscreen ? frameData.offscreenUnderlineSpanData : frameData.underlineSpanData
                                            strikethroughSpans:isOffscreen ? frameData.offscreenStrikethroughSpanData : frameData.strikethroughSpanData];
             }

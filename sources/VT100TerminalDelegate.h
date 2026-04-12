@@ -7,6 +7,7 @@
 //
 
 #import <Foundation/Foundation.h>
+#import "ScreenChar.h"
 #import "VT100InlineImageHelper.h"
 #import "VT100Token.h"
 #import "iTermPromise.h"
@@ -119,6 +120,10 @@ typedef NS_ENUM(NSUInteger, VT100TerminalProtectedMode) {
 
 // Replaces the screen contents with a test pattern.
 - (void)terminalShowTestPattern;
+
+// Sets the line attribute (double-width, double-height top/bottom, or single-width)
+// on the current cursor line.
+- (void)terminalSetLineAttribute:(iTermLineAttribute)attr;
 
 // Returns the cursor's position relative to the scroll region's origin. 1-based.
 - (int)terminalRelativeCursorX;

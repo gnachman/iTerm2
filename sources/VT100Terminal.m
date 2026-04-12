@@ -2002,8 +2002,18 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
         case VT100CSI_DECALN:
             [_delegate terminalShowTestPattern];
             break;
-        case VT100CSI_DECDHL:
+        case VT100CSI_DECDHL: {
+            iTermLineAttribute attr = (token.csi->p[0] == 3) ? iTermLineAttributeDoubleHeightTop
+                                                              : iTermLineAttributeDoubleHeightBottom;
+            [_delegate terminalSetLineAttribute:attr];
+            break;
+        }
         case VT100CSI_DECDWL:
+            [_delegate terminalSetLineAttribute:iTermLineAttributeDoubleWidth];
+            break;
+        case VT100CSI_DECSWL:
+            [_delegate terminalSetLineAttribute:iTermLineAttributeSingleWidth];
+            break;
         case VT100CSI_DECID:
             break;
         case VT100CSI_DECKPNM:

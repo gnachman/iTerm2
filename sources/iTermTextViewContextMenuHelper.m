@@ -558,6 +558,13 @@ const int kMaxSelectedTextLengthForCustomActions = 400;
     // Split pane options
     add(@"Split Pane Vertically", @selector(splitTextViewVertically:));
     add(@"Split Pane Horizontally", @selector(splitTextViewHorizontally:));
+    if ([iTermPreferences boolForKey:kPreferenceKeyMenuActionImages]) {
+        NSInteger n = theMenu.numberOfItems;
+        theMenu.itemArray[n - 2].image = [NSImage imageWithSystemSymbolName:@"square.split.2x1.fill"
+                                                   accessibilityDescription:nil];
+        theMenu.itemArray[n - 1].image = [NSImage imageWithSystemSymbolName:@"square.split.1x2.fill"
+                                                   accessibilityDescription:nil];
+    }
 
     // Separator
     [theMenu addItem:[NSMenuItem separatorItem]];

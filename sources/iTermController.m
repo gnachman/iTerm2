@@ -1087,12 +1087,12 @@ replaceInitialDirectoryForSessionWithGUID:(NSString *)guid
 
             case WINDOW_TYPE_TOP_PERCENTAGE:
             case WINDOW_TYPE_BOTTOM_PERCENTAGE:
-                *percentage = iTermPercentageFromProfile(aDict);
+                *percentage = iTermPercentageFromProfile(aDict, windowType);
                 break;
 
             case WINDOW_TYPE_LEFT_PERCENTAGE:
             case WINDOW_TYPE_RIGHT_PERCENTAGE:
-                *percentage = iTermPercentageFromProfile(aDict);
+                *percentage = iTermPercentageFromProfile(aDict, windowType);
                 break;
         }
         if (windowType == WINDOW_TYPE_TRADITIONAL_FULL_SCREEN &&

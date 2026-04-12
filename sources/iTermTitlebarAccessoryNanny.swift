@@ -200,6 +200,30 @@ class iTermTitlebarAccessoryNanny: NSObject {
         DLog("Update complete")
     }
 
+    // Work around macOS bug where the content view frame isn't updated to
+    // account for titlebar accessories after exiting Lion fullscreen.
+    // Removing and re-adding forces AppKit to recalculate. Issue 12810.
+    @objc func forceReaddAll() {
+        guard let window = windowController?.window else {
+            return
+        }
+        DLog("Force re-adding all view controllers to fix content view layout")
+        var toReadd = [NSTitlebarAccessoryViewController]()
+        for vc in viewControllers {
+            if window.titlebarAccessoryViewControllers.contains(vc) {
+                toReadd.append(vc)
+            }
+        }
+        for vc in toReadd.reversed() {
+            if let index = window.titlebarAccessoryViewControllers.firstIndex(of: vc) {
+                window.removeTitlebarAccessoryViewController(at: index)
+            }
+        }
+        for vc in toReadd {
+            window.addTitlebarAccessoryViewController(vc)
+        }
+    }
+
     @objc(has:)
     func has(viewController: NSTitlebarAccessoryViewController) -> Bool {
         guard windowController?.window?.styleMask.contains(.titled) == true else {

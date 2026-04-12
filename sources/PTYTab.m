@@ -48,7 +48,9 @@
 #import "PTYTab+Scripting.h"
 #import "SessionView.h"
 #import "SolidColorView.h"
+#import "TmuxController.h"
 #import "TmuxDashboardController.h"
+#import "TmuxGateway.h"
 #import "TmuxLayoutParser.h"
 #import "iTermTmuxOptionMonitor.h"
 #import "VT100GridTypes.h"
@@ -5849,6 +5851,7 @@ typedef struct {
     }
     // Dragging looks a lot better if we turn on resizing subviews temporarily.
     _isDraggingSplitInTmuxTab = YES;
+    [tmuxController_.gateway pauseTokenExecution];
     [self updateUseMetal];
 }
 
@@ -5895,6 +5898,7 @@ typedef struct {
         return;
     }
     _isDraggingSplitInTmuxTab = NO;
+    [tmuxController_.gateway unpauseTokenExecution];
     [self updateUseMetal];
     // Find a session view adjacent to the moved splitter.
     NSArray *subviews = [splitView subviews];

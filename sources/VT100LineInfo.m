@@ -20,7 +20,7 @@
         width_ = width;
         _dirty = NO;
         [self setDirty:NO inRange:VT100GridRangeMake(0, width) updateTimestampTo:0];
-        iTermMetadataInit(&_metadata, 0, NO, nil);
+        iTermMetadataInit(&_metadata, 0, NO, nil, iTermLineAttributeSingleWidth);
     }
     return self;
 }

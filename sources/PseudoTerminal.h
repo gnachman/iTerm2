@@ -134,7 +134,8 @@ extern NSString *const iTermDidCreateTerminalWindowNotification;
 // forceOpeningHotKeyWindow means open the window even if there is already a hotkey window with the
 // specified profile, or the arrangement is defective in specifying details of the hotkey window.
 + (PseudoTerminal *)bareTerminalWithArrangement:(NSDictionary *)arrangement
-                       forceOpeningHotKeyWindow:(BOOL)force;
+                       forceOpeningHotKeyWindow:(BOOL)force
+                                      restoring:(BOOL)restoring;
 
 // Returns a new terminal window restored from an arrangement, with
 // tabs/sessions also restored. May return nil.

@@ -907,8 +907,8 @@ class ComposerTextView: MultiCursorTextView {
         if unsafeIndex < 0 {
             return nil
         }
-        if let prefixLength = prefix?.string.count, prefixLength > 0 {
-            if unsafeIndex > prefixLength {
+        if let prefixLength = prefix?.string.utf16.count, prefixLength > 0 {
+            if unsafeIndex < prefixLength {
                 return nil
             }
             if let (_range, string) = withoutPrefix({
@@ -1000,7 +1000,11 @@ class ComposerTextView: MultiCursorTextView {
         // Remove line continuation backslashes.
         let temp = ((textStorage.string as NSString).substring(with: rangeExcludingSuggestion) as NSString).mutableCopy() as! NSMutableString
         for index in characterIndexesToDrop.sorted().reversed() {
-            temp.replaceCharacters(in: NSRange(location: index, length: 1), with: " ")
+            let relativeIndex = index - rangeExcludingSuggestion.location
+            guard relativeIndex < temp.length else {
+                continue
+            }
+            temp.replaceCharacters(in: NSRange(location: relativeIndex, length: 1), with: " ")
         }
         return (rangeExcludingSuggestion, temp as String)
     }

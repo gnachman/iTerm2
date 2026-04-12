@@ -129,6 +129,10 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
 
     BOOL _blinkingFound;
 
+    // Line attribute of the line currently being drawn. Used to apply 2x
+    // scaling for double-width lines in the text drawing methods.
+    iTermLineAttribute _currentLineAttribute;
+
     // Frame of the view we're drawing into.
     NSRect _frame;
 
@@ -1882,7 +1886,8 @@ static BOOL NSRangesAdjacent(NSRange lhs, NSRange rhs) {
                                   matches:matches
                            forceTextColor:nil
                                   context:ctx
-                            virtualOffset:virtualOffset];
+                            virtualOffset:virtualOffset
+                            lineAttribute:metadata.lineAttribute];
     }
 }
 
@@ -1900,18 +1905,19 @@ static BOOL NSRangesAdjacent(NSRange lhs, NSRange rhs) {
                             matches:(NSData *)matches
                      forceTextColor:(NSColor *)forceTextColor  // optional
                             context:(CGContextRef)ctx
-                      virtualOffset:(CGFloat)virtualOffset {
+                      virtualOffset:(CGFloat)virtualOffset
+                      lineAttribute:(iTermLineAttribute)lineAttribute {
     CTVector(CGFloat) positions;
     CTVectorCreate(&positions, _gridSize.width);
 
-    if (indexRange.location > 0) {
-        screen_char_t firstCharacter = theLine[indexRange.location];
-        if (ScreenCharIsDWC_RIGHT(firstCharacter)) {
-            // Don't try to start drawing in the middle of a double-width character.
-            indexRange.location -= 1;
-            indexRange.length += 1;
-            initialPoint.x -= _cellSize.width;
-        }
+    while (indexRange.location > 0 &&
+           (ScreenCharIsDWC_RIGHT(theLine[indexRange.location]) ||
+            ScreenCharIsDWL_SPACER(theLine[indexRange.location]))) {
+        // Don't try to start drawing in the middle of a double-width character
+        // or on a DWL_SPACER. Back up over the full sequence.
+        indexRange.location -= 1;
+        indexRange.length += 1;
+        initialPoint.x -= _cellSize.width;
     }
 
     DLog(@"row %f: %@", (initialPoint.y - virtualOffset) / self.cellSize.height, ScreenCharArrayToStringDebug(theLine, _gridSize.width));
@@ -1936,13 +1942,41 @@ static BOOL NSRangesAdjacent(NSRange lhs, NSRange rhs) {
     if (_offscreenCommandLine && displayLineNumber == [self rangeOfVisibleRows].location) {
         adjustedPoint.y += iTermOffscreenCommandLineVerticalPadding;
     }
+
+    if (iTermLineAttributeIsDoubleWidth(lineAttribute)) {
+        // Scale the context 2x horizontally. Halve x positions so they end up
+        // correct after the scale. The scale makes each glyph 2x wider while
+        // the halved positions keep them in the right cells.
+        CGContextSaveGState(ctx);
+        if (lineAttribute == iTermLineAttributeDoubleHeightTop ||
+            lineAttribute == iTermLineAttributeDoubleHeightBottom) {
+            // Clip to the row rect to prevent 2x-tall glyphs from bleeding
+            // into adjacent rows. Account for virtualOffset since the actual
+            // drawing position subtracts it from y.
+            CGContextClipToRect(ctx, CGRectMake(0, adjustedPoint.y - virtualOffset, CGFLOAT_MAX, _cellSize.height));
+        }
+        CGContextScaleCTM(ctx, 2.0, 1.0);
+        // Halve the x coordinate of the drawing point.
+        adjustedPoint.x /= 2.0;
+        // Halve all character x positions.
+        for (int i = 0; i < CTVectorCount(&positions); i++) {
+            CGFloat *p = CTVectorElementsFromIndex(&positions, i);
+            *p /= 2.0;
+        }
+    }
+
     [self drawMultipartAttributedString:attributedStrings
                                 atPoint:adjustedPoint
                                  origin:VT100GridCoordMake(indexRange.location, displayLineNumber)
                               positions:&positions
                               inContext:ctx
                         backgroundColor:processedBackgroundColor
-                          virtualOffset:virtualOffset];
+                          virtualOffset:virtualOffset
+                          lineAttribute:lineAttribute];
+
+    if (iTermLineAttributeIsDoubleWidth(lineAttribute)) {
+        CGContextRestoreGState(ctx);
+    }
 
     CTVectorDestroy(&positions);
     iTermPreciseTimerStatsMeasureAndAccumulate(&_stats[TIMER_STAT_DRAW]);
@@ -1954,7 +1988,9 @@ static BOOL NSRangesAdjacent(NSRange lhs, NSRange rhs) {
                             positions:(CTVector(CGFloat) *)positions
                             inContext:(CGContextRef)ctx
                       backgroundColor:(NSColor *)backgroundColor
-                        virtualOffset:(CGFloat)virtualOffset {
+                        virtualOffset:(CGFloat)virtualOffset
+                        lineAttribute:(iTermLineAttribute)lineAttribute {
+    _currentLineAttribute = lineAttribute;
     const NSPoint point = initialPoint;
     VT100GridCoord origin = initialOrigin;
     NSInteger start = 0;
@@ -2004,8 +2040,20 @@ static BOOL NSRangesAdjacent(NSRange lhs, NSRange rhs) {
     [transform concat];
 
     CGColorRef color = (__bridge CGColorRef)attributes[(__bridge NSString *)kCTForegroundColorAttributeName];
+    NSSize cellSize = _cellSize;
+    if (_currentLineAttribute == iTermLineAttributeDoubleHeightTop ||
+        _currentLineAttribute == iTermLineAttributeDoubleHeightBottom) {
+        cellSize.height *= 2;
+        if (_currentLineAttribute == iTermLineAttributeDoubleHeightBottom) {
+            // Shift the 2x box up by one cell so the bottom half lands in the
+            // clipped row. In flipped screen coords, up = negative y.
+            NSAffineTransform *shift = [NSAffineTransform transform];
+            [shift translateXBy:0 yBy:-_cellSize.height];
+            [shift concat];
+        }
+    }
     [iTermBoxDrawingBezierCurveFactory drawCodeInCurrentContext:theCharacter
-                                                       cellSize:_cellSize
+                                                       cellSize:cellSize
                                                           scale:self.isRetina ? 2.0 : 1.0
                                                        isPoints:YES
                                                          offset:CGPointZero
@@ -2066,12 +2114,15 @@ static BOOL NSRangesAdjacent(NSRange lhs, NSRange rhs) {
                                                          backgroundColor:backgroundColor
                                                                    smear:NO
                                                            virtualOffset:virtualOffset];
-    [self drawUnderlineOrStrikethroughForFastPathString:cheapString
-                                          wantUnderline:YES
-                                                atPoint:point
-                                              positions:positions
-                                        backgroundColor:backgroundColor
-                                          virtualOffset:virtualOffset];
+    // Underlines belong on the bottom-half line for DECDHL (below the text).
+    if (_currentLineAttribute != iTermLineAttributeDoubleHeightTop) {
+        [self drawUnderlineOrStrikethroughForFastPathString:cheapString
+                                              wantUnderline:YES
+                                                    atPoint:point
+                                                  positions:positions
+                                            backgroundColor:backgroundColor
+                                              virtualOffset:virtualOffset];
+    }
 
     [self drawUnderlineOrStrikethroughForFastPathString:cheapString
                                           wantUnderline:NO
@@ -2164,14 +2215,22 @@ static BOOL NSRangesAdjacent(NSRange lhs, NSRange rhs) {
     }
     CGContextSetFillColor(ctx, components);
     double y = point.y + _cellSize.height + _baselineOffset - virtualOffset;
-    int x = point.x + positions[0];
+    CGFloat vScale = -1.0;
+    if (_currentLineAttribute == iTermLineAttributeDoubleHeightTop) {
+        vScale = -2.0;
+        y += _cellSize.height + _baselineOffset;  // ≈ +ascent
+    } else if (_currentLineAttribute == iTermLineAttributeDoubleHeightBottom) {
+        vScale = -2.0;
+        y += _baselineOffset;  // ≈ -descent
+    }
+    const CGFloat x = point.x + positions[0];
     // Flip vertically and translate to (x, y).
     CGFloat m21 = 0.0;
     if (fakeItalic) {
         m21 = 0.2;
     }
     CGContextSetTextMatrix(ctx, CGAffineTransformMake(1.0,  0.0,
-                                                      m21, -1.0,
+                                                      m21, vScale,
                                                       x, y));
 
     CGPoint points[length];
@@ -2199,7 +2258,7 @@ static BOOL NSRangesAdjacent(NSRange lhs, NSRange rhs) {
             // If anti-aliased, drawing twice at the same position makes the strokes thicker.
             // If not anti-alised, draw one pixel to the right.
             CGContextSetTextMatrix(ctx, CGAffineTransformMake(1.0,  0.0,
-                                                              m21, -1.0,
+                                                              m21, vScale,
                                                               x + (antiAlias ? _antiAliasedShift : 1),
                                                               y));
 
@@ -2418,9 +2477,21 @@ static BOOL NSRangesAdjacent(NSRange lhs, NSRange rhs) {
                                useThinStrokes:useThinStrokes
                                    antialised:antiAlias];
 
-    const CGFloat ty = origin.y + _baselineOffset + _cellSize.height - virtualOffset;
+    CGFloat ty = origin.y + _baselineOffset + _cellSize.height - virtualOffset;
+    CGFloat vScale = -1.0;
+    if (_currentLineAttribute == iTermLineAttributeDoubleHeightTop) {
+        // Render glyphs at 2x vertical. Shift baseline down by ascent so the
+        // top of the 2x glyph aligns with the normal glyph top.
+        vScale = -2.0;
+        ty += _cellSize.height + _baselineOffset;  // ≈ +ascent
+    } else if (_currentLineAttribute == iTermLineAttributeDoubleHeightBottom) {
+        // Render glyphs at 2x vertical. Shift baseline up by descent so the
+        // bottom of the 2x glyph aligns with the normal glyph bottom.
+        vScale = -2.0;
+        ty += _baselineOffset;  // ≈ -descent
+    }
     CGAffineTransform textMatrix = CGAffineTransformMake(1.0, 0.0,
-                                                         c, -1.0,
+                                                         c, vScale,
                                                          origin.x, ty);
     CGContextSetTextMatrix(cgContext, textMatrix);
     const BOOL verbose = NO;  // turn this on to debug character position problems.
@@ -2442,18 +2513,46 @@ static BOOL NSRangesAdjacent(NSRange lhs, NSRange rhs) {
                                                                    size_t length,
                                                                    BOOL *stop) {
         if (!smear) {
-            CTFontDrawGlyphs(runFont, buffer, (NSPoint *)positions, length, cgContext);
-
-            if (bold && !fakeBold) {
-                // If this text is supposed to be bold, but the font is not, use double-struck text. Issue 4956.
-                CTFontSymbolicTraits traits = CTFontGetSymbolicTraits(runFont);
-                fakeBold = !(traits & kCTFontTraitBold);
-            }
-
-            if (fakeBold && _boldAllowed) {
-                CGContextTranslateCTM(cgContext, antiAlias ? _antiAliasedShift : 1, 0);
+            // Emoji glyphs ignore the text matrix for scaling (they're
+            // color bitmaps). For DECDHL, move the vertical 2x scale from
+            // the text matrix into the CTM so emoji get scaled too.
+            const BOOL isDoubleHeight = (_currentLineAttribute == iTermLineAttributeDoubleHeightTop ||
+                                         _currentLineAttribute == iTermLineAttributeDoubleHeightBottom);
+            NSString *fontName = isDoubleHeight ? CFBridgingRelease(CTFontCopyFamilyName(runFont)) : nil;
+            const BOOL isEmojiOnDHL = isDoubleHeight &&
+                ([fontName isEqualToString:@"AppleColorEmoji"] ||
+                 [fontName isEqualToString:@"Apple Color Emoji"]);
+            if (isEmojiOnDHL) {
+                // Emoji ignore the text matrix for scaling (they're color
+                // bitmaps). For DECDHL, move the vertical 2x from the text
+                // matrix into the CTM. Halve ty to compensate for the CTM
+                // doubling it. Skip fake bold — emoji don't benefit from
+                // double-striking (matching the GPU renderer).
+                CGContextSaveGState(cgContext);
+                CGAffineTransform tm = CGContextGetTextMatrix(cgContext);
+                tm.d /= 2.0;   // -2 → -1
+                tm.ty /= 2.0;  // compensate for CTM 2x
+                CGContextSetTextMatrix(cgContext, tm);
+                CGContextScaleCTM(cgContext, 1.0, 2.0);
                 CTFontDrawGlyphs(runFont, buffer, (NSPoint *)positions, length, cgContext);
-                CGContextTranslateCTM(cgContext, antiAlias ? -_antiAliasedShift : -1, 0);
+                CGContextRestoreGState(cgContext);
+                CGAffineTransform restored = CGAffineTransformMake(1.0, 0.0,
+                                                                    c, vScale,
+                                                                    origin.x, ty);
+                CGContextSetTextMatrix(cgContext, restored);
+            } else {
+                CTFontDrawGlyphs(runFont, buffer, (NSPoint *)positions, length, cgContext);
+
+                if (bold && !fakeBold) {
+                    CTFontSymbolicTraits traits = CTFontGetSymbolicTraits(runFont);
+                    fakeBold = !(traits & kCTFontTraitBold);
+                }
+
+                if (fakeBold && _boldAllowed) {
+                    CGContextTranslateCTM(cgContext, antiAlias ? _antiAliasedShift : 1, 0);
+                    CTFontDrawGlyphs(runFont, buffer, (NSPoint *)positions, length, cgContext);
+                    CGContextTranslateCTM(cgContext, antiAlias ? -_antiAliasedShift : -1, 0);
+                }
             }
         } else {
             const int radius = 1;
@@ -2496,11 +2595,13 @@ static BOOL NSRangesAdjacent(NSRange lhs, NSRange rhs) {
                                                       graphicsContext:graphicsContext
                                                                 smear:NO
                                                         virtualOffset:virtualOffset];
-    [self drawUnderlineAndStrikethroughForAttributedString:attributedString
-                                                   atPoint:origin
-                                                 positions:stringPositions
-                                             wantUnderline:YES
-                                             virtualOffset:virtualOffset];
+    if (_currentLineAttribute != iTermLineAttributeDoubleHeightTop) {
+        [self drawUnderlineAndStrikethroughForAttributedString:attributedString
+                                                       atPoint:origin
+                                                     positions:stringPositions
+                                                 wantUnderline:YES
+                                                 virtualOffset:virtualOffset];
+    }
     [self drawUnderlineAndStrikethroughForAttributedString:attributedString
                                                    atPoint:origin
                                                  positions:stringPositions
@@ -2873,9 +2974,21 @@ BOOL iTermDecodeKittyUnicodePlaceholder(const screen_char_t *c,
     iTermShapeBuilder *shapeBuilder = [[iTermShapeBuilder alloc] init];
     shapeBuilder.enableEndcap = NO;
 
-    const CGFloat y = [self retinaRound:(wantUnderline ?
-                       [self yOriginForUnderlineForFont:font yOffset:rect.origin.y cellHeight:_cellSize.height] :
-                       [self yOriginForStrikethroughForFont:font yOffset:rect.origin.y cellHeight:_cellSize.height])];
+    CGFloat y;
+    if (!wantUnderline && _currentLineAttribute == iTermLineAttributeDoubleHeightTop) {
+        // Strikethrough at the very bottom of the top-half cell.
+        // Position so the line's bottom edge aligns with the cell boundary.
+        const CGFloat scaleFactor = self.isRetina ? 2.0 : 1.0;
+        const CGFloat onePixel = 1.0 / scaleFactor;
+        y = rect.origin.y + _cellSize.height - onePixel;
+    } else if (!wantUnderline && _currentLineAttribute == iTermLineAttributeDoubleHeightBottom) {
+        // Strikethrough at the very top of the bottom-half cell.
+        y = rect.origin.y;
+    } else {
+        y = [self retinaRound:(wantUnderline ?
+                               [self yOriginForUnderlineForFont:font yOffset:rect.origin.y cellHeight:_cellSize.height] :
+                               [self yOriginForStrikethroughForFont:font yOffset:rect.origin.y cellHeight:_cellSize.height])];
+    }
     NSPoint origin = NSMakePoint(rect.origin.x,
                                  y);
     CGFloat dashPattern[] = { 4, 3 };
@@ -3425,7 +3538,7 @@ iTermKittyImageDraw *iTermFindKittyImageDrawForVirtualPlaceholder(NSArray<iTermK
                                   remainingCharsInBuffer);
             int skipped = 0;
             if (charsInLine + i < len &&
-                ScreenCharIsDWC_RIGHT(buf[charsInLine + i])) {
+                (ScreenCharIsDWC_RIGHT(buf[charsInLine + i]) || ScreenCharIsDWL_SPACER(buf[charsInLine + i]))) {
                 // If we actually drew 'charsInLine' chars then half of a
                 // double-width char would be drawn. Skip it and draw it on the
                 // next line.
@@ -3456,7 +3569,8 @@ iTermKittyImageDraw *iTermFindKittyImageDrawForVirtualPlaceholder(NSArray<iTermK
                                       matches:nil
                                forceTextColor:[self defaultTextColor]
                                       context:ctx
-                                virtualOffset:virtualOffset];
+                                virtualOffset:virtualOffset
+                                lineAttribute:iTermLineAttributeSingleWidth];
             // Draw an underline.
             BOOL unusedBold = NO;
             BOOL unusedItalic = NO;
@@ -3595,14 +3709,17 @@ typedef struct {
 - (iTermCursorInfo)cursorInfoForCoord:(VT100GridCoord)cursorCoord {
     // Get the character that's under the cursor.
     const screen_char_t *theLine;
+    const int absoluteLine = cursorCoord.y + _numberOfScrollbackLines;
     if (cursorCoord.y >= 0) {
         theLine = [self lineAtScreenIndex:cursorCoord.y];
     } else {
-        theLine = [self lineAtIndex:cursorCoord.y + _numberOfScrollbackLines isFirst:nil];
+        theLine = [self lineAtIndex:absoluteLine isFirst:nil];
     }
+    iTermImmutableMetadata metadata = [self.delegate drawingHelperMetadataOnLine:absoluteLine];
     BOOL isDoubleWidth;
     screen_char_t screenChar = [self charForCursorAtColumn:cursorCoord.x
                                                     inLine:theLine
+                                             lineAttribute:metadata.lineAttribute
                                                doubleWidth:&isDoubleWidth];
 
     // Update the "find cursor" view.
@@ -3694,14 +3811,17 @@ typedef struct {
 - (NSColor *)blockCursorFillColorRespectingSmartSelection {
     if (_useSmartCursorColor) {
         const screen_char_t *theLine;
+        const int absoluteLine = _cursorCoord.y + _numberOfScrollbackLines;
         if (_cursorCoord.y >= 0) {
             theLine = [self lineAtScreenIndex:_cursorCoord.y];
         } else {
-            theLine = [self lineAtIndex:_cursorCoord.y + _numberOfScrollbackLines isFirst:nil];
+            theLine = [self lineAtIndex:absoluteLine isFirst:nil];
         }
+        iTermImmutableMetadata metadata = [self.delegate drawingHelperMetadataOnLine:absoluteLine];
         BOOL isDoubleWidth;
         screen_char_t screenChar = [self charForCursorAtColumn:_cursorCoord.x
                                                         inLine:theLine
+                                                 lineAttribute:metadata.lineAttribute
                                                    doubleWidth:&isDoubleWidth];
         iTermSmartCursorColor *smartCursorColor = [[iTermSmartCursorColor alloc] init];
         smartCursorColor.delegate = self;
@@ -3862,6 +3982,7 @@ typedef struct {
 
 - (screen_char_t)charForCursorAtColumn:(int)column
                                 inLine:(const screen_char_t *)theLine
+                         lineAttribute:(iTermLineAttribute)lineAttribute
                            doubleWidth:(BOOL *)doubleWidth {
     screen_char_t screenChar = theLine[column];
     int width = _gridSize.width;
@@ -3870,12 +3991,12 @@ typedef struct {
         screenChar.code = 0;
         screenChar.complexChar = NO;
     }
-    if (screenChar.code) {
-        if (ScreenCharIsDWC_RIGHT(screenChar)) {
-            *doubleWidth = NO;
-        } else {
-            *doubleWidth = (column < width - 1) && ScreenCharIsDWC_RIGHT(theLine[column+1]);
-        }
+    if (ScreenCharIsDWC_RIGHT(screenChar) || ScreenCharIsDWL_SPACER(screenChar)) {
+        *doubleWidth = NO;
+    } else if (iTermLineAttributeIsDoubleWidth(lineAttribute)) {
+        *doubleWidth = YES;
+    } else if (screenChar.code && column < width - 1 && ScreenCharIsDWC_RIGHT(theLine[column + 1])) {
+        *doubleWidth = YES;
     } else {
         *doubleWidth = NO;
     }
@@ -4200,7 +4321,8 @@ typedef struct {
                               matches:nil
                        forceTextColor:overrideColor
                               context:ctx
-                        virtualOffset:virtualOffset];
+                        virtualOffset:virtualOffset
+                        lineAttribute:metadata.lineAttribute];
 
     [context restoreGraphicsState];
 }

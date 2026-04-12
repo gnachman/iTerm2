@@ -577,7 +577,7 @@ typedef struct {
     double height;
 } iTermPercentage;
 
-iTermPercentage iTermPercentageFromProfile(Profile *profile);
+iTermPercentage iTermPercentageFromProfile(Profile *profile, iTermWindowType windowType);
 NSString *iTermPercentageDescription(iTermPercentage percentage);
 
 NSString *iTermPathToSSH(void);

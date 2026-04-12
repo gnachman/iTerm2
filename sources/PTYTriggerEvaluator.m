@@ -183,7 +183,7 @@ NSString *const PTYSessionSlownessEventExecute = @"execute";
         }
 
         NSArray<Trigger *> *triggers = _triggers;
-        NSString *currentJob = self.foregroundJob;
+        NSArray<NSString *> *currentJobAncestors = self.foregroundJobAncestors;
 
         DLog(@"Start checking triggers");
         [_triggersSlownessDetector measureEvent:PTYSessionSlownessEventTriggers block:^{
@@ -192,9 +192,9 @@ NSString *const PTYSessionSlownessEventExecute = @"execute";
                 if (requireIdempotency && !trigger.isIdempotent) {
                     continue;
                 }
-                DLog(@"Trigger %@ has job=%@ (length=%@), currentJob=%@", trigger, trigger.job, @(trigger.job.length), currentJob);
-                if (trigger.job.length > 0 && [trigger.job caseInsensitiveCompare:currentJob ?: @""] != NSOrderedSame) {
-                    DLog(@"Skip trigger %@ because job %@ doesn't match foreground job %@", trigger, trigger.job, currentJob);
+                DLog(@"Trigger %@ has job=%@ (length=%@), currentJobAncestors=%@", trigger, trigger.job, @(trigger.job.length), currentJobAncestors);
+                if (trigger.job.length > 0 && ![currentJobAncestors containsObject:trigger.job.lowercaseString]) {
+                    DLog(@"Skip trigger %@ because job %@ doesn't match foreground job ancestors %@", trigger, trigger.job, currentJobAncestors);
                     continue;
                 }
                 BOOL stop = [trigger tryString:stringLine

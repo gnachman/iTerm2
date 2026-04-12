@@ -58,11 +58,11 @@
             }
             return cursors;
         }] mutableCopy];
-        _timer = [NSTimer scheduledWeakTimerWithTimeInterval:0
-                                                      target:self
-                                                    selector:@selector(searchMore:)
-                                                    userInfo:nil
-                                                     repeats:YES];
+        _timer = [NSTimer it_scheduledWeakTimerWithTimeInterval:0
+                                                         target:self
+                                                       selector:@selector(searchMore:)
+                                                       userInfo:nil
+                                                        repeats:YES];
     }
     return self;
 }

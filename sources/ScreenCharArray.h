@@ -108,6 +108,12 @@ NS_ASSUME_NONNULL_BEGIN
 
 
 - (BOOL)isEqualToScreenCharArray:(ScreenCharArray *)other;
+// Compares only character identity (code + complexChar + image), ignoring
+// style attributes, eol, continuation, and metadata.
+- (BOOL)hasEqualCharacterContents:(ScreenCharArray *)other;
+// Returns YES if this is a DECDHL bottom-half line that duplicates the
+// given top-half line's character content.
+- (BOOL)isDECDHLDuplicateOf:(ScreenCharArray *)previous;
 - (ScreenCharArray *)screenCharArrayByAppendingScreenCharArray:(ScreenCharArray *)other;
 - (ScreenCharArray *)screenCharArrayByRemovingTrailingNullsAndHardNewline;
 - (ScreenCharArray *)inWindow:(VT100GridRange)window;
@@ -136,7 +142,7 @@ NS_ASSUME_NONNULL_BEGIN
 // Ensures that if this object outlives the raw pointer it was initialized with that there won't be a dangling pointer.
 - (void)makeSafe;
 
-- (NSAttributedString *)attributedStringValueWithAttributeProvider:(NSDictionary *(^)(screen_char_t, iTermExternalAttribute *))attributeProvider;
+- (NSAttributedString *)attributedStringValueWithAttributeProvider:(NSDictionary *(^)(screen_char_t, iTermExternalAttribute *, const iTermImmutableMetadata *))attributeProvider;
 
 // Wraps copy for Swift's benefit
 - (instancetype)clone;

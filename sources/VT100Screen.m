@@ -247,7 +247,8 @@ additionalWordCharacters:(NSString *)additionalWordCharacters
                                cappedAtSize:-1
                                truncateTail:YES
                           continuationChars:nil
-                                     coords:nil];
+                                     coords:nil
+                          deduplicateDECDHL:NO];
     return s;
 }
 
@@ -1099,6 +1100,9 @@ additionalWordCharacters:(NSString *)additionalWordCharacters
         if (successor.lineStyle && !includeSucessorDivider) {
             range.end.y -= 1;
         }
+        if (range.end.y < range.start.y) {
+            range.end.y = range.start.y;
+        }
     } else {
         range.end = VT100GridAbsCoordMake(self.width - 1, self.numberOfLines + self.totalScrollbackOverflow);
     }
@@ -1747,8 +1751,8 @@ additionalWordCharacters:(NSString *)additionalWordCharacters
     return _state.lastPromptLine;
 }
 
-- (void)setForegroundJobForTriggerFiltering:(NSString *)job {
-    [self.mutableState setForegroundJobForTriggerFiltering:job];
+- (void)setForegroundJobAncestorsForTriggerFiltering:(NSArray<NSString *> *)ancestors {
+    [self.mutableState setForegroundJobAncestorsForTriggerFiltering:ancestors];
 }
 
 - (void)beginEchoProbeWithBackspace:(NSData *)backspace

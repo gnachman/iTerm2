@@ -103,6 +103,12 @@ typedef NS_ENUM(NSInteger, ControlCommand) {
 // The token must be TMUX_xxx.
 - (void)executeToken:(VT100Token *)token;
 
+// Pause/unpause token execution. While paused, tokens are queued and
+// drained when unpaused. Used to prevent tmux layout changes from
+// mutating split view subviews during an NSSplitView divider drag.
+- (void)pauseTokenExecution;
+- (void)unpauseTokenExecution;
+
 - (void)sendCommand:(NSString *)command
      responseTarget:(id)target
    responseSelector:(SEL)selector;

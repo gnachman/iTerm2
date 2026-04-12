@@ -214,7 +214,8 @@ NSString *const iTermWindowStateKeyGUID = @"guid";
             DLog(@"PseudoTerminalRestorer block running for id %@", identifier);
             DLog(@"Creating term");
             PseudoTerminal *term = [PseudoTerminal bareTerminalWithArrangement:arrangement
-                                                      forceOpeningHotKeyWindow:NO];
+                                                      forceOpeningHotKeyWindow:NO
+                                                                     restoring:YES];
             [arrangement autorelease];
             DLog(@"Create a new terminal %@", term);
             if (!term) {

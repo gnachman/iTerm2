@@ -29,16 +29,43 @@ NS_ASSUME_NONNULL_BEGIN
 /// Creates attributes with specific bold/italic settings.
 + (iTermCharacterSourceAttributes *)attributesWithBold:(BOOL)bold italic:(BOOL)italic;
 
-/// Creates a character source for testing.
+/// Creates a character source for testing (single-width).
 + (nullable iTermCharacterSource *)characterSourceWithCharacter:(NSString *)character
                                                      descriptor:(iTermCharacterSourceDescriptor *)descriptor
                                                      attributes:(iTermCharacterSourceAttributes *)attributes
                                                          radius:(int)radius
                                                         context:(CGContextRef)context;
 
+/// Creates a double-width character source for testing.
++ (nullable iTermCharacterSource *)doubleWidthCharacterSourceWithCharacter:(NSString *)character
+                                                                descriptor:(iTermCharacterSourceDescriptor *)descriptor
+                                                                attributes:(iTermCharacterSourceAttributes *)attributes
+                                                                    radius:(int)radius
+                                                                   context:(CGContextRef)context;
+
+/// Creates a double-height-top character source for testing.
++ (nullable iTermCharacterSource *)doubleHeightTopCharacterSourceWithCharacter:(NSString *)character
+                                                                    descriptor:(iTermCharacterSourceDescriptor *)descriptor
+                                                                    attributes:(iTermCharacterSourceAttributes *)attributes
+                                                                        radius:(int)radius
+                                                                       context:(CGContextRef)context;
+
+/// Creates a double-height-bottom character source for testing.
++ (nullable iTermCharacterSource *)doubleHeightBottomCharacterSourceWithCharacter:(NSString *)character
+                                                                       descriptor:(iTermCharacterSourceDescriptor *)descriptor
+                                                                       attributes:(iTermCharacterSourceAttributes *)attributes
+                                                                           radius:(int)radius
+                                                                          context:(CGContextRef)context;
+
 /// Draws the character and returns the frame that was drawn.
 /// Returns NSZeroRect if the character couldn't be drawn.
 + (NSRect)drawAndGetFrameForSource:(iTermCharacterSource *)source;
+
+/// Returns whether the bitmap for the given part has any non-zero alpha pixels.
++ (BOOL)source:(iTermCharacterSource *)source hasBitmapContentForPart:(int)part;
+
+/// Returns the count of non-zero alpha pixels in the bitmap for the given part.
++ (NSInteger)source:(iTermCharacterSource *)source nonZeroPixelCountForPart:(int)part;
 
 /// Draws the character, then checks if the context is properly cleared.
 /// Returns YES if all pixels are zero (properly cleared), NO otherwise.

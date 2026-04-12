@@ -16,6 +16,8 @@
 NSRect iTermRectCenteredHorizontallyWithinRect(NSRect frameToCenter, NSRect container);
 NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect container);
 
+NSString *CGAffineTransformDescription(CGAffineTransform tm);
+
 @interface NSView (iTerm)
 
 + (BOOL)iterm_takingSnapshot;

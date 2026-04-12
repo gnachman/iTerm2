@@ -169,11 +169,20 @@ public class SavedIntervalTreeObject: NSObject {
         self.object = intervalTreeObject
 
         let absCoordRange = interval.absCoordRange(forWidth: width)
+        let startY = Int(absCoordRange.start.y - line)
+        let endY = Int(absCoordRange.end.y - line)
+        // absCoordRangeForWidth: normalizes x == width to (0, y+1). When an
+        // ITO sits at the sentinel column on the boundary of the range this
+        // can push a y index past the end of screenCharArrays. Skip it.
+        let count = preprocessedState.hardNewlineCounts.count
+        guard startY >= 0, startY < count, endY >= 0, endY < count else {
+            return nil
+        }
         start = ReflowableCoordinate(x: absCoordRange.start.x,
-                                     y: Int(absCoordRange.start.y - line),
+                                     y: startY,
                                      preprocessedState: preprocessedState)
         end = ReflowableCoordinate(x: absCoordRange.end.x,
-                                   y: Int(absCoordRange.end.y - line),
+                                   y: endY,
                                    preprocessedState: preprocessedState)
     }
 

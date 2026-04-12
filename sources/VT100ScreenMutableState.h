@@ -47,8 +47,9 @@ NS_ASSUME_NONNULL_BEGIN
 // Specific to the mutable state. Not related to PTYSession's guid.
 @property (nonatomic, readonly) NSString *uniqueIdentifier;
 
-// Sets the foreground job name on the trigger evaluator (atomic, safe from any thread).
-- (void)setForegroundJobForTriggerFiltering:(nullable NSString *)job;
+// Sets the foreground job ancestor chain on the trigger evaluator (atomic, safe from any thread).
+// The array contains lowercased argv0 values ordered deepest-first.
+- (void)setForegroundJobAncestorsForTriggerFiltering:(nullable NSArray<NSString *> *)ancestors;
 
 #pragma mark - Internal
 
@@ -132,6 +133,16 @@ NS_ASSUME_NONNULL_BEGIN
       externalAttributeIndex:(id<iTermExternalAttributeIndexReading>)externalAttributeIndex
              continuation:(screen_char_t)continuation
                  rtlFound:(BOOL)rtlFound;
+
+// Like appendScreenChars: but handles DWL/DHL source data: sets the
+// lineAttribute on the current grid line and strips DWL_SPACERs before
+// appending so the append code can re-expand correctly.
+- (void)appendScreenChars:(const screen_char_t *)line
+                   length:(int)length
+   externalAttributeIndex:(id<iTermExternalAttributeIndexReading>)externalAttributeIndex
+             continuation:(screen_char_t)continuation
+                 rtlFound:(BOOL)rtlFound
+            lineAttribute:(iTermLineAttribute)lineAttribute;
 
 - (void)appendBannerMessage:(NSString *)message;
 

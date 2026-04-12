@@ -237,6 +237,35 @@ class ResilientCoordinateTests: XCTestCase {
         XCTAssertNil(makeCoord(x: -1, absY: 30).validCoord)
     }
 
+    // MARK: - Fold: SavedIntervalTreeObject crash (issue #40)
+
+    /// Regression test: folding a range that contains an interval tree object
+    /// at the sentinel column (x == width) used to crash in
+    /// SavedIntervalTreeObject.from because absCoordRangeForWidth: normalizes
+    /// (width, Y) → (0, Y+1), pushing the array index one past the end of
+    /// the screenCharArrays collected for the fold.
+    func testFoldWithMarkAtSentinelColumnDoesNotCrash() {
+        // Place a zero-length mark at (width, 24) — the sentinel column on
+        // the last line of the range we are about to fold.
+        screen.performBlock(joinedThreads: { _, mutableState, _ in
+            let mark = VT100ScreenMark()
+            let w = mutableState!.width()
+            // Create interval at (w, 24) — the sentinel position.
+            let range = VT100GridAbsCoordRangeMake(w, 24, w, 24)
+            let interval = mutableState!.interval(for: range)
+            mutableState!.mutableIntervalTree().add(mark, with: interval)
+        })
+
+        // Fold lines 20–24.  foldAbsLineRange: builds the query interval
+        // with end.x = self.width, so the mark at (width, 24) falls inside
+        // the query.  Before the fix this crashes in
+        // SavedIntervalTreeObject.from with an array-index-out-of-bounds.
+        screen.foldAbsLineRange(NSRange(location: 20, length: 4))
+        screen.performBlock(joinedThreads: { _, _, _ in })
+
+        // If we get here without crashing, the bug is fixed.
+    }
+
     // MARK: - Fold: Collapse
 
     func testFoldCoordBeforeFoldUnchanged() {

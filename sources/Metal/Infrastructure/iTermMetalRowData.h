@@ -9,6 +9,7 @@
 
 #import "iTermData.h"
 #import "iTermMarkRenderer.h"
+#import "ScreenChar.h"
 
 @class ScreenCharArray;
 @class iTermBidiDisplayInfo;
@@ -50,6 +51,7 @@ NS_CLASS_AVAILABLE(10_11, NA)
 @property (nonatomic) BOOL belongsToBlock;
 @property (nonatomic, readonly) NSMutableArray<iTermKittyImageRun *> *kittyImageRuns;
 
+@property (nonatomic) iTermLineAttribute lineAttribute;
 @property (nonatomic, readonly) BOOL hasFold;
 @property (nonatomic) BOOL hasUnderlineOrStrikethrough;
 

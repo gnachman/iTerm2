@@ -423,8 +423,8 @@ static const int64_t VT100ScreenMutableStateSideEffectFlagLineBufferDidDropLines
 
 #pragma mark - Accessors
 
-- (void)setForegroundJobForTriggerFiltering:(NSString *)job {
-    _triggerEvaluator.foregroundJob = job;
+- (void)setForegroundJobAncestorsForTriggerFiltering:(NSArray<NSString *> *)ancestors {
+    _triggerEvaluator.foregroundJobAncestors = ancestors;
 }
 
 - (void)setConfig:(VT100MutableScreenConfiguration *)config {
@@ -766,6 +766,36 @@ static const int64_t VT100ScreenMutableStateSideEffectFlagLineBufferDidDropLines
     }];
 }
 
+- (void)appendScreenChars:(const screen_char_t *)line
+                   length:(int)length
+   externalAttributeIndex:(id<iTermExternalAttributeIndexReading>)externalAttributeIndex
+             continuation:(screen_char_t)continuation
+                 rtlFound:(BOOL)rtlFound
+            lineAttribute:(iTermLineAttribute)lineAttribute {
+    // Always set the lineAttribute on the target grid line so the append
+    // code uses the correct width class. This is essential when the target
+    // line had a different lineAttribute (e.g., a cleared DWL line that is
+    // being overwritten with singleWidth content).
+    VT100Grid *grid = self.currentGrid;
+    VT100LineInfo *lineInfo = [grid lineInfoAtLineNumber:grid.cursorY];
+    iTermMetadata md = lineInfo.metadata;
+    md.lineAttribute = lineAttribute;
+    lineInfo.metadata = md;
+
+    const screen_char_t *chars = line;
+    int len = length;
+    screen_char_t compactBuf[len];
+    if (iTermLineAttributeIsDoubleWidth(lineAttribute)) {
+        len = ScreenCharCompactRemovingDWLSpacers(compactBuf, chars, len);
+        chars = compactBuf;
+    }
+    [self appendScreenChars:chars
+                     length:len
+     externalAttributeIndex:externalAttributeIndex
+               continuation:continuation
+                   rtlFound:rtlFound];
+}
+
 - (VT100StringConversionConfig)stringConversionConfigWithSoftAlternateScreenMode:(BOOL)mode {
     return (VT100StringConversionConfig){
         .ambiguousIsDoubleWidth = self.config.treatAmbiguousCharsAsDoubleWidth,
@@ -1031,40 +1061,74 @@ static const int64_t VT100ScreenMutableStateSideEffectFlagLineBufferDidDropLines
                              rtlFound:(BOOL)rtlFound
                               dwcFree:(BOOL)dwcFree {
     if (len >= 1) {
-        screen_char_t lastCharacter = buffer[len - 1];
+        const int cursorY = self.currentGrid.cursorY;
+        iTermLineAttribute lineAttr = [self.currentGrid lineInfoAtLineNumber:cursorY].metadata.lineAttribute;
+
+        const screen_char_t *actualBuffer = buffer;
+        int actualLen = len;
+        id<iTermExternalAttributeIndexReading> actualExternalAttributes = externalAttributes;
+        NSMutableData *expandedData = nil;
+        iTermExternalAttributeIndex *expandedEA = nil;
+
+        if (iTermLineAttributeIsDoubleWidth(lineAttr)) {
+            // Pre-expand: interleave DWL_SPACERs after each character.
+            expandedData = [NSMutableData dataWithLength:(len * 2) * sizeof(screen_char_t)];
+            screen_char_t *expanded = (screen_char_t *)expandedData.mutableBytes;
+            actualLen = ScreenCharExpandWithDWLSpacers(expanded, buffer, len);
+            // Expand external attributes to match new positions.
+            expandedEA = [[iTermExternalAttributeIndex alloc] init];
+            for (int i = 0; i < len; i++) {
+                iTermExternalAttribute *ea = [externalAttributes attributeAtIndex:i];
+                if (ea) {
+                    [expandedEA setAttributes:ea at:i * 2 count:1];
+                }
+            }
+            actualBuffer = expanded;
+            actualExternalAttributes = expandedEA;
+            dwcFree = NO;
+        }
+
+        screen_char_t lastCharacter = actualBuffer[actualLen - 1];
         if (ScreenCharIsDWC_RIGHT(lastCharacter) && !lastCharacter.complexChar) {
             // Last character is the right half of a double-width character. Use the penultimate character instead.
-            if (len >= 2) {
-                self.lastCharacter = buffer[len - 2];
+            if (actualLen >= 2) {
+                self.lastCharacter = actualBuffer[actualLen - 2];
                 self.lastCharacterIsDoubleWidth = YES;
-                self.lastExternalAttribute = externalAttributes[len - 2];
+                self.lastExternalAttribute = actualExternalAttributes[actualLen - 2];
+            }
+        } else if (ScreenCharIsDWL_SPACER(lastCharacter)) {
+            // Last character is a DWL_SPACER. Use the character before it.
+            if (actualLen >= 2) {
+                self.lastCharacter = actualBuffer[actualLen - 2];
+                self.lastCharacterIsDoubleWidth = NO;
+                self.lastExternalAttribute = actualExternalAttributes[actualLen - 2];
             }
         } else {
             // Record the last character.
-            self.lastCharacter = buffer[len - 1];
+            self.lastCharacter = actualBuffer[actualLen - 1];
             self.lastCharacterIsDoubleWidth = NO;
-            self.lastExternalAttribute = externalAttributes[len];
+            self.lastExternalAttribute = actualExternalAttributes[actualLen];
         }
         LineBuffer *lineBuffer = nil;
         if (self.currentGrid != self.altGrid || self.saveToScrollbackInAlternateScreen) {
             // Not in alt screen or it's ok to scroll into line buffer while in alt screen.k
             lineBuffer = self.linebuffer;
         }
-        [self incrementOverflowBy:[self.currentGrid appendCharsAtCursor:buffer
-                                                                 length:len
+        [self incrementOverflowBy:[self.currentGrid appendCharsAtCursor:actualBuffer
+                                                                 length:actualLen
                                                 scrollingIntoLineBuffer:lineBuffer
                                                     unlimitedScrollback:self.unlimitedScrollback
                                                 useScrollbackWithRegion:self.appendToScrollbackWithStatusBar
                                                              wraparound:self.wraparoundMode
                                                                    ansi:self.ansi
                                                                  insert:self.insert
-                                                 externalAttributeIndex:externalAttributes
+                                                 externalAttributeIndex:actualExternalAttributes
                                                                rtlFound:rtlFound
                                                                 dwcFree:dwcFree]];
 
         if (self.config.publishing) {
             iTermImmutableMetadata temp;
-            iTermImmutableMetadataInit(&temp, 0, rtlFound, externalAttributes);
+            iTermImmutableMetadataInit(&temp, 0, rtlFound, externalAttributes, iTermLineAttributeSingleWidth);
 
             screen_char_t continuation = buffer[0];
             continuation.code = EOL_SOFT;
@@ -1231,16 +1295,26 @@ static const int64_t VT100ScreenMutableStateSideEffectFlagLineBufferDidDropLines
 
 - (void)cursorToX:(int)x Y:(int)y {
     DLog(@"cursorToX:Y");
-    [self cursorToX:x];
+    // Set Y first so cursorToX: can check the target line's attribute.
     [self cursorToY:y];
+    [self cursorToX:x];
 }
 
 - (void)cursorToX:(int)x {
     DLog(@"cursorToX:%d", x);
-    const int leftMargin = [self.currentGrid leftMargin];
-    const int rightMargin = [self.currentGrid rightMargin];
+    int leftMargin = [self.currentGrid leftMargin];
+    int rightMargin = [self.currentGrid rightMargin];
+    const BOOL isDWL = [self.currentGrid currentLineIsDoubleWidth];
 
     int xPos = x - 1;
+
+    if (isDWL) {
+        // Snap margins to character boundaries on double-width lines.
+        leftMargin = (leftMargin + 1) & ~1;   // round up to even
+        rightMargin = rightMargin & ~1;        // round down to even
+        xPos = MIN(xPos, self.currentGrid.size.width / 2 - 1);
+        xPos *= 2;
+    }
 
     if ([self.terminal originMode]) {
         DLog(@"In origin mode. Interpret relative to left margin %d, don't go past right margin %d",
@@ -1522,6 +1596,9 @@ static const int64_t VT100ScreenMutableStateSideEffectFlagLineBufferDidDropLines
     }
     if (j <= 0) {
         return;
+    }
+    if ([self.currentGrid currentLineIsDoubleWidth]) {
+        j *= 2;
     }
 
     switch (self.protectedMode) {
@@ -1897,7 +1974,8 @@ void VT100ScreenEraseCell(screen_char_t *sct,
                          length:savedLine.length
          externalAttributeIndex:iTermImmutableMetadataGetExternalAttributesIndex(savedLine.metadata)
                    continuation:savedLine.continuation
-                       rtlFound:savedLine.metadata.rtlFound];
+                       rtlFound:savedLine.metadata.rtlFound
+                  lineAttribute:savedLine.metadata.lineAttribute];
 
         // Restore marks on that line.
         const long long numberOfLinesRemoved = absCursorCoord.y - absLine;
@@ -2630,7 +2708,6 @@ void VT100ScreenEraseCell(screen_char_t *sct,
             self.currentGrid.cursorX = cursorX - 1;
         }
     }
-
     // It is OK to land on the right half of a double-width character (issue 3475).
 }
 
@@ -5861,7 +5938,7 @@ lengthExcludingInBandSignaling:data.length
     helper.delegate = self;
     [helper writeToGrid:self.currentGrid];
 }
-
+// TODO: Check what happens with tmux and double width chars
 - (void)setHistory:(TmuxHistory *)history {
     // This is way more complicated than it should be to work around something dumb in tmux.
     // It pads lines in its history with trailing spaces, which we'd like to trim. More importantly,
@@ -5876,7 +5953,7 @@ lengthExcludingInBandSignaling:data.length
     NSTimeInterval now = [NSDate timeIntervalSinceReferenceDate];
     // TODO(externalAttributes): Add support for external attributes here. This is only used by tmux at the moment.
     iTermMetadata metadata;
-    iTermMetadataInit(&metadata, now, NO, nil);
+    iTermMetadataInit(&metadata, now, NO, nil, iTermLineAttributeSingleWidth);
     for (NSData *chars in history.data) {
         screen_char_t *line = (screen_char_t *) [chars bytes];
         const int len = [chars length] / sizeof(screen_char_t);

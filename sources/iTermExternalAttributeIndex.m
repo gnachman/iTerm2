@@ -209,6 +209,21 @@ NSString *const iTermExternalAttributeBlockIDDelimiter = @"\uf8ff";
     return _attributes.count == 0;
 }
 
+- (iTermLineAttribute)uniformLineAttribute {
+    __block iTermLineAttribute result = iTermLineAttributeSingleWidth;
+    __block BOOL first = YES;
+    [self enumerateValuesInRange:NSMakeRange(0, NSUIntegerMax)
+                           block:^(NSRange range, iTermExternalAttribute *attr) {
+        if (first) {
+            result = attr.lineAttribute;
+            first = NO;
+        } else if (attr.lineAttribute != result) {
+            result = iTermLineAttributeSingleWidth;
+        }
+    }];
+    return result;
+}
+
 - (void)mutateAttributesFrom:(int)start
                           to:(int)end
                        block:(iTermExternalAttribute * _Nullable(^)(iTermExternalAttribute * _Nullable))block {
@@ -415,6 +430,7 @@ static NSString *const iTermExternalAttributeKeyURLCode_Deprecated = @"url";
 static NSString *const iTermExternalAttributeKeyBlockIDList = @"b";
 static NSString *const iTermExternalAttributeKeyControlCode = @"cc";
 static NSString *const iTermExternalAttributeKeyURL = @"u";
+static NSString *const iTermExternalAttributeKeyLineAttribute = @"la";
 
 @interface iTermExternalAttribute()
 @property (atomic, readwrite) BOOL hasUnderlineColor;
@@ -509,18 +525,23 @@ static BOOL iTermControlCodeAttributeEqualsNumber(const iTermControlCodeAttribut
 
     NSData *urlData = [decoder decodeData];
     iTermURL *url = nil;
-    if (urlData || urlCode) {
+    if (urlData.length || urlCode) {
         url = [iTermURL urlWithData:urlData code:urlCode];
     }
 
-    if (!hasUnderlineColor && !blockIDList && !url) {
+    iTermLineAttribute lineAttr = 0;
+    [decoder decodeInt:&lineAttr];
+
+    if (!hasUnderlineColor && !blockIDList && !url && lineAttr == 0) {
         return nil;
     }
 
-    return [[self alloc] initWithUnderlineColor:underlineColor
-                                            url:url
-                                    blockIDList:blockIDList
-                                    controlCode:cc >= 0 && cc < 256 ? @(cc) : nil];
+    iTermExternalAttribute *result = [[self alloc] initWithUnderlineColor:underlineColor
+                                                                      url:url
+                                                              blockIDList:blockIDList
+                                                              controlCode:cc >= 0 && cc < 256 ? @(cc) : nil];
+    result->_lineAttribute = lineAttr;
+    return result;
 }
 
 + (BOOL)externalAttribute:(iTermExternalAttribute *)lhs isEqualToExternalAttribute:(iTermExternalAttribute *)rhs {
@@ -641,10 +662,16 @@ static BOOL iTermControlCodeAttributeEqualsNumber(const iTermControlCodeAttribut
     } else {
         [encoder encodeInt:-1];
     }
-    if (_url) {
-        [encoder encodeData:_url.data];
+    if (!_url && _lineAttribute == iTermLineAttributeSingleWidth) {
+        return encoder.data;
+    } else {
+        [encoder encodeData:_url.data ?: [NSData data]];
+        if (_lineAttribute == iTermLineAttributeSingleWidth) {
+            return encoder.data;
+        }
+        [encoder encodeInt:_lineAttribute];
+        return encoder.data;
     }
-    return encoder.data;
 }
 
 - (instancetype)initWithDictionary:(NSDictionary *)dict {
@@ -675,7 +702,11 @@ static BOOL iTermControlCodeAttributeEqualsNumber(const iTermControlCodeAttribut
         } else {
             _controlCode = (iTermControlCodeAttribute){ .valid = NO };
         }
-        if (!_hasUnderlineColor && !_url && !self.blockIDList && !_controlCode.valid) {
+        NSNumber *la = [NSNumber castFrom:dict[iTermExternalAttributeKeyLineAttribute]];
+        if (la) {
+            _lineAttribute = (iTermLineAttribute)la.intValue;
+        }
+        if (!_hasUnderlineColor && !_url && !self.blockIDList && !_controlCode.valid && _lineAttribute == iTermLineAttributeSingleWidth) {
             return nil;
         }
     }
@@ -690,7 +721,8 @@ static BOOL iTermControlCodeAttributeEqualsNumber(const iTermControlCodeAttribut
                                                                          @(_underlineColor.red),
                                                                          @(_underlineColor.green),
                                                                          @(_underlineColor.blue) ] : [NSNull null] ,
-        iTermExternalAttributeKeyControlCode: _controlCode.valid ? @(_controlCode.code) : [NSNull null]
+        iTermExternalAttributeKeyControlCode: _controlCode.valid ? @(_controlCode.code) : [NSNull null],
+        iTermExternalAttributeKeyLineAttribute: _lineAttribute != iTermLineAttributeSingleWidth ? @(_lineAttribute) : [NSNull null]
     } dictionaryByRemovingNullValues];
 }
 
@@ -702,11 +734,14 @@ static BOOL iTermControlCodeAttributeEqualsNumber(const iTermControlCodeAttribut
     if (![NSObject object:_url isEqualToObject:rhs.url]) {
         return NO;
     }
+    if (_lineAttribute != rhs.lineAttribute) {
+        return NO;
+    }
     if (_hasUnderlineColor != rhs.hasUnderlineColor) {
         return NO;
     }
-    if (!_hasUnderlineColor && !rhs.hasUnderlineColor) {
-        return YES;
+    if (_hasUnderlineColor && memcmp(&_underlineColor, &rhs->_underlineColor, sizeof(_underlineColor))) {
+        return NO;
     }
     if (_controlCode.valid != rhs.controlCode.valid) {
         return NO;
@@ -714,11 +749,32 @@ static BOOL iTermControlCodeAttributeEqualsNumber(const iTermControlCodeAttribut
     if (_controlCode.valid && _controlCode.code != rhs.controlCode.code) {
         return NO;
     }
-    return !memcmp(&_underlineColor, &rhs->_underlineColor, sizeof(_underlineColor));
+    if (![NSObject object:_blockIDList isEqualToObject:rhs.blockIDList]) {
+        return NO;
+    }
+    return YES;
 }
 
 - (BOOL)isDefault {
-    return !self.hasUnderlineColor && self.blockIDList == nil && self.controlCodeNumber == nil && self.url == nil;
+    return !self.hasUnderlineColor && self.blockIDList == nil && self.controlCodeNumber == nil && self.url == nil && _lineAttribute == iTermLineAttributeSingleWidth;
+}
+
++ (iTermExternalAttribute *)attributeWithLineAttribute:(iTermLineAttribute)attr {
+    if (attr == iTermLineAttributeSingleWidth) {
+        return nil;
+    }
+    iTermExternalAttribute *result = [[self alloc] init];
+    result->_lineAttribute = attr;
+    return result;
+}
+
+- (iTermExternalAttribute *)copyWithLineAttribute:(iTermLineAttribute)attr {
+    iTermExternalAttribute *result = [self copy];
+    result->_lineAttribute = attr;
+    if (result.isDefault) {
+        return nil;
+    }
+    return result;
 }
 
 - (BOOL)isEqual:(id)object {
@@ -775,6 +831,10 @@ static BOOL iTermControlCodeAttributeEqualsNumber(const iTermControlCodeAttribut
 
 - (BOOL)isEmpty {
     return _attr == nil || _attr.isDefault;
+}
+
+- (iTermLineAttribute)uniformLineAttribute {
+    return _attr ? _attr.lineAttribute : iTermLineAttributeSingleWidth;
 }
 
 - (NSDictionary *)dictionaryValue {

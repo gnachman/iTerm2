@@ -141,10 +141,8 @@ NSString *const iTermProcessTypeDidChangeNotification = @"iTermProcessTypeDidCha
                            key:kPreferenceKeyTabStyle
                    relatedView:_tabStyleLabel
                           type:kPreferenceInfoTypePopup];
-    info.onChange = ^() {
-        [[iTermApplication sharedApplication] updateAppearance];
-        [weakSelf postRefreshNotification];
-    };
+    // updateAppearance and kRefreshTerminalNotification are handled by
+    // iTermApplicationDelegate's iTermPreferenceDidChangeNotification observer.
     info.hasDefaultValue = ^BOOL{
         return [weakSelf unsignedIntegerForKey:kPreferenceKeyTabStyle] == TAB_STYLE_AUTOMATIC;
     };

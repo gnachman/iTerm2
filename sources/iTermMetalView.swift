@@ -218,6 +218,12 @@ public class iTermMetalView: NSView {
 
     deinit {
         NotificationCenter.default.removeObserver(self)
+        // Clear the CAMetalLayer's delegate before deallocation. CALayer.delegate
+        // is unowned(unsafe), so without this it becomes a dangling pointer.
+        // On macOS 26, AppKit's _NSDisplayLinkForwarder accesses the layer's
+        // delegate when the display link fires; a dangling delegate causes a
+        // NULL-block crash in _Block_copy.
+        metalLayerBox?.delegate = nil
         if let displayLink {
             CVDisplayLinkStop(displayLink)
             displaySource.value?.cancel()
@@ -497,7 +503,7 @@ extension iTermMetalView {
         metalLayerBox = iTermMetalLayerBox(metalLayer: layer)
         self.layer = layer
         layerContentsRedrawPolicy = .duringViewResize
-        paused = false
+        paused = true
         renderAttachmentDirtyState = [DirtyState.colorTexturesDirty]
 
         colorPixelFormats = [.invalid, .invalid, .invalid, .invalid, .invalid, .invalid, .invalid, .invalid]
@@ -535,7 +541,9 @@ extension iTermMetalView {
                    let displaySource = displaySource.value,
                    CVDisplayLinkSetOutputCallback(displayLink, DisplayLinkCallback, Unmanaged.passUnretained(displaySource).toOpaque()) == 0 {
                     if CVDisplayLinkSetCurrentCGDisplay(displayLink, CGMainDisplayID()) ==  kCVReturnSuccess {
-                        CVDisplayLinkStart(displayLink)
+                        if !paused {
+                            CVDisplayLinkStart(displayLink)
+                        }
                         NotificationCenter.default.addObserver(self, selector: #selector(_windowWillClose(_:)), name: NSWindow.willCloseNotification, object: window)
                         preferredFramesPerSecond = calculateRefreshesPerSecond()
                         return
@@ -795,8 +803,30 @@ extension iTermMetalView {
         }
     }
 
+    open override func viewWillMove(toWindow newWindow: NSWindow?) {
+        super.viewWillMove(toWindow: newWindow)
+        if newWindow == nil {
+            // Stop the CVDisplayLink and clear the layer delegate when leaving
+            // a window. This prevents AppKit's _NSDisplayLinkForwarder (macOS 26)
+            // from firing a callback through a stale layer delegate after the
+            // view is detached from the window.
+            if let displayLink {
+                CVDisplayLinkStop(displayLink)
+            }
+            metalLayerBox?.delegate = nil
+        }
+    }
+
     open override func viewDidMoveToWindow() {
         updateToNativeScale()
+        if window != nil {
+            // Restore the layer delegate and restart display link when
+            // entering a window.
+            metalLayerBox?.delegate = self
+            if !paused, let displayLink {
+                CVDisplayLinkStart(displayLink)
+            }
+        }
         // Recalculate drawable size now that we're in a window, since convertToBacking()
         // uses the main display's scale factor when the view has no window.
         // Only do this when we have a window - when window becomes nil, we don't want
@@ -881,7 +911,6 @@ fileprivate func DisplayLinkCallback(displayLink: CVDisplayLink,
                                         flagsIn: CVOptionFlags,
                                         flagsOut: UnsafeMutablePointer<CVOptionFlags>,
                                         displayLinkContext: UnsafeMutableRawPointer?) -> CVReturn {
-    NSLog("Display link callback running")
     guard let context = displayLinkContext else {
         return kCVReturnError
     }

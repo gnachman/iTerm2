@@ -1458,7 +1458,8 @@ extension ChatViewController {
             cappedAtSize: -1,
             truncateTail: false,
             continuationChars: nil,
-            coords: nil) as! String
+            coords: nil,
+            deduplicateDECDHL: true) as! String
         let cmd = TerminalCommand(username: remoteHost?.username,
                                   hostname: remoteHost?.hostname,
                                   directory: directory,

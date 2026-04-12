@@ -153,7 +153,8 @@ const int kMaxResultContextWords = 4;
                                    cappedAtSize:-1
                                    truncateTail:YES
                               continuationChars:nil
-                                         coords:nil];
+                                         coords:nil
+                              deduplicateDECDHL:YES];
     // Add only if not whitespace.
     if ([s rangeOfCharacterFromSet:nonWhitespace].location == NSNotFound) {
         return nil;
@@ -606,7 +607,8 @@ precededByWhitespace:(BOOL)precededByWhitespace
                                                cappedAtSize:-1
                                                truncateTail:YES
                                           continuationChars:nil
-                                                     coords:nil];
+                                                     coords:nil
+                                          deduplicateDECDHL:YES];
         NSMutableString* firstWord = [NSMutableString stringWithString:immutableWord];
         while ([firstWord length] < [prefix_ length]) {
             range = [extractor rangeForWordAt:range.coordRange.end
@@ -620,7 +622,8 @@ precededByWhitespace:(BOOL)precededByWhitespace
                                           cappedAtSize:-1
                                           truncateTail:YES
                                      continuationChars:nil
-                                                coords:nil];
+                                                coords:nil
+                                     deduplicateDECDHL:YES];
             if ([part length] == 0) {
                 break;
             }
@@ -658,7 +661,8 @@ precededByWhitespace:(BOOL)precededByWhitespace
                                     cappedAtSize:-1
                                     truncateTail:YES
                                continuationChars:nil
-                                          coords:nil];
+                                          coords:nil
+                               deduplicateDECDHL:YES];
                 AcLog(@"First candidate is at %@", VT100GridWindowedRangeDescription(range));
                 if ([word rangeOfCharacterFromSet:nonWhitespace].location == NSNotFound) {
                     // word after match is all whitespace. Grab the next word.
@@ -678,7 +682,8 @@ precededByWhitespace:(BOOL)precededByWhitespace
                                             cappedAtSize:-1
                                             truncateTail:YES
                                        continuationChars:nil
-                                                  coords:nil];
+                                                  coords:nil
+                                       deduplicateDECDHL:YES];
                         if (!whitespaceBeforeCursor_) {
                             // Prepend a space if one is needed
                             word = [NSString stringWithFormat:@" %@", word];
