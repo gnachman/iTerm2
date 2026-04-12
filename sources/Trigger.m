@@ -709,6 +709,17 @@ NSString * const kTriggerProvenanceKey = @"provenance";
         [parts addObject:[NSString stringWithFormat:@"command /%@/", commandRegex]];
     }
 
+    // Progress bar filter
+    NSString *progressBarFilter = self.eventParams[@"progressBarFilter"];
+    if (progressBarFilter) {
+        if ([progressBarFilter isEqualToString:@"appeared"]) {
+            [parts addObject:@"appeared"];
+        } else if ([progressBarFilter isEqualToString:@"disappeared"]) {
+            [parts addObject:@"disappeared"];
+        }
+        // Don't add anything for "*" - it's the default (either)
+    }
+
     return [parts componentsJoinedByString:@", "];
 }
 

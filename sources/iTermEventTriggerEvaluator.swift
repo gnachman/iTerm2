@@ -179,6 +179,10 @@ class EventTriggerEvaluator: NSObject {
         return hasEnabledTrigger(for: .eventNotificationPosted)
     }
 
+    @objc var hasProgressBarChangedTrigger: Bool {
+        return hasEnabledTrigger(for: .eventProgressBarChanged)
+    }
+
     private func hasEnabledTrigger(for matchType: iTermTriggerMatchType) -> Bool {
         guard let triggers = eventTriggers[matchType] else { return false }
         return triggers.contains { !$0.disabled }
@@ -407,6 +411,28 @@ class EventTriggerEvaluator: NSObject {
         }
     }
 
+    /// Called when the progress bar appears or disappears
+    /// - Parameter appeared: true if progress bar appeared, false if it disappeared
+    @objc func progressBarChanged(appeared: Bool) {
+        DLog("[\(sessionDescription)] Progress bar \(appeared ? "appeared" : "disappeared")")
+        guard !disabled else {
+            DLog("[\(sessionDescription)] Disabled, skipping progress bar changed triggers")
+            return
+        }
+        guard let triggers = eventTriggers[.eventProgressBarChanged] else {
+            DLog("[\(sessionDescription)] No progress bar changed triggers configured")
+            return
+        }
+
+        for trigger in triggers where !trigger.disabled {
+            if matchesProgressBarFilter(trigger: trigger, appeared: appeared) {
+                fireTrigger(trigger, capturedStrings: [appeared ? "appeared" : "disappeared"])
+            } else {
+                DLog("[\(sessionDescription)] Progress bar filter did not match for trigger \(trigger.action)")
+            }
+        }
+    }
+
     // MARK: - Timer Management
 
     private func invalidateAllTimers() {
@@ -614,6 +640,27 @@ class EventTriggerEvaluator: NSObject {
             return true
         }
         return messages.contains { matchesRegexParam(trigger: trigger, paramKey: "messageRegex", value: $0) }
+    }
+
+    private func matchesProgressBarFilter(trigger: Trigger, appeared: Bool) -> Bool {
+        guard let filter = trigger.eventParams?["progressBarFilter"] as? String else {
+            DLog("[\(sessionDescription)] No progress bar filter, matches by default")
+            return true
+        }
+
+        let matches: Bool
+        switch filter {
+        case "appeared":
+            matches = appeared
+        case "disappeared":
+            matches = !appeared
+        case "*", "":
+            matches = true
+        default:
+            matches = true
+        }
+        DLog("[\(sessionDescription)] Progress bar filter '\(filter)' \(matches ? "matches" : "does not match") appeared=\(appeared)")
+        return matches
     }
 }
 
