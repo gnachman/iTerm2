@@ -21742,8 +21742,13 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     [self updateAutoComposerFrame];
     [self updateSearchRange];
     if (_view.progress != _screen.progress) {
+        BOOL wasVisible = VT100ScreenProgressIsVisible(_view.progress);
+        BOOL isVisible = VT100ScreenProgressIsVisible(_screen.progress);
         _view.progress = _screen.progress;
         [self.delegate session:self progressDidChange:_screen.progress];
+        if (wasVisible != isVisible) {
+            [_eventTriggerEvaluator progressBarChangedWithAppeared:isVisible];
+        }
     }
 }
 

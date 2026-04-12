@@ -40,6 +40,7 @@ class EventTriggerParameterView: NSView, NSTextFieldDelegate {
     private var userRegexTextField: NSTextField?
     private var commandRegexTextField: NSTextField?
     private var notificationMessageRegexTextField: NSTextField?
+    private var progressBarFilterPopup: NSPopUpButton?
 
     // MARK: - Initialization
 
@@ -105,6 +106,7 @@ class EventTriggerParameterView: NSView, NSTextFieldDelegate {
         userRegexTextField = nil
         commandRegexTextField = nil
         notificationMessageRegexTextField = nil
+        progressBarFilterPopup = nil
 
         // Add appropriate UI for this event type
         switch matchType {
@@ -124,6 +126,8 @@ class EventTriggerParameterView: NSView, NSTextFieldDelegate {
             addSequenceIdUI()
         case .eventNotificationPosted:
             addNotificationMessageRegexUI()
+        case .eventProgressBarChanged:
+            addProgressBarFilterUI()
         default:
             // No parameters needed for other event types
             addNoParametersLabel()
@@ -318,6 +322,20 @@ class EventTriggerParameterView: NSView, NSTextFieldDelegate {
         stackView.addArrangedSubview(helpLabel)
     }
 
+    private func addProgressBarFilterUI() {
+        let row = createRow(label: "Fire When:")
+
+        let popup = NSPopUpButton()
+        popup.translatesAutoresizingMaskIntoConstraints = false
+        popup.addItems(withTitles: ["Appears or Disappears", "Appears", "Disappears"])
+        popup.target = self
+        popup.action = #selector(progressBarFilterChanged(_:))
+        progressBarFilterPopup = popup
+
+        row.addArrangedSubview(popup)
+        stackView.addArrangedSubview(row)
+    }
+
     private func addNoParametersLabel() {
         let label = NSTextField(labelWithString: "No additional parameters required.")
         label.translatesAutoresizingMaskIntoConstraints = false
@@ -346,6 +364,10 @@ class EventTriggerParameterView: NSView, NSTextFieldDelegate {
     @objc private func exitCodeFilterChanged(_ sender: NSPopUpButton) {
         let isSpecific = sender.indexOfSelectedItem == 3
         exitCodeTextField?.isHidden = !isSpecific
+        onParametersChanged?()
+    }
+
+    @objc private func progressBarFilterChanged(_ sender: NSPopUpButton) {
         onParametersChanged?()
     }
 
@@ -433,6 +455,20 @@ class EventTriggerParameterView: NSView, NSTextFieldDelegate {
                 params["userRegex"] = regex
             }
 
+        case .eventProgressBarChanged:
+            if let popup = progressBarFilterPopup {
+                switch popup.indexOfSelectedItem {
+                case 0:
+                    params["progressBarFilter"] = "*"
+                case 1:
+                    params["progressBarFilter"] = "appeared"
+                case 2:
+                    params["progressBarFilter"] = "disappeared"
+                default:
+                    params["progressBarFilter"] = "*"
+                }
+            }
+
         default:
             break
         }
@@ -499,6 +535,20 @@ class EventTriggerParameterView: NSView, NSTextFieldDelegate {
                 userRegexTextField?.stringValue = regex
             }
 
+        case .eventProgressBarChanged:
+            if let filter = params["progressBarFilter"] as? String {
+                switch filter {
+                case "*", "":
+                    progressBarFilterPopup?.selectItem(at: 0)
+                case "appeared":
+                    progressBarFilterPopup?.selectItem(at: 1)
+                case "disappeared":
+                    progressBarFilterPopup?.selectItem(at: 2)
+                default:
+                    progressBarFilterPopup?.selectItem(at: 0)
+                }
+            }
+
         default:
             break
         }
@@ -537,6 +587,8 @@ class EventTriggerMatchTypeHelper: NSObject {
             return "Custom Escape Sequence"
         case .eventNotificationPosted:
             return "Notification Posted"
+        case .eventProgressBarChanged:
+            return "Progress Bar Changed"
         default:
             return "Unknown Event"
         }
@@ -569,6 +621,8 @@ class EventTriggerMatchTypeHelper: NSObject {
             return "Fires when a specific OSC escape sequence is received."
         case .eventNotificationPosted:
             return "Fires when a notification is posted by a control sequence (OSC 9)."
+        case .eventProgressBarChanged:
+            return "Fires when a progress bar appears or disappears."
         default:
             return ""
         }
@@ -588,7 +642,8 @@ class EventTriggerMatchTypeHelper: NSObject {
             NSNumber(value: iTermTriggerMatchType.eventBellReceived.rawValue),
             NSNumber(value: iTermTriggerMatchType.eventLongRunningCommand.rawValue),
             NSNumber(value: iTermTriggerMatchType.eventCustomEscapeSequence.rawValue),
-            NSNumber(value: iTermTriggerMatchType.eventNotificationPosted.rawValue)
+            NSNumber(value: iTermTriggerMatchType.eventNotificationPosted.rawValue),
+            NSNumber(value: iTermTriggerMatchType.eventProgressBarChanged.rawValue)
         ]
     }
 

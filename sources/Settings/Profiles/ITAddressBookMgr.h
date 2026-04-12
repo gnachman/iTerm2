@@ -566,7 +566,8 @@ typedef NS_ENUM(NSInteger, iTermTriggerMatchType) {
     iTermTriggerMatchTypeEventBellReceived = 108,
     iTermTriggerMatchTypeEventLongRunningCommand = 109,
     iTermTriggerMatchTypeEventCustomEscapeSequence = 110,
-    iTermTriggerMatchTypeEventNotificationPosted = 111
+    iTermTriggerMatchTypeEventNotificationPosted = 111,
+    iTermTriggerMatchTypeEventProgressBarChanged = 112
 };
 
 static inline BOOL iTermTriggerMatchTypeIsEvent(iTermTriggerMatchType type) {
