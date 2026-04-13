@@ -144,6 +144,7 @@
 #import "iTermPasteHelper.h"
 #import "iTermPreferences.h"
 #import "iTermPreferences.h"
+#import "iTermPowerManager.h"
 #import "iTermPrintGuard.h"
 #import "iTermProcessCache.h"
 #import "iTermProfilePreferences.h"
@@ -8103,7 +8104,7 @@ extendResultsAcrossSoftBoundaries:(BOOL)extendResultsAcrossSoftBoundaries {
     });
     if (@available(macOS 12.0, *)) {
         if ([iTermPreferences boolForKey:kPreferenceKeyDisableInLowPowerMode] &&
-            [[NSProcessInfo processInfo] isLowPowerModeEnabled]) {
+            [[iTermPowerManager sharedInstance] isLowPowerModeEnabled]) {
             if (reason) {
                 *reason = iTermMetalUnavailableReasonLowerPowerMode;
             }
@@ -19744,7 +19745,7 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     state.liveResizing = _inLiveResize;
     state.proMotion = [NSProcessInfo it_hasARMProcessor] && [_textview.window.screen it_supportsHighFrameRates];
     state.estimatedThroughput = _estimatedThroughput;
-    state.lowPowerMode = [[NSProcessInfo processInfo] isLowPowerModeEnabled];
+    state.lowPowerMode = [[iTermPowerManager sharedInstance] isLowPowerModeEnabled];
     return state;
 }
 

@@ -392,9 +392,9 @@ legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth
         [view setNeedsDisplay:YES];
     }
 
-    iTermPreciseTimerSaveLog([NSString stringWithFormat:@"%@: Dropped frames", _identifier],
-                             [NSString stringWithFormat:@"%0.1f%%\n", 100.0 * ((double)_dropped / (double)MAX(1, _total))]);
     if (_total % 10 == 1) {
+        iTermPreciseTimerSaveLog([NSString stringWithFormat:@"%@: Dropped frames", _identifier],
+                                 [NSString stringWithFormat:@"%0.1f%%\n", 100.0 * ((double)_dropped / (double)MAX(1, _total))]);
         iTermPreciseTimerSaveLog([NSString stringWithFormat:@"%@: Start-to-Start Time (ms)", _identifier],
                                  [_startToStartHistogram stringValue]);
         iTermPreciseTimerSaveLog([NSString stringWithFormat:@"%@: Frames In Flight at Start", _identifier],

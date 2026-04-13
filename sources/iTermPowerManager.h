@@ -23,6 +23,7 @@ extern NSString *const iTermPowerManagerMetalAllowedDidChangeNotification;
 @property (nonatomic, readonly) BOOL connectedToPower;
 @property (nonatomic, readonly) BOOL hasBattery;
 @property (nonatomic, readonly) BOOL metalAllowed;
+@property (nonatomic, readonly) BOOL isLowPowerModeEnabled;
 @property (nonatomic, readonly) NSArray<NSNumber *> *percentageSamples;
 
 // This will be nil if the machine has no battery.

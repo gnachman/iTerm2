@@ -39,6 +39,7 @@ NSString *const iTermPowerManagerMetalAllowedDidChangeNotification = @"iTermPowe
     CFRunLoopRef _runLoop;
     CFRunLoopSourceRef _runLoopSource;
     BOOL _metalAllowed;
+    BOOL _isLowPowerModeEnabled;
     iTermPublisher<iTermPowerState *> *_publisher;
     NSTimer *_timer;
     NSNumber *_hasBatteryNumber;
@@ -78,6 +79,11 @@ static void iTermPowerManagerSourceDidChange(void *context) {
                                                                    name:NSWorkspaceDidWakeNotification
                                                                  object:nil];
 
+        _isLowPowerModeEnabled = [[NSProcessInfo processInfo] isLowPowerModeEnabled];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(powerStateDidChange:)
+                                                     name:NSProcessInfoPowerStateDidChangeNotification
+                                                   object:nil];
         _publisher = [[iTermPublisher alloc] initWithCapacity:120];
         _publisher.delegate = self;
         [self metalAllowed];
@@ -102,6 +108,14 @@ static void iTermPowerManagerSourceDidChange(void *context) {
     const BOOL connectionToPowerRequired = [iTermPreferences boolForKey:kPreferenceKeyDisableMetalWhenUnplugged];
     _metalAllowed = (!connectionToPowerRequired || connectedToPower);
     return _metalAllowed;
+}
+
+- (BOOL)isLowPowerModeEnabled {
+    return _isLowPowerModeEnabled;
+}
+
+- (void)powerStateDidChange:(NSNotification *)notification {
+    _isLowPowerModeEnabled = [[NSProcessInfo processInfo] isLowPowerModeEnabled];
 }
 
 #if ENABLE_FAKE_BATTERY

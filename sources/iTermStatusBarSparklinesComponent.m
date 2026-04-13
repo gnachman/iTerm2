@@ -8,6 +8,7 @@
 #import "iTermStatusBarSparklinesComponent.h"
 
 #import "iTermAdvancedSettingsModel.h"
+#import "iTermPowerManager.h"
 #import "NSArray+iTerm.h"
 #import "NSBezierPath+iTerm.h"
 #import "NSDictionary+iTerm.h"
@@ -162,7 +163,7 @@ static const CGFloat iTermStatusBarSparklineBottomMargin = 2;
     animation.toValue = (id)[NSValue valueWithPoint:position];
     animation.duration = 1.0;
     if (@available(macOS 12, *)) {
-        if ([[NSProcessInfo processInfo] isLowPowerModeEnabled]) {
+        if ([[iTermPowerManager sharedInstance] isLowPowerModeEnabled]) {
             animation.preferredFrameRateRange = CAFrameRateRangeMake(1, 1, 1);
         } else {
             animation.preferredFrameRateRange = CAFrameRateRangeMake(1, 60, 5);
