@@ -803,6 +803,19 @@ BOOL iTermSRGBColorFromDictionary(NSDictionary *dict, iTermSRGBColor *colorOut) 
     return YES;
 }
 
+BOOL iTermSRGBColorFromHexString(NSString *hexString, iTermSRGBColor *colorOut) {
+    unsigned int red, green, blue;
+    if (![hexString getHashColorRed:&red green:&green blue:&blue]) {
+        return NO;
+    }
+    *colorOut = (iTermSRGBColor){
+        .r = red / 65535.0,
+        .g = green / 65535.0,
+        .b = blue / 65535.0
+    };
+    return YES;
+}
+
 - (NSDictionary *)dictionaryValue {
     if ([iTermAdvancedSettingsModel p3]) {
         NSColor *color = [self colorUsingColorSpace:[NSColorSpace displayP3ColorSpace]];

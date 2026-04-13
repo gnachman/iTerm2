@@ -40,6 +40,7 @@ struct IT2: ParsableCommand {
             RunShortcut.self,
             SendShortcut.self,
             Session.self,
+            SetStatusShortcut.self,
             SplitShortcut.self,
             Tab.self,
             VSplitShortcut.self,
