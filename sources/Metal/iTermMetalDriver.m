@@ -608,13 +608,15 @@ legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth
     _context = nil;
 
     void (^block)(void) = ^{
-        NSTimeInterval now = [NSDate timeIntervalSinceReferenceDate];
-        if (self->_lastFrameTime) {
-            [self->_fpsMovingAverage addValue:now - self->_lastFrameTime];
-        }
-        self->_lastFrameTime = now;
+        @autoreleasepool {
+            NSTimeInterval now = [NSDate timeIntervalSinceReferenceDate];
+            if (self->_lastFrameTime) {
+                [self->_fpsMovingAverage addValue:now - self->_lastFrameTime];
+            }
+            self->_lastFrameTime = now;
 
-        [self performPrivateQueueSetupForFrameData:frameData view:view];
+            [self performPrivateQueueSetupForFrameData:frameData view:view];
+        }
     };
 #if ENABLE_PRIVATE_QUEUE
     [frameData dispatchToPrivateQueue:_queue forPreparation:block];
@@ -740,7 +742,7 @@ legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth
 }
 
 - (void)addRowDataToFrameData:(iTermMetalFrameData *)frameData {
-    for (int y = 0; y < frameData.gridSize.height; y++) {
+    for (int y = 0; y < frameData.gridSize.height; y++) { @autoreleasepool {
         const int columns = frameData.gridSize.width;
         iTermMetalRowData *rowData = [[iTermMetalRowData alloc] init];
         [frameData.rows addObject:rowData];
@@ -802,7 +804,7 @@ legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth
         [rowData.attributesData checkForOverrun];
         [rowData.backgroundColorRLEData checkForOverrun];
         [frameData.debugInfo addRowData:rowData];
-    }
+    } }
 }
 
 - (BOOL)shouldCreateIntermediateRenderPassDescriptor:(iTermMetalFrameData *)frameData {

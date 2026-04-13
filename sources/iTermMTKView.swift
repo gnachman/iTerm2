@@ -82,6 +82,14 @@ public class iTermMTKView: iTermMetalView {
     override public func viewDidMoveToWindow() {
         super.viewDidMoveToWindow()
         colorspace = window?.screen?.colorSpace?.cgColorSpace
+        if window != nil {
+            if _timer == nil {
+                it_schedule()
+            }
+        } else {
+            _timer?.invalidate()
+            _timer = nil
+        }
     }
 
     @objc(enclosingWindowDidMoveToScreen:)

@@ -60,6 +60,7 @@ typedef struct {
                                             selector:@selector(timerDidFire:)
                                             userInfo:nil
                                              repeats:YES];
+    _timer.tolerance = 0.2;
 }
 
 - (void)timerDidFire:(NSTimer *)timer {

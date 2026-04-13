@@ -62,6 +62,7 @@ NS_ASSUME_NONNULL_BEGIN
                                                    selector:@selector(poll)
                                                    userInfo:nil
                                                     repeats:YES];
+    _timer.tolerance = _cadence * 0.1;
 }
 
 - (void)bump {

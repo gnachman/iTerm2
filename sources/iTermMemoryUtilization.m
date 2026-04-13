@@ -131,6 +131,7 @@
                                                 selector:@selector(update)
                                                 userInfo:nil
                                                  repeats:YES];
+        _timer.tolerance = 0.2;
     }
 }
 

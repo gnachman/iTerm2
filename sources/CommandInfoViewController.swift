@@ -227,7 +227,7 @@ class CommandInfoViewController: NSViewController {
         } else {
             returnCode.stringValue = "Still Running"
             if _startDate != nil {
-                timer = Timer.scheduledTimer(withTimeInterval: 0.017, repeats: true) { [weak self] timer in
+                timer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] timer in
                     self?.timerDidFire()
                 }
             }
