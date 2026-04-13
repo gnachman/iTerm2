@@ -14,6 +14,7 @@
 #import "iTermImageWell.h"
 #import "iTermPreferences.h"
 #import "iTermSizeRememberingView.h"
+#import "iTerm2SharedARC-Swift.h"
 #import "iTermSystemVersion.h"
 #import "iTermVariableScope.h"
 #import "iTermWarning.h"
@@ -734,9 +735,11 @@ typedef NS_ENUM(NSUInteger, iTermWindowUnitsTag) {
 }
 
 - (void)sanitizeBackgroundImageFolderInterval {
+    static const NSInteger minimumInterval = 5;
     NSInteger interval = [self integerForKey:KEY_BACKGROUND_IMAGE_FOLDER_INTERVAL];
-    if (interval < 1) {
-        [self setInteger:1 forKey:KEY_BACKGROUND_IMAGE_FOLDER_INTERVAL];
+    if (interval < minimumInterval) {
+        [self setInteger:minimumInterval forKey:KEY_BACKGROUND_IMAGE_FOLDER_INTERVAL];
+        _backgroundImageFolderIntervalField.integerValue = minimumInterval;
     }
 }
 
@@ -932,28 +935,7 @@ typedef NS_ENUM(NSUInteger, iTermWindowUnitsTag) {
 }
 
 - (NSString *)firstImageFilenameInFolder:(NSString *)folderPath {
-    if (folderPath.length == 0) {
-        return nil;
-    }
-    NSURL *folderURL = [NSURL fileURLWithPath:[folderPath stringByExpandingTildeInPath] isDirectory:YES];
-    NSArray<NSURL *> *contents = [[NSFileManager defaultManager] contentsOfDirectoryAtURL:folderURL
-                                                               includingPropertiesForKeys:@[ NSURLIsRegularFileKey ]
-                                                                                  options:NSDirectoryEnumerationSkipsHiddenFiles
-                                                                                    error:nil];
-    NSArray<NSURL *> *sortedContents = [contents sortedArrayUsingComparator:^NSComparisonResult(NSURL *lhs, NSURL *rhs) {
-        return [lhs.lastPathComponent localizedStandardCompare:rhs.lastPathComponent];
-    }];
-    for (NSURL *url in sortedContents) {
-        NSNumber *isRegularFile = nil;
-        [url getResourceValue:&isRegularFile forKey:NSURLIsRegularFileKey error:nil];
-        if (!isRegularFile.boolValue) {
-            continue;
-        }
-        if ([[NSImage alloc] initWithContentsOfFile:url.path]) {
-            return url.path;
-        }
-    }
-    return nil;
+    return [iTermBackgroundImageRotationManager firstImagePathInFolder:folderPath];
 }
 
 // Sets _backgroundImagePreview and _useBackgroundImage.

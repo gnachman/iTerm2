@@ -91,7 +91,6 @@
 #import "iTermAutomaticProfileSwitcher.h"
 #import "iTermBackgroundCommandRunner.h"
 #import "iTermBackgroundDrawingHelper.h"
-#import "iTermBackgroundImageRotationManager.h"
 #import "iTermBadgeLabel.h"
 #import "iTermBuiltInFunctions.h"
 #import "iTermBuriedSessions.h"
@@ -945,11 +944,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTurdType) {
                                                    object:nil];
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(backgroundImageRotationDidChange:)
-                                                     name:iTermBackgroundImageRotationDidChangeNotification
-                                                   object:nil];
-        [[NSNotificationCenter defaultCenter] addObserver:self
-                                                 selector:@selector(profileDidChange:)
-                                                     name:iTermProfileDidChange
+                                                     name:iTermBackgroundImageRotationManager.didChangeNotification
                                                    object:nil];
         [[[NSWorkspace sharedWorkspace] notificationCenter] addObserver:self
                                                                selector:@selector(activeSpaceDidChange:)
@@ -4997,34 +4992,6 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
     }
     NSString *path = [[iTermBackgroundImageRotationManager sharedInstance] backgroundImagePathForProfile:profile];
     [self setBackgroundImagePath:path];
-}
-
-- (void)profileDidChange:(NSNotification *)notification {
-    NSString *guid = [NSString castFrom:notification.object];
-    if (guid.length == 0) {
-        return;
-    }
-    NSString *sharedProfileGUID = _originalProfile[KEY_GUID];
-    NSString *sessionProfileGUID = _profile[KEY_GUID];
-    BOOL didChange = NO;
-    if (sharedProfileGUID.length > 0 && [guid isEqualToString:sharedProfileGUID]) {
-        [self sharedProfileDidChange];
-        NSDictionary *sharedProfile = [[ProfileModel sharedInstance] bookmarkWithGuid:sharedProfileGUID];
-        if (sharedProfile) {
-            [_originalProfile autorelease];
-            _originalProfile = [sharedProfile copy];
-        }
-        didChange = YES;
-    }
-    if (self.isDivorced &&
-        sessionProfileGUID.length > 0 &&
-        [guid isEqualToString:sessionProfileGUID]) {
-        [self sessionProfileDidChange];
-        didChange = YES;
-    }
-    if (didChange) {
-        [self profileNameDidChangeTo:self.profile[KEY_NAME]];
-    }
 }
 
 - (void)loadColorsFromProfile:(Profile *)aDict {
