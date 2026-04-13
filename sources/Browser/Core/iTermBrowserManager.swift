@@ -117,6 +117,7 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler 
     private let audioHandler: iTermBrowserAudioHandler?
     private let editingDetector: iTermBrowserEditingDetectorHandler?
     private let graphDiscovery = iTermBrowserGraphDiscoveryHandler()
+    private var permissionNotificationObserver: NSObjectProtocol?
     private static var nextIdentifier = 1
     private lazy var identifier: Int = {
         defer {
@@ -165,6 +166,13 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler 
     }
     
     deinit {
+        if let observer = permissionNotificationObserver {
+            NotificationCenter.default.removeObserver(observer)
+        }
+        let userToClean = user
+        Task { @MainActor in
+            iTermBrowserGeolocationHandler.removeInstance(for: userToClean)
+        }
         // Remove KVO observer to prevent crashes
         webView?.removeObserver(self, forKeyPath: "title")
         if let webView = self.webView {
@@ -482,7 +490,7 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler 
 
     private func setupPermissionNotificationObserver() {
         let key = iTermBrowserPermissionManager.permissionRevokedOriginKey
-        NotificationCenter.default.addObserver(
+        permissionNotificationObserver = NotificationCenter.default.addObserver(
             forName: iTermBrowserPermissionManager.permissionRevokedNotification,
             object: nil,
             queue: .main

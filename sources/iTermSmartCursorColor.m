@@ -18,10 +18,14 @@
                                        lineSource:(const screen_char_t *(^NS_NOESCAPE)(int))lineSource {
     iTermCursorNeighbors neighbors;
     memset(&neighbors, 0, sizeof(neighbors));
-    NSArray *coords = @[ @[ @0,    @(-1) ],     // Above
-                         @[ @(-1), @0    ],     // Left
-                         @[ @1,    @0    ],     // Right
-                         @[ @0,    @1    ] ];   // Below
+    static NSArray *coords;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        coords = @[ @[ @0,    @(-1) ],     // Above
+                    @[ @(-1), @0    ],     // Left
+                    @[ @1,    @0    ],     // Right
+                    @[ @0,    @1    ] ];   // Below
+    });
     int prevY = -2;
 
     for (NSArray *tuple in coords) {
