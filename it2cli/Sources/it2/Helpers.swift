@@ -86,6 +86,11 @@ func trimJSONQuotes(_ s: String?) -> String {
 
 /// Wrap a string as a JSON string value.
 func jsonString(_ s: String) -> String {
+    if let data = try? JSONSerialization.data(withJSONObject: s, options: .fragmentsAllowed),
+       let result = String(data: data, encoding: .utf8) {
+        return result
+    }
+    // Fallback for edge cases where JSONSerialization fails:
     let escaped = s.replacingOccurrences(of: "\\", with: "\\\\")
                    .replacingOccurrences(of: "\"", with: "\\\"")
     return "\"\(escaped)\""

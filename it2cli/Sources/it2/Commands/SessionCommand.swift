@@ -20,6 +20,7 @@ struct Session: ParsableCommand {
             Copy.self,
             SetName.self,
             SetColor.self,
+            SetStatus.self,
             GetVar.self,
             SetVar.self,
         ]
@@ -375,10 +376,7 @@ extension Session {
             let method = ITMInvokeFunctionRequest_Method()
             method.receiver = sessionId
             invoke.method = method
-            let escapedName = name
-                .replacingOccurrences(of: "\\", with: "\\\\")
-                .replacingOccurrences(of: "\"", with: "\\\"")
-            invoke.invocation = "iterm2.set_name(name: \"\(escapedName)\")"
+            invoke.invocation = "iterm2.set_name(name: \(jsonString(name)))"
 
             let request = ITMClientOriginatedMessage()
             request.id_p = client.nextId()
@@ -840,6 +838,69 @@ extension Session {
                 throw IT2Error.apiError("Set variable failed with status \(varResp.status.rawValue)")
             }
             print("Set \(variable) = \(value)")
+        }
+    }
+}
+
+// MARK: - session set-status
+
+extension Session {
+    struct SetStatus: ParsableCommand {
+        static let configuration = CommandConfiguration(
+            commandName: "set-status",
+            abstract: "Set session status indicator."
+        )
+
+        @Option(name: .shortAndLong, help: "Target session ID.")
+        var session: String
+
+        @Option(name: .long, help: "Status text (idle, working, or waiting).")
+        var status: String?
+
+        @Option(name: .long, help: "Dot indicator color as #rrggbb.")
+        var dotColor: String?
+
+        @Option(name: .long, help: "Text color as #rrggbb.")
+        var textColor: String?
+
+        func run() throws {
+            let client = try APIClient.connect()
+            defer { client.disconnect() }
+
+            let invoke = ITMInvokeFunctionRequest()
+            let sessionContext = ITMInvokeFunctionRequest_Session()
+            sessionContext.sessionId = session
+            invoke.session = sessionContext
+
+            var args: [String] = []
+            if let status = status {
+                args.append("status: \(jsonString(status))")
+            }
+            if let textColor = textColor {
+                args.append("text_color: \(jsonString(textColor))")
+            }
+            if let dotColor = dotColor {
+                args.append("dot_color: \(jsonString(dotColor))")
+            }
+
+            invoke.invocation = "iterm2.set_status(\(args.joined(separator: ", ")))"
+
+            let request = ITMClientOriginatedMessage()
+            request.id_p = client.nextId()
+            request.invokeFunctionRequest = invoke
+
+            let response = try client.send(request)
+            guard response.submessageOneOfCase == .invokeFunctionResponse,
+                  let invokeResp = response.invokeFunctionResponse else {
+                throw IT2Error.apiError("No invoke function response")
+            }
+
+            if invokeResp.dispositionOneOfCase == .error {
+                let reason = invokeResp.error?.errorReason ?? "unknown"
+                throw IT2Error.apiError("Set status failed: \(reason)")
+            }
+
+            print("Session status updated.")
         }
     }
 }

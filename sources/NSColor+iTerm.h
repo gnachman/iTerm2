@@ -100,6 +100,10 @@ NSDictionary *iTermSRGBColorToDictionary(iTermSRGBColor color);
 // if the dictionary is missing required keys.
 BOOL iTermSRGBColorFromDictionary(NSDictionary *dict, iTermSRGBColor *colorOut);
 
+// Parse a "#rrggbb" hex string into an iTermSRGBColor. Returns YES on success.
+// The leading '#' is required. Returns NO if the string is malformed.
+BOOL iTermSRGBColorFromHexString(NSString *hexString, iTermSRGBColor *colorOut);
+
 @interface NSColor (iTerm)
 
 @property(nonatomic, readonly) CGFloat perceivedBrightness;
