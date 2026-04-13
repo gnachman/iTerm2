@@ -137,6 +137,11 @@ static char iTermSliderEnabledKVOKey;
     [self loadFromSlider];
 }
 
+- (void)dealloc {
+    [_slider removeObserver:self forKeyPath:@"doubleValue" context:(void *)&iTermSliderValueKVOKey];
+    [_slider removeObserver:self forKeyPath:@"enabled" context:(void *)&iTermSliderEnabledKVOKey];
+}
+
 - (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary<NSKeyValueChangeKey,id> *)change context:(void *)context {
     if (context == &iTermSliderValueKVOKey || context == &iTermSliderEnabledKVOKey) {
         [self loadFromSlider];

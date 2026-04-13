@@ -87,10 +87,12 @@ typedef struct {
 - (iTermCPUTicks)sample {
     host_cpu_load_info_data_t cpuinfo;
     mach_msg_type_number_t count = HOST_CPU_LOAD_INFO_COUNT;
-    kern_return_t rc = host_statistics(mach_host_self(),
+    mach_port_t host_port = mach_host_self();
+    kern_return_t rc = host_statistics(host_port,
                                        HOST_CPU_LOAD_INFO,
                                        (host_info_t)&cpuinfo,
                                        &count);
+    mach_port_deallocate(mach_task_self(), host_port);
     iTermCPUTicks result = { 0, 0 };
     if (rc != KERN_SUCCESS) {
         return result;

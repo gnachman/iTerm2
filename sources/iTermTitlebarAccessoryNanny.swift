@@ -77,8 +77,8 @@ class iTermTitlebarAccessoryNanny: NSObject {
     @objc private func reviewProbation() {
         if !safe {
             DLog("Entering full screen. Retry twiddle later. This code path sucks and should be avoided.")
-            Timer.scheduledTimer(withTimeInterval: 0.1, repeats: false) { _ in
-                self.reviewProbation()
+            Timer.scheduledTimer(withTimeInterval: 0.1, repeats: false) { [weak self] _ in
+                self?.reviewProbation()
             }
             return
         }
