@@ -23,8 +23,8 @@ class TerminalTestHarness {
         delegate.screen = screen
 
         screen.performBlock(joinedThreads: { _, mutableState, _ in
-            mutableState?.terminalEnabled = true
-            mutableState?.terminal?.termType = "xterm"
+            mutableState.terminalEnabled = true
+            mutableState.terminal?.termType = "xterm"
             self.screen.destructivelySetScreenWidth(Int32(width),
                                                     height: Int32(height),
                                                     mutableState: mutableState)
@@ -35,9 +35,9 @@ class TerminalTestHarness {
     func sendOSC7(path: String, host: String? = nil) {
         screen.performBlock(joinedThreads: { _, mutableState, _ in
             if let host = host {
-                mutableState?.setWorkingDirectoryFromURLString("file://\(host)\(path)")
+                mutableState.setWorkingDirectoryFromURLString("file://\(host)\(path)")
             } else {
-                mutableState?.setWorkingDirectoryFromURLString("file://\(path)")
+                mutableState.setWorkingDirectoryFromURLString("file://\(path)")
             }
         })
     }
@@ -45,14 +45,14 @@ class TerminalTestHarness {
     /// Send shell integration: Set remote host (FinalTerm OSC 1337)
     func sendRemoteHost(user: String, host: String) {
         screen.performBlock(joinedThreads: { _, mutableState, _ in
-            mutableState?.setRemoteHostFrom("\(user)@\(host)")
+            mutableState.setRemoteHostFrom("\(user)@\(host)")
         })
     }
 
     /// Send shell integration: Set current directory (FinalTerm OSC 1337)
     func sendCurrentDirectory(path: String) {
         screen.performBlock(joinedThreads: { _, mutableState, _ in
-            mutableState?.currentDirectoryDidChange(to: path, completion: {})
+            mutableState.currentDirectoryDidChange(to: path, completion: {})
         })
     }
 
@@ -61,7 +61,7 @@ class TerminalTestHarness {
     func sendWindowTitle(_ title: String) {
         screen.performBlock(joinedThreads: { _, mutableState, _ in
             // VT100ScreenMutableState conforms to VT100TerminalDelegate
-            mutableState?.terminalSetWindowTitle(title)
+            mutableState.terminalSetWindowTitle(title)
         })
     }
 

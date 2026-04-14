@@ -81,7 +81,10 @@ public class SavedIntervalTreeObject: NSObject {
         }
 
         // Function to convert x, y into reflowable coordinates
-        init(x: Int32, y: Int, preprocessedState: PreprocessedState) {
+        init?(x: Int32, y: Int, preprocessedState: PreprocessedState) {
+            guard y >= 0, y < preprocessedState.hardNewlineCounts.count else {
+                return nil
+            }
             let hardNewlineCount = preprocessedState.hardNewlineCounts[y]
             var cellCountAfterLastHardNewline = preprocessedState.cellOffsets[y]
 
@@ -169,12 +172,21 @@ public class SavedIntervalTreeObject: NSObject {
         self.object = intervalTreeObject
 
         let absCoordRange = interval.absCoordRange(forWidth: width)
-        start = ReflowableCoordinate(x: absCoordRange.start.x,
-                                     y: Int(absCoordRange.start.y - line),
-                                     preprocessedState: preprocessedState)
-        end = ReflowableCoordinate(x: absCoordRange.end.x,
-                                   y: Int(absCoordRange.end.y - line),
-                                   preprocessedState: preprocessedState)
+        let startY = Int(absCoordRange.start.y - line)
+        let endY = Int(absCoordRange.end.y - line)
+        // absCoordRangeForWidth: normalizes x == width to (0, y+1). When an
+        // ITO sits at the sentinel column on the boundary of the range this
+        // can push a y index past the end of screenCharArrays. Skip it.
+        guard let startRC = ReflowableCoordinate(x: absCoordRange.start.x,
+                                                  y: startY,
+                                                  preprocessedState: preprocessedState),
+              let endRC = ReflowableCoordinate(x: absCoordRange.end.x,
+                                               y: endY,
+                                               preprocessedState: preprocessedState) else {
+            return nil
+        }
+        start = startRC
+        end = endRC
     }
 
     private func absLineForVerticalAdvance(baseLine: Int64,

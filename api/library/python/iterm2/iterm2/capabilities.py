@@ -168,3 +168,14 @@ def check_supports_load_url(connection):
         raise AppVersionTooOld(
             "This version of iTerm2 is too old to load URLs in browser sessions. " +
             "You should upgrade to run this script.")
+
+def supports_move_session_to_tab_or_window(connection):
+    """Can you use move_session_to_new_tab() or move_session_to_new_window()?"""
+    min_ver = (1, 13)
+    return ge(connection.iterm2_protocol_version, min_ver)
+
+def check_supports_move_session_to_tab_or_window(connection):
+    if not supports_move_session_to_tab_or_window(connection):
+        raise AppVersionTooOld(
+            "This version of iTerm2 is too old to move sessions to new tabs or windows. " +
+            "You should upgrade to run this script.")

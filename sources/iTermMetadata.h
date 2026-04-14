@@ -20,6 +20,7 @@ typedef struct {
     NSTimeInterval timestamp;
     void * _Nullable externalAttributes;
     BOOL rtlFound;
+    iTermLineAttribute lineAttribute;
 } iTermMetadata;
 
 // I'd like to make these const to keep users well-behaved but C++ makes structs with const fields
@@ -33,13 +34,15 @@ typedef struct {
     NSTimeInterval timestamp;
     void * _Nullable externalAttributes;
     BOOL rtlFound;
+    iTermLineAttribute lineAttribute;
 } iTermImmutableMetadata;
 
 NS_INLINE iTermImmutableMetadata iTermMetadataMakeImmutable(iTermMetadata obj) {
     iTermImmutableMetadata result = {
         .timestamp = obj.timestamp,
         .externalAttributes = obj.externalAttributes,
-        .rtlFound = obj.rtlFound
+        .rtlFound = obj.rtlFound,
+        .lineAttribute = obj.lineAttribute
     };
     return result;
 }
@@ -48,12 +51,14 @@ NS_INLINE iTermImmutableMetadata iTermMetadataMakeImmutable(iTermMetadata obj) {
 void iTermMetadataInit(iTermMetadata *obj,
                        NSTimeInterval timestamp,
                        BOOL rtlFound,
-                       iTermExternalAttributeIndex * _Nullable externalAttributes);
+                       iTermExternalAttributeIndex * _Nullable externalAttributes,
+                       iTermLineAttribute lineAttribute);
 
 void iTermImmutableMetadataInit(iTermImmutableMetadata *obj,
                                 NSTimeInterval timestamp,
                                 BOOL rtlFound,
-                                id<iTermExternalAttributeIndexReading> _Nullable externalAttributes);
+                                id<iTermExternalAttributeIndexReading> _Nullable externalAttributes,
+                                iTermLineAttribute lineAttribute);
 
 iTermMetadata iTermMetadataTemporaryWithTimestamp(NSTimeInterval timestamp);
 iTermMetadata iTermMetadataCopy(iTermMetadata obj);
@@ -83,6 +88,11 @@ iTermMetadataGetExternalAttributesIndexCreatingIfNeeded(iTermMetadata *obj);
 
 id<iTermExternalAttributeIndexReading> _Nullable
 iTermImmutableMetadataGetExternalAttributesIndex(iTermImmutableMetadata obj);
+
+// Derive lineAttribute from per-character external attributes. If all
+// entries share the same non-singleWidth lineAttribute, set it on the
+// metadata. Safe to call on stack-local metadata structs.
+void iTermImmutableMetadataDeriveLineAttributeFromExternalAttributes(iTermImmutableMetadata *metadata);
 
 void iTermMetadataInitFromArray(iTermMetadata *obj, NSArray *array);
 NSArray *iTermImmutableMetadataEncodeToArray(iTermImmutableMetadata obj);

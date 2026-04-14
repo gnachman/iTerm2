@@ -44,6 +44,8 @@
 @class iTermTerminalContentSnapshot;
 @class iTermTokenExecutor;
 
+NS_ASSUME_NONNULL_BEGIN
+
 // Key into dictionaryValue to get screen state.
 extern NSString *const kScreenStateKey;
 
@@ -59,13 +61,13 @@ extern const NSInteger VT100ScreenBigFileDownloadThreshold;
     iTermTriggerCallbackScheduler>
 
 @property(nonatomic) BOOL terminalEnabled;
-@property(atomic, weak) id<VT100ScreenDelegate> delegate;
+@property(atomic, weak, nullable) id<VT100ScreenDelegate> delegate;
 @property(nonatomic, readonly) unsigned int maxScrollbackLines;
 @property(nonatomic, readonly) BOOL unlimitedScrollback;
 @property(nonatomic, readonly) BOOL useColumnScrollRegion;
 @property(nonatomic, readonly) BOOL saveToScrollbackInAlternateScreen;
 // Main thread only! Unlike all other state in VT100Screen, this one is never seen by the screen mutator.
-@property(nonatomic, retain) DVR *dvr;
+@property(nonatomic, retain, nullable) DVR *dvr;
 @property(nonatomic, assign) BOOL trackCursorLineMovement;
 @property(nonatomic, readonly) BOOL appendToScrollbackWithStatusBar;
 @property(nonatomic, readonly) VT100GridAbsCoordRange lastCommandOutputRange;
@@ -83,11 +85,11 @@ extern const NSInteger VT100ScreenBigFileDownloadThreshold;
 // contents are reflowed, and the selection is updated. It is a little slow so be judicious.
 @property(nonatomic, assign) VT100GridSize size;
 
-@property(nonatomic, weak) id<iTermIntervalTreeObserver> intervalTreeObserver;
+@property(nonatomic, weak, nullable) id<iTermIntervalTreeObserver> intervalTreeObserver;
 
 @property(nonatomic, retain, readonly) id<iTermColorMapReading> colorMap;
-@property(nonatomic, readonly) id<iTermTemporaryDoubleBufferedGridControllerReading> temporaryDoubleBuffer;
-@property(nonatomic, readonly) id<VT100ScreenConfiguration> config;
+@property(nonatomic, readonly, nullable) id<iTermTemporaryDoubleBufferedGridControllerReading> temporaryDoubleBuffer;
+@property(nonatomic, readonly, nullable) id<VT100ScreenConfiguration> config;
 @property(nonatomic, readonly) long long fakePromptDetectedAbsLine;
 @property(nonatomic, readonly) long long lastPromptLine;
 @property(nonatomic, readonly) BOOL echoProbeIsActive;
@@ -96,10 +98,10 @@ extern const NSInteger VT100ScreenBigFileDownloadThreshold;
 @property (nonatomic, readonly) MouseMode terminalMouseMode;
 @property (nonatomic, readonly) NSStringEncoding terminalEncoding;
 @property (nonatomic, readonly) BOOL terminalSendReceiveMode;
-@property (nonatomic, readonly) VT100Output *terminalOutput;
+@property (nonatomic, readonly, nullable) VT100Output *terminalOutput;
 @property (nonatomic, readonly) BOOL terminalAllowPasteBracketing;
 @property (nonatomic, readonly) BOOL terminalBracketedPasteMode;
-@property (nonatomic, readonly) NSMutableArray<NSNumber *> *terminalSendModifiers;
+@property (nonatomic, readonly, nullable) NSArray<NSNumber *> *terminalSendModifiers;
 @property (nonatomic, readonly) VT100TerminalKeyReportingFlags terminalKeyReportingFlags;
 @property (nonatomic, readonly) BOOL terminalLiteralMode;
 @property (nonatomic, readonly) iTermEmulationLevel terminalEmulationLevel;
@@ -114,7 +116,7 @@ extern const NSInteger VT100ScreenBigFileDownloadThreshold;
 @property (nonatomic, readonly) BOOL terminalAutorepeatMode;
 @property (nonatomic, readonly) BOOL terminalSendResizeNotifications;
 @property (nonatomic, readonly) int terminalCharset;
-@property (nonatomic, readonly) NSDictionary *terminalState;
+@property (nonatomic, readonly, nullable) NSDictionary *terminalState;
 
 // Where the next tail-find needs to begin.
 @property (nonatomic) long long savedFindContextAbsPos;
@@ -135,9 +137,9 @@ extern const NSInteger VT100ScreenBigFileDownloadThreshold;
 - (iTermAsyncFilter *)newAsyncFilterWithDestination:(id<iTermFilterDestination>)destination
                                               query:(NSString *)query
                                                mode:(iTermFindMode)mode
-                                           refining:(iTermAsyncFilter *)refining
+                                           refining:(nullable iTermAsyncFilter *)refining
                                        absLineRange:(NSRange)absLineRange
-                                           progress:(void (^)(double))progress;
+                                           progress:(nullable void (^)(double))progress;
 
 - (NSString *)compactLineDump;
 - (NSString *)compactLineDumpWithHistory;
@@ -149,61 +151,61 @@ extern const NSInteger VT100ScreenBigFileDownloadThreshold;
 
 - (void)resetAnimatedLines;
 
-- (iTermStringLine *)stringLineAsStringAtAbsoluteLineNumber:(long long)absoluteLineNumber
-                                                   startPtr:(long long *)startAbsLineNumber;
+- (nullable iTermStringLine *)stringLineAsStringAtAbsoluteLineNumber:(long long)absoluteLineNumber
+                                                           startPtr:(long long *)startAbsLineNumber;
 
 #pragma mark - Marks and notes
 
-- (id<VT100ScreenMarkReading>)lastMark;
-- (id<VT100ScreenMarkReading>)lastPromptMark;
-- (id<VT100ScreenMarkReading>)lastScreenMark;
-- (id<VT100ScreenMarkReading>)firstPromptMark;
-- (id<VT100ScreenMarkReading>)firstScreenMark;
-- (id<VT100RemoteHostReading>)lastRemoteHost;
-- (id<VT100ScreenMarkReading>)promptMarkWithGUID:(NSString *)guid;
-- (id<VT100ScreenMarkReading>)namedMarkWithGUID:(NSString *)guid;
+- (nullable id<VT100ScreenMarkReading>)lastMark;
+- (nullable id<VT100ScreenMarkReading>)lastPromptMark;
+- (nullable id<VT100ScreenMarkReading>)lastScreenMark;
+- (nullable id<VT100ScreenMarkReading>)firstPromptMark;
+- (nullable id<VT100ScreenMarkReading>)firstScreenMark;
+- (nullable id<VT100RemoteHostReading>)lastRemoteHost;
+- (nullable id<VT100ScreenMarkReading>)promptMarkWithGUID:(NSString *)guid;
+- (nullable id<VT100ScreenMarkReading>)namedMarkWithGUID:(NSString *)guid;
 - (BOOL)markIsValid:(iTermMark *)mark;
-- (VT100GridRange)lineNumberRangeOfInterval:(Interval *)interval;
-- (VT100GridAbsCoordRange)absCoordRangeForInterval:(Interval *)interval;
-- (void)enumeratePromptsFrom:(NSString *)maybeFirst
-                          to:(NSString *)maybeLast
+- (VT100GridRange)lineNumberRangeOfInterval:(nullable Interval *)interval;
+- (VT100GridAbsCoordRange)absCoordRangeForInterval:(nullable Interval *)interval;
+- (void)enumeratePromptsFrom:(nullable NSString *)maybeFirst
+                          to:(nullable NSString *)maybeLast
                        block:(void (^ NS_NOESCAPE)(id<VT100ScreenMarkReading> mark))block;
 - (void)enumeratePortholes:(void (^ NS_NOESCAPE)(id<PortholeMarkReading> mark))block;
 
 // These methods normally only return one object, but if there is a tie, all of the equally-positioned marks/notes are returned.
 
-- (NSArray<id<VT100ScreenMarkReading>> *)lastMarks;
-- (NSArray<id<VT100ScreenMarkReading>> *)firstMarks;
-- (NSArray<id<PTYAnnotationReading>> *)lastAnnotations;
-- (NSArray<id<PTYAnnotationReading>> *)firstAnnotations;
+- (nullable NSArray<id<VT100ScreenMarkReading>> *)lastMarks;
+- (nullable NSArray<id<VT100ScreenMarkReading>> *)firstMarks;
+- (nullable NSArray<id<PTYAnnotationReading>> *)lastAnnotations;
+- (nullable NSArray<id<PTYAnnotationReading>> *)firstAnnotations;
 
-- (NSArray *)marksOrNotesBefore:(Interval *)location;
-- (NSArray *)marksOrNotesAfter:(Interval *)location;
+- (nullable NSArray *)marksOrNotesBefore:(nullable Interval *)location;
+- (nullable NSArray *)marksOrNotesAfter:(nullable Interval *)location;
 
-- (NSArray *)marksBefore:(Interval *)location;
-- (NSArray *)marksAfter:(Interval *)location;
+- (nullable NSArray *)marksBefore:(nullable Interval *)location;
+- (nullable NSArray *)marksAfter:(nullable Interval *)location;
 
-- (id<VT100ScreenMarkReading>)screenMarkBefore:(Interval *)location;
+- (nullable id<VT100ScreenMarkReading>)screenMarkBefore:(nullable Interval *)location;
 
-- (NSArray *)annotationsBefore:(Interval *)location;
-- (NSArray *)annotationsAfter:(Interval *)location;
+- (nullable NSArray *)annotationsBefore:(nullable Interval *)location;
+- (nullable NSArray *)annotationsAfter:(nullable Interval *)location;
 
-- (id<VT100ScreenMarkReading>)commandMarkAtOrBeforeLine:(int)line;
-- (id<VT100ScreenMarkReading>)screenMarkAfterScreenMark:(id<VT100ScreenMarkReading>)predecessor;
-- (id<VT100ScreenMarkReading>)promptMarkAfterScreenMark:(id<VT100ScreenMarkReading>)predecessor;
-- (id<VT100ScreenMarkReading>)firstCommandMarkWithCommandInRange:(NSRange)absLineRange;
-- (id<VT100ScreenMarkReading>)lastCommandMarkWithCommandInRange:(NSRange)absLineRange;
+- (nullable id<VT100ScreenMarkReading>)commandMarkAtOrBeforeLine:(int)line;
+- (nullable id<VT100ScreenMarkReading>)screenMarkAfterScreenMark:(nullable id<VT100ScreenMarkReading>)predecessor;
+- (nullable id<VT100ScreenMarkReading>)promptMarkAfterScreenMark:(nullable id<VT100ScreenMarkReading>)predecessor;
+- (nullable id<VT100ScreenMarkReading>)firstCommandMarkWithCommandInRange:(NSRange)absLineRange;
+- (nullable id<VT100ScreenMarkReading>)lastCommandMarkWithCommandInRange:(NSRange)absLineRange;
 
 - (BOOL)containsMark:(id<iTermMark>)mark;
 - (void)clearToLastMark;
 
-- (NSString *)workingDirectoryOnLine:(int)line;
-- (id<VT100RemoteHostReading>)remoteHostOnLine:(int)line;
-- (id<VT100ScreenMarkReading>)lastCommandMark;  // last mark representing a command
-- (id<VT100ScreenMarkReading>)penultimateCommandMark;
+- (nullable NSString *)workingDirectoryOnLine:(int)line;
+- (nullable id<VT100RemoteHostReading>)remoteHostOnLine:(int)line;
+- (nullable id<VT100ScreenMarkReading>)lastCommandMark;  // last mark representing a command
+- (nullable id<VT100ScreenMarkReading>)penultimateCommandMark;
 
 - (BOOL)encodeContents:(id<iTermEncoderAdapter>)encoder
-          linesDropped:(int *)linesDroppedOut
+          linesDropped:(int * _Nullable)linesDroppedOut
              unlimited:(BOOL)unlimited;
 
 // WARNING: This may change the screen size! Use -restoreInitialSize to restore it.
@@ -213,7 +215,7 @@ extern const NSInteger VT100ScreenBigFileDownloadThreshold;
      includeRestorationBanner:(BOOL)includeRestorationBanner
                    reattached:(BOOL)reattached
                     isArchive:(BOOL)isArchive
-         largeContentProvider:(id<iTermLargeContentProvider>)largeContentProvider;
+         largeContentProvider:(nullable id<iTermLargeContentProvider>)largeContentProvider;
 
 // Uninitialize timestamps.
 - (void)resetTimestamps;
@@ -222,13 +224,13 @@ extern const NSInteger VT100ScreenBigFileDownloadThreshold;
 
 - (void)enumerateObservableMarks:(void (^ NS_NOESCAPE)(iTermIntervalTreeObjectType, NSInteger, id<IntervalTreeObject>))block;
 - (void)setColorsFromDictionary:(NSDictionary<NSNumber *, id> *)dict harmonize:(BOOL)harmonize;
-- (void)setColor:(NSColor *)color forKey:(int)key;
+- (void)setColor:(nullable NSColor *)color forKey:(int)key;
 - (void)userDidPressReturn;
 
 - (BOOL)shouldExpectPromptMarks;
 - (BOOL)shouldExpectWorkingDirectoryUpdates;
 
-- (NSString *)commandInRange:(VT100GridCoordRange)range;
+- (nullable NSString *)commandInRange:(VT100GridCoordRange)range;
 - (BOOL)haveCommandInRange:(VT100GridCoordRange)range;
 - (VT100GridCoordRange)commandRange;
 - (VT100GridCoordRange)extendedCommandRange;
@@ -244,21 +246,22 @@ typedef NS_ENUM(NSUInteger, VT100ScreenTriggerCheckType) {
 - (void)restoreState:(VT100ScreenState *)state;
 
 - (VT100SyncResult)synchronizeWithConfig:(VT100MutableScreenConfiguration *)sourceConfig
-                                  expect:(iTermExpect *)maybeExpect
+                                  expect:(nullable iTermExpect *)maybeExpect
                            checkTriggers:(VT100ScreenTriggerCheckType)checkTriggers
                            resetOverflow:(BOOL)resetOverflow
                             mutableState:(VT100ScreenMutableState *)mutableState;
-- (void)performBlockWithJoinedThreads:(void (^ NS_NOESCAPE)(VT100Terminal *terminal,
+- (void)performBlockWithJoinedThreads:(void (^ NS_NOESCAPE)(VT100Terminal * _Nullable terminal,
                                                             VT100ScreenMutableState *mutableState,
-                                                            id<VT100ScreenDelegate> delegate))block;
-- (void)performBlockWithJoinedThreadsReentrantSafe:(void (^ NS_NOESCAPE)(VT100Terminal *terminal,
+                                                            id<VT100ScreenDelegate> _Nullable delegate))block;
+- (void)performBlockWithJoinedThreadsReentrantSafe:(void (^ NS_NOESCAPE)(VT100Terminal * _Nullable terminal,
                                                                          VT100ScreenMutableState *mutableState,
-                                                                         id<VT100ScreenDelegate> delegate))block;
+                                                                         id<VT100ScreenDelegate> _Nullable delegate))block;
 - (void)performLightweightBlockWithJoinedThreads:(void (^ NS_NOESCAPE)(VT100ScreenMutableState *mutableState))block;
-- (void)mutateAsynchronously:(void (^)(VT100Terminal *terminal,
+- (void)mutateAsynchronously:(void (^)(VT100Terminal * _Nullable terminal,
                                        VT100ScreenMutableState *mutableState,
-                                       id<VT100ScreenDelegate> delegate))block;
-- (void)beginEchoProbeWithBackspace:(NSData *)backspace
+                                       id<VT100ScreenDelegate> _Nullable delegate))block;
+- (void)setForegroundJobAncestorsForTriggerFiltering:(nullable NSArray<NSString *> *)ancestors;
+- (void)beginEchoProbeWithBackspace:(nullable NSData *)backspace
                            password:(NSString *)password
                            delegate:(id<iTermEchoProbeDelegate>)echoProbeDelegate;
 - (void)sendPasswordInEchoProbe;
@@ -269,24 +272,24 @@ typedef NS_ENUM(NSUInteger, VT100ScreenTriggerCheckType) {
 - (void)destructivelySetScreenWidth:(int)width
                              height:(int)height
                        mutableState:(VT100ScreenMutableState *)mutableState;
-- (NSDictionary<NSString *, NSString *> *)exfiltratedEnvironmentVariables:(NSArray<NSString *> *)names;
+- (NSDictionary<NSString *, NSString *> *)exfiltratedEnvironmentVariables:(nullable NSArray<NSString *> *)names;
 
 // These record the state that should be restored when ssh ends.
 - (void)restoreSavedState:(NSDictionary *)savedState;
 - (NSArray<id<VT100ScreenMarkReading>> *)namedMarks;
 - (long long)startAbsLineForBlock:(NSString *)blockID;
 - (VT100GridCoordRange)rangeOfOutputForCommandMark:(id<VT100ScreenMarkReading>)mark;
-- (void)pauseAtNextPrompt:(void (^)(void))paused;
+- (void)pauseAtNextPrompt:(nullable void (^)(void))paused;
 - (long long)absLineNumberOfLastLineInLineBuffer;
 - (iTermTerminalContentSnapshot *)snapshotForcingPrimaryGrid:(BOOL)forcePrimary;
 - (LineBufferPosition *)positionForTailSearchOfScreen;
 - (void)foldAbsLineRange:(NSRange)range;
 - (NSString *)intervalTreeDump;
 - (NSString *)wordEndingAt:(VT100GridCoord)coord
-                     range:(VT100GridWindowedRange *)rangePtr;
+                     range:(nullable VT100GridWindowedRange *)rangePtr;
 - (NSString *)wordBefore:(VT100GridCoord)coord
-additionalWordCharacters:(NSString *)additionalWordCharacters
-                   range:(VT100GridWindowedRange *)rangePtr;
+additionalWordCharacters:(nullable NSString *)additionalWordCharacters
+                   range:(nullable VT100GridWindowedRange *)rangePtr;
 
 // Fire an event trigger action. Must be called on the main queue.
 - (void)fireEventTrigger:(Trigger *)trigger
@@ -294,3 +297,5 @@ additionalWordCharacters:(NSString *)additionalWordCharacters
         useInterpolation:(BOOL)useInterpolation;
 
 @end
+
+NS_ASSUME_NONNULL_END

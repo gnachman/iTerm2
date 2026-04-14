@@ -72,12 +72,20 @@
 }
 
 - (NSColor *)textColor {
-    NSDictionary *colors = [self colorsPreservingColorSpace:NO];
+    return [self textColorInParam:self.param];
+}
+
+- (NSColor *)textColorInParam:(id)param {
+    NSDictionary *colors = [self colorsPreservingColorSpace:NO param:param];
     return colors[kHighlightForegroundColor];
 }
 
 - (NSColor *)backgroundColor {
-    NSDictionary *colors = [self colorsPreservingColorSpace:NO];
+    return [self backgroundColorInParam:self.param];
+}
+
+- (NSColor *)backgroundColorInParam:(id)param {
+    NSDictionary *colors = [self colorsPreservingColorSpace:NO param:param];
     return colors[kHighlightBackgroundColor];
 }
 
@@ -97,13 +105,17 @@
 
 // Returns a string of the form {text components,background components} from self.param.
 - (NSArray *)stringsForColors {
-    if (![self.param isKindOfClass:[NSString class]]) {
+    return [self stringsForColorsInParam:self.param];
+}
+
+- (NSArray *)stringsForColorsInParam:(id)param {
+    if (![param isKindOfClass:[NSString class]]) {
         return @[ [[NSColor whiteColor] hexString], [[NSColor redColor] hexString] ];
     }
-    if ([self.param isKindOfClass:[NSString class]] &&
-        [self.param hasPrefix:@"{"] && [self.param hasSuffix:@"}"]) {
-        NSString *stringParam = self.param;
-        NSString *inner = [self.param substringWithRange:NSMakeRange(1, stringParam.length - 2)];
+    if ([param isKindOfClass:[NSString class]] &&
+        [param hasPrefix:@"{"] && [param hasSuffix:@"}"]) {
+        NSString *stringParam = param;
+        NSString *inner = [param substringWithRange:NSMakeRange(1, stringParam.length - 2)];
         NSArray *parts = [inner componentsSeparatedByString:@","];
         if (parts.count == 2) {
             return parts;
@@ -116,7 +128,11 @@
 
 // Returns a dictionary with text and background color from the self.param string.
 - (NSDictionary<NSString *, NSColor *> *)colorsPreservingColorSpace:(BOOL)preserveColorSpace {
-    NSArray *parts = [self stringsForColors];
+    return [self colorsPreservingColorSpace:preserveColorSpace param:self.param];
+}
+
+- (NSDictionary<NSString *, NSColor *> *)colorsPreservingColorSpace:(BOOL)preserveColorSpace param:(id)param {
+    NSArray *parts = [self stringsForColorsInParam:param];
     NSMutableDictionary *dict = [NSMutableDictionary dictionary];
     NSColor *textColor = nil;
     NSColor *backgroundColor = nil;

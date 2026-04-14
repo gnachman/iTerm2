@@ -253,4 +253,25 @@ class iTermProcessInfo: NSObject {
     @objc var isForegroundJob: Bool {
         return _testValueForForegroundJob ?? expensiveValues.isForegroundJob
     }
+
+    /// Returns lowercased argv0 (or name) values for this process and its ancestors,
+    /// ordered from this process (deepest) toward the root. Stops before including
+    /// the login shell (argv0 starts with "-") or iTermServer.
+    @objc var foregroundJobAncestorNames: [String] {
+        var result = [String]()
+        var current: iTermProcessInfo? = self
+        while let info = current {
+            let title = info.argv0 ?? info.name
+            guard let title, !title.isEmpty else {
+                current = info.parent
+                continue
+            }
+            if title.hasPrefix("-") || title.hasPrefix("iTermServer") {
+                break
+            }
+            result.append(title.lowercased())
+            current = info.parent
+        }
+        return result
+    }
 }

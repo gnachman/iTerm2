@@ -1,0 +1,1 @@
+]21337;indicator=#00d75f;status=Idle;status-color=#888888

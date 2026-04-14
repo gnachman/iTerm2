@@ -28,6 +28,7 @@
 @implementation iTermGlyphCharacterSource {
     unsigned short _glyphNumber;
     NSPoint _position;
+    iTermLineAttribute _lineAttribute;
 }
 
 - (instancetype)initWithFontID:(unsigned int)fontID
@@ -38,6 +39,7 @@
                     descriptor:(iTermCharacterSourceDescriptor *)descriptor
                     attributes:(iTermCharacterSourceAttributes *)attributes
                         radius:(int)radius
+                 lineAttribute:(iTermLineAttribute)lineAttribute
                        context:(CGContextRef)context {
     NSFont *font = [NSFont it_fontWithMetalID:fontID];
     if (!font) {
@@ -54,6 +56,7 @@
     if (self) {
         _glyphNumber = glyphNumber;
         _position = position;
+        _lineAttribute = lineAttribute;
     }
     return self;
 }
@@ -102,6 +105,25 @@
     return CGSizeZero;
 }
 
+- (iTermLineAttribute)lineAttribute {
+    return _lineAttribute;
+}
+
+- (CGFloat)drawHScale {
+    if (iTermLineAttributeIsDoubleWidth(_lineAttribute)) {
+        return 2.0;
+    }
+    return 1.0;
+}
+
+- (CGFloat)drawVScale {
+    if (_lineAttribute == iTermLineAttributeDoubleHeightTop ||
+        _lineAttribute == iTermLineAttributeDoubleHeightBottom) {
+        return 2.0;
+    }
+    return 1.0;
+}
+
 - (CGRect)frameFlipped:(BOOL)flipped {
     CGGlyph glyph = _glyphNumber;
     const CGRect bounds = CTFontGetBoundingRectsForGlyphs((__bridge CTFontRef)_font,
@@ -109,7 +131,28 @@
                                                           &glyph,
                                                           NULL,
                                                           1);
-    return [self frameForBoundingRect:bounds flipped:flipped];
+    const CGRect adjustedBounds = CGRectOffset(bounds, _position.x, _position.y);
+    CGRect result = [self frameForBoundingRect:adjustedBounds flipped:flipped];
+    if (iTermLineAttributeIsDoubleWidth(_lineAttribute)) {
+        const CGFloat pivotX = _descriptor.glyphSize.width * _radius;
+        const CGFloat tyUnflipped = _descriptor.glyphSize.height * _radius - _descriptor.baselineOffset * _descriptor.scale;
+        const CGFloat pivotY = flipped ? (_size.height - tyUnflipped) : tyUnflipped;
+        const CGFloat hScale = 2.0;
+        const CGFloat vScale = (_lineAttribute == iTermLineAttributeDoubleHeightTop ||
+                                _lineAttribute == iTermLineAttributeDoubleHeightBottom) ? 2.0 : 1.0;
+        result = CGRectMake(pivotX + (result.origin.x - pivotX) * hScale,
+                            pivotY + (result.origin.y - pivotY) * vScale,
+                            result.size.width * hScale,
+                            result.size.height * vScale);
+        if (_lineAttribute == iTermLineAttributeDoubleHeightTop) {
+            const CGFloat shift = (_descriptor.cellSize.height + _descriptor.baselineOffset) * _descriptor.scale;
+            result.origin.y += flipped ? shift : -shift;
+        } else if (_lineAttribute == iTermLineAttributeDoubleHeightBottom) {
+            const CGFloat shift = _descriptor.baselineOffset * _descriptor.scale;
+            result.origin.y += flipped ? shift : -shift;
+        }
+    }
+    return result;
 }
 
 @end

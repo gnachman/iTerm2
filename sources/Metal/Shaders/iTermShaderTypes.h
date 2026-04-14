@@ -159,4 +159,12 @@ typedef struct {
     float verticalOffset;  // For non-grid-aligned text, such as offscreen command line.
 } iTermVertexTextInfoStruct;
 
+typedef struct {
+    vector_float4 color;
+    float lineOffset;     // distance from cell bottom in pixels
+    float lineThickness;  // in pixels
+    int style;            // iTermMetalGlyphAttributesUnderline base style or strikethrough
+    float scale;
+} iTermUnderlineSpanInfo;
+
 #endif

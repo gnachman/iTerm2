@@ -247,6 +247,9 @@
 }
 
 + (BOOL)pathIsSafe:(NSString *)path {
+    if (!path) {
+        return NO;
+    }
     struct sockaddr_un addr;
     return (strlen(path.UTF8String) + 1 < sizeof(addr.sun_path));
 }
@@ -262,9 +265,12 @@
 
     NSString *appSupportPath = [[NSFileManager defaultManager] applicationSupportDirectory];
     NSString *normalFilename = [NSString stringWithFormat:@"%@-%d.socket", daemonPrefix, number];
-    NSURL *normalURL = [[NSURL fileURLWithPath:appSupportPath] URLByAppendingPathComponent:normalFilename];
-    if ([self pathIsSafe:normalURL.path] && [[NSFileManager defaultManager] directoryIsWritable:appSupportPath]) {
-        return normalURL.path;
+    NSURL *normalURL = nil;
+    if (appSupportPath) {
+        normalURL = [[NSURL fileURLWithPath:appSupportPath] URLByAppendingPathComponent:normalFilename];
+        if ([self pathIsSafe:normalURL.path] && [[NSFileManager defaultManager] directoryIsWritable:appSupportPath]) {
+            return normalURL.path;
+        }
     }
 
     NSString *homedir = NSHomeDirectory();

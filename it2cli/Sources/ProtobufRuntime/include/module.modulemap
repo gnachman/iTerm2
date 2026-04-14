@@ -1,0 +1,5 @@
+module ProtobufRuntime {
+    header "GPBProtocolBuffers.h"
+    header "Api.pbobjc.h"
+    export *
+}

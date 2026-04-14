@@ -98,6 +98,16 @@ enum {
     self.backgroundColor = colors[kHighlightBackgroundColor];
 }
 
+- (NSColor *)textColorInParam:(id)param {
+    NSDictionary *colors = [HighlightTrigger colorsPreservingColorSpace:NO param:param];
+    return colors[kHighlightForegroundColor];
+}
+
+- (NSColor *)backgroundColorInParam:(id)param {
+    NSDictionary *colors = [HighlightTrigger colorsPreservingColorSpace:NO param:param];
+    return colors[kHighlightBackgroundColor];
+}
+
 - (NSDictionary *)menuItemsForPoupupButton {
     return [NSDictionary dictionaryWithObjectsAndKeys:
             @"Yellow on Black", [NSNumber numberWithInt:(int)kYellowOnBlackHighlight],
@@ -231,14 +241,28 @@ enum {
 
 - (NSDictionary *)dictionaryWithForegroundColor:(NSColor *)foreground
                                 backgroundColor:(NSColor *)background {
+    return [HighlightTrigger dictionaryWithForegroundColor:foreground
+                                           backgroundColor:background];
+}
+
++ (NSDictionary *)dictionaryWithForegroundColor:(NSColor *)foreground
+                                backgroundColor:(NSColor *)background {
     return [NSDictionary dictionaryWithObjectsAndKeys:foreground, kHighlightForegroundColor, background, kHighlightBackgroundColor, nil];
 }
 
 - (NSDictionary *)dictionaryWithForegroundColor:(NSColor *)foreground {
+    return [HighlightTrigger dictionaryWithForegroundColor:foreground];
+}
+
++ (NSDictionary *)dictionaryWithForegroundColor:(NSColor *)foreground {
     return [NSDictionary dictionaryWithObjectsAndKeys:foreground, kHighlightForegroundColor, nil];
 }
 
 - (NSDictionary *)dictionaryWithBackgroundColor:(NSColor *)background {
+    return [HighlightTrigger dictionaryWithBackgroundColor:background];
+}
+
++ (NSDictionary *)dictionaryWithBackgroundColor:(NSColor *)background {
     return [NSDictionary dictionaryWithObjectsAndKeys:background, kHighlightBackgroundColor, nil];
 }
 
@@ -283,13 +307,17 @@ enum {
 
 // Returns a string of the form {text components,background components} from self.param.
 - (NSArray<NSString *> *)stringsForColors {
-    if (self.param == nil) {
+    return [HighlightTrigger stringsForColorsInParam:self.param];
+}
+
++ (NSArray<NSString *> *)stringsForColorsInParam:(id)param {
+    if (param == nil) {
         return @[ [[NSColor whiteColor] hexString], [[NSColor redColor] hexString] ];
     }
-    if ([self.param isKindOfClass:[NSString class]] &&
-        [self.param hasPrefix:@"{"] && [self.param hasSuffix:@"}"]) {
-        NSString *stringParam = self.param;
-        NSString *inner = [self.param substringWithRange:NSMakeRange(1, stringParam.length - 2)];
+    if ([param isKindOfClass:[NSString class]] &&
+        [param hasPrefix:@"{"] && [param hasSuffix:@"}"]) {
+        NSString *stringParam = param;
+        NSString *inner = [param substringWithRange:NSMakeRange(1, stringParam.length - 2)];
         NSArray *parts = [inner componentsSeparatedByString:@","];
         if (parts.count == 2) {
             return parts;
@@ -297,8 +325,8 @@ enum {
         return @[ @"", @"" ];
     }
 
-    if ([self.param isKindOfClass:[NSNumber class]]) {
-        NSNumber *numberParam = self.param;
+    if ([param isKindOfClass:[NSNumber class]]) {
+        NSNumber *numberParam = param;
         NSDictionary *dict = [self colorDictionaryForInteger:numberParam.intValue];
         NSColor *text = dict[kHighlightForegroundColor];
         NSColor *background = dict[kHighlightBackgroundColor];
@@ -314,7 +342,14 @@ enum {
     if (_cachedColors) {
         return _cachedColors;
     }
-    NSArray *parts = [self stringsForColors];
+    NSDictionary *dict = [HighlightTrigger colorsPreservingColorSpace:preserveColorSpace param:self.param];
+    _cachedColors = [dict copy];
+    return dict;
+}
+
++ (NSDictionary<NSString *, NSColor *> *)colorsPreservingColorSpace:(BOOL)preserveColorSpace
+                                                              param:(id)param {
+    NSArray *parts = [HighlightTrigger stringsForColorsInParam:param];
     NSMutableDictionary<NSString *, NSColor *> *dict = [NSMutableDictionary dictionary];
     NSColor *textColor = nil;
     NSColor *backgroundColor = nil;
@@ -333,11 +368,14 @@ enum {
     if (backgroundColor) {
         dict[kHighlightBackgroundColor] = backgroundColor;
     }
-    _cachedColors = [dict copy];
     return dict;
 }
 
 - (NSDictionary *)colorDictionaryForInteger:(int)param {
+    return [HighlightTrigger colorDictionaryForInteger:param];
+}
+
++ (NSDictionary *)colorDictionaryForInteger:(int)param {
     switch (param) {
         case kYellowOnBlackHighlight:
             return [self dictionaryWithForegroundColor:[NSColor yellowColor] backgroundColor:[NSColor blackColor]];

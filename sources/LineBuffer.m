@@ -1471,9 +1471,14 @@ NS_INLINE int TotalNumberOfRawLines(LineBuffer *self) {
         }
         if (i < numBlocks) {
             int x, y;
-            assert(position >= passed);
-            assert(position < passed + used);
-            assert(used == [block rawSpaceUsed]);
+            if (position < passed || position >= passed + used) {
+                ITBetaAssert(NO,
+                             @"Position %@ out of bounds [%@, %@) in block %d/%d (used=%@, rawSpaceUsed=%@). Cache: %@",
+                             @(position), @(passed), @(passed + used), i, numBlocks,
+                             @(used), @([block rawSpaceUsed]),
+                             [[[[_lineBlocks dumpForCrashlog] dataUsingEncoding:NSUTF8StringEncoding] it_compressedData] it_hexEncoded]);
+                continue;
+            }
             const int positionToConvert = expanded ? [block offsetOfStartOfLineIncludingOffset:position - passed] : position - passed;
             if (expanded) {
                 // Prevent duplicates when expanding.
@@ -1492,7 +1497,10 @@ NS_INLINE int TotalNumberOfRawLines(LineBuffer *self) {
                 [intermediate addCoordinate:VT100GridCoordMake(x, y)
                                 forPosition:positionToConvert + passed];
             } else {
-                assert(false);
+                ITBetaAssert(NO,
+                             @"convertPosition:%@ withWidth:%@ failed in block %d/%d (passed=%@, used=%@)",
+                             @(positionToConvert), @(width), i, numBlocks, @(passed), @(used));
+                continue;
             }
             if (expanded) {
                 const NSNumber *rawLineNumber = [block rawLineNumberAtWrappedLineOffset:y - yoffset
@@ -1512,7 +1520,9 @@ NS_INLINE int TotalNumberOfRawLines(LineBuffer *self) {
                         [intermediate addCoordinate:VT100GridCoordMake(x, y)
                                         forPosition:positionToConvert + passed + length - 1];
                     } else {
-                        assert(false);
+                        ITBetaAssert(NO,
+                                     @"convertPosition:%@ (expanded end) withWidth:%@ failed in block %d/%d (passed=%@, used=%@)",
+                                     @(positionToConvert + length - 1), @(width), i, numBlocks, @(passed), @(used));
                     }
                 }
             }
@@ -1655,7 +1665,19 @@ NS_INLINE int TotalNumberOfRawLines(LineBuffer *self) {
         // trailing empty lines. They all have the same position because they
         // are empty. We need to back up by the number of empty lines and then
         // use position.yOffset to disambiguate.
-        result.y = MAX(0, [self numLinesWithWidth:width] - 1 - [_lineBlocks.lastBlock numberOfTrailingEmptyLines]);
+        const int numLines = [self numLinesWithWidth:width];
+        // Cross-check the simple cache against the cumulative sum cache.
+        // numLinesWithWidth: may use a fast scalar cache while wrappedLineAtIndex: uses
+        // the cumulative sum cache. If they disagree, the line lookup will fail.
+#if BETA
+        {
+            const int fromBlocks = [_lineBlocks numberOfWrappedLinesForWidth:width];
+            ITBetaAssert(numLines == fromBlocks,
+                         @"Line count caches disagree: simple=%@ vs cumulative=%@",
+                         @(numLines), @(fromBlocks));
+        }
+#endif
+        result.y = MAX(0, numLines - 1 - [_lineBlocks.lastBlock numberOfTrailingEmptyLines]);
         ScreenCharArray *lastLine = [self wrappedLineAtIndex:result.y
                                                        width:width
                                                 continuation:NULL];
@@ -2267,6 +2289,14 @@ NS_INLINE int TotalNumberOfRawLines(LineBuffer *self) {
         }
     }
     [self sanityCheck];
+#if BETA
+    if (num_wrapped_lines_width > 0) {
+        const int fromBlocks = [_lineBlocks numberOfWrappedLinesForWidth:num_wrapped_lines_width];
+        ITBetaAssert(fromBlocks == num_wrapped_lines_cache,
+                     @"After merge: line count caches disagree for width %@: simple=%@ vs cumulative=%@",
+                     @(num_wrapped_lines_width), @(num_wrapped_lines_cache), @(fromBlocks));
+    }
+#endif
 }
 
 - (BOOL)isEqual:(LineBuffer *)other {

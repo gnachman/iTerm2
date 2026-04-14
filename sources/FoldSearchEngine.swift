@@ -142,43 +142,60 @@ class FoldSearchEngine: NSObject {
     }
 
     /// Extract a short snippet of text around a match for display in the find bar.
+    /// Uses `iTermLocatedString` to correctly map grid coordinates to string
+    /// indices so that double-width, image, and PUA characters are handled.
     private static func extractSnippet(
         from lineBuffer: LineBuffer,
         xyRange: XYRange,
         width: Int32
     ) -> (text: String, matchRange: NSRange) {
-        let matchStartY = xyRange.coordRange.start.y
         let matchStartX = xyRange.coordRange.start.x
-        let matchEndY = xyRange.coordRange.end.y
+        let matchStartY = xyRange.coordRange.start.y
         let matchEndX = xyRange.coordRange.end.x
+        let matchEndY = xyRange.coordRange.end.y
 
         // Get the line containing the match start.
         let sca = lineBuffer.wrappedLine(at: matchStartY, width: width)
-        let lineStr = sca.stringValue
+        let located = iTermLocatedString(screenCharArray: sca)
+        let nsString = located.string as NSString
+
+        guard nsString.length > 0 else {
+            return ("", NSRange(location: 0, length: 0))
+        }
 
         // For single-line matches, extract context around the match.
         if matchStartY == matchEndY {
-            let matchLen = Int(matchEndX - matchStartX) + 1  // endX is inclusive
-            let startIdx = Int(matchStartX)
-            let nsLine = lineStr as NSString
-            let contextBefore = max(0, startIdx - 20)
-            let contextAfter = min(Int(nsLine.length), startIdx + matchLen + 40)
-            let snippetRange = NSRange(location: contextBefore,
-                                       length: contextAfter - contextBefore)
-            let snippet = nsLine.substring(with: snippetRange)
-            let matchInSnippet = NSRange(location: startIdx - contextBefore,
-                                         length: min(matchLen, contextAfter - startIdx))
+            // Map grid x range [matchStartX, matchEndX] to string indices.
+            // matchEndX is inclusive, so pass matchEndX + 1 as the exclusive upper bound.
+            let matchStringRange = located.gridCoords.rangeOfIndices(
+                xFrom: matchStartX, to: matchEndX + 1)
+
+            if matchStringRange.location == NSNotFound {
+                return (located.string, NSRange(location: 0, length: 0))
+            }
+
+            // Add context: up to 20 characters before, 40 after.
+            let contextStart = max(0, matchStringRange.location - 20)
+            let contextEnd = min(Int(nsString.length),
+                                 NSMaxRange(matchStringRange) + 40)
+            let snippetRange = NSRange(location: contextStart,
+                                       length: contextEnd - contextStart)
+            let snippet = nsString.substring(with: snippetRange)
+            let matchInSnippet = NSRange(
+                location: matchStringRange.location - contextStart,
+                length: matchStringRange.length)
             return (snippet, matchInSnippet)
         }
 
-        // Multi-line match: just show the first line starting from the match.
-        let nsLine = lineStr as NSString
-        let startIdx = Int(matchStartX)
-        let rest = nsLine.length - startIdx
-        if rest > 0 {
-            let snippet = nsLine.substring(from: startIdx)
-            return (snippet, NSRange(location: 0, length: min(rest, 80)))
+        // Multi-line match: show from match start to end of line.
+        let startStringIdx = located.gridCoords.indexOfFirstCoord(
+            xGreaterOrEqual: matchStartX)
+        if startStringIdx != NSNotFound && startStringIdx < nsString.length {
+            let snippet = nsString.substring(from: startStringIdx)
+            return (snippet, NSRange(location: 0,
+                                     length: min((snippet as NSString).length, 80)))
         }
-        return (lineStr, NSRange(location: 0, length: min(nsLine.length, 80)))
+        return (located.string, NSRange(location: 0,
+                                         length: min(nsString.length, 80)))
     }
 }

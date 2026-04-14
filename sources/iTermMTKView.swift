@@ -37,7 +37,7 @@ public class iTermMTKView: iTermMetalView {
         }
     }
     private func it_schedule() {
-        _timer = Timer.scheduledWeakTimer(
+        _timer = Timer.it_scheduledWeakTimer(
             withTimeInterval: iTermAdvancedSettingsModel.metalRedrawPeriod(),
             target: self,
             selector: #selector(it_redrawPeriodically(_:)),

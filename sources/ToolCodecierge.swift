@@ -221,7 +221,8 @@ class ToolCodecierge: NSView, ToolbeltTool {
                     cappedAtSize: -1,
                     truncateTail: false,
                     continuationChars: nil,
-                    coords: nil) as! String
+                    coords: nil,
+                    deduplicateDECDHL: true) as! String
                 updateHistory(command: command,
                               exitCode: exitCode,
                               directory: directory,

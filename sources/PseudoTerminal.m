@@ -2102,6 +2102,15 @@ ITERM_WEAKLY_REFERENCEABLE
 - (void)removeTab:(PTYTab *)aTab {
     DLog(@"Remove tab %@", aTab);
     if (![aTab isTmuxTab]) {
+        // Exit synthetic sessions (filter, instant replay, screenshot mode)
+        // so the restorable session captures live sessions that can be revived.
+        for (PTYSession *session in [aTab sessions]) {
+            if (session.liveSession) {
+                PTYSession *liveSession = session.liveSession;
+                [self showLiveSession:liveSession inPlaceOf:session];
+                [liveSession.view.findDriver setFilterWithoutSideEffects:@""];
+            }
+        }
         iTermRestorableSession *restorableSession = [[[iTermRestorableSession alloc] init] autorelease];
         restorableSession.sessions = [aTab sessions];
         restorableSession.terminalGuid = self.terminalGuid;
@@ -2209,6 +2218,7 @@ ITERM_WEAKLY_REFERENCEABLE
     DLog(@"%@", self);
     if ([self anyFullScreen]) {
         [self updateTabBarControlIsTitlebarAccessory];
+        [self updateSessionProgressBarVisibility];
         [_contentView.tabBarControl updateFlashing];
         [self repositionWidgets];
         [self fitTabsToWindow];
@@ -3081,7 +3091,8 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 + (PseudoTerminal*)bareTerminalWithArrangement:(NSDictionary *)arrangement
-                      forceOpeningHotKeyWindow:(BOOL)force {
+                      forceOpeningHotKeyWindow:(BOOL)force
+                                     restoring:(BOOL)restoring {
     BOOL isHotkeyWindow = [arrangement[TERMINAL_ARRANGEMENT_IS_HOTKEY_WINDOW] boolValue];
     NSString *guid = arrangement[TERMINAL_ARRANGEMENT_PROFILE_GUID];
     if (isHotkeyWindow && !force) {
@@ -3138,7 +3149,9 @@ ITERM_WEAKLY_REFERENCEABLE
                                                      screen:screenIndex
                                            hotkeyWindowType:hotkeyWindowType
                                                     profile:arrangement[TERMINAL_ARRANGEMENT_INITIAL_PROFILE]] autorelease];
-        [term delayedEnterFullscreen];
+        if (!restoring) {
+            [term delayedEnterFullscreen];
+        }
     } else {
         // Support legacy edge-spanning flag by adjusting the
         // window type.
@@ -3257,13 +3270,19 @@ ITERM_WEAKLY_REFERENCEABLE
                                sessions:(NSArray *)sessions
                forceOpeningHotKeyWindow:(BOOL)force {
     PseudoTerminal *term = [PseudoTerminal bareTerminalWithArrangement:arrangement
-                                              forceOpeningHotKeyWindow:force];
+                                              forceOpeningHotKeyWindow:force
+                                                             restoring:NO];
+    NSMutableArray *revivedSessions = sessions ? [NSMutableArray array] : nil;
     for (PTYSession *session in sessions) {
-        assert([session revive]);  // TODO(georgen): This isn't guaranteed
+        if ([session revive]) {
+            [revivedSessions addObject:session];
+        } else {
+            DLog(@"Failed to revive session %@", session);
+        }
     }
     if ([term loadArrangement:arrangement
                         named:arrangementName
-                     sessions:sessions
+                     sessions:revivedSessions
            partialAttachments:nil
          largeContentProvider:nil]) {
         return term;
@@ -4135,9 +4154,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
 // NSWindow delegate methods
 - (void)windowDidDeminiaturize:(NSNotification *)aNotification {
     DLog(@"windowDidDeminiaturize: %@\n%@", self, [NSThread callStackSymbols]);
-    DLog(@"Erase badge label");
-    [self.window.dockTile setBadgeLabel:@""];
-    [self.window.dockTile setShowsApplicationBadge:NO];
+    [[iTermDockBadgeController sharedInstance] resetBellCount];
     if ([[self currentTab] blur]) {
         [self enableBlur:[[self currentTab] blurRadius]];
     } else {
@@ -4339,6 +4356,22 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     [_windowPositioner saveFrame];
     [_windowPositioner saveWindowPosition];
 
+    // Exit synthetic sessions (filter, instant replay, screenshot mode) before
+    // creating the restorable session. Synthetic sessions are non-undoable so
+    // they go through hardStop during terminate, but hardStop can't remove the
+    // restorable session from _restorableSessions because it's still on the
+    // push stack. This leaves a non-revivable session in the committed
+    // restorable session, crashing on undo.
+    for (PTYTab *tab in [self tabs]) {
+        for (PTYSession *session in [tab sessions]) {
+            if (session.liveSession) {
+                PTYSession *liveSession = session.liveSession;
+                [self showLiveSession:liveSession inPlaceOf:session];
+                [liveSession.view.findDriver setFilterWithoutSideEffects:@""];
+            }
+        }
+    }
+
     if ([[self allSessions] count]) {
         // First close any tmux tabs because their closure is not undoable.
         for (PTYTab *tab in [self tabs]) {
@@ -4403,9 +4436,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
         [[iTermHotKeyController sharedInstance] nonHotKeyWindowDidBecomeKey];
     }
     [[iTermHotKeyController sharedInstance] autoHideHotKeyWindowsExcept:[[iTermHotKeyController sharedInstance] siblingWindowControllersOf:self]];
-    DLog(@"Erase badge label");
-    [[[NSApplication sharedApplication] dockTile] setBadgeLabel:@""];
-    [[[NSApplication sharedApplication] dockTile] setShowsApplicationBadge:NO];
+    [[iTermDockBadgeController sharedInstance] resetBellCount];
 
     [[iTermController sharedInstance] setCurrentTerminal:self];
     iTermApplicationDelegate *itad = [iTermApplication.sharedApplication delegate];
@@ -6313,6 +6344,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
         DLog(@"tab bar should NOT be accessory, but is on loan.");
         [self returnTabBarToContentView];
     }
+    [self updateSessionProgressBarVisibility];
     DLog(@"Tab bar state after updateTabBarControlIsTitlebarAccessory: hidden=%@ alpha=%@ frame=%@",
          @(_contentView.tabBarControl.isHidden),
          @(_contentView.tabBarControl.alphaValue),
@@ -6526,6 +6558,10 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     [self editSession:session makeKey:YES];
 }
 
+- (IBAction)editSessionNote:(id)sender {
+    [[self currentSession] textViewEditSessionNote];
+}
+
 - (void)editSession:(PTYSession *)session makeKey:(BOOL)makeKey {
     Profile* bookmark = [session profile];
     if (!bookmark) {
@@ -6728,6 +6764,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     [self showOrHideInstantReplayBar];
     [self refreshTools];
     [self updateTabColors];
+    [self updateSessionProgressBarVisibility];
     [self updateToolbeltAppearance];
     [[NSNotificationCenter defaultCenter] postNotificationName:kCurrentSessionDidChange object:nil];
     [self notifyTmuxOfTabChange];
@@ -7222,11 +7259,11 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
             }
             DLog(@"tabViewDidChangeNumberOfTabViewItems: tmuxOriginatedResizeInProgress=%d window frame before=%@",
                  tmuxOriginatedResizeInProgress_, NSStringFromRect(self.window.frame));
-            if (tmuxOriginatedResizeInProgress_) {
-                [self lazyFitWindowToTabs];
-            } else {
-                [self fitWindowToTabs];
-            }
+            // Always use lazyFitWindowToTabs here. It falls back to fitWindowToTabs when
+            // no tmux tabs are present, and avoids sub-cell shrinkage when there are tmux
+            // tabs — even when tmuxOriginatedResizeInProgress_ is 0 (e.g., when the
+            // pre-tmux session is buried after tmux init completes). Issue 9480.
+            [self lazyFitWindowToTabs];
             const NSRect frameAfter = self.window.frame;
             DLog(@"tabViewDidChangeNumberOfTabViewItems: window frame after=%@", NSStringFromRect(frameAfter));
             if (NSEqualRects(frameBefore, frameAfter) && neededInitialSize) {
@@ -7288,6 +7325,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     }
 
     [self updateTabColors];
+    [self updateSessionProgressBarVisibility];
     [self updateTabProgress];
     [self updateToolbeltAppearance];
     [self setNeedsUpdateTabObjectCounts:YES];
@@ -7762,6 +7800,8 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
 - (void)tabView:(NSTabView *)tabView updateStateForTabViewItem:(NSTabViewItem *)tabViewItem {
     PTYTab *tab = tabViewItem.identifier;
     [_contentView.tabBarControl setIsProcessing:tab.isProcessing forTabWithIdentifier:tab];
+    [_contentView.tabBarControl setProgress:(PSMProgress)tab.progress
+                       forTabWithIdentifier:tab];
     [_contentView.tabBarControl setIcon:tab.icon forTabWithIdentifier:tab];
     [_contentView.tabBarControl setObjectCount:tab.objectCount forTabWithIdentifier:tab];
     [_contentView.tabBarControl setIsPinned:tab.isPinned forTabViewItem:tabViewItem];
@@ -7794,9 +7834,44 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     [_contentView updateTitleAndBorderViews];
 }
 
+- (BOOL)tabBarProvidesProgressVisibility {
+    if (togglingLionFullScreen_ || self.anyFullScreen) {
+        const BOOL result = self.shouldShowPermanentFullScreenTabBar;
+        DLog(@"tabBarProvidesProgressVisibility: fullscreen path -> shouldShowPermanentFullScreenTabBar=%d", result);
+        return result;
+    }
+    const BOOL result = self.tabBarShouldBeVisible;
+    DLog(@"tabBarProvidesProgressVisibility: normal path -> tabBarShouldBeVisible=%d", result);
+    return result;
+}
+
+- (BOOL)shouldShowInlineProgressBarForSession:(PTYSession *)session tabBarVisible:(BOOL)tabBarVisible {
+    PTYTab *tab = [self tabForSession:session];
+    if (!tab) {
+        DLog(@"shouldShowInlineProgressBarForSession: no tab, return YES");
+        return YES;
+    }
+    const BOOL hasSingleTab = (self.numberOfTabs == 1);
+    const BOOL hasSplitPanes = (tab.sessions.count > 1);
+    const BOOL isInOverflow = [_contentView.tabBarControl isInOverflowMenuForTabWithIdentifier:tab];
+    const BOOL result = (hasSingleTab || hasSplitPanes || isInOverflow || !tabBarVisible);
+    DLog(@"shouldShowInlineProgressBarForSession: hasSingleTab=%d hasSplitPanes=%d isInOverflow=%d tabBarVisible=%d -> %d",
+         hasSingleTab, hasSplitPanes, isInOverflow, tabBarVisible, result);
+    return result;
+}
+
+- (void)updateSessionProgressBarVisibility {
+    const BOOL tabBarVisible = [self tabBarProvidesProgressVisibility];
+    DLog(@"updateSessionProgressBarVisibility: tabBarVisible=%d sessions=%d", tabBarVisible, (int)self.allSessions.count);
+    for (PTYSession *session in self.allSessions) {
+        session.view.showInlineProgressBar = [self shouldShowInlineProgressBarForSession:session
+                                                                           tabBarVisible:tabBarVisible];
+    }
+}
+
 - (void)updateTabProgress {
     for (PTYTab *tab in [self tabs]) {
-        [_contentView.tabBarControl setProgress:(PSMProgress)tab.activeSession.screen.progress
+        [_contentView.tabBarControl setProgress:(PSMProgress)tab.progress
                            forTabWithIdentifier:tab];
     }
 }
@@ -9203,7 +9278,12 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
         // Moving an existing session (newSession) into a new split
         [newSession setScrollViewDocumentView];
 
-        // SessionView doesn't have any state that survives being moved except the browser view & view controller.
+        // SessionView doesn't have any state that survives being moved except the browser view & view controller
+        // and progress bar state.
+        newSession.view.progress = originalNewSessionView.progress;
+        newSession.view.enableProgressBars = originalNewSessionView.enableProgressBars;
+        newSession.view.progressBarHeight = originalNewSessionView.progressBarHeight;
+        newSession.view.progressBarColorScheme = originalNewSessionView.progressBarColorScheme;
         if (@available(macOS 11, *)) {
             if (originalNewSessionView.browserViewController) {
                 [newSession.view setBrowserViewController:originalNewSessionView.browserViewController
@@ -11154,8 +11234,7 @@ static BOOL iTermApproximatelyEqualRects(NSRect lhs, NSRect rhs, double epsilon)
 - (IBAction)moveSessionToTab:(id)sender {
     NSString *sessionID = [NSString castFrom:[[NSMenuItem castFrom:sender] representedObject]];
     PTYSession *session = [[iTermController sharedInstance] sessionWithGUID:sessionID] ?: self.currentSession;
-    [[MovePaneController sharedInstance] moveSession:session
-                                       toTabInWindow:self.window];
+    [[MovePaneController sharedInstance] moveSessionToTab:session];
 
 }
 
@@ -11581,6 +11660,10 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
         }
         [item setState:session.highlightCursorLine ? NSControlStateValueOn : NSControlStateValueOff];
         result = YES;
+    } else if ([item action] == @selector(editSessionNote:)) {
+        PTYSession *session = [self currentSession];
+        [item setState:session.view.isSessionNoteVisible ? NSControlStateValueOn : NSControlStateValueOff];
+        return session != nil;
     } else if ([item action] == @selector(toggleSelectionRespectsSoftBoundaries:)) {
         [item setState:[[iTermController sharedInstance] selectionRespectsSoftBoundaries] ? NSControlStateValueOn : NSControlStateValueOff];
         result = YES;
@@ -12212,8 +12295,7 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
     return [dvr firstTimeStamp] + offset;
 }
 
-- (NSArray*)allSessions
-{
+- (NSArray<PTYSession *> *)allSessions {
     NSMutableArray* result = [NSMutableArray arrayWithCapacity:[_contentView.tabView numberOfTabViewItems]];
     for (NSTabViewItem* item in [_contentView.tabView tabViewItems]) {
         PTYTab *tab = [item identifier];
@@ -12231,35 +12313,7 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
 #pragma clang diagnostic pop
 
 - (BOOL)incrementBadge {
-    DLog(@"incrementBadge");
-    if (![iTermAdvancedSettingsModel indicateBellsInDockBadgeLabel]) {
-        DLog(@"Disabled by advanced pref");
-        return NO;
-    }
-
-    NSDockTile *dockTile;
-    if (self.window.isMiniaturized) {
-        DLog(@"Use miniaturized window tile");
-        dockTile = self.window.dockTile;
-    } else {
-        if ([[NSApplication sharedApplication] isActive]) {
-            DLog(@"App is active so don't increment it");
-            return NO;
-        }
-        DLog(@"Use main app dock tile");
-        dockTile = [[NSApplication sharedApplication] dockTile];
-    }
-    int count = [[dockTile badgeLabel] intValue];
-    DLog(@"Old count was %d", count);
-    if (count == 999) {
-        DLog(@"Won't go over 999, so stop early");
-        return NO;
-    }
-    ++count;
-    DLog(@"Set badge label to %@", @(count));
-    [dockTile setBadgeLabel:[NSString stringWithFormat:@"%d", count]];
-    [self.window.dockTile setShowsApplicationBadge:YES];
-    return YES;
+    return [[iTermDockBadgeController sharedInstance] incrementBellCount];
 }
 
 - (void)sessionHostDidChange:(PTYSession *)session to:(id<VT100RemoteHostReading>)host {
@@ -12317,6 +12371,10 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
         return YES;
     }
     return NO;
+}
+
+- (void)iTermTabBarDidUpdateProgressBars {
+    [self updateSessionProgressBarVisibility];
 }
 
 - (PTYSession *)sessionForDirectoryRecycling {
@@ -12984,6 +13042,10 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
     }
 }
 
+- (void)tabDidChangeTabStatus:(PTYTab *)tab {
+    [_contentView.tabBarControl setNeedsDisplay:YES];
+}
+
 - (void)tab:(PTYTab *)tab didSetMetalEnabled:(BOOL)useMetal {
     [self updateContentViewExpectsMetal];
 }
@@ -13034,6 +13096,7 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
 }
 
 - (void)numberOfSessionsDidChangeInTab:(PTYTab *)tab {
+    [self updateSessionProgressBarVisibility];
     if (tab == self.currentTab) {
         [self updateUseTransparency];
     }
@@ -13183,6 +13246,21 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
     [self.currentSession openComposerWithString:text escaping:escaping];
 }
 
+- (iTermSessionNoteModel *)toolbeltCurrentSessionNoteModel {
+    return self.currentSession.sessionNoteModel;
+}
+
+- (iTermSessionNoteModel *)toolbeltEnsureCurrentSessionNoteModel {
+    PTYSession *session = self.currentSession;
+    if (!session) {
+        return nil;
+    }
+    if (!session.sessionNoteModel) {
+        session.sessionNoteModel = [[[iTermSessionNoteModel alloc] init] autorelease];
+    }
+    return session.sessionNoteModel;
+}
+
 - (NSArray<iTermCommandHistoryCommandUseMO *> *)toolbeltCommandUsesForCurrentSession {
     return [self.currentSession commandUses];
 }
@@ -13223,6 +13301,12 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
 
 - (ProfileType)toolbeltProfileType {
     return self.currentSession.profile.profileType;
+}
+
+- (BOOL)toolbeltWindowContainsSessionWithGUID:(NSString *)guid {
+    return [self.allSessions anyWithBlock:^BOOL(PTYSession *session) {
+        return [session.guid isEqualToString:guid];
+    }];
 }
 
 #pragma mark - Quick Look panel support

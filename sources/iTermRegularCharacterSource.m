@@ -30,6 +30,7 @@
     NSString *_string;
     BOOL _boxDrawing;
     BOOL _useNativePowerlineGlyphs;
+    iTermLineAttribute _lineAttribute;
 
     CTLineRef _lineRefs[4];
 
@@ -46,6 +47,7 @@
                        boxDrawing:(BOOL)boxDrawing
                            radius:(int)radius
          useNativePowerlineGlyphs:(BOOL)useNativePowerlineGlyphs
+                    lineAttribute:(iTermLineAttribute)lineAttribute
                           context:(CGContextRef)context {
     assert(descriptor.glyphSize.width > 0);
     assert(descriptor.glyphSize.height > 0);
@@ -87,6 +89,7 @@
         ITAssertWithMessage(descriptor.fontTable, @"Nil font table for string=%@ attributes=%@", string, attributes);
         _boxDrawing = boxDrawing;
         _useNativePowerlineGlyphs = useNativePowerlineGlyphs;
+        _lineAttribute = lineAttribute;
 
         for (int i = 0; i < 4; i++) {
             _attributedStrings[i] = [[NSAttributedString alloc] initWithString:string attributes:[self attributesForIteration:i]];
@@ -114,7 +117,7 @@
 #pragma mark Lazy Computations
 
 - (CGSize)desiredOffset {
-    if (_isAscii) {
+    if (_isAscii && !iTermLineAttributeIsDoubleWidth(_lineAttribute)) {
         return _descriptor.asciiOffset;
     } else {
         return CGSizeZero;
@@ -132,13 +135,20 @@
         // ty should equal ty in drawWithOffset:iteration:
         const CGFloat ty = yOffset - _descriptor.baselineOffset * _descriptor.scale;
 
-        // y should equal rect.origin.y in drawBoxAtOffset:iteration:
-        const CGFloat y = ty + _descriptor.baselineOffset * _descriptor.scale - self.verticalShift;
+        // y should equal boxY in drawBoxAtOffset:iteration:
+        CGFloat y = ty + _descriptor.baselineOffset * _descriptor.scale - self.verticalShift;
+        if (_lineAttribute == iTermLineAttributeDoubleHeightTop) {
+            y += (_descriptor.cellSize.height + _descriptor.baselineOffset) * _descriptor.scale;
+            y -= _descriptor.cellSize.height * _descriptor.scale;
+        } else if (_lineAttribute == iTermLineAttributeDoubleHeightBottom) {
+            y += _descriptor.baselineOffset * _descriptor.scale;
+        }
 
+        const CGFloat vScale = [self drawVScale];
         NSRect rect = NSMakeRect(_descriptor.glyphSize.width * _radius,
                                  y,
                                  _descriptor.cellSize.width * _descriptor.scale,
-                                 _descriptor.cellSize.height * _descriptor.scale);
+                                 _descriptor.cellSize.height * _descriptor.scale * vScale);
         if (_string.length > 0 &&
             _useNativePowerlineGlyphs &&
             [iTermBoxDrawingBezierCurveFactory isDoubleWidthPowerlineGlyph:[_string characterAtIndex:0]]) {
@@ -150,9 +160,38 @@
         return rect;
     }
 
-    CGContextRef cgContext = _context;
-    CGRect frame = CTLineGetImageBounds(_lineRefs[0], cgContext);
-    return [self frameForBoundingRect:frame flipped:flipped];
+    // Temporarily remove any CTM scale so CTLineGetImageBounds returns
+    // unscaled bounds. We apply hScale/vScale manually below because the
+    // CTM is only set during drawing, not when newParts calls this.
+    // TODO: Is this step actually needed?
+    CGContextSaveGState(_context);
+    CGContextConcatCTM(_context, CGAffineTransformInvert(CGContextGetCTM(_context)));
+    CGRect frame = CTLineGetImageBounds(_lineRefs[0], _context);
+    CGContextRestoreGState(_context);
+
+    CGRect result = [self frameForBoundingRect:frame flipped:flipped];
+    if (iTermLineAttributeIsDoubleWidth(_lineAttribute)) {
+        // Expand around the unshifted text origin for the horizontal DWL
+        // scaling and (for DECDHL) the vertical scaling.
+        const CGFloat pivotX = _descriptor.glyphSize.width * _radius;
+        const CGFloat tyUnflipped = _descriptor.glyphSize.height * _radius - _descriptor.baselineOffset * _descriptor.scale;
+        const CGFloat pivotY = flipped ? (_size.height - tyUnflipped) : tyUnflipped;
+        const CGFloat hScale = 2.0;
+        const CGFloat vScale = (_lineAttribute == iTermLineAttributeDoubleHeightTop ||
+                                _lineAttribute == iTermLineAttributeDoubleHeightBottom) ? 2.0 : 1.0;
+        result = CGRectMake(pivotX + (result.origin.x - pivotX) * hScale,
+                            pivotY + (result.origin.y - pivotY) * vScale,
+                            result.size.width * hScale,
+                            result.size.height * vScale);
+        if (_lineAttribute == iTermLineAttributeDoubleHeightTop) {
+            const CGFloat shift = (_descriptor.cellSize.height + _descriptor.baselineOffset) * _descriptor.scale;
+            result.origin.y += flipped ? shift : -shift;
+        } else if (_lineAttribute == iTermLineAttributeDoubleHeightBottom) {
+            const CGFloat shift = _descriptor.baselineOffset * _descriptor.scale;
+            result.origin.y += flipped ? shift : -shift;
+        }
+    }
+    return result;
 }
 
 #pragma mark Drawing
@@ -174,9 +213,10 @@
     }
     DLog(@"Draw box %@ at scale %@ with systemScale=%@ mainScreen=%@. descriptor=%@",
          _string, @(_descriptor.scale), @(systemScale), [[NSScreen mainScreen] it_uniqueName], _descriptor);
+    const CGFloat vScale = [self drawVScale];
     [iTermBoxDrawingBezierCurveFactory drawCodeInCurrentContext:[_string longCharacterAtIndex:0]
                                                        cellSize:NSMakeSize(_descriptor.cellSize.width * _descriptor.scale,
-                                                                           _descriptor.cellSize.height * _descriptor.scale)
+                                                                           _descriptor.cellSize.height * _descriptor.scale * vScale)
                                                            scale:_descriptor.scale
                                                        isPoints:NO
                                                           offset:CGPointZero
@@ -200,10 +240,26 @@
     [NSGraphicsContext setCurrentContext:graphicsContext];
     NSAffineTransform *transform = [NSAffineTransform transform];
 
+    const CGFloat vScale = [self drawVScale];
+    // For box drawing, position the rect at the cell boundary rather than
+    // using the DECDHL text-offset. The offset already includes the DECDHL
+    // ty shift meant for text rendering; undo it and use the raw cell origin.
+    // The rect is drawn in a flipped context so the vertical direction is
+    // reversed: shifting the rect DOWN in CG coords shows the TOP half.
+    CGFloat boxY = offset.y + _descriptor.baselineOffset * _descriptor.scale - self.verticalShift;
+    if (_lineAttribute == iTermLineAttributeDoubleHeightTop) {
+        // Undo the top shift, then move down by one cell so the top half
+        // of the 2x box lands in the clipped center row (flipped context).
+        boxY += (_descriptor.cellSize.height + _descriptor.baselineOffset) * _descriptor.scale;
+        boxY -= _descriptor.cellSize.height * _descriptor.scale;
+    } else if (_lineAttribute == iTermLineAttributeDoubleHeightBottom) {
+        // Undo the bottom shift.
+        boxY += _descriptor.baselineOffset * _descriptor.scale;
+    }
     NSRect rect = NSMakeRect(offset.x,
-                             offset.y + _descriptor.baselineOffset * _descriptor.scale - self.verticalShift,
+                             boxY,
                              _descriptor.cellSize.width * _descriptor.scale,
-                             _descriptor.cellSize.height * _descriptor.scale);
+                             _descriptor.cellSize.height * _descriptor.scale * vScale);
     if (_debug) {
         [[NSColor whiteColor] set];
         NSFrameRect(rect);
@@ -281,6 +337,25 @@
     }
 }
 
+- (iTermLineAttribute)lineAttribute {
+    return _lineAttribute;
+}
+
+- (CGFloat)drawHScale {
+    if (iTermLineAttributeIsDoubleWidth(_lineAttribute)) {
+        return 2.0;
+    }
+    return 1.0;
+}
+
+- (CGFloat)drawVScale {
+    if (_lineAttribute == iTermLineAttributeDoubleHeightTop ||
+        _lineAttribute == iTermLineAttributeDoubleHeightBottom) {
+        return 2.0;
+    }
+    return 1.0;
+}
+
 #pragma mark Core Text Helpers
 
 - (const CGGlyph *)glyphsInRun:(CTRunRef)run length:(size_t)length {
@@ -298,7 +373,6 @@
     _positionsBuffer = [[NSMutableData alloc] initWithLength:sizeof(CGPoint) * length];
     CTRunGetPositions(run, CFRangeMake(0, length), (CGPoint *)_positionsBuffer.mutableBytes);
     return (CGPoint *)_positionsBuffer.mutableBytes;
-
 }
 
 - (NSDictionary *)attributesForIteration:(NSInteger)iteration {

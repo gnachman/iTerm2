@@ -11,7 +11,7 @@ import WebKit
 @available(macOS 11.0, *)
 extension PTYSession: iTermBrowserViewControllerDelegate {
     func browserFindManager(_ manager: iTermBrowserFindManager, didUpdateResult result: iTermBrowserFindResultBundle) {
-        view.findDriver.viewController.countDidChange()
+        view.findDriver?.viewController.countDidChange()
     }
 
     func browserViewController(_ controller: iTermBrowserViewController, didUpdateTitle title: String?) {
@@ -306,9 +306,7 @@ extension PTYSession: iTermBrowserViewControllerDelegate {
             textViewMovePane()
 
         case .moveBrowserToTab:
-            if let window = view.window {
-                MovePaneController.sharedInstance().moveSession(self, toTabIn: window)
-            }
+            MovePaneController.sharedInstance().moveSession(toTab: self)
 
         case .moveBrowserToWindow:
             if let window = view.window {

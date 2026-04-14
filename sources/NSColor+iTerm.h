@@ -92,6 +92,14 @@ iTermP3Color iTermXYZToLinearP3(iTermXYZColor xyz);
 iTermRGBColor iTermXYZToLinearSRGB(iTermXYZColor xyz);
 iTermXYZColor iTermLinearSRGBToXYZ(iTermRGBColor linearRGB);
 
+// Encode an iTermSRGBColor as a dictionary compatible with -[NSColor dictionaryValue].
+NSDictionary *iTermSRGBColorToDictionary(iTermSRGBColor color);
+
+// Decode an iTermSRGBColor from a dictionary produced by -[NSColor dictionaryValue] or
+// iTermSRGBColorToDictionary. Returns YES on success. Returns NO and leaves *colorOut unchanged
+// if the dictionary is missing required keys.
+BOOL iTermSRGBColorFromDictionary(NSDictionary *dict, iTermSRGBColor *colorOut);
+
 @interface NSColor (iTerm)
 
 @property(nonatomic, readonly) CGFloat perceivedBrightness;

@@ -32,6 +32,10 @@ typedef struct {
 @property (atomic, readonly) iTermControlCodeAttribute controlCode;
 @property (atomic, readonly, nullable) NSNumber *controlCodeNumber;
 @property (atomic, readonly, nullable) iTermURL *url;
+// Per-line attribute stored on the first character of a wrapped line in LineBuffer.
+// Used as a signal to re-insert DWL_SPACERs when reading from scrollback.
+// Only set when entering LineBuffer; stripped when reading out.
+@property (atomic, readonly) iTermLineAttribute lineAttribute;
 @property (nonatomic, readonly) BOOL isDefault;
 
 @property(nonatomic, readonly) NSDictionary *dictionaryValue;
@@ -53,6 +57,10 @@ isEqualToExternalAttribute:(iTermExternalAttribute * _Nullable)rhs;
 - (instancetype _Nullable)initWithDictionary:(NSDictionary *)dict;
 - (BOOL)isEqualToExternalAttribute:(iTermExternalAttribute *)rhs;
 - (NSData *)data;
+// Returns a copy with lineAttribute set. If the receiver is nil and attr is
+// non-singleWidth, creates a new minimal attribute.
+- (iTermExternalAttribute *)copyWithLineAttribute:(iTermLineAttribute)attr;
++ (iTermExternalAttribute * _Nullable)attributeWithLineAttribute:(iTermLineAttribute)attr;
 @end
 
 @protocol iTermExternalAttributeIndexReading<NSCopying, NSMutableCopying, NSObject>
@@ -72,6 +80,9 @@ isEqualToExternalAttribute:(iTermExternalAttribute * _Nullable)rhs;
 - (void)copyFrom:(id<iTermExternalAttributeIndexReading> _Nullable)destination startOffset:(int)startOffset;
 - (BOOL)isEqualToExternalAttributeIndex:(id<iTermExternalAttributeIndexReading>)other;
 - (iTermExternalAttribute * _Nullable)attributeAtIndex:(int)i;
+// Returns the lineAttribute if all entries share the same non-singleWidth
+// value, or singleWidth if empty/mixed. Efficient for uniform attrs.
+- (iTermLineAttribute)uniformLineAttribute;
 @end
 
 @interface iTermExternalAttributeIndex: NSObject<iTermExternalAttributeIndexReading>

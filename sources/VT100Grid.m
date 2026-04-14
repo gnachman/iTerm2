@@ -396,8 +396,24 @@ NS_INLINE int VT100GridLineInfoIndex(VT100Grid *self, int lineNumber) {
     return cursor_.y;
 }
 
+- (BOOL)currentLineIsDoubleWidth {
+    return iTermLineAttributeIsDoubleWidth([self lineInfoAtLineNumber:cursor_.y].metadata.lineAttribute);
+}
+
+- (BOOL)lineIsDoubleWidth:(int)lineNumber {
+    return iTermLineAttributeIsDoubleWidth([self lineInfoAtLineNumber:lineNumber].metadata.lineAttribute);
+}
+
+// Snap x to an even position on double-width lines.
+- (int)clampedCursorX:(int)x onLine:(int)y {
+    if ([self lineIsDoubleWidth:y] && (x % 2) != 0 && x < size_.width) {
+        return x & ~1;
+    }
+    return x;
+}
+
 - (void)setCursorX:(int)cursorX {
-    int newX = MIN(size_.width, MAX(0, cursorX));
+    int newX = [self clampedCursorX:MIN(size_.width, MAX(0, cursorX)) onLine:cursor_.y];
     if (newX != cursor_.x) {
         DLog(@"Move cursor x to %d (requested %d)", newX, cursorX);
         cursor_.x = newX;
@@ -423,13 +439,17 @@ NS_INLINE int VT100GridLineInfoIndex(VT100Grid *self, int lineNumber) {
 }
 
 - (void)setCursor:(VT100GridCoord)coord {
-    cursor_.x = MIN(size_.width, MAX(0, coord.x));
-    self.cursorY = MIN(size_.height - 1, MAX(0, coord.y));
+    const int y = MIN(size_.height - 1, MAX(0, coord.y));
+    int x = MIN(size_.width, MAX(0, coord.x));
+    x = [self clampedCursorX:x onLine:y];
+    cursor_.x = x;
+    self.cursorY = y;
 }
 
 - (void)setCursorWithoutInvalidatingDWCFreeLineCount:(VT100GridCoord)coord {
-    cursor_.x = MIN(size_.width, MAX(0, coord.x));
-    [self setCursorY:MIN(size_.height - 1, MAX(0, coord.y))
+    const int y = MIN(size_.height - 1, MAX(0, coord.y));
+    cursor_.x = [self clampedCursorX:MIN(size_.width, MAX(0, coord.x)) onLine:y];
+    [self setCursorY:y
        resetDWCCount:NO];
 }
 
@@ -442,6 +462,7 @@ NS_INLINE int VT100GridLineInfoIndex(VT100Grid *self, int lineNumber) {
         [allowedCharacters addCharactersInRange:NSMakeRange(TAB_FILLER, 1)];
         [allowedCharacters addCharactersInRange:NSMakeRange(DWC_RIGHT, 1)];
         [allowedCharacters addCharactersInRange:NSMakeRange(DWC_SKIP, 1)];
+        [allowedCharacters addCharactersInRange:NSMakeRange(DWL_SPACER, 1)];
     }
     for(; numberOfLinesUsed > 0; numberOfLinesUsed--) {
         const screen_char_t *line = [self immutableScreenCharsAtLineNumber:numberOfLinesUsed - 1];
@@ -553,11 +574,21 @@ makeCursorLineSoft:(BOOL)makeCursorLineSoft {
                          self.cursor.y == i &&
                          self.cursor.x == [self lengthOfLineNumber:i]);
         }
+        VT100LineInfo *lineInfo = [self lineInfoAtLineNumber:i];
+        const iTermLineAttribute lineAttr = lineInfo.metadata.lineAttribute;
+        if (iTermLineAttributeIsDoubleWidth(lineAttr) && currentLineLength > 0) {
+            iTermExternalAttributeIndex *eaIndex =
+                [lineInfo externalAttributesCreatingIfNeeded:YES];
+            [eaIndex mutateAttributesFrom:0 to:currentLineLength - 1 block:^iTermExternalAttribute *(iTermExternalAttribute *old) {
+                return old ? [old copyWithLineAttribute:lineAttr]
+                           : [iTermExternalAttribute attributeWithLineAttribute:lineAttr];
+            }];
+        }
         [lineBuffer appendLine:line
                         length:currentLineLength
                        partial:isPartial
                          width:size_.width
-                      metadata:[[self lineInfoAtLineNumber:i] immutableMetadata]
+                      metadata:[lineInfo immutableMetadata]
                   continuation:line[size_.width]];
 #ifdef DEBUG_RESIZEDWIDTH
         NSLog(@"Appended a line. now have %d lines for width %d\n",
@@ -842,11 +873,12 @@ makeCursorLineSoft:(BOOL)makeCursorLineSoft {
 }
 
 - (void)moveCursorLeft:(int)n {
+    const int step = [self currentLineIsDoubleWidth] ? 2 : 1;
     if ([self haveColumnScrollRegion]) {
         // Don't allow cursor to wrap around the left margin when there is a
         // column scroll region. If the cursor begins at/right of the left margin, it stops at the
         // left margin. If the cursor begins left of the left margin, it stops at the left edge.
-        int x = cursor_.x - n;
+        int x = cursor_.x - n * step;
         const int leftMargin = [self leftMargin];
 
         int limit;
@@ -883,16 +915,17 @@ makeCursorLineSoft:(BOOL)makeCursorLineSoft {
             }
         } else {
             // Move as far as the left margin
-            int x = MAX(0, cursor_.x - n);
+            int x = MAX(0, cursor_.x - n * step);
             int moved = self.cursorX - x;
-            n -= moved;
+            n -= moved / step;
             self.cursorX = x;
         }
     }
 }
 
 - (void)moveCursorRight:(int)n {
-    int x = cursor_.x + n;
+    const int step = [self currentLineIsDoubleWidth] ? 2 : 1;
+    int x = cursor_.x + n * step;
     int rightMargin = [self rightMargin];
     if (cursor_.x > rightMargin) {
         rightMargin = size_.width - 1;
@@ -1002,8 +1035,16 @@ makeCursorLineSoft:(BOOL)makeCursorLineSoft {
         [self erasePossibleDoubleWidthCharInLineNumber:y startingAtOffset:to.x withChar:c];
         const int minX = MAX(0, from.x);
         const int maxX = MIN(to.x, size_.width - 1);
+        const BOOL isDWL = [self lineIsDoubleWidth:y];
         for (int x = minX; x <= maxX; x++) {
-            line[x] = c;
+            if (isDWL && (x % 2) != 0) {
+                // Preserve DWL_SPACER on odd cells of double-width lines.
+                screen_char_t spacer = c;
+                ScreenCharSetDWL_SPACER(&spacer);
+                line[x] = spacer;
+            } else {
+                line[x] = c;
+            }
         }
         if (c.code == 0 && to.x == size_.width - 1) {
             line[size_.width] = c;
@@ -1558,17 +1599,26 @@ externalAttributeIndex:(iTermExternalAttributeIndex *)ea {
     screen_char_t *src = aLine + cursorX;
     screen_char_t *dst = aLine + cursorX + amount;
     const int elements = rightMargin - cursorX - amount;
-    if (cursorX > 0 && ScreenCharIsDWC_RIGHT(src[0])) {
-        // The insert occurred in the middle of a DWC.
-        src[-1].code = 0;
-        src[-1].complexChar = NO;
-        src[0].code = 0;
-        src[0].complexChar = NO;
+    if (cursorX > 0 && (ScreenCharIsDWC_RIGHT(src[0]) || ScreenCharIsDWL_SPACER(src[0]))) {
+        // The insert occurred on a DWC_RIGHT or DWL_SPACER. Back up to find the
+        // real character that owns this placeholder and erase it.
+        int j = -1;
+        while (cursorX + j > 0 && (ScreenCharIsDWC_RIGHT(src[j]) || ScreenCharIsDWL_SPACER(src[j]))) {
+            j--;
+        }
+        // src[j] is the real character — erase it.
+        src[j].code = 0;
+        src[j].complexChar = NO;
     }
-    if (ScreenCharIsDWC_RIGHT(src[elements])) {
-        // Moving a DWC on top of its right half. Erase the DWC.
-        src[elements - 1].code = 0;
-        src[elements - 1].complexChar = NO;
+    if (ScreenCharIsDWC_RIGHT(src[elements]) || ScreenCharIsDWL_SPACER(src[elements])) {
+        // The push-off boundary falls on a DWC_RIGHT or DWL_SPACER. Back up to
+        // find the real character and erase it.
+        int j = elements - 1;
+        while (j > 0 && (ScreenCharIsDWC_RIGHT(src[j]) || ScreenCharIsDWL_SPACER(src[j]))) {
+            j--;
+        }
+        src[j].code = 0;
+        src[j].complexChar = NO;
     } else if (ScreenCharIsDWC_SKIP(src[elements]) &&
                aLine[size_.width].code == EOL_DWC) {
         // Stomping on a DWC_SKIP. Join the lines normally.
@@ -1945,6 +1995,8 @@ externalAttributeIndex:(iTermExternalAttributeIndex *)ea {
                     c = p[x].code;
                 } else if (ScreenCharIsDWC_RIGHT(p[x])) {
                     c = '-';
+                } else if (ScreenCharIsDWL_SPACER(p[x])) {
+                    c = '|';
                 } else if (ScreenCharIsTAB_FILLER(p[x])) {
                     c = ' ';
                 } else if (ScreenCharIsDWC_SKIP(p[x])) {
@@ -2012,6 +2064,7 @@ externalAttributeIndex:(iTermExternalAttributeIndex *)ea {
                                               metadata:&metadata
                                           continuation:&continuation];
     assert(ok);
+    iTermImmutableMetadataDeriveLineAttributeFromExternalAttributes(&metadata);
     [[self lineInfoAtLineNumber:0] setMetadataFromImmutable:metadata];
     line[width] = continuation;
     line[width].code = eol;
@@ -2069,6 +2122,7 @@ externalAttributeIndex:(iTermExternalAttributeIndex *)ea {
                                 includesEndOfLine:&cont
                                          metadata:&metadata
                                      continuation:&continuation]);
+        iTermImmutableMetadataDeriveLineAttributeFromExternalAttributes(&metadata);
         [[self lineInfoAtLineNumber:destLineNumber] setMetadataFromImmutable:metadata];
         if (cont && dest[size_.width - 1].code == 0 && prevLineStartsWithDoubleWidth) {
             // If you pop a soft-wrapped line that's a character short and the
@@ -2191,6 +2245,7 @@ externalAttributeIndex:(iTermExternalAttributeIndex *)ea {
             if (line[x].code == 0) c = '.';
             if (line[x].code > 127) c = '?';
             if (ScreenCharIsDWC_RIGHT(line[x])) c = '-';
+            if (ScreenCharIsDWL_SPACER(line[x])) c = '|';
             if (ScreenCharIsDWC_SKIP(line[x])) {
                 assert(x == size_.width - 1);
                 c = '>';
@@ -2217,6 +2272,7 @@ externalAttributeIndex:(iTermExternalAttributeIndex *)ea {
             if (line[x].code == 0) c = '.';
             if (line[x].code > 127) c = '?';
             if (ScreenCharIsDWC_RIGHT(line[x])) c = '-';
+            if (ScreenCharIsDWL_SPACER(line[x])) c = '|';
             if (ScreenCharIsDWC_SKIP(line[x])) {
                 assert(x == size_.width - 1);
                 c = '>';
@@ -2242,6 +2298,7 @@ externalAttributeIndex:(iTermExternalAttributeIndex *)ea {
             if (line[x].code == 0) c = '.';
             if (line[x].code > 127) c = '?';
             if (ScreenCharIsDWC_RIGHT(line[x])) c = '-';
+            if (ScreenCharIsDWL_SPACER(line[x])) c = '|';
             if (ScreenCharIsDWC_SKIP(line[x])) {
                 assert(x == size_.width - 1);
                 c = '>';
@@ -2735,11 +2792,29 @@ static const screen_char_t *VT100GridDefaultLine(VT100Grid *self, int width) {
     if (continuationMark == EOL_DWC && len == size_.width) {
         --len;
     }
+
+    VT100LineInfo *lineInfo = [self lineInfoAtLineNumber:0];
+
+    // For DWL/DHL lines, stamp the lineAttribute onto every character's
+    // external attribute. This preserves the double-width/height flag
+    // per-character so that after rewrapping at a different width, the
+    // lineAttribute can be derived for each wrapped line by checking
+    // whether all characters share the same attribute.
+    const iTermLineAttribute lineAttr = lineInfo.metadata.lineAttribute;
+    if (iTermLineAttributeIsDoubleWidth(lineAttr) && len > 0) {
+        iTermExternalAttributeIndex *eaIndex =
+            [lineInfo externalAttributesCreatingIfNeeded:YES];
+        [eaIndex mutateAttributesFrom:0 to:len - 1 block:^iTermExternalAttribute *(iTermExternalAttribute *old) {
+            return old ? [old copyWithLineAttribute:lineAttr]
+                       : [iTermExternalAttribute attributeWithLineAttribute:lineAttr];
+        }];
+    }
+
     [lineBuffer appendLine:line
                     length:len
                    partial:(continuationMark != EOL_HARD)
                      width:size_.width
-                  metadata:[[self lineInfoAtLineNumber:0] immutableMetadata]
+                  metadata:[lineInfo immutableMetadata]
               continuation:line[size_.width]];
     int dropped;
     if (!unlimitedScrollback) {
@@ -2851,18 +2926,20 @@ static const screen_char_t *VT100GridDefaultLine(VT100Grid *self, int width) {
     }
 
     const screen_char_t *line = [self immutableScreenCharsAtLineNumber:cy];
-    if (ScreenCharIsDWC_RIGHT(line[cx])) {
-        if (cx > 0) {
-            if (dwc) {
-                *dwc = YES;
-            }
-            cx--;
-        } else {
+    // Back up over any DWL_SPACERs and DWC_RIGHTs to land on the real character.
+    BOOL movedOverDWC = NO;
+    while (cx >= 0 && (ScreenCharIsDWL_SPACER(line[cx]) || ScreenCharIsDWC_RIGHT(line[cx]))) {
+        if (ScreenCharIsDWC_RIGHT(line[cx])) {
+            movedOverDWC = YES;
+        }
+        cx--;
+        if (cx < 0) {
             // This should never happen.
             return invalid;
         }
-    } else if (dwc) {
-        *dwc = NO;
+    }
+    if (dwc) {
+        *dwc = movedOverDWC;
     }
 
     return VT100GridCoordMake(cx, cy);
@@ -2924,14 +3001,14 @@ static const screen_char_t *VT100GridDefaultLine(VT100Grid *self, int width) {
 
 - (BOOL)haveDoubleWidthExtensionAt:(VT100GridCoord)coord {
     screen_char_t sct = [self characterAt:coord];
-    return !sct.complexChar && (ScreenCharIsDWC_RIGHT(sct) || ScreenCharIsDWC_SKIP(sct));
+    return !sct.complexChar && (ScreenCharIsDWC_RIGHT(sct) || ScreenCharIsDWC_SKIP(sct) || ScreenCharIsDWL_SPACER(sct));
 }
 
 - (VT100GridCoord)successorOf:(VT100GridCoord)origin {
     VT100GridCoord coord = origin;
     coord.x += 1;
     BOOL checkedForDWC = NO;
-    if (coord.x < self.size.width && [self haveDoubleWidthExtensionAt:coord]) {
+    while (coord.x < self.size.width && [self haveDoubleWidthExtensionAt:coord]) {
         coord.x += 1;
         checkedForDWC = YES;
     }
@@ -2941,8 +3018,10 @@ static const screen_char_t *VT100GridDefaultLine(VT100Grid *self, int width) {
         if (coord.y >= self.size.height) {
             return VT100GridCoordMake(-1, -1);
         }
-        if (!checkedForDWC && [self haveDoubleWidthExtensionAt:coord]) {
-            coord.x++;
+        if (!checkedForDWC) {
+            while (coord.x < self.size.width && [self haveDoubleWidthExtensionAt:coord]) {
+                coord.x++;
+            }
         }
     }
     return coord;
@@ -3018,17 +3097,31 @@ static void DumpBuf(screen_char_t* p, int n) {
                                 startingAtOffset:(int)offset
                                         withChar:(screen_char_t)c {
     screen_char_t *aLine = [self screenCharsAtLineNumber:lineNumber];
-    if (offset >= 0 && offset < size_.width - 1 && ScreenCharIsDWC_RIGHT(aLine[offset + 1])) {
-        aLine[offset] = c;
-        aLine[offset + 1] = c;
+    // Check for DWC_RIGHT immediately after offset, or after a DWL_SPACER
+    // (on double-width lines: [char][DWL_SPACER][DWC_RIGHT][DWL_SPACER]).
+    int dwcRightOffset = -1;
+    if (offset >= 0 && offset < size_.width - 1) {
+        if (ScreenCharIsDWC_RIGHT(aLine[offset + 1])) {
+            dwcRightOffset = offset + 1;
+        } else if (ScreenCharIsDWL_SPACER(aLine[offset + 1]) &&
+                   offset + 2 < size_.width &&
+                   ScreenCharIsDWC_RIGHT(aLine[offset + 2])) {
+            dwcRightOffset = offset + 2;
+        }
+    }
+    if (dwcRightOffset >= 0) {
+        // Erase the DWC character and DWC_RIGHT, but leave DWL_SPACERs intact
+        // (they are structural on double-width lines).
+        for (int i = offset; i <= dwcRightOffset; i++) {
+            if (!ScreenCharIsDWL_SPACER(aLine[i])) {
+                aLine[i] = c;
+            }
+            [self markCharDirty:YES
+                             at:VT100GridCoordMake(i, lineNumber)
+                updateTimestamp:YES];
+        }
         [self eraseExternalAttributesAt:VT100GridCoordMake(offset, lineNumber)
-                                  count:2];
-        [self markCharDirty:YES
-                         at:VT100GridCoordMake(offset, lineNumber)
-            updateTimestamp:YES];
-        [self markCharDirty:YES
-                         at:VT100GridCoordMake(offset + 1, lineNumber)
-            updateTimestamp:YES];
+                                  count:dwcRightOffset - offset + 1];
 
         if (offset == 0 && lineNumber > 0) {
             [self erasePossibleSplitDwcAtLineNumber:lineNumber - 1];

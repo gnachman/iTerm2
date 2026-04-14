@@ -108,6 +108,7 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
     iTermGenericStatusBarContainer,
     iTermLegacyViewDelegate,
     iTermSearchResultsMinimapViewDelegate,
+    iTermSessionNoteViewDelegate,
     NSDraggingSource,
     PTYScrollerDelegate,
     SplitSelectionViewDelegate>
@@ -165,6 +166,8 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
 
     // Border view for active pane indication (used for browser sessions)
     iTermActivePaneBorderView *_activePaneBorderView;
+
+    iTermSessionNoteView *_sessionNoteView;
 }
 
 + (double)titleHeight {
@@ -186,6 +189,7 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
     if (self) {
         [self registerForDraggedTypes:@[ iTermMovePaneDragType, @"com.iterm2.psm.controlitem" ]];
         lastResizeDate_ = [NSDate date];
+        _showInlineProgressBar = YES;
         _announcements = [[NSMutableArray alloc] init];
 
         _imageView = [[iTermImageView alloc] init];
@@ -647,7 +651,7 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
     NSDictionary *knobs = @{ iTermStatusBarPriorityKey: @(INFINITY),
                              iTermStatusBarFilterComponent.isTemporaryKey: @YES };
     NSDictionary *configuration = @{ iTermStatusBarComponentConfigurationKeyKnobValues: knobs,
-                                     iTermStatusBarComponentConfigurationKeyLayoutAdvancedConfigurationDictionaryValue: self.delegate.sessionViewStatusBarAdvancedConfigurationDictionary};
+                                     iTermStatusBarComponentConfigurationKeyLayoutAdvancedConfigurationDictionaryValue: self.delegate.sessionViewStatusBarAdvancedConfigurationDictionary ?: @{}};
     iTermStatusBarFilterComponent *component =
     [[iTermStatusBarFilterComponent alloc] initWithConfiguration:configuration
                                                            scope:self.delegate.sessionViewScope];
@@ -1177,6 +1181,7 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
         [self updateMetalViewFrame];
     }
     [self updateUploadIndicatorFrame];
+    [self updateSessionNoteFrame];
     DLog(@"After:\n%@", [self iterm_recursiveDescription]);
 }
 
@@ -1882,6 +1887,7 @@ typedef NS_ENUM(NSInteger, SessionViewTrackingMode) {
             [_title setAutoresizingMask:NSViewWidthSizable | NSViewMinYMargin];
         }
         _title.delegate = self;
+        _title.puaFontProvider = [_delegate sessionViewPUAFontProvider];
         [_title setDimmingAmount:[self adjustedDimmingAmount]];
         [_title updateLockButton];
         [self addSubviewBelowFindView:_title];
@@ -1967,13 +1973,20 @@ typedef NS_ENUM(NSInteger, SessionViewTrackingMode) {
             _progressBar.hidden = YES;
         }
     }
-    if (!self.enableProgressBars) {
+    if (!self.enableProgressBars || !self.showInlineProgressBar) {
         _progressBar.hidden = YES;
     }
 }
 
 - (void)setEnableProgressBars:(BOOL)enableProgressBars {
     _enableProgressBars = enableProgressBars;
+    [self updateProgressBar];
+}
+
+- (void)setShowInlineProgressBar:(BOOL)showInlineProgressBar {
+    DLog(@"setShowInlineProgressBar:%d (was %d) enableProgressBars=%d progress=%d",
+         showInlineProgressBar, _showInlineProgressBar, _enableProgressBars, (int)_progress);
+    _showInlineProgressBar = showInlineProgressBar;
     [self updateProgressBar];
 }
 
@@ -2828,7 +2841,7 @@ extendResultsAcrossSoftBoundaries:(BOOL)extendResultsAcrossSoftBoundaries {
     CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceRGB();
     CGContextRef ctx = CGBitmapContextCreate(
         storage.mutableBytes, width, height, 8, bytesPerRow, colorSpace,
-        kCGImageAlphaPremultipliedFirst | kCGBitmapByteOrder32Little);
+        (CGBitmapInfo)kCGImageAlphaPremultipliedFirst | kCGBitmapByteOrder32Little);
     CGColorSpaceRelease(colorSpace);
     if (!ctx) {
         return NULL;
@@ -2848,6 +2861,101 @@ extendResultsAcrossSoftBoundaries:(BOOL)extendResultsAcrossSoftBoundaries {
                                                                  CGImageGetHeight(cgImage) / 2.0)];
     CGImageRelease(cgImage);
     return image;
+}
+
+#pragma mark - Session Note
+
+- (void)showSessionNoteWithModel:(iTermSessionNoteModel *)model {
+    [self ensureSessionNoteViewWithModel:model];
+    // User-initiated: uncollapse and focus.
+    if (model.isCollapsed) {
+        _sessionNoteView.isCollapsed = NO;
+    }
+    [_sessionNoteView focus];
+}
+
+- (void)restoreSessionNoteWithModel:(iTermSessionNoteModel *)model {
+    // Restore-only: preserve collapsed state, don't steal focus.
+    [self ensureSessionNoteViewWithModel:model];
+}
+
+- (void)ensureSessionNoteViewWithModel:(iTermSessionNoteModel *)model {
+    if (_sessionNoteView) {
+        return;
+    }
+    NSRect noteFrame = model.noteFrame;
+    if (NSIsEmptyRect(noteFrame)) {
+        // Default to top-right, away from the prompt area.
+        CGFloat w = 280, h = 180;
+        CGFloat x = self.bounds.size.width - w - 20;
+        CGFloat y = self.bounds.size.height - h - 20;
+        noteFrame = NSMakeRect(MAX(20, x), MAX(20, y), w, h);
+    }
+    _sessionNoteView = [[iTermSessionNoteView alloc] initWithFrame:noteFrame model:model];
+    _sessionNoteView.delegate = self;
+    [self addSubviewBelowFindView:_sessionNoteView];
+
+    NSFont *font = [self sessionNoteFont];
+    if (font) {
+        [_sessionNoteView updateFont:font];
+    }
+}
+
+- (void)hideSessionNoteIfEmpty {
+    if (_sessionNoteView && !_sessionNoteView.hasContent) {
+        [_sessionNoteView removeFromSuperview];
+        _sessionNoteView = nil;
+    }
+}
+
+- (void)hideSessionNote {
+    if (_sessionNoteView) {
+        [_sessionNoteView syncModelFrame];
+        [_sessionNoteView removeFromSuperview];
+        _sessionNoteView = nil;
+    }
+}
+
+- (BOOL)isSessionNoteVisible {
+    return _sessionNoteView != nil;
+}
+
+- (void)updateSessionNoteFrame {
+    if (!_sessionNoteView) {
+        return;
+    }
+    NSRect noteFrame = _sessionNoteView.frame;
+    NSRect bounds = self.bounds;
+    CGFloat w = MIN(noteFrame.size.width, bounds.size.width);
+    CGFloat h = MIN(noteFrame.size.height, bounds.size.height);
+    CGFloat x = MAX(0, MIN(noteFrame.origin.x, bounds.size.width - w));
+    CGFloat y = MAX(0, MIN(noteFrame.origin.y, bounds.size.height - h));
+    NSRect clamped = NSMakeRect(x, y, w, h);
+    if (!NSEqualRects(noteFrame, clamped)) {
+        [_sessionNoteView setFrame:clamped];
+    }
+}
+
+#pragma mark - iTermSessionNoteViewDelegate
+
+- (void)sessionNoteViewTextDidChange:(iTermSessionNoteView *)view {
+    // Model is updated by the view.
+}
+
+- (void)sessionNoteViewDidBecomeEmpty:(iTermSessionNoteView *)view {
+    [self hideSessionNoteIfEmpty];
+}
+
+- (void)sessionNoteViewDidUpdateFrame:(iTermSessionNoteView *)view {
+    // Model frame is updated by the view.
+}
+
+- (NSFont *)sessionNoteFont {
+    PTYSession *session = (PTYSession *)self.delegate;
+    if ([session respondsToSelector:@selector(textview)]) {
+        return session.textview.fontTable.asciiFont.font;
+    }
+    return [NSFont systemFontOfSize:[NSFont systemFontSize]];
 }
 
 @end

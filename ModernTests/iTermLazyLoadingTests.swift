@@ -311,7 +311,7 @@ class iTermProviderPlumbingTests: XCTestCase {
             return
         }
         XCTAssertTrue(dbClass.conforms(to: iTermLargeContentProvider.self),
-                     "iTermGraphDatabase should conform to LargeContentProvider")
+                     "iTermGraphDatabase should conform to iTermLargeContentProvider")
     }
 
     func testLargeContentMetadataCreation() {

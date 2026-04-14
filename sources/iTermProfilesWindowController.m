@@ -34,6 +34,7 @@
 #import "iTermApplication.h"
 #import "iTermApplicationDelegate.h"
 #import "iTermController.h"
+#import "iTermFlagsChangedNotification.h"
 #import "iTermSessionLauncher.h"
 #import "iTermUserDefaults.h"
 
@@ -118,6 +119,7 @@ typedef enum {
     IBOutlet NSButton* closeAfterOpeningBookmark_;
     IBOutlet NSButton* newTabsInNewWindowButton_;
     IBOutlet NSButton* toggleTagsButton_;
+    NSImage *_newWindowIcon;
 }
 
 @synthesize tabButton = tabButton_;
@@ -166,6 +168,9 @@ typedef enum {
 
 - (void)windowDidLoad {
     ((iTermProfileWindowContentView *)self.window.contentView).windowController = self;
+    [iTermFlagsChangedNotification subscribe:self block:^(iTermFlagsChangedNotification * _Nonnull notification) {
+        [self updateButtonImagesForModifiers:notification.event.modifierFlags];
+    }];
 }
 
 - (void)awakeFromNib {
@@ -174,6 +179,17 @@ typedef enum {
         [tableView_ setTagsOpen:NO animated:NO];
         [tableView_ setTagsOpen:YES animated:NO];
     }
+    // Load the new window icon for split buttons
+    _newWindowIcon = [NSImage imageWithSystemSymbolName:@"rectangle.badge.plus" accessibilityDescription:@"Open in new window"];
+    [horizontalPaneButton_ setImagePosition:NSImageLeft];
+    [verticalPaneButton_ setImagePosition:NSImageLeft];
+}
+
+- (void)updateButtonImagesForModifiers:(NSEventModifierFlags)modifiers {
+    BOOL optionPressed = (modifiers & NSEventModifierFlagOption) != 0;
+    NSImage *image = optionPressed ? _newWindowIcon : nil;
+    [horizontalPaneButton_ setImage:image];
+    [verticalPaneButton_ setImage:image];
 }
 
 - (IBAction)closeCurrentSession:(id)sender
@@ -216,8 +232,58 @@ typedef enum {
     }
 }
 
+// Open the first profile in a new window, then split remaining profiles into that window.
+- (void)_openProfilesAsSplitsInNewWindow:(PaneMode)inPane {
+    NSArray *guids = [tableView_ orderedSelectedGuids];
+    if (![guids count]) {
+        DLog(@"Beep: no guids");
+        NSBeep();
+        return;
+    }
+    Profile *firstBookmark = [[ProfileModel sharedInstance] bookmarkWithGuid:guids.firstObject];
+    NSArray *remainingGuids = [guids subarrayWithRange:NSMakeRange(1, guids.count - 1)];
+    BOOL closeAfter = [closeAfterOpeningBookmark_ state] == NSControlStateValueOn;
+    __weak typeof(self) weakSelf = self;
+    [iTermSessionLauncher launchBookmark:firstBookmark
+                              inTerminal:nil
+                      respectTabbingMode:NO
+                              completion:^(PTYSession *session) {
+        if (!session) {
+            return;
+        }
+        PseudoTerminal *terminal = (PseudoTerminal *)[(PTYTab *)session.delegate parentWindow];
+        if (!terminal) {
+            return;
+        }
+        [weakSelf _splitProfiles:remainingGuids
+                      inTerminal:terminal
+                            mode:inPane];
+        if (closeAfter) {
+            [[weakSelf window] close];
+        }
+    }];
+}
+
+- (void)_splitProfiles:(NSArray<NSString *> *)guids
+            inTerminal:(PseudoTerminal *)terminal
+                  mode:(PaneMode)inPane {
+    for (NSString *guid in guids) {
+        Profile *bookmark = [[ProfileModel sharedInstance] bookmarkWithGuid:guid];
+        [terminal asyncSplitVertically:(inPane == VERTICAL_PANE)
+                                before:NO
+                               profile:bookmark
+                         targetSession:[[terminal currentTab] activeSession]
+                            completion:nil
+                                 ready:nil];
+    }
+}
+
 - (IBAction)openBookmarkInVerticalPane:(id)sender
 {
+    if (([[NSApp currentEvent] modifierFlags] & NSEventModifierFlagOption) != 0) {
+        [self _openProfilesAsSplitsInNewWindow:VERTICAL_PANE];
+        return;
+    }
     BOOL windowExists = [[iTermController sharedInstance] currentTerminal] != nil;
     [self _openBookmarkInTab:YES firstInWindow:!windowExists inPane:VERTICAL_PANE];
     if ([closeAfterOpeningBookmark_ state] == NSControlStateValueOn) {
@@ -227,6 +293,10 @@ typedef enum {
 
 - (IBAction)openBookmarkInHorizontalPane:(id)sender
 {
+    if (([[NSApp currentEvent] modifierFlags] & NSEventModifierFlagOption) != 0) {
+        [self _openProfilesAsSplitsInNewWindow:HORIZONTAL_PANE];
+        return;
+    }
     BOOL windowExists = [[iTermController sharedInstance] currentTerminal] != nil;
     [self _openBookmarkInTab:YES firstInWindow:!windowExists inPane:HORIZONTAL_PANE];
     if ([closeAfterOpeningBookmark_ state] == NSControlStateValueOn) {
@@ -291,6 +361,7 @@ typedef enum {
         // don't want to break that.
         [tabButton_ setEnabled:!anySelectionDisablesTabs];
         [windowButton_ setEnabled:YES];
+        [windowButton_ setTitle:([guids count] > 1 ? @"New Windows" : @"New Window")];
         if ([guids count] > 1) {
             [newTabsInNewWindowButton_ setEnabled:!anySelectionDisablesTabs];
             [horizontalPaneButton_ setEnabled:YES];
@@ -311,6 +382,7 @@ typedef enum {
         [actions_ setEnabled:([guids count] > 0) forSegment:i];
     }
     [self updateKeyEquivalents];
+    [self updateButtonImagesForModifiers:[NSEvent modifierFlags]];
 }
 
 - (void)profileTableSelectionWillChange:(id)profileTable

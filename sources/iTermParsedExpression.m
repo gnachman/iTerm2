@@ -395,14 +395,20 @@
 }
 
 - (iTermParsedExpression *)deoptionalized {
-    // If this is a Nil expression with a fallback error, convert to an error expression.
-    // This handles the case of an undefined variable that wasn't marked as optional with ?.
-    if (_expressionType == iTermParsedExpressionTypeNil && _fallbackError) {
+    // If this is a Nil expression with a fallback error and NOT explicitly optional,
+    // convert to an error expression. Explicitly optional expressions (from user writing var?)
+    // should stay as Nil so they can participate in null comparisons and ternaries.
+    if (_expressionType == iTermParsedExpressionTypeNil && _fallbackError && !_optional) {
         return [[iTermParsedExpression alloc] initWithErrorCode:7 reason:_fallbackError];
     }
+    // Only Nil types keep the optional flag because it's load-bearing in asSubexpression:
+    // Nil+optional (user wrote "var?") → returns a null Subexpression for comparisons.
+    // Nil+!optional (bare undefined var) → returns nil, causing a "nil operand" error.
+    // For all other types the flag has no effect, so strip it.
+    BOOL keepOptional = (_expressionType == iTermParsedExpressionTypeNil) && _optional;
     return [[iTermParsedExpression alloc] initWithExpressionType:_expressionType
                                                           object:_object
-                                                        optional:NO
+                                                        optional:keepOptional
                                                    fallbackError:_fallbackError];
 }
 
@@ -418,6 +424,18 @@
         case iTermParsedExpressionTypeString:
             // Wrap string literal in Subexpression for comparison operations.
             return [[iTermSubexpression alloc] initWithStringLiteral:self.string];
+        case iTermParsedExpressionTypeNil:
+            // Nil with no fallbackError is the 'null' literal — valid in comparisons.
+            // Nil with fallbackError AND optional flag is an explicitly-optional undefined
+            // variable (user wrote var?) — evaluates to null in comparisons.
+            // Nil with fallbackError and NOT optional is a bare undefined variable —
+            // return nil to produce an error.
+            if (!_fallbackError || _optional) {
+                return [[iTermSubexpression alloc] initWithNullValue];
+            }
+            return nil;
+        case iTermParsedExpressionTypeIndirectValue:
+            return [[iTermSubexpression alloc] initWithIndirectValue:self.indirectValue];
         default:
             return nil;
     }

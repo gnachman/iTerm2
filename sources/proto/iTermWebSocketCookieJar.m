@@ -9,6 +9,9 @@
 
 @implementation iTermWebSocketCookieJar {
     NSMutableSet<NSString *> *_cookies;
+    // Cookies with an expiration date are reusable until they expire.
+    // Cookies without an entry here are single-use.
+    NSMutableDictionary<NSString *, NSDate *> *_expirationDates;
 }
 
 + (instancetype)sharedInstance {
@@ -24,20 +27,29 @@
     self = [super init];
     if (self) {
         _cookies = [NSMutableSet set];
+        _expirationDates = [NSMutableDictionary dictionary];
     }
     return self;
 }
 
 - (BOOL)consumeCookie:(NSString *)cookie {
-    @synchronized( _cookies) {
-        if ([_cookies containsObject:cookie]) {
-            if (![cookie hasSuffix:@"_"]) {
-                [_cookies removeObject:cookie];
-            }
-            return YES;
-        } else {
+    @synchronized(_cookies) {
+        if (![_cookies containsObject:cookie]) {
             return NO;
         }
+        NSDate *expiration = _expirationDates[cookie];
+        if (expiration) {
+            // Reusable cookie — check TTL.
+            if ([expiration timeIntervalSinceNow] <= 0) {
+                [_cookies removeObject:cookie];
+                [_expirationDates removeObjectForKey:cookie];
+                return NO;
+            }
+            return YES;
+        }
+        // Single-use cookie — consume it.
+        [_cookies removeObject:cookie];
+        return YES;
     }
 }
 
@@ -74,9 +86,25 @@
     return cookie;
 }
 
+- (NSString *)randomStringForReusableCookieWithDuration:(NSTimeInterval)duration {
+    NSString *cookie = [self randomString];
+    @synchronized(_cookies) {
+        [_cookies addObject:cookie];
+        _expirationDates[cookie] = [NSDate dateWithTimeIntervalSinceNow:duration];
+    }
+    return cookie;
+}
+
+- (void)removeCookieExpiration:(NSString *)cookie {
+    @synchronized(_cookies) {
+        [_expirationDates removeObjectForKey:cookie];
+    }
+}
+
 - (void)removeCookie:(NSString *)cookie {
     @synchronized(_cookies) {
         [_cookies removeObject:cookie];
+        [_expirationDates removeObjectForKey:cookie];
     }
 }
 

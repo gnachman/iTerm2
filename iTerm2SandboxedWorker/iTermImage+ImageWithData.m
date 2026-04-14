@@ -56,10 +56,68 @@
 
 @implementation iTermImage(ImageWithData)
 
+// macOS's _NSSVGImageRep cannot resolve <use> references to elements nested
+// inside a <g> wrapper within <defs>. Cairo-generated SVGs (and others) use
+// this pattern for text glyphs, causing text to silently disappear.
+// Work around by unwrapping anonymous <g> containers in <defs>.
++ (NSData *)fixedSVGData:(NSData *)data {
+    if (data.length < 4 || data.length > 10 * 1024 * 1024) {
+        return data;
+    }
+    // Quick check: is this plausibly SVG with a defs block?
+    const char *bytes = data.bytes;
+    BOOL hasSVGTag = NO;
+    for (NSUInteger i = 0; i + 3 < data.length && i < 1000; i++) {
+        if (bytes[i] == '<' && bytes[i + 1] == 's' && bytes[i + 2] == 'v' && bytes[i + 3] == 'g') {
+            hasSVGTag = YES;
+            break;
+        }
+    }
+    if (!hasSVGTag) {
+        return data;
+    }
+
+    NSXMLDocument *doc = [[NSXMLDocument alloc] initWithData:data
+                                                     options:0
+                                                       error:nil];
+    if (!doc) {
+        return data;
+    }
+    NSXMLElement *root = doc.rootElement;
+    if (![root.localName isEqualToString:@"svg"]) {
+        return data;
+    }
+
+    // Find <defs> elements and unwrap any direct-child <g> that has no id.
+    BOOL modified = NO;
+    for (NSXMLElement *defs in [root elementsForLocalName:@"defs" URI:root.URI]) {
+        NSArray<NSXMLNode *> *children = [defs.children copy];
+        for (NSXMLNode *child in children) {
+            if (child.kind != NSXMLElementKind) {
+                continue;
+            }
+            NSXMLElement *elem = (NSXMLElement *)child;
+            if (![elem.localName isEqualToString:@"g"] || [elem attributeForName:@"id"]) {
+                continue;
+            }
+            // Anonymous <g> — promote its children into <defs>.
+            NSUInteger index = elem.index;
+            NSArray<NSXMLNode *> *grandchildren = [elem.children copy];
+            [elem detach];
+            for (NSXMLNode *gc in grandchildren) {
+                [gc detach];
+                [defs insertChild:gc atIndex:index++];
+            }
+            modified = YES;
+        }
+    }
+    return modified ? doc.XMLData : data;
+}
+
 - (instancetype)initWithData:(NSData *)data {
     self = [self init];
     if (self) {
-        NSImage *image = [[NSImage alloc] initWithData:data];
+        NSImage *image = [[NSImage alloc] initWithData:[iTermImage fixedSVGData:data]];
         NSImageRep *rep = [[image representations] firstObject];
         NSSize imageSize = NSMakeSize(rep.pixelsWide, rep.pixelsHigh);
         self.scaledSize = image.size;

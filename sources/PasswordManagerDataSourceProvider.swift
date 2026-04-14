@@ -20,6 +20,7 @@ class PasswordManagerDataSourceProvider: NSObject {
     private var _lastPass: LastPassDataSource
     private var _keePassXC: AdapterPasswordDataSource
     private var _bitwarden: AdapterPasswordDataSource
+    private var _keeper: AdapterPasswordDataSource
     #if ITERM_DEBUG
     private var _testAdapter: AdapterPasswordDataSource
     #endif
@@ -34,6 +35,7 @@ class PasswordManagerDataSourceProvider: NSObject {
         case lastPass = "LastPass"
         case keePassXC = "KeePassXC"
         case bitwarden = "Bitwarden"
+        case keeper = "Keeper"
         #if ITERM_DEBUG
         case testAdapter = "TestAdapter"
         #endif
@@ -56,6 +58,10 @@ class PasswordManagerDataSourceProvider: NSObject {
                                                adapterPath: bitwardenPath,
                                                identifier: "Bitwarden")
 
+        let keeperPath = Bundle(for: Self.self).path(forAuxiliaryExecutable: "iterm2-keeper-adapter")!
+        _keeper = AdapterPasswordDataSource(browser: browser,
+                                            adapterPath: keeperPath,
+                                            identifier: "Keeper Security")
         #if ITERM_DEBUG
         let testAdapterPath = Bundle(for: Self.self).path(forAuxiliaryExecutable: "iterm2-test-adapter")!
         _testAdapter = AdapterPasswordDataSource(browser: browser,
@@ -98,6 +104,8 @@ class PasswordManagerDataSourceProvider: NSObject {
                     return keePassXC!
                 case .bitwarden:
                     return bitwarden!
+                case .keeper:
+                    return keeper!
                 #if ITERM_DEBUG
                 case .testAdapter:
                     return testAdapter!
@@ -150,6 +158,14 @@ class PasswordManagerDataSourceProvider: NSObject {
         return preferredDataSource == .lastPass
     }
 
+    @objc func enableKeeper() {
+        preferredDataSource = .keeper
+    }
+
+    @objc var keeperEnabled: Bool {
+        return preferredDataSource == .keeper
+    }
+
     @objc var keychain: PasswordManagerDataSource? {
         if !authenticated {
             return nil
@@ -185,6 +201,12 @@ class PasswordManagerDataSourceProvider: NSObject {
         return _bitwarden
     }
 
+    private var keeper: AdapterPasswordDataSource? {
+        if !authenticated {
+            return nil
+        }
+        return _keeper
+    }
     #if ITERM_DEBUG
     private var testAdapter: AdapterPasswordDataSource? {
         if !authenticated {
@@ -201,7 +223,6 @@ class PasswordManagerDataSourceProvider: NSObject {
         return preferredDataSource == .testAdapter
     }
     #endif
-
     @objc func revokeAuthentication() {
         authenticated = false
     }

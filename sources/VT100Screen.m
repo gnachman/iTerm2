@@ -247,7 +247,8 @@ additionalWordCharacters:(NSString *)additionalWordCharacters
                                cappedAtSize:-1
                                truncateTail:YES
                           continuationChars:nil
-                                     coords:nil];
+                                     coords:nil
+                          deduplicateDECDHL:NO];
     return s;
 }
 
@@ -1099,6 +1100,9 @@ additionalWordCharacters:(NSString *)additionalWordCharacters
         if (successor.lineStyle && !includeSucessorDivider) {
             range.end.y -= 1;
         }
+        if (range.end.y < range.start.y) {
+            range.end.y = range.start.y;
+        }
     } else {
         range.end = VT100GridAbsCoordMake(self.width - 1, self.numberOfLines + self.totalScrollbackOverflow);
     }
@@ -1747,6 +1751,10 @@ additionalWordCharacters:(NSString *)additionalWordCharacters
     return _state.lastPromptLine;
 }
 
+- (void)setForegroundJobAncestorsForTriggerFiltering:(NSArray<NSString *> *)ancestors {
+    [self.mutableState setForegroundJobAncestorsForTriggerFiltering:ancestors];
+}
+
 - (void)beginEchoProbeWithBackspace:(NSData *)backspace
                            password:(NSString *)password
                            delegate:(id<iTermEchoProbeDelegate>)echoProbeDelegate {
@@ -2258,6 +2266,10 @@ launchCoprocessWithCommand:(NSString *)command
 
 - (void)triggerSession:(Trigger *)trigger setVariableNamed:(NSString *)name toValue:(id)value {
     [self.delegate triggerSideEffectSetValue:value forVariableNamed:name];
+}
+
+- (void)triggerSession:(Trigger *)trigger setTabStatus:(VT100TabStatusUpdate *)status {
+    [self.delegate screenSetTabStatus:status];
 }
 
 - (void)triggerSession:(Trigger *)trigger

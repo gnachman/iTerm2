@@ -258,6 +258,14 @@
             description="Name of script using the cookie. This is shown in the console.">
             <cocoa key="appName"/>
         </parameter>
+        <parameter name="reusable" code="Reus" type="boolean" optional="yes"
+            description="If true, the cookie may be used for multiple connections. An announcement offers the user duration options.">
+            <cocoa key="reusable"/>
+        </parameter>
+        <parameter name="session id" code="Rsid" type="text" optional="yes"
+            description="ITERM_SESSION_ID of the session to show the announcement in (e.g. w0t0p0:UUID).">
+            <cocoa key="sessionId"/>
+        </parameter>
         <result type="text"
           description="A cookie that can be used to connect to the Python API endpoint" />
     </command>

@@ -96,7 +96,7 @@ static id iTermVariablesNewProxy(NSString *name, id value, BOOL isAlias, NSStrin
 
 - (NSString *)value {
     if ([_value isKindOfClass:[NSString class]]) {
-        return _value;
+        return [_value stringByReplacingOccurrencesOfString:@"\n" withString:@"\\n"];
     }
     return [NSJSONSerialization it_jsonStringForObject:_value];
 }

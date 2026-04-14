@@ -338,6 +338,10 @@ extern NSString *const kPreferenceKeyAlertOnMarksInOffscreenSessions;
 // Set to YES on the first launch of a version that supports multiple hotkey windows.
 extern NSString *const kPreferenceKeyHotkeyMigratedFromSingleToMulti;
 
+// Set to YES after migrating dynamic profiles from the legacy "Dynamic" tag to the
+// KEY_DYNAMIC_PROFILE boolean flag.
+extern NSString *const kPreferenceKeyMigratedDynamicProfileTagToFlag;
+
 // See iTermActionsModel. NOTE: This cannot be accessed with the usual getters and setters because
 // it is array-valued.
 extern NSString *const kPreferenceKeyActions;

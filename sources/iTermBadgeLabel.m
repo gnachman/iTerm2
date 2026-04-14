@@ -124,8 +124,8 @@
 
 // Attributed string attributes for a given font point size.
 - (NSDictionary *)attributesWithPointSize:(CGFloat)pointSize {
-    NSDictionary *attributes = @{ NSFontAttributeName: [self.delegate badgeLabelFontOfSize:pointSize],
-                                  NSForegroundColorAttributeName: _fillColor,
+    NSDictionary *attributes = @{ NSFontAttributeName: [self.delegate badgeLabelFontOfSize:pointSize] ?: [NSFont systemFontOfSize:pointSize],
+                                  NSForegroundColorAttributeName: _fillColor ?: [NSColor whiteColor],
                                   NSParagraphStyleAttributeName: _paragraphStyle,
                                   NSStrokeWidthAttributeName: @-2 };
     return attributes;

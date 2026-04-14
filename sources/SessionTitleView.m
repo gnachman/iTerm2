@@ -8,6 +8,7 @@
 
 #import "SessionTitleView.h"
 #import "iTermAdvancedSettingsModel.h"
+#import "PSMCachedTitle.h"
 #import "iTermHamburgerButton.h"
 #import "iTermPreferences.h"
 #import "iTermStatusBarViewController.h"
@@ -73,6 +74,10 @@ static const CGFloat kLockButtonSize = 14;
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(modifierShortcutDidChange:)
                                                      name:kPSMModifierChangedNotification
+                                                   object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(advancedSettingsDidChange:)
+                                                     name:iTermAdvancedSettingsDidChange
                                                    object:nil];
 
         // Menu button - positioned at right edge
@@ -277,8 +282,26 @@ static const CGFloat kLockButtonSize = 14;
 }
 
 - (void)updateTitle {
-    [label_ setStringValue:[self titleString]];
+    NSString *titleString = [self titleString];
+    if (_puaFontProvider) {
+        NSFont *font = [NSFont systemFontOfSize:[NSFont smallSystemFontSize]];
+        NSMutableParagraphStyle *paragraphStyle = [[NSMutableParagraphStyle alloc] init];
+        paragraphStyle.lineBreakMode = NSLineBreakByTruncatingTail;
+        NSAttributedString *plain = [[NSAttributedString alloc] initWithString:titleString
+                                                                    attributes:@{NSFontAttributeName: font,
+                                                                                 NSParagraphStyleAttributeName: paragraphStyle}];
+        NSAttributedString *withPUAFonts = PSMApplyPUAFonts(plain,
+                                                             _puaFontProvider,
+                                                             [NSFont smallSystemFontSize]);
+        [label_ setAttributedStringValue:withPUAFonts];
+    } else {
+        [label_ setStringValue:titleString];
+    }
     [self setNeedsDisplay:YES];
+}
+
+- (void)invalidateTitleFont {
+    [self updateTitle];
 }
 
 - (void)setDimmingAmount:(double)value
@@ -299,6 +322,16 @@ static const CGFloat kLockButtonSize = 14;
 }
 
 - (void)updateTextColor {
+    NSString *customText = [iTermAdvancedSettingsModel paneTitleBarTextColor];
+    if ([customText hasPrefix:@"#"]) {
+        NSColor *custom = [NSColor colorFromHexString:customText];
+        if (custom) {
+            label_.textColor = custom;
+            menuButton_.contentTintColor = custom;
+            [self setNeedsDisplay:YES];
+            return;
+        }
+    }
     CGFloat whiteLevel = 0;
     iTermPreferencesTabStyle preferredStyle = [iTermPreferences intForKey:kPreferenceKeyTabStyle];
     if (self.window.ptyWindow.it_terminalWindowUseMinimalStyle) {
@@ -373,6 +406,11 @@ static const CGFloat kLockButtonSize = 14;
 
 - (void)modifierShortcutDidChange:(NSNotification *)notification {
     [self updateTitle];
+}
+
+- (void)advancedSettingsDidChange:(NSNotification *)notification {
+    [self updateTextColor];
+    [self setNeedsDisplay:YES];
 }
 
 @end

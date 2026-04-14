@@ -383,10 +383,18 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
         let puaFontProvider = tabBar?.delegate?.tabView?(tabBar, valueOfOption: PSMTabBarControlOptionKey.puaFontProvider) as? PSMPUAFontProvider
         let color = textColor(for: cell)
 
+        var subtitleColor: NSColor
+        if let tab = (cell.representedObject as? NSTabViewItem)?.identifier as? PSMTabBarControlRepresentedObjectIdentifierProtocol,
+           let statusColor = tab.psmTabStatusSubtitleColor?() {
+            subtitleColor = statusColor
+        } else {
+            subtitleColor = color.withAlphaComponent(color.alphaComponent * 0.7)
+        }
+
         return PSMCachedTitleInputs(
             title: subtitle,
             truncationStyle: cell.truncationStyle,
-            color: color.withAlphaComponent(color.alphaComponent * 0.7),
+            color: subtitleColor,
             graphic: nil,
             orientation: _orientation,
             fontSize: subtitleFontSize,
@@ -405,7 +413,33 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
         frame.size.height = generic.height - 1
         return frame
     }
-    
+
+    private func backgroundRect(for cellFrame: NSRect) -> NSRect {
+        var rect = cellFrame
+        rect.origin.y += 2
+        rect.size.height -= 3
+        return rect
+    }
+
+    @objc func progressBarRect(forTabCell cell: PSMTabBarCell) -> NSRect {
+        let cellFrame = cell.frame
+        // Enclose the progress bar within the pill-shaped background for all tabs.
+        let pillRect = backgroundRect(for: cellFrame)
+        let horizontalInset = CGFloat(4)
+        let verticalInset = CGFloat(1)
+        return NSRect(x: pillRect.origin.x + horizontalInset,
+                      y: pillRect.origin.y + verticalInset,
+                      width: max(CGFloat(0), pillRect.size.width - horizontalInset * 2),
+                      height: PSMTabBarProgressBarHeight)
+    }
+
+    @objc func progressBarClipPath(forTabCell cell: PSMTabBarCell) -> NSBezierPath? {
+        let cellFrame = cell.frame
+        let rect = backgroundRect(for: cellFrame).insetBy(dx: 1, dy: 1)
+        let radius = max(0, barRadius - 2.5 - 1)
+        return NSBezierPath(roundedRect: rect, xRadius: radius, yRadius: radius)
+    }
+
     // MARK: - Drawing
     
     private static let rightDropShadow: NSImage = {
@@ -781,9 +815,7 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
         backgroundColorSelected(selected, highlightAmount: isHighlighted ? 1.0 : 0.0).set()
         
         let radius = barRadius - 2.5
-        var rect = cellFrame
-        rect.origin.y += 2
-        rect.size.height -= 3
+        let rect = backgroundRect(for: cellFrame)
         let path = NSBezierPath(roundedRect: rect, xRadius: radius, yRadius: radius)
         path.fill()
         if selected {
@@ -1582,7 +1614,9 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
                 ImageLO(name: "Icon", image: icon, priority: Priority.required.rawValue, gravity: .left) { resolved in
                     var rect = resolved.frame
                     rect.size.height = kPSMTabBarIconWidth
-                    rect.origin.y = Self.centeredMinY(cell: cell, height: kPSMTabBarIconWidth) + orientationShift
+                    // Vertically center the icon in the cell, then shift down to
+                    // match the OS text rendering offset applied to all labels.
+                    rect.origin.y = cell.frame.origin.y + floor((cell.frame.size.height - kPSMTabBarIconWidth) / 2) + textShift
                     icon.draw(in: rect,
                               from: NSZeroRect,
                               operation: .sourceOver,

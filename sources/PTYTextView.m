@@ -805,7 +805,7 @@ const CGFloat PTYTextViewMarginClickGraceWidth = 2.0;
     int extra = 0;
     int curX = x;
     for (int i = 0; i < len; ++i) {
-        if (curX == 0 && ScreenCharIsDWC_RIGHT(buf[i])) {
+        if (curX == 0 && (ScreenCharIsDWC_RIGHT(buf[i]) || ScreenCharIsDWL_SPACER(buf[i]))) {
             ++extra;
             ++curX;
         }
@@ -3530,6 +3530,7 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
         }
         unichar code = line[result.start.x].code;
         BOOL trim = ((code == 0) ||
+                     code == DWL_SPACER ||
                      (trimSpaces && (code == ' ' || code == '\t' || code == TAB_FILLER)));
         if (trim) {
             result.start.x++;
@@ -3559,6 +3560,7 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
         }
         unichar code = line[x].code;
         BOOL trim = ((code == 0) ||
+                     code == DWL_SPACER ||
                      (trimSpaces && (code == ' ' || code == '\t' || code == TAB_FILLER)));
         if (trim) {
             result.end = VT100GridCoordMake(x, y);
@@ -3800,7 +3802,8 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
                         cappedAtSize:-1
                         truncateTail:YES
                    continuationChars:nil
-                              coords:nil];
+                              coords:nil
+                   deduplicateDECDHL:NO];
 }
 
 - (BOOL)liveSelectionRespectsSoftBoundaries {
@@ -4074,10 +4077,10 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
     return [self contentWithAttributes:NO timestamps:NO];
 }
 
-- (NSDictionary *(^)(screen_char_t, iTermExternalAttribute *))attributeProviderUsingProcessedColors:(BOOL)processed
+- (NSDictionary *(^)(screen_char_t, iTermExternalAttribute *, const iTermImmutableMetadata *))attributeProviderUsingProcessedColors:(BOOL)processed
                                                                         elideDefaultBackgroundColor:(BOOL)elideDefaultBackgroundColor {
-    return [[^NSDictionary *(screen_char_t theChar, iTermExternalAttribute *ea) {
-        return [self charAttributes:theChar externalAttributes:ea processed:processed elideDefaultBackgroundColor:elideDefaultBackgroundColor];
+    return [[^NSDictionary *(screen_char_t theChar, iTermExternalAttribute *ea, const iTermImmutableMetadata *metadata) {
+        return [self charAttributes:theChar externalAttributes:ea metadata:metadata processed:processed elideDefaultBackgroundColor:elideDefaultBackgroundColor];
     } copy] autorelease];
 }
 
@@ -4088,7 +4091,7 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
                                                            0,
                                                            [_dataSource width],
                                                            [_dataSource numberOfLines] - 1);
-    NSDictionary *(^attributeProvider)(screen_char_t, iTermExternalAttribute *) = nil;
+    NSDictionary *(^attributeProvider)(screen_char_t, iTermExternalAttribute *, const iTermImmutableMetadata *) = nil;
     if (attributes) {
         attributeProvider = [self attributeProviderUsingProcessedColors:NO elideDefaultBackgroundColor:NO];
     }
@@ -4101,7 +4104,8 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
                         cappedAtSize:-1
                         truncateTail:YES
                    continuationChars:nil
-                              coords:nil];
+                              coords:nil
+                   deduplicateDECDHL:YES];
 }
 
 // Save method
@@ -4364,9 +4368,13 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
          VT100GridCoordDescription(cursor), VT100GridCoordDescription(target));
     VT100Output *terminalOutput = [_dataSource terminalOutput];
     iTermTextExtractor *extractor = [iTermTextExtractor textExtractorWithDataSource:_dataSource];
+    // Snap target off DWL_SPACER/DWC_RIGHT — cursor should never land on either.
+    if ([extractor haveDoubleWidthExtensionAt:target]) {
+        target = [extractor predecessorOfCoord:VT100GridCoordMake(target.x + 1, target.y)];
+    }
     NSComparisonResult initialOrder = VT100GridCoordOrder(cursor, target);
     // Note that we could overshoot the destination because of double-width characters if the target
-    // is a DWC_RIGHT.
+    // is a DWC_RIGHT or DWL_SPACER.
     NSMutableString *stringToSend = [NSMutableString string];
     NSString *rightArrow = [[terminalOutput keyArrowRight:0] stringWithEncoding:NSISOLatin1StringEncoding];
     NSString *leftArrow = [[terminalOutput keyArrowLeft:0] stringWithEncoding:NSISOLatin1StringEncoding];
@@ -4886,8 +4894,8 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
                                                                      [_dataSource width],
                                                                      lineOffset + numLines - 1);
             [self printContent:[extractor contentInRange:VT100GridWindowedRangeMake(coordRange, 0, 0)
-                                       attributeProvider:^NSDictionary *(screen_char_t theChar, iTermExternalAttribute *ea) {
-                return [self charAttributes:theChar externalAttributes:ea processed:NO elideDefaultBackgroundColor:NO];
+                                       attributeProvider:^NSDictionary *(screen_char_t theChar, iTermExternalAttribute *ea, const iTermImmutableMetadata *metadata) {
+                return [self charAttributes:theChar externalAttributes:ea metadata:metadata processed:NO elideDefaultBackgroundColor:NO];
             }
                                               nullPolicy:kiTermTextExtractorNullPolicyTreatAsSpace
                                                      pad:NO
@@ -4896,7 +4904,8 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
                                             cappedAtSize:-1
                                             truncateTail:YES
                                        continuationChars:nil
-                                                  coords:nil]];
+                                                  coords:nil
+                                       deduplicateDECDHL:YES]];
             break;
         case 1: // text selection
             [self printContent:[self selectedAttributedTextWithPad:NO]];
@@ -5032,18 +5041,13 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
 }
 
 - (NSRange)markedRange {
-    NSRange range;
-    if (_drawingHelper.inputMethodMarkedRange.length > 0) {
-        range = NSMakeRange([_dataSource cursorX]-1, _drawingHelper.inputMethodMarkedRange.length);
-    } else {
-        range = NSMakeRange([_dataSource cursorX]-1, 0);
-    }
+    NSRange cursor = [self nsrangeOfCursor];
+    NSRange range = NSMakeRange(cursor.location, _drawingHelper.inputMethodMarkedRange.length);
     DLog(@"markedRange->%@", NSStringFromRange(range));
     return range;
 }
 
 - (NSRange)selectedRange {
-    DLog(@"selectedRange");
     if (_selection.hasSelection) {
         DLog(@"Use range of selection");
         return [self nsRangeForAbsCoordRange:_selection.allSubSelections.lastObject.absRange.coordRange];
@@ -5070,6 +5074,19 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
                        VT100GridAbsCoordDistance(range.start, range.end, width));
 }
 
+- (VT100GridAbsCoordRange)absCoordRangeForNSRange:(NSRange)range {
+    const long long width = _dataSource.width;
+    if (width <= 0) {
+        return VT100GridAbsCoordRangeMake(0, 0, 0, 0);
+    }
+    const long long startPos = (long long)range.location;
+    const long long endPos = startPos + (long long)range.length;
+    return VT100GridAbsCoordRangeMake((int)(startPos % width),
+                                      startPos / width,
+                                      (int)(endPos % width),
+                                      endPos / width);
+}
+
 - (NSArray *)validAttributesForMarkedText {
     return @[ NSForegroundColorAttributeName,
               NSBackgroundColorAttributeName,
@@ -5084,22 +5101,134 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
 - (NSAttributedString *)attributedSubstringForProposedRange:(NSRange)proposedRange
                                                 actualRange:(NSRangePointer)actualRange {
     DLog(@"attributedSubstringForProposedRange:%@", NSStringFromRange(proposedRange));
-    NSRange aRange = NSIntersectionRange(proposedRange,
-                                         NSMakeRange(0, _drawingHelper.markedText.length));
-    if (proposedRange.length > 0 && aRange.length == 0) {
-        aRange.location = NSNotFound;
+
+    // If the requested range overlaps with the IME marked text, return the
+    // marked text content. Otherwise fall through to the screen buffer, which
+    // Voice Control needs during composition to maintain context for spacing.
+    if (_drawingHelper.markedText.length > 0) {
+        NSRange mRange = [self markedRange];
+        NSRange overlap = NSIntersectionRange(proposedRange, mRange);
+        if (overlap.length > 0) {
+            NSUInteger startInMarked = overlap.location - mRange.location;
+            NSRange substringRange = NSMakeRange(startInMarked, overlap.length);
+            if (actualRange) {
+                *actualRange = overlap;
+            }
+            return [_drawingHelper.markedText attributedSubstringFromRange:substringRange];
+        }
     }
-    if (actualRange) {
-        *actualRange = aRange;
-    }
-    if (aRange.location == NSNotFound) {
+
+    // Fall back to reading from the terminal screen buffer. This is needed for
+    // Voice Control, which queries text near the cursor to decide whether to
+    // insert spaces between dictation chunks.
+    if (_dataSource.width <= 0 || proposedRange.length == 0) {
+        if (actualRange) {
+            *actualRange = NSMakeRange(NSNotFound, 0);
+        }
         return nil;
     }
-    return [_drawingHelper.markedText attributedSubstringFromRange:NSMakeRange(0, aRange.length)];
+
+    // Convert NSRange to grid coordinates using the inverse of nsRangeForAbsCoordRange:.
+    const long long overflow = _dataSource.totalScrollbackOverflow;
+    const int numberOfLines = [_dataSource numberOfLines];
+    VT100GridAbsCoordRange absRange = [self absCoordRangeForNSRange:proposedRange];
+
+    // Clamp to available lines in the data source.
+    if (absRange.start.y - overflow >= numberOfLines || absRange.end.y < overflow) {
+        if (actualRange) {
+            *actualRange = NSMakeRange(NSNotFound, 0);
+        }
+        return nil;
+    }
+    if (absRange.start.y < overflow) {
+        absRange.start.y = overflow;
+        absRange.start.x = 0;
+    }
+    if (absRange.end.y - overflow >= numberOfLines) {
+        absRange.end.y = overflow + numberOfLines - 1;
+        absRange.end.x = _dataSource.width;
+    }
+
+    BOOL valid;
+    VT100GridWindowedRange windowedRange =
+        VT100GridWindowedRangeFromAbsWindowedRangeSafe(
+            VT100GridAbsWindowedRangeMake(absRange, 0, 0),
+            overflow,
+            &valid);
+    if (!valid) {
+        if (actualRange) {
+            *actualRange = NSMakeRange(NSNotFound, 0);
+        }
+        return nil;
+    }
+
+    // Build the string one line at a time, padding each to full width with
+    // spaces. The NSRange coordinate space is a flat grid (position = x + y *
+    // width) with no newline characters, so we must not insert any.
+    const int startLine = windowedRange.coordRange.start.y;
+    const int endLine = windowedRange.coordRange.end.y;
+    const int startX = windowedRange.coordRange.start.x;
+    const int endX = windowedRange.coordRange.end.x;
+    const int w = _dataSource.width;
+    NSMutableString *result = [NSMutableString string];
+
+    iTermTextExtractor *extractor = [iTermTextExtractor textExtractorWithDataSource:_dataSource];
+    for (int line = startLine; line <= endLine; line++) {
+        const int lineStartX = (line == startLine) ? startX : 0;
+        const int lineEndX = (line == endLine) ? endX : w;
+        if (lineEndX <= lineStartX) {
+            continue;
+        }
+        VT100GridCoordRange lineRange = VT100GridCoordRangeMake(lineStartX, line,
+                                                                 lineEndX, line);
+        NSString *lineContent =
+            [extractor contentInRange:VT100GridWindowedRangeMake(lineRange, 0, 0)
+                    attributeProvider:nil
+                           nullPolicy:kiTermTextExtractorNullPolicyTreatAsSpace
+                                  pad:YES
+                   includeLastNewline:NO
+               trimTrailingWhitespace:NO
+                         cappedAtSize:-1
+                         truncateTail:YES
+                    continuationChars:nil
+                               coords:nil
+                    deduplicateDECDHL:NO];
+        [result appendString:lineContent];
+    }
+
+    // Clamp to the requested length.
+    if (result.length > proposedRange.length) {
+        [result deleteCharactersInRange:NSMakeRange(proposedRange.length,
+                                                     result.length - proposedRange.length)];
+    }
+
+    if (result.length == 0) {
+        if (actualRange) {
+            *actualRange = NSMakeRange(NSNotFound, 0);
+        }
+        return nil;
+    }
+
+    if (actualRange) {
+        *actualRange = NSMakeRange(proposedRange.location, result.length);
+    }
+    return [[[NSAttributedString alloc] initWithString:result] autorelease];
 }
 
 - (NSUInteger)characterIndexForPoint:(NSPoint)thePoint {
-    return MAX(0, thePoint.x / _charWidth);
+    // Convert a point in screen coordinates to an absolute character index
+    // consistent with selectedRange/markedRange.
+    const long long width = _dataSource.width;
+    if (width <= 0) {
+        return 0;
+    }
+    NSPoint localPoint = [self convertPoint:[[self window] convertPointFromScreen:thePoint]
+                                   fromView:nil];
+    const int x = (int)((localPoint.x - [iTermPreferences sideMargins]) / _charWidth);
+    const int line = (int)(localPoint.y / _lineHeight);
+    const int clampedLine = MAX(0, MIN(line, [_dataSource numberOfLines] - 1));
+    const long long absY = _dataSource.totalScrollbackOverflow + clampedLine;
+    return (NSUInteger)(MIN(MAX(x, 0), width - 1) + absY * width);
 }
 
 - (long)conversationIdentifier {
@@ -5107,13 +5236,24 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
 }
 
 - (NSRect)firstRectForCharacterRange:(NSRange)theRange actualRange:(NSRangePointer)actualRange {
-    int y = [_dataSource cursorY] - 1;
-    int x = [_dataSource cursorX] - 1;
+    // Convert absolute character range to screen coordinates.
+    const long long width = _dataSource.width;
+    if (width <= 0) {
+        if (actualRange) {
+            *actualRange = theRange;
+        }
+        return NSZeroRect;
+    }
+    VT100GridAbsCoordRange absRange = [self absCoordRangeForNSRange:theRange];
+    const long long overflow = _dataSource.totalScrollbackOverflow;
+    const int y = (int)(absRange.start.y - overflow - _dataSource.numberOfScrollbackLines);
+    const int x = absRange.start.x;
 
-    NSRect rect=NSMakeRect(x * _charWidth + [iTermPreferences sideMargins],
-                           (y + [_dataSource numberOfLines] - [_dataSource height] + 1) * _lineHeight,
-                           _charWidth * theRange.length,
-                           _lineHeight);
+    const NSUInteger firstLineLength = MIN(theRange.length, (NSUInteger)(width - x));
+    NSRect rect = NSMakeRect(x * _charWidth + [iTermPreferences sideMargins],
+                             (y + [_dataSource numberOfLines] - [_dataSource height] + 1) * _lineHeight,
+                             _charWidth * firstLineLength,
+                             _lineHeight);
     rect.origin = [[self window] pointToScreenCoords:[self convertPoint:rect.origin toView:nil]];
     if (actualRange) {
         *actualRange = theRange;
@@ -5766,7 +5906,7 @@ extendResultsAcrossSoftBoundaries:(BOOL)extendResultsAcrossSoftBoundaries {
              }
 
             theLine = [_dataSource screenCharArrayForLine:coord.y].line;
-        } while (ScreenCharIsDWC_RIGHT(theLine[coord.x]));
+        } while (ScreenCharIsDWC_RIGHT(theLine[coord.x]) || ScreenCharIsDWL_SPACER(theLine[coord.x]));
         result = VT100GridAbsCoordFromCoord(coord, totalScrollbackOverflow);
     }];
     if (!ok) {
@@ -6995,7 +7135,8 @@ static NSString *iTermStringFromRange(NSRange range) {
                               cappedAtSize:-1
                               truncateTail:YES
                          continuationChars:nil
-                                    coords:nil];
+                                    coords:nil
+                         deduplicateDECDHL:YES];
     }
     if (string.length > 0) {
         [self copyString:string];
@@ -7180,7 +7321,8 @@ static NSString *iTermStringFromRange(NSRange range) {
                                                 cappedAtSize:-1
                                                 truncateTail:YES
                                            continuationChars:nil
-                                                      coords:nil];
+                                                      coords:nil
+                                           deduplicateDECDHL:NO];
                 NSURL *url = [NSURL URLWithString:string];
                 if (string.stringIsUrlLike &&
                     url != nil &&

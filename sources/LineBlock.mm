@@ -1417,7 +1417,11 @@ int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BO
                                               bidiInfo:&bidiInfo
                                             lineOffset:NULL];
 
-    ;
+    // Derive lineAttribute from per-character external attributes.
+    // metadata is a struct (value type) so modifying our local copy
+    // doesn't affect the LineBlockMetadataArray.
+    iTermImmutableMetadataDeriveLineAttributeFromExternalAttributes(&metadata);
+
     ScreenCharArray *sca = [[ScreenCharArray alloc] initWithLine:chunk + offset
                                                           length:length
                                                         metadata:metadata
@@ -1631,9 +1635,20 @@ int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BO
         [_metadataArray eraseLastLineCache];
         id<iTermExternalAttributeIndexReading> attrs = [_metadataArray lastExternalAttributeIndex];
         const int split_index = available_len - *length;
-        [_metadataArray setLastExternalAttributeIndex:[attrs subAttributesFromIndex:split_index]];
+        // Split ext attrs: remaining line keeps 0..split_index-1,
+        // popped line gets split_index..end (re-indexed to 0-based).
+        iTermExternalAttributeIndex *poppedAttrs = [attrs subAttributesFromIndex:split_index];
+        [_metadataArray setLastExternalAttributeIndex:[attrs subAttributesToIndex:split_index]];
         if (metadataPtr) {
-            *metadataPtr = [_metadataArray immutableLineMetadataAtIndex:cll_entries - 1];
+            // Build popped metadata: same timestamp/lineAttribute as the
+            // logical line, but with the popped portion's ext attrs.
+            iTermImmutableMetadata base = [_metadataArray immutableLineMetadataAtIndex:cll_entries - 1];
+            iTermMetadataInit((iTermMetadata *)metadataPtr,
+                              base.timestamp,
+                              base.rtlFound,
+                              poppedAttrs,
+                              base.lineAttribute);
+            iTermMetadataAutorelease(*(iTermMetadata *)metadataPtr);
         }
 
         is_partial = YES;

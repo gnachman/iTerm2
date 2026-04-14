@@ -60,6 +60,7 @@
                                     iTermVariableKeySessionWindowName,
                                     iTermVariableKeySessionJob,
                                     iTermVariableKeySessionProcessTitle,
+                                    iTermVariableKeySessionForegroundJobAncestors,
                                     iTermVariableKeySessionCommandLine,
                                     iTermVariableKeySessionPresentationName,
                                     iTermVariableKeySessionShowingAlternateScreen,

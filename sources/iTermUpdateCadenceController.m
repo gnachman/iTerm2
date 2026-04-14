@@ -263,11 +263,11 @@ static const NSTimeInterval kBackgroundUpdateCadence = 1;
         // I'm worried about the possible side effects it might have since there's no way to
         // know all the tracking event loops.
         [_updateTimer invalidate];
-        _updateTimer = [NSTimer weakTimerWithTimeInterval:[self liveResizeInterval]
-                                                   target:self
-                                                 selector:@selector(updateDisplay)
-                                                 userInfo:nil
-                                                  repeats:YES];
+        _updateTimer = [NSTimer it_weakTimerWithTimeInterval:[self liveResizeInterval]
+                                                      target:self
+                                                    selector:@selector(updateDisplay)
+                                                    userInfo:nil
+                                                     repeats:YES];
         [[NSRunLoop currentRunLoop] addTimer:_updateTimer forMode:NSRunLoopCommonModes];
     } else {
         if (!force && _updateTimer && cadence > _updateTimer.timeInterval) {
@@ -275,11 +275,11 @@ static const NSTimeInterval kBackgroundUpdateCadence = 1;
             _deferredCadenceChange = YES;
         } else {
             [_updateTimer invalidate];
-            _updateTimer = [NSTimer scheduledWeakTimerWithTimeInterval:cadence
-                                                                target:self
-                                                              selector:@selector(updateDisplay)
-                                                              userInfo:nil
-                                                               repeats:YES];
+            _updateTimer = [NSTimer it_scheduledWeakTimerWithTimeInterval:cadence
+                                                                   target:self
+                                                                 selector:@selector(updateDisplay)
+                                                                 userInfo:nil
+                                                                  repeats:YES];
         }
     }
 }

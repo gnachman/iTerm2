@@ -156,6 +156,25 @@ NSString *const kProfileSessionHotkeyDidChange = @"kProfileSessionHotkeyDidChang
     return self;
 }
 
+- (void)warnAboutCorruptNib {
+    NSString *team = [iTermAppSignatureValidator currentAppTeamID];
+    NSString *message;
+    if (!team) {
+        message = @"A required user interface component is missing or corrupted and iTerm2\u2019s code signature could not be verified. You should download a fresh copy of the app and reinstall it.";
+    } else if (![team isEqualToString:@"H7V7XYVQ7D"]) {
+        message = @"A required user interface component is missing or corrupted and iTerm2\u2019s code signature did not match that of the official distribution. You should download a fresh copy of the app and reinstall it.";
+    } else {
+        message = @"A required user interface component is missing or corrupted, yet against all odds the code signature for iTerm2 is valid. Please file a bug at https://iterm2.com/bugs";
+    }
+    NSAlert *alert = [[NSAlert alloc] init];
+    [alert setMessageText:@"Application Corrupt"];
+    [alert setInformativeText:message];
+    [alert addButtonWithTitle:@"OK"];
+    [alert setAlertStyle:NSAlertStyleCritical];
+    [alert runModal];
+    exit(1);
+}
+
 - (void)dealloc {
     [[NSNotificationCenter defaultCenter] removeObserver:self];
     _profilesListView.delegate = nil;
@@ -177,27 +196,41 @@ NSString *const kProfileSessionHotkeyDidChange = @"kProfileSessionHotkeyDidChang
 #pragma mark - NSViewController
 
 - (NSArray *)tabViewTuples {
-    return @[ @[ _generalTab, _generalViewController.view ],
-              @[ _colorsTab, _colorsViewController.view ],
-              @[ _textTab, _textViewController.view ],
-              @[ _webTab, _webViewController.view ],
-              @[ _windowTab, _windowViewController.view ],
-              @[ _terminalTab, _terminalViewController.view ],
-              @[ _sessionTab, _sessionViewController.view ],
-              @[ _keysTab, _keysViewController.view ],
-              @[ _advancedTab, _advancedViewController.view ] ];
+    NSArray *tuples = @[ @[ _generalTab, _generalViewController.view ?: [NSNull null] ],
+                         @[ _colorsTab, _colorsViewController.view ?: [NSNull null] ],
+                         @[ _textTab, _textViewController.view ?: [NSNull null] ],
+                         @[ _webTab, _webViewController.view ?: [NSNull null] ],
+                         @[ _windowTab, _windowViewController.view ?: [NSNull null] ],
+                         @[ _terminalTab, _terminalViewController.view ?: [NSNull null] ],
+                         @[ _sessionTab, _sessionViewController.view ?: [NSNull null] ],
+                         @[ _keysTab, _keysViewController.view ?: [NSNull null] ],
+                         @[ _advancedTab, _advancedViewController.view ?: [NSNull null] ] ];
+    NSArray *filtered = [tuples filteredArrayUsingPredicate:[NSPredicate predicateWithBlock:^BOOL(NSArray *tuple, NSDictionary *bindings) {
+        return ![tuple containsObject:[NSNull null]];
+    }]];
+    if (filtered.count < tuples.count) {
+        [self warnAboutCorruptNib];
+    }
+    return filtered;
 }
 
 - (NSArray *)tabViewControllerTuples {
-    return @[ @[ _generalTab, _generalViewController ],
-              @[ _colorsTab, _colorsViewController ],
-              @[ _textTab, _textViewController ],
-              @[ _webTab, _webViewController ],
-              @[ _windowTab, _windowViewController ],
-              @[ _terminalTab, _terminalViewController ],
-              @[ _sessionTab, _sessionViewController ],
-              @[ _keysTab, _keysViewController ],
-              @[ _advancedTab, _advancedViewController ] ];
+    NSArray *tuples = @[ @[ _generalTab, _generalViewController ?: [NSNull null] ],
+                         @[ _colorsTab, _colorsViewController ?: [NSNull null] ],
+                         @[ _textTab, _textViewController ?: [NSNull null] ],
+                         @[ _webTab, _webViewController ?: [NSNull null] ],
+                         @[ _windowTab, _windowViewController ?: [NSNull null] ],
+                         @[ _terminalTab, _terminalViewController ?: [NSNull null] ],
+                         @[ _sessionTab, _sessionViewController ?: [NSNull null] ],
+                         @[ _keysTab, _keysViewController ?: [NSNull null] ],
+                         @[ _advancedTab, _advancedViewController ?: [NSNull null] ] ];
+    NSArray *filtered = [tuples filteredArrayUsingPredicate:[NSPredicate predicateWithBlock:^BOOL(NSArray *tuple, NSDictionary *bindings) {
+        return ![tuple containsObject:[NSNull null]];
+    }]];
+    if (filtered.count < tuples.count) {
+        [self warnAboutCorruptNib];
+    }
+    return filtered;
 }
 
 - (void)awakeFromNib {
@@ -483,15 +516,20 @@ andEditComponentWithIdentifier:(NSString *)identifier
 }
 
 - (NSArray<iTermProfilePreferencesBaseViewController *> *)tabViewControllers {
-    return @[ _generalViewController,
-              _colorsViewController,
-              _textViewController,
-              _webViewController,
-              _windowViewController,
-              _terminalViewController,
-              _sessionViewController,
-              _keysViewController,
-              _advancedViewController ];
+    NSArray *vcs = @[ _generalViewController ?: [NSNull null],
+                      _colorsViewController ?: [NSNull null],
+                      _textViewController ?: [NSNull null],
+                      _webViewController ?: [NSNull null],
+                      _windowViewController ?: [NSNull null],
+                      _terminalViewController ?: [NSNull null],
+                      _sessionViewController ?: [NSNull null],
+                      _keysViewController ?: [NSNull null],
+                      _advancedViewController ?: [NSNull null] ];
+    NSArray *filtered = [vcs arrayByRemovingNulls];
+    if (filtered.count < vcs.count) {
+        [self warnAboutCorruptNib];
+    }
+    return filtered;
 }
 
 - (BOOL)hasViewController:(iTermProfilePreferencesBaseViewController *)viewController {

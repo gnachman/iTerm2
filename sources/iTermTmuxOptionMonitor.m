@@ -96,11 +96,11 @@
         return;
     }
     [_timer invalidate];
-    _timer = [NSTimer scheduledWeakTimerWithTimeInterval:_interval
-                                                  target:self
-                                                selector:@selector(update:)
-                                                userInfo:nil
-                                                 repeats:YES];
+    _timer = [NSTimer it_scheduledWeakTimerWithTimeInterval:_interval
+                                                     target:self
+                                                   selector:@selector(update:)
+                                                   userInfo:nil
+                                                    repeats:YES];
 }
 
 - (void)invalidate {

@@ -98,6 +98,9 @@ extern NSString *const iTermSnippetsTagsDidChange;
 - (PTYTab *)tabWithID:(NSString *)tabID;  // short numeric ID
 - (PTYTab *)tabWithGUID:(NSString *)guid;  // UUID
 - (PseudoTerminal *)windowForSessionWithGUID:(NSString *)guid;
+- (PTYTab *)tabForSession:(PTYSession *)session;
+- (PseudoTerminal *)windowForTab:(PTYTab *)tab;
+- (PseudoTerminal *)windowForSession:(PTYSession *)session;
 
 - (int)allocateWindowNumber;
 
@@ -186,6 +189,10 @@ replaceInitialDirectoryForSessionWithGUID:(NSString *)guid
 - (NSArray<PseudoTerminal *> *)terminals;
 - (void)addTerminalWindow:(PseudoTerminal *)terminalWindow;
 - (PTYSession *)sessionWithGUID:(NSString *)identifier;
+
+// sessionID is of the form "w0t0p0:guid"
+- (void)revealSessionID:(NSString *)sessionID;
+- (void)revealSessionWithGUID:(NSString *)guid;
 
 void OnHotKeyEvent(void);
 

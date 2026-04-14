@@ -544,6 +544,7 @@ DEFINE_BOOL(disableCustomBoxDrawing, NO, SECTION_DRAWING @"Use your typeface’s
 DEFINE_INT(minimumWeightDifferenceForBoldFont, 4, SECTION_DRAWING @"Minimum weight difference between regular and bold font.\nThis affects selection of the bold version of a font. Font weights go from 0 to 9. If no font can be found that has a high enough weight then the regular font will be double-struck with a small offset.");
 DEFINE_FLOAT(underlineCursorHeight, 2, SECTION_DRAWING @"Thickness of underline cursor.");
 DEFINE_BOOL(preferSpeedToFullLigatureSupport, YES, SECTION_DRAWING @"Improves drawing performance at the expense of disallowing alphanumeric characters to belong to ligatures.");
+DEFINE_BOOL(enableContextualAlternates, YES, SECTION_DRAWING @"Enable contextual alternates (calt) for ligature-capable fonts.\nWhen enabled, uses ligature level 2 which activates calt in addition to standard ligatures. Many coding fonts such as Monaspace, Iosevka, and Cascadia Code require this for their ligatures to work.");
 DEFINE_BOOL(forceAntialiasingOnRetina, NO, SECTION_DRAWING @"Force text to be anti-aliased on Retina displays.\nEnable this to use non-AA text on non-retina displays, which sometimes looks better.");
 DEFINE_BOOL(makeSomePowerlineSymbolsWide, YES, SECTION_DRAWING @"Draw certain Powerline symbols double-width?\nThis matches how most “nerd” fonts render them, but your favorite one might not do this. An example code point that is affected is U+E0B8.");
 
@@ -553,6 +554,7 @@ DEFINE_BOOL(useLowPowerGPUWhenUnplugged, NO, SECTION_DRAWING @"Metal renderer us
 
 DEFINE_BOOL(underlineHyperlinks, YES, SECTION_DRAWING @"Underline OSC 8 hyperlinks");
 DEFINE_BOOL(solidUnderlines, NO, SECTION_DRAWING @"Use solid underlines?\nWhen disabled, underlines break near text that would intersect them.");
+DEFINE_BOOL(useMultiPassUnderlineRenderer, YES, SECTION_DRAWING @"Use multi-pass underline renderer?\nFixes underline gaps with ligature fonts. Requires restart.");
 DEFINE_SETTABLE_BOOL(showMetalFPSmeter, ShowMetalFPSmeter, NO, SECTION_DRAWING @"Show FPS meter\nRequires Metal renderer");
 DEFINE_BOOL(hdrCursor, NO, SECTION_DRAWING @"HDR cursor\nExperimental. Half-baked. Probably don't use this.");
 DEFINE_FLOAT(metalRedrawPeriod, 0.5, SECTION_DRAWING @"GPU renderer redraws at least this often, in seconds.\nThis is to work around a problem where the GPU renderer encounters a lot of latency when drawing for the first time after a short period of inactivity. Set this to a big number to render it ineffectual.");
@@ -621,6 +623,7 @@ DEFINE_STRING(logTimestampFormat, @"yyyy-MM-dd hh.mm.ss.SSS", SECTION_SESSION @"
 DEFINE_BOOL(focusNewSplitPaneWithFocusFollowsMouse, YES, SECTION_SESSION @"When focus follows mouse is enabled, should new split panes automatically be focused?");
 DEFINE_BOOL(NoSyncSuppressRestartSessionConfirmationAlert, NO, SECTION_SESSION @"Suppress restart session confirmation alert.\nDon't ask for a confirmation when manually restarting a session.");
 DEFINE_BOOL(showAutomaticProfileSwitchingBanner, YES, SECTION_SESSION @"Show a “Switched to profile” message when Automatic Profile Switching activates.");
+DEFINE_BOOL(preserveFontSizeOnAutomaticProfileSwitch, YES, SECTION_SESSION @"Preserve font zoom level when Automatic Profile Switching changes profiles.");
 DEFINE_BOOL(autoLockSessionNameOnEdit, YES, SECTION_SESSION @"Auto-lock session name after editing it.");
 DEFINE_FLOAT(timeoutForDaemonAttachment, 10, SECTION_SESSION @"How long to wait when trying to attach to an iTerm daemon at startup when restoring windows (in seconds)?");
 DEFINE_BOOL(logTimestampsWithPlainText, YES, SECTION_SESSION @"When logging plain text, include timestamps for each line?");
@@ -662,6 +665,9 @@ DEFINE_FLOAT(toolbeltFontSize, 0, SECTION_WINDOWS @"Toolbelt font size in points
 DEFINE_STRING(toolbeltFont, @"Menlo", SECTION_WINDOWS @"Toolbelt font family name");
 DEFINE_FLOAT(fakeNotchHeight, 0, SECTION_WINDOWS @"Simulated notch height");
 DEFINE_STRING(splitPaneColor, @"", SECTION_WINDOWS @"Custom color for split pane dividers. Leave empty to use default color.\nThis should be an HTML-style color, like #aabbcc.");
+DEFINE_FLOAT(splitPaneDividerWidth, 0, SECTION_WINDOWS @"Custom width for split pane dividers in points (1-5). Set to 0 to use default width.");
+DEFINE_STRING(paneTitleBarBackgroundColor, @"", SECTION_WINDOWS @"Custom background color for pane title bars. Leave empty to use default color.\nThis should be an HTML-style color, like #aabbcc.");
+DEFINE_STRING(paneTitleBarTextColor, @"", SECTION_WINDOWS @"Custom text color for pane title bars. Leave empty to use default color.\nThis should be an HTML-style color, like #aabbcc.");
 DEFINE_BOOL(bordersOnlyInLightMode, YES, SECTION_WINDOWS @"Opaque windows have a border only in light mode.\nThis setting modifies “Show border around windows”. Borders in opaque windows in dark mode are ugly and the OS draws one that is pretty serviceable. Enable this if you have trouble seeing them.")
 DEFINE_BOOL(allowLiveResize, YES, SECTION_WINDOWS @"Allow window resizing by dragging edges and corners?");
 DEFINE_SETTABLE_BOOL(showSecureKeyboardEntryIndicator, ShowSecureKeyboardEntryIndicator, YES, SECTION_WINDOWS @"Show secure keyboard entry indicator?");

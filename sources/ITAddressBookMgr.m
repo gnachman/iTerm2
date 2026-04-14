@@ -28,6 +28,7 @@
 #import "ITAddressBookMgr.h"
 
 #import "DebugLogging.h"
+#import "NSDictionary+Profile.h"
 #import "NSColor+iTerm.h"
 #import "NSDictionary+iTerm.h"
 #import "NSFont+iTerm.h"
@@ -170,10 +171,72 @@ NSString *iTermPercentageDescription(iTermPercentage percentage) {
     return [NSString stringWithFormat:@"w=%0.1f%% h=%0.1f%%", percentage.width, percentage.height];
 }
 
-iTermPercentage iTermPercentageFromProfile(Profile *profile) {
+iTermPercentage iTermPercentageFromProfile(Profile *profile, iTermWindowType windowType) {
+    double width;
+    if (profile[KEY_WIDTH_PERCENTAGE]) {
+        width = [profile[KEY_WIDTH_PERCENTAGE] doubleValue];
+    } else {
+        // Legacy profiles predate the percentage feature. Top/bottom windows
+        // span the full width; left/right use cell-based width.
+        switch (windowType) {
+            case WINDOW_TYPE_TOP_PERCENTAGE:
+            case WINDOW_TYPE_BOTTOM_PERCENTAGE:
+                width = 100;
+                break;
+            case WINDOW_TYPE_LEFT_PERCENTAGE:
+            case WINDOW_TYPE_RIGHT_PERCENTAGE:
+            case WINDOW_TYPE_NORMAL:
+            case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
+            case WINDOW_TYPE_LION_FULL_SCREEN:
+            case WINDOW_TYPE_TOP_CELLS:
+            case WINDOW_TYPE_BOTTOM_CELLS:
+            case WINDOW_TYPE_LEFT_CELLS:
+            case WINDOW_TYPE_RIGHT_CELLS:
+            case WINDOW_TYPE_NO_TITLE_BAR:
+            case WINDOW_TYPE_COMPACT:
+            case WINDOW_TYPE_ACCESSORY:
+            case WINDOW_TYPE_MAXIMIZED:
+            case WINDOW_TYPE_COMPACT_MAXIMIZED:
+            case WINDOW_TYPE_CENTERED:
+                width = -1;
+                break;
+        }
+    }
+
+    double height;
+    if (profile[KEY_HEIGHT_PERCENTAGE]) {
+        height = [profile[KEY_HEIGHT_PERCENTAGE] doubleValue];
+    } else {
+        // Legacy profiles predate the percentage feature. Left/right windows
+        // span the full height; top/bottom use cell-based height.
+        switch (windowType) {
+            case WINDOW_TYPE_LEFT_PERCENTAGE:
+            case WINDOW_TYPE_RIGHT_PERCENTAGE:
+                height = 100;
+                break;
+            case WINDOW_TYPE_TOP_PERCENTAGE:
+            case WINDOW_TYPE_BOTTOM_PERCENTAGE:
+            case WINDOW_TYPE_NORMAL:
+            case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
+            case WINDOW_TYPE_LION_FULL_SCREEN:
+            case WINDOW_TYPE_TOP_CELLS:
+            case WINDOW_TYPE_BOTTOM_CELLS:
+            case WINDOW_TYPE_LEFT_CELLS:
+            case WINDOW_TYPE_RIGHT_CELLS:
+            case WINDOW_TYPE_NO_TITLE_BAR:
+            case WINDOW_TYPE_COMPACT:
+            case WINDOW_TYPE_ACCESSORY:
+            case WINDOW_TYPE_MAXIMIZED:
+            case WINDOW_TYPE_COMPACT_MAXIMIZED:
+            case WINDOW_TYPE_CENTERED:
+                height = -1;
+                break;
+        }
+    }
+
     iTermPercentage result = {
-        .width = [iTermProfilePreferences doubleForKey:KEY_WIDTH_PERCENTAGE inProfile:profile],
-        .height = [iTermProfilePreferences doubleForKey:KEY_HEIGHT_PERCENTAGE inProfile:profile]
+        .width = width,
+        .height = height,
     };
     return result;
 }
@@ -263,6 +326,19 @@ iTermPercentage iTermPercentageFromProfile(Profile *profile) {
                                               [self removeBonjourProfiles];
                                           }
                                       }];
+
+        // Migrate dynamic profiles that were saved with a "Dynamic" tag (the old
+        // method) but without the KEY_DYNAMIC_PROFILE boolean flag (the new method).
+        if (![iTermPreferences boolForKey:kPreferenceKeyMigratedDynamicProfileTagToFlag]) {
+            for (Profile *profile in [[[ProfileModel sharedInstance] bookmarks] copy]) {
+                if (!profile.profileIsDynamic && profile[KEY_DYNAMIC_PROFILE_FILENAME] != nil) {
+                    [[ProfileModel sharedInstance] setObject:@YES
+                                                     forKey:KEY_DYNAMIC_PROFILE
+                                                 inBookmark:profile];
+                }
+            }
+            [iTermPreferences setBool:YES forKey:kPreferenceKeyMigratedDynamicProfileTagToFlag];
+        }
 
         BOOL bookmarkWithDefaultGuidExisted =
             ([[ProfileModel sharedInstance] bookmarkWithGuid:originalDefaultGuid] != nil);

@@ -24,6 +24,8 @@
 - (BOOL)iTermTabBarWindowIsFullScreen;
 - (BOOL)iTermTabBarCanDragWindow;
 - (BOOL)iTermTabBarShouldHideBacking;
+@optional
+- (void)iTermTabBarDidUpdateProgressBars;
 @end
 
 // A customized version of PSMTabBarControl.

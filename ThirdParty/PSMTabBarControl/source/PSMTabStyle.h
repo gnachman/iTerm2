@@ -39,6 +39,10 @@ Protocol to be observed by all style delegate objects.  These objects handle the
 - (NSRect)dragRectForTabCell:(PSMTabBarCell *)cell orientation:(PSMTabBarOrientation)orientation;
 - (NSRect)closeButtonRectForTabCell:(PSMTabBarCell *)cell;
 - (NSRect)indicatorRectForTabCell:(PSMTabBarCell *)cell;
+- (NSRect)progressBarRectForTabCell:(PSMTabBarCell *)cell;
+@optional
+- (nullable NSBezierPath *)progressBarClipPathForTabCell:(PSMTabBarCell *)cell;
+@required
 - (NSRect)objectCounterRectForTabCell:(PSMTabBarCell *)cell;
 - (float)minimumWidthOfTabCell:(PSMTabBarCell *)cell;
 - (float)desiredWidthOfTabCell:(PSMTabBarCell *)cell;

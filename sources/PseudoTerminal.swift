@@ -19,7 +19,7 @@ extension PseudoTerminal {
                size: UnsafePointer<NSSize>?) {
         let sessionSize = windowSizeHelper.sessionSize(
             profile: session.profile,
-            existingViewSize: currentSession()?.view?.scrollview?.documentVisibleRect.size,
+            existingViewSize: currentSession()?.view?.scrollview.documentVisibleRect.size,
             desiredPointSize: size?.pointee,
             hasScrollbar: scrollbarShouldBeVisible(),
             scrollerStyle: scrollerStyle(),

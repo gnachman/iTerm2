@@ -2002,8 +2002,18 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
         case VT100CSI_DECALN:
             [_delegate terminalShowTestPattern];
             break;
-        case VT100CSI_DECDHL:
+        case VT100CSI_DECDHL: {
+            iTermLineAttribute attr = (token.csi->p[0] == 3) ? iTermLineAttributeDoubleHeightTop
+                                                              : iTermLineAttributeDoubleHeightBottom;
+            [_delegate terminalSetLineAttribute:attr];
+            break;
+        }
         case VT100CSI_DECDWL:
+            [_delegate terminalSetLineAttribute:iTermLineAttributeDoubleWidth];
+            break;
+        case VT100CSI_DECSWL:
+            [_delegate terminalSetLineAttribute:iTermLineAttributeSingleWidth];
+            break;
         case VT100CSI_DECID:
             break;
         case VT100CSI_DECKPNM:
@@ -2959,6 +2969,10 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
 
         case XTERMCC_LINK:
             [self executeLink:token];
+            break;
+
+        case XTERMCC_SET_TAB_STATUS:
+            [self executeSetTabStatus:token];
             break;
 
         case XTERMCC_SET_PALETTE:
@@ -4386,6 +4400,87 @@ static NSString *VT100GetURLParamForKey(NSString *params, NSString *key) {
     }
     NSCharacterSet *illegalCharacters = [NSCharacterSet characterSetWithCharactersInString:@"abcdefABCDEF0123456789"].invertedSet;
     return [uid rangeOfCharacterFromSet:illegalCharacters].location == NSNotFound;
+}
+
+// OSC 21337: Tab status
+// Payload is semicolon-delimited key=value pairs with \; and \\ escaping.
+- (void)executeSetTabStatus:(VT100Token *)token {
+    NSString *payload = token.string;
+    if (!payload) {
+        return;
+    }
+
+    // Parse the payload into tokens split on unescaped semicolons.
+    VT100TabStatusUpdate *status = [[VT100TabStatusUpdate alloc] init];
+    NSMutableString *currentToken = [NSMutableString string];
+    NSMutableArray<NSString *> *tokens = [NSMutableArray array];
+    BOOL escaped = NO;
+    for (NSUInteger i = 0; i < payload.length; i++) {
+        unichar ch = [payload characterAtIndex:i];
+        if (escaped) {
+            if (ch == ';' || ch == '\\') {
+                [currentToken appendFormat:@"%C", ch];
+            } else {
+                [currentToken appendFormat:@"\\%C", ch];
+            }
+            escaped = NO;
+        } else if (ch == '\\') {
+            escaped = YES;
+        } else if (ch == ';') {
+            [tokens addObject:[currentToken copy]];
+            currentToken = [NSMutableString string];
+        } else {
+            [currentToken appendFormat:@"%C", ch];
+        }
+    }
+    [tokens addObject:[currentToken copy]];
+
+    for (NSString *kvString in tokens) {
+        NSRange eqRange = [kvString rangeOfString:@"="];
+        NSString *key;
+        NSString *value;
+        if (eqRange.location == NSNotFound) {
+            key = kvString;
+            value = @"";
+        } else {
+            key = [kvString substringToIndex:eqRange.location];
+            value = [kvString substringFromIndex:eqRange.location + 1];
+        }
+
+        if ([key isEqualToString:@"indicator"]) {
+            if (value.length == 0) {
+                status.indicatorPresence = VT100TabStatusUpdateFieldCleared;
+            } else {
+                NSArray<NSNumber *> *components = [self xtermParseColorArgument:value];
+                if (components) {
+                    status.indicatorPresence = VT100TabStatusUpdateFieldSet;
+                    iTermSRGBColor c = { components[0].doubleValue, components[1].doubleValue, components[2].doubleValue };
+                    status.indicator = c;
+                }
+            }
+        } else if ([key isEqualToString:@"status"]) {
+            if (value.length > 0) {
+                status.statusPresence = VT100TabStatusUpdateFieldSet;
+                status.status = value;
+            } else {
+                status.statusPresence = VT100TabStatusUpdateFieldCleared;
+            }
+        } else if ([key isEqualToString:@"status-color"]) {
+            if (value.length == 0) {
+                status.statusColorPresence = VT100TabStatusUpdateFieldCleared;
+            } else {
+                NSArray<NSNumber *> *components = [self xtermParseColorArgument:value];
+                if (components) {
+                    status.statusColorPresence = VT100TabStatusUpdateFieldSet;
+                    iTermSRGBColor c = { components[0].doubleValue, components[1].doubleValue, components[2].doubleValue };
+                    status.statusColor = c;
+                }
+            }
+        }
+        // Unknown keys are silently ignored
+    }
+
+    [_delegate terminalSetTabStatus:status];
 }
 
 // This is based on a misbegotten linux console control sequence:

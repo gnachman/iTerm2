@@ -872,11 +872,11 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
 - (IBAction)downloadBrowserPlugin:(id)sender {
     [iTermBrowserGateway openDownloadPage];
     [_pluginTimer invalidate];
-    _pluginTimer = [NSTimer scheduledWeakTimerWithTimeInterval:10
-                                                        target:self
-                                                      selector:@selector(updateDownloadBrowserPluginButtonHidden)
-                                                      userInfo:nil
-                                                       repeats:YES];
+    _pluginTimer = [NSTimer it_scheduledWeakTimerWithTimeInterval:10
+                                                           target:self
+                                                         selector:@selector(updateDownloadBrowserPluginButtonHidden)
+                                                         userInfo:nil
+                                                          repeats:YES];
 }
 
 - (IBAction)locateBrowserPlugin:(id)sender {

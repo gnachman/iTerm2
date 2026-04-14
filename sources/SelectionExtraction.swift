@@ -105,6 +105,9 @@ class SelectionExtractor: NSObject {
     }
     @objc var progress: Progress?
     @objc var addTimestamps = false
+    // Subclasses override to disable DECDHL dedup (e.g., Copy with
+    // Control Sequences needs both top and bottom halves).
+    var shouldDeduplicateDECDHL: Bool { true }
 
     // Does not include selected text on lines before |minimumLineNumber|.
     // Returns an NSAttributedString* if style is iTermCopyTextStyleAttributed, or an NSString* if not.
@@ -152,11 +155,16 @@ class SelectionExtractor: NSObject {
     }
 
     fileprivate func extract(_ result: Destination,
-                             attributeProvider: ((screen_char_t, iTermExternalAttribute) -> [AnyHashable: Any])?) {
+                             attributeProvider: ((screen_char_t, iTermExternalAttribute, UnsafePointer<iTermImmutableMetadata>?) -> [AnyHashable: Any])?) {
         DLog("Begin extracting \(String(describing: selection.allSubSelections)) self=\(self)")
         var cap = maxBytes > 0 ? maxBytes : Int32.max
         var fractionSoFar = Double(0)
         let totalWeight = weight(selection)
+        // DECDHL deduplication: track the previous sub-selection's last
+        // line so we can skip the bottom half of a double-height pair
+        // when it duplicates the top half. This handles box selections
+        // where each line is a separate sub-selection.
+        var prevSCA: ScreenCharArray?
         selection.enumerateSelectedAbsoluteRanges { [unowned self] absRange, stopPtr, eol in
             let subselectionWeight = weight(absRange) / totalWeight
             if _canceled.value {
@@ -192,11 +200,26 @@ class SelectionExtractor: NSObject {
                 }
                 atomicExtractor.set(extractor)
                 extractor.addTimestamps = addTimestamps
+                // DECDHL deduplication: skip the bottom half when it
+                // matches the preceding top half.
+                if shouldDeduplicateDECDHL {
+                    let lastLineY = range.coordRange.end.y
+                    let lastSCA = snapshot.screenCharArray(forLine: lastLineY)
+                    defer { prevSCA = lastSCA }
+                    let firstSCA = (range.coordRange.start.y == lastLineY)
+                        ? lastSCA
+                        : snapshot.screenCharArray(forLine: range.coordRange.start.y)
+                    if let prev = prevSCA, firstSCA.isDECDHLDuplicate(of: prev) {
+                        return
+                    }
+                }
+
                 let content = content(in: range,
                                       attributeProvider: attributeProvider,
                                       options: options,
                                       cappedAtSize: cap,
-                                      extractor: extractor)
+                                      extractor: extractor,
+                                      deduplicateDECDHL: shouldDeduplicateDECDHL)
                 atomicExtractor.set(nil)
                 result.appendSelectionContent(content, newline: eol)
             }
@@ -207,10 +230,11 @@ class SelectionExtractor: NSObject {
     }
 
     fileprivate func content(in range: VT100GridWindowedRange,
-                             attributeProvider: ((screen_char_t, iTermExternalAttribute) -> [AnyHashable: Any])?,
+                             attributeProvider: ((screen_char_t, iTermExternalAttribute, UnsafePointer<iTermImmutableMetadata>?) -> [AnyHashable: Any])?,
                              options: iTermSelectionExtractorOptions,
                              cappedAtSize cap: Int32,
-                             extractor: iTermTextExtractor) -> Any {
+                             extractor: iTermTextExtractor,
+                             deduplicateDECDHL: Bool) -> Any {
         return extractor.content(in: range,
                                  attributeProvider: attributeProvider,
                                  nullPolicy: .kiTermTextExtractorNullPolicyMidlineAsSpaceIgnoreTerminal,
@@ -220,7 +244,8 @@ class SelectionExtractor: NSObject {
                                  cappedAtSize: cap,
                                  truncateTail: true,
                                  continuationChars: nil,
-                                 coords: nil)
+                                 coords: nil,
+                                 deduplicateDECDHL: deduplicateDECDHL)
     }
 
     fileprivate func cancel() {
@@ -247,19 +272,54 @@ class StringSelectionExtractor: SelectionExtractor {
 
 @objc(iTermSGRSelectionExtractor)
 class SGRSelectionExtractor: StringSelectionExtractor {
+    override var shouldDeduplicateDECDHL: Bool { false }
     override func extract() -> NSString {
         if !selection.hasSelection {
             return ""
         }
-        let sgrAttribute = NSAttributedString.Key("iTermSGR");
-        let attributeProvider = { (c: screen_char_t, ea: iTermExternalAttribute?) -> [AnyHashable: Any] in
+        let sgrAttribute = NSAttributedString.Key("iTermSGR")
+        let lineAttrAttribute = NSAttributedString.Key("iTermLineAttribute")
+        let attributeProvider = { (c: screen_char_t, ea: iTermExternalAttribute?, metadata: UnsafePointer<iTermImmutableMetadata>?) -> [AnyHashable: Any] in
             let codes = VT100Terminal.sgrCodes(forCharacter: c, externalAttributes: ea)!
-            return [sgrAttribute: codes.array]
+            var attrs: [AnyHashable: Any] = [sgrAttribute: codes.array]
+            if let metadata {
+                let la = metadata.pointee.lineAttribute
+                if la != .singleWidth {
+                    attrs[lineAttrAttribute] = la.rawValue
+                }
+            }
+            return attrs
         }
         let temp = NSMutableAttributedString()
         super.extract(temp, attributeProvider: attributeProvider)
         let result = NSMutableString()
         let sgr0 = "\u{1b}[0m"
+        // Collect the DEC line attribute for each line in the output.
+        // Lines are separated by \n in the attributed string.
+        var lineAttributes = [iTermLineAttribute]()
+        var currentLA: iTermLineAttribute = .singleWidth
+        for i in 0..<temp.length {
+            if let rawLA = temp.attribute(lineAttrAttribute, at: i, effectiveRange: nil) as? Int32,
+               let la = iTermLineAttribute(rawValue: rawLA) {
+                currentLA = la
+            }
+            if i == 0 {
+                lineAttributes.append(currentLA)
+            }
+            if (temp.string as NSString).character(at: i) == unichar(Character("\n").asciiValue!) {
+                // Next line starts after this newline
+                if i + 1 < temp.length {
+                    if let rawLA = temp.attribute(lineAttrAttribute, at: i + 1, effectiveRange: nil) as? Int32,
+                       let la = iTermLineAttribute(rawValue: rawLA) {
+                        lineAttributes.append(la)
+                    } else {
+                        lineAttributes.append(.singleWidth)
+                    }
+                }
+            }
+        }
+
+        // Build the SGR output without DEC sequences.
         temp.enumerateAttribute(sgrAttribute,
                                 in: NSMakeRange(0, temp.length),
                                 options: []) { value, range, stop in
@@ -270,12 +330,29 @@ class SGRSelectionExtractor: StringSelectionExtractor {
             result.append(String(temp.string[swiftRange]))
         }
         result.append(sgr0)
-        result.replaceOccurrences(of: "\n",
-                                  with: sgr0 + "\n",
-                                  options: [],
-                                  range: NSRange(location: 0,
-                                                 length: result.length))
-        return result
+        // Insert DEC line attribute sequences and SGR resets at newlines.
+        // Process from end to start so insertions don't shift indices.
+        let lines = (result as String).components(separatedBy: "\n")
+        let rebuilt = NSMutableString()
+        for (i, line) in lines.enumerated() {
+            if i < lineAttributes.count {
+                switch lineAttributes[i] {
+                case .doubleWidth:
+                    rebuilt.append("\u{1b}#6")
+                case .doubleHeightTop:
+                    rebuilt.append("\u{1b}#3")
+                case .doubleHeightBottom:
+                    rebuilt.append("\u{1b}#4")
+                default:
+                    break
+                }
+            }
+            rebuilt.append(line)
+            if i < lines.count - 1 {
+                rebuilt.append(sgr0 + "\n")
+            }
+        }
+        return rebuilt
     }
 }
 
@@ -287,8 +364,8 @@ class AttributedStringSelectionExtractor: SelectionExtractor {
             return result
         }
 
-        let attributeProvider = { (c, ea) -> [AnyHashable: Any] in
-            return characterAttributesProvider.attributes(c, externalAttributes: ea)
+        let attributeProvider = { (c: screen_char_t, ea: iTermExternalAttribute, metadata: UnsafePointer<iTermImmutableMetadata>?) -> [AnyHashable: Any] in
+            return characterAttributesProvider.attributes(c, externalAttributes: ea, metadata: metadata)
         }
         super.extract(result, attributeProvider: attributeProvider)
         return result
@@ -314,10 +391,11 @@ class LocatedStringSelectionExtractor: SelectionExtractor {
     }
 
     fileprivate override func content(in range: VT100GridWindowedRange,
-                                      attributeProvider: ((screen_char_t,iTermExternalAttribute) -> [AnyHashable : Any])?,
+                                      attributeProvider: ((screen_char_t, iTermExternalAttribute, UnsafePointer<iTermImmutableMetadata>?) -> [AnyHashable : Any])?,
                                       options: iTermSelectionExtractorOptions,
                                       cappedAtSize cap: Int32,
-                                      extractor: iTermTextExtractor) -> Any {
+                                      extractor: iTermTextExtractor,
+                                      deduplicateDECDHL: Bool) -> Any {
         return extractor.locatedString(in: range,
                                        attributeProvider: attributeProvider,
                                        nullPolicy: .kiTermTextExtractorNullPolicyMidlineAsSpaceIgnoreTerminal,
@@ -326,7 +404,8 @@ class LocatedStringSelectionExtractor: SelectionExtractor {
                                        trimTrailingWhitespace: options.contains(.trimWhitespace),
                                        cappedAtSize: cap,
                                        truncateTail: true,
-                                       continuationChars: nil)
+                                       continuationChars: nil,
+                                       deduplicateDECDHL: deduplicateDECDHL)
     }
 }
 

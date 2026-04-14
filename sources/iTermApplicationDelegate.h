@@ -50,6 +50,8 @@ void TurnOnDebugLoggingAutomatically(void);
 
 @interface iTermApplicationDelegate : NSObject<iTermApplicationDelegate>
 
++ (BOOL)isCompareRenderingMode;
+
 @property(nonatomic, readonly) BOOL workspaceSessionActive;
 @property(nonatomic, readonly) BOOL isAppleScriptTestApp;
 @property(nonatomic, readonly) BOOL isRunningOnTravis;

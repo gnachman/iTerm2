@@ -408,10 +408,10 @@ class IntervalTreeGraphEncodingTests: XCTestCase {
         session.screen = screen
         screen.delegate = session
         screen.performBlock(joinedThreads: { _, mutableState, _ in
-            mutableState?.terminalEnabled = true
-            mutableState?.terminal?.termType = "xterm"
+            mutableState.terminalEnabled = true
+            mutableState.terminal?.termType = "xterm"
             screen.destructivelySetScreenWidth(width, height: height, mutableState: mutableState)
-            mutableState?.maxScrollbackLines = maxScrollback
+            mutableState.maxScrollbackLines = maxScrollback
         })
         return screen
     }
@@ -419,8 +419,8 @@ class IntervalTreeGraphEncodingTests: XCTestCase {
     private func appendLines(_ lines: [String], to screen: VT100Screen) {
         screen.performBlock(joinedThreads: { _, mutableState, _ in
             for line in lines {
-                mutableState?.appendString(atCursor: line)
-                mutableState?.appendCarriageReturnLineFeed()
+                mutableState.appendString(atCursor: line)
+                mutableState.appendCarriageReturnLineFeed()
             }
         })
     }
@@ -440,7 +440,7 @@ class IntervalTreeGraphEncodingTests: XCTestCase {
         var markGuid: String?
         var originalInterval: Interval?
         screen.performBlock(joinedThreads: { _, mutableState, _ in
-            let mark = mutableState?.addMark(onLine: 1, of: VT100ScreenMark.self) as? VT100ScreenMark
+            let mark = mutableState.addMark(onLine: 1, of: VT100ScreenMark.self) as? VT100ScreenMark
             markGuid = mark?.guid
             originalInterval = mark?.entry?.interval
         })
@@ -460,7 +460,7 @@ class IntervalTreeGraphEncodingTests: XCTestCase {
 
         // Restore to a new screen
         let restoredScreen = self.screen(width: 10, height: 4, maxScrollback: 3)
-        restoredScreen.restore(from: state,
+        restoredScreen.restore(from: state!,
                                includeRestorationBanner: false,
                                reattached: false,
                                isArchive: false,
@@ -470,8 +470,8 @@ class IntervalTreeGraphEncodingTests: XCTestCase {
         var restoredMark: VT100ScreenMark?
         var restoredInterval: Interval?
         restoredScreen.performBlock(joinedThreads: { _, mutableState, _ in
-            let marks = mutableState?.intervalTree.allObjects().compactMap { $0 as? VT100ScreenMark }
-            restoredMark = marks?.first { $0.guid == markGuid }
+            let marks = mutableState.intervalTree.allObjects().compactMap { $0 as? VT100ScreenMark }
+            restoredMark = marks.first { $0.guid == markGuid }
             restoredInterval = restoredMark?.entry?.interval
         })
 
@@ -498,8 +498,8 @@ class IntervalTreeGraphEncodingTests: XCTestCase {
         var mark1Guid: String?
         var mark2Guid: String?
         screen.performBlock(joinedThreads: { _, mutableState, _ in
-            let mark1 = mutableState?.addMark(onLine: 2, of: VT100ScreenMark.self) as? VT100ScreenMark
-            let mark2 = mutableState?.addMark(onLine: 4, of: VT100ScreenMark.self) as? VT100ScreenMark
+            let mark1 = mutableState.addMark(onLine: 2, of: VT100ScreenMark.self) as? VT100ScreenMark
+            let mark2 = mutableState.addMark(onLine: 4, of: VT100ScreenMark.self) as? VT100ScreenMark
             mark1Guid = mark1?.guid
             mark2Guid = mark2?.guid
         })
@@ -515,7 +515,7 @@ class IntervalTreeGraphEncodingTests: XCTestCase {
 
         // Restore
         let restoredScreen = self.screen(width: 10, height: 4, maxScrollback: 5)
-        restoredScreen.restore(from: state,
+        restoredScreen.restore(from: state!,
                                includeRestorationBanner: false,
                                reattached: false,
                                isArchive: false,
@@ -525,9 +525,9 @@ class IntervalTreeGraphEncodingTests: XCTestCase {
         var mark1Interval: Interval?
         var mark2Interval: Interval?
         restoredScreen.performBlock(joinedThreads: { _, mutableState, _ in
-            let marks = mutableState?.intervalTree.allObjects().compactMap { $0 as? VT100ScreenMark }
-            mark1Interval = marks?.first { $0.guid == mark1Guid }?.entry?.interval
-            mark2Interval = marks?.first { $0.guid == mark2Guid }?.entry?.interval
+            let marks = mutableState.intervalTree.allObjects().compactMap { $0 as? VT100ScreenMark }
+            mark1Interval = marks.first { $0.guid == mark1Guid }?.entry?.interval
+            mark2Interval = marks.first { $0.guid == mark2Guid }?.entry?.interval
         })
 
         // If both marks survived, verify their relative positions
@@ -564,7 +564,7 @@ class IntervalTreeGraphEncodingTests: XCTestCase {
 
         // Restore
         let restoredScreen = self.screen(width: 10, height: 4, maxScrollback: 4)
-        restoredScreen.restore(from: state,
+        restoredScreen.restore(from: state!,
                                includeRestorationBanner: false,
                                reattached: false,
                                isArchive: false,
@@ -573,8 +573,8 @@ class IntervalTreeGraphEncodingTests: XCTestCase {
         // Find the annotation
         var restoredAnnotation: PTYAnnotation?
         restoredScreen.performBlock(joinedThreads: { _, mutableState, _ in
-            let annotations = mutableState?.intervalTree.allObjects().compactMap { $0 as? PTYAnnotation }
-            restoredAnnotation = annotations?.first { $0.uniqueID == originalUniqueID }
+            let annotations = mutableState.intervalTree.allObjects().compactMap { $0 as? PTYAnnotation }
+            restoredAnnotation = annotations.first { $0.uniqueID == originalUniqueID }
         })
 
         // Annotation may have scrolled out; if it exists, verify it has content

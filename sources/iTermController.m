@@ -1087,12 +1087,12 @@ replaceInitialDirectoryForSessionWithGUID:(NSString *)guid
 
             case WINDOW_TYPE_TOP_PERCENTAGE:
             case WINDOW_TYPE_BOTTOM_PERCENTAGE:
-                *percentage = iTermPercentageFromProfile(aDict);
+                *percentage = iTermPercentageFromProfile(aDict, windowType);
                 break;
 
             case WINDOW_TYPE_LEFT_PERCENTAGE:
             case WINDOW_TYPE_RIGHT_PERCENTAGE:
-                *percentage = iTermPercentageFromProfile(aDict);
+                *percentage = iTermPercentageFromProfile(aDict, windowType);
                 break;
         }
         if (windowType == WINDOW_TYPE_TRADITIONAL_FULL_SCREEN &&
@@ -1505,6 +1505,28 @@ replaceInitialDirectoryForSessionWithGUID:(NSString *)guid
     [self updateWindowTitles];
     [self updateProcessType];
     [[iTermPresentationController sharedInstance] update];
+}
+
+- (void)revealSessionID:(NSString *)sessionID {
+    NSString *guid = [sessionID it_stringBySplittingOnFirstSubstring:@":"].secondObject;
+    [self revealSessionWithGUID:guid];
+}
+
+- (void)revealSessionWithGUID:(NSString *)guid {
+    for (PseudoTerminal *window in [self terminals]) {
+        for (PTYSession *session in window.allSessions) {
+            if ([session.guid isEqualToString:guid]) {
+                [session reveal];
+                return;
+            }
+        }
+    }
+    for (PTYSession *session in [[iTermBuriedSessions sharedInstance] buriedSessions]) {
+        if ([session.guid isEqualToString:guid]) {
+            [session reveal];
+            return;
+        }
+    }
 }
 
 - (PTYSession *)sessionWithGUID:(NSString *)identifier {

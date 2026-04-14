@@ -102,7 +102,8 @@
         iTermMetadataInit(&destination->lineMetadata,
                           value->lineMetadata.timestamp,
                           value->lineMetadata.rtlFound,
-                          indexCopy);
+                          indexCopy,
+                          value->lineMetadata.lineAttribute);
 
         destination->continuation = value->continuation;
         destination->number_of_wrapped_lines = 0;
@@ -222,11 +223,13 @@
         }
     }
     NSNumber *rtlFound = components.count > j ? components[j++] : @NO;
+    NSNumber *lineAttribute = components.count > j ? components[j++] : @0;
 
     iTermMetadataInit(&_guts->_array[i].lineMetadata,
                       timestamp.doubleValue,
                       rtlFound.boolValue,
-                      eaIndex);
+                      eaIndex,
+                      (iTermLineAttribute)lineAttribute.intValue);
     _guts->_array[i].number_of_wrapped_lines = 0;
     if (_guts->_useDWCCache) {
         _guts->_array[i].doubleWidthCharacters = nil;
@@ -323,7 +326,8 @@
     iTermMetadataInit(&destination->lineMetadata,
                       value->lineMetadata.timestamp,
                       value->lineMetadata.rtlFound,
-                      indexCopy);
+                      indexCopy,
+                      value->lineMetadata.lineAttribute);
 
     destination->continuation = value->continuation;
     destination->number_of_wrapped_lines = 0;

@@ -253,13 +253,41 @@ static BOOL hasBecomeActive = NO;
     iTermGlobalSearchWindowController *_globalSearchWindowController;
 }
 
++ (BOOL)isCompareRenderingMode {
+    static BOOL result;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        NSArray *arguments = [[NSProcessInfo processInfo] arguments];
+        for (NSString *arg in arguments) {
+            if ([arg isEqualToString:@"-compare-rendering"]) {
+                result = YES;
+                return;
+            }
+        }
+    });
+    return result;
+}
+
+static NSModalResponse iTermCompareRenderingRunModal(id self, SEL _cmd) {
+    return NSAlertFirstButtonReturn;
+}
+
 - (instancetype)init {
     self = [super init];
     if (self) {
+        if ([iTermApplicationDelegate isCompareRenderingMode]) {
+            // Suppress all alerts in compare-rendering mode. macOS's
+            // NSPersistentUIRestorer may show a "unexpectedly quit while
+            // reopening windows" alert via -[NSAlert runModal] and we
+            // can't prevent it through public API.
+            Method m = class_getInstanceMethod([NSAlert class], @selector(runModal));
+            method_setImplementation(m, (IMP)iTermCompareRenderingRunModal);
+        }
         _untitledWindowStateMachine = [[iTermUntitledWindowStateMachine alloc] init];
         _untitledWindowStateMachine.delegate = self;
         if ([iTermAdvancedSettingsModel useRestorableStateController] &&
-            ![[NSApplication sharedApplication] isRunningUnitTests]) {
+            ![[NSApplication sharedApplication] isRunningUnitTests] &&
+            ![iTermApplicationDelegate isCompareRenderingMode]) {
             _restorableStateController = [iTermRestorableStateController sharedInstance];
             _restorableStateController.delegate = self;
         }
@@ -729,6 +757,10 @@ static BOOL hasBecomeActive = NO;
         [[iTermController sharedInstance] importWindowArrangementAtPath:filename asTabsInTerminal:nil];
         return YES;
     }
+    if ([filename.pathExtension isEqualToString:@"it2triggers"]) {
+        [TriggerController importTriggersFromFile:filename];
+        return YES;
+    }
     NSLog(@"Quiet launch");
     quiet_ = YES;
     if ([filename isEqualToString:[[NSFileManager defaultManager] versionNumberFilename]]) {
@@ -1072,6 +1104,10 @@ static BOOL hasBecomeActive = NO;
     // * NOTE *
     // ********
     // If you change this also change -restorableStateEncoderAppStateWithEncoder.
+    if ([iTermApplicationDelegate isCompareRenderingMode]) {
+        DLog(@"Skip encoding restorable state in compare-rendering mode");
+        return;
+    }
     if ([iTermAdvancedSettingsModel storeStateInSqlite]) {
         DLog(@"Using sqlite-based restoration so not saving anything.");
         return;
@@ -1099,6 +1135,10 @@ static BOOL hasBecomeActive = NO;
 
 - (void)application:(NSApplication *)app didDecodeRestorableState:(NSCoder *)coder {
     DLog(@"application:didDecodeRestorableState: starting");
+    if ([iTermApplicationDelegate isCompareRenderingMode]) {
+        DLog(@"Skip decoding restorable state in compare-rendering mode");
+        return;
+    }
     if ([iTermAdvancedSettingsModel storeStateInSqlite]) {
         DLog(@"Using sqlite-based restoration so not restoring anything.");
         return;
@@ -1196,6 +1236,13 @@ void TurnOnDebugLoggingAutomatically(void) {
 - (void)applicationWillFinishLaunching:(NSNotification *)aNotification {
     DLog(@"Begin");
     [[iTermApplication sharedApplication] updateAppearance];
+    [[iTermUserDefaults userDefaults] it_addObserverForKey:kPreferenceKeyTabStyle
+                                                     block:^(id _Nonnull newValue) {
+        [[iTermApplication sharedApplication] updateAppearance];
+        [[NSNotificationCenter defaultCenter] postNotificationName:kRefreshTerminalNotification
+                                                            object:nil
+                                                          userInfo:nil];
+    }];
     if ([iTermUserDefaults importPath]) {
         [iTerm2ImportExport finishImporting];
         assert(NO);
@@ -1511,6 +1558,7 @@ void TurnOnDebugLoggingAutomatically(void) {
     }
 
     [self registerMenuTips];
+    [iTermClaudeWatcher start];
 #if DEBUG
     NSMenu *appMenu = [[[[NSApp mainMenu] itemArray] firstObject] submenu];
     [appMenu addItem:[NSMenuItem separatorItem]];
@@ -1649,31 +1697,13 @@ static iTermKeyEventReplayer *gReplayer;
     [menuItem setState:newState];
 }
 
-- (void)revealSessionID:(NSString *)sessionID {
-    NSString *guid = [sessionID it_stringBySplittingOnFirstSubstring:@":"].secondObject;
-    for (PseudoTerminal *window in [[iTermController sharedInstance] terminals]) {
-        for (PTYSession *session in window.allSessions) {
-            if ([session.guid isEqualToString:guid]) {
-                [session reveal];
-                return;
-            }
-        }
-    }
-    for (PTYSession *session in [[iTermBuriedSessions sharedInstance] buriedSessions]) {
-        if ([session.guid isEqualToString:guid]) {
-            [session reveal];
-            return;
-        }
-    }
-}
-
 - (void)revealWithURL:(NSURL *)url {
     NSURLComponents *components = [[[NSURLComponents alloc] initWithURL:url resolvingAgainstBaseURL:NO] autorelease];
     NSURLQueryItem *item = [components.queryItems objectPassingTest:^BOOL(NSURLQueryItem *item, NSUInteger index, BOOL *stop) {
         return [item.name isEqualToString:@"sessionid"];
     }];
     if (item) {
-        [self revealSessionID:item.value];
+        [iTermController.sharedInstance revealSessionID:item.value];
         return;
     }
 }
@@ -1874,7 +1904,7 @@ static iTermKeyEventReplayer *gReplayer;
         return;
     }
     PTYSession *session = [[iTermController sharedInstance] sessionWithGUID:guid];
-    if (!session) {
+    if (!session || !markID) {
         return;
     }
     [session revealPromptMarkWithID:markID];
@@ -2242,6 +2272,10 @@ static iTermKeyEventReplayer *gReplayer;
 
 - (IBAction)checkForUpdatesFromMenu:(id)sender {
     [suUpdater checkForUpdates:(sender)];
+}
+
+- (IBAction)installClaudeCodeIntegration:(id)sender {
+    [iTermClaudeCodeOnboarding show];
 }
 
 #pragma mark - Main Menu

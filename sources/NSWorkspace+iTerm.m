@@ -410,35 +410,39 @@ withApplicationAtURL:appURL
         }
         return YES;
     }
-    BOOL consent = NO;
+    iTermWarningSelection selection = kiTermWarningSelection0;
     switch (style) {
         case iTermOpenStyleWindow:
         case iTermOpenStyleTab:
             if (isFileURL) {
-                consent = ([iTermWarning showWarningWithTitle:@"iTerm2 can display files like this in its built-in web browser! Would you like to open this link in iTerm2?"
-                                                      actions:@[ @"Use Default App", @"Open in iTerm2"]
+                selection = [iTermWarning showWarningWithTitle:@"iTerm2 can display files like this in its built-in web browser! Would you like to open this link in iTerm2?"
+                                                      actions:@[ @"Use Default App", @"Open in iTerm2", @"Cancel"]
                                                     accessory:nil
                                                    identifier:identifier
                                                   silenceable:kiTermWarningTypePermanentlySilenceable
                                                       heading:@"Open in iTerm2?"
-                                                       window:window] == kiTermWarningSelection1);
+                                                       window:window];
             } else {
-                consent = ([iTermWarning showWarningWithTitle:@"iTerm2 can display web pages! Would you like to open this link in iTerm2?"
-                                                      actions:@[ @"Use Default Browser", @"Open in iTerm2"]
+                selection = [iTermWarning showWarningWithTitle:@"iTerm2 can display web pages! Would you like to open this link in iTerm2?"
+                                                      actions:@[ @"Use Default Browser", @"Open in iTerm2", @"Cancel"]
                                                     accessory:nil
                                                    identifier:identifier
                                                   silenceable:kiTermWarningTypePermanentlySilenceable
                                                       heading:@"Open in iTerm2?"
-                                                       window:window] == kiTermWarningSelection1);
+                                                       window:window];
             }
             break;
         case iTermOpenStyleVerticalSplit:
         case iTermOpenStyleHorizontalSplit:
             // Implied consent - no way to open in a split otherwise!
-            consent = YES;
+            selection = kiTermWarningSelection1;
             break;
     }
-    if (!consent) {
+    if (selection == kiTermWarningSelection2) {
+        // Cancel: do nothing. Return YES to prevent the caller from opening in the default browser.
+        return YES;
+    }
+    if (selection != kiTermWarningSelection1) {
         return NO;
     }
     return [self it_openURLLocally:url target:target configuration:configuration openStyle:style];

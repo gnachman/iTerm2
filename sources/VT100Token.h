@@ -87,6 +87,7 @@ typedef enum {
     VT100CSI_DECALN,                // Screen Alignment Display
     VT100CSI_DECDHL,                // Double Height Line
     VT100CSI_DECDWL,                // Double Width Line
+    VT100CSI_DECSWL,                // Single Width Line (reset double width/height)
     VT100CSI_DECID,                 // Identify Terminal
     VT100CSI_DECKPAM,               // Keypad Application Mode
     VT100CSI_DECKPNM,               // Keypad Numeric Mode
@@ -221,6 +222,7 @@ typedef enum {
     XTERMCC_SET_HIGHLIGHT_COLOR,
     XTERMCC_SET_HIGHLIGHT_FOREGROUND_COLOR,
     XTERMCC_SET_POINTER_SHAPE,
+    XTERMCC_SET_TAB_STATUS,
 
     // If a sequence is split into multiple tokens, the first will be one of the above whose name
     // includes MULTITOKEN_HEADER, then zero or more of these, and then XTERMCC_MULTITOKEN_END.

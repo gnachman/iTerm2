@@ -1,6 +1,7 @@
 #import "iTermCursorRenderer.h"
 
 #import "DebugLogging.h"
+#import "iTerm2SharedARC-Swift.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermMetalBufferPool.h"
 #import "iTermSharedImageStore.h"
@@ -626,11 +627,18 @@ static id<MTLBuffer> iTermNewVertexBufferWithBlockCursorQuad(iTermCursorRenderer
         _lightTexture = [self.cellRenderer textureFromImage:[iTermImageWrapper withImage:[[[[NSBundle bundleForClass:self.class] imageForResource:@"key-light"] it_imageOfSize:tState.cellConfiguration.cellSize] it_verticallyFlippedImage]]
                                                context:nil
                                             colorSpace:tState.configuration.colorSpace];
-        ITAssertWithMessage(_lightTexture != nil, @"Failed to load key-light image");
         _darkTexture = [self.cellRenderer textureFromImage:[iTermImageWrapper withImage:[[[[NSBundle bundleForClass:self.class] imageForResource:@"key-dark"] it_imageOfSize:tState.cellConfiguration.cellSize] it_verticallyFlippedImage]]
                                                context:nil
                                             colorSpace:tState.configuration.colorSpace];
-        ITAssertWithMessage(_darkTexture != nil, @"Failed to load key-dark image");
+        if (!_lightTexture || !_darkTexture) {
+            static dispatch_once_t onceToken;
+            dispatch_once(&onceToken, ^{
+                dispatch_async(dispatch_get_main_queue(), ^{
+                    [iTermAppSignatureValidator warnWithReason:@"While loading the key cursor image"];
+                });
+            });
+            return;
+        }
         self.colorSpace = tState.configuration.colorSpace;
         _textureSize = tState.cellConfiguration.cellSize;
     }

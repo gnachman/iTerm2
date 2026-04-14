@@ -11,6 +11,7 @@
 #import "NSAppearance+iTerm.h"
 #import "NSBezierPath+iTerm.h"
 #import "NSColor+iTerm.h"
+#import "NSObject+iTerm.h"
 #import "NSView+iTerm.h"
 #import "SolidColorView.h"
 #import <QuartzCore/QuartzCore.h>
@@ -83,25 +84,25 @@ static const CGFloat kStandardButtonHeight = 34;
         self.layer.masksToBounds = YES;
         self.layer.backgroundColor = [[NSColor controlBackgroundColor] CGColor];
         iTermTipCardActionButtonTopDividerView *divider =
-            [[[iTermTipCardActionButtonTopDividerView alloc] initWithFrame:NSMakeRect(0, 0, frameRect.size.width, 1)] autorelease];
+            [[iTermTipCardActionButtonTopDividerView alloc] initWithFrame:NSMakeRect(0, 0, frameRect.size.width, 1)];
         divider.autoresizingMask = NSViewWidthSizable | NSViewMaxYMargin;
         divider.color = [NSColor it_automaticDynamicColorForLightModeWhite:0.85 alpha:1];
         [self addSubview:divider];
 
-        _leftDivider = [[[iTermTipCardActionButtonLeftDividerView alloc] initWithFrame:NSMakeRect(0, 0, 1, frameRect.size.height)] autorelease];
+        _leftDivider = [[iTermTipCardActionButtonLeftDividerView alloc] initWithFrame:NSMakeRect(0, 0, 1, frameRect.size.height)];
         _leftDivider.autoresizingMask = NSViewHeightSizable | NSViewMaxXMargin;
         _leftDivider.color = [NSColor it_automaticDynamicColorForLightModeWhite:0.85 alpha:1];
         _leftDivider.hidden = YES;
         [self addSubview:_leftDivider];
 
-        _highlightLayer = [[[CAShapeLayer alloc] init] autorelease];
+        _highlightLayer = [[CAShapeLayer alloc] init];
         NSBezierPath *path = [NSBezierPath bezierPathWithOvalInRect:NSMakeRect(0, 0, 1, 1)];
         _highlightLayer.path = path.iterm_CGPath;
         _highlightLayer.anchorPoint = CGPointMake(0.5, 0.5);
         _highlightLayer.fillColor = [[iTermTipCardActionButton highlightColor] CGColor];
         [self.layer addSublayer:_highlightLayer];
 
-        _textField = [[[NSTextField alloc] initWithFrame:NSMakeRect(42, 5, 200, 17)] autorelease];
+        _textField = [[NSTextField alloc] initWithFrame:NSMakeRect(42, 5, 200, 17)];
         [_textField setBezeled:NO];
         [_textField setDrawsBackground:NO];
         [_textField setEditable:NO];
@@ -113,13 +114,6 @@ static const CGFloat kStandardButtonHeight = 34;
     return self;
 }
 
-- (void)dealloc {
-    [_block release];
-    [_icon release];
-    [_titleValue release];
-    [_shortcutValue release];
-    [super dealloc];
-}
 
 - (BOOL)isAccessibilityElement {
     return YES;
@@ -130,7 +124,7 @@ static const CGFloat kStandardButtonHeight = 34;
 }
 
 - (BOOL)accessibilityPerformPress {
-    [self.target performSelector:self.action withObject:self];
+    [self.target it_performNonObjectReturningSelector:self.action withObject:self];
     return YES;
 }
 
@@ -176,21 +170,21 @@ static const CGFloat kStandardButtonHeight = 34;
 
 - (void)updateTitle {
     CGFloat width = NSWidth(self.bounds) - NSMinX(_textField.frame);
-    NSMutableParagraphStyle *paragraphStyle = [[[NSMutableParagraphStyle alloc] init] autorelease];
+    NSMutableParagraphStyle *paragraphStyle = [[NSMutableParagraphStyle alloc] init];
     paragraphStyle.alignment = NSTextAlignmentLeft;
 
     // For inscrutable reasons, putting the tab stop all the way at the right edge of the field
     // doesn't work--the tab seems to be ignored.
-    NSTextTab *tab = [[[NSTextTab alloc] initWithTextAlignment:NSTextAlignmentRight
+    NSTextTab *tab = [[NSTextTab alloc] initWithTextAlignment:NSTextAlignmentRight
                                                       location:width - 8
-                                                       options:@{ }] autorelease];
+                                                       options:@{ }];
     paragraphStyle.tabStops = @[ tab ];
     NSString *string = [NSString stringWithFormat:@"%@\t%@",
                                                   self.titleValue ?: @"",
                                                   self.shortcutValue ?: @""];
     NSDictionary *attributes = @{ NSParagraphStyleAttributeName: paragraphStyle };
     NSAttributedString *attributedString =
-        [[[NSAttributedString alloc] initWithString:string attributes:attributes] autorelease];
+        [[NSAttributedString alloc] initWithString:string attributes:attributes];
     _textField.attributedStringValue = attributedString;
     [_textField sizeToFit];
     NSRect rect = _textField.frame;
@@ -220,13 +214,12 @@ static const CGFloat kStandardButtonHeight = 34;
 // This assumes the icon is 22x22
 - (void)setIcon:(NSImage *)image {
     if (!_iconLayer) {
-        _iconLayer = [[[CALayer alloc] init] autorelease];
+        _iconLayer = [[CALayer alloc] init];
         _iconLayer.position = CGPointMake(22, 17);
         [self.layer addSublayer:_iconLayer];
     }
 
-    [_icon autorelease];
-    _icon = [image retain];
+    _icon = image;
     _iconLayer.bounds = CGRectMake(0, 0, image.size.width, image.size.height);
     _iconLayer.contents = (id)[image CGImageForProposedRect:NULL
                                                     context:nil
@@ -310,10 +303,9 @@ static const CGFloat kStandardButtonHeight = 34;
 }
 
 - (void)mouseUp:(NSEvent *)theEvent {
-    // Prevent self from being deallocated during this method. CATransaction commit
-    // below can trigger completion handlers that may release our owner, which would
-    // release us while we're still executing.
-    [[self retain] autorelease];
+    // CATransaction commit below can trigger completion handlers that release
+    // our owner, which would release us while we're still executing.
+    __typeof(self) NS_VALID_UNTIL_END_OF_SCOPE selfRef = self;
 
     _isHighlighted = NO;
 
@@ -333,7 +325,7 @@ static const CGFloat kStandardButtonHeight = 34;
     if (self.enabled &&
         NSPointInRect([self convertPoint:theEvent.locationInWindow fromView:nil], self.bounds)) {
         if (self.target && self.action) {
-            [self.target performSelector:self.action withObject:self];
+            [self.target it_performNonObjectReturningSelector:self.action withObject:self];
         }
     }
 }

@@ -143,6 +143,13 @@ enum {
             }
             break;
 
+        case iTermMouseCursorTypeNortheastSouthwestArrow:
+            self = [super init];
+            if (self) {
+                _type = kResizeNortheastSouthwestCursor;
+            }
+            break;
+
         case iTermMouseCursorTypeArrow:
             self = [super init];
             if (self) {

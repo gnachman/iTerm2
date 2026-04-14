@@ -197,15 +197,22 @@ extension ScreenCharArray {
         var parts = [(ScreenCharArray, Int)]()
         var ci = 0
         while sca.length > 0 {
-            var i = min(Int(sca.length), maxWidth)
-            if sca.line[i - 1].code == DWC_RIGHT {
-                i -= 1
-            }
+            let i = min(Int(sca.length), maxWidth)
+            // subArrayToIndex handles backing up over DWC_RIGHT and
+            // DWL_SPACER to avoid splitting multi-cell characters.
             let subsca = sca.subArray(to: Int32(i))
-            let tuple = (subsca, ci)
-            parts.append(tuple)
-            sca = sca.subArray(from: subsca.length)
-            ci += Int(subsca.length)
+            if subsca.length == 0 {
+                // Safety: if subArrayToIndex backed up to 0, take at least
+                // 1 cell to guarantee forward progress.
+                let forced = sca.subArray(to: 1)
+                parts.append((forced, ci))
+                sca = sca.subArray(from: forced.length)
+                ci += Int(forced.length)
+            } else {
+                parts.append((subsca, ci))
+                sca = sca.subArray(from: subsca.length)
+                ci += Int(subsca.length)
+            }
         }
         return parts
     }

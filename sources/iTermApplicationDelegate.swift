@@ -188,7 +188,10 @@ extension iTermApplicationDelegate {
                 text: "When enabled, typing in this session is broadcast to other sessions in the same broadcast domain. Typing in other sessions sends input only to those sessions."),
             Tip(identifier: "Lock Size",
                 text: "Locked windows resist being resized. This can be useful when macOS screws up your windows when connecting or disconnecting displays."),
-            Tip(identifier: "Toggle Buffer Input", text: "While Buffer Input is turned on, keyboard input is stored in a buffer. It will be sent when Buffer Input is turned off. You can also configure a trigger to change the Buffer Input setting.")
+            Tip(identifier: "Toggle Buffer Input", text: "While Buffer Input is turned on, keyboard input is stored in a buffer. It will be sent when Buffer Input is turned off. You can also configure a trigger to change the Buffer Input setting."),
+            Tip(identifier: "Toolbelt.Session Status",
+                imageName: "TabStatus",
+                text: "The **Session Status** tool shows the status of sessions across all tabs. Statuses can be set by the **Set Tab Status** trigger or by programs using a control sequence. Each entry shows the session name, a colored indicator dot, status text, and a keyboard shortcut to jump to that session."),
         ]
         var index = [String: NSMenuItem]()
         func makeIndex(menu: NSMenu) {

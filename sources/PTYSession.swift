@@ -444,7 +444,8 @@ extension PTYSession {
                           cappedAtSize: -1,
                           truncateTail: false,
                           continuationChars: nil,
-                          coords: nil)
+                          coords: nil,
+                          deduplicateDECDHL: true)
         return content as? String
     }
 
@@ -476,7 +477,7 @@ extension PTYSession {
             if entries.count >= limit {
                 return
             }
-            if let mark, let command = mark.command {
+            if let command = mark.command {
                 var entry: [String: String] = ["command": command]
                 let guid = mark.guid
                 if !guid.isEmpty {
@@ -532,7 +533,7 @@ extension PTYSession {
         }
         var entries = [[String: String]]()
         screen.enumeratePrompts(from: nil, to: nil) { mark in
-            if let mark, let command = mark.command, command.contains(searchCommandHistory.query) {
+            if let command = mark.command, command.contains(searchCommandHistory.query) {
                 var entry: [String: String] = ["command": command]
                 let guid = mark.guid
                 if !guid.isEmpty {
@@ -574,7 +575,8 @@ extension PTYSession {
                           cappedAtSize: 16384,
                           truncateTail: false,
                           continuationChars: nil,
-                          coords: nil)
+                          coords: nil,
+                          deduplicateDECDHL: true)
         if let string = content as? String {
             try completion(string, "Command output provided to AI.")
         } else {
@@ -866,9 +868,7 @@ struct SubSelectionSerializationInfo {
     }
 
     func absRange(_ screen: VT100Screen) -> VT100GridAbsWindowedRange? {
-        guard let snapshot = screen.snapshotForcingPrimaryGrid(false) else {
-            return nil
-        }
+        let snapshot = screen.snapshotForcingPrimaryGrid(false)
         var ok = ObjCBool(false)
         let startCoord = snapshot.lineBuffer.coordinate(for: start,
                                                         width: screen.width(),
@@ -1437,15 +1437,13 @@ extension PTYSession {
         if var triggerDicts = self.profile[KEY_TRIGGERS] as? [NSDictionary] {
             var haveStats = false
             screen.performBlock(joinedThreads: { _, state, _ in
-                if let state {
-                    let stats = state.triggerStats()
-                    if stats.count == triggerDicts.count {
-                        for i in 0..<stats.count {
-                            if var dict = triggerDicts[i] as? [String: Any] {
-                                haveStats = true
-                                dict[kTriggerPerformanceKey] = stats[i].dictionaryValue
-                                triggerDicts[i] = dict as NSDictionary
-                            }
+                let stats = state.triggerStats()
+                if stats.count == triggerDicts.count {
+                    for i in 0..<stats.count {
+                        if var dict = triggerDicts[i] as? [String: Any] {
+                            haveStats = true
+                            dict[kTriggerPerformanceKey] = stats[i].dictionaryValue
+                            triggerDicts[i] = dict as NSDictionary
                         }
                     }
                 }
@@ -1546,5 +1544,20 @@ extension PTYSession: AutomaticProfileSwitchingSessionDelegate {
                                              job: genericScope.value(forVariableName: iTermVariableKeySessionJob) as? String,
                                              commandLine: genericScope.value(forVariableName: iTermVariableKeySessionCommandLine) as? String,
                                              expressionValueProvider: apsContext)
+    }
+}
+
+// MARK: - Session Note
+
+extension PTYSession {
+    @objc func textViewEditSessionNote() {
+        if view.isSessionNoteVisible {
+            view.hideSessionNote()
+        } else {
+            if sessionNoteModel == nil {
+                sessionNoteModel = SessionNoteModel()
+            }
+            view.showSessionNote(with: sessionNoteModel!)
+        }
     }
 }

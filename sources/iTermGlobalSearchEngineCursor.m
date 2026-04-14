@@ -373,7 +373,8 @@ typedef struct iTermGlobalSearchEngineCursorSearchOutput {
     NSMutableAttributedString *result = [[NSMutableAttributedString alloc] initWithString:text
                                                                               attributes:regularAttributes];
     NSRange matchRange = foldResult.snippetMatchRange;
-    if (matchRange.location + matchRange.length <= result.length) {
+    if (matchRange.location <= result.length &&
+        matchRange.length <= result.length - matchRange.location) {
         [result addAttributes:matchAttributes range:matchRange];
     }
     return result;

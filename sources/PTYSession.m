@@ -321,6 +321,8 @@ static NSString *const SESSION_ARRANGEMENT_PENDING_JUMPS = @"Pending Jumps";  //
 static NSString *const SESSION_ARRANGEMENT_CHANNEL_ID = @"Channel ID";  // NSString
 static NSString *const SESSION_ARRANGEMENT_TIMESTAMP_BASELINE = @"Timestamp Baseline"; // NSNumber
 static NSString *const SESSION_ARRANGEMENT_BROWSER_TARGET = @"Browser Target";  // String
+static NSString *const SESSION_ARRANGEMENT_TAB_STATUS = @"Tab Status";  // NSDictionary
+static NSString *const SESSION_ARRANGEMENT_SESSION_NOTE = @"Session Note";  // NSDictionary (graph-encoded)
 
 // Keys for dictionary in SESSION_ARRANGEMENT_PROGRAM
 static NSString *const kProgramType = @"Type";  // Value will be one of the kProgramTypeXxx constants.
@@ -564,6 +566,8 @@ typedef NS_ENUM(NSUInteger, PTYSessionTurdType) {
     iTermSwiftyString *_subtitleSwiftyString;
     iTermSwiftyString *_backgroundImageSwiftyString;
 
+    iTermSessionTabStatus *_tabStatus;
+
     iTermBackgroundDrawingHelper *_backgroundDrawingHelper;
     iTermMetaFrustrationDetector *_metaFrustrationDetector;
 
@@ -576,6 +580,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTurdType) {
     iTermVariableReference *_jobPidRef;
     iTermCacheableImage *_customIcon;
     CGContextRef _metalContext;
+    CGContextRef _metalContextDoubleWidth;  // 2x size, created on demand for DECDWL/DECDHL
     BOOL _errorCreatingMetalContext;
 
     id<iTermKeyMapper> _keyMapper;
@@ -701,6 +706,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTurdType) {
 
 + (void)registerBuiltInFunctions {
     [iTermSessionTitleBuiltInFunction registerBuiltInFunction];
+    [iTermSessionNameBuiltInFunction registerBuiltInFunction];
 }
 
 + (void)registerSessionInArrangement:(NSDictionary *)arrangement {
@@ -1061,6 +1067,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [_badgeSwiftyString release];
     [_backgroundImageSwiftyString release];
     [_subtitleSwiftyString release];
+    [_tabStatus release];
     [_autoNameSwiftyString release];
     [_statusBarViewController release];
     [_backgroundDrawingHelper release];
@@ -1074,6 +1081,9 @@ ITERM_WEAKLY_REFERENCEABLE
     [_paneIndexMonitor release];
     if (_metalContext) {
         CGContextRelease(_metalContext);
+    }
+    if (_metalContextDoubleWidth) {
+        CGContextRelease(_metalContextDoubleWidth);
     }
     [[NSNotificationCenter defaultCenter] removeObserver:self];
 
@@ -1151,6 +1161,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [_browserTarget release];
     [_bindings release];
     [_apsContext release];
+    [_sessionNoteModel release];
 
     [super dealloc];
 }
@@ -1312,21 +1323,17 @@ ITERM_WEAKLY_REFERENCEABLE
                                                ScreenCharArray *sca,
                                                iTermImmutableMetadata metadata,
                                                BOOL *stopPtr) {
+            screen_char_t continuation = sca.continuation;
             if (i + 1 == NSMaxRange(rangeOfLines)) {
-                screen_char_t continuation = { 0 };
+                continuation = (screen_char_t){ 0 };
                 continuation.code = EOL_SOFT;
-                [mutableState appendScreenChars:sca.line
-                                         length:sca.length
-                         externalAttributeIndex:iTermImmutableMetadataGetExternalAttributesIndex(metadata)
-                                   continuation:continuation
-                                       rtlFound:metadata.rtlFound];
-            } else {
-                [mutableState appendScreenChars:sca.line
-                                         length:sca.length
-                         externalAttributeIndex:iTermImmutableMetadataGetExternalAttributesIndex(metadata)
-                                   continuation:sca.continuation
-                                       rtlFound:metadata.rtlFound];
             }
+            [mutableState appendScreenChars:sca.line
+                                     length:sca.length
+                     externalAttributeIndex:iTermImmutableMetadataGetExternalAttributesIndex(metadata)
+                               continuation:continuation
+                                   rtlFound:metadata.rtlFound
+                              lineAttribute:metadata.lineAttribute];
         }];
     }];
 }
@@ -1590,6 +1597,18 @@ ITERM_WEAKLY_REFERENCEABLE
         aSession->_sshState = [arrangement[SESSION_ARRANGEMENT_SSH_STATE] unsignedIntegerValue];
     }
     aSession.cursorTypeOverride = arrangement[SESSION_ARRANGEMENT_CURSOR_TYPE_OVERRIDE];
+    NSDictionary *tabStatusDict = arrangement[SESSION_ARRANGEMENT_TAB_STATUS];
+    if (tabStatusDict) {
+        aSession->_tabStatus = [[iTermSessionTabStatus fromArrangementDictionary:tabStatusDict
+                                                                       sessionID:aSession.guid] retain];
+        if (aSession->_tabStatus) {
+            [[iTermSessionStatusController instance] tabStatusDidChange:aSession->_tabStatus];
+        }
+    }
+    NSDictionary *sessionNoteDict = [NSDictionary castFrom:arrangement[SESSION_ARRANGEMENT_SESSION_NOTE]];
+    if (sessionNoteDict) {
+        aSession.sessionNoteModel = [iTermSessionNoteModel fromArrangement:sessionNoteDict];
+    }
     if (didRestoreContents && attachedToServer) {
         if (arrangement[SESSION_ARRANGEMENT_ALERT_ON_NEXT_MARK]) {
             aSession->_alertOnNextMark = [arrangement[SESSION_ARRANGEMENT_ALERT_ON_NEXT_MARK] boolValue];
@@ -1655,6 +1674,9 @@ ITERM_WEAKLY_REFERENCEABLE
 - (void)didFinishRestoration {
     if ([_foundingArrangement[SESSION_ARRANGEMENT_FILTER] length] > 0) {
         [self.delegate session:self setFilter:_foundingArrangement[SESSION_ARRANGEMENT_FILTER]];
+    }
+    if (_sessionNoteModel.hasContent) {
+        [_view restoreSessionNoteWithModel:_sessionNoteModel];
     }
 }
 
@@ -1754,8 +1776,8 @@ ITERM_WEAKLY_REFERENCEABLE
         NSString *useTabColorKey = iTermAmendedColorKey(KEY_USE_TAB_COLOR, theBookmark, dark);
         if (tabColorDict) {
             // We're restoring a tmux arrangement that specifies a tab color.
-            NSColor *profileTabColorDict = [iTermProfilePreferences objectForColorKey:KEY_TAB_COLOR dark:dark profile:theBookmark];
-            if (![iTermProfilePreferences boolForColorKey:KEY_USE_TAB_COLOR dark:dark profile:theBookmark] ||
+            NSDictionary *profileTabColorDict = [iTermProfilePreferences objectForTabColorKey:KEY_TAB_COLOR dark:dark profile:theBookmark];
+            if (![iTermProfilePreferences boolForTabColorKey:KEY_USE_TAB_COLOR dark:dark profile:theBookmark] ||
                 ![NSObject object:profileTabColorDict isApproximatelyEqualToObject:tabColorDict epsilon:1/255.0]) {
                 // The tmux profile does not specify a tab color or it specifies a different one. Override it and divorce.
                 NSString *tabColorKey = iTermAmendedColorKey(KEY_TAB_COLOR, theBookmark, dark);
@@ -1765,7 +1787,7 @@ ITERM_WEAKLY_REFERENCEABLE
                 [keysToPreserveInCaseOfDivorce addObjectsFromArray:@[ tabColorKey, useTabColorKey ]];
             }
         } else if ([colorString isEqualToString:iTermTmuxTabColorNone] &&
-                   [iTermProfilePreferences boolForColorKey:KEY_USE_TAB_COLOR dark:dark profile:theBookmark]) {
+                   [iTermProfilePreferences boolForTabColorKey:KEY_USE_TAB_COLOR dark:dark profile:theBookmark]) {
             // There was no tab color but the tmux profile specifies one. Disable it and divorce.
             theBookmark = [theBookmark dictionaryBySettingObject:@NO forKey:useTabColorKey];
             [keysToPreserveInCaseOfDivorce addObjectsFromArray:@[ useTabColorKey ]];
@@ -2817,6 +2839,11 @@ ITERM_WEAKLY_REFERENCEABLE
         env[@"ITERM2_COOKIE"] = self.cookie;
     }
 
+    NSString *suiteName = [iTermUserDefaults customSuiteName];
+    if (suiteName) {
+        env[@"IT2_SUITE"] = suiteName;
+    }
+
     if ([iTermAdvancedSettingsModel addUtilitiesToPATH]) {
         NSString *sshPath = [iTermPathToSSH() stringByDeletingLastPathComponent];
         if (sshPath) {
@@ -3458,6 +3485,8 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
     dispatch_async(dispatch_get_main_queue(), ^{
         [weakSelf updateDisplayBecause:@"terminate session"];
     });
+
+    [self clearTabStatus];
 
     [[NSNotificationCenter defaultCenter] postNotificationName:iTermSessionWillTerminateNotification
                                                         object:self];
@@ -4816,8 +4845,8 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
 
 - (NSColor *)tabColorInProfile:(NSDictionary *)profile {
     const BOOL dark = _screen.colorMap.darkMode;
-    if ([iTermProfilePreferences boolForColorKey:KEY_USE_TAB_COLOR dark:dark profile:profile]) {
-        return [iTermProfilePreferences colorForKey:KEY_TAB_COLOR dark:dark profile:profile];
+    if ([iTermProfilePreferences boolForTabColorKey:KEY_USE_TAB_COLOR dark:dark profile:profile]) {
+        return [iTermProfilePreferences colorForTabColorKey:KEY_TAB_COLOR dark:dark profile:profile];
     }
     return nil;
 }
@@ -5377,8 +5406,8 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
     }
 
     if (self.isTmuxClient) {
-        NSDictionary *tabColorDict = [iTermProfilePreferences objectForColorKey:KEY_TAB_COLOR dark:_screen.colorMap.darkMode profile:aDict];
-        if (![iTermProfilePreferences boolForColorKey:KEY_USE_TAB_COLOR dark:_screen.colorMap.darkMode profile:aDict]) {
+        NSDictionary *tabColorDict = [iTermProfilePreferences objectForTabColorKey:KEY_TAB_COLOR dark:_screen.colorMap.darkMode profile:aDict];
+        if (![iTermProfilePreferences boolForTabColorKey:KEY_USE_TAB_COLOR dark:_screen.colorMap.darkMode profile:aDict]) {
             tabColorDict = nil;
         }
         NSColor *tabColor = [ITAddressBookMgr decodeColor:tabColorDict];
@@ -6444,6 +6473,20 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
 
     NSString *pwd = [self currentLocalWorkingDirectory];
     result[SESSION_ARRANGEMENT_WORKING_DIRECTORY] = pwd ? pwd : @"";
+
+    NSDictionary *tabStatusDict = [_tabStatus arrangementDictionary];
+    if (tabStatusDict) {
+        result[SESSION_ARRANGEMENT_TAB_STATUS] = tabStatusDict;
+    }
+    if (_sessionNoteModel.hasContent) {
+        [result encodeChildWithKey:SESSION_ARRANGEMENT_SESSION_NOTE
+                        identifier:@"note"
+                        generation:_sessionNoteModel.generation
+                             block:^BOOL(id<iTermEncoderAdapter> encoder) {
+            [_sessionNoteModel encodeWithAdapter:encoder];
+            return YES;
+        }];
+    }
     return YES;
 }
 
@@ -6686,6 +6729,17 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
     [self.variablesScope setValue:processInfo.commandLine forVariableNamed:iTermVariableKeySessionCommandLine];
     [self.variablesScope setValue:@(processInfo.processID) forVariableNamed:iTermVariableKeySessionJobPid];
 
+    // Collect argv0 values from the foreground process up through its ancestors (deepest first),
+    // stopping before the login shell. This lets triggers and monitors match on the user's command
+    // (e.g. "claude") even when a child process (e.g. caffeinate) is the deepest foreground job.
+    NSArray<NSString *> *ancestorNames = processInfo.foregroundJobAncestorNames;
+    [self.variablesScope setValue:[ancestorNames componentsJoinedByString:@"\n"]
+                forVariableNamed:iTermVariableKeySessionForegroundJobAncestors];
+
+    DLog(@"setCurrentForegroundJobProcessInfo: setting foreground job ancestors to %@ for trigger filtering", ancestorNames);
+    [_screen setForegroundJobAncestorsForTriggerFiltering:ancestorNames];
+    _eventTriggerEvaluator.foregroundJobAncestors = ancestorNames;
+
     if ([name isEqualToString:@"sudo"]) {
         [self checkForSudoPasswordPromptToOfferTouchID];
     } else {
@@ -6815,6 +6869,7 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
     DLog(@"Line height is now %f", [_textview lineHeight]);
     [_delegate sessionDidChangeFontSize:self adjustWindow:!_windowAdjustmentDisabled && !_view.isBrowser];
     [_composerManager updateFont];
+    [_view.title invalidateTitleFont];
     DLog(@"After:\n%@", [window.contentView iterm_recursiveDescription]);
     DLog(@"Window frame: %@", window);
 
@@ -6883,7 +6938,7 @@ static NSString *const PTYSessionComposerPrefixUserDataKeyDetectedByTrigger = @"
         return nil;
     }
     NSDictionary *defaultAttributes = [_textview attributeProviderUsingProcessedColors:YES
-                                                           elideDefaultBackgroundColor:elideDefaultBackgroundColor]((screen_char_t){}, nil);
+                                                           elideDefaultBackgroundColor:elideDefaultBackgroundColor]((screen_char_t){}, nil, NULL);
     NSAttributedString *space = [NSAttributedString attributedStringWithString:@" "
                                                                     attributes:defaultAttributes];
 
@@ -7918,6 +7973,10 @@ extendResultsAcrossSoftBoundaries:(BOOL)extendResultsAcrossSoftBoundaries {
     return _metalContext;
 }
 
+- (CGContextRef)metalGlueContextDoubleWidth {
+    return _metalContextDoubleWidth;
+}
+
 + (CGColorSpaceRef)metalColorSpace {
     static dispatch_once_t onceToken;
     static CGColorSpaceRef colorSpace;
@@ -7963,17 +8022,37 @@ extendResultsAcrossSoftBoundaries:(BOOL)extendResultsAcrossSoftBoundaries {
         CGContextRelease(_metalContext);
         _metalContext = NULL;
     }
+    if (_metalContextDoubleWidth) {
+        CGContextRelease(_metalContextDoubleWidth);
+        _metalContextDoubleWidth = NULL;
+    }
     DLog(@"allocate new metal context of size %@", NSStringFromSize(scaledSize));
+    const CGBitmapInfo bitmapInfo = CGBitmapInfoMake(kCGImageAlphaPremultipliedFirst,
+                                                     kCGImageComponentInteger,
+                                                     kCGImageByteOrder32Host,
+                                                     kCGImagePixelFormatPacked);
     _metalContext = CGBitmapContextCreate(NULL,
                                           scaledSize.width,
                                           scaledSize.height,
                                           8,
-                                          scaledSize.width * 4,  // bytes per row
+                                          scaledSize.width * 4,
                                           [PTYSession metalColorSpace],
-                                          CGBitmapInfoMake(kCGImageAlphaPremultipliedFirst, kCGImageComponentInteger, kCGImageByteOrder32Host, kCGImagePixelFormatPacked));
-    // Initialize to transparent. Character sources will clear only the
-    // area they draw into after copying pixels, keeping the context clean.
+                                          bitmapInfo);
     CGContextClearRect(_metalContext, CGRectMake(0, 0, scaledSize.width, scaledSize.height));
+
+    // Double-width context uses a larger radius for overflow room.
+    const int dwMaxParts = iTermTextureMapMaxCharacterParts * 2 + 1;
+    CGSize dwSize = CGSizeMake(size.width * scale * dwMaxParts,
+                               size.height * scale * dwMaxParts);
+    _metalContextDoubleWidth = CGBitmapContextCreate(NULL,
+                                                      dwSize.width,
+                                                      dwSize.height,
+                                                      8,
+                                                      dwSize.width * 4,
+                                                      [PTYSession metalColorSpace],
+                                                      bitmapInfo);
+    memset(CGBitmapContextGetData(_metalContextDoubleWidth), 0,
+           CGBitmapContextGetBytesPerRow(_metalContextDoubleWidth) * (size_t)dwSize.height);
 }
 
 - (BOOL)metalAllowed {
@@ -14700,6 +14779,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 }
 
 - (void)screenPromptDidStartAtLine:(int)line {
+    [self clearTabStatus];
     [_pasteHelper unblock];
 }
 
@@ -15540,72 +15620,125 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     [self setTabColor:color fromEscapeSequence:NO];
 }
 
+// Returns all appearance-variant keys for a tab color base key.
+// When separate colors mode is enabled, returns both the light and dark
+// variants so that tab colors are written to both modes and survive
+// appearance switches. When separate mode is off, returns just the base key.
+- (NSArray<NSString *> *)allTabColorKeysForBaseKey:(NSString *)baseKey {
+    const BOOL separate = [iTermProfilePreferences boolForKey:KEY_USE_SEPARATE_COLORS_FOR_LIGHT_AND_DARK_MODE
+                                                    inProfile:self.profile];
+    if (!separate) {
+        return @[ baseKey ];
+    }
+    return @[ baseKey,
+              iTermAmendedColorKey2(baseKey, YES, YES),
+              iTermAmendedColorKey2(baseKey, YES, NO) ];
+}
+
+- (NSDictionary<NSString *, id> *)tabColorSettings {
+    NSArray<NSString *> *useTabColorKeys = [self allTabColorKeysForBaseKey:KEY_USE_TAB_COLOR];
+    NSArray<NSString *> *tabColorKeys = [self allTabColorKeysForBaseKey:KEY_TAB_COLOR];
+
+    NSMutableDictionary *settings = [NSMutableDictionary dictionary];
+
+    // Retain baselines since setSessionSpecificProfileValues will remove them from
+    // _preEscapeSequenceColors, potentially deallocating them.
+    for (NSString *key in useTabColorKeys) {
+        id baseline = [[_preEscapeSequenceColors[key] retain] autorelease] ?: @([iTermProfilePreferences boolForKey:key inProfile:_profile]);
+        settings[key] = baseline;
+    }
+
+    for (NSString *key in tabColorKeys) {
+        id baseline = [[_preEscapeSequenceColors[key] retain] autorelease] ?: _profile[key];
+        if (baseline) {
+            settings[key] = baseline;
+        }
+    }
+
+    return settings;
+}
+
+- (void)clearTabColorByEscapeSequence {
+    NSArray<NSString *> *useTabColorKeys = [self allTabColorKeysForBaseKey:KEY_USE_TAB_COLOR];
+    NSArray<NSString *> *tabColorKeys = [self allTabColorKeysForBaseKey:KEY_TAB_COLOR];
+
+    NSDictionary<NSString *, id> *savedBaselines = [self tabColorSettings];
+    NSMutableDictionary *valuesToRestore = [NSMutableDictionary dictionary];
+    for (NSString *key in useTabColorKeys) {
+        if (savedBaselines[key]) {
+            valuesToRestore[key] = savedBaselines[key];
+            [_preEscapeSequenceColors removeObjectForKey:key];
+        }
+    }
+    for (NSString *key in tabColorKeys) {
+        if (savedBaselines[key]) {
+            valuesToRestore[key] = savedBaselines[key];
+            [_preEscapeSequenceColors removeObjectForKey:key];
+        }
+    }
+    if (valuesToRestore.count > 0) {
+        [self setSessionSpecificProfileValues:valuesToRestore];
+    }
+}
+
+- (void)setTabColorFromEscapeSequence:(NSColor *)color {
+    NSArray<NSString *> *useTabColorKeys = [self allTabColorKeysForBaseKey:KEY_USE_TAB_COLOR];
+    NSArray<NSString *> *tabColorKeys = [self allTabColorKeysForBaseKey:KEY_TAB_COLOR];
+
+    NSDictionary<NSString *, id> *savedBaselines = [self tabColorSettings];
+    // Setting a new color - write to all appearance variants.
+    NSMutableDictionary *dict = [NSMutableDictionary dictionary];
+    NSDictionary *encoded = [ITAddressBookMgr encodeColor:color];
+    for (NSString *key in useTabColorKeys) {
+        dict[key] = @YES;
+    }
+    for (NSString *key in tabColorKeys) {
+        dict[key] = encoded;
+    }
+    [self setSessionSpecificProfileValues:dict];
+
+    // Restore baselines after setSessionSpecificProfileValues clears them.
+    if (!_preEscapeSequenceColors) {
+        _preEscapeSequenceColors = [[NSMutableDictionary alloc] init];
+    }
+    [_preEscapeSequenceColors addEntriesFromDictionary:savedBaselines];
+}
+
 - (void)setTabColor:(NSColor *)color fromEscapeSequence:(BOOL)fromEscapeSequence {
-    NSString *useTabColorKey = [self amendedColorKey:KEY_USE_TAB_COLOR];
-    NSString *tabColorKey = [self amendedColorKey:KEY_TAB_COLOR];
-
     if (fromEscapeSequence) {
-        // Save baselines before modifying, if not already saved.
-        if (!_preEscapeSequenceColors) {
-            _preEscapeSequenceColors = [[NSMutableDictionary alloc] init];
-        }
-
-        // Retain baselines since setSessionSpecificProfileValues will remove them from
-        // _preEscapeSequenceColors, potentially deallocating them.
-        id useTabColorBaseline = [[_preEscapeSequenceColors[useTabColorKey] retain] autorelease];
-        id tabColorBaseline = [[_preEscapeSequenceColors[tabColorKey] retain] autorelease];
-
-        if (!useTabColorBaseline) {
-            useTabColorBaseline = @([iTermProfilePreferences boolForKey:useTabColorKey inProfile:_profile]);
-        }
-        if (!tabColorBaseline) {
-            tabColorBaseline = _profile[tabColorKey];
-        }
-
-        // If this is a reset (color == nil) and we have baselines, restore them.
-        if (!color && (useTabColorBaseline || tabColorBaseline)) {
-            NSMutableDictionary *valuesToRestore = [NSMutableDictionary dictionary];
-            if (useTabColorBaseline) {
-                valuesToRestore[useTabColorKey] = useTabColorBaseline;
-                [_preEscapeSequenceColors removeObjectForKey:useTabColorKey];
-            }
-            if (tabColorBaseline) {
-                valuesToRestore[tabColorKey] = tabColorBaseline;
-                [_preEscapeSequenceColors removeObjectForKey:tabColorKey];
-            }
-            [self setSessionSpecificProfileValues:valuesToRestore];
-            return;
-        }
-
-        // Setting a new color - apply the change
-        NSDictionary *dict;
         if (color) {
-            dict = @{ useTabColorKey: @YES,
-                      tabColorKey: [ITAddressBookMgr encodeColor:color] };
+            [self setTabColorFromEscapeSequence:color];
         } else {
-            dict = @{ useTabColorKey: @NO };
+            [self clearTabColorByEscapeSequence];
         }
-        [self setSessionSpecificProfileValues:dict];
 
-        // Restore baselines after setSessionSpecificProfileValues clears them.
-        if (useTabColorBaseline) {
-            _preEscapeSequenceColors[useTabColorKey] = useTabColorBaseline;
+
+    } else {
+        [self setTabColorByUI:color];
+    }
+}
+
+- (void)setTabColorByUI:(NSColor *)color {
+    NSArray<NSString *> *useTabColorKeys = [self allTabColorKeysForBaseKey:KEY_USE_TAB_COLOR];
+    NSArray<NSString *> *tabColorKeys = [self allTabColorKeysForBaseKey:KEY_TAB_COLOR];
+
+    // Not from escape sequence (Edit Session, View menu, etc.)
+    // setSessionSpecificProfileValues will clear any baselines.
+    NSMutableDictionary *dict = [NSMutableDictionary dictionary];
+    if (color) {
+        NSDictionary *encoded = [ITAddressBookMgr encodeColor:color];
+        for (NSString *key in useTabColorKeys) {
+            dict[key] = @YES;
         }
-        if (tabColorBaseline) {
-            _preEscapeSequenceColors[tabColorKey] = tabColorBaseline;
+        for (NSString *key in tabColorKeys) {
+            dict[key] = encoded;
         }
     } else {
-        // Not from escape sequence (Edit Session) - just apply the change.
-        // setSessionSpecificProfileValues will clear any baselines.
-        NSDictionary *dict;
-        if (color) {
-            dict = @{ useTabColorKey: @YES,
-                      tabColorKey: [ITAddressBookMgr encodeColor:color] };
-        } else {
-            dict = @{ useTabColorKey: @NO };
+        for (NSString *key in useTabColorKeys) {
+            dict[key] = @NO;
         }
-        [self setSessionSpecificProfileValues:dict];
     }
+    [self setSessionSpecificProfileValues:dict];
 }
 
 - (void)screenSetTabColorRedComponentTo:(CGFloat)color {
@@ -18322,20 +18455,70 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
 - (void)automaticProfileSwitcherLoadProfile:(iTermSavedProfile *)savedProfile {
     Profile *underlyingProfile = [[ProfileModel sharedInstance] bookmarkWithGuid:savedProfile.originalProfile[KEY_GUID]];
     Profile *replacementProfile = underlyingProfile ?: savedProfile.originalProfile;
+    DLog(@"APS load profile: target=%@ isDivorced=%@ currentFont=%@ originalProfileGuid=%@",
+         underlyingProfile[KEY_NAME], @(savedProfile.isDivorced),
+         _textview.fontTable.asciiFont.font, _originalProfile[KEY_GUID]);
+
+    // Compute the font zoom delta before switching profiles so we can preserve it.
+    // Use _originalProfile to get the base (unzoomed) font size, since _originalProfile
+    // always reflects the underlying shared profile and is not modified by Cmd+/- zoom.
+    CGFloat fontZoomDelta = 0;
+    if ([iTermAdvancedSettingsModel preserveFontSizeOnAutomaticProfileSwitch]) {
+        iTermFontTable *originalFontTable = [iTermFontTable fontTableForProfile:_originalProfile];
+        CGFloat currentPointSize = _textview.fontTable.asciiFont.font.pointSize;
+        CGFloat originalPointSize = originalFontTable.asciiFont.font.pointSize;
+        fontZoomDelta = currentPointSize - originalPointSize;
+        DLog(@"APS zoom: currentPointSize=%@ originalPointSize=%@ fontZoomDelta=%@",
+             @(currentPointSize), @(originalPointSize), @(fontZoomDelta));
+    }
+
     if (![self setProfile:replacementProfile preservingName:NO adjustWindow:NO]) {
+        DLog(@"APS setProfile failed");
         [_view showUnobtrusiveMessage:[NSString stringWithFormat:@"Can’t switch to profile “%@”—wrong profile type.", underlyingProfile[KEY_NAME]]];
         return;
     }
     if (savedProfile.isDivorced) {
+        // When preserving font zoom, exclude font keys from the overrides
+        // since the zoom delta will handle the font. The saved overrides may
+        // have a stale font if the user zoomed after a previous APS round-trip.
+        NSSet *fontKeys = nil;
+        if (fontZoomDelta != 0) {
+            fontKeys = [NSSet setWithObjects:KEY_NORMAL_FONT, KEY_NON_ASCII_FONT,
+                        KEY_FONT_CONFIG, KEY_BROWSER_ZOOM, nil];
+            DLog(@"APS excluding font keys from divorced overrides because fontZoomDelta=%@", @(fontZoomDelta));
+        }
+        DLog(@"APS restoring divorced overrides: %@", [savedProfile.overriddenFields allObjects]);
         NSMutableDictionary *overrides = [NSMutableDictionary dictionary];
         for (NSString *key in savedProfile.overriddenFields) {
             if ([key isEqualToString:KEY_GUID] || [key isEqualToString:KEY_ORIGINAL_GUID]) {
                 continue;
             }
+            if ([fontKeys containsObject:key]) {
+                continue;
+            }
             overrides[key] = savedProfile.profile[key];
         }
+        const BOOL saved = _windowAdjustmentDisabled;
+        _windowAdjustmentDisabled = YES;
         [self setSessionSpecificProfileValues:overrides];
+        _windowAdjustmentDisabled = saved;
     }
+
+    // Re-apply the font zoom delta after the profile switch.
+    if (fontZoomDelta != 0) {
+        DLog(@"APS applying zoom delta %@ to font %@", @(fontZoomDelta), _textview.fontTable.asciiFont.font);
+        const BOOL saved = _windowAdjustmentDisabled;
+        _windowAdjustmentDisabled = YES;
+        iTermFontTable *zoomedTable = [_textview.fontTable fontTableGrownBy:fontZoomDelta];
+        [self setFontTable:zoomedTable
+         horizontalSpacing:_textview.horizontalSpacing
+           verticalSpacing:_textview.verticalSpacing];
+        _windowAdjustmentDisabled = saved;
+        DLog(@"APS after zoom: font=%@", _textview.fontTable.asciiFont.font);
+    } else {
+        DLog(@"APS skipping zoom: delta=0");
+    }
+
     if ([iTermAdvancedSettingsModel showAutomaticProfileSwitchingBanner]) {
         [_view showUnobtrusiveMessage:[NSString stringWithFormat:@"Switched to profile “%@”.", underlyingProfile[KEY_NAME]]];
     }
@@ -19493,6 +19676,16 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
 
 - (void)sessionViewToggleLock {
     self.locked = !_locked;
+}
+
+- (id<PSMPUAFontProvider>)sessionViewPUAFontProvider {
+    return self;
+}
+
+#pragma mark - PSMPUAFontProvider
+
+- (NSFont *)fontForPUACodePoint:(UTF32Char)codePoint {
+    return [_textview.fontTable fontForPUACodePoint:codePoint];
 }
 
 #pragma mark - iTermCoprocessDelegate
@@ -21679,6 +21872,11 @@ preferredOffsetFromTopDidChange:(CGFloat)offset {
 
 - (id<iTermSyntaxHighlighting>)composerManager:(iTermComposerManager *)composerManager
           syntaxHighlighterForAttributedString:(NSMutableAttributedString *)attributedString {
+    // fontTable is non-optional in Swift. If _textview is nil, ObjC nil messaging
+    // returns nil which would be stored as null in the Swift field, crashing later.
+    if (!_textview) {
+        return nil;
+    }
     return [[[iTermSyntaxHighlighter alloc] init:attributedString
                                         colorMap:_screen.colorMap
                                         fontTable:_textview.fontTable
@@ -22219,7 +22417,8 @@ getOptionKeyBehaviorLeft:(iTermOptionKeyBehavior *)left
                                              length:sca.length
                              externalAttributeIndex:sca.eaIndex
                                        continuation:sca.continuation
-                                           rtlFound:sca.metadata.rtlFound];
+                                           rtlFound:sca.metadata.rtlFound
+                                      lineAttribute:sca.metadata.lineAttribute];
                 } else {
                     DLog(@"%@: Removing last line from filter results", self);
                     [mutableState removeLastLine];
@@ -22746,6 +22945,52 @@ getOptionKeyBehaviorLeft:(iTermOptionKeyBehavior *)left
             self.variablesScope.uname = _conductor.uname;
             break;
     }
+}
+
+- (iTermSessionTabStatus *)tabStatus {
+    if (!_tabStatus) {
+        _tabStatus = [[iTermSessionTabStatus alloc] initWithSessionID:self.guid];
+    }
+    return _tabStatus;
+}
+
+- (void)screenSetTabStatus:(VT100TabStatusUpdate *)status {
+    DLog(@"%@ screenSetTabStatus: %@", self, status);
+    NSString *previousStatusText = self.tabStatus.statusText;
+    if (![self.tabStatus apply:status]) {
+        DLog(@"No change");
+        return;
+    }
+    [self maybePostTabStatusNotificationWithPreviousStatusText:previousStatusText];
+    [_delegate sessionTabStatusDidChange:self];
+}
+
+- (void)maybePostTabStatusNotificationWithPreviousStatusText:(NSString *)previousStatusText {
+    NSString *newStatusText = self.tabStatus.statusText;
+    if (!newStatusText) {
+        return;
+    }
+    if ([newStatusText isEqualToString:previousStatusText ?: @""]) {
+        return;
+    }
+    if (![[iTermStatusPrioritySettings shared] shouldNotifyFor:newStatusText]) {
+        return;
+    }
+    [[iTermNotificationController sharedInstance]
+        notify:[NSString stringWithFormat:@"Session \u201c%@\u201d", [[self name] removingHTMLFromTabTitleIfNeeded]]
+        withDescription:[NSString stringWithFormat:@"Status changed to \u201c%@\u201d", newStatusText]
+        windowIndex:[self screenWindowIndex]
+        tabIndex:[self screenTabIndex]
+        viewIndex:[self screenViewIndex]];
+}
+
+- (void)clearTabStatus {
+    if (!_tabStatus || !_tabStatus.hasActiveStatus) {
+        return;
+    }
+    [_tabStatus clear];
+    [[iTermDockBadgeController sharedInstance] sessionDidLeaveWaiting:_guid];
+    [_delegate sessionTabStatusDidChange:self];
 }
 
 @end

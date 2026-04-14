@@ -781,6 +781,28 @@ iTermP3Color iTermSRGBColorToP3Color(iTermSRGBColor srgb) {
     return [self perceivedBrightness] < 0.5;
 }
 
+NSDictionary *iTermSRGBColorToDictionary(iTermSRGBColor color) {
+    return @{ kEncodedColorDictionaryColorSpace: kEncodedColorDictionarySRGBColorSpace,
+              kEncodedColorDictionaryRedComponent: @(color.r),
+              kEncodedColorDictionaryGreenComponent: @(color.g),
+              kEncodedColorDictionaryBlueComponent: @(color.b) };
+}
+
+BOOL iTermSRGBColorFromDictionary(NSDictionary *dict, iTermSRGBColor *colorOut) {
+    NSNumber *r = dict[kEncodedColorDictionaryRedComponent];
+    NSNumber *g = dict[kEncodedColorDictionaryGreenComponent];
+    NSNumber *b = dict[kEncodedColorDictionaryBlueComponent];
+    if (!r || !g || !b) {
+        return NO;
+    }
+    *colorOut = (iTermSRGBColor){
+        .r = r.doubleValue,
+        .g = g.doubleValue,
+        .b = b.doubleValue
+    };
+    return YES;
+}
+
 - (NSDictionary *)dictionaryValue {
     if ([iTermAdvancedSettingsModel p3]) {
         NSColor *color = [self colorUsingColorSpace:[NSColorSpace displayP3ColorSpace]];

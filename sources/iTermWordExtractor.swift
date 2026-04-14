@@ -558,8 +558,8 @@ class WordExtractor: NSObject {
         let startCoord = atoms[startIndex].coordRange.start
         var endCoord = atoms[endIndex - 1].coordRange.end
 
-        // Make sure to include the DWC_RIGHT after the last character
-        if endCoord.x < ds.xLimit() && ds.haveDoubleWidthExtension(at: endCoord) {
+        // Make sure to include extensions (DWC_RIGHT, DWL_SPACER) after the last character.
+        while endCoord.x < ds.xLimit() && ds.haveDoubleWidthExtension(at: endCoord) {
             endCoord.x += 1
         }
 
@@ -709,8 +709,8 @@ class WordExtractor: NSObject {
         let startCoord = atoms[newStartAtomIndex].coordRange.start
         var endCoord = atoms[newEndAtomIndex - 1].coordRange.end
 
-        // Make sure to include the DWC_RIGHT after the last character
-        if endCoord.x < ds.xLimit() && ds.haveDoubleWidthExtension(at: endCoord) {
+        // Make sure to include extensions (DWC_RIGHT, DWL_SPACER) after the last character.
+        while endCoord.x < ds.xLimit() && ds.haveDoubleWidthExtension(at: endCoord) {
             endCoord.x += 1
         }
 
@@ -891,7 +891,7 @@ class WordExtractor: NSObject {
         if theCharacter.complexChar == 0 && theCharacter.image == 0 {
             if theCharacter.code == TAB_FILLER {
                 return .whitespace
-            } else if theCharacter.code == DWC_RIGHT || theCharacter.code == DWC_SKIP {
+            } else if theCharacter.code == DWC_RIGHT || theCharacter.code == DWC_SKIP || theCharacter.code == DWL_SPACER {
                 return .doubleWidthPlaceholder
             }
         }

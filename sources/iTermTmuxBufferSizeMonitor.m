@@ -159,7 +159,7 @@ static double TimespecToSeconds(struct timespec* ts) {
         _controller = controller;
         _pauseAge = pauseAge;
         _series = [NSMutableDictionary dictionary];
-        _timer = [NSTimer scheduledWeakTimerWithTimeInterval:1 target:self selector:@selector(update:) userInfo:nil repeats:YES];
+        _timer = [NSTimer it_scheduledWeakTimerWithTimeInterval:1 target:self selector:@selector(update:) userInfo:nil repeats:YES];
     }
     return self;
 }

@@ -59,6 +59,20 @@
                 result->type = VT100_WAIT;
             } else {
                 switch (c2) {
+                    case '3':
+                        result->type = VT100CSI_DECDHL;
+                        result.csi->p[0] = 3;
+                        break;
+                    case '4':
+                        result->type = VT100CSI_DECDHL;
+                        result.csi->p[0] = 4;
+                        break;
+                    case '5':
+                        result->type = VT100CSI_DECSWL;
+                        break;
+                    case '6':
+                        result->type = VT100CSI_DECDWL;
+                        break;
                     case '8':
                         result->type = VT100CSI_DECALN;
                         break;

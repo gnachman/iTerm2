@@ -43,11 +43,11 @@ class ResilientCoordinateTests: XCTestCase {
         let sc = s.screen!
         sc.delegate = s
         sc.performBlock(joinedThreads: { _, mutableState, _ in
-            mutableState!.terminalEnabled = true
-            mutableState!.terminal!.termType = "xterm"
+            mutableState.terminalEnabled = true
+            mutableState.terminal!.termType = "xterm"
             sc.destructivelySetScreenWidth(width, height: height, mutableState: mutableState)
-            mutableState!.maxScrollbackLines = UInt32(scrollback)
-            setup?(mutableState!)
+            mutableState.maxScrollbackLines = UInt32(scrollback)
+            setup?(mutableState)
         })
         return s
     }
@@ -80,7 +80,7 @@ class ResilientCoordinateTests: XCTestCase {
     private func readChar(at coord: VT100GridAbsCoord,
                           screen sc: VT100Screen? = nil) -> Character? {
         let sc = sc ?? screen!
-        guard let dump = sc.compactLineDumpWithHistory() else { return nil }
+        let dump = sc.compactLineDumpWithHistory()
         let lines = dump.components(separatedBy: "\n")
         let overflow = sc.totalScrollbackOverflow()
         let lineIndex = Int(coord.y - overflow)
@@ -195,8 +195,8 @@ class ResilientCoordinateTests: XCTestCase {
     func testScrolledOffCoord() {
         screen.performBlock(joinedThreads: { _, mutableState, _ in
             for _ in 0..<2000 {
-                mutableState!.appendString(atCursor: "x")
-                mutableState!.appendCarriageReturnLineFeed()
+                mutableState.appendString(atCursor: "x")
+                mutableState.appendCarriageReturnLineFeed()
             }
         })
         let rc = makeCoord(absY: 0)
@@ -206,8 +206,8 @@ class ResilientCoordinateTests: XCTestCase {
     func testScrolledOffBoundary() {
         screen.performBlock(joinedThreads: { _, mutableState, _ in
             for _ in 0..<2000 {
-                mutableState!.appendString(atCursor: "x")
-                mutableState!.appendCarriageReturnLineFeed()
+                mutableState.appendString(atCursor: "x")
+                mutableState.appendCarriageReturnLineFeed()
             }
         })
         let overflow = screen.totalScrollbackOverflow()
@@ -235,6 +235,35 @@ class ResilientCoordinateTests: XCTestCase {
 
     func testValidCoordNilWhenInvalid() {
         XCTAssertNil(makeCoord(x: -1, absY: 30).validCoord)
+    }
+
+    // MARK: - Fold: SavedIntervalTreeObject crash (issue #40)
+
+    /// Regression test: folding a range that contains an interval tree object
+    /// at the sentinel column (x == width) used to crash in
+    /// SavedIntervalTreeObject.from because absCoordRangeForWidth: normalizes
+    /// (width, Y) → (0, Y+1), pushing the array index one past the end of
+    /// the screenCharArrays collected for the fold.
+    func testFoldWithMarkAtSentinelColumnDoesNotCrash() {
+        // Place a zero-length mark at (width, 24) — the sentinel column on
+        // the last line of the range we are about to fold.
+        screen.performBlock(joinedThreads: { _, mutableState, _ in
+            let mark = VT100ScreenMark()
+            let w = mutableState.width()
+            // Create interval at (w, 24) — the sentinel position.
+            let range = VT100GridAbsCoordRangeMake(w, 24, w, 24)
+            let interval = mutableState.interval(for: range)
+            mutableState.mutableIntervalTree().add(mark, with: interval)
+        })
+
+        // Fold lines 20–24.  foldAbsLineRange: builds the query interval
+        // with end.x = self.width, so the mark at (width, 24) falls inside
+        // the query.  Before the fix this crashes in
+        // SavedIntervalTreeObject.from with an array-index-out-of-bounds.
+        screen.foldAbsLineRange(NSRange(location: 20, length: 4))
+        screen.performBlock(joinedThreads: { _, _, _ in })
+
+        // If we get here without crashing, the bug is fixed.
     }
 
     // MARK: - Fold: Collapse
@@ -654,8 +683,8 @@ class ResilientCoordinateTests: XCTestCase {
         let tempGuid = tempSession!.guid!
         tempSession!.screen.performBlock(joinedThreads: { _, mutableState, _ in
             for _ in 0..<10 {
-                mutableState!.appendString(atCursor: "line")
-                mutableState!.appendCarriageReturnLineFeed()
+                mutableState.appendString(atCursor: "line")
+                mutableState.appendCarriageReturnLineFeed()
             }
         })
 
@@ -683,8 +712,8 @@ class ResilientCoordinateTests: XCTestCase {
         assertContent(rc, matchesLine: 5)
         screen.performBlock(joinedThreads: { _, mutableState, _ in
             for _ in 0..<2000 {
-                mutableState!.appendString(atCursor: "overflow")
-                mutableState!.appendCarriageReturnLineFeed()
+                mutableState.appendString(atCursor: "overflow")
+                mutableState.appendCarriageReturnLineFeed()
             }
         })
         XCTAssertEqual(rc.status, .scrolledOff)
@@ -697,8 +726,8 @@ class ResilientCoordinateTests: XCTestCase {
         // Overflow the scrollback so the fold region scrolls off.
         screen.performBlock(joinedThreads: { _, mutableState, _ in
             for _ in 0..<2000 {
-                mutableState!.appendString(atCursor: "overflow")
-                mutableState!.appendCarriageReturnLineFeed()
+                mutableState.appendString(atCursor: "overflow")
+                mutableState.appendCarriageReturnLineFeed()
             }
         })
         // The fold mark should be gone or the RC should be retired/invalid.
@@ -714,8 +743,8 @@ class ResilientCoordinateTests: XCTestCase {
         // Overflow the scrollback so the porthole region scrolls off.
         screen.performBlock(joinedThreads: { _, mutableState, _ in
             for _ in 0..<2000 {
-                mutableState!.appendString(atCursor: "overflow")
-                mutableState!.appendCarriageReturnLineFeed()
+                mutableState.appendString(atCursor: "overflow")
+                mutableState.appendCarriageReturnLineFeed()
             }
         })
         let status = rc.status
@@ -929,7 +958,7 @@ class ResilientCoordinateTests: XCTestCase {
         })
         let localScreen = localSession.screen!
 
-        let dump0 = localScreen.compactLineDumpWithHistory()!.components(separatedBy: "\n")
+        let dump0 = localScreen.compactLineDumpWithHistory().components(separatedBy: "\n")
         XCTAssertEqual(dump0[0], "abcdefghij")
         XCTAssertTrue(dump0[2].hasPrefix("uvwxy"))
 

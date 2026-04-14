@@ -1853,6 +1853,12 @@ NS_CLASS_AVAILABLE_MAC(10_14)
     return [_delegate iTermTabBarCanDragWindow];
 }
 
+- (void)iTermTabBarDidUpdateProgressBars {
+    if ([_delegate respondsToSelector:@selector(iTermTabBarDidUpdateProgressBars)]) {
+        [_delegate iTermTabBarDidUpdateProgressBars];
+    }
+}
+
 - (BOOL)iTermTabBarShouldHideBacking {
     const iTermPreferencesTabStyle preferredStyle = [iTermPreferences intForKey:kPreferenceKeyTabStyle];
     if (preferredStyle != TAB_STYLE_MINIMAL) {

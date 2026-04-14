@@ -168,10 +168,10 @@ extern NSString *const kScreenStateProgressKey;
 @property (nonatomic, readonly) MouseMode terminalMouseMode;
 @property (nonatomic, readonly) NSStringEncoding terminalEncoding;
 @property (nonatomic, readonly) BOOL terminalSendReceiveMode;
-@property (nonatomic, readonly) VT100Output *terminalOutput;
+@property (nonatomic, readonly, nullable) VT100Output *terminalOutput;
 @property (nonatomic, readonly) BOOL terminalAllowPasteBracketing;
 @property (nonatomic, readonly) BOOL terminalBracketedPasteMode;
-@property (nonatomic, readonly) NSArray<NSNumber *> *terminalSendModifiers;
+@property (nonatomic, readonly, nullable) NSArray<NSNumber *> *terminalSendModifiers;
 @property (nonatomic, readonly) VT100TerminalKeyReportingFlags terminalKeyReportingFlags;
 @property (nonatomic, readonly) BOOL terminalLiteralMode;
 @property (nonatomic, readonly) iTermEmulationLevel terminalEmulationLevel;
@@ -189,7 +189,7 @@ extern NSString *const kScreenStateProgressKey;
 @property (nonatomic, readonly) MouseMode terminalPreviousMouseMode;
 @property (nonatomic, readonly) screen_char_t terminalForegroundColorCode;
 @property (nonatomic, readonly) screen_char_t terminalBackgroundColorCode;
-@property (nonatomic, readonly) NSDictionary *terminalState;
+@property (nonatomic, readonly, nullable) NSDictionary *terminalState;
 @property (nullable, nonatomic, copy, readonly) id<VT100ScreenConfiguration> config;
 @property (nullable, nonatomic, strong, readonly) NSArray<iTermTuple<NSString *, NSString *> *> *exfiltratedEnvironment;
 @property (nonatomic, readonly) NSDictionary *promptStateDictionary;
@@ -241,7 +241,7 @@ extern NSString *const kScreenStateProgressKey;
 @property (nonatomic, readwrite) BOOL trackCursorLineMovement;
 @property (nonatomic, weak, readwrite) id<iTermIntervalTreeObserver> intervalTreeObserver;
 @property (nullable, nonatomic, strong, readwrite) id<VT100ScreenMarkReading> lastCommandMark;
-@property (nonatomic, strong, readwrite) iTermTemporaryDoubleBufferedGridController *temporaryDoubleBuffer;
+@property (nullable, nonatomic, strong, readwrite) iTermTemporaryDoubleBufferedGridController *temporaryDoubleBuffer;
 @property (nonatomic, readwrite) long long fakePromptDetectedAbsLine;
 @property (nonatomic, readwrite) long long lastPromptLine;
 @property (nonatomic, readwrite) BOOL shouldExpectPromptMarks;
@@ -310,9 +310,9 @@ extern NSString *const kScreenStateProgressKey;
 
 // WARNING - If you add any new APIs that return interval tree objects update VT100ScreenStateSanitizingAdapter
 
-- (VT100GridCoordRange)coordRangeForInterval:(Interval *)interval;
-- (VT100GridAbsCoordRange)absCoordRangeForInterval:(Interval *)interval;
-- (VT100GridRange)lineNumberRangeOfInterval:(Interval *)interval;
+- (VT100GridCoordRange)coordRangeForInterval:(nullable Interval *)interval;
+- (VT100GridAbsCoordRange)absCoordRangeForInterval:(nullable Interval *)interval;
+- (VT100GridRange)lineNumberRangeOfInterval:(nullable Interval *)interval;
 - (Interval *)intervalForGridCoordRange:(VT100GridCoordRange)range;
 - (Interval *)intervalForGridAbsCoordRange:(VT100GridAbsCoordRange)range;
 - (Interval *)intervalForGridAbsCoordRange:(VT100GridAbsCoordRange)absRange
@@ -327,8 +327,8 @@ extern NSString *const kScreenStateProgressKey;
 - (NSIndexSet *)foldsInRange:(VT100GridRange)gridRange;
 - (NSArray<id<iTermFoldMarkReading>> *)foldMarksInRange:(VT100GridRange)range;
 - (NSArray<id<iTermImageMarkReading>> *)imageMarksInRange:(VT100GridRange)range;
-- (id<VT100ScreenMarkReading>)firstCommandMarkWithCommandInRange:(NSRange)absLineRange;
-- (id<VT100ScreenMarkReading>)lastCommandMarkWithCommandInRange:(NSRange)absLineRange;
+- (id<VT100ScreenMarkReading> _Nullable)firstCommandMarkWithCommandInRange:(NSRange)absLineRange;
+- (id<VT100ScreenMarkReading> _Nullable)lastCommandMarkWithCommandInRange:(NSRange)absLineRange;
 
 // WARNING - If you add any new APIs that return interval tree objects update VT100ScreenStateSanitizingAdapter
 
@@ -336,11 +336,11 @@ extern NSString *const kScreenStateProgressKey;
 
 // WARNING - If you add any new APIs that return interval tree objects update VT100ScreenStateSanitizingAdapter
 
-@property (nonatomic, readonly) id<VT100RemoteHostReading> lastRemoteHost;
-@property (nonatomic, readonly) id<VT100ScreenMarkReading> lastPromptMark;
-@property (nonatomic, readonly) id<VT100ScreenMarkReading> firstPromptMark;
-@property (nonatomic, readonly) id<VT100ScreenMarkReading> firstScreenMark;
-@property (nonatomic, readonly) id<VT100ScreenMarkReading> lastScreenMark;
+@property (nullable, nonatomic, readonly) id<VT100RemoteHostReading> lastRemoteHost;
+@property (nullable, nonatomic, readonly) id<VT100ScreenMarkReading> lastPromptMark;
+@property (nullable, nonatomic, readonly) id<VT100ScreenMarkReading> firstPromptMark;
+@property (nullable, nonatomic, readonly) id<VT100ScreenMarkReading> firstScreenMark;
+@property (nullable, nonatomic, readonly) id<VT100ScreenMarkReading> lastScreenMark;
 
 // If at a shell prompt, this gives the range of the command being edited not past the cursor.
 // If not at a prompt (no shell integration or command is running) this is -1,-1,-1,-1.
@@ -358,8 +358,8 @@ extern NSString *const kScreenStateProgressKey;
                                       mustHaveCommand:(BOOL)mustHaveCommand
                                                 range:(out VT100GridWindowedRange * _Nullable)rangeOut;
 - (id<VT100ScreenMarkReading> _Nullable)commandMarkAtOrBeforeLine:(int)line;
-- (id<VT100ScreenMarkReading> _Nullable)promptMarkAfterScreenMark:(id<VT100ScreenMarkReading>)predecessor;
-- (id<VT100ScreenMarkReading> _Nullable)screenMarkAfterScreenMark:(id<VT100ScreenMarkReading>)predecessor;
+- (id<VT100ScreenMarkReading> _Nullable)promptMarkAfterScreenMark:(id<VT100ScreenMarkReading> _Nullable)predecessor;
+- (id<VT100ScreenMarkReading> _Nullable)screenMarkAfterScreenMark:(id<VT100ScreenMarkReading> _Nullable)predecessor;
 - (id<VT100ScreenMarkReading> _Nullable)screenMarkBeforeScreenMark:(id<VT100ScreenMarkReading>)successor;
 - (NSArray<id<PTYAnnotationReading>> *)annotationsOnAbsLine:(long long)absLine;
 - (id<iTermPathMarkReading>)pathMarkAt:(VT100GridCoord)coord;
@@ -369,7 +369,7 @@ extern NSString *const kScreenStateProgressKey;
 
 - (id<IntervalTreeImmutableObject> _Nullable)lastMarkMustBePrompt:(BOOL)wantPrompt class:(Class)theClass;
 
-- (id<VT100RemoteHostReading>)remoteHostOnLine:(int)line;
+- (id<VT100RemoteHostReading> _Nullable)remoteHostOnLine:(int)line;
 
 - (NSString * _Nullable)workingDirectoryOnLine:(int)line;
 - (NSString * _Nullable)currentWorkingDirectory;

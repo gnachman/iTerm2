@@ -205,7 +205,8 @@ static NSString *const ScreenCharArrayKeyBidiInfo = @"bidi";
     iTermMetadata metadata = {
         .timestamp = [date timeIntervalSinceReferenceDate],
         .externalAttributes = nil,
-        .rtlFound = rtlFound
+        .rtlFound = rtlFound,
+        .lineAttribute = iTermLineAttributeSingleWidth
     };
     iTermMetadataSetExternalAttributes(&metadata, eaIndex);
     return [self initWithLine:line
@@ -225,7 +226,8 @@ static NSString *const ScreenCharArrayKeyBidiInfo = @"bidi";
     iTermMetadata metadata = {
         .timestamp = [date timeIntervalSinceReferenceDate],
         .externalAttributes = nil,
-        .rtlFound = rtlFound
+        .rtlFound = rtlFound,
+        .lineAttribute = iTermLineAttributeSingleWidth
     };
     iTermMetadataSetExternalAttributes(&metadata, (iTermExternalAttributeIndex *)eaIndex);
     return [self initWithData:data
@@ -382,7 +384,7 @@ static NSString *const ScreenCharArrayKeyBidiInfo = @"bidi";
     return base;
 }
 
-- (NSAttributedString *)attributedStringValueWithAttributeProvider:(NSDictionary *(^)(screen_char_t, iTermExternalAttribute *))attributeProvider {
+- (NSAttributedString *)attributedStringValueWithAttributeProvider:(NSDictionary *(^)(screen_char_t, iTermExternalAttribute *, const iTermImmutableMetadata *))attributeProvider {
     NSMutableAttributedString *result = [[NSMutableAttributedString alloc] init];
     const screen_char_t *line = self.line;
     id<iTermExternalAttributeIndexReading> eaindex = iTermImmutableMetadataGetExternalAttributesIndex(_metadata);
@@ -405,7 +407,7 @@ static NSString *const ScreenCharArrayKeyBidiInfo = @"bidi";
             string = ScreenCharToStr(&c);
         }
         [result iterm_appendString:string
-                    withAttributes:attributeProvider(c, eaindex[i])];
+                    withAttributes:attributeProvider(c, eaindex[i], &_metadata)];
     }
     return result;
 }
@@ -413,6 +415,32 @@ static NSString *const ScreenCharArrayKeyBidiInfo = @"bidi";
 - (BOOL)isEqual:(id)object {
     ScreenCharArray *other = [ScreenCharArray castFrom:object];
     return [self isEqualToScreenCharArray:other];
+}
+
+- (BOOL)hasEqualCharacterContents:(ScreenCharArray *)other {
+    if (!other) {
+        return NO;
+    }
+    if (_length != other->_length) {
+        return NO;
+    }
+    for (int i = 0; i < _length; i++) {
+        if (_line[i].image || other->_line[i].image) {
+            return NO;
+        }
+        if (_line[i].code != other->_line[i].code ||
+            _line[i].complexChar != other->_line[i].complexChar) {
+            return NO;
+        }
+    }
+    return YES;
+}
+
+- (BOOL)isDECDHLDuplicateOf:(ScreenCharArray *)previous {
+    return (previous != nil &&
+            _metadata.lineAttribute == iTermLineAttributeDoubleHeightBottom &&
+            previous->_metadata.lineAttribute == iTermLineAttributeDoubleHeightTop &&
+            [self hasEqualCharacterContents:previous]);
 }
 
 - (BOOL)isEqualToScreenCharArray:(ScreenCharArray *)other {
@@ -567,11 +595,16 @@ static NSString *const ScreenCharArrayKeyBidiInfo = @"bidi";
     if (self.length <= i) {
         return self;
     }
-    int numberToRemove = self.length - i;
-    BOOL split = self.line[i].code == DWC_RIGHT;
-    if (split) {
-        numberToRemove += 1;
+    // Back up over any DWC_RIGHT or DWL_SPACER at the split boundary.
+    // On a double-width line, a DWC spans 4 cells: [char][DWL_SPACER][DWC_RIGHT][DWL_SPACER].
+    // We must not split in the middle of that sequence.
+    int adjusted = i;
+    while (adjusted > 0 &&
+           (ScreenCharIsDWC_RIGHT(self.line[adjusted]) || ScreenCharIsDWL_SPACER(self.line[adjusted]))) {
+        adjusted--;
     }
+    BOOL split = (adjusted < i);
+    int numberToRemove = self.length - adjusted;
     MutableScreenCharArray *result = [[self screenCharArrayByRemovingLast:numberToRemove] mutableCopy];
     if (split) {
         result.eol = EOL_DWC;
@@ -649,6 +682,7 @@ static NSString *const ScreenCharArrayKeyBidiInfo = @"bidi";
         .timestamp = _metadata.timestamp,
         .externalAttributes = nil,
         .rtlFound = _metadata.rtlFound,
+        .lineAttribute = _metadata.lineAttribute,
     };
     iTermExternalAttributeIndex *modified = [original subAttributesInRange:range];
     iTermMetadataSetExternalAttributes(&result, modified);
@@ -671,7 +705,8 @@ static NSString *const ScreenCharArrayKeyBidiInfo = @"bidi";
     iTermMetadataInit(&combined,
                       _metadata.timestamp,
                       other->_metadata.rtlFound,
-                      eaIndex);
+                      eaIndex,
+                      _metadata.lineAttribute);
     ScreenCharArray *result = [[ScreenCharArray alloc] initWithLine:copy
                                                              length:combinedLength
                                                            metadata:iTermMetadataMakeImmutable(combined)

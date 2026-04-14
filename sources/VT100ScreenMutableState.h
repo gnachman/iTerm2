@@ -21,20 +21,20 @@
 NS_ASSUME_NONNULL_BEGIN
 
 @protocol VT100ScreenSideEffectPerforming<NSObject>
-- (id<VT100ScreenDelegate>)sideEffectPerformingScreenDelegate;
-- (id<iTermIntervalTreeObserver>)sideEffectPerformingIntervalTreeObserver;
+- (nullable id<VT100ScreenDelegate>)sideEffectPerformingScreenDelegate;
+- (nullable id<iTermIntervalTreeObserver>)sideEffectPerformingIntervalTreeObserver;
 @end
 
 @interface VT100ScreenMutableState: VT100ScreenState<NSCopying, VT100ScreenMutableState>
 @property (nonatomic, strong, readwrite) iTermOrderEnforcer *currentDirectoryDidChangeOrderEnforcer;
 @property (nullable, nonatomic, strong) VT100InlineImageHelper *inlineImageHelper;
 @property (nonatomic, strong, readwrite) iTermOrderEnforcer *setWorkingDirectoryOrderEnforcer;
-@property (atomic, weak) id<VT100ScreenSideEffectPerforming> sideEffectPerformer;
+@property (atomic, weak, nullable) id<VT100ScreenSideEffectPerforming> sideEffectPerformer;
 @property (nonatomic, readonly) iTermTokenExecutor *tokenExecutor;
 @property (nonatomic) BOOL exited;
 @property (nonatomic, strong, readonly, nullable) VT100Terminal *terminal;
 @property (nonatomic, strong) iTermEchoProbe *echoProbe;
-@property (nonatomic, weak) id<iTermEchoProbeDelegate> echoProbeDelegate;
+@property (nonatomic, weak, nullable) id<iTermEchoProbeDelegate> echoProbeDelegate;
 @property (nullable, nonatomic, strong) VT100ScreenState *mainThreadCopy;
 
 - (instancetype)initWithSideEffectPerformer:(id<VT100ScreenSideEffectPerforming>)performer NS_DESIGNATED_INITIALIZER;
@@ -46,6 +46,10 @@ NS_ASSUME_NONNULL_BEGIN
 
 // Specific to the mutable state. Not related to PTYSession's guid.
 @property (nonatomic, readonly) NSString *uniqueIdentifier;
+
+// Sets the foreground job ancestor chain on the trigger evaluator (atomic, safe from any thread).
+// The array contains lowercased argv0 values ordered deepest-first.
+- (void)setForegroundJobAncestorsForTriggerFiltering:(nullable NSArray<NSString *> *)ancestors;
 
 #pragma mark - Internal
 
@@ -129,6 +133,16 @@ NS_ASSUME_NONNULL_BEGIN
       externalAttributeIndex:(id<iTermExternalAttributeIndexReading>)externalAttributeIndex
              continuation:(screen_char_t)continuation
                  rtlFound:(BOOL)rtlFound;
+
+// Like appendScreenChars: but handles DWL/DHL source data: sets the
+// lineAttribute on the current grid line and strips DWL_SPACERs before
+// appending so the append code can re-expand correctly.
+- (void)appendScreenChars:(const screen_char_t *)line
+                   length:(int)length
+   externalAttributeIndex:(id<iTermExternalAttributeIndexReading>)externalAttributeIndex
+             continuation:(screen_char_t)continuation
+                 rtlFound:(BOOL)rtlFound
+            lineAttribute:(iTermLineAttribute)lineAttribute;
 
 - (void)appendBannerMessage:(NSString *)message;
 
@@ -247,7 +261,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
 - (VT100ScreenMark * _Nullable)setPromptStartLine:(int)line detectedByTrigger:(BOOL)detectedByTrigger;
 - (void)didUpdatePromptLocation;
 - (void)incrementClearCountForCommandMark:(id<VT100ScreenMarkReading>)screenMarkDoppelganger;
-- (void)pauseAtNextPrompt:(void (^)(void))paused;
+- (void)pauseAtNextPrompt:(nullable void (^)(void))paused;
 
 #pragma mark Command
 
@@ -412,14 +426,14 @@ lengthExcludingInBandSignaling:(int)lengthExcludingInBandSignaling
 // mutable state and main thread state safely. The block does not escape and is called synchronously.
 // It may block for some time until the current token or other high-priority tasks finish processing.
 // Pass a nil block to sync state without doing anything else.
-- (void)performBlockWithJoinedThreads:(void (^ _Nullable NS_NOESCAPE)(VT100Terminal *terminal,
+- (void)performBlockWithJoinedThreads:(void (^ _Nullable NS_NOESCAPE)(VT100Terminal * _Nullable terminal,
                                                                       VT100ScreenMutableState *mutableState,
-                                                                      id<VT100ScreenDelegate> delegate))block;
+                                                                      id<VT100ScreenDelegate> _Nullable delegate))block;
 
 // This is called eventually. It does not block the caller. It should be called from the main thread.
-- (void)performBlockAsynchronously:(void (^ _Nullable)(VT100Terminal *terminal,
+- (void)performBlockAsynchronously:(void (^ _Nullable)(VT100Terminal * _Nullable terminal,
                                                        VT100ScreenMutableState *mutableState,
-                                                       id<VT100ScreenDelegate> delegate))block;
+                                                       id<VT100ScreenDelegate> _Nullable delegate))block;
 
 // Doesn't sync before or after running the block. Calls it even if there is no delegate.
 - (void)performLightweightBlockWithJoinedThreads:(void (^ NS_NOESCAPE)(VT100ScreenMutableState *mutableState))block;

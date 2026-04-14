@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="24506" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES">
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="24765" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES">
     <dependencies>
         <deployment identifier="macosx"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="24506"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="24765"/>
     </dependencies>
     <objects>
         <customObject id="-2" userLabel="File's Owner" customClass="NSApplication">
@@ -111,10 +111,16 @@
                                     <action selector="unmakeDefaultTerminal:" target="201" id="1475"/>
                                 </connections>
                             </menuItem>
+                            <menuItem isSeparatorItem="YES" id="CR0-Qf-0XM"/>
                             <menuItem title="Install Shell Integration" alternate="YES" identifier="Install Shell Integration" id="rHN-nq-xah">
                                 <modifierMask key="keyEquivalentModifierMask"/>
                                 <connections>
                                     <action selector="installShellIntegration:" target="-1" id="QBH-7C-wWV"/>
+                                </connections>
+                            </menuItem>
+                            <menuItem title="Install Claude Code Integration" identifier="Install Claude Code Integration" id="Qef-e2-NCc">
+                                <connections>
+                                    <action selector="installClaudeCodeIntegration:" target="-1" id="0Ln-FF-m2P"/>
                                 </connections>
                             </menuItem>
                             <menuItem title="Remove Recent Profiles from Dock Menu" identifier="Remove Recent Profiles from Dock Menu" id="WcV-7l-ycc">
@@ -979,17 +985,6 @@ Gw
                             <menuItem isSeparatorItem="YES" id="Fkp-Ji-fyj">
                                 <modifierMask key="keyEquivalentModifierMask" command="YES"/>
                             </menuItem>
-                            <menuItem title="Show Cursor Guide" keyEquivalent=";" identifier="Show Cursor Guide" id="DcF-ub-g6d">
-                                <modifierMask key="keyEquivalentModifierMask" option="YES" command="YES"/>
-                                <connections>
-                                    <action selector="toggleCursorGuide:" target="-1" id="Vxk-ww-Ugb"/>
-                                </connections>
-                            </menuItem>
-                            <menuItem title="Show Timestamps" keyEquivalent="E" identifier="Show Timestamps" id="TnF-kz-Lf0">
-                                <connections>
-                                    <action selector="toggleShowTimestamps:" target="-1" id="oGg-h2-Ex7"/>
-                                </connections>
-                            </menuItem>
                             <menuItem title="Show Annotations" keyEquivalent="\" identifier="Show Annotations" id="pAu-j3-wEC">
                                 <connections>
                                     <action selector="showHideNotes:" target="-1" id="bWx-ZS-6aE"/>
@@ -999,6 +994,23 @@ Gw
                                 <modifierMask key="keyEquivalentModifierMask" shift="YES" command="YES"/>
                                 <connections>
                                     <action selector="compose:" target="-1" id="dCP-co-yhy"/>
+                                </connections>
+                            </menuItem>
+                            <menuItem title="Show Cursor Guide" keyEquivalent=";" identifier="Show Cursor Guide" id="DcF-ub-g6d">
+                                <modifierMask key="keyEquivalentModifierMask" option="YES" command="YES"/>
+                                <connections>
+                                    <action selector="toggleCursorGuide:" target="-1" id="Vxk-ww-Ugb"/>
+                                </connections>
+                            </menuItem>
+                            <menuItem title="Show Session Note" keyEquivalent="g" identifier="Edit Session Note" id="sNt-vw-E1q">
+                                <modifierMask key="keyEquivalentModifierMask" option="YES" command="YES"/>
+                                <connections>
+                                    <action selector="editSessionNote:" target="-1" id="sNt-ac-R2p"/>
+                                </connections>
+                            </menuItem>
+                            <menuItem title="Show Timestamps" keyEquivalent="E" identifier="Show Timestamps" id="TnF-kz-Lf0">
+                                <connections>
+                                    <action selector="toggleShowTimestamps:" target="-1" id="oGg-h2-Ex7"/>
                                 </connections>
                             </menuItem>
                             <menuItem isSeparatorItem="YES" id="ikb-Lb-87K">

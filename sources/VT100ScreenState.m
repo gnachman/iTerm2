@@ -774,7 +774,11 @@ static NSRange NSRangeFromBounds(NSInteger lowerBound, NSInteger upperBound) {
                                       continuation:&continuation];
         if (cont == EOL_SOFT &&
             theIndex == numLinesInLineBuffer - 1 &&
-            ScreenCharIsDWC_RIGHT([self.currentGrid immutableScreenCharsAtLineNumber:0][1]) &&
+            self.currentGrid.size.width > 1 &&
+            (ScreenCharIsDWC_RIGHT([self.currentGrid immutableScreenCharsAtLineNumber:0][1]) ||
+             (ScreenCharIsDWL_SPACER([self.currentGrid immutableScreenCharsAtLineNumber:0][1]) &&
+              self.currentGrid.size.width > 2 &&
+              ScreenCharIsDWC_RIGHT([self.currentGrid immutableScreenCharsAtLineNumber:0][2]))) &&
             buffer[self.currentGrid.size.width - 1].code == 0) {
             // The last line in the scrollback buffer is actually a split DWC
             // if the first char on the screen is double-width and the buffer is soft-wrapped without
@@ -1236,7 +1240,8 @@ static NSRange NSRangeFromBounds(NSInteger lowerBound, NSInteger upperBound) {
                                      cappedAtSize:-1
                                      truncateTail:YES
                                 continuationChars:nil
-                                           coords:nil];
+                                           coords:nil
+                                deduplicateDECDHL:NO];
     NSRange newline = [command rangeOfString:@"\n"];
     if (newline.location != NSNotFound) {
         command = [command substringToIndex:newline.location];
@@ -1463,8 +1468,14 @@ static NSRange NSRangeFromBounds(NSInteger lowerBound, NSInteger upperBound) {
 - (ScreenCharArray *)screenCharArrayForLine:(int)line {
     const NSInteger numLinesInLineBuffer = [self.linebuffer numLinesWithWidth:self.currentGrid.size.width];
     if (line < numLinesInLineBuffer) {
-        const BOOL eligibleForDWC = (line == numLinesInLineBuffer - 1 &&
-                                     ScreenCharIsDWC_RIGHT([self.currentGrid immutableScreenCharsAtLineNumber:0][1]));
+        const screen_char_t *firstGridLine = (line == numLinesInLineBuffer - 1) ? [self.currentGrid immutableScreenCharsAtLineNumber:0] : nil;
+        const int gridWidth = self.currentGrid.size.width;
+        const BOOL eligibleForDWC = (firstGridLine != nil &&
+                                     gridWidth > 1 &&
+                                     (ScreenCharIsDWC_RIGHT(firstGridLine[1]) ||
+                                      (ScreenCharIsDWL_SPACER(firstGridLine[1]) &&
+                                       gridWidth > 2 &&
+                                       ScreenCharIsDWC_RIGHT(firstGridLine[2]))));
         return [self.linebuffer screenCharArrayForLine:line width:self.width paddedTo:self.width eligibleForDWC:eligibleForDWC];
     }
     return [self screenCharArrayAtScreenIndex:line - numLinesInLineBuffer];

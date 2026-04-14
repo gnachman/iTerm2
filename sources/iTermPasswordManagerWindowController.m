@@ -550,6 +550,16 @@ static NSArray<NSString *> *gTerminalCachedCombinedAccountNames;
     [self updateConfiguration];
 }
 
+- (IBAction)useKeeper:(id)sender {
+    [self.dataSourceProvider enableKeeper];
+    [self.currentDataSource resetErrors];
+    if (![self.currentDataSource checkAvailability]) {
+        [self useKeychain:nil];
+    }
+    [self update];
+    [self updateConfiguration];
+}
+
 #if ITERM_DEBUG
 - (IBAction)useTestAdapter:(id)sender {
     [self.dataSourceProvider enableTestAdapter];
@@ -669,15 +679,19 @@ static NSArray<NSString *> *gTerminalCachedCombinedAccountNames;
         if (![self shouldRemoveSelection]) {
             return;
         }
+        const NSInteger cancelCount = [self incrBusy];
         [_tableView reloadData];
         __weak __typeof(self) weakSelf = self;
         [_entries[selectedRow] deleteWithContext:self.recipeExecutionContext
                                       completion:^(NSError * _Nullable error) {
-            if (error) {
-                DLog(@"%@", error);
-                return;
-            }
-            [weakSelf didRemoveEntry];
+            [weakSelf ifCancelCountUnchanged:cancelCount perform:^{
+                [weakSelf decrBusy];
+                if (error) {
+                    DLog(@"%@", error);
+                    return;
+                }
+                [weakSelf didRemoveEntry];
+            }];
         }];
     }
 }
@@ -730,9 +744,10 @@ static NSArray<NSString *> *gTerminalCachedCombinedAccountNames;
     __weak __typeof(self) weakSelf = self;
     switch (response) {
         case NSAlertFirstButtonReturn: {
+            NSString *password = newPassword.stringValue;
             const NSInteger cancelCount = [self incrBusy];
             [_entries[row] setPasswordWithContext:self.recipeExecutionContext
-                                         password:newPassword.stringValue
+                                         password:password
                                        completion:^(NSError * _Nullable error) {
                 [weakSelf ifCancelCountUnchanged:cancelCount perform:^{
                     [weakSelf decrBusy];
@@ -1144,15 +1159,25 @@ static NSArray<NSString *> *gTerminalCachedCombinedAccountNames;
     __weak __typeof(self) weakSelf = self;
     [self runModal:alert completion:^(NSModalResponse response) {
         if (response == NSAlertSecondButtonReturn) {
-            [weakSelf copy:password];
+            [weakSelf copyPasswordToClipboard:password];
         }
     }];
 }
 
-- (void)copy:(NSString *)password {
+- (void)copyPasswordToClipboard:(NSString *)password {
+    if (!password) {
+        return;
+    }
     NSPasteboard *pasteboard = [NSPasteboard generalPasteboard];
     [pasteboard declareTypes:@[ NSPasteboardTypeString ] owner:self];
     [pasteboard setString:password forType:NSPasteboardTypeString];
+}
+
+// Handle ⌘C. The old `copy:` method expected an NSString argument, but
+// AppKit sends the NSMenuItem as `sender`, causing a crash in
+// -[NSPasteboard setString:forType:].
+- (void)copy:(id)sender {
+    [self copyPassword:sender];
 }
 
 - (IBAction)copyPassword:(id)sender {
@@ -1170,9 +1195,7 @@ static NSArray<NSString *> *gTerminalCachedCombinedAccountNames;
 }
 
 - (void)didFetchPasswordToCopy:(NSString *)password {
-    NSPasteboard *pasteboard = [NSPasteboard generalPasteboard];
-    [pasteboard declareTypes:@[ NSPasteboardTypeString ] owner:self];
-    [pasteboard setString:password forType:NSPasteboardTypeString];
+    [self copyPasswordToClipboard:password];
 }
 
 - (BOOL)shouldProbe {
@@ -1282,6 +1305,8 @@ static NSInteger const kDynamicMenuItemTag = 9999;
         menuItem.state = self.dataSourceProvider.keePassXCEnabled ? NSControlStateValueOn : NSControlStateValueOff;
     } else if (menuItem.action == @selector(useBitwarden:)) {
         menuItem.state = self.dataSourceProvider.bitwardenEnabled ? NSControlStateValueOn : NSControlStateValueOff;
+    } else if (menuItem.action == @selector(useKeeper:)) {
+        menuItem.state = self.dataSourceProvider.keeperEnabled ? NSControlStateValueOn : NSControlStateValueOff;
     }
 #if ITERM_DEBUG
     else if (menuItem.action == @selector(useTestAdapter:)) {

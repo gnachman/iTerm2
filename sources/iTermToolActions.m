@@ -307,6 +307,9 @@ static NSButton *iTermToolActionsNewButton(NSString *imageName, NSString *title,
 }
 
 - (NSString *)stringForTableColumn:(NSTableColumn *)aTableColumn row:(NSInteger)rowIndex {
+    if (rowIndex < 0 || rowIndex >= (NSInteger)_actions.count) {
+        return @"";
+    }
     NSString *title = _actions[rowIndex].title;
     if (title.length) {
         return title;

@@ -64,6 +64,9 @@ extern NSString *const PTYTabArrangementOptionsPendingJumps;
 @property(nonatomic, assign) int objectCount;
 // Icon to display in tab
 @property(nonatomic, retain) NSImage *icon;
+// Aggregated tab status from all sessions (highest-priority wins)
+@property(nonatomic, readonly) iTermSessionTabStatus *aggregatedTabStatus;
+@property(nonatomic, readonly) VT100ScreenProgress progress;
 
 // Size we should report to fit the current layout
 @property(nonatomic, readonly) NSSize tmuxSize;
@@ -244,6 +247,9 @@ extern NSString *const PTYTabArrangementOptionsPendingJumps;
 - (void)toggleMaximizeSession:(PTYSession *)session;
 // Does any session in this tab require prompt on close?
 - (iTermPromptOnCloseReason *)promptOnCloseReason;
+
+- (NSArray<PTYSession *> *)sessions;
+- (void)removeSession:(PTYSession *)aSession;
 
 // Anyone changing the number of sessions must call this after the sessions
 // are "well formed".

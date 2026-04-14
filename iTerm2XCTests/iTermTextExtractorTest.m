@@ -275,7 +275,8 @@ static const NSInteger kUnicodeVersion = 9;
                                     cappedAtSize:3
                                     truncateTail:NO
                                continuationChars:nil
-                                          coords:coords];
+                                          coords:coords
+                               deduplicateDECDHL:NO];
     XCTAssertEqualObjects(@"xyz", actual);
     XCTAssertEqual(coords.count, 3);
 }
@@ -310,7 +311,8 @@ static const NSInteger kUnicodeVersion = 9;
                                     cappedAtSize:3
                                     truncateTail:NO
                                continuationChars:nil
-                                          coords:coords];
+                                          coords:coords
+                               deduplicateDECDHL:NO];
     XCTAssertEqualObjects(@"xyz", actual);
     XCTAssertEqual(coords.count, 3);
 }
@@ -344,7 +346,8 @@ static const NSInteger kUnicodeVersion = 9;
                                     cappedAtSize:3
                                     truncateTail:NO
                                continuationChars:nil
-                                          coords:nil];
+                                          coords:nil
+                               deduplicateDECDHL:NO];
     XCTAssertEqualObjects(@"xyz", actual);
 
     // Same thing but truncate to 3 bytes at the tail.
@@ -357,7 +360,8 @@ static const NSInteger kUnicodeVersion = 9;
                           cappedAtSize:3
                           truncateTail:YES
                      continuationChars:nil
-                                coords:nil];
+                                coords:nil
+                     deduplicateDECDHL:NO];
     XCTAssertEqualObjects(@"abc", actual);
 }
 
@@ -397,7 +401,8 @@ static const NSInteger kUnicodeVersion = 9;
                                     cappedAtSize:-1
                                     truncateTail:NO
                                continuationChars:nil
-                                          coords:nil];
+                                          coords:nil
+                               deduplicateDECDHL:NO];
     XCTAssertEqualObjects(@"a\tb", actual);
 
 }
@@ -438,7 +443,8 @@ static const NSInteger kUnicodeVersion = 9;
                                     cappedAtSize:-1
                                     truncateTail:NO
                                continuationChars:nil
-                                          coords:nil];
+                                          coords:nil
+                               deduplicateDECDHL:NO];
     XCTAssertEqualObjects(@"ab  c", actual);
 }
 

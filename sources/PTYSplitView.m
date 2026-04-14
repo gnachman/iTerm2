@@ -50,6 +50,10 @@
     self = [super initWithFrame:frame];
     if (self) {
         _stringUniqueIdentifier = identifier ?: [[NSUUID UUID] UUIDString];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(advancedSettingsDidChange:)
+                                                     name:iTermAdvancedSettingsDidChange
+                                                   object:nil];
     }
     return self;
 }
@@ -58,6 +62,10 @@
     self = [super init];
     if (self) {
         _stringUniqueIdentifier = identifier ?: [[NSUUID UUID] UUIDString];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(advancedSettingsDidChange:)
+                                                     name:iTermAdvancedSettingsDidChange
+                                                   object:nil];
     }
     return self;
 }
@@ -66,6 +74,10 @@
     self = [super init];
     if (self) {
         _stringUniqueIdentifier = [[NSUUID UUID] UUIDString];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(advancedSettingsDidChange:)
+                                                     name:iTermAdvancedSettingsDidChange
+                                                   object:nil];
     }
     return self;
 }
@@ -74,12 +86,25 @@
     self = [super initWithFrame:frameRect];
     if (self) {
         _stringUniqueIdentifier = [[NSUUID UUID] UUIDString];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(advancedSettingsDidChange:)
+                                                     name:iTermAdvancedSettingsDidChange
+                                                   object:nil];
     }
     return self;
 }
 
 - (void)dealloc {
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
     _dead = YES;
+}
+
+- (CGFloat)dividerThickness {
+    CGFloat customWidth = [iTermAdvancedSettingsModel splitPaneDividerWidth];
+    if (customWidth > 0) {
+        return MIN(customWidth, 5.0);
+    }
+    return [super dividerThickness];
 }
 
 - (NSColor *)dividerColor {
@@ -323,6 +348,11 @@
 
 - (NSString *)stringUniqueIdentifier {
     return _stringUniqueIdentifier;
+}
+
+- (void)advancedSettingsDidChange:(NSNotification *)notification {
+    [self adjustSubviews];
+    [self setNeedsDisplay:YES];
 }
 
 @end

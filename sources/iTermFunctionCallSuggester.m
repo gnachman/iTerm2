@@ -11,6 +11,7 @@
 #import "DebugLogging.h"
 #import "iTermExpressionParser+Private.h"
 #import "iTermGrammarProcessor.h"
+#import "iTerm2SharedARC-Swift.h"
 #import "iTermSwiftyStringParser.h"
 #import "iTermSwiftyStringRecognizer.h"
 #import "iTermTruncatedQuotedRecognizer.h"
@@ -467,6 +468,13 @@
                                return syntaxTree.children[0];
                            }];
 
+    // PrimaryExpression → OptionalPath (e.g., "name?" with no space before ?)
+    // The ? has been consumed by the tokenizer, so the expression is terminated.
+    [_grammarProcessor addProductionRule:@"PrimaryExpression ::= 'OptionalPath'"
+                           treeTransform:^id(CPSyntaxTree *syntaxTree) {
+                               return @{ @"terminated": @YES };
+                           }];
+
     // PrimaryExpression → composed_call (function call)
     [_grammarProcessor addProductionRule:@"PrimaryExpression ::= <composed_call>"
                            treeTransform:^id(CPSyntaxTree *syntaxTree) {
@@ -733,8 +741,7 @@
                                                     legalPaths:(NSArray<NSString *> *)legalPaths {
     NSArray<NSString *> *functionNames = _functionSignatures.allKeys;
     functionNames = [functionNames mapWithBlock:^id(NSString *anObject) {
-        NSString *firstArgName  = [self argumentNamesForFunction:anObject].firstObject ?: @")";
-        firstArgName = [firstArgName stringByAppendingString:@":"];
+        NSString *firstArgName = [[self argumentNamesForFunction:anObject].firstObject stringByAppendingString:@":"] ?: @")";
         return [anObject stringByAppendingFormat:@"(%@", firstArgName];
     }];
 

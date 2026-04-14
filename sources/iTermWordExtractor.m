@@ -445,8 +445,8 @@ typedef struct {
     // It's a half open interval so advance endCoord by one.
     endCoord.x += 1;
 
-    // Make sure to include the DWC_RIGHT after the last character to be selected.
-    if (endCoord.x < [_dataSource xLimit] && [_dataSource haveDoubleWidthExtensionAt:endCoord]) {
+    // Make sure to include extensions (DWC_RIGHT, DWL_SPACER) after the last character.
+    while (endCoord.x < [_dataSource xLimit] && [_dataSource haveDoubleWidthExtensionAt:endCoord]) {
         endCoord.x += 1;
     }
     return [_dataSource windowedRangeWithRange:VT100GridCoordRangeMake(startCoord.x,
@@ -575,7 +575,7 @@ typedef struct {
     if (!theCharacter.complexChar && !theCharacter.image) {
         if (theCharacter.code == TAB_FILLER) {
             return kTextExtractorClassWhitespace;
-        } else if (theCharacter.code == DWC_RIGHT || theCharacter.complexChar == DWC_SKIP) {
+        } else if (theCharacter.code == DWC_RIGHT || theCharacter.code == DWC_SKIP || theCharacter.code == DWL_SPACER) {
             return kTextExtractorClassDoubleWidthPlaceholder;
         }
     }

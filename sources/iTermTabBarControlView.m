@@ -15,6 +15,8 @@
 #import "NSObject+iTerm.h"
 #import "NSView+iTerm.h"
 #import "NSWindow+iTerm.h"
+#import "PTYTab.h"
+#import "SessionView.h"
 
 @interface NSView (Private2)
 - (NSRect)_opaqueRectForWindowMoveWhenInTitlebar;
@@ -54,12 +56,17 @@ typedef NS_ENUM(NSInteger, iTermTabBarFlashState) {
         }
         self.showAddTabButton = ![iTermAdvancedSettingsModel removeAddTabButton];
         self.selectsTabsOnMouseDown = [iTermAdvancedSettingsModel selectsTabsOnMouseDown];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(advancedSettingsDidChange:)
+                                                     name:iTermAdvancedSettingsDidChange
+                                                   object:nil];
     }
     return self;
 }
 
-- (void)drawRect:(NSRect)dirtyRect {
-    [super drawRect:dirtyRect];
+- (void)dealloc {
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
+    [super dealloc];
 }
 
 - (void)setCmdPressed:(BOOL)cmdPressed {
@@ -277,6 +284,64 @@ typedef NS_ENUM(NSInteger, iTermTabBarFlashState) {
 }
 
 #pragma mark - Private
+
+- (BOOL)cellAllowsTabProgressBar:(PSMTabBarCell *)cell {
+    NSTabViewItem *item = (NSTabViewItem *)cell.representedObject;
+    PTYTab *tab = item.identifier;
+    if (![tab isKindOfClass:[PTYTab class]]) {
+        return YES;
+    }
+    return tab.activeSession.view.enableProgressBars;
+}
+
+- (BOOL)cellShouldShowTabProgressBar:(PSMTabBarCell *)cell {
+    if (self.tabView.numberOfTabViewItems <= 1 ||
+        cell.isPlaceholder ||
+        cell.isInOverflowMenu ||
+        ![self cellAllowsTabProgressBar:cell]) {
+        return NO;
+    }
+    return VT100ScreenProgressIsVisible((VT100ScreenProgress)cell.progress);
+}
+
+- (NSString *)tabProgressBarColorSchemeForCell:(PSMTabBarCell *)cell {
+    NSTabViewItem *item = (NSTabViewItem *)cell.representedObject;
+    PTYTab *tab = item.identifier;
+    if (![tab isKindOfClass:[PTYTab class]]) {
+        return iTermProgressBarColorSchemeDefault;
+    }
+    return tab.activeSession.view.progressBarColorScheme ?: iTermProgressBarColorSchemeDefault;
+}
+
+- (BOOL)shouldShowCustomProgressBarForTabCell:(PSMTabBarCell *)cell {
+    return [self cellShouldShowTabProgressBar:cell];
+}
+
+- (NSView *)customProgressBarViewForTabCell:(PSMTabBarCell *)cell {
+    iTermProgressBarView *progressBar = [[[iTermProgressBarView alloc] init] autorelease];
+    progressBar.heightValue = PSMTabBarProgressBarHeight;
+    return progressBar;
+}
+
+- (void)configureCustomProgressBarView:(NSView *)view forTabCell:(PSMTabBarCell *)cell {
+    iTermProgressBarView *progressBar = (iTermProgressBarView *)view;
+    progressBar.heightValue = PSMTabBarProgressBarHeight;
+    progressBar.transparent = [self.style respondsToSelector:@selector(progressBarClipPathForTabCell:)];
+    progressBar.darkMode = self.style.useLightControls;
+    progressBar.colorScheme = [self tabProgressBarColorSchemeForCell:cell];
+    progressBar.state = (VT100ScreenProgress)cell.progress;
+}
+
+- (void)syncTabProgressBars {
+    [super syncTabProgressBars];
+    if ([_itermTabBarDelegate respondsToSelector:@selector(iTermTabBarDidUpdateProgressBars)]) {
+        [_itermTabBarDelegate iTermTabBarDidUpdateProgressBars];
+    }
+}
+
+- (void)advancedSettingsDidChange:(NSNotification *)notification {
+    [self syncTabProgressBars];
+}
 
 - (void)setFlashState:(iTermTabBarFlashState)flashState {
     NSArray *names = @[ @"Off", @"FadeIn", @"Holding", @"Extending", @"FadeOut" ];

@@ -317,6 +317,14 @@ iTermCommandInfoViewControllerDelegate>
     x = MAX(0, MIN(x, limit));
     y = MAX(0, MIN(y, [self.dataSource numberOfLines] - 1));
 
+    // Snap off DWL_SPACER — the cursor should never land on one.
+    if (x > 0) {
+        const screen_char_t *theLine = [self.dataSource screenCharArrayForLine:y].line;
+        if (theLine && ScreenCharIsDWL_SPACER(theLine[x])) {
+            x--;
+        }
+    }
+
     return VT100GridCoordMake(x, y);
 }
 
@@ -828,10 +836,18 @@ iTermCommandInfoViewControllerDelegate>
             return [urlAction.identifier URL];
 
         case kURLActionOpenExistingFile:
+            if (!urlAction.fullPath) {
+                return nil;
+            }
             return [NSURL fileURLWithPath:urlAction.fullPath];
 
-        case kURLActionOpenImage:
-            return [NSURL fileURLWithPath:[urlAction.identifier nameForNewSavedTempFile]];
+        case kURLActionOpenImage: {
+            NSString *tempFile = [urlAction.identifier nameForNewSavedTempFile];
+            if (!tempFile) {
+                return nil;
+            }
+            return [NSURL fileURLWithPath:tempFile];
+        }
 
         case kURLActionOpenURL: {
             if (!urlAction.string) {
@@ -879,9 +895,10 @@ iTermCommandInfoViewControllerDelegate>
     [extractor rangeForWordAt:VT100GridCoordMake(clickPoint.x, clickPoint.y)
                 maximumLength:kReasonableMaximumWordLength];
     NSAttributedString *word = [extractor contentInRange:range
-                                       attributeProvider:^NSDictionary *(screen_char_t theChar, iTermExternalAttribute *ea) {
+                                       attributeProvider:^NSDictionary *(screen_char_t theChar, iTermExternalAttribute *ea, const iTermImmutableMetadata *metadata) {
         return [self charAttributes:theChar
                  externalAttributes:ea
+                           metadata:metadata
                           processed:NO
         elideDefaultBackgroundColor:NO];
     }
@@ -892,7 +909,8 @@ iTermCommandInfoViewControllerDelegate>
                                             cappedAtSize:self.dataSource.width
                                             truncateTail:YES
                                        continuationChars:nil
-                                                  coords:nil];
+                                                  coords:nil
+                                       deduplicateDECDHL:YES];
     if (word.length) {
         NSPoint point = [self pointForCoord:range.coordRange.start];
         point.y += self.lineHeight;
@@ -932,6 +950,7 @@ iTermCommandInfoViewControllerDelegate>
 // Returns a dictionary to pass to NSAttributedString.
 - (NSDictionary *)charAttributes:(screen_char_t)c
               externalAttributes:(iTermExternalAttribute *)ea
+                        metadata:(const iTermImmutableMetadata *)metadata
                        processed:(BOOL)processed
      elideDefaultBackgroundColor:(BOOL)elideDefaultBackgroundColor {
     BOOL isBold = c.bold;
@@ -985,6 +1004,9 @@ iTermCommandInfoViewControllerDelegate>
         } else {
             font = [NSFont systemFontOfSize:size];
         }
+    }
+    if (metadata && metadata->lineAttribute == iTermLineAttributeDoubleHeightTop) {
+        font = [NSFont fontWithDescriptor:font.fontDescriptor size:font.pointSize * 2] ?: font;
     }
     if (![iTermAdvancedSettingsModel copyBackgroundColor] || elideDefaultBackgroundColor) {
         if (c.backgroundColorMode == ColorModeAlternate &&
@@ -2876,7 +2898,8 @@ toggleAnimationOfImage:(id<iTermImageInfoReading>)imageInfo {
                                          cappedAtSize:4096
                                          truncateTail:YES
                                     continuationChars:nil
-                                               coords:nil];
+                                               coords:nil
+                                    deduplicateDECDHL:NO];
         NSString *folder = [self.dataSource workingDirectoryOnLine:range.start.y];
         if (!content.length) {
             return;

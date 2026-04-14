@@ -25,6 +25,7 @@ NS_ASSUME_NONNULL_BEGIN
 @protocol iTermObject;
 @class iTermRateLimitedUpdate;
 @class iTermStringLine;
+@class VT100TabStatusUpdate;
 @class iTermVariableScope;
 @protocol PTYAnnotationReading;
 @class Trigger;
@@ -39,6 +40,8 @@ extern NSString * const kTriggerPartialLineKey;
 extern NSString * const kTriggerDisabledKey;
 extern NSString * const kTriggerNameKey;
 extern NSString * const kTriggerEventParamsKey;
+extern NSString * const kTriggerJobKey;
+extern NSString * const kTriggerProvenanceKey;
 
 @protocol iTermTriggerDelegate<NSObject>
 - (void)triggerDidChangeParameterOptions:(Trigger *)trigger;
@@ -115,6 +118,7 @@ extern NSString * const kTriggerEventParamsKey;
                    sgr:(CSIParam)csi;
 - (void)triggerSetBufferInput:(Trigger *)trigger
                  shouldBuffer:(BOOL)shouldBuffer;
+- (void)triggerSession:(Trigger *)trigger setTabStatus:(VT100TabStatusUpdate *)status;
 @end
 
 @interface Trigger : NSObject<iTermObject>
@@ -123,6 +127,8 @@ extern NSString * const kTriggerEventParamsKey;
 @property (nonatomic, copy) NSString *regex;
 @property (nonatomic, copy, readonly) NSString *contentRegex;
 @property (nonatomic, copy, readonly) NSString *name;
+@property (nonatomic, copy, readonly, nullable) NSString *job;
+@property (nonatomic, copy, readonly, nullable) NSString *provenance;
 @property (nonatomic, copy) NSString *action;
 @property (nullable, nonatomic, copy) id param;
 @property (nonatomic, assign) BOOL partialLine;
@@ -157,6 +163,15 @@ extern NSString * const kTriggerEventParamsKey;
 - (BOOL)paramIsPopupButton;
 - (BOOL)paramIsTwoColorWells;
 - (BOOL)paramIsTwoStrings;
+- (BOOL)paramIsComboBoxAndTwoColorWells;
+// Items for the combo box when paramIsComboBoxAndTwoColorWells returns YES.
+- (nullable NSArray<NSString *> *)comboBoxItems;
+// Returns the current combo box string extracted from the parameter.
+- (nullable NSString *)comboBoxValueInParam:(nullable id)param;
+- (nullable NSColor *)textColorInParam:(nullable id)param;
+- (nullable NSColor *)backgroundColorInParam:(nullable id)param;
+// Returns an updated parameter incorporating the given combo box value.
+- (nullable id)paramByReplacingComboBoxValue:(NSString *)value inParam:(nullable id)param;
 // Returns a map from id(tag/represented object) -> NSString(title)
 - (nullable NSDictionary *)menuItemsForPoupupButton;
 // Returns an array of NSDictionaries mapping NSNumber(tag) -> NSString(title)
@@ -178,6 +193,11 @@ extern NSString * const kTriggerEventParamsKey;
                                                                 absLine:(long long)absLine
                                                                   scope:(id<iTermTriggerScopeProvider>)scope
                                                        useInterpolation:(BOOL)useInterpolation;
+- (iTermPromise<NSString *> *)promisedValueOfInterpolatedString:(NSString *)p
+            withBackreferencesReplacedWithValues:(NSArray *)stringArray
+                                         absLine:(long long)absLine
+                                           scope:(id<iTermTriggerScopeProvider>)scopeProvider
+                                useInterpolation:(BOOL)useInterpolation;
 
 // Returns YES if no more triggers should be processed.
 - (BOOL)tryString:(iTermStringLine *)stringLine

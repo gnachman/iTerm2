@@ -81,11 +81,11 @@
                                                           selector:@selector(performBlockIfNeeded:)
                                                              queue:_queue];
     } else {
-        _timer = [NSTimer scheduledWeakTimerWithTimeInterval:delay
-                                                      target:self
-                                                    selector:@selector(performBlockIfNeeded:)
-                                                    userInfo:nil
-                                                     repeats:NO];
+        _timer = [NSTimer it_scheduledWeakTimerWithTimeInterval:delay
+                                                         target:self
+                                                       selector:@selector(performBlockIfNeeded:)
+                                                       userInfo:nil
+                                                        repeats:NO];
     }
 }
 

@@ -113,16 +113,19 @@ class iTermRenderingComparer: NSObject {
 
         guard let profile = ProfileModel.sharedInstance()?.defaultProfile() else {
             fputs("ERROR: No default profile found\n", stderr)
-            exit(2)
+            NSApp.terminate(nil)
+            return
         }
         guard let guid = profile[KEY_GUID] as? String else {
             fputs("ERROR: Default profile has no GUID\n", stderr)
-            exit(2)
+            NSApp.terminate(nil)
+            return
         }
 
-        let legacyPath = "/tmp/iterm2-compare-legacy.png"
-        let gpuPath = "/tmp/iterm2-compare-gpu.png"
-        let diffPath = "/tmp/iterm2-compare-diff.png"
+        let cwd = FileManager.default.currentDirectoryPath
+        let legacyPath = (cwd as NSString).appendingPathComponent("iterm2-compare-legacy.png")
+        let gpuPath = (cwd as NSString).appendingPathComponent("iterm2-compare-gpu.png")
+        let diffPath = (cwd as NSString).appendingPathComponent("iterm2-compare-diff.png")
 
         // Render legacy
         let legacyImage: NSImage
@@ -131,7 +134,8 @@ class iTermRenderingComparer: NSObject {
             legacyImage.saveAsPNG(to: legacyPath)
         } catch {
             fputs("ERROR: Legacy render failed: \(error)\n", stderr)
-            exit(2)
+            NSApp.terminate(nil)
+            return
         }
 
         // Render GPU
@@ -140,7 +144,8 @@ class iTermRenderingComparer: NSObject {
             gpuImage = try renderGPU(rows: rows, columns: columns, guid: guid, profile: profile, data: data)
         } catch {
             fputs("ERROR: GPU render failed: \(error)\n", stderr)
-            exit(2)
+            NSApp.terminate(nil)
+            return
         }
 
         // Compare
@@ -160,7 +165,10 @@ class iTermRenderingComparer: NSObject {
         let pass = result.percentDifferent < 0.1
         print("RESULT: \(pass ? "PASS" : "FAIL")")
 
-        exit(pass ? 0 : 1)
+        // Use NSApp.terminate instead of exit() so macOS properly clears its
+        // window restoration crash tracking. A raw exit() causes macOS to show
+        // a "unexpectedly quit while reopening windows" alert on next launch.
+        NSApp.terminate(nil)
     }
 
     // MARK: - Private

@@ -98,10 +98,14 @@ static NSRange NSMakeRangeFromEndpointsInclusive(NSUInteger start, NSUInteger in
     for (j = charRange.location; j < charRange.location + charRange.length; j++) {
         lastVisualColumn = visualColumn;
         int x = j;
-        if (ScreenCharIsDWC_RIGHT(theLine[j])) {
+        if (ScreenCharIsDWC_RIGHT(theLine[j]) || ScreenCharIsDWL_SPACER(theLine[j])) {
+            // Back up to the real character. On double-width lines, DWL_SPACER
+            // may appear between a DWC char and its DWC_RIGHT.
             x = j - 1;
+            while (x >= 0 && (ScreenCharIsDWC_RIGHT(theLine[x]) || ScreenCharIsDWL_SPACER(theLine[x]))) {
+                x--;
+            }
             if (x < 0) {
-                // AFAIK this only happens in tests, but it's a nice safety in case things go sideways.
                 continue;
             }
         }

@@ -47,7 +47,8 @@ class CharacterAttributesProvider: NSObject {
         self.fontTable = fontTable
     }
 
-    func attributes(_ c: screen_char_t, externalAttributes: iTermExternalAttribute) -> [AnyHashable: Any] {
+    @objc
+    func attributes(_ c: screen_char_t, externalAttributes: iTermExternalAttribute, metadata: UnsafePointer<iTermImmutableMetadata>?) -> [AnyHashable: Any] {
         var isBold = ObjCBool(c.bold != 0)
         let isFaint = c.faint != 0
         var bgColor = colorMap.color(forCode: Int32(c.backgroundColor),
@@ -88,9 +89,15 @@ class CharacterAttributesProvider: NSObject {
             c.backgroundColor == ALTSEM_DEFAULT {
             bgColor = NSColor.clear
         }
+        var selectedFont = font(fontInfo, bold: c.bold != 0)
+        // For DECDHL pairs (double-height), scale the font to 2x.
+        if let metadata, metadata.pointee.lineAttribute == .doubleHeightTop {
+            selectedFont = NSFont(descriptor: selectedFont.fontDescriptor,
+                                  size: selectedFont.pointSize * 2) ?? selectedFont
+        }
         var attributes: [NSAttributedString.Key: Any] = [.foregroundColor: fgColor,
                                                          .backgroundColor: bgColor,
-                                                         .font: font(fontInfo, bold: c.bold != 0),
+                                                         .font: selectedFont,
                                                          .paragraphStyle: paragraphStyle,
                                                          .underlineStyle: underlineStyle.rawValue]
         if remapped > 0 {

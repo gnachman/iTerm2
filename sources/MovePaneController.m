@@ -100,46 +100,17 @@ NSString *const iTermSessionDidChangeTabNotification = @"iTermSessionDidChangeTa
     [window setFrameOrigin:origin];
 }
 
-- (void)moveSession:(PTYSession *)movingSession toTabInWindow:(NSWindow *)window {
-    DLog(@"moveSession:%@ toTabInWindow:%@", movingSession, window);
-    if (movingSession.locked) {
-        DLog(@"Locked");
+- (void)moveSessionToTab:(PTYSession *)movingSession {
+    DLog(@"moveSessionToTab:%@", movingSession);
+    PseudoTerminal *term = [PseudoTerminal castFrom:[movingSession.delegate realParentWindow]];
+    if (!term) {
         return;
     }
-    PTYTab *oldTab = [movingSession.delegate.realParentWindow tabForSession:movingSession];
-    assert(oldTab);
-    if (oldTab.sessions.count < 2) {
-        return;
-    }
-
-    NSWindowController<iTermWindowController> *term = oldTab.realParentWindow;
-
-    if (movingSession.isTmuxClient) {
-        [[movingSession tmuxController] breakOutWindowPane:[movingSession tmuxPane]
-                                                toTabAside:term.terminalGuid];
-        return;
-    }
-    SessionView *oldView = movingSession.view;
-    [[oldView retain] autorelease];
-    [[movingSession retain] autorelease];
-
-    [oldTab removeSession:movingSession];
-    NSInteger i = [term.tabs indexOfObject:oldTab];
-    if (i == NSNotFound) {
-        // I don't think this should be possible. It is just paranoia.
-        i = term.tabs.count;
-    } else {
-        i += 1;
-    }
-    [term insertSession:movingSession atIndex:i];
-    [oldTab numberOfSessionsDidChange];
-    [term.currentTab numberOfSessionsDidChange];
-    [[NSNotificationCenter defaultCenter] postNotificationName:iTermSessionDidChangeTabNotification object:movingSession];
-    [movingSession didMoveSession];
+    [self moveSession:movingSession toNewTabIn:term atIndex:-1];
 }
 
 - (void)moveSessionToNewWindow:(PTYSession *)movingSession atPoint:(NSPoint)point {
-    DLog(@"moveSessionToNewWindow:%@", movingSession);
+    DLog(@"moveSessionToNewWindow:%@ atPoint:%@", movingSession, NSStringFromPoint(point));
     if (movingSession.locked) {
         DLog(@"Locked");
         return;
@@ -149,28 +120,16 @@ NSString *const iTermSessionDidChangeTabNotification = @"iTermSessionDidChangeTa
                                                    toPoint:point];
         return;
     }
-    PTYTab *theTab = [movingSession.delegate.realParentWindow tabForSession:movingSession];
-    NSWindowController<iTermWindowController> *term =
-        [[theTab realParentWindow] terminalDraggedFromAnotherWindowAtPoint:point];
-
-    SessionView *oldView = [movingSession view];
-    [oldView retain];
-
-    // Prevent -removeSession from freeing the session.
-    [[movingSession retain] autorelease];
-
-    [theTab removeSession:movingSession];
-    if ([[theTab sessions] count] == 0) {
-        [[theTab realParentWindow] closeTab:theTab];
+    PseudoTerminal *sourceTerm = [[iTermController sharedInstance] windowForSession:movingSession];
+    if (!sourceTerm) {
+        return;
     }
-
-    [term insertSession:movingSession atIndex:0];
-    [oldView autorelease];
-    [theTab numberOfSessionsDidChange];
-    [[term currentTab] numberOfSessionsDidChange];
-
-    [[NSNotificationCenter defaultCenter] postNotificationName:iTermSessionDidChangeTabNotification object:movingSession];
-    [movingSession didMoveSession];
+    NSWindowController<iTermWindowController> *newTerm =
+        [sourceTerm terminalDraggedFromAnotherWindowAtPoint:point];
+    if (!newTerm) {
+        return;
+    }
+    [self moveSession:movingSession toNewTabIn:(PseudoTerminal *)newTerm atIndex:0];
 }
 
 + (void)moveTab:(PTYTab *)tab toWindow:(PseudoTerminal *)term atIndex:(NSInteger)index {

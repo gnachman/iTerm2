@@ -12,6 +12,7 @@ typedef NS_ENUM(NSInteger, iTermMouseCursorType) {
     iTermMouseCursorTypeIBeam,
     iTermMouseCursorTypeIBeamWithCircle,
     iTermMouseCursorTypeNorthwestSoutheastArrow,
+    iTermMouseCursorTypeNortheastSouthwestArrow,
     iTermMouseCursorTypeArrow
 };
 

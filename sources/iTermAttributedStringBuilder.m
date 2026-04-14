@@ -329,6 +329,11 @@ preferSpeedToFullLigatureSupport:(BOOL)preferSpeedToFullLigatureSupport
     for (int i = indexRange.location; i < NSMaxRange(indexRange); i++) {
         iTermPreciseTimerStatsStartTimer(_stats.attrsForChar);
         screen_char_t c = line[i];
+        if (ScreenCharIsDWL_SPACER(c)) {
+            // DWL_SPACERs are structural placeholders on double-width lines.
+            // They occupy a cell but carry no content — skip entirely.
+            continue;
+        }
         if (!_preferSpeedToFullLigatureSupport) {
             if (c.code == 0) {
                 if (!lastWasNull) {
