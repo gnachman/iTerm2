@@ -16,7 +16,6 @@ int iTermProcPidInfoWrapper(int pid, int flavor, uint64_t arg,  void *buffer, in
 @interface iTermLSOF : NSObject
 
 + (NSArray<NSString *> *)commandLineArgumentsForProcess:(pid_t)pid execName:(NSString **)execName;
-+ (NSArray<NSString *> *)displayCommandLineArgumentsForProcess:(pid_t)pid execName:(NSString **)execName;
 + (NSString *)commandForProcess:(pid_t)pid execName:(NSString **)execName;
 + (NSString *)displayCommandForProcess:(pid_t)pid execName:(NSString **)execName;
 + (NSArray<NSNumber *> *)allPids;

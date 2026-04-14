@@ -41,10 +41,6 @@
     return [iTermLSOF commandLineArgumentsForProcess:pid execName:execName];
 }
 
-- (NSArray<NSString *> *)displayCommandLineArgumentsForProcess:(pid_t)pid execName:(NSString *__autoreleasing *)execName {
-    return [iTermLSOF displayCommandLineArgumentsForProcess:pid execName:execName];
-}
-
 - (NSString *)nameOfProcessWithPid:(pid_t)thePid isForeground:(BOOL *)isForeground {
     return [iTermLSOF nameOfProcessWithPid:thePid isForeground:isForeground];
 }
@@ -98,10 +94,6 @@
 + (NSString *)commandForProcess:(pid_t)pid execName:(NSString **)execName {
     NSArray<NSString *> *argv = [self commandLineArgumentsForProcess:pid execName:execName];
     return [argv componentsJoinedByString:@" "];
-}
-
-+ (NSArray<NSString *> *)displayCommandLineArgumentsForProcess:(pid_t)pid execName:(NSString **)execName {
-    return [self rawCommandLineArgumentsForProcess:pid execName:execName];
 }
 
 + (NSString *)displayCommandForProcess:(pid_t)pid execName:(NSString **)execName {

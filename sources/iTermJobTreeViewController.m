@@ -558,6 +558,8 @@ static int gSignalsToList[] = {
     if (!info.pid) {
         return;
     }
+    // Use the escaped (shell-quotable) form so the user can paste directly into a shell.
+    // Fall back to fullName (unescaped display form) if lsof fails.
     NSString *shellCommand = [iTermLSOF commandForProcess:info.pid execName:nil] ?: info.fullName;
     if (!shellCommand) {
         return;

@@ -17,10 +17,6 @@ protocol ProcessDataSource: AnyObject {
     func commandLineArguments(forProcess pid: pid_t,
                               execName: AutoreleasingUnsafeMutablePointer<NSString>?) -> [String]?
 
-    @objc(displayCommandLineArgumentsForProcess:execName:)
-    func displayCommandLineArguments(forProcess pid: pid_t,
-                                     execName: AutoreleasingUnsafeMutablePointer<NSString>?) -> [String]?
-
     @objc(startTimeForProcess:)
     func startTime(forProcess pid: pid_t) -> Date?
 }

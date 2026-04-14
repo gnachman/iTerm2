@@ -345,11 +345,6 @@ fileprivate class SSHProcessDataSource: NSObject, ProcessDataSource {
         return args
     }
 
-    func displayCommandLineArguments(forProcess pid: pid_t,
-                                     execName: AutoreleasingUnsafeMutablePointer<NSString>?) -> [String]? {
-        return commandLineArguments(forProcess: pid, execName: execName)
-    }
-
     func startTime(forProcess pid: pid_t) -> Date? {
         guard let row = self.row(pid: pid) else {
             return nil
