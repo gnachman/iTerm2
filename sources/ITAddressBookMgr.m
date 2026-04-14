@@ -738,6 +738,7 @@ iTermPercentage iTermPercentageFromProfile(Profile *profile, iTermWindowType win
     return parts[0];
 }
 
+// /usr/bin/login -f[q]pl $USER /path/to/ShellLauncher --launch_shell [SHELL=$SHELL]
 + (NSString *)shellLauncherCommandWithCustomShell:(NSString *)customShell {
     NSString *sanitizedCustomShell = [self sanitizedCustomShell:customShell];
     NSString *customShellArg = sanitizedCustomShell ? [@" SHELL=" stringByAppendingString:sanitizedCustomShell] : @"";
@@ -751,39 +752,14 @@ iTermPercentage iTermPercentageFromProfile(Profile *profile, iTermWindowType win
             customShellArg];
 }
 
+// Always uses the ShellLauncher form so every login-shell profile shares a single argv shape.
+// The working directory is chosen by PTYTask from env["PWD"] (falls back to $HOME), so the
+// home-dir case doesn't need a distinct command — it just passes $HOME as PWD.
+//
+// Shape: /usr/bin/login -f[q]pl $USER /path/to/ShellLauncher --launch_shell [SHELL=$SHELL]
 + (NSString*)loginShellCommandForBookmark:(Profile*)profile
                             forObjectType:(iTermObjectType)objectType {
-    NSString *customDirectoryString;
-    if ([profile[KEY_CUSTOM_DIRECTORY] isEqualToString:kProfilePreferenceInitialDirectoryAdvancedValue]) {
-        switch (objectType) {
-            case iTermWindowObject:
-                customDirectoryString = profile[KEY_AWDS_WIN_OPTION];
-                break;
-            case iTermTabObject:
-                customDirectoryString = profile[KEY_AWDS_TAB_OPTION];
-                break;
-            case iTermPaneObject:
-                customDirectoryString = profile[KEY_AWDS_PANE_OPTION];
-                break;
-            default:
-                NSLog(@"Bogus object type %d", (int)objectType);
-                customDirectoryString = kProfilePreferenceInitialDirectoryHomeValue;
-        }
-    } else {
-        customDirectoryString = profile[KEY_CUSTOM_DIRECTORY];
-    }
-
-    if ([customDirectoryString isEqualToString:kProfilePreferenceInitialDirectoryHomeValue] &&
-        [[self customShellForProfile:profile] length] == 0) {
-        // Run login without -l argument: this is a login session and will use the home dir.
-        return [self standardLoginCommand];
-    } else {
-        // Not using the home directory/default shell. This requires some trickery.
-        // Run iTerm2's executable with a special flag that makes it run the shell as a login shell
-        // (with "-" inserted at the start of argv[0]). See shell_launcher.c for more details.
-        NSString *launchShellCommand = [self shellLauncherCommandWithCustomShell:[self customShellForProfile:profile]];
-        return launchShellCommand;
-    }
+    return [self shellLauncherCommandWithCustomShell:[self customShellForProfile:profile]];
 }
 
 // See issue 4425 for why we do this.
@@ -792,6 +768,7 @@ iTermPercentage iTermPercentageFromProfile(Profile *profile, iTermWindowType win
     return [[NSFileManager defaultManager] fileExistsAtPath:path];
 }
 
+// /usr/bin/login -f[q]p $USER
 + (NSString *)standardLoginCommand {
     NSString *userName = NSUserName();
     // Active directory users have backslash in their user name (issue 6999)
@@ -809,6 +786,7 @@ iTermPercentage iTermPercentageFromProfile(Profile *profile, iTermWindowType win
             userName];
 }
 
+// login -f[q]p $USER
 + (NSString *)legacyStandardLoginCommand {
     NSString *userName = NSUserName();
     // Active directory users have backslash in their user name (issue 6999)

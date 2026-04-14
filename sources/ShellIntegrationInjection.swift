@@ -20,23 +20,41 @@ import Foundation
         case command
 
         init(_ argv: [String]) {
+            // Login Shell:    /usr/bin/login -f[q]pl $USER /path/to/ShellLauncher --launch_shell
+            // Custom Shell:   /usr/bin/login -f[q]pl $USER /path/to/ShellLauncher --launch_shell SHELL=$SHELL
+            // Custom Command: literally anything at all
+            //
             // NOTE: This must be kept in sync with -[ITAddressBookMgr shellLauncherCommandWithCustomShell:]
-            guard argv.starts(with: ["/usr/bin/login", "-fpl"]) || argv.starts(with: ["/usr/bin/login", "-fqpl"]),
-                  argv.get(3, default: "").lastPathComponent == "ShellLauncher",
-                  argv.get(4, default: "") == "--launch_shell" else {
+            let arg1 = argv.get(1, default: "")
+            if argv.get(0, default: "") != "/usr/bin/login" {
                 self = .command
                 return
             }
-            guard argv.get(5, default: "").hasPrefix("SHELL="),
-                  let (_, shell) = argv[5].split(onFirst: "=") else {
-                guard let shell = iTermOpenDirectory.userShell() else {
-                    self = .command
+            if ["-fqp", "-fp"].contains(arg1) && argv.count == 3 {
+                // Login shell in home directory
+                if let shell = iTermOpenDirectory.userShell() {
+                    self = .loginShell(shell)
                     return
                 }
-                self = .loginShell(shell)
+                self = .command
                 return
             }
-            self = .customShell(String(shell))
+            if ["-fqpl", "-fpl"].contains(arg1) &&
+                argv.get(3, default: "").lastPathComponent == "ShellLauncher" &&
+                argv.get(4, default: "") == "--launch_shell" {
+                // Either login shell + custom dir or custom shell
+                if argv.get(5, default: "").hasPrefix("SHELL="),
+                   let (_, shell) = argv[5].split(onFirst: "=") {
+                    // Custom shell
+                    self = .customShell(String(shell))
+                    return
+                } else if argv.count == 5, let shell = iTermOpenDirectory.userShell() {
+                    // Login Shell + Custom Dir
+                    self = .loginShell(shell)
+                    return
+                }
+            }
+            self = .command
         }
     }
 
@@ -82,6 +100,20 @@ import Foundation
                 shellIntegrationDir: shellIntegrationDir,
                 env: env,
                 argv: [shell])
+            if newArgs.count == 1 {
+                return (newEnv, argv)
+            }
+            // The injector added args (e.g., bash's --posix). These can only ride through to the
+            // shell via ShellLauncher's argv[3+]. In the plain `/usr/bin/login -f[q]p $USER` form
+            // there's no ShellLauncher to route them through — macOS login(1) without -l doesn't
+            // pass trailing args to the shell, it tries to exec them — so skip injection in that
+            // case rather than produce a broken command. iTerm's own profiles never emit this
+            // shape (see +loginShellCommandForBookmark:forObjectType:); this only fires when a
+            // user types the plain form as a custom command.
+            guard argv.count >= 5 else {
+                DLog("Plain login shell form can't transport extra args; skipping injection")
+                return (env, argv)
+            }
             // "-" is a placeholder meaning "use $SHELL", followed by extra args (e.g., "--posix")
             return (newEnv, Array(argv + ["-"] + newArgs.dropFirst()))
         }
