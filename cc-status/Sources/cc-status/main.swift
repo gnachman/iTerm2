@@ -25,10 +25,24 @@ case "PreToolUse", "PostToolUse", "UserPromptSubmit":
     status = "working"
     dotColor = "#ff9500"
     textColor = "#ff9500"
-case "PermissionRequest", "Notification":
+case "PermissionRequest":
     status = "waiting"
     dotColor = "#5f87ff"
     textColor = "#5f87ff"
+case "Notification":
+    // idle_prompt means Claude has been idle and is just nudging the user; it should
+    // not overwrite the idle state set by the preceding Stop event. Only permission
+    // prompts (and any unknown subtypes) should flip the tab to "waiting".
+    let notificationType = json["notification_type"] as? String
+    if notificationType == "idle_prompt" {
+        status = "idle"
+        dotColor = "#00d75f"
+        textColor = "#888888"
+    } else {
+        status = "waiting"
+        dotColor = "#5f87ff"
+        textColor = "#5f87ff"
+    }
 case "Stop", "StopFailure", "SessionStart", "SessionEnd":
     status = "idle"
     dotColor = "#00d75f"
