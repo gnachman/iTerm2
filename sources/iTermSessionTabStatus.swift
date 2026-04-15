@@ -7,6 +7,7 @@ class VT100TabStatusUpdate: NSObject {
         update.indicatorPresence = .cleared
         update.statusPresence = .cleared
         update.statusColorPresence = .cleared
+        update.detailPresence = .cleared
         return update
     }
     @objc var indicatorPresence: VT100TabStatusUpdateFieldPresence = .notSet
@@ -17,6 +18,9 @@ class VT100TabStatusUpdate: NSObject {
 
     @objc var statusColorPresence: VT100TabStatusUpdateFieldPresence = .notSet
     @objc var statusColor: iTermSRGBColor = iTermSRGBColor(r: 0, g: 0, b: 0)
+
+    @objc var detailPresence: VT100TabStatusUpdateFieldPresence = .notSet
+    @objc var detail: String? = nil
 
     override var description: String {
         var parts = [String]()
@@ -50,6 +54,14 @@ class VT100TabStatusUpdate: NSObject {
                                 Int(statusColor.b * 255)))
         @unknown default: break
         }
+        switch detailPresence {
+        case .notSet: break
+        case .cleared:
+            parts.append("detail=cleared")
+        case .set:
+            parts.append("detail=\(detail ?? "")")
+        @unknown default: break
+        }
         if parts.isEmpty {
             return "VT100TabStatusUpdate{empty}"
         }
@@ -73,6 +85,7 @@ class iTermSessionTabStatus: NSObject {
         var statusText: String? = nil
         var hasStatusTextColor: Bool = false
         var statusTextColor: iTermSRGBColor = iTermSRGBColor(r: 0, g: 0, b: 0)
+        var detailText: String? = nil
     }
     private var state = State()
     @objc var hasIndicator: Bool {
@@ -113,6 +126,14 @@ class iTermSessionTabStatus: NSObject {
         }
         set {
             state.statusTextColor = newValue
+        }
+    }
+    @objc var detailText: String? {
+        get {
+            state.detailText
+        }
+        set {
+            state.detailText = newValue
         }
     }
 
@@ -167,6 +188,17 @@ class iTermSessionTabStatus: NSObject {
         @unknown default:
             break
         }
+
+        switch update.detailPresence {
+        case .notSet:
+            break
+        case .cleared:
+            detailText = nil
+        case .set:
+            detailText = update.detail
+        @unknown default:
+            break
+        }
         if state == before {
             return false
         }
@@ -180,6 +212,7 @@ class iTermSessionTabStatus: NSObject {
         statusText = nil
         hasStatusTextColor = false
         statusTextColor = iTermSRGBColor(r: 0, g: 0, b: 0)
+        detailText = nil
         notify()
     }
 
@@ -232,6 +265,7 @@ class iTermSessionTabStatus: NSObject {
     private static let arrangementIndicatorColorKey = "Indicator Color"
     private static let arrangementStatusTextKey = "Status Text"
     private static let arrangementStatusTextColorKey = "Status Text Color"
+    private static let arrangementDetailTextKey = "Detail Text"
 
     @objc func arrangementDictionary() -> NSDictionary? {
         guard hasActiveStatus else {
@@ -246,6 +280,9 @@ class iTermSessionTabStatus: NSObject {
         }
         if hasStatusTextColor {
             dict[Self.arrangementStatusTextColorKey] = iTermSRGBColorToDictionary(statusTextColor)
+        }
+        if let detailText {
+            dict[Self.arrangementDetailTextKey] = detailText
         }
         return dict as NSDictionary
     }
@@ -267,6 +304,7 @@ class iTermSessionTabStatus: NSObject {
                 status.statusTextColor = color
             }
         }
+        status.detailText = dict[arrangementDetailTextKey] as? String
         return status
     }
 
@@ -277,6 +315,7 @@ class iTermSessionTabStatus: NSObject {
         copy.statusText = statusText
         copy.hasStatusTextColor = hasStatusTextColor
         copy.statusTextColor = statusTextColor
+        copy.detailText = detailText
         return copy
     }
 }

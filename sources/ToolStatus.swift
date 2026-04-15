@@ -27,7 +27,6 @@ class ToolStatus: NSView {
             }
         }
         var sessionID: String
-        var detail: String?
         var lastChanged = NSDate.it_timeSinceBoot()
 
         static func < (lhs: ToolStatus.Status, rhs: ToolStatus.Status) -> Bool {
@@ -172,7 +171,7 @@ extension ToolStatus {
             let contains = delegate?.toolbeltWindowContainsSession(withGUID: status.sessionID) == true
             DLog("ToolStatus viewDidMoveToWindow: sessionID=\(status.sessionID) contains=\(contains) hasActive=\(status.hasActiveStatus)")
             if contains {
-                return Status(tabStatus: status, sessionID: status.sessionID, detail: nil)
+                return Status(tabStatus: status, sessionID: status.sessionID)
             } else {
                 return nil
             }
@@ -219,6 +218,7 @@ extension ToolStatus {
     * `status=TEXT` — Sets the status text (e.g., \u{201c}Working\u{201d}, \u{201c}Waiting\u{201d}).
     * `indicator=COLOR` — Sets the dot color.
     * `status-color=COLOR` — Sets the status text color.
+    * `detail=TEXT` — Sets optional detail text shown below the status (wraps up to 3 lines).
 
     Colors use xterm format: `rgb:RR/GG/BB` (hex, 1–4 digits per component) or `#RRGGBB`.
 
@@ -286,7 +286,7 @@ private extension ToolStatus {
             guard contains else {
                 return
             }
-            let newValue = Status(tabStatus: value!, sessionID: key, detail: nil)
+            let newValue = Status(tabStatus: value!, sessionID: key)
             var updated = statuses
             updated.append(newValue)
             updated = updated.sorted { lhs, rhs in
@@ -317,7 +317,7 @@ private extension ToolStatus {
                 candidate.sessionID == key
             }
             if let i {
-                let newValue = Status(tabStatus: value!, sessionID: key, detail: nil)
+                let newValue = Status(tabStatus: value!, sessionID: key)
                 var updated = statuses
                 updated[i] = newValue
                 updated = updated.sorted { lhs, rhs in
@@ -331,12 +331,16 @@ private extension ToolStatus {
                         _tableView?.moveRow(at: i, to: j)
                     }
                     _tableView?.reloadData(forRowIndexes: IndexSet(integer: j), columnIndexes: IndexSet(integer: 0))
+                    // reloadData reloads cell content but keeps the cached row
+                    // height; detail text can wrap 1–3 lines so height must be
+                    // recomputed whenever tabStatus changes.
+                    _tableView?.noteHeightOfRows(withIndexesChanged: IndexSet(integer: j))
                     _tableView?.endUpdates()
                 }
             } else {
                 // Session was added to the controller before this observer existed.
                 // Treat it as a new addition.
-                let newValue = Status(tabStatus: value!, sessionID: key, detail: nil)
+                let newValue = Status(tabStatus: value!, sessionID: key)
                 var updated = statuses
                 updated.append(newValue)
                 updated.sort()
@@ -429,7 +433,7 @@ private extension ToolStatus {
                        shortcut: shortcutString(for: status.sessionID),
                        statusText: tabStatus.statusText,
                        statusColor: statusColor,
-                       detail: status.detail)
+                       detail: tabStatus.detailText)
     }
 }
 

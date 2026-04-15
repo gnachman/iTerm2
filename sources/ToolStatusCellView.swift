@@ -18,6 +18,9 @@ class ToolStatusCellView: NSTableCellView {
     private let dotSize: CGFloat = 10
     private let dotNameSpacing: CGFloat = 4
     private let rowSpacing: CGFloat = 1
+    // Detail text hangs one indent level in from the status row.
+    private let detailIndent: CGFloat = 14
+    private let maxDetailLines = 3
 
     override init(frame: NSRect) {
         let font = NSFont.it_toolbelt()
@@ -42,8 +45,12 @@ class ToolStatusCellView: NSTableCellView {
         addSubview(statusLabel)
 
         detailLabel.font = font
-        detailLabel.maximumNumberOfLines = 0
+        detailLabel.textColor = .secondaryLabelColor
+        detailLabel.maximumNumberOfLines = maxDetailLines
         detailLabel.lineBreakMode = .byWordWrapping
+        detailLabel.cell?.wraps = true
+        detailLabel.cell?.isScrollable = false
+        detailLabel.cell?.truncatesLastVisibleLine = true
         detailLabel.usesSingleLineMode = false
         detailLabel.isHidden = true
         addSubview(detailLabel)
@@ -128,14 +135,22 @@ class ToolStatusCellView: NSTableCellView {
             y += statusLabel.frame.height + rowSpacing
         }
 
-        // Detail label
+        // Detail label — indented one additional level from the status row,
+        // word-wrapped up to maxDetailLines, tail-truncated if it overflows.
         if !detailLabel.isHidden {
-            detailLabel.preferredMaxLayoutWidth = textWidth
-            detailLabel.frame = NSRect(x: textX, y: y, width: textWidth, height: 0)
-            detailLabel.sizeToFit()
-            detailLabel.frame = NSRect(x: textX, y: y,
-                                       width: textWidth,
-                                       height: detailLabel.frame.height)
+            let detailX = textX + detailIndent
+            let detailWidth = max(0, width - detailX - margin)
+            let font = detailLabel.font ?? NSFont.it_toolbelt()
+            let textBounds = (detailLabel.stringValue as NSString).boundingRect(
+                with: CGSize(width: detailWidth, height: .greatestFiniteMagnitude),
+                options: [.usesLineFragmentOrigin, .usesFontLeading],
+                attributes: [.font: font])
+            let lineHeight = ceil(font.boundingRectForFont.height)
+            let maxHeight = lineHeight * CGFloat(maxDetailLines)
+            let measuredHeight = ceil(textBounds.height)
+            let h = min(measuredHeight, maxHeight)
+            detailLabel.preferredMaxLayoutWidth = detailWidth
+            detailLabel.frame = NSRect(x: detailX, y: y, width: detailWidth, height: h)
         }
     }
 
