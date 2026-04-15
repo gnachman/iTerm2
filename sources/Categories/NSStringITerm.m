@@ -454,18 +454,18 @@
 }
 
 - (NSString *)it_stringByExpandingBackslashEscapedCharacters {
-    NSNumber *nkey = @'n';
-    NSNumber *akey = @'a';
-    NSNumber *tkey = @'t';
-    NSNumber *rkey = @'r';
-    NSNumber *bskey = @'\\';
-    NSNumber *ekey = @'e';
-    NSDictionary *escapes = @{ nkey: @('\n'),
-                               akey: @('\x07'),
-                               tkey: @('\t'),
-                               rkey: @('\r'),
-                               bskey: @('\\'),
-                               ekey: @('\e') };
+    // Covers the superset of C-style (\n \r \t \a \e \\) and JSON-style
+    // (\n \r \t \b \f \" \\ \/) single-character escapes, plus \uXXXX below.
+    NSDictionary *escapes = @{ @'n':  @('\n'),
+                               @'r':  @('\r'),
+                               @'t':  @('\t'),
+                               @'a':  @('\x07'),
+                               @'b':  @('\x08'),
+                               @'f':  @('\x0c'),
+                               @'e':  @('\e'),
+                               @'\\': @('\\'),
+                               @'"':  @('"'),
+                               @'/':  @('/') };
     NSMutableString *result = [NSMutableString string];
     NSInteger start = 0;
     BOOL escape = NO;

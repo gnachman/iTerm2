@@ -863,6 +863,9 @@ extension Session {
         @Option(name: .long, help: "Text color as #rrggbb.")
         var textColor: String?
 
+        @Option(name: .long, help: "Optional detail text shown alongside the status.")
+        var detail: String?
+
         func run() throws {
             let client = try APIClient.connect()
             defer { client.disconnect() }
@@ -881,6 +884,9 @@ extension Session {
             }
             if let dotColor = dotColor {
                 args.append("dot_color: \(jsonString(dotColor))")
+            }
+            if let detail = detail {
+                args.append("detail: \(jsonString(detail))")
             }
 
             invoke.invocation = "iterm2.set_status(\(args.joined(separator: ", ")))"

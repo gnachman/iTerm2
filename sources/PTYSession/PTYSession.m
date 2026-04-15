@@ -22987,7 +22987,7 @@ getOptionKeyBehaviorLeft:(iTermOptionKeyBehavior *)left
 }
 
 - (void)screenSetTabStatus:(VT100TabStatusUpdate *)status {
-    DLog(@"%@ screenSetTabStatus: %@", self, status);
+    DLog(@"%@ screenSetTabStatus: %@", self, status.description);
     NSString *previousStatusText = self.tabStatus.statusText;
     if (![self.tabStatus apply:status]) {
         DLog(@"No change");
