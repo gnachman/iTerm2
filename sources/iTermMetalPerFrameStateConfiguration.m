@@ -161,6 +161,10 @@ static vector_float4 VectorForColor(NSColor *color) {
     _selectedCommandRegion = drawingHelper.selectedCommandRegion;
     _selectedCommandRegion.location += drawingHelper.totalScrollbackOverflow;
     _totalScrollbackOverflow = drawingHelper.totalScrollbackOverflow;
+
+    _linkUnderlineStyle = drawingHelper.linkUnderlineStyle;
+    _useLinkHoverColor = [_colorMap colorForKey:kColorMapLinkHover] != nil;
+    _useLinkActiveColor = [_colorMap colorForKey:kColorMapLinkActive] != nil;
 }
 
 @end

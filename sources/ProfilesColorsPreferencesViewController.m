@@ -97,6 +97,11 @@ static NSString * const kColorGalleryURL = @"https://www.iterm2.com/colorgallery
 
     IBOutlet NSButton *_useTabColor;
     IBOutlet NSButton *_useUnderlineColor;
+    IBOutlet NSButton *_useLinkHoverColor;
+    IBOutlet iTermSettingsColorWell *_linkHoverColor;
+    IBOutlet NSButton *_useLinkActiveColor;
+    IBOutlet iTermSettingsColorWell *_linkActiveColor;
+    IBOutlet NSPopUpButton *_linkUnderlineStylePopup;
     IBOutlet NSButton *_useSmartCursorColor;
     IBOutlet NSButton *_useActivePaneBorder;
     IBOutlet iTermSettingsColorWell *_activePaneBorderColor;
@@ -262,6 +267,23 @@ static NSString * const kColorGalleryURL = @"https://www.iterm2.com/colorgallery
                    relatedView:nil
                           type:kPreferenceInfoTypeCheckbox];
     info.observer = ^() { [weakSelf updateColorControlsEnabled]; };
+
+    info = [self defineControl:_useLinkHoverColor
+                           key:KEY_USE_LINK_HOVER_COLOR
+                   relatedView:nil
+                          type:kPreferenceInfoTypeCheckbox];
+    info.observer = ^() { [weakSelf updateColorControlsEnabled]; };
+
+    info = [self defineControl:_useLinkActiveColor
+                           key:KEY_USE_LINK_ACTIVE_COLOR
+                   relatedView:nil
+                          type:kPreferenceInfoTypeCheckbox];
+    info.observer = ^() { [weakSelf updateColorControlsEnabled]; };
+
+    [self defineControl:_linkUnderlineStylePopup
+                    key:KEY_LINK_UNDERLINE_STYLE
+            relatedView:nil
+                   type:kPreferenceInfoTypePopup];
 
     info = [self defineControl:_useSmartCursorColor
                            key:KEY_SMART_CURSOR_COLOR
@@ -436,6 +458,8 @@ static NSString * const kColorGalleryURL = @"https://www.iterm2.com/colorgallery
     _tabColor.enabled = [self boolForKey:KEY_USE_TAB_COLOR];
     _selectedTextColor.enabled = [self boolForKey:KEY_USE_SELECTED_TEXT_COLOR];
     _underlineColor.enabled = [self boolForKey:KEY_USE_UNDERLINE_COLOR];
+    _linkHoverColor.enabled = [self boolForKey:KEY_USE_LINK_HOVER_COLOR];
+    _linkActiveColor.enabled = [self boolForKey:KEY_USE_LINK_ACTIVE_COLOR];
     _activePaneBorderColor.enabled = [self boolForKey:KEY_USE_ACTIVE_PANE_BORDER];
 
     const BOOL smartCursorColorSelected = [self boolForKey:KEY_SMART_CURSOR_COLOR];
@@ -470,6 +494,8 @@ static NSString * const kColorGalleryURL = @"https://www.iterm2.com/colorgallery
               KEY_BACKGROUND_COLOR: _backgroundColor,
               KEY_BOLD_COLOR: _boldColor,
               KEY_LINK_COLOR: _linkColor,
+              KEY_LINK_HOVER_COLOR: _linkHoverColor,
+              KEY_LINK_ACTIVE_COLOR: _linkActiveColor,
               KEY_MATCH_COLOR: _matchColor,
               KEY_SELECTION_COLOR: _selectionColor,
               KEY_SELECTED_TEXT_COLOR: _selectedTextColor,

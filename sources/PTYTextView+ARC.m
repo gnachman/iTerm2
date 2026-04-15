@@ -516,8 +516,14 @@ iTermCommandInfoViewControllerDelegate>
 
     if ([iTermAdvancedSettingsModel enableUnderlineSemanticHistoryOnCmdHover]) {
         DLog(@"Setting underlined range to %@", VT100GridWindowedRangeDescription(action.logicalRange));
-        self.drawingHelper.underlinedRange = VT100GridAbsWindowedRangeFromRelative(action.logicalRange,
-                                                                                   [self.dataSource totalScrollbackOverflow]);
+        const VT100GridAbsWindowedRange absRange = VT100GridAbsWindowedRangeFromRelative(action.logicalRange,
+                                                                                         [self.dataSource totalScrollbackOverflow]);
+        self.drawingHelper.underlinedRange = absRange;
+        if ([NSEvent pressedMouseButtons] & 1) {
+            self.drawingHelper.activeLinkRange = absRange;
+        } else {
+            self.drawingHelper.activeLinkRange = VT100GridAbsWindowedRangeMake(VT100GridAbsCoordRangeMake(-1, -1, -1, -1), 0, 0);
+        }
     }
 
     DLog(@"Request redraw and update cursor");

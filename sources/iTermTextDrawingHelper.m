@@ -214,6 +214,13 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
     _underlinedRange = underlinedRange;
 }
 
+- (void)setActiveLinkRange:(VT100GridAbsWindowedRange)activeLinkRange {
+    if (VT100GridAbsWindowedRangeEquals(activeLinkRange, _activeLinkRange)) {
+        return;
+    }
+    _activeLinkRange = activeLinkRange;
+}
+
 #pragma mark - Drawing: General
 
 - (void)didFinishSetup {
@@ -3950,6 +3957,38 @@ typedef struct {
         return NSMakeRange(start, end - start);
     } else {
         // No underline on this line.
+        return NSMakeRange(0, 0);
+    }
+}
+
+- (NSRange)activeLinkRangeOnLine:(long long)row {
+    if (_activeLinkRange.coordRange.start.x < 0) {
+        return NSMakeRange(0, 0);
+    }
+
+    if (row == _activeLinkRange.coordRange.start.y && row == _activeLinkRange.coordRange.end.y) {
+        const int start = VT100GridAbsWindowedRangeStart(_activeLinkRange).x;
+        const int end = VT100GridAbsWindowedRangeEnd(_activeLinkRange).x;
+        return NSMakeRange(start, end - start);
+    } else if (row == _activeLinkRange.coordRange.start.y) {
+        const int start = VT100GridAbsWindowedRangeStart(_activeLinkRange).x;
+        const int end =
+            _activeLinkRange.columnWindow.length > 0 ? VT100GridRangeMax(_activeLinkRange.columnWindow) + 1
+            : _gridSize.width;
+        return NSMakeRange(start, end - start);
+    } else if (row == _activeLinkRange.coordRange.end.y) {
+        const int start =
+            _activeLinkRange.columnWindow.length > 0 ? _activeLinkRange.columnWindow.location : 0;
+        const int end = VT100GridAbsWindowedRangeEnd(_activeLinkRange).x;
+        return NSMakeRange(start, end - start);
+    } else if (row > _activeLinkRange.coordRange.start.y && row < _activeLinkRange.coordRange.end.y) {
+        const int start =
+            _activeLinkRange.columnWindow.length > 0 ? _activeLinkRange.columnWindow.location : 0;
+        const int end =
+            _activeLinkRange.columnWindow.length > 0 ? VT100GridRangeMax(_activeLinkRange.columnWindow) + 1
+            : _gridSize.width;
+        return NSMakeRange(start, end - start);
+    } else {
         return NSMakeRange(0, 0);
     }
 }

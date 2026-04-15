@@ -303,6 +303,8 @@ const CGFloat PTYTextViewMarginClickGraceWidth = 2.0;
         _oldSelection = [_selection copy];
         _drawingHelper.underlinedRange =
             VT100GridAbsWindowedRangeMake(VT100GridAbsCoordRangeMake(-1, -1, -1, -1), 0, 0);
+        _drawingHelper.activeLinkRange =
+            VT100GridAbsWindowedRangeMake(VT100GridAbsCoordRangeMake(-1, -1, -1, -1), 0, 0);
         _timeOfLastBlink = [NSDate timeIntervalSinceReferenceDate];
 
         // Register for drag and drop.
@@ -2146,6 +2148,8 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
         return NO;
     }
     _drawingHelper.underlinedRange =
+        VT100GridAbsWindowedRangeMake(VT100GridAbsCoordRangeMake(-1, -1, -1, -1), 0, 0);
+    _drawingHelper.activeLinkRange =
         VT100GridAbsWindowedRangeMake(VT100GridAbsCoordRangeMake(-1, -1, -1, -1), 0, 0);
     [self requestDelegateRedraw];  // It would be better to just display the underlined/formerly underlined area.
     return YES;

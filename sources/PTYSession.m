@@ -5072,12 +5072,16 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
         return iTermAmendedColorKey(baseKey, profile, dark);
     };
     const BOOL useUnderline = [iTermProfilePreferences boolForKey:k(KEY_USE_UNDERLINE_COLOR) inProfile:profile];
+    const BOOL useLinkHover = [iTermProfilePreferences boolForKey:k(KEY_USE_LINK_HOVER_COLOR) inProfile:profile];
+    const BOOL useLinkActive = [iTermProfilePreferences boolForKey:k(KEY_USE_LINK_ACTIVE_COLOR) inProfile:profile];
     NSDictionary *keyMap = @{ @(kColorMapForeground): k(KEY_FOREGROUND_COLOR),
                               @(kColorMapBackground): k(KEY_BACKGROUND_COLOR),
                               @(kColorMapSelection): k(KEY_SELECTION_COLOR),
                               @(kColorMapSelectedText): k(KEY_SELECTED_TEXT_COLOR),
                               @(kColorMapBold): k(KEY_BOLD_COLOR),
                               @(kColorMapLink): k(KEY_LINK_COLOR),
+                              @(kColorMapLinkHover): (useLinkHover ? k(KEY_LINK_HOVER_COLOR) : [NSNull null]),
+                              @(kColorMapLinkActive): (useLinkActive ? k(KEY_LINK_ACTIVE_COLOR) : [NSNull null]),
                               @(kColorMapMatch): k(KEY_MATCH_COLOR),
                               @(kColorMapCursor): k(KEY_CURSOR_COLOR),
                               @(kColorMapCursorText): k(KEY_CURSOR_TEXT_COLOR),
@@ -5284,6 +5288,7 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
     _textview.cursorSmoothSlide = [iTermProfilePreferences boolForKey:KEY_CURSOR_SMOOTH_SLIDE inProfile:aDict];
     [_textview setBlinkingCursor:[iTermProfilePreferences boolForKey:KEY_BLINKING_CURSOR inProfile:aDict]];
     [_textview setCursorType:_cursorTypeOverride ? _cursorTypeOverride.integerValue : [iTermProfilePreferences intForKey:KEY_CURSOR_TYPE inProfile:aDict]];
+    _textview.drawingHelper.linkUnderlineStyle = [iTermProfilePreferences intForKey:KEY_LINK_UNDERLINE_STYLE inProfile:aDict];
 
     PTYTab* currentTab = [[_delegate parentWindow] currentTab];
     if (currentTab == nil || [_delegate sessionBelongsToVisibleTab]) {
