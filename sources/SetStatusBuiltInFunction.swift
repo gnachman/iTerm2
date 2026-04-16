@@ -34,7 +34,7 @@ extension SetStatusBuiltInFunction: iTermBuiltInFunctionProtocol {
             defaultValues: ["session_id": iTermVariableKeySessionID],
             context: .session,
             sideEffectsPlaceholder: "[set_status]") { parameters, completion in
-                DLog("%@", "set_status \(parameters)")
+                DLog("set_status \(parameters)")
                 guard let sessionID = parameters["session_id"] as? String else {
                     completion(nil, error(message: "Missing session_id"))
                     return
