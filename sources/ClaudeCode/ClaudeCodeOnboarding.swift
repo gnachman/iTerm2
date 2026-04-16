@@ -12,13 +12,13 @@ class ClaudeCodeOnboarding: NSObject {
     private static var instance: ClaudeCodeOnboarding?
 
     private enum Step: Int, CaseIterable {
-        case installTriggers = 0
+        case installHook = 0
         case showToolbelt = 1
         case explainStatus = 2
 
         var title: String {
             switch self {
-            case .installTriggers: return "Install Triggers"
+            case .installHook: return "Install Hook"
             case .showToolbelt: return "Show Toolbelt"
             case .explainStatus: return "Using Session Status"
             }
@@ -26,7 +26,7 @@ class ClaudeCodeOnboarding: NSObject {
 
         var buttonTitle: String {
             switch self {
-            case .installTriggers: return "Install"
+            case .installHook: return "Install"
             case .showToolbelt: return "Show"
             case .explainStatus: return "Show Settings"
             }
@@ -34,8 +34,8 @@ class ClaudeCodeOnboarding: NSObject {
 
         var description: String {
             switch self {
-            case .installTriggers:
-                return "Add Claude Code\u{2013}specific triggers to the profiles you use with Claude Code. These triggers let iTerm2 detect Claude\u{2019}s state (working, waiting, idle) and display it in the Session Status tool."
+            case .installHook:
+                return "Install a Claude Code hook that lets iTerm2 detect Claude\u{2019}s state (working, waiting, idle) and display it in the Session Status tool.\n\nThis adds a hook to your Claude Code settings that runs automatically as Claude works."
             case .showToolbelt:
                 return "Show the toolbelt and enable the Session Status tool. The toolbelt appears on the right side of your terminal window.\n\nYou can toggle the toolbelt from View \u{2192} Toolbelt \u{2192} Show Toolbelt, or with the shortcut \u{2318}\u{21E7}B."
             case .explainStatus:
@@ -45,7 +45,7 @@ class ClaudeCodeOnboarding: NSObject {
     }
 
     private var panel: iTermFocusablePanel!
-    private var currentStep: Step = .installTriggers
+    private var currentStep: Step = .installHook
     private var completedSteps = Set<Step>()
 
     // UI elements
@@ -264,8 +264,8 @@ class ClaudeCodeOnboarding: NSObject {
 
     @objc private func doItPressed(_ sender: Any?) {
         switch currentStep {
-        case .installTriggers:
-            doInstallTriggers()
+        case .installHook:
+            doInstallHook()
         case .showToolbelt:
             doShowToolbelt()
         case .explainStatus:
@@ -275,7 +275,20 @@ class ClaudeCodeOnboarding: NSObject {
         updateUI()
     }
 
-    // MARK: - Step 1: Install Triggers
+    // MARK: - Step 1: Install Hook
+
+    /// Hook event names that cc-status handles.
+    private static let hookEventNames = [
+        "UserPromptSubmit",
+        "Stop",
+        "StopFailure",
+        "Notification",
+        "PermissionRequest",
+        "SessionEnd",
+        "PreToolUse",
+        "PostToolUse",
+        "SessionStart",
+    ]
 
     private func claudeSessionGUIDs() -> Set<String> {
         // Prefer ClaudeWatcher if running, otherwise query GlobalJobMonitor directly.
@@ -286,146 +299,96 @@ class ClaudeCodeOnboarding: NSObject {
     }
 
     private func claudeSessions() -> [PTYSession] {
-        return claudeSessionGUIDs().compactMap { guid in
+        let actual = claudeSessionGUIDs().compactMap { guid in
             iTermController.sharedInstance()?.session(withGUID: guid)
         }
+        if actual.isEmpty,
+           let currentSession = iTermController.sharedInstance()?.currentTerminal?.currentSession() {
+            return [currentSession]
+        }
+        return actual
     }
 
-    private func doInstallTriggers() {
-        guard let bundlePath = Bundle.main.path(forResource: "claude-code-status-triggers",
-                                                ofType: "json") else {
-            DLog("Onboarding: claude-code-status-triggers.json not found in bundle")
+    private func doInstallHook() {
+        guard let ccStatusPath = Bundle.main.path(forResource: "utilities/cc-status",
+                                                  ofType: nil) else {
+            DLog("Onboarding: cc-status not found in bundle")
             return
         }
-        DLog("Onboarding: loading triggers from \(bundlePath)")
+        DLog("Onboarding: cc-status binary at \(ccStatusPath)")
 
-        guard let triggers = TriggerController.triggers(fromFile: bundlePath,
-                                                        window: panel),
-              triggers.count > 0 else {
-            DLog("Onboarding: no triggers loaded from file")
-            return
-        }
-        DLog("Onboarding: loaded \(triggers.count) triggers")
+        let settingsURL = FileManager.default.homeDirectoryForCurrentUser
+            .appendingPathComponent(".claude")
+            .appendingPathComponent("settings.json")
 
-        let sessions = claudeSessions()
-        DLog("Onboarding: found \(sessions.count) Claude sessions")
-
-        // Collect unique profile GUIDs that are running Claude.
-        var claudeProfileGUIDs = Set<String>()
-        for session in sessions {
-            if let guid = profileGUID(for: session) {
-                claudeProfileGUIDs.insert(guid)
-                DLog("Onboarding: Claude session \(session.guid ?? "nil") uses profile GUID \(guid) (isDivorced=\(session.isDivorced))")
-            } else {
-                DLog("Onboarding: Claude session \(session.guid ?? "nil") has no profile GUID")
-            }
-        }
-        DLog("Onboarding: unique Claude profile GUIDs: \(claudeProfileGUIDs)")
-
-        // Show profile selection alert with pre-selection.
-        guard let selectedGUIDs = showProfileSelectionAlert(triggers: triggers,
-                                                            preselectedGUIDs: claudeProfileGUIDs) else {
-            DLog("Onboarding: user cancelled profile selection")
-            return
-        }
-        DLog("Onboarding: user selected \(selectedGUIDs.count) profile(s): \(selectedGUIDs)")
-
-        // Add triggers to each selected profile.
-        for guid in selectedGUIDs {
-            let profileBefore = ProfileModel.sharedInstance()?.bookmark(withGuid: guid)
-            let countBefore = (profileBefore?[KEY_TRIGGERS] as? [Any])?.count ?? 0
-            DLog("Onboarding: adding triggers to profile \(guid), existing trigger count: \(countBefore)")
-
-            TriggerController.add(triggers, toProfileWithGUID: guid)
-
-            let profileAfter = ProfileModel.sharedInstance()?.bookmark(withGuid: guid)
-            let countAfter = (profileAfter?[KEY_TRIGGERS] as? [Any])?.count ?? 0
-            DLog("Onboarding: profile \(guid) now has \(countAfter) triggers (was \(countBefore))")
+        // Read existing settings, or start with an empty object.
+        var settings: [String: Any]
+        if let data = try? Data(contentsOf: settingsURL),
+           let parsed = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
+            settings = parsed
+            DLog("Onboarding: loaded existing settings.json")
+        } else {
+            settings = [:]
+            DLog("Onboarding: starting with empty settings")
         }
 
-        // Update divorced sessions that have overridden triggers.
-        for session in sessions {
-            guard session.isDivorced else {
-                DLog("Onboarding: session \(session.guid ?? "nil") is not divorced, skipping session-specific update")
-                continue
-            }
-            guard let originalGUID = session.profile?[KEY_ORIGINAL_GUID] as? String,
-                  selectedGUIDs.contains(originalGUID) else {
-                DLog("Onboarding: divorced session \(session.guid ?? "nil") originalGUID \(session.profile?[KEY_ORIGINAL_GUID] ?? "nil") not in selected set, skipping")
-                continue
-            }
-            // Copy the updated trigger list from the shared profile to the session.
-            if let sharedProfile = ProfileModel.sharedInstance()?.bookmark(withGuid: originalGUID),
-               let updatedTriggers = sharedProfile[KEY_TRIGGERS] {
-                let count = (updatedTriggers as? [Any])?.count ?? -1
-                DLog("Onboarding: copying \(count) triggers to divorced session \(session.guid ?? "nil")")
-                session.setSessionSpecificProfileValues([KEY_TRIGGERS: updatedTriggers])
-            } else {
-                DLog("Onboarding: failed to get shared profile for \(originalGUID)")
-            }
-        }
+        // Build or update the "hooks" dictionary.
+        var hooks = (settings["hooks"] as? [String: Any]) ?? [:]
 
-        DLog("Onboarding: posting kReloadAllProfiles")
-        NotificationCenter.default.post(name: NSNotification.Name(kReloadAllProfiles), object: nil)
+        let hookEntry: [String: Any] = [
+            "type": "command",
+            "command": ccStatusPath
+        ]
 
-        // Jiggle all Claude sessions so triggers have a chance to fire on a redraw.
-        for session in sessions {
-            DLog("Onboarding: jiggling session \(session.guid ?? "nil")")
-            session.setNeedsJiggle(true)
-        }
-        DLog("Onboarding: doInstallTriggers complete")
-    }
+        for eventName in Self.hookEventNames {
+            var eventHookGroups = (hooks[eventName] as? [[String: Any]]) ?? []
 
-    private func profileGUID(for session: PTYSession) -> String? {
-        if session.isDivorced,
-           let originalGUID = session.profile?[KEY_ORIGINAL_GUID] as? String {
-            return originalGUID
-        }
-        return session.profile?[KEY_GUID] as? String
-    }
-
-    private func showProfileSelectionAlert(triggers: [Trigger],
-                                           preselectedGUIDs: Set<String>) -> Set<String>? {
-        let alert = NSAlert()
-        alert.messageText = "Select profiles to add Claude Code triggers to:"
-        alert.addButton(withTitle: "OK")
-        alert.addButton(withTitle: "Cancel")
-
-        let profiles = ProfileListView(frame: NSMakeRect(0, 0, 300, 300))
-        profiles.disableArrowHandler()
-        profiles.allowMultipleSelections()
-        alert.accessoryView = profiles
-
-        // Ensure data is loaded before trying to select.
-        profiles.reloadData()
-
-        // Pre-select profiles running Claude.
-        if !preselectedGUIDs.isEmpty {
-            var indicesToSelect = IndexSet()
-            guard let wrapper = profiles.dataSource() else { return nil }
-            for guid in preselectedGUIDs {
-                let row = Int(wrapper.indexOfProfile(withGuid: guid))
-                if row >= 0 {
-                    indicesToSelect.insert(row)
+            // Check if cc-status is already installed in any group.
+            let alreadyInstalled = eventHookGroups.contains { group in
+                guard let groupHooks = group["hooks"] as? [[String: Any]] else {
+                    return false
+                }
+                return groupHooks.contains { entry in
+                    guard let command = entry["command"] as? String else {
+                        return false
+                    }
+                    return command.hasSuffix("/cc-status")
                 }
             }
-            if !indicesToSelect.isEmpty {
-                profiles.tableView().selectRowIndexes(indicesToSelect, byExtendingSelection: false)
+            if alreadyInstalled {
+                DLog("Onboarding: hook for \(eventName) already installed, skipping")
+                continue
             }
+
+            // Add a new hook group with cc-status.
+            let newGroup: [String: Any] = ["hooks": [hookEntry]]
+            eventHookGroups.append(newGroup)
+            hooks[eventName] = eventHookGroups
+            DLog("Onboarding: added hook for \(eventName)")
         }
 
-        // Disable OK when nothing is selected.
-        let okButton = alert.buttons[0]
-        okButton.isEnabled = profiles.hasSelection
-        let observer = ProfileSelectionObserver(profiles: profiles, okButton: okButton)
-        profiles.delegate = observer
+        settings["hooks"] = hooks
 
-        guard alert.runModal() == .alertFirstButtonReturn else {
-            _ = observer  // prevent dealloc
-            return nil
+        // Write settings back.
+        do {
+            // Ensure ~/.claude directory exists.
+            let claudeDir = settingsURL.deletingLastPathComponent()
+            try FileManager.default.createDirectory(at: claudeDir,
+                                                    withIntermediateDirectories: true)
+
+            let data = try JSONSerialization.data(withJSONObject: settings,
+                                                  options: [.prettyPrinted, .sortedKeys])
+            try data.write(to: settingsURL, options: .atomic)
+            DLog("Onboarding: wrote settings.json")
+        } catch {
+            DLog("Onboarding: failed to write settings.json: \(error)")
+            let alert = NSAlert()
+            alert.messageText = "Failed to install hook"
+            alert.informativeText = "Could not write to \(settingsURL.path): \(error.localizedDescription)"
+            alert.runModal()
+            return
         }
-        _ = observer
-        return profiles.selectedGuids
+        DLog("Onboarding: doInstallHook complete")
     }
 
     // MARK: - Step 2: Show Toolbelt
@@ -503,23 +466,6 @@ extension ClaudeCodeOnboarding: NSWindowDelegate {
     func windowWillClose(_ notification: Notification) {
         removeScrims()
         Self.instance = nil
-    }
-}
-
-// MARK: - ProfileSelectionObserver
-
-/// Observes profile list selection to enable/disable the OK button.
-private class ProfileSelectionObserver: NSObject, ProfileListViewDelegate {
-    private weak var okButton: NSButton?
-
-    init(profiles: ProfileListView, okButton: NSButton) {
-        self.okButton = okButton
-        super.init()
-    }
-
-    func profileTableSelectionDidChange(_ profileTable: Any!) {
-        guard let list = profileTable as? ProfileListView else { return }
-        okButton?.isEnabled = list.hasSelection
     }
 }
 

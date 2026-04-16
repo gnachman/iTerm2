@@ -4522,9 +4522,6 @@
 		A6E701092F82C537001349AE /* ToolStatus.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6E701082F82C537001349AE /* ToolStatus.swift */; };
 		A6E702DF2F8327F2001349AE /* iTermSwiftyStringTextField.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6E702DE2F8327F2001349AE /* iTermSwiftyStringTextField.swift */; };
 		A6E70C202F84B6D5001349AE /* ClaudeWatcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6E70C1F2F84B6D5001349AE /* ClaudeWatcher.swift */; };
-		A6E70C222F858463001349AE /* claude-code-status-triggers.json in Resources */ = {isa = PBXBuildFile; fileRef = A6E70C212F858463001349AE /* claude-code-status-triggers.json */; };
-		A6E70C232F858463001349AE /* claude-code-status-triggers.json in Resources */ = {isa = PBXBuildFile; fileRef = A6E70C212F858463001349AE /* claude-code-status-triggers.json */; };
-		A6E70C242F858463001349AE /* claude-code-status-triggers.json in Resources */ = {isa = PBXBuildFile; fileRef = A6E70C212F858463001349AE /* claude-code-status-triggers.json */; };
 		A6E7137A18F1D70E008D94DD /* GeneralPreferencesViewController.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E7137818F1D70D008D94DD /* GeneralPreferencesViewController.h */; };
 		A6E7138418F263BC008D94DD /* PreferenceInfo.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E7138218F263BC008D94DD /* PreferenceInfo.h */; };
 		A6E7138918F26445008D94DD /* iTermPreferencesBaseViewController.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E7138718F26445008D94DD /* iTermPreferencesBaseViewController.h */; };
@@ -8782,7 +8779,6 @@
 		A6E701082F82C537001349AE /* ToolStatus.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToolStatus.swift; sourceTree = "<group>"; };
 		A6E702DE2F8327F2001349AE /* iTermSwiftyStringTextField.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermSwiftyStringTextField.swift; sourceTree = "<group>"; };
 		A6E70C1F2F84B6D5001349AE /* ClaudeWatcher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClaudeWatcher.swift; sourceTree = "<group>"; };
-		A6E70C212F858463001349AE /* claude-code-status-triggers.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; name = "claude-code-status-triggers.json"; path = "OtherResources/claude-code-status-triggers.json"; sourceTree = "<group>"; };
 		A6E7137818F1D70D008D94DD /* GeneralPreferencesViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = GeneralPreferencesViewController.h; sourceTree = "<group>"; tabWidth = 4; };
 		A6E7137918F1D70D008D94DD /* GeneralPreferencesViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = GeneralPreferencesViewController.m; sourceTree = "<group>"; tabWidth = 4; };
 		A6E7137D18F1DB1E008D94DD /* iTermPreferences.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = iTermPreferences.h; sourceTree = "<group>"; tabWidth = 4; };
@@ -9824,7 +9820,6 @@
 		1D03D42719144C3B0049EB8F /* Other Assets */ = {
 			isa = PBXGroup;
 			children = (
-				A6E70C212F858463001349AE /* claude-code-status-triggers.json */,
 				A6CB248C2C68147B00005824 /* Utilities */,
 				A6B577D52C0A9520003FEB4F /* ai-plugin.sb */,
 				A6D3205629C492410088BBE1 /* nerd.itse */,
@@ -17611,7 +17606,6 @@
 				A6A3EDDA2E0D050700D711DA /* select-text.js in Resources */,
 				A6CBB7AE2E087DBF00B2CCCB /* notification-bridge.js in Resources */,
 				A6CBB7BE2E08BDD600B2CCCB /* geolocation-demo.html in Resources */,
-				A6E70C222F858463001349AE /* claude-code-status-triggers.json in Resources */,
 				A6109B662B969B4100D8E4E9 /* graphic_neovim@2x.png in Resources */,
 				A6C6822B2E40367B00B8B021 /* trigger-remove-highlighted-text.js in Resources */,
 				A6C838B22CB9ACF90062BE68 /* success-sound.mp3 in Resources */,
@@ -17827,7 +17821,6 @@
 				1DB40A421B1FDC7F005B83C7 /* NoColor@2x.png in Resources */,
 				A6E7AEAD214394F600DE9F3B /* graphic_database.png in Resources */,
 				A60BB38A1EB54BD800D76C09 /* CopyMode@2x.png in Resources */,
-				A6E70C232F858463001349AE /* claude-code-status-triggers.json in Resources */,
 				A6E7AEB6214394F600DE9F3B /* graphic_database@2x.png in Resources */,
 				A697CEC92D98CEB00031583F /* OpenQuicklyMenuItem.png in Resources */,
 				A635F1E425076201008C3038 /* iTermActionsEditingViewController.xib in Resources */,
@@ -18577,7 +18570,6 @@
 				A6BEE47A26E0A624009C0C2C /* FilterIndicator.png in Resources */,
 				A6E743302F98373A001349AE /* clock.png in Resources */,
 				A68E33351DE746F5003F1D8E /* Next Mark Touch Bar Icon.png in Resources */,
-				A6E70C242F858463001349AE /* claude-code-status-triggers.json in Resources */,
 				53FF981C20927F1E008688D7 /* template_pyenv_simple.py in Resources */,
 				A686A1151C86A6CB0024C2DE /* NewOutputForDarkTheme.png in Resources */,
 				A65D7CB121E1EBCA00E3D81C /* StopStatusIcon@2x.png in Resources */,
