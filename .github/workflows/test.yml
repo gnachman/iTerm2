@@ -24,14 +24,29 @@ jobs:
         run: |
           pip install -r requirements-dev.txt
           pip install -e .
+          pip install pytest-cov
 
-      - name: Run tests
+      - name: Run tests with coverage
         working-directory: api/library/python/iterm2
-        run: python -m pytest tests/ -v
+        run: python -m pytest tests/ -v --cov=iterm2 --cov-report=term-missing --cov-report=xml --cov-fail-under=80
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: python-coverage
+          path: api/library/python/iterm2/coverage.xml
+          retention-days: 7
 
       - name: Run mypy
         working-directory: api/library/python/iterm2
         run: python -m mypy iterm2/
+
+      - name: Run harness validation
+        run: |
+          if [ -f .pai/validate.sh ]; then
+            bash .pai/validate.sh --ci
+          fi
 
   xcode-tests:
     runs-on: macos-15

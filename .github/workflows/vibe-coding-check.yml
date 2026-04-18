@@ -1,0 +1,135 @@
+name: Vibe Coding Check
+
+on:
+  push:
+    branches: [master, main, dev]
+  pull_request:
+    branches: [master, main, dev]
+
+jobs:
+  structure-check:
+    name: Repository Structure
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check required root files
+        run: |
+          test -f CLAUDE.md   || (echo "CLAUDE.md 없음" && exit 1)
+          test -f AGENTS.md   || (echo "AGENTS.md 없음" && exit 1)
+          test -f README.md   || (echo "README.md 없음" && exit 1)
+          test -d .claude     || (echo ".claude/ 없음"  && exit 1)
+          echo "필수 파일 확인 완료"
+
+      - name: Check PAI pipeline files
+        run: |
+          test -f .pai/harness.json || (echo "harness.json 없음" && exit 1)
+          test -f .pai/gstack.json  || (echo "gstack.json 없음"  && exit 1)
+          test -f .pai/omc.md       || (echo "omc.md 없음"       && exit 1)
+          test -f handoff.md        || (echo "handoff.md 없음"   && exit 1)
+          echo "PAI 파이프라인 파일 확인 완료"
+
+      - name: Check docs structure
+        run: |
+          test -f docs/openspec.md          || (echo "docs/openspec.md 없음" && exit 1)
+          test -f docs/architecture.md      || echo "경고: docs/architecture.md 없음"
+          test -f docs/development-guide.md || echo "경고: docs/development-guide.md 없음"
+          echo "docs/ 구조 확인 완료"
+
+      - name: Check openspec completeness
+        run: |
+          TODO_COUNT=$(grep -c "<!-- TODO" docs/openspec.md || true)
+          if [ "$TODO_COUNT" -gt 0 ]; then
+            echo "openspec.md에 미완성 섹션 ${TODO_COUNT}개 — /pai design 을 실행하세요"
+            exit 1
+          fi
+          echo "openspec.md 완성 확인"
+
+  harness-check:
+    name: Harness Validation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate harness.json
+        run: |
+          python3 - <<'PYEOF'
+          import json, sys, os
+
+          with open('.pai/harness.json') as f:
+              h = json.load(f)
+
+          for key in ['version', 'specFile', 'checkOn', 'rules']:
+              if key not in h:
+                  print(f'harness.json에 {key} 없음')
+                  sys.exit(1)
+
+          spec = h['specFile']
+          if not os.path.exists(spec):
+              print(f'specFile "{spec}" 없음')
+              sys.exit(1)
+
+          print('harness.json 검증 완료')
+          PYEOF
+
+      - name: Validate gstack.json
+        run: |
+          python3 - <<'PYEOF'
+          import json, sys
+
+          with open('.pai/gstack.json') as f:
+              g = json.load(f)
+
+          for key in ['version', 'testRunners', 'qualityGates']:
+              if key not in g:
+                  print(f'gstack.json에 {key} 없음')
+                  sys.exit(1)
+
+          if not g.get('testRunners'):
+              print('testRunners가 비어 있음')
+              sys.exit(1)
+
+          print(f"gstack.json 검증 완료 — testRunners {len(g['testRunners'])}개")
+          PYEOF
+
+      - name: Check omc.md has project-specific content
+        run: |
+          TODO_COUNT=$(grep -c "TODO" .pai/omc.md || true)
+          if [ "$TODO_COUNT" -gt 0 ]; then
+            echo "경고: omc.md에 TODO ${TODO_COUNT}개 — 도메인 객체를 채우세요"
+          else
+            echo "omc.md 도메인 모델 확인 완료"
+          fi
+
+  code-quality:
+    name: Code Quality Gates
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check no inline web code
+        run: |
+          VIOLATIONS=0
+          while IFS= read -r -d '' f; do
+            if grep -qE '"<(html|script|style)[^"]{50,}' "$f" 2>/dev/null; then
+              echo "인라인 웹 코드 감지: $f"
+              VIOLATIONS=$((VIOLATIONS + 1))
+            fi
+          done < <(find sources -name '*.swift' -o -name '*.m' -o -name '*.h' 2>/dev/null | tr '\n' '\0' || true)
+          if [ "$VIOLATIONS" -gt 0 ]; then
+            echo "iTermBrowserTemplateLoader를 사용하세요 (위반 ${VIOLATIONS}개)"
+            exit 1
+          fi
+          echo "인라인 웹 코드 검사 통과"
+
+      - name: Check no NSUserDefaults direct usage
+        run: |
+          BAD=0
+          while IFS= read -r -d '' f; do
+            COUNT=$(grep -c '\[NSUserDefaults standardUserDefaults\]' "$f" 2>/dev/null || true)
+            if [ "$COUNT" -gt 0 ]; then
+              echo "경고: $f — NSUserDefaults 직접 사용 ${COUNT}개 (iTermUserDefaults 권장)"
+              BAD=$((BAD + COUNT))
+            fi
+          done < <(find sources -name '*.m' -o -name '*.h' 2>/dev/null | tr '\n' '\0' || true)
+          echo "NSUserDefaults 검사 완료 (위반 ${BAD}개)"

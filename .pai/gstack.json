@@ -1,0 +1,17 @@
+{
+  "version": "1",
+  "testRunners": [
+    { "name": "pytest", "path": "api/library/python/iterm2", "cmd": "python -m pytest tests/ -v" },
+    { "name": "xcode", "path": ".", "cmd": "make test" }
+  ],
+  "qualityGates": {
+    "coverage": 80,
+    "maxWarnings": 0,
+    "requireTypeCheck": true
+  },
+  "stackPolicy": {
+    "trunkBranch": "master",
+    "maxStackDepth": 5,
+    "requireLinearHistory": true
+  }
+}

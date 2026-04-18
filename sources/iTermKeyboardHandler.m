@@ -178,6 +178,16 @@ static iTermKeyboardHandler *sCurrentKeyboardHandler;
         if (![self hasMarkedText] && !_hadMarkedTextBeforeHandlingKeypressEvent && _eventBeingHandled) {
             _keyPressHandled = YES;
             [self.delegate keyboardHandler:self sendEventToController:_eventBeingHandled];
+        } else if (_hadMarkedTextBeforeHandlingKeypressEvent &&
+                   aSelector == @selector(insertNewline:) &&
+                   ![self hasMarkedText] &&
+                   _eventBeingHandled &&
+                   [[iTermUserDefaults userDefaults] boolForKey:@"MomentermSingleEnterCommitsIME"]) {
+            // MomenTerm: When IME composition (e.g. Korean Hangul) was active and Enter committed
+            // it, also forward the Enter to the terminal so users don't need to press Enter twice.
+            // Enabled by default; disable via: defaults write com.googlecode.iterm2 MomentermSingleEnterCommitsIME -bool NO
+            _keyPressHandled = YES;
+            [self.delegate keyboardHandler:self sendEventToController:_eventBeingHandled];
         }
     }
     DLog(@"returning from doCommandBySelector:%@", NSStringFromSelector(aSelector));

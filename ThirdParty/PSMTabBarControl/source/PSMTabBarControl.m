@@ -248,7 +248,10 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionPUAFontProvider = @"PSMTabBarCon
         _tabLocation = PSMTab_TopTab;
         if (@available(macOS 26, *)) {
             if (![iTermAdvancedSettingsModel useSequoiaStyleTabs]) {
-                _style = [[PSMTahoeTabStyle alloc] init];
+                // PSMTahoeTabStyle is @available(macOS 26) Swift — look up dynamically
+                // so this file compiles with older SDKs.
+                Class tahoeClass = NSClassFromString(@"PSMTahoeTabStyle");
+                _style = tahoeClass ? [[tahoeClass alloc] init] : [[PSMYosemiteTabStyle alloc] init];
             } else {
                 _style = [[PSMYosemiteTabStyle alloc] init];
             }

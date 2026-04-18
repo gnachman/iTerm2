@@ -71,3 +71,9 @@ emoji-data.txt
 # Unicode data cache for generate_nscharacterset.py
 tools/.unicode_cache/
 emoji-sequences.txt
+
+# MomenTerm additions
+.env
+.env.*
+node_modules/
+report.md

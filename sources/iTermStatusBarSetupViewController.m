@@ -33,6 +33,7 @@
 #import "iTermStatusBarSetupElement.h"
 #import "iTermStatusBarSwiftyStringComponent.h"
 #import "iTermStatusBarVariableBaseComponent.h"
+#import "MomentermStatusBarProjectComponentImpl.h"
 #import "NSArray+iTerm.h"
 #import "NSImage+iTerm.h"
 #import "NSJSONSerialization+iTerm.h"
@@ -117,6 +118,7 @@ NS_ASSUME_NONNULL_BEGIN
                                  [iTermStatusBarTriggersComponent class],
 
                                  [iTermStatusBarGitComponent class],
+                                 [MomentermStatusBarProjectComponentImpl class],
                                  [iTermStatusBarHostnameComponent class],
                                  [iTermStatusBarUsernameComponent class],
                                  [iTermStatusBarJobComponent class],

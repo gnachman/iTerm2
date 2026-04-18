@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+# MomenTerm pre-push hook
+# Install: cp .hooks/pre-push .git/hooks/pre-push
+
+set -e
+
+echo "🔍 MomenTerm pre-push checks..."
+
+# 1. Run build to catch compilation errors before push
+if [ -f "tools/build.sh" ]; then
+  echo "  → Running build check..."
+  if ! bash tools/build.sh Development 2>/dev/null; then
+    echo "❌ Build failed. Fix compilation errors before pushing."
+    echo "   See tmp/build.log for details."
+    exit 1
+  fi
+  echo "  ✓ Build passed"
+fi
+
+# 2. mt-cli TypeScript compile check
+if [ -f "mt-cli/package.json" ]; then
+  echo "  → Checking mt-cli TypeScript..."
+  if command -v npx &>/dev/null; then
+    if ! (cd mt-cli && npx tsc --noEmit 2>/dev/null); then
+      echo "⚠️  mt-cli TypeScript errors found (non-blocking)"
+    else
+      echo "  ✓ mt-cli TypeScript OK"
+    fi
+  fi
+fi
+
+echo "✓ Pre-push checks passed."

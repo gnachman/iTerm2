@@ -230,10 +230,12 @@ NS_AVAILABLE_MAC(26)
         self.imageScaling = NSImageScaleProportionallyDown;
         self.contentTintColor = [NSColor labelColor];
 
-        // New Tahoe (macOS 26) look:
+        // New Tahoe (macOS 26) look — guarded by SDK version:
         self.controlSize = NSControlSizeLarge;
+#if defined(__MAC_OS_X_VERSION_MAX_ALLOWED) && __MAC_OS_X_VERSION_MAX_ALLOWED >= 260000
         self.bezelStyle = NSBezelStyleGlass;              // Liquid Glass bezel
         self.borderShape = NSControlBorderShapeCircle;    // round/capsule shape
+#endif
         self.bordered = YES;
         self.showsBorderOnlyWhileMouseInside = NO;
     }

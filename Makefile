@@ -279,10 +279,10 @@ Nightly: force
 	chmod -R go+rX $(BUILD_DIR)/Nightly
 
 run: Development
-	"$(BUILD_DIR)/Development/iTerm2.app/Contents/MacOS/iTerm2" -suite iterm2-dev
+	"$(BUILD_DIR)/Development/MomenTerm.app/Contents/MacOS/MomenTerm" -suite iterm2-dev
 
 watch: Development
-	tools/run.sh "$(BUILD_DIR)/Development/iTerm2.app/Contents/MacOS/iTerm2" "$(BUILD_DIR)" -suite iterm2-dev
+	tools/run.sh "$(BUILD_DIR)/Development/MomenTerm.app/Contents/MacOS/MomenTerm" "$(BUILD_DIR)" -suite iterm2-dev
 
 devzip: Development
 	cd $(BUILD_DIR)/Development && \

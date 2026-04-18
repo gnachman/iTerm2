@@ -1,0 +1,34 @@
+#!/usr/bin/env bash
+# MomenTerm pre-commit hook
+# Install: cp .hooks/pre-commit .git/hooks/pre-commit
+
+set -e
+
+echo "🔍 MomenTerm pre-commit checks..."
+
+# 1. Block .env from being committed
+if git diff --cached --name-only | grep -qE '^\.env$'; then
+  echo "❌ .env is staged. It must not be committed."
+  echo "   Run: git reset HEAD .env"
+  exit 1
+fi
+
+# 2. Detect secret patterns in staged files
+STAGED=$(git diff --cached --name-only --diff-filter=ACM)
+if [ -n "$STAGED" ]; then
+  if echo "$STAGED" | xargs grep -l -E '(PRIVATE_KEY|SECRET_KEY|API_SECRET|PASSWORD)\s*=' 2>/dev/null | grep -qv '\.example\|\.md\|test\|spec'; then
+    echo "❌ Possible secret key pattern detected in staged files."
+    echo "   Review staged changes: git diff --cached"
+    exit 1
+  fi
+fi
+
+# 3. Block AI-generated summary markdown files
+if git diff --cached --name-only | grep -qE '(summary|plan|analysis|report).*\.md$'; then
+  echo "⚠️  AI-generated markdown file detected."
+  echo "   Per CLAUDE.md: do not commit AI-generated markdown summaries/plans."
+  echo "   If intentional, bypass: git commit --no-verify"
+  # Warning only, not a block
+fi
+
+echo "✓ Pre-commit checks passed."

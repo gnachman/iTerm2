@@ -1559,6 +1559,19 @@ void TurnOnDebugLoggingAutomatically(void) {
 
     [self registerMenuTips];
     [iTermClaudeWatcher start];
+
+    // MomenTerm: register defaults (must run before any keyboard input)
+    [[iTermUserDefaults userDefaults] registerDefaults:@{@"MomentermSingleEnterCommitsIME": @YES}];
+
+    // MomenTerm: add project manager entry to the Window menu
+    NSMenu *windowsMenu = [NSApp windowsMenu];
+    if (windowsMenu) {
+        NSMenuItem *projItem = [[[NSMenuItem alloc] initWithTitle:@"MomenTerm Projects…"
+                                                           action:@selector(openMomentermProjects:)
+                                                    keyEquivalent:@""] autorelease];
+        [windowsMenu insertItem:[NSMenuItem separatorItem] atIndex:0];
+        [windowsMenu insertItem:projItem atIndex:0];
+    }
 #if DEBUG
     NSMenu *appMenu = [[[[NSApp mainMenu] itemArray] firstObject] submenu];
     [appMenu addItem:[NSMenuItem separatorItem]];
@@ -2189,6 +2202,12 @@ static iTermKeyEventReplayer *gReplayer;
     [PTYSession removeAllRegisteredSessions];
 
     [iTermLaunchExperienceController performStartupActivities];
+
+    // MomenTerm: check for AI tools once per launch (user-controlled preference)
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1.5 * NSEC_PER_SEC)),
+                   dispatch_get_main_queue(), ^{
+        [[MomentermNewTabHandler shared] checkAIToolsIfNeededWithForce:NO];
+    });
 }
 
 - (BOOL)shouldOpenUntitledFileAfterRunningAutoLaunchScripts:(BOOL)ranAutoLaunchScripts {
@@ -3093,6 +3112,10 @@ static iTermKeyEventReplayer *gReplayer;
 
 - (IBAction)openDashboard:(id)sender {
     [[TmuxDashboardController sharedInstance] showWindow:nil];
+}
+
+- (IBAction)openMomentermProjects:(id)sender {
+    [MomentermProjectWindowController show];
 }
 
 - (NSString *)gpuUnavailableStringForReason:(iTermMetalUnavailableReason)reason {

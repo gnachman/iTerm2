@@ -1,0 +1,53 @@
+# .agentignore — paths excluded from AI context scanning
+# Claude Code and Codex will skip these paths when building context.
+# Format: same as .gitignore patterns
+
+# Build artifacts
+tmp/
+build/
+out/
+*.build/
+DerivedData/
+
+# Binary and compiled files
+*.o
+*.a
+*.dylib
+*.framework/Versions/*/
+BetterFontPicker/
+ColorPicker/SearchableComboListView/
+*.xcarchive/
+
+# Dependencies and submodules
+submodules/
+vendor/
+
+# Generated / cache
+.build/
+*.xcuserdata/
+xcuserdata/
+*.xcworkspace/xcshareddata/swiftpm/
+mt-cli/node_modules/
+mt-cli/dist/
+
+# Test artifacts
+tests/PerformanceTests/
+coverage/
+
+# Large auto-generated ObjC files (review if needed)
+# sources/Generated/
+
+# Logs
+*.log
+tmp/build.log
+
+# OS temporaries
+.DS_Store
+*.swp
+*~
+
+# Xcode intermediates
+*.pbxuser
+*.mode1v3
+*.mode2v3
+*.perspectivev3

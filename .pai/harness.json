@@ -1,0 +1,13 @@
+{
+  "version": "1",
+  "specFile": "docs/openspec.md",
+  "checkOn": ["push", "pull_request"],
+  "rules": {
+    "requireCLAUDE": true,
+    "requireAGENTS": true,
+    "requireHandoff": true,
+    "noNSUserDefaults": true,
+    "noInlineWebCode": true,
+    "noFatalError": true
+  }
+}
