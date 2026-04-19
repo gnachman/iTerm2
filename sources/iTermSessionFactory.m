@@ -58,7 +58,7 @@ NS_ASSUME_NONNULL_BEGIN
                                  command:(nullable NSString *)command
                                   isUTF8:(nullable NSNumber *)isUTF8Number
                            substitutions:(nullable NSDictionary *)substitutions
-                        windowController:(PseudoTerminal * _Nonnull)windowController
+                        windowController:(nullable PseudoTerminal *)windowController
                                    ready:(void (^ _Nullable)(BOOL ok))ready
                               completion:(void (^ _Nullable)(PTYSession * _Nullable, BOOL))completion {
     iTermSessionAttachOrLaunchRequest *request = [[self alloc] init];
@@ -245,8 +245,10 @@ NS_ASSUME_NONNULL_BEGIN
     DLog(@"  update variables");
     [self updateVariables];
     DLog(@"  set name to %@", self.name);
-    [self.windowController setName:self.name ?: @""
-                        forSession:self.session];
+    
+    [self.session didInitializeSessionWithName:self.name ?: @""];
+    [self.session setSessionSpecificProfileValues:@{ KEY_NAME: self.name ?: @"" }];
+
     DLog(@"  done setting name");
 }
 

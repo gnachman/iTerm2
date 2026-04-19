@@ -115,6 +115,7 @@
 #import "iTermSecureKeyboardEntryController.h"
 #import "iTermSelection.h"
 #import "iTermSelectionExtraction.h"
+#import "iTermSessionFactory.h"
 #import "iTermSessionLauncher.h"
 #import "iTermSessionPicker.h"
 #import "iTermSetFindStringNotification.h"

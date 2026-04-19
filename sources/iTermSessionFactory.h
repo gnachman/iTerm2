@@ -57,7 +57,7 @@ NS_ASSUME_NONNULL_BEGIN
                                  command:(nullable NSString *)command
                                   isUTF8:(nullable NSNumber *)isUTF8Number  // Overrides profile's iSUTF8 if nonnil
                            substitutions:(nullable NSDictionary *)substitutions
-                        windowController:(PseudoTerminal * _Nonnull)windowController
+                        windowController:(nullable PseudoTerminal *)windowController
                                    ready:(void (^ _Nullable)(BOOL ok))ready
                               completion:(void (^ _Nullable)(PTYSession * _Nullable, BOOL))completion;
 

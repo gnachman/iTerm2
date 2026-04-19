@@ -5598,6 +5598,7 @@ typedef struct {
         DLog(@"tmux");
         return;
     }
+    [buried disinter];
     PTYSplitView *splitView = (PTYSplitView *)existing.view.superview;
     const NSUInteger index = [splitView.subviews indexOfObject:existing.view];
     buried.view.frame = existing.view.frame;
@@ -7315,7 +7316,27 @@ backgroundColor:(NSColor *)backgroundColor {
     [self.delegate tab:self progressDidChange:self.progress];
 }
 
-- (NSScriptObjectSpecifier *)objectSpecifier { 
+- (void)sessionActivateSession:(PTYSession *)sessionToActivate
+                    amongPeers:(PTYSessionPeerPort *)peerPort
+                   moveToolbar:(BOOL)moveToolbar {
+    for (PTYSession *visiblePeer in [self sessions]) {
+        if (visiblePeer != sessionToActivate && [visiblePeer sessionBelongsToPeers:peerPort]) {
+            // TODO: Ensure self.activeSession is buriable (not synthetic) - if it is synthetic we need to replace it with the live session before burial
+            if (moveToolbar) {
+                [visiblePeer moveToolbarTo:sessionToActivate];
+            }
+            [self swapSession:visiblePeer withBuriedSession:sessionToActivate];
+            break;
+        }
+    }
+    if ([self.sessions containsObject:sessionToActivate]) {
+        [self setActiveSession:sessionToActivate];
+    }
+    // Update layout for toolbar
+    [self updatePaneTitles];
+}
+
+- (NSScriptObjectSpecifier *)objectSpecifier {
     return [self scriptingObjectSpecifier];
 }
 

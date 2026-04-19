@@ -332,6 +332,13 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
     [super viewWillDraw];
 }
 
+- (void)moveToolbarTo:(SessionView *)other {
+    [other->_toolbarView removeFromSuperview];
+    other->_toolbarView = _toolbarView;
+    [other addSubviewBelowFindView:_toolbarView];
+    _toolbarView = nil;
+}
+
 - (BOOL)setToolbarItems:(NSArray<iTermSessionToolbarItem *> *)toolbarItems {
     const BOOL hadToolbar = (_toolbarView != nil);
     const BOOL shouldHaveToolbar = (toolbarItems.count > 0);

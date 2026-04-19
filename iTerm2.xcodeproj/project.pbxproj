@@ -3390,6 +3390,7 @@
 		A6BAB4582F9157050063FA7F /* iTermGitStringMaker.m in Sources */ = {isa = PBXBuildFile; fileRef = A6BAB4572F9157030063FA7F /* iTermGitStringMaker.m */; };
 		A6BAB4602F9200010063FA7F /* iTermCCMode.h in Headers */ = {isa = PBXBuildFile; fileRef = A6BAB45F2F9200010063FA7F /* iTermCCMode.h */; };
 		A6BAB4622F9210010063FA7F /* ClaudeCodeModeController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6BAB4612F9210010063FA7F /* ClaudeCodeModeController.swift */; };
+		A6BAB8752F9572FD0063FA7F /* PTYSessionPeerPort.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6BAB8742F9572FD0063FA7F /* PTYSessionPeerPort.swift */; };
 		A6BBBFCB2CC87203000A697C /* ConditionVariable.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6BBBFCA2CC871FF000A697C /* ConditionVariable.swift */; };
 		A6BBBFCD2CC8721A000A697C /* ProducerConsumerQueue.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6BBBFCC2CC87215000A697C /* ProducerConsumerQueue.swift */; };
 		A6BBBFCF2CC8727E000A697C /* AddressString.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6BBBFCE2CC87278000A697C /* AddressString.swift */; };
@@ -8265,6 +8266,7 @@
 		A6BAB4572F9157030063FA7F /* iTermGitStringMaker.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermGitStringMaker.m; sourceTree = "<group>"; };
 		A6BAB45F2F9200010063FA7F /* iTermCCMode.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermCCMode.h; sourceTree = "<group>"; };
 		A6BAB4612F9210010063FA7F /* ClaudeCodeModeController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClaudeCodeModeController.swift; sourceTree = "<group>"; };
+		A6BAB8742F9572FD0063FA7F /* PTYSessionPeerPort.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PTYSessionPeerPort.swift; sourceTree = "<group>"; };
 		A6BBBFCA2CC871FF000A697C /* ConditionVariable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConditionVariable.swift; sourceTree = "<group>"; };
 		A6BBBFCC2CC87215000A697C /* ProducerConsumerQueue.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProducerConsumerQueue.swift; sourceTree = "<group>"; };
 		A6BBBFCE2CC87278000A697C /* AddressString.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddressString.swift; sourceTree = "<group>"; };
@@ -11965,6 +11967,7 @@
 				A616CF102841AA1600EF82D0 /* WinSizeController.swift */,
 				A6BAB4532F91237C0063FA7F /* iTermSessionToolbarView.swift */,
 				A6BAB45F2F9200010063FA7F /* iTermCCMode.h */,
+				A6BAB8742F9572FD0063FA7F /* PTYSessionPeerPort.swift */,
 			);
 			name = Core;
 			sourceTree = "<group>";
@@ -19335,6 +19338,7 @@
 				53E98E7C233C6B760094D8A9 /* iTermTmuxSessionObject.m in Sources */,
 				A6F7D4FE2E05C4890065D09C /* iTermBrowserNavigationState.swift in Sources */,
 				A66719621DCE3772000CE608 /* iTermSocketAddress.m in Sources */,
+				A6BAB8752F9572FD0063FA7F /* PTYSessionPeerPort.swift in Sources */,
 				A6A8323B2E6808E900157F82 /* iTermBrowserWelcomePageHandler.swift in Sources */,
 				A6A4867E20B67FD100493302 /* SmartSelectionController.m in Sources */,
 				A6EEAED92836F0590039E850 /* ProcessInfoProvider.swift in Sources */,
