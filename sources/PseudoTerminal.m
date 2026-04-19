@@ -436,6 +436,7 @@ typedef NS_ENUM(int, iTermShouldHaveTitleSeparator) {
     // MomenTerm: embedded project sidebar
     MomentermEmbeddedSidebarVC *_momentermSidebarVC;
     NSTitlebarAccessoryViewController *_momentermToggleAccessory;
+    NSButton *_momentermToggleButton;
 
 }
 
@@ -737,7 +738,7 @@ typedef NS_ENUM(int, iTermShouldHaveTitleSeparator) {
     _momentermSidebarVC.sidebarDelegate = self;
     _contentView.momentermSidebarWidth = 220;
     _contentView.momentermSidebarContainer = _momentermSidebarVC.view;
-    _contentView.shouldShowMomentermSidebar = NO;
+    _contentView.shouldShowMomentermSidebar = YES;
     [self performSelector:@selector(it_setupMomentermToggleButton) withObject:nil afterDelay:0];
 
     if (hotkeyWindowType == iTermHotkeyWindowTypeNone) {
@@ -1045,29 +1046,43 @@ typedef NS_ENUM(int, iTermShouldHaveTitleSeparator) {
     if ((self.window.styleMask & NSWindowStyleMaskTitled) == 0) {
         return;
     }
-    // Build the toggle button
-    NSButton *btn = [NSButton buttonWithImage:[NSImage imageWithSystemSymbolName:@"sidebar.left"
-                                                       accessibilityDescription:@"Toggle Sidebar"]
-                                       target:self
+    // Build the toggle button — borderless so contentTintColor renders cleanly
+    NSImage *sidebarImg = [NSImage imageWithSystemSymbolName:@"sidebar.left"
+                                       accessibilityDescription:@"Workspace 패널"];
+    NSButton *btn = [NSButton buttonWithImage:sidebarImg target:self
                                        action:@selector(toggleMomentermSidebar:)];
-    btn.bezelStyle = NSBezelStyleTexturedRounded;
-    btn.frame = NSMakeRect(0, 0, 32, 22);
+    btn.bezelStyle = NSBezelStyleSmallSquare;
+    [btn setBordered:NO];
+    btn.frame = NSMakeRect(0, 0, 28, 22);
     btn.autoresizingMask = NSViewNotSizable;
-    [btn sizeToFit];
+    btn.toolTip = @"Workspace 패널 표시/숨기기";
 
     // Wrap in a container view so layoutAttribute = left works cleanly
     NSView *container = [[[NSView alloc] initWithFrame:NSMakeRect(0, 0, btn.frame.size.width + 4, 24)] autorelease];
     btn.frame = NSMakeRect(2, 1, btn.frame.size.width, 22);
     [container addSubview:btn];
 
+    _momentermToggleButton = btn;
     _momentermToggleAccessory = [[NSTitlebarAccessoryViewController alloc] init];
     _momentermToggleAccessory.view = container;
     _momentermToggleAccessory.layoutAttribute = NSLayoutAttributeLeft;
     [self.window addTitlebarAccessoryViewController:_momentermToggleAccessory];
+
+    // Reflect the initial sidebar state in the button color
+    [self it_updateMomentermToggleButtonAppearance];
+}
+
+- (void)it_updateMomentermToggleButtonAppearance {
+    if (!_momentermToggleButton) {
+        return;
+    }
+    BOOL visible = _contentView.shouldShowMomentermSidebar;
+    _momentermToggleButton.contentTintColor = visible ? [NSColor systemYellowColor] : nil;
 }
 
 - (IBAction)toggleMomentermSidebar:(id)sender {
     _contentView.shouldShowMomentermSidebar = !_contentView.shouldShowMomentermSidebar;
+    [self it_updateMomentermToggleButtonAppearance];
 }
 
 // Returns a stable pastel color derived from the space name.
@@ -1099,8 +1114,13 @@ typedef NS_ENUM(int, iTermShouldHaveTitleSeparator) {
 
 - (void)sidebarDidRequestOpenProjectWithPath:(NSString *)path
                                    spaceName:(NSString *)spaceName
-                                    inNewTab:(BOOL)inNewTab {
+                                    inNewTab:(BOOL)inNewTab
+                                   aiCommand:(nullable NSString *)aiCommand {
     Profile *profile = [self it_momentermProfileForPath:path spaceName:spaceName];
+    // KEY_INITIAL_TEXT sends the command to the shell on session start (PTYSession appends \n).
+    if (aiCommand.length > 0) {
+        profile = [profile dictionaryBySettingObject:aiCommand forKey:KEY_INITIAL_TEXT];
+    }
     if (inNewTab) {
         [self createTabWithProfile:profile
                        withCommand:nil

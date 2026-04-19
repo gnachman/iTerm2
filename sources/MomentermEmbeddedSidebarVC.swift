@@ -11,12 +11,13 @@ import AppKit
 // MARK: - Delegate
 
 @objc protocol MomentermEmbeddedSidebarDelegate: AnyObject {
-    /// Called when the user double-clicks a project and picks a mode.
+    /// Called when the user opens a project from the sidebar.
     /// - Parameters:
     ///   - path:      The project's filesystem path
     ///   - spaceName: The name of the Space that owns this project (used for tab color)
     ///   - inNewTab:  true = open in new tab in current window; false = open in a new window
-    func sidebarDidRequestOpenProject(path: String, spaceName: String, inNewTab: Bool)
+    ///   - aiCommand: Shell command to auto-execute after the tab opens (nil = no command)
+    func sidebarDidRequestOpenProject(path: String, spaceName: String, inNewTab: Bool, aiCommand: String?)
 }
 
 // MARK: - SidebarItem
@@ -97,8 +98,8 @@ private enum SidebarItem {
 
         outlineView = NSOutlineView()
         outlineView.style = .sourceList
-        outlineView.rowHeight = 22
-        outlineView.indentationPerLevel = 14
+        outlineView.rowHeight = 24
+        outlineView.indentationPerLevel = 8
         outlineView.headerView = nil
         outlineView.dataSource = self
         outlineView.delegate = self
@@ -209,11 +210,13 @@ private enum SidebarItem {
         if response == .alertFirstButtonReturn {
             sidebarDelegate?.sidebarDidRequestOpenProject(path: project.path,
                                                          spaceName: space.name,
-                                                         inNewTab: true)
+                                                         inNewTab: true,
+                                                         aiCommand: nil)
         } else if response == .alertSecondButtonReturn {
             sidebarDelegate?.sidebarDidRequestOpenProject(path: project.path,
                                                          spaceName: space.name,
-                                                         inNewTab: false)
+                                                         inNewTab: false,
+                                                         aiCommand: nil)
         }
     }
 }
@@ -258,10 +261,10 @@ extension MomentermEmbeddedSidebarVC: NSOutlineViewDelegate {
         switch row {
         case .space(let space):
             return makeCell(outlineView, text: space.name.uppercased(), symbol: "folder.fill",
-                            isHeader: true, accent: false)
+                            isHeader: true, accent: false, aiTool: nil)
         case .project(let project, _):
             return makeCell(outlineView, text: project.name, symbol: "chevron.left.slash.chevron.right",
-                            isHeader: false, accent: !project.pathExists)
+                            isHeader: false, accent: !project.pathExists, aiTool: project.aiTool)
         }
     }
 
@@ -277,51 +280,113 @@ extension MomentermEmbeddedSidebarVC: NSOutlineViewDelegate {
     }
 
     private func makeCell(_ ov: NSOutlineView, text: String, symbol: String,
-                          isHeader: Bool, accent: Bool) -> NSTableCellView {
+                          isHeader: Bool, accent: Bool,
+                          aiTool: MomentermAITool? = nil) -> NSTableCellView {
         let id = NSUserInterfaceItemIdentifier(isHeader ? "MtSpaceCell" : "MtProjectCell")
-        let cell = (ov.makeView(withIdentifier: id, owner: nil) as? NSTableCellView) ?? NSTableCellView()
+        // Use a known width so label frames are correct from the start.
+        let cellW = max(ov.bounds.width, 220)
+        let cell: NSTableCellView
+        if let reused = ov.makeView(withIdentifier: id, owner: nil) as? NSTableCellView {
+            cell = reused
+        } else {
+            cell = NSTableCellView()
+            cell.frame = NSRect(x: 0, y: 0, width: cellW, height: 24)
+        }
         cell.identifier = id
         cell.subviews.forEach { $0.removeFromSuperview() }
 
-        // Leading icon — 16×16 for better readability
-        let iconView = NSImageView(frame: NSRect(x: 2, y: 2, width: 16, height: 16))
-        iconView.autoresizingMask = .height
+        // Leading icon — 12pt SF Symbol, fixed size (no autoresizing).
+        let iconView = NSImageView(frame: NSRect(x: 4, y: 4, width: 16, height: 16))
+        iconView.autoresizingMask = []
+        iconView.imageScaling = .scaleProportionallyUpOrDown
+        iconView.symbolConfiguration = NSImage.SymbolConfiguration(pointSize: 12, weight: .regular)
         if let img = NSImage(systemSymbolName: symbol, accessibilityDescription: nil) {
             iconView.image = img
         }
         iconView.contentTintColor = isHeader ? .secondaryLabelColor
                                   : (accent ? .systemRed : .controlAccentColor)
+        cell.addSubview(iconView)
 
-        // Label — shifted right to give the larger icon room.
-        // When showing a warning badge (accent), reserve 18px on the right for it.
+        // Label — all project cells reserve 20px on the right for badge/AI icon.
         let labelX: CGFloat = 24
-        let labelRightPad: CGFloat = accent ? 20 : 4
+        let labelRightPad: CGFloat = isHeader ? 4 : 20
         let label = NSTextField(labelWithString: text)
         label.autoresizingMask = .width
-        label.frame = NSRect(x: labelX, y: 3, width: max(0, cell.bounds.width - labelX - labelRightPad), height: 16)
+        label.frame = NSRect(x: labelX, y: 4, width: max(0, cell.bounds.width - labelX - labelRightPad), height: 16)
         label.font = isHeader ? .systemFont(ofSize: 10, weight: .semibold) : .systemFont(ofSize: 12)
         label.textColor = isHeader ? .secondaryLabelColor : (accent ? .systemRed : .labelColor)
         label.lineBreakMode = .byTruncatingTail
-
-        cell.addSubview(iconView)
         cell.addSubview(label)
         cell.textField = label
 
-        // Warning badge for projects whose directory no longer exists
+        // Right badge: warning (accent) takes priority over AI icon.
+        let badgeSize: CGFloat = 14
+        let badgeX = cell.bounds.width - badgeSize - 4
         if !isHeader && accent {
-            let warnSize: CGFloat = 12
-            let warnView = NSImageView(frame: NSRect(x: labelX, y: 3, width: warnSize, height: warnSize))
+            // Warning icon for missing path
+            let warnView = NSImageView(frame: NSRect(x: badgeX, y: 5, width: badgeSize, height: badgeSize))
             warnView.autoresizingMask = [.minXMargin]
-            if let warnImg = NSImage(systemSymbolName: "exclamationmark.triangle.fill", accessibilityDescription: "경로 없음") {
-                warnView.image = warnImg
+            warnView.imageScaling = .scaleProportionallyUpOrDown
+            warnView.symbolConfiguration = NSImage.SymbolConfiguration(pointSize: 11, weight: .regular)
+            if let img = NSImage(systemSymbolName: "exclamationmark.triangle.fill", accessibilityDescription: "경로 없음") {
+                warnView.image = img
             }
             warnView.contentTintColor = .systemRed
-            // Position warning to the right of the label
-            warnView.frame = NSRect(x: cell.bounds.width - warnSize - 4, y: 3, width: warnSize, height: warnSize)
             cell.addSubview(warnView)
+        } else if !isHeader, let tool = aiTool {
+            // AI tool icon button — single-click opens project with AI command
+            let (aiSymbol, aiColor): (String, NSColor) = {
+                switch tool {
+                case .claudeCode, .both: return ("sparkles", .controlAccentColor)
+                case .codex:             return ("chevron.left.slash.chevron.right", .systemGreen)
+                case .none:              return ("terminal.fill", .secondaryLabelColor)
+                }
+            }()
+            let aiBtn = NSButton(frame: NSRect(x: badgeX, y: 5, width: badgeSize, height: badgeSize))
+            [aiBtn].forEach { $0.autoresizingMask = [.minXMargin] }
+            aiBtn.isBordered = false
+            aiBtn.imagePosition = .imageOnly
+            aiBtn.imageScaling = .scaleProportionallyUpOrDown
+            let symConfig = NSImage.SymbolConfiguration(pointSize: 11, weight: .regular)
+            if let img = NSImage(systemSymbolName: aiSymbol, accessibilityDescription: nil)?
+                    .withSymbolConfiguration(symConfig) {
+                aiBtn.image = img
+            }
+            aiBtn.contentTintColor = aiColor
+            aiBtn.target = self
+            aiBtn.action = #selector(aiIconClicked(_:))
+            cell.addSubview(aiBtn)
         }
 
         return cell
+    }
+
+    /// Handles taps on the per-project AI tool icon.
+    /// Opens the project in a new tab immediately (no dialog) and auto-runs the AI command.
+    @objc private func aiIconClicked(_ sender: NSButton) {
+        // Walk up to the enclosing NSTableCellView to find the row index.
+        var view: NSView? = sender
+        while let v = view, !(v is NSTableCellView) { view = v.superview }
+        guard let cellView = view else { return }
+        let row = outlineView.row(for: cellView)
+        guard row >= 0 else { return }
+
+        let sidebarItem: SidebarItem?
+        if let filtered = filteredItems {
+            guard row < filtered.count else { return }
+            sidebarItem = filtered[row]
+        } else {
+            sidebarItem = outlineView.item(atRow: row) as? SidebarItem
+        }
+        guard let sidebarItem, case .project(let project, let space) = sidebarItem else { return }
+
+        // launchCommand already provides the correct string; KEY_INITIAL_TEXT appends \n automatically.
+        sidebarDelegate?.sidebarDidRequestOpenProject(
+            path: project.path,
+            spaceName: space.name,
+            inNewTab: true,
+            aiCommand: project.aiTool.launchCommand
+        )
     }
 }
 

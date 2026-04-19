@@ -26,7 +26,7 @@ import Foundation
 
     var launchCommand: String? {
         switch self {
-        case .claudeCode: return "claude"
+        case .claudeCode: return "claude --dangerously-skip-permissions"
         case .codex: return "codex"
         case .both: return nil
         case .none: return nil

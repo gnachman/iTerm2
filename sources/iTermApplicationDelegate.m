@@ -2275,6 +2275,23 @@ static iTermKeyEventReplayer *gReplayer;
         }
         [[iTermUserDefaults userDefaults] setBool:YES forKey:cwdMigrationKey];
     }
+
+    // MomenTerm: one-time migration — increase default window size from 80×25 to 160×50.
+    // Only updates profiles that still have the old iTerm2 default (80×25).
+    NSString *sizeMigrationKey = @"MomentermWindowSizeMigratedV1";
+    if (![[iTermUserDefaults userDefaults] boolForKey:sizeMigrationKey]) {
+        Profile *defaultProfile = [[ProfileModel sharedInstance] defaultBookmark];
+        NSInteger cols = [defaultProfile[KEY_COLUMNS] integerValue];
+        NSInteger rows = [defaultProfile[KEY_ROWS] integerValue];
+        if (cols == 80 && rows == 25) {
+            NSMutableDictionary *updated = [NSMutableDictionary dictionaryWithDictionary:defaultProfile];
+            [updated setObject:@160 forKey:KEY_COLUMNS];
+            [updated setObject:@50  forKey:KEY_ROWS];
+            [[ProfileModel sharedInstance] setBookmark:updated withGuid:defaultProfile[KEY_GUID]];
+            [[ProfileModel sharedInstance] flush];
+        }
+        [[iTermUserDefaults userDefaults] setBool:YES forKey:sizeMigrationKey];
+    }
 }
 
 - (BOOL)shouldOpenUntitledFileAfterRunningAutoLaunchScripts:(BOOL)ranAutoLaunchScripts {
