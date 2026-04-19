@@ -2260,6 +2260,21 @@ static iTermKeyEventReplayer *gReplayer;
             }
         }
     }
+
+    // MomenTerm: one-time migration — set Default profile initial directory to
+    // "Recycle" so Cmd+D / Cmd+T inherit the current pane's working directory.
+    NSString *cwdMigrationKey = @"MomentermCWDMigratedV1";
+    if (![[iTermUserDefaults userDefaults] boolForKey:cwdMigrationKey]) {
+        Profile *defaultProfile = [[ProfileModel sharedInstance] defaultBookmark];
+        NSString *currentDir = defaultProfile[KEY_CUSTOM_DIRECTORY];
+        if (![currentDir isEqualToString:kProfilePreferenceInitialDirectoryRecycleValue]) {
+            NSMutableDictionary *updated = [NSMutableDictionary dictionaryWithDictionary:defaultProfile];
+            [updated setObject:kProfilePreferenceInitialDirectoryRecycleValue forKey:KEY_CUSTOM_DIRECTORY];
+            [[ProfileModel sharedInstance] setBookmark:updated withGuid:defaultProfile[KEY_GUID]];
+            [[ProfileModel sharedInstance] flush];
+        }
+        [[iTermUserDefaults userDefaults] setBool:YES forKey:cwdMigrationKey];
+    }
 }
 
 - (BOOL)shouldOpenUntitledFileAfterRunningAutoLaunchScripts:(BOOL)ranAutoLaunchScripts {
