@@ -971,6 +971,7 @@
 		759637C82593AFB500E278CC /* iTerm2SandboxedWorkerProtocol.h in Headers */ = {isa = PBXBuildFile; fileRef = 7596379C2593AE0700E278CC /* iTerm2SandboxedWorkerProtocol.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		77E49C95CA97F58D042F688E /* iTermScreenshotRedaction.swift in Sources */ = {isa = PBXBuildFile; fileRef = 97539C440B63BAC6011E9208 /* iTermScreenshotRedaction.swift */; };
 		8289B1D38F6B6319DAF1F1BC /* MomenTerm.icns in Sources */ = {isa = PBXBuildFile; fileRef = EB0AC2E0FC18C6C12C31A6B5 /* MomenTerm.icns */; };
+		A6MOMENTERM0001ICNSRES00 /* MomenTerm.icns in Resources */ = {isa = PBXBuildFile; fileRef = EB0AC2E0FC18C6C12C31A6B5 /* MomenTerm.icns */; };
 		82C8876B3E6C833593501F97 /* SetTabStatusTrigger.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00885D5646181ED6CFE9A2DE /* SetTabStatusTrigger.swift */; };
 		84914ABAD880FC4B174DFAF5 /* iTermTouchIDHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 207C83644F1E850C9F1E918A /* iTermTouchIDHelper.swift */; };
 		874206490564169600CFC3F1 /* iTermApplicationDelegate.h in Headers */ = {isa = PBXBuildFile; fileRef = 20D5CC6304E7AA0500000106 /* iTermApplicationDelegate.h */; };
@@ -17831,6 +17832,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A6MOMENTERM0001ICNSRES00 /* MomenTerm.icns in Resources */,
 				A6109B612B969B4100D8E4E9 /* graphic_neovim.png in Resources */,
 				A65DF4A12849601A00AA29AB /* .zshenv in Resources */,
 				A6CC2D0A2E4A7FA600F8D620 /* ssh-page-no-conductor.html in Resources */,
@@ -20358,7 +20360,6 @@
 				AA5D2BB2D31EDEA4C68D4C3D /* SessionNoteView.swift in Sources */,
 				70F805A3A750CCB540F58C9A /* MovePaneController+API.swift in Sources */,
 				735B3770025197D62DB3DE9E /* MoveSessionBuiltInFunctions.swift in Sources */,
-				8289B1D38F6B6319DAF1F1BC /* MomenTerm.icns in Sources */,
 				FEC99ABF3850FA8AA8906679 /* MomentermProjectModel.swift in Sources */,
 				2C6FC9E97D933C7C178FC50E /* MomentermProjectStorage.swift in Sources */,
 				00023F9621BD05FC05590E7A /* MomentermProjectSidebarVC.swift in Sources */,
