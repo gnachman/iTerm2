@@ -76,6 +76,10 @@ final class MomentermProjectSidebarVC: NSViewController {
         outlineView.target = self
         outlineView.doubleAction = #selector(outlineViewDoubleClicked)
 
+        let ctxMenu = NSMenu()
+        ctxMenu.delegate = self
+        outlineView.menu = ctxMenu
+
         let column = NSTableColumn(identifier: NSUserInterfaceItemIdentifier("Main"))
         column.isEditable = false
         outlineView.addTableColumn(column)
@@ -253,26 +257,26 @@ extension MomentermProjectSidebarVC: NSOutlineViewDelegate {
         }
     }
 
-    // MARK: - Context menu
+}
 
-    func outlineView(_ outlineView: NSOutlineView, menuFor item: Any?) -> NSMenu? {
-        guard let row = item as? SidebarItem else { return nil }
-        let menu = NSMenu()
+// MARK: - NSMenuDelegate (context menu)
+
+extension MomentermProjectSidebarVC: NSMenuDelegate {
+
+    func menuNeedsUpdate(_ menu: NSMenu) {
+        menu.removeAllItems()
+
+        // "Add Space" is always available (even on empty areas)
+        let addSpaceItem = NSMenuItem(title: "Add Space", action: #selector(addSpaceTapped), keyEquivalent: "")
+        addSpaceItem.target = self
+        menu.addItem(addSpaceItem)
+
+        let clickedRow = outlineView.clickedRow
+        guard clickedRow >= 0, let row = outlineView.item(atRow: clickedRow) as? SidebarItem else {
+            return
+        }
+
         switch row {
-        case .project(let project, _):
-            let openTab = NSMenuItem(title: "Open in New Tab", action: #selector(openInNewTab(_:)), keyEquivalent: "")
-            openTab.representedObject = project
-            openTab.target = self
-            let openWindow = NSMenuItem(title: "Open in New Window", action: #selector(openInNewWindow(_:)), keyEquivalent: "")
-            openWindow.representedObject = project
-            openWindow.target = self
-            let delete = NSMenuItem(title: "Remove Project", action: #selector(deleteProject(_:)), keyEquivalent: "")
-            delete.representedObject = project
-            delete.target = self
-            menu.addItem(openTab)
-            menu.addItem(openWindow)
-            menu.addItem(NSMenuItem.separator())
-            menu.addItem(delete)
         case .space(let space):
             let addProj = NSMenuItem(title: "Add Project to \u{201C}\(space.name)\u{201D}", action: #selector(addProjectToSpace(_:)), keyEquivalent: "")
             addProj.representedObject = space
@@ -280,11 +284,27 @@ extension MomentermProjectSidebarVC: NSOutlineViewDelegate {
             let deleteSpace = NSMenuItem(title: "Delete Space", action: #selector(deleteSpace(_:)), keyEquivalent: "")
             deleteSpace.representedObject = space
             deleteSpace.target = self
+            menu.addItem(NSMenuItem.separator())
             menu.addItem(addProj)
             menu.addItem(NSMenuItem.separator())
             menu.addItem(deleteSpace)
+
+        case .project(let project, _):
+            let openTab = NSMenuItem(title: "Open in New Tab", action: #selector(openInNewTab(_:)), keyEquivalent: "")
+            openTab.representedObject = project
+            openTab.target = self
+            let openWindow = NSMenuItem(title: "Open in New Window", action: #selector(openInNewWindow(_:)), keyEquivalent: "")
+            openWindow.representedObject = project
+            openWindow.target = self
+            let deleteProj = NSMenuItem(title: "Remove Project", action: #selector(deleteProject(_:)), keyEquivalent: "")
+            deleteProj.representedObject = project
+            deleteProj.target = self
+            menu.addItem(NSMenuItem.separator())
+            menu.addItem(openTab)
+            menu.addItem(openWindow)
+            menu.addItem(NSMenuItem.separator())
+            menu.addItem(deleteProj)
         }
-        return menu
     }
 
     @objc private func openInNewTab(_ sender: NSMenuItem) {

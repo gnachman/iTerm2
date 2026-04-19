@@ -65,6 +65,9 @@ final class MomentermProjectFileTreeVC: NSViewController {
     private var outlineView: NSOutlineView!
     private var scrollView: NSScrollView!
     private var pathLabel: NSTextField!
+    private var searchField: NSSearchField!
+    /// When non-nil, the outline view shows a flat list of search matches.
+    private var searchResults: [FileNode]?
     private var agentIgnorePatterns: [String] = []
 
     // MARK: - Public API
@@ -90,6 +93,14 @@ final class MomentermProjectFileTreeVC: NSViewController {
         pathLabel.textColor = .secondaryLabelColor
         pathLabel.lineBreakMode = .byTruncatingMiddle
         view.addSubview(pathLabel)
+
+        // Search field
+        searchField = NSSearchField()
+        searchField.translatesAutoresizingMaskIntoConstraints = false
+        searchField.placeholderString = "Search files\u{2026}"
+        searchField.target = self
+        searchField.action = #selector(searchChanged(_:))
+        view.addSubview(searchField)
 
         // Scroll + outline
         scrollView = NSScrollView()
@@ -122,7 +133,11 @@ final class MomentermProjectFileTreeVC: NSViewController {
             pathLabel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -8),
             pathLabel.heightAnchor.constraint(equalToConstant: 16),
 
-            scrollView.topAnchor.constraint(equalTo: pathLabel.bottomAnchor, constant: 4),
+            searchField.topAnchor.constraint(equalTo: pathLabel.bottomAnchor, constant: 4),
+            searchField.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 8),
+            searchField.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -8),
+
+            scrollView.topAnchor.constraint(equalTo: searchField.bottomAnchor, constant: 4),
             scrollView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             scrollView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             scrollView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
@@ -202,6 +217,33 @@ final class MomentermProjectFileTreeVC: NSViewController {
             delegate?.fileTreeDidSelectFile(atPath: node.path)
         }
     }
+
+    @objc private func searchChanged(_ sender: NSSearchField) {
+        let query = sender.stringValue.trimmingCharacters(in: .whitespaces).lowercased()
+        if query.isEmpty {
+            searchResults = nil
+        } else {
+            var matches: [FileNode] = []
+            if let root = rootNode {
+                collectMatches(node: root, query: query, into: &matches)
+            }
+            searchResults = matches
+        }
+        outlineView.reloadData()
+    }
+
+    private func collectMatches(node: FileNode, query: String, into results: inout [FileNode]) {
+        loadChildren(of: node)
+        guard let children = node.children else { return }
+        for child in children {
+            if child.name.lowercased().contains(query) {
+                results.append(child)
+            }
+            if child.isDirectory {
+                collectMatches(node: child, query: query, into: &results)
+            }
+        }
+    }
 }
 
 // MARK: - NSOutlineViewDataSource
@@ -209,6 +251,9 @@ final class MomentermProjectFileTreeVC: NSViewController {
 extension MomentermProjectFileTreeVC: NSOutlineViewDataSource {
 
     func outlineView(_ outlineView: NSOutlineView, numberOfChildrenOfItem item: Any?) -> Int {
+        if let results = searchResults {
+            return item == nil ? results.count : 0
+        }
         if item == nil { return rootNode != nil ? 1 : 0 }
         guard let node = item as? FileNode else { return 0 }
         loadChildren(of: node)
@@ -216,6 +261,9 @@ extension MomentermProjectFileTreeVC: NSOutlineViewDataSource {
     }
 
     func outlineView(_ outlineView: NSOutlineView, child index: Int, ofItem item: Any?) -> Any {
+        if let results = searchResults {
+            return results[index]
+        }
         if item == nil { return rootNode! }
         guard let node = item as? FileNode, let children = node.children else {
             it_fatalError("Unexpected nil children in file tree")
@@ -224,6 +272,7 @@ extension MomentermProjectFileTreeVC: NSOutlineViewDataSource {
     }
 
     func outlineView(_ outlineView: NSOutlineView, isItemExpandable item: Any) -> Bool {
+        if searchResults != nil { return false }
         guard let node = item as? FileNode else { return false }
         return node.isDirectory
     }

@@ -532,7 +532,9 @@ iTermPercentage iTermPercentageFromProfile(Profile *profile, iTermWindowType win
     [aDict setObject:kProfilePreferenceCommandTypeLoginShellValue forKey:KEY_CUSTOM_COMMAND];
     [aDict setObject:@"" forKey: KEY_COMMAND_LINE];
     [aDict setObject:aName forKey: KEY_DESCRIPTION];
-    [aDict setObject:kProfilePreferenceInitialDirectoryHomeValue
+    // MomenTerm default: reuse the previous session's directory so Cmd+D / Cmd+T
+    // automatically inherit the current working directory.
+    [aDict setObject:kProfilePreferenceInitialDirectoryRecycleValue
               forKey:KEY_CUSTOM_DIRECTORY];
     [aDict setObject:NSHomeDirectory() forKey: KEY_WORKING_DIRECTORY];
 }
