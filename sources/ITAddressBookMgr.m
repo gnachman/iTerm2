@@ -537,6 +537,13 @@ iTermPercentage iTermPercentageFromProfile(Profile *profile, iTermWindowType win
     [aDict setObject:kProfilePreferenceInitialDirectoryRecycleValue
               forKey:KEY_CUSTOM_DIRECTORY];
     [aDict setObject:NSHomeDirectory() forKey: KEY_WORKING_DIRECTORY];
+
+    // MomenTerm: use a Nerd Font-compatible font for Powerline/icon glyph rendering.
+    // Falls back to Menlo if the user has not installed MesloLGS NF.
+    NSString *nerdFontDesc = [NSFont fontWithName:@"MesloLGS-NF-Regular" size:12] != nil
+        ? @"MesloLGS-NF-Regular 12"
+        : @"Menlo-Regular 12";
+    [aDict setObject:nerdFontDesc forKey:KEY_NORMAL_FONT];
 }
 
 - (BOOL)usernameIsSafe:(NSString *)username {
