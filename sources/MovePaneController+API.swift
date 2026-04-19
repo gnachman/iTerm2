@@ -109,7 +109,7 @@ extension MovePaneController {
             if index >= 0 {
                 insertIndex = index
             } else if sameWindow {
-                let i = (destWindow.tabs as? [PTYTab])?.firstIndex(of: source.tab)
+                let i = destWindow.tabs().firstIndex(of: source.tab)
                 insertIndex = i.map { Int32($0) + 1 } ?? destWindow.numberOfTabs()
             } else {
                 insertIndex = destWindow.numberOfTabs()

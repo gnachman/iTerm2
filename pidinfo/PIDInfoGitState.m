@@ -12,7 +12,7 @@
 #include <syslog.h>
 #include <stdarg.h>
 
-void PIDInfoGetGitState(const char *cpath, int timeout) {
+void PIDInfoGetGitState(const char *cpath, int timeout, int includeDiffStats) {
     const int newPriority = 20;
     int rc = setpriority(PRIO_PROCESS, 0, newPriority);
     if (rc) {
@@ -26,7 +26,8 @@ void PIDInfoGetGitState(const char *cpath, int timeout) {
         kill(getpid(), SIGKILL);
     });
 
-    iTermGitState *state = [iTermGitState gitStateForRepoAtPath:[NSString stringWithUTF8String:cpath]];
+    iTermGitState *state = [iTermGitState gitStateForRepoAtPath:[NSString stringWithUTF8String:cpath]
+                                               includeDiffStats:(includeDiffStats != 0)];
     NSKeyedArchiver *archiver = [[NSKeyedArchiver alloc] initRequiringSecureCoding:NO];
     archiver.requiresSecureCoding = YES;
     [archiver encodeObject:state forKey:@"state"];

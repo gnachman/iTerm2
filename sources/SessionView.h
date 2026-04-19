@@ -48,6 +48,7 @@
 @protocol PSMPUAFontProvider;
 @protocol iTermSearchResultsMinimapViewDelegate;
 @class iTermSearchResultsMinimapView;
+@class iTermSessionToolbarItem;
 @class PTYSession;
 @class iTermSessionNoteModel;
 @class SplitSelectionView;
@@ -233,6 +234,10 @@ typedef NS_ENUM(NSUInteger, iTermSessionViewFindDriver) {
 @property (nonatomic, copy, nullable) NSString *progressBarColorScheme;
 @property (nonatomic, readonly, nullable) SessionTitleView *title;
 @property (nonatomic) NSSize savedSize;
+
+// Returns YES if the toolbar's presence changed (meaning the session's usable
+// height changed and the tab should refit).
+- (BOOL)setToolbarItems:(NSArray<iTermSessionToolbarItem *> * _Nullable)toolbarItems;
 
 - (void)setBrowserViewController:(iTermBrowserViewController *)browserViewController
                       initialURL:(nullable NSString *)initialURL

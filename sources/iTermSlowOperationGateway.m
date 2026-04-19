@@ -148,9 +148,9 @@ typedef void (^iTermRecentBranchFetchCallback)(NSArray<NSString *> *);
                                                  argumentIndex:0
                                                        ofReply:YES];
 
-    // For requestGitStateForPath:timeout:completion:
+    // For requestGitStateForPath:timeout:includeDiffStats:completion:
     [_connectionToService.remoteObjectInterface setClasses:[NSSet setWithObject:[iTermGitState class]]
-                                                   forSelector:@selector(requestGitStateForPath:timeout:completion:)
+                                                   forSelector:@selector(requestGitStateForPath:timeout:includeDiffStats:completion:)
                                                  argumentIndex:0
                                                        ofReply:YES];
 
@@ -341,6 +341,7 @@ typedef void (^iTermRecentBranchFetchCallback)(NSArray<NSString *> *);
 }
 
 - (void)requestGitStateForPath:(NSString *)path
+              includeDiffStats:(BOOL)includeDiffStats
                     completion:(void (^)(iTermGitState * _Nullable))completion {
     iTermGitStateHandlerBox *box = [[iTermGitStateHandlerBox alloc] init];
     box.block = completion;
@@ -349,6 +350,7 @@ typedef void (^iTermRecentBranchFetchCallback)(NSArray<NSString *> *);
     }
     [[_connectionToService remoteObjectProxy] requestGitStateForPath:path
                                                              timeout:[iTermAdvancedSettingsModel gitTimeout]
+                                                    includeDiffStats:includeDiffStats
                                                           completion:^(iTermGitState * _Nullable state) {
         [self didGetGitState:state completion:box];
     }];

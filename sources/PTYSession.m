@@ -388,6 +388,10 @@ typedef NS_ENUM(NSUInteger, PTYSessionTurdType) {
 @end
 
 @implementation PTYSession {
+    // Built lazily when claudeCodeModeEnabled becomes YES; released when it becomes NO
+    // so any in-flight item state (segmented control selection, git poller) is preserved.
+    NSArray<iTermSessionToolbarItem *> *_cachedToolbarItems;
+
     NSString *_termVariable;
 
     // Has the underlying connection been closed?
@@ -989,6 +993,7 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (void)dealloc {
     [NSApp removeObserver:self forKeyPath:@"effectiveAppearance"];
+    [_cachedToolbarItems release];
     NSString *guid = [_guid copy];
     dispatch_async(dispatch_get_main_queue(), ^{
         [[NSNotificationCenter defaultCenter] postNotificationName:PTYSessionDidDealloc object:guid];
@@ -1352,6 +1357,42 @@ ITERM_WEAKLY_REFERENCEABLE
         return [self.view.browserViewController copyMode];
     }
     return _modeHandler.mode == iTermSessionModeCopy;
+}
+
+- (void)setClaudeCodeModeEnabled:(BOOL)enabled {
+    if (_claudeCodeModeEnabled == enabled) {
+        return;
+    }
+    _claudeCodeModeEnabled = enabled;
+    if (!enabled) {
+        [_cachedToolbarItems release];
+        _cachedToolbarItems = nil;
+    }
+    [_delegate sessionDidChangeDesiredToolbarItems:self];
+}
+
+- (NSArray<iTermSessionToolbarItem *> *)desiredToolbarItems {
+    if (!_claudeCodeModeEnabled) {
+        return nil;
+    }
+    if (!_cachedToolbarItems) {
+        iTermSessionToolbarSpacer *leadingSpacer =
+            [[[iTermSessionToolbarSpacer alloc] initWithIdentifier:@"ccLeadingSpacer"
+                                                          priority:3] autorelease];
+        iTermCCModeSwitchSessionToolbarItem *modeItem =
+            [[[iTermCCModeSwitchSessionToolbarItem alloc] initWithIdentifier:@"ccMode"
+                                                                    priority:1
+                                                                        mode:_claudeCodeMode] autorelease];
+        iTermCCGitSessionToolbarItem *gitItem =
+            [[[iTermCCGitSessionToolbarItem alloc] initWithIdentifier:@"ccGit"
+                                                             priority:2
+                                                                scope:self.genericScope] autorelease];
+        iTermSessionToolbarSpacer *trailingSpacer =
+            [[[iTermSessionToolbarSpacer alloc] initWithIdentifier:@"ccTrailingSpacer"
+                                                          priority:3] autorelease];
+        _cachedToolbarItems = [@[ leadingSpacer, modeItem, gitItem, trailingSpacer ] retain];
+    }
+    return _cachedToolbarItems;
 }
 
 - (BOOL)sessionModeConsumesEvent:(NSEvent *)event {

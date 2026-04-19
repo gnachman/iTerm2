@@ -46,70 +46,86 @@ typedef void (^iTermGitPollWorkerCompletionBlock)(iTermGitState * _Nullable);
 }
 
 - (NSString *)cachedBranchForPath:(NSString *)path {
-    return _cache[path].branch;
+    // Prefer either cache entry — branch is the same in both.
+    iTermGitState *cached = _cache[[self cacheKeyForPath:path includeDiffStats:YES]] ?:
+                            _cache[[self cacheKeyForPath:path includeDiffStats:NO]];
+    return cached.branch;
 }
 
 - (NSString *)debugInfoForDirectory:(NSString *)path {
-    iTermGitState *existing = _cache[path];
-    NSMutableArray<iTermGitPollWorkerCompletionBlock> *pending = _pending[path];
-    return [NSString stringWithFormat:@"Cache status: %@\nPending calls: %@\n",
-            existing ? [NSString stringWithFormat:@"Have cached value of age %@", @(existing.age)] : @"No cached value",
-            @(pending.count)];
+    iTermGitState *basic = _cache[[self cacheKeyForPath:path includeDiffStats:NO]];
+    iTermGitState *rich = _cache[[self cacheKeyForPath:path includeDiffStats:YES]];
+    NSUInteger pendingCount = _pending[[self cacheKeyForPath:path includeDiffStats:NO]].count +
+                              _pending[[self cacheKeyForPath:path includeDiffStats:YES]].count;
+    return [NSString stringWithFormat:@"Basic cache: %@\nRich cache: %@\nPending calls: %@\n",
+            basic ? [NSString stringWithFormat:@"age %@", @(basic.age)] : @"none",
+            rich ? [NSString stringWithFormat:@"age %@", @(rich.age)] : @"none",
+            @(pendingCount)];
 }
 
-- (void)requestPath:(NSString *)path completion:(void (^)(iTermGitState * _Nullable))completion {
-    DLog(@"requestPath:%@", path);
-    const NSTimeInterval ttl = 1;
+- (NSString *)cacheKeyForPath:(NSString *)path includeDiffStats:(BOOL)includeDiffStats {
+    return includeDiffStats ? [path stringByAppendingString:@"\x01stats"] : path;
+}
 
-    iTermGitState *existing = _cache[path];
+- (void)requestPath:(NSString *)path
+   includeDiffStats:(BOOL)includeDiffStats
+         completion:(void (^)(iTermGitState * _Nullable))completion {
+    DLog(@"requestPath:%@ includeDiffStats:%@", path, @(includeDiffStats));
+    const NSTimeInterval ttl = 1;
+    NSString *cacheKey = [self cacheKeyForPath:path includeDiffStats:includeDiffStats];
+
+    iTermGitState *existing = _cache[cacheKey];
     DLog(@"Existing state %@ has age %@", existing, @(existing.age));
     if (existing != nil && existing.age < ttl) {
         completion(existing);
         return;
     }
 
-    NSMutableArray<iTermGitPollWorkerCompletionBlock> *pending = _pending[path];
+    NSMutableArray<iTermGitPollWorkerCompletionBlock> *pending = _pending[cacheKey];
     if (pending.count) {
-        DLog(@"Add to pending request for %@ with %@ waiting blocks. Pending is now:\n%@", path, @(pending.count), _pending);
+        DLog(@"Add to pending request for %@ with %@ waiting blocks. Pending is now:\n%@", cacheKey, @(pending.count), _pending);
         [pending addObject:[completion copy]];
         return;
     }
 
-    _pending[path] = [@[ [completion copy] ] mutableCopy];
-    DLog(@"Create pending request for %@ with a single waiter", path);
+    _pending[cacheKey] = [@[ [completion copy] ] mutableCopy];
+    DLog(@"Create pending request for %@ with a single waiter", cacheKey);
     DLog(@"Send through gateway with the following pending requests:\n%@", _pending);
-    [[iTermSlowOperationGateway sharedInstance] requestGitStateForPath:path completion:^(iTermGitState * _Nullable state) {
-        DLog(@"Got response for %@ with state %@", path, state);
-        [self didFetchState:state path:path];
+    [[iTermSlowOperationGateway sharedInstance] requestGitStateForPath:path
+                                                      includeDiffStats:includeDiffStats
+                                                            completion:^(iTermGitState * _Nullable state) {
+        DLog(@"Got response for %@ with state %@", cacheKey, state);
+        [self didFetchState:state cacheKey:cacheKey];
     }];
 }
 
-- (void)didFetchState:(iTermGitState *)state path:(NSString *)path {
-    DLog(@"Did fetch state %@ for path %@", state, path);
-    iTermGitState *cached = _cache[path];
+- (void)didFetchState:(iTermGitState *)state cacheKey:(NSString *)cacheKey {
+    DLog(@"Did fetch state %@ for cacheKey %@", state, cacheKey);
+    iTermGitState *cached = _cache[cacheKey];
     if (cached != nil &&
         !isnan(cached.creationTime) &&  // just paranoia to avoid unbounded recursion
         cached.creationTime > state.creationTime) {
         DLog(@"Cached entry is newer. Recurse.");
-        [self didFetchState:cached path:path];
+        [self didFetchState:cached cacheKey:cacheKey];
         return;
     }
 
     DLog(@"Save to cache");
-    _cache[path] = state;
+    _cache[cacheKey] = state;
 
-    NSArray<iTermGitPollWorkerCompletionBlock> *blocks = _pending[path];
+    NSArray<iTermGitPollWorkerCompletionBlock> *blocks = _pending[cacheKey];
     DLog(@"Invoke %@ blocks", @(blocks.count));
-    [_pending removeObjectForKey:path];
-    DLog(@"Remove all waiters from pending for %@. Pending is now\n%@", path, _pending);
+    [_pending removeObjectForKey:cacheKey];
+    DLog(@"Remove all waiters from pending for %@. Pending is now\n%@", cacheKey, _pending);
     [blocks enumerateObjectsUsingBlock:^(iTermGitPollWorkerCompletionBlock  _Nonnull block, NSUInteger idx, BOOL * _Nonnull stop) {
-        DLog(@"Invoke completion block for path %@ with state %@", path, state);
+        DLog(@"Invoke completion block for cacheKey %@ with state %@", cacheKey, state);
         block(state);
     }];
 }
 
 - (void)invalidateCacheForPath:(NSString *)path {
-    [_pending removeObjectForKey:path];
+    [_pending removeObjectForKey:[self cacheKeyForPath:path includeDiffStats:NO]];
+    [_pending removeObjectForKey:[self cacheKeyForPath:path includeDiffStats:YES]];
 }
 
 @end

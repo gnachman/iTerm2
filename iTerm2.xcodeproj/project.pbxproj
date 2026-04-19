@@ -3385,6 +3385,11 @@
 		A6BA7D25247637B700407C4D /* VT100InlineImageHelper.m in Sources */ = {isa = PBXBuildFile; fileRef = A6BA7D23247637B700407C4D /* VT100InlineImageHelper.m */; };
 		A6BAB25C2F8CBC550063FA7F /* SetStatusBuiltInFunction.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6BAB25B2F8CBC550063FA7F /* SetStatusBuiltInFunction.swift */; };
 		A6BAB25E2F8CCCD10063FA7F /* cc-status in CopyFiles */ = {isa = PBXBuildFile; fileRef = A6BAB25D2F8CCCD10063FA7F /* cc-status */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
+		A6BAB4542F91237C0063FA7F /* iTermSessionToolbarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6BAB4532F91237C0063FA7F /* iTermSessionToolbarView.swift */; };
+		A6BAB4562F9156F50063FA7F /* iTermGitStringMaker.h in Headers */ = {isa = PBXBuildFile; fileRef = A6BAB4552F9156D10063FA7F /* iTermGitStringMaker.h */; };
+		A6BAB4582F9157050063FA7F /* iTermGitStringMaker.m in Sources */ = {isa = PBXBuildFile; fileRef = A6BAB4572F9157030063FA7F /* iTermGitStringMaker.m */; };
+		A6BAB4602F9200010063FA7F /* iTermCCMode.h in Headers */ = {isa = PBXBuildFile; fileRef = A6BAB45F2F9200010063FA7F /* iTermCCMode.h */; };
+		A6BAB4622F9210010063FA7F /* ClaudeCodeModeController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6BAB4612F9210010063FA7F /* ClaudeCodeModeController.swift */; };
 		A6BBBFCB2CC87203000A697C /* ConditionVariable.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6BBBFCA2CC871FF000A697C /* ConditionVariable.swift */; };
 		A6BBBFCD2CC8721A000A697C /* ProducerConsumerQueue.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6BBBFCC2CC87215000A697C /* ProducerConsumerQueue.swift */; };
 		A6BBBFCF2CC8727E000A697C /* AddressString.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6BBBFCE2CC87278000A697C /* AddressString.swift */; };
@@ -8255,6 +8260,11 @@
 		A6BA7D23247637B700407C4D /* VT100InlineImageHelper.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = VT100InlineImageHelper.m; sourceTree = "<group>"; };
 		A6BAB25B2F8CBC550063FA7F /* SetStatusBuiltInFunction.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SetStatusBuiltInFunction.swift; sourceTree = "<group>"; };
 		A6BAB25D2F8CCCD10063FA7F /* cc-status */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.executable"; name = "cc-status"; path = "cc-status/bin/cc-status"; sourceTree = "<group>"; };
+		A6BAB4532F91237C0063FA7F /* iTermSessionToolbarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermSessionToolbarView.swift; sourceTree = "<group>"; };
+		A6BAB4552F9156D10063FA7F /* iTermGitStringMaker.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermGitStringMaker.h; sourceTree = "<group>"; };
+		A6BAB4572F9157030063FA7F /* iTermGitStringMaker.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermGitStringMaker.m; sourceTree = "<group>"; };
+		A6BAB45F2F9200010063FA7F /* iTermCCMode.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermCCMode.h; sourceTree = "<group>"; };
+		A6BAB4612F9210010063FA7F /* ClaudeCodeModeController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClaudeCodeModeController.swift; sourceTree = "<group>"; };
 		A6BBBFCA2CC871FF000A697C /* ConditionVariable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConditionVariable.swift; sourceTree = "<group>"; };
 		A6BBBFCC2CC87215000A697C /* ProducerConsumerQueue.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProducerConsumerQueue.swift; sourceTree = "<group>"; };
 		A6BBBFCE2CC87278000A697C /* AddressString.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddressString.swift; sourceTree = "<group>"; };
@@ -11608,6 +11618,8 @@
 		A63011C020E85028008114B7 /* Components */ = {
 			isa = PBXGroup;
 			children = (
+				A6BAB4572F9157030063FA7F /* iTermGitStringMaker.m */,
+				A6BAB4552F9156D10063FA7F /* iTermGitStringMaker.h */,
 				A630117320E61AC3008114B7 /* iTermStatusBarComponent.h */,
 				A630118820E6B4DA008114B7 /* iTermStatusBarComponent.m */,
 				A630117420E6971D008114B7 /* iTermStatusBarTextComponent.h */,
@@ -11951,6 +11963,8 @@
 				A6F0E2582796AA7900022D20 /* VT100SyncResult.h */,
 				A6C267072F0DE418009C9954 /* WindowInitialPositioner.swift */,
 				A616CF102841AA1600EF82D0 /* WinSizeController.swift */,
+				A6BAB4532F91237C0063FA7F /* iTermSessionToolbarView.swift */,
+				A6BAB45F2F9200010063FA7F /* iTermCCMode.h */,
 			);
 			name = Core;
 			sourceTree = "<group>";
@@ -13111,6 +13125,7 @@
 				C08AA4008946722C3F4C67C1 /* WordSelectionAtom.swift */,
 				CA34A6F29B10471D8FD572F6 /* GlobalJobMonitor.swift */,
 				A6E70C1F2F84B6D5001349AE /* ClaudeWatcher.swift */,
+				A6BAB4612F9210010063FA7F /* ClaudeCodeModeController.swift */,
 			);
 			name = Helpers;
 			sourceTree = "<group>";
@@ -15563,6 +15578,8 @@
 				A61F457222FA8BD400E2054A /* iTermSetStatusBarComponentUnreadCountBuiltInFunction.h in Headers */,
 				A6A4B2A62425D18D00184EAC /* iTermKeystroke.h in Headers */,
 				A6024B81254CE2000036D6CF /* iTermAddTriggerViewController.h in Headers */,
+				A6BAB4562F9156F50063FA7F /* iTermGitStringMaker.h in Headers */,
+				A6BAB4602F9200010063FA7F /* iTermCCMode.h in Headers */,
 				A63B92212F05A1DF00591B9E /* iTermGenericEvaluator.h in Headers */,
 				A66719131DCE36C3000CE608 /* iTermPreviousState.h in Headers */,
 				A648DAB92427E73E00C2FF02 /* iTermFlagsChangedNotification.h in Headers */,
@@ -19102,6 +19119,7 @@
 				A6A802EA226ED20800BC70DC /* iTermPrintGuard.m in Sources */,
 				A653F66C24CE7CE30062377E /* iTermGraphEncoder.m in Sources */,
 				A6E70C202F84B6D5001349AE /* ClaudeWatcher.swift in Sources */,
+				A6BAB4622F9210010063FA7F /* ClaudeCodeModeController.swift in Sources */,
 				A6F7D4BB2E0373110065D09C /* iTermBrowserErrorHandler.swift in Sources */,
 				A66319872308C60000C502BD /* NSStringITerm.m in Sources */,
 				5370678A21C9D2780088D0F3 /* SIGKey.m in Sources */,
@@ -19438,6 +19456,7 @@
 				A68400A71FF82424008D3EE2 /* iTermIndicatorRenderer.m in Sources */,
 				A6A9839727E68092003319D1 /* CommandLinePasswordDataSource.swift in Sources */,
 				A6EE7F34234082BE00D0F724 /* iTermMalloc.m in Sources */,
+				A6BAB4542F91237C0063FA7F /* iTermSessionToolbarView.swift in Sources */,
 				A68400B51FF8644F008D3EE2 /* iTermFulScreenFlash.metal in Sources */,
 				53850904212FA8910039AFC7 /* iTermMetaFrustrationDetector.m in Sources */,
 				A6D24D3D26BC5FA600CCE211 /* SwiftDebugLogging.swift in Sources */,
@@ -19534,6 +19553,7 @@
 				A6E9AA1B2F16EE8200A04BAE /* AutomaticProfileSwitchingSession.swift in Sources */,
 				535EA50520D1869800FC81E0 /* iTermSwiftyStringParser.m in Sources */,
 				A653F6A124D00CE30062377E /* iTermGraphDeltaEncoder.m in Sources */,
+				A6BAB4582F9157050063FA7F /* iTermGitStringMaker.m in Sources */,
 				A6CBB7F82E0912A100B2CCCB /* iTermBrowserPermissionsViewHandler.swift in Sources */,
 				A664AE782C55A6B800A6807A /* iTermModernKeyMapper.swift in Sources */,
 				5365207A21433F7A003C58FD /* iTermGitPoller.m in Sources */,

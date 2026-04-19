@@ -52,6 +52,10 @@ static const CGFloat iTermGetSessionViewTitleHeight(void) {
     return iTermGetStatusBarHeight() + 1;
 }
 
+static const CGFloat iTermGetSessionViewToolbarHeight(void) {
+    return 28;
+}
+
 // Last time any window was resized TODO(georgen):it would be better to track per window.
 static NSDate* lastResizeDate_;
 
@@ -168,6 +172,7 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
     iTermActivePaneBorderView *_activePaneBorderView;
 
     iTermSessionNoteView *_sessionNoteView;
+    iTermSessionToolbarView *_toolbarView;
 }
 
 + (double)titleHeight {
@@ -327,6 +332,41 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
     [super viewWillDraw];
 }
 
+- (BOOL)setToolbarItems:(NSArray<iTermSessionToolbarItem *> *)toolbarItems {
+    const BOOL hadToolbar = (_toolbarView != nil);
+    const BOOL shouldHaveToolbar = (toolbarItems.count > 0);
+    const BOOL presenceChanged = (hadToolbar != shouldHaveToolbar);
+    if (!shouldHaveToolbar) {
+        if (_toolbarView) {
+            [_toolbarView removeFromSuperview];
+            _toolbarView = nil;
+        }
+    } else if (_toolbarView) {
+        [_toolbarView setItems:toolbarItems];
+    } else {
+        _toolbarView = [[iTermSessionToolbarView alloc] initWithItems:toolbarItems];
+        [self addSubviewBelowFindView:_toolbarView];
+    }
+    [self updateLayout];
+    return presenceChanged;
+}
+
+- (CGFloat)toolbarReservedHeight {
+    return _toolbarView ? iTermGetSessionViewToolbarHeight() : 0;
+}
+
+- (void)updateToolbarFrame {
+    if (!_toolbarView) {
+        return;
+    }
+    const CGFloat titleHeight = _showTitle ? iTermGetSessionViewTitleHeight() : 0;
+    const CGFloat toolbarHeight = iTermGetSessionViewToolbarHeight();
+    _toolbarView.frame = NSMakeRect(0,
+                                    self.bounds.size.height - titleHeight - toolbarHeight,
+                                    self.bounds.size.width,
+                                    toolbarHeight);
+}
+
 - (void)setBrowserViewController:(iTermBrowserViewController *)browserViewController
                       initialURL:(NSString *)initialURL
                  restorableState:(NSDictionary *)restorableState NS_AVAILABLE_MAC(11_0) {
@@ -334,11 +374,12 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
 
     // Set initial frame to avoid constraint conflicts
     CGFloat titleHeight = _showTitle ? _title.frame.size.height : 0;
+    CGFloat toolbarHeight = [self toolbarReservedHeight];
     CGFloat reservedSpaceOnBottom = _showBottomStatusBar ? iTermGetStatusBarHeight() : 0;
     NSRect initialFrame = NSMakeRect(0,
                                      reservedSpaceOnBottom,
                                      self.frame.size.width,
-                                     self.frame.size.height - titleHeight - reservedSpaceOnBottom);
+                                     self.frame.size.height - titleHeight - toolbarHeight - reservedSpaceOnBottom);
     _browserViewController.view.frame = initialFrame;
 
     // This magic incantation prevents auto layout from virally eating everything in the window preventing it from resizing.
@@ -620,6 +661,7 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
     if (_showTitle) {
         size.height += _title.frame.size.height;
     }
+    size.height += [self toolbarReservedHeight];
     if (_showBottomStatusBar) {
         size.height += iTermGetStatusBarHeight();
     }
@@ -1077,6 +1119,7 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
         if (self.showTitle) {
             [self updateTitleFrame];
         } else {
+            [self updateToolbarFrame];
             [self updateScrollViewFrame];
             [self updateFindViewFrame];
         }
@@ -1112,6 +1155,7 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
                 _scrollview.verticalScroller.frame = [self frameForScroller];
             }
         }
+        [self updateToolbarFrame];
         if (_showBottomStatusBar) {
             _genericStatusBarContainer.frame = NSMakeRect(0,
                                                           0,
@@ -1141,6 +1185,7 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
         if (_showTitle) {
             progressBarY -= iTermGetSessionViewTitleHeight();
         }
+        progressBarY -= [self toolbarReservedHeight];
         _progressBar.frame = NSMakeRect(0,
                                         progressBarY,
                                         self.bounds.size.width,
@@ -1692,6 +1737,7 @@ typedef NS_ENUM(NSInteger, SessionViewTrackingMode) {
     if (_showTitle) {
         insets.top = iTermGetSessionViewTitleHeight();
     }
+    insets.top += [self toolbarReservedHeight];
     if (self.showBottomStatusBar) {
         insets.bottom = iTermGetStatusBarHeight();
     }
@@ -2149,6 +2195,7 @@ typedef NS_ENUM(NSInteger, SessionViewTrackingMode) {
     if (_showTitle) {
         size.height += iTermGetSessionViewTitleHeight();
     }
+    size.height += [self toolbarReservedHeight];
     if (_showBottomStatusBar) {
         size.height += iTermGetStatusBarHeight();
     }
@@ -2163,6 +2210,7 @@ typedef NS_ENUM(NSInteger, SessionViewTrackingMode) {
         size.height -= iTermGetSessionViewTitleHeight();
         DLog(@"maximumPossibleScrollViewContentSize: sub title height. size=%@", [NSValue valueWithSize:size]);
     }
+    size.height -= [self toolbarReservedHeight];
     if (_showBottomStatusBar) {
         size.height -= iTermGetStatusBarHeight();
         DLog(@"maximumPossibleScrollViewContentSize: sub bottom status bar height. size=%@", NSStringFromSize(size));
@@ -2193,9 +2241,10 @@ typedef NS_ENUM(NSInteger, SessionViewTrackingMode) {
                                     aRect.size.width,
                                     iTermGetSessionViewTitleHeight())];
         NSViewController *viewController = [self.delegate sessionViewStatusBarViewController];
-        
+
         [[viewController view] setNeedsLayout:YES];
     }
+    [self updateToolbarFrame];
     [self updateScrollViewFrame];
     [self updateFindViewFrame];
 }
@@ -2222,9 +2271,10 @@ typedef NS_ENUM(NSInteger, SessionViewTrackingMode) {
 - (void)updateScrollViewFrame {
     DLog(@"update scrollview frame");
     CGFloat titleHeight = _showTitle ? _title.frame.size.height : 0;
+    CGFloat toolbarHeight = [self toolbarReservedHeight];
     CGFloat reservedSpaceOnBottom = _showBottomStatusBar ? iTermGetStatusBarHeight() : 0;
     NSSize proposedSize = NSMakeSize(self.frame.size.width,
-                                     self.frame.size.height - titleHeight - reservedSpaceOnBottom);
+                                     self.frame.size.height - titleHeight - toolbarHeight - reservedSpaceOnBottom);
     NSSize size = [_delegate sessionViewScrollViewWillResize:proposedSize];
     NSRect rect = NSMakeRect(0,
                              reservedSpaceOnBottom + proposedSize.height - size.height,
@@ -2258,12 +2308,13 @@ typedef NS_ENUM(NSInteger, SessionViewTrackingMode) {
     
     // Browser view should cover the entire content area, similar to how scrollview is positioned
     CGFloat titleHeight = _showTitle ? _title.frame.size.height : 0;
+    CGFloat toolbarHeight = [self toolbarReservedHeight];
     CGFloat reservedSpaceOnBottom = _showBottomStatusBar ? iTermGetStatusBarHeight() : 0;
-    
+
     NSRect browserFrame = NSMakeRect(0,
                                      reservedSpaceOnBottom,
                                      self.frame.size.width,
-                                     self.frame.size.height - titleHeight - reservedSpaceOnBottom);
+                                     self.frame.size.height - titleHeight - toolbarHeight - reservedSpaceOnBottom);
     
     _browserViewController.view.frame = browserFrame;
 }
@@ -2518,6 +2569,7 @@ typedef NS_OPTIONS(NSUInteger, iTermCornerFlags) {
     if (_showTitle) {
         rect.origin.y -= iTermGetSessionViewTitleHeight();
     }
+    rect.origin.y -= [self toolbarReservedHeight];
     _currentAnnouncement.view.frame = rect;
 }
 

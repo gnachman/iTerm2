@@ -1559,6 +1559,7 @@ void TurnOnDebugLoggingAutomatically(void) {
 
     [self registerMenuTips];
     [iTermClaudeWatcher start];
+    [iTermClaudeCodeModeController start];
 #if DEBUG
     NSMenu *appMenu = [[[[NSApp mainMenu] itemArray] firstObject] submenu];
     [appMenu addItem:[NSMenuItem separatorItem]];

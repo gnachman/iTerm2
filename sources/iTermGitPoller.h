@@ -22,6 +22,9 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic) NSTimeInterval cadence;
 @property (nonatomic, copy) NSString *currentDirectory;
 @property (nonatomic) BOOL enabled;
+// When YES, the poller asks the git service to also compute line/file-level
+// diff stats. This can be expensive; leave NO unless the caller needs it.
+@property (nonatomic) BOOL includeDiffStats;
 @property (nonatomic, readonly) iTermGitState *state;
 @property (nonatomic, weak) id<iTermGitPollerDelegate> delegate;
 @property (nonatomic, readonly) NSDate *lastPollTime;
