@@ -2208,6 +2208,58 @@ static iTermKeyEventReplayer *gReplayer;
                    dispatch_get_main_queue(), ^{
         [[MomentermNewTabHandler shared] checkAIToolsIfNeededWithForce:NO];
     });
+
+    // MomenTerm: one-time migration — update existing Default profile from "Monaco 12"
+    // to a Nerd Font so Powerline/icon glyphs render correctly.
+    NSString *fontMigrationKey = @"MomentermNerdFontMigratedV1";
+    if (![[iTermUserDefaults userDefaults] boolForKey:fontMigrationKey]) {
+        Profile *defaultProfile = [[ProfileModel sharedInstance] defaultBookmark];
+        NSString *currentFont = defaultProfile[KEY_NORMAL_FONT];
+
+        if (![currentFont isEqualToString:@"Monaco 12"]) {
+            // User already customized their font — mark done, don't touch it
+            [[iTermUserDefaults userDefaults] setBool:YES forKey:fontMigrationKey];
+        } else {
+            // Try Nerd Font variants in priority order
+            NSArray<NSString *> *candidates = @[
+                @"MesloLGS-NF-Regular",
+                @"MesloLGS NF",
+                @"D2CodingLigature Nerd Font Mono",
+                @"Hack Nerd Font Mono",
+                @"FiraCode Nerd Font Mono",
+            ];
+            NSString *nerdFontDesc = nil;
+            for (NSString *name in candidates) {
+                if ([NSFont fontWithName:name size:12] != nil) {
+                    nerdFontDesc = [NSString stringWithFormat:@"%@ 12", name];
+                    break;
+                }
+            }
+
+            if (nerdFontDesc) {
+                NSMutableDictionary *updated = [NSMutableDictionary dictionaryWithDictionary:defaultProfile];
+                [updated setObject:nerdFontDesc forKey:KEY_NORMAL_FONT];
+                [[ProfileModel sharedInstance] setBookmark:updated withGuid:defaultProfile[KEY_GUID]];
+                [[ProfileModel sharedInstance] flush];
+                // Mark done only after successful migration
+                [[iTermUserDefaults userDefaults] setBool:YES forKey:fontMigrationKey];
+            } else {
+                // No Nerd Font found — show a one-time install hint (retry next launch)
+                dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2.0 * NSEC_PER_SEC)),
+                               dispatch_get_main_queue(), ^{
+                    NSAlert *alert = [[NSAlert alloc] init];
+                    alert.messageText = @"Nerd Font을 설치해 주세요";
+                    alert.informativeText =
+                        @"터미널 프롬프트 아이콘(파워라인 심벌)을 표시하려면 Nerd Font가 필요합니다.\n\n"
+                        @"권장: MesloLGS NF (p10k 기본)\n"
+                        @"또는 D2Coding Nerd Font\n\n"
+                        @"설치 후 MomenTerm을 재실행하면 자동으로 적용됩니다.";
+                    [alert addButtonWithTitle:@"확인"];
+                    [alert runModal];
+                });
+            }
+        }
+    }
 }
 
 - (BOOL)shouldOpenUntitledFileAfterRunningAutoLaunchScripts:(BOOL)ranAutoLaunchScripts {
