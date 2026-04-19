@@ -42,13 +42,26 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (BOOL)getDeletions:(NSInteger *)deletionsPtr
            untracked:(NSInteger *)untrackedPtr;
+
+// Populate on state: linesInserted, linesDeleted, filesAdded, filesModified,
+// filesDeleted by diffing HEAD's tree against workdir-with-index. Returns NO
+// if diffing fails or there is no HEAD commit.
+- (BOOL)populateDiffStatsOnState:(iTermGitState *)state;
+
 - (void)forEachReference:(void (^)(git_reference *ref, BOOL *stop))block;
 
 @end
 
 @interface iTermGitState(GitClient)
 
+// Basic state (branch, push/pull, dirty, untracked/deleted file counts).
 + (instancetype _Nullable)gitStateForRepoAtPath:(NSString *)path;
+
+// Same as above, but if includeDiffStats is YES also populates linesInserted,
+// linesDeleted, filesAdded, filesModified, filesDeleted via git_diff. Skip it
+// when not needed — diffing can touch many files on slow repos/filesystems.
++ (instancetype _Nullable)gitStateForRepoAtPath:(NSString *)path
+                               includeDiffStats:(BOOL)includeDiffStats;
 
 @end
 

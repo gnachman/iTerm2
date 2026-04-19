@@ -37,10 +37,11 @@
 
 int main(int argc, const char *argv[])
 {
-    // pidinfo --git-state /path/to/repo <timeout>
-    if (argc == 4 && !strcmp(argv[1], "--git-state")) {
+    // pidinfo --git-state /path/to/repo <timeout> [<includeDiffStats 0|1>]
+    if ((argc == 4 || argc == 5) && !strcmp(argv[1], "--git-state")) {
         @autoreleasepool {
-            PIDInfoGetGitState(argv[2], atoi(argv[3]));
+            const int includeDiffStats = (argc >= 5) ? atoi(argv[4]) : 0;
+            PIDInfoGetGitState(argv[2], atoi(argv[3]), includeDiffStats);
         }
         return 0;
     }

@@ -9,7 +9,9 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-// Write encoded git state to fd 0.
-void PIDInfoGetGitState(const char *cpath, int timeout);
+// Write encoded git state to fd 0. If includeDiffStats is non-zero, also
+// populates the richer diff stats fields; this requires running git_diff which
+// can be expensive on large repos or slow filesystems.
+void PIDInfoGetGitState(const char *cpath, int timeout, int includeDiffStats);
 
 NS_ASSUME_NONNULL_END

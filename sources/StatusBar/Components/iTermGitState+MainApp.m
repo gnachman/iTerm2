@@ -47,6 +47,12 @@
         self.dirty = [[scope valueForVariableName:iTermGitStateVariableNameGitDirty] gitDirtyBoolValue];
         self.adds = [[scope valueForVariableName:iTermGitStateVariableNameGitAdds] integerValue];
         self.deletes = [[scope valueForVariableName:iTermGitStateVariableNameGitDeletes] integerValue];
+        // Optional richer stats — left at 0 when the remote it2git doesn't emit them.
+        self.linesInserted = [[scope valueForVariableName:iTermGitStateVariableNameGitLinesInserted] integerValue];
+        self.linesDeleted = [[scope valueForVariableName:iTermGitStateVariableNameGitLinesDeleted] integerValue];
+        self.filesAdded = [[scope valueForVariableName:iTermGitStateVariableNameGitFilesAdded] integerValue];
+        self.filesModified = [[scope valueForVariableName:iTermGitStateVariableNameGitFilesModified] integerValue];
+        self.filesDeleted = [[scope valueForVariableName:iTermGitStateVariableNameGitFilesDeleted] integerValue];
         self.creationTime = [NSDate it_timeSinceBoot];
     }
     return self;
@@ -66,7 +72,7 @@
                         block:(void (^)(void))block {
     self = [super init];
     if (self) {
-        NSArray<NSString *> *paths = iTermGitStatePaths();
+        NSArray<NSString *> *paths = [iTermGitStatePaths() arrayByAddingObjectsFromArray:iTermGitStateOptionalPaths()];
         _refs = [paths mapWithBlock:^id(NSString *path) {
             iTermVariableReference *ref = [[iTermVariableReference alloc] initWithPath:path vendor:scope];
             ref.onChangeBlock = block;

@@ -612,7 +612,8 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
                                      adjustScrollView:![self isTmuxTab]];
         const BOOL changedBottomStatusBar = [aSession.view setShowBottomStatusBar:shouldShowBottomStatusBar
                                                                  adjustScrollView:!self.isTmuxTab];
-        if (changedTitle || changedBottomStatusBar) {
+        const BOOL changedToolbar = [aSession.view setToolbarItems:aSession.desiredToolbarItems];
+        if (changedTitle || changedBottomStatusBar || changedToolbar) {
             if (![self isTmuxTab]) {
                 if ([self fitSessionToCurrentViewSize:aSession]) {
                     anyChange = YES;
@@ -7116,6 +7117,10 @@ typedef struct {
 
 - (void)sessionDidUpdatePaneTitle:(PTYSession *)session {
     [_tmuxTitleMonitor updateOnce];
+}
+
+- (void)sessionDidChangeDesiredToolbarItems:(PTYSession *)session {
+    [self updatePaneTitles];
 }
 
 - (void)sessionDidSetWindowTitle:(NSString *)title {

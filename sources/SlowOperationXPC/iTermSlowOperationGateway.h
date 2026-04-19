@@ -59,6 +59,7 @@ NS_ASSUME_NONNULL_BEGIN
                        completion:(void (^)(NSArray<NSString *> *))completions;
 
 - (void)requestGitStateForPath:(NSString *)path
+              includeDiffStats:(BOOL)includeDiffStats
                     completion:(void (^)(iTermGitState * _Nullable))completion;
 
 - (void)fetchRecentBranchesAt:(NSString *)path count:(NSInteger)maxCount completion:(void (^)(NSArray<NSString *> *))reply;

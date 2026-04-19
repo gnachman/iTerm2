@@ -3,6 +3,7 @@
 #import "Api.pbobjc.h"
 #import "DVR.h"
 #import "iTermAPIHelper.h"
+#import "iTermCCMode.h"
 #import "iTermEchoProbe.h"
 #import "iTermEncoderAdapter.h"
 #import "iTermFindDriver.h"
@@ -103,6 +104,7 @@ extern NSString *const PTYSessionArrangementOptionsLargeContentProvider;
 @protocol iTermSessionScope;
 @class SessionView;
 @class iTermSessionNoteModel;
+@class iTermSessionToolbarItem;
 @class TmuxHistory;
 @class WKWebViewConfiguration;
 
@@ -313,6 +315,11 @@ backgroundColor:(NSColor *)backgroundColor;
 - (iTermBackgroundImageMode)sessionBackgroundImageMode;
 - (CGFloat)sessionBlend;
 - (void)sessionDidUpdatePreferencesFromProfile:(PTYSession *)session;
+
+// Signals that the session's desired toolbar items may have changed. The tab
+// should run its chrome update (which calls setToolbarItems: on the view and
+// refits the session if the toolbar's presence changed).
+- (void)sessionDidChangeDesiredToolbarItems:(PTYSession *)session;
 - (id<iTermSwipeHandler>)sessionSwipeHandler;
 - (BOOL)sessionIsInSelectedTab:(PTYSession *)session;
 - (void)sessionDisableFocusFollowsMouseAtCurrentLocation;
@@ -625,6 +632,15 @@ backgroundColor:(NSColor *)backgroundColor;
 @property(nonatomic, readonly) iTermEchoProbe *echoProbe;
 @property(nonatomic, readonly) BOOL canOpenPasswordManager;
 @property(nonatomic) BOOL shortLivedSingleUse;
+
+// When YES, the session's view shows a Claude Code toolbar.
+@property(nonatomic) BOOL claudeCodeModeEnabled;
+
+// Only meaningful when claudeCodeModeEnabled is YES.
+@property(nonatomic) iTermCCMode claudeCodeMode;
+
+// nil unless claudeCodeModeEnabled is YES.
+@property(nonatomic, readonly, nullable) NSArray<iTermSessionToolbarItem *> *desiredToolbarItems;
 @property(nonatomic, retain) NSMutableDictionary<NSString *, NSString *> *hostnameToShell;  // example.com -> fish
 @property(nonatomic, readonly) NSString *sessionId;
 @property(nonatomic, retain) NSNumber *cursorTypeOverride;

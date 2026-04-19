@@ -272,6 +272,52 @@ typedef void (^DeferralBlock)(void);
     return YES;
 }
 
+- (BOOL)populateDiffStatsOnState:(iTermGitState *)state {
+    git_object *head_tree_obj = NULL;
+    git_diff *diff = NULL;
+    git_diff_stats *stats = NULL;
+    BOOL ok = NO;
+
+    // "HEAD^{tree}" peels HEAD down to the commit's tree.
+    if (git_revparse_single(&head_tree_obj, _repo, "HEAD^{tree}") != 0) {
+        goto cleanup;
+    }
+    git_tree *head_tree = (git_tree *)head_tree_obj;
+
+    git_diff_options opts = GIT_DIFF_OPTIONS_INIT;
+    // Include untracked files so newly-created files count as added.
+    opts.flags = (GIT_DIFF_INCLUDE_UNTRACKED |
+                  GIT_DIFF_RECURSE_UNTRACKED_DIRS);
+
+    if (git_diff_tree_to_workdir_with_index(&diff, _repo, head_tree, &opts) != 0) {
+        goto cleanup;
+    }
+
+    const size_t added = git_diff_num_deltas_of_type(diff, GIT_DELTA_ADDED);
+    const size_t untracked = git_diff_num_deltas_of_type(diff, GIT_DELTA_UNTRACKED);
+    const size_t deleted = git_diff_num_deltas_of_type(diff, GIT_DELTA_DELETED);
+    const size_t modified = git_diff_num_deltas_of_type(diff, GIT_DELTA_MODIFIED);
+    const size_t renamed = git_diff_num_deltas_of_type(diff, GIT_DELTA_RENAMED);
+    const size_t typechange = git_diff_num_deltas_of_type(diff, GIT_DELTA_TYPECHANGE);
+
+    state.filesAdded = (NSInteger)(added + untracked);
+    state.filesDeleted = (NSInteger)deleted;
+    state.filesModified = (NSInteger)(modified + renamed + typechange);
+
+    if (git_diff_get_stats(&stats, diff) == 0) {
+        state.linesInserted = (NSInteger)git_diff_stats_insertions(stats);
+        state.linesDeleted = (NSInteger)git_diff_stats_deletions(stats);
+    }
+
+    ok = YES;
+
+cleanup:
+    if (stats) git_diff_stats_free(stats);
+    if (diff) git_diff_free(diff);
+    if (head_tree_obj) git_object_free(head_tree_obj);
+    return ok;
+}
+
 static int GitForEachCallback(git_reference *ref, void *data) {
     typedef void (^UserCallback)(git_reference *, BOOL *);
     UserCallback block = (__bridge UserCallback)data;
@@ -289,6 +335,11 @@ static int GitForEachCallback(git_reference *ref, void *data) {
 @implementation iTermGitState(GitClient)
 
 + (instancetype)gitStateForRepoAtPath:(NSString *)path {
+    return [self gitStateForRepoAtPath:path includeDiffStats:NO];
+}
+
++ (instancetype)gitStateForRepoAtPath:(NSString *)path
+                     includeDiffStats:(BOOL)includeDiffStats {
     iTermGitClient *client = [[iTermGitClient alloc] initWithRepoPath:path];
 
     if (!client.repo) {
@@ -296,7 +347,7 @@ static int GitForEachCallback(git_reference *ref, void *data) {
         if ([parent isEqualToString:path] || parent.length == 0) {
             return nil;
         }
-        return [self gitStateForRepoAtPath:parent];
+        return [self gitStateForRepoAtPath:parent includeDiffStats:includeDiffStats];
     }
 
     git_reference *headRef = [client head];
@@ -334,6 +385,11 @@ static int GitForEachCallback(git_reference *ref, void *data) {
     if ([client getDeletions:&deletions untracked:&untracked]) {
         state.adds = untracked;
         state.deletes = deletions;
+    }
+
+    // Richer diff stats: only if the caller explicitly asked. Can be expensive.
+    if (includeDiffStats) {
+        [client populateDiffStatsOnState:state];
     }
 
     // Current operation
