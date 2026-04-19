@@ -275,7 +275,7 @@ protocol CCModeSwitchSessionToolbarItemDelegate: AnyObject {
 
 @objc(iTermCCModeSwitchSessionToolbarItem)
 class CCModeSwitchSessionToolbarItem: SessionToolbarControl {
-    weak var modeSwitchDelegate: CCModeSwitchSessionToolbarItemDelegate?
+    @objc weak var modeSwitchDelegate: CCModeSwitchSessionToolbarItemDelegate?
     private let segmentedControl: NSSegmentedControl
 
     @objc

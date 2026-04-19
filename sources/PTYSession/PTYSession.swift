@@ -7,6 +7,12 @@
 
 import WebKit
 
+@objc
+class PTYSessionSwiftState: NSObject {
+    var peerPort: PTYSessionPeerPort?
+    var delegateObservers = [(PTYSessionDelegate) -> ()]()
+}
+
 // MARK: - AI Chat
 extension PTYSession {
     var aiState: String {
@@ -1558,6 +1564,157 @@ extension PTYSession {
                 sessionNoteModel = SessionNoteModel()
             }
             view.showSessionNote(with: sessionNoteModel!)
+        }
+    }
+}
+
+enum PTYSessionClaudeCodePeerIdentifier: String {
+    case claudeCode = "Claude Code"
+    case diff = "Diff"
+    case codeReview = "Code Review"
+}
+extension PTYSession {
+    var peerPort: PTYSessionPeerPort? {
+        get {
+            swiftState!.peerPort
+        }
+        set {
+            swiftState!.peerPort = newValue
+        }
+    }
+    
+    func set(peerPort: PTYSessionPeerPort) {
+        it_assert(self.peerPort == nil)
+        self.peerPort = peerPort
+    }
+    
+    @objc
+    func didAssignDelegate() {
+        let observers = swiftState!.delegateObservers
+        swiftState!.delegateObservers = []
+        for closure in observers {
+            if let delegate {
+                closure(delegate)
+            } else {
+                swiftState!.delegateObservers.append(closure)
+            }
+        }
+    }
+    
+    private func withDelegate(_ closure: @escaping (PTYSessionDelegate) -> ()) {
+        if let delegate {
+            closure(delegate)
+            return
+        }
+        swiftState!.delegateObservers.append(closure)
+    }
+    
+    private func makePeer(command: String) -> iTermPromise<PTYSession> {
+        return iTermPromise<PTYSession> { seal in
+            withDelegate { [weak self] delegate in
+                guard let self else {
+                    seal.reject(iTermError("Session terminated"))
+                    return
+                }
+                asyncInitialDirectoryForNewSessionBased { [weak self] oldCWD in
+                    guard let self else {
+                        seal.reject(iTermError("Session terminated"))
+                        return
+                    }
+                    let factory = iTermSessionFactory()
+                    let profile = self.profile!
+                    
+                    let diffSession = factory.newSession(withProfile: self.profile, parent: self)
+                    diffSession.setScreenSize(view.bounds.size, parent: delegate.realParentWindow())
+                    diffSession.setSize(screen.size)
+                    diffSession.view.scrollview.hasVerticalScroller = view.scrollview.hasVerticalScroller
+                    diffSession.view.scrollview.lineScroll = view.scrollview.lineScroll
+                    diffSession.view.scrollview.pageScroll = view.scrollview.pageScroll
+                    if let imagePath = backgroundImagePath {
+                        diffSession.backgroundImagePath = imagePath
+                    }
+                    diffSession.setPreferencesFromAddressBookEntry(profile)
+                    diffSession.loadInitialColorTableAndResetCursorGuide()
+                    diffSession.screen.resetTimestamps()
+                    
+                    if ProfileModel.sessionsInstance().bookmark(withGuid: (diffSession.profile[KEY_GUID] as! String)) != nil &&
+                        isDivorced {
+                        // We know the GUID is unique and in sessions instance and the original guid is already set.
+                        // This might be possible to do earlier, but I'm afraid of introducing bugs.
+                        // Only inherit if targetSession is actually divorced - otherwise we'd clear newSession's
+                        // overriddenFields, breaking the invariant that a divorced session's GUID is in sessionsInstance.
+                        diffSession.inheritDivorce(from: self, decree: "Peer of session with guid \(d(profile[KEY_GUID]))")
+                    }
+                    // TODO: This is probably wrong, especially if self is using ssh integration on a remote host.
+                    // I also don't now what I want the custom command to be for diff and code review cases.
+                    let launchRequest = iTermSessionAttachOrLaunchRequest(
+                        session: diffSession,
+                        canPrompt: false,
+                        objectType: .paneObject,
+                        hasServerConnection: false,
+                        serverConnection: iTermGeneralServerConnection(),
+                        urlString: nil,
+                        allowURLSubs: false,
+                        environment: [:],
+                        customShell: nil,
+                        oldCWD: oldCWD,
+                        forceUseOldCWD: true,
+                        command: command,
+                        isUTF8: nil,
+                        substitutions: nil,
+                        windowController: nil,
+                        ready: nil) { session, ok in
+                            if ok, let session {
+                                session.bury()
+                                seal.fulfill(session)
+                                session.didJoinClaudeCodePeers()
+                            } else {
+                                seal.reject(iTermError("Failed to create session"))
+                            }
+                        }
+                    factory.attachOrLaunch(with: launchRequest)
+                }
+            }
+        }
+    }
+    
+    @objc
+    func installClaudeCodePeers() {
+        let diffCommand = "git difftool"
+        let codeReviewCommand = "claude"
+        peerPort = PTYSessionPeerPort(
+            peers: [PTYSessionClaudeCodePeerIdentifier.claudeCode.rawValue: iTermPromise<PTYSession>(value: self),
+                    PTYSessionClaudeCodePeerIdentifier.diff.rawValue: makePeer(command: diffCommand),
+                    PTYSessionClaudeCodePeerIdentifier.codeReview.rawValue: makePeer(command: codeReviewCommand)],
+            activeSessionIdentifier: PTYSessionClaudeCodePeerIdentifier.claudeCode.rawValue)
+    }
+    
+    @objc
+    func removeClaudeCodePeers() {
+        peerPort?.invalidate()
+        peerPort = nil
+    }
+    
+    @objc(sessionBelongsToPeers:)
+    func belongs(toPeers peers: PTYSessionPeerPort) -> Bool {
+        return peers.contains(session: self)
+    }
+}
+
+extension PTYSession: CCModeSwitchSessionToolbarItemDelegate {
+    func ccModeDidChange(mode: iTermCCMode) {
+        let identifier: String? = switch mode {
+        case .CLI:
+            PTYSessionClaudeCodePeerIdentifier.claudeCode.rawValue
+        case .diff:
+            PTYSessionClaudeCodePeerIdentifier.diff.rawValue
+        case .codeReview:
+            PTYSessionClaudeCodePeerIdentifier.codeReview.rawValue
+        @unknown default:
+            nil
+        }
+        if let identifier {
+            _ = peerPort?.activate(identifier: identifier)
         }
     }
 }

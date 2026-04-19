@@ -60,6 +60,7 @@ extern NSString *const PTYSessionArrangementOptionsLargeContentProvider;
 @class CapturedOutput;
 @protocol ExternalSearchResultsController;
 @class FakeWindow;
+@class PTYSessionSwiftState;
 @class iTermAction;
 @class iTermAnnouncementViewController;
 @class iTermAutomaticProfileSwitcher;
@@ -83,6 +84,7 @@ extern NSString *const PTYSessionArrangementOptionsLargeContentProvider;
 @class iTermVariableReference;
 @class iTermVariables;
 @class iTermVariableScope;
+@class PTYSessionPeerPort;
 @class PTYSessionZoomState;
 @class PTYTab;
 @class PTYTask;
@@ -338,6 +340,9 @@ backgroundColor:(NSColor *)backgroundColor;
 - (BOOL)sessionBelongsToHotkeyWindow:(PTYSession *)session;
 - (void)swapSession:(PTYSession *)existing withBuriedSession:(PTYSession *)buried;
 - (void)session:(PTYSession *)session progressDidChange:(VT100ScreenProgress)progress;
+- (void)sessionActivateSession:(PTYSession *)session
+                    amongPeers:(PTYSessionPeerPort *)peerPort
+                   moveToolbar:(BOOL)moveToolbar;
 
 @end
 
@@ -684,6 +689,7 @@ backgroundColor:(NSColor *)backgroundColor;
 @property(nonatomic, readonly) iTermAutomaticProfileSwitchingSession *apsContext;
 
 @property(nonatomic, readonly, retain) iTermNaggingController *naggingController;
+@property(nonatomic, readonly, strong) PTYSessionSwiftState *swiftState;
 
 #pragma mark - methods
 
@@ -1109,6 +1115,8 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
 - (void)sync;
 - (void)toggleSettingWithKey:(NSString *)key
                    isProfile:(BOOL)isProfile;
+- (void)didJoinClaudeCodePeers;
+- (void)moveToolbarTo:(PTYSession *)destination;
 
 #pragma mark - API
 

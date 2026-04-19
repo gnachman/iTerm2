@@ -870,6 +870,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTurdType) {
         _canChangeProfileInArrangementGeneration = -1;
         _runningRemoteCommand = [[iTermRunningRemoteCommand alloc] init];
         _channelClients = [[NSMutableArray alloc] init];
+        _swiftState = [[PTYSessionSwiftState alloc] init];
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(coprocessChanged)
                                                      name:kCoprocessStatusChangeNotification
@@ -1168,6 +1169,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [_bindings release];
     [_apsContext release];
     [_sessionNoteModel release];
+    [_swiftState release];
 
     [super dealloc];
 }
@@ -1365,11 +1367,25 @@ ITERM_WEAKLY_REFERENCEABLE
         return;
     }
     _claudeCodeModeEnabled = enabled;
-    if (!enabled) {
+    if (enabled) {
+        [self installClaudeCodePeers];
+    } else {
+        [self removeClaudeCodePeers];
         [_cachedToolbarItems release];
         _cachedToolbarItems = nil;
     }
     [_delegate sessionDidChangeDesiredToolbarItems:self];
+}
+
+- (void)didJoinClaudeCodePeers {
+    _claudeCodeModeEnabled = YES;
+}
+
+- (void)moveToolbarTo:(PTYSession *)destination {
+    [self.view moveToolbarTo:destination.view];
+    [destination->_cachedToolbarItems autorelease];
+    destination->_cachedToolbarItems = _cachedToolbarItems;
+    _cachedToolbarItems = nil;
 }
 
 - (NSArray<iTermSessionToolbarItem *> *)desiredToolbarItems {
@@ -1384,6 +1400,7 @@ ITERM_WEAKLY_REFERENCEABLE
             [[[iTermCCModeSwitchSessionToolbarItem alloc] initWithIdentifier:@"ccMode"
                                                                     priority:1
                                                                         mode:_claudeCodeMode] autorelease];
+        modeItem.modeSwitchDelegate = self;
         iTermCCGitSessionToolbarItem *gitItem =
             [[[iTermCCGitSessionToolbarItem alloc] initWithIdentifier:@"ccGit"
                                                              priority:2
@@ -5729,6 +5746,9 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
     }
     // useTransparency may have just changed.
     [self invalidateBlend];
+    if (delegate) {
+        [self didAssignDelegate];
+    }
 }
 
 - (NSString *)name {

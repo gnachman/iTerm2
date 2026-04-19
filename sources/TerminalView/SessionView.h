@@ -238,7 +238,7 @@ typedef NS_ENUM(NSUInteger, iTermSessionViewFindDriver) {
 // Returns YES if the toolbar's presence changed (meaning the session's usable
 // height changed and the tab should refit).
 - (BOOL)setToolbarItems:(NSArray<iTermSessionToolbarItem *> * _Nullable)toolbarItems;
-
+- (void)moveToolbarTo:(SessionView *)other;
 - (void)setBrowserViewController:(iTermBrowserViewController *)browserViewController
                       initialURL:(nullable NSString *)initialURL
                  restorableState:(nullable NSDictionary *)restorableState NS_AVAILABLE_MAC(11_0);

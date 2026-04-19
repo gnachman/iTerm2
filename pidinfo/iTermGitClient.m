@@ -275,7 +275,6 @@ typedef void (^DeferralBlock)(void);
 - (BOOL)populateDiffStatsOnState:(iTermGitState *)state {
     git_object *head_tree_obj = NULL;
     git_diff *diff = NULL;
-    git_diff_stats *stats = NULL;
     BOOL ok = NO;
 
     // "HEAD^{tree}" peels HEAD down to the commit's tree.
@@ -293,26 +292,64 @@ typedef void (^DeferralBlock)(void);
         goto cleanup;
     }
 
-    const size_t added = git_diff_num_deltas_of_type(diff, GIT_DELTA_ADDED);
-    const size_t untracked = git_diff_num_deltas_of_type(diff, GIT_DELTA_UNTRACKED);
-    const size_t deleted = git_diff_num_deltas_of_type(diff, GIT_DELTA_DELETED);
-    const size_t modified = git_diff_num_deltas_of_type(diff, GIT_DELTA_MODIFIED);
-    const size_t renamed = git_diff_num_deltas_of_type(diff, GIT_DELTA_RENAMED);
-    const size_t typechange = git_diff_num_deltas_of_type(diff, GIT_DELTA_TYPECHANGE);
+    NSInteger filesAdded = 0;
+    NSInteger filesDeleted = 0;
+    NSInteger filesModified = 0;
+    NSInteger linesInserted = 0;
+    NSInteger linesDeleted = 0;
 
-    state.filesAdded = (NSInteger)(added + untracked);
-    state.filesDeleted = (NSInteger)deleted;
-    state.filesModified = (NSInteger)(modified + renamed + typechange);
+    const size_t numDeltas = git_diff_num_deltas(diff);
+    for (size_t i = 0; i < numDeltas; i++) {
+        const git_diff_delta *delta = git_diff_get_delta(diff, i);
+        if (!delta) {
+            continue;
+        }
+        switch (delta->status) {
+            case GIT_DELTA_ADDED:
+            case GIT_DELTA_UNTRACKED:
+                // New file: only increments filesAdded. Its contents are not
+                // counted as inserted lines.
+                filesAdded += 1;
+                break;
 
-    if (git_diff_get_stats(&stats, diff) == 0) {
-        state.linesInserted = (NSInteger)git_diff_stats_insertions(stats);
-        state.linesDeleted = (NSInteger)git_diff_stats_deletions(stats);
+            case GIT_DELTA_DELETED:
+                // File actually removed from disk. Doesn't contribute to
+                // linesDeleted.
+                filesDeleted += 1;
+                break;
+
+            case GIT_DELTA_MODIFIED:
+            case GIT_DELTA_RENAMED:
+            case GIT_DELTA_TYPECHANGE: {
+                filesModified += 1;
+                git_patch *patch = NULL;
+                if (git_patch_from_diff(&patch, diff, i) == 0 && patch) {
+                    size_t additions = 0;
+                    size_t deletions = 0;
+                    if (git_patch_line_stats(NULL, &additions, &deletions, patch) == 0) {
+                        linesInserted += (NSInteger)additions;
+                        linesDeleted += (NSInteger)deletions;
+                    }
+                    git_patch_free(patch);
+                }
+                break;
+            }
+
+            default:
+                // COPIED, IGNORED, UNREADABLE, CONFLICTED — skip.
+                break;
+        }
     }
+
+    state.filesAdded = filesAdded;
+    state.filesDeleted = filesDeleted;
+    state.filesModified = filesModified;
+    state.linesInserted = linesInserted;
+    state.linesDeleted = linesDeleted;
 
     ok = YES;
 
 cleanup:
-    if (stats) git_diff_stats_free(stats);
     if (diff) git_diff_free(diff);
     if (head_tree_obj) git_object_free(head_tree_obj);
     return ok;
