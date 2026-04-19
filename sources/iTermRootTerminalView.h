@@ -104,6 +104,11 @@ extern const NSInteger iTermRootTerminalViewWindowNumberLabelWidth;
 // ALWAYS USE THE FLOOR OF THIS VALUE!
 @property(nonatomic) CGFloat toolbeltWidth;
 
+// MomenTerm: embedded left project sidebar.
+@property(nonatomic) BOOL shouldShowMomentermSidebar;
+@property(nonatomic) CGFloat momentermSidebarWidth;  // default 220; set by PseudoTerminal
+@property(nonatomic, strong) NSView *momentermSidebarContainer;  // set by PseudoTerminal
+
 @property(nonatomic, readonly) BOOL scrollbarShouldBeVisible;
 
 @property(nonatomic, readonly) BOOL tabBarShouldBeVisible;

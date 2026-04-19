@@ -167,6 +167,11 @@ NS_CLASS_AVAILABLE_MAC(10_14)
     NSView *_workaroundView;  // 10.14 only. See issue 8701.
     iTermLayerBackedSolidColorView *_notchMask NS_AVAILABLE_MAC(12_0);
     iTermCompactProxyIconView *_compactProxyIconView;
+
+    // MomenTerm: embedded left project sidebar
+    BOOL _shouldShowMomentermSidebar;
+    CGFloat _momentermSidebarWidth;
+    NSView *_momentermSidebarContainer;
 }
 
 - (instancetype)initWithFrame:(NSRect)frameRect
@@ -1217,6 +1222,80 @@ NS_CLASS_AVAILABLE_MAC(10_14)
     _toolbelt.hidden = !shouldShowToolbelt;
 }
 
+// MARK: - MomenTerm Sidebar
+
+- (void)setShouldShowMomentermSidebar:(BOOL)shouldShowMomentermSidebar {
+    if (_shouldShowMomentermSidebar == shouldShowMomentermSidebar) {
+        return;
+    }
+    _shouldShowMomentermSidebar = shouldShowMomentermSidebar;
+    _momentermSidebarContainer.hidden = !shouldShowMomentermSidebar;
+    [self layoutSubviews];
+}
+
+- (BOOL)shouldShowMomentermSidebar {
+    return _shouldShowMomentermSidebar;
+}
+
+- (void)setMomentermSidebarWidth:(CGFloat)momentermSidebarWidth {
+    _momentermSidebarWidth = momentermSidebarWidth;
+}
+
+- (CGFloat)momentermSidebarWidth {
+    return _momentermSidebarWidth > 0 ? _momentermSidebarWidth : 220.0;
+}
+
+- (void)setMomentermSidebarContainer:(NSView *)momentermSidebarContainer {
+    [_momentermSidebarContainer removeFromSuperview];
+    _momentermSidebarContainer = momentermSidebarContainer;
+    if (_momentermSidebarContainer) {
+        _momentermSidebarContainer.hidden = !_shouldShowMomentermSidebar;
+        [self addSubview:_momentermSidebarContainer positioned:NSWindowAbove relativeTo:nil];
+    }
+    [self layoutSubviews];
+}
+
+- (NSView *)momentermSidebarContainer {
+    return _momentermSidebarContainer;
+}
+
+- (void)layoutMomentermSidebar {
+    if (!_momentermSidebarContainer || !_shouldShowMomentermSidebar) {
+        return;
+    }
+    const CGFloat sw = floor(self.momentermSidebarWidth);
+    const CGFloat h = NSHeight(self.bounds);
+
+    // Position the sidebar on the left edge, full height
+    _momentermSidebarContainer.frame = NSMakeRect(0, 0, sw, h);
+
+    // Shrink the tabView leftward
+    NSRect tvFrame = self.tabView.frame;
+    if (tvFrame.origin.x < sw) {
+        const CGFloat delta = sw - tvFrame.origin.x;
+        tvFrame.origin.x = sw;
+        tvFrame.size.width -= delta;
+        if (tvFrame.size.width < 0) {
+            tvFrame.size.width = 0;
+        }
+        self.tabView.frame = tvFrame;
+    }
+
+    // Shrink the tab bar backing leftward (only when tab bar is not on loan)
+    if (!_tabBarControlOnLoan && _tabBarBacking && !_tabBarBacking.hidden) {
+        NSRect tbFrame = _tabBarBacking.frame;
+        if (tbFrame.origin.x < sw) {
+            const CGFloat delta = sw - tbFrame.origin.x;
+            tbFrame.origin.x = sw;
+            tbFrame.size.width -= delta;
+            if (tbFrame.size.width < 0) {
+                tbFrame.size.width = 0;
+            }
+            _tabBarBacking.frame = tbFrame;
+        }
+    }
+}
+
 - (void)updateToolbeltFrameForWindow:(NSWindow *)thisWindow {
     const NSRect toolbeltFrame = [self toolbeltFrameInWindow:thisWindow];
     DLog(@"Set toolbelt frame to %@", NSStringFromRect(toolbeltFrame));
@@ -1666,6 +1745,9 @@ NS_CLASS_AVAILABLE_MAC(10_14)
     if (!_tabBarControlOnLoan) {
         [self.tabBarControl updateFlashing];
     }
+    // MomenTerm: post-process layout to make room for the embedded left sidebar
+    [self layoutMomentermSidebar];
+
     DLog(@"After:\n%@", [self iterm_recursiveDescription]);
     [self.delegate rootTerminalViewDidLayoutSubviews];
 }

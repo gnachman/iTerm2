@@ -246,6 +246,7 @@ typedef NS_ENUM(int, iTermShouldHaveTitleSeparator) {
     PTYTabDelegate,
     iTermRootTerminalViewDelegate,
     iTermToolbeltViewDelegate,
+    MomentermEmbeddedSidebarDelegate,
     NSComboBoxDelegate,
     NSFontChanging,
     NSMenuItemValidation,
@@ -431,6 +432,10 @@ typedef NS_ENUM(int, iTermShouldHaveTitleSeparator) {
 
     iTermIdempotentOperationJoiner *_rightExtraJoiner;
     BOOL _excursionPrevented;
+
+    // MomenTerm: embedded project sidebar
+    MomentermEmbeddedSidebarVC *_momentermSidebarVC;
+    NSTitlebarAccessoryViewController *_momentermToggleAccessory;
 
 }
 
@@ -726,6 +731,15 @@ typedef NS_ENUM(int, iTermShouldHaveTitleSeparator) {
                                        tabBarDelegate:self
                                              delegate:self] autorelease];
     self.window.contentView = _contentView;
+
+    // MomenTerm: create embedded sidebar and attach it to the content view
+    _momentermSidebarVC = [[MomentermEmbeddedSidebarVC alloc] init];
+    _momentermSidebarVC.sidebarDelegate = self;
+    _contentView.momentermSidebarWidth = 220;
+    _contentView.momentermSidebarContainer = _momentermSidebarVC.view;
+    _contentView.shouldShowMomentermSidebar = NO;
+    [self performSelector:@selector(it_setupMomentermToggleButton) withObject:nil afterDelay:0];
+
     if (hotkeyWindowType == iTermHotkeyWindowTypeNone) {
         self.window.alphaValue = 1;
     } else {
@@ -1025,6 +1039,84 @@ typedef NS_ENUM(int, iTermShouldHaveTitleSeparator) {
     }
 }
 
+// MARK: - MomenTerm Embedded Sidebar
+
+- (void)it_setupMomentermToggleButton {
+    if ((self.window.styleMask & NSWindowStyleMaskTitled) == 0) {
+        return;
+    }
+    // Build the toggle button
+    NSButton *btn = [NSButton buttonWithImage:[NSImage imageWithSystemSymbolName:@"sidebar.left"
+                                                       accessibilityDescription:@"Toggle Sidebar"]
+                                       target:self
+                                       action:@selector(toggleMomentermSidebar:)];
+    btn.bezelStyle = NSBezelStyleTexturedRounded;
+    btn.frame = NSMakeRect(0, 0, 32, 22);
+    btn.autoresizingMask = NSViewNotSizable;
+    [btn sizeToFit];
+
+    // Wrap in a container view so layoutAttribute = left works cleanly
+    NSView *container = [[[NSView alloc] initWithFrame:NSMakeRect(0, 0, btn.frame.size.width + 4, 24)] autorelease];
+    btn.frame = NSMakeRect(2, 1, btn.frame.size.width, 22);
+    [container addSubview:btn];
+
+    _momentermToggleAccessory = [[NSTitlebarAccessoryViewController alloc] init];
+    _momentermToggleAccessory.view = container;
+    _momentermToggleAccessory.layoutAttribute = NSLayoutAttributeLeft;
+    [self.window addTitlebarAccessoryViewController:_momentermToggleAccessory];
+}
+
+- (IBAction)toggleMomentermSidebar:(id)sender {
+    _contentView.shouldShowMomentermSidebar = !_contentView.shouldShowMomentermSidebar;
+}
+
+// Returns a stable pastel color derived from the space name.
+- (NSColor *)it_momentermColorForSpaceName:(NSString *)spaceName {
+    NSUInteger h = [spaceName hash];
+    CGFloat hue = (CGFloat)(h % 360) / 360.0;
+    return [NSColor colorWithHue:hue saturation:0.45 brightness:0.85 alpha:1.0];
+}
+
+// Returns a modified copy of the current session's profile (or defaultBookmark) that:
+//   1. Sets the initial directory to |path|
+//   2. Sets the tab color to a stable color derived from |spaceName|
+- (Profile *)it_momentermProfileForPath:(NSString *)path spaceName:(NSString *)spaceName {
+    Profile *base = [[self currentSession] profile];
+    if (!base) {
+        base = [[iTermController sharedInstance] defaultBookmark];
+    }
+    NSColor *color = [self it_momentermColorForSpaceName:spaceName];
+    NSDictionary *colorDict = [ITAddressBookMgr encodeColor:color];
+    Profile *modified = [base dictionaryBySettingObject:kProfilePreferenceInitialDirectoryCustomValue
+                                               forKey:KEY_CUSTOM_DIRECTORY];
+    modified = [modified dictionaryBySettingObject:path forKey:KEY_WORKING_DIRECTORY];
+    modified = [modified dictionaryBySettingObject:@YES  forKey:KEY_USE_TAB_COLOR];
+    modified = [modified dictionaryBySettingObject:colorDict forKey:KEY_TAB_COLOR];
+    return modified;
+}
+
+// MARK: MomentermEmbeddedSidebarDelegate
+
+- (void)sidebarDidRequestOpenProjectWithPath:(NSString *)path
+                                   spaceName:(NSString *)spaceName
+                                    inNewTab:(BOOL)inNewTab {
+    Profile *profile = [self it_momentermProfileForPath:path spaceName:spaceName];
+    if (inNewTab) {
+        [self createTabWithProfile:profile
+                       withCommand:nil
+                       environment:nil
+                          tabIndex:nil
+                 previousDirectory:path
+                            parent:nil
+                        completion:nil];
+    } else {
+        [iTermSessionLauncher launchBookmark:profile
+                                  inTerminal:nil
+                          respectTabbingMode:NO
+                                  completion:nil];
+    }
+}
+
 ITERM_WEAKLY_REFERENCEABLE
 
 - (void)dealloc {
@@ -1072,6 +1164,8 @@ ITERM_WEAKLY_REFERENCEABLE
     [_autoCommandHistorySessionGuid release];
     [_shortcutAccessoryViewController release];
     [_titleBarAccessoryTabBarViewController release];
+    [_momentermSidebarVC release];
+    [_momentermToggleAccessory release];
     [_didEnterLionFullscreen release];
     [_desiredTitle release];
     [_tabsTouchBarItem release];
@@ -10551,11 +10645,13 @@ static BOOL iTermApproximatelyEqualRects(NSRect lhs, NSRect rhs, double epsilon)
             iTermWindowTypeIsCompact(self.savedWindowType)) {
             return [iTermAdvancedSettingsModel defaultTabBarHeight];
         }
+#if defined(__MAC_26_0) && MAC_OS_X_VERSION_MAX_ALLOWED >= __MAC_26_0
         if (@available(macOS 26, *)) {
             if (![iTermAdvancedSettingsModel useSequoiaStyleTabs]) {
                 return PSMTahoeTabStyle.horizontalTabBarHeight;
             }
         }
+#endif
         return [iTermAdvancedSettingsModel defaultTabBarHeight];
     }
 }

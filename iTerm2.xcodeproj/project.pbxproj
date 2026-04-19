@@ -970,8 +970,6 @@
 		759637A52593AE0700E278CC /* iTerm2SandboxedWorker.xpc in Embed XPC Services */ = {isa = PBXBuildFile; fileRef = 7596379A2593AE0700E278CC /* iTerm2SandboxedWorker.xpc */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		759637C82593AFB500E278CC /* iTerm2SandboxedWorkerProtocol.h in Headers */ = {isa = PBXBuildFile; fileRef = 7596379C2593AE0700E278CC /* iTerm2SandboxedWorkerProtocol.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		77E49C95CA97F58D042F688E /* iTermScreenshotRedaction.swift in Sources */ = {isa = PBXBuildFile; fileRef = 97539C440B63BAC6011E9208 /* iTermScreenshotRedaction.swift */; };
-		8289B1D38F6B6319DAF1F1BC /* MomenTerm.icns in Sources */ = {isa = PBXBuildFile; fileRef = EB0AC2E0FC18C6C12C31A6B5 /* MomenTerm.icns */; };
-		A6MOMENTERM0001ICNSRES00 /* MomenTerm.icns in Resources */ = {isa = PBXBuildFile; fileRef = EB0AC2E0FC18C6C12C31A6B5 /* MomenTerm.icns */; };
 		82C8876B3E6C833593501F97 /* SetTabStatusTrigger.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00885D5646181ED6CFE9A2DE /* SetTabStatusTrigger.swift */; };
 		84914ABAD880FC4B174DFAF5 /* iTermTouchIDHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 207C83644F1E850C9F1E918A /* iTermTouchIDHelper.swift */; };
 		874206490564169600CFC3F1 /* iTermApplicationDelegate.h in Headers */ = {isa = PBXBuildFile; fileRef = 20D5CC6304E7AA0500000106 /* iTermApplicationDelegate.h */; };
@@ -5192,6 +5190,7 @@
 		A6FFAE712CF123D10031FB21 /* CoreTextLineRenderingHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6FFAE702CF123CC0031FB21 /* CoreTextLineRenderingHelper.swift */; };
 		A6FFAE732CF682BD0031FB21 /* iTermDoubleWidthCharacterCache.h in Headers */ = {isa = PBXBuildFile; fileRef = A6FFAE722CF682B60031FB21 /* iTermDoubleWidthCharacterCache.h */; };
 		A6FFAE752CF682D60031FB21 /* iTermDoubleWidthCharacterCache.m in Sources */ = {isa = PBXBuildFile; fileRef = A6FFAE742CF682D40031FB21 /* iTermDoubleWidthCharacterCache.m */; };
+		A6MOMENTERM0001ICNSRES00 /* MomenTerm.icns in Resources */ = {isa = PBXBuildFile; fileRef = EB0AC2E0FC18C6C12C31A6B5 /* MomenTerm.icns */; };
 		A7538B418331D32A3C38281F /* FIFOQueue.swift in Sources */ = {isa = PBXBuildFile; fileRef = 20065710A2FC0BE95B224445 /* FIFOQueue.swift */; };
 		A785F516A64BC93AAF1474B8 /* RegexAtomIterator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 76421C2E762130B690D1ADC5 /* RegexAtomIterator.swift */; };
 		A7E25DCB1956D4A7FA738CB9 /* iTermStreamingPNGWriter.h in Sources */ = {isa = PBXBuildFile; fileRef = CB2F48F836C5732146BCEDD9 /* iTermStreamingPNGWriter.h */; };
@@ -5207,6 +5206,7 @@
 		CB38FB7556A26003BEC278BA /* MomentermNewTabHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4BCB55D89CEE16E48D34174F /* MomentermNewTabHandler.swift */; };
 		CC1EDD90C29B2AFC43831C81 /* VT100StringConversionConfig.h in Sources */ = {isa = PBXBuildFile; fileRef = 6F87CB3CBFBF0D0E8781513C /* VT100StringConversionConfig.h */; };
 		CD2E8590B507B08EBD3313A3 /* iTermCompactProxyIconView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E6CB27B6647329ACD05CE222 /* iTermCompactProxyIconView.swift */; };
+		CDA7DEFB07CAF834888B7D5F /* MomentermEmbeddedSidebarVC.swift in Sources */ = {isa = PBXBuildFile; fileRef = C21E1916B94130C2B39D3D93 /* MomentermEmbeddedSidebarVC.swift */; };
 		CDCD9FF08FCE42F7A6963859 /* PillBackgroundGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7EA289FFE2BF4090A65931BA /* PillBackgroundGenerator.swift */; };
 		D3CE2D4E1A00936F0098ED99 /* PSMDarkTabStyle.h in Headers */ = {isa = PBXBuildFile; fileRef = D3CE2D4C1A00936F0098ED99 /* PSMDarkTabStyle.h */; };
 		D3D470D34777DFA2474E14DC /* iTermSessionTabStatus.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA1C7B91071000DE37B9DA33 /* iTermSessionTabStatus.swift */; };
@@ -9266,6 +9266,7 @@
 		B786F989A8C6C24DC8B0E753 /* MomentermProjectStorage.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MomentermProjectStorage.swift; sourceTree = "<group>"; };
 		BB0AE1578253243F3CE15721 /* iTermBackgroundColorRLETestHelper.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; path = iTermBackgroundColorRLETestHelper.h; sourceTree = "<group>"; };
 		C08AA4008946722C3F4C67C1 /* WordSelectionAtom.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WordSelectionAtom.swift; sourceTree = "<group>"; };
+		C21E1916B94130C2B39D3D93 /* MomentermEmbeddedSidebarVC.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MomentermEmbeddedSidebarVC.swift; sourceTree = "<group>"; };
 		C553F420E05CA5C507043774 /* SessionNoteView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SessionNoteView.swift; sourceTree = "<group>"; };
 		C6675EBA1C4FE96B0041173B /* iTermSelectorSwizzler.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermSelectorSwizzler.h; sourceTree = "<group>"; };
 		C6675EBB1C4FE96B0041173B /* iTermSelectorSwizzler.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermSelectorSwizzler.m; sourceTree = "<group>"; };
@@ -9679,6 +9680,7 @@
 				4BCB55D89CEE16E48D34174F /* MomentermNewTabHandler.swift */,
 				7AFC4883731BE8AEE37BB955 /* MomentermStatusBarProjectComponentImpl.h */,
 				F532D45B9B70D653B76E7A91 /* MomentermStatusBarProjectComponentImpl.m */,
+				C21E1916B94130C2B39D3D93 /* MomentermEmbeddedSidebarVC.swift */,
 			);
 			name = Classes;
 			path = sources/;
@@ -20370,6 +20372,7 @@
 				CB38FB7556A26003BEC278BA /* MomentermNewTabHandler.swift in Sources */,
 				40E34BE8947CDE5D558F00B6 /* MomentermStatusBarProjectComponentImpl.h in Sources */,
 				06D08D826AB790F00454B833 /* MomentermStatusBarProjectComponentImpl.m in Sources */,
+				CDA7DEFB07CAF834888B7D5F /* MomentermEmbeddedSidebarVC.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
