@@ -12,6 +12,10 @@ class iTermBrowserView: NSView {
 
     override init(frame frameRect: NSRect) {
         super.init(frame: frameRect)
+        // Enable transparency for see-through background
+        wantsLayer = true
+        layer?.backgroundColor = NSColor.clear.cgColor
+
         // Register for the same drag types as SessionView to allow drag events to be forwarded
         registerForDraggedTypes([
             NSPasteboard.PasteboardType(iTermMovePaneDragType),
@@ -21,6 +25,10 @@ class iTermBrowserView: NSView {
 
     required init?(coder: NSCoder) {
         super.init(coder: coder)
+        // Enable transparency for see-through background
+        wantsLayer = true
+        layer?.backgroundColor = NSColor.clear.cgColor
+
         registerForDraggedTypes([
             NSPasteboard.PasteboardType(iTermMovePaneDragType),
             NSPasteboard.PasteboardType("com.iterm2.psm.controlitem")

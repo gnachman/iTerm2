@@ -1557,6 +1557,17 @@ void TurnOnDebugLoggingAutomatically(void) {
                                             username:nil];
     }
 
+    // Auto-launch browser for transparent browser development
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.5 * NSEC_PER_SEC)),
+                   dispatch_get_main_queue(), ^{
+        [[iTermController sharedInstance] openWindow:YES
+                                             command:@"https://www.youtube.com"
+                                         initialText:nil
+                                           directory:nil
+                                            hostname:nil
+                                            username:nil];
+    });
+
     [self registerMenuTips];
     [iTermClaudeWatcher start];
 #if DEBUG

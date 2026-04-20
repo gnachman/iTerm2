@@ -801,8 +801,11 @@ extension iTermBrowserViewController {
 extension iTermBrowserViewController {
     private func setupBackgroundView() {
         backgroundView = NSVisualEffectView()
-        backgroundView.material = .contentBackground
+        // Use transparent background to see through to window behind (like terminal)
+        backgroundView.material = .underWindowBackground
         backgroundView.blendingMode = .behindWindow
+        backgroundView.state = .active
+        backgroundView.alphaValue = 0.0  // Make fully transparent
         view.addSubview(backgroundView)
     }
 
@@ -1075,6 +1078,10 @@ extension iTermBrowserViewController: iTermBrowserToolbarDelegate {
     }
     func browserToolbarIsCurrentPageMuted() -> Bool {
         return browserManager.currentPageIsMuted
+    }
+    func browserToolbarDidChangeTransparency(_ value: Double) {
+        DLog("Transparency changed to: \(value)")
+        browserManager.setTransparency(value)
     }
 }
 
