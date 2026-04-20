@@ -167,6 +167,14 @@ sh \
 "$eval_cmd" \
 \'"$sanitized"\'
 
+
+stty_settings=$(command stty -g)
+cleanup() {
+  command stty "$stty_settings"
+}
+trap "cleanup" EXIT
+command stty -isig -echo
+
 print_osc
 printf "1337;EndSSH=%s" "${UNIQUEID}"
 print_st
@@ -175,5 +183,7 @@ print_st
 # the command line. Read until EndSSH causes a blank line to be sent.
 while read l; do
     [ -z "$l" ] && break
+    [ "$l" = "$(command printf '\003')" ] && break
 done
 
+cleanup

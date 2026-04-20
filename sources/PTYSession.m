@@ -17189,7 +17189,7 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     }
     // it2ssh waits for a newline before exiting. This is in case ssh dies while iTerm2 is sending
     // conductor.sh.
-    [self writeTaskNoBroadcast:@"\n"];
+    [self writeTaskNoBroadcast:@"\x03\n"];
     if (_queuedConnectingSSH.length) {
         [_queuedConnectingSSH release];
         _queuedConnectingSSH = nil;
