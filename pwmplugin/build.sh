@@ -53,6 +53,7 @@ build_universal() {
 build_universal "iterm2-keepassxc-adapter"
 build_universal "iterm2-bitwarden-adapter"
 build_universal "iterm2-keeper-adapter"
+build_universal "iterm2-test-adapter"
 
 echo ""
 echo "✓✓✓ All builds complete! ✓✓✓"
