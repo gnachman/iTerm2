@@ -391,7 +391,10 @@ class Conductor: NSObject {
                  restored: Bool) {
         self.restorableState = restorableState
         self.restored = restored
-        self.linePrefix = restored ? "" : UUID().uuidString
+        // Send a ^C at the start of every line because writing a newline is
+        // otherwise unsafe (could cause the output of previous reports to be
+        // executed as a command)
+        self.linePrefix = restored ? "" : "\u{0003}" + UUID().uuidString
         super.init()
         if framedPID != nil {
             ConductorRegistry.instance.addConductor(self, for: sshIdentity)
