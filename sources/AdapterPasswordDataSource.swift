@@ -95,7 +95,7 @@ class AdapterPasswordDataSource: CommandLinePasswordDataSource {
         } else {
             self.iTermVersion = "unknown"
         }
-        userAccountID = iTermUserDefaults.userDefaults().string(forKey: userAccountKey + identifier)
+        userAccountID = UserDefaults.standard.string(forKey: userAccountKey + identifier)
     }
 
     // MARK: - Helper Methods
@@ -183,7 +183,7 @@ class AdapterPasswordDataSource: CommandLinePasswordDataSource {
     }
 
     private func requestPathToDatabase(_ handshake: HandshakeResponse) -> Bool {
-        if let saved = iTermUserDefaults.userDefaults().string(forKey: "PathToDatabase_\(identifier)") {
+        if let saved = UserDefaults.standard.string(forKey: "PathToDatabase_\(identifier)") {
             pathToDatabase = saved
             return true
         }
@@ -214,7 +214,7 @@ class AdapterPasswordDataSource: CommandLinePasswordDataSource {
         }
 
         pathToDatabase = selectedURL.path
-        iTermUserDefaults.userDefaults().set(selectedURL.path, forKey: "PathToDatabase_\(identifier)")
+        UserDefaults.standard.set(selectedURL.path, forKey: "PathToDatabase_\(identifier)")
         return true
     }
 
@@ -240,12 +240,12 @@ class AdapterPasswordDataSource: CommandLinePasswordDataSource {
         }
 
         pathToDatabase = value
-        iTermUserDefaults.userDefaults().set(value, forKey: "PathToDatabase_\(identifier)")
+        UserDefaults.standard.set(value, forKey: "PathToDatabase_\(identifier)")
         return true
     }
 
     private func requestPathToExecutable(_ name: String) -> Bool {
-        if let saved = iTermUserDefaults.userDefaults().string(forKey: "PathToExecutable_\(identifier)") {
+        if let saved = UserDefaults.standard.string(forKey: "PathToExecutable_\(identifier)") {
             pathToExecutable = saved
             return true
         }
@@ -279,7 +279,7 @@ class AdapterPasswordDataSource: CommandLinePasswordDataSource {
             }
 
             pathToExecutable = selectedURL.path
-            iTermUserDefaults.userDefaults().set(selectedURL.path, forKey: "PathToExecutable_\(identifier)")
+            UserDefaults.standard.set(selectedURL.path, forKey: "PathToExecutable_\(identifier)")
             return true
         }
     }
@@ -328,7 +328,7 @@ class AdapterPasswordDataSource: CommandLinePasswordDataSource {
     private func hydratePersistedCredentialsIfNeeded() {
         guard handshakeInfo?.persistsCredentials == true else { return }
         if pathToDatabase == nil {
-            if let u = iTermUserDefaults.userDefaults().string(forKey: "PathToDatabase_\(identifier)"), !u.isEmpty {
+            if let u = UserDefaults.standard.string(forKey: "PathToDatabase_\(identifier)"), !u.isEmpty {
                 pathToDatabase = u
             }
         }
@@ -345,7 +345,7 @@ class AdapterPasswordDataSource: CommandLinePasswordDataSource {
         if field.persistInKeychain {
             return try? SSKeychain.password(forService: keychainCredentialServiceName, account: key)
         } else {
-            return iTermUserDefaults.userDefaults().string(forKey: "AdapterSetting_\(identifier)_\(key)")
+            return UserDefaults.standard.string(forKey: "AdapterSetting_\(identifier)_\(key)")
         }
     }
 
@@ -361,9 +361,9 @@ class AdapterPasswordDataSource: CommandLinePasswordDataSource {
             }
         } else {
             if trimmed.isEmpty {
-                iTermUserDefaults.userDefaults().removeObject(forKey: "AdapterSetting_\(identifier)_\(key)")
+                UserDefaults.standard.removeObject(forKey: "AdapterSetting_\(identifier)_\(key)")
             } else {
-                iTermUserDefaults.userDefaults().set(trimmed, forKey: "AdapterSetting_\(identifier)_\(key)")
+                UserDefaults.standard.set(trimmed, forKey: "AdapterSetting_\(identifier)_\(key)")
             }
         }
     }
@@ -374,7 +374,7 @@ class AdapterPasswordDataSource: CommandLinePasswordDataSource {
             if field.persistInKeychain {
                 _ = SSKeychain.deletePassword(forService: keychainCredentialServiceName, account: field.key)
             } else {
-                iTermUserDefaults.userDefaults().removeObject(forKey: "AdapterSetting_\(identifier)_\(field.key)")
+                UserDefaults.standard.removeObject(forKey: "AdapterSetting_\(identifier)_\(field.key)")
             }
         }
     }
@@ -886,8 +886,8 @@ extension AdapterPasswordDataSource {
         pathToExecutable = nil
         authToken = nil
         masterPassword = nil
-        iTermUserDefaults.userDefaults().removeObject(forKey: "PathToDatabase_\(identifier)")
-        iTermUserDefaults.userDefaults().removeObject(forKey: "PathToExecutable_\(identifier)")
+        UserDefaults.standard.removeObject(forKey: "PathToDatabase_\(identifier)")
+        UserDefaults.standard.removeObject(forKey: "PathToExecutable_\(identifier)")
         deletePersistedCredentials()
         deleteAllSettingsFieldStorage()
         handshakeInfo = nil
@@ -956,7 +956,7 @@ extension AdapterPasswordDataSource {
             AccountPicker.Account(title: $0.name, accountID: $0.identifier)
         })
         userAccountID = pickedAccountID
-        iTermUserDefaults.userDefaults().set(pickedAccountID, forKey: userAccountKey + identifier)
+        UserDefaults.standard.set(pickedAccountID, forKey: userAccountKey + identifier)
         completion()
     }
 }
