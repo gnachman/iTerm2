@@ -13,6 +13,67 @@ protocol SpecialExceptionEntryEditorWindowControllerDelegate: AnyObject {
     func editorRangeIsValid(range: ClosedRange<Int>) -> Bool
 }
 
+enum SpecialExceptionRangePreset: CaseIterable {
+    case han
+    case hiraganaKatakana
+    case hangulSyllables
+    case arabic
+    case cyrillic
+    case greek
+    case privateUseArea
+
+    var title: String {
+        switch self {
+        case .han:
+            return "Han (CJK Unified Ideographs)"
+        case .hiraganaKatakana:
+            return "Hiragana/Katakana"
+        case .hangulSyllables:
+            return "Hangul Syllables"
+        case .arabic:
+            return "Arabic"
+        case .cyrillic:
+            return "Cyrillic"
+        case .greek:
+            return "Greek (Greek and Coptic)"
+        case .privateUseArea:
+            return "Private Use Area"
+        }
+    }
+
+    var range: ClosedRange<Int> {
+        switch self {
+        case .han:
+            return 0x4E00...0x9FFF
+        case .hiraganaKatakana:
+            return 0x3040...0x30FF
+        case .hangulSyllables:
+            return 0xAC00...0xD7AF
+        case .arabic:
+            return 0x0600...0x06FF
+        case .cyrillic:
+            return 0x0400...0x04FF
+        case .greek:
+            return 0x0370...0x03FF
+        case .privateUseArea:
+            return 0xE000...0xF8FF
+        }
+    }
+
+    var entry: FontTable.Entry {
+        FontTable.Entry(start: range.lowerBound,
+                        count: range.upperBound - range.lowerBound + 1,
+                        destination: nil,
+                        fontName: "")
+    }
+
+    static var menuOrder: [SpecialExceptionRangePreset] {
+        allCases.sorted {
+            $0.title.localizedStandardCompare($1.title) == .orderedAscending
+        }
+    }
+}
+
 @objc
 class SpecialExceptionEntryEditorWindowController: NSWindowController, NSTextFieldDelegate, AffordanceDelegate {
     @IBOutlet weak var start: NSTextField!
@@ -42,10 +103,7 @@ class SpecialExceptionEntryEditorWindowController: NSWindowController, NSTextFie
         compositeView.removeOptionsButton()
         compositeView.affordance.delegate = self
         preview.textColor = .textColor
-        if let entry {
-            copyEntryToControls()
-            affordance.familyName = entry.fontName
-        }
+        copyEntryToControls()
         updateEnabled()
     }
 
@@ -131,11 +189,16 @@ class SpecialExceptionEntryEditorWindowController: NSWindowController, NSTextFie
 
     func copyEntryToControls() {
         guard let entry else {
+            start.stringValue = ""
+            end.stringValue = ""
+            compositeView.affordance.familyName = nil
+            hasDestination.state = .off
+            destination.stringValue = ""
             return
         }
         start.stringValue = Self.formatUnicode(entry.start)
         end.stringValue = Self.formatUnicode(entry.start + entry.count - 1)
-        compositeView.affordance.familyName = entry.fontName
+        compositeView.affordance.familyName = entry.fontName.isEmpty ? nil : entry.fontName
         if let d = entry.destination {
             hasDestination.state = .on
             destination.stringValue = Self.formatUnicode(d)
@@ -433,6 +496,29 @@ final class SpecialExceptionsWindowController: NSWindowController {
         crud.reload()
     }
 
+    @IBAction func addPreset(_ sender: NSButton) {
+        let menu = NSMenu()
+        for (index, preset) in SpecialExceptionRangePreset.menuOrder.enumerated() {
+            let item = NSMenuItem(title: preset.title,
+                                  action: #selector(addPresetMenuItem(_:)),
+                                  keyEquivalent: "")
+            item.tag = index
+            item.target = self
+            menu.addItem(item)
+        }
+        menu.popUp(positioning: nil,
+                   at: NSPoint(x: 0, y: sender.bounds.maxY + 4),
+                   in: sender)
+    }
+
+    @objc
+    private func addPresetMenuItem(_ sender: NSMenuItem) {
+        let preset = SpecialExceptionRangePreset.menuOrder[sender.tag]
+        beginAdd(with: preset.entry) { [weak self] in
+            self?.acceptAddPreset()
+        }
+    }
+
     private func showError(_ message: String) {
         iTermWarning.show(withTitle: message,
                           actions: ["OK"],
@@ -622,25 +708,48 @@ extension SpecialExceptionsWindowController: CRUDDataProvider {
     }
 
     func makeNew(completion: @escaping (Int) -> ()) {
-        editorWindowController.entry = nil
-        editorWindowController.delegate = self
-        editorWindowController.disallowedIndexes = assignedIndexes
-        editorWindowController.copyEntryToControls()
-        window?.beginSheet(editorWindowController.window!) { [weak self] status in
-            if status == .OK {
-                self?.acceptAdd(completion: completion)
-            }
+        beginAdd(with: nil) { [weak self] in
+            self?.acceptAdd(completion: completion)
         }
     }
 
     private func acceptAdd(completion: (Int) -> ()) {
+        let row = insertEditorEntry()
+        completion(row)
+        updateEnabled()
+    }
+
+    private func acceptAddPreset() {
+        let row = insertEditorEntry()
+        crud.reload()
+        tableView.selectRowIndexes(IndexSet(integer: row), byExtendingSelection: false)
+        tableView.scrollRowToVisible(row)
+        updateEnabled()
+    }
+
+    private func beginAdd(with entry: FontTable.Entry?, completion: @escaping () -> ()) {
+        rowBeingEdited = -1
+        editorWindowController.entry = entry
+        editorWindowController.delegate = self
+        editorWindowController.disallowedIndexes = assignedIndexes
+        editorWindowController.copyEntryToControls()
+        window?.beginSheet(editorWindowController.window!) { status in
+            if status == .OK {
+                completion()
+            }
+        }
+    }
+
+    @discardableResult
+    private func insertEditorEntry() -> Int {
         let entry = editorWindowController!.entry!
-        let row = config.entries.insertionIndex { $0.start < entry.start }
+        let row = config.entries.insertionIndex {
+            $0.closedRange.lowerBound < entry.closedRange.lowerBound
+        }
         crud.undoable {
             config.entries.insert(entry, at: row)
         }
-        completion(row)
-        updateEnabled()
+        return row
     }
 }
 
@@ -660,4 +769,3 @@ extension RandomAccessCollection {
         return currentSlice.startIndex
     }
 }
-
