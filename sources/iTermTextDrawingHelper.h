@@ -229,6 +229,12 @@ extern const CGFloat iTermCursorGuideAlphaThreshold;
 // This is a logical range.
 @property(nonatomic, assign) VT100GridAbsWindowedRange underlinedRange;
 
+// Active link range (Cmd+mouseDown), a subset of the underlined range.
+@property(nonatomic, assign) VT100GridAbsWindowedRange activeLinkRange;
+
+// Underline style to use for links (maps to iTermMetalGlyphAttributesUnderline values).
+@property(nonatomic, assign) int linkUnderlineStyle;
+
 // If set, the last-modified time of each line on the screen is shown on the right side of the display.
 @property(nonatomic) BOOL shouldShowTimestamps;
 
@@ -426,6 +432,7 @@ extern const CGFloat iTermCursorGuideAlphaThreshold;
 - (CGFloat)underlineThicknessForFont:(NSFont *)font;
 - (CGFloat)strikethroughThicknessForFont:(NSFont *)font;
 - (NSRange)underlinedRangeOnLine:(long long)row;
+- (NSRange)activeLinkRangeOnLine:(long long)row;
 
 - (void)updateCachedMetrics;
 - (NSArray<iTermTerminalButton *> *)updateButtonFrames;

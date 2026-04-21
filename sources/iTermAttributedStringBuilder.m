@@ -132,8 +132,9 @@ static NSColor *iTermTextDrawingHelperGetTextColor(screen_char_t *c,
         assert(rawColor);
         context->havePreviousCharacterAttributes = NO;
     } else if (inUnderlinedRange) {
-        // Blue link text.
-        rawColor = [context->colorMap colorForKey:kColorMapLink];
+        NSColor *hoverColor = [context->colorMap colorForKey:kColorMapLinkHover];
+        NSColor *linkColor = hoverColor ?: [context->colorMap colorForKey:kColorMapLink];
+        rawColor = linkColor;
         assert(rawColor);
         context->havePreviousCharacterAttributes = NO;
     } else if (context->hasSelectedText && context->delegate.useSelectedTextColor) {

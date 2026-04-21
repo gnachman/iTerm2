@@ -92,6 +92,11 @@ NS_ASSUME_NONNULL_BEGIN
     CGFloat _backgroundColorAlpha;  // See iTermAlphaBlendingHelper.h
     iTermBackgroundImageMode _backgroundImageMode;
 
+    // Link customisation
+    int _linkUnderlineStyle;
+    BOOL _useLinkHoverColor;
+    BOOL _useLinkActiveColor;
+
     // Other
     BOOL _showBroadcastStripes;
     BOOL _timestampsEnabled;

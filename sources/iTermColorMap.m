@@ -40,6 +40,8 @@ const int kColorMapUnderline = 9;
 // Additional configurable colors (I ran out of space < 10).
 const int kColorMapMatch = kExtendedColorsBase + 0;
 const int kColorMapIMECursor = kExtendedColorsBase + 1;
+const int kColorMapLinkHover = kExtendedColorsBase + 2;
+const int kColorMapLinkActive = kExtendedColorsBase + 3;
 
 // ANSI colors that automatically get bright variants.
 const int kColorMapAnsiBlack = kColorMap8bitBase + 0;
@@ -532,6 +534,8 @@ const int kColorMapAnsiBrightModifier = 8;
             @(kColorMapBackground): KEY_BACKGROUND_COLOR,
             @(kColorMapBold): KEY_BOLD_COLOR,
             @(kColorMapLink): KEY_LINK_COLOR,
+            @(kColorMapLinkHover): KEY_LINK_HOVER_COLOR,
+            @(kColorMapLinkActive): KEY_LINK_ACTIVE_COLOR,
             @(kColorMapMatch): KEY_MATCH_COLOR,
             @(kColorMapSelection): KEY_SELECTION_COLOR,
             @(kColorMapSelectedText): KEY_SELECTED_TEXT_COLOR,

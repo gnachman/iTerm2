@@ -71,6 +71,7 @@ NS_INLINE void iTermCachedGlyphKeysBufferEnsureSize(iTermCachedGlyphKeysBuffer *
 typedef struct {
     unsigned int isMatch : 1;
     unsigned int inUnderlinedRange : 1;  // This is the underline for semantic history
+    unsigned int inActiveLinkRange : 1;
     unsigned int selected : 1;
     unsigned int foregroundColor : 8;
     unsigned int fgGreen : 8;
@@ -1390,6 +1391,7 @@ int iTermGetMetalBackgroundColors(iTermMetalPerFrameState *self,
 
 static void iTermInitializeColorKey(BOOL findMatch,
                                     BOOL inUnderlinedRange,
+                                    BOOL inActiveLinkRange,
                                     BOOL selected,
                                     BOOL isBlockCharacter,
                                     vector_float4 bgColor,
@@ -1397,6 +1399,7 @@ static void iTermInitializeColorKey(BOOL findMatch,
                                     iTermTextColorKey *currentColorKey) {
     currentColorKey->isMatch = findMatch;
     currentColorKey->inUnderlinedRange = inUnderlinedRange;
+    currentColorKey->inActiveLinkRange = inActiveLinkRange;
     currentColorKey->selected = selected;
     currentColorKey->mode = characterPointer->foregroundColorMode;
     currentColorKey->foregroundColor = characterPointer->foregroundColor;
@@ -1412,6 +1415,7 @@ static BOOL iTermColorKeysEqual(const iTermTextColorKey *lhs,
                                 const iTermTextColorKey *rhs) {
     return (lhs->isMatch == rhs->isMatch &&
             lhs->inUnderlinedRange == rhs->inUnderlinedRange &&
+            lhs->inActiveLinkRange == rhs->inActiveLinkRange &&
             lhs->selected == rhs->selected &&
             lhs->foregroundColor == rhs->foregroundColor &&
             lhs->mode == rhs->mode &&
@@ -1456,7 +1460,14 @@ static BOOL iTermMetalSetUnderline(iTermMetalPerFrameState *self,
                 break;
         }
     } else if (url != nil && underlineHyperlinks) {
-        attributes[visualX].underlineStyle = iTermMetalGlyphAttributesUnderlineDashedSingle;
+        const int linkStyle = _configuration->_linkUnderlineStyle;
+        const BOOL validLinkStyle = (linkStyle == iTermMetalGlyphAttributesUnderlineSingle ||
+                                     linkStyle == iTermMetalGlyphAttributesUnderlineDouble ||
+                                     linkStyle == iTermMetalGlyphAttributesUnderlineDashedSingle ||
+                                     linkStyle == iTermMetalGlyphAttributesUnderlineCurly ||
+                                     linkStyle == iTermMetalGlyphAttributesUnderlineDotted);
+        attributes[visualX].underlineStyle = validLinkStyle ? (iTermMetalGlyphAttributesUnderline)linkStyle
+                                                            : iTermMetalGlyphAttributesUnderlineDashedSingle;
     } else {
         attributes[visualX].underlineStyle = iTermMetalGlyphAttributesUnderlineNone;
     }
@@ -1492,6 +1503,7 @@ static int iTermEmitGlyphsAndSetAttributes(iTermMetalPerFrameState *self,
                                            NSIndexSet *annotatedIndexes,
                                            NSData *findMatches,
                                            NSRange underlinedRange,
+                                           NSRange activeLinkRange,
                                            iTermExternalAttributeIndex *eaIndex,
                                            iTermMetalPerFrameStateConfiguration *_configuration,
                                            NSMutableArray<iTermKittyImageRun *> *kittyImageRuns,
@@ -1576,6 +1588,7 @@ static int iTermEmitGlyphsAndSetAttributes(iTermMetalPerFrameState *self,
         }
         const BOOL annotated = [annotatedIndexes containsIndex:visualX];
         const BOOL inUnderlinedRange = NSLocationInRange(logicalIndex, underlinedRange) || annotated;
+        const BOOL inActiveLinkRange = NSLocationInRange(logicalIndex, activeLinkRange);
 
 
         attributes[visualX].annotation = annotated;
@@ -1604,6 +1617,7 @@ static int iTermEmitGlyphsAndSetAttributes(iTermMetalPerFrameState *self,
         // Build up a compact key describing all the inputs to a text color
         iTermInitializeColorKey(findMatch,
                                 inUnderlinedRange,
+                                inActiveLinkRange,
                                 selected,
                                 isBlockCharacter,
                                 bgColor,
@@ -1618,6 +1632,7 @@ static int iTermEmitGlyphsAndSetAttributes(iTermMetalPerFrameState *self,
                                                          selected:selected
                                                         findMatch:findMatch
                                                 inUnderlinedRange:inUnderlinedRange && !annotated
+                                                inActiveLinkRange:inActiveLinkRange && !annotated
                                            disableMinimumContrast:isBlockCharacter
                                                            caches:&caches];
             attributes[visualX].foregroundColor = textColor;
@@ -1722,12 +1737,14 @@ static int iTermEmitGlyphsAndSetAttributes(iTermMetalPerFrameState *self,
     NSData *findMatches = _rows[row]->_matches;
     NSIndexSet *selectedIndexes = _rows[row]->_selectedIndexSet;
     NSRange underlinedRange = _rows[row]->_underlinedRange;
+    NSRange activeLinkRange = _rows[row]->_activeLinkRange;
     NSIndexSet *annotatedIndexes = _rowToAnnotationRanges[@(row)];
     if (VT100GridRangeContains(_linesToSuppressDrawing, row)) {
         lineData = [ScreenCharArray emptyLineOfLength:width];
         findMatches = nil;
         selectedIndexes = nil;
         underlinedRange = NSMakeRange(NSNotFound, 0);
+        activeLinkRange = NSMakeRange(NSNotFound, 0);
         annotatedIndexes = nil;
     }
     const screen_char_t *const line = (const screen_char_t *const)lineData.line;
@@ -1809,6 +1826,7 @@ static int iTermEmitGlyphsAndSetAttributes(iTermMetalPerFrameState *self,
                                                         annotatedIndexes,
                                                         findMatches,
                                                         underlinedRange,
+                                                        activeLinkRange,
                                                         eaIndex,
                                                         _configuration,
                                                         kittyImageRuns,
@@ -2297,6 +2315,7 @@ static int iTermEmitGlyphsAndSetAttributes(iTermMetalPerFrameState *self,
                               selected:(BOOL)selected
                              findMatch:(BOOL)findMatch
                      inUnderlinedRange:(BOOL)inUnderlinedRange
+                     inActiveLinkRange:(BOOL)inActiveLinkRange
                 disableMinimumContrast:(BOOL)disableMinimumContrast
                                 caches:(iTermMetalPerFrameStateCaches *)caches {
     vector_float4 rawColor = { 0, 0, 0, 0 };
@@ -2313,8 +2332,15 @@ static int iTermEmitGlyphsAndSetAttributes(iTermMetalPerFrameState *self,
         rawColor = VectorForColor(iTermTextDrawingHelperTextColorForMatch(bgColor),
                                   _configuration->_colorSpace);
         caches->havePreviousCharacterAttributes = NO;
+    } else if (inActiveLinkRange && _configuration->_useLinkActiveColor) {
+        rawColor = VectorForColor([_configuration->_colorMap colorForKey:kColorMapLinkActive],
+                                  _configuration->_colorSpace);
+        caches->havePreviousCharacterAttributes = NO;
+    } else if (inUnderlinedRange && _configuration->_useLinkHoverColor) {
+        rawColor = VectorForColor([_configuration->_colorMap colorForKey:kColorMapLinkHover],
+                                  _configuration->_colorSpace);
+        caches->havePreviousCharacterAttributes = NO;
     } else if (inUnderlinedRange) {
-        // Blue link text.
         rawColor = VectorForColor([_configuration->_colorMap colorForKey:kColorMapLink],
                                   _configuration->_colorSpace);
         caches->havePreviousCharacterAttributes = NO;
