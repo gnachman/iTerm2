@@ -125,16 +125,29 @@
                                                 job:(NSString *)job {
     NSMutableArray *matching = [NSMutableArray array];
     for (iTermRule *rule in _rules) {
-        double score = [rule scoreForHostname:hostname username:username path:path job:job];
+        double score = [self scoreForRule:rule hostname:hostname username:username path:path job:job];
         if (score > 0) {
             [matching addObject:rule];
         }
     }
     return [matching sortedArrayUsingComparator:^NSComparisonResult(id obj1, id obj2) {
-        int score1 = [obj1 scoreForHostname:hostname username:username path:path job:job];
-        int score2 = [obj2 scoreForHostname:hostname username:username path:path job:job];
+        int score1 = [self scoreForRule:obj1 hostname:hostname username:username path:path job:job];
+        int score2 = [self scoreForRule:obj2 hostname:hostname username:username path:path job:job];
         return [@(score2) compare:@(score1)];
     }];
+}
+
+- (double)scoreForRule:(iTermRule *)rule
+              hostname:(NSString *)hostname
+              username:(NSString *)username
+                  path:(NSString *)path
+                   job:(NSString *)job {
+    return [rule scoreForHostname:hostname
+                         username:username
+                             path:path
+                              job:job
+                      commandLine:nil
+          expressionValueProvider:nil];
 }
 
 - (void)testHostname {
@@ -491,9 +504,9 @@
     iTermRule *longHostnameRule = [iTermRule ruleWithString:@"hostname*"];
     iTermRule *shortHostnameRule = [iTermRule ruleWithString:@"h*"];
 
-    double exactScore = [exactHostnameRule scoreForHostname:@"hostname12" username:@"george" path:@"/path" job:@"job"];
-    double longScore = [longHostnameRule scoreForHostname:@"hostname12" username:@"george" path:@"/path" job:@"job"];
-    double shortScore = [shortHostnameRule scoreForHostname:@"hostname12" username:@"george" path:@"/path" job:@"job"];
+    double exactScore = [self scoreForRule:exactHostnameRule hostname:@"hostname12" username:@"george" path:@"/path" job:@"job"];
+    double longScore = [self scoreForRule:longHostnameRule hostname:@"hostname12" username:@"george" path:@"/path" job:@"job"];
+    double shortScore = [self scoreForRule:shortHostnameRule hostname:@"hostname12" username:@"george" path:@"/path" job:@"job"];
 
     XCTAssertGreaterThan(longScore, shortScore);
     XCTAssertGreaterThan(exactScore, longScore);
@@ -504,9 +517,9 @@
     iTermRule *longPathRule = [iTermRule ruleWithString:@"/path*"];
     iTermRule *shortPathRule = [iTermRule ruleWithString:@"/p*"];
 
-    double exactScore = [exactPathRule scoreForHostname:@"hostname" username:@"george" path:@"/path123" job:@"job"];
-    double longScore = [longPathRule scoreForHostname:@"hostname" username:@"george" path:@"/path123" job:@"job"];
-    double shortScore = [shortPathRule scoreForHostname:@"hostname" username:@"george" path:@"/path123" job:@"job"];
+    double exactScore = [self scoreForRule:exactPathRule hostname:@"hostname" username:@"george" path:@"/path123" job:@"job"];
+    double longScore = [self scoreForRule:longPathRule hostname:@"hostname" username:@"george" path:@"/path123" job:@"job"];
+    double shortScore = [self scoreForRule:shortPathRule hostname:@"hostname" username:@"george" path:@"/path123" job:@"job"];
 
     XCTAssertGreaterThan(longScore, shortScore);
     XCTAssertGreaterThan(exactScore, longScore);
@@ -525,8 +538,8 @@
     iTermRule *longRule = [iTermRule ruleWithString:longRuleString];
     iTermRule *shortRule = [iTermRule ruleWithString:shortRuleString];
 
-    double longScore = [longRule scoreForHostname:@"hostname" username:@"george" path:path job:@"job"];
-    double shortScore = [shortRule scoreForHostname:@"hostname" username:@"george" path:path job:@"job"];
+    double longScore = [self scoreForRule:longRule hostname:@"hostname" username:@"george" path:path job:@"job"];
+    double shortScore = [self scoreForRule:shortRule hostname:@"hostname" username:@"george" path:path job:@"job"];
 
     XCTAssertGreaterThan(longScore, shortScore);
 }

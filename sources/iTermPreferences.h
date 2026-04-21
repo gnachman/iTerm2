@@ -395,6 +395,8 @@ extern NSString *const iTermDefaultAIPrompt;
 + (BOOL)keyHasDefaultValue:(NSString *)key;
 + (BOOL)defaultValueForKey:(NSString *)key isCompatibleWithType:(PreferenceInfoType)type;
 + (id)defaultObjectForKey:(NSString *)key;
+// Returns YES if the user has explicitly set a value for this key (i.e., the value
+// exists in UserDefaults rather than being a default value).
 + (BOOL)valueIsExplicitlySetForKey:(NSString *)key;
 
 // When the value held by |key| changes, the block is invoked with the old an

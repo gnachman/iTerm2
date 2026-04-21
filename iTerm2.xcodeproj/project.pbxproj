@@ -22536,6 +22536,9 @@
 					"$(DEVELOPER_FRAMEWORKS_DIR)",
 					"$(inherited)",
 					"$(PROJECT_DIR)",
+					"$(PROJECT_DIR)/ColorPicker",
+					"$(PROJECT_DIR)/SearchableComboListView",
+					"$(PROJECT_DIR)/BetterFontPicker",
 					"$(PROJECT_DIR)/ThirdParty",
 				);
 				GCC_C_LANGUAGE_STANDARD = gnu99;
@@ -24689,6 +24692,9 @@
 					"$(DEVELOPER_FRAMEWORKS_DIR)",
 					"$(inherited)",
 					"$(PROJECT_DIR)",
+					"$(PROJECT_DIR)/ColorPicker",
+					"$(PROJECT_DIR)/SearchableComboListView",
+					"$(PROJECT_DIR)/BetterFontPicker",
 					"$(PROJECT_DIR)/ThirdParty",
 				);
 				GCC_C_LANGUAGE_STANDARD = gnu99;
@@ -24765,6 +24771,9 @@
 					"$(DEVELOPER_FRAMEWORKS_DIR)",
 					"$(inherited)",
 					"$(PROJECT_DIR)",
+					"$(PROJECT_DIR)/ColorPicker",
+					"$(PROJECT_DIR)/SearchableComboListView",
+					"$(PROJECT_DIR)/BetterFontPicker",
 					"$(PROJECT_DIR)/ThirdParty",
 				);
 				GCC_C_LANGUAGE_STANDARD = gnu99;

@@ -82,6 +82,7 @@ static const double kFloatingPointTolerance = 0.00001;
             return 1;  /* deprecated NSAlertDefaultReturn; */
         }
         XCTAssert(false);
+        return 0;
     } copy];
 }
 

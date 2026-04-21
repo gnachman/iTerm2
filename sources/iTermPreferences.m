@@ -26,8 +26,167 @@
 #import "iTermRemotePreferences.h"
 #import "iTermUserDefaults.h"
 #import "iTermUserDefaultsObserver.h"
+#import <os/lock.h>
+#import <stdatomic.h>
+
+static os_unfair_lock sPreferenceCacheLock = OS_UNFAIR_LOCK_INIT;
+static os_unfair_lock sPreferenceObserverLock = OS_UNFAIR_LOCK_INIT;
+static NSMutableDictionary<NSString *, id> *sPreferenceCache;
+static NSMutableSet<NSString *> *sPreferenceExplicitlySetKeys;
+static NSMutableDictionary<NSString *, id> *sObservedPreferenceValues;
+static id sPreferenceNullSentinel;
+static atomic_int sPreferenceMutationDepth;
+static atomic_uint_fast64_t sPreferenceCacheGeneration;
+static NSUserDefaults *sUserDefaultsOverride;
+static NSUserDefaults *sObservedUserDefaults;
+
+@interface iTermPreferencesDefaultsObserver : NSObject
+- (void)userDefaultsDidChange:(NSNotification *)notification;
+@end
+
+@interface iTermPreferences (Private)
++ (NSDictionary<NSString *, id> *)defaultValueMap;
++ (void)preferencesUserDefaultsDidChange:(NSNotification *)notification;
+@end
+
+static NSUserDefaults *PreferencesUserDefaults(void);
+static void PreferencesEnsureCacheInitialized(void);
+static void PreferencesCacheClear(void);
+static void PreferencesCacheClearWithObservedValues(NSDictionary<NSString *, id> *observedValues);
+static NSDictionary<NSString *, id> *PreferencesCurrentObservedValues(NSUserDefaults *defaults);
+static NSArray<NSString *> *PreferencesObservedKeys(void);
+static BOOL PreferencesIsObservedKey(NSString *key);
+static void PreferencesObserveDefaultsObject(NSUserDefaults *defaults);
 
 #define BLOCK(x) [^id() { return [self x]; } copy]
+
+static NSUserDefaults *PreferencesUserDefaults(void) {
+    return sUserDefaultsOverride ?: [iTermUserDefaults userDefaults];
+}
+
+static char sPreferenceObserverContext;
+static iTermPreferencesDefaultsObserver *sPreferenceObserver;
+
+@implementation iTermPreferencesDefaultsObserver
+
+- (void)observeValueForKeyPath:(NSString *)keyPath
+                      ofObject:(id)object
+                        change:(NSDictionary *)change
+                       context:(void *)context {
+    if (context != &sPreferenceObserverContext) {
+        [super observeValueForKeyPath:keyPath ofObject:object change:change context:context];
+        return;
+    }
+    if (object != PreferencesUserDefaults()) {
+        return;
+    }
+    if (atomic_load_explicit(&sPreferenceMutationDepth, memory_order_relaxed) > 0) {
+        return;
+    }
+    PreferencesCacheClear();
+}
+
+- (void)userDefaultsDidChange:(NSNotification *)notification {
+    [iTermPreferences preferencesUserDefaultsDidChange:notification];
+}
+
+@end
+
+static NSArray<NSString *> *PreferencesObservedKeys(void) {
+    static NSArray<NSString *> *keys;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        NSMutableOrderedSet<NSString *> *orderedKeys =
+            [NSMutableOrderedSet orderedSetWithArray:[iTermPreferences defaultValueMap].allKeys];
+        [orderedKeys addObjectsFromArray:@[
+            kPreferenceKeyControlRemapping_Deprecated,
+            kPreferenceKeySmartWindowPlacement_Deprecated,
+            kPreferenceKeyUseAutoSaveFrames_Deprecated,
+            @"eliminateCloseButtons",
+        ]];
+        keys = [[orderedKeys array] copy];
+    });
+    return keys;
+}
+
+static NSDictionary<NSString *, id> *PreferencesCurrentObservedValues(NSUserDefaults *defaults) {
+    NSArray<NSString *> *keys = PreferencesObservedKeys();
+    NSMutableDictionary<NSString *, id> *observedValues =
+        [NSMutableDictionary dictionaryWithCapacity:keys.count];
+    for (NSString *key in keys) {
+        observedValues[key] = [defaults objectForKey:key] ?: sPreferenceNullSentinel;
+    }
+    return observedValues;
+}
+
+static BOOL PreferencesIsObservedKey(NSString *key) {
+    static NSSet<NSString *> *keySet;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        keySet = [NSSet setWithArray:PreferencesObservedKeys()];
+    });
+    return [keySet containsObject:key];
+}
+
+static void PreferencesObserveDefaultsObject(NSUserDefaults *defaults) {
+    os_unfair_lock_lock(&sPreferenceObserverLock);
+    NSUserDefaults *previous = sObservedUserDefaults;
+    if (previous == defaults) {
+        os_unfair_lock_unlock(&sPreferenceObserverLock);
+        return;
+    }
+    sObservedUserDefaults = defaults;
+    iTermPreferencesDefaultsObserver *observer = sPreferenceObserver;
+    NSArray<NSString *> *keys = PreferencesObservedKeys();
+    os_unfair_lock_unlock(&sPreferenceObserverLock);
+
+    if (previous) {
+        for (NSString *key in keys) {
+            [previous removeObserver:observer forKeyPath:key context:&sPreferenceObserverContext];
+        }
+    }
+    if (defaults) {
+        for (NSString *key in keys) {
+            [defaults addObserver:observer
+                       forKeyPath:key
+                          options:NSKeyValueObservingOptionNew
+                          context:&sPreferenceObserverContext];
+        }
+    }
+}
+
+static void PreferencesEnsureCacheInitialized(void) {
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        sPreferenceCache = [[NSMutableDictionary alloc] init];
+        sPreferenceExplicitlySetKeys = [[NSMutableSet alloc] init];
+        sObservedPreferenceValues = [[NSMutableDictionary alloc] init];
+        sPreferenceNullSentinel = [[NSObject alloc] init];
+        sPreferenceObserver = [[iTermPreferencesDefaultsObserver alloc] init];
+        [[NSNotificationCenter defaultCenter] addObserver:sPreferenceObserver
+                                                 selector:@selector(userDefaultsDidChange:)
+                                                     name:NSUserDefaultsDidChangeNotification
+                                                   object:nil];
+        NSUserDefaults *defaults = PreferencesUserDefaults();
+        PreferencesObserveDefaultsObject(defaults);
+        [sObservedPreferenceValues addEntriesFromDictionary:PreferencesCurrentObservedValues(defaults)];
+    });
+}
+
+static void PreferencesCacheClearWithObservedValues(NSDictionary<NSString *, id> *observedValues) {
+    PreferencesEnsureCacheInitialized();
+    os_unfair_lock_lock(&sPreferenceCacheLock);
+    [sPreferenceCache removeAllObjects];
+    [sPreferenceExplicitlySetKeys removeAllObjects];
+    [sObservedPreferenceValues removeAllObjects];
+    [sObservedPreferenceValues addEntriesFromDictionary:observedValues];
+    atomic_fetch_add_explicit(&sPreferenceCacheGeneration, 1, memory_order_relaxed);
+    os_unfair_lock_unlock(&sPreferenceCacheLock);
+}
+
+static void PreferencesCacheClear(void) {
+    PreferencesCacheClearWithObservedValues(PreferencesCurrentObservedValues(PreferencesUserDefaults()));
+}
 
 NSString *const kPreferenceKeyOpenBookmark = @"OpenBookmark";
 NSString *const kPreferenceKeyOpenArrangementAtStartup = @"OpenArrangementAtStartup";
@@ -282,7 +441,7 @@ static NSString *sPreviousVersion;
 
 + (NSString *)appVersionBeforeThisLaunch {
     if (!sPreviousVersion) {
-        NSUserDefaults *userDefaults = [iTermUserDefaults userDefaults];
+        NSUserDefaults *userDefaults = PreferencesUserDefaults();
         sPreviousVersion = [[userDefaults objectForKey:kPreferenceKeyAppVersion] copy];
     }
     return sPreviousVersion;
@@ -292,7 +451,7 @@ static NSString *sPreviousVersion;
     static NSSet<NSString *> *versions;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
-        versions = [NSSet setWithArray:[[iTermUserDefaults userDefaults] objectForKey:kPreferenceKeyAllAppVersions] ?: @[]];
+        versions = [NSSet setWithArray:[PreferencesUserDefaults() objectForKey:kPreferenceKeyAllAppVersions] ?: @[]];
     });
     return versions;
 
@@ -302,15 +461,15 @@ static NSString *sPreviousVersion;
     // Force it to be lazy-loaded.
     [self appVersionBeforeThisLaunch];
     // Then overwrite it with the current version
-    [[iTermUserDefaults userDefaults] setObject:thisVersion forKey:kPreferenceKeyAppVersion];
+    [PreferencesUserDefaults() setObject:thisVersion forKey:kPreferenceKeyAppVersion];
     NSProcessInfo *processInfo = [NSProcessInfo processInfo];
-    [[iTermUserDefaults userDefaults] setObject:processInfo.operatingSystemVersionString
-                                              forKey:kPreferenceKeyOSVersion];
+    [PreferencesUserDefaults() setObject:processInfo.operatingSystemVersionString
+                                  forKey:kPreferenceKeyOSVersion];
 }
 
 + (void)initializeAllAppVersionsUsedOnThisMachine:(NSString *)thisVersion {
     // Update all app versions ever seena.
-    NSMutableSet *allVersions = [NSMutableSet setWithArray:[[iTermUserDefaults userDefaults] objectForKey:kPreferenceKeyAllAppVersions] ?: @[]];
+    NSMutableSet *allVersions = [NSMutableSet setWithArray:[PreferencesUserDefaults() objectForKey:kPreferenceKeyAllAppVersions] ?: @[]];
     
     NSString *const before = [self appVersionBeforeThisLaunch];
     if (before) {
@@ -319,7 +478,7 @@ static NSString *sPreviousVersion;
 
     [allVersions addObject:thisVersion];
     [allVersions removeObject:@"unknown"];
-    [[iTermUserDefaults userDefaults] setObject:allVersions.allObjects forKey:kPreferenceKeyAllAppVersions];
+    [PreferencesUserDefaults() setObject:allVersions.allObjects forKey:kPreferenceKeyAllAppVersions];
 }
 
 + (NSDictionary *)systemPreferenceOverrides {
@@ -419,7 +578,7 @@ static NSString *sPreviousVersion;
     if (!url) {
         return;
     }
-    NSUserDefaults *ud = [iTermUserDefaults userDefaults];
+    NSUserDefaults *ud = PreferencesUserDefaults();
     NSString *urlString = url.absoluteString;
     if ([ud boolForKey:kPreferenceKeyLoadPrefsFromCustomFolder] &&
         [[ud stringForKey:kPreferenceKeyCustomFolder] isEqual:urlString]) {
@@ -444,7 +603,7 @@ static NSString *sPreviousVersion;
 #if DEBUG
     [self handleGitlabURLOnPasteboard];
 #endif
-    NSUserDefaults *userDefaults = [iTermUserDefaults userDefaults];
+    NSUserDefaults *userDefaults = PreferencesUserDefaults();
     [[self systemPreferenceOverrides] enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, id  _Nonnull obj, BOOL * _Nonnull stop) {
         [userDefaults setObject:obj forKey:key];
     }];
@@ -688,11 +847,6 @@ static NSString *sPreviousVersion;
     }
 }
 
-+ (BOOL)valueIsExplicitlySetForKey:(NSString *)key {
-    id object = [[iTermUserDefaults userDefaults] objectForKey:key];
-    return object != nil;
-}
-
 + (BOOL)defaultValueForKey:(NSString *)key isCompatibleWithType:(PreferenceInfoType)type {
     id defaultValue = [self defaultValueMap][key];
     switch (type) {
@@ -768,7 +922,7 @@ static NSString *sPreviousVersion;
 }
 
 + (NSString *)uncomputedObjectForKey:(NSString *)key {
-    id object = [[iTermUserDefaults userDefaults] objectForKey:key];
+    id object = [PreferencesUserDefaults() objectForKey:key];
     if (!object) {
         object = [self defaultObjectForKey:key];
     }
@@ -776,20 +930,86 @@ static NSString *sPreviousVersion;
 }
 
 + (id)objectForKey:(NSString *)key {
-    id object = [self computedObjectForKey:key];
-    if (!object) {
-        object = [self uncomputedObjectForKey:key];
+    PreferencesEnsureCacheInitialized();
+
+    // Check cache FIRST for ALL preferences (including computed)
+    os_unfair_lock_lock(&sPreferenceCacheLock);
+    id cached = sPreferenceCache[key];
+    const uint64_t generation = atomic_load_explicit(&sPreferenceCacheGeneration, memory_order_relaxed);
+    os_unfair_lock_unlock(&sPreferenceCacheLock);
+    if (cached) {
+        return cached == sPreferenceNullSentinel ? nil : cached;
     }
+
+    // Cache miss - compute or fetch the value
+    id object = nil;
+    BOOL explicitlySet = NO;
+    id (^computedBlock)(void) = [self computedObjectDictionary][key];
+    if (computedBlock) {
+        // For computed preferences, check if key exists in UserDefaults.
+        // The computed block may check this internally, but we need to know for explicit-set tracking.
+        explicitlySet = [PreferencesUserDefaults() objectForKey:key] != nil;
+        object = computedBlock();
+        if (!object) {
+            // Computed block returned nil, fall back to uncomputed value
+            // Note: explicitlySet was already determined above - if key doesn't exist,
+            // uncomputedObjectForKey will use defaults, so explicitlySet remains false
+            object = [self uncomputedObjectForKey:key];
+        }
+    } else {
+        // Capture whether the user explicitly set a value before falling back to defaults.
+        id raw = [PreferencesUserDefaults() objectForKey:key];
+        explicitlySet = raw != nil;
+        object = raw ?: [self defaultObjectForKey:key];
+    }
+    
+    // Update explicit-set tracking AND cache the result atomically
+    os_unfair_lock_lock(&sPreferenceCacheLock);
+    const uint64_t currentGeneration = atomic_load_explicit(&sPreferenceCacheGeneration, memory_order_relaxed);
+    if (currentGeneration != generation) {
+        os_unfair_lock_unlock(&sPreferenceCacheLock);
+        return object;
+    }
+    cached = sPreferenceCache[key];
+    if (cached) {
+        os_unfair_lock_unlock(&sPreferenceCacheLock);
+        return cached == sPreferenceNullSentinel ? nil : cached;
+    }
+    if (explicitlySet) {
+        [sPreferenceExplicitlySetKeys addObject:key];
+    } else {
+        [sPreferenceExplicitlySetKeys removeObject:key];
+    }
+    sPreferenceCache[key] = object ?: sPreferenceNullSentinel;
+    os_unfair_lock_unlock(&sPreferenceCacheLock);
     return object;
 }
 
 + (void)setWithoutSideEffectsObject:(id)object forKey:(NSString *)key {
-    if (object) {
-        DLog(@"Set NSUserDefaults[%@] <- %@", key, object);
-        [[iTermUserDefaults userDefaults] setObject:object forKey:key];
-    } else {
-        DLog(@"Delete %@ from NSUserDefaults", key);
-        [[iTermUserDefaults userDefaults] removeObjectForKey:key];
+    PreferencesEnsureCacheInitialized();
+    atomic_fetch_add_explicit(&sPreferenceMutationDepth, 1, memory_order_relaxed);
+    @try {
+        os_unfair_lock_lock(&sPreferenceCacheLock);
+        [sPreferenceCache removeAllObjects];
+        [sPreferenceExplicitlySetKeys removeAllObjects];
+        if (object) {
+            sPreferenceCache[key] = object;
+            [sPreferenceExplicitlySetKeys addObject:key];
+        }
+        if (PreferencesIsObservedKey(key)) {
+            sObservedPreferenceValues[key] = object ?: sPreferenceNullSentinel;
+        }
+        atomic_fetch_add_explicit(&sPreferenceCacheGeneration, 1, memory_order_relaxed);
+        os_unfair_lock_unlock(&sPreferenceCacheLock);
+        if (object) {
+            DLog(@"Set NSUserDefaults[%@] <- %@", key, object);
+            [PreferencesUserDefaults() setObject:object forKey:key];
+        } else {
+            DLog(@"Delete %@ from NSUserDefaults", key);
+            [PreferencesUserDefaults() removeObjectForKey:key];
+        }
+    } @finally {
+        atomic_fetch_sub_explicit(&sPreferenceMutationDepth, 1, memory_order_relaxed);
     }
 }
 
@@ -816,10 +1036,59 @@ static NSString *sPreviousVersion;
     [[iTermPreferenceDidChangeNotification notificationWithKey:key value:object] post];
 }
 
++ (void)preferencesUserDefaultsDidChange:(NSNotification *)notification {
+    PreferencesEnsureCacheInitialized();
+    NSUserDefaults *defaults = PreferencesUserDefaults();
+    // Only respond to changes from our own defaults object. Some notifications arrive with a
+    // nil object; those may come from unrelated domains and would otherwise thrash the cache.
+    if (notification.object != defaults) {
+        return;
+    }
+    if (atomic_load_explicit(&sPreferenceMutationDepth, memory_order_relaxed) > 0) {
+        return;
+    }
+    NSDictionary<NSString *, id> *observedValues = PreferencesCurrentObservedValues(defaults);
+    os_unfair_lock_lock(&sPreferenceCacheLock);
+    BOOL observedValuesChanged = ![sObservedPreferenceValues isEqualToDictionary:observedValues];
+    os_unfair_lock_unlock(&sPreferenceCacheLock);
+    if (!observedValuesChanged) {
+        return;
+    }
+    PreferencesCacheClearWithObservedValues(observedValues);
+}
+
++ (void)setUserDefaultsOverrideForTesting:(NSUserDefaults *)userDefaults {
+    PreferencesEnsureCacheInitialized();
+    sUserDefaultsOverride = userDefaults;
+    PreferencesObserveDefaultsObject(PreferencesUserDefaults());
+    PreferencesCacheClear();
+}
+
++ (void)resetPreferenceCacheForTesting {
+    PreferencesCacheClear();
+}
+
 #pragma mark - APIs
 
 + (BOOL)keyHasDefaultValue:(NSString *)key {
     return ([self defaultValueMap][key] != nil);
+}
+
++ (BOOL)valueIsExplicitlySetForKey:(NSString *)key {
+    PreferencesEnsureCacheInitialized();
+    os_unfair_lock_lock(&sPreferenceCacheLock);
+    BOOL cached = sPreferenceCache[key] != nil;
+    BOOL explicitlySet = [sPreferenceExplicitlySetKeys containsObject:key];
+    os_unfair_lock_unlock(&sPreferenceCacheLock);
+    if (cached) {
+        return explicitlySet;
+    }
+    // Populate cache (and explicit set) then re-read.
+    (void)[self objectForKey:key];
+    os_unfair_lock_lock(&sPreferenceCacheLock);
+    explicitlySet = [sPreferenceExplicitlySetKeys containsObject:key];
+    os_unfair_lock_unlock(&sPreferenceCacheLock);
+    return explicitlySet;
 }
 
 + (BOOL)boolForKey:(NSString *)key {
@@ -948,7 +1217,7 @@ static NSString *sPreviousVersion;
 // Migrates all pre-10.14 users now on 10.14 to automatic, since anything else looks bad.
 + (NSNumber *)computedTabStyle {
     NSNumber *value;
-    value = [[iTermUserDefaults userDefaults] objectForKey:kPreferenceKeyTabStyle];
+    value = [PreferencesUserDefaults() objectForKey:kPreferenceKeyTabStyle];
     if (value) {
         return value;
     }
@@ -958,11 +1227,11 @@ static NSString *sPreviousVersion;
 
 + (NSNumber *)computedLeftControlRemapping {
     NSNumber *value;
-    value = [[iTermUserDefaults userDefaults] objectForKey:kPreferenceKeyLeftControlRemapping];
+    value = [PreferencesUserDefaults() objectForKey:kPreferenceKeyLeftControlRemapping];
     if (value) {
         return value;
     }
-    value = [[iTermUserDefaults userDefaults] objectForKey:kPreferenceKeyControlRemapping_Deprecated];
+    value = [PreferencesUserDefaults() objectForKey:kPreferenceKeyControlRemapping_Deprecated];
     if (value) {
         return @(value.intValue);
     }
@@ -971,15 +1240,15 @@ static NSString *sPreviousVersion;
 
 + (NSNumber *)computedWindowPlacement {
     NSNumber *value;
-    value = [[iTermUserDefaults userDefaults] objectForKey:kPreferenceKeyWindowPlacement];
+    value = [PreferencesUserDefaults() objectForKey:kPreferenceKeyWindowPlacement];
     if (value) {
         return value;
     }
-    value = [[iTermUserDefaults userDefaults] objectForKey:kPreferenceKeySmartWindowPlacement_Deprecated];
+    value = [PreferencesUserDefaults() objectForKey:kPreferenceKeySmartWindowPlacement_Deprecated];
     if (value.boolValue) {
         return @(iTermWindowPlacementSmart);
     }
-    value = [[iTermUserDefaults userDefaults] objectForKey:kPreferenceKeyUseAutoSaveFrames_Deprecated];
+    value = [PreferencesUserDefaults() objectForKey:kPreferenceKeyUseAutoSaveFrames_Deprecated];
     if (value.boolValue) {
         return @(iTermWindowPlacementSizeAndPosition);
     }
@@ -988,11 +1257,11 @@ static NSString *sPreviousVersion;
 
 + (NSNumber *)computedRightControlRemapping {
     NSNumber *value;
-    value = [[iTermUserDefaults userDefaults] objectForKey:kPreferenceKeyRightControlRemapping];
+    value = [PreferencesUserDefaults() objectForKey:kPreferenceKeyRightControlRemapping];
     if (value) {
         return value;
     }
-    value = [[iTermUserDefaults userDefaults] objectForKey:kPreferenceKeyControlRemapping_Deprecated];
+    value = [PreferencesUserDefaults() objectForKey:kPreferenceKeyControlRemapping_Deprecated];
     if (value) {
         return @(value.intValue);
     }
@@ -1000,12 +1269,12 @@ static NSString *sPreviousVersion;
 }
 + (NSNumber *)computedTabsHaveCloseButton {
     NSNumber *value;
-    value = [[iTermUserDefaults userDefaults] objectForKey:kPreferenceKeyTabsHaveCloseButton];
+    value = [PreferencesUserDefaults() objectForKey:kPreferenceKeyTabsHaveCloseButton];
     if (value) {
         return value;
     }
 
-    value = [[iTermUserDefaults userDefaults] objectForKey:@"eliminateCloseButtons"];
+    value = [PreferencesUserDefaults() objectForKey:@"eliminateCloseButtons"];
     if (value) {
         return @(!value.boolValue);
     }
@@ -1015,7 +1284,7 @@ static NSString *sPreviousVersion;
 
 + (NSNumber *)computedUseMetal {
     NSNumber *value;
-    value = [[iTermUserDefaults userDefaults] objectForKey:kPreferenceKeyUseMetal];
+    value = [PreferencesUserDefaults() objectForKey:kPreferenceKeyUseMetal];
     if (value) {
         return value;
     }
