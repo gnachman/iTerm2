@@ -18,7 +18,6 @@
 #import "iTermSnippetsMenuController.h"
 #import "DebugLogging.h"
 #import "NSAppearance+iTerm.h"
-#import "NSColor+iTerm.h"
 #import "NSObject+iTerm.h"
 #import "NSTextField+iTerm.h"
 #import "NSWindow+iTerm.h"

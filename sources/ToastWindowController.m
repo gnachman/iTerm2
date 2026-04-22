@@ -8,7 +8,9 @@
 
 #import "ToastWindowController.h"
 #import <QuartzCore/QuartzCore.h>
+#import "NSAppearance+iTerm.h"
 #import "NSScreen+iTerm.h"
+#import "PTYSession.h"
 #import "PseudoTerminal.h"
 #import "RoundedRectView.h"
 #import "iTermController.h"
@@ -58,15 +60,19 @@ static NSMutableArray *visibleToast;
 + (void)showToastWithMessage:(NSString *)message duration:(NSInteger)duration screenCoordinate:(NSPoint)screenCoordinate pointSize:(CGFloat)pointSize center:(BOOL)center {
     ToastWindowController *toast = [[ToastWindowController alloc] init];
 
+    PTYSession *session = [[iTermController sharedInstance] currentTerminal].currentSession;
+    NSAppearance *sessionAppearance = [NSAppearance it_appearanceForCurrentSessionWithBackgroundColor:session.effectiveUnprocessedBackgroundColor];
+    BOOL isDark = sessionAppearance.it_isDark;
+
     NSTextField *textField = [[NSTextField alloc] init];
-    [textField setTextColor:[NSColor whiteColor]];
+    [textField setTextColor:isDark ? [NSColor whiteColor] : [NSColor blackColor]];
     [textField setBackgroundColor:[NSColor clearColor]];
     [textField setFont:[NSFont systemFontOfSize:pointSize weight:NSFontWeightMedium]];
     [textField setBordered:NO];
     [textField setStringValue:message];
     [textField setEditable:NO];
     NSShadow *textShadow = [[NSShadow alloc] init];
-    textShadow.shadowColor = [[NSColor blackColor] colorWithAlphaComponent:0.3];
+    textShadow.shadowColor = [isDark ? [NSColor blackColor] : [NSColor whiteColor] colorWithAlphaComponent:0.3];
     textShadow.shadowOffset = NSMakeSize(0, -1);
     textShadow.shadowBlurRadius = 2.0;
     [textField setShadow:textShadow];
@@ -138,8 +144,8 @@ static NSMutableArray *visibleToast;
     vev.wantsLayer = YES;
     vev.blendingMode = NSVisualEffectBlendingModeBehindWindow;
     vev.state = NSVisualEffectStateActive;
-    vev.material = NSVisualEffectMaterialHUDWindow;
-    vev.appearance = [NSAppearance appearanceNamed:NSAppearanceNameVibrantDark];
+    vev.material = isDark ? NSVisualEffectMaterialHUDWindow : NSVisualEffectMaterialSheet;
+    vev.appearance = [NSAppearance appearanceNamed:isDark ? NSAppearanceNameVibrantDark : NSAppearanceNameVibrantLight];
     vev.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
     vev.maskImage = maskImage;
     [container addSubview:vev];

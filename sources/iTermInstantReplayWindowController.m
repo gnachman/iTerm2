@@ -9,6 +9,10 @@
 #import "iTermInstantReplayWindowController.h"
 
 #import "DebugLogging.h"
+#import "iTermController.h"
+#import "NSAppearance+iTerm.h"
+#import "PTYSession.h"
+#import "PseudoTerminal.h"
 
 static const float kAlphaValue = 0.9;
 
@@ -138,6 +142,8 @@ typedef NS_ENUM(NSUInteger, iTermInstantReplayState) {
 
     self.window.level = NSFloatingWindowLevel;
     self.window.alphaValue = kAlphaValue;
+    PTYSession *session = [[iTermController sharedInstance] currentTerminal].currentSession;
+    self.window.appearance = [NSAppearance it_appearanceForCurrentSessionWithBackgroundColor:session.effectiveUnprocessedBackgroundColor];
 }
 
 - (void)windowWillClose:(NSNotification *)notification {

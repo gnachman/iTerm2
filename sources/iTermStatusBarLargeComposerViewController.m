@@ -365,6 +365,10 @@
     return NO;
 }
 
+- (NSColor *)popupWindowBackgroundColor {
+    return nil;
+}
+
 - (NSRect)popupScreenVisibleFrame {
     return self.view.window.screen.visibleFrame;
 }

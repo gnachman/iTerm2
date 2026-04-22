@@ -10,6 +10,7 @@
 #import "FindContext.h"
 #import "iTerm2SharedARC-Swift.h"
 #import "iTermController.h"
+#import "NSAppearance+iTerm.h"
 #import "iTermFocusReportingTextField.h"
 #import "iTermGlobalSearchEngine.h"
 #import "iTermGlobalSearchOutlineView.h"
@@ -58,6 +59,8 @@
 - (void)windowDidLoad {
     self.window.delegate = self;
     self.window.level = NSFloatingWindowLevel;
+    PTYSession *session = [[iTermController sharedInstance] currentTerminal].currentSession;
+    self.window.appearance = [NSAppearance it_appearanceForCurrentSessionWithBackgroundColor:session.effectiveUnprocessedBackgroundColor];
     [_outlineView expandItem:nil expandChildren:YES];
     _panel.becomesKeyOnlyIfNeeded = YES;
     [_findType selectItemWithTag:[iTermUserDefaults globalSearchMode]];

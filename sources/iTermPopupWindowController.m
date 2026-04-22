@@ -4,6 +4,8 @@
 #import "DebugLogging.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermPreferences.h"
+#import "NSAppearance+iTerm.h"
+#import "NSColor+iTerm.h"
 #import "NSObject+iTerm.h"
 #import "NSTextField+iTerm.h"
 #import "NSView+iTerm.h"
@@ -160,6 +162,9 @@
     self.delegate = delegate;
 
     [self.popupWindow setOwningWindow:owningWindow];
+
+    NSColor *bgColor = [delegate respondsToSelector:@selector(popupWindowBackgroundColor)] ? [delegate popupWindowBackgroundColor] : nil;
+    self.window.appearance = [NSAppearance it_appearanceForCurrentSessionWithBackgroundColor:bgColor];
 
     static const NSTimeInterval kAnimationDuration = 0.15;
     self.window.alphaValue = 0;
