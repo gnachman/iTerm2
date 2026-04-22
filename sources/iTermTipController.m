@@ -64,6 +64,7 @@ static NSString *const kPermissionToShowTip = @"NoSyncPermissionToShowTip";
 }
 
 - (void)dealloc {
+    [NSObject cancelPreviousPerformRequestsWithTarget:self];
     [[NSNotificationCenter defaultCenter] removeObserver:self];
 }
 

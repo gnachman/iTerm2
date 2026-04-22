@@ -45,9 +45,11 @@ class ChatSearchResultsViewController: NSViewController {
                 timer = nil
             } else {
                 iterator = dataSource?.chatSearchResultsIterator(query: query).makeIterator()
-                timer = Timer.scheduledTimer(withTimeInterval: 0.02, repeats: true, block: { [weak self] _ in
+                let t = Timer.scheduledTimer(withTimeInterval: 0.02, repeats: true, block: { [weak self] _ in
                     self?.iterate()
                 })
+                t.tolerance = 0.01
+                timer = t
             }
         }
     }

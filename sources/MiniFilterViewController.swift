@@ -180,9 +180,11 @@ class MiniFilterViewController: NSViewController, NSTextFieldDelegate, iTermFilt
         }
         cell.fraction = CGFloat(progress)
         if cell.needsAnimation && timer == nil {
-            timer = Timer.scheduledTimer(withTimeInterval: 1 / 60.0, repeats: true, block: { [weak self] timer in
+            let t = Timer.scheduledTimer(withTimeInterval: 1 / 60.0, repeats: true, block: { [weak self] timer in
                 self?.redrawSearchField()
             })
+            t.tolerance = 1.0 / 120.0
+            timer = t
         }
     }
 

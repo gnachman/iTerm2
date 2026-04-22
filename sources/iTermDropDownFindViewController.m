@@ -235,6 +235,7 @@ static const CGFloat kLineRangeHeight = 24;
                                                          selector:@selector(redrawSearchField:)
                                                          userInfo:nil
                                                           repeats:YES];
+        _animationTimer.tolerance = 1.0 / 120.0;
     }
 }
 

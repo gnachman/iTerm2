@@ -62,6 +62,7 @@ NS_CLASS_AVAILABLE_MAC(10_14)
 
 @implementation iTermGlobalScopeController {
     iTermVariables *_userVariables;
+    NSTimer *_hostnameTimer;
 }
 
 + (instancetype)allocWithZone:(struct _NSZone *)zone {
@@ -87,12 +88,24 @@ NS_CLASS_AVAILABLE_MAC(10_14)
                                    forVariableNamed:iTermVariableKeyApplicationEffectiveTheme];
         [[iTermVariableScope globalsScope] setValue:[NSHost fullyQualifiedDomainName]
                                    forVariableNamed:iTermVariableKeyApplicationLocalhostName];
-        [NSTimer scheduledTimerWithTimeInterval:60 repeats:YES block:^(NSTimer * _Nonnull timer) {
-            [[iTermVariableScope globalsScope] setValue:[NSHost fullyQualifiedDomainName]
-                                       forVariableNamed:iTermVariableKeyApplicationLocalhostName];
+        _hostnameTimer = [NSTimer scheduledTimerWithTimeInterval:60 repeats:YES block:^(NSTimer * _Nonnull timer) {
+            [weakSelf updateLocalhostNameAsync];
         }];
+        _hostnameTimer.tolerance = 6;
     }
     return self;
+}
+
+// Reverse-DNS via +[NSHost fullyQualifiedDomainName] can block on slow resolvers.
+// Hop to a background queue and publish back on main.
+- (void)updateLocalhostNameAsync {
+    dispatch_async(dispatch_get_global_queue(QOS_CLASS_UTILITY, 0), ^{
+        NSString *name = [NSHost fullyQualifiedDomainName];
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [[iTermVariableScope globalsScope] setValue:name
+                                       forVariableNamed:iTermVariableKeyApplicationLocalhostName];
+        });
+    });
 }
 
 - (void)themeDidChange {
