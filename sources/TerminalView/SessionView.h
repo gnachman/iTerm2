@@ -239,6 +239,7 @@ typedef NS_ENUM(NSUInteger, iTermSessionViewFindDriver) {
 // height changed and the tab should refit).
 - (BOOL)setToolbarItems:(NSArray<iTermSessionToolbarItem *> * _Nullable)toolbarItems;
 - (void)moveToolbarTo:(SessionView *)other;
+- (void)layoutContentsForNewlyActiveSession;
 - (void)setBrowserViewController:(iTermBrowserViewController *)browserViewController
                       initialURL:(nullable NSString *)initialURL
                  restorableState:(nullable NSDictionary *)restorableState NS_AVAILABLE_MAC(11_0);

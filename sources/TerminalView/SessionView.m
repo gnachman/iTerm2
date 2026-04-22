@@ -333,16 +333,40 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
 }
 
 - (void)moveToolbarTo:(SessionView *)other {
+    DLog(@"moveToolbarTo: from %p (frame=%@) to %p (frame=%@)",
+         self, NSStringFromRect(self.frame),
+         other, NSStringFromRect(other.frame));
     [other->_toolbarView removeFromSuperview];
     other->_toolbarView = _toolbarView;
     [other addSubviewBelowFindView:_toolbarView];
     _toolbarView = nil;
+    // Both views' reserved-height calculations just changed, so re-run layout
+    // to reposition scrollview/browser content and the toolbar itself.
+    [self updateLayout];
+    [other updateLayout];
+}
+
+- (void)layoutContentsForNewlyActiveSession {
+    // Called right after a peer swap puts this view on screen. The destination
+    // SessionView's frame often didn't change size during the swap, so
+    // -resizeSubviewsWithOldSize: didn't fire, and updatePaneTitles'
+    // setToolbarItems: path returns changedToolbar==NO (the toolbar was moved,
+    // not added or removed). Force a layout so browser / scrollview frames
+    // reflect this view's current toolbar state.
+    DLog(@"layoutContentsForNewlyActiveSession on %p frame=%@ toolbar=%p scrollview.frame=%@",
+         self, NSStringFromRect(self.frame), _toolbarView,
+         NSStringFromRect([self scrollview].frame));
+    [self updateLayout];
+    DLog(@"layoutContentsForNewlyActiveSession AFTER on %p scrollview.frame=%@",
+         self, NSStringFromRect([self scrollview].frame));
 }
 
 - (BOOL)setToolbarItems:(NSArray<iTermSessionToolbarItem *> *)toolbarItems {
     const BOOL hadToolbar = (_toolbarView != nil);
     const BOOL shouldHaveToolbar = (toolbarItems.count > 0);
     const BOOL presenceChanged = (hadToolbar != shouldHaveToolbar);
+    DLog(@"setToolbarItems on %p: hadToolbar=%d shouldHave=%d presenceChanged=%d items=%@",
+         self, hadToolbar, shouldHaveToolbar, presenceChanged, @(toolbarItems.count));
     if (!shouldHaveToolbar) {
         if (_toolbarView) {
             [_toolbarView removeFromSuperview];
@@ -2287,6 +2311,9 @@ typedef NS_ENUM(NSInteger, SessionViewTrackingMode) {
                              reservedSpaceOnBottom + proposedSize.height - size.height,
                              size.width,
                              size.height);
+    DLog(@"updateScrollViewFrame on %p: selfFrame=%@ toolbarView=%p toolbarH=%.1f titleH=%.1f -> scrollview rect=%@ (prevRect=%@)",
+         self, NSStringFromRect(self.frame), _toolbarView, toolbarHeight, titleHeight,
+         NSStringFromRect(rect), NSStringFromRect([self scrollview].frame));
     DLog(@"titleHeight=%@ bottomStatusBarHeight=%@ proposedSize=%@ size=%@ rect=%@",
          @(titleHeight), @(reservedSpaceOnBottom), NSStringFromSize(proposedSize), NSStringFromSize(size),
          NSStringFromRect(rect));
@@ -2312,7 +2339,7 @@ typedef NS_ENUM(NSInteger, SessionViewTrackingMode) {
     if (!_browserViewController) {
         return;
     }
-    
+
     // Browser view should cover the entire content area, similar to how scrollview is positioned
     CGFloat titleHeight = _showTitle ? _title.frame.size.height : 0;
     CGFloat toolbarHeight = [self toolbarReservedHeight];
@@ -2322,7 +2349,7 @@ typedef NS_ENUM(NSInteger, SessionViewTrackingMode) {
                                      reservedSpaceOnBottom,
                                      self.frame.size.width,
                                      self.frame.size.height - titleHeight - toolbarHeight - reservedSpaceOnBottom);
-    
+
     _browserViewController.view.frame = browserFrame;
 }
 

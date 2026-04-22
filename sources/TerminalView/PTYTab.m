@@ -510,16 +510,11 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
                                                       userInfo:nil];
     PtyLog(@"PTYTab dealloc");
     [[NSNotificationCenter defaultCenter] removeObserver:self];
-    for (PTYSession *aSession in [self sessions]) {
-        aSession.delegate = nil;
-    }
-
     for (id key in idMap_) {
         SessionView* aView = [idMap_ objectForKey:key];
 
         PTYSession* aSession = [self sessionForSessionView:aView];
         aSession.active = NO;
-        aSession.delegate = nil;
     }
 
     root_ = nil;
@@ -7320,13 +7315,21 @@ backgroundColor:(NSColor *)backgroundColor {
 - (void)sessionActivateSession:(PTYSession *)sessionToActivate
                     amongPeers:(PTYSessionPeerPort *)peerPort
                    moveToolbar:(BOOL)moveToolbar {
+    DLog(@"sessionActivateSession: activate=%p moveToolbar=%d", sessionToActivate, moveToolbar);
     for (PTYSession *visiblePeer in [self sessions]) {
         if (visiblePeer != sessionToActivate && [visiblePeer sessionBelongsToPeers:peerPort]) {
+            DLog(@"found visiblePeer=%p to swap", visiblePeer);
             // TODO: Ensure self.activeSession is buriable (not synthetic) - if it is synthetic we need to replace it with the live session before burial
             if (moveToolbar) {
                 [visiblePeer moveToolbarTo:sessionToActivate];
             }
+            DLog(@"before swapSession: activate.view.frame=%@ scrollview.frame=%@",
+                 NSStringFromRect(sessionToActivate.view.frame),
+                 NSStringFromRect(sessionToActivate.view.scrollview.frame));
             [self swapSession:visiblePeer withBuriedSession:sessionToActivate];
+            DLog(@"after swapSession: activate.view.frame=%@ scrollview.frame=%@",
+                 NSStringFromRect(sessionToActivate.view.frame),
+                 NSStringFromRect(sessionToActivate.view.scrollview.frame));
             break;
         }
     }
@@ -7334,7 +7337,20 @@ backgroundColor:(NSColor *)backgroundColor {
         [self setActiveSession:sessionToActivate];
     }
     // Update layout for toolbar
+    DLog(@"before updatePaneTitles");
     [self updatePaneTitles];
+    DLog(@"after updatePaneTitles: activate.view.frame=%@ scrollview.frame=%@ grid=%dx%d",
+         NSStringFromRect(sessionToActivate.view.frame),
+         NSStringFromRect(sessionToActivate.view.scrollview.frame),
+         sessionToActivate.columns, sessionToActivate.rows);
+    if (!self.isTmuxTab) {
+        const BOOL fit = [self fitSessionToCurrentViewSize:sessionToActivate];
+        DLog(@"fitSessionToCurrentViewSize returned %d (grid is now %dx%d)",
+             fit, sessionToActivate.columns, sessionToActivate.rows);
+    }
+    [sessionToActivate.view layoutContentsForNewlyActiveSession];
+    DLog(@"end sessionActivateSession: scrollview.frame=%@",
+         NSStringFromRect(sessionToActivate.view.scrollview.frame));
 }
 
 - (NSScriptObjectSpecifier *)objectSpecifier {

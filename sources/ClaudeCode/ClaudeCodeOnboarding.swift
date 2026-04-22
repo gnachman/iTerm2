@@ -11,13 +11,15 @@ import AppKit
 class ClaudeCodeOnboarding: NSObject {
     private static var instance: ClaudeCodeOnboarding?
 
-    private enum Step: Int, CaseIterable {
-        case installHook = 0
-        case showToolbelt = 1
-        case explainStatus = 2
+    private enum Step: Int {
+        case enablePythonAPI = 0
+        case installHook = 1
+        case showToolbelt = 2
+        case explainStatus = 3
 
         var title: String {
             switch self {
+            case .enablePythonAPI: return "Enable Python API"
             case .installHook: return "Install Hook"
             case .showToolbelt: return "Show Toolbelt"
             case .explainStatus: return "Using Session Status"
@@ -26,6 +28,7 @@ class ClaudeCodeOnboarding: NSObject {
 
         var buttonTitle: String {
             switch self {
+            case .enablePythonAPI: return "Enable"
             case .installHook: return "Install"
             case .showToolbelt: return "Show"
             case .explainStatus: return "Show Settings"
@@ -34,6 +37,8 @@ class ClaudeCodeOnboarding: NSObject {
 
         var description: String {
             switch self {
+            case .enablePythonAPI:
+                return "The Claude Code integration relies on iTerm2\u{2019}s Python API to find sessions running Claude and track their status.\n\nThe Python API is currently disabled. Setup can\u{2019}t continue until it is enabled. Click Enable to turn it on."
             case .installHook:
                 return "Install a Claude Code hook that lets iTerm2 detect Claude\u{2019}s state (working, waiting, idle) and display it in the Session Status tool.\n\nThis adds a hook to your Claude Code settings that runs automatically as Claude works."
             case .showToolbelt:
@@ -45,8 +50,23 @@ class ClaudeCodeOnboarding: NSObject {
     }
 
     private var panel: iTermFocusablePanel!
-    private var currentStep: Step = .installHook
+    private let activeSteps: [Step]
+    private var currentStep: Step
     private var completedSteps = Set<Step>()
+
+    private init(activeSteps: [Step]) {
+        it_assert(!activeSteps.isEmpty)
+        self.activeSteps = activeSteps
+        self.currentStep = activeSteps[0]
+        super.init()
+    }
+
+    private func index(of step: Step) -> Int {
+        return activeSteps.firstIndex(of: step) ?? 0
+    }
+
+    private var isFirstStep: Bool { currentStep == activeSteps.first }
+    private var isLastStep: Bool { currentStep == activeSteps.last }
 
     // UI elements
     private var stepLabels = [NSTextField]()
@@ -63,7 +83,17 @@ class ClaudeCodeOnboarding: NSObject {
             existing.panel.makeKeyAndOrderFront(nil)
             return
         }
-        let onboarding = ClaudeCodeOnboarding()
+
+        // Omit the Python API step if the API is already enabled when the
+        // installer opens. Otherwise it runs first, because the integration
+        // cannot function without it.
+        var steps: [Step] = []
+        if !iTermAPIHelper.isEnabled() {
+            steps.append(.enablePythonAPI)
+        }
+        steps.append(contentsOf: [.installHook, .showToolbelt, .explainStatus])
+
+        let onboarding = ClaudeCodeOnboarding(activeSteps: steps)
         instance = onboarding
         onboarding.setupPanel()
         onboarding.updateUI()
@@ -75,7 +105,7 @@ class ClaudeCodeOnboarding: NSObject {
 
     private func setupPanel() {
         panel = iTermFocusablePanel(
-            contentRect: NSRect(x: 0, y: 0, width: 500, height: 380),
+            contentRect: NSRect(x: 0, y: 0, width: 620, height: 380),
             styleMask: [.titled, .closable],
             backing: .buffered,
             defer: false)
@@ -157,7 +187,7 @@ class ClaudeCodeOnboarding: NSObject {
         let container = NSView()
         stepLabels.removeAll()
 
-        for _ in Step.allCases {
+        for _ in activeSteps {
             let label = NSTextField(labelWithString: "")
             label.font = NSFont.systemFont(ofSize: 12)
             label.lineBreakMode = .byTruncatingTail
@@ -186,7 +216,7 @@ class ClaudeCodeOnboarding: NSObject {
 
     private func updateUI() {
         // Update step labels
-        for step in Step.allCases {
+        for (i, step) in activeSteps.enumerated() {
             let prefix: String
             if completedSteps.contains(step) {
                 prefix = "\u{2705} "
@@ -195,7 +225,7 @@ class ClaudeCodeOnboarding: NSObject {
             } else {
                 prefix = "\u{25CB} "
             }
-            let label = stepLabels[step.rawValue]
+            let label = stepLabels[i]
             label.stringValue = prefix + step.title
             label.font = step == currentStep ? NSFont.boldSystemFont(ofSize: 12) : NSFont.systemFont(ofSize: 12)
             label.sizeToFit()
@@ -211,7 +241,7 @@ class ClaudeCodeOnboarding: NSObject {
         contentLabel.stringValue = currentStep.description
 
         // Update buttons
-        backButton.isEnabled = currentStep.rawValue > 0
+        backButton.isEnabled = !isFirstStep
         doItButton.title = currentStep.buttonTitle
         let oldY = doItButton.frame.origin.y
         let oldHeight = doItButton.frame.height
@@ -221,7 +251,7 @@ class ClaudeCodeOnboarding: NSObject {
         doItButton.frame.size.height = oldHeight
         doItButton.isHidden = false
 
-        if currentStep == .explainStatus {
+        if isLastStep {
             nextButton.title = "Close"
             nextButton.isEnabled = true
         } else {
@@ -241,38 +271,60 @@ class ClaudeCodeOnboarding: NSObject {
     // MARK: - Navigation
 
     @objc private func backPressed(_ sender: Any?) {
-        guard currentStep.rawValue > 0,
-              let prev = Step(rawValue: currentStep.rawValue - 1) else {
+        let i = index(of: currentStep)
+        guard i > 0 else {
             return
         }
-        currentStep = prev
+        currentStep = activeSteps[i - 1]
         updateUI()
     }
 
     @objc private func nextPressed(_ sender: Any?) {
-        if currentStep == .explainStatus {
+        if isLastStep {
             panel.close()
             Self.instance = nil
             return
         }
-        guard let next = Step(rawValue: currentStep.rawValue + 1) else {
+        let i = index(of: currentStep)
+        guard i + 1 < activeSteps.count else {
             return
         }
-        currentStep = next
+        currentStep = activeSteps[i + 1]
         updateUI()
     }
 
     @objc private func doItPressed(_ sender: Any?) {
+        let success: Bool
         switch currentStep {
+        case .enablePythonAPI:
+            success = doEnablePythonAPI()
         case .installHook:
-            doInstallHook()
+            success = doInstallHook()
         case .showToolbelt:
             doShowToolbelt()
+            success = true
         case .explainStatus:
             showSettingsPopover()
+            success = true
         }
-        completedSteps.insert(currentStep)
+        if success {
+            completedSteps.insert(currentStep)
+        }
         updateUI()
+    }
+
+    // MARK: - Step: Enable Python API
+
+    private func doEnablePythonAPI() -> Bool {
+        if iTermAPIHelper.isEnabled() {
+            return true
+        }
+        // Prompt the user. If they agree, update the preference and start the server.
+        guard iTermAPIHelper.confirmShouldStartServerAndUpdateUserDefaultsForced(true) else {
+            return false
+        }
+        _ = iTermAPIHelper.sharedInstance()
+        return iTermAPIHelper.isEnabled()
     }
 
     // MARK: - Step 1: Install Hook
@@ -309,11 +361,11 @@ class ClaudeCodeOnboarding: NSObject {
         return actual
     }
 
-    private func doInstallHook() {
+    private func doInstallHook() -> Bool {
         guard let ccStatusPath = Bundle.main.path(forResource: "utilities/cc-status",
                                                   ofType: nil) else {
             DLog("Onboarding: cc-status not found in bundle")
-            return
+            return false
         }
         DLog("Onboarding: cc-status binary at \(ccStatusPath)")
 
@@ -386,9 +438,10 @@ class ClaudeCodeOnboarding: NSObject {
             alert.messageText = "Failed to install hook"
             alert.informativeText = "Could not write to \(settingsURL.path): \(error.localizedDescription)"
             alert.runModal()
-            return
+            return false
         }
         DLog("Onboarding: doInstallHook complete")
+        return true
     }
 
     // MARK: - Step 2: Show Toolbelt
@@ -399,7 +452,23 @@ class ClaudeCodeOnboarding: NSObject {
             iTermToolbeltView.toggleShouldShowTool(kStatusToolName)
         }
 
-        // Show toolbelt in all windows with Claude sessions.
+        let noTerminals = (iTermController.sharedInstance()?.terminals() ?? []).isEmpty
+        if noTerminals {
+            // Nothing to put the toolbelt in — launch a default window first, then
+            // apply the toolbelt setup once the session is ready.
+            iTermSessionLauncher.launchBookmark(nil,
+                                                in: nil,
+                                                respectTabbingMode: true) { [weak self] _ in
+                self?.applyToolbeltToClaudeWindows()
+            }
+        } else {
+            applyToolbeltToClaudeWindows()
+        }
+    }
+
+    private func applyToolbeltToClaudeWindows() {
+        // Show toolbelt in all windows with Claude sessions (falling back to the
+        // current session's window if we don't know of any Claude sessions yet).
         let sessions = claudeSessions()
         var processedWindows = Set<ObjectIdentifier>()
         for session in sessions {
@@ -427,7 +496,6 @@ class ClaudeCodeOnboarding: NSObject {
                 scrims.append(scrim)
             }
         }
-
     }
 
     // MARK: - Step 3: Explain Status
