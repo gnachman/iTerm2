@@ -359,7 +359,7 @@ backgroundColor:(NSColor *)backgroundColor;
     PTYTextViewDelegate,
     TmuxGatewayDelegate,
     VT100ScreenDelegate>
-@property(nonatomic, assign) id<PTYSessionDelegate> delegate;
+@property(nonatomic, weak) id<PTYSessionDelegate> delegate;
 
 // A session is active when it's in a visible tab and it needs periodic redraws (something is
 // blinking, it isn't idle, etc), or when a background tab is updating its tab label. This controls
