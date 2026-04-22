@@ -1609,7 +1609,7 @@ extension PTYSession {
         swiftState!.delegateObservers.append(closure)
     }
     
-    private func makePeer(command: String) -> iTermPromise<PTYSession> {
+    private func makePeer(mode: iTermCCMode, command: String) -> iTermPromise<PTYSession> {
         return iTermPromise<PTYSession> { seal in
             withDelegate { [weak self] delegate in
                 guard let self else {
@@ -1667,7 +1667,7 @@ extension PTYSession {
                             if ok, let session {
                                 session.bury()
                                 seal.fulfill(session)
-                                session.didJoinClaudeCodePeers()
+                                session.didJoinClaudeCodePeers(with: mode)
                             } else {
                                 seal.reject(iTermError("Failed to create session"))
                             }
@@ -1684,8 +1684,10 @@ extension PTYSession {
         let codeReviewCommand = "claude"
         peerPort = PTYSessionPeerPort(
             peers: [PTYSessionClaudeCodePeerIdentifier.claudeCode.rawValue: iTermPromise<PTYSession>(value: self),
-                    PTYSessionClaudeCodePeerIdentifier.diff.rawValue: makePeer(command: diffCommand),
-                    PTYSessionClaudeCodePeerIdentifier.codeReview.rawValue: makePeer(command: codeReviewCommand)],
+                    PTYSessionClaudeCodePeerIdentifier.diff.rawValue:       makePeer(mode: iTermCCMode.diff,
+                                                                                     command: diffCommand),
+                    PTYSessionClaudeCodePeerIdentifier.codeReview.rawValue: makePeer(mode: iTermCCMode.codeReview,
+                                                                                     command: codeReviewCommand)],
             activeSessionIdentifier: PTYSessionClaudeCodePeerIdentifier.claudeCode.rawValue)
     }
     

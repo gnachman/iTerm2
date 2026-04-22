@@ -72,11 +72,13 @@ deletes() {
     "${GIT_BINARY}" ls-files --deleted --exclude-standard | wc -l
 }
 
-# Line counts: "insertions<TAB>deletions" from tracked-file changes vs HEAD.
-# Does not include untracked files — matches --shortstat's behavior.
+# Line counts: "insertions<TAB>deletions" for modified files only.
+# Excludes added, untracked, and deleted files — their line contents are not
+# counted as inserted/deleted lines, only the file-level add/delete below.
 line_counts() {
     local insertions=0 deletions=0
-    local line path
+    local line
+    # Include M (modified), R (renamed), T (typechange). Exclude A/D.
     # --numstat prints "INS\tDEL\tPATH" per file; "-\t-\tPATH" for binary.
     while IFS=$'\t' read -r line; do
         local ins del
@@ -87,11 +89,14 @@ line_counts() {
         [[ "$del" == "-" ]] && del=0
         insertions=$((insertions + ins))
         deletions=$((deletions + del))
-    done < <("${GIT_BINARY}" diff --numstat HEAD 2>/dev/null)
+    done < <("${GIT_BINARY}" diff --numstat --diff-filter=MRT HEAD 2>/dev/null)
     printf '%s\t%s\n' "$insertions" "$deletions"
 }
 
-# File counts by status (added/modified/deleted) across staged+unstaged+untracked.
+# File counts by status across staged+unstaged+untracked.
+# Added: brand-new files only (staged A or untracked ??).
+# Deleted: actually-removed files only (D in either column).
+# Modified: M/R/T/C/U — existing files whose contents changed.
 # Emits "A<TAB>M<TAB>D".
 file_counts() {
     local added=0 modified=0 deleted=0 porcelain
@@ -100,13 +105,13 @@ file_counts() {
         return
     }
     # git status --porcelain: two status chars in cols 1-2, space, path.
-    # XY where X=index, Y=worktree. We categorize per-file by either column.
+    # XY where X=index, Y=worktree. Categorize per file, "added" and "deleted"
+    # take priority over "modified" when both columns differ (e.g. AM, MD).
     local line x y
     while IFS= read -r line; do
         [[ -z "$line" ]] && continue
         x="${line:0:1}"
         y="${line:1:1}"
-        # Renames/copies print "R  old -> new"; treat as modified.
         if [[ "$x" == "?" && "$y" == "?" ]]; then
             added=$((added + 1))
         elif [[ "$x" == "A" || "$y" == "A" ]]; then
@@ -114,7 +119,7 @@ file_counts() {
         elif [[ "$x" == "D" || "$y" == "D" ]]; then
             deleted=$((deleted + 1))
         else
-            # M, R, C, T, U, or any mix — count as modified.
+            # M, R, C, T, U, or any mix of those — existing file changed.
             modified=$((modified + 1))
         fi
     done <<< "$porcelain"
