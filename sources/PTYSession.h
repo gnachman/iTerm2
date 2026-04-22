@@ -1115,7 +1115,7 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
 - (void)sync;
 - (void)toggleSettingWithKey:(NSString *)key
                    isProfile:(BOOL)isProfile;
-- (void)didJoinClaudeCodePeers;
+- (void)didJoinClaudeCodePeersWithMode:(iTermCCMode)mode;
 - (void)moveToolbarTo:(PTYSession *)destination;
 
 #pragma mark - API

@@ -18,6 +18,7 @@ class SessionToolbarGenericView: NSObject {
     private let wrapper: NSView
     @objc let identifier: String
     @objc let priority: Int
+    @objc var enabled = true
 
     init(identifier: String,
          priority: Int,
@@ -135,8 +136,15 @@ class SessionToolbarView: NSView {
         doLayout()
     }
 
+    @objc
+    func requestLayout() {
+        layoutJoiner.setNeedsUpdate { [weak self] in
+            self?.doLayout()
+        }
+    }
+
     private func doLayout() {
-        let builder = SessionToolbarLayoutBuilder(toolbarItems: items,
+        let builder = SessionToolbarLayoutBuilder(toolbarItems: items.filter({ $0.enabled }),
                                                   availableWidth: bounds.width)
         let result = builder.build()
         var x = 0.0
@@ -159,9 +167,7 @@ class SessionToolbarView: NSView {
 
 extension SessionToolbarView: SessionToolbarItemDelegate {
     func itemDidChange(sender: SessionToolbarGenericView) {
-        layoutJoiner.setNeedsUpdate { [weak self] in
-            self?.doLayout()
-        }
+        requestLayout()
     }
 }
 
@@ -268,6 +274,42 @@ extension Array {
     }
 }
 
+@objc(iTermCCModeButtonToolbarItemDelegate)
+protocol CCModeButtonToolbarItemDelegate: AnyObject {
+    func toolbarButtonSelected(identifier: String)
+}
+
+@objc(iTermCCModeButtonToolbarItem)
+class CCModeButtonToolbarItem: SessionToolbarControl {
+    @objc weak var buttonDelegate: CCModeButtonToolbarItemDelegate?
+    private let button: NSButton
+    
+    @objc
+    init(identifier: String,
+         priority: Int,
+         image: NSImage) {
+        button = NSButton(image: image, target: nil, action: nil)
+        button.isBordered = false
+        button.imageScaling = .scaleProportionallyUpOrDown
+        button.refusesFirstResponder = true
+        button.setButtonType(.momentaryPushIn)
+
+        super.init(identifier: identifier, priority: priority, control: button)
+        
+        button.target = self
+        button.action = #selector(didSelectButton(_:))
+    }
+
+    override var desiredWidthRange: ClosedRange<CGFloat> {
+        button.fittingSize.width...button.fittingSize.width
+    }
+    
+    @objc
+    private func didSelectButton(_ sender: Any?) {
+        buttonDelegate?.toolbarButtonSelected(identifier: identifier)
+    }
+}
+
 @objc(iTermCCModeSwitchSessionToolbarItemDelegate)
 protocol CCModeSwitchSessionToolbarItemDelegate: AnyObject {
     func ccModeDidChange(mode: iTermCCMode)
@@ -307,6 +349,52 @@ class CCModeSwitchSessionToolbarItem: SessionToolbarControl {
             return
         }
         modeSwitchDelegate?.ccModeDidChange(mode: mode)
+    }
+}
+
+@objc(iTermCCDiffSelectorItemDelegate)
+protocol CCDiffSelectorItemDelegate: AnyObject {
+    func diffDidSelect(filename: String)
+}
+
+@objc(iTermCCDiffSelectorItem)
+class CCDiffSelectorItem: SessionToolbarControl {
+    @objc weak var diffSelectorDelegate: CCDiffSelectorItemDelegate?
+    private let button: NSPopUpButton
+
+    @objc
+    init(identifier: String,
+         priority: Int) {
+        button = NSPopUpButton()
+
+        // Use a minimal, borderless style
+        button.isBordered = true
+        button.font = NSFont.systemFont(ofSize: NSFont.systemFontSize)
+        
+        super.init(identifier: identifier, priority: priority, control: button)
+
+        button.target = self
+        button.action = #selector(selectionDidChange(_:))
+    }
+
+    func set(files: [String]) {
+        let prefix = String(files.longestCommonPrefix)
+        button.menu?.removeAllItems()
+        for file in files {
+            button.addItem(withTitle: String(file.removing(prefix: prefix)))
+            button.lastItem?.representedObject = file
+        }
+    }
+
+    override var desiredWidthRange: ClosedRange<CGFloat> {
+        return 30.0...button.fittingSize.width
+    }
+    
+    @objc
+    private func selectionDidChange(_ sender: Any?) {
+        if let filename = button.selectedItem?.representedObject as? String {
+            diffSelectorDelegate?.diffDidSelect(filename: filename)
+        }
     }
 }
 
