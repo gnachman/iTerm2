@@ -22,10 +22,29 @@ class ClaudeCodePeerPort: PTYSessionPeerPort {
     @objc static let diffSelectorIdentifier = "ccDiffSelector"
     @objc static let diffBackIdentifier = "ccDiffBack"
     @objc static let diffForwardIdentifier = "ccDiffForward"
+    @objc static let diffSettingsIdentifier = "ccDiffSettings"
     @objc static let codeReviewReloadIdentifier = "ccCodeReviewReload"
+
+    // Defaults for the command each peer kind launches. Exposed statically so
+    // installClaudeCodePeers can use them when building the initial peers
+    // (before the port instance itself exists).
+    @objc static let defaultCommands: [String: String] = [
+        PTYSessionClaudeCodePeerIdentifier.diff.rawValue: "git diff",
+        PTYSessionClaudeCodePeerIdentifier.codeReview.rawValue:
+            "claude -p 'Review the pending change in this git repository for correctness and completeness.'"
+    ]
+
+    private static let peerDisplayNames: [String: String] = [
+        PTYSessionClaudeCodePeerIdentifier.diff.rawValue: "Diff",
+        PTYSessionClaudeCodePeerIdentifier.codeReview.rawValue: "Code Review"
+    ]
 
     @objc private(set) var toolbarItems: [SessionToolbarGenericView] = []
     @objc private(set) var gitPoller: iTermGitPoller!
+
+    // Per-peer settings. For now, just the command; eventually this might
+    // grow (pane kind, URL for browser-backed peers, env vars, …).
+    private var peerCommands: [String: String]
 
     private var modeItem: CCModeSwitchSessionToolbarItem!
     private var gitItem: CCGitSessionToolbarItem!
@@ -33,12 +52,15 @@ class ClaudeCodePeerPort: PTYSessionPeerPort {
     private var backButton: CCModeButtonToolbarItem!
     private var forwardButton: CCModeButtonToolbarItem!
     private var reloadButton: CCModeButtonToolbarItem!
+    private var settingsButton: CCModeButtonToolbarItem!
+    private var settingsPopover: NSPopover?
 
     @objc
     init(peers: [String: iTermPromise<PTYSession>],
          activeSessionIdentifier: String,
          leaderIdentifier: String,
          leaderScope: iTermVariableScope) {
+        self.peerCommands = Self.defaultCommands
         super.init(peers: peers,
                    activeSessionIdentifier: activeSessionIdentifier,
                    leaderIdentifier: leaderIdentifier)
@@ -79,6 +101,8 @@ class ClaudeCodePeerPort: PTYSessionPeerPort {
                                    accessibilityDescription: nil) ?? NSImage()
         let reloadImage = NSImage(systemSymbolName: SFSymbol.arrowClockwise.rawValue,
                                   accessibilityDescription: nil) ?? NSImage()
+        let settingsImage = NSImage(systemSymbolName: SFSymbol.gearshape.rawValue,
+                                    accessibilityDescription: "Diff settings") ?? NSImage()
         backButton = CCModeButtonToolbarItem(identifier: Self.diffBackIdentifier,
                                              priority: 3,
                                              image: backImage)
@@ -91,9 +115,14 @@ class ClaudeCodePeerPort: PTYSessionPeerPort {
                                                priority: 3,
                                                image: reloadImage)
         reloadButton.buttonDelegate = self
+        settingsButton = CCModeButtonToolbarItem(identifier: Self.diffSettingsIdentifier,
+                                                 priority: 3,
+                                                 image: settingsImage)
+        settingsButton.buttonDelegate = self
 
         toolbarItems = [leftSpacer, modeItem, gitItem, diffSelector,
-                        backButton, forwardButton, reloadButton, rightSpacer]
+                        backButton, forwardButton, reloadButton,
+                        settingsButton, rightSpacer]
 
         customizeItems(for: Self.mode(forIdentifier: activeSessionIdentifier))
     }
@@ -118,6 +147,7 @@ class ClaudeCodePeerPort: PTYSessionPeerPort {
                           Self.diffSelectorIdentifier,
                           Self.diffBackIdentifier,
                           Self.diffForwardIdentifier,
+                          Self.diffSettingsIdentifier,
                           Self.rightSpacerIdentifier]
         case .codeReview:
             desiredIDs = [Self.leftSpacerIdentifier,
@@ -214,6 +244,53 @@ extension ClaudeCodePeerPort: CCDiffSelectorItemDelegate {
 extension ClaudeCodePeerPort: CCModeButtonToolbarItemDelegate {
     func toolbarButtonSelected(identifier: String) {
         DLog("ClaudeCodePeerPort.toolbarButtonSelected \(identifier)")
-        // TODO: act on back/forward/reload buttons in the diff or code-review peer.
+        switch identifier {
+        case Self.diffSettingsIdentifier:
+            showSettings(forPeer: PTYSessionClaudeCodePeerIdentifier.diff.rawValue,
+                         anchor: settingsButton)
+        default:
+            // TODO: act on back/forward/reload buttons.
+            break
+        }
+    }
+}
+
+// MARK: - Settings
+
+extension ClaudeCodePeerPort {
+    @objc
+    func command(forPeer identifier: String) -> String {
+        return peerCommands[identifier] ?? ""
+    }
+
+    @objc
+    func setCommand(_ command: String, forPeer identifier: String) {
+        peerCommands[identifier] = command
+        // The running peer session isn't rebuilt here; the new command takes
+        // effect the next time that peer session is (re)launched.
+    }
+
+    private func showSettings(forPeer peerIdentifier: String,
+                              anchor: CCModeButtonToolbarItem) {
+        if let existing = settingsPopover, existing.isShown {
+            existing.close()
+            settingsPopover = nil
+            return
+        }
+        let displayName = Self.peerDisplayNames[peerIdentifier] ?? peerIdentifier
+        let vc = PeerSessionSettingsViewController(
+            peerDisplayName: displayName,
+            command: command(forPeer: peerIdentifier))
+        vc.onCommandChange = { [weak self] newCommand in
+            self?.setCommand(newCommand, forPeer: peerIdentifier)
+        }
+        let popover = NSPopover()
+        popover.contentViewController = vc
+        popover.behavior = .transient
+        let anchorView = anchor._view
+        popover.show(relativeTo: anchorView.bounds,
+                     of: anchorView,
+                     preferredEdge: .minY)
+        settingsPopover = popover
     }
 }

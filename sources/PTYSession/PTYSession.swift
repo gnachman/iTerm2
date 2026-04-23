@@ -1682,8 +1682,8 @@ extension PTYSession {
     
     @objc
     func installClaudeCodePeers() {
-        let diffCommand = "git difftool"
-        let codeReviewCommand = "claude"
+        let diffCommand = ClaudeCodePeerPort.defaultCommands[PTYSessionClaudeCodePeerIdentifier.diff.rawValue] ?? "git diff"
+        let codeReviewCommand = ClaudeCodePeerPort.defaultCommands[PTYSessionClaudeCodePeerIdentifier.codeReview.rawValue] ?? "claude"
         peerPort = ClaudeCodePeerPort(
             peers: [PTYSessionClaudeCodePeerIdentifier.claudeCode.rawValue: iTermPromise<PTYSession>(value: self),
                     PTYSessionClaudeCodePeerIdentifier.diff.rawValue:       makePeer(mode: iTermCCMode.diff,
