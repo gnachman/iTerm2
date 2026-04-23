@@ -169,10 +169,6 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler 
         if let observer = permissionNotificationObserver {
             NotificationCenter.default.removeObserver(observer)
         }
-        let userToClean = user
-        Task { @MainActor in
-            iTermBrowserGeolocationHandler.removeInstance(for: userToClean)
-        }
         // Remove KVO observer to prevent crashes
         webView?.removeObserver(self, forKeyPath: "title")
         if let webView = self.webView {

@@ -303,6 +303,14 @@ static const NSTimeInterval kBackgroundUpdateCadence = 1;
 
     _cadence = period;
 
+    // For high frame rates (<= 1/60s period) keep the original tight leeway
+    // so frames don't slip into the wrong vsync slot. For slower cadences,
+    // use 10% of the period so the OS can coalesce timer wakes and reduce
+    // energy consumption.
+    const uint64_t leeway = (period > 1.0 / 60.0)
+        ? (uint64_t)(period * 0.1 * NSEC_PER_SEC)
+        : (uint64_t)(0.0005 * NSEC_PER_SEC);
+
     if (_gcdUpdateTimer == nil) {
         // First-time creation: set up the dispatch source and event handler
         _gcdUpdateTimer = dispatch_source_create(DISPATCH_SOURCE_TYPE_TIMER, 0, 0, dispatch_get_main_queue());
@@ -311,10 +319,6 @@ static const NSTimeInterval kBackgroundUpdateCadence = 1;
             DLog(@"GCD cadence timer fired for %@", weakSelf);
             [weakSelf maybeUpdateDisplay];
         });
-        // Use 10% of the period as leeway so the OS can coalesce timer
-        // wakes with other work, significantly reducing CPU wake-ups and
-        // improving energy efficiency on battery.
-        const uint64_t leeway = (uint64_t)(period * 0.1 * NSEC_PER_SEC);
         dispatch_source_set_timer(_gcdUpdateTimer,
                                   dispatch_time(DISPATCH_TIME_NOW, period * NSEC_PER_SEC),
                                   period * NSEC_PER_SEC,
@@ -322,7 +326,6 @@ static const NSTimeInterval kBackgroundUpdateCadence = 1;
         dispatch_resume(_gcdUpdateTimer);
     } else {
         // Reuse existing timer: just update the timing parameters
-        const uint64_t leeway = (uint64_t)(period * 0.1 * NSEC_PER_SEC);
         dispatch_source_set_timer(_gcdUpdateTimer,
                                   dispatch_time(DISPATCH_TIME_NOW, period * NSEC_PER_SEC),
                                   period * NSEC_PER_SEC,

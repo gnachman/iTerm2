@@ -72,7 +72,6 @@
 #import "iTermPreferences.h"
 #import "iTermPrintAccessoryViewController.h"
 #import "iTermQuickLookController.h"
-#import "iTermRateLimitedUpdate.h"
 #import "iTermScrollAccumulator.h"
 #import "iTermSecureKeyboardEntryController.h"
 #import "iTermSelection.h"
@@ -193,7 +192,6 @@ const CGFloat PTYTextViewMarginClickGraceWidth = 2.0;
     // Used to report scroll wheel mouse events.
     iTermScrollAccumulator *_scrollAccumulator;
 
-    iTermRateLimitedUpdate *_shadowRateLimit;
     NSMutableArray<PTYNoteViewController *> *_notes;
     iTermScrollAccumulator *_horizontalScrollAccumulator;
     BOOL _cursorVisible;
@@ -435,7 +433,6 @@ const CGFloat PTYTextViewMarginClickGraceWidth = 2.0;
     [_highlightedRows release];
     [_scrollAccumulator release];
     [_horizontalScrollAccumulator release];
-    [_shadowRateLimit release];
     _keyboardHandler.delegate = nil;
     [_keyboardHandler release];
     _urlActionHelper.delegate = nil;
@@ -1613,9 +1610,6 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
     if (![_delegate textViewShouldDrawRect]) {
         // Metal code path in use
         [super drawRect:rect];
-        if (![iTermAdvancedSettingsModel disableWindowShadowWhenTransparencyOnMojave]) {
-            [self maybeInvalidateWindowShadow];
-        }
         return;
     }
 
@@ -1711,7 +1705,6 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
         [_cursorSlideAnimator drawCursorAfterNormalDrawInView:view
                                              startedThisFrame:startedLegacyAnimation];
     }];
-    [self maybeInvalidateWindowShadow];
     [self shiftTrackingChildWindows];
 }
 
@@ -2103,28 +2096,6 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
     const CGFloat visibleHeightExceptTopMargin = NSHeight(visibleRectExcludingTopAndBottomMargins) + bottomMarginHeight;
     return MAX(visibleHeightExceptTopMargin - heightOfTextRows,
                bottomMarginHeight);  // Never have less than VMARGIN excess, but it can be more (if another tab has a bigger font)
-}
-
-- (void)maybeInvalidateWindowShadow {
-    if (@available(macOS 10.16, *)) {
-        return;
-    }
-    const double invalidateFPS = [iTermAdvancedSettingsModel invalidateShadowTimesPerSecond];
-    if (invalidateFPS > 0) {
-        if (self.transparencyAlpha < 1) {
-            if ([self.window conformsToProtocol:@protocol(PTYWindow)]) {
-                if (_shadowRateLimit == nil) {
-                    _shadowRateLimit = [[iTermRateLimitedUpdate alloc] initWithName:@"Shadow"
-                                                                    minimumInterval:1.0 / invalidateFPS];
-                }
-                id<PTYWindow> ptyWindow = (id<PTYWindow>)self.window;
-                [_shadowRateLimit performRateLimitedBlock:^{
-                    DLog(@"Called");
-                    [ptyWindow it_setNeedsInvalidateShadow];
-                }];
-            }
-        }
-    }
 }
 
 - (BOOL)getAndResetDrawingAnimatedImageFlag {

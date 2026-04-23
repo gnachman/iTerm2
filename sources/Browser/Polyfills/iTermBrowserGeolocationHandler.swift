@@ -24,10 +24,6 @@ class iTermBrowserGeolocationHandler: NSObject {
         }
     }
 
-    static func removeInstance(for user: iTermBrowserUser) {
-        instances.removeValue(forKey: user)
-    }
-
     static let messageHandlerName = "iTermGeolocation"
     private let user: iTermBrowserUser
     private let locationManager = CLLocationManager()

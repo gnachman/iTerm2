@@ -236,7 +236,6 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (BOOL)includeShortcutInWindowsMenu;
 + (BOOL)indicateBellsInDockBadgeLabel;
 + (double)indicatorFlashInitialAlpha;
-+ (double)invalidateShadowTimesPerSecond;
 + (BOOL)jiggleTTYSizeOnClearBuffer;
 + (BOOL)killJobsInServersOnQuit;
 + (BOOL)killSessionsOnLogout;
