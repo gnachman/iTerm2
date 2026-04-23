@@ -69,8 +69,6 @@ class SessionToolbarControl: SessionToolbarGenericView {
     }
 }
 
-
-
 @objc
 class SessionToolbarLabel: SessionToolbarGenericView {
     let textField: NSTextField
@@ -96,13 +94,16 @@ class SessionToolbarLabel: SessionToolbarGenericView {
 // items.
 @objc(iTermSessionToolbarSpacer)
 class SessionToolbarSpacer: SessionToolbarGenericView {
+    private let widthRange: ClosedRange<CGFloat>
+
     @objc
-    init(identifier: String, priority: Int) {
+    init(identifier: String, priority: Int, minWidth: CGFloat, maxWidth: CGFloat) {
+        self.widthRange = minWidth...maxWidth
         super.init(identifier: identifier, priority: priority, view: NSView())
     }
 
     override var desiredWidthRange: ClosedRange<CGFloat> {
-        return 0...CGFloat.infinity
+        return widthRange
     }
 }
 

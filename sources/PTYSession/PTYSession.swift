@@ -1622,8 +1622,10 @@ extension PTYSession {
                         return
                     }
                     let factory = iTermSessionFactory()
-                    let profile = self.profile!
-                    
+                    var profile = self.profile!
+                    profile[KEY_PROMPT_CLOSE] = PROMPT_ALWAYS
+                    profile[KEY_SESSION_END_ACTION] = iTermSessionEndAction.default.rawValue
+
                     let diffSession = factory.newSession(withProfile: self.profile, parent: self)
                     diffSession.setScreenSize(view.bounds.size, parent: delegate.realParentWindow())
                     diffSession.setSize(screen.size)
@@ -1688,7 +1690,8 @@ extension PTYSession {
                                                                                      command: diffCommand),
                     PTYSessionClaudeCodePeerIdentifier.codeReview.rawValue: makePeer(mode: iTermCCMode.codeReview,
                                                                                      command: codeReviewCommand)],
-            activeSessionIdentifier: PTYSessionClaudeCodePeerIdentifier.claudeCode.rawValue)
+            activeSessionIdentifier: PTYSessionClaudeCodePeerIdentifier.claudeCode.rawValue,
+            leaderIdentifier: PTYSessionClaudeCodePeerIdentifier.claudeCode.rawValue)
     }
     
     @objc

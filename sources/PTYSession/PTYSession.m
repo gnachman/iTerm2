@@ -1177,8 +1177,12 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (NSString *)description {
     NSString *synthetic = _synthetic ? @" Synthetic" : @"";
-    return [NSString stringWithFormat:@"<%@: %p %dx%d metal=%@ id=%@%@%@>",
-            [self class], self, [_screen width], [_screen height], @(self.useMetal), _guid, synthetic, _view.isBrowser ? @" WebBrowser" : @""];
+    NSString *cc = @"";
+    if (self.claudeCodeModeEnabled) {
+        cc = [NSString stringWithFormat:@" cc=%@", @(self.claudeCodeMode)];
+    }
+    return [NSString stringWithFormat:@"<%@: %p %dx%d metal=%@ id=%@%@%@%@>",
+            [self class], self, [_screen width], [_screen height], @(self.useMetal), _guid, synthetic, _view.isBrowser ? @" WebBrowser" : @"", cc];
 }
 
 - (void)didFinishInitialization {
@@ -1393,6 +1397,8 @@ ITERM_WEAKLY_REFERENCEABLE
     _cachedToolbarItems = nil;
 }
 
+static NSString *PTYSessionToolbarItemClaudeCodeModeLeftSpacer = @"ccLeftSpacer";
+static NSString *PTYSessionToolbarItemClaudeCodeModeRightSpacer = @"ccRightSpacer";
 static NSString *PTYSessionToolbarItemClaudeCodeModeSwitcher = @"ccMode";
 static NSString *PTYSessionToolbarItemClaudeCodeGitStatus = @"ccGitStatus";
 static NSString *PTYSessionToolbarItemClaudeCodeDiffSelector = @"ccDiffSelector";
@@ -1412,18 +1418,24 @@ static NSString *PTYSessionToolbarItemClaudeCodeCodeReviewReload = @"ccCodeRevie
     NSSet<NSString *> *desiredButtons;
     switch (_claudeCodeMode) {
         case iTermCCModeCLI:
-            desiredButtons = [NSSet setWithArray:@[ PTYSessionToolbarItemClaudeCodeModeSwitcher,
-                                                    PTYSessionToolbarItemClaudeCodeGitStatus ]];
+            desiredButtons = [NSSet setWithArray:@[ PTYSessionToolbarItemClaudeCodeModeLeftSpacer,
+                                                    PTYSessionToolbarItemClaudeCodeModeSwitcher,
+                                                    PTYSessionToolbarItemClaudeCodeGitStatus,
+                                                    PTYSessionToolbarItemClaudeCodeModeRightSpacer ]];
             break;
         case iTermCCModeDiff:
-            desiredButtons = [NSSet setWithArray:@[ PTYSessionToolbarItemClaudeCodeModeSwitcher,
+            desiredButtons = [NSSet setWithArray:@[ PTYSessionToolbarItemClaudeCodeModeLeftSpacer,
+                                                    PTYSessionToolbarItemClaudeCodeModeSwitcher,
                                                     PTYSessionToolbarItemClaudeCodeDiffSelector,
                                                     PTYSessionToolbarItemClaudeCodeDiffBack,
-                                                    PTYSessionToolbarItemClaudeCodeDiffForward ]];
+                                                    PTYSessionToolbarItemClaudeCodeDiffForward,
+                                                    PTYSessionToolbarItemClaudeCodeModeRightSpacer ]];
             break;
         case iTermCCModeCodeReview:
-            desiredButtons = [NSSet setWithArray:@[ PTYSessionToolbarItemClaudeCodeModeSwitcher,
-                                                    PTYSessionToolbarItemClaudeCodeCodeReviewReload ]];
+            desiredButtons = [NSSet setWithArray:@[ PTYSessionToolbarItemClaudeCodeModeLeftSpacer,
+                                                    PTYSessionToolbarItemClaudeCodeModeSwitcher,
+                                                    PTYSessionToolbarItemClaudeCodeCodeReviewReload,
+                                                    PTYSessionToolbarItemClaudeCodeModeRightSpacer ]];
             break;
     }
     for (iTermSessionToolbarItem *item in _cachedToolbarItems) {
@@ -1460,6 +1472,17 @@ static NSString *PTYSessionToolbarItemClaudeCodeCodeReviewReload = @"ccCodeRevie
         return nil;
     }
     if (!_cachedToolbarItems) {
+        iTermSessionToolbarSpacer *leftSpacer =
+            [[[iTermSessionToolbarSpacer alloc] initWithIdentifier:PTYSessionToolbarItemClaudeCodeModeLeftSpacer
+                                                          priority:1
+                                                          minWidth:4.0
+                                                          maxWidth:4.0] autorelease];
+        iTermSessionToolbarSpacer *rightSpacer =
+            [[[iTermSessionToolbarSpacer alloc] initWithIdentifier:PTYSessionToolbarItemClaudeCodeModeRightSpacer
+                                                          priority:1
+                                                          minWidth:4.0
+                                                          maxWidth:4.0] autorelease];
+
         iTermCCModeSwitchSessionToolbarItem *modeItem =
             [[[iTermCCModeSwitchSessionToolbarItem alloc] initWithIdentifier:PTYSessionToolbarItemClaudeCodeModeSwitcher
                                                                     priority:1
@@ -1503,7 +1526,7 @@ static NSString *PTYSessionToolbarItemClaudeCodeCodeReviewReload = @"ccCodeRevie
             backButton.buttonDelegate = self;
         }
 
-        _cachedToolbarItems = [@[ modeItem, gitItem, diffSelector, backButton, forwardButton, reloadButton ] retain];
+        _cachedToolbarItems = [@[ leftSpacer, modeItem, gitItem, diffSelector, backButton, forwardButton, reloadButton, rightSpacer ] retain];
     }
     return _cachedToolbarItems;
 }
@@ -14944,7 +14967,11 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 }
 
 - (void)screenPromptDidStartAtLine:(int)line {
-    [self clearTabStatus];
+    // Dispatch because we are in a side-effect and it wouldn't be safe to call clearTabStatus,
+    // which can have big consequences (like terminating sessions if we're in CC integration mode).
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [self clearTabStatus];
+    });
     [_pasteHelper unblock];
 }
 

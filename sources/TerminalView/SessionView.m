@@ -53,7 +53,7 @@ static const CGFloat iTermGetSessionViewTitleHeight(void) {
 }
 
 static const CGFloat iTermGetSessionViewToolbarHeight(void) {
-    return 28;
+    return 40;
 }
 
 // Last time any window was resized TODO(georgen):it would be better to track per window.

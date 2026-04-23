@@ -13,12 +13,15 @@ class PTYSessionPeerPort: NSObject {
     private var peers = [String: iTermPromise<PTYSession>]()
     // This can be the identifier of a promised but not realized session. Consider it aspirational.
     var activeSessionIdentifier: String
+    private let leader: String
 
     init(peers: [String: iTermPromise<PTYSession>],
-         activeSessionIdentifier: String) {
+         activeSessionIdentifier: String,
+         leaderIdentifier: String) {
         self.activeSessionIdentifier = activeSessionIdentifier
         self.peers = peers
-        
+        self.leader = leaderIdentifier
+
         super.init()
         
         for peer in peers.values {
@@ -62,8 +65,10 @@ class PTYSessionPeerPort: NSObject {
 
     // Terminate inactive session and release references.
     func invalidate() {
-        for peer in peers.values {
-            peer.then { $0.terminate() }
+        for identifier in peers.keys where identifier != leader {
+            peers[identifier]?.then {
+                $0.terminate()
+            }
         }
         peers = [:]
     }
