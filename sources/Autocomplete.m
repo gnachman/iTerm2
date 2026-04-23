@@ -752,7 +752,6 @@ precededByWhitespace:(BOOL)precededByWhitespace
                                                              selector:@selector(_populateMore:)
                                                              userInfo:nil
                                                               repeats:NO];
-        _searchEngine.timer.tolerance = 0.002;
     }
 
     AcLog(@"Nothing more to do.");

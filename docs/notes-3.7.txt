@@ -270,15 +270,11 @@ Settings Improvements:
   don't get reset by control sequence.
 
 Bug Fixes:
-- Move main-thread reverse-DNS lookup in
-  iTermGlobalScopeController to a background
-  queue so the UI cannot stall on slow
-  resolvers.
-- Add tolerance to short-interval timers in
-  search and autocomplete controllers so the
+- Add tolerance to search-field animation
+  timers and the tail-find poll timer so the
   OS can coalesce wake-ups on battery.
-- Cancel pending performSelector calls in
-  iTermTipController dealloc.
+- Add tolerance to the hostname refresh timer
+  in iTermGlobalScopeController.
 - Fix various crashes.
 - Fix wrong terminal size after exiting
   fullscreen with multiple tabs.
