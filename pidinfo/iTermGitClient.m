@@ -276,6 +276,7 @@ typedef void (^DeferralBlock)(void);
     git_object *head_tree_obj = NULL;
     git_diff *diff = NULL;
     BOOL ok = NO;
+    NSMutableArray<NSString *> *dirtyFiles = [NSMutableArray array];
 
     // "HEAD^{tree}" peels HEAD down to the commit's tree.
     if (git_revparse_single(&head_tree_obj, _repo, "HEAD^{tree}") != 0) {
@@ -304,24 +305,34 @@ typedef void (^DeferralBlock)(void);
         if (!delta) {
             continue;
         }
+        NSString *path = nil;
         switch (delta->status) {
             case GIT_DELTA_ADDED:
             case GIT_DELTA_UNTRACKED:
                 // New file: only increments filesAdded. Its contents are not
                 // counted as inserted lines.
                 filesAdded += 1;
+                if (delta->new_file.path) {
+                    path = [NSString stringWithUTF8String:delta->new_file.path];
+                }
                 break;
 
             case GIT_DELTA_DELETED:
                 // File actually removed from disk. Doesn't contribute to
                 // linesDeleted.
                 filesDeleted += 1;
+                if (delta->old_file.path) {
+                    path = [NSString stringWithUTF8String:delta->old_file.path];
+                }
                 break;
 
             case GIT_DELTA_MODIFIED:
             case GIT_DELTA_RENAMED:
             case GIT_DELTA_TYPECHANGE: {
                 filesModified += 1;
+                if (delta->new_file.path) {
+                    path = [NSString stringWithUTF8String:delta->new_file.path];
+                }
                 git_patch *patch = NULL;
                 if (git_patch_from_diff(&patch, diff, i) == 0 && patch) {
                     size_t additions = 0;
@@ -339,6 +350,9 @@ typedef void (^DeferralBlock)(void);
                 // COPIED, IGNORED, UNREADABLE, CONFLICTED — skip.
                 break;
         }
+        if (path.length > 0) {
+            [dirtyFiles addObject:path];
+        }
     }
 
     state.filesAdded = filesAdded;
@@ -346,6 +360,7 @@ typedef void (^DeferralBlock)(void);
     state.filesModified = filesModified;
     state.linesInserted = linesInserted;
     state.linesDeleted = linesDeleted;
+    state.dirtyFiles = dirtyFiles;
 
     ok = YES;
 

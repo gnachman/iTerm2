@@ -666,6 +666,7 @@
 		4BC1E97CEA4441CF9390DD52 /* MenuTips.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 904AE312A0E0489899D9ECB8 /* MenuTips.xcassets */; };
 		4C4BE71D1C8948BD8CD672BC /* iTermLayoutCalculator.m in Sources */ = {isa = PBXBuildFile; fileRef = AF19E441FF824539A275D8DA /* iTermLayoutCalculator.m */; };
 		4C9D9EF0E49226A8A974CE88 /* SearchResultSoftBoundaryExtender.swift in Sources */ = {isa = PBXBuildFile; fileRef = A004AF3FD82E9DE92D43DF5E /* SearchResultSoftBoundaryExtender.swift */; };
+		520675B5D46FC25766EC8F84 /* ClaudeCodePeerPort.swift in Sources */ = {isa = PBXBuildFile; fileRef = CDA30BB0C1CB96BE8ED7002A /* ClaudeCodePeerPort.swift */; };
 		5300984C2259365B00A69348 /* iTermHapticActuator.h in Headers */ = {isa = PBXBuildFile; fileRef = 5300984A2259365B00A69348 /* iTermHapticActuator.h */; };
 		5300984D2259365B00A69348 /* iTermHapticActuator.m in Sources */ = {isa = PBXBuildFile; fileRef = 5300984B2259365B00A69348 /* iTermHapticActuator.m */; };
 		530098502259A44D00A69348 /* iTermSoundPlayer.h in Headers */ = {isa = PBXBuildFile; fileRef = 5300984E2259A44D00A69348 /* iTermSoundPlayer.h */; };
@@ -9313,6 +9314,7 @@
 		CA1C7B91071000DE37B9DA33 /* iTermSessionTabStatus.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = iTermSessionTabStatus.swift; sourceTree = "<group>"; };
 		CA34A6F29B10471D8FD572F6 /* GlobalJobMonitor.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = GlobalJobMonitor.swift; sourceTree = "<group>"; };
 		CB2F48F836C5732146BCEDD9 /* iTermStreamingPNGWriter.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; path = iTermStreamingPNGWriter.h; sourceTree = "<group>"; };
+		CDA30BB0C1CB96BE8ED7002A /* ClaudeCodePeerPort.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ClaudeCodePeerPort.swift; sourceTree = "<group>"; };
 		D3CE2D4C1A00936F0098ED99 /* PSMDarkTabStyle.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PSMDarkTabStyle.h; sourceTree = "<group>"; };
 		D3CE2D4D1A00936F0098ED99 /* PSMDarkTabStyle.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PSMDarkTabStyle.m; sourceTree = "<group>"; };
 		DD02572609CB9398008F320C /* PSMYosemiteTabStyle.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = PSMYosemiteTabStyle.h; sourceTree = "<group>"; };
@@ -14599,6 +14601,7 @@
 				A6E70C1F2F84B6D5001349AE /* ClaudeWatcher.swift */,
 				CA34A6F29B10471D8FD572F6 /* GlobalJobMonitor.swift */,
 				E961A126DE6D9EFA0C6CC9AB /* ClaudeCodeOnboarding.swift */,
+				CDA30BB0C1CB96BE8ED7002A /* ClaudeCodePeerPort.swift */,
 			);
 			path = ClaudeCode;
 			sourceTree = "<group>";
@@ -20915,6 +20918,7 @@
 				6DCC8EC2DC1D2D840507C044 /* iTermCCMode.h in Sources */,
 				13828E04441792A509FD9864 /* ClaudeCodeModeController.swift in Sources */,
 				0C8691424C40627F505DDE94 /* PTYSessionPeerPort.swift in Sources */,
+				520675B5D46FC25766EC8F84 /* ClaudeCodePeerPort.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

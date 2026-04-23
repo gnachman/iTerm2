@@ -111,10 +111,31 @@ class SessionToolbarSpacer: SessionToolbarGenericView {
 class SessionToolbarView: NSView {
     private var items: [SessionToolbarGenericView] = []
     private let layoutJoiner = IdempotentOperationJoiner.asyncJoiner(.main)
+    private let backgroundView: NSVisualEffectView = {
+        let v = NSVisualEffectView()
+        v.material = .titlebar
+        v.blendingMode = .withinWindow
+        v.state = .followsWindowActiveState
+        v.autoresizingMask = [.width, .height]
+        return v
+    }()
+    // 1pt system-colored divider at the bottom. NSBox.separator picks a color
+    // that adapts to the effective appearance, so this reads correctly in
+    // both light and dark mode without us naming a specific color.
+    private let bottomDivider: NSBox = {
+        let box = NSBox()
+        box.boxType = .separator
+        box.autoresizingMask = [.width, .maxYMargin]
+        return box
+    }()
 
     @objc init(items: [SessionToolbarGenericView]) {
         self.items = items
         super.init(frame: .zero)
+        backgroundView.frame = bounds
+        addSubview(backgroundView)
+        bottomDivider.frame = NSRect(x: 0, y: 0, width: bounds.width, height: 1)
+        addSubview(bottomDivider)
         doLayout()
     }
 
@@ -162,7 +183,9 @@ class SessionToolbarView: NSView {
             x += item.width + builder.spacerWidth
             item.obj.layoutSubviews()
         }
-        subviews = result.map { $0.obj.view }
+        // Keep the visual-effect background at index 0 and the divider just
+        // above it, with item views on top.
+        subviews = [backgroundView, bottomDivider] + result.map { $0.obj.view }
     }
 }
 
@@ -362,39 +385,61 @@ protocol CCDiffSelectorItemDelegate: AnyObject {
 class CCDiffSelectorItem: SessionToolbarControl {
     @objc weak var diffSelectorDelegate: CCDiffSelectorItemDelegate?
     private let button: NSPopUpButton
+    // Held so the item participates in keeping the shared poller alive.
+    private let poller: iTermGitPoller
 
     @objc
     init(identifier: String,
-         priority: Int) {
+         priority: Int,
+         poller: iTermGitPoller) {
         button = NSPopUpButton()
 
         // Use a minimal, borderless style
         button.isBordered = true
         button.font = NSFont.systemFont(ofSize: NSFont.systemFontSize)
-        
+        self.poller = poller
+
         super.init(identifier: identifier, priority: priority, control: button)
 
         button.target = self
         button.action = #selector(selectionDidChange(_:))
+        DLog("CCDiffSelectorItem init \(identifier) — menu item count \(button.menu?.items.count ?? -1), fittingSize.width=\(button.fittingSize.width)")
     }
 
+    @objc(setFiles:)
     func set(files: [String]) {
-        let prefix = String(files.longestCommonPrefix)
+        DLog("CCDiffSelectorItem set(files:) called with \(files.count) files: \(files)")
+        let segmentedFiles: [[String]] = files.map { ($0 as NSString).pathComponents }
+        let dirs = segmentedFiles.map { $0.dropLast() }
+        let prefixLength = dirs.longestCommonPrefix.count
+        let previouslySelected = button.selectedItem?.representedObject as? String
         button.menu?.removeAllItems()
-        for file in files {
-            button.addItem(withTitle: String(file.removing(prefix: prefix)))
-            button.lastItem?.representedObject = file
+        for (fullFilename, pathComponents) in zip(files, segmentedFiles) {
+            let file = pathComponents.dropFirst(prefixLength).joined(separator: "/")
+            button.addItem(withTitle: String(file))
+            button.lastItem?.representedObject = fullFilename
         }
+        // Try to preserve the user's current selection across refreshes.
+        if let previouslySelected,
+           let match = button.menu?.items.first(where: { ($0.representedObject as? String) == previouslySelected }) {
+            button.select(match)
+        }
+        DLog("CCDiffSelectorItem after set(files:): menu item count \(button.menu?.items.count ?? -1), fittingSize.width=\(button.fittingSize.width)")
+        delegate?.itemDidChange(sender: self)
     }
 
     override var desiredWidthRange: ClosedRange<CGFloat> {
+        DLog("CCDiffSelectorItem desiredWidthRange: fittingSize.width=\(button.fittingSize.width), menu items=\(button.menu?.items.count ?? -1)")
         return 30.0...button.fittingSize.width
     }
-    
+
     @objc
     private func selectionDidChange(_ sender: Any?) {
         if let filename = button.selectedItem?.representedObject as? String {
+            DLog("CCDiffSelectorItem selection changed to \(filename)")
             diffSelectorDelegate?.diffDidSelect(filename: filename)
+        } else {
+            DLog("CCDiffSelectorItem selectionDidChange but no representedObject; selectedItem=\(String(describing: button.selectedItem))")
         }
     }
 }
@@ -403,13 +448,17 @@ class CCDiffSelectorItem: SessionToolbarControl {
 class CCGitSessionToolbarItem: SessionToolbarLabel {
     var ags: iTermAutoGitString!
     private let scope: iTermVariableScope
+    // Held so the item participates in keeping the shared poller alive.
+    private let poller: iTermGitPoller
 
     @objc
     init(identifier: String,
          priority: Int,
-         scope: iTermVariableScope) {
+         scope: iTermVariableScope,
+         poller: iTermGitPoller) {
         self.scope = scope
-        
+        self.poller = poller
+
         let textField = NSTextField(frame: .zero)
         textField.drawsBackground = false
         textField.isBordered = false
@@ -418,22 +467,23 @@ class CCGitSessionToolbarItem: SessionToolbarLabel {
         textField.lineBreakMode = .byTruncatingTail
 
         super.init(identifier: identifier, priority: priority, textField: textField)
-        let gitPoller = iTermGitPoller(cadence: 2, update: { [weak self] in
-            self?.update()
-        })
-        gitPoller.delegate = self
-        gitPoller.includeDiffStats = true
         ags = iTermAutoGitString(
             stringMaker: iTermGitStringMaker(
                 scope: scope,
-                gitPoller: gitPoller))
+                gitPoller: poller))
         ags.delegate = self
         ags.maker.delegate = self
         update()
     }
 
+    @objc
+    func pollerDidUpdate() {
+        update()
+    }
+
     private func update() {
         textField.attributedStringValue = attributedString
+        DLog("CCGitSessionToolbarItem.update attributedString=\(attributedString.string)")
         delegate?.itemDidChange(sender: self)
     }
     
@@ -458,9 +508,3 @@ extension CCGitSessionToolbarItem: iTermGitStringMakerDelegate {
     }
 }
 
-extension CCGitSessionToolbarItem: iTermGitPollerDelegate {
-    func gitPollerShouldPoll(_ poller: iTermGitPoller, after lastPoll: Date?) -> Bool {
-        // The toolbar only exists while Claude Code mode is active; always poll.
-        return view.window != nil
-    }
-}

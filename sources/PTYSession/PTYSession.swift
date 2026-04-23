@@ -1684,14 +1684,19 @@ extension PTYSession {
     func installClaudeCodePeers() {
         let diffCommand = "git difftool"
         let codeReviewCommand = "claude"
-        peerPort = PTYSessionPeerPort(
+        peerPort = ClaudeCodePeerPort(
             peers: [PTYSessionClaudeCodePeerIdentifier.claudeCode.rawValue: iTermPromise<PTYSession>(value: self),
                     PTYSessionClaudeCodePeerIdentifier.diff.rawValue:       makePeer(mode: iTermCCMode.diff,
                                                                                      command: diffCommand),
                     PTYSessionClaudeCodePeerIdentifier.codeReview.rawValue: makePeer(mode: iTermCCMode.codeReview,
                                                                                      command: codeReviewCommand)],
             activeSessionIdentifier: PTYSessionClaudeCodePeerIdentifier.claudeCode.rawValue,
-            leaderIdentifier: PTYSessionClaudeCodePeerIdentifier.claudeCode.rawValue)
+            leaderIdentifier: PTYSessionClaudeCodePeerIdentifier.claudeCode.rawValue,
+            leaderScope: genericScope)
+    }
+
+    @objc var claudeCodePeerPort: ClaudeCodePeerPort? {
+        return peerPort as? ClaudeCodePeerPort
     }
     
     @objc
@@ -1706,20 +1711,5 @@ extension PTYSession {
     }
 }
 
-extension PTYSession: CCModeSwitchSessionToolbarItemDelegate {
-    func ccModeDidChange(mode: iTermCCMode) {
-        let identifier: String? = switch mode {
-        case .CLI:
-            PTYSessionClaudeCodePeerIdentifier.claudeCode.rawValue
-        case .diff:
-            PTYSessionClaudeCodePeerIdentifier.diff.rawValue
-        case .codeReview:
-            PTYSessionClaudeCodePeerIdentifier.codeReview.rawValue
-        @unknown default:
-            nil
-        }
-        if let identifier {
-            _ = peerPort?.activate(identifier: identifier)
-        }
-    }
-}
+// Delegate protocols for CC toolbar items (ccModeDidChange, diffDidSelect,
+// toolbarButtonSelected) are handled by ClaudeCodePeerPort now.

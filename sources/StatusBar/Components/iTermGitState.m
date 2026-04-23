@@ -58,6 +58,7 @@ NSArray<NSString *> *iTermGitStateOptionalPaths(void) {
     [coder encodeInteger:self.filesAdded forKey:@"filesAdded"];
     [coder encodeInteger:self.filesModified forKey:@"filesModified"];
     [coder encodeInteger:self.filesDeleted forKey:@"filesDeleted"];
+    [coder encodeObject:self.dirtyFiles forKey:@"dirtyFiles"];
     [coder encodeInteger:self.creationTime forKey:@"creationTime"];
     [coder encodeInteger:self.repoState forKey:@"repoState"];
 }
@@ -77,6 +78,8 @@ NSArray<NSString *> *iTermGitStateOptionalPaths(void) {
         _filesAdded = [coder decodeIntegerForKey:@"filesAdded"];
         _filesModified = [coder decodeIntegerForKey:@"filesModified"];
         _filesDeleted = [coder decodeIntegerForKey:@"filesDeleted"];
+        _dirtyFiles = [[coder decodeObjectOfClasses:[NSSet setWithObjects:[NSArray class], [NSString class], nil]
+                                             forKey:@"dirtyFiles"] copy];
         _creationTime = [coder decodeIntegerForKey:@"creationTime"];
         _repoState = [coder decodeIntegerForKey:@"repoState"];
     }
@@ -99,6 +102,7 @@ NSArray<NSString *> *iTermGitStateOptionalPaths(void) {
     theCopy.filesAdded = self.filesAdded;
     theCopy.filesModified = self.filesModified;
     theCopy.filesDeleted = self.filesDeleted;
+    theCopy.dirtyFiles = self.dirtyFiles.copy;
     return theCopy;
 }
 

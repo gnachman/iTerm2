@@ -390,9 +390,6 @@ typedef NS_ENUM(NSUInteger, PTYSessionTurdType) {
 @end
 
 @implementation PTYSession {
-    // Built lazily when claudeCodeModeEnabled becomes YES; released when it becomes NO
-    // so any in-flight item state (segmented control selection, git poller) is preserved.
-    NSArray<iTermSessionToolbarItem *> *_cachedToolbarItems;
 
     NSString *_termVariable;
 
@@ -996,7 +993,6 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (void)dealloc {
     [NSApp removeObserver:self forKeyPath:@"effectiveAppearance"];
-    [_cachedToolbarItems release];
     NSString *guid = [_guid copy];
     dispatch_async(dispatch_get_main_queue(), ^{
         [[NSNotificationCenter defaultCenter] postNotificationName:PTYSessionDidDealloc object:guid];
@@ -1374,12 +1370,12 @@ ITERM_WEAKLY_REFERENCEABLE
     _claudeCodeModeEnabled = enabled;
     if (enabled) {
         _claudeCodeMode = iTermCCModeCLI;
-        [self customizeToolbarItems];
+        // installClaudeCodePeers creates the ClaudeCodePeerPort, which builds
+        // the toolbar items and shared git poller and customizes items for the
+        // leader's initial mode.
         [self installClaudeCodePeers];
     } else {
         [self removeClaudeCodePeers];
-        [_cachedToolbarItems release];
-        _cachedToolbarItems = nil;
     }
     [_delegate sessionDidChangeDesiredToolbarItems:self];
 }
@@ -1390,145 +1386,21 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)moveToolbarTo:(PTYSession *)destination {
+    // The toolbar items and poller are owned by the shared ClaudeCodePeerPort,
+    // so the only thing that needs to happen is reparenting the physical
+    // toolbar view onto the destination's SessionView.
     [self.view moveToolbarTo:destination.view];
-    [destination->_cachedToolbarItems autorelease];
-    destination->_cachedToolbarItems = _cachedToolbarItems;
-    [destination customizeToolbarItems];
-    _cachedToolbarItems = nil;
-}
-
-static NSString *PTYSessionToolbarItemClaudeCodeModeLeftSpacer = @"ccLeftSpacer";
-static NSString *PTYSessionToolbarItemClaudeCodeModeRightSpacer = @"ccRightSpacer";
-static NSString *PTYSessionToolbarItemClaudeCodeModeSwitcher = @"ccMode";
-static NSString *PTYSessionToolbarItemClaudeCodeGitStatus = @"ccGitStatus";
-static NSString *PTYSessionToolbarItemClaudeCodeDiffSelector = @"ccDiffSelector";
-static NSString *PTYSessionToolbarItemClaudeCodeDiffBack = @"ccDiffBack";
-static NSString *PTYSessionToolbarItemClaudeCodeDiffForward = @"ccDiffForward";
-static NSString *PTYSessionToolbarItemClaudeCodeCodeReviewReload = @"ccCodeReviewReload";
-
-- (__kindof iTermSessionToolbarItem *)toolbarItemWithIdentifier:(NSString *)identifier {
-    return [self.desiredToolbarItems objectPassingTest:^BOOL(iTermSessionToolbarItem *item, NSUInteger index, BOOL *stop) {
-        return [item.identifier isEqual:identifier];
-    }];
 }
 
 - (void)customizeToolbarItems {
-    [self desiredToolbarItems];
-    
-    NSSet<NSString *> *desiredButtons;
-    switch (_claudeCodeMode) {
-        case iTermCCModeCLI:
-            desiredButtons = [NSSet setWithArray:@[ PTYSessionToolbarItemClaudeCodeModeLeftSpacer,
-                                                    PTYSessionToolbarItemClaudeCodeModeSwitcher,
-                                                    PTYSessionToolbarItemClaudeCodeGitStatus,
-                                                    PTYSessionToolbarItemClaudeCodeModeRightSpacer ]];
-            break;
-        case iTermCCModeDiff:
-            desiredButtons = [NSSet setWithArray:@[ PTYSessionToolbarItemClaudeCodeModeLeftSpacer,
-                                                    PTYSessionToolbarItemClaudeCodeModeSwitcher,
-                                                    PTYSessionToolbarItemClaudeCodeDiffSelector,
-                                                    PTYSessionToolbarItemClaudeCodeDiffBack,
-                                                    PTYSessionToolbarItemClaudeCodeDiffForward,
-                                                    PTYSessionToolbarItemClaudeCodeModeRightSpacer ]];
-            break;
-        case iTermCCModeCodeReview:
-            desiredButtons = [NSSet setWithArray:@[ PTYSessionToolbarItemClaudeCodeModeLeftSpacer,
-                                                    PTYSessionToolbarItemClaudeCodeModeSwitcher,
-                                                    PTYSessionToolbarItemClaudeCodeCodeReviewReload,
-                                                    PTYSessionToolbarItemClaudeCodeModeRightSpacer ]];
-            break;
-    }
-    for (iTermSessionToolbarItem *item in _cachedToolbarItems) {
-        item.enabled = [desiredButtons containsObject:item.identifier];
-    }
-}
-
-- (iTermCCModeSwitchSessionToolbarItem *)toolbarModeItem {
-    return [self toolbarItemWithIdentifier:PTYSessionToolbarItemClaudeCodeModeSwitcher];
-}
-
-- (iTermCCGitSessionToolbarItem *)gitStatusToolbarItem {
-    return [self toolbarItemWithIdentifier:PTYSessionToolbarItemClaudeCodeGitStatus];
-}
-
-- (iTermCCDiffSelectorItem *)diffSelectorToolbarItem {
-    return [self toolbarItemWithIdentifier:PTYSessionToolbarItemClaudeCodeDiffSelector];
-}
-
-- (iTermCCModeButtonToolbarItem *)backButtonToolbarItem {
-    return [self toolbarItemWithIdentifier:PTYSessionToolbarItemClaudeCodeDiffBack];
-}
-
-- (iTermCCModeButtonToolbarItem *)forwardButtonToolbarItem {
-    return [self toolbarItemWithIdentifier:PTYSessionToolbarItemClaudeCodeDiffForward];
-}
-
-- (iTermCCModeButtonToolbarItem *)reloadButtonToolbarItem {
-    return [self toolbarItemWithIdentifier:PTYSessionToolbarItemClaudeCodeCodeReviewReload];
+    [self.claudeCodePeerPort customizeItemsFor:_claudeCodeMode];
 }
 
 - (NSArray<iTermSessionToolbarItem *> *)desiredToolbarItems {
     if (!_claudeCodeModeEnabled) {
         return nil;
     }
-    if (!_cachedToolbarItems) {
-        iTermSessionToolbarSpacer *leftSpacer =
-            [[[iTermSessionToolbarSpacer alloc] initWithIdentifier:PTYSessionToolbarItemClaudeCodeModeLeftSpacer
-                                                          priority:1
-                                                          minWidth:4.0
-                                                          maxWidth:4.0] autorelease];
-        iTermSessionToolbarSpacer *rightSpacer =
-            [[[iTermSessionToolbarSpacer alloc] initWithIdentifier:PTYSessionToolbarItemClaudeCodeModeRightSpacer
-                                                          priority:1
-                                                          minWidth:4.0
-                                                          maxWidth:4.0] autorelease];
-
-        iTermCCModeSwitchSessionToolbarItem *modeItem =
-            [[[iTermCCModeSwitchSessionToolbarItem alloc] initWithIdentifier:PTYSessionToolbarItemClaudeCodeModeSwitcher
-                                                                    priority:1
-                                                                        mode:_claudeCodeMode] autorelease];
-        if (_claudeCodeMode == iTermCCModeCLI) {
-            modeItem.modeSwitchDelegate = self;
-        }
-        iTermCCGitSessionToolbarItem *gitItem =
-            [[[iTermCCGitSessionToolbarItem alloc] initWithIdentifier:PTYSessionToolbarItemClaudeCodeGitStatus
-                                                             priority:2
-                                                                scope:self.genericScope] autorelease];
-        
-        iTermCCDiffSelectorItem *diffSelector =
-            [[[iTermCCDiffSelectorItem alloc] initWithIdentifier:PTYSessionToolbarItemClaudeCodeDiffSelector
-                                                        priority:2] autorelease];
-        if (_claudeCodeMode == iTermCCModeDiff) {
-            diffSelector.diffSelectorDelegate = self;
-        }
-        
-        iTermCCModeButtonToolbarItem *backButton =
-            [[[iTermCCModeButtonToolbarItem alloc] initWithIdentifier:PTYSessionToolbarItemClaudeCodeDiffBack
-                                                              priority:3
-                                                                 image:[NSImage imageWithSystemSymbolName:SFSymbolGetString(SFSymbolChevronLeft) accessibilityDescription:nil]] autorelease];
-        if (_claudeCodeMode == iTermCCModeDiff) {
-            backButton.buttonDelegate = self;
-        }
-
-        iTermCCModeButtonToolbarItem *forwardButton =
-            [[[iTermCCModeButtonToolbarItem alloc] initWithIdentifier:PTYSessionToolbarItemClaudeCodeDiffForward
-                                                              priority:3
-                                                                 image:[NSImage imageWithSystemSymbolName:SFSymbolGetString(SFSymbolChevronRight) accessibilityDescription:nil]] autorelease];
-        if (_claudeCodeMode == iTermCCModeDiff) {
-            backButton.buttonDelegate = self;
-        }
-
-        iTermCCModeButtonToolbarItem *reloadButton =
-            [[[iTermCCModeButtonToolbarItem alloc] initWithIdentifier:PTYSessionToolbarItemClaudeCodeCodeReviewReload
-                                                              priority:3
-                                                                 image:[NSImage imageWithSystemSymbolName:SFSymbolGetString(SFSymbolArrowClockwise) accessibilityDescription:nil]] autorelease];
-        if (_claudeCodeMode == iTermCCModeCodeReview) {
-            backButton.buttonDelegate = self;
-        }
-
-        _cachedToolbarItems = [@[ leftSpacer, modeItem, gitItem, diffSelector, backButton, forwardButton, reloadButton, rightSpacer ] retain];
-    }
-    return _cachedToolbarItems;
+    return self.claudeCodePeerPort.toolbarItems;
 }
 
 - (BOOL)sessionModeConsumesEvent:(NSEvent *)event {

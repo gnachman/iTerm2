@@ -55,6 +55,9 @@ typedef NS_ENUM(NSInteger, iTermGitRepoState) {
 @property (nonatomic) NSInteger filesAdded;  // staged + unstaged
 @property (nonatomic) NSInteger filesModified;
 @property (nonatomic) NSInteger filesDeleted;  // staged + unstaged
+// Repo-root-relative paths of files that differ from HEAD (workdir + index +
+// untracked). Only populated when diff stats were requested.
+@property (nullable, nonatomic, copy) NSArray<NSString *> *dirtyFiles;
 @property (nonatomic) NSTimeInterval creationTime;
 @property (nonatomic) iTermGitRepoState repoState;
 
