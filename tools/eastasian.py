@@ -18,7 +18,7 @@ import sys
 import requests
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-SOURCE_FILE = os.path.join(SCRIPT_DIR, "../sources/iTermCharacterWidth.c")
+SOURCE_FILE = os.path.join(SCRIPT_DIR, "../sources/CharacterSets/iTermCharacterWidth.c")
 
 # Default to latest, or specify version like "16.0.0"
 UNICODE_VERSION = sys.argv[1] if len(sys.argv) > 1 else "latest"

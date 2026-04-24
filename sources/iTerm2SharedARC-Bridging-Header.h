@@ -26,6 +26,8 @@
 #import "iTermAnnouncementView.h"
 #import "iTermAnnouncementViewController.h"
 #import "iTermApplicationDelegate.h"
+#import "iTermArrangementKeys.h"
+#import "SmartSelectionController.h"
 #import "iTermAutomaticProfileSwitcher.h"
 #import "iTermCommandRunnerPool.h"
 #import "iTermBaseWKWebView.h"

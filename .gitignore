@@ -64,7 +64,7 @@ hudsucker-ffi/lib/
 iTermBrowserPlugin/iTermBrowserPlugin.xcodeproj/project.xcworkspace/xcuserdata/gnachman.xcuserdatad/
 
 # Claude Code local settings
-.claude/*.local.json
+.claude/
 EastAsianWidth.txt
 emoji-data.txt
 

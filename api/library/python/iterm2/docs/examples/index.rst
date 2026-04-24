@@ -172,6 +172,8 @@ Here are a collection of working scripts for you to crib from. While they are ca
 
 :doc:`oneshot` — Demonstrates registering a function and showing a modal alert.
 
+:doc:`open_browser_tab` — Demonstrates creating a browser tab and loading a URL in it.
+
 ----
 
 ++++++++++++++

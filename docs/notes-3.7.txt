@@ -1,0 +1,364 @@
+Version 3.7.0beta1 was built on April 20, 2026
+
+A note to beta users:
+An awful lot of features have been piling up here
+since the last release off the main branch was
+many months ago. I decided to bump the version
+number up to 3.7. The changelog below is relative
+to version 3.6.7 and duplicates some items in
+betas since then.
+
+Major New Features:
+- A new Tab Status system was added. Sessions
+  can now report status that appears on their
+  tab with a custom subtitle, color, and dot
+  icon. Triggers can set tab status from
+  output, a new Session Status toolbelt tool
+  lets you configure priority sorting with a
+  drag-to-reorder popover, status is
+  aggregated across split panes, and it is
+  auto-cleared on shell prompt or session
+  termination.
+
+- Session Notes were added: floating,
+  draggable, resizable, collapsible multiline
+  text notes attached to a session that
+  persist across restarts. A global or
+  per-session toggle is available in the
+  Notes toolbelt tool.
+
+- You can now run multiple concurrent
+  instances of iTerm2 side by side with
+  independent settings. Launch with
+  --suite=com.iterm2.unique-id-of-your-choice.
+
+- Claude Code integration was added.
+  This is still a work in progress as of 3.7.0beta1.
+
+- The new Fold All menu item folds everyting
+  (aside from folds at the very top of history).
+  This makes it easy to keep history around
+  without it getting in the way.
+
+- You can now create screenshots including
+  highlights and redactions using the Make
+  Screenshot menu item.
+
+- Session archives were added. The new Session >
+  Archives menu has “Save Archive of Current
+  Session…” and “Restore Archive…” commands, and
+  remembers your ten most recent archives. A
+  per-profile setting can automatically archive a
+  session to a configured directory when it
+  closes.  Restoring an archive reopens the
+  session’s scrollback in a new window.
+
+- Panes can be locked to prevent accidental drag
+  and drop.
+
+- Tabs can be pinned so they stay put and are
+  protected from reordering.
+
+- You can now assign a "job" to a trigger, which
+  ensures the trigger is only active when that job
+  is running. This makes it possible, for example,
+  to write triggers that are only active while
+  Claude Code is running.
+
+- Most window types support initial size as a
+  percentage of the screen (used to be only number
+  of rows and columns).
+
+New Features in Terminal Sessions:
+- Double-width and double-height lines
+  (DECDWL, DECDHL, DECSWL) are now supported
+  via ESC #3, #4, #5, and #6.
+- Custom in-terminal buttons with SF Symbol
+  icons that emit a user-defined escape code
+  when clicked. To add one, send
+  OSC 1337 ; Button=type=custom;code=N;
+  icon=<SF-Symbol-name> ST. The code must be
+  positive. To invalidate all custom buttons,
+  send OSC 1337 ; Button=type=custom ST.
+- A control sequence to programmatically
+  fold and unfold blocks of output. Send
+  OSC 1337 ; UpdateBlock=id=<blockID>;
+  action=fold ST (or action=unfold) where
+  blockID matches a previously declared
+  block ID (see custom escape sequence docs
+  "Blocks" section for details).
+- A new SetProfileProperty control sequence
+  lets you change profile properties at
+  runtime. Send
+  OSC 1337 ; SetProfileProperty=<Key>=
+  <base64-JSON>[;<Key2>=<base64-JSON>...] ST,
+  e.g. set “Cursor Type” to 2 by encoding
+  the JSON value 2 as base64.
+- OSC 52 clipboard query responses now work
+  with tmux 3.6+ in tmux integration.
+- Added OSC 21337 for tab status. Send
+  OSC 21337 ; indicator=<#rrggbb> ;
+  status=<text> ; status-color=<#rrggbb> ST
+  to set the tab’s dot indicator, subtitle,
+  and subtitle color. Send the same sequence
+  with empty values to clear.
+- Smooth-typing animation for underscore and
+  vertical-bar cursors can be enabled in
+  Settings > Profiles > Text.
+
+Tabs, Windows, and UI:
+- The control-sequence-controlled progress
+  indicator is now shown in the tab bar.
+- An active pane border can be displayed to
+  highlight the focused pane.
+- New Lock Size menu item and per-profile
+  preference to prevent window resizing.
+- You can now choose to show a Proxy icon in
+  Compact and Minimal themes.
+- The tab color menu now has a color picker,
+  recent colors, and an eyedropper tool.
+- Asymmetrical broadcasting via a per-session
+  broadcast-source flag lets you prevent
+  accidental typing in some sessions from being
+  broadcast.
+- New key binding action to send text without
+  broadcasting.
+- Nerd Font glyphs are now rendered in pane title
+  bars and tabs.
+- A unified dock badge combines bell count
+  and tab status, and the old 999 cap on the
+  bell count was removed.
+- Split pane icons were added to the context
+  menu.
+- Hold Option when clicking a Split button in the
+  Profiles panel to open the selected profiles as
+  splits in a new window instead of the current
+  one.
+- Background images can now rotate through a
+  folder of images at a configurable interval.
+  Pick a folder instead of a file in
+  Settings > Profiles > Window > Background.
+
+
+Triggers Improvements:
+- Event-based triggers can fire on events such as
+  a session ending or a hostname change.
+- Triggers can be imported and exported as
+  .it2triggers files.
+- A regex can now be used to define word
+  characters for a trigger.
+- Nulls are now treated as spaces in trigger regex
+  matching.
+
+AI Improvements:
+- AI chat can connect to LAN-hosted models
+  over HTTP.
+
+Python API Improvements:
+- Move sessions to new tabs or windows via the
+  Python API.
+- Load URLs in browser sessions from the Python
+  API.
+- The Open URL API now supports a per-domain
+  allowlist.
+
+Password Manager Improvements:
+- Bitwarden is now a supported password manager.
+- Keeper Security is also supported.
+
+Shell Integration Improvements:
+- xonsh is now a supported shell.
+- Better interop with Fish 4.3, which builds in
+  some of shell integration.
+- A new it2 command-line utility lets you perform
+  common actions like creating a window at the
+  command line. Run `it2 --help` for details.
+
+SSH Integration Improvements:
+- Better passphrase handling for SCP and
+  private keys. Wrong passphrases now retry
+  instead of falling through to an empty
+  password, and encrypted-key detection was
+  improved.
+
+Tmux Improvements:
+- Bracketed paste state is restored on attach
+  (prep for tmux’s upcoming bracket_paste_flag
+  format).
+- Saner defaults for which window and tab a tmux
+  attach uses.
+
+Expressions and Variables:
+- Arithmetic expressions and comparisons are
+  now supported in interpolated strings.
+- You can right click on a color in settings and
+  choose "Bind to Expression" so that it will
+  takes its value from an expression (e.g., a
+  user-defined Variable or registered function:
+  see the Scripting Fundamentals section of the
+  documentation for details). The value should
+  be a string like #ff8844.
+- Same for checkbox settings. The value should be
+  a boolean.
+
+UI Improvements:
+- Contextual alternates (calt) are enabled by
+  default for ligature-capable fonts.
+- Prettier, animated toasts.
+- Rename dialogs, the pane menu, and the context
+  menu now respect dark/light mode.
+- Tab colors are written to all appearance
+  variants so they survive light/dark switches.
+- Customizable IME color.
+- Cleaner glass material on the jobs popover.
+- Scroll command marks to top (instead of
+  centering) on Next/Previous Mark.
+
+Input and Accessibility:
+- VoiceOver now announces terminal output and
+  deleted characters.
+- Voice dictation now works.
+- A repair button was added to fix key bindings
+  corrupted by a 3.4.x-3.5.x migration bug.
+- Ctrl/Option-modified function keys now work with
+  third-party global shortcuts.
+- 3-finger drag is now treated like a regular drag
+  for mouse reporting.
+- Offer to reset the key reporting mode when it
+  gets stuck on.
+
+Search and Selection Improvements:
+- Folded content is searched in global search.
+- URL search results extend across soft boundaries
+  such as tmux pane dividers.
+- “$” is now a default URL character for detecting
+  URL boundaries.
+- Search results refresh after window resize.
+- Fix Cmd+G skipping matches after tail find.
+- New “Copy or Paste” pointer action.
+- New pointer action to copy link address.
+
+Menus and Miscellaneous:
+- New menu item to open new tabs next to the
+  current tab or at the end (opposite of the
+  default).
+- New “Always show alerts with remembered
+  selections” option.
+- New “Buffer input by default” profile setting
+  with menu item, indicator, and trigger
+  integration.
+- "Copy" menu item on status bar components to
+  copy relevant information.
+- Smart selection action URL is shown on hover.
+- Offer to restore titles when an ssh session
+  ends.
+- New "Suppress notifications from the active
+  session" setting.
+
+Core Improvements:
+- Significant Metal rendering speedups for
+  non-ASCII text should result in higher frame
+  rates.
+- Framerate is capped at 30 fps in low-power mode.
+- Crash-log search was moved off the main thread
+  so app launch does not hang when there are a
+  huge number of crash logs.
+- Prompt for local-network permission on launch.
+
+Settings Improvements:
+- Window frames are remembered per-profile to
+  prevent cross-contamination.
+- Font zoom is preserved during Automatic Profile
+  Switching.
+- User-set colors are remembered separately
+  from control-sequence-set colors so that they
+  don't get reset by control sequence.
+- Special Exceptions has a new Add Preset
+  button with common Unicode ranges such as
+  Han, Hangul, and Cyrillic.
+
+Bug Fixes:
+- Improved energy efficiency.
+- Fix ⌥Y and the Character Viewer inserting
+  a backslash instead of ¥ on non-JIS
+  keyboards. Restore ⌥+¥ sending ESC+\
+  (with Option=Esc+) on JIS keyboards.
+- Fix various crashes.
+- Fix wrong terminal size after exiting
+  fullscreen with multiple tabs.
+- Fix tmux window shrink when a pre-tmux
+  session is buried after attach.
+- Fix theme not updating when changed via
+  the Python API.
+- Fix legacy hotkey window profiles
+  defaulting to 100% width and height.
+- Fix NSTextInputClient to use consistent
+  absolute coordinates.
+- Work around a macOS SVG bug that dropped
+  <use> elements referencing IDs nested in
+  <g> wrappers inside <defs>.
+- Fix trigger color wells not prefilling
+  with the trigger’s actual colors.
+- Fix session tab color across appearance
+  changes.
+- Fix GPU renderer not respecting a custom
+  underline color for non-ASCII text.
+- Fix the color space of the block cursor
+  in Metal.
+- Fix wrong session used for GPU frame
+  capture.
+- Fix tmux italic rewriting not being
+  skipped when TERM matches *tmux*.
+- Fix cursor shape being reset to a block
+  instead of the profile default when
+  programs use the terminfo Se capability
+  (e.g. Neovim 0.12+).
+- Fix paste bracketing race that could
+  cause out-of-order chunks.
+- Fix posix_spawn failing with “disclaim
+  children” enabled.
+- Fix async_set_profile() failing with
+  REQUEST_MALFORMED on certain keys.
+- Fix tmux close dialog Cancel button not
+  preventing window close.
+- Fix shell integration not working with
+  Login Shell mode.
+- Fix Nerd Font Bundle not persisting
+  after restart.
+- Fix full-bleed drawing of unfilled
+  Powerline arrow glyphs.
+- Fix multipart Kitty image transmission
+  where independently-encoded padded
+  chunks did not decode.
+- Fix Kitty image transmission rejecting
+  paths containing /dev/.
+- Fix a “not clearing enough of character
+  images” rendering bug.
+- Fix adaptive framerate always overriding
+  the non-adaptive setting.
+- Fix status bar hidden behind the tab bar
+  in fullscreen.
+- Fix clearing a filter in a maximized
+  pane causing the window to shrink.
+- Fix divorced session drag-to-split
+  losing divorce state.
+- Fix a background-tab token execution
+  hang when tabs were not rescheduled.
+- Fix a per-window settings save bug.
+- Fix “dynamic” tag being added to dynamic
+  profiles when unwanted.
+- Migrate legacy dynamic profiles that
+  remained in user defaults.
+- Mark navigation now visits marks created
+  by triggers, not just prompt marks.
+- Fix tmux -CC alternate screen not showing
+  in apps like vim.
+- Fix memory leaks.
+- Prompt before opening a .iterm2arrangement
+  file that has been downloaded from the
+  internet, because arrangements can embed
+  profiles that run arbitrary commands.
+  Reported by @naxus-audit.
+- Fix “Save Current Window to File with
+  Contents…” producing a file that had no
+  contents.

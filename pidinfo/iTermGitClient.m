@@ -222,8 +222,9 @@ typedef void (^DeferralBlock)(void);
     return YES;
 }
 
-// git status --porcelain --ignore-submodules -unormal
-- (BOOL)repoIsDirty {
+- (BOOL)getDirty:(BOOL *)dirtyPtr
+       deletions:(NSInteger *)deletionsPtr
+       untracked:(NSInteger *)untrackedPtr {
     git_status_list *status_list = NULL;
     git_status_options status_options = GIT_STATUS_OPTIONS_INIT;
     status_options.show = GIT_STATUS_SHOW_INDEX_AND_WORKDIR;
@@ -234,26 +235,8 @@ typedef void (^DeferralBlock)(void);
         return NO;
     }
 
-    const BOOL dirty = git_status_list_entrycount(status_list) > 0;
-    git_status_list_free(status_list);
-    return dirty;
-}
-
-// git ls-files --others --exclude-standard | wc -l
-- (BOOL)getDeletions:(NSInteger *)deletionsPtr untracked:(NSInteger *)untrackedPtr {
-    git_status_list *status_list = NULL;
-    git_status_options status_options = GIT_STATUS_OPTIONS_INIT;
-    status_options.show = GIT_STATUS_SHOW_INDEX_AND_WORKDIR;
-    status_options.flags = (GIT_STATUS_OPT_INCLUDE_UNTRACKED |
-                            GIT_STATUS_OPT_RENAMES_HEAD_TO_INDEX);
-    const int error = git_status_list_new(&status_list, _repo, &status_options);
-    if (error) {
-        return NO;
-    }
-
     NSInteger deletions = 0;
     NSInteger untracked = 0;
-
     const size_t count = git_status_list_entrycount(status_list);
     for (size_t i = 0; i < count; i++) {
         const git_status_entry *status_entry = git_status_byindex(status_list, i);
@@ -266,9 +249,9 @@ typedef void (^DeferralBlock)(void);
     }
     git_status_list_free(status_list);
 
+    *dirtyPtr = count > 0;
     *deletionsPtr = deletions;
     *untrackedPtr = untracked;
-
     return YES;
 }
 
@@ -325,13 +308,11 @@ static int GitForEachCallback(git_reference *ref, void *data) {
         state.pullArrow = @"";
     }
 
-    // Get dirty
-    state.dirty = [client repoIsDirty];
-
-    // Untracked files & deleted but tracked files
+    BOOL dirty = NO;
     NSInteger deletions = 0;
     NSInteger untracked = 0;
-    if ([client getDeletions:&deletions untracked:&untracked]) {
+    if ([client getDirty:&dirty deletions:&deletions untracked:&untracked]) {
+        state.dirty = dirty;
         state.adds = untracked;
         state.deletes = deletions;
     }

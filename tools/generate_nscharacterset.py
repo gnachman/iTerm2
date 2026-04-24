@@ -16,7 +16,8 @@ Usage:
     python3 tools/generate_nscharacterset.py
 
 Output:
-    sources/NSCharacterSet+iTerm.m
+    sources/Categories/NSCharacterSet+iTerm.m
+    sources/CharacterSets/iTermCharacterSets.m
 """
 
 import itertools
@@ -346,9 +347,9 @@ def main():
     script_dir = Path(__file__).parent
     repo_root = script_dir.parent
     objc_template_path = script_dir / "NSCharacterSet+iTerm.m.template"
-    objc_output_path = repo_root / "sources" / "NSCharacterSet+iTerm.m"
+    objc_output_path = repo_root / "sources" / "Categories" / "NSCharacterSet+iTerm.m"
     c_template_path = script_dir / "iTermCharacterSets.m.template"
-    c_output_path = repo_root / "sources" / "iTermCharacterSets.m"
+    c_output_path = repo_root / "sources" / "CharacterSets" / "iTermCharacterSets.m"
 
     print("Downloading Unicode data files...")
     unicode_data_content = get_cached_or_fetch(UNICODE_DATA_URL, "UnicodeData.txt")

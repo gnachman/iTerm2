@@ -1019,7 +1019,7 @@ class Session:
         :raises: :class:`~iterm2.rpc.RPCException` if the session is not a
             browser session, the URL is invalid, or the user denies permission.
 
-        .. seealso:: Example ":ref:`browser_function_example`"
+        .. seealso:: Example ":ref:`open_browser_tab_example`"
         """
         iterm2.capabilities.check_supports_load_url(self.connection)
         invocation = iterm2.util.invocation_string(

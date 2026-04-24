@@ -38,10 +38,9 @@ NS_ASSUME_NONNULL_BEGIN
                     pull:(NSInteger *)pullCount
                     push:(NSInteger *)pushCount;
 
-- (BOOL)repoIsDirty;
-
-- (BOOL)getDeletions:(NSInteger *)deletionsPtr
-           untracked:(NSInteger *)untrackedPtr;
+- (BOOL)getDirty:(BOOL *)dirtyPtr
+       deletions:(NSInteger *)deletionsPtr
+       untracked:(NSInteger *)untrackedPtr;
 - (void)forEachReference:(void (^)(git_reference *ref, BOOL *stop))block;
 
 @end
