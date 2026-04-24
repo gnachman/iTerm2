@@ -376,6 +376,65 @@ class CCModeSwitchSessionToolbarItem: SessionToolbarControl {
     }
 }
 
+// MARK: - Generalized workgroup mode switcher
+
+protocol WorkgroupModeSwitcherItemDelegate: AnyObject {
+    // The user picked a peer from the switcher; `identifier` is the
+    // peer session's uniqueIdentifier.
+    func workgroupModeSwitcher(_ item: WorkgroupModeSwitcherItem,
+                               didSelect identifier: String)
+}
+
+// Like CCModeSwitchSessionToolbarItem but not hardcoded to three
+// Claude-Code-specific segments — segments mirror whatever peer-group
+// members the workgroup's runtime gives it.
+final class WorkgroupModeSwitcherItem: SessionToolbarControl {
+    weak var modeSwitchDelegate: WorkgroupModeSwitcherItemDelegate?
+    private let segmentedControl: NSSegmentedControl
+    // Segment index → peer-session unique identifier.
+    private var identifiers: [String]
+
+    init(identifier: String,
+         priority: Int,
+         members: [(identifier: String, label: String)],
+         activeIdentifier: String) {
+        self.identifiers = members.map { $0.identifier }
+        let labels = members.map { $0.label }
+        segmentedControl = NSSegmentedControl(
+            labels: labels,
+            trackingMode: .selectOne,
+            target: nil,
+            action: #selector(modeChanged(_:)))
+        segmentedControl.segmentStyle = .texturedRounded
+        if let idx = identifiers.firstIndex(of: activeIdentifier) {
+            segmentedControl.selectedSegment = idx
+        }
+        super.init(identifier: identifier,
+                   priority: priority,
+                   control: segmentedControl)
+        segmentedControl.target = self
+    }
+
+    func setActiveIdentifier(_ identifier: String) {
+        if let idx = identifiers.firstIndex(of: identifier) {
+            segmentedControl.selectedSegment = idx
+        }
+    }
+
+    override var desiredWidthRange: ClosedRange<CGFloat> {
+        let natural = max(_view.fittingSize.width, 0)
+        return (30.0 * CGFloat(segmentedControl.segmentCount))...natural
+    }
+
+    @objc
+    private func modeChanged(_ sender: Any?) {
+        let idx = segmentedControl.indexOfSelectedItem
+        guard idx >= 0, idx < identifiers.count else { return }
+        modeSwitchDelegate?.workgroupModeSwitcher(self,
+                                                  didSelect: identifiers[idx])
+    }
+}
+
 @objc(iTermCCDiffSelectorItemDelegate)
 protocol CCDiffSelectorItemDelegate: AnyObject {
     func diffDidSelect(filename: String)

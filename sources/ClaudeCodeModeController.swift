@@ -116,8 +116,15 @@ class ClaudeCodeModeController: NSObject {
             return
         }
         let shouldEnable = claudeSessionGUIDs.contains(guid) && statusSessionGUIDs.contains(guid)
-        if session.claudeCodeModeEnabled != shouldEnable {
-            session.claudeCodeModeEnabled = shouldEnable
+        let isActive =
+            iTermWorkgroupController.instance.workgroupInstance(on: session)?
+                .workgroupUniqueIdentifier == BuiltinWorkgroups.ID.claudeCode
+        if shouldEnable && !isActive {
+            iTermWorkgroupController.instance.enter(
+                workgroupUniqueIdentifier: BuiltinWorkgroups.ID.claudeCode,
+                on: session)
+        } else if !shouldEnable && isActive {
+            iTermWorkgroupController.instance.exit(on: session)
         }
     }
 

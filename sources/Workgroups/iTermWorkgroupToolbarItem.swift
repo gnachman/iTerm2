@@ -13,7 +13,7 @@ import Foundation
 // width bounds; other tools are parameter-less today). New tools are added
 // by extending this enum and registering a factory in
 // iTermWorkgroupToolbarItemRegistry.
-enum iTermWorkgroupToolbarItem: Codable, Equatable {
+enum iTermWorkgroupToolbarItem: Codable, Equatable, Hashable {
     case gitStatus
     case changedFileSelector
     case modeSwitcher

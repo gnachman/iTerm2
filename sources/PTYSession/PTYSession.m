@@ -1393,10 +1393,21 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)customizeToolbarItems {
+    // Workgroup runtime handles its own enable/disable via
+    // iTermWorkgroupPeerPort.activate; nothing extra to do here for
+    // sessions owned by a workgroup. The old CC path is kept as a
+    // fallback until ClaudeCodeModeController is routed through the
+    // controller (landing A8).
+    if (self.workgroupInstance) {
+        return;
+    }
     [self.claudeCodePeerPort customizeItemsFor:_claudeCodeMode];
 }
 
 - (NSArray<iTermSessionToolbarItem *> *)desiredToolbarItems {
+    if (self.workgroupInstance) {
+        return self.workgroupInstance.toolbarItems;
+    }
     if (!_claudeCodeModeEnabled) {
         return nil;
     }

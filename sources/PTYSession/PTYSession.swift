@@ -10,6 +10,7 @@ import WebKit
 @objc
 class PTYSessionSwiftState: NSObject {
     var peerPort: PTYSessionPeerPort?
+    var workgroupInstance: iTermWorkgroupInstance?
     var delegateObservers = [(PTYSessionDelegate) -> ()]()
 }
 
@@ -1586,6 +1587,102 @@ extension PTYSession {
     func set(peerPort: PTYSessionPeerPort) {
         it_assert(self.peerPort == nil)
         self.peerPort = peerPort
+    }
+
+    // Workgroup runtime: when a workgroup is active on this session,
+    // `workgroupInstance` points at the per-entry state owner.
+    @objc var workgroupInstance: iTermWorkgroupInstance? {
+        get { swiftState!.workgroupInstance }
+        set { swiftState!.workgroupInstance = newValue }
+    }
+
+    // Build a peer session for a workgroup's configured peer. Replaces
+    // the old CC-specific makePeer(mode:command:) — same launch plumbing,
+    // but driven by an iTermWorkgroupSession config (profile override,
+    // command override, buried until activated).
+    func makeWorkgroupPeer(
+        config: iTermWorkgroupSession
+    ) -> iTermPromise<PTYSession> {
+        return iTermPromise<PTYSession> { seal in
+            withDelegate { [weak self] delegate in
+                guard let self else {
+                    seal.reject(iTermError("Session terminated"))
+                    return
+                }
+                asyncInitialDirectoryForNewSessionBased { [weak self] oldCWD in
+                    guard let self else {
+                        seal.reject(iTermError("Session terminated"))
+                        return
+                    }
+                    let factory = iTermSessionFactory()
+                    var profile = self.profile!
+                    // Peer sessions live on the same screen as the
+                    // main session and should never prompt on close —
+                    // they're torn down when the workgroup exits.
+                    profile[KEY_PROMPT_CLOSE] = PROMPT_ALWAYS
+                    profile[KEY_SESSION_END_ACTION] =
+                        iTermSessionEndAction.default.rawValue
+                    if let guid = config.profileGUID,
+                       let override = ProfileModel.sharedInstance()?
+                        .bookmark(withGuid: guid) {
+                        profile = override
+                    }
+
+                    let newSession = factory.newSession(
+                        withProfile: profile, parent: self)
+                    newSession.setScreenSize(
+                        view.bounds.size,
+                        parent: delegate.realParentWindow())
+                    newSession.setSize(screen.size)
+                    newSession.view.scrollview.hasVerticalScroller =
+                        view.scrollview.hasVerticalScroller
+                    newSession.view.scrollview.lineScroll =
+                        view.scrollview.lineScroll
+                    newSession.view.scrollview.pageScroll =
+                        view.scrollview.pageScroll
+                    if let imagePath = backgroundImagePath {
+                        newSession.backgroundImagePath = imagePath
+                    }
+                    newSession.setPreferencesFromAddressBookEntry(profile)
+                    newSession.loadInitialColorTableAndResetCursorGuide()
+                    newSession.screen.resetTimestamps()
+
+                    if ProfileModel.sessionsInstance().bookmark(
+                        withGuid: (newSession.profile[KEY_GUID] as! String)) != nil
+                        && isDivorced {
+                        newSession.inheritDivorce(
+                            from: self,
+                            decree: "Workgroup peer of session with guid \(d(profile[KEY_GUID]))")
+                    }
+                    let command = config.command.isEmpty ? nil : config.command
+                    let launchRequest = iTermSessionAttachOrLaunchRequest(
+                        session: newSession,
+                        canPrompt: false,
+                        objectType: .paneObject,
+                        hasServerConnection: false,
+                        serverConnection: iTermGeneralServerConnection(),
+                        urlString: nil,
+                        allowURLSubs: false,
+                        environment: [:],
+                        customShell: nil,
+                        oldCWD: oldCWD,
+                        forceUseOldCWD: true,
+                        command: command,
+                        isUTF8: nil,
+                        substitutions: nil,
+                        windowController: nil,
+                        ready: nil) { session, ok in
+                            if ok, let session {
+                                session.bury()
+                                seal.fulfill(session)
+                            } else {
+                                seal.reject(iTermError("Failed to create session"))
+                            }
+                        }
+                    factory.attachOrLaunch(with: launchRequest)
+                }
+            }
+        }
     }
     
     @objc
