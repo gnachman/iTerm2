@@ -37,6 +37,7 @@ static NSString *const iTermUserDefaultsKeyImportPath = @"ImportPath";
 static NSString *const iTermUserDefaultsKeyShouldSendReturnAfterPassword = @"ShouldSendReturnAfterPassword";
 static NSString *const iTermUserDefaultsKeyWindowCornerRadiusCache = @"NoSyncWindowCornerRadiusCache";
 static NSString *const iTermUserDefaultsKeyLastShutdownWasClean = @"NoSyncLastShutdownWasClean";
+static NSString *const iTermUserDefaultsKeyWorkgroupsData = @"Workgroups";
 
 @implementation iTermUserDefaults
 
@@ -276,6 +277,15 @@ static NSUserDefaults *iTermPrivateUserDefaults(void) {
 + (void)setWindowCornerRadiusCache:(NSDictionary<NSString *, NSNumber *> *)windowCornerRadiusCache {
     [self.userDefaults setObject:windowCornerRadiusCache
                           forKey:iTermUserDefaultsKeyWindowCornerRadiusCache];
+}
+
++ (NSData *)workgroupsData {
+    return [self.userDefaults objectForKey:iTermUserDefaultsKeyWorkgroupsData];
+}
+
++ (void)setWorkgroupsData:(NSData *)workgroupsData {
+    [self.userDefaults setObject:workgroupsData
+                          forKey:iTermUserDefaultsKeyWorkgroupsData];
 }
 
 + (BOOL)lastShutdownWasClean {

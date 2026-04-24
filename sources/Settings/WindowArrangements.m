@@ -21,6 +21,19 @@ static NSString* WINDOW_ARRANGEMENTS = @"Window Arrangements";
 static NSString* DEFAULT_ARRANGEMENT_KEY = @"Default Arrangement Name";
 static NSString *const kSavedArrangementWillChangeNotification = @"kSavedArrangementWillChangeNotification";
 
+@interface iTermWorkgroupTabView: NSView
+@end
+
+@implementation iTermWorkgroupTabView
+@end
+
+@interface iTermWorkgroupWrapperView: NSView
+@end
+
+@implementation iTermWorkgroupWrapperView
+@end
+
+
 @interface WindowArrangements()<NSTextFieldDelegate>
 @end
 
@@ -31,6 +44,8 @@ static NSString *const kSavedArrangementWillChangeNotification = @"kSavedArrange
     IBOutlet ArrangementPreviewView *previewView_;
     IBOutlet NSButton *deleteButton_;
     IBOutlet NSButton *defaultButton_;
+    IBOutlet iTermWorkgroupsEditingViewController *_workgroupsViewController;
+    IBOutlet NSView *_workgroupsContainer;
 }
 
 + (WindowArrangements *)sharedInstance {
@@ -52,6 +67,9 @@ static NSString *const kSavedArrangementWillChangeNotification = @"kSavedArrange
                                              selector:@selector(pushUndo)
                                                  name:kSavedArrangementWillChangeNotification
                                                object:nil];
+    if (_workgroupsViewController && _workgroupsContainer) {
+        [_workgroupsViewController defineControlsInContainerView:_workgroupsContainer];
+    }
 }
 
 + (BOOL)hasWindowArrangement:(NSString *)name {

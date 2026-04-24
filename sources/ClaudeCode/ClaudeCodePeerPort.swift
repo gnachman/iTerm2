@@ -19,11 +19,11 @@ class ClaudeCodePeerPort: PTYSessionPeerPort {
     @objc static let rightSpacerIdentifier = "ccRightSpacer"
     @objc static let modeSwitcherIdentifier = "ccMode"
     @objc static let gitStatusIdentifier = "ccGitStatus"
-    @objc static let diffSelectorIdentifier = "ccDiffSelector"
-    @objc static let diffBackIdentifier = "ccDiffBack"
-    @objc static let diffForwardIdentifier = "ccDiffForward"
+    @objc static let changedFileSelectorIdentifier = "ccChangedFileSelector"
+    @objc static let backIdentifier = "ccBack"
+    @objc static let forwardIdentifier = "ccForward"
     @objc static let diffSettingsIdentifier = "ccDiffSettings"
-    @objc static let codeReviewReloadIdentifier = "ccCodeReviewReload"
+    @objc static let reloadIdentifier = "ccReload"
 
     // Defaults for the command each peer kind launches. Exposed statically so
     // installClaudeCodePeers can use them when building the initial peers
@@ -48,7 +48,7 @@ class ClaudeCodePeerPort: PTYSessionPeerPort {
 
     private var modeItem: CCModeSwitchSessionToolbarItem!
     private var gitItem: CCGitSessionToolbarItem!
-    private var diffSelector: CCDiffSelectorItem!
+    private var changedFileSelector: CCDiffSelectorItem!
     private var backButton: CCModeButtonToolbarItem!
     private var forwardButton: CCModeButtonToolbarItem!
     private var reloadButton: CCModeButtonToolbarItem!
@@ -90,10 +90,10 @@ class ClaudeCodePeerPort: PTYSessionPeerPort {
                                           scope: leaderScope,
                                           poller: gitPoller)
 
-        diffSelector = CCDiffSelectorItem(identifier: Self.diffSelectorIdentifier,
-                                          priority: 2,
-                                          poller: gitPoller)
-        diffSelector.diffSelectorDelegate = self
+        changedFileSelector = CCDiffSelectorItem(identifier: Self.changedFileSelectorIdentifier,
+                                                 priority: 2,
+                                                 poller: gitPoller)
+        changedFileSelector.diffSelectorDelegate = self
 
         let backImage = NSImage(systemSymbolName: SFSymbol.chevronLeft.rawValue,
                                 accessibilityDescription: nil) ?? NSImage()
@@ -103,15 +103,15 @@ class ClaudeCodePeerPort: PTYSessionPeerPort {
                                   accessibilityDescription: nil) ?? NSImage()
         let settingsImage = NSImage(systemSymbolName: SFSymbol.gearshape.rawValue,
                                     accessibilityDescription: "Diff settings") ?? NSImage()
-        backButton = CCModeButtonToolbarItem(identifier: Self.diffBackIdentifier,
+        backButton = CCModeButtonToolbarItem(identifier: Self.backIdentifier,
                                              priority: 3,
                                              image: backImage)
         backButton.buttonDelegate = self
-        forwardButton = CCModeButtonToolbarItem(identifier: Self.diffForwardIdentifier,
+        forwardButton = CCModeButtonToolbarItem(identifier: Self.forwardIdentifier,
                                                 priority: 3,
                                                 image: forwardImage)
         forwardButton.buttonDelegate = self
-        reloadButton = CCModeButtonToolbarItem(identifier: Self.codeReviewReloadIdentifier,
+        reloadButton = CCModeButtonToolbarItem(identifier: Self.reloadIdentifier,
                                                priority: 3,
                                                image: reloadImage)
         reloadButton.buttonDelegate = self
@@ -120,7 +120,7 @@ class ClaudeCodePeerPort: PTYSessionPeerPort {
                                                  image: settingsImage)
         settingsButton.buttonDelegate = self
 
-        toolbarItems = [leftSpacer, modeItem, gitItem, diffSelector,
+        toolbarItems = [leftSpacer, modeItem, gitItem, changedFileSelector,
                         backButton, forwardButton, reloadButton,
                         settingsButton, rightSpacer]
 
@@ -144,15 +144,15 @@ class ClaudeCodePeerPort: PTYSessionPeerPort {
         case .diff:
             desiredIDs = [Self.leftSpacerIdentifier,
                           Self.modeSwitcherIdentifier,
-                          Self.diffSelectorIdentifier,
-                          Self.diffBackIdentifier,
-                          Self.diffForwardIdentifier,
+                          Self.changedFileSelectorIdentifier,
+                          Self.backIdentifier,
+                          Self.forwardIdentifier,
                           Self.diffSettingsIdentifier,
                           Self.rightSpacerIdentifier]
         case .codeReview:
             desiredIDs = [Self.leftSpacerIdentifier,
                           Self.modeSwitcherIdentifier,
-                          Self.codeReviewReloadIdentifier,
+                          Self.reloadIdentifier,
                           Self.rightSpacerIdentifier]
         @unknown default:
             desiredIDs = []
@@ -183,7 +183,7 @@ class ClaudeCodePeerPort: PTYSessionPeerPort {
         let files = gitPoller.state.dirtyFiles ?? []
         DLog("ClaudeCodePeerPort.pollerDidUpdate — \(files.count) dirty files")
         gitItem.pollerDidUpdate()
-        diffSelector.set(files: files)
+        changedFileSelector.set(files: files)
     }
 
     private static func mode(forIdentifier identifier: String) -> iTermCCMode {

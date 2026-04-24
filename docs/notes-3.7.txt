@@ -35,6 +35,13 @@ Major New Features:
 - Claude Code integration was added.
   This is still a work in progress as of 3.7.0beta1.
 
+- Workgroups let you configure a session
+  to be transformed into a group of related
+  sessions — peers, split panes, or tabs —
+  each with its own toolbar. Configure
+  them in Settings > Shortcuts >
+  Workgroups. Still a work in progress.
+
 - The new Fold All menu item folds everyting
   (aside from folds at the very top of history).
   This makes it easy to keep history around
