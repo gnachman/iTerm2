@@ -32,7 +32,7 @@ enum BuiltinWorkgroups {
     // buttons, Code Review peer running `claude -p '...'` with mode
     // switcher + reload.
     static let claudeCode: iTermWorkgroup = {
-        let main = iTermWorkgroupSession(
+        let main = iTermWorkgroupSessionConfig(
             uniqueIdentifier: ID.claudeCodeMain,
             parentID: nil,
             kind: .root,
@@ -47,25 +47,24 @@ enum BuiltinWorkgroups {
             ],
             displayName: "Claude Code")
 
-        let diff = iTermWorkgroupSession(
+        let diff = iTermWorkgroupSessionConfig(
             uniqueIdentifier: ID.claudeCodeDiff,
             parentID: ID.claudeCodeMain,
             kind: .peer,
             profileGUID: nil,
-            command: "git diff",
+            command: "git difftool -y -x vimdiff HEAD",
             urlString: "",
             toolbarItems: [
                 .spacer(minWidth: 4, maxWidth: 4),
                 .modeSwitcher,
                 .changedFileSelector,
-                .back,
-                .forward,
-                .settings,
+                .reload,
                 .spacer(minWidth: 4, maxWidth: 4),
             ],
-            displayName: "Diff")
+            displayName: "Diff",
+            perFileCommand: "git difftool -y -x vimdiff HEAD -- \\(file)")
 
-        let review = iTermWorkgroupSession(
+        let review = iTermWorkgroupSessionConfig(
             uniqueIdentifier: ID.claudeCodeReview,
             parentID: ID.claudeCodeMain,
             kind: .peer,

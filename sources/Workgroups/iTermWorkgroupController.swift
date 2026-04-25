@@ -14,10 +14,15 @@ import Foundation
 final class iTermWorkgroupController: NSObject {
     @objc static let instance = iTermWorkgroupController()
 
-    // Sessions currently running a workgroup, keyed by session GUID.
-    // Holds strong references to the instances; sessions keep a weak
-    // reference back.
-    private var instancesBySessionGUID: [String: iTermWorkgroupInstance] = [:]
+    // Sessions currently running a workgroup, keyed by the Swift
+    // object identity of the leader PTYSession. Object identity is
+    // stable for the lifetime of the session object, even across
+    // restarts that rotate `session.guid` (see
+    // PTYSession.replaceTerminatedShellWithNewInstance). Keying by
+    // GUID would break the moment the leader was restarted: lookups
+    // by the new GUID would miss, and a re-enter under the new GUID
+    // would orphan the original instance.
+    private var instances: [ObjectIdentifier: iTermWorkgroupInstance] = [:]
 
     private override init() {
         super.init()
@@ -31,15 +36,27 @@ final class iTermWorkgroupController: NSObject {
     @discardableResult
     func enter(workgroupUniqueIdentifier identifier: String,
                on session: PTYSession) -> Bool {
-        guard let sessionGUID = session.guid else { return false }
+        return enter(workgroupUniqueIdentifier: identifier,
+                     on: session,
+                     spawner: DefaultWorkgroupSessionSpawner())
+    }
+
+    // Same as the @objc enter but lets the caller (only tests, today)
+    // inject a spawner so the controller's dict stays the source of
+    // truth without dragging in the real factory/PseudoTerminal.
+    @discardableResult
+    func enter(workgroupUniqueIdentifier identifier: String,
+               on session: PTYSession,
+               spawner: WorkgroupSessionSpawner) -> Bool {
+        let key = ObjectIdentifier(session)
 
         // Already running the same one? Nothing to do.
-        if let existing = instancesBySessionGUID[sessionGUID],
+        if let existing = instances[key],
            existing.workgroupUniqueIdentifier == identifier {
             return true
         }
         // Running a different one — exit first.
-        if instancesBySessionGUID[sessionGUID] != nil {
+        if instances[key] != nil {
             exit(on: session)
         }
 
@@ -48,28 +65,28 @@ final class iTermWorkgroupController: NSObject {
             return false
         }
         guard let instance = iTermWorkgroupInstance.enter(workgroup: workgroup,
-                                                          on: session) else {
+                                                          on: session,
+                                                          spawner: spawner) else {
             DLog("iTermWorkgroupController: failed to build instance for \(identifier)")
             return false
         }
-        instancesBySessionGUID[sessionGUID] = instance
+        instances[key] = instance
         session.delegate?.sessionDidChangeDesiredToolbarItems(session)
         return true
     }
 
     @objc
     func exit(on session: PTYSession) {
-        guard let sessionGUID = session.guid,
-              let instance = instancesBySessionGUID.removeValue(
-                forKey: sessionGUID) else { return }
+        guard let instance = instances.removeValue(forKey: ObjectIdentifier(session)) else {
+            return
+        }
         instance.teardown()
         session.delegate?.sessionDidChangeDesiredToolbarItems(session)
     }
 
     @objc
     func workgroupInstance(on session: PTYSession) -> iTermWorkgroupInstance? {
-        guard let sessionGUID = session.guid else { return nil }
-        return instancesBySessionGUID[sessionGUID]
+        return instances[ObjectIdentifier(session)]
     }
 
     // MARK: - Private

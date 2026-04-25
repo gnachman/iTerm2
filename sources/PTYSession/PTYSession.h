@@ -1025,6 +1025,12 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
 // Kill the running command (if possible), print a banner, and rerun the profile's command.
 - (void)restartSession;
 
+// Like restartSession, but replace the program before relaunching. Used by
+// workgroups so a "reload" button or a per-file diff selector can restart
+// the session with a different command instead of just typing keystrokes
+// into whatever's running.
+- (void)restartSessionWithCommand:(NSString *)command;
+
 // Make this session's textview the first responder.
 - (void)takeFocus;
 

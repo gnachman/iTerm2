@@ -9,8 +9,16 @@ import WebKit
 
 @objc
 class PTYSessionSwiftState: NSObject {
-    var peerPort: PTYSessionPeerPort?
-    var workgroupInstance: iTermWorkgroupInstance?
+    // The iTermWorkgroupInstance owns the peer port (held
+    // strongly by it and by the workgroup controller's dict).
+    weak var peerPort: PTYSessionPeerPort?
+
+    // The controller's dict keeps the instance alive
+    // for the workgroup's lifetime; sessions never outlive their
+    // workgroup (the sessionWillTerminate observer tears the
+    // workgroup down if any tracked session goes away).
+    weak var workgroupInstance: iTermWorkgroupInstance?
+
     var delegateObservers = [(PTYSessionDelegate) -> ()]()
 }
 
@@ -1592,10 +1600,9 @@ extension PTYSession {
     }
 
     // Build a peer session for a workgroup's configured peer, driven
-    // by an iTermWorkgroupSession config (profile override, command
+    // by an iTermWorkgroupSessionConfig config (profile override, command
     // override, buried until activated).
-    func makeWorkgroupPeer(
-        config: iTermWorkgroupSession) -> iTermPromise<PTYSession> {
+    func makeWorkgroupPeer(config: iTermWorkgroupSessionConfig) -> iTermPromise<PTYSession> {
         return iTermPromise<PTYSession> { seal in
             withDelegate { [weak self] delegate in
                 guard let self else {
@@ -1609,17 +1616,17 @@ extension PTYSession {
                     }
                     let factory = iTermSessionFactory()
                     var profile = self.profile!
+                    if let guid = config.profileGUID,
+                       let override = ProfileModel.sharedInstance()?
+                        .bookmark(withGuid: guid) {
+                        profile = override
+                    }
                     // Peer sessions live on the same screen as the
                     // main session and should never prompt on close —
                     // they're torn down when the workgroup exits.
                     profile[KEY_PROMPT_CLOSE] = PROMPT_ALWAYS
                     profile[KEY_SESSION_END_ACTION] =
                         iTermSessionEndAction.default.rawValue
-                    if let guid = config.profileGUID,
-                       let override = ProfileModel.sharedInstance()?
-                        .bookmark(withGuid: guid) {
-                        profile = override
-                    }
                     // Browser profile + configured URL: seed
                     // KEY_INITIAL_URL so the browser session's
                     // deferred-URL load picks it up.

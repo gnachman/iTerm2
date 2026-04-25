@@ -300,12 +300,15 @@ extension Array {
 
 @objc(iTermCCModeButtonToolbarItemDelegate)
 protocol CCModeButtonToolbarItemDelegate: AnyObject {
-    func toolbarButtonSelected(identifier: String)
+    func toolbarButtonSelected(identifier: String, sender: CCModeButtonToolbarItem)
 }
 
 @objc(iTermCCModeButtonToolbarItem)
 class CCModeButtonToolbarItem: SessionToolbarControl {
     @objc weak var buttonDelegate: CCModeButtonToolbarItemDelegate?
+    // Set by the workgroup builder so the delegate can demux which
+    // peer's button was tapped (each peer gets its own instance).
+    @objc var ownerPeerID: String?
     private let button: NSButton
     
     @objc
@@ -330,21 +333,25 @@ class CCModeButtonToolbarItem: SessionToolbarControl {
     
     @objc
     private func didSelectButton(_ sender: Any?) {
-        buttonDelegate?.toolbarButtonSelected(identifier: identifier)
+        buttonDelegate?.toolbarButtonSelected(identifier: identifier,
+                                              sender: self)
     }
 }
 
 @objc(iTermCCDiffSelectorItemDelegate)
 protocol CCDiffSelectorItemDelegate: AnyObject {
-    func diffDidSelect(filename: String)
+    func diffDidSelect(filename: String, sender: CCDiffSelectorItem)
 }
 
 @objc(iTermCCDiffSelectorItem)
 class CCDiffSelectorItem: SessionToolbarControl {
     @objc weak var diffSelectorDelegate: CCDiffSelectorItemDelegate?
+    // Set by the workgroup builder so the delegate can demux which
+    // peer's selector fired.
+    @objc var ownerPeerID: String?
     private let button: NSPopUpButton
     // Held so the item participates in keeping the shared poller alive.
-    private let poller: iTermGitPoller
+    let poller: iTermGitPoller
 
     @objc
     init(identifier: String,
@@ -395,7 +402,8 @@ class CCDiffSelectorItem: SessionToolbarControl {
     private func selectionDidChange(_ sender: Any?) {
         if let filename = button.selectedItem?.representedObject as? String {
             DLog("CCDiffSelectorItem selection changed to \(filename)")
-            diffSelectorDelegate?.diffDidSelect(filename: filename)
+            diffSelectorDelegate?.diffDidSelect(filename: filename,
+                                                sender: self)
         } else {
             DLog("CCDiffSelectorItem selectionDidChange but no representedObject; selectedItem=\(String(describing: button.selectedItem))")
         }
@@ -407,7 +415,7 @@ class CCGitSessionToolbarItem: SessionToolbarLabel {
     var ags: iTermAutoGitString!
     private let scope: iTermVariableScope
     // Held so the item participates in keeping the shared poller alive.
-    private let poller: iTermGitPoller
+    let poller: iTermGitPoller
 
     @objc
     init(identifier: String,

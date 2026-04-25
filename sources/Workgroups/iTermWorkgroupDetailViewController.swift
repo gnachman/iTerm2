@@ -276,7 +276,7 @@ class iTermWorkgroupDetailViewController: NSViewController {
         return outlineView.item(atRow: row) as? WorkgroupSessionNode
     }
 
-    private var selectedSession: iTermWorkgroupSession? {
+    private var selectedSession: iTermWorkgroupSessionConfig? {
         guard let id = selectedNode?.sessionID else { return nil }
         return currentWorkgroup?.session(withUniqueIdentifier: id)
     }
@@ -419,12 +419,12 @@ class iTermWorkgroupDetailViewController: NSViewController {
                  parentOverride: rootNode?.sessionID)
     }
 
-    private func addChild(kind: iTermWorkgroupSession.Kind,
+    private func addChild(kind: iTermWorkgroupSessionConfig.Kind,
                           displayName: String = "",
                           parentOverride: String? = nil) {
         guard var wg = currentWorkgroup,
               let parentID = parentOverride ?? selectedNode?.sessionID else { return }
-        let newSession = iTermWorkgroupSession(
+        let newSession = iTermWorkgroupSessionConfig(
             uniqueIdentifier: UUID().uuidString,
             parentID: parentID,
             kind: kind,
@@ -504,7 +504,7 @@ class iTermWorkgroupDetailViewController: NSViewController {
 
     // Called by the session detail VC when the user edits a session.
     func sessionDetail(_ sender: iTermWorkgroupSessionDetailViewController,
-                       didUpdate session: iTermWorkgroupSession,
+                       didUpdate session: iTermWorkgroupSessionConfig,
                        actionName: String) {
         guard var wg = currentWorkgroup,
               let idx = wg.sessions.firstIndex(where: {
@@ -588,7 +588,7 @@ extension iTermWorkgroupDetailViewController: NSOutlineViewDataSource, NSOutline
                        selectedSessionID: selectedNode?.sessionID)
     }
 
-    private func displayLabel(for session: iTermWorkgroupSession) -> String {
+    private func displayLabel(for session: iTermWorkgroupSessionConfig) -> String {
         switch session.kind {
         case .root:
             return "Main session"

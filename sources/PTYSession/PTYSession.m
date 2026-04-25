@@ -3388,6 +3388,27 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
     return restorableSession;
 }
 
+- (void)restartSessionWithCommand:(NSString *)command {
+    // Mirror the Swift callers' isRestartable() guard. -restartSession
+    // asserts(self.isRestartable) at the top, so an ObjC caller (or
+    // any future path) that forgets the gate would abort instead of
+    // failing gracefully. A non-restartable session has nothing to
+    // restart — including reassigning `program` would only flip the
+    // session into an inconsistent restartable-but-never-launched
+    // state, so the early return covers both halves.
+    if (!self.isRestartable) {
+        return;
+    }
+    if (command.length > 0) {
+        // Update the stored program so that
+        // replaceTerminatedShellWithNewInstance (called after the
+        // shell dies) launches the new command rather than the
+        // original one.
+        self.program = command;
+    }
+    [self restartSession];
+}
+
 - (void)restartSession {
     DLog(@"Restart session %@", self);
     assert(self.isRestartable);

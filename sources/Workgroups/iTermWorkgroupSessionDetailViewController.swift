@@ -31,12 +31,13 @@ import AppKit
 class iTermWorkgroupSessionDetailViewController: NSViewController {
     weak var parentDetail: iTermWorkgroupDetailViewController?
 
-    private var session: iTermWorkgroupSession?
+    private var session: iTermWorkgroupSessionConfig?
     private var workgroup: iTermWorkgroup?
 
     // Sections
     private var profileRow: NSView!
     private var commandRow: NSView!
+    private var perFileCommandRow: NSView!
     private var urlRow: NSView!
     private var peerRow: NSView!
     private var splitSection: NSView!
@@ -46,6 +47,7 @@ class iTermWorkgroupSessionDetailViewController: NSViewController {
     // Controls
     private var profilePopup: NSPopUpButton!
     private var commandField: NSTextField!
+    private var perFileCommandField: NSTextField!
     private var urlField: NSTextField!
     private var peerNameField: NSTextField!
 
@@ -88,13 +90,17 @@ class iTermWorkgroupSessionDetailViewController: NSViewController {
                                     control: makeProfilePopup())
         commandRow = makeLabeledRow(labelText: "Command:",
                                     control: makeCommandField())
+        perFileCommandRow = makeLabeledRow(
+            labelText: "File command:",
+            control: makePerFileCommandField())
         urlRow = makeLabeledRow(labelText: "URL:", control: makeURLField())
         peerRow = makeLabeledRow(labelText: "Name:",
                                  control: makePeerNameField())
         splitSection = makeSplitSection()
         toolbarSection = makeToolbarSection()
 
-        for section in [profileRow, commandRow, urlRow, peerRow,
+        for section in [profileRow, commandRow, perFileCommandRow,
+                        urlRow, peerRow,
                         splitSection, toolbarSection] as [NSView] {
             root.addSubview(section)
         }
@@ -135,6 +141,18 @@ class iTermWorkgroupSessionDetailViewController: NSViewController {
         field.font = .userFixedPitchFont(ofSize: NSFont.systemFontSize)
         field.delegate = self
         commandField = field
+        return field
+    }
+
+    // The per-file command runs when the user picks a file from the
+    // changedFileSelector toolbar item. `\(file)` is substituted with
+    // the picked path before the command runs.
+    private func makePerFileCommandField() -> NSView {
+        let field = NSTextField(frame: .zero)
+        field.font = .userFixedPitchFont(ofSize: NSFont.systemFontSize)
+        field.delegate = self
+        field.placeholderString = "git diff HEAD '\\(file)'"
+        perFileCommandField = field
         return field
     }
 
@@ -312,6 +330,7 @@ class iTermWorkgroupSessionDetailViewController: NSViewController {
 
         layoutSection(profileRow, height: rowHeight)
         layoutSection(commandRow, height: rowHeight)
+        layoutSection(perFileCommandRow, height: rowHeight)
         layoutSection(urlRow, height: rowHeight)
         layoutSection(peerRow, height: rowHeight)
         layoutSection(splitSection, height: 2 * rowHeight + rowSpacing)
@@ -327,6 +346,7 @@ class iTermWorkgroupSessionDetailViewController: NSViewController {
         // Inner layout of each section.
         layoutLabeledRow(profileRow)
         layoutLabeledRow(commandRow)
+        layoutLabeledRow(perFileCommandRow)
         layoutLabeledRow(urlRow)
         layoutLabeledRow(peerRow)
         layoutSplitSection()
@@ -443,7 +463,7 @@ class iTermWorkgroupSessionDetailViewController: NSViewController {
 
     // MARK: - Load
 
-    func load(session: iTermWorkgroupSession?,
+    func load(session: iTermWorkgroupSessionConfig?,
               in workgroup: iTermWorkgroup?) {
         if let current = self.session, let new = session,
            current == new,
@@ -455,8 +475,8 @@ class iTermWorkgroupSessionDetailViewController: NSViewController {
         self.workgroup = workgroup
         if session == nil || workgroup == nil {
             emptyLabel.isHidden = false
-            [profileRow, commandRow, urlRow, peerRow, splitSection,
-             toolbarSection].forEach { $0.isHidden = true }
+            [profileRow, commandRow, perFileCommandRow, urlRow, peerRow,
+             splitSection, toolbarSection].forEach { $0.isHidden = true }
             view.needsLayout = true
             return
         }
@@ -472,6 +492,7 @@ class iTermWorkgroupSessionDetailViewController: NSViewController {
 
         syncProfilePopup(to: s)
         commandField.stringValue = s.command
+        perFileCommandField.stringValue = s.perFileCommand
         urlField.stringValue = s.urlString
         syncKindControls(to: s)
 
@@ -483,6 +504,7 @@ class iTermWorkgroupSessionDetailViewController: NSViewController {
         let isBrowser = resolvedProfileIsBrowser(for: s)
         profileRow.isHidden = isRoot
         commandRow.isHidden = isRoot || isBrowser
+        perFileCommandRow.isHidden = !shouldShowPerFileCommandRow(for: s)
         urlRow.isHidden = isRoot || !isBrowser
         // Every session is a potential peer-group leader (root and any
         // non-peer host can carry a peer group), so every kind gets an
@@ -500,7 +522,7 @@ class iTermWorkgroupSessionDetailViewController: NSViewController {
 
     // MARK: - Value sync helpers
 
-    private func syncProfilePopup(to s: iTermWorkgroupSession) {
+    private func syncProfilePopup(to s: iTermWorkgroupSessionConfig) {
         if let guid = s.profileGUID,
            let idx = profilePopup.itemArray.firstIndex(where: {
                ($0.representedObject as? String) == guid
@@ -511,7 +533,7 @@ class iTermWorkgroupSessionDetailViewController: NSViewController {
         }
     }
 
-    private func syncKindControls(to s: iTermWorkgroupSession) {
+    private func syncKindControls(to s: iTermWorkgroupSessionConfig) {
         // displayName drives the peer-group label regardless of kind, so
         // sync it whenever the row could be shown (peers and hosts).
         peerNameField.stringValue = s.displayName
@@ -560,7 +582,7 @@ class iTermWorkgroupSessionDetailViewController: NSViewController {
         }
     }
 
-    private func resolvedProfileIsBrowser(for session: iTermWorkgroupSession) -> Bool {
+    private func resolvedProfileIsBrowser(for session: iTermWorkgroupSessionConfig) -> Bool {
         guard let model = ProfileModel.sharedInstance() else { return false }
         let profile: [AnyHashable: Any]?
         if let guid = session.profileGUID,
@@ -625,7 +647,7 @@ class iTermWorkgroupSessionDetailViewController: NSViewController {
 
     // MARK: - Commit
 
-    private func commitUpdate(_ updated: iTermWorkgroupSession,
+    private func commitUpdate(_ updated: iTermWorkgroupSessionConfig,
                               actionName: String,
                               after: (() -> Void)? = nil) {
         session = updated
@@ -717,6 +739,7 @@ class iTermWorkgroupSessionDetailViewController: NSViewController {
             self.toolbarTable.selectRowIndexes(IndexSet(integer: insertAt),
                                                byExtendingSelection: false)
             self.refreshToolbarParamUI()
+            self.refreshConditionalRowsVisibility()
         }
     }
 
@@ -733,13 +756,40 @@ class iTermWorkgroupSessionDetailViewController: NSViewController {
             guard let self else { return }
             self.toolbarTable.reloadData()
             self.refreshToolbarParamUI()
+            self.refreshConditionalRowsVisibility()
+        }
+    }
+
+    // Per-file command is only meaningful when the user actually has a
+    // changedFileSelector in this session's toolbar — that's the only
+    // thing that fires it. Browsers and the root never use it. Single
+    // source of truth so toolbar mutations and the initial show()
+    // don't drift apart.
+    private func shouldShowPerFileCommandRow(for s: iTermWorkgroupSessionConfig) -> Bool {
+        if case .root = s.kind { return false }
+        if resolvedProfileIsBrowser(for: s) { return false }
+        return s.toolbarItems.contains(where: {
+            if case .changedFileSelector = $0 { return true }
+            return false
+        })
+    }
+
+    // Show/hide rows whose visibility depends on the current toolbar
+    // contents. Cheaper than a full refresh() and doesn't clobber
+    // other fields' in-progress edits.
+    private func refreshConditionalRowsVisibility() {
+        guard let s = session else { return }
+        let shouldHide = !shouldShowPerFileCommandRow(for: s)
+        if perFileCommandRow.isHidden != shouldHide {
+            perFileCommandRow.isHidden = shouldHide
+            view.needsLayout = true
         }
     }
 
     // A session is "in a peer group" if it's a peer itself, or if it
     // hosts peer children. Both cases need a display-name field so the
     // session has a label in the mode switcher.
-    private func sessionIsInPeerGroup(_ s: iTermWorkgroupSession) -> Bool {
+    private func sessionIsInPeerGroup(_ s: iTermWorkgroupSessionConfig) -> Bool {
         if case .peer = s.kind { return true }
         guard let wg = workgroup else { return false }
         return wg.sessions.contains { child in
@@ -750,7 +800,7 @@ class iTermWorkgroupSessionDetailViewController: NSViewController {
     }
 
     private func isRequiredModeSwitcher(at row: Int,
-                                        in s: iTermWorkgroupSession) -> Bool {
+                                        in s: iTermWorkgroupSessionConfig) -> Bool {
         guard row < s.toolbarItems.count,
               case .modeSwitcher = s.toolbarItems[row] else { return false }
         guard let wg = workgroup else { return false }
@@ -772,9 +822,9 @@ class iTermWorkgroupSessionDetailViewController: NSViewController {
     }
 }
 
-// MARK: - iTermWorkgroupSession.Kind introspection
+// MARK: - iTermWorkgroupSessionConfig.Kind introspection
 
-extension iTermWorkgroupSession.Kind {
+extension iTermWorkgroupSessionConfig.Kind {
     var isPeer: Bool { if case .peer = self { return true } else { return false } }
     var isSplit: Bool { if case .split = self { return true } else { return false } }
 }
@@ -804,6 +854,11 @@ extension iTermWorkgroupSessionDetailViewController: NSTextFieldDelegate {
             if s.command != field.stringValue {
                 s.command = field.stringValue
                 commitUpdate(s, actionName: "Change Command")
+            }
+        case perFileCommandField:
+            if s.perFileCommand != field.stringValue {
+                s.perFileCommand = field.stringValue
+                commitUpdate(s, actionName: "Change Per-File Command")
             }
         case urlField:
             if s.urlString != field.stringValue {
@@ -841,7 +896,7 @@ extension iTermWorkgroupSessionDetailViewController: NSTextFieldDelegate {
 
     // Every name currently used by a session in the workgroup other
     // than `ignoring` (so renaming-to-same doesn't count against us).
-    private func takenNames(excluding ignoring: iTermWorkgroupSession) -> Set<String> {
+    private func takenNames(excluding ignoring: iTermWorkgroupSessionConfig) -> Set<String> {
         guard let wg = workgroup else { return [] }
         return Set(wg.sessions.compactMap { s -> String? in
             guard s.uniqueIdentifier != ignoring.uniqueIdentifier else {

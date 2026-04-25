@@ -34,7 +34,7 @@ enum WorkgroupPresets {
         // stored Swift string.
         let diffCommand = "git diff \\(workgroup.selectedFile) HEAD"
 
-        let root = iTermWorkgroupSession(
+        let root = iTermWorkgroupSessionConfig(
             uniqueIdentifier: rootID,
             parentID: nil,
             kind: .root,
@@ -44,7 +44,7 @@ enum WorkgroupPresets {
             toolbarItems: [.modeSwitcher, .gitStatus],
             displayName: "")
 
-        let diff = iTermWorkgroupSession(
+        let diff = iTermWorkgroupSessionConfig(
             uniqueIdentifier: diffID,
             parentID: rootID,
             kind: .peer,

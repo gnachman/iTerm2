@@ -17,15 +17,15 @@ import Foundation
 struct iTermWorkgroup: Codable, Equatable {
     let uniqueIdentifier: String
     var name: String
-    var sessions: [iTermWorkgroupSession]
+    var sessions: [iTermWorkgroupSessionConfig]
 
-    var root: iTermWorkgroupSession? {
+    var root: iTermWorkgroupSessionConfig? {
         return sessions.first(where: { $0.parentID == nil })
     }
 
     // Convenience: build an empty workgroup with just a root session.
     static func newEmpty(name: String) -> iTermWorkgroup {
-        let root = iTermWorkgroupSession(
+        let root = iTermWorkgroupSessionConfig(
             uniqueIdentifier: UUID().uuidString,
             parentID: nil,
             kind: .root,
@@ -39,11 +39,11 @@ struct iTermWorkgroup: Codable, Equatable {
                               sessions: [root])
     }
 
-    func children(of parentID: String) -> [iTermWorkgroupSession] {
+    func children(of parentID: String) -> [iTermWorkgroupSessionConfig] {
         return sessions.filter { $0.parentID == parentID }
     }
 
-    func session(withUniqueIdentifier id: String) -> iTermWorkgroupSession? {
+    func session(withUniqueIdentifier id: String) -> iTermWorkgroupSessionConfig? {
         return sessions.first(where: { $0.uniqueIdentifier == id })
     }
 }

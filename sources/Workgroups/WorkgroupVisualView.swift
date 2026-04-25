@@ -113,7 +113,7 @@ final class WorkgroupVisualView: NSView {
             activePeerByHost[hostID] = sid
         }
         // Walk up ancestors to find which tab the selection lives in.
-        var cursor: iTermWorkgroupSession? = selected
+        var cursor: iTermWorkgroupSessionConfig? = selected
         while let c = cursor {
             if case .tab = c.kind {
                 activeTabSessionID = c.uniqueIdentifier
@@ -147,7 +147,7 @@ final class WorkgroupVisualView: NSView {
             if case .tab = s.kind { return true }
             return false
         }
-        let tabs: [iTermWorkgroupSession] = [root] + tabChildren
+        let tabs: [iTermWorkgroupSessionConfig] = [root] + tabChildren
         let activeTabID = activeTabSessionID ?? root.uniqueIdentifier
 
         // Only draw the tab bar when there are actually multiple tabs —
@@ -180,7 +180,7 @@ final class WorkgroupVisualView: NSView {
                   withAttributes: attrs)
     }
 
-    private func drawTabBar(tabs: [iTermWorkgroupSession],
+    private func drawTabBar(tabs: [iTermWorkgroupSessionConfig],
                             activeID: String, in rect: NSRect) {
         NSColor.controlBackgroundColor.setFill()
         rect.fill()
@@ -204,7 +204,7 @@ final class WorkgroupVisualView: NSView {
         }
     }
 
-    private func tabLabel(for s: iTermWorkgroupSession) -> String {
+    private func tabLabel(for s: iTermWorkgroupSessionConfig) -> String {
         if !s.displayName.isEmpty { return s.displayName }
         switch s.kind {
         case .root: return "Main"
@@ -220,7 +220,7 @@ final class WorkgroupVisualView: NSView {
     // which peer is currently active. Only the remaining (non-split)
     // "core" area is governed by the peer switcher, so swapping between
     // Main and its peer P doesn't make Main's splits disappear.
-    private func drawContainer(_ container: iTermWorkgroupSession,
+    private func drawContainer(_ container: iTermWorkgroupSessionConfig,
                                in rect: NSRect,
                                wg: iTermWorkgroup) {
         var remaining = rect
@@ -271,7 +271,7 @@ final class WorkgroupVisualView: NSView {
         }
     }
 
-    private func drawModeSwitcher(members: [iTermWorkgroupSession],
+    private func drawModeSwitcher(members: [iTermWorkgroupSessionConfig],
                                   activeID: String, in rect: NSRect) {
         NSColor.controlBackgroundColor.setFill()
         rect.fill()
@@ -291,7 +291,7 @@ final class WorkgroupVisualView: NSView {
         }
     }
 
-    private func peerLabel(for s: iTermWorkgroupSession) -> String {
+    private func peerLabel(for s: iTermWorkgroupSessionConfig) -> String {
         if !s.displayName.isEmpty { return s.displayName }
         switch s.kind {
         case .root: return "Main"
@@ -303,7 +303,7 @@ final class WorkgroupVisualView: NSView {
 
     // Returns the location to render this split at — the pending drag
     // value if one is in flight, else the clamped model value.
-    private func effectiveLocation(for split: iTermWorkgroupSession,
+    private func effectiveLocation(for split: iTermWorkgroupSessionConfig,
                                    settings: SplitSettings) -> Double {
         if let drag = activeDrag,
            drag.region.sessionID == split.uniqueIdentifier {
@@ -312,7 +312,7 @@ final class WorkgroupVisualView: NSView {
         return min(max(settings.location, splitLocationMin), splitLocationMax)
     }
 
-    private func carveSplitRect(split: iTermWorkgroupSession,
+    private func carveSplitRect(split: iTermWorkgroupSessionConfig,
                                 from remaining: inout NSRect,
                                 settings: SplitSettings) -> NSRect {
         let parent = remaining
@@ -376,7 +376,7 @@ final class WorkgroupVisualView: NSView {
         return splitRect
     }
 
-    private func drawPane(_ session: iTermWorkgroupSession, in rect: NSRect) {
+    private func drawPane(_ session: iTermWorkgroupSessionConfig, in rect: NSRect) {
         let inset = rect.insetBy(dx: paneInset, dy: paneInset)
         let isSelected = session.uniqueIdentifier == selectedSessionID
         let fill: NSColor = isSelected
@@ -407,7 +407,7 @@ final class WorkgroupVisualView: NSView {
         hitRegions.append(HitRegion(rect: rect, sessionID: session.uniqueIdentifier))
     }
 
-    private func paneLabel(for s: iTermWorkgroupSession) -> String {
+    private func paneLabel(for s: iTermWorkgroupSessionConfig) -> String {
         if !s.displayName.isEmpty { return s.displayName }
         switch s.kind {
         case .root: return "Main"

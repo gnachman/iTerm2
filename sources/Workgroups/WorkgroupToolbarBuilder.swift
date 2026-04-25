@@ -32,10 +32,16 @@ struct WorkgroupToolbarContext {
     let activePeerIdentifier: String
 
     // Delegate assigned to every back/forward/reload/settings button
-    // the builder produces. The peer port conforms to
-    // CCModeButtonToolbarItemDelegate and demuxes using the item's
-    // `identifier` (which the builder sets to the kind's rawValue).
+    // the builder produces. The peer port (or workgroup instance, for
+    // non-peer toolbars) conforms to CCModeButtonToolbarItemDelegate
+    // and demuxes using the item's `identifier` (which the builder
+    // sets to the kind's rawValue) plus its `ownerPeerID` tag.
     weak var buttonDelegate: CCModeButtonToolbarItemDelegate?
+
+    // Delegate for the changedFileSelector pop-up. Separate from
+    // peerPort so non-peer toolbars (split/tab hosts) can route file
+    // picks to the workgroup instance even though they have no port.
+    weak var diffSelectorDelegate: CCDiffSelectorItemDelegate?
 }
 
 // Does an item in a given peer-group need the shared git poller to be
@@ -56,7 +62,7 @@ enum WorkgroupToolbarBuilder {
     // mode-switcher get one shared instance). Returned order follows
     // first-appearance order across the inputs. Items that need the
     // git poller but whose context has no poller are dropped.
-    static func buildUnion(fromSessions sessions: [iTermWorkgroupSession],
+    static func buildUnion(fromSessions sessions: [iTermWorkgroupSessionConfig],
                            context: WorkgroupToolbarContext) -> [(item: iTermWorkgroupToolbarItem, view: SessionToolbarGenericView)] {
         var seen = Set<iTermWorkgroupToolbarItem>()
         var ordered: [iTermWorkgroupToolbarItem] = []
@@ -77,9 +83,14 @@ enum WorkgroupToolbarBuilder {
 
     // Build a single item. Returns nil when the item can't be
     // realized in this context (e.g. needs git poller but none was
-    // provided).
+    // provided). `ownerPeerID` tags the item with the peer it was
+    // built for so per-peer delegate callbacks (button taps, file
+    // picks) know which peer fired them; pass nil for non-peer
+    // toolbars (split/tab hosts that don't participate in a peer
+    // group at this level).
     static func build(item: iTermWorkgroupToolbarItem,
-                      context: WorkgroupToolbarContext) -> SessionToolbarGenericView? {
+                      context: WorkgroupToolbarContext,
+                      ownerPeerID: String? = nil) -> SessionToolbarGenericView? {
         let id = item.kind.rawValue
         switch item {
         case .gitStatus:
@@ -93,7 +104,8 @@ enum WorkgroupToolbarBuilder {
             let view = CCDiffSelectorItem(identifier: id,
                                           priority: 2,
                                           poller: poller)
-            view.diffSelectorDelegate = context.peerPort
+            view.diffSelectorDelegate = context.diffSelectorDelegate
+            view.ownerPeerID = ownerPeerID
             return view
         case .modeSwitcher:
             let view = WorkgroupModeSwitcherItem(
@@ -104,13 +116,13 @@ enum WorkgroupToolbarBuilder {
             view.modeSwitchDelegate = context.peerPort
             return view
         case .back:
-            return makeButton(kind: .back, symbol: .chevronLeft, context: context)
+            return makeButton(kind: .back, symbol: .chevronLeft, context: context, ownerPeerID: ownerPeerID)
         case .forward:
-            return makeButton(kind: .forward, symbol: .chevronRight, context: context)
+            return makeButton(kind: .forward, symbol: .chevronRight, context: context, ownerPeerID: ownerPeerID)
         case .reload:
-            return makeButton(kind: .reload, symbol: .arrowClockwise, context: context)
+            return makeButton(kind: .reload, symbol: .arrowClockwise, context: context, ownerPeerID: ownerPeerID)
         case .settings:
-            return makeButton(kind: .settings, symbol: .gearshape, context: context)
+            return makeButton(kind: .settings, symbol: .gearshape, context: context, ownerPeerID: ownerPeerID)
         case .spacer(let minW, let maxW):
             return SessionToolbarSpacer(identifier: id,
                                         priority: 1,
@@ -121,13 +133,15 @@ enum WorkgroupToolbarBuilder {
 
     private static func makeButton(kind: iTermWorkgroupToolbarItemKind,
                                    symbol: SFSymbol,
-                                   context: WorkgroupToolbarContext) -> SessionToolbarGenericView? {
+                                   context: WorkgroupToolbarContext,
+                                   ownerPeerID: String?) -> SessionToolbarGenericView? {
         let image = NSImage(systemSymbolName: symbol.rawValue,
                             accessibilityDescription: nil) ?? NSImage()
         let view = CCModeButtonToolbarItem(identifier: kind.rawValue,
                                            priority: 3,
                                            image: image)
         view.buttonDelegate = context.buttonDelegate
+        view.ownerPeerID = ownerPeerID
         return view
     }
 }

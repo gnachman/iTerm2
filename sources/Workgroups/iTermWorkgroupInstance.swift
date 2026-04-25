@@ -29,14 +29,37 @@ final class iTermWorkgroupInstance: NSObject {
     // The peer port wired to the main session's SessionView.
     @objc let peerPort: iTermWorkgroupPeerPort
 
-    // Per-non-peer-session toolbar item views, keyed by session GUID.
-    // Built once when the session is spawned and retained for the
-    // life of the workgroup instance.
-    private var nonPeerToolbarItems: [String: [SessionToolbarGenericView]] = [:]
+    // Seam for creating peers, splits, and tabs. Production uses
+    // DefaultWorkgroupSessionSpawner (which calls into PTYSession,
+    // PseudoTerminal, and iTermSessionFactory). Tests inject a fake
+    // that returns synthetic PTYSessions without touching windows.
+    let spawner: WorkgroupSessionSpawner
 
-    // GUIDs of non-peer sessions we spawned, in spawn order. Used by
-    // teardown to terminate them when the workgroup exits.
-    private var nonPeerSessionGUIDs: [String] = []
+    // Per-session bundle of state for a non-peer (split/tab) child:
+    // the live PTYSession and its toolbar item views.
+    private struct NonPeerEntry {
+        let session: PTYSession
+        var items: [SessionToolbarGenericView]
+    }
+
+    // Non-peer entries keyed by workgroup-config UUID. We hold a
+    // strong reference to the session so it can't dealloc between
+    // spawn and teardown, and so we can find the session even after
+    // PTYSession.replaceTerminatedShellWithNewInstance reassigns its
+    // GUID on restart — keying by configID (stable) instead of GUID
+    // (rotates) makes toolbar/lookup robust to those rotations.
+    private var nonPeerEntriesByConfigID: [String: NonPeerEntry] = [:]
+
+    // Insertion order so teardown terminates in spawn order.
+    private var nonPeerOrderedConfigIDs: [String] = []
+
+    // Non-peer sessions tracked for sessionWillTerminate matching but
+    // not owned by us (e.g. peer children of a nested host — the
+    // nested peer port already owns the lifecycle, but we want to
+    // notice if any of them terminates so we can tear down the
+    // workgroup). Stored as ObjectIdentifier so we can compare by
+    // reference in the notification handler.
+    private var trackedSessionIdentities: Set<ObjectIdentifier> = []
 
     // Nested peer ports for non-peer hosts that themselves host a peer
     // group (e.g. a split whose config declares peer children). Each
@@ -44,14 +67,82 @@ final class iTermWorkgroupInstance: NSObject {
     // consults them when the main port doesn't own the session.
     private var nestedPeerPorts: [iTermWorkgroupPeerPort] = []
 
+    // Workgroup-wide git poller, shared across every gitStatus and
+    // changedFileSelector view in every peer group AND every non-peer
+    // host. Built once at instance creation if any session in the
+    // tree (peer or otherwise) declares an item that needs it; nil
+    // otherwise. Owning it here (vs on the main peer port) means
+    // workgroups whose only git-aware items live on splits or tabs
+    // still get a poller, and updates fan out to all toolbars.
+    @objc let gitPoller: iTermGitPoller?
+
+    // Holds onto the leader's PWD/host observers that drive the
+    // poller's currentDirectory and enabled state. Normally a
+    // CCGitSessionToolbarItem (the gitStatus item) creates one of
+    // these and the poller tracks the leader. But a workgroup can
+    // have a changedFileSelector without any gitStatus item — in
+    // that case nothing else would set up the observer chain, the
+    // poller's currentDirectory stays nil, and the selector
+    // dropdown is permanently empty. Always holding one here keeps
+    // the poller productive whenever it exists.
+    private var gitDirectoryTracker: iTermAutoGitString?
+
     init(workgroup: iTermWorkgroup,
          mainSession: PTYSession,
-         peerPort: iTermWorkgroupPeerPort) {
+         peerPort: iTermWorkgroupPeerPort,
+         gitPoller: iTermGitPoller?,
+         spawner: WorkgroupSessionSpawner) {
         self.workgroupUniqueIdentifier = workgroup.uniqueIdentifier
         self.workgroup = workgroup
         self.mainSession = mainSession
         self.peerPort = peerPort
+        self.gitPoller = gitPoller
+        self.spawner = spawner
         super.init()
+        gitPoller?.delegate = self
+        // When any of our tracked sessions terminates (leader, peer,
+        // or non-peer child), exit the workgroup so the leader's
+        // workgroupInstance is cleared and re-entering produces a
+        // fresh setup. Without this, closing a child pane left the
+        // workgroup half-alive — the controller's dict still pointed
+        // at this instance, so enter() returned early as a no-op.
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(sessionWillTerminate(_:)),
+            name: NSNotification.Name.iTermSessionWillTerminate,
+            object: nil)
+    }
+
+    deinit {
+        NotificationCenter.default.removeObserver(self)
+    }
+
+    @objc
+    private func sessionWillTerminate(_ notification: Notification) {
+        guard let session = notification.object as? PTYSession else { return }
+        let isMine: Bool = {
+            if mainSession === session { return true }
+            if peerPort.contains(session: session) { return true }
+            for port in nestedPeerPorts where port.contains(session: session) {
+                return true
+            }
+            // Reference-equality check — non-peer sessions can rotate
+            // their GUID across restarts (replaceTerminatedShellWithNewInstance),
+            // so a GUID-based contains here would miss a recently-restarted
+            // session. The PTYSession object identity stays stable.
+            if trackedSessionIdentities.contains(ObjectIdentifier(session)) {
+                return true
+            }
+            return false
+        }()
+        guard isMine else { return }
+        guard let leader = mainSession else {
+            // Leader is gone too — just tear down directly. Nothing
+            // for the controller's per-session dict to release.
+            teardown()
+            return
+        }
+        iTermWorkgroupController.instance.exit(on: leader)
     }
 
     // The toolbar items to show on a specific session's SessionView.
@@ -70,10 +161,13 @@ final class iTermWorkgroupInstance: NSObject {
     // the session was spawned and live in nonPeerToolbarItems.
     @objc
     func toolbarItems(for session: PTYSession) -> [SessionToolbarGenericView] {
-        if let guid = session.guid,
-           let items = nonPeerToolbarItems[guid] {
-            return items
-        }
+        // Peer ports first. A non-peer host that itself runs a peer
+        // group (e.g. a split with peer children) is registered
+        // BOTH as a non-peer entry (with an empty items list, for
+        // teardown tracking) AND as the leader of a nested peer
+        // port. Its real toolbar is the port's per-peer list, so
+        // the port lookup must win — otherwise the empty items
+        // list shadows it and the host's toolbar disappears.
         if let id = peerPort.identifier(for: session) {
             return peerPort.toolbarItems(forPeerID: id)
         }
@@ -82,34 +176,33 @@ final class iTermWorkgroupInstance: NSObject {
                 return port.toolbarItems(forPeerID: id)
             }
         }
+        // Leaf non-peer (no peer children). Lookup by reference
+        // equality — GUIDs rotate on restart.
+        for entry in nonPeerEntriesByConfigID.values where entry.session === session {
+            return entry.items
+        }
         return []
     }
 
     // Register a peer port owned by a non-peer host (e.g. a split or
-    // tab whose config itself declares peer children). The host's
-    // toolbar is provided by the port, not by nonPeerToolbarItems.
-    //
-    // `peerChildrenPromises` are the launch promises for the nested
-    // port's non-leader peers. As each resolves, we record its GUID
-    // in nonPeerSessionGUIDs so teardown can clear workgroupInstance
-    // and peerPort on it before terminate — otherwise the peer keeps
-    // a dangling back-pointer to the torn-down instance. (The port's
-    // own invalidate() terminates non-leader peers, but doesn't clear
-    // those back-pointers; belt-and-suspenders here keeps cleanup
-    // symmetric with registerNonPeer.)
+    // tab whose config itself declares peer children). The host
+    // session is registered as a non-peer entry (its toolbar comes
+    // from the port, so we store an empty items list). The port's
+    // own non-leader peers are tracked by reference identity for the
+    // sessionWillTerminate observer.
     func registerNestedPeerPort(_ port: iTermWorkgroupPeerPort,
                                 hostSession: PTYSession,
+                                hostConfig: iTermWorkgroupSessionConfig,
                                 peerChildrenPromises: [iTermPromise<PTYSession>]) {
         nestedPeerPorts.append(port)
-        if let guid = hostSession.guid {
-            nonPeerSessionGUIDs.append(guid)
-        }
+        nonPeerOrderedConfigIDs.append(hostConfig.uniqueIdentifier)
+        nonPeerEntriesByConfigID[hostConfig.uniqueIdentifier] =
+            NonPeerEntry(session: hostSession, items: [])
+        trackedSessionIdentities.insert(ObjectIdentifier(hostSession))
         for promise in peerChildrenPromises {
             promise.then { [weak self] peerSession in
-                guard let self, let guid = peerSession.guid else { return }
-                if !self.nonPeerSessionGUIDs.contains(guid) {
-                    self.nonPeerSessionGUIDs.append(guid)
-                }
+                guard let self else { return }
+                self.trackedSessionIdentities.insert(ObjectIdentifier(peerSession))
             }
         }
     }
@@ -118,24 +211,26 @@ final class iTermWorkgroupInstance: NSObject {
     // its config-built toolbar items, and wire the workgroup back-
     // pointer so its desiredToolbarItems can find us.
     func registerNonPeer(session: PTYSession,
-                        config: iTermWorkgroupSession) {
-        guard let guid = session.guid else { return }
+                        config: iTermWorkgroupSessionConfig) {
         let items = buildNonPeerToolbarItems(for: config)
-        nonPeerToolbarItems[guid] = items
-        nonPeerSessionGUIDs.append(guid)
+        nonPeerOrderedConfigIDs.append(config.uniqueIdentifier)
+        nonPeerEntriesByConfigID[config.uniqueIdentifier] =
+            NonPeerEntry(session: session, items: items)
+        trackedSessionIdentities.insert(ObjectIdentifier(session))
         session.workgroupInstance = self
         // Refresh the new session's toolbar view to pick up its items.
         session.delegate?.sessionDidChangeDesiredToolbarItems(session)
     }
 
-    private func buildNonPeerToolbarItems(for config: iTermWorkgroupSession) -> [SessionToolbarGenericView] {
+    private func buildNonPeerToolbarItems(for config: iTermWorkgroupSessionConfig) -> [SessionToolbarGenericView] {
         let context = WorkgroupToolbarContext(
             peerPort: nil,
-            gitPoller: peerPort.gitPoller,
+            gitPoller: gitPoller,
             scope: mainSession?.genericScope ?? iTermVariableScope(),
             peerGroupMembers: [],
             activePeerIdentifier: "",
-            buttonDelegate: nil)
+            buttonDelegate: self,
+            diffSelectorDelegate: self)
         var built: [SessionToolbarGenericView] = []
         for item in config.toolbarItems {
             // modeSwitcher only makes sense in a peer group; skip it
@@ -143,11 +238,32 @@ final class iTermWorkgroupInstance: NSObject {
             // settings UI.
             if case .modeSwitcher = item { continue }
             if let view = WorkgroupToolbarBuilder.build(
-                item: item, context: context) {
+                item: item,
+                context: context,
+                ownerPeerID: config.uniqueIdentifier) {
                 built.append(view)
             }
         }
         return built
+    }
+
+    // Look up the live PTY session for a workgroup config UUID. Used
+    // by toolbar callbacks (button taps, file picks) that come in
+    // tagged with the config UUID; resolves it to whatever live
+    // session that config currently corresponds to (peer in main
+    // port, peer in a nested port, or non-peer host).
+    fileprivate func liveSession(forConfigID configID: String) -> PTYSession? {
+        if let s = peerPort.session(forIdentifier: configID) { return s }
+        for port in nestedPeerPorts {
+            if let s = port.session(forIdentifier: configID) { return s }
+        }
+        return nonPeerEntriesByConfigID[configID]?.session
+    }
+
+    fileprivate func config(forConfigID configID: String) -> iTermWorkgroupSessionConfig? {
+        return workgroup.sessions.first(where: {
+            $0.uniqueIdentifier == configID
+        })
     }
 
     // Tear down peers, terminate non-peer children, and release
@@ -161,24 +277,35 @@ final class iTermWorkgroupInstance: NSObject {
             port.invalidate()
         }
         nestedPeerPorts.removeAll()
-        for guid in nonPeerSessionGUIDs {
-            if let s = iTermController.sharedInstance()?.session(withGUID: guid) {
-                s.workgroupInstance = nil
-                s.peerPort = nil
-                s.terminate()
+        for configID in nonPeerOrderedConfigIDs {
+            guard let entry = nonPeerEntriesByConfigID[configID] else { continue }
+            entry.session.workgroupInstance = nil
+            entry.session.peerPort = nil
+            // Skip sessions that have already exited. Calling
+            // terminate() on them would still post a second
+            // iTermSessionWillTerminate notification, which re-
+            // enters our own observer mid-teardown for no benefit.
+            // Note: iTermSessionWillTerminate fires before `exited`
+            // is set, so this guard does NOT skip the session that
+            // triggered teardown — only ones that exited earlier.
+            if !entry.session.exited {
+                entry.session.terminate()
             }
         }
-        nonPeerSessionGUIDs.removeAll()
-        nonPeerToolbarItems.removeAll()
+        nonPeerOrderedConfigIDs.removeAll()
+        nonPeerEntriesByConfigID.removeAll()
+        trackedSessionIdentities.removeAll()
         mainSession?.workgroupInstance = nil
         mainSession?.peerPort = nil
     }
 
     // MARK: - Entry
 
-    // Build a workgroup instance on the given main session.
+    // Build a workgroup instance on the given main session. Tests can
+    // pass a fake spawner; production callers should use the default.
     static func enter(workgroup: iTermWorkgroup,
-                      on mainSession: PTYSession) -> iTermWorkgroupInstance? {
+                      on mainSession: PTYSession,
+                      spawner: WorkgroupSessionSpawner = DefaultWorkgroupSessionSpawner()) -> iTermWorkgroupInstance? {
         guard let root = workgroup.root else { return nil }
 
         // Peer-group members = the root + its peer children.
@@ -187,30 +314,61 @@ final class iTermWorkgroupInstance: NSObject {
             if case .peer = s.kind { return true }
             return false
         }
-        let peerConfigs: [iTermWorkgroupSession] = [root] + peerChildren
+        let peerConfigs: [iTermWorkgroupSessionConfig] = [root] + peerChildren
 
         // Build promises for each peer session. The leader (root) is
         // the already-existing main session; other peers are launched
-        // anew via PTYSession's peer-creation helper.
+        // anew via the spawner.
         var peers: [String: iTermPromise<PTYSession>] = [:]
         peers[root.uniqueIdentifier] = iTermPromise<PTYSession>(value: mainSession)
         for peer in peerChildren {
             peers[peer.uniqueIdentifier] =
-                mainSession.makeWorkgroupPeer(config: peer)
+                spawner.spawnPeer(parent: mainSession, config: peer)
         }
+
+        // Workgroup-wide poller built up front (rather than inside the
+        // peer port) so non-peer toolbars can share it. Built only if
+        // any session in the WHOLE tree (peer or otherwise) needs git
+        // status / changed-file lookup. The closure captures the
+        // about-to-be-created instance via a weak local set after
+        // construction, avoiding a strong cycle through the poller's
+        // update handler.
+        let needsPoller = workgroup.sessions.contains { s in
+            s.toolbarItems.contains(where: { $0.needsGitPoller })
+        }
+        weak var instanceForPoller: iTermWorkgroupInstance?
+        let poller: iTermGitPoller? = needsPoller
+            ? iTermGitPoller(cadence: 2) {
+                instanceForPoller?.gitPollerDidUpdate()
+            }
+            : nil
+        poller?.includeDiffStats = true
 
         let port = iTermWorkgroupPeerPort(
             peers: peers,
             peerConfigs: peerConfigs,
             activeSessionIdentifier: root.uniqueIdentifier,
             leaderIdentifier: root.uniqueIdentifier,
-            leaderScope: mainSession.genericScope)
+            leaderScope: mainSession.genericScope,
+            gitPoller: poller)
 
         mainSession.peerPort = port
 
         let instance = iTermWorkgroupInstance(workgroup: workgroup,
                                               mainSession: mainSession,
-                                              peerPort: port)
+                                              peerPort: port,
+                                              gitPoller: poller,
+                                              spawner: spawner)
+        instanceForPoller = instance
+
+        // Wire the poller to the leader's PWD so it polls a real
+        // directory regardless of whether a gitStatus item exists.
+        if let poller {
+            let maker = iTermGitStringMaker(scope: mainSession.genericScope,
+                                            gitPoller: poller)
+            instance.gitDirectoryTracker =
+                iTermAutoGitString(stringMaker: maker)
+        }
 
         // Propagate workgroupInstance to every peer (not just the
         // main). desiredToolbarItems on a peer needs to reach the
@@ -255,5 +413,87 @@ final class iTermWorkgroupInstance: NSObject {
                 break
             }
         }
+    }
+
+    // Fan a poller update out to every git/changed-file view in the
+    // workgroup — peer items in the main port, peer items in any
+    // nested port, and non-peer-host items. Without iterating non-
+    // peer items, a split with a changedFileSelector would have a
+    // permanently empty dropdown even though the poller is firing.
+    func gitPollerDidUpdate() {
+        guard let poller = gitPoller else { return }
+        let files = poller.state.dirtyFiles ?? []
+        var allViews: [SessionToolbarGenericView] = []
+        allViews.append(contentsOf: peerPort.allToolbarItemViews)
+        for port in nestedPeerPorts {
+            allViews.append(contentsOf: port.allToolbarItemViews)
+        }
+        for entry in nonPeerEntriesByConfigID.values {
+            allViews.append(contentsOf: entry.items)
+        }
+        for view in allViews {
+            if let gitItem = view as? CCGitSessionToolbarItem {
+                gitItem.pollerDidUpdate()
+            } else if let selector = view as? CCDiffSelectorItem {
+                selector.set(files: files)
+            }
+        }
+    }
+}
+
+extension iTermWorkgroupInstance: iTermGitPollerDelegate {
+    func gitPollerShouldPoll(_ poller: iTermGitPoller,
+                             after lastPoll: Date?) -> Bool {
+        // Instance exists => workgroup is active => poll.
+        return true
+    }
+}
+
+// Button taps from non-peer toolbars (split/tab hosts) route here.
+// Peer toolbars route through iTermWorkgroupPeerPort, which has its
+// own conformance. Both end up doing essentially the same thing for
+// reload — re-run the configured command in the live session — but
+// the lookup paths differ (peer port has its peerConfigs dict; the
+// instance walks the full workgroup).
+extension iTermWorkgroupInstance: CCModeButtonToolbarItemDelegate {
+    func toolbarButtonSelected(identifier: String,
+                               sender: CCModeButtonToolbarItem) {
+        guard let kind = iTermWorkgroupToolbarItemKind(rawValue: identifier),
+              let configID = sender.ownerPeerID else { return }
+        switch kind {
+        case .reload:
+            // "Reload" means redo what's currently running — i.e.
+            // re-execute the session's program. After a per-file pick
+            // restart, that's the per-file command; before any pick,
+            // it's whatever the session was launched with. We don't
+            // pull cfg.command here because that would always reset
+            // to the original entry command, which is not what users
+            // expect from a reload button (cf. browser reload).
+            guard let session = liveSession(forConfigID: configID),
+                  session.isRestartable() else {
+                return
+            }
+            session.restart()
+        case .back, .forward, .settings:
+            // TODO: peer-specific behavior.
+            break
+        case .gitStatus, .changedFileSelector, .modeSwitcher, .spacer:
+            break
+        }
+    }
+}
+
+// File picks from a changedFileSelector on a non-peer toolbar route
+// here (the peer-toolbar version goes through iTermWorkgroupPeerPort).
+extension iTermWorkgroupInstance: CCDiffSelectorItemDelegate {
+    func diffDidSelect(filename: String, sender: CCDiffSelectorItem) {
+        guard let configID = sender.ownerPeerID,
+              let cfg = config(forConfigID: configID),
+              !cfg.perFileCommand.isEmpty,
+              let session = liveSession(forConfigID: configID) else {
+            return
+        }
+        let command = cfg.resolvedPerFileCommand(filename: filename)
+        session.restart(withCommand: command)
     }
 }
