@@ -13,27 +13,55 @@ pushd build/Deployment
 
 
 function die {
-  echo $1
-  exit
+  echo "$1"
+  exit 1
 }
 
 # - notarize -
 PRENOTARIZED_ZIP=iTerm2-${NAME}-prenotarized.zip
 zip -ry $PRENOTARIZED_ZIP iTerm.app
+
+# Retry notarytool submit on transient upload failures (e.g.
+# HTTPClientError.deadlineExceeded, abortedUpload, connection
+# reset). Real rejections (Invalid status, bad credentials)
+# are not retried.
+function notarize_with_retry {
+  local zip="$1"
+  local max_attempts=6
+  local attempt=1
+  local out=/tmp/upload.out
+  while [ $attempt -le $max_attempts ]; do
+    echo "Notarization attempt $attempt of $max_attempts..."
+    xcrun notarytool submit \
+      --team-id H7V7XYVQ7D \
+      --apple-id "apple@georgester.com" \
+      --password "$NOTPASS" \
+      --wait \
+      "$zip" > "$out" 2>&1
+    local rc=$?
+    cat "$out"
+    if [ $rc -eq 0 ] && grep -q "status: Accepted" "$out"; then
+      return 0
+    fi
+    if grep -qE "abortedUpload|deadlineExceeded|connection reset|connectionReset|timed out|Connection refused|networkConnectionLost" "$out"; then
+      local backoff=$((attempt * 10))
+      echo "Transient upload failure (attempt $attempt). Retrying in ${backoff}s..."
+      sleep $backoff
+      attempt=$((attempt + 1))
+      continue
+    fi
+    echo "Notarization failed with non-retryable error (rc=$rc)."
+    return 1
+  done
+  echo "Notarization failed after $max_attempts attempts."
+  return 1
+}
+
 set -x
-xcrun notarytool submit --team-id H7V7XYVQ7D --apple-id "apple@georgester.com" --password "$NOTPASS" $PRENOTARIZED_ZIP > /tmp/upload.out 2>&1 || die "Notarization failed"
-cat /tmp/upload.out
-UUID=$(grep RequestUUID /tmp/upload.out | sed -e 's/RequestUUID = //')
-echo "uuid is $UUID"
-xcrun notarytool info --team-id H7V7XYVQ7D --apple-id "apple@georgester.com" --password "$NOTPASS" $UUID
-sleep 1
-while xcrun notarytool info --team-id H7V7XYVQ7D --apple-id "apple@georgester.com" --password "$NOTPASS" $UUID 2>&1 | egrep -i "in progress|Could not find the RequestUUID|Submission does not exist or does not belong to your team":
-do
-    echo "Trying again"
-    sleep 1
-done
-xcrun stapler staple iTerm.app
-# - end notarize - 
+notarize_with_retry "$PRENOTARIZED_ZIP" || die "Notarization failed"
+xcrun stapler staple iTerm.app || die "Stapling failed"
+set +x
+# - end notarize -
 
 zip -ry iTerm2-${NAME}.zip iTerm.app
 chmod a+r iTerm2-${NAME}.zip
