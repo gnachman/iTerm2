@@ -1620,6 +1620,14 @@ extension PTYSession {
                         .bookmark(withGuid: guid) {
                         profile = override
                     }
+                    // Browser profile + configured URL: seed
+                    // KEY_INITIAL_URL so the browser session's
+                    // deferred-URL load picks it up.
+                    if !config.urlString.isEmpty,
+                       let customCommand = profile[KEY_CUSTOM_COMMAND as String] as? String,
+                       customCommand == kProfilePreferenceCommandTypeBrowserValue {
+                        profile[KEY_INITIAL_URL as String] = config.urlString
+                    }
 
                     let newSession = factory.newSession(withProfile: profile,
                                                         parent: self)
@@ -1642,13 +1650,14 @@ extension PTYSession {
                             decree: "Workgroup peer of session with guid \(d(profile[KEY_GUID]))")
                     }
                     let command = config.command.isEmpty ? nil : config.command
+                    let urlString = config.urlString.isEmpty ? nil : config.urlString
                     let launchRequest = iTermSessionAttachOrLaunchRequest(
                         session: newSession,
                         canPrompt: false,
                         objectType: .paneObject,
                         hasServerConnection: false,
                         serverConnection: iTermGeneralServerConnection(),
-                        urlString: nil,
+                        urlString: urlString,
                         allowURLSubs: false,
                         environment: [:],
                         customShell: nil,

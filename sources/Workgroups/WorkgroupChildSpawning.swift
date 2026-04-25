@@ -18,11 +18,24 @@ extension iTermWorkgroupInstance {
         config: iTermWorkgroupSession
     ) -> [AnyHashable: Any]? {
         let model = ProfileModel.sharedInstance()
+        let base: [AnyHashable: Any]?
         if let guid = config.profileGUID,
            let override = model?.bookmark(withGuid: guid) {
-            return override
+            base = override
+        } else {
+            base = model?.defaultBookmark()
         }
-        return model?.defaultBookmark()
+        guard var profile = base else { return nil }
+        // Browser profile + configured URL: the launcher reads
+        // KEY_INITIAL_URL to seed the deferred-URL load on the new
+        // browser session (see iTermSessionLauncher.m:466). Terminal
+        // profiles ignore the key.
+        if !config.urlString.isEmpty,
+           let customCommand = profile[KEY_CUSTOM_COMMAND as String] as? String,
+           customCommand == kProfilePreferenceCommandTypeBrowserValue {
+            profile[KEY_INITIAL_URL as String] = config.urlString
+        }
+        return profile
     }
 
     private static func splitArguments(_ settings: SplitSettings) -> (isVertical: Bool, before: Bool) {
@@ -73,6 +86,7 @@ extension iTermWorkgroupInstance {
                              parentConfigID: config.uniqueIdentifier)
         launch(session: newSession,
                command: config.command,
+               urlString: config.urlString,
                objectType: .paneObject,
                factory: factory,
                windowController: windowController,
@@ -96,6 +110,7 @@ extension iTermWorkgroupInstance {
                              parentConfigID: config.uniqueIdentifier)
         launch(session: newSession,
                command: config.command,
+               urlString: config.urlString,
                objectType: .tabObject,
                factory: factory,
                windowController: windowController,
@@ -217,19 +232,21 @@ extension iTermWorkgroupInstance {
     // SessionView before this point.
     private func launch(session: PTYSession,
                         command: String,
+                        urlString: String,
                         objectType: iTermObjectType,
                         factory: iTermSessionFactory,
                         windowController: PseudoTerminal,
                         parent: PTYSession) {
         parent.asyncInitialDirectoryForNewSessionBased { oldCWD in
             let cmd = command.isEmpty ? nil : command
+            let url = urlString.isEmpty ? nil : urlString
             let request = iTermSessionAttachOrLaunchRequest(
                 session: session,
                 canPrompt: false,
                 objectType: objectType,
                 hasServerConnection: false,
                 serverConnection: iTermGeneralServerConnection(),
-                urlString: nil,
+                urlString: url,
                 allowURLSubs: false,
                 environment: [:],
                 customShell: nil,
