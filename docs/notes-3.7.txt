@@ -107,6 +107,11 @@ New Features in Terminal Sessions:
   Settings > Profiles > Text.
 
 Tabs, Windows, and UI:
+- Closing a pinned tab now requires
+  confirmation, whether via the close
+  button, middle-click, ⌘W, or quitting
+  the app. The dialog identifies the tab
+  as pinned so the prompt is clear.
 - The control-sequence-controlled progress
   indicator is now shown in the tab bar.
 - An active pane border can be displayed to

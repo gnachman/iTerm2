@@ -238,6 +238,10 @@
     return [[[iTermPromptOnCloseMessageReason alloc] initWithMessage:@"This pane is locked." priority:75] autorelease];
 }
 
++ (instancetype)tabIsPinned {
+    return [[[iTermPromptOnCloseMessageReason alloc] initWithMessage:@"A pinned tab is open." priority:70] autorelease];
+}
+
 - (BOOL)hasReason {
     return YES;
 }

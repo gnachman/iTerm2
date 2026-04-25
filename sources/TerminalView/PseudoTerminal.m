@@ -1941,14 +1941,21 @@ ITERM_WEAKLY_REFERENCEABLE
         const BOOL anyIsLocked = [[aTab sessions] anyWithBlock:^BOOL(PTYSession *anObject) {
             return anObject.locked;
         }];
+        NSString *const pinnedPrefix = aTab.isPinned ? @"pinned " : @"";
         if (numClosing == 1) {
+            NSString *const identifier = anyIsLocked
+                ? [NSString stringWithFormat:@"This %@tab (with a locked session)", pinnedPrefix]
+                : [NSString stringWithFormat:@"This %@tab", pinnedPrefix];
             okToClose = [self confirmCloseForSessions:[aTab sessions]
-                                           identifier:anyIsLocked ? @"This tab (with a locked session)" : @"This tab"
+                                           identifier:identifier
                                           genericName:[NSString stringWithFormat:@"tab #%d",
                                                        [aTab tabNumber]]];
         } else {
+            NSString *const identifier = anyIsLocked
+                ? [NSString stringWithFormat:@"This %@multi-pane tab (with locked sessions)", pinnedPrefix]
+                : [NSString stringWithFormat:@"This %@multi-pane tab", pinnedPrefix];
             okToClose = [self confirmCloseForSessions:[aTab sessions]
-                                           identifier:anyIsLocked ? @"This multi-pane tab (with locked sessions)" : @"This multi-pane tab"
+                                           identifier:identifier
                                           genericName:[NSString stringWithFormat:@"tab #%d",
                                                        [aTab tabNumber]]];
         }
@@ -4174,6 +4181,12 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     iTermPromptOnCloseReason *reason = [iTermPromptOnCloseReason noReason];
     for (PTYSession *aSession in [self allSessions]) {
         [reason addReason:[aSession promptOnCloseReason]];
+    }
+    for (PTYTab *tab in self.tabs) {
+        if (tab.isPinned) {
+            [reason addReason:[iTermPromptOnCloseReason tabIsPinned]];
+            break;
+        }
     }
     return reason;
 }
@@ -6662,6 +6675,10 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
 // NSTabView
 - (void)tabView:(NSTabView *)tabView closeTab:(id)identifier button:(int)button {
     if (button != 2 || [iTermAdvancedSettingsModel middleClickClosesTab]) {
+        PTYTab *const tab = identifier;
+        if (tab.isPinned && ![self confirmCloseTab:tab suppressConfirmation:NO]) {
+            return;
+        }
         [self closeTab:identifier];
     }
 }
