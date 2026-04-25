@@ -120,19 +120,19 @@ extension iTermWorkgroupInstance {
     // After a split lands, resize the divider so the new pane
     // occupies the configured fraction of the parent's area.
     //
-    // When the requested orientation differs from the enclosing
-    // split's, splitVertically:…: wraps the parent in a fresh split
-    // view of the new orientation, so newSession and parent are the
-    // only two subviews and the relevant divider is index 0 spanning
-    // the whole splitView. When the orientations match, the no-same-
-    // orientation-nesting invariant kicks in: newSession is appended
-    // as a sibling of parent in the existing splitView, alongside
-    // unrelated siblings. In that case divider 0 may belong to a
-    // completely different pair, and splitView.bounds covers the
-    // whole sibling row, not just the parent+newSession portion. So
-    // compute the divider index by locating the two subviews, and
-    // compute the divider position relative to the pair's combined
-    // span only.
+    // Two layouts to handle:
+    // - 2-subview splitView (fresh wrapper from an orientation-change
+    //   split, OR root-of-tab just gained its second pane): parent +
+    //   new are the only subviews and fill the splitView in the
+    //   divider axis. Use splitView.bounds as the span — individual
+    //   subview frames may still be in transition from the delegate's
+    //   proportional resize, so frame-union is unreliable.
+    // - 3+-subview splitView (same-orientation sibling insertion,
+    //   per the no-same-orientation-nesting invariant): new is
+    //   inserted as a sibling of parent alongside other unrelated
+    //   panes. Compute the pair's span from their actual frames —
+    //   splitView.bounds would cover the whole sibling row, giving a
+    //   position far outside the parent+new pair.
     private func applySplitLocation(settings: SplitSettings,
                                     newSession: PTYSession,
                                     targetSession: PTYSession) {
@@ -144,29 +144,36 @@ extension iTermWorkgroupInstance {
             return
         }
         let dividerIndex = min(newIdx, parentIdx)
-
         let isVertical = splitView.isVertical
-        let pAxisOrigin = isVertical
-            ? parentView.frame.origin.x
-            : parentView.frame.origin.y
-        let pAxisSize = isVertical
-            ? parentView.frame.width
-            : parentView.frame.height
-        let nAxisOrigin = isVertical
-            ? newView.frame.origin.x
-            : newView.frame.origin.y
-        let nAxisSize = isVertical
-            ? newView.frame.width
-            : newView.frame.height
-        let pairOrigin = min(pAxisOrigin, nAxisOrigin)
-        let pairEnd = max(pAxisOrigin + pAxisSize, nAxisOrigin + nAxisSize)
-        let pairSpan = pairEnd - pairOrigin
-        // If both frames are still .zero (layout hasn't happened yet),
-        // there's nothing sensible to compute against, so leave the
-        // divider where splitVertically put it. Best-effort: the pane
-        // lands at the system default 50/50 instead of the configured
-        // location. Rare in practice because splitVertically:…
-        // performSetup:YES triggers layout before we get here.
+
+        let pairOrigin: CGFloat
+        let pairSpan: CGFloat
+        if splitView.subviews.count == 2 {
+            pairOrigin = 0
+            pairSpan = isVertical
+                ? splitView.bounds.width
+                : splitView.bounds.height
+        } else {
+            let pAxisOrigin = isVertical
+                ? parentView.frame.origin.x
+                : parentView.frame.origin.y
+            let pAxisSize = isVertical
+                ? parentView.frame.width
+                : parentView.frame.height
+            let nAxisOrigin = isVertical
+                ? newView.frame.origin.x
+                : newView.frame.origin.y
+            let nAxisSize = isVertical
+                ? newView.frame.width
+                : newView.frame.height
+            pairOrigin = min(pAxisOrigin, nAxisOrigin)
+            let pairEnd = max(pAxisOrigin + pAxisSize,
+                              nAxisOrigin + nAxisSize)
+            pairSpan = pairEnd - pairOrigin
+        }
+        // If layout hasn't produced a real span yet (zero bounds or
+        // zero frames), leave the divider wherever splitVertically
+        // put it — best-effort fallback to the system default.
         guard pairSpan > 0 else { return }
 
         let location = CGFloat(min(max(settings.location, 0.05), 0.95))
@@ -176,7 +183,37 @@ extension iTermWorkgroupInstance {
         }
         let fraction = newPaneIsFirst ? location : 1.0 - location
         let position = (pairOrigin + fraction * pairSpan).rounded()
-        splitView.setPosition(position, ofDividerAt: dividerIndex)
+
+        // NSSplitView.setPosition:ofDividerAt: doesn't stick in this
+        // codebase — PTYTab's splitView:resizeSubviewsWithOldSize:
+        // delegate redistributes based on existing subview
+        // proportions, so the divider gets snapped back to whatever
+        // ratio was already there. Set the pair's frames directly
+        // (the arrangeSplitPanesEvenlyInSplitView pattern) and then
+        // let adjustSubviews finalize; the delegate's coefficient
+        // collapses to ~1 against the sizes we just wrote, so the
+        // ratio sticks.
+        let beforeView = splitView.subviews[dividerIndex]
+        let afterView = splitView.subviews[dividerIndex + 1]
+        let dividerThickness = splitView.dividerThickness
+        let beforeSize = max(0, position - pairOrigin)
+        let afterSize = max(0,
+                            (pairOrigin + pairSpan) - (position + dividerThickness))
+        var beforeFrame = beforeView.frame
+        var afterFrame = afterView.frame
+        if isVertical {
+            beforeFrame.origin.x = pairOrigin
+            beforeFrame.size.width = beforeSize
+            afterFrame.origin.x = position + dividerThickness
+            afterFrame.size.width = afterSize
+        } else {
+            beforeFrame.origin.y = pairOrigin
+            beforeFrame.size.height = beforeSize
+            afterFrame.origin.y = position + dividerThickness
+            afterFrame.size.height = afterSize
+        }
+        beforeView.frame = beforeFrame
+        afterView.frame = afterFrame
         splitView.adjustSubviews()
     }
 
