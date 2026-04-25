@@ -6675,10 +6675,6 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
 // NSTabView
 - (void)tabView:(NSTabView *)tabView closeTab:(id)identifier button:(int)button {
     if (button != 2 || [iTermAdvancedSettingsModel middleClickClosesTab]) {
-        PTYTab *const tab = identifier;
-        if (tab.isPinned && ![self confirmCloseTab:tab suppressConfirmation:NO]) {
-            return;
-        }
         [self closeTab:identifier];
     }
 }
