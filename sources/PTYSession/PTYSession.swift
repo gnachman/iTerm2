@@ -1601,8 +1601,7 @@ extension PTYSession {
     // but driven by an iTermWorkgroupSession config (profile override,
     // command override, buried until activated).
     func makeWorkgroupPeer(
-        config: iTermWorkgroupSession
-    ) -> iTermPromise<PTYSession> {
+        config: iTermWorkgroupSession) -> iTermPromise<PTYSession> {
         return iTermPromise<PTYSession> { seal in
             withDelegate { [weak self] delegate in
                 guard let self else {
@@ -1628,18 +1627,14 @@ extension PTYSession {
                         profile = override
                     }
 
-                    let newSession = factory.newSession(
-                        withProfile: profile, parent: self)
-                    newSession.setScreenSize(
-                        view.bounds.size,
-                        parent: delegate.realParentWindow())
+                    let newSession = factory.newSession(withProfile: profile,
+                                                        parent: self)
+                    newSession.setScreenSize(view.bounds.size,
+                                             parent: delegate.realParentWindow())
                     newSession.setSize(screen.size)
-                    newSession.view.scrollview.hasVerticalScroller =
-                        view.scrollview.hasVerticalScroller
-                    newSession.view.scrollview.lineScroll =
-                        view.scrollview.lineScroll
-                    newSession.view.scrollview.pageScroll =
-                        view.scrollview.pageScroll
+                    newSession.view.scrollview.hasVerticalScroller = view.scrollview.hasVerticalScroller
+                    newSession.view.scrollview.lineScroll = view.scrollview.lineScroll
+                    newSession.view.scrollview.pageScroll = view.scrollview.pageScroll
                     if let imagePath = backgroundImagePath {
                         newSession.backgroundImagePath = imagePath
                     }
@@ -1647,9 +1642,7 @@ extension PTYSession {
                     newSession.loadInitialColorTableAndResetCursorGuide()
                     newSession.screen.resetTimestamps()
 
-                    if ProfileModel.sessionsInstance().bookmark(
-                        withGuid: (newSession.profile[KEY_GUID] as! String)) != nil
-                        && isDivorced {
+                    if ProfileModel.sessionsInstance().bookmark(withGuid: (newSession.profile[KEY_GUID] as! String)) != nil && isDivorced {
                         newSession.inheritDivorce(
                             from: self,
                             decree: "Workgroup peer of session with guid \(d(profile[KEY_GUID]))")

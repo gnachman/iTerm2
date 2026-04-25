@@ -43,14 +43,12 @@ final class iTermWorkgroupController: NSObject {
             exit(on: session)
         }
 
-        guard let workgroup = resolveWorkgroup(uniqueIdentifier: identifier)
-            else {
-                DLog("iTermWorkgroupController: no workgroup with id \(identifier)")
-                return false
-            }
-        guard let instance =
-                iTermWorkgroupInstance.enter(workgroup: workgroup,
-                                             on: session) else {
+        guard let workgroup = resolveWorkgroup(uniqueIdentifier: identifier) else {
+            DLog("iTermWorkgroupController: no workgroup with id \(identifier)")
+            return false
+        }
+        guard let instance = iTermWorkgroupInstance.enter(workgroup: workgroup,
+                                                          on: session) else {
             DLog("iTermWorkgroupController: failed to build instance for \(identifier)")
             return false
         }
@@ -87,7 +85,6 @@ final class iTermWorkgroupController: NSObject {
                 }) {
             return builtin
         }
-        return iTermWorkgroupModel.instance.workgroup(
-            uniqueIdentifier: uniqueIdentifier)
+        return iTermWorkgroupModel.instance.workgroup(uniqueIdentifier: uniqueIdentifier)
     }
 }

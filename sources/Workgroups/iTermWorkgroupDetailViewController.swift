@@ -488,13 +488,13 @@ class iTermWorkgroupDetailViewController: NSViewController {
         for i in wg.sessions.indices {
             let id = wg.sessions[i].uniqueIdentifier
             let hasMS = wg.sessions[i].toolbarItems.contains {
-                $0.kind == "modeSwitcher"
+                $0.kind == .modeSwitcher
             }
             if needSwitcher.contains(id) && !hasMS {
                 wg.sessions[i].toolbarItems.insert(.modeSwitcher, at: 0)
             } else if !needSwitcher.contains(id) && hasMS {
                 wg.sessions[i].toolbarItems.removeAll {
-                    $0.kind == "modeSwitcher"
+                    $0.kind == .modeSwitcher
                 }
             }
         }

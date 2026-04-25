@@ -37,6 +37,23 @@ class PTYSessionPeerPort: NSObject {
         return Array(peers.values).anySatisfies { $0.maybeValue === session }
     }
 
+    // Reverse-lookup: returns the peer-group identifier that `session`
+    // is registered under, or nil if it isn't in this port.
+    func identifier(for session: PTYSession) -> String? {
+        for (id, promise) in peers {
+            if promise.maybeValue === session {
+                return id
+            }
+        }
+        return nil
+    }
+
+    // The realized PTYSession for a given peer identifier, if the
+    // promise has already fulfilled.
+    func session(forIdentifier identifier: String) -> PTYSession? {
+        return peers[identifier]?.maybeValue
+    }
+
     func activate(identifier: String) -> Bool {
         guard let promise = peers[identifier] else {
             return false

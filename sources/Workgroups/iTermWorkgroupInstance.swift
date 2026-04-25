@@ -17,8 +17,10 @@ import Foundation
 final class iTermWorkgroupInstance: NSObject {
     @objc let workgroupUniqueIdentifier: String
     @objc weak var mainSession: PTYSession?
+
     // Config snapshot at entry time.
     let workgroup: iTermWorkgroup
+
     // The peer port wired to the main session's SessionView.
     @objc let peerPort: iTermWorkgroupPeerPort
 
@@ -32,17 +34,30 @@ final class iTermWorkgroupInstance: NSObject {
         super.init()
     }
 
-    // The toolbar items shown on the session's SessionView. Every
-    // peer sees the same array (items flip enabled on activate).
-    @objc var toolbarItems: [SessionToolbarGenericView] {
-        return peerPort.toolbarItems
+    // The toolbar items to show on a specific session's SessionView.
+    // Each peer has its own ordered list of NSView instances built
+    // fresh from its config; the same view objects are retained in
+    // the port's per-peer dict across activations, so anything held
+    // on a peer's view (e.g. its changed-file selector's last
+    // selection) persists across peer swaps. Cross-peer consistency
+    // is coordinated externally: every gitStatus / changedFileSelector
+    // view reads from a single shared poller, and the active-peer
+    // segment on every modeSwitcher is synced on activate.
+    @objc
+    func toolbarItems(for session: PTYSession) -> [SessionToolbarGenericView] {
+        guard let id = peerPort.identifier(for: session) else { return [] }
+        return peerPort.toolbarItems(forPeerID: id)
     }
 
-    // Tear down peers and release references.
+    // Tear down peers and release references. Leaves the main
+    // session in a clean state so a later enter() can install a
+    // fresh port — PTYSession.set(peerPort:) asserts the previous
+    // port is gone.
     @objc
     func teardown() {
         peerPort.invalidate()
         mainSession?.workgroupInstance = nil
+        mainSession?.peerPort = nil
     }
 
     // MARK: - Entry
@@ -86,7 +101,17 @@ final class iTermWorkgroupInstance: NSObject {
         let instance = iTermWorkgroupInstance(workgroup: workgroup,
                                               mainSession: mainSession,
                                               peerPort: port)
-        mainSession.workgroupInstance = instance
+
+        // Propagate workgroupInstance to every peer (not just the
+        // main). desiredToolbarItems on a peer needs to reach the
+        // instance to return that peer's own items; without this, a
+        // peer ends up with an empty toolbar the moment it's
+        // activated.
+        for (_, promise) in peers {
+            promise.then { peerSession in
+                peerSession.workgroupInstance = instance
+            }
+        }
         return instance
     }
 }

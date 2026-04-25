@@ -9,29 +9,30 @@ import Foundation
 
 // Generalized PTYSessionPeerPort for a workgroup's peer group.
 //
-// Toolbar items are built as the UNION of every peer's toolbar list
-// (deduped, so e.g. a mode-switcher present on multiple peers becomes
-// one shared instance). On activate(identifier:), each item's `enabled`
-// flag is flipped according to whether the newly-active peer declared
-// it. This mirrors the pattern the old ClaudeCodePeerPort used —
-// reparenting one toolbar view across peer swaps while hiding/showing
-// items — so state (segmented selection, git text, etc.) carries over.
+// Each peer has its own ordered list of toolbar item VIEWS, built
+// fresh from that peer's config. Item views are never shared across
+// peers — two peers with the same kind get separate NSView
+// instances. Shared state that matters across the group (git status,
+// which peer is active) is coordinated out-of-band:
+// - The git poller is a single instance held by the port; every
+//   peer's gitStatus / changedFileSelector view reads from it, so
+//   all views show the same current git state regardless of which
+//   peer you're looking at.
+// - On activate(identifier:), every peer's modeSwitcher is updated
+//   to select the newly-active peer, so each peer's switcher
+//   consistently reflects "who's active" rather than "who was
+//   picked from this particular switcher".
 @objc(iTermWorkgroupPeerPort)
 final class iTermWorkgroupPeerPort: PTYSessionPeerPort {
-    // One entry per item in the union, kept in display order.
-    @objc private(set) var toolbarItems: [SessionToolbarGenericView] = []
-    // Set of item values enabled per peer uniqueIdentifier.
-    private var enabledByPeerID: [String: Set<iTermWorkgroupToolbarItem>] = [:]
-    // Parallel array keyed by toolbarItems index → the enum value used
-    // to look up in enabledByPeerID.
-    private var itemValues: [iTermWorkgroupToolbarItem] = []
+    // Per-peer ordered list of item views, preserving each peer's
+    // configured order and allowing duplicates within a single list
+    // (two spacers, two separators — both get distinct NSViews).
+    private var itemsByPeerID: [String: [SessionToolbarGenericView]] = [:]
+
     // Held so every toolbar item consumer keeps the same shared poller.
     // nil if no peer's toolbar item needed one.
     @objc private(set) var gitPoller: iTermGitPoller?
 
-    // Peer-group member metadata (identifier + label) captured at init
-    // time. Used to populate the mode switcher and to validate
-    // activate(identifier:) calls.
     private let peerMembers: [(identifier: String, label: String)]
 
     init(peers: [String: iTermPromise<PTYSession>],
@@ -39,7 +40,6 @@ final class iTermWorkgroupPeerPort: PTYSessionPeerPort {
          activeSessionIdentifier: String,
          leaderIdentifier: String,
          leaderScope: iTermVariableScope) {
-        // Ordered list of members = configs in the order they appear.
         self.peerMembers = peerConfigs.map { cfg in
             (identifier: cfg.uniqueIdentifier,
              label: cfg.displayName.isEmpty ? "Peer" : cfg.displayName)
@@ -68,71 +68,80 @@ final class iTermWorkgroupPeerPort: PTYSessionPeerPort {
             scope: leaderScope,
             peerGroupMembers: peerMembers,
             activePeerIdentifier: activeSessionIdentifier,
-            onButtonTapped: { [weak self] kind in
-                self?.handleButtonTap(kind: kind)
-            })
+            buttonDelegate: self)
 
-        let built = WorkgroupToolbarBuilder.buildUnion(
-            fromSessions: peerConfigs,
-            context: context)
-        self.toolbarItems = built.map { $0.view }
-        self.itemValues = built.map { $0.item }
-
-        var masks: [String: Set<iTermWorkgroupToolbarItem>] = [:]
+        // Build each peer's ordered list of views fresh. No cross-peer
+        // sharing — a second `.spacer(4,4)` in the same list gets its
+        // own NSView, and two peers with `.modeSwitcher` get separate
+        // instances too.
         for cfg in peerConfigs {
-            masks[cfg.uniqueIdentifier] = Set(cfg.toolbarItems)
+            var views: [SessionToolbarGenericView] = []
+            for item in cfg.toolbarItems {
+                if let view = WorkgroupToolbarBuilder.build(item: item, context: context) {
+                    views.append(view)
+                }
+            }
+            itemsByPeerID[cfg.uniqueIdentifier] = views
         }
-        self.enabledByPeerID = masks
-
-        applyEnabledMask(forPeerID: activeSessionIdentifier)
     }
 
     override func activate(identifier: String) -> Bool {
         guard super.activate(identifier: identifier) else { return false }
-        applyEnabledMask(forPeerID: identifier)
-        (toolbarItems.first {
-            $0 is WorkgroupModeSwitcherItem
-        } as? WorkgroupModeSwitcherItem)?.setActiveIdentifier(identifier)
+        // Keep every peer's modeSwitcher visually in sync with the
+        // newly-active peer — otherwise if you tap "Diff" on Main's
+        // switcher and later come back to Main, Main's switcher would
+        // still show "Diff" highlighted.
+        for views in itemsByPeerID.values {
+            for view in views {
+                (view as? WorkgroupModeSwitcherItem)?
+                    .setActiveIdentifier(identifier)
+            }
+        }
+        // No explicit sessionDidChangeDesiredToolbarItems here:
+        // super.activate's promise handler runs sessionActivate,
+        // which calls updatePaneTitles → setToolbarItems on every
+        // session in the tab. That picks up the per-peer items.
         return true
+    }
+
+    // The ordered list of toolbar items for a specific peer.
+    @objc
+    func toolbarItems(forPeerID id: String) -> [SessionToolbarGenericView] {
+        return itemsByPeerID[id] ?? []
     }
 
     // MARK: - Private
 
-    private func applyEnabledMask(forPeerID identifier: String) {
-        let mask = enabledByPeerID[identifier] ?? []
-        for (view, value) in zip(toolbarItems, itemValues) {
-            view.enabled = mask.contains(value)
-        }
-        // Nudge the live layout — flipping enabled alone doesn't
-        // trigger relayout on the surrounding SessionToolbarView.
-        requestToolbarLayout()
-    }
-
-    private func requestToolbarLayout() {
-        for item in toolbarItems {
-            if let delegate = item.delegate {
-                delegate.itemDidChange(sender: item)
-                return
-            }
-        }
-    }
-
     private func pollerDidUpdate() {
         guard let poller = gitPoller else { return }
         let files = poller.state.dirtyFiles ?? []
-        for view in toolbarItems {
-            if let gitItem = view as? CCGitSessionToolbarItem {
-                gitItem.pollerDidUpdate()
-            } else if let selector = view as? CCDiffSelectorItem {
-                selector.set(files: files)
+        for views in itemsByPeerID.values {
+            for view in views {
+                if let gitItem = view as? CCGitSessionToolbarItem {
+                    gitItem.pollerDidUpdate()
+                } else if let selector = view as? CCDiffSelectorItem {
+                    selector.set(files: files)
+                }
             }
         }
     }
 
-    private func handleButtonTap(kind: String) {
+    private func handleButtonTap(kind: iTermWorkgroupToolbarItemKind) {
         DLog("iTermWorkgroupPeerPort.handleButtonTap \(kind)")
         // Back/forward/reload/settings are TODO — wire them to peer-
         // specific behavior once that behavior exists.
+    }
+}
+
+// MARK: - Button delegate
+
+// The builder sets each back/forward/reload/settings button's
+// identifier to the kind's rawValue, so we can decode it back here.
+extension iTermWorkgroupPeerPort: CCModeButtonToolbarItemDelegate {
+    func toolbarButtonSelected(identifier: String) {
+        guard let kind = iTermWorkgroupToolbarItemKind(rawValue: identifier)
+            else { return }
+        handleButtonTap(kind: kind)
     }
 }
 

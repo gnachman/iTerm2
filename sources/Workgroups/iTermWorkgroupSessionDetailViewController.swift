@@ -688,12 +688,12 @@ class iTermWorkgroupSessionDetailViewController: NSViewController {
             // offering it in the add menu does nothing useful on a
             // session that has no peers, and it's already present on
             // ones that do.
-            if metadata.kind == "modeSwitcher" { continue }
+            if metadata.kind == .modeSwitcher { continue }
             let item = menu.addItem(withTitle: metadata.displayName,
                                     action: #selector(addToolbarItemMenuSelected(_:)),
                                     keyEquivalent: "")
             item.target = self
-            item.representedObject = metadata.kind
+            item.representedObject = metadata.kind.rawValue
         }
         let origin = NSPoint(x: toolbarSegmented.frame.minX,
                              y: toolbarSegmented.frame.maxY + 2)
@@ -702,7 +702,8 @@ class iTermWorkgroupSessionDetailViewController: NSViewController {
 
     @objc private func addToolbarItemMenuSelected(_ sender: NSMenuItem) {
         guard var s = session,
-              let kind = sender.representedObject as? String,
+              let rawKind = sender.representedObject as? String,
+              let kind = iTermWorkgroupToolbarItemKind(rawValue: rawKind),
               let metadata = iTermWorkgroupToolbarItemRegistry.metadata(forKind: kind)
             else { return }
         let insertAt = (selectedToolbarRow ?? (s.toolbarItems.count - 1)) + 1
@@ -911,7 +912,7 @@ extension iTermWorkgroupSessionDetailViewController: NSTableViewDataSource, NSTa
 
     private func displayName(for item: iTermWorkgroupToolbarItem) -> String {
         let base = iTermWorkgroupToolbarItemRegistry.metadata(for: item)?.displayName
-            ?? item.kind
+            ?? item.kind.rawValue
         switch item {
         case .spacer(let minWidth, let maxWidth):
             return "\(base) (\(formatWidth(minWidth))–\(formatWidth(maxWidth)) pt)"

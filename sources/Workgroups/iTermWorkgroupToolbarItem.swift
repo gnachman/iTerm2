@@ -13,6 +13,20 @@ import Foundation
 // width bounds; other tools are parameter-less today). New tools are added
 // by extending this enum and registering a factory in
 // iTermWorkgroupToolbarItemRegistry.
+// Stable type tag for each toolbar item case. rawValue doubles as the
+// JSON discriminator — never rename an existing case's rawValue or
+// saved workgroups will drop that item on decode.
+enum iTermWorkgroupToolbarItemKind: String, Codable, CaseIterable {
+    case gitStatus
+    case changedFileSelector
+    case modeSwitcher
+    case back
+    case forward
+    case reload
+    case settings
+    case spacer
+}
+
 enum iTermWorkgroupToolbarItem: Codable, Equatable, Hashable {
     case gitStatus
     case changedFileSelector
@@ -23,18 +37,16 @@ enum iTermWorkgroupToolbarItem: Codable, Equatable, Hashable {
     case settings
     case spacer(minWidth: CGFloat, maxWidth: CGFloat)
 
-    // Stable identifier used for persistence and UI list keys. Never change an
-    // existing rawValue — that would silently drop saved items on decode.
-    var kind: String {
+    var kind: iTermWorkgroupToolbarItemKind {
         switch self {
-        case .gitStatus: return "gitStatus"
-        case .changedFileSelector: return "changedFileSelector"
-        case .modeSwitcher: return "modeSwitcher"
-        case .back: return "back"
-        case .forward: return "forward"
-        case .reload: return "reload"
-        case .settings: return "settings"
-        case .spacer: return "spacer"
+        case .gitStatus: return .gitStatus
+        case .changedFileSelector: return .changedFileSelector
+        case .modeSwitcher: return .modeSwitcher
+        case .back: return .back
+        case .forward: return .forward
+        case .reload: return .reload
+        case .settings: return .settings
+        case .spacer: return .spacer
         }
     }
 
@@ -55,24 +67,20 @@ enum iTermWorkgroupToolbarItem: Codable, Equatable, Hashable {
 
     init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
-        let kind = try c.decode(String.self, forKey: .kind)
+        let kind = try c.decode(iTermWorkgroupToolbarItemKind.self,
+                                forKey: .kind)
         switch kind {
-        case "gitStatus": self = .gitStatus
-        case "changedFileSelector": self = .changedFileSelector
-        case "modeSwitcher": self = .modeSwitcher
-        case "back": self = .back
-        case "forward": self = .forward
-        case "reload": self = .reload
-        case "settings": self = .settings
-        case "spacer":
+        case .gitStatus: self = .gitStatus
+        case .changedFileSelector: self = .changedFileSelector
+        case .modeSwitcher: self = .modeSwitcher
+        case .back: self = .back
+        case .forward: self = .forward
+        case .reload: self = .reload
+        case .settings: self = .settings
+        case .spacer:
             let minWidth = try c.decode(CGFloat.self, forKey: .minWidth)
             let maxWidth = try c.decode(CGFloat.self, forKey: .maxWidth)
             self = .spacer(minWidth: minWidth, maxWidth: maxWidth)
-        default:
-            throw DecodingError.dataCorruptedError(
-                forKey: .kind,
-                in: c,
-                debugDescription: "Unknown toolbar item kind: \(kind)")
         }
     }
 }

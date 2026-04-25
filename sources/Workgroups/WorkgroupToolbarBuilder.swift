@@ -15,21 +15,27 @@ struct WorkgroupToolbarContext {
     // item hands peer-switch taps to it, and the changed-file selector
     // forwards file clicks. Nil for non-peer toolbars (split/tab).
     weak var peerPort: iTermWorkgroupPeerPort?
+
     // Shared git poller if at least one item in the set needs one
     // (gitStatus, changedFileSelector). Built once per workgroup
     // instance; nil if nothing asked for it.
     let gitPoller: iTermGitPoller?
+
     // Variable scope used by the git-status label's template engine
     // to resolve variables like `\(session.cwd)`.
     let scope: iTermVariableScope
+
     // Peer-group members for the mode switcher (identifier + label),
     // and which one is currently active. Empty for non-peer toolbars.
     let peerGroupMembers: [(identifier: String, label: String)]
+
     let activePeerIdentifier: String
-    // Invoked when the user taps a back/forward/reload/settings button.
-    // The registry kind string is passed back so the caller can tell
-    // them apart.
-    let onButtonTapped: ((String) -> Void)?
+
+    // Delegate assigned to every back/forward/reload/settings button
+    // the builder produces. The peer port conforms to
+    // CCModeButtonToolbarItemDelegate and demuxes using the item's
+    // `identifier` (which the builder sets to the kind's rawValue).
+    weak var buttonDelegate: CCModeButtonToolbarItemDelegate?
 }
 
 // Does an item in a given peer-group need the shared git poller to be
@@ -50,10 +56,8 @@ enum WorkgroupToolbarBuilder {
     // mode-switcher get one shared instance). Returned order follows
     // first-appearance order across the inputs. Items that need the
     // git poller but whose context has no poller are dropped.
-    static func buildUnion(
-        fromSessions sessions: [iTermWorkgroupSession],
-        context: WorkgroupToolbarContext
-    ) -> [(item: iTermWorkgroupToolbarItem, view: SessionToolbarGenericView)] {
+    static func buildUnion(fromSessions sessions: [iTermWorkgroupSession],
+                           context: WorkgroupToolbarContext) -> [(item: iTermWorkgroupToolbarItem, view: SessionToolbarGenericView)] {
         var seen = Set<iTermWorkgroupToolbarItem>()
         var ordered: [iTermWorkgroupToolbarItem] = []
         for session in sessions {
@@ -76,77 +80,54 @@ enum WorkgroupToolbarBuilder {
     // provided).
     static func build(item: iTermWorkgroupToolbarItem,
                       context: WorkgroupToolbarContext) -> SessionToolbarGenericView? {
+        let id = item.kind.rawValue
         switch item {
         case .gitStatus:
             guard let poller = context.gitPoller else { return nil }
-            return CCGitSessionToolbarItem(identifier: item.kind,
+            return CCGitSessionToolbarItem(identifier: id,
                                            priority: 2,
                                            scope: context.scope,
                                            poller: poller)
         case .changedFileSelector:
             guard let poller = context.gitPoller else { return nil }
-            let view = CCDiffSelectorItem(identifier: item.kind,
+            let view = CCDiffSelectorItem(identifier: id,
                                           priority: 2,
                                           poller: poller)
             view.diffSelectorDelegate = context.peerPort
             return view
         case .modeSwitcher:
             let view = WorkgroupModeSwitcherItem(
-                identifier: item.kind,
+                identifier: id,
                 priority: 1,
                 members: context.peerGroupMembers,
                 activeIdentifier: context.activePeerIdentifier)
             view.modeSwitchDelegate = context.peerPort
             return view
         case .back:
-            return makeButton(item: item, symbol: .chevronLeft, context: context)
+            return makeButton(kind: .back, symbol: .chevronLeft, context: context)
         case .forward:
-            return makeButton(item: item, symbol: .chevronRight, context: context)
+            return makeButton(kind: .forward, symbol: .chevronRight, context: context)
         case .reload:
-            return makeButton(item: item, symbol: .arrowClockwise, context: context)
+            return makeButton(kind: .reload, symbol: .arrowClockwise, context: context)
         case .settings:
-            return makeButton(item: item, symbol: .gearshape, context: context)
+            return makeButton(kind: .settings, symbol: .gearshape, context: context)
         case .spacer(let minW, let maxW):
-            return SessionToolbarSpacer(identifier: item.kind,
+            return SessionToolbarSpacer(identifier: id,
                                         priority: 1,
                                         minWidth: minW,
                                         maxWidth: maxW)
         }
     }
 
-    private static func makeButton(item: iTermWorkgroupToolbarItem,
+    private static func makeButton(kind: iTermWorkgroupToolbarItemKind,
                                    symbol: SFSymbol,
                                    context: WorkgroupToolbarContext) -> SessionToolbarGenericView? {
         let image = NSImage(systemSymbolName: symbol.rawValue,
                             accessibilityDescription: nil) ?? NSImage()
-        let view = CCModeButtonToolbarItem(identifier: item.kind,
+        let view = CCModeButtonToolbarItem(identifier: kind.rawValue,
                                            priority: 3,
                                            image: image)
-        let handler = context.onButtonTapped
-        view.buttonDelegate = ButtonForwarder(kind: item.kind,
-                                              handler: handler)
-        // Retain the forwarder on the view so it stays alive.
-        objc_setAssociatedObject(view._view,
-                                 &ButtonForwarderKey,
-                                 view.buttonDelegate,
-                                 .OBJC_ASSOCIATION_RETAIN)
+        view.buttonDelegate = context.buttonDelegate
         return view
-    }
-}
-
-// Small trampoline that lets the builder attach a closure to each
-// back/forward/reload/settings button without needing every caller to
-// subclass the item class.
-private var ButtonForwarderKey: UInt8 = 0
-
-private final class ButtonForwarder: NSObject, CCModeButtonToolbarItemDelegate {
-    let kind: String
-    let handler: ((String) -> Void)?
-    init(kind: String, handler: ((String) -> Void)?) {
-        self.kind = kind
-        self.handler = handler
-    }
-    func toolbarButtonSelected(identifier: String) {
-        handler?(kind)
     }
 }
