@@ -33,7 +33,7 @@ struct iTermWorkgroup: Codable, Equatable {
             command: "",
             urlString: "",
             toolbarItems: [],
-            displayName: "")
+            displayName: "Main")
         return iTermWorkgroup(uniqueIdentifier: UUID().uuidString,
                               name: name,
                               sessions: [root])

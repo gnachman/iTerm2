@@ -19582,6 +19582,16 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     if (_inScreenshotMode && _view.window == nil) {
         [iTermScreenshotPanel closePanelForSession:self];
     }
+    // After a peer swap, the view may have had outstanding temporarilyDisableMetal
+    // tokens dropped while it had no window, leaving the metal view stuck at alpha=0.
+    // Now that we have a window again, render frames and show it.
+    if (_view.window != nil &&
+        _useMetal &&
+        _metalDisabledTokens.count == 0 &&
+        _view.metalView.alphaValue == 0) {
+        DLog(@"sessionViewDidChangeWindow: metal view alpha is 0 with no pending tokens; re-showing %@", self);
+        [self renderTwoMetalFramesAndShowMetalView];
+    }
 }
 
 - (void)sessionViewAnnouncementDidChange:(SessionView *)sessionView {
@@ -19631,7 +19641,10 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
             return;
         }
         if (!_view.window) {
-            DLog(@"drawFrameAndRemoveTemporarilyDisablementOfMetal: Returning because the view has no window");
+            // Drop the token instead of leaking it. We can't draw without a window, but a later
+            // sessionViewDidChangeWindow will re-show the metal view when it returns.
+            [_metalDisabledTokens removeObject:token];
+            DLog(@"drawFrameAndRemoveTemporarilyDisablementOfMetal: Returning because the view has no window. Tokens are now %@", _metalDisabledTokens);
             return;
         }
         if (!_useMetal) {

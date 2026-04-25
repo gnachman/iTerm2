@@ -19,6 +19,9 @@
 }
 
 + (instancetype)forTerm:(NSString *)term {
+    if (!term) {
+        return nil;
+    }
     static NSMutableDictionary *terms;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{

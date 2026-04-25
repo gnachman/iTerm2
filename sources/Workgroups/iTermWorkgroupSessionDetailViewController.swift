@@ -484,8 +484,11 @@ class iTermWorkgroupSessionDetailViewController: NSViewController {
         profileRow.isHidden = isRoot
         commandRow.isHidden = isRoot || isBrowser
         urlRow.isHidden = isRoot || !isBrowser
-        // Every session except the main (root) gets an editable name.
-        peerRow.isHidden = (s.kind == .root)
+        // Every session is a potential peer-group leader (root and any
+        // non-peer host can carry a peer group), so every kind gets an
+        // editable display name. Required for .peer; for the others
+        // it's the leader's own switcher label.
+        peerRow.isHidden = false
         splitSection.isHidden = !(s.kind.isSplit)
         toolbarSection.isHidden = false
 

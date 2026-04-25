@@ -275,6 +275,13 @@
                             <menuItem isSeparatorItem="YES" id="sr9-jE-RB0">
                                 <modifierMask key="keyEquivalentModifierMask" command="YES"/>
                             </menuItem>
+                            <menuItem title="Workgroups" id="OW4-ru-6dZ">
+                                <modifierMask key="keyEquivalentModifierMask"/>
+                                <menu key="submenu" title="Workgroups" id="wMa-7x-vmS"/>
+                            </menuItem>
+                            <menuItem isSeparatorItem="YES" id="0Pe-Q6-LEJ">
+                                <modifierMask key="keyEquivalentModifierMask" command="YES"/>
+                            </menuItem>
                             <menuItem title="Broadcast Input" id="1261">
                                 <modifierMask key="keyEquivalentModifierMask"/>
                                 <menu key="submenu" title="Broadcast Input" id="1262">
@@ -2009,6 +2016,7 @@ CQ
                 <outlet property="useTransparency" destination="1228" id="1230"/>
                 <outlet property="windowArrangementsAsTabs_" destination="z6V-EJ-Ntf" id="wse-Wc-WVw"/>
                 <outlet property="windowArrangements_" destination="1280" id="1285"/>
+                <outlet property="workgroupsMenuItem" destination="OW4-ru-6dZ" id="Yvx-Rp-XKF"/>
             </connections>
         </customObject>
         <customObject id="266" userLabel="Font Manager" customClass="NSFontManager"/>
