@@ -281,15 +281,25 @@ final class iTermWorkgroupInstance: NSObject {
             guard let entry = nonPeerEntriesByConfigID[configID] else { continue }
             entry.session.workgroupInstance = nil
             entry.session.peerPort = nil
-            // Skip sessions that have already exited. Calling
-            // terminate() on them would still post a second
-            // iTermSessionWillTerminate notification, which re-
-            // enters our own observer mid-teardown for no benefit.
-            // Note: iTermSessionWillTerminate fires before `exited`
-            // is set, so this guard does NOT skip the session that
-            // triggered teardown — only ones that exited earlier.
-            if !entry.session.exited {
-                entry.session.terminate()
+            // Skip sessions that have already exited.
+            // iTermSessionWillTerminate fires before `exited` is set,
+            // so this guard does NOT skip the session that triggered
+            // teardown — only ones that exited earlier.
+            guard !entry.session.exited else { continue }
+            // Defer the actual close to the next runloop. Reason:
+            // when teardown is triggered by the leader's
+            // iTermSessionWillTerminate notification, the leader is
+            // still mid-terminate — its view hasn't been removed
+            // from the tab yet. PseudoTerminal.closeSession only
+            // closes the tab when sessions.count == 1, and at this
+            // moment the count is 2 (the leader plus our child).
+            // Dispatching to the next runloop tick lets the leader's
+            // removeSession complete first, so when our close runs
+            // the child is the only session left and the tab/window
+            // closes naturally.
+            let session = entry.session
+            DispatchQueue.main.async {
+                session.delegate?.close(session)
             }
         }
         nonPeerOrderedConfigIDs.removeAll()

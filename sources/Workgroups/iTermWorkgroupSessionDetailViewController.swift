@@ -832,24 +832,22 @@ extension iTermWorkgroupSessionConfig.Kind {
 // MARK: - Text-field delegate
 
 extension iTermWorkgroupSessionDetailViewController: NSTextFieldDelegate {
-    // Live updates for the peer/host display name: every keystroke is
-    // pushed to the model (and therefore to the visual preview and the
-    // switcher label). Empty strings are allowed here — the end-editing
-    // pass below restores a non-empty value if the session is a peer.
+    // Live updates: every keystroke in any of these fields is pushed to
+    // the model so the user doesn't have to tab out to save. The
+    // end-editing pass below still runs for finalization (e.g. peer
+    // names get a non-empty default restored, spacer min/max get
+    // applied as a pair).
     func controlTextDidChange(_ obj: Notification) {
-        guard var s = session,
-              let field = obj.object as? NSTextField,
-              field === peerNameField else { return }
-        if s.displayName != field.stringValue {
-            s.displayName = field.stringValue
-            commitUpdate(s, actionName: "Rename Peer")
-        }
-    }
-
-    func controlTextDidEndEditing(_ obj: Notification) {
         guard var s = session,
               let field = obj.object as? NSTextField else { return }
         switch field {
+        case peerNameField:
+            // Empty strings are allowed during typing — the end-editing
+            // pass restores a default if the session is a peer.
+            if s.displayName != field.stringValue {
+                s.displayName = field.stringValue
+                commitUpdate(s, actionName: "Rename Peer")
+            }
         case commandField:
             if s.command != field.stringValue {
                 s.command = field.stringValue
@@ -865,6 +863,19 @@ extension iTermWorkgroupSessionDetailViewController: NSTextFieldDelegate {
                 s.urlString = field.stringValue
                 commitUpdate(s, actionName: "Change URL")
             }
+        default:
+            break
+        }
+    }
+
+    // End-editing handler runs the finalizers that don't make sense on
+    // every keystroke: peer-name validation, spacer min/max coupling.
+    // Commit-on-keystroke for command/url/perFileCommand happens in
+    // controlTextDidChange above.
+    func controlTextDidEndEditing(_ obj: Notification) {
+        guard var s = session,
+              let field = obj.object as? NSTextField else { return }
+        switch field {
         case peerNameField:
             let trimmed = field.stringValue.trimmingCharacters(
                 in: .whitespacesAndNewlines)

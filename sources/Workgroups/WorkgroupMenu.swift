@@ -66,12 +66,22 @@ final class WorkgroupMenu: NSObject, NSMenuDelegate {
               update item: NSMenuItem,
               at index: Int,
               shouldCancel: Bool) -> Bool {
-        if let session = currentSession(), session.workgroupInstance == nil {
-            item.isEnabled = true
-        } else {
-            item.isEnabled = false
-        }
+        item.isEnabled = canEnter
         return false
+    }
+
+    // NSMenu also routes validation through the action target's
+    // validateMenuItem:. Without this, items show as enabled
+    // (greyed-out flag from menuNeedsUpdate gets overridden) when
+    // there's no current terminal window.
+    @objc
+    func validateMenuItem(_ menuItem: NSMenuItem) -> Bool {
+        return canEnter
+    }
+
+    private var canEnter: Bool {
+        guard let session = currentSession() else { return false }
+        return session.workgroupInstance == nil
     }
 
     // MARK: - Action
