@@ -15,7 +15,6 @@
 #import "iTermCache.h"
 #import "iTermColorMap.h"
 #import "iTermCommandRunner.h"
-#import "iTermTLVCodec.h"
 #import "PTYSession.h"
 #import "PTYTab.h"
 #import "PTYWindow.h"
