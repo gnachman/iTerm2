@@ -334,48 +334,6 @@ class CCModeButtonToolbarItem: SessionToolbarControl {
     }
 }
 
-@objc(iTermCCModeSwitchSessionToolbarItemDelegate)
-protocol CCModeSwitchSessionToolbarItemDelegate: AnyObject {
-    func ccModeDidChange(mode: iTermCCMode)
-}
-
-@objc(iTermCCModeSwitchSessionToolbarItem)
-class CCModeSwitchSessionToolbarItem: SessionToolbarControl {
-    @objc weak var modeSwitchDelegate: CCModeSwitchSessionToolbarItemDelegate?
-    private let segmentedControl: NSSegmentedControl
-
-    @objc
-    init(identifier: String,
-         priority: Int,
-         mode: iTermCCMode) {
-        segmentedControl = NSSegmentedControl(
-            labels: ["Claude Code", "Diff", "Code Review"],
-            trackingMode: .selectOne,
-            target: nil,
-            action: #selector(modeChanged(_:)))
-        segmentedControl.segmentStyle = .texturedRounded
-        segmentedControl.selectedSegment = mode.rawValue
-        super.init(identifier: identifier,
-                   priority: priority,
-                   control: segmentedControl)
-        segmentedControl.target = self
-    }
-
-    override var desiredWidthRange: ClosedRange<CGFloat> {
-        // Controls don't stretch past their natural size.
-        let width = max(_view.fittingSize.width, 0)
-        return (30.0 * CGFloat(segmentedControl.segmentCount))...width
-    }
-    
-    @objc
-    private func modeChanged(_ sender: Any?) {
-        guard let mode = iTermCCMode(rawValue: segmentedControl.indexOfSelectedItem) else {
-            return
-        }
-        modeSwitchDelegate?.ccModeDidChange(mode: mode)
-    }
-}
-
 @objc(iTermCCDiffSelectorItemDelegate)
 protocol CCDiffSelectorItemDelegate: AnyObject {
     func diffDidSelect(filename: String)

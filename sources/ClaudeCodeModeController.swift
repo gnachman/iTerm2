@@ -5,14 +5,14 @@
 
 import Foundation
 
-// Keeps each PTYSession's claudeCodeModeEnabled flag synchronized with two
-// signals:
+// Enters and exits the built-in Claude Code workgroup on a PTYSession
+// based on two signals:
 //   • "claude" is in the session's foreground-job ancestry chain, per
 //     GlobalJobMonitor.
-//   • The session has an active tab status (indicator or status text), per
-//     SessionStatusController / iTermSessionTabStatus notifications.
+//   • The session has an active tab status (indicator or status text),
+//     per SessionStatusController / iTermSessionTabStatus notifications.
 //
-// The flag is YES iff both signals are true.
+// Workgroup is entered iff both signals are true; exited otherwise.
 @objc(iTermClaudeCodeModeController)
 class ClaudeCodeModeController: NSObject {
     @objc static let instance = ClaudeCodeModeController()

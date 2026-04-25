@@ -1173,12 +1173,8 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (NSString *)description {
     NSString *synthetic = _synthetic ? @" Synthetic" : @"";
-    NSString *cc = @"";
-    if (self.claudeCodeModeEnabled) {
-        cc = [NSString stringWithFormat:@" cc=%@", @(self.claudeCodeMode)];
-    }
-    return [NSString stringWithFormat:@"<%@: %p %dx%d metal=%@ id=%@%@%@%@>",
-            [self class], self, [_screen width], [_screen height], @(self.useMetal), _guid, synthetic, _view.isBrowser ? @" WebBrowser" : @"", cc];
+    return [NSString stringWithFormat:@"<%@: %p %dx%d metal=%@ id=%@%@%@>",
+            [self class], self, [_screen width], [_screen height], @(self.useMetal), _guid, synthetic, _view.isBrowser ? @" WebBrowser" : @""];
 }
 
 - (void)didFinishInitialization {
@@ -1363,32 +1359,10 @@ ITERM_WEAKLY_REFERENCEABLE
     return _modeHandler.mode == iTermSessionModeCopy;
 }
 
-- (void)setClaudeCodeModeEnabled:(BOOL)enabled {
-    if (_claudeCodeModeEnabled == enabled) {
-        return;
-    }
-    _claudeCodeModeEnabled = enabled;
-    if (enabled) {
-        _claudeCodeMode = iTermCCModeCLI;
-        // installClaudeCodePeers creates the ClaudeCodePeerPort, which builds
-        // the toolbar items and shared git poller and customizes items for the
-        // leader's initial mode.
-        [self installClaudeCodePeers];
-    } else {
-        [self removeClaudeCodePeers];
-    }
-    [_delegate sessionDidChangeDesiredToolbarItems:self];
-}
-
-- (void)didJoinClaudeCodePeersWithMode:(iTermCCMode)mode {
-    _claudeCodeModeEnabled = YES;
-    _claudeCodeMode = mode;
-}
-
 - (void)moveToolbarTo:(PTYSession *)destination {
-    // The toolbar items and poller are owned by the shared ClaudeCodePeerPort,
-    // so the only thing that needs to happen is reparenting the physical
-    // toolbar view onto the destination's SessionView.
+    // The toolbar items and poller are owned by the shared workgroup
+    // peer port, so the only thing that needs to happen is reparenting
+    // the physical toolbar view onto the destination's SessionView.
     [self.view moveToolbarTo:destination.view];
 }
 
@@ -1396,10 +1370,7 @@ ITERM_WEAKLY_REFERENCEABLE
     if (self.workgroupInstance) {
         return [self.workgroupInstance toolbarItemsFor:self];
     }
-    if (!_claudeCodeModeEnabled) {
-        return nil;
-    }
-    return self.claudeCodePeerPort.toolbarItems;
+    return nil;
 }
 
 - (BOOL)sessionModeConsumesEvent:(NSEvent *)event {

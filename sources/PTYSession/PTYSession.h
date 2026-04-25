@@ -3,7 +3,6 @@
 #import "Api.pbobjc.h"
 #import "DVR.h"
 #import "iTermAPIHelper.h"
-#import "iTermCCMode.h"
 #import "iTermEchoProbe.h"
 #import "iTermEncoderAdapter.h"
 #import "iTermFindDriver.h"
@@ -638,13 +637,7 @@ backgroundColor:(NSColor *)backgroundColor;
 @property(nonatomic, readonly) BOOL canOpenPasswordManager;
 @property(nonatomic) BOOL shortLivedSingleUse;
 
-// When YES, the session's view shows a Claude Code toolbar.
-@property(nonatomic) BOOL claudeCodeModeEnabled;
-
-// Only meaningful when claudeCodeModeEnabled is YES.
-@property(nonatomic) iTermCCMode claudeCodeMode;
-
-// nil unless claudeCodeModeEnabled is YES.
+// nil unless this session has an active workgroup instance.
 @property(nonatomic, readonly, nullable) NSArray<iTermSessionToolbarItem *> *desiredToolbarItems;
 @property(nonatomic, retain) NSMutableDictionary<NSString *, NSString *> *hostnameToShell;  // example.com -> fish
 @property(nonatomic, readonly) NSString *sessionId;
@@ -1115,7 +1108,6 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
 - (void)sync;
 - (void)toggleSettingWithKey:(NSString *)key
                    isProfile:(BOOL)isProfile;
-- (void)didJoinClaudeCodePeersWithMode:(iTermCCMode)mode;
 - (void)moveToolbarTo:(PTYSession *)destination;
 
 #pragma mark - API
