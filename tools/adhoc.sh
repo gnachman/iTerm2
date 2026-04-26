@@ -23,20 +23,27 @@ zip -ry $PRENOTARIZED_ZIP iTerm.app
 
 # Retry notarytool submit on transient upload failures (e.g.
 # HTTPClientError.deadlineExceeded, abortedUpload, connection
-# reset). Real rejections (Invalid status, bad credentials)
-# are not retried.
+# reset). After the first transient failure, fall back to
+# --no-s3-acceleration: Apple's S3 Transfer Acceleration (the
+# default) routes through CloudFront edges and can be slower
+# than the direct S3 path when an edge is congested or
+# mis-routed, which is the usual cause of deadlineExceeded
+# during the multipart upload. Real rejections (Invalid status,
+# bad credentials) are not retried.
 function notarize_with_retry {
   local zip="$1"
   local max_attempts=6
   local attempt=1
   local out=/tmp/upload.out
+  local accel_args=()
   while [ $attempt -le $max_attempts ]; do
-    echo "Notarization attempt $attempt of $max_attempts..."
+    echo "Notarization attempt $attempt of $max_attempts (${accel_args[*]:-default acceleration})..."
     xcrun notarytool submit \
       --team-id H7V7XYVQ7D \
       --apple-id "apple@georgester.com" \
       --password "$NOTPASS" \
       --wait \
+      "${accel_args[@]}" \
       "$zip" > "$out" 2>&1
     local rc=$?
     cat "$out"
@@ -44,8 +51,9 @@ function notarize_with_retry {
       return 0
     fi
     if grep -qE "abortedUpload|deadlineExceeded|connection reset|connectionReset|timed out|Connection refused|networkConnectionLost" "$out"; then
+      accel_args=(--no-s3-acceleration)
       local backoff=$((attempt * 10))
-      echo "Transient upload failure (attempt $attempt). Retrying in ${backoff}s..."
+      echo "Transient upload failure (attempt $attempt). Retrying in ${backoff}s with --no-s3-acceleration..."
       sleep $backoff
       attempt=$((attempt + 1))
       continue
