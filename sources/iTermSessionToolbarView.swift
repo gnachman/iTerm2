@@ -352,6 +352,16 @@ class CCDiffSelectorItem: SessionToolbarControl {
     private let button: NSPopUpButton
     // Held so the item participates in keeping the shared poller alive.
     let poller: iTermGitPoller
+    // Backing list mirroring the popup's items (display order). Kept
+    // separately so back/forward can navigate even if the popup's
+    // selectedItem is stale (e.g. currentFile fell out of the list).
+    private var orderedFiles: [String] = []
+    // Last file the user navigated to via popup or back/forward —
+    // the anchor that survives changes to orderedFiles. Independent
+    // of `button.selectedItem`: when `currentFile` is gone from the
+    // list, the popup falls back to its first item visually but we
+    // still know where the user was.
+    private var currentFile: String?
 
     @objc
     init(identifier: String,
@@ -374,6 +384,7 @@ class CCDiffSelectorItem: SessionToolbarControl {
     @objc(setFiles:)
     func set(files: [String]) {
         DLog("CCDiffSelectorItem set(files:) called with \(files.count) files: \(files)")
+        orderedFiles = files
         let segmentedFiles: [[String]] = files.map { ($0 as NSString).pathComponents }
         let dirs = segmentedFiles.map { $0.dropLast() }
         let prefixLength = dirs.longestCommonPrefix.count
@@ -393,6 +404,61 @@ class CCDiffSelectorItem: SessionToolbarControl {
         delegate?.itemDidChange(sender: self)
     }
 
+    // Pick the next/previous file in the popup's display order,
+    // wrapping at the ends. Anchor is the user's last navigation
+    // (`currentFile`); if that's gone from the list, we land on the
+    // file that would have come immediately after it (forward) or
+    // before it (backward) by string comparison — which is the order
+    // the popup itself displays since git status output is sorted.
+    // Falls back to the popup's visible selection so a click before
+    // the user has ever picked anything still advances visibly.
+    // Returns the chosen filename (also fired through
+    // diffSelectorDelegate) or nil when there's nothing to pick.
+    @objc
+    @discardableResult
+    func selectNextFile() -> String? {
+        return advanceFile(forward: true)
+    }
+
+    @objc
+    @discardableResult
+    func selectPreviousFile() -> String? {
+        return advanceFile(forward: false)
+    }
+
+    private func advanceFile(forward: Bool) -> String? {
+        guard !orderedFiles.isEmpty else { return nil }
+        let anchor = currentFile ?? (button.selectedItem?.representedObject as? String)
+        let chosen: String
+        if let anchor, let idx = orderedFiles.firstIndex(of: anchor) {
+            let count = orderedFiles.count
+            let next = forward
+                ? (idx + 1) % count
+                : (idx - 1 + count) % count
+            chosen = orderedFiles[next]
+        } else if let anchor {
+            // Anchor is gone — pick the neighbor that would come after
+            // (or before) it in the list's natural order, with wrap.
+            if forward {
+                chosen = orderedFiles.first(where: { $0 > anchor })
+                    ?? orderedFiles[0]
+            } else {
+                chosen = orderedFiles.last(where: { $0 < anchor })
+                    ?? orderedFiles[orderedFiles.count - 1]
+            }
+        } else {
+            chosen = forward ? orderedFiles[0] : orderedFiles[orderedFiles.count - 1]
+        }
+        currentFile = chosen
+        if let match = button.menu?.items.first(where: {
+            ($0.representedObject as? String) == chosen
+        }) {
+            button.select(match)
+        }
+        diffSelectorDelegate?.diffDidSelect(filename: chosen, sender: self)
+        return chosen
+    }
+
     override var desiredWidthRange: ClosedRange<CGFloat> {
         DLog("CCDiffSelectorItem desiredWidthRange: fittingSize.width=\(button.fittingSize.width), menu items=\(button.menu?.items.count ?? -1)")
         return 30.0...button.fittingSize.width
@@ -402,6 +468,7 @@ class CCDiffSelectorItem: SessionToolbarControl {
     private func selectionDidChange(_ sender: Any?) {
         if let filename = button.selectedItem?.representedObject as? String {
             DLog("CCDiffSelectorItem selection changed to \(filename)")
+            currentFile = filename
             diffSelectorDelegate?.diffDidSelect(filename: filename,
                                                 sender: self)
         } else {

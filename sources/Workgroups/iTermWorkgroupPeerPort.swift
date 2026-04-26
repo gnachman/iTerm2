@@ -130,12 +130,26 @@ final class iTermWorkgroupPeerPort: PTYSessionPeerPort {
             // iTermWorkgroupInstance.toolbarButtonSelected for the
             // rationale.
             session.restart()
-        case .back, .forward, .settings:
+        case .back:
+            diffSelector(forPeerID: ownerPeerID)?.selectPreviousFile()
+        case .forward:
+            diffSelector(forPeerID: ownerPeerID)?.selectNextFile()
+        case .settings:
             // TODO: wire once we have peer-specific behavior.
             break
         case .gitStatus, .changedFileSelector, .modeSwitcher, .spacer:
             break
         }
+    }
+
+    // The peer's CFS, if it has one. Back/forward fan their click onto
+    // this so the existing diffDidSelect path (which performs the
+    // per-file restart) handles the actual session restart.
+    private func diffSelector(forPeerID id: String?) -> CCDiffSelectorItem? {
+        guard let id else { return nil }
+        return itemsByPeerID[id]?
+            .compactMap { $0 as? CCDiffSelectorItem }
+            .first
     }
 }
 

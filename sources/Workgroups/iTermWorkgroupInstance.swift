@@ -484,12 +484,26 @@ extension iTermWorkgroupInstance: CCModeButtonToolbarItemDelegate {
                 return
             }
             session.restart()
-        case .back, .forward, .settings:
+        case .back:
+            diffSelector(forNonPeerConfigID: configID)?.selectPreviousFile()
+        case .forward:
+            diffSelector(forNonPeerConfigID: configID)?.selectNextFile()
+        case .settings:
             // TODO: peer-specific behavior.
             break
         case .gitStatus, .changedFileSelector, .modeSwitcher, .spacer:
             break
         }
+    }
+
+    // The CFS for a non-peer host (split/tab) by config ID. Peer
+    // CFSes live in the peer port's itemsByPeerID; this method
+    // intentionally only looks at the non-peer entries.
+    private func diffSelector(forNonPeerConfigID id: String) -> CCDiffSelectorItem? {
+        return nonPeerEntriesByConfigID[id]?
+            .items
+            .compactMap { $0 as? CCDiffSelectorItem }
+            .first
     }
 }
 
