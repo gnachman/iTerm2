@@ -436,10 +436,13 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
             relatedView:nil
                    type:kPreferenceInfoTypeCheckbox];
 
-    [self defineControl:_runCommandInLoginShell
-                    key:KEY_RUN_COMMAND_IN_LOGIN_SHELL
-            relatedView:nil
-                   type:kPreferenceInfoTypeCheckbox];
+    info = [self defineControl:_runCommandInLoginShell
+                           key:KEY_RUN_COMMAND_IN_LOGIN_SHELL
+                   relatedView:nil
+                          type:kPreferenceInfoTypeCheckbox];
+    info.observer = ^{
+        [weakSelf updateCommandWarningImageView];
+    };
 
     [self addViewToSearchIndex:_urlSchemes
                    displayName:@"URL schemes handled by profile"
@@ -1131,6 +1134,11 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
     const NSInteger mode = _commandType.selectedTag;
     if (commandLine.length == 0) {
         [self didDetermineThatFilename:commandLine isExecutableRegularFile:NO mode:mode];
+        return;
+    }
+    if ([self boolForKey:KEY_RUN_COMMAND_IN_LOGIN_SHELL]) {
+        // Assume it's valid. No way to check if a shell command is going to work but to run it.
+        [self didDetermineThatFilename:commandLine isExecutableRegularFile:YES mode:mode];
         return;
     }
     NSString *filename = [self commandInCurrentCommandLine];
