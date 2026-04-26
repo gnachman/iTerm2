@@ -1657,7 +1657,16 @@ extension PTYSession {
                             from: self,
                             decree: "Workgroup peer of session with guid \(d(profile[KEY_GUID]))")
                     }
-                    let command = config.command.isEmpty ? nil : config.command
+                    // Workgroup commands run via /usr/bin/login +
+                    // ShellLauncher so dotfiles are sourced and the
+                    // user's interactive PATH/aliases are visible.
+                    // KEY_RUN_COMMAND_IN_LOGIN_SHELL doesn't apply
+                    // here — the launch request below feeds `command`
+                    // into the launcher directly, bypassing the
+                    // bookmarkCommandSwiftyString: wrapping path.
+                    let command = config.command.isEmpty
+                        ? nil
+                        : ITAddressBookMgr.commandByWrapping(inLoginShell: config.command)
                     let urlString = config.urlString.isEmpty ? nil : config.urlString
                     let launchRequest = iTermSessionAttachOrLaunchRequest(
                         session: newSession,

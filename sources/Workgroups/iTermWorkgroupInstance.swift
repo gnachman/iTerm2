@@ -504,6 +504,7 @@ extension iTermWorkgroupInstance: CCDiffSelectorItemDelegate {
             return
         }
         let command = cfg.resolvedPerFileCommand(filename: filename)
-        session.restart(withCommand: command)
+        let wrapped = ITAddressBookMgr.commandByWrapping(inLoginShell: command)
+        session.restart(withCommand: wrapped)
     }
 }

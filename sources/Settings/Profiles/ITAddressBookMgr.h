@@ -614,6 +614,13 @@ NSString *iTermPathToSSH(void);
 
 + (NSString *)customShellForProfile:(Profile *)profile;
 
+// Wraps `command` so it runs through `/usr/bin/login` + ShellLauncher,
+// matching what KEY_RUN_COMMAND_IN_LOGIN_SHELL does inside
+// bookmarkCommandSwiftyString:. Use this at sites that bypass the
+// session-factory launch path (e.g. workgroup spawn / per-file restart)
+// but still need dotfiles sourced and the user's interactive PATH.
++ (NSString *)commandByWrappingInLoginShell:(NSString *)command;
+
 // Indicates if it is safe to remove the profile from the model.
 + (BOOL)canRemoveProfile:(Profile *)profile fromModel:(ProfileModel *)model;
 

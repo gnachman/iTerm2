@@ -804,6 +804,21 @@ iTermPercentage iTermPercentageFromProfile(Profile *profile, iTermWindowType win
             userName];
 }
 
++ (NSString *)commandByWrappingInLoginShell:(NSString *)command {
+    // Mirrors the wrapping done inside bookmarkCommandSwiftyString:
+    // when KEY_RUN_COMMAND_IN_LOGIN_SHELL is set. ShellLauncher exec's
+    // the user's shell with argv[0] = "-<basename>" so login behavior
+    // is triggered uniformly across bash, zsh, fish, tcsh, and xonsh —
+    // tcsh in particular rejects -l combined with -c on the command line.
+    NSString *shellLauncher =
+        [[NSBundle bundleForClass:self.class] pathForAuxiliaryExecutable:@"ShellLauncher"];
+    return [NSString stringWithFormat:@"/usr/bin/login -f%@pl %@ %@ --launch_shell - -i -c %@",
+            [self hushlogin] ? @"q" : @"",
+            [NSUserName() stringWithBackslashEscapedShellCharactersIncludingNewlines:YES],
+            [shellLauncher stringWithBackslashEscapedShellCharactersIncludingNewlines:YES],
+            [command stringWithBackslashEscapedShellCharactersIncludingNewlines:YES]];
+}
+
 + (void)computeCommandForProfile:(Profile *)profile
                       objectType:(iTermObjectType)objectType
                            scope:(iTermVariableScope *)scope

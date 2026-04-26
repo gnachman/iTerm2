@@ -251,7 +251,14 @@ final class DefaultWorkgroupSessionSpawner: WorkgroupSessionSpawner {
                                windowController: PseudoTerminal,
                                parent: PTYSession) {
         parent.asyncInitialDirectoryForNewSessionBased { oldCWD in
-            let cmd = command.isEmpty ? nil : command
+            // Wrap workgroup-supplied commands so they go through
+            // /usr/bin/login + ShellLauncher and pick up the user's
+            // dotfiles / PATH. The launcher path here bypasses the
+            // KEY_RUN_COMMAND_IN_LOGIN_SHELL wrapping that
+            // bookmarkCommandSwiftyString: would normally apply.
+            let cmd = command.isEmpty
+                ? nil
+                : ITAddressBookMgr.commandByWrapping(inLoginShell: command)
             let url = urlString.isEmpty ? nil : urlString
             let request = iTermSessionAttachOrLaunchRequest(
                 session: session,

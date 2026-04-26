@@ -178,6 +178,7 @@ extension iTermWorkgroupPeerPort: CCDiffSelectorItemDelegate {
         // template — that avoids any backslash-paren shell parsing.
         let command = cfg.resolvedPerFileCommand(filename: filename)
         guard !command.isEmpty else { return }
-        session.restart(withCommand: command)
+        let wrapped = ITAddressBookMgr.commandByWrapping(inLoginShell: command)
+        session.restart(withCommand: wrapped)
     }
 }
