@@ -1247,6 +1247,7 @@ extension PTYSession {
             KEY_SUPPRESS_ALERTS_IN_ACTIVE_SESSION: nullValue,
             KEY_ALLOW_CHANGE_CURSOR_BLINK: nullValue,
             KEY_LOAD_SHELL_INTEGRATION_AUTOMATICALLY: nullValue,
+            KEY_RUN_COMMAND_IN_LOGIN_SHELL: nullValue,
             KEY_AUTOMATICALLY_ENABLE_ALTERNATE_MOUSE_SCROLL: nullValue,
             KEY_RESTRICT_ALTERNATE_MOUSE_SCROLL_TO_VERTICAL: nullValue,
             KEY_SET_LOCALE_VARS: nullValue,

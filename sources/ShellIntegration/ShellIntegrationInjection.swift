@@ -20,11 +20,20 @@ import Foundation
         case command
 
         init(_ argv: [String]) {
-            // Login Shell:    /usr/bin/login -f[q]pl $USER /path/to/ShellLauncher --launch_shell
-            // Custom Shell:   /usr/bin/login -f[q]pl $USER /path/to/ShellLauncher --launch_shell SHELL=$SHELL
-            // Custom Command: literally anything at all
+            // Login Shell:           /usr/bin/login -f[q]pl $USER /path/to/ShellLauncher --launch_shell
+            // Custom Shell:          /usr/bin/login -f[q]pl $USER /path/to/ShellLauncher --launch_shell SHELL=$SHELL
+            // Command via shell:     /usr/bin/login -f[q]pl $USER /path/to/ShellLauncher --launch_shell - -i -c <cmd>
+            // Custom Command:        literally anything at all
+            //
+            // The "Command via shell" form (KEY_RUN_COMMAND_IN_LOGIN_SHELL) deliberately
+            // classifies as .command below — argv[5] is "-" (not "SHELL=…") and argv.count > 5
+            // so neither match arm fires. That's the intended outcome: we don't try to inject
+            // shell integration into a wrapper whose terminal target is a user-typed command,
+            // and the .command path's createInjector(path: "/usr/bin/login") returns nil so
+            // env/argv are returned unchanged.
             //
             // NOTE: This must be kept in sync with -[ITAddressBookMgr shellLauncherCommandWithCustomShell:]
+            // and the wrap branch in -[ITAddressBookMgr bookmarkCommandSwiftyString:forObjectType:].
             let arg1 = argv.get(1, default: "")
             if argv.get(0, default: "") != "/usr/bin/login" {
                 self = .command

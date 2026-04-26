@@ -859,6 +859,19 @@ iTermPercentage iTermPercentageFromProfile(Profile *profile, iTermWindowType win
                            [iTermOpenDirectory userShell] ?: @"/bin/zsh",
                            [wrappedCommand stringWithBackslashEscapedShellCharactersIncludingNewlines:YES]];
                 DLog(@"wrappedCommand=%@, command=%@", wrappedCommand, command);
+            } else if (custom && [bookmark[KEY_RUN_COMMAND_IN_LOGIN_SHELL] boolValue]) {
+                // Wrap the user's command in their login shell so dotfiles (.zshrc/.bashrc/etc.)
+                // run first and the command sees the user's $PATH and exported environment.
+                // ShellLauncher exec's the shell with argv[0] = "-<basename>" so login behavior
+                // is triggered uniformly across bash, zsh, fish, tcsh, and xonsh — tcsh in
+                // particular rejects -l combined with -c on the command line.
+                NSString *shellLauncher = [[NSBundle bundleForClass:self.class] pathForAuxiliaryExecutable:@"ShellLauncher"];
+                command = [NSString stringWithFormat:@"/usr/bin/login -f%@pl %@ %@ --launch_shell - -i -c %@",
+                           [self hushlogin] ? @"q" : @"",
+                           [NSUserName() stringWithBackslashEscapedShellCharactersIncludingNewlines:YES],
+                           [shellLauncher stringWithBackslashEscapedShellCharactersIncludingNewlines:YES],
+                           [command stringWithBackslashEscapedShellCharactersIncludingNewlines:YES]];
+                DLog(@"login-shell wrapped command=%@", command);
             }
             return command;
         }

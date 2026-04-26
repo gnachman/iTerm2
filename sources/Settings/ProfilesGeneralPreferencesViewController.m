@@ -101,6 +101,7 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
     IBOutlet NSButton *_configureSSHButton;
     IBOutlet NSButton *_loadShellIntegrationAutomatically;
     IBOutlet NSTextField *_reasonShellIntegrationDisabledLabel;
+    IBOutlet NSButton *_runCommandInLoginShell;
 
     NSMutableDictionary<NSString *, NSString *> *_cachedCommandLines;  // KEY_COMMAND_LINE per command type
     iTermFunctionCallTextFieldDelegate *_commandDelegate;
@@ -432,6 +433,11 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
 
     [self defineControl:_loadShellIntegrationAutomatically
                     key:KEY_LOAD_SHELL_INTEGRATION_AUTOMATICALLY
+            relatedView:nil
+                   type:kPreferenceInfoTypeCheckbox];
+
+    [self defineControl:_runCommandInLoginShell
+                    key:KEY_RUN_COMMAND_IN_LOGIN_SHELL
             relatedView:nil
                    type:kPreferenceInfoTypeCheckbox];
 
@@ -810,9 +816,12 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
         _configureSSHButton.hidden = YES;
     }
     _customDirectory.enabled = ([[self stringForKey:KEY_CUSTOM_DIRECTORY] isEqualToString:kProfilePreferenceInitialDirectoryCustomValue]);
+    const BOOL isCustomCommand = [[self stringForKey:KEY_CUSTOM_COMMAND] isEqualToString:kProfilePreferenceCommandTypeCustomValue];
     NSString *reason;
     _loadShellIntegrationAutomatically.enabled = [self shouldEnableLoadShellIntegration:&reason];
-    if (reason) {
+    _loadShellIntegrationAutomatically.hidden = isCustomCommand;
+    _runCommandInLoginShell.hidden = !isCustomCommand;
+    if (reason && !isCustomCommand) {
         _reasonShellIntegrationDisabledLabel.stringValue = reason;
         [_reasonShellIntegrationDisabledLabel setLabelEnabled:NO];
         _reasonShellIntegrationDisabledLabel.hidden = NO;

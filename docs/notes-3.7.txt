@@ -275,6 +275,11 @@ Settings Improvements:
 - User-set colors are remembered separately
   from control-sequence-set colors so that they
   don't get reset by control sequence.
+- Profiles using a custom Command can now opt
+  to run the command through the user’s login
+  shell so dotfiles set $PATH and exported
+  variables (API keys, GEM_HOME, etc.) before
+  the command starts.
 
 Bug Fixes:
 - Fix various crashes.

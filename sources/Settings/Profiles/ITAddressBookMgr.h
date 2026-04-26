@@ -251,6 +251,7 @@ extern NSString *const iTermProgressBarColorSchemeOrange;
 #define KEY_SUPPRESS_ALERTS_IN_ACTIVE_SESSION @"Suppress Alerts in Active Session"
 #define KEY_ALLOW_CHANGE_CURSOR_BLINK         @"Allow Change Cursor Blink"
 #define KEY_LOAD_SHELL_INTEGRATION_AUTOMATICALLY @"Load Shell Integration Automatically"
+#define KEY_RUN_COMMAND_IN_LOGIN_SHELL        @"Run Command In Login Shell"
 #define KEY_AUTOMATICALLY_ENABLE_ALTERNATE_MOUSE_SCROLL @"Automatically Enable Alternate Mouse Scroll"
 #define KEY_RESTRICT_ALTERNATE_MOUSE_SCROLL_TO_VERTICAL @"Restrict Alternate Mouse Scroll to Vertical"
 
