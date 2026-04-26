@@ -135,39 +135,20 @@ final class iTermExternalAttributeSerializationTests: XCTestCase {
 
     // MARK: - TLV backward compat
 
-    // Builds a TLV blob in the wire shape produced by pre-dual-mode iTerm2
-    // builds. Used to verify saved scrollback from older builds still decodes.
-    private func buildLegacyTLVBlob(hasUnderlineColor: Bool,
-                                    underline: (r: Int32, g: Int32, b: Int32, mode: Int32)? = nil,
-                                    blockIDList: String? = nil,
-                                    controlCode: Int32 = -1,
-                                    url: Data? = nil,
-                                    lineAttribute: Int32? = nil) -> Data {
-        var data = Data()
-        func appendInt32(_ v: Int32) { withUnsafeBytes(of: v) { data.append(contentsOf: $0) } }
-        func appendUInt32(_ v: UInt32) { withUnsafeBytes(of: v) { data.append(contentsOf: $0) } }
-        func appendBool(_ v: Bool) { data.append(v ? 1 : 0) }
-        func appendData(_ d: Data) { appendInt32(Int32(d.count)); data.append(d) }
-        appendBool(hasUnderlineColor)
-        if hasUnderlineColor, let u = underline {
-            appendInt32(u.r); appendInt32(u.g); appendInt32(u.b); appendInt32(u.mode)
-        }
-        appendUInt32(UInt32.max)  // deprecated urlCode
-        appendData(blockIDList?.data(using: .utf8) ?? Data())
-        appendInt32(controlCode)
-        if let url { appendData(url) }
-        if let lineAttribute { appendInt32(lineAttribute) }
-        return data
-    }
-
     // A blob produced by the pre-dual-mode encoder must still decode correctly.
     // This guards against a future change breaking saved scrollback.
     func testTLVDecodesPreDualModeBlob() {
-        let blob = buildLegacyTLVBlob(hasUnderlineColor: true,
-                                      underline: (r: 11, g: 22, b: 33, mode: Int32(ColorMode24bit.rawValue)),
-                                      blockIDList: "block-1",
-                                      controlCode: 0x07)
-        guard let decoded = iTermExternalAttribute.fromData(blob) else {
+        let encoder = iTermTLVEncoder()
+        encoder.encode(true)                              // hasUnderlineColor
+        encoder.encode(Int32(11))                         // red
+        encoder.encode(Int32(22))                         // green
+        encoder.encode(Int32(33))                         // blue
+        encoder.encode(Int32(ColorMode24bit.rawValue))    // mode
+        encoder.encodeUnsignedInt(UInt32.max)             // deprecated urlCode
+        encoder.encodeData("block-1".data(using: .utf8)!)
+        encoder.encode(Int32(0x07))                       // controlCode
+
+        guard let decoded = iTermExternalAttribute.fromData(encoder.data) else {
             XCTFail("expected pre-dual-mode blob to decode"); return
         }
         XCTAssertTrue(decoded.hasUnderlineColor)
@@ -182,8 +163,12 @@ final class iTermExternalAttributeSerializationTests: XCTestCase {
 
     // The minimal pre-dual-mode shape (everything default) decodes to nil.
     func testTLVDecodesPreDualModeMinimalReturnsNil() {
-        let blob = buildLegacyTLVBlob(hasUnderlineColor: false)
-        XCTAssertNil(iTermExternalAttribute.fromData(blob))
+        let encoder = iTermTLVEncoder()
+        encoder.encode(false)
+        encoder.encodeUnsignedInt(UInt32.max)
+        encoder.encodeData(Data())
+        encoder.encode(Int32(-1))
+        XCTAssertNil(iTermExternalAttribute.fromData(encoder.data))
     }
 
     // MARK: - Dictionary form
