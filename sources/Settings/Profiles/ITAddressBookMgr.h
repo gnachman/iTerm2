@@ -567,7 +567,11 @@ typedef NS_ENUM(NSInteger, iTermTriggerMatchType) {
     iTermTriggerMatchTypeEventLongRunningCommand = 109,
     iTermTriggerMatchTypeEventCustomEscapeSequence = 110,
     iTermTriggerMatchTypeEventNotificationPosted = 111,
-    iTermTriggerMatchTypeEventProgressBarChanged = 112
+    iTermTriggerMatchTypeEventProgressBarChanged = 112,
+    // Foreground-job ancestry deltas. The trigger's job filter
+    // selects the process name to watch for (e.g. "claude").
+    iTermTriggerMatchTypeEventJobStarted = 113,
+    iTermTriggerMatchTypeEventJobEnded = 114,
 };
 
 static inline BOOL iTermTriggerMatchTypeIsEvent(iTermTriggerMatchType type) {

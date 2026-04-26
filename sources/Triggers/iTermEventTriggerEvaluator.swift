@@ -45,7 +45,17 @@ class EventTriggerEvaluator: NSObject {
 
     @objc var triggerParametersUseInterpolatedStrings = false
     @objc var disabled = false
-    @objc var foregroundJobAncestors: [String]?
+    @objc var foregroundJobAncestors: [String]? {
+        didSet {
+            // Detect deltas in the foreground-job ancestry chain so
+            // job-started / job-ended event triggers can fire. The
+            // trigger.job filter (applied by fireTriggersForMatchType)
+            // selects which job name each trigger cares about; we
+            // just need to fire the event when ancestry membership
+            // for any job changes.
+            handleAncestorDelta(previous: oldValue, current: foregroundJobAncestors)
+        }
+    }
 
     /// Description of the owning session for logging purposes
     private let sessionDescription: String
@@ -181,6 +191,63 @@ class EventTriggerEvaluator: NSObject {
 
     @objc var hasProgressBarChangedTrigger: Bool {
         return hasEnabledTrigger(for: .eventProgressBarChanged)
+    }
+
+    @objc var hasJobStartedTrigger: Bool {
+        return hasEnabledTrigger(for: .eventJobStarted)
+    }
+
+    @objc var hasJobEndedTrigger: Bool {
+        return hasEnabledTrigger(for: .eventJobEnded)
+    }
+
+    // Diff successive `foregroundJobAncestors` updates and fire
+    // jobStarted / jobEnded triggers for the difference. Membership
+    // comparison is case-insensitive (lowercased keys), but the
+    // capture passed to the trigger preserves the original case so
+    // a substitution like "Process \1 started" reads "Claude" not
+    // "claude".
+    private func handleAncestorDelta(previous: [String]?, current: [String]?) {
+        let previousLower = (previous ?? []).reduce(into: [String: String]()) {
+            $0[$1.lowercased()] = $1
+        }
+        let currentLower = (current ?? []).reduce(into: [String: String]()) {
+            $0[$1.lowercased()] = $1
+        }
+        let previousKeys = Set(previousLower.keys)
+        let currentKeys = Set(currentLower.keys)
+        guard previousKeys != currentKeys else { return }
+        for key in currentKeys.subtracting(previousKeys) {
+            let original = currentLower[key] ?? key
+            fireJobAncestryTriggers(matchType: .eventJobStarted,
+                                    job: original)
+        }
+        for key in previousKeys.subtracting(currentKeys) {
+            let original = previousLower[key] ?? key
+            fireJobAncestryTriggers(matchType: .eventJobEnded,
+                                    job: original)
+        }
+    }
+
+    // Fires the relevant triggers for a single newly-added or newly-
+    // removed job. Bypasses the ancestor-membership check inside
+    // fireTriggersForMatchType (the job has just left the chain in
+    // the .ended case, so that check would never match) and uses
+    // the trigger's own jobName param (the global trigger.job field
+    // is suppressed for these event types since it'd be redundant).
+    private func fireJobAncestryTriggers(matchType: iTermTriggerMatchType,
+                                         job: String) {
+        guard !disabled,
+              let triggers = eventTriggers[matchType] else { return }
+        let jobLower = job.lowercased()
+        for trigger in triggers where !trigger.disabled {
+            if let target = trigger.eventParams?["jobName"] as? String,
+               !target.isEmpty,
+               target.lowercased() != jobLower {
+                continue
+            }
+            fireTrigger(trigger, capturedStrings: [job])
+        }
     }
 
     private func hasEnabledTrigger(for matchType: iTermTriggerMatchType) -> Bool {

@@ -70,6 +70,8 @@ typedef NS_ENUM(NSInteger, iTermLinesShiftedReason) {
 - (void)triggerSideEffectCurrentDirectoryDidChange:(NSString * _Nonnull)newPath;
 - (void)triggerSideEffectShowCapturedOutputTool;
 - (void)triggerSessionSetBufferInput:(BOOL)shouldBuffer;
+- (void)triggerSideEffectEnterWorkgroupWithIdentifier:(NSString * _Nonnull)workgroupUniqueIdentifier;
+- (void)triggerSideEffectExitWorkgroup;
 
 @end
 

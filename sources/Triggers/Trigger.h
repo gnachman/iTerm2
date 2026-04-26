@@ -119,6 +119,9 @@ extern NSString * const kTriggerProvenanceKey;
 - (void)triggerSetBufferInput:(Trigger *)trigger
                  shouldBuffer:(BOOL)shouldBuffer;
 - (void)triggerSession:(Trigger *)trigger setTabStatus:(VT100TabStatusUpdate *)status;
+- (void)triggerSession:(Trigger *)trigger
+    enterWorkgroupWithIdentifier:(NSString *)workgroupUniqueIdentifier;
+- (void)triggerSessionExitWorkgroup:(Trigger *)trigger;
 @end
 
 @interface Trigger : NSObject<iTermObject>

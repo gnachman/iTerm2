@@ -1510,6 +1510,24 @@ static const CGFloat kLabelWidth = 124;
         _instantButton.state = NSControlStateValueOff;
         [_eventParamView configureForMatchType:_matchType];
     }
+    // Job started/ended own the job-name selection via their own
+    // parameter (the global "job" filter would be redundant and
+    // confusing). Disable + clear the placeholder so the field
+    // reads as inert.
+    BOOL jobFieldRedundant = (_matchType == iTermTriggerMatchTypeEventJobStarted ||
+                              _matchType == iTermTriggerMatchTypeEventJobEnded);
+    _jobTextField.enabled = !jobFieldRedundant;
+    if (jobFieldRedundant) {
+        _jobTextField.placeholderString = @"Set job above";
+        // Clear so we don't serialize a stale trigger.job from a
+        // previously-selected match type. The job-started/ended
+        // evaluator ignores trigger.job entirely (it reads from
+        // eventParams["jobName"]), but writing dead data here
+        // would confuse future callers.
+        _jobTextField.stringValue = @"";
+    } else {
+        _jobTextField.placeholderString = @"Trigger enabled only for this job (e.g., emacs)";
+    }
 }
 
 - (void)updateMatchTypeButtonForTrigger:(Trigger *)trigger {

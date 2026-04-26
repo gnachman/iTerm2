@@ -6702,6 +6702,19 @@ launchCoprocessWithCommand:(NSString *)command
     } name:@"trigger set tab status"];
 }
 
+- (void)triggerSession:(Trigger *)trigger
+    enterWorkgroupWithIdentifier:(NSString *)workgroupUniqueIdentifier {
+    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+        [delegate triggerSideEffectEnterWorkgroupWithIdentifier:workgroupUniqueIdentifier];
+    } name:@"trigger enter workgroup"];
+}
+
+- (void)triggerSessionExitWorkgroup:(Trigger *)trigger {
+    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+        [delegate triggerSideEffectExitWorkgroup];
+    } name:@"trigger exit workgroup"];
+}
+
 - (BOOL)triggerSessionIsInAlternateScreen {
     return self.terminal.softAlternateScreenMode;
 }

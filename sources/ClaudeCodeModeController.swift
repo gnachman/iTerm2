@@ -5,30 +5,40 @@
 
 import Foundation
 
-// Enters and exits the built-in Claude Code workgroup on a PTYSession
-// based on two signals:
-//   • "claude" is in the session's foreground-job ancestry chain, per
-//     GlobalJobMonitor.
-//   • The session has an active tab status (indicator or status text),
-//     per SessionStatusController / iTermSessionTabStatus notifications.
+// Detects when Claude Code is running in a session and offers to
+// upsell the workgroup feature: a one-time per-session announcement
+// asking the user if they'd like to enter the built-in Claude Code
+// workgroup (or open Settings to configure their own). Does NOT
+// auto-enter — that decision belongs to the user (via the trigger
+// system, the menu, or this announcement).
 //
-// Workgroup is entered iff both signals are true; exited otherwise.
+// "Claude is running" is the conjunction of two signals:
+//   • "claude" appears in the session's foreground-job ancestry
+//     chain, per GlobalJobMonitor.
+//   • The session has an active tab status (indicator or status
+//     text), per SessionStatusController / iTermSessionTabStatus
+//     notifications.
+//
+// The user can dismiss the upsell forever via
+// iTermUserDefaults.claudeCodeWorkgroupUpsellSuppressed.
 @objc(iTermClaudeCodeModeController)
 class ClaudeCodeModeController: NSObject {
     @objc static let instance = ClaudeCodeModeController()
 
     private static let monitoredJob = "claude"
+    private static let announcementIdentifier = "ClaudeCodeWorkgroupUpsell"
 
-    // Sessions with "claude" in their foreground-job ancestry.
     private var claudeSessionGUIDs = Set<String>()
-
-    // Sessions with an active (non-empty) tab status.
     private var statusSessionGUIDs = Set<String>()
+
+    // Per-session: whether we've already shown the upsell during
+    // this app run. Independent of the persistent "suppressed"
+    // user default — even without persistence we don't want to
+    // re-queue the announcement on every reconcile tick.
+    private var shownThisRun = Set<String>()
 
     private override init() {
         super.init()
-
-        // Ensure upstream singletons are running so we receive notifications.
         _ = GlobalJobMonitor.instance
         _ = SessionStatusController.instance
 
@@ -48,10 +58,11 @@ class ClaudeCodeModeController: NSObject {
             name: NSNotification.Name.iTermSessionWillTerminate,
             object: nil)
 
-        // Seed state from what's already tracked.
         claudeSessionGUIDs = GlobalJobMonitor.instance.sessionGUIDs(runningJob: Self.monitoredJob)
         for session in iTermController.sharedInstance()?.allSessions() ?? [] {
-            if let status = session.tabStatus, status.hasActiveStatus, let guid = session.guid {
+            if let status = session.tabStatus,
+               status.hasActiveStatus,
+               let guid = session.guid {
                 statusSessionGUIDs.insert(guid)
             }
         }
@@ -107,30 +118,57 @@ class ClaudeCodeModeController: NSObject {
         }
         claudeSessionGUIDs.remove(guid)
         statusSessionGUIDs.remove(guid)
+        shownThisRun.remove(guid)
     }
 
-    // MARK: - Reconciliation
+    // MARK: - Upsell
 
     private func reconcile(guid: String) {
+        guard !iTermUserDefaults.claudeCodeWorkgroupUpsellSuppressed else { return }
         guard let session = iTermController.sharedInstance()?.session(withGUID: guid) else {
             return
         }
-        let shouldEnable = claudeSessionGUIDs.contains(guid) && statusSessionGUIDs.contains(guid)
-        let isActive =
-            iTermWorkgroupController.instance.workgroupInstance(on: session)?
-                .workgroupUniqueIdentifier == BuiltinWorkgroups.ID.claudeCode
-        if shouldEnable && !isActive {
-            iTermWorkgroupController.instance.enter(
-                workgroupUniqueIdentifier: BuiltinWorkgroups.ID.claudeCode,
-                on: session)
-        } else if !shouldEnable && isActive {
-            iTermWorkgroupController.instance.exit(on: session)
-        }
+        // Don't offer to enter a workgroup if there's already one
+        // active — the user already has the feature in use here.
+        guard session.workgroupInstance == nil else { return }
+        let claudeIsRunning = claudeSessionGUIDs.contains(guid) && statusSessionGUIDs.contains(guid)
+        guard claudeIsRunning else { return }
+        guard !shownThisRun.contains(guid) else { return }
+        shownThisRun.insert(guid)
+        showAnnouncement(on: session)
     }
 
     private func reconcileAll() {
         for guid in claudeSessionGUIDs.union(statusSessionGUIDs) {
             reconcile(guid: guid)
         }
+    }
+
+    private func showAnnouncement(on session: PTYSession) {
+        let title = "Claude Code is running. Want to try the Claude Code integration?."
+        let actions = ["Try It Now", "Customize…", "Don't Show Again"]
+        let announcement = iTermAnnouncementViewController.announcement(
+            withTitle: title,
+            style: .kiTermAnnouncementViewStyleQuestion,
+            withActions: actions) { [weak session] choice in
+                switch choice {
+                case 0:
+                    if let session {
+                        iTermWorkgroupController.instance.enter(
+                            workgroupUniqueIdentifier: BuiltinWorkgroups.ID.claudeCode,
+                            on: session)
+                    }
+                case 1:
+                    let panel = PreferencePanel.sharedInstance()
+                    panel.window?.makeKeyAndOrderFront(nil)
+                    NSApp.activate(ignoringOtherApps: true)
+                case 2:
+                    iTermUserDefaults.claudeCodeWorkgroupUpsellSuppressed = true
+                default:
+                    break
+                }
+            }
+        session.queueAnnouncement(announcement,
+                                  identifier: Self.announcementIdentifier)
     }
 }

@@ -22859,6 +22859,54 @@ getOptionKeyBehaviorLeft:(iTermOptionKeyBehavior *)left
     }
 }
 
+- (void)triggerSideEffectEnterWorkgroupWithIdentifier:(NSString * _Nonnull)workgroupUniqueIdentifier {
+    [iTermGCD assertMainQueueSafe];
+    // No-op if this session is already in a workgroup. The
+    // controller's enter would otherwise replace a different active
+    // workgroup with this one, which causes churn when the user
+    // has multiple triggers (each fires on its own match) and would
+    // also disagree with the Workgroups menu's behavior of disabling
+    // itself for sessions that are already in a workgroup. The user
+    // must exit the current workgroup first.
+    if (self.workgroupInstance != nil) {
+        return;
+    }
+    // Defer to the next main-runloop tick. We're inside a screen
+    // side-effect right now, and workgroup entry spawns splits/tabs
+    // which call performBlockWithJoinedThreads — that asserts we're
+    // NOT currently performing a side effect. Yielding to the next
+    // tick gets us outside the side-effect critical section.
+    NSString *identifier = [workgroupUniqueIdentifier copy];
+    __weak __typeof(self) weakSelf = self;
+    dispatch_async(dispatch_get_main_queue(), ^{
+        __strong __typeof(weakSelf) strongSelf = weakSelf;
+        if (!strongSelf || strongSelf.workgroupInstance != nil) {
+            return;
+        }
+        [iTermWorkgroupController.instance enterWithWorkgroupUniqueIdentifier:identifier
+                                                                           on:strongSelf];
+    });
+}
+
+- (void)triggerSideEffectExitWorkgroup {
+    [iTermGCD assertMainQueueSafe];
+    // No-op if not in a workgroup. Same dispatch_async deferral as
+    // the enter side: we're inside a screen side-effect, and the
+    // teardown path can call into PTYTab/PseudoTerminal which trip
+    // the "not currently performing a side effect" assert.
+    if (self.workgroupInstance == nil) {
+        return;
+    }
+    __weak __typeof(self) weakSelf = self;
+    dispatch_async(dispatch_get_main_queue(), ^{
+        __strong __typeof(weakSelf) strongSelf = weakSelf;
+        if (!strongSelf || strongSelf.workgroupInstance == nil) {
+            return;
+        }
+        [iTermWorkgroupController.instance exitOn:strongSelf];
+    });
+}
+
 - (void)triggerSideEffectInvokeFunctionCall:(NSString * _Nonnull)invocation
                               withVariables:(NSDictionary * _Nonnull)temporaryVariables
                                    captures:(NSArray<NSString *> * _Nonnull)captureStringArray

@@ -26,6 +26,7 @@ static NSString *const iTermUserDefaultsKeyEnableAutomaticProfileSwitchingLoggin
 
 static NSString *const iTermUserDefaultsKeyRequireAuthenticationAfterScreenLocks = @"RequireAuthenticationAfterScreenLocks";
 static NSString *const iTermUserDefaultsKeyOpenTmuxDashboardIfHiddenWindows = @"OpenTmuxDashboardIfHiddenWindows";
+static NSString *const iTermUserDefaultsKeyClaudeCodeWorkgroupUpsellSuppressed = @"ClaudeCodeWorkgroupUpsellSuppressed";
 static NSString *const iTermUserDefaultsKeyHaveExplainedHowToAddTouchbarControls = @"NoSyncHaveExplainedHowToAddTouchbarControls";
 static NSString *const iTermUserDefaultsKeyIgnoreSystemWindowRestoration = @"NoSyncIgnoreSystemWindowRestoration";
 static NSString *const iTermUserDefaultsKeyGlobalSearchMode = @"NoSyncGlobalSearchMode";
@@ -188,6 +189,15 @@ static NSUserDefaults *iTermPrivateUserDefaults(void) {
 + (void)setOpenTmuxDashboardIfHiddenWindows:(BOOL)openTmuxDashboardIfHiddenWindows {
     [self.userDefaults setBool:openTmuxDashboardIfHiddenWindows
                         forKey:iTermUserDefaultsKeyOpenTmuxDashboardIfHiddenWindows];
+}
+
++ (BOOL)claudeCodeWorkgroupUpsellSuppressed {
+    return [self.userDefaults boolForKey:iTermUserDefaultsKeyClaudeCodeWorkgroupUpsellSuppressed];
+}
+
++ (void)setClaudeCodeWorkgroupUpsellSuppressed:(BOOL)suppressed {
+    [self.userDefaults setBool:suppressed
+                        forKey:iTermUserDefaultsKeyClaudeCodeWorkgroupUpsellSuppressed];
 }
 
 + (BOOL)haveExplainedHowToAddTouchbarControls {

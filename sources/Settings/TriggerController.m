@@ -270,6 +270,8 @@ NSString *const kStatusTextComboBoxIdentifier = @"kStatusTextComboBoxIdentifier"
             [iTermBufferInputTrigger class],
             [iTermFoldTrigger class],
             [iTermInjectTrigger class],
+            [iTermEnterWorkgroupTrigger class],
+            [iTermExitWorkgroupTrigger class],
             [iTermHighlightLineTrigger class],
             [iTermUserNotificationTrigger class],
             [iTermSetUserVariableTrigger class],
