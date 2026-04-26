@@ -341,6 +341,10 @@ class CCModeButtonToolbarItem: SessionToolbarControl {
 @objc(iTermCCDiffSelectorItemDelegate)
 protocol CCDiffSelectorItemDelegate: AnyObject {
     func diffDidSelect(filename: String, sender: CCDiffSelectorItem)
+    // The user picked the "All Files" row at the top of the popup —
+    // intent is to run the workgroup's main command, NOT the
+    // per-file command. Each implementation routes accordingly.
+    func diffDidSelectAllFiles(sender: CCDiffSelectorItem)
 }
 
 @objc(iTermCCDiffSelectorItem)
@@ -378,30 +382,162 @@ class CCDiffSelectorItem: SessionToolbarControl {
 
         button.target = self
         button.action = #selector(selectionDidChange(_:))
+        // The Staged/Unstaged/Untracked rows are header-only and set
+        // isEnabled=false on themselves. NSMenu's default
+        // auto-enable logic asks the responder chain whether each
+        // item is enabled, ignoring isEnabled when the action is nil
+        // and a target chain exists, so we have to opt out so our
+        // explicit values stick.
+        button.menu?.autoenablesItems = false
         DLog("CCDiffSelectorItem init \(identifier) — menu item count \(button.menu?.items.count ?? -1), fittingSize.width=\(button.fittingSize.width)")
     }
 
-    @objc(setFiles:)
-    func set(files: [String]) {
-        DLog("CCDiffSelectorItem set(files:) called with \(files.count) files: \(files)")
-        orderedFiles = files
-        let segmentedFiles: [[String]] = files.map { ($0 as NSString).pathComponents }
-        let dirs = segmentedFiles.map { $0.dropLast() }
-        let prefixLength = dirs.longestCommonPrefix.count
+    // Non-path representedObject for the "All Files" row, distinct
+    // from any path string the file list could carry.
+    private static let allFilesMarker = "\u{0}__cc_diff_selector_all_files__"
+
+    @objc(setFileStatuses:)
+    func set(fileStatuses statuses: [iTermGitFileStatus]) {
+        DLog("CCDiffSelectorItem set(fileStatuses:) called with \(statuses.count) entries")
+        // Group like git status displays them. A file modified after
+        // staging shows up in BOTH staged and unstaged groups (that's
+        // how `git status` renders the MM case), so we filter the same
+        // status list three different ways instead of partitioning.
+        let staged = statuses.filter { $0.indexStatus != .none }
+        let unstaged = statuses.filter {
+            $0.workdirStatus != .none && $0.workdirStatus != .untracked
+        }
+        let untracked = statuses.filter { $0.workdirStatus == .untracked }
+
+        // Use every reported file's path for prefix shortening, even
+        // when groups overlap — picking a smaller subset would let the
+        // shortened display vary based on which group a file lives in.
+        let allPaths = statuses.map { $0.path }
+        let segmentedAll = allPaths.map { ($0 as NSString).pathComponents }
+        let prefixLength = segmentedAll.map { $0.dropLast() }
+            .longestCommonPrefix.count
+
         let previouslySelected = button.selectedItem?.representedObject as? String
         button.menu?.removeAllItems()
-        for (fullFilename, pathComponents) in zip(files, segmentedFiles) {
-            let file = pathComponents.dropFirst(prefixLength).joined(separator: "/")
-            button.addItem(withTitle: String(file))
-            button.lastItem?.representedObject = fullFilename
-        }
-        // Try to preserve the user's current selection across refreshes.
+
+        let allFilesItem = NSMenuItem(title: "All Files",
+                                      action: nil,
+                                      keyEquivalent: "")
+        allFilesItem.representedObject = Self.allFilesMarker
+        button.menu?.addItem(allFilesItem)
+
+        var ordered: [String] = []
+        addGroup(title: "Staged",
+                 entries: staged,
+                 prefixLength: prefixLength,
+                 column: \.indexStatus,
+                 letterColor: .systemGreen,
+                 ordered: &ordered)
+        addGroup(title: "Unstaged",
+                 entries: unstaged,
+                 prefixLength: prefixLength,
+                 column: \.workdirStatus,
+                 letterColor: .systemRed,
+                 ordered: &ordered)
+        addGroup(title: "Untracked",
+                 entries: untracked,
+                 prefixLength: prefixLength,
+                 column: \.workdirStatus,
+                 letterColor: .systemRed,
+                 ordered: &ordered)
+        // Dedupe by path (preserving first-occurrence order). A file
+        // with both index and workdir changes (MM) lands in both the
+        // Staged and Unstaged sections by design, but back/forward
+        // navigates by anchor path: with two rows for one path,
+        // firstIndex(of:) always returns the lower one and Next would
+        // stick on it forever. Visiting the file once in the
+        // navigation order is the right semantic.
+        var seen = Set<String>()
+        orderedFiles = ordered.filter { seen.insert($0).inserted }
+
         if let previouslySelected,
-           let match = button.menu?.items.first(where: { ($0.representedObject as? String) == previouslySelected }) {
+           let match = button.menu?.items.first(where: {
+               ($0.representedObject as? String) == previouslySelected
+           }) {
             button.select(match)
+        } else {
+            // Falls through here on first build and whenever the
+            // previously visible row vanished (e.g. user staged a
+            // file). All Files is a sensible default — they didn't
+            // pick anything specific, so don't pretend they did.
+            button.select(allFilesItem)
         }
-        DLog("CCDiffSelectorItem after set(files:): menu item count \(button.menu?.items.count ?? -1), fittingSize.width=\(button.fittingSize.width)")
+        DLog("CCDiffSelectorItem after set(fileStatuses:): menu item count \(button.menu?.items.count ?? -1)")
         delegate?.itemDidChange(sender: self)
+    }
+
+    // Adds a separator + disabled header + one menu row per file in
+    // `entries`. No-op when entries is empty (keeps the menu free of
+    // empty-section separators). `letterColor` tints the porcelain
+    // letter only — green for staged, red for unstaged/untracked,
+    // matching `git status` defaults.
+    private func addGroup(title: String,
+                          entries: [iTermGitFileStatus],
+                          prefixLength: Int,
+                          column: KeyPath<iTermGitFileStatus, iTermGitFileChangeKind>,
+                          letterColor: NSColor,
+                          ordered: inout [String]) {
+        guard !entries.isEmpty else { return }
+        button.menu?.addItem(.separator())
+        let header = NSMenuItem(title: title, action: nil, keyEquivalent: "")
+        header.isEnabled = false
+        button.menu?.addItem(header)
+        let menuFont = NSFont.menuFont(ofSize: 0)
+        for entry in entries {
+            let kind = entry[keyPath: column]
+            let letter = Self.letter(for: kind)
+            let segments = (entry.path as NSString).pathComponents
+            let shortened = segments.dropFirst(prefixLength).joined(separator: "/")
+            // Two spaces between letter and path mirrors `git status
+            // --short`. NSMenuItem strips leading whitespace, so the
+            // letter has to come first; aligning visually with a
+            // padded letter (e.g. "M ") is enough.
+            let title = "\(letter)  \(shortened)"
+            let attributed = NSMutableAttributedString(
+                string: title,
+                attributes: [.font: menuFont])
+            // Color just the leading porcelain letter — keeps the
+            // path readable in the system text color while making
+            // the change kind pop at a glance. `letter` is a single
+            // grapheme produced by `letter(for:)`, so range starts
+            // at 0 with length matching `letter.utf16.count`.
+            attributed.addAttribute(.foregroundColor,
+                                    value: letterColor,
+                                    range: NSRange(location: 0,
+                                                   length: letter.utf16.count))
+            let row = NSMenuItem(title: title,
+                                 action: nil,
+                                 keyEquivalent: "")
+            row.attributedTitle = attributed
+            row.representedObject = entry.path
+            button.menu?.addItem(row)
+            ordered.append(entry.path)
+        }
+    }
+
+    // Letter shown next to a file in its group's section. Mirrors git
+    // status --porcelain so the meaning is familiar (M, A, D, R, T,
+    // ?, U for conflicts). Falls back to a space when the kind is
+    // .none — the column we picked the file under shouldn't ever be
+    // .none, but defensive default avoids a confusing empty cell if
+    // it is.
+    private static func letter(for kind: iTermGitFileChangeKind) -> String {
+        switch kind {
+        case .modified:    return "M"
+        case .added:       return "A"
+        case .deleted:     return "D"
+        case .renamed:     return "R"
+        case .typeChange:  return "T"
+        case .untracked:   return "?"
+        case .conflicted:  return "U"
+        case .none:        return " "
+        @unknown default:  return " "
+        }
     }
 
     // Pick the next/previous file in the popup's display order,
@@ -428,7 +564,13 @@ class CCDiffSelectorItem: SessionToolbarControl {
 
     private func advanceFile(forward: Bool) -> String? {
         guard !orderedFiles.isEmpty else { return nil }
-        let anchor = currentFile ?? (button.selectedItem?.representedObject as? String)
+        // If the popup is on All Files (or anything that isn't a path
+        // entry) treat the anchor as missing; the fallback below picks
+        // the first/last file instead of trying to find a neighbor of
+        // the marker string.
+        let visible = button.selectedItem?.representedObject as? String
+        let visibleAnchor = (visible != Self.allFilesMarker) ? visible : nil
+        let anchor = currentFile ?? visibleAnchor
         let chosen: String
         if let anchor, let idx = orderedFiles.firstIndex(of: anchor) {
             let count = orderedFiles.count
@@ -466,14 +608,22 @@ class CCDiffSelectorItem: SessionToolbarControl {
 
     @objc
     private func selectionDidChange(_ sender: Any?) {
-        if let filename = button.selectedItem?.representedObject as? String {
-            DLog("CCDiffSelectorItem selection changed to \(filename)")
-            currentFile = filename
-            diffSelectorDelegate?.diffDidSelect(filename: filename,
-                                                sender: self)
-        } else {
+        guard let value = button.selectedItem?.representedObject as? String else {
             DLog("CCDiffSelectorItem selectionDidChange but no representedObject; selectedItem=\(String(describing: button.selectedItem))")
+            return
         }
+        if value == Self.allFilesMarker {
+            DLog("CCDiffSelectorItem selection changed to All Files")
+            // Clear the per-file anchor so a subsequent forward press
+            // starts at the first file rather than wrapping past the
+            // file the user happened to be on before picking All Files.
+            currentFile = nil
+            diffSelectorDelegate?.diffDidSelectAllFiles(sender: self)
+            return
+        }
+        DLog("CCDiffSelectorItem selection changed to \(value)")
+        currentFile = value
+        diffSelectorDelegate?.diffDidSelect(filename: value, sender: self)
     }
 }
 

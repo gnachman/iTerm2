@@ -37,6 +37,17 @@ class ClaudeCodeModeController: NSObject {
     // re-queue the announcement on every reconcile tick.
     private var shownThisRun = Set<String>()
 
+    // Sessions whose CC workgroup was entered via the upsell's "Try
+    // It Now" button. We hold these so we can auto-exit the
+    // workgroup when claude leaves the foreground — that's the
+    // implicit contract of the trial: enters with claude, leaves
+    // with claude. Sessions where the user installed CC mode the
+    // long way (triggers, menu, future "install CC mode" action)
+    // aren't in this set, so this controller stays out of their
+    // lifecycle and lets the user's own Exit Workgroup trigger /
+    // menu handle it.
+    private var trialSessionGUIDs = Set<String>()
+
     private override init() {
         super.init()
         _ = GlobalJobMonitor.instance
@@ -87,6 +98,13 @@ class ClaudeCodeModeController: NSObject {
         let previous = claudeSessionGUIDs
         claudeSessionGUIDs = sessions
         for guid in previous.symmetricDifference(sessions) {
+            // claude just left this session — if it's a trial entry,
+            // auto-exit the workgroup. Doing this BEFORE reconcile
+            // means a hypothetical "claude restarts immediately" race
+            // doesn't keep the trial flag dangling on the next entry.
+            if previous.contains(guid) && !sessions.contains(guid) {
+                autoExitTrialWorkgroupIfNeeded(guid: guid)
+            }
             reconcile(guid: guid)
         }
     }
@@ -119,6 +137,23 @@ class ClaudeCodeModeController: NSObject {
         claudeSessionGUIDs.remove(guid)
         statusSessionGUIDs.remove(guid)
         shownThisRun.remove(guid)
+        trialSessionGUIDs.remove(guid)
+    }
+
+    // Pulled out to keep jobMonitorDidChange readable. The active-
+    // workgroup check guards against the user manually swapping the
+    // session into a different workgroup mid-trial — we'd otherwise
+    // tear down their replacement workgroup when claude exited.
+    private func autoExitTrialWorkgroupIfNeeded(guid: String) {
+        guard trialSessionGUIDs.remove(guid) != nil else { return }
+        guard let session = iTermController.sharedInstance()?.session(withGUID: guid) else {
+            return
+        }
+        guard let instance = session.workgroupInstance,
+              instance.workgroupUniqueIdentifier == BuiltinWorkgroups.ID.claudeCode else {
+            return
+        }
+        iTermWorkgroupController.instance.exit(on: session)
     }
 
     // MARK: - Upsell
@@ -150,10 +185,15 @@ class ClaudeCodeModeController: NSObject {
         let announcement = iTermAnnouncementViewController.announcement(
             withTitle: title,
             style: .kiTermAnnouncementViewStyleQuestion,
-            withActions: actions) { [weak session] choice in
+            withActions: actions) { [weak self, weak session] choice in
                 switch choice {
                 case 0:
-                    if let session {
+                    if let session, let guid = session.guid {
+                        // Tag the session as a trial entry BEFORE
+                        // entering — the entry path is synchronous,
+                        // but a paranoid order keeps the auto-exit
+                        // contract clear (in the set means we own it).
+                        self?.trialSessionGUIDs.insert(guid)
                         iTermWorkgroupController.instance.enter(
                             workgroupUniqueIdentifier: BuiltinWorkgroups.ID.claudeCode,
                             on: session)

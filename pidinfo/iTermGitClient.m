@@ -272,11 +272,101 @@ typedef void (^DeferralBlock)(void);
     return YES;
 }
 
+// Walk `git_status_list_new` to produce one iTermGitFileStatus per
+// file with both index and workdir change kinds populated separately.
+// Mirrors `git status --porcelain` so the menu builder can group
+// staged / unstaged / untracked the same way the user sees them in
+// the terminal.
+- (BOOL)populateFileStatusesOnState:(iTermGitState *)state {
+    git_status_list *status_list = NULL;
+    git_status_options opts = GIT_STATUS_OPTIONS_INIT;
+    opts.show = GIT_STATUS_SHOW_INDEX_AND_WORKDIR;
+    opts.flags = (GIT_STATUS_OPT_INCLUDE_UNTRACKED |
+                  GIT_STATUS_OPT_RECURSE_UNTRACKED_DIRS |
+                  GIT_STATUS_OPT_EXCLUDE_SUBMODULES |
+                  GIT_STATUS_OPT_RENAMES_HEAD_TO_INDEX |
+                  GIT_STATUS_OPT_RENAMES_INDEX_TO_WORKDIR);
+    if (git_status_list_new(&status_list, _repo, &opts) != 0) {
+        return NO;
+    }
+    NSMutableArray<iTermGitFileStatus *> *result = [NSMutableArray array];
+    const size_t count = git_status_list_entrycount(status_list);
+    for (size_t i = 0; i < count; i++) {
+        const git_status_entry *e = git_status_byindex(status_list, i);
+        if (!e) continue;
+        const unsigned int s = e->status;
+        // Pick the most-recent path: workdir's new_file when the
+        // workdir side has anything to say (incl. rename), else
+        // index's new_file, else index's old_file (rare).
+        const char *cpath = NULL;
+        if (e->index_to_workdir &&
+            e->index_to_workdir->new_file.path) {
+            cpath = e->index_to_workdir->new_file.path;
+        } else if (e->head_to_index &&
+                   e->head_to_index->new_file.path) {
+            cpath = e->head_to_index->new_file.path;
+        } else if (e->head_to_index &&
+                   e->head_to_index->old_file.path) {
+            cpath = e->head_to_index->old_file.path;
+        }
+        if (!cpath) continue;
+        NSString *path = [NSString stringWithUTF8String:cpath];
+        // -stringWithUTF8String: returns nil if the C string isn't
+        // valid UTF-8. Skipping is the right move here — passing a
+        // nil path through to Swift would crash on the NSString
+        // bridge, and the file isn't actionable anyway since the
+        // per-file restart can't reference a name we can't print.
+        if (!path) continue;
+        iTermGitFileChangeKind indexStatus = iTermGitFileChangeKindNone;
+        iTermGitFileChangeKind workdirStatus = iTermGitFileChangeKindNone;
+        if (s & GIT_STATUS_INDEX_NEW) {
+            indexStatus = iTermGitFileChangeKindAdded;
+        } else if (s & GIT_STATUS_INDEX_MODIFIED) {
+            indexStatus = iTermGitFileChangeKindModified;
+        } else if (s & GIT_STATUS_INDEX_DELETED) {
+            indexStatus = iTermGitFileChangeKindDeleted;
+        } else if (s & GIT_STATUS_INDEX_RENAMED) {
+            indexStatus = iTermGitFileChangeKindRenamed;
+        } else if (s & GIT_STATUS_INDEX_TYPECHANGE) {
+            indexStatus = iTermGitFileChangeKindTypeChange;
+        }
+        if (s & GIT_STATUS_WT_NEW) {
+            workdirStatus = iTermGitFileChangeKindUntracked;
+        } else if (s & GIT_STATUS_WT_MODIFIED) {
+            workdirStatus = iTermGitFileChangeKindModified;
+        } else if (s & GIT_STATUS_WT_DELETED) {
+            workdirStatus = iTermGitFileChangeKindDeleted;
+        } else if (s & GIT_STATUS_WT_TYPECHANGE) {
+            workdirStatus = iTermGitFileChangeKindTypeChange;
+        } else if (s & GIT_STATUS_WT_RENAMED) {
+            workdirStatus = iTermGitFileChangeKindRenamed;
+        }
+        if (s & GIT_STATUS_CONFLICTED) {
+            // Conflict trumps both columns — surface it once on the
+            // workdir side so it lands in the "unstaged" group, the
+            // section users expect to find conflicts in.
+            workdirStatus = iTermGitFileChangeKindConflicted;
+        }
+        if (indexStatus == iTermGitFileChangeKindNone &&
+            workdirStatus == iTermGitFileChangeKindNone) {
+            // Nothing to report (probably an ignored file slipping in).
+            continue;
+        }
+        iTermGitFileStatus *fs = [[iTermGitFileStatus alloc] init];
+        fs.path = path;
+        fs.indexStatus = indexStatus;
+        fs.workdirStatus = workdirStatus;
+        [result addObject:fs];
+    }
+    git_status_list_free(status_list);
+    state.fileStatuses = result;
+    return YES;
+}
+
 - (BOOL)populateDiffStatsOnState:(iTermGitState *)state {
     git_object *head_tree_obj = NULL;
     git_diff *diff = NULL;
     BOOL ok = NO;
-    NSMutableArray<NSString *> *dirtyFiles = [NSMutableArray array];
 
     // "HEAD^{tree}" peels HEAD down to the commit's tree.
     if (git_revparse_single(&head_tree_obj, _repo, "HEAD^{tree}") != 0) {
@@ -305,34 +395,24 @@ typedef void (^DeferralBlock)(void);
         if (!delta) {
             continue;
         }
-        NSString *path = nil;
         switch (delta->status) {
             case GIT_DELTA_ADDED:
             case GIT_DELTA_UNTRACKED:
                 // New file: only increments filesAdded. Its contents are not
                 // counted as inserted lines.
                 filesAdded += 1;
-                if (delta->new_file.path) {
-                    path = [NSString stringWithUTF8String:delta->new_file.path];
-                }
                 break;
 
             case GIT_DELTA_DELETED:
                 // File actually removed from disk. Doesn't contribute to
                 // linesDeleted.
                 filesDeleted += 1;
-                if (delta->old_file.path) {
-                    path = [NSString stringWithUTF8String:delta->old_file.path];
-                }
                 break;
 
             case GIT_DELTA_MODIFIED:
             case GIT_DELTA_RENAMED:
             case GIT_DELTA_TYPECHANGE: {
                 filesModified += 1;
-                if (delta->new_file.path) {
-                    path = [NSString stringWithUTF8String:delta->new_file.path];
-                }
                 git_patch *patch = NULL;
                 if (git_patch_from_diff(&patch, diff, i) == 0 && patch) {
                     size_t additions = 0;
@@ -350,9 +430,6 @@ typedef void (^DeferralBlock)(void);
                 // COPIED, IGNORED, UNREADABLE, CONFLICTED — skip.
                 break;
         }
-        if (path.length > 0) {
-            [dirtyFiles addObject:path];
-        }
     }
 
     state.filesAdded = filesAdded;
@@ -360,7 +437,6 @@ typedef void (^DeferralBlock)(void);
     state.filesModified = filesModified;
     state.linesInserted = linesInserted;
     state.linesDeleted = linesDeleted;
-    state.dirtyFiles = dirtyFiles;
 
     ok = YES;
 
@@ -442,6 +518,7 @@ static int GitForEachCallback(git_reference *ref, void *data) {
     // Richer diff stats: only if the caller explicitly asked. Can be expensive.
     if (includeDiffStats) {
         [client populateDiffStatsOnState:state];
+        [client populateFileStatusesOnState:state];
     }
 
     // Current operation

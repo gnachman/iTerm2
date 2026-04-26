@@ -195,4 +195,25 @@ extension iTermWorkgroupPeerPort: CCDiffSelectorItemDelegate {
         let wrapped = ITAddressBookMgr.commandByWrapping(inLoginShell: command)
         session.restart(withCommand: wrapped)
     }
+
+    // "All Files" is the menu's escape hatch back to the workgroup's
+    // entry command — what diff would show with no filter. Restart
+    // the peer with cfg.command, NOT cfg.perFileCommand.
+    func diffDidSelectAllFiles(sender: CCDiffSelectorItem) {
+        DLog("iTermWorkgroupPeerPort.diffDidSelectAllFiles owner=\(sender.ownerPeerID ?? "nil")")
+        // No isRestartable gate — restart(withCommand:) early-returns
+        // for non-restartable sessions internally (PTYSession.m:3399),
+        // and matching the per-file path's lack of gate keeps both
+        // CFS-driven restart shapes consistent.
+        guard let ownerPeerID = sender.ownerPeerID,
+              let cfg = peerConfigs.first(where: {
+                  $0.uniqueIdentifier == ownerPeerID
+              }),
+              !cfg.command.isEmpty,
+              let session = session(forIdentifier: ownerPeerID) else {
+            return
+        }
+        let wrapped = ITAddressBookMgr.commandByWrapping(inLoginShell: cfg.command)
+        session.restart(withCommand: wrapped)
+    }
 }

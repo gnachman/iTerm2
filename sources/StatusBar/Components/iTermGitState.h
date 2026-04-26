@@ -40,6 +40,38 @@ typedef NS_ENUM(NSInteger, iTermGitRepoState) {
     iTermGitRepoStateApply,
 };
 
+// Per-column change kind matching the letters used by `git status
+// --porcelain`. iTermGitFileChangeKindNone means no change in that
+// column; ignored entries are excluded entirely by the poller so the
+// `!` code is intentionally absent. Copies (C) aren't surfaced —
+// libgit2's status_list flags don't separate copy from rename in the
+// index column, and we'd produce false positives if we tried.
+typedef NS_ENUM(NSInteger, iTermGitFileChangeKind) {
+    iTermGitFileChangeKindNone        = 0,
+    iTermGitFileChangeKindModified,   // M
+    iTermGitFileChangeKindAdded,      // A (index only)
+    iTermGitFileChangeKindDeleted,    // D
+    iTermGitFileChangeKindRenamed,    // R
+    iTermGitFileChangeKindTypeChange, // T
+    iTermGitFileChangeKindUntracked,  // ? (workdir only)
+    iTermGitFileChangeKindConflicted, // U-style conflict, either column
+};
+
+// One entry per file reported by `git status`, mirroring porcelain's
+// two-column form. `indexStatus` is the staged side ("changes to be
+// committed"); `workdirStatus` is the unstaged side ("changes not
+// staged for commit") — except untracked files, which set workdir to
+// .untracked and leave index as .none.
+//
+// A file modified after staging shows up with both columns non-.none
+// (e.g. .modified / .modified, "MM" in porcelain); the menu builder
+// renders it once per non-empty group.
+@interface iTermGitFileStatus : NSObject<NSCopying, NSSecureCoding>
+@property (nonatomic, copy) NSString *path;
+@property (nonatomic) iTermGitFileChangeKind indexStatus;
+@property (nonatomic) iTermGitFileChangeKind workdirStatus;
+@end
+
 @interface iTermGitState : NSObject<NSCopying, NSSecureCoding>
 @property (nullable, nonatomic, copy) NSString *directory;
 @property (nullable, nonatomic, copy) NSString *xcode;
@@ -55,9 +87,9 @@ typedef NS_ENUM(NSInteger, iTermGitRepoState) {
 @property (nonatomic) NSInteger filesAdded;  // staged + unstaged
 @property (nonatomic) NSInteger filesModified;
 @property (nonatomic) NSInteger filesDeleted;  // staged + unstaged
-// Repo-root-relative paths of files that differ from HEAD (workdir + index +
-// untracked). Only populated when diff stats were requested.
-@property (nullable, nonatomic, copy) NSArray<NSString *> *dirtyFiles;
+// Per-file status entries — one per file reported by `git status`.
+// Only populated when diff stats were requested.
+@property (nullable, nonatomic, copy) NSArray<iTermGitFileStatus *> *fileStatuses;
 @property (nonatomic) NSTimeInterval creationTime;
 @property (nonatomic) iTermGitRepoState repoState;
 

@@ -37,6 +37,38 @@ NSArray<NSString *> *iTermGitStateOptionalPaths(void) {
               iTermGitStateVariableNameGitFilesDeleted ];
 }
 
+@implementation iTermGitFileStatus
+
++ (BOOL)supportsSecureCoding {
+    return YES;
+}
+
+- (void)encodeWithCoder:(NSCoder *)coder {
+    [coder encodeObject:self.path forKey:@"path"];
+    [coder encodeInteger:self.indexStatus forKey:@"indexStatus"];
+    [coder encodeInteger:self.workdirStatus forKey:@"workdirStatus"];
+}
+
+- (instancetype)initWithCoder:(NSCoder *)coder {
+    self = [super init];
+    if (self) {
+        _path = [[coder decodeObjectOfClass:[NSString class] forKey:@"path"] copy];
+        _indexStatus = (iTermGitFileChangeKind)[coder decodeIntegerForKey:@"indexStatus"];
+        _workdirStatus = (iTermGitFileChangeKind)[coder decodeIntegerForKey:@"workdirStatus"];
+    }
+    return self;
+}
+
+- (id)copyWithZone:(NSZone *)zone {
+    iTermGitFileStatus *theCopy = [[iTermGitFileStatus alloc] init];
+    theCopy.path = self.path.copy;
+    theCopy.indexStatus = self.indexStatus;
+    theCopy.workdirStatus = self.workdirStatus;
+    return theCopy;
+}
+
+@end
+
 @implementation iTermGitState
 
 #pragma mark NSSecureCoding
@@ -58,7 +90,7 @@ NSArray<NSString *> *iTermGitStateOptionalPaths(void) {
     [coder encodeInteger:self.filesAdded forKey:@"filesAdded"];
     [coder encodeInteger:self.filesModified forKey:@"filesModified"];
     [coder encodeInteger:self.filesDeleted forKey:@"filesDeleted"];
-    [coder encodeObject:self.dirtyFiles forKey:@"dirtyFiles"];
+    [coder encodeObject:self.fileStatuses forKey:@"fileStatuses"];
     [coder encodeInteger:self.creationTime forKey:@"creationTime"];
     [coder encodeInteger:self.repoState forKey:@"repoState"];
 }
@@ -78,8 +110,8 @@ NSArray<NSString *> *iTermGitStateOptionalPaths(void) {
         _filesAdded = [coder decodeIntegerForKey:@"filesAdded"];
         _filesModified = [coder decodeIntegerForKey:@"filesModified"];
         _filesDeleted = [coder decodeIntegerForKey:@"filesDeleted"];
-        _dirtyFiles = [[coder decodeObjectOfClasses:[NSSet setWithObjects:[NSArray class], [NSString class], nil]
-                                             forKey:@"dirtyFiles"] copy];
+        _fileStatuses = [[coder decodeObjectOfClasses:[NSSet setWithObjects:[NSArray class], [iTermGitFileStatus class], nil]
+                                               forKey:@"fileStatuses"] copy];
         _creationTime = [coder decodeIntegerForKey:@"creationTime"];
         _repoState = [coder decodeIntegerForKey:@"repoState"];
     }
@@ -102,7 +134,8 @@ NSArray<NSString *> *iTermGitStateOptionalPaths(void) {
     theCopy.filesAdded = self.filesAdded;
     theCopy.filesModified = self.filesModified;
     theCopy.filesDeleted = self.filesDeleted;
-    theCopy.dirtyFiles = self.dirtyFiles.copy;
+    theCopy.fileStatuses = [[NSArray alloc] initWithArray:self.fileStatuses
+                                                 copyItems:YES];
     return theCopy;
 }
 

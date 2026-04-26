@@ -432,7 +432,7 @@ final class iTermWorkgroupInstance: NSObject {
     // permanently empty dropdown even though the poller is firing.
     func gitPollerDidUpdate() {
         guard let poller = gitPoller else { return }
-        let files = poller.state.dirtyFiles ?? []
+        let statuses = poller.state.fileStatuses ?? []
         var allViews: [SessionToolbarGenericView] = []
         allViews.append(contentsOf: peerPort.allToolbarItemViews)
         for port in nestedPeerPorts {
@@ -445,7 +445,7 @@ final class iTermWorkgroupInstance: NSObject {
             if let gitItem = view as? CCGitSessionToolbarItem {
                 gitItem.pollerDidUpdate()
             } else if let selector = view as? CCDiffSelectorItem {
-                selector.set(files: files)
+                selector.set(fileStatuses: statuses)
             }
         }
     }
@@ -519,6 +519,19 @@ extension iTermWorkgroupInstance: CCDiffSelectorItemDelegate {
         }
         let command = cfg.resolvedPerFileCommand(filename: filename)
         let wrapped = ITAddressBookMgr.commandByWrapping(inLoginShell: command)
+        session.restart(withCommand: wrapped)
+    }
+
+    func diffDidSelectAllFiles(sender: CCDiffSelectorItem) {
+        // See iTermWorkgroupPeerPort.diffDidSelectAllFiles for why
+        // there's no isRestartable gate here.
+        guard let configID = sender.ownerPeerID,
+              let cfg = config(forConfigID: configID),
+              !cfg.command.isEmpty,
+              let session = liveSession(forConfigID: configID) else {
+            return
+        }
+        let wrapped = ITAddressBookMgr.commandByWrapping(inLoginShell: cfg.command)
         session.restart(withCommand: wrapped)
     }
 }
