@@ -67,7 +67,7 @@ final class iTermWorkgroupPeerPort: PTYSessionPeerPort {
                 scope: leaderScope,
                 peerGroupMembers: peerMembers,
                 activePeerIdentifier: activeSessionIdentifier,
-                buttonDelegate: self,
+                navigationDelegate: self,
                 diffSelectorDelegate: self,
                 displayName: cfg.displayName)
             var views: [SessionToolbarGenericView] = []
@@ -141,29 +141,6 @@ final class iTermWorkgroupPeerPort: PTYSessionPeerPort {
 
     // MARK: - Private
 
-    private func handleButtonTap(kind: iTermWorkgroupToolbarItemKind,
-                                 ownerPeerID: String?) {
-        switch kind {
-        case .reload:
-            guard let ownerPeerID,
-                  let session = session(forIdentifier: ownerPeerID),
-                  session.isRestartable() else {
-                return
-            }
-            // Reload re-runs whatever the session is currently set to
-            // run (its _program), not the original cfg.command — see
-            // iTermWorkgroupInstance.toolbarButtonSelected for the
-            // rationale.
-            session.restart()
-        case .back:
-            diffSelector(forPeerID: ownerPeerID)?.selectPreviousFile()
-        case .forward:
-            diffSelector(forPeerID: ownerPeerID)?.selectNextFile()
-        case .gitStatus, .changedFileSelector, .modeSwitcher, .spacer, .name:
-            break
-        }
-    }
-
     // The peer's CFS, if it has one. Back/forward fan their click onto
     // this so the existing diffDidSelect path (which performs the
     // per-file restart) handles the actual session restart.
@@ -175,16 +152,27 @@ final class iTermWorkgroupPeerPort: PTYSessionPeerPort {
     }
 }
 
-// MARK: - Button delegate
+// MARK: - Navigation delegate
 
-// The builder sets each back/forward/reload/settings button's
-// identifier to the kind's rawValue, so we can decode it back here.
-extension iTermWorkgroupPeerPort: CCModeButtonToolbarItemDelegate {
-    func toolbarButtonSelected(identifier: String,
-                               sender: CCModeButtonToolbarItem) {
-        guard let kind = iTermWorkgroupToolbarItemKind(rawValue: identifier)
-            else { return }
-        handleButtonTap(kind: kind, ownerPeerID: sender.ownerPeerID)
+extension iTermWorkgroupPeerPort: WorkgroupNavigationToolbarItemDelegate {
+    func workgroupNavigationDidTapBack(sender: WorkgroupNavigationToolbarItem) {
+        diffSelector(forPeerID: sender.ownerPeerID)?.selectPreviousFile()
+    }
+
+    func workgroupNavigationDidTapForward(sender: WorkgroupNavigationToolbarItem) {
+        diffSelector(forPeerID: sender.ownerPeerID)?.selectNextFile()
+    }
+
+    func workgroupNavigationDidTapReload(sender: WorkgroupNavigationToolbarItem) {
+        guard let ownerPeerID = sender.ownerPeerID,
+              let session = session(forIdentifier: ownerPeerID),
+              session.isRestartable() else {
+            return
+        }
+        // Reload re-runs whatever the session is currently set to run
+        // (its _program), not the original cfg.command — same
+        // rationale as the workgroup instance's reload path.
+        session.restart()
     }
 }
 

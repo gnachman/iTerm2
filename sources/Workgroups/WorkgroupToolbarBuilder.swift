@@ -31,12 +31,10 @@ struct WorkgroupToolbarContext {
 
     let activePeerIdentifier: String
 
-    // Delegate assigned to every back/forward/reload/settings button
-    // the builder produces. The peer port (or workgroup instance, for
-    // non-peer toolbars) conforms to CCModeButtonToolbarItemDelegate
-    // and demuxes using the item's `identifier` (which the builder
-    // sets to the kind's rawValue) plus its `ownerPeerID` tag.
-    weak var buttonDelegate: CCModeButtonToolbarItemDelegate?
+    // Delegate assigned to the bundled Navigation item (back /
+    // forward / reload). The peer port and workgroup instance both
+    // conform; demux via the item's `ownerPeerID` tag.
+    weak var navigationDelegate: WorkgroupNavigationToolbarItemDelegate?
 
     // Delegate for the changedFileSelector pop-up. Separate from
     // peerPort so non-peer toolbars (split/tab hosts) can route file
@@ -145,12 +143,12 @@ enum WorkgroupToolbarBuilder {
                 activeIdentifier: context.activePeerIdentifier)
             view.modeSwitchDelegate = context.peerPort
             return view
-        case .back:
-            return makeButton(kind: .back, symbol: .chevronLeft, context: context, ownerPeerID: ownerPeerID)
-        case .forward:
-            return makeButton(kind: .forward, symbol: .chevronRight, context: context, ownerPeerID: ownerPeerID)
-        case .reload:
-            return makeButton(kind: .reload, symbol: .arrowClockwise, context: context, ownerPeerID: ownerPeerID)
+        case .navigation:
+            let view = WorkgroupNavigationToolbarItem(identifier: id,
+                                                      priority: 3)
+            view.navigationDelegate = context.navigationDelegate
+            view.ownerPeerID = ownerPeerID
+            return view
         case .spacer(let minW, let maxW):
             return SessionToolbarSpacer(identifier: id,
                                         priority: 1,
@@ -164,6 +162,9 @@ enum WorkgroupToolbarBuilder {
     // Auto-injected per-session display label. Plain text field so it
     // matches the visual weight of the git-status label; the layout
     // builder lets it claim its fitting width and shrinks if needed.
+    // The 22pt minimum keeps the label from collapsing to a bare
+    // ellipsis under heavy contention — a lone "…" tells the user
+    // nothing.
     private static func makeNameLabel(context: WorkgroupToolbarContext) -> SessionToolbarGenericView {
         let textField = NSTextField(labelWithString: context.displayName)
         textField.drawsBackground = false
@@ -174,20 +175,8 @@ enum WorkgroupToolbarBuilder {
         textField.font = NSFont.systemFont(ofSize: NSFont.systemFontSize)
         return SessionToolbarLabel(identifier: iTermWorkgroupToolbarItemKind.name.rawValue,
                                    priority: 2,
-                                   textField: textField)
+                                   textField: textField,
+                                   minWidth: 22)
     }
 
-    private static func makeButton(kind: iTermWorkgroupToolbarItemKind,
-                                   symbol: SFSymbol,
-                                   context: WorkgroupToolbarContext,
-                                   ownerPeerID: String?) -> SessionToolbarGenericView? {
-        let image = NSImage(systemSymbolName: symbol.rawValue,
-                            accessibilityDescription: nil) ?? NSImage()
-        let view = CCModeButtonToolbarItem(identifier: kind.rawValue,
-                                           priority: 3,
-                                           image: image)
-        view.buttonDelegate = context.buttonDelegate
-        view.ownerPeerID = ownerPeerID
-        return view
-    }
 }

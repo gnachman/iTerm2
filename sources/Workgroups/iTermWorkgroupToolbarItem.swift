@@ -20,9 +20,10 @@ enum iTermWorkgroupToolbarItemKind: String, Codable, CaseIterable {
     case gitStatus
     case changedFileSelector
     case modeSwitcher
-    case back
-    case forward
-    case reload
+    // Bundled back / forward / reload buttons. Rendered as a single
+    // toolbar item with no internal divider so the controls read as
+    // a navigation cluster rather than three loose buttons.
+    case navigation
     case spacer
     // Auto-injected at runtime — never user-addable, never written to
     // disk. The decoder still understands it so a future change that
@@ -34,9 +35,7 @@ enum iTermWorkgroupToolbarItem: Codable, Equatable, Hashable {
     case gitStatus
     case changedFileSelector
     case modeSwitcher
-    case back
-    case forward
-    case reload
+    case navigation
     case spacer(minWidth: CGFloat, maxWidth: CGFloat)
     case name
 
@@ -45,9 +44,7 @@ enum iTermWorkgroupToolbarItem: Codable, Equatable, Hashable {
         case .gitStatus: return .gitStatus
         case .changedFileSelector: return .changedFileSelector
         case .modeSwitcher: return .modeSwitcher
-        case .back: return .back
-        case .forward: return .forward
-        case .reload: return .reload
+        case .navigation: return .navigation
         case .spacer: return .spacer
         case .name: return .name
         }
@@ -76,9 +73,7 @@ enum iTermWorkgroupToolbarItem: Codable, Equatable, Hashable {
         case .gitStatus: self = .gitStatus
         case .changedFileSelector: self = .changedFileSelector
         case .modeSwitcher: self = .modeSwitcher
-        case .back: self = .back
-        case .forward: self = .forward
-        case .reload: self = .reload
+        case .navigation: self = .navigation
         case .spacer:
             let minWidth = try c.decode(CGFloat.self, forKey: .minWidth)
             let maxWidth = try c.decode(CGFloat.self, forKey: .maxWidth)

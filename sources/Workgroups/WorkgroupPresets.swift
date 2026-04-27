@@ -52,9 +52,8 @@ enum WorkgroupPresets {
             command: diffCommand,
             urlString: "",
             toolbarItems: [.modeSwitcher,
-                           .back,
-                           .forward,
-                           .changedFileSelector],
+                           .changedFileSelector,
+                           .navigation],
             displayName: "Diff")
 
         return iTermWorkgroup(

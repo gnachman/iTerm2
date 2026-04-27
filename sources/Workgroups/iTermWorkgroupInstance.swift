@@ -229,7 +229,7 @@ final class iTermWorkgroupInstance: NSObject {
             scope: mainSession?.genericScope ?? iTermVariableScope(),
             peerGroupMembers: [],
             activePeerIdentifier: "",
-            buttonDelegate: self,
+            navigationDelegate: self,
             diffSelectorDelegate: self,
             displayName: config.displayName)
         // modeSwitcher only makes sense in a peer group; strip it
@@ -482,38 +482,37 @@ extension iTermWorkgroupInstance: iTermGitPollerDelegate {
     }
 }
 
-// Button taps from non-peer toolbars (split/tab hosts) route here.
-// Peer toolbars route through iTermWorkgroupPeerPort, which has its
-// own conformance. Both end up doing essentially the same thing for
-// reload — re-run the configured command in the live session — but
-// the lookup paths differ (peer port has its peerConfigs dict; the
-// instance walks the full workgroup).
-extension iTermWorkgroupInstance: CCModeButtonToolbarItemDelegate {
-    func toolbarButtonSelected(identifier: String,
-                               sender: CCModeButtonToolbarItem) {
-        guard let kind = iTermWorkgroupToolbarItemKind(rawValue: identifier),
-              let configID = sender.ownerPeerID else { return }
-        switch kind {
-        case .reload:
-            // "Reload" means redo what's currently running — i.e.
-            // re-execute the session's program. After a per-file pick
-            // restart, that's the per-file command; before any pick,
-            // it's whatever the session was launched with. We don't
-            // pull cfg.command here because that would always reset
-            // to the original entry command, which is not what users
-            // expect from a reload button (cf. browser reload).
-            guard let session = liveSession(forConfigID: configID),
-                  session.isRestartable() else {
-                return
-            }
-            session.restart()
-        case .back:
-            diffSelector(forNonPeerConfigID: configID)?.selectPreviousFile()
-        case .forward:
-            diffSelector(forNonPeerConfigID: configID)?.selectNextFile()
-        case .gitStatus, .changedFileSelector, .modeSwitcher, .spacer, .name:
-            break
+// Navigation taps from non-peer toolbars (split/tab hosts) route
+// here. Peer toolbars route through iTermWorkgroupPeerPort which
+// has its own conformance. Both end up doing essentially the same
+// thing for reload — re-run the configured command in the live
+// session — but the lookup paths differ (peer port has its
+// peerConfigs dict; the instance walks the full workgroup).
+extension iTermWorkgroupInstance: WorkgroupNavigationToolbarItemDelegate {
+    func workgroupNavigationDidTapBack(sender: WorkgroupNavigationToolbarItem) {
+        guard let configID = sender.ownerPeerID else { return }
+        diffSelector(forNonPeerConfigID: configID)?.selectPreviousFile()
+    }
+
+    func workgroupNavigationDidTapForward(sender: WorkgroupNavigationToolbarItem) {
+        guard let configID = sender.ownerPeerID else { return }
+        diffSelector(forNonPeerConfigID: configID)?.selectNextFile()
+    }
+
+    func workgroupNavigationDidTapReload(sender: WorkgroupNavigationToolbarItem) {
+        guard let configID = sender.ownerPeerID else { return }
+        // "Reload" means redo what's currently running — i.e.
+        // re-execute the session's program. After a per-file pick
+        // restart, that's the per-file command; before any pick,
+        // it's whatever the session was launched with. We don't
+        // pull cfg.command here because that would always reset to
+        // the original entry command, which is not what users
+        // expect from a reload button (cf. browser reload).
+        guard let session = liveSession(forConfigID: configID),
+              session.isRestartable() else {
+            return
         }
+        session.restart()
     }
 
     // The CFS for a non-peer host (split/tab) by config ID. Peer

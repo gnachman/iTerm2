@@ -55,9 +55,7 @@ enum BuiltinWorkgroups {
             toolbarItems: [
                 .modeSwitcher,
                 .changedFileSelector,
-                .back,
-                .reload,
-                .forward
+                .navigation,
             ],
             displayName: "Diff",
             perFileCommand: "git difftool -y -x vimdiff HEAD -- \\(file)")
@@ -71,7 +69,7 @@ enum BuiltinWorkgroups {
             urlString: "",
             toolbarItems: [
                 .modeSwitcher,
-                .reload,
+                .navigation,
             ],
             displayName: "Code Review")
 

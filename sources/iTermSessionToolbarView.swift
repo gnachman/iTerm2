@@ -42,8 +42,8 @@ class SessionToolbarGenericView: NSObject {
     func layoutSubviews() {
         let viewHeight = _view.fittingSize.height
         _view.frame = NSRect(x: 0,
-                             y: (wrapper.bounds.height - viewHeight) / 2.0,
-                             width: wrapper.bounds.width,
+                             y: (view.bounds.height - viewHeight) / 2.0,
+                             width: view.bounds.width,
                              height: viewHeight)
     }
 
@@ -72,10 +72,13 @@ class SessionToolbarControl: SessionToolbarGenericView {
 @objc
 class SessionToolbarLabel: SessionToolbarGenericView {
     let textField: NSTextField
+    private let minWidth: CGFloat
     init(identifier: String,
          priority: Int,
-         textField: NSTextField) {
+         textField: NSTextField,
+         minWidth: CGFloat = 0) {
         self.textField = textField
+        self.minWidth = minWidth
         super.init(identifier: identifier,
                    priority: priority,
                    view: textField)
@@ -83,9 +86,11 @@ class SessionToolbarLabel: SessionToolbarGenericView {
 
     override var desiredWidthRange: ClosedRange<CGFloat> {
         // Labels want exactly their natural width: no stretching, no
-        // unnecessary shrinking beyond ellipsis.
-        let width = max(_view.fittingSize.width, 0)
-        return 0...width
+        // unnecessary shrinking beyond ellipsis. `minWidth` lets a
+        // caller insist on a floor — useful for the per-session name
+        // label, which is uninformative when squeezed to "…".
+        let width = max(_view.fittingSize.width, minWidth)
+        return min(minWidth, width)...width
     }
 }
 
@@ -169,7 +174,16 @@ class SessionToolbarView: NSView {
     // against the session edge. Pure visual breathing room — the
     // layout builder sees a smaller availableWidth and items are
     // pushed in from the leading edge by the same amount.
-    private static let horizontalInset = 4.0
+    private static let horizontalInset = 8.0
+    // Width of the divider line between adjacent items. Padding
+    // on each side comes from SessionToolbarLayoutBuilder.spacerWidth
+    // (which is now padding + divider + padding); the divider is
+    // drawn centered in that gap.
+    private static let dividerThickness = 1.0
+    private static let dividerSidePadding = 8.0
+    // Vertical breathing room above and below each divider so the
+    // line reads as a delimiter, not a hard separator wall.
+    private static let dividerVerticalInset = 8.0
 
     private func doLayout() {
         let inset = Self.horizontalInset
@@ -179,7 +193,8 @@ class SessionToolbarView: NSView {
         var x = inset
         let topBottomMargin = 2.0
         let height = bounds.height - topBottomMargin * 2
-        for item in result {
+        var dividers: [NSView] = []
+        for (index, item) in result.enumerated() {
             item.obj.delegate = self
             var frame = item.obj.view.frame
             frame.origin.x = x
@@ -187,12 +202,33 @@ class SessionToolbarView: NSView {
             frame.size.width = item.width
             frame.size.height = height
             item.obj.view.frame = frame
+            // Drop a divider in the gap after every item except the
+            // last. Centered in the spacer: padding | divider | padding.
+            if index < result.count - 1 {
+                let dividerX = x + item.width + Self.dividerSidePadding
+                let vInset = Self.dividerVerticalInset
+                let dividerHeight = max(0, height - vInset * 2)
+                dividers.append(makeDivider(x: dividerX,
+                                            y: topBottomMargin + vInset,
+                                            height: dividerHeight))
+            }
             x += item.width + builder.spacerWidth
             item.obj.layoutSubviews()
         }
-        // Keep the visual-effect background at index 0 and the divider just
-        // above it, with item views on top.
-        subviews = [backgroundView, bottomDivider] + result.map { $0.obj.view }
+        // Keep the visual-effect background at index 0 and the bottom
+        // divider just above it; vertical inter-item dividers and
+        // item views layer on top.
+        subviews = [backgroundView, bottomDivider] + dividers + result.map { $0.obj.view }
+    }
+
+    // Vertical 1pt separator. NSBox.boxType = .separator picks a
+    // system-adapted color (matches the bottom divider) and the
+    // 1pt-wide / full-height frame triggers its vertical orientation.
+    private func makeDivider(x: CGFloat, y: CGFloat, height: CGFloat) -> NSView {
+        let box = NSBox()
+        box.boxType = .separator
+        box.frame = NSRect(x: x, y: y, width: Self.dividerThickness, height: height)
+        return box
     }
 }
 
@@ -212,7 +248,10 @@ private class SessionToolbarLayoutBuilder {
     private let items: [Item]
     private var candidate = [Item]()
     private let availableWidth: CGFloat
-    let spacerWidth = 4.0
+    // padding (8) + divider (1) + padding (8). The view layer draws
+    // the divider centered in this gap; the layout builder just
+    // needs the gap width to size items correctly.
+    let spacerWidth = 17.0
     private var availableWidthExcludingSpacing: CGFloat {
         let numSpacers = max(0, candidate.count - 1)
         return availableWidth - CGFloat(numSpacers) * spacerWidth
@@ -302,46 +341,6 @@ extension Array {
             }
         }
         return result
-    }
-}
-
-@objc(iTermCCModeButtonToolbarItemDelegate)
-protocol CCModeButtonToolbarItemDelegate: AnyObject {
-    func toolbarButtonSelected(identifier: String, sender: CCModeButtonToolbarItem)
-}
-
-@objc(iTermCCModeButtonToolbarItem)
-class CCModeButtonToolbarItem: SessionToolbarControl {
-    @objc weak var buttonDelegate: CCModeButtonToolbarItemDelegate?
-    // Set by the workgroup builder so the delegate can demux which
-    // peer's button was tapped (each peer gets its own instance).
-    @objc var ownerPeerID: String?
-    private let button: NSButton
-    
-    @objc
-    init(identifier: String,
-         priority: Int,
-         image: NSImage) {
-        button = NSButton(image: image, target: nil, action: nil)
-        button.isBordered = false
-        button.imageScaling = .scaleProportionallyUpOrDown
-        button.refusesFirstResponder = true
-        button.setButtonType(.momentaryPushIn)
-
-        super.init(identifier: identifier, priority: priority, control: button)
-        
-        button.target = self
-        button.action = #selector(didSelectButton(_:))
-    }
-
-    override var desiredWidthRange: ClosedRange<CGFloat> {
-        button.fittingSize.width...button.fittingSize.width
-    }
-    
-    @objc
-    private func didSelectButton(_ sender: Any?) {
-        buttonDelegate?.toolbarButtonSelected(identifier: identifier,
-                                              sender: self)
     }
 }
 
@@ -635,11 +634,18 @@ class CCDiffSelectorItem: SessionToolbarControl {
 }
 
 @objc(iTermCCGitSessionToolbarItem)
-class CCGitSessionToolbarItem: SessionToolbarLabel {
+class CCGitSessionToolbarItem: SessionToolbarGenericView {
+    private let textField: NSTextField
+    private let imageView: NSImageView
     var ags: iTermAutoGitString!
     private let scope: iTermVariableScope
     // Held so the item participates in keeping the shared poller alive.
     let poller: iTermGitPoller
+    // Match the icon to the system text height so it sits flush with
+    // the branch label rather than dwarfing it.
+    private let iconSide: CGFloat
+    // Gap between the icon and the branch text.
+    private static let iconTextSpacing = 4.0
 
     @objc
     init(identifier: String,
@@ -648,6 +654,7 @@ class CCGitSessionToolbarItem: SessionToolbarLabel {
          poller: iTermGitPoller) {
         self.scope = scope
         self.poller = poller
+        self.iconSide = round(NSFont.systemFontSize) + 2
 
         let textField = NSTextField(frame: .zero)
         textField.drawsBackground = false
@@ -655,8 +662,28 @@ class CCGitSessionToolbarItem: SessionToolbarLabel {
         textField.isEditable = false
         textField.isSelectable = false
         textField.lineBreakMode = .byTruncatingTail
+        self.textField = textField
 
-        super.init(identifier: identifier, priority: priority, textField: textField)
+        // Template image so AppKit substitutes the appropriate
+        // foreground tint for the current appearance (light/dark) —
+        // matches the surrounding text without us hard-coding either
+        // color.
+        let imageView = NSImageView(frame: .zero)
+        let image = NSImage(named: "GitBig") ?? NSImage()
+        image.isTemplate = true
+        imageView.image = image
+        imageView.imageScaling = .scaleProportionallyUpOrDown
+        self.imageView = imageView
+
+        // Plain NSView container — terminal toolbars are
+        // autoresizing-mask territory per the project rule, no
+        // NSStackView / no constraints. Children laid out by frame
+        // in layoutSubviews.
+        let container = NSView(frame: .zero)
+        container.addSubview(imageView)
+        container.addSubview(textField)
+
+        super.init(identifier: identifier, priority: priority, view: container)
         ags = iTermAutoGitString(
             stringMaker: iTermGitStringMaker(
                 scope: scope,
@@ -664,6 +691,33 @@ class CCGitSessionToolbarItem: SessionToolbarLabel {
         ags.delegate = self
         ags.maker.delegate = self
         update()
+    }
+
+    override var desiredWidthRange: ClosedRange<CGFloat> {
+        // Icon + spacing + text fitting size. Lower bound is just the
+        // icon — text truncates first when space runs short.
+        let textWidth = max(textField.fittingSize.width, 0)
+        let natural = iconSide + Self.iconTextSpacing + textWidth
+        return iconSide...natural
+    }
+
+    override func layoutSubviews() {
+        // Container fills the wrapper; image is left-aligned and
+        // vertically centered, text fills the remaining width.
+        let height = view.bounds.height
+        let width = view.bounds.width
+        _view.frame = NSRect(x: 0, y: 0, width: width, height: height)
+        imageView.frame = NSRect(x: 0,
+                                 y: (height - iconSide) / 2.0,
+                                 width: iconSide,
+                                 height: iconSide)
+        let textOriginX = iconSide + Self.iconTextSpacing
+        let textHeight = textField.fittingSize.height
+        let textWidth = max(0, width - textOriginX)
+        textField.frame = NSRect(x: textOriginX,
+                                 y: (height - textHeight) / 2.0,
+                                 width: textWidth,
+                                 height: textHeight)
     }
 
     @objc
@@ -676,7 +730,7 @@ class CCGitSessionToolbarItem: SessionToolbarLabel {
         DLog("CCGitSessionToolbarItem.update attributedString=\(attributedString.string)")
         delegate?.itemDidChange(sender: self)
     }
-    
+
     private var attributedString: NSAttributedString {
         return ags.maker.attributedStringVariants().first ?? NSAttributedString()
     }
@@ -694,7 +748,11 @@ extension CCGitSessionToolbarItem: iTermGitStringMakerDelegate {
     }
 
     var gitTextColor: NSColor? {
-        NSColor.textColor
+        // Match the auto-injected name label, which uses
+        // NSTextField(labelWithString:) and gets NSColor.labelColor.
+        // labelColor is the right semantic for static text anyway —
+        // textColor is for editable/selectable fields.
+        NSColor.labelColor
     }
 }
 

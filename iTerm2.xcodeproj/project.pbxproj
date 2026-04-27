@@ -913,6 +913,7 @@
 		53FF9826209283D2008688D7 /* template_pyenv_daemon.py in Resources */ = {isa = PBXBuildFile; fileRef = 53FF9823209283D2008688D7 /* template_pyenv_daemon.py */; };
 		564EA2FD15A05A60A95ABBB9 /* PrivateIPChecker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 625C956DD832F4FD0D8F9715 /* PrivateIPChecker.swift */; };
 		5A70B4826716B6F27711CADF /* WorkgroupToolbarBuilder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7F7C79A0745E993B91C40235 /* WorkgroupToolbarBuilder.swift */; };
+		5A9B38999DE20ABF75B37873 /* WorkgroupNavigationToolbarItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 18CB4B106AA1AA4EFB180EB7 /* WorkgroupNavigationToolbarItem.swift */; };
 		5ECE005F1454E59B004861E9 /* PseudoTerminalRestorer.h in Headers */ = {isa = PBXBuildFile; fileRef = 5ECE005D1454E59B004861E9 /* PseudoTerminalRestorer.h */; };
 		616ABD699141533212F458CF /* ToolStatusCellView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10914CB04BC4D2847EC8EB23 /* ToolStatusCellView.swift */; };
 		639530D5AD779882EF35DAE4 /* iTermLargeContentObject.h in Sources */ = {isa = PBXBuildFile; fileRef = 13C5AE44EEA24B945DE0A064 /* iTermLargeContentObject.h */; };
@@ -3292,6 +3293,9 @@
 		A6A73D4F27C80E6C002E4CCA /* iTermCancelable.m in Sources */ = {isa = PBXBuildFile; fileRef = A6A73D4E27C80E6C002E4CCA /* iTermCancelable.m */; };
 		A6A73D5027C80E6C002E4CCA /* iTermCancelable.m in Sources */ = {isa = PBXBuildFile; fileRef = A6A73D4E27C80E6C002E4CCA /* iTermCancelable.m */; };
 		A6A73D6527CCA408002E4CCA /* DonateViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6A73D6427CCA408002E4CCA /* DonateViewController.swift */; };
+		A6A7E22A2F9EEA1200B391BA /* GitBig.png in Resources */ = {isa = PBXBuildFile; fileRef = A6A7E2292F9EEA1200B391BA /* GitBig.png */; };
+		A6A7E22B2F9EEA1200B391BA /* GitBig.png in Resources */ = {isa = PBXBuildFile; fileRef = A6A7E2292F9EEA1200B391BA /* GitBig.png */; };
+		A6A7E22C2F9EEA1200B391BA /* GitBig.png in Resources */ = {isa = PBXBuildFile; fileRef = A6A7E2292F9EEA1200B391BA /* GitBig.png */; };
 		A6A802E0226AD0D200BC70DC /* iTermSearchHistory.h in Headers */ = {isa = PBXBuildFile; fileRef = A6A802DE226AD0D200BC70DC /* iTermSearchHistory.h */; };
 		A6A802E1226AD0D200BC70DC /* iTermSearchHistory.m in Sources */ = {isa = PBXBuildFile; fileRef = A6A802DF226AD0D200BC70DC /* iTermSearchHistory.m */; };
 		A6A802E6226B8C8400BC70DC /* PTYTask.m in Sources */ = {isa = PBXBuildFile; fileRef = E8CF7560026DDA6303A80106 /* PTYTask.m */; };
@@ -5601,6 +5605,7 @@
 		13C5AE44EEA24B945DE0A064 /* iTermLargeContentObject.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; path = iTermLargeContentObject.h; sourceTree = "<group>"; };
 		148411BF36E0AD043E6CA1CD /* decdwl_decdhl_normalized.txt */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text; path = decdwl_decdhl_normalized.txt; sourceTree = "<group>"; };
 		17306A9E43DF81BD3B73C4B3 /* iTermLargeContent.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = iTermLargeContent.swift; sourceTree = "<group>"; };
+		18CB4B106AA1AA4EFB180EB7 /* WorkgroupNavigationToolbarItem.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WorkgroupNavigationToolbarItem.swift; sourceTree = "<group>"; };
 		19537E68A2ADEB03B3086882 /* iTermBlurRowBuffer.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = iTermBlurRowBuffer.swift; sourceTree = "<group>"; };
 		1CF9D13C38FB56DAF280BDA7 /* iTermSessionToolbarView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = iTermSessionToolbarView.swift; sourceTree = "<group>"; };
 		1D027C0F1CD1867000B0FBFF /* iTermColorPresets.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermColorPresets.h; sourceTree = "<group>"; };
@@ -8255,6 +8260,7 @@
 		A6A73D4A27C80517002E4CCA /* NSString+CommonAdditions.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "NSString+CommonAdditions.m"; sourceTree = "<group>"; };
 		A6A73D4E27C80E6C002E4CCA /* iTermCancelable.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermCancelable.m; sourceTree = "<group>"; };
 		A6A73D6427CCA408002E4CCA /* DonateViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DonateViewController.swift; sourceTree = "<group>"; };
+		A6A7E2292F9EEA1200B391BA /* GitBig.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = GitBig.png; path = images/GitBig.png; sourceTree = "<group>"; };
 		A6A802DE226AD0D200BC70DC /* iTermSearchHistory.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermSearchHistory.h; sourceTree = "<group>"; };
 		A6A802DF226AD0D200BC70DC /* iTermSearchHistory.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermSearchHistory.m; sourceTree = "<group>"; };
 		A6A802E7226ED20800BC70DC /* iTermPrintGuard.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermPrintGuard.h; sourceTree = "<group>"; };
@@ -9929,6 +9935,7 @@
 		1D093C131217412B0029F9AD /* Images */ = {
 			isa = PBXGroup;
 			children = (
+				A6A7E2292F9EEA1200B391BA /* GitBig.png */,
 				A68E332D1DE746F5003F1D8E /* Add Mark Touch Bar Icon.png */,
 				A68E332E1DE746F5003F1D8E /* Add Mark Touch Bar Icon@2x.png */,
 				A6A30ED02950EA540050F01A /* aiterm.png */,
@@ -10548,6 +10555,7 @@
 				A25EF27A7558A60A0553EDC9 /* WorkgroupChildSpawning.swift */,
 				9B6C28F8B3BF9399A955C2CA /* WorkgroupMenu.swift */,
 				B21F806A265725167FCCDFC1 /* WorkgroupSessionSpawner.swift */,
+				18CB4B106AA1AA4EFB180EB7 /* WorkgroupNavigationToolbarItem.swift */,
 			);
 			path = Workgroups;
 			sourceTree = "<group>";
@@ -17790,6 +17798,7 @@
 				A671D6D62E1E372E0087348B /* dev.html in Resources */,
 				1D6ED9E019AEA20D005A7799 /* PrefsAppearance.png in Resources */,
 				A6A64E6B2508C5B50040490B /* OpenQuicklySnippetIcon.png in Resources */,
+				A6A7E22B2F9EEA1200B391BA /* GitBig.png in Resources */,
 				A68CB8672E400A2E002531F5 /* trigger-highlight-text.js in Resources */,
 				A67F61EC214395D50093940A /* graphic_yarn@2x.png in Resources */,
 				1D8BBA6A1B30F5C30005A852 /* Navigate.png in Resources */,
@@ -18320,6 +18329,7 @@
 				A6CC2D0B2E4A7FA600F8D620 /* ssh-page-no-conductor.html in Resources */,
 				A63821F0229E50CD005D74BE /* Warning@2x.png in Resources */,
 				A6E312C22E3C11BF008222DE /* copy-mode-cursor.js in Resources */,
+				A6A7E22C2F9EEA1200B391BA /* GitBig.png in Resources */,
 				A6C978F224A0194500971AA7 /* WindowCornerFull.psd in Resources */,
 				A6E7AE93214394DD00DE9F3B /* graphic_coffee.png in Resources */,
 				1D8BBA7C1B30FD230005A852 /* Later@2x.png in Resources */,
@@ -18940,6 +18950,7 @@
 				1D48B292165F405A000046EE /* important@2x.png in Resources */,
 				1DEF5E6F185F889600300319 /* Alert@2x.png in Resources */,
 				9D737D5F17495B4100B3334D /* PrefsGeneral.png in Resources */,
+				A6A7E22A2F9EEA1200B391BA /* GitBig.png in Resources */,
 				1D99C8E71BD59C37001EE1FC /* SearchCursor@2x.png in Resources */,
 				A60BB3861EB54BD100D76C09 /* CopyMode.png in Resources */,
 				A6D6946D2E448116005E9AFE /* find-engine.js in Resources */,
@@ -21012,6 +21023,7 @@
 				C74DEE2C4422D9EDBB63D33C /* WorkgroupSessionSpawner.swift in Sources */,
 				FC58829E571DF07C5902F3EB /* EnterWorkgroupTrigger.swift in Sources */,
 				7F1D5FC8326911E82FE9C402 /* ExitWorkgroupTrigger.swift in Sources */,
+				5A9B38999DE20ABF75B37873 /* WorkgroupNavigationToolbarItem.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
