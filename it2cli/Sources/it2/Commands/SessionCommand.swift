@@ -23,6 +23,7 @@ struct Session: ParsableCommand {
             SetStatus.self,
             GetVar.self,
             SetVar.self,
+            AddClipping.self,
         ]
     )
 }
@@ -791,6 +792,65 @@ extension Session {
             } else {
                 print("Variable '\(variable)' not set")
             }
+        }
+    }
+}
+
+// MARK: - session add-clipping
+
+extension Session {
+    struct AddClipping: ParsableCommand {
+        static let configuration = CommandConfiguration(
+            commandName: "add-clipping",
+            abstract: "Add a clipping to a session (e.g., a code review comment)."
+        )
+
+        @Argument(help: "Clipping type (e.g., “Code Review Comment”).")
+        var type: String
+
+        @Argument(help: "Clipping title.")
+        var title: String
+
+        @Argument(help: "Clipping detail.")
+        var detail: String
+
+        @Option(name: .shortAndLong, help: "Target session ID (default: active).")
+        var session: String?
+
+        func run() throws {
+            let client = try APIClient.connect()
+            defer { client.disconnect() }
+
+            let sessionId = try client.resolveSessionId(session)
+
+            let invoke = ITMInvokeFunctionRequest()
+            let sessionContext = ITMInvokeFunctionRequest_Session()
+            sessionContext.sessionId = sessionId
+            invoke.session = sessionContext
+            invoke.invocation = try "iterm2.add_clipping(session: \(jsonString(sessionId)), type: \(jsonString(type)), title: \(jsonString(title)), detail: \(jsonString(detail)))"
+
+            let request = ITMClientOriginatedMessage()
+            request.id_p = client.nextId()
+            request.invokeFunctionRequest = invoke
+
+            let response = try client.send(request)
+            guard response.submessageOneOfCase == .invokeFunctionResponse,
+                  let invokeResp = response.invokeFunctionResponse else {
+                throw IT2Error.apiError("No invoke function response")
+            }
+
+            if invokeResp.dispositionOneOfCase == .error {
+                let reason = invokeResp.error?.errorReason ?? "unknown"
+                throw IT2Error.apiError("Add clipping failed: \(reason)")
+            }
+        }
+
+        private func jsonString(_ s: String) throws -> String {
+            let data = try JSONEncoder().encode(s)
+            guard let str = String(data: data, encoding: .utf8) else {
+                throw IT2Error.apiError("Failed to JSON-encode string")
+            }
+            return str
         }
     }
 }
