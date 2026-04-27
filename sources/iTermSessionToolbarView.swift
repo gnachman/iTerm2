@@ -165,11 +165,18 @@ class SessionToolbarView: NSView {
         }
     }
 
+    // Symmetric horizontal inset so item content never butts up
+    // against the session edge. Pure visual breathing room — the
+    // layout builder sees a smaller availableWidth and items are
+    // pushed in from the leading edge by the same amount.
+    private static let horizontalInset = 4.0
+
     private func doLayout() {
+        let inset = Self.horizontalInset
         let builder = SessionToolbarLayoutBuilder(toolbarItems: items.filter({ $0.enabled }),
-                                                  availableWidth: bounds.width)
+                                                  availableWidth: max(0, bounds.width - inset * 2))
         let result = builder.build()
-        var x = 0.0
+        var x = inset
         let topBottomMargin = 2.0
         let height = bounds.height - topBottomMargin * 2
         for item in result {
