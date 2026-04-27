@@ -389,6 +389,57 @@ static void iTermUncaughtExceptionHandler(NSException *exception) {
     return NO;
 }
 
+// ⌥⇧⌘N: activate the Nth peer in the active session's workgroup
+// peer group (1..8 by index, 9 always picks the last). Only fires
+// when the active session belongs to a workgroup peer port; falls
+// through silently for unrelated sessions so the same chord can be
+// rebound elsewhere by users who aren't using workgroups.
+//
+// Uses keyCode directly because charactersIgnoringModifiers does
+// NOT ignore Shift — ⌘⇧⌥2 reports "@" / "€" depending on layout,
+// not "2" — so digitKeyForEvent: would miss the digit on every
+// non-US-emulation layout.
+- (BOOL)switchToWorkgroupPeerByNumber:(NSEvent *)event
+                   inWindowController:(PseudoTerminal *)currentTerminal {
+    const NSUInteger mask = NSEventModifierFlagShift | NSEventModifierFlagControl |
+                            NSEventModifierFlagOption | NSEventModifierFlagCommand;
+    const NSUInteger required = NSEventModifierFlagShift |
+                                NSEventModifierFlagOption |
+                                NSEventModifierFlagCommand;
+    if (([event it_modifierFlags] & mask) != required) {
+        return NO;
+    }
+    const NSInteger digit = [self digitForTopRowOrKeypadKeyCode:event.keyCode];
+    if (digit < 1 || digit > 9) {
+        return NO;
+    }
+    PTYSession *session = [currentTerminal currentSession];
+    iTermWorkgroupInstance *instance = session.workgroupInstance;
+    if (!instance) {
+        return NO;
+    }
+    return [instance activatePeerByShortcutDigit:digit fromSession:session];
+}
+
+// Layout-independent 1..9 digit mapping for the number row and
+// numeric keypad. Returns -1 for any other key. Used by the
+// workgroup peer shortcut where Shift is held and characters-based
+// detection would yield punctuation instead of digits.
+- (NSInteger)digitForTopRowOrKeypadKeyCode:(unsigned short)keyCode {
+    switch (keyCode) {
+        case kVK_ANSI_1: case kVK_ANSI_Keypad1: return 1;
+        case kVK_ANSI_2: case kVK_ANSI_Keypad2: return 2;
+        case kVK_ANSI_3: case kVK_ANSI_Keypad3: return 3;
+        case kVK_ANSI_4: case kVK_ANSI_Keypad4: return 4;
+        case kVK_ANSI_5: case kVK_ANSI_Keypad5: return 5;
+        case kVK_ANSI_6: case kVK_ANSI_Keypad6: return 6;
+        case kVK_ANSI_7: case kVK_ANSI_Keypad7: return 7;
+        case kVK_ANSI_8: case kVK_ANSI_Keypad8: return 8;
+        case kVK_ANSI_9: case kVK_ANSI_Keypad9: return 9;
+        default: return -1;
+    }
+}
+
 - (BOOL)switchToPaneInWindowController:(PseudoTerminal *)currentTerminal byNumber:(NSEvent *)event {
     const int mask = NSEventModifierFlagShift | NSEventModifierFlagControl | NSEventModifierFlagOption | NSEventModifierFlagCommand;
     if (([event it_modifierFlags] & mask) == [iTermPreferences maskForModifierTag:[iTermPreferences intForKey:kPreferenceKeySwitchPaneModifier]]) {
@@ -552,6 +603,12 @@ static void iTermUncaughtExceptionHandler(NSException *exception) {
             return YES;
         }
         if ([self remapEvent:event inResponder:responder currentSession:[currentTerminal currentSession]]) {
+            return YES;
+        }
+        // Workgroup peer shortcut runs AFTER user key mappings so a
+        // user-configured ⌘⇧⌥<digit> action takes precedence over
+        // peer activation.
+        if ([self switchToWorkgroupPeerByNumber:event inWindowController:currentTerminal]) {
             return YES;
         }
         if ([[self sessionOfFirstResponder] handleKeyDownWithBuckyBits:event]) {

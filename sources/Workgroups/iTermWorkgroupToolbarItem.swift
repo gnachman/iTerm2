@@ -23,8 +23,11 @@ enum iTermWorkgroupToolbarItemKind: String, Codable, CaseIterable {
     case back
     case forward
     case reload
-    case settings
     case spacer
+    // Auto-injected at runtime — never user-addable, never written to
+    // disk. The decoder still understands it so a future change that
+    // does persist it wouldn't trip an old client.
+    case name
 }
 
 enum iTermWorkgroupToolbarItem: Codable, Equatable, Hashable {
@@ -34,8 +37,8 @@ enum iTermWorkgroupToolbarItem: Codable, Equatable, Hashable {
     case back
     case forward
     case reload
-    case settings
     case spacer(minWidth: CGFloat, maxWidth: CGFloat)
+    case name
 
     var kind: iTermWorkgroupToolbarItemKind {
         switch self {
@@ -45,8 +48,8 @@ enum iTermWorkgroupToolbarItem: Codable, Equatable, Hashable {
         case .back: return .back
         case .forward: return .forward
         case .reload: return .reload
-        case .settings: return .settings
         case .spacer: return .spacer
+        case .name: return .name
         }
     }
 
@@ -76,11 +79,11 @@ enum iTermWorkgroupToolbarItem: Codable, Equatable, Hashable {
         case .back: self = .back
         case .forward: self = .forward
         case .reload: self = .reload
-        case .settings: self = .settings
         case .spacer:
             let minWidth = try c.decode(CGFloat.self, forKey: .minWidth)
             let maxWidth = try c.decode(CGFloat.self, forKey: .maxWidth)
             self = .spacer(minWidth: minWidth, maxWidth: maxWidth)
+        case .name: self = .name
         }
     }
 }

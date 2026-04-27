@@ -261,9 +261,13 @@ class iTermWorkgroupSessionDetailViewController: NSViewController {
         let col = NSTableColumn(identifier: NSUserInterfaceItemIdentifier("item"))
         col.resizingMask = .autoresizingMask
         toolbarTable.addTableColumn(col)
-        toolbarTable.registerForDraggedTypes([
-            .init("com.googlecode.iterm2.workgroupToolbarItem")
-        ])
+        toolbarTable.registerForDraggedTypes([Self.toolbarRowDragType])
+        // Intra-table reorder only — explicitly mark .move for local
+        // drags and disable other operations so dragging out of the
+        // table doesn't pretend to copy.
+        toolbarTable.setDraggingSourceOperationMask(.move, forLocal: true)
+        toolbarTable.setDraggingSourceOperationMask([], forLocal: false)
+        toolbarTable.draggingDestinationFeedbackStyle = .gap
         toolbarTable.dataSource = self
         toolbarTable.delegate = self
         toolbarScroll.documentView = toolbarTable
@@ -948,9 +952,74 @@ extension iTermWorkgroupSessionDetailViewController: NSTextFieldDelegate {
 // MARK: - Toolbar items table
 
 extension iTermWorkgroupSessionDetailViewController: NSTableViewDataSource, NSTableViewDelegate {
+    // Pasteboard type for the toolbar table's intra-row reorder
+    // drags. Internal-only — we do not advertise this to other apps.
+    fileprivate static let toolbarRowDragType =
+        NSPasteboard.PasteboardType("com.googlecode.iterm2.workgroupToolbarItem")
+
     func numberOfRows(in tableView: NSTableView) -> Int {
         guard tableView === toolbarTable else { return 0 }
         return toolbarItems.count
+    }
+
+    // MARK: - Drag-reorder
+
+    func tableView(_ tableView: NSTableView,
+                   pasteboardWriterForRow row: Int) -> NSPasteboardWriting? {
+        guard tableView === toolbarTable else { return nil }
+        let item = NSPasteboardItem()
+        // We only need the source row index; the destination handler
+        // reads it back below to perform the move on session.toolbarItems.
+        item.setString(String(row), forType: Self.toolbarRowDragType)
+        return item
+    }
+
+    func tableView(_ tableView: NSTableView,
+                   validateDrop info: NSDraggingInfo,
+                   proposedRow row: Int,
+                   proposedDropOperation dropOperation: NSTableView.DropOperation) -> NSDragOperation {
+        guard tableView === toolbarTable,
+              dropOperation == .above else {
+            return []
+        }
+        return .move
+    }
+
+    func tableView(_ tableView: NSTableView,
+                   acceptDrop info: NSDraggingInfo,
+                   row destinationRow: Int,
+                   dropOperation: NSTableView.DropOperation) -> Bool {
+        guard tableView === toolbarTable,
+              dropOperation == .above,
+              var s = session else {
+            return false
+        }
+        guard let sourceRow = info.draggingPasteboard.pasteboardItems?
+                .compactMap({ $0.string(forType: Self.toolbarRowDragType) })
+                .compactMap({ Int($0) })
+                .first,
+              sourceRow >= 0,
+              sourceRow < s.toolbarItems.count else {
+            return false
+        }
+        if sourceRow == destinationRow || sourceRow == destinationRow - 1 {
+            // No-op moves: dropping a row onto its own current
+            // location, or onto the gap immediately below itself.
+            return false
+        }
+        let item = s.toolbarItems.remove(at: sourceRow)
+        // After removal, an insertion index past the source row
+        // shifts down by one.
+        let insertAt = destinationRow > sourceRow ? destinationRow - 1 : destinationRow
+        s.toolbarItems.insert(item, at: insertAt)
+        commitUpdate(s, actionName: "Reorder Toolbar Item") { [weak self] in
+            guard let self else { return }
+            self.toolbarTable.reloadData()
+            self.toolbarTable.selectRowIndexes(IndexSet(integer: insertAt),
+                                               byExtendingSelection: false)
+            self.refreshToolbarParamUI()
+        }
+        return true
     }
 
     func tableView(_ tableView: NSTableView,
@@ -976,7 +1045,20 @@ extension iTermWorkgroupSessionDetailViewController: NSTableViewDataSource, NSTa
     }
 
     func updateToolbarRemoveEnabled() {
-        toolbarSegmented.setEnabled(selectedToolbarRow != nil, forSegment: 1)
+        toolbarSegmented.setEnabled(canRemoveSelectedToolbarItem, forSegment: 1)
+    }
+
+    // Match the guards inside removeSelectedToolbarItem so the button
+    // stays disabled rather than beeping when pressed: nothing
+    // selected, or the selected row is the required peer mode
+    // switcher (peers need it to be reachable).
+    private var canRemoveSelectedToolbarItem: Bool {
+        guard let row = selectedToolbarRow,
+              let s = session,
+              row < s.toolbarItems.count else {
+            return false
+        }
+        return !isRequiredModeSwitcher(at: row, in: s)
     }
 
     private func displayName(for item: iTermWorkgroupToolbarItem) -> String {

@@ -29,7 +29,22 @@ final class WorkgroupModeSwitcherItem: SessionToolbarControl {
          members: [(identifier: String, label: String)],
          activeIdentifier: String) {
         self.identifiers = members.map { $0.identifier }
-        let labels = members.map { $0.label }
+        // Suffix each label with its activation shortcut: ⌥⇧⌘1..8
+        // for the first eight segments; ⌥⇧⌘9 also appears on the
+        // last segment when there are nine or more peers (so the
+        // "always go to last" hint is visible). For ≤8 peers the
+        // direct number wins on the last segment because it's how
+        // the user thinks ("press 5 for the 5th peer").
+        let labels = members.enumerated().map { (index, member) -> String in
+            guard let suffix = Self.shortcutLabel(forSegmentIndex: index,
+                                                  total: members.count) else {
+                return member.label
+            }
+            // U+2003 EM SPACE — wider than a regular space so the
+            // shortcut hint reads as a separate visual cluster from
+            // the peer's name.
+            return "\(member.label)\u{2003}\(suffix)"
+        }
         segmentedControl = NSSegmentedControl(
             labels: labels,
             trackingMode: .selectOne,
@@ -44,6 +59,22 @@ final class WorkgroupModeSwitcherItem: SessionToolbarControl {
                    control: segmentedControl)
         segmentedControl.target = self
     }
+
+    // Shortcut suffix for a segment label, or nil if no shortcut maps
+    // to this segment. Modifier order matches macOS shortcut display:
+    // ⌃⌥⇧⌘ (we have no ⌃, so ⌥⇧⌘).
+    private static func shortcutLabel(forSegmentIndex i: Int,
+                                      total: Int) -> String? {
+        let n = i + 1
+        if n <= 8 {
+            return "⌥⇧⌘\(n)"
+        }
+        if n == total {
+            return "⌥⇧⌘9"
+        }
+        return nil
+    }
+
 
     func setActiveIdentifier(_ identifier: String) {
         if let idx = identifiers.firstIndex(of: identifier) {

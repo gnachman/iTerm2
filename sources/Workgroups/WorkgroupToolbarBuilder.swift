@@ -42,6 +42,12 @@ struct WorkgroupToolbarContext {
     // peerPort so non-peer toolbars (split/tab hosts) can route file
     // picks to the workgroup instance even though they have no port.
     weak var diffSelectorDelegate: CCDiffSelectorItemDelegate?
+
+    // Display name of the session this toolbar is being built for —
+    // shown by the auto-injected `.name` item. Empty for peer-group
+    // hosts that don't surface a label here (the modeSwitcher already
+    // shows the active peer's name in that case).
+    let displayName: String
 }
 
 // Does an item in a given peer-group need the shared git poller to be
@@ -57,6 +63,30 @@ extension iTermWorkgroupToolbarItem {
 
 // Constructs SessionToolbarGenericView instances for a workgroup.
 enum WorkgroupToolbarBuilder {
+    // Inject the auto-managed `.name` item into a session's
+    // configured toolbar list. Slot it in immediately after the first
+    // `.modeSwitcher`; if no switcher is present, prepend it. The
+    // user can never remove or reorder this — it is not stored in
+    // the persisted config and is added every time the toolbar is
+    // built. Pre-existing `.name` entries (defensive: shouldn't
+    // happen since the settings UI doesn't expose .name) are
+    // dropped first to keep ordering deterministic.
+    static func injectAutoItems(into items: [iTermWorkgroupToolbarItem]) -> [iTermWorkgroupToolbarItem] {
+        var stripped = items.filter {
+            if case .name = $0 { return false }
+            return true
+        }
+        if let switcherIndex = stripped.firstIndex(where: {
+            if case .modeSwitcher = $0 { return true }
+            return false
+        }) {
+            stripped.insert(.name, at: switcherIndex + 1)
+        } else {
+            stripped.insert(.name, at: 0)
+        }
+        return stripped
+    }
+
     // Build the union of items across every session in `sessions`,
     // deduping repeats (e.g. multiple peers that each declare a
     // mode-switcher get one shared instance). Returned order follows
@@ -121,14 +151,30 @@ enum WorkgroupToolbarBuilder {
             return makeButton(kind: .forward, symbol: .chevronRight, context: context, ownerPeerID: ownerPeerID)
         case .reload:
             return makeButton(kind: .reload, symbol: .arrowClockwise, context: context, ownerPeerID: ownerPeerID)
-        case .settings:
-            return makeButton(kind: .settings, symbol: .gearshape, context: context, ownerPeerID: ownerPeerID)
         case .spacer(let minW, let maxW):
             return SessionToolbarSpacer(identifier: id,
                                         priority: 1,
                                         minWidth: minW,
                                         maxWidth: maxW)
+        case .name:
+            return makeNameLabel(context: context)
         }
+    }
+
+    // Auto-injected per-session display label. Plain text field so it
+    // matches the visual weight of the git-status label; the layout
+    // builder lets it claim its fitting width and shrinks if needed.
+    private static func makeNameLabel(context: WorkgroupToolbarContext) -> SessionToolbarGenericView {
+        let textField = NSTextField(labelWithString: context.displayName)
+        textField.drawsBackground = false
+        textField.isBordered = false
+        textField.isEditable = false
+        textField.isSelectable = false
+        textField.lineBreakMode = .byTruncatingTail
+        textField.font = NSFont.systemFont(ofSize: NSFont.systemFontSize)
+        return SessionToolbarLabel(identifier: iTermWorkgroupToolbarItemKind.name.rawValue,
+                                   priority: 2,
+                                   textField: textField)
     }
 
     private static func makeButton(kind: iTermWorkgroupToolbarItemKind,

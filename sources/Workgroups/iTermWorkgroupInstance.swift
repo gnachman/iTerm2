@@ -230,13 +230,17 @@ final class iTermWorkgroupInstance: NSObject {
             peerGroupMembers: [],
             activePeerIdentifier: "",
             buttonDelegate: self,
-            diffSelectorDelegate: self)
+            diffSelectorDelegate: self,
+            displayName: config.displayName)
+        // modeSwitcher only makes sense in a peer group; strip it
+        // before injection so .name lands at index 0 on non-peers.
+        let configured = config.toolbarItems.filter {
+            if case .modeSwitcher = $0 { return false }
+            return true
+        }
+        let augmented = WorkgroupToolbarBuilder.injectAutoItems(into: configured)
         var built: [SessionToolbarGenericView] = []
-        for item in config.toolbarItems {
-            // modeSwitcher only makes sense in a peer group; skip it
-            // on non-peer sessions even if the user added it in the
-            // settings UI.
-            if case .modeSwitcher = item { continue }
+        for item in augmented {
             if let view = WorkgroupToolbarBuilder.build(
                 item: item,
                 context: context,
@@ -245,6 +249,25 @@ final class iTermWorkgroupInstance: NSObject {
             }
         }
         return built
+    }
+
+    // Activate a peer by ⌥⇧⌘digit shortcut, scoped to whichever peer
+    // port owns `session`. Returns true if a peer was activated.
+    // Hooked from iTermApplication.handleKeypressInTerminalWindow:
+    // — only fires when the active session belongs to a workgroup
+    // peer group.
+    @objc
+    @discardableResult
+    func activatePeer(byShortcutDigit digit: Int,
+                      fromSession session: PTYSession) -> Bool {
+        let owningPort: iTermWorkgroupPeerPort?
+        if peerPort.contains(session: session) {
+            owningPort = peerPort
+        } else {
+            owningPort = nestedPeerPorts.first { $0.contains(session: session) }
+        }
+        guard let owningPort else { return false }
+        return owningPort.activatePeer(byShortcutDigit: digit)
     }
 
     // Look up the live PTY session for a workgroup config UUID. Used
@@ -488,10 +511,7 @@ extension iTermWorkgroupInstance: CCModeButtonToolbarItemDelegate {
             diffSelector(forNonPeerConfigID: configID)?.selectPreviousFile()
         case .forward:
             diffSelector(forNonPeerConfigID: configID)?.selectNextFile()
-        case .settings:
-            // TODO: peer-specific behavior.
-            break
-        case .gitStatus, .changedFileSelector, .modeSwitcher, .spacer:
+        case .gitStatus, .changedFileSelector, .modeSwitcher, .spacer, .name:
             break
         }
     }

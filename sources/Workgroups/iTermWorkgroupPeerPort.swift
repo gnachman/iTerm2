@@ -52,24 +52,28 @@ final class iTermWorkgroupPeerPort: PTYSessionPeerPort {
                    activeSessionIdentifier: activeSessionIdentifier,
                    leaderIdentifier: leaderIdentifier)
 
-        let context = WorkgroupToolbarContext(
-            peerPort: self,
-            gitPoller: gitPoller,
-            scope: leaderScope,
-            peerGroupMembers: peerMembers,
-            activePeerIdentifier: activeSessionIdentifier,
-            buttonDelegate: self,
-            diffSelectorDelegate: self)
-
         // Build each peer's ordered list of views fresh. No cross-peer
         // sharing — a second `.spacer(4,4)` in the same list gets its
         // own NSView, and two peers with `.modeSwitcher` get separate
         // instances too. Each item is tagged with its owner peer ID so
         // delegate callbacks (button taps, file picks) know which
-        // peer fired them.
+        // peer fired them. The context is rebuilt per peer because
+        // `displayName` (used by the auto-injected .name item) varies
+        // by peer.
         for cfg in peerConfigs {
+            let context = WorkgroupToolbarContext(
+                peerPort: self,
+                gitPoller: gitPoller,
+                scope: leaderScope,
+                peerGroupMembers: peerMembers,
+                activePeerIdentifier: activeSessionIdentifier,
+                buttonDelegate: self,
+                diffSelectorDelegate: self,
+                displayName: cfg.displayName)
             var views: [SessionToolbarGenericView] = []
-            for item in cfg.toolbarItems {
+            let augmented = WorkgroupToolbarBuilder
+                .injectAutoItems(into: cfg.toolbarItems)
+            for item in augmented {
                 if let view = WorkgroupToolbarBuilder.build(
                     item: item,
                     context: context,
@@ -107,6 +111,27 @@ final class iTermWorkgroupPeerPort: PTYSessionPeerPort {
         return itemsByPeerID[id] ?? []
     }
 
+    // Activate the peer mapped to a ⌥⇧⌘digit shortcut. Returns true
+    // if a peer was activated, false when the digit doesn't map (no
+    // matching peer, e.g. ⌥⇧⌘8 with 5 peers). 9 always picks the
+    // last peer; 1..8 pick directly when in range.
+    @discardableResult
+    func activatePeer(byShortcutDigit digit: Int) -> Bool {
+        let count = peerConfigs.count
+        guard count > 0 else { return false }
+        let targetIndex: Int
+        switch digit {
+        case 1...8:
+            guard digit <= count else { return false }
+            targetIndex = digit - 1
+        case 9:
+            targetIndex = count - 1
+        default:
+            return false
+        }
+        return activate(identifier: peerConfigs[targetIndex].uniqueIdentifier)
+    }
+
     // Flat list of every toolbar item view across all peers — used by
     // the workgroup instance to fan out poller updates without having
     // to know about per-peer organization.
@@ -134,10 +159,7 @@ final class iTermWorkgroupPeerPort: PTYSessionPeerPort {
             diffSelector(forPeerID: ownerPeerID)?.selectPreviousFile()
         case .forward:
             diffSelector(forPeerID: ownerPeerID)?.selectNextFile()
-        case .settings:
-            // TODO: wire once we have peer-specific behavior.
-            break
-        case .gitStatus, .changedFileSelector, .modeSwitcher, .spacer:
+        case .gitStatus, .changedFileSelector, .modeSwitcher, .spacer, .name:
             break
         }
     }
