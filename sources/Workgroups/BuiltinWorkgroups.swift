@@ -40,10 +40,8 @@ enum BuiltinWorkgroups {
             command: "",
             urlString: "",
             toolbarItems: [
-                .spacer(minWidth: 4, maxWidth: 4),
                 .modeSwitcher,
                 .gitStatus,
-                .spacer(minWidth: 4, maxWidth: 4),
             ],
             displayName: "Claude Code")
 
@@ -55,11 +53,11 @@ enum BuiltinWorkgroups {
             command: "git difftool -y -x vimdiff HEAD",
             urlString: "",
             toolbarItems: [
-                .spacer(minWidth: 4, maxWidth: 4),
                 .modeSwitcher,
                 .changedFileSelector,
+                .back,
                 .reload,
-                .spacer(minWidth: 4, maxWidth: 4),
+                .forward
             ],
             displayName: "Diff",
             perFileCommand: "git difftool -y -x vimdiff HEAD -- \\(file)")
@@ -69,13 +67,11 @@ enum BuiltinWorkgroups {
             parentID: ID.claudeCodeMain,
             kind: .peer,
             profileGUID: nil,
-            command: "claude -p 'Review the pending change in this git repository for correctness and completeness.'",
+            command: "claude",
             urlString: "",
             toolbarItems: [
-                .spacer(minWidth: 4, maxWidth: 4),
                 .modeSwitcher,
                 .reload,
-                .spacer(minWidth: 4, maxWidth: 4),
             ],
             displayName: "Code Review")
 
