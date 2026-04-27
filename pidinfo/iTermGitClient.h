@@ -38,10 +38,21 @@ NS_ASSUME_NONNULL_BEGIN
                     pull:(NSInteger *)pullCount
                     push:(NSInteger *)pushCount;
 
-- (BOOL)repoIsDirty;
-
-- (BOOL)getDeletions:(NSInteger *)deletionsPtr
-           untracked:(NSInteger *)untrackedPtr;
+// Single git_status_list_new walk feeding the on-state fields that
+// were previously computed by three separate walks (repoIsDirty +
+// getDeletions:untracked: + a fileStatuses pass). Always populates
+// dirty, adds (untracked count), and deletes (workdir-deleted
+// count). When `includeFileStatuses` is YES, also builds the
+// per-file fileStatuses array; callers that don't need it (the
+// status-bar git component) skip the allocation cost by passing NO.
+//
+// Behavior note vs the older code path: this walk uses
+// RECURSE_UNTRACKED_DIRS, so a directory of N untracked files
+// contributes N to `adds` instead of the directory rollup of 1.
+// The status bar's adds/deletes counts shift accordingly — more
+// accurate, matches what `git status` actually reports.
+- (BOOL)populateFromStatusListOnState:(iTermGitState *)state
+                  includeFileStatuses:(BOOL)includeFileStatuses;
 
 // Populate on state: linesInserted, linesDeleted, filesAdded, filesModified,
 // filesDeleted by diffing HEAD's tree against workdir-with-index. Returns NO

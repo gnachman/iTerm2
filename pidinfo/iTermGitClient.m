@@ -152,6 +152,7 @@ typedef void (^DeferralBlock)(void);
     if (git_commit_lookup(&commit, _repo, oid)) {
         return nil;
     }
+    [_defers addObject:^{ git_commit_free(commit); }];
     git_time_t t = git_commit_time(commit);
     return [NSDate dateWithTimeIntervalSince1970:t];
 }
@@ -205,6 +206,7 @@ typedef void (^DeferralBlock)(void);
     if (error) {
         return NO;
     }
+    [_defers addObject:^{ git_reference_free(upstream_ref); }];
 
     const git_oid *remote_oid = git_reference_target(upstream_ref);
     if (local_head_oid == NULL || remote_oid == NULL) {
@@ -222,79 +224,48 @@ typedef void (^DeferralBlock)(void);
     return YES;
 }
 
-// git status --porcelain --ignore-submodules -unormal
-- (BOOL)repoIsDirty {
-    git_status_list *status_list = NULL;
-    git_status_options status_options = GIT_STATUS_OPTIONS_INIT;
-    status_options.show = GIT_STATUS_SHOW_INDEX_AND_WORKDIR;
-    status_options.flags = (GIT_STATUS_OPT_INCLUDE_UNTRACKED |
-                            GIT_STATUS_OPT_EXCLUDE_SUBMODULES);
-    const int error = git_status_list_new(&status_list, _repo, &status_options);
-    if (error) {
-        return NO;
-    }
-
-    const BOOL dirty = git_status_list_entrycount(status_list) > 0;
-    git_status_list_free(status_list);
-    return dirty;
-}
-
-// git ls-files --others --exclude-standard | wc -l
-- (BOOL)getDeletions:(NSInteger *)deletionsPtr untracked:(NSInteger *)untrackedPtr {
-    git_status_list *status_list = NULL;
-    git_status_options status_options = GIT_STATUS_OPTIONS_INIT;
-    status_options.show = GIT_STATUS_SHOW_INDEX_AND_WORKDIR;
-    status_options.flags = (GIT_STATUS_OPT_INCLUDE_UNTRACKED |
-                            GIT_STATUS_OPT_RENAMES_HEAD_TO_INDEX);
-    const int error = git_status_list_new(&status_list, _repo, &status_options);
-    if (error) {
-        return NO;
-    }
-
-    NSInteger deletions = 0;
-    NSInteger untracked = 0;
-
-    const size_t count = git_status_list_entrycount(status_list);
-    for (size_t i = 0; i < count; i++) {
-        const git_status_entry *status_entry = git_status_byindex(status_list, i);
-        if (status_entry->status & GIT_STATUS_WT_DELETED) {
-            deletions += 1;
-        }
-        if (status_entry->status & GIT_STATUS_WT_NEW) {
-            untracked += 1;
-        }
-    }
-    git_status_list_free(status_list);
-
-    *deletionsPtr = deletions;
-    *untrackedPtr = untracked;
-
-    return YES;
-}
-
-// Walk `git_status_list_new` to produce one iTermGitFileStatus per
-// file with both index and workdir change kinds populated separately.
-// Mirrors `git status --porcelain` so the menu builder can group
-// staged / unstaged / untracked the same way the user sees them in
-// the terminal.
-- (BOOL)populateFileStatusesOnState:(iTermGitState *)state {
+// One git_status_list pass feeding everything that previously took
+// three: dirty (any entry), adds (workdir-new count), deletes
+// (workdir-deleted count), and the per-file fileStatuses array used
+// by the workgroup menu. Mirrors `git status --porcelain` so the
+// menu builder can group staged / unstaged / untracked the same way
+// the user sees them in the terminal.
+- (BOOL)populateFromStatusListOnState:(iTermGitState *)state
+                  includeFileStatuses:(BOOL)includeFileStatuses {
     git_status_list *status_list = NULL;
     git_status_options opts = GIT_STATUS_OPTIONS_INIT;
     opts.show = GIT_STATUS_SHOW_INDEX_AND_WORKDIR;
     opts.flags = (GIT_STATUS_OPT_INCLUDE_UNTRACKED |
                   GIT_STATUS_OPT_RECURSE_UNTRACKED_DIRS |
-                  GIT_STATUS_OPT_EXCLUDE_SUBMODULES |
-                  GIT_STATUS_OPT_RENAMES_HEAD_TO_INDEX |
-                  GIT_STATUS_OPT_RENAMES_INDEX_TO_WORKDIR);
+                  GIT_STATUS_OPT_EXCLUDE_SUBMODULES);
+    // Rename detection (head→index, index→workdir) is only useful
+    // when we're emitting per-file statuses; the count fields don't
+    // need it. Skip the similarity scan for the cheap path.
+    if (includeFileStatuses) {
+        opts.flags |= (GIT_STATUS_OPT_RENAMES_HEAD_TO_INDEX |
+                       GIT_STATUS_OPT_RENAMES_INDEX_TO_WORKDIR);
+    }
     if (git_status_list_new(&status_list, _repo, &opts) != 0) {
         return NO;
     }
-    NSMutableArray<iTermGitFileStatus *> *result = [NSMutableArray array];
+    NSMutableArray<iTermGitFileStatus *> *result =
+        includeFileStatuses ? [NSMutableArray array] : nil;
+    NSInteger untracked = 0;
+    NSInteger deletions = 0;
     const size_t count = git_status_list_entrycount(status_list);
     for (size_t i = 0; i < count; i++) {
         const git_status_entry *e = git_status_byindex(status_list, i);
         if (!e) continue;
         const unsigned int s = e->status;
+        if (s & GIT_STATUS_WT_NEW) {
+            untracked += 1;
+        }
+        if (s & GIT_STATUS_WT_DELETED) {
+            deletions += 1;
+        }
+        if (!includeFileStatuses) {
+            continue;
+        }
         // Pick the most-recent path: workdir's new_file when the
         // workdir side has anything to say (incl. rename), else
         // index's new_file, else index's old_file (rare).
@@ -359,6 +330,9 @@ typedef void (^DeferralBlock)(void);
         [result addObject:fs];
     }
     git_status_list_free(status_list);
+    state.dirty = (count > 0);
+    state.adds = untracked;
+    state.deletes = deletions;
     state.fileStatuses = result;
     return YES;
 }
@@ -504,21 +478,21 @@ static int GitForEachCallback(git_reference *ref, void *data) {
         state.pullArrow = @"";
     }
 
-    // Get dirty
-    state.dirty = [client repoIsDirty];
-
-    // Untracked files & deleted but tracked files
-    NSInteger deletions = 0;
-    NSInteger untracked = 0;
-    if ([client getDeletions:&deletions untracked:&untracked]) {
-        state.adds = untracked;
-        state.deletes = deletions;
-    }
+    // Single status_list pass: dirty, adds (untracked count), deletes
+    // (workdir-deleted count). Replaces the old repoIsDirty +
+    // getDeletions:untracked: walks. fileStatuses comes from the same
+    // pass when includeDiffStats is YES (the workgroup menu is the
+    // only consumer); the cheap path skips the per-file array
+    // allocation and the rename-detection similarity scan entirely.
+    [client populateFromStatusListOnState:state
+                      includeFileStatuses:includeDiffStats];
 
     // Richer diff stats: only if the caller explicitly asked. Can be expensive.
+    // Adds linesInserted/Deleted and filesAdded/Modified/Deleted by
+    // walking diff deltas with patches; fileStatuses already came from
+    // the status_list pass above.
     if (includeDiffStats) {
         [client populateDiffStatsOnState:state];
-        [client populateFileStatusesOnState:state];
     }
 
     // Current operation

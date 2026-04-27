@@ -2275,6 +2275,14 @@ class FakeSession: NSObject, VT100ScreenDelegate {
 
     }
 
+    func triggerSideEffectEnterWorkgroup(withIdentifier workgroupUniqueIdentifier: String) {
+
+    }
+
+    func triggerSideEffectExitWorkgroup() {
+
+    }
+
     private let colorMap = iTermColorMap()
 
     func immutableColorMap(_ colorMap: (any iTermColorMapReading)!, didChangeColorForKey theKey: iTermColorMapKey, from before: NSColor!, to after: NSColor!) {

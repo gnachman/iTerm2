@@ -88,7 +88,9 @@ typedef NS_ENUM(NSInteger, iTermGitFileChangeKind) {
 @property (nonatomic) NSInteger filesModified;
 @property (nonatomic) NSInteger filesDeleted;  // staged + unstaged
 // Per-file status entries — one per file reported by `git status`.
-// Only populated when diff stats were requested.
+// Populated by populateFromStatusListOnState: when its
+// includeFileStatuses argument is YES (which gitStateForRepoAtPath:
+// wires to the includeDiffStats parameter). Nil otherwise.
 @property (nullable, nonatomic, copy) NSArray<iTermGitFileStatus *> *fileStatuses;
 @property (nonatomic) NSTimeInterval creationTime;
 @property (nonatomic) iTermGitRepoState repoState;
