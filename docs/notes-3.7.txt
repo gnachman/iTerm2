@@ -361,3 +361,10 @@ Bug Fixes:
 - Fix “Save Current Window to File with
   Contents…” producing a file that had no
   contents.
+- Fix tab graphic matching when the
+  foreground binary is a versioned symlink
+  target (e.g., claude → 2.1.121) by also
+  consulting argv0 and the command line,
+  and by walking up to a non-shell ancestor
+  when the deepest foreground job has no
+  icon match.

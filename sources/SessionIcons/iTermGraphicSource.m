@@ -104,15 +104,72 @@ static NSDictionary *sGraphicIconMap;
     if (!enabled) {
         return nil;
     }
-    NSString *job = [processInfoProvider deepestForegroundJobForPid:pid].name;
-    if (!job) {
+    iTermProcessInfo *info = [processInfoProvider deepestForegroundJobForPid:pid];
+    if (!info) {
         return nil;
     }
-    
-    NSArray *parts = [job componentsInShellCommand];
-    NSString *command = parts.firstObject;
 
-    return [self imageForJobName:command enabled:YES];
+    NSImage *image = [self iconImageForProcessInfo:info];
+    if (image) {
+        return image;
+    }
+
+    // Fallback: the deepest foreground job didn't match any icon, so walk up the parent
+    // chain looking for one that does. This handles cases like claude → awk where the
+    // child has no icon but a non-shell ancestor does. Stop at the login shell (argv0
+    // starts with "-") or iTermServer.
+    iTermProcessInfo *ancestor = info.parent;
+    int depth = 0;
+    while (ancestor && depth < 50) {
+        NSString *title = ancestor.argv0 ?: ancestor.name;
+        if ([title hasPrefix:@"-"] || [title hasPrefix:@"iTermServer"]) {
+            break;
+        }
+        image = [self iconImageForProcessInfo:ancestor];
+        if (image) {
+            return image;
+        }
+        ancestor = ancestor.parent;
+        depth++;
+    }
+
+    // No graphic match — fall back to the default (letter) image for the deepest job,
+    // preferring argv0 over name so a versioned symlink target like 2.1.121 still
+    // shows "C" for claude.
+    return [self imageForJobName:[self preferredFallbackNameForProcessInfo:info] enabled:YES];
+}
+
+- (NSString *)preferredFallbackNameForProcessInfo:(iTermProcessInfo *)info {
+    NSString *raw = info.argv0 ?: info.commandLine ?: info.name;
+    return [[raw componentsInShellCommand] firstObject].lastPathComponent;
+}
+
+- (NSImage *)iconImageForProcessInfo:(iTermProcessInfo *)info {
+    for (NSString *candidate in [self iconCandidateNamesForProcessInfo:info]) {
+        NSImage *image = [self imageForJobName:candidate];
+        if (image) {
+            // imageForJobName: looks up the cache under the normalized command (e.g.,
+            // "emacs" for "emacs-25.1"), so write under the same key — otherwise the
+            // entry is never read.
+            CachedGraphicImages()[[self normalizedCommand:candidate]] = image;
+            return image;
+        }
+    }
+    return nil;
+}
+
+- (NSArray<NSString *> *)iconCandidateNamesForProcessInfo:(iTermProcessInfo *)info {
+    NSMutableArray<NSString *> *candidates = [NSMutableArray array];
+    void (^addCandidate)(NSString *) = ^(NSString *raw) {
+        NSString *first = [[raw componentsInShellCommand] firstObject].lastPathComponent;
+        if (first.length > 0 && ![candidates containsObject:first]) {
+            [candidates addObject:first];
+        }
+    };
+    addCandidate(info.name);
+    addCandidate(info.argv0);
+    addCandidate(info.commandLine);
+    return candidates;
 }
 
 - (NSString *)normalizedCommand:(NSString *)nonnormalCommand {
