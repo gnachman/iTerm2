@@ -15,13 +15,19 @@ extension PTYSession {
     // Initial spawn (deferred launch). The session has been created but
     // no program has run yet; on Start, fire attachOrLaunch with the
     // resolved command.
+    //
+    // `workgroupInstanceID` is captured for ITERM_WORKGROUP_ID just
+    // like the regular spawn paths in WorkgroupSessionSpawner.launch
+    // and PTYSession.makeWorkgroupPeer — without this, the deferred
+    // shell would launch with no workgroup-id env var.
     @objc
     func presentCodeReviewPromptOverlay(rawCommand: String,
                                          urlString: String?,
                                          objectType: iTermObjectType,
                                          factory: iTermSessionFactory,
                                          windowController: PseudoTerminal?,
-                                         oldCWD: String?) {
+                                         oldCWD: String?,
+                                         workgroupInstanceID: String) {
         codeReviewRawCommand = rawCommand
         showCodeReviewPromptOverlay { [weak self] text in
             guard let self else { return }
@@ -35,7 +41,7 @@ extension PTYSession {
                 serverConnection: iTermGeneralServerConnection(),
                 urlString: urlString,
                 allowURLSubs: false,
-                environment: [:],
+                environment: ["ITERM_WORKGROUP_ID": workgroupInstanceID],
                 customShell: nil,
                 oldCWD: oldCWD,
                 forceUseOldCWD: true,
@@ -53,6 +59,11 @@ extension PTYSession {
     // running; on Start, kill+restart the session with the new
     // resolved command. Reads the raw template from the cached
     // `codeReviewRawCommand` set during the initial spawn.
+    //
+    // restart(withCommand:) feeds through replaceTerminatedShellWith-
+    // NewInstance, which preserves the existing _environment — so
+    // ITERM_WORKGROUP_ID set during the initial deferred launch
+    // carries forward across reloads.
     @objc
     func reloadCodeReviewPromptOverlay() {
         guard let rawCommand = codeReviewRawCommand else { return }

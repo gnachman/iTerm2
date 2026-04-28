@@ -46,7 +46,20 @@ extension AddClippingBuiltInFunction: iTermBuiltInFunctionProtocol {
                     completion(nil, error(message: "No such session"))
                     return
                 }
-                session.addClipping(type: type, title: title, detail: detail)
+                // Code-review-mode workgroup peers send their clippings
+                // to the workgroup leader instead of accumulating them
+                // on the (often short-lived) review session itself —
+                // the leader is where the user is actually working, so
+                // their it2 add-clipping call from inside `claude`
+                // surfaces alongside their normal terminal history.
+                let target: PTYSession
+                if session.workgroupSessionMode == .codeReview,
+                   let leader = session.workgroupInstance?.mainSession {
+                    target = leader
+                } else {
+                    target = session
+                }
+                target.addClipping(type: type, title: title, detail: detail)
                 completion(nil, nil)
             }
         iTermBuiltInFunctions.sharedInstance().register(builtInFunction, namespace: "iterm2")

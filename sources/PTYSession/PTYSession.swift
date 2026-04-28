@@ -1768,7 +1768,8 @@ extension PTYSession {
                             objectType: .paneObject,
                             factory: factory,
                             windowController: nil,
-                            oldCWD: oldCWD)
+                            oldCWD: oldCWD,
+                            workgroupInstanceID: workgroupInstanceID)
                         seal.fulfill(newSession)
                         return
                     }

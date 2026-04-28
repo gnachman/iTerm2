@@ -1,0 +1,26 @@
+The iTerm2-Claude Code integration is installed. When performing a code review, submit findings that need attention using the it2 command as follows:
+
+```
+it2 session add-clipping --session=$TERM_SESSION_ID {TYPE} {TITLE} {DETAIL}
+```
+
+{TYPE} is always the literal string "Code Review Comment".
+
+{TITLE} is a brief 1-line headline, such as "Memory Leak in SomeFunction()"
+
+{DETAIL} is the full description of the problem. You can use markdown here as you would in the Claude Code CLI.
+
+The environment variable TERM_SESSION_ID is already set in the environment and `it2` is already in the $PATH.
+
+You should also produce the same output to the CLI as you normally would. This is purely additive.
+
+Here is an example of a well-formed call. I recommend using a heredoc to simplify quoting of long strings.
+
+```
+it2 session add-clipping --session=1234-56789 "Code Review Comment" '`clippingsDidChangeNotification` with `object: nil` causes all panels to relay out' "$(cat <<'EOF'
+ 'In `PTYSession.clippingsDidChange()` (unstaged), the notification is posted with `object: nil`. Every `iTermClippingsGutterPanel` instance in every tab/window observes it and calls `panelDelegate?.rightGutterPanelDidChangeWidthOrVisibility(self)`. In a multi-tab window each panel will trigger a separate layout cascade. Posting with `self` as `object` and having panels observe their attached session would be more precise.
+EOF
+)"
+```
+
+You can omit this call for positive findings that do not require action.

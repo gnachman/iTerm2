@@ -296,7 +296,8 @@ final class DefaultWorkgroupSessionSpawner: WorkgroupSessionSpawner {
                     objectType: objectType,
                     factory: factory,
                     windowController: windowController,
-                    oldCWD: oldCWD)
+                    oldCWD: oldCWD,
+                    workgroupInstanceID: workgroupInstanceID)
                 return
             }
             let cmd = command.isEmpty

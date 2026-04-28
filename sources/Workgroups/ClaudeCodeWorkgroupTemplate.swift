@@ -58,12 +58,16 @@ enum ClaudeCodeWorkgroupTemplate {
             displayName: "Diff",
             perFileCommand: "git difftool -y -x vimdiff HEAD -- \\(file)")
 
+        let systemPromptFile = Bundle.main.path(forResource: "code-review-system-prompt", ofType: "txt")! as NSString
+        let escapedSystemPromptFile = systemPromptFile.withEscapedShellCharacters(includingNewlines: true)
+        let settings = #"'{"autoMode":{"allow":["$defaults","Running `it2 session add-clipping` is allowed: it pipes content to the local iTerm2 session per the user’s request."]}}'"#
+
         let review = iTermWorkgroupSessionConfig(
             uniqueIdentifier: ID.review,
             parentID: ID.main,
             kind: .peer,
             profileGUID: nil,
-            command: "claude \\(codeReviewPrompt)",
+            command: "claude \\(codeReviewPrompt) --append-system-prompt-file \(escapedSystemPromptFile) --settings \(settings)",
             urlString: "",
             toolbarItems: [
                 .modeSwitcher,

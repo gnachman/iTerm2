@@ -1534,18 +1534,6 @@ replaceInitialDirectoryForSessionWithGUID:(NSString *)guid
 }
 
 - (PTYSession *)sessionWithGUID:(NSString *)identifier {
-    // Workgroup instance ids are minted with a "wg-" prefix
-    // specifically so they're disjoint from PTYSession GUIDs (bare
-    // UUIDs). When the caller passes one, return the leader session
-    // of the active workgroup — useful for tools that hold an
-    // ITERM_WORKGROUP_ID and want the session it's anchored to.
-    if ([identifier hasPrefix:@"wg-"]) {
-        PTYSession *leader = [iTermWorkgroupController.instance
-            mainSessionForInstanceUniqueIdentifier:identifier];
-        if (leader) {
-            return leader;
-        }
-    }
     for (PseudoTerminal *term in [[iTermController sharedInstance] terminals]) {
         for (PTYSession *session in term.allSessions) {
             if ([session.guid isEqualToString:identifier]) {
