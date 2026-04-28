@@ -42,6 +42,11 @@ Major New Features:
   them in Settings > Shortcuts >
   Workgroups. Still a work in progress.
 
+- Enter Workgroup and Exit Workgroup are
+  also available as URL-regex triggers on
+  browser profiles, so a navigation event
+  can change the active workgroup.
+
 - The new Fold All menu item folds everyting
   (aside from folds at the very top of history).
   This makes it easy to keep history around

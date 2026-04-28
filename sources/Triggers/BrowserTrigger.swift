@@ -11,6 +11,8 @@ protocol BrowserTriggerDelegate {
     func browserTriggerHighlightText(matchID: String, textColor: String?, backgroundColor: String?)
     func browserTriggerMakeHyperlink(matchID: String, url: String)
     func browserTriggerInject(_ script: String)
+    func browserTriggerEnterWorkgroup(uniqueIdentifier: String)
+    func browserTriggerExitWorkgroup()
 }
 
 @MainActor

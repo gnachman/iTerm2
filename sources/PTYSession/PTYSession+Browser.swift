@@ -279,6 +279,13 @@ extension PTYSession: iTermBrowserViewControllerDelegate {
         return (genericScope, self)
     }
 
+    // The browser view controller is hosted by this PTYSession, so the
+    // owning session is just self. Used by the workgroup browser
+    // triggers, which need a PTYSession to enter/exit a workgroup on.
+    func browserViewControllerSession(_ controller: iTermBrowserViewController) -> PTYSession? {
+        return self
+    }
+
     func browserViewControllerShouldInterpolateSmartSelectionParameters(_ controller: iTermBrowserViewController) -> Bool {
         return iTermProfilePreferences.bool(forKey: KEY_SMART_SELECTION_ACTIONS_USE_INTERPOLATED_STRINGS,
                                             inProfile: profile)
