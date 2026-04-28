@@ -89,6 +89,20 @@ final class iTermWorkgroupController: NSObject {
         return instances[ObjectIdentifier(session)]
     }
 
+    // Look up the main (leader) session for the active workgroup
+    // instance whose per-entry id matches `identifier`. Returns nil
+    // if no active workgroup has that id (e.g. the workgroup was
+    // exited, or `identifier` was never a workgroup instance id).
+    @objc
+    func mainSession(forInstanceUniqueIdentifier identifier: String) -> PTYSession? {
+        for instance in instances.values {
+            if instance.instanceUniqueIdentifier == identifier {
+                return instance.mainSession
+            }
+        }
+        return nil
+    }
+
     // MARK: - Private
 
     // Looks up the workgroup config by identifier in the user's

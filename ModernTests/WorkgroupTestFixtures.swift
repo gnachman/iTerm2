@@ -28,6 +28,11 @@ final class FakeWorkgroupSpawner: WorkgroupSessionSpawner {
     private(set) var sessionsByConfigID: [String: PTYSession] = [:]
     private(set) var records: [SpawnRecord] = []
 
+    // workgroupInstanceID forwarded to each spawn call. Tests can read
+    // this to assert that the same per-entry UUID is propagated to
+    // every spawn (peers, splits, tabs, nested peers).
+    private(set) var workgroupInstanceIDsByConfigID: [String: String] = [:]
+
     // Tests that need a spy/subclass instead of the default
     // PTYSession can replace this. Defaults to a plain non-synthetic
     // PTYSession.
@@ -46,26 +51,32 @@ final class FakeWorkgroupSpawner: WorkgroupSessionSpawner {
     }
 
     func spawnPeer(parent: PTYSession,
-                   config: iTermWorkgroupSessionConfig) -> iTermPromise<PTYSession> {
+                   config: iTermWorkgroupSessionConfig,
+                   workgroupInstanceID: String) -> iTermPromise<PTYSession> {
         let session = makeSession()
         sessionsByConfigID[config.uniqueIdentifier] = session
+        workgroupInstanceIDsByConfigID[config.uniqueIdentifier] = workgroupInstanceID
         records.append(SpawnRecord(kind: .peer, parent: parent, config: config, session: session))
         return iTermPromise<PTYSession>(value: session)
     }
 
     func spawnSplit(parent: PTYSession,
                     config: iTermWorkgroupSessionConfig,
-                    settings: SplitSettings) -> PTYSession? {
+                    settings: SplitSettings,
+                    workgroupInstanceID: String) -> PTYSession? {
         let session = makeSession()
         sessionsByConfigID[config.uniqueIdentifier] = session
+        workgroupInstanceIDsByConfigID[config.uniqueIdentifier] = workgroupInstanceID
         records.append(SpawnRecord(kind: .split, parent: parent, config: config, session: session))
         return session
     }
 
     func spawnTab(parent: PTYSession,
-                  config: iTermWorkgroupSessionConfig) -> PTYSession? {
+                  config: iTermWorkgroupSessionConfig,
+                  workgroupInstanceID: String) -> PTYSession? {
         let session = makeSession()
         sessionsByConfigID[config.uniqueIdentifier] = session
+        workgroupInstanceIDsByConfigID[config.uniqueIdentifier] = workgroupInstanceID
         records.append(SpawnRecord(kind: .tab, parent: parent, config: config, session: session))
         return session
     }

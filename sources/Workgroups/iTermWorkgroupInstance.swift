@@ -21,6 +21,14 @@ import Foundation
 @objc(iTermWorkgroupInstance)
 final class iTermWorkgroupInstance: NSObject {
     @objc let workgroupUniqueIdentifier: String
+
+    // Stable identifier for this *entry* of the workgroup, distinct
+    // from workgroupUniqueIdentifier (which is the config's UUID and
+    // is the same across re-entries). Exposed to spawned sessions as
+    // ITERM_WORKGROUP_ID so external tools can tell two runs of the
+    // same workgroup config apart.
+    @objc let instanceUniqueIdentifier: String
+
     @objc weak var mainSession: PTYSession?
 
     // Config snapshot at entry time.
@@ -88,11 +96,13 @@ final class iTermWorkgroupInstance: NSObject {
     private var gitDirectoryTracker: iTermAutoGitString?
 
     init(workgroup: iTermWorkgroup,
+         instanceUniqueIdentifier: String,
          mainSession: PTYSession,
          peerPort: iTermWorkgroupPeerPort,
          gitPoller: iTermGitPoller?,
          spawner: WorkgroupSessionSpawner) {
         self.workgroupUniqueIdentifier = workgroup.uniqueIdentifier
+        self.instanceUniqueIdentifier = instanceUniqueIdentifier
         self.workgroup = workgroup
         self.mainSession = mainSession
         self.peerPort = peerPort
@@ -341,6 +351,14 @@ final class iTermWorkgroupInstance: NSObject {
                       spawner: WorkgroupSessionSpawner = DefaultWorkgroupSessionSpawner()) -> iTermWorkgroupInstance? {
         guard let root = workgroup.root else { return nil }
 
+        // Per-entry UUID, generated upfront so peer spawns (which run
+        // before the iTermWorkgroupInstance is constructed) can carry
+        // it into the spawned sessions' environment as
+        // ITERM_WORKGROUP_ID. Prefixed so it's visually distinct from
+        // a PTYSession GUID (also a bare UUID) when it shows up in
+        // env dumps, logs, or external tooling.
+        let instanceUniqueIdentifier = "wg-" + UUID().uuidString
+
         // Peer-group members = the root + its peer children.
         let peerChildren = workgroup.sessions.filter { s in
             guard s.parentID == root.uniqueIdentifier else { return false }
@@ -356,7 +374,9 @@ final class iTermWorkgroupInstance: NSObject {
         peers[root.uniqueIdentifier] = iTermPromise<PTYSession>(value: mainSession)
         for peer in peerChildren {
             peers[peer.uniqueIdentifier] =
-                spawner.spawnPeer(parent: mainSession, config: peer)
+                spawner.spawnPeer(parent: mainSession,
+                                  config: peer,
+                                  workgroupInstanceID: instanceUniqueIdentifier)
         }
 
         // Workgroup-wide poller built up front (rather than inside the
@@ -388,6 +408,7 @@ final class iTermWorkgroupInstance: NSObject {
         mainSession.peerPort = port
 
         let instance = iTermWorkgroupInstance(workgroup: workgroup,
+                                              instanceUniqueIdentifier: instanceUniqueIdentifier,
                                               mainSession: mainSession,
                                               peerPort: port,
                                               gitPoller: poller,

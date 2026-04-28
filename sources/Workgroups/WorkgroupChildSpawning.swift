@@ -19,7 +19,8 @@ extension iTermWorkgroupInstance {
         guard case .split(let settings) = config.kind else { return }
         guard let newSession = spawner.spawnSplit(parent: parent,
                                                   config: config,
-                                                  settings: settings) else {
+                                                  settings: settings,
+                                                  workgroupInstanceID: instanceUniqueIdentifier) else {
             return
         }
         registerNonPeerOrPeerGroupHost(session: newSession,
@@ -32,7 +33,8 @@ extension iTermWorkgroupInstance {
     // Add a new-tab child from the workgroup config.
     func spawnTab(config: iTermWorkgroupSessionConfig, parent: PTYSession) {
         guard let newSession = spawner.spawnTab(parent: parent,
-                                                config: config) else {
+                                                config: config,
+                                                workgroupInstanceID: instanceUniqueIdentifier) else {
             return
         }
         registerNonPeerOrPeerGroupHost(session: newSession,
@@ -66,7 +68,9 @@ extension iTermWorkgroupInstance {
         peers[config.uniqueIdentifier] = iTermPromise<PTYSession>(value: session)
         for peer in peerChildren {
             peers[peer.uniqueIdentifier] =
-                spawner.spawnPeer(parent: parent, config: peer)
+                spawner.spawnPeer(parent: parent,
+                                  config: peer,
+                                  workgroupInstanceID: instanceUniqueIdentifier)
         }
         let port = iTermWorkgroupPeerPort(
             peers: peers,

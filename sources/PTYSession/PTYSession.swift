@@ -1602,8 +1602,11 @@ extension PTYSession {
 
     // Build a peer session for a workgroup's configured peer, driven
     // by an iTermWorkgroupSessionConfig config (profile override, command
-    // override, buried until activated).
-    func makeWorkgroupPeer(config: iTermWorkgroupSessionConfig) -> iTermPromise<PTYSession> {
+    // override, buried until activated). `workgroupInstanceID` is
+    // injected as ITERM_WORKGROUP_ID in the launch request so the
+    // peer's shell sees the per-entry workgroup id.
+    func makeWorkgroupPeer(config: iTermWorkgroupSessionConfig,
+                           workgroupInstanceID: String) -> iTermPromise<PTYSession> {
         return iTermPromise<PTYSession> { seal in
             withDelegate { [weak self] delegate in
                 guard let self else {
@@ -1676,7 +1679,7 @@ extension PTYSession {
                         serverConnection: iTermGeneralServerConnection(),
                         urlString: urlString,
                         allowURLSubs: false,
-                        environment: [:],
+                        environment: ["ITERM_WORKGROUP_ID": workgroupInstanceID],
                         customShell: nil,
                         oldCWD: oldCWD,
                         forceUseOldCWD: true,

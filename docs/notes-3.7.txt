@@ -368,3 +368,9 @@ Bug Fixes:
   and by walking up to a non-shell ancestor
   when the deepest foreground job has no
   icon match.
+- Sessions spawned by entering a workgroup
+  now receive an ITERM_WORKGROUP_ID
+  environment variable identifying the
+  workgroup entry, so external tools can
+  distinguish runs of the same workgroup
+  config.
