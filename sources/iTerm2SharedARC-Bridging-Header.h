@@ -221,6 +221,7 @@
 #import "TokenExecutorHelpers.h"
 #import "Trigger.h"
 #import "TriggerController.h"
+#import "iTermDynamicProfileManager.h"
 #import "iTermFocusablePanel.h"
 #import "ITAddressBookMgr.h"
 #import "ProfileModelWrapper.h"

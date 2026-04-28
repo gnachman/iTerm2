@@ -702,7 +702,15 @@ NSString *const kStatusTextComboBoxIdentifier = @"kStatusTextComboBoxIdentifier"
 }
 
 + (void)addTriggers:(NSArray<Trigger *> *)triggers toProfileWithGUID:(NSString *)guid {
-    Profile *profile = [[ProfileModel sharedInstance] bookmarkWithGuid:guid];
+    [self addTriggers:triggers
+    toProfileWithGUID:guid
+              inModel:[ProfileModel sharedInstance]];
+}
+
++ (void)addTriggers:(NSArray<Trigger *> *)triggers
+  toProfileWithGUID:(NSString *)guid
+            inModel:(ProfileModel *)model {
+    Profile *profile = [model bookmarkWithGuid:guid];
     if (!profile) {
         return;
     }
@@ -719,7 +727,7 @@ NSString *const kStatusTextComboBoxIdentifier = @"kStatusTextComboBoxIdentifier"
         return dict;
     }];
     NSArray *updated = [existing arrayByAddingObjectsFromArray:newDicts];
-    [[ProfileModel sharedInstance] setObject:updated forKey:KEY_TRIGGERS inBookmark:profile];
+    [model setObject:updated forKey:KEY_TRIGGERS inBookmark:profile];
 }
 
 #pragma mark - NSTableViewDataSource

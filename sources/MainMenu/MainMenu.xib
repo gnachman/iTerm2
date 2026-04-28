@@ -120,7 +120,12 @@
                             </menuItem>
                             <menuItem title="Install Claude Code Integration" identifier="Install Claude Code Integration" id="Qef-e2-NCc">
                                 <connections>
-                                    <action selector="installClaudeCodeIntegration:" target="-1" id="0Ln-FF-m2P"/>
+                                    <action selector="installClaudeCodeIntegration:" target="201" id="9iz-or-Y6i"/>
+                                </connections>
+                            </menuItem>
+                            <menuItem title="Uninstall Claude Code Integration" identifier="Uninstall Claude Code Integration" id="O3D-kK-x3j">
+                                <connections>
+                                    <action selector="uninstallClaudeCodeIntegration:" target="201" id="fkt-E3-bxJ"/>
                                 </connections>
                             </menuItem>
                             <menuItem title="Remove Recent Profiles from Dock Menu" identifier="Remove Recent Profiles from Dock Menu" id="WcV-7l-ycc">

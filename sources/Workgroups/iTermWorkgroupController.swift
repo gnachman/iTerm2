@@ -91,17 +91,11 @@ final class iTermWorkgroupController: NSObject {
 
     // MARK: - Private
 
-    // Looks up the workgroup config by identifier. Checks built-ins
-    // first (so e.g. the Claude Code workgroup is always available
-    // regardless of user settings), then the user's configured
-    // workgroups in the model.
+    // Looks up the workgroup config by identifier in the user's
+    // configured workgroups. Returns nil if the identifier doesn't
+    // match a configured workgroup — e.g. a stale trigger pointing
+    // at one the user has since deleted.
     private func resolveWorkgroup(uniqueIdentifier: String) -> iTermWorkgroup? {
-        if let builtin =
-                BuiltinWorkgroups.all.first(where: {
-                    $0.uniqueIdentifier == uniqueIdentifier
-                }) {
-            return builtin
-        }
         return iTermWorkgroupModel.instance.workgroup(uniqueIdentifier: uniqueIdentifier)
     }
 }

@@ -11,6 +11,7 @@
 #import "iTermOptionallyBordered.h"
 
 @class CPKColorWell;
+@class ProfileModel;
 @class Trigger;
 @class TriggerController;
 
@@ -55,6 +56,9 @@ extern NSString *const kStatusTextComboBoxIdentifier;
 + (void)importTriggersFromFile:(NSString *)filename;
 + (NSArray<Trigger *> *)triggersFromFile:(NSString *)filename window:(NSWindow *)window;
 + (void)addTriggers:(NSArray<Trigger *> *)triggers toProfileWithGUID:(NSString *)guid;
++ (void)addTriggers:(NSArray<Trigger *> *)triggers
+  toProfileWithGUID:(NSString *)guid
+            inModel:(ProfileModel *)model;
 
 - (void)windowWillOpen;
 - (void)profileDidChange;

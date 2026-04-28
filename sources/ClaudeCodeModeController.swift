@@ -12,12 +12,12 @@ import Foundation
 // auto-enter — that decision belongs to the user (via the trigger
 // system, the menu, or this announcement).
 //
-// "Claude is running" is the conjunction of two signals:
-//   • "claude" appears in the session's foreground-job ancestry
-//     chain, per GlobalJobMonitor.
-//   • The session has an active tab status (indicator or status
-//     text), per SessionStatusController / iTermSessionTabStatus
-//     notifications.
+// "Claude is running" is just the GlobalJobMonitor signal: "claude"
+// appears in the session's foreground-job ancestry. We deliberately
+// don't gate on tab status / iTermSessionTabStatus, because the
+// thing that drives that status is the cc-status hook — and that
+// hook only exists after the user has opted into the integration.
+// Requiring it would mean a fresh user could never see the upsell.
 //
 // The user can dismiss the upsell forever via
 // iTermUserDefaults.claudeCodeWorkgroupUpsellSuppressed.
@@ -29,7 +29,6 @@ class ClaudeCodeModeController: NSObject {
     private static let announcementIdentifier = "ClaudeCodeWorkgroupUpsell"
 
     private var claudeSessionGUIDs = Set<String>()
-    private var statusSessionGUIDs = Set<String>()
 
     // Per-session: whether we've already shown the upsell during
     // this app run. Independent of the persistent "suppressed"
@@ -51,7 +50,6 @@ class ClaudeCodeModeController: NSObject {
     private override init() {
         super.init()
         _ = GlobalJobMonitor.instance
-        _ = SessionStatusController.instance
 
         NotificationCenter.default.addObserver(
             self,
@@ -60,23 +58,11 @@ class ClaudeCodeModeController: NSObject {
             object: nil)
         NotificationCenter.default.addObserver(
             self,
-            selector: #selector(sessionStatusDidChange(_:)),
-            name: iTermSessionTabStatus.didChangeNotificationName,
-            object: nil)
-        NotificationCenter.default.addObserver(
-            self,
             selector: #selector(sessionWillTerminate(_:)),
             name: NSNotification.Name.iTermSessionWillTerminate,
             object: nil)
 
         claudeSessionGUIDs = GlobalJobMonitor.instance.sessionGUIDs(runningJob: Self.monitoredJob)
-        for session in iTermController.sharedInstance()?.allSessions() ?? [] {
-            if let status = session.tabStatus,
-               status.hasActiveStatus,
-               let guid = session.guid {
-                statusSessionGUIDs.insert(guid)
-            }
-        }
         reconcileAll()
     }
 
@@ -98,34 +84,29 @@ class ClaudeCodeModeController: NSObject {
         let previous = claudeSessionGUIDs
         claudeSessionGUIDs = sessions
         for guid in previous.symmetricDifference(sessions) {
-            // claude just left this session — if it's a trial entry,
-            // auto-exit the workgroup. Doing this BEFORE reconcile
-            // means a hypothetical "claude restarts immediately" race
-            // doesn't keep the trial flag dangling on the next entry.
-            if previous.contains(guid) && !sessions.contains(guid) {
+            let claudeLeft = previous.contains(guid) && !sessions.contains(guid)
+            if claudeLeft {
+                // Clear the "already prompted" flag so the next
+                // claude launch in this session can re-show the
+                // upsell. Without this, anyone who saw the upsell
+                // once (took the trial or dismissed it) would never
+                // see it again until they closed the terminal.
+                shownThisRun.remove(guid)
+                // If the upsell is currently visible (or queued)
+                // for this session, drop it: the offer to "try
+                // Claude Code" while claude isn't running is
+                // confusing.
+                if let session = iTermController.sharedInstance()?.session(withGUID: guid) {
+                    session.dismissAnnouncement(withIdentifier: Self.announcementIdentifier)
+                }
+                // If the workgroup was a trial entry, auto-exit it.
+                // Doing this BEFORE reconcile means a hypothetical
+                // "claude restarts immediately" race doesn't keep
+                // the trial flag dangling on the next entry.
                 autoExitTrialWorkgroupIfNeeded(guid: guid)
             }
             reconcile(guid: guid)
         }
-    }
-
-    @objc
-    private func sessionStatusDidChange(_ notification: Notification) {
-        guard let status = notification.object as? iTermSessionTabStatus else {
-            return
-        }
-        let guid = status.sessionID
-        let hadStatus = statusSessionGUIDs.contains(guid)
-        let hasStatus = status.hasActiveStatus
-        if hasStatus == hadStatus {
-            return
-        }
-        if hasStatus {
-            statusSessionGUIDs.insert(guid)
-        } else {
-            statusSessionGUIDs.remove(guid)
-        }
-        reconcile(guid: guid)
     }
 
     @objc
@@ -135,7 +116,6 @@ class ClaudeCodeModeController: NSObject {
             return
         }
         claudeSessionGUIDs.remove(guid)
-        statusSessionGUIDs.remove(guid)
         shownThisRun.remove(guid)
         trialSessionGUIDs.remove(guid)
     }
@@ -150,7 +130,7 @@ class ClaudeCodeModeController: NSObject {
             return
         }
         guard let instance = session.workgroupInstance,
-              instance.workgroupUniqueIdentifier == BuiltinWorkgroups.ID.claudeCode else {
+              instance.workgroupUniqueIdentifier == ClaudeCodeWorkgroupTemplate.ID.workgroup else {
             return
         }
         iTermWorkgroupController.instance.exit(on: session)
@@ -160,28 +140,35 @@ class ClaudeCodeModeController: NSObject {
 
     private func reconcile(guid: String) {
         guard !iTermUserDefaults.claudeCodeWorkgroupUpsellSuppressed else { return }
+        // The upsell is an introduction to the feature. Once the user
+        // has the workgroup in their config (via the installer, or via a
+        // prior Try It Now), they've adopted it — don't keep nagging
+        // when the trigger hasn't auto-entered yet, or when claude
+        // started in a profile without the trigger installed. They
+        // already know the workgroup exists; let them enter it the
+        // way they've configured (trigger, menu, manual).
+        guard !ClaudeCodeOnboarding.workgroupAlreadyInstalled() else { return }
         guard let session = iTermController.sharedInstance()?.session(withGUID: guid) else {
             return
         }
         // Don't offer to enter a workgroup if there's already one
         // active — the user already has the feature in use here.
         guard session.workgroupInstance == nil else { return }
-        let claudeIsRunning = claudeSessionGUIDs.contains(guid) && statusSessionGUIDs.contains(guid)
-        guard claudeIsRunning else { return }
+        guard claudeSessionGUIDs.contains(guid) else { return }
         guard !shownThisRun.contains(guid) else { return }
         shownThisRun.insert(guid)
         showAnnouncement(on: session)
     }
 
     private func reconcileAll() {
-        for guid in claudeSessionGUIDs.union(statusSessionGUIDs) {
+        for guid in claudeSessionGUIDs {
             reconcile(guid: guid)
         }
     }
 
     private func showAnnouncement(on session: PTYSession) {
-        let title = "Claude Code is running. Want to try the Claude Code integration?."
-        let actions = ["Try It Now", "Customize…", "Don't Show Again"]
+        let title = "Claude Code is running. Want to try the Claude Code integration?"
+        let actions = ["Try It Now", "Don't Show Again"]
         let announcement = iTermAnnouncementViewController.announcement(
             withTitle: title,
             style: .kiTermAnnouncementViewStyleQuestion,
@@ -194,15 +181,30 @@ class ClaudeCodeModeController: NSObject {
                         // but a paranoid order keeps the auto-exit
                         // contract clear (in the set means we own it).
                         self?.trialSessionGUIDs.insert(guid)
+                        // The workgroup lives in user data now (no
+                        // built-ins). Install it if missing so the
+                        // trial works the first time someone clicks
+                        // Try It Now without going through the installer.
+                        ClaudeCodeOnboarding.installWorkgroupIfNeeded()
                         iTermWorkgroupController.instance.enter(
-                            workgroupUniqueIdentifier: BuiltinWorkgroups.ID.claudeCode,
+                            workgroupUniqueIdentifier: ClaudeCodeWorkgroupTemplate.ID.workgroup,
                             on: session)
+                        // First-time trial users almost certainly
+                        // want the cc-status hook so Claude's state
+                        // appears in the toolbelt — open the installer
+                        // directly instead of nagging with a second
+                        // announcement. Skip when hooks are already
+                        // installed; the installer would have nothing
+                        // to add. Deferred so the upsell's dismiss
+                        // animation and the workgroup-entry UI
+                        // churn settle before the installer takes key.
+                        if !ClaudeCodeOnboarding.hooksAlreadyInstalled() {
+                            DispatchQueue.main.async {
+                                ClaudeCodeOnboarding.show()
+                            }
+                        }
                     }
                 case 1:
-                    let panel = PreferencePanel.sharedInstance()
-                    panel.window?.makeKeyAndOrderFront(nil)
-                    NSApp.activate(ignoringOtherApps: true)
-                case 2:
                     iTermUserDefaults.claudeCodeWorkgroupUpsellSuppressed = true
                 default:
                     break
@@ -211,4 +213,5 @@ class ClaudeCodeModeController: NSObject {
         session.queueAnnouncement(announcement,
                                   identifier: Self.announcementIdentifier)
     }
+
 }

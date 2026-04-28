@@ -1,5 +1,5 @@
 //
-//  BuiltinWorkgroups.swift
+//  ClaudeCodeWorkgroupTemplate.swift
 //  iTerm2SharedARC
 //
 //  Created by George Nachman on 4/24/26.
@@ -7,33 +7,31 @@
 
 import Foundation
 
-// Workgroups that iTerm ships with — resolvable by
-// iTermWorkgroupController without the user having configured them in
-// Settings. Stable unique identifiers so trigger sources (menu items,
-// API callers, or the Claude Code job monitor) can reference them.
-enum BuiltinWorkgroups {
-    // Unique identifiers for the built-in workgroups. These must stay
-    // stable: triggers and saved state encode them as plain strings.
+// Factory for the Claude Code workgroup the onboarding installer installs
+// into the user's iTermWorkgroupModel. After install it's just regular
+// user data — editable in Settings, removable on uninstall — but the
+// identifier strings stay stable so an Enter Workgroup trigger pointing
+// at this ID keeps resolving across upgrades.
+enum ClaudeCodeWorkgroupTemplate {
+    // The strings start with "builtin." for backward compatibility:
+    // pre-cleanup, this workgroup was a hardcoded built-in keyed off
+    // these literals. Users who already had triggers or saved state
+    // pointing at "builtin.claudeCode" must keep working.
     enum ID {
-        static let claudeCode = "builtin.claudeCode"
-        // Stable sub-session IDs inside the built-in Claude Code
-        // workgroup, so runtime peer activation can reference them
-        // without having to look up sessions by kind.
-        static let claudeCodeMain = "builtin.claudeCode.main"
-        static let claudeCodeDiff = "builtin.claudeCode.diff"
-        static let claudeCodeReview = "builtin.claudeCode.review"
+        static let workgroup = "builtin.claudeCode"
+        static let main = "builtin.claudeCode.main"
+        static let diff = "builtin.claudeCode.diff"
+        static let review = "builtin.claudeCode.review"
     }
-
-    static let all: [iTermWorkgroup] = [claudeCode]
 
     // Mirrors the behavior of the old hardcoded Claude Code mode:
     // Main session with mode switcher + git status, Diff peer running
     // `git diff` with mode switcher + changed-file selector + nav
     // buttons, Code Review peer running `claude -p '...'` with mode
     // switcher + reload.
-    static let claudeCode: iTermWorkgroup = {
+    static let config: iTermWorkgroup = {
         let main = iTermWorkgroupSessionConfig(
-            uniqueIdentifier: ID.claudeCodeMain,
+            uniqueIdentifier: ID.main,
             parentID: nil,
             kind: .root,
             profileGUID: nil,
@@ -46,8 +44,8 @@ enum BuiltinWorkgroups {
             displayName: "Claude Code")
 
         let diff = iTermWorkgroupSessionConfig(
-            uniqueIdentifier: ID.claudeCodeDiff,
-            parentID: ID.claudeCodeMain,
+            uniqueIdentifier: ID.diff,
+            parentID: ID.main,
             kind: .peer,
             profileGUID: nil,
             command: "git difftool -y -x vimdiff HEAD",
@@ -61,8 +59,8 @@ enum BuiltinWorkgroups {
             perFileCommand: "git difftool -y -x vimdiff HEAD -- \\(file)")
 
         let review = iTermWorkgroupSessionConfig(
-            uniqueIdentifier: ID.claudeCodeReview,
-            parentID: ID.claudeCodeMain,
+            uniqueIdentifier: ID.review,
+            parentID: ID.main,
             kind: .peer,
             profileGUID: nil,
             command: "claude",
@@ -73,7 +71,7 @@ enum BuiltinWorkgroups {
             ],
             displayName: "Code Review")
 
-        return iTermWorkgroup(uniqueIdentifier: ID.claudeCode,
+        return iTermWorkgroup(uniqueIdentifier: ID.workgroup,
                               name: "Claude Code",
                               sessions: [main, diff, review])
     }()

@@ -47,10 +47,11 @@ class EnterWorkgroupTrigger: Trigger {
 
     // MARK: - Popup
 
-    // The set of workgroups eligible for entry: built-ins (e.g.
-    // Claude Code) plus everything the user has configured.
+    // The set of workgroups eligible for entry: everything the user
+    // has configured (which now includes the Claude Code workgroup if
+    // installed via the onboarding installer).
     private var availableWorkgroups: [iTermWorkgroup] {
-        return BuiltinWorkgroups.all + iTermWorkgroupModel.instance.workgroups
+        return iTermWorkgroupModel.instance.workgroups
     }
 
     // The trigger's `param` resolves to a workgroup UUID. Empty/nil

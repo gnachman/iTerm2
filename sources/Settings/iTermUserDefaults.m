@@ -27,6 +27,8 @@ static NSString *const iTermUserDefaultsKeyEnableAutomaticProfileSwitchingLoggin
 static NSString *const iTermUserDefaultsKeyRequireAuthenticationAfterScreenLocks = @"RequireAuthenticationAfterScreenLocks";
 static NSString *const iTermUserDefaultsKeyOpenTmuxDashboardIfHiddenWindows = @"OpenTmuxDashboardIfHiddenWindows";
 static NSString *const iTermUserDefaultsKeyClaudeCodeWorkgroupUpsellSuppressed = @"ClaudeCodeWorkgroupUpsellSuppressed";
+static NSString *const iTermUserDefaultsKeyClaudeCodeHooksInstalled = @"ClaudeCodeHooksInstalled";
+static NSString *const iTermUserDefaultsKeyClaudeCodeTriggersInstalled = @"ClaudeCodeTriggersInstalled";
 static NSString *const iTermUserDefaultsKeyHaveExplainedHowToAddTouchbarControls = @"NoSyncHaveExplainedHowToAddTouchbarControls";
 static NSString *const iTermUserDefaultsKeyIgnoreSystemWindowRestoration = @"NoSyncIgnoreSystemWindowRestoration";
 static NSString *const iTermUserDefaultsKeyGlobalSearchMode = @"NoSyncGlobalSearchMode";
@@ -198,6 +200,24 @@ static NSUserDefaults *iTermPrivateUserDefaults(void) {
 + (void)setClaudeCodeWorkgroupUpsellSuppressed:(BOOL)suppressed {
     [self.userDefaults setBool:suppressed
                         forKey:iTermUserDefaultsKeyClaudeCodeWorkgroupUpsellSuppressed];
+}
+
++ (BOOL)claudeCodeHooksInstalled {
+    return [self.userDefaults boolForKey:iTermUserDefaultsKeyClaudeCodeHooksInstalled];
+}
+
++ (void)setClaudeCodeHooksInstalled:(BOOL)installed {
+    [self.userDefaults setBool:installed
+                        forKey:iTermUserDefaultsKeyClaudeCodeHooksInstalled];
+}
+
++ (BOOL)claudeCodeTriggersInstalled {
+    return [self.userDefaults boolForKey:iTermUserDefaultsKeyClaudeCodeTriggersInstalled];
+}
+
++ (void)setClaudeCodeTriggersInstalled:(BOOL)installed {
+    [self.userDefaults setBool:installed
+                        forKey:iTermUserDefaultsKeyClaudeCodeTriggersInstalled];
 }
 
 + (BOOL)haveExplainedHowToAddTouchbarControls {
