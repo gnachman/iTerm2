@@ -42,6 +42,13 @@ class ToolStatus: NSView {
     }
 
     private var statuses = [Status]()
+    // Coalesce bursts of status changes from the controller. Triggers can fire
+    // several times in quick succession (e.g. an Idle match followed immediately
+    // by a Working match when an interactive TUI repaints); collecting them and
+    // applying the net effect avoids spurious row-slide animations.
+    private static let debounceInterval: TimeInterval = 0.05
+    private var pendingKeys = Set<String>()
+    private var pendingFlush: DispatchWorkItem?
 
     override init(frame frameRect: NSRect) {
         super.init(frame: frameRect)
@@ -167,6 +174,10 @@ extension ToolStatus {
     override func viewDidMoveToWindow() {
         let delegate = toolWrapper()?.delegate?.delegate
         DLog("ToolStatus viewDidMoveToWindow: window=\(window.d), delegate=\(delegate.d), statuses in controller=\(SessionStatusController.instance.statuses.keys.map { $0 })")
+        // The fresh reload below is authoritative — drop any in-flight debounced work.
+        pendingFlush?.cancel()
+        pendingFlush = nil
+        pendingKeys.removeAll()
         statuses = SessionStatusController.instance.statuses.values.compactMap { status in
             let contains = delegate?.toolbeltWindowContainsSession(withGUID: status.sessionID) == true
             DLog("ToolStatus viewDidMoveToWindow: sessionID=\(status.sessionID) contains=\(contains) hasActive=\(status.hasActiveStatus)")
@@ -278,7 +289,52 @@ private extension ToolStatus {
     }
 
     func didChange(key: String, value: iTermSessionTabStatus?, change: NotifyingDictionaryChange) {
-        DLog("ToolStatus didChange: key=\(key) change=\(change) window=\(window.d)")
+        DLog("ToolStatus didChange enqueue: key=\(key) change=\(change) window=\(window.d)")
+        pendingKeys.insert(key)
+        if pendingFlush != nil {
+            return
+        }
+        let work = DispatchWorkItem { [weak self] in self?.flushPendingChanges() }
+        pendingFlush = work
+        DispatchQueue.main.asyncAfter(deadline: .now() + Self.debounceInterval, execute: work)
+    }
+
+    private func flushPendingChanges() {
+        pendingFlush = nil
+        let keys = pendingKeys
+        pendingKeys.removeAll()
+        if keys.isEmpty {
+            return
+        }
+        // The session's iTermSessionTabStatus is a stable per-session reference
+        // whose state accumulates across partial updates, so the canonical
+        // current state is whatever the controller holds right now. Compare
+        // local presence to controller presence to derive the effective change:
+        // [.removed, .added] collapses to .updated, [.added, .removed] to a no-op.
+        // Wrap the whole loop so multi-key bursts coalesce into one animation
+        // instead of N cascading ones (the inner begin/endUpdates inside
+        // applyChange become harmless nested calls).
+        _tableView?.beginUpdates()
+        for key in keys {
+            let inLocal = statuses.contains { $0.sessionID == key }
+            let current = SessionStatusController.instance.statuses[key]
+            switch (inLocal, current) {
+            case (false, .some(let v)):
+                applyChange(key: key, value: v, change: .added)
+            case (true, .some(let v)):
+                applyChange(key: key, value: v, change: .updated)
+            case (true, .none):
+                applyChange(key: key, value: nil, change: .removed)
+            case (false, .none):
+                continue
+            }
+        }
+        _tableView?.endUpdates()
+        updateSelectionWithoutChangingFirstResponder()
+    }
+
+    private func applyChange(key: String, value: iTermSessionTabStatus?, change: NotifyingDictionaryChange) {
+        DLog("ToolStatus applyChange: key=\(key) change=\(change) window=\(window.d)")
         switch change {
         case .added:
             let contains = toolWrapper()?.delegate?.delegate?.toolbeltWindowContainsSession(withGUID: key) == true
@@ -313,47 +369,31 @@ private extension ToolStatus {
             guard toolWrapper()?.delegate?.delegate?.toolbeltWindowContainsSession(withGUID: key) == true else {
                 return
             }
-            let i = statuses.firstIndex { candidate in
-                candidate.sessionID == key
+            guard let i = statuses.firstIndex(where: { $0.sessionID == key }) else {
+                it_assert(false, "applyChange(.updated) for \(key) but session is not in statuses; flushPendingChanges should only route here when inLocal is true")
+                return
             }
-            if let i {
-                let newValue = Status(tabStatus: value!, sessionID: key)
-                var updated = statuses
-                updated[i] = newValue
-                updated = updated.sorted { lhs, rhs in
-                    lhs < rhs
+            let newValue = Status(tabStatus: value!, sessionID: key)
+            var updated = statuses
+            updated[i] = newValue
+            updated = updated.sorted { lhs, rhs in
+                lhs < rhs
+            }
+            let j = updated.firstIndex { $0.sessionID == key }
+            if let j {
+                _tableView?.beginUpdates()
+                statuses = updated
+                if i != j {
+                    _tableView?.moveRow(at: i, to: j)
                 }
-                let j = updated.firstIndex { $0.sessionID == key }
-                if let j {
-                    _tableView?.beginUpdates()
-                    statuses = updated
-                    if i != j {
-                        _tableView?.moveRow(at: i, to: j)
-                    }
-                    _tableView?.reloadData(forRowIndexes: IndexSet(integer: j), columnIndexes: IndexSet(integer: 0))
-                    // reloadData reloads cell content but keeps the cached row
-                    // height; detail text can wrap 1–3 lines so height must be
-                    // recomputed whenever tabStatus changes.
-                    _tableView?.noteHeightOfRows(withIndexesChanged: IndexSet(integer: j))
-                    _tableView?.endUpdates()
-                }
-            } else {
-                // Session was added to the controller before this observer existed.
-                // Treat it as a new addition.
-                let newValue = Status(tabStatus: value!, sessionID: key)
-                var updated = statuses
-                updated.append(newValue)
-                updated.sort()
-                let j = updated.firstIndex { $0.sessionID == key }
-                if let j {
-                    statuses = updated
-                    _tableView?.beginUpdates()
-                    _tableView?.insertRows(at: IndexSet(integer: j))
-                    _tableView?.endUpdates()
-                }
+                _tableView?.reloadData(forRowIndexes: IndexSet(integer: j), columnIndexes: IndexSet(integer: 0))
+                // reloadData reloads cell content but keeps the cached row
+                // height; detail text can wrap 1–3 lines so height must be
+                // recomputed whenever tabStatus changes.
+                _tableView?.noteHeightOfRows(withIndexesChanged: IndexSet(integer: j))
+                _tableView?.endUpdates()
             }
         }
-        updateSelectionWithoutChangingFirstResponder()
     }
 
     func contentSize() -> NSSize {
