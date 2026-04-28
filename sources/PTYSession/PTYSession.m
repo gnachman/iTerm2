@@ -326,6 +326,8 @@ static NSString *const SESSION_ARRANGEMENT_TIMESTAMP_BASELINE = @"Timestamp Base
 static NSString *const SESSION_ARRANGEMENT_BROWSER_TARGET = @"Browser Target";  // String
 static NSString *const SESSION_ARRANGEMENT_TAB_STATUS = @"Tab Status";  // NSDictionary
 static NSString *const SESSION_ARRANGEMENT_SESSION_NOTE = @"Session Note";  // NSDictionary (graph-encoded)
+static NSString *const SESSION_ARRANGEMENT_CLIPPINGS = @"Clippings";  // NSArray<NSDictionary<NSString *, NSString *> *>, see PTYSessionClipping. Belongs to the leader of the peer group.
+static NSString *const SESSION_ARRANGEMENT_CLIPPINGS_VISIBLE = @"Clippings Visible";  // BOOL
 
 // Keys for dictionary in SESSION_ARRANGEMENT_PROGRAM
 NSString *const kProgramType = @"Type";  // Value will be one of the kProgramTypeXxx constants.
@@ -1606,6 +1608,11 @@ ITERM_WEAKLY_REFERENCEABLE
         [aSession.commands addObjectsFromArray:arrangement[SESSION_ARRANGEMENT_COMMANDS]];
         [aSession trimCommandsIfNeeded];
     }
+    NSArray *clippingDicts = arrangement[SESSION_ARRANGEMENT_CLIPPINGS];
+    if ([clippingDicts isKindOfClass:[NSArray class]]) {
+        [aSession setLocalClippingsFromDictionaries:clippingDicts];
+    }
+    aSession.clippingsVisible = [[NSNumber castFrom:arrangement[SESSION_ARRANGEMENT_CLIPPINGS_VISIBLE]] boolValue];
     [aSession.directoryTracker restoreFromArrangement:arrangement];
 
     if (arrangement[SESSION_ARRANGEMENT_APS]) {
@@ -4398,7 +4405,7 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
 }
 
 - (CGFloat)desiredRightExtra {
-    return [PTYSession desiredRightExtraForProfile:self.profile];
+    return [PTYSession desiredRightExtraForProfile:self.profile session:self];
 }
 
 + (iTermTimestampsMode)desiredTimestampsModeForProfile:(Profile *)profile {
@@ -4413,21 +4420,24 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
     return [PTYSession desiredTimestampsModeForProfile:self.profile];
 }
 
-+ (CGFloat)desiredRightExtraForProfile:(Profile *)profile {
++ (CGFloat)desiredRightExtraForProfile:(Profile *)profile
+                               session:(PTYSession *)session {
     CGFloat extra = 0;
     if ([self desiredTimestampsModeForProfile:profile] == iTermTimestampsModeAdjacent) {
         extra += 100.0;
     }
-    extra += [self desiredPanelReservationForProfile:profile];
+    extra += [self desiredPanelReservationForProfile:profile session:session];
     return extra;
 }
 
-+ (CGFloat)desiredPanelReservationForProfile:(Profile *)profile {
-    return [[iTermRightGutterPanelRegistry sharedInstance] totalWidthForProfile:profile];
++ (CGFloat)desiredPanelReservationForProfile:(Profile *)profile
+                                     session:(PTYSession *)session {
+    return [[iTermRightGutterPanelRegistry sharedInstance] totalWidthForProfile:profile
+                                                                        session:session];
 }
 
 - (CGFloat)desiredPanelReservation {
-    return [PTYSession desiredPanelReservationForProfile:self.profile];
+    return [PTYSession desiredPanelReservationForProfile:self.profile session:self];
 }
 
 - (BOOL)setScrollBarVisible:(BOOL)visible style:(NSScrollerStyle)style {
@@ -6537,6 +6547,11 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
         result[SESSION_ARRANGEMENT_COMMANDS] = _commands;
         [_directoryTracker encodeArrangementWith:result];
     }
+    NSArray *localClippingDicts = self.localClippingsAsDictionaries;
+    if (localClippingDicts.count > 0) {
+        result[SESSION_ARRANGEMENT_CLIPPINGS] = localClippingDicts;
+    }
+    result[SESSION_ARRANGEMENT_CLIPPINGS_VISIBLE] = @(self.clippingsVisible);
 
     NSString *pwd = [self currentLocalWorkingDirectory];
     result[SESSION_ARRANGEMENT_WORKING_DIRECTORY] = pwd ? pwd : @"";

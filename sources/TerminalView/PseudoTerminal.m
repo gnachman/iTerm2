@@ -430,6 +430,13 @@ typedef NS_ENUM(int, iTermShouldHaveTitleSeparator) {
     BOOL _needsCanonicalize;
 
     iTermIdempotentOperationJoiner *_rightExtraJoiner;
+    // Total width the window was grown by to accommodate right-gutter panels
+    // (mirrors the toolbelt's hidingToolbeltShouldResizeWindow_ idea, but
+    // additive since multiple panels can show/hide independently). When a
+    // panel shrinks rightExtra, we undo at most this much window width — so
+    // sessions that pinned the window to the screen edge don't push the
+    // window away when their panel hides.
+    CGFloat _rightExtraWindowGrowthDelta;
     BOOL _excursionPrevented;
 
 }
@@ -1285,8 +1292,55 @@ ITERM_WEAKLY_REFERENCEABLE
     }
     __weak __typeof(self) weakSelf = self;
     [_rightExtraJoiner setNeedsUpdateWithBlock:^{
-        [weakSelf scrollerStyleOrRightExtraDidChange];
+        [weakSelf rightExtraDidChangeImpl];
     }];
+}
+
+// Symmetric resize for right-gutter panel show/hide. Mirrors the toolbelt's
+// "remember whether show grew the window, undo on hide" pattern so that
+// toggling clippings (or any other gutter panel) doesn't bloat the window.
+- (void)rightExtraDidChangeImpl {
+    DLog(@"rightExtraDidChangeImpl");
+    [self updateSessionScrollbars];
+    if ([self anyFullScreen]) {
+        [self fitTabsToWindow];
+        return;
+    }
+    // Snapshot the current frame to compute how much we actually grew/shrunk.
+    const NSRect beforeFrame = self.window.frame;
+    NSScreen *screen = self.window.screen;
+    if (!screen) {
+        // Off-screen window: visibleFrame would return NSZeroRect, making
+        // atRightEdgeBefore almost always false and causing the window to
+        // grow on every panel toggle. Fall back to a plain re-layout.
+        [self fitTabsToWindow];
+        return;
+    }
+    const NSRect screenFrame = screen.visibleFrame;
+
+    // Ask each tab for its ideal size (which reflects the new rightExtra),
+    // then size the window to fit. fitWindowToTabsExcludingTmuxTabs:... will
+    // grow or shrink the window to match.
+    const BOOL atRightEdgeBefore =
+        fabs(NSMaxX(beforeFrame) - NSMaxX(screenFrame)) <= 0.5;
+
+    // For shrinks: cap how much we shrink by what we previously grew. This
+    // keeps the window pinned to the screen edge if the user had it there
+    // (we never grew it, so we won't shrink it either).
+    if (!atRightEdgeBefore || _rightExtraWindowGrowthDelta > 0) {
+        [self fitWindowToIdealizedTabsPreservingHeight:YES];
+        const NSRect afterFrame = self.window.frame;
+        const CGFloat actualDelta = afterFrame.size.width - beforeFrame.size.width;
+        _rightExtraWindowGrowthDelta += actualDelta;
+        if (_rightExtraWindowGrowthDelta < 0) {
+            _rightExtraWindowGrowthDelta = 0;
+        }
+    }
+
+    [self fitTabsToWindow];
+    for (TmuxController *controller in [self uniqueTmuxControllers]) {
+        [controller fitLayoutToWindows];
+    }
 }
 
 - (void)tmuxFontDidChange:(NSNotification *)notification {
@@ -2176,6 +2230,14 @@ ITERM_WEAKLY_REFERENCEABLE
 - (IBAction)toggleCursorGuide:(id)sender {
   PTYSession *session = [self currentSession];
   session.highlightCursorLine = !session.highlightCursorLine;
+}
+
+- (IBAction)toggleShowClippings:(id)sender {
+    PTYSession *session = [self currentSession];
+    if (!session) {
+        return;
+    }
+    session.clippingsVisible = !session.clippingsVisible;
 }
 
 - (IBAction)toggleSelectionRespectsSoftBoundaries:(id)sender {
@@ -11663,6 +11725,10 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
     } else if ([item action] == @selector(editSessionNote:)) {
         PTYSession *session = [self currentSession];
         [item setState:session.view.isSessionNoteVisible ? NSControlStateValueOn : NSControlStateValueOff];
+        return session != nil;
+    } else if ([item action] == @selector(toggleShowClippings:)) {
+        PTYSession *session = [self currentSession];
+        [item setState:(session != nil && session.clippingsVisible) ? NSControlStateValueOn : NSControlStateValueOff];
         return session != nil;
     } else if ([item action] == @selector(toggleSelectionRespectsSoftBoundaries:)) {
         [item setState:[[iTermController sharedInstance] selectionRespectsSoftBoundaries] ? NSControlStateValueOn : NSControlStateValueOff];

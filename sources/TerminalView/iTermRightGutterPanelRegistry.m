@@ -60,20 +60,22 @@
     }
 }
 
-- (NSArray<NSString *> *)enabledPanelIdentifiersForProfile:(Profile *)profile {
+- (NSArray<NSString *> *)enabledPanelIdentifiersForProfile:(Profile *)profile
+                                                   session:(PTYSession *)session {
     NSMutableArray<NSString *> *result = [NSMutableArray array];
     for (iTermRightGutterPanelRegistration *registration in _registrations) {
-        if (registration.widthProvider(profile) > 0) {
+        if (registration.widthProvider(profile, session) > 0) {
             [result addObject:registration.identifier];
         }
     }
     return result;
 }
 
-- (CGFloat)totalWidthForProfile:(Profile *)profile {
+- (CGFloat)totalWidthForProfile:(Profile *)profile
+                        session:(PTYSession *)session {
     CGFloat total = 0;
     for (iTermRightGutterPanelRegistration *registration in _registrations) {
-        const CGFloat w = registration.widthProvider(profile);
+        const CGFloat w = registration.widthProvider(profile, session);
         if (w > 0) {
             total += w;
         }

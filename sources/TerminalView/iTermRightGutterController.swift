@@ -90,7 +90,7 @@ class iTermRightGutterController: NSObject, iTermRightGutterPanelDelegate {
     // NSDictionary that Swift can't see — Swift bridges it to a Dictionary.
     private func syncPanels(forSession session: PTYSession, profile: [AnyHashable: Any]) {
         let registry = iTermRightGutterPanelRegistry.sharedInstance()
-        let desired = registry.enabledPanelIdentifiers(forProfile: profile)
+        let desired = registry.enabledPanelIdentifiers(forProfile: profile, session: session)
         if desired == panelIdentifiers {
             return
         }

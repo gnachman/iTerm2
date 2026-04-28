@@ -15,6 +15,29 @@ class PTYSessionPeerPort: NSObject {
     var activeSessionIdentifier: String
     private let leader: String
 
+    // Clippings shared by all sessions in this peer group. Stored on the
+    // leader session's swiftState — peers read/write through this pass-through.
+    // The leader outlives the other peers (see invalidate()), so anchoring the
+    // data there gives clippings a natural lifetime tied to the main session.
+    @objc var clippings: [PTYSessionClipping] {
+        get { leaderSession?.localClippings ?? [] }
+        set { leaderSession?.localClippings = newValue }
+    }
+
+    // Per-peer-group "user wants the clippings panel visible" flag.
+    @objc var clippingsVisibilityFlag: Bool {
+        get { leaderSession?.localClippingsVisibilityFlag ?? true }
+        set { leaderSession?.localClippingsVisibilityFlag = newValue }
+    }
+
+    @objc var leaderSession: PTYSession? {
+        return peers[leader]?.maybeValue
+    }
+
+    @objc var activeSession: PTYSession? {
+        return peers[activeSessionIdentifier]?.maybeValue
+    }
+
     init(peers: [String: iTermPromise<PTYSession>],
          activeSessionIdentifier: String,
          leaderIdentifier: String) {

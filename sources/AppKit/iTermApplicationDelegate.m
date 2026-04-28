@@ -1279,6 +1279,7 @@ void TurnOnDebugLoggingAutomatically(void) {
     [PTYTab registerBuiltInFunctions];
     DLog(@"registerStandardFunctions");
     [iTermBuiltInFunctions registerStandardFunctions];
+    [iTermClippingsGutterPanelRegistration register];
 
     DLog(@"migrateApplicationSupportDirectoryIfNeeded");
     [iTermMigrationHelper migrateApplicationSupportDirectoryIfNeeded];

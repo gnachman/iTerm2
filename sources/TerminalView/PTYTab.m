@@ -3908,7 +3908,7 @@ typedef struct {
                                                                             [parseTree[kLayoutDictHeightKey] intValue])
                                                       showTitles:showTitles
                                              showBottomStatusBar:showBottomStatusBar
-                                                      rightExtra:[PTYSession desiredRightExtraForProfile:profile]
+                                                      rightExtra:[PTYSession desiredRightExtraForProfile:profile session:nil]
                                                       inTerminal:term];
             parseTree[kLayoutDictPixelWidthKey] = @(size.width);
             parseTree[kLayoutDictPixelHeightKey] = @(size.height);
@@ -7003,7 +7003,7 @@ typedef struct {
                                                          borderType:anySession.view.scrollview.borderType
                                                         controlSize:NSControlSizeRegular
                                                       scrollerStyle:anySession.view.scrollview.scrollerStyle
-                                                         rightExtra:[PTYSession desiredRightExtraForProfile:profile]];
+                                                         rightExtra:[PTYSession desiredRightExtraForProfile:profile session:anySession]];
         NSSize cellSize = [PTYTab cellSizeForBookmark:profile];
         return VT100GridSizeMake((contentSize.width - [iTermPreferences intForKey:kPreferenceKeySideMargins] * 2) / cellSize.width,
                                  (contentSize.height - [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins] * 2) / cellSize.height);

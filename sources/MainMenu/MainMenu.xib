@@ -1002,6 +1002,12 @@ Gw
                                     <action selector="showHideNotes:" target="-1" id="bWx-ZS-6aE"/>
                                 </connections>
                             </menuItem>
+                            <menuItem title="Show Clippings" keyEquivalent="=" identifier="Show Clippings" id="Clp-vw-ShC">
+                                <modifierMask key="keyEquivalentModifierMask" shift="YES" command="YES"/>
+                                <connections>
+                                    <action selector="toggleShowClippings:" target="-1" id="Clp-ac-Tog"/>
+                                </connections>
+                            </menuItem>
                             <menuItem title="Show Composer" keyEquivalent="." identifier="Composer" id="Bhs-45-5yR">
                                 <modifierMask key="keyEquivalentModifierMask" shift="YES" command="YES"/>
                                 <connections>

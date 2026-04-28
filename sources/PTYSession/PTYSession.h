@@ -1107,14 +1107,16 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
 - (BOOL)handleKeyUpWithBuckyBits:(NSEvent *)event;
 - (BOOL)handleFlagsChangedWithBuckyBits:(NSEvent *)event;
 - (CGFloat)desiredRightExtra;
-+ (CGFloat)desiredRightExtraForProfile:(Profile *)profile;
++ (CGFloat)desiredRightExtraForProfile:(Profile *)profile
+                               session:(nullable PTYSession *)session;
 
 // Portion of desiredRightExtra contributed by right-gutter panels (the rest
 // is the timestamp-Adjacent reservation, if any). Used to position
 // timestamps at the inner edge of the panel area instead of all the way at
 // PTYTextView's right edge.
 - (CGFloat)desiredPanelReservation;
-+ (CGFloat)desiredPanelReservationForProfile:(Profile *)profile;
++ (CGFloat)desiredPanelReservationForProfile:(Profile *)profile
+                                     session:(nullable PTYSession *)session;
 - (void)refuseFirstResponderAtCurrentMouseLocation;
 - (void)showError:(NSString *)message suppressionKey:(NSString *)key identifier:(NSString *)identifier;
 - (void)dismissAnnouncementWithIdentifier:(NSString *)identifier;

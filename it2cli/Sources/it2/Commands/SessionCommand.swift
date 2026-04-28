@@ -827,7 +827,7 @@ extension Session {
             let sessionContext = ITMInvokeFunctionRequest_Session()
             sessionContext.sessionId = sessionId
             invoke.session = sessionContext
-            invoke.invocation = try "iterm2.add_clipping(session: \(jsonString(sessionId)), type: \(jsonString(type)), title: \(jsonString(title)), detail: \(jsonString(detail)))"
+            invoke.invocation = try "iterm2.add_clipping(type: \(jsonString(type)), title: \(jsonString(title)), detail: \(jsonString(detail)))"
 
             let request = ITMClientOriginatedMessage()
             request.id_p = client.nextId()

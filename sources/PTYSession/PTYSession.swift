@@ -8,6 +8,34 @@
 import WebKit
 
 @objc
+class PTYSessionClipping: NSObject {
+    @objc let type: String
+    @objc let title: String
+    @objc let detail: String
+
+    @objc(initWithType:title:detail:)
+    init(type: String, title: String, detail: String) {
+        self.type = type
+        self.title = title
+        self.detail = detail
+    }
+
+    @objc var dictionaryValue: [String: String] {
+        return ["type": type, "title": title, "detail": detail]
+    }
+
+    @objc(initWithDictionary:)
+    convenience init?(dictionary: [String: String]) {
+        guard let type = dictionary["type"],
+              let title = dictionary["title"],
+              let detail = dictionary["detail"] else {
+            return nil
+        }
+        self.init(type: type, title: title, detail: detail)
+    }
+}
+
+@objc
 class PTYSessionSwiftState: NSObject {
     // The iTermWorkgroupInstance owns the peer port (held
     // strongly by it and by the workgroup controller's dict).
@@ -20,6 +48,22 @@ class PTYSessionSwiftState: NSObject {
     weak var workgroupInstance: iTermWorkgroupInstance?
 
     var delegateObservers = [(PTYSessionDelegate) -> ()]()
+
+    // Canonical storage for this session's clippings. Sessions in a peer group
+    // all delegate through PTYSessionPeerPort to the leader session's storage,
+    // so this is only the active backing store on the leader (or on a solo
+    // session). Non-leader sessions keep this empty.
+    var clippings = [PTYSessionClipping]()
+
+    // Whether the user wants the clippings panel shown. Defaults to false so
+    // a fresh launch shows nothing; add_clipping flips it to true. Lives on
+    // the leader (parallel to `clippings`) and is exposed via the peer port
+    // so all peers share it.
+    var clippingsVisibilityFlag = false
+
+    // Holds the modal panel used by the "+" button so it isn't deallocated
+    // before the sheet finishes.
+    var activeAddClippingPanel: AddClippingPanel?
 }
 
 // MARK: - AI Chat
@@ -1726,4 +1770,107 @@ extension PTYSession {
     func belongs(toPeers peers: PTYSessionPeerPort) -> Bool {
         return peers.contains(session: self)
     }
+
+    // Public accessor — delegates to the peer-group's leader if this session
+    // is in a peer group, otherwise reads/writes its own swiftState storage.
+    @objc var clippings: [PTYSessionClipping] {
+        get {
+            if let peerPort {
+                return peerPort.clippings
+            }
+            return swiftState!.clippings
+        }
+        set {
+            if let peerPort {
+                peerPort.clippings = newValue
+            } else {
+                swiftState!.clippings = newValue
+            }
+        }
+    }
+
+    // Bypasses peer-port delegation. Used by PTYSessionPeerPort to talk to its
+    // leader's storage without recursing, and by save/restore so the leader's
+    // data is persisted at the session level.
+    @objc var localClippings: [PTYSessionClipping] {
+        get { swiftState!.clippings }
+        set { swiftState!.clippings = newValue }
+    }
+
+    @objc var localClippingsAsDictionaries: [[String: String]] {
+        return swiftState!.clippings.map { $0.dictionaryValue }
+    }
+
+    @objc(setLocalClippingsFromDictionaries:)
+    func setLocalClippingsFromDictionaries(_ dictionaries: [[String: String]]) {
+        swiftState!.clippings = dictionaries.compactMap {
+            PTYSessionClipping(dictionary: $0)
+        }
+    }
+
+    @objc(addClippingWithType:title:detail:)
+    func addClipping(type: String, title: String, detail: String) {
+        var current = clippings
+        current.append(PTYSessionClipping(type: type, title: title, detail: detail))
+        clippings = current
+        // Auto-show on arrival; the visibility setter posts the change
+        // notification so the gutter panel relayouts. If already visible,
+        // post the change directly.
+        if !clippingsVisible {
+            clippingsVisible = true
+        } else {
+            clippingsDidChange()
+        }
+    }
+
+    // Public accessor — delegates to the peer-group's leader, or own storage if solo.
+    @objc var clippingsVisible: Bool {
+        get {
+            if let peerPort {
+                return peerPort.clippingsVisibilityFlag
+            }
+            return swiftState!.clippingsVisibilityFlag
+        }
+        set {
+            if let peerPort {
+                peerPort.clippingsVisibilityFlag = newValue
+            } else {
+                swiftState!.clippingsVisibilityFlag = newValue
+            }
+            clippingsDidChange()
+        }
+    }
+
+    // Bypasses peer-port delegation — used by PTYSessionPeerPort to talk to
+    // the leader's storage without recursing.
+    @objc var localClippingsVisibilityFlag: Bool {
+        get { swiftState!.clippingsVisibilityFlag }
+        set { swiftState!.clippingsVisibilityFlag = newValue }
+    }
+
+    // Effective visibility is just the user-controlled flag — no auto-hide
+    // when the list is empty.
+    @objc var clippingsPanelEffectivelyVisible: Bool {
+        return clippingsVisible
+    }
+
+    // Call after any mutation to the clippings list — broadcasts to gutter
+    // panels so they reload and re-evaluate their visibility.
+    @objc func clippingsDidChange() {
+        NotificationCenter.default.post(name: PTYSession.clippingsDidChangeNotification,
+                                        object: nil)
+        // The gutter controller only instantiates the clippings panel when the
+        // registry's width is > 0. On the 0→1 transition (e.g., first clipping
+        // added via the Python API) no panel exists yet to consume the
+        // notification above, so kick the parent window's layout cascade —
+        // which ends up calling iTermRightGutterController.layoutPanels and
+        // creates the panel. Same goes for the 1→0 transition tearing it down
+        // when no panel is around to detect its own visibility flip.
+        if view.actualRightExtra != desiredRightExtra() {
+            delegate?.realParentWindow()?.rightExtraDidChange()
+        }
+    }
+
+    @objc static let clippingsDidChangeNotification =
+        Notification.Name("iTermClippingsDidChange")
 }

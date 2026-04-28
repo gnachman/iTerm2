@@ -240,6 +240,7 @@ class MainMenuMangler: NSObject {
         "Explain Output with AI": "sparkles.rectangle.stack",
         "Open Interactive Window": "terminal",
         "Make Screenshot": "camera",
+        "Show Clippings": "square.stack",
 
         // Scripts menu
         // Manage removed - no identifier in XIB
