@@ -74,6 +74,7 @@ final class DefaultWorkgroupSessionSpawner: WorkgroupSessionSpawner {
         Self.launch(session: newSession,
                     command: config.command,
                     urlString: config.urlString,
+                    mode: config.mode,
                     objectType: .paneObject,
                     factory: factory,
                     windowController: windowController,
@@ -95,6 +96,7 @@ final class DefaultWorkgroupSessionSpawner: WorkgroupSessionSpawner {
         Self.launch(session: newSession,
                     command: config.command,
                     urlString: config.urlString,
+                    mode: config.mode,
                     objectType: .tabObject,
                     factory: factory,
                     windowController: windowController,
@@ -259,9 +261,14 @@ final class DefaultWorkgroupSessionSpawner: WorkgroupSessionSpawner {
     // working directory. The session must already be installed in
     // the window; the launcher's setupSession:withSize: wired up the
     // SessionView before this point.
+    //
+    // For .codeReview mode the launch is deferred: the prompt overlay
+    // is added to the session view immediately, and attachOrLaunch
+    // fires only when the user presses Start.
     private static func launch(session: PTYSession,
                                command: String,
                                urlString: String,
+                               mode: iTermWorkgroupSessionMode,
                                objectType: iTermObjectType,
                                factory: iTermSessionFactory,
                                windowController: PseudoTerminal,
@@ -273,10 +280,28 @@ final class DefaultWorkgroupSessionSpawner: WorkgroupSessionSpawner {
             // dotfiles / PATH. The launcher path here bypasses the
             // KEY_RUN_COMMAND_IN_LOGIN_SHELL wrapping that
             // bookmarkCommandSwiftyString: would normally apply.
+            session.workgroupSessionMode = mode
+            let url = urlString.isEmpty ? nil : urlString
+            if mode == .codeReview {
+                // Splits/tabs are already installed in the window by
+                // splitVertically: / addSession:inNewTab: above, so
+                // they're visible immediately — no bury() needed (peer
+                // sessions, handled by PTYSession.makeWorkgroupPeer,
+                // do bury here for the same reason a peer can't be
+                // visible until activated). The overlay is added on
+                // top of the freshly-installed pane.
+                session.presentCodeReviewPromptOverlay(
+                    rawCommand: command,
+                    urlString: url,
+                    objectType: objectType,
+                    factory: factory,
+                    windowController: windowController,
+                    oldCWD: oldCWD)
+                return
+            }
             let cmd = command.isEmpty
                 ? nil
                 : ITAddressBookMgr.commandByWrapping(inLoginShell: command)
-            let url = urlString.isEmpty ? nil : urlString
             let request = iTermSessionAttachOrLaunchRequest(
                 session: session,
                 canPrompt: false,

@@ -63,13 +63,14 @@ enum ClaudeCodeWorkgroupTemplate {
             parentID: ID.main,
             kind: .peer,
             profileGUID: nil,
-            command: "claude",
+            command: "claude \\(codeReviewPrompt)",
             urlString: "",
             toolbarItems: [
                 .modeSwitcher,
-                .navigation,
+                .reload,
             ],
-            displayName: "Code Review")
+            displayName: "Code Review",
+            mode: .codeReview)
 
         return iTermWorkgroup(uniqueIdentifier: ID.workgroup,
                               name: "Claude Code",

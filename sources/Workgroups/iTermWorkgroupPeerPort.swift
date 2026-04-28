@@ -155,18 +155,25 @@ final class iTermWorkgroupPeerPort: PTYSessionPeerPort {
 // MARK: - Navigation delegate
 
 extension iTermWorkgroupPeerPort: WorkgroupNavigationToolbarItemDelegate {
-    func workgroupNavigationDidTapBack(sender: WorkgroupNavigationToolbarItem) {
-        diffSelector(forPeerID: sender.ownerPeerID)?.selectPreviousFile()
+    func workgroupNavigationDidTapBack(ownerPeerID: String?) {
+        diffSelector(forPeerID: ownerPeerID)?.selectPreviousFile()
     }
 
-    func workgroupNavigationDidTapForward(sender: WorkgroupNavigationToolbarItem) {
-        diffSelector(forPeerID: sender.ownerPeerID)?.selectNextFile()
+    func workgroupNavigationDidTapForward(ownerPeerID: String?) {
+        diffSelector(forPeerID: ownerPeerID)?.selectNextFile()
     }
 
-    func workgroupNavigationDidTapReload(sender: WorkgroupNavigationToolbarItem) {
-        guard let ownerPeerID = sender.ownerPeerID,
+    func workgroupNavigationDidTapReload(ownerPeerID: String?) {
+        guard let ownerPeerID,
               let session = session(forIdentifier: ownerPeerID),
               session.isRestartable() else {
+            return
+        }
+        // Code-review peers re-show the prompt overlay so the user can
+        // edit their prompt before the program is rerun.
+        if session.workgroupSessionMode == .codeReview,
+           session.codeReviewRawCommand != nil {
+            session.reloadCodeReviewPromptOverlay()
             return
         }
         // Reload re-runs whatever the session is currently set to run

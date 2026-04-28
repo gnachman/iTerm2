@@ -510,18 +510,18 @@ extension iTermWorkgroupInstance: iTermGitPollerDelegate {
 // session — but the lookup paths differ (peer port has its
 // peerConfigs dict; the instance walks the full workgroup).
 extension iTermWorkgroupInstance: WorkgroupNavigationToolbarItemDelegate {
-    func workgroupNavigationDidTapBack(sender: WorkgroupNavigationToolbarItem) {
-        guard let configID = sender.ownerPeerID else { return }
+    func workgroupNavigationDidTapBack(ownerPeerID: String?) {
+        guard let configID = ownerPeerID else { return }
         diffSelector(forNonPeerConfigID: configID)?.selectPreviousFile()
     }
 
-    func workgroupNavigationDidTapForward(sender: WorkgroupNavigationToolbarItem) {
-        guard let configID = sender.ownerPeerID else { return }
+    func workgroupNavigationDidTapForward(ownerPeerID: String?) {
+        guard let configID = ownerPeerID else { return }
         diffSelector(forNonPeerConfigID: configID)?.selectNextFile()
     }
 
-    func workgroupNavigationDidTapReload(sender: WorkgroupNavigationToolbarItem) {
-        guard let configID = sender.ownerPeerID else { return }
+    func workgroupNavigationDidTapReload(ownerPeerID: String?) {
+        guard let configID = ownerPeerID else { return }
         // "Reload" means redo what's currently running — i.e.
         // re-execute the session's program. After a per-file pick
         // restart, that's the per-file command; before any pick,
@@ -531,6 +531,13 @@ extension iTermWorkgroupInstance: WorkgroupNavigationToolbarItemDelegate {
         // expect from a reload button (cf. browser reload).
         guard let session = liveSession(forConfigID: configID),
               session.isRestartable() else {
+            return
+        }
+        // Code-review hosts re-show the prompt overlay so the user
+        // can edit their prompt before the program is rerun.
+        if session.workgroupSessionMode == .codeReview,
+           session.codeReviewRawCommand != nil {
+            session.reloadCodeReviewPromptOverlay()
             return
         }
         session.restart()

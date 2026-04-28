@@ -22,8 +22,15 @@ enum iTermWorkgroupToolbarItemKind: String, Codable, CaseIterable {
     case modeSwitcher
     // Bundled back / forward / reload buttons. Rendered as a single
     // toolbar item with no internal divider so the controls read as
-    // a navigation cluster rather than three loose buttons.
+    // a navigation cluster rather than three loose buttons. Only
+    // meaningful paired with .changedFileSelector — back/forward
+    // step through the diff list — so the settings UI hides this
+    // option from sessions without a changed-file selector.
     case navigation
+    // Stand-alone reload button. For sessions that want a "rerun"
+    // affordance without back/forward (e.g. .codeReview peers, where
+    // reload re-shows the prompt overlay).
+    case reload
     case spacer
     // Auto-injected at runtime — never user-addable, never written to
     // disk. The decoder still understands it so a future change that
@@ -36,6 +43,7 @@ enum iTermWorkgroupToolbarItem: Codable, Equatable, Hashable {
     case changedFileSelector
     case modeSwitcher
     case navigation
+    case reload
     case spacer(minWidth: CGFloat, maxWidth: CGFloat)
     case name
 
@@ -45,6 +53,7 @@ enum iTermWorkgroupToolbarItem: Codable, Equatable, Hashable {
         case .changedFileSelector: return .changedFileSelector
         case .modeSwitcher: return .modeSwitcher
         case .navigation: return .navigation
+        case .reload: return .reload
         case .spacer: return .spacer
         case .name: return .name
         }
@@ -74,6 +83,7 @@ enum iTermWorkgroupToolbarItem: Codable, Equatable, Hashable {
         case .changedFileSelector: self = .changedFileSelector
         case .modeSwitcher: self = .modeSwitcher
         case .navigation: self = .navigation
+        case .reload: self = .reload
         case .spacer:
             let minWidth = try c.decode(CGFloat.self, forKey: .minWidth)
             let maxWidth = try c.decode(CGFloat.self, forKey: .maxWidth)

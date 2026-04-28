@@ -21533,6 +21533,13 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
 }
 
 - (void)naggingControllerRestart {
+    if (self.workgroupSessionMode == iTermWorkgroupSessionModeCodeReview &&
+        self.codeReviewRawCommand) {
+        // Code-review sessions re-show the prompt overlay so the user
+        // can edit the prompt before the program is rerun.
+        [self reloadCodeReviewPromptOverlay];
+        return;
+    }
     [self replaceTerminatedShellWithNewInstance];
 }
 

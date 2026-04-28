@@ -226,6 +226,7 @@ NSString *const kPreferenceKeyAIPromptAIChatReadWriteTerminal = @"AI Prompt for 
 NSString *const kPreferenceKeyAIPromptAIChatBrowser = @"AI Prompt for AI Chat with Browser";
 NSString *const kPreferenceKeyAIPromptAIChatReadOnlyTerminalBrowser = @"AI Prompt for AI Chat with ReadOnlyTerminalBrowser";
 NSString *const kPreferenceKeyAIPromptAIChatReadWriteTerminalBrowser = @"AI Prompt for AI Chat with ReadWriteTerminalBrowser";
+NSString *const kPreferenceKeyAIPromptCodeReview = @"AI Prompt for Code Review";
 NSString *const kPreferenceKeyAIPromptPlaceholder = @"NoUserDefaultAIPromptPlaceholder";
 
 NSString *const kPreferenceKeyAIModel = @"AiModel";
@@ -272,6 +273,8 @@ NSString *iTermDefaultAIPromptAIChatBrowser = @"You are an assistant embedded in
 NSString *iTermDefaultAIPromptAIChatReadOnlyTerminalBrowser = @"You are an assistant embedded in a terminal app with an attached web browser. You have read-only access to the terminal (cannot execute commands or modify text).\n\nTools:\n    * Web browser: find_on_page, load_url  \n    * Terminal (read-only): search_command_history, get_command_history\n    * Others may be present but execution/modification tools are disabled\n\nWhen to use tools:\n\n1. If the user refers to web content (phrases like: \"this page\", \"on the page\", \"this site\", \"the article\"), use find_on_page to search the current page before answering.\n   \n2. If the user refers to terminal history:\n   - For searching history: use search_command_history\n   - For retrieving history: use get_command_history\n   - If asked to run/execute/install anything: explain that you have read-only access and cannot execute commands\n   \n3. If the user asks to search the web or open a URL, use appropriate web tools.\n\n4. If the user asks general questions unrelated to the current page or terminal state, answer directly without tools.\n\nImportant: \n- When action words (install, run, execute, update, create, open, save) are used, politely explain that you have read-only terminal access and can only view command history or provide instructions.\n- You CAN still help by: providing command suggestions, analyzing history, searching web pages, and answering questions.\n- Never refuse to help - offer alternatives like providing the commands they could run themselves.\n\nAfter gathering evidence via tools, synthesize a clear answer. Be concise and helpful.";
 
 NSString *iTermDefaultAIPromptAIChatReadWriteTerminalBrowser = @"You are an assistant embedded in a terminal app with an attached web browser.\n\nTools:\n    * Web browser: find_on_page, load_url  \n    * Terminal: execute_command, search_command_history, get_command_history, create_file\n    * (Others may be present.)\n\nWhen to use tools:\n\n1. If the user refers to web content (phrases like: \"this page\", \"on the page\", \"this site\", \"the article\"), use find_on_page to search the current page before answering.\n   \n2. If the user refers to terminal activity or asks to perform actions:\n   - Commands to run: \"run\", \"execute\", \"install\", \"update\", \"open [file]\", \"save\", \"create\"\n   - History queries: \"commands I ran\", \"terminal history\" \n   - Action verbs imply doing, not explaining: use execute_command\n   - For searching history: use search_command_history\n   - For retrieving history: use get_command_history\n   \n3. If the user asks to search the web or open a URL, use appropriate web tools.\n\n4. If the user asks general questions unrelated to the current page or terminal state, answer directly without tools.\n\nImportant: \n- Action words (install, run, execute, update, create, open, save) indicate the user wants you to DO something, not explain how.\n- Never refuse to act because a tool might be unnecessary. Either call the appropriate tool based on context clues or answer directly.\n\nAfter gathering evidence via tools, synthesize a clear answer. Be concise and helpful.";
+
+NSString *iTermDefaultAIPromptCodeReview = @"Please review my recent changes for correctness, clarity, and obvious bugs. Point out anything that looks risky or surprising.";
 
 // NOTE: If you update this list, also update preferences.py.
 
@@ -534,6 +537,7 @@ static NSString *sPreviousVersion;
                   kPreferenceKeyAIPromptAIChatBrowser: iTermDefaultAIPromptAIChatBrowser,
                   kPreferenceKeyAIPromptAIChatReadOnlyTerminalBrowser: iTermDefaultAIPromptAIChatReadOnlyTerminalBrowser,
                   kPreferenceKeyAIPromptAIChatReadWriteTerminalBrowser: iTermDefaultAIPromptAIChatReadWriteTerminalBrowser,
+                  kPreferenceKeyAIPromptCodeReview: iTermDefaultAIPromptCodeReview,
                   kPreferenceKeyAIPromptPlaceholder: @"",
                   kPreferenceKeyAlertOnMarksInOffscreenSessions: @NO,
                   kPreferenceKeyAIModel: @"gpt-4o-mini",

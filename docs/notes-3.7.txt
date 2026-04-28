@@ -47,7 +47,17 @@ Major New Features:
   browser profiles, so a navigation event
   can change the active workgroup.
 
-- The new Fold All menu item folds everyting
+- Workgroup sessions now have a Mode
+  setting. The new Code Review mode shows
+  an in-session prompt overlay with a Start
+  button before the program runs; the
+  entered text is exposed as the variable
+  codeReviewPrompt for swifty interpolation
+  in the command. The Claude Code
+  workgroup’s review peer uses this mode
+  by default.
+
+- The new Fold All menu item folds everything
   (aside from folds at the very top of history).
   This makes it easy to keep history around
   without it getting in the way.

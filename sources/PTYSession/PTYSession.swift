@@ -47,6 +47,18 @@ class PTYSessionSwiftState: NSObject {
     // workgroup down if any tracked session goes away).
     weak var workgroupInstance: iTermWorkgroupInstance?
 
+    // Mode this session inherited from its workgroup config when it was
+    // spawned. .regular for everything that didn't come from a workgroup
+    // (or that came from a regular-mode workgroup config). .codeReview
+    // gates the deferred prompt-overlay launch path.
+    var workgroupSessionMode: iTermWorkgroupSessionMode = .regular
+
+    // For .codeReview sessions, the raw (unwrapped, swifty-templated)
+    // command — e.g. "claude \(codeReviewPrompt)". Cached so any future
+    // relaunch (toolbar reload, broken-pipe restart announcement) can
+    // re-present the prompt overlay against the original template.
+    var codeReviewRawCommand: String?
+
     var delegateObservers = [(PTYSessionDelegate) -> ()]()
 
     // Canonical storage for this session's clippings. Sessions in a peer group
@@ -1644,6 +1656,22 @@ extension PTYSession {
         set { swiftState!.workgroupInstance = newValue }
     }
 
+    // Workgroup-mode tag set by the spawn path. .codeReview triggers the
+    // deferred-launch / prompt-overlay path; .regular runs the program
+    // immediately as before.
+    @objc var workgroupSessionMode: iTermWorkgroupSessionMode {
+        get { swiftState!.workgroupSessionMode }
+        set { swiftState!.workgroupSessionMode = newValue }
+    }
+
+    // Raw (unwrapped, swifty-templated) command for .codeReview sessions.
+    // Used by reload paths (toolbar reload, restart-after-exit) to
+    // re-present the prompt overlay against the original template.
+    @objc var codeReviewRawCommand: String? {
+        get { swiftState!.codeReviewRawCommand }
+        set { swiftState!.codeReviewRawCommand = newValue }
+    }
+
     // Build a peer session for a workgroup's configured peer, driven
     // by an iTermWorkgroupSessionConfig config (profile override, command
     // override, buried until activated). `workgroupInstanceID` is
@@ -1711,10 +1739,43 @@ extension PTYSession {
                     // here — the launch request below feeds `command`
                     // into the launcher directly, bypassing the
                     // bookmarkCommandSwiftyString: wrapping path.
+                    newSession.workgroupSessionMode = config.mode
+                    let urlString = config.urlString.isEmpty ? nil : config.urlString
+
+                    // .codeReview mode defers the entire spawn: bury and
+                    // fulfill the promise immediately so the workgroup
+                    // can activate this peer (showing its overlay), then
+                    // present the prompt overlay in the session's view.
+                    // The Start handler builds and fires the launch
+                    // request when the user is ready.
+                    //
+                    // The bury() is peer-specific: peers live in the
+                    // same tab as the leader and need to be in the
+                    // buried-sessions registry so the workgroup's
+                    // mode-switch path can swap them in via
+                    // sessionActivateSession:amongPeers:moveToolbar:.
+                    // The parallel deferred-launch path in
+                    // DefaultWorkgroupSessionSpawner.launch (for
+                    // .codeReview splits/tabs) does NOT bury — split
+                    // and tab sessions are visible in the window the
+                    // moment they're inserted, so there's nothing to
+                    // unbury from later.
+                    if config.mode == .codeReview {
+                        newSession.bury()
+                        newSession.presentCodeReviewPromptOverlay(
+                            rawCommand: config.command,
+                            urlString: urlString,
+                            objectType: .paneObject,
+                            factory: factory,
+                            windowController: nil,
+                            oldCWD: oldCWD)
+                        seal.fulfill(newSession)
+                        return
+                    }
+
                     let command = config.command.isEmpty
                         ? nil
                         : ITAddressBookMgr.commandByWrapping(inLoginShell: config.command)
-                    let urlString = config.urlString.isEmpty ? nil : config.urlString
                     let launchRequest = iTermSessionAttachOrLaunchRequest(
                         session: newSession,
                         canPrompt: false,

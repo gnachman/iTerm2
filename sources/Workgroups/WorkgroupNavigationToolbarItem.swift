@@ -10,10 +10,16 @@ import AppKit
 // Three navigation buttons (Back, Forward, Reload) packed into a
 // single toolbar item so they read as a cluster rather than three
 // loose controls separated by toolbar dividers.
+//
+// `ownerPeerID` identifies the peer/host config the button fired
+// for; the delegate uses it to demultiplex which session needs the
+// action. This protocol is shared with the smaller WorkgroupReload-
+// ToolbarItem (reload-only variant) so the workgroup runtime needs
+// only one delegate surface.
 protocol WorkgroupNavigationToolbarItemDelegate: AnyObject {
-    func workgroupNavigationDidTapBack(sender: WorkgroupNavigationToolbarItem)
-    func workgroupNavigationDidTapForward(sender: WorkgroupNavigationToolbarItem)
-    func workgroupNavigationDidTapReload(sender: WorkgroupNavigationToolbarItem)
+    func workgroupNavigationDidTapBack(ownerPeerID: String?)
+    func workgroupNavigationDidTapForward(ownerPeerID: String?)
+    func workgroupNavigationDidTapReload(ownerPeerID: String?)
 }
 
 final class WorkgroupNavigationToolbarItem: SessionToolbarGenericView {
@@ -90,7 +96,7 @@ final class WorkgroupNavigationToolbarItem: SessionToolbarGenericView {
         }
     }
 
-    private static func makeButton(symbol: SFSymbol) -> NSButton {
+    fileprivate static func makeButton(symbol: SFSymbol) -> NSButton {
         let image = NSImage(systemSymbolName: symbol.rawValue,
                             accessibilityDescription: nil) ?? NSImage()
         let button = NSButton(image: image, target: nil, action: nil)
@@ -102,14 +108,56 @@ final class WorkgroupNavigationToolbarItem: SessionToolbarGenericView {
     }
 
     @objc private func didTapBack(_ sender: Any?) {
-        navigationDelegate?.workgroupNavigationDidTapBack(sender: self)
+        navigationDelegate?.workgroupNavigationDidTapBack(ownerPeerID: ownerPeerID)
     }
 
     @objc private func didTapForward(_ sender: Any?) {
-        navigationDelegate?.workgroupNavigationDidTapForward(sender: self)
+        navigationDelegate?.workgroupNavigationDidTapForward(ownerPeerID: ownerPeerID)
     }
 
     @objc private func didTapReload(_ sender: Any?) {
-        navigationDelegate?.workgroupNavigationDidTapReload(sender: self)
+        navigationDelegate?.workgroupNavigationDidTapReload(ownerPeerID: ownerPeerID)
+    }
+
+    static func makeReloadButton() -> NSButton {
+        return makeButton(symbol: .arrowClockwise)
+    }
+}
+
+// Standalone reload button — same delegate as the navigation cluster
+// but with only the reload control. Suited for code-review-mode peers
+// where back/forward have nothing to step through.
+final class WorkgroupReloadToolbarItem: SessionToolbarGenericView {
+    weak var navigationDelegate: WorkgroupNavigationToolbarItemDelegate?
+    var ownerPeerID: String?
+
+    private let reloadButton: NSButton
+
+    init(identifier: String, priority: Int) {
+        reloadButton = WorkgroupNavigationToolbarItem.makeReloadButton()
+        let container = NSView(frame: .zero)
+        container.addSubview(reloadButton)
+        super.init(identifier: identifier, priority: priority, view: container)
+        reloadButton.target = self
+        reloadButton.action = #selector(didTapReload(_:))
+    }
+
+    override var desiredWidthRange: ClosedRange<CGFloat> {
+        let w = reloadButton.fittingSize.width
+        return w...w
+    }
+
+    override func layoutSubviews() {
+        let height = view.bounds.height
+        _view.frame = NSRect(x: 0, y: 0, width: view.bounds.width, height: height)
+        let buttonSize = reloadButton.fittingSize
+        reloadButton.frame = NSRect(x: 0,
+                                     y: (height - buttonSize.height) / 2.0,
+                                     width: buttonSize.width,
+                                     height: buttonSize.height)
+    }
+
+    @objc private func didTapReload(_ sender: Any?) {
+        navigationDelegate?.workgroupNavigationDidTapReload(ownerPeerID: ownerPeerID)
     }
 }

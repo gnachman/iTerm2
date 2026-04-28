@@ -62,24 +62,38 @@ extension iTermWorkgroupToolbarItem {
 // Constructs SessionToolbarGenericView instances for a workgroup.
 enum WorkgroupToolbarBuilder {
     // Inject the auto-managed `.name` item into a session's
-    // configured toolbar list. Slot it in immediately after the first
-    // `.modeSwitcher`; if no switcher is present, prepend it. The
-    // user can never remove or reorder this — it is not stored in
-    // the persisted config and is added every time the toolbar is
-    // built. Pre-existing `.name` entries (defensive: shouldn't
-    // happen since the settings UI doesn't expose .name) are
-    // dropped first to keep ordering deterministic.
+    // configured toolbar list. Skip it entirely when a `.modeSwitcher`
+    // is present — the switcher already surfaces the active peer's
+    // name, so a separate label would be redundant. Otherwise
+    // prepend the label. The user can never remove or reorder this
+    // — it is not stored in the persisted config and is added every
+    // time the toolbar is built. Pre-existing `.name` entries
+    // (defensive: shouldn't happen since the settings UI doesn't
+    // expose .name) are dropped first to keep ordering deterministic.
+    //
+    // Also drops `.navigation` items when the same set has no
+    // `.changedFileSelector` — back/forward step through the diff
+    // list, so without one they're no-op buttons. Mirrors the add-
+    // menu guard in iTermWorkgroupSessionDetailViewController so
+    // legacy configs that still carry a stranded `.navigation`
+    // don't render dead buttons.
     static func injectAutoItems(into items: [iTermWorkgroupToolbarItem]) -> [iTermWorkgroupToolbarItem] {
+        let hasChangedFileSelector = items.contains(where: {
+            if case .changedFileSelector = $0 { return true }
+            return false
+        })
         var stripped = items.filter {
-            if case .name = $0 { return false }
-            return true
+            switch $0 {
+            case .name: return false
+            case .navigation: return hasChangedFileSelector
+            default: return true
+            }
         }
-        if let switcherIndex = stripped.firstIndex(where: {
+        let hasModeSwitcher = stripped.contains(where: {
             if case .modeSwitcher = $0 { return true }
             return false
-        }) {
-            stripped.insert(.name, at: switcherIndex + 1)
-        } else {
+        })
+        if !hasModeSwitcher {
             stripped.insert(.name, at: 0)
         }
         return stripped
@@ -146,6 +160,12 @@ enum WorkgroupToolbarBuilder {
         case .navigation:
             let view = WorkgroupNavigationToolbarItem(identifier: id,
                                                       priority: 3)
+            view.navigationDelegate = context.navigationDelegate
+            view.ownerPeerID = ownerPeerID
+            return view
+        case .reload:
+            let view = WorkgroupReloadToolbarItem(identifier: id,
+                                                  priority: 3)
             view.navigationDelegate = context.navigationDelegate
             view.ownerPeerID = ownerPeerID
             return view

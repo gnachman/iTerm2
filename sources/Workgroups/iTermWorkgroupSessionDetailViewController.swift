@@ -36,6 +36,7 @@ class iTermWorkgroupSessionDetailViewController: NSViewController {
 
     // Sections
     private var profileRow: NSView!
+    private var modeRow: NSView!
     private var commandRow: NSView!
     private var perFileCommandRow: NSView!
     private var urlRow: NSView!
@@ -46,6 +47,7 @@ class iTermWorkgroupSessionDetailViewController: NSViewController {
 
     // Controls
     private var profilePopup: NSPopUpButton!
+    private var modePopup: NSPopUpButton!
     private var commandField: NSTextField!
     private var perFileCommandField: NSTextField!
     private var urlField: NSTextField!
@@ -88,6 +90,8 @@ class iTermWorkgroupSessionDetailViewController: NSViewController {
 
         profileRow = makeLabeledRow(labelText: "Profile:",
                                     control: makeProfilePopup())
+        modeRow = makeLabeledRow(labelText: "Mode:",
+                                 control: makeModePopup())
         commandRow = makeLabeledRow(labelText: "Command:",
                                     control: makeCommandField())
         perFileCommandRow = makeLabeledRow(
@@ -99,7 +103,7 @@ class iTermWorkgroupSessionDetailViewController: NSViewController {
         splitSection = makeSplitSection()
         toolbarSection = makeToolbarSection()
 
-        for section in [profileRow, commandRow, perFileCommandRow,
+        for section in [profileRow, modeRow, commandRow, perFileCommandRow,
                         urlRow, peerRow,
                         splitSection, toolbarSection] as [NSView] {
             root.addSubview(section)
@@ -133,6 +137,18 @@ class iTermWorkgroupSessionDetailViewController: NSViewController {
         popup.target = self
         popup.action = #selector(profileChanged(_:))
         profilePopup = popup
+        return popup
+    }
+
+    private func makeModePopup() -> NSView {
+        let popup = NSPopUpButton(frame: .zero)
+        for mode in iTermWorkgroupSessionMode.allCases {
+            popup.addItem(withTitle: mode.localizedTitle)
+            popup.lastItem?.representedObject = mode.rawValue
+        }
+        popup.target = self
+        popup.action = #selector(modeChanged(_:))
+        modePopup = popup
         return popup
     }
 
@@ -333,6 +349,7 @@ class iTermWorkgroupSessionDetailViewController: NSViewController {
         }
 
         layoutSection(profileRow, height: rowHeight)
+        layoutSection(modeRow, height: rowHeight)
         layoutSection(commandRow, height: rowHeight)
         layoutSection(perFileCommandRow, height: rowHeight)
         layoutSection(urlRow, height: rowHeight)
@@ -349,6 +366,7 @@ class iTermWorkgroupSessionDetailViewController: NSViewController {
 
         // Inner layout of each section.
         layoutLabeledRow(profileRow)
+        layoutLabeledRow(modeRow)
         layoutLabeledRow(commandRow)
         layoutLabeledRow(perFileCommandRow)
         layoutLabeledRow(urlRow)
@@ -479,7 +497,7 @@ class iTermWorkgroupSessionDetailViewController: NSViewController {
         self.workgroup = workgroup
         if session == nil || workgroup == nil {
             emptyLabel.isHidden = false
-            [profileRow, commandRow, perFileCommandRow, urlRow, peerRow,
+            [profileRow, modeRow, commandRow, perFileCommandRow, urlRow, peerRow,
              splitSection, toolbarSection].forEach { $0.isHidden = true }
             view.needsLayout = true
             return
@@ -495,6 +513,7 @@ class iTermWorkgroupSessionDetailViewController: NSViewController {
         guard let s = session else { return }
 
         syncProfilePopup(to: s)
+        syncModePopup(to: s)
         commandField.stringValue = s.command
         perFileCommandField.stringValue = s.perFileCommand
         urlField.stringValue = s.urlString
@@ -507,6 +526,10 @@ class iTermWorkgroupSessionDetailViewController: NSViewController {
         if case .root = s.kind { isRoot = true } else { isRoot = false }
         let isBrowser = resolvedProfileIsBrowser(for: s)
         profileRow.isHidden = isRoot
+        // Browser sessions have no command, so the deferred-launch
+        // / prompt-overlay path that .codeReview drives doesn't apply
+        // — hide Mode there too.
+        modeRow.isHidden = isRoot || isBrowser
         commandRow.isHidden = isRoot || isBrowser
         perFileCommandRow.isHidden = !shouldShowPerFileCommandRow(for: s)
         urlRow.isHidden = isRoot || !isBrowser
@@ -534,6 +557,17 @@ class iTermWorkgroupSessionDetailViewController: NSViewController {
             profilePopup.selectItem(at: idx)
         } else {
             profilePopup.selectItem(at: 0)
+        }
+    }
+
+    private func syncModePopup(to s: iTermWorkgroupSessionConfig) {
+        let raw = s.mode.rawValue
+        if let idx = modePopup.itemArray.firstIndex(where: {
+            ($0.representedObject as? Int) == raw
+        }) {
+            modePopup.selectItem(at: idx)
+        } else {
+            modePopup.selectItem(at: 0)
         }
     }
 
@@ -609,6 +643,15 @@ class iTermWorkgroupSessionDetailViewController: NSViewController {
         commitUpdate(s, actionName: "Change Profile") { [weak self] in
             self?.refresh()
         }
+    }
+
+    @objc private func modeChanged(_ sender: NSPopUpButton) {
+        guard var s = session,
+              let raw = sender.selectedItem?.representedObject as? Int,
+              let mode = iTermWorkgroupSessionMode(rawValue: raw),
+              s.mode != mode else { return }
+        s.mode = mode
+        commitUpdate(s, actionName: "Change Mode")
     }
 
     @objc private func splitOrientationChanged(_ sender: NSSegmentedControl) {
@@ -712,12 +755,24 @@ class iTermWorkgroupSessionDetailViewController: NSViewController {
 
     private func showAddToolbarItemMenu() {
         let menu = NSMenu()
+        let hasChangedFileSelector = session?.toolbarItems.contains(where: {
+            if case .changedFileSelector = $0 { return true }
+            return false
+        }) ?? false
         for metadata in iTermWorkgroupToolbarItemRegistry.all {
             // modeSwitcher is auto-managed by the peer-group invariant —
             // offering it in the add menu does nothing useful on a
             // session that has no peers, and it's already present on
             // ones that do.
             if metadata.kind == .modeSwitcher { continue }
+            // Navigation buttons (back/forward/reload) only do
+            // something useful when the session also has a changed-
+            // file selector to step through; hide it from the picker
+            // for sessions without one. Reload-on-its-own remains
+            // available via the .reload item.
+            if metadata.kind == .navigation && !hasChangedFileSelector {
+                continue
+            }
             let item = menu.addItem(withTitle: metadata.displayName,
                                     action: #selector(addToolbarItemMenuSelected(_:)),
                                     keyEquivalent: "")

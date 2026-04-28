@@ -103,6 +103,7 @@ typedef NS_ENUM(NSUInteger, iTermAIPrompt) {
     iTermAIPromptAIChatBrowser = 4,
     iTermAIPromptAIChatReadOnlyTerminalBrowser = 5,
     iTermAIPromptAIChatReadWriteTerminalBrowser = 6,
+    iTermAIPromptCodeReview = 7,
 };
 
 typedef NS_ENUM(NSUInteger, iTermWindowPlacement) {
@@ -145,6 +146,7 @@ extern NSString *const kPreferenceKeyAIPromptAIChatReadWriteTerminal;
 extern NSString *const kPreferenceKeyAIPromptAIChatBrowser;
 extern NSString *const kPreferenceKeyAIPromptAIChatReadOnlyTerminalBrowser;
 extern NSString *const kPreferenceKeyAIPromptAIChatReadWriteTerminalBrowser;
+extern NSString *const kPreferenceKeyAIPromptCodeReview;
 extern NSString *const kPreferenceKeyAIPromptPlaceholder;  // not a real setting, just there to make the prefs UI infra happy
 extern NSString *const kPreferenceKeyAIModel;
 extern NSString *const kPreferenceKeyAITokenLimit;

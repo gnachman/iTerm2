@@ -109,6 +109,13 @@ struct iTermWorkgroupSessionConfig: Codable, Equatable {
     // level, not inside .peer's associated value, so a session that is
     // both a split AND a peer-group host/member can carry a name.
     var displayName: String
+    // Behavioral mode applied when the session is launched. .regular
+    // is the historical behavior (run the command immediately).
+    // .codeReview shows an in-session prompt overlay and defers the
+    // program start until the user clicks Start; the entered text is
+    // exposed as the variable `codeReviewPrompt` for swifty-string
+    // interpolation in `command`.
+    var mode: iTermWorkgroupSessionMode
 
     private enum CodingKeys: String, CodingKey {
         case uniqueIdentifier
@@ -120,6 +127,7 @@ struct iTermWorkgroupSessionConfig: Codable, Equatable {
         case urlString
         case toolbarItems
         case displayName
+        case mode
     }
 
     init(uniqueIdentifier: String,
@@ -130,7 +138,8 @@ struct iTermWorkgroupSessionConfig: Codable, Equatable {
          urlString: String,
          toolbarItems: [iTermWorkgroupToolbarItem],
          displayName: String = "",
-         perFileCommand: String = "") {
+         perFileCommand: String = "",
+         mode: iTermWorkgroupSessionMode = .regular) {
         self.uniqueIdentifier = uniqueIdentifier
         self.parentID = parentID
         self.kind = kind
@@ -140,6 +149,7 @@ struct iTermWorkgroupSessionConfig: Codable, Equatable {
         self.urlString = urlString
         self.toolbarItems = toolbarItems
         self.displayName = displayName
+        self.mode = mode
     }
 
     init(from decoder: Decoder) throws {
@@ -156,6 +166,8 @@ struct iTermWorkgroupSessionConfig: Codable, Equatable {
                                     forKey: .toolbarItems)
         displayName =
             (try? c.decode(String.self, forKey: .displayName)) ?? ""
+        mode =
+            (try? c.decode(iTermWorkgroupSessionMode.self, forKey: .mode)) ?? .regular
     }
 
     enum Kind: Codable, Equatable {
