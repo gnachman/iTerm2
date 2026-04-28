@@ -17,6 +17,7 @@
                           maximumExtendedDynamicRangeColorComponentValue:1.0
                                                             colorSpace:[NSColorSpace sRGBColorSpace]
                                                       rightExtraPixels:0
+                                                panelReservationPixels:0
                                                               cellSize:CGSizeMake(10, 20)
                                                              glyphSize:CGSizeMake(10, 20)
                                                 cellSizeWithoutSpacing:CGSizeMake(10, 20)

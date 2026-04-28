@@ -210,7 +210,8 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
               scale:(CGFloat)scale
             context:(CGContextRef)context
 legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth
-   rightExtraPoints:(CGFloat)rightExtraPoints;
+   rightExtraPoints:(CGFloat)rightExtraPoints
+panelReservationPoints:(CGFloat)panelReservationPoints;
 
 // Draw and return immediately, calling completion block after GPU's completion
 // block is called.

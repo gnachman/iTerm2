@@ -25,6 +25,10 @@ NS_CLASS_AVAILABLE(10_11, NA)
 @property (nonatomic, readonly) CGFloat scale;
 @property (nonatomic, readonly) BOOL hasBackgroundImage;
 @property (nonatomic, readonly) CGFloat rightExtraPixels;
+// Width inside rightExtraPixels that the right-gutter panels (drawn as
+// SessionView subviews outside the metal viewport's cell area) reserve.
+// Timestamps right-align at the inner edge of this slot.
+@property (nonatomic, readonly) CGFloat panelReservationPixels;
 
 // NOT flipped. top means top, bottom means bottom.
 @property (nonatomic, readonly) NSEdgeInsets extraMargins;
@@ -39,7 +43,8 @@ NS_CLASS_AVAILABLE(10_11, NA)
                         extraMargins:(NSEdgeInsets)extraMargins
 maximumExtendedDynamicRangeColorComponentValue:(CGFloat)maximumExtendedDynamicRangeColorComponentValue
                           colorSpace:(NSColorSpace *)colorSpace
-                    rightExtraPixels:(CGFloat)rightExtraPixels NS_DESIGNATED_INITIALIZER;
+                    rightExtraPixels:(CGFloat)rightExtraPixels
+              panelReservationPixels:(CGFloat)panelReservationPixels NS_DESIGNATED_INITIALIZER;
 @end
 
 NS_CLASS_AVAILABLE(10_11, NA)

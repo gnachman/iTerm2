@@ -172,6 +172,7 @@ NS_CLASS_AVAILABLE(10_11, NA)
 #endif  // ENABLE_UNFAMILIAR_TEXTURE_WORKAROUND
 @property (nonatomic) CGFloat maximumExtendedDynamicRangeColorComponentValue;
 @property (nonatomic) CGFloat rightExtraPixels;
+@property (nonatomic) CGFloat panelReservationPixels;
 @property (nonatomic) CGFloat vmargin;
 
 // Multi-pass underline rendering. Populated during row data setup.

@@ -5100,6 +5100,8 @@ typedef struct {
     const BOOL haveMultipleSessions = self.sessions.count > 1;
     const BOOL showTitles = forceTitleBar || (perPaneTitleBarEnabled && haveMultipleSessions);
 
+    const BOOL hasScrollbar = [realParentWindow_ scrollbarShouldBeVisible];
+    const NSScrollerStyle scrollerStyle = [realParentWindow_ scrollerStyle];
     for (PTYSession *aSession in [self sessions]) {
         NSNumber *n = [NSNumber numberWithInt:[aSession tmuxPane]];
         if (![preexistingPanes containsObject:n]) {
@@ -5108,6 +5110,11 @@ typedef struct {
                                     withPane:[aSession tmuxPane]
                                     inWindow:self.tmuxWindow];
             [aSession setTmuxController:tmuxController_];
+            // Sync scrollbar/right-extra state so timestamps and gutter
+            // panels get their reserved space. +openTabWithTmuxLayout: does
+            // this for new tabs; it was missed here for in-place layout
+            // updates (i.e. tmux-driven splits in an existing tab).
+            [aSession setScrollBarVisible:hasScrollbar style:scrollerStyle];
         }
         [aSession.view setShowTitle:showTitles adjustScrollView:NO];
         [aSession.view setShowBottomStatusBar:NO adjustScrollView:NO];

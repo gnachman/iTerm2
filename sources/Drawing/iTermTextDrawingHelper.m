@@ -1442,8 +1442,13 @@ const CGFloat commandRegionOutlineThickness = 2.0;
     }
     // Note: for the foreground color, we don't use the dimmed version because it looks bad on
     // nonretina displays. That's why I go to the colormap instead of using -defaultForegroundColor.
+    // Shrink the frame by the panel reservation so timestamps right-align at
+    // the inner edge of the right-gutter panel area instead of at the very
+    // right edge of PTYTextView (which would put them behind the panels).
+    NSRect timestampFrame = _frame;
+    timestampFrame.size.width -= _panelReservation;
     [_timestampDrawHelper drawInContext:[NSGraphicsContext currentContext]
-                                  frame:_frame
+                                  frame:timestampFrame
                           virtualOffset:virtualOffset];
     if (!self.isRetina) {
         CGContextSetShouldSmoothFonts(ctx, YES);

@@ -363,6 +363,10 @@ extern const CGFloat iTermCursorGuideAlphaThreshold;
 @property (nonatomic, copy) NSIndexSet *folds;
 @property (nonatomic, readonly) iTermAttributedStringBuilder *attributedStringBuilder;
 @property (nonatomic) CGFloat rightExtra;
+// Width inside rightExtra reserved for right-gutter panels (drawn outside
+// PTYTextView by the gutter controller). Timestamps right-align at the
+// inner edge of this reservation rather than at PTYTextView's right edge.
+@property (nonatomic) CGFloat panelReservation;
 @property (nonatomic) NSRange highlightedBlockLineRange;
 @property (nonatomic) VT100MarginColor marginColor;
 @property (nonatomic, readonly) NSColor *colorForMargins;

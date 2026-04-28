@@ -341,6 +341,7 @@ extern const CGFloat PTYTextViewMarginClickGraceWidth;
                              to:(NSRect)to
                           color:(NSColor *)color;
 - (CGFloat)textViewRightExtra;
+- (CGFloat)textViewPanelReservation;
 - (void)textViewLiveSelectionDidEnd;
 - (void)textViewShowJSONPromotion;
 - (void)textViewUserDidClickPathMark:(id<iTermPathMarkReading>)pathMark;

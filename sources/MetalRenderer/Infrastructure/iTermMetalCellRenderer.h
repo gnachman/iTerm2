@@ -36,7 +36,8 @@ NS_CLASS_AVAILABLE(10_11, NA)
                         extraMargins:(NSEdgeInsets)extraMargins
 maximumExtendedDynamicRangeColorComponentValue:(CGFloat)maximumExtendedDynamicRangeColorComponentValue
                           colorSpace:(NSColorSpace *)colorSpace
-                    rightExtraPixels:(CGFloat)rightExtraPixels NS_UNAVAILABLE;
+                    rightExtraPixels:(CGFloat)rightExtraPixels
+              panelReservationPixels:(CGFloat)panelReservationPixels NS_UNAVAILABLE;
 
 - (instancetype)initWithViewportSize:(vector_uint2)viewportSize
                 legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth
@@ -46,6 +47,7 @@ maximumExtendedDynamicRangeColorComponentValue:(CGFloat)maximumExtendedDynamicRa
 maximumExtendedDynamicRangeColorComponentValue:(CGFloat)maximumExtendedDynamicRangeColorComponentValue
                           colorSpace:(NSColorSpace *)colorSpace
                     rightExtraPixels:(CGFloat)rightExtraPixels
+              panelReservationPixels:(CGFloat)panelReservationPixels
                             cellSize:(CGSize)cellSize
                            glyphSize:(CGSize)glyphSize
               cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing

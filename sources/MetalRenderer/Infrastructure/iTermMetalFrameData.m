@@ -537,6 +537,7 @@ static NSInteger gNextFrameDataNumber;
                                          maximumExtendedDynamicRangeColorComponentValue:self.maximumExtendedDynamicRangeColorComponentValue
                                                                              colorSpace:self.colorSpace
                                                                        rightExtraPixels:self.rightExtraPixels
+                                                                 panelReservationPixels:self.panelReservationPixels
                                                                                cellSize:self.cellSize
                                                                               glyphSize:self.glyphSize
                                                                  cellSizeWithoutSpacing:self.cellSizeWithoutSpacing

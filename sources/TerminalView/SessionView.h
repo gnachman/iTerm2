@@ -226,6 +226,10 @@ typedef NS_ENUM(NSUInteger, iTermSessionViewFindDriver) {
 // bar or bottom per-pane status bar.
 @property(nonatomic, readonly) NSEdgeInsets extraMargins;
 @property (nonatomic) CGFloat actualRightExtra;
+// Subset of actualRightExtra that is reserved for right-gutter panel views
+// (the rest is the timestamp slot, if any). Used to position timestamps at
+// the inner edge of the panel area.
+@property (nonatomic) CGFloat actualPanelReservation;
 @property (nonatomic, readonly) BOOL isBrowser;
 @property (nonatomic) VT100ScreenProgress progress;
 @property (nonatomic) BOOL enableProgressBars;

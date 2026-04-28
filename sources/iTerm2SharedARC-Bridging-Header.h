@@ -81,6 +81,8 @@
 #import "iTermProfilePreferencesBaseViewController.h"
 #import "iTermPromise.h"
 #import "iTermRemotePreferences.h"
+#import "iTermRightGutterPanel.h"
+#import "iTermRightGutterPanelRegistry.h"
 #import "iTermRule.h"
 #import "iTermSearchFieldCell.h"
 #import "iTermShortcutInputView.h"

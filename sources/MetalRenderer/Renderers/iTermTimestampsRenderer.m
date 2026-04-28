@@ -108,10 +108,16 @@
                                                            _backgroundColor.alphaComponent);
     const CGFloat vmargin = self.margins.bottom / scale;
 
-    const CGFloat gridWidth = self.cellConfiguration.gridSize.width * self.cellConfiguration.cellSize.width;
-    const NSEdgeInsets margins = self.margins;
-    // The right gutter includes the scrollbar if legacy scrollbars are on.
-    const CGFloat rightGutterWidth = self.configuration.viewportSize.x - margins.left - margins.right - gridWidth - self.configuration.rightExtraPixels;
+    // Anchor the timestamp's right edge directly to PTYTextView's right edge
+    // minus the right-gutter panel reservation, in points. Going through
+    // self.margins.right would compute a slack of fmod(usableSize, cellWidth)
+    // which doesn't match the column-fitting slack of
+    // fmod(usableSize - rightExtra, cellWidth) used by PTYSession when picking
+    // the column count — for non-cell-aligned rightExtras (e.g. panel + 100pt
+    // adjacent timestamps) the two slacks disagree by `rightExtra mod
+    // cellWidth`, which appears as a few-point CG/Metal misalignment.
+    const CGFloat rightEdgePoints =
+        (self.configuration.viewportSizeExcludingLegacyScrollbars.x - self.configuration.panelReservationPixels) / scale;
     [_timestamps enumerateObjectsUsingBlock:^(NSDate * _Nonnull date, NSUInteger idx, BOOL * _Nonnull stop) {
         iTermTimestampKey *key = [[iTermTimestampKey alloc] init];
         key.width = visibleWidth;
@@ -120,7 +126,7 @@
         key.string = [self->_drawHelper rowIsRepeat:idx] ? @"(repeat)" : [self->_drawHelper stringForRow:idx];
         block(idx,
               key,
-              NSMakeRect((self.configuration.viewportSize.x - rightGutterWidth) / scale - visibleWidth,
+              NSMakeRect(rightEdgePoints - visibleWidth,
                          self.configuration.viewportSize.y / scale - ((idx + 1) * rowHeight) - vmargin,
                          visibleWidth,
                          rowHeight));

@@ -87,7 +87,8 @@ const NSInteger iTermMetalDriverMaximumNumberOfFramesInFlight = 3;
                         extraMargins:(NSEdgeInsets)extraMargins
 maximumExtendedDynamicRangeColorComponentValue:(CGFloat)maximumExtendedDynamicRangeColorComponentValue
                           colorSpace:(NSColorSpace *)colorSpace
-                    rightExtraPixels:(CGFloat)rightExtraPixels {
+                    rightExtraPixels:(CGFloat)rightExtraPixels
+              panelReservationPixels:(CGFloat)panelReservationPixels {
     self = [super init];
     if (self) {
         _viewportSize = viewportSize;
@@ -99,6 +100,7 @@ maximumExtendedDynamicRangeColorComponentValue:(CGFloat)maximumExtendedDynamicRa
         _maximumExtendedDynamicRangeColorComponentValue = maximumExtendedDynamicRangeColorComponentValue;
         _colorSpace = colorSpace;
         _rightExtraPixels = rightExtraPixels;
+        _panelReservationPixels = panelReservationPixels;
     }
     return self;
 }

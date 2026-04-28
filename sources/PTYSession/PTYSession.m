@@ -154,6 +154,7 @@
 #import "iTermRawKeyMapper.h"
 #import "iTermRecentDirectoryMO.h"
 #import "iTermRestorableSession.h"
+#import "iTermRightGutterPanelRegistry.h"
 #import "iTermRule.h"
 #import "iTermSavePanel.h"
 #import "iTermScriptConsole.h"
@@ -4413,11 +4414,20 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
 }
 
 + (CGFloat)desiredRightExtraForProfile:(Profile *)profile {
+    CGFloat extra = 0;
     if ([self desiredTimestampsModeForProfile:profile] == iTermTimestampsModeAdjacent) {
-        return 100.0;
-    } else {
-        return 0;
+        extra += 100.0;
     }
+    extra += [self desiredPanelReservationForProfile:profile];
+    return extra;
+}
+
++ (CGFloat)desiredPanelReservationForProfile:(Profile *)profile {
+    return [[iTermRightGutterPanelRegistry sharedInstance] totalWidthForProfile:profile];
+}
+
+- (CGFloat)desiredPanelReservation {
+    return [PTYSession desiredPanelReservationForProfile:self.profile];
 }
 
 - (BOOL)setScrollBarVisible:(BOOL)visible style:(NSScrollerStyle)style {
@@ -4434,6 +4444,14 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
     [[self textview] updateScrollerForBackgroundColor];
     if (self.view.actualRightExtra != self.desiredRightExtra) {
         self.view.actualRightExtra = self.desiredRightExtra;
+        self.view.actualPanelReservation = self.desiredPanelReservation;
+        [self updateMetalDriver];
+        changed = YES;
+    } else if (self.view.actualPanelReservation != self.desiredPanelReservation) {
+        // Panel reservation can change without the total rightExtra changing
+        // (e.g., a panel's width grows by N while the timestamps slot
+        // disappears). Keep the two in lockstep so timestamps reposition.
+        self.view.actualPanelReservation = self.desiredPanelReservation;
         [self updateMetalDriver];
         changed = YES;
     }
@@ -8541,7 +8559,8 @@ extendResultsAcrossSoftBoundaries:(BOOL)extendResultsAcrossSoftBoundaries {
                         scale:_view.window.screen.backingScaleFactor
                       context:_metalContext
          legacyScrollbarWidth:self.legacyScrollbarWidth
-             rightExtraPoints:_view.actualRightExtra];
+             rightExtraPoints:_view.actualRightExtra
+       panelReservationPoints:_view.actualPanelReservation];
 }
 
 - (CGFloat)legacyScrollbarWidth {
@@ -13319,6 +13338,10 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 
 - (CGFloat)textViewRightExtra {
     return self.view.actualRightExtra;
+}
+
+- (CGFloat)textViewPanelReservation {
+    return self.view.actualPanelReservation;
 }
 
 - (void)textViewLiveSelectionDidEnd {

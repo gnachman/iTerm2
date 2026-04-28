@@ -93,6 +93,7 @@ typedef struct {
     CGFloat maximumExtendedDynamicRangeColorComponentValue NS_AVAILABLE_MAC(10_15);
     CGFloat legacyScrollbarWidth;
     CGFloat rightExtraPixels;
+    CGFloat panelReservationPixels;
     BOOL extendBackgroundColorIntoMargins;
 } iTermMetalDriverMainThreadState;
 
@@ -330,7 +331,8 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
               scale:(CGFloat)scale
             context:(CGContextRef)context
 legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth
-   rightExtraPoints:(CGFloat)rightExtraPoints {
+   rightExtraPoints:(CGFloat)rightExtraPoints
+panelReservationPoints:(CGFloat)panelReservationPoints {
     scale = MAX(1, scale);
     cellSize.width *= scale;
     cellSize.height *= scale;
@@ -360,6 +362,7 @@ legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth
     self.mainThreadState->context = context;
     self.mainThreadState->legacyScrollbarWidth = legacyScrollbarWidth * scale;
     self.mainThreadState->rightExtraPixels = rightExtraPoints * scale;
+    self.mainThreadState->panelReservationPixels = panelReservationPoints * scale;
     self.mainThreadState->extendBackgroundColorIntoMargins = [iTermAdvancedSettingsModel extendBackgroundColorIntoMargins];
 
 }
@@ -641,6 +644,7 @@ legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth
         frameData.extendBackgroundColorIntoMargins = self.mainThreadState->extendBackgroundColorIntoMargins;
         frameData.legacyScrollbarWidth = self.mainThreadState->legacyScrollbarWidth;
         frameData.rightExtraPixels = self.mainThreadState->rightExtraPixels;
+        frameData.panelReservationPixels = self.mainThreadState->panelReservationPixels;
         frameData.asciiOffset = self.mainThreadState->asciiOffset;
 
         // This is the slow part

@@ -173,6 +173,8 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
 
     iTermSessionNoteView *_sessionNoteView;
     iTermSessionToolbarView *_toolbarView;
+
+    iTermRightGutterController *_rightGutterController;
 }
 
 + (double)titleHeight {
@@ -297,6 +299,7 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
             [self addSubviewBelowFindView:_scrollview.verticalScroller];
             _scrollview.verticalScroller.frame = [self frameForScroller];
         }
+        _rightGutterController = [[iTermRightGutterController alloc] initWithSessionView:self];
         [self updateSessionSelectorButton];
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(scrollerStyleDidChange:)
@@ -1258,6 +1261,7 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
     }
     [self updateUploadIndicatorFrame];
     [self updateSessionNoteFrame];
+    [_rightGutterController layoutPanels];
     DLog(@"After:\n%@", [self iterm_recursiveDescription]);
 }
 
@@ -2331,6 +2335,7 @@ typedef NS_ENUM(NSInteger, SessionViewTrackingMode) {
     }
     [self updateLegacyViewFrame];
     [self updateMinimapFrameAnimated:NO];
+    [_rightGutterController layoutPanels];
     [_delegate sessionViewScrollViewDidResize];
     DLog(@"Returning");
 }
