@@ -189,6 +189,9 @@
   "vim": [
     "Vim",
     "vi",
-    "vim",
+    "vim"
+  ],
+  "claude_code": [
+    "claude"
   ]
 }
