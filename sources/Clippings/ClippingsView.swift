@@ -8,6 +8,7 @@
 import AppKit
 import Carbon.HIToolbox
 import Foundation
+import SwiftyMarkdown
 
 @objc protocol iTermClippingsViewDelegate: AnyObject {
     func clippingsViewClippings(_ view: iTermClippingsView) -> [PTYSessionClipping]
@@ -27,7 +28,7 @@ private let kClippingsCellPadX: CGFloat = 10
 private let kClippingsCellPadY: CGFloat = 6
 private let kClippingsCellTitleHeight: CGFloat = 18
 private let kClippingsCellTitleDetailGap: CGFloat = 2
-private let kClippingsCellMaxDetailLines = 3
+private let kClippingsCellMaxDetailHeight: CGFloat = 100
 private let kClippingsCellTitleFont = NSFont.systemFont(ofSize: 13, weight: .semibold)
 private let kClippingsCellDetailFont = NSFont.systemFont(ofSize: 11)
 
@@ -45,6 +46,8 @@ class iTermClippingsView: NSView {
     private let editSegmentedControl = NSSegmentedControl()
     private let actionSegmentedControl = NSSegmentedControl()
     private let closeButton = NSButton()
+    private var previewPopover: NSPopover?
+    private var previewRow: Int?
 
     @objc(initWithDelegate:)
     init(delegate: iTermClippingsViewDelegate?) {
@@ -76,6 +79,7 @@ class iTermClippingsView: NSView {
         tableView.target = self
         tableView.doubleAction = #selector(doubleClicked(_:))
         tableView.deletePressedHandler = { [weak self] in self?.deleteSelected() }
+        tableView.spacePressedHandler = { [weak self] in self?.toggleQuickLook() }
         tableView.registerForDraggedTypes([kClippingsPasteboardType])
         tableView.draggingDestinationFeedbackStyle = .gap
 
@@ -265,6 +269,56 @@ class iTermClippingsView: NSView {
         delegate?.clippingsView(self, didChangeClippings: items)
         reload()
     }
+
+    fileprivate func toggleQuickLook(forRow specific: Int? = nil) {
+        let openRow = previewRow
+        if let popover = previewPopover {
+            popover.close()
+            previewPopover = nil
+            previewRow = nil
+            // Spacebar always toggles closed; an explicit button click on the
+            // same row also closes. A click on a different row falls through
+            // to switch the popover to that row.
+            if specific == nil || specific == openRow {
+                return
+            }
+        }
+        let row: Int
+        if let specific {
+            row = specific
+        } else {
+            let selected = tableView.selectedRowIndexes
+            guard selected.count == 1, let only = selected.first else { return }
+            row = only
+        }
+        let items = currentClippings()
+        guard row < items.count else { return }
+
+        tableView.scrollRowToVisible(row)
+        guard let rowView = tableView.rowView(atRow: row, makeIfNecessary: true) else { return }
+        let cell = tableView.view(atColumn: 0, row: row, makeIfNecessary: true) as? ClippingsCellView
+        let anchor: NSView = cell?.popoverAnchorView ?? rowView
+
+        let popover = NSPopover()
+        popover.behavior = .transient
+        popover.animates = true
+        popover.delegate = self
+        let vc = ClippingsPreviewViewController(clipping: items[row])
+        vc.onDismiss = { [weak popover] in popover?.close() }
+        popover.contentViewController = vc
+        popover.show(relativeTo: anchor.bounds, of: anchor, preferredEdge: .minX)
+        previewPopover = popover
+        previewRow = row
+    }
+}
+
+extension iTermClippingsView: NSPopoverDelegate {
+    func popoverDidClose(_ notification: Notification) {
+        if (notification.object as? NSPopover) === previewPopover {
+            previewPopover = nil
+            previewRow = nil
+        }
+    }
 }
 
 extension iTermClippingsView: NSTableViewDataSource {
@@ -343,7 +397,12 @@ extension iTermClippingsView: NSTableViewDelegate {
         }
         let items = currentClippings()
         if row < items.count {
-            cell.configure(with: items[row])
+            cell.configure(with: items[row]) { [weak self, weak cell] in
+                guard let self, let cell else { return }
+                let liveRow = tableView.row(for: cell)
+                guard liveRow >= 0 else { return }
+                self.toggleQuickLook(forRow: liveRow)
+            }
         }
         return cell
     }
@@ -359,9 +418,24 @@ extension iTermClippingsView: NSTableViewDelegate {
     }
 }
 
+private let kClippingsPreviewButtonSize: CGFloat = 18
+private let kClippingsPreviewButtonRightPad: CGFloat = 6
+private let kClippingsPreviewButtonTitleGap: CGFloat = 4
+
 private class ClippingsCellView: NSTableCellView {
     private let titleLabel = NSTextField(labelWithString: "")
     private let detailLabel = NSTextField(labelWithString: "")
+    private let previewButton = NSButton()
+    private var trackingArea: NSTrackingArea?
+    private var isHovered = false {
+        didSet { updatePreviewButtonVisibility() }
+    }
+    private var isSelected = false {
+        didSet { updatePreviewButtonVisibility() }
+    }
+    private var onPreview: (() -> Void)?
+
+    var popoverAnchorView: NSView { previewButton }
 
     override init(frame frameRect: NSRect) {
         super.init(frame: frameRect)
@@ -386,7 +460,7 @@ private class ClippingsCellView: NSTableCellView {
 
         detailLabel.font = kClippingsCellDetailFont
         detailLabel.lineBreakMode = .byTruncatingTail
-        detailLabel.maximumNumberOfLines = kClippingsCellMaxDetailLines
+        detailLabel.maximumNumberOfLines = 0
         detailLabel.cell?.wraps = true
         detailLabel.cell?.usesSingleLineMode = false
         detailLabel.textColor = .secondaryLabelColor
@@ -396,27 +470,136 @@ private class ClippingsCellView: NSTableCellView {
         detailLabel.isSelectable = false
         detailLabel.autoresizingMask = [.width, .height]
         addSubview(detailLabel)
+
+        if let glass = NSImage(systemSymbolName: "magnifyingglass",
+                               accessibilityDescription: "Preview clipping") {
+            previewButton.image = glass
+        }
+        previewButton.bezelStyle = .smallSquare
+        previewButton.isBordered = false
+        previewButton.imagePosition = .imageOnly
+        previewButton.contentTintColor = .secondaryLabelColor
+        previewButton.toolTip = "Preview (Space)"
+        previewButton.target = self
+        previewButton.action = #selector(previewButtonClicked(_:))
+        previewButton.autoresizingMask = [.minXMargin, .minYMargin]
+        previewButton.isHidden = true
+        addSubview(previewButton)
+    }
+
+    override func updateTrackingAreas() {
+        super.updateTrackingAreas()
+        if let trackingArea {
+            removeTrackingArea(trackingArea)
+        }
+        let area = NSTrackingArea(rect: bounds,
+                                  options: [.mouseEnteredAndExited,
+                                            .activeInKeyWindow,
+                                            .inVisibleRect],
+                                  owner: self,
+                                  userInfo: nil)
+        addTrackingArea(area)
+        trackingArea = area
+    }
+
+    override func mouseEntered(with event: NSEvent) {
+        isHovered = true
+    }
+
+    override func mouseExited(with event: NSEvent) {
+        isHovered = false
+    }
+
+    override var backgroundStyle: NSView.BackgroundStyle {
+        didSet {
+            isSelected = (backgroundStyle != .normal)
+        }
+    }
+
+    private func updatePreviewButtonVisibility() {
+        previewButton.isHidden = !(isHovered || isSelected)
+    }
+
+    @objc private func previewButtonClicked(_ sender: Any?) {
+        onPreview?()
     }
 
     override func layout() {
         super.layout()
-        let width = max(0, bounds.width - kClippingsCellPadX * 2)
+        let buttonReserve = kClippingsPreviewButtonSize
+            + kClippingsPreviewButtonRightPad
+            + kClippingsPreviewButtonTitleGap
+        let titleWidth = max(0, bounds.width - kClippingsCellPadX - buttonReserve)
+        let detailWidth = max(0, bounds.width - kClippingsCellPadX * 2)
         titleLabel.frame = NSRect(x: kClippingsCellPadX,
                                   y: bounds.height - kClippingsCellTitleHeight - kClippingsCellPadY,
-                                  width: width,
+                                  width: titleWidth,
                                   height: kClippingsCellTitleHeight)
         let detailHeight = max(0, bounds.height - kClippingsCellTitleHeight
                                   - kClippingsCellPadY * 2
                                   - kClippingsCellTitleDetailGap)
         detailLabel.frame = NSRect(x: kClippingsCellPadX,
                                    y: kClippingsCellPadY,
-                                   width: width,
+                                   width: detailWidth,
                                    height: detailHeight)
+        let buttonY = bounds.height
+            - kClippingsCellPadY
+            - kClippingsCellTitleHeight
+            + (kClippingsCellTitleHeight - kClippingsPreviewButtonSize) / 2
+        previewButton.frame = NSRect(x: bounds.width - kClippingsPreviewButtonRightPad - kClippingsPreviewButtonSize,
+                                     y: buttonY,
+                                     width: kClippingsPreviewButtonSize,
+                                     height: kClippingsPreviewButtonSize)
     }
 
-    func configure(with clipping: PTYSessionClipping) {
+    func configure(with clipping: PTYSessionClipping, onPreview: (() -> Void)?) {
+        self.onPreview = onPreview
+        // Cell reuse: previous cursor-tracking state is meaningless for the new
+        // row. The tracking area will fire mouseEntered if the cursor is still
+        // over us.
+        isHovered = false
         titleLabel.stringValue = clipping.title
-        detailLabel.stringValue = clipping.detail
+        if clipping.detail.isEmpty {
+            detailLabel.stringValue = ""
+        } else {
+            detailLabel.attributedStringValue = Self.attributedDetail(for: clipping.detail)
+        }
+    }
+
+    fileprivate static func attributedMarkdown(_ markdown: String,
+                                                baseSize: CGFloat,
+                                                color: NSColor) -> NSAttributedString {
+        let md = SwiftyMarkdown(string: markdown)
+        if let fixedPitch = NSFont.userFixedPitchFont(ofSize: baseSize)?.fontName {
+            md.code.fontName = fixedPitch
+        }
+        md.setFontSizeForAllStyles(with: baseSize)
+        md.h1.fontSize = max(4, round(baseSize * 1.5))
+        md.h2.fontSize = max(4, round(baseSize * 1.3))
+        md.h3.fontSize = max(4, round(baseSize * 1.15))
+        md.h4.fontSize = max(4, round(baseSize * 1.0))
+        md.h5.fontSize = max(4, round(baseSize * 0.9))
+        md.h6.fontSize = max(4, round(baseSize * 0.85))
+        md.setFontColorForAllStyles(with: color)
+        return md.attributedString().postprocessedSwiftyMarkdownAttributedString()
+    }
+
+    // SwiftyMarkdown parsing is non-trivial and detailHeight() is called once
+    // per visible row on every layout pass, so cache the result keyed on the
+    // markdown string. The cached NSColor remains dynamic across appearance
+    // changes because NSColor is resolved at draw time.
+    private static let detailCache = NSCache<NSString, NSAttributedString>()
+
+    fileprivate static func attributedDetail(for markdown: String) -> NSAttributedString {
+        let key = markdown as NSString
+        if let cached = detailCache.object(forKey: key) {
+            return cached
+        }
+        let attributed = attributedMarkdown(markdown,
+                                            baseSize: kClippingsCellDetailFont.pointSize,
+                                            color: .secondaryLabelColor)
+        detailCache.setObject(attributed, forKey: key)
+        return attributed
     }
 
     static func height(for clipping: PTYSessionClipping, width: CGFloat) -> CGFloat {
@@ -434,9 +617,8 @@ private class ClippingsCellView: NSTableCellView {
     // when laying out, including its internal line spacing.
     private static let detailMeasuringLabel: NSTextField = {
         let l = NSTextField(labelWithString: "")
-        l.font = kClippingsCellDetailFont
         l.lineBreakMode = .byTruncatingTail
-        l.maximumNumberOfLines = kClippingsCellMaxDetailLines
+        l.maximumNumberOfLines = 0
         l.cell?.wraps = true
         l.cell?.usesSingleLineMode = false
         return l
@@ -446,15 +628,17 @@ private class ClippingsCellView: NSTableCellView {
         if string.isEmpty {
             return 0
         }
-        detailMeasuringLabel.stringValue = string
+        detailMeasuringLabel.attributedStringValue = attributedDetail(for: string)
         guard let cell = detailMeasuringLabel.cell else { return 0 }
         let bounds = NSRect(x: 0, y: 0, width: width, height: CGFloat.greatestFiniteMagnitude)
-        return ceil(cell.cellSize(forBounds: bounds).height)
+        let natural = ceil(cell.cellSize(forBounds: bounds).height)
+        return min(natural, kClippingsCellMaxDetailHeight)
     }
 }
 
 private class ClippingsTableView: NSTableView {
     var deletePressedHandler: (() -> Void)?
+    var spacePressedHandler: (() -> Void)?
 
     override func keyDown(with event: NSEvent) {
         let key = Int(event.keyCode)
@@ -462,6 +646,125 @@ private class ClippingsTableView: NSTableView {
             deletePressedHandler?()
             return
         }
+        if key == kVK_Space {
+            spacePressedHandler?()
+            return
+        }
         super.keyDown(with: event)
+    }
+}
+
+private let kClippingsPreviewWidth: CGFloat = 700
+private let kClippingsPreviewMaxHeight: CGFloat = 480
+private let kClippingsPreviewPad: CGFloat = 12
+private let kClippingsPreviewTitleHeight: CGFloat = 22
+private let kClippingsPreviewTitleDetailGap: CGFloat = 6
+private let kClippingsPreviewMinDetailHeight: CGFloat = 16
+
+private class ClippingsPreviewViewController: NSViewController {
+    private let clipping: PTYSessionClipping
+    var onDismiss: (() -> Void)?
+    private var keyMonitor: Any?
+
+    init(clipping: PTYSessionClipping) {
+        self.clipping = clipping
+        super.init(nibName: nil, bundle: nil)
+    }
+
+    required init?(coder: NSCoder) {
+        it_fatalError("init(coder:) has not been implemented")
+    }
+
+    override func loadView() {
+        let width = kClippingsPreviewWidth
+        let textWidth = width - kClippingsPreviewPad * 2
+
+        let attributed: NSAttributedString
+        if clipping.detail.isEmpty {
+            attributed = NSAttributedString(string: "")
+        } else {
+            attributed = ClippingsCellView.attributedMarkdown(
+                clipping.detail,
+                baseSize: NSFont.systemFontSize,
+                color: .labelColor)
+        }
+        let naturalTextHeight = ceil(attributed.boundingRect(
+            with: NSSize(width: textWidth, height: .greatestFiniteMagnitude),
+            options: [.usesLineFragmentOrigin, .usesFontLeading]).height)
+        let chrome = kClippingsPreviewPad * 2 + kClippingsPreviewTitleHeight + kClippingsPreviewTitleDetailGap
+        let availableForText = kClippingsPreviewMaxHeight - chrome
+        let textHeight = min(max(naturalTextHeight, kClippingsPreviewMinDetailHeight), availableForText)
+        let totalHeight = chrome + textHeight
+
+        let container = NSView(frame: NSRect(x: 0, y: 0, width: width, height: totalHeight))
+
+        let titleLabel = NSTextField(labelWithString: clipping.title)
+        titleLabel.font = NSFont.systemFont(ofSize: 13, weight: .semibold)
+        titleLabel.textColor = .labelColor
+        titleLabel.lineBreakMode = .byTruncatingTail
+        titleLabel.maximumNumberOfLines = 1
+        titleLabel.drawsBackground = false
+        titleLabel.isBordered = false
+        titleLabel.isEditable = false
+        titleLabel.isSelectable = false
+        titleLabel.frame = NSRect(x: kClippingsPreviewPad,
+                                  y: totalHeight - kClippingsPreviewPad - kClippingsPreviewTitleHeight,
+                                  width: textWidth,
+                                  height: kClippingsPreviewTitleHeight)
+        titleLabel.autoresizingMask = [.width, .minYMargin]
+        container.addSubview(titleLabel)
+
+        let scrollView = NSScrollView(frame: NSRect(x: kClippingsPreviewPad,
+                                                    y: kClippingsPreviewPad,
+                                                    width: textWidth,
+                                                    height: textHeight))
+        scrollView.autoresizingMask = [.width, .height]
+        scrollView.borderType = .noBorder
+        scrollView.hasVerticalScroller = true
+        scrollView.drawsBackground = false
+
+        let textView = NSTextView(frame: NSRect(x: 0, y: 0, width: textWidth, height: textHeight))
+        textView.minSize = NSSize(width: 0, height: 0)
+        textView.maxSize = NSSize(width: CGFloat.greatestFiniteMagnitude,
+                                  height: CGFloat.greatestFiniteMagnitude)
+        textView.isVerticallyResizable = true
+        textView.isHorizontallyResizable = false
+        textView.autoresizingMask = [.width]
+        textView.textContainer?.containerSize = NSSize(width: textWidth,
+                                                       height: CGFloat.greatestFiniteMagnitude)
+        textView.textContainer?.widthTracksTextView = true
+        textView.isEditable = false
+        textView.isSelectable = true
+        textView.drawsBackground = false
+        textView.textStorage?.setAttributedString(attributed)
+
+        scrollView.documentView = textView
+        container.addSubview(scrollView)
+
+        view = container
+        preferredContentSize = NSSize(width: width, height: totalHeight)
+    }
+
+    override func viewDidAppear() {
+        super.viewDidAppear()
+        // A local key monitor catches space/escape regardless of which subview
+        // (text view, scroll view) holds first responder while the popover is up.
+        keyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
+            guard let self else { return event }
+            let key = Int(event.keyCode)
+            if key == kVK_Space || key == kVK_Escape {
+                self.onDismiss?()
+                return nil
+            }
+            return event
+        }
+    }
+
+    override func viewWillDisappear() {
+        if let keyMonitor {
+            NSEvent.removeMonitor(keyMonitor)
+            self.keyMonitor = nil
+        }
+        super.viewWillDisappear()
     }
 }
