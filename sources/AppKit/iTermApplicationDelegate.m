@@ -1576,6 +1576,19 @@ void TurnOnDebugLoggingAutomatically(void) {
     // walking ~/.claude/settings.json or every profile's trigger list.
     [iTermClaudeCodeOnboarding reconcileHooksCache];
     [iTermClaudeCodeOnboarding reconcileTriggersCache];
+    // ~/.claude/settings.json hooks reference a stable cc-status
+    // symlink in iTerm2's dot dir; we keep it pointed at the running
+    // app's bundle binary. Refresh it on every launch so a moved /
+    // renamed / replaced iTerm2.app still resolves correctly the next
+    // time a hook fires. Gated on the (NoSync) cached install flag —
+    // the vast majority of users never install the cc-status hook,
+    // and they shouldn't pay the cost of touching the dot dir and a
+    // symlink on every launch. reconcileHooksCache above just
+    // refreshed the flag from disk, so a manual edit of
+    // ~/.claude/settings.json is detected next launch.
+    if ([iTermClaudeCodeOnboarding hooksAlreadyInstalled]) {
+        [iTermClaudeCodeOnboarding ensureCCStatusSymlink];
+    }
     if (_workgroupsMenuItem) {
         [iTermWorkgroupMenu attachTo:_workgroupsMenuItem];
     }

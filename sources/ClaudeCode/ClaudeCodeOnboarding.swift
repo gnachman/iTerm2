@@ -898,6 +898,56 @@ class ClaudeCodeOnboarding: NSObject {
 
     // MARK: - Step 1: Install Hook
 
+    // Point a stable cc-status symlink in iTerm2's dot dir
+    // (homeDirectoryDotDir — typically ~/.config/iterm2 or ~/.iterm2,
+    // honoring preferredBaseDir and the --suite= per-instance suite
+    // name) at the cc-status binary inside the currently-running
+    // iTerm2.app bundle. Hooks reference the symlink path instead of
+    // the bundle path so moving, renaming, or replacing iTerm2.app
+    // doesn't break them — the next launch refreshes the target.
+    // Idempotent: skips the filesystem update when the symlink already
+    // resolves to the right target. Returns the symlink path on
+    // success.
+    @objc
+    @discardableResult
+    static func ensureCCStatusSymlink() -> String? {
+        guard let bundlePath = Bundle.main.path(forResource: "utilities/cc-status",
+                                                ofType: nil) else {
+            DLog("Onboarding: cc-status not found in bundle")
+            return nil
+        }
+        let fm = FileManager.default
+        guard let dotDir = fm.homeDirectoryDotDir() else {
+            DLog("Onboarding: no dot dir available for cc-status symlink")
+            return nil
+        }
+        let symlinkURL = URL(fileURLWithPath: dotDir)
+            .appendingPathComponent("cc-status")
+        let existing = try? fm.destinationOfSymbolicLink(atPath: symlinkURL.path)
+        if existing == bundlePath {
+            return symlinkURL.path
+        }
+        // The path may be a regular file or a stale symlink. Either
+        // way, remove before recreating.
+        if (try? symlinkURL.checkResourceIsReachable()) == true || existing != nil {
+            do {
+                try fm.removeItem(at: symlinkURL)
+            } catch {
+                DLog("Onboarding: couldn't remove old cc-status symlink: \(error)")
+                return nil
+            }
+        }
+        do {
+            try fm.createSymbolicLink(atPath: symlinkURL.path,
+                                       withDestinationPath: bundlePath)
+        } catch {
+            DLog("Onboarding: couldn't create cc-status symlink: \(error)")
+            return nil
+        }
+        DLog("Onboarding: cc-status symlink \(symlinkURL.path) -> \(bundlePath)")
+        return symlinkURL.path
+    }
+
     /// Hook event names that cc-status handles.
     private static let hookEventNames = [
         "UserPromptSubmit",
@@ -931,12 +981,11 @@ class ClaudeCodeOnboarding: NSObject {
     }
 
     private func doInstallHook() -> Bool {
-        guard let ccStatusPath = Bundle.main.path(forResource: "utilities/cc-status",
-                                                  ofType: nil) else {
-            DLog("Onboarding: cc-status not found in bundle")
+        guard let ccStatusPath = Self.ensureCCStatusSymlink() else {
+            DLog("Onboarding: couldn't prepare cc-status symlink")
             return false
         }
-        DLog("Onboarding: cc-status binary at \(ccStatusPath)")
+        DLog("Onboarding: cc-status hook will point at \(ccStatusPath)")
 
         let settingsURL = FileManager.default.homeDirectoryForCurrentUser
             .appendingPathComponent(".claude")
