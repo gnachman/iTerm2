@@ -567,6 +567,9 @@ const CGFloat PTYTextViewMarginClickGraceWidth = 2.0;
         return [_delegate textViewCanSelectOutputOfLastCommand];
     } else if ([item action]==@selector(selectCurrentCommand:)) {
         return [_delegate textViewCanSelectCurrentCommand];
+    } else if ([item action] == @selector(nextWorkgroupPeer:) ||
+               [item action] == @selector(previousWorkgroupPeer:)) {
+        return [_delegate textViewCanCycleWorkgroupPeer];
     }
     if ([item action] == @selector(pasteBase64Encoded:)) {
         return [[NSPasteboard generalPasteboard] dataForFirstFile] != nil;
@@ -3584,6 +3587,14 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
 - (IBAction)selectOutputOfLastCommand:(id)sender {
     DLog(@"selectOutputOfLastCommand:");
     [self selectRange:[_delegate textViewRangeOfLastCommandOutput]];
+}
+
+- (IBAction)nextWorkgroupPeer:(id)sender {
+    [_delegate textViewActivateNextWorkgroupPeer];
+}
+
+- (IBAction)previousWorkgroupPeer:(id)sender {
+    [_delegate textViewActivatePreviousWorkgroupPeer];
 }
 
 - (void)selectRange:(VT100GridAbsCoordRange)range {

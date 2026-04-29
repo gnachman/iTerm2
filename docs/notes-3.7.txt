@@ -425,3 +425,6 @@ Bug Fixes:
   workgroup entry, so external tools can
   distinguish runs of the same workgroup
   config.
+- New Next Peer (⌘⌥]) and Previous Peer
+  (⌘⌥[) commands in the Window menu cycle
+  the active peer in the current workgroup.

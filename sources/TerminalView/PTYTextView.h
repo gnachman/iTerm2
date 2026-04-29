@@ -145,6 +145,9 @@ extern const CGFloat PTYTextViewMarginClickGraceWidth;
 - (void)textViewSelectPreviousTab;
 - (void)textViewSelectNextWindow;
 - (void)textViewSelectPreviousWindow;
+- (BOOL)textViewCanCycleWorkgroupPeer;
+- (void)textViewActivateNextWorkgroupPeer;
+- (void)textViewActivatePreviousWorkgroupPeer;
 - (void)textViewCreateWindowWithProfileGuid:(NSString *)guid;
 - (void)textViewCreateTabWithProfileGuid:(NSString *)guid;
 - (void)textViewSelectNextPane;
@@ -791,6 +794,12 @@ extendResultsAcrossSoftBoundaries:(BOOL)extendResultsAcrossSoftBoundaries;
 
 - (IBAction)selectCurrentCommand:(id)sender;
 - (IBAction)selectOutputOfLastCommand:(id)sender;
+
+// Cycle the active peer in the current workgroup. Wired up in
+// MainMenu.xib as first-responder actions on the Window menu so Cocoa
+// dispatches them to whichever PTYTextView is key.
+- (IBAction)nextWorkgroupPeer:(id)sender;
+- (IBAction)previousWorkgroupPeer:(id)sender;
 
 - (void)showFireworks;
 

@@ -12126,6 +12126,19 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     [[iTermController sharedInstance] previousTerminal];
 }
 
+- (BOOL)textViewCanCycleWorkgroupPeer {
+    iTermWorkgroupInstance *wg = self.workgroupInstance;
+    return wg != nil && wg.peerPort.peerCount > 1;
+}
+
+- (void)textViewActivateNextWorkgroupPeer {
+    [self.workgroupInstance.peerPort activateNextPeer];
+}
+
+- (void)textViewActivatePreviousWorkgroupPeer {
+    [self.workgroupInstance.peerPort activatePreviousPeer];
+}
+
 - (void)textViewSelectNextPane
 {
     [_delegate nextSession];

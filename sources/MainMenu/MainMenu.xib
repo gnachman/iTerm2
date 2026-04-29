@@ -1740,6 +1740,19 @@ CQ
                                                             <action selector="previousPane:" target="-1" id="1254"/>
                                                         </connections>
                                                     </menuItem>
+                                                    <menuItem isSeparatorItem="YES" id="qml-rY-JSo"/>
+                                                    <menuItem title="Previous Peer" keyEquivalent="[" identifier="Select Split Pane.Previous Pane" id="OCq-v2-LJk">
+                                                        <modifierMask key="keyEquivalentModifierMask" option="YES" command="YES"/>
+                                                        <connections>
+                                                            <action selector="previousWorkgroupPeer:" target="-1" id="CTy-F2-xIr"/>
+                                                        </connections>
+                                                    </menuItem>
+                                                    <menuItem title="Next Peer" keyEquivalent="]" identifier="Select Split Pane.Next Pane" id="ZtC-pi-TV2">
+                                                        <modifierMask key="keyEquivalentModifierMask" option="YES" command="YES"/>
+                                                        <connections>
+                                                            <action selector="nextWorkgroupPeer:" target="-1" id="jNf-zE-95u"/>
+                                                        </connections>
+                                                    </menuItem>
                                                 </items>
                                             </menu>
                                         </menuItem>

@@ -132,6 +132,30 @@ final class iTermWorkgroupPeerPort: PTYSessionPeerPort {
         return activate(identifier: peerConfigs[targetIndex].uniqueIdentifier)
     }
 
+    // Number of peers in the group — exposed so the Workgroups menu can
+    // disable the next/previous-peer items when there's nothing to cycle.
+    @objc var peerCount: Int { peerConfigs.count }
+
+    @objc @discardableResult
+    func activateNextPeer() -> Bool {
+        return activatePeer(byOffset: 1)
+    }
+
+    @objc @discardableResult
+    func activatePreviousPeer() -> Bool {
+        return activatePeer(byOffset: -1)
+    }
+
+    private func activatePeer(byOffset offset: Int) -> Bool {
+        let count = peerConfigs.count
+        guard count > 1 else { return false }
+        let currentID = activeSessionIdentifier
+        let baseIndex = peerConfigs.firstIndex { $0.uniqueIdentifier == currentID } ?? 0
+        // Modulo with sign correction so a negative offset wraps to the end.
+        let targetIndex = ((baseIndex + offset) % count + count) % count
+        return activate(identifier: peerConfigs[targetIndex].uniqueIdentifier)
+    }
+
     // Flat list of every toolbar item view across all peers — used by
     // the workgroup instance to fan out poller updates without having
     // to know about per-peer organization.
