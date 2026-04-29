@@ -48,6 +48,13 @@ class CodeReviewPromptView: NSView {
     private let buttonHeight: CGFloat = 28
     private let titleHeight: CGFloat = 18
 
+    // Block-based KVO token. Manual addObserver/removeObserver against a
+    // weak SessionView is unsafe at tear-down: ARC zeros weak refs before
+    // -[NSView dealloc] propagates removeFromSuperview to subviews, so
+    // viewWillMove(toSuperview: nil) would see a nil ref and skip removal,
+    // tripping the "deallocated while observers still registered" trap.
+    private var panelReservationObservation: NSKeyValueObservation?
+
     @objc override init(frame frameRect: NSRect) {
         scrollView = NSScrollView(frame: .zero)
         textView = ShiftReturnSubmittingTextView(frame: .zero)
@@ -180,6 +187,7 @@ class CodeReviewPromptView: NSView {
                 name: NSView.frameDidChangeNotification,
                 object: oldSuperview)
         }
+        panelReservationObservation = nil
     }
 
     override func viewDidMoveToSuperview() {
@@ -191,6 +199,19 @@ class CodeReviewPromptView: NSView {
                 selector: #selector(superviewFrameDidChange(_:)),
                 name: NSView.frameDidChangeNotification,
                 object: newSuperview)
+            // The right-gutter panel reservation can change without the
+            // SessionView frame changing — e.g., when the session finishes
+            // setup and instantiates panels after the overlay is already up,
+            // or when a panel is toggled by a non-resize path. Observe it
+            // directly so the overlay re-insets in those cases.
+            if let sessionView = newSuperview as? SessionView {
+                panelReservationObservation = sessionView.observe(
+                    \.actualPanelReservation,
+                    options: [.new]
+                ) { [weak self] _, _ in
+                    self?.updateFrameFromProvider()
+                }
+            }
             updateFrameFromProvider()
         }
     }

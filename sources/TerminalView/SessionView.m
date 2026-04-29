@@ -2602,13 +2602,13 @@ typedef NS_OPTIONS(NSUInteger, iTermCornerFlags) {
     // Make it change its height
     [(iTermAnnouncementView *)_currentAnnouncement.view sizeToFit];
 
-    // Fix the origin
+    // Fix the origin. While the announcement is visible the title strip is
+    // hidden (see -showNextAnnouncement and issue 6981), so the announcement
+    // legitimately reuses that space — don't subtract titleHeight. The
+    // toolbar stays visible, so keep the announcement clear of it. This
+    // matches the slide-in target frame in -showNextAnnouncement.
     rect = _currentAnnouncement.view.frame;
-    rect.origin.y = self.frame.size.height - _currentAnnouncement.view.frame.size.height;
-    if (_showTitle) {
-        rect.origin.y -= iTermGetSessionViewTitleHeight();
-    }
-    rect.origin.y -= [self toolbarReservedHeight];
+    rect.origin.y = self.frame.size.height - _currentAnnouncement.view.frame.size.height - [self toolbarReservedHeight];
     _currentAnnouncement.view.frame = rect;
 }
 
@@ -2634,9 +2634,12 @@ typedef NS_OPTIONS(NSUInteger, iTermCornerFlags) {
         _currentAnnouncement = possibleAnnouncement;
         [self updateAnnouncementFrame];
 
-        // Animate in
+        // Animate in. The title strip is hidden below for the duration of
+        // the announcement (see issue 6981), so we don't subtract titleHeight
+        // — the announcement legitimately reuses that space. The toolbar,
+        // however, stays visible, so keep the announcement clear of it.
         NSRect finalRect = NSMakeRect(0,
-                                      self.frame.size.height - _currentAnnouncement.view.frame.size.height,
+                                      self.frame.size.height - _currentAnnouncement.view.frame.size.height - [self toolbarReservedHeight],
                                       self.frame.size.width,
                                       _currentAnnouncement.view.frame.size.height);
 

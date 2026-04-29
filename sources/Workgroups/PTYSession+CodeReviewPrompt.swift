@@ -89,8 +89,14 @@ extension PTYSession {
             sub.removeFromSuperview()
         }
         let promptView = CodeReviewPromptView(frame: sessionView.scrollview.frame)
+        // Avoid the right-gutter panel strip (clippings, etc.) so the
+        // overlay's right edge aligns with the inner edge of the panel area
+        // rather than running underneath panels.
         promptView.frameProvider = { [weak sessionView] in
-            sessionView?.scrollview.frame ?? .zero
+            guard let sessionView else { return .zero }
+            var rect = sessionView.scrollview.frame
+            rect.size.width = max(0, rect.size.width - sessionView.actualPanelReservation)
+            return rect
         }
         if let defaultPrompt = iTermPreferences.string(forKey: kPreferenceKeyAIPromptCodeReview) {
             promptView.text = defaultPrompt
