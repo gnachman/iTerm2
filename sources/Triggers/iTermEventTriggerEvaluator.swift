@@ -241,9 +241,17 @@ class EventTriggerEvaluator: NSObject {
               let triggers = eventTriggers[matchType] else { return }
         let jobLower = job.lowercased()
         for trigger in triggers where !trigger.disabled {
-            if let target = trigger.eventParams?["jobName"] as? String,
-               !target.isEmpty,
-               target.lowercased() != jobLower {
+            // A jobName filter is required: firing on every job
+            // ancestry change would mean an Exit Workgroup trigger
+            // tears the workgroup down whenever any short-lived
+            // child (e.g. cc-status) ends, even though the host
+            // process is still running.
+            guard let target = trigger.eventParams?["jobName"] as? String,
+                  !target.isEmpty else {
+                DLog("[\(sessionDescription)] Skip trigger \(trigger.action) for job \(job) because no jobName filter is set")
+                continue
+            }
+            if target.lowercased() != jobLower {
                 continue
             }
             fireTrigger(trigger, capturedStrings: [job])
