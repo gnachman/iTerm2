@@ -259,7 +259,13 @@ class AdapterPasswordDataSource: CommandLinePasswordDataSource {
                 if FileManager.default.itemIsDirectory(url.path) {
                     return true
                 }
-                return url.lastPathComponent == name
+                if url.lastPathComponent == name {
+                    return true
+                }
+                // NSOpenPanel may resolve symlinks before calling this delegate.
+                // Homebrew’s ‘bw’ is a chain of symlinks ending at build/bw.js,
+                // so accept names like bw.js as well.
+                return url.deletingPathExtension().lastPathComponent == name
             }
         }
 

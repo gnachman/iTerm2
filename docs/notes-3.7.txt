@@ -314,7 +314,8 @@ Bug Fixes:
 - Fix the password-manager CLI picker
   greying out interpreter scripts (such as
   the Homebrew-installed Bitwarden ‘bw’,
-  which is a Node.js script).
+  which is a Node.js script). Also accept
+  the symlink target name (e.g. bw.js).
 - Improved energy efficiency.
 - Fix bell and other user notifications not being
   posted when iTerm2 is not hidden behind another
