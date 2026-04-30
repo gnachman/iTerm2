@@ -389,6 +389,10 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
     return _toolbarView ? iTermGetSessionViewToolbarHeight() : 0;
 }
 
+- (CGFloat)titleReservedHeight {
+    return _showTitle ? iTermGetSessionViewTitleHeight() : 0;
+}
+
 - (void)updateToolbarFrame {
     if (!_toolbarView) {
         return;
@@ -2602,13 +2606,11 @@ typedef NS_OPTIONS(NSUInteger, iTermCornerFlags) {
     // Make it change its height
     [(iTermAnnouncementView *)_currentAnnouncement.view sizeToFit];
 
-    // Fix the origin. While the announcement is visible the title strip is
-    // hidden (see -showNextAnnouncement and issue 6981), so the announcement
-    // legitimately reuses that space — don't subtract titleHeight. The
-    // toolbar stays visible, so keep the announcement clear of it. This
-    // matches the slide-in target frame in -showNextAnnouncement.
+    // Fix the origin so the announcement sits below any title strip and
+    // toolbar. Both reserve their slot at the top of the SessionView; if we
+    // skip either the announcement runs into them.
     rect = _currentAnnouncement.view.frame;
-    rect.origin.y = self.frame.size.height - _currentAnnouncement.view.frame.size.height - [self toolbarReservedHeight];
+    rect.origin.y = self.frame.size.height - _currentAnnouncement.view.frame.size.height - [self toolbarReservedHeight] - [self titleReservedHeight];
     _currentAnnouncement.view.frame = rect;
 }
 
@@ -2634,18 +2636,16 @@ typedef NS_OPTIONS(NSUInteger, iTermCornerFlags) {
         _currentAnnouncement = possibleAnnouncement;
         [self updateAnnouncementFrame];
 
-        // Animate in. The title strip is hidden below for the duration of
-        // the announcement (see issue 6981), so we don't subtract titleHeight
-        // — the announcement legitimately reuses that space. The toolbar,
-        // however, stays visible, so keep the announcement clear of it.
+        // Animate in. The announcement sits below any title strip and
+        // toolbar — both reserve their slot at the top of the SessionView,
+        // so we subtract both heights here too.
         NSRect finalRect = NSMakeRect(0,
-                                      self.frame.size.height - _currentAnnouncement.view.frame.size.height - [self toolbarReservedHeight],
+                                      self.frame.size.height - _currentAnnouncement.view.frame.size.height - [self toolbarReservedHeight] - [self titleReservedHeight],
                                       self.frame.size.width,
                                       _currentAnnouncement.view.frame.size.height);
 
         NSRect initialRect = finalRect;
         initialRect.origin.y += finalRect.size.height;
-        _title.hidden = YES;
         _currentAnnouncement.view.frame = initialRect;
 
         [_currentAnnouncement.view.animator setFrame:finalRect];
@@ -2653,8 +2653,6 @@ typedef NS_OPTIONS(NSUInteger, iTermCornerFlags) {
         _currentAnnouncement.view.autoresizingMask = NSViewWidthSizable | NSViewMinYMargin;
         [_currentAnnouncement didBecomeVisible];
         [self addSubviewBelowFindView:_currentAnnouncement.view];
-    } else {
-        _title.hidden = NO;
     }
     [self.delegate sessionViewAnnouncementDidChange:self];
 }
