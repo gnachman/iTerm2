@@ -388,7 +388,7 @@ class CCDiffSelectorItem: SessionToolbarControl {
 
         button.target = self
         button.action = #selector(selectionDidChange(_:))
-        // The Staged/Unstaged/Untracked rows are header-only and set
+        // The Staged/Unstaged rows are header-only and set
         // isEnabled=false on themselves. NSMenu's default
         // auto-enable logic asks the responder chain whether each
         // item is enabled, ignoring isEnabled when the action is nil
@@ -413,11 +413,13 @@ class CCDiffSelectorItem: SessionToolbarControl {
         let unstaged = statuses.filter {
             $0.workdirStatus != .none && $0.workdirStatus != .untracked
         }
-        let untracked = statuses.filter { $0.workdirStatus == .untracked }
 
         // Use every reported file's path for prefix shortening, even
         // when groups overlap — picking a smaller subset would let the
         // shortened display vary based on which group a file lives in.
+        // Untracked files are intentionally excluded from the menu but
+        // still contribute to the shared prefix so the displayed paths
+        // line up with the rest of the working tree.
         let allPaths = statuses.map { $0.path }
         let segmentedAll = allPaths.map { ($0 as NSString).pathComponents }
         let prefixLength = segmentedAll.map { $0.dropLast() }
@@ -426,7 +428,13 @@ class CCDiffSelectorItem: SessionToolbarControl {
         let previouslySelected = button.selectedItem?.representedObject as? String
         button.menu?.removeAllItems()
 
-        let allFilesItem = NSMenuItem(title: "All Files",
+        // No staged or unstaged changes means there's nothing to diff
+        // — relabel the catch-all row so the dropdown reads "Empty
+        // Diff" and disable the control to signal it's not actionable.
+        let hasChanges = !staged.isEmpty || !unstaged.isEmpty
+        button.isEnabled = hasChanges
+        let allFilesTitle = hasChanges ? "All Files" : "Empty Diff"
+        let allFilesItem = NSMenuItem(title: allFilesTitle,
                                       action: nil,
                                       keyEquivalent: "")
         allFilesItem.representedObject = Self.allFilesMarker
@@ -441,12 +449,6 @@ class CCDiffSelectorItem: SessionToolbarControl {
                  ordered: &ordered)
         addGroup(title: "Unstaged",
                  entries: unstaged,
-                 prefixLength: prefixLength,
-                 column: \.workdirStatus,
-                 letterColor: .systemRed,
-                 ordered: &ordered)
-        addGroup(title: "Untracked",
-                 entries: untracked,
                  prefixLength: prefixLength,
                  column: \.workdirStatus,
                  letterColor: .systemRed,
@@ -480,8 +482,8 @@ class CCDiffSelectorItem: SessionToolbarControl {
     // Adds a separator + disabled header + one menu row per file in
     // `entries`. No-op when entries is empty (keeps the menu free of
     // empty-section separators). `letterColor` tints the porcelain
-    // letter only — green for staged, red for unstaged/untracked,
-    // matching `git status` defaults.
+    // letter only — green for staged, red for unstaged, matching
+    // `git status` defaults.
     private func addGroup(title: String,
                           entries: [iTermGitFileStatus],
                           prefixLength: Int,

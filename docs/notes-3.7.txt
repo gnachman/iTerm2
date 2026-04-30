@@ -428,3 +428,8 @@ Bug Fixes:
 - New Next Peer (⌘⌥]) and Previous Peer
   (⌘⌥[) commands in the Window menu cycle
   the active peer in the current workgroup.
+- The workgroup toolbar’s git file selector
+  no longer lists untracked files; only
+  staged and unstaged changes appear. When
+  there are no changes, the control is
+  disabled and reads “Empty Diff”.
