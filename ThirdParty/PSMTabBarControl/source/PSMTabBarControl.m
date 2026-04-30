@@ -1513,7 +1513,6 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionPUAFontProvider = @"PSMTabBarCon
 
     for (i = 0; i < cellCount; i++) {
         id cell = [_cells objectAtIndex:i];
-        [[NSNotificationCenter defaultCenter] removeObserver:cell];
         [cell removeCloseButtonTrackingRectFrom:self];
         [cell removeCellTrackingRectFrom:self];
     }

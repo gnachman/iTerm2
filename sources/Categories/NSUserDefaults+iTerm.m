@@ -6,6 +6,7 @@
 //
 
 #import "NSDictionary+iTerm.h"
+#import "NSObject+iTerm.h"
 #import "NSUserDefaults+iTerm.h"
 #import "iTermUserDefaults.h"
 
@@ -34,7 +35,7 @@ static NSMutableDictionary<NSString *, NSMutableArray<iTermUserDefaultsBlock> *>
     }
     [[iTermUserDefaults userDefaults] addObserver:self
                                             forKeyPath:key
-                                               options:NSKeyValueObservingOptionNew
+                                               options:NSKeyValueObservingOptionNew | NSKeyValueObservingOptionOld
                                                context:(void *)&iTermUserDefaultsKVOKey];
 }
 
@@ -52,6 +53,15 @@ static NSMutableDictionary<NSString *, NSMutableArray<iTermUserDefaultsBlock> *>
                         change:(NSDictionary *)change
                        context:(void *)context {
     if (context == &iTermUserDefaultsKVOKey) {
+        // CFPreferences fires KVO on every write to the defaults domain even
+        // when the value is unchanged (e.g., a process rewrites the same
+        // value, or another process touches the domain). Drop no-op changes
+        // so observers don't pay for the side effects.
+        id oldValue = change[NSKeyValueChangeOldKey];
+        id newValue = change[NSKeyValueChangeNewKey];
+        if ([NSObject object:oldValue isEqualToObject:newValue]) {
+            return;
+        }
         NSMutableDictionary<NSString *, NSMutableArray<iTermUserDefaultsBlock> *> *blocks =
             iTermUserDefaultsObserverBlocks();
         NSArray<iTermUserDefaultsBlock> *array;
@@ -60,7 +70,6 @@ static NSMutableDictionary<NSString *, NSMutableArray<iTermUserDefaultsBlock> *>
             // an immutable copy even if the inner array is mutated later.
             array = [blocks[keyPath] copy];
         }
-        id newValue = change[NSKeyValueChangeNewKey];
         dispatch_async(dispatch_get_main_queue(), ^{
             for (iTermUserDefaultsBlock block in array) {
                 block(newValue);
