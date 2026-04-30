@@ -3337,6 +3337,9 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
     if (self.isBrowserSession) {
         return;
     }
+    if (self.workgroupInstance != nil) {
+        return;
+    }
     if (_tmuxMode == TMUX_CLIENT && (_tmuxController.detached || _tmuxController.detaching)) {
         return;
     }
