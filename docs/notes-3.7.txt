@@ -442,3 +442,6 @@ Bug Fixes:
   refreshes to show the new peer’s items
   and unmaximize restores the new peer in
   place of the old one.
+- Fix announcement banner overlapping the
+  workgroup toolbar after switching to a
+  peer whose pane title strip is shown.
