@@ -437,3 +437,8 @@ Bug Fixes:
   staged and unstaged changes appear. When
   there are no changes, the control is
   disabled and reads “Empty Diff”.
+- Fix workgroup peer switching while a
+  split pane is maximized so the toolbar
+  refreshes to show the new peer’s items
+  and unmaximize restores the new peer in
+  place of the old one.

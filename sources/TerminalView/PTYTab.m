@@ -5608,6 +5608,21 @@ typedef struct {
     [existing.view removeFromSuperview];
     [splitView insertSubview:buried.view atIndex:index];
     buried.delegate = self;
+    // When maximized, idMap_ and viewToSessionMap still resolve the swapped-out
+    // peer's view to the (now buried) existing session. -[self sessions]
+    // iterates idMap_ in maximized mode, so without remapping, updatePaneTitles
+    // never reaches buried to refresh its toolbar items, and unmaximize would
+    // restore existing.view in the active slot instead of buried.view.
+    if (isMaximized_) {
+        for (NSNumber *key in idMap_) {
+            if (idMap_[key] == existing.view) {
+                idMap_[key] = buried.view;
+                [buried.view setSavedSize:existing.view.savedSize];
+                break;
+            }
+        }
+        [self.viewToSessionMap removeObjectForKey:existing.view];
+    }
     [self setActiveSession:buried];
     [splitView adjustSubviews];
     [self updatePaneTitles];
