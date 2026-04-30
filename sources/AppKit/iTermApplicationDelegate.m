@@ -1590,7 +1590,8 @@ void TurnOnDebugLoggingAutomatically(void) {
         [iTermClaudeCodeOnboarding ensureCCStatusSymlink];
     }
     if (_workgroupsMenuItem) {
-        [iTermWorkgroupMenu attachTo:_workgroupsMenuItem];
+        [iTermWorkgroupMenu attachTo:_workgroupsMenuItem
+                           separator:_workgroupsSeparator];
     }
 #if DEBUG
     NSMenu *appMenu = [[[[NSApp mainMenu] itemArray] firstObject] submenu];

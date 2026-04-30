@@ -282,7 +282,19 @@
                             </menuItem>
                             <menuItem title="Workgroups" id="OW4-ru-6dZ">
                                 <modifierMask key="keyEquivalentModifierMask"/>
-                                <menu key="submenu" title="Workgroups" id="wMa-7x-vmS"/>
+                                <menu key="submenu" title="Workgroups" id="wMa-7x-vmS">
+                                    <items>
+                                        <menuItem isSeparatorItem="YES" id="lAc-WU-Rz6">
+                                            <modifierMask key="keyEquivalentModifierMask" command="YES"/>
+                                        </menuItem>
+                                        <menuItem title="Exit Workgroup" identifier="Close All Panes in Tab" id="JqP-Wg-vG9">
+                                            <modifierMask key="keyEquivalentModifierMask"/>
+                                            <connections>
+                                                <action selector="exitWorkgroup:" target="-1" id="gUE-ME-NzR"/>
+                                            </connections>
+                                        </menuItem>
+                                    </items>
+                                </menu>
                             </menuItem>
                             <menuItem isSeparatorItem="YES" id="0Pe-Q6-LEJ">
                                 <modifierMask key="keyEquivalentModifierMask" command="YES"/>
@@ -2041,6 +2053,7 @@ CQ
                 <outlet property="windowArrangementsAsTabs_" destination="z6V-EJ-Ntf" id="wse-Wc-WVw"/>
                 <outlet property="windowArrangements_" destination="1280" id="1285"/>
                 <outlet property="workgroupsMenuItem" destination="OW4-ru-6dZ" id="Yvx-Rp-XKF"/>
+                <outlet property="workgroupsSeparator" destination="lAc-WU-Rz6" id="Ylg-qm-L6J"/>
             </connections>
         </customObject>
         <customObject id="266" userLabel="Font Manager" customClass="NSFontManager"/>

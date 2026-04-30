@@ -11,50 +11,50 @@ import AppKit
 // itself is defined in MainMenu.xib and reaches us through the
 // app delegate's `workgroupsMenuItem` IBOutlet — install() wires
 // the existing item to this delegate, which populates the submenu
-// on demand from iTermWorkgroupModel.
+// on demand from iTermWorkgroupModel. The xib also carries a
+// trailing separator + "Exit Workgroup" item that we leave alone;
+// dynamic workgroup entries are inserted above the separator.
 @objc(iTermWorkgroupMenu)
 final class WorkgroupMenu: NSObject, NSMenuDelegate {
     @objc static let instance = WorkgroupMenu()
 
+    private weak var separator: NSMenuItem?
+
     @objc
-    static func attach(to menuItem: NSMenuItem) {
-        instance.attach(to: menuItem)
+    static func attach(to menuItem: NSMenuItem, separator: NSMenuItem) {
+        instance.attach(to: menuItem, separator: separator)
     }
 
-    private func attach(to menuItem: NSMenuItem) {
+    private func attach(to menuItem: NSMenuItem, separator: NSMenuItem) {
         let submenu = menuItem.submenu ?? {
             let m = NSMenu(title: menuItem.title)
             menuItem.submenu = m
             return m
         }()
         submenu.delegate = self
-        // Wipe any placeholder items the xib carried so menuNeedsUpdate
-        // is the sole source of truth.
-        submenu.removeAllItems()
+        self.separator = separator
     }
 
     // MARK: - NSMenuDelegate
 
     func menuNeedsUpdate(_ menu: NSMenu) {
-        menu.removeAllItems()
-        let workgroups = iTermWorkgroupModel.instance.workgroups
-        if workgroups.isEmpty {
-            let placeholder = NSMenuItem(
-                title: "No Workgroups Configured",
-                action: nil,
-                keyEquivalent: "")
-            placeholder.isEnabled = false
-            menu.addItem(placeholder)
-            return
+        // Drop previous dynamic entries (everything above the
+        // separator); leave the separator and "Exit Workgroup" item
+        // from the xib in place.
+        while let first = menu.items.first, first !== separator {
+            menu.removeItem(first)
         }
-        for wg in workgroups {
+        let workgroups = iTermWorkgroupModel.instance.workgroups
+        separator?.isHidden = workgroups.isEmpty
+        for (index, wg) in workgroups.enumerated() {
             let title = wg.name.isEmpty ? "Untitled" : wg.name
-            let entry = menu.addItem(
-                withTitle: title,
+            let entry = NSMenuItem(
+                title: title,
                 action: #selector(enterWorkgroup(_:)),
                 keyEquivalent: "")
             entry.target = self
             entry.representedObject = wg.uniqueIdentifier
+            menu.insertItem(entry, at: index)
         }
     }
 

@@ -57,6 +57,10 @@ Major New Features:
   workgroup’s review peer uses this mode
   by default.
 
+- The Shell > Workgroups submenu now has
+  an Exit Workgroup item to leave the
+  current session’s workgroup.
+
 - The new Fold All menu item folds everything
   (aside from folds at the very top of history).
   This makes it easy to keep history around
