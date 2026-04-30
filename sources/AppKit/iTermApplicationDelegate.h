@@ -69,6 +69,7 @@ void TurnOnDebugLoggingAutomatically(void);
 @property(nonatomic, readonly) iTermScriptsMenuController *scriptsMenuController;
 @property(nonatomic, readonly) BOOL toggleFullScreenHasCmdEnterShortcut;
 @property(nonatomic, strong) IBOutlet NSMenuItem *workgroupsMenuItem;
+@property(nonatomic, strong) IBOutlet NSMenuItem *workgroupsSeparator;
 
 - (void)updateMaximizePaneMenuItem;
 - (void)updateUseTransparencyMenuItem;

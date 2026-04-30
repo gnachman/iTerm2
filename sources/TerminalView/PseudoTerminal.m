@@ -11932,6 +11932,8 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
         return !self.currentSession.isBrowserSession;
     } else if (item.action == @selector(moveTabToNewWindow:)) {
         return [_contentView.tabView numberOfTabViewItems] > 1;
+    } else if (item.action == @selector(exitWorkgroup:)) {
+        return self.currentSession.workgroupInstance != nil;
     }
 
     return result;
@@ -12226,6 +12228,10 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
         }
         [self closeTab:tab];
     }
+}
+
+- (IBAction)exitWorkgroup:(id)sender {
+    [iTermWorkgroupController.instance exitOn:self.currentSession];
 }
 
 // Move a tab to a new window due to a context menu selection.
