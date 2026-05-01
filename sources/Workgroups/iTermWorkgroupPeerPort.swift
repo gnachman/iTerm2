@@ -136,6 +136,25 @@ final class iTermWorkgroupPeerPort: PTYSessionPeerPort {
     // disable the next/previous-peer items when there's nothing to cycle.
     @objc var peerCount: Int { peerConfigs.count }
 
+    // Display label for the peer registered under `id` — falls back to
+    // "Peer" when the config's displayName is empty (matches how
+    // peerLabel renders in WorkgroupVisualView and the mode switcher).
+    @objc func label(forPeerID id: String) -> String? {
+        return peerMembers.first { $0.identifier == id }?.label
+    }
+
+    // 1-based position of the peer registered under `id` in the peer
+    // configs, or 0 when not found. Used to compute the peer's
+    // ⌥⇧⌘<digit> activation shortcut for display.
+    @objc func position(forPeerID id: String) -> Int {
+        guard let i = peerConfigs.firstIndex(where: {
+            $0.uniqueIdentifier == id
+        }) else {
+            return 0
+        }
+        return i + 1
+    }
+
     @objc @discardableResult
     func activateNextPeer() -> Bool {
         return activatePeer(byOffset: 1)

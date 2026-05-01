@@ -14857,6 +14857,22 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
         [[NSApplication sharedApplication] activateIgnoringOtherApps:YES];
     }
 
+    // If this session is a non-visible workgroup peer, its view isn't
+    // in the splitview — setActiveSessionPreservingMaximization can't
+    // do the right thing. Route through the peer port instead, which
+    // swaps this peer's view in and burying the previously-active
+    // sibling. The port's sessionActivate then sets the active session
+    // for us, so don't fall through to the plain setActiveSession path.
+    PTYSessionPeerPort *port = self.peerPort;
+    if (port && port.activeSession != self) {
+        NSString *identifier = [port identifierForSession:self];
+        if (identifier) {
+            DLog(@"Activate peer %@ via port", identifier);
+            [port activateIdentifier:identifier];
+            return;
+        }
+    }
+
     DLog(@"Make this session active in delegate %@", _delegate);
     [_delegate setActiveSessionPreservingMaximization:self];
 }

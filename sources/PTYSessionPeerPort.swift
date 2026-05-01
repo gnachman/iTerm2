@@ -60,8 +60,30 @@ class PTYSessionPeerPort: NSObject {
         return Array(peers.values).anySatisfies { $0.maybeValue === session }
     }
 
+    // True when any peer in this port has the given session GUID,
+    // whether that peer is currently in a tab or buried. Used to
+    // decide whether a buried-or-orphaned peer's status belongs in
+    // this peer group's window.
+    @objc(containsPeerWithGUID:)
+    func containsPeer(guid: String) -> Bool {
+        return peers.values.contains { $0.maybeValue?.guid == guid }
+    }
+
+    // The realized peer session matching `guid`, or nil. Used by
+    // callers (e.g. the toolbelt's row-resolution) that have a
+    // session GUID but can't find it in the usual places (tab list
+    // or iTermBuriedSessions) because the peer was never registered
+    // there — see addBuriedSession's "Failed to create restorable
+    // session" early-return for the workgroup-peer-born-buried case.
+    @objc(peerSessionWithGUID:)
+    func peerSession(withGUID guid: String) -> PTYSession? {
+        return peers.values.compactMap { $0.maybeValue }
+            .first { $0.guid == guid }
+    }
+
     // Reverse-lookup: returns the peer-group identifier that `session`
     // is registered under, or nil if it isn't in this port.
+    @objc(identifierForSession:)
     func identifier(for session: PTYSession) -> String? {
         for (id, promise) in peers {
             if promise.maybeValue === session {
@@ -77,6 +99,8 @@ class PTYSessionPeerPort: NSObject {
         return peers[identifier]?.maybeValue
     }
 
+    @objc(activateIdentifier:)
+    @discardableResult
     func activate(identifier: String) -> Bool {
         guard let promise = peers[identifier] else {
             return false

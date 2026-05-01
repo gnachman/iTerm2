@@ -1643,10 +1643,34 @@ extension PTYSession {
             swiftState!.peerPort = newValue
         }
     }
-    
+
+    // Read-only bridge for ObjC. We deliberately don't make the Swift
+    // `peerPort` property `@objc` directly: doing so would also expose
+    // the setter to ObjC, which lets callers bypass `set(peerPort:)`'s
+    // "self.peerPort == nil" invariant. ObjC consumers that need to
+    // *read* the peer port (e.g. the toolbelt's window-contains check)
+    // go through this method.
+    @objc(peerPort)
+    func _objcPeerPort() -> PTYSessionPeerPort? {
+        return peerPort
+    }
+
     func set(peerPort: PTYSessionPeerPort) {
         it_assert(self.peerPort == nil)
         self.peerPort = peerPort
+    }
+
+    // Display label identifying this peer within its workgroup peer
+    // group, or nil when the session isn't a member of a multi-peer
+    // workgroup port. Used by the Session Status toolbelt tool to
+    // disambiguate rows for sessions that share a tab/workgroup name.
+    var peerDisplayLabel: String? {
+        guard let port = peerPort as? iTermWorkgroupPeerPort,
+              port.peerCount > 1,
+              let id = port.identifier(for: self) else {
+            return nil
+        }
+        return port.label(forPeerID: id)
     }
 
     // Workgroup runtime: when a workgroup is active on this session,

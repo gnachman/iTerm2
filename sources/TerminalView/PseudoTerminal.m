@@ -13368,7 +13368,10 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
 
 - (BOOL)toolbeltWindowContainsSessionWithGUID:(NSString *)guid {
     return [self.allSessions anyWithBlock:^BOOL(PTYSession *session) {
-        return [session.guid isEqualToString:guid];
+        if ([session.guid isEqualToString:guid]) {
+            return YES;
+        }
+        return [session.peerPort containsPeerWithGUID:guid];
     }];
 }
 

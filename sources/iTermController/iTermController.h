@@ -183,6 +183,19 @@ replaceInitialDirectoryForSessionWithGUID:(NSString *)guid
 - (void)addTerminalWindow:(PseudoTerminal *)terminalWindow;
 - (PTYSession *)sessionWithGUID:(NSString *)identifier;
 
+// Like -sessionWithGUID: but also finds (a) buried sessions and
+// (b) workgroup peers reachable through any in-tab session's peer
+// port. Use this when the caller needs a stable handle on a session
+// regardless of whether it's currently visible in a tab — e.g. the
+// Session Status toolbelt, which displays rows for buried/non-visible
+// peers and needs to resolve them to a PTYSession to render the row
+// or activate the peer on click. Peers can be invisible to both
+// -sessionWithGUID: and iTermBuriedSessions (the
+// addBuriedSession path silently drops sessions when
+// restorableSessionForSession returns nil), but their peer port still
+// holds a strong reference, which is why the third leg matters.
+- (PTYSession *)anySessionWithGUID:(NSString *)identifier;
+
 // sessionID is of the form "w0t0p0:guid"
 - (void)revealSessionID:(NSString *)sessionID;
 - (void)revealSessionWithGUID:(NSString *)guid;

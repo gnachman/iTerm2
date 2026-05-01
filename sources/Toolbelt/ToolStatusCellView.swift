@@ -9,6 +9,10 @@ import Foundation
 
 class ToolStatusCellView: NSTableCellView {
     private let dotView = NSImageView()
+    // Optional peer-group label inserted between the dot and the
+    // session name when the session belongs to a multi-peer workgroup.
+    // Hidden for solo sessions.
+    private let peerLabel = NSTextField(labelWithString: "")
     private var nameLabel = iTermSwiftyStringTextField(labelWithString: "")
     private let shortcutLabel = NSTextField(labelWithString: "")
     private let statusLabel = NSTextField(labelWithString: "")
@@ -17,6 +21,8 @@ class ToolStatusCellView: NSTableCellView {
     private let margin: CGFloat = 4
     private let dotSize: CGFloat = 10
     private let dotNameSpacing: CGFloat = 4
+    // Gap between the peer label and the session name.
+    private let peerNameSpacing: CGFloat = 6
     private let rowSpacing: CGFloat = 1
     // Detail text hangs one indent level in from the status row.
     private let detailIndent: CGFloat = 14
@@ -29,6 +35,12 @@ class ToolStatusCellView: NSTableCellView {
 
         dotView.imageScaling = .scaleProportionallyDown
         addSubview(dotView)
+
+        peerLabel.font = font
+        peerLabel.textColor = .secondaryLabelColor
+        peerLabel.lineBreakMode = .byTruncatingTail
+        peerLabel.isHidden = true
+        addSubview(peerLabel)
 
         nameLabel.font = font
         nameLabel.lineBreakMode = .byTruncatingTail
@@ -59,8 +71,6 @@ class ToolStatusCellView: NSTableCellView {
     required init?(coder: NSCoder) {
         it_fatalError()
     }
-
-    var currentShortcut: String { shortcutLabel.stringValue }
 
     override var isFlipped: Bool { true }
 
@@ -100,14 +110,36 @@ class ToolStatusCellView: NSTableCellView {
             shortcutLabel.sizeToFit()
             shortcutWidth = shortcutLabel.frame.width
         }
+        let shortcutReserve = shortcutWidth > 0 ? shortcutWidth + dotNameSpacing : 0
 
-        // Name label
-        let nameWidth = max(0, textWidth - (shortcutWidth > 0 ? shortcutWidth + dotNameSpacing : 0))
-        nameLabel.frame = NSRect(x: textX, y: y, width: nameWidth, height: 0)
+        // Peer label — capped at half of what's left *after* the
+        // shortcut reservation so the name is guaranteed at least as
+        // much room as the peer label, even on narrow toolbelts where
+        // a wide shortcut would otherwise crowd both out.
+        var peerWidth: CGFloat = 0
+        if !peerLabel.isHidden {
+            peerLabel.sizeToFit()
+            let peerBudget = max(0, textWidth - shortcutReserve) / 2
+            peerWidth = min(peerLabel.frame.width, peerBudget)
+        }
+
+        // Name label gets whatever's left after the shortcut and
+        // optional peer label.
+        let peerReserve = peerWidth > 0 ? peerWidth + peerNameSpacing : 0
+        let nameWidth = max(0, textWidth - shortcutReserve - peerReserve)
+        let nameX = textX + peerReserve
+        nameLabel.frame = NSRect(x: nameX, y: y, width: nameWidth, height: 0)
         nameLabel.sizeToFit()
-        nameLabel.frame = NSRect(x: textX, y: y,
+        nameLabel.frame = NSRect(x: nameX, y: y,
                                  width: nameWidth,
                                  height: nameLabel.frame.height)
+
+        // Place peer label between dot and name
+        if peerWidth > 0 {
+            peerLabel.frame = NSRect(x: textX, y: y,
+                                     width: peerWidth,
+                                     height: nameLabel.frame.height)
+        }
 
         // Place shortcut label right-aligned on the name row
         if !shortcutLabel.isHidden {
@@ -168,6 +200,7 @@ class ToolStatusCellView: NSTableCellView {
 
     func configure(scope: iTermVariableScope,
                    dotImage: NSImage?,
+                   peerLabel: String?,
                    shortcut: String?,
                    statusText: String?,
                    statusColor: NSColor?,
@@ -175,6 +208,10 @@ class ToolStatusCellView: NSTableCellView {
         nameLabel.set(interpolatedString: #"\(iterm2.private.session_name(session: id))"#, scope: scope)
         dotView.image = dotImage
         dotView.isHidden = dotImage == nil
+
+        let peerText = peerLabel ?? ""
+        self.peerLabel.stringValue = peerText
+        self.peerLabel.isHidden = peerText.isEmpty
 
         shortcutLabel.stringValue = shortcut ?? ""
         shortcutLabel.isHidden = (shortcut ?? "").isEmpty

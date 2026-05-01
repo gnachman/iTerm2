@@ -179,7 +179,7 @@ extension ToolStatus {
         pendingFlush = nil
         pendingKeys.removeAll()
         statuses = SessionStatusController.instance.statuses.values.compactMap { status in
-            let contains = delegate?.toolbeltWindowContainsSession(withGUID: status.sessionID) == true
+            let contains = windowContains(sessionGUID: status.sessionID)
             DLog("ToolStatus viewDidMoveToWindow: sessionID=\(status.sessionID) contains=\(contains) hasActive=\(status.hasActiveStatus)")
             if contains {
                 return Status(tabStatus: status, sessionID: status.sessionID)
@@ -252,24 +252,24 @@ private extension ToolStatus {
             return
         }
         updateSelectionWithoutChangingFirstResponder()
+        needsShortcutReload(notification)
     }
 
     @objc
     func needsShortcutReload(_ notification: Notification) {
-        guard let tableView = _tableView else {
+        guard let tableView = _tableView, !statuses.isEmpty else {
             return
         }
-        var changedRows = IndexSet()
-        for (i, status) in statuses.enumerated() {
-            let newShortcut = shortcutString(for: status.sessionID) ?? ""
-            let cell = tableView.view(atColumn: 0, row: i, makeIfNecessary: false) as? ToolStatusCellView
-            if cell?.currentShortcut != newShortcut {
-                changedRows.insert(i)
-            }
-        }
-        if !changedRows.isEmpty {
-            tableView.reloadData(forRowIndexes: changedRows, columnIndexes: IndexSet(integer: 0))
-        }
+        // Active-session changes can shift many rows at once (every
+        // peer-of-focus row gains or loses its ⌥⇧⌘N shortcut), so
+        // reload all rows rather than chase a per-row diff that has
+        // to stay in sync with the active-session computation. The
+        // toolbelt is small so the cost is trivial;
+        // reloadData(forRowIndexes:) preserves selection/scroll,
+        // unlike full reloadData().
+        let allRows = IndexSet(integersIn: 0..<statuses.count)
+        tableView.reloadData(forRowIndexes: allRows,
+                             columnIndexes: IndexSet(integer: 0))
     }
 
     func updateSelectionWithoutChangingFirstResponder() {
@@ -337,7 +337,7 @@ private extension ToolStatus {
         DLog("ToolStatus applyChange: key=\(key) change=\(change) window=\(window.d)")
         switch change {
         case .added:
-            let contains = toolWrapper()?.delegate?.delegate?.toolbeltWindowContainsSession(withGUID: key) == true
+            let contains = windowContains(sessionGUID: key)
             DLog("ToolStatus didChange .added: contains=\(contains)")
             guard contains else {
                 return
@@ -366,7 +366,7 @@ private extension ToolStatus {
                 _tableView?.endUpdates()
             }
         case .updated:
-            guard toolWrapper()?.delegate?.delegate?.toolbeltWindowContainsSession(withGUID: key) == true else {
+            guard windowContains(sessionGUID: key) else {
                 return
             }
             guard let i = statuses.firstIndex(where: { $0.sessionID == key }) else {
@@ -402,24 +402,79 @@ private extension ToolStatus {
         return size
     }
 
+    // Mirrors WorkgroupModeSwitcherItem.shortcutLabel: peers 1..8 get
+    // their numeric digit; the *last* peer gets ⌥⇧⌘9 (which is what
+    // activatePeer(byShortcutDigit: 9) does); peers between 9 and
+    // count-1 get nothing.
+    func peerSwitchShortcutLabel(port: iTermWorkgroupPeerPort,
+                                 peerID: String) -> String? {
+        let position = port.position(forPeerID: peerID)
+        guard position > 0 else {
+            return nil
+        }
+        if position <= 8 {
+            return "⌥⇧⌘\(position)"
+        }
+        if position == port.peerCount {
+            return "⌥⇧⌘9"
+        }
+        return nil
+    }
+
     func shortcutString(for sessionID: String) -> String? {
         guard let controller = iTermController.sharedInstance() else {
             return nil
         }
-        guard let session = controller.session(withGUID: sessionID) else {
+        guard let session = controller.anySession(withGUID: sessionID) else {
             return nil
         }
-        guard let terminal = controller.terminal(with: session) else {
+
+        // Peer-of-focus sessions get their ⌥⇧⌘<digit> peer-switch
+        // shortcut, which always wins over pane/tab shortcuts: the
+        // user wants the keystroke that switches *the focused pane*
+        // to this peer, not the keystroke that focuses some other
+        // split. This also applies to the row for the currently
+        // active peer — the shortcut still identifies which peer the
+        // row represents (and pressing it is a harmless no-op).
+        // Non-visible peers are reached via anySession(withGUID:)'s
+        // peer-port fallback; their delegate may not match this tab
+        // but their peerPort reference survives.
+        if let activeGUID = toolWrapper()?.delegate?.delegate?.toolbeltCurrentSessionGUID(),
+           let activeSession = controller.anySession(withGUID: activeGUID),
+           let activePort = activeSession.peerPort as? iTermWorkgroupPeerPort,
+           activePort.contains(session: session),
+           let peerID = activePort.identifier(for: session),
+           let label = peerSwitchShortcutLabel(port: activePort, peerID: peerID) {
+            return label
+        }
+
+        // For pane/tab shortcuts we need a session that's actually in
+        // a tab. If `session` itself isn't (e.g. it's a non-visible
+        // workgroup peer of some other pane), use its port's active
+        // peer instead — that's the in-tab representative of the
+        // group, and clicking the row activates this peer into that
+        // pane, so "Pane N" of the active peer is the right shortcut.
+        let visible: PTYSession
+        if controller.terminal(with: session) != nil {
+            visible = session
+        } else if let activePeer = session.peerPort?.activeSession,
+                  controller.terminal(with: activePeer) != nil {
+            visible = activePeer
+        } else {
             return nil
         }
-        guard let sessionTab = session.delegate as? PTYTab else {
+        guard let terminal = controller.terminal(with: visible) else {
+            return nil
+        }
+        guard let sessionTab = visible.delegate as? PTYTab else {
             return nil
         }
         let currentTab = terminal.currentTab()
 
         if sessionTab === currentTab && sessionTab.sessions().count > 1 {
-            // Session is in the current tab — show pane shortcut
-            let ordinal = session.view.ordinal
+            // Session (or its in-tab peer) is in the current tab —
+            // show pane shortcut.
+            let ordinal = visible.view.ordinal
             if ordinal != 0 {
                 let paneTag = iTermPreferencesModifierTag(
                     rawValue: iTermPreferences.int(forKey: kPreferenceKeySwitchPaneModifier))
@@ -448,9 +503,22 @@ private extension ToolStatus {
         return "\(modString)\(tabIndex)"
     }
 
+    // A status belongs in this toolbelt's window iff the session has a
+    // *live home* there. The window is authoritative: it walks its
+    // tabs and asks each in-tab session's peer port whether it owns
+    // the GUID. So a workgroup peer's status surfaces in the window
+    // hosting any of its peers — whether the queried peer is in a
+    // tab, properly buried, or orphaned (i.e. addBuriedSession failed
+    // to register it). Solo buried sessions have no peer port and so
+    // surface nowhere — they're orphans without a live home.
+    func windowContains(sessionGUID guid: String) -> Bool {
+        return toolWrapper()?.delegate?.delegate?
+            .toolbeltWindowContainsSession(withGUID: guid) == true
+    }
+
     func configureCell(_ cell: ToolStatusCellView, for row: Int) {
         let status = statuses[row]
-        guard let session = iTermController.sharedInstance()?.session(withGUID: status.sessionID) else {
+        guard let session = iTermController.sharedInstance()?.anySession(withGUID: status.sessionID) else {
             return
         }
         let tabStatus = status.tabStatus
@@ -470,6 +538,7 @@ private extension ToolStatus {
 
         cell.configure(scope: session.genericScope,
                        dotImage: dotImage,
+                       peerLabel: session.peerDisplayLabel,
                        shortcut: shortcutString(for: status.sessionID),
                        statusText: tabStatus.statusText,
                        statusColor: statusColor,
@@ -520,11 +589,12 @@ extension ToolStatus: NSTableViewDelegate {
         if row == -1 {
             return
         }
-        guard iTermController.sharedInstance()?.session(withGUID: statuses[row].sessionID) != nil else {
-            DLog("No session with ID \(statuses[row].sessionID)")
+        let guid = statuses[row].sessionID
+        guard let session = iTermController.sharedInstance()?.anySession(withGUID: guid) else {
+            DLog("No session with ID \(guid)")
             return
         }
-        iTermController.sharedInstance()?.revealSession(withGUID: statuses[row].sessionID)
+        session.reveal()
         window?.makeFirstResponder(_tableView)
     }
 }

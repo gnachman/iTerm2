@@ -1522,6 +1522,27 @@ replaceInitialDirectoryForSessionWithGUID:(NSString *)guid
     return nil;
 }
 
+- (PTYSession *)anySessionWithGUID:(NSString *)identifier {
+    PTYSession *direct = [self sessionWithGUID:identifier];
+    if (direct) {
+        return direct;
+    }
+    for (PTYSession *buried in [[iTermBuriedSessions sharedInstance] buriedSessions]) {
+        if ([buried.guid isEqualToString:identifier]) {
+            return buried;
+        }
+    }
+    for (PseudoTerminal *term in self.terminals) {
+        for (PTYSession *session in term.allSessions) {
+            PTYSession *peer = [session.peerPort peerSessionWithGUID:identifier];
+            if (peer) {
+                return peer;
+            }
+        }
+    }
+    return nil;
+}
+
 - (void)workspaceWillPowerOff:(NSNotification *)notification {
     if ([iTermAdvancedSettingsModel killSessionsOnLogout] && [iTermAdvancedSettingsModel runJobsInServers]) {
         _willPowerOff = YES;
