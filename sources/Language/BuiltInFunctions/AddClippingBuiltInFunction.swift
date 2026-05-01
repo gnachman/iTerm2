@@ -42,7 +42,7 @@ extension AddClippingBuiltInFunction: iTermBuiltInFunctionProtocol {
                     completion(nil, error(message: "Missing required argument"))
                     return
                 }
-                guard let session = iTermController.sharedInstance().session(withGUID: sessionID) else {
+                guard let session = iTermController.sharedInstance().anySession(withGUID: sessionID) else {
                     completion(nil, error(message: "No such session"))
                     return
                 }

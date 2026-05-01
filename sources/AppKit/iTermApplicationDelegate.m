@@ -1936,7 +1936,7 @@ static iTermKeyEventReplayer *gReplayer;
     if (!guid) {
         return;
     }
-    PTYSession *session = [[iTermController sharedInstance] sessionWithGUID:guid];
+    PTYSession *session = [[iTermController sharedInstance] anySessionWithGUID:guid];
     if (!session || !markID) {
         return;
     }
@@ -1958,7 +1958,7 @@ static iTermKeyEventReplayer *gReplayer;
     if (!guid) {
         return;
     }
-    PTYSession *session = [[iTermController sharedInstance] sessionWithGUID:guid];
+    PTYSession *session = [[iTermController sharedInstance] anySessionWithGUID:guid];
     if (!session) {
         return;
     }
@@ -1979,7 +1979,7 @@ static iTermKeyEventReplayer *gReplayer;
     if (!guid) {
         return;
     }
-    PTYSession *session = [[iTermController sharedInstance] sessionWithGUID:guid];
+    PTYSession *session = [[iTermController sharedInstance] anySessionWithGUID:guid];
     selection.delegate = session.textview;
     for (NSURLQueryItem *item in components.queryItems) {
         if ([item.name isEqualToString:@"sub"]) {

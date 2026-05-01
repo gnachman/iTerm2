@@ -121,7 +121,7 @@ class ChatClient {
             model.chat(id: chatID)?.terminalSessionGuid
         }
         guard let guid = maybeGuid,
-              let session = iTermController.sharedInstance().session(withGUID: guid) else {
+              let session = iTermController.sharedInstance().anySession(withGUID: guid) else {
             return Message(chatID: chatID,
                            author: .agent,
                            content: .selectSessionRequest(message, terminal: !request.content.permissionCategory.isBrowserSpecific),
@@ -415,7 +415,7 @@ class ChatClient {
                                                 chatID: String,
                                                 messageID: UUID) -> String? {
         let value = update ?? ExplanationResponse.Update(response)
-        guard let session = iTermController.sharedInstance().session(withGUID: response.request.context.sessionID) else {
+        guard let session = iTermController.sharedInstance().anySession(withGUID: response.request.context.sessionID) else {
             return nil
         }
         let aiAnnotations = value.annotations.compactMap {

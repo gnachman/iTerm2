@@ -1546,23 +1546,22 @@ static BOOL iTermAPIHelperLastApplescriptAuthRequiredSetting;
 - (PTYSession *)sessionForAPIIdentifier:(NSString *)identifier includeBuriedSessions:(BOOL)includeBuriedSessions {
     if ([identifier isEqualToString:@"active"]) {
         return [[[iTermController sharedInstance] currentTerminal] currentSession];
-    } else if (identifier) {
-        for (PseudoTerminal *term in [[iTermController sharedInstance] terminals]) {
-            for (PTYSession *session in term.allSessions) {
-                if ([session.guid isEqualToString:identifier]) {
-                    return session;
-                }
-            }
-        }
-        if (includeBuriedSessions) {
-            for (PTYSession *session in [[iTermBuriedSessions sharedInstance] buriedSessions]) {
-                if ([session.guid isEqualToString:identifier]) {
-                    return session;
-                }
-            }
-        }
     }
-    return nil;
+    if (!identifier) {
+        return nil;
+    }
+    if (includeBuriedSessions) {
+        // anySessionWithGUID: covers tab sessions, properly-buried
+        // sessions, *and* workgroup peers reachable via an in-tab
+        // session's peer port. The third leg matters because peers
+        // born buried can fail to register with iTermBuriedSessions
+        // (addBuriedSession early-returns when restorableSessionForSession
+        // is nil) — without it, API calls targeting a non-active peer
+        // get "No such session" before the request reaches the
+        // registered builtin.
+        return [[iTermController sharedInstance] anySessionWithGUID:identifier];
+    }
+    return [[iTermController sharedInstance] sessionWithGUID:identifier];
 }
 
 - (PseudoTerminal *)windowControllerWithID:(NSString *)windowID {

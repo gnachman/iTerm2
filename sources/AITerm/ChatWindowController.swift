@@ -308,7 +308,7 @@ final class ChatWindowController: NSWindowController, DictionaryCodable {
                                            permissions: "")
             chatViewController.load(chatID: chatID)
             chatListViewController.select(chatID: chatID)
-            if let guid, let session = iTermController.sharedInstance().session(withGUID: guid) {
+            if let guid, let session = iTermController.sharedInstance().anySession(withGUID: guid) {
                 let terminal = !session.isBrowserSession()
                 let name = session.name
                 chatViewController.offerLink(to: guid, terminal: terminal, name: name)
@@ -555,7 +555,7 @@ extension ChatWindowController: ChatSearchResultsViewControllerDelegate {
 
 extension ChatWindowController: ChatViewControllerDelegate {
     func chatViewController(_ controller: ChatViewController, revealSessionWithGuid guid: String) -> Bool {
-        if let session = iTermController.sharedInstance().session(withGUID: guid) {
+        if let session = iTermController.sharedInstance().anySession(withGUID: guid) {
             session.reveal()
             return true
         }

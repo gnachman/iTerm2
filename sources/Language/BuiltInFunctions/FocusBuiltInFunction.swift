@@ -32,7 +32,7 @@ extension FocusBuiltInFunction: iTermBuiltInFunctionProtocol {
                     completion(nil, error(message: "Missing session_id. This shouldn't happen so please report a bug."))
                     return
                 }
-                guard let session = iTermController.sharedInstance().session(withGUID: sessionID) else {
+                guard let session = iTermController.sharedInstance().anySession(withGUID: sessionID) else {
                     completion(nil, error(message: "No such session"))
                     return
                 }
@@ -42,6 +42,13 @@ extension FocusBuiltInFunction: iTermBuiltInFunctionProtocol {
     }
 
     private static func execute(session: PTYSession, completion: iTermBuiltInFunctionCompletionBlock) {
+        // reveal() handles disinterring buried sessions and swapping
+        // non-visible workgroup peers into their pane; takeFocus alone
+        // would silently no-op for either case (its first responder
+        // target isn't in any window). Calling reveal first means
+        // "focus" actually focuses the session the caller named,
+        // regardless of visibility, which matches the API's promise.
+        session.reveal()
         session.takeFocus()
         completion(nil, nil)
     }

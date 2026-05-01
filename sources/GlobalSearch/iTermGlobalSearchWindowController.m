@@ -176,7 +176,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     id item = [_outlineView itemAtRow:_outlineView.selectedRow];
     NSString *guid = [NSString castFrom:item];
     if (guid) {
-        PTYSession *session = [[iTermController sharedInstance] sessionWithGUID:guid];
+        PTYSession *session = [[iTermController sharedInstance] anySessionWithGUID:guid];
         [self restoreAlternateScreensWithAnnouncement:YES];
         [session reveal];
         return;

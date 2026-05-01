@@ -34,7 +34,7 @@ extension GetProfilePropertyBuiltInFunction: iTermBuiltInFunctionProtocol {
                     completion(nil, error(message: "Missing session_id. This shouldn't happen so please report a bug."))
                     return
                 }
-                guard let session = iTermController.sharedInstance().session(withGUID: sessionID) else {
+                guard let session = iTermController.sharedInstance().anySession(withGUID: sessionID) else {
                     completion(nil, error(message: "No such session"))
                     return
                 }

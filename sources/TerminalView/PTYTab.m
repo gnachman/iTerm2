@@ -5601,6 +5601,21 @@ typedef struct {
         DLog(@"tmux");
         return;
     }
+    const BOOL wasMaximized = isMaximized_;
+    if (isMaximized_) {
+        // While maximized, root_ contains only the maximized session
+        // and idMap_ holds the original layout's SessionViews
+        // disconnected from any view hierarchy. -[self sessions]
+        // returns idMap_'s sessions, so a peer swap could pick an
+        // `existing` whose view's superview is a stash splitter (or
+        // nil), not root_. Mutating that splitter corrupts the
+        // saved layout and leaves root_ in a state that fails
+        // -unmaximize's "1 subview" invariant later, including
+        // during quit teardown. Restore the split layout first; the
+        // swap then operates on the live tree.
+        DLog(@"Unmaximize before peer swap");
+        [self unmaximize];
+    }
     [buried disinter];
     PTYSplitView *splitView = (PTYSplitView *)existing.view.superview;
     const NSUInteger index = [splitView.subviews indexOfObject:existing.view];
@@ -5634,6 +5649,15 @@ typedef struct {
     [self updateSessionOrdinals];
 
     [[iTermBuriedSessions sharedInstance] swapSession:existing withBuriedSession:buried];
+
+    if (wasMaximized) {
+        // Re-maximize so the peer swap is transparent: -maximize uses
+        // activeSession_ as its target, which is now the just-swapped-in
+        // peer, so the user keeps their maximized layout with the new
+        // peer in the maximized slot.
+        DLog(@"Re-maximize after peer swap");
+        [self maximize];
+    }
 }
 
 - (void)swapSession:(PTYSession *)session1 withSession:(PTYSession *)session2 {

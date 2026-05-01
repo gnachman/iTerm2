@@ -617,7 +617,7 @@ extension ChatViewController {
     private var haveLinkedTerminalSession: Bool {
         guard let model,
               let guid = model.terminalSessionGuid,
-              iTermController.sharedInstance().session(withGUID: guid) != nil else {
+              iTermController.sharedInstance().anySession(withGUID: guid) != nil else {
             return false
         }
         return true
@@ -626,7 +626,7 @@ extension ChatViewController {
     private var haveLinkedBrowserSession: Bool {
         guard let model,
               let guid = model.browserSessionGuid,
-              iTermController.sharedInstance().session(withGUID: guid) != nil else {
+              iTermController.sharedInstance().anySession(withGUID: guid) != nil else {
             return false
         }
         return true
@@ -878,7 +878,7 @@ extension ChatViewController: NSTableViewDataSource, NSTableViewDelegate {
             case .executingCommand:
                 cell.buttonClicked = { [weak self] identifier, messageID in
                     if let model = self?.model, let guid = model.terminalSessionGuid,
-                       let session = iTermController.sharedInstance().session(withGUID: guid) {
+                       let session = iTermController.sharedInstance().anySession(withGUID: guid) {
                         session.cancelRemoteCommand()
                     }
                 }
@@ -989,7 +989,7 @@ extension ChatViewController: NSTableViewDataSource, NSTableViewDelegate {
                     self.listModel.chat(id: chatID)?.terminalSessionGuid
                 }
                 guard let guid,
-                      let session = iTermController.sharedInstance().session(withGUID: guid) else {
+                      let session = iTermController.sharedInstance().anySession(withGUID: guid) else {
                     try? ChatClient.instance?.publishNotice(chatID: chatID, notice: "This chat is not linked to any \(browser ? "web browser" : "terminal") session.")
                     try? client.respondSuccessfullyToRemoteCommandRequest(
                         inChat: chatID,
@@ -1094,7 +1094,7 @@ extension ChatViewController: NSTableViewDataSource, NSTableViewDelegate {
                 }
                 if let guid,
                    let controller = iTermController.sharedInstance(),
-                   let session = controller.session(withGUID: guid) {
+                   let session = controller.anySession(withGUID: guid) {
                     if !session.isExecutingRemoteCommand {
                         enableButtons = false
                     }
@@ -1104,11 +1104,11 @@ extension ChatViewController: NSTableViewDataSource, NSTableViewDelegate {
             case .streamingChanged:
                 enableButtons = streaming
             case .offerLink(terminal: _, guid: let guid, name: _):
-                enableButtons = (iTermController.sharedInstance()?.session(withGUID: guid) != nil &&
+                enableButtons = (iTermController.sharedInstance()?.anySession(withGUID: guid) != nil &&
                                  terminalSessionGuid == nil &&
                                  browserSessionGuid == nil)
             case .permissions(terminal: _, guid: let guid):
-                enableButtons = (iTermController.sharedInstance()?.session(withGUID: guid) != nil)
+                enableButtons = (iTermController.sharedInstance()?.anySession(withGUID: guid) != nil)
             }
         default:
             break
@@ -1408,7 +1408,7 @@ extension ChatViewController: ChatInputViewDelegate {
         guard let guid = model?.terminalSessionGuid else {
             return nil
         }
-        return iTermController.sharedInstance().session(withGUID: guid)
+        return iTermController.sharedInstance().anySession(withGUID: guid)
     }
 
     private var shouldShareTerminalStateAutomatically: Bool {
@@ -1781,7 +1781,7 @@ extension ChatViewController: ChatToolbarDataSource {
 
         // Terminal session items
         if let guid = model?.terminalSessionGuid,
-           iTermController.sharedInstance().session(withGUID: guid) != nil {
+           iTermController.sharedInstance().anySession(withGUID: guid) != nil {
 
             menu.addItem(withTitle: "Reveal Linked Terminal Session", action: #selector(revealLinkedTerminalSession(_:)), target: self)
             menu.addItem(withTitle: "Unlink Terminal Session", action: #selector(unlinkTerminalSession(_:)), target: self)
@@ -1818,7 +1818,7 @@ extension ChatViewController: ChatToolbarDataSource {
 
         // Browser session items
         if let guid = model?.browserSessionGuid,
-           iTermController.sharedInstance().session(withGUID: guid) != nil {
+           iTermController.sharedInstance().anySession(withGUID: guid) != nil {
 
             menu.addItem(withTitle: "Reveal Linked Web Browser Session", action: #selector(revealLinkedBrowserSession(_:)), target: self)
             menu.addItem(withTitle: "Unlink Web Browser Session", action: #selector(unlinkBrowserSession(_:)), target: self)
