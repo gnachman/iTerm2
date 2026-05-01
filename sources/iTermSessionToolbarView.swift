@@ -433,7 +433,15 @@ class CCDiffSelectorItem: SessionToolbarControl {
         // Diff" and disable the control to signal it's not actionable.
         let hasChanges = !staged.isEmpty || !unstaged.isEmpty
         button.isEnabled = hasChanges
-        let allFilesTitle = hasChanges ? "All Files" : "Empty Diff"
+        // Count unique paths so MM files (present in both staged and
+        // unstaged) don't double-count — matches the dedupe applied to
+        // orderedFiles below.
+        let uniqueChangedFileCount = Set(staged.map { $0.path })
+            .union(unstaged.map { $0.path })
+            .count
+        let allFilesTitle = hasChanges
+            ? "All Files (\(uniqueChangedFileCount))"
+            : "Empty Diff"
         let allFilesItem = NSMenuItem(title: allFilesTitle,
                                       action: nil,
                                       keyEquivalent: "")
