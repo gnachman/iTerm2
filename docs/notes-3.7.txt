@@ -427,30 +427,3 @@ Bug Fixes:
   and by walking up to a non-shell ancestor
   when the deepest foreground job has no
   icon match.
-- Sessions spawned by entering a workgroup
-  now receive an ITERM_WORKGROUP_ID
-  environment variable identifying the
-  workgroup entry, so external tools can
-  distinguish runs of the same workgroup
-  config.
-- New Next Peer (⌘⌥]) and Previous Peer
-  (⌘⌥[) commands in the Window menu cycle
-  the active peer in the current workgroup.
-- The workgroup toolbar’s git file selector
-  no longer lists untracked files; only
-  staged and unstaged changes appear. When
-  there are no changes, the control is
-  disabled and reads “Empty Diff”. The
-  catch-all row now reads “All Files (N)”,
-  showing the number of changed files.
-- Fix workgroup peer switching while a
-  split pane is maximized so the toolbar
-  refreshes to show the new peer’s items
-  and unmaximize restores the new peer in
-  place of the old one.
-- Fix announcement banner overlapping the
-  workgroup toolbar after switching to a
-  peer whose pane title strip is shown.
-- Fix Code Review prompt overlay being
-  hidden by the workgroup toolbar after
-  splits or other layout changes.

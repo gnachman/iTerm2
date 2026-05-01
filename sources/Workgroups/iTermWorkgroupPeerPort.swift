@@ -193,6 +193,15 @@ final class iTermWorkgroupPeerPort: PTYSessionPeerPort {
             .compactMap { $0 as? CCDiffSelectorItem }
             .first
     }
+
+    // The peer's navigation cluster, if any — used to push the diff
+    // selector's can-navigate state onto the back/forward buttons.
+    private func navigationItem(forPeerID id: String?) -> WorkgroupNavigationToolbarItem? {
+        guard let id else { return nil }
+        return itemsByPeerID[id]?
+            .compactMap { $0 as? WorkgroupNavigationToolbarItem }
+            .first
+    }
 }
 
 // MARK: - Navigation delegate
@@ -254,6 +263,24 @@ extension iTermWorkgroupPeerPort: CCDiffSelectorItemDelegate {
         guard !command.isEmpty else { return }
         let wrapped = ITAddressBookMgr.commandByWrapping(inLoginShell: command)
         session.restart(withCommand: wrapped)
+    }
+
+    // Mirror the diff selector's can-navigate predicates onto the
+    // peer's back/forward buttons, plus the "X/Y" progress label
+    // between them. Fires on file-list reloads (driven by the shared
+    // git poller), popup picks, and after each button-driven advance
+    // — so the cluster reflects state immediately for both
+    // synchronous user actions and asynchronous repo changes.
+    func diffNavigationStateDidChange(sender: CCDiffSelectorItem) {
+        guard let nav = navigationItem(forPeerID: sender.ownerPeerID) else { return }
+        let position = sender.visibleFilePosition
+        let progress = position > 0
+            ? "\(position)/\(sender.navigableFileCount)"
+            : nil
+        nav.setNavigationState(
+            canBack: sender.canSelectPreviousFile,
+            canForward: sender.canSelectNextFile,
+            progress: progress)
     }
 
     // "All Files" is the menu's escape hatch back to the workgroup's

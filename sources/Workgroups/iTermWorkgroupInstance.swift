@@ -552,6 +552,16 @@ extension iTermWorkgroupInstance: WorkgroupNavigationToolbarItemDelegate {
             .compactMap { $0 as? CCDiffSelectorItem }
             .first
     }
+
+    // The navigation cluster for a non-peer host's toolbar, used to
+    // mirror the diff selector's can-navigate state onto its
+    // back/forward buttons. Same scoping rule as diffSelector(...).
+    fileprivate func navigationItem(forNonPeerConfigID id: String) -> WorkgroupNavigationToolbarItem? {
+        return nonPeerEntriesByConfigID[id]?
+            .items
+            .compactMap { $0 as? WorkgroupNavigationToolbarItem }
+            .first
+    }
 }
 
 // File picks from a changedFileSelector on a non-peer toolbar route
@@ -580,5 +590,25 @@ extension iTermWorkgroupInstance: CCDiffSelectorItemDelegate {
         }
         let wrapped = ITAddressBookMgr.commandByWrapping(inLoginShell: cfg.command)
         session.restart(withCommand: wrapped)
+    }
+
+    // Push the diff selector's can-navigate state and the "X/Y"
+    // progress label onto the matching non-peer toolbar's navigation
+    // cluster. Mirrors the peer-port implementation; see
+    // iTermWorkgroupPeerPort.diffNavigationStateDidChange for the
+    // rationale and the asynchronous-update story.
+    func diffNavigationStateDidChange(sender: CCDiffSelectorItem) {
+        guard let configID = sender.ownerPeerID,
+              let nav = navigationItem(forNonPeerConfigID: configID) else {
+            return
+        }
+        let position = sender.visibleFilePosition
+        let progress = position > 0
+            ? "\(position)/\(sender.navigableFileCount)"
+            : nil
+        nav.setNavigationState(
+            canBack: sender.canSelectPreviousFile,
+            canForward: sender.canSelectNextFile,
+            progress: progress)
     }
 }

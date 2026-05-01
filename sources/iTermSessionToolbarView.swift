@@ -351,6 +351,11 @@ protocol CCDiffSelectorItemDelegate: AnyObject {
     // intent is to run the workgroup's main command, NOT the
     // per-file command. Each implementation routes accordingly.
     func diffDidSelectAllFiles(sender: CCDiffSelectorItem)
+    // Fired whenever the canSelectPrevious/NextFile predicates may
+    // have changed (popup selection, file list reload, button-driven
+    // advance). Listeners use it to drive companion controls' enabled
+    // state — e.g. the workgroup navigation cluster's back/forward.
+    func diffNavigationStateDidChange(sender: CCDiffSelectorItem)
 }
 
 @objc(iTermCCDiffSelectorItem)
@@ -485,6 +490,58 @@ class CCDiffSelectorItem: SessionToolbarControl {
         }
         DLog("CCDiffSelectorItem after set(fileStatuses:): menu item count \(button.menu?.items.count ?? -1)")
         delegate?.itemDidChange(sender: self)
+        diffSelectorDelegate?.diffNavigationStateDidChange(sender: self)
+    }
+
+    // The popup's currently visible file selection, or nil when the
+    // popup shows the "All Files" / "Empty Diff" catch-all (or has
+    // no selection at all). Used as the source of truth for
+    // canSelect{Previous,Next}File so the buttons reflect what the
+    // user sees, not the (possibly diverged) `currentFile` anchor.
+    private var visiblyPickedFile: String? {
+        guard let value = button.selectedItem?.representedObject as? String,
+              value != Self.allFilesMarker else {
+            return nil
+        }
+        return value
+    }
+
+    // True when there's a file before the popup's visible selection
+    // in orderedFiles. False when "All Files" is showing or when the
+    // visible file is the first (or absent from) the list — both
+    // cases where Back would either be a no-op or wrap.
+    @objc var canSelectPreviousFile: Bool {
+        guard let visible = visiblyPickedFile,
+              let idx = orderedFiles.firstIndex(of: visible) else {
+            return false
+        }
+        return idx > 0
+    }
+
+    // True when there's a file after the popup's visible selection
+    // in orderedFiles. Mirror of canSelectPreviousFile for Forward.
+    @objc var canSelectNextFile: Bool {
+        guard let visible = visiblyPickedFile,
+              let idx = orderedFiles.firstIndex(of: visible) else {
+            return false
+        }
+        return idx < orderedFiles.count - 1
+    }
+
+    // Total number of navigable (deduped, staged∪unstaged) files —
+    // matches the "All Files (N)" count and is the denominator for
+    // the navigation cluster's progress label.
+    @objc var navigableFileCount: Int { orderedFiles.count }
+
+    // 1-based index of the popup's visibly picked file in
+    // orderedFiles, or 0 when "All Files"/nothing is showing.
+    // Companion to navigableFileCount for "X/Y" displays.
+    @objc var visibleFilePosition: Int {
+        guard let visible = visiblyPickedFile,
+              let idx = orderedFiles.firstIndex(of: visible) else {
+            return 0
+        }
+        return idx + 1
     }
 
     // Adds a separator + disabled header + one menu row per file in
@@ -614,6 +671,7 @@ class CCDiffSelectorItem: SessionToolbarControl {
             button.select(match)
         }
         diffSelectorDelegate?.diffDidSelect(filename: chosen, sender: self)
+        diffSelectorDelegate?.diffNavigationStateDidChange(sender: self)
         return chosen
     }
 
@@ -635,11 +693,13 @@ class CCDiffSelectorItem: SessionToolbarControl {
             // file the user happened to be on before picking All Files.
             currentFile = nil
             diffSelectorDelegate?.diffDidSelectAllFiles(sender: self)
+            diffSelectorDelegate?.diffNavigationStateDidChange(sender: self)
             return
         }
         DLog("CCDiffSelectorItem selection changed to \(value)")
         currentFile = value
         diffSelectorDelegate?.diffDidSelect(filename: value, sender: self)
+        diffSelectorDelegate?.diffNavigationStateDidChange(sender: self)
     }
 }
 

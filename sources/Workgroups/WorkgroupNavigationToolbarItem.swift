@@ -31,18 +31,24 @@ final class WorkgroupNavigationToolbarItem: SessionToolbarGenericView {
     private let backButton: NSButton
     private let forwardButton: NSButton
     private let reloadButton: NSButton
+    // Sits between back and forward, showing "X/Y" position in the
+    // diff selector's file list. Hidden when no file is picked
+    // (popup is on "All Files" / "Empty Diff" / has no items).
+    private let progressLabel: NSTextField
     private static let interButtonSpacing = 8.0
 
     init(identifier: String, priority: Int) {
         backButton = Self.makeButton(symbol: .chevronLeft)
         forwardButton = Self.makeButton(symbol: .chevronRight)
         reloadButton = Self.makeButton(symbol: .arrowClockwise)
+        progressLabel = Self.makeProgressLabel()
 
         // Plain NSView container, no auto layout — terminal-window
         // toolbars are explicitly autoresizing-mask territory per the
         // project rule. Children are positioned in layoutSubviews.
         let container = NSView(frame: .zero)
         container.addSubview(backButton)
+        container.addSubview(progressLabel)
         container.addSubview(forwardButton)
         container.addSubview(reloadButton)
 
@@ -53,18 +59,61 @@ final class WorkgroupNavigationToolbarItem: SessionToolbarGenericView {
         forwardButton.action = #selector(didTapForward(_:))
         reloadButton.target = self
         reloadButton.action = #selector(didTapReload(_:))
+        // Default disabled — the diff selector hasn't reported file
+        // statuses yet, so there's nothing to step through. The peer
+        // port re-enables them once the selector has files and a
+        // non-"All Files" row is showing.
+        backButton.isEnabled = false
+        forwardButton.isEnabled = false
+        progressLabel.isHidden = true
     }
 
-    private var buttons: [NSButton] {
-        [backButton, forwardButton, reloadButton]
+    // Set by the peer port (and workgroup instance) in response to
+    // diff-selector state changes — file list reloaded by the git
+    // poller, popup selection changed, or a button-driven advance.
+    // `progress` is "X/Y" when a file is picked, nil otherwise; the
+    // label hides in the nil case so the cluster collapses to just
+    // back / forward / reload.
+    func setNavigationState(canBack: Bool,
+                            canForward: Bool,
+                            progress: String?) {
+        backButton.isEnabled = canBack
+        forwardButton.isEnabled = canForward
+        let wasHidden = progressLabel.isHidden
+        let oldText = progressLabel.stringValue
+        if let progress {
+            progressLabel.stringValue = progress
+            progressLabel.isHidden = false
+            progressLabel.sizeToFit()
+        } else {
+            progressLabel.isHidden = true
+        }
+        let visibilityChanged = wasHidden != progressLabel.isHidden
+        let textChanged = !progressLabel.isHidden && oldText != progressLabel.stringValue
+        if visibilityChanged || textChanged {
+            // Cluster width depends on whether the label is shown
+            // and how wide its text is — kick the toolbar to relayout
+            // so the new desiredWidthRange is honored.
+            delegate?.itemDidChange(sender: self)
+        }
+    }
+
+    private var laidOutSubviews: [NSView] {
+        var result: [NSView] = [backButton]
+        if !progressLabel.isHidden {
+            result.append(progressLabel)
+        }
+        result.append(forwardButton)
+        result.append(reloadButton)
+        return result
     }
 
     private var naturalWidth: CGFloat {
         var width = 0.0
-        let bs = buttons
-        for (i, b) in bs.enumerated() {
-            width += b.fittingSize.width
-            if i < bs.count - 1 {
+        let subs = laidOutSubviews
+        for (i, v) in subs.enumerated() {
+            width += v.fittingSize.width
+            if i < subs.count - 1 {
                 width += Self.interButtonSpacing
             }
         }
@@ -86,13 +135,13 @@ final class WorkgroupNavigationToolbarItem: SessionToolbarGenericView {
                              width: view.bounds.width,
                              height: height)
         var x = 0.0
-        for b in buttons {
-            let buttonSize = b.fittingSize
-            b.frame = NSRect(x: x,
-                             y: (height - buttonSize.height) / 2.0,
-                             width: buttonSize.width,
-                             height: buttonSize.height)
-            x += buttonSize.width + Self.interButtonSpacing
+        for v in laidOutSubviews {
+            let size = v.fittingSize
+            v.frame = NSRect(x: x,
+                             y: (height - size.height) / 2.0,
+                             width: size.width,
+                             height: size.height)
+            x += size.width + Self.interButtonSpacing
         }
     }
 
@@ -105,6 +154,14 @@ final class WorkgroupNavigationToolbarItem: SessionToolbarGenericView {
         button.refusesFirstResponder = true
         button.setButtonType(.momentaryPushIn)
         return button
+    }
+
+    private static func makeProgressLabel() -> NSTextField {
+        let field = NSTextField(labelWithString: "")
+        field.font = NSFont.systemFont(ofSize: NSFont.systemFontSize)
+        field.textColor = .secondaryLabelColor
+        field.alignment = .center
+        return field
     }
 
     @objc private func didTapBack(_ sender: Any?) {
