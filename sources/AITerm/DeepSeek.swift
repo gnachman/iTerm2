@@ -19,6 +19,11 @@ struct DeepSeekRequestBuilder {
         var tools: [Tool]? = nil
         var function_call: String? = nil  // "none" and "auto" also allowed
         var stream: Bool
+        var thinking: Thinking? = nil
+    }
+
+    private struct Thinking: Codable {
+        var type: String  // "enabled" or "disabled"
     }
 
     struct Message: Codable {
@@ -106,7 +111,8 @@ struct DeepSeekRequestBuilder {
             max_tokens: provider.maxTokens(functions: functions, messages: messages),
             tools: maybeDecls,
             function_call: functions.isEmpty ? nil : "auto",
-            stream: stream)
+            stream: stream,
+            thinking: Thinking(type: "disabled"))
         DLog("REQUEST:\n\(body)")
         if body.max_tokens < 2 {
             throw AIError.requestTooLarge
