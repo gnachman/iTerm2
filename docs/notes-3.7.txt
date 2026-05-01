@@ -311,6 +311,10 @@ Settings Improvements:
   the command starts.
 
 Bug Fixes:
+- Fix the window growing wider when a
+  clippings panel appears in a non-current
+  tab. Window resize now happens only when
+  the visible tab needs the space.
 - Fix the password-manager CLI picker
   greying out interpreter scripts (such as
   the Homebrew-installed Bitwarden ‘bw’,

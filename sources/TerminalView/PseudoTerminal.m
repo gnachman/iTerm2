@@ -1298,9 +1298,29 @@ ITERM_WEAKLY_REFERENCEABLE
 // toggling clippings (or any other gutter panel) doesn't bloat the window.
 - (void)rightExtraDidChangeImpl {
     DLog(@"rightExtraDidChangeImpl");
+    // actualRightExtra/desiredRightExtra live on each SessionView; capture
+    // before updateSessionScrollbars syncs them so we can decide whether the
+    // window grow is even visible to the user. Resizing the window for a
+    // session the user can't see is confusing, so we skip it unless not
+    // growing would push some session to a non-positive cell-grid width.
+    const BOOL needsGrow = [self rightExtraChangeRequiresWindowGrow];
     [self updateSessionScrollbars];
     if ([self anyFullScreen]) {
         [self fitTabsToWindow];
+        return;
+    }
+    if (!needsGrow) {
+        // The change is on a non-visible session and not big enough to crush
+        // its cell grid. Drop the window resize entirely (we don't try to
+        // catch up on tab switch — there's no hook for that, and growing the
+        // window when the user changes tabs would itself be jarring): the
+        // affected SessionView's cell grid will absorb the new rightExtra on
+        // the next layout pass. We accept that trade to avoid widening the
+        // window for something the user can't see.
+        [self fitTabsToWindow];
+        for (TmuxController *controller in [self uniqueTmuxControllers]) {
+            [controller fitLayoutToWindows];
+        }
         return;
     }
     // Snapshot the current frame to compute how much we actually grew/shrunk.
@@ -1338,6 +1358,38 @@ ITERM_WEAKLY_REFERENCEABLE
     for (TmuxController *controller in [self uniqueTmuxControllers]) {
         [controller fitLayoutToWindows];
     }
+}
+
+// Decides whether the pending right-extra change should pull the window
+// wider. A session is "visible" when it lives in the current tab — split
+// panes are tiled, so an inactive split is still on screen. For visible
+// sessions any mismatch is enough; for non-visible ones we only force a
+// grow if PTYTab's minimum-session-size constraint (kVT100ScreenMinColumns
+// at the current font, plus margins, scrollbar, and rightExtra) would be
+// violated by leaving the view at its existing width. We pass
+// respectPinning:NO because pinning lets a SessionView's preferredWidth
+// override that floor, but for the safety check we want the column floor
+// to be the actual invariant.
+- (BOOL)rightExtraChangeRequiresWindowGrow {
+    PTYTab *currentTab = self.currentTab;
+    for (PTYSession *session in [self allSessions]) {
+        SessionView *view = session.view;
+        if (view.actualRightExtra == session.desiredRightExtra) {
+            continue;
+        }
+        if ([currentTab.sessions containsObject:session]) {
+            return YES;
+        }
+        PTYTab *tab = [self tabForSession:session];
+        if (!tab) {
+            continue;
+        }
+        const NSSize minSize = [tab _minSessionSize:view respectPinning:NO];
+        if (view.frame.size.width < minSize.width) {
+            return YES;
+        }
+    }
+    return NO;
 }
 
 - (void)tmuxFontDidChange:(NSNotification *)notification {
