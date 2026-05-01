@@ -445,3 +445,6 @@ Bug Fixes:
 - Fix announcement banner overlapping the
   workgroup toolbar after switching to a
   peer whose pane title strip is shown.
+- Fix Code Review prompt overlay being
+  hidden by the workgroup toolbar after
+  splits or other layout changes.
