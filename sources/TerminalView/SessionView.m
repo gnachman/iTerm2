@@ -173,6 +173,7 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
 
     iTermSessionNoteView *_sessionNoteView;
     iTermSessionToolbarView *_toolbarView;
+    __weak iTermCodeReviewPromptView *_codeReviewPromptOverlay;
 
     iTermRightGutterController *_rightGutterController;
 }
@@ -1265,8 +1266,18 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
     }
     [self updateUploadIndicatorFrame];
     [self updateSessionNoteFrame];
+    [self updateCodeReviewPromptOverlayFrame];
     [_rightGutterController layoutPanels];
     DLog(@"After:\n%@", [self iterm_recursiveDescription]);
+}
+
+- (void)updateCodeReviewPromptOverlayFrame {
+    // The overlay's frameProvider closure reads scrollview.frame and
+    // actualPanelReservation, but its frameDidChangeNotification observer
+    // fires only when the SessionView itself resizes. Toolbar/title
+    // changes resize the scrollview without changing the SessionView's
+    // own frame, so we re-poke the overlay here.
+    [_codeReviewPromptOverlay sessionViewLayoutDidChange];
 }
 
 - (void)updateUploadIndicatorFrame {

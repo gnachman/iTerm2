@@ -37,6 +37,7 @@
 
 @class iTermAnnouncementViewController;
 @class iTermBrowserViewController;
+@class iTermCodeReviewPromptView;
 @class iTermFindDriver;
 @class iTermImageWrapper;
 @class iTermIncrementalMinimapView;
@@ -350,6 +351,11 @@ typedef NS_ENUM(NSUInteger, iTermSessionViewFindDriver) {
 - (void)hideSessionNote;
 - (void)hideSessionNoteIfEmpty;
 @property(nonatomic, readonly) BOOL isSessionNoteVisible;
+
+// Code review prompt overlay (created in a Swift extension on SessionView).
+@property(nonatomic, weak, nullable) iTermCodeReviewPromptView *codeReviewPromptOverlay;
+- (void)presentCodeReviewPromptOverlayWithDefaultPrompt:(nullable NSString *)defaultPrompt
+                                                onStart:(void (^)(NSString *text))onStart;
 
 @end
 

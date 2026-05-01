@@ -76,37 +76,10 @@ extension PTYSession {
     }
 
     private func showCodeReviewPromptOverlay(onStart: @escaping (String) -> Void) {
-        // SessionView overrides resizeSubviewsWithOldSize: without
-        // forwarding to autoresizing, so we can't rely on autoresizing
-        // masks to keep the overlay sized to the terminal area. Track
-        // the scrollview's frame instead — the overlay re-syncs on each
-        // SessionView frame change so the toolbar (mode switcher,
-        // reload) above it stays uncovered as the session resizes.
         guard let sessionView: SessionView = view else { return }
-        // Drop any overlay that's already up so a rapid reload-on-reload
-        // doesn't stack two prompt views.
-        for sub in sessionView.subviews where sub is CodeReviewPromptView {
-            sub.removeFromSuperview()
-        }
-        let promptView = CodeReviewPromptView(frame: sessionView.scrollview.frame)
-        // Avoid the right-gutter panel strip (clippings, etc.) so the
-        // overlay's right edge aligns with the inner edge of the panel area
-        // rather than running underneath panels.
-        promptView.frameProvider = { [weak sessionView] in
-            guard let sessionView else { return .zero }
-            var rect = sessionView.scrollview.frame
-            rect.size.width = max(0, rect.size.width - sessionView.actualPanelReservation)
-            return rect
-        }
-        if let defaultPrompt = iTermPreferences.string(forKey: kPreferenceKeyAIPromptCodeReview) {
-            promptView.text = defaultPrompt
-        }
-        weak var weakPromptView = promptView
-        promptView.onStart = { (text: String) in
-            onStart(text)
-            weakPromptView?.removeFromSuperview()
-        }
-        sessionView.addSubview(belowFind: promptView)
+        let defaultPrompt = iTermPreferences.string(forKey: kPreferenceKeyAIPromptCodeReview)
+        sessionView.presentCodeReviewPromptOverlay(defaultPrompt: defaultPrompt,
+                                                   onStart: onStart)
     }
 
     private func wrappedCommandForCodeReview(text: String,

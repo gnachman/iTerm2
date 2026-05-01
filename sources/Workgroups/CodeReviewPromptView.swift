@@ -228,6 +228,15 @@ class CodeReviewPromptView: NSView {
         }
     }
 
+    // Re-evaluate the frame against the current frameProvider. Called from
+    // SessionView.updateLayout so the overlay re-syncs after the toolbar
+    // or title strip is added/removed/resized — those don't change the
+    // SessionView's own frame, so the frameDidChangeNotification observer
+    // doesn't fire for them.
+    @objc func sessionViewLayoutDidChange() {
+        updateFrameFromProvider()
+    }
+
     @objc private func startClicked(_ sender: Any) {
         let text = textView.string
         onStart?(text)
