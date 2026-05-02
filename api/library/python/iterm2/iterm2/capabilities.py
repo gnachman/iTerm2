@@ -179,3 +179,14 @@ def check_supports_move_session_to_tab_or_window(connection):
         raise AppVersionTooOld(
             "This version of iTerm2 is too old to move sessions to new tabs or windows. " +
             "You should upgrade to run this script.")
+
+def supports_apply_layout(connection):
+    """Can you use App.async_apply_layout()?"""
+    min_ver = (1, 14)
+    return ge(connection.iterm2_protocol_version, min_ver)
+
+def check_supports_apply_layout(connection):
+    if not supports_apply_layout(connection):
+        raise AppVersionTooOld(
+            "This version of iTerm2 is too old to apply layouts via the Python API. " +
+            "You should upgrade to run this script.")

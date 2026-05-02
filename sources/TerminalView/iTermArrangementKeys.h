@@ -12,6 +12,16 @@ extern NSString *const TAB_ARRANGEMENT_SESSION;
 extern NSString *const SUBVIEWS;
 extern NSString *const VIEW_TYPE_SPLITTER;
 extern NSString *const VIEW_TYPE_SESSIONVIEW;
+extern NSString *const TAB_ARRANGEMENT_SPLITTER_FRAME;
+extern NSString *const TAB_ARRANGEMENT_SPLITTER_ID;
+extern NSString *const TAB_ARRANGEMENT_SESSIONVIEW_FRAME;
+extern NSString *const SPLITTER_IS_VERTICAL;
+extern NSString *const TAB_ARRANGEMENT_TMUX_WINDOW_PANE;
+extern NSString *const TAB_ARRANGEMENT_ID;
+extern NSString *const TAB_X;
+extern NSString *const TAB_Y;
+extern NSString *const TAB_WIDTH;
+extern NSString *const TAB_HEIGHT;
 
 // Session arrangement keys (defined in PTYSession.m).
 extern NSString *const SESSION_ARRANGEMENT_BOOKMARK;

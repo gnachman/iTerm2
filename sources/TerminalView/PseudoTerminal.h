@@ -387,6 +387,10 @@ extern NSString *const iTermDidCreateTerminalWindowNotification;
 - (BOOL)closeSessionWithConfirmation:(PTYSession *)aSession;
 - (void)closeSessionWithoutConfirmation:(PTYSession *)aSession;
 
+// Close the named tab without confirmation. Used by the layout-
+// application API and other programmatic flows.
+- (void)closeTab:(PTYTab *)aTab;
+
 - (void)changeTabColorToMenuAction:(id)sender;
 - (void)moveSessionToWindow:(id)sender;
 

@@ -204,6 +204,11 @@ Python API Improvements:
   API.
 - The Open URL API now supports a per-domain
   allowlist.
+- App.async_apply_layout atomically reshapes
+  one or more tabs to a target layout in a
+  single transaction. Supports swapping panes,
+  rearranging the split tree, and moving
+  sessions across tabs and windows.
 
 Password Manager Improvements:
 - Bitwarden is now a supported password manager.

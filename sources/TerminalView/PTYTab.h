@@ -324,6 +324,28 @@ extern NSString *const PTYTabArrangementOptionsPendingJumps;
 
 - (void)setSizesFromSplitTreeNode:(ITMSplitTreeNode *)node;
 - (void)arrangeSplitPanesEvenly;
+
+// Recursively distributes available space evenly across siblings of the
+// given split view. Operates on the live hierarchy without needing
+// arrangement-frame pre-computation. Short-circuits to
+// `arrangeTmuxSplitPanesEvenly` for tmux integration tabs.
+- (void)arrangeSplitPanesEvenlyInSplitView:(NSSplitView *)splitView;
+
+// Fit each session view to its scroll view. Used after view hierarchy
+// changes to propagate sizes down without going through the
+// arrangement-restore path.
+- (void)fitSubviewsToRoot;
+
+// Returns the PTYSession that owns the given SessionView, or nil if the
+// view is not part of this tab.
+- (PTYSession *)sessionForSessionView:(SessionView *)sessionView;
+
+// Adopts a session that has been detached from its previous tab via
+// `removeSession:` and is now parented (visually) in this tab's split
+// tree. Updates the view-to-session map and the session's delegate.
+// Used by the layout-application API for cross-tab moves.
+- (void)adoptSession:(PTYSession *)session;
+
 - (void)bounceMetal;
 - (void)makeActive;
 - (void)willDeselectTab;

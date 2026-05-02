@@ -3,6 +3,7 @@
 This module is the starting point for getting access to windows and other
 application-global data.
 """
+import base64
 import json
 import typing
 
@@ -527,6 +528,96 @@ class App(
         await async_invoke_function(
             self.connection,
             f'iterm2.move_session(session: {json.dumps(session.session_id)}, destination: {json.dumps(destination.session_id)}, vertical: {json.dumps(split_vertically)}, before: {json.dumps(before)})')
+
+    async def async_apply_layout(self, spec: typing.Dict[str, typing.Any]):
+        """
+        Apply a target layout to one or more tabs.
+
+        Supports reshaping existing tabs (including swapping panes and
+        rearranging the split tree) and moving sessions across tabs and
+        windows.
+
+        Validation runs in two phases: a structural pre-check before any
+        mutation (rejects malformed specs without side effects), then
+        per-tab mutations. If a per-tab mutation fails partway through
+        the plan, the transaction aborts and the error propagates to
+        the caller; the parts already mutated remain mutated (there is
+        no rollback). The structural pre-check makes mid-plan failures
+        rare in practice, but callers should not assume the API is
+        all-or-nothing in the face of unexpected errors.
+
+        :param spec: A dictionary describing the target state. Schema:
+
+            ::
+
+                {
+                    "tabs": [
+                        {"tab_id": "<guid>", "root": <node>},  # reshape
+                    ],
+                    "close_sessions": ["<guid>", ...],     # explicit closes
+                    "close_tabs":     ["<guid>", ...],
+                    "close_windows":  ["<guid>", ...],
+                }
+
+            A ``<node>`` is one of:
+
+            - ``{"session_id": "<guid>"}`` — leaf referring to a live
+              session.
+            - ``{"vertical": True, "children": [<node>, <node>, ...]}``
+              — splitter with at least 2 children.
+
+            Validation rules enforced server-side:
+
+            - Splitters must have at least 2 children.
+            - Same-orientation nesting (V inside V, H inside H) is
+              rejected — flatten yourself.
+            - Every session GUID that appears in the spec may appear
+              at most once.
+            - Every tab affected by a session move must be listed in
+              ``tabs`` (or its sessions accounted for via
+              ``close_sessions`` / ``close_tabs``).
+            - tmux integration tabs are not supported.
+
+            **Limitations:** layouts may reference live sessions only.
+            Creating new sessions inline (``new_session`` leaves), the
+            ``new_tabs`` field, and the ``new_windows`` field are not
+            supported and are rejected by the resolver.
+
+        :throws: :class:`~iterm2.rpc.RPCException` on validation
+            failure or execution error. The error message includes a
+            tree-path indicating the offending node.
+
+        Example: swap two sessions in a tab.
+
+        .. code-block:: python
+
+            spec = {
+                "tabs": [
+                    {
+                        "tab_id": tab.tab_id,
+                        "root": {
+                            "vertical": True,
+                            "children": [
+                                {"session_id": "<b-guid>"},
+                                {"session_id": "<a-guid>"},
+                            ],
+                        },
+                    },
+                ],
+            }
+            await app.async_apply_layout(spec)
+        """
+        iterm2.capabilities.check_supports_apply_layout(self.connection)
+        # The spec is sent as base64 because iTerm2's expression parser does
+        # not decode \" inside string literals, and a JSON spec almost always
+        # contains quoted strings.
+        spec_b64 = base64.b64encode(
+            json.dumps(spec).encode("utf-8")).decode("ascii")
+        await async_invoke_function(
+            self.connection,
+            iterm2.util.invocation_string(
+                "iterm2.apply_layout",
+                {"spec_json_b64": spec_b64}))
 
     async def _async_listen(self):
         """

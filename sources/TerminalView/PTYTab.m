@@ -77,20 +77,20 @@ NSString *const TAB_ARRANGEMENT_ROOT = @"Root";
 NSString *const TAB_ARRANGEMENT_VIEW_TYPE = @"View Type";
 NSString *const VIEW_TYPE_SPLITTER = @"Splitter";
 NSString *const VIEW_TYPE_SESSIONVIEW = @"SessionView";
-static NSString* SPLITTER_IS_VERTICAL = @"isVertical";
-static NSString* TAB_ARRANGEMENT_SPLITTER_FRAME = @"frame";
-static NSString* TAB_ARRANGEMENT_SPLITTER_ID = @"Splitter ID";
-static NSString* TAB_ARRANGEMENT_SESSIONVIEW_FRAME = @"frame";
-static NSString* TAB_WIDTH = @"width";
-static NSString* TAB_HEIGHT = @"height";
-static NSString* TAB_X = @"x";
-static NSString* TAB_Y = @"y";
+NSString *const SPLITTER_IS_VERTICAL = @"isVertical";
+NSString *const TAB_ARRANGEMENT_SPLITTER_FRAME = @"frame";
+NSString *const TAB_ARRANGEMENT_SPLITTER_ID = @"Splitter ID";
+NSString *const TAB_ARRANGEMENT_SESSIONVIEW_FRAME = @"frame";
+NSString *const TAB_X = @"x";
+NSString *const TAB_Y = @"y";
+NSString *const TAB_WIDTH = @"width";
+NSString *const TAB_HEIGHT = @"height";
 NSString *const SUBVIEWS = @"Subviews";
 NSString *const TAB_ARRANGEMENT_SESSION = @"Session";
 static NSString* TAB_ARRANGEMENT_IS_ACTIVE = @"Is Active";
-static NSString* TAB_ARRANGEMENT_ID = @"ID";  // only for maximize/unmaximize
+NSString *const TAB_ARRANGEMENT_ID = @"ID";  // only for maximize/unmaximize
 static NSString* TAB_ARRANGEMENT_IS_MAXIMIZED = @"Maximized";
-static NSString* TAB_ARRANGEMENT_TMUX_WINDOW_PANE = @"tmux window pane";
+NSString *const TAB_ARRANGEMENT_TMUX_WINDOW_PANE = @"tmux window pane";
 static NSString* TAB_ARRANGEMENT_COLOR = @"Tab color";  // DEPRECATED - Each PTYSession has its own tab color now
 static NSString* TAB_ARRANGEMENT_TITLE_OVERRIDE = @"Title Override";
 static NSString* TAB_GUID = @"Tab GUID";
@@ -321,6 +321,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     [MoveSessionBuiltInFunction registerBuiltInFunction];
     [MoveSessionToNewTabBuiltInFunction registerBuiltInFunction];
     [MoveSessionToNewWindowBuiltInFunction registerBuiltInFunction];
+    [ApplyLayoutBuiltInFunction registerBuiltInFunction];
 }
 
 + (NSSize)cellSizeForBookmark:(Profile *)bookmark {
@@ -2046,6 +2047,14 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     return (SessionView *)nearestNeighbor;
 }
 
+- (void)adoptSession:(PTYSession *)session {
+    if (!session) {
+        return;
+    }
+    [self.viewToSessionMap setObject:session forKey:session.view];
+    session.delegate = self;
+}
+
 - (void)removeSession:(PTYSession*)aSession {
     SessionView *theView = aSession.view;
 
@@ -3028,68 +3037,10 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
                                       fromIdMap:(NSDictionary<NSNumber *, SessionView *> *)idMap
                                      sessionMap:(NSDictionary<NSString *, PTYSession *> *)sessionMap
                                 revivedSessions:(NSMutableArray<PTYSession *> *)revivedSessions {
-    if ([[arrangement objectForKey:TAB_ARRANGEMENT_VIEW_TYPE] isEqualToString:VIEW_TYPE_SPLITTER]) {
-        NSRect frame = [PTYTab dictToFrame:[arrangement objectForKey:TAB_ARRANGEMENT_SPLITTER_FRAME]];
-        NSSplitView *splitter = [[PTYSplitView alloc] initWithFrame:frame
-                                                   uniqueIdentifier:arrangement[TAB_ARRANGEMENT_SPLITTER_ID]];
-        if (USE_THIN_SPLITTERS) {
-            [splitter setDividerStyle:NSSplitViewDividerStyleThin];
-        }
-        [splitter setVertical:[[arrangement objectForKey:SPLITTER_IS_VERTICAL] boolValue]];
-
-        NSArray<NSDictionary *> *subviews = [arrangement objectForKey:SUBVIEWS];
-        for (NSDictionary *subArrangement in subviews) {
-            NSView* subView = [PTYTab _recursiveRestoreSplitters:subArrangement
-                                                       fromIdMap:idMap
-                                                      sessionMap:sessionMap
-                                                 revivedSessions:revivedSessions];
-            if (subView) {
-                [splitter addSubview:subView];
-            }
-        }
-        return splitter;
-    } else {
-        if (idMap || sessionMap) {
-            SessionView *sessionView = nil;
-            id tabArrangementId = arrangement[TAB_ARRANGEMENT_ID];
-            if (tabArrangementId && idMap[tabArrangementId]) {
-                // Exiting a maximized-pane state, so we can get a session view from theMap, a map from arrangement id -> SessionView*
-                // where arrangement IDs are stored in the arrangement dict.
-                sessionView = [idMap objectForKey:[arrangement objectForKey:TAB_ARRANGEMENT_ID]];
-                [sessionView restoreFrameSize];
-                return sessionView;
-            }
-
-            NSNumber *windowPaneNumber = [arrangement objectForKey:TAB_ARRANGEMENT_TMUX_WINDOW_PANE];
-            NSString *uniqueId = [PTYSession guidInArrangement:arrangement[TAB_ARRANGEMENT_SESSION]];
-            if (windowPaneNumber && idMap[windowPaneNumber]) {
-                // Creating splitters for a tmux tab. The arrangement is marked
-                // up with window pane IDs, which may or may not already exist.
-                // When restoring a tmux tab, then all session dicts in the
-                // arrangement have a window pane. The presence of a
-                // TAB_ARRANGEMENT_TMUX_WINDOW_PANE implies that theMap is
-                // window pane->SessionView.
-                sessionView = idMap[windowPaneNumber];
-            } else if (uniqueId) {
-                PTYSession *session = sessionMap[uniqueId];
-                [revivedSessions addObject:session];
-                sessionView = [session view];
-            }
-            NSRect frame = [PTYTab dictToFrame:[arrangement objectForKey:TAB_ARRANGEMENT_SESSIONVIEW_FRAME]];
-            if (sessionView) {
-                // Recycle an existing session view.
-                [sessionView setFrame:frame];
-            } else {
-                // This session is new, so set a nonnegative pending window
-                // pane and we'll create a session for it later.
-                sessionView = [[SessionView alloc] initWithFrame:frame];
-            }
-            return sessionView;
-        } else {
-            NSRect frame = [PTYTab dictToFrame:[arrangement objectForKey:TAB_ARRANGEMENT_SESSIONVIEW_FRAME]];
-            return [[SessionView alloc] initWithFrame:frame];
-        }
-    }
+    return [iTermSplitTreeRebuilder buildSplitterTreeForArrangement:arrangement
+                                                              idMap:idMap
+                                                         sessionMap:sessionMap
+                                                    revivedSessions:revivedSessions];
 }
 
 + (BOOL)recursiveArrangementNode:(NSDictionary *)arrangement
