@@ -41,7 +41,7 @@ enum ClaudeCodeWorkgroupTemplate {
                 .modeSwitcher,
                 .gitStatus,
             ],
-            displayName: "Claude Code")
+            displayName: "Chat")
 
         let diff = iTermWorkgroupSessionConfig(
             uniqueIdentifier: ID.diff,

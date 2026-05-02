@@ -60,7 +60,7 @@ class EnterWorkgroupTrigger: Trigger {
     // back to the trigger) falls back to the first workgroup in the
     // sorted popup order — matching what the popup is visibly
     // showing the user. Without this fallback the table row reads
-    // "(unset)" while the popup reads e.g. "Claude Code".
+    // "(unset)" while the popup reads e.g. "Chat.
     private var effectiveID: String? {
         if let s = self.param as? String, !s.isEmpty {
             return s
