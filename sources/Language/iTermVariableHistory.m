@@ -147,6 +147,7 @@
     [self recordUseOfVariableNamed:iTermVariableKeyApplicationPID inContext:iTermVariablesSuggestionContextApp];
     [self recordUseOfVariableNamed:iTermVariableKeyApplicationLocalhostName inContext:iTermVariablesSuggestionContextApp];
     [self recordUseOfVariableNamed:iTermVariableKeyApplicationEffectiveTheme inContext:iTermVariablesSuggestionContextApp];
+    [self recordUseOfVariableNamed:iTermVariableKeyApplicationBundlePath inContext:iTermVariablesSuggestionContextApp];
 }
 
 + (NSSet<NSString *> * _Nonnull (^)(NSString * _Nonnull))pathSourceForContext:(iTermVariablesSuggestionContext)context {

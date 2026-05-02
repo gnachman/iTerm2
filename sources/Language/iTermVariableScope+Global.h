@@ -14,6 +14,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nullable, nonatomic, strong) NSNumber *applicationPID;
 @property (nullable, nonatomic, strong) NSString *localhostName;
 @property (nullable, nonatomic, strong) NSString *effectiveTheme;
+@property (nullable, nonatomic, strong) NSString *appBundlePath;
 
 @end
 

@@ -29,6 +29,7 @@ NSString *const iTermVariableKeyGlobalScopeName = @"iterm2";
 NSString *const iTermVariableKeyApplicationPID = @"pid";
 NSString *const iTermVariableKeyApplicationLocalhostName = @"localhostName";
 NSString *const iTermVariableKeyApplicationEffectiveTheme = @"effectiveTheme";
+NSString *const iTermVariableKeyApplicationBundlePath = @"appBundlePath";
 
 #pragma mark - Tab Context
 

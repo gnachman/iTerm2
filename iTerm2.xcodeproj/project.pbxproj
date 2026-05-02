@@ -3325,6 +3325,9 @@
 		A6A7F27F2FA130C900B391BA /* code-review-system-prompt.txt in Resources */ = {isa = PBXBuildFile; fileRef = A6A7F27E2FA130C300B391BA /* code-review-system-prompt.txt */; };
 		A6A7F2802FA130C900B391BA /* code-review-system-prompt.txt in Resources */ = {isa = PBXBuildFile; fileRef = A6A7F27E2FA130C300B391BA /* code-review-system-prompt.txt */; };
 		A6A7F2812FA130C900B391BA /* code-review-system-prompt.txt in Resources */ = {isa = PBXBuildFile; fileRef = A6A7F27E2FA130C300B391BA /* code-review-system-prompt.txt */; };
+		A6A7F2832FA130C900B391BA /* code-review-settings.txt in Resources */ = {isa = PBXBuildFile; fileRef = A6A7F2822FA130C900B391BA /* code-review-settings.txt */; };
+		A6A7F2842FA130C900B391BA /* code-review-settings.txt in Resources */ = {isa = PBXBuildFile; fileRef = A6A7F2822FA130C900B391BA /* code-review-settings.txt */; };
+		A6A7F2852FA130C900B391BA /* code-review-settings.txt in Resources */ = {isa = PBXBuildFile; fileRef = A6A7F2822FA130C900B391BA /* code-review-settings.txt */; };
 		A6A802E0226AD0D200BC70DC /* iTermSearchHistory.h in Headers */ = {isa = PBXBuildFile; fileRef = A6A802DE226AD0D200BC70DC /* iTermSearchHistory.h */; };
 		A6A802E1226AD0D200BC70DC /* iTermSearchHistory.m in Sources */ = {isa = PBXBuildFile; fileRef = A6A802DF226AD0D200BC70DC /* iTermSearchHistory.m */; };
 		A6A802E6226B8C8400BC70DC /* PTYTask.m in Sources */ = {isa = PBXBuildFile; fileRef = E8CF7560026DDA6303A80106 /* PTYTask.m */; };
@@ -8321,6 +8324,7 @@
 		A6A7ECB32FA0634400B391BA /* graphic_claude_code.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = graphic_claude_code.png; path = "hyper-tab-icons-plus/png/graphic_claude_code.png"; sourceTree = "<group>"; };
 		A6A7ECB42FA0634400B391BA /* graphic_claude_code@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "graphic_claude_code@2x.png"; path = "hyper-tab-icons-plus/png/graphic_claude_code@2x.png"; sourceTree = "<group>"; };
 		A6A7F27E2FA130C300B391BA /* code-review-system-prompt.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = "code-review-system-prompt.txt"; sourceTree = "<group>"; };
+		A6A7F2822FA130C900B391BA /* code-review-settings.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = "code-review-settings.txt"; sourceTree = "<group>"; };
 		A6A802DE226AD0D200BC70DC /* iTermSearchHistory.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermSearchHistory.h; sourceTree = "<group>"; };
 		A6A802DF226AD0D200BC70DC /* iTermSearchHistory.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermSearchHistory.m; sourceTree = "<group>"; };
 		A6A802E7226ED20800BC70DC /* iTermPrintGuard.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermPrintGuard.h; sourceTree = "<group>"; };
@@ -9979,6 +9983,7 @@
 			isa = PBXGroup;
 			children = (
 				A6A7F27E2FA130C300B391BA /* code-review-system-prompt.txt */,
+				A6A7F2822FA130C900B391BA /* code-review-settings.txt */,
 				A6CB248C2C68147B00005824 /* Utilities */,
 				A6B577D52C0A9520003FEB4F /* ai-plugin.sb */,
 				A6D3205629C492410088BBE1 /* nerd.itse */,
@@ -17754,6 +17759,7 @@
 				1D6ED9C119AEA20D005A7799 /* Coprocess.png in Resources */,
 				A6E7AE88214394DD00DE9F3B /* graphic_curl.png in Resources */,
 				A6A7F2812FA130C900B391BA /* code-review-system-prompt.txt in Resources */,
+				A6A7F2852FA130C900B391BA /* code-review-settings.txt in Resources */,
 				A686C1971ADF62F200906FAE /* Zoomed.png in Resources */,
 				A67F61A3214395B70093940A /* graphic_python.png in Resources */,
 				A67F61AC214395B70093940A /* graphic_rails@2x.png in Resources */,
@@ -18449,6 +18455,7 @@
 				A67F61C2214395C60093940A /* graphic_read.png in Resources */,
 				A663010919CFCE74004AF81C /* SuppressAllOutput.png in Resources */,
 				A6A7F27F2FA130C900B391BA /* code-review-system-prompt.txt in Resources */,
+				A6A7F2832FA130C900B391BA /* code-review-settings.txt in Resources */,
 				1DB8FBD119468A40006BAF5C /* TabClose_Front_Rollover.png in Resources */,
 				A697101518DFA7FC007E901D /* closebutton.png in Resources */,
 				A6CBB7F12E090ED400B2CCCB /* media-demo.html in Resources */,
@@ -18914,6 +18921,7 @@
 				A67F616A214395990093940A /* graphic_micro@2x.png in Resources */,
 				A6F7A731213CB143004DE961 /* StatusBarIconGitBranch.png in Resources */,
 				A6A7F2802FA130C900B391BA /* code-review-system-prompt.txt in Resources */,
+				A6A7F2842FA130C900B391BA /* code-review-settings.txt in Resources */,
 				A6FE8D07209382C000B5C648 /* download@2x.png in Resources */,
 				A686C1981ADF62F200906FAE /* Zoomed@2x.png in Resources */,
 				A629F58D23AF437400C2F16B /* utilities-manifest.txt in Resources */,

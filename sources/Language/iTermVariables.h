@@ -16,6 +16,7 @@ extern NSString *const iTermVariableKeyGlobalScopeName;
 extern NSString *const iTermVariableKeyApplicationPID;
 extern NSString *const iTermVariableKeyApplicationLocalhostName;
 extern NSString *const iTermVariableKeyApplicationEffectiveTheme;
+extern NSString *const iTermVariableKeyApplicationBundlePath;
 
 extern NSString *const iTermVariableKeyTabTitleOverride;
 extern NSString *const iTermVariableKeyTabTitleOverrideFormat;

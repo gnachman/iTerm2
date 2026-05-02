@@ -130,6 +130,7 @@ static NSString *const ProfilesSessionPreferencesViewControllerPhonyShortLivedSe
         [@[ iTermVariableKeyGlobalScopeName, iTermVariableKeyApplicationEffectiveTheme] componentsJoinedByString:@"."],
         [@[ iTermVariableKeyGlobalScopeName, iTermVariableKeyApplicationLocalhostName] componentsJoinedByString:@"."],
         [@[ iTermVariableKeyGlobalScopeName, iTermVariableKeyApplicationPID] componentsJoinedByString:@"."],
+        [@[ iTermVariableKeyGlobalScopeName, iTermVariableKeyApplicationBundlePath] componentsJoinedByString:@"."],
     ];
     return ^NSSet<NSString *> *(NSString *prefix) {
         NSArray<NSString *> *array = [allowList filteredArrayUsingBlock:^BOOL(NSString *anObject) {

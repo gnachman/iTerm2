@@ -87,6 +87,8 @@ NS_CLASS_AVAILABLE_MAC(10_14)
                                    forVariableNamed:iTermVariableKeyApplicationEffectiveTheme];
         [[iTermVariableScope globalsScope] setValue:[NSHost fullyQualifiedDomainName]
                                    forVariableNamed:iTermVariableKeyApplicationLocalhostName];
+        [[iTermVariableScope globalsScope] setValue:[[NSBundle mainBundle] bundlePath]
+                                   forVariableNamed:iTermVariableKeyApplicationBundlePath];
         NSTimer *hostnameTimer = [NSTimer scheduledTimerWithTimeInterval:60 repeats:YES block:^(NSTimer * _Nonnull timer) {
             [[iTermVariableScope globalsScope] setValue:[NSHost fullyQualifiedDomainName]
                                        forVariableNamed:iTermVariableKeyApplicationLocalhostName];

@@ -39,5 +39,13 @@
     [self setValue:newValue forVariableNamed:iTermVariableKeyApplicationEffectiveTheme];
 }
 
+- (NSString *)appBundlePath {
+    return [self valueForVariableName:iTermVariableKeyApplicationBundlePath];
+}
+
+- (void)setAppBundlePath:(NSString *)newValue {
+    [self setValue:newValue forVariableNamed:iTermVariableKeyApplicationBundlePath];
+}
+
 
 @end

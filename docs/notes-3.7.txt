@@ -248,6 +248,9 @@ Expressions and Variables:
   be a string like #ff8844.
 - Same for checkbox settings. The value should be
   a boolean.
+- A new global variable iterm2.appBundlePath
+  exposes the path to iTerm2.app for use in
+  interpolated strings.
 
 UI Improvements:
 - Contextual alternates (calt) are enabled by
