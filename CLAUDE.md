@@ -27,3 +27,4 @@
 - If your changes introduce compiler warnings, fix them.
 - After landing a feature or bugfix, update docs/notes-3.7.txt (the release notes). Max width of a line is 50 characters.
 - The sources directory is organized into folders. Before adding a new file, consider which directory it belongs in. Some are named after features while others are named after their role.
+- User Defaults keys that should only be stored locally begin with the prefix NoSync. If a user chooses to load prefs from a custom location (e.g., Dropbox) they may be prompted to write settings when a non-NoSync key changes. To avoid disrupting them in this manner, user defaults that are not actual configuration settings (e.g., a list of recent items) get a NoSync prefix.
