@@ -99,7 +99,8 @@ extension iTermClippingsGutterPanel: iTermClippingsViewDelegate {
     func clippingsView(_ view: iTermClippingsView,
                        presentAddSheetWithCompletion completion: @escaping (PTYSessionClipping?) -> Void) {
         guard let session = currentSession,
-              let window = session.view.window else {
+              let view = session.view,
+              let window = view.window else {
             completion(nil)
             return
         }

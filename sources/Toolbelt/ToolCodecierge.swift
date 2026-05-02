@@ -167,8 +167,8 @@ class ToolCodecierge: NSView, ToolbeltTool {
                 return ""
             }
             let scope = session.genericScope
-            let shell = scope?.value(forVariableName: "shell")
-            let uname = scope?.value(forVariableName: "uname")
+            let shell = scope.value(forVariableName: "shell")
+            let uname = scope.value(forVariableName: "uname")
             if let shell, let uname {
                 return "The shell is \(shell) and the system's `uname` is \(uname). "
             }

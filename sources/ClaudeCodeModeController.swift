@@ -111,10 +111,10 @@ class ClaudeCodeModeController: NSObject {
 
     @objc
     private func sessionWillTerminate(_ notification: Notification) {
-        guard let session = notification.object as? PTYSession,
-              let guid = session.guid else {
+        guard let session = notification.object as? PTYSession else {
             return
         }
+        let guid = session.guid
         claudeSessionGUIDs.remove(guid)
         shownThisRun.remove(guid)
         trialSessionGUIDs.remove(guid)
@@ -175,7 +175,8 @@ class ClaudeCodeModeController: NSObject {
             withActions: actions) { [weak self, weak session] choice in
                 switch choice {
                 case 0:
-                    if let session, let guid = session.guid {
+                    if let session {
+                        let guid = session.guid
                         // Tag the session as a trial entry BEFORE
                         // entering — the entry path is synchronous,
                         // but a paranoid order keeps the auto-exit
@@ -210,8 +211,10 @@ class ClaudeCodeModeController: NSObject {
                     break
                 }
             }
-        session.queueAnnouncement(announcement,
-                                  identifier: Self.announcementIdentifier)
+        if let announcement {
+            session.queueAnnouncement(announcement,
+                                      identifier: Self.announcementIdentifier)
+        }
     }
 
 }

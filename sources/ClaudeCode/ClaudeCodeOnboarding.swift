@@ -1296,7 +1296,7 @@ class ClaudeCodeOnboarding: NSObject {
         let sessions = claudeSessions()
         var processedWindows = Set<ObjectIdentifier>()
         for session in sessions {
-            guard let windowController = session.view.window?.windowController as? PseudoTerminal else {
+            guard let windowController = session.view?.window?.windowController as? PseudoTerminal else {
                 continue
             }
             let windowID = ObjectIdentifier(windowController)
@@ -1326,7 +1326,7 @@ class ClaudeCodeOnboarding: NSObject {
 
     private func showSettingsPopover() {
         for session in claudeSessions() {
-            guard let windowController = session.view.window?.windowController as? PseudoTerminal,
+            guard let windowController = session.view?.window?.windowController as? PseudoTerminal,
                   let toolbeltView = windowController.toolbelt(),
                   let statusTool = toolbeltView.tool(withName: kStatusToolName) as? ToolStatus else {
                 continue

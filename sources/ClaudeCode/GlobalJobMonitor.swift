@@ -72,19 +72,19 @@ class GlobalJobMonitor: NSObject {
 
     @objc private func sessionCreated(_ notification: Notification) {
         guard let session = notification.object as? PTYSession else { return }
-        DLog("GlobalJobMonitor sessionCreated: \(session.guid ?? "(no guid)")")
+        DLog("GlobalJobMonitor sessionCreated: \(session.guid)")
         startObserving(session)
     }
 
     @objc private func sessionRevived(_ notification: Notification) {
         guard let session = notification.object as? PTYSession else { return }
-        DLog("GlobalJobMonitor sessionRevived: \(session.guid ?? "(no guid)")")
+        DLog("GlobalJobMonitor sessionRevived: \(session.guid)")
         startObserving(session)
     }
 
     @objc private func sessionWillTerminate(_ notification: Notification) {
-        guard let session = notification.object as? PTYSession,
-              let guid = session.guid else { return }
+        guard let session = notification.object as? PTYSession else { return }
+        let guid = session.guid
         DLog("GlobalJobMonitor sessionWillTerminate: \(guid)")
         stopObserving(guid)
     }
@@ -92,10 +92,7 @@ class GlobalJobMonitor: NSObject {
     // MARK: - Observation
 
     private func startObserving(_ session: PTYSession) {
-        guard let guid = session.guid else {
-            DLog("GlobalJobMonitor startObserving: session has no guid, skipping")
-            return
-        }
+        let guid = session.guid
         guard references[guid] == nil else {
             DLog("GlobalJobMonitor startObserving: already observing \(guid)")
             return
@@ -105,7 +102,8 @@ class GlobalJobMonitor: NSObject {
         let ref = iTermVariableReference<AnyObject>(path: monitoredVariable,
                                                     vendor: session.genericScope)
         ref.onChangeBlock = { [weak self, weak session] in
-            guard let self, let session, let guid = session.guid else { return }
+            guard let self, let session else { return }
+            let guid = session.guid
             let value = session.genericScope.value(forVariableName: self.monitoredVariable) as? String
             DLog("GlobalJobMonitor variable changed for \(guid): \(value ?? "(nil)")")
             self.ancestorsChanged(for: guid, newValue: value)

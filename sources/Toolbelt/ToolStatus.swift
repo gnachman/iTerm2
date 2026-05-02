@@ -474,7 +474,7 @@ private extension ToolStatus {
         if sessionTab === currentTab && sessionTab.sessions().count > 1 {
             // Session (or its in-tab peer) is in the current tab —
             // show pane shortcut.
-            let ordinal = visible.view.ordinal
+            let ordinal = visible.view?.ordinal ?? 0
             if ordinal != 0 {
                 let paneTag = iTermPreferencesModifierTag(
                     rawValue: iTermPreferences.int(forKey: kPreferenceKeySwitchPaneModifier))

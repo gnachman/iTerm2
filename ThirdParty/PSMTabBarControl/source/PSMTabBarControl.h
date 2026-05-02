@@ -11,6 +11,8 @@
 #import "PSMCachedTitle.h"
 #import "PSMProgressIndicator.h"
 
+NS_ASSUME_NONNULL_BEGIN
+
 // Set to 1 to enable drag performance debugging (timestamp overlay and NSLog statements)
 #define PSM_DEBUG_DRAG_PERFORMANCE 0
 
@@ -76,7 +78,7 @@ extern PSMTabBarControlOptionKey PSMTabBarControlOptionPUAFontProvider;  // id<P
 - (void)tabView:(NSTabView *)tabView doubleClickTabViewItem:(NSTabViewItem *)tabViewItem;
 - (NSDragOperation)tabView:(NSTabView *)tabView draggingEnteredTabBarForSender:(id<NSDraggingInfo>)sender;
 - (BOOL)tabView:(NSTabView *)tabView shouldAcceptDragFromSender:(id<NSDraggingInfo>)sender;
-- (NSTabViewItem *)tabView:(NSTabView *)tabView unknownObjectWasDropped:(id <NSDraggingInfo>)sender;
+- (nullable NSTabViewItem *)tabView:(NSTabView *)tabView unknownObjectWasDropped:(id <NSDraggingInfo>)sender;
 @end
 
 // These methods are KVO-observed.
@@ -84,12 +86,12 @@ extern PSMTabBarControlOptionKey PSMTabBarControlOptionPUAFontProvider;  // id<P
 @optional
 - (BOOL)isProcessing;
 - (void)setIsProcessing:(BOOL)processing;
-- (NSImage *)icon;
-- (void)setIcon:(NSImage *)icon;
+- (nullable NSImage *)icon;
+- (void)setIcon:(nullable NSImage *)icon;
 - (int)objectCount;
 - (void)setObjectCount:(int)objectCount;
-- (NSImage *)psmTabGraphic;
-- (NSColor *)psmTabStatusSubtitleColor;
+- (nullable NSImage *)psmTabGraphic;
+- (nullable NSColor *)psmTabStatusSubtitleColor;
 @end
 
 @protocol PSMTabBarControlDelegate<NSTabViewDelegate>
@@ -109,17 +111,17 @@ extern PSMTabBarControlOptionKey PSMTabBarControlOptionPUAFontProvider;  // id<P
 - (void)tabView:(NSTabView *)aTabView acceptedDraggingInfo:(id <NSDraggingInfo>)draggingInfo onTabViewItem:(NSTabViewItem *)tabViewItem;
 
 //Contextual menu method
-- (NSMenu *)tabView:(NSTabView *)aTabView menuForTabViewItem:(NSTabViewItem *)tabViewItem;
+- (nullable NSMenu *)tabView:(NSTabView *)aTabView menuForTabViewItem:(NSTabViewItem *)tabViewItem;
 
 //Drag and drop methods
 - (BOOL)tabView:(NSTabView *)aTabView shouldDragTabViewItem:(NSTabViewItem *)tabViewItem fromTabBar:(PSMTabBarControl *)tabBarControl;
-- (BOOL)tabView:(NSTabView *)aTabView shouldDropTabViewItem:(NSTabViewItem *)tabViewItem inTabBar:(PSMTabBarControl *)tabBarControl moveSourceWindow:(BOOL *)moveSourceWindow;
+- (BOOL)tabView:(NSTabView *)aTabView shouldDropTabViewItem:(NSTabViewItem *)tabViewItem inTabBar:(nullable PSMTabBarControl *)tabBarControl moveSourceWindow:(nullable BOOL *)moveSourceWindow;
 - (void)tabView:(NSTabView*)aTabView willDropTabViewItem:(NSTabViewItem *)tabViewItem inTabBar:(PSMTabBarControl *)tabBarControl;
 - (void)tabView:(NSTabView*)aTabView didDropTabViewItem:(NSTabViewItem *)tabViewItem inTabBar:(PSMTabBarControl *)tabBarControl;
 
 //Tear-off tabs methods
-- (NSImage *)tabView:(NSTabView *)aTabView imageForTabViewItem:(NSTabViewItem *)tabViewItem styleMask:(NSWindowStyleMask *)styleMask;
-- (PSMTabBarControl *)tabView:(NSTabView *)aTabView newTabBarForDraggedTabViewItem:(NSTabViewItem *)tabViewItem atPoint:(NSPoint)point;
+- (nullable NSImage *)tabView:(NSTabView *)aTabView imageForTabViewItem:(NSTabViewItem *)tabViewItem styleMask:(NSWindowStyleMask *)styleMask;
+- (nullable PSMTabBarControl *)tabView:(NSTabView *)aTabView newTabBarForDraggedTabViewItem:(NSTabViewItem *)tabViewItem atPoint:(NSPoint)point;
 - (void)tabView:(NSTabView *)aTabView closeWindowForLastTabViewItem:(NSTabViewItem *)tabViewItem;
 - (BOOL)tabViewDragShouldExitWindow:(NSTabView *)tabView;
 
@@ -131,7 +133,7 @@ extern PSMTabBarControlOptionKey PSMTabBarControlOptionPUAFontProvider;  // id<P
 - (void)tabView:(NSTabView *)aTabView tabBarDidUnhide:(PSMTabBarControl *)tabBarControl;
 
 //tooltips
-- (NSString *)tabView:(NSTabView *)aTabView toolTipForTabViewItem:(NSTabViewItem *)tabViewItem;
+- (nullable NSString *)tabView:(NSTabView *)aTabView toolTipForTabViewItem:(NSTabViewItem *)tabViewItem;
 
 //accessibility
 - (NSString *)accessibilityStringForTabView:(NSTabView *)aTabView objectCount:(int)objectCount;
@@ -142,15 +144,15 @@ extern PSMTabBarControlOptionKey PSMTabBarControlOptionPUAFontProvider;  // id<P
 - (void)tabViewDidChangeNumberOfTabViewItems:(NSTabView *)tabView;
 
 // iTerm add-on
-- (void)setTabColor:(NSColor *)aColor forTabViewItem:(NSTabViewItem *) tabViewItem;
-- (NSColor*)tabColorForTabViewItem:(NSTabViewItem*)tabViewItem;
+- (void)setTabColor:(nullable NSColor *)aColor forTabViewItem:(NSTabViewItem *) tabViewItem;
+- (nullable NSColor*)tabColorForTabViewItem:(NSTabViewItem*)tabViewItem;
 - (void)tabView:(NSTabView *)tabView doubleClickTabViewItem:(NSTabViewItem *)tabViewItem;
 - (void)tabViewDoubleClickTabBar:(NSTabView *)tabView;
 - (void)setModifier:(int)mask;
 - (void)fillPath:(NSBezierPath*)path;
 - (void)tabView:(NSTabView *)tabView closeTab:(id)identifier button:(int)button;
-- (NSTabViewItem *)tabView:(NSTabView *)tabView unknownObjectWasDropped:(id <NSDraggingInfo>)sender;
-- (id)tabView:(PSMTabBarControl *)tabView valueOfOption:(PSMTabBarControlOptionKey)option;
+- (nullable NSTabViewItem *)tabView:(NSTabView *)tabView unknownObjectWasDropped:(id <NSDraggingInfo>)sender;
+- (nullable id)tabView:(PSMTabBarControl *)tabView valueOfOption:(PSMTabBarControlOptionKey)option;
 - (void)tabViewDidClickAddTabButton:(PSMTabBarControl *)tabView;
 - (BOOL)tabViewShouldDragWindow:(NSTabView *)tabView event:(NSEvent *)event;
 - (BOOL)tabViewShouldAllowDragOnAddTabButton:(NSTabView *)tabView;
@@ -209,21 +211,21 @@ extern const CGFloat PSMTabBarProgressBarHeight;
 // Of on, ellipsize the start if more tabs share a prefix than a suffix.
 @property(nonatomic, assign) BOOL smartTruncation;
 
-@property(nonatomic, retain) IBOutlet NSTabView *tabView;
-@property(nonatomic, weak) id<PSMTabBarControlDelegate> delegate;
-@property(nonatomic, retain) id partnerView;
-@property(nonatomic, readonly) NSButton *overflowPopUpButton;
+@property(nonatomic, retain, nullable) IBOutlet NSTabView *tabView;
+@property(nonatomic, weak, nullable) id<PSMTabBarControlDelegate> delegate;
+@property(nonatomic, retain, nullable) id partnerView;
+@property(nonatomic, readonly, nullable) NSButton *overflowPopUpButton;
 @property(nonatomic, assign) BOOL ignoreTrailingParentheticalsForSmartTruncation;
 
 // control characteristics
 + (NSBundle *)bundle;
 + (BOOL)isAnyDragInProgress;
 
-- (void)changeIdentifier:(id)newIdentifier atIndex:(int)theIndex;
+- (void)changeIdentifier:(nullable id)newIdentifier atIndex:(int)theIndex;
 - (void)moveTabAtIndex:(NSInteger)i1 toIndex:(NSInteger)i2;
 
 // the buttons
-- (PSMRolloverButton *)addTabButton;
+- (nullable PSMRolloverButton *)addTabButton;
 
 // tab information
 - (NSMutableArray *)representedTabViewItems;
@@ -243,28 +245,28 @@ extern const CGFloat PSMTabBarProgressBarHeight;
 @property(nonatomic, assign) NSEdgeInsets insets;
 @property(nonatomic) CGFloat height;
 
-- (void)setTabColor:(NSColor *)aColor forTabViewItem:(NSTabViewItem *) tabViewItem;
-- (NSColor*)tabColorForTabViewItem:(NSTabViewItem*)tabViewItem;
+- (void)setTabColor:(nullable NSColor *)aColor forTabViewItem:(NSTabViewItem *) tabViewItem;
+- (nullable NSColor*)tabColorForTabViewItem:(NSTabViewItem*)tabViewItem;
 - (void)setIsPinned:(BOOL)pinned forTabViewItem:(NSTabViewItem *)tabViewItem;
 - (BOOL)isPinnedForTabViewItem:(NSTabViewItem *)tabViewItem;
 - (void)setModifier:(NSUInteger)mask;
 - (NSString*)_modifierString;
 - (void)fillPath:(NSBezierPath*)path;
-- (NSTabViewItem *)tabView:(NSTabView *)tabView unknownObjectWasDropped:(id <NSDraggingInfo>)sender;
+- (nullable NSTabViewItem *)tabView:(NSTabView *)tabView unknownObjectWasDropped:(id <NSDraggingInfo>)sender;
 
 - (NSColor *)accessoryTextColor;
 
 - (void)initializeStateForCell:(PSMTabBarCell *)cell;
 
-- (void)setIsProcessing:(BOOL)isProcessing forTabWithIdentifier:(id)identifier;
-- (void)setProgress:(PSMProgress)progress forTabWithIdentifier:(id)identifier;
+- (void)setIsProcessing:(BOOL)isProcessing forTabWithIdentifier:(nullable id)identifier;
+- (void)setProgress:(PSMProgress)progress forTabWithIdentifier:(nullable id)identifier;
 - (BOOL)shouldShowCustomProgressBarForTabCell:(PSMTabBarCell *)cell;
 - (nullable NSView *)customProgressBarViewForTabCell:(PSMTabBarCell *)cell;
 - (void)configureCustomProgressBarView:(NSView *)view forTabCell:(PSMTabBarCell *)cell;
-- (BOOL)isInOverflowMenuForTabWithIdentifier:(id)identifier;
-- (void)setIcon:(NSImage *)icon forTabWithIdentifier:(id)identifier;
-- (void)setObjectCount:(NSInteger)objectCount forTabWithIdentifier:(id)identifier;
-- (void)graphicDidChangeForTabWithIdentifier:(id)identifier;
+- (BOOL)isInOverflowMenuForTabWithIdentifier:(nullable id)identifier;
+- (void)setIcon:(nullable NSImage *)icon forTabWithIdentifier:(nullable id)identifier;
+- (void)setObjectCount:(NSInteger)objectCount forTabWithIdentifier:(nullable id)identifier;
+- (void)graphicDidChangeForTabWithIdentifier:(nullable id)identifier;
 
 - (void)setTabsHaveCloseButtons:(BOOL)tabsHaveCloseButtons;
 
@@ -278,13 +280,15 @@ extern const CGFloat PSMTabBarProgressBarHeight;
               toTabBar:(PSMTabBarControl *)destinationTabBar
                atIndex:(NSInteger)destinationIndex;
 - (void)backgroundColorWillChange;
-- (id)cellForPoint:(NSPoint)point
-         cellFrame:(NSRectPointer)outFrame;
+- (nullable id)cellForPoint:(NSPoint)point
+                  cellFrame:(nullable NSRectPointer)outFrame;
 - (void)dragWillExitTabBar;
 - (void)dragDidFinish;
 - (void)syncTabProgressBars;
 
 @end
+
+NS_ASSUME_NONNULL_END
 
 BOOL PSMShouldExtendTransparencyIntoMinimalTabBar(void);
 

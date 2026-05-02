@@ -52,7 +52,7 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
     }
     
     @objc var edgeDragHeight: CGFloat {
-        guard let delegate = tabBar?.delegate,
+        guard let tabBar, let delegate = tabBar.delegate,
               let size = delegate.tabView?(tabBar, valueOfOption: PSMTabBarControlOptionKey.dragEdgeHeight) as? NSNumber else {
             return 0
         }
@@ -151,11 +151,11 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
         return NSRect(x: enclosureSize.width - 30, y: enclosureSize.height - 30, width: 24, height: 24)
     }
 
-    @objc func makeAddTabButton(withFrame frame: NSRect) -> PSMRolloverButton {
+    @objc func makeAddTabButton(withFrame frame: NSRect) -> PSMRolloverButton? {
         return PSMTahoeRolloverButton(symbolName: "plus")
     }
-    
-    func makeOverflowButton(withFrame frame: NSRect) -> NSButton! {
+
+    func makeOverflowButton(withFrame frame: NSRect) -> NSButton {
         return PSMTahoeOverflowButton()
     }
 
@@ -163,7 +163,7 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
         return "Tahoe"
     }
     
-    func frameForAddTabButton(withCellWidths widths: [NSNumber]!, height: CGFloat) -> NSRect {
+    func frameForAddTabButton(withCellWidths widths: [NSNumber]?, height: CGFloat) -> NSRect {
         guard let tabBar else {
             return .zero
         }
@@ -303,7 +303,7 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
     
     
     @objc
-    func minimumWidth(ofTabCell cell: PSMTabBarCell!) -> Float {
+    func minimumWidth(ofTabCell cell: PSMTabBarCell) -> Float {
         if cell.isPinned {
             return Float(tabBar?.pinnedTabWidth ?? 0)
         }
@@ -313,7 +313,7 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
     }
 
     @objc
-    func desiredWidth(ofTabCell cell: PSMTabBarCell!) -> Float {
+    func desiredWidth(ofTabCell cell: PSMTabBarCell) -> Float {
         if cell.isPinned {
             return Float(tabBar?.pinnedTabWidth ?? 0)
         }
@@ -355,8 +355,15 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
     }
     
     @objc func cachedTitleInputs(forTabCell cell: PSMTabBarCell) -> PSMCachedTitleInputs {
-        let parseHTML = tabBar?.delegate?.tabView?(tabBar, valueOfOption: PSMTabBarControlOptionKey.htmlTabTitles) as? NSNumber ?? NSNumber(value: false)
-        let puaFontProvider = tabBar?.delegate?.tabView?(tabBar, valueOfOption: PSMTabBarControlOptionKey.puaFontProvider) as? PSMPUAFontProvider
+        let parseHTML: NSNumber
+        let puaFontProvider: PSMPUAFontProvider?
+        if let tabBar {
+            parseHTML = tabBar.delegate?.tabView?(tabBar, valueOfOption: PSMTabBarControlOptionKey.htmlTabTitles) as? NSNumber ?? NSNumber(value: false)
+            puaFontProvider = tabBar.delegate?.tabView?(tabBar, valueOfOption: PSMTabBarControlOptionKey.puaFontProvider) as? PSMPUAFontProvider
+        } else {
+            parseHTML = NSNumber(value: false)
+            puaFontProvider = nil
+        }
 
         let tabViewItem = cell.representedObject as? NSTabViewItem
         let tab = tabViewItem?.identifier as? PSMTabBarControlRepresentedObjectIdentifierProtocol
@@ -379,8 +386,15 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
             return nil
         }
 
-        let parseHTML = tabBar?.delegate?.tabView?(tabBar, valueOfOption: PSMTabBarControlOptionKey.htmlTabTitles) as? NSNumber ?? NSNumber(value: false)
-        let puaFontProvider = tabBar?.delegate?.tabView?(tabBar, valueOfOption: PSMTabBarControlOptionKey.puaFontProvider) as? PSMPUAFontProvider
+        let parseHTML: NSNumber
+        let puaFontProvider: PSMPUAFontProvider?
+        if let tabBar {
+            parseHTML = tabBar.delegate?.tabView?(tabBar, valueOfOption: PSMTabBarControlOptionKey.htmlTabTitles) as? NSNumber ?? NSNumber(value: false)
+            puaFontProvider = tabBar.delegate?.tabView?(tabBar, valueOfOption: PSMTabBarControlOptionKey.puaFontProvider) as? PSMPUAFontProvider
+        } else {
+            parseHTML = NSNumber(value: false)
+            puaFontProvider = nil
+        }
         let color = textColor(for: cell)
 
         var subtitleColor: NSColor
@@ -469,14 +483,14 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
         }
     }()
 
-    @objc func dirtyFrame(for cell: PSMTabBarCell!) -> NSRect {
+    @objc func dirtyFrame(for cell: PSMTabBarCell) -> NSRect {
         return cell.frame.insetBy(dx: -Self.leftDropShadow.size.width, dy: -Self.topDropShadow.size.height)
     }
     
     @objc func drawTabCell(_ cell: PSMTabBarCell, highlightAmount: CGFloat) {
         let horizontal = (_orientation == .horizontalOrientation)
-        let isFirst = (cell == tabBar?.cells()?.first as? PSMTabBarCell)
-        let isLast = (cell == tabBar?.cells()?.lastObject as? PSMTabBarCell)
+        let isFirst = (cell == tabBar?.cells().firstObject as? PSMTabBarCell)
+        let isLast = (cell == tabBar?.cells().lastObject as? PSMTabBarCell)
         
         if tabBar?.window?.isKeyWindow == true {
             if cell.state == .on {
@@ -1134,7 +1148,8 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
     }
     
     var fontSize: CGFloat {
-        if let override = tabBar?.delegate?.tabView?(tabBar, valueOfOption: PSMTabBarControlOptionKey.fontSizeOverride) as? NSNumber {
+        if let tabBar,
+           let override = tabBar.delegate?.tabView?(tabBar, valueOfOption: PSMTabBarControlOptionKey.fontSizeOverride) as? NSNumber {
             return CGFloat(override.doubleValue)
         }
         return 11.0
@@ -1950,7 +1965,8 @@ class PSMTahoeDarkHighContrastTabStyle: PSMTahoeDarkTabStyle {
         }
     }
     override var fontSize: CGFloat {
-        if let override = tabBar?.delegate?.tabView?(tabBar, valueOfOption: PSMTabBarControlOptionKey.fontSizeOverride) as? NSNumber {
+        if let tabBar,
+           let override = tabBar.delegate?.tabView?(tabBar, valueOfOption: PSMTabBarControlOptionKey.fontSizeOverride) as? NSNumber {
             return CGFloat(override.doubleValue)
         }
         return 13.0
@@ -1986,7 +2002,8 @@ class PSMTahoeLightHighContrastTabStyle: PSMTahoeTabStyle {
     }
     
     override var fontSize: CGFloat {
-        if let override = tabBar?.delegate?.tabView?(tabBar, valueOfOption: PSMTabBarControlOptionKey.fontSizeOverride) as? NSNumber {
+        if let tabBar,
+           let override = tabBar.delegate?.tabView?(tabBar, valueOfOption: PSMTabBarControlOptionKey.fontSizeOverride) as? NSNumber {
             return CGFloat(override.doubleValue)
         }
         return 13.0

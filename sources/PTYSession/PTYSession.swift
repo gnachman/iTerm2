@@ -158,7 +158,7 @@ extension PTYSession {
             guard type == .annotation, let note = obj as? PTYAnnotationReading, note.uniqueID == id else {
                 return
             }
-            textview.scrollLineNumberRange(
+            textview?.scrollLineNumberRange(
                 intoView: VT100GridRangeMake(Int32(Int64(line) - screen.totalScrollbackOverflow()), 1))
             highlightMarkOrNote(obj)
         }
@@ -244,7 +244,7 @@ extension PTYSession {
                               identifier: nil,
                               silenceable: .kiTermWarningTypePersistent,
                               heading: "Error",
-                              window: self.genericView.window)
+                              window: self.genericView?.window)
             return
         }
         try client.explain(request,
@@ -825,7 +825,7 @@ extension PTYSession {
         }
     }
     private func searchBrowser(args: RemoteCommand.SearchBrowser, completion: @escaping (String, String) throws -> ()) rethrows {
-        view.browserViewController?.findOnPage(query: args.query, maxResults: 20, contextLength: 100) { result in
+        view?.browserViewController?.findOnPage(query: args.query, maxResults: 20, contextLength: 100) { result in
             switch result {
             case .success(let results):
                 let json = try! JSONEncoder().encode(results).lossyString
@@ -843,7 +843,7 @@ extension PTYSession {
             try completion("The URL \(args.url) is not well formed", "Navigation failed")
             return
         }
-        view.browserViewController?.loadURL(url) { error in
+        view?.browserViewController?.loadURL(url) { error in
             if let error {
                 try? completion("The web page could not be loaded: " + error.localizedDescription, "Navigation failed")
             } else {
@@ -853,13 +853,13 @@ extension PTYSession {
     }
 
     private func webSearch(args: RemoteCommand.WebSearch, completion: @escaping (String, String) throws -> ()) rethrows {
-        view.browserViewController?.doWebSearch(for: args.query) { [weak self] error in
+        view?.browserViewController?.doWebSearch(for: args.query) { [weak self] error in
             if let error {
                 DLog("\(error)")
                 try? completion("Web search is not currently available", "Web search failed")
                 return
             }
-            self?.view.browserViewController?.convertToMarkdown(skipChrome: true) { (result: Result<String, Error>) in
+            self?.view?.browserViewController?.convertToMarkdown(skipChrome: true) { (result: Result<String, Error>) in
                 if let markdown = result.successValue {
                     try? completion(markdown, "Web search complete")
                 } else {
@@ -870,7 +870,7 @@ extension PTYSession {
     }
 
     private func getURL(args: RemoteCommand.GetURL, completion: @escaping (String, String) throws -> ()) rethrows {
-        if let url = view.browserViewController?.webView.url {
+        if let url = view?.browserViewController?.webView.url {
             try completion(url.absoluteString, "URL provided")
         } else {
             try completion("about:blank", "URL provided")
@@ -878,7 +878,7 @@ extension PTYSession {
     }
 
     private func readWebPage(args: RemoteCommand.ReadWebPage, completion: @escaping (String, String) throws -> ()) rethrows {
-        view.browserViewController?.convertToMarkdown(skipChrome: false) { (result: Result<String, Error>) in
+        view?.browserViewController?.convertToMarkdown(skipChrome: false) { (result: Result<String, Error>) in
             switch result {
             case .success(let text):
                 let lines = text.components(separatedBy: "\n")
@@ -1079,6 +1079,7 @@ extension PTYSession: PathCompletionHelperDelegate {
 
     func pathCompletionHelper(_ helper: PathCompletionHelper,
                               screenRectForCoordRange coordRange: VT100GridCoordRange) -> NSRect {
+        guard let textview else { return .zero }
         let startRect = textview.rect(for: coordRange.start)
         let endRect = textview.rect(for: coordRange.end)
         let textViewRect = startRect.union(endRect)
@@ -1088,11 +1089,11 @@ extension PTYSession: PathCompletionHelperDelegate {
     }
 
     func pathCompletionHelperWindow(_ helper: PathCompletionHelper) -> NSWindow? {
-        return textview.window
+        return textview?.window
     }
 
     func pathCompletionHelperFont(_ helper: PathCompletionHelper) -> NSFont {
-        return textview.fontTable.asciiFont.font
+        return textview?.fontTable.asciiFont.font ?? NSFont.systemFont(ofSize: NSFont.systemFontSize)
     }
 
     func pathCompletionHelper(_ helper: PathCompletionHelper, didSelect suggestion: String) {
@@ -1129,7 +1130,7 @@ extension PTYSession {
         session.shell.ioBuffer = iobuffer
         session.channelParentGuid = guid
         // Should only be nil for tmux
-        let restorableSession = self.restorableSession!
+        let restorableSession = self.restorableSession
         restorableSession.arrangement = [:]
         restorableSession.sessions = [session]
         restorableSession.group = .kiTermRestorableSessionGroupChannel
@@ -1170,7 +1171,8 @@ extension PTYSession {
 extension PTYSession {
     func smartSelectAllVisible() {
         DLog("begin");
-        textview?.removeContentNavigationShortcutsAndSearchResults(false)
+        guard let textview, let view else { return }
+        textview.removeContentNavigationShortcutsAndSearchResults(false)
         let visibleLines = textview.rangeOfVisibleLines
         let overflow = screen.totalScrollbackOverflow()
         let y = VT100GridRangeNoninclusiveMaxLL(visibleLines) + overflow
@@ -1178,7 +1180,7 @@ extension PTYSession {
         let findDriver = view.findDriverCreatingIfNeeded
 
         let regex = regularExpressonForNonLowPrecisionSmartSelectionRulesCombined
-        DLog("findDriver=\(findDriver.d) regex=\(regex.d)")
+        DLog("findDriver=\(findDriver.d) regex=\(regex)")
         var done = false
         let visibleAbsLines = NSMakeRange(Int(visibleLines.location) + Int(overflow),
                                           Int(visibleLines.length))
@@ -1202,14 +1204,14 @@ extension PTYSession {
 extension PTYSession {
     @objc
     var minimalThemeTextColor: NSColor {
-        if let color = textview.colorForMargins {
+        if let color = textview?.colorForMargins {
             if color.isDark {
                 return NSColor(displayP3Red: 0.95, green: 0.95, blue: 0.95, alpha: 1.0)
             } else {
                 return NSColor(displayP3Red: 0.05, green: 0.05, blue: 0.05, alpha: 1.0)
             }
         }
-        return textview.colorMap.color(forKey: kColorMapForeground)
+        return textview?.colorMap.color(forKey: kColorMapForeground) ?? NSColor.textColor
     }
 }
 
@@ -1217,24 +1219,24 @@ extension PTYSession {
 extension PTYSession {
     @objc(openURL:)
     func open(url: URL) {
-        guard view.isBrowser else {
+        guard view?.isBrowser == true else {
             DLog("Can't open \(url), not a browser")
             return
         }
-        view.browserViewController?.loadURL(url.absoluteString)
+        view?.browserViewController?.loadURL(url.absoluteString)
     }
 
     @objc
     var webSiteTitle: String? {
         if #available(macOS 11, *) {
-            return view.browserViewController?.title
+            return view?.browserViewController?.title
         }
         return nil
     }
 
     @objc
     func loadDeferredURLIfNeeded() {
-        view.browserViewController?.loadDeferredURLIfNeeded()
+        view?.browserViewController?.loadDeferredURLIfNeeded()
     }
 }
 
@@ -1450,14 +1452,14 @@ extension PTYSession {
             self.reloadProfile()
         }
 
-        if iTermProfilePreferences.bool(forKey: KEY_BROWSER_DEV_NULL, inProfile: self.profile) {
+        if iTermProfilePreferences.bool(forKey: KEY_BROWSER_DEV_NULL, inProfile: justProfile) {
             setSessionSpecificProfileValues([KEY_UNDO_TIMEOUT: 0])
         }
         let model: ProfileModel
         let guid: String
-        let myGuid = profile[KEY_GUID]! as! String
+        let myGuid = justProfile[KEY_GUID]! as! String
         if isDivorced {
-            if let originalGuid = profile[KEY_ORIGINAL_GUID] as? String,
+            if let originalGuid = justProfile[KEY_ORIGINAL_GUID] as? String,
                ProfileModel.sharedInstance()!.bookmark(withGuid: originalGuid) != nil {
                 model = ProfileModel.sharedInstance()!
                 guid = originalGuid
@@ -1469,11 +1471,12 @@ extension PTYSession {
             model = ProfileModel.sharedInstance()!
             guid = myGuid
         }
+        guard let textview, let view else { return false }
         let vc = iTermBrowserViewController(
             configuration: configuration,
             sessionGuid: guid,
             profileObserver: iTermProfilePreferenceObserver(
-                guid: profile[KEY_GUID]! as! String,
+                guid: justProfile[KEY_GUID]! as! String,
                 model: isDivorced ? ProfileModel.sessionsInstance() : ProfileModel.sharedInstance()),
             profileMutator: iTermProfilePreferenceMutator(
                 model: model,
@@ -1482,7 +1485,7 @@ extension PTYSession {
         vc.delegate = self
         view.setBrowserViewController(
             vc, initialURL: iTermProfilePreferences.string(forKey: KEY_INITIAL_URL,
-                                                           inProfile: profile),
+                                                           inProfile: justProfile),
             restorableState: restorableState as? [AnyHashable: Any])
         return true
     }
@@ -1497,7 +1500,7 @@ extension PTYSession {
 extension PTYSession {
     var defaultAccountNameForPasswordManager: String? {
         if isBrowserSession() {
-            return view.browserViewController?.currentURL?.host
+            return view?.browserViewController?.currentURL?.host
         }
         return nil
     }
@@ -1506,7 +1509,7 @@ extension PTYSession {
 @objc
 extension PTYSession {
     func willOpenEditSessionSettings() {
-        if var triggerDicts = self.profile[KEY_TRIGGERS] as? [NSDictionary] {
+        if var triggerDicts = self.justProfile[KEY_TRIGGERS] as? [NSDictionary] {
             var haveStats = false
             screen.performBlock(joinedThreads: { _, state, _ in
                 let stats = state.triggerStats()
@@ -1530,7 +1533,7 @@ extension PTYSession {
 @objc
 extension PTYSession {
     func saveArchive() {
-        guard let destination = iTermProfilePreferences.string(forKey: KEY_ARCHIVEDIR, inProfile: profile) else {
+        guard let destination = iTermProfilePreferences.string(forKey: KEY_ARCHIVEDIR, inProfile: justProfile) else {
             DLog("No archive dir in profile")
             return
         }
@@ -1545,7 +1548,7 @@ extension PTYSession {
             .replacingOccurrences(of: " ", with: "_")
             .replacingOccurrences(of: "/", with: "-")
             .replacingOccurrences(of: ",", with: "")
-        let filename = "\(dateTime) - \(name ?? "Untitled").itermarchive"
+        let filename = "\(dateTime) - \(name).itermarchive"
         let url = URL(fileURLWithPath: destination).appendingPathComponent(filename)
         saveArchive(to: iTermSavePanelItem(filename: url.path, host: .localhost), term: term)
     }
@@ -1606,9 +1609,13 @@ extension VT100ScreenMutableState: ResilientCoordinateDataSource {
 
 extension PTYSession: AutomaticProfileSwitchingSessionDelegate {
     func automaticProfileSwitchingSessionExpressionNeedEvaluation(_ session: AutomaticProfileSwitchingSession) {
-        if iTermProfilePreferences.bool(forKey: KEY_PREVENT_APS, inProfile: profile) {
+        if iTermProfilePreferences.bool(forKey: KEY_PREVENT_APS, inProfile: justProfile) {
             return
         }
+        // apsContext is initialized in -setPreferencesFromAddressBookEntry:.
+        // This delegate callback only fires after that runs, so this is
+        // belt-and-suspenders.
+        guard let apsContext else { return }
         automaticProfileSwitcher.markDirty()
         automaticProfileSwitcher.setHostname(genericScope.value(forVariableName: iTermVariableKeySessionHostname) as? String,
                                              username: genericScope.value(forVariableName: iTermVariableKeySessionUsername) as? String,
@@ -1623,6 +1630,7 @@ extension PTYSession: AutomaticProfileSwitchingSessionDelegate {
 
 extension PTYSession {
     @objc func textViewEditSessionNote() {
+        guard let view else { return }
         if view.isSessionNoteVisible {
             view.hideSessionNote()
         } else {
@@ -1637,10 +1645,10 @@ extension PTYSession {
 extension PTYSession {
     var peerPort: PTYSessionPeerPort? {
         get {
-            swiftState!.peerPort
+            swiftState.peerPort
         }
         set {
-            swiftState!.peerPort = newValue
+            swiftState.peerPort = newValue
         }
     }
 
@@ -1676,24 +1684,24 @@ extension PTYSession {
     // Workgroup runtime: when a workgroup is active on this session,
     // `workgroupInstance` points at the per-entry state owner.
     @objc var workgroupInstance: iTermWorkgroupInstance? {
-        get { swiftState!.workgroupInstance }
-        set { swiftState!.workgroupInstance = newValue }
+        get { swiftState.workgroupInstance }
+        set { swiftState.workgroupInstance = newValue }
     }
 
     // Workgroup-mode tag set by the spawn path. .codeReview triggers the
     // deferred-launch / prompt-overlay path; .regular runs the program
     // immediately as before.
     @objc var workgroupSessionMode: iTermWorkgroupSessionMode {
-        get { swiftState!.workgroupSessionMode }
-        set { swiftState!.workgroupSessionMode = newValue }
+        get { swiftState.workgroupSessionMode }
+        set { swiftState.workgroupSessionMode = newValue }
     }
 
     // Raw (unwrapped, swifty-templated) command for .codeReview sessions.
     // Used by reload paths (toolbar reload, restart-after-exit) to
     // re-present the prompt overlay against the original template.
     @objc var codeReviewRawCommand: String? {
-        get { swiftState!.codeReviewRawCommand }
-        set { swiftState!.codeReviewRawCommand = newValue }
+        get { swiftState.codeReviewRawCommand }
+        set { swiftState.codeReviewRawCommand = newValue }
     }
 
     // Build a peer session for a workgroup's configured peer, driven
@@ -1715,7 +1723,14 @@ extension PTYSession {
                         return
                     }
                     let factory = iTermSessionFactory()
-                    var profile = self.profile!
+                    guard var profile = self.profile else {
+                        seal.reject(iTermError("Session has no profile"))
+                        return
+                    }
+                    guard let myView = self.view else {
+                        seal.reject(iTermError("Session has no view"))
+                        return
+                    }
                     if let guid = config.profileGUID,
                        let override = ProfileModel.sharedInstance()?
                         .bookmark(withGuid: guid) {
@@ -1738,12 +1753,14 @@ extension PTYSession {
 
                     let newSession = factory.newSession(withProfile: profile,
                                                         parent: self)
-                    newSession.setScreenSize(view.bounds.size,
+                    newSession.setScreenSize(myView.bounds.size,
                                              parent: delegate.realParentWindow())
                     newSession.setSize(screen.size)
-                    newSession.view.scrollview.hasVerticalScroller = view.scrollview.hasVerticalScroller
-                    newSession.view.scrollview.lineScroll = view.scrollview.lineScroll
-                    newSession.view.scrollview.pageScroll = view.scrollview.pageScroll
+                    if let newSessionView = newSession.view {
+                        newSessionView.scrollview.hasVerticalScroller = myView.scrollview.hasVerticalScroller
+                        newSessionView.scrollview.lineScroll = myView.scrollview.lineScroll
+                        newSessionView.scrollview.pageScroll = myView.scrollview.pageScroll
+                    }
                     if let imagePath = backgroundImagePath {
                         newSession.backgroundImagePath = imagePath
                     }
@@ -1751,7 +1768,7 @@ extension PTYSession {
                     newSession.loadInitialColorTableAndResetCursorGuide()
                     newSession.screen.resetTimestamps()
 
-                    if ProfileModel.sessionsInstance().bookmark(withGuid: (newSession.profile[KEY_GUID] as! String)) != nil && isDivorced {
+                    if ProfileModel.sessionsInstance().bookmark(withGuid: (newSession.justProfile[KEY_GUID] as! String)) != nil && isDivorced {
                         newSession.inheritDivorce(
                             from: self,
                             decree: "Workgroup peer of session with guid \(d(profile[KEY_GUID]))")
@@ -1833,13 +1850,13 @@ extension PTYSession {
     
     @objc
     func didAssignDelegate() {
-        let observers = swiftState!.delegateObservers
-        swiftState!.delegateObservers = []
+        let observers = swiftState.delegateObservers
+        swiftState.delegateObservers = []
         for closure in observers {
             if let delegate {
                 closure(delegate)
             } else {
-                swiftState!.delegateObservers.append(closure)
+                swiftState.delegateObservers.append(closure)
             }
         }
     }
@@ -1849,7 +1866,7 @@ extension PTYSession {
             closure(delegate)
             return
         }
-        swiftState!.delegateObservers.append(closure)
+        swiftState.delegateObservers.append(closure)
     }
     
     @objc(sessionBelongsToPeers:)
@@ -1864,13 +1881,13 @@ extension PTYSession {
             if let peerPort {
                 return peerPort.clippings
             }
-            return swiftState!.clippings
+            return swiftState.clippings
         }
         set {
             if let peerPort {
                 peerPort.clippings = newValue
             } else {
-                swiftState!.clippings = newValue
+                swiftState.clippings = newValue
             }
         }
     }
@@ -1879,17 +1896,17 @@ extension PTYSession {
     // leader's storage without recursing, and by save/restore so the leader's
     // data is persisted at the session level.
     @objc var localClippings: [PTYSessionClipping] {
-        get { swiftState!.clippings }
-        set { swiftState!.clippings = newValue }
+        get { swiftState.clippings }
+        set { swiftState.clippings = newValue }
     }
 
     @objc var localClippingsAsDictionaries: [[String: String]] {
-        return swiftState!.clippings.map { $0.dictionaryValue }
+        return swiftState.clippings.map { $0.dictionaryValue }
     }
 
     @objc(setLocalClippingsFromDictionaries:)
     func setLocalClippingsFromDictionaries(_ dictionaries: [[String: String]]) {
-        swiftState!.clippings = dictionaries.compactMap {
+        swiftState.clippings = dictionaries.compactMap {
             PTYSessionClipping(dictionary: $0)
         }
     }
@@ -1915,13 +1932,13 @@ extension PTYSession {
             if let peerPort {
                 return peerPort.clippingsVisibilityFlag
             }
-            return swiftState!.clippingsVisibilityFlag
+            return swiftState.clippingsVisibilityFlag
         }
         set {
             if let peerPort {
                 peerPort.clippingsVisibilityFlag = newValue
             } else {
-                swiftState!.clippingsVisibilityFlag = newValue
+                swiftState.clippingsVisibilityFlag = newValue
             }
             clippingsDidChange()
         }
@@ -1930,8 +1947,8 @@ extension PTYSession {
     // Bypasses peer-port delegation — used by PTYSessionPeerPort to talk to
     // the leader's storage without recursing.
     @objc var localClippingsVisibilityFlag: Bool {
-        get { swiftState!.clippingsVisibilityFlag }
-        set { swiftState!.clippingsVisibilityFlag = newValue }
+        get { swiftState.clippingsVisibilityFlag }
+        set { swiftState.clippingsVisibilityFlag = newValue }
     }
 
     // Effective visibility is just the user-controlled flag — no auto-hide
@@ -1952,7 +1969,7 @@ extension PTYSession {
         // which ends up calling iTermRightGutterController.layoutPanels and
         // creates the panel. Same goes for the 1→0 transition tearing it down
         // when no panel is around to detect its own visibility flip.
-        if view.actualRightExtra != desiredRightExtra() {
+        if view?.actualRightExtra != desiredRightExtra() {
             delegate?.realParentWindow()?.rightExtraDidChange()
         }
     }

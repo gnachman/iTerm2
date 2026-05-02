@@ -176,9 +176,11 @@ final class DefaultWorkgroupSessionSpawner: WorkgroupSessionSpawner {
     static func applySplitLocation(settings: SplitSettings,
                                    newSession: PTYSession,
                                    targetSession: PTYSession) {
-        guard let splitView = newSession.view.superview as? NSSplitView else { return }
-        let parentView: NSView = targetSession.view
-        let newView: NSView = newSession.view
+        guard let newSessionView = newSession.view,
+              let targetSessionView = targetSession.view,
+              let splitView = newSessionView.superview as? NSSplitView else { return }
+        let parentView: NSView = targetSessionView
+        let newView: NSView = newSessionView
         guard let newIdx = splitView.subviews.firstIndex(of: newView),
               let parentIdx = splitView.subviews.firstIndex(of: parentView) else {
             return

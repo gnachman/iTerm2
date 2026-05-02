@@ -18,7 +18,7 @@ extension PseudoTerminal {
                screenSize: NSSize,
                size: UnsafePointer<NSSize>?) {
         let sessionSize = windowSizeHelper.sessionSize(
-            profile: session.profile,
+            profile: session.justProfile,
             existingViewSize: currentSession()?.view?.scrollview.documentVisibleRect.size,
             desiredPointSize: size?.pointee,
             hasScrollbar: scrollbarShouldBeVisible(),
@@ -34,7 +34,7 @@ extension PseudoTerminal {
                                  columns: sessionSize.gridSize.width)
 
             DLog("setupSession - call setPreferencesFromAddressBookEntry")
-            session.setPreferencesFromAddressBookEntry(session.profile)
+            session.setPreferencesFromAddressBookEntry(session.justProfile)
             session.loadInitialColorTableAndResetCursorGuide()
             session.screen.resetTimestamps()
         }

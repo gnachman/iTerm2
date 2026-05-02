@@ -35,7 +35,7 @@ extension PasteBuiltInFunction: iTermBuiltInFunctionProtocol {
                     completion(nil, error(message: "No such session"))
                     return
                 }
-                session.textview.paste(nil)
+                session.textview?.paste(nil)
                 completion(nil, nil)
             }
         iTermBuiltInFunctions.sharedInstance().register(builtInFunction, namespace: "iterm2")

@@ -205,13 +205,19 @@ class iTermRenderingComparer: NSObject {
 
     private static func renderLegacy(rows: Int, columns: Int, guid: String, profile: [AnyHashable: Any], data: Data) throws -> NSImage {
         let session = createSession(rows: rows, columns: columns, guid: guid, profile: profile, data: data)
+        guard let textview = session.textview else {
+            throw NSError(domain: "iTermRenderingComparer", code: 5, userInfo: [NSLocalizedDescriptionKey: "Session has no textview"])
+        }
         let scrollback = Int(session.screen.numberOfScrollbackLines())
-        session.textview.setDrawingHelperIsRetina((NSScreen.main?.backingScaleFactor ?? 2.0) > 1)
+        textview.setDrawingHelperIsRetina((NSScreen.main?.backingScaleFactor ?? 2.0) > 1)
+        // Renderer skips the fill when bgColor is nil, leaving margins
+        // transparent — fall back to black so the comparer's pixel diffs
+        // are stable.
         let bgColor = session.processedBackgroundColor ?? .black
-        guard let image = session.textview.renderImage(withLines: NSRange(location: scrollback, length: rows),
-                                                       includeMargins: true,
-                                                       backgroundColor: bgColor,
-                                                       showCursor: true) else {
+        guard let image = textview.renderImage(withLines: NSRange(location: scrollback, length: rows),
+                                               includeMargins: true,
+                                               backgroundColor: bgColor,
+                                               showCursor: true) else {
             throw NSError(domain: "iTermRenderingComparer", code: 1, userInfo: [NSLocalizedDescriptionKey: "Legacy render returned nil"])
         }
         return image
@@ -222,17 +228,20 @@ class iTermRenderingComparer: NSObject {
             throw NSError(domain: "iTermRenderingComparer", code: 2, userInfo: [NSLocalizedDescriptionKey: "No Metal device"])
         }
         let session = createSession(rows: rows, columns: columns, guid: guid, profile: profile, data: data)
+        guard let sessionView = session.view else {
+            throw NSError(domain: "iTermRenderingComparer", code: 6, userInfo: [NSLocalizedDescriptionKey: "Session has no view"])
+        }
 
         guard let screen = NSScreen.main else {
             throw NSError(domain: "iTermRenderingComparer", code: 3, userInfo: [NSLocalizedDescriptionKey: "No screen"])
         }
         let window = NSWindow(
-            contentRect: NSRect(origin: screen.frame.origin, size: session.view.frame.size),
+            contentRect: NSRect(origin: screen.frame.origin, size: sessionView.frame.size),
             styleMask: [.borderless],
             backing: .buffered,
             defer: false,
             screen: screen)
-        window.contentView = session.view
+        window.contentView = sessionView
         window.orderFront(nil)
         RunLoop.current.run(until: Date(timeIntervalSinceNow: 0.1))
 
@@ -240,7 +249,7 @@ class iTermRenderingComparer: NSObject {
         RunLoop.current.run(until: Date(timeIntervalSinceNow: 2.0))
         session.updateMetalDriver()
 
-        guard let image = session.view.drawMetalFrameToImage() else {
+        guard let image = sessionView.drawMetalFrameToImage() else {
             window.orderOut(nil)
             throw NSError(domain: "iTermRenderingComparer", code: 4, userInfo: [NSLocalizedDescriptionKey: "Metal capture returned nil"])
         }

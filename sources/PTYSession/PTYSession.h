@@ -29,6 +29,8 @@
 #import <Foundation/Foundation.h>
 #include <sys/time.h>
 
+NS_ASSUME_NONNULL_BEGIN
+
 // Posted when the tmux font changes. Window layouts will need to be updated.
 extern NSString *const kPTYSessionTmuxFontDidChange;
 
@@ -128,10 +130,13 @@ typedef enum {
 
 // Return the window controller for this session. This is the "real" one, not a
 // possible proxy that gets subbed in during instant replay.
-- (NSWindowController<iTermWindowController> *)realParentWindow;
+// `realParentWindow_` in PTYTab is weak and "non-nil only if parent is
+// PseudoTerminal*", so callers must handle nil.
+- (nullable NSWindowController<iTermWindowController> *)realParentWindow;
 
 // A window controller which may be a proxy during instant replay.
-- (id<WindowControllerInterface>)parentWindow;
+// Backed by the same weak ref as -realParentWindow, so callers must handle nil.
+- (nullable id<WindowControllerInterface>)parentWindow;
 
 // When a surrogate view is replacing the real SessionView, a reference to the
 // real (or "live") view must be held. Invoke this to add it to an array of
@@ -241,7 +246,7 @@ typedef enum {
 - (int)tmuxWindow;
 
 // If the tab is a tmux window, this gives its name.
-- (NSString *)tmuxWindowName;
+- (nullable NSString *)tmuxWindowName;
 
 - (BOOL)session:(PTYSession *)session shouldAllowDrag:(id<NSDraggingInfo>)sender;
 - (BOOL)session:(PTYSession *)session performDragOperation:(id<NSDraggingInfo>)sender;
@@ -290,7 +295,7 @@ typedef enum {
 - (BOOL)sessionShouldAutoClose:(PTYSession *)session;
 - (void)sessionDidChangeGraphic:(PTYSession *)session
                      shouldShow:(BOOL)shouldShow
-                          image:(NSImage *)image;
+                          image:(nullable NSImage *)image;
 - (NSView *)sessionContainerView:(PTYSession *)session;
 
 
@@ -309,10 +314,10 @@ typedef enum {
 - (void)sessionEditActions;
 - (void)sessionEditSnippets;
 - (void)session:(PTYSession *)session
-setBackgroundImage:(iTermImageWrapper *)image
+setBackgroundImage:(nullable iTermImageWrapper *)image
            mode:(iTermBackgroundImageMode)imageMode
-backgroundColor:(NSColor *)backgroundColor;
-- (iTermImageWrapper *)sessionBackgroundImage;
+backgroundColor:(nullable NSColor *)backgroundColor;
+- (nullable iTermImageWrapper *)sessionBackgroundImage;
 - (iTermBackgroundImageMode)sessionBackgroundImageMode;
 - (CGFloat)sessionBlend;
 - (void)sessionDidUpdatePreferencesFromProfile:(PTYSession *)session;
@@ -321,7 +326,7 @@ backgroundColor:(NSColor *)backgroundColor;
 // should run its chrome update (which calls setToolbarItems: on the view and
 // refits the session if the toolbar's presence changed).
 - (void)sessionDidChangeDesiredToolbarItems:(PTYSession *)session;
-- (id<iTermSwipeHandler>)sessionSwipeHandler;
+- (nullable id<iTermSwipeHandler>)sessionSwipeHandler;
 - (BOOL)sessionIsInSelectedTab:(PTYSession *)session;
 - (void)sessionDisableFocusFollowsMouseAtCurrentLocation;
 - (void)sessionDidResize:(PTYSession *)session;
@@ -331,8 +336,8 @@ backgroundColor:(NSColor *)backgroundColor;
 - (void)sessionTabStatusDidChange:(PTYSession *)session;
 - (void)sessionActivate:(PTYSession *)session;
 
-- (void)session:(PTYSession *)session setFilter:(NSString *)filter;
-- (PTYSession *)sessionSyntheticSessionFor:(PTYSession *)live;
+- (void)session:(PTYSession *)session setFilter:(nullable NSString *)filter;
+- (nullable PTYSession *)sessionSyntheticSessionFor:(PTYSession *)live;
 - (void)sessionClose:(PTYSession *)session;
 - (void)sessionProcessInfoProviderDidChange:(PTYSession *)session;
 - (void)sessionSwapWithSessionInDirection:(int)direction;
@@ -358,7 +363,7 @@ backgroundColor:(NSColor *)backgroundColor;
     PTYTextViewDelegate,
     TmuxGatewayDelegate,
     VT100ScreenDelegate>
-@property(nonatomic, weak) id<PTYSessionDelegate> delegate;
+@property(nonatomic, weak, nullable) id<PTYSessionDelegate> delegate;
 
 // A session is active when it's in a visible tab and it needs periodic redraws (something is
 // blinking, it isn't idle, etc), or when a background tab is updating its tab label. This controls
@@ -371,15 +376,15 @@ backgroundColor:(NSColor *)backgroundColor;
 // Prevents the pane from being dragged or detached.
 @property(nonatomic, assign) BOOL locked;
 // Floating session note model.
-@property(nonatomic, retain) iTermSessionNoteModel *sessionNoteModel;
+@property(nonatomic, retain, nullable) iTermSessionNoteModel *sessionNoteModel;
 // This comes from prefs and is kept up to date.
 @property(nonatomic, readonly) BOOL alertOnMarksinOffscreenSessions;
-@property(nonatomic, copy) NSColor *tabColor;
+@property(nonatomic, copy, nullable) NSColor *tabColor;
 
-@property(nonatomic, readonly) DVR *dvr;
-@property(nonatomic, readonly) DVRDecoder *dvrDecoder;
+@property(nonatomic, readonly, nullable) DVR *dvr;
+@property(nonatomic, readonly, nullable) DVRDecoder *dvrDecoder;
 // Returns the "real" session while in instant replay, else nil if not in IR.
-@property(nonatomic, retain) PTYSession *liveSession;
+@property(nonatomic, retain, nullable) PTYSession *liveSession;
 @property(nonatomic, readonly) BOOL canInstantReplayPrev;
 @property(nonatomic, readonly) BOOL canInstantReplayNext;
 
@@ -391,7 +396,7 @@ backgroundColor:(NSColor *)backgroundColor;
 @property(nonatomic, assign) BOOL newOutput;
 
 // Do we need to prompt on close for this session?
-@property(nonatomic, readonly) iTermPromptOnCloseReason *promptOnCloseReason;
+@property(nonatomic, readonly, nullable) iTermPromptOnCloseReason *promptOnCloseReason;
 
 // Array of subprocessess names. WARNING: This forces a synchronous update of the process cache.
 // It is up-to-date but too slow to call frequently.
@@ -413,32 +418,34 @@ backgroundColor:(NSColor *)backgroundColor;
 
 // The window title that should be used when this session is current. Otherwise defaultName
 // should be used.
-@property(nonatomic, copy) NSString *windowTitle;
+@property(nonatomic, copy, nullable) NSString *windowTitle;
 
 // The path to the proxy icon that should be used when this session is current. If is nil the current directory icon
 // is shown.
-@property(nonatomic, retain) NSURL *preferredProxyIcon;
+@property(nonatomic, retain, nullable) NSURL *preferredProxyIcon;
 
 // Shell wraps the underlying file descriptor pair.
 @property(nonatomic, retain) PTYTask *shell;
 
 // The value of the $TERM environment var.
-@property(nonatomic, copy) NSString *termVariable;
+@property(nonatomic, copy, nullable) NSString *termVariable;
 
 // The value of the $COLORFGBG environment var.
-@property(nonatomic, copy) NSString *colorFgBgVariable;
+@property(nonatomic, copy, nullable) NSString *colorFgBgVariable;
 
 // Screen contents, plus scrollback buffer.
 @property(nonatomic, retain) VT100Screen *screen;
 
 // The view in which this session's objects live. Can't call this from swift because of dependency madness.
-@property(nonatomic, retain) SessionView *view;
-@property(nonatomic, readonly) NSView *genericView;  // Use this from swift
+// nil before -setScreenSize:parent: runs and after -terminate.
+@property(nonatomic, retain, nullable) SessionView *view;
+@property(nonatomic, readonly, nullable) NSView *genericView;  // Use this from swift
 
 // The view that contains all the visible text in this session and that does most input handling.
 // This is the one and only subview of the document view of -scrollview.
-@property(nonatomic, retain) PTYTextView *textview;
-@property(nonatomic, readonly) NSView *mainResponder;  // textView or browser vc depending on mode
+// nil before init completes and after -terminate.
+@property(nonatomic, retain, nullable) PTYTextView *textview;
+@property(nonatomic, readonly, nullable) NSView *mainResponder;  // textView or browser vc depending on mode
 @property(nonatomic, readonly) NSStringEncoding encoding;
 
 // Send a character periodically.
@@ -463,14 +470,21 @@ backgroundColor:(NSColor *)backgroundColor;
 @property(nonatomic, assign) BOOL xtermMouseReportingAllowMouseWheel;
 @property(nonatomic, assign) BOOL xtermMouseReportingAllowClicksAndDrags;
 
-// Profile for this session
-@property(nonatomic, copy) Profile *profile;
+// Profile for this session. Nil between -initSynthetic: and the first
+// -setProfile: (e.g., during arrangement restore where -setView: lands
+// before the profile is wired in). Use -justProfile when you want a
+// guaranteed non-nil dictionary (defaults to @{}) for read-only lookups.
+@property(nonatomic, copy, nullable) Profile *profile;
+
+// Like -profile but returns @{} instead of nil when no profile has been
+// assigned yet. For Swift call sites that just want to look up keys.
+@property(nonatomic, readonly) Profile *justProfile;
 
 // Return the address book that the session was originally created with.
-@property(nonatomic, readonly) Profile *originalProfile;
+@property(nonatomic, readonly, nullable) Profile *originalProfile;
 
 // tty device
-@property(nonatomic, readonly) NSString *tty;
+@property(nonatomic, readonly, nullable) NSString *tty;
 
 @property(nonatomic, assign) iTermBackgroundImageMode backgroundImageMode;
 
@@ -478,8 +492,8 @@ backgroundColor:(NSColor *)backgroundColor;
 @property(nonatomic, readonly) CGFloat desiredBlend;
 
 // Filename of background image.
-@property(nonatomic, copy) NSString *backgroundImagePath;  // Used by scripting
-@property(nonatomic, retain) iTermImageWrapper *backgroundImage;
+@property(nonatomic, copy, nullable) NSString *backgroundImagePath;  // Used by scripting
+@property(nonatomic, retain, nullable) iTermImageWrapper *backgroundImage;
 
 @property(nonatomic, assign) float transparency;
 @property(nonatomic, assign) BOOL useBoldFont;
@@ -515,29 +529,29 @@ backgroundColor:(NSColor *)backgroundColor;
 @property(nonatomic, assign) BOOL ignoreResizeNotifications;
 
 // This number (int) imposes an ordering on session activity time.
-@property(nonatomic, retain) NSNumber *activityCounter;
+@property(nonatomic, retain, nullable) NSNumber *activityCounter;
 
 // Is there a saved scroll position?
 @property(nonatomic, readonly) BOOL hasSavedScrollPosition;
 
 // Image for dragging one session.
-@property(nonatomic, readonly) NSImage *dragImage;
+@property(nonatomic, readonly, nullable) NSImage *dragImage;
 
 @property(nonatomic, readonly) BOOL hasCoprocess;
 
-@property(nonatomic, retain) TmuxController *tmuxController;
+@property(nonatomic, retain, nullable) TmuxController *tmuxController;
 
 // Call this on tmux clients to get the session with the tmux gateway.
-@property(nonatomic, readonly) PTYSession *tmuxGatewaySession;
+@property(nonatomic, readonly, nullable) PTYSession *tmuxGatewaySession;
 
-@property(nonatomic, strong) id<VT100RemoteHostReading> currentHost;
+@property(nonatomic, strong, nullable) id<VT100RemoteHostReading> currentHost;
 
 @property(nonatomic, readonly) int tmuxPane;
 
 // FinalTerm
-@property(nonatomic, readonly) NSArray *autocompleteSuggestionsForCurrentCommand;
-@property(nonatomic, readonly) NSString *currentCommand;
-@property(nonatomic, readonly) NSString *currentCommandUpToCursor;
+@property(nonatomic, readonly, nullable) NSArray *autocompleteSuggestionsForCurrentCommand;
+@property(nonatomic, readonly, nullable) NSString *currentCommand;
+@property(nonatomic, readonly, nullable) NSString *currentCommandUpToCursor;
 
 // Session is not in foreground and notifications are enabled on the screen.
 @property(nonatomic, readonly) BOOL shouldPostUserNotification;
@@ -550,9 +564,9 @@ backgroundColor:(NSColor *)backgroundColor;
 @property(nonatomic, assign) NSPoint savedRootRelativeOrigin;
 
 // The computed label
-@property(nonatomic, readonly) NSString *badgeLabel;
-@property(nonatomic, readonly) NSString *subtitle;
-@property(nonatomic, readonly) iTermSessionTabStatus *tabStatus;
+@property(nonatomic, readonly, nullable) NSString *badgeLabel;
+@property(nonatomic, readonly, nullable) NSString *subtitle;
+@property(nonatomic, readonly, nullable) iTermSessionTabStatus *tabStatus;
 - (void)clearTabStatus;
 
 // Commands issued, directories entered, and hosts connected to during this session.
@@ -583,20 +597,20 @@ backgroundColor:(NSColor *)backgroundColor;
 // Tries to return the current local working directory without resolving symlinks (possible if
 // shell integration is on). If that can't be done then the current local working directory with
 // symlinks resolved is returned.
-@property(nonatomic, readonly) NSString *currentLocalWorkingDirectory;
+@property(nonatomic, readonly, nullable) NSString *currentLocalWorkingDirectory;
 
 // Async version of currentLocalWorkingDirectory.
-- (void)asyncCurrentLocalWorkingDirectory:(void (^)(NSString *pwd))completion;
+- (void)asyncCurrentLocalWorkingDirectory:(void (^)(NSString * _Nullable pwd))completion;
 
-- (void)asyncInitialDirectoryForNewSessionBasedOnCurrentDirectory:(void (^)(NSString *pwd))completion;
+- (void)asyncInitialDirectoryForNewSessionBasedOnCurrentDirectory:(void (^)(NSString * _Nullable pwd))completion;
 
 // Like the above but filters by SSH identity of the new session.
 // If newSessionSSHIdentity is non-nil, only returns a directory if it came from the same SSH host.
-- (void)asyncInitialDirectoryForNewSessionBasedOnCurrentDirectoryWithSSHIdentity:(SSHIdentity *)newSessionSSHIdentity
-                                                                       completion:(void (^)(NSString *pwd))completion;
+- (void)asyncInitialDirectoryForNewSessionBasedOnCurrentDirectoryWithSSHIdentity:(nullable SSHIdentity *)newSessionSSHIdentity
+                                                                       completion:(void (^)(NSString * _Nullable pwd))completion;
 
 // Gets the local directory as URL. Weirdly, combines the remote hostname and the local path because this is really only used for the proxy icon.
-- (void)asyncGetCurrentLocationWithCompletion:(void (^)(NSURL *url))completion;
+- (void)asyncGetCurrentLocationWithCompletion:(void (^)(NSURL * _Nullable url))completion;
 
 // A UUID that uniquely identifies this session.
 // Used to link serialized data back to a restored session (e.g., which session
@@ -615,7 +629,7 @@ backgroundColor:(NSColor *)backgroundColor;
 @property(nonatomic, readonly) BOOL eligibleForAutoCommandHistory;
 
 // If we want to show quicklook this will not be nil.
-@property(nonatomic, readonly) iTermQuickLookController *quickLookController;
+@property(nonatomic, readonly, nullable) iTermQuickLookController *quickLookController;
 
 @property(nonatomic, readonly) NSDictionary<NSString *, NSString *> *keyLabels;
 @property(nonatomic, readonly) iTermRestorableSession *restorableSession;
@@ -627,59 +641,61 @@ backgroundColor:(NSColor *)backgroundColor;
 @property(nonatomic) BOOL isSingleUseSession;
 @property(nonatomic) BOOL overrideGlobalDisableMetalWhenIdleSetting;
 @property(nonatomic, readonly) BOOL canProduceMetalFramecap;
-@property(nonatomic, readonly) NSColor *textColorForStatusBar;
-@property(nonatomic, readonly) NSColor *processedBackgroundColor;
-@property(nonatomic, readonly) NSImage *tabGraphic;
-@property(nonatomic, readonly) iTermStatusBarViewController *statusBarViewController;
+@property(nonatomic, readonly, nullable) NSColor *textColorForStatusBar;
+// May be nil before the colormap has been populated (e.g., during early
+// init, before -setPreferencesFromAddressBookEntry: runs).
+@property(nonatomic, readonly, nullable) NSColor *processedBackgroundColor;
+@property(nonatomic, readonly, nullable) NSImage *tabGraphic;
+@property(nonatomic, readonly, nullable) iTermStatusBarViewController *statusBarViewController;
 @property(nonatomic, readonly) BOOL shouldShowTabGraphic;
-@property(nonatomic, readonly) NSData *backspaceData;
+@property(nonatomic, readonly, nullable) NSData *backspaceData;
 @property(nonatomic, readonly) iTermEchoProbe *echoProbe;
 @property(nonatomic, readonly) BOOL canOpenPasswordManager;
 @property(nonatomic) BOOL shortLivedSingleUse;
 
 // nil unless this session has an active workgroup instance.
 @property(nonatomic, readonly, nullable) NSArray<iTermSessionToolbarItem *> *desiredToolbarItems;
-@property(nonatomic, retain) NSMutableDictionary<NSString *, NSString *> *hostnameToShell;  // example.com -> fish
+@property(nonatomic, retain, nullable) NSMutableDictionary<NSString *, NSString *> *hostnameToShell;  // example.com -> fish
 @property(nonatomic, readonly) NSString *sessionId;
-@property(nonatomic, retain) NSNumber *cursorTypeOverride;
-@property(nonatomic, readonly) NSDictionary *environment;
+@property(nonatomic, retain, nullable) NSNumber *cursorTypeOverride;
+@property(nonatomic, readonly, nullable) NSDictionary *environment;
 @property(nonatomic, readonly) BOOL hasNontrivialJob;
 @property(nonatomic, readonly) BOOL tmuxPaused;
-@property(nonatomic, readonly) NSString *userShell;  // Something like "/bin/bash".
-@property(nonatomic, copy) NSString *filter;
-@property(nonatomic, readonly, strong) iTermAsyncFilter *asyncFilter;
-@property(nonatomic, readonly) NSMutableArray<id<iTermContentSubscriber>> *contentSubscribers;
-@property(nonatomic, readonly) PTYSessionZoomState *stateToSaveForZoom;  // current state to restore after exiting zoom in the future
-@property(nonatomic, strong) PTYSessionZoomState *savedStateForZoom;  // set in synthetic sessions, not in live sessions.
+@property(nonatomic, readonly, nullable) NSString *userShell;  // Something like "/bin/bash".
+@property(nonatomic, copy, nullable) NSString *filter;
+@property(nonatomic, readonly, strong, nullable) iTermAsyncFilter *asyncFilter;
+@property(nonatomic, readonly, nullable) NSMutableArray<id<iTermContentSubscriber>> *contentSubscribers;
+@property(nonatomic, readonly, nullable) PTYSessionZoomState *stateToSaveForZoom;  // current state to restore after exiting zoom in the future
+@property(nonatomic, strong, nullable) PTYSessionZoomState *savedStateForZoom;  // set in synthetic sessions, not in live sessions.
 @property(nonatomic) BOOL inScreenshotMode;  // set for synthetic sessions used for screenshot capture
 
 // Excludes SESSION_ARRANGEMENT_CONTENTS. Nil if session not created from arrangement.
-@property(nonatomic, copy) NSDictionary *foundingArrangement;
-@property(nonatomic, readonly) id<ExternalSearchResultsController> externalSearchResultsController;
-@property(nonatomic, readonly) SSHIdentity *sshIdentity;
-@property(nonatomic, readonly) NSArray<iTermSSHReconnectionInfo *> *sshCommandLineSequence;
-@property(nonatomic, readonly) id<ProcessInfoProvider> processInfoProvider;
+@property(nonatomic, copy, nullable) NSDictionary *foundingArrangement;
+@property(nonatomic, readonly, nullable) id<ExternalSearchResultsController> externalSearchResultsController;
+@property(nonatomic, readonly, nullable) SSHIdentity *sshIdentity;
+@property(nonatomic, readonly, nullable) NSArray<iTermSSHReconnectionInfo *> *sshCommandLineSequence;
+@property(nonatomic, readonly, nullable) id<ProcessInfoProvider> processInfoProvider;
 @property(nonatomic, readonly) BOOL shouldShowAutoComposer;
 @property(nonatomic, readonly) NSString *regularExpressonForNonLowPrecisionSmartSelectionRulesCombined;
-@property(nonatomic, strong) NSCursor *defaultPointer;
-@property(nonatomic, readonly) iTermConductor *conductor;
+@property(nonatomic, strong, nullable) NSCursor *defaultPointer;
+@property(nonatomic, readonly, nullable) iTermConductor *conductor;
 @property(nonatomic, readonly) iTermExpect *expect;
 @property(nonatomic, strong) iTermRunningRemoteCommand *runningRemoteCommand;
 @property(nonatomic, readonly) iTermSessionModeHandler *modeHandler;
-@property(nonatomic, strong) iTermPathCompletionHelper *pathCompletionHelper;
+@property(nonatomic, strong, nullable) iTermPathCompletionHelper *pathCompletionHelper;
 @property(nonatomic, readonly) NSMutableArray<iTermChannelClient *> *channelClients;
-@property(nonatomic, copy) NSString *channelUID;
-@property(nonatomic, copy) NSString *channelParentGuid;
+@property(nonatomic, copy, nullable) NSString *channelUID;
+@property(nonatomic, copy, nullable) NSString *channelParentGuid;
 
 // Autodetected dominant color, otherwise configured bg color
-@property(nonatomic, readonly) NSColor *effectiveUnprocessedBackgroundColor;
-@property(nonatomic, readonly) NSColor *effectiveProcessedBackgroundColor;
+@property(nonatomic, readonly, nullable) NSColor *effectiveUnprocessedBackgroundColor;
+@property(nonatomic, readonly, nullable) NSColor *effectiveProcessedBackgroundColor;
 @property(nonatomic, readonly) BOOL abortBury;
 @property(nonatomic, readonly) BOOL isArchive;
-@property(nonatomic, copy) NSString *browserTarget;
+@property(nonatomic, copy, nullable) NSString *browserTarget;
 
 @property(nonatomic, retain) iTermAutomaticProfileSwitcher *automaticProfileSwitcher;
-@property(nonatomic, readonly) iTermAutomaticProfileSwitchingSession *apsContext;
+@property(nonatomic, readonly, nullable) iTermAutomaticProfileSwitchingSession *apsContext;
 
 @property(nonatomic, readonly, retain) iTermNaggingController *naggingController;
 @property(nonatomic, readonly, strong) PTYSessionSwiftState *swiftState;
@@ -716,7 +732,7 @@ backgroundColor:(NSColor *)backgroundColor;
 + (void)removeAllRegisteredSessions;
 
 - (instancetype)init NS_UNAVAILABLE;
-- (instancetype)initSynthetic:(BOOL)synthetic NS_DESIGNATED_INITIALIZER;
+- (nullable instancetype)initSynthetic:(BOOL)synthetic NS_DESIGNATED_INITIALIZER;
 
 - (void)didFinishInitialization;
 
@@ -724,7 +740,7 @@ backgroundColor:(NSColor *)backgroundColor;
 - (long long)irSeekToAtLeast:(long long)timestamp;
 
 // Begin showing DVR frames from some live session.
-- (void)setDvr:(DVR*)dvr liveSession:(PTYSession*)liveSession;
+- (void)setDvr:(nullable DVR*)dvr liveSession:(nullable PTYSession*)liveSession;
 - (void)clearInstantReplay;
 
 - (void)willRetireSyntheticSession:(PTYSession *)syntheticSession;
@@ -737,7 +753,7 @@ backgroundColor:(NSColor *)backgroundColor;
 - (void)irAdvance:(int)dir;
 
 // Session specific methods
-- (BOOL)setScreenSize:(NSSize)size parent:(id<WindowControllerInterface>)parent;
+- (BOOL)setScreenSize:(NSSize)size parent:(nullable id<WindowControllerInterface>)parent;
 
 // triggers
 - (void)setAllTriggersEnabled:(BOOL)enabled;
@@ -749,15 +765,15 @@ backgroundColor:(NSColor *)backgroundColor;
 
 + (void)drawArrangementPreview:(NSDictionary *)arrangement frame:(NSRect)frame dark:(BOOL)dark;
 - (void)setSizeFromArrangement:(NSDictionary*)arrangement;
-+ (PTYSession*)sessionFromArrangement:(NSDictionary *)arrangement
-                                named:(NSString *)arrangementName
-                               inView:(SessionView *)sessionView
-                         withDelegate:(id<PTYSessionDelegate>)delegate
-                        forObjectType:(iTermObjectType)objectType
-                   partialAttachments:(NSDictionary *)partialAttachments
-                              options:(NSDictionary *)options;
++ (nullable PTYSession*)sessionFromArrangement:(NSDictionary *)arrangement
+                                         named:(nullable NSString *)arrangementName
+                                        inView:(SessionView *)sessionView
+                                  withDelegate:(nullable id<PTYSessionDelegate>)delegate
+                                 forObjectType:(iTermObjectType)objectType
+                            partialAttachments:(nullable NSDictionary *)partialAttachments
+                                       options:(nullable NSDictionary *)options;
 
-- (PTYSession *)newSessionForChannelID:(NSString *)channelID command:(NSString *)command;
+- (nullable PTYSession *)newSessionForChannelID:(NSString *)channelID command:(NSString *)command;
 
 + (NSDictionary *)arrangementFromTmuxParsedLayout:(NSDictionary *)parseNode
                                          bookmark:(Profile *)bookmark
@@ -767,8 +783,8 @@ backgroundColor:(NSColor *)backgroundColor;
                                   profile:(Profile *)profile
                          workingDirectory:(NSString *)workingDirectory
                                      size:(VT100GridSize)size;
-+ (NSString *)guidInArrangement:(NSDictionary *)arrangement;
-+ (NSString *)initialWorkingDirectoryFromArrangement:(NSDictionary *)arrangement;
++ (nullable NSString *)guidInArrangement:(NSDictionary *)arrangement;
++ (nullable NSString *)initialWorkingDirectoryFromArrangement:(NSDictionary *)arrangement;
 
 - (void)textViewFontDidChange;
 
@@ -780,20 +796,20 @@ backgroundColor:(NSColor *)backgroundColor;
 - (void)startProgram:(NSString *)program
                  ssh:(BOOL)ssh
              browser:(BOOL)browser
-         environment:(NSDictionary *)prog_env
-         customShell:(NSString *)customShell
+         environment:(nullable NSDictionary *)prog_env
+         customShell:(nullable NSString *)customShell
               isUTF8:(BOOL)isUTF8
-       substitutions:(NSDictionary *)substitutions
-         arrangement:(NSString *)arrangement
+       substitutions:(nullable NSDictionary *)substitutions
+         arrangement:(nullable NSString *)arrangement
      fromArrangement:(BOOL)fromArrangement
-webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
-          completion:(void (^)(BOOL))completion;
+webViewConfiguration:(nullable WKWebViewConfiguration *)webViewConfiguration
+          completion:(nullable void (^)(BOOL))completion;
 
 // This is an alternative to runCommandWithOldCwd and startProgram. It attaches
 // to an existing server. Use only if [iTermAdvancedSettingsModel runJobsInServers]
 // is YES.
 - (void)attachToServer:(iTermGeneralServerConnection)serverConnection
-            completion:(void (^)(void))completion;
+            completion:(nullable void (^)(void))completion;
 
 // Acts like the user pressing cmd-W but without confirmation.
 - (void)close;
@@ -843,18 +859,18 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
 - (BOOL)hasTextSendingKeyMappingForEvent:(NSEvent*)event;
 - (BOOL)willHandleEvent: (NSEvent *)theEvent;
 - (void)handleEvent: (NSEvent *)theEvent;
-- (void)insertNewline:(id)sender;
-- (void)insertTab:(id)sender;
-- (void)moveUp:(id)sender;
-- (void)moveDown:(id)sender;
-- (void)moveLeft:(id)sender;
-- (void)moveRight:(id)sender;
-- (void)pageUp:(id)sender;
-- (void)pageDown:(id)sender;
-- (void)paste:(id)sender;
+- (void)insertNewline:(nullable id)sender;
+- (void)insertTab:(nullable id)sender;
+- (void)moveUp:(nullable id)sender;
+- (void)moveDown:(nullable id)sender;
+- (void)moveLeft:(nullable id)sender;
+- (void)moveRight:(nullable id)sender;
+- (void)pageUp:(nullable id)sender;
+- (void)pageDown:(nullable id)sender;
+- (void)paste:(nullable id)sender;
 - (void)pasteString:(NSString *)str flags:(PTYSessionPasteFlags)flags;
-- (void)deleteBackward:(id)sender;
-- (void)deleteForward:(id)sender;
+- (void)deleteBackward:(nullable id)sender;
+- (void)deleteForward:(nullable id)sender;
 - (void)setSplitSelectionMode:(SplitSelectionMode)mode move:(BOOL)move;
 - (void)setSmartCursorColor:(BOOL)value;
 
@@ -883,7 +899,7 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
 - (void)popWindowTitle;
 - (void)pushIconTitle;
 - (void)popIconTitle;
-- (void)setUntrustedIconName:(NSString *)theName;
+- (void)setUntrustedIconName:(nullable NSString *)theName;
 
 - (void)clearBuffer;
 - (void)clearScrollbackBuffer;
@@ -893,7 +909,7 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
 // Display timer stuff
 - (void)updateDisplayBecause:(NSString *)reason;
 - (void)doAntiIdle;
-- (NSString*)ansiColorsMatchingForeground:(NSDictionary*)fg andBackground:(NSDictionary*)bg inBookmark:(Profile*)aDict;
+- (nullable NSString*)ansiColorsMatchingForeground:(NSDictionary*)fg andBackground:(NSDictionary*)bg inBookmark:(Profile*)aDict;
 
 - (void)changeFontSizeDirection:(int)dir;
 - (void)setFontTable:(iTermFontTable *)fontTable
@@ -937,7 +953,7 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
 - (void)convertVisibleSearchResultsToContentNavigationShortcutsWithAction:(iTermContentNavigationAction)action
                                                                clearOnEnd:(BOOL)clearOnEnd;
 
-- (void)setPasteboard:(NSString *)pbName;
+- (void)setPasteboard:(nullable NSString *)pbName;
 - (void)stopCoprocess;
 - (void)launchSilentCoprocessWithCommand:(NSString *)command;
 
@@ -959,8 +975,8 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
 // impose this restriction because they must belong to the same controller.
 - (BOOL)isCompatibleWith:(PTYSession *)otherSession;
 - (void)setTmuxPane:(int)windowPane;
-- (void)setTmuxHistory:(TmuxHistory *)history
-            altHistory:(TmuxHistory *)altHistory
+- (void)setTmuxHistory:(nullable TmuxHistory *)history
+            altHistory:(nullable TmuxHistory *)altHistory
                  state:(NSDictionary *)state;
 - (void)toggleTmuxPausePane;
 
@@ -973,8 +989,8 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
 - (void)scrollToNamedMark:(id<iTermGenericNamedMarkReading>)mark;
 - (void)scrollToMarkWithGUID:(NSString *)guid;
 - (void)revealPromptMarkWithID:(NSString *)guid;
-- (void)saveScrollPositionWithName:(NSString *)name;
-- (void)renameMark:(id<iTermGenericNamedMarkReading>)mark to:(NSString *)newName;
+- (void)saveScrollPositionWithName:(nullable NSString *)name;
+- (void)renameMark:(id<iTermGenericNamedMarkReading>)mark to:(nullable NSString *)newName;
 - (NSArray<id<iTermGenericNamedMarkReading>> *)namedMarks;
 - (void)removeNamedMark:(id<iTermGenericNamedMarkReading>)mark;
 - (BOOL)canAddNamedMark;
@@ -982,14 +998,14 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
 // Select this session and tab and bring window to foreground.
 - (void)reveal;
 - (void)revealSelection:(iTermSelection *)selection;
-- (void)highlightMarkOrNote:(id<IntervalTreeImmutableObject>)obj;
+- (void)highlightMarkOrNote:(nullable id<IntervalTreeImmutableObject>)obj;
 
 // Make this session active in its tab but don't reveal the tab or window if not already active.
 - (void)makeActive;
 
 // Refreshes the textview and takes a snapshot of the SessionView.
-- (NSImage *)snapshot;
-- (NSImage *)snapshotCenteredOn:(VT100GridAbsCoord)coord size:(NSSize)size;
+- (nullable NSImage *)snapshot;
+- (nullable NSImage *)snapshotCenteredOn:(VT100GridAbsCoord)coord size:(NSSize)size;
 
 - (void)enterPassword:(NSString *)password;
 
@@ -1003,10 +1019,10 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
 
 - (BOOL)encodeArrangementWithContents:(BOOL)includeContents
                               encoder:(id<iTermEncoderAdapter>)result
-                   replacementProfile:(Profile *)replacementProfile
+                   replacementProfile:(nullable Profile *)replacementProfile
                           saveProgram:(BOOL)saveProgram
-                         pendingJumps:(NSArray<iTermSSHReconnectionInfo *> *)pendingJumps
-                              options:(NSDictionary *)options;
+                         pendingJumps:(nullable NSArray<iTermSSHReconnectionInfo *> *)pendingJumps
+                              options:(nullable NSDictionary *)options;
 
 - (BOOL)canChangeProfileInArrangement;
 - (void)changeProfileInArrangement;
@@ -1016,7 +1032,7 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
 - (void)tmuxDidDisconnect;
 - (void)tmuxWindowTitleDidChange;
 
-- (void)restoreStateForZoom:(PTYSessionZoomState *)state;
+- (void)restoreStateForZoom:(nullable PTYSessionZoomState *)state;
 
 // This is to work around a macOS bug where setNeedsDisplay: on the root view controller does not
 // cause the TextViewWrapper to be redrawn in its entirety.
@@ -1029,14 +1045,14 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
 // workgroups so a "reload" button or a per-file diff selector can restart
 // the session with a different command instead of just typing keystrokes
 // into whatever's running.
-- (void)restartSessionWithCommand:(NSString *)command;
+- (void)restartSessionWithCommand:(nullable NSString *)command;
 
 // Make this session's textview the first responder.
 - (void)takeFocus;
 
-- (id)tmuxFormat:(NSString *)tmuxFormat
-       reference:(iTermVariableReference *)ref
-           error:(out NSError **)errorPtr;
+- (nullable id)tmuxFormat:(NSString *)tmuxFormat
+                reference:(iTermVariableReference *)ref
+                    error:(out NSError * _Nullable * _Nullable)errorPtr;
 
 // Show an announcement explaining why a restored session is an orphan.
 - (void)showOrphanAnnouncement;
@@ -1057,7 +1073,7 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
 
 - (void)useTransparencyDidChange;
 
-- (void)performKeyBindingAction:(iTermKeyBindingAction *)action event:(NSEvent *)event;
+- (void)performKeyBindingAction:(iTermKeyBindingAction *)action event:(nullable NSEvent *)event;
 
 - (void)setColorsFromPresetNamed:(NSString *)presetName;
 
@@ -1070,10 +1086,10 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
 - (void)jumpToLocationWhereCurrentStatusChanged;
 - (void)updateMetalDriver;
 - (id)temporarilyDisableMetal NS_AVAILABLE_MAC(10_11);
-- (void)drawFrameAndRemoveTemporarilyDisablementOfMetalForToken:(id)token NS_AVAILABLE_MAC(10_11);
+- (void)drawFrameAndRemoveTemporarilyDisablementOfMetalForToken:(nullable id)token NS_AVAILABLE_MAC(10_11);
 
 - (BOOL)willEnableMetal;
-- (BOOL)metalAllowed:(out iTermMetalUnavailableReason *)reason;
+- (BOOL)metalAllowed:(out nullable iTermMetalUnavailableReason *)reason;
 - (void)injectData:(NSData *)data;
 
 // Call this when a session moves to a different tab or window to update the session ID.
@@ -1085,9 +1101,9 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
 - (BOOL)checkForCyclesInSwiftyStrings;
 - (void)applyAction:(iTermAction *)action;
 - (BOOL)sessionModeConsumesEvent:(NSEvent *)event;
-- (Profile *)profileForSplit;
+- (nullable Profile *)profileForSplit;
 - (void)compose;
-- (void)openComposerWithString:(NSString *)text escaping:(iTermSendTextEscaping)escaping;
+- (void)openComposerWithString:(nullable NSString *)text escaping:(iTermSendTextEscaping)escaping;
 - (BOOL)closeComposer;
 - (void)didChangeScreen:(CGFloat)scaleFactor;
 - (void)addContentSubscriber:(id<iTermContentSubscriber>)contentSubscriber;
@@ -1099,10 +1115,10 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
 - (void)enclosingTabWillBeDeselected;
 - (void)enclosingTabDidBecomeSelected;
 - (void)copyTextFromBlockWithID:(NSString *)blockID;
-- (void)runCommand:(NSString *)command
-       inDirectory:(NSString *)directory
-            onHost:(NSString *)hostname
-            asUser:(NSString *)username;
+- (void)runCommand:(nullable NSString *)command
+       inDirectory:(nullable NSString *)directory
+            onHost:(nullable NSString *)hostname
+            asUser:(nullable NSString *)username;
 - (BOOL)handleKeyDownWithBuckyBits:(NSEvent *)event;
 - (BOOL)handleKeyUpWithBuckyBits:(NSEvent *)event;
 - (BOOL)handleFlagsChangedWithBuckyBits:(NSEvent *)event;
@@ -1132,7 +1148,7 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
 + (ITMCellStyle *)protoStyleForCharacter:(screen_char_t)c
                        externalAttributes:(iTermExternalAttribute *)ea;
 
-- (ITMGetBufferResponse *)handleGetBufferRequest:(ITMGetBufferRequest *)request;
+- (nullable ITMGetBufferResponse *)handleGetBufferRequest:(ITMGetBufferRequest *)request;
 - (void)handleGetPromptRequest:(ITMGetPromptRequest *)request
                     completion:(void (^)(ITMGetPromptResponse *response))completion;
 - (void)handleListPromptsRequest:(ITMListPromptsRequest *)request
@@ -1141,7 +1157,7 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
                                             connectionKey:(NSString *)connectionKey;
 
 - (ITMSetProfilePropertyResponse_Status)handleSetProfilePropertyForAssignments:(NSArray<iTermTuple<NSString *, id> *> *)tuples
-                                                            scriptHistoryEntry:(iTermScriptHistoryEntry *)scriptHistoryEntry;
+                                                            scriptHistoryEntry:(nullable iTermScriptHistoryEntry *)scriptHistoryEntry;
 
 - (ITMGetProfilePropertyResponse *)handleGetProfilePropertyForKeys:(NSArray<NSString *> *)keys;
 
@@ -1150,8 +1166,10 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
 - (void)invokeFunctionCall:(NSString *)invocation
                      scope:(iTermVariableScope *)scope
                     origin:(NSString *)origin;
-- (void)setParentScope:(iTermVariableScope *)parentScope;
-- (void)setOrAppendComposerString:(NSString *)string;
+- (void)setParentScope:(nullable iTermVariableScope *)parentScope;
+- (void)setOrAppendComposerString:(nullable NSString *)string;
 
 @end
+
+NS_ASSUME_NONNULL_END
 

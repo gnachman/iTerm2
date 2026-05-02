@@ -13,10 +13,12 @@ Protocol to be observed by all style delegate objects.  These objects handle the
 #import "PSMTabBarCell.h"
 #import "PSMTabBarControl.h"
 
+NS_ASSUME_NONNULL_BEGIN
+
 @protocol PSMTabStyle <NSObject>
 
-@property(nonatomic, weak) PSMTabBarControl *tabBar;
-@property(nonatomic, readonly) NSAppearance *accessoryAppearance NS_AVAILABLE_MAC(10_14);
+@property(nonatomic, weak, nullable) PSMTabBarControl *tabBar;
+@property(nonatomic, readonly, nullable) NSAppearance *accessoryAppearance NS_AVAILABLE_MAC(10_14);
 @property(nonatomic, readonly) CGFloat edgeDragHeight;
 @property(nonatomic, readonly) BOOL supportsMultiLineLabels;
 @property(nonatomic, readonly) CGFloat intercellSpacing;
@@ -31,9 +33,9 @@ Protocol to be observed by all style delegate objects.  These objects handle the
 - (float)topMarginForTabBarControl;
 
 // add tab button
-- (NSImage *)addTabButtonImage;
-- (NSImage *)addTabButtonPressedImage;
-- (NSImage *)addTabButtonRolloverImage;
+- (nullable NSImage *)addTabButtonImage;
+- (nullable NSImage *)addTabButtonPressedImage;
+- (nullable NSImage *)addTabButtonRolloverImage;
 
 // cell specific parameters
 - (NSRect)dragRectForTabCell:(PSMTabBarCell *)cell orientation:(PSMTabBarOrientation)orientation;
@@ -50,11 +52,11 @@ Protocol to be observed by all style delegate objects.  These objects handle the
 // cell values
 - (NSAttributedString *)attributedObjectCountValueForTabCell:(PSMTabBarCell *)cell;
 - (PSMCachedTitleInputs *)cachedTitleInputsForTabCell:(PSMTabBarCell *)cell;
-- (PSMCachedTitleInputs *)cachedSubtitleInputsForTabCell:(PSMTabBarCell *)cell;
+- (nullable PSMCachedTitleInputs *)cachedSubtitleInputsForTabCell:(PSMTabBarCell *)cell;
 
 // drawing
 - (void)drawTabCell:(PSMTabBarCell *)cell highlightAmount:(CGFloat)highlightAmount;
-- (void)drawBackgroundInRect:(NSRect)rect color:(NSColor*)color horizontal:(BOOL)horizontal;
+- (void)drawBackgroundInRect:(NSRect)rect color:(nullable NSColor*)color horizontal:(BOOL)horizontal;
 - (void)drawTabBar:(PSMTabBarControl *)bar
             inRect:(NSRect)rect
           clipRect:(NSRect)clipRect
@@ -70,7 +72,7 @@ Protocol to be observed by all style delegate objects.  These objects handle the
 - (BOOL)useLightControls;
 
 - (NSColor *)textColorDefaultSelected:(BOOL)selected
-                      backgroundColor:(NSColor *)backgroundColor
+                      backgroundColor:(nullable NSColor *)backgroundColor
                    windowIsMainAndAppIsActive:(BOOL)mainAndActive;
 - (NSColor *)backgroundColorSelected:(BOOL)selected highlightAmount:(CGFloat)highlightAmount;
 - (void)drawPostHocDecorationsOnSelectedCell:(PSMTabBarCell *)cell
@@ -78,9 +80,9 @@ Protocol to be observed by all style delegate objects.  These objects handle the
 - (NSColor *)textColorForCell:(PSMTabBarCell *)cell;
 - (NSRect)adjustedCellRect:(NSRect)rect generic:(NSRect)generic;
 - (NSRect)dirtyFrameForCell:(PSMTabBarCell *)cell;
-- (NSRect)frameForAddTabButtonWithCellWidths:(NSArray<NSNumber *> *)widths
+- (NSRect)frameForAddTabButtonWithCellWidths:(nullable NSArray<NSNumber *> *)widths
                                       height:(CGFloat)height;
-- (PSMRolloverButton *)makeAddTabButtonWithFrame:(NSRect)frame;
+- (nullable PSMRolloverButton *)makeAddTabButtonWithFrame:(NSRect)frame;
 - (NSRect)frameForOverflowButtonWithAddTabButton:(BOOL)showAddTabButton
                                    enclosureSize:(NSSize)enclosureSize
                                   standardHeight:(CGFloat)standardHeight;
@@ -99,3 +101,5 @@ Protocol to be observed by all style delegate objects.  These objects handle the
 - (void)sanityCheck:(NSString *)callsite force:(BOOL)force;
 
 @end
+
+NS_ASSUME_NONNULL_END

@@ -6338,6 +6338,10 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
     }
 }
 
+- (Profile *)justProfile {
+    return _profile ?: @{};
+}
+
 - (void)setProfile:(Profile *)newProfile {
     assert(newProfile);
 

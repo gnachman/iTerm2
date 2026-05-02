@@ -40,7 +40,7 @@ class ResilientCoordinateTests: XCTestCase {
                              scrollback: Int32 = 1000,
                              setup: ((VT100ScreenMutableState) -> Void)? = nil) -> PTYSession {
         let s = PTYSession(synthetic: false)!
-        let sc = s.screen!
+        let sc = s.screen
         sc.delegate = s
         sc.performBlock(joinedThreads: { _, mutableState, _ in
             mutableState.terminalEnabled = true
@@ -549,7 +549,7 @@ class ResilientCoordinateTests: XCTestCase {
             mutableState.appendString(atCursor: "abcdefghijklmnopqrst")
             mutableState.appendCarriageReturnLineFeed()
         })
-        let sc = s.screen!
+        let sc = s.screen
 
         // RC at (5, 1) → 'p'
         let rc = ResilientCoordinate(dataSource: s, absCoord: VT100GridAbsCoordMake(5, 1))
@@ -577,7 +577,7 @@ class ResilientCoordinateTests: XCTestCase {
                 mutableState.appendCarriageReturnLineFeed()
             }
         })
-        let sc = s.screen!
+        let sc = s.screen
 
         // 't' is the last char of each 20-char line. At width 5 it's at x=4, y=3
         // of each 4-line group. The last group starts at y=36, so 't' is at (4, 39).
@@ -680,7 +680,7 @@ class ResilientCoordinateTests: XCTestCase {
 
     func testRetiredWhenSessionDeallocated() {
         var tempSession: PTYSession? = makeSession()
-        let tempGuid = tempSession!.guid!
+        let tempGuid = tempSession!.guid
         tempSession!.screen.performBlock(joinedThreads: { _, mutableState, _ in
             for _ in 0..<10 {
                 mutableState.appendString(atCursor: "line")
@@ -956,7 +956,7 @@ class ResilientCoordinateTests: XCTestCase {
             mutableState.appendString(atCursor: "ZZZZZZZZZZ")
             mutableState.appendCarriageReturnLineFeed()
         })
-        let localScreen = localSession.screen!
+        let localScreen = localSession.screen
 
         let dump0 = localScreen.compactLineDumpWithHistory().components(separatedBy: "\n")
         XCTAssertEqual(dump0[0], "abcdefghij")
@@ -992,7 +992,7 @@ class ResilientCoordinateTests: XCTestCase {
             mutableState.appendString(atCursor: "ZZZZZZZZZZ")
             mutableState.appendCarriageReturnLineFeed()
         })
-        let sc = s.screen!
+        let sc = s.screen
 
         let rc = ResilientCoordinate(dataSource: s, absCoord: VT100GridAbsCoordMake(4, 2))
         XCTAssertEqual(rc.status, .valid)
@@ -1109,7 +1109,7 @@ class ResilientCoordinateTests: XCTestCase {
                 mutableState.appendCarriageReturnLineFeed()
             }
         })
-        let sc = s.screen!
+        let sc = s.screen
         let rc = ResilientCoordinate(dataSource: s, absCoord: VT100GridAbsCoordMake(0, 0))
         XCTAssertEqual(rc.status, .valid)
 

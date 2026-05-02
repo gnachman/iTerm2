@@ -74,11 +74,12 @@ class iTermRightGutterController: NSObject, iTermRightGutterPanelDelegate {
     @objc private func advancedSettingsDidChange(_ notification: Notification) {
         guard let sessionView = sessionView,
               let session = sessionView.delegate as? PTYSession,
+              let view = session.view,
               session.profile != nil else {
             return
         }
-        if session.view.actualRightExtra != session.desiredRightExtra() {
-            session.delegate?.realParentWindow().rightExtraDidChange()
+        if view.actualRightExtra != session.desiredRightExtra() {
+            session.delegate?.realParentWindow()?.rightExtraDidChange()
         } else {
             layoutPanels()
         }
@@ -178,14 +179,15 @@ class iTermRightGutterController: NSObject, iTermRightGutterPanelDelegate {
     func rightGutterPanelDidChangeWidthOrVisibility(_ panel: iTermRightGutterPanel) {
         guard let sessionView = sessionView,
               let session = sessionView.delegate as? PTYSession,
+              let view = session.view,
               session.profile != nil else {
             return
         }
         // The registry's totalWidthForProfile reads the same prefs the panels
         // use, so the next time desiredRightExtra is evaluated it will reflect
         // the new width. Notify the parent window to rerun the layout cascade.
-        if session.view.actualRightExtra != session.desiredRightExtra() {
-            session.delegate?.realParentWindow().rightExtraDidChange()
+        if view.actualRightExtra != session.desiredRightExtra() {
+            session.delegate?.realParentWindow()?.rightExtraDidChange()
         } else {
             // Width unchanged at the budget level (e.g., visibility toggle
             // that doesn't affect the configured width). Just relayout in

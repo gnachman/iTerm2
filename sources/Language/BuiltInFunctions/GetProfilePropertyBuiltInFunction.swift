@@ -39,7 +39,7 @@ extension GetProfilePropertyBuiltInFunction: iTermBuiltInFunctionProtocol {
                     return
                 }
                 let key = parameters[keyArgName] as! String
-                let value = iTermProfilePreferences.object(forKey: key, inProfile: session.profile)
+                let value = iTermProfilePreferences.object(forKey: key, inProfile: session.justProfile)
                 completion(value, nil)
             }
         iTermBuiltInFunctions.sharedInstance().register(builtInFunction, namespace: "iterm2")

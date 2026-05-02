@@ -11,7 +11,7 @@ import WebKit
 @available(macOS 11.0, *)
 extension PTYSession: iTermBrowserViewControllerDelegate {
     func browserFindManager(_ manager: iTermBrowserFindManager, didUpdateResult result: iTermBrowserFindResultBundle) {
-        view.findDriver?.viewController.countDidChange()
+        view?.findDriver?.viewController.countDidChange()
     }
 
     func browserViewController(_ controller: iTermBrowserViewController, didUpdateTitle title: String?) {
@@ -137,7 +137,7 @@ extension PTYSession: iTermBrowserViewControllerDelegate {
     }
 
     func browserViewControllerSmartSelectionRules(_ controller: iTermBrowserViewController) -> [SmartSelectRule] {
-        let rules = iTermProfilePreferences.object(forKey: KEY_SMART_SELECTION_RULES, inProfile: profile) as? [[String: Any]] ?? SmartSelectionController.defaultRules() ?? []
+        let rules = iTermProfilePreferences.object(forKey: KEY_SMART_SELECTION_RULES, inProfile: justProfile) as? [[String: Any]] ?? SmartSelectionController.defaultRules() ?? []
         return rules.map { dict in
             return SmartSelectRule(regex: SmartSelectionController.regex(inRule: dict),
                                    weight: SmartSelectionController.precision(inRule: dict),
@@ -146,6 +146,7 @@ extension PTYSession: iTermBrowserViewControllerDelegate {
     }
 
     func browserViewController(_ controller: iTermBrowserViewController, didHoverURL url: String?, frame: NSRect) {
+        guard let view else { return }
         let webView = controller.webView
         let frameInSessionView = view.convert(frame, from: webView)
         _ = view.setHoverURL(url, anchorFrame: frameInSessionView)
@@ -159,13 +160,13 @@ extension PTYSession: iTermBrowserViewControllerDelegate {
     
     func browserViewControllerOnboardingEnableInstantReplay(_ controller: iTermBrowserViewController) {
         // Update in my profile (which may be divorced)
-        let guid = profile[KEY_GUID]! as! String
+        let guid = justProfile[KEY_GUID]! as! String
         let model = isDivorced ? ProfileModel.sessionsInstance()! : ProfileModel.sharedInstance()!
         let mutator = iTermProfilePreferenceMutator(model: model, guid: guid)
         mutator.set(key: KEY_INSTANT_REPLAY, value: true)
 
         // If I am divorced also update the original profile
-        if let originalGuid = profile[KEY_ORIGINAL_GUID] as? String {
+        if let originalGuid = justProfile[KEY_ORIGINAL_GUID] as? String {
             let mutator = iTermProfilePreferenceMutator(model: ProfileModel.sharedInstance(),
                                                         guid: originalGuid)
             mutator.set(key: KEY_INSTANT_REPLAY, value: true)
@@ -197,7 +198,7 @@ extension PTYSession: iTermBrowserViewControllerDelegate {
             return
         }
         divorceAddressBookEntryFromPreferences()
-        let origGuid = profile[KEY_GUID] as! String
+        let origGuid = justProfile[KEY_GUID] as! String
         ProfileModel.sessionsInstance().setProfilePreservingGuidWithGuid(origGuid,
                                                                          fromProfile: newProfile,
                                                                          overrides: [:])
@@ -209,14 +210,14 @@ extension PTYSession: iTermBrowserViewControllerDelegate {
     
     func browserViewControllerOnboardingFindBrowserProfileGuid(_ controller: iTermBrowserViewController) -> String? {
         // First check if the current session's profile is a browser profile
-        if let currentGuid = profile[KEY_GUID] as? String,
+        if let currentGuid = justProfile[KEY_GUID] as? String,
            let currentProfile = ProfileModel.sharedInstance().bookmark(withGuid: currentGuid) as? NSDictionary,
            currentProfile.profileIsBrowser {
             return currentGuid
         }
-        
+
         // If divorced, check the original profile
-        if let originalGuid = profile[KEY_ORIGINAL_GUID] as? String,
+        if let originalGuid = justProfile[KEY_ORIGINAL_GUID] as? String,
            let originalProfile = ProfileModel.sharedInstance().bookmark(withGuid: originalGuid) as? NSDictionary,
            originalProfile.profileIsBrowser {
             return originalGuid
@@ -234,7 +235,7 @@ extension PTYSession: iTermBrowserViewControllerDelegate {
         let adBlockerEnabled = iTermAdvancedSettingsModel.webKitAdblockEnabled()
         
         // Check if instant replay is enabled for the current profile
-        let instantReplayEnabled = iTermProfilePreferences.bool(forKey: KEY_INSTANT_REPLAY, inProfile: profile)
+        let instantReplayEnabled = iTermProfilePreferences.bool(forKey: KEY_INSTANT_REPLAY, inProfile: justProfile)
         
         return iTermBrowserOnboardingSettings(
             adBlockerEnabled: adBlockerEnabled,
@@ -263,7 +264,7 @@ extension PTYSession: iTermBrowserViewControllerDelegate {
                                 identifier: nil,
                                 silenceable: .kiTermWarningTypePersistent,
                                 heading: "Run command?",
-                                window: view.window) == .kiTermWarningSelection0 else {
+                                window: view?.window) == .kiTermWarningSelection0 else {
             return
         }
         iTermController.sharedInstance().openSingleUseWindow(withCommand: command,
@@ -288,7 +289,7 @@ extension PTYSession: iTermBrowserViewControllerDelegate {
 
     func browserViewControllerShouldInterpolateSmartSelectionParameters(_ controller: iTermBrowserViewController) -> Bool {
         return iTermProfilePreferences.bool(forKey: KEY_SMART_SELECTION_ACTIONS_USE_INTERPOLATED_STRINGS,
-                                            inProfile: profile)
+                                            inProfile: justProfile)
     }
 
     func browserViewController(_ controller: iTermBrowserViewController, openFile file: String) {
@@ -298,7 +299,7 @@ extension PTYSession: iTermBrowserViewControllerDelegate {
                                 identifier: nil,
                                 silenceable: .kiTermWarningTypePersistent,
                                 heading: "Open file?",
-                                window: view.window) == .kiTermWarningSelection0 else {
+                                window: view?.window) == .kiTermWarningSelection0 else {
             return
         }
         NSWorkspace.shared.open(URL(fileURLWithPath: file))
@@ -316,7 +317,7 @@ extension PTYSession: iTermBrowserViewControllerDelegate {
             MovePaneController.sharedInstance().moveSession(toTab: self)
 
         case .moveBrowserToWindow:
-            if let window = view.window {
+            if let window = view?.window {
                 MovePaneController.sharedInstance().moveSession(toNewWindow: self,
                                                                 at: window.convertPoint(toScreen: NSPoint(x: -10.0, y: -10.0)))
             }
@@ -352,7 +353,7 @@ extension PTYSession: iTermBrowserViewControllerDelegate {
             guard session.isBrowserSession(), session !== self else {
                 return nil
             }
-            return session.view.browserViewController?.webView
+            return session.view?.browserViewController?.webView
         }
     }
 
@@ -391,13 +392,17 @@ extension PTYSession: iTermBrowserViewControllerDelegate {
                     continuation.resume(returning: request.options[Int(selection)].identifier)
                 }
             }
-            queueAnnouncement(announcement, identifier: request.identifier)
+            if let announcement {
+                queueAnnouncement(announcement, identifier: request.identifier)
+            } else {
+                continuation.resume(returning: nil)
+            }
         }
     }
 
     func browserViewController(_ controller: iTermBrowserViewController,
                                handleKeyDown event: NSEvent) -> Bool {
-        if view.currentAnnouncement?.handleKeyDown(event) == true {
+        if view?.currentAnnouncement?.handleKeyDown(event) == true {
             return true
         }
         return false
@@ -419,7 +424,7 @@ extension PTYSession {
                                 withOffset offset: Int,
                                 scrollToFirstResult: Bool,
                                 force: Bool) {
-        guard let vc = view.browserViewController else {
+        guard let vc = view?.browserViewController else {
             return
         }
         
@@ -441,21 +446,21 @@ extension PTYSession {
     }
     
     @objc func browserResetFindCursor() {
-        guard let vc = view.browserViewController else {
+        guard let vc = view?.browserViewController else {
             return
         }
         vc.resetFindCursor()
     }
     
     @objc func browserFindInProgress() -> Bool {
-        guard let vc = view.browserViewController else {
+        guard let vc = view?.browserViewController else {
             return false
         }
         return vc.findInProgress
     }
     
     @objc func browserContinueFind(_ progress: UnsafeMutablePointer<Double>, range: NSRangePointer) -> Bool {
-        guard let vc = view.browserViewController else {
+        guard let vc = view?.browserViewController else {
             progress.pointee = 1.0
             range.pointee = NSRange(location: 100, length: 100)
             return false
@@ -464,14 +469,14 @@ extension PTYSession {
     }
     
     @objc func browserNumberOfSearchResults() -> Int {
-        guard let vc = view.browserViewController else {
+        guard let vc = view?.browserViewController else {
             return 0
         }
         return vc.numberOfSearchResults
     }
     
     @objc func browserCurrentIndex() -> Int {
-        guard let vc = view.browserViewController else {
+        guard let vc = view?.browserViewController else {
             return 0
         }
         return vc.currentIndex
