@@ -2663,7 +2663,13 @@ typedef NS_OPTIONS(NSUInteger, iTermCornerFlags) {
 
         _currentAnnouncement.view.autoresizingMask = NSViewWidthSizable | NSViewMinYMargin;
         [_currentAnnouncement didBecomeVisible];
-        [self addSubviewBelowFindView:_currentAnnouncement.view];
+        // Order the announcement below the toolbar so the slide-in/out
+        // animation passes behind it instead of painting over it.
+        if (_toolbarView && [self.subviews containsObject:_toolbarView]) {
+            [self addSubview:_currentAnnouncement.view positioned:NSWindowBelow relativeTo:_toolbarView];
+        } else {
+            [self addSubviewBelowFindView:_currentAnnouncement.view];
+        }
     }
     [self.delegate sessionViewAnnouncementDidChange:self];
 }
