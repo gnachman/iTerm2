@@ -27,10 +27,9 @@ extension SessionView {
         if let defaultPrompt {
             promptView.text = defaultPrompt
         }
-        weak var weakPromptView = promptView
-        promptView.onStart = { text in
+        promptView.onStart = { [weak promptView] text in
             onStart(text)
-            weakPromptView?.removeFromSuperview()
+            promptView?.removeFromSuperview()
         }
         codeReviewPromptOverlay = promptView
         addSubview(belowFind: promptView)

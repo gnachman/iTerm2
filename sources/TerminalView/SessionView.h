@@ -354,9 +354,12 @@ typedef NS_ENUM(NSUInteger, iTermSessionViewFindDriver) {
 
 // Code review prompt overlay (created in a Swift extension on SessionView).
 @property(nonatomic, weak, nullable) iTermCodeReviewPromptView *codeReviewPromptOverlay;
+
+@end
+
+@interface SessionView (CodeReviewPromptOverlay)
 - (void)presentCodeReviewPromptOverlayWithDefaultPrompt:(nullable NSString *)defaultPrompt
                                                 onStart:(void (^)(NSString *text))onStart;
-
 @end
 
 NS_ASSUME_NONNULL_END
