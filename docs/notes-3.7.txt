@@ -319,6 +319,23 @@ Bug Fixes:
   clippings panel appears in a non-current
   tab. Window resize now happens only when
   the visible tab needs the space.
+- Fix Code Review (and any other long
+  command) failing immediately with a zsh
+  "unmatched '" error. The shell-arg
+  splitter used by startProgram was running
+  every unquoted argv element through
+  -stringByExpandingTildeInPath, which
+  silently truncates at 1024 chars. Long
+  arguments now skip the expansion when
+  there's no leading ~.
+- Fix shell escaping of embedded apostrophes
+  and CR/LF in single-quote (POSIX) and
+  $'...' (bash) modes. Apostrophes now use
+  the close-escape-reopen idiom ('\''), and
+  control chars round-trip cleanly through
+  the receiving shell instead of either
+  injecting a literal backslash or producing
+  an unmatched-quote parse error.
 - Fix the password-manager CLI picker
   greying out interpreter scripts (such as
   the Homebrew-installed Bitwarden ‘bw’,

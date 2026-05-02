@@ -84,13 +84,18 @@ extension PTYSession {
 
     private func wrappedCommandForCodeReview(text: String,
                                                rawCommand: String) -> String? {
-        // Shell-escape the prompt before exposing it as a variable so the
-        // typical interpolation (`claude \(codeReviewPrompt)`) is safe
-        // for any text the user types — including spaces, quotes, and
-        // shell metacharacters. Same single-quote wrapping pattern used
-        // by iTermWorkgroupSessionConfig.resolvedPerFileCommand.
+        // Single-quote wrap so the value is one positional arg in any
+        // POSIX-style shell (bash, zsh, fish, …). Normalize line
+        // endings first: a stray CR from NSTextView or pasted content
+        // gets backslash-escaped to `\<CR>` by
+        // commandByWrappingInLoginShell:, which the user's shell then
+        // reads as line continuation — splitting the wrapping `'…'`
+        // and producing "unmatched '". LF is safe inside `'…'`.
+        let normalized = text
+            .replacingOccurrences(of: "\r\n", with: "\n")
+            .replacingOccurrences(of: "\r", with: "\n")
         let shellEscaped =
-            "'" + text.replacingOccurrences(of: "'", with: "'\\''") + "'"
+            "'" + normalized.replacingOccurrences(of: "'", with: "'\\''") + "'"
         genericScope.setValue(shellEscaped, forVariableNamed: "codeReviewPrompt")
 
         let resolvedCommand = evaluateSwiftyTemplate(rawCommand)

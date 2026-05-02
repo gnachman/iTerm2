@@ -609,11 +609,36 @@
 // /Users/example/foo  -> /Users/example/foo
 // /Users/example/foo/ -> /Users/example/foo/
 - (NSString *)stringByExpandingTildeInPathPreservingSlash {
-    NSString *candidate = [self stringByExpandingTildeInPath];
-    if ([self hasSuffix:@"/"] && ![candidate hasSuffix:@"/"]) {
-        return [candidate stringByAppendingString:@"/"];
+    // -[NSString stringByExpandingTildeInPath] silently truncates its
+    // result at PATH_MAX (1024 chars on macOS) — a leftover from when
+    // it was strictly a filesystem-path helper. The shell-arg splitter
+    // hands us long argv elements (e.g. the prompt of a Code Review
+    // claude invocation), which were getting capped at 1024.
+    //
+    // Tilde expansion only needs the first path component anyway —
+    // ~ or ~user — so split there, expand just that prefix (which is
+    // short), then glue the rest back on verbatim. Inputs without a
+    // leading ~ get returned unchanged. A first component longer than
+    // PATH_MAX wouldn't survive stringByExpandingTildeInPath either,
+    // and almost certainly isn't a path, so leave those alone too.
+    if (![self hasPrefix:@"~"]) {
+        return self;
     }
-    return candidate;
+    NSRange slashRange = [self rangeOfString:@"/"];
+    NSString *firstComponent;
+    NSString *rest;
+    if (slashRange.location == NSNotFound) {
+        firstComponent = self;
+        rest = @"";
+    } else {
+        firstComponent = [self substringToIndex:slashRange.location];
+        rest = [self substringFromIndex:slashRange.location];
+    }
+    if (firstComponent.length >= 1024) {
+        return self;
+    }
+    NSString *expandedFirst = [firstComponent stringByExpandingTildeInPath];
+    return [expandedFirst stringByAppendingString:rest];
 }
 
 - (NSString *)stringByReplacingBackreference:(int)n withString:(NSString *)s {
@@ -3220,20 +3245,51 @@ static NSDictionary<NSString *, NSNumber *> *iTermKittyDiacriticIndex(void) {
         
 - (void)escapeShellCharactersWithSingleQuotesIncludingNewlines:(BOOL)includingNewlines
                                                        forBash:(BOOL)forBash {
-    // Only need to escape single quote and backslash in a single-quoted string
-    NSMutableString *charsToEscape = [@"\\'" mutableCopy];
+    // Bail out early when nothing inside needs quoting at all.
     NSMutableCharacterSet *charsToSearch = [NSMutableCharacterSet characterSetWithCharactersInString:[NSString shellEscapableCharacters]];
     if (includingNewlines) {
-        [charsToEscape appendString:@"\r\n"];
         [charsToSearch addCharactersInString:@"\r\n"];
     }
-    if ([self rangeOfCharacterFromSet:charsToSearch].location != NSNotFound) {
-        [self escapeCharacters:charsToEscape forBash:forBash];
-        if (forBash) {
-            [self insertString:@"$'" atIndex:0];
-        } else {
-            [self insertString:@"'" atIndex:0];
+    if ([self rangeOfCharacterFromSet:charsToSearch].location == NSNotFound) {
+        return;
+    }
+
+    if (forBash) {
+        // $'...' (ANSI-C) quoting: bash and zsh decode backslash
+        // escapes, so embed control chars as their two-character
+        // letter form (\n, \r, \t) and apostrophes as \x27. Backslash
+        // must go first so subsequent additions of \ aren't
+        // re-escaped.
+        [self replaceOccurrencesOfString:@"\\"
+                              withString:@"\\\\"
+                                 options:0
+                                   range:NSMakeRange(0, self.length)];
+        [self replaceOccurrencesOfString:@"'"
+                              withString:@"\\x27"
+                                 options:0
+                                   range:NSMakeRange(0, self.length)];
+        if (includingNewlines) {
+            [self replaceOccurrencesOfString:@"\r"
+                                  withString:@"\\r"
+                                     options:0
+                                       range:NSMakeRange(0, self.length)];
+            [self replaceOccurrencesOfString:@"\n"
+                                  withString:@"\\n"
+                                     options:0
+                                       range:NSMakeRange(0, self.length)];
         }
+        [self insertString:@"$'" atIndex:0];
+        [self appendString:@"'"];
+    } else {
+        // POSIX '...' quoting: nothing inside is special, including
+        // backslash and CR/LF. They are all literal. The single
+        // exception is the apostrophe itself, which has to be done
+        // with the close-escape-reopen idiom: ' -> '\''.
+        [self replaceOccurrencesOfString:@"'"
+                              withString:@"'\\''"
+                                 options:0
+                                   range:NSMakeRange(0, self.length)];
+        [self insertString:@"'" atIndex:0];
         [self appendString:@"'"];
     }
 }
