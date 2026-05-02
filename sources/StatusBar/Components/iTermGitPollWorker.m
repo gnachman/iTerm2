@@ -46,33 +46,73 @@ typedef void (^iTermGitPollWorkerCompletionBlock)(iTermGitState * _Nullable, BOO
 }
 
 - (NSString *)cachedBranchForPath:(NSString *)path {
-    // Prefer either cache entry — branch is the same in both.
-    iTermGitState *cached = _cache[[self cacheKeyForPath:path includeDiffStats:YES]] ?:
-                            _cache[[self cacheKeyForPath:path includeDiffStats:NO]];
-    return cached.branch;
+    // Branch is the same regardless of gitBase or includeDiffStats
+    // — scan every key that could belong to this path. Three key
+    // shapes exist: bare `path` (basic, HEAD), `path\x01stats`
+    // (rich, HEAD or with `\x02<base>` suffix when non-HEAD), and
+    // `path\x02<base>` (basic, non-HEAD). All three prefixes
+    // need a hasPrefix check or the function under-reports when
+    // only base-keyed entries are cached.
+    NSString *statsPrefix = [path stringByAppendingString:@"\x01"];
+    NSString *basePrefix = [path stringByAppendingString:@"\x02"];
+    for (NSString *key in _cache) {
+        if ([key isEqualToString:path] ||
+            [key hasPrefix:statsPrefix] ||
+            [key hasPrefix:basePrefix]) {
+            iTermGitState *state = _cache[key];
+            if (state.branch) {
+                return state.branch;
+            }
+        }
+    }
+    return nil;
 }
 
 - (NSString *)debugInfoForDirectory:(NSString *)path {
-    iTermGitState *basic = _cache[[self cacheKeyForPath:path includeDiffStats:NO]];
-    iTermGitState *rich = _cache[[self cacheKeyForPath:path includeDiffStats:YES]];
-    NSUInteger pendingCount = _pending[[self cacheKeyForPath:path includeDiffStats:NO]].count +
-                              _pending[[self cacheKeyForPath:path includeDiffStats:YES]].count;
+    iTermGitState *basic = _cache[[self cacheKeyForPath:path
+                                                gitBase:nil
+                                       includeDiffStats:NO]];
+    iTermGitState *rich = _cache[[self cacheKeyForPath:path
+                                               gitBase:nil
+                                      includeDiffStats:YES]];
+    NSUInteger pendingCount =
+        _pending[[self cacheKeyForPath:path gitBase:nil includeDiffStats:NO]].count +
+        _pending[[self cacheKeyForPath:path gitBase:nil includeDiffStats:YES]].count;
     return [NSString stringWithFormat:@"Basic cache: %@\nRich cache: %@\nPending calls: %@\n",
             basic ? [NSString stringWithFormat:@"age %@", @(basic.age)] : @"none",
             rich ? [NSString stringWithFormat:@"age %@", @(rich.age)] : @"none",
             @(pendingCount)];
 }
 
-- (NSString *)cacheKeyForPath:(NSString *)path includeDiffStats:(BOOL)includeDiffStats {
-    return includeDiffStats ? [path stringByAppendingString:@"\x01stats"] : path;
+// Cache key is path + gitBase + stats flag. Empty/nil/"HEAD"
+// gitBase all collapse to the same key so the existing HEAD-only
+// callers keep hitting the same cache slot they always have.
+// \x01 is the legacy separator the stats variant used; the
+// gitBase segment uses \x02 to keep the HEAD-default key
+// byte-identical to the pre-change one (= bare path, optionally
+// with "\x01stats").
+- (NSString *)cacheKeyForPath:(NSString *)path
+                      gitBase:(NSString * _Nullable)gitBase
+             includeDiffStats:(BOOL)includeDiffStats {
+    NSString *key = path;
+    if (includeDiffStats) {
+        key = [key stringByAppendingString:@"\x01stats"];
+    }
+    if (gitBase.length > 0 && ![gitBase isEqualToString:@"HEAD"]) {
+        key = [key stringByAppendingFormat:@"\x02%@", gitBase];
+    }
+    return key;
 }
 
 - (void)requestPath:(NSString *)path
+            gitBase:(NSString * _Nullable)gitBase
    includeDiffStats:(BOOL)includeDiffStats
          completion:(void (^)(iTermGitState * _Nullable, BOOL timedOut))completion {
-    DLog(@"requestPath:%@ includeDiffStats:%@", path, @(includeDiffStats));
+    DLog(@"requestPath:%@ gitBase:%@ includeDiffStats:%@", path, gitBase, @(includeDiffStats));
     const NSTimeInterval ttl = 1;
-    NSString *cacheKey = [self cacheKeyForPath:path includeDiffStats:includeDiffStats];
+    NSString *cacheKey = [self cacheKeyForPath:path
+                                       gitBase:gitBase
+                              includeDiffStats:includeDiffStats];
 
     iTermGitState *existing = _cache[cacheKey];
     DLog(@"Existing state %@ has age %@", existing, @(existing.age));
@@ -92,6 +132,7 @@ typedef void (^iTermGitPollWorkerCompletionBlock)(iTermGitState * _Nullable, BOO
     DLog(@"Create pending request for %@ with a single waiter", cacheKey);
     DLog(@"Send through gateway with the following pending requests:\n%@", _pending);
     [[iTermSlowOperationGateway sharedInstance] requestGitStateForPath:path
+                                                               gitBase:gitBase
                                                       includeDiffStats:includeDiffStats
                                                             completion:^(iTermGitState * _Nullable state, BOOL timedOut) {
         DLog(@"Got response for %@ with state %@ timedOut=%@", cacheKey, state, @(timedOut));
@@ -126,8 +167,37 @@ typedef void (^iTermGitPollWorkerCompletionBlock)(iTermGitState * _Nullable, BOO
 }
 
 - (void)invalidateCacheForPath:(NSString *)path {
-    [_pending removeObjectForKey:[self cacheKeyForPath:path includeDiffStats:NO]];
-    [_pending removeObjectForKey:[self cacheKeyForPath:path includeDiffStats:YES]];
+    // Wipe both the cache and the pending dict for every key that
+    // belongs to this path. Three key shapes:
+    //   `path`                       — basic, HEAD
+    //   `path\x01stats[\x02<base>]`  — rich, HEAD or non-HEAD base
+    //   `path\x02<base>`             — basic, non-HEAD base
+    // A prefix sweep on `\x01` and `\x02` catches the latter two,
+    // and an exact match catches the bare-path key.
+    NSString *statsPrefix = [path stringByAppendingString:@"\x01"];
+    NSString *basePrefix = [path stringByAppendingString:@"\x02"];
+    NSMutableArray<NSString *> *toRemove = [NSMutableArray array];
+    for (NSString *key in _pending) {
+        if ([key isEqualToString:path] ||
+            [key hasPrefix:statsPrefix] ||
+            [key hasPrefix:basePrefix]) {
+            [toRemove addObject:key];
+        }
+    }
+    for (NSString *key in toRemove) {
+        [_pending removeObjectForKey:key];
+    }
+    [toRemove removeAllObjects];
+    for (NSString *key in _cache) {
+        if ([key isEqualToString:path] ||
+            [key hasPrefix:statsPrefix] ||
+            [key hasPrefix:basePrefix]) {
+            [toRemove addObject:key];
+        }
+    }
+    for (NSString *key in toRemove) {
+        [_cache removeObjectForKey:key];
+    }
 }
 
 @end

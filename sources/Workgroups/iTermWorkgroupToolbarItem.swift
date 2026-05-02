@@ -32,6 +32,12 @@ enum iTermWorkgroupToolbarItemKind: String, Codable, CaseIterable {
     // reload re-shows the prompt overlay).
     case reload
     case spacer
+    // Combo box that picks the git base ref against which the
+    // changedFileSelector's diff command runs. Defaults to HEAD;
+    // remembers previously used values across launches. Like
+    // navigation, only meaningful paired with .changedFileSelector,
+    // so the settings UI hides it from sessions without one.
+    case gitBaseSelector
     // Auto-injected at runtime — never user-addable, never written to
     // disk. The decoder still understands it so a future change that
     // does persist it wouldn't trip an old client.
@@ -45,6 +51,7 @@ enum iTermWorkgroupToolbarItem: Codable, Equatable, Hashable {
     case navigation
     case reload
     case spacer(minWidth: CGFloat, maxWidth: CGFloat)
+    case gitBaseSelector
     case name
 
     var kind: iTermWorkgroupToolbarItemKind {
@@ -55,6 +62,7 @@ enum iTermWorkgroupToolbarItem: Codable, Equatable, Hashable {
         case .navigation: return .navigation
         case .reload: return .reload
         case .spacer: return .spacer
+        case .gitBaseSelector: return .gitBaseSelector
         case .name: return .name
         }
     }
@@ -88,6 +96,7 @@ enum iTermWorkgroupToolbarItem: Codable, Equatable, Hashable {
             let minWidth = try c.decode(CGFloat.self, forKey: .minWidth)
             let maxWidth = try c.decode(CGFloat.self, forKey: .maxWidth)
             self = .spacer(minWidth: minWidth, maxWidth: maxWidth)
+        case .gitBaseSelector: self = .gitBaseSelector
         case .name: self = .name
         }
     }

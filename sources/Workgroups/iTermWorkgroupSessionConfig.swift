@@ -216,21 +216,56 @@ struct iTermWorkgroupSessionConfig: Codable, Equatable {
 }
 
 extension iTermWorkgroupSessionConfig {
-    // Render `perFileCommand` with the picked filename substituted
-    // for the `\(file)` placeholder. The filename is shell-escaped
-    // (wrapped in single quotes, with any internal single quote
-    // turned into the standard '\'' sequence) so users don't need
-    // to quote the placeholder themselves in the template. Existing
-    // templates that DO quote it (e.g. `… -- '\(file)'`) still work
-    // — the result becomes `''escaped''`, which is shell-equivalent
-    // to a single quoted string.
-    func resolvedPerFileCommand(filename: String) -> String {
-        let escaped = "'"
-            + filename.replacingOccurrences(of: "'", with: "'\\''")
+    // POSIX shell-escape: wrap in single quotes, expanding any
+    // embedded single quote to the four-char '\'' sequence. Used
+    // for both `\(file)` and `\(gitBase)` substitution so the
+    // shell can never interpret user-typed text as
+    // metacharacters — even though git refs and filenames
+    // generally don't carry shell metas, the gitBase value comes
+    // from a free-form combo box and a paste of `;rm -rf ~` would
+    // otherwise execute when interpolated raw.
+    private static func shellSingleQuoted(_ s: String) -> String {
+        return "'"
+            + s.replacingOccurrences(of: "'", with: "'\\''")
             + "'"
-        return perFileCommand.replacingOccurrences(
-            of: "\\(file)",
-            with: escaped)
+    }
+
+    // Render `perFileCommand` with the picked filename substituted
+    // for the `\(file)` placeholder and `\(gitBase)` substituted
+    // with the current git base ref (defaults to "HEAD"). Both
+    // placeholders are shell-escaped; existing templates that
+    // already quote them (e.g. `… -- '\(file)'`) still work —
+    // the result becomes `''escaped''`, which is shell-equivalent
+    // to the just-quoted string.
+    func resolvedPerFileCommand(filename: String,
+                                gitBase: String = CCGitBaseSelectorItem.defaultBase) -> String {
+        return perFileCommand
+            .replacingOccurrences(of: "\\(file)",
+                                  with: Self.shellSingleQuoted(filename))
+            .replacingOccurrences(of: "\\(gitBase)",
+                                  with: Self.shellSingleQuoted(gitBase))
+    }
+
+    // Substitute `\(gitBase)` in `command`. Used at workgroup-entry
+    // spawn time and on diffDidSelectAllFiles restarts. Same shell-
+    // escape contract as resolvedPerFileCommand.
+    func resolvedCommand(gitBase: String = CCGitBaseSelectorItem.defaultBase) -> String {
+        return command.replacingOccurrences(
+            of: "\\(gitBase)",
+            with: Self.shellSingleQuoted(gitBase))
+    }
+
+    // Returns a copy with `\(gitBase)` substituted in `command`.
+    // Used to pre-resolve at spawn time so the spawner's downstream
+    // (non-swifty) launch path doesn't hand the shell a literal
+    // backslash-paren. The codeReview path is unaffected: its
+    // template still has `\(gitBase)` available in the `command`
+    // field, but evaluator runs against the leader scope which we
+    // also set, so the result is the same value.
+    func substitutingGitBase(_ gitBase: String) -> iTermWorkgroupSessionConfig {
+        var copy = self
+        copy.command = copy.resolvedCommand(gitBase: gitBase)
+        return copy
     }
 }
 

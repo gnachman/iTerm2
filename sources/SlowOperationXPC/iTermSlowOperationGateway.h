@@ -59,6 +59,7 @@ NS_ASSUME_NONNULL_BEGIN
                        completion:(void (^)(NSArray<NSString *> *))completions;
 
 - (void)requestGitStateForPath:(NSString *)path
+                       gitBase:(NSString * _Nullable)gitBase
               includeDiffStats:(BOOL)includeDiffStats
                     completion:(void (^)(iTermGitState * _Nullable, BOOL timedOut))completion;
 

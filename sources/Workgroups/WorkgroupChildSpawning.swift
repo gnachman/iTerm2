@@ -17,8 +17,9 @@ extension iTermWorkgroupInstance {
     // resulting session in the workgroup tree and recurse.
     func spawnSplit(config: iTermWorkgroupSessionConfig, parent: PTYSession) {
         guard case .split(let settings) = config.kind else { return }
+        let resolved = config.substitutingGitBase(currentGitBase)
         guard let newSession = spawner.spawnSplit(parent: parent,
-                                                  config: config,
+                                                  config: resolved,
                                                   settings: settings,
                                                   workgroupInstanceID: instanceUniqueIdentifier) else {
             return
@@ -32,8 +33,9 @@ extension iTermWorkgroupInstance {
 
     // Add a new-tab child from the workgroup config.
     func spawnTab(config: iTermWorkgroupSessionConfig, parent: PTYSession) {
+        let resolved = config.substitutingGitBase(currentGitBase)
         guard let newSession = spawner.spawnTab(parent: parent,
-                                                config: config,
+                                                config: resolved,
                                                 workgroupInstanceID: instanceUniqueIdentifier) else {
             return
         }
@@ -69,7 +71,8 @@ extension iTermWorkgroupInstance {
         for peer in peerChildren {
             peers[peer.uniqueIdentifier] =
                 spawner.spawnPeer(parent: parent,
-                                  config: peer,
+                                  config: peer.substitutingGitBase(
+                                    currentGitBase),
                                   workgroupInstanceID: instanceUniqueIdentifier)
         }
         let port = iTermWorkgroupPeerPort(

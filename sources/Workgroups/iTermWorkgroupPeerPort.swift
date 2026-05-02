@@ -37,6 +37,29 @@ final class iTermWorkgroupPeerPort: PTYSessionPeerPort {
     // `perFileCommand` lookup).
     private var peerConfigs: [iTermWorkgroupSessionConfig] = []
 
+    // Variable scope used for swifty-string interpolation in commands
+    // and exposed to status-bar / trigger consumers. Stored so the
+    // gitBaseSelector can publish `gitBase` here on every change.
+    private let leaderScope: iTermVariableScope
+
+    // Cached copy of the workgroup-wide git base ref. The instance
+    // owns the canonical value; each port keeps a local copy so
+    // the per-file restart path stays decoupled from the instance
+    // lifecycle (no `weak workgroupInstance` deref on every diff).
+    // Synced via applyGitBase, which the instance calls whenever
+    // any selector commits a new value.
+    private var currentGitBase: String =
+        CCGitBaseSelectorItem.defaultBase
+
+    // Weak back-pointer to the workgroup instance that owns this
+    // port. Set by iTermWorkgroupInstance.enter (main port) and
+    // registerNestedPeerPort (nested ports). The peer port forwards
+    // every gitBaseSelector commit to the instance via this ref so
+    // the instance can broadcast the new value to every port (main
+    // + nested) and fan out to non-peer entries — keeping all ports
+    // in lockstep regardless of which one originated the change.
+    @objc weak var workgroupInstance: iTermWorkgroupInstance?
+
     init(peers: [String: iTermPromise<PTYSession>],
          peerConfigs: [iTermWorkgroupSessionConfig],
          activeSessionIdentifier: String,
@@ -47,10 +70,17 @@ final class iTermWorkgroupPeerPort: PTYSessionPeerPort {
             (identifier: cfg.uniqueIdentifier,
              label: cfg.displayName.isEmpty ? "Peer" : cfg.displayName)
         }
+        self.leaderScope = leaderScope
 
         super.init(peers: peers,
                    activeSessionIdentifier: activeSessionIdentifier,
                    leaderIdentifier: leaderIdentifier)
+
+        // Seed the workgroup-wide `gitBase` variable so commands
+        // that reference `\(gitBase)` resolve before the user has
+        // touched the gitBaseSelector.
+        leaderScope.setValue(currentGitBase,
+                             forVariableNamed: "gitBase")
 
         // Build each peer's ordered list of views fresh. No cross-peer
         // sharing — a second `.spacer(4,4)` in the same list gets its
@@ -69,6 +99,7 @@ final class iTermWorkgroupPeerPort: PTYSessionPeerPort {
                 activePeerIdentifier: activeSessionIdentifier,
                 navigationDelegate: self,
                 diffSelectorDelegate: self,
+                gitBaseSelectorDelegate: self,
                 displayName: cfg.displayName)
             var views: [SessionToolbarGenericView] = []
             let augmented = WorkgroupToolbarBuilder
@@ -182,12 +213,34 @@ final class iTermWorkgroupPeerPort: PTYSessionPeerPort {
         return Array(itemsByPeerID.values.joined())
     }
 
-    // MARK: - Private
+    // Adopt a new git base ref pushed by the workgroup instance.
+    // Updates the local cache + the per-port leaderScope variable
+    // so swifty-string consumers in this port's session group see
+    // the same value the instance just committed. Does NOT trigger
+    // restarts — those are orchestrated by the instance after every
+    // port has been synced. Call this rather than mutating
+    // currentGitBase / leaderScope directly so future sync work
+    // (e.g. driving toolbar items to display the new value) only
+    // needs to be added in one place.
+    @objc
+    func applyGitBase(_ base: String) {
+        currentGitBase = base
+        leaderScope.setValue(base, forVariableNamed: "gitBase")
+        // Mirror the new value into every gitBaseSelector in this
+        // port's toolbar items so sibling selectors (e.g. another
+        // peer in the same group, or the same selector duplicated
+        // across peers) don't keep showing the old text after a
+        // different selector committed.
+        for views in itemsByPeerID.values {
+            for view in views {
+                (view as? CCGitBaseSelectorItem)?.displayBase(base)
+            }
+        }
+    }
 
-    // The peer's CFS, if it has one. Back/forward fan their click onto
-    // this so the existing diffDidSelect path (which performs the
-    // per-file restart) handles the actual session restart.
-    private func diffSelector(forPeerID id: String?) -> CCDiffSelectorItem? {
+    // The peer's CFS, if it has one. Internal so back/forward can
+    // route their click here for the per-file restart path.
+    func diffSelector(forPeerID id: String?) -> CCDiffSelectorItem? {
         guard let id else { return nil }
         return itemsByPeerID[id]?
             .compactMap { $0 as? CCDiffSelectorItem }
@@ -201,6 +254,29 @@ final class iTermWorkgroupPeerPort: PTYSessionPeerPort {
         return itemsByPeerID[id]?
             .compactMap { $0 as? WorkgroupNavigationToolbarItem }
             .first
+    }
+
+    // Restart every peer in this port whose toolbar has a diff
+    // selector against the current base. Called by the workgroup
+    // instance from gitBaseChanged so every running diff session
+    // — firing or not, including a different peer port's diff peer
+    // in nested workgroups — re-runs against the new ref. The
+    // current-file vs All-Files decision is made per-selector so
+    // each peer keeps its own visible filter.
+    @objc
+    func restartAllDiffSelectors() {
+        for views in itemsByPeerID.values {
+            for view in views {
+                guard let selector = view as? CCDiffSelectorItem else {
+                    continue
+                }
+                if let file = selector.currentlySelectedFilename {
+                    diffDidSelect(filename: file, sender: selector)
+                } else {
+                    diffDidSelectAllFiles(sender: selector)
+                }
+            }
+        }
     }
 }
 
@@ -256,10 +332,11 @@ extension iTermWorkgroupPeerPort: CCDiffSelectorItemDelegate {
               let session = session(forIdentifier: ownerPeerID) else {
             return
         }
-        // Substitute \(file) with the picked path. We do the
-        // substitution before sending so the shell never sees the
-        // template — that avoids any backslash-paren shell parsing.
-        let command = cfg.resolvedPerFileCommand(filename: filename)
+        // Substitute \(file) and \(gitBase) before sending so the
+        // shell never sees the template — that avoids any
+        // backslash-paren shell parsing.
+        let command = cfg.resolvedPerFileCommand(filename: filename,
+                                                 gitBase: currentGitBase)
         guard !command.isEmpty else { return }
         let wrapped = ITAddressBookMgr.commandByWrapping(inLoginShell: command)
         session.restart(withCommand: wrapped)
@@ -300,7 +377,23 @@ extension iTermWorkgroupPeerPort: CCDiffSelectorItemDelegate {
               let session = session(forIdentifier: ownerPeerID) else {
             return
         }
-        let wrapped = ITAddressBookMgr.commandByWrapping(inLoginShell: cfg.command)
+        let resolved = cfg.resolvedCommand(gitBase: currentGitBase)
+        let wrapped = ITAddressBookMgr.commandByWrapping(inLoginShell: resolved)
         session.restart(withCommand: wrapped)
+    }
+}
+
+extension iTermWorkgroupPeerPort: CCGitBaseSelectorItemDelegate {
+    // Thin pass-through. The instance owns the workgroup-wide
+    // gitBase value and is responsible for syncing it to every
+    // port (main + nested), updating the poller, and restarting
+    // both the firing peer and every non-peer diff session — see
+    // iTermWorkgroupInstance.gitBaseChanged. Centralizing the
+    // logic there is what keeps nested ports from desyncing when
+    // a selector on a different port commits.
+    func gitBaseDidChange(base: String,
+                          sender: CCGitBaseSelectorItem) {
+        DLog("iTermWorkgroupPeerPort.gitBaseDidChange \(base) owner=\(sender.ownerPeerID ?? "nil")")
+        workgroupInstance?.gitBaseChanged(base, fromSender: sender)
     }
 }

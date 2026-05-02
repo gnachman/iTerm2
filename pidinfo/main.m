@@ -37,11 +37,14 @@
 
 int main(int argc, const char *argv[])
 {
-    // pidinfo --git-state /path/to/repo <timeout> [<includeDiffStats 0|1>]
-    if ((argc == 4 || argc == 5) && !strcmp(argv[1], "--git-state")) {
+    // pidinfo --git-state /path/to/repo <timeout> [<includeDiffStats 0|1> [<gitBase>]]
+    if ((argc == 4 || argc == 5 || argc == 6) && !strcmp(argv[1], "--git-state")) {
         @autoreleasepool {
             const int includeDiffStats = (argc >= 5) ? atoi(argv[4]) : 0;
-            PIDInfoGetGitState(argv[2], atoi(argv[3]), includeDiffStats);
+            // Empty argv[5] means "default base" (HEAD); the function
+            // also treats nil identically.
+            const char *gitBase = (argc >= 6 && argv[5][0] != '\0') ? argv[5] : NULL;
+            PIDInfoGetGitState(argv[2], atoi(argv[3]), includeDiffStats, gitBase);
         }
         return 0;
     }

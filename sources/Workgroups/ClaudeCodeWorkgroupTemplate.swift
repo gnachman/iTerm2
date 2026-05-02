@@ -48,15 +48,16 @@ enum ClaudeCodeWorkgroupTemplate {
             parentID: ID.main,
             kind: .peer,
             profileGUID: nil,
-            command: "git difftool -y -x vimdiff HEAD",
+            command: "git difftool -y -x vimdiff \\(gitBase)",
             urlString: "",
             toolbarItems: [
                 .modeSwitcher,
                 .changedFileSelector,
+                .gitBaseSelector,
                 .navigation,
             ],
             displayName: "Diff",
-            perFileCommand: "git difftool -y -x vimdiff HEAD -- \\(file)")
+            perFileCommand: "git difftool -y -x vimdiff \\(gitBase) -- \\(file)")
 
         let systemPromptFile = Bundle.main.path(forResource: "code-review-system-prompt", ofType: "txt")! as NSString
         let escapedSystemPromptFile = systemPromptFile.withEscapedShellCharacters(includingNewlines: true)

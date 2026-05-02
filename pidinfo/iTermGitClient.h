@@ -59,6 +59,19 @@ NS_ASSUME_NONNULL_BEGIN
 // if diffing fails or there is no HEAD commit.
 - (BOOL)populateDiffStatsOnState:(iTermGitState *)state;
 
+// Populate `state.fileStatuses` by diffing the tree resolved from
+// `gitBase` (any libgit2 revparse spec — branch, tag, SHA, "HEAD~3")
+// against the working tree (with index applied). Used when the user
+// has picked a non-default base in the workgroup's gitBaseSelector;
+// the regular libgit2 status_list pass can only diff against HEAD.
+// Routes every delta through the file's `workdirStatus` column —
+// the index/workdir distinction doesn't apply when the comparison
+// point isn't HEAD, so the popup just shows one flat list. Returns
+// NO if `gitBase` doesn't resolve or the diff fails (caller falls
+// back to the HEAD path so the menu doesn't go blank).
+- (BOOL)populateFileStatusesAgainstBase:(NSString *)gitBase
+                                onState:(iTermGitState *)state;
+
 - (void)forEachReference:(void (^)(git_reference *ref, BOOL *stop))block;
 
 @end
@@ -72,6 +85,15 @@ NS_ASSUME_NONNULL_BEGIN
 // linesDeleted, filesAdded, filesModified, filesDeleted via git_diff. Skip it
 // when not needed — diffing can touch many files on slow repos/filesystems.
 + (instancetype _Nullable)gitStateForRepoAtPath:(NSString *)path
+                               includeDiffStats:(BOOL)includeDiffStats;
+
+// `gitBase` selects the comparison base for fileStatuses. nil or
+// "HEAD" → legacy git-status-style output. Anything else triggers
+// the diff-against-base path (see populateFileStatusesAgainstBase:);
+// the dirty/adds/deletes/diffstat counts still report HEAD-relative
+// values since those are what the status bar consumes.
++ (instancetype _Nullable)gitStateForRepoAtPath:(NSString *)path
+                                        gitBase:(NSString * _Nullable)gitBase
                                includeDiffStats:(BOOL)includeDiffStats;
 
 @end

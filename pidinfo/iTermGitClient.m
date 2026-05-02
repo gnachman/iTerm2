@@ -304,6 +304,133 @@ typedef void (^DeferralBlock)(void);
     return YES;
 }
 
+- (BOOL)populateFileStatusesAgainstBase:(NSString *)gitBase
+                                onState:(iTermGitState *)state {
+    if (gitBase.length == 0) {
+        return NO;
+    }
+    // All non-trivial declarations are hoisted above the first
+    // `goto cleanup` so the gotos don't jump past their inits —
+    // Clang refuses that even for POD aggregates initialized with
+    // libgit2's _OPTIONS_INIT macros (they call `version`-aware
+    // helpers under the hood).
+    git_object *base_obj = NULL;
+    git_diff *diff = NULL;
+    BOOL ok = NO;
+    git_tree *base_tree = NULL;
+    git_diff_options opts = GIT_DIFF_OPTIONS_INIT;
+    git_diff_find_options find_opts = GIT_DIFF_FIND_OPTIONS_INIT;
+    NSMutableArray<iTermGitFileStatus *> *result = nil;
+    size_t numDeltas = 0;
+
+    // "<spec>^{tree}" peels the resolved object down to a tree —
+    // works for branches/tags/commits/SHAs alike. If the spec is
+    // ambiguous or unknown libgit2 returns non-zero and we leave
+    // fileStatuses untouched.
+    NSString *treeSpec = [gitBase stringByAppendingString:@"^{tree}"];
+    if (git_revparse_single(&base_obj, _repo, treeSpec.UTF8String) != 0) {
+        return NO;
+    }
+    // base_tree aliases base_obj — `git_revparse_single` returns
+    // an owned object, and the cleanup block frees it via
+    // git_object_free. Do NOT switch this to git_object_peel(...,
+    // GIT_OBJECT_TREE, ...) without also adding a separate
+    // git_tree_free(base_tree) — peel returns a NEW owned tree
+    // and would leak under the current cleanup.
+    base_tree = (git_tree *)base_obj;
+
+    // Default flags only — deliberately *not* setting
+    // GIT_DIFF_INCLUDE_UNTRACKED. The picker excludes untracked
+    // files from `git status` output via CCDiffSelectorItem's
+    // workdirStatus filter; this path mirrors that behavior by
+    // never having libgit2 surface UNTRACKED deltas in the first
+    // place. Files that are tracked in the working tree but absent
+    // from the base still come through as ADDED, which is what
+    // the user wants — "files that differ from the base ref".
+    if (git_diff_tree_to_workdir_with_index(&diff, _repo, base_tree, &opts) != 0) {
+        goto cleanup;
+    }
+
+    // Detect renames so the popup labels match what the user sees
+    // in `git status`. find_similar mutates `diff` in place to
+    // collapse paired add+delete deltas into a single rename delta.
+    find_opts.flags = (GIT_DIFF_FIND_RENAMES |
+                       GIT_DIFF_FIND_RENAMES_FROM_REWRITES);
+    git_diff_find_similar(diff, &find_opts);
+
+    result = [NSMutableArray array];
+    numDeltas = git_diff_num_deltas(diff);
+    for (size_t i = 0; i < numDeltas; i++) {
+        const git_diff_delta *delta = git_diff_get_delta(diff, i);
+        if (!delta) {
+            continue;
+        }
+        const char *cpath = NULL;
+        // For deletes the new_file path is empty — fall back to old.
+        if (delta->new_file.path && delta->new_file.path[0] != '\0') {
+            cpath = delta->new_file.path;
+        } else if (delta->old_file.path && delta->old_file.path[0] != '\0') {
+            cpath = delta->old_file.path;
+        }
+        if (!cpath) {
+            continue;
+        }
+        NSString *path = [NSString stringWithUTF8String:cpath];
+        if (!path) {
+            continue;
+        }
+        iTermGitFileChangeKind kind = iTermGitFileChangeKindNone;
+        switch (delta->status) {
+            case GIT_DELTA_ADDED:
+                kind = iTermGitFileChangeKindAdded;
+                break;
+            case GIT_DELTA_DELETED:
+                kind = iTermGitFileChangeKindDeleted;
+                break;
+            case GIT_DELTA_MODIFIED:
+                kind = iTermGitFileChangeKindModified;
+                break;
+            case GIT_DELTA_RENAMED:
+                kind = iTermGitFileChangeKindRenamed;
+                break;
+            case GIT_DELTA_TYPECHANGE:
+                kind = iTermGitFileChangeKindTypeChange;
+                break;
+            case GIT_DELTA_CONFLICTED:
+                kind = iTermGitFileChangeKindConflicted;
+                break;
+            // GIT_DELTA_UNTRACKED, _IGNORED, _COPIED, _UNREADABLE
+            // all fall through here — untracked files are
+            // intentionally excluded from the picker.
+            default:
+                continue;
+        }
+        if (kind == iTermGitFileChangeKindNone) {
+            continue;
+        }
+        // The dropdown bins entries by which column is non-none:
+        // indexStatus → "Staged" group, workdirStatus → "Unstaged".
+        // For a non-HEAD base, that distinction is meaningless — the
+        // diff merges committed and uncommitted changes — so route
+        // every entry through workdirStatus and let it land under
+        // a single "Unstaged" header. The `Self.allFilesMarker`-
+        // headed "All Files" entry above remains the escape hatch
+        // back to the unfiltered diff command.
+        iTermGitFileStatus *fs = [[iTermGitFileStatus alloc] init];
+        fs.path = path;
+        fs.indexStatus = iTermGitFileChangeKindNone;
+        fs.workdirStatus = kind;
+        [result addObject:fs];
+    }
+    state.fileStatuses = result;
+    ok = YES;
+
+cleanup:
+    if (diff) git_diff_free(diff);
+    if (base_obj) git_object_free(base_obj);
+    return ok;
+}
+
 - (BOOL)populateDiffStatsOnState:(iTermGitState *)state {
     git_object *head_tree_obj = NULL;
     git_diff *diff = NULL;
@@ -409,6 +536,14 @@ static int GitForEachCallback(git_reference *ref, void *data) {
 
 + (instancetype)gitStateForRepoAtPath:(NSString *)path
                      includeDiffStats:(BOOL)includeDiffStats {
+    return [self gitStateForRepoAtPath:path
+                               gitBase:nil
+                      includeDiffStats:includeDiffStats];
+}
+
++ (instancetype)gitStateForRepoAtPath:(NSString *)path
+                              gitBase:(NSString * _Nullable)gitBase
+                     includeDiffStats:(BOOL)includeDiffStats {
     iTermGitClient *client = [[iTermGitClient alloc] initWithRepoPath:path];
 
     if (!client.repo) {
@@ -416,7 +551,9 @@ static int GitForEachCallback(git_reference *ref, void *data) {
         if ([parent isEqualToString:path] || parent.length == 0) {
             return nil;
         }
-        return [self gitStateForRepoAtPath:parent includeDiffStats:includeDiffStats];
+        return [self gitStateForRepoAtPath:parent
+                                   gitBase:gitBase
+                          includeDiffStats:includeDiffStats];
     }
 
     git_reference *headRef = [client head];
@@ -460,6 +597,19 @@ static int GitForEachCallback(git_reference *ref, void *data) {
     // the status_list pass above.
     if (includeDiffStats) {
         [client populateDiffStatsOnState:state];
+    }
+
+    // gitBase override: when the caller asked for files relative to
+    // a non-HEAD ref, replace fileStatuses with the diff-against-base
+    // result. Counts (dirty/adds/deletes/diffstats) keep their HEAD-
+    // relative meaning — they're consumed by the status bar, which
+    // wants `git status` semantics regardless of what the workgroup
+    // toolbar picked. If the gitBase ref doesn't resolve, leave the
+    // HEAD-relative fileStatuses in place rather than blanking the
+    // menu — the user typed something invalid and a stale list is
+    // more useful than nothing.
+    if (gitBase.length > 0 && ![gitBase isEqualToString:@"HEAD"]) {
+        [client populateFileStatusesAgainstBase:gitBase onState:state];
     }
 
     // Current operation

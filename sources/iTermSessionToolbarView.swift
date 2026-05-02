@@ -635,6 +635,18 @@ class CCDiffSelectorItem: SessionToolbarControl {
         return advanceFile(forward: false)
     }
 
+    // The path string the popup is currently on, or nil when "All
+    // Files" is selected (or nothing meaningful is — empty list).
+    // Used by the gitBase-change path to decide whether to restart
+    // the diff peer with the per-file or the all-files command.
+    @objc var currentlySelectedFilename: String? {
+        guard let value = button.selectedItem?.representedObject as? String,
+              value != Self.allFilesMarker else {
+            return nil
+        }
+        return value
+    }
+
     private func advanceFile(forward: Bool) -> String? {
         guard !orderedFiles.isEmpty else { return nil }
         // If the popup is on All Files (or anything that isn't a path

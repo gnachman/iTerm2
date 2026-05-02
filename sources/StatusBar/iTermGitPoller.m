@@ -108,6 +108,7 @@ NS_ASSUME_NONNULL_BEGIN
     iTermGitPollWorker *worker = [iTermGitPollWorker sharedInstance];
     DLog(@"%@: Using worker %@", self, worker);
     [worker requestPath:polledPath
+                gitBase:self.gitBase
        includeDiffStats:self.includeDiffStats
              completion:^(iTermGitState *state, BOOL timedOut) {
         __strong __typeof(weakSelf) strongSelf = weakSelf;
@@ -140,6 +141,30 @@ NS_ASSUME_NONNULL_BEGIN
     DLog(@"%@: Update state of git poller to %@", self, state);
     _state = state;
     _update();
+}
+
+- (void)setGitBase:(NSString * _Nullable)gitBase {
+    DLog(@"%@: Set gitBase to %@", self, gitBase);
+    NSString *normalizedNew = gitBase.length > 0 ? gitBase : nil;
+    NSString *normalizedOld = _gitBase.length > 0 ? _gitBase : nil;
+    if (normalizedNew == normalizedOld ||
+        [normalizedNew isEqualToString:normalizedOld]) {
+        return;
+    }
+    _gitBase = [gitBase copy];
+    // Invalidate any in-flight pending requests against the old
+    // base so a stale reply doesn't land back in the cache. Cached
+    // entries are keyed by base, so they simply stop being read.
+    if (self.currentDirectory.length) {
+        [[iTermGitPollWorker sharedInstance]
+            invalidateCacheForPath:self.currentDirectory];
+    }
+    // Clear any "we have stale info" flags so the picker doesn't
+    // briefly render with the old-base file list while the new
+    // base is being fetched.
+    _hasSuccessfullyFetched = NO;
+    _lastPollTimedOut = NO;
+    [self bump];
 }
 
 - (void)setCurrentDirectory:(NSString *)currentDirectory {

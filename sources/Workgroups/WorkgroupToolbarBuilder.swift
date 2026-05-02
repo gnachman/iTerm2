@@ -41,6 +41,11 @@ struct WorkgroupToolbarContext {
     // picks to the workgroup instance even though they have no port.
     weak var diffSelectorDelegate: CCDiffSelectorItemDelegate?
 
+    // Delegate for the gitBaseSelector combo box. Same separation
+    // rationale as diffSelectorDelegate — non-peer toolbars route
+    // through the workgroup instance, peer toolbars through the port.
+    weak var gitBaseSelectorDelegate: CCGitBaseSelectorItemDelegate?
+
     // Display name of the session this toolbar is being built for —
     // shown by the auto-injected `.name` item. Empty for peer-group
     // hosts that don't surface a label here (the modeSwitcher already
@@ -86,6 +91,7 @@ enum WorkgroupToolbarBuilder {
             switch $0 {
             case .name: return false
             case .navigation: return hasChangedFileSelector
+            case .gitBaseSelector: return hasChangedFileSelector
             default: return true
             }
         }
@@ -174,6 +180,12 @@ enum WorkgroupToolbarBuilder {
                                         priority: 1,
                                         minWidth: minW,
                                         maxWidth: maxW)
+        case .gitBaseSelector:
+            let view = CCGitBaseSelectorItem(identifier: id,
+                                             priority: 2)
+            view.gitBaseSelectorDelegate = context.gitBaseSelectorDelegate
+            view.ownerPeerID = ownerPeerID
+            return view
         case .name:
             return makeNameLabel(context: context)
         }

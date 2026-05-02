@@ -773,6 +773,13 @@ class iTermWorkgroupSessionDetailViewController: NSViewController {
             if metadata.kind == .navigation && !hasChangedFileSelector {
                 continue
             }
+            // Git base selector picks the ref the diff command runs
+            // against — only meaningful when the session also has a
+            // changed-file selector. Mirrors the navigation guard
+            // above; injectAutoItems strips strays at runtime.
+            if metadata.kind == .gitBaseSelector && !hasChangedFileSelector {
+                continue
+            }
             let item = menu.addItem(withTitle: metadata.displayName,
                                     action: #selector(addToolbarItemMenuSelected(_:)),
                                     keyEquivalent: "")

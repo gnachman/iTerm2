@@ -28,11 +28,12 @@ enum WorkgroupPresets {
     private static func buildCodingAgentPlusDiff() -> iTermWorkgroup {
         let rootID = UUID().uuidString
         let diffID = UUID().uuidString
-        // Template uses \(workgroup.selectedFile), which the runtime
-        // substitutes when a file is picked from the changed-file
-        // selector. Double backslash keeps the `\(` literal in the
-        // stored Swift string.
-        let diffCommand = "git diff \\(workgroup.selectedFile) HEAD"
+        // Template uses `\(gitBase)`, the workgroup variable bound
+        // to the gitBaseSelector's current value (defaults to HEAD).
+        // Double backslash keeps the `\(` literal in the stored
+        // Swift string. Per-file diffs reuse the same base via the
+        // perFileCommand template below.
+        let diffCommand = "git diff \\(gitBase)"
 
         let root = iTermWorkgroupSessionConfig(
             uniqueIdentifier: rootID,
@@ -53,8 +54,10 @@ enum WorkgroupPresets {
             urlString: "",
             toolbarItems: [.modeSwitcher,
                            .changedFileSelector,
+                           .gitBaseSelector,
                            .navigation],
-            displayName: "Diff")
+            displayName: "Diff",
+            perFileCommand: "git diff \\(gitBase) -- \\(file)")
 
         return iTermWorkgroup(
             uniqueIdentifier: UUID().uuidString,

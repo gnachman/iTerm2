@@ -25,6 +25,14 @@ NS_ASSUME_NONNULL_BEGIN
 // When YES, the poller asks the git service to also compute line/file-level
 // diff stats. This can be expensive; leave NO unless the caller needs it.
 @property (nonatomic) BOOL includeDiffStats;
+// Optional ref the per-file status comparison runs against. nil
+// (or "HEAD") preserves the legacy `git status`-style output. Any
+// other value (e.g. a branch name or "origin/master^^^") makes the
+// poller emit fileStatuses for everything that differs between the
+// working tree and that base — for the workgroup file picker.
+// Setting a new value invalidates the per-path cache and bumps so
+// the picker repopulates without waiting for the next poll tick.
+@property (nonatomic, copy, nullable) NSString *gitBase;
 @property (nonatomic, readonly) iTermGitState *state;
 @property (nonatomic, weak) id<iTermGitPollerDelegate> delegate;
 @property (nonatomic, readonly) NSDate *lastPollTime;

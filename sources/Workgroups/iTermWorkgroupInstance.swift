@@ -95,6 +95,13 @@ final class iTermWorkgroupInstance: NSObject {
     // the poller productive whenever it exists.
     private var gitDirectoryTracker: iTermAutoGitString?
 
+    // Workgroup-wide git base ref. Single source of truth — every
+    // peer port mirrors this via applyGitBase, and every
+    // resolvedCommand / resolvedPerFileCommand caller reads it
+    // here so per-port copies can't drift. Updated by
+    // gitBaseChanged whenever any gitBaseSelector commits.
+    @objc fileprivate(set) var currentGitBase: String = CCGitBaseSelectorItem.defaultBase
+
     init(workgroup: iTermWorkgroup,
          instanceUniqueIdentifier: String,
          mainSession: PTYSession,
@@ -205,6 +212,10 @@ final class iTermWorkgroupInstance: NSObject {
                                 hostConfig: iTermWorkgroupSessionConfig,
                                 peerChildrenPromises: [iTermPromise<PTYSession>]) {
         nestedPeerPorts.append(port)
+        // Same back-ref as the main port (set in enter) so a peer-
+        // side gitBaseSelector inside the nested group can fan out
+        // to non-peer entries.
+        port.workgroupInstance = self
         nonPeerOrderedConfigIDs.append(hostConfig.uniqueIdentifier)
         nonPeerEntriesByConfigID[hostConfig.uniqueIdentifier] =
             NonPeerEntry(session: hostSession, items: [])
@@ -241,6 +252,7 @@ final class iTermWorkgroupInstance: NSObject {
             activePeerIdentifier: "",
             navigationDelegate: self,
             diffSelectorDelegate: self,
+            gitBaseSelectorDelegate: self,
             displayName: config.displayName)
         // modeSwitcher only makes sense in a peer group; strip it
         // before injection so .name lands at index 0 on non-peers.
@@ -367,15 +379,25 @@ final class iTermWorkgroupInstance: NSObject {
         }
         let peerConfigs: [iTermWorkgroupSessionConfig] = [root] + peerChildren
 
+        // Seed `gitBase` on the leader scope before any spawn so
+        // codeReview swifty-string evaluation and downstream
+        // consumers (status bar, triggers) see the default value.
+        // The peer port re-affirms this on init for safety.
+        mainSession.genericScope.setValue(
+            CCGitBaseSelectorItem.defaultBase,
+            forVariableNamed: "gitBase")
+
         // Build promises for each peer session. The leader (root) is
         // the already-existing main session; other peers are launched
-        // anew via the spawner.
+        // anew via the spawner. Each peer's command is pre-substituted
+        // for `\(gitBase)` so the non-swifty spawn path doesn't ship
+        // a literal backslash-paren to the shell.
         var peers: [String: iTermPromise<PTYSession>] = [:]
         peers[root.uniqueIdentifier] = iTermPromise<PTYSession>(value: mainSession)
         for peer in peerChildren {
             peers[peer.uniqueIdentifier] =
                 spawner.spawnPeer(parent: mainSession,
-                                  config: peer,
+                                  config: peer.substitutingGitBase(CCGitBaseSelectorItem.defaultBase),
                                   workgroupInstanceID: instanceUniqueIdentifier)
         }
 
@@ -414,6 +436,10 @@ final class iTermWorkgroupInstance: NSObject {
                                               gitPoller: poller,
                                               spawner: spawner)
         instanceForPoller = instance
+        // Back-pointer so a peer-side gitBaseSelector change can
+        // fan out to non-peer entries' diff selectors via
+        // propagateGitBaseToNonPeerSelectors.
+        port.workgroupInstance = instance
 
         // Wire the poller to the leader's PWD so it polls a real
         // directory regardless of whether a gitStatus item exists.
@@ -574,7 +600,8 @@ extension iTermWorkgroupInstance: CCDiffSelectorItemDelegate {
               let session = liveSession(forConfigID: configID) else {
             return
         }
-        let command = cfg.resolvedPerFileCommand(filename: filename)
+        let command = cfg.resolvedPerFileCommand(filename: filename,
+                                                 gitBase: currentGitBase)
         let wrapped = ITAddressBookMgr.commandByWrapping(inLoginShell: command)
         session.restart(withCommand: wrapped)
     }
@@ -588,7 +615,8 @@ extension iTermWorkgroupInstance: CCDiffSelectorItemDelegate {
               let session = liveSession(forConfigID: configID) else {
             return
         }
-        let wrapped = ITAddressBookMgr.commandByWrapping(inLoginShell: cfg.command)
+        let resolved = cfg.resolvedCommand(gitBase: currentGitBase)
+        let wrapped = ITAddressBookMgr.commandByWrapping(inLoginShell: resolved)
         session.restart(withCommand: wrapped)
     }
 
@@ -610,5 +638,91 @@ extension iTermWorkgroupInstance: CCDiffSelectorItemDelegate {
             canBack: sender.canSelectPreviousFile,
             canForward: sender.canSelectNextFile,
             progress: progress)
+    }
+}
+
+// gitBaseSelector picks on a non-peer toolbar route here. The
+// instance owns the workgroup-wide currentGitBase and every port
+// reads through it; both the peer-port and non-peer delegate paths
+// funnel into gitBaseChanged below.
+extension iTermWorkgroupInstance: CCGitBaseSelectorItemDelegate {
+    func gitBaseDidChange(base: String,
+                          sender: CCGitBaseSelectorItem) {
+        gitBaseChanged(base, fromSender: sender)
+    }
+}
+
+extension iTermWorkgroupInstance {
+    // Workgroup-wide handler for every gitBaseSelector commit.
+    // Single source of truth for currentGitBase; broadcasts to
+    // every port (so per-file restarts and swifty-string consumers
+    // in nested groups stay aligned with the firing port), pushes
+    // the new ref into the shared poller (so the changed-file
+    // picker repopulates against the new base), then restarts
+    // every diff session in the workgroup — the firing peer (if
+    // any), plus every non-peer entry with a diff selector.
+    //
+    // The pre-centralization design had each port own its own
+    // currentGitBase and only the firing port updated; nested
+    // peer ports + non-peer diff sessions silently desynced. This
+    // method exists to make that class of bug structurally
+    // impossible.
+    @objc
+    func gitBaseChanged(_ base: String,
+                        fromSender sender: CCGitBaseSelectorItem) {
+        currentGitBase = base
+        // Sync every port's local cache + leaderScope, and mirror
+        // the new value into every gitBaseSelector — peer-side via
+        // applyGitBase, non-peer-side here. Without this fan-out,
+        // sibling selectors keep showing the old text after another
+        // selector committed (state changes workgroup-wide; UI
+        // doesn't).
+        peerPort.applyGitBase(base)
+        for nested in nestedPeerPorts {
+            nested.applyGitBase(base)
+        }
+        for entry in nonPeerEntriesByConfigID.values {
+            for view in entry.items {
+                (view as? CCGitBaseSelectorItem)?.displayBase(base)
+            }
+        }
+        // Tell the shared poller to compute fileStatuses against
+        // the new base. Setting the property invalidates the cache
+        // and bumps a fresh poll, fanning out to every
+        // CCDiffSelectorItem via gitPollerDidUpdate. nil/HEAD
+        // restores the legacy `git status` semantics.
+        gitPoller?.gitBase =
+            (base == CCGitBaseSelectorItem.defaultBase) ? nil : base
+        // Restart every diff session in the workgroup — peer or
+        // non-peer — against the new base. Iterating both fan-out
+        // helpers covers the firing source as a side effect, so
+        // there's no separate "firing source" branch to keep
+        // straight: a single gitBase pick on any selector restarts
+        // every diff peer / split / tab in the workgroup.
+        peerPort.restartAllDiffSelectors()
+        for nested in nestedPeerPorts {
+            nested.restartAllDiffSelectors()
+        }
+        propagateGitBaseToNonPeerSelectors()
+    }
+
+    // Restart every non-peer entry's diff selector against the
+    // current gitBase. Called from gitBaseChanged after every
+    // port has been synced, so the cfg.resolvedCommand /
+    // resolvedPerFileCommand calls inside diffDidSelect/
+    // diffDidSelectAllFiles see the new value.
+    @objc
+    func propagateGitBaseToNonPeerSelectors() {
+        for entry in nonPeerEntriesByConfigID.values {
+            let selector = entry.items
+                .compactMap { $0 as? CCDiffSelectorItem }
+                .first
+            guard let selector else { continue }
+            if let file = selector.currentlySelectedFilename {
+                diffDidSelect(filename: file, sender: selector)
+            } else {
+                diffDidSelectAllFiles(sender: selector)
+            }
+        }
     }
 }

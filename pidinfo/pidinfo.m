@@ -600,6 +600,7 @@ static const char *GetPathToSelf(void) {
 }
 
 - (void)requestGitStateForPath:(NSString *)path
+                       gitBase:(NSString * _Nullable)gitBase
                        timeout:(int)timeout
               includeDiffStats:(BOOL)includeDiffStats
                     completion:(void (^)(iTermGitState * _Nullable, BOOL timedOut))reply {
@@ -625,10 +626,16 @@ static const char *GetPathToSelf(void) {
         if (pathToSelf) {
             free((void *)pathToSelf);
         }
+        // Empty string means "no override" downstream — keeps the
+        // arg vector positional so the child can branch on
+        // gitBase.length. Trim for safety: a stray newline coming
+        // from a free-form text field would land inside argv.
+        NSString *trimmedBase = [gitBase ?: @"" stringByTrimmingCharactersInSet:NSCharacterSet.whitespaceAndNewlineCharacterSet];
         task.arguments = @[ @"--git-state",
                             path,
                             [@(timeout) stringValue],
-                            includeDiffStats ? @"1" : @"0" ];
+                            includeDiffStats ? @"1" : @"0",
+                            trimmedBase ];
         task.standardOutput = pipe;
         @try {
             [task launch];
