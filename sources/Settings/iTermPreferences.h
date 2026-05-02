@@ -103,7 +103,6 @@ typedef NS_ENUM(NSUInteger, iTermAIPrompt) {
     iTermAIPromptAIChatBrowser = 4,
     iTermAIPromptAIChatReadOnlyTerminalBrowser = 5,
     iTermAIPromptAIChatReadWriteTerminalBrowser = 6,
-    iTermAIPromptCodeReview = 7,
 };
 
 typedef NS_ENUM(NSUInteger, iTermWindowPlacement) {

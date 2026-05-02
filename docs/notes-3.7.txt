@@ -57,6 +57,17 @@ Major New Features:
   workgroup’s review peer uses this mode
   by default.
 
+- The Code Review prompt overlay can save
+  multiple named prompts. A pulldown menu
+  on the overlay loads any saved prompt;
+  a dedicated Manage Prompts… window
+  handles add/rename/edit/reorder/delete.
+  The single Code Review prompt previously
+  managed in Settings > General > AI >
+  Prompts is migrated to a Default entry
+  on first launch and the entry has been
+  removed from Settings.
+
 - The Shell > Workgroups submenu now has
   an Exit Workgroup item to leave the
   current session’s workgroup.

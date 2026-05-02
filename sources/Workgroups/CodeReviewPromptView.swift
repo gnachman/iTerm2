@@ -4,7 +4,9 @@
 //
 //  In-session overlay shown before a Code Review-mode workgroup peer
 //  starts its program. The user types a free-form prompt; clicking
-//  Start invokes `onStart` with the entered text.
+//  Start invokes `onStart` with the entered text. A pulldown menu
+//  exposes the user’s saved prompts (managed via the dedicated
+//  CodeReviewPromptManagerWindowController).
 //
 
 import AppKit
@@ -27,19 +29,13 @@ class CodeReviewPromptView: NSView {
             textView.string = newValue
             let end = (newValue as NSString).length
             textView.setSelectedRange(NSRange(location: end, length: 0))
-            reloadBaselineAndUpdateSaveButton()
         }
     }
-
-    // Baseline value used to decide whether the prompt has been "edited"
-    // (and thus whether Save Prompt is enabled). Set to the current
-    // saved-defaults value at init time and after each save.
-    private var savedBaseline: String = ""
 
     private let scrollView: NSScrollView
     private let textView: ShiftReturnSubmittingTextView
     private let startButton: NSButton
-    private let savePromptButton: NSButton
+    private let promptMenuButton: NSPopUpButton
     private let titleLabel: NSTextField
 
     private let outerInset: CGFloat = 16
@@ -47,6 +43,7 @@ class CodeReviewPromptView: NSView {
     private let buttonSpacing: CGFloat = 12
     private let buttonHeight: CGFloat = 28
     private let titleHeight: CGFloat = 18
+    private let menuButtonWidth: CGFloat = 160
 
     // Block-based KVO token. Manual addObserver/removeObserver against a
     // weak SessionView is unsafe at tear-down: ARC zeros weak refs before
@@ -59,10 +56,8 @@ class CodeReviewPromptView: NSView {
         scrollView = NSScrollView(frame: .zero)
         textView = ShiftReturnSubmittingTextView(frame: .zero)
         startButton = NSButton(frame: .zero)
-        savePromptButton = NSButton(frame: .zero)
-        titleLabel = NSTextField(labelWithString:
-            NSLocalizedString("Code review prompt:",
-                              comment: "Label above the code review prompt text field"))
+        promptMenuButton = NSPopUpButton(frame: .zero, pullsDown: true)
+        titleLabel = NSTextField(labelWithString: "Code review prompt:")
 
         super.init(frame: frameRect)
 
@@ -91,7 +86,6 @@ class CodeReviewPromptView: NSView {
             guard let self else { return }
             self.startClicked(self)
         }
-        textView.delegate = self
 
         scrollView.hasVerticalScroller = true
         scrollView.borderType = .bezelBorder
@@ -99,8 +93,7 @@ class CodeReviewPromptView: NSView {
         scrollView.autoresizingMask = [.width, .height]
         addSubview(scrollView)
 
-        startButton.title = NSLocalizedString("Start",
-            comment: "Button to start the code review program")
+        startButton.title = "Start"
         startButton.bezelStyle = .rounded
         // Shift-Return submits via the text view's keyDown override
         // (set above); plain Return inserts a newline. The button
@@ -111,16 +104,29 @@ class CodeReviewPromptView: NSView {
         startButton.autoresizingMask = [.minXMargin, .maxYMargin]
         addSubview(startButton)
 
-        savePromptButton.title = NSLocalizedString("Save Prompt",
-            comment: "Button that saves the current code review prompt as the new default")
-        savePromptButton.bezelStyle = .rounded
-        savePromptButton.target = self
-        savePromptButton.action = #selector(savePromptClicked(_:))
-        savePromptButton.isEnabled = false
-        savePromptButton.autoresizingMask = [.minXMargin, .maxYMargin]
-        addSubview(savePromptButton)
+        promptMenuButton.bezelStyle = .rounded
+        promptMenuButton.autoenablesItems = false
+        promptMenuButton.autoresizingMask = [.minXMargin, .maxYMargin]
+        addSubview(promptMenuButton)
+        rebuildPromptMenu()
+        // Lazily refresh per-item enabled state right before the menu
+        // opens, instead of recomputing on every keystroke.
+        promptMenuButton.menu?.delegate = self
+
+        // Only structural changes (add/remove/rename/reorder) affect
+        // what the pulldown shows. Body edits in the manager fire a
+        // separate notification that we deliberately ignore.
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(storeDidChange(_:)),
+            name: CodeReviewPromptStore.structureDidChangeNotification,
+            object: nil)
 
         autoresizingMask = [.width, .height]
+    }
+
+    deinit {
+        NotificationCenter.default.removeObserver(self)
     }
 
     required init?(coder: NSCoder) {
@@ -131,7 +137,7 @@ class CodeReviewPromptView: NSView {
         super.layout()
         let bounds = self.bounds
         let startWidth = max(80, startButton.fittingSize.width)
-        let saveWidth = max(100, savePromptButton.fittingSize.width)
+        let menuWidth = max(menuButtonWidth, promptMenuButton.fittingSize.width)
 
         // Title at top.
         let titleY = bounds.maxY - outerInset - titleHeight
@@ -140,7 +146,7 @@ class CodeReviewPromptView: NSView {
                                   width: bounds.width - 2 * outerInset,
                                   height: titleHeight)
 
-        // Bottom row: Save Prompt on the left of Start, both
+        // Bottom row: prompts pulldown on the left of Start, both
         // right-aligned.
         let buttonY = outerInset
         let startX = bounds.maxX - outerInset - startWidth
@@ -148,10 +154,10 @@ class CodeReviewPromptView: NSView {
                                    y: buttonY,
                                    width: startWidth,
                                    height: buttonHeight)
-        let saveX = startX - buttonSpacing - saveWidth
-        savePromptButton.frame = NSRect(x: saveX,
+        let menuX = startX - buttonSpacing - menuWidth
+        promptMenuButton.frame = NSRect(x: menuX,
                                          y: buttonY,
-                                         width: saveWidth,
+                                         width: menuWidth,
                                          height: buttonHeight)
 
         // Scroll view fills the middle.
@@ -242,33 +248,106 @@ class CodeReviewPromptView: NSView {
         onStart?(text)
     }
 
-    @objc private func savePromptClicked(_ sender: Any) {
-        let current = textView.string
-        iTermPreferences.setString(current, forKey: kPreferenceKeyAIPromptCodeReview)
-        savedBaseline = current
-        savePromptButton.isEnabled = false
+    @objc private func storeDidChange(_ note: Notification) {
+        rebuildPromptMenu()
     }
 
-    // Pull the current saved value from prefs into `savedBaseline`
-    // and refresh the Save Prompt button's enabled state. Called
-    // when the prompt text is replaced wholesale (e.g. when the
-    // overlay is presented and prepopulated) so future text changes
-    // can be compared against the right baseline.
-    fileprivate func reloadBaselineAndUpdateSaveButton() {
-        savedBaseline = iTermPreferences.string(forKey: kPreferenceKeyAIPromptCodeReview) ?? ""
-        syncSavePromptEnabled()
+    // MARK: - Pulldown menu
+
+    // Pull-down NSPopUpButtons display item-0's title as the menu’s
+    // visible label and never select it on click. Use a fixed “Prompts”
+    // header item so the button reads consistently regardless of which
+    // saved prompt is currently loaded.
+    private func rebuildPromptMenu() {
+        let menu = NSMenu()
+        menu.addItem(withTitle: "Prompts", action: nil, keyEquivalent: "")
+
+        let store = CodeReviewPromptStore.shared
+        if !store.prompts.isEmpty {
+            for (index, prompt) in store.prompts.enumerated() {
+                let item = NSMenuItem(title: prompt.name,
+                                       action: #selector(loadSavedPromptMenuItem(_:)),
+                                       keyEquivalent: "")
+                item.target = self
+                item.tag = index
+                menu.addItem(item)
+            }
+            menu.addItem(.separator())
+        }
+
+        let saveItem = NSMenuItem(title: "Save Current as New…",
+                                   action: #selector(saveAsNewMenuItem(_:)),
+                                   keyEquivalent: "")
+        saveItem.target = self
+        saveItem.identifier = Self.saveItemIdentifier
+        menu.addItem(saveItem)
+
+        let manageItem = NSMenuItem(title: "Manage Prompts…",
+                                     action: #selector(manageMenuItem(_:)),
+                                     keyEquivalent: "")
+        manageItem.target = self
+        menu.addItem(manageItem)
+
+        menu.delegate = self
+        promptMenuButton.menu = menu
     }
 
-    // Cheap version: just compare current text to the cached baseline
-    // without round-tripping prefs. Used on every keystroke.
-    private func syncSavePromptEnabled() {
-        savePromptButton.isEnabled = (textView.string != savedBaseline)
+    private static let saveItemIdentifier =
+        NSUserInterfaceItemIdentifier("iTermCodeReviewPromptSaveAsNewItem")
+
+    @objc private func loadSavedPromptMenuItem(_ sender: NSMenuItem) {
+        let store = CodeReviewPromptStore.shared
+        let index = sender.tag
+        guard index >= 0, index < store.prompts.count else { return }
+        let prompt = store.prompts[index]
+        text = prompt.text
+        store.lastSelectedUUID = prompt.uuid
+    }
+
+    @objc private func saveAsNewMenuItem(_ sender: Any) {
+        guard let host = window else { return }
+        let alert = NSAlert()
+        alert.messageText = "Name this prompt"
+        alert.informativeText =
+            "Saved prompts can be re-loaded from the Prompts pulldown."
+        alert.addButton(withTitle: "Save")
+        alert.addButton(withTitle: "Cancel")
+
+        let field = NSTextField(frame: NSRect(x: 0, y: 0, width: 240, height: 22))
+        field.placeholderString = "Prompt name"
+        alert.accessoryView = field
+
+        alert.beginSheetModal(for: host) { [weak self] response in
+            guard let self else { return }
+            guard response == .alertFirstButtonReturn else { return }
+            let name = field.stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !name.isEmpty else { return }
+            let store = CodeReviewPromptStore.shared
+            let index = store.add(name: name, text: self.textView.string)
+            if index >= 0, index < store.prompts.count {
+                store.lastSelectedUUID = store.prompts[index].uuid
+            }
+        }
+        // Focus the input as the sheet finishes presenting.
+        DispatchQueue.main.async {
+            field.window?.makeFirstResponder(field)
+        }
+    }
+
+    @objc private func manageMenuItem(_ sender: Any) {
+        CodeReviewPromptManagerWindowController.shared.showWindow(parent: window)
     }
 }
 
-extension CodeReviewPromptView: NSTextViewDelegate {
-    func textDidChange(_ notification: Notification) {
-        syncSavePromptEnabled()
+extension CodeReviewPromptView: NSMenuDelegate {
+    func menuNeedsUpdate(_ menu: NSMenu) {
+        guard menu === promptMenuButton.menu else { return }
+        let trimmed = textView.string
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        let canSave = !trimmed.isEmpty
+        for item in menu.items where item.identifier == Self.saveItemIdentifier {
+            item.isEnabled = canSave
+        }
     }
 }
 

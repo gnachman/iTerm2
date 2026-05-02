@@ -666,6 +666,7 @@
 		29C503BA29752DF6A4DB2A02 /* iTermBlurRowBuffer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 19537E68A2ADEB03B3086882 /* iTermBlurRowBuffer.swift */; };
 		2AB0AC886DE3F1F616F92D2F /* CharacterAtomIterator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 02CF16386D8605E6BC44ED81 /* CharacterAtomIterator.swift */; };
 		307E444E87AC1B58031A53B4 /* iTermWorkgroupModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0DB9037425C749B5A0E7E089 /* iTermWorkgroupModel.swift */; };
+		329255FAF6BE419BCB700B39 /* CodeReviewPromptStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1F0C4D86ED1181AF4DA5A4F /* CodeReviewPromptStore.swift */; };
 		355CFD74AA25EE29E0561F98 /* iTermWorkgroupsEditingViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC3C8D1807D495D39ED10205 /* iTermWorkgroupsEditingViewController.swift */; };
 		38C1ECCA9DCF67E64C50E1BC /* iTermRenderingComparer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 80A64098B399CE71B981E2C7 /* iTermRenderingComparer.swift */; };
 		3C8FED766F941C2CB0A070E4 /* iTermCharacterSets.h in Sources */ = {isa = PBXBuildFile; fileRef = 46019892B59C674931043643 /* iTermCharacterSets.h */; };
@@ -942,6 +943,7 @@
 		759637C82593AFB500E278CC /* iTerm2SandboxedWorkerProtocol.h in Headers */ = {isa = PBXBuildFile; fileRef = 7596379C2593AE0700E278CC /* iTerm2SandboxedWorkerProtocol.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		77E49C95CA97F58D042F688E /* iTermScreenshotRedaction.swift in Sources */ = {isa = PBXBuildFile; fileRef = 97539C440B63BAC6011E9208 /* iTermScreenshotRedaction.swift */; };
 		7F1D5FC8326911E82FE9C402 /* ExitWorkgroupTrigger.swift in Sources */ = {isa = PBXBuildFile; fileRef = E9D218FDCACCEF2DA820B7D4 /* ExitWorkgroupTrigger.swift */; };
+		8008796EC80143F16E30D1A4 /* CodeReviewPromptManagerWindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = B7B8DBB7E0FAD724F2C26042 /* CodeReviewPromptManagerWindowController.swift */; };
 		812B1CADD4B73EBD47FE36FC /* iTermArrangementTrustGate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0DCE6E6D44984C2D7ECD0AB4 /* iTermArrangementTrustGate.swift */; };
 		82C8876B3E6C833593501F97 /* SetTabStatusTrigger.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00885D5646181ED6CFE9A2DE /* SetTabStatusTrigger.swift */; };
 		833B6065F4848F124E956CCC /* WorkgroupVisualView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C42ABD0E29FAE8BD4B694629 /* WorkgroupVisualView.swift */; };
@@ -9395,6 +9397,7 @@
 		B23866DFB3D15427C93C0849 /* EnterWorkgroupTrigger.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = EnterWorkgroupTrigger.swift; sourceTree = "<group>"; };
 		B673BD86C08D1241D0DDA4C1 /* ExitWorkgroupBrowserTrigger.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ExitWorkgroupBrowserTrigger.swift; sourceTree = "<group>"; };
 		B73FCEC5593D29C35827971E /* ClaudeCodeModeController.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ClaudeCodeModeController.swift; sourceTree = "<group>"; };
+		B7B8DBB7E0FAD724F2C26042 /* CodeReviewPromptManagerWindowController.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CodeReviewPromptManagerWindowController.swift; sourceTree = "<group>"; };
 		C08AA4008946722C3F4C67C1 /* WordSelectionAtom.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WordSelectionAtom.swift; sourceTree = "<group>"; };
 		C10C843E3FEB7FC74ADE7DC0 /* AddClippingBuiltInFunction.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AddClippingBuiltInFunction.swift; sourceTree = "<group>"; };
 		C42ABD0E29FAE8BD4B694629 /* WorkgroupVisualView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WorkgroupVisualView.swift; sourceTree = "<group>"; };
@@ -9405,6 +9408,7 @@
 		CA34A6F29B10471D8FD572F6 /* GlobalJobMonitor.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = GlobalJobMonitor.swift; sourceTree = "<group>"; };
 		CB2F48F836C5732146BCEDD9 /* iTermStreamingPNGWriter.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; path = iTermStreamingPNGWriter.h; sourceTree = "<group>"; };
 		CDAAC581B8C1D99C7CF3091C /* iTermWorkgroupSessionConfig.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = iTermWorkgroupSessionConfig.swift; sourceTree = "<group>"; };
+		D1F0C4D86ED1181AF4DA5A4F /* CodeReviewPromptStore.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CodeReviewPromptStore.swift; sourceTree = "<group>"; };
 		D3CE2D4C1A00936F0098ED99 /* PSMDarkTabStyle.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PSMDarkTabStyle.h; sourceTree = "<group>"; };
 		D3CE2D4D1A00936F0098ED99 /* PSMDarkTabStyle.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PSMDarkTabStyle.m; sourceTree = "<group>"; };
 		D46A873D7F2EFCF8441303D1 /* ShuffleDeck.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ShuffleDeck.swift; sourceTree = "<group>"; };
@@ -10608,6 +10612,8 @@
 				167F170AF620D7443F74609C /* CodeReviewPromptView.swift */,
 				104C821988B6D8E0FCCC5700 /* PTYSession+CodeReviewPrompt.swift */,
 				86C0539E651D1486353396EC /* SessionView+CodeReviewPromptOverlay.swift */,
+				D1F0C4D86ED1181AF4DA5A4F /* CodeReviewPromptStore.swift */,
+				B7B8DBB7E0FAD724F2C26042 /* CodeReviewPromptManagerWindowController.swift */,
 			);
 			path = Workgroups;
 			sourceTree = "<group>";
@@ -21124,6 +21130,8 @@
 				BFB10C44BAFFF7241285A0CE /* CodeReviewPromptView.swift in Sources */,
 				C638AC33A2BC958B8A153D79 /* PTYSession+CodeReviewPrompt.swift in Sources */,
 				2142430EE84BF7382F0D416F /* SessionView+CodeReviewPromptOverlay.swift in Sources */,
+				329255FAF6BE419BCB700B39 /* CodeReviewPromptStore.swift in Sources */,
+				8008796EC80143F16E30D1A4 /* CodeReviewPromptManagerWindowController.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

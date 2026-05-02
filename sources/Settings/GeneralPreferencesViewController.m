@@ -1025,8 +1025,6 @@ enum {
             return kPreferenceKeyAIPromptAIChatReadOnlyTerminalBrowser;
         case iTermAIPromptAIChatReadWriteTerminalBrowser:
             return kPreferenceKeyAIPromptAIChatReadWriteTerminalBrowser;
-        case iTermAIPromptCodeReview:
-            return kPreferenceKeyAIPromptCodeReview;
     }
 }
 

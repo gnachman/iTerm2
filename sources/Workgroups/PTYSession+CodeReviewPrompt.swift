@@ -77,7 +77,7 @@ extension PTYSession {
 
     private func showCodeReviewPromptOverlay(onStart: @escaping (String) -> Void) {
         guard let sessionView: SessionView = view else { return }
-        let defaultPrompt = iTermPreferences.string(forKey: kPreferenceKeyAIPromptCodeReview)
+        let defaultPrompt = CodeReviewPromptStore.shared.defaultPromptText
         sessionView.presentCodeReviewPromptOverlay(defaultPrompt: defaultPrompt,
                                                    onStart: onStart)
     }

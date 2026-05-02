@@ -7363,8 +7363,6 @@ See the [documentation](https://iterm2.com/automatic-profile-switching.html) for
                                                                                         <menuItem isSeparatorItem="YES" id="KUa-wg-3dF"/>
                                                                                         <menuItem title="AI Chat + Read-Only Terminal + Browser Access" tag="5" id="9Ym-m8-lsR"/>
                                                                                         <menuItem title="AI Chat + Full Terminal + Browser Access" tag="6" id="Bdz-2l-yoP"/>
-                                                                                        <menuItem isSeparatorItem="YES" id="cRv-7c-prc"/>
-                                                                                        <menuItem title="Workgroup Code Review default prompt" tag="7" id="cRv-7c-prd"/>
                                                                                     </items>
                                                                                 </menu>
                                                                             </popUpButtonCell>
