@@ -257,6 +257,15 @@ class ChatListModel: ChatListDataSource {
             (chat.terminalSessionGuid == guid || chat.browserSessionGuid == guid)
         }
     }
+
+    // chatStorage is kept ordered most-recent-first (new chats prepend; a
+    // bump/rename re-prepends), so the first match is the chat with the
+    // most recent activity for the given session guid.
+    func mostRecentChat(forGuid guid: String) -> Chat? {
+        return chatStorage.first { chat in
+            chat.terminalSessionGuid == guid || chat.browserSessionGuid == guid
+        }
+    }
 }
 
 struct PersonChat: Hashable {

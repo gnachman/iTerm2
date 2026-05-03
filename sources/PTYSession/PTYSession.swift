@@ -76,6 +76,15 @@ class PTYSessionSwiftState: NSObject {
     // Holds the modal panel used by the "+" button so it isn't deallocated
     // before the sheet finishes.
     var activeAddClippingPanel: AddClippingPanel?
+
+    // ID of the chat hosted in this session's right-gutter panel, or nil if
+    // none. A session owns at most one inline chat at a time.
+    var inlineChatID: String?
+
+    // Whether the inline chat panel is currently shown. The panel only
+    // contributes to the right-extra width budget when this is true and
+    // inlineChatID is non-nil.
+    var inlineChatVisibilityFlag = true
 }
 
 // MARK: - AI Chat
@@ -1976,4 +1985,78 @@ extension PTYSession {
 
     @objc static let clippingsDidChangeNotification =
         Notification.Name("iTermClippingsDidChange")
+
+    // The chat ID currently bound to this session's inline-chat right-gutter
+    // panel, or nil if none. Setting this value re-runs the layout cascade
+    // because the right-extra budget depends on whether an inline chat is
+    // installed.
+    @objc var inlineChatID: String? {
+        get { swiftState.inlineChatID }
+        set {
+            swiftState.inlineChatID = newValue
+            inlineChatDidChange()
+        }
+    }
+
+    // Whether the inline chat panel should be shown. Honored only when an
+    // inlineChatID is set; with no chat to show, visibility has no effect.
+    @objc var inlineChatVisible: Bool {
+        get { swiftState.inlineChatVisibilityFlag }
+        set {
+            swiftState.inlineChatVisibilityFlag = newValue
+            inlineChatDidChange()
+        }
+    }
+
+    @objc func inlineChatDidChange() {
+        NotificationCenter.default.post(name: PTYSession.inlineChatDidChangeNotification,
+                                        object: self)
+        if view?.actualRightExtra != desiredRightExtra() {
+            delegate?.realParentWindow()?.rightExtraDidChange()
+        }
+    }
+
+    @objc static let inlineChatDidChangeNotification =
+        Notification.Name("iTermInlineChatDidChange")
+
+    // Action for the View > Show Inline Chat menu item. If a chat is bound
+    // already, just toggle its panel visibility. Otherwise pick the most
+    // recently active chat linked to this session, or create a new one if
+    // none exists, then bind it inline. Intentionally does NOT route
+    // through ChatWindowController so the chat window stays unaffected and
+    // is not opened as a side effect.
+    @objc(toggleInlineChat)
+    func toggleInlineChat() {
+        if inlineChatID != nil {
+            inlineChatVisible = !inlineChatVisible
+            return
+        }
+        guard iTermAITermGatekeeper.check() else {
+            return
+        }
+        guard let listModel = ChatListModel.instance,
+              let client = ChatClient.instance else {
+            return
+        }
+        let sessionGuid = self.guid
+        if let existing = listModel.mostRecentChat(forGuid: sessionGuid) {
+            inlineChatID = existing.id
+            inlineChatVisible = true
+            return
+        }
+        do {
+            let title = "Chat about \(self.name)"
+            let isBrowser = self.isBrowserSession()
+            let chatID = try client.create(
+                chatWithTitle: title,
+                terminalSessionGuid: isBrowser ? nil : sessionGuid,
+                browserSessionGuid: isBrowser ? sessionGuid : nil,
+                initialMessages: [],
+                permissions: "")
+            inlineChatID = chatID
+            inlineChatVisible = true
+        } catch {
+            DLog("\(error)")
+        }
+    }
 }

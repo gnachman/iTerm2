@@ -1286,6 +1286,7 @@ void TurnOnDebugLoggingAutomatically(void) {
     DLog(@"registerStandardFunctions");
     [iTermBuiltInFunctions registerStandardFunctions];
     [iTermClippingsGutterPanelRegistration register];
+    [iTermInlineChatGutterPanelRegistration register];
 
     DLog(@"migrateApplicationSupportDirectoryIfNeeded");
     [iTermMigrationHelper migrateApplicationSupportDirectoryIfNeeded];

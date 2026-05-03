@@ -10,6 +10,23 @@
 import AppKit
 import Foundation
 
+// Vertical 1pt separator drawn between adjacent right-gutter panels. Uses
+// NSColor.separatorColor so it adapts to dark/light mode and matches the
+// system divider styling used elsewhere in the app.
+final class iTermRightGutterDividerView: NSView {
+    override var isFlipped: Bool { false }
+
+    override func draw(_ dirtyRect: NSRect) {
+        NSColor.separatorColor.setFill()
+        bounds.fill()
+    }
+
+    override func viewDidChangeEffectiveAppearance() {
+        super.viewDidChangeEffectiveAppearance()
+        needsDisplay = true
+    }
+}
+
 @objc(iTermRightGutterController)
 class iTermRightGutterController: NSObject, iTermRightGutterPanelDelegate {
     private weak var sessionView: SessionView?
@@ -17,6 +34,16 @@ class iTermRightGutterController: NSObject, iTermRightGutterPanelDelegate {
     // Mirrors panels' identifiers in order; used for diffing against the
     // registry's enabled list.
     private var panelIdentifiers: [String] = []
+
+    // Hairline vertical separators drawn between adjacent visible panels.
+    // Pooled and re-used across layout passes; unused dividers are hidden
+    // rather than removed.
+    private var dividers: [iTermRightGutterDividerView] = []
+    // Hairline drawn along the left edge of the gutter as a whole (between
+    // the cell grid / timestamps slot and the leftmost visible panel).
+    // Lazily attached on first use.
+    private var leadingDivider: iTermRightGutterDividerView?
+    private static let dividerWidth: CGFloat = 1
 
     @objc(initWithSessionView:)
     init(sessionView: SessionView) {
@@ -39,6 +66,10 @@ class iTermRightGutterController: NSObject, iTermRightGutterPanelDelegate {
             panel.view.removeFromSuperview()
             panel.detach()
         }
+        for divider in dividers {
+            divider.removeFromSuperview()
+        }
+        leadingDivider?.removeFromSuperview()
     }
 
     // MARK: - Public
@@ -67,6 +98,12 @@ class iTermRightGutterController: NSObject, iTermRightGutterPanelDelegate {
         }
         panels.removeAll()
         panelIdentifiers.removeAll()
+        for divider in dividers {
+            divider.removeFromSuperview()
+        }
+        dividers.removeAll()
+        leadingDivider?.removeFromSuperview()
+        leadingDivider = nil
     }
 
     // MARK: - Notifications
@@ -98,8 +135,8 @@ class iTermRightGutterController: NSObject, iTermRightGutterPanelDelegate {
         let desiredSet = Set(desired)
         var byID: [String: iTermRightGutterPanel] = [:]
         for panel in panels {
-            if desiredSet.contains(panel.identifier) {
-                byID[panel.identifier] = panel
+            if desiredSet.contains(panel.panelIdentifier) {
+                byID[panel.panelIdentifier] = panel
             } else {
                 panel.panelDelegate = nil
                 panel.view.removeFromSuperview()
@@ -134,7 +171,7 @@ class iTermRightGutterController: NSObject, iTermRightGutterPanelDelegate {
             }
         }
         panels = survivors
-        panelIdentifiers = survivors.map { $0.identifier }
+        panelIdentifiers = survivors.map { $0.panelIdentifier }
     }
 
     // MARK: - Layout
@@ -156,7 +193,8 @@ class iTermRightGutterController: NSObject, iTermRightGutterPanelDelegate {
         let y = contentFrameInSession.minY
         let height = contentFrameInSession.height
 
-        for panel in panels {
+        var visiblePanelIndices: [Int] = []
+        for (i, panel) in panels.enumerated() {
             // Always advance `x` by `panel.width` even when hidden, so a panel
             // that goes invisible without zeroing its widthProvider (e.g.
             // during a slide-in/out animation) leaves its slot intact rather
@@ -167,10 +205,89 @@ class iTermRightGutterController: NSObject, iTermRightGutterPanelDelegate {
             if panel.visible {
                 panel.view.isHidden = false
                 panel.view.frame = NSRect(x: x, y: y, width: width, height: height)
+                visiblePanelIndices.append(i)
             } else {
                 panel.view.isHidden = true
             }
             x += width
+        }
+
+        positionDividers(visiblePanelIndices: visiblePanelIndices,
+                         y: y,
+                         height: height,
+                         in: sessionView)
+        positionLeadingDivider(visiblePanelIndices: visiblePanelIndices,
+                               gutterMinX: contentFrameInSession.maxX - panelReservation,
+                               y: y,
+                               height: height,
+                               in: sessionView)
+    }
+
+    // Hairline drawn along the left edge of the gutter strip as a whole,
+    // visible whenever the gutter contains any visible panel. Sits flush
+    // with the leftmost panel's left edge — one pixel wide, overlapping
+    // the panel's leading edge for the same reason as inter-panel
+    // dividers (no width-budget plumbing required).
+    private func positionLeadingDivider(visiblePanelIndices: [Int],
+                                        gutterMinX: CGFloat,
+                                        y: CGFloat,
+                                        height: CGFloat,
+                                        in sessionView: SessionView) {
+        guard let firstIndex = visiblePanelIndices.first else {
+            leadingDivider?.isHidden = true
+            return
+        }
+        if leadingDivider == nil {
+            let divider = iTermRightGutterDividerView()
+            sessionView.addSubview(belowFind: divider)
+            leadingDivider = divider
+        }
+        guard let divider = leadingDivider else {
+            return
+        }
+        // Anchor to the first visible panel rather than gutterMinX so the
+        // divider tracks the panel exactly even if upstream rounding nudges
+        // its frame; gutterMinX is only used as the effective fallback when
+        // the panel hasn't been positioned yet.
+        let x = panels[firstIndex].view.frame.minX.isFinite
+            ? panels[firstIndex].view.frame.minX
+            : gutterMinX
+        divider.frame = NSRect(x: x, y: y, width: Self.dividerWidth, height: height)
+        divider.isHidden = false
+        // Re-add to push to the end of the subview list so it draws above
+        // its panel neighbor.
+        sessionView.addSubview(belowFind: divider)
+    }
+
+    // Hairline divider between consecutive visible panels. Drawn as an
+    // overlay above the panels — it overlaps the leftmost dividerWidth pt
+    // of the right panel rather than reserving budget space, which would
+    // require plumbing through PTYSession.desiredRightExtraForProfile.
+    private func positionDividers(visiblePanelIndices: [Int],
+                                  y: CGFloat,
+                                  height: CGFloat,
+                                  in sessionView: SessionView) {
+        let neededDividerCount = max(visiblePanelIndices.count - 1, 0)
+        while dividers.count < neededDividerCount {
+            let divider = iTermRightGutterDividerView()
+            sessionView.addSubview(belowFind: divider)
+            dividers.append(divider)
+        }
+        for (slot, divider) in dividers.enumerated() {
+            if slot < neededDividerCount {
+                let rightPanel = panels[visiblePanelIndices[slot + 1]]
+                let frame = NSRect(x: rightPanel.view.frame.minX,
+                                   y: y,
+                                   width: Self.dividerWidth,
+                                   height: height)
+                divider.frame = frame
+                divider.isHidden = false
+                // Re-add so the divider is at the end of the subview list
+                // (and therefore drawn above the just-positioned panels).
+                sessionView.addSubview(belowFind: divider)
+            } else {
+                divider.isHidden = true
+            }
         }
     }
 

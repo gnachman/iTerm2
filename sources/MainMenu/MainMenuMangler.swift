@@ -241,6 +241,7 @@ class MainMenuMangler: NSObject {
         "Open Interactive Window": "terminal",
         "Make Screenshot": "camera",
         "Show Clippings": "square.stack",
+        "Show Inline Chat": "bubble.left",
 
         // Scripts menu
         // Manage removed - no identifier in XIB

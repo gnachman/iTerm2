@@ -19,8 +19,11 @@ NS_ASSUME_NONNULL_BEGIN
 @protocol iTermRightGutterPanel <NSObject>
 
 // Stable identifier; used for ordering and lookup. Must not change over the
-// lifetime of the panel instance.
-@property (nonatomic, readonly) NSString *identifier;
+// lifetime of the panel instance. Named `panelIdentifier` rather than just
+// `identifier` because NSResponder already declares an `identifier` property
+// (NSUserInterfaceItemIdentifier?), which would collide for NSResponder-
+// derived implementations such as NSViewController-based panels.
+@property (nonatomic, readonly) NSString *panelIdentifier;
 
 // The hosted view. Installed by the controller as a SessionView subview
 // above the scrollview (and the legacy/metal rendering siblings) so the

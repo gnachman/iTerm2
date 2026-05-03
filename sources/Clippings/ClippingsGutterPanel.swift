@@ -17,7 +17,7 @@ class iTermClippingsGutterPanel: NSObject, iTermRightGutterPanel {
 
     weak var panelDelegate: iTermRightGutterPanelDelegate?
 
-    var identifier: String { iTermClippingsGutterPanel.panelIdentifier }
+    var panelIdentifier: String { iTermClippingsGutterPanel.panelIdentifier }
 
     private let clippingsView = iTermClippingsView(delegate: nil)
     private weak var attachedSession: PTYSession?

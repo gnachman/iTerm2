@@ -21,6 +21,18 @@ protocol ChatViewControllerDelegate: AnyObject {
 class ChatViewControllerMainStackView: NSStackView {}
 class ChatViewControllerSpacerView: NSView {}
 
+// Root view for ChatViewController. The closure fires whenever the view's
+// window changes; the inline-chat right-gutter panel uses this to defer
+// load(chatID:) until after the panel has been added to the SessionView's
+// window (load early-returns when view.window is nil).
+class ChatViewControllerRootView: NSView {
+    var didMoveToWindowHandler: (() -> Void)?
+    override func viewDidMoveToWindow() {
+        super.viewDidMoveToWindow()
+        didMoveToWindowHandler?()
+    }
+}
+
 @objc
 class ChatViewController: NSViewController {
     weak var delegate: ChatViewControllerDelegate?
@@ -77,6 +89,33 @@ class ChatViewController: NSViewController {
     private let userDefaultsObserver = iTermUserDefaultsObserver()
     private(set) var chatToolbar: ChatToolbar!
 
+    // MARK: - Right-gutter panel mode
+
+    // Non-nil when this CVC is hosted as an inline chat in a SessionView's
+    // right gutter. Holds the session whose inline-chat slot owns this panel
+    // (weak so a session teardown can drop us). Also acts as the "is panel
+    // mode" flag for behavior that should differ between window vs gutter
+    // hosting.
+    weak var panelAttachedSession: PTYSession?
+
+    // Pending chatID to load once the panel's view is installed in a window.
+    // load(chatID:) early-returns without a window, so attach() stashes the
+    // ID here and the root view's viewDidMoveToWindow handler retries.
+    var pendingPanelChatID: String?
+
+    // Set non-nil only in panel mode; supplies the ChatViewControllerDelegate
+    // implementation tailored for inline hosting (e.g., delete chat clears
+    // the inline slot rather than asking a window controller).
+    var inlinePanelCoordinator: InlinePanelCoordinator?
+
+    // iTermRightGutterPanel.panelDelegate. Stored property so the protocol's
+    // weak/var requirement is satisfied at the class level (extensions can't
+    // declare stored properties).
+    weak var panelDelegate: iTermRightGutterPanelDelegate?
+
+    static let inlineChatPanelIdentifier = "com.iterm2.inlineChat"
+    static let inlineChatPanelWidth: CGFloat = 400
+
     init(listModel: ChatListModel, client: ChatClient) {
         self.listModel = listModel
         self.client = client
@@ -132,7 +171,10 @@ class ChatViewController: NSViewController {
     }
 
     override func loadView() {
-        let view = NSView(frame: NSRect(x: 0, y: 0, width: 400, height: 600))
+        let view = ChatViewControllerRootView(frame: NSRect(x: 0, y: 0, width: 400, height: 600))
+        view.didMoveToWindowHandler = { [weak self] in
+            self?.rootViewDidMoveToWindow()
+        }
 
         // Session button
 
@@ -305,10 +347,13 @@ extension ChatViewController {
         model?.delegate = self
         self.chatID = chat?.id
 
-        // Update window title via window controller
+        // Update window title via window controller. Skip when this CVC is
+        // hosted as an inline gutter panel — its window is the terminal
+        // window, and clobbering its title with the chat title would be
+        // wrong.
         if let windowController = view.window?.windowController as? ChatWindowController {
             windowController.updateTitle(chat?.title ?? "AI Chat")
-        } else {
+        } else if !isInlinePanel {
             // Fallback for compatibility
             view.window?.title = chat?.title ?? "AI Chat"
         }
@@ -329,10 +374,12 @@ extension ChatViewController {
                         model.commit()
                     }
                     if case .renameChat(let newName) = message.content {
-                        // Update window title when chat is renamed
+                        // Update window title when chat is renamed. Skip
+                        // for inline panels so the terminal window's title
+                        // isn't clobbered.
                         if let windowController = view.window?.windowController as? ChatWindowController {
                             windowController.updateTitle(newName)
-                        } else {
+                        } else if !isInlinePanel {
                             // Fallback for compatibility
                             view.window?.title = newName
                         }
@@ -686,6 +733,30 @@ extension ChatViewController {
         }
     }
 
+    @objc private func putChatInLinkedTerminalSession(_ sender: Any) {
+        installInLinkedSession(terminal: true)
+    }
+
+    @objc private func putChatInLinkedBrowserSession(_ sender: Any) {
+        installInLinkedSession(terminal: false)
+    }
+
+    // Installs this chat as the inline (right-gutter) chat for the linked
+    // session. The chat window's CVC remains; a fresh CVC is created in
+    // the gutter via the registered factory once inlineChatID is set.
+    private func installInLinkedSession(terminal: Bool) {
+        guard let chatID else {
+            return
+        }
+        let maybeGuid = terminal ? model?.terminalSessionGuid : model?.browserSessionGuid
+        guard let guid = maybeGuid,
+              let session = iTermController.sharedInstance().anySession(withGUID: guid) else {
+            return
+        }
+        session.inlineChatID = chatID
+        session.inlineChatVisible = true
+    }
+
     @objc private func unlinkTerminalSession(_ sender: Any?) {
         if let chatID {
             do {
@@ -714,7 +785,7 @@ extension ChatViewController {
         }
     }
 
-    private func scrollToBottom(animated: Bool) {
+    func scrollToBottom(animated: Bool) {
         guard let model else {
             return
         }
@@ -1785,6 +1856,13 @@ extension ChatViewController: ChatToolbarDataSource {
 
             menu.addItem(withTitle: "Reveal Linked Terminal Session", action: #selector(revealLinkedTerminalSession(_:)), target: self)
             menu.addItem(withTitle: "Unlink Terminal Session", action: #selector(unlinkTerminalSession(_:)), target: self)
+            // Inline-panel CVCs are already hosted in their session — no
+            // need to offer to put themselves there.
+            if !isInlinePanel {
+                menu.addItem(withTitle: "Put Chat in Linked Terminal Session",
+                             action: #selector(putChatInLinkedTerminalSession(_:)),
+                             target: self)
+            }
             menu.addItem(NSMenuItem.separator())
 
             let rce = RemoteCommandExecutor.instance
@@ -1822,6 +1900,11 @@ extension ChatViewController: ChatToolbarDataSource {
 
             menu.addItem(withTitle: "Reveal Linked Web Browser Session", action: #selector(revealLinkedBrowserSession(_:)), target: self)
             menu.addItem(withTitle: "Unlink Web Browser Session", action: #selector(unlinkBrowserSession(_:)), target: self)
+            if !isInlinePanel {
+                menu.addItem(withTitle: "Put Chat in Linked Browser Session",
+                             action: #selector(putChatInLinkedBrowserSession(_:)),
+                             target: self)
+            }
             menu.addItem(NSMenuItem.separator())
 
             let rce = RemoteCommandExecutor.instance
@@ -1870,5 +1953,189 @@ extension ChatViewController: ChatToolbarDataSource {
 
     var effectiveModel: String? {
         return provider?.model.name
+    }
+}
+
+// MARK: - Inline (right-gutter) chat support
+
+extension ChatViewController {
+    // Whether this CVC is acting as an inline right-gutter panel rather
+    // than the chat window's main content view. Read from many call sites
+    // to skip behavior that only makes sense in window mode (e.g., updating
+    // the window title, offering "Put Chat in Linked Session").
+    var isInlinePanel: Bool {
+        return panelAttachedSession != nil || inlinePanelCoordinator != nil
+    }
+
+    // Called by the root view when it enters or leaves a window. In panel
+    // mode load(chatID:) early-returns until the view has a window, so the
+    // attach() flow stashes the chatID in pendingPanelChatID and we retry
+    // here.
+    fileprivate func rootViewDidMoveToWindow() {
+        guard view.window != nil else { return }
+        if let chatID = pendingPanelChatID {
+            pendingPanelChatID = nil
+            load(chatID: chatID)
+            // load(chatID:) calls scrollToBottom, but at this point the
+            // gutter controller hasn't yet set the panel's frame — its
+            // positionPanels runs immediately after attach. Re-scroll on
+            // the next runloop so row heights are computed against the
+            // final tableview width.
+            DispatchQueue.main.async { [weak self] in
+                self?.scrollToBottom(animated: false)
+            }
+        }
+    }
+}
+
+extension ChatViewController: iTermRightGutterPanel {
+    // The protocol's `view` requirement is satisfied by NSViewController's
+    // own `view` property. Same goes for `panelDelegate` (declared as a
+    // stored property on the class so the weak ref has somewhere to live).
+
+    var panelIdentifier: String { Self.inlineChatPanelIdentifier }
+
+    var width: CGFloat { Self.inlineChatPanelWidth }
+
+    var visible: Bool {
+        guard let session = currentInlinePanelSession else { return false }
+        return session.inlineChatID != nil && session.inlineChatVisible
+    }
+
+    func attach(to session: PTYSession) {
+        panelAttachedSession = session
+        let coordinator = InlinePanelCoordinator(session: session)
+        coordinator.controller = self
+        inlinePanelCoordinator = coordinator
+        delegate = coordinator
+        if let chatID = session.inlineChatID {
+            pendingPanelChatID = chatID
+            // If we've already been hosted in a window (the controller sets
+            // panelDelegate before adding the view, but a re-attach can
+            // happen later), try loading immediately.
+            if view.window != nil {
+                rootViewDidMoveToWindow()
+            }
+            if model?.terminalSessionGuid == nil && model?.browserSessionGuid == nil {
+                try? link(terminal: !session.isBrowserSession(), guid: session.guid, name: session.name)
+            }
+        }
+    }
+
+    func detach() {
+        // Tear down streaming so a hidden inline chat doesn't keep mirroring
+        // commands. The broker subscription is unsubscribed in deinit; once
+        // the controller drops the panel and its view leaves the SessionView
+        // hierarchy, the CVC will deallocate.
+        if streaming {
+            stopStreaming()
+        }
+        panelAttachedSession = nil
+        pendingPanelChatID = nil
+        inlinePanelCoordinator = nil
+        delegate = nil
+    }
+
+    // The panel may outlive its initial session if SessionView's delegate
+    // is swapped (peer reassignment). Mirror the resolution pattern used by
+    // iTermClippingsGutterPanel: prefer the SessionView's current delegate
+    // if our hosted view is still attached, falling back to the captured
+    // session.
+    private var currentInlinePanelSession: PTYSession? {
+        if let live = view.superview as? SessionView,
+           let session = live.delegate as? PTYSession {
+            return session
+        }
+        return panelAttachedSession
+    }
+}
+
+// MARK: - Inline panel delegate
+
+// In-window CVCs are owned by ChatWindowController which acts as the
+// delegate; inline-panel CVCs need a delegate too, but the window
+// controller's behavior (e.g., dismissing the host window on chat delete)
+// doesn't apply. This coordinator provides the small set of behaviors that
+// make sense for the gutter case.
+class InlinePanelCoordinator: NSObject, ChatViewControllerDelegate {
+    weak var session: PTYSession?
+    weak var controller: ChatViewController?
+
+    init(session: PTYSession) {
+        self.session = session
+    }
+
+    func chatViewController(_ controller: ChatViewController,
+                            revealSessionWithGuid guid: String) -> Bool {
+        if let session = iTermController.sharedInstance().anySession(withGUID: guid) {
+            session.reveal()
+            return true
+        }
+        return false
+    }
+
+    func chatViewControllerDeleteSession(_ controller: ChatViewController) {
+        guard let chatID = controller.chatID else { return }
+        let warning = iTermWarning()
+        warning.title = "Are you sure you want to delete this chat? This action cannot be undone."
+        warning.heading = "Delete Chat?"
+        let action = iTermWarningAction(label: "Delete") { [weak self] _ in
+            do {
+                try ChatClient.instance?.delete(chatID: chatID)
+            } catch {
+                DLog("\(error)")
+            }
+            // Clearing the inline-chat ID drops this panel out of the gutter
+            // because the registered widthProvider returns 0 once the ID is
+            // nil; the layout cascade tears down the panel. Defer to the
+            // next runloop so the menu/warning host this is called from has
+            // unwound before the panel is deallocated.
+            DispatchQueue.main.async {
+                self?.session?.inlineChatID = nil
+            }
+        }
+        action.destructive = true
+        warning.warningActions = [iTermWarningAction(label: "Cancel"), action]
+        warning.warningType = .kiTermWarningTypePersistent
+        warning.runModal()
+    }
+
+    func chatViewController(_ controller: ChatViewController,
+                            forkAtMessageID messageID: UUID,
+                            ofChat chatID: String) {
+        // Forking spawns a brand-new chat; surface it in the chat window
+        // since the inline panel only hosts one chat per session.
+        ChatWindowController.instance(showErrors: true)?.showChatWindow()
+    }
+
+    func chatViewControllerDidUpdateToolbar(_ controller: ChatViewController) {
+        // Inline panel doesn't drive a toolbar.
+    }
+}
+
+// MARK: - Right-gutter panel registration
+
+@objc(iTermInlineChatGutterPanelRegistration)
+class iTermInlineChatGutterPanelRegistration: NSObject {
+    @objc static func register() {
+        iTermRightGutterPanelRegistry.sharedInstance().registerPanelType(
+            ChatViewController.inlineChatPanelIdentifier,
+            factory: {
+                // The widthProvider gates panel creation on the singletons
+                // being available, so this force-construct is reachable
+                // only when both are non-nil.
+                return ChatViewController(listModel: ChatListModel.instance!,
+                                          client: ChatClient.instance!)
+            },
+            widthProvider: { _, session in
+                guard let session,
+                      session.inlineChatID != nil,
+                      session.inlineChatVisible,
+                      ChatListModel.instance != nil,
+                      ChatClient.instance != nil else {
+                    return 0
+                }
+                return ChatViewController.inlineChatPanelWidth
+            })
     }
 }

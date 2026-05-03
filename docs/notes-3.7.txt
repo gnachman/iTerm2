@@ -332,6 +332,11 @@ Settings Improvements:
   shell so dotfiles set $PATH and exported
   variables (API keys, GEM_HOME, etc.) before
   the command starts.
+- A linked AI chat can be hosted inline in
+  its session’s right gutter. Use the chat
+  menu’s “Put Chat in Linked Session” item
+  and toggle visibility from View > Show
+  Inline Chat.
 
 Bug Fixes:
 - Fix UI hangs when opendirectoryd is slow or
