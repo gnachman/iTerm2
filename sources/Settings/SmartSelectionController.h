@@ -47,7 +47,7 @@ extern const double SmartSelectionVeryHighPrecision;
 
 @property (nonatomic, copy) NSString *guid;
 @property (nonatomic) BOOL hasSelection;
-@property (nonatomic, weak) id<SmartSelectionDelegate> delegate;
+@property (nonatomic, weak) IBOutlet id<SmartSelectionDelegate> delegate;
 @property (nonatomic, readonly) NSArray<NSDictionary *> *rules;
 
 + (BOOL)logDebugInfo;

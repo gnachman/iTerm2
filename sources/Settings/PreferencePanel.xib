@@ -78,6 +78,7 @@
                 <outlet property="_syntaxHelpButton" destination="GPd-jU-wd3" id="D06-lm-IG5"/>
                 <outlet property="_visualizationButton" destination="D33-2s-Z80" id="Yfx-7f-Kq1"/>
                 <outlet property="contextMenuPrefsController_" destination="6306" id="6317"/>
+                <outlet property="delegate" destination="Qvt-kg-svI" id="mQg-0f-xOZ"/>
                 <outlet property="logDebugInfo_" destination="5961" id="5963"/>
                 <outlet property="tableView_" destination="5845" id="5868"/>
                 <outlet property="window" destination="5910" id="5916"/>
@@ -736,7 +737,7 @@ Gw
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <clipView key="contentView" id="gZI-PG-peZ">
                             <rect key="frame" x="1" y="1" width="373" height="353"/>
-                            <autoresizingMask key="autoresizingMask"/>
+                            <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                             <subviews>
                                 <tableView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="lastColumnOnly" alternatingRowBackgroundColors="YES" columnReordering="NO" columnResizing="NO" autosaveColumns="NO" id="5845">
                                     <rect key="frame" x="0.0" y="0.0" width="373" height="353"/>
@@ -943,7 +944,7 @@ DQ
                                 <autoresizingMask key="autoresizingMask" heightSizable="YES"/>
                                 <clipView key="contentView" drawsBackground="NO" id="Yde-8Q-TRE">
                                     <rect key="frame" x="1" y="1" width="256" height="133"/>
-                                    <autoresizingMask key="autoresizingMask"/>
+                                    <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                     <subviews>
                                         <textView wantsLayer="YES" importsGraphics="NO" richText="NO" verticallyResizable="YES" allowsUndo="YES" textCompletion="NO" id="235-ob-yuB">
                                             <rect key="frame" x="0.0" y="0.0" width="256" height="133"/>
@@ -998,7 +999,7 @@ DQ
                         <autoresizingMask key="autoresizingMask"/>
                         <clipView key="contentView" drawsBackground="NO" id="XnQ-nh-5wv">
                             <rect key="frame" x="1" y="1" width="379" height="83"/>
-                            <autoresizingMask key="autoresizingMask"/>
+                            <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                             <subviews>
                                 <textView wantsLayer="YES" importsGraphics="NO" richText="NO" verticallyResizable="YES" textCompletion="NO" id="ucv-8U-BE7" customClass="iTermPlaygroundTextView">
                                     <rect key="frame" x="0.0" y="0.0" width="379" height="83"/>

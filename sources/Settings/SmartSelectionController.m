@@ -286,6 +286,9 @@ const double SmartSelectionVeryHighPrecision = 1000000.0;
 }
 
 - (void)setGuid:(NSString *)guid {
+    if (guid == guid_ || [guid isEqualToString:guid_]) {
+        return;
+    }
     guid_ = [guid copy];
     [self reloadData];
 }
