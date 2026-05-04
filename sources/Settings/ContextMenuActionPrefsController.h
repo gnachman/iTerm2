@@ -39,6 +39,7 @@ typedef NS_ENUM(NSInteger, ContextMenuActions) {
 @property (nonatomic) BOOL useInterpolatedStrings;
 
 + (ContextMenuActions)actionForActionDict:(NSDictionary *)dict;
++ (NSString *)parameterInActionDict:(NSDictionary *)dict;
 
 + (NSString *)titleForActionDict:(NSDictionary *)dict
            withCaptureComponents:(NSArray *)components

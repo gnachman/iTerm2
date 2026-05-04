@@ -1908,6 +1908,11 @@ copyRangeAccordingToUserPreferences:(VT100GridWindowedRange)range {
 }
 
 - (void)contextMenu:(iTermTextViewContextMenuHelper *)contextMenu
+           copyText:(NSString *)text {
+    [self copyString:text];
+}
+
+- (void)contextMenu:(iTermTextViewContextMenuHelper *)contextMenu
                copy:(id)obj {
     NSString *string = [NSString castFrom:obj];
     BOOL copied = NO;

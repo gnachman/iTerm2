@@ -129,6 +129,8 @@ toggleTerminalStateForMenuItem:(NSMenuItem *)item;
 - (void)contextMenuCopySelectionAccordingToUserPreferences:(iTermTextViewContextMenuHelper *)contextMenu;
 - (void)contextMenu:(iTermTextViewContextMenuHelper *)contextMenu
 copyRangeAccordingToUserPreferences:(VT100GridWindowedRange)range;
+- (void)contextMenu:(iTermTextViewContextMenuHelper *)contextMenu
+           copyText:(NSString *)text;
 
 // obj is NSString or NSData
 - (void)contextMenu:(iTermTextViewContextMenuHelper *)contextMenu

@@ -41,7 +41,7 @@ static ContextMenuActionDeclaration gContextMenuActionDeclarations[] = {
     { @"Run Coprocess…",           @"Enter coprocess command",  @"Coprocess:", kRunCoprocessContextMenuAction,         NO  },
     { @"Send text…",               @"Enter text",               @"Text:",      kSendTextContextMenuAction,             NO  },
     { @"Run Command in Window…",   @"Enter command",            @"Command:",   kRunCommandInWindowContextMenuAction,   YES },
-    { @"Copy",                     @"",                         @"",           kCopyContextMenuAction,                 YES },
+    { @"Copy",                     @"Enter text",               @"Text:",      kCopyContextMenuAction,                 YES },
 };
 
 static ContextMenuActionDeclaration ContextMenuActionDeclarationForTag(ContextMenuActions tag) {
@@ -149,6 +149,10 @@ static ContextMenuActionDeclaration ContextMenuActionDeclarationForTag(ContextMe
     completion(result);
 }
 
++ (NSString *)parameterInActionDict:(NSDictionary *)dict {
+    return dict[kParameterKey];
+}
+
 + (void)computeInterpolatedParameterForActionDict:(NSDictionary *)dict
                             withCaptureComponents:(NSArray *)components
                                             scope:(iTermVariableScope *)scope
@@ -157,6 +161,12 @@ static ContextMenuActionDeclaration ContextMenuActionDeclarationForTag(ContextMe
                                        completion:(void (^)(NSString *parameter))completion {
     NSString *parameter = [dict objectForKey:kParameterKey];
     ContextMenuActions action = (ContextMenuActions) [[dict objectForKey:kActionKey] intValue];
+    if (action == kCopyContextMenuAction && parameter.length == 0) {
+        // Special case for copy, which copies the whole value when the parameter is empty because
+        // it didn't used to take a parameter.
+        completion(components[0]);
+        return;
+    }
     iTermSwiftyStringWithBackreferencesEvaluator *evaluator = [[iTermSwiftyStringWithBackreferencesEvaluator alloc] initWithExpression:parameter];
     NSArray *encodedCaptures = [components mapWithBlock:^id(id anObject) {
         return [self parameterValue:anObject encodedForAction:action];
@@ -188,6 +198,11 @@ static ContextMenuActionDeclaration ContextMenuActionDeclarationForTag(ContextMe
                                                      scope:(iTermVariableScope *)scope {
     NSString *parameter = [dict objectForKey:kParameterKey];
     ContextMenuActions action = (ContextMenuActions) [[dict objectForKey:kActionKey] intValue];
+    if (action == kCopyContextMenuAction && parameter.length == 0) {
+        // Special case for copy, which copies the whole value when the parameter is empty because
+        // it didn't used to take a parameter.
+        return components[0];
+    }
     for (int i = 0; i < 9; i++) {
         NSString *repl = @"";
         if (i < components.count) {
@@ -493,11 +508,14 @@ static ContextMenuActionDeclaration ContextMenuActionDeclarationForTag(ContextMe
     NSNumber *action = [NSNumber castFrom:item[kActionKey]] ?: @0;
     [_action selectItemWithTag:action.integerValue];
     _parameterLabel.stringValue = ContextMenuActionDeclarationForTag(action.integerValue).parameterLabel;
-
-    const BOOL noParameter = (action.integerValue == kCopyContextMenuAction);
-    _parameterLabel.hidden = noParameter;
-    _parameter.hidden = noParameter;
-    _parameterInfoTextField.hidden = noParameter;
+    _parameterLabel.hidden = NO;
+    _parameter.hidden = NO;
+    _parameterInfoTextField.hidden = NO;
+    if (action.integerValue == kCopyContextMenuAction) {
+        _parameter.placeholderString = @"Leave empty to copy matching text";
+    } else {
+        _parameter.placeholderString = @"";
+    }
 }
 
 - (CGFloat)tableView:(NSTableView *)tableView heightOfRow:(NSInteger)row {

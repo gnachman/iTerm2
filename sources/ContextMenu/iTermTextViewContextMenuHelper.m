@@ -1028,12 +1028,21 @@ const int kMaxSelectedTextLengthForCustomActions = 400;
 - (void)contextMenuActionCopy:(id)sender {
     DLog(@"Copy");
     URLAction *action = [URLAction castFrom:sender];
-    if (!action) {
-        DLog(@"Sender not an action or nil: %@", sender);
+    NSDictionary *dict = [NSDictionary castFrom:[sender representedObject]];
+    NSDictionary *actionDict = dict[iTermSmartSelectionActionContextKeyAction];
+    if (action && [[ContextMenuActionPrefsController parameterInActionDict:actionDict] length] == 0) {
+        // Preserve the historical cmd-click behavior of copying the matched
+        // range so that the user's copy-with-styles preference is honored.
+        [self.delegate contextMenu:self copyRangeAccordingToUserPreferences:action.visualRange];
         return;
     }
-    const VT100GridWindowedRange range = action.visualRange;
-    [self.delegate contextMenu:self copyRangeAccordingToUserPreferences:range];
+    [self evaluateCustomActionDictionary:[sender representedObject] completion:^(NSString *value) {
+        DLog(@"Copy text: %@", value);
+        if (!value) {
+            return;
+        }
+        [self.delegate contextMenu:self copyText:value];
+    }];
 }
 
 - (void)runCommand:(NSString *)command {
