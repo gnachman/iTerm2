@@ -494,3 +494,9 @@ Bug Fixes:
   from the most recently pushed one, not
   only from the interval tree’s last-line
   host.
+- Add an advanced setting (off by default)
+  to set IT2_APP_PATH on new sessions, so
+  the “it2” CLI targets this iTerm2 build
+  via AppleScript when multiple iTerm2
+  builds are running. Useful for iTerm2
+  developers.

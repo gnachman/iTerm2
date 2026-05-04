@@ -401,6 +401,8 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (int)screenshotMaxPixelHeight;
 + (BOOL)setCookie;
 + (void)setSetCookie:(BOOL)value;
++ (BOOL)setIT2AppPath;
++ (void)setSetIT2AppPath:(BOOL)value;
 + (double)shortLivedSessionDuration;
 + (BOOL)shouldSetLCTerminal;
 + (BOOL)shouldSetTerminfoDirs;

@@ -2875,6 +2875,10 @@ ITERM_WEAKLY_REFERENCEABLE
         env[@"IT2_SUITE"] = suiteName;
     }
 
+    if ([iTermAdvancedSettingsModel setIT2AppPath]) {
+        env[@"IT2_APP_PATH"] = [[NSBundle mainBundle] bundlePath];
+    }
+
     if ([iTermAdvancedSettingsModel addUtilitiesToPATH]) {
         NSString *sshPath = [iTermPathToSSH() stringByDeletingLastPathComponent];
         if (sshPath) {
