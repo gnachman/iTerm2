@@ -408,6 +408,33 @@ NSString *const iTermEncoderGraphRecordGenerationKeySuffix = @"_Generation";
     }];
 }
 
+- (iTermEncoderGraphRecord *)deepCopyForRecovery {
+    NSMutableArray<iTermEncoderGraphRecord *> *children =
+        [NSMutableArray arrayWithCapacity:_graphRecords.count];
+    NSMutableSet<iTermTuple<NSString *, NSString *> *> *seen =
+        [NSMutableSet setWithCapacity:_graphRecords.count];
+    for (iTermEncoderGraphRecord *child in _graphRecords) {
+        iTermTuple<NSString *, NSString *> *tuple =
+            [iTermTuple tupleWithObject:child.key andObject:child.identifier];
+        if ([seen containsObject:tuple]) {
+            // Match iTermOrderedDictionary byMapping:'s "first occurrence
+            // wins" semantics, so reallySave's INSERT pass and this tree
+            // agree on which sibling is authoritative.
+            continue;
+        }
+        [seen addObject:tuple];
+        [children addObject:[child deepCopyForRecovery]];
+    }
+    return [[iTermEncoderGraphRecord alloc] initWithPODs:[self.pod copy]
+                                                  graphs:children
+                                              generation:_generation
+                                                     key:_key
+                                              identifier:_identifier
+                                                   rowid:nil
+                                            hasLargeData:NO
+                                                database:nil];
+}
+
 @end
 
 @implementation NSObject (iTermEncoderGraphRecord)

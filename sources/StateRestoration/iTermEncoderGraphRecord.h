@@ -72,6 +72,15 @@ extern NSString *const iTermEncoderGraphRecordGenerationKeySuffix;
 - (nullable id)objectWithKey:(NSString *)key class:(Class)theClass;
 - (void)eraseRowIDs;
 
+// Returns a freshly-allocated tree with the same shape and POD content as the
+// receiver, but with `rowid=nil` on every node and no shared instances with
+// any existing tree. Children that share a `(key, identifier)` tuple at the
+// same level are deduplicated (first occurrence wins, matching the behavior
+// of `iTermOrderedDictionary byMapping:`). Used by `iTermGraphDatabase`'s
+// recovery path so that the recovery encoder owns its tree exclusively and
+// `reallySave`'s INSERT pass visits every record exactly once.
+- (iTermEncoderGraphRecord *)deepCopyForRecovery;
+
 - (NSMutableDictionary<iTermTuple<NSString *, NSString *> *, iTermEncoderGraphRecord *> *)index;
 
 @end

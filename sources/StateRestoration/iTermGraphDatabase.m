@@ -241,16 +241,24 @@
         DLogCyclic(_log, @"Starting recovery attempt %@. originalEncoder.record rowid=%@ ptr=%p",
                    @(_recoveryCount), originalEncoder.record.rowid, originalEncoder.record);
         // For recovery, create a fresh encoder with no previous revision.
-        // This treats everything as inserts, avoiding the need for valid rowIDs in "before" state.
+        // This treats everything as inserts, avoiding the need for valid
+        // rowIDs in "before" state.
+        //
+        // We deep-copy originalEncoder.record so the recovery encoder owns
+        // its tree exclusively. Aliasing it directly (and then calling
+        // eraseRowIDs in place) would mutate record instances that other
+        // code still holds, including descendants of the previous-revision
+        // tree, since unchanged-generation children get aliased into the
+        // failed save's tree by iTermGraphDeltaEncoder.m:67-71. The deep
+        // copy also dedupes siblings by (key, identifier) so reallySave's
+        // INSERT pass, which keys on (key, identifier) via
+        // iTermOrderedDictionary byMapping: and silently drops duplicates,
+        // assigns a fresh rowid to every record this recovery publishes.
+        iTermEncoderGraphRecord *recoveryTree = [originalEncoder.record deepCopyForRecovery];
         encoder = [[iTermGraphDeltaEncoder alloc] initWithPreviousRevision:nil];
-        [encoder encodeGraph:originalEncoder.record];
+        [encoder encodeGraph:recoveryTree];
         DLogCyclic(_log, @"Recovery: After encodeGraph, encoder.record rowid=%@ ptr=%p children=%@",
                    encoder.record.rowid, encoder.record, @(encoder.record.graphRecords.count));
-        // Erase rowIDs from the recovery encoder's record since we're treating everything as inserts.
-        // The "after" records will get new rowIDs assigned during the insert.
-        [encoder.record eraseRowIDs];
-        DLogCyclic(_log, @"Recovery: After eraseRowIDs, encoder.record rowid=%@ (should be nil)",
-                   encoder.record.rowid);
         ok = [self attemptRecovery:state encoder:encoder];
         DLogCyclic(_log, @"Recovery attempt %@ result: %@", @(_recoveryCount), @(ok));
     } @catch (NSException *exception) {

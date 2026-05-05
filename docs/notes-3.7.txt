@@ -355,6 +355,15 @@ Bug Fixes:
   observer block is set, avoiding O(N²)
   teardown across the many controls in the
   panel.
+- Fix a state-restoration crash where the
+  recovery path could leave records with no
+  rowid in the in-memory tree, causing the
+  next save to abort with MissingRowID. The
+  recovery now operates on a deep copy of
+  the failed save’s tree so it can’t corrupt
+  records other code still holds, and it
+  dedupes siblings by (key, identifier) so
+  every record gets a fresh rowid.
 - Fix the window growing wider when a
   clippings panel appears in a non-current
   tab. Window resize now happens only when
