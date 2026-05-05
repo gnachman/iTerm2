@@ -90,6 +90,15 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)fetchDirectoryListingOfPath:(NSString *)path
                          completion:(void (^)(NSArray<iTermDirectoryEntry *> *entries))completion;
 
+// Returns the calling user's login shell. Always invokes `completion` exactly
+// once: with the shell on success, or nil if the XPC service isn't ready, the
+// underlying daemon (opendirectoryd) is wedged, or no reply arrives within an
+// internal timeout. Unlike most gateway methods, the completion does NOT run
+// on the main queue — it fires on whatever queue the XPC reply or internal
+// timeout uses. This is so a synchronous main-thread caller waiting on this
+// result can't deadlock against its own delivery.
+- (void)fetchUserShellWithCompletion:(void (^)(NSString * _Nullable shell))completion;
+
 @end
 
 NS_ASSUME_NONNULL_END

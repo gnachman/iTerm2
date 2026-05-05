@@ -334,6 +334,16 @@ Settings Improvements:
   the command starts.
 
 Bug Fixes:
+- Fix UI hangs when opendirectoryd is slow or
+  wedged. The user’s login shell is now
+  fetched in the pidinfo XPC service (so a
+  daemon hang only burns the helper, never
+  the main app) and cached in-process. Every
+  call still kicks off a fresh background
+  lookup so the cache stays current after
+  chsh, but a slow lookup no longer stalls
+  the UI — the cached value is returned if a
+  fresh result doesn’t arrive in time.
 - Fix the window growing wider when a
   clippings panel appears in a non-current
   tab. Window resize now happens only when

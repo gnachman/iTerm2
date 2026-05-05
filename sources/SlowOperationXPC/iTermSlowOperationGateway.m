@@ -12,7 +12,7 @@
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermGitState.h"
 #import "ITAddressBookMgr.h"
-#import "iTermOpenDirectory.h"
+#import "iTermOpenDirectory+MainApp.h"
 #import "NSStringITerm.h"
 #import "ProfileModel.h"
 #import "pidinfo.h"
@@ -182,7 +182,14 @@ typedef void (^iTermRecentBranchFetchCallback)(NSArray<NSString *> *);
     [_connectionToService.remoteObjectInterface setClasses:[NSSet setWithArray:@[[NSArray class], [iTermDirectoryEntry class]]]
                                                    forSelector:@selector(fetchDirectoryListingOfPath:completion:)
                                                  argumentIndex:0
-                                                       ofReply:YES];}
+                                                       ofReply:YES];
+
+    // For fetchUserShellWithReply:
+    [_connectionToService.remoteObjectInterface setClasses:[NSSet setWithObject:[NSString class]]
+                                                   forSelector:@selector(fetchUserShellWithReply:)
+                                                 argumentIndex:0
+                                                       ofReply:YES];
+}
 
 - (void)didInterrupt {
     {
@@ -488,6 +495,43 @@ typedef void (^iTermRecentBranchFetchCallback)(NSArray<NSString *> *);
             completion(entries);
         });
     }];
+}
+
+- (void)fetchUserShellWithCompletion:(void (^)(NSString * _Nullable))completion {
+    // Every completion path runs off the caller's stack and off the main
+    // queue, so a synchronous main-thread caller waiting on this result
+    // can't deadlock against its own completion delivery and the caller's
+    // stack frame is always unwound by the time `completion` fires.
+    static dispatch_queue_t fallbackQueue;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        fallbackQueue = dispatch_queue_create("com.iterm2.SlowOperationGateway.userShellFallback",
+                                              DISPATCH_QUEUE_SERIAL);
+    });
+    if (!self.ready) {
+        DLog(@"fetchUserShell: gateway not ready");
+        dispatch_async(fallbackQueue, ^{
+            completion(nil);
+        });
+        return;
+    }
+    // Defense-in-depth timeout: an XPC connection that drops mid-call
+    // can leave the reply block silently unfired.
+    __block atomic_flag finished = ATOMIC_FLAG_INIT;
+    [[_connectionToService remoteObjectProxy] fetchUserShellWithReply:^(NSString * _Nullable shell) {
+        if (atomic_flag_test_and_set(&finished)) {
+            return;
+        }
+        completion(shell);
+    }];
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(15.0 * NSEC_PER_SEC)),
+                   fallbackQueue, ^{
+        if (atomic_flag_test_and_set(&finished)) {
+            return;
+        }
+        DLog(@"fetchUserShell: gave up waiting for XPC reply");
+        completion(nil);
+    });
 }
 
 @end

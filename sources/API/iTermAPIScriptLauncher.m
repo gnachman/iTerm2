@@ -13,7 +13,7 @@
 #import "iTermAPIHelper.h"
 #import "iTermController.h"
 #import "iTermNotificationController.h"
-#import "iTermOpenDirectory.h"
+#import "iTermOpenDirectory+MainApp.h"
 #import "iTermOptionalComponentDownloadWindowController.h"
 #import "iTermPythonRuntimeDownloader.h"
 #import "iTermScriptConsole.h"

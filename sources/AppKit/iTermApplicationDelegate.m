@@ -1265,6 +1265,12 @@ void TurnOnDebugLoggingAutomatically(void) {
     [[iTermUserDefaults userDefaults] registerDefaults:@{ @"NSApplicationCrashOnExceptions": @YES }];
 
     [iTermLaunchExperienceController applicationWillFinishLaunching];
+
+    // Populate the user-shell cache off the main thread so the first
+    // synchronous +[iTermOpenDirectory userShell] call doesn't block on
+    // opendirectoryd.
+    [iTermOpenDirectory prime];
+
     // Start automatic debug logging if it's enabled.
     if ([iTermAdvancedSettingsModel startDebugLoggingAutomatically]) {
         TurnOnDebugLoggingAutomatically();

@@ -8,19 +8,13 @@
 #import "iTermOpenDirectory.h"
 
 #import "DebugLogging.h"
-#import "iTermAdvancedSettingsModel.h"
-
 #import <OpenDirectory/OpenDirectory.h>
 
 @implementation iTermOpenDirectory
 
 // This is (I hope) the equivalent of the command "dscl . read /Users/$USER UserShell", which
 // appears to be how you get the user's shell nowadays. Returns nil if it can't be gotten.
-+ (NSString *)userShell {
-    if (![iTermAdvancedSettingsModel useOpenDirectory]) {
-        return nil;
-    }
-
++ (NSString *)performBlockingLookup {
     DLog(@"Trying to figure out the user's shell.");
     NSError *error = nil;
     ODNode *node = [ODNode nodeWithSession:[ODSession defaultSession]
@@ -57,6 +51,5 @@
     DLog(@"Returning %@", shell);
     return shell;
 }
-
 
 @end

@@ -19,7 +19,7 @@
 #import "iTermLegacyJobManager.h"
 #import "iTermMonoServerJobManager.h"
 #import "iTermMultiServerJobManager.h"
-#import "iTermOpenDirectory.h"
+#import "iTermOpenDirectory+MainApp.h"
 #import "iTermOrphanServerAdopter.h"
 #import "iTermThreadSafety.h"
 #import "iTermTmuxJobManager.h"

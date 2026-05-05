@@ -142,7 +142,7 @@
 #import "iTermNotificationCenter.h"
 #import "iTermNotificationController.h"
 #import "iTermObject.h"
-#import "iTermOpenDirectory.h"
+#import "iTermOpenDirectory+MainApp.h"
 #import "iTermPasteHelper.h"
 #import "iTermPreferences.h"
 #import "iTermPreferences.h"

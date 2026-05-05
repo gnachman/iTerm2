@@ -90,6 +90,12 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)fetchDirectoryListingOfPath:(NSString *)path
                          completion:(void (^)(NSArray<iTermDirectoryEntry *> *entries))completion;
 
+// Returns the calling user's login shell (the pw_shell field). Goes through
+// NSS > opendirectoryd, so it can hang if the daemon is wedged. That's why it
+// lives in the XPC service: the performRiskyBlock watchdog catches the wedge
+// without burning a thread in the main app.
+- (void)fetchUserShellWithReply:(void (^)(NSString * _Nullable shell))reply;
+
 @end
 
 NS_ASSUME_NONNULL_END

@@ -22,7 +22,7 @@
 #import "NSStringITerm.h"
 #import "NSWorkspace+iTerm.h"
 #import "ProfileModel.h"
-#import "iTermOpenDirectory.h"
+#import "iTermOpenDirectory+MainApp.h"
 #import "iTermSSHHelpers.h"
 #import "iTermSlowOperationGateway.h"
 #import "iTermWarning.h"

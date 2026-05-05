@@ -10,6 +10,7 @@
 #import "iTermDirectoryEntry.h"
 #import "iTermFileDescriptorServerShared.h"
 #import "iTermGitClient.h"
+#import "iTermOpenDirectory.h"
 #import "iTermPathFinder.h"
 #import "pidinfo-Swift.h"
 #include <dirent.h>
@@ -854,6 +855,24 @@ void iTermMutatePathFindersDict(void (^NS_NOESCAPE block)(NSMutableDictionary<NS
             syslog(LOG_INFO, "fetchDirectoryListingOfPath finished after timing out.");
         }
         reply([self reallyFetchDirectoryListingOfPath:path]);
+    }];
+}
+
+- (void)fetchUserShellWithReply:(void (^)(NSString * _Nullable))reply {
+    [self performRiskyBlock:^(BOOL shouldPerform, BOOL (^ _Nullable completion)(void)) {
+        if (!shouldPerform) {
+            reply(nil);
+            syslog(LOG_WARNING,
+                   "pidinfo wedged in fetchUserShell. count=%d",
+                   self->_numWedged);
+            return;
+        }
+        NSString *shell = [iTermOpenDirectory performBlockingLookup];
+        if (!completion()) {
+            syslog(LOG_INFO, "fetchUserShell finished after timing out.");
+            return;
+        }
+        reply(shell);
     }];
 }
 

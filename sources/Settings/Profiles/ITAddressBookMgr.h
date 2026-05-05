@@ -30,7 +30,7 @@
 #import <Foundation/Foundation.h>
 #import <Cocoa/Cocoa.h>
 #import "FutureMethods.h"
-#import "iTermOpenDirectory.h"
+#import "iTermOpenDirectory+MainApp.h"
 #import "iTermUnicodeNormalization.h"
 #import "ProfileModel.h"
 
