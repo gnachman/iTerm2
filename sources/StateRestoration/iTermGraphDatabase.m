@@ -277,8 +277,13 @@
                        self.record, self.record.rowid);
             self.record = nil;
         }
-        // Uncomment to debug missing rowIDs
-        // [self assertRecordIntegrity:self.record];
+#if BETA
+        // Tests can opt out of the abort so they can observe a corrupted
+        // self.record via their own assertions instead of dying mid-save.
+        if (!getenv("ITERM2_SKIP_GRAPH_INTEGRITY_ASSERT")) {
+            [self assertRecordIntegrity:self.record];
+        }
+#endif
     }
 }
 
