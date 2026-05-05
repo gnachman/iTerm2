@@ -80,7 +80,7 @@ class ChatCellView: NSTableCellView {
                     snippet = "AI is typing…"
                 } else {
                     self.typing = false
-                    DLog("set typing=true in \(false)")
+                    DLog("set typing=false in \(chatID)")
                     snippet = dataSource?.snippet(forChatID: chatID) ?? ""
                 }
             }
