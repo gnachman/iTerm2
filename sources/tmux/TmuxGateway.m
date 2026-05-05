@@ -158,9 +158,9 @@ static NSString *kCommandTimestamp = @"timestamp";
             c = 0;
             for (int j = 0; j < 3; j++) {
                 i++;
-                if (bytes[i] == '\r') {
-                    // Ignore \r's that the line driver sprinkles in at its pleasure.
-                    continue;
+                // Ignore \r's that the line driver sprinkles in at its pleasure.
+                while (bytes[i] == '\r') {
+                    i++;
                 }
                 if (bytes[i] < '0' || bytes[i] > '7') {
                     c = '?';
