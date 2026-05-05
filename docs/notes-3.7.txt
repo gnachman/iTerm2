@@ -528,3 +528,8 @@ Bug Fixes:
   dropped. Also fix LRU bump leaving a
   stale node reference, which corrupted
   eviction order after a re-insert.
+- Fix paste-history scores using a
+  different epoch for freshly saved entries
+  vs. entries loaded from disk, which could
+  cause inconsistent ordering if score-
+  based sorting/eviction were used.
