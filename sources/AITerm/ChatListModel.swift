@@ -52,7 +52,11 @@ class ChatListModel: ChatListDataSource {
 
     func delete(chatID: String, messageIDs: [UUID]) {
         let messages = messages(forChat: chatID, createIfNeeded: false)
-        messages?.removeAll(where: { messageIDs.contains($0.uniqueID) })
+        do {
+            try messages?.removeAll(where: { messageIDs.contains($0.uniqueID) })
+        } catch {
+            DLog("Failed to delete messages from chat \(chatID): \(error)")
+        }
     }
 
     func delete(chatID: String) throws {

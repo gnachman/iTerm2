@@ -60,9 +60,9 @@ class DatabaseBackedArray<Element> where Element: iTermDatabaseElement {
 
     func set(at i: Int, _ newValue: Element) throws {
         let oldValue = elements[i]
-        elements[i] = newValue
         let (query, args) = newValue.updateQuery()
-        try? db.executeUpdate(query, withArguments: args)
+        try db.executeUpdate(query, withArguments: args)
+        elements[i] = newValue
         delegate?.databaseBackedArray(didModifyElement: newValue, oldValue: oldValue)
     }
 
@@ -83,13 +83,13 @@ class DatabaseBackedArray<Element> where Element: iTermDatabaseElement {
     }
 
     @discardableResult
-    func removeAll(where closure: (Element) throws -> Bool) rethrows -> IndexSet {
+    func removeAll(where closure: (Element) throws -> Bool) throws -> IndexSet {
         var i = 0
         var j = 0
         var indexes = IndexSet()
         while i < elements.count {
             if try closure(elements[i]) {
-                try? self.remove(at: i)
+                try self.remove(at: i)
                 indexes.insert(j)
             } else {
                 i += 1
