@@ -453,12 +453,11 @@
                                                      completion:
      ^(PTYSession *newSession, BOOL ok) {
         DLog(@"launch by url finished with ok=%@", @(ok));
-        if (@available(macOS 11, *)) {
-            [newSession loadDeferredURLIfNeeded];
-        }
+        [newSession loadDeferredURLIfNeeded];
         [weakSelf setFinishedWithSuccess:ok];
     }];
-    [windowController.sessionFactory attachOrLaunchWithRequest:launchRequest];}
+    [windowController.sessionFactory attachOrLaunchWithRequest:launchRequest];
+}
 
 - (NSDictionary *)profile:(NSDictionary *)aDict
         modifiedToOpenURL:(NSString *)url
@@ -780,7 +779,7 @@
 }
 
 - (void)maybeBreakRetainCycle {
-    if (_haveSetSession & _finished) {
+    if (_haveSetSession && _finished) {
         DLog(@"Break retain cycle");
         _keepAlive = nil;
     }
