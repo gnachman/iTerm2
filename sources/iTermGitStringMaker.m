@@ -110,7 +110,6 @@
             }
         }
         if (linesInserted > 0 || linesDeleted > 0) {
-            [result appendAttributedString:enSpace];
             if (linesInserted == 0) {
                 [parts addObject:[self attributedStringWithString:[NSString stringWithFormat:@"-%@ lines",
                                                                                  @(linesDeleted)]]];
