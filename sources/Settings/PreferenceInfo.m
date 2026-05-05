@@ -32,21 +32,34 @@
     self = [super init];
     if (self) {
         _range = NSMakeRange(0, INT_MAX);
-        // Observers' initial execution happens from the notification because it gives the current
-        // profile a chance to get set before the observer runs.
-        [[NSNotificationCenter defaultCenter] addObserver:self
-                                                 selector:@selector(preferencePanelDidLoad:)
-                                                     name:kPreferencePanelDidLoadNotification
-                                                   object:nil];
     }
     return self;
 }
 
 - (void)dealloc {
-    [[NSNotificationCenter defaultCenter] removeObserver:self];
+    if (_observer) {
+        [[NSNotificationCenter defaultCenter] removeObserver:self
+                                                        name:kPreferencePanelDidLoadNotification
+                                                      object:nil];
+    }
 }
 
 - (void)setObserver:(void (^)(void))observer {
+    // The observer block is invoked once when the preference panel finishes loading (so the current
+    // profile has a chance to be set first) and thereafter whenever the control's value changes.
+    // Register for the panel-did-load notification only while there is a block to invoke — most
+    // PreferenceInfos have no observer, and a per-instance registration makes teardown O(N²) when
+    // the keyMap is cleared on close.
+    if (observer && !_observer) {
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(preferencePanelDidLoad:)
+                                                     name:kPreferencePanelDidLoadNotification
+                                                   object:nil];
+    } else if (!observer && _observer) {
+        [[NSNotificationCenter defaultCenter] removeObserver:self
+                                                        name:kPreferencePanelDidLoadNotification
+                                                      object:nil];
+    }
     _observer = [observer copy];
 }
 

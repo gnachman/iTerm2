@@ -344,6 +344,12 @@ Bug Fixes:
   chsh, but a slow lookup no longer stalls
   the UI — the cached value is returned if a
   fresh result doesn’t arrive in time.
+- Fix a multi-second hang when closing the
+  Settings window. PreferenceInfo now only
+  registers a notification observer when an
+  observer block is set, avoiding O(N²)
+  teardown across the many controls in the
+  panel.
 - Fix the window growing wider when a
   clippings panel appears in a non-current
   tab. Window resize now happens only when
