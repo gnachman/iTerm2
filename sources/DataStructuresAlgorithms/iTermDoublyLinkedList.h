@@ -14,7 +14,7 @@ NS_ASSUME_NONNULL_BEGIN
 @interface iTermDoublyLinkedListEntry<T>: NSObject
 @property (nullable, nonatomic, weak) iTermDoublyLinkedList<T> *dll;
 @property (nullable, nonatomic, strong) iTermDoublyLinkedListEntry<T> *dllNext;
-@property (nullable, nonatomic, strong) iTermDoublyLinkedListEntry<T> *dllPrevious;
+@property (nullable, nonatomic, weak) iTermDoublyLinkedListEntry<T> *dllPrevious;
 @property (nonatomic, strong, readonly) T object;
 - (instancetype)initWithObject:(T)object NS_DESIGNATED_INITIALIZER;
 - (instancetype)init NS_UNAVAILABLE;

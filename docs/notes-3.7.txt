@@ -521,3 +521,10 @@ Bug Fixes:
   via AppleScript when multiple iTerm2
   builds are running. Useful for iTerm2
   developers.
+- Fix memory leaks in the doubly-linked
+  list backing iTermCache and the Swift
+  LRUDictionary: every cached entry was
+  retained forever once the cache was
+  dropped. Also fix LRU bump leaving a
+  stale node reference, which corrupted
+  eviction order after a re-insert.

@@ -131,7 +131,7 @@ class LRUEvictionPolicy<Element: Hashable> {
             return
         }
         itemsByUse.remove(node)
-        _ = itemsByUse.append(node.value)
+        nodesByKey[element] = itemsByUse.append(node.value)
     }
 
     private func evictIfNeeded() -> Set<Element> {

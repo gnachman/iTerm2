@@ -9,7 +9,7 @@ import Foundation
 
 class DLLNode<T> {
     var value: T
-    fileprivate var prev: DLLNode?
+    fileprivate weak var prev: DLLNode?
     fileprivate var next: DLLNode?
 
     init(value: T) {
