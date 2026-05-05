@@ -538,3 +538,8 @@ Bug Fixes:
   vs. entries loaded from disk, which could
   cause inconsistent ordering if score-
   based sorting/eviction were used.
+- Add advanced settings to customize
+  the window border color for focused
+  and unfocused windows (requires
+  "Show border around windows" with
+  no title bar).

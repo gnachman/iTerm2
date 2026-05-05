@@ -12,6 +12,7 @@
 #import "iTermLayoutCalculator.h"
 
 #import "NSAppearance+iTerm.h"
+#import "NSColor+iTerm.h"
 #import "NSEvent+iTerm.h"
 #import "NSImage+iTerm.h"
 #import "NSObject+iTerm.h"
@@ -62,6 +63,24 @@ typedef struct {
     CGFloat top;
     CGFloat bottom;
 } iTermDecorationHeights;
+
+static NSImage *gTopLeftCornerHalfImage;
+static NSImage *gTopRightCornerHalfImage;
+static NSImage *gBottomLeftCornerHalfImage;
+static NSImage *gBottomRightCornerHalfImage;
+static NSImage *gTopLeftCornerFullImage;
+static NSImage *gTopRightCornerFullImage;
+static NSImage *gBottomLeftCornerFullImage;
+static NSImage *gBottomRightCornerFullImage;
+
+static NSImage *iTermTintedBorderImage(NSImage *source, NSColor *color) {
+    return [NSImage imageWithSize:source.size flipped:NO drawingHandler:^BOOL(NSRect rect) {
+        [source drawInRect:rect];
+        [color set];
+        NSRectFillUsingOperation(rect, NSCompositingOperationSourceAtop);
+        return YES;
+    }];
+}
 
 @interface iTermRootTerminalView()<
     iTermTabBarControlViewDelegate,
@@ -281,18 +300,7 @@ NS_CLASS_AVAILABLE_MAC(10_14)
         _windowTitleLabel.autoresizingMask = (NSViewMinYMargin | NSViewWidthSizable);
         [self addSubview:_windowTitleLabel];
         
-        NSColor *borderColor = [NSColor colorWithWhite:0.5 alpha:0.75];
         {
-            static NSImage *gTopLeftCornerHalfImage;
-            static NSImage *gTopRightCornerHalfImage;
-            static NSImage *gBottomLeftCornerHalfImage;
-            static NSImage *gBottomRightCornerHalfImage;
-
-            static NSImage *gTopLeftCornerFullImage;
-            static NSImage *gTopRightCornerFullImage;
-            static NSImage *gBottomLeftCornerFullImage;
-            static NSImage *gBottomRightCornerFullImage;
-
             static dispatch_once_t onceToken;
             dispatch_once(&onceToken, ^{
                 NSString *halfName = @"WindowCorner";
@@ -319,25 +327,20 @@ NS_CLASS_AVAILABLE_MAC(10_14)
                 gBottomLeftCornerFullImage = [NSImage it_imageNamed:fullName forClass:self.class];
                 gBottomRightCornerFullImage = [gBottomLeftCornerFullImage it_horizontallyFlippedImage];
             });
-            // Half
-            NSImage *topLeftCornerHalfImage = gTopLeftCornerHalfImage;
-            NSImage *topRightCornerHalfImage = gTopRightCornerHalfImage;
-            NSImage *bottomLeftCornerHalfImage = gBottomLeftCornerHalfImage;
-            NSImage *bottomRightCornerHalfImage = gBottomRightCornerHalfImage;
 
-            _topLeftCornerHalfRoundImageView = [NSImageView imageViewWithImage:topLeftCornerHalfImage];
+            _topLeftCornerHalfRoundImageView = [NSImageView imageViewWithImage:gTopLeftCornerHalfImage];
             _topLeftCornerHalfRoundImageView.autoresizingMask = NSViewMinYMargin | NSViewMaxXMargin;
             _topLeftCornerHalfRoundImageView.alphaValue = 0.75;
 
-            _topRightCornerHalfRoundImageView = [NSImageView imageViewWithImage:topRightCornerHalfImage];
+            _topRightCornerHalfRoundImageView = [NSImageView imageViewWithImage:gTopRightCornerHalfImage];
             _topRightCornerHalfRoundImageView.alphaValue = 0.75;
             _topRightCornerHalfRoundImageView.autoresizingMask = NSViewMinYMargin | NSViewMinXMargin;
 
-            _bottomLeftCornerHalfRoundImageView = [NSImageView imageViewWithImage:bottomLeftCornerHalfImage];
+            _bottomLeftCornerHalfRoundImageView = [NSImageView imageViewWithImage:gBottomLeftCornerHalfImage];
             _bottomLeftCornerHalfRoundImageView.alphaValue = 0.75;
             _bottomLeftCornerHalfRoundImageView.autoresizingMask = NSViewMaxYMargin | NSViewMaxXMargin;
 
-            _bottomRightCornerHalfRoundImageView = [NSImageView imageViewWithImage:bottomRightCornerHalfImage];
+            _bottomRightCornerHalfRoundImageView = [NSImageView imageViewWithImage:gBottomRightCornerHalfImage];
             _bottomRightCornerHalfRoundImageView.alphaValue = 0.75;
             _bottomRightCornerHalfRoundImageView.autoresizingMask = NSViewMaxYMargin | NSViewMinXMargin;
 
@@ -351,26 +354,19 @@ NS_CLASS_AVAILABLE_MAC(10_14)
             [self addSubview:_bottomLeftCornerHalfRoundImageView];
             [self addSubview:_bottomRightCornerHalfRoundImageView];
 
-            // Full
-
-            NSImage *topLeftCornerFullImage = gTopLeftCornerFullImage;
-            NSImage *topRightCornerFullImage = gTopRightCornerFullImage;
-            NSImage *bottomLeftCornerFullImage = gBottomLeftCornerFullImage;
-            NSImage *bottomRightCornerFullImage = gBottomRightCornerFullImage;
-
-            _topLeftCornerFullRoundImageView = [NSImageView imageViewWithImage:topLeftCornerFullImage];
+            _topLeftCornerFullRoundImageView = [NSImageView imageViewWithImage:gTopLeftCornerFullImage];
             _topLeftCornerFullRoundImageView.autoresizingMask = NSViewMinYMargin | NSViewMaxXMargin;
             _topLeftCornerFullRoundImageView.alphaValue = 0.75;
 
-            _topRightCornerFullRoundImageView = [NSImageView imageViewWithImage:topRightCornerFullImage];
+            _topRightCornerFullRoundImageView = [NSImageView imageViewWithImage:gTopRightCornerFullImage];
             _topRightCornerFullRoundImageView.alphaValue = 0.75;
             _topRightCornerFullRoundImageView.autoresizingMask = NSViewMinYMargin | NSViewMinXMargin;
 
-            _bottomLeftCornerFullRoundImageView = [NSImageView imageViewWithImage:bottomLeftCornerFullImage];
+            _bottomLeftCornerFullRoundImageView = [NSImageView imageViewWithImage:gBottomLeftCornerFullImage];
             _bottomLeftCornerFullRoundImageView.alphaValue = 0.75;
             _bottomLeftCornerFullRoundImageView.autoresizingMask = NSViewMaxYMargin | NSViewMaxXMargin;
 
-            _bottomRightCornerFullRoundImageView = [NSImageView imageViewWithImage:bottomRightCornerFullImage];
+            _bottomRightCornerFullRoundImageView = [NSImageView imageViewWithImage:gBottomRightCornerFullImage];
             _bottomRightCornerFullRoundImageView.alphaValue = 0.75;
             _bottomRightCornerFullRoundImageView.autoresizingMask = NSViewMaxYMargin | NSViewMinXMargin;
 
@@ -385,24 +381,25 @@ NS_CLASS_AVAILABLE_MAC(10_14)
             [self addSubview:_bottomRightCornerFullRoundImageView];
         }
         {
+            NSColor *defaultBorderColor = [NSColor colorWithWhite:0.5 alpha:0.75];
             _leftBorderView = [[NSView alloc] init];
             _leftBorderView.wantsLayer = YES;
-            _leftBorderView.layer.backgroundColor = borderColor.CGColor;
+            _leftBorderView.layer.backgroundColor = defaultBorderColor.CGColor;
             _leftBorderView.autoresizingMask = NSViewMaxXMargin | NSViewHeightSizable;
 
             _rightBorderView = [[NSView alloc] init];
             _rightBorderView.wantsLayer = YES;
-            _rightBorderView.layer.backgroundColor = borderColor.CGColor;
+            _rightBorderView.layer.backgroundColor = defaultBorderColor.CGColor;
             _rightBorderView.autoresizingMask = NSViewMinXMargin | NSViewHeightSizable;
 
             _topBorderView = [[NSView alloc] init];
             _topBorderView.wantsLayer = YES;
-            _topBorderView.layer.backgroundColor = borderColor.CGColor;
+            _topBorderView.layer.backgroundColor = defaultBorderColor.CGColor;
             _topBorderView.autoresizingMask = NSViewMinYMargin | NSViewWidthSizable;
 
             _bottomBorderView = [[NSView alloc] init];
             _bottomBorderView.wantsLayer = YES;
-            _bottomBorderView.layer.backgroundColor = borderColor.CGColor;
+            _bottomBorderView.layer.backgroundColor = defaultBorderColor.CGColor;
             _bottomBorderView.autoresizingMask = NSViewMaxYMargin | NSViewWidthSizable;
 
             [self addSubview:_leftBorderView];
@@ -891,7 +888,48 @@ NS_CLASS_AVAILABLE_MAC(10_14)
     [self updateTextColors];
 }
 
+- (void)updateBorderForKeyState NS_AVAILABLE_MAC(10_14) {
+    NSColor *focusedColor   = [NSColor colorFromHexString:[iTermAdvancedSettingsModel windowBorderColor]];
+    NSColor *unfocusedColor = [NSColor colorFromHexString:[iTermAdvancedSettingsModel windowBorderColorUnfocused]];
+    const BOOL isKey = self.window.isKeyWindow;
+    NSColor *color = isKey ? (focusedColor ?: unfocusedColor) : (unfocusedColor ?: focusedColor);
+
+    if (color == nil) {
+        _topLeftCornerHalfRoundImageView.image     = gTopLeftCornerHalfImage;
+        _topRightCornerHalfRoundImageView.image    = gTopRightCornerHalfImage;
+        _bottomLeftCornerHalfRoundImageView.image  = gBottomLeftCornerHalfImage;
+        _bottomRightCornerHalfRoundImageView.image = gBottomRightCornerHalfImage;
+        _topLeftCornerFullRoundImageView.image     = gTopLeftCornerFullImage;
+        _topRightCornerFullRoundImageView.image    = gTopRightCornerFullImage;
+        _bottomLeftCornerFullRoundImageView.image  = gBottomLeftCornerFullImage;
+        _bottomRightCornerFullRoundImageView.image = gBottomRightCornerFullImage;
+
+        NSColor *defaultBorderColor = [NSColor colorWithWhite:0.5 alpha:0.75];
+        _leftBorderView.layer.backgroundColor   = defaultBorderColor.CGColor;
+        _rightBorderView.layer.backgroundColor  = defaultBorderColor.CGColor;
+        _topBorderView.layer.backgroundColor    = defaultBorderColor.CGColor;
+        _bottomBorderView.layer.backgroundColor = defaultBorderColor.CGColor;
+        return;
+    }
+
+    _topLeftCornerHalfRoundImageView.image     = iTermTintedBorderImage(gTopLeftCornerHalfImage,     color);
+    _topRightCornerHalfRoundImageView.image    = iTermTintedBorderImage(gTopRightCornerHalfImage,    color);
+    _bottomLeftCornerHalfRoundImageView.image  = iTermTintedBorderImage(gBottomLeftCornerHalfImage,  color);
+    _bottomRightCornerHalfRoundImageView.image = iTermTintedBorderImage(gBottomRightCornerHalfImage, color);
+    _topLeftCornerFullRoundImageView.image     = iTermTintedBorderImage(gTopLeftCornerFullImage,     color);
+    _topRightCornerFullRoundImageView.image    = iTermTintedBorderImage(gTopRightCornerFullImage,    color);
+    _bottomLeftCornerFullRoundImageView.image  = iTermTintedBorderImage(gBottomLeftCornerFullImage,  color);
+    _bottomRightCornerFullRoundImageView.image = iTermTintedBorderImage(gBottomRightCornerFullImage, color);
+
+    NSColor *layerColor = [color colorWithAlphaComponent:0.75];
+    _leftBorderView.layer.backgroundColor   = layerColor.CGColor;
+    _rightBorderView.layer.backgroundColor  = layerColor.CGColor;
+    _topBorderView.layer.backgroundColor    = layerColor.CGColor;
+    _bottomBorderView.layer.backgroundColor = layerColor.CGColor;
+}
+
 - (void)updateBorderViews NS_AVAILABLE_MAC(10_14) {
+    [self updateBorderForKeyState];
     const BOOL haveLeft = self.delegate.haveLeftBorder;
     const BOOL haveTop = self.delegate.haveTopBorder;
     const BOOL haveRight = self.delegate.haveRightBorderRegardlessOfScrollBar;

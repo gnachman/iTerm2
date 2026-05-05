@@ -452,6 +452,8 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (NSString *)splitPaneTargetDropBorderColor;
 + (NSString *)splitPaneTargetDropInnerBorderColor;
 + (BOOL)squareWindowCorners;
++ (NSString *)windowBorderColor;
++ (NSString *)windowBorderColorUnfocused;
 + (NSString *)sshSchemePath;
 + (BOOL)sshURLsSupportPath;
 + (BOOL)startDebugLoggingAutomatically;
