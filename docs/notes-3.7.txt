@@ -339,6 +339,12 @@ Settings Improvements:
   Inline Chat.
 
 Bug Fixes:
+- Fix a crash when invoking Undo after closing
+  a split pane that contained an annotation,
+  session note, or chat input. These text
+  views now own their own undo manager so
+  text-edit undo actions can’t outlive the
+  text view in the window’s undo stack.
 - Fix UI hangs when opendirectoryd is slow or
   wedged. The user’s login shell is now
   fetched in the pidinfo XPC service (so a

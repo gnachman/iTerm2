@@ -43,6 +43,7 @@ static void PTYNoteViewControllerIncrementVisibleCount(NSInteger delta) {
     NSPoint anchor_;
     BOOL watchForUpdate_;
     BOOL hidden_;
+    NSUndoManager *_textViewUndoManager;
 }
 
 @synthesize noteView = noteView_;
@@ -335,6 +336,17 @@ static void PTYNoteViewControllerIncrementVisibleCount(NSInteger delta) {
         return YES;
     }
     return NO;
+}
+
+// Bind the text view's undo stack to this controller's lifetime. NSUndoManager
+// holds undo targets unowned(unsafe), so leaking text-edit undo actions into a
+// shared (window) undo manager would leave dangling pointers when the
+// annotation is destroyed (e.g. when a split pane is closed).
+- (NSUndoManager *)undoManagerForTextView:(NSTextView *)view {
+    if (!_textViewUndoManager) {
+        _textViewUndoManager = [[NSUndoManager alloc] init];
+    }
+    return _textViewUndoManager;
 }
 
 - (void)updateBackgroundColor {

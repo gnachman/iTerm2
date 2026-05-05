@@ -21,6 +21,13 @@ private class FlippedVisualEffectView: NSVisualEffectView {
 private class SessionNoteTextView: NSTextView {
     var collapseHandler: (() -> Void)?
 
+    // Bind the undo stack to this text view's lifetime. NSUndoManager holds
+    // undo targets unowned(unsafe), so registering text-edit undo on a shared
+    // (window) undo manager leaves dangling pointers when the session — and
+    // this text view with it — is deallocated.
+    private lazy var privateUndoManager = UndoManager()
+    override var undoManager: UndoManager? { privateUndoManager }
+
     override func keyDown(with event: NSEvent) {
         if event.keyCode == 36 /* Return */ && event.modifierFlags.contains(.shift) {
             collapseHandler?()

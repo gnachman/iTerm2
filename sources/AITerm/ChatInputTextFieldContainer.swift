@@ -259,6 +259,13 @@ class ChatInputTextView: ShiftEnterTextView {
     var sendAction: Selector?
     weak var sendTarget: AnyObject?
 
+    // Bind the undo stack to this text view's lifetime. NSUndoManager holds
+    // undo targets unowned(unsafe), so registering text-edit undo on a shared
+    // (window) undo manager leaves dangling pointers when the chat — and this
+    // text view with it — is deallocated.
+    private lazy var privateUndoManager = UndoManager()
+    override var undoManager: UndoManager? { privateUndoManager }
+
     override func keyDown(with event: NSEvent) {
         guard let characters = event.charactersIgnoringModifiers, characters == "\r" else {
             super.keyDown(with: event)
