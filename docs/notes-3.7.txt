@@ -339,6 +339,12 @@ Settings Improvements:
   Inline Chat.
 
 Bug Fixes:
+- Fix the cursor jumping to the end while
+  typing in an annotation when the caret was
+  not already at the end. The optimistic
+  main-thread write echoed back through the
+  delegate and reassigned the text view’s
+  string, which resets the selection.
 - Fix a crash when invoking Undo after closing
   a split pane that contained an annotation,
   session note, or chat input. These text

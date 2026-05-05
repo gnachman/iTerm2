@@ -238,6 +238,13 @@ static void PTYNoteViewControllerIncrementVisibleCount(NSInteger delta) {
 
 - (void)updateTextViewString {
     [self view];  // Ensure textView exists.
+    // Avoid reassigning .string when nothing changed: NSTextView resets the
+    // selection to the end on assignment, so a no-op update during typing
+    // (the optimistic main-thread write echoed back via annotationStringDidChange:)
+    // would jump the cursor after every keystroke.
+    if ([textView_.string isEqualToString:_annotation.stringValue]) {
+        return;
+    }
     textView_.string = _annotation.stringValue;
 }
 
