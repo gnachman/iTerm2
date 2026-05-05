@@ -7,24 +7,18 @@ class TwoTextFieldCell: iTermTableCellView {
     @objc let bottomTextField: NSTextField
     @objc var iconImageView: NSImageView? = nil
 
+    private static let iconSize: CGFloat = 10
+    private static let iconTopInset: CGFloat = 2.5
+    private static let iconTextSpacing: CGFloat = 2
+
     @objc(initWithIdentifier:font:)
     init(identifier: String, font: NSFont) {
-        topTextField = NSTextField.it_textFieldForTableView(withIdentifier: identifier)
-        topTextField.font = font
-        topTextField.lineBreakMode = .byTruncatingTail
-        topTextField.usesSingleLineMode = false
-        topTextField.maximumNumberOfLines = 1
-        topTextField.cell?.truncatesLastVisibleLine = true
-
-        bottomTextField = NSTextField.it_textFieldForTableView(withIdentifier: identifier)
-        bottomTextField.font = font
-        bottomTextField.lineBreakMode = .byTruncatingTail
-        bottomTextField.usesSingleLineMode = false
-        bottomTextField.maximumNumberOfLines = 1
-        bottomTextField.cell?.truncatesLastVisibleLine = true
+        topTextField = Self.makeTextField(identifier: identifier, font: font)
+        bottomTextField = Self.makeTextField(identifier: identifier, font: font)
 
         super.init(frame: .zero)
-        setupViews()
+        addSubview(topTextField)
+        addSubview(bottomTextField)
     }
 
     @objc(initWithIdentifier:font:icon:color:)
@@ -35,10 +29,9 @@ class TwoTextFieldCell: iTermTableCellView {
             icon.isTemplate = true
             imageView.contentTintColor = iconColor
             imageView.image = icon
-            imageView.translatesAutoresizingMaskIntoConstraints = false
-            self.iconImageView = imageView
-            // Reconfigure layout to include the icon.
-            setupViews()
+            iconImageView = imageView
+            addSubview(imageView)
+            needsLayout = true
         }
     }
 
@@ -46,42 +39,53 @@ class TwoTextFieldCell: iTermTableCellView {
         it_fatalError("Not implemented")
     }
 
-    private func setupViews() {
-        // Remove previous subviews if reconfiguring.
-        subviews.forEach { $0.removeFromSuperview() }
+    private static func makeTextField(identifier: String, font: NSFont) -> NSTextField {
+        let tf = NSTextField.it_textFieldForTableView(withIdentifier: identifier)
+        tf.font = font
+        tf.lineBreakMode = .byTruncatingTail
+        tf.usesSingleLineMode = false
+        tf.maximumNumberOfLines = 1
+        tf.cell?.truncatesLastVisibleLine = true
+        return tf
+    }
 
-        let textStackView = NSStackView(views: [topTextField, bottomTextField])
-        textStackView.orientation = .vertical
-        textStackView.alignment = .leading
-        textStackView.spacing = 0
-        textStackView.translatesAutoresizingMaskIntoConstraints = false
+    override func layout() {
+        super.layout()
 
-        let containerView: NSView
+        let bounds = self.bounds
+        let topHeight = ceil(topTextField.intrinsicContentSize.height)
+        let bottomHeight = ceil(bottomTextField.intrinsicContentSize.height)
+
         if let iconImageView = iconImageView {
-            let horizontalStack = NSStackView(views: [iconImageView, textStackView])
-            horizontalStack.orientation = .horizontal
-            horizontalStack.alignment = .top
-            horizontalStack.spacing = 2
-            horizontalStack.translatesAutoresizingMaskIntoConstraints = false
-            containerView = horizontalStack
-            addSubview(containerView)
+            iconImageView.frame = NSRect(
+                x: 0,
+                y: bounds.maxY - Self.iconTopInset - Self.iconSize,
+                width: Self.iconSize,
+                height: Self.iconSize)
 
-            NSLayoutConstraint.activate([
-                iconImageView.heightAnchor.constraint(equalToConstant: 10.0),
-                iconImageView.widthAnchor.constraint(equalToConstant: 10.0),
-                iconImageView.topAnchor.constraint(equalTo: topAnchor, constant: 2.5)
-            ])
+            let textX = Self.iconSize + Self.iconTextSpacing
+            let textWidth = max(0, bounds.width - textX)
+            let topY = bounds.maxY - Self.iconTopInset - topHeight
+            topTextField.frame = NSRect(x: textX,
+                                        y: topY,
+                                        width: textWidth,
+                                        height: topHeight)
+            bottomTextField.frame = NSRect(x: textX,
+                                           y: topY - bottomHeight,
+                                           width: textWidth,
+                                           height: bottomHeight)
         } else {
-            containerView = textStackView
-            addSubview(containerView)
+            let textBlockHeight = topHeight + bottomHeight
+            let topY = bounds.midY + textBlockHeight / 2 - topHeight
+            topTextField.frame = NSRect(x: 0,
+                                        y: topY,
+                                        width: bounds.width,
+                                        height: topHeight)
+            bottomTextField.frame = NSRect(x: 0,
+                                           y: topY - bottomHeight,
+                                           width: bounds.width,
+                                           height: bottomHeight)
         }
-
-
-        NSLayoutConstraint.activate([
-            containerView.leadingAnchor.constraint(equalTo: leadingAnchor),
-            containerView.trailingAnchor.constraint(equalTo: trailingAnchor),
-            containerView.centerYAnchor.constraint(equalTo: centerYAnchor)
-        ])
     }
 
     override var backgroundStyle: NSView.BackgroundStyle {
