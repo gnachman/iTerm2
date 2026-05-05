@@ -45,30 +45,30 @@
     for (CFIndex j = 0; j < CFArrayGetCount(runs); j++) {
         CTRunRef run = CFArrayGetValueAtIndex(runs, j);
         size_t length = CTRunGetGlyphCount(run);
+        NS_VALID_UNTIL_END_OF_SCOPE NSMutableData *glyphsBuffer = nil;
         const CGGlyph *buffer = CTRunGetGlyphsPtr(run);
         if (!buffer) {
-            NSMutableData *tempBuffer =
-            [[NSMutableData alloc] initWithLength:sizeof(CGGlyph) * length];
-            CTRunGetGlyphs(run, CFRangeMake(0, length), (CGGlyph *)tempBuffer.mutableBytes);
-            buffer = tempBuffer.mutableBytes;
+            glyphsBuffer = [[NSMutableData alloc] initWithLength:sizeof(CGGlyph) * length];
+            CTRunGetGlyphs(run, CFRangeMake(0, length), (CGGlyph *)glyphsBuffer.mutableBytes);
+            buffer = glyphsBuffer.mutableBytes;
         }
 
-        NSMutableData *positionsBuffer =
+        NS_VALID_UNTIL_END_OF_SCOPE NSMutableData *positionsBuffer =
         [[NSMutableData alloc] initWithLength:sizeof(CGPoint) * length];
         CTRunGetPositions(run, CFRangeMake(0, length), (CGPoint *)positionsBuffer.mutableBytes);
         CGPoint *positions = positionsBuffer.mutableBytes;
 
-        NSMutableData *advancesBuffer =
+        NS_VALID_UNTIL_END_OF_SCOPE NSMutableData *advancesBuffer =
         [[NSMutableData alloc] initWithLength:sizeof(CGSize) * length];
         CTRunGetAdvances(run, CFRangeMake(0, length), advancesBuffer.mutableBytes);
         CGSize *advances = advancesBuffer.mutableBytes;
 
+        NS_VALID_UNTIL_END_OF_SCOPE NSMutableData *indicesBuffer = nil;
         const CFIndex *glyphIndexToCharacterIndex = CTRunGetStringIndicesPtr(run);
         if (!glyphIndexToCharacterIndex) {
-            NSMutableData *tempBuffer =
-            [[NSMutableData alloc] initWithLength:sizeof(CFIndex) * length];
-            CTRunGetStringIndices(run, CFRangeMake(0, length), (CFIndex *)tempBuffer.mutableBytes);
-            glyphIndexToCharacterIndex = (CFIndex *)tempBuffer.mutableBytes;
+            indicesBuffer = [[NSMutableData alloc] initWithLength:sizeof(CFIndex) * length];
+            CTRunGetStringIndices(run, CFRangeMake(0, length), (CFIndex *)indicesBuffer.mutableBytes);
+            glyphIndexToCharacterIndex = (CFIndex *)indicesBuffer.mutableBytes;
         }
 
         BOOL stop = NO;
