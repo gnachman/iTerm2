@@ -473,3 +473,13 @@ Bug Fixes:
   and by walking up to a non-shell ancestor
   when the deepest foreground job has no
   icon match.
+- Fix the session’s hostname variable
+  going stale when gethostname() at session
+  init returned a value (e.g., from a
+  transient DHCP-provided name) that
+  differed from the OSC RemoteHost the
+  shell later sent. Now a host change is
+  also detected when the new value differs
+  from the most recently pushed one, not
+  only from the interval tree’s last-line
+  host.

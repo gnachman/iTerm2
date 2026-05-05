@@ -71,6 +71,11 @@ static const int64_t VT100ScreenMutableStateSideEffectFlagLineBufferDidDropLines
     BOOL _runSideEffectAfterTopJoinFinishes;
     NSMutableArray<void (^)(void)> *_postTriggerActions;
     void (^_nextPromptBlock)(void);
+    // Hostname most recently pushed to the delegate via screenCurrentHostDidChange.
+    // Used to fire that side effect once per session even when the new mark equals
+    // the tree's last-line host, so the main-thread hostname variable can be
+    // refreshed if didFinishInitialization seeded it from a stale gethostname().
+    NSString *_lastPushedHostname;
 }
 
 // performingJoinedBlock is now centralized in iTermGCD.
@@ -3566,7 +3571,15 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     const int cursorLine = self.numberOfLines - self.height + self.currentGrid.cursorY;
     id<VT100RemoteHostReading> remoteHostObj = [[self setRemoteHost:host user:user onLine:cursorLine] doppelganger];
 
-    if (![remoteHostObj isEqualToRemoteHost:currentHost]) {
+    const BOOL hostChangedInTree = ![remoteHostObj isEqualToRemoteHost:currentHost];
+    // Also fire on first push or when the value differs from what we last pushed,
+    // so a stale hostname variable seeded by didFinishInitialization gets corrected
+    // even when the new OSC matches the tree's last-line host.
+    NSString *newHostname = remoteHostObj.hostname ?: @"";
+    const BOOL pushedValueDiffers = (_lastPushedHostname == nil ||
+                                     ![_lastPushedHostname isEqualToString:newHostname]);
+    if (hostChangedInTree || pushedValueDiffers) {
+        _lastPushedHostname = [newHostname copy];
         const int line = [self numberOfScrollbackLines] + self.cursorY;
         NSString *pwd = [self workingDirectoryOnLine:line];
         dispatch_queue_t queue = _queue;
