@@ -58,9 +58,24 @@ class ChatService {
                 return
             }
 
+        case .setPermissions:
+            // Permission updates are handled synchronously by the agent
+            // (no LLM round-trip). Routing them through agentWorking
+            // briefly publishes typingStatus(true) → typingStatus(false),
+            // which makes the chat view's typing-indicator setter
+            // scroll-to-bottom unnecessarily. Apply the permissions
+            // without engaging the typing indicator.
+            let agent = agents[chatID]
+                ?? newAgent(forChatID: chatID,
+                            messages: messages(chatID: chatID).dropLast())
+            try? agent.fetchCompletion(userMessage: message,
+                                       history: messages(chatID: chatID).dropLast(),
+                                       streaming: nil) { _ in }
+            return
+
         case .plainText, .markdown, .explanationRequest, .explanationResponse,
                 .remoteCommandRequest, .remoteCommandResponse, .selectSessionRequest, .renameChat,
-                .append, .appendAttachment, .commit, .setPermissions, .vectorStoreCreated,
+                .append, .appendAttachment, .commit, .vectorStoreCreated,
                 .terminalCommand, .multipart:
             break
         }

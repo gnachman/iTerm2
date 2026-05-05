@@ -3,17 +3,20 @@ import Cocoa
 @objc
 class MessageCellView: NSView {
     var textSelectable = true
-    var customConstraints = [NSLayoutConstraint]()
     var rightClickMonitor: Any?
     var editable: Bool = false
     // store the messageUniqueID so that the edit button can pass it along.
     var messageUniqueID: UUID?
     static let topInset: CGFloat = 8
     static let bottomInset: CGFloat = 8
+    static let horizontalEdgePadding: CGFloat = 8
     // Callback for the edit button.
     var editButtonClicked: ((UUID) -> Void)?
     var forkButtonClicked: ((UUID) -> Void)?
-    var maxWidthConstraint: NSLayoutConstraint?
+
+    // Cached at configure-time so layout() and the static height helper
+    // both see the same bubble width budget.
+    var configuredMaxBubbleWidth: CGFloat = 0
 
     override var description: String {
         "<\(Self.self): \(it_addressString) editable=\(editable)>"
@@ -34,13 +37,6 @@ class MessageCellView: NSView {
         }
     }
 
-
-    func add(constraint: NSLayoutConstraint) {
-        customConstraints.append(constraint)
-        constraint.isActive = true
-    }
-
-
     override func hitTest(_ point: NSPoint) -> NSView? {
         if textSelectable {
             return super.hitTest(point)
@@ -59,8 +55,12 @@ class MessageCellView: NSView {
     func updateColors() {
     }
 
-    func maxBubbleWidth(tableViewWidth: CGFloat) -> CGFloat {
+    static func maxBubbleWidth(tableViewWidth: CGFloat) -> CGFloat {
         return max(16, tableViewWidth * 0.7)
+    }
+
+    func maxBubbleWidth(tableViewWidth: CGFloat) -> CGFloat {
+        return Self.maxBubbleWidth(tableViewWidth: tableViewWidth)
     }
 
     override var menu: NSMenu? {
@@ -114,4 +114,3 @@ class MessageCellView: NSView {
         it_fatalError()
     }
 }
-

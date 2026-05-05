@@ -6,10 +6,9 @@
 //
 
 class SystemMessageCellView: RegularMessageCellView {
-    override func addHorizontalAlignmentConstraints(_ rendition: MessageRendition) {
-        add(constraint: bubbleView.centerXAnchor.constraint(equalTo: centerXAnchor))
-        add(constraint: bubbleView.trailingAnchor.constraint(lessThanOrEqualTo: trailingAnchor, constant: -8))
-        add(constraint: bubbleView.leadingAnchor.constraint(greaterThanOrEqualTo: leadingAnchor, constant: 8))
+    override func bubbleOriginX(bubbleWidth: CGFloat) -> CGFloat {
+        let centered = floor((bounds.width - bubbleWidth) / 2)
+        return max(Self.bubbleEdgePadding, centered)
     }
 
     override func backgroundColorPair(_ rendition: MessageRendition) -> (NSColor, NSColor) {

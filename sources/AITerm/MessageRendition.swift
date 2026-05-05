@@ -34,6 +34,10 @@ struct MessageRendition {
         var attributedString: NSAttributedString
         var buttons: [Button]
         var enableButtons: Bool
+        // Some bubbles (e.g. the permissions toggle row) want the buttons
+        // to stay tappable after a click so the user can keep cycling the
+        // value. The default is to disable all buttons on click.
+        var keepsButtonsEnabledAfterClick: Bool = false
     }
     struct Command {
         var command: String

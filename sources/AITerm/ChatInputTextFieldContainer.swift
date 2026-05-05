@@ -18,15 +18,36 @@ fileprivate let horizontalInset = CGFloat(6)
 class ChatInputTextFieldContainer: NSView {
     private let scrollView: NSScrollView = {
         let sv = NSScrollView(frame: .zero)
-        if #unavailable(macOS 26) {
-            sv.translatesAutoresizingMaskIntoConstraints = false
-        }
         sv.hasVerticalScroller = true
         sv.hasHorizontalScroller = false
         sv.autohidesScrollers = true
         sv.borderType = .noBorder
         sv.drawsBackground = false
         return sv
+    }()
+
+    // Translucent backdrop. NSVisualEffectView replaces the older
+    // NSGlassEffectView entirely so this container doesn't drag the chat
+    // tree into NSGlassEffectView's auto-layout coupling.
+    private let backdrop: NSVisualEffectView = {
+        let v = NSVisualEffectView()
+        v.wantsLayer = true
+        v.blendingMode = .withinWindow
+        v.state = .active
+        v.material = .menu
+        v.layer?.cornerRadius = 10
+        v.layer?.masksToBounds = true
+        v.layer?.borderWidth = 1
+        v.layer?.borderColor = NSColor.gray.withAlphaComponent(0.5).cgColor
+        return v
+    }()
+
+    private let scrim: NSView = {
+        let v = NSView()
+        v.wantsLayer = true
+        v.layer?.cornerRadius = 10
+        v.layer?.masksToBounds = true
+        return v
     }()
 
     var maxHeight: CGFloat = 200.0
@@ -39,7 +60,6 @@ class ChatInputTextFieldContainer: NSView {
         tv.drawsBackground = false
         tv.isVerticallyResizable = true
         tv.isHorizontallyResizable = false
-        tv.autoresizingMask = [.width]
         tv.textContainer?.containerSize = NSSize(width: 0, height: CGFloat.greatestFiniteMagnitude)
         tv.textContainer?.widthTracksTextView = true
         tv.font = NSFont.systemFont(ofSize: NSFont.systemFontSize)
@@ -47,13 +67,13 @@ class ChatInputTextFieldContainer: NSView {
         return tv
     }()
 
-    private lazy var scrim: NSView? = {
-        if #unavailable(macOS 26) {
-            return NSView()
-        } else {
-            return nil
+    private let layoutJoiner = IdempotentOperationJoiner.asyncJoiner(.main)
+
+    func setNeedsLayoutNow() {
+        layoutJoiner.setNeedsUpdate { [weak self] in
+            self?.performLayoutNow()
         }
-    }()
+    }
     var placeholder: String? {
         get {
             textView.it_placeholderString
@@ -82,7 +102,7 @@ class ChatInputTextFieldContainer: NSView {
         }
         set {
             textView.string = newValue
-            invalidateIntrinsicContentSize()
+            setNeedsLayoutNow()
         }
     }
 
@@ -108,150 +128,130 @@ class ChatInputTextFieldContainer: NSView {
         NotificationCenter.default.removeObserver(self)
     }
 
+    override func setFrameSize(_ newSize: NSSize) {
+        let oldSize = frame.size
+        super.setFrameSize(newSize)
+        if oldSize != newSize {
+            setNeedsLayoutNow()
+        }
+    }
+
+    // AppKit's pass calls layout() before draw — route through the same
+    // method the joiner uses so children are sized in time for the first
+    // paint. The async path coalesces re-layouts triggered by text or
+    // size changes outside an active layout pass.
     override func layout() {
         super.layout()
+        performLayoutNow()
+    }
+
+    private func performLayoutNow() {
+        guard bounds.width > 0 else { return }
+
+        let backdropFrame = bounds
+        if backdrop.frame != backdropFrame {
+            backdrop.frame = backdropFrame
+        }
+        let scrimFrame = bounds
+        if scrim.frame != scrimFrame {
+            scrim.frame = scrimFrame
+        }
+
+        // ScrollView is inset horizontally and vertically; same insets as
+        // the original auto-layout setup.
+        let scrollFrame = NSRect(x: horizontalInset,
+                                 y: extraHeight / 2,
+                                 width: max(0, bounds.width - horizontalInset * 2),
+                                 height: max(0, bounds.height - extraHeight))
+        if scrollView.frame != scrollFrame {
+            scrollView.frame = scrollFrame
+        }
+
+        // Lay out the text view inside the scroll view's content view.
+        // Width fills clip view; height = max(font line height, used rect
+        // height) so a blank single line still reserves a full line of
+        // room for the cursor. Without the floor, single-line empty
+        // content sizes the text view shorter than its drawn cursor and
+        // the bottom of the line gets clipped by the scroll view.
+        let clipBounds = scrollView.contentView.bounds
         if let textContainer = textView.textContainer {
-            textContainer.containerSize = NSSize(width: textView.bounds.width,
+            textContainer.containerSize = NSSize(width: clipBounds.width,
                                                  height: CGFloat.greatestFiniteMagnitude)
         }
-        // Calculate the full content height from the layout manager.
-        if let layoutManager = textView.layoutManager, let textContainer = textView.textContainer {
+        var textFrame = textView.frame
+        textFrame.origin = .zero
+        textFrame.size.width = clipBounds.width
+        if let layoutManager = textView.layoutManager,
+           let textContainer = textView.textContainer {
             layoutManager.ensureLayout(for: textContainer)
-            let usedRect = layoutManager.usedRect(for: textContainer)
-            // Set the text view’s frame to the full used height.
-            var frame = textView.frame
-            frame.size.height = usedRect.height
-            textView.frame = frame
+            let used = layoutManager.usedRect(for: textContainer).height
+            let font = textView.font ?? NSFont.systemFont(ofSize: NSFont.systemFontSize)
+            let lineHeight = ceil(layoutManager.defaultLineHeight(for: font))
+            textFrame.size.height = max(lineHeight, ceil(used))
+        }
+        if textView.frame != textFrame {
+            textView.frame = textFrame
         }
     }
 
     private func customizeAppearance() {
-        // Set an initial frame.
         frame = NSRect(x: 0, y: 0, width: 100, height: 100)
 
-        // Configure background.
-        let backgroundView: NSVisualEffectView?
-        if #available(macOS 26, *) {
-            backgroundView = nil
-            scrollView.translatesAutoresizingMaskIntoConstraints = false
-            let glassView = NSGlassEffectView()
-            glassView.contentView = scrollView
-            glassView.cornerRadius = 14
-            glassView.translatesAutoresizingMaskIntoConstraints = false
-            glassView.setContentHuggingPriority(.defaultLow, for: .horizontal)
+        addSubview(backdrop)
+        addSubview(scrim)
 
-            addSubview(glassView)
-            NSLayoutConstraint.activate([
-                glassView.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 0),
-                glassView.trailingAnchor.constraint(equalTo: trailingAnchor, constant: 0),
-                glassView.topAnchor.constraint(equalTo: topAnchor, constant: 0),
-                glassView.bottomAnchor.constraint(equalTo: bottomAnchor, constant: 0),
-            ])
-            // Let the scrollView size itself based on content
-            NSLayoutConstraint.activate([
-                scrollView.leadingAnchor.constraint(equalTo: glassView.leadingAnchor),
-                scrollView.trailingAnchor.constraint(equalTo: glassView.trailingAnchor),
-                scrollView.topAnchor.constraint(equalTo: glassView.topAnchor),
-                scrollView.bottomAnchor.constraint(equalTo: glassView.bottomAnchor),
-            ])
-        } else {
-            scrollView.translatesAutoresizingMaskIntoConstraints = false
-            backgroundView = {
-                let backgroundView = NSVisualEffectView()
-                backgroundView.translatesAutoresizingMaskIntoConstraints = false
-                backgroundView.blendingMode = .withinWindow
-                backgroundView.material = .menu
-                backgroundView.state = .active
-                backgroundView.wantsLayer = true
-                backgroundView.layer?.cornerRadius = 10
-                backgroundView.layer?.masksToBounds = true
-                backgroundView.layer?.borderWidth = 1
-                backgroundView.layer?.borderColor = NSColor.gray.withAlphaComponent(0.5).cgColor
-                return backgroundView
-            }()
-        }
+        scrollView.documentView = textView
+        // No contentInsets here — performLayoutNow insets the scrollView's
+        // frame inside this container (horizontalInset on the sides,
+        // extraHeight/2 top and bottom). Using both would double the
+        // padding and leave only a sliver of visible text.
+        scrollView.automaticallyAdjustsContentInsets = false
+        scrollView.contentInsets = .init()
+        addSubview(scrollView)
 
-        if let scrim {
-            scrim.translatesAutoresizingMaskIntoConstraints = false
-            scrim.wantsLayer = true
-            scrim.layer?.backgroundColor = effectiveAppearance.it_isDark ?
+        updateScrimColor()
+    }
+
+    private func updateScrimColor() {
+        scrim.layer?.backgroundColor = effectiveAppearance.it_isDark ?
             NSColor(white: 0, alpha: 0.3).cgColor :
             NSColor(white: 1, alpha: 0.3).cgColor
-            scrim.layer?.cornerRadius = 10
-            scrim.layer?.masksToBounds = true
-            addSubview(scrim)
-        }
-
-        if let backgroundView {
-            addSubview(backgroundView)
-            NSLayoutConstraint.activate([
-                backgroundView.leadingAnchor.constraint(equalTo: leadingAnchor),
-                backgroundView.trailingAnchor.constraint(equalTo: trailingAnchor),
-                backgroundView.topAnchor.constraint(equalTo: topAnchor),
-                backgroundView.bottomAnchor.constraint(equalTo: bottomAnchor),
-            ])
-        }
-
-        if let scrim {
-            NSLayoutConstraint.activate([
-                scrim.leadingAnchor.constraint(equalTo: leadingAnchor),
-                scrim.trailingAnchor.constraint(equalTo: trailingAnchor),
-                scrim.topAnchor.constraint(equalTo: topAnchor),
-                scrim.bottomAnchor.constraint(equalTo: bottomAnchor)
-            ])
-        }
-
-        // Add the text view inside the scroll view.
-        textView.translatesAutoresizingMaskIntoConstraints = false
-        scrollView.documentView = textView
-        if #available(macOS 26, *) {
-            scrollView.automaticallyAdjustsContentInsets = false
-            scrollView.contentInsets = NSEdgeInsets(top: extraHeight / 2,
-                                                    left: horizontalInset,
-                                                    bottom: extraHeight / 2,
-                                                    right: horizontalInset)
-        }
-
-        if scrollView.superview == nil {
-            // Pre-26 code path when scrollView is not in a glass view
-            addSubview(scrollView)
-            NSLayoutConstraint.activate([
-                scrollView.leadingAnchor.constraint(equalTo: leadingAnchor, constant: horizontalInset),
-                scrollView.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -horizontalInset),
-                scrollView.topAnchor.constraint(equalTo: topAnchor, constant: extraHeight / 2),
-                scrollView.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -extraHeight / 2),
-            ])
-        }
-
-        NSLayoutConstraint.activate([
-            textView.leadingAnchor.constraint(equalTo: scrollView.contentView.leadingAnchor),
-            textView.trailingAnchor.constraint(equalTo: scrollView.contentView.trailingAnchor),
-            textView.topAnchor.constraint(equalTo: scrollView.contentView.topAnchor)
-        ])
     }
 
     @objc private func textDidChange(_ notification: Notification) {
-        // Invalidate intrinsic content size when text changes.
-        self.invalidateIntrinsicContentSize()
-        needsLayout = true
+        setNeedsLayoutNow()
     }
 
     override func viewDidChangeEffectiveAppearance() {
-        scrim?.layer?.backgroundColor = effectiveAppearance.it_isDark ?
-            NSColor(white: 0, alpha: 0.3).cgColor :
-            NSColor(white: 1, alpha: 0.3).cgColor
+        super.viewDidChangeEffectiveAppearance()
+        updateScrimColor()
     }
 
-    override var intrinsicContentSize: NSSize {
-        guard let textContainer = textView.textContainer,
-              let layoutManager = textView.layoutManager else {
-            return super.intrinsicContentSize
+    // Stable height measurement for a hypothetical content width that does
+    // NOT touch our live text container or layout manager. Floored at one
+    // line of the configured font so empty / single-line content reserves
+    // enough vertical room for the cursor — without this, NSLayoutManager's
+    // usedRect under-reports for a single empty line and the scroll view
+    // ends up shorter than the text view it contains.
+    func preferredHeight(forContentWidth contentWidth: CGFloat) -> CGFloat {
+        guard let textStorage = textView.textStorage else {
+            return extraHeight
         }
-        layoutManager.ensureLayout(for: textContainer)
-        let usedRect = layoutManager.usedRect(for: textContainer)
-        let calculatedHeight = usedRect.height + extraHeight
-        let height = min(calculatedHeight, maxHeight)
-        return NSSize(width: NSView.noIntrinsicMetric, height: height)
+        let measurementWidth = max(0, contentWidth - horizontalInset * 2)
+        let font = textView.font ?? NSFont.systemFont(ofSize: NSFont.systemFontSize)
+        let storage = NSTextStorage(attributedString: textStorage)
+        let layoutManager = NSLayoutManager()
+        let container = NSTextContainer(size: NSSize(width: measurementWidth,
+                                                     height: CGFloat.greatestFiniteMagnitude))
+        container.lineFragmentPadding = textView.textContainer?.lineFragmentPadding ?? 0
+        container.widthTracksTextView = false
+        layoutManager.addTextContainer(container)
+        storage.addLayoutManager(layoutManager)
+        layoutManager.ensureLayout(for: container)
+        let used = layoutManager.usedRect(for: container)
+        let lineHeight = ceil(layoutManager.defaultLineHeight(for: font))
+        let textHeight = max(lineHeight, ceil(used.height))
+        return min(textHeight + extraHeight, maxHeight)
     }
 }
 

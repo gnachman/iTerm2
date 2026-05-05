@@ -13,19 +13,8 @@ class MessageTimestamp: NSTextField {}
 
 @objc
 class RegularMessageCellView: MessageCellView {
-    // The bubble
     let bubbleView = BubbleView()
 
-    // A vertical stack that holds the textLabel on top and any buttons beneath
-    private let contentStack: NSStackView = {
-        let stack = NSStackView()
-        stack.orientation = .vertical
-        stack.spacing = RegularMessageCellView.stackViewSpacing
-        stack.translatesAutoresizingMaskIntoConstraints = false
-        return stack
-    }()
-
-    // The text label
     private let textLabel: AutoSizingTextView = {
         let tv = AutoSizingTextView()
         tv.isEditable = false
@@ -35,16 +24,8 @@ class RegularMessageCellView: MessageCellView {
         tv.isHorizontallyResizable = false
         tv.textContainer?.lineFragmentPadding = 0
         tv.textContainerInset = .zero
-        tv.textContainer?.widthTracksTextView = true
-        tv.setContentCompressionResistancePriority(.defaultHigh, for: .horizontal)
-        tv.translatesAutoresizingMaskIntoConstraints = false
+        tv.textContainer?.widthTracksTextView = false
         return tv
-    }()
-
-    private let container: TextLabelContainer = {
-        let container = TextLabelContainer()
-        container.translatesAutoresizingMaskIntoConstraints = false
-        return container
     }()
 
     private let timestamp: MessageTimestamp = {
@@ -55,35 +36,38 @@ class RegularMessageCellView: MessageCellView {
         textField.isBordered = false
         textField.font = NSFont.systemFont(ofSize: NSFont.smallSystemFontSize)
         textField.alphaValue = 0.65
-        textField.translatesAutoresizingMaskIntoConstraints = false
-        textField.setContentHuggingPriority(.defaultLow, for: .horizontal)
         textField.alignment = .right
         return textField
     }()
 
-    // We store the button ID + message ID so we can fire a callback
-    private var buttonIdentifiers: [NSButton: (identifier: String, messageUniqueID: UUID)] = [:]
+    private var buttons: [(button: NSButton, identifier: String, messageUniqueID: UUID)] = []
+    private var separators: [NSView] = []
+    private var bottomSpacer: NSView?
 
-    // Called when any button is clicked
     var buttonClicked: ((String, UUID) -> Void)?
 
-    // Bubble background colors
     private var backgroundColorPair: (NSColor, NSColor)?
+    private var isUserMessage: Bool = false
+    private var keepsButtonsEnabledAfterClick: Bool = false
 
-    private static let stackViewSpacing = 1.0
+    static let textHorizontalPadding: CGFloat = 8
+    static let textVerticalPadding: CGFloat = 8
+    static let separatorHeight: CGFloat = 1
+    static let buttonHeight: CGFloat = 30
+    static let buttonsBottomSpacer: CGFloat = 1
+    static let bubbleEdgePadding: CGFloat = 8
+    static let timestampGap: CGFloat = 8
 
     override func setupViews() {
         super.setupViews()
         bubbleView.wantsLayer = true
         bubbleView.layer?.cornerRadius = 8
-        bubbleView.translatesAutoresizingMaskIntoConstraints = false
     }
 
     override var description: String {
         "<\(Self.self): \(it_addressString) editable=\(editable) text=\(textLabel.textStorage?.string ?? "(nil)")>"
     }
 
-    // Update the bubble’s color if dark vs. light mode changes
     override func updateColors() {
         updateBubbleColor()
     }
@@ -104,145 +88,165 @@ class RegularMessageCellView: MessageCellView {
         guard case .regular(let regular) = rendition.flavor else {
             it_fatalError()
         }
-        NSLayoutConstraint.deactivate(customConstraints)
-        customConstraints = []
+        configuredMaxBubbleWidth = maxBubbleWidth
+        isUserMessage = rendition.isUser
+        keepsButtonsEnabledAfterClick = regular.keepsButtonsEnabledAfterClick
 
-        // Ensure constraints are really gone by removing everything
-        // from the view hierarchy.
         bubbleView.removeFromSuperview()
-        contentStack.removeFromSuperview()
         textLabel.removeFromSuperview()
-        container.removeFromSuperview()
         timestamp.removeFromSuperview()
-        for subview in contentStack.arrangedSubviews {
-            contentStack.removeArrangedSubview(subview)
-            subview.removeFromSuperview()
+        for entry in buttons {
+            entry.button.removeFromSuperview()
         }
+        for sep in separators {
+            sep.removeFromSuperview()
+        }
+        bottomSpacer?.removeFromSuperview()
+        bottomSpacer = nil
+        buttons.removeAll()
+        separators.removeAll()
 
-        // Set up subviews aside from content stack, which is dynamic.
         addSubview(bubbleView)
-        bubbleView.addSubview(contentStack)
-        container.addSubview(textLabel)
+        bubbleView.addSubview(textLabel)
 
-        // Decide bubble color pair based on isUser
         backgroundColorPair = backgroundColorPair(rendition)
         updateBubbleColor()
 
-        // Set text
         textLabel.textStorage?.setAttributedString(regular.attributedString)
-
-        // Let text wrap if it's wider than the bubble
-        textLabel.textContainer?.widthTracksTextView = false
-        textLabel.textContainer?.size = NSSize(width: maxBubbleWidth - 16, height: .greatestFiniteMagnitude)
+        textLabel.textContainer?.size = NSSize(width: maxBubbleWidth - Self.textHorizontalPadding * 2,
+                                               height: .greatestFiniteMagnitude)
         textLabel.linkTextAttributes = [.foregroundColor: rendition.linkColor]
 
-        add(constraint: container.leadingAnchor.constraint(equalTo: textLabel.leadingAnchor, constant: -8.0))
-        add(constraint: container.trailingAnchor.constraint(equalTo: textLabel.trailingAnchor, constant: 8.0))
-        add(constraint: container.topAnchor.constraint(equalTo: textLabel.topAnchor, constant: -Self.topInset))
-        add(constraint: container.bottomAnchor.constraint(equalTo: textLabel.bottomAnchor, constant: Self.bottomInset))
-        container.setContentCompressionResistancePriority(.defaultHigh, for: .vertical)
-
-        contentStack.setContentCompressionResistancePriority(.defaultHigh, for: .vertical)
-        contentStack.addArrangedSubview(container)
-
-        // Timestamp
         timestamp.stringValue = rendition.timestamp
         if !rendition.timestamp.isEmpty {
             addSubview(timestamp)
-            add(constraint: timestamp.bottomAnchor.constraint(equalTo: bubbleView.bottomAnchor))
-
-            if rendition.isUser {
-                add(constraint: timestamp.rightAnchor.constraint(equalTo: bubbleView.leftAnchor, constant: -8))
-            } else {
-                add(constraint: timestamp.leftAnchor.constraint(equalTo: bubbleView.rightAnchor, constant: 8))
-            }
         }
 
-        buttonIdentifiers.removeAll()
-
-        // Add new buttons (if any) under the text
         for buttonRendition in regular.buttons {
-            // Add a separator.
-            let view = NSView()
-            view.wantsLayer = true
-            view.layer?.backgroundColor = NSColor.gray.cgColor
-            contentStack.addArrangedSubview(view)
-            add(constraint: view.heightAnchor.constraint(equalToConstant: 1))
-            add(constraint: view.widthAnchor.constraint(equalTo: contentStack.widthAnchor, multiplier: 1.0))
+            let separator = NSView()
+            separator.wantsLayer = true
+            separator.layer?.backgroundColor = NSColor.gray.cgColor
+            bubbleView.addSubview(separator)
+            separators.append(separator)
 
-            let button = NSButton(title: buttonRendition.title, target: self, action: #selector(buttonTapped(_:)))
-            button.translatesAutoresizingMaskIntoConstraints = false
+            let button = NSButton(title: buttonRendition.title,
+                                  target: self,
+                                  action: #selector(buttonTapped(_:)))
             button.isBordered = false
             button.wantsLayer = true
-
-            // Single-line truncation if too wide
+            // Don't take first-responder status on click. NSScrollView
+            // auto-scrolls to keep the focused responder visible, which
+            // would shove a tapped button (often near the bottom of the
+            // visible area, partly under the input view's contentInset)
+            // up into the unobstructed region — visually jarring.
+            button.refusesFirstResponder = true
             if let cell = button.cell as? NSButtonCell {
                 cell.usesSingleLineMode = true
                 cell.lineBreakMode = .byTruncatingTail
                 cell.wraps = false
             }
-
             let attrTitle = NSAttributedString(
                 string: buttonRendition.title,
                 attributes: [
                     .foregroundColor: buttonRendition.color,
                     .font: NSFont.systemFont(ofSize: NSFont.systemFontSize)
-                ]
-            )
+                ])
             button.attributedTitle = attrTitle
-
-            // Store button ID + message ID for the callback
-            buttonIdentifiers[button] = (buttonRendition.identifier, rendition.messageUniqueID)
-
-            // Force a single-line height (30)
-            add(constraint: button.heightAnchor.constraint(equalToConstant: 30))
-            // Let the button expand horizontally, up to the bubble’s max
-            button.setContentHuggingPriority(.defaultLow, for: .horizontal)
-            button.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
-
-            // Add it under the text label
-            contentStack.addArrangedSubview(button)
-            add(constraint: button.widthAnchor.constraint(equalTo: contentStack.widthAnchor, multiplier: 1.0))
-
             if !regular.enableButtons {
                 button.isEnabled = false
             }
+            bubbleView.addSubview(button)
+            buttons.append((button, buttonRendition.identifier, rendition.messageUniqueID))
         }
 
         if !regular.buttons.isEmpty {
-            // Add bottom spacer
-            let view = NSView()
-            contentStack.addArrangedSubview(view)
-            add(constraint: view.heightAnchor.constraint(equalToConstant: 1))
+            let spacer = NSView()
+            bubbleView.addSubview(spacer)
+            bottomSpacer = spacer
         }
-
-        addHorizontalAlignmentConstraints(rendition)
-        add(constraint: bubbleView.topAnchor.constraint(equalTo: topAnchor, constant: Self.topInset))
-        add(constraint: bubbleView.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -Self.bottomInset))
-
-        // Inset contentStack in bubbleView
-        add(constraint: contentStack.topAnchor.constraint(equalTo: bubbleView.topAnchor, constant: 0))
-        add(constraint: contentStack.leadingAnchor.constraint(equalTo: bubbleView.leadingAnchor, constant: 0))
-        add(constraint: contentStack.trailingAnchor.constraint(equalTo: bubbleView.trailingAnchor, constant: 0))
-        add(constraint: contentStack.bottomAnchor.constraint(equalTo: bubbleView.bottomAnchor, constant: 0))
-
-        // Finally cap the total width
-        let widthConstraint = bubbleView.widthAnchor.constraint(lessThanOrEqualToConstant: maxBubbleWidth)
-        maxWidthConstraint = widthConstraint
-        add(constraint: widthConstraint)
 
         messageUniqueID = rendition.messageUniqueID
         editable = rendition.isEditable
+        needsLayout = true
     }
 
-    func addHorizontalAlignmentConstraints(_ rendition: MessageRendition) {
-        if rendition.isUser {
-            add(constraint: bubbleView.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -8))
-            add(constraint: bubbleView.leadingAnchor.constraint(greaterThanOrEqualTo: leadingAnchor, constant: 8))
-        } else {
-            add(constraint: bubbleView.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 8))
-            add(constraint: bubbleView.trailingAnchor.constraint(lessThanOrEqualTo: trailingAnchor, constant: -8))
+    override func layout() {
+        super.layout()
+        let maxBubble = configuredMaxBubbleWidth
+        guard maxBubble > 0 else { return }
+        let textContentWidth = max(0, maxBubble - Self.textHorizontalPadding * 2)
+        let textSize = textLabel.desiredSize(forContentWidth: textContentWidth)
+        let textWidth = ceil(textSize.width)
+        let textHeight = ceil(textSize.height)
+        let bubbleWidth = min(maxBubble, textWidth + Self.textHorizontalPadding * 2)
+        let containerHeight = textHeight + Self.textVerticalPadding * 2
+
+        let buttonRowsHeight = CGFloat(buttons.count) * (Self.separatorHeight + Self.buttonHeight)
+        let bottomSpacerHeight: CGFloat = buttons.isEmpty ? 0 : Self.buttonsBottomSpacer
+        let bubbleHeight = containerHeight + buttonRowsHeight + bottomSpacerHeight
+
+        let bubbleX = bubbleOriginX(bubbleWidth: bubbleWidth)
+        let bubbleY = Self.bottomInset
+        bubbleView.frame = NSRect(x: bubbleX,
+                                  y: bubbleY,
+                                  width: bubbleWidth,
+                                  height: bubbleHeight)
+
+        // Inside the bubble (NSView coords: y=0 at bottom). Container is
+        // visually at the top, so its y is high.
+        let containerY = bubbleHeight - containerHeight
+        textLabel.frame = NSRect(x: Self.textHorizontalPadding,
+                                 y: containerY + Self.textVerticalPadding,
+                                 width: bubbleWidth - Self.textHorizontalPadding * 2,
+                                 height: textHeight)
+
+        // Stack separator + button rows below the container, top-down.
+        var nextTop = containerY
+        for i in 0..<buttons.count {
+            let separator = separators[i]
+            nextTop -= Self.separatorHeight
+            separator.frame = NSRect(x: 0,
+                                     y: nextTop,
+                                     width: bubbleWidth,
+                                     height: Self.separatorHeight)
+
+            let button = buttons[i].button
+            nextTop -= Self.buttonHeight
+            button.frame = NSRect(x: 0,
+                                  y: nextTop,
+                                  width: bubbleWidth,
+                                  height: Self.buttonHeight)
         }
+        if let bottomSpacer {
+            nextTop -= Self.buttonsBottomSpacer
+            bottomSpacer.frame = NSRect(x: 0,
+                                        y: nextTop,
+                                        width: bubbleWidth,
+                                        height: Self.buttonsBottomSpacer)
+        }
+
+        if timestamp.superview != nil {
+            timestamp.sizeToFit()
+            let ts = timestamp.frame.size
+            let tsX: CGFloat
+            if isUserMessage {
+                tsX = bubbleX - Self.timestampGap - ts.width
+            } else {
+                tsX = bubbleX + bubbleWidth + Self.timestampGap
+            }
+            timestamp.frame = NSRect(x: tsX,
+                                     y: bubbleY,
+                                     width: ts.width,
+                                     height: ts.height)
+        }
+    }
+
+    func bubbleOriginX(bubbleWidth: CGFloat) -> CGFloat {
+        if isUserMessage {
+            return max(Self.bubbleEdgePadding,
+                       bounds.maxX - Self.bubbleEdgePadding - bubbleWidth)
+        }
+        return Self.bubbleEdgePadding
     }
 
     func backgroundColorPair(_ rendition: MessageRendition) -> (NSColor, NSColor) {
@@ -252,13 +256,13 @@ class RegularMessageCellView: MessageCellView {
     }
 
     @objc private func buttonTapped(_ sender: NSButton) {
-        // Fire your callback with the button ID and the message ID
-        if let (identifier, msgID) = buttonIdentifiers[sender] {
-            buttonClicked?(identifier, msgID)
+        if let entry = buttons.first(where: { $0.button === sender }) {
+            buttonClicked?(entry.identifier, entry.messageUniqueID)
         }
-        // Disable all buttons
-        for case let button as NSButton in contentStack.arrangedSubviews where button !== textLabel {
-            button.isEnabled = false
+        if !keepsButtonsEnabledAfterClick {
+            for entry in buttons {
+                entry.button.isEnabled = false
+            }
         }
     }
 
@@ -267,5 +271,42 @@ class RegularMessageCellView: MessageCellView {
         pasteboard.clearContents()
         pasteboard.setString(textLabel.string, forType: .string)
     }
-}
 
+    static func cellHeight(for rendition: MessageRendition,
+                           tableViewWidth: CGFloat) -> CGFloat {
+        guard case .regular(let regular) = rendition.flavor else {
+            return 0
+        }
+        let maxBubble = maxBubbleWidth(tableViewWidth: tableViewWidth)
+        let textContentWidth = max(0, maxBubble - textHorizontalPadding * 2)
+        let textHeight = ceil(measureText(regular.attributedString,
+                                          contentWidth: textContentWidth))
+        let containerHeight = textHeight + textVerticalPadding * 2
+        let buttonRowsHeight = CGFloat(regular.buttons.count) *
+            (separatorHeight + buttonHeight)
+        let bottomSpacerHeight: CGFloat = regular.buttons.isEmpty ? 0 : buttonsBottomSpacer
+        let bubbleHeight = containerHeight + buttonRowsHeight + bottomSpacerHeight
+        return topInset + bubbleHeight + bottomInset
+    }
+
+    // Used by both layout() (via AutoSizingTextView.desiredSize) and the
+    // static height helper. The static helper has no live AutoSizingTextView
+    // so it builds an NSLayoutManager configured the same way.
+    private static func measureText(_ attributedString: NSAttributedString,
+                                    contentWidth: CGFloat) -> CGFloat {
+        if attributedString.length == 0 || contentWidth <= 0 {
+            return 0
+        }
+        let storage = NSTextStorage(attributedString: attributedString)
+        let layoutManager = NSLayoutManager()
+        let container = NSTextContainer(size: NSSize(width: contentWidth,
+                                                     height: .greatestFiniteMagnitude))
+        container.lineFragmentPadding = 0
+        layoutManager.addTextContainer(container)
+        storage.addLayoutManager(layoutManager)
+        layoutManager.ensureLayout(for: container)
+        let glyphRange = layoutManager.glyphRange(for: container)
+        let bounding = layoutManager.boundingRect(forGlyphRange: glyphRange, in: container)
+        return bounding.maxY
+    }
+}

@@ -51,47 +51,56 @@ class FileAttachmentSubpartView: NSView {
         }
     }
 
+    static let viewHeight: CGFloat = 32
+    private static let iconSize: CGFloat = 16
+    private static let leadingPadding: CGFloat = 8
+    private static let iconLabelGap: CGFloat = 6
+    private static let trailingPadding: CGFloat = 8
+
     private func setupView() {
-        // Configure the main view
         wantsLayer = true
         layer?.backgroundColor = NSColor.white.withAlphaComponent(0.1).cgColor
         layer?.cornerRadius = 3
         layer?.borderWidth = 1
         layer?.borderColor = NSColor.controlColor.cgColor
 
-        // Configure icon
         iconImageView.image = icon
         iconImageView.imageScaling = .scaleProportionallyUpOrDown
-        iconImageView.translatesAutoresizingMaskIntoConstraints = false
 
-        // Configure filename label
         filenameLabel.attributedStringValue = filename
         filenameLabel.isEditable = false
         filenameLabel.isSelectable = false
         filenameLabel.isBordered = false
         filenameLabel.backgroundColor = .clear
-        filenameLabel.translatesAutoresizingMaskIntoConstraints = false
+        filenameLabel.cell?.lineBreakMode = .byTruncatingTail
+        filenameLabel.cell?.usesSingleLineMode = true
 
         addSubview(iconImageView)
         addSubview(filenameLabel)
     }
 
     private func setupLayout() {
-        NSLayoutConstraint.activate([
-            // Icon constraints
-            iconImageView.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 8),
-            iconImageView.centerYAnchor.constraint(equalTo: centerYAnchor),
-            iconImageView.widthAnchor.constraint(equalToConstant: 16),
-            iconImageView.heightAnchor.constraint(equalToConstant: 16),
+        // Empty: layout() does the work. Kept as a hook for symmetry with
+        // the original construction order.
+    }
 
-            // Filename label constraints
-            filenameLabel.leadingAnchor.constraint(equalTo: iconImageView.trailingAnchor, constant: 6),
-            filenameLabel.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -8),
-            filenameLabel.centerYAnchor.constraint(equalTo: centerYAnchor),
+    override func layout() {
+        super.layout()
+        let iconY = floor((bounds.height - Self.iconSize) / 2)
+        iconImageView.frame = NSRect(x: Self.leadingPadding,
+                                     y: iconY,
+                                     width: Self.iconSize,
+                                     height: Self.iconSize)
 
-            // Height constraint for the whole view
-            heightAnchor.constraint(equalToConstant: 32)
-        ])
+        let labelX = Self.leadingPadding + Self.iconSize + Self.iconLabelGap
+        let labelMaxWidth = max(0, bounds.width - labelX - Self.trailingPadding)
+        let intrinsic = filenameLabel.intrinsicContentSize
+        let labelHeight = intrinsic.height > 0 ? intrinsic.height : 16
+        let labelY = floor((bounds.height - labelHeight) / 2)
+        filenameLabel.frame = NSRect(x: labelX,
+                                     y: labelY,
+                                     width: labelMaxWidth,
+                                     height: labelHeight)
     }
 
     private func setupDragAndDrop() {

@@ -40,14 +40,7 @@ class ChatListViewController: NSViewController {
     private let newChatButton: NSButton = {
         let image = NSImage(systemSymbolName: SFSymbol.plus.rawValue, accessibilityDescription: nil)!
         let button = NSButton(image: image, target: nil, action: nil)
-        if #available(macOS 26.0, *) {
-            button.controlSize = .large
-            button.bezelStyle = .glass
-            button.borderShape = .circle
-            button.isBordered = true
-        } else {
-            button.isBordered = false
-        }
+        button.isBordered = false
         button.imageScaling = .scaleProportionallyUpOrDown
         button.refusesFirstResponder = true
         button.setButtonType(.momentaryPushIn)

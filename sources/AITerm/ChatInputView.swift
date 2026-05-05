@@ -11,28 +11,35 @@ protocol ChatInputViewDelegate: AnyObject {
     func textDidChange()
 }
 
-// ChatInputView
-//   NSVisualEffectView
-//   ChatViewControllerInputStackView
-//     AddAttachmentButton
-//     ChatInputTextFieldContainer
-//     SendButton
+// ChatInputView (manual layout)
+//   NSVisualEffectView (full bounds, pre-macOS 26)
+//   horizontal row: [+] [text field] [send]
+//   below it (when files attached): horizontal file list
+//   hintLabel floats inside the text field's right edge.
 @objc
 class ChatInputView: NSView, NSTextFieldDelegate {
-    private class ChatInputVerticalStackView: NSStackView {}
-    private class ChatInputHorizontalStackView: NSStackView {}
     private class SendButton: NSButton { }
     private class AddAttachmentButton: NSButton { }
 
-    private let vev: NSVisualEffectView?
+    // Translucent backdrop. Sized to fill self in performLayoutNow so chat
+    // bubbles that scroll under the input area (allowed by the scroll
+    // view's bottom contentInset) blur behind the controls instead of
+    // being solid behind them — improves legibility of the row's text
+    // field and buttons against the message stream.
+    private let vev: NSVisualEffectView
     private let inputTextFieldContainer = ChatInputTextFieldContainer()
     private var sendButton: SendButton!
     private var addAttachmentButton: AddAttachmentButton!
     private let attachmentsView = HorizontalFileListView()
-    private var verticalStack: ChatInputVerticalStackView!
     private let sendImage: NSImage
     private let stopImage: NSImage
     private var hintLabel: NSTextField!
+
+    // Horizontal row of [+ button, text field, send button]. The text
+    // field flexes to fill the available width.
+    private var inputRow: ChatManualStackView!
+    // Outer column of [input row, attachments strip].
+    private var outerColumn: ChatManualStackView!
 
     weak var delegate: ChatInputViewDelegate?
     var stoppable = false {
@@ -45,156 +52,141 @@ class ChatInputView: NSView, NSTextFieldDelegate {
         attachmentsView.files
     }
 
-    init() {
-        sendImage = NSImage(systemSymbolName: SFSymbol.paperplaneFill.rawValue, accessibilityDescription: "Send")!
-        stopImage = NSImage(systemSymbolName: SFSymbol.stopCircleFill.rawValue, accessibilityDescription: "Stop")!
-        if #available(macOS 26, *) {
-            vev = nil
-        } else {
-            vev = NSVisualEffectView()
+    private static let leftPadding: CGFloat = 16
+    private static let rightPadding: CGFloat = 16
+    private static let buttonGap: CGFloat = 6
+    // Total vertical padding above+below the text field inside the row.
+    // Mirrors the constraint cascade in the prior auto-layout build:
+    // verticalStack.top = inputTextField.top - 12 with stack.top = self.top
+    // forced the row height to be at least textHeight + 24.
+    private static let inputRowVerticalPadding: CGFloat = 24
+
+    private var buttonHeight: CGFloat {
+        if #available(macOS 26, *) { return 28 }
+        return 18
+    }
+
+    // iOS-style deferred layout: setNeedsLayoutNow marks dirty, the joiner
+    // coalesces marks into a single performLayoutNow on the next runloop
+    // tick. No layout work runs synchronously inside an AppKit layout
+    // pass — that's how we avoid re-entering the constraint engine via
+    // ChatInputTextFieldContainer's auto-layout subtree.
+    private let layoutJoiner = IdempotentOperationJoiner.asyncJoiner(.main)
+
+    func setNeedsLayoutNow() {
+        layoutJoiner.setNeedsUpdate { [weak self] in
+            self?.performLayoutNow()
         }
+    }
+
+    init() {
+        // Match the symbol size of the + button (pointSize 16, weight
+        // .medium). Without this, paperplane.fill renders ~10pt taller
+        // than plus, throwing off the row visually.
+        let sendConfig: NSImage.SymbolConfiguration?
+        if #available(macOS 11.0, *) {
+            sendConfig = NSImage.SymbolConfiguration(pointSize: 16, weight: .medium)
+        } else {
+            sendConfig = nil
+        }
+        let rawSendImage = NSImage(systemSymbolName: SFSymbol.paperplaneFill.rawValue, accessibilityDescription: "Send")!
+        let rawStopImage = NSImage(systemSymbolName: SFSymbol.stopCircleFill.rawValue, accessibilityDescription: "Stop")!
+        if #available(macOS 11.0, *), let sendConfig {
+            sendImage = rawSendImage.withSymbolConfiguration(sendConfig) ?? rawSendImage
+            stopImage = rawStopImage.withSymbolConfiguration(sendConfig) ?? rawStopImage
+        } else {
+            sendImage = rawSendImage
+            stopImage = rawStopImage
+        }
+        vev = NSVisualEffectView()
         super.init(frame: .zero)
 
-        // Input Components
-        inputTextFieldContainer.translatesAutoresizingMaskIntoConstraints = false
         inputTextFieldContainer.placeholder = "Type a message…"
         inputTextFieldContainer.isEnabled = false
-        inputTextFieldContainer.setContentCompressionResistancePriority(.defaultHigh, for: .horizontal)
-        inputTextFieldContainer.setContentHuggingPriority(.defaultLow, for: .horizontal)
         inputTextFieldContainer.textView.delegate = self
 
         sendButton = SendButton(image: sendImage, target: self, action: #selector(sendButtonClicked))
-        if #available(macOS 26, *) {
-            // New Tahoe (macOS 26) liquid glass look
-            sendButton.imagePosition = .imageOnly
-            sendButton.imageScaling = .scaleProportionallyDown
-            sendButton.contentTintColor = .it_dynamicColor(forLightMode: NSColor(white: 1, alpha: 0.3),
-                                                           darkMode: NSColor(white: 0, alpha: 0.3))
-            sendButton.controlSize = .large
-            sendButton.bezelStyle = .glass
-            sendButton.borderShape = .circle
-            sendButton.isBordered = true
-            sendButton.showsBorderOnlyWhileMouseInside = true
-        } else {
-            sendButton.imageScaling = .scaleProportionallyUpOrDown
-            sendButton.imagePosition = .imageOnly
-            sendButton.bezelStyle = .regularSquare
-            sendButton.isBordered = false
-        }
+        // .scaleNone keeps the symbol at the configured pointSize. With
+        // .scaleProportionallyUpOrDown the symbol would upscale to fill
+        // the 28pt-square button, undoing the explicit sizing above.
+        sendButton.imageScaling = .scaleNone
+        sendButton.imagePosition = .imageOnly
+        sendButton.bezelStyle = .regularSquare
+        sendButton.isBordered = false
         sendButton.setButtonType(.momentaryPushIn)
 
-        sendButton.translatesAutoresizingMaskIntoConstraints = false
-        sendButton.setContentHuggingPriority(.defaultHigh, for: .horizontal)
-        sendButton.setContentCompressionResistancePriority(.required, for: .horizontal)
-
-        var addImage = NSImage.it_image(forSymbolName: SFSymbol.plus.rawValue, accessibilityDescription: "Attach files", fallbackImageName: "plus", for: ChatInputView.self)!
+        var addImage = NSImage.it_image(forSymbolName: SFSymbol.plus.rawValue,
+                                        accessibilityDescription: "Attach files",
+                                        fallbackImageName: "plus",
+                                        for: ChatInputView.self)!
         if #available(macOS 11.0, *) {
-            // Create a larger version of the image
-            let config = NSImage.SymbolConfiguration(pointSize: 16, weight: .medium) // Adjust size as needed
+            let config = NSImage.SymbolConfiguration(pointSize: 16, weight: .medium)
             addImage = addImage.withSymbolConfiguration(config)!
         }
-        addAttachmentButton = AddAttachmentButton(image: addImage, target: self, action: #selector(attachmentButtonClicked))
-        if #available(macOS 26, *) {
-            // New Tahoe (macOS 26) liquid glass look
-            addAttachmentButton.imagePosition = .imageOnly
-            addAttachmentButton.imageScaling = .scaleProportionallyDown
-            addAttachmentButton.contentTintColor = .it_dynamicColor(forLightMode: NSColor(white: 1, alpha: 0.3),
-                                                                    darkMode: NSColor(white: 0, alpha: 0.3))
-            addAttachmentButton.controlSize = .large
-            addAttachmentButton.bezelStyle = .glass
-            addAttachmentButton.borderShape = .circle
-            addAttachmentButton.isBordered = true
-            addAttachmentButton.showsBorderOnlyWhileMouseInside = true
-        } else {
-            addAttachmentButton.imageScaling = .scaleNone
-            addAttachmentButton.imagePosition = .imageOnly
-            addAttachmentButton.bezelStyle = .regularSquare
-            addAttachmentButton.isBordered = false
-        }
+        addAttachmentButton = AddAttachmentButton(image: addImage,
+                                                  target: self,
+                                                  action: #selector(attachmentButtonClicked))
+        addAttachmentButton.imageScaling = .scaleNone
+        addAttachmentButton.imagePosition = .imageOnly
+        addAttachmentButton.bezelStyle = .regularSquare
+        addAttachmentButton.isBordered = false
         addAttachmentButton.setButtonType(.momentaryPushIn)
         addAttachmentButton.toolTip = "Attach files"
-        addAttachmentButton.translatesAutoresizingMaskIntoConstraints = false
-        addAttachmentButton.setContentHuggingPriority(.defaultHigh, for: .horizontal)
-        addAttachmentButton.setContentCompressionResistancePriority(.required, for: .horizontal)
 
-        attachmentsView.translatesAutoresizingMaskIntoConstraints = false
-        attachmentsView.onItemsWillBeDeleted = { _ in
-            return true
-        }
+        attachmentsView.onItemsWillBeDeleted = { _ in true }
         attachmentsView.onDidDeleteItems = { [weak self] in
             self?.updateAttachmentsView()
             self?.updateSendButtonEnabled()
         }
-        
+
         hintLabel = NSTextField(labelWithString: "↩ to submit")
-        hintLabel.translatesAutoresizingMaskIntoConstraints = false
         hintLabel.font = NSFont.systemFont(ofSize: NSFont.smallSystemFontSize - 1)
         hintLabel.textColor = .tertiaryLabelColor
         hintLabel.alignment = .right
-        hintLabel.setContentHuggingPriority(.defaultHigh, for: .horizontal)
-        hintLabel.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
 
-        let horizontalStack = ChatInputHorizontalStackView(views: [addAttachmentButton, inputTextFieldContainer, sendButton])
-        horizontalStack.orientation = .horizontal
-        horizontalStack.spacing = 6
-        horizontalStack.translatesAutoresizingMaskIntoConstraints = false
-        horizontalStack.setContentHuggingPriority(.defaultHigh, for: .vertical)
+        // Disable autoresizing on every manually-laid-out subview so AppKit's
+        // implicit autoresizingMask logic doesn't fight our layout() pass on
+        // window resize.
+        addAttachmentButton.translatesAutoresizingMaskIntoConstraints = false
+        sendButton.translatesAutoresizingMaskIntoConstraints = false
+        attachmentsView.translatesAutoresizingMaskIntoConstraints = false
+        inputTextFieldContainer.translatesAutoresizingMaskIntoConstraints = false
+        hintLabel.translatesAutoresizingMaskIntoConstraints = false
 
-        verticalStack = ChatInputVerticalStackView(views: [horizontalStack, attachmentsView])
-        verticalStack.orientation = .vertical
-        verticalStack.spacing = 0
-        verticalStack.translatesAutoresizingMaskIntoConstraints = false
+        vev.wantsLayer = true
+        vev.translatesAutoresizingMaskIntoConstraints = false
+        vev.blendingMode = .withinWindow
+        // .windowBackground blends with the host window's chrome — subtle
+        // in both light and dark mode (matches the window's own
+        // background) — its job is to obscure bubbles scrolling
+        // underneath, not to stand out.
+        vev.material = .windowBackground
+        vev.state = .active
+        addSubview(vev, positioned: .below, relativeTo: nil)
 
-        if let vev {
-            vev.translatesAutoresizingMaskIntoConstraints = false
-            vev.wantsLayer = true
-            vev.blendingMode = .withinWindow
-            vev.material = .underWindowBackground
-            vev.state = .active
+        // Build the input row [+ button, text field, send button] using
+        // the manual stack helper. The text field is the flex child — it
+        // absorbs all leftover horizontal space so a too-clever intrinsic
+        // size on the buttons can't squeeze it down to 10pt.
+        inputRow = ChatManualStackView(orientation: .horizontal,
+                                       spacing: Self.buttonGap,
+                                       alignment: .center)
+        inputRow.translatesAutoresizingMaskIntoConstraints = false
+        inputRow.addArrangedSubview(addAttachmentButton)
+        inputRow.addArrangedSubview(inputTextFieldContainer)
+        inputRow.addArrangedSubview(sendButton)
+        inputRow.setFlex(inputTextFieldContainer, true)
 
-            addSubview(vev)
-        }
+        outerColumn = ChatManualStackView(orientation: .vertical,
+                                          spacing: 0,
+                                          alignment: .fill)
+        outerColumn.translatesAutoresizingMaskIntoConstraints = false
+        outerColumn.addArrangedSubview(inputRow)
+        outerColumn.addArrangedSubview(attachmentsView)
 
-        addSubview(verticalStack)
+        addSubview(outerColumn)
         addSubview(hintLabel)
 
-        let inputStackVerticalInset = CGFloat(12)
-
-        let buttonHeight: CGFloat
-        if #available(macOS 26, *) {
-            buttonHeight = 28
-        } else {
-            buttonHeight = 18
-        }
-        NSLayoutConstraint.activate([
-            addAttachmentButton.widthAnchor.constraint(equalToConstant: buttonHeight),
-            addAttachmentButton.heightAnchor.constraint(equalToConstant: buttonHeight),
-
-            verticalStack.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 16),
-            verticalStack.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -16),
-            verticalStack.bottomAnchor.constraint(equalTo: bottomAnchor),
-            verticalStack.topAnchor.constraint(equalTo: inputTextFieldContainer.topAnchor,
-                                            constant: -inputStackVerticalInset),
-            verticalStack.topAnchor.constraint(equalTo: topAnchor),
-
-            horizontalStack.leadingAnchor.constraint(equalTo: verticalStack.leadingAnchor),
-            horizontalStack.trailingAnchor.constraint(equalTo: verticalStack.trailingAnchor),
-
-            sendButton.widthAnchor.constraint(greaterThanOrEqualToConstant: buttonHeight),
-            sendButton.heightAnchor.constraint(equalToConstant: buttonHeight),
-            sendButton.trailingAnchor.constraint(equalTo: horizontalStack.trailingAnchor),
-
-            hintLabel.trailingAnchor.constraint(equalTo: inputTextFieldContainer.trailingAnchor, constant: -12),
-            hintLabel.centerYAnchor.constraint(equalTo: inputTextFieldContainer.centerYAnchor),
-        ])
-        if let vev {
-            NSLayoutConstraint.activate([
-                vev.leftAnchor.constraint(equalTo: leftAnchor),
-                vev.rightAnchor.constraint(equalTo: rightAnchor),
-                vev.bottomAnchor.constraint(equalTo: bottomAnchor),
-                vev.heightAnchor.constraint(equalTo: heightAnchor),
-            ])
-        }
         updateAttachmentsView()
         updateSendButtonEnabled()
         setupDragAndDrop()
@@ -202,6 +194,126 @@ class ChatInputView: NSView, NSTextFieldDelegate {
 
     required init?(coder: NSCoder) {
         it_fatalError("init(coder:) has not been implemented")
+    }
+
+    // intentionally no `intrinsicContentSize` override — that property is
+    // an auto-layout protocol and returning a non-noIntrinsicMetric value
+    // pulls the whole view tree into the constraint engine. Callers ask
+    // for our preferred height through the explicit method below instead.
+
+    // Predict the input view's required height given the container width.
+    // Stable for a given (text, attachments, container width) tuple.
+    func preferredHeight(forContainerWidth containerWidth: CGFloat) -> CGFloat {
+        let textW = predictedTextWidth(forContainerWidth: containerWidth)
+        let textH = inputTextFieldContainer.preferredHeight(forContentWidth: textW)
+        let rowHeight = max(buttonHeight, textH + Self.inputRowVerticalPadding)
+        let attH = attachmentsView.isHidden ? 0 : HorizontalFileListView.preferredHeight
+        return rowHeight + attH
+    }
+
+    private func predictedTextWidth(forContainerWidth containerWidth: CGFloat) -> CGFloat {
+        let stackWidth = max(0, containerWidth - Self.leftPadding - Self.rightPadding)
+        let attachW = buttonHeight
+        let sendIntrinsic = sendButton.intrinsicContentSize
+        let sendBtnW = max(buttonHeight, sendIntrinsic.width > 0 ? sendIntrinsic.width : buttonHeight)
+        return max(0, stackWidth - attachW - sendBtnW - Self.buttonGap * 2)
+    }
+
+    override func setFrameSize(_ newSize: NSSize) {
+        let oldSize = frame.size
+        super.setFrameSize(newSize)
+        if oldSize != newSize {
+            setNeedsLayoutNow()
+        }
+    }
+
+    // AppKit's layout pass calls layout() before draw — route through the
+    // same method the joiner uses, so children are sized in time for the
+    // first paint. The joiner's separately-scheduled async will fire later
+    // and run performLayoutNow again, which is a no-op when frames are
+    // already correct (every assignment is gated on `frame != newFrame`).
+    override func layout() {
+        super.layout()
+        performLayoutNow()
+    }
+
+    private func performLayoutNow() {
+        guard bounds.width > 0 else { return }
+
+        let outerWidth = max(0, bounds.width - Self.leftPadding - Self.rightPadding)
+        let textW = predictedTextWidth(forContainerWidth: bounds.width)
+        let textH = inputTextFieldContainer.preferredHeight(forContentWidth: textW)
+        let rowHeight = max(buttonHeight, textH + Self.inputRowVerticalPadding)
+        let attH: CGFloat = attachmentsView.isHidden ? 0 : HorizontalFileListView.preferredHeight
+
+        // Per-child size overrides for the input row. Flex absorbs the
+        // remaining width for the text field, so we just declare its
+        // width as 0 (a floor) and the row's flex pass fills it in.
+        let buttonH = buttonHeight
+        inputRow.sizeOverride = { [weak self] view, _ in
+            guard let self else { return nil }
+            if view === self.addAttachmentButton || view === self.sendButton {
+                return NSSize(width: buttonH, height: buttonH)
+            }
+            if view === self.inputTextFieldContainer {
+                return NSSize(width: 0, height: textH)
+            }
+            return nil
+        }
+
+        outerColumn.sizeOverride = { [weak self] view, _ in
+            guard let self else { return nil }
+            if view === self.inputRow {
+                return NSSize(width: outerWidth, height: rowHeight)
+            }
+            if view === self.attachmentsView {
+                return NSSize(width: outerWidth, height: attH)
+            }
+            return nil
+        }
+
+        let outerHeight = rowHeight + attH
+        let outerFrame = NSRect(x: Self.leftPadding,
+                                y: 0,
+                                width: outerWidth,
+                                height: outerHeight)
+        if outerColumn.frame != outerFrame {
+            outerColumn.frame = outerFrame
+        }
+        // Force the manual stack to lay out its children synchronously
+        // so the hint label can be positioned relative to the (now
+        // settled) text field frame in the same pass.
+        outerColumn.layout()
+        inputRow.layout()
+
+        let textFrameInOuter = inputTextFieldContainer.convert(inputTextFieldContainer.bounds, to: self)
+
+        // Visual effect view: bottom = self bottom, top = top of the text
+        // field (no extra space above). Mirrors the Messages app, where
+        // the input bar's blur lines up with the entry field's top edge
+        // and content scrolls past beneath without an extra blank strip
+        // above it.
+        let vevFrame = NSRect(x: 0,
+                              y: 0,
+                              width: bounds.width,
+                              height: textFrameInOuter.maxY)
+        if vev.frame != vevFrame {
+            vev.frame = vevFrame
+        }
+
+        // Use sizeToFit so the label gets its rendered size (NSTextField's
+        // intrinsicContentSize occasionally rounds the width down by a
+        // sub-pixel and the trailing glyph clips). Pad by 1pt for safety.
+        hintLabel.sizeToFit()
+        let hintFitting = hintLabel.frame.size
+        let hintW = ceil(hintFitting.width) + 1
+        let hintH = hintFitting.height > 0 ? hintFitting.height : 14
+        let hintX = textFrameInOuter.maxX - 12 - hintW
+        let hintY = textFrameInOuter.midY - hintH / 2
+        let hintFrame = NSRect(x: hintX, y: hintY, width: hintW, height: hintH)
+        if hintLabel.frame != hintFrame {
+            hintLabel.frame = hintFrame
+        }
     }
 
     private func setupDragAndDrop() {
@@ -291,34 +403,28 @@ class ChatInputView: NSView, NSTextFieldDelegate {
         let textView = inputTextFieldContainer.textView
         let text = textView.string
 
-        // Always show hint if empty
         if text.isEmpty {
             return false
         }
 
-        // Hide if multiple lines (text contains newline or has wrapped)
         guard let layoutManager = textView.layoutManager,
               let textContainer = textView.textContainer else {
             return !text.isEmpty
         }
 
-        // Check if text spans multiple lines
         let usedRect = layoutManager.usedRect(for: textContainer)
         let lineHeight = layoutManager.defaultLineHeight(for: textView.font ?? NSFont.systemFont(ofSize: NSFont.systemFontSize))
 
-        // If content height is greater than one line, hide hint
         if usedRect.height > lineHeight * 1.5 {
             return true
         }
 
-        // Calculate the width of the text to see if it would overlap with hint label
         let textWidth = usedRect.width
         let hintWidth = hintLabel.intrinsicContentSize.width
         let availableWidth = textView.bounds.width
 
-        // Hide if text would be under the hint (leaving some padding)
-        let hintStartX = availableWidth - hintWidth - 12 // 12 is the trailing constraint constant
-        if textWidth > hintStartX - 20 { // 20px padding buffer
+        let hintStartX = availableWidth - hintWidth - 12
+        if textWidth > hintStartX - 20 {
             return true
         }
 
@@ -326,8 +432,33 @@ class ChatInputView: NSView, NSTextFieldDelegate {
     }
 
     private func updateAttachmentsView() {
-        verticalStack.setVisibilityPriority(attachmentsView.files.isEmpty ? .notVisible : .mustHold,
-                                            for: attachmentsView)
+        let shouldHide = attachmentsView.files.isEmpty
+        if attachmentsView.isHidden != shouldHide {
+            attachmentsView.isHidden = shouldHide
+            heightDidChange()
+        }
+    }
+
+    // Notify ourselves and the chat view controller that our preferred
+    // height changed. The chat view controller's nextResponder chain
+    // walks back to itself; we hop two responder steps (NSView -> next
+    // responder, which is the controller) to reach it. Intentionally
+    // does NOT call invalidateIntrinsicContentSize — that would engage
+    // the constraint engine.
+    private func heightDidChange() {
+        setNeedsLayoutNow()
+        chatViewController?.setNeedsLayoutNow()
+    }
+
+    private var chatViewController: ChatViewController? {
+        var responder: NSResponder? = self
+        while let next = responder?.nextResponder {
+            if let vc = next as? ChatViewController {
+                return vc
+            }
+            responder = next
+        }
+        return nil
     }
 
     private func addFiles(from urls: [URL]) {
@@ -359,6 +490,7 @@ class ChatInputView: NSView, NSTextFieldDelegate {
         set {
             inputTextFieldContainer.stringValue = newValue
             updateSendButtonEnabled()
+            heightDidChange()
         }
     }
 
@@ -401,7 +533,6 @@ extension ChatInputView {
             return false
         }
 
-        // Filter to only include files (not directories)
         let fileURLs = urls.filter { url in
             var isDirectory: ObjCBool = false
             return FileManager.default.fileExists(atPath: url.path, isDirectory: &isDirectory) && !isDirectory.boolValue
@@ -431,6 +562,7 @@ extension ChatInputView: NSTextViewDelegate {
 
     func textDidChange(_ notification: Notification) {
         updateSendButtonEnabled()
+        heightDidChange()
         delegate?.textDidChange()
     }
 

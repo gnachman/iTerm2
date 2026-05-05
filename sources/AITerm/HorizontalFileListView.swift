@@ -164,15 +164,27 @@ fileprivate let itemHeight = CGFloat(86)
 
     private func setupView() {
         addSubview(scrollView)
+    }
 
-        // Auto Layout
-        scrollView.translatesAutoresizingMaskIntoConstraints = false
-        NSLayoutConstraint.activate([
-            scrollView.topAnchor.constraint(equalTo: topAnchor),
-            scrollView.leadingAnchor.constraint(equalTo: leadingAnchor),
-            scrollView.trailingAnchor.constraint(equalTo: trailingAnchor),
-            scrollView.bottomAnchor.constraint(equalTo: bottomAnchor)
-        ])
+    private var lastLayoutBoundsSize: NSSize?
+
+    override func layout() {
+        super.layout()
+        if scrollView.frame != bounds {
+            scrollView.frame = bounds
+        }
+        // The files.didSet async dispatch may have run a reloadData while
+        // bounds were still zero (the file picker fires updateAttachmentsView
+        // before our layout cascade resizes us). When the bounds first
+        // become non-zero, force a fresh reload + flow-layout invalidation
+        // so items pick up real frames.
+        if bounds.size != lastLayoutBoundsSize {
+            lastLayoutBoundsSize = bounds.size
+            if bounds.width > 0 && bounds.height > 0 {
+                flowLayout.invalidateLayout()
+                collectionView.reloadData()
+            }
+        }
     }
 
     private func setupCollectionView() {
@@ -255,11 +267,9 @@ fileprivate let itemHeight = CGFloat(86)
         updateSelectionAppearance()
     }
 
-    // MARK: - Intrinsic Content Size
-    override var intrinsicContentSize: NSSize {
-        let height = flowLayout.itemSize.height + flowLayout.sectionInset.top + flowLayout.sectionInset.bottom
-        return NSSize(width: NSView.noIntrinsicMetric, height: height)
-    }
+    // Static preferred height for callers using manual layout. The flow
+    // layout uses constants so this never varies for a given configuration.
+    static let preferredHeight: CGFloat = itemHeight + 0 + 10  // top + bottom section insets
 }
 
 // MARK: - Public API for Placeholders
@@ -528,25 +538,28 @@ class FileItemView: NSCollectionViewItem {
         view = containerView
     }
 
+    private static let iconTopInset: CGFloat = 5
+    private static let iconSize: CGFloat = 48
+    private static let iconLabelGap: CGFloat = 5
+    private static let nameLabelMaxHeight: CGFloat = 30 // ~2 lines at 11pt
+    private static let progressBarInset: CGFloat = 4
+    private static let progressBarHeight: CGFloat = 5
+    private static let iconOverlayPadding: CGFloat = 4
+    private static let deleteButtonSize: CGFloat = 16
+
     private func setupViews() {
         containerView.fileItemView = self
 
-        // Configure icon selection overlay (light gray around just the icon)
         iconSelectionOverlay.color = NSColor.it_dynamicColor(forLightMode: .quaternaryLabelColor,
                                                               darkMode: .tertiaryLabelColor)
         iconSelectionOverlay.layer?.cornerRadius = 3
         iconSelectionOverlay.isHidden = true
-        iconSelectionOverlay.translatesAutoresizingMaskIntoConstraints = false
 
-        // Configure icon image view
         iconImageView.imageScaling = .scaleProportionallyUpOrDown
         iconImageView.imageAlignment = .alignCenter
-        iconImageView.translatesAutoresizingMaskIntoConstraints = false
 
-        // Configure delete button
         setupDeleteButton()
 
-        // Configure name label for multi-line display
         nameLabel.isEditable = false
         nameLabel.isSelectable = false
         nameLabel.isBordered = false
@@ -561,68 +574,72 @@ class FileItemView: NSCollectionViewItem {
         nameLabel.cell?.isScrollable = false
         nameLabel.drawsBackground = false
         nameLabel.wantsLayer = true
-        nameLabel.translatesAutoresizingMaskIntoConstraints = false
         nameLabel.layer?.cornerRadius = 3
         nameLabel.layer?.masksToBounds = true
 
-        // Configure progress indicator
         progressIndicator.style = .bar
         progressIndicator.isIndeterminate = false
         progressIndicator.minValue = 0.0
         progressIndicator.maxValue = 1.0
         progressIndicator.isHidden = true
-        progressIndicator.translatesAutoresizingMaskIntoConstraints = false
         progressIndicator.wantsLayer = true
         progressIndicator.layer?.cornerRadius = 2
 
-        // Add subviews
         containerView.addSubview(iconSelectionOverlay)
         containerView.addSubview(iconImageView)
         containerView.addSubview(deleteButton)
         containerView.addSubview(nameLabel)
         containerView.addSubview(progressIndicator)
-
-        NSLayoutConstraint.activate([
-            // Icon selection overlay constraints
-            iconSelectionOverlay.centerXAnchor.constraint(equalTo: iconImageView.centerXAnchor),
-            iconSelectionOverlay.centerYAnchor.constraint(equalTo: iconImageView.centerYAnchor),
-            iconSelectionOverlay.widthAnchor.constraint(equalTo: iconImageView.widthAnchor, constant: 8),
-            iconSelectionOverlay.heightAnchor.constraint(equalTo: iconImageView.heightAnchor, constant: 8),
-
-            // Icon constraints
-            iconImageView.topAnchor.constraint(equalTo: containerView.topAnchor, constant: 5),
-            iconImageView.centerXAnchor.constraint(equalTo: containerView.centerXAnchor),
-            iconImageView.widthAnchor.constraint(equalToConstant: 48),
-            iconImageView.heightAnchor.constraint(equalToConstant: 48),
-
-            // Label constraints
-            nameLabel.topAnchor.constraint(equalTo: iconImageView.bottomAnchor, constant: 5),
-            nameLabel.centerXAnchor.constraint(equalTo: containerView.centerXAnchor),
-
-            // Progress Indicator constraints
-            progressIndicator.leadingAnchor.constraint(equalTo: iconImageView.leadingAnchor, constant: 4),
-            progressIndicator.trailingAnchor.constraint(equalTo: iconImageView.trailingAnchor, constant: -4),
-            progressIndicator.bottomAnchor.constraint(equalTo: iconImageView.bottomAnchor, constant: -4),
-            progressIndicator.heightAnchor.constraint(equalToConstant: 5),
-        ])
-
-        let nameWidthConstraint = nameLabel.widthAnchor.constraint(equalToConstant: filenameLabelWidth)
-        nameWidthConstraint.priority = .required
-        NSLayoutConstraint.activate([nameWidthConstraint])
-        nameLabel.setContentHuggingPriority(.required, for: .horizontal)
-        nameLabel.setContentCompressionResistancePriority(.defaultHigh, for: .horizontal)
     }
 
     override func viewDidLayout() {
         super.viewDidLayout()
-        // Position delete button manually so its visibility doesn't affect label size.
-        let iconFrame = iconImageView.frame
+
+        let bounds = containerView.bounds
+
+        // Icon: top-centered.
+        let iconX = floor((bounds.width - Self.iconSize) / 2)
+        let iconY = bounds.height - Self.iconTopInset - Self.iconSize
+        let iconFrame = NSRect(x: iconX,
+                               y: iconY,
+                               width: Self.iconSize,
+                               height: Self.iconSize)
+        iconImageView.frame = iconFrame
+
+        // Selection overlay: 4pt around the icon on each side.
+        iconSelectionOverlay.frame = iconFrame.insetBy(dx: -Self.iconOverlayPadding,
+                                                       dy: -Self.iconOverlayPadding)
+
+        // Name label: below icon, centered. Width is clamped by NameLabel.frame
+        // to filenameLabelWidth and re-centered around midX.
+        let labelMidX = bounds.midX
+        let labelTop = iconFrame.minY - Self.iconLabelGap
+        // Pre-size to the wrapping width so its intrinsic height reflects 2-line
+        // wrapping, then NameLabel.frame clamps width and recenters.
+        let labelHeight = ceil(min(Self.nameLabelMaxHeight,
+                                   nameLabel.cell?.cellSize(forBounds: NSRect(x: 0,
+                                                                             y: 0,
+                                                                             width: filenameLabelWidth,
+                                                                             height: .greatestFiniteMagnitude)).height ?? 16))
+        let labelY = labelTop - labelHeight
+        nameLabel.frame = NSRect(x: labelMidX - filenameLabelWidth / 2,
+                                 y: labelY,
+                                 width: filenameLabelWidth,
+                                 height: labelHeight)
+
+        // Progress indicator: along bottom of icon.
+        progressIndicator.frame = NSRect(
+            x: iconFrame.minX + Self.progressBarInset,
+            y: iconFrame.minY + Self.progressBarInset,
+            width: max(0, iconFrame.width - Self.progressBarInset * 2),
+            height: Self.progressBarHeight)
+
+        // Delete button at the icon's top-right corner.
         deleteButton.frame = NSRect(
             x: iconFrame.maxX - 12,
             y: iconFrame.maxY - 12,
-            width: 16,
-            height: 16
-        )
+            width: Self.deleteButtonSize,
+            height: Self.deleteButtonSize)
     }
 
     private func setupDeleteButton() {

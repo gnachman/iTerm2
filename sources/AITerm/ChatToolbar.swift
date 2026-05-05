@@ -37,14 +37,11 @@ class ChatToolbar {
     init(dataSource: ChatToolbarDataSource) {
         self.dataSource = dataSource
 
-        // Create the title label for toolbar use
         let label = NSTextField(labelWithString: "AI Chat")
-        // Match the font size of our popup buttons (20pt)
         label.font = NSFont.systemFont(ofSize: 20, weight: .semibold)
         label.textColor = NSColor.labelColor
         label.alignment = .center
         label.lineBreakMode = .byTruncatingTail
-        label.translatesAutoresizingMaskIntoConstraints = false
         self.titleLabel = label
 
         do {
@@ -60,10 +57,6 @@ class ChatToolbar {
         sessionButton.target = self
         sessionButton.action = #selector(showSessionButtonMenu(_:))
         sessionButton.sizeToFit()
-        sessionButton.setContentCompressionResistancePriority(.defaultHigh, for: .horizontal)
-        sessionButton.translatesAutoresizingMaskIntoConstraints = false
-        sessionButton.setContentHuggingPriority(.defaultHigh, for: .horizontal)
-        sessionButton.setContentCompressionResistancePriority(.required, for: .horizontal)
 
         do {
             let webSearchButton = WebSearchButton(image: NSImage.it_image(forSymbolName: SFSymbol.globe.rawValue,
@@ -81,10 +74,6 @@ class ChatToolbar {
             webSearchButton.target = self
             webSearchButton.action = #selector(toggleWebSearch(_:))
             webSearchButton.sizeToFit()
-            webSearchButton.setContentCompressionResistancePriority(.defaultHigh, for: .horizontal)
-            webSearchButton.translatesAutoresizingMaskIntoConstraints = false
-            webSearchButton.setContentHuggingPriority(.defaultHigh, for: .horizontal)
-            webSearchButton.setContentCompressionResistancePriority(.required, for: .horizontal)
             webSearchButton.toolTip = "Allow AI to perform web search?"
             self.webSearchButton = webSearchButton
             webSearchButton.isEnabled = (dataSource.provider?.supportsHostedWebSearch == true)
@@ -108,10 +97,6 @@ class ChatToolbar {
             thinkingButton.target = self
             thinkingButton.action = #selector(toggleThinking(_:))
             thinkingButton.sizeToFit()
-            thinkingButton.setContentCompressionResistancePriority(.defaultHigh, for: .horizontal)
-            thinkingButton.translatesAutoresizingMaskIntoConstraints = false
-            thinkingButton.setContentHuggingPriority(.defaultHigh, for: .horizontal)
-            thinkingButton.setContentCompressionResistancePriority(.required, for: .horizontal)
             thinkingButton.toolTip = "Enable high-effort reasoning? Slower but may produce better results."
             self.thinkingButton = thinkingButton
             thinkingButton.isEnabled = (dataSource.provider?.model.features.contains(.configurableThinking) == true)
@@ -131,107 +116,164 @@ class ChatToolbar {
     }
 }
 
-extension ChatToolbar {
-    @available(macOS 26, *)
-    func createFloatingView() -> NSView {
-        // Constants for control sizing
-        let controlHeight: CGFloat = 22
-        let buttonMinWidth: CGFloat = 22
+// Container for the macOS 26 floating bar. Hosts a translucent NSVisualEffect
+// background plus a manually-laid-out row of controls. Replaces the previous
+// NSGlassEffectView+NSStackView constraint-driven implementation so the chat
+// UI is auto-layout-free.
+final class FloatingChatToolbarView: NSView {
+    static let controlHeight: CGFloat = 22
+    static let buttonMinWidth: CGFloat = 22
+    static let modelSelectorMinWidth: CGFloat = 120
+    static let horizontalPadding: CGFloat = 16
+    static let verticalPadding: CGFloat = 8
+    static let cornerRadius: CGFloat = 20
 
-        // Create all controls
-        var controls: [NSView] = []
+    private let backdrop: NSVisualEffectView
+    private let row: ChatManualStackView
+    private let titleLabel: NSTextField
+    private let modelSelectorButton: NSPopUpButton?
+    private let thinkingButton: NSButton?
+    private let webSearchButton: NSButton?
+    private let sessionButton: NSButton?
 
-        // Title label
-        controls.append(titleLabel)
+    private let layoutJoiner = IdempotentOperationJoiner.asyncJoiner(.main)
 
-        // AI controls
-        var baselineAlignedViews = [NSView]()
+    func setNeedsLayoutNow() {
+        layoutJoiner.setNeedsUpdate { [weak self] in
+            self?.performLayoutNow()
+        }
+    }
+
+    init(titleLabel: NSTextField,
+         modelSelectorButton: NSPopUpButton?,
+         thinkingButton: NSButton?,
+         webSearchButton: NSButton?,
+         sessionButton: NSButton?) {
+        self.titleLabel = titleLabel
+        self.modelSelectorButton = modelSelectorButton
+        self.thinkingButton = thinkingButton
+        self.webSearchButton = webSearchButton
+        self.sessionButton = sessionButton
+
+        backdrop = NSVisualEffectView()
+        backdrop.wantsLayer = true
+        backdrop.material = .hudWindow
+        backdrop.blendingMode = .withinWindow
+        backdrop.state = .active
+
+        row = ChatManualStackView(orientation: .horizontal,
+                                  spacing: 12,
+                                  alignment: .center)
+
+        super.init(frame: .zero)
+
+        wantsLayer = true
+        layer?.cornerRadius = Self.cornerRadius
+        layer?.masksToBounds = true
+
+        addSubview(backdrop)
+        addSubview(row)
+
+        row.addArrangedSubview(titleLabel)
         if let modelSelectorButton {
             modelSelectorButton.controlSize = .large
-            modelSelectorButton.translatesAutoresizingMaskIntoConstraints = false
-            baselineAlignedViews.append(modelSelectorButton)
-            NSLayoutConstraint.activate([
-                modelSelectorButton.heightAnchor.constraint(equalToConstant: controlHeight),
-                modelSelectorButton.widthAnchor.constraint(greaterThanOrEqualToConstant: 120)  // Wider for text
-            ])
-            controls.append(modelSelectorButton)
+            row.addArrangedSubview(modelSelectorButton)
         }
         if let thinkingButton {
             thinkingButton.controlSize = .large
-            thinkingButton.translatesAutoresizingMaskIntoConstraints = false
-            NSLayoutConstraint.activate([
-                thinkingButton.heightAnchor.constraint(equalToConstant: controlHeight),
-                thinkingButton.widthAnchor.constraint(greaterThanOrEqualToConstant: buttonMinWidth)
-            ])
-            controls.append(thinkingButton)
+            row.addArrangedSubview(thinkingButton)
         }
         if let webSearchButton {
             webSearchButton.controlSize = .large
-            webSearchButton.translatesAutoresizingMaskIntoConstraints = false
-            NSLayoutConstraint.activate([
-                webSearchButton.heightAnchor.constraint(equalToConstant: controlHeight),
-                webSearchButton.widthAnchor.constraint(greaterThanOrEqualToConstant: buttonMinWidth)
-            ])
-            controls.append(webSearchButton)
+            row.addArrangedSubview(webSearchButton)
         }
         if let sessionButton {
             sessionButton.controlSize = .large
-            sessionButton.translatesAutoresizingMaskIntoConstraints = false
-            NSLayoutConstraint.activate([
-                sessionButton.heightAnchor.constraint(equalToConstant: controlHeight),
-                sessionButton.widthAnchor.constraint(greaterThanOrEqualToConstant: buttonMinWidth)
-            ])
-            controls.append(sessionButton)
+            row.addArrangedSubview(sessionButton)
         }
 
-        // Create horizontal stack
-        let stackView = NSStackView(views: controls)
-        stackView.orientation = .horizontal
-        stackView.spacing = 12
-        stackView.distribution = .gravityAreas  // Let controls size naturally
-        stackView.alignment = .centerY
-        stackView.translatesAutoresizingMaskIntoConstraints = false
+        // Override per-control sizing so the row reads the same minimums the
+        // old constraint cascade enforced.
+        row.sizeOverride = { [weak self] view, _ in
+            guard let self else { return nil }
+            if view === self.modelSelectorButton {
+                let intrinsic = view.intrinsicContentSize
+                return NSSize(width: max(Self.modelSelectorMinWidth, intrinsic.width),
+                              height: Self.controlHeight)
+            }
+            if view === self.thinkingButton ||
+               view === self.webSearchButton ||
+               view === self.sessionButton {
+                let intrinsic = view.intrinsicContentSize
+                return NSSize(width: max(Self.buttonMinWidth, intrinsic.width),
+                              height: Self.controlHeight)
+            }
+            // Title label: use intrinsic for both axes.
+            return nil
+        }
+    }
 
-        // Create a container view to hold the stack with proper padding
-        let containerView = NSView()
-        containerView.translatesAutoresizingMaskIntoConstraints = false
-        containerView.addSubview(stackView)
+    required init?(coder: NSCoder) {
+        it_fatalError("init(coder:) not implemented")
+    }
 
-        // Add constraints to create padding
-        NSLayoutConstraint.activate([
-            stackView.topAnchor.constraint(equalTo: containerView.topAnchor, constant: 8),
-            stackView.bottomAnchor.constraint(equalTo: containerView.bottomAnchor, constant: -8),
-            stackView.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 16),
-            stackView.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -16)
-        ])
+    // Manual-layout helper (don't override intrinsicContentSize — it would
+    // activate the constraint engine for the surrounding view tree).
+    func preferredSize() -> NSSize {
+        let rowSize = row.fittingSize(crossAxisLimit: Self.controlHeight)
+        let height = max(Self.controlHeight, rowSize.height) + Self.verticalPadding * 2
+        let width = rowSize.width + Self.horizontalPadding * 2
+        return NSSize(width: width, height: height)
+    }
 
-        // Add vertical alignment constraints
-        NSLayoutConstraint.activate(baselineAlignedViews.map { view in
-            view.bottomAnchor.constraint(equalTo: titleLabel.bottomAnchor)
-        })
+    override func setFrameSize(_ newSize: NSSize) {
+        let oldSize = frame.size
+        super.setFrameSize(newSize)
+        if oldSize != newSize {
+            setNeedsLayoutNow()
+        }
+    }
 
-        // Create glass effect view to wrap the container
-        let glassView = NSGlassEffectView()
-        glassView.contentView = containerView
-        glassView.cornerRadius = 20
-        glassView.translatesAutoresizingMaskIntoConstraints = false
-        return glassView
+    override func layout() {
+        super.layout()
+        performLayoutNow()
+    }
+
+    private func performLayoutNow() {
+        let backdropFrame = bounds
+        if backdrop.frame != backdropFrame {
+            backdrop.frame = backdropFrame
+        }
+        let rowX = Self.horizontalPadding
+        let rowY = Self.verticalPadding
+        let rowWidth = max(0, bounds.width - Self.horizontalPadding * 2)
+        let rowHeight = max(0, bounds.height - Self.verticalPadding * 2)
+        let rowFrame = NSRect(x: rowX, y: rowY, width: rowWidth, height: rowHeight)
+        if row.frame != rowFrame {
+            row.frame = rowFrame
+        }
+    }
+}
+
+extension ChatToolbar {
+    @available(macOS 26, *)
+    func createFloatingView() -> NSView {
+        return FloatingChatToolbarView(titleLabel: titleLabel,
+                                       modelSelectorButton: modelSelectorButton,
+                                       thinkingButton: thinkingButton,
+                                       webSearchButton: webSearchButton,
+                                       sessionButton: sessionButton)
     }
 
     func createOrUpdateModelSelector() {
         modelSelectorButton?.removeAllItems()
 
-        // Create new model selector if multiple models are available
         let availableModels = AITermController.allProvidersForCurrentVendor.map({ $0.model })
         let modelSelector = modelSelectorButton ?? NSPopUpButton()
         modelSelectorButton = modelSelector
-        modelSelector.translatesAutoresizingMaskIntoConstraints = false
-        modelSelector.setContentHuggingPriority(.defaultHigh, for: .horizontal)
-        modelSelector.setContentCompressionResistancePriority(.defaultHigh, for: .horizontal)
         modelSelector.target = self
         modelSelector.action = #selector(selectModel(_:))
 
-        // Use a minimal, borderless style
         modelSelector.isBordered = false
         modelSelector.bezelStyle = .inline
         modelSelector.font = NSFont.systemFont(ofSize: 16)

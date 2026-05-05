@@ -9,16 +9,18 @@ class DateTextField: NSTextField {}
 
 @objc
 class DateCellView: NSView {
-    private static let topInset: CGFloat = 8
-    private static let bottomInset: CGFloat = 8
+    private static let cellTopInset: CGFloat = 8
+    private static let cellBottomInset: CGFloat = 8
+    private static let bubbleHorizontalPadding: CGFloat = 8
+    private static let bubbleVerticalPadding: CGFloat = 8
+
     private let bubbleView = BubbleView()
-    private let textField = {
+    private let textField: DateTextField = {
         let tf = DateTextField()
         tf.isEditable = false
         tf.isSelectable = false
         tf.drawsBackground = false
         tf.isBordered = false
-        tf.translatesAutoresizingMaskIntoConstraints = false
         return tf
     }()
 
@@ -35,30 +37,30 @@ class DateCellView: NSView {
         wantsLayer = true
         layer?.masksToBounds = false  // Allow subviews to be drawn outside the cell’s bounds.
 
-        // Setup bubble
         bubbleView.wantsLayer = true
         bubbleView.layer?.cornerRadius = 8
-        bubbleView.translatesAutoresizingMaskIntoConstraints = false
         addSubview(bubbleView)
 
-        // Add the vertical stack inside the bubble
         bubbleView.addSubview(textField)
         updateBubbleColor()
+    }
 
-        NSLayoutConstraint.activate([
-            // textField inset within bubbleView
-            bubbleView.leadingAnchor.constraint(equalTo: textField.leadingAnchor, constant: -8.0),
-            bubbleView.trailingAnchor.constraint(equalTo: textField.trailingAnchor, constant: 8.0),
-            bubbleView.topAnchor.constraint(equalTo: textField.topAnchor, constant: -Self.topInset),
-            bubbleView.bottomAnchor.constraint(equalTo: textField.bottomAnchor, constant: Self.bottomInset),
-
-            // bubbleView inset within cell and centered horizontally
-            bubbleView.centerXAnchor.constraint(equalTo: centerXAnchor, constant: 0),
-            bubbleView.topAnchor.constraint(equalTo: topAnchor, constant: Self.topInset),
-            bubbleView.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -Self.bottomInset),
-        ])
-        bubbleView.setContentHuggingPriority(.defaultHigh, for: .horizontal)
-        textField.setContentHuggingPriority(.defaultHigh, for: .horizontal)
+    override func layout() {
+        super.layout()
+        textField.sizeToFit()
+        let textSize = textField.frame.size
+        let bubbleWidth = textSize.width + Self.bubbleHorizontalPadding * 2
+        let bubbleHeight = textSize.height + Self.bubbleVerticalPadding * 2
+        let bubbleX = floor((bounds.width - bubbleWidth) / 2)
+        let bubbleY = Self.cellBottomInset
+        bubbleView.frame = NSRect(x: bubbleX,
+                                  y: bubbleY,
+                                  width: bubbleWidth,
+                                  height: bubbleHeight)
+        textField.frame = NSRect(x: Self.bubbleHorizontalPadding,
+                                 y: Self.bubbleVerticalPadding,
+                                 width: textSize.width,
+                                 height: textSize.height)
     }
 
     override func viewDidChangeEffectiveAppearance() {
@@ -73,10 +75,21 @@ class DateCellView: NSView {
     }
 
     func set(dateComponents components: DateComponents) {
-        textField.stringValue = humanReadableDate(from: components)
+        textField.stringValue = Self.humanReadableDate(from: components)
+        needsLayout = true
     }
 
-    private func humanReadableDate(from components: DateComponents) -> String {
+    static func cellHeight(for components: DateComponents) -> CGFloat {
+        // Layout is dominated by a single line of system-font text. Match
+        // the field's font metrics so static height equals the laid-out
+        // height to within a pixel.
+        let probe = DateTextField()
+        probe.stringValue = humanReadableDate(from: components)
+        probe.sizeToFit()
+        return cellTopInset + bubbleVerticalPadding * 2 + probe.frame.height + cellBottomInset
+    }
+
+    private static func humanReadableDate(from components: DateComponents) -> String {
         let calendar = Calendar.current
         guard let date = calendar.date(from: components) else {
             return "Invalid date"

@@ -18,18 +18,61 @@ protocol ChatViewControllerDelegate: AnyObject {
     func chatViewControllerDidUpdateToolbar(_ controller: ChatViewController)
 }
 
-class ChatViewControllerMainStackView: NSStackView {}
-class ChatViewControllerSpacerView: NSView {}
+// Document view for the chat scroll view. Hosts the tableView only —
+// the iOS-style bottom contentInset on the clip view reserves the
+// vertical room so the last row can scroll above the floating input
+// view without anything wedged inside the document view.
+//
+// setFrameSize preserves clip-view origin verbatim. NSScrollView's
+// generic `performWithoutScrolling` clamps origin.y to >= 0, which
+// would bounce us back to the document's bottom (origin.y = 0 in this
+// unflipped doc) every time the doc grew — visibly fighting our
+// scrollToBottom which targets origin.y = -contentInsets.bottom.
+class ChatViewControllerDocumentView: NSView {
+    weak var tableView: NSTableView?
 
-// Root view for ChatViewController. The closure fires whenever the view's
-// window changes; the inline-chat right-gutter panel uses this to defer
-// load(chatID:) until after the panel has been added to the SessionView's
-// window (load early-returns when view.window is nil).
+    override func setFrameSize(_ newSize: NSSize) {
+        let oldOrigin = enclosingScrollView?.contentView.bounds.origin
+        super.setFrameSize(newSize)
+        guard let clipView = enclosingScrollView?.contentView,
+              let oldOrigin,
+              clipView.bounds.origin != oldOrigin else {
+            return
+        }
+        clipView.setBoundsOrigin(oldOrigin)
+        enclosingScrollView?.reflectScrolledClipView(clipView)
+    }
+
+    override func layout() {
+        super.layout()
+        guard let tableView else { return }
+        tableView.frame = NSRect(x: 0, y: 0, width: bounds.width, height: bounds.height)
+    }
+}
+
+// Inner container for the chat root view. The chat root only owns three
+// subviews (a scroll view, the input view, and a hairline divider) but
+// some hosts (the chat window controller toolbar layer) wrap it in
+// additional decoration. Layout is handled in ChatViewController.viewDidLayout.
+class ChatViewControllerInnerContainer: NSView {}
+
+// Root view for ChatViewController. Hooks both window-arrival (the
+// inline-chat right-gutter panel uses this to defer load(chatID:) until
+// after the panel has been added to the SessionView's window) and the
+// synchronous layout pass (which runs the controller's manual layout
+// before draw, in addition to whatever the joiner schedules).
 class ChatViewControllerRootView: NSView {
     var didMoveToWindowHandler: (() -> Void)?
+    var layoutHandler: (() -> Void)?
+
     override func viewDidMoveToWindow() {
         super.viewDidMoveToWindow()
         didMoveToWindowHandler?()
+    }
+
+    override func layout() {
+        super.layout()
+        layoutHandler?()
     }
 }
 
@@ -155,19 +198,137 @@ class ChatViewController: NSViewController {
         }
     }
 
+    // Holds the document view so layout() can reach the tableView.
+    private var documentView: ChatViewControllerDocumentView!
+    private var divider: NSView!
+    // macOS 26 floating bar; positioned manually in performLayoutNow().
+    private var floatingControlsView: NSView?
+
     private var lastTableViewWidth: CGFloat?
-    override func viewWillLayout() {
-        super.viewWillLayout()
-        let tableViewWidth = tableView.bounds.width
-        if tableViewWidth != lastTableViewWidth {
-            lastTableViewWidth = tableViewWidth
-            // I tried updating constraints but of course it does crazy stuff. Some day when I have
-            // more ability to suffer abuse from auto layout I should revisit this. On the other
-            // hand, I have to recalculate height for every row so it might not make much of a
-            // difference anyway.
-            tableView.reloadData()
-            tableView.invalidateIntrinsicContentSize()
+
+    // iOS-style deferred layout. AppKit's viewDidLayout (and any other
+    // event that might mutate frames or content) marks layout dirty via
+    // setNeedsLayoutNow(); the joiner coalesces multiple marks into a
+    // single performLayoutNow() invocation on the next runloop tick. This
+    // keeps our manual layout work strictly OUTSIDE AppKit's synchronous
+    // layout pass — which is what trips the "more passes than views" guard
+    // when the chat tree's auto-layout-internal subtrees (NSScrollView,
+    // ChatInputTextFieldContainer) cycle.
+    private let layoutJoiner = IdempotentOperationJoiner.asyncJoiner(.main)
+
+    func setNeedsLayoutNow() {
+        layoutJoiner.setNeedsUpdate { [weak self] in
+            self?.performLayoutNow()
         }
+    }
+
+    override func viewDidLayout() {
+        super.viewDidLayout()
+        setNeedsLayoutNow()
+    }
+
+    private func performLayoutNow() {
+        guard isViewLoaded else { return }
+        let bounds = view.bounds
+        guard bounds.width > 0 else { return }
+        let dividerHeight: CGFloat = 1
+
+        let scrollFrame = bounds
+        if scrollView.frame != scrollFrame {
+            scrollView.frame = scrollFrame
+        }
+
+        let inputHeight = inputView.preferredHeight(forContainerWidth: bounds.width)
+        let inputFrame = NSRect(x: 0,
+                                y: 0,
+                                width: bounds.width,
+                                height: inputHeight)
+        if inputView.frame != inputFrame {
+            inputView.frame = inputFrame
+        }
+
+        // Reserve room below the table content equal to the input view's
+        // height so the last row can scroll above it. This is the iOS
+        // pattern: scroll view's contentInset.bottom == hovering view's
+        // height, so the content can scroll up out from underneath.
+        let currentInsets = scrollView.contentInsets
+        if currentInsets.bottom != inputHeight ||
+           currentInsets.top != 0 ||
+           currentInsets.left != 0 ||
+           currentInsets.right != 0 {
+            scrollView.contentInsets = NSEdgeInsets(top: 0,
+                                                    left: 0,
+                                                    bottom: inputHeight,
+                                                    right: 0)
+        }
+
+        let dividerFrame = NSRect(x: 0,
+                                  y: bounds.maxY,
+                                  width: bounds.width,
+                                  height: dividerHeight)
+        if divider.frame != dividerFrame {
+            divider.frame = dividerFrame
+        }
+
+        updateDocumentViewSize()
+
+        let tableWidth = tableView.bounds.width
+        if tableWidth != lastTableViewWidth {
+            lastTableViewWidth = tableWidth
+            tableView.reloadData()
+            updateDocumentViewSize()
+        }
+
+        if let floating = floatingControlsView as? FloatingChatToolbarView {
+            let preferred = floating.preferredSize()
+            let availableWidth = max(0, bounds.width - 32)
+            let width = min(availableWidth, preferred.width)
+            let height = max(0, preferred.height)
+            let x = floor((bounds.width - width) / 2)
+            let topPadding: CGFloat = 8
+            let y = bounds.height - topPadding - height
+            let floatingFrame = NSRect(x: x, y: y, width: width, height: height)
+            if floating.frame != floatingFrame {
+                floating.frame = floatingFrame
+            }
+        }
+    }
+
+    func updateDocumentViewSize() {
+        guard let documentView else { return }
+        // The scroll view's clip view is sized asynchronously after we set
+        // the scroll view's frame; reading clipView.bounds.width here can
+        // still report 0 even though scrollView.bounds.width is correct.
+        // Use scrollView.bounds.width directly, minus the vertical scroller
+        // width if one is showing.
+        var width = scrollView.bounds.width
+        if let scroller = scrollView.verticalScroller,
+           scrollView.scrollerStyle == .legacy,
+           !scroller.isHidden {
+            width -= scroller.frame.width
+        }
+        guard width > 0 else { return }
+        // Document height = table content. We deliberately do NOT pad to
+        // the clip view's height: the table view fills the document
+        // (ChatViewControllerDocumentView.layout sets tableView.frame =
+        // bounds), and an over-sized document would leave empty rows
+        // beyond the actual content. Combined with the unflipped
+        // document and flipped table view, that empty area lives above
+        // the last row in document coordinates, so scrollToBottom would
+        // show blank space above the input view rather than the latest
+        // bubble. The bottom contentInset gives users the extra
+        // scrollable room they need.
+        let tableHeight = tableView.intrinsicContentSize.height
+        let newSize = NSSize(width: width, height: tableHeight)
+        if documentView.frame.size == newSize {
+            return
+        }
+        documentView.setFrameSize(newSize)
+        // setFrameSize marks documentView for layout but the actual layout
+        // call happens asynchronously. Force it now so the table view and
+        // spacer pick up the new bounds in the same pass — otherwise the
+        // table can stay at 0×1 (its previous frame) until the next tick.
+        documentView.layout()
     }
 
     override func loadView() {
@@ -175,10 +336,14 @@ class ChatViewController: NSViewController {
         view.didMoveToWindowHandler = { [weak self] in
             self?.rootViewDidMoveToWindow()
         }
+        view.layoutHandler = { [weak self] in
+            // Run the manual layout synchronously inside AppKit's layout
+            // pass so children have valid frames before draw — the joiner
+            // path is for reacting to off-pass state changes (text input,
+            // chat updates) and may run too late for the first paint.
+            self?.performLayoutNow()
+        }
 
-        // Session button
-
-        // Configure Table View
         tableView = NSTableView()
         let column = NSTableColumn(identifier: NSUserInterfaceItemIdentifier("MessageColumn"))
         column.resizingMask = .autoresizingMask
@@ -189,105 +354,61 @@ class ChatViewController: NSViewController {
         tableView.rowHeight = 40
         tableView.backgroundColor = .clear
         tableView.focusRingType = .none
-        tableView.translatesAutoresizingMaskIntoConstraints = false
 
-        class ChatViewControllerDocumentView: NSView {
-            override func setFrameSize(_ newSize: NSSize) {
-                DLog("About to change document view frame size from \(frame.size) to \(newSize). Will adjust clip view's bounds accordingly")
-                enclosingScrollView?.performWithoutScrolling {
-                    super.setFrameSize(newSize)
-                }
-            }
-        }
         let documentView = ChatViewControllerDocumentView()
-        documentView.translatesAutoresizingMaskIntoConstraints = false
         documentView.addSubview(tableView)
+        documentView.tableView = tableView
+        self.documentView = documentView
 
-        let spacer = ChatViewControllerSpacerView()
-        spacer.translatesAutoresizingMaskIntoConstraints = false
-        documentView.addSubview(spacer)
-
-        // Scroll View for Table
         scrollView = NSScrollView()
         scrollView.contentView = NSClipView()
         scrollView.documentView = documentView
         scrollView.hasVerticalScroller = true
-        scrollView.translatesAutoresizingMaskIntoConstraints = false
+        scrollView.autoresizesSubviews = false
+        // iOS-style: bottom contentInset on the clip view reserves room
+        // below the content so the last row can scroll above the floating
+        // input view. The exact value is updated in performLayoutNow once
+        // the input view's preferred height is known.
+        scrollView.automaticallyAdjustsContentInsets = false
+        scrollView.contentInsets = .init()
 
         if #available(macOS 26, *) {
             scrollView.scrollerStyle = .overlay
-            // Ensure content can scroll under the toolbar
-            scrollView.contentView.contentInsets = NSEdgeInsets(top: 0, left: 0, bottom: 0, right: 0)
         }
 
         inputView.delegate = self
+
+        let dividerView: NSView = {
+            class ChatViewControllerDividerView: GradientView {}
+            return ChatViewControllerDividerView(
+                gradient: .init(
+                    stops: [
+                        .init(
+                            color: .it_dynamicColor(
+                                forLightMode: .init(fromHexString: "#f2f2f2")!,
+                                darkMode: .init(fromHexString: "#161616")!), location: 0.25),
+                        .init(
+                            color: .it_dynamicColor(
+                                forLightMode: .init(fromHexString: "#e3e3e3")!,
+                                darkMode: .init(fromHexString: "#0b0b0b")!), location: 0.75)]))
+        }()
+        self.divider = dividerView
+
+        // Disable autoresizing for the children we lay out manually so
+        // AppKit doesn't move them on window resize.
+        scrollView.translatesAutoresizingMaskIntoConstraints = false
         inputView.translatesAutoresizingMaskIntoConstraints = false
+        dividerView.translatesAutoresizingMaskIntoConstraints = false
+        documentView.translatesAutoresizingMaskIntoConstraints = false
+        tableView.translatesAutoresizingMaskIntoConstraints = false
 
-        // Main container for scroll view and input
-        class ChatViewControllerInnerContainer: NSView {}
-        let innerContainer = ChatViewControllerInnerContainer()
-        innerContainer.addSubview(scrollView)
-        innerContainer.addSubview(inputView)
-        innerContainer.translatesAutoresizingMaskIntoConstraints = false
-        view.addSubview(innerContainer)
+        view.addSubview(scrollView)
+        view.addSubview(inputView)
+        view.addSubview(dividerView)
 
-        let mainStackInsets = NSEdgeInsets(top: 0, left: 0, bottom: 0, right: 0)
-
-        class ChatViewControllerDividerView: GradientView {}
-        let divider = ChatViewControllerDividerView(
-            gradient: .init(
-                stops: [
-                    .init(
-                        color: .it_dynamicColor(
-                            forLightMode: .init(fromHexString: "#f2f2f2")!,
-                            darkMode: .init(fromHexString: "#161616")!), location: 0.25),
-                    .init(
-                        color: .it_dynamicColor(
-                            forLightMode: .init(fromHexString: "#e3e3e3")!,
-                            darkMode: .init(fromHexString: "#0b0b0b")!), location: 0.75)]))
-        divider.translatesAutoresizingMaskIntoConstraints = false
-        view.addSubview(divider)
-
-        NSLayoutConstraint.activate([
-            divider.leadingAnchor.constraint(equalTo: scrollView.leadingAnchor),
-            divider.trailingAnchor.constraint(equalTo: scrollView.trailingAnchor),
-            divider.bottomAnchor.constraint(equalTo: scrollView.topAnchor),
-            divider.heightAnchor.constraint(equalToConstant: 1),
-
-            innerContainer.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: mainStackInsets.left),
-            innerContainer.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -mainStackInsets.right),
-            // On macOS 26+, content should extend to top for scroll edge effect
-            innerContainer.topAnchor.constraint(equalTo: view.topAnchor, constant: mainStackInsets.top),
-            innerContainer.bottomAnchor.constraint(equalTo: view.bottomAnchor, constant: -mainStackInsets.bottom),
-
-            innerContainer.leadingAnchor.constraint(equalTo: scrollView.leadingAnchor),
-            innerContainer.trailingAnchor.constraint(equalTo: scrollView.trailingAnchor),
-            innerContainer.bottomAnchor.constraint(equalTo: scrollView.bottomAnchor),
-            innerContainer.topAnchor.constraint(equalTo: scrollView.topAnchor),
-
-            documentView.leadingAnchor.constraint(equalTo: scrollView.leadingAnchor),
-            documentView.trailingAnchor.constraint(equalTo: scrollView.trailingAnchor),
-
-            tableView.topAnchor.constraint(equalTo: documentView.topAnchor),
-            tableView.leftAnchor.constraint(equalTo: documentView.leftAnchor),
-            tableView.rightAnchor.constraint(equalTo: documentView.rightAnchor),
-
-            tableView.bottomAnchor.constraint(equalTo: spacer.topAnchor),
-
-            spacer.leftAnchor.constraint(equalTo: documentView.leftAnchor),
-            spacer.rightAnchor.constraint(equalTo: documentView.rightAnchor),
-            spacer.bottomAnchor.constraint(equalTo: documentView.bottomAnchor),
-
-            inputView.leftAnchor.constraint(equalTo: documentView.leftAnchor),
-            inputView.rightAnchor.constraint(equalTo: documentView.rightAnchor),
-            inputView.bottomAnchor.constraint(equalTo: innerContainer.bottomAnchor),
-            inputView.heightAnchor.constraint(equalTo: spacer.heightAnchor),
-        ])
-        // Button constraints will be handled by toolbar items
         view.alphaValue = 0
         self.view = view
-        
-        // Initialize toolbar with model selector if needed
+
         chatToolbar.update()
     }
 }
@@ -367,7 +488,13 @@ extension ChatViewController {
                 var shouldScroll = true
                 switch update {
                 case let .delivery(message, _):
-                    shouldScroll = message.shouldCauseScrollToBottom
+                    // Hidden-from-client messages (setPermissions,
+                    // remoteCommandResponse, renameChat, commit,
+                    // vectorStoreCreated, userCommand) don't appear in
+                    // the table, so they shouldn't trigger a scroll
+                    // either — that was making button clicks in
+                    // permissions bubbles bounce the chat.
+                    shouldScroll = !message.hiddenFromClient && message.shouldCauseScrollToBottom
                     if !message.hiddenFromClient {
                         model.appendMessage(message)
                     } else if case .commit = message.content {
@@ -791,26 +918,39 @@ extension ChatViewController {
         }
         let row = model.items.count - 1
         guard row >= 0 else { return }
-        if !animated {
-            tableView.scrollRowToVisible(row)
-        } else {
+        // Force the manual layout pass to run synchronously so the
+        // input-view height has been measured, contentInsets.bottom is
+        // current, and the document size reflects the latest row heights.
+        // load(chatID:) calls us before the joiner has fired; without
+        // this, insetBottom is 0 and setBoundsOrigin(0, 0) clamps to the
+        // valid range — leaving the last bubble(s) obscured by the
+        // input view.
+        performLayoutNow()
+        // documentView (ChatViewControllerDocumentView) is unflipped, so
+        // doc.y=0 is the BOTTOM of the document (newest row). Setting
+        // clipView.bounds.origin.y = -contentInsets.bottom puts that
+        // bottom edge at insetBottom pixels above the clip's lower edge —
+        // i.e., flush with the top of the input view.
+        let insetBottom = scrollView.contentInsets.bottom
+        let target = NSPoint(x: 0, y: -insetBottom)
+        if animated {
             NSAnimationContext.runAnimationGroup { context in
                 context.duration = 0.1
-                scrollView.contentView.animator().setBoundsOrigin(.zero)
+                scrollView.contentView.animator().setBoundsOrigin(target)
             }
+        } else {
+            scrollView.contentView.setBoundsOrigin(target)
+            scrollView.reflectScrolledClipView(scrollView.contentView)
         }
     }
 
     @available(macOS 26, *)
     func setupFloatingControls() {
         let floatingView = chatToolbar.createFloatingView()
+        floatingView.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(floatingView)
-        NSLayoutConstraint.activate([
-            floatingView.topAnchor.constraint(equalTo: view.topAnchor, constant: 8),
-            floatingView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            floatingView.leadingAnchor.constraint(greaterThanOrEqualTo: view.leadingAnchor, constant: 16),
-            floatingView.trailingAnchor.constraint(lessThanOrEqualTo: view.trailingAnchor, constant: -16)
-        ])
+        floatingControlsView = floatingView
+        view.needsLayout = true
     }
 }
 
@@ -989,6 +1129,10 @@ extension ChatViewController: NSTableViewDataSource, NSTableViewDelegate {
                         return
                     }
                     toggle(permissionCategory: category)
+                    // Button titles encode the current permission state
+                    // ("Category: Allow"/"Ask"/"Never"), so reload the
+                    // cell after a toggle to refresh them.
+                    reloadCell(forMessageID: messageID)
                 }
             }
         case .vectorStoreCreated, .userCommand:
@@ -1132,13 +1276,28 @@ extension ChatViewController: NSTableViewDataSource, NSTableViewDelegate {
             return 0
         }
         let item = model.items[row]
-        let prototypeCell = view(forItem: item, isLastMessage: model.indexIsLastMessage(row))
-        prototypeCell.frame = NSRect(x: 0, y: 0, width: tableView.bounds.width, height: 0)
-        prototypeCell.layoutSubtreeIfNeeded()
-
-        let height = prototypeCell.fittingSize.height
-        DLog("tableView(_, heightOfRow: \(row)) returns \(height)")
-        return height
+        // Cells converted to manual layout report their own height; the
+        // remainder still rely on auto-layout fittingSize via a prototype.
+        switch item {
+        case .agentTyping:
+            return TypingIndicatorCellView.cellHeight
+        case .date(let components):
+            return DateCellView.cellHeight(for: components)
+        case .message(let message):
+            let r = rendition(for: message.message,
+                              isLast: model.indexIsLastMessage(row))
+            switch r.flavor {
+            case .regular:
+                return RegularMessageCellView.cellHeight(for: r,
+                                                         tableViewWidth: tableView.bounds.width)
+            case .command:
+                return TerminalCommandMessageCellView.cellHeight(for: r,
+                                                                 tableViewWidth: tableView.bounds.width)
+            case .multipart:
+                return MultipartMessageCellView.cellHeight(for: r,
+                                                           tableViewWidth: tableView.bounds.width)
+            }
+        }
     }
 
     private func rendition(for message: Message, isLast: Bool) -> MessageRendition {
@@ -1240,9 +1399,10 @@ extension ChatViewController: NSTableViewDataSource, NSTableViewDelegate {
                     }
                 })
         default:
-                .regular(.init(attributedString: message.attributedStringValue,
-                               buttons: message.buttons,
-                               enableButtons: enableButtons))
+            .regular(.init(attributedString: message.attributedStringValue,
+                           buttons: message.buttons,
+                           enableButtons: enableButtons,
+                           keepsButtonsEnabledAfterClick: message.isPermissionsClientLocal))
         }
         return MessageRendition(isUser: message.author == .user,
                                 messageUniqueID: message.uniqueID,
@@ -1566,9 +1726,9 @@ extension ChatViewController: ChatViewControllerModelDelegate {
             tableView.reloadData(forRowIndexes: rows,
                                  columnIndexes: IndexSet(integer: 0))
             tableView.noteHeightOfRows(withIndexesChanged: rows)
-            tableView.invalidateIntrinsicContentSize()
             tableView.endUpdates()
         }
+        setNeedsLayoutNow()
     }
 
 
@@ -1577,6 +1737,7 @@ extension ChatViewController: ChatViewControllerModelDelegate {
         it_assert(range.upperBound <= estimatedCount)
         estimatedCount -= range.count
         tableView.removeRows(at: IndexSet(ranges: [range]))
+        setNeedsLayoutNow()
     }
 
     func chatViewControllerModel(didModifyItemsAtIndexes indexSet: IndexSet) {
@@ -1593,8 +1754,8 @@ extension ChatViewController: ChatViewControllerModelDelegate {
         tableView.beginUpdates()
         tableView.noteHeightOfRows(withIndexesChanged: indexSet)
         tableView.reloadData(forRowIndexes: indexSet, columnIndexes: IndexSet(integer: 0))
-        tableView.invalidateIntrinsicContentSize()
         tableView.endUpdates()
+        setNeedsLayoutNow()
     }
 }
 
@@ -1717,6 +1878,18 @@ extension Message {
     }
     var textColor: NSColor {
         return author == .user ? .white : .textColor
+    }
+
+    // True when this is the permissions toggle bubble. Its buttons are
+    // meant to be re-tappable so the user can cycle Allow/Ask/Never;
+    // RegularMessageCellView reads this to skip the default
+    // disable-on-click loop in buttonTapped.
+    var isPermissionsClientLocal: Bool {
+        if case .clientLocal(let clientLocal) = content,
+           case .permissions = clientLocal.action {
+            return true
+        }
+        return false
     }
 
     var buttons: [MessageRendition.Regular.Button] {

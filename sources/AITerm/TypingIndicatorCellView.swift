@@ -9,6 +9,10 @@
 class TypingIndicatorCellView: NSView {
     private let activityIndicator = NSProgressIndicator()
 
+    private static let leadingInset: CGFloat = 8
+    private static let indicatorSize: CGFloat = 16
+    static let cellHeight: CGFloat = 20
+
     init() {
         super.init(frame: .zero)
         setupViews()
@@ -19,21 +23,23 @@ class TypingIndicatorCellView: NSView {
     }
 
     private func setupViews() {
-        // Bubble View Setup
         activityIndicator.isIndeterminate = true
-        activityIndicator.translatesAutoresizingMaskIntoConstraints = false
         activityIndicator.style = .spinning
-        activityIndicator.controlSize = .regular
+        activityIndicator.controlSize = .small
         addSubview(activityIndicator)
-
-        NSLayoutConstraint.activate([
-            activityIndicator.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 8),
-            activityIndicator.topAnchor.constraint(equalTo: topAnchor, constant: 4),
-            activityIndicator.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -4),
-            heightAnchor.constraint(equalToConstant: 20.0)
-        ])
-        activityIndicator.setContentHuggingPriority(.defaultHigh, for: .horizontal)
         activityIndicator.startAnimation(nil)
     }
-}
 
+    override func layout() {
+        super.layout()
+        // Hardcode the indicator size — NSProgressIndicator's fittingSize
+        // and intrinsicContentSize both return the *current frame* (which
+        // is .zero on init) rather than a measured natural size, so reading
+        // them gives garbage. 16×16 matches the .small spinner.
+        let y = floor((bounds.height - Self.indicatorSize) / 2)
+        activityIndicator.frame = NSRect(x: Self.leadingInset,
+                                         y: y,
+                                         width: Self.indicatorSize,
+                                         height: Self.indicatorSize)
+    }
+}

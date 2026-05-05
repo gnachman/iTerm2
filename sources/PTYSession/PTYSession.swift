@@ -2053,6 +2053,16 @@ extension PTYSession {
                 browserSessionGuid: isBrowser ? sessionGuid : nil,
                 initialMessages: [],
                 permissions: "")
+            // Mirror the chat window's link flow so the inline chat
+            // starts with the same "linked to session" notice and
+            // permissions buttons.
+            let escapedName = self.name.escapedForMarkdownCode
+            try? client.publishNotice(
+                chatID: chatID,
+                notice: "This chat has been linked to \(isBrowser ? "web browser" : "terminal") session “\(escapedName)”")
+            try? client.publishClientLocalMessage(
+                chatID: chatID,
+                action: .permissions(terminal: !isBrowser, guid: sessionGuid))
             inlineChatID = chatID
             inlineChatVisible = true
         } catch {
