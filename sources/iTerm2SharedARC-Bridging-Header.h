@@ -11,6 +11,7 @@
 #import "ObjCExceptions.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermApplication.h"
+#import "iTermBijection.h"
 #import "iTermBuiltInFunctions.h"
 #import "iTermCache.h"
 #import "iTermColorMap.h"

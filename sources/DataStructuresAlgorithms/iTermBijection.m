@@ -24,11 +24,11 @@
     [_impl link:left to:right];
 }
 
-- (id)objectForLeft:(id)left {
+- (nullable id)objectForLeft:(id)left {
     return [_impl objectForLeft:left];
 }
 
-- (id)objectForRight:(id)right {
+- (nullable id)objectForRight:(id)right {
     return [_impl objectForRight:right];
 }
 

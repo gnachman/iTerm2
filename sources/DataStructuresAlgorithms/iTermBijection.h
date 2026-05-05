@@ -12,8 +12,8 @@ NS_ASSUME_NONNULL_BEGIN
 @interface iTermBijection<__covariant Left, __covariant Right>: NSObject
 
 - (void)link:(Left)left to:(Right)right;
-- (Right)objectForLeft:(Left)left;
-- (Left)objectForRight:(Right)right;
+- (nullable Right)objectForLeft:(Left)left;
+- (nullable Left)objectForRight:(Right)right;
 
 @end
 
