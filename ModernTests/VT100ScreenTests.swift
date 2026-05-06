@@ -414,6 +414,21 @@ class VT100ScreenTests: XCTestCase {
         XCTAssertTrue(VT100GridCoordRangeEqualsCoordRange(rangeAfterResize, expected))
     }
 
+    // MARK: - VT100ScreenMark dealloc tests
+
+    // Regression test: a mark with an unfulfilled return-code promise (i.e. returnCodePromise
+    // was called but setCode: was never called) must not crash on dealloc.
+    // This reproduces the crash seen when marks are freed during copySlowStuffFrom: while a
+    // command is still running (session closed before the command finished).
+    func testMarkDeallocWithUnfulfilledReturnCodePromise() {
+        autoreleasepool {
+            let mark = VT100ScreenMark()
+            _ = mark.returnCodePromise
+            // mark deallocates here without setCode: ever being called
+        }
+        // reaching this line without a crash is the pass condition
+    }
+
     // MARK: - VT100ScreenMark property resize tests
 
     // Test that VT100ScreenMark's commandRange, promptRange, and outputStart are updated

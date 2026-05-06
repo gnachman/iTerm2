@@ -192,6 +192,10 @@ static NSString *const kMarkOutputStart = @"Output Start";
 }
 
 - (void)dealloc {
+    // If the promise was created but setCode: was never called (e.g., session terminated while a
+    // command was running), reject it now so iTermPromiseSeal's dealloc assertion doesn't fire.
+    [_codeSeal rejectWithDefaultError];
+    _codeSeal = nil;
     @synchronized([VT100ScreenMark class]) {
         // I think this is not needed because we use weak pointers but I also don't trust
         // NSMapTable to ever remove dead objects. Do this to avoid a possible waste of memory.
