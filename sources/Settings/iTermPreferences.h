@@ -45,6 +45,7 @@ typedef NS_ENUM(NSUInteger, iTermStatusBarPosition) {
 #define TAB_POSITION_TOP PSMTab_TopTab
 #define TAB_POSITION_BOTTOM PSMTab_BottomTab
 #define TAB_POSITION_LEFT PSMTab_LeftTab
+#define TAB_POSITION_RIGHT PSMTab_RightTab
 
 // Values for kPreferenceKeyXxxRemapping (corresponds to tags in controls).
 // Note that this serves two purposes. It describes what keys are remapped to and also the shortcuts

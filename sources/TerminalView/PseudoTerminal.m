@@ -1818,6 +1818,7 @@ ITERM_WEAKLY_REFERENCEABLE
         case PSMTab_TopTab:
             return NO;
         case PSMTab_LeftTab:
+        case PSMTab_RightTab:
         case PSMTab_BottomTab:
             return YES;
     }
@@ -3078,7 +3079,11 @@ ITERM_WEAKLY_REFERENCEABLE
             tabSize = NSMakeSize(step.width - 2, 8);
             break;
         case PSMTab_LeftTab:
+        case PSMTab_RightTab:
             tabsRect.size.width = kLeftTabPreviewWidth;
+            if ([iTermPreferences intForKey:kPreferenceKeyTabPosition] == PSMTab_RightTab) {
+                tabsRect.origin.x = NSMaxX(rect) - kLeftTabPreviewWidth - 1;
+            }
             tabsRect.size.height = rect.size.height;
             step.width = 0;
             tabSize = NSMakeSize(kLeftTabPreviewWidth - 2, 4);
@@ -3114,6 +3119,10 @@ ITERM_WEAKLY_REFERENCEABLE
               break;
           case PSMTab_LeftTab:
               contentRect.origin.x += kLeftTabPreviewWidth;
+              contentRect.size.width -= kLeftTabPreviewWidth;
+              contentRect.size.height += 10;
+              break;
+          case PSMTab_RightTab:
               contentRect.size.width -= kLeftTabPreviewWidth;
               contentRect.size.height += 10;
               break;
@@ -5127,6 +5136,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
         case PSMTab_TopTab:
             return NO;
         case PSMTab_LeftTab:
+        case PSMTab_RightTab:
             return !self.tabBarShouldBeVisible;
     }
 
@@ -5165,6 +5175,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
                                 bottomInset = 4.5;
                                 break;
                             case PSMTab_LeftTab:
+                            case PSMTab_RightTab:
                                 break;
                         }
                     }
@@ -5234,6 +5245,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
             }
         }
         case PSMTab_LeftTab:
+        case PSMTab_RightTab:
             return NSEdgeInsetsMake(24, 0, 0, 0);
 
         case PSMTab_BottomTab:
@@ -6281,8 +6293,9 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
 - (BOOL)shouldMoveTabBarToTitlebarAccessoryInLionFullScreen {
     switch ([iTermPreferences intForKey:kPreferenceKeyTabPosition]) {
         case PSMTab_LeftTab:
+        case PSMTab_RightTab:
         case PSMTab_BottomTab:
-            DLog(@"left or bottom tabbar - return NO");
+            DLog(@"side or bottom tabbar - return NO");
             return NO;
 
         case PSMTab_TopTab:
@@ -6362,6 +6375,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     }
     switch ((PSMTabPosition)[iTermPreferences intForKey:kPreferenceKeyTabPosition]) {
         case PSMTab_LeftTab:
+        case PSMTab_RightTab:
         case PSMTab_BottomTab:
             DLog(@"NO - tabs not on top");
             return NO;
@@ -7125,6 +7139,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
 
     switch ((PSMTabPosition)[iTermPreferences intForKey:kPreferenceKeyTabPosition]) {
         case PSMTab_LeftTab:
+        case PSMTab_RightTab:
             return NO;
 
         case PSMTab_BottomTab:
@@ -7232,6 +7247,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     contentFrame = viewRect = [tabRootView frame];
     switch ([iTermPreferences intForKey:kPreferenceKeyTabPosition]) {
         case PSMTab_LeftTab:
+        case PSMTab_RightTab:
             contentFrame.size.width += _contentView.leftTabBarWidth;
             break;
 
@@ -7253,6 +7269,10 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     switch ([iTermPreferences intForKey:kPreferenceKeyTabPosition]) {
         case PSMTab_LeftTab:
             viewRect.origin.x += _contentView.leftTabBarWidth;
+            viewRect.size.width -= _contentView.leftTabBarWidth;
+            break;
+
+        case PSMTab_RightTab:
             viewRect.size.width -= _contentView.leftTabBarWidth;
             break;
 
@@ -7356,7 +7376,8 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
         // In case the tab bar will go away
         [_contentView invalidateAutomaticTabBarBackingHiding];
 
-        if (willShowTabBar && [iTermPreferences intForKey:kPreferenceKeyTabPosition] == PSMTab_LeftTab) {
+        const PSMTabPosition tabPosition = [iTermPreferences intForKey:kPreferenceKeyTabPosition];
+        if (willShowTabBar && (tabPosition == PSMTab_LeftTab || tabPosition == PSMTab_RightTab)) {
             [_contentView willShowTabBar];
         }
         const BOOL generallyPreserveWindowSize = [iTermPreferences boolForKey:kPreferenceKeyPreserveWindowSizeWhenTabBarVisibilityChanges];
@@ -7597,7 +7618,8 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
 
         if (hasUnpinnedToRight) {
             NSString *title;
-            if ([iTermPreferences intForKey:kPreferenceKeyTabPosition] == PSMTab_LeftTab) {
+            const PSMTabPosition tabPosition = [iTermPreferences intForKey:kPreferenceKeyTabPosition];
+            if (tabPosition == PSMTab_LeftTab || tabPosition == PSMTab_RightTab) {
                 title = @"Close Tabs Below";
             } else {
                 title = @"Close Tabs to the Right";
@@ -7725,6 +7747,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
             break;
 
         case PSMTab_LeftTab:
+        case PSMTab_RightTab:
             switch ([term windowType]) {
                 case WINDOW_TYPE_COMPACT:
                 case WINDOW_TYPE_NO_TITLE_BAR: {
@@ -8158,6 +8181,9 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
         case PSMTab_LeftTab:
             sessions = self.currentTab.sessionsAtLeft;
             break;
+        case PSMTab_RightTab:
+            sessions = self.currentTab.sessionsAtRight;
+            break;
         case PSMTab_TopTab:
             sessions = self.currentTab.sessionsAtTop;
             break;
@@ -8236,6 +8262,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
                         case PSMTab_TopTab:
                             return @NO;
                         case PSMTab_LeftTab:
+                        case PSMTab_RightTab:
                         case PSMTab_BottomTab:
                             return @YES;
                     }
@@ -8317,6 +8344,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
         }
         switch ([iTermPreferences intForKey:kPreferenceKeyTabPosition]) {
             case PSMTab_LeftTab:
+            case PSMTab_RightTab:
                 return NO;
             case PSMTab_TopTab:
                 return (point.y < height);
@@ -10579,6 +10607,7 @@ static BOOL iTermApproximatelyEqualRects(NSRect lhs, NSRect rhs, double epsilon)
     }
     switch ([iTermPreferences intForKey:kPreferenceKeyTabPosition]) {
         case PSMTab_LeftTab:
+        case PSMTab_RightTab:
         case PSMTab_TopTab:
             break;
         case PSMTab_BottomTab:
@@ -10638,7 +10667,8 @@ static BOOL iTermApproximatelyEqualRects(NSRect lhs, NSRect rhs, double epsilon)
 }
 
 - (BOOL)shouldHaveTallTabBar {
-    if ([iTermPreferences intForKey:kPreferenceKeyTabPosition] == PSMTab_LeftTab) {
+    const PSMTabPosition tabPosition = [iTermPreferences intForKey:kPreferenceKeyTabPosition];
+    if (tabPosition == PSMTab_LeftTab || tabPosition == PSMTab_RightTab) {
         return NO;
     }
     if (!iTermWindowTypeIsCompact(self.windowType) &&
@@ -10778,6 +10808,7 @@ static BOOL iTermApproximatelyEqualRects(NSRect lhs, NSRect rhs, double epsilon)
         switch ([iTermPreferences intForKey:kPreferenceKeyTabPosition]) {
             case PSMTab_TopTab:
             case PSMTab_LeftTab:
+            case PSMTab_RightTab:
                 switch (_savedWindowType) {
                     case WINDOW_TYPE_TOP_PERCENTAGE:
                     case WINDOW_TYPE_LEFT_PERCENTAGE:
@@ -11080,10 +11111,12 @@ static BOOL iTermApproximatelyEqualRects(NSRect lhs, NSRect rhs, double epsilon)
 }
 
 - (BOOL)haveRightBorderRegardlessOfScrollBar {
+    BOOL rightTabBar = ([iTermPreferences intForKey:kPreferenceKeyTabPosition] == PSMTab_RightTab);
     if (!self.shouldShowBorder) {
         return NO;
     } else if ([self anyFullScreen] ||
-               self.windowType == WINDOW_TYPE_RIGHT_PERCENTAGE ) {
+               self.windowType == WINDOW_TYPE_RIGHT_PERCENTAGE ||
+               (rightTabBar && [self tabBarShouldBeVisible])) {
         return NO;
     }
     return YES;
@@ -11147,6 +11180,7 @@ static BOOL iTermApproximatelyEqualRects(NSRect lhs, NSRect rhs, double epsilon)
                 }
                 break;
             case PSMTab_LeftTab:
+            case PSMTab_RightTab:
                 if (self.tabs.count == 1 && self.tabs.firstObject.reportIdeal) {
                     // Initial setup. Do this so we can get the initial session's desired number of columns. Issue 8365.
                     decorationSize.width += _contentView.leftTabBarPreferredWidth;

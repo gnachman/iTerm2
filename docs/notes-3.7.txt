@@ -9,6 +9,9 @@ to version 3.6.7 and duplicates some items in
 betas since then.
 
 Major New Features:
+- Tabs can now be placed on the right side
+  of the window.
+
 - A new Tab Status system was added. Sessions
   can now report status that appears on their
   tab with a custom subtitle, color, and dot

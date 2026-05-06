@@ -241,6 +241,11 @@ NS_CLASS_AVAILABLE_MAC(10_14)
                 _tabBarControl.orientation = PSMTabBarVerticalOrientation;
                 [self setTabBarControlAutoresizingMask:(NSViewHeightSizable | NSViewMaxXMargin)];
                 break;
+
+            case PSMTab_RightTab:
+                _tabBarControl.orientation = PSMTabBarVerticalOrientation;
+                [self setTabBarControlAutoresizingMask:(NSViewHeightSizable | NSViewMinXMargin)];
+                break;
         }
         [self addSubview:_tabBarBacking];
         [_tabBarBacking addSubview:_tabBarControl];
@@ -597,7 +602,8 @@ NS_CLASS_AVAILABLE_MAC(10_14)
     }
     [_windowNumberLabel sizeToFit];
     const NSRect standardButtonsFrame = [self frameForStandardWindowButtons];
-    const CGFloat tabBarHeight = [iTermPreferences intForKey:kPreferenceKeyTabPosition] == PSMTab_LeftTab ? 26.0 : _tabBarControl.height;
+    const PSMTabPosition tabPosition = [iTermPreferences intForKey:kPreferenceKeyTabPosition];
+    const CGFloat tabBarHeight = (tabPosition == PSMTab_LeftTab || tabPosition == PSMTab_RightTab) ? 26.0 : _tabBarControl.height;
     const CGFloat windowNumberHeight = _windowNumberLabel.frame.size.height;
     const CGFloat baselineOffset = -_windowNumberLabel.font.descender;
     const CGFloat capHeight = _windowNumberLabel.font.capHeight;
@@ -1310,6 +1316,11 @@ NS_CLASS_AVAILABLE_MAC(10_14)
             [self layoutSubviewsWithVisibleLeftTabBarAndInlineToolbelt:showToolbeltInline forWindow:thisWindow];
             break;
         }
+
+        case PSMTab_RightTab: {
+            [self layoutSubviewsWithVisibleRightTabBarAndInlineToolbelt:showToolbeltInline forWindow:thisWindow];
+            break;
+        }
     }
 }
 
@@ -1541,6 +1552,29 @@ NS_CLASS_AVAILABLE_MAC(10_14)
     [self updateLeftTabBarDragHandleForTabBarFrame:outputs.tabBarFrame];
 }
 
+- (void)layoutSubviewsWithVisibleRightTabBarAndInlineToolbelt:(BOOL)showToolbeltInline forWindow:(NSWindow *)thisWindow {
+    assert(!_tabBarControlOnLoan);
+    [self setLeftTabBarWidthFromPreferredWidth];
+
+    iTermLayoutInputs inputs = [self layoutInputsForWindow:thisWindow];
+    inputs.tabBarVisible = YES;
+    inputs.tabPosition = kLayoutTabPositionRight;
+    iTermLayoutOutputs outputs = [iTermLayoutCalculator calculateLayoutWithInputs:inputs];
+
+    self.tabBarControl.insets = [self.delegate tabBarInsets];
+    [self setTabBarFrame:outputs.tabBarFrame];
+    [self setTabBarControlAutoresizingMask:(NSViewHeightSizable | NSViewMinXMargin)];
+
+    DLog(@"repositionWidgets - Set tab view frame to %@", NSStringFromRect(outputs.tabViewFrame));
+    self.tabView.frame = outputs.tabViewFrame;
+
+    [self layoutStatusBarWithOutputs:outputs window:thisWindow];
+
+    [self updateDivisionViewAndWindowNumberLabel];
+
+    [self updateRightTabBarDragHandleForTabBarFrame:outputs.tabBarFrame];
+}
+
 - (void)updateLeftTabBarDragHandleForTabBarFrame:(CGRect)tabBarFrame {
     if (CGRectIsEmpty(tabBarFrame)) {
         [self removeLeftTabBarDragHandle];
@@ -1558,6 +1592,26 @@ NS_CLASS_AVAILABLE_MAC(10_14)
         [self addSubview:self.leftTabBarDragHandle];
     } else {
         self.leftTabBarDragHandle.frame = leftTabBarDragHandleFrame;
+    }
+}
+
+- (void)updateRightTabBarDragHandleForTabBarFrame:(CGRect)tabBarFrame {
+    if (CGRectIsEmpty(tabBarFrame)) {
+        [self removeLeftTabBarDragHandle];
+        return;
+    }
+
+    const CGFloat dragHandleWidth = 3;
+    NSRect rightTabBarDragHandleFrame = NSMakeRect(NSMinX(tabBarFrame),
+                                                   0,
+                                                   dragHandleWidth,
+                                                   NSHeight(tabBarFrame));
+    if (!self.leftTabBarDragHandle) {
+        self.leftTabBarDragHandle = [[iTermDragHandleView alloc] initWithFrame:rightTabBarDragHandleFrame];
+        self.leftTabBarDragHandle.delegate = self;
+        [self addSubview:self.leftTabBarDragHandle];
+    } else {
+        self.leftTabBarDragHandle.frame = rightTabBarDragHandleFrame;
     }
 }
 
@@ -1867,6 +1921,7 @@ NS_CLASS_AVAILABLE_MAC(10_14)
     switch ([iTermPreferences intForKey:kPreferenceKeyTabPosition]) {
         case PSMTab_BottomTab:
         case PSMTab_LeftTab:
+        case PSMTab_RightTab:
             return YES;
 
         case PSMTab_TopTab:
@@ -1895,7 +1950,8 @@ NS_CLASS_AVAILABLE_MAC(10_14)
 // For the left-side tab bar.
 - (CGFloat)dragHandleView:(iTermDragHandleView *)dragHandle didMoveBy:(CGFloat)delta {
     CGFloat originalValue = _leftTabBarPreferredWidth;
-    _leftTabBarPreferredWidth = round([self leftTabBarWidthForPreferredWidth:_leftTabBarPreferredWidth + delta]);
+    const CGFloat signedDelta = [iTermPreferences intForKey:kPreferenceKeyTabPosition] == PSMTab_RightTab ? -delta : delta;
+    _leftTabBarPreferredWidth = round([self leftTabBarWidthForPreferredWidth:_leftTabBarPreferredWidth + signedDelta]);
     [self layoutSubviews];  // This may modify _leftTabBarWidth if it's too big or too small.
     [[iTermUserDefaults userDefaults] setDouble:_leftTabBarPreferredWidth
                                               forKey:kPreferenceKeyLeftTabBarWidth];

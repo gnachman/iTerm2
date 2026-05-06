@@ -2654,6 +2654,10 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
                 xOrigin = tabFrame.size.width;
                 viewSize.width += tabFrame.size.width;
                 break;
+
+            case PSMTab_RightTab:
+                viewSize.width += tabFrame.size.width;
+                break;
         }
     }
 
