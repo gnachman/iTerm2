@@ -7215,6 +7215,13 @@ static NSString *iTermStringFromRange(NSRange range) {
         id<iTermPathMarkReading> pathMark = [self pathMarkAtWindowCoord:event.locationInWindow];
         const VT100GridCoord coord = [self coordForPoint:pointInSelf allowRightMarginOverflow:NO];
         NSString *blockID = [self foldableBlockIDOnLine:coord.y];
+        // A click anywhere on a folded line’s placeholder also unfolds. The fold
+        // arrow in the margin (handled by foldMark above) remains the primary
+        // affordance; this is the wider hit area.
+        id<iTermFoldMarkReading> foldMarkOnLine = nil;
+        if (coord.y >= 0 && !foldMark) {
+            foldMarkOnLine = [[_dataSource foldMarksInRange:VT100GridRangeMake(coord.y, 1)] firstObject];
+        }
         if (foldMark) {
             DLog(@"mouseUp: fold mark");
             [self unfoldMark:foldMark];
@@ -7237,6 +7244,10 @@ static NSString *iTermStringFromRange(NSRange range) {
                                                                      block:^(NSTimer * _Nonnull timer) {
                 [weakSelf openPathMark:pathMark];
             }] retain];
+        } else if (foldMarkOnLine) {
+            DLog(@"mouseUp: click on folded line, unfolding");
+            [self unfoldMark:foldMarkOnLine];
+            return VT100GridCoordMake(-1, -1);
         } else if (!firstMouse) {
             if ([self revealAnnotationsAt:[self coordForEvent:event] toggle:YES]) {
                 DLog(@"mouseUp: reveal annotation");

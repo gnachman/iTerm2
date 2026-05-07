@@ -727,8 +727,8 @@ iTermCommandInfoViewControllerDelegate>
     } else if ([self mouseIsOverButtonInEvent:event]) {
         DLog(@"Mouse is over a button");
         changed = [self setCursor:[NSCursor arrowCursor]];
-    } else if ([self mouseIsOverFoldButtonInEvent:event]) {
-        DLog(@"Mouse is over a command mark");
+    } else if ([self mouseIsOverFoldAffordanceInEvent:event]) {
+        DLog(@"Mouse is over a fold affordance");
         changed = [self setCursor:[NSCursor arrowCursor]];
     } else {
         changed = [self setCursor:self.delegate.textViewDefaultPointer ?: [iTermMouseCursor mouseCursorOfType:iTermMouseCursorTypeIBeam]];
@@ -752,13 +752,21 @@ iTermCommandInfoViewControllerDelegate>
     return [self imageInfoAtCoord:VT100GridCoordMake(point.x, point.y)] != nil;
 }
 
-- (BOOL)mouseIsOverFoldButtonInEvent:(NSEvent *)event {
+- (BOOL)mouseIsOverFoldAffordanceInEvent:(NSEvent *)event {
     id<iTermFoldMarkReading> foldMark = [self foldMarkAtWindowCoord:event.locationInWindow];
     if (foldMark) {
         return YES;
     }
     id<VT100ScreenMarkReading> commandMark = [self commandMarkAtWindowCoord:event.locationInWindow];
     if (commandMark) {
+        return YES;
+    }
+    // Click anywhere on a folded line’s placeholder also unfolds — show the
+    // arrow cursor over the whole line so the affordance is discoverable.
+    const NSPoint pointInSelf = [self convertPoint:event.locationInWindow fromView:nil];
+    const VT100GridCoord coord = [self coordForPoint:pointInSelf allowRightMarginOverflow:NO];
+    if (coord.y >= 0 &&
+        [[self.dataSource foldMarksInRange:VT100GridRangeMake(coord.y, 1)] firstObject]) {
         return YES;
     }
     return NO;
