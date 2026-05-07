@@ -48,6 +48,11 @@ extern CGFloat kiTermIndicatorStandardHeight;
 @property(nonatomic, assign) BOOL backgroundlessMode;
 @property(nonatomic, assign) CGFloat indicatorSize; // Size for non-large indicators (default: 26)
 
+// Top-right indicators whose identifiers are in this set will be skipped during
+// drawing/enumeration. Used to hide indicators that overlap a button currently
+// under the mouse so the button remains usable.
+@property(nonatomic, copy) NSSet<NSString *> *suppressedTopRightIdentifiers;
+
 // Alpha value for fullscreen flash.
 @property(nonatomic, readonly) CGFloat fullScreenAlpha;
 @property(nonatomic, copy) void (^configurationObserver)(void);
@@ -64,6 +69,11 @@ extern CGFloat kiTermIndicatorStandardHeight;
 
 - (void)enumerateTopRightIndicatorsInFrame:(NSRect)frame andDraw:(BOOL)shouldDraw block:(void (^)(NSString *, NSImage *, NSRect, BOOL))block;
 - (void)enumerateCenterIndicatorsInFrame:(NSRect)frame block:(void (^)(NSString *, NSImage *, NSRect, CGFloat, BOOL))block;
+
+// Returns identifiers of top-right indicators whose frame contains `point`.
+// Ignores `suppressedTopRightIdentifiers` so it is safe to use when computing
+// the suppression set itself.
+- (NSSet<NSString *> *)topRightIndicatorIdentifiersAtPoint:(NSPoint)point inFrame:(NSRect)frame;
 
 - (NSString *)helpTextForIndicatorAt:(NSPoint)point sessionID:(NSString *)sessionID;
 - (NSString *)helpTextForIndicatorWithName:(NSString *)name sessionID:(NSString *)sessionID;

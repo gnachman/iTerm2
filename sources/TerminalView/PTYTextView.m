@@ -1389,6 +1389,10 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
     _hoverBlockCopyButton = nil;
     [_hoverBlockFoldButton autorelease];
     _hoverBlockFoldButton = nil;
+    if (_indicatorsHelper.suppressedTopRightIdentifiers.count > 0) {
+        _indicatorsHelper.suppressedTopRightIdentifiers = nil;
+        [self requestDelegateRedraw];
+    }
     [_delegate textViewShowHoverURL:nil
                              anchor:VT100GridWindowedRangeMake(VT100GridCoordRangeMake(-1, -1, -1, -1), -1, -1)];
 }
@@ -6575,10 +6579,36 @@ extendResultsAcrossSoftBoundaries:(BOOL)extendResultsAcrossSoftBoundaries {
                 }
             }
         }
+        if ([self updateSuppressedTopRightIndicatorsForMouseAt:point overButton:(buttonUnderMouse != nil)]) {
+            changed = YES;
+        }
         if (changed) {
             [self requestDelegateRedraw];
         }
     }
+}
+
+// Computes the set of top-right indicators that should be hidden because the
+// mouse is currently both inside a button and inside the indicator’s drawn
+// rectangle. Updates the indicators helper and returns YES if the set changed.
+- (BOOL)updateSuppressedTopRightIndicatorsForMouseAt:(NSPoint)point overButton:(BOOL)overButton {
+    NSSet<NSString *> *suppressed;
+    if (overButton) {
+        // indicatorFrame is in view coordinates (it's the visibleRect), and
+        // `point` was just produced by convertPoint:fromView:nil, so the two
+        // are directly comparable. The virtualOffset adjustment is only needed
+        // when drawing through a graphics context that has the offset baked in.
+        suppressed = [_indicatorsHelper topRightIndicatorIdentifiersAtPoint:point
+                                                                    inFrame:_drawingHelper.indicatorFrame];
+    } else {
+        suppressed = [NSSet set];
+    }
+    NSSet<NSString *> *previous = _indicatorsHelper.suppressedTopRightIdentifiers ?: [NSSet set];
+    if ([previous isEqualToSet:suppressed]) {
+        return NO;
+    }
+    _indicatorsHelper.suppressedTopRightIdentifiers = suppressed;
+    return YES;
 }
 
 #pragma mark - Accessibility

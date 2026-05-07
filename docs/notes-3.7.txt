@@ -568,3 +568,7 @@ Bug Fixes:
   renders and the “Badge application
   icon” toggle appears in System
   Settings › Notifications › iTerm.
+- Hide a top-right status indicator while
+  the mouse is hovering an inline button
+  it overlaps, so the button stays
+  reachable.

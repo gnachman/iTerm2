@@ -321,10 +321,8 @@ CGFloat kiTermIndicatorStandardHeight = 20;
               kiTermIndicatorScreenshotMode];
 }
 
-- (void)enumerateTopRightIndicatorsInFrame:(NSRect)frame andDraw:(BOOL)shouldDraw block:(void (^)(NSString *, NSImage *, NSRect, BOOL))block {
-    if ([iTermAdvancedSettingsModel disableTopRightIndicators]) {
-        return;
-    }
+- (void)iterateAllTopRightIndicatorsInFrame:(NSRect)frame
+                                      block:(void (^)(NSString *, NSImage *, NSRect, BOOL))block {
     NSArray *sequentialIdentifiers = [iTermIndicatorsHelper sequentialIndicatorIdentifiers];
     const CGFloat vmargin = [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins];
     const CGFloat kIndicatorTopMargin = MAX(5, vmargin);
@@ -337,18 +335,43 @@ CGFloat kiTermIndicatorStandardHeight = 20;
             point.x -= indicator.image.size.width;
             point.x -= kInterIndicatorHorizontalMargin;
             NSImage *image = indicator.image;
-
             block(identifier, image, NSMakeRect(point.x, point.y, image.size.width, image.size.height), indicator.dark);
-            if (shouldDraw) {
-                [image drawInRect:NSMakeRect(point.x, point.y, image.size.width, image.size.height)
-                         fromRect:NSMakeRect(0, 0, image.size.width, image.size.height)
-                        operation:NSCompositingOperationSourceOver
-                         fraction:0.5
-                   respectFlipped:YES
-                            hints:nil];
-            }
         }
     }
+}
+
+- (void)enumerateTopRightIndicatorsInFrame:(NSRect)frame andDraw:(BOOL)shouldDraw block:(void (^)(NSString *, NSImage *, NSRect, BOOL))block {
+    if ([iTermAdvancedSettingsModel disableTopRightIndicators]) {
+        return;
+    }
+    NSSet<NSString *> *suppressed = _suppressedTopRightIdentifiers;
+    [self iterateAllTopRightIndicatorsInFrame:frame block:^(NSString *identifier, NSImage *image, NSRect rect, BOOL dark) {
+        if ([suppressed containsObject:identifier]) {
+            return;
+        }
+        block(identifier, image, rect, dark);
+        if (shouldDraw) {
+            [image drawInRect:rect
+                     fromRect:NSMakeRect(0, 0, image.size.width, image.size.height)
+                    operation:NSCompositingOperationSourceOver
+                     fraction:0.5
+               respectFlipped:YES
+                        hints:nil];
+        }
+    }];
+}
+
+- (NSSet<NSString *> *)topRightIndicatorIdentifiersAtPoint:(NSPoint)point inFrame:(NSRect)frame {
+    if ([iTermAdvancedSettingsModel disableTopRightIndicators]) {
+        return [NSSet set];
+    }
+    NSMutableSet<NSString *> *result = [NSMutableSet set];
+    [self iterateAllTopRightIndicatorsInFrame:frame block:^(NSString *identifier, NSImage *image, NSRect rect, BOOL dark) {
+        if (NSPointInRect(point, rect)) {
+            [result addObject:identifier];
+        }
+    }];
+    return result;
 }
 
 - (NSString *)helpTextForIndicatorWithName:(NSString *)name sessionID:(NSString *)sessionID {
