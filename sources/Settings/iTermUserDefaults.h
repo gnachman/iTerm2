@@ -41,6 +41,13 @@ typedef NS_ENUM(NSUInteger, iTermAppleWindowTabbingMode) {
 @property (class, nonatomic) BOOL claudeCodeWorkgroupUpsellSuppressed;
 @property (class, nonatomic) BOOL claudeCodeHooksInstalled;
 @property (class, nonatomic) BOOL claudeCodeTriggersInstalled;
+// Sticky flag: set to YES when the user successfully installs the
+// cc-status hook, cleared only by the Uninstall menu flow. Distinct
+// from claudeCodeHooksInstalled, which is reconciled against disk on
+// every launch — this one preserves the "user once completed setup"
+// signal so we can detect when something else (e.g. Claude Code
+// rewriting ~/.claude/settings.json) silently strips our hook.
+@property (class, nonatomic) BOOL claudeCodeIntegrationCompleted;
 @property (class, nonatomic) BOOL haveExplainedHowToAddTouchbarControls;
 @property (class, nonatomic) BOOL ignoreSystemWindowRestoration;
 @property (class, nonatomic) NSUInteger globalSearchMode;

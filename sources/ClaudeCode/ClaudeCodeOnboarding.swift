@@ -375,11 +375,75 @@ class ClaudeCodeOnboarding: NSObject {
         return iTermUserDefaults.claudeCodeHooksInstalled
     }
 
-    // Authoritative scan of ~/.claude/settings.json. Used only at
-    // app launch to seed the cache, since the alternative — trusting
-    // a stale cache forever — would mis-report state for users who
-    // installed hooks before this caching landed, or who edited
-    // settings.json by hand.
+    // Strict health check used by the broken-install detector.
+    // Stronger than hooksInstalledOnDisk: every event in
+    // hookEventNames must have a cc-status entry, AND the command
+    // path must point at an executable file. Catches the cases
+    // hooksInstalledOnDisk doesn't:
+    //   • partial removal (Claude Code rewrote settings.json and
+    //     dropped some events but not others)
+    //   • stale path (a hook command from an iTerm2 location that
+    //     no longer exists, e.g. the user replaced the app and the
+    //     symlink target is gone)
+    //   • broken symlink (cc-status was removed from the bundle)
+    // hooksInstalledOnDisk stays loose because reconcileHooksCache
+    // wants "is it set up at all" semantics — flipping the cache to
+    // false on a partial install would incorrectly hide the menu's
+    // Uninstall item.
+    //
+    // The new-hook-event migration case (a future iTerm2 adds a
+    // 10th event) returns false here, which prompts the user to
+    // Reinstall — doInstallHook is idempotent and just adds the
+    // missing event.
+    //
+    // Reads disk and follows symlinks; call off the main thread.
+    @objc
+    static func hooksHealthyOnDiskForHealthCheck() -> Bool {
+        let settingsURL = FileManager.default.homeDirectoryForCurrentUser
+            .appendingPathComponent(".claude")
+            .appendingPathComponent("settings.json")
+        guard let data = try? Data(contentsOf: settingsURL),
+              let parsed = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let hooks = parsed["hooks"] as? [String: Any] else {
+            return false
+        }
+        let fm = FileManager.default
+        for eventName in hookEventNames {
+            guard let groups = hooks[eventName] as? [[String: Any]] else {
+                return false
+            }
+            var ok = false
+            for group in groups {
+                guard let entries = group["hooks"] as? [[String: Any]] else { continue }
+                for entry in entries {
+                    guard let command = entry["command"] as? String,
+                          command.hasSuffix("/cc-status") else {
+                        continue
+                    }
+                    // Follows symlinks; a dangling symlink fails
+                    // both isExecutableFile and fileExists. The
+                    // executable bit matters because Claude Code
+                    // would refuse to invoke a non-executable hook.
+                    if fm.isExecutableFile(atPath: command) {
+                        ok = true
+                        break
+                    }
+                }
+                if ok { break }
+            }
+            if !ok { return false }
+        }
+        return true
+    }
+
+    // Loose "is the hook set up at all" scan, used by
+    // reconcileHooksCache to seed the menu-validation cache at
+    // launch. Returns true if any one event has a cc-status entry.
+    // Stays loose because flipping the cache to false on a partial
+    // install would incorrectly hide the menu's Uninstall item
+    // when there's still real state on disk. The strict variant
+    // for the broken-install detector is
+    // hooksHealthyOnDiskForHealthCheck above.
     private static func hooksInstalledOnDisk() -> Bool {
         let settingsURL = FileManager.default.homeDirectoryForCurrentUser
             .appendingPathComponent(".claude")
@@ -416,6 +480,77 @@ class ClaudeCodeOnboarding: NSObject {
         }
     }
 
+    // Migration for the claudeCodeIntegrationCompleted sticky flag.
+    // The flag was added after 3.7.0beta1/beta2 shipped, so users
+    // who installed the integration in those releases never got it
+    // set on their successful install — and they're exactly the
+    // population that most needs the broken-install prompt
+    // (settings.json may have been rewritten in the meantime).
+    //
+    // Detect them by intersecting "we have hooks on disk now" (per
+    // claudeCodeHooksInstalled, which reconcileHooksCache has just
+    // refreshed) with "user has run a pre-flag beta on this
+    // machine" (per iTermPreferences's recorded version history).
+    // Idempotent: subsequent launches see the flag set and bail.
+    // Must run after reconcileHooksCache so the cache is current.
+    @objc static func migrateIntegrationCompletedFlagIfNeeded() {
+        if iTermUserDefaults.claudeCodeIntegrationCompleted {
+            return
+        }
+        // Only fire on the upgrade transition: the version that
+        // ran on the previous launch was a pre-flag build.
+        // Looking at the full all-versions-ever-used set would
+        // also catch this, but it would re-evaluate forever — a
+        // user who briefly tried a pre-flag build years ago and
+        // has been on post-flag versions since would have the
+        // pre-flag string in their history indefinitely, so any
+        // future event that cleared the flag (manual defaults
+        // edit, a future bug) would re-trigger this migration on
+        // every launch. The migration is a one-time bridge across
+        // the version that introduced the flag, so make it
+        // observe exactly that transition.
+        guard let previousVersion = iTermPreferences.appVersionBeforeThisLaunch(),
+              versionStringIsPreFlag(previousVersion) else {
+            return
+        }
+        // Mirror doInstallHook, the only path that sets the flag
+        // for live installs: condition strictly on the hook being
+        // present. ORing in triggers/workgroup would cover more
+        // wholesale-strip cases — but it would also turn on the
+        // flag for users who installed only triggers or only the
+        // workgroup in a pre-flag build without ever installing
+        // the hook, leaving them subject to the broken-install
+        // prompt whose copy talks about reinstalling a hook they
+        // never had. Wholesale-strip users (settings.json wiped,
+        // cache reconciled to false) miss the auto-prompt; they
+        // recover via the Install Claude Code Integration menu,
+        // which is visible when no artifacts are detected.
+        guard iTermUserDefaults.claudeCodeHooksInstalled else {
+            return
+        }
+        DLog("Onboarding: migrating claudeCodeIntegrationCompleted=true (hook on disk, previous launch was pre-flag build \(previousVersion))")
+        iTermUserDefaults.claudeCodeIntegrationCompleted = true
+    }
+
+    // True for versions that shipped doInstallHook but predate the
+    // claudeCodeIntegrationCompleted setter inside it. The integration
+    // code first landed on 2026-04-07 (commit 5ad76ad9c), and the
+    // setter is being added in 3.7.0beta3, so the affected window
+    // is: 3.7.0beta1, 3.7.0beta2, and any 3.7 nightly built between
+    // 2026-04-07 and beta3 cut. We don't bother filtering nightlies
+    // by date — a user whose only 3.7 nightly is post-flag will
+    // have had the flag set natively by doInstallHook on install
+    // and will already have bailed out of migration above.
+    private static func versionStringIsPreFlag(_ version: String) -> Bool {
+        if version == "3.7.0beta1" || version == "3.7.0beta2" {
+            return true
+        }
+        // Format: "3.7.YYYYMMDD-nightly" (per version.txt's
+        // %(extra)s expansion in the nightly build script).
+        return version.range(of: #"^3\.7\.\d{8}-nightly$"#,
+                             options: .regularExpression) != nil
+    }
+
     @objc static func show() {
         if let existing = instance {
             existing.panel.makeKeyAndOrderFront(nil)
@@ -450,9 +585,17 @@ class ClaudeCodeOnboarding: NSObject {
         // settings.json since this app launch.
         reconcileHooksCache()
         reconcileTriggersCache()
-        if hooksAlreadyInstalled() {
-            onboarding.completedSteps.insert(.installHook)
-        }
+        // installHook's pre-marked state needs the strict check —
+        // show() is also the repair prompt's destination, and
+        // marking it complete via the loose cache would
+        // contradict the warning text ("reinstall the hook…")
+        // that just brought the user here. But the strict check
+        // does file IO, including stat-following symlinks, and a
+        // wedged network mount on $HOME would hang the panel
+        // open. Defer to a background read and update the row
+        // when it returns; the panel opens immediately with the
+        // step shown as not-complete (default), then flips to ✅
+        // if the install is actually healthy.
         if workgroupAlreadyInstalled() {
             onboarding.completedSteps.insert(.installWorkgroup)
         }
@@ -471,6 +614,22 @@ class ClaudeCodeOnboarding: NSObject {
         // count down for repeat users while still surfacing the
         // "you can undo this" promise to first-timers.
         onboarding.showIntroOverlay()
+        // Background completion of the install-step pre-mark.
+        // Identity-checks against the static instance on return so
+        // a panel that was closed-and-reopened during the read
+        // doesn't get the result of an earlier query.
+        DispatchQueue.global(qos: .utility).async { [weak onboarding] in
+            let healthy = hooksHealthyOnDiskForHealthCheck()
+            DispatchQueue.main.async {
+                guard let onboarding,
+                      Self.instance === onboarding,
+                      healthy else {
+                    return
+                }
+                onboarding.completedSteps.insert(.installHook)
+                onboarding.updateUI()
+            }
+        }
     }
 
     // MARK: - Panel Setup
@@ -1059,6 +1218,12 @@ class ClaudeCodeOnboarding: NSObject {
             return false
         }
         iTermUserDefaults.claudeCodeHooksInstalled = true
+        // Sticky "user once completed setup" flag — distinct from the
+        // disk-reconciled cache above. Drives broken-install detection
+        // when something else (Claude Code itself, hand edits) strips
+        // our hook out of settings.json after the fact. Only the
+        // Uninstall menu flow clears it.
+        iTermUserDefaults.claudeCodeIntegrationCompleted = true
         DLog("Onboarding: doInstallHook complete")
         return true
     }

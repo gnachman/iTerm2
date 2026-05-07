@@ -68,6 +68,28 @@ class GlobalJobMonitor: NSObject {
         return result
     }
 
+    /// Re-emit a didChangeNotification for every job currently being
+    /// tracked. Lets a late-registering observer seed itself with
+    /// current state without depending on registration order: the
+    /// singleton's init posts seed notifications inline, so the
+    /// first observer to trigger creation gets the seed and any
+    /// later observer misses it. Earlier observers receive duplicate
+    /// notifications, which all current handlers are idempotent
+    /// against (ClaudeWatcher's offers are gated by
+    /// naggingControllerCanShowMessageWithIdentifier; the health
+    /// monitor's evaluation is gated by hasEvaluated).
+    @objc func replayCurrentState() {
+        DLog("GlobalJobMonitor replayCurrentState: \(guidsByJob.count) job(s)")
+        // Snapshot the keys before iterating: postNotification
+        // posts synchronously, observers handle synchronously, and
+        // a future observer that mutates guidsByJob during its
+        // handler (today none does, but the assumption is fragile)
+        // would invalidate the in-flight iterator.
+        for jobName in Array(guidsByJob.keys) {
+            postNotification(jobName: jobName)
+        }
+    }
+
     // MARK: - Notifications
 
     @objc private func sessionCreated(_ notification: Notification) {

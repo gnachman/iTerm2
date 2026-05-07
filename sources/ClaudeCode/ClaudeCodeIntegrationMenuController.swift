@@ -25,6 +25,19 @@ final class ClaudeCodeIntegrationMenuController: NSObject {
         ClaudeCodeOnboarding.show()
     }
 
+    // Same code path as install — the onboarding is idempotent and
+    // pre-marks completed steps. The reason this is a separate menu
+    // item is the menu validation (see validateInstallMenuItem):
+    // once the integration has previously been set up, Install is
+    // hidden, so without a Reinstall entry the user has no way to
+    // add a missing piece (Try-It-Now-only users who never installed
+    // the hook, triggers-only users who never entered the workgroup)
+    // or to repair a broken install (Claude Code stripped the hook,
+    // hand edits, etc.) — Uninstall would be their only option.
+    @objc func reinstall(_ sender: Any?) {
+        ClaudeCodeOnboarding.show()
+    }
+
     @objc func uninstall(_ sender: Any?) {
         let confirm = NSAlert()
         confirm.messageText = "Uninstall Claude Code Integration?"
@@ -76,6 +89,11 @@ final class ClaudeCodeIntegrationMenuController: NSObject {
         ClaudeCodeOnboarding.uninstallWorkgroup()
         ClaudeCodeOnboarding.uninstallTriggers()
 
+        // Clear the "user once completed setup" sticky flag so the
+        // broken-install nag doesn't fire after an explicit uninstall.
+        // Set again on the next successful install.
+        iTermUserDefaults.claudeCodeIntegrationCompleted = false
+
         // The installer turned the Python API on, but the user might
         // rely on it for unrelated scripts/AI integrations now.
         // Don't flip it off behind their back — ask. Skip the prompt
@@ -97,17 +115,39 @@ final class ClaudeCodeIntegrationMenuController: NSObject {
 
     // MARK: - Menu Validation
 
-    // Mutually exclusive with validateUninstallMenuItem(_:): exactly
-    // one of the two menu items is visible at any time, computed
-    // from "are any of {hooks, workgroup, triggers} installed?".
+    // The three Claude Code menu items partition by install state:
+    // never set up → only Install is visible; previously set up
+    // → Reinstall and Uninstall are both visible (Install is hidden).
+    //
+    // The "previously set up" predicate is OR-of-two-signals:
+    // (a) live artifacts on disk (hooks / workgroup / triggers),
+    // (b) the sticky claudeCodeIntegrationCompleted flag.
+    //
+    // (b) matters because the wholesale-strip case — Claude Code
+    // rewriting ~/.claude/settings.json and removing the cc-status
+    // entry — leaves (a) false. A user in that state isn't doing
+    // a fresh Install; they're recovering. Reinstall is the right
+    // label, and Uninstall stays available so the user can clear
+    // the sticky flag and silence the broken-install prompt
+    // permanently if they no longer want the integration.
     @objc func validateInstallMenuItem(_ item: NSMenuItem) -> Bool {
-        item.isHidden = anyArtifactInstalled
+        item.isHidden = integrationKnownToHaveExisted
+        return true
+    }
+
+    @objc func validateReinstallMenuItem(_ item: NSMenuItem) -> Bool {
+        item.isHidden = !integrationKnownToHaveExisted
         return true
     }
 
     @objc func validateUninstallMenuItem(_ item: NSMenuItem) -> Bool {
-        item.isHidden = !anyArtifactInstalled
+        item.isHidden = !integrationKnownToHaveExisted
         return true
+    }
+
+    private var integrationKnownToHaveExisted: Bool {
+        return anyArtifactInstalled
+            || iTermUserDefaults.claudeCodeIntegrationCompleted
     }
 
     private var anyArtifactInstalled: Bool {

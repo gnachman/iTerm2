@@ -25,7 +25,14 @@ class ClaudeWatcher: NSObject {
                                                selector: #selector(jobMonitorDidChange(_:)),
                                                name: GlobalJobMonitor.didChangeNotification,
                                                object: nil)
-        // Ensure it's running
+        // First observer to touch the singleton receives the seed
+        // notifications inline from GlobalJobMonitor.init; we
+        // happen to be that first observer at app launch (per
+        // iTermApplicationDelegate's start order), so an explicit
+        // replay would just deliver everything to us a second
+        // time. Later observers (e.g. ClaudeIntegrationHealthMonitor)
+        // are responsible for calling replayCurrentState themselves
+        // after registering.
         _ = GlobalJobMonitor.instance
     }
 }
@@ -58,6 +65,18 @@ private extension ClaudeWatcher {
         return true
     }
 
+    // This handler must be idempotent: notifications for the
+    // claude job can fire repeatedly as the foreground ancestor
+    // chain churns, and a future observer that calls
+    // GlobalJobMonitor.replayCurrentState (the health monitor
+    // already does, others may follow) will deliver them to every
+    // registered observer including this one. Re-assigning
+    // sessionIDs to the same value and re-running thresholdReached
+    // is harmless because offerClaudeCodeStatusTool routes through
+    // the nag controller's naggingControllerCanShowMessageWithIdentifier
+    // gate, which suppresses a repeat offer for the same identifier.
+    // Be careful adding work here that doesn't have its own
+    // idempotency guarantee.
     @objc
     func jobMonitorDidChange(_ notification: Notification) {
         defer {

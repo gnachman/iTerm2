@@ -446,6 +446,8 @@ static NSModalResponse iTermCompareRenderingRunModal(id self, SEL _cmd) {
         return ![[iTermLaunchServices sharedInstance] iTermIsDefaultTerminal];
     } else if ([menuItem action] == @selector(installClaudeCodeIntegration:)) {
         return [[iTermClaudeCodeIntegrationMenuController shared] validateInstallMenuItem:menuItem];
+    } else if ([menuItem action] == @selector(reinstallClaudeCodeIntegration:)) {
+        return [[iTermClaudeCodeIntegrationMenuController shared] validateReinstallMenuItem:menuItem];
     } else if ([menuItem action] == @selector(uninstallClaudeCodeIntegration:)) {
         return [[iTermClaudeCodeIntegrationMenuController shared] validateUninstallMenuItem:menuItem];
     } else if (menuItem == maximizePane) {
@@ -1582,14 +1584,24 @@ void TurnOnDebugLoggingAutomatically(void) {
     }
 
     [self registerMenuTips];
-    [iTermClaudeWatcher start];
-    [iTermClaudeCodeModeController start];
     // Seed the cached "are hooks installed" / "are triggers
     // installed" flags from disk once at launch so validateMenuItem
     // (called constantly) can read user defaults instead of re-
     // walking ~/.claude/settings.json or every profile's trigger list.
     [iTermClaudeCodeOnboarding reconcileHooksCache];
     [iTermClaudeCodeOnboarding reconcileTriggersCache];
+
+    // Sticky claudeCodeIntegrationCompleted flag was added after
+    // 3.7.0beta1/beta2 shipped; users who installed the
+    // integration on those releases need their flag backfilled so
+    // the broken-install prompt can detect their case. Must run
+    // before the health monitor starts: HealthMonitor.start()
+    // calls replayCurrentState, which can synchronously evaluate
+    // restored claude sessions and burn the one-shot hasEvaluated
+    // flag with completed=false — leaving migration users (the
+    // entire migration audience) unprompted for the session.
+    [iTermClaudeCodeOnboarding migrateIntegrationCompletedFlagIfNeeded];
+
     // ~/.claude/settings.json hooks reference a stable cc-status
     // symlink in iTerm2's dot dir; we keep it pointed at the running
     // app's bundle binary. Refresh it on every launch so a moved /
@@ -1603,6 +1615,9 @@ void TurnOnDebugLoggingAutomatically(void) {
     if ([iTermClaudeCodeOnboarding hooksAlreadyInstalled]) {
         [iTermClaudeCodeOnboarding ensureCCStatusSymlink];
     }
+    [iTermClaudeWatcher start];
+    [[iTermClaudeIntegrationHealthMonitor instance] start];
+    [iTermClaudeCodeModeController start];
     if (_workgroupsMenuItem) {
         [iTermWorkgroupMenu attachTo:_workgroupsMenuItem
                            separator:_workgroupsSeparator];
@@ -2324,6 +2339,10 @@ static iTermKeyEventReplayer *gReplayer;
 
 - (IBAction)installClaudeCodeIntegration:(id)sender {
     [[iTermClaudeCodeIntegrationMenuController shared] install:sender];
+}
+
+- (IBAction)reinstallClaudeCodeIntegration:(id)sender {
+    [[iTermClaudeCodeIntegrationMenuController shared] reinstall:sender];
 }
 
 - (IBAction)uninstallClaudeCodeIntegration:(id)sender {
