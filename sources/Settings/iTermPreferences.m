@@ -27,6 +27,10 @@
 #import "iTermUserDefaults.h"
 #import "iTermUserDefaultsObserver.h"
 
+// Defined in PreferencePanel.m. Forward-declared here to avoid pulling the
+// heavyweight PreferencePanel.h into this file.
+extern NSString *const kRefreshTerminalNotification;
+
 #define BLOCK(x) [^id() { return [self x]; } copy]
 
 NSString *const kPreferenceKeyOpenBookmark = @"OpenBookmark";
@@ -757,6 +761,7 @@ static NSString *sPreviousVersion;
                   kPreferenceKeyLeftControlRemapping: BLOCK(computedLeftControlRemapping),
                   kPreferenceKeyRightControlRemapping: BLOCK(computedRightControlRemapping),
                   kPreferenceKeyWindowPlacement: BLOCK(computedWindowPlacement),
+                  kPreferenceKeyHideTabBar: BLOCK(computedHideTabBar),
                   };
     }
     return dict;
@@ -1025,6 +1030,35 @@ static NSString *sPreviousVersion;
     }
 
     return @YES;
+}
+
+static BOOL gHideTabBarSuppressedDuringDrag = NO;
+
++ (BOOL)hideTabBarSuppressedDuringDrag {
+    return gHideTabBarSuppressedDuringDrag;
+}
+
++ (void)setHideTabBarSuppressedDuringDrag:(BOOL)suppressed {
+    if (gHideTabBarSuppressedDuringDrag == suppressed) {
+        return;
+    }
+    gHideTabBarSuppressedDuringDrag = suppressed;
+    // Mirror what the Settings UI does when the user toggles "Hide tab bar
+    // when only one tab is open": post kRefreshTerminalNotification so every
+    // PseudoTerminal runs refreshTerminal: and refits its window.
+    [[NSNotificationCenter defaultCenter] postNotificationName:kRefreshTerminalNotification
+                                                        object:nil];
+}
+
++ (NSNumber *)computedHideTabBar {
+    if (gHideTabBarSuppressedDuringDrag) {
+        return @NO;
+    }
+    NSNumber *value = [[iTermUserDefaults userDefaults] objectForKey:kPreferenceKeyHideTabBar];
+    if (value) {
+        return value;
+    }
+    return [self defaultObjectForKey:kPreferenceKeyHideTabBar];
 }
 
 + (iTermUserDefaultsObserver *)sharedObserver {

@@ -405,6 +405,13 @@ extern NSString *const iTermDefaultAIPrompt;
 
 + (NSUInteger)maskForModifierTag:(iTermPreferencesModifierTag)tag;
 
+// While set, computed reads of kPreferenceKeyHideTabBar return @NO, so the
+// tab bar appears as if the user had unchecked "Hide tab bar when only one
+// tab is open." Used during a tab drag so that hidden tab bars become real
+// drop targets (issue 12846). Setting this does not write to user defaults.
++ (BOOL)hideTabBarSuppressedDuringDrag;
++ (void)setHideTabBarSuppressedDuringDrag:(BOOL)suppressed;
+
 + (NSString *)warningIdentifierForNeverWarnAboutShortLivedSessions:(NSString *)guid;
 #if DEBUG
 + (NSURL *)gitlabURLOnPasteboard;

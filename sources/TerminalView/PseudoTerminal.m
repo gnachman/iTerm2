@@ -1280,6 +1280,13 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)draggingDidBeginOrEnd:(NSNotification *)notification {
+    // While a tab drag is in flight, force kPreferenceKeyHideTabBar to read as
+    // NO so that single-tab windows show their tab bar and become real drop
+    // targets (issue 12846). The setter posts kRefreshTerminalNotification on
+    // a real change, so every window refits as if the user had toggled the
+    // setting in Settings.
+    const BOOL begin = [notification.name isEqualToString:PSMTabDragDidBeginNotification];
+    [iTermPreferences setHideTabBarSuppressedDuringDrag:begin];
     [self updateUseMetalInAllTabs];
 }
 

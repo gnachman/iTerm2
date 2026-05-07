@@ -7,6 +7,7 @@
 #import "MovePaneController.h"
 #import "DebugLogging.h"
 #import "iTermController.h"
+#import "iTermPreferences.h"
 #import "NSObject+iTerm.h"
 #import "PseudoTerminal.h"
 #import "PTYSession.h"
@@ -320,6 +321,10 @@ NSString *const iTermSessionDidChangeTabNotification = @"iTermSessionDidChangeTa
     }
     [[NSCursor closedHandCursor] set];
     _isDragInProgress = YES;
+    // Force tab bars to remain visible while a session is dragged so that
+    // single-tab destination windows can act as drop targets — same fix as
+    // for tab drags in PSMTabDragAssistant. See iTerm2 issue 12846.
+    [iTermPreferences setHideTabBarSuppressedDuringDrag:YES];
     [theWindow dragImage:[session dragImage]
                       at:rect.origin
                   offset:NSZeroSize
@@ -327,6 +332,7 @@ NSString *const iTermSessionDidChangeTabNotification = @"iTermSessionDidChangeTa
               pasteboard:pboard
                   source:source
                slideBack:NO];
+    [iTermPreferences setHideTabBarSuppressedDuringDrag:NO];
     _isDragInProgress = NO;
     for (PseudoTerminal *term in [[iTermController sharedInstance] terminals]) {
         [[term window] enableCursorRects];
