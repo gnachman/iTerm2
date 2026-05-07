@@ -75,14 +75,25 @@ def get_script_name():
         name = "Unknown"
     return name
 
+def _applescript_target():
+    """Returns the AppleScript application clause for cookie requests.
+
+    Honors IT2_APP_PATH so external callers can disambiguate when multiple
+    iTerm2 builds are running (matching the it2 CLI's behavior).
+    """
+    path = os.environ.get("IT2_APP_PATH")
+    if path:
+        escaped = path.replace('\\', '\\\\').replace('"', '\\"')
+        return f'application "{escaped}"'
+    return 'application "iTerm2"'
+
 def request_cookie_and_key(
         launch_if_needed: bool, myname: typing.Optional[str], runner_class):
+    target = _applescript_target()
     if not launch_if_needed:
         runner = runner_class(
-            """
-            set appName to "iTerm2"
-
-            if application appName is running then
+            f"""
+            if {target} is running then
                 return "yes"
             else
                 return "no"
@@ -96,7 +107,7 @@ def request_cookie_and_key(
     if justName is None:
         justName = get_script_name()
     runner = runner_class(
-            'tell application "iTerm2" to request cookie and key ' +
+            f'tell {target} to request cookie and key ' +
             f'for app named "{justName}"')
     runner.execute()
     if runner.has_error():

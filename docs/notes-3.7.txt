@@ -613,3 +613,10 @@ Bug Fixes:
   the mouse is hovering an inline button
   it overlaps, so the button stays
   reachable.
+- Honor IT2_APP_PATH in the iterm2
+  Python library’s AppleScript cookie
+  request, matching the “it2” CLI. Lets
+  external scripts targeting a -suite
+  dev build get a cookie from the right
+  iTerm2 instance instead of whichever
+  one macOS routes to. Issue 12850.
