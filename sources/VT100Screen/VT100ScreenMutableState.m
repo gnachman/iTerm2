@@ -6216,6 +6216,23 @@ lengthExcludingInBandSignaling:data.length
 
     // Gracefully degrades to NO on tmux versions that lack bracket_paste_flag.
     [self.terminal setBracketedPasteMode:[state[kStateDictBracketedPasteMode] boolValue]];
+
+    // pane_key_mode is exposed by tmux 3.5+ and reports the per-pane modifyOtherKeys
+    // state of whatever application is running inside the pane. Older tmux versions
+    // return an empty string, which we leave alone.
+    NSString *paneKeyMode = [NSString castFrom:state[kStateDictPaneKeyMode]];
+    int modifyOtherKeysValue = -1;
+    if ([paneKeyMode isEqualToString:@"Ext 1"]) {
+        modifyOtherKeysValue = 1;
+    } else if ([paneKeyMode isEqualToString:@"Ext 2"]) {
+        modifyOtherKeysValue = 2;
+    } else if ([paneKeyMode isEqualToString:@"VT10x"]) {
+        modifyOtherKeysValue = 0;
+    }
+    if (modifyOtherKeysValue >= 0 && self.terminal.sendModifiers.count > 4) {
+        self.terminal.sendModifiers[4] = @(modifyOtherKeysValue);
+        [self terminalDidChangeSendModifiers];
+    }
 }
 
 #pragma mark - SSH

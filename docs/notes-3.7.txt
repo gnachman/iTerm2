@@ -238,6 +238,11 @@ Tmux Improvements:
 - Bracketed paste state is restored on attach
   (prep for tmux’s upcoming bracket_paste_flag
   format).
+- The per-pane modifyOtherKeys state is now
+  restored on attach (using tmux 3.5+’s
+  pane_key_mode format), so reattaching while
+  nvim or another app is running keeps the
+  correct key reporting mode active.
 - Saner defaults for which window and tab a tmux
   attach uses.
 

@@ -1671,6 +1671,16 @@ ITERM_WEAKLY_REFERENCEABLE
         [aSession.directoryTracker recordLastRemoteHost:aSession.screen.lastRemoteHost];
     }
 
+    // Clear any stale send-modifier state from the arrangement before applying
+    // tmux state, so that setTmuxState: (which may set sendModifiers[4] from
+    // pane_key_mode) is not subsequently wiped out by the reset.
+    if (!attachedToServer) {
+        [aSession.screen performBlockWithJoinedThreads:^(VT100Terminal *terminal,
+                                                         VT100ScreenMutableState *mutableState,
+                                                         id<VT100ScreenDelegate> delegate) {
+            [terminal resetSendModifiersWithSideEffects:YES];
+        }];
+    }
     if (state) {
         [aSession setTmuxState:state];
     }
@@ -1703,13 +1713,6 @@ ITERM_WEAKLY_REFERENCEABLE
                                                                                        guid:arrangement[SESSION_ARRANGEMENT_GUID]];
             }
         }
-    }
-    if (!attachedToServer) {
-        [aSession.screen performBlockWithJoinedThreads:^(VT100Terminal *terminal,
-                                                         VT100ScreenMutableState *mutableState,
-                                                         id<VT100ScreenDelegate> delegate) {
-            [terminal resetSendModifiersWithSideEffects:YES];
-        }];
     }
     NSString *path = [aSession.screen workingDirectoryOnLine:aSession.screen.numberOfScrollbackLines + aSession.screen.cursorY - 1];
     [aSession.variablesScope setValue:path forVariableNamed:iTermVariableKeySessionPath];

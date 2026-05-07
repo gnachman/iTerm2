@@ -41,6 +41,7 @@ NSString *kStateDictMouseAnyMode = @"mouse_any_flag";
 NSString *kStateDictMouseUTF8Mode = @"mouse_utf8_flag";
 NSString *kStateDictMouseSGRMode = @"mouse_sgr_flag";  // tmux 3.1+
 NSString *kStateDictBracketedPasteMode = @"bracket_paste_flag";  // Requires tmux patch (not yet in any release)
+NSString *kStateDictPaneKeyMode = @"pane_key_mode";  // tmux 3.5+; reports per-pane modifyOtherKeys state
 
 @interface NSString (TmuxStateParser)
 - (NSArray *)intlistValue;
@@ -90,7 +91,7 @@ NSString *kStateDictBracketedPasteMode = @"bracket_paste_flag";  // Requires tmu
                          kStateDictKCursorMode, kStateDictKKeypadMode, kStateDictWrapMode,
                          kStateDictMouseStandardMode, kStateDictMouseButtonMode,
                          kStateDictMouseAnyMode, kStateDictMouseUTF8Mode, kStateDictMouseSGRMode,
-                         kStateDictBracketedPasteMode ];
+                         kStateDictBracketedPasteMode, kStateDictPaneKeyMode ];
     for (NSString *value in theModes) {
         [format appendFormat:@"%@=#{%@}", value, value];
         if (value != [theModes lastObject]) {
