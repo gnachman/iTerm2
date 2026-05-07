@@ -132,6 +132,13 @@ typedef NS_ENUM(NSUInteger, VT100TerminalFramerRecoveryMode) {
 + (NSOrderedSet<NSString *> *)sgrCodesForCharacter:(screen_char_t)c
                                 externalAttributes:(iTermExternalAttribute *)ea;
 
+// Marshals a VT100GraphicRendition (including dual-mode fg/bg/underline
+// dark variants) to and from a property-list-friendly dictionary used by
+// stateDictionary / setStateFromDictionary: and DECSC/DECRC saved cursors.
+// Round-trip is total — dark variants in either direction must survive.
++ (NSDictionary *)dictionaryForGraphicRendition:(VT100GraphicRendition)graphicRendition;
++ (VT100GraphicRendition)graphicRenditionFromDictionary:(NSDictionary *)dict;
+
 - (void)setStateFromDictionary:(NSDictionary *)dict;
 
 - (void)setForegroundColor:(int)fgColorCode alternateSemantics:(BOOL)altsem;

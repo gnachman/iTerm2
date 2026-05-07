@@ -580,6 +580,22 @@ const int kColorMapAnsiBrightModifier = 8;
     return value;
 }
 
+- (VT100TerminalColorValue)resolvedColorValue:(VT100TerminalColorValue)value {
+    if (!value.hasDarkVariant) {
+        return value;
+    }
+    if (self.backgroundIsDark) {
+        value.red = value.redDark;
+        value.green = value.greenDark;
+        value.blue = value.blueDark;
+    }
+    value.hasDarkVariant = NO;
+    value.redDark = 0;
+    value.greenDark = 0;
+    value.blueDark = 0;
+    return value;
+}
+
 - (NSColor *)colorForCode:(int)theIndex
                     green:(int)green
                      blue:(int)blue

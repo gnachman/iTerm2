@@ -522,7 +522,9 @@ static BOOL iTermControlCodeAttributeEqualsNumber(const iTermControlCodeAttribut
 }
 
 // Reads four ints in order red, green, blue, mode from `decoder` into `value`.
-// Returns YES on success, NO on EOF.
+// Returns YES on success, NO on EOF. Always clears the dark variant fields
+// so callers using stack-allocated scratch values don't end up with phantom
+// dual-mode state when decoding a single-color blob.
 static BOOL iTermDecodeColorValue(iTermTLVDecoder *decoder, VT100TerminalColorValue *value) {
     if (![decoder decodeInt:&value->red]) {
         return NO;
@@ -538,6 +540,30 @@ static BOOL iTermDecodeColorValue(iTermTLVDecoder *decoder, VT100TerminalColorVa
         return NO;
     }
     value->mode = mode;
+    value->hasDarkVariant = NO;
+    value->redDark = 0;
+    value->greenDark = 0;
+    value->blueDark = 0;
+    return YES;
+}
+
+// Reads three ints in order redDark, greenDark, blueDark and applies them to
+// `value` if the trailer is present. Both light and dark share the same mode.
+static BOOL iTermDecodeDarkVariantTrailer(iTermTLVDecoder *decoder, VT100TerminalColorValue *value) {
+    int rd = 0, gd = 0, bd = 0;
+    if (![decoder decodeInt:&rd]) {
+        return NO;
+    }
+    if (![decoder decodeInt:&gd]) {
+        return NO;
+    }
+    if (![decoder decodeInt:&bd]) {
+        return NO;
+    }
+    value->hasDarkVariant = YES;
+    value->redDark = rd;
+    value->greenDark = gd;
+    value->blueDark = bd;
     return YES;
 }
 
@@ -605,6 +631,26 @@ static BOOL iTermDecodeColorValue(iTermTLVDecoder *decoder, VT100TerminalColorVa
             return nil;
         }
         dualBg.valid = YES;
+    }
+
+    // V5 (optional, append-at-end): dark variant of underline color. Only
+    // present when an EA already crossed into the v4+ section, so old data
+    // (no v4) won't even attempt to read this.
+    BOOL hasDualUnderline = NO;
+    if ([decoder decodeBool:&hasDualUnderline] && hasDualUnderline) {
+        if (hasUnderlineColor) {
+            if (!iTermDecodeDarkVariantTrailer(decoder, &underlineColor)) {
+                return nil;
+            }
+        } else {
+            // Pathological: dark variant flagged without a base underline color.
+            // Drain the three ints to keep the decoder stream aligned, then
+            // ignore them.
+            VT100TerminalColorValue scratch = { 0 };
+            if (!iTermDecodeDarkVariantTrailer(decoder, &scratch)) {
+                return nil;
+            }
+        }
     }
 
     if (!hasUnderlineColor && !blockIDList && !url && lineAttr == 0 &&
@@ -764,22 +810,25 @@ static BOOL iTermDecodeColorValue(iTermTLVDecoder *decoder, VT100TerminalColorVa
     } else {
         [encoder encodeInt:-1];
     }
+    const BOOL hasDualUnderline = _hasUnderlineColor && _underlineColor.hasDarkVariant;
     const BOOL hasTrailingFields = _url ||
                                    _lineAttribute != iTermLineAttributeSingleWidth ||
                                    _dualModeForeground.valid ||
-                                   _dualModeBackground.valid;
+                                   _dualModeBackground.valid ||
+                                   hasDualUnderline;
     if (!hasTrailingFields) {
         return encoder.data;
     }
     [encoder encodeData:_url.data ?: [NSData data]];
     const BOOL hasFurtherTrailing = _lineAttribute != iTermLineAttributeSingleWidth ||
                                     _dualModeForeground.valid ||
-                                    _dualModeBackground.valid;
+                                    _dualModeBackground.valid ||
+                                    hasDualUnderline;
     if (!hasFurtherTrailing) {
         return encoder.data;
     }
     [encoder encodeInt:_lineAttribute];
-    if (!_dualModeForeground.valid && !_dualModeBackground.valid) {
+    if (!_dualModeForeground.valid && !_dualModeBackground.valid && !hasDualUnderline) {
         return encoder.data;
     }
     [encoder encodeBool:_dualModeForeground.valid];
@@ -804,11 +853,25 @@ static BOOL iTermDecodeColorValue(iTermTLVDecoder *decoder, VT100TerminalColorVa
         [encoder encodeInt:_dualModeBackground.dark.blue];
         [encoder encodeInt:_dualModeBackground.dark.mode];
     }
+    if (!hasDualUnderline) {
+        return encoder.data;
+    }
+    // V5: dual-mode underline dark variant. Three ints; light variant and
+    // mode are already in the v1 underline block.
+    [encoder encodeBool:YES];
+    [encoder encodeInt:_underlineColor.redDark];
+    [encoder encodeInt:_underlineColor.greenDark];
+    [encoder encodeInt:_underlineColor.blueDark];
     return encoder.data;
 }
 
-// Decodes a stored array shape @[mode, R, G, B] into `out`.
+// Decodes a stored array shape @[mode, R, G, B] (legacy single-color) or
+// @[mode, R, G, B, RDark, GDark, BDark] (dual-mode) into `out`. Length-
+// discriminated for forward compatibility — old data ships only 4 elements
+// and decodes with hasDarkVariant=NO.
 // Returns YES if values were valid, NO otherwise (in which case `out` is unchanged).
+// Always writes the dark variant fields (clearing them on the legacy path)
+// so callers using stack scratch values don't get phantom dual-mode state.
 static BOOL iTermDecodeColorValueArray(NSArray<NSNumber *> *values,
                                        VT100TerminalColorValue *out) {
     if (!values || values.count < 4) {
@@ -818,6 +881,17 @@ static BOOL iTermDecodeColorValueArray(NSArray<NSNumber *> *values,
     out->red = [values[1] intValue];
     out->green = [values[2] intValue];
     out->blue = [values[3] intValue];
+    if (values.count >= 7) {
+        out->hasDarkVariant = YES;
+        out->redDark = [values[4] intValue];
+        out->greenDark = [values[5] intValue];
+        out->blueDark = [values[6] intValue];
+    } else {
+        out->hasDarkVariant = NO;
+        out->redDark = 0;
+        out->greenDark = 0;
+        out->blueDark = 0;
+    }
     return YES;
 }
 
@@ -898,14 +972,22 @@ static NSArray<NSNumber *> *iTermDualModeColorAsArray(const iTermDualModeColor *
               @(c->dark.mode), @(c->dark.red), @(c->dark.green), @(c->dark.blue) ];
 }
 
+// Encode the underline color as a length-discriminated array. The 4-element
+// shape matches what pre-dual-underline iTerm2 wrote, so saved scrollback
+// without a dark variant is byte-identical to the old form.
+static NSArray<NSNumber *> *iTermUnderlineColorAsArray(const VT100TerminalColorValue *uc) {
+    if (uc->hasDarkVariant) {
+        return @[ @(uc->mode), @(uc->red), @(uc->green), @(uc->blue),
+                  @(uc->redDark), @(uc->greenDark), @(uc->blueDark) ];
+    }
+    return @[ @(uc->mode), @(uc->red), @(uc->green), @(uc->blue) ];
+}
+
 - (NSDictionary *)dictionaryValue {
     return [@{
         iTermExternalAttributeKeyURL: _url.data ?: [NSNull null],
         iTermExternalAttributeKeyBlockIDList: self.blockIDList ?: [NSNull null],
-        iTermExternalAttributeKeyUnderlineColor: _hasUnderlineColor ? @[ @(_underlineColor.mode),
-                                                                         @(_underlineColor.red),
-                                                                         @(_underlineColor.green),
-                                                                         @(_underlineColor.blue) ] : [NSNull null] ,
+        iTermExternalAttributeKeyUnderlineColor: _hasUnderlineColor ? iTermUnderlineColorAsArray(&_underlineColor) : [NSNull null] ,
         iTermExternalAttributeKeyControlCode: _controlCode.valid ? @(_controlCode.code) : [NSNull null],
         iTermExternalAttributeKeyLineAttribute: _lineAttribute != iTermLineAttributeSingleWidth ? @(_lineAttribute) : [NSNull null],
         iTermExternalAttributeKeyDualModeForeground: _dualModeForeground.valid ? iTermDualModeColorAsArray(&_dualModeForeground) : [NSNull null],

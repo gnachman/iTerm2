@@ -136,6 +136,12 @@ extern const int kColorMap24bitBase;
 // a valid VT100TerminalColorValue with hasDarkVariant=NO.
 - (VT100TerminalColorValue)resolvedDualModeColor:(iTermDualModeColor)dual;
 
+// Flattens a VT100TerminalColorValue carrying a dark variant
+// (hasDarkVariant=YES) by selecting light or dark based on the current
+// background's perceived brightness, then clearing hasDarkVariant. If the
+// input has no dark variant, returns it unchanged.
+- (VT100TerminalColorValue)resolvedColorValue:(VT100TerminalColorValue)value;
+
 - (iTermColorMap *)copy;
 - (VT100SavedColorsSlot *)savedColorsSlot;
 @end

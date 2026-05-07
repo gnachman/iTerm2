@@ -93,9 +93,19 @@ static inline BOOL iTermCharacterAttributesUnderlineColorEqual(iTermCharacterAtt
     if (!newAttributes->hasUnderlineColor) {
         return YES;
     }
-    return memcmp(&newAttributes->underlineColor,
-                  &previousAttributes->underlineColor,
-                  sizeof(newAttributes->underlineColor)) == 0;
+    // Field-by-field rather than memcmp: VT100TerminalColorValue's
+    // BOOL hasDarkVariant is followed by ints, so padding bytes can spuriously
+    // differ even when the logical value is identical, fragmenting runs.
+    const VT100TerminalColorValue *a = &newAttributes->underlineColor;
+    const VT100TerminalColorValue *b = &previousAttributes->underlineColor;
+    return a->red == b->red &&
+           a->green == b->green &&
+           a->blue == b->blue &&
+           a->mode == b->mode &&
+           a->hasDarkVariant == b->hasDarkVariant &&
+           a->redDark == b->redDark &&
+           a->greenDark == b->greenDark &&
+           a->blueDark == b->blueDark;
 }
 
 static NSColor *iTermTextDrawingHelperGetTextColor(screen_char_t *c,
@@ -702,7 +712,12 @@ preferSpeedToFullLigatureSupport:(BOOL)preferSpeedToFullLigatureSupport
     attributes->rtlStatus = c->rtlStatus;
     if (ea) {
         attributes->hasUnderlineColor = ea.hasUnderlineColor;
-        attributes->underlineColor = ea.underlineColor;
+        // Resolve any light/dark variant against the current background so
+        // downstream code (drawing, copy-as-attributed-string) sees a single
+        // concrete RGB.
+        attributes->underlineColor = ea.hasUnderlineColor
+            ? [textColorContext->colorMap resolvedColorValue:ea.underlineColor]
+            : (VT100TerminalColorValue){ 0 };
         attributes->isURL = (ea.url != nil);
     } else {
         attributes->hasUnderlineColor = NO;

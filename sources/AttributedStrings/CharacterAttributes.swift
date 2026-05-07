@@ -132,10 +132,12 @@ class CharacterAttributesProvider: NSObject {
         }
         
         if externalAttributes.hasUnderlineColor {
-            let color = colorMap.color(forCode: externalAttributes.underlineColor.red,
-                                       green: externalAttributes.underlineColor.green,
-                                       blue: externalAttributes.underlineColor.blue,
-                                       colorMode: externalAttributes.underlineColor.mode,
+            // Resolve any dual-mode variant against the current background.
+            let uc = colorMap.resolvedColorValue(externalAttributes.underlineColor)
+            let color = colorMap.color(forCode: uc.red,
+                                       green: uc.green,
+                                       blue: uc.blue,
+                                       colorMode: uc.mode,
                                        bold: isBold.boolValue,
                                        faint: isFaint,
                                        isBackground: false,

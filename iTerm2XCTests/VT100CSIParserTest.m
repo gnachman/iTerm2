@@ -247,6 +247,42 @@
     XCTAssertEqual(override.blueDark, 66);
 }
 
+#pragma mark - Dual-mode SGR 58 (underline color)
+
+// SGR 58 shares VT100TerminalColorValueFromCSI with 38/48, so the parser already
+// understands sub-modes 12 and 13 for underline. These tests pin the contract.
+
+- (void)testDualModeRGBUnderline {
+    VT100Token *token = [self tokenForDataWithFormat:@"%c[58:12:10:20:30:40:50:60m", VT100CC_ESC];
+    XCTAssert(token->type == VT100CSI_SGR);
+    XCTAssert(token.csi->count == 1);
+    XCTAssert(token.csi->p[0] == 58);
+
+    int j = 0;
+    const VT100TerminalColorValue value = VT100TerminalColorValueFromCSI(token.csi, &j);
+    XCTAssertEqual(value.mode, ColorMode24bit);
+    XCTAssertEqual(value.red, 10);
+    XCTAssertEqual(value.green, 20);
+    XCTAssertEqual(value.blue, 30);
+    XCTAssertTrue(value.hasDarkVariant);
+    XCTAssertEqual(value.redDark, 40);
+    XCTAssertEqual(value.greenDark, 50);
+    XCTAssertEqual(value.blueDark, 60);
+}
+
+- (void)testDualModeIndexedUnderline {
+    VT100Token *token = [self tokenForDataWithFormat:@"%c[58:13:208:120m", VT100CC_ESC];
+    XCTAssert(token->type == VT100CSI_SGR);
+    XCTAssert(token.csi->p[0] == 58);
+
+    int j = 0;
+    const VT100TerminalColorValue value = VT100TerminalColorValueFromCSI(token.csi, &j);
+    XCTAssertEqual(value.mode, ColorModeNormal);
+    XCTAssertEqual(value.red, 208);
+    XCTAssertTrue(value.hasDarkVariant);
+    XCTAssertEqual(value.redDark, 120);
+}
+
 - (void)testIntermediateByte {
     // DECSCUSR with parameter 3 (set cursor to "blink underline"), which has an intermediate byte
     // of the space character.

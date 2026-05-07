@@ -1020,10 +1020,13 @@ iTermCommandInfoViewControllerDelegate>
                                   NSParagraphStyleAttributeName: paragraphStyle,
                                   NSUnderlineStyleAttributeName: @(underlineStyle) };
     if (ea.hasUnderlineColor) {
-        NSColor *color = [self colorForCode:ea.underlineColor.red
-                                      green:ea.underlineColor.green
-                                       blue:ea.underlineColor.blue
-                                  colorMode:ea.underlineColor.mode
+        // Copy-as-attributed-string is a snapshot — resolve any dual-mode
+        // variant to whatever was visible at copy time.
+        const VT100TerminalColorValue uc = [self.colorMap resolvedColorValue:ea.underlineColor];
+        NSColor *color = [self colorForCode:uc.red
+                                      green:uc.green
+                                       blue:uc.blue
+                                  colorMode:uc.mode
                                        bold:isBold
                                       faint:isFaint
                                isBackground:NO];

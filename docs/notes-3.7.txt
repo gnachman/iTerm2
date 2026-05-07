@@ -524,6 +524,9 @@ Bug Fixes:
   38:12:Rl:Gl:Bl:Rd:Gd:Bd m for 24-bit and
   CSI 38:13:Nl:Nd m for 256-color (and 48
   for backgrounds).
+- Extend dual-mode SGR to underline color
+  via CSI 58:12:Rl:Gl:Bl:Rd:Gd:Bd m and
+  CSI 58:13:Nl:Nd m.
 - Fix tab graphic matching when the
   foreground binary is a versioned symlink
   target (e.g., claude → 2.1.121) by also

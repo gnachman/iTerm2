@@ -1494,10 +1494,13 @@ static BOOL iTermMetalSetUnderline(iTermMetalPerFrameState *self,
     if (ea) {
         attributes[visualX].hasUnderlineColor = ea.hasUnderlineColor;
         if (attributes[visualX].hasUnderlineColor) {
-            attributes[visualX].underlineColor = [self vectorColorForCode:ea.underlineColor.red
-                                                              green:ea.underlineColor.green
-                                                               blue:ea.underlineColor.blue
-                                                          colorMode:ea.underlineColor.mode
+            // Resolve any light/dark variant against the current background
+            // before converting to a concrete RGB.
+            const VT100TerminalColorValue uc = [self->_configuration->_colorMap resolvedColorValue:ea.underlineColor];
+            attributes[visualX].underlineColor = [self vectorColorForCode:uc.red
+                                                              green:uc.green
+                                                               blue:uc.blue
+                                                          colorMode:uc.mode
                                                                bold:NO
                                                               faint:currentColorKey->faint
                                                        isBackground:NO];

@@ -50,6 +50,24 @@ NSString *const kGraphicRenditionUnderlineGreenKey = @"Underline Green";
 NSString *const kGraphicRenditionUnderlineBlueKey = @"Underline Blue";
 NSString *const kGraphicRenditionUnderlineModeKey = @"Underline Mode";
 
+// Dual-mode (light/dark) fg/bg/underline keys. Append-only — older state
+// files lacking these keys decode as single-color (boolValue / intValue on
+// nil yields NO / 0).
+static NSString *const kGraphicRenditionHasDualModeFgKey = @"Has Dual Mode FG";
+static NSString *const kGraphicRenditionFgDarkColorCodeKey = @"FG Dark/Red";
+static NSString *const kGraphicRenditionFgDarkGreenKey = @"FG Dark Green";
+static NSString *const kGraphicRenditionFgDarkBlueKey = @"FG Dark Blue";
+static NSString *const kGraphicRenditionFgDarkModeKey = @"FG Dark Mode";
+static NSString *const kGraphicRenditionHasDualModeBgKey = @"Has Dual Mode BG";
+static NSString *const kGraphicRenditionBgDarkColorCodeKey = @"BG Dark/Red";
+static NSString *const kGraphicRenditionBgDarkGreenKey = @"BG Dark Green";
+static NSString *const kGraphicRenditionBgDarkBlueKey = @"BG Dark Blue";
+static NSString *const kGraphicRenditionBgDarkModeKey = @"BG Dark Mode";
+static NSString *const kGraphicRenditionHasDarkUnderlineKey = @"Has Dark Underline";
+static NSString *const kGraphicRenditionUnderlineDarkRedKey = @"Underline Dark/Red";
+static NSString *const kGraphicRenditionUnderlineDarkGreenKey = @"Underline Dark Green";
+static NSString *const kGraphicRenditionUnderlineDarkBlueKey = @"Underline Dark Blue";
+
 NSString *const kSavedCursorPositionKey = @"Position";
 NSString *const kSavedCursorCharsetKey = @"Charset";
 NSString *const kSavedCursorLineDrawingArrayKey = @"Line Drawing Flags";
@@ -3780,17 +3798,27 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
         [result addObject:@"9"];
     }
     if (graphicRendition.hasUnderlineColor) {
-        switch (graphicRendition.underlineColor.mode) {
+        const VT100TerminalColorValue uc = graphicRendition.underlineColor;
+        switch (uc.mode) {
             case ColorModeNormal:
-                [result addObject:[NSString stringWithFormat:@"58:5:%d",
-                                   graphicRendition.underlineColor.red]];
+                [result addObject:[NSString stringWithFormat:@"58:5:%d", uc.red]];
+                if (uc.hasDarkVariant) {
+                    // Chained dual-mode override. Last-wins SGR semantics
+                    // mean dual-mode-aware terminals pick this up while
+                    // older terminals see only the 58:5 fallback.
+                    [result addObject:[NSString stringWithFormat:@"58:13:%d:%d",
+                                       uc.red, uc.redDark]];
+                }
                 break;
             case ColorMode24bit:
                 [result addObject:[NSString stringWithFormat:@"58:2:%d:%d:%d",
-                                   graphicRendition.underlineColor.red,
-                                   graphicRendition.underlineColor.green,
-                                   graphicRendition.underlineColor.blue]];
-                 break;
+                                   uc.red, uc.green, uc.blue]];
+                if (uc.hasDarkVariant) {
+                    [result addObject:[NSString stringWithFormat:@"58:12:%d:%d:%d:%d:%d:%d",
+                                       uc.red, uc.green, uc.blue,
+                                       uc.redDark, uc.greenDark, uc.blueDark]];
+                }
+                break;
             case ColorModeExternal:
             case ColorModeAlternate:
                 break;
@@ -5473,33 +5501,57 @@ static iTermPromise<NSNumber *> *VT100TerminalPromiseOfDECRPMSettingFromBoolean(
     }
 }
 
-- (NSDictionary *)dictionaryForGraphicRendition:(VT100GraphicRendition)graphicRendition {
-    return @{ kGraphicRenditionBoldKey: @(graphicRendition.bold),
-              kGraphicRenditionBlinkKey: @(graphicRendition.blink),
-              kGraphicRenditionInvisibleKey: @(graphicRendition.invisible),
-              kGraphicRenditionUnderlineKey: @(graphicRendition.underline),
-              kGraphicRenditionStrikethroughKey: @(graphicRendition.strikethrough),
-              kGraphicRenditionUnderlineStyle: @(graphicRendition.underlineStyle),
-              kGraphicRenditionReversedKey: @(graphicRendition.reversed),
-              kGraphicRenditionFaintKey: @(graphicRendition.faint),
-              kGraphicRenditionItalicKey: @(graphicRendition.italic),
-              kGraphicRenditionForegroundColorCodeKey: @(graphicRendition.fgColorCode),
-              kGraphicRenditionForegroundGreenKey: @(graphicRendition.fgGreen),
-              kGraphicRenditionForegroundBlueKey: @(graphicRendition.fgBlue),
-              kGraphicRenditionForegroundModeKey: @(graphicRendition.fgColorMode),
-              kGraphicRenditionBackgroundColorCodeKey: @(graphicRendition.bgColorCode),
-              kGraphicRenditionBackgroundGreenKey: @(graphicRendition.bgGreen),
-              kGraphicRenditionBackgroundBlueKey: @(graphicRendition.bgBlue),
-              kGraphicRenditionBackgroundModeKey: @(graphicRendition.bgColorMode),
-              kGraphicRenditionHasUnderlineColorKey: @(graphicRendition.hasUnderlineColor),
-              kGraphicRenditionUnderlineColorCodeKey: @(graphicRendition.underlineColor.red),
-              kGraphicRenditionUnderlineGreenKey: @(graphicRendition.underlineColor.green),
-              kGraphicRenditionUnderlineBlueKey: @(graphicRendition.underlineColor.blue),
-              kGraphicRenditionUnderlineModeKey: @(graphicRendition.underlineColor.mode),
-    };
++ (NSDictionary *)dictionaryForGraphicRendition:(VT100GraphicRendition)graphicRendition {
+    NSMutableDictionary *dict = [@{
+        kGraphicRenditionBoldKey: @(graphicRendition.bold),
+        kGraphicRenditionBlinkKey: @(graphicRendition.blink),
+        kGraphicRenditionInvisibleKey: @(graphicRendition.invisible),
+        kGraphicRenditionUnderlineKey: @(graphicRendition.underline),
+        kGraphicRenditionStrikethroughKey: @(graphicRendition.strikethrough),
+        kGraphicRenditionUnderlineStyle: @(graphicRendition.underlineStyle),
+        kGraphicRenditionReversedKey: @(graphicRendition.reversed),
+        kGraphicRenditionFaintKey: @(graphicRendition.faint),
+        kGraphicRenditionItalicKey: @(graphicRendition.italic),
+        kGraphicRenditionForegroundColorCodeKey: @(graphicRendition.fgColorCode),
+        kGraphicRenditionForegroundGreenKey: @(graphicRendition.fgGreen),
+        kGraphicRenditionForegroundBlueKey: @(graphicRendition.fgBlue),
+        kGraphicRenditionForegroundModeKey: @(graphicRendition.fgColorMode),
+        kGraphicRenditionBackgroundColorCodeKey: @(graphicRendition.bgColorCode),
+        kGraphicRenditionBackgroundGreenKey: @(graphicRendition.bgGreen),
+        kGraphicRenditionBackgroundBlueKey: @(graphicRendition.bgBlue),
+        kGraphicRenditionBackgroundModeKey: @(graphicRendition.bgColorMode),
+        kGraphicRenditionHasUnderlineColorKey: @(graphicRendition.hasUnderlineColor),
+        kGraphicRenditionUnderlineColorCodeKey: @(graphicRendition.underlineColor.red),
+        kGraphicRenditionUnderlineGreenKey: @(graphicRendition.underlineColor.green),
+        kGraphicRenditionUnderlineBlueKey: @(graphicRendition.underlineColor.blue),
+        kGraphicRenditionUnderlineModeKey: @(graphicRendition.underlineColor.mode),
+    } mutableCopy];
+    // Dual-mode fields are written only when set. Single-color renditions
+    // produce a dict with the same shape older iTerm2 wrote.
+    if (graphicRendition.hasDualModeFg) {
+        dict[kGraphicRenditionHasDualModeFgKey] = @YES;
+        dict[kGraphicRenditionFgDarkColorCodeKey] = @(graphicRendition.fgDarkColorCode);
+        dict[kGraphicRenditionFgDarkGreenKey] = @(graphicRendition.fgDarkGreen);
+        dict[kGraphicRenditionFgDarkBlueKey] = @(graphicRendition.fgDarkBlue);
+        dict[kGraphicRenditionFgDarkModeKey] = @(graphicRendition.fgDarkColorMode);
+    }
+    if (graphicRendition.hasDualModeBg) {
+        dict[kGraphicRenditionHasDualModeBgKey] = @YES;
+        dict[kGraphicRenditionBgDarkColorCodeKey] = @(graphicRendition.bgDarkColorCode);
+        dict[kGraphicRenditionBgDarkGreenKey] = @(graphicRendition.bgDarkGreen);
+        dict[kGraphicRenditionBgDarkBlueKey] = @(graphicRendition.bgDarkBlue);
+        dict[kGraphicRenditionBgDarkModeKey] = @(graphicRendition.bgDarkColorMode);
+    }
+    if (graphicRendition.hasUnderlineColor && graphicRendition.underlineColor.hasDarkVariant) {
+        dict[kGraphicRenditionHasDarkUnderlineKey] = @YES;
+        dict[kGraphicRenditionUnderlineDarkRedKey] = @(graphicRendition.underlineColor.redDark);
+        dict[kGraphicRenditionUnderlineDarkGreenKey] = @(graphicRendition.underlineColor.greenDark);
+        dict[kGraphicRenditionUnderlineDarkBlueKey] = @(graphicRendition.underlineColor.blueDark);
+    }
+    return dict;
 }
 
-- (VT100GraphicRendition)graphicRenditionFromDictionary:(NSDictionary *)dict {
++ (VT100GraphicRendition)graphicRenditionFromDictionary:(NSDictionary *)dict {
     VT100GraphicRendition graphicRendition = { 0 };
     graphicRendition.bold = [dict[kGraphicRenditionBoldKey] boolValue];
     graphicRendition.blink = [dict[kGraphicRenditionBlinkKey] boolValue];
@@ -5527,6 +5579,31 @@ static iTermPromise<NSNumber *> *VT100TerminalPromiseOfDECRPMSettingFromBoolean(
     graphicRendition.underlineColor.blue = [dict[kGraphicRenditionUnderlineBlueKey] intValue];
     graphicRendition.underlineColor.mode = [dict[kGraphicRenditionUnderlineModeKey] intValue];
 
+    // Dual-mode fields. Missing keys (older state files) default to NO/0
+    // via boolValue/intValue on nil, so a single-color rendition is fully
+    // restored without phantom dark variants.
+    if ([dict[kGraphicRenditionHasDualModeFgKey] boolValue]) {
+        graphicRendition.hasDualModeFg = YES;
+        graphicRendition.fgDarkColorCode = [dict[kGraphicRenditionFgDarkColorCodeKey] intValue];
+        graphicRendition.fgDarkGreen = [dict[kGraphicRenditionFgDarkGreenKey] intValue];
+        graphicRendition.fgDarkBlue = [dict[kGraphicRenditionFgDarkBlueKey] intValue];
+        graphicRendition.fgDarkColorMode = [dict[kGraphicRenditionFgDarkModeKey] intValue];
+    }
+    if ([dict[kGraphicRenditionHasDualModeBgKey] boolValue]) {
+        graphicRendition.hasDualModeBg = YES;
+        graphicRendition.bgDarkColorCode = [dict[kGraphicRenditionBgDarkColorCodeKey] intValue];
+        graphicRendition.bgDarkGreen = [dict[kGraphicRenditionBgDarkGreenKey] intValue];
+        graphicRendition.bgDarkBlue = [dict[kGraphicRenditionBgDarkBlueKey] intValue];
+        graphicRendition.bgDarkColorMode = [dict[kGraphicRenditionBgDarkModeKey] intValue];
+    }
+    if (graphicRendition.hasUnderlineColor &&
+        [dict[kGraphicRenditionHasDarkUnderlineKey] boolValue]) {
+        graphicRendition.underlineColor.hasDarkVariant = YES;
+        graphicRendition.underlineColor.redDark = [dict[kGraphicRenditionUnderlineDarkRedKey] intValue];
+        graphicRendition.underlineColor.greenDark = [dict[kGraphicRenditionUnderlineDarkGreenKey] intValue];
+        graphicRendition.underlineColor.blueDark = [dict[kGraphicRenditionUnderlineDarkBlueKey] intValue];
+    }
+
     return graphicRendition;
 }
 
@@ -5538,7 +5615,7 @@ static iTermPromise<NSNumber *> *VT100TerminalPromiseOfDECRPMSettingFromBoolean(
     return @{ kSavedCursorPositionKey: [NSDictionary dictionaryWithGridCoord:savedCursor.position],
               kSavedCursorCharsetKey: @(savedCursor.charset),
               kSavedCursorLineDrawingArrayKey: lineDrawingArray,
-              kSavedCursorGraphicRenditionKey: [self dictionaryForGraphicRendition:savedCursor.graphicRendition],
+              kSavedCursorGraphicRenditionKey: [VT100Terminal dictionaryForGraphicRendition:savedCursor.graphicRendition],
               kSavedCursorOriginKey: @(savedCursor.origin),
               kSavedCursorWraparoundKey: @(savedCursor.wraparound),
               kSavedCursorUnicodeVersion: @(savedCursor.unicodeVersion),
@@ -5555,7 +5632,7 @@ static iTermPromise<NSNumber *> *VT100TerminalPromiseOfDECRPMSettingFromBoolean(
         NSNumber *n = [dict[kSavedCursorLineDrawingArrayKey] objectAtIndex:i];
         savedCursor.lineDrawing[i] = [n boolValue];
     }
-    savedCursor.graphicRendition = [self graphicRenditionFromDictionary:dict[kSavedCursorGraphicRenditionKey]];
+    savedCursor.graphicRendition = [VT100Terminal graphicRenditionFromDictionary:dict[kSavedCursorGraphicRenditionKey]];
     savedCursor.origin = [dict[kSavedCursorOriginKey] boolValue];
     savedCursor.wraparound = [dict[kSavedCursorWraparoundKey] boolValue];
     savedCursor.unicodeVersion = [dict[kSavedCursorUnicodeVersion] integerValue];
@@ -5602,7 +5679,7 @@ static iTermPromise<NSNumber *> *VT100TerminalPromiseOfDECRPMSettingFromBoolean(
            kTerminalStateBracketedPasteModeKey: @(self.bracketedPasteMode),
            kTerminalStateAnsiModeKey: @YES,  // For compatibility with downgrades; older versions need this for DECRQM.
            kTerminalStateNumLockKey: @(numLock_),
-           kTerminalStateGraphicRenditionKey: [self dictionaryForGraphicRendition:graphicRendition_],
+           kTerminalStateGraphicRenditionKey: [VT100Terminal dictionaryForGraphicRendition:graphicRendition_],
            kTerminalStateMainSavedCursorKey: [self dictionaryForSavedCursor:mainSavedCursor_],
            kTerminalStateAltSavedCursorKey: [self dictionaryForSavedCursor:altSavedCursor_],
            kTerminalStateAllowColumnModeKey: @(self.allowColumnMode),
@@ -5704,7 +5781,7 @@ static iTermPromise<NSNumber *> *VT100TerminalPromiseOfDECRPMSettingFromBoolean(
 
     self.bracketedPasteMode = [dict[kTerminalStateBracketedPasteModeKey] boolValue];
     numLock_ = [dict[kTerminalStateNumLockKey] boolValue];
-    graphicRendition_ = [self graphicRenditionFromDictionary:dict[kTerminalStateGraphicRenditionKey]];
+    graphicRendition_ = [VT100Terminal graphicRenditionFromDictionary:dict[kTerminalStateGraphicRenditionKey]];
     [self updateDefaultChar];
     mainSavedCursor_ = [self savedCursorFromDictionary:dict[kTerminalStateMainSavedCursorKey]];
     altSavedCursor_ = [self savedCursorFromDictionary:dict[kTerminalStateAltSavedCursorKey]];
@@ -5760,7 +5837,7 @@ static iTermPromise<NSNumber *> *VT100TerminalPromiseOfDECRPMSettingFromBoolean(
         for (int j = 0; j < _sgrStack[i].numElements; j++) {
             [elements addObject:@(_sgrStack[i].elements[j])];
         }
-        [result addObject:@{ @"state": [self dictionaryForGraphicRendition:_sgrStack[i].graphicRendition],
+        [result addObject:@{ @"state": [VT100Terminal dictionaryForGraphicRendition:_sgrStack[i].graphicRendition],
                              @"elements": elements }];
     }
     return result;
@@ -5788,7 +5865,7 @@ static iTermPromise<NSNumber *> *VT100TerminalPromiseOfDECRPMSettingFromBoolean(
             *stop = YES;
             return;
         }
-        self->_sgrStack[idx].graphicRendition = [self graphicRenditionFromDictionary:state];
+        self->_sgrStack[idx].graphicRendition = [VT100Terminal graphicRenditionFromDictionary:state];
         NSArray *elements = [NSArray castFrom:dict[@"elements"]];
         if (!elements) {
             *stop = YES;
