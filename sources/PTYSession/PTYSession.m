@@ -298,6 +298,7 @@ static NSString *const SESSION_ARRANGEMENT_SHELL_INTEGRATION_EVER_USED_DEPRECATE
 static NSString *const SESSION_ARRANGEMENT_SHOULD_EXPECT_PROMPT_MARKS = @"Should Expect Prompt Marks";  // BOOL
 static NSString *const SESSION_ARRANGEMENT_ALERT_ON_NEXT_MARK = @"Alert on Next Mark";  // BOOL
 static NSString *const SESSION_ARRANGEMENT_LOCKED = @"Locked";  // BOOL
+static NSString *const SESSION_ARRANGEMENT_LAST_ACTIVITY_ORDINAL = @"Last Activity Ordinal";  // NSNumber (NSInteger). Cross-window MRU ordinal.
 static NSString *const SESSION_ARRANGEMENT_COMMANDS = @"Commands";  // Array of strings
 static NSString *const SESSION_ARRANGEMENT_CURSOR_GUIDE = @"Cursor Guide";  // BOOL
 static NSString *const SESSION_ARRANGEMENT_SELECTION = @"Selection";  // Dictionary for iTermSelection.
@@ -1576,6 +1577,14 @@ ITERM_WEAKLY_REFERENCEABLE
         }
     }];
     [aSession.nameController restoreNameFromStateDictionary:arrangement[SESSION_ARRANGEMENT_NAME_CONTROLLER_STATE]];
+    NSNumber *lastActivityOrdinal = [NSNumber castFrom:arrangement[SESSION_ARRANGEMENT_LAST_ACTIVITY_ORDINAL]];
+    if (lastActivityOrdinal) {
+        const NSInteger ordinal = lastActivityOrdinal.integerValue;
+        aSession.lastActivityOrdinal = ordinal;
+        // Keep the global counter strictly above any restored ordinal so
+        // future stamps never collide with restored values.
+        [[iTermController sharedInstance].sessionActivityCounter setMinimum:ordinal];
+    }
     if (arrangement[SESSION_ARRANGEMENT_VARIABLES]) {
         NSDictionary *variables = arrangement[SESSION_ARRANGEMENT_VARIABLES];
         for (id key in variables) {
@@ -6557,6 +6566,9 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
     }
 
     result[SESSION_ARRANGEMENT_GUID] = _guid;
+    if (_lastActivityOrdinal > 0) {
+        result[SESSION_ARRANGEMENT_LAST_ACTIVITY_ORDINAL] = @(_lastActivityOrdinal);
+    }
     if (_liveSession && includeContents && !_dvr) {
         [result encodeDictionaryWithKey:SESSION_ARRANGEMENT_LIVE_SESSION
                              generation:iTermGenerationAlwaysEncode

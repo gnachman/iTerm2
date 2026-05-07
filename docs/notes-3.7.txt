@@ -342,6 +342,11 @@ Settings Improvements:
   menu’s “Put Chat in Linked Session” item
   and toggle visibility from View > Show
   Inline Chat.
+- Open Quickly now uses recency as a
+  tiebreaker, so the session list (whether
+  the query is empty or matches several
+  panes) is ordered most-recently-used
+  first across tabs and windows.
 
 Bug Fixes:
 - The “open password manager automatically”

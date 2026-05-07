@@ -157,6 +157,7 @@ static NSString *const kHotkeyWindowRestorableState = @"kHotkeyWindowRestorableS
 static NSString *const kHotkeyWindowsRestorableStates = @"kHotkeyWindowsRestorableState";  // deprecated
 static NSString *const iTermBuriedSessionState = @"iTermBuriedSessionState";
 static NSString *const kPortholeRestorableStateKey = @"kPortholeRestorableStateKey";
+static NSString *const kSessionActivityCounterKey = @"kSessionActivityCounter";  // NSNumber (NSInteger) high-water mark.
 
 static NSString *const kRestoreDefaultWindowArrangementShortcut = @"R";
 NSString *const iTermApplicationWillTerminate = @"iTermApplicationWillTerminate";
@@ -1138,6 +1139,8 @@ static NSModalResponse iTermCompareRenderingRunModal(id self, SEL _cmd) {
     if ([[[iTermBuriedSessions sharedInstance] buriedSessions] count]) {
         [coder encodeObject:[[iTermBuriedSessions sharedInstance] restorableState] forKey:iTermBuriedSessionState];
     }
+    [coder encodeObject:@([iTermController sharedInstance].sessionActivityCounter.value)
+                 forKey:kSessionActivityCounterKey];
     DLog(@"Time to save app restorable state: %@",
          @([NSDate timeIntervalSinceReferenceDate] - start));
 }
@@ -1186,6 +1189,10 @@ static NSModalResponse iTermCompareRenderingRunModal(id self, SEL _cmd) {
     _buriedSessionsState = [[coder decodeObjectForKey:iTermBuriedSessionState] retain];
     if (finishedLaunching_) {
         [self restoreBuriedSessionsState];
+    }
+    NSNumber *sessionActivityCounter = [NSNumber castFrom:[coder decodeObjectForKey:kSessionActivityCounterKey]];
+    if (sessionActivityCounter) {
+        [[iTermController sharedInstance].sessionActivityCounter setMinimum:sessionActivityCounter.integerValue];
     }
     if ([iTermAdvancedSettingsModel logRestorableStateSize]) {
         NSDictionary *dict = @{ kScreenCharRestorableStateKey: screenCharState ?: @{},
@@ -3629,6 +3636,8 @@ static iTermKeyEventReplayer *gReplayer;
             // TODO: Why doesn't this encode window content?
             [encoder encodeObject:[[iTermBuriedSessions sharedInstance] restorableState] key:iTermBuriedSessionState];
         }
+        [encoder encodeObject:@([iTermController sharedInstance].sessionActivityCounter.value)
+                          key:kSessionActivityCounterKey];
         DLog(@"Time to save app restorable state: %@",
              @([NSDate timeIntervalSinceReferenceDate] - start));
         return YES;
@@ -3679,6 +3688,11 @@ static iTermKeyEventReplayer *gReplayer;
     }
 
     _buriedSessionsState = [[NSArray fromGraphRecord:app withKey:iTermBuriedSessionState] retain];
+
+    NSNumber *sessionActivityCounter = [NSNumber fromGraphRecord:app withKey:kSessionActivityCounterKey];
+    if (sessionActivityCounter) {
+        [[iTermController sharedInstance].sessionActivityCounter setMinimum:sessionActivityCounter.integerValue];
+    }
 
     if (finishedLaunching_) {
         [self restoreBuriedSessionsState];

@@ -825,6 +825,10 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     for (PTYSession *session in self.sessions) {
         [session enclosingTabDidBecomeSelected];
     }
+    // Bump cross-window MRU for the active pane in this tab. setActiveSession:
+    // only stamps when the active pane within a tab changes, so a plain
+    // tab switch (no pane change) wouldn't otherwise register.
+    activeSession_.lastActivityOrdinal = [iTermController sharedInstance].sessionActivityCounter.next;
 }
 
 - (void)sessionSelectContainingTab {
@@ -859,6 +863,9 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     if (changed && updateActivityCounter) {
         [activeSession_ setActivityCounter:@(_activityCounter++)];
         [session setActivityCounter:@(_activityCounter++)];
+        // Stamp a globally comparable ordinal too, so cross-tab/cross-window
+        // MRU sorting (e.g. Open Quickly) can rank panes by recency.
+        session.lastActivityOrdinal = [iTermController sharedInstance].sessionActivityCounter.next;
     }
     activeSession_ = session;
     if (activeSession_ == nil) {

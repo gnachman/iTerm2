@@ -277,6 +277,17 @@ static const double kProfileNameMultiplierForWindowItem = 0.08;
     // (feature name, display string)
     iTermTuple<NSString *, NSString *> *(^detailFunction)(PTYSession *) = [self detailFunctionForSessions:self.sessions];
 
+    // Find the largest activity ordinal across all sessions. Used below to
+    // turn each session's lastActivityOrdinal into a per-session score
+    // contribution in [0, 0.01) — small enough to act as a recency
+    // tiebreaker without overriding real query matches.
+    NSInteger maxOrdinal = 0;
+    for (PTYSession *session in self.sessions) {
+        if (session.lastActivityOrdinal > maxOrdinal) {
+            maxOrdinal = session.lastActivityOrdinal;
+        }
+    }
+
     for (PTYSession *session in self.sessions) {
         NSMutableArray *features = [NSMutableArray array];
         iTermOpenQuicklySessionItem *item = [[iTermOpenQuicklySessionItem alloc] init];
@@ -291,6 +302,11 @@ static const double kProfileNameMultiplierForWindowItem = 0.08;
                                   features:features
                             attributedName:attributedName];
         if (item.score > 0) {
+            if (maxOrdinal > 0) {
+                // Recency tiebreaker, strictly less than 0.01 so it never
+                // outweighs even a single empty-query feature contribution.
+                item.score += 0.0099 * ((double)session.lastActivityOrdinal / (double)maxOrdinal);
+            }
             iTermTuple<NSString *, NSAttributedString *> *detail = [self detailForSession:session features:features];
             // "Feature: value" giving why this session was recalled.
             item.detail = detail.secondObject;

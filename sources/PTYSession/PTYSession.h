@@ -531,6 +531,12 @@ backgroundColor:(nullable NSColor *)backgroundColor;
 // This number (int) imposes an ordering on session activity time.
 @property(nonatomic, retain, nullable) NSNumber *activityCounter;
 
+// Monotonically increasing ordinal stamped from a global counter when this
+// session becomes the active session (within a tab) or its window becomes
+// frontmost. 0 means it has never been active. Used for cross-window MRU
+// sorting (e.g. by the Open Quickly picker).
+@property(nonatomic) NSInteger lastActivityOrdinal;
+
 // Is there a saved scroll position?
 @property(nonatomic, readonly) BOOL hasSavedScrollPosition;
 

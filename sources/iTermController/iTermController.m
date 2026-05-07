@@ -144,6 +144,10 @@ static iTermController *gSharedInstance;
 
         _setCurrentTerminalHelper = [[iTermSetCurrentTerminalHelper alloc] init];
         _setCurrentTerminalHelper.delegate = self;
+        // The high-water mark is restored from the app-wide restorable state
+        // graph (see iTermApplicationDelegate.encodeGraphWithEncoder:); each
+        // restored session's arrangement also ratchets it via -setMinimum:.
+        _sessionActivityCounter = [[iTermMonotonicCounter alloc] init];
         _terminalWindows = [[NSMutableArray alloc] init];
         _restorableSessions = [[NSMutableArray alloc] init];
         _currentRestorableSessionsStack = [[NSMutableArray alloc] init];
@@ -2040,6 +2044,14 @@ replaceInitialDirectoryForSessionWithGUID:(NSString *)guid
 - (void)reallySetCurrentTerminal:(PseudoTerminal *)thePseudoTerminal {
     DLog(@"Actually make terminal current: %@", thePseudoTerminal);
     _frontTerminalWindowController = thePseudoTerminal;
+
+    // Bump the global MRU ordinal so the active session in the now-current
+    // window stays at the top of cross-window MRU lists even when the user
+    // switches windows without changing panes within them.
+    PTYSession *currentSession = [thePseudoTerminal currentSession];
+    if (currentSession) {
+        currentSession.lastActivityOrdinal = _sessionActivityCounter.next;
+    }
 
     // make sure this window is the key window
     if ([thePseudoTerminal windowInitialized] && [[thePseudoTerminal window] isKeyWindow] == NO) {
