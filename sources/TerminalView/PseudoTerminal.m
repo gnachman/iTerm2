@@ -2040,22 +2040,28 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 
     if (mustAsk && !suppressConfirmation) {
-        BOOL okToClose;
         const BOOL anyIsLocked = [[aTab sessions] anyWithBlock:^BOOL(PTYSession *anObject) {
             return anObject.locked;
         }];
-        if (numClosing == 1) {
-            okToClose = [self confirmCloseForSessions:[aTab sessions]
-                                           identifier:anyIsLocked ? @"This tab (with a locked session)" : @"This tab"
-                                          genericName:[NSString stringWithFormat:@"tab #%d",
-                                                       [aTab tabNumber]]];
+        NSString *const pinnedPrefix = aTab.isPinned ? @"pinned " : @"";
+        // When numClosing is 0 (e.g., closing a pinned tab whose sessions all
+        // exited) fall back to the tab's pane count to pick singular vs plural
+        // wording.
+        const BOOL singular = (numClosing > 0) ? (numClosing == 1) : ([aTab sessions].count <= 1);
+        NSString *identifier;
+        if (singular) {
+            identifier = anyIsLocked
+                ? [NSString stringWithFormat:@"This %@tab (with a locked session)", pinnedPrefix]
+                : [NSString stringWithFormat:@"This %@tab", pinnedPrefix];
         } else {
-            okToClose = [self confirmCloseForSessions:[aTab sessions]
-                                           identifier:anyIsLocked ? @"This multi-pane tab (with locked sessions)" : @"This multi-pane tab"
-                                          genericName:[NSString stringWithFormat:@"tab #%d",
-                                                       [aTab tabNumber]]];
+            identifier = anyIsLocked
+                ? [NSString stringWithFormat:@"This %@multi-pane tab (with locked sessions)", pinnedPrefix]
+                : [NSString stringWithFormat:@"This %@multi-pane tab", pinnedPrefix];
         }
-        return okToClose;
+        return [self confirmCloseForSessions:[aTab sessions]
+                                  identifier:identifier
+                                 genericName:[NSString stringWithFormat:@"tab #%d",
+                                              [aTab tabNumber]]];
     }
     return YES;
 }
@@ -4293,6 +4299,11 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     iTermPromptOnCloseReason *reason = [iTermPromptOnCloseReason noReason];
     for (PTYSession *aSession in [self allSessions]) {
         [reason addReason:[aSession promptOnCloseReason]];
+    }
+    for (PTYTab *tab in self.tabs) {
+        if (tab.isPinned) {
+            [reason addReason:[iTermPromptOnCloseReason tabIsPinnedWithNumber:tab.tabNumber]];
+        }
     }
     return reason;
 }

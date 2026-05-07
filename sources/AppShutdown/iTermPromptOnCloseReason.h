@@ -22,6 +22,7 @@
 + (instancetype)closingMultipleSessionsPreferenceEnabled;
 + (instancetype)tmuxClientsAlwaysPromptBecauseJobsAreNotExposed;
 + (instancetype)sessionIsLocked;
++ (instancetype)tabIsPinnedWithNumber:(int)tabNumber;
 
 - (void)addReason:(iTermPromptOnCloseReason *)reason;
 

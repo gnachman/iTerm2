@@ -238,6 +238,11 @@
     return [[[iTermPromptOnCloseMessageReason alloc] initWithMessage:@"This pane is locked." priority:75] autorelease];
 }
 
++ (instancetype)tabIsPinnedWithNumber:(int)tabNumber {
+    NSString *const message = [NSString stringWithFormat:@"Tab #%d is pinned.", tabNumber];
+    return [[[iTermPromptOnCloseMessageReason alloc] initWithMessage:message priority:70] autorelease];
+}
+
 - (BOOL)hasReason {
     return YES;
 }
