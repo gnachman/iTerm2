@@ -530,6 +530,12 @@ static NSDictionary *iTermRemotePreferencesSave(NSDictionary *myDict, NSString *
         if (self.remoteLocationIsURL) {
             // If the setting is always copy, then ask. Copying isn't an option.
             [[iTermUserDefaults userDefaults] setObject:[self remotePrefsLocation] forKey:iTermRemotePreferencesPromptBeforeLoadingPrefsFromURL];
+        } else if ([self shouldSaveAutomatically]) {
+            // The debounced setNeedsSave path can lose the race against app
+            // exit, leaving a stale remote file that overwrites the local
+            // copy on next launch. Flush synchronously instead. Issue 12844.
+            DLog(@"Save changes on quit (Automatic)");
+            [self saveLocalUserDefaultsToRemotePrefs];
         } else {
             // Not a URL
             NSString *theTitle = [NSString stringWithFormat:

@@ -351,6 +351,15 @@ Bug Fixes:
   copy the install command or run it in a new
   iTerm2 window where you can enter your sudo
   password.
+- Fix a bug where suppressing a warning would
+  not stick across launches when prefs are
+  loaded from a custom folder with “Save
+  changes: Automatically.” The debounced save
+  could lose the race against app exit, so
+  the next launch overwrote the just-saved
+  suppression with the stale remote copy.
+  applicationWillTerminate now flushes
+  synchronously when Automatic mode is on.
 - Fix a latent use-after-free in Core Text run
   enumeration when the font does not return
   contiguous glyph or string-index pointers.
