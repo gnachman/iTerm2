@@ -86,7 +86,7 @@
                     break;
 
                 case UNAuthorizationStatusNotDetermined: {
-                    [center requestAuthorizationWithOptions:(UNAuthorizationOptionAlert | UNAuthorizationOptionSound)
+                    [center requestAuthorizationWithOptions:(UNAuthorizationOptionAlert | UNAuthorizationOptionSound | UNAuthorizationOptionBadge)
                                           completionHandler:^(BOOL authGranted, NSError * _Nullable error) {
                         dispatch_async(dispatch_get_main_queue(), ^{
                             if (error) {

@@ -538,3 +538,9 @@ Bug Fixes:
   vs. entries loaded from disk, which could
   cause inconsistent ordering if score-
   based sorting/eviction were used.
+- Request the badge authorization option
+  from UNUserNotificationCenter so the
+  dock-tile bell-count badge actually
+  renders and the “Badge application
+  icon” toggle appears in System
+  Settings › Notifications › iTerm.
