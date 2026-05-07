@@ -62,6 +62,12 @@ class iTermTitlebarAccessoryNanny: NSObject {
         }
     }
     private var pendingUpdates = [ObjectIdentifier: (CGFloat, NSRect)]()
+    // The most recent minHeight requested for each view controller via
+    // updateMinHeight. Tracked here rather than reading
+    // vc.fullScreenMinHeight because that value can be stashed on probation or
+    // overridden with defaultHeight when a vc is first added. Used by callers
+    // who want to react to the *requested* height changing. Issue 12811.
+    private var lastRequestedMinHeight = [ObjectIdentifier: CGFloat]()
     private var timer: Timer?
 
     @objc(add:)
@@ -121,6 +127,7 @@ class iTermTitlebarAccessoryNanny: NSObject {
             $0 === viewController
         }
         pendingUpdates.removeValue(forKey: ObjectIdentifier(viewController))
+        lastRequestedMinHeight.removeValue(forKey: ObjectIdentifier(viewController))
         needsUpdate = true
     }
 
@@ -132,14 +139,24 @@ class iTermTitlebarAccessoryNanny: NSObject {
         DLog("Remove all view controllers")
         viewControllers = []
         pendingUpdates = [:]
+        lastRequestedMinHeight = [:]
         needsUpdate = true
     }
 
+    /// Records a minHeight/frame request for `viewController`. Returns true if
+    /// the requested minHeight differs from the previous request for this view
+    /// controller (or if there was no previous request). Useful for triggering
+    /// a relayout when the accessory's effective height changes.
+    @discardableResult
     @objc(updateViewController:settingMinHeight:frame:)
-    func updateMinHeight(viewController: NSTitlebarAccessoryViewController, minHeight: CGFloat, frame: NSRect) {
+    func updateMinHeight(viewController: NSTitlebarAccessoryViewController, minHeight: CGFloat, frame: NSRect) -> Bool {
         DLog("For \(viewController) set minHeight=\(minHeight), frame=\(frame)")
-        pendingUpdates[ObjectIdentifier(viewController)] = (minHeight, frame)
+        let id = ObjectIdentifier(viewController)
+        let previous = lastRequestedMinHeight[id]
+        lastRequestedMinHeight[id] = minHeight
+        pendingUpdates[id] = (minHeight, frame)
         needsUpdate = true
+        return previous != minHeight
     }
 
     @objc

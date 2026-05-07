@@ -6471,9 +6471,18 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
         DLog(@"View hierarchy:\n%@", [_contentView.tabBarControl.window.contentView iterm_recursiveDescription]);
 
         [_titlebarAccessoryNanny add:viewController];
-        [_titlebarAccessoryNanny updateViewController:viewController
-                                     settingMinHeight:tabBarHeight
-                                                frame:frame];
+        const BOOL minHeightChanged = [_titlebarAccessoryNanny updateViewController:viewController
+                                                                   settingMinHeight:tabBarHeight
+                                                                              frame:frame];
+        if (minHeightChanged) {
+            // Accessory's effective height changed, which alters how much of
+            // the content view is usable for the tabView. Deferred because
+            // callers may be mid-layout. Issue 12811.
+            __weak __typeof(self) weakSelf = self;
+            dispatch_async(dispatch_get_main_queue(), ^{
+                [weakSelf repositionWidgets];
+            });
+        }
     } else if (_contentView.tabBarControlOnLoan) {
         DLog(@"tab bar should NOT be accessory, but is on loan.");
         [self returnTabBarToContentView];

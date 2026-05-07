@@ -359,6 +359,14 @@ Bug Fixes:
   DetectPasswordInputDebounce advanced
   setting — before iTerm2 treats it as a
   password prompt.
+- Fix the Minimal-theme tab bar overlapping the
+  terminal in fullscreen when adding a second
+  tab with “Hide tab bar when there is only
+  one tab” enabled. The titlebar accessory
+  hosting the tab bar grew from zero to its
+  full height but the content view was not
+  re-laid out to leave room for it. Issue
+  12811.
 - The Touch ID for sudo offer no longer relies on
   AppleScript admin elevation, which fails on
   macOS 26 with EPERM when writing to
