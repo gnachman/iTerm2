@@ -925,6 +925,23 @@ static NSString *kCommandTimestamp = @"timestamp";
     }
 }
 
+// Classification of how a code point should be sent to a tmux pane via send-keys.
+// The values are the kind tags fed to iTermRunLengthEncoder, so consecutive code
+// points with the same kind are grouped into one send-keys command.
+typedef NS_ENUM(NSInteger, iTermTmuxSendKeysEncoding) {
+    // ASCII printable, sent concatenated via "send -lt %pane STRING".
+    iTermTmuxSendKeysEncodingLiteralChar = 0,
+    // Sent as space-separated key tokens via "send -t %pane 0xNN ...".
+    // For code points >= 0x80 this routes through tmux's UTF-8 encoder so that
+    // typed Unicode characters reach the pane as their UTF-8 byte sequence.
+    iTermTmuxSendKeysEncodingHex = 1,
+    // Sent as raw bytes via "send -H -t %pane NN ...". Bypasses tmux's
+    // input_key key-name dispatch (which silently rewrites unmodified C0
+    // control bytes to literal text under modifyOtherKeys mode in tmux 3.5+;
+    // see issue 12845). Available since tmux 3.0a.
+    iTermTmuxSendKeysEncodingLiteralByte = 2
+};
+
 - (void)sendCodePoints:(NSArray<NSNumber *> *)codePoints toWindowPane:(int)windowPane {
     if (!codePoints.count) {
         return;
@@ -938,26 +955,30 @@ static NSString *kCommandTimestamp = @"timestamp";
         }
     }
 
+    const BOOL useLiteralByteForControl = [self serverSupportsLiteralByteInjection];
+
     // Configure max lengths. Commands larger than 1024 bytes crash tmux 1.8.
     const NSUInteger maxLiteralCharacters = 1000;
     const NSUInteger maxHexCharacters = maxLiteralCharacters / 8;  // len(' C-Space') = 8
+    const NSUInteger maxLiteralByteCharacters = maxLiteralCharacters / 3;  // len(' NN') = 3
     NSDictionary<NSNumber *, NSNumber *> *maxLengths = @{
-        @YES: @(maxLiteralCharacters),
-        @NO: @(maxHexCharacters)
+        @(iTermTmuxSendKeysEncodingLiteralChar): @(maxLiteralCharacters),
+        @(iTermTmuxSendKeysEncodingHex): @(maxHexCharacters),
+        @(iTermTmuxSendKeysEncodingLiteralByte): @(maxLiteralByteCharacters),
     };
 
     NSMutableArray *commands = [NSMutableArray array];
     void (^emitter)(NSArray<NSNumber *> * _Nonnull,
               NSNumber * _Nonnull) =
     ^(NSArray<NSNumber *> * _Nonnull codePoints,
-      NSNumber * _Nonnull literal) {
+      NSNumber * _Nonnull encoding) {
         [commands addObject:[self dictionaryForSendKeysCommandWithCodePoints:codePoints
                                                                   windowPane:windowPane
-                                                         asLiteralCharacters:literal.boolValue]];
+                                                                    encoding:(iTermTmuxSendKeysEncoding)encoding.integerValue]];
     };
     NSNumber * _Nonnull(^classifier)(NSNumber * _Nonnull number) =
     ^NSNumber * _Nonnull(NSNumber * _Nonnull number) {
-        return @([self canSendAsLiteralCharacter:number]);
+        return @([self encodingForCodePoint:number useLiteralByteForControl:useLiteralByteForControl]);
     };
 
     [iTermRunLengthEncoder encodeArray:codePoints
@@ -984,12 +1005,46 @@ static NSString *kCommandTimestamp = @"timestamp";
     return !([self.minimumServerVersion isEqual:version2_2] && [self.maximumServerVersion isEqual:version2_2]);
 }
 
+// tmux's send-keys -H flag injects each argument as a single literal byte (key
+// flagged with KEYC_LITERAL), bypassing input_key's mode-dependent dispatch.
+// Added in commit fc2016db (Jul 2019), which first shipped in tmux 3.0a (Dec
+// 2019). tmux 3.0 (Jun 2019) is just before that commit and does NOT have the
+// flag, so we have to gate strictly on >= 3.0a, not >= 3.0.
+//
+// iTerm2 encodes lettered tmux releases by mapping the suffix into the
+// hundredths place: 3.0 -> 3.0, 3.0a -> 3.01, 3.0b -> 3.02 (see
+// TmuxController.m -handleDisplayMessageVersion:). So the threshold to express
+// "3.0a or newer" is the NSDecimalNumber 3.01.
+- (BOOL)serverSupportsLiteralByteInjection {
+    return (self.minimumServerVersion != nil &&
+            [self.minimumServerVersion compare:[NSDecimalNumber decimalNumberWithString:@"3.01"]] != NSOrderedAscending);
+}
+
 - (BOOL)canSendAsLiteralCharacter:(NSNumber *)codePoint {
     const unichar c = codePoint.unsignedShortValue;
     if (c == '+' || c == '/' || c == ')' || c == ':' || c == ',' || c == '_') {
         return YES;
     }
     return isascii(c) && isalnum(c);
+}
+
+- (iTermTmuxSendKeysEncoding)encodingForCodePoint:(NSNumber *)codePoint
+                          useLiteralByteForControl:(BOOL)useLiteralByteForControl {
+    const NSInteger c = codePoint.integerValue;
+    if ([self canSendAsLiteralCharacter:codePoint]) {
+        return iTermTmuxSendKeysEncodingLiteralChar;
+    }
+    // Route ASCII C0 control bytes (and NUL) through -H when tmux supports it.
+    // Without -H, tmux 3.5+ silently turns "send-keys 0xNN" for these bytes
+    // into literal text "0xNN" once a pane has modifyOtherKeys enabled. With
+    // -H, every byte 0x00-0xFF round-trips as a single raw byte regardless of
+    // pane mode. We deliberately do not route 0x80+ through -H because for
+    // those code points the existing 0xNN path runs through tmux's UTF-8
+    // encoder, which is the desired behavior for typed Unicode characters.
+    if (useLiteralByteForControl && c >= 0x00 && c <= 0x1F) {
+        return iTermTmuxSendKeysEncodingLiteralByte;
+    }
+    return iTermTmuxSendKeysEncodingHex;
 }
 
 - (NSString *)numbersAsLiteralCharacters:(NSArray<NSNumber *> *)codePoints {
@@ -1000,17 +1055,34 @@ static NSString *kCommandTimestamp = @"timestamp";
     return result;
 }
 
+- (NSString *)numbersAsLiteralByteHexArguments:(NSArray<NSNumber *> *)codePoints {
+    NSMutableString *result = [NSMutableString stringWithCapacity:codePoints.count * 3];
+    NSString *separator = @"";
+    for (NSNumber *number in codePoints) {
+        [result appendFormat:@"%@%02x", separator, number.intValue & 0xff];
+        separator = @" ";
+    }
+    return result;
+}
+
 - (NSDictionary *)dictionaryForSendKeysCommandWithCodePoints:(NSArray<NSNumber *> *)codePoints
                                                   windowPane:(int)windowPane
-                                         asLiteralCharacters:(BOOL)asLiteralCharacters {
-    NSString *value;
-    if (asLiteralCharacters) {
-        value = [self numbersAsLiteralCharacters:codePoints];
-    } else {
-        value = [codePoints numbersAsHexStrings];
+                                                    encoding:(iTermTmuxSendKeysEncoding)encoding {
+    NSString *command;
+    switch (encoding) {
+        case iTermTmuxSendKeysEncodingLiteralChar:
+            command = [NSString stringWithFormat:@"send -lt %%%d %@",
+                       windowPane, [self numbersAsLiteralCharacters:codePoints]];
+            break;
+        case iTermTmuxSendKeysEncodingHex:
+            command = [NSString stringWithFormat:@"send -t %%%d %@",
+                       windowPane, [codePoints numbersAsHexStrings]];
+            break;
+        case iTermTmuxSendKeysEncodingLiteralByte:
+            command = [NSString stringWithFormat:@"send -H -t %%%d %@",
+                       windowPane, [self numbersAsLiteralByteHexArguments:codePoints]];
+            break;
     }
-    NSString *command = [NSString stringWithFormat:@"send %@ %%%d %@",
-                         asLiteralCharacters ? @"-lt" : @"-t", windowPane, value];
     NSDictionary *dict = [self dictionaryForCommand:command
                                      responseTarget:nil
                                    responseSelector:nil

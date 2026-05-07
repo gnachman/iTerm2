@@ -370,6 +370,16 @@ Bug Fixes:
   suppression with the stale remote copy.
   applicationWillTerminate now flushes
   synchronously when Automatic mode is on.
+- Fix Ctrl-letter keystrokes appearing as
+  literal text (e.g., “0x4” for Ctrl-D) in
+  tmux -CC mode when the tmux server has
+  extended-keys enabled and an inner app
+  has turned on modifyOtherKeys. Control
+  bytes 0x00–0x1F are now sent through
+  send-keys with the -H flag on tmux
+  3.0a or newer, which bypasses tmux 3.5’s
+  silent literal-text fallthrough for
+  unmodified C0 bytes. Issue 12845.
 - Fix a latent use-after-free in Core Text run
   enumeration when the font does not return
   contiguous glyph or string-index pointers.
