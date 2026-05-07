@@ -441,6 +441,8 @@ typedef NS_ENUM(NSUInteger, PTYSessionTurdType) {
     // Is the update timer's callback currently running?
     BOOL _timerRunning;
 
+    iTermPasswordInputDebouncer *_passwordInputDebouncer;
+
     // Time session was created
     NSDate *_creationDate;
 
@@ -756,6 +758,8 @@ typedef NS_ENUM(NSUInteger, PTYSessionTurdType) {
         _modeHandler = [[iTermSessionModeHandler alloc] init];
         _modeHandler.delegate = self;
 
+        _passwordInputDebouncer = [[iTermPasswordInputDebouncer alloc] init];
+
         _lastOutputIgnoringOutputAfterResizing = _lastInput;
         _lastUpdate = _lastInput;
         _pasteHelper = [[iTermPasteHelper alloc] init];
@@ -803,6 +807,9 @@ typedef NS_ENUM(NSUInteger, PTYSessionTurdType) {
         __weak __typeof(self) weakSelf = self;
         _jobPidRef.onChangeBlock = ^{
             [weakSelf jobPidDidChange];
+        };
+        _passwordInputDebouncer.onRecheck = ^{
+            [weakSelf updateDisplayBecause:@"password input debounce expired"];
         };
 
         [_autoNameSwiftyString invalidate];
@@ -1072,6 +1079,8 @@ ITERM_WEAKLY_REFERENCEABLE
     [_customEscapeSequenceNotifications release];
 
     [_modeHandler release];
+    _passwordInputDebouncer.onRecheck = nil;
+    [_passwordInputDebouncer release];
     [_metalDisabledTokens release];
     [_badgeSwiftyString release];
     [_backgroundImageSwiftyString release];
@@ -6778,7 +6787,9 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
         [_tailFindController stopContinuousTailFind];
     }
 
-    const BOOL passwordInput = _shell.passwordInput || _conductor.atPasswordPrompt;
+    const BOOL passwordInput =
+        [_passwordInputDebouncer debouncedStateWithTtyPasswordInput:_shell.passwordInput
+                                             conductorPasswordInput:_conductor.atPasswordPrompt];
     DLog(@"passwordInput=%@", @(passwordInput));
     if (passwordInput != _passwordInput) {
         _passwordInput = passwordInput;

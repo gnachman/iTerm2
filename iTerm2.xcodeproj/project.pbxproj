@@ -3718,9 +3718,6 @@
 		A6C838B52CB9ACF90062BE68 /* error-sound.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = A6C838B12CB9ACF90062BE68 /* error-sound.mp3 */; };
 		A6C838B62CB9ACF90062BE68 /* success-sound.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = A6C838B02CB9ACF90062BE68 /* success-sound.mp3 */; };
 		A6C838B72CB9ACF90062BE68 /* error-sound.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = A6C838B12CB9ACF90062BE68 /* error-sound.mp3 */; };
-		A6CCDF002D0E000000000002 /* install-touchid-sudo.sh in Resources */ = {isa = PBXBuildFile; fileRef = A6CCDF002D0E000000000001 /* install-touchid-sudo.sh */; };
-		A6CCDF002D0E000000000003 /* install-touchid-sudo.sh in Resources */ = {isa = PBXBuildFile; fileRef = A6CCDF002D0E000000000001 /* install-touchid-sudo.sh */; };
-		A6CCDF002D0E000000000004 /* install-touchid-sudo.sh in Resources */ = {isa = PBXBuildFile; fileRef = A6CCDF002D0E000000000001 /* install-touchid-sudo.sh */; };
 		A6C93DD4238A447900F21E0D /* iTermLogicalMovementHelper.h in Headers */ = {isa = PBXBuildFile; fileRef = A6C93DD2238A447900F21E0D /* iTermLogicalMovementHelper.h */; };
 		A6C93DD5238A447900F21E0D /* iTermLogicalMovementHelper.m in Sources */ = {isa = PBXBuildFile; fileRef = A6C93DD3238A447900F21E0D /* iTermLogicalMovementHelper.m */; };
 		A6C978F124A0194500971AA7 /* WindowCornerFull.psd in Resources */ = {isa = PBXBuildFile; fileRef = A6C978EF24A0194400971AA7 /* WindowCornerFull.psd */; };
@@ -3900,6 +3897,9 @@
 		A6CC7F59274ABCBF0060C3C2 /* NSScrollView+iTerm.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6CC7F58274ABCBF0060C3C2 /* NSScrollView+iTerm.swift */; };
 		A6CC7F5C274B6C570060C3C2 /* ToolJobs.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D19C71314171F1D00617E08 /* ToolJobs.m */; };
 		A6CC7F60274ECFEB0060C3C2 /* NSProcessInfo+iTerm.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6CC7F5F274ECFEB0060C3C2 /* NSProcessInfo+iTerm.swift */; };
+		A6CCDF002D0E000000000002 /* install-touchid-sudo.sh in Resources */ = {isa = PBXBuildFile; fileRef = A6CCDF002D0E000000000001 /* install-touchid-sudo.sh */; };
+		A6CCDF002D0E000000000003 /* install-touchid-sudo.sh in Resources */ = {isa = PBXBuildFile; fileRef = A6CCDF002D0E000000000001 /* install-touchid-sudo.sh */; };
+		A6CCDF002D0E000000000004 /* install-touchid-sudo.sh in Resources */ = {isa = PBXBuildFile; fileRef = A6CCDF002D0E000000000001 /* install-touchid-sudo.sh */; };
 		A6CD8A432234DB83007C5B39 /* iTermStatusBarPlaceholderComponent.h in Headers */ = {isa = PBXBuildFile; fileRef = A6CD8A412234DB83007C5B39 /* iTermStatusBarPlaceholderComponent.h */; };
 		A6CD8A442234DB83007C5B39 /* iTermStatusBarPlaceholderComponent.m in Sources */ = {isa = PBXBuildFile; fileRef = A6CD8A422234DB83007C5B39 /* iTermStatusBarPlaceholderComponent.m */; };
 		A6CDC31826391D1200616155 /* PIDInfoGitState.m in Sources */ = {isa = PBXBuildFile; fileRef = A6CDC31726391D1200616155 /* PIDInfoGitState.m */; };
@@ -5332,6 +5332,7 @@
 		EFA4A1D0B4853EF8B42D4CA3 /* ExitWorkgroupBrowserTrigger.swift in Sources */ = {isa = PBXBuildFile; fileRef = B673BD86C08D1241D0DDA4C1 /* ExitWorkgroupBrowserTrigger.swift */; };
 		F7C626F9C65F19A1BEE800DA /* iTermWordExtractor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7BF1E9C79C30008CC546F987 /* iTermWordExtractor.swift */; };
 		F7E9577EBDD47ED18CBD569F /* iTermImageComparison.h in Sources */ = {isa = PBXBuildFile; fileRef = 516BF83D01B179D961D3EDB6 /* iTermImageComparison.h */; };
+		F8ECBE597A69D02A7C924093 /* iTermPasswordInputDebouncer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3F20922E7C56B246576E589A /* iTermPasswordInputDebouncer.swift */; };
 		F96B31FFBFC5DFE713E9C670 /* EnterWorkgroupBrowserTrigger.swift in Sources */ = {isa = PBXBuildFile; fileRef = 171DC262300F3B977D7FF1DB /* EnterWorkgroupBrowserTrigger.swift */; };
 		FB4CEC973C7E9235362E3F26 /* iTermRemotePreferences.h in Headers */ = {isa = PBXBuildFile; fileRef = FB4CECF4AC4392B21E87A07B /* iTermRemotePreferences.h */; };
 		FC58829E571DF07C5902F3EB /* EnterWorkgroupTrigger.swift in Sources */ = {isa = PBXBuildFile; fileRef = B23866DFB3D15427C93C0849 /* EnterWorkgroupTrigger.swift */; };
@@ -6154,6 +6155,7 @@
 		3335AD96138BA74CC79D25A8 /* iTermUnicodeNormalization.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; path = iTermUnicodeNormalization.h; sourceTree = "<group>"; };
 		39A91EF453B797BB100AD508 /* SessionNoteModel.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SessionNoteModel.swift; sourceTree = "<group>"; };
 		3C05599DA2E4F97B75124672 /* iTermOpenDirectory+MainApp.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; path = "iTermOpenDirectory+MainApp.m"; sourceTree = "<group>"; };
+		3F20922E7C56B246576E589A /* iTermPasswordInputDebouncer.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = iTermPasswordInputDebouncer.swift; sourceTree = "<group>"; };
 		40D246CFCEDD7927D320BF51 /* MovePaneController+API.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = "MovePaneController+API.swift"; sourceTree = "<group>"; };
 		46019892B59C674931043643 /* iTermCharacterSets.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; path = iTermCharacterSets.h; sourceTree = "<group>"; };
 		479FDFE9C0F424FEC10526EC /* iTermCursorSlideAnimator.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; name = iTermCursorSlideAnimator.m; path = sources/Drawing/iTermCursorSlideAnimator.m; sourceTree = SOURCE_ROOT; };
@@ -8538,7 +8540,6 @@
 		A6C838AC2CB88BF90062BE68 /* DeprecatedProfileKeyMappings.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = DeprecatedProfileKeyMappings.plist; sourceTree = "<group>"; };
 		A6C838B02CB9ACF90062BE68 /* success-sound.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = "success-sound.mp3"; sourceTree = "<group>"; };
 		A6C838B12CB9ACF90062BE68 /* error-sound.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = "error-sound.mp3"; sourceTree = "<group>"; };
-		A6CCDF002D0E000000000001 /* install-touchid-sudo.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = "install-touchid-sudo.sh"; sourceTree = "<group>"; };
 		A6C93DD2238A447900F21E0D /* iTermLogicalMovementHelper.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermLogicalMovementHelper.h; sourceTree = "<group>"; };
 		A6C93DD3238A447900F21E0D /* iTermLogicalMovementHelper.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermLogicalMovementHelper.m; sourceTree = "<group>"; };
 		A6C978EF24A0194400971AA7 /* WindowCornerFull.psd */ = {isa = PBXFileReference; lastKnownFileType = file; name = WindowCornerFull.psd; path = images/WindowCornerFull.psd; sourceTree = "<group>"; };
@@ -8624,6 +8625,7 @@
 		A6CC498F2C08EFC1003484B2 /* CommandURLBuilder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommandURLBuilder.swift; sourceTree = "<group>"; };
 		A6CC7F58274ABCBF0060C3C2 /* NSScrollView+iTerm.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NSScrollView+iTerm.swift"; sourceTree = "<group>"; };
 		A6CC7F5F274ECFEB0060C3C2 /* NSProcessInfo+iTerm.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NSProcessInfo+iTerm.swift"; sourceTree = "<group>"; };
+		A6CCDF002D0E000000000001 /* install-touchid-sudo.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = "install-touchid-sudo.sh"; sourceTree = "<group>"; };
 		A6CD8A4022345427007C5B39 /* iTermNotificationCenter+Protected.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "iTermNotificationCenter+Protected.h"; sourceTree = "<group>"; };
 		A6CD8A412234DB83007C5B39 /* iTermStatusBarPlaceholderComponent.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermStatusBarPlaceholderComponent.h; sourceTree = "<group>"; };
 		A6CD8A422234DB83007C5B39 /* iTermStatusBarPlaceholderComponent.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermStatusBarPlaceholderComponent.m; sourceTree = "<group>"; };
@@ -9519,8 +9521,28 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		9C0F690213C696BCC28C2EDF /* PerformanceTests */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = PerformanceTests; sourceTree = "<group>"; };
-		A6A723AF2DC04C2200A8115D /* ModernTests */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = ModernTests; sourceTree = "<group>"; };
+		9C0F690213C696BCC28C2EDF /* PerformanceTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+			);
+			explicitFileTypes = {
+			};
+			explicitFolders = (
+			);
+			path = PerformanceTests;
+			sourceTree = "<group>";
+		};
+		A6A723AF2DC04C2200A8115D /* ModernTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+			);
+			explicitFileTypes = {
+			};
+			explicitFolders = (
+			);
+			path = ModernTests;
+			sourceTree = "<group>";
+		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -9698,7 +9720,7 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		0464AB0D006CD2EC7F000001 /* JTerminal */ = {
+		0464AB0D006CD2EC7F000001 = {
 			isa = PBXGroup;
 			children = (
 				A6BAB25D2F8CCCD10063FA7F /* cc-status */,
@@ -11808,6 +11830,7 @@
 				A6A9839C27E7BD7C003319D1 /* OnePasswordTokenRequester.swift */,
 				A6A9838B27E5A83C003319D1 /* PasswordManagerDataSource.swift */,
 				A6A9839027E5C427003319D1 /* PasswordManagerDataSourceProvider.swift */,
+				3F20922E7C56B246576E589A /* iTermPasswordInputDebouncer.swift */,
 			);
 			path = PasswordManager;
 			sourceTree = "<group>";
@@ -17371,7 +17394,7 @@
 				en,
 				Base,
 			);
-			mainGroup = 0464AB0D006CD2EC7F000001 /* JTerminal */;
+			mainGroup = 0464AB0D006CD2EC7F000001;
 			packageReferences = (
 				A62E3BC62E1CC674002DF8C3 /* XCLocalSwiftPackageReference "WebExtensionsFramework" */,
 			);
@@ -21177,6 +21200,7 @@
 				5EEA7C6C9BEA8194F891E3F1 /* CCGitBaseSelectorItem.swift in Sources */,
 				C369A6986C34BDE586B335C9 /* iTermOpenDirectory+MainApp.m in Sources */,
 				DD90A2E4670A4DAA580B2BA6 /* ChatManualStackView.swift in Sources */,
+				F8ECBE597A69D02A7C924093 /* iTermPasswordInputDebouncer.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

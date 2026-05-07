@@ -344,6 +344,16 @@ Settings Improvements:
   Inline Chat.
 
 Bug Fixes:
+- The “open password manager automatically”
+  feature no longer triggers when a shell
+  script briefly disables terminal echo to
+  suppress the visible echo of an OSC report
+  response (e.g. it2getvar, it2profile -g).
+  ECHO must now stay off for at least 0.2
+  seconds — tunable via the
+  DetectPasswordInputDebounce advanced
+  setting — before iTerm2 treats it as a
+  password prompt.
 - The Touch ID for sudo offer no longer relies on
   AppleScript admin elevation, which fails on
   macOS 26 with EPERM when writing to

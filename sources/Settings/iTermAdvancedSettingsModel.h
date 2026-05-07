@@ -140,6 +140,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (BOOL)defaultWideMode;
 + (BOOL)detectParagraphDirection;
 + (BOOL)detectPasswordInput;
++ (double)detectPasswordInputDebounce;
 + (BOOL)disableAdaptiveFrameRateInInteractiveApps;
 + (BOOL)disableAppNap;
 + (BOOL)disableCustomBoxDrawing;
