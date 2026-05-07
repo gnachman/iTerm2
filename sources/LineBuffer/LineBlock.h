@@ -147,6 +147,20 @@ NS_ASSUME_NONNULL_BEGIN
 // (either n or the number of lines in the block).
 - (int)dropLines:(int)n withWidth:(int)width chars:(int * _Nullable)charsDropped;
 
+// Same as -dropLines:withWidth:chars: but additionally reports a partial-drop offset.
+//
+// On return:
+//   *charsDropped is the total number of characters removed from the buffer.
+//   *firstSurvivorPartialOffset is the number of characters trimmed off the front of the
+//       first surviving raw line — i.e., the characters that were dropped from the raw line
+//       that ended up partially intact. Zero if every dropped raw line was dropped entirely
+//       (including the whole-buffer case). Callers that track positions inside a raw line
+//       (e.g. LineBuffer's cursor_x) need this to fix up offsets after a partial drop.
+- (int)dropLines:(int)n
+       withWidth:(int)width
+           chars:(int * _Nullable)charsDropped
+firstSurvivorPartialOffset:(int * _Nullable)firstSurvivorPartialOffset;
+
 // Returns true if there are no lines in the block
 - (BOOL)isEmpty;
 

@@ -2204,15 +2204,16 @@ class VT100GridTests: XCTestCase {
         // through the production code path:
         //   restoreScreenFromLineBuffer: → getCursorInLastLineWithWidth: → rawLine:
         //
-        // The bug: rawLine: checked "linenum == 0" instead of "linenum == _firstEntry",
-        // causing it to return cumulative_line_lengths[_firstEntry - 1] instead of
-        // bufferStartOffset when there's been a partial drop with _firstEntry > 0.
+        // The rawLine bug: rawLine: checked "linenum == 0" instead of
+        // "linenum == _firstEntry", causing it to return
+        // cumulative_line_lengths[_firstEntry - 1] instead of bufferStartOffset when
+        // there's been a partial drop with _firstEntry > 0.
         //
         // Setup:
         // - Line 0: "ABCDEFGH" (8 chars, no DWC)
         // - Line 1: "IJKW-NOP" (8 chars, DWC W- at positions 3-4)
         // - Width 4
-        // - Cursor at position 3 in line 1
+        // - Cursor at position 3 in line 1 (the W character)
         //
         // At width 4, line 1 wraps as: [IJK>][W-NO][P] (DWC causes wrap, > is DWC_SKIP)
         //
@@ -2220,14 +2221,12 @@ class VT100GridTests: XCTestCase {
         // - _firstEntry = 1, bufferStartOffset = 11
         // - Remaining content: "W-NOP" (5 chars), wraps as [W-NO][P]
         //
-        // Bug behavior: rawLine:1 returned position 8 (cumulative_line_lengths[0]),
-        // reading "IJKW-" instead of "W-NOP". The DWC_RIGHT at position 4 in the wrong
-        // data caused OffsetOfWrappedLine to return 3 instead of 4, shifting min_x and
-        // causing the cursor to be found in the FIRST iteration at wrong position (0, 1).
-        //
-        // Fixed behavior: rawLine:1 returns position 11 (bufferStartOffset), reading
-        // correct "W-NOP" data. Cursor is found in the SECOND iteration (after popping
-        // [P]) at correct position (3, 0).
+        // The cursor was on the W character. After dropping the first wrapped portion,
+        // the W is the first character of the surviving content, so the cursor lands
+        // at column 0 of the first restored row. dropExcessLines: also adjusts cursor_x
+        // to follow the partial trim — without that adjustment, cursor_x would still
+        // point three characters past the (now-shifted) start of the raw line, which
+        // is the bug Fold All used to hit.
 
         let width: Int32 = 4
 
@@ -2262,10 +2261,10 @@ class VT100GridTests: XCTestCase {
                                               withDefaultChar: grid.defaultChar,
                                               maxLinesToRestore: 10)
 
-        // With the fix, cursor is found at (3, 0)
-        // Before the fix, cursor was incorrectly found at (0, 1) due to wrong data
+        // The cursor's character (W) is at offset 0 of the trimmed content; after
+        // restoring [W-NO] to row 0, that's grid coord (0, 0).
         XCTAssertTrue(foundCursor, "Cursor should be found")
-        XCTAssertEqual(grid.cursorX, 3, "Cursor X should be 3")
+        XCTAssertEqual(grid.cursorX, 0, "Cursor X should be 0 (W landed at column 0)")
         XCTAssertEqual(grid.cursorY, 0, "Cursor Y should be 0")
     }
 

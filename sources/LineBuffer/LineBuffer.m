@@ -321,6 +321,10 @@ static int RawNumLines(LineBuffer* buffer, int width) {
     int nl = RawNumLines(self, width);
     int totalDropped = 0;
     int totalRawLinesDropped = 0;
+    // Set when a single dropLines: call trims chars off the front of the first surviving raw
+    // line (the partial-drop case). At most one such trim happens per call to this method,
+    // because dropLines: stops as soon as it has consumed enough wrapped lines.
+    int firstSurvivorPartialOffset = 0;
 #if DEBUG
     [self assertUniqueBlockIDs];
     [self sanityCheck];
@@ -356,8 +360,12 @@ static int RawNumLines(LineBuffer* buffer, int width) {
 #endif
             } else {
                 int charsDropped;
+                int partialOffset = 0;
                 const int numRawLinesBefore = block.numRawLines;
-                int dropped = [block dropLines:extra_lines withWidth:width chars:&charsDropped];
+                int dropped = [block dropLines:extra_lines
+                                     withWidth:width
+                                         chars:&charsDropped
+                    firstSurvivorPartialOffset:&partialOffset];
 #if DEBUG
                 [self assertUniqueBlockIDs];
                 [self sanityCheck];
@@ -367,6 +375,9 @@ static int RawNumLines(LineBuffer* buffer, int width) {
                 assert(numRawLinesAfter <= numRawLinesBefore);
                 totalRawLinesDropped += (numRawLinesBefore - numRawLinesAfter);
                 droppedChars += charsDropped;
+                if (partialOffset > 0) {
+                    firstSurvivorPartialOffset = partialOffset;
+                }
                 const BOOL blockIsEmpty = block.isEmpty;
                 if (blockIsEmpty) {
                     [_lineBlocks removeFirstBlock];
@@ -401,6 +412,12 @@ static int RawNumLines(LineBuffer* buffer, int width) {
     [self assertUniqueBlockIDs];
 #endif
     cursor_rawline -= totalRawLinesDropped;
+    // cursor_x is an offset within the cursor's raw line. If that raw line ended up as the
+    // first surviving raw line and lost characters off its front, slide cursor_x left by the
+    // same amount so it remains a valid offset within the (now shorter) raw line.
+    if (firstSurvivorPartialOffset > 0 && cursor_rawline == 0) {
+        cursor_x = MAX(0, cursor_x - firstSurvivorPartialOffset);
+    }
     [_delegate lineBufferDidDropLines:self];
 #if DEBUG
     [self assertUniqueBlockIDs];

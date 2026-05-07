@@ -218,6 +218,57 @@ class LineBufferTests: XCTestCase {
         XCTAssertEqual(second.allScreenCharArrays, [s2])
     }
 
+    // Reproduction for the bug seen by Fold All: when dropExcessLines partially trims a raw line
+    // from the front (instead of dropping it entirely), the LineBuffer cursor's raw-line index is
+    // adjusted but cursor_x is not. cursor_x is an offset *within* the cursor's raw line, so when
+    // the front of that raw line is sliced off, cursor_x must decrease by the same number of
+    // characters. Otherwise the cursor points past the end of its own raw line, and
+    // getCursorInLastLineWithWidth: refuses to recognize it.
+    func testDropExcessLinesAdjustsCursorXWhenItsRawLineIsPartiallyTrimmed() throws {
+        let linebuffer = LineBuffer()
+        let width = Int32(5)
+
+        // Append a 5-char soft-EOL portion. This creates a single partial raw line of length 5.
+        let part1 = screenCharArrayWithDefaultStyle("ABCDE", eol: EOL_SOFT)
+        linebuffer.append(part1, width: width)
+
+        // Set the cursor at column 2 of the next-to-be-appended portion. setCursor sees the
+        // partial last block and stores cursor_x = 2 + 5 = 7 (offset into the combined raw line),
+        // cursor_rawline = 0.
+        linebuffer.setCursor(2)
+
+        // Complete the raw line with a 3-char hard-EOL portion. The raw line is now "ABCDEXYZ"
+        // (length 8); at width 5 it wraps to 2 visual lines: "ABCDE" (offsets 0..4) and "XYZ"
+        // (offsets 5..7).
+        let part2 = screenCharArrayWithDefaultStyle("XYZ", eol: EOL_HARD)
+        linebuffer.append(part2, width: width)
+
+        XCTAssertEqual(linebuffer.numLines(withWidth: width), 2)
+
+        // Sanity check the pre-drop cursor state: cursor_x = 7 lies in [5, 10] for the second
+        // wrapped line, so getCursorInLastLineWithWidth returns YES with x = 7 - 5 = 2.
+        var preDropX: Int32 = -1
+        XCTAssertTrue(linebuffer.getCursorInLastLine(withWidth: width, atX: &preDropX))
+        XCTAssertEqual(preDropX, 2)
+
+        // Drop everything but the last wrapped line. dropExcessLines calls LineBlock.dropLines:,
+        // which advances the block's bufferStartOffset by 5 chars, leaving the (only) raw line
+        // 3 chars long ("XYZ"). No raw lines are entirely dropped, so cursor_rawline stays at 0.
+        // cursor_x SHOULD be 7 - 5 = 2 after this, but the bug leaves it at 7.
+        linebuffer.setMaxLines(1)
+        linebuffer.dropExcessLines(withWidth: width)
+
+        XCTAssertEqual(linebuffer.numLines(withWidth: width), 1)
+
+        // The cursor is on the only remaining wrapped line, at column 2. With cursor_x correctly
+        // adjusted to 2, getCursorInLastLineWithWidth should return YES with x = 2. Without the
+        // fix, cursor_x is still 7, max_x is 5, the range check fails, and this returns NO —
+        // which is what causes Fold All to leave the grid cursor stranded.
+        var postDropX: Int32 = -1
+        XCTAssertTrue(linebuffer.getCursorInLastLine(withWidth: width, atX: &postDropX))
+        XCTAssertEqual(postDropX, 2)
+    }
+
     func testConvertPositionMultiBlock() {
         let buffer = LineBuffer()
         let width = Int32(80)

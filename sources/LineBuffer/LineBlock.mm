@@ -1885,6 +1885,16 @@ int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BO
 }
 
 - (int)dropLines:(int)orig_n withWidth:(int)width chars:(int *)charsDropped {
+    return [self dropLines:orig_n
+                 withWidth:width
+                     chars:charsDropped
+firstSurvivorPartialOffset:NULL];
+}
+
+- (int)dropLines:(int)orig_n
+       withWidth:(int)width
+           chars:(int *)charsDropped
+firstSurvivorPartialOffset:(int *)firstSurvivorPartialOffset {
     _appendOnlySinceLastCopy = NO;
     // Note that there's no mutation certificate because we aren't touching the character buffer.
     [_metadataArray willMutate];
@@ -1894,6 +1904,9 @@ int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BO
     int length;
     int i;
     *charsDropped = 0;
+    if (firstSurvivorPartialOffset) {
+        *firstSurvivorPartialOffset = 0;
+    }
     int initialOffset = self.bufferStartOffset;
 
     _numberOfFullLinesCache.clear();
@@ -1934,6 +1947,9 @@ int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BO
             [_metadataArray eraseFirstLineCache];
 
             *charsDropped = self.bufferStartOffset - initialOffset;
+            if (firstSurvivorPartialOffset) {
+                *firstSurvivorPartialOffset = offset;
+            }
 
 #ifdef TEST_LINEBUFFER_SANITY
             [self checkAndResetCachedNumlines:"dropLines" width:width];
