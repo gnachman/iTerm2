@@ -192,6 +192,19 @@ static NSString *const kMarkOutputStart = @"Output Start";
 }
 
 - (void)dealloc {
+    // If the promise was created but setCode: was never called (e.g., session terminated while a
+    // command was running), reject it so iTermPromiseSeal's dealloc assertion doesn't fire.
+    // Hop to the main queue: dealloc can run on any thread, but observers (e.g.
+    // CommandInfoViewController) consume the promise via raw then:/catchError: which deliver
+    // callbacks synchronously on the rejecting thread. The seal retains its promise, so capturing
+    // it keeps both alive until the block runs.
+    id<iTermPromiseSeal> seal = _codeSeal;
+    _codeSeal = nil;
+    if (seal) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [seal rejectWithDefaultError];
+        });
+    }
     @synchronized([VT100ScreenMark class]) {
         // I think this is not needed because we use weak pointers but I also don't trust
         // NSMapTable to ever remove dead objects. Do this to avoid a possible waste of memory.
