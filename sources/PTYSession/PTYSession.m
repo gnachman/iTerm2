@@ -6810,6 +6810,20 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
     if (![self.jobName isEqualToString:@"sudo"]) {
         return;
     }
+    // Single-use sessions are launched for focused tasks (e.g. our own Run In
+    // New Window install path); don’t nag the user there.
+    if (self.isSingleUseSession) {
+        return;
+    }
+    // Don’t offer when the user is in the middle of running our install script.
+    // processInfo.commandLine is nil for sudo, so check lastCommand from shell
+    // integration as well.
+    NSString *commandLine = [self.variablesScope valueForVariableName:iTermVariableKeySessionCommandLine];
+    NSString *lastCommand = [self.variablesScope valueForVariableName:iTermVariableKeySessionLastCommand];
+    if ([commandLine containsString:@"install-touchid-sudo.sh"] ||
+        [lastCommand containsString:@"install-touchid-sudo.sh"]) {
+        return;
+    }
     if (_tmuxMode != TMUX_NONE) {
         return;
     }

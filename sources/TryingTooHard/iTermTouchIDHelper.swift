@@ -11,7 +11,7 @@ import LocalAuthentication
 @objc(iTermTouchIDHelper)
 class iTermTouchIDHelper: NSObject {
     private static let sudoLocalPath = "/etc/pam.d/sudo_local"
-    private static let pamTidLine = "auth       sufficient     pam_tid.so"
+    private static let scriptResourceName = "install-touchid-sudo"
 
     /// Returns true if biometric authentication (Touch ID) is available on this device.
     @objc static var isBiometricAuthenticationAvailable: Bool {
@@ -29,7 +29,6 @@ class iTermTouchIDHelper: NSObject {
         guard let contents = try? String(contentsOfFile: sudoLocalPath, encoding: .utf8) else {
             return false
         }
-        // Check for uncommented pam_tid.so line
         for line in contents.components(separatedBy: .newlines) {
             let trimmed = line.trimmingCharacters(in: .whitespaces)
             if trimmed.hasPrefix("#") {
@@ -42,49 +41,46 @@ class iTermTouchIDHelper: NSObject {
         return false
     }
 
-    /// Enables Touch ID for sudo by appending to /etc/pam.d/sudo_local using AppleScript
-    /// to gain administrator privileges.
-    /// Returns true on success, false on failure.
-    @objc static func enableTouchIDForSudo() -> Bool {
-        // Check if already enabled
-        if isTouchIDEnabledForSudo {
-            DLog("Touch ID for sudo is already enabled")
-            return true
+    /// Path to the bundled install-touchid-sudo.sh script, or nil if missing.
+    private static var scriptPath: String? {
+        return Bundle.main.path(forResource: scriptResourceName, ofType: "sh")
+    }
+
+    /// The shell command a user can paste into a terminal to install Touch ID for
+    /// sudo. Returns nil if the bundled script is missing.
+    @objc static var installCommand: String? {
+        guard let path = scriptPath else {
+            DLog("install-touchid-sudo.sh not found in app bundle")
+            return nil
         }
+        let escaped = path.replacingOccurrences(of: "\\", with: "\\\\")
+            .replacingOccurrences(of: "\"", with: "\\\"")
+        return "sudo \"\(escaped)\""
+    }
 
-        // Build the modified file in /tmp, then cp it into place. On macOS 26+, in-place writes
-        // to /etc/pam.d/ (sed -i, shell redirects) fail with "Operation not permitted" even as
-        // root, but cp still works.
-        let templatePath = "/etc/pam.d/sudo_local.template"
-        let shellCommand = "T=$(mktemp) && { SRC=\(sudoLocalPath); test -f $SRC || SRC=\(templatePath); sed 's/^#auth.*pam_tid.so/\(pamTidLine)/' $SRC > $T && { grep -q '^auth.*pam_tid.so' $T || echo '\(pamTidLine)' >> $T; } && cp -f $T \(sudoLocalPath); R=$?; rm -f $T; exit $R; }"
-
-        let code = """
-        do shell script "\(shellCommand)" with prompt "iTerm2 wants to enable Touch ID for sudo authentication." with administrator privileges
-        """
-
-        DLog("Executing AppleScript to enable Touch ID for sudo")
-        let script = NSAppleScript(source: code)
-        var error: NSDictionary? = nil
-        script?.executeAndReturnError(&error)
-
-        if let error = error {
-            DLog("AppleScript error: \(error)")
-            // Error -128 is user cancellation - don't show an alert for that.
-            if let errorNumber = error[NSAppleScript.errorNumber] as? Int, errorNumber == -128 {
-                return false
-            }
-            let errorMessage = (error[NSAppleScript.errorMessage] as? String) ?? "Unknown error"
-            iTermWarning.show(withTitle: errorMessage,
+    /// Runs the install command in a new iTerm2 window. The user will be prompted
+    /// for their sudo password in that window.
+    @objc static func runInstallInNewWindow() {
+        guard let path = scriptPath else {
+            iTermWarning.show(withTitle: "The Touch ID install script is missing from the iTerm2 application bundle.",
                               actions: ["OK"],
                               accessory: nil,
                               identifier: nil,
                               silenceable: .kiTermWarningTypePersistent,
-                              heading: "Failed to Enable Touch ID for Sudo",
+                              heading: "Cannot Enable Touch ID for Sudo",
                               window: nil)
-            return false
+            return
         }
-
-        DLog("Touch ID for sudo enabled successfully")
-        return true
+        // Run the script without sudo. The script prints a banner explaining
+        // what is about to happen, then re-execs itself under sudo so the user
+        // sees context before the password prompt.
+        iTermController.sharedInstance().openSingleUseWindow(withCommand: path,
+                                                             arguments: [],
+                                                             inject: nil,
+                                                             environment: nil,
+                                                             pwd: nil,
+                                                             options: [],
+                                                             didMakeSession: nil,
+                                                             completion: nil)
     }
 }

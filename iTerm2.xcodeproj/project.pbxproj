@@ -3718,6 +3718,9 @@
 		A6C838B52CB9ACF90062BE68 /* error-sound.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = A6C838B12CB9ACF90062BE68 /* error-sound.mp3 */; };
 		A6C838B62CB9ACF90062BE68 /* success-sound.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = A6C838B02CB9ACF90062BE68 /* success-sound.mp3 */; };
 		A6C838B72CB9ACF90062BE68 /* error-sound.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = A6C838B12CB9ACF90062BE68 /* error-sound.mp3 */; };
+		A6CCDF002D0E000000000002 /* install-touchid-sudo.sh in Resources */ = {isa = PBXBuildFile; fileRef = A6CCDF002D0E000000000001 /* install-touchid-sudo.sh */; };
+		A6CCDF002D0E000000000003 /* install-touchid-sudo.sh in Resources */ = {isa = PBXBuildFile; fileRef = A6CCDF002D0E000000000001 /* install-touchid-sudo.sh */; };
+		A6CCDF002D0E000000000004 /* install-touchid-sudo.sh in Resources */ = {isa = PBXBuildFile; fileRef = A6CCDF002D0E000000000001 /* install-touchid-sudo.sh */; };
 		A6C93DD4238A447900F21E0D /* iTermLogicalMovementHelper.h in Headers */ = {isa = PBXBuildFile; fileRef = A6C93DD2238A447900F21E0D /* iTermLogicalMovementHelper.h */; };
 		A6C93DD5238A447900F21E0D /* iTermLogicalMovementHelper.m in Sources */ = {isa = PBXBuildFile; fileRef = A6C93DD3238A447900F21E0D /* iTermLogicalMovementHelper.m */; };
 		A6C978F124A0194500971AA7 /* WindowCornerFull.psd in Resources */ = {isa = PBXBuildFile; fileRef = A6C978EF24A0194400971AA7 /* WindowCornerFull.psd */; };
@@ -8535,6 +8538,7 @@
 		A6C838AC2CB88BF90062BE68 /* DeprecatedProfileKeyMappings.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = DeprecatedProfileKeyMappings.plist; sourceTree = "<group>"; };
 		A6C838B02CB9ACF90062BE68 /* success-sound.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = "success-sound.mp3"; sourceTree = "<group>"; };
 		A6C838B12CB9ACF90062BE68 /* error-sound.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = "error-sound.mp3"; sourceTree = "<group>"; };
+		A6CCDF002D0E000000000001 /* install-touchid-sudo.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = "install-touchid-sudo.sh"; sourceTree = "<group>"; };
 		A6C93DD2238A447900F21E0D /* iTermLogicalMovementHelper.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermLogicalMovementHelper.h; sourceTree = "<group>"; };
 		A6C93DD3238A447900F21E0D /* iTermLogicalMovementHelper.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermLogicalMovementHelper.m; sourceTree = "<group>"; };
 		A6C978EF24A0194400971AA7 /* WindowCornerFull.psd */ = {isa = PBXFileReference; lastKnownFileType = file; name = WindowCornerFull.psd; path = images/WindowCornerFull.psd; sourceTree = "<group>"; };
@@ -10715,6 +10719,7 @@
 				A697CECE2D9B0FB60031583F /* Help */,
 				A6C838B02CB9ACF90062BE68 /* success-sound.mp3 */,
 				A6C838B12CB9ACF90062BE68 /* error-sound.mp3 */,
+				A6CCDF002D0E000000000001 /* install-touchid-sudo.sh */,
 				A603831F294D062A00FE11C2 /* iTermCopyModeKeyBindings.dict */,
 				A67A502726CCD3E200281693 /* terminfo */,
 				A629F57223AF2DD900C2F16B /* shell_integration */,
@@ -17837,6 +17842,7 @@
 				A6C838B22CB9ACF90062BE68 /* success-sound.mp3 in Resources */,
 				A6CBB8302E0A284100B2CCCB /* add-saved-attributes.js in Resources */,
 				A6C838B32CB9ACF90062BE68 /* error-sound.mp3 in Resources */,
+				A6CCDF002D0E000000000002 /* install-touchid-sudo.sh in Resources */,
 				A6A64E632508BE650040490B /* StatusBarIconSnippet.png in Resources */,
 				A67F614C214395870093940A /* graphic_http.png in Resources */,
 				1D6ED9D319AEA20D005A7799 /* TabClose_Front_Pressed.png in Resources */,
@@ -18504,6 +18510,7 @@
 				A6E7432F2F98373A001349AE /* clock.png in Resources */,
 				A6C838B42CB9ACF90062BE68 /* success-sound.mp3 in Resources */,
 				A6C838B52CB9ACF90062BE68 /* error-sound.mp3 in Resources */,
+				A6CCDF002D0E000000000003 /* install-touchid-sudo.sh in Resources */,
 				A6FE7A9E2E0E6BA000BEBCE4 /* autofill-write.js in Resources */,
 				A6F18B452AE2F39C006C08EE /* uniE0A3_column-number.pdf in Resources */,
 				A6F2F219250757FE00FC227F /* PrefsShortcuts@2x.png in Resources */,
@@ -19100,6 +19107,7 @@
 				A6F31A27295BC41700C1A51E /* uniE0C9_PowerlineExtraSymbols.pdf in Resources */,
 				A6C838B62CB9ACF90062BE68 /* success-sound.mp3 in Resources */,
 				A6C838B72CB9ACF90062BE68 /* error-sound.mp3 in Resources */,
+				A6CCDF002D0E000000000004 /* install-touchid-sudo.sh in Resources */,
 				A67F61DB214395D50093940A /* graphic_yo.png in Resources */,
 				A6D420112E4D39DF00E8D3EF /* Onboarding-Chat.png in Resources */,
 				A6D420122E4D39DF00E8D3EF /* Onboarding-Web.png in Resources */,

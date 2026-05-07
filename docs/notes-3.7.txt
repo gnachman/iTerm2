@@ -339,6 +339,13 @@ Settings Improvements:
   Inline Chat.
 
 Bug Fixes:
+- The Touch ID for sudo offer no longer relies on
+  AppleScript admin elevation, which fails on
+  macOS 26 with EPERM when writing to
+  /etc/pam.d/. Accepting the offer now lets you
+  copy the install command or run it in a new
+  iTerm2 window where you can enter your sudo
+  password.
 - Fix a latent use-after-free in Core Text run
   enumeration when the font does not return
   contiguous glyph or string-index pointers.

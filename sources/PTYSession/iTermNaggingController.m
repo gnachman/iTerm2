@@ -56,6 +56,10 @@ static NSString *const iTermNaggingControllerRestoreIconAndWindowNameChoiceAlway
     NSString *_pendingRestoreIconName;
     NSString *_pendingRestoreWindowName;
     BOOL _hasPendingRestoreOffer;
+    // Tracks whether the user has already dismissed or acted on the Touch ID for
+    // sudo offer for the current sudo invocation. Cleared when sudo is no longer
+    // the foreground job.
+    BOOL _touchIDForSudoDismissed;
 }
 
 - (instancetype)init {
@@ -966,6 +970,10 @@ static NSString *const iTermNaggingControllerTouchIDForSudoIdentifier = @"TouchI
 static NSString *const iTermNaggingControllerTouchIDForSudoUserDefaultsKey = @"NoSyncOfferTouchIDForSudo";
 
 - (void)offerToEnableTouchIDForSudo {
+    if (_touchIDForSudoDismissed) {
+        DLog(@"Touch ID for sudo offer already dismissed for this sudo invocation");
+        return;
+    }
     if (![self.delegate naggingControllerCanShowMessageWithIdentifier:iTermNaggingControllerTouchIDForSudoIdentifier]) {
         DLog(@"Can't show Touch ID for sudo offer");
         return;
@@ -988,13 +996,27 @@ static NSString *const iTermNaggingControllerTouchIDForSudoUserDefaultsKey = @"N
                                      isQuestion:YES
                                       important:YES
                                      identifier:iTermNaggingControllerTouchIDForSudoIdentifier
-                                        options:@[ @"_Enable", @"Don't Ask Again" ]
+                                        options:@[ @"_Run In New Window", @"Copy Command", @"Don’t Ask Again" ]
                                      completion:^(int selection) {
+        // Any explicit user action — including closing with the X (selection -1)
+        // — should suppress further offers for this sudo invocation.
+        if (selection != -2) {
+            _touchIDForSudoDismissed = YES;
+        }
         switch (selection) {
-            case 0:  // Enable
-                (void)[iTermTouchIDHelper enableTouchIDForSudo];
+            case 0:  // Run In New Window
+                [iTermTouchIDHelper runInstallInNewWindow];
                 break;
-            case 1:  // Don't ask again
+            case 1: {  // Copy Command
+                NSString *command = [iTermTouchIDHelper installCommand];
+                if (command) {
+                    NSPasteboard *pasteboard = [NSPasteboard generalPasteboard];
+                    [pasteboard clearContents];
+                    [pasteboard setString:command forType:NSPasteboardTypeString];
+                }
+                break;
+            }
+            case 2:  // Don't ask again
                 [[iTermUserDefaults userDefaults] setBool:NO
                                                    forKey:iTermNaggingControllerTouchIDForSudoUserDefaultsKey];
                 break;
@@ -1003,6 +1025,9 @@ static NSString *const iTermNaggingControllerTouchIDForSudoUserDefaultsKey = @"N
 }
 
 - (void)removeTouchIDForSudoOffer {
+    // Called by PTYSession when sudo is no longer the foreground job. Reset the
+    // dismissal flag so future sudo invocations can offer again.
+    _touchIDForSudoDismissed = NO;
     [self.delegate naggingControllerRemoveMessageWithIdentifier:iTermNaggingControllerTouchIDForSudoIdentifier];
 }
 
