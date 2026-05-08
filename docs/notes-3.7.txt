@@ -355,6 +355,14 @@ Settings Improvements:
   first across tabs and windows.
 
 Bug Fixes:
+- When ESC #3, #4, or #6 (DECDHL/DECDWL) was
+  received mid-line, characters already on the
+  line were correctly doubled in size but the
+  cursor was not advanced to compensate, so
+  text printed afterward overwrote the right
+  half of the existing characters. The cursor
+  is now repositioned when the line’s width
+  class changes.
 - The “open password manager automatically”
   feature no longer triggers when a shell
   script briefly disables terminal echo to

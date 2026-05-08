@@ -590,6 +590,8 @@ typedef struct {
     }
 
     screen_char_t *line = [self.currentGrid screenCharsAtLineNumber:y];
+    const int oldCursorX = self.currentGrid.cursorX;
+    int newCursorX;
 
     if (iTermLineAttributeIsDoubleWidth(attr)) {
         // Expanding: normal → double-width.
@@ -610,6 +612,9 @@ typedef struct {
         }
         // Expand in-place (works backwards to avoid overwriting source data).
         ScreenCharExpandWithDWLSpacers(line, line, contentLen);
+        // Cursor stays over the same character, which is now twice as wide.
+        // If it was in the right half of the line, clamp to the right margin.
+        newCursorX = MIN(oldCursorX * 2, width - 1);
     } else {
         // Compacting: double-width → normal.
         // Compact in-place (works forwards, safe since dest <= source).
@@ -620,6 +625,7 @@ typedef struct {
         for (int i = effectiveWidth; i < width; i++) {
             line[i] = blank;
         }
+        newCursorX = oldCursorX / 2;
     }
 
     iTermMetadata metadata = lineInfo.metadata;
@@ -628,6 +634,7 @@ typedef struct {
     [lineInfo setDirty:YES
                inRange:VT100GridRangeMake(0, width)
       updateTimestampTo:metadata.timestamp];
+    [self.currentGrid setCursor:VT100GridCoordMake(newCursorX, y)];
 }
 
 - (void)terminalShowTestPattern {

@@ -766,6 +766,95 @@ final class iTermLineAttributeTests: XCTestCase {
         XCTAssertEqual(codes[6], 0)
     }
 
+    // MARK: - Cursor Adjustment on Width Class Change
+
+    private func getCursorX(_ screen: VT100Screen) -> Int {
+        var result: Int32 = 0
+        screen.performBlock(joinedThreads: { _, mutableState, _ in
+            result = mutableState.currentGrid.cursorX
+        })
+        return Int(result)
+    }
+
+    /// When normal -> double-width happens mid-line, the cursor should move
+    /// so it stays past the existing (now twice as wide) content rather than
+    /// landing in the middle of it.
+    func testCursorDoubledWhenExpanding() {
+        let screen = makeScreen(width: 20, height: 4)
+        screen.performBlock(joinedThreads: { _, mutableState, _ in
+            mutableState.appendString(atCursor: "ABCDE")  // cursor now at 5
+        })
+        XCTAssertEqual(getCursorX(screen), 5)
+        setLineAttribute(screen, attr: .doubleWidth)
+        XCTAssertEqual(getCursorX(screen), 10)
+    }
+
+    /// When the cursor is already in the right half of the line, expanding
+    /// to double-width should clamp it to the right margin. On a double-width
+    /// line the grid further snaps the cursor down to an even column (real
+    /// character positions, not DWL_SPACERs).
+    func testCursorClampedToRightMarginWhenExpanding() {
+        let screen = makeScreen(width: 20, height: 4)
+        screen.performBlock(joinedThreads: { _, mutableState, _ in
+            mutableState.currentGrid.cursorX = 15  // in the right half (>= width/2)
+        })
+        setLineAttribute(screen, attr: .doubleWidth)
+        XCTAssertEqual(getCursorX(screen), 18)  // right margin, snapped to even
+    }
+
+    /// When double-width -> normal, the cursor should be halved so it tracks
+    /// the same character position in the now-compacted buffer.
+    func testCursorHalvedWhenCompacting() {
+        let screen = makeScreen(width: 20, height: 4)
+        setLineAttribute(screen, attr: .doubleWidth)
+        screen.performBlock(joinedThreads: { _, mutableState, _ in
+            mutableState.appendString(atCursor: "ABC")  // cursor now at 6
+        })
+        XCTAssertEqual(getCursorX(screen), 6)
+        setLineAttribute(screen, attr: .singleWidth)
+        XCTAssertEqual(getCursorX(screen), 3)
+    }
+
+    /// Switching between same-width-class attributes (e.g., doubleWidth ->
+    /// doubleHeightTop) should not move the cursor.
+    func testCursorUnchangedWhenSameWidthClass() {
+        let screen = makeScreen(width: 20, height: 4)
+        setLineAttribute(screen, attr: .doubleWidth)
+        screen.performBlock(joinedThreads: { _, mutableState, _ in
+            mutableState.appendString(atCursor: "AB")  // cursor now at 4
+        })
+        XCTAssertEqual(getCursorX(screen), 4)
+        setLineAttribute(screen, attr: .doubleHeightTop)
+        XCTAssertEqual(getCursorX(screen), 4)
+    }
+
+    /// Regression test for the user-reported bug: text printed before ESC #6
+    /// then text printed after should not overlap. After the escape sequence
+    /// the cursor should be at the position after the (now-doubled) prefix.
+    func testTextAfterMidLineDoubleWidthDoesNotOverlap() {
+        let screen = makeScreen(width: 40, height: 4)
+        screen.performBlock(joinedThreads: { _, mutableState, _ in
+            mutableState.appendString(atCursor: "AB")  // cursor at 2
+        })
+        setLineAttribute(screen, attr: .doubleWidth)
+        // Cursor should be at 4 now (past A, DWL, B, DWL).
+        XCTAssertEqual(getCursorX(screen), 4)
+        screen.performBlock(joinedThreads: { _, mutableState, _ in
+            mutableState.appendString(atCursor: "CD")
+        })
+        // Final layout: A,DWL,B,DWL,C,DWL,D,DWL,0,...
+        let codes = lineCodes(screen, line: 0, count: 10)
+        XCTAssertEqual(codes[0], unichar(UnicodeScalar("A").value))
+        XCTAssertEqual(codes[1], unichar(DWL_SPACER))
+        XCTAssertEqual(codes[2], unichar(UnicodeScalar("B").value))
+        XCTAssertEqual(codes[3], unichar(DWL_SPACER))
+        XCTAssertEqual(codes[4], unichar(UnicodeScalar("C").value))
+        XCTAssertEqual(codes[5], unichar(DWL_SPACER))
+        XCTAssertEqual(codes[6], unichar(UnicodeScalar("D").value))
+        XCTAssertEqual(codes[7], unichar(DWL_SPACER))
+        XCTAssertEqual(codes[8], 0)
+    }
+
     // MARK: - Character Input on Double-Width Lines (Phase 5 part 2)
 
     /// Typing on a double-width line should interleave DWL_SPACERs.
@@ -1935,19 +2024,19 @@ final class iTermLineAttributeTests: XCTestCase {
             mutableState.appendString(atCursor: "ABCDE")
         })
         // Cursor should be at physical 10 (5 chars × 2 cells each)
-        XCTAssertEqual(cursorX(screen), 10)
+        XCTAssertEqual(getCursorX(screen), 10)
 
         // Move cursor to start
         inject(screen, "\u{1b}[1G") // HPA col 1 (= physical 0)
-        XCTAssertEqual(cursorX(screen), 0, "HPA should position at physical 0")
+        XCTAssertEqual(getCursorX(screen), 0, "HPA should position at physical 0")
 
         // CUF 1 should go to physical 2 (skip spacer at 1)
         inject(screen, "\u{1b}[C")
-        XCTAssertEqual(cursorX(screen), 2, "CUF 1 should advance to physical 2")
+        XCTAssertEqual(getCursorX(screen), 2, "CUF 1 should advance to physical 2")
 
         // CUF 2 should go to physical 6
         inject(screen, "\u{1b}[2C")
-        XCTAssertEqual(cursorX(screen), 6, "CUF 2 should advance to physical 6")
+        XCTAssertEqual(getCursorX(screen), 6, "CUF 2 should advance to physical 6")
     }
 
     /// CUB (cursor backward) on a DWL line should retreat by 2 physical cells.
@@ -1958,15 +2047,15 @@ final class iTermLineAttributeTests: XCTestCase {
             mutableState.appendString(atCursor: "ABCDE")
         })
         // Cursor at physical 10
-        XCTAssertEqual(cursorX(screen), 10)
+        XCTAssertEqual(getCursorX(screen), 10)
 
         // CUB 1 should go to physical 8
         inject(screen, "\u{1b}[D")
-        XCTAssertEqual(cursorX(screen), 8, "CUB 1 should retreat to physical 8")
+        XCTAssertEqual(getCursorX(screen), 8, "CUB 1 should retreat to physical 8")
 
         // CUB 2 should go to physical 4
         inject(screen, "\u{1b}[2D")
-        XCTAssertEqual(cursorX(screen), 4, "CUB 2 should retreat to physical 4")
+        XCTAssertEqual(getCursorX(screen), 4, "CUB 2 should retreat to physical 4")
     }
 
     /// CUP on a DWL line: column parameter is logical, so col 3 should
@@ -1980,15 +2069,15 @@ final class iTermLineAttributeTests: XCTestCase {
 
         // CUP row 1, col 1 → physical (0, 0)
         inject(screen, "\u{1b}[1;1H")
-        XCTAssertEqual(cursorX(screen), 0, "CUP col 1 should be physical 0")
+        XCTAssertEqual(getCursorX(screen), 0, "CUP col 1 should be physical 0")
 
         // CUP row 1, col 3 → physical column 4
         inject(screen, "\u{1b}[1;3H")
-        XCTAssertEqual(cursorX(screen), 4, "CUP col 3 should be physical 4")
+        XCTAssertEqual(getCursorX(screen), 4, "CUP col 3 should be physical 4")
 
         // CUP row 1, col 5 → physical column 8
         inject(screen, "\u{1b}[1;5H")
-        XCTAssertEqual(cursorX(screen), 8, "CUP col 5 should be physical 8")
+        XCTAssertEqual(getCursorX(screen), 8, "CUP col 5 should be physical 8")
     }
 
     /// HPA on a DWL line should map logical to physical column.
@@ -2001,11 +2090,11 @@ final class iTermLineAttributeTests: XCTestCase {
 
         // HPA col 1 → physical 0
         inject(screen, "\u{1b}[1G")
-        XCTAssertEqual(cursorX(screen), 0, "HPA col 1 should be physical 0")
+        XCTAssertEqual(getCursorX(screen), 0, "HPA col 1 should be physical 0")
 
         // HPA col 4 → physical 6
         inject(screen, "\u{1b}[4G")
-        XCTAssertEqual(cursorX(screen), 6, "HPA col 4 should be physical 6")
+        XCTAssertEqual(getCursorX(screen), 6, "HPA col 4 should be physical 6")
     }
 
     /// setCursorX directly should snap to even position on DWL lines.
@@ -2018,7 +2107,7 @@ final class iTermLineAttributeTests: XCTestCase {
             mutableState.currentGrid.cursorX = 3
         })
         // Should snap to 2 (round down to even)
-        XCTAssertEqual(cursorX(screen), 2, "setCursorX(3) should snap to 2 on DWL line")
+        XCTAssertEqual(getCursorX(screen), 2, "setCursorX(3) should snap to 2 on DWL line")
     }
 
     /// DCH (delete character) on a DWL line should delete char+spacer pairs
@@ -2121,7 +2210,7 @@ final class iTermLineAttributeTests: XCTestCase {
         // Move down to DWL line — cursor at physical 5 is a spacer, should snap
         inject(screen, "\u{1b}[B") // CUD 1
 
-        let x = cursorX(screen)
+        let x = getCursorX(screen)
         XCTAssertEqual(x % 2, 0, "Cursor should be at even position on DWL line, got \(x)")
     }
 
@@ -2175,23 +2264,23 @@ final class iTermLineAttributeTests: XCTestCase {
             mutableState.appendString(atCursor: "ABC")
         })
         // Cursor at physical 6 (3 chars × 2 cells)
-        XCTAssertEqual(cursorX(screen), 6)
+        XCTAssertEqual(getCursorX(screen), 6)
 
         // Backspace should go to physical 4
         inject(screen, "\u{08}")
-        XCTAssertEqual(cursorX(screen), 4, "Backspace should retreat to physical 4")
+        XCTAssertEqual(getCursorX(screen), 4, "Backspace should retreat to physical 4")
 
         // Another backspace to physical 2
         inject(screen, "\u{08}")
-        XCTAssertEqual(cursorX(screen), 2, "Backspace should retreat to physical 2")
+        XCTAssertEqual(getCursorX(screen), 2, "Backspace should retreat to physical 2")
 
         // Another to physical 0
         inject(screen, "\u{08}")
-        XCTAssertEqual(cursorX(screen), 0, "Backspace should retreat to physical 0")
+        XCTAssertEqual(getCursorX(screen), 0, "Backspace should retreat to physical 0")
 
         // At column 0, backspace should not go negative
         inject(screen, "\u{08}")
-        XCTAssertEqual(cursorX(screen), 0, "Backspace at column 0 should stay at 0")
+        XCTAssertEqual(getCursorX(screen), 0, "Backspace at column 0 should stay at 0")
     }
 
     /// Copy with Control Sequences should NOT deduplicate DECDHL pairs —
