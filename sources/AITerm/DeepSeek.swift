@@ -23,7 +23,11 @@ struct DeepSeekRequestBuilder {
     }
 
     private struct Thinking: Codable {
-        var type: String  // "enabled" or "disabled"
+        enum Mode: String, Codable {
+            case enabled
+            case disabled
+        }
+        var type: Mode
     }
 
     struct Message: Codable {
@@ -112,7 +116,13 @@ struct DeepSeekRequestBuilder {
             tools: maybeDecls,
             function_call: functions.isEmpty ? nil : "auto",
             stream: stream,
-            thinking: Thinking(type: "disabled"))
+            // DeepSeek v4 enables thinking mode by default, which adds a reasoning_content
+            // field to assistant messages. Their API requires that field to be echoed back
+            // in subsequent requests whenever tool calls are involved, or it returns 400.
+            // LLM.Message has no place to store reasoning_content yet, so we disable
+            // thinking to avoid breaking multi-turn tool-call conversations.
+            // https://api-docs.deepseek.com/guides/thinking_mode#input-and-output-parameters
+            thinking: Thinking(type: .disabled))
         DLog("REQUEST:\n\(body)")
         if body.max_tokens < 2 {
             throw AIError.requestTooLarge

@@ -343,6 +343,16 @@ class AIMetadata: NSObject {
         features: [.functionCalling, .streaming],
         vendor: .deepSeek
     )
+    // Deprecated by DeepSeek on 2026-07-24; remove after that date
+    private static let deepseek_chat = Model(
+        name: "deepseek-chat",
+        contextWindowTokens: 128_000,
+        maxResponseTokens: 8_000,
+        url: "https://api.deepseek.com/v1/chat/completions",
+        api: .deepSeek,
+        features: [.functionCalling, .streaming],
+        vendor: .deepSeek
+    )
     private static let gemini_2_0_flash = Model(
         name: "gemini-2.0-flash",
         contextWindowTokens: 1_048_576,
@@ -485,6 +495,25 @@ class AIMetadata: NSObject {
         features: [.functionCalling, .streaming],
         vendor: .anthropic
     )
+    // Deprecated by DeepSeek on 2026-07-24; remove after that date
+    private static let deepseek_coder = Model(
+        name: "deepseek-coder",
+        contextWindowTokens: 65_536,
+        maxResponseTokens: 8_000,
+        url: "https://api.deepseek.com/v1/chat/completions",
+        api: .deepSeek,
+        features: [.functionCalling, .streaming],
+        vendor: .deepSeek
+    )
+    private static let deepseek_reasoner = Model(
+        name: "deepseek-reasoner",
+        contextWindowTokens: 64_000,
+        maxResponseTokens: 8_000,
+        url: "https://api.deepseek.com/v1/chat/completions",
+        api: .deepSeek,
+        features: [.functionCalling, .streaming],
+        vendor: .deepSeek
+    )
     let models: [Model] = [
         // The first model will be the default.
         AIMetadata.gpt5_4,
@@ -516,6 +545,10 @@ class AIMetadata: NSObject {
         // MARK: - DeepSeek Models
         AIMetadata.deepseek_v4_flash,
         AIMetadata.deepseek_v4_pro,
+        // Deprecated by DeepSeek on 2026-07-24; remove after that date
+        AIMetadata.deepseek_chat,
+        AIMetadata.deepseek_coder,
+        AIMetadata.deepseek_reasoner,
 
 
         // MARK: - Anthropic Models
