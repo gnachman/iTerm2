@@ -171,6 +171,10 @@ Tabs, Windows, and UI:
   broadcast.
 - New key binding action to send text without
   broadcasting.
+- The Cycle Tabs Forward and Cycle Tabs
+  Backward key actions now have a help
+  button explaining their tap-vs-hold
+  behavior.
 - Nerd Font glyphs are now rendered in pane title
   bars and tabs.
 - A unified dock badge combines bell count

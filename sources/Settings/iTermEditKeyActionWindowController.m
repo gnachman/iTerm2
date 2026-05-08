@@ -190,6 +190,16 @@ const CGFloat sideMarginWidth = 40;
                 _helpString = @"Prevents the keystroke from having any effect within iTerm2. Modifier remapping remains unaffected.";
                 break;
 
+            case KEY_ACTION_NEXT_MRU_TAB:
+                _parameterValue = @"";
+                _helpString = @"Switches tabs in most-recently-used order, like ⌘-Tab in macOS. Hold a modifier and tap repeatedly to walk back through tab history; release the modifier to commit your selection. A single tap with no modifier held jumps to the previously-selected tab, so binding this to a plain key acts as a toggle between the two most recent tabs.";
+                break;
+
+            case KEY_ACTION_PREVIOUS_MRU_TAB:
+                _parameterValue = @"";
+                _helpString = @"Switches tabs in reverse most-recently-used order. Hold a modifier and tap repeatedly to walk forward through tab history (oldest first); release the modifier to commit your selection. A single tap with no modifier held jumps to the least-recently-used tab.";
+                break;
+
             case KEY_ACTION_FIND_REGEX:
                 _parameterHidden = NO;
                 _parameterPlaceholder = @"Regular Expression";
@@ -360,7 +370,7 @@ const CGFloat sideMarginWidth = 40;
                 [[iTermSearchableComboViewItem alloc] initWithLabel:@"Do Not Remap Modifiers" tag:KEY_ACTION_DO_NOT_REMAP_MODIFIERS],
                 [[iTermSearchableComboViewItem alloc] initWithLabel:@"Remap Modifiers in iTerm2 Only" tag:KEY_ACTION_REMAP_LOCALLY],
             ]] : [NSNull null],
-            [[iTermSearchableComboViewGroup alloc] initWithLabel:@"Cycle" items:@[
+            [[iTermSearchableComboViewGroup alloc] initWithLabel:@"Recent Tabs" items:@[
                 [[iTermSearchableComboViewItem alloc] initWithLabel:@"Cycle Tabs Forward" tag:KEY_ACTION_NEXT_MRU_TAB],
                 [[iTermSearchableComboViewItem alloc] initWithLabel:@"Cycle Tabs Backward" tag:KEY_ACTION_PREVIOUS_MRU_TAB],
             ]],
