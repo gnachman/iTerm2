@@ -201,6 +201,7 @@ Triggers Improvements:
 AI Improvements:
 - AI chat can connect to LAN-hosted models
   over HTTP.
+- Add DeepSeek v4-flash and v4-pro models.
 
 Python API Improvements:
 - Move sessions to new tabs or windows via the

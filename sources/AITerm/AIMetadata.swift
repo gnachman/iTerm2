@@ -21,7 +21,7 @@ class AIModel: NSObject {
             featuresGuess = [.functionCalling, .streaming]
             vendorGuess = .gemini
         } else if modelName.contains("deepseek") {
-            urlGuess = "https://api.deepseek.com/v1/chat/completions"
+            urlGuess = "https://api.deepseek.com/chat/completions"
             apiGuess = .deepSeek
             featuresGuess = [.functionCalling, .streaming]
             vendorGuess = .deepSeek
@@ -126,7 +126,7 @@ class AIMetadata: NSObject {
     }
 
     static var recommendedDeepSeekModel: Model {
-        return AIMetadata.deepseek_chat
+        return AIMetadata.deepseek_v4_flash
     }
 
     static var recommendedGeminiModel: Model {
@@ -325,6 +325,25 @@ class AIMetadata: NSObject {
         vectorStoreConfig: .openAI,
         vendor: .openAI
     )
+    private static let deepseek_v4_flash = Model(
+        name: "deepseek-v4-flash",
+        contextWindowTokens: 1_000_000,
+        maxResponseTokens: 384_000,
+        url: "https://api.deepseek.com/chat/completions",
+        api: .deepSeek,
+        features: [.functionCalling, .streaming],
+        vendor: .deepSeek
+    )
+    private static let deepseek_v4_pro = Model(
+        name: "deepseek-v4-pro",
+        contextWindowTokens: 1_000_000,
+        maxResponseTokens: 384_000,
+        url: "https://api.deepseek.com/chat/completions",
+        api: .deepSeek,
+        features: [.functionCalling, .streaming],
+        vendor: .deepSeek
+    )
+    // Deprecated by DeepSeek on 2026-07-24; remove after that date
     private static let deepseek_chat = Model(
         name: "deepseek-chat",
         contextWindowTokens: 128_000,
@@ -476,6 +495,7 @@ class AIMetadata: NSObject {
         features: [.functionCalling, .streaming],
         vendor: .anthropic
     )
+    // Deprecated by DeepSeek on 2026-07-24; remove after that date
     private static let deepseek_coder = Model(
         name: "deepseek-coder",
         contextWindowTokens: 65_536,
@@ -523,6 +543,9 @@ class AIMetadata: NSObject {
         AIMetadata.gemini_2_0_flash,
 
         // MARK: - DeepSeek Models
+        AIMetadata.deepseek_v4_flash,
+        AIMetadata.deepseek_v4_pro,
+        // Deprecated by DeepSeek on 2026-07-24; remove after that date
         AIMetadata.deepseek_chat,
         AIMetadata.deepseek_coder,
         AIMetadata.deepseek_reasoner,
