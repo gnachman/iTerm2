@@ -625,3 +625,8 @@ Bug Fixes:
   dev build get a cookie from the right
   iTerm2 instance instead of whichever
   one macOS routes to. Issue 12850.
+- Add advanced settings to customize
+  the window border color for focused
+  and unfocused windows (requires
+  “Show border around windows” with
+  no title bar).
