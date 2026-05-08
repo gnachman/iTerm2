@@ -554,12 +554,19 @@
     DLog(@"modify profile to ssh to %@", url);
     NSMutableString *tempString = [NSMutableString string];
     const BOOL useSSHIntegration = [iTermPreferences boolForKey:kPreferenceKeySshIntegrationForURLs];
+    BOOL forceLoginShell = NO;
     if (!useSSHIntegration) {
-        [tempString appendString:[iTermAdvancedSettingsModel sshSchemePath]];
-        NSCharacterSet *alphanumericSet = [NSMutableCharacterSet alphanumericCharacterSet];
-        if ([tempString rangeOfCharacterFromSet:alphanumericSet].location == NSNotFound) {
-            // if the setting is set to an empty string, we will default to "ssh" for safety reasons
-            tempString = [NSMutableString stringWithString:@"ssh"];
+        NSString *sshPath = [iTermAdvancedSettingsModel sshSchemePath];
+        NSCharacterSet *alphanumericSet = [NSCharacterSet alphanumericCharacterSet];
+        const BOOL pathIsUsable = [sshPath rangeOfCharacterFromSet:alphanumericSet].location != NSNotFound;
+        if (!pathIsUsable || [sshPath isEqualToString:@"ssh"]) {
+            // sshSchemePath is at its default (or empty). Use bare "ssh" and
+            // wrap in the user's login shell so $PATH from rc files applies
+            // (e.g. /opt/homebrew/bin/ssh on Homebrew systems).
+            [tempString appendString:@"ssh"];
+            forceLoginShell = YES;
+        } else {
+            [tempString appendString:sshPath];
         }
         [tempString appendString:@" "];
     }
@@ -613,8 +620,12 @@
         return [prototype dictionaryByMergingDictionary:@{ KEY_COMMAND_LINE: tempString,
                                                            KEY_CUSTOM_COMMAND: kProfilePreferenceCommandTypeSSHValue }];
     } else {
-        return [prototype dictionaryByMergingDictionary:@{ KEY_COMMAND_LINE: tempString,
-                                                           KEY_CUSTOM_COMMAND: kProfilePreferenceCommandTypeCustomValue }];
+        NSMutableDictionary *merge = [@{ KEY_COMMAND_LINE: tempString,
+                                         KEY_CUSTOM_COMMAND: kProfilePreferenceCommandTypeCustomValue } mutableCopy];
+        if (forceLoginShell) {
+            merge[KEY_RUN_COMMAND_IN_LOGIN_SHELL] = @YES;
+        }
+        return [prototype dictionaryByMergingDictionary:merge];
     }
 }
 

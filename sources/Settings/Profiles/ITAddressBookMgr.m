@@ -35,6 +35,7 @@
 #import "PreferencePanel.h"
 #import "ProfileModel.h"
 #import "iTerm2SharedARC-Swift.h"
+#import "iTermAdvancedSettingsModel.h"
 #import "iTermDynamicProfileManager.h"
 #import "iTermExpressionEvaluator.h"
 #import "iTermHotKeyController.h"
@@ -579,10 +580,24 @@ iTermPercentage iTermPercentageFromProfile(Profile *profile, iTermWindowType win
             destination = [NSString stringWithFormat:@"%@@%@", username, address];
         }
     }
-    [newBookmark setObject:[NSString stringWithFormat:@"%@ %@%@%@", serviceType, userNameArg, optionalPortArg, destination]
+    NSString *commandName = serviceType;
+    BOOL forceLoginShell = YES;
+    if ([serviceType isEqualToString:@"ssh"]) {
+        NSString *sshPath = [iTermAdvancedSettingsModel sshSchemePath];
+        NSCharacterSet *alphanumericSet = [NSCharacterSet alphanumericCharacterSet];
+        const BOOL pathIsUsable = [sshPath rangeOfCharacterFromSet:alphanumericSet].location != NSNotFound;
+        if (pathIsUsable && ![sshPath isEqualToString:@"ssh"]) {
+            commandName = sshPath;
+            forceLoginShell = NO;
+        }
+    }
+    [newBookmark setObject:[NSString stringWithFormat:@"%@ %@%@%@", commandName, userNameArg, optionalPortArg, destination]
                     forKey:KEY_COMMAND_LINE];
     [newBookmark setObject:@"" forKey:KEY_WORKING_DIRECTORY];
     [newBookmark setObject:kProfilePreferenceCommandTypeCustomValue forKey:KEY_CUSTOM_COMMAND];
+    if (forceLoginShell) {
+        [newBookmark setObject:@YES forKey:KEY_RUN_COMMAND_IN_LOGIN_SHELL];
+    }
     [newBookmark setObject:kProfilePreferenceInitialDirectoryHomeValue
                     forKey:KEY_CUSTOM_DIRECTORY];
     [newBookmark setObject:destination forKey:KEY_BONJOUR_SERVICE_ADDRESS];

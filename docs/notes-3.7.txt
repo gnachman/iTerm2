@@ -363,6 +363,12 @@ Bug Fixes:
   half of the existing characters. The cursor
   is now repositioned when the line’s width
   class changes.
+- ssh:// URL handling and Bonjour-discovered
+  host profiles now find ssh through the user’s
+  login shell PATH, so Homebrew’s ssh (or any
+  ssh outside /usr/bin) is used. The advanced
+  setting SshSchemePath, when changed from its
+  default, still wins. Issue 3415.
 - The “open password manager automatically”
   feature no longer triggers when a shell
   script briefly disables terminal echo to
