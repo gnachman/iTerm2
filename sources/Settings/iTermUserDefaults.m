@@ -42,6 +42,7 @@ static NSString *const iTermUserDefaultsKeyShouldSendReturnAfterPassword = @"Sho
 static NSString *const iTermUserDefaultsKeyWindowCornerRadiusCache = @"NoSyncWindowCornerRadiusCache";
 static NSString *const iTermUserDefaultsKeyLastShutdownWasClean = @"NoSyncLastShutdownWasClean";
 static NSString *const iTermUserDefaultsKeyWorkgroupsData = @"Workgroups";
+static NSString *const iTermUserDefaultsKeyWorkgroupShortcutsBackfilled = @"NoSyncWorkgroupShortcutsBackfilled";
 
 @implementation iTermUserDefaults
 
@@ -326,6 +327,15 @@ static NSUserDefaults *iTermPrivateUserDefaults(void) {
 + (void)setWorkgroupsData:(NSData *)workgroupsData {
     [self.userDefaults setObject:workgroupsData
                           forKey:iTermUserDefaultsKeyWorkgroupsData];
+}
+
++ (BOOL)workgroupShortcutsBackfilled {
+    return [self.userDefaults boolForKey:iTermUserDefaultsKeyWorkgroupShortcutsBackfilled];
+}
+
++ (void)setWorkgroupShortcutsBackfilled:(BOOL)value {
+    [self.userDefaults setBool:value
+                        forKey:iTermUserDefaultsKeyWorkgroupShortcutsBackfilled];
 }
 
 + (BOOL)lastShutdownWasClean {

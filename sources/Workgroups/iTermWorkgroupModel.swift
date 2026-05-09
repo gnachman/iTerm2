@@ -26,6 +26,7 @@ final class iTermWorkgroupModel: NSObject {
     private override init() {
         self.workgroups = Self.load()
         super.init()
+        backfillToolbarShortcutsIfNeeded()
     }
 
     // MARK: - Top-level mutations
@@ -89,5 +90,45 @@ final class iTermWorkgroupModel: NSObject {
         NotificationCenter.default.post(
             name: Self.didChangeNotification,
             object: self)
+    }
+
+    // One-time migration: stamp the default keyboard shortcuts onto
+    // .navigation and .reload toolbar items that pre-date this
+    // feature. Runs once per user (latched in NoSync user defaults)
+    // so a subsequent intentional clear by the user doesn't get
+    // re-seeded on the next launch. Only items whose shortcuts are
+    // entirely empty are touched — if any of the three navigation
+    // sub-shortcuts is set, that item is left as-is on the
+    // assumption it has already been updated.
+    private func backfillToolbarShortcutsIfNeeded() {
+        guard !iTermUserDefaults.workgroupShortcutsBackfilled else { return }
+        defer { iTermUserDefaults.workgroupShortcutsBackfilled = true }
+
+        var changed = false
+        for wgIdx in workgroups.indices {
+            for sIdx in workgroups[wgIdx].sessions.indices {
+                let original = workgroups[wgIdx].sessions[sIdx].toolbarItems
+                var items = original
+                for itemIdx in items.indices {
+                    switch items[itemIdx] {
+                    case .navigation(let s)
+                        where s.back == nil && s.forward == nil
+                            && s.reload == nil:
+                        items[itemIdx] = .navigation(.defaults)
+                    case .reload(nil):
+                        items[itemIdx] = .reload(.reloadDefault)
+                    default:
+                        break
+                    }
+                }
+                if items != original {
+                    workgroups[wgIdx].sessions[sIdx].toolbarItems = items
+                    changed = true
+                }
+            }
+        }
+        if changed {
+            persist()
+        }
     }
 }

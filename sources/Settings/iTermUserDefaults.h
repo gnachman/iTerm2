@@ -60,6 +60,12 @@ typedef NS_ENUM(NSUInteger, iTermAppleWindowTabbingMode) {
 @property (class, nonatomic, copy, nullable) NSDictionary<NSString *, NSNumber *> *windowCornerRadiusCache;
 @property (class, nonatomic, copy, nullable) NSData *workgroupsData;
 
+// Latched once the one-time backfill of default keyboard shortcuts
+// onto pre-existing workgroup .navigation / .reload toolbar items
+// has run. Stored locally (NoSync prefix) so it doesn't push
+// migration state through synced prefs.
+@property (class, nonatomic) BOOL workgroupShortcutsBackfilled;
+
 // Returns whether the previous process exited cleanly. The value is latched on
 // first access: the on-disk flag is read then immediately reset so that if this
 // process crashes before +markShutdownAsClean is called, the next launch will
