@@ -10751,7 +10751,7 @@ instead of the system keyboard.</string>
                     </subviews>
                 </customView>
                 <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="hGR-TB-l25" customClass="iTermTerminalModeEnclosure">
-                    <rect key="frame" x="528" y="450" width="17" height="11"/>
+                    <rect key="frame" x="528" y="445" width="17" height="11"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                     <subviews>
                         <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="imM-Ma-mjV">
