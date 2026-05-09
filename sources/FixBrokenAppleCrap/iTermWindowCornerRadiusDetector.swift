@@ -24,7 +24,7 @@ class iTermWindowCornerRadiusDetector: NSObject {
     // In-flight detection tracking to merge redundant requests
     private struct WindowInfo {
         let windowID: CGWindowID
-        let windowWidth: CGFloat
+        let backingScaleFactor: CGFloat
         weak var window: NSWindow?
     }
 
@@ -110,9 +110,9 @@ class iTermWindowCornerRadiusDetector: NSObject {
         }
 
         // Capture window dimensions and cache key on main thread
-        let windowWidth = window.frame.width
+        let backingScale = window.backingScaleFactor
         let cacheKeyValue = cacheKey(for: window)
-        let windowInfo = WindowInfo(windowID: windowID, windowWidth: windowWidth, window: window)
+        let windowInfo = WindowInfo(windowID: windowID, backingScaleFactor: backingScale, window: window)
 
         // Check if there's already an in-flight detection for this cache key
         var shouldStartDetection = false
@@ -167,7 +167,7 @@ class iTermWindowCornerRadiusDetector: NSObject {
 
         detectionQueue.async { [weak window = windowInfo.window] in
             if let radius = detectRadius(windowID: windowInfo.windowID,
-                                          windowWidth: windowInfo.windowWidth) {
+                                          backingScaleFactor: windowInfo.backingScaleFactor) {
                 DispatchQueue.main.async {
                     DLog("detectCornerRadius completed for key \(cacheKeyValue) radius=\(radius)")
                     // Cache the result
@@ -273,16 +273,13 @@ class iTermWindowCornerRadiusDetector: NSObject {
     // MARK: - Private
 
     private static func detectRadius(windowID: CGWindowID,
-                                     windowWidth: CGFloat) -> CGFloat? {
+                                     backingScaleFactor: CGFloat) -> CGFloat? {
         guard let image = captureWindow(windowID: windowID) else {
             DLog("detectRadius failed - captureWindow returned nil for windowID=\(windowID)")
             return nil
         }
 
-        DLog("detectRadius captured image \(image.width)x\(image.height) for windowID=\(windowID)")
-
-        // Calculate actual scale factor from image pixels vs window points.
-        let actualScaleFactor = CGFloat(image.width) / windowWidth
+        DLog("detectRadius captured image \(image.width)x\(image.height) backingScale=\(backingScaleFactor) for windowID=\(windowID)")
 
         // Analyze top-left corner region
         let cornerSize = min(50, image.width, image.height)
@@ -340,7 +337,7 @@ class iTermWindowCornerRadiusDetector: NSObject {
 
         saveImageToTmp(image, windowID: windowID, suffix: "radius-\(radiusPixels)")
 
-        return CGFloat(radiusPixels) / actualScaleFactor
+        return CGFloat(radiusPixels) / backingScaleFactor
     }
 
     /// Calculate sum of squared geometric errors for a given radius.
@@ -358,7 +355,11 @@ class iTermWindowCornerRadiusDetector: NSObject {
         return sse
     }
 
-    /// Find the radius that minimizes geometric SSE by trying all integer radii.
+    /// Find the radius that minimizes geometric SSE.
+    ///
+    /// Coarse pass at integer pixels, then check the two adjacent half-pixels.
+    /// The integer pass alone is quantized to 1 px (0.5 pt at 2x); checking
+    /// ±0.5 picks up masks whose true radius sits on a half-integer.
     private static func findBestRadius(points: [(x: Double, y: Double)],
                                        maxRadius: Int) -> Double {
         var bestRadius = 1.0
@@ -370,6 +371,16 @@ class iTermWindowCornerRadiusDetector: NSObject {
             if sse < bestSSE {
                 bestSSE = sse
                 bestRadius = radius
+            }
+        }
+
+        let coarseBest = bestRadius
+        for candidate in [coarseBest - 0.5, coarseBest + 0.5] {
+            if candidate < 0.5 || candidate > Double(maxRadius) { continue }
+            let sse = sumOfSquaredErrors(points: points, radius: candidate)
+            if sse < bestSSE {
+                bestSSE = sse
+                bestRadius = candidate
             }
         }
 

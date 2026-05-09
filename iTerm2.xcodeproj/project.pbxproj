@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		01D8567525D898E2B0DB6FF1 /* iTermWindowBorderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 77FCEB05FACE33F5F7947261 /* iTermWindowBorderView.swift */; };
 		02B907EBABFCDE0B68A178AF /* iTermDockBadgeController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1179CD897A4780286BB29AAC /* iTermDockBadgeController.swift */; };
 		035F0DC62B0099E102FBDF19 /* iTermAsyncStringConversion.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB2AE5DA2AD1C35F1397A53D /* iTermAsyncStringConversion.swift */; };
 		037739337EBEA62A59866733 /* iTermSplitTreeRebuilder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4C811516EBB14A113E1C7B83 /* iTermSplitTreeRebuilder.swift */; };
@@ -6428,6 +6429,7 @@
 		759637A02593AE0700E278CC /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
 		759637A22593AE0700E278CC /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		76421C2E762130B690D1ADC5 /* RegexAtomIterator.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = RegexAtomIterator.swift; sourceTree = "<group>"; };
+		77FCEB05FACE33F5F7947261 /* iTermWindowBorderView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = iTermWindowBorderView.swift; sourceTree = "<group>"; };
 		79B2FA2A3C0CD6168ED88878 /* iTermLayoutTransaction.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = iTermLayoutTransaction.swift; sourceTree = "<group>"; };
 		7AA5AEB702F05430C1F1B793 /* iTermLayoutEnvironment.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = iTermLayoutEnvironment.swift; sourceTree = "<group>"; };
 		7AB44D00ABCD3E5DC090E2D2 /* StatusPrioritySettings.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = StatusPrioritySettings.swift; sourceTree = "<group>"; };
@@ -13699,6 +13701,7 @@
 				7AA5AEB702F05430C1F1B793 /* iTermLayoutEnvironment.swift */,
 				79B2FA2A3C0CD6168ED88878 /* iTermLayoutTransaction.swift */,
 				89D3137ADD4526A5A2012D83 /* iTermLayoutMutator.swift */,
+				77FCEB05FACE33F5F7947261 /* iTermWindowBorderView.swift */,
 			);
 			path = TerminalView;
 			sourceTree = "<group>";
@@ -21205,6 +21208,7 @@
 				DD90A2E4670A4DAA580B2BA6 /* ChatManualStackView.swift in Sources */,
 				F8ECBE597A69D02A7C924093 /* iTermPasswordInputDebouncer.swift in Sources */,
 				57F37DCBE10E9775FA590138 /* ClaudeIntegrationHealthMonitor.swift in Sources */,
+				01D8567525D898E2B0DB6FF1 /* iTermWindowBorderView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

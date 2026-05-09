@@ -14,7 +14,6 @@
 #import "NSAppearance+iTerm.h"
 #import "NSColor+iTerm.h"
 #import "NSEvent+iTerm.h"
-#import "NSImage+iTerm.h"
 #import "NSObject+iTerm.h"
 #import "NSTextField+iTerm.h"
 #import "NSView+RecursiveDescription.h"
@@ -63,24 +62,6 @@ typedef struct {
     CGFloat top;
     CGFloat bottom;
 } iTermDecorationHeights;
-
-static NSImage *gTopLeftCornerHalfImage;
-static NSImage *gTopRightCornerHalfImage;
-static NSImage *gBottomLeftCornerHalfImage;
-static NSImage *gBottomRightCornerHalfImage;
-static NSImage *gTopLeftCornerFullImage;
-static NSImage *gTopRightCornerFullImage;
-static NSImage *gBottomLeftCornerFullImage;
-static NSImage *gBottomRightCornerFullImage;
-
-static NSImage *iTermTintedBorderImage(NSImage *source, NSColor *color) {
-    return [NSImage imageWithSize:source.size flipped:NO drawingHandler:^BOOL(NSRect rect) {
-        [source drawInRect:rect];
-        [color set];
-        NSRectFillUsingOperation(rect, NSCompositingOperationSourceAtop);
-        return YES;
-    }];
-}
 
 @interface iTermRootTerminalView()<
     iTermTabBarControlViewDelegate,
@@ -166,22 +147,10 @@ NS_CLASS_AVAILABLE_MAC(10_14)
     iTermWindowSizeView *_windowSizeView NS_AVAILABLE_MAC(10_14);
 
     iTermLayerBackedSolidColorView *_titleBackgroundView NS_AVAILABLE_MAC(10_14);
-    
-    NSImageView *_topLeftCornerHalfRoundImageView NS_AVAILABLE_MAC(10_14);
-    NSImageView *_topRightCornerHalfRoundImageView NS_AVAILABLE_MAC(10_14);
-    NSImageView *_bottomLeftCornerHalfRoundImageView NS_AVAILABLE_MAC(10_14);
-    NSImageView *_bottomRightCornerHalfRoundImageView NS_AVAILABLE_MAC(10_14);
 
-    NSImageView *_topLeftCornerFullRoundImageView NS_AVAILABLE_MAC(10_14);
-    NSImageView *_topRightCornerFullRoundImageView NS_AVAILABLE_MAC(10_14);
-    NSImageView *_bottomLeftCornerFullRoundImageView NS_AVAILABLE_MAC(10_14);
-    NSImageView *_bottomRightCornerFullRoundImageView NS_AVAILABLE_MAC(10_14);
+    iTermWindowBorderView *_windowBorderView NS_AVAILABLE_MAC(10_14);
+    BOOL _cornerRadiusDetectionFailed NS_AVAILABLE_MAC(10_14);
 
-    NSView *_leftBorderView NS_AVAILABLE_MAC(10_14);
-    NSView *_rightBorderView NS_AVAILABLE_MAC(10_14);
-    NSView *_topBorderView NS_AVAILABLE_MAC(10_14);
-    NSView *_bottomBorderView NS_AVAILABLE_MAC(10_14);
-    
     iTermImageView *_backgroundImage NS_AVAILABLE_MAC(10_14);
     NSView *_workaroundView;  // 10.14 only. See issue 8701.
     iTermLayerBackedSolidColorView *_notchMask NS_AVAILABLE_MAC(12_0);
@@ -305,114 +274,11 @@ NS_CLASS_AVAILABLE_MAC(10_14)
         _windowTitleLabel.autoresizingMask = (NSViewMinYMargin | NSViewWidthSizable);
         [self addSubview:_windowTitleLabel];
         
-        {
-            static dispatch_once_t onceToken;
-            dispatch_once(&onceToken, ^{
-                NSString *halfName = @"WindowCorner";
-                if (@available(macOS 10.16, *)) {
-                    halfName = @"WindowCorner_BigSur";
-                }
-                if ([iTermAdvancedSettingsModel squareWindowCorners]) {
-                    halfName = @"WindowCorner_Square";
-                }
-                gTopLeftCornerHalfImage = [[NSImage it_imageNamed:halfName forClass:self.class] it_verticallyFlippedImage];
-                gTopRightCornerHalfImage = [gTopLeftCornerHalfImage it_horizontallyFlippedImage];
-                gBottomLeftCornerHalfImage = [NSImage it_imageNamed:halfName forClass:self.class];
-                gBottomRightCornerHalfImage = [gBottomLeftCornerHalfImage it_horizontallyFlippedImage];
-
-                NSString *fullName = @"WindowCornerFull";
-                if (@available(macOS 10.16, *)) {
-                    fullName = @"WindowCornerFull_BigSur";
-                }
-                if ([iTermAdvancedSettingsModel squareWindowCorners]) {
-                    fullName = @"WindowCornerFull_Square";
-                }
-                gTopLeftCornerFullImage = [[NSImage it_imageNamed:fullName forClass:self.class] it_verticallyFlippedImage];
-                gTopRightCornerFullImage = [gTopLeftCornerFullImage it_horizontallyFlippedImage];
-                gBottomLeftCornerFullImage = [NSImage it_imageNamed:fullName forClass:self.class];
-                gBottomRightCornerFullImage = [gBottomLeftCornerFullImage it_horizontallyFlippedImage];
-            });
-
-            _topLeftCornerHalfRoundImageView = [NSImageView imageViewWithImage:gTopLeftCornerHalfImage];
-            _topLeftCornerHalfRoundImageView.autoresizingMask = NSViewMinYMargin | NSViewMaxXMargin;
-            _topLeftCornerHalfRoundImageView.alphaValue = 0.75;
-
-            _topRightCornerHalfRoundImageView = [NSImageView imageViewWithImage:gTopRightCornerHalfImage];
-            _topRightCornerHalfRoundImageView.alphaValue = 0.75;
-            _topRightCornerHalfRoundImageView.autoresizingMask = NSViewMinYMargin | NSViewMinXMargin;
-
-            _bottomLeftCornerHalfRoundImageView = [NSImageView imageViewWithImage:gBottomLeftCornerHalfImage];
-            _bottomLeftCornerHalfRoundImageView.alphaValue = 0.75;
-            _bottomLeftCornerHalfRoundImageView.autoresizingMask = NSViewMaxYMargin | NSViewMaxXMargin;
-
-            _bottomRightCornerHalfRoundImageView = [NSImageView imageViewWithImage:gBottomRightCornerHalfImage];
-            _bottomRightCornerHalfRoundImageView.alphaValue = 0.75;
-            _bottomRightCornerHalfRoundImageView.autoresizingMask = NSViewMaxYMargin | NSViewMinXMargin;
-
-            _topLeftCornerHalfRoundImageView.hidden = YES;
-            _topRightCornerHalfRoundImageView.hidden = YES;
-            _bottomLeftCornerHalfRoundImageView.hidden = YES;
-            _bottomRightCornerHalfRoundImageView.hidden = YES;
-
-            [self addSubview:_topLeftCornerHalfRoundImageView];
-            [self addSubview:_topRightCornerHalfRoundImageView];
-            [self addSubview:_bottomLeftCornerHalfRoundImageView];
-            [self addSubview:_bottomRightCornerHalfRoundImageView];
-
-            _topLeftCornerFullRoundImageView = [NSImageView imageViewWithImage:gTopLeftCornerFullImage];
-            _topLeftCornerFullRoundImageView.autoresizingMask = NSViewMinYMargin | NSViewMaxXMargin;
-            _topLeftCornerFullRoundImageView.alphaValue = 0.75;
-
-            _topRightCornerFullRoundImageView = [NSImageView imageViewWithImage:gTopRightCornerFullImage];
-            _topRightCornerFullRoundImageView.alphaValue = 0.75;
-            _topRightCornerFullRoundImageView.autoresizingMask = NSViewMinYMargin | NSViewMinXMargin;
-
-            _bottomLeftCornerFullRoundImageView = [NSImageView imageViewWithImage:gBottomLeftCornerFullImage];
-            _bottomLeftCornerFullRoundImageView.alphaValue = 0.75;
-            _bottomLeftCornerFullRoundImageView.autoresizingMask = NSViewMaxYMargin | NSViewMaxXMargin;
-
-            _bottomRightCornerFullRoundImageView = [NSImageView imageViewWithImage:gBottomRightCornerFullImage];
-            _bottomRightCornerFullRoundImageView.alphaValue = 0.75;
-            _bottomRightCornerFullRoundImageView.autoresizingMask = NSViewMaxYMargin | NSViewMinXMargin;
-
-            _topLeftCornerFullRoundImageView.hidden = YES;
-            _topRightCornerFullRoundImageView.hidden = YES;
-            _bottomLeftCornerFullRoundImageView.hidden = YES;
-            _bottomRightCornerFullRoundImageView.hidden = YES;
-
-            [self addSubview:_topLeftCornerFullRoundImageView];
-            [self addSubview:_topRightCornerFullRoundImageView];
-            [self addSubview:_bottomLeftCornerFullRoundImageView];
-            [self addSubview:_bottomRightCornerFullRoundImageView];
-        }
-        {
-            NSColor *defaultBorderColor = [NSColor colorWithWhite:0.5 alpha:0.75];
-            _leftBorderView = [[NSView alloc] init];
-            _leftBorderView.wantsLayer = YES;
-            _leftBorderView.layer.backgroundColor = defaultBorderColor.CGColor;
-            _leftBorderView.autoresizingMask = NSViewMaxXMargin | NSViewHeightSizable;
-
-            _rightBorderView = [[NSView alloc] init];
-            _rightBorderView.wantsLayer = YES;
-            _rightBorderView.layer.backgroundColor = defaultBorderColor.CGColor;
-            _rightBorderView.autoresizingMask = NSViewMinXMargin | NSViewHeightSizable;
-
-            _topBorderView = [[NSView alloc] init];
-            _topBorderView.wantsLayer = YES;
-            _topBorderView.layer.backgroundColor = defaultBorderColor.CGColor;
-            _topBorderView.autoresizingMask = NSViewMinYMargin | NSViewWidthSizable;
-
-            _bottomBorderView = [[NSView alloc] init];
-            _bottomBorderView.wantsLayer = YES;
-            _bottomBorderView.layer.backgroundColor = defaultBorderColor.CGColor;
-            _bottomBorderView.autoresizingMask = NSViewMaxYMargin | NSViewWidthSizable;
-
-            [self addSubview:_leftBorderView];
-            [self addSubview:_rightBorderView];
-            [self addSubview:_topBorderView];
-            [self addSubview:_bottomBorderView];
-        }
-
+        _windowBorderView = [[iTermWindowBorderView alloc] initWithFrame:self.bounds];
+        _windowBorderView.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
+        _windowBorderView.cornerRadius =
+            [iTermAdvancedSettingsModel squareWindowCorners] ? 0 : iTermWindowBorderRadius;
+        [self addSubview:_windowBorderView];
 
         if (@available(macOS 10.15, *)) {} else {
             // 10.14 only
@@ -424,13 +290,22 @@ NS_CLASS_AVAILABLE_MAC(10_14)
             _notchMask.hidden = YES;
             [self addSubview:_notchMask];
         }
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(advancedSettingsDidChange:)
+                                                     name:iTermAdvancedSettingsDidChange
+                                                   object:nil];
     }
     return self;
 }
 
 - (void)dealloc {
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
     _tabBarControl.itermTabBarDelegate = nil;
     _verticalTabBarDragHandle.delegate = nil;
+}
+
+- (void)advancedSettingsDidChange:(NSNotification *)notification NS_AVAILABLE_MAC(10_14) {
+    [self updateBorderViews];
 }
 
 - (void)setDelegate:(id<iTermRootTerminalViewDelegate>)delegate {
@@ -894,111 +769,67 @@ NS_CLASS_AVAILABLE_MAC(10_14)
     [self updateTextColors];
 }
 
-- (void)updateBorderForKeyState NS_AVAILABLE_MAC(10_14) {
-    NSColor *focusedColor   = [NSColor colorFromHexString:[iTermAdvancedSettingsModel windowBorderColor]];
-    NSColor *unfocusedColor = [NSColor colorFromHexString:[iTermAdvancedSettingsModel windowBorderColorUnfocused]];
-    const BOOL isKey = self.window.isKeyWindow;
-    NSColor *color = isKey ? (focusedColor ?: unfocusedColor) : (unfocusedColor ?: focusedColor);
-
-    if (color == nil) {
-        _topLeftCornerHalfRoundImageView.image     = gTopLeftCornerHalfImage;
-        _topRightCornerHalfRoundImageView.image    = gTopRightCornerHalfImage;
-        _bottomLeftCornerHalfRoundImageView.image  = gBottomLeftCornerHalfImage;
-        _bottomRightCornerHalfRoundImageView.image = gBottomRightCornerHalfImage;
-        _topLeftCornerFullRoundImageView.image     = gTopLeftCornerFullImage;
-        _topRightCornerFullRoundImageView.image    = gTopRightCornerFullImage;
-        _bottomLeftCornerFullRoundImageView.image  = gBottomLeftCornerFullImage;
-        _bottomRightCornerFullRoundImageView.image = gBottomRightCornerFullImage;
-
-        NSColor *defaultBorderColor = [NSColor colorWithWhite:0.5 alpha:0.75];
-        _leftBorderView.layer.backgroundColor   = defaultBorderColor.CGColor;
-        _rightBorderView.layer.backgroundColor  = defaultBorderColor.CGColor;
-        _topBorderView.layer.backgroundColor    = defaultBorderColor.CGColor;
-        _bottomBorderView.layer.backgroundColor = defaultBorderColor.CGColor;
-        return;
+- (NSColor *)resolvedWindowBorderColor NS_AVAILABLE_MAC(10_14) {
+    NSColor *focused = [NSColor colorFromHexString:[iTermAdvancedSettingsModel windowBorderColor]];
+    NSColor *unfocused = [NSColor colorFromHexString:[iTermAdvancedSettingsModel windowBorderColorUnfocused]];
+    NSColor *base = self.window.isKeyWindow ? (focused ?: unfocused) : (unfocused ?: focused);
+    if (base == nil) {
+        return [NSColor colorWithWhite:0.5 alpha:0.75];
     }
+    return [base colorWithAlphaComponent:0.75];
+}
 
-    _topLeftCornerHalfRoundImageView.image     = iTermTintedBorderImage(gTopLeftCornerHalfImage,     color);
-    _topRightCornerHalfRoundImageView.image    = iTermTintedBorderImage(gTopRightCornerHalfImage,    color);
-    _bottomLeftCornerHalfRoundImageView.image  = iTermTintedBorderImage(gBottomLeftCornerHalfImage,  color);
-    _bottomRightCornerHalfRoundImageView.image = iTermTintedBorderImage(gBottomRightCornerHalfImage, color);
-    _topLeftCornerFullRoundImageView.image     = iTermTintedBorderImage(gTopLeftCornerFullImage,     color);
-    _topRightCornerFullRoundImageView.image    = iTermTintedBorderImage(gTopRightCornerFullImage,    color);
-    _bottomLeftCornerFullRoundImageView.image  = iTermTintedBorderImage(gBottomLeftCornerFullImage,  color);
-    _bottomRightCornerFullRoundImageView.image = iTermTintedBorderImage(gBottomRightCornerFullImage, color);
-
-    NSColor *layerColor = [color colorWithAlphaComponent:0.75];
-    _leftBorderView.layer.backgroundColor   = layerColor.CGColor;
-    _rightBorderView.layer.backgroundColor  = layerColor.CGColor;
-    _topBorderView.layer.backgroundColor    = layerColor.CGColor;
-    _bottomBorderView.layer.backgroundColor = layerColor.CGColor;
+// Path arc is concentric with the system mask: same center, same radius. The
+// stroke straddles the mask boundary so half of it is clipped and half is
+// visible (with `outset` shifting which half ends up where). Updated on cache
+// miss by the early-return path in updateBorderViews.
+- (CGFloat)resolvedWindowBorderCornerRadius NS_AVAILABLE_MAC(10_14) {
+    if ([iTermAdvancedSettingsModel squareWindowCorners]) {
+        return 0;
+    }
+    NSWindow *window = self.window;
+    NSNumber *cached = (window == nil) ? nil : [iTermWindowCornerRadiusDetector cachedCornerRadiusFor:window];
+    if (cached == nil) {
+        return iTermWindowBorderRadius;
+    }
+    return MAX(0, cached.doubleValue);
 }
 
 - (void)updateBorderViews NS_AVAILABLE_MAC(10_14) {
-    [self updateBorderForKeyState];
-    const BOOL haveLeft = self.delegate.haveLeftBorder;
-    const BOOL haveTop = self.delegate.haveTopBorder;
-    const BOOL haveRight = self.delegate.haveRightBorderRegardlessOfScrollBar;
-    const BOOL haveBottom = self.delegate.haveBottomBorder;
-    const BOOL fullThickness = self.effectiveAppearance.it_isDark || (self.window.backingScaleFactor <= 1);
-    const CGFloat radius = iTermWindowBorderRadius;
-    {
-        const CGFloat top = self.bounds.size.height - radius;
-        const CGFloat right = self.bounds.size.width - radius;
-        const CGFloat bottom = 0;
-        
-        _topLeftCornerHalfRoundImageView.frame = NSMakeRect(0, top, radius, radius);
-        _topRightCornerHalfRoundImageView.frame = NSMakeRect(right, top, radius, radius);
-        _bottomLeftCornerHalfRoundImageView.frame = NSMakeRect(0, bottom, radius, radius);
-        _bottomRightCornerHalfRoundImageView.frame = NSMakeRect(right, bottom, radius, radius);
+    NSWindow *window = self.window;
 
-        _topLeftCornerFullRoundImageView.frame = NSMakeRect(0, top, radius, radius);
-        _topRightCornerFullRoundImageView.frame = NSMakeRect(right, top, radius, radius);
-        _bottomLeftCornerFullRoundImageView.frame = NSMakeRect(0, bottom, radius, radius);
-        _bottomRightCornerFullRoundImageView.frame = NSMakeRect(right, bottom, radius, radius);
-    }
-    
-    {
-        _leftBorderView.hidden = !haveLeft;
-        _rightBorderView.hidden = !haveRight;
-        _topBorderView.hidden = !haveTop;
-        _bottomBorderView.hidden = !haveBottom;
-
-        const CGFloat topInset = haveTop ? radius : 0;
-        const CGFloat bottomInset = haveBottom ? radius : 0;
-        const CGFloat leftInset = haveLeft ? radius : 0;
-        const CGFloat rightInset = haveRight ? radius : 0;
-
-        const CGFloat thickness = fullThickness ? 1 : 0.5;
-        _leftBorderView.frame = NSMakeRect(0,
-                                         bottomInset,
-                                         thickness,
-                                         self.bounds.size.height - topInset - bottomInset);
-        
-        _rightBorderView.frame = NSMakeRect(self.bounds.size.width - thickness,
-                                          bottomInset,
-                                          thickness,
-                                          self.bounds.size.height - topInset - bottomInset);
-        _bottomBorderView.frame = NSMakeRect(leftInset,
-                                            0,
-                                            self.bounds.size.width - leftInset - rightInset,
-                                            thickness);
-        
-        _topBorderView.frame = NSMakeRect(leftInset,
-                                         self.bounds.size.height - thickness,
-                                         self.bounds.size.width - leftInset - rightInset,
-                                         thickness);
+    // Hide the border until the detector has cached a radius for this window
+    // state. Otherwise on a translucent window our own stroke is the only
+    // opaque content in the corner of the captured frame and the SSE fit
+    // converges on it instead of the system mask. If detection has already
+    // failed once for this view, fall through to the static fallback.
+    if (window != nil
+        && ![iTermAdvancedSettingsModel squareWindowCorners]
+        && !_cornerRadiusDetectionFailed
+        && [iTermWindowCornerRadiusDetector cachedCornerRadiusFor:window] == nil) {
+        _windowBorderView.hidden = YES;
+        __weak __typeof(self) weakSelf = self;
+        [iTermWindowCornerRadiusDetector detectCornerRadiusFor:window
+                                                    completion:^(CGFloat radius, BOOL success) {
+            __strong __typeof(weakSelf) strongSelf = weakSelf;
+            if (strongSelf == nil) { return; }
+            if (!success) {
+                strongSelf->_cornerRadiusDetectionFailed = YES;
+            }
+            [strongSelf updateBorderViews];
+        }];
+        return;
     }
 
-    _bottomLeftCornerHalfRoundImageView.hidden = !(haveLeft && haveBottom && !fullThickness);
-    _bottomRightCornerHalfRoundImageView.hidden = !(haveRight && haveBottom && !fullThickness);
-    _topLeftCornerHalfRoundImageView.hidden = !(haveLeft && haveTop && !fullThickness);
-    _topRightCornerHalfRoundImageView.hidden = !(haveRight && haveTop && !fullThickness);
-
-    _bottomLeftCornerFullRoundImageView.hidden = !(haveLeft && haveBottom && fullThickness);
-    _bottomRightCornerFullRoundImageView.hidden = !(haveRight && haveBottom && fullThickness);
-    _topLeftCornerFullRoundImageView.hidden = !(haveLeft && haveTop && fullThickness);
-    _topRightCornerFullRoundImageView.hidden = !(haveRight && haveTop && fullThickness);
+    _windowBorderView.hidden = NO;
+    _windowBorderView.borderWidth = 2;
+    _windowBorderView.outset = 1;
+    _windowBorderView.cornerRadius = [self resolvedWindowBorderCornerRadius];
+    _windowBorderView.haveLeftEdge = self.delegate.haveLeftBorder;
+    _windowBorderView.haveTopEdge = self.delegate.haveTopBorder;
+    _windowBorderView.haveRightEdge = self.delegate.haveRightBorderRegardlessOfScrollBar;
+    _windowBorderView.haveBottomEdge = self.delegate.haveBottomBorder;
+    _windowBorderView.borderColor = [self resolvedWindowBorderColor];
 }
 
 - (void)setUseMetal:(BOOL)useMetal {
