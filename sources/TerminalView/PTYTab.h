@@ -99,6 +99,7 @@ extern NSString *const PTYTabArrangementOptionsPendingJumps;
 @property(nonatomic) BOOL reportIdeal;
 @property(nonatomic, readonly) NSArray<PTYSession *> *sessionsAtTop;
 @property(nonatomic, readonly) NSArray<PTYSession *> *sessionsAtLeft;
+@property(nonatomic, readonly) NSArray<PTYSession *> *sessionsAtRight;
 @property(nonatomic, readonly) NSArray<PTYSession *> *sessionsAtBottom;
 
 + (NSSize)sizeForTmuxWindowWithAffinity:(NSString *)affinity

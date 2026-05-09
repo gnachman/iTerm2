@@ -92,7 +92,7 @@ static NSImage *iTermTintedBorderImage(NSImage *source, NSColor *color) {
 @property(nonatomic, strong) iTermTabBarControlView *tabBarControl;
 @property(nonatomic, strong) SolidColorView *divisionView;
 @property(nonatomic, strong) iTermToolbeltView *toolbelt;
-@property(nonatomic, strong) iTermDragHandleView *leftTabBarDragHandle;
+@property(nonatomic, strong) iTermDragHandleView *verticalTabBarDragHandle;
 
 @end
 
@@ -430,7 +430,7 @@ NS_CLASS_AVAILABLE_MAC(10_14)
 
 - (void)dealloc {
     _tabBarControl.itermTabBarDelegate = nil;
-    _leftTabBarDragHandle.delegate = nil;
+    _verticalTabBarDragHandle.delegate = nil;
 }
 
 - (void)setDelegate:(id<iTermRootTerminalViewDelegate>)delegate {
@@ -1309,9 +1309,9 @@ NS_CLASS_AVAILABLE_MAC(10_14)
     return result;
 }
 
-- (void)removeLeftTabBarDragHandle {
-    [self.leftTabBarDragHandle removeFromSuperview];
-    self.leftTabBarDragHandle = nil;
+- (void)removeVerticalTabBarDragHandle {
+    [self.verticalTabBarDragHandle removeFromSuperview];
+    self.verticalTabBarDragHandle = nil;
 }
 
 - (void)updateWindowNumberFont {
@@ -1469,7 +1469,7 @@ NS_CLASS_AVAILABLE_MAC(10_14)
         return;
     }
 
-    [self removeLeftTabBarDragHandle];
+    [self removeVerticalTabBarDragHandle];
 
     // Build inputs and calculate layout using the calculator
     iTermLayoutInputs inputs = [self layoutInputsForWindow:thisWindow];
@@ -1496,7 +1496,7 @@ NS_CLASS_AVAILABLE_MAC(10_14)
 }
 
 - (void)layoutSubviewsTopTabBarVisible:(BOOL)topTabBarVisible forWindow:(NSWindow *)thisWindow {
-    [self removeLeftTabBarDragHandle];
+    [self removeVerticalTabBarDragHandle];
 
     // Build inputs and calculate layout using the calculator
     iTermLayoutInputs inputs = [self layoutInputsForWindow:thisWindow];
@@ -1529,7 +1529,7 @@ NS_CLASS_AVAILABLE_MAC(10_14)
 - (void)layoutSubviewsWithVisibleBottomTabBarForWindow:(NSWindow *)thisWindow {
     assert(!_tabBarControlOnLoan);
     DLog(@"repositionWidgets - putting tabs at bottom");
-    [self removeLeftTabBarDragHandle];
+    [self removeVerticalTabBarDragHandle];
 
     // Build inputs and calculate layout using the calculator
     iTermLayoutInputs inputs = [self layoutInputsForWindow:thisWindow];
@@ -1615,7 +1615,7 @@ NS_CLASS_AVAILABLE_MAC(10_14)
 
 - (void)updateLeftTabBarDragHandleForTabBarFrame:(CGRect)tabBarFrame {
     if (CGRectIsEmpty(tabBarFrame)) {
-        [self removeLeftTabBarDragHandle];
+        [self removeVerticalTabBarDragHandle];
         return;
     }
 
@@ -1624,18 +1624,18 @@ NS_CLASS_AVAILABLE_MAC(10_14)
                                                   0,
                                                   dragHandleWidth,
                                                   NSHeight(tabBarFrame));
-    if (!self.leftTabBarDragHandle) {
-        self.leftTabBarDragHandle = [[iTermDragHandleView alloc] initWithFrame:leftTabBarDragHandleFrame];
-        self.leftTabBarDragHandle.delegate = self;
-        [self addSubview:self.leftTabBarDragHandle];
+    if (!self.verticalTabBarDragHandle) {
+        self.verticalTabBarDragHandle = [[iTermDragHandleView alloc] initWithFrame:leftTabBarDragHandleFrame];
+        self.verticalTabBarDragHandle.delegate = self;
+        [self addSubview:self.verticalTabBarDragHandle];
     } else {
-        self.leftTabBarDragHandle.frame = leftTabBarDragHandleFrame;
+        self.verticalTabBarDragHandle.frame = leftTabBarDragHandleFrame;
     }
 }
 
 - (void)updateRightTabBarDragHandleForTabBarFrame:(CGRect)tabBarFrame {
     if (CGRectIsEmpty(tabBarFrame)) {
-        [self removeLeftTabBarDragHandle];
+        [self removeVerticalTabBarDragHandle];
         return;
     }
 
@@ -1644,12 +1644,12 @@ NS_CLASS_AVAILABLE_MAC(10_14)
                                                    0,
                                                    dragHandleWidth,
                                                    NSHeight(tabBarFrame));
-    if (!self.leftTabBarDragHandle) {
-        self.leftTabBarDragHandle = [[iTermDragHandleView alloc] initWithFrame:rightTabBarDragHandleFrame];
-        self.leftTabBarDragHandle.delegate = self;
-        [self addSubview:self.leftTabBarDragHandle];
+    if (!self.verticalTabBarDragHandle) {
+        self.verticalTabBarDragHandle = [[iTermDragHandleView alloc] initWithFrame:rightTabBarDragHandleFrame];
+        self.verticalTabBarDragHandle.delegate = self;
+        [self addSubview:self.verticalTabBarDragHandle];
     } else {
-        self.leftTabBarDragHandle.frame = rightTabBarDragHandleFrame;
+        self.verticalTabBarDragHandle.frame = rightTabBarDragHandleFrame;
     }
 }
 
@@ -1985,15 +1985,20 @@ NS_CLASS_AVAILABLE_MAC(10_14)
 
 #pragma mark - iTermDragHandleViewDelegate
 
-// For the left-side tab bar.
+// For the left-side or right-side tab bar.
 - (CGFloat)dragHandleView:(iTermDragHandleView *)dragHandle didMoveBy:(CGFloat)delta {
     CGFloat originalValue = _leftTabBarPreferredWidth;
-    const CGFloat signedDelta = [iTermPreferences intForKey:kPreferenceKeyTabPosition] == PSMTab_RightTab ? -delta : delta;
+    const BOOL isRight = ([iTermPreferences intForKey:kPreferenceKeyTabPosition] == PSMTab_RightTab);
+    const CGFloat signedDelta = isRight ? -delta : delta;
     _leftTabBarPreferredWidth = round([self leftTabBarWidthForPreferredWidth:_leftTabBarPreferredWidth + signedDelta]);
     [self layoutSubviews];  // This may modify _leftTabBarWidth if it's too big or too small.
     [[iTermUserDefaults userDefaults] setDouble:_leftTabBarPreferredWidth
                                               forKey:kPreferenceKeyLeftTabBarWidth];
-    return _leftTabBarPreferredWidth - originalValue;
+    // Return the handle's actual movement in window coordinates. For the
+    // right-side tab bar the handle is on the bar's left edge, so it moves
+    // opposite to the width change.
+    const CGFloat widthChange = _leftTabBarPreferredWidth - originalValue;
+    return isRight ? -widthChange : widthChange;
 }
 
 - (void)dragHandleViewDidFinishMoving:(iTermDragHandleView *)dragHandle {

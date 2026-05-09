@@ -428,6 +428,17 @@ static CVReturn DisplayLinkCallback(CVDisplayLinkRef displayLink,
                _dragWindowOffset.height += self.draggedCell.frame.size.height;
             }
 
+            // For right-side tab bars the dragged tab cell is drawn near the
+            // right edge of viewImage (because the new window will also have
+            // its tab bar on the right). Shift the new window left by that
+            // distance so the tab cell sits under the mouse instead of the
+            // snapshot. topLeftPointOfDragViewWindowForMouseLocation: subtracts
+            // _dragWindowOffset.width from the mouse position, so we add here.
+            if (self.sourceTabBar.tabLocation == PSMTab_RightTab) {
+                NSImage *tabImage = [[_dragTabWindow contentView] image];
+                _dragWindowOffset.width += (viewImage.size.width - tabImage.size.width);
+            }
+
             _dragViewWindow = [[PSMTabDragWindow dragWindowWithTabBarCell:[self draggedCell]
                                                                     image:viewImage
                                                                 styleMask:NSWindowStyleMaskBorderless] retain];

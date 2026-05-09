@@ -1301,6 +1301,17 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     }];
 }
 
+- (NSArray<PTYSession *> *)sessionsAtRight {
+    if (isMaximized_) {
+        return @[self.activeSession];
+    }
+    return [self.sessions maximumsWithComparator:^NSComparisonResult(PTYSession *_Nonnull session1, PTYSession *_Nonnull session2) {
+        const CGFloat x1 = round(NSMaxX([root_ convertRect:session1.view.bounds fromView:session1.view]));
+        const CGFloat x2 = round(NSMaxX([root_ convertRect:session2.view.bounds fromView:session2.view]));
+        return [@(x1) compare:@(x2)];
+    }];
+}
+
 - (NSArray<PTYSession *> *)sessionsAtBottom {
     if (isMaximized_) {
         return @[self.activeSession];
