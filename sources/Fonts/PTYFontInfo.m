@@ -47,6 +47,22 @@
     return NO;
 }
 
+- (BOOL)it_explicitlyDisablesContextualAlternates {
+    NSArray *settings = self.fontDescriptor.fontAttributes[NSFontFeatureSettingsAttribute];
+    for (NSDictionary *dict in settings) {
+        if (![dict isKindOfClass:[NSDictionary class]]) {
+            continue;
+        }
+        NSNumber *type = dict[(__bridge NSString *)kCTFontFeatureTypeIdentifierKey];
+        NSNumber *selector = dict[(__bridge NSString *)kCTFontFeatureSelectorIdentifierKey];
+        if (type.integerValue == kContextualAlternatesType &&
+            selector.integerValue == kContextualAlternatesOffSelector) {
+            return YES;
+        }
+    }
+    return NO;
+}
+
 // This function is obviously an embarrassment.
 // You might think you could look at the font's features (which you can get through
 // fontAttributes[NSFontFeatureSettingsAttribute] and thn looking for the
@@ -56,15 +72,21 @@
 - (NSInteger)it_ligatureLevel {
     if ([self it_fontIsOnLigatureBlacklist]) {
         return 0;
-    } else if ([iTermAdvancedSettingsModel enableContextualAlternates]) {
+    }
+    if ([self it_explicitlyDisablesContextualAlternates]) {
+        // The font carries an explicit calt-off feature setting from the
+        // per-profile picker. Don't ask Core Text to re-enable calt via the
+        // ligature attribute.
+        return 1;
+    }
+    if ([iTermAdvancedSettingsModel enableContextualAlternates]) {
         // Use level 2 to enable contextual alternates (calt) in addition to
         // standard ligatures (liga). Many popular coding fonts such as
         // Monaspace, Iosevka, and Cascadia Code use calt for their coding
         // ligatures, which level 1 does not activate.
         return 2;
-    } else {
-        return 1;
     }
+    return 1;
 }
 
 - (BOOL)it_defaultLigatures {

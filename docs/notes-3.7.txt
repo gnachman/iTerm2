@@ -649,3 +649,10 @@ Bug Fixes:
   and unfocused windows (requires
   “Show border around windows” with
   no title bar).
+- Add a per-profile “Contextual Alternates”
+  toggle to the font picker’s options menu,
+  for fonts that expose calt. Lets you keep
+  calt-based coding ligatures on for one
+  profile while turning off surprising
+  substitutions (e.g. Monaspace rendering
+  [] as a checkbox) on another. Issue 12847.
