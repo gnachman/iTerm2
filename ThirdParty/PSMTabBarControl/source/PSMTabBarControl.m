@@ -584,6 +584,7 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionPUAFontProvider = @"PSMTabBarCon
             break;
 
         case PSMTab_LeftTab:
+        case PSMTab_RightTab:
             [self setOrientation:PSMTabBarVerticalOrientation];
             break;
     }
@@ -607,6 +608,7 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionPUAFontProvider = @"PSMTabBarCon
             return (point.y > self.bounds.size.height - edgeDragHeight);
 
         case PSMTab_LeftTab:
+        case PSMTab_RightTab:
             break;
     }
     return NO;
@@ -1821,7 +1823,8 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionPUAFontProvider = @"PSMTabBarCon
     NSPoint mousePt = [self convertPoint:[theEvent locationInWindow] fromView:nil];
     NSRect frame = [self frame];
 
-    if ([self orientation] == PSMTabBarVerticalOrientation && [self allowsResizing] && partnerView && (mousePt.x > frame.size.width - 3)) {
+    const BOOL mouseIsOverVerticalResizeHandle = (_tabLocation == PSMTab_RightTab) ? (mousePt.x < 3) : (mousePt.x > frame.size.width - 3);
+    if ([self orientation] == PSMTabBarVerticalOrientation && [self allowsResizing] && partnerView && mouseIsOverVerticalResizeHandle) {
         _resizing = YES;
     }
 
@@ -1873,16 +1876,28 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionPUAFontProvider = @"PSMTabBarCon
     if (_resizing) {
         NSRect frame = [self frame];
         float resizeAmount = [theEvent deltaX];
-        if ((currentPoint.x > frame.size.width && resizeAmount > 0) || (currentPoint.x < frame.size.width && resizeAmount < 0)) {
+        if (_tabLocation == PSMTab_RightTab) {
+            resizeAmount = -resizeAmount;
+        }
+        const BOOL shouldResize = (_tabLocation == PSMTab_RightTab) ?
+            ((currentPoint.x < 0 && resizeAmount > 0) || (currentPoint.x > 0 && resizeAmount < 0)) :
+            ((currentPoint.x > frame.size.width && resizeAmount > 0) || (currentPoint.x < frame.size.width && resizeAmount < 0));
+        if (shouldResize) {
             [[NSCursor resizeLeftRightCursor] push];
 
             NSRect partnerFrame = [partnerView frame];
 
             //do some bounds checking
             if ((frame.size.width + resizeAmount > [self cellMinWidth]) && (frame.size.width + resizeAmount < [self cellMaxWidth])) {
-                frame.size.width += resizeAmount;
-                partnerFrame.size.width -= resizeAmount;
-                partnerFrame.origin.x += resizeAmount;
+                if (_tabLocation == PSMTab_RightTab) {
+                    frame.origin.x -= resizeAmount;
+                    frame.size.width += resizeAmount;
+                    partnerFrame.size.width -= resizeAmount;
+                } else {
+                    frame.size.width += resizeAmount;
+                    partnerFrame.size.width -= resizeAmount;
+                    partnerFrame.origin.x += resizeAmount;
+                }
 
                 [self setFrame:frame];
                 [partnerView setFrame:partnerFrame];
@@ -2033,7 +2048,8 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionPUAFontProvider = @"PSMTabBarCon
     [super resetCursorRects];
     if ([self orientation] == PSMTabBarVerticalOrientation) {
         NSRect frame = [self frame];
-        [self addCursorRect:NSMakeRect(frame.size.width - 2, 0, 2, frame.size.height) cursor:[NSCursor resizeLeftRightCursor]];
+        const CGFloat cursorX = (_tabLocation == PSMTab_RightTab) ? 0 : frame.size.width - 2;
+        [self addCursorRect:NSMakeRect(cursorX, 0, 2, frame.size.height) cursor:[NSCursor resizeLeftRightCursor]];
     } else {
         const CGFloat edgeDragHeight = self.style.edgeDragHeight;
         if (edgeDragHeight == 0) {
@@ -2053,6 +2069,7 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionPUAFontProvider = @"PSMTabBarCon
                 break;
 
             case PSMTab_LeftTab:
+            case PSMTab_RightTab:
                 break;
         }
     }
@@ -2940,4 +2957,3 @@ static CFAbsoluteTime gDragMoveFirstTime = 0;
 }
 
 @end
-

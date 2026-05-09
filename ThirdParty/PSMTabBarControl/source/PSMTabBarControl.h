@@ -174,6 +174,7 @@ typedef NS_ENUM(int, PSMTabPosition) {
     PSMTab_TopTab = 0,
     PSMTab_BottomTab = 1,
     PSMTab_LeftTab = 2,
+    PSMTab_RightTab = 3,
 };
 
 extern const CGFloat PSMTabBarProgressBarHeight;
@@ -291,4 +292,3 @@ extern const CGFloat PSMTabBarProgressBarHeight;
 NS_ASSUME_NONNULL_END
 
 BOOL PSMShouldExtendTransparencyIntoMinimalTabBar(void);
-

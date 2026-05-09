@@ -1356,10 +1356,12 @@ const void *PSMTabStyleDarkColorKey = "dark";
         [[self bottomLineColorSelected:NO] set];
         NSRect rightLineRect = rect;
         rightLineRect.origin.y -= 1;
-        [self drawVerticalLineInFrame:rightLineRect x:NSMaxX(rect) - 1];
+        const CGFloat x = (bar.tabLocation == PSMTab_RightTab) ? NSMinX(rect) : NSMaxX(rect) - 1;
+        [self drawVerticalLineInFrame:rightLineRect x:x];
     } else {
         switch (bar.tabLocation) {
             case PSMTab_LeftTab:
+            case PSMTab_RightTab:
                 break;
             case PSMTab_TopTab:
                 // Bottom line
@@ -1381,6 +1383,7 @@ const void *PSMTabStyleDarkColorKey = "dark";
     switch (position) {
         case PSMTab_BottomTab:
         case PSMTab_LeftTab:
+        case PSMTab_RightTab:
             return YES;
 
         case PSMTab_TopTab:

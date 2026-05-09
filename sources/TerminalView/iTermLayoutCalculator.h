@@ -45,7 +45,7 @@ typedef struct {
     BOOL enteringFullscreen;
     BOOL inFullscreen;
 
-    /// Tab position (PSMTab_TopTab, PSMTab_BottomTab, PSMTab_LeftTab)
+    /// Tab position (PSMTab_TopTab, PSMTab_BottomTab, PSMTab_LeftTab, PSMTab_RightTab)
     int tabPosition;
 
     /// Division view
@@ -110,11 +110,15 @@ typedef struct {
 /// Calculate layout for visible left tab bar.
 + (iTermLayoutOutputs)calculateLayoutWithVisibleLeftTabBarInputs:(iTermLayoutInputs)inputs;
 
+/// Calculate layout for visible right tab bar.
++ (iTermLayoutOutputs)calculateLayoutWithVisibleRightTabBarInputs:(iTermLayoutInputs)inputs;
+
 @end
 
 // Tab position constants (matching PSMTabBarControl)
 extern const int kLayoutTabPositionTop;
 extern const int kLayoutTabPositionBottom;
 extern const int kLayoutTabPositionLeft;
+extern const int kLayoutTabPositionRight;
 
 NS_ASSUME_NONNULL_END

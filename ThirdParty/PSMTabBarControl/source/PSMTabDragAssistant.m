@@ -395,6 +395,7 @@ static CVReturn DisplayLinkCallback(CVDisplayLinkRef displayLink,
                     switch (control.tabLocation) {
                         case PSMTab_TopTab:
                         case PSMTab_LeftTab:
+                        case PSMTab_RightTab:
                             drawPoint.y = viewImage.size.height - self.draggedCell.frame.size.height;
                             break;
                         case PSMTab_BottomTab:
@@ -421,7 +422,7 @@ static CVReturn DisplayLinkCallback(CVDisplayLinkRef displayLink,
                 [viewImage unlockFocus];
             }
 
-            if (self.sourceTabBar.tabLocation == PSMTab_LeftTab) {
+            if (self.sourceTabBar.tabLocation == PSMTab_LeftTab || self.sourceTabBar.tabLocation == PSMTab_RightTab) {
                 _dragWindowOffset.height += self.height;
             } else if (styleMask & NSWindowStyleMaskFullSizeContentView) {
                _dragWindowOffset.height += self.draggedCell.frame.size.height;
@@ -711,6 +712,7 @@ static CVReturn DisplayLinkCallback(CVDisplayLinkRef displayLink,
             break;
         }
         case PSMTab_LeftTab:
+        case PSMTab_RightTab:
         case PSMTab_TopTab: {
             NSPoint topLeft = control.window.frame.origin;
             topLeft.y += control.window.frame.size.height;
@@ -791,6 +793,7 @@ static CVReturn DisplayLinkCallback(CVDisplayLinkRef displayLink,
             break;
         }
         case PSMTab_LeftTab:
+        case PSMTab_RightTab:
         case PSMTab_TopTab: {
             NSPoint topLeft = origin;
             [window setFrameTopLeftPoint:topLeft];

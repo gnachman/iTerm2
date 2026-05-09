@@ -26,6 +26,7 @@
 const int kLayoutTabPositionTop = 0;
 const int kLayoutTabPositionBottom = 1;
 const int kLayoutTabPositionLeft = 2;
+const int kLayoutTabPositionRight = 3;
 
 @implementation iTermLayoutCalculator
 
@@ -43,6 +44,8 @@ const int kLayoutTabPositionLeft = 2;
             return [self calculateLayoutWithVisibleBottomTabBarInputs:inputs];
         case kLayoutTabPositionLeft:
             return [self calculateLayoutWithVisibleLeftTabBarInputs:inputs];
+        case kLayoutTabPositionRight:
+            return [self calculateLayoutWithVisibleRightTabBarInputs:inputs];
         default:
             return [self calculateLayoutWithVisibleTopTabBarInputs:inputs];
     }
@@ -286,6 +289,65 @@ const int kLayoutTabPositionLeft = 2;
         CGRectGetMaxX(outputs.tabBarFrame) + xOffset,
         outputs.decorationHeightBottom,
         inputs.contentViewWidth - CGRectGetWidth(outputs.tabBarFrame) - widthAdjustment,
+        inputs.contentViewHeight - outputs.decorationHeightBottom - outputs.decorationHeightTop
+    );
+
+    outputs.tabViewFrame = [self tabViewFrameByShrinkingForFullScreenTabBar:outputs.tabViewFrame
+                                                                 withInputs:inputs];
+
+    outputs.toolbeltFrame = [self toolbeltFrameWithInputs:inputs];
+
+    return outputs;
+}
+
+#pragma mark - Visible Right Tab Bar Layout
+
++ (iTermLayoutOutputs)calculateLayoutWithVisibleRightTabBarInputs:(iTermLayoutInputs)inputs {
+    iTermLayoutOutputs outputs = {0};
+
+    outputs.decorationHeightTop = inputs.notchInset;
+    outputs.decorationHeightBottom = 0;
+
+    if (inputs.divisionViewVisible) {
+        outputs.decorationHeightTop += inputs.divisionViewHeight;
+    }
+
+    const CGFloat toolbeltWidth = inputs.shouldShowToolbelt ? inputs.toolbeltWidth : 0;
+    const CGFloat tabBarMaxX = inputs.contentViewWidth - toolbeltWidth;
+
+    outputs.tabBarFrame = CGRectMake(
+        tabBarMaxX - inputs.leftTabBarWidth,
+        outputs.decorationHeightBottom,
+        inputs.leftTabBarWidth,
+        inputs.contentViewHeight - outputs.decorationHeightBottom - outputs.decorationHeightTop
+    );
+
+    CGFloat widthAdjustment = 0;
+    const CGFloat tabViewWidthAdjustment = CGRectGetWidth(outputs.tabBarFrame);
+    if (inputs.tabBarFlashing) {
+        widthAdjustment -= CGRectGetWidth(outputs.tabBarFrame);
+    }
+    if (inputs.shouldShowToolbelt) {
+        widthAdjustment += inputs.toolbeltWidth;
+    }
+
+    CGRect frame = CGRectMake(
+        0,
+        outputs.decorationHeightBottom,
+        inputs.contentViewWidth - tabViewWidthAdjustment - widthAdjustment,
+        inputs.contentViewHeight - outputs.decorationHeightBottom - outputs.decorationHeightTop
+    );
+
+    [self layoutStatusBarWithInputs:inputs
+                   decorationTop:&outputs.decorationHeightTop
+                decorationBottom:&outputs.decorationHeightBottom
+                  statusBarFrame:&outputs.statusBarFrame
+                   tabViewFrame:frame];
+
+    outputs.tabViewFrame = CGRectMake(
+        0,
+        outputs.decorationHeightBottom,
+        inputs.contentViewWidth - tabViewWidthAdjustment - widthAdjustment,
         inputs.contentViewHeight - outputs.decorationHeightBottom - outputs.decorationHeightTop
     );
 
