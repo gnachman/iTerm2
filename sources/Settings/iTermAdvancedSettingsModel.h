@@ -173,6 +173,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (void)setNoSyncOpenLinksInApp:(BOOL)value;
 + (BOOL)drawBottomLineForHorizontalTabBar;
 + (BOOL)drawOutlineAroundCursor;
++ (BOOL)dryRunEraseAllSettingsAndData;
 + (BOOL)dwcLineCache;
 + (double)dynamicProfilesNotificationLatency;
 + (NSString *)dynamicProfilesPath;

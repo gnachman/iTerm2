@@ -1370,6 +1370,11 @@ enum {
     [self showMessage:[iTerm2ImportExport importAll] title:@"Problem Importing"];
 }
 
+- (IBAction)eraseAllSettingsAndData:(id)sender {
+    [self showMessage:[iTerm2ImportExport eraseAllWithWindow:self.view.window]
+                title:@"Problem Erasing Settings and Data"];
+}
+
 - (void)showMessage:(NSString *)message title:(NSString *)title {
     if (!message) {
         return;

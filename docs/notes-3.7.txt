@@ -659,3 +659,11 @@ Bug Fixes:
   profile while turning off surprising
   substitutions (e.g. Monaspace rendering
   [] as a checkbox) on another. Issue 12847.
+- Add an Erase All Settings and Data
+  button in Settings > General >
+  Settings. It offers to export first,
+  then erases preferences, profiles,
+  saved sessions, scripts, and the
+  contents of ~/.iterm2 and the app
+  support folder, then quits
+  immediately. Issue 12852.

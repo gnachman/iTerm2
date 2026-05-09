@@ -8183,11 +8183,11 @@ You can choose to define the characters considered part of a word with a regular
                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                 <subviews>
                                     <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="pnz-ME-DBf" customClass="iTermPreferencesInnerTabContainerView">
-                                        <rect key="frame" x="27" y="344" width="701" height="176"/>
+                                        <rect key="frame" x="27" y="304" width="701" height="216"/>
                                         <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxX="YES" flexibleMinY="YES"/>
                                         <subviews>
                                             <textField focusRingType="none" verticalHuggingPriority="750" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="5616">
-                                                <rect key="frame" x="164" y="112" width="405" height="21"/>
+                                                <rect key="frame" x="164" y="152" width="405" height="21"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" state="on" borderStyle="bezel" placeholderString="Enter path to folder with settings" drawsBackground="YES" id="5617" userLabel="iTermStatusIndicatingTextFieldCell" customClass="iTermStatusIndicatingTextFieldCell">
                                                     <font key="font" metaFont="system"/>
@@ -8199,12 +8199,12 @@ You can choose to define the characters considered part of a word with a regular
                                                 </connections>
                                             </textField>
                                             <imageView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="5628">
-                                                <rect key="frame" x="549" y="115" width="16" height="16"/>
+                                                <rect key="frame" x="549" y="155" width="16" height="16"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <imageCell key="cell" refusesFirstResponder="YES" alignment="left" animates="YES" imageScaling="proportionallyDown" image="WarningSign" id="5629"/>
                                             </imageView>
                                             <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="5614">
-                                                <rect key="frame" x="162" y="140" width="428" height="18"/>
+                                                <rect key="frame" x="162" y="180" width="428" height="18"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <buttonCell key="cell" type="check" title="Load settings from a custom folder or URL" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="5615">
                                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -8215,7 +8215,7 @@ You can choose to define the characters considered part of a word with a regular
                                                 </connections>
                                             </button>
                                             <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="5618">
-                                                <rect key="frame" x="571" y="105" width="96" height="32"/>
+                                                <rect key="frame" x="571" y="145" width="96" height="32"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <buttonCell key="cell" type="push" title="Browse" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="5619">
                                                     <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
@@ -8226,7 +8226,7 @@ You can choose to define the characters considered part of a word with a regular
                                                 </connections>
                                             </button>
                                             <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="YYR-pl-zPM">
-                                                <rect key="frame" x="162" y="81" width="88" height="16"/>
+                                                <rect key="frame" x="162" y="121" width="88" height="16"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <textFieldCell key="cell" lineBreakMode="clipping" title="Save changes" id="6Dp-co-GtB">
                                                     <font key="font" metaFont="system"/>
@@ -8235,7 +8235,7 @@ You can choose to define the characters considered part of a word with a regular
                                                 </textFieldCell>
                                             </textField>
                                             <popUpButton verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="WKm-Jb-RMO">
-                                                <rect key="frame" x="252" y="76" width="321" height="25"/>
+                                                <rect key="frame" x="252" y="116" width="321" height="25"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <popUpButtonCell key="cell" type="push" title="Automatically" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" tag="2" imageScaling="proportionallyDown" inset="2" selectedItem="KXS-zY-yFi" id="nFZ-i3-Vo2">
                                                     <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
@@ -8253,7 +8253,7 @@ You can choose to define the characters considered part of a word with a regular
                                                 </connections>
                                             </popUpButton>
                                             <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="5620">
-                                                <rect key="frame" x="571" y="72" width="96" height="32"/>
+                                                <rect key="frame" x="571" y="112" width="96" height="32"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <buttonCell key="cell" type="push" title="Save Now" bezelStyle="rounded" alignment="center" state="on" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="5621">
                                                     <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
@@ -8264,7 +8264,7 @@ You can choose to define the characters considered part of a word with a regular
                                                 </connections>
                                             </button>
                                             <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="vVY-wm-9aY">
-                                                <rect key="frame" x="157" y="36" width="215" height="32"/>
+                                                <rect key="frame" x="157" y="76" width="215" height="32"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <buttonCell key="cell" type="push" title="Export All Settings and Data…" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="Qcp-C1-4DM">
                                                     <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
@@ -8275,7 +8275,7 @@ You can choose to define the characters considered part of a word with a regular
                                                 </connections>
                                             </button>
                                             <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="tsJ-bg-61W">
-                                                <rect key="frame" x="18" y="141" width="138" height="16"/>
+                                                <rect key="frame" x="18" y="181" width="138" height="16"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <textFieldCell key="cell" lineBreakMode="clipping" alignment="right" title="External  settings:" id="Pmq-3t-6WB">
                                                     <font key="font" metaFont="system"/>
@@ -8284,7 +8284,7 @@ You can choose to define the characters considered part of a word with a regular
                                                 </textFieldCell>
                                             </textField>
                                             <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="oCd-zk-hpR">
-                                                <rect key="frame" x="18" y="46" width="138" height="16"/>
+                                                <rect key="frame" x="18" y="86" width="138" height="16"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <textFieldCell key="cell" lineBreakMode="clipping" alignment="right" title="Backup &amp; restore:" id="2JC-Pw-mnp">
                                                     <font key="font" metaFont="system"/>
@@ -8293,7 +8293,7 @@ You can choose to define the characters considered part of a word with a regular
                                                 </textFieldCell>
                                             </textField>
                                             <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="XgN-lM-YNU">
-                                                <rect key="frame" x="157" y="4" width="215" height="32"/>
+                                                <rect key="frame" x="157" y="44" width="215" height="32"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <buttonCell key="cell" type="push" title="Import All Settings and Data…" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="lVc-Bf-xne">
                                                     <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
@@ -8301,6 +8301,26 @@ You can choose to define the characters considered part of a word with a regular
                                                 </buttonCell>
                                                 <connections>
                                                     <action selector="importAllSettingsAndData:" target="9Se-ld-UJa" id="WEb-C0-qfR"/>
+                                                </connections>
+                                            </button>
+                                            <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="RPd-sE-9My">
+                                                <rect key="frame" x="18" y="20" width="138" height="16"/>
+                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                                <textFieldCell key="cell" lineBreakMode="clipping" alignment="right" title="Reset:" id="Ecm-c4-bUs">
+                                                    <font key="font" metaFont="system"/>
+                                                    <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                                                    <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                                                </textFieldCell>
+                                            </textField>
+                                            <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="BuE-Wp-Vt7">
+                                                <rect key="frame" x="157" y="12" width="215" height="32"/>
+                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                                <buttonCell key="cell" type="push" title="Erase All Settings and Data…" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="hdw-5J-3fP">
+                                                    <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
+                                                    <font key="font" metaFont="system"/>
+                                                </buttonCell>
+                                                <connections>
+                                                    <action selector="eraseAllSettingsAndData:" target="9Se-ld-UJa" id="BMM-Ug-n8P"/>
                                                 </connections>
                                             </button>
                                         </subviews>

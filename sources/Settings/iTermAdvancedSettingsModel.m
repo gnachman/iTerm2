@@ -522,6 +522,7 @@ DEFINE_SECURE_STRING(browserBundleID, BrowserBundleID, SECTION_GENERAL @"Bundle 
 DEFINE_FLOAT(menuTipDelay, 1.0, SECTION_GENERAL @"Time to wait before showing tips in the main menu.\nSet this to a big number if you don’t like the tips.");
 
 DEFINE_BOOL(revealExportedSettingsAndData, YES, SECTION_GENERAL @"Reveal file created by “Export All Settings and Data” in finder upon completion");
+DEFINE_BOOL(dryRunEraseAllSettingsAndData, NO, SECTION_GENERAL @"Dry-run “Erase All Settings and Data”.\nWhen enabled, the Erase All Settings and Data button logs what it would delete (via NSLog) instead of actually deleting anything, and does not quit. Intended for testing the feature.");
 
 #pragma mark - Drawing
 

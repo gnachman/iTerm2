@@ -10,8 +10,13 @@ import UniformTypeIdentifiers
 
 @objc(iTerm2ImportExport)
 class ImportExport: NSObject {
-    @objc
-    static func exportAll() -> String? {
+    fileprivate enum ExportOutcome {
+        case success
+        case cancelled
+        case failure(String)
+    }
+
+    fileprivate static func performExportFlow() -> ExportOutcome {
         DLog("Begin")
         let savePanel = NSSavePanel()
         savePanel.allowedContentTypes = ["itermexport"].compactMap { UTType(filenameExtension: $0) }
@@ -20,10 +25,10 @@ class ImportExport: NSObject {
 
         let response = savePanel.runModal()
         guard response == NSApplication.ModalResponse.OK else {
-            return nil
+            return .cancelled
         }
         guard let url = savePanel.url else {
-            return nil
+            return .cancelled
         }
         DLog("Export to \(url.path)")
         do {
@@ -32,33 +37,43 @@ class ImportExport: NSObject {
             if iTermAdvancedSettingsModel.revealExportedSettingsAndData() {
                 NSWorkspace.shared.activateFileViewerSelecting([url])
             }
-            return nil
+            return .success
         } catch {
             DLog("Failed: \(error)")
             switch error {
             case ImportExportError.failedToCreateTempDir(let reason):
-                return "Failed to create temporary directory: \(reason)"
+                return .failure("Failed to create temporary directory: \(reason)")
             case ImportExportError.failedToCreateIntermediateFolder(let reason):
-                return "Failed to create folder: \(reason)"
+                return .failure("Failed to create folder: \(reason)")
             case ImportExportError.failedToCopyFile(let reason):
-                return "Failed to copy file: \(reason)"
+                return .failure("Failed to copy file: \(reason)")
             case ImportExportError.failedToSaveFile(let reason):
-                return "Failed to save file: \(reason)"
+                return .failure("Failed to save file: \(reason)")
             case ImportExportError.bug(let reason):
-                return "A bug was encountered: \(reason). Please report this at https://iterm2.com/bugs"
+                return .failure("A bug was encountered: \(reason). Please report this at https://iterm2.com/bugs")
             case ImportExportError.failedToCreateArchive(let reason):
-                return "Failed to create archive: \(reason)"
+                return .failure("Failed to create archive: \(reason)")
             case ImportExportError.failedToLoadFile(let reason):
-                return "Failed to load file: \(reason)"
+                return .failure("Failed to load file: \(reason)")
             case ImportExportError.corruptDataFound(let reason):
-                return "Malformed data found: \(reason)"
+                return .failure("Malformed data found: \(reason)")
             case ImportExportError.scriptExportFailed(let reason):
-                return "Script could not be exported: \(reason)"
+                return .failure("Script could not be exported: \(reason)")
             case ImportExportError.failedToInstallPythonRuntime:
-                return "Failed to install Python runtime"
+                return .failure("Failed to install Python runtime")
             default:
-                return "Unexpected error: \(error.localizedDescription)"
+                return .failure("Unexpected error: \(error.localizedDescription)")
             }
+        }
+    }
+
+    @objc
+    static func exportAll() -> String? {
+        switch performExportFlow() {
+        case .success, .cancelled:
+            return nil
+        case .failure(let message):
+            return message
         }
     }
 
@@ -101,6 +116,214 @@ class ImportExport: NSObject {
         precondition(url.lastPathComponent.hasPrefix(".") && url.lastPathComponent.utf16.count > 12)
         try? FileManager.default.removeItem(at: url)
         NSApp.relaunch()
+    }
+
+    // Returns nil on success or cancellation. Returns an error message string if
+    // the optional export step failed and the caller should surface it to the
+    // user. On a successful erase, this method does not return: it calls
+    // _exit(0) so no normal teardown code path can re-save state.
+    @objc
+    static func eraseAll(window: NSWindow?) -> String? {
+        let exportSelection = iTermWarning.show(
+            withTitle: "Would you like to export your settings and data first? You will be able to re-import the exported file later if you change your mind.",
+            actions: ["Export First", "Skip Export", "Cancel"],
+            accessory: nil,
+            identifier: nil,
+            silenceable: .kiTermWarningTypePersistent,
+            heading: "Erase All Settings and Data",
+            window: window)
+
+        switch exportSelection {
+        case .kiTermWarningSelection0:
+            switch performExportFlow() {
+            case .success:
+                break
+            case .cancelled:
+                // Cancelling the save panel during "Export First" cancels
+                // the whole erase flow rather than silently proceeding to
+                // the destructive confirmation with no backup made.
+                return nil
+            case .failure(let message):
+                // Show the export failure under its own heading rather
+                // than letting the caller surface it under "Problem
+                // Erasing Settings and Data" — the failure was during
+                // export, not erase, and the erase has not happened.
+                _ = iTermWarning.show(
+                    withTitle: message,
+                    actions: ["OK"],
+                    accessory: nil,
+                    identifier: nil,
+                    silenceable: .kiTermWarningTypePersistent,
+                    heading: "Problem Exporting Settings and Data",
+                    window: window)
+                return nil
+            }
+        case .kiTermWarningSelection1:
+            break  // Skip Export
+        default:
+            return nil
+        }
+
+        let dryRun = iTermAdvancedSettingsModel.dryRunEraseAllSettingsAndData()
+        let confirmTitle: String
+        let confirmHeading: String
+        let actionLabel: String
+        if dryRun {
+            confirmTitle = """
+            Dry-run mode is enabled. iTerm2 will log to Console.app what it would erase and stay running. Nothing will actually be deleted.
+            """
+            confirmHeading = "Dry-Run Erase?"
+            actionLabel = "Run Dry Run"
+        } else {
+            confirmTitle = """
+            The following will be erased and iTerm2 will quit immediately:
+
+            \u{2022} Preferences (profiles, key bindings, arrangements, advanced settings)
+            \u{2022} Saved windows and sessions
+            \u{2022} Python API scripts and runtimes
+            \u{2022} Secure settings
+            \u{2022} The contents of ~/.iterm2 and ~/Library/Application Support/iTerm2
+
+            Items stored in the macOS Keychain (such as the AI API key and Password Manager entries) are not erased and must be removed manually from Keychain Access if you want them gone too. On systems with networked home directories, secure settings stored under /usr/local are written by an administrator and may also need to be removed manually.
+
+            This cannot be undone.
+            """
+            confirmHeading = "Erase Everything?"
+            actionLabel = "Erase Everything and Quit"
+        }
+
+        let warning = iTermWarning()
+        warning.title = confirmTitle
+        warning.heading = confirmHeading
+        let eraseAction = iTermWarningAction(label: actionLabel, block: nil)
+        eraseAction.destructive = !dryRun
+        warning.warningActions = [iTermWarningAction(label: "Cancel"), eraseAction]
+        warning.warningType = .kiTermWarningTypePersistent
+        warning.window = window
+        let confirm = warning.runModal()
+        if confirm != .kiTermWarningSelection1 {
+            return nil
+        }
+
+        Eraser(dryRun: dryRun).eraseEverything()
+        if !dryRun {
+            _exit(0)
+        }
+        _ = iTermWarning.show(
+            withTitle: "iTerm2 logged what it would have erased to Console.app. Nothing was actually deleted because the “Dry-run Erase All Settings and Data” advanced setting is enabled.",
+            actions: ["OK"],
+            accessory: nil,
+            identifier: nil,
+            silenceable: .kiTermWarningTypePersistent,
+            heading: "Dry Run Complete",
+            window: window)
+        return nil
+    }
+}
+
+// Wraps every state-mutating action the eraser performs so a single dry-run
+// flag can divert it into NSLog instead of actually deleting things. Use this
+// for every file/system mutation; do not call FileManager.removeItem or
+// removePersistentDomain directly from an eraser.
+private struct EraseAction {
+    let dryRun: Bool
+
+    func remove(atPath path: String) {
+        if dryRun {
+            NSLog("[Erase dry-run] would remove %@", path)
+            return
+        }
+        try? FileManager.default.removeItem(atPath: path)
+    }
+
+    func removeUserDefaults(suiteName: String) {
+        if dryRun {
+            NSLog("[Erase dry-run] would removePersistentDomain forName: %@", suiteName)
+            return
+        }
+        // The forName: variant of removePersistentDomain is routed through
+        // cfprefsd by domain name, so the receiver instance is functionally
+        // irrelevant here. Use iTermUserDefaults.userDefaults() anyway to
+        // match the project convention from CLAUDE.md.
+        let defaults = iTermUserDefaults.userDefaults()
+        defaults.removePersistentDomain(forName: suiteName)
+        defaults.synchronize()
+    }
+}
+
+private struct Eraser {
+    private let config = ImportExportConfig()
+    private let action: EraseAction
+    // Resolved before any erase happens because scriptsPath() depends on
+    // iTermPreferences.boolForKey(kPreferenceKeyUseCustomScriptsFolder)
+    // and the user-defaults entity wipes that key. If we resolved
+    // lazily, a user with a custom scripts folder would silently keep
+    // their scripts on disk after clicking "Erase Everything and Quit".
+    private let scriptsPath: String?
+
+    init(dryRun: Bool) {
+        self.action = EraseAction(dryRun: dryRun)
+        self.scriptsPath = (FileManager.default.scriptsPath() as String?).flatMap {
+            $0.isEmpty ? nil : $0
+        }
+    }
+
+    func eraseEverything() {
+        // Iterate the same entity list used by export/import so any new
+        // entity automatically participates in erase too. FolderImporter
+        // Exporter.erase resolves .applicationSupport via the canonical
+        // app-support path (not via the lazily-created ~/.iterm2/AppSupport
+        // symlink), so folder iteration order does not matter for
+        // correctness. The scripts entity is order-sensitive because it
+        // depends on a user-default that the user-defaults entity wipes;
+        // that lookup is captured eagerly in init so iteration order is
+        // not load-bearing here either.
+        for entity in config.entities {
+            erase(entity: entity)
+        }
+        eraseSavedApplicationState()
+    }
+
+    // The export/import config does not include macOS's per-app saved
+    // window-restoration directory because export/import has no use for
+    // it, but for "Erase All Settings and Data" leaving it behind would
+    // contradict the confirmation dialog and let macOS attempt window
+    // restoration on next launch.
+    private func eraseSavedApplicationState() {
+        // macOS keys saved-state directories by bundle identifier. The
+        // -suite argv only changes which NSUserDefaults suite is used; it
+        // does not change the bundle identifier, so customSuiteName is
+        // not relevant here.
+        guard let bundleID = Bundle.main.bundleIdentifier, !bundleID.isEmpty else {
+            return
+        }
+        let path = (NSHomeDirectory() as NSString)
+            .appendingPathComponent("Library/Saved Application State")
+            .appendingPathComponent("\(bundleID).savedState")
+        action.remove(atPath: path)
+    }
+
+    private func erase(entity: ImportExportConfig.Entity) {
+        switch entity.flavor {
+        case .pythonRuntimes:
+            // Runtime files (iterm2env*) live inside the app-support folder
+            // and are removed by that entity's folder erase.
+            break
+        case .disableAutomationAuth:
+            // The disable-automation-auth file lives inside app-support and
+            // is removed by that entity's folder erase.
+            break
+        case .secureUserDefaults:
+            SecureUserDefaultsImporterExporter().erase(action: action)
+        case .userDefaults:
+            UserDefaultsImporterExporter().erase(action: action)
+        case let .folder(path, _):
+            // Exclusions exist for export (skip transient/redundant files).
+            // Erase ignores them; we want a clean slate.
+            FolderImporterExporter().erase(path: path, action: action)
+        case .scripts:
+            ScriptsImporterExporter().erase(scriptsPath: scriptsPath, action: action)
+        }
     }
 }
 
@@ -421,6 +644,38 @@ private struct FolderImporterExporter {
             throw ImportExportError.failedToCopyFile(error.localizedDescription)
         }
     }
+
+    func erase(path: ImportExportConfig.Path, action: EraseAction) {
+        // Path.url resolves .applicationSupport via the spaceless symlink
+        // ~/.iterm2/AppSupport, which is created lazily and may not exist
+        // yet on a fresh install or after the dot-dir entity unlinks it
+        // earlier in this same session. Use the canonical app-support path
+        // directly so we don't silently no-op and leave the user's
+        // profiles, arrangements, and SavedState on disk after they
+        // confirmed "Erase Everything and Quit".
+        let target: String
+        switch path.baseDirectory {
+        case .home:
+            target = path.url.resolvingSymlinksInPath().path
+        case .applicationSupport:
+            guard let real = FileManager.default.applicationSupportDirectoryWithoutCreating(),
+                  !real.isEmpty else {
+                return
+            }
+            if let relative = path.relativePath, !relative.isEmpty {
+                target = (real as NSString).appendingPathComponent(relative)
+            } else {
+                target = real
+            }
+        }
+        guard let items = try? FileManager.default.contentsOfDirectory(atPath: target) else {
+            return
+        }
+        for item in items {
+            let fullPath = (target as NSString).appendingPathComponent(item)
+            action.remove(atPath: fullPath)
+        }
+    }
 }
 
 private struct PythonRuntimesImporterExporter {
@@ -590,6 +845,47 @@ private struct UserDefaultsImporterExporter {
 
         NSApp.relaunch()
     }
+
+    func erase(action: EraseAction) {
+        // The main suite (settings, profiles, advanced settings, etc.).
+        let mainSuite: String
+        if let custom = iTermUserDefaults.customSuiteName() as String?, !custom.isEmpty {
+            mainSuite = custom
+        } else if let bundleID = Bundle.main.bundleIdentifier, !bundleID.isEmpty {
+            mainSuite = bundleID
+        } else {
+            return
+        }
+        eraseSuite(mainSuite, action: action)
+
+        // iTermPrivateUserDefaults (defined in iTermUserDefaults.m) writes
+        // to a separate ".private" suite that holds NoSyncSearchHistory2
+        // and similar private state. Mirror its naming exactly: when no
+        // -suite was given the private suite is the literal string
+        // "com.googlecode.iterm2.private", not a derivation of the bundle
+        // identifier.
+        let privateSuite: String
+        if let custom = iTermUserDefaults.customSuiteName() as String?, !custom.isEmpty {
+            privateSuite = "\(custom).private"
+        } else {
+            privateSuite = "com.googlecode.iterm2.private"
+        }
+        eraseSuite(privateSuite, action: action)
+    }
+
+    private func eraseSuite(_ suiteName: String, action: EraseAction) {
+        action.removeUserDefaults(suiteName: suiteName)
+        // removePersistentDomain + synchronize asks cfprefsd to clear and
+        // flush, but cfprefsd's on-disk behavior for an empty domain is
+        // implementation-defined (it may rewrite an empty plist or leave
+        // the existing file alone). Remove the file directly so the next
+        // launch definitely sees no preferences regardless of which path
+        // cfprefsd takes.
+        let plistPath = (NSHomeDirectory() as NSString)
+            .appendingPathComponent("Library/Preferences")
+            .appendingPathComponent("\(suiteName).plist")
+        action.remove(atPath: plistPath)
+    }
 }
 
 extension NSApplication {
@@ -642,6 +938,27 @@ private struct SecureUserDefaultsImporterExporter {
 
     private func reallyPerformImport(_ dict: [String: String]) {
         SecureUserDefaults.instance.deserializeAll(dict: dict)
+    }
+
+    func erase(action: EraseAction) {
+        // Secure user defaults files in the app support directory are
+        // removed by the app-support folder erase (they match the
+        // *.secureSetting suffix). The fallback location used when the home
+        // directory is on a network mount lives outside any folder entity,
+        // so clear it explicitly here.
+        let folder: String
+        if let suite = iTermUserDefaults.customSuiteName() as String?, !suite.isEmpty {
+            folder = "/usr/local/\(suite)-secure-settings"
+        } else {
+            folder = "/usr/local/iTerm2-secure-settings"
+        }
+        guard let items = try? FileManager.default.contentsOfDirectory(atPath: folder) else {
+            return
+        }
+        for item in items where (item as NSString).pathExtension == "secureSetting" {
+            let fullPath = (folder as NSString).appendingPathComponent(item)
+            action.remove(atPath: fullPath)
+        }
     }
 }
 
@@ -766,6 +1083,25 @@ private struct ScriptsImporterExporter {
         }
         waitForDone()
         DLog("\(source.path) \(autolaunch) \(error ?? "ok")")
+    }
+
+    // The scripts path is passed in (rather than re-queried) because it
+    // depends on iTermPreferences keys that the user-defaults entity will
+    // wipe before this method runs. The Eraser captures it in init, before
+    // any erase happens, so a custom scripts folder is still discoverable
+    // here.
+    func erase(scriptsPath: String?, action: EraseAction) {
+        guard let scriptsPath, !scriptsPath.isEmpty else {
+            return
+        }
+        let fm = FileManager.default
+        guard let items = try? fm.contentsOfDirectory(atPath: scriptsPath) else {
+            return
+        }
+        for item in items {
+            let fullPath = (scriptsPath as NSString).appendingPathComponent(item)
+            action.remove(atPath: fullPath)
+        }
     }
 }
 
