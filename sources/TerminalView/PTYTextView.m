@@ -721,6 +721,14 @@ const CGFloat PTYTextViewMarginClickGraceWidth = 2.0;
         return NO;
     }
 
+    // Workgroup toolbar shortcuts beat both the main menu and profile
+    // key bindings. Global key bindings still win — the delegate's
+    // implementation defers to those internally and returns NO when
+    // they apply.
+    if ([self.delegate textViewWorkgroupShortcutHandlesEvent:theEvent]) {
+        DLog(@"Workgroup toolbar shortcut handled it");
+        return YES;
+    }
     if ([[NSApp mainMenu] performKeyEquivalent:theEvent]) {
         // Originally I tried to detect when a key would be handled later by a
         // key equivalent by checking if Cmd is pressed, but that doesn't work

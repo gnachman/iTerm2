@@ -11738,6 +11738,14 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     return [[self _keyBindingActionForEvent:event] isActionable];
 }
 
+- (BOOL)textViewWorkgroupShortcutHandlesEvent:(NSEvent *)event {
+    iTermWorkgroupInstance *wg = self.workgroupInstance;
+    if (wg == nil) {
+        return NO;
+    }
+    return [wg handleToolbarShortcutWithEvent:event focusedSession:self];
+}
+
 - (BOOL)shouldRespectTerminalMetaSendsEscape {
     if (![iTermAdvancedSettingsModel supportDecsetMetaSendsEscape]) {
         return NO;

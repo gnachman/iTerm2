@@ -63,9 +63,21 @@ class iTermWorkgroupSessionDetailViewController: NSViewController {
     private var toolbarScroll: NSScrollView!
     private var toolbarSegmented: NSSegmentedControl!
     private var toolbarParamContainer: NSView!
+    private var toolbarShortcutsContainer: NSView!
 
     private var spacerMinField: NSTextField!
     private var spacerMaxField: NSTextField!
+
+    // Three shortcut inputs for the .navigation cluster, plus one for
+    // the standalone .reload item. The .reload's input is reused
+    // (visible/hidden) when either kind of row is selected; the other
+    // two are only shown for .navigation.
+    private var backShortcutLabel: NSTextField!
+    private var backShortcutInput: iTermShortcutInputView!
+    private var forwardShortcutLabel: NSTextField!
+    private var forwardShortcutInput: iTermShortcutInputView!
+    private var reloadShortcutLabel: NSTextField!
+    private var reloadShortcutInput: iTermShortcutInputView!
 
     // Full-bleed layout — no left/right inset inside this controller's
     // views. The enclosing detail controller already provides whatever
@@ -255,6 +267,10 @@ class iTermWorkgroupSessionDetailViewController: NSViewController {
         toolbarParamContainer.isHidden = true
         section.addSubview(toolbarParamContainer)
 
+        toolbarShortcutsContainer = makeToolbarShortcutsContainer()
+        toolbarShortcutsContainer.isHidden = true
+        section.addSubview(toolbarShortcutsContainer)
+
         toolbarSegmented = NSSegmentedControl(
             images: [
                 NSImage(named: NSImage.addTemplateName) ?? NSImage(),
@@ -317,6 +333,56 @@ class iTermWorkgroupSessionDetailViewController: NSViewController {
 
         return container
     }
+
+    // Three rows of [label][shortcut input] for .navigation, with the
+    // bottom row reused for the standalone .reload item. Each
+    // iTermShortcutInputView is created with the shared delegate
+    // (this VC); on commit we route the keystroke into the selected
+    // toolbar item via shortcutInputView(_:didReceiveKeyPressEvent:).
+    private func makeToolbarShortcutsContainer() -> NSView {
+        let container = NSView(frame: .zero)
+
+        backShortcutLabel = NSTextField(labelWithString: "Back:")
+        backShortcutLabel.sizeToFit()
+        container.addSubview(backShortcutLabel)
+        backShortcutInput = iTermShortcutInputView(frame: NSRect(x: 0, y: 0, width: 200, height: kShortcutPreferredHeight))
+        backShortcutInput.shortcutDelegate = self
+        backShortcutInput.disableKeyRemapping = true
+        container.addSubview(backShortcutInput)
+
+        forwardShortcutLabel = NSTextField(labelWithString: "Forward:")
+        forwardShortcutLabel.sizeToFit()
+        container.addSubview(forwardShortcutLabel)
+        forwardShortcutInput = iTermShortcutInputView(frame: NSRect(x: 0, y: 0, width: 200, height: kShortcutPreferredHeight))
+        forwardShortcutInput.shortcutDelegate = self
+        forwardShortcutInput.disableKeyRemapping = true
+        container.addSubview(forwardShortcutInput)
+
+        reloadShortcutLabel = NSTextField(labelWithString: "Reload:")
+        reloadShortcutLabel.sizeToFit()
+        container.addSubview(reloadShortcutLabel)
+        reloadShortcutInput = iTermShortcutInputView(frame: NSRect(x: 0, y: 0, width: 200, height: kShortcutPreferredHeight))
+        reloadShortcutInput.shortcutDelegate = self
+        reloadShortcutInput.disableKeyRemapping = true
+        container.addSubview(reloadShortcutInput)
+
+        return container
+    }
+
+    // Height of the shortcuts container as a function of the selected
+    // toolbar item: navigation shows three rows, reload one, anything
+    // else hides the container entirely.
+    private var shortcutsContainerHeight: CGFloat {
+        guard !toolbarShortcutsContainer.isHidden else { return 0 }
+        let visibleRows = [backShortcutInput, forwardShortcutInput, reloadShortcutInput]
+            .filter { !$0!.isHidden }
+            .count
+        if visibleRows == 0 { return 0 }
+        return CGFloat(visibleRows) * shortcutRowHeight
+            + CGFloat(visibleRows - 1) * rowSpacing
+    }
+
+    private let shortcutRowHeight: CGFloat = kShortcutPreferredHeight
 
     // MARK: - Layout
 
@@ -442,14 +508,25 @@ class iTermWorkgroupSessionDetailViewController: NSViewController {
                                           width: max(0, w - 2 * margin),
                                           height: headerH)
 
+        // The param and shortcuts containers are mutually exclusive
+        // (they describe parameters of the selected row, and a row
+        // can't be both a spacer and a navigation/reload item).
         let paramVisible = !toolbarParamContainer.isHidden
         let paramH: CGFloat = paramVisible ? rowHeight : 0
         toolbarParamContainer.frame = NSRect(
             x: margin, y: 0, width: max(0, w - 2 * margin), height: paramH)
 
+        let shortcutsH = shortcutsContainerHeight
+        toolbarShortcutsContainer.frame = NSRect(
+            x: margin,
+            y: paramH + (paramVisible && shortcutsH > 0 ? rowSpacing : 0),
+            width: max(0, w - 2 * margin),
+            height: shortcutsH)
+
+        let extrasH = max(paramH, toolbarShortcutsContainer.frame.maxY)
         let segH: CGFloat = 22
-        let segSpacing: CGFloat = paramVisible ? rowSpacing : 0
-        let segY = paramH + segSpacing
+        let segSpacing: CGFloat = (extrasH > 0) ? rowSpacing : 0
+        let segY = extrasH + segSpacing
         toolbarSegmented.frame = NSRect(x: margin, y: segY,
                                         width: 60, height: segH)
 
@@ -462,6 +539,29 @@ class iTermWorkgroupSessionDetailViewController: NSViewController {
             toolbarScroll.contentSize.width - 4
 
         layoutToolbarParamContainer()
+        layoutToolbarShortcutsContainer()
+    }
+
+    private func layoutToolbarShortcutsContainer() {
+        guard !toolbarShortcutsContainer.isHidden else { return }
+        let w = toolbarShortcutsContainer.bounds.width
+        let inputX = labelGutter
+        let inputW = max(0, w - inputX - margin)
+        let h = toolbarShortcutsContainer.bounds.height
+
+        // Lay rows top-down: back at top, forward middle, reload bottom.
+        var y = h - shortcutRowHeight
+        func place(label: NSTextField, input: iTermShortcutInputView) {
+            guard !input.isHidden else { return }
+            label.frame.origin = NSPoint(
+                x: 0, y: y + (shortcutRowHeight - label.frame.height) / 2)
+            input.frame = NSRect(x: inputX, y: y,
+                                 width: inputW, height: shortcutRowHeight)
+            y -= shortcutRowHeight + rowSpacing
+        }
+        place(label: backShortcutLabel, input: backShortcutInput)
+        place(label: forwardShortcutLabel, input: forwardShortcutInput)
+        place(label: reloadShortcutLabel, input: reloadShortcutInput)
     }
 
     private func layoutToolbarParamContainer() {
@@ -715,24 +815,72 @@ class iTermWorkgroupSessionDetailViewController: NSViewController {
     }
 
     private func refreshToolbarParamUI() {
-        let wasHidden = toolbarParamContainer.isHidden
+        let oldParamHidden = toolbarParamContainer.isHidden
+        let oldShortcutsHidden = toolbarShortcutsContainer.isHidden
+        let oldShortcutsHeight = shortcutsContainerHeight
         defer {
-            if wasHidden != toolbarParamContainer.isHidden {
+            if oldParamHidden != toolbarParamContainer.isHidden
+                || oldShortcutsHidden != toolbarShortcutsContainer.isHidden
+                || oldShortcutsHeight != shortcutsContainerHeight {
                 view.needsLayout = true
             }
         }
         guard let row = selectedToolbarRow,
               row < toolbarItems.count else {
             toolbarParamContainer.isHidden = true
+            toolbarShortcutsContainer.isHidden = true
             return
         }
         switch toolbarItems[row] {
         case .spacer(let minWidth, let maxWidth):
             toolbarParamContainer.isHidden = false
+            toolbarShortcutsContainer.isHidden = true
             spacerMinField.stringValue = formatWidth(minWidth)
             spacerMaxField.stringValue = formatWidth(maxWidth)
+        case .navigation(let shortcuts):
+            toolbarParamContainer.isHidden = true
+            toolbarShortcutsContainer.isHidden = false
+            setShortcutInput(backShortcutInput,
+                             label: backShortcutLabel,
+                             to: shortcuts.back,
+                             visible: true)
+            setShortcutInput(forwardShortcutInput,
+                             label: forwardShortcutLabel,
+                             to: shortcuts.forward,
+                             visible: true)
+            setShortcutInput(reloadShortcutInput,
+                             label: reloadShortcutLabel,
+                             to: shortcuts.reload,
+                             visible: true)
+        case .reload(let shortcut):
+            toolbarParamContainer.isHidden = true
+            toolbarShortcutsContainer.isHidden = false
+            setShortcutInput(backShortcutInput,
+                             label: backShortcutLabel,
+                             to: nil,
+                             visible: false)
+            setShortcutInput(forwardShortcutInput,
+                             label: forwardShortcutLabel,
+                             to: nil,
+                             visible: false)
+            setShortcutInput(reloadShortcutInput,
+                             label: reloadShortcutLabel,
+                             to: shortcut,
+                             visible: true)
         default:
             toolbarParamContainer.isHidden = true
+            toolbarShortcutsContainer.isHidden = true
+        }
+    }
+
+    private func setShortcutInput(_ input: iTermShortcutInputView,
+                                  label: NSTextField,
+                                  to shortcut: WorkgroupToolbarShortcut?,
+                                  visible: Bool) {
+        input.isHidden = !visible
+        label.isHidden = !visible
+        if visible {
+            input.shortcut = shortcut?.makeShortcut()
         }
     }
 
@@ -1131,6 +1279,45 @@ extension iTermWorkgroupSessionDetailViewController: NSTableViewDataSource, NSTa
             return "\(base) (\(formatWidth(minWidth))–\(formatWidth(maxWidth)) pt)"
         default:
             return base
+        }
+    }
+}
+
+// MARK: - Shortcut input
+
+extension iTermWorkgroupSessionDetailViewController: iTermShortcutInputViewDelegate {
+    func shortcutInputView(_ view: iTermShortcutInputView!,
+                           didReceiveKeyPress event: NSEvent!) {
+        guard var s = session,
+              let row = selectedToolbarRow,
+              row < s.toolbarItems.count else { return }
+        // The view has already updated its `shortcut` property to
+        // reflect the captured event (or to nil for the clear button).
+        // Mirror that into the model.
+        let newValue: WorkgroupToolbarShortcut?
+        if let shortcut = view.shortcut, shortcut.isAssigned {
+            newValue = WorkgroupToolbarShortcut(shortcut: shortcut)
+        } else {
+            newValue = nil
+        }
+        switch s.toolbarItems[row] {
+        case .navigation(var shortcuts):
+            if view === backShortcutInput {
+                shortcuts.back = newValue
+            } else if view === forwardShortcutInput {
+                shortcuts.forward = newValue
+            } else if view === reloadShortcutInput {
+                shortcuts.reload = newValue
+            } else {
+                return
+            }
+            s.toolbarItems[row] = .navigation(shortcuts)
+            commitUpdate(s, actionName: "Change Shortcut")
+        case .reload:
+            s.toolbarItems[row] = .reload(newValue)
+            commitUpdate(s, actionName: "Change Shortcut")
+        default:
+            return
         }
     }
 }

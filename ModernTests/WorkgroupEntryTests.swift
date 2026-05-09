@@ -20,8 +20,8 @@ final class WorkgroupEntryTests: WorkgroupEntryTestBase {
     // §1.1 — toolbar item count matches config (after drop rules).
     func test_1_1_toolbarItemCountMatchesConfig() {
         let wg = WGFix.wgRootWithPeers(n: 2,
-                                       rootItems: [.modeSwitcher, .reload],
-                                       peerItems: [.modeSwitcher, .reload])
+                                       rootItems: [.modeSwitcher, .reload(nil)],
+                                       peerItems: [.modeSwitcher, .reload(nil)])
         enterWorkgroup(wg)
         XCTAssertNotNil(instance)
         for cfg in wg.sessions {
@@ -44,7 +44,12 @@ final class WorkgroupEntryTests: WorkgroupEntryTestBase {
     // the list so the auto-injection of .name is suppressed (it
     // would prepend otherwise and throw off the order check).
     func test_1_2_toolbarItemOrderMatchesConfig() {
-        let items: [iTermWorkgroupToolbarItem] = [.modeSwitcher, .changedFileSelector, .reload, .navigation]
+        let items: [iTermWorkgroupToolbarItem] = [
+            .modeSwitcher,
+            .changedFileSelector,
+            .reload(nil),
+            .navigation(WorkgroupNavigationShortcuts(back: nil, forward: nil, reload: nil))
+        ]
         let wg = WGFix.wgRootWithPeers(n: 1, rootItems: items, peerItems: items)
         enterWorkgroup(wg)
         for cfg in wg.sessions {
@@ -65,7 +70,7 @@ final class WorkgroupEntryTests: WorkgroupEntryTestBase {
     // has peer children must NOT return the empty toolbar slot — its
     // real items come from the nested port.
     func test_1_3_peerHostToolbarNotShadowedByEmptySlot() {
-        let wg = WGFix.wgRootSplitWithPeers(splitItems: [.modeSwitcher, .reload],
+        let wg = WGFix.wgRootSplitWithPeers(splitItems: [.modeSwitcher, .reload(nil)],
                                             peerCount: 1)
         enterWorkgroup(wg)
         // Find the split-host config.
@@ -118,8 +123,8 @@ final class WorkgroupEntryTests: WorkgroupEntryTestBase {
     // the node whose toolbar list contains it.
     func test_2_1_ownerPeerIDIsConfigUUIDOfHost() {
         let wg = WGFix.wgRootWithPeers(n: 2,
-                                       rootItems: [.reload],
-                                       peerItems: [.reload])
+                                       rootItems: [.reload(nil)],
+                                       peerItems: [.reload(nil)])
         enterWorkgroup(wg)
         for cfg in wg.sessions {
             guard let live = liveSession(forConfigID: cfg.uniqueIdentifier) else { continue }
@@ -141,8 +146,8 @@ final class WorkgroupEntryTests: WorkgroupEntryTestBase {
     // tags (each its own peer's UUID).
     func test_2_2_distinctOwnerPeerIDsAcrossPeers() {
         let wg = WGFix.wgRootWithPeers(n: 2,
-                                       rootItems: [.reload],
-                                       peerItems: [.reload])
+                                       rootItems: [.reload(nil)],
+                                       peerItems: [.reload(nil)])
         enterWorkgroup(wg)
         var allTags = Set<String>()
         for cfg in wg.sessions {
@@ -309,7 +314,7 @@ final class WorkgroupEntryTests: WorkgroupEntryTestBase {
 
     // §4.3 — non-peer host with no peer children does NOT get a port.
     func test_4_3_noNestedPortForLeafSplit() {
-        let wg = WGFix.wgRootWithSplits(n: 1, splitItems: [.reload])
+        let wg = WGFix.wgRootWithSplits(n: 1, splitItems: [.reload(nil)])
         enterWorkgroup(wg)
         let split = wg.sessions.first(where: {
             if case .split = $0.kind { return true }
@@ -411,7 +416,7 @@ final class WorkgroupEntryTests: WorkgroupEntryTestBase {
     // checkable: a stranger session never resolves to a workgroup
     // toolbar even if its GUID happens to match a workgroup member.
     func test_6_2_lookupUsesReferenceIdentityNotGUID() {
-        let wg = WGFix.wgRootWithSplits(n: 1, splitItems: [.reload])
+        let wg = WGFix.wgRootWithSplits(n: 1, splitItems: [.reload(nil)])
         enterWorkgroup(wg)
         let split = wg.sessions.first(where: {
             if case .split = $0.kind { return true }
@@ -524,8 +529,8 @@ final class WorkgroupEntryTests: WorkgroupEntryTestBase {
     func test_8_1_8_2_pollerPresenceTracksGitItems() {
         // Workgroup with no git items — no poller.
         let dry = WGFix.wgRootWithPeers(n: 1,
-                                        rootItems: [.reload],
-                                        peerItems: [.reload])
+                                        rootItems: [.reload(nil)],
+                                        peerItems: [.reload(nil)])
         enterWorkgroup(dry)
         XCTAssertNil(instance!.gitPoller, "No git item → no poller")
         teardownInstance()
@@ -533,7 +538,7 @@ final class WorkgroupEntryTests: WorkgroupEntryTestBase {
         // Workgroup where only the leaf split has changedFileSelector.
         let withFileSel = WGFix.wgRootWithSplits(
             n: 1,
-            rootItems: [.reload],
+            rootItems: [.reload(nil)],
             splitItems: [.changedFileSelector])
         enterWorkgroup(withFileSel)
         XCTAssertNotNil(instance!.gitPoller,
@@ -640,7 +645,7 @@ final class WorkgroupEntryTests: WorkgroupEntryTestBase {
     // regression-covers the half-alive workgroup state from before
     // the observer was added.
     func test_9_2_terminationOfChildExitsWorkgroup() {
-        let wg = WGFix.wgRootWithSplits(n: 1, splitItems: [.reload])
+        let wg = WGFix.wgRootWithSplits(n: 1, splitItems: [.reload(nil)])
         registerWithModel(wg)
         defer { unregisterFromModel(wg) }
         XCTAssertTrue(
@@ -757,7 +762,7 @@ final class WorkgroupEntryTests: WorkgroupEntryTestBase {
     // `exited` flag is already true.
     func test_teardown_skipsAlreadyExitedNonPeerEntries() {
         spawner.sessionFactory = { SpyPTYSession(synthetic: false)! }
-        let wg = WGFix.wgRootWithSplits(n: 1, splitItems: [.reload])
+        let wg = WGFix.wgRootWithSplits(n: 1, splitItems: [.reload(nil)])
         enterWorkgroup(wg)
         let split = wg.sessions.first(where: {
             if case .split = $0.kind { return true }

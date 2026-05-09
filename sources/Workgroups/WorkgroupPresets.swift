@@ -55,7 +55,7 @@ enum WorkgroupPresets {
             toolbarItems: [.modeSwitcher,
                            .changedFileSelector,
                            .gitBaseSelector,
-                           .navigation],
+                           .navigation(WorkgroupNavigationShortcuts.defaults)],
             displayName: "Diff",
             perFileCommand: "git diff \\(gitBase) -- \\(file)")
 

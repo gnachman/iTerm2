@@ -48,8 +48,13 @@ enum iTermWorkgroupToolbarItem: Codable, Equatable, Hashable {
     case gitStatus
     case changedFileSelector
     case modeSwitcher
-    case navigation
-    case reload
+    // Bundled back/forward/reload buttons. Each sub-button can carry
+    // its own optional keyboard shortcut. Defaults are seeded by
+    // iTermWorkgroupToolbarItemRegistry when the item is added; the
+    // user can clear or change them in the session detail UI.
+    case navigation(WorkgroupNavigationShortcuts)
+    // Stand-alone reload button with an optional shortcut.
+    case reload(WorkgroupToolbarShortcut?)
     case spacer(minWidth: CGFloat, maxWidth: CGFloat)
     case gitBaseSelector
     case name
@@ -71,14 +76,28 @@ enum iTermWorkgroupToolbarItem: Codable, Equatable, Hashable {
         case kind
         case minWidth
         case maxWidth
+        case backShortcut
+        case forwardShortcut
+        case reloadShortcut
+        case shortcut
     }
 
     func encode(to encoder: Encoder) throws {
         var c = encoder.container(keyedBy: CodingKeys.self)
         try c.encode(kind, forKey: .kind)
-        if case let .spacer(minWidth, maxWidth) = self {
+        switch self {
+        case .spacer(let minWidth, let maxWidth):
             try c.encode(minWidth, forKey: .minWidth)
             try c.encode(maxWidth, forKey: .maxWidth)
+        case .navigation(let shortcuts):
+            try c.encodeIfPresent(shortcuts.back, forKey: .backShortcut)
+            try c.encodeIfPresent(shortcuts.forward, forKey: .forwardShortcut)
+            try c.encodeIfPresent(shortcuts.reload, forKey: .reloadShortcut)
+        case .reload(let shortcut):
+            try c.encodeIfPresent(shortcut, forKey: .shortcut)
+        case .gitStatus, .changedFileSelector, .modeSwitcher,
+             .gitBaseSelector, .name:
+            break
         }
     }
 
@@ -90,8 +109,23 @@ enum iTermWorkgroupToolbarItem: Codable, Equatable, Hashable {
         case .gitStatus: self = .gitStatus
         case .changedFileSelector: self = .changedFileSelector
         case .modeSwitcher: self = .modeSwitcher
-        case .navigation: self = .navigation
-        case .reload: self = .reload
+        case .navigation:
+            // Older configs stored navigation with no shortcut keys —
+            // missing fields decode as nil so the user gets an unbound
+            // shortcut rather than the default. The registry's
+            // defaultValue seeds defaults on freshly-added items.
+            let back = try c.decodeIfPresent(
+                WorkgroupToolbarShortcut.self, forKey: .backShortcut)
+            let forward = try c.decodeIfPresent(
+                WorkgroupToolbarShortcut.self, forKey: .forwardShortcut)
+            let reload = try c.decodeIfPresent(
+                WorkgroupToolbarShortcut.self, forKey: .reloadShortcut)
+            self = .navigation(WorkgroupNavigationShortcuts(
+                back: back, forward: forward, reload: reload))
+        case .reload:
+            let shortcut = try c.decodeIfPresent(
+                WorkgroupToolbarShortcut.self, forKey: .shortcut)
+            self = .reload(shortcut)
         case .spacer:
             let minWidth = try c.decode(CGFloat.self, forKey: .minWidth)
             let maxWidth = try c.decode(CGFloat.self, forKey: .maxWidth)

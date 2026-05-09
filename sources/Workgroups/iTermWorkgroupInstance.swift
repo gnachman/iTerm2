@@ -725,4 +725,104 @@ extension iTermWorkgroupInstance {
             }
         }
     }
+
+    // Try to dispatch a workgroup-toolbar shortcut for `event` while
+    // `session` is focused. Returns true iff the shortcut matched a
+    // toolbar item on `session`'s config and the corresponding action
+    // was fired — the caller (the PTYTextView -> PTYSession key
+    // chain) treats that as "handled" and short-circuits the rest of
+    // its dispatch (main menu, profile bindings, terminal input).
+    //
+    // Global key bindings still win: if the keystroke has any global
+    // mapping the call returns false so the regular flow handles it.
+    // That preserves the user's expectation that a binding configured
+    // globally (Keys preferences) is unconditional.
+    @objc
+    func handleToolbarShortcut(event: NSEvent,
+                               focusedSession session: PTYSession) -> Bool {
+        let keystroke = iTermKeystroke.withEvent(event)
+        if iTermKeyMappings.haveGlobalKeyMapping(for: keystroke) {
+            return false
+        }
+        guard let configID = configID(forSession: session),
+              let config = config(forConfigID: configID) else {
+            return false
+        }
+        let delegate = navigationDelegate(forSession: session)
+        for item in config.toolbarItems {
+            switch item {
+            case .navigation(let shortcuts):
+                if Self.shortcutMatches(shortcuts.back, keystroke: keystroke) {
+                    delegate?.workgroupNavigationDidTapBack(ownerPeerID: configID)
+                    return true
+                }
+                if Self.shortcutMatches(shortcuts.forward, keystroke: keystroke) {
+                    delegate?.workgroupNavigationDidTapForward(ownerPeerID: configID)
+                    return true
+                }
+                if Self.shortcutMatches(shortcuts.reload, keystroke: keystroke) {
+                    delegate?.workgroupNavigationDidTapReload(ownerPeerID: configID)
+                    return true
+                }
+            case .reload(let shortcut):
+                if Self.shortcutMatches(shortcut, keystroke: keystroke) {
+                    delegate?.workgroupNavigationDidTapReload(ownerPeerID: configID)
+                    return true
+                }
+            default:
+                break
+            }
+        }
+        return false
+    }
+
+    // Find the workgroup-config UUID that owns `session`. Mirrors the
+    // peer/nested-peer/non-peer order used by toolbarItems(for:); the
+    // main session falls back to the workgroup root.
+    private func configID(forSession session: PTYSession) -> String? {
+        if let id = peerPort.identifier(for: session) { return id }
+        for port in nestedPeerPorts {
+            if let id = port.identifier(for: session) { return id }
+        }
+        for (id, entry) in nonPeerEntriesByConfigID where entry.session === session {
+            return id
+        }
+        if session === mainSession {
+            return workgroup.root?.uniqueIdentifier
+        }
+        return nil
+    }
+
+    // Pick the WorkgroupNavigationToolbarItemDelegate that matches
+    // `session`'s lifecycle owner: peer sessions go through their
+    // peer port (so reload restarts the right peer; back/forward
+    // reach the port's diff selector), non-peer sessions go through
+    // the instance.
+    private func navigationDelegate(forSession session: PTYSession)
+        -> WorkgroupNavigationToolbarItemDelegate? {
+        if peerPort.identifier(for: session) != nil {
+            return peerPort
+        }
+        for port in nestedPeerPorts {
+            if port.identifier(for: session) != nil {
+                return port
+            }
+        }
+        return self
+    }
+
+    private static func shortcutMatches(_ shortcut: WorkgroupToolbarShortcut?,
+                                        keystroke: iTermKeystroke) -> Bool {
+        guard let serialized = shortcut?.serialized,
+              !serialized.isEmpty else {
+            return false
+        }
+        // Use iTermKeystroke's own dictionary lookup so we get the
+        // same matching semantics as profile / global key bindings,
+        // including language-agnostic and legacy serialization
+        // fallbacks. Empty dictionary is the placeholder value; we
+        // only care whether the lookup hits.
+        let dict: [String: [AnyHashable: Any]] = [serialized: [:]]
+        return keystroke.value(inBindingDictionary: dict) != nil
+    }
 }

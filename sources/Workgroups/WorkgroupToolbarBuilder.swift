@@ -163,15 +163,17 @@ enum WorkgroupToolbarBuilder {
                 activeIdentifier: context.activePeerIdentifier)
             view.modeSwitchDelegate = context.peerPort
             return view
-        case .navigation:
+        case .navigation(let shortcuts):
             let view = WorkgroupNavigationToolbarItem(identifier: id,
-                                                      priority: 3)
+                                                      priority: 3,
+                                                      shortcuts: shortcuts)
             view.navigationDelegate = context.navigationDelegate
             view.ownerPeerID = ownerPeerID
             return view
-        case .reload:
+        case .reload(let shortcut):
             let view = WorkgroupReloadToolbarItem(identifier: id,
-                                                  priority: 3)
+                                                  priority: 3,
+                                                  shortcut: shortcut)
             view.navigationDelegate = context.navigationDelegate
             view.ownerPeerID = ownerPeerID
             return view

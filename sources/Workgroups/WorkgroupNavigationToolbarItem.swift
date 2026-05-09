@@ -37,11 +37,20 @@ final class WorkgroupNavigationToolbarItem: SessionToolbarGenericView {
     private let progressLabel: NSTextField
     private static let interButtonSpacing = 8.0
 
-    init(identifier: String, priority: Int) {
+    init(identifier: String,
+         priority: Int,
+         shortcuts: WorkgroupNavigationShortcuts = WorkgroupNavigationShortcuts(
+            back: nil, forward: nil, reload: nil)) {
         backButton = Self.makeButton(symbol: .chevronLeft)
         forwardButton = Self.makeButton(symbol: .chevronRight)
         reloadButton = Self.makeButton(symbol: .arrowClockwise)
         progressLabel = Self.makeProgressLabel()
+        backButton.toolTip = Self.tooltip(action: "Previous file",
+                                          shortcut: shortcuts.back)
+        forwardButton.toolTip = Self.tooltip(action: "Next file",
+                                             shortcut: shortcuts.forward)
+        reloadButton.toolTip = Self.tooltip(action: "Reload",
+                                            shortcut: shortcuts.reload)
 
         // Plain NSView container, no auto layout — terminal-window
         // toolbars are explicitly autoresizing-mask territory per the
@@ -179,6 +188,18 @@ final class WorkgroupNavigationToolbarItem: SessionToolbarGenericView {
     static func makeReloadButton() -> NSButton {
         return makeButton(symbol: .arrowClockwise)
     }
+
+    // Render `<action> (<shortcut>)` when a shortcut is bound, or
+    // just `<action>` when it isn't. Uses iTermKeystrokeFormatter so
+    // the displayed glyphs (⌃⌘← etc.) match what the rest of the
+    // app shows for key bindings.
+    fileprivate static func tooltip(action: String,
+                                    shortcut: WorkgroupToolbarShortcut?) -> String {
+        guard let keystroke = shortcut?.keystroke else { return action }
+        let keys = iTermKeystrokeFormatter.string(for: keystroke)
+        guard !keys.isEmpty else { return action }
+        return "\(action) (\(keys))"
+    }
 }
 
 // Standalone reload button — same delegate as the navigation cluster
@@ -190,8 +211,12 @@ final class WorkgroupReloadToolbarItem: SessionToolbarGenericView {
 
     private let reloadButton: NSButton
 
-    init(identifier: String, priority: Int) {
+    init(identifier: String,
+         priority: Int,
+         shortcut: WorkgroupToolbarShortcut? = nil) {
         reloadButton = WorkgroupNavigationToolbarItem.makeReloadButton()
+        reloadButton.toolTip = WorkgroupNavigationToolbarItem.tooltip(
+            action: "Reload", shortcut: shortcut)
         let container = NSView(frame: .zero)
         container.addSubview(reloadButton)
         super.init(identifier: identifier, priority: priority, view: container)

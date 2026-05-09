@@ -64,6 +64,7 @@
 #import "iTermIntegerNumberFormatter.h"
 #import "iTermKeyboardNavigatableTableView.h"
 #import "iTermKeyBindingAction.h"
+#import "iTermKeyMappings.h"
 #import "iTermKeystroke.h"
 #import "iTermKeystrokeFormatter.h"
 #import "iTermLargeContentObject.h"

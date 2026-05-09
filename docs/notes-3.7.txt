@@ -667,3 +667,13 @@ Bug Fixes:
   contents of ~/.iterm2 and the app
   support folder, then quits
   immediately. Issue 12852.
+- Add keyboard shortcut bindings to
+  workgroup toolbar items. Navigation
+  cluster (back, forward, reload) and
+  the standalone reload toolbar item
+  each support a per-action shortcut,
+  with defaults of ctrl-cmd-left,
+  ctrl-cmd-right, and cmd-R. Shortcuts
+  take precedence over profile key
+  bindings and main menu items but
+  defer to global key bindings.

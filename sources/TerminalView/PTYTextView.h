@@ -90,6 +90,14 @@ extern const CGFloat PTYTextViewMarginClickGraceWidth;
 - (void)keyUp:(NSEvent *)event;
 - (void)textViewhandleSpecialKeyDown:(NSEvent *)event;
 - (BOOL)hasActionableKeyMappingForEvent:(NSEvent *)event;
+
+// Returns YES iff the focused session is in an active workgroup whose
+// configured toolbar items include a shortcut matching `event`. The
+// matching action is dispatched as a side effect — the caller treats
+// YES as "handled" and short-circuits the rest of its dispatch (main
+// menu, profile bindings, terminal input). Always returns NO when the
+// event has any global key binding so global mappings keep priority.
+- (BOOL)textViewWorkgroupShortcutHandlesEvent:(NSEvent *)event;
 - (iTermOptionKeyBehavior)optionKey;
 - (iTermOptionKeyBehavior)rightOptionKey;
 // Contextual menu

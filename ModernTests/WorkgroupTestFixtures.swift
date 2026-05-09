@@ -254,7 +254,7 @@ enum WGFix {
 
     // wgRootSplitWithPeers — root + 1 split that itself hosts peers.
     // This is the §1.3 regression shape.
-    static func wgRootSplitWithPeers(splitItems: [iTermWorkgroupToolbarItem] = [.modeSwitcher, .reload],
+    static func wgRootSplitWithPeers(splitItems: [iTermWorkgroupToolbarItem] = [.modeSwitcher, .reload(nil)],
                                      peerCount: Int = 1) -> iTermWorkgroup {
         let root = makeRoot()
         let split = makeSplit(parentID: root.uniqueIdentifier,
@@ -276,12 +276,12 @@ enum WGFix {
         var sessions = [root]
         for i in 0..<peerCount {
             sessions.append(makePeer(parentID: root.uniqueIdentifier,
-                                     items: [.modeSwitcher, .reload],
+                                     items: [.modeSwitcher, .reload(nil)],
                                      displayName: "P\(i)"))
         }
         for i in 0..<splitCount {
             sessions.append(makeSplit(parentID: root.uniqueIdentifier,
-                                      items: [.reload, .changedFileSelector],
+                                      items: [.reload(nil), .changedFileSelector],
                                       displayName: "S\(i)"))
         }
         return wrap(name: "wgRootPeersAndSplits", sessions: sessions)
@@ -309,8 +309,8 @@ enum WGFix {
             .modeSwitcher,
             .changedFileSelector,
             .gitStatus,
-            .navigation,
-            .reload,
+            .navigation(WorkgroupNavigationShortcuts(back: nil, forward: nil, reload: nil)),
+            .reload(nil),
             .spacer(minWidth: 4, maxWidth: 8)
         ]
         let root = makeRoot(items: items)

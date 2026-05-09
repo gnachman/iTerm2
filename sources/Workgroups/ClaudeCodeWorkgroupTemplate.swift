@@ -54,7 +54,7 @@ enum ClaudeCodeWorkgroupTemplate {
                 .modeSwitcher,
                 .changedFileSelector,
                 .gitBaseSelector,
-                .navigation,
+                .navigation(WorkgroupNavigationShortcuts.defaults),
             ],
             displayName: "Diff",
             perFileCommand: "git difftool -y -x vimdiff \\(gitBase) -- \\(file)")
@@ -68,7 +68,7 @@ enum ClaudeCodeWorkgroupTemplate {
             urlString: "",
             toolbarItems: [
                 .modeSwitcher,
-                .reload,
+                .reload(WorkgroupToolbarShortcut.reloadDefault),
             ],
             displayName: "Code Review",
             mode: .codeReview)
