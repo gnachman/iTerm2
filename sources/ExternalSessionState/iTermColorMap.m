@@ -25,6 +25,11 @@ const int kColorMap24bitBase = kColorMap8bitBase + 256;
 // Additional configurable colors because I ran out space under 8bit base.
 const int kExtendedColorsBase = kColorMap24bitBase + (1 << 24);
 
+// Floor for faintTextAlpha. Lower values (especially 0) cause SGR 2 text to
+// alpha-composite to exactly the background color in processedTextColorForTextColor,
+// making it invisible. Some older profiles have 0 stored, so clamp at runtime.
+static const CGFloat kMinimumFaintTextAlpha = 0.1;
+
 // Configurable colors
 const int kColorMapForeground = 0;
 const int kColorMapBackground = 1;
@@ -93,7 +98,7 @@ const int kColorMapAnsiBrightModifier = 8;
     if (self) {
         _map = [[NSMutableDictionary alloc] init];
         _fastMap = [[NSMutableDictionary alloc] init];
-        _faintTextAlpha = 0.5;
+        _faintTextAlpha = MAX(kMinimumFaintTextAlpha, 0.5);
     }
     return self;
 }
@@ -237,6 +242,11 @@ const int kColorMapAnsiBrightModifier = 8;
 
 - (void)setMinimumContrast:(double)minimumContrast {
     _minimumContrast = minimumContrast;
+    _generation += 1;
+}
+
+- (void)setFaintTextAlpha:(CGFloat)faintTextAlpha {
+    _faintTextAlpha = MAX(kMinimumFaintTextAlpha, faintTextAlpha);
     _generation += 1;
 }
 

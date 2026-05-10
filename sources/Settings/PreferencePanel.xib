@@ -3008,8 +3008,8 @@ CA
                                         <slider verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="mOt-Fp-WpW">
                                             <rect key="frame" x="18" y="-6" width="177" height="28"/>
                                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                            <string key="toolTip">This boosts the contrast of text when its color is close to that of the background color by moving the text color towards black or white.</string>
-                                            <sliderCell key="cell" continuous="YES" alignment="left" maxValue="1" tickMarkPosition="above" sliderType="linear" id="YLV-ns-HxW"/>
+                                            <string key="toolTip">Controls the opacity of faint (dim) text produced by SGR 2. Lower values make faint text fade further toward the background; at 1, it has no effect.</string>
+                                            <sliderCell key="cell" continuous="YES" alignment="left" minValue="0.10000000000000001" maxValue="1" tickMarkPosition="above" sliderType="linear" id="YLV-ns-HxW"/>
                                             <connections>
                                                 <action selector="settingChanged:" target="p8i-eM-oBc" id="ldW-64-Ybf"/>
                                                 <outlet property="nextKeyView" destination="3213" id="bsS-GE-yhF"/>

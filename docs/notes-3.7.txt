@@ -376,6 +376,15 @@ Bug Fixes:
   ssh outside /usr/bin) is used. The advanced
   setting SshSchemePath, when changed from its
   default, still wins. Issue 3415.
+- The faint-text opacity slider in Profiles >
+  Colors now has a minimum of 0.1, and existing
+  profiles with a stored value below 0.1 are
+  clamped at runtime. A value of 0 caused SGR 2
+  text to render in exactly the background
+  color, making it invisible. The slider’s
+  tooltip was also incorrect (it described
+  minimum contrast); it now describes faint
+  text opacity.
 - The “open password manager automatically”
   feature no longer triggers when a shell
   script briefly disables terminal echo to
