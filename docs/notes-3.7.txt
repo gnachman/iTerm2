@@ -697,3 +697,6 @@ Bug Fixes:
   take precedence over profile key
   bindings and main menu items but
   defer to global key bindings.
+- Fix vertical window resize being
+  silently rejected when the window
+  sits partly below the screen.
