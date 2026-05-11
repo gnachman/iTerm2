@@ -708,7 +708,11 @@ struct ResponsesResponseBody: Codable {
     struct CodeInterpreterToolCall: Codable {
         let code: String
         let id: String
-        let results: [CodeInterpreterResult]
+        // OpenAI's actual wire field is `outputs` (nullable), not `results`.
+        // Until late 2025 the docs (and our struct) called it `results`, but
+        // a real response can come back with `outputs: null` and no
+        // `results` key at all, which made decoding throw.
+        let outputs: [CodeInterpreterResult]?
         let status: String
         let type: String
         let containerID: String
@@ -716,7 +720,7 @@ struct ResponsesResponseBody: Codable {
         enum CodingKeys: String, CodingKey {
             case code
             case id
-            case results
+            case outputs
             case status
             case type
             case containerID = "container_id"
@@ -1334,31 +1338,44 @@ struct ResponsesResponse: LLM.AnyResponse {
     var body: ResponsesResponseBody
     var isStreamingResponse: Bool
 
+    var newlyCreatedResponseID: String? { body.id }
+
     var choiceMessages: [LLM.Message] {
-        body.output.flatMap { item -> [LLM.Message] in
+        // Responses API returns one logical assistant turn split across
+        // several `output` items: an `.message` for any text/refusal content,
+        // a `.functionToolCall` if the model invoked a tool, plus reasoning
+        // items that don't surface to the user. Collapse the turn into a
+        // single multipart-bodied .assistant message so AITerm sees the
+        // same shape produced by every other vendor.
+        var bodies: [LLM.Message.Body] = []
+        for item in body.output {
             switch item {
             case .functionToolCall(let call):
-                return [LLM.Message(role: .function,
-                                    functionCallID: LLM.Message.FunctionCallID(callID: call.callID, itemID: call.id),
-                                    function_call: LLM.FunctionCall(name: call.name,
-                                                                    arguments: call.arguments))]
+                let id = LLM.Message.FunctionCallID(callID: call.callID, itemID: call.id)
+                let fc = LLM.FunctionCall(name: call.name, arguments: call.arguments)
+                bodies.append(.functionCall(fc, id: id))
             case .message(let message):
-                return message.content.map { content in
+                for content in message.content {
                     switch content {
                     case .outputText(let outputText):
-                        LLM.Message(role: .assistant,
-                                    content: outputText.text)
+                        bodies.append(.text(outputText.text))
                     case .refusal(let refusal):
-                        LLM.Message(role: .assistant,
-                                    content:  "The request was refused: \(refusal.refusal)")
+                        bodies.append(.text("The request was refused: \(refusal.refusal)"))
                     }
                 }
             case .fileSearchToolCall,  .webSearchToolCall,  .computerToolCall,  .reasoning,
                     .imageGenerationCall,  .codeInterpreterToolCall,  .localShellCall,
                     .mcpToolCall,  .mcpListTools,  .mcpApprovalRequest:
-                return []
+                break
             }
         }
+        let combinedBody: LLM.Message.Body
+        switch bodies.count {
+        case 0: return []
+        case 1: combinedBody = bodies[0]
+        default: combinedBody = .multipart(bodies)
+        }
+        return [LLM.Message(responseID: nil, role: .assistant, body: combinedBody)]
     }
 }
 

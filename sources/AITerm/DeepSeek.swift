@@ -68,32 +68,79 @@ struct DeepSeekRequestBuilder {
             case .attachment:
                 content = ""
             case .multipart(let parts):
-                content = parts.compactMap { part in
+                // Walk subparts collecting text into content and any
+                // .functionCall into tool_calls. parseNonStreamingResponse can
+                // produce a [text-preamble, .functionCall(...)] multipart
+                // assistant turn for any vendor whose response splits a turn
+                // into multiple choice-messages (Anthropic, Gemini after the
+                // 2026 parser refactor). If the conversation is then
+                // round-tripped through this builder, we must not silently
+                // drop the embedded function call.
+                var contentParts: [String] = []
+                var collectedToolCalls: [ToolCall] = []
+                var collectedToolCallID: String?
+                for part in parts {
                     switch part {
-                    case .uninitialized:
-                        return nil
+                    case .uninitialized, .multipart:
+                        continue
                     case .text(let text):
-                        return text
-                    case .functionCall, .functionOutput:
-                        return nil
+                        contentParts.append(text)
+                    case .functionCall(let call, let id):
+                        collectedToolCalls.append(ToolCall(id: id?.callID ?? call.id,
+                                                           function: call))
+                    case .functionOutput(name: _, output: let output, id: let id):
+                        // A multipart assistant turn shouldn't carry a
+                        // function output, but if it ever does, surface its
+                        // content and tool_call_id so the request remains
+                        // valid rather than silently losing it.
+                        if collectedToolCallID == nil {
+                            collectedToolCallID = id?.callID
+                        }
+                        contentParts.append(output)
                     case .attachment(let attachment):
                         switch attachment.type {
                         case .code(let text):
-                            return text
+                            contentParts.append(text)
                         case .statusUpdate:
-                            return nil
+                            continue
                         case .file(let file):
+                            // TODO: lossyString here means binary attachments
+                            // (images, PDFs, archives) get sent to DeepSeek as
+                            // mangled UTF-8 wrapped in <iterm2:attachment>.
+                            // DeepSeek doesn't have a vision API in iTerm2, so
+                            // there's no good alternative; consider rejecting
+                            // non-textual mimes upstream instead of silently
+                            // shipping garbage.
                             var value = "<iterm2:attachment file=\"\(file.name)\" type=\"\(file.mimeType)\">\n"
                             value += file.content.lossyString
                             value += "\n</iterm2:attachment>"
-                            return value
+                            contentParts.append(value)
                         case .fileID(id: _, name: let name):
-                            return "A file named \(name) (content unavailable)"
+                            contentParts.append("A file named \(name) (content unavailable)")
                         }
-                    case .multipart(_):
-                        return nil
                     }
-                }.joined(separator: "\n")
+                }
+                // A chat-completions message can be either an assistant tool
+                // call (tool_calls) or a tool output (tool_call_id), not both.
+                // No current parser produces a multipart body containing both
+                // a .functionCall and a .functionOutput sibling. If a future
+                // one ever does, prefer the assistant-call shape: drop the
+                // tool_call_id and emit tool_calls. This is a deliberate
+                // recovery rather than a crash because the alternative is
+                // sending a wire-ambiguous message to the vendor (or aborting
+                // the user's session over a hypothetical future parser bug).
+                if !collectedToolCalls.isEmpty {
+                    collectedToolCallID = nil
+                }
+                if !contentParts.isEmpty {
+                    content = contentParts.joined(separator: "\n")
+                }
+                if !collectedToolCalls.isEmpty {
+                    tool_calls = collectedToolCalls
+                }
+                if let collectedToolCallID {
+                    tool_call_id = collectedToolCallID
+                }
             }
         }
     }
@@ -191,28 +238,28 @@ struct DeepSeekStreamingResponseParser: LLMStreamingResponseParser {
         }
 
         var choiceMessages: [LLM.Message] {
-            return choices.compactMap { choice -> LLM.Message? in
-                if choice.finish_reason == "tool_calls" {
-                    // Sent at the end of a function call
-                    return nil
-                }
-
-                if let call = choice.delta.tool_calls?.first {
-                    let function = call.function
-                    let functionCall = LLM.FunctionCall(
-                        name: function?.name,
-                        arguments: function?.arguments,
-                        id: call.id)
-                    return LLM.Message(
-                        role: .assistant,
-                        content: choice.delta.content,
-                        functionCallID: call.id.map { .init(callID: $0, itemID: "") },
-                        function_call: functionCall)
-                } else {
-                    return LLM.Message(
-                        role: .assistant,
-                        content: choice.delta.content)
-                }
+            // `choices` is the n-sampling alternatives axis; iTerm2 never
+            // requests n > 1, so surface only the first.
+            guard let choice = choices.first else { return [] }
+            if choice.finish_reason == "tool_calls" {
+                // Sent at the end of a function call
+                return []
+            }
+            if let call = choice.delta.tool_calls?.first {
+                let function = call.function
+                let functionCall = LLM.FunctionCall(
+                    name: function?.name,
+                    arguments: function?.arguments,
+                    id: call.id)
+                return [LLM.Message(
+                    role: .assistant,
+                    content: choice.delta.content,
+                    functionCallID: call.id.map { .init(callID: $0, itemID: "") },
+                    function_call: functionCall)]
+            } else {
+                return [LLM.Message(
+                    role: .assistant,
+                    content: choice.delta.content)]
             }
         }
     }

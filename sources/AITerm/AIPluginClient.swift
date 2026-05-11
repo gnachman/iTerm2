@@ -252,10 +252,72 @@ class iTermAIClient {
         }
     }
 
+    // Live-traffic observer hook used exclusively by the AI live test
+    // harness (AILiveDriver) to capture raw wire data for fixture
+    // generation. Always compiled in (no #if guard) so test code in
+    // ModernTests can reference these symbols regardless of which
+    // configuration the test target is built under. The runtime cost in
+    // release is one optional read per request: nothing in the shipping
+    // app sets liveObserver, so the conditional capture path is dead code
+    // the optimizer can elide.
+    //
+    // Concurrency model: get/set of the slot itself is locked so
+    // concurrent tests installing/removing observers cannot tear the
+    // closure word. The harness still pins `parallel-testing-enabled NO`
+    // because two harness tests sharing one observer slot would clobber
+    // each other's captures even if the assignment were atomic. Per-call
+    // mutation of the captured LiveCapture IS safe: streamChunks is
+    // written from the plugin's executionQueue inside plugin.load, and
+    // the response/error/elapsed fields are written on the main queue
+    // inside emit; the DispatchQueue.main.async barrier orders the
+    // executionQueue writes before main-queue reads.
+    struct LiveCapture {
+        var request: WebRequest
+        var streaming: Bool
+        var streamChunks: [String]
+        var response: WebResponse?
+        var error: PluginError?
+        var elapsed: TimeInterval
+    }
+
+    private final class LiveCaptureBox {
+        var capture: LiveCapture
+        init(_ c: LiveCapture) { self.capture = c }
+    }
+
+    private static let _liveObserver = MutableAtomicObject<((LiveCapture) -> Void)?>(nil)
+    static var liveObserver: ((LiveCapture) -> Void)? {
+        get { _liveObserver.value }
+        set { _liveObserver.set(newValue) }
+    }
+
     func request(webRequest: WebRequest,
                  stream: ((String) -> ())?,
                  completion: @escaping (Result<WebResponse, PluginError>) -> ()) -> Cancellation {
         let cancellation = Cancellation()
+        let observer = Self.liveObserver
+        let captureBox: LiveCaptureBox? = observer.map { _ in
+            LiveCaptureBox(LiveCapture(request: webRequest,
+                                       streaming: stream != nil,
+                                       streamChunks: [],
+                                       response: nil,
+                                       error: nil,
+                                       elapsed: 0))
+        }
+        let startTime = Date()
+        let emit: (Result<WebResponse, PluginError>) -> Void = { result in
+            DispatchQueue.main.async {
+                if let observer, let captureBox {
+                    switch result {
+                    case .success(let r): captureBox.capture.response = r
+                    case .failure(let e): captureBox.capture.error = e
+                    }
+                    captureBox.capture.elapsed = Date().timeIntervalSince(startTime)
+                    observer(captureBox.capture)
+                }
+                completion(result)
+            }
+        }
         executionQueue.async {
             switch Plugin.instance() {
             case .success(let plugin):
@@ -266,23 +328,21 @@ class iTermAIClient {
                     cancellation.impl = {
                         plugin.cancel()
                     }
-                    let response = try plugin.load(webRequest: webRequest, stream: stream)
-                    DispatchQueue.main.async {
-                        completion(.success(response))
+                    let wrappedStream: ((String) -> ())? = stream.map { downstream in
+                        return { chunk in
+                            captureBox?.capture.streamChunks.append(chunk)
+                            downstream(chunk)
+                        }
                     }
+                    let response = try plugin.load(webRequest: webRequest, stream: wrappedStream)
+                    emit(.success(response))
                 } catch let error as PluginError {
-                    DispatchQueue.main.async {
-                        completion(.failure(error))
-                    }
+                    emit(.failure(error))
                 } catch {
-                    DispatchQueue.main.async {
-                        completion(.failure(PluginError(reason: "Unexpected exception: \(error.localizedDescription)")))
-                    }
+                    emit(.failure(PluginError(reason: "Unexpected exception: \(error.localizedDescription)")))
                 }
             case .failure(let error):
-                DispatchQueue.main.async {
-                    completion(.failure(error))
-                }
+                emit(.failure(error))
             }
         }
         return cancellation

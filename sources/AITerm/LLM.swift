@@ -21,13 +21,27 @@ enum LLM {
 
         // Deep seek uses this, maybe others too?
         var id: String?
+
+        // Gemini 3 attaches a per-call signature on functionCall parts. The server
+        // requires it to be echoed back unchanged on subsequent requests; omitting
+        // it triggers a 4xx validation error.
+        var thoughtSignature: String?
     }
 
 
     protocol AnyResponse {
         var choiceMessages: [Message] { get }
         var isStreamingResponse: Bool { get }
+        var newlyCreatedResponseID: String? { get }
     }
+}
+
+extension LLM.AnyResponse {
+    // Default for vendors that don't expose a server-side response ID for chaining.
+    var newlyCreatedResponseID: String? { nil }
+}
+
+extension LLM {
 
     protocol AnyStreamingResponse {
         // Streaming parsers will sometimes have to parse messages that are just status updates
@@ -204,17 +218,21 @@ enum LLM {
                                 LLM.FunctionCall(
                                     name: combinedName,
                                     arguments: combinedArgs,
-                                    id: combinedID),
+                                    id: combinedID,
+                                    thoughtSignature: original.thoughtSignature ?? content.thoughtSignature),
                                 id: originalID)
                             return true
                         }
                     case let .text(string):
-                        // Anthropic does this
+                        // Anthropic does this. Preserve thoughtSignature in case
+                        // a future provider (Gemini-shaped) ever streams partial
+                        // function-call args as text deltas alongside a signature.
                         self = .functionCall(
                             LLM.FunctionCall(
                                 name: original.name ?? "",
                                 arguments: (original.arguments ?? "") + (string),
-                                id: original.id),
+                                id: original.id,
+                                thoughtSignature: original.thoughtSignature),
                             id: originalID)
                         return true
                     case .uninitialized, .functionOutput, .attachment, .multipart:
@@ -258,13 +276,32 @@ enum LLM {
         var function_call: FunctionCall? {
             switch body {
             case .functionCall(let call, _): call
-            default: nil
+            case .multipart(let parts):
+                // Parsers now collapse multi-part turns (text preamble +
+                // tool_use, function tool call + assistant message, etc.)
+                // into a single multipart-bodied Message. Surface the first
+                // embedded function call so AITerm can detect and dispatch
+                // it without inspecting the body shape.
+                parts.lazy.compactMap { part -> FunctionCall? in
+                    if case .functionCall(let call, _) = part { return call }
+                    return nil
+                }.first
+            case .text, .uninitialized, .attachment, .functionOutput: nil
             }
         }
         var functionCallID: FunctionCallID? {
             switch body {
             case .functionCall(_, let id), .functionOutput(_, _, id: let id): id
-            case .text, .uninitialized, .attachment, .multipart: nil
+            case .multipart(let parts):
+                // Anthropic-style assistant turns can be [text preamble, function_call];
+                // surface the first embedded function-call ID so callers don't need to
+                // know whether the turn was wrapped in multipart.
+                parts.lazy.compactMap { part -> FunctionCallID? in
+                    if case .functionCall(_, let id) = part { return id }
+                    if case .functionOutput(_, _, id: let id) = part { return id }
+                    return nil
+                }.first
+            case .text, .uninitialized, .attachment: nil
             }
         }
         var content: String? {

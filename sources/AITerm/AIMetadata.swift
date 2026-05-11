@@ -4,6 +4,33 @@
 //
 //  Created by George Nachman on 6/11/25.
 //
+//  ============================================================================
+//  ADDING A NEW MODEL: checklist
+//  ============================================================================
+//
+//  1. Declare the Model below as a `private static let`.
+//  2. Append it to the `models` array (under the right vendor section).
+//  3. Capture a refusal fixture so the live-harness regression suite covers
+//     this model's response shape:
+//
+//        # one model:
+//        ITERM2_AI_LIVE_<VENDOR>_MODELS=<modelname> \
+//            tools/run_ai_live.sh test_<vendor>_refusal
+//
+//        # all models for a vendor:
+//        tools/run_ai_live.sh test_<vendor>_refusal
+//
+//     <vendor> is openai / anthropic / gemini / deepseek (lowercase).
+//
+//  4. `git add ModernTests/Resources/SafetyRefusalFixtures/*` and commit
+//     alongside the AIMetadata change.
+//
+//  AIMetadataFixtureCoverageTest in ModernTests fails if step 3-4 is skipped,
+//  so `make test` will catch a missed capture before the change ships.
+//
+//  Llama models (vendor: .llama) are local-only and do not require fixtures;
+//  the coverage test skips them.
+//  ============================================================================
 
 @objc(iTermAIModel)
 class AIModel: NSObject {
@@ -380,7 +407,11 @@ class AIMetadata: NSObject {
         features: [.streaming, .functionCalling],
         vendor: .llama
     )
-    private static let geimini_2_0_flash_lite = Model(
+    // Returns 404 "no longer available to new users" for Gemini API keys
+    // minted after Google's 2026 deprecation cutoff. Pre-existing keys still
+    // work, so the entry remains. The fixture-coverage test skips deprecated
+    // models via the comment marker below.
+    private static let gemini_2_0_flash_lite = Model(
         name: "gemini-2.0-flash-lite",
         contextWindowTokens: 1_048_576,
         maxResponseTokens: 8_192,
@@ -539,8 +570,10 @@ class AIMetadata: NSObject {
         AIMetadata.gemini_2_5_flash_lite,
         AIMetadata.gemini_2_5_flash,
         AIMetadata.gemini_2_5_pro,
-        AIMetadata.geimini_2_0_flash_lite,
         AIMetadata.gemini_2_0_flash,
+        // Deprecated by Google: returns 404 for new keys. Kept for users
+        // with grandfathered access. Skipped by AIMetadataFixtureCoverageTest.
+        AIMetadata.gemini_2_0_flash_lite,
 
         // MARK: - DeepSeek Models
         AIMetadata.deepseek_v4_flash,

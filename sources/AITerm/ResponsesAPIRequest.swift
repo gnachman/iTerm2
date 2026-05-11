@@ -1644,48 +1644,52 @@ struct ResponsesBodyRequestBuilder {
     var previousResponseID: String?
     var shouldThink: Bool?
 
-    private func transform(message: LLM.Message) -> ResponsesRequestBody.Input.ItemListEntry? {
+    private func transform(message: LLM.Message) -> [ResponsesRequestBody.Input.ItemListEntry] {
         switch message.role {
         case .assistant:
-            if let content = message.content {
-                return .message(.init(content: .text(content), role: .assistant))
-            }
-            return nil
-
+            // Parsers collapse a Responses turn into one .assistant message
+            // whose body can be `.text`, `.functionCall`, or a `.multipart`
+            // of both. Emit one ItemListEntry per logical piece so the wire
+            // shape (text content + function_tool_call as siblings) is
+            // preserved when the local conversation is fully re-sent
+            // (previousResponseID == nil). The previousResponseID==set path
+            // strips all but the last item before sending, so emitting
+            // multiple here is also correct there.
+            return assistantEntries(for: message.body)
         case .function:
             if let call = message.function_call {
                 // Function call request
                 guard let args = call.arguments, let id = message.functionCallID, let name = call.name else {
-                    return nil
+                    return []
                 }
-                return .item(.functionToolCall(.init(arguments: args,
-                                                     callID: id.callID,
-                                                     name: name,
-                                                     id: id.itemID)))
+                return [.item(.functionToolCall(.init(arguments: args,
+                                                      callID: id.callID,
+                                                      name: name,
+                                                      id: id.itemID)))]
             }
             if let callID = message.functionCallID,
                let content = message.content {
                 // Function call response
-                return .item(.functionToolCallOutput(.init(callID: callID.callID,
-                                                           id: nil,
-                                                           output: content,
-                                                           status: nil /*.completed*/)))
+                return [.item(.functionToolCallOutput(.init(callID: callID.callID,
+                                                            id: nil,
+                                                            output: content,
+                                                            status: nil /*.completed*/)))]
             }
-            return nil
+            return []
         case .system:
             guard let content = message.content else {
-                return nil
+                return []
             }
-            return .message(.init(content: .text(content), role: .system))
+            return [.message(.init(content: .text(content), role: .system))]
         case .user:
             switch message.body {
             case .uninitialized:
-                return nil
+                return []
             case .text(let text):
-                return .message(.init(content: .text(text), role: .user))
+                return [.message(.init(content: .text(text), role: .user))]
             case .functionCall, .functionOutput, .attachment:
                 DLog("Unexpected user message body \(message.body)")
-                return nil
+                return []
             case .multipart(let subparts):
                 let inputItemContents = subparts.compactMap { subpart -> ResponsesRequestBody.InputItemContent? in
                     switch subpart {
@@ -1705,6 +1709,15 @@ struct ResponsesBodyRequestBuilder {
                             if mimeTypeIsTextual(file.mimeType) {
                                 return .inputText(.init(text: file.content.lossyString))
                             }
+                            // TODO: OpenAI Responses rejects inline image MIME types
+                            // (e.g. image/png) via input_file. Production code never
+                            // reaches this branch with an image because
+                            // MessagePrepPipeline pre-uploads non-PDF binaries and
+                            // replaces them with .fileID. If we ever change that
+                            // (e.g. switch to vision API direct input for cheaper
+                            // image calls), images need to use input_image with an
+                            // image_url instead of input_file with file_data.
+                            // Caught by AILiveHarness.test_openai_imageDescribe (currently skipped).
                             return .inputFile(.init(fileData: "data:\(file.mimeType);base64," +  file.content.base64EncodedString(),
                                                     filename: file.name))
                         case .fileID(let fileID, _):
@@ -1726,11 +1739,60 @@ struct ResponsesBodyRequestBuilder {
                         return nil
                     }
                 }
-                return .message(.init(content: .inputItemContentList(inputItemContents),
-                                      role: .user))
+                return [.message(.init(content: .inputItemContentList(inputItemContents),
+                                       role: .user))]
             }
         case .none:
-            return nil
+            return []
+        }
+    }
+
+    private func assistantEntries(for body: LLM.Message.Body) -> [ResponsesRequestBody.Input.ItemListEntry] {
+        switch body {
+        case .text(let text):
+            return [.message(.init(content: .text(text), role: .assistant))]
+        case .functionCall(let call, let id):
+            guard let args = call.arguments, let id, let name = call.name else {
+                return []
+            }
+            return [.item(.functionToolCall(.init(arguments: args,
+                                                  callID: id.callID,
+                                                  name: name,
+                                                  id: id.itemID)))]
+        case .multipart(let parts):
+            return parts.flatMap { assistantEntries(for: $0) }
+        case .attachment(let attachment):
+            // Persisted assistant turns can carry attachments. Responses
+            // assistant-role messages only accept text/refusal on the wire
+            // (input_file is user/system-only), so each shape falls back
+            // to a text representation that keeps the turn visible:
+            //   .code:         inline the string (unchanged behavior).
+            //   .statusUpdate: ephemeral, drop with no log.
+            //   .file:         placeholder describing the file; DLog so a
+            //                  surprise drop on a real history is visible.
+            //   .fileID:       placeholder with the original name; DLog.
+            switch attachment.type {
+            case .code(let string):
+                return [.message(.init(content: .text(string), role: .assistant))]
+            case .statusUpdate:
+                return []
+            case .file(let file):
+                DLog("ResponsesAPIRequest: assistant turn carries .attachment(.file name=\(file.name) mime=\(file.mimeType)); emitting text placeholder")
+                let placeholder = "[file attachment: \(file.name) (\(file.mimeType))]"
+                return [.message(.init(content: .text(placeholder), role: .assistant))]
+            case .fileID(_, let name):
+                DLog("ResponsesAPIRequest: assistant turn carries .attachment(.fileID name=\(name)); emitting text placeholder")
+                return [.message(.init(content: .text("[file attachment: \(name)]"), role: .assistant))]
+            }
+        case .functionOutput, .uninitialized:
+            // A .function-role .functionOutput is the normal shape; on an
+            // .assistant-role message it's malformed but might exist in old
+            // history. Fall back to text via maybeContent so the message
+            // survives the round-trip.
+            if let text = body.maybeContent {
+                return [.message(.init(content: .text(text), role: .assistant))]
+            }
+            return []
         }
     }
 
@@ -1787,7 +1849,7 @@ struct ResponsesBodyRequestBuilder {
     func body() throws -> Data {
         // Tokens are about 4 letters each. Allow enough tokens to include both the query and an
         // answer the same length as the query.
-        var itemList = messages.compactMap { transform(message: $0) }
+        var itemList = messages.flatMap { transform(message: $0) }
         if previousResponseID != nil && !itemList.isEmpty {
             itemList.removeFirst(itemList.count - 1)
         }

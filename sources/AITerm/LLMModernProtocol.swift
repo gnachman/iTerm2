@@ -12,6 +12,20 @@ struct CompletionsMessage: Codable, Equatable {
     // For function calling
     var functionName: String?  // in the response only
     var function_call: LLM.FunctionCall?
+    // Modern OpenAI-compatible chat-completions servers (incl. DeepSeek) emit
+    // function calls as tool_calls.
+    var tool_calls: [ToolCall]?
+    // Modern format: tool output messages use role="tool" with tool_call_id
+    // referring back to the assistant's tool_calls[i].id. Legacy format used
+    // role="function" with name and no id.
+    var tool_call_id: String?
+
+    struct ToolCall: Codable, Equatable {
+        var index: Int?
+        var id: String?
+        var type: String?  // "function"
+        var function: LLM.FunctionCall?
+    }
 
     init(role: LLM.Role? = .user,
          content: Content? = nil,
@@ -28,14 +42,24 @@ struct CompletionsMessage: Codable, Equatable {
         case functionName = "name"
         case content
         case function_call
+        case tool_calls
+        case tool_call_id
     }
 
     func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
 
-        try container.encode(role, forKey: .role)
+        // Modern format requires role="tool" with tool_call_id for function
+        // outputs; legacy used role="function" with name. Pick based on
+        // whether we have a tool_call_id (we do iff the call originally came
+        // back as tool_calls, i.e. a modern server).
+        if tool_call_id != nil {
+            try container.encode("tool", forKey: .role)
+        } else {
+            try container.encode(role, forKey: .role)
+        }
 
-        if let functionName {
+        if tool_call_id == nil, let functionName {
             try container.encode(functionName, forKey: .functionName)
         }
 
@@ -43,6 +67,19 @@ struct CompletionsMessage: Codable, Equatable {
 
         if let function_call {
             try container.encode(function_call, forKey: .function_call)
+        }
+
+        // Echo tool_calls back when present. Modern OpenAI-compatible servers
+        // expect tool_calls (function_call has been deprecated since
+        // mid-2023). Without this, an assistant turn captured via tool_calls
+        // gets re-emitted as the legacy function_call field, which servers
+        // that drop legacy support would refuse on round-trip.
+        if let tool_calls, !tool_calls.isEmpty {
+            try container.encode(tool_calls, forKey: .tool_calls)
+        }
+
+        if let tool_call_id {
+            try container.encode(tool_call_id, forKey: .tool_call_id)
         }
     }
 
@@ -70,49 +107,85 @@ struct CompletionsMessage: Codable, Equatable {
             case .fileID(_, let name):
                 content = .string("A file named \(name) (content unavailable)")
             }
-        case .functionCall(let call, _):
-            functionName = call.name
-            function_call = call
+        case .functionCall(let call, let id):
+            // Modern servers want tool_calls with an explicit id; legacy
+            // servers want the older function_call field. Prefer modern when
+            // we captured an id (server gave us one); fall back to legacy
+            // when we don't have one (very old conversation history).
+            if let callID = id?.callID ?? call.id {
+                tool_calls = [.init(index: nil, id: callID, type: "function", function: call)]
+            } else {
+                functionName = call.name
+                function_call = call
+            }
             content = nil
-        case .functionOutput(name: let name, output: let output, id: _):
-            functionName = name
+        case .functionOutput(name: let name, output: let output, id: let id):
+            // Modern servers want role="tool" with tool_call_id; legacy
+            // servers want role="function" with name. The custom encode
+            // above picks based on whether tool_call_id is set.
+            if let callID = id?.callID {
+                tool_call_id = callID
+            } else {
+                functionName = name
+            }
             content = .string(output)
         case .uninitialized:
             return nil
         case .multipart(let subparts):
-            // This is pretty crappy but I don't think it'll happen unless you continue an
-            // existing conversation in an older API.
-            content = .array(subparts.compactMap({ subpart -> ContentPart? in
+            // Multipart bodies can now reach this serializer when AITermController
+            // collapses a [text-preamble, functionCall] response into one history
+            // entry (see parseNonStreamingResponse). Surface text + the first
+            // function call onto the same CompletionsMessage so neither is dropped.
+            // Function outputs and nested multipart aren't expected from any
+            // current parser; ignore them rather than crashing.
+            var contentParts: [ContentPart] = []
+            for subpart in subparts {
                 switch subpart {
                 case .uninitialized:
-                    return nil
+                    break
                 case .text(let string):
-                    return .text(.init(text: string))
-                case .functionCall, .functionOutput, .multipart:
-                    it_fatalError()
+                    contentParts.append(.text(.init(text: string)))
+                case .functionCall(let call, let id):
+                    // Mirror the top-level functionCall encode logic: prefer
+                    // modern tool_calls when we have an id, fall back to
+                    // legacy function_call otherwise.
+                    if tool_calls == nil && function_call == nil {
+                        if let callID = id?.callID ?? call.id {
+                            tool_calls = [.init(index: nil, id: callID, type: "function", function: call)]
+                        } else {
+                            function_call = call
+                            functionName = call.name
+                        }
+                    }
+                case .functionOutput, .multipart:
+                    // Not expected from any current parser. Log so future regressions
+                    // (e.g. nested multipart bodies, or function output siblings) are
+                    // visible instead of silently dropped.
+                    DLog("CompletionsMessage: ignoring unsupported subpart in multipart body: \(subpart)")
                 case .attachment(let attachment):
                     switch attachment.type {
                     case .code(let string):
-                        return .text(.init(text: string))
+                        contentParts.append(.text(.init(text: string)))
                     case .statusUpdate:
-                        return nil
+                        break
                     case .file(let file):
-                        // The only base-64 encoded type OpenAI currently supports is PDF.
                         if file.mimeType == "application/pdf" {
                             let base64Data = file.content.base64EncodedString()
-                            return .file(.init(file_data: "data:\(file.mimeType);base64,\(base64Data)",
-                                               filename: file.name))
+                            contentParts.append(.file(.init(
+                                file_data: "data:\(file.mimeType);base64,\(base64Data)",
+                                filename: file.name)))
                         } else {
                             var value = "<iterm2:attachment file=\"\(file.name)\" type=\"\(file.mimeType)\">\n"
                             value += file.content.lossyString
                             value += "\n</iterm2:attachment>"
-                            return .text(.init(text: value))
+                            contentParts.append(.text(.init(text: value)))
                         }
                     case .fileID(id: _, name: let name):
-                        return .text(.init(text: "A file named \(name) (content unavailable)"))
+                        contentParts.append(.text(.init(text: "A file named \(name) (content unavailable)")))
                     }
                 }
-            }))
+            }
+            content = contentParts.isEmpty ? nil : .array(contentParts)
         }
     }
     var llmMessage: LLM.Message {
@@ -123,21 +196,26 @@ struct CompletionsMessage: Codable, Equatable {
                                                      output: string,
                                                      id: nil))
         }
-        if let function_call {
-            return LLM.Message(responseID: nil,
-                               role: role,
-                               body: .functionCall(function_call, id: nil))
-        }
+        // Build the assistant turn's body from whatever combination of text,
+        // legacy function_call, and modern tool_calls the server returned.
+        // Modern chat-completions can deliver a turn that includes both
+        // preamble content AND tool_calls; surface them as a multipart so
+        // neither is dropped, matching the platform-neutral shape that the
+        // other vendors' parsers now produce.
+        // TODO: parallel_tool_calls (multiple entries in tool_calls) are not
+        // yet surfaced; only the first call is propagated. Modeling parallel
+        // calls would require multipart with several .functionCall parts and
+        // dispatching multiple function executions before continuing, which
+        // the framework does not do today.
+        var bodies: [LLM.Message.Body] = []
         if let content {
             switch content {
-            case .string(let string):
-                return LLM.Message(responseID: nil,
-                                   role: role,
-                                   body: .text(string))
+            case .string(let string) where !string.isEmpty:
+                bodies.append(.text(string))
+            case .string:
+                break
             case .array(let array):
-                return LLM.Message(responseID: nil,
-                                   role: role,
-                                   body: .multipart(array.compactMap { part in
+                let parts: [LLM.Message.Body] = array.map { part in
                     switch part {
                     case .text(let text):
                         return .text(text.text)
@@ -148,10 +226,29 @@ struct CompletionsMessage: Codable, Equatable {
                                                                    content: Data(base64Encoded: file.file_data) ?? Data(),
                                                                    mimeType: "application/octet-stream"))))
                     }
-                }))
+                }
+                if parts.count == 1 {
+                    bodies.append(parts[0])
+                } else if !parts.isEmpty {
+                    bodies.append(.multipart(parts))
+                }
             }
         }
-        return LLM.Message(responseID: nil, role: role, body: .uninitialized)
+        if let function_call {
+            bodies.append(.functionCall(function_call, id: nil))
+        } else if let toolCall = tool_calls?.first, let function = toolCall.function {
+            let id: LLM.Message.FunctionCallID? = toolCall.id.map {
+                LLM.Message.FunctionCallID(callID: $0, itemID: $0)
+            }
+            bodies.append(.functionCall(function, id: id))
+        }
+        let body: LLM.Message.Body
+        switch bodies.count {
+        case 0: body = .uninitialized
+        case 1: body = bodies[0]
+        default: body = .multipart(bodies)
+        }
+        return LLM.Message(responseID: nil, role: role, body: body)
     }
 
     var coercedContentString: String {
@@ -197,9 +294,10 @@ struct LLMModernResponseParser: LLMResponseParser {
         }
 
         var choiceMessages: [LLM.Message] {
-            return choices.map {
-                $0.message.llmMessage
-            }
+            // `choices` is the n-sampling alternatives array; iTerm2 never
+            // requests n > 1, so surface only the first.
+            guard let first = choices.first else { return [] }
+            return [first.message.llmMessage]
         }
     }
 
@@ -239,18 +337,64 @@ struct LLMModernStreamingResponseParser: LLMStreamingResponseParser {
         }
 
         var choiceMessages: [LLM.Message] {
-            return choices.compactMap { choice -> LLM.Message? in
-                if choice.finish_reason == "function_call" &&
-                    choice.delta.role == nil &&
-                    choice.delta.content == nil &&
-                    choice.delta.functionName == nil &&
-                    choice.delta.function_call == nil {
-                    // Sent at the end of a function call
+            // `choices` is the n-sampling alternatives axis; iTerm2 never
+            // requests n > 1, so surface only the first.
+            guard let choice = choices.first else { return [] }
+            return [choice].compactMap { choice -> LLM.Message? in
+                let delta = choice.delta
+                let trailerForLegacyFunctionCall =
+                    (choice.finish_reason == "function_call" || choice.finish_reason == "tool_calls") &&
+                    delta.role == nil &&
+                    delta.content == nil &&
+                    delta.functionName == nil &&
+                    delta.function_call == nil &&
+                    (delta.tool_calls?.isEmpty ?? true)
+                if trailerForLegacyFunctionCall {
+                    // Sent at the end of a function call: a delta carrying only the
+                    // finish_reason. Nothing to surface.
                     return nil
                 }
-                return LLM.Message(role: .assistant,
-                                   content: choice.delta.coercedContentString,
-                                   function_call: choice.delta.function_call)
+                // Modern OpenAI-compatible servers stream function calls as tool_calls
+                // deltas; the legacy `function_call` field is only used by very old
+                // chat-completions endpoints. Prefer tool_calls when present.
+                // TODO: parallel tool_calls in a single assistant turn are not yet
+                // surfaced; only the first tool_call is propagated, matching the
+                // single-call shape the rest of the framework assumes. Both this
+                // streaming path and the non-streaming counterpart above need to
+                // be updated together if parallel calls become a requirement.
+                // OpenAI today streams text deltas and tool_calls deltas in
+                // separate chunks, but the protocol doesn't forbid combining
+                // them. If a single delta carries both, surface them together
+                // as a multipart so neither is silently dropped.
+                let textContent = delta.coercedContentString
+                if let toolCall = delta.tool_calls?.first, let function = toolCall.function {
+                    let id: LLM.Message.FunctionCallID? = toolCall.id.map {
+                        LLM.Message.FunctionCallID(callID: $0, itemID: $0)
+                    }
+                    let body: LLM.Message.Body
+                    if textContent.isEmpty {
+                        body = .functionCall(function, id: id)
+                    } else {
+                        body = .multipart([
+                            .text(textContent),
+                            .functionCall(function, id: id),
+                        ])
+                    }
+                    return LLM.Message(responseID: nil, role: .assistant, body: body)
+                }
+                if let function_call = delta.function_call {
+                    let body: LLM.Message.Body
+                    if textContent.isEmpty {
+                        body = .functionCall(function_call, id: nil)
+                    } else {
+                        body = .multipart([
+                            .text(textContent),
+                            .functionCall(function_call, id: nil),
+                        ])
+                    }
+                    return LLM.Message(responseID: nil, role: .assistant, body: body)
+                }
+                return LLM.Message(role: .assistant, content: textContent)
             }
         }
     }

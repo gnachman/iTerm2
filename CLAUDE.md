@@ -7,6 +7,7 @@
 - Don't write more than one line of inline javascript, html, or css. Instead create a new file and load it using iTermBrowserTemplateLoader.swift
 - Don't create dependency cycles. Use delegates or closures instead.
 - To run unit tests in ModernTests, use tools/run_tests.expect. It takes an argument naming the test or tests, such as `tools/run_tests.expect ModernTests/iTermScriptFunctionCallTest/testSignature`
+- After changes that affect AI chat (request builders, response parsers, AITermController, AIConversation, anything in sources/AITerm/, ChatAgent, ChatClient, etc.), run `tools/run_ai_live.sh` against real vendor APIs. This is a separate live harness from the regular ModernTests; it costs real money but exercises end-to-end round-trips (smoke, multi-turn, tool calls, both streaming and non-streaming) against OpenAI/Anthropic/Gemini/DeepSeek. The default ModernTests run skips the live harness, so unit tests passing alone is not sufficient evidence. Pass a filter to scope the run: `tools/run_ai_live.sh openai`, `tools/run_ai_live.sh smoke`, or an exact method name like `tools/run_ai_live.sh test_anthropic_toolCall_nonStreaming`.
 - When renaming a file tracked by git (and almost all of them are) use `git mv` instead of `mv`
 - To make a debug build run `tools/build.sh` (or `tools/build.sh Development`). This saves logs to `tmp/build.log` and shows only errors/warnings on failure.
 - Little scripts or text files that are used for manual testing of features go in tests/

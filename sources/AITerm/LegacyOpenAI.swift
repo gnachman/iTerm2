@@ -5,6 +5,16 @@
 //  Created by George Nachman on 6/6/25.
 //
 
+// TODO: Streaming is broken on this entire path. LegacyBodyRequestBuilder
+// has no `stream` field so requests never opt into SSE, and
+// LLMLegacyStreamingResponseParser below decodes a {model, response, done}
+// shape that's Ollama-style, not OpenAI's {choices: [{text, ...}]} SSE
+// format. If a user points iTerm2 at /v1/completions with streaming on,
+// the request goes out as non-streaming and any streaming response would
+// fail to parse anyway. Either fix both sides or remove
+// LLMLegacyStreamingResponseParser and surface "streaming unsupported on
+// this protocol" earlier. Discussed in AILiveHarness comments around
+// test_openai_legacyCompletions_smoke_nonStreaming.
 struct LegacyBodyRequestBuilder {
     var messages: [LLM.Message]
     var provider: LLMProvider
@@ -16,6 +26,11 @@ struct LegacyBodyRequestBuilder {
     }
 
     func body() throws -> Data {
+        // TODO: Multi-turn semantics are also broken. messages are joined into
+        // one prompt string, losing role/turn structure. Acceptable since the
+        // only realistic /v1/completions consumer today is gpt-3.5-turbo-instruct
+        // for one-shot tasks, but worth flagging if anyone tries to do chat
+        // history through this path.
         let query = messages.compactMap { $0.body.content }.joined(separator: "\n")
         let body = LegacyBody(
             model: provider.dynamicModelsSupported ? provider.model.name : nil,
@@ -54,9 +69,10 @@ struct LLMLegacyResponseParser: LLMResponseParser {
         }
 
         var choiceMessages: [LLM.Message] {
-            return choices.map {
-                return LLM.Message(role: .assistant, content: $0.text)
-            }
+            // The legacy `choices` array is n-sampling alternatives.
+            // iTerm2 never requests n > 1, so surface only the first.
+            guard let first = choices.first else { return [] }
+            return [LLM.Message(role: .assistant, content: first.text)]
         }
     }
 

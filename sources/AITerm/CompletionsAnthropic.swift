@@ -66,6 +66,14 @@ struct AnthropicMessage: Codable, Equatable {
                                    data: base64Data))
                     ])
                 } else {
+                    // TODO: Non-image binary attachments fall through to
+                    // lossyString, which mangles binary bytes into a UTF-8
+                    // approximation Anthropic can't actually read. Anthropic
+                    // accepts PDFs natively as document content blocks; if
+                    // we want PDF support, switch to .document(.base64) for
+                    // application/pdf and explicitly reject other binaries
+                    // upstream. Pinned by
+                    // AIRequestBuilderAttachmentTests.testAnthropic_binaryAttachment_fallsBackToText_doesNotCrash.
                     content = .string(file.content.lossyString)
                 }
             case .fileID(_, let name):
@@ -457,13 +465,17 @@ struct AnthropicResponseParser: LLMResponseParser {
         }
 
         var choiceMessages: [LLM.Message] {
-            var messages: [LLM.Message] = []
-
+            // Anthropic returns one assistant turn whose `content` array can
+            // hold multiple blocks (`text`, `tool_use`, etc.). The framework
+            // expects choiceMessages to surface at most one Message; collapse
+            // sibling blocks into one multipart-bodied assistant message so
+            // AITerm sees the same shape it gets from every other vendor.
+            var bodies: [LLM.Message.Body] = []
             for contentItem in content {
                 switch contentItem.type {
                 case "text":
                     if let text = contentItem.text, !text.isEmpty {
-                        messages.append(LLM.Message(responseID: id, role: .assistant, body: .text(text)))
+                        bodies.append(.text(text))
                     }
                 case "tool_use":
                     if let name = contentItem.name,
@@ -471,19 +483,24 @@ struct AnthropicResponseParser: LLMResponseParser {
                        let input = contentItem.input {
                         let inputString = (try? JSONSerialization.data(withJSONObject: input))?.lossyString ?? ""
                         let functionCall = LLM.FunctionCall(name: name, arguments: inputString, id: toolID)
-                        messages.append(LLM.Message(responseID: id, role: .assistant, body: .functionCall(functionCall, id: nil)))
+                        bodies.append(.functionCall(functionCall, id: nil))
                     }
                 default:
                     break
                 }
             }
 
-            if messages.isEmpty {
+            let body: LLM.Message.Body
+            switch bodies.count {
+            case 0:
                 let textContent = content.compactMap { $0.text }.joined(separator: "")
-                return [LLM.Message(responseID: id, role: .assistant, body: .text(textContent))]
+                body = .text(textContent)
+            case 1:
+                body = bodies[0]
+            default:
+                body = .multipart(bodies)
             }
-
-            return messages
+            return [LLM.Message(responseID: id, role: .assistant, body: body)]
         }
     }
 

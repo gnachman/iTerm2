@@ -209,6 +209,17 @@ AI Improvements:
 - AI chat can connect to LAN-hosted models
   over HTTP.
 - Add DeepSeek v4-flash and v4-pro models.
+- Chat-completions function calling now uses
+  the modern tools/tool_choice request shape
+  instead of the deprecated functions/
+  function_call shape. All current vendors
+  (OpenAI, DeepSeek, recent Ollama, recent
+  llama.cpp, recent vLLM) support this.
+  If you point iTerm2 at an older self-hosted
+  OpenAI-compatible server that only
+  understands functions/function_call, tool
+  calls will stop working until you upgrade
+  the backend.
 
 Python API Improvements:
 - Move sessions to new tabs or windows via the

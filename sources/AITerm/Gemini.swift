@@ -22,6 +22,8 @@ struct GeminiRequestBuilder: Codable {
         var inlineData: InlineData?
         var functionResponse: FunctionResponse?
         var functionCall: FunctionCall?
+        // Gemini 3 returns this on functionCall parts and requires it back unchanged.
+        var thoughtSignature: String?
     }
     struct InlineData: Codable {
         var mime_type: String
@@ -119,7 +121,8 @@ struct GeminiRequestBuilder: Codable {
             case .functionCall(let call, _):
                 if let name = call.name {
                     [Part(functionCall: FunctionCall(name: name,
-                                                     args: Self.encodedArgs(call.arguments)))]
+                                                     args: Self.encodedArgs(call.arguments)),
+                          thoughtSignature: call.thoughtSignature)]
                 } else {
                     []
                 }
@@ -127,6 +130,14 @@ struct GeminiRequestBuilder: Codable {
                 [Part(functionResponse: FunctionResponse(name: name,
                                                          response: ["output": output]))]
             case .attachment:
+                // TODO: Gemini's request builder drops top-level .attachment
+                // bodies (no multipart wrapper). Production callers always
+                // wrap user-sent attachments in a multipart with at least
+                // their prompt text, so this hasn't bitten anyone, but a
+                // stray bare-attachment body silently produces a request
+                // with no contents. Mirror the multipart branch's
+                // attachment handling here if we ever rely on this path.
+                // Pinned by AIRequestBuilderAttachmentTests.testGemini_topLevelAttachment_isUnsupported.
                 []
             case .multipart(let subparts):
                 subparts.compactMap { subpart -> Part? in
@@ -135,8 +146,21 @@ struct GeminiRequestBuilder: Codable {
                         return nil
                     case .text(let string):
                         return Part(text: string)
-                    case .functionCall, .functionOutput:
+                    case .functionCall(let call, _):
+                        // Mirror the top-level .functionCall handling: emit a
+                        // functionCall Part carrying the per-call thoughtSignature,
+                        // which Gemini 3 requires to be echoed back unchanged.
+                        if let name = call.name {
+                            return Part(functionCall: FunctionCall(
+                                            name: name,
+                                            args: Self.encodedArgs(call.arguments)),
+                                        thoughtSignature: call.thoughtSignature)
+                        }
                         return nil
+                    case .functionOutput(name: let name, output: let output, id: _):
+                        return Part(functionResponse: FunctionResponse(
+                                        name: name,
+                                        response: ["output": output]))
                     case .attachment(let attachment):
                         switch attachment.type {
                         case .code(let code):
@@ -172,33 +196,57 @@ struct LLMGeminiResponseParser: LLMResponseParser {
     struct GeminiResponse: Codable, LLM.AnyResponse {
         var isStreamingResponse: Bool { false }
         var choiceMessages: [LLM.Message] {
-            candidates.map {
-                let role = if let content = $0.content {
-                    content.role == "model" ? LLM.Role.assistant : LLM.Role.user
-                } else {
-                    LLM.Role.assistant  // failed, probably because of safety
+            // Gemini returns one or more candidates; iTerm2 never requests
+            // candidateCount > 1, so only the first candidate matters.
+            // Within that candidate, parts is a list of consecutive pieces
+            // of one assistant turn (e.g. [text preamble, functionCall +
+            // thoughtSignature]). Collapse them into a single multipart-bodied
+            // Message so AITerm sees the same shape as every other vendor.
+            guard let candidate = candidates.first else { return [] }
+            let role: LLM.Role = if let content = candidate.content {
+                content.role == "model" ? .assistant : .user
+            } else {
+                .assistant  // failed, probably because of safety
+            }
+            let parts = candidate.content?.parts ?? []
+            let bodies: [LLM.Message.Body] = parts.compactMap { part in
+                if let text = part.text, !text.isEmpty {
+                    return .text(text)
                 }
-                return if let text = $0.content?.parts.first?.text {
-                    LLM.Message(role: role, content: text)
-                } else if let functionCall = $0.content?.parts.first?.functionCall {
-                    LLM.Message(
-                        responseID: nil,
-                        role: role,
-                        body: .functionCall(
-                            LLM.FunctionCall(
-                                name: functionCall.name,
-                                arguments:
-                                    try! JSONEncoder().encode(functionCall.args).lossyString),
-                            id: nil))
-                } else {
-                    if $0.finishReason == "SAFETY" {
-                        LLM.Message(role: role, content: "The request violated Gemini's safety rules.")
-                    } else if let reason = $0.finishReason {
-                        LLM.Message(role: role, content: "Failed to generate a response with reason: \(reason).")
-                    } else {
-                        LLM.Message(role: role, content: "Failed to generate a response for an unknown reason.")
-                    }
+                if let functionCall = part.functionCall {
+                    return .functionCall(
+                        LLM.FunctionCall(
+                            name: functionCall.name,
+                            arguments:
+                                try! JSONEncoder().encode(functionCall.args).lossyString,
+                            id: nil,
+                            thoughtSignature: part.thoughtSignature),
+                        id: nil)
                 }
+                return nil
+            }
+            if !bodies.isEmpty {
+                let body: LLM.Message.Body = bodies.count == 1 ? bodies[0] : .multipart(bodies)
+                return [LLM.Message(responseID: nil, role: role, body: body)]
+            }
+            // No usable parts. STOP/MAX_TOKENS are normal completions. Gemini
+            // streams a final empty-text chunk with finishReason=STOP after a
+            // function call, and Body.tryAppend would otherwise merge a synthetic
+            // "Failed..." string into the function call's arguments and corrupt
+            // the JSON. Return no message in those cases. Only emit a synthetic
+            // message for genuine failure reasons (safety, recitation, etc.).
+            guard let reason = candidate.finishReason else {
+                return []
+            }
+            switch reason {
+            case "STOP", "MAX_TOKENS", "FINISH_REASON_UNSPECIFIED":
+                return []
+            case "SAFETY":
+                return [LLM.Message(role: role,
+                                    content: "The request violated Gemini's safety rules.")]
+            default:
+                return [LLM.Message(role: role,
+                                    content: "Failed to generate a response with reason: \(reason).")]
             }
         }
 
@@ -214,6 +262,7 @@ struct LLMGeminiResponseParser: LLMResponseParser {
                 struct Part: Codable {
                     var text: String?
                     var functionCall: GeminiRequestBuilder.FunctionCall?
+                    var thoughtSignature: String?
                 }
             }
             var finishReason: String?

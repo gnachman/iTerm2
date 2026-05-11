@@ -814,12 +814,25 @@ class AITermController {
                 delegate?.aitermController(self, didFailWithError: AIError("Unexpected end of file from server"))
                 return
             }
-            if let topChoice = response.choiceMessages.first, let functionCall = topChoice.function_call {
-                doFunctionCall(topChoice, call: functionCall)
+            if let id = response.newlyCreatedResponseID {
+                previousResponseID = id
+            }
+            // Parsers now guarantee at most one Message per response: a single
+            // assistant turn whose body is `.text`, `.functionCall`, or a
+            // `.multipart` of both (for vendors that split a turn into multiple
+            // content blocks: Anthropic content array, Responses output items,
+            // Gemini parts, modern chat-completions text+tool_calls). Detect a
+            // function call in the body (multipart-aware via Message.function_call)
+            // and dispatch it; otherwise offer the text.
+            guard let messageToDispatch = response.choiceMessages.first else {
+                delegate?.aitermController(self, didFailWithError: AIError("Empty response from server"))
                 return
             }
-            let choices = response.choiceMessages.compactMap { $0.trimmedString }
-            guard let choice = choices.first else {
+            if let functionCall = messageToDispatch.function_call {
+                doFunctionCall(messageToDispatch, call: functionCall)
+                return
+            }
+            guard let choice = messageToDispatch.trimmedString else {
                 delegate?.aitermController(self, didFailWithError: AIError("Empty response from server"))
                 return
             }
@@ -861,10 +874,27 @@ class AITermController {
                     switch result {
                     case .success(let response):
                         DLog("Response to function call with arguments \(functionCall.arguments ?? ""): \(response)")
+                        // Some parsers (notably Anthropic) put the tool-use id on
+                        // FunctionCall.id rather than wrapping it in the outer
+                        // FunctionCallID. Fall back to the inner id so the function
+                        // output can round-trip through providers that demand a
+                        // tool_use_id reference.
+                        //
+                        // For Anthropic specifically, AnthropicRequestBuilder also
+                        // tracks pendingToolIds and recovers the id from the
+                        // assistant turn's tool_use block, so that path remains the
+                        // primary mechanism on the wire today. This fallback fires
+                        // when AnthropicMessage encodes a function output by itself
+                        // (no pending id) and is what unblocks the OpenAI Responses
+                        // API path where the call_id has no recovery alternative.
+                        let outputCallID = message.functionCallID
+                            ?? functionCall.id.map {
+                                LLM.Message.FunctionCallID(callID: $0, itemID: $0)
+                            }
                         amended.append(Message(role: .function,
                                                content: response,
                                                name: functionCall.name,
-                                               functionCallID: message.functionCallID))
+                                               functionCallID: outputCallID))
                         DLog("Set state to querySent with accumulting message:\n\(message)")
                         if let truncate {
                             amended = truncate(amended)
