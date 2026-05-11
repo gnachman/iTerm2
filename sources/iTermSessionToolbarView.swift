@@ -149,6 +149,16 @@ class SessionToolbarView: NSView {
         doLayout()
     }
 
+    // Fade the blurred background in proportion to the window's
+    // opacity. NSVisualEffectView with .withinWindow blending picks
+    // up the (transparent) session backing as its source, so at low
+    // alpha it looks muddy on top of a see-through window. Dropping
+    // its alphaValue lets the desktop show through the toolbar to
+    // match the rest of the session.
+    @objc func setTransparencyAlpha(_ transparencyAlpha: CGFloat) {
+        backgroundView.alphaValue = transparencyAlpha
+    }
+
     required init?(coder: NSCoder) {
         it_fatalError("init(coder:) has not been implemented")
     }

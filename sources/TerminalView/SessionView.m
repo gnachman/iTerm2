@@ -380,6 +380,7 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
         [_toolbarView setItems:toolbarItems];
     } else {
         _toolbarView = [[iTermSessionToolbarView alloc] initWithItems:toolbarItems];
+        [_toolbarView setTransparencyAlpha:[self.delegate sessionViewTransparencyAlpha]];
         [self addSubviewBelowFindView:_toolbarView];
     }
     [self updateLayout];
@@ -544,6 +545,7 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
     }
     _imageView.transparency = 1 - transparencyAlpha;
     _imageView.blend = blend;
+    [_toolbarView setTransparencyAlpha:transparencyAlpha];
     [CATransaction commit];
 }
 
