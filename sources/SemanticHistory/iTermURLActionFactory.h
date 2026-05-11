@@ -19,7 +19,7 @@
 @class URLAction;
 @protocol VT100RemoteHostReading;
 
-@interface iTermURLActionFactory : NSUserDefaults<iTermCancelable>
+@interface iTermURLActionFactory : NSObject<iTermCancelable>
 
 + (instancetype)urlActionAtCoord:(VT100GridCoord)coord
              respectHardNewlines:(BOOL)respectHardNewlines

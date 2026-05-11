@@ -9,6 +9,7 @@
 
 #import "iTermDragHandleView.h"
 #import "iTermStatusBarLargeComposerViewController.h"
+#import "iTermUserDefaults.h"
 #import "iTerm2SharedARC-Swift.h"
 #import "NSArray+iTerm.h"
 
@@ -131,8 +132,8 @@ static NSString *const iTermMinimalComposerViewHeightUserDefaultsKey = @"Compose
 - (instancetype)init {
     self = [super initWithNibName:NSStringFromClass(self.class) bundle:[NSBundle bundleForClass:self.class]];
     if (self) {
-        [[NSUserDefaults standardUserDefaults] registerDefaults:@{ iTermMinimalComposerViewHeightUserDefaultsKey: @135 }];
-        _manualHeight = [[NSUserDefaults standardUserDefaults] doubleForKey:iTermMinimalComposerViewHeightUserDefaultsKey];
+        [[iTermUserDefaults userDefaults] registerDefaults:@{ iTermMinimalComposerViewHeightUserDefaultsKey: @135 }];
+        _manualHeight = [[iTermUserDefaults userDefaults] doubleForKey:iTermMinimalComposerViewHeightUserDefaultsKey];
     }
     return self;
 }
@@ -472,8 +473,8 @@ workingDirectory:(NSString *)pwd
         delta += error;
         _manualHeight -= error;
     }
-    [[NSUserDefaults standardUserDefaults] setDouble:_manualHeight
-                                              forKey:iTermMinimalComposerViewHeightUserDefaultsKey];
+    [[iTermUserDefaults userDefaults] setDouble:_manualHeight
+                                         forKey:iTermMinimalComposerViewHeightUserDefaultsKey];
     [self updateFrame];
     CGFloat actual = originalHeight - NSHeight(self.view.frame);
     if (dragHandle == _topDragHandle) {

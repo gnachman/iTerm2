@@ -14,10 +14,10 @@ class iTermRecentTabColors: NSObject {
 
     private var hexStrings: [String] {
         get {
-            return UserDefaults.standard.stringArray(forKey: userDefaultsKey) ?? []
+            return iTermUserDefaults.userDefaults().stringArray(forKey: userDefaultsKey) ?? []
         }
         set {
-            UserDefaults.standard.set(newValue, forKey: userDefaultsKey)
+            iTermUserDefaults.userDefaults().set(newValue, forKey: userDefaultsKey)
         }
     }
 

@@ -69,6 +69,9 @@ extension PseudoTerminal {
 private let kTabColorAccessoryViewID = NSUserInterfaceItemIdentifier("iTermTabColorAccessory")
 
 /// Mirrors the kCPKUseSystemColorPicker constant from CPKControlsView.h (not public).
+/// Must use UserDefaults.standard rather than iTermUserDefaults: ColorPicker
+/// reads and writes this key against standardUserDefaults and has no awareness
+/// of -suite, so a custom suite would desynchronize the two sides.
 private let kUseSystemColorPickerKey = "kCPKUseSystemColorPicker"
 
 extension PseudoTerminal: ColorsMenuItemViewDelegate {

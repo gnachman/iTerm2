@@ -43,7 +43,7 @@ class LocalNetworkPermissionPrompter: NSObject {
             return false
         }
 
-        let lastPromptedVersion = UserDefaults.standard.string(forKey: Self.userDefaultsKey)
+        let lastPromptedVersion = iTermUserDefaults.userDefaults().string(forKey: Self.userDefaultsKey)
         return lastPromptedVersion != currentVersion
     }
 
@@ -51,7 +51,7 @@ class LocalNetworkPermissionPrompter: NSObject {
         guard let currentVersion = Bundle.main.infoDictionary?[kCFBundleVersionKey as String] as? String else {
             return
         }
-        UserDefaults.standard.set(currentVersion, forKey: Self.userDefaultsKey)
+        iTermUserDefaults.userDefaults().set(currentVersion, forKey: Self.userDefaultsKey)
     }
 
     private func startBrowsing() {
