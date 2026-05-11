@@ -373,6 +373,14 @@ Settings Improvements:
   first across tabs and windows.
 
 Bug Fixes:
+- Fix a crash when a Python API client invoked
+  a function whose argument string contained
+  non-BMP characters (for example, emoji). The
+  expression tokenizer’s optional-path
+  recognizer indexed by Unicode scalar while
+  the surrounding tokenizer tracks UTF-16
+  positions, so the offset could run past the
+  scalar count and trap. Issue 12856.
 - When ESC #3, #4, or #6 (DECDHL/DECDWL) was
   received mid-line, characters already on the
   line were correctly doubled in size but the

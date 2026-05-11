@@ -1865,4 +1865,19 @@ final class iTermExpressionParserTests: XCTestCase, iTermObject {
         }
         XCTAssertEqual(output as? String, "default")
     }
+
+    // MARK: - Non-BMP characters in input (issue 12856)
+
+    // OptionalPathRecognizer used to index by Unicode scalars while CoreParse's
+    // tokenPosition is in UTF-16 code units. After a quoted string containing
+    // non-BMP characters (e.g. emoji), the UTF-16 offset can exceed the scalar
+    // count and String.UnicodeScalarView.index(_:offsetBy:) traps. This crashes
+    // the app when a Python API client invokes a function with such an input.
+    func testParseInvocationWithEmojiStringDoesNotCrash() {
+        let parser = iTermExpressionParser.expressionParser()!
+        // After SwiftyString consumes "😀😀", currentTokenOffset = 6 (UTF-16);
+        // the scalar count is 6, then whitespace advances to 7 and OptionalPath
+        // is invoked with offset 7, which used to trap.
+        _ = parser.parse("\"😀😀\" x", scope: scope)
+    }
 }

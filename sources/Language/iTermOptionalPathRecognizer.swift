@@ -39,30 +39,32 @@ class OptionalPathRecognizer: NSObject, CPTokenRecogniser {
         return OptionalPathRecognizer()
     }
 
+    // CoreParse's tokenPosition is in UTF-16 code units (matches NSString length);
+    // index in UTF-16 so non-BMP characters (e.g. emoji) earlier in the input
+    // can't push the offset past the Unicode scalar count and trap.
     func recogniseToken(in string: String!,
                         currentTokenPosition tokenPosition: UnsafeMutablePointer<UInt>!) -> CPToken? {
-        let scalars = string.unicodeScalars
-        let start = scalars.index(scalars.startIndex, offsetBy: Int(tokenPosition.pointee))
+        let nsString = string as NSString
+        let length = nsString.length
+        var pos = Int(tokenPosition.pointee)
+        guard pos < length else { return nil }
 
-        guard start < scalars.endIndex else { return nil }
+        guard nsString.character(at: pos).isIdentifierStart else { return nil }
 
-        let first = scalars[start]
-        guard first.isIdentifierStart else { return nil }
-
-        var pos = scalars.index(after: start)
-        while pos < scalars.endIndex, scalars[pos].isIdentifierBody {
-            pos = scalars.index(after: pos)
+        let startPos = pos
+        pos += 1
+        while pos < length, nsString.character(at: pos).isIdentifierBody {
+            pos += 1
         }
 
-        guard pos < scalars.endIndex, scalars[pos] == "?" else { return nil }
+        guard pos < length, nsString.character(at: pos) == questionMark else { return nil }
 
-        let path = String(scalars[start..<pos])
+        let path = nsString.substring(with: NSRange(location: startPos, length: pos - startPos))
 
         guard !keywords.contains(path) else { return nil }
         guard !path.hasSuffix(".") else { return nil }
 
-        let end = scalars.index(after: pos)
-        tokenPosition.pointee = UInt(scalars.distance(from: scalars.startIndex, to: end))
+        tokenPosition.pointee = UInt(pos + 1)
         return OptionalPathToken(identifier: path)
     }
 
@@ -77,16 +79,20 @@ class OptionalPathRecognizer: NSObject, CPTokenRecogniser {
     }
 }
 
-private extension Unicode.Scalar {
+private let questionMark = unichar(UnicodeScalar("?").value)
+
+private extension unichar {
+    private static func ascii(_ scalar: Unicode.Scalar) -> unichar { unichar(scalar.value) }
+
     var isIdentifierStart: Bool {
-        (self >= "a" && self <= "z") ||
-        (self >= "A" && self <= "Z") ||
-        self == "_"
+        (self >= unichar.ascii("a") && self <= unichar.ascii("z")) ||
+        (self >= unichar.ascii("A") && self <= unichar.ascii("Z")) ||
+        self == unichar.ascii("_")
     }
 
     var isIdentifierBody: Bool {
         isIdentifierStart ||
-        (self >= "0" && self <= "9") ||
-        self == "."
+        (self >= unichar.ascii("0") && self <= unichar.ascii("9")) ||
+        self == unichar.ascii(".")
     }
 }
