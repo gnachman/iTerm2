@@ -708,3 +708,12 @@ Bug Fixes:
 - Fix vertical window resize being
   silently rejected when the window
   sits partly below the screen.
+- Coalesce pending re-evaluations of
+  interpolated strings. Previously,
+  every dependency change enqueued a
+  fresh dispatch_async on the main
+  queue, so a tmux -CC pane title that
+  changed many times per second could
+  pile millions of blocks onto the main
+  queue and exhaust memory. Issue
+  12857.

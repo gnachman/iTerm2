@@ -8,6 +8,7 @@
 #import "iTermGenericEvaluator.h"
 
 #import "DebugLogging.h"
+#import "iTerm2SharedARC-Swift.h"
 #import "iTermAPIHelper.h"
 #import "iTermExpressionEvaluator.h"
 #import "iTermScriptFunctionCall.h"
@@ -18,7 +19,6 @@
 #import "NSObject+iTerm.h"
 
 @interface iTermGenericEvaluator()
-@property (nonatomic) BOOL needsReevaluation;
 @property (nonatomic) NSInteger count;
 @property (nonatomic) NSInteger appliedCount;
 @end
@@ -29,6 +29,7 @@
     BOOL _observing;
     iTermVariableReference<NSString *> *_sourceRef;
     BOOL _sideEffectsAllowed;
+    iTermIdempotentOperationJoiner *_reevaluationJoiner;
 }
 
 - (instancetype)initWithString:(NSString *)stringToEvaluate
@@ -43,6 +44,7 @@
         _observer = [observer copy];
         _missingFunctions = [NSMutableSet set];
         _sideEffectsAllowed = sideEffectsAllowed;
+        _reevaluationJoiner = [iTermIdempotentOperationJoiner asyncJoiner:dispatch_get_main_queue()];
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(registeredFunctionsDidChange:)
                                                      name:iTermAPIRegisteredFunctionsDidChangeNotification
@@ -65,6 +67,7 @@
         _missingFunctions = [NSMutableSet set];
         _destinationPath = [destinationPath copy];
         _sourceRef = [[iTermVariableReference alloc] initWithPath:sourcePath vendor:scope];
+        _reevaluationJoiner = [iTermIdempotentOperationJoiner asyncJoiner:dispatch_get_main_queue()];
         __weak __typeof(self) weakSelf = self;
         _sourceRef.onChangeBlock = ^{
             [weakSelf sourceDidChange];
@@ -106,6 +109,7 @@
     _observer = nil;
     _sourceRef.onChangeBlock = nil;
     [_sourceRef invalidate];
+    [_reevaluationJoiner invalidate];
     [[NSNotificationCenter defaultCenter] removeObserver:self];
 }
 
@@ -234,22 +238,13 @@
 }
 
 - (void)setNeedsReevaluation {
-    self.needsReevaluation = YES;
-    dispatch_async(dispatch_get_main_queue(), ^{
-        if (self.needsReevaluation) {
-            [self reevaluateIfNeeded];
-        }
-    });
+    __weak __typeof(self) weakSelf = self;
+    [_reevaluationJoiner setNeedsUpdateWithBlock:^{
+        [weakSelf reevaluateIfNeeded];
+    }];
 }
 
 - (void)reevaluateIfNeeded {
-    if (!_evaluationResult) {
-        _needsReevaluation = YES;
-    }
-    if (!_needsReevaluation) {
-        return;
-    }
-    _needsReevaluation = NO;
     if (!_evaluationResult) {
         [self evaluateSynchronously:YES sideEffectsAllowed:NO];
     }
