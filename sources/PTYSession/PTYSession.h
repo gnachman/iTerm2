@@ -1013,6 +1013,13 @@ webViewConfiguration:(nullable WKWebViewConfiguration *)webViewConfiguration
 - (nullable NSImage *)snapshot;
 - (nullable NSImage *)snapshotCenteredOn:(VT100GridAbsCoord)coord size:(NSSize)size;
 
+// Renders just the currently-visible terminal grid (no chrome) via the offscreen
+// drawing helper. Works whether or not Metal is the active renderer. Falls back
+// to a Metal capture or the SessionView snapshot if the offscreen render isn't
+// possible (e.g. empty visible range, zero-width textview frame, missing data
+// source), so the returned image may include chrome or be empty in those cases.
+- (nullable NSImage *)terminalContentSnapshot;
+
 - (void)enterPassword:(NSString *)password;
 
 - (void)queueAnnouncement:(iTermAnnouncementViewController *)announcement

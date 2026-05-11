@@ -8077,6 +8077,33 @@ extendResultsAcrossSoftBoundaries:(BOOL)extendResultsAcrossSoftBoundaries {
     return [_view snapshot];
 }
 
+- (NSImage *)terminalContentSnapshot {
+    // Intentionally skip [_textview refresh] here. refresh runs the full
+    // textViewWillRefresh -> refreshAfterSync: cycle (frame resize, scrollback
+    // overflow handling, scrollEnd), which is more side-effecting than a
+    // snapshot helper should be. We render against whatever state the
+    // timer-driven refresh has already produced; the resulting preview may be a
+    // few tens of milliseconds stale but never wrong.
+    const VT100GridRange range = [_textview rangeOfVisibleLines];
+    if (range.length > 0) {
+        NSColor *bg = [_textview.colorMap colorForKey:kColorMapBackground];
+        NSImage *rendered = [_textview renderImageWithLines:NSMakeRange(range.location, range.length)
+                                             includeMargins:YES
+                                            backgroundColor:bg
+                                                 showCursor:YES];
+        if (rendered) {
+            return rendered;
+        }
+    }
+    if (_view.useMetal) {
+        NSImage *metalImage = [_view drawMetalFrameToImage];
+        if (metalImage) {
+            return metalImage;
+        }
+    }
+    return [_view snapshot];
+}
+
 - (NSImage *)snapshotCenteredOn:(VT100GridAbsCoord)coord size:(NSSize)size {
     if (_screen.totalScrollbackOverflow > coord.y) {
         return nil;

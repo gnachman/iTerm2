@@ -370,7 +370,12 @@ Settings Improvements:
   tiebreaker, so the session list (whether
   the query is empty or matches several
   panes) is ordered most-recently-used
-  first across tabs and windows.
+  first across tabs and windows. The
+  current session is omitted from results
+  since it is never a useful jump target,
+  so Cmd-Shift-O followed by Enter now
+  jumps to the most-recently-used other
+  pane.
 
 Bug Fixes:
 - Fix a launch crash when a saved status bar

@@ -274,6 +274,11 @@ static const double kProfileNameMultiplierForWindowItem = 0.08;
 
 - (void)addSessionLocationToItems:(NSMutableArray<iTermOpenQuicklyItem *> *)items
                     withMatcher:(iTermMinimumSubsequenceMatcher *)matcher {
+    // The session the user is already in is never a useful jump target, so
+    // exclude it from results. This makes Cmd-Shift-O + Enter toggle to the
+    // most-recently-used other pane.
+    PTYSession *currentSession = [[iTermController sharedInstance] currentTerminal].currentSession;
+
     // (feature name, display string)
     iTermTuple<NSString *, NSString *> *(^detailFunction)(PTYSession *) = [self detailFunctionForSessions:self.sessions];
 
@@ -283,12 +288,18 @@ static const double kProfileNameMultiplierForWindowItem = 0.08;
     // tiebreaker without overriding real query matches.
     NSInteger maxOrdinal = 0;
     for (PTYSession *session in self.sessions) {
+        if (session == currentSession) {
+            continue;
+        }
         if (session.lastActivityOrdinal > maxOrdinal) {
             maxOrdinal = session.lastActivityOrdinal;
         }
     }
 
     for (PTYSession *session in self.sessions) {
+        if (session == currentSession) {
+            continue;
+        }
         NSMutableArray *features = [NSMutableArray array];
         iTermOpenQuicklySessionItem *item = [[iTermOpenQuicklySessionItem alloc] init];
         item.logoGenerator.textColor = session.foregroundColor;
@@ -1049,8 +1060,11 @@ static const double kProfileNameMultiplierForWindowItem = 0.08;
                                   features:nameFeature
                                      limit:2 * kProfileNameMultiplierForArrangementItem];
     if (score > 0 &&
+        matcher.query.length > 0 &&
         [[WindowArrangements defaultArrangementName] isEqualToString:arrangementName]) {
         // Make the default arrangement always be the highest-scored arrangement if it matches the query.
+        // Skipped for empty queries since every arrangement trivially matches and we don't want this
+        // bump to dominate the recency-sorted session list.
         score += 0.2;
     }
     if (nameFeature.count) {
@@ -1220,8 +1234,11 @@ static const double kProfileNameMultiplierForWindowItem = 0.08;
                                   features:nameFeature
                                      limit:2 * kProfileNameMultiplierForProfileItem];
     if (score > 0 &&
+        matcher.query.length > 0 &&
         [[[ProfileModel sharedInstance] defaultBookmark][KEY_GUID] isEqualToString:profile[KEY_GUID]]) {
         // Make the default profile always be the highest-scored profile if it matches the query.
+        // Skipped for empty queries since every profile trivially matches and we don't want this
+        // bump to dominate the recency-sorted session list.
         score += 0.2;
     }
     if (nameFeature.count) {
@@ -1384,7 +1401,14 @@ static const double kProfileNameMultiplierForWindowItem = 0.08;
     if (matcher.query.length == 0) {
         // Trivially matches every document.
         double score = 0.01;
+        BOOL anyNonEmpty = NO;
         for (NSString *document in documents) {
+            if (document.length == 0) {
+                // Skip empty documents (e.g., a missing toolTip alongside a real title)
+                // so they don't end up at index 0 of features and produce an empty title.
+                continue;
+            }
+            anyNonEmpty = YES;
             if (features) {
                 id displayString = [_delegate openQuicklyModelDisplayStringForFeatureNamed:name
                                                                                      value:document
@@ -1392,7 +1416,7 @@ static const double kProfileNameMultiplierForWindowItem = 0.08;
                 [features addObject:@[ displayString, @(score), name ?: @"" ]];
             }
         }
-        return score;
+        return anyNonEmpty ? score : 0;
     }
     double score = 0;
     double highestValue = 0;
