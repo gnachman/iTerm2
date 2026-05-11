@@ -13,6 +13,14 @@
       "detectStackUseAfterReturn" : true,
       "enabled" : true
     },
+    "commandLineArgumentEntries" : [
+      {
+        "argument" : "-suite"
+      },
+      {
+        "argument" : "iterm2-tests"
+      }
+    ],
     "environmentVariableEntries" : [
       {
         "key" : "MallocStackLogging",
