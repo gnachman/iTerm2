@@ -71,6 +71,11 @@ Major New Features:
   on first launch and the entry has been
   removed from Settings.
 
+- Switching to a Code Review peer that is
+  still showing its prompt overlay now
+  focuses the prompt text field so you can
+  start typing immediately.
+
 - The Shell > Workgroups submenu now has
   an Exit Workgroup item to leave the
   current session’s workgroup.

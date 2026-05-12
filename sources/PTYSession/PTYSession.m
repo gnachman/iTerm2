@@ -4717,6 +4717,14 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
 }
 
 - (NSView *)mainResponder {
+    // Route focus to the Code Review prompt overlay while it's on
+    // screen. Without this, PTYTab.setActiveSession's first-responder
+    // assignment after a peer swap would steal focus from the prompt's
+    // text view back to the (deferred, not-yet-running) terminal.
+    iTermCodeReviewPromptView *promptOverlay = _view.codeReviewPromptOverlay;
+    if (promptOverlay != nil && promptOverlay.window != nil && !promptOverlay.isHidden) {
+        return promptOverlay.promptResponder;
+    }
     if (@available(macOS 11, *)) {
         if (_view.isBrowser) {
             return _view.browserViewController.webView;

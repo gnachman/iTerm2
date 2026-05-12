@@ -32,6 +32,13 @@ class CodeReviewPromptView: iTermLayerBackedSolidColorView {
         }
     }
 
+    // The NSView that should receive focus when this overlay is on
+    // screen. Exposed so PTYSession.mainResponder can route focus here
+    // on peer activation; otherwise PTYTab.setActiveSession’s
+    // makeFirstResponder call clobbers the assignment we make in
+    // viewDidMoveToWindow.
+    @objc var promptResponder: NSView { textView }
+
     private let scrollView: NSScrollView
     private let textView: ShiftReturnSubmittingTextView
     private let startButton: NSButton
