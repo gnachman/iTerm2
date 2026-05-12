@@ -400,10 +400,10 @@
         <key>NSSupportsAutomaticGraphicsSwitching</key>
         <true/>
         <key>SUFeedURLForTesting</key>
-        <string>https://iterm2.com/appcasts/testing_modern.xml</string>
+        <string>https://github.com/SoInKyu/iTerm2/releases/latest/download/appcast.xml</string>
         <key>SUFeedURLForFinal</key>
-        <string>https://iterm2.com/appcasts/final_modern.xml</string>
+        <string>https://github.com/SoInKyu/iTerm2/releases/latest/download/appcast.xml</string>
         <key>SUFeedURL</key>
-        <string>https://iterm2.com/appcasts/final_modern.xml</string>
+        <string>https://github.com/SoInKyu/iTerm2/releases/latest/download/appcast.xml</string>
 </dict>
 </plist>

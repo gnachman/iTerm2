@@ -1,0 +1,24 @@
+<?xml version="1.0" standalone="yes"?>
+<rss xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle" version="2.0">
+    <channel>
+        <title>MomenTerm</title>
+        <link>__RELEASE_URL__</link>
+        <description>MomenTerm release feed (Sparkle 2.x, EdDSA-signed).</description>
+        <language>en</language>
+        <item>
+            <title>__VERSION__</title>
+            <description><![CDATA[
+                <p>MomenTerm __VERSION__ — see release notes at
+                   <a href="__RELEASE_URL__">__RELEASE_URL__</a>.</p>
+            ]]></description>
+            <pubDate>__PUBDATE__</pubDate>
+            <sparkle:version>__BUILD__</sparkle:version>
+            <sparkle:shortVersionString>__VERSION__</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>12.0.0</sparkle:minimumSystemVersion>
+            <enclosure url="__ZIP_URL__"
+                       length="__ZIP_LENGTH__"
+                       type="application/octet-stream"
+                       sparkle:edSignature="__SIGNATURE__" />
+        </item>
+    </channel>
+</rss>
