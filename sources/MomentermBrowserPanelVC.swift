@@ -42,11 +42,16 @@ final class MomentermBrowserPanelVC: NSViewController {
     private let backButton = NSButton()
     private let forwardButton = NSButton()
     private let reloadButton = NSButton()
+    private let zoomOutButton = NSButton()
+    private let zoomLabel = NSTextField(labelWithString: "100%")
+    private let zoomInButton = NSButton()
     private let detachButton = NSButton()
     private let closeButton = NSButton()
 
     private var currentURL: URL?
     private var navigationObserver: NSKeyValueObservation?
+    private let zoomLevels: [CGFloat] = [0.5, 0.67, 0.75, 0.8, 0.9, 1.0, 1.1, 1.25, 1.5, 1.75, 2.0]
+    private var currentZoomIndex: Int = 5  // 1.0
 
     // MARK: - Lifecycle
 
@@ -119,12 +124,26 @@ final class MomentermBrowserPanelVC: NSViewController {
                               accessibility: "Forward", selector: #selector(goForward), tip: "Forward")
         configureSymbolButton(reloadButton, symbol: "arrow.clockwise",
                               accessibility: "Reload", selector: #selector(reload), tip: "Reload")
+        configureSymbolButton(zoomOutButton, symbol: "minus.magnifyingglass",
+                              accessibility: "Zoom out", selector: #selector(zoomOut), tip: "Zoom out")
+        configureSymbolButton(zoomInButton, symbol: "plus.magnifyingglass",
+                              accessibility: "Zoom in", selector: #selector(zoomIn), tip: "Zoom in")
         configureSymbolButton(detachButton, symbol: "rectangle.portrait.and.arrow.right",
                               accessibility: "Detach", selector: #selector(detachToggle),
                               tip: "Detach into a separate window")
         configureSymbolButton(closeButton, symbol: "xmark",
                               accessibility: "Close", selector: #selector(closeTapped), tip: "Close panel")
         refreshDetachButtonIcon()
+
+        zoomLabel.translatesAutoresizingMaskIntoConstraints = false
+        zoomLabel.font = .monospacedDigitSystemFont(ofSize: 10, weight: .regular)
+        zoomLabel.textColor = .tertiaryLabelColor
+        zoomLabel.alignment = .center
+        zoomLabel.toolTip = "Page zoom — double-click to reset"
+        let resetClick = NSClickGestureRecognizer(target: self, action: #selector(resetZoom))
+        resetClick.numberOfClicksRequired = 2
+        zoomLabel.addGestureRecognizer(resetClick)
+        toolbar.addSubview(zoomLabel)
 
         urlField.translatesAutoresizingMaskIntoConstraints = false
         urlField.font = .monospacedSystemFont(ofSize: 11, weight: .regular)
@@ -164,8 +183,20 @@ final class MomentermBrowserPanelVC: NSViewController {
             reloadButton.widthAnchor.constraint(equalToConstant: 22),
 
             urlField.leadingAnchor.constraint(equalTo: reloadButton.trailingAnchor, constant: 8),
-            urlField.trailingAnchor.constraint(equalTo: detachButton.leadingAnchor, constant: -8),
+            urlField.trailingAnchor.constraint(equalTo: zoomOutButton.leadingAnchor, constant: -8),
             urlField.centerYAnchor.constraint(equalTo: toolbar.centerYAnchor),
+
+            zoomOutButton.trailingAnchor.constraint(equalTo: zoomLabel.leadingAnchor, constant: -2),
+            zoomOutButton.centerYAnchor.constraint(equalTo: toolbar.centerYAnchor),
+            zoomOutButton.widthAnchor.constraint(equalToConstant: 22),
+
+            zoomLabel.trailingAnchor.constraint(equalTo: zoomInButton.leadingAnchor, constant: -2),
+            zoomLabel.centerYAnchor.constraint(equalTo: toolbar.centerYAnchor),
+            zoomLabel.widthAnchor.constraint(equalToConstant: 38),
+
+            zoomInButton.trailingAnchor.constraint(equalTo: detachButton.leadingAnchor, constant: -6),
+            zoomInButton.centerYAnchor.constraint(equalTo: toolbar.centerYAnchor),
+            zoomInButton.widthAnchor.constraint(equalToConstant: 22),
 
             detachButton.trailingAnchor.constraint(equalTo: closeButton.leadingAnchor, constant: -4),
             detachButton.centerYAnchor.constraint(equalTo: toolbar.centerYAnchor),
@@ -235,5 +266,21 @@ final class MomentermBrowserPanelVC: NSViewController {
         }
         guard let url = URL(string: input) else { return }
         webView.load(URLRequest(url: url))
+    }
+
+    @objc private func zoomIn() { setZoomIndex(currentZoomIndex + 1) }
+    @objc private func zoomOut() { setZoomIndex(currentZoomIndex - 1) }
+    @objc private func resetZoom() {
+        if let i = zoomLevels.firstIndex(of: 1.0) { setZoomIndex(i) }
+    }
+
+    private func setZoomIndex(_ idx: Int) {
+        let clamped = max(0, min(zoomLevels.count - 1, idx))
+        currentZoomIndex = clamped
+        let zoom = zoomLevels[clamped]
+        webView.pageZoom = zoom
+        zoomLabel.stringValue = "\(Int(zoom * 100))%"
+        zoomOutButton.isEnabled = clamped > 0
+        zoomInButton.isEnabled = clamped < zoomLevels.count - 1
     }
 }

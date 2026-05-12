@@ -782,6 +782,11 @@ typedef NS_ENUM(int, iTermShouldHaveTitleSeparator) {
     _momentermBottomStripView.delegate = self;
     _contentView.momentermBottomStripHeight = 30;
     _contentView.momentermBottomStripContainer = _momentermBottomStripView;
+    // The strip eats 30pt off the tabView so re-fit existing sessions to the
+    // new view size; ditto when the user toggles right-side panels later on.
+    [self performSelector:@selector(it_refitAllSessionsAfterMomentermLayoutChange)
+               withObject:nil
+               afterDelay:0];
 
 
     if (hotkeyWindowType == iTermHotkeyWindowTypeNone) {
@@ -1205,6 +1210,18 @@ typedef NS_ENUM(int, iTermShouldHaveTitleSeparator) {
         }
         [_momentermBottomStripView setActivePanel:show ? @"gitgraph" : @""];
     }
+    [self it_refitAllSessionsAfterMomentermLayoutChange];
+}
+
+// Whenever any momenterm panel toggles the tabView's frame changes, but the
+// underlying PTYSession grids aren't automatically renegotiated. Trigger an
+// explicit re-fit so the terminal rows/columns reflect the new view size.
+- (void)it_refitAllSessionsAfterMomentermLayoutChange {
+    for (PTYTab *aTab in [self tabs]) {
+        for (PTYSession *aSession in [aTab sessions]) {
+            [aTab fitSessionToCurrentViewSize:aSession];
+        }
+    }
 }
 
 - (void)it_updateMomentermGitGraphCwd {
@@ -1311,18 +1328,25 @@ typedef NS_ENUM(int, iTermShouldHaveTitleSeparator) {
                                                     name:NSWindowWillCloseNotification
                                                   object:window];
     if (window == _momentermBrowserDetachedWindow) {
-        // Re-parent the view back into the inline container.
+        // Re-parent the view back into the inline container AND make it visible
+        // so the user sees the panel land back in the terminal window — closing
+        // the floater is the explicit "bring it home" gesture.
         _contentView.momentermBrowserPanelContainer = _momentermBrowserPanelVC.view;
         _momentermBrowserPanelVC.isDetached = NO;
         _momentermBrowserDetachedWindow = nil;
-        // Stay hidden — user can re-open via bottom strip.
-        _contentView.shouldShowMomentermBrowserPanel = NO;
+        _contentView.shouldShowMomentermGitGraphPanel = NO;
+        _contentView.shouldShowMomentermBrowserPanel = YES;
+        [_momentermBottomStripView setActivePanel:@"browser"];
     } else if (window == _momentermGitGraphDetachedWindow) {
         _contentView.momentermGitGraphPanelContainer = _momentermGitGraphPanelVC.view;
         _momentermGitGraphPanelVC.isDetached = NO;
         _momentermGitGraphDetachedWindow = nil;
-        _contentView.shouldShowMomentermGitGraphPanel = NO;
+        _contentView.shouldShowMomentermBrowserPanel = NO;
+        _contentView.shouldShowMomentermGitGraphPanel = YES;
+        [_momentermBottomStripView setActivePanel:@"gitgraph"];
+        [self it_updateMomentermGitGraphCwd];
     }
+    [self it_refitAllSessionsAfterMomentermLayoutChange];
 }
 
 // Returns a stable pastel color derived from the space name.
