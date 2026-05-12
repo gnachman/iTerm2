@@ -22,6 +22,11 @@ enum MomentermAIToolChecker {
             checkTool("claude", displayName: "Claude Code", installHint: "npm install -g @anthropic-ai/claude-code", completion: completion)
         case .codex:
             checkTool("codex", displayName: "Codex", installHint: "npm install -g @openai/codex", completion: completion)
+        case .gemini:
+            checkTool("gemini", displayName: "Gemini", installHint: "npm install -g @google/gemini-cli", completion: completion)
+        case .localLLM:
+            // Detection happens at form time via MomentermLocalLLMDetector; skip the prompt here.
+            completion(true)
         case .both:
             checkBothTools(completion: completion)
         }

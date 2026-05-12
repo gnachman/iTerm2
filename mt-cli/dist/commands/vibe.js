@@ -54,7 +54,7 @@ function vibeCommand(program) {
         const targetDir = path.resolve(directory ?? process.cwd());
         logger_js_1.logger.header('Vibe-Readiness Analysis');
         const spinner = (0, ora_1.default)('Analyzing project…').start();
-        // Try vibe-ready-cli first
+        // Try vibe-ready-cli first (npm install -g vibe-ready-cli to enable)
         const vibeCliExists = await (0, shell_js_1.commandExists)('vibe-ready');
         if (vibeCliExists) {
             spinner.text = 'Running vibe-ready-cli…';
@@ -70,9 +70,16 @@ function vibeCommand(program) {
                     return;
                 }
                 catch {
-                    spinner.warn('Could not parse vibe-ready-cli output. Running built-in analysis.');
+                    spinner.warn('Could not parse vibe-ready-cli output — using built-in analysis.');
                 }
             }
+            else {
+                spinner.warn('vibe-ready exited with error — using built-in analysis.');
+            }
+        }
+        else {
+            spinner.info('vibe-ready not found — using built-in analysis. Install: npm install -g vibe-ready-cli');
+            spinner.start('Analyzing project…');
         }
         // Built-in analysis
         const report = await runBuiltinAnalysis(targetDir);

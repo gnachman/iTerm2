@@ -1,0 +1,45 @@
+[run]
+source = iterm2
+omit =
+    # protobuf 자동 생성 코드
+    iterm2/api_pb2.py
+    iterm2/api_pb2.pyi
+    # 버전 파일
+    iterm2/_version.py
+    # 스텁 파일
+    iterm2/stubs/*
+    # 테스트 파일 자체
+    tests/*
+    test.py
+    # 코드 생성 스크립트
+    gen_*.py
+    # 라이브 iTerm2 WebSocket 연결 필요 — 통합 테스트만 가능
+    iterm2/connection.py
+    iterm2/rpc.py
+    iterm2/notifications.py
+    iterm2/registration.py
+    iterm2/app.py
+    iterm2/session.py
+    iterm2/window.py
+    iterm2/tab.py
+    iterm2/lifecycle.py
+
+[report]
+exclude_lines =
+    # 추상 메서드 / 프로토콜
+    pragma: no cover
+    def __repr__
+    raise NotImplementedError
+    if TYPE_CHECKING:
+    @(abc\.)?abstractmethod
+    \.\.\.
+
+show_missing = true
+precision = 1
+fail_under = 60
+
+[html]
+directory = htmlcov
+
+[xml]
+output = coverage.xml

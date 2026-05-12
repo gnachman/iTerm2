@@ -46,8 +46,13 @@ const CGFloat kEdgeWidth = 3;
     }
 
     if (_loupeColor) {
+#if defined(__MAC_26_0) && MAC_OS_X_VERSION_MAX_ALLOWED >= __MAC_26_0
         NSImage *originalImage = [NSImage imageWithSystemSymbolName:SFSymbolGetString(SFSymbolMagnifyingglass)
                                           accessibilityDescription:@"Search"];
+#else
+        NSImage *originalImage = [NSImage imageWithSystemSymbolName:@"magnifyingglass"
+                                          accessibilityDescription:@"Search"];
+#endif
 
         if (originalImage) {
             NSImage *tintedImage = [originalImage it_imageWithTintColor:_loupeColor];

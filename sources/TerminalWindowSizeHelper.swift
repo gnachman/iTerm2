@@ -126,13 +126,14 @@ extension TerminalWindowSizeHelper {
                decorationWidth: CGFloat,
                fallback: CGFloat) -> CGFloat {
         let hmargin = iTermPreferences.double(forKey: kPreferenceKeySideMargins)
-        let desiredPoints = switch desiredColumns {
+        let desiredPoints: CGFloat
+        switch desiredColumns {
         case .none:
-            fallback
+            desiredPoints = fallback
         case .cells(let cells):
-            charWidth * CGFloat(cells) + decorationWidth + 2.0 * hmargin
+            desiredPoints = charWidth * CGFloat(cells) + decorationWidth + 2.0 * hmargin
         case .screenPercentage(let percentage):
-            screenVisibleSize.width * percentage / 100.0
+            desiredPoints = screenVisibleSize.width * percentage / 100.0
         }
         return min(screenVisibleSize.width, desiredPoints)
     }
@@ -144,13 +145,14 @@ extension TerminalWindowSizeHelper {
                 decorationHeight: CGFloat,
                 fallback: CGFloat) -> CGFloat {
         let vmargin = iTermPreferences.double(forKey: kPreferenceKeyTopBottomMargins)
-        let desiredPoints = switch desiredRows {
+        let desiredPoints: CGFloat
+        switch desiredRows {
         case .none:
-            fallback
+            desiredPoints = fallback
         case .cells(let cells):
-            ceil(lineHeight * CGFloat(cells)) + decorationHeight + 2.0 * vmargin
+            desiredPoints = ceil(lineHeight * CGFloat(cells)) + decorationHeight + 2.0 * vmargin
         case .screenPercentage(let percentage):
-            screenVisibleSize.height * percentage / 100.0
+            desiredPoints = screenVisibleSize.height * percentage / 100.0
         }
         return min(screenVisibleSize.height, desiredPoints)
     }

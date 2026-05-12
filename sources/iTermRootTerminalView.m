@@ -172,6 +172,10 @@ NS_CLASS_AVAILABLE_MAC(10_14)
     BOOL _shouldShowMomentermSidebar;
     CGFloat _momentermSidebarWidth;
     NSView *_momentermSidebarContainer;
+
+    // MomenTerm: file tree panel (right of sidebar)
+    NSView *_momentermFileTreeContainer;
+    CGFloat _momentermFileTreeWidth;
 }
 
 - (instancetype)initWithFrame:(NSRect)frameRect
@@ -1259,21 +1263,49 @@ NS_CLASS_AVAILABLE_MAC(10_14)
     return _momentermSidebarContainer;
 }
 
+- (void)setMomentermFileTreeContainer:(NSView *)momentermFileTreeContainer {
+    [_momentermFileTreeContainer removeFromSuperview];
+    _momentermFileTreeContainer = momentermFileTreeContainer;
+    if (_momentermFileTreeContainer) {
+        [self addSubview:_momentermFileTreeContainer positioned:NSWindowAbove relativeTo:nil];
+    }
+    [self layoutSubviews];
+}
+
+- (NSView *)momentermFileTreeContainer {
+    return _momentermFileTreeContainer;
+}
+
+- (void)setMomentermFileTreeWidth:(CGFloat)momentermFileTreeWidth {
+    _momentermFileTreeWidth = momentermFileTreeWidth;
+}
+
+- (CGFloat)momentermFileTreeWidth {
+    return _momentermFileTreeWidth > 0 ? _momentermFileTreeWidth : 240.0;
+}
+
 - (void)layoutMomentermSidebar {
     if (!_momentermSidebarContainer || !_shouldShowMomentermSidebar) {
         return;
     }
     const CGFloat sw = floor(self.momentermSidebarWidth);
+    const CGFloat ftw = _momentermFileTreeContainer ? floor(self.momentermFileTreeWidth) : 0;
+    const CGFloat totalLeft = sw + ftw;
     const CGFloat h = NSHeight(self.bounds);
 
     // Position the sidebar on the left edge, full height
     _momentermSidebarContainer.frame = NSMakeRect(0, 0, sw, h);
 
+    // Position file tree panel immediately to the right of the sidebar
+    if (_momentermFileTreeContainer) {
+        _momentermFileTreeContainer.frame = NSMakeRect(sw, 0, ftw, h);
+    }
+
     // Shrink the tabView leftward
     NSRect tvFrame = self.tabView.frame;
-    if (tvFrame.origin.x < sw) {
-        const CGFloat delta = sw - tvFrame.origin.x;
-        tvFrame.origin.x = sw;
+    if (tvFrame.origin.x < totalLeft) {
+        const CGFloat delta = totalLeft - tvFrame.origin.x;
+        tvFrame.origin.x = totalLeft;
         tvFrame.size.width -= delta;
         if (tvFrame.size.width < 0) {
             tvFrame.size.width = 0;
@@ -1284,9 +1316,9 @@ NS_CLASS_AVAILABLE_MAC(10_14)
     // Shrink the tab bar backing leftward (only when tab bar is not on loan)
     if (!_tabBarControlOnLoan && _tabBarBacking && !_tabBarBacking.hidden) {
         NSRect tbFrame = _tabBarBacking.frame;
-        if (tbFrame.origin.x < sw) {
-            const CGFloat delta = sw - tbFrame.origin.x;
-            tbFrame.origin.x = sw;
+        if (tbFrame.origin.x < totalLeft) {
+            const CGFloat delta = totalLeft - tbFrame.origin.x;
+            tbFrame.origin.x = totalLeft;
             tbFrame.size.width -= delta;
             if (tbFrame.size.width < 0) {
                 tbFrame.size.width = 0;

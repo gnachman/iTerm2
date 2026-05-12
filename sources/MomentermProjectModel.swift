@@ -14,6 +14,8 @@ import Foundation
     case codex = 1
     case both = 2
     case none = 3
+    case gemini = 4
+    case localLLM = 5
 
     var displayName: String {
         switch self {
@@ -21,14 +23,29 @@ import Foundation
         case .codex: return "Codex"
         case .both: return "Both"
         case .none: return "None"
+        case .gemini: return "Gemini"
+        case .localLLM: return "Local LLM"
+        }
+    }
+}
+
+@objc enum MomentermLocalLLMBackend: Int, Codable, CaseIterable {
+    case none = 0
+    case ollama = 1
+    case lmStudio = 2
+
+    var displayName: String {
+        switch self {
+        case .none: return "None"
+        case .ollama: return "Ollama"
+        case .lmStudio: return "LM Studio"
         }
     }
 
-    var launchCommand: String? {
+    var defaultEndpoint: URL? {
         switch self {
-        case .claudeCode: return "claude --dangerously-skip-permissions"
-        case .codex: return "codex"
-        case .both: return nil
+        case .ollama: return URL(string: "http://localhost:11434")
+        case .lmStudio: return URL(string: "http://localhost:1234")
         case .none: return nil
         }
     }
@@ -59,6 +76,8 @@ struct MomentermProject: Codable, Identifiable {
     var tmuxSession: String?
     var createdAt: Date
     var lastOpenedAt: Date?
+    var localLLMBackend: MomentermLocalLLMBackend?
+    var localLLMModel: String?
 
     init(name: String, path: String, aiTool: MomentermAITool = .claudeCode, tmuxMode: MomentermTmuxMode = .disabled) {
         self.id = UUID().uuidString
@@ -67,6 +86,23 @@ struct MomentermProject: Codable, Identifiable {
         self.aiTool = aiTool
         self.tmuxMode = tmuxMode
         self.createdAt = Date()
+    }
+
+    /// Command to start the configured AI tool. Project-aware so localLLM can reference its backend/model.
+    var aiLaunchCommand: String? {
+        switch aiTool {
+        case .claudeCode: return "claude --dangerously-skip-permissions"
+        case .codex:      return "codex"
+        case .gemini:     return "gemini"
+        case .localLLM:
+            guard let backend = localLLMBackend, let model = localLLMModel else { return nil }
+            switch backend {
+            case .ollama:   return "ollama run \(model)"
+            case .lmStudio: return "lms chat \(model)"
+            case .none:     return nil
+            }
+        case .both, .none: return nil
+        }
     }
 
     var displayPath: String {
@@ -95,7 +131,7 @@ struct MomentermProject: Codable, Identifiable {
         case .disabled:
             break
         }
-        if let cmd = aiTool.launchCommand {
+        if let cmd = aiLaunchCommand {
             parts.append(cmd)
         }
         return parts.joined(separator: " && ")

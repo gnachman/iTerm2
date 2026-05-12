@@ -77,3 +77,19 @@ emoji-sequences.txt
 .env.*
 node_modules/
 report.md
+
+# PAI / OMC / husky runtime state (auto-generated per install)
+.pai/config.json
+.pai/roboco.json
+.pai/validate.sh
+.husky/
+.omc/
+.claude/commands/pai/
+.claude/skills/
+
+# Root .pkg installer output (does NOT match mt-cli/dist which is tracked)
+/dist/
+
+# Vibe-ready reports and vibe-coding workflow stubs
+docs/p-reports/
+docs/vibe-coding/

@@ -33,6 +33,7 @@
     _container = [[NSView alloc] initWithFrame:self.bounds];
     [self insertSubview:_container atIndex:0];
 
+#if defined(__MAC_26_0) && MAC_OS_X_VERSION_MAX_ALLOWED >= __MAC_26_0
     if (@available(macOS 26, *)) {
         NSGlassEffectView *glassView = [[NSGlassEffectView alloc] initWithFrame:self.bounds];
         _backgroundEffectView = glassView;
@@ -45,15 +46,22 @@
         // Fallback for older macOS versions: use NSVisualEffectView
         NSVisualEffectView *visual = [[NSVisualEffectView alloc] initWithFrame:self.bounds];
         visual.blendingMode = NSVisualEffectBlendingModeBehindWindow;
-        if (@available(macOS 10.16, *)) {
-            visual.material = NSVisualEffectMaterialMenu;
-        } else {
-            visual.material = NSVisualEffectMaterialSheet;
-        }
+        visual.material = NSVisualEffectMaterialMenu;
         visual.state = NSVisualEffectStateActive;
         _backgroundEffectView = visual;
         [_container addSubview:_backgroundEffectView];
     }
+#else
+    {
+        // Fallback for older macOS versions: use NSVisualEffectView
+        NSVisualEffectView *visual = [[NSVisualEffectView alloc] initWithFrame:self.bounds];
+        visual.blendingMode = NSVisualEffectBlendingModeBehindWindow;
+        visual.material = NSVisualEffectMaterialMenu;
+        visual.state = NSVisualEffectStateActive;
+        _backgroundEffectView = visual;
+        [_container addSubview:_backgroundEffectView];
+    }
+#endif
 
     // Even though this is set in IB, we have to set it manually.
     self.autoresizesSubviews = NO;

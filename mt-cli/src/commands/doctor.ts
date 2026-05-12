@@ -103,6 +103,26 @@ export function doctorCommand(program: Command): void {
         detail: MT_HOME,
       });
 
+      // Graphite CLI (gstack skill)
+      const gtInstalled = await commandExists('gt');
+      results.push({
+        label: 'Graphite (gt)',
+        status: gtInstalled ? 'ok' : 'warn',
+        detail: gtInstalled
+          ? 'Available'
+          : 'Not found (optional). Run: mt skills install gstack',
+      });
+
+      // Spectral (open-spec skill)
+      const spectralInstalled = await commandExists('spectral');
+      results.push({
+        label: 'Spectral',
+        status: spectralInstalled ? 'ok' : 'warn',
+        detail: spectralInstalled
+          ? 'Available'
+          : 'Not found (optional). Run: mt skills install open-spec',
+      });
+
       spinner.stop();
       logger.blank();
 

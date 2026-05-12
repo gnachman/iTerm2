@@ -6,11 +6,14 @@
 //
 
 import Foundation
+#if canImport(FoundationModels)
 import FoundationModels
+#endif
 
 @objc(iTermAIAvailabilityProbe)
 public final class AIAvailabilityProbe: NSObject {
     @objc public static func check() -> Bool {
+#if canImport(FoundationModels)
         if #available(macOS 26, *) {
             let model = SystemLanguageModel.default
             switch model.availability {
@@ -26,10 +29,12 @@ public final class AIAvailabilityProbe: NSObject {
                 return false
             }
         }
+#endif
         return false
     }
 }
 
+#if canImport(FoundationModels)
 @available(macOS 26, *)
 class CommandSafetyChecker {
     static func check(_ command: String) async -> Bool {
@@ -105,3 +110,4 @@ class CommandSafetyChecker {
         return isSafe
     }
 }
+#endif  // canImport(FoundationModels)

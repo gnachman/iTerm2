@@ -64,6 +64,7 @@ class ChatInputView: NSView, NSTextFieldDelegate {
         inputTextFieldContainer.textView.delegate = self
 
         sendButton = SendButton(image: sendImage, target: self, action: #selector(sendButtonClicked))
+#if swift(>=6.2)
         if #available(macOS 26, *) {
             // New Tahoe (macOS 26) liquid glass look
             sendButton.imagePosition = .imageOnly
@@ -81,6 +82,12 @@ class ChatInputView: NSView, NSTextFieldDelegate {
             sendButton.bezelStyle = .regularSquare
             sendButton.isBordered = false
         }
+#else
+        sendButton.imageScaling = .scaleProportionallyUpOrDown
+        sendButton.imagePosition = .imageOnly
+        sendButton.bezelStyle = .regularSquare
+        sendButton.isBordered = false
+#endif
         sendButton.setButtonType(.momentaryPushIn)
 
         sendButton.translatesAutoresizingMaskIntoConstraints = false
@@ -94,6 +101,7 @@ class ChatInputView: NSView, NSTextFieldDelegate {
             addImage = addImage.withSymbolConfiguration(config)!
         }
         addAttachmentButton = AddAttachmentButton(image: addImage, target: self, action: #selector(attachmentButtonClicked))
+#if swift(>=6.2)
         if #available(macOS 26, *) {
             // New Tahoe (macOS 26) liquid glass look
             addAttachmentButton.imagePosition = .imageOnly
@@ -111,6 +119,12 @@ class ChatInputView: NSView, NSTextFieldDelegate {
             addAttachmentButton.bezelStyle = .regularSquare
             addAttachmentButton.isBordered = false
         }
+#else
+        addAttachmentButton.imageScaling = .scaleNone
+        addAttachmentButton.imagePosition = .imageOnly
+        addAttachmentButton.bezelStyle = .regularSquare
+        addAttachmentButton.isBordered = false
+#endif
         addAttachmentButton.setButtonType(.momentaryPushIn)
         addAttachmentButton.toolTip = "Attach files"
         addAttachmentButton.translatesAutoresizingMaskIntoConstraints = false

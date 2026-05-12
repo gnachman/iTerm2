@@ -11,6 +11,7 @@ import { vibeCommand } from './commands/vibe.js';
 import { handoffCommand } from './commands/handoff.js';
 import { mcpCommand } from './commands/mcp.js';
 import { projectsCommand } from './commands/projects.js';
+import { guardrailCommand } from './commands/guardrail.js';
 
 const program = new Command();
 
@@ -31,6 +32,8 @@ ${chalk.bold('Examples:')}
   ${chalk.cyan('mt plugins list')}      List installed plugins
   ${chalk.cyan('mt skills install db-supabase')}  Install Supabase skill
   ${chalk.cyan('mt mcp setup')}         Set up an MCP server
+  ${chalk.cyan('mt mcp scope')}         Apply least-privilege scope policy
+  ${chalk.cyan('mt guardrail check')}   Detect AI scope violations
   ${chalk.cyan('mt handoff show')}      Show current work context
   ${chalk.cyan('mt upgrade')}           Check for and apply updates
 `);
@@ -46,6 +49,7 @@ vibeCommand(program);
 handoffCommand(program);
 mcpCommand(program);
 projectsCommand(program);
+guardrailCommand(program);
 
 // bootstrap alias
 program

@@ -217,7 +217,9 @@ const char *iTermStrerror(int err) {
         case ENOPOLICY:       return "No such policy registered";
         case ENOTRECOVERABLE: return "State not recoverable";
         case EOWNERDEAD:      return "Previous owner died";
+#ifdef ENOTCAPABLE
         case ENOTCAPABLE:     return "Capabilities insufficient";
+#endif
         default:              return NULL;
     }
 }

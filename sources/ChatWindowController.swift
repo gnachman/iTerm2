@@ -286,9 +286,11 @@ final class ChatWindowController: NSWindowController, DictionaryCodable {
         window.delegate = self
 
         // Add floating controls on macOS 26
+#if swift(>=6.2)
         if #available(macOS 26, *) {
             chatViewController.setupFloatingControls()
         }
+#endif
 
         return window
     }

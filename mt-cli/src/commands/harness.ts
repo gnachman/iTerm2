@@ -274,8 +274,8 @@ function generatePreCommitHook(c: HarnessConfig): string {
 
 echo "🔍 Running pre-commit checks..."
 
-# Check for secret patterns
-if git diff --cached --name-only | xargs grep -l -E '(PRIVATE_KEY|SECRET|PASSWORD|API_KEY)\s*=' 2>/dev/null | grep -v '.example'; then
+# Check for secret patterns in staged files
+if git diff --cached --name-only | xargs grep -l -E '(PRIVATE_KEY|SECRET|PASSWORD|API_KEY)\\s*=' 2>/dev/null | grep -v '\\.example'; then
   echo "❌ Possible secret detected in staged files. Review before committing."
   exit 1
 fi
@@ -284,6 +284,17 @@ fi
 if git diff --cached --name-only | grep -qE '^\\.env$'; then
   echo "❌ .env file is staged. Add it to .gitignore first."
   exit 1
+fi
+
+# Check node_modules not staged
+if git diff --cached --name-only | grep -qE '^node_modules/'; then
+  echo "❌ node_modules staged. Add node_modules to .gitignore first."
+  exit 1
+fi
+
+# Run mt guardrail check if available
+if command -v mt &>/dev/null; then
+  mt guardrail check --commits 0 || exit 1
 fi
 
 echo "✓ Pre-commit checks passed."

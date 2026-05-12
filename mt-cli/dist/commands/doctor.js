@@ -123,6 +123,24 @@ function doctorCommand(program) {
             status: homeExists ? 'ok' : 'warn',
             detail: config_js_1.MT_HOME,
         });
+        // Graphite CLI (gstack skill)
+        const gtInstalled = await (0, shell_js_1.commandExists)('gt');
+        results.push({
+            label: 'Graphite (gt)',
+            status: gtInstalled ? 'ok' : 'warn',
+            detail: gtInstalled
+                ? 'Available'
+                : 'Not found (optional). Run: mt skills install gstack',
+        });
+        // Spectral (open-spec skill)
+        const spectralInstalled = await (0, shell_js_1.commandExists)('spectral');
+        results.push({
+            label: 'Spectral',
+            status: spectralInstalled ? 'ok' : 'warn',
+            detail: spectralInstalled
+                ? 'Available'
+                : 'Not found (optional). Run: mt skills install open-spec',
+        });
         spinner.stop();
         logger_js_1.logger.blank();
         const maxLabel = Math.max(...results.map(r => r.label.length));

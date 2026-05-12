@@ -1,1 +1,1 @@
-{"version":3,"file":"skills.d.ts","sourceRoot":"","sources":["../../src/commands/skills.ts"],"names":[],"mappings":"AAAA,OAAO,EAAE,OAAO,EAAE,MAAM,WAAW,CAAC;AAqBpC,wBAAgB,aAAa,CAAC,OAAO,EAAE,OAAO,GAAG,IAAI,CA4HpD"}
+{"version":3,"file":"skills.d.ts","sourceRoot":"","sources":["../../src/commands/skills.ts"],"names":[],"mappings":"AAAA,OAAO,EAAE,OAAO,EAAE,MAAM,WAAW,CAAC;AAwBpC,wBAAgB,aAAa,CAAC,OAAO,EAAE,OAAO,GAAG,IAAI,CA4HpD"}

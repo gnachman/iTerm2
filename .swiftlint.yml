@@ -1,0 +1,45 @@
+# SwiftLint 설정 — MomenTerm (iTerm2)
+# CLAUDE.md 코드 규칙을 자동 검증
+
+disabled_rules:
+  - trailing_whitespace        # 자동 포매터가 처리
+  - line_length                # 레거시 ObjC 브리지 코드 고려
+  - file_length                # PTYSession.m 등 대형 파일 존재
+  - type_body_length           # 레거시 클래스 고려
+  - function_body_length       # 복잡한 터미널 에뮬레이션 로직
+  - cyclomatic_complexity      # VT100 파서 특성
+  - identifier_name            # 짧은 변수명 (x, y 등) 허용
+
+opt_in_rules:
+  - empty_count
+  - first_where
+  - closure_spacing
+  - contains_over_first_not_nil
+  - explicit_init
+  - fatal_error_message        # fatalError 사용 시 메시지 필수
+
+included:
+  - sources
+
+excluded:
+  - submodules
+  - sources/iTerm2SharedARC-Bridging-Header.h
+
+custom_rules:
+  no_raw_fatal_error:
+    name: "it_fatalError 사용 필수"
+    regex: '(?<!it_)(fatalError|preconditionFailure)\s*\('
+    message: "CLAUDE.md 규칙: fatalError 대신 it_fatalError를 사용하세요. 충돌 로그 생성을 위해 필요합니다."
+    severity: warning
+
+  no_standard_user_defaults:
+    name: "iTermUserDefaults 사용 필수"
+    regex: '\[NSUserDefaults standardUserDefaults\]'
+    message: "CLAUDE.md 규칙: [NSUserDefaults standardUserDefaults] 대신 [iTermUserDefaults userDefaults]를 사용하세요."
+    severity: warning
+
+  no_associated_objects:
+    name: "Associated Objects 금지"
+    regex: 'objc_(get|set)AssociatedObject'
+    message: "CLAUDE.md 규칙: associated objects는 명시적 허가 없이 사용할 수 없습니다."
+    severity: error

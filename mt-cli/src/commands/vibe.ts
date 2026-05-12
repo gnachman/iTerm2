@@ -20,7 +20,7 @@ export function vibeCommand(program: Command): void {
 
       const spinner = ora('Analyzing project…').start();
 
-      // Try vibe-ready-cli first
+      // Try vibe-ready-cli first (npm install -g vibe-ready-cli to enable)
       const vibeCliExists = await commandExists('vibe-ready');
       if (vibeCliExists) {
         spinner.text = 'Running vibe-ready-cli…';
@@ -35,9 +35,14 @@ export function vibeCommand(program: Command): void {
             }
             return;
           } catch {
-            spinner.warn('Could not parse vibe-ready-cli output. Running built-in analysis.');
+            spinner.warn('Could not parse vibe-ready-cli output — using built-in analysis.');
           }
+        } else {
+          spinner.warn('vibe-ready exited with error — using built-in analysis.');
         }
+      } else {
+        spinner.info('vibe-ready not found — using built-in analysis. Install: npm install -g vibe-ready-cli');
+        spinner.start('Analyzing project…');
       }
 
       // Built-in analysis

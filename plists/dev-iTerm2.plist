@@ -23,9 +23,9 @@
             </dict>  
 	</dict>
 	<key>CFBundleIconName</key>
-	<string>iTerm2 App Icon for Nightly</string>
+	<string>MomenTerm</string>
 	<key>CFBundleIconFile</key>
-	<string>AppIcon-Nightly</string>
+	<string>MomenTerm</string>
         <key>NSHumanReadableCopyright</key>
         <string>GPL v2</string>
         <key>CFBundleDevelopmentRegion</key>
@@ -230,7 +230,7 @@
                 </dict>
         </array>
         <key>CFBundleExecutable</key>
-        <string>iTerm2</string>
+        <string>MomenTerm</string>
         <key>CFBundleGetInfoString</key>
         <string>unknown</string>
         <key>CFBundleHelpBookFolder</key>

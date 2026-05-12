@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/dompurify/dist/purify.min.js"></script>
+<style>
+:root{color-scheme:light dark;}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;font-size:14px;line-height:1.6;max-width:900px;margin:0 auto;padding:16px 24px;color:light-dark(#1a1a1a,#e0e0e0);background:light-dark(#ffffff,#1e1e1e);}
+h1,h2,h3,h4,h5,h6{font-weight:600;margin-top:1.2em;margin-bottom:.4em;}
+h1{font-size:1.8em;border-bottom:1px solid light-dark(#d0d0d0,#404040);padding-bottom:.2em;}
+h2{font-size:1.4em;border-bottom:1px solid light-dark(#e0e0e0,#303030);padding-bottom:.1em;}
+code{font-family:"SF Mono",Menlo,monospace;font-size:.88em;background:light-dark(#f0f0f0,#2a2a2a);padding:.15em .35em;border-radius:3px;}
+pre{background:light-dark(#f0f0f0,#2a2a2a);padding:12px 16px;border-radius:6px;overflow-x:auto;}
+pre code{background:none;padding:0;}
+blockquote{border-left:3px solid light-dark(#c0c0c0,#505050);margin:0;padding-left:16px;color:light-dark(#666,#aaa);}
+table{border-collapse:collapse;width:100%;}
+th,td{border:1px solid light-dark(#d0d0d0,#404040);padding:6px 12px;}
+th{background:light-dark(#f5f5f5,#252525);}
+a{color:light-dark(#0070c9,#4da6ff);}
+hr{border:none;border-top:1px solid light-dark(#d0d0d0,#404040);}
+img{max-width:100%;}
+</style>
+</head>
+<body>
+<div id="content"></div>
+<script>
+window.__setContent=function(md){var frag=DOMPurify.sanitize(marked.parse(md),{RETURN_DOM_FRAGMENT:true});document.getElementById('content').replaceChildren(frag);};
+</script>
+</body>
+</html>

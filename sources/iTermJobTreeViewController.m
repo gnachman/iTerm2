@@ -279,6 +279,7 @@ static int gSignalsToList[] = {
     }
     _outlineView.backgroundColor = [NSColor clearColor];
     if (_useGlassEffectView) {
+#if defined(__MAC_26_0) && MAC_OS_X_VERSION_MAX_ALLOWED >= __MAC_26_0
         if (@available(macOS 26, *)) {
             NSGlassEffectView *glassView = [[NSGlassEffectView alloc] initWithFrame:_vev.frame];
             glassView.autoresizingMask = _vev.autoresizingMask;
@@ -286,6 +287,7 @@ static int gSignalsToList[] = {
             [superview replaceSubview:_vev with:glassView];
             _vev = glassView;
         }
+#endif
     }
     [self updateKillButtonEnabled];
 }

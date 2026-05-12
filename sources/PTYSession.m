@@ -7996,7 +7996,11 @@ extendResultsAcrossSoftBoundaries:(BOOL)extendResultsAcrossSoftBoundaries {
                                         8,
                                         1 * 4,
                                         [self metalColorSpace],
+#if defined(__MAC_26_0) && MAC_OS_X_VERSION_MAX_ALLOWED >= __MAC_26_0
                                         CGBitmapInfoMake(kCGImageAlphaPremultipliedFirst, kCGImageComponentInteger, kCGImageByteOrder32Host, kCGImagePixelFormatPacked));
+#else
+                                        kCGImageAlphaPremultipliedFirst | kCGBitmapByteOrder32Host);
+#endif
     }
     return context;
 }
@@ -8027,10 +8031,14 @@ extendResultsAcrossSoftBoundaries:(BOOL)extendResultsAcrossSoftBoundaries {
         _metalContextDoubleWidth = NULL;
     }
     DLog(@"allocate new metal context of size %@", NSStringFromSize(scaledSize));
+#if defined(__MAC_26_0) && MAC_OS_X_VERSION_MAX_ALLOWED >= __MAC_26_0
     const CGBitmapInfo bitmapInfo = CGBitmapInfoMake(kCGImageAlphaPremultipliedFirst,
                                                      kCGImageComponentInteger,
                                                      kCGImageByteOrder32Host,
                                                      kCGImagePixelFormatPacked);
+#else
+    const CGBitmapInfo bitmapInfo = kCGImageAlphaPremultipliedFirst | kCGBitmapByteOrder32Host;
+#endif
     _metalContext = CGBitmapContextCreate(NULL,
                                           scaledSize.width,
                                           scaledSize.height,

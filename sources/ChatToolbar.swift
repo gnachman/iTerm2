@@ -132,6 +132,7 @@ class ChatToolbar {
 }
 
 extension ChatToolbar {
+#if swift(>=6.2)
     @available(macOS 26, *)
     func createFloatingView() -> NSView {
         // Constants for control sizing
@@ -217,6 +218,7 @@ extension ChatToolbar {
         glassView.translatesAutoresizingMaskIntoConstraints = false
         return glassView
     }
+#endif  // swift(>=6.2)
 
     func createOrUpdateModelSelector() {
         modelSelectorButton?.removeAllItems()

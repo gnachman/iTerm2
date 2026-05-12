@@ -247,6 +247,7 @@ typedef NS_ENUM(int, iTermShouldHaveTitleSeparator) {
     iTermRootTerminalViewDelegate,
     iTermToolbeltViewDelegate,
     MomentermEmbeddedSidebarDelegate,
+    MomentermEmbeddedFileTreeDelegate,
     NSComboBoxDelegate,
     NSFontChanging,
     NSMenuItemValidation,
@@ -437,6 +438,13 @@ typedef NS_ENUM(int, iTermShouldHaveTitleSeparator) {
     MomentermEmbeddedSidebarVC *_momentermSidebarVC;
     NSTitlebarAccessoryViewController *_momentermToggleAccessory;
     NSButton *_momentermToggleButton;
+
+    // MomenTerm: file tree panel
+    MomentermFileTreeVC *_momentermFileTreeVC;
+    NSString *_momentermFileTreePath;
+
+    // MomenTerm: editor overlay
+    MomentermEditorOverlayVC *_momentermEditorVC;
 
 }
 
@@ -1077,7 +1085,41 @@ typedef NS_ENUM(int, iTermShouldHaveTitleSeparator) {
         return;
     }
     BOOL visible = _contentView.shouldShowMomentermSidebar;
-    _momentermToggleButton.contentTintColor = visible ? [NSColor systemYellowColor] : nil;
+    _momentermToggleButton.contentTintColor = visible ? [NSColor controlAccentColor] : nil;
+}
+
+- (void)it_momentermCheckPasskeyIfNeeded {
+    if (![MomentermPasskeyManager.shared isPasskeySet]) return;
+    if ([MomentermPasskeyManager.shared isUnlocked]) return;
+
+    int attempts = 0;
+    while (attempts < 5) {
+        NSAlert *alert = [[NSAlert alloc] init];
+        alert.messageText = @"MomenTerm 잠금 해제";
+        alert.informativeText = attempts == 0 ? @"패스키를 입력하세요:" : [NSString stringWithFormat:@"틀렸습니다. %d회 남았습니다:", 5 - attempts];
+        [alert addButtonWithTitle:@"확인"];
+        [alert addButtonWithTitle:@"취소"];
+
+        NSSecureTextField *field = [[NSSecureTextField alloc] initWithFrame:NSMakeRect(0, 0, 240, 24)];
+        alert.accessoryView = field;
+
+        NSModalResponse response = [alert runModal];
+        [alert release];
+
+        if (response != NSAlertFirstButtonReturn) {
+            [NSApp terminate:nil];
+            return;
+        }
+
+        if ([MomentermPasskeyManager.shared verifyAndUnlock:field.stringValue]) {
+            [field release];
+            return;
+        }
+        [field release];
+        attempts++;
+    }
+    // 5 failures → quit
+    [NSApp terminate:nil];
 }
 
 - (IBAction)toggleMomentermSidebar:(id)sender {
@@ -1107,6 +1149,8 @@ typedef NS_ENUM(int, iTermShouldHaveTitleSeparator) {
     modified = [modified dictionaryBySettingObject:path forKey:KEY_WORKING_DIRECTORY];
     modified = [modified dictionaryBySettingObject:@YES  forKey:KEY_USE_TAB_COLOR];
     modified = [modified dictionaryBySettingObject:colorDict forKey:KEY_TAB_COLOR];
+    // Prevent shell/program (e.g. Claude Code) from overriding the tab title via OSC sequences.
+    modified = [modified dictionaryBySettingObject:@NO forKey:KEY_ALLOW_TITLE_SETTING];
     return modified;
 }
 
@@ -1114,9 +1158,14 @@ typedef NS_ENUM(int, iTermShouldHaveTitleSeparator) {
 
 - (void)sidebarDidRequestOpenProjectWithPath:(NSString *)path
                                    spaceName:(NSString *)spaceName
+                                 projectName:(NSString *)projectName
                                     inNewTab:(BOOL)inNewTab
                                    aiCommand:(nullable NSString *)aiCommand {
     Profile *profile = [self it_momentermProfileForPath:path spaceName:spaceName];
+    // Set the tab/session title to the project name.
+    if (projectName.length > 0) {
+        profile = [profile dictionaryBySettingObject:projectName forKey:KEY_NAME];
+    }
     // KEY_INITIAL_TEXT sends the command to the shell on session start (PTYSession appends \n).
     if (aiCommand.length > 0) {
         profile = [profile dictionaryBySettingObject:aiCommand forKey:KEY_INITIAL_TEXT];
@@ -1135,6 +1184,68 @@ typedef NS_ENUM(int, iTermShouldHaveTitleSeparator) {
                           respectTabbingMode:NO
                                   completion:nil];
     }
+}
+
+- (void)sidebarDidRequestShowFileTreeWithPath:(NSString *)path
+                                 projectName:(NSString *)projectName {
+    // Toggle: clicking same project again closes the panel
+    if (_momentermFileTreeVC && [_momentermFileTreePath isEqualToString:path]) {
+        [self it_closeMomentermFileTree];
+        return;
+    }
+    [self it_closeMomentermFileTree];
+
+    _momentermFileTreeVC = [[MomentermFileTreeVC alloc] initWithRootPath:path
+                                                             projectName:projectName];
+    _momentermFileTreeVC.fileTreeDelegate = self;
+    _momentermFileTreePath = [path retain];
+    _contentView.momentermFileTreeWidth = 240;
+    _contentView.momentermFileTreeContainer = _momentermFileTreeVC.view;
+}
+
+- (void)fileTreeDidRequestOpenEditorAtPath:(NSString *)path {
+    // Remove any existing overlay first
+    if (_momentermEditorVC) {
+        [_momentermEditorVC.view removeFromSuperview];
+        [_momentermEditorVC release];
+        _momentermEditorVC = nil;
+        [[NSNotificationCenter defaultCenter] removeObserver:self
+                                                        name:@"MomentermEditorOverlayVCDidClose"
+                                                      object:nil];
+    }
+    NSURL *url = [NSURL fileURLWithPath:path];
+    MomentermEditorOverlayVC *vc = [[MomentermEditorOverlayVC alloc] initWithURL:url];
+    // Add as subview of tabView so it covers the terminal and resizes with it
+    NSView *tabView = _contentView.tabView;
+    vc.view.frame = tabView.bounds;
+    vc.view.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
+    [tabView addSubview:vc.view];
+    _momentermEditorVC = vc;
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(it_editorOverlayClosed:)
+                                                 name:@"MomentermEditorOverlayVCDidClose"
+                                               object:vc];
+}
+
+- (void)it_editorOverlayClosed:(NSNotification *)note {
+    [[NSNotificationCenter defaultCenter] removeObserver:self
+                                                    name:@"MomentermEditorOverlayVCDidClose"
+                                                  object:nil];
+    [_momentermEditorVC release];
+    _momentermEditorVC = nil;
+}
+
+- (void)fileTreeDidRequestClose {
+    [self it_closeMomentermFileTree];
+}
+
+- (void)it_closeMomentermFileTree {
+    if (!_momentermFileTreeVC) { return; }
+    _contentView.momentermFileTreeContainer = nil;
+    [_momentermFileTreeVC release];
+    _momentermFileTreeVC = nil;
+    [_momentermFileTreePath release];
+    _momentermFileTreePath = nil;
 }
 
 ITERM_WEAKLY_REFERENCEABLE
@@ -1186,6 +1297,9 @@ ITERM_WEAKLY_REFERENCEABLE
     [_titleBarAccessoryTabBarViewController release];
     [_momentermSidebarVC release];
     [_momentermToggleAccessory release];
+    [_momentermFileTreeVC release];
+    [_momentermFileTreePath release];
+    [_momentermEditorVC release];
     [_didEnterLionFullscreen release];
     [_desiredTitle release];
     [_tabsTouchBarItem release];
@@ -6617,6 +6731,8 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
 }
 
 - (void)windowWillShowInitial {
+    // MomenTerm passkey check
+    [self it_momentermCheckPasskeyIfNeeded];
     [_windowPositioner windowWillShowInitial];
 }
 
@@ -6916,6 +7032,11 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     [_contentView setCurrentSessionAlpha:self.currentSession.textview.transparencyAlpha];
     [tab didSelectTab];
     [[NSNotificationCenter defaultCenter] postNotificationName:iTermSelectedTabDidChange object:tab];
+    // Sync sidebar selection to the newly-active tab's project directory.
+    NSString *tabDir = tab.activeSession.profile[KEY_WORKING_DIRECTORY];
+    if (tabDir.length > 0) {
+        [_momentermSidebarVC selectProjectForPath:tabDir];
+    }
     DLog(@"Finished");
 }
 
@@ -11164,6 +11285,14 @@ static BOOL iTermApproximatelyEqualRects(NSRect lhs, NSRect rhs, double epsilon)
     }
     if ([self shouldPlaceStatusBarOutsideTabview]) {
         decorationSize.height += iTermGetStatusBarHeight();
+    }
+    // MomenTerm: sidebar + file tree panels reduce the terminal area; account for them
+    // so iTerm2's window-sizing math (columns * charWidth + decorationSize) stays correct.
+    if (_contentView.shouldShowMomentermSidebar && _contentView.momentermSidebarContainer) {
+        decorationSize.width += floor(_contentView.momentermSidebarWidth);
+        if (_contentView.momentermFileTreeContainer) {
+            decorationSize.width += floor(_contentView.momentermFileTreeWidth);
+        }
     }
     NSSize result = [[self window] frameRectForContentRect:NSMakeRect(0, 0, decorationSize.width, decorationSize.height)].size;
     if (self.shouldCompensateForDisappearingTabBarAccessory) {

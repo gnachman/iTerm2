@@ -49,6 +49,7 @@ const vibe_js_1 = require("./commands/vibe.js");
 const handoff_js_1 = require("./commands/handoff.js");
 const mcp_js_1 = require("./commands/mcp.js");
 const projects_js_1 = require("./commands/projects.js");
+const guardrail_js_1 = require("./commands/guardrail.js");
 const program = new commander_1.Command();
 program
     .name('mt')
@@ -65,6 +66,8 @@ ${chalk_1.default.bold('Examples:')}
   ${chalk_1.default.cyan('mt plugins list')}      List installed plugins
   ${chalk_1.default.cyan('mt skills install db-supabase')}  Install Supabase skill
   ${chalk_1.default.cyan('mt mcp setup')}         Set up an MCP server
+  ${chalk_1.default.cyan('mt mcp scope')}         Apply least-privilege scope policy
+  ${chalk_1.default.cyan('mt guardrail check')}   Detect AI scope violations
   ${chalk_1.default.cyan('mt handoff show')}      Show current work context
   ${chalk_1.default.cyan('mt upgrade')}           Check for and apply updates
 `);
@@ -79,6 +82,7 @@ ${chalk_1.default.bold('Examples:')}
 (0, handoff_js_1.handoffCommand)(program);
 (0, mcp_js_1.mcpCommand)(program);
 (0, projects_js_1.projectsCommand)(program);
+(0, guardrail_js_1.guardrailCommand)(program);
 // bootstrap alias
 program
     .command('bootstrap [directory]')

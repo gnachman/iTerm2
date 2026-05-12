@@ -145,6 +145,159 @@ export function mcpCommand(program: Command): void {
       await fs.writeJson(mcpConfigPath, config, { spaces: 2 });
       logger.success(`MCP server "${server}" removed from config.`);
     });
+
+  mcp
+    .command('scope [directory]')
+    .description('Apply least-privilege scope policy to all configured MCP servers')
+    .option('--show', 'Show current policy without writing')
+    .action(async (directory?: string, opts?: { show?: boolean }) => {
+      const dir = path.resolve(directory ?? process.cwd());
+      const mcpConfigPath = path.join(dir, '.claude', 'mcp.json');
+      const scopePolicyPath = path.join(dir, '.claude', 'mcp-scope.json');
+
+      logger.header('MCP Scope Policy');
+
+      if (!(await fs.pathExists(mcpConfigPath))) {
+        logger.warn('No MCP config found. Run: mt mcp setup');
+        return;
+      }
+
+      const config = await fs.readJson(mcpConfigPath);
+      const serverIds = Object.keys(config.mcpServers ?? {});
+
+      if (serverIds.length === 0) {
+        logger.info('No MCP servers configured.');
+        return;
+      }
+
+      // Build least-privilege policy for each server
+      const policy: Record<string, ScopePolicy> = {};
+      for (const id of serverIds) {
+        policy[id] = buildLeastPrivilegePolicy(id);
+      }
+
+      if (opts?.show) {
+        logger.blank();
+        console.log(JSON.stringify(policy, null, 2));
+        return;
+      }
+
+      await fs.ensureDir(path.join(dir, '.claude'));
+      await fs.writeJson(scopePolicyPath, {
+        version: 1,
+        generatedAt: new Date().toISOString(),
+        note: 'Least-privilege MCP scope policy. Review before applying.',
+        servers: policy,
+      }, { spaces: 2 });
+
+      logger.success(`Scope policy written to .claude/mcp-scope.json`);
+      logger.blank();
+      for (const [id, p] of Object.entries(policy)) {
+        console.log(`  ${chalk_bold(id)}`);
+        console.log(`    ${dim_text('allow: ' + p.allow.join(', '))}`);
+        if (p.deny.length > 0) {
+          console.log(`    ${dim_text('deny:  ' + p.deny.join(', '))}`);
+        }
+      }
+      logger.blank();
+      logger.info('Review and commit .claude/mcp-scope.json alongside mcp.json.');
+    });
+
+  mcp
+    .command('audit [directory]')
+    .description('Audit MCP servers for scope policy compliance')
+    .action(async (directory?: string) => {
+      const dir = path.resolve(directory ?? process.cwd());
+      const mcpConfigPath = path.join(dir, '.claude', 'mcp.json');
+      const scopePolicyPath = path.join(dir, '.claude', 'mcp-scope.json');
+
+      logger.header('MCP Scope Audit');
+
+      if (!(await fs.pathExists(mcpConfigPath))) {
+        logger.warn('No MCP config found. Run: mt mcp setup');
+        return;
+      }
+
+      const config = await fs.readJson(mcpConfigPath);
+      const serverIds = Object.keys(config.mcpServers ?? {});
+      let issues = 0;
+
+      for (const id of serverIds) {
+        const knownServer = MCP_SERVERS.find(s => s.id === id);
+        const hasScopePolicy = await fs.pathExists(scopePolicyPath);
+
+        if (!knownServer) {
+          console.log(`  \x1b[33m⚠\x1b[0m ${chalk_bold(id)} — unknown server, review manually`);
+          issues++;
+        } else if (!hasScopePolicy) {
+          console.log(`  \x1b[33m⚠\x1b[0m ${chalk_bold(id)} — no scope policy. Run: mt mcp scope`);
+          issues++;
+        } else {
+          const policyFile = await fs.readJson(scopePolicyPath);
+          const serverPolicy = policyFile.servers?.[id] as ScopePolicy | undefined;
+          if (!serverPolicy) {
+            console.log(`  \x1b[33m⚠\x1b[0m ${chalk_bold(id)} — missing from scope policy`);
+            issues++;
+          } else {
+            console.log(`  \x1b[32m✓\x1b[0m ${chalk_bold(id)} — policy OK (${serverPolicy.allow.join(', ')})`);
+          }
+        }
+      }
+
+      logger.blank();
+      if (issues === 0) {
+        logger.success('All MCP servers have scope policies.');
+      } else {
+        logger.warn(`${issues} server(s) need scope policy review.`);
+      }
+    });
+}
+
+interface ScopePolicy {
+  allow: string[];
+  deny: string[];
+  notes: string;
+}
+
+// Least-privilege default scopes per known server type
+function buildLeastPrivilegePolicy(serverId: string): ScopePolicy {
+  const policies: Record<string, ScopePolicy> = {
+    filesystem: {
+      allow: ['read'],
+      deny: ['write', 'delete', 'execute'],
+      notes: 'Read-only by default. Add write scope only for specific directories.',
+    },
+    github: {
+      allow: ['repo:read', 'issues:read', 'pulls:read'],
+      deny: ['repo:write', 'admin:org', 'delete_repo'],
+      notes: 'Read-only repo access. Do not grant admin scopes.',
+    },
+    slack: {
+      allow: ['channels:read', 'chat:write'],
+      deny: ['admin', 'files:write', 'users:write'],
+      notes: 'Send messages only. No admin or user management.',
+    },
+    postgres: {
+      allow: ['SELECT'],
+      deny: ['INSERT', 'UPDATE', 'DELETE', 'DROP', 'CREATE'],
+      notes: 'Read-only SQL. Create a dedicated read-only DB user.',
+    },
+    'brave-search': {
+      allow: ['search:web'],
+      deny: [],
+      notes: 'Web search only. No API key sharing.',
+    },
+    puppeteer: {
+      allow: ['navigate', 'screenshot'],
+      deny: ['download', 'file:write'],
+      notes: 'Navigation and screenshots only. Disable file downloads.',
+    },
+  };
+  return policies[serverId] ?? {
+    allow: ['read'],
+    deny: ['write', 'delete', 'admin'],
+    notes: 'Unknown server — conservative read-only default applied.',
+  };
 }
 
 function chalk_bold(s: string): string {

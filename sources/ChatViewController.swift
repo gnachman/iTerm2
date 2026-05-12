@@ -730,6 +730,7 @@ extension ChatViewController {
         }
     }
 
+#if swift(>=6.2)
     @available(macOS 26, *)
     func setupFloatingControls() {
         let floatingView = chatToolbar.createFloatingView()
@@ -741,6 +742,7 @@ extension ChatViewController {
             floatingView.trailingAnchor.constraint(lessThanOrEqualTo: view.trailingAnchor, constant: -16)
         ])
     }
+#endif  // swift(>=6.2)
 }
 
 extension ChatViewController: NSTableViewDataSource, NSTableViewDelegate {

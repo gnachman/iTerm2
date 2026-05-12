@@ -1,1 +1,1 @@
-{"version":3,"file":"doctor.d.ts","sourceRoot":"","sources":["../../src/commands/doctor.ts"],"names":[],"mappings":"AAAA,OAAO,EAAE,OAAO,EAAE,MAAM,WAAW,CAAC;AAcpC,wBAAgB,aAAa,CAAC,OAAO,EAAE,OAAO,GAAG,IAAI,CA4HpD"}
+{"version":3,"file":"doctor.d.ts","sourceRoot":"","sources":["../../src/commands/doctor.ts"],"names":[],"mappings":"AAAA,OAAO,EAAE,OAAO,EAAE,MAAM,WAAW,CAAC;AAcpC,wBAAgB,aAAa,CAAC,OAAO,EAAE,OAAO,GAAG,IAAI,CAgJpD"}

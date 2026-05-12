@@ -19,7 +19,7 @@ protocol ResilientCoordinateDataSource: AnyObject {
 // and so on.
 @objc(iTermResilientCoordinate)
 class ResilientCoordinate: NSObject {
-    private weak let dataSource: ResilientCoordinateDataSource?
+    private weak var dataSource: ResilientCoordinateDataSource?
     private enum Location {
         case coord(VT100GridAbsCoord)
         case fold(mark: WeakBox<FoldMark>, coord: VT100GridCoord)

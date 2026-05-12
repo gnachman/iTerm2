@@ -253,7 +253,9 @@ struct RemoteCommand: Codable {
                         }
                     }
                     if iTermPreferences.bool(forKey: kPreferenceKeyAISafetyCheck) {
+#if canImport(FoundationModels)
                         return await CommandSafetyChecker.check(command.command)
+#endif
                     }
                 }
             }

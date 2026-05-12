@@ -109,6 +109,10 @@ extern const NSInteger iTermRootTerminalViewWindowNumberLabelWidth;
 @property(nonatomic) CGFloat momentermSidebarWidth;  // default 220; set by PseudoTerminal
 @property(nonatomic, strong) NSView *momentermSidebarContainer;  // set by PseudoTerminal
 
+// MomenTerm: file tree panel (right of sidebar).
+@property(nonatomic, strong) NSView *momentermFileTreeContainer;  // nil = not shown
+@property(nonatomic) CGFloat momentermFileTreeWidth;              // default 240
+
 @property(nonatomic, readonly) BOOL scrollbarShouldBeVisible;
 
 @property(nonatomic, readonly) BOOL tabBarShouldBeVisible;

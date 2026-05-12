@@ -177,6 +177,7 @@ static NSArray<NSString *> *gTerminalCachedCombinedAccountNames;
 
     _scrim.wantsLayer = YES;
     _scrim.layer = [[CALayer alloc] init];
+#if defined(__MAC_26_0) && MAC_OS_X_VERSION_MAX_ALLOWED >= __MAC_26_0
     if (@available(macOS 26, *)) {
         NSView *inner = _scrim.subviews.firstObject;
         NSGlassEffectView *glass = [[NSGlassEffectView alloc] init];
@@ -192,6 +193,9 @@ static NSArray<NSString *> *gTerminalCachedCombinedAccountNames;
     } else {
         _scrim.layer.backgroundColor = [[[NSColor windowBackgroundColor] colorWithAlphaComponent:0.75] CGColor];
     }
+#else
+    _scrim.layer.backgroundColor = [[[NSColor windowBackgroundColor] colorWithAlphaComponent:0.75] CGColor];
+#endif
     _scrim.alphaValue = 0;
 
     _broadcastButton.state = NSControlStateValueOff;

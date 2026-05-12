@@ -131,6 +131,7 @@ class ChatInputTextFieldContainer: NSView {
 
         // Configure background.
         let backgroundView: NSVisualEffectView?
+#if swift(>=6.2)
         if #available(macOS 26, *) {
             backgroundView = nil
             scrollView.translatesAutoresizingMaskIntoConstraints = false
@@ -170,6 +171,22 @@ class ChatInputTextFieldContainer: NSView {
                 return backgroundView
             }()
         }
+#else
+        scrollView.translatesAutoresizingMaskIntoConstraints = false
+        backgroundView = {
+            let backgroundView = NSVisualEffectView()
+            backgroundView.translatesAutoresizingMaskIntoConstraints = false
+            backgroundView.blendingMode = .withinWindow
+            backgroundView.material = .menu
+            backgroundView.state = .active
+            backgroundView.wantsLayer = true
+            backgroundView.layer?.cornerRadius = 10
+            backgroundView.layer?.masksToBounds = true
+            backgroundView.layer?.borderWidth = 1
+            backgroundView.layer?.borderColor = NSColor.gray.withAlphaComponent(0.5).cgColor
+            return backgroundView
+        }()
+#endif
 
         if let scrim {
             scrim.translatesAutoresizingMaskIntoConstraints = false

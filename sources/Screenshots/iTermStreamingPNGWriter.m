@@ -117,7 +117,11 @@
         32,                         // bits per pixel
         (size_t)_bytesPerRow,
         colorSpace,
+#if defined(__MAC_26_0) && MAC_OS_X_VERSION_MAX_ALLOWED >= __MAC_26_0
         CGBitmapInfoMake(kCGImageAlphaLast, kCGImageComponentInteger, kCGImageByteOrderDefault, kCGImagePixelFormatPacked),
+#else
+        kCGImageAlphaLast,
+#endif
         provider,
         NULL,                       // decode array
         NO,                         // should interpolate

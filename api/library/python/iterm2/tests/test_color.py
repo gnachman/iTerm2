@@ -157,14 +157,18 @@ class TestMissingDependency:
         assert issubclass(MissingDependency, ImportError)
 
     def test_from_cocoa_without_pyobjc(self):
-        """Test that from_cocoa raises MissingDependency without pyobjc."""
-        with pytest.raises(MissingDependency):
-            Color.from_cocoa("dGVzdA==")
+        """Test that from_cocoa raises MissingDependency when AppKit is unavailable."""
+        from unittest.mock import patch
+        with patch("iterm2.color.gAppKitAvailable", False):
+            with pytest.raises(MissingDependency):
+                Color.from_cocoa("dGVzdA==")
 
     def test_from_legacy_trigger_without_pyobjc(self):
-        """Test that from_legacy_trigger raises MissingDependency without pyobjc."""
-        with pytest.raises(MissingDependency):
-            Color.from_legacy_trigger("0")
+        """Test that from_legacy_trigger raises MissingDependency when AppKit is unavailable."""
+        from unittest.mock import patch
+        with patch("iterm2.color.gAppKitAvailable", False):
+            with pytest.raises(MissingDependency):
+                Color.from_legacy_trigger("0")
 
 
 class TestColorRepr:
