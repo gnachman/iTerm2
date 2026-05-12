@@ -158,6 +158,9 @@ NSString *const kPreferenceKeyHotkeyEnabled = @"Hotkey";
 NSString *const kPreferenceKeyHotKeyCode = @"HotkeyCode";
 NSString *const kPreferenceKeyHotkeyCharacter = @"HotkeyChar";  // Nonzero if hotkey char is set.
 NSString *const kPreferenceKeyHotkeyModifiers = @"HotkeyModifiers";
+NSString *const kPreferenceKeyOpenQuicklyHotKeyCode = @"OpenQuicklyHotkeyCode";
+NSString *const kPreferenceKeyOpenQuicklyHotkeyCharacter = @"OpenQuicklyHotkeyChar";
+NSString *const kPreferenceKeyOpenQuicklyHotkeyModifiers = @"OpenQuicklyHotkeyModifiers";
 NSString *const kPreferenceKeyEnableHapticFeedbackForEsc = @"HapticFeedbackForEsc";
 NSString *const kPreferenceKeyEnableSoundForEsc = @"SoundForEsc";
 NSString *const kPreferenceKeyVisualIndicatorForEsc = @"VisualIndicatorForEsc";
@@ -630,6 +633,9 @@ static NSString *sPreviousVersion;
                   kPreferenceKeyHotKeyCode: @0,
                   kPreferenceKeyHotkeyCharacter: @0,
                   kPreferenceKeyHotkeyModifiers: @0,
+                  kPreferenceKeyOpenQuicklyHotKeyCode: @0,
+                  kPreferenceKeyOpenQuicklyHotkeyCharacter: @0,
+                  kPreferenceKeyOpenQuicklyHotkeyModifiers: @0,
                   kPreferenceKeyHotKeyTogglesWindow_Deprecated: @NO,
                   kPreferenceKeyHotkeyProfileGuid_Deprecated: [NSNull null],
                   kPreferenceKeyHotkeyAutoHides_Deprecated: @YES,

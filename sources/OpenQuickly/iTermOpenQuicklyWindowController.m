@@ -255,10 +255,43 @@ static CGFloat iTermOpenQuicklyPreviewLabelsBlockHeight(void) {
     [_model removeAllItems];
     [_table reloadData];
     self.window.appearance = [NSAppearance it_appearanceForCurrentTheme];
+    // Mirror iTermProfileHotKey's floating-panel collection behavior. Notably:
+    // (1) FullScreenAuxiliary lets the panel appear over fullscreen windows of
+    // other apps, (2) Transient is omitted because transient windows "do not
+    // contribute to the active state of the app", which appears to break
+    // re-show as a non-activating panel on macOS 26.
+    self.window.collectionBehavior = (NSWindowCollectionBehaviorCanJoinAllSpaces |
+                                      NSWindowCollectionBehaviorFullScreenAuxiliary |
+                                      NSWindowCollectionBehaviorIgnoresCycle);
+    // Float just below the main menu, matching the level used by iTerm2's
+    // floating profile hotkey window. Higher levels (e.g. NSPopUpMenuWindowLevel)
+    // are not honored for non-activating panels on macOS 26 when the app is
+    // in the background, so the panel ends up hidden behind other apps on
+    // subsequent shows.
+    if (@available(macOS 10.16, *)) {
+        self.window.level = NSMainMenuWindowLevel - 2;
+    } else {
+        self.window.level = 17;
+    }
     // Set the window's frame to be table-less initially.
     [self.window setFrame:[self frame] display:YES animate:NO];
     [_textField selectText:nil];
-    [self.window it_makeKeyAndOrderFront];
+    // The alpha 0 -> 1 fade is only needed when iTerm2 is in the background:
+    // on macOS 26 the alpha transition is what forces the window server to
+    // actually paint a non-activating panel brought up from another app.
+    // When iTerm2 is already active, skip it so it doesn't race with the
+    // setFrame:display:animate:YES height animation in -resizeWindowAnimatedToFrame:.
+    NSRunningApplication *frontmost = NSWorkspace.sharedWorkspace.frontmostApplication;
+    const BOOL inBackground = (frontmost != nil &&
+                               ![frontmost isEqual:NSRunningApplication.currentApplication]);
+    if (inBackground) {
+        self.window.alphaValue = 0;
+        [self.window makeKeyAndOrderFront:nil];
+        [self.window.animator setAlphaValue:1];
+    } else {
+        self.window.alphaValue = 1;
+        [self.window makeKeyAndOrderFront:nil];
+    }
 
     // After the window is rendered, call update which will animate to the new frame.
     [self performSelector:@selector(update) withObject:nil afterDelay:0];
@@ -502,7 +535,11 @@ static CGFloat iTermOpenQuicklyPreviewLabelsBlockHeight(void) {
 // Bound to the close button.
 - (IBAction)close:(id)sender {
     [self teardownPreviewWindow];
-    [self.window close];
+    // Use orderOut, not close. -close on a non-activating panel can leave the
+    // window in a state where the window-server refuses to re-elevate it on
+    // subsequent shows from a background app (iTermProfileHotKey's floating
+    // panel uses the same pattern).
+    [self.window orderOut:nil];
 }
 
 - (void)teardownPreviewWindow {
@@ -522,9 +559,61 @@ static CGFloat iTermOpenQuicklyPreviewLabelsBlockHeight(void) {
     _cachedPreviewSessionGuid = nil;
 }
 
+// Observes NSWorkspaceActiveSpaceDidChangeNotification once. When the Space
+// switch animation completes, macOS may pick a different app's window as
+// frontmost on the destination Space; re-activate iTerm2 over a couple of
+// runloop spins to win the race. Modeled on iTermProfileHotKey's
+// activeSpaceDidChange: handling.
+- (void)reassertActivationAfterSpaceChange {
+    __block id token = nil;
+    NSNotificationCenter *center = NSWorkspace.sharedWorkspace.notificationCenter;
+    token = [center addObserverForName:NSWorkspaceActiveSpaceDidChangeNotification
+                                object:nil
+                                 queue:NSOperationQueue.mainQueue
+                            usingBlock:^(NSNotification *note) {
+        if (token) {
+            [center removeObserver:token];
+            token = nil;
+        }
+        // Two spins of the runloop, then re-activate if some other app stole
+        // the focus during the Space transition.
+        dispatch_async(dispatch_get_main_queue(), ^{
+            dispatch_async(dispatch_get_main_queue(), ^{
+                NSRunningApplication *current = NSRunningApplication.currentApplication;
+                if (![NSWorkspace.sharedWorkspace.frontmostApplication isEqual:current]) {
+                    [current activateWithOptions:NSApplicationActivateIgnoringOtherApps];
+                }
+            });
+        });
+    }];
+    // Bail out after a short timeout so we don't leak the observer if no Space
+    // change actually happens.
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2.0 * NSEC_PER_SEC)),
+                   dispatch_get_main_queue(), ^{
+        if (token) {
+            [center removeObserver:token];
+            token = nil;
+        }
+    });
+}
+
 // Switch to the session associated with the currently selected row, closing
 // this window.
 - (void)openSelectedRow {
+    // NSApp.isActive returns YES whenever our panel is key, even if iTerm2
+    // isn't the frontmost app, so it's not a reliable check. Compare against
+    // NSWorkspace.frontmostApplication to actually detect "we're in the
+    // background".
+    NSRunningApplication *frontmost = NSWorkspace.sharedWorkspace.frontmostApplication;
+    if (!frontmost || ![frontmost isEqual:NSRunningApplication.currentApplication]) {
+        [[NSRunningApplication currentApplication] activateWithOptions:NSApplicationActivateIgnoringOtherApps];
+        // If selecting a session triggers a Space switch (e.g. the user is in
+        // another app's fullscreen Space and the chosen session lives on a
+        // different Space), macOS often activates some other app once the
+        // animation finishes. Re-assert iTerm2's frontmost status after the
+        // active-Space change notification arrives.
+        [self reassertActivationAfterSpaceChange];
+    }
     NSInteger row = [_table selectedRow];
 
     if (row >= 0) {
@@ -755,14 +844,7 @@ static CGFloat iTermOpenQuicklyPreviewLabelsBlockHeight(void) {
 
 - (void)windowDidResignKey:(NSNotification *)notification {
     [self teardownPreviewWindow];
-    [self.window close];
-}
-
-- (void)windowWillClose:(NSNotification *)notification {
-    if (notification.object != self.window) {
-        return;
-    }
-    [self teardownPreviewWindow];
+    [self.window orderOut:nil];
 }
 
 #pragma mark - NSControlDelegate

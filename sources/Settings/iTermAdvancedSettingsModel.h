@@ -334,6 +334,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (int)newInstanceOpenStyle;
 + (BOOL)openFileOverridesSendText;
 + (BOOL)openNewWindowAtStartup;
++ (double)openQuicklyAnimationDuration;
 + (BOOL)openUntitledFile;
 + (int)optimumTabWidth;
 + (BOOL)oscColorReport16Bits;

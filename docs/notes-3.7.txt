@@ -386,7 +386,13 @@ Settings Improvements:
   since it is never a useful jump target,
   so Cmd-Shift-O followed by Enter now
   jumps to the most-recently-used other
-  pane.
+  pane. A new preview side panel shows a
+  snapshot of the highlighted session.
+  Open Quickly can also be assigned a
+  system-wide hotkey in Settings > Keys
+  that works while another app is in
+  front, without activating iTerm2 until
+  you commit a selection.
 
 Bug Fixes:
 - The Code Review prompt overlay no longer

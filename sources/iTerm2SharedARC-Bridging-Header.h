@@ -253,4 +253,7 @@
 #import "iTermImageComparison.h"
 #import "iTermBackgroundColorRLETestHelper.h"
 #import "iTermUnderlineSpanTestHelper.h"
+#import "iTermShortcut.h"
+#import "iTermCarbonHotKeyController.h"
+#import "iTermOpenQuicklyWindowController.h"
 #import <CoreParse/CoreParse.h>

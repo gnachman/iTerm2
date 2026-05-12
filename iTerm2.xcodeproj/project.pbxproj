@@ -990,6 +990,7 @@
 		9DB3D6F1176CCABE0071CCF8 /* PrefsArrangements@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 9DB3D6EF176CCABE0071CCF8 /* PrefsArrangements@2x.png */; };
 		9EFA79D2C14244111CAADEE1 /* WorkgroupModeSwitcherItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23DA26C236E4BC3ECF3CF916 /* WorkgroupModeSwitcherItem.swift */; };
 		A073973E14C768E400786414 /* ColorsMenuItemView.h in Headers */ = {isa = PBXBuildFile; fileRef = A073973D14C768E400786414 /* ColorsMenuItemView.h */; };
+		A1F1A091602C6C5597DFE2B6 /* iTermOpenQuicklyHotKeyProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = F629D4C69CD80D78E2E014C6 /* iTermOpenQuicklyHotKeyProvider.swift */; };
 		A445EEDC85D346B39596FDC3 /* iTermLayoutCalculator.h in Headers */ = {isa = PBXBuildFile; fileRef = 93EDFB853885460AA504C6B9 /* iTermLayoutCalculator.h */; };
 		A60014F618550F3900CE38D8 /* NSMutableAttributedString+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = A60014F418550F3900CE38D8 /* NSMutableAttributedString+iTerm.h */; };
 		A60014FB18552BDF00CE38D8 /* iTermNSKeyBindingEmulator.h in Headers */ = {isa = PBXBuildFile; fileRef = A60014F918552BDF00CE38D8 /* iTermNSKeyBindingEmulator.h */; };
@@ -9499,6 +9500,7 @@
 		F52ED8DD037F0A7D01A8A066 /* PTYSession.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; lineEnding = 0; path = PTYSession.m; sourceTree = "<group>"; tabWidth = 4; xcLanguageSpecificationIdentifier = xcode.lang.objc; };
 		F56B230B03A1B36701A8A066 /* PTYWindow.m */ = {isa = PBXFileReference; fileEncoding = 30; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; lineEnding = 0; path = PTYWindow.m; sourceTree = "<group>"; tabWidth = 4; xcLanguageSpecificationIdentifier = xcode.lang.objc; };
 		F5E533B403B2959201A8A066 /* PTYTabView.m */ = {isa = PBXFileReference; fileEncoding = 30; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = PTYTabView.m; sourceTree = "<group>"; tabWidth = 4; };
+		F629D4C69CD80D78E2E014C6 /* iTermOpenQuicklyHotKeyProvider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = iTermOpenQuicklyHotKeyProvider.swift; sourceTree = "<group>"; };
 		F62D15F00AA64B2F0075A287 /* PSMTabDragWindow.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = PSMTabDragWindow.h; sourceTree = "<group>"; };
 		F62D15F10AA64B2F0075A287 /* PSMTabDragWindow.m */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.objc; path = PSMTabDragWindow.m; sourceTree = "<group>"; };
 		F6441F620E748404000EC682 /* CarbonHelpers.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CarbonHelpers.h; sourceTree = "<group>"; };
@@ -11278,6 +11280,7 @@
 				A6EFF23D1D21949D00806EEF /* iTermShortcut.h */,
 				A6EFF23E1D21949D00806EEF /* iTermShortcut.m */,
 				A6AE58CA2E83463300762C1D /* iTermSymbolicHotkeys.swift */,
+				F629D4C69CD80D78E2E014C6 /* iTermOpenQuicklyHotKeyProvider.swift */,
 			);
 			path = Hotkey;
 			sourceTree = "<group>";
@@ -21275,6 +21278,7 @@
 				57F37DCBE10E9775FA590138 /* ClaudeIntegrationHealthMonitor.swift in Sources */,
 				01D8567525D898E2B0DB6FF1 /* iTermWindowBorderView.swift in Sources */,
 				79F784C0D62EE69089FB4CD2 /* WorkgroupToolbarShortcut.swift in Sources */,
+				A1F1A091602C6C5597DFE2B6 /* iTermOpenQuicklyHotKeyProvider.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

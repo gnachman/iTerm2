@@ -438,6 +438,7 @@ DEFINE_INT(bufferDepth, 40, SECTION_TERMINAL @"Maximum number of chunks to buffe
 
 #define SECTION_HOTKEY @"Hotkey: "
 DEFINE_FLOAT(hotkeyTermAnimationDuration, 0.25, SECTION_HOTKEY @"Duration in seconds of the hotkey window animation.\nWarning: reducing this value may cause problems if you have multiple displays.");
+DEFINE_FLOAT(openQuicklyAnimationDuration, 0.12, SECTION_HOTKEY @"Duration in seconds of the Open Quickly window height animation.\nSet to 0 to disable the animation.");
 DEFINE_BOOL(dockIconTogglesWindow, NO, SECTION_HOTKEY @"If the only window is a hotkey window, then clicking the dock icon shows or hides it.");
 DEFINE_BOOL(hotkeyWindowFloatsAboveOtherWindows, NO, SECTION_HOTKEY @"The hotkey window floats above other windows even when another application is active.\nYou must disable “Settings > Keys > Hotkey window hides when focus is lost” for this setting to be effective.");
 DEFINE_FLOAT(hotKeyDoubleTapMaxDelay, 0.3, SECTION_HOTKEY @"The maximum amount of time allowed between presses of a modifier key when performing a modifier double-tap.");

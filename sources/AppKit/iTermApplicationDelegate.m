@@ -1508,6 +1508,7 @@ void TurnOnDebugLoggingAutomatically(void) {
 
     // Ensure hotkeys are registered.
     [iTermAppHotKeyProvider sharedInstance];
+    [iTermOpenQuicklyHotKeyProvider sharedInstance];
     [iTermHotKeyProfileBindingController sharedInstance];
 
     if ([[iTermModifierRemapper sharedInstance] isAnyModifierRemapped]) {
