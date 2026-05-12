@@ -181,6 +181,11 @@ NS_CLASS_AVAILABLE_MAC(10_14)
     BOOL _shouldShowMomentermBrowserPanel;
     NSView *_momentermBrowserPanelContainer;
     CGFloat _momentermBrowserPanelWidth;
+
+    // MomenTerm: bottom git graph panel
+    BOOL _shouldShowMomentermGitGraph;
+    NSView *_momentermGitGraphContainer;
+    CGFloat _momentermGitGraphHeight;
 }
 
 - (instancetype)initWithFrame:(NSRect)frameRect
@@ -1321,25 +1326,66 @@ NS_CLASS_AVAILABLE_MAC(10_14)
     return _momentermBrowserPanelWidth > 0 ? _momentermBrowserPanelWidth : 420.0;
 }
 
+- (void)setShouldShowMomentermGitGraph:(BOOL)show {
+    _shouldShowMomentermGitGraph = show;
+    _momentermGitGraphContainer.hidden = !show;
+    [self layoutSubviews];
+}
+
+- (BOOL)shouldShowMomentermGitGraph {
+    return _shouldShowMomentermGitGraph;
+}
+
+- (void)setMomentermGitGraphContainer:(NSView *)container {
+    [_momentermGitGraphContainer removeFromSuperview];
+    _momentermGitGraphContainer = container;
+    if (_momentermGitGraphContainer) {
+        _momentermGitGraphContainer.hidden = !_shouldShowMomentermGitGraph;
+        [self addSubview:_momentermGitGraphContainer positioned:NSWindowAbove relativeTo:nil];
+    }
+    [self layoutSubviews];
+}
+
+- (NSView *)momentermGitGraphContainer {
+    return _momentermGitGraphContainer;
+}
+
+- (void)setMomentermGitGraphHeight:(CGFloat)h {
+    _momentermGitGraphHeight = h;
+}
+
+- (CGFloat)momentermGitGraphHeight {
+    return _momentermGitGraphHeight > 0 ? _momentermGitGraphHeight : 160.0;
+}
+
 - (void)layoutMomentermSidebar {
     const BOOL leftActive = _momentermSidebarContainer && _shouldShowMomentermSidebar;
     const BOOL rightActive = _momentermBrowserPanelContainer && _shouldShowMomentermBrowserPanel;
-    if (!leftActive && !rightActive) {
+    const BOOL bottomActive = _momentermGitGraphContainer && _shouldShowMomentermGitGraph;
+    if (!leftActive && !rightActive && !bottomActive) {
         return;
     }
     const CGFloat h = NSHeight(self.bounds);
+    const CGFloat gitGraphH = bottomActive ? floor(self.momentermGitGraphHeight) : 0;
+    if (bottomActive) {
+        // Bottom strip spans full width but sits above the bottom edge.
+        _momentermGitGraphContainer.frame = NSMakeRect(0, 0, NSWidth(self.bounds), gitGraphH);
+    }
     CGFloat totalLeft = 0;
+    // Side panels sit above the bottom git-graph strip if it's visible.
+    const CGFloat sidesY = gitGraphH;
+    const CGFloat sidesH = h - gitGraphH;
     if (leftActive) {
         const CGFloat sw = floor(self.momentermSidebarWidth);
         const CGFloat ftw = _momentermFileTreeContainer ? floor(self.momentermFileTreeWidth) : 0;
         totalLeft = sw + ftw;
 
-        // Position the sidebar on the left edge, full height
-        _momentermSidebarContainer.frame = NSMakeRect(0, 0, sw, h);
+        // Position the sidebar on the left edge
+        _momentermSidebarContainer.frame = NSMakeRect(0, sidesY, sw, sidesH);
 
         // Position file tree panel immediately to the right of the sidebar
         if (_momentermFileTreeContainer) {
-            _momentermFileTreeContainer.frame = NSMakeRect(sw, 0, ftw, h);
+            _momentermFileTreeContainer.frame = NSMakeRect(sw, sidesY, ftw, sidesH);
         }
     }
 
@@ -1349,10 +1395,10 @@ NS_CLASS_AVAILABLE_MAC(10_14)
         browserPanelW = floor(self.momentermBrowserPanelWidth);
         const CGFloat toolbeltW = [self shouldShowToolbelt] ? NSWidth(_toolbelt.frame) : 0;
         const CGFloat panelX = NSWidth(self.bounds) - toolbeltW - browserPanelW;
-        _momentermBrowserPanelContainer.frame = NSMakeRect(panelX, 0, browserPanelW, h);
+        _momentermBrowserPanelContainer.frame = NSMakeRect(panelX, sidesY, browserPanelW, sidesH);
     }
 
-    // Shrink the tabView from the left and right to make room for our panels.
+    // Shrink the tabView from the left/right/bottom to make room for our panels.
     NSRect tvFrame = self.tabView.frame;
     BOOL changed = NO;
     if (tvFrame.origin.x < totalLeft) {
@@ -1368,6 +1414,12 @@ NS_CLASS_AVAILABLE_MAC(10_14)
             tvFrame.size.width = MAX(0, maxRight - tvFrame.origin.x);
             changed = YES;
         }
+    }
+    if (gitGraphH > 0 && tvFrame.origin.y < gitGraphH) {
+        const CGFloat delta = gitGraphH - tvFrame.origin.y;
+        tvFrame.origin.y = gitGraphH;
+        tvFrame.size.height = MAX(0, tvFrame.size.height - delta);
+        changed = YES;
     }
     if (changed) {
         if (tvFrame.size.width < 0) tvFrame.size.width = 0;

@@ -1571,6 +1571,11 @@ void TurnOnDebugLoggingAutomatically(void) {
                                                        keyEquivalent:@"b"] autorelease];
         browserItem.keyEquivalentModifierMask = NSEventModifierFlagCommand | NSEventModifierFlagOption;
 
+        NSMenuItem *graphItem = [[[NSMenuItem alloc] initWithTitle:@"Toggle Git Graph"
+                                                            action:@selector(toggleMomentermGitGraph:)
+                                                     keyEquivalent:@"g"] autorelease];
+        graphItem.keyEquivalentModifierMask = NSEventModifierFlagCommand | NSEventModifierFlagOption;
+
         NSMenuItem *marketItem = [[[NSMenuItem alloc] initWithTitle:@"Plugin Marketplace…"
                                                              action:@selector(openMomentermPluginMarketplace:)
                                                       keyEquivalent:@"p"] autorelease];
@@ -1580,6 +1585,7 @@ void TurnOnDebugLoggingAutomatically(void) {
                                                            action:@selector(openMomentermProjects:)
                                                     keyEquivalent:@""] autorelease];
         [windowsMenu insertItem:[NSMenuItem separatorItem] atIndex:0];
+        [windowsMenu insertItem:graphItem atIndex:0];
         [windowsMenu insertItem:browserItem atIndex:0];
         [windowsMenu insertItem:marketItem atIndex:0];
         [windowsMenu insertItem:projItem atIndex:0];

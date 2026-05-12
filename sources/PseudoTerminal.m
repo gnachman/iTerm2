@@ -450,6 +450,9 @@ typedef NS_ENUM(int, iTermShouldHaveTitleSeparator) {
     // MomenTerm: right-side localhost preview browser panel
     MomentermBrowserPanelVC *_momentermBrowserPanelVC;
 
+    // MomenTerm: bottom git graph panel
+    MomentermGitGraphVC *_momentermGitGraphVC;
+
 }
 
 @synthesize scope = _scope;
@@ -759,6 +762,12 @@ typedef NS_ENUM(int, iTermShouldHaveTitleSeparator) {
     _contentView.momentermBrowserPanelWidth = 420;
     _contentView.momentermBrowserPanelContainer = _momentermBrowserPanelVC.view;
     _contentView.shouldShowMomentermBrowserPanel = NO;
+
+    // MomenTerm: lazily-shown bottom git graph panel.
+    _momentermGitGraphVC = [[MomentermGitGraphVC alloc] init];
+    _contentView.momentermGitGraphHeight = 160;
+    _contentView.momentermGitGraphContainer = _momentermGitGraphVC.view;
+    _contentView.shouldShowMomentermGitGraph = NO;
 
     if (hotkeyWindowType == iTermHotkeyWindowTypeNone) {
         self.window.alphaValue = 1;
@@ -1159,6 +1168,26 @@ typedef NS_ENUM(int, iTermShouldHaveTitleSeparator) {
     return [self currentSession].guid;
 }
 
+- (IBAction)toggleMomentermGitGraph:(id)sender {
+    const BOOL show = !_contentView.shouldShowMomentermGitGraph;
+    _contentView.shouldShowMomentermGitGraph = show;
+    if (show) {
+        [self it_updateMomentermGitGraphCwd];
+    }
+}
+
+- (void)it_updateMomentermGitGraphCwd {
+    if (!_momentermGitGraphVC || !_contentView.shouldShowMomentermGitGraph) {
+        return;
+    }
+    PTYSession *session = [self currentSession];
+    NSString *cwd = [session currentLocalWorkingDirectory];
+    if (cwd.length == 0) {
+        return;
+    }
+    [_momentermGitGraphVC setCwd:cwd];
+}
+
 // Returns a stable pastel color derived from the space name.
 - (NSColor *)it_momentermColorForSpaceName:(NSString *)spaceName {
     NSUInteger h = [spaceName hash];
@@ -1333,6 +1362,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [_momentermFileTreePath release];
     [_momentermEditorVC release];
     [_momentermBrowserPanelVC release];
+    [_momentermGitGraphVC release];
     [_didEnterLionFullscreen release];
     [_desiredTitle release];
     [_tabsTouchBarItem release];
@@ -7070,6 +7100,8 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     if (tabDir.length > 0) {
         [_momentermSidebarVC selectProjectForPath:tabDir];
     }
+    // Refresh the bottom git-graph against the active session's live cwd.
+    [self it_updateMomentermGitGraphCwd];
     DLog(@"Finished");
 }
 
