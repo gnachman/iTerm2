@@ -248,6 +248,7 @@ typedef NS_ENUM(int, iTermShouldHaveTitleSeparator) {
     iTermToolbeltViewDelegate,
     MomentermEmbeddedSidebarDelegate,
     MomentermEmbeddedFileTreeDelegate,
+    MomentermBrowserPanelDelegate,
     NSComboBoxDelegate,
     NSFontChanging,
     NSMenuItemValidation,
@@ -445,6 +446,9 @@ typedef NS_ENUM(int, iTermShouldHaveTitleSeparator) {
 
     // MomenTerm: editor overlay
     MomentermEditorOverlayVC *_momentermEditorVC;
+
+    // MomenTerm: right-side localhost preview browser panel
+    MomentermBrowserPanelVC *_momentermBrowserPanelVC;
 
 }
 
@@ -748,6 +752,13 @@ typedef NS_ENUM(int, iTermShouldHaveTitleSeparator) {
     _contentView.momentermSidebarContainer = _momentermSidebarVC.view;
     _contentView.shouldShowMomentermSidebar = YES;
     [self performSelector:@selector(it_setupMomentermToggleButton) withObject:nil afterDelay:0];
+
+    // MomenTerm: lazily-shown right-side browser panel that follows localhost URLs.
+    _momentermBrowserPanelVC = [[MomentermBrowserPanelVC alloc] init];
+    _momentermBrowserPanelVC.delegate = self;
+    _contentView.momentermBrowserPanelWidth = 420;
+    _contentView.momentermBrowserPanelContainer = _momentermBrowserPanelVC.view;
+    _contentView.shouldShowMomentermBrowserPanel = NO;
 
     if (hotkeyWindowType == iTermHotkeyWindowTypeNone) {
         self.window.alphaValue = 1;
@@ -1127,6 +1138,27 @@ typedef NS_ENUM(int, iTermShouldHaveTitleSeparator) {
     [self it_updateMomentermToggleButtonAppearance];
 }
 
+- (IBAction)toggleMomentermBrowserPanel:(id)sender {
+    const BOOL show = !_contentView.shouldShowMomentermBrowserPanel;
+    _contentView.shouldShowMomentermBrowserPanel = show;
+    if (show) {
+        // If we have a stashed URL from the active session, show it immediately.
+        NSString *guid = [self currentSession].guid;
+        if (guid) {
+            NSString *url = [MomentermLocalhostURLScanner.shared lastURLForSession:guid];
+            if (url.length > 0) {
+                [_momentermBrowserPanelVC loadURLString:url];
+            }
+        }
+    }
+}
+
+// MARK: - MomentermBrowserPanelDelegate
+
+- (NSString *)momentermBrowserPanelActiveSessionGUID {
+    return [self currentSession].guid;
+}
+
 // Returns a stable pastel color derived from the space name.
 - (NSColor *)it_momentermColorForSpaceName:(NSString *)spaceName {
     NSUInteger h = [spaceName hash];
@@ -1300,6 +1332,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [_momentermFileTreeVC release];
     [_momentermFileTreePath release];
     [_momentermEditorVC release];
+    [_momentermBrowserPanelVC release];
     [_didEnterLionFullscreen release];
     [_desiredTitle release];
     [_tabsTouchBarItem release];

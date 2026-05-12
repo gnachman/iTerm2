@@ -3409,6 +3409,10 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
 // "restart", which is done by first calling revive and then replaceTerminatedShellWithNewInstance.
 - (void)terminate {
     DLog(@"terminate called from %@", [NSThread callStackSymbols]);
+    // MomenTerm: forget any scanner buffer for this session so memory stays bounded.
+    if (self.guid.length > 0) {
+        [MomentermLocalhostURLScanner.shared resetSession:self.guid];
+    }
     if (self.isBrowserSession) {
         [self terminateBrowser];
     }
@@ -13924,6 +13928,11 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
              foreground:fg
              background:bg
                atPrompt:atPrompt];
+        // MomenTerm: feed plain-text output to the localhost URL scanner so
+        // the right-side browser panel can follow `Listening on http://localhost:PORT`.
+        if (self.guid.length > 0) {
+            [MomentermLocalhostURLScanner.shared ingest:string sessionGUID:self.guid];
+        }
     }
 }
 

@@ -1563,9 +1563,14 @@ void TurnOnDebugLoggingAutomatically(void) {
     // MomenTerm: register defaults (must run before any keyboard input)
     [[iTermUserDefaults userDefaults] registerDefaults:@{@"MomentermSingleEnterCommitsIME": @YES}];
 
-    // MomenTerm: add project manager + plugin marketplace entries to the Window menu
+    // MomenTerm: add project manager + plugin marketplace + browser panel entries to the Window menu
     NSMenu *windowsMenu = [NSApp windowsMenu];
     if (windowsMenu) {
+        NSMenuItem *browserItem = [[[NSMenuItem alloc] initWithTitle:@"Toggle Browser Panel"
+                                                              action:@selector(toggleMomentermBrowserPanel:)
+                                                       keyEquivalent:@"b"] autorelease];
+        browserItem.keyEquivalentModifierMask = NSEventModifierFlagCommand | NSEventModifierFlagOption;
+
         NSMenuItem *marketItem = [[[NSMenuItem alloc] initWithTitle:@"Plugin Marketplace…"
                                                              action:@selector(openMomentermPluginMarketplace:)
                                                       keyEquivalent:@"p"] autorelease];
@@ -1575,6 +1580,7 @@ void TurnOnDebugLoggingAutomatically(void) {
                                                            action:@selector(openMomentermProjects:)
                                                     keyEquivalent:@""] autorelease];
         [windowsMenu insertItem:[NSMenuItem separatorItem] atIndex:0];
+        [windowsMenu insertItem:browserItem atIndex:0];
         [windowsMenu insertItem:marketItem atIndex:0];
         [windowsMenu insertItem:projItem atIndex:0];
     }

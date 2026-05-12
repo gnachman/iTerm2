@@ -113,6 +113,11 @@ extern const NSInteger iTermRootTerminalViewWindowNumberLabelWidth;
 @property(nonatomic, strong) NSView *momentermFileTreeContainer;  // nil = not shown
 @property(nonatomic) CGFloat momentermFileTreeWidth;              // default 240
 
+// MomenTerm: localhost preview browser panel (right edge, before toolbelt).
+@property(nonatomic) BOOL shouldShowMomentermBrowserPanel;
+@property(nonatomic, strong) NSView *momentermBrowserPanelContainer;  // nil = not shown
+@property(nonatomic) CGFloat momentermBrowserPanelWidth;              // default 420
+
 @property(nonatomic, readonly) BOOL scrollbarShouldBeVisible;
 
 @property(nonatomic, readonly) BOOL tabBarShouldBeVisible;

@@ -176,6 +176,11 @@ NS_CLASS_AVAILABLE_MAC(10_14)
     // MomenTerm: file tree panel (right of sidebar)
     NSView *_momentermFileTreeContainer;
     CGFloat _momentermFileTreeWidth;
+
+    // MomenTerm: localhost preview browser panel (right edge, left of toolbelt)
+    BOOL _shouldShowMomentermBrowserPanel;
+    NSView *_momentermBrowserPanelContainer;
+    CGFloat _momentermBrowserPanelWidth;
 }
 
 - (instancetype)initWithFrame:(NSRect)frameRect
@@ -1284,45 +1289,111 @@ NS_CLASS_AVAILABLE_MAC(10_14)
     return _momentermFileTreeWidth > 0 ? _momentermFileTreeWidth : 240.0;
 }
 
+- (void)setShouldShowMomentermBrowserPanel:(BOOL)show {
+    _shouldShowMomentermBrowserPanel = show;
+    _momentermBrowserPanelContainer.hidden = !show;
+    [self layoutSubviews];
+}
+
+- (BOOL)shouldShowMomentermBrowserPanel {
+    return _shouldShowMomentermBrowserPanel;
+}
+
+- (void)setMomentermBrowserPanelContainer:(NSView *)container {
+    [_momentermBrowserPanelContainer removeFromSuperview];
+    _momentermBrowserPanelContainer = container;
+    if (_momentermBrowserPanelContainer) {
+        _momentermBrowserPanelContainer.hidden = !_shouldShowMomentermBrowserPanel;
+        [self addSubview:_momentermBrowserPanelContainer positioned:NSWindowAbove relativeTo:nil];
+    }
+    [self layoutSubviews];
+}
+
+- (NSView *)momentermBrowserPanelContainer {
+    return _momentermBrowserPanelContainer;
+}
+
+- (void)setMomentermBrowserPanelWidth:(CGFloat)w {
+    _momentermBrowserPanelWidth = w;
+}
+
+- (CGFloat)momentermBrowserPanelWidth {
+    return _momentermBrowserPanelWidth > 0 ? _momentermBrowserPanelWidth : 420.0;
+}
+
 - (void)layoutMomentermSidebar {
-    if (!_momentermSidebarContainer || !_shouldShowMomentermSidebar) {
+    const BOOL leftActive = _momentermSidebarContainer && _shouldShowMomentermSidebar;
+    const BOOL rightActive = _momentermBrowserPanelContainer && _shouldShowMomentermBrowserPanel;
+    if (!leftActive && !rightActive) {
         return;
     }
-    const CGFloat sw = floor(self.momentermSidebarWidth);
-    const CGFloat ftw = _momentermFileTreeContainer ? floor(self.momentermFileTreeWidth) : 0;
-    const CGFloat totalLeft = sw + ftw;
     const CGFloat h = NSHeight(self.bounds);
+    CGFloat totalLeft = 0;
+    if (leftActive) {
+        const CGFloat sw = floor(self.momentermSidebarWidth);
+        const CGFloat ftw = _momentermFileTreeContainer ? floor(self.momentermFileTreeWidth) : 0;
+        totalLeft = sw + ftw;
 
-    // Position the sidebar on the left edge, full height
-    _momentermSidebarContainer.frame = NSMakeRect(0, 0, sw, h);
+        // Position the sidebar on the left edge, full height
+        _momentermSidebarContainer.frame = NSMakeRect(0, 0, sw, h);
 
-    // Position file tree panel immediately to the right of the sidebar
-    if (_momentermFileTreeContainer) {
-        _momentermFileTreeContainer.frame = NSMakeRect(sw, 0, ftw, h);
+        // Position file tree panel immediately to the right of the sidebar
+        if (_momentermFileTreeContainer) {
+            _momentermFileTreeContainer.frame = NSMakeRect(sw, 0, ftw, h);
+        }
     }
 
-    // Shrink the tabView leftward
+    // Position the right-side browser panel between tabView/toolbelt.
+    CGFloat browserPanelW = 0;
+    if (rightActive) {
+        browserPanelW = floor(self.momentermBrowserPanelWidth);
+        const CGFloat toolbeltW = [self shouldShowToolbelt] ? NSWidth(_toolbelt.frame) : 0;
+        const CGFloat panelX = NSWidth(self.bounds) - toolbeltW - browserPanelW;
+        _momentermBrowserPanelContainer.frame = NSMakeRect(panelX, 0, browserPanelW, h);
+    }
+
+    // Shrink the tabView from the left and right to make room for our panels.
     NSRect tvFrame = self.tabView.frame;
+    BOOL changed = NO;
     if (tvFrame.origin.x < totalLeft) {
         const CGFloat delta = totalLeft - tvFrame.origin.x;
         tvFrame.origin.x = totalLeft;
         tvFrame.size.width -= delta;
-        if (tvFrame.size.width < 0) {
-            tvFrame.size.width = 0;
+        changed = YES;
+    }
+    if (browserPanelW > 0) {
+        const CGFloat toolbeltW = [self shouldShowToolbelt] ? NSWidth(_toolbelt.frame) : 0;
+        const CGFloat maxRight = NSWidth(self.bounds) - toolbeltW - browserPanelW;
+        if (NSMaxX(tvFrame) > maxRight) {
+            tvFrame.size.width = MAX(0, maxRight - tvFrame.origin.x);
+            changed = YES;
         }
+    }
+    if (changed) {
+        if (tvFrame.size.width < 0) tvFrame.size.width = 0;
         self.tabView.frame = tvFrame;
     }
 
-    // Shrink the tab bar backing leftward (only when tab bar is not on loan)
+    // Shrink the tab bar backing (only when tab bar is not on loan)
     if (!_tabBarControlOnLoan && _tabBarBacking && !_tabBarBacking.hidden) {
         NSRect tbFrame = _tabBarBacking.frame;
+        BOOL tbChanged = NO;
         if (tbFrame.origin.x < totalLeft) {
             const CGFloat delta = totalLeft - tbFrame.origin.x;
             tbFrame.origin.x = totalLeft;
             tbFrame.size.width -= delta;
-            if (tbFrame.size.width < 0) {
-                tbFrame.size.width = 0;
+            tbChanged = YES;
+        }
+        if (browserPanelW > 0) {
+            const CGFloat toolbeltW = [self shouldShowToolbelt] ? NSWidth(_toolbelt.frame) : 0;
+            const CGFloat maxRight = NSWidth(self.bounds) - toolbeltW - browserPanelW;
+            if (NSMaxX(tbFrame) > maxRight) {
+                tbFrame.size.width = MAX(0, maxRight - tbFrame.origin.x);
+                tbChanged = YES;
             }
+        }
+        if (tbChanged) {
+            if (tbFrame.size.width < 0) tbFrame.size.width = 0;
             _tabBarBacking.frame = tbFrame;
         }
     }
