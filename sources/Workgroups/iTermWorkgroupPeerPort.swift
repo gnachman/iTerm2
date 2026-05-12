@@ -30,7 +30,9 @@ final class iTermWorkgroupPeerPort: PTYSessionPeerPort {
     // (two spacers, two separators — both get distinct NSViews).
     private var itemsByPeerID: [String: [SessionToolbarGenericView]] = [:]
 
-    private let peerMembers: [(identifier: String, label: String)]
+    private let peerMembers: [(identifier: String,
+                               label: String,
+                               shortcut: WorkgroupToolbarShortcut?)]
 
     // Held so handleButtonTap / diffDidSelect can find the config for
     // the peer whose UI fired the event (for `command` and
@@ -68,7 +70,8 @@ final class iTermWorkgroupPeerPort: PTYSessionPeerPort {
          gitPoller: iTermGitPoller?) {
         self.peerMembers = peerConfigs.map { cfg in
             (identifier: cfg.uniqueIdentifier,
-             label: cfg.displayName.isEmpty ? "Peer" : cfg.displayName)
+             label: cfg.displayName.isEmpty ? "Peer" : cfg.displayName,
+             shortcut: cfg.peerSwitchShortcut)
         }
         self.leaderScope = leaderScope
 

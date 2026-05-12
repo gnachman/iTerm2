@@ -775,6 +775,17 @@ Bug Fixes:
   take precedence over profile key
   bindings and main menu items but
   defer to global key bindings.
+- Add an optional per-peer shortcut
+  for jumping to a peer in a workgroup.
+  Configurable in the workgroup
+  session settings; when unset, the
+  built-in opt-shift-cmd-number
+  fallback still works. Custom peer
+  shortcuts route through the same
+  pipeline as workgroup toolbar
+  shortcuts, so they beat profile
+  bindings and the main menu but
+  defer to global key bindings.
 - Fix vertical window resize being
   silently rejected when the window
   sits partly below the screen.

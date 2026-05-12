@@ -744,6 +744,17 @@ extension iTermWorkgroupInstance {
         if iTermKeyMappings.haveGlobalKeyMapping(for: keystroke) {
             return false
         }
+        // Peer-switch shortcuts are workgroup-wide rather than scoped
+        // to the focused session's toolbar items: pressing the
+        // configured shortcut from any session in the workgroup
+        // activates the matching peer (in whichever peer port owns
+        // it). Checked before the toolbar-item scan so a peer's
+        // jump shortcut can't be accidentally shadowed by an
+        // identically-bound navigation/reload key on the focused
+        // session's toolbar.
+        if activatePeer(matching: keystroke) {
+            return true
+        }
         guard let configID = configID(forSession: session),
               let config = config(forConfigID: configID) else {
             return false
@@ -771,6 +782,35 @@ extension iTermWorkgroupInstance {
                 }
             default:
                 break
+            }
+        }
+        return false
+    }
+
+    // Activate the peer whose configured `peerSwitchShortcut` matches
+    // `keystroke`. Returns true iff a peer was found and activated.
+    // Scans every session in the workgroup (not just `.peer` kinds —
+    // a peer group's leader is the root or any non-peer host whose
+    // children include peers, and that leader sits in the mode
+    // switcher alongside the peer children). The live peer port
+    // (main or nested) that owns the matching configID handles the
+    // activation; ports return false for IDs they don't own.
+    // Shortcuts are the user's responsibility to keep unique — on
+    // a collision the first matching config in workgroup.sessions
+    // order wins.
+    private func activatePeer(matching keystroke: iTermKeystroke) -> Bool {
+        for cfg in workgroup.sessions {
+            guard Self.shortcutMatches(cfg.peerSwitchShortcut,
+                                       keystroke: keystroke) else {
+                continue
+            }
+            if peerPort.activate(identifier: cfg.uniqueIdentifier) {
+                return true
+            }
+            for port in nestedPeerPorts {
+                if port.activate(identifier: cfg.uniqueIdentifier) {
+                    return true
+                }
             }
         }
         return false
