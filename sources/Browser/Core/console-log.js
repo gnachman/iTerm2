@@ -1,5 +1,12 @@
  (function() {
      'use strict';
+     // Skip wrapping console.* in challenge frames so the captcha probe
+     // sees the native [native code] toString. The flag is set by
+     // cloak-page-world.js, which only runs in the .page world; in
+     // .defaultClient the flag is undefined so this script proceeds.
+     if (window.__iTermBrowserCloak === true) {
+         return;
+     }
      const TAG = '[ConsoleLogBridge]';
 
      // Safely grab the native handler (or stub)

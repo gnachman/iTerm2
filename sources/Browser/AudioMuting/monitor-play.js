@@ -1,5 +1,12 @@
 (function() {
     'use strict';
+    // Skip the play/Audio/createElement wraps in challenge frames so the
+    // probe does not see HTMLMediaElement.prototype.play, window.Audio,
+    // or document.createElement as non-native. Flag set by
+    // cloak-page-world.js.
+    if (window.__iTermBrowserCloak === true) {
+        return;
+    }
     const sessionSecret = "{{SECRET}}";
 
     // Cache to store audio detection results per element

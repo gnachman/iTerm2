@@ -777,3 +777,28 @@ Bug Fixes:
   pile millions of blocks onto the main
   queue and exhaust memory. Issue
   12857.
+- Built-in browser: hide our message
+  handlers and skip the page-world
+  Notification, geolocation, console,
+  and audio bridges inside Cloudflare
+  Turnstile, hCaptcha, and similar
+  challenge frames so the captcha
+  probe sees an unmodified Safari
+  surface.
+- Built-in browser geolocation: stop
+  silently dropping requests when
+  permission is not granted; the page
+  now receives a PERMISSION_DENIED
+  error instead of hanging. Push the
+  decision to the calling frame so
+  navigator.permissions.query reflects
+  reality, and route success and error
+  callbacks back to the originating
+  iframe instead of always the main
+  frame. Stop persisting system-level
+  denials (Location Services off, OS
+  prompt declined) as per-site
+  decisions; only an explicit Allow
+  or Block in the per-site dialog is
+  remembered. The same fix applies to
+  notification permissions.
