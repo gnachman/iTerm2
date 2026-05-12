@@ -711,6 +711,13 @@ Bug Fixes:
   dev build get a cookie from the right
   iTerm2 instance instead of whichever
   one macOS routes to. Issue 12850.
+- Honor IT2_SUITE when checking for
+  disable-automation-auth in the iterm2
+  Python library, so external scripts
+  targeting a -suite instance no longer
+  silently fail with 401 when stock
+  iTerm2 has “Always Allow All Apps”
+  enabled. Issue 12864.
 - Add advanced settings to customize
   the window border color for focused
   and unfocused windows (requires
