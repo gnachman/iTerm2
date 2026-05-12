@@ -1,0 +1,139 @@
+{
+  "schemaVersion": 1,
+  "plugins": [
+    {
+      "id": "oh-my-claudecode",
+      "name": "oh-my-claudecode",
+      "kind": "claude-plugin",
+      "detail": "Multi-agent orchestration with specialized agents, ralph/ultrawork loops, team coordination.",
+      "install": "claude plugin install anthropics/oh-my-claudecode",
+      "source": "https://github.com/anthropics/oh-my-claudecode",
+      "tags": ["orchestration", "agents", "workflow"]
+    },
+    {
+      "id": "pai",
+      "name": "PAI Pipeline",
+      "kind": "claude-plugin",
+      "detail": "5-stage AI development pipeline: design → harness → validate → ship.",
+      "install": "claude plugin install pai/pai",
+      "source": "https://github.com/pai/pai",
+      "tags": ["workflow", "pipeline"]
+    },
+    {
+      "id": "pr-review-toolkit",
+      "name": "PR Review Toolkit",
+      "kind": "claude-plugin",
+      "detail": "Specialized agents for code review, comment analysis, test coverage, silent failures.",
+      "install": "claude plugin install anthropics/pr-review-toolkit",
+      "source": "https://github.com/anthropics/pr-review-toolkit",
+      "tags": ["review", "quality"]
+    },
+    {
+      "id": "feature-dev",
+      "name": "feature-dev",
+      "kind": "claude-plugin",
+      "detail": "Guided feature development: explore → architect → execute with codebase understanding.",
+      "install": "claude plugin install anthropics/feature-dev",
+      "source": "https://github.com/anthropics/feature-dev",
+      "tags": ["development"]
+    },
+    {
+      "id": "plugin-dev",
+      "name": "plugin-dev",
+      "kind": "claude-plugin",
+      "detail": "Scaffold and validate Claude Code plugins (commands, skills, agents, hooks, MCP).",
+      "install": "claude plugin install anthropics/plugin-dev",
+      "source": "https://github.com/anthropics/plugin-dev",
+      "tags": ["meta", "development"]
+    },
+    {
+      "id": "frontend-design",
+      "name": "frontend-design",
+      "kind": "claude-plugin",
+      "detail": "Generate distinctive, production-grade frontend interfaces that avoid generic AI aesthetics.",
+      "install": "claude plugin install anthropics/frontend-design",
+      "source": "https://github.com/anthropics/frontend-design",
+      "tags": ["frontend", "design"]
+    },
+    {
+      "id": "ralph-wiggum",
+      "name": "Ralph Wiggum loop",
+      "kind": "claude-plugin",
+      "detail": "Self-referential loop runner until task completion with configurable reviewer.",
+      "install": "claude plugin install anthropics/ralph-wiggum",
+      "source": "https://github.com/anthropics/ralph-wiggum",
+      "tags": ["loop", "automation"]
+    },
+    {
+      "id": "agent-sdk-dev",
+      "name": "Agent SDK Dev",
+      "kind": "claude-plugin",
+      "detail": "Scaffold Python / TypeScript Claude Agent SDK applications with verifier subagents.",
+      "install": "claude plugin install anthropics/agent-sdk-dev",
+      "source": "https://github.com/anthropics/agent-sdk-dev",
+      "tags": ["sdk", "scaffolding"]
+    }
+  ],
+  "mcpServers": [
+    {
+      "id": "atlassian",
+      "name": "Atlassian (Jira / Confluence)",
+      "kind": "mcp",
+      "detail": "Read and write Jira issues, Confluence pages with OAuth.",
+      "install": "claude mcp add atlassian --transport sse https://mcp.atlassian.com/sse",
+      "source": "https://www.atlassian.com/platform/mcp",
+      "tags": ["issue-tracker", "wiki"],
+      "auth": "oauth"
+    },
+    {
+      "id": "notion",
+      "name": "Notion",
+      "kind": "mcp",
+      "detail": "Search and edit Notion pages and databases.",
+      "install": "claude mcp add notion --transport sse https://mcp.notion.com/sse",
+      "source": "https://developers.notion.com/docs/mcp",
+      "tags": ["docs", "knowledge"],
+      "auth": "oauth"
+    },
+    {
+      "id": "sentry",
+      "name": "Sentry",
+      "kind": "mcp",
+      "detail": "Query Sentry issues, releases, events; assist with root-cause analysis.",
+      "install": "claude mcp add sentry --transport sse https://mcp.sentry.dev/sse",
+      "source": "https://docs.sentry.io/product/integrations/notification-incidents/mcp/",
+      "tags": ["observability", "error-tracking"],
+      "auth": "oauth"
+    },
+    {
+      "id": "google-drive",
+      "name": "Google Drive",
+      "kind": "mcp",
+      "detail": "Search and read Google Drive files; create new docs.",
+      "install": "claude mcp add google-drive --transport sse https://mcp.googleapis.com/drive/sse",
+      "source": "https://developers.google.com/drive/mcp",
+      "tags": ["files", "docs"],
+      "auth": "oauth"
+    },
+    {
+      "id": "microsoft-365",
+      "name": "Microsoft 365",
+      "kind": "mcp",
+      "detail": "Outlook, Teams, SharePoint, OneDrive access.",
+      "install": "claude mcp add microsoft-365 --transport sse https://mcp.office.com/sse",
+      "source": "https://learn.microsoft.com/en-us/microsoft-365/mcp",
+      "tags": ["office", "collab"],
+      "auth": "oauth"
+    },
+    {
+      "id": "cloudflare",
+      "name": "Cloudflare Developer Platform",
+      "kind": "mcp",
+      "detail": "Manage Workers, R2, D1, KV via Cloudflare's MCP server.",
+      "install": "claude mcp add cloudflare --transport sse https://mcp.cloudflare.com/sse",
+      "source": "https://developers.cloudflare.com/agents/mcp/",
+      "tags": ["infra", "edge"],
+      "auth": "oauth"
+    }
+  ]
+}

@@ -1563,13 +1563,19 @@ void TurnOnDebugLoggingAutomatically(void) {
     // MomenTerm: register defaults (must run before any keyboard input)
     [[iTermUserDefaults userDefaults] registerDefaults:@{@"MomentermSingleEnterCommitsIME": @YES}];
 
-    // MomenTerm: add project manager entry to the Window menu
+    // MomenTerm: add project manager + plugin marketplace entries to the Window menu
     NSMenu *windowsMenu = [NSApp windowsMenu];
     if (windowsMenu) {
+        NSMenuItem *marketItem = [[[NSMenuItem alloc] initWithTitle:@"Plugin Marketplace…"
+                                                             action:@selector(openMomentermPluginMarketplace:)
+                                                      keyEquivalent:@"p"] autorelease];
+        marketItem.keyEquivalentModifierMask = NSEventModifierFlagCommand | NSEventModifierFlagOption;
+
         NSMenuItem *projItem = [[[NSMenuItem alloc] initWithTitle:@"MomenTerm Projects…"
                                                            action:@selector(openMomentermProjects:)
                                                     keyEquivalent:@""] autorelease];
         [windowsMenu insertItem:[NSMenuItem separatorItem] atIndex:0];
+        [windowsMenu insertItem:marketItem atIndex:0];
         [windowsMenu insertItem:projItem atIndex:0];
     }
 #if DEBUG
@@ -3200,6 +3206,10 @@ static iTermKeyEventReplayer *gReplayer;
 
 - (IBAction)openMomentermProjects:(id)sender {
     [MomentermProjectWindowController show];
+}
+
+- (IBAction)openMomentermPluginMarketplace:(id)sender {
+    [MomentermPluginMarketWindowController toggle];
 }
 
 - (NSString *)gpuUnavailableStringForReason:(iTermMetalUnavailableReason)reason {
