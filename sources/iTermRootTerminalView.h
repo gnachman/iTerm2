@@ -113,10 +113,19 @@ extern const NSInteger iTermRootTerminalViewWindowNumberLabelWidth;
 @property(nonatomic, strong) NSView *momentermFileTreeContainer;  // nil = not shown
 @property(nonatomic) CGFloat momentermFileTreeWidth;              // default 240
 
-// MomenTerm: localhost preview browser panel (right edge, before toolbelt).
+// MomenTerm: right-side inline panels (browser, git graph) — mutually exclusive,
+// each occupies ~50% of available terminal width when visible.
 @property(nonatomic) BOOL shouldShowMomentermBrowserPanel;
 @property(nonatomic, strong) NSView *momentermBrowserPanelContainer;  // nil = not shown
-@property(nonatomic) CGFloat momentermBrowserPanelWidth;              // default 420
+@property(nonatomic) CGFloat momentermBrowserPanelWidth;              // legacy default; layout overrides with 50%
+
+@property(nonatomic) BOOL shouldShowMomentermGitGraphPanel;
+@property(nonatomic, strong) NSView *momentermGitGraphPanelContainer; // nil = not shown
+
+// MomenTerm: full-width slim bar pinned to the bottom of the window for
+// inline-panel toggle buttons.
+@property(nonatomic, strong) NSView *momentermBottomStripContainer;   // nil = not shown
+@property(nonatomic) CGFloat momentermBottomStripHeight;              // default 30
 
 
 @property(nonatomic, readonly) BOOL scrollbarShouldBeVisible;

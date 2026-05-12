@@ -177,10 +177,18 @@ NS_CLASS_AVAILABLE_MAC(10_14)
     NSView *_momentermFileTreeContainer;
     CGFloat _momentermFileTreeWidth;
 
-    // MomenTerm: localhost preview browser panel (right edge, left of toolbelt)
+    // MomenTerm: right-side inline panels (browser, git graph) — mutually exclusive,
+    // each occupies ~50% of the available terminal width when visible.
     BOOL _shouldShowMomentermBrowserPanel;
     NSView *_momentermBrowserPanelContainer;
-    CGFloat _momentermBrowserPanelWidth;
+    CGFloat _momentermBrowserPanelWidth;  // legacy default; layout overrides with 50%
+
+    BOOL _shouldShowMomentermGitGraphPanel;
+    NSView *_momentermGitGraphPanelContainer;
+
+    // MomenTerm: full-width slim bar pinned to the bottom of the window
+    NSView *_momentermBottomStripContainer;
+    CGFloat _momentermBottomStripHeight;
 }
 
 - (instancetype)initWithFrame:(NSRect)frameRect
@@ -1321,25 +1329,81 @@ NS_CLASS_AVAILABLE_MAC(10_14)
     return _momentermBrowserPanelWidth > 0 ? _momentermBrowserPanelWidth : 420.0;
 }
 
+// --- Git Graph right-side panel ---
+
+- (void)setShouldShowMomentermGitGraphPanel:(BOOL)show {
+    _shouldShowMomentermGitGraphPanel = show;
+    _momentermGitGraphPanelContainer.hidden = !show;
+    [self layoutSubviews];
+}
+
+- (BOOL)shouldShowMomentermGitGraphPanel {
+    return _shouldShowMomentermGitGraphPanel;
+}
+
+- (void)setMomentermGitGraphPanelContainer:(NSView *)container {
+    [_momentermGitGraphPanelContainer removeFromSuperview];
+    _momentermGitGraphPanelContainer = container;
+    if (_momentermGitGraphPanelContainer) {
+        _momentermGitGraphPanelContainer.hidden = !_shouldShowMomentermGitGraphPanel;
+        [self addSubview:_momentermGitGraphPanelContainer positioned:NSWindowAbove relativeTo:nil];
+    }
+    [self layoutSubviews];
+}
+
+- (NSView *)momentermGitGraphPanelContainer {
+    return _momentermGitGraphPanelContainer;
+}
+
+// --- Bottom strip ---
+
+- (void)setMomentermBottomStripContainer:(NSView *)container {
+    [_momentermBottomStripContainer removeFromSuperview];
+    _momentermBottomStripContainer = container;
+    if (_momentermBottomStripContainer) {
+        [self addSubview:_momentermBottomStripContainer positioned:NSWindowAbove relativeTo:nil];
+    }
+    [self layoutSubviews];
+}
+
+- (NSView *)momentermBottomStripContainer {
+    return _momentermBottomStripContainer;
+}
+
+- (void)setMomentermBottomStripHeight:(CGFloat)h {
+    _momentermBottomStripHeight = h;
+}
+
+- (CGFloat)momentermBottomStripHeight {
+    return _momentermBottomStripHeight > 0 ? _momentermBottomStripHeight : 30.0;
+}
+
 - (void)layoutMomentermSidebar {
     const BOOL leftActive = _momentermSidebarContainer && _shouldShowMomentermSidebar;
-    const BOOL rightActive = _momentermBrowserPanelContainer && _shouldShowMomentermBrowserPanel;
-    if (!leftActive && !rightActive) {
+    const BOOL bottomActive = _momentermBottomStripContainer != nil;
+    const BOOL browserActive = _momentermBrowserPanelContainer && _shouldShowMomentermBrowserPanel;
+    const BOOL gitGraphActive = _momentermGitGraphPanelContainer && _shouldShowMomentermGitGraphPanel;
+    if (!leftActive && !bottomActive && !browserActive && !gitGraphActive) {
         return;
     }
-    const CGFloat h = NSHeight(self.bounds);
+    const CGFloat windowW = NSWidth(self.bounds);
+    const CGFloat windowH = NSHeight(self.bounds);
+    const CGFloat bottomH = bottomActive ? floor(self.momentermBottomStripHeight) : 0;
+    const CGFloat sidesY = bottomH;
+    const CGFloat sidesH = windowH - bottomH;
+
+    if (bottomActive) {
+        // Bottom strip spans the full width above the bottom edge.
+        _momentermBottomStripContainer.frame = NSMakeRect(0, 0, windowW, bottomH);
+    }
+
     CGFloat totalLeft = 0;
-    const CGFloat sidesY = 0;
-    const CGFloat sidesH = h;
     if (leftActive) {
         const CGFloat sw = floor(self.momentermSidebarWidth);
         const CGFloat ftw = _momentermFileTreeContainer ? floor(self.momentermFileTreeWidth) : 0;
         totalLeft = sw + ftw;
 
-        // Position the sidebar on the left edge
         _momentermSidebarContainer.frame = NSMakeRect(0, sidesY, sw, sidesH);
-
-        // Position file tree panel immediately to the right of the sidebar
         if (_momentermFileTreeContainer) {
             _momentermFileTreeContainer.frame = NSMakeRect(sw, sidesY, ftw, sidesH);
         }
@@ -1348,17 +1412,24 @@ NS_CLASS_AVAILABLE_MAC(10_14)
     // Toolbelt width is consulted three times below — hoist once.
     const CGFloat toolbeltW = [self shouldShowToolbelt] ? NSWidth(_toolbelt.frame) : 0;
 
-    // Position the right-side browser panel between tabView/toolbelt.
-    CGFloat browserPanelW = 0;
-    if (rightActive) {
-        browserPanelW = floor(self.momentermBrowserPanelWidth);
-        const CGFloat panelX = NSWidth(self.bounds) - toolbeltW - browserPanelW;
-        _momentermBrowserPanelContainer.frame = NSMakeRect(panelX, sidesY, browserPanelW, sidesH);
+    // The available terminal area between the left panels and the toolbelt.
+    const CGFloat availableW = MAX(0, windowW - totalLeft - toolbeltW);
+    // Right-side inline panels are mutually exclusive; each takes 50% of the
+    // available terminal area when shown so the user keeps a usable terminal
+    // strip on the left.
+    const CGFloat rightPanelW = (browserActive || gitGraphActive) ? floor(availableW * 0.5) : 0;
+    if (browserActive) {
+        const CGFloat panelX = windowW - toolbeltW - rightPanelW;
+        _momentermBrowserPanelContainer.frame = NSMakeRect(panelX, sidesY, rightPanelW, sidesH);
+    }
+    if (gitGraphActive) {
+        const CGFloat panelX = windowW - toolbeltW - rightPanelW;
+        _momentermGitGraphPanelContainer.frame = NSMakeRect(panelX, sidesY, rightPanelW, sidesH);
     }
 
-    const CGFloat maxRight = NSWidth(self.bounds) - toolbeltW - browserPanelW;
+    const CGFloat maxRight = windowW - toolbeltW - rightPanelW;
 
-    // Shrink the tabView from the left/right/bottom to make room for our panels.
+    // Shrink the tabView from the left / right / bottom to make room for our panels.
     NSRect tvFrame = self.tabView.frame;
     BOOL changed = NO;
     if (tvFrame.origin.x < totalLeft) {
@@ -1367,12 +1438,19 @@ NS_CLASS_AVAILABLE_MAC(10_14)
         tvFrame.size.width -= delta;
         changed = YES;
     }
-    if (browserPanelW > 0 && NSMaxX(tvFrame) > maxRight) {
+    if (rightPanelW > 0 && NSMaxX(tvFrame) > maxRight) {
         tvFrame.size.width = MAX(0, maxRight - tvFrame.origin.x);
+        changed = YES;
+    }
+    if (bottomH > 0 && tvFrame.origin.y < bottomH) {
+        const CGFloat delta = bottomH - tvFrame.origin.y;
+        tvFrame.origin.y = bottomH;
+        tvFrame.size.height = MAX(0, tvFrame.size.height - delta);
         changed = YES;
     }
     if (changed) {
         if (tvFrame.size.width < 0) tvFrame.size.width = 0;
+        if (tvFrame.size.height < 0) tvFrame.size.height = 0;
         self.tabView.frame = tvFrame;
     }
 
@@ -1386,7 +1464,7 @@ NS_CLASS_AVAILABLE_MAC(10_14)
             tbFrame.size.width -= delta;
             tbChanged = YES;
         }
-        if (browserPanelW > 0 && NSMaxX(tbFrame) > maxRight) {
+        if (rightPanelW > 0 && NSMaxX(tbFrame) > maxRight) {
             tbFrame.size.width = MAX(0, maxRight - tbFrame.origin.x);
             tbChanged = YES;
         }

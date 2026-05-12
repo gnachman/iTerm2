@@ -249,7 +249,7 @@ typedef NS_ENUM(int, iTermShouldHaveTitleSeparator) {
     MomentermEmbeddedSidebarDelegate,
     MomentermEmbeddedFileTreeDelegate,
     MomentermBrowserPanelDelegate,
-    MomentermGitGraphIndicatorDelegate,
+    MomentermBottomStripDelegate,
     NSComboBoxDelegate,
     NSFontChanging,
     NSMenuItemValidation,
@@ -451,8 +451,11 @@ typedef NS_ENUM(int, iTermShouldHaveTitleSeparator) {
     // MomenTerm: right-side localhost preview browser panel
     MomentermBrowserPanelVC *_momentermBrowserPanelVC;
 
-    // MomenTerm: bottom-right floating "Git Graph" indicator
-    MomentermGitGraphIndicator *_momentermGitGraphIndicator;
+    // MomenTerm: right-side inline Git Graph panel
+    MomentermGitGraphPanelVC *_momentermGitGraphPanelVC;
+
+    // MomenTerm: full-width bottom strip with inline-panel toggle buttons
+    MomentermBottomStripView *_momentermBottomStripView;
 
 }
 
@@ -760,24 +763,19 @@ typedef NS_ENUM(int, iTermShouldHaveTitleSeparator) {
     // MomenTerm: lazily-shown right-side browser panel that follows localhost URLs.
     _momentermBrowserPanelVC = [[MomentermBrowserPanelVC alloc] init];
     _momentermBrowserPanelVC.delegate = self;
-    _contentView.momentermBrowserPanelWidth = 420;
     _contentView.momentermBrowserPanelContainer = _momentermBrowserPanelVC.view;
     _contentView.shouldShowMomentermBrowserPanel = NO;
 
-    // MomenTerm: floating "Git Graph" indicator pinned bottom-right of the content area.
-    {
-        const CGFloat kIndicatorW = 96;
-        const CGFloat kIndicatorH = 20;
-        const CGFloat kMargin = 8;
-        NSRect cb = _contentView.bounds;
-        NSRect frame = NSMakeRect(cb.size.width - kIndicatorW - kMargin, kMargin, kIndicatorW, kIndicatorH);
-        _momentermGitGraphIndicator = [[MomentermGitGraphIndicator alloc] initWithFrame:frame];
-        _momentermGitGraphIndicator.delegate = self;
-        _momentermGitGraphIndicator.autoresizingMask = NSViewMinXMargin | NSViewMaxYMargin;
-        [_contentView addSubview:_momentermGitGraphIndicator
-                      positioned:NSWindowAbove
-                      relativeTo:nil];
-    }
+    // MomenTerm: right-side inline Git Graph panel (mutually exclusive with browser).
+    _momentermGitGraphPanelVC = [[MomentermGitGraphPanelVC alloc] init];
+    _contentView.momentermGitGraphPanelContainer = _momentermGitGraphPanelVC.view;
+    _contentView.shouldShowMomentermGitGraphPanel = NO;
+
+    // MomenTerm: bottom strip hosting the Git Graph / Browser toggle buttons.
+    _momentermBottomStripView = [[MomentermBottomStripView alloc] initWithFrame:NSZeroRect];
+    _momentermBottomStripView.delegate = self;
+    _contentView.momentermBottomStripHeight = 30;
+    _contentView.momentermBottomStripContainer = _momentermBottomStripView;
 
 
     if (hotkeyWindowType == iTermHotkeyWindowTypeNone) {
@@ -1159,18 +1157,7 @@ typedef NS_ENUM(int, iTermShouldHaveTitleSeparator) {
 }
 
 - (IBAction)toggleMomentermBrowserPanel:(id)sender {
-    const BOOL show = !_contentView.shouldShowMomentermBrowserPanel;
-    _contentView.shouldShowMomentermBrowserPanel = show;
-    if (show) {
-        // If we have a stashed URL from the active session, show it immediately.
-        NSString *guid = [self currentSession].guid;
-        if (guid) {
-            NSString *url = [MomentermLocalhostURLScanner.shared lastURLForSession:guid];
-            if (url.length > 0) {
-                [_momentermBrowserPanelVC loadURLString:url];
-            }
-        }
-    }
+    [self it_setMomentermRightPanel:@"browser"];
 }
 
 // MARK: - MomentermBrowserPanelDelegate
@@ -1180,24 +1167,59 @@ typedef NS_ENUM(int, iTermShouldHaveTitleSeparator) {
 }
 
 - (IBAction)toggleMomentermGitGraph:(id)sender {
-    PTYSession *session = [self currentSession];
-    NSString *cwd = [session currentLocalWorkingDirectory];
-    if (cwd.length == 0) {
-        cwd = NSHomeDirectory();
-    }
-    [[MomentermGitGraphWindowController shared] toggleForCwd:cwd];
+    [self it_setMomentermRightPanel:@"gitgraph"];
 }
 
-// MARK: - MomentermGitGraphIndicatorDelegate
-
-- (NSString *)momentermGitGraphIndicatorCurrentCwd {
-    return [[self currentSession] currentLocalWorkingDirectory];
+// Toggles which inline panel (browser or gitgraph) occupies the right half
+// of the terminal area. Panels are mutually exclusive — activating one
+// hides the other. Passing the currently-active name toggles it off.
+- (void)it_setMomentermRightPanel:(NSString *)panel {
+    const BOOL browserOn = _contentView.shouldShowMomentermBrowserPanel;
+    const BOOL graphOn = _contentView.shouldShowMomentermGitGraphPanel;
+    if ([panel isEqualToString:@"browser"]) {
+        const BOOL show = !browserOn;
+        _contentView.shouldShowMomentermGitGraphPanel = NO;
+        _contentView.shouldShowMomentermBrowserPanel = show;
+        if (show) {
+            NSString *guid = [self currentSession].guid;
+            if (guid) {
+                NSString *url = [MomentermLocalhostURLScanner.shared lastURLForSession:guid];
+                if (url.length > 0) {
+                    [_momentermBrowserPanelVC loadURLString:url];
+                }
+            }
+        }
+        [_momentermBottomStripView setActivePanel:show ? @"browser" : @""];
+    } else if ([panel isEqualToString:@"gitgraph"]) {
+        const BOOL show = !graphOn;
+        _contentView.shouldShowMomentermBrowserPanel = NO;
+        _contentView.shouldShowMomentermGitGraphPanel = show;
+        if (show) {
+            [self it_updateMomentermGitGraphCwd];
+        }
+        [_momentermBottomStripView setActivePanel:show ? @"gitgraph" : @""];
+    }
 }
 
 - (void)it_updateMomentermGitGraphCwd {
-    // No-op now that the graph lives in its own window; the window pulls
-    // cwd on each open so we don't need to push updates here. Method kept
-    // so the tab-switch hook below stays a one-liner.
+    if (!_contentView.shouldShowMomentermGitGraphPanel) {
+        return;
+    }
+    NSString *cwd = [[self currentSession] currentLocalWorkingDirectory];
+    if (cwd.length == 0) {
+        cwd = NSHomeDirectory();
+    }
+    [_momentermGitGraphPanelVC setCwd:cwd];
+}
+
+// MARK: - MomentermBottomStripDelegate
+
+- (void)momentermBottomStripDidTapGitGraph {
+    [self it_setMomentermRightPanel:@"gitgraph"];
+}
+
+- (void)momentermBottomStripDidTapBrowser {
+    [self it_setMomentermRightPanel:@"browser"];
 }
 
 // Returns a stable pastel color derived from the space name.
@@ -1374,7 +1396,8 @@ ITERM_WEAKLY_REFERENCEABLE
     [_momentermFileTreePath release];
     [_momentermEditorVC release];
     [_momentermBrowserPanelVC release];
-    [_momentermGitGraphIndicator release];
+    [_momentermGitGraphPanelVC release];
+    [_momentermBottomStripView release];
     [_didEnterLionFullscreen release];
     [_desiredTitle release];
     [_tabsTouchBarItem release];

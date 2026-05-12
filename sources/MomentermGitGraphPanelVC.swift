@@ -1,19 +1,19 @@
 //
-//  MomentermGitGraphWindowController.swift
+//  MomentermGitGraphPanelVC.swift
 //  iTerm2
 //
-//  Standalone window that shows the git DAG of the cwd from the terminal
-//  window that triggered it, presented as an NSTableView with the columns
-//  every git client needs: Graph | Description | Date | Author | Commit.
-//  The leftmost Graph column is drawn by MomentermGitGraphCellView.
+//  Embeddable Git Graph viewer. Lives in iTermRootTerminalView's right-
+//  side panel slot (mirroring the browser panel) so clicking the Git
+//  Graph button in the bottom strip splits the terminal's right half
+//  into a five-column commit table. The view controller owns the
+//  NSTableView + header and reuses MomentermGitGraphCellView for the
+//  custom Graph column.
 //
 
 import AppKit
 
-@objc(MomentermGitGraphWindowController)
-final class MomentermGitGraphWindowController: NSWindowController, NSTableViewDataSource, NSTableViewDelegate, NSSearchFieldDelegate {
-
-    @objc static let shared = MomentermGitGraphWindowController()
+@objc(MomentermGitGraphPanelVC)
+final class MomentermGitGraphPanelVC: NSViewController, NSTableViewDataSource, NSTableViewDelegate, NSSearchFieldDelegate {
 
     private var currentCwd: String = ""
     private var commits: [MomentermGitCommit] = []
@@ -34,16 +34,12 @@ final class MomentermGitGraphWindowController: NSWindowController, NSTableViewDa
         return f
     }()
 
-    private init() {
-        let window = NSWindow(
-            contentRect: NSRect(x: 0, y: 0, width: 980, height: 620),
-            styleMask: [.titled, .closable, .miniaturizable, .resizable],
-            backing: .buffered,
-            defer: true)
-        window.title = "MomenTerm — Git Graph"
-        window.minSize = NSSize(width: 640, height: 360)
-        window.isReleasedWhenClosed = false
-        super.init(window: window)
+    override func loadView() {
+        view = NSView(frame: NSRect(x: 0, y: 0, width: 480, height: 600))
+        view.wantsLayer = true
+        view.layer?.backgroundColor = NSColor.windowBackgroundColor.cgColor
+        view.layer?.borderWidth = 0.5
+        view.layer?.borderColor = NSColor.separatorColor.cgColor
         setupSubviews()
         NotificationCenter.default.addObserver(
             self,
@@ -52,49 +48,49 @@ final class MomentermGitGraphWindowController: NSWindowController, NSTableViewDa
             object: nil)
     }
 
-    required init?(coder: NSCoder) {
-        it_fatalError("init(coder:) not supported")
-    }
-
     deinit {
         NotificationCenter.default.removeObserver(self)
     }
 
     // MARK: - Public
 
-    @objc func showForCwd(_ cwd: String) {
-        setCwd(cwd)
-        showWindow(nil)
-        window?.makeKeyAndOrderFront(nil)
-        NSApp.activate(ignoringOtherApps: true)
+    @objc func setCwd(_ cwd: String) {
+        guard cwd != currentCwd else {
+            refresh()
+            return
+        }
+        currentCwd = cwd
+        cwdLabel.stringValue = (cwd as NSString).abbreviatingWithTildeInPath
+        let cached = MomentermGitGraphPoller.shared.commits(forCwd: cwd)
+        if !cached.isEmpty {
+            commits = cached
+            applyFilter()
+        }
+        refresh()
     }
 
-    @objc func toggleForCwd(_ cwd: String) {
-        if window?.isVisible == true {
-            window?.orderOut(nil)
-        } else {
-            showForCwd(cwd)
-        }
+    @objc func refresh() {
+        guard !currentCwd.isEmpty else { return }
+        MomentermGitGraphPoller.shared.refresh(cwd: currentCwd)
     }
 
     // MARK: - Setup
 
     private func setupSubviews() {
-        guard let content = window?.contentView else { return }
-        content.wantsLayer = true
-
         header.translatesAutoresizingMaskIntoConstraints = false
         header.wantsLayer = true
         header.layer?.backgroundColor = NSColor.controlBackgroundColor.cgColor
 
         cwdLabel.translatesAutoresizingMaskIntoConstraints = false
-        cwdLabel.font = .monospacedSystemFont(ofSize: 11, weight: .regular)
+        cwdLabel.font = .monospacedSystemFont(ofSize: 10, weight: .regular)
         cwdLabel.textColor = .secondaryLabelColor
         cwdLabel.lineBreakMode = .byTruncatingMiddle
 
         searchField.translatesAutoresizingMaskIntoConstraints = false
-        searchField.placeholderString = "Search commits, refs, authors"
+        searchField.placeholderString = "Search"
         searchField.delegate = self
+        searchField.controlSize = .small
+        searchField.font = .systemFont(ofSize: 11)
 
         refreshButton.translatesAutoresizingMaskIntoConstraints = false
         refreshButton.bezelStyle = .regularSquare
@@ -116,7 +112,7 @@ final class MomentermGitGraphWindowController: NSWindowController, NSTableViewDa
         scrollView.drawsBackground = false
 
         tableView.headerView = NSTableHeaderView()
-        tableView.rowHeight = 24
+        tableView.rowHeight = 22
         tableView.style = .inset
         tableView.usesAlternatingRowBackgroundColors = true
         tableView.selectionHighlightStyle = .regular
@@ -126,85 +122,52 @@ final class MomentermGitGraphWindowController: NSWindowController, NSTableViewDa
         tableView.allowsColumnReordering = false
         tableView.allowsColumnResizing = true
 
-        let graphCol = NSTableColumn(identifier: NSUserInterfaceItemIdentifier("graph"))
-        graphCol.title = "Graph"
-        graphCol.width = 120
-        graphCol.minWidth = 60
-        graphCol.maxWidth = 320
-        tableView.addTableColumn(graphCol)
-
-        let descCol = NSTableColumn(identifier: NSUserInterfaceItemIdentifier("description"))
-        descCol.title = "Description"
-        descCol.width = 460
-        descCol.minWidth = 220
-        tableView.addTableColumn(descCol)
-
-        let dateCol = NSTableColumn(identifier: NSUserInterfaceItemIdentifier("date"))
-        dateCol.title = "Date"
-        dateCol.width = 130
-        dateCol.minWidth = 90
-        tableView.addTableColumn(dateCol)
-
-        let authorCol = NSTableColumn(identifier: NSUserInterfaceItemIdentifier("author"))
-        authorCol.title = "Author"
-        authorCol.width = 140
-        authorCol.minWidth = 80
-        tableView.addTableColumn(authorCol)
-
-        let commitCol = NSTableColumn(identifier: NSUserInterfaceItemIdentifier("commit"))
-        commitCol.title = "Commit"
-        commitCol.width = 90
-        commitCol.minWidth = 70
-        commitCol.maxWidth = 140
-        tableView.addTableColumn(commitCol)
+        addColumn("graph", title: "Graph", width: 110, min: 60, max: 220)
+        addColumn("description", title: "Description", width: 220, min: 140, max: nil)
+        addColumn("date", title: "Date", width: 120, min: 80, max: nil)
+        addColumn("author", title: "Author", width: 110, min: 60, max: nil)
+        addColumn("commit", title: "Commit", width: 80, min: 60, max: 140)
 
         scrollView.documentView = tableView
 
-        content.addSubview(header)
-        content.addSubview(scrollView)
+        view.addSubview(header)
+        view.addSubview(scrollView)
 
         NSLayoutConstraint.activate([
-            header.topAnchor.constraint(equalTo: content.topAnchor),
-            header.leadingAnchor.constraint(equalTo: content.leadingAnchor),
-            header.trailingAnchor.constraint(equalTo: content.trailingAnchor),
-            header.heightAnchor.constraint(equalToConstant: 36),
+            header.topAnchor.constraint(equalTo: view.topAnchor),
+            header.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            header.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            header.heightAnchor.constraint(equalToConstant: 32),
 
-            cwdLabel.leadingAnchor.constraint(equalTo: header.leadingAnchor, constant: 14),
+            cwdLabel.leadingAnchor.constraint(equalTo: header.leadingAnchor, constant: 10),
             cwdLabel.centerYAnchor.constraint(equalTo: header.centerYAnchor),
-            cwdLabel.trailingAnchor.constraint(lessThanOrEqualTo: searchField.leadingAnchor, constant: -12),
+            cwdLabel.trailingAnchor.constraint(lessThanOrEqualTo: searchField.leadingAnchor, constant: -8),
 
             searchField.centerYAnchor.constraint(equalTo: header.centerYAnchor),
-            searchField.widthAnchor.constraint(equalToConstant: 260),
-            searchField.trailingAnchor.constraint(equalTo: refreshButton.leadingAnchor, constant: -8),
+            searchField.widthAnchor.constraint(equalToConstant: 160),
+            searchField.trailingAnchor.constraint(equalTo: refreshButton.leadingAnchor, constant: -6),
 
             refreshButton.centerYAnchor.constraint(equalTo: header.centerYAnchor),
-            refreshButton.trailingAnchor.constraint(equalTo: header.trailingAnchor, constant: -10),
-            refreshButton.widthAnchor.constraint(equalToConstant: 24),
+            refreshButton.trailingAnchor.constraint(equalTo: header.trailingAnchor, constant: -8),
+            refreshButton.widthAnchor.constraint(equalToConstant: 22),
 
             scrollView.topAnchor.constraint(equalTo: header.bottomAnchor),
-            scrollView.leadingAnchor.constraint(equalTo: content.leadingAnchor),
-            scrollView.trailingAnchor.constraint(equalTo: content.trailingAnchor),
-            scrollView.bottomAnchor.constraint(equalTo: content.bottomAnchor),
+            scrollView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            scrollView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            scrollView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
         ])
     }
 
-    // MARK: - Data flow
-
-    @objc private func setCwd(_ cwd: String) {
-        currentCwd = cwd
-        cwdLabel.stringValue = (cwd as NSString).abbreviatingWithTildeInPath
-        let cached = MomentermGitGraphPoller.shared.commits(forCwd: cwd)
-        if !cached.isEmpty {
-            commits = cached
-            applyFilter()
-        }
-        refresh()
+    private func addColumn(_ id: String, title: String, width: CGFloat, min: CGFloat, max: CGFloat?) {
+        let col = NSTableColumn(identifier: NSUserInterfaceItemIdentifier(id))
+        col.title = title
+        col.width = width
+        col.minWidth = min
+        if let m = max { col.maxWidth = m }
+        tableView.addTableColumn(col)
     }
 
-    @objc private func refresh() {
-        guard !currentCwd.isEmpty else { return }
-        MomentermGitGraphPoller.shared.refresh(cwd: currentCwd)
-    }
+    // MARK: - Data
 
     @objc private func graphUpdated(_ note: Notification) {
         guard let cwd = note.userInfo?["cwd"] as? String, cwd == currentCwd else { return }
@@ -298,8 +261,8 @@ final class MomentermGitGraphWindowController: NSWindowController, NSTableViewDa
         cell.addSubview(tf)
         cell.textField = tf
         NSLayoutConstraint.activate([
-            tf.leadingAnchor.constraint(equalTo: cell.leadingAnchor, constant: 8),
-            tf.trailingAnchor.constraint(equalTo: cell.trailingAnchor, constant: -8),
+            tf.leadingAnchor.constraint(equalTo: cell.leadingAnchor, constant: 6),
+            tf.trailingAnchor.constraint(equalTo: cell.trailingAnchor, constant: -6),
             tf.centerYAnchor.constraint(equalTo: cell.centerYAnchor),
         ])
         return cell
@@ -307,11 +270,11 @@ final class MomentermGitGraphWindowController: NSWindowController, NSTableViewDa
 
     private func descriptionCell(for commit: MomentermGitCommit, in tableView: NSTableView) -> NSView {
         let id = NSUserInterfaceItemIdentifier("MomentermGitGraph-description")
-        if let cell = tableView.makeView(withIdentifier: id, owner: self) as? DescriptionCellView {
+        if let cell = tableView.makeView(withIdentifier: id, owner: self) as? PanelDescriptionCellView {
             cell.configure(commit: commit)
             return cell
         }
-        let cell = DescriptionCellView()
+        let cell = PanelDescriptionCellView()
         cell.identifier = id
         cell.configure(commit: commit)
         return cell
@@ -320,7 +283,7 @@ final class MomentermGitGraphWindowController: NSWindowController, NSTableViewDa
 
 // MARK: - Description cell
 
-private final class DescriptionCellView: NSTableCellView {
+private final class PanelDescriptionCellView: NSTableCellView {
 
     private let stack = NSStackView()
 
@@ -333,7 +296,7 @@ private final class DescriptionCellView: NSTableCellView {
         addSubview(stack)
         NSLayoutConstraint.activate([
             stack.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 6),
-            stack.trailingAnchor.constraint(lessThanOrEqualTo: trailingAnchor, constant: -8),
+            stack.trailingAnchor.constraint(lessThanOrEqualTo: trailingAnchor, constant: -6),
             stack.centerYAnchor.constraint(equalTo: centerYAnchor),
         ])
     }
@@ -344,11 +307,11 @@ private final class DescriptionCellView: NSTableCellView {
 
     func configure(commit: MomentermGitCommit) {
         for v in stack.arrangedSubviews { stack.removeArrangedSubview(v); v.removeFromSuperview() }
-        for ref in commit.refs.prefix(4) {
-            stack.addArrangedSubview(RefPill(ref: ref))
+        for ref in commit.refs.prefix(3) {
+            stack.addArrangedSubview(PanelRefPill(ref: ref))
         }
         let summary = NSTextField(labelWithString: commit.summary)
-        summary.font = .systemFont(ofSize: 12)
+        summary.font = .systemFont(ofSize: 11)
         summary.textColor = .labelColor
         summary.lineBreakMode = .byTruncatingTail
         summary.cell?.usesSingleLineMode = true
@@ -357,26 +320,26 @@ private final class DescriptionCellView: NSTableCellView {
     }
 }
 
-private final class RefPill: NSView {
+private final class PanelRefPill: NSView {
     init(ref: String) {
         super.init(frame: .zero)
         wantsLayer = true
         let isHEAD = ref.contains("HEAD")
         let display = ref.replacingOccurrences(of: "HEAD -> ", with: "")
         let color: NSColor = isHEAD ? .controlAccentColor : .systemYellow
-        layer?.cornerRadius = 4
+        layer?.cornerRadius = 3
         layer?.backgroundColor = color.withAlphaComponent(0.18).cgColor
 
         let label = NSTextField(labelWithString: display)
         label.translatesAutoresizingMaskIntoConstraints = false
-        label.font = .systemFont(ofSize: 10, weight: .medium)
+        label.font = .systemFont(ofSize: 9, weight: .medium)
         label.textColor = color
         label.maximumNumberOfLines = 1
         label.lineBreakMode = .byTruncatingTail
         addSubview(label)
         NSLayoutConstraint.activate([
-            label.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 6),
-            label.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -6),
+            label.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 4),
+            label.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -4),
             label.topAnchor.constraint(equalTo: topAnchor, constant: 1),
             label.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -1),
         ])
