@@ -27,7 +27,6 @@ class ClaudeCodeOnboarding: NSObject {
         case enablePythonAPI = 0
         case installHook = 1
         case showToolbelt = 2
-        case explainStatus = 3
         case installWorkgroup = 4
         case installTriggers = 5
 
@@ -36,7 +35,6 @@ class ClaudeCodeOnboarding: NSObject {
             case .enablePythonAPI: return "Enable Python API"
             case .installHook: return "Install Hook"
             case .showToolbelt: return "Show Toolbelt"
-            case .explainStatus: return "Using Session Status"
             case .installWorkgroup: return "Install Workgroup"
             case .installTriggers: return "Auto-Enter Workgroup"
             }
@@ -47,7 +45,6 @@ class ClaudeCodeOnboarding: NSObject {
             case .enablePythonAPI: return "Enable"
             case .installHook: return "Install"
             case .showToolbelt: return "Show"
-            case .explainStatus: return "Show Settings"
             case .installWorkgroup: return "Install"
             case .installTriggers: return "Install"
             }
@@ -61,8 +58,6 @@ class ClaudeCodeOnboarding: NSObject {
                 return "Install a Claude Code hook that lets iTerm2 detect Claude\u{2019}s state (working, waiting, idle) and display it in the Session Status tool.\n\nThis adds a hook to your Claude Code settings that runs automatically as Claude works."
             case .showToolbelt:
                 return "Show the toolbelt and enable the Session Status tool. The toolbelt appears on the right side of your terminal window.\n\nYou can toggle the toolbelt from View > Toolbelt > Show Toolbelt, or with the shortcut \u{2318}\u{21E7}B."
-            case .explainStatus:
-                return "The Session Status tool shows all your Claude Code sessions sorted by status.\n\nSessions waiting for input appear at the top, followed by those actively working, with idle sessions at the bottom.\n\nClick a session to jump to it. Use the gear icon (\u{2699}\u{FE0F}) to configure which statuses are visible and how sessions are sorted."
             case .installWorkgroup:
                 return "Install the Claude Code workgroup, which groups your main Claude session with two peer sessions: a diff viewer and a code-review session. You can switch between them with one click.\n\nYou can customize this layout later in Settings > Shortcuts > Workgroups."
             case .installTriggers:
@@ -571,7 +566,6 @@ class ClaudeCodeOnboarding: NSObject {
         }
         steps.append(contentsOf: [.installHook,
                                   .showToolbelt,
-                                  .explainStatus,
                                   .installWorkgroup,
                                   .installTriggers])
 
@@ -956,8 +950,8 @@ class ClaudeCodeOnboarding: NSObject {
         }
         layoutStepLabels()
 
-        // Keep scrims visible during steps 2 and 3; remove otherwise.
-        if currentStep != .showToolbelt && currentStep != .explainStatus {
+        // Keep scrims visible during the Show Toolbelt step; remove otherwise.
+        if currentStep != .showToolbelt {
             removeScrims()
         }
 
@@ -1026,9 +1020,6 @@ class ClaudeCodeOnboarding: NSObject {
             success = doInstallHook()
         case .showToolbelt:
             doShowToolbelt()
-            success = true
-        case .explainStatus:
-            showSettingsPopover()
             success = true
         case .installWorkgroup:
             success = doInstallWorkgroup()
@@ -1484,20 +1475,6 @@ class ClaudeCodeOnboarding: NSObject {
                 contentView.addSubview(scrim)
                 scrims.append(scrim)
             }
-        }
-    }
-
-    // MARK: - Step 3: Explain Status
-
-    private func showSettingsPopover() {
-        for session in claudeSessions() {
-            guard let windowController = session.view?.window?.windowController as? PseudoTerminal,
-                  let toolbeltView = windowController.toolbelt(),
-                  let statusTool = toolbeltView.tool(withName: kStatusToolName) as? ToolStatus else {
-                continue
-            }
-            statusTool.showSettings(nil)
-            return
         }
     }
 
