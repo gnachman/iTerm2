@@ -12,7 +12,7 @@
 import AppKit
 
 @objc(iTermCodeReviewPromptView)
-class CodeReviewPromptView: NSView {
+class CodeReviewPromptView: iTermLayerBackedSolidColorView {
     @objc var onStart: ((String) -> Void)?
 
     // Closure that returns the desired frame in superview coordinates.
@@ -61,8 +61,7 @@ class CodeReviewPromptView: NSView {
 
         super.init(frame: frameRect)
 
-        wantsLayer = true
-        layer?.backgroundColor = NSColor.windowBackgroundColor.cgColor
+        color = NSColor.windowBackgroundColor
         autoresizesSubviews = false
 
         titleLabel.font = .systemFont(ofSize: NSFont.systemFontSize)
@@ -133,6 +132,10 @@ class CodeReviewPromptView: NSView {
         it_fatalError("init(coder:) is not supported")
     }
 
+    required init(frame frameRect: NSRect, color: NSColor) {
+        it_fatalError("init(frame:color:) is not supported; use init(frame:)")
+    }
+
     override func layout() {
         super.layout()
         let bounds = self.bounds
@@ -175,14 +178,6 @@ class CodeReviewPromptView: NSView {
         if window != nil {
             window?.makeFirstResponder(textView)
         }
-    }
-
-    override func viewDidChangeEffectiveAppearance() {
-        super.viewDidChangeEffectiveAppearance()
-        // CGColor is a snapshot of the resolved color; re-snapshot
-        // under the new appearance so the overlay's background stays
-        // in sync with the user's light/dark mode toggle.
-        layer?.backgroundColor = NSColor.windowBackgroundColor.cgColor
     }
 
     override func viewWillMove(toSuperview newSuperview: NSView?) {

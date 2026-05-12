@@ -378,6 +378,16 @@ Settings Improvements:
   pane.
 
 Bug Fixes:
+- The Code Review prompt overlay no longer
+  drifts out of sync with light/dark mode. The
+  panel cached a CGColor snapshot of
+  windowBackgroundColor resolved against an
+  arbitrary NSAppearance.current, so its
+  background could disagree with its own text
+  view. It now uses the existing layer-backed
+  solid color view, which refreshes the color
+  in updateLayer under the correct drawing
+  appearance.
 - The legacy (non-GPU) renderer now invalidates
   only the lines that actually changed, instead
   of repainting the entire view on every cell
