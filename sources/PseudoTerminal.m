@@ -450,9 +450,6 @@ typedef NS_ENUM(int, iTermShouldHaveTitleSeparator) {
     // MomenTerm: right-side localhost preview browser panel
     MomentermBrowserPanelVC *_momentermBrowserPanelVC;
 
-    // MomenTerm: bottom git graph panel
-    MomentermGitGraphVC *_momentermGitGraphVC;
-
 }
 
 @synthesize scope = _scope;
@@ -763,11 +760,6 @@ typedef NS_ENUM(int, iTermShouldHaveTitleSeparator) {
     _contentView.momentermBrowserPanelContainer = _momentermBrowserPanelVC.view;
     _contentView.shouldShowMomentermBrowserPanel = NO;
 
-    // MomenTerm: lazily-shown bottom git graph panel.
-    _momentermGitGraphVC = [[MomentermGitGraphVC alloc] init];
-    _contentView.momentermGitGraphHeight = 160;
-    _contentView.momentermGitGraphContainer = _momentermGitGraphVC.view;
-    _contentView.shouldShowMomentermGitGraph = NO;
 
     if (hotkeyWindowType == iTermHotkeyWindowTypeNone) {
         self.window.alphaValue = 1;
@@ -1169,23 +1161,18 @@ typedef NS_ENUM(int, iTermShouldHaveTitleSeparator) {
 }
 
 - (IBAction)toggleMomentermGitGraph:(id)sender {
-    const BOOL show = !_contentView.shouldShowMomentermGitGraph;
-    _contentView.shouldShowMomentermGitGraph = show;
-    if (show) {
-        [self it_updateMomentermGitGraphCwd];
-    }
-}
-
-- (void)it_updateMomentermGitGraphCwd {
-    if (!_momentermGitGraphVC || !_contentView.shouldShowMomentermGitGraph) {
-        return;
-    }
     PTYSession *session = [self currentSession];
     NSString *cwd = [session currentLocalWorkingDirectory];
     if (cwd.length == 0) {
-        return;
+        cwd = NSHomeDirectory();
     }
-    [_momentermGitGraphVC setCwd:cwd];
+    [[MomentermGitGraphWindowController shared] toggleForCwd:cwd];
+}
+
+- (void)it_updateMomentermGitGraphCwd {
+    // No-op now that the graph lives in its own window; the window pulls
+    // cwd on each open so we don't need to push updates here. Method kept
+    // so the tab-switch hook below stays a one-liner.
 }
 
 // Returns a stable pastel color derived from the space name.
@@ -1362,7 +1349,6 @@ ITERM_WEAKLY_REFERENCEABLE
     [_momentermFileTreePath release];
     [_momentermEditorVC release];
     [_momentermBrowserPanelVC release];
-    [_momentermGitGraphVC release];
     [_didEnterLionFullscreen release];
     [_desiredTitle release];
     [_tabsTouchBarItem release];

@@ -181,11 +181,6 @@ NS_CLASS_AVAILABLE_MAC(10_14)
     BOOL _shouldShowMomentermBrowserPanel;
     NSView *_momentermBrowserPanelContainer;
     CGFloat _momentermBrowserPanelWidth;
-
-    // MomenTerm: bottom git graph panel
-    BOOL _shouldShowMomentermGitGraph;
-    NSView *_momentermGitGraphContainer;
-    CGFloat _momentermGitGraphHeight;
 }
 
 - (instancetype)initWithFrame:(NSRect)frameRect
@@ -1326,55 +1321,16 @@ NS_CLASS_AVAILABLE_MAC(10_14)
     return _momentermBrowserPanelWidth > 0 ? _momentermBrowserPanelWidth : 420.0;
 }
 
-- (void)setShouldShowMomentermGitGraph:(BOOL)show {
-    _shouldShowMomentermGitGraph = show;
-    _momentermGitGraphContainer.hidden = !show;
-    [self layoutSubviews];
-}
-
-- (BOOL)shouldShowMomentermGitGraph {
-    return _shouldShowMomentermGitGraph;
-}
-
-- (void)setMomentermGitGraphContainer:(NSView *)container {
-    [_momentermGitGraphContainer removeFromSuperview];
-    _momentermGitGraphContainer = container;
-    if (_momentermGitGraphContainer) {
-        _momentermGitGraphContainer.hidden = !_shouldShowMomentermGitGraph;
-        [self addSubview:_momentermGitGraphContainer positioned:NSWindowAbove relativeTo:nil];
-    }
-    [self layoutSubviews];
-}
-
-- (NSView *)momentermGitGraphContainer {
-    return _momentermGitGraphContainer;
-}
-
-- (void)setMomentermGitGraphHeight:(CGFloat)h {
-    _momentermGitGraphHeight = h;
-}
-
-- (CGFloat)momentermGitGraphHeight {
-    return _momentermGitGraphHeight > 0 ? _momentermGitGraphHeight : 160.0;
-}
-
 - (void)layoutMomentermSidebar {
     const BOOL leftActive = _momentermSidebarContainer && _shouldShowMomentermSidebar;
     const BOOL rightActive = _momentermBrowserPanelContainer && _shouldShowMomentermBrowserPanel;
-    const BOOL bottomActive = _momentermGitGraphContainer && _shouldShowMomentermGitGraph;
-    if (!leftActive && !rightActive && !bottomActive) {
+    if (!leftActive && !rightActive) {
         return;
     }
     const CGFloat h = NSHeight(self.bounds);
-    const CGFloat gitGraphH = bottomActive ? floor(self.momentermGitGraphHeight) : 0;
-    if (bottomActive) {
-        // Bottom strip spans full width but sits above the bottom edge.
-        _momentermGitGraphContainer.frame = NSMakeRect(0, 0, NSWidth(self.bounds), gitGraphH);
-    }
     CGFloat totalLeft = 0;
-    // Side panels sit above the bottom git-graph strip if it's visible.
-    const CGFloat sidesY = gitGraphH;
-    const CGFloat sidesH = h - gitGraphH;
+    const CGFloat sidesY = 0;
+    const CGFloat sidesH = h;
     if (leftActive) {
         const CGFloat sw = floor(self.momentermSidebarWidth);
         const CGFloat ftw = _momentermFileTreeContainer ? floor(self.momentermFileTreeWidth) : 0;
@@ -1413,12 +1369,6 @@ NS_CLASS_AVAILABLE_MAC(10_14)
     }
     if (browserPanelW > 0 && NSMaxX(tvFrame) > maxRight) {
         tvFrame.size.width = MAX(0, maxRight - tvFrame.origin.x);
-        changed = YES;
-    }
-    if (gitGraphH > 0 && tvFrame.origin.y < gitGraphH) {
-        const CGFloat delta = gitGraphH - tvFrame.origin.y;
-        tvFrame.origin.y = gitGraphH;
-        tvFrame.size.height = MAX(0, tvFrame.size.height - delta);
         changed = YES;
     }
     if (changed) {

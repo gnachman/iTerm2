@@ -118,10 +118,6 @@ extern const NSInteger iTermRootTerminalViewWindowNumberLabelWidth;
 @property(nonatomic, strong) NSView *momentermBrowserPanelContainer;  // nil = not shown
 @property(nonatomic) CGFloat momentermBrowserPanelWidth;              // default 420
 
-// MomenTerm: bottom git graph panel.
-@property(nonatomic) BOOL shouldShowMomentermGitGraph;
-@property(nonatomic, strong) NSView *momentermGitGraphContainer;  // nil = not shown
-@property(nonatomic) CGFloat momentermGitGraphHeight;             // default 160
 
 @property(nonatomic, readonly) BOOL scrollbarShouldBeVisible;
 

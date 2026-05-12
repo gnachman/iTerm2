@@ -675,7 +675,6 @@
 		29C503BA29752DF6A4DB2A02 /* iTermBlurRowBuffer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 19537E68A2ADEB03B3086882 /* iTermBlurRowBuffer.swift */; };
 		2AB0AC886DE3F1F616F92D2F /* CharacterAtomIterator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 02CF16386D8605E6BC44ED81 /* CharacterAtomIterator.swift */; };
 		2C6FC9E97D933C7C178FC50E /* MomentermProjectStorage.swift in Sources */ = {isa = PBXBuildFile; fileRef = B786F989A8C6C24DC8B0E753 /* MomentermProjectStorage.swift */; };
-		37B0DDB7832963C836A2B8B4 /* MomentermGitGraphView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4CD458D8BB64405EF22F0A51 /* MomentermGitGraphView.swift */; };
 		38C1ECCA9DCF67E64C50E1BC /* iTermRenderingComparer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 80A64098B399CE71B981E2C7 /* iTermRenderingComparer.swift */; };
 		3C8FED766F941C2CB0A070E4 /* iTermCharacterSets.h in Sources */ = {isa = PBXBuildFile; fileRef = 46019892B59C674931043643 /* iTermCharacterSets.h */; };
 		3EE67BF59096D6B080A87676 /* MomentermProjectWindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 67695A0180B16B38E67C5508 /* MomentermProjectWindowController.swift */; };
@@ -1011,6 +1010,7 @@
 		9DB3D6F0176CCABE0071CCF8 /* PrefsArrangements.png in Resources */ = {isa = PBXBuildFile; fileRef = 9DB3D6EE176CCABE0071CCF8 /* PrefsArrangements.png */; };
 		9DB3D6F1176CCABE0071CCF8 /* PrefsArrangements@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 9DB3D6EF176CCABE0071CCF8 /* PrefsArrangements@2x.png */; };
 		A073973E14C768E400786414 /* ColorsMenuItemView.h in Headers */ = {isa = PBXBuildFile; fileRef = A073973D14C768E400786414 /* ColorsMenuItemView.h */; };
+		A2D50D50973B2D59F4F148A9 /* MomentermGitGraphCellView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D67F2D7DFE211B54DF8F180F /* MomentermGitGraphCellView.swift */; };
 		A3CC73EBB44AFCF507EAF928 /* MomentermAssets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 09D0823C95B27BF9DD71A4DD /* MomentermAssets.xcassets */; };
 		A445EEDC85D346B39596FDC3 /* iTermLayoutCalculator.h in Headers */ = {isa = PBXBuildFile; fileRef = 93EDFB853885460AA504C6B9 /* iTermLayoutCalculator.h */; };
 		A5C9521E47A0D0E57CADE993 /* MomentermStatusBarProjectComponent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7E069C075077BCF0CC1C2E47 /* MomentermStatusBarProjectComponent.swift */; };
@@ -5232,7 +5232,6 @@
 		D3D470D34777DFA2474E14DC /* iTermSessionTabStatus.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA1C7B91071000DE37B9DA33 /* iTermSessionTabStatus.swift */; };
 		D4283C3C099667FE7E668D3B /* plugins.default.json in Resources */ = {isa = PBXBuildFile; fileRef = 8708C08A490EF1C2F493B015 /* plugins.default.json */; };
 		D456895D420CBEEDC331D5F7 /* StatusPrioritySettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7AB44D00ABCD3E5DC090E2D2 /* StatusPrioritySettings.swift */; };
-		D47C3476BE3F14C69B9A6A24 /* MomentermGitGraphVC.swift in Sources */ = {isa = PBXBuildFile; fileRef = 009783CBC523BCFD1F46876D /* MomentermGitGraphVC.swift */; };
 		D5EF7F4036204859817200E0 /* iTermLayoutCalculator.h in Headers */ = {isa = PBXBuildFile; fileRef = 93EDFB853885460AA504C6B9 /* iTermLayoutCalculator.h */; };
 		D7391EB323E94EAC34943C01 /* iTermOptionalPathRecognizer.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF73E7832C84F926A6CE54CA /* iTermOptionalPathRecognizer.swift */; };
 		D9A2368683D7DDB73A826821 /* iTermStreamingPNGWriter.m in Sources */ = {isa = PBXBuildFile; fileRef = 11C735CA9A1AF5E864EC718E /* iTermStreamingPNGWriter.m */; };
@@ -5245,6 +5244,7 @@
 		EDD2335A6BDA84CE2B29C285 /* Box.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10731A1F54B9BF72FBAC682 /* Box.swift */; };
 		EE293B4DA9D2204FCFDE6784 /* iTermCursorSlideAnimator.h in Sources */ = {isa = PBXBuildFile; fileRef = 889A9128E944B618CDE75E18 /* iTermCursorSlideAnimator.h */; };
 		EF419BF24F3EE0D2AF71B964 /* MomentermMarkdownTemplate.html in Resources */ = {isa = PBXBuildFile; fileRef = E1DCDB86FBBA5C3B72776075 /* MomentermMarkdownTemplate.html */; };
+		F272A3D81C0D23308C3E3604 /* MomentermGitGraphWindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C57E6052B5D2254F070B6B5 /* MomentermGitGraphWindowController.swift */; };
 		F7C626F9C65F19A1BEE800DA /* iTermWordExtractor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7BF1E9C79C30008CC546F987 /* iTermWordExtractor.swift */; };
 		F7E9577EBDD47ED18CBD569F /* iTermImageComparison.h in Sources */ = {isa = PBXBuildFile; fileRef = 516BF83D01B179D961D3EDB6 /* iTermImageComparison.h */; };
 		FB4CEC973C7E9235362E3F26 /* iTermRemotePreferences.h in Headers */ = {isa = PBXBuildFile; fileRef = FB4CECF4AC4392B21E87A07B /* iTermRemotePreferences.h */; };
@@ -5552,7 +5552,6 @@
 
 /* Begin PBXFileReference section */
 		00885D5646181ED6CFE9A2DE /* SetTabStatusTrigger.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SetTabStatusTrigger.swift; sourceTree = "<group>"; };
-		009783CBC523BCFD1F46876D /* MomentermGitGraphVC.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MomentermGitGraphVC.swift; sourceTree = "<group>"; };
 		02CF16386D8605E6BC44ED81 /* CharacterAtomIterator.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CharacterAtomIterator.swift; sourceTree = "<group>"; };
 		0464AB2F006CD2EC7F000001 /* AppKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppKit.framework; path = /System/Library/Frameworks/AppKit.framework; sourceTree = "<absolute>"; };
 		047171745F54FFD5DDDDC7ED /* MomentermPluginInstaller.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MomentermPluginInstaller.swift; sourceTree = "<group>"; };
@@ -6071,7 +6070,6 @@
 		494467F76632F9A0D31DD7D4 /* MomentermProjectFileTreeVC.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MomentermProjectFileTreeVC.swift; sourceTree = "<group>"; };
 		49A6E4081211CC6000D9AD6F /* Compatability.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Compatability.h; sourceTree = "<group>"; };
 		4BCB55D89CEE16E48D34174F /* MomentermNewTabHandler.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MomentermNewTabHandler.swift; sourceTree = "<group>"; };
-		4CD458D8BB64405EF22F0A51 /* MomentermGitGraphView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MomentermGitGraphView.swift; sourceTree = "<group>"; };
 		516BF83D01B179D961D3EDB6 /* iTermImageComparison.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; path = iTermImageComparison.h; sourceTree = "<group>"; };
 		5300984A2259365B00A69348 /* iTermHapticActuator.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermHapticActuator.h; sourceTree = "<group>"; };
 		5300984B2259365B00A69348 /* iTermHapticActuator.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermHapticActuator.m; sourceTree = "<group>"; };
@@ -6340,6 +6338,7 @@
 		559F673B932A92677E244E73 /* MomentermProjectModel.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MomentermProjectModel.swift; sourceTree = "<group>"; };
 		57EF08786C9D79C55CDAC970 /* iTermCharacterSets.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; path = iTermCharacterSets.m; sourceTree = "<group>"; };
 		59E8C286069801E089BBBA7F /* MomentermCCStatusBarComponentImpl.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; path = MomentermCCStatusBarComponentImpl.m; sourceTree = "<group>"; };
+		5C57E6052B5D2254F070B6B5 /* MomentermGitGraphWindowController.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MomentermGitGraphWindowController.swift; sourceTree = "<group>"; };
 		5ECE005D1454E59B004861E9 /* PseudoTerminalRestorer.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = PseudoTerminalRestorer.h; sourceTree = "<group>"; tabWidth = 4; };
 		5ECE005E1454E59B004861E9 /* PseudoTerminalRestorer.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = PseudoTerminalRestorer.m; sourceTree = "<group>"; tabWidth = 4; };
 		61DE2C181D86B1F93619B375 /* iTermSessionNameBuiltInFunction.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = iTermSessionNameBuiltInFunction.swift; sourceTree = "<group>"; };
@@ -9315,6 +9314,7 @@
 		D09403FBCC1118D62736F442 /* MomentermEditorOverlayVC.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MomentermEditorOverlayVC.swift; sourceTree = "<group>"; };
 		D3CE2D4C1A00936F0098ED99 /* PSMDarkTabStyle.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PSMDarkTabStyle.h; sourceTree = "<group>"; };
 		D3CE2D4D1A00936F0098ED99 /* PSMDarkTabStyle.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PSMDarkTabStyle.m; sourceTree = "<group>"; };
+		D67F2D7DFE211B54DF8F180F /* MomentermGitGraphCellView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MomentermGitGraphCellView.swift; sourceTree = "<group>"; };
 		D9086C14331A22AB325E5DC2 /* MomentermLocalhostURLScanner.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MomentermLocalhostURLScanner.swift; sourceTree = "<group>"; };
 		DC270C0DFF72D210FFF767FF /* iTermUnderlineSpanTestHelper.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; path = iTermUnderlineSpanTestHelper.m; sourceTree = "<group>"; };
 		DD02572609CB9398008F320C /* PSMYosemiteTabStyle.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = PSMYosemiteTabStyle.h; sourceTree = "<group>"; };
@@ -9623,6 +9623,7 @@
 				9F0196C68D70500A30EDEE26 /* tests */,
 				6ED672E58BA18106B86A40CF /* images */,
 				8BA44FAAF89F693AD9023988 /* Resources */,
+				778EED6F3D458EB43D896F60 /* sources */,
 			);
 			name = JTerminal;
 			sourceTree = "<group>";
@@ -9738,8 +9739,8 @@
 				90E09EE846415D5858CA5116 /* MomentermBrowserPanelVC.swift */,
 				0DD398D12D7DD30CFFF18A90 /* MomentermGitGraphModel.swift */,
 				1ECC425201B6EAB778DB95D0 /* MomentermGitGraphPoller.swift */,
-				4CD458D8BB64405EF22F0A51 /* MomentermGitGraphView.swift */,
-				009783CBC523BCFD1F46876D /* MomentermGitGraphVC.swift */,
+				D67F2D7DFE211B54DF8F180F /* MomentermGitGraphCellView.swift */,
+				5C57E6052B5D2254F070B6B5 /* MomentermGitGraphWindowController.swift */,
 			);
 			name = Classes;
 			path = sources/;
@@ -11377,6 +11378,13 @@
 				7577E2A02593B88700905402 /* iTermSandboxedWorkerClient.m */,
 			);
 			name = XPC;
+			sourceTree = "<group>";
+		};
+		778EED6F3D458EB43D896F60 /* sources */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = sources;
 			sourceTree = "<group>";
 		};
 		8BA44FAAF89F693AD9023988 /* Resources */ = {
@@ -20463,8 +20471,8 @@
 				04692B5767CDB5B75BFDD1F7 /* MomentermBrowserPanelVC.swift in Sources */,
 				CE51340ADD4DD298D735151F /* MomentermGitGraphModel.swift in Sources */,
 				AD073830011B9EBFCE1B1EB7 /* MomentermGitGraphPoller.swift in Sources */,
-				37B0DDB7832963C836A2B8B4 /* MomentermGitGraphView.swift in Sources */,
-				D47C3476BE3F14C69B9A6A24 /* MomentermGitGraphVC.swift in Sources */,
+				A2D50D50973B2D59F4F148A9 /* MomentermGitGraphCellView.swift in Sources */,
+				F272A3D81C0D23308C3E3604 /* MomentermGitGraphWindowController.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
