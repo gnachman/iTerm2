@@ -168,9 +168,22 @@ struct AnthropicMessage: Codable, Equatable {
                     case .toolUse(let toolUse):
                         let inputString = (try? JSONSerialization.data(withJSONObject: toolUse.input))?.lossyString ?? ""
                         let functionCall = LLM.FunctionCall(name: toolUse.name, arguments: inputString, id: toolUse.id)
-                        return .functionCall(functionCall, id: nil)
+                        // Populate the wrapper FunctionCallID alongside call.id
+                        // so the serializer's .functionOutput branch can recover
+                        // the tool_use_id when the function output round-trips
+                        // back through Anthropic. itemID uses the tool_use id
+                        // (not "") so LLM.Message.Body.tryAppend keeps distinct
+                        // parallel tool_use blocks distinct instead of merging
+                        // them on matching empty itemIDs.
+                        return .functionCall(functionCall, id: .init(callID: toolUse.id, itemID: toolUse.id))
                     case .toolResult(let toolResult):
-                        return .functionOutput(name: "", output: toolResult.content, id: .init(callID: toolResult.tool_use_id, itemID: ""))
+                        // itemID mirrors the .toolUse pattern above so the two
+                        // halves of a tool round-trip carry symmetric wrapper
+                        // ids. Functionally either value works here because
+                        // .functionOutput's tryAppend predicate (LLM.swift)
+                        // requires full FunctionCallID equality and distinct
+                        // callIDs already prevent erroneous merging.
+                        return .functionOutput(name: "", output: toolResult.content, id: .init(callID: toolResult.tool_use_id, itemID: toolResult.tool_use_id))
                     }
                 }
                 return LLM.Message(responseID: nil, role: llmRole, body: .multipart(subparts))
@@ -483,7 +496,7 @@ struct AnthropicResponseParser: LLMResponseParser {
                        let input = contentItem.input {
                         let inputString = (try? JSONSerialization.data(withJSONObject: input))?.lossyString ?? ""
                         let functionCall = LLM.FunctionCall(name: name, arguments: inputString, id: toolID)
-                        bodies.append(.functionCall(functionCall, id: nil))
+                        bodies.append(.functionCall(functionCall, id: .init(callID: toolID, itemID: toolID)))
                     }
                 default:
                     break
@@ -604,7 +617,7 @@ struct AnthropicStreamingResponseParser: LLMStreamingResponseParser {
                    let toolID = contentBlock.id {
                     // According to clause, input is just a placeholder so it should be ignored.
                     let functionCall = LLM.FunctionCall(name: name, arguments: "", id: toolID)
-                    return [LLM.Message(responseID: nil, role: .assistant, body: .functionCall(functionCall, id: nil))]
+                    return [LLM.Message(responseID: nil, role: .assistant, body: .functionCall(functionCall, id: .init(callID: toolID, itemID: toolID)))]
                 }
                 return []
             }

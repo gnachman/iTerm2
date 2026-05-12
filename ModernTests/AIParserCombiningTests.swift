@@ -688,4 +688,136 @@ final class AIParserCombiningTests: XCTestCase {
         XCTAssertEqual(response.choiceMessages.count, 1)
         XCTAssertEqual(response.choiceMessages[0].body.maybeContent, "first")
     }
+
+    // MARK: - Anthropic tool_use id wrapper population
+    //
+    // The Anthropic serializer's .functionOutput branch reads the tool_use_id
+    // from the outer LLM.Message.Body.functionCall wrapper FunctionCallID. If
+    // the parser leaves the wrapper nil and stashes the id only on the inner
+    // LLM.FunctionCall.id, persisted tool calls round-trip back to Anthropic
+    // as plain text and the API rejects the request for a missing tool_result.
+    // These tests pin the wrapper id on all three Anthropic parse paths.
+
+    /// Non-streaming AnthropicResponseParser: the wrapper FunctionCallID's
+    /// callID must equal the inner FunctionCall.id.
+    func testAnthropicParser_choiceMessage_setsWrapperFunctionCallID() throws {
+        let body = """
+        {
+            "id": "msg_test_wrap_1",
+            "type": "message",
+            "role": "assistant",
+            "model": "claude-haiku-4-5",
+            "content": [
+                {"type": "tool_use", "id": "toolu_wrap_1", "name": "f", "input": {}}
+            ],
+            "stop_reason": "tool_use",
+            "stop_sequence": null,
+            "usage": {"input_tokens": 1, "output_tokens": 1}
+        }
+        """.data(using: .utf8)!
+        var parser = AnthropicResponseParser()
+        let response = try XCTUnwrap(try parser.parse(data: body))
+        let message = try XCTUnwrap(response.choiceMessages.first)
+        guard case let .functionCall(call, wrapper) = message.body else {
+            XCTFail("expected .functionCall body, got \(message.body)")
+            return
+        }
+        XCTAssertEqual(call.id, "toolu_wrap_1")
+        XCTAssertEqual(wrapper?.callID, "toolu_wrap_1",
+                       "wrapper FunctionCallID.callID must equal tool_use id so .functionOutput round-trips back to Anthropic as a tool_result block")
+    }
+
+    /// Streaming AnthropicStreamingResponseParser: a content_block_start
+    /// event for a tool_use must produce a .functionCall whose wrapper
+    /// FunctionCallID.callID equals the tool_use id. itemID must also be
+    /// the tool_use id (not "") so two distinct parallel tool_use blocks
+    /// don't merge in LLM.Message.Body.tryAppend on matching empty itemIDs.
+    func testAnthropicStreamingParser_toolUse_setsWrapperFunctionCallID() throws {
+        let event = """
+        {
+            "type": "content_block_start",
+            "index": 0,
+            "content_block": {
+                "type": "tool_use",
+                "id": "toolu_stream_1",
+                "name": "f",
+                "input": {}
+            }
+        }
+        """.data(using: .utf8)!
+        var parser = AnthropicStreamingResponseParser()
+        let response = try XCTUnwrap(try parser.parse(data: event))
+        let message = try XCTUnwrap(response.choiceMessages.first)
+        guard case let .functionCall(call, wrapper) = message.body else {
+            XCTFail("expected .functionCall body, got \(message.body)")
+            return
+        }
+        XCTAssertEqual(call.id, "toolu_stream_1")
+        XCTAssertEqual(wrapper?.callID, "toolu_stream_1")
+        XCTAssertEqual(wrapper?.itemID, "toolu_stream_1",
+                       "itemID must equal tool_use id so tryAppend doesn't merge distinct parallel tool calls")
+    }
+
+    /// Two streaming content_block_start events for different parallel
+    /// tool_use blocks must NOT merge into one .functionCall via
+    /// LLM.Message.Body.tryAppend. The merge predicate compares wrapper
+    /// itemIDs, so populating itemID with the tool_use id (rather than "")
+    /// is what keeps the second tool call from being concatenated into the
+    /// first. Anthropic disables parallel tool use today, so this is a
+    /// guard for future enablement.
+    func testAnthropicStreamingParser_distinctToolUseBlocks_doNotMerge() throws {
+        let event1 = """
+        {
+            "type": "content_block_start",
+            "index": 0,
+            "content_block": {"type": "tool_use", "id": "toolu_a", "name": "alpha", "input": {}}
+        }
+        """.data(using: .utf8)!
+        let event2 = """
+        {
+            "type": "content_block_start",
+            "index": 1,
+            "content_block": {"type": "tool_use", "id": "toolu_b", "name": "beta", "input": {}}
+        }
+        """.data(using: .utf8)!
+        var parser = AnthropicStreamingResponseParser()
+        let first = try XCTUnwrap(try parser.parse(data: event1)?.choiceMessages.first?.body)
+        let second = try XCTUnwrap(try parser.parse(data: event2)?.choiceMessages.first?.body)
+        var accumulator = first
+        let merged = accumulator.tryAppend(second)
+        XCTAssertFalse(merged,
+                       "distinct parallel tool_use blocks must keep distinct itemIDs so tryAppend rejects the merge")
+    }
+
+    /// AnthropicMessage.llmMessage (the round-trip deserialization path):
+    /// a multipart content array containing a toolUse block must produce a
+    /// .functionCall whose wrapper FunctionCallID.callID equals the tool_use
+    /// id.
+    func testAnthropicMessage_llmMessage_toolUse_setsWrapperFunctionCallID() throws {
+        let raw = """
+        {
+            "role": "assistant",
+            "content": [
+                {"type": "text", "text": "thinking"},
+                {"type": "tool_use", "id": "toolu_round_1", "name": "f", "input": {}}
+            ]
+        }
+        """.data(using: .utf8)!
+        let anthropicMessage = try JSONDecoder().decode(AnthropicMessage.self, from: raw)
+        let llmMessage = anthropicMessage.llmMessage
+        guard case let .multipart(parts) = llmMessage.body else {
+            XCTFail("expected multipart body, got \(llmMessage.body)")
+            return
+        }
+        let callPart = parts.first { part in
+            if case .functionCall = part { return true }
+            return false
+        }
+        guard case let .functionCall(call, wrapper) = try XCTUnwrap(callPart) else {
+            XCTFail("expected .functionCall part")
+            return
+        }
+        XCTAssertEqual(call.id, "toolu_round_1")
+        XCTAssertEqual(wrapper?.callID, "toolu_round_1")
+    }
 }

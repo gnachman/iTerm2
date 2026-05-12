@@ -874,19 +874,17 @@ class AITermController {
                     switch result {
                     case .success(let response):
                         DLog("Response to function call with arguments \(functionCall.arguments ?? ""): \(response)")
-                        // Some parsers (notably Anthropic) put the tool-use id on
-                        // FunctionCall.id rather than wrapping it in the outer
-                        // FunctionCallID. Fall back to the inner id so the function
-                        // output can round-trip through providers that demand a
-                        // tool_use_id reference.
-                        //
-                        // For Anthropic specifically, AnthropicRequestBuilder also
-                        // tracks pendingToolIds and recovers the id from the
-                        // assistant turn's tool_use block, so that path remains the
-                        // primary mechanism on the wire today. This fallback fires
-                        // when AnthropicMessage encodes a function output by itself
-                        // (no pending id) and is what unblocks the OpenAI Responses
-                        // API path where the call_id has no recovery alternative.
+                        // Defensive: every current parser that sets an inner
+                        // FunctionCall.id also sets the outer FunctionCallID
+                        // wrapper (modern OpenAI tool_calls, DeepSeek,
+                        // Responses, Anthropic). The parsers that don't
+                        // populate the wrapper also don't populate the inner
+                        // id — legacy chat-completions `function_call` has no
+                        // id at all, and Gemini's function-call parts have no
+                        // id either — so this fallback can't recover anything
+                        // for them. Kept so a future parser that populates
+                        // only the inner id still round-trips through
+                        // providers that require a tool_use_id reference.
                         let outputCallID = message.functionCallID
                             ?? functionCall.id.map {
                                 LLM.Message.FunctionCallID(callID: $0, itemID: $0)

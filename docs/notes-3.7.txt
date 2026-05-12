@@ -378,6 +378,16 @@ Settings Improvements:
   pane.
 
 Bug Fixes:
+- Anthropic tool calls reloaded from a chat
+  transcript would fail with HTTP 400 because
+  the function output got serialized as plain
+  text instead of a tool_result block. The
+  parser stored the tool_use id only on the
+  inner FunctionCall while the serializer
+  looked on the outer wrapper, so the id was
+  lost on round-trip. Both fields are now
+  populated so persisted tool calls survive
+  the round-trip.
 - Fix a launch crash when a saved status bar
   layout referenced an RPC-provided text
   component whose configuration was missing
