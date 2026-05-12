@@ -802,3 +802,11 @@ Bug Fixes:
   or Block in the per-site dialog is
   remembered. The same fix applies to
   notification permissions.
+- Honor the option-modified “Quit and
+  Close All Windows” menu item. iTerm2
+  now samples the option modifier at
+  quit time and erases saved state when
+  the user picked the option-modified
+  menu item, so it actually closes all
+  windows on the next launch. Issue
+  12852.

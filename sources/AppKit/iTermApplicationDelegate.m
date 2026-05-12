@@ -944,7 +944,12 @@ static NSModalResponse iTermCompareRenderingRunModal(id self, SEL _cmd) {
     if (_disableTermination) {
         return NSTerminateCancel;
     }
-    
+
+    // Capture the option-key state for the “Quit and Close All Windows”
+    // detection below. We sample it before any modal prompt so a slow user
+    // releasing the key doesn’t change the answer.
+    const BOOL optionHeldAtQuit = ([NSEvent modifierFlags] & NSEventModifierFlagOption) != 0;
+
     terminals = [[iTermController sharedInstance] terminals];
     int numSessions = 0;
 
@@ -1011,6 +1016,20 @@ static NSModalResponse iTermCompareRenderingRunModal(id self, SEL _cmd) {
             DLog(@"User declined to quit");
             return NSTerminateCancel;
         }
+    }
+
+    // The option-modified Quit menu item (“Quit and Close All Windows”) has no
+    // dedicated selector — AppKit reads modifier flags at click time. Detect
+    // it ourselves and only treat option as a request to discard when the
+    // standing window-restoration pref would otherwise force save; when the
+    // pref is off, the option-modified item is “Quit and Keep Windows”, which
+    // we must not interpret as discard. We commit the flag here, past the
+    // confirmation prompt, so a canceled quit does not leave it set.
+    if (optionHeldAtQuit &&
+        [[iTermUserDefaults userDefaults] boolForKey:@"NSQuitAlwaysKeepsWindows"] &&
+        ![self systemIsShuttingDown]) {
+        DLog(@"Option held on user-initiated quit; force discarding saved state.");
+        iTermRestorableStateController.forceDiscardState = YES;
     }
 
     // Ensure [iTermController dealloc] is called before prefs are saved

@@ -58,6 +58,13 @@ extern NSString *const iTermApplicationWillTerminate;
 }
 
 + (BOOL)stateRestorationEnabled {
+    // forceDiscardState is set when we detect that the user picked the
+    // option-modified “Quit and Close All Windows” menu item. It must veto
+    // before the OR below, which can otherwise lock in YES via either the
+    // standing pref or NSApp’s private shouldRestoreStateOnNextLaunch.
+    if (self.forceDiscardState) {
+        return NO;
+    }
     return ([[iTermUserDefaults userDefaults] boolForKey:@"NSQuitAlwaysKeepsWindows"] ||
             [self shouldRestoreStateOnNextLaunch]);
 }
@@ -75,6 +82,16 @@ static BOOL gForceSaveState;
 + (void)setForceSaveState:(BOOL)forceSaveState {
     gForceSaveState = forceSaveState;
     [[iTermUserDefaults userDefaults] setBool:forceSaveState forKey:@"NoSyncWindowRestoresWorkspaceAtLaunch"];
+}
+
+static BOOL gForceDiscardState;
+
++ (BOOL)forceDiscardState {
+    return gForceDiscardState;
+}
+
++ (void)setForceDiscardState:(BOOL)forceDiscardState {
+    gForceDiscardState = forceDiscardState;
 }
 
 - (instancetype)init {
