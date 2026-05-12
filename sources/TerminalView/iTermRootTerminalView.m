@@ -147,6 +147,7 @@ NS_CLASS_AVAILABLE_MAC(10_14)
     iTermWindowSizeView *_windowSizeView NS_AVAILABLE_MAC(10_14);
 
     iTermLayerBackedSolidColorView *_titleBackgroundView NS_AVAILABLE_MAC(10_14);
+    NSVisualEffectView *_titleBackgroundVEV NS_AVAILABLE_MAC(10_14);
 
     iTermWindowBorderView *_windowBorderView NS_AVAILABLE_MAC(10_14);
     BOOL _cornerRadiusDetectionFailed NS_AVAILABLE_MAC(10_14);
@@ -761,8 +762,38 @@ NS_CLASS_AVAILABLE_MAC(10_14)
         if (_titleBackgroundView.superview != self) {
             [self insertSubview:_titleBackgroundView atIndex:1];
         }
+
+        // The Compact tab style's selected backgroundColor is clearColor on
+        // purpose: it expects an NSVisualEffectMaterialTitlebar view to be
+        // visible beneath. With 2+ tabs that view is iTermTabBarBacking's VEV;
+        // when the fake title bar replaces the tab bar we must provide our own.
+        const BOOL wantsVEV = ([iTermPreferences intForKey:kPreferenceKeyTabStyle] == TAB_STYLE_COMPACT);
+        if (wantsVEV) {
+            if (!_titleBackgroundVEV) {
+                _titleBackgroundVEV = [[NSVisualEffectView alloc] initWithFrame:self.frameForTitleBackgroundView];
+                _titleBackgroundVEV.autoresizingMask = NSViewWidthSizable | NSViewMinYMargin;
+                NSVisualEffectState state = NSVisualEffectStateActive;
+                if (![iTermAdvancedSettingsModel allowTabbarInTitlebarAccessoryBigSur]) {
+                    if (@available(macOS 10.16, *)) {
+                        state = NSVisualEffectStateFollowsWindowActiveState;
+                    }
+                }
+                _titleBackgroundVEV.state = state;
+                _titleBackgroundVEV.blendingMode = NSVisualEffectBlendingModeWithinWindow;
+                _titleBackgroundVEV.material = NSVisualEffectMaterialTitlebar;
+            }
+            _titleBackgroundVEV.frame = self.frameForTitleBackgroundView;
+            if (_titleBackgroundVEV.superview != self) {
+                [self addSubview:_titleBackgroundVEV
+                      positioned:NSWindowBelow
+                      relativeTo:_titleBackgroundView];
+            }
+        } else {
+            [_titleBackgroundVEV removeFromSuperview];
+        }
     } else {
         [_titleBackgroundView removeFromSuperview];
+        [_titleBackgroundVEV removeFromSuperview];
     }
 
     [self updateBorderViews];
