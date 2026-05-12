@@ -761,4 +761,441 @@ final class AILiveHarness: XCTestCase {
         let key = try keyOrSkip(Self.loadKeys().deepSeek, vendor: "deepseek")
         runRefusal(vendor: "deepseek", apiKey: key, streaming: true)
     }
+
+    // MARK: - DeepSeek thinking + tool call (issue 12858 / 12707)
+    //
+    // Validates that DeepSeek v4 multi-turn tool calls succeed when thinking
+    // mode is enabled. DeepSeek's API requires assistant-turn reasoning_content
+    // to be echoed back on every subsequent request when tool calls are
+    // involved, or it returns 400. The parser + request builder round-trip
+    // this via LLM.Message.reasoningContent.
+    //
+    // Until the toolbar toggle gates DeepSeek thinking (a separate metadata
+    // flip), this test uses a synthetic AIMetadata.Model with
+    // .configurableThinking listed so AITermController propagates the flag.
+
+    private static func deepseekV4ThinkingModel(named name: String) -> AIMetadata.Model {
+        return AIMetadata.Model(
+            name: name,
+            contextWindowTokens: 1_000_000,
+            maxResponseTokens: 384_000,
+            url: "https://api.deepseek.com/chat/completions",
+            api: .deepSeek,
+            features: [.functionCalling, .streaming, .configurableThinking],
+            vendor: .deepSeek)
+    }
+
+    private func runDeepSeekThinkingToolCall(modelName: String,
+                                             apiKey: String,
+                                             streaming: Bool) {
+        let token = "MAGENTA-LARK-77"
+        let decl = ChatGPTFunctionDeclaration(
+            name: "get_random_word",
+            description: "Returns a randomly chosen made-up word. Call this whenever the user asks for a random word.",
+            parameters: JSONSchema(for: EmptyArgs(), descriptions: [:]))
+        let spec = AILiveFunctionSpec<EmptyArgs>(
+            decl: decl,
+            implementation: { _, _, completion in
+                try completion(.success(token))
+            })
+        let messages = [LLM.Message(role: .user,
+                                    content: "Call the get_random_word tool to get a word, then include the exact word it returned somewhere in your reply.")]
+        throttle(forVendor: "deepseek")
+        do {
+            let result = try AILiveDriver.run(model: Self.deepseekV4ThinkingModel(named: modelName),
+                                              apiKey: apiKey,
+                                              messages: messages,
+                                              streaming: streaming,
+                                              thinking: true,
+                                              function: spec,
+                                              scenarioTag: "thinkingToolCall",
+                                              test: self)
+            XCTAssertTrue(result.functionsInvoked.contains(decl.name),
+                          "[deepseek/\(modelName)] tool was never invoked; final text: \(result.finalText)")
+            XCTAssertTrue(result.finalText.contains(token),
+                          "[deepseek/\(modelName)] tool result not echoed; final text: \(result.finalText)")
+            report(vendor: "deepseek-thinking",
+                   model: modelName,
+                   scenario: "thinkingToolCall",
+                   streaming: streaming,
+                   result: result)
+        } catch {
+            XCTFail("[deepseek/\(modelName)/thinkingToolCall/stream=\(streaming)] \(error)")
+        }
+    }
+
+    func test_deepseek_thinking_toolCall_nonStreaming() throws {
+        let key = try keyOrSkip(Self.loadKeys().deepSeek, vendor: "deepseek")
+        runDeepSeekThinkingToolCall(modelName: "deepseek-v4-flash",
+                                    apiKey: key,
+                                    streaming: false)
+    }
+
+    func test_deepseek_thinking_toolCall_streaming() throws {
+        let key = try keyOrSkip(Self.loadKeys().deepSeek, vendor: "deepseek")
+        runDeepSeekThinkingToolCall(modelName: "deepseek-v4-flash",
+                                    apiKey: key,
+                                    streaming: true)
+    }
+
+    // Regression anchor for the non-streaming reasoning drop: AITermController
+    // must deliver the reasoning scalar to its delegate so persistence layers
+    // (AIConversation, ChatAgent) can attach it to the assistant Message they
+    // build. Before the fix, parseNonStreamingResponse handed only the text
+    // body to offerChoice and the reasoning was lost on the floor; the next
+    // user turn went out with no reasoning_content and DeepSeek 400'd.
+    func test_deepseek_thinking_nonStreaming_deliversReasoningToDelegate() throws {
+        let key = try keyOrSkip(Self.loadKeys().deepSeek, vendor: "deepseek")
+        let prompt = "Think briefly about why ice floats on water and reply with one short sentence."
+        let messages = [LLM.Message(role: .user, content: prompt)]
+        throttle(forVendor: "deepseek")
+        do {
+            let result = try AILiveDriver.run(
+                model: Self.deepseekV4ThinkingModel(named: "deepseek-v4-flash"),
+                apiKey: key,
+                messages: messages,
+                streaming: false,
+                thinking: true,
+                scenarioTag: "nonStreamingDelivers",
+                test: self)
+            XCTAssertFalse(result.finalText.isEmpty,
+                           "empty assistant text")
+            let delivered = result.deliveredReasoning ?? ""
+            XCTAssertFalse(delivered.isEmpty,
+                           "non-streaming reasoning was not delivered via didReceiveReasoning; finalText=\(result.finalText)")
+        } catch {
+            XCTFail("[deepseek/nonStreamingDelivers] \(error)")
+        }
+    }
+
+    // Drives two non-streaming, non-tool-call conversations in a row through
+    // AIConversation. The first turn must populate conversation.messages.last
+    // with reasoningContent — without that, the second turn round-trips no
+    // reasoning_content and DeepSeek returns 400. This is the exact regression
+    // the user pointed out is missing from the rest of the suite (the other
+    // thinking tests go through AILiveDriver directly, which bypasses the
+    // AIConversation accumulator entirely).
+    func test_deepseek_thinking_nonStreaming_plainText_aiConversation_multiTurn() throws {
+        let key = try keyOrSkip(Self.loadKeys().deepSeek, vendor: "deepseek")
+        let provider = AILiveStaticRegistrationProvider(apiKey: key)
+        // Production model entry — Phase 4 added .configurableThinking to it,
+        // so AITermController.shouldThink propagation flows.
+        let modelName = "deepseek-v4-flash"
+
+        // Verify the wire request actually used the test's loaded key, not
+        // whatever AITermControllerRegistrationHelper.instance pulled from
+        // the keychain singleton. AIConversation.init eagerly seeds its
+        // controller from the singleton and consults the registrationProvider
+        // only as a fallback — so on a dev machine where DeepSeek is already
+        // configured, the static provider above might never be touched. Hook
+        // iTermAIClient.liveObserver to capture Authorization headers and
+        // assert at end-of-test that every captured request matched
+        // "Bearer <test key>". Without this guard the test could pass against
+        // the wrong account and the divergence would be invisible.
+        var capturedAuthorizationHeaders: [String] = []
+        let priorObserver = iTermAIClient.liveObserver
+        iTermAIClient.liveObserver = { capture in
+            capturedAuthorizationHeaders.append(
+                capture.request.headers["Authorization"]
+                ?? capture.request.headers["authorization"]
+                ?? "")
+            priorObserver?(capture)
+        }
+        defer { iTermAIClient.liveObserver = priorObserver }
+        let expectedAuthorization = "Bearer \(key)"
+
+        var conv = AIConversation(registrationProvider: provider)
+        conv.model = modelName
+        conv.shouldThink = true
+        conv.messages = [LLM.Message(role: .user,
+                                     content: "Briefly explain why the sky is blue. Reply in one short sentence.")]
+
+        let turn1Exp = expectation(description: "non-streaming AIConversation turn 1")
+        var turn1Result: Result<AIConversation, Error>?
+        conv.complete { result in
+            turn1Result = result
+            turn1Exp.fulfill()
+        }
+        wait(for: [turn1Exp], timeout: 60)
+        guard case .success(var updated) = turn1Result else {
+            XCTFail("turn 1 failed: \(String(describing: turn1Result))")
+            return
+        }
+        // The bug: this assertion fails before the fix because AIConversation
+        // never sets reasoningContent on the assistant Message it appends.
+        XCTAssertNotNil(updated.messages.last?.reasoningContent,
+                        "turn 1's persisted assistant Message must carry reasoningContent for round-trip")
+        XCTAssertFalse(updated.messages.last?.reasoningContent?.isEmpty ?? true,
+                       "reasoningContent must be non-empty")
+
+        // Now drive turn 2 with the same conversation. Without the fix, the
+        // assistant message has no reasoningContent and DeepSeek returns 400.
+        updated.model = modelName
+        updated.shouldThink = true
+        updated.messages.append(LLM.Message(role: .user,
+                                            content: "Was that explanation about Rayleigh scattering? Answer yes or no."))
+        let turn2Exp = expectation(description: "non-streaming AIConversation turn 2")
+        var turn2Result: Result<AIConversation, Error>?
+        updated.complete { result in
+            turn2Result = result
+            turn2Exp.fulfill()
+        }
+        wait(for: [turn2Exp], timeout: 60)
+        switch turn2Result {
+        case .success(let final):
+            XCTAssertFalse(final.messages.last?.body.content.isEmpty ?? true,
+                           "turn 2 produced empty response")
+        case .failure(let error):
+            XCTFail("turn 2 failed (expected success after reasoning round-trip): \(error)")
+        case .none:
+            XCTFail("turn 2 completion never fired")
+        }
+        XCTAssertFalse(capturedAuthorizationHeaders.isEmpty,
+                       "no outbound requests were observed; was iTermAIClient.liveObserver hooked?")
+        for (i, auth) in capturedAuthorizationHeaders.enumerated() {
+            XCTAssertEqual(auth, expectedAuthorization,
+                           "request \(i) used the wrong API key — test would have passed against a stale singleton-resolved key from the keychain rather than the loadKeys() value")
+        }
+    }
+
+    // Phase 4 anchor: when the user sets the toolbar thinking toggle, the
+    // request to DeepSeek must go out with `thinking.type: "enabled"`. The
+    // .configurableThinking feature flag on the production model is what
+    // unlocks the propagation (AITerm.swift:439 gates shouldThink on it). Until
+    // that flag is added in AIMetadata.swift, the user's preference is dropped
+    // silently and the wire body has thinking.type: "disabled".
+    func test_deepseek_thinking_userToggle_propagates() throws {
+        let key = try keyOrSkip(Self.loadKeys().deepSeek, vendor: "deepseek")
+        // Use the production model from AIMetadata — NOT the synthetic
+        // .configurableThinking override the other deepseek thinking tests
+        // use. The whole point of this test is that the production metadata
+        // entry advertises .configurableThinking.
+        let prompt = "Reply with exactly the single word: PINEAPPLE"
+        let messages = [LLM.Message(role: .user, content: prompt)]
+        throttle(forVendor: "deepseek")
+        do {
+            let result = try AILiveDriver.run(
+                modelName: "deepseek-v4-flash",
+                apiKey: key,
+                messages: messages,
+                streaming: false,
+                thinking: true,
+                scenarioTag: "userToggle",
+                test: self)
+            XCTAssertFalse(result.capturedRequestBodies.isEmpty,
+                           "no captured request bodies")
+            let body = result.capturedRequestBodies[0]
+            // Parse the body as JSON and assert on thinking.type directly.
+            // Substring matching against the raw string is fragile — any
+            // future wire field whose value is the literal "enabled" or
+            // "disabled" (or a user prompt that contains those words) would
+            // make the test flip for the wrong reason.
+            guard let data = body.data(using: .utf8),
+                  let json = try JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+                XCTFail("captured request body wasn't valid JSON: \(body)")
+                return
+            }
+            guard let thinking = json["thinking"] as? [String: Any] else {
+                XCTFail("request body missing thinking field; body=\(body)")
+                return
+            }
+            XCTAssertEqual(thinking["type"] as? String, "enabled",
+                           "user toggle did not propagate to thinking.type=enabled; thinking=\(thinking)")
+        } catch {
+            XCTFail("[deepseek/userToggle] \(error)")
+        }
+    }
+
+    // Symmetric counterpart: when the user hasn't enabled thinking
+    // (shouldThink is nil — the default after the metadata flag was added),
+    // the request must go out with thinking.type=disabled. Without this
+    // assertion, a regression that always sends "enabled" regardless of the
+    // toggle would pass the userToggle_propagates test but ship surprise
+    // latency/cost to every DeepSeek v4 user who didn't opt in.
+    func test_deepseek_thinking_userToggleOff_emitsDisabled() throws {
+        let key = try keyOrSkip(Self.loadKeys().deepSeek, vendor: "deepseek")
+        let prompt = "Reply with exactly the single word: BANANA"
+        let messages = [LLM.Message(role: .user, content: prompt)]
+        throttle(forVendor: "deepseek")
+        do {
+            let result = try AILiveDriver.run(
+                modelName: "deepseek-v4-flash",
+                apiKey: key,
+                messages: messages,
+                streaming: false,
+                // thinking: nil means "no recorded user preference"; per the
+                // policy at AITerm.swift gating + DeepSeek.swift builder
+                // default, that maps to thinking.type=disabled on the wire.
+                thinking: nil,
+                scenarioTag: "userToggleOff",
+                test: self)
+            XCTAssertFalse(result.capturedRequestBodies.isEmpty,
+                           "no captured request bodies")
+            let body = result.capturedRequestBodies[0]
+            guard let data = body.data(using: .utf8),
+                  let json = try JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+                XCTFail("captured request body wasn't valid JSON: \(body)")
+                return
+            }
+            guard let thinking = json["thinking"] as? [String: Any] else {
+                XCTFail("request body missing thinking field; body=\(body)")
+                return
+            }
+            XCTAssertEqual(thinking["type"] as? String, "disabled",
+                           "unset toggle must produce thinking.type=disabled; thinking=\(thinking)")
+        } catch {
+            XCTFail("[deepseek/userToggleOff] \(error)")
+        }
+    }
+
+    // Phase 2 anchor: an assistant turn whose reasoningContent is set must be
+    // re-emittable on the wire so DeepSeek accepts the follow-up. Without the
+    // request-builder change in Phase 2 the second turn 400s with
+    // "The reasoning_content in the thinking mode must be passed back to the API."
+    func test_deepseek_thinking_assistantTurn_roundTrips() throws {
+        let key = try keyOrSkip(Self.loadKeys().deepSeek, vendor: "deepseek")
+        let model = Self.deepseekV4ThinkingModel(named: "deepseek-v4-flash")
+
+        let turn1 = [LLM.Message(role: .user,
+                                 content: "Briefly explain why ice floats on water. Reply in one short sentence.")]
+        throttle(forVendor: "deepseek")
+        let r1: AILiveRunResult
+        do {
+            r1 = try AILiveDriver.run(
+                model: model,
+                apiKey: key,
+                messages: turn1,
+                streaming: true,
+                thinking: true,
+                scenarioTag: "thinkingRoundTrip1",
+                test: self)
+        } catch {
+            XCTFail("[deepseek/thinkingRoundTrip] turn 1 failed: \(error)")
+            return
+        }
+        XCTAssertFalse(r1.finalText.isEmpty, "turn 1 returned empty text")
+        XCTAssertFalse(r1.reasoningText.isEmpty,
+                       "turn 1 must surface reasoning so turn 2 has something to round-trip")
+
+        var assistant = LLM.Message(role: .assistant, content: r1.finalText)
+        assistant.reasoningContent = r1.reasoningText
+        let turn2 = turn1 + [
+            assistant,
+            LLM.Message(role: .user,
+                        content: "Was that explanation primarily about ice's density compared to liquid water? Reply yes or no.")
+        ]
+        throttle(forVendor: "deepseek")
+        do {
+            let r2 = try AILiveDriver.run(
+                model: model,
+                apiKey: key,
+                messages: turn2,
+                streaming: true,
+                thinking: true,
+                scenarioTag: "thinkingRoundTrip2",
+                test: self)
+            XCTAssertFalse(r2.finalText.isEmpty,
+                           "turn 2 returned empty text; round-trip failed")
+            report(vendor: "deepseek-thinking",
+                   model: "deepseek-v4-flash",
+                   scenario: "thinkingRoundTrip2",
+                   streaming: true,
+                   result: r2)
+        } catch {
+            XCTFail("[deepseek/thinkingRoundTrip] turn 2 failed: \(error)")
+        }
+    }
+
+    // Phase 1 anchor: a streaming smoke call with thinking enabled must surface
+    // reasoning content to the driver as a `.statusUpdate(.reasoningSummaryUpdate)`
+    // attachment so iTerm2 can show it to the user. DeepSeek streams reasoning
+    // via `delta.reasoning_content`; until the parser change lands the driver's
+    // attachments array will be empty and the assertion fails. The test pairs
+    // with offline parser coverage in AIParserCombiningTests.
+    func test_deepseek_thinking_smoke_captures_reasoning() throws {
+        let key = try keyOrSkip(Self.loadKeys().deepSeek, vendor: "deepseek")
+        let prompt = "Think briefly about why the sky appears blue, then reply with a one-sentence answer."
+        let messages = [LLM.Message(role: .user, content: prompt)]
+        throttle(forVendor: "deepseek")
+        do {
+            let result = try AILiveDriver.run(
+                model: Self.deepseekV4ThinkingModel(named: "deepseek-v4-flash"),
+                apiKey: key,
+                messages: messages,
+                streaming: true,
+                thinking: true,
+                scenarioTag: "thinkingSmoke",
+                test: self)
+            XCTAssertFalse(result.finalText.isEmpty,
+                           "[deepseek/deepseek-v4-flash] empty response")
+            XCTAssertFalse(result.reasoningText.isEmpty,
+                           "[deepseek/deepseek-v4-flash] no reasoning content captured; attachments=\(result.attachments)")
+            report(vendor: "deepseek-thinking",
+                   model: "deepseek-v4-flash",
+                   scenario: "thinkingSmoke",
+                   streaming: true,
+                   result: result)
+        } catch {
+            XCTFail("[deepseek/deepseek-v4-flash/thinkingSmoke] \(error)")
+        }
+    }
+
+    // Empirical check for the corner case the offline test
+    // testDeepSeekRequestBuilder_reasoningOnlyAssistant_serializesEmptyContent
+    // locks the wire shape for: a persisted assistant turn whose body is
+    // empty (the post-harvest state of a streamed reasoning-only response)
+    // but which still carries reasoning_content. The request builder emits
+    // {"role":"assistant","content":"","reasoning_content":"..."} for that
+    // turn. This test sends exactly that shape to DeepSeek's live API and
+    // confirms it's accepted.
+    //
+    // First run (2026-05-12): DeepSeek accepted the shape and replied with
+    // non-empty text in ~2s. The policy in DeepSeek.swift relies on that
+    // empirical result. If this test ever starts failing, DeepSeek has
+    // tightened its schema validation — the policy needs to flip to
+    // `return nil` AND a higher layer must merge surrounding user turns to
+    // avoid breaking alternation.
+    func test_deepseek_thinking_reasoningOnlyAssistant_roundTrips() throws {
+        let key = try keyOrSkip(Self.loadKeys().deepSeek, vendor: "deepseek")
+        var assistant = LLM.Message(role: .assistant, body: .multipart([]))
+        assistant.reasoningContent = "I considered the user's previous question and concluded ice floats on water because solid water is less dense than liquid water due to its open hydrogen-bonded crystal structure."
+        let messages: [LLM.Message] = [
+            LLM.Message(role: .user, content: "Briefly explain why ice floats on water. Reply in one short sentence."),
+            assistant,
+            LLM.Message(role: .user, content: "Was that explanation primarily about ice's density compared to liquid water? Reply yes or no."),
+        ]
+        throttle(forVendor: "deepseek")
+        do {
+            let result = try AILiveDriver.run(
+                model: Self.deepseekV4ThinkingModel(named: "deepseek-v4-flash"),
+                apiKey: key,
+                messages: messages,
+                streaming: false,
+                thinking: true,
+                scenarioTag: "reasoningOnlyRoundTrip",
+                test: self)
+            XCTAssertFalse(result.finalText.isEmpty,
+                           "DeepSeek rejected the empty-content + reasoning_content assistant turn (or returned empty text); see captured request body. If this fails the offline policy needs to flip — see comment in DeepSeek.swift around the `content == nil && reasoning_content != nil` shim.")
+            // Belt-and-suspenders: confirm the wire body actually carried the
+            // shape we expect (content="" with reasoning_content alongside).
+            // Without this, a future refactor could silently change the shape
+            // and the test would still pass for the wrong reason.
+            XCTAssertFalse(result.capturedRequestBodies.isEmpty,
+                           "no request body captured")
+            let body = result.capturedRequestBodies[0]
+            guard let data = body.data(using: .utf8),
+                  let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],
+                  let wireMessages = json["messages"] as? [[String: Any]] else {
+                XCTFail("could not parse captured request body as JSON; got \(body)")
+                return
+            }
+            XCTAssertEqual(wireMessages.count, 3,
+                           "all three turns must survive on the wire to preserve alternation; got \(wireMessages)")
+            XCTAssertEqual(wireMessages[1]["role"] as? String, "assistant")
+            XCTAssertEqual(wireMessages[1]["content"] as? String, "",
+                           "this test only exercises the empirical question for the content=\"\" shape; if the request builder no longer emits that, update or delete this test")
+        } catch {
+            XCTFail("[deepseek/reasoningOnlyRoundTrip] \(error) — DeepSeek may have rejected the empty-content + reasoning_content shape")
+        }
+    }
 }

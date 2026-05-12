@@ -358,7 +358,7 @@ class AIMetadata: NSObject {
         maxResponseTokens: 384_000,
         url: "https://api.deepseek.com/chat/completions",
         api: .deepSeek,
-        features: [.functionCalling, .streaming],
+        features: [.functionCalling, .streaming, .configurableThinking],
         vendor: .deepSeek
     )
     private static let deepseek_v4_pro = Model(
@@ -367,7 +367,7 @@ class AIMetadata: NSObject {
         maxResponseTokens: 384_000,
         url: "https://api.deepseek.com/chat/completions",
         api: .deepSeek,
-        features: [.functionCalling, .streaming],
+        features: [.functionCalling, .streaming, .configurableThinking],
         vendor: .deepSeek
     )
     // Deprecated by DeepSeek on 2026-07-24; remove after that date

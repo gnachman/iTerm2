@@ -535,6 +535,232 @@ final class AIParserCombiningTests: XCTestCase {
                       "tool_calls sentinel must not surface a message")
     }
 
+    // MARK: - DeepSeek thinking-mode reasoning_content (issue 12858)
+
+    /// A DeepSeek streaming chunk delivering reasoning_content must surface
+    /// it via the .statusUpdate(.reasoningSummaryUpdate) attachment path so
+    /// the cell view renders it like an OpenAI reasoning summary.
+    func testDeepSeekStreaming_reasoningContent_surfacesAsStatusUpdate() throws {
+        let chunk = """
+        {
+            "id": "chatcmpl_test",
+            "object": "chat.completion.chunk",
+            "created": 0,
+            "model": "deepseek-v4-flash",
+            "choices": [
+                {
+                    "index": 0,
+                    "delta": {"role": "assistant", "reasoning_content": "I will think..."},
+                    "finish_reason": null
+                }
+            ]
+        }
+        """.data(using: .utf8)!
+        var parser = DeepSeekStreamingResponseParser()
+        let response = try XCTUnwrap(try parser.parse(data: chunk))
+        XCTAssertEqual(response.choiceMessages.count, 1)
+        guard case .attachment(let attachment) = response.choiceMessages[0].body,
+              case .statusUpdate(let update) = attachment.type else {
+            XCTFail("expected attachment(.statusUpdate), got \(response.choiceMessages[0].body)")
+            return
+        }
+        XCTAssertEqual(update, .reasoningSummaryUpdate("I will think..."))
+    }
+
+    /// Streamed reasoning_content must also land on the LLM.Message's
+    /// dedicated reasoningContent field so the streaming accumulator in
+    /// AITermController can fold it into the final assistant turn for
+    /// round-trip on the next request.
+    func testDeepSeekStreaming_reasoningContent_propagatesToMessage() throws {
+        let chunk = """
+        {
+            "id": "chatcmpl_test",
+            "object": "chat.completion.chunk",
+            "created": 0,
+            "model": "deepseek-v4-flash",
+            "choices": [
+                {"index": 0, "delta": {"reasoning_content": "deep thoughts"}, "finish_reason": null}
+            ]
+        }
+        """.data(using: .utf8)!
+        var parser = DeepSeekStreamingResponseParser()
+        let response = try XCTUnwrap(try parser.parse(data: chunk))
+        XCTAssertEqual(response.choiceMessages.first?.reasoningContent, "deep thoughts")
+    }
+
+    /// Non-streaming DeepSeek responses carry reasoning_content on the
+    /// assistant message; the shared LLMModernResponseParser path used by
+    /// DeepSeekResponseParser must decode it into LLM.Message.reasoningContent.
+    func testDeepSeekNonStreaming_reasoningContentDecoded() throws {
+        let body = """
+        {
+            "id": "chatcmpl_test_n",
+            "object": "chat.completion",
+            "created": 0,
+            "model": "deepseek-v4-flash",
+            "choices": [
+                {
+                    "index": 0,
+                    "message": {
+                        "role": "assistant",
+                        "content": "final answer",
+                        "reasoning_content": "captured reasoning"
+                    },
+                    "finish_reason": "stop"
+                }
+            ]
+        }
+        """.data(using: .utf8)!
+        var parser = DeepSeekResponseParser()
+        let response = try XCTUnwrap(try parser.parse(data: body))
+        XCTAssertEqual(response.choiceMessages.first?.reasoningContent, "captured reasoning")
+        XCTAssertEqual(response.choiceMessages.first?.body.maybeContent, "final answer")
+    }
+
+    /// DeepSeekRequestBuilder must emit reasoning_content on assistant turns
+    /// when LLM.Message.reasoningContent is set, and only on assistant role.
+    func testDeepSeekRequestBuilder_emitsReasoningContent() throws {
+        let model = try model(named: "deepseek-v4-flash")
+        var assistant = LLM.Message(role: .assistant, content: "the visible reply")
+        assistant.reasoningContent = "the hidden thinking"
+        let messages: [LLM.Message] = [
+            LLM.Message(role: .user, content: "ask"),
+            assistant,
+            LLM.Message(role: .user, content: "follow-up")
+        ]
+        let builder = DeepSeekRequestBuilder(messages: messages,
+                                             provider: LLMProvider(model: model),
+                                             functions: [],
+                                             stream: false,
+                                             shouldThink: true)
+        let data = try builder.body()
+        let json = try XCTUnwrap(try JSONSerialization.jsonObject(with: data) as? [String: Any])
+        let wireMessages = try XCTUnwrap(json["messages"] as? [[String: Any]])
+        XCTAssertEqual(wireMessages.count, 3)
+        XCTAssertNil(wireMessages[0]["reasoning_content"], "user role must not carry reasoning")
+        XCTAssertEqual(wireMessages[1]["reasoning_content"] as? String, "the hidden thinking",
+                       "assistant role must carry reasoning")
+        XCTAssertNil(wireMessages[2]["reasoning_content"], "user role must not carry reasoning")
+    }
+
+    /// When LLM.Message has no reasoningContent, the wire body must omit the
+    /// field entirely (not encode it as null). DeepSeek's API may reject
+    /// `reasoning_content: null` as ambiguous; absence is the safe shape.
+    func testDeepSeekRequestBuilder_omitsReasoningWhenNil() throws {
+        let model = try model(named: "deepseek-v4-flash")
+        let messages: [LLM.Message] = [
+            LLM.Message(role: .user, content: "ask"),
+            LLM.Message(role: .assistant, content: "reply"),  // no reasoningContent
+        ]
+        let builder = DeepSeekRequestBuilder(messages: messages,
+                                             provider: LLMProvider(model: model),
+                                             functions: [],
+                                             stream: false,
+                                             shouldThink: false)
+        let data = try builder.body()
+        let raw = String(data: data, encoding: .utf8) ?? ""
+        XCTAssertFalse(raw.contains("reasoning_content"),
+                       "reasoning_content key must be absent (not null) when nil; got \(raw)")
+    }
+
+    /// A streaming chunk that carries both reasoning_content AND tool_calls in
+    /// the same delta must surface BOTH messages, not just the reasoning one.
+    /// DeepSeek docs say these arrive in separate deltas in practice, but
+    /// silently dropping a tool call if the server ever co-emits them would
+    /// break the agent loop with no visible error.
+    func testDeepSeekStreaming_reasoningAndToolCallInOneDelta_surfacesBoth() throws {
+        let chunk = """
+        {
+            "id": "chatcmpl_test_both",
+            "object": "chat.completion.chunk",
+            "created": 0,
+            "model": "deepseek-v4-flash",
+            "choices": [
+                {
+                    "index": 0,
+                    "delta": {
+                        "role": "assistant",
+                        "reasoning_content": "deliberating",
+                        "tool_calls": [
+                            {"index": 0, "id": "call_1", "type": "function",
+                             "function": {"name": "get_word", "arguments": "{}"}}
+                        ]
+                    },
+                    "finish_reason": null
+                }
+            ]
+        }
+        """.data(using: .utf8)!
+        var parser = DeepSeekStreamingResponseParser()
+        let response = try XCTUnwrap(try parser.parse(data: chunk))
+        XCTAssertEqual(response.choiceMessages.count, 2,
+                       "parser must surface reasoning AND tool-call as separate messages")
+        guard case .attachment(let attachment) = response.choiceMessages[0].body,
+              case .statusUpdate(.reasoningSummaryUpdate(let text)) = attachment.type else {
+            XCTFail("first message must be reasoning status update; got \(response.choiceMessages[0].body)")
+            return
+        }
+        XCTAssertEqual(text, "deliberating")
+        XCTAssertEqual(response.choiceMessages[1].function_call?.name, "get_word")
+    }
+
+    /// A reasoning-only assistant turn (no content, no tool_calls, just
+    /// reasoningContent) is the persisted shape that ChatListModel's `.commit`
+    /// case produces after harvesting statusUpdate subparts from a streamed
+    /// reasoning-only response. The request builder serializes the turn with
+    /// content="" so the wire body preserves user→assistant→user alternation
+    /// AND the reasoning round-trip. The empirical check against DeepSeek's
+    /// API lives in test_deepseek_thinking_reasoningOnlyAssistant_roundTrips
+    /// in the live harness; this offline test only locks the local wire shape.
+    func testDeepSeekRequestBuilder_reasoningOnlyAssistant_serializesEmptyContent() throws {
+        let model = try model(named: "deepseek-v4-flash")
+        var assistant = LLM.Message(role: .assistant, body: .multipart([]))
+        assistant.reasoningContent = "the hidden thinking"
+        let messages: [LLM.Message] = [
+            LLM.Message(role: .user, content: "ask"),
+            assistant,
+            LLM.Message(role: .user, content: "follow-up")
+        ]
+        let builder = DeepSeekRequestBuilder(messages: messages,
+                                             provider: LLMProvider(model: model),
+                                             functions: [],
+                                             stream: false,
+                                             shouldThink: true)
+        let data = try builder.body()
+        let json = try XCTUnwrap(try JSONSerialization.jsonObject(with: data) as? [String: Any])
+        let wireMessages = try XCTUnwrap(json["messages"] as? [[String: Any]])
+        XCTAssertEqual(wireMessages.count, 3,
+                       "all three turns must survive — dropping the assistant turn would leave consecutive user turns and break alternation; got \(wireMessages)")
+        XCTAssertEqual(wireMessages[1]["role"] as? String, "assistant")
+        XCTAssertEqual(wireMessages[1]["content"] as? String, "",
+                       "reasoning-only assistant turn must serialize with content=\"\" to keep alternation valid; got \(wireMessages[1])")
+        XCTAssertEqual(wireMessages[1]["reasoning_content"] as? String, "the hidden thinking",
+                       "reasoning must round-trip on the rebuilt assistant turn; got \(wireMessages[1])")
+    }
+
+    /// DeepSeek models without `.configurableThinking` (chat / coder / reasoner)
+    /// must omit the `thinking` block from the wire body rather than guessing
+    /// the older endpoints tolerate `thinking: {type: disabled}`. The v4 case
+    /// is covered by testDeepSeekRequestBuilder_emitsReasoningContent /
+    /// _omitsReasoningWhenNil (those models advertise configurableThinking).
+    func testDeepSeekRequestBuilder_omitsThinkingBlock_forNonThinkingModel() throws {
+        guard let model = AIMetadata.instance.models.first(where: {
+            $0.vendor == .deepSeek && !$0.features.contains(.configurableThinking)
+        }) else {
+            throw XCTSkip("no non-thinking DeepSeek model in AIMetadata")
+        }
+        let messages: [LLM.Message] = [LLM.Message(role: .user, content: "ask")]
+        let builder = DeepSeekRequestBuilder(messages: messages,
+                                             provider: LLMProvider(model: model),
+                                             functions: [],
+                                             stream: false,
+                                             shouldThink: nil)
+        let data = try builder.body()
+        let json = try XCTUnwrap(try JSONSerialization.jsonObject(with: data) as? [String: Any])
+        XCTAssertNil(json["thinking"],
+                     "thinking block must be absent for \(model.name); got \(json["thinking"] ?? "nil")")
+    }
+
     // MARK: - Responses request builder backward-compat fallback
 
     /// Pre-refactor persisted history can hold an .assistant message

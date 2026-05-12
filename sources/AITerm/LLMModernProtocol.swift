@@ -19,6 +19,15 @@ struct CompletionsMessage: Codable, Equatable {
     // referring back to the assistant's tool_calls[i].id. Legacy format used
     // role="function" with name and no id.
     var tool_call_id: String?
+    // DeepSeek v4 thinking mode: present only on assistant responses. Other
+    // chat-completions vendors don't emit it. This field is decode-only by
+    // construction: it is NOT in CodingKeys (the wire key set used by
+    // encode(to:)), so there is no path through which it can be serialized
+    // back to a server that doesn't accept it (e.g. OpenAI's chat-completions
+    // would reject the unknown field). DeepSeek's round-trip goes through
+    // DeepSeekRequestBuilder.Body.Message, not this type. To read it off the
+    // wire we use a separate single-case ReasoningKey in init(from:).
+    var reasoning_content: String?
 
     struct ToolCall: Codable, Equatable {
         var index: Int?
@@ -37,6 +46,8 @@ struct CompletionsMessage: Codable, Equatable {
         self.function_call = function_call
     }
 
+    // Wire keys consumed by both encode(to:) and init(from:). Deliberately
+    // does NOT include reasoning_content — see ReasoningKey below.
     enum CodingKeys: String, CodingKey {
         case role
         case functionName = "name"
@@ -44,6 +55,28 @@ struct CompletionsMessage: Codable, Equatable {
         case function_call
         case tool_calls
         case tool_call_id
+    }
+
+    // Read-only side channel for DeepSeek's reasoning_content. Kept out of
+    // CodingKeys so a future maintainer adding `try container.encodeIfPresent
+    // (reasoning_content, ...)` "for symmetry" would get a compile error
+    // (.reasoning_content isn't a CodingKey member) — making the OpenAI-safe
+    // invariant structural rather than convention.
+    private enum ReasoningKey: String, CodingKey {
+        case reasoning_content
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.role = try container.decodeIfPresent(LLM.Role.self, forKey: .role)
+        self.content = try container.decodeIfPresent(Content.self, forKey: .content)
+        self.functionName = try container.decodeIfPresent(String.self, forKey: .functionName)
+        self.function_call = try container.decodeIfPresent(LLM.FunctionCall.self, forKey: .function_call)
+        self.tool_calls = try container.decodeIfPresent([ToolCall].self, forKey: .tool_calls)
+        self.tool_call_id = try container.decodeIfPresent(String.self, forKey: .tool_call_id)
+        let reasoningContainer = try decoder.container(keyedBy: ReasoningKey.self)
+        self.reasoning_content = try reasoningContainer.decodeIfPresent(
+            String.self, forKey: .reasoning_content)
     }
 
     func encode(to encoder: Encoder) throws {
@@ -194,7 +227,8 @@ struct CompletionsMessage: Codable, Equatable {
                                role: role,
                                body: .functionOutput(name: functionName,
                                                      output: string,
-                                                     id: nil))
+                                                     id: nil),
+                               reasoningContent: reasoning_content)
         }
         // Build the assistant turn's body from whatever combination of text,
         // legacy function_call, and modern tool_calls the server returned.
@@ -248,7 +282,7 @@ struct CompletionsMessage: Codable, Equatable {
         case 1: body = bodies[0]
         default: body = .multipart(bodies)
         }
-        return LLM.Message(responseID: nil, role: role, body: body)
+        return LLM.Message(responseID: nil, role: role, body: body, reasoningContent: reasoning_content)
     }
 
     var coercedContentString: String {

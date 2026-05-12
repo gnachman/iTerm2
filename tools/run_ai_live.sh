@@ -123,6 +123,15 @@ else
         test_deepseek_toolCall_streaming
         test_deepseek_refusal_nonStreaming
         test_deepseek_refusal_streaming
+        test_deepseek_thinking_toolCall_nonStreaming
+        test_deepseek_thinking_toolCall_streaming
+        test_deepseek_thinking_smoke_captures_reasoning
+        test_deepseek_thinking_assistantTurn_roundTrips
+        test_deepseek_thinking_userToggle_propagates
+        test_deepseek_thinking_nonStreaming_deliversReasoningToDelegate
+        test_deepseek_thinking_nonStreaming_plainText_aiConversation_multiTurn
+        test_deepseek_thinking_userToggleOff_emitsDisabled
+        test_deepseek_thinking_reasoningOnlyAssistant_roundTrips
         test_openai_refusal_nonStreaming
         test_openai_refusal_streaming
         test_openai_imageDescribe

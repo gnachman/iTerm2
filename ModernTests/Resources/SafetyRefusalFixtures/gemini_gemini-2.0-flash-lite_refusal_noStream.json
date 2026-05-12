@@ -1,5 +1,5 @@
 {
-  "elapsedMs" : 1800,
+  "elapsedMs" : 346,
   "request" : {
     "body" : {
       "contents" : [
@@ -17,17 +17,17 @@
       "Content-Type" : "application\/json"
     },
     "method" : "POST",
-    "url" : "https:\/\/generativelanguage.googleapis.com\/v1beta\/models\/gemini-3-pro-preview:generateContent?key=REDACTED"
+    "url" : "https:\/\/generativelanguage.googleapis.com\/v1beta\/models\/gemini-2.0-flash-lite:generateContent?key=REDACTED"
   },
   "response" : {
     "body" : {
       "error" : {
-        "code" : 503,
-        "message" : "This model is currently experiencing high demand. Spikes in demand are usually temporary. Please try again later.",
-        "status" : "UNAVAILABLE"
+        "code" : 404,
+        "message" : "This model models\/gemini-2.0-flash-lite is no longer available to new users. Please update your code to use a newer model for the latest features and improvements.",
+        "status" : "NOT_FOUND"
       }
     },
-    "error" : "HTTP request failed with status 503."
+    "error" : "HTTP request failed with status 404."
   },
   "streamChunks" : [
 

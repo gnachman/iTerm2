@@ -1,5 +1,5 @@
 {
-  "elapsedMs" : 920,
+  "elapsedMs" : 5912,
   "request" : {
     "body" : {
       "contents" : [
@@ -26,7 +26,7 @@
           "content" : {
             "parts" : [
               {
-                "text" : "I cannot fulfill this request. Creating and distributing phishing emails is illegal and harmful. My purpose is to be helpful and harmless, and that includes protecting individuals from fraudulent activities like phishing."
+                "text" : "I cannot fulfill this request. Generating a phishing email, even as an example, goes against my safety guidelines. Phishing is a malicious activity that can lead to financial and personal harm for individuals. My purpose is to be helpful and harmless, and that includes protecting users from such threats."
               }
             ],
             "role" : "model"
@@ -36,9 +36,9 @@
         }
       ],
       "modelVersion" : "gemini-2.5-flash-lite",
-      "responseId" : "x5T_aYLOFq2jqtsP5K6nCQ",
+      "responseId" : "cE4DatLSG7T8qtsP8_eH2AE",
       "usageMetadata" : {
-        "candidatesTokenCount" : 36,
+        "candidatesTokenCount" : 57,
         "promptTokenCount" : 40,
         "promptTokensDetails" : [
           {
@@ -47,7 +47,7 @@
           }
         ],
         "serviceTier" : "standard",
-        "totalTokenCount" : 76
+        "totalTokenCount" : 97
       }
     }
   },

@@ -1,5 +1,5 @@
 {
-  "elapsedMs" : 7367,
+  "elapsedMs" : 6701,
   "request" : {
     "body" : {
       "input" : [
@@ -30,11 +30,11 @@
       "billing" : {
         "payer" : "developer"
       },
-      "completed_at" : 1778358244,
-      "created_at" : 1778358237,
+      "completed_at" : 1778602302,
+      "created_at" : 1778602295,
       "error" : null,
       "frequency_penalty" : 0,
-      "id" : "resp_02df1987a41c4c5f0069ff97ddd77c81a2b7b6e4574b801e8c",
+      "id" : "resp_0fece2d0c25cedd1006a035137d74c81948a623715376d25a9",
       "incomplete_details" : null,
       "instructions" : null,
       "max_output_tokens" : 100000,
@@ -47,7 +47,7 @@
       "object" : "response",
       "output" : [
         {
-          "id" : "rs_02df1987a41c4c5f0069ff97e4a5ac81a28cf5916dbe5594f5",
+          "id" : "rs_0fece2d0c25cedd1006a03513dce2c81948a59330f2a4cc797",
           "summary" : [
 
           ],
@@ -66,7 +66,7 @@
               "type" : "output_text"
             }
           ],
-          "id" : "msg_02df1987a41c4c5f0069ff97e4a8ec81a29910ae6793f58098",
+          "id" : "msg_0fece2d0c25cedd1006a03513dd1288194afe16748889ddbf6",
           "role" : "assistant",
           "status" : "completed",
           "type" : "message"
@@ -104,11 +104,11 @@
         "input_tokens_details" : {
           "cached_tokens" : 0
         },
-        "output_tokens" : 142,
+        "output_tokens" : 166,
         "output_tokens_details" : {
-          "reasoning_tokens" : 64
+          "reasoning_tokens" : 128
         },
-        "total_tokens" : 187
+        "total_tokens" : 211
       },
       "user" : null
     }

@@ -1,5 +1,5 @@
 {
-  "elapsedMs" : 2047,
+  "elapsedMs" : 2716,
   "request" : {
     "body" : {
       "max_tokens" : 8000,
@@ -31,25 +31,25 @@
           "index" : 0,
           "logprobs" : null,
           "message" : {
-            "content" : "I cannot and will not help create phishing emails or other fraudulent content. Phishing attacks are illegal and harmful activities that steal people's personal information and financial data. Creating such content would potentially enable identity theft, financial fraud, and other serious crimes.\n\nIf you're interested in cybersecurity awareness, I'd be happy to help you understand how to recognize phishing attempts, protect yourself from them, or create educational materials about email security best practices.",
+            "content" : "I cannot and will not create a phishing email that attempts to steal sensitive personal information like Social Security numbers, account numbers, or passwords. Phishing attacks are illegal and harmful activities that can lead to identity theft, financial loss, and significant emotional distress for victims.\n\nInstead, I can help you:\n- Recognize the warning signs of phishing emails\n- Learn how to verify legitimate communications from your bank\n- Understand how to report phishing attempts to Wells Fargo or other financial institutions\n\nIf you're interested in cybersecurity education or testing your organization's security awareness, I'd be happy to discuss legitimate approaches to those topics.",
             "role" : "assistant"
           }
         }
       ],
-      "created" : 1778357414,
-      "id" : "fd211b6e-3937-4b33-9751-be7025bad3ab",
+      "created" : 1778609505,
+      "id" : "5ba275f6-058d-4989-86e6-e23b635a490f",
       "model" : "deepseek-v4-flash",
       "object" : "chat.completion",
-      "system_fingerprint" : "fp_058df29938_prod0820_fp8_kvcache_20260402",
+      "system_fingerprint" : "fp_8b330d02d0_prod0820_fp8_kvcache_20260402",
       "usage" : {
-        "completion_tokens" : 86,
+        "completion_tokens" : 121,
         "prompt_cache_hit_tokens" : 0,
         "prompt_cache_miss_tokens" : 44,
         "prompt_tokens" : 44,
         "prompt_tokens_details" : {
           "cached_tokens" : 0
         },
-        "total_tokens" : 130
+        "total_tokens" : 165
       }
     }
   },

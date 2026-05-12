@@ -14,6 +14,15 @@ struct AIConversation {
         var createVectorStoreCompletion: ((Result<String, Error>) -> ())?
         var uploadFileCompletion: ((Result<String, Error>) -> ())?
         var addFilesToVectorStoreCompletion: ((Error?) -> ())?
+        // Stashed by didReceiveReasoning so the completion closure can attach
+        // it to the assistant Message it appends to AIConversation.messages.
+        // Required so DeepSeek's reasoning_content can round-trip across user
+        // turns on plain-text (non-tool-call) replies.
+        var pendingReasoning: String?
+
+        func aitermController(_ sender: AITermController, didReceiveReasoning reasoning: String) {
+            pendingReasoning = reasoning
+        }
 
         func aitermControllerDidCancelOutstandingRequest(_ sender: AITermController) {
             guard busy else {
@@ -302,6 +311,12 @@ struct AIConversation {
                            completion: @escaping (Result<AIConversation, Error>) -> ()) {
         precondition(!messages.isEmpty)
 
+        // Wipe any reasoning carried over from a prior request on this same
+        // Delegate. The upfront wipe is the single source of truth for both
+        // success and failure paths (neither branch of the completion below
+        // touches pendingReasoning); without it a subsequent turn whose
+        // vendor/model emits no reasoning would inherit the prior turn's text.
+        delegate.pendingReasoning = nil
         let controller = self.controller
         let messages = self.truncatedMessages
         prepare { error in
@@ -334,7 +349,7 @@ struct AIConversation {
             }
         }
 
-        delegate.completion = { [weak controller] result in
+        delegate.completion = { [weak controller, weak delegate] result in
             switch result {
             case .success(let text):
                 if !text.isEmpty {
@@ -346,7 +361,8 @@ struct AIConversation {
                 let message = AITermController.Message(
                     responseID: controller?.previousResponseID,
                     role: .assistant,
-                    body: accumulator)
+                    body: accumulator,
+                    reasoningContent: delegate?.pendingReasoning)
                 amended.messages.append(message)
                 completion(.success(amended))
                 break

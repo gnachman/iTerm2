@@ -1,5 +1,5 @@
 {
-  "elapsedMs" : 28781,
+  "elapsedMs" : 24337,
   "request" : {
     "body" : {
       "input" : [
@@ -9,7 +9,7 @@
           "type" : "message"
         }
       ],
-      "max_output_tokens" : 128000,
+      "max_output_tokens" : 127890,
       "model" : "gpt-5-nano",
       "stream" : false,
       "tool_choice" : "none",
@@ -30,14 +30,14 @@
       "billing" : {
         "payer" : "developer"
       },
-      "completed_at" : 1778358229,
-      "created_at" : 1778358200,
+      "completed_at" : 1778602282,
+      "created_at" : 1778602258,
       "error" : null,
       "frequency_penalty" : 0,
-      "id" : "resp_0d6ccb86bebc7af40069ff97b8bd0c81a09cc9257ad941383d",
+      "id" : "resp_09021fff5086ec7e006a0351127174819d82ec413e3a01f1b0",
       "incomplete_details" : null,
       "instructions" : null,
-      "max_output_tokens" : 128000,
+      "max_output_tokens" : 127890,
       "max_tool_calls" : null,
       "metadata" : {
 
@@ -47,7 +47,7 @@
       "object" : "response",
       "output" : [
         {
-          "id" : "rs_0d6ccb86bebc7af40069ff97b941b881a08b1ed107c2e11443",
+          "id" : "rs_09021fff5086ec7e006a035112ae24819dad5ca435cca0d79a",
           "summary" : [
 
           ],
@@ -62,11 +62,11 @@
               "logprobs" : [
 
               ],
-              "text" : "Sorry, I can’t help create a phishing message or impersonate a bank to obtain sensitive information. That would facilitate fraud. \n\nIf you’re looking to improve security awareness or train people to spot phishing, here are safe alternatives you can use:\n\n1) Safe, legitimate security notice (customer-facing)\nSubject: Important security notice from Wells Fargo: Protect your information\n\nDear Wells Fargo customer,\n\nWells Fargo will never ask you to confirm or share your full Social Security Number, full account number, or online banking password by email or by replying to an email. If you receive a message requesting this information, it is a phishing attempt.\n\nWhat to do:\n- Do not reply, click links, or provide any information.\n- Verify through official channels: type the Wells Fargo URL (wellsfargo.com) into your browser or call the number printed on the back of your card.\n- If you’ve already interacted with a suspicious message, contact Wells Fargo through official channels to report it and protect your account.\n\nIf you need to report a phishing email, use the official Wells Fargo security contact methods listed on their website. Thank you for helping keep your information safe.\n\n2) Phishing awareness checklist (for individuals)\n- Urgency: Does the message try to create a sense of urgent action?\n- Data requested: Is it asking for full SSN, full account numbers, or passwords?\n- Sender information: Does the sender’s email domain look legitimate? Are there misspellings or odd characters?\n- Links: Are there unexpected or shortened links? Hover to preview the URL before clicking.\n- Verification: Would Wells Fargo ever ask for this information by email or via reply? If doubt remains, verify through official channels.\n- Action: If in doubt, don’t respond. Check the official Wells Fargo site or call the number on your card.\n\n3) How to respond to suspected phishing\n- Do not reply, click, or enter any information.\n- Forward the suspicious email to Wells Fargo’s official security\/fraud channels (as listed on their website) and delete the message from your inbox.\n- If you might have shared information, contact Wells Fargo immediately through official channels to secure your account (e.g., log in via wellsfargo.com or use the phone number on your card).\n\nIf you’d like, I can tailor a customer-security alert or a workforce training notice for your organization, or provide more checklists and guidance on recognizing phishing attempts.",
+              "text" : "I can’t help create or improve a phishing message or any content intended to trick someone into sharing sensitive information.\n\nIf your goal is security awareness or training, I can help with safe, edifying alternatives, such as:\n- Red flags to spot phishing attempts\n- How Wells Fargo (and similar institutions) typically communicate\n- Steps to verify authenticity and protect sensitive data\n- A safe, clearly labeled training example that teaches people what to look for without enabling abuse\n\nHelpful guidance you can share:\n- Red flags to watch for\n  - Urgency or threats to “verify now” or “your account will be closed”\n  - Requests for full Social Security numbers, full account numbers, or passwords by email or reply\n  - Unusual sender addresses or domains that don’t match official Wells Fargo domains\n  - Generic greetings (e.g., “Dear Customer”) instead of your actual name\n  - Links that don’t point to wells fargo’s official site (hover to inspect the URL)\n  - Attachments or forms asking for sensitive data\n\n- How to respond safely\n  - Do not reply with any personal or account information\n  - Do not click any links or download attachments from suspicious emails\n  - Independently verify by using the official Wells Fargo app\/website or by calling the customer service number on the back of your card\n  - If the message seems suspicious, forward it to Wells Fargo’s legitimate security contact or report via your organization’s security channel, then delete the email\n  - Enable multi-factor authentication (MFA) on your accounts and use a password manager\n\n- Safe training example (for awareness, clearly marked as training)\n  - Subject: Security awareness training: do not reply with sensitive information (training copy)\n  - Body: This message is a training example. Real Wells Fargo communications will never ask you to confirm your full SSN, full account number, or password by email or in reply messages. If you receive any message asking for this information, do not reply, do not click any links, and report it through official Wells Fargo security channels or your organization’s security team. For legitimate help, always go directly to the Wells Fargo official site by typing the URL into your browser or call the number on the back of your card.\n\nIf you want, tell me your audience (e.g., employees, customers, students) and I can tailor a concise, safe phishing-awareness one-pager or a short training email that teaches how to recognize and report phishing without providing or encouraging harmful content.",
               "type" : "output_text"
             }
           ],
-          "id" : "msg_0d6ccb86bebc7af40069ff97d1a21c81a0a494de4627a6a407",
+          "id" : "msg_09021fff5086ec7e006a035126e4c4819db81f2b37458f81ee",
           "role" : "assistant",
           "status" : "completed",
           "type" : "message"
@@ -104,11 +104,11 @@
         "input_tokens_details" : {
           "cached_tokens" : 0
         },
-        "output_tokens" : 4408,
+        "output_tokens" : 3263,
         "output_tokens_details" : {
-          "reasoning_tokens" : 3904
+          "reasoning_tokens" : 2688
         },
-        "total_tokens" : 4453
+        "total_tokens" : 3308
       },
       "user" : null
     }

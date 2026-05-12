@@ -24,6 +24,24 @@ protocol AITermControllerDelegate: AnyObject {
     func aitermController(_ sender: AITermController,
                           willInvokeFunction function: LLM.AnyFunction)
     func aitermControllerDidCancelOutstandingRequest(_ sender: AITermController)
+    /// Final accumulated reasoning text from a thinking-enabled response.
+    ///
+    /// Contract: fires AT MOST ONCE per assistant turn, carrying the full
+    /// reasoning text for that turn (not a delta). Fires after the body has
+    /// been parsed (non-streaming) or the stream has ended (streaming), and
+    /// only when the assistant turn does NOT contain a function call —
+    /// function-call paths preserve reasoning internally via
+    /// doFunctionCall's `amended.append(message)`. Delegates should treat
+    /// each call as authoritative for that turn (replace, not append). The
+    /// method has a default empty implementation; delegates that don't care
+    /// about reasoning don't have to implement it.
+    func aitermController(_ sender: AITermController,
+                          didReceiveReasoning reasoning: String)
+}
+
+extension AITermControllerDelegate {
+    func aitermController(_ sender: AITermController,
+                          didReceiveReasoning reasoning: String) {}
 }
 
 struct PendingCommandCanceled: Error {}
@@ -702,6 +720,16 @@ class AITermController {
             if let functionCall = accumulatingMessage.function_call {
                 doFunctionCall(accumulatingMessage, call: functionCall)
             } else {
+                // For streaming non-tool-call replies, the accumulator has
+                // gathered the full reasoning scalar across deltas. Surface
+                // it BEFORE the end-of-stream signal so AIConversation can
+                // attach it to the persisted assistant Message. Tool-call
+                // paths preserve reasoning via doFunctionCall (its
+                // `amended.append(message)` keeps reasoningContent intact)
+                // so they don't need this hook.
+                if let reasoning = accumulatingMessage.reasoningContent, !reasoning.isEmpty {
+                    delegate?.aitermController(self, didReceiveReasoning: reasoning)
+                }
                 delegate?.aitermController(self, didStreamUpdate: nil)
             }
             state = .ground
@@ -768,18 +796,36 @@ class AITermController {
                             if let id = response.newlyCreatedResponseID {
                                 previousResponseID = id
                             }
-                            // The Responses API can have choiceless messages, such as type=response.created
-                            if let choice = response.choiceMessages.first {
+                            // The Responses API can have choiceless messages, such as type=response.created.
+                            // Iterate over every choice (not just .first) so parsers that surface multiple
+                            // messages from a single delta — e.g. DeepSeek streaming a delta with both
+                            // reasoning_content and tool_calls — get all of them applied to the accumulator
+                            // in order, instead of silently dropping the trailing messages.
+                            for choice in response.choiceMessages {
                                 if let role = choice.role {
                                     accumulatingMessage.role = role
                                 }
+                                // Reasoning is a sibling scalar, not a Body
+                                // part, so Body.tryAppend doesn't see it.
+                                // Concatenate deltas across chunks here so
+                                // the final assistant turn carries the full
+                                // reasoning text for round-trip on the next
+                                // request (required by DeepSeek's API).
+                                if let reasoning = choice.reasoningContent, !reasoning.isEmpty {
+                                    accumulatingMessage.reasoningContent =
+                                        (accumulatingMessage.reasoningContent ?? "") + reasoning
+                                }
                                 if !accumulatingMessage.tryAppend(choice.body) {
                                     DLog("Failed to append \(choice.body) to \(accumulatingMessage). Drain and start a new message.")
+                                    // drain() resets accumulatingMessage.body but does not
+                                    // touch reasoningContent, so it's safe to read directly
+                                    // from accumulatingMessage after the call.
                                     drain()
                                     accumulatingMessage = LLM.Message(
                                         responseID: previousResponseID,
                                         role: choice.role,
-                                        body: choice.body)
+                                        body: choice.body,
+                                        reasoningContent: accumulatingMessage.reasoningContent)
                                     DLog("accumulating message is now\n\(accumulatingMessage)")
                                 } else {
                                     DLog("Appended \(choice.body). accumulating message is now\n\(accumulatingMessage)")
@@ -836,6 +882,14 @@ class AITermController {
                 delegate?.aitermController(self, didFailWithError: AIError("Empty response from server"))
                 return
             }
+            // Surface the reasoning scalar BEFORE offerChoice so the delegate
+            // can stash it and attach it to the persisted assistant Message
+            // it builds when offerChoice fires. Without this, DeepSeek's
+            // required round-trip of reasoning_content on the next user turn
+            // breaks for plain-text replies (issue 12858 follow-up).
+            if let reasoning = messageToDispatch.reasoningContent, !reasoning.isEmpty {
+                delegate?.aitermController(self, didReceiveReasoning: reasoning)
+            }
             state = .ground
             delegate?.aitermController(self, offerChoice: choice)
         } catch {
@@ -860,6 +914,17 @@ class AITermController {
         case .querySent(let messages, let streamParserState):
             let shouldStream = streamParserState != nil
             var amended = messages
+            // The full `message` (including its reasoningContent scalar) is
+            // appended here so the on-the-wire follow-up echoes
+            // reasoning_content back to the vendor — which DeepSeek requires
+            // when thinking mode is enabled. Note: didReceiveReasoning is
+            // intentionally NOT fired for this intermediate tool-call assistant
+            // turn (it only fires on the FINAL non-tool-call turn). That's
+            // fine for AIConversation.messages today because only the final
+            // turn is persisted, but if a future contributor adds a path that
+            // persists intermediate tool-call assistant turns to chat history,
+            // they'll need to also surface reasoning via didReceiveReasoning
+            // (or otherwise propagate `message.reasoningContent`) from here.
             amended.append(message)
             if let impl = functions.first(where: { $0.decl.name == functionCall.name }) {
                 DLog("Invoke function with arguments \(functionCall.arguments ?? "")")

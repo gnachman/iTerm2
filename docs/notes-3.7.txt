@@ -214,6 +214,12 @@ AI Improvements:
 - AI chat can connect to LAN-hosted models
   over HTTP.
 - Add DeepSeek v4-flash and v4-pro models.
+- DeepSeek v4 thinking mode is now supported.
+  Toggle the lightbulb in the chat toolbar to
+  enable. Reasoning summaries appear live in
+  the conversation and round-trip correctly
+  on multi-turn tool calls (fixes a 400 from
+  the API when reasoning_content was missing).
 - Chat-completions function calling now uses
   the modern tools/tool_choice request shape
   instead of the deprecated functions/

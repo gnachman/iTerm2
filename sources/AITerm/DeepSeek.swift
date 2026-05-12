@@ -10,6 +10,7 @@ struct DeepSeekRequestBuilder {
     var provider: LLMProvider
     var functions = [LLM.AnyFunction]()
     var stream: Bool
+    var shouldThink: Bool? = nil
 
     private struct Body: Codable {
         var model: String?
@@ -35,6 +36,15 @@ struct DeepSeekRequestBuilder {
         var tool_call_id: String?
         var content: String?
         var tool_calls: [ToolCall]?
+        // DeepSeek requires this echoed back on assistant turns when thinking
+        // mode is enabled, or it returns 400 on multi-turn tool calls. Emitted
+        // only when the source LLM.Message has a non-empty reasoningContent
+        // (set by DeepSeekStreamingResponseParser / LLMModernResponseParser).
+        // Every stored property of this Message is Optional<T>, so Swift's
+        // synthesized Codable conformance already omits nil keys
+        // (encodeIfPresent semantics) — that's the shape DeepSeek's API
+        // expects for non-thinking conversations.
+        var reasoning_content: String?
 
         struct ToolCall: Codable {
             var id: String?
@@ -47,6 +57,7 @@ struct DeepSeekRequestBuilder {
             case system
             case tool
         }
+
         init?(_ message: LLM.Message) {
             role = switch message.role {
             case .user: .user
@@ -54,6 +65,14 @@ struct DeepSeekRequestBuilder {
             case .system: .system
             case .function: .tool
             case .none: nil
+            }
+            // Round-trip reasoning_content on assistant turns only. Skipping
+            // user/tool roles avoids accidentally promoting display state into
+            // a wire field the server doesn't accept there.
+            if message.role == .assistant,
+               let reasoning = message.reasoningContent,
+               !reasoning.isEmpty {
+                reasoning_content = reasoning
             }
             switch message.body {
             case .uninitialized:
@@ -142,6 +161,22 @@ struct DeepSeekRequestBuilder {
                     tool_call_id = collectedToolCallID
                 }
             }
+            // A reasoning-only assistant turn (no content, no tool_calls, only
+            // reasoning_content) is the persisted shape after the ChatListModel
+            // .commit case harvests statusUpdate subparts from a streamed
+            // reasoning-only response. We emit content="" so the wire body
+            // preserves user→assistant→user alternation and the reasoning
+            // round-trip survives. The shape was verified against the live
+            // DeepSeek API by test_deepseek_thinking_reasoningOnlyAssistant_roundTrips
+            // — DeepSeek accepts {"role":"assistant","content":"","reasoning_content":"..."}
+            // and replies normally. Don't change this assignment without
+            // re-running that live test.
+            if role == .assistant
+                && content == nil
+                && tool_calls == nil
+                && reasoning_content != nil {
+                content = ""
+            }
         }
     }
 
@@ -156,6 +191,19 @@ struct DeepSeekRequestBuilder {
         let maybeDecls = functions.isEmpty ? nil : functions.map {
             Tool(function: $0.decl)
         }
+        // Only thinking-capable models (DeepSeek v4) get an explicit `thinking`
+        // block. For v4 we always emit one so the server-side default (enabled)
+        // never leaks through: shouldThink == true → enabled, otherwise disabled.
+        // Older DeepSeek models (chat/coder/reasoner) have no server-side
+        // thinking default and the field isn't documented on those endpoints,
+        // so omit it entirely rather than guessing they tolerate an unknown key.
+        // The reasoning_content round-trip required by DeepSeek when thinking
+        // is on is handled by Message.reasoning_content (sourced from
+        // LLM.Message.reasoningContent on assistant turns).
+        // https://api-docs.deepseek.com/guides/thinking_mode#input-and-output-parameters
+        let thinkingBlock: Thinking? = provider.model.features.contains(.configurableThinking)
+            ? Thinking(type: shouldThink == true ? .enabled : .disabled)
+            : nil
         let body = Body(
             model: provider.dynamicModelsSupported ? provider.model.name : nil,
             messages: messages.compactMap { Message($0) },
@@ -163,13 +211,7 @@ struct DeepSeekRequestBuilder {
             tools: maybeDecls,
             function_call: functions.isEmpty ? nil : "auto",
             stream: stream,
-            // DeepSeek v4 enables thinking mode by default, which adds a reasoning_content
-            // field to assistant messages. Their API requires that field to be echoed back
-            // in subsequent requests whenever tool calls are involved, or it returns 400.
-            // LLM.Message has no place to store reasoning_content yet, so we disable
-            // thinking to avoid breaking multi-turn tool-call conversations.
-            // https://api-docs.deepseek.com/guides/thinking_mode#input-and-output-parameters
-            thinking: Thinking(type: .disabled))
+            thinking: thinkingBlock)
         DLog("REQUEST:\n\(body)")
         if body.max_tokens < 2 {
             throw AIError.requestTooLarge
@@ -227,6 +269,10 @@ struct DeepSeekStreamingResponseParser: LLMStreamingResponseParser {
                 var role: LLM.Role?
                 var content: String?
                 var tool_calls: [ToolCall]?
+                // DeepSeek streams reasoning as its own incremental field,
+                // distinct from `content`. A single delta carries either
+                // reasoning or content, never both interleaved.
+                var reasoning_content: String?
 
                 struct ToolCall: Codable {
                     var index: Int
@@ -245,22 +291,47 @@ struct DeepSeekStreamingResponseParser: LLMStreamingResponseParser {
                 // Sent at the end of a function call
                 return []
             }
+            // Reasoning deltas typically arrive in their own deltas (DeepSeek
+            // docs describe `reasoning_content` and `content` as separate
+            // streams), but the parser handles co-arrival defensively: if a
+            // single delta carries both, surface both messages so AITermController
+            // applies them in order. Surfaces reasoning via the existing
+            // .statusUpdate(.reasoningSummaryUpdate) attachment path so the chat
+            // cell renders it the same way OpenAI reasoning summaries do, and
+            // also stashes the reasoning string on LLM.Message.reasoningContent
+            // so the accumulator in AITerm.swift can fold it into the final
+            // assistant turn for round-trip on the next request.
+            var messages: [LLM.Message] = []
+            if let reasoningDelta = choice.delta.reasoning_content, !reasoningDelta.isEmpty {
+                var msg = LLM.Message(
+                    role: .assistant,
+                    body: .attachment(.init(
+                        inline: true,
+                        id: "deepseek-reasoning",
+                        type: .statusUpdate(.reasoningSummaryUpdate(reasoningDelta)))))
+                msg.reasoningContent = reasoningDelta
+                messages.append(msg)
+            }
             if let call = choice.delta.tool_calls?.first {
                 let function = call.function
                 let functionCall = LLM.FunctionCall(
                     name: function?.name,
                     arguments: function?.arguments,
                     id: call.id)
-                return [LLM.Message(
+                messages.append(LLM.Message(
                     role: .assistant,
                     content: choice.delta.content,
                     functionCallID: call.id.map { .init(callID: $0, itemID: "") },
-                    function_call: functionCall)]
-            } else {
-                return [LLM.Message(
+                    function_call: functionCall))
+            } else if messages.isEmpty || choice.delta.content != nil {
+                // Emit a content message when there's actual content, or when
+                // there's no reasoning message yet (preserves the prior empty-delta
+                // behavior of returning a placeholder assistant message).
+                messages.append(LLM.Message(
                     role: .assistant,
-                    content: choice.delta.content)]
+                    content: choice.delta.content))
             }
+            return messages
         }
     }
     var parsedResponse: DeepSeekStreamingResponse?

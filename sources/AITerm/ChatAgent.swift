@@ -144,7 +144,8 @@ class ChatAgent {
         return AITermController.Message(
             responseID: message.responseID,
             role: AITermController.Message.role(from: message),
-            body: body)
+            body: body,
+            reasoningContent: message.agentReasoning)
     }
 
 
@@ -382,10 +383,18 @@ class ChatAgent {
         guard let text = conversation.messages.last?.body.content else {
             return nil
         }
-        return self.message(completionText: text,
-                            userMessage: userMessage,
-                            streaming: false,
-                            responseID: conversation.messages.last?.responseID)
+        var msg = self.message(completionText: text,
+                               userMessage: userMessage,
+                               streaming: false,
+                               responseID: conversation.messages.last?.responseID)
+        // Carry DeepSeek-style reasoning content through to the persisted chat
+        // message so reopening the chat can round-trip it on the next request.
+        // Streaming runs harvest reasoning in Message.removeStatusUpdates;
+        // this path handles the non-streaming completion.
+        if let reasoning = conversation.messages.last?.reasoningContent, !reasoning.isEmpty {
+            msg?.agentReasoning = reasoning
+        }
+        return msg
     }
 
     // Return a new message from the agent containing the content of the last message in result.
