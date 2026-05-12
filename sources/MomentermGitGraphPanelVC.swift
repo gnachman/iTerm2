@@ -12,8 +12,23 @@
 
 import AppKit
 
+@objc(MomentermGitGraphPanelDelegate)
+protocol MomentermGitGraphPanelDelegate: AnyObject {
+    /// Toggle whether the panel is embedded inline or in its own floating window.
+    func momentermGitGraphPanelRequestDetachToggle()
+
+    /// Close (hide) the panel.
+    func momentermGitGraphPanelRequestClose()
+}
+
 @objc(MomentermGitGraphPanelVC)
 final class MomentermGitGraphPanelVC: NSViewController, NSTableViewDataSource, NSTableViewDelegate, NSSearchFieldDelegate {
+
+    @objc weak var delegate: MomentermGitGraphPanelDelegate?
+
+    @objc var isDetached: Bool = false {
+        didSet { refreshDetachButtonIcon() }
+    }
 
     private var currentCwd: String = ""
     private var commits: [MomentermGitCommit] = []
@@ -23,7 +38,9 @@ final class MomentermGitGraphPanelVC: NSViewController, NSTableViewDataSource, N
     private let header = NSView()
     private let cwdLabel = NSTextField(labelWithString: "(no repository)")
     private let searchField = NSSearchField()
-    private let refreshButton = NSButton(title: "↻", target: nil, action: nil)
+    private let refreshButton = NSButton()
+    private let detachButton = NSButton()
+    private let closeButton = NSButton()
 
     private let scrollView = NSScrollView()
     private let tableView = NSTableView()
@@ -74,6 +91,21 @@ final class MomentermGitGraphPanelVC: NSViewController, NSTableViewDataSource, N
         MomentermGitGraphPoller.shared.refresh(cwd: currentCwd)
     }
 
+    @objc private func detachToggle() {
+        delegate?.momentermGitGraphPanelRequestDetachToggle()
+    }
+
+    @objc private func closeTapped() {
+        delegate?.momentermGitGraphPanelRequestClose()
+    }
+
+    private func refreshDetachButtonIcon() {
+        let cfg = NSImage.SymbolConfiguration(pointSize: 12, weight: .medium)
+        let symbol = isDetached ? "rectangle.portrait.and.arrow.forward" : "rectangle.portrait.and.arrow.right"
+        detachButton.image = NSImage(systemSymbolName: symbol, accessibilityDescription: nil)?.withSymbolConfiguration(cfg)
+        detachButton.toolTip = isDetached ? "Re-attach to terminal window" : "Detach into a separate window"
+    }
+
     // MARK: - Setup
 
     private func setupSubviews() {
@@ -92,17 +124,29 @@ final class MomentermGitGraphPanelVC: NSViewController, NSTableViewDataSource, N
         searchField.controlSize = .small
         searchField.font = .systemFont(ofSize: 11)
 
-        refreshButton.translatesAutoresizingMaskIntoConstraints = false
-        refreshButton.bezelStyle = .regularSquare
-        refreshButton.isBordered = false
-        refreshButton.font = .systemFont(ofSize: 14, weight: .medium)
-        refreshButton.target = self
-        refreshButton.action = #selector(refresh)
-        refreshButton.toolTip = "Refresh git graph"
+        let cfg = NSImage.SymbolConfiguration(pointSize: 12, weight: .medium)
+        func symBtn(_ btn: NSButton, sym: String, selector: Selector, tip: String) {
+            btn.translatesAutoresizingMaskIntoConstraints = false
+            btn.image = NSImage(systemSymbolName: sym, accessibilityDescription: tip)?.withSymbolConfiguration(cfg)
+            btn.imagePosition = .imageOnly
+            btn.bezelStyle = .regularSquare
+            btn.isBordered = false
+            btn.contentTintColor = .secondaryLabelColor
+            btn.target = self
+            btn.action = selector
+            btn.toolTip = tip
+        }
+        symBtn(refreshButton, sym: "arrow.clockwise", selector: #selector(refresh), tip: "Refresh git graph")
+        symBtn(detachButton, sym: "rectangle.portrait.and.arrow.right",
+               selector: #selector(detachToggle), tip: "Detach into a separate window")
+        symBtn(closeButton, sym: "xmark", selector: #selector(closeTapped), tip: "Close panel")
+        refreshDetachButtonIcon()
 
         header.addSubview(cwdLabel)
         header.addSubview(searchField)
         header.addSubview(refreshButton)
+        header.addSubview(detachButton)
+        header.addSubview(closeButton)
 
         scrollView.translatesAutoresizingMaskIntoConstraints = false
         scrollView.hasVerticalScroller = true
@@ -144,12 +188,20 @@ final class MomentermGitGraphPanelVC: NSViewController, NSTableViewDataSource, N
             cwdLabel.trailingAnchor.constraint(lessThanOrEqualTo: searchField.leadingAnchor, constant: -8),
 
             searchField.centerYAnchor.constraint(equalTo: header.centerYAnchor),
-            searchField.widthAnchor.constraint(equalToConstant: 160),
+            searchField.widthAnchor.constraint(equalToConstant: 140),
             searchField.trailingAnchor.constraint(equalTo: refreshButton.leadingAnchor, constant: -6),
 
             refreshButton.centerYAnchor.constraint(equalTo: header.centerYAnchor),
-            refreshButton.trailingAnchor.constraint(equalTo: header.trailingAnchor, constant: -8),
+            refreshButton.trailingAnchor.constraint(equalTo: detachButton.leadingAnchor, constant: -2),
             refreshButton.widthAnchor.constraint(equalToConstant: 22),
+
+            detachButton.centerYAnchor.constraint(equalTo: header.centerYAnchor),
+            detachButton.trailingAnchor.constraint(equalTo: closeButton.leadingAnchor, constant: -2),
+            detachButton.widthAnchor.constraint(equalToConstant: 22),
+
+            closeButton.centerYAnchor.constraint(equalTo: header.centerYAnchor),
+            closeButton.trailingAnchor.constraint(equalTo: header.trailingAnchor, constant: -8),
+            closeButton.widthAnchor.constraint(equalToConstant: 22),
 
             scrollView.topAnchor.constraint(equalTo: header.bottomAnchor),
             scrollView.leadingAnchor.constraint(equalTo: view.leadingAnchor),

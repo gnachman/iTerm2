@@ -53,9 +53,12 @@ final class MomentermBottomStripView: NSView {
     }
 
     private func configure(button: NSButton, symbolName: String, title: String, selector: Selector) {
-        button.image = NSImage(systemSymbolName: symbolName, accessibilityDescription: title)
-        button.title = "  \(title)"
+        let symbolImage = NSImage(systemSymbolName: symbolName, accessibilityDescription: title)
+        let symbolConfig = NSImage.SymbolConfiguration(pointSize: 11, weight: .medium)
+        button.image = symbolImage?.withSymbolConfiguration(symbolConfig)
+        button.title = title
         button.imagePosition = .imageLeading
+        button.imageHugsTitle = true
         button.font = .systemFont(ofSize: 11, weight: .medium)
         button.contentTintColor = .secondaryLabelColor
         button.isBordered = false
@@ -63,6 +66,7 @@ final class MomentermBottomStripView: NSView {
         button.target = self
         button.action = selector
         button.toolTip = title
+        button.alignment = .left
     }
 
     override func layout() {
@@ -73,14 +77,17 @@ final class MomentermBottomStripView: NSView {
     private func layoutContents() {
         let h = bounds.height
         topLine.frame = NSRect(x: 0, y: h - 0.5, width: bounds.width, height: 0.5)
-        // Left-anchored buttons under the sidebar area.
+        // Left-anchored buttons sized to their intrinsic content.
         let buttonH: CGFloat = h - 8
         let buttonY: CGFloat = 4
-        let graphW: CGFloat = 96
-        let browserW: CGFloat = 92
         let leftMargin: CGFloat = 10
+        let gap: CGFloat = 12
+        let graphSize = graphButton.intrinsicContentSize
+        let browserSize = browserButton.intrinsicContentSize
+        let graphW = max(72, graphSize.width + 8)
+        let browserW = max(72, browserSize.width + 8)
         graphButton.frame = NSRect(x: leftMargin, y: buttonY, width: graphW, height: buttonH)
-        browserButton.frame = NSRect(x: leftMargin + graphW + 8, y: buttonY, width: browserW, height: buttonH)
+        browserButton.frame = NSRect(x: leftMargin + graphW + gap, y: buttonY, width: browserW, height: buttonH)
     }
 
     /// Mark which inline panel is currently visible so the button shows an

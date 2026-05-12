@@ -249,6 +249,7 @@ typedef NS_ENUM(int, iTermShouldHaveTitleSeparator) {
     MomentermEmbeddedSidebarDelegate,
     MomentermEmbeddedFileTreeDelegate,
     MomentermBrowserPanelDelegate,
+    MomentermGitGraphPanelDelegate,
     MomentermBottomStripDelegate,
     NSComboBoxDelegate,
     NSFontChanging,
@@ -456,6 +457,10 @@ typedef NS_ENUM(int, iTermShouldHaveTitleSeparator) {
 
     // MomenTerm: full-width bottom strip with inline-panel toggle buttons
     MomentermBottomStripView *_momentermBottomStripView;
+
+    // MomenTerm: floating windows that host the inline panels when detached
+    NSWindow *_momentermBrowserDetachedWindow;
+    NSWindow *_momentermGitGraphDetachedWindow;
 
 }
 
@@ -768,6 +773,7 @@ typedef NS_ENUM(int, iTermShouldHaveTitleSeparator) {
 
     // MomenTerm: right-side inline Git Graph panel (mutually exclusive with browser).
     _momentermGitGraphPanelVC = [[MomentermGitGraphPanelVC alloc] init];
+    _momentermGitGraphPanelVC.delegate = self;
     _contentView.momentermGitGraphPanelContainer = _momentermGitGraphPanelVC.view;
     _contentView.shouldShowMomentermGitGraphPanel = NO;
 
@@ -1222,6 +1228,103 @@ typedef NS_ENUM(int, iTermShouldHaveTitleSeparator) {
     [self it_setMomentermRightPanel:@"browser"];
 }
 
+// MARK: - Browser / Git Graph detach + close
+
+- (void)momentermBrowserPanelRequestDetachToggle {
+    [self it_toggleDetachForPanel:@"browser"];
+}
+
+- (void)momentermBrowserPanelRequestClose {
+    if (_momentermBrowserDetachedWindow) {
+        [_momentermBrowserDetachedWindow close];
+        return;
+    }
+    _contentView.shouldShowMomentermBrowserPanel = NO;
+    [_momentermBottomStripView setActivePanel:@""];
+}
+
+- (void)momentermGitGraphPanelRequestDetachToggle {
+    [self it_toggleDetachForPanel:@"gitgraph"];
+}
+
+- (void)momentermGitGraphPanelRequestClose {
+    if (_momentermGitGraphDetachedWindow) {
+        [_momentermGitGraphDetachedWindow close];
+        return;
+    }
+    _contentView.shouldShowMomentermGitGraphPanel = NO;
+    [_momentermBottomStripView setActivePanel:@""];
+}
+
+// Swap the panel's view between the inline container and a floating window.
+// Called when the user clicks the detach icon in either panel's toolbar.
+- (void)it_toggleDetachForPanel:(NSString *)panel {
+    const BOOL isBrowser = [panel isEqualToString:@"browser"];
+    NSViewController *vc = isBrowser ? (NSViewController *)_momentermBrowserPanelVC
+                                     : (NSViewController *)_momentermGitGraphPanelVC;
+    NSWindow *existing = isBrowser ? _momentermBrowserDetachedWindow
+                                   : _momentermGitGraphDetachedWindow;
+
+    if (existing) {
+        // Re-attach: close window, return view to inline container.
+        [existing close];
+        return;  // close notification handler will finish the swap
+    }
+
+    // Detach: hide inline container, host view in a new floating window.
+    NSRect inlineFrame = vc.view.frame;
+    NSRect contentRect = NSMakeRect(NSMidX(self.window.frame) - inlineFrame.size.width / 2.0,
+                                    NSMidY(self.window.frame) - inlineFrame.size.height / 2.0,
+                                    MAX(420, inlineFrame.size.width),
+                                    MAX(360, inlineFrame.size.height));
+    NSWindow *window = [[NSWindow alloc] initWithContentRect:contentRect
+                                                   styleMask:NSWindowStyleMaskTitled |
+                                                             NSWindowStyleMaskClosable |
+                                                             NSWindowStyleMaskMiniaturizable |
+                                                             NSWindowStyleMaskResizable
+                                                     backing:NSBackingStoreBuffered
+                                                       defer:YES];
+    window.title = isBrowser ? @"MomenTerm — Browser" : @"MomenTerm — Git Graph";
+    window.releasedWhenClosed = NO;
+    window.contentView = vc.view;
+    if (isBrowser) {
+        _momentermBrowserDetachedWindow = window;
+        _momentermBrowserPanelVC.isDetached = YES;
+        _contentView.shouldShowMomentermBrowserPanel = NO;
+    } else {
+        _momentermGitGraphDetachedWindow = window;
+        _momentermGitGraphPanelVC.isDetached = YES;
+        _contentView.shouldShowMomentermGitGraphPanel = NO;
+    }
+    [_momentermBottomStripView setActivePanel:@""];
+
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(it_detachedWindowWillClose:)
+                                                 name:NSWindowWillCloseNotification
+                                               object:window];
+    [window makeKeyAndOrderFront:nil];
+}
+
+- (void)it_detachedWindowWillClose:(NSNotification *)note {
+    NSWindow *window = note.object;
+    [[NSNotificationCenter defaultCenter] removeObserver:self
+                                                    name:NSWindowWillCloseNotification
+                                                  object:window];
+    if (window == _momentermBrowserDetachedWindow) {
+        // Re-parent the view back into the inline container.
+        _contentView.momentermBrowserPanelContainer = _momentermBrowserPanelVC.view;
+        _momentermBrowserPanelVC.isDetached = NO;
+        _momentermBrowserDetachedWindow = nil;
+        // Stay hidden — user can re-open via bottom strip.
+        _contentView.shouldShowMomentermBrowserPanel = NO;
+    } else if (window == _momentermGitGraphDetachedWindow) {
+        _contentView.momentermGitGraphPanelContainer = _momentermGitGraphPanelVC.view;
+        _momentermGitGraphPanelVC.isDetached = NO;
+        _momentermGitGraphDetachedWindow = nil;
+        _contentView.shouldShowMomentermGitGraphPanel = NO;
+    }
+}
+
 // Returns a stable pastel color derived from the space name.
 - (NSColor *)it_momentermColorForSpaceName:(NSString *)spaceName {
     NSUInteger h = [spaceName hash];
@@ -1398,6 +1501,11 @@ ITERM_WEAKLY_REFERENCEABLE
     [_momentermBrowserPanelVC release];
     [_momentermGitGraphPanelVC release];
     [_momentermBottomStripView release];
+    [_momentermBrowserDetachedWindow release];
+    [_momentermGitGraphDetachedWindow release];
+    [[NSNotificationCenter defaultCenter] removeObserver:self
+                                                    name:NSWindowWillCloseNotification
+                                                  object:nil];
     [_didEnterLionFullscreen release];
     [_desiredTitle release];
     [_tabsTouchBarItem release];

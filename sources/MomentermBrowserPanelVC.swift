@@ -17,6 +17,12 @@ protocol MomentermBrowserPanelDelegate: AnyObject {
     /// Return the GUID of the session whose output should drive auto-navigation,
     /// or nil if the panel should ignore detections (e.g. inactive window).
     func momentermBrowserPanelActiveSessionGUID() -> String?
+
+    /// Toggle whether the panel is embedded inline or in its own floating window.
+    func momentermBrowserPanelRequestDetachToggle()
+
+    /// Close (hide) the panel.
+    func momentermBrowserPanelRequestClose()
 }
 
 @objc(MomentermBrowserPanelVC)
@@ -24,19 +30,20 @@ final class MomentermBrowserPanelVC: NSViewController {
 
     @objc weak var delegate: MomentermBrowserPanelDelegate?
 
-    /// When true, ignore auto-detected URLs and stay on whatever the user manually loaded.
-    @objc var isPinned: Bool = false {
-        didSet { pinButton.state = isPinned ? .on : .off }
+    /// When true, the toolbar button shows the "detached" icon and the
+    /// delegate manages the floating window. Toggling re-parents the view.
+    @objc var isDetached: Bool = false {
+        didSet { refreshDetachButtonIcon() }
     }
 
     private var webView: WKWebView!
     private let toolbar = NSView()
-    private let urlLabel = NSTextField(labelWithString: "")
-    private let backButton = NSButton(title: "‹", target: nil, action: nil)
-    private let forwardButton = NSButton(title: "›", target: nil, action: nil)
-    private let reloadButton = NSButton(title: "⟳", target: nil, action: nil)
-    private let pinButton = NSButton(title: "📌", target: nil, action: nil)
-    private let openExternalButton = NSButton(title: "↗︎", target: nil, action: nil)
+    private let urlField = NSTextField()
+    private let backButton = NSButton()
+    private let forwardButton = NSButton()
+    private let reloadButton = NSButton()
+    private let detachButton = NSButton()
+    private let closeButton = NSButton()
 
     private var currentURL: URL?
     private var navigationObserver: NSKeyValueObservation?
@@ -79,7 +86,10 @@ final class MomentermBrowserPanelVC: NSViewController {
         navigationObserver = webView.observe(\.url, options: [.new]) { [weak self] _, change in
             guard let self = self, let new = change.newValue, let url = new else { return }
             self.currentURL = url
-            self.urlLabel.stringValue = url.absoluteString
+            // Don't clobber the field while the user is mid-edit.
+            if self.urlField.currentEditor() == nil {
+                self.urlField.stringValue = url.absoluteString
+            }
         }
     }
 
@@ -89,30 +99,44 @@ final class MomentermBrowserPanelVC: NSViewController {
         toolbar.layer?.backgroundColor = NSColor.controlBackgroundColor.cgColor
         view.addSubview(toolbar)
 
-        let buttons: [NSButton] = [backButton, forwardButton, reloadButton, pinButton, openExternalButton]
-        for btn in buttons {
+        let cfg = NSImage.SymbolConfiguration(pointSize: 12, weight: .medium)
+        func configureSymbolButton(_ btn: NSButton, symbol: String, accessibility: String, selector: Selector, tip: String) {
             btn.translatesAutoresizingMaskIntoConstraints = false
+            btn.image = NSImage(systemSymbolName: symbol, accessibilityDescription: accessibility)?.withSymbolConfiguration(cfg)
+            btn.imagePosition = .imageOnly
             btn.bezelStyle = .regularSquare
             btn.isBordered = false
-            btn.font = .systemFont(ofSize: 14, weight: .medium)
+            btn.contentTintColor = .secondaryLabelColor
             btn.target = self
+            btn.action = selector
+            btn.toolTip = tip
             toolbar.addSubview(btn)
         }
-        backButton.action = #selector(goBack)
-        forwardButton.action = #selector(goForward)
-        reloadButton.action = #selector(reload)
-        pinButton.action = #selector(togglePin)
-        pinButton.setButtonType(.toggle)
-        pinButton.toolTip = "Pin: stop auto-navigating when localhost URLs print"
-        openExternalButton.action = #selector(openExternal)
-        openExternalButton.toolTip = "Open in default browser"
 
-        urlLabel.translatesAutoresizingMaskIntoConstraints = false
-        urlLabel.font = .monospacedSystemFont(ofSize: 11, weight: .regular)
-        urlLabel.textColor = .secondaryLabelColor
-        urlLabel.lineBreakMode = .byTruncatingMiddle
-        urlLabel.stringValue = "(waiting for localhost URL)"
-        toolbar.addSubview(urlLabel)
+        configureSymbolButton(backButton, symbol: "chevron.left",
+                              accessibility: "Back", selector: #selector(goBack), tip: "Back")
+        configureSymbolButton(forwardButton, symbol: "chevron.right",
+                              accessibility: "Forward", selector: #selector(goForward), tip: "Forward")
+        configureSymbolButton(reloadButton, symbol: "arrow.clockwise",
+                              accessibility: "Reload", selector: #selector(reload), tip: "Reload")
+        configureSymbolButton(detachButton, symbol: "rectangle.portrait.and.arrow.right",
+                              accessibility: "Detach", selector: #selector(detachToggle),
+                              tip: "Detach into a separate window")
+        configureSymbolButton(closeButton, symbol: "xmark",
+                              accessibility: "Close", selector: #selector(closeTapped), tip: "Close panel")
+        refreshDetachButtonIcon()
+
+        urlField.translatesAutoresizingMaskIntoConstraints = false
+        urlField.font = .monospacedSystemFont(ofSize: 11, weight: .regular)
+        urlField.placeholderString = "Type a URL and press Enter"
+        urlField.bezelStyle = .roundedBezel
+        urlField.isBordered = true
+        urlField.isEditable = true
+        urlField.isSelectable = true
+        urlField.target = self
+        urlField.action = #selector(urlFieldSubmit)
+        urlField.lineBreakMode = .byTruncatingMiddle
+        toolbar.addSubview(urlField)
     }
 
     private func layoutSubviews() {
@@ -120,7 +144,7 @@ final class MomentermBrowserPanelVC: NSViewController {
             toolbar.topAnchor.constraint(equalTo: view.topAnchor),
             toolbar.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             toolbar.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            toolbar.heightAnchor.constraint(equalToConstant: 32),
+            toolbar.heightAnchor.constraint(equalToConstant: 34),
 
             webView.topAnchor.constraint(equalTo: toolbar.bottomAnchor),
             webView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
@@ -139,24 +163,32 @@ final class MomentermBrowserPanelVC: NSViewController {
             reloadButton.centerYAnchor.constraint(equalTo: toolbar.centerYAnchor),
             reloadButton.widthAnchor.constraint(equalToConstant: 22),
 
-            urlLabel.leadingAnchor.constraint(equalTo: reloadButton.trailingAnchor, constant: 8),
-            urlLabel.trailingAnchor.constraint(equalTo: pinButton.leadingAnchor, constant: -8),
-            urlLabel.centerYAnchor.constraint(equalTo: toolbar.centerYAnchor),
+            urlField.leadingAnchor.constraint(equalTo: reloadButton.trailingAnchor, constant: 8),
+            urlField.trailingAnchor.constraint(equalTo: detachButton.leadingAnchor, constant: -8),
+            urlField.centerYAnchor.constraint(equalTo: toolbar.centerYAnchor),
 
-            pinButton.trailingAnchor.constraint(equalTo: openExternalButton.leadingAnchor, constant: -4),
-            pinButton.centerYAnchor.constraint(equalTo: toolbar.centerYAnchor),
-            pinButton.widthAnchor.constraint(equalToConstant: 24),
+            detachButton.trailingAnchor.constraint(equalTo: closeButton.leadingAnchor, constant: -4),
+            detachButton.centerYAnchor.constraint(equalTo: toolbar.centerYAnchor),
+            detachButton.widthAnchor.constraint(equalToConstant: 22),
 
-            openExternalButton.trailingAnchor.constraint(equalTo: toolbar.trailingAnchor, constant: -6),
-            openExternalButton.centerYAnchor.constraint(equalTo: toolbar.centerYAnchor),
-            openExternalButton.widthAnchor.constraint(equalToConstant: 22),
+            closeButton.trailingAnchor.constraint(equalTo: toolbar.trailingAnchor, constant: -6),
+            closeButton.centerYAnchor.constraint(equalTo: toolbar.centerYAnchor),
+            closeButton.widthAnchor.constraint(equalToConstant: 22),
         ])
+    }
+
+    private func refreshDetachButtonIcon() {
+        let cfg = NSImage.SymbolConfiguration(pointSize: 12, weight: .medium)
+        let symbol = isDetached ? "rectangle.portrait.and.arrow.forward" : "rectangle.portrait.and.arrow.right"
+        detachButton.image = NSImage(systemSymbolName: symbol, accessibilityDescription: nil)?.withSymbolConfiguration(cfg)
+        detachButton.toolTip = isDetached ? "Re-attach to terminal window" : "Detach into a separate window"
     }
 
     // MARK: - URL detection
 
     @objc private func localhostDetected(_ note: Notification) {
-        guard !isPinned else { return }
+        // Don't overwrite while the user is mid-edit in the URL field.
+        if urlField.currentEditor() != nil { return }
         guard let urlString = note.userInfo?["url"] as? String,
               let sessionGUID = note.userInfo?["sessionGUID"] as? String else { return }
         guard let activeGUID = delegate?.momentermBrowserPanelActiveSessionGUID(),
@@ -185,12 +217,23 @@ final class MomentermBrowserPanelVC: NSViewController {
     @objc private func goBack() { webView.goBack() }
     @objc private func goForward() { webView.goForward() }
     @objc private func reload() { webView.reload() }
-    @objc private func togglePin() {
-        isPinned = (pinButton.state == .on)
+
+    @objc private func detachToggle() {
+        delegate?.momentermBrowserPanelRequestDetachToggle()
     }
-    @objc private func openExternal() {
-        if let url = currentURL {
-            NSWorkspace.shared.open(url)
+
+    @objc private func closeTapped() {
+        delegate?.momentermBrowserPanelRequestClose()
+    }
+
+    @objc private func urlFieldSubmit() {
+        var input = urlField.stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
+        if input.isEmpty { return }
+        // Be forgiving: accept "localhost:3000" / "example.com" without scheme.
+        if !input.contains("://") {
+            input = "http://\(input)"
         }
+        guard let url = URL(string: input) else { return }
+        webView.load(URLRequest(url: url))
     }
 }
