@@ -380,6 +380,14 @@ Bug Fixes:
   a partial profile restoration). The base64
   decoder dereferenced a NULL pointer instead
   of returning nil. Issue 12861.
+- The “Respect shortcuts from System Settings >
+  Keyboard > Keyboard Shortcuts > Keyboard”
+  option used subset matching on modifier keys,
+  so a system shortcut bound to Ctrl+Right (or
+  any other strict subset of an event’s
+  modifiers) would also intercept
+  Ctrl+Shift+Right and similar keystrokes.
+  Modifier comparison is now exact. Issue 12859.
 - Fix a crash when a Python API client invoked
   a function whose argument string contained
   non-BMP characters (for example, emoji). The
