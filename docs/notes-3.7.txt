@@ -373,6 +373,13 @@ Settings Improvements:
   first across tabs and windows.
 
 Bug Fixes:
+- Fix a launch crash when a saved status bar
+  layout referenced an RPC-provided text
+  component whose configuration was missing
+  the registration request (for example, from
+  a partial profile restoration). The base64
+  decoder dereferenced a NULL pointer instead
+  of returning nil. Issue 12861.
 - Fix a crash when a Python API client invoked
   a function whose argument string contained
   non-BMP characters (for example, emoji). The

@@ -25,6 +25,9 @@
 @implementation NSData (iTerm)
 
 + (NSData *)dataWithBase64EncodedString:(NSString *)string {
+    if (!string) {
+        return nil;
+    }
     const char *buffer = [[string stringByReplacingOccurrencesOfRegex:@"[\x0a\x0d]" withString:@""] UTF8String];
     int destLength = apr_base64_decode_len(buffer);
     if (destLength <= 0) {

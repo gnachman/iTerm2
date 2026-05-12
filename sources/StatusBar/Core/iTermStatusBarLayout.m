@@ -118,7 +118,9 @@ static NSString *const iTermStatusBarLayoutKeyClass = @"class";
                                                           forKey:iTermStatusBarComponentConfigurationKeyLayoutAdvancedConfigurationDictionaryValue];
         id<iTermStatusBarComponent> component = [[theClass alloc] initWithConfiguration:configuration
                                                                                   scope:scope];
-        [result addObject:component];
+        if (component) {
+            [result addObject:component];
+        }
     }
     return result;
 }
