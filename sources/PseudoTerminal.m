@@ -249,6 +249,7 @@ typedef NS_ENUM(int, iTermShouldHaveTitleSeparator) {
     MomentermEmbeddedSidebarDelegate,
     MomentermEmbeddedFileTreeDelegate,
     MomentermBrowserPanelDelegate,
+    MomentermGitGraphIndicatorDelegate,
     NSComboBoxDelegate,
     NSFontChanging,
     NSMenuItemValidation,
@@ -449,6 +450,9 @@ typedef NS_ENUM(int, iTermShouldHaveTitleSeparator) {
 
     // MomenTerm: right-side localhost preview browser panel
     MomentermBrowserPanelVC *_momentermBrowserPanelVC;
+
+    // MomenTerm: bottom-right floating "Git Graph" indicator
+    MomentermGitGraphIndicator *_momentermGitGraphIndicator;
 
 }
 
@@ -759,6 +763,21 @@ typedef NS_ENUM(int, iTermShouldHaveTitleSeparator) {
     _contentView.momentermBrowserPanelWidth = 420;
     _contentView.momentermBrowserPanelContainer = _momentermBrowserPanelVC.view;
     _contentView.shouldShowMomentermBrowserPanel = NO;
+
+    // MomenTerm: floating "Git Graph" indicator pinned bottom-right of the content area.
+    {
+        const CGFloat kIndicatorW = 96;
+        const CGFloat kIndicatorH = 20;
+        const CGFloat kMargin = 8;
+        NSRect cb = _contentView.bounds;
+        NSRect frame = NSMakeRect(cb.size.width - kIndicatorW - kMargin, kMargin, kIndicatorW, kIndicatorH);
+        _momentermGitGraphIndicator = [[MomentermGitGraphIndicator alloc] initWithFrame:frame];
+        _momentermGitGraphIndicator.delegate = self;
+        _momentermGitGraphIndicator.autoresizingMask = NSViewMinXMargin | NSViewMaxYMargin;
+        [_contentView addSubview:_momentermGitGraphIndicator
+                      positioned:NSWindowAbove
+                      relativeTo:nil];
+    }
 
 
     if (hotkeyWindowType == iTermHotkeyWindowTypeNone) {
@@ -1169,6 +1188,12 @@ typedef NS_ENUM(int, iTermShouldHaveTitleSeparator) {
     [[MomentermGitGraphWindowController shared] toggleForCwd:cwd];
 }
 
+// MARK: - MomentermGitGraphIndicatorDelegate
+
+- (NSString *)momentermGitGraphIndicatorCurrentCwd {
+    return [[self currentSession] currentLocalWorkingDirectory];
+}
+
 - (void)it_updateMomentermGitGraphCwd {
     // No-op now that the graph lives in its own window; the window pulls
     // cwd on each open so we don't need to push updates here. Method kept
@@ -1349,6 +1374,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [_momentermFileTreePath release];
     [_momentermEditorVC release];
     [_momentermBrowserPanelVC release];
+    [_momentermGitGraphIndicator release];
     [_didEnterLionFullscreen release];
     [_desiredTitle release];
     [_tabsTouchBarItem release];

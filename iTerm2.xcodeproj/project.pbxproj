@@ -5216,6 +5216,7 @@
 		AD073830011B9EBFCE1B1EB7 /* MomentermGitGraphPoller.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1ECC425201B6EAB778DB95D0 /* MomentermGitGraphPoller.swift */; };
 		AD82AA37B3EB2A9CDAF13F1C /* MomentermMarkdownTemplate.html in Resources */ = {isa = PBXBuildFile; fileRef = E1DCDB86FBBA5C3B72776075 /* MomentermMarkdownTemplate.html */; };
 		B2CA85E23B4CCCC3391BA025 /* NotifyingDictionary.swift in Sources */ = {isa = PBXBuildFile; fileRef = 877B9444B69DE32D9CF87354 /* NotifyingDictionary.swift */; };
+		C1003928DBC91940137BA6AC /* MomentermGitGraphIndicator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8D3BFD3E450A53564F48B2C8 /* MomentermGitGraphIndicator.swift */; };
 		C48D7AA2E70B019313C401F3 /* WordSelectionAtom.swift in Sources */ = {isa = PBXBuildFile; fileRef = C08AA4008946722C3F4C67C1 /* WordSelectionAtom.swift */; };
 		C5F394249CF581965B22B714 /* GlobalJobMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA34A6F29B10471D8FD572F6 /* GlobalJobMonitor.swift */; };
 		C6675EBC1C4FE96B0041173B /* iTermSelectorSwizzler.m in Sources */ = {isa = PBXBuildFile; fileRef = C6675EBB1C4FE96B0041173B /* iTermSelectorSwizzler.m */; };
@@ -6380,6 +6381,7 @@
 		877B9444B69DE32D9CF87354 /* NotifyingDictionary.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = NotifyingDictionary.swift; sourceTree = "<group>"; };
 		87EACE073A674E2A48387D1E /* iTermBackgroundColorRLETestHelper.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; path = iTermBackgroundColorRLETestHelper.m; sourceTree = "<group>"; };
 		889A9128E944B618CDE75E18 /* iTermCursorSlideAnimator.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; name = iTermCursorSlideAnimator.h; path = sources/iTermCursorSlideAnimator.h; sourceTree = SOURCE_ROOT; };
+		8D3BFD3E450A53564F48B2C8 /* MomentermGitGraphIndicator.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MomentermGitGraphIndicator.swift; sourceTree = "<group>"; };
 		904AE312A0E0489899D9ECB8 /* MenuTips.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = MenuTips.xcassets; sourceTree = "<group>"; };
 		90A1E139186F9EA4003EC3E8 /* AppleScriptTest.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AppleScriptTest.h; sourceTree = "<group>"; };
 		90A1E13A186F9EA4003EC3E8 /* AppleScriptTest.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = AppleScriptTest.m; sourceTree = "<group>"; };
@@ -9741,6 +9743,7 @@
 				1ECC425201B6EAB778DB95D0 /* MomentermGitGraphPoller.swift */,
 				D67F2D7DFE211B54DF8F180F /* MomentermGitGraphCellView.swift */,
 				5C57E6052B5D2254F070B6B5 /* MomentermGitGraphWindowController.swift */,
+				8D3BFD3E450A53564F48B2C8 /* MomentermGitGraphIndicator.swift */,
 			);
 			name = Classes;
 			path = sources/;
@@ -20473,6 +20476,7 @@
 				AD073830011B9EBFCE1B1EB7 /* MomentermGitGraphPoller.swift in Sources */,
 				A2D50D50973B2D59F4F148A9 /* MomentermGitGraphCellView.swift in Sources */,
 				F272A3D81C0D23308C3E3604 /* MomentermGitGraphWindowController.swift in Sources */,
+				C1003928DBC91940137BA6AC /* MomentermGitGraphIndicator.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
