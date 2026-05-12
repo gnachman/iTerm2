@@ -10,6 +10,7 @@
 NS_ASSUME_NONNULL_BEGIN
 
 extern NSString *const kSelectionRespectsSoftBoundariesKey;
+extern NSString *const iTermShowSessionStatusInTabSubtitleDidChange;
 
 @interface iTermUserDefaults : NSObject
 
@@ -48,6 +49,15 @@ typedef NS_ENUM(NSUInteger, iTermAppleWindowTabbingMode) {
 // signal so we can detect when something else (e.g. Claude Code
 // rewriting ~/.claude/settings.json) silently strips our hook.
 @property (class, nonatomic) BOOL claudeCodeIntegrationCompleted;
+
+// Whether session-status text (from cc-status, OSC 21337, the SetTabStatus
+// trigger, or iterm2.set_status) is woven into the tab’s subtitle and
+// allowed to tint that subtitle text. The colored dot on the tab is
+// independent and always visible regardless of this setting. Default YES
+// preserves the existing behavior. Posted as
+// iTermShowSessionStatusInTabSubtitleDidChange when toggled so tabs can
+// refresh their labels live.
+@property (class, nonatomic) BOOL showSessionStatusInTabSubtitle;
 @property (class, nonatomic) BOOL haveExplainedHowToAddTouchbarControls;
 @property (class, nonatomic) BOOL ignoreSystemWindowRestoration;
 @property (class, nonatomic) NSUInteger globalSearchMode;
