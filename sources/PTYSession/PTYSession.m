@@ -13176,8 +13176,19 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 }
 
 - (void)textViewNeedsDisplayInRect:(NSRect)rect {
-    DLog(@"text view needs display");
-    [self requestRedraw];
+    DLog(@"text view needs display in rect %@", NSStringFromRect(rect));
+    if (NSIsEmptyRect(rect)) {
+        [self requestRedraw];
+        return;
+    }
+    // Skip -updateWrapperAlphaForMetalEnabled: and
+    // -configureIndicatorsHelperWithRightMargin: on the partial-rect path.
+    // Both depend only on session-level state (porthole/annotation/nav-shortcut
+    // presence, useMetal, browser indicators) — none of which a partial-rect
+    // invalidation can change. Anything that does change that state already
+    // funnels through the empty-rect / -requestRedraw path or calls those
+    // updaters directly (e.g. -textViewDidAddOrRemovePorthole).
+    [_view requestRedrawInRect:rect];
 }
 
 - (void)requestRedraw {

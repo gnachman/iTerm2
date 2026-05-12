@@ -411,6 +411,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (BOOL)showAutomaticProfileSwitchingBanner;
 + (BOOL)showBlockBoundaries;
 + (BOOL)showButtonsForSelectedCommand;
++ (BOOL)showDirtyRectsInLegacyRenderer;
 + (BOOL)showHintsInSplitPaneMenuItems;
 + (BOOL)showMetalFPSmeter;
 + (void)setShowMetalFPSmeter:(BOOL)value;

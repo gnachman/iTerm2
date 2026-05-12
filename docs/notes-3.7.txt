@@ -378,6 +378,13 @@ Settings Improvements:
   pane.
 
 Bug Fixes:
+- The legacy (non-GPU) renderer now invalidates
+  only the lines that actually changed, instead
+  of repainting the entire view on every cell
+  update. Heavy TUI animations (e.g. spinners
+  that rewrite a single line at high frequency)
+  use significantly less CPU on hosts where the
+  GPU renderer is disabled. Issue 12790.
 - Anthropic tool calls reloaded from a chat
   transcript would fail with HTTP 400 because
   the function output got serialized as plain

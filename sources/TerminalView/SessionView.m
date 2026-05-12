@@ -998,6 +998,14 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
     [_legacyView setNeedsDisplay:YES];
 }
 
+- (void)requestRedrawInRect:(NSRect)rect {
+    if (_useMetal) {
+        [_metalView setNeedsDisplay:YES];
+        [_scrollview setNeedsDisplay:YES];
+    }
+    [_legacyView setNeedsDisplayInRect:rect];
+}
+
 - (void)didChangeMetalViewAlpha {
     [self metalViewVisibilityDidChange];
 }

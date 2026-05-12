@@ -267,6 +267,9 @@ typedef NS_ENUM(NSUInteger, iTermSessionViewFindDriver) {
 + (void)windowDidResize;
 
 - (void)requestRedraw;
+// Partial redraw for the legacy renderer. `rect` is in the legacy view's coordinate space.
+// The Metal path always redraws its full drawable; the rect is only honored for the legacy view.
+- (void)requestRedrawInRect:(NSRect)rect;
 
 - (void)setDimmed:(BOOL)isDimmed;
 - (void)setBackgroundDimmed:(BOOL)backgroundDimmed;

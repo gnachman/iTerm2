@@ -830,6 +830,10 @@ extendResultsAcrossSoftBoundaries:(BOOL)extendResultsAcrossSoftBoundaries;
 - (void)setNeedsDisplay:(BOOL)needsDisplay NS_UNAVAILABLE;
 - (void)setNeedsDisplayInRect:(NSRect)invalidRect NS_UNAVAILABLE;  // Use this instead of setNeedsDisplay:
 - (void)requestDelegateRedraw;  // Use this instead of setNeedsDisplay:
+// Partial redraw. `rect` is in PTYTextView coordinates. The drawing helper widens its draw
+// region for ligatures, descenders, and oversize glyphs and relies on AppKit's clip to limit
+// the pixels that actually change.
+- (void)requestDelegateRedrawInRect:(NSRect)rect;
 
 - (iTermSelection *)selectionForCommandAndOutputOfMark:(id<VT100ScreenMarkReading>)mark;
 - (void)smearCursorIfNeededWithDrawingHelper:(iTermTextDrawingHelper *)drawingHelper;
