@@ -1389,14 +1389,18 @@ NS_CLASS_AVAILABLE_MAC(10_14)
         }
     }
 
+    // Toolbelt width is consulted three times below — hoist once.
+    const CGFloat toolbeltW = [self shouldShowToolbelt] ? NSWidth(_toolbelt.frame) : 0;
+
     // Position the right-side browser panel between tabView/toolbelt.
     CGFloat browserPanelW = 0;
     if (rightActive) {
         browserPanelW = floor(self.momentermBrowserPanelWidth);
-        const CGFloat toolbeltW = [self shouldShowToolbelt] ? NSWidth(_toolbelt.frame) : 0;
         const CGFloat panelX = NSWidth(self.bounds) - toolbeltW - browserPanelW;
         _momentermBrowserPanelContainer.frame = NSMakeRect(panelX, sidesY, browserPanelW, sidesH);
     }
+
+    const CGFloat maxRight = NSWidth(self.bounds) - toolbeltW - browserPanelW;
 
     // Shrink the tabView from the left/right/bottom to make room for our panels.
     NSRect tvFrame = self.tabView.frame;
@@ -1407,13 +1411,9 @@ NS_CLASS_AVAILABLE_MAC(10_14)
         tvFrame.size.width -= delta;
         changed = YES;
     }
-    if (browserPanelW > 0) {
-        const CGFloat toolbeltW = [self shouldShowToolbelt] ? NSWidth(_toolbelt.frame) : 0;
-        const CGFloat maxRight = NSWidth(self.bounds) - toolbeltW - browserPanelW;
-        if (NSMaxX(tvFrame) > maxRight) {
-            tvFrame.size.width = MAX(0, maxRight - tvFrame.origin.x);
-            changed = YES;
-        }
+    if (browserPanelW > 0 && NSMaxX(tvFrame) > maxRight) {
+        tvFrame.size.width = MAX(0, maxRight - tvFrame.origin.x);
+        changed = YES;
     }
     if (gitGraphH > 0 && tvFrame.origin.y < gitGraphH) {
         const CGFloat delta = gitGraphH - tvFrame.origin.y;
@@ -1436,13 +1436,9 @@ NS_CLASS_AVAILABLE_MAC(10_14)
             tbFrame.size.width -= delta;
             tbChanged = YES;
         }
-        if (browserPanelW > 0) {
-            const CGFloat toolbeltW = [self shouldShowToolbelt] ? NSWidth(_toolbelt.frame) : 0;
-            const CGFloat maxRight = NSWidth(self.bounds) - toolbeltW - browserPanelW;
-            if (NSMaxX(tbFrame) > maxRight) {
-                tbFrame.size.width = MAX(0, maxRight - tbFrame.origin.x);
-                tbChanged = YES;
-            }
+        if (browserPanelW > 0 && NSMaxX(tbFrame) > maxRight) {
+            tbFrame.size.width = MAX(0, maxRight - tbFrame.origin.x);
+            tbChanged = YES;
         }
         if (tbChanged) {
             if (tbFrame.size.width < 0) tbFrame.size.width = 0;

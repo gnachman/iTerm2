@@ -27,6 +27,12 @@ if [ "${1:-}" = "" ]; then
 fi
 
 VERSION="$1"
+# Reject anything that isn't strict semver — sed substitutions below trust
+# this value, so a hostile argument like "0.4|foo" would corrupt appcast.xml.
+if ! [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+([._A-Za-z0-9-]*)?$ ]]; then
+  echo "error: version must look like X.Y.Z (got: $VERSION)" >&2
+  exit 2
+fi
 TAG="momenterm-v$VERSION"
 REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 OUT="$REPO_ROOT/build/release"

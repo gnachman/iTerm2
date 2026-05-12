@@ -195,7 +195,11 @@ private struct RawItem: Decodable {
     }
 
     private func startMonitoring() {
-        let fd = open(userURL.path, O_EVTONLY)
+        // O_NOFOLLOW: refuse to watch a symlink an attacker may have planted
+        // in ~/.momenterm/. We re-read the file by URL below, so any symlink
+        // swap between the open and the read still has to pass O_NOFOLLOW too
+        // on the next monitor tick.
+        let fd = open(userURL.path, O_EVTONLY | O_NOFOLLOW)
         guard fd >= 0 else { return }
         let src = DispatchSource.makeFileSystemObjectSource(
             fileDescriptor: fd,
