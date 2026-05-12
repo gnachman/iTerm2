@@ -139,6 +139,7 @@ final class MomentermGitGraphPanelVC: NSViewController, NSTableViewDataSource, N
         symBtn(refreshButton, sym: "arrow.clockwise", selector: #selector(refresh), tip: "Refresh git graph")
         symBtn(detachButton, sym: "rectangle.portrait.and.arrow.right",
                selector: #selector(detachToggle), tip: "Detach into a separate window")
+        detachButton.isHidden = true
         symBtn(closeButton, sym: "xmark", selector: #selector(closeTapped), tip: "Close panel")
         refreshDetachButtonIcon()
 
@@ -196,8 +197,8 @@ final class MomentermGitGraphPanelVC: NSViewController, NSTableViewDataSource, N
             refreshButton.widthAnchor.constraint(equalToConstant: 22),
 
             detachButton.centerYAnchor.constraint(equalTo: header.centerYAnchor),
-            detachButton.trailingAnchor.constraint(equalTo: closeButton.leadingAnchor, constant: -2),
-            detachButton.widthAnchor.constraint(equalToConstant: 22),
+            detachButton.trailingAnchor.constraint(equalTo: closeButton.leadingAnchor, constant: 0),
+            detachButton.widthAnchor.constraint(equalToConstant: 0),
 
             closeButton.centerYAnchor.constraint(equalTo: header.centerYAnchor),
             closeButton.trailingAnchor.constraint(equalTo: header.trailingAnchor, constant: -8),

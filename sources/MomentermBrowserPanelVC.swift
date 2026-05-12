@@ -131,6 +131,7 @@ final class MomentermBrowserPanelVC: NSViewController {
         configureSymbolButton(detachButton, symbol: "rectangle.portrait.and.arrow.right",
                               accessibility: "Detach", selector: #selector(detachToggle),
                               tip: "Detach into a separate window")
+        detachButton.isHidden = true
         configureSymbolButton(closeButton, symbol: "xmark",
                               accessibility: "Close", selector: #selector(closeTapped), tip: "Close panel")
         refreshDetachButtonIcon()
@@ -198,9 +199,9 @@ final class MomentermBrowserPanelVC: NSViewController {
             zoomInButton.centerYAnchor.constraint(equalTo: toolbar.centerYAnchor),
             zoomInButton.widthAnchor.constraint(equalToConstant: 22),
 
-            detachButton.trailingAnchor.constraint(equalTo: closeButton.leadingAnchor, constant: -4),
+            detachButton.trailingAnchor.constraint(equalTo: closeButton.leadingAnchor, constant: 0),
             detachButton.centerYAnchor.constraint(equalTo: toolbar.centerYAnchor),
-            detachButton.widthAnchor.constraint(equalToConstant: 22),
+            detachButton.widthAnchor.constraint(equalToConstant: 0),
 
             closeButton.trailingAnchor.constraint(equalTo: toolbar.trailingAnchor, constant: -6),
             closeButton.centerYAnchor.constraint(equalTo: toolbar.centerYAnchor),

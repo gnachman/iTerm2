@@ -1193,11 +1193,20 @@ typedef NS_ENUM(int, iTermShouldHaveTitleSeparator) {
         _contentView.shouldShowMomentermBrowserPanel = show;
         if (show) {
             NSString *guid = [self currentSession].guid;
+            NSString *url = nil;
             if (guid) {
-                NSString *url = [MomentermLocalhostURLScanner.shared lastURLForSession:guid];
-                if (url.length > 0) {
-                    [_momentermBrowserPanelVC loadURLString:url];
-                }
+                url = [MomentermLocalhostURLScanner.shared lastURLForSession:guid];
+            }
+            // The TUI of Claude Code (and similar ink-style renderers) repaints
+            // via cursor positioning, so screenDidAppendStringToCurrentLine: may
+            // never have fired for the URL even though it's plainly visible on
+            // screen. Fall back to a direct screen scan when the accumulator
+            // has nothing.
+            if (url.length == 0) {
+                url = [self it_scanActiveSessionForLocalhostURL];
+            }
+            if (url.length > 0) {
+                [_momentermBrowserPanelVC loadURLString:url];
             }
         }
         [_momentermBottomStripView setActivePanel:show ? @"browser" : @""];
@@ -1222,6 +1231,45 @@ typedef NS_ENUM(int, iTermShouldHaveTitleSeparator) {
             [aTab fitSessionToCurrentViewSize:aSession];
         }
     }
+}
+
+// Walks the last ~400 lines of the active session's screen+scrollback and
+// returns the LAST (most-recent) http(s) URL matching loopback host. Used as
+// a fallback when the per-character scanner missed the URL — Claude Code's
+// TUI repaints over previously-written rows, which bypasses the append hook.
+- (NSString *)it_scanActiveSessionForLocalhostURL {
+    PTYSession *session = [self currentSession];
+    if (!session) { return nil; }
+    VT100Screen *screen = session.screen;
+    if (!screen) { return nil; }
+    const int total = MAX(0, screen.numberOfLines);
+    if (total == 0) { return nil; }
+    const int wanted = MIN(400, total);
+    const int start = total - wanted;
+    NSMutableString *joined = [NSMutableString stringWithCapacity:wanted * 80];
+    [screen enumerateLinesInRange:NSMakeRange(start, wanted)
+                            block:^(int line, ScreenCharArray *sca, iTermImmutableMetadata md, BOOL *stop) {
+        NSString *s = sca.stringValue;
+        if (s.length > 0) {
+            [joined appendString:s];
+            [joined appendString:@"\n"];
+        }
+    }];
+
+    static NSRegularExpression *rx = nil;
+    static dispatch_once_t once;
+    dispatch_once(&once, ^{
+        // Mirror MomentermLocalhostURLScanner's pattern.
+        NSString *pattern = @"https?://(?:localhost|127\\.0\\.0\\.1|0\\.0\\.0\\.0)(?::\\d{1,5})?(?:/[^\\s'\"<>]{0,256})?";
+        rx = [NSRegularExpression regularExpressionWithPattern:pattern options:0 error:nil];
+    });
+    if (!rx) { return nil; }
+    NSArray<NSTextCheckingResult *> *matches = [rx matchesInString:joined
+                                                          options:0
+                                                            range:NSMakeRange(0, joined.length)];
+    NSTextCheckingResult *last = matches.lastObject;
+    if (!last) { return nil; }
+    return [joined substringWithRange:last.range];
 }
 
 - (void)it_updateMomentermGitGraphCwd {
