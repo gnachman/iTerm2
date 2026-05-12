@@ -116,11 +116,9 @@ final class AIRequestBuilderAttachmentTests: XCTestCase {
         XCTAssertEqual(source?["data"] as? String, Self.imageBase64)
     }
 
-    /// Non-image binary attachment falls back to text. The fallback uses
-    /// lossyString which mangles binary bytes, but the encoder MUST NOT
-    /// crash and the resulting message must still be a valid Anthropic
-    /// content array.
-    func testAnthropic_binaryAttachment_fallsBackToText_doesNotCrash() throws {
+    /// PDF attachments serialize as a native Anthropic document content
+    /// block (base64 source, media_type application/pdf), not text.
+    func testAnthropic_pdfAttachment_asDocumentBlock() throws {
         let model = try model(named: "claude-haiku-4-5")
         let attachment = file(name: "x.pdf", mime: "application/pdf", bytes: Self.pdfBytes)
         let message = LLM.Message(responseID: nil, role: .user, body: .attachment(attachment))
@@ -132,14 +130,119 @@ final class AIRequestBuilderAttachmentTests: XCTestCase {
         let json = try decode(bodyData)
         let messages = (json["messages"] as? [[String: Any]]) ?? []
         XCTAssertEqual(messages.count, 1)
-        // The Anthropic encoder collapses single-attachment file bodies into
-        // a string content. Whatever shape, just confirm the request is
-        // still valid and didn't drop the role.
         XCTAssertEqual(messages[0]["role"] as? String, "user")
-        XCTAssertNotNil(messages[0]["content"])
+        guard let blocks = messages[0]["content"] as? [[String: Any]] else {
+            XCTFail("expected array content for document block; got \(String(describing: messages[0]["content"]))")
+            return
+        }
+        XCTAssertEqual(blocks.count, 1)
+        XCTAssertEqual(blocks[0]["type"] as? String, "document")
+        let source = blocks[0]["source"] as? [String: Any]
+        XCTAssertEqual(source?["type"] as? String, "base64")
+        XCTAssertEqual(source?["media_type"] as? String, "application/pdf")
+        XCTAssertEqual(source?["data"] as? String, Self.pdfBase64,
+                       "PDF bytes lost or re-encoded incorrectly")
+    }
+
+    /// SVG attachments are XML text (image/svg+xml has the +xml suffix that
+    /// MIMETypeIsTextual recognizes) and must NOT be sent as a binary image
+    /// block — Anthropic's image source only accepts jpeg/png/gif/webp and
+    /// would 400. Pinned because the obvious "anything that starts with
+    /// image/ is an image" branch produced exactly that 400 in production.
+    func testAnthropic_svgAttachment_asText_notImageBlock() throws {
+        let model = try model(named: "claude-haiku-4-5")
+        let svg = Data("<svg xmlns=\"http://www.w3.org/2000/svg\"/>".utf8)
+        let attachment = file(name: "x.svg", mime: "image/svg+xml", bytes: svg)
+        let message = LLM.Message(responseID: nil, role: .user, body: .multipart([
+            .text("What is this?"),
+            .attachment(attachment),
+        ]))
+        let bodyData = try AnthropicRequestBuilder(
+            messages: [message],
+            provider: LLMProvider(model: model),
+            functions: [],
+            stream: false).body()
+        let json = try decode(bodyData)
+        let messages = (json["messages"] as? [[String: Any]]) ?? []
+        XCTAssertEqual(messages.count, 1)
+        guard let blocks = messages[0]["content"] as? [[String: Any]] else {
+            XCTFail("expected array content for multipart")
+            return
+        }
+        // Two text blocks, no image block.
+        XCTAssertEqual(blocks.count, 2)
+        XCTAssertEqual(blocks[0]["type"] as? String, "text")
+        XCTAssertEqual(blocks[1]["type"] as? String, "text",
+                       "SVG must be sent as text, not as an image block; got \(blocks[1])")
+        XCTAssertNil(blocks[1]["source"],
+                     "SVG block must not carry an image-style source")
+        XCTAssertEqual(blocks[1]["text"] as? String,
+                       "<svg xmlns=\"http://www.w3.org/2000/svg\"/>")
+    }
+
+    /// PDF inside a multipart body emits a text part followed by a
+    /// document part (mirrors the image case).
+    func testAnthropic_multipart_textThenPdf_asDocumentBlock() throws {
+        let model = try model(named: "claude-haiku-4-5")
+        let attachment = file(name: "x.pdf", mime: "application/pdf", bytes: Self.pdfBytes)
+        let body: LLM.Message.Body = .multipart([
+            .text("Read this:"),
+            .attachment(attachment),
+        ])
+        let message = LLM.Message(responseID: nil, role: .user, body: body)
+        let bodyData = try AnthropicRequestBuilder(
+            messages: [message],
+            provider: LLMProvider(model: model),
+            functions: [],
+            stream: false).body()
+        let json = try decode(bodyData)
+        let messages = (json["messages"] as? [[String: Any]]) ?? []
+        XCTAssertEqual(messages.count, 1)
+        guard let blocks = messages[0]["content"] as? [[String: Any]] else {
+            XCTFail("expected array content for multipart")
+            return
+        }
+        XCTAssertEqual(blocks.count, 2)
+        XCTAssertEqual(blocks[0]["type"] as? String, "text")
+        XCTAssertEqual(blocks[0]["text"] as? String, "Read this:")
+        XCTAssertEqual(blocks[1]["type"] as? String, "document")
+        let source = blocks[1]["source"] as? [String: Any]
+        XCTAssertEqual(source?["media_type"] as? String, "application/pdf")
+        XCTAssertEqual(source?["data"] as? String, Self.pdfBase64)
     }
 
     // MARK: - Gemini
+
+    /// SVG and other textual MIMEs must NOT be sent as inlineData on
+    /// Gemini. Gemini's inlineData enforces a binary-format allowlist and
+    /// 400s with "Unsupported MIME type: image/svg+xml" / "application/xml"
+    /// otherwise. Textual content goes through a text Part instead.
+    /// Pinned because this regression spent a sprint masquerading as a
+    /// vendor outage. Same root cause as the Anthropic SVG bug.
+    func testGemini_svgAttachment_asText_notInlineData() throws {
+        let model = try model(named: "gemini-3-flash-preview")
+        let svg = Data("<svg xmlns=\"http://www.w3.org/2000/svg\"/>".utf8)
+        let attachment = file(name: "x.svg", mime: "image/svg+xml", bytes: svg)
+        let message = LLM.Message(responseID: nil, role: .user, body: .multipart([
+            .text("Describe:"),
+            .attachment(attachment),
+        ]))
+        let bodyData = try GeminiRequestBuilder(
+            messages: [message],
+            functions: [],
+            hostedTools: HostedTools()).body()
+        let json = try decode(bodyData)
+        let contents = (json["contents"] as? [[String: Any]]) ?? []
+        XCTAssertEqual(contents.count, 1)
+        let parts = (contents[0]["parts"] as? [[String: Any]]) ?? []
+        XCTAssertEqual(parts.count, 2, "expected text part + text part for SVG")
+        XCTAssertEqual(parts[0]["text"] as? String, "Describe:")
+        XCTAssertNotNil(parts[1]["text"], "SVG must be sent as text, not inlineData; got \(parts[1])")
+        XCTAssertNil(parts[1]["inlineData"],
+                     "SVG must NOT carry inlineData; Gemini's inlineData allowlist rejects image/svg+xml")
+        XCTAssertEqual(parts[1]["text"] as? String,
+                       "<svg xmlns=\"http://www.w3.org/2000/svg\"/>")
+    }
 
     /// Gemini encodes any binary file as inlineData with mime_type +
     /// base64-encoded data. Distinct from text-content blocks.

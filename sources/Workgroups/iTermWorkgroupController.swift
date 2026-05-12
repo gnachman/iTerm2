@@ -89,6 +89,20 @@ final class iTermWorkgroupController: NSObject {
         return instances[ObjectIdentifier(session)]
     }
 
+    // All active workgroup instances, sorted by instance-unique
+    // identifier so iteration order is stable across calls. The
+    // underlying dictionary's value-iteration order is unspecified and
+    // shifts after any mutation, which would surface as the cockpit's
+    // workgroup-mode tree spuriously reordering itself on every
+    // refresh. Sorting here means every caller gets a deterministic
+    // order without having to remember to sort at the call site.
+    @objc
+    var allInstances: [iTermWorkgroupInstance] {
+        return instances.values.sorted {
+            $0.instanceUniqueIdentifier < $1.instanceUniqueIdentifier
+        }
+    }
+
     // Look up the main (leader) session for the active workgroup
     // instance whose per-entry id matches `identifier`. Returns nil
     // if no active workgroup has that id (e.g. the workgroup was

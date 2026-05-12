@@ -1053,6 +1053,8 @@ enum {
             return kPreferenceKeyAIPromptAIChatReadOnlyTerminalBrowser;
         case iTermAIPromptAIChatReadWriteTerminalBrowser:
             return kPreferenceKeyAIPromptAIChatReadWriteTerminalBrowser;
+        case iTermAIPromptAIChatOrchestration:
+            return kPreferenceKeyAIPromptAIChatOrchestration;
     }
 }
 

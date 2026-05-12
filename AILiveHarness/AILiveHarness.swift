@@ -46,7 +46,11 @@ final class AILiveHarness: XCTestCase {
     private static let configFileName = "iterm2-ai-live.json"
 
     private static func configPath() -> String {
-        return (NSTemporaryDirectory() as NSString).appendingPathComponent(configFileName)
+        // /tmp is stable; macOS's per-user $TMPDIR under
+        // /var/folders/.../T/ has a periodic cleanup that deletes files
+        // mid-run for long sweeps. run_ai_live.sh writes the config to
+        // /tmp explicitly for the same reason.
+        return "/tmp/\(configFileName)"
     }
 
     override func setUpWithError() throws {
@@ -152,7 +156,7 @@ final class AILiveHarness: XCTestCase {
 
     private static let defaultInterval: [String: TimeInterval] = [:]
 
-    private func throttle(forVendor vendor: String) {
+    func throttle(forVendor vendor: String) {
         let interval = Self.minIntervalSeconds(forVendor: vendor)
         guard interval > 0 else { return }
         Self.lastCallLock.lock()

@@ -355,8 +355,10 @@ class ChatInputView: NSView, NSTextFieldDelegate {
             guard response == .OK, let self else {
                 return
             }
+            var rejected: [URL] = []
             for item in panel.items {
                 guard AITermController.provider?.fileTypeIsSupported(extension: item.filename.pathExtension.lowercased()) == true else {
+                    rejected.append(URL(fileURLWithPath: item.filename))
                     continue
                 }
                 let placeholder = attachmentsView.addPlaceholder(filename: item.filename,
@@ -371,6 +373,9 @@ class ChatInputView: NSView, NSTextFieldDelegate {
                     updateAttachmentsView()
                     updateSendButtonEnabled()
                 }
+            }
+            if !rejected.isEmpty {
+                presentRejectedAttachments(rejected)
             }
             updateAttachmentsView()
             updateSendButtonEnabled()
@@ -389,7 +394,14 @@ class ChatInputView: NSView, NSTextFieldDelegate {
 
     private func updateSendButtonEnabled() {
         let hasPlaceholder = attachmentsView.files.anySatisfies { $0.isPlaceholder }
-        sendButton.isEnabled = stoppable || (!inputTextFieldContainer.stringValue.isEmpty && !hasPlaceholder)
+        // Mirror sendButtonClicked's whitespace-trim rule: a field
+        // containing only spaces / newlines isn't a sendable message,
+        // so the button shouldn't be active either. Without this the
+        // user can click Send on a whitespace-only field and the click
+        // is silently no-oped by the trim in ChatViewController.
+        let trimmed = inputTextFieldContainer.stringValue
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        sendButton.isEnabled = stoppable || (!trimmed.isEmpty && !hasPlaceholder)
         if stoppable {
             sendButton.image = stopImage
             hintLabel.isHidden = true
@@ -462,8 +474,22 @@ class ChatInputView: NSView, NSTextFieldDelegate {
     }
 
     private func addFiles(from urls: [URL]) {
-        var attachments = attachmentsView.files
+        let provider = AITermController.provider
+        var accepted: [URL] = []
+        var rejected: [URL] = []
         for url in urls {
+            let ext = url.pathExtension.lowercased()
+            if provider?.fileTypeIsSupported(extension: ext) == true {
+                accepted.append(url)
+            } else {
+                rejected.append(url)
+            }
+        }
+        if !rejected.isEmpty {
+            presentRejectedAttachments(rejected)
+        }
+        var attachments = attachmentsView.files
+        for url in accepted {
             let path = url.path
             if !attachments.contains(.regular(path)) {
                 attachments.append(.regular(path))
@@ -472,6 +498,20 @@ class ChatInputView: NSView, NSTextFieldDelegate {
         attachmentsView.files = attachments
         updateAttachmentsView()
         updateSendButtonEnabled()
+    }
+
+    private func presentRejectedAttachments(_ urls: [URL]) {
+        guard let window else { return }
+        let names = urls.map { $0.lastPathComponent }.joined(separator: ", ")
+        let providerName = AITermController.provider?.displayName ?? "the current AI provider"
+        let alert = NSAlert()
+        alert.messageText = urls.count == 1
+            ? "Attachment not supported"
+            : "Attachments not supported"
+        alert.informativeText = "\(providerName) doesn’t accept this file type as a chat attachment: \(names)."
+        alert.alertStyle = .informational
+        alert.addButton(withTitle: "OK")
+        alert.beginSheetModal(for: window)
     }
 
     var isEnabled: Bool {

@@ -729,7 +729,15 @@ extension PTYSession {
 
     func insertTextAtCursorRemoteCommand(insertTextAtCursor: RemoteCommand.InsertTextAtCursor,
                                          completion: @escaping (String, String) throws -> ()) rethrows {
-        writeTaskNoBroadcast(insertTextAtCursor.text)
+        let decoded: String
+        do {
+            decoded = try decodeAIBackslashEscapes(insertTextAtCursor.text)
+        } catch {
+            try completion("Error: \(error). Try again with a corrected text argument.",
+                       "AI tried to insert text but the escape sequence was malformed.")
+            return
+        }
+        writeTaskNoBroadcast(decoded)
         try completion("Inserted", "Text inserted by AI.")
     }
 

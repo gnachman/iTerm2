@@ -263,6 +263,15 @@ AI Improvements:
   override built-in headers with the same
   name. Values are stored unencrypted in
   iTerm2’s preferences.
+- PDF chat attachments now work on Anthropic.
+  Previously the bytes were mangled into a
+  UTF-8 approximation; PDFs are now sent as
+  native document content blocks. The chat
+  attachment picker also disables files the
+  current AI provider cannot accept, and
+  rejected drag-and-drop attachments now show
+  an explanatory alert instead of vanishing
+  silently.
 
 Python API Improvements:
 - Move sessions to new tabs or windows via the
@@ -528,6 +537,15 @@ Bug Fixes:
   appearance variant of the profile key so
   it persists until OSC 110/111 or a manual
   reset clears it.
+- The Cockpit orchestrator’s send_text tool
+  now routes payloads containing control bytes
+  (ESC, Ctrl-C, etc.) as raw keystrokes instead
+  of bracketed pastes. The previous wrap turned
+  embedded control bytes into literal pasted
+  data, so e.g. sending ESC :q ENTER to a vim
+  session inserted “^[:q” as text instead of
+  quitting. Pure prompt-style text still goes
+  through as a paste, as Ink-based TUIs expect.
 - Showing the clippings panel in a window
   zoomed to fit the display no longer grows
   the window horizontally. The tab content
@@ -1085,3 +1103,32 @@ Bug Fixes:
   at the inner edge of the right-gutter
   panel area in both the legacy and GPU
   renderers.
+- AI text-typing tools (send_text in
+  orchestration mode and
+  insert_text_at_cursor in
+  session-bound mode) now accept a
+  small backslash-escape vocabulary so
+  the agent can drive control keys.
+  Recognized: \\ for a literal
+  backslash, \n, \r, \t, and \uXXXX
+  (four hex digits) for any Unicode
+  scalar. Set append_newline to false
+  for a standalone control key (e.g.
+  Escape) so iTerm2 doesn’t tack a
+  newline onto it. Lets the agent
+  send things
+  like  for Ctrl-D,  for
+  Ctrl-Z,  for Ctrl-L, and
+   for Escape.
+- Implement start_session for the
+  orchestrator. The agent can now
+  spawn a new window, tab, or
+  vertical split via the existing
+  start_session tool. Every spawn
+  prompts for user approval inline
+  in the chat, with the placement
+  and command (if any) shown in the
+  prompt. Returns the new session’s
+  synthetic workgroup_id so the
+  agent can immediately drive the
+  new session with the other tools.

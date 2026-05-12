@@ -1979,6 +1979,12 @@ CQ
                                     <action selector="openAIChats:" target="201" id="Xdw-Tb-nB2"/>
                                 </connections>
                             </menuItem>
+                            <menuItem title="Cockpit" keyEquivalent="C" identifier="Cockpit" id="g30-gR-6hU">
+                                <modifierMask key="keyEquivalentModifierMask" option="YES" command="YES"/>
+                                <connections>
+                                    <action selector="revealCockpit:" target="201" id="Ql9-I0-729"/>
+                                </connections>
+                            </menuItem>
                             <menuItem isSeparatorItem="YES" id="zl8-Q7-4RO">
                                 <modifierMask key="keyEquivalentModifierMask" command="YES"/>
                             </menuItem>

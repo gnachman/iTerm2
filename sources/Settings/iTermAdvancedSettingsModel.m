@@ -608,6 +608,7 @@ DEFINE_BOOL(logRestorableStateSize, NO, SECTION_DEBUGGING @"Log restorable state
 DEFINE_BOOL(showBlockBoundaries, NO, SECTION_DEBUGGING @"Show line buffer block boundaries (issue 6207)");
 DEFINE_BOOL(logToSyslog, NO, SECTION_DEBUGGING @"Debug logs also write to the system log.");
 DEFINE_STRING(fakeFullyQualifiedDomainName, @"", SECTION_DEBUGGING @"Override the local hostname used for localhost detection.\nWhen non-empty, the app behaves as though [NSHost fullyQualifiedDomainName] returns this value. Lets you test how localhost detection reacts to a hostname change without actually renaming your computer. Affects hosts reported after you change it; leave empty to use the real hostname.");
+DEFINE_BOOL(aiChatVerboseConsoleLogging, NO, SECTION_DEBUGGING @"Log AI chat traffic to the system console.\nEmits per-turn user / agent / tool entries via NSFuckingLog so you can trace exactly what the agent received and produced. Useful for debugging tool dispatch and history translation. Off by default; turn on only while reproducing an issue.");
 #if DEBUG
 DEFINE_STRING(alternateSSHIntegrationScript, @"", SECTION_DEBUGGING @"Alternate SSH integration python script");
 #endif

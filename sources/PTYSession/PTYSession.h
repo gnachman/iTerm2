@@ -44,6 +44,13 @@ extern NSString *const iTermSessionWillTerminateNotification;
 extern NSString *const PTYSessionDidResizeNotification;
 extern NSString *const PTYSessionDidDealloc;
 extern NSNotificationName const PTYCommandDidExitNotification;
+// Posted on every presentation-name change, regardless of which
+// window owns the session. Unlike the older iTermNameOfSessionDidChange
+// notification (which gates on the session belonging to the current
+// terminal because it drives a window-scoped menu rebuild), this fires
+// unconditionally so cross-window observers (e.g. the cockpit outline)
+// can keep stale labels in sync. Notification object is the PTYSession.
+extern NSNotificationName const PTYSessionPresentationNameDidChangeNotification;
 
 extern NSString *const PTYCommandDidExitUserInfoKeyCommand;
 extern NSString *const PTYCommandDidExitUserInfoKeyExitCode;

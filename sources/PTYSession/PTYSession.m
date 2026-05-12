@@ -222,6 +222,7 @@ NSString *const iTermSessionWillTerminateNotification = @"iTermSessionDidTermina
 NSString *const PTYSessionDidResizeNotification = @"PTYSessionDidResizeNotification";
 NSString *const PTYSessionDidDealloc = @"PTYSessionDidDealloc";
 NSNotificationName const PTYCommandDidExitNotification = @"PTYCommandDidExitNotification";
+NSNotificationName const PTYSessionPresentationNameDidChangeNotification = @"PTYSessionPresentationNameDidChangeNotification";
 
 
 NSString *const PTYCommandDidExitUserInfoKeyCommand = @"Command";
@@ -20753,6 +20754,8 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
                                                             object:[_delegate parentWindow]
                                                           userInfo:nil];
     }
+    [[NSNotificationCenter defaultCenter] postNotificationName:PTYSessionPresentationNameDidChangeNotification
+                                                        object:self];
     [self.variablesScope setValue:presentationName forVariableNamed:iTermVariableKeySessionPresentationName];
     [_textview setBadgeLabel:[self badgeLabel]];
 }

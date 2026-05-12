@@ -6,6 +6,7 @@
 //
 
 // High level interface for AI chat clients.
+@MainActor
 class ChatClient {
     private static var _instance: ChatClient?
     private var rewriteMessageID = [UUID: UUID]()
@@ -44,15 +45,21 @@ class ChatClient {
         switch message.content {
         case .userCommand:
             it_fatalError("Agent should not send userCommand")
-        case .remoteCommandRequest(let request, safe: let safe):
+        case .remoteCommandRequest(let payload, safe: let safe):
             it_assert(!partial)
+            // AITerm's client only processes .classic payloads. .external
+            // payloads come from orchestration mode and have their own
+            // client; ignore them here.
+            guard case let .classic(request) = payload else {
+                return message
+            }
             return processRemoteCommandRequest(chatID: chatID,
                                                message: message,
                                                request: request,
                                                safe: safe)
         case .plainText, .markdown, .explanationRequest, .remoteCommandResponse,
                 .selectSessionRequest, .clientLocal, .renameChat, .setPermissions,
-                .terminalCommand, .multipart, .vectorStoreCreated:
+                .terminalCommand, .multipart, .vectorStoreCreated, .watcherEvent:
             return message
         case let .append(string: string, uuid: uuid):
             it_assert(partial)
@@ -301,7 +308,7 @@ class ChatClient {
                             .remoteCommandResponse, .selectSessionRequest, .clientLocal,
                             .renameChat, .append, .appendAttachment, .commit, .setPermissions,
                             .vectorStoreCreated, .terminalCommand, .multipart,
-                            .userCommand:
+                            .userCommand, .watcherEvent:
                         it_fatalError("You can't append \(stringOrAttachment)")
                     }
                 case .attachment:
@@ -325,7 +332,7 @@ class ChatClient {
         case .explanationRequest, .remoteCommandResponse, .clientLocal,
                 .renameChat, .append, .commit, .remoteCommandRequest, .selectSessionRequest,
                 .setPermissions, .terminalCommand, .appendAttachment, .multipart,
-                .vectorStoreCreated, .userCommand:
+                .vectorStoreCreated, .userCommand, .watcherEvent:
             // These are impossible or just normal streaming messages.
             return appendMessage
 
@@ -381,7 +388,7 @@ class ChatClient {
         case .plainText, .markdown, .explanationRequest, .remoteCommandResponse, .clientLocal,
                 .renameChat, .append, .commit, .remoteCommandRequest, .selectSessionRequest,
                 .setPermissions, .terminalCommand, .appendAttachment, .multipart,
-                .vectorStoreCreated, .userCommand:
+                .vectorStoreCreated, .userCommand, .watcherEvent:
             // These are impossible or just normal streaming messages.
             return finalMessage
 

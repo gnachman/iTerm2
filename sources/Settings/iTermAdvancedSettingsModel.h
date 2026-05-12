@@ -255,6 +255,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (NSString *)logTimestampFormat;
 + (BOOL)logTimestampsWithPlainText;
 + (BOOL)logToSyslog;
++ (BOOL)aiChatVerboseConsoleLogging;
 + (BOOL)lowFiCombiningMarks;
 + (double)lowPowerModeFrameRate;
 + (BOOL)makeSomePowerlineSymbolsWide;

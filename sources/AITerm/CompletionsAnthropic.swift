@@ -9,6 +9,14 @@ struct AnthropicMessage: Codable, Equatable {
     var role: AnthropicRole
     var content: AnthropicContent
 
+    // Image MIME types Anthropic accepts as inline image content blocks.
+    // The API rejects anything outside this set with a 400, so the
+    // serializer must not send e.g. image/svg+xml here (SVG is XML text
+    // and goes through the textual branch instead).
+    static let anthropicSupportedImageMimeTypes: Set<String> = [
+        "image/jpeg", "image/png", "image/gif", "image/webp"
+    ]
+
     init(role: AnthropicRole, content: AnthropicContent) {
         self.role = role
         self.content = content
@@ -58,22 +66,32 @@ struct AnthropicMessage: Codable, Equatable {
             case .statusUpdate(let statusUpdate):
                 content = .string(statusUpdate.displayString)
             case .file(let file):
-                if file.mimeType.hasPrefix("image/") {
+                // Textual content (including image/svg+xml) goes through as a
+                // plain string. Check this BEFORE the image-prefix branch so
+                // SVGs don't get base64-wrapped as binary images — Anthropic's
+                // image source only accepts jpeg/png/gif/webp.
+                if MIMETypeIsTextual(file.mimeType) {
+                    content = .string(file.content.lossyString)
+                } else if Self.anthropicSupportedImageMimeTypes.contains(file.mimeType) {
                     let base64Data = file.content.base64EncodedString()
                     content = .array([
                         .image(.init(type: "base64",
                                    media_type: file.mimeType,
                                    data: base64Data))
                     ])
+                } else if file.mimeType == "application/pdf" {
+                    let base64Data = file.content.base64EncodedString()
+                    content = .array([
+                        .document(.init(type: "base64",
+                                        media_type: file.mimeType,
+                                        data: base64Data))
+                    ])
                 } else {
-                    // TODO: Non-image binary attachments fall through to
-                    // lossyString, which mangles binary bytes into a UTF-8
-                    // approximation Anthropic can't actually read. Anthropic
-                    // accepts PDFs natively as document content blocks; if
-                    // we want PDF support, switch to .document(.base64) for
-                    // application/pdf and explicitly reject other binaries
-                    // upstream. Pinned by
-                    // AIRequestBuilderAttachmentTests.testAnthropic_binaryAttachment_fallsBackToText_doesNotCrash.
+                    // Any remaining binary type is unsupported by Anthropic;
+                    // the per-provider allowlist should already have rejected
+                    // it at the input layer. Fall back to lossyString so the
+                    // request is still well-formed, but the upstream gate is
+                    // the real defense here.
                     content = .string(file.content.lossyString)
                 }
             case .fileID(_, let name):
@@ -127,12 +145,24 @@ struct AnthropicMessage: Codable, Equatable {
                     case .statusUpdate:
                         return nil
                     case .file(let file):
-                        if file.mimeType.hasPrefix("image/") {
+                        // Textual content (including image/svg+xml) goes
+                        // through as text. Check this BEFORE the image-prefix
+                        // branch so SVGs aren't sent as binary images.
+                        if MIMETypeIsTextual(file.mimeType) {
+                            return .text(.init(text: file.content.lossyString))
+                        } else if Self.anthropicSupportedImageMimeTypes.contains(file.mimeType) {
                             let base64Data = file.content.base64EncodedString()
                             return .image(.init(type: "base64",
                                               media_type: file.mimeType,
                                               data: base64Data))
+                        } else if file.mimeType == "application/pdf" {
+                            let base64Data = file.content.base64EncodedString()
+                            return .document(.init(type: "base64",
+                                                   media_type: file.mimeType,
+                                                   data: base64Data))
                         } else {
+                            // Non-PDF, non-image binaries should have been
+                            // rejected by the provider allowlist upstream.
                             return .text(.init(text: file.content.lossyString))
                         }
                     case .fileID(id: _, name: let name):
@@ -165,6 +195,13 @@ struct AnthropicMessage: Codable, Equatable {
                                                type: .file(.init(name: "image",
                                                                content: data,
                                                                mimeType: image.media_type))))
+                    case .document(let document):
+                        guard let data = Data(base64Encoded: document.data) else { return nil }
+                        return .attachment(.init(inline: false,
+                                               id: UUID().uuidString,
+                                               type: .file(.init(name: "document",
+                                                               content: data,
+                                                               mimeType: document.media_type))))
                     case .toolUse(let toolUse):
                         let inputString = (try? JSONSerialization.data(withJSONObject: toolUse.input))?.lossyString ?? ""
                         let functionCall = LLM.FunctionCall(name: toolUse.name, arguments: inputString, id: toolUse.id)
@@ -202,6 +239,8 @@ struct AnthropicMessage: Codable, Equatable {
                     return text.text
                 case .image(let image):
                     return "[Image: \(image.media_type)]"
+                case .document(let document):
+                    return "[Document: \(document.media_type)]"
                 case .toolUse(let toolUse):
                     return "[Tool Use: \(toolUse.name)]"
                 case .toolResult(let toolResult):
@@ -248,6 +287,7 @@ extension AnthropicMessage {
     enum AnthropicContentBlock: Codable, Equatable {
         case text(AnthropicTextContent)
         case image(AnthropicImageContent)
+        case document(AnthropicDocumentContent)
         case toolUse(AnthropicToolUseContent)
         case toolResult(AnthropicToolResultContent)
 
@@ -261,6 +301,10 @@ extension AnthropicMessage {
                 return AIMetadata.instance.tokens(in: content.text) + 1
             case .image(_):
                 return 1000
+            case .document(_):
+                // PDFs are tokenized server-side; we don't have a useful local
+                // estimate so report a conservative non-trivial number.
+                return 2000
             case .toolUse(_):
                 return 100
             case .toolResult(let content):
@@ -273,6 +317,8 @@ extension AnthropicMessage {
             case .text(let content):
                 try content.encode(to: encoder)
             case .image(let content):
+                try content.encode(to: encoder)
+            case .document(let content):
                 try content.encode(to: encoder)
             case .toolUse(let content):
                 try content.encode(to: encoder)
@@ -292,6 +338,9 @@ extension AnthropicMessage {
             case "image":
                 let imageContent = try AnthropicImageContent(from: decoder)
                 self = .image(imageContent)
+            case "document":
+                let documentContent = try AnthropicDocumentContent(from: decoder)
+                self = .document(documentContent)
             case "tool_use":
                 let toolUseContent = try AnthropicToolUseContent(from: decoder)
                 self = .toolUse(toolUseContent)
@@ -336,6 +385,31 @@ extension AnthropicMessage {
         }
 
         // For backward compatibility
+        var media_type: String { source.media_type }
+        var data: String { source.data }
+
+        enum CodingKeys: String, CodingKey {
+            case type, source
+        }
+    }
+
+    // Anthropic document content block. Used for application/pdf (base64) and
+    // text/plain (for citations). See
+    // https://docs.anthropic.com/en/docs/build-with-claude/pdf-support.
+    struct AnthropicDocumentContent: Codable, Equatable {
+        let type: String = "document"
+        let source: Source
+
+        struct Source: Codable, Equatable {
+            let type: String
+            let media_type: String
+            let data: String
+        }
+
+        init(type: String, media_type: String, data: String) {
+            self.source = Source(type: type, media_type: media_type, data: data)
+        }
+
         var media_type: String { source.media_type }
         var data: String { source.data }
 
@@ -768,8 +842,8 @@ struct AnthropicRequestBuilder {
 
     // Anthropic requires that every tool_use block in an assistant message be
     // immediately followed by a user message containing the matching tool_result
-    // block (or all of them, for parallel tool_use). Callers (notably Cockpit's
-    // racy persistence) may hand us a layout where a plain user-text message
+    // block (or all of them, for parallel tool_use). Callers (notably the
+    // orchestrator's racy persistence) may hand us a layout where a plain user-text message
     // got persisted between a tool_use and its matching tool_result. Reorder so
     // the tool_result lands immediately after the tool_use, bumping any
     // intervening messages to AFTER the tool_result while preserving their

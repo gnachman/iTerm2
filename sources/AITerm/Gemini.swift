@@ -168,6 +168,16 @@ struct GeminiRequestBuilder: Codable {
                         case .statusUpdate:
                             return nil
                         case .file(let file):
+                            // Textual content (including image/svg+xml and
+                            // application/xml) must go through a text Part,
+                            // not inlineData. Gemini's inlineData validates
+                            // the MIME against a binary-format allowlist and
+                            // 400s on anything textual that's not text/plain.
+                            // Pinned by AIRequestBuilderAttachmentTests.testGemini_svgAttachment_asText
+                            // and the cross-vendor live attachment matrix.
+                            if MIMETypeIsTextual(file.mimeType) {
+                                return Part(text: file.content.lossyString)
+                            }
                             return Part(inlineData: InlineData(
                                 mime_type: file.mimeType,
                                 data: file.content.base64EncodedString()))

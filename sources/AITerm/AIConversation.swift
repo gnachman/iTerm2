@@ -218,6 +218,20 @@ struct AIConversation {
 
     func cancelOutstandingOperation() {
         controller.cancelOutstandingOperation()
+        // controller.cancelOutstandingOperation routes through
+        // handle(.cancel), which the state machine ignores in
+        // .ground state (AITerm.swift:227-229). We can be in
+        // .ground because parseStreamingResponse(final:true) moved
+        // here after dispatching a function_call that's still
+        // parked in the function-dispatch layer (the
+        // pendingRemoteCommands map in ChatAgent). The delegate
+        // callback never fired so our completion is stuck. Fire it
+        // directly if the delegate still thinks there's a request
+        // in flight. Idempotent: aitermControllerDidCancelOutstandingRequest
+        // is a no-op when busy is already false.
+        if delegate.busy {
+            delegate.aitermControllerDidCancelOutstandingRequest(controller)
+        }
     }
     private func cancel() {
         controller.cancel()
@@ -301,10 +315,6 @@ struct AIConversation {
 
     mutating func complete(_ completion: @escaping (Result<AIConversation, Error>) -> ()) {
         complete(streaming: nil, completion: completion)
-    }
-
-    mutating func stop() {
-        controller.cancel()
     }
 
     mutating func complete(streaming: ((LLM.StreamingUpdate, String?) -> ())?,

@@ -153,13 +153,75 @@ struct LLMProvider {
     }
 
     func fileTypeIsSupported(extension ext: String) -> Bool {
-        if LLMMetadata.hostIsOpenAIAPI(url: URL(string: model.url)) {
+        // Unknown extensions fall back to application/octet-stream, not
+        // text/plain. Text-only vendors' accepts(mimeType:) allowlist
+        // then rejects them at the gate instead of letting an unknown
+        // binary slip through and get base64-wrapped as lossy text. Users
+        // with a genuinely text-like unknown extension (.yaml, .toml,
+        // ...) will see "unsupported file" and can either rename the
+        // file or paste its contents inline; that's a strictly safer
+        // default than silently shipping bytes that may render as
+        // garbage in the LLM's input.
+        let mime = extensionToMime[ext] ?? "application/octet-stream"
+        return accepts(mimeType: mime)
+    }
+
+    func accepts(mimeType: String) -> Bool {
+        // Textual content (including image/svg+xml, which is XML text) is
+        // always acceptable — it can be inlined as a text block on any vendor.
+        if MIMETypeIsTextual(mimeType) {
             return true
         }
-        guard let mime = extensionToMime[ext] else {
-            return false
+        if mimeType == "application/pdf" {
+            return supportsPDFAttachments
         }
-        return MIMETypeIsTextual(mime)
+        if mimeType.hasPrefix("image/") {
+            return supportedImageMimeTypes.contains(mimeType)
+        }
+        if mimeType.hasPrefix("audio/") || mimeType.hasPrefix("video/") {
+            return supportsAudioVideoAttachments
+        }
+        // Vector-store-backed providers can ingest arbitrary other binaries
+        // by uploading them and referencing by file ID.
+        return shouldUploadFile(mimeType: mimeType)
+    }
+
+    var supportsPDFAttachments: Bool {
+        let url = URL(string: model.url)
+        if LLMMetadata.hostIsOpenAIAPI(url: url) {
+            return true
+        }
+        if LLMMetadata.hostIsAnthropicAIAPI(url: url) {
+            return true
+        }
+        if LLMMetadata.hostIsGoogleAIAPI(url: url) {
+            return true
+        }
+        return false
+    }
+
+    // Per-provider list of image MIME types accepted as inline binary
+    // attachments. Anthropic's image content block source is documented to
+    // accept exactly these four formats; Gemini's inlineData accepts a wider
+    // list including heic/heif. Image-shaped MIMEs that are really text
+    // (image/svg+xml) are handled by the textual branch of accepts() instead.
+    var supportedImageMimeTypes: Set<String> {
+        let url = URL(string: model.url)
+        if LLMMetadata.hostIsAnthropicAIAPI(url: url) {
+            return ["image/jpeg", "image/png", "image/gif", "image/webp"]
+        }
+        if LLMMetadata.hostIsGoogleAIAPI(url: url) {
+            return ["image/jpeg", "image/png", "image/webp", "image/heic", "image/heif"]
+        }
+        // OpenAI image_url (chat completions) and input_image (responses) are
+        // not wired up to user attachments in this codebase today. Vector-store
+        // uploads cover the responses+vectorStore case via shouldUploadFile.
+        return []
+    }
+
+    var supportsAudioVideoAttachments: Bool {
+        let url = URL(string: model.url)
+        return LLMMetadata.hostIsGoogleAIAPI(url: url)
     }
 
     func shouldInlineBase64EncodedFile(mimeType: String) -> Bool {

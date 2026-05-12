@@ -256,13 +256,25 @@ class RegularMessageCellView: MessageCellView {
     }
 
     @objc private func buttonTapped(_ sender: NSButton) {
-        if let entry = buttons.first(where: { $0.button === sender }) {
-            buttonClicked?(entry.identifier, entry.messageUniqueID)
-        }
+        // Disable BEFORE invoking the click handler. Some handlers
+        // (e.g. .offerLink's "Enable Orchestration" path) run an
+        // NSAlert modally and then publish a system-message bubble,
+        // which synchronously inserts a row and reloads the
+        // previously-last row. That reload destroys this cell view and
+        // replaces it with a fresh one whose buttons are enabled. If
+        // we disabled after the click ran, we'd be disabling the
+        // detached button instances; the visible (new) cell would
+        // still have clickable buttons and a second click could
+        // re-trigger the action (or, worse, take a different branch
+        // that fights the first one — e.g. Enable Orchestration
+        // followed by Link, which then asserts in setTerminalGuid).
         if !keepsButtonsEnabledAfterClick {
             for entry in buttons {
                 entry.button.isEnabled = false
             }
+        }
+        if let entry = buttons.first(where: { $0.button === sender }) {
+            buttonClicked?(entry.identifier, entry.messageUniqueID)
         }
     }
 

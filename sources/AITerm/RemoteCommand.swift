@@ -5,6 +5,96 @@
 //  Created by George Nachman on 8/18/25.
 //
 
+// Generic wrapper around "a remote command the LLM wants to run".
+// Two flavors:
+//   - .classic: session-bound mode's typed RemoteCommand. Its Content
+//     enum drives permission checks, safety classification, markdown
+//     rendering, and the per-tool argument shape known at compile time.
+//   - .external: any other stack's tool call (today: the orchestration
+//     mode's tool surface). Args travel as opaque JSON. Renders via
+//     the wrapper's markdownDescription.
+//
+// Codable shape:
+//   - .classic encodes as a bare RemoteCommand (no envelope) so existing
+//     chat databases round-trip without migration.
+//   - .external encodes with a "kind": "external" discriminator on the
+//     same object level; init(from:) checks for it and routes
+//     accordingly, falling back to the legacy classic shape.
+enum RemoteCommandPayload {
+    case classic(RemoteCommand)
+    case external(ExternalRemoteCommand)
+
+    var llmMessage: LLM.Message {
+        switch self {
+        case .classic(let rc): rc.llmMessage
+        case .external(let ext): ext.llmMessage
+        }
+    }
+
+    // Tool name as the LLM sees it. For .classic this is the typed
+    // Content's functionName; for .external it's whatever the
+    // orchestrator's tool definition registered.
+    var name: String {
+        switch self {
+        case .classic(let rc): rc.content.functionName
+        case .external(let ext): ext.name
+        }
+    }
+
+    var markdownDescription: String {
+        switch self {
+        case .classic(let rc): rc.markdownDescription
+        case .external(let ext): ext.markdownDescription
+        }
+    }
+
+    // Convenience for AITerm-side readers that need typed Content
+    // access (safety check, permission category, etc.). Returns nil
+    // for external payloads — readers that don't have a sensible
+    // fallback should treat that as "skip this message".
+    var classic: RemoteCommand? {
+        if case .classic(let rc) = self { return rc }
+        return nil
+    }
+}
+
+struct ExternalRemoteCommand: Codable {
+    // Discriminator. Always "external"; used by RemoteCommandPayload's
+    // custom decoder to tell this shape apart from a bare RemoteCommand.
+    var kind: String = "external"
+    var llmMessage: LLM.Message
+    var name: String
+    var argsJSON: String
+    var markdownDescription: String
+}
+
+extension RemoteCommandPayload: Codable {
+    private enum DiscriminatorKey: String, CodingKey {
+        case kind
+    }
+
+    init(from decoder: Decoder) throws {
+        if let container = try? decoder.container(keyedBy: DiscriminatorKey.self),
+           let kind = try? container.decode(String.self, forKey: .kind),
+           kind == "external" {
+            let ext = try ExternalRemoteCommand(from: decoder)
+            self = .external(ext)
+            return
+        }
+        let rc = try RemoteCommand(from: decoder)
+        self = .classic(rc)
+    }
+
+    func encode(to encoder: Encoder) throws {
+        switch self {
+        case .classic(let rc):
+            try rc.encode(to: encoder)
+        case .external(let ext):
+            try ext.encode(to: encoder)
+        }
+    }
+}
+
 struct RemoteCommand: Codable {
     struct IsAtPrompt: Codable {}
     struct ExecuteCommand: Codable { var command: String = "" }
@@ -484,7 +574,7 @@ extension RemoteCommand.Content {
         case .setClipboard(_):
             ["text": "The text to copy to the clipboard."]
         case .insertTextAtCursor(_):
-            ["text": "The text to insert at the cursor position. Consider whether execute_command would be a better choice, especially when running a command at the shell prompt since insert_text_at_cursor does not return the output to you."]
+            ["text": "The text to insert at the cursor position. Supports a small backslash-escape vocabulary so you can send control keys and special characters: \\\\ for a literal backslash, \\n for newline, \\r for carriage return, \\t for tab, and \\uXXXX (four hex digits, JSON-style) for any Unicode scalar. Examples: \\u0004 for Ctrl-D / EOF, \\u001a for Ctrl-Z, \\u000c for Ctrl-L, \\u001b for Escape. Consider whether execute_command would be a better choice, especially when running a command at the shell prompt since insert_text_at_cursor does not return the output to you."]
         case .deleteCurrentLine(_):
             [:]
         case .getManPage(_):

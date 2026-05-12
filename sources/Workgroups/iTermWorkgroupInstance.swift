@@ -75,6 +75,15 @@ final class iTermWorkgroupInstance: NSObject {
     // consults them when the main port doesn't own the session.
     private var nestedPeerPorts: [iTermWorkgroupPeerPort] = []
 
+    // Read-only view of every peer port in this instance, top-level
+    // first then any nested ports in registration order. Callers that
+    // need to walk every peer (e.g. to enumerate inactive members)
+    // can iterate this without having to know about the nested-port
+    // distinction.
+    var allPeerPorts: [iTermWorkgroupPeerPort] {
+        return [peerPort] + nestedPeerPorts
+    }
+
     // Workgroup-wide git poller, shared across every gitStatus and
     // changedFileSelector view in every peer group AND every non-peer
     // host. Built once at instance creation if any session in the
@@ -290,6 +299,29 @@ final class iTermWorkgroupInstance: NSObject {
         }
         guard let owningPort else { return false }
         return owningPort.activatePeer(byShortcutDigit: digit)
+    }
+
+    // Walk every session in the workgroup config and pair each with its
+    // live PTYSession (when one exists). Returns triples sufficient for
+    // the cockpit orchestrator to describe the workgroup to the LLM:
+    //   - roleID:      the workgroup-config UUID for this session slot
+    //   - displayName: the human-readable role name
+    //   - session:     the live PTYSession (peer, nested peer, or
+    //                  non-peer host); nil if the session hasn't been
+    //                  realized yet or has already terminated
+    struct ResolvedMember {
+        let roleID: String
+        let displayName: String
+        let session: PTYSession?
+    }
+
+    func resolvedMembers() -> [ResolvedMember] {
+        return workgroup.sessions.map { config in
+            ResolvedMember(
+                roleID: config.uniqueIdentifier,
+                displayName: config.displayName,
+                session: liveSession(forConfigID: config.uniqueIdentifier))
+        }
     }
 
     // Look up the live PTY session for a workgroup config UUID. Used

@@ -232,6 +232,8 @@ extension Message.Content {
             return result.successValue
         case let .terminalCommand(cmd):
             return cmd.command
+        case let .watcherEvent(payload):
+            return payload.detail
         case  .remoteCommandRequest, .selectSessionRequest, .clientLocal, .renameChat,
                 .commit, .setPermissions, .vectorStoreCreated, .userCommand:
             return nil

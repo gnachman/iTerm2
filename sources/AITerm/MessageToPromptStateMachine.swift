@@ -36,7 +36,7 @@ struct MessageToPromptStateMachine {
             }
         case .remoteCommandResponse, .selectSessionRequest, .clientLocal, .renameChat, .append,
                 .commit, .setPermissions, .vectorStoreCreated, .terminalCommand, .appendAttachment,
-                .explanationRequest, .userCommand:
+                .explanationRequest, .userCommand, .watcherEvent:
             it_fatalError()
         case .multipart(let subparts, _):
             return .multipart(subparts.compactMap { subpart -> LLM.Message.Body? in
@@ -93,6 +93,18 @@ struct MessageToPromptStateMachine {
             case .initialExplanation:
                 return .text(AIExplanationRequest.conversationalPrompt(userPrompt: value))
             }
+        case .markdown(let text):
+            // A user-author markdown message comes from the orchestrator
+            // turn path (the agent's translator wraps the body with a
+            // <workgroups> snapshot before adding; on history reload
+            // we just want the raw text).
+            return .text(text)
+        case .watcherEvent(let payload):
+            // Orchestration watcher events are routed like user messages so
+            // ChatService kicks off an agent turn; they're rendered to
+            // the LLM as a tagged <status_update> block both on the
+            // initial firing and on history reload.
+            return .text(Self.llmText(forWatcherEvent: payload))
         case .explanationRequest(let request):
             mode = .initialExplanation
             return .text(request.prompt())
@@ -130,9 +142,53 @@ struct MessageToPromptStateMachine {
             return .text(prompt(terminalCommand: cmd))
         case .explanationResponse, .append, .appendAttachment, .remoteCommandRequest,
                 .selectSessionRequest, .clientLocal, .renameChat, .commit, .setPermissions,
-                .vectorStoreCreated, .userCommand, .markdown:
+                .vectorStoreCreated, .userCommand:
             it_fatalError()
         }
+    }
+
+    // LLM-visible rendering of a watcher event. Wrapped in an XML-ish
+    // tag so the system prompt can teach the model to recognize these
+    // as iTerm2-generated events, not user requests.
+    //
+    // Every interpolated value passes through xmlEscape* helpers. Detail
+    // in particular is free-form text from watcher output and can legally
+    // contain markup; without escaping a detail string containing
+    // "</status_update>" would close the tag early and the rest of the
+    // payload would be parsed by the LLM as a higher-trust system frame.
+    private static func llmText(forWatcherEvent payload: StatusUpdate) -> String {
+        let iso = ISO8601DateFormatter()
+        iso.formatOptions = [.withInternetDateTime]
+        let at = iso.string(from: payload.timestamp)
+        var lines: [String] = []
+        lines.append("<status_update reason=\"\(xmlEscapeAttribute(payload.reason.rawValue))\" "
+                     + "watcher_id=\"\(xmlEscapeAttribute(payload.watcherID))\" "
+                     + "at=\"\(xmlEscapeAttribute(at))\">")
+        lines.append("Workgroup: \(xmlEscapeText(payload.workgroupName))")
+        lines.append("Role: \(xmlEscapeText(payload.roleName))")
+        if !payload.stateReached.isEmpty {
+            lines.append("Reached state: \(xmlEscapeText(payload.stateReached))")
+        }
+        if !payload.detail.isEmpty {
+            lines.append("Detail: \(xmlEscapeText(payload.detail))")
+        }
+        lines.append("</status_update>")
+        return lines.joined(separator: "\n")
+    }
+
+    // & must be replaced first so subsequent replacements don't
+    // double-encode the ampersands they introduce.
+    private static func xmlEscapeText(_ s: String) -> String {
+        return s
+            .replacingOccurrences(of: "&", with: "&amp;")
+            .replacingOccurrences(of: "<", with: "&lt;")
+            .replacingOccurrences(of: ">", with: "&gt;")
+    }
+
+    private static func xmlEscapeAttribute(_ s: String) -> String {
+        return xmlEscapeText(s)
+            .replacingOccurrences(of: "\"", with: "&quot;")
+            .replacingOccurrences(of: "\n", with: "&#10;")
     }
 }
 

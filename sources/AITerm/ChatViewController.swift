@@ -56,6 +56,11 @@ class ChatViewControllerDocumentView: NSView {
 // additional decoration. Layout is handled in ChatViewController.viewDidLayout.
 class ChatViewControllerInnerContainer: NSView {}
 
+// Hairline divider between the input area and the rest of the chat
+// surface. Lifted out of loadView so it can live at file scope —
+// local types can't be nested inside closures in a generic context.
+class ChatViewControllerDividerView: GradientView {}
+
 // Root view for ChatViewController. Hooks both window-arrival (the
 // inline-chat right-gutter panel uses this to defer load(chatID:) until
 // after the panel has been added to the SessionView's window) and the
@@ -76,6 +81,22 @@ class ChatViewControllerRootView: NSView {
     }
 }
 
+// Encoded into the buttonClicked identifier strings for two-button
+// Approve/Deny client-local bubbles (workgroupPermissionRequest,
+// enableOrchestrationRequest). Identifier format is
+// "<prefix>:<choice>:<requestID>".
+fileprivate enum ApprovalChoice: String {
+    case approve
+    case deny
+}
+
+// The chat view controller. Drives the table view, the input area,
+// and the broker subscription. The same controller renders both
+// chat modes (session-bound and orchestration); the mode is
+// determined per-chat by Chat.orchestrationEnabled and is mutable
+// at runtime. Hosted by ChatWindowController as the standalone
+// chat window's content view, or as an inline right-gutter panel
+// inside a SessionView.
 @objc
 class ChatViewController: NSViewController {
     weak var delegate: ChatViewControllerDelegate?
@@ -175,11 +196,11 @@ class ChatViewController: NSViewController {
             self?.chatToolbar.update()
         }
     }
-    
+
     required init?(coder: NSCoder) {
         it_fatalError("init(coder:) has not been implemented")
     }
-    
+
     deinit {
         brokerSubscription?.unsubscribe()
     }
@@ -216,6 +237,8 @@ class ChatViewController: NSViewController {
     // ChatInputTextFieldContainer) cycle.
     private let layoutJoiner = IdempotentOperationJoiner.asyncJoiner(.main)
 
+    // MARK: - Layout
+
     func setNeedsLayoutNow() {
         layoutJoiner.setNeedsUpdate { [weak self] in
             self?.performLayoutNow()
@@ -227,28 +250,28 @@ class ChatViewController: NSViewController {
         setNeedsLayoutNow()
     }
 
-    private func performLayoutNow() {
+    func performLayoutNow() {
         guard isViewLoaded else { return }
         let bounds = view.bounds
         guard bounds.width > 0 else { return }
         let dividerHeight: CGFloat = 1
 
-        let scrollFrame = bounds
+        let scrollFrame = NSRect(x: 0,
+                                  y: 0,
+                                  width: bounds.width,
+                                  height: bounds.height)
         if scrollView.frame != scrollFrame {
             scrollView.frame = scrollFrame
         }
 
         let inputHeight = inputView.preferredHeight(forContainerWidth: bounds.width)
-        let inputFrame = NSRect(x: 0,
-                                y: 0,
-                                width: bounds.width,
-                                height: inputHeight)
+        let inputFrame = NSRect(x: 0, y: 0, width: bounds.width, height: inputHeight)
         if inputView.frame != inputFrame {
             inputView.frame = inputFrame
         }
 
-        // Reserve room below the table content equal to the input view's
-        // height so the last row can scroll above it. This is the iOS
+        // Reserve room below the table content equal to the input
+        // area's height so the last row can scroll above it. iOS
         // pattern: scroll view's contentInset.bottom == hovering view's
         // height, so the content can scroll up out from underneath.
         let currentInsets = scrollView.contentInsets
@@ -262,8 +285,13 @@ class ChatViewController: NSViewController {
                                                     right: 0)
         }
 
+        // Divider sits at the top edge of the floating input area,
+        // separating it from the scroll content above. y: inputHeight
+        // puts it just above the input view (which lives at 0..inputHeight).
+        // The previous y: bounds.maxY put the 1pt divider above the
+        // chrome top, making it invisible.
         let dividerFrame = NSRect(x: 0,
-                                  y: bounds.maxY,
+                                  y: inputHeight,
                                   width: bounds.width,
                                   height: dividerHeight)
         if divider.frame != dividerFrame {
@@ -275,8 +303,15 @@ class ChatViewController: NSViewController {
         let tableWidth = tableView.bounds.width
         if tableWidth != lastTableViewWidth {
             lastTableViewWidth = tableWidth
-            tableView.reloadData()
-            updateDocumentViewSize()
+            // reloadData() inside an AppKit synchronous layout pass
+            // re-dirties our own layout and can trigger the "more
+            // layout passes than views" assertion on macOS 13+. Defer
+            // via the joiner so it runs OUTSIDE the current pass.
+            layoutJoiner.setNeedsUpdate { [weak self] in
+                guard let self else { return }
+                self.tableView.reloadData()
+                self.updateDocumentViewSize()
+            }
         }
 
         if let floating = floatingControlsView as? FloatingChatToolbarView {
@@ -296,11 +331,11 @@ class ChatViewController: NSViewController {
 
     func updateDocumentViewSize() {
         guard let documentView else { return }
-        // The scroll view's clip view is sized asynchronously after we set
-        // the scroll view's frame; reading clipView.bounds.width here can
-        // still report 0 even though scrollView.bounds.width is correct.
-        // Use scrollView.bounds.width directly, minus the vertical scroller
-        // width if one is showing.
+        // The scroll view's clip view is sized asynchronously after
+        // we set the scroll view's frame; reading clipView.bounds.width
+        // here can still report 0 even though scrollView.bounds.width
+        // is correct. Use scrollView.bounds.width directly, minus the
+        // vertical scroller width if one is showing.
         var width = scrollView.bounds.width
         if let scroller = scrollView.verticalScroller,
            scrollView.scrollerStyle == .legacy,
@@ -308,44 +343,43 @@ class ChatViewController: NSViewController {
             width -= scroller.frame.width
         }
         guard width > 0 else { return }
-        // Document height = table content. We deliberately do NOT pad to
-        // the clip view's height: the table view fills the document
-        // (ChatViewControllerDocumentView.layout sets tableView.frame =
-        // bounds), and an over-sized document would leave empty rows
-        // beyond the actual content. Combined with the unflipped
-        // document and flipped table view, that empty area lives above
-        // the last row in document coordinates, so scrollToBottom would
-        // show blank space above the input view rather than the latest
-        // bubble. The bottom contentInset gives users the extra
-        // scrollable room they need.
+        // Document height = table content. We deliberately do NOT pad
+        // to the clip view's height: the table view fills the document
+        // (ChatViewControllerDocumentView.layout sets tableView.frame
+        // = bounds), and an over-sized document would leave empty rows
+        // beyond the actual content.
         let tableHeight = tableView.intrinsicContentSize.height
         let newSize = NSSize(width: width, height: tableHeight)
         if documentView.frame.size == newSize {
             return
         }
         documentView.setFrameSize(newSize)
-        // setFrameSize marks documentView for layout but the actual layout
-        // call happens asynchronously. Force it now so the table view and
-        // spacer pick up the new bounds in the same pass — otherwise the
-        // table can stay at 0×1 (its previous frame) until the next tick.
+        // setFrameSize marks documentView for layout but the actual
+        // layout call happens asynchronously. Force it now so the
+        // table view picks up the new bounds in the same pass.
         documentView.layout()
     }
 
+    // MARK: - loadView
+
     override func loadView() {
-        let view = ChatViewControllerRootView(frame: NSRect(x: 0, y: 0, width: 400, height: 600))
+        let view = ChatViewControllerRootView(
+            frame: NSRect(x: 0, y: 0, width: 400, height: 600))
         view.didMoveToWindowHandler = { [weak self] in
             self?.rootViewDidMoveToWindow()
         }
         view.layoutHandler = { [weak self] in
-            // Run the manual layout synchronously inside AppKit's layout
-            // pass so children have valid frames before draw — the joiner
-            // path is for reacting to off-pass state changes (text input,
-            // chat updates) and may run too late for the first paint.
+            // Run the manual layout synchronously inside AppKit's
+            // layout pass so children have valid frames before draw —
+            // the joiner path is for reacting to off-pass state
+            // changes (text input, chat updates) and may run too
+            // late for the first paint.
             self?.performLayoutNow()
         }
 
         tableView = NSTableView()
-        let column = NSTableColumn(identifier: NSUserInterfaceItemIdentifier("MessageColumn"))
+        let column = NSTableColumn(identifier:
+                                     NSUserInterfaceItemIdentifier("MessageColumn"))
         column.resizingMask = .autoresizingMask
         tableView.addTableColumn(column)
         tableView.headerView = nil
@@ -365,42 +399,43 @@ class ChatViewController: NSViewController {
         scrollView.documentView = documentView
         scrollView.hasVerticalScroller = true
         scrollView.autoresizesSubviews = false
-        // iOS-style: bottom contentInset on the clip view reserves room
-        // below the content so the last row can scroll above the floating
-        // input view. The exact value is updated in performLayoutNow once
-        // the input view's preferred height is known.
+        // iOS-style: bottom contentInset on the clip view reserves
+        // room below the content so the last row can scroll above
+        // the floating input view. The exact value is updated in
+        // performLayoutNow once the input view's preferred height
+        // is known.
         scrollView.automaticallyAdjustsContentInsets = false
         scrollView.contentInsets = .init()
-
         if #available(macOS 26, *) {
             scrollView.scrollerStyle = .overlay
         }
 
-        inputView.delegate = self
-
-        let dividerView: NSView = {
-            class ChatViewControllerDividerView: GradientView {}
-            return ChatViewControllerDividerView(
-                gradient: .init(
-                    stops: [
-                        .init(
-                            color: .it_dynamicColor(
-                                forLightMode: .init(fromHexString: "#f2f2f2")!,
-                                darkMode: .init(fromHexString: "#161616")!), location: 0.25),
-                        .init(
-                            color: .it_dynamicColor(
-                                forLightMode: .init(fromHexString: "#e3e3e3")!,
-                                darkMode: .init(fromHexString: "#0b0b0b")!), location: 0.75)]))
-        }()
+        let dividerView = ChatViewControllerDividerView(
+            gradient: .init(
+                stops: [
+                    .init(
+                        color: .it_dynamicColor(
+                            forLightMode: .init(fromHexString: "#f2f2f2")!,
+                            darkMode: .init(fromHexString: "#161616")!),
+                        location: 0.25),
+                    .init(
+                        color: .it_dynamicColor(
+                            forLightMode: .init(fromHexString: "#e3e3e3")!,
+                            darkMode: .init(fromHexString: "#0b0b0b")!),
+                        location: 0.75)]))
         self.divider = dividerView
 
-        // Disable autoresizing for the children we lay out manually so
-        // AppKit doesn't move them on window resize.
-        scrollView.translatesAutoresizingMaskIntoConstraints = false
-        inputView.translatesAutoresizingMaskIntoConstraints = false
-        dividerView.translatesAutoresizingMaskIntoConstraints = false
-        documentView.translatesAutoresizingMaskIntoConstraints = false
-        tableView.translatesAutoresizingMaskIntoConstraints = false
+        inputView.delegate = self
+
+        // Disable autoresizing for the children we lay out manually
+        // so AppKit doesn't move them on window resize. Empty mask
+        // (not translatesAutoresizingMaskIntoConstraints=false, which
+        // is the auto-layout opt-in switch).
+        scrollView.autoresizingMask = []
+        inputView.autoresizingMask = []
+        dividerView.autoresizingMask = []
+        documentView.autoresizingMask = []
+        tableView.autoresizingMask = []
 
         view.addSubview(scrollView)
         view.addSubview(inputView)
@@ -411,6 +446,7 @@ class ChatViewController: NSViewController {
 
         chatToolbar.update()
     }
+
 }
 
 extension Message {
@@ -441,7 +477,7 @@ extension ChatViewController {
 
     func offerLink(to guid: String, terminal: Bool, name: String?) {
         if let chatID {
-            try? ChatClient.instance?.publishClientLocalMessage(
+            try? client.publishClientLocalMessage(
                 chatID: chatID,
                 action: .offerLink(terminal: terminal, guid: guid, name: name))
         }
@@ -460,12 +496,13 @@ extension ChatViewController {
             nil
         }
         if let chat {
-            model = ChatViewControllerModel(chat: chat, listModel: listModel)
+            let m = ChatViewControllerModel(chatID: chat.id, listModel: listModel)
+            m.delegate = self
+            model = m
         } else {
             model = nil
         }
         inputView.isEnabled = chatID != nil
-        model?.delegate = self
         self.chatID = chat?.id
 
         // Update window title via window controller. Skip when this CVC is
@@ -482,50 +519,60 @@ extension ChatViewController {
         brokerSubscription?.unsubscribe()
         if let chat {
             brokerSubscription = client.subscribe(chatID: chat.id, registrationProvider: window) { [weak self] update in
-                guard let self, let model else {
-                    return
-                }
-                var shouldScroll = true
-                switch update {
-                case let .delivery(message, _):
-                    // Hidden-from-client messages (setPermissions,
-                    // remoteCommandResponse, renameChat, commit,
-                    // vectorStoreCreated, userCommand) don't appear in
-                    // the table, so they shouldn't trigger a scroll
-                    // either — that was making button clicks in
-                    // permissions bubbles bounce the chat.
-                    shouldScroll = !message.hiddenFromClient && message.shouldCauseScrollToBottom
-                    if !message.hiddenFromClient {
-                        model.appendMessage(message)
-                    } else if case .commit = message.content {
-                        model.commit()
+                // The broker publishes synchronously on whatever thread
+                // the caller is on; appendMessage and the typing-indicator
+                // setter run AppKit layout, so hop to main when needed.
+                let apply = {
+                    guard let self, let model = self.model else {
+                        return
                     }
-                    if case .renameChat(let newName) = message.content {
-                        // Update window title when chat is renamed. Skip
-                        // for inline panels so the terminal window's title
-                        // isn't clobbered.
-                        if let windowController = view.window?.windowController as? ChatWindowController {
-                            windowController.updateTitle(newName)
-                        } else if !isInlinePanel {
-                            // Fallback for compatibility
-                            view.window?.title = newName
+                    var shouldScroll = true
+                    switch update {
+                    case let .delivery(message, _):
+                        // Hidden-from-client messages (setPermissions,
+                        // remoteCommandResponse, renameChat, commit,
+                        // vectorStoreCreated, userCommand) don't appear in
+                        // the table, so they shouldn't trigger a scroll
+                        // either — that was making button clicks in
+                        // permissions bubbles bounce the chat.
+                        shouldScroll = !message.hiddenFromClient && message.shouldCauseScrollToBottom
+                        if !message.hiddenFromClient {
+                            model.appendMessage(message)
+                        } else if case .commit = message.content {
+                            model.commit()
+                        }
+                        if case .renameChat(let newName) = message.content {
+                            // Update window title when chat is renamed. Skip
+                            // for inline panels so the terminal window's title
+                            // isn't clobbered.
+                            if let windowController = self.view.window?.windowController as? ChatWindowController {
+                                windowController.updateTitle(newName)
+                            } else if !self.isInlinePanel {
+                                // Fallback for compatibility
+                                self.view.window?.title = newName
+                            }
+                        }
+                    case let .typingStatus(typing, participant):
+                        switch participant {
+                        case .user:
+                            break
+                        case .agent:
+                            self.showTypingIndicator = typing
+                            shouldScroll = typing
                         }
                     }
-                case let .typingStatus(typing, participant):
-                    switch participant {
-                    case .user:
-                        break
-                    case .agent:
-                        self.showTypingIndicator = typing
-                        shouldScroll = typing
+                    if shouldScroll {
+                        DLog("Schedule scroll to bottom")
+                        DispatchQueue.main.async { [weak self] in
+                            DLog("Scroll to bottom")
+                            self?.scrollToBottom(animated: true)
+                        }
                     }
                 }
-                if shouldScroll {
-                    DLog("Schedule scroll to bottom")
-                    DispatchQueue.main.async { [weak self] in
-                        DLog("Scroll to bottom")
-                        self?.scrollToBottom(animated: true)
-                    }
+                if Thread.isMainThread {
+                    apply()
+                } else {
+                    DispatchQueue.main.async(execute: apply)
                 }
             }
         }
@@ -537,7 +584,7 @@ extension ChatViewController {
             showTypingIndicator = false
         }
         if let chatID, let model, model.lastStreamingState == .active {
-            try? ChatClient.instance?.publishClientLocalMessage(
+            try? client.publishClientLocalMessage(
                 chatID: chatID,
                 action: .streamingChanged(.stoppedAutomatically))
             model.lastStreamingState = .stoppedAutomatically
@@ -546,7 +593,8 @@ extension ChatViewController {
         inputView.makeTextViewFirstResponder()
     }
 
-    // Pre-fill the input controls to send a message resembling `message`
+    // Pre-fill the input controls to send a message resembling
+    // `message`. Pure input-view wrapper; works for both stacks.
     func stage(_ message: Message) {
         switch message.content {
         case .plainText(let text, context: _), .markdown(let text):
@@ -570,16 +618,14 @@ extension ChatViewController {
                 }
             }
         case .explanationRequest, .explanationResponse, .remoteCommandRequest,
-                .remoteCommandResponse, .selectSessionRequest, .clientLocal, .renameChat, .append,
-                .appendAttachment, .commit, .userCommand, .setPermissions, .vectorStoreCreated,
-                .terminalCommand:
+                .remoteCommandResponse, .selectSessionRequest, .clientLocal,
+                .renameChat, .append, .appendAttachment, .commit, .userCommand,
+                .setPermissions, .vectorStoreCreated, .terminalCommand, .watcherEvent:
             break
         }
     }
 
-    func attach(filename: String,
-                content: Data,
-                mimeType: String) {
+    func attach(filename: String, content: Data, mimeType: String) {
         inputView.attach(filename: filename, content: content, mimeType: mimeType)
         inputView.makeTextViewFirstResponder()
     }
@@ -588,6 +634,10 @@ extension ChatViewController {
         inputView.makeTextViewFirstResponder()
     }
 
+    // Drop the given text into the input field iff the user hasn't
+    // already started typing (eligibleForAutoPaste is reset by
+    // textDidChange). Used by hosts that want to seed the chat with
+    // pre-selected terminal text.
     func offerSelectedText(_ text: String) {
         if eligibleForAutoPaste {
             inputView.stringValue = text
@@ -710,7 +760,7 @@ extension ChatViewController {
         if shouldShareTerminalStateAutomatically {
             allowedCategories.remove(.checkTerminalState)
         }
-        try ChatClient.instance?.publishUserMessage(
+        try client.publishUserMessage(
             chatID: chatID,
             content: .setPermissions(allowedCategories))
     }
@@ -760,7 +810,7 @@ extension ChatViewController {
             }
         }
         do {
-            try ChatClient.instance?.publish(message: waitingMessage,
+            try client.publish(message: waitingMessage,
                                              toChatID: chatID,
                                              partial: false)
         } catch {
@@ -779,10 +829,10 @@ extension ChatViewController {
         } else {
             try model.setBrowserSessionGuid(guid)
         }
-        try ChatClient.instance?.publishNotice(
+        try client.publishNotice(
             chatID: chatID,
             notice: "This chat has been linked to \(terminal ? "terminal" : "web browser") session “\(name?.escapedForMarkdownCode ?? "(Unnamed session)")”")
-        try? ChatClient.instance?.publishClientLocalMessage(
+        try? client.publishClientLocalMessage(
             chatID: chatID,
             action: .permissions(terminal: terminal, guid: guid))
         try publishUpdatedPermissions()
@@ -808,7 +858,7 @@ extension ChatViewController {
 
     func stopStreaming() {
         if let chatID, streaming {
-            try? ChatClient.instance?.publishMessageFromAgent(
+            try? client.publishMessageFromAgent(
                 chatID: chatID,
                 content: .clientLocal(.init(action: .streamingChanged(.stopped))))
         }
@@ -834,7 +884,7 @@ extension ChatViewController {
         if selection == .kiTermWarningSelection0 {
             streaming = true
             tableView.reloadData()
-            try? ChatClient.instance?.publishMessageFromAgent(
+            try? client.publishMessageFromAgent(
                 chatID: chatID,
                 content: .clientLocal(.init(action: .streamingChanged(.active))))
         }
@@ -888,7 +938,7 @@ extension ChatViewController {
         if let chatID {
             do {
                 try listModel.setTerminalGuid(for: chatID, to: nil)
-                try? ChatClient.instance?.publishNotice(
+                try? client.publishNotice(
                     chatID: chatID,
                     notice: "This chat is no longer linked to a terminal session.")
                 try publishUpdatedPermissions()
@@ -902,7 +952,7 @@ extension ChatViewController {
         if let chatID {
             do {
                 try listModel.setBrowserGuid(for: chatID, to: nil)
-                try? ChatClient.instance?.publishNotice(
+                try? client.publishNotice(
                     chatID: chatID,
                     notice: "This chat is no longer linked to a web browser session.")
                 try publishUpdatedPermissions()
@@ -919,18 +969,19 @@ extension ChatViewController {
         let row = model.items.count - 1
         guard row >= 0 else { return }
         // Force the manual layout pass to run synchronously so the
-        // input-view height has been measured, contentInsets.bottom is
-        // current, and the document size reflects the latest row heights.
-        // load(chatID:) calls us before the joiner has fired; without
-        // this, insetBottom is 0 and setBoundsOrigin(0, 0) clamps to the
-        // valid range — leaving the last bubble(s) obscured by the
-        // input view.
+        // input-view height has been measured, contentInsets.bottom
+        // is current, and the document size reflects the latest row
+        // heights. load(chatID:) calls us before the joiner has
+        // fired; without this, insetBottom is 0 and setBoundsOrigin
+        // (0, 0) clamps to the valid range — leaving the last
+        // bubble(s) obscured by the input view.
         performLayoutNow()
-        // documentView (ChatViewControllerDocumentView) is unflipped, so
-        // doc.y=0 is the BOTTOM of the document (newest row). Setting
-        // clipView.bounds.origin.y = -contentInsets.bottom puts that
-        // bottom edge at insetBottom pixels above the clip's lower edge —
-        // i.e., flush with the top of the input view.
+        // documentView (ChatViewControllerDocumentView) is unflipped,
+        // so doc.y=0 is the BOTTOM of the document (newest row).
+        // Setting clipView.bounds.origin.y = -contentInsets.bottom
+        // puts that bottom edge at insetBottom pixels above the
+        // clip's lower edge — i.e., flush with the top of the input
+        // view.
         let insetBottom = scrollView.contentInsets.bottom
         let target = NSPoint(x: 0, y: -insetBottom)
         if animated {
@@ -947,7 +998,7 @@ extension ChatViewController {
     @available(macOS 26, *)
     func setupFloatingControls() {
         let floatingView = chatToolbar.createFloatingView()
-        floatingView.translatesAutoresizingMaskIntoConstraints = false
+        floatingView.autoresizingMask = []
         view.addSubview(floatingView)
         floatingControlsView = floatingView
         view.needsLayout = true
@@ -988,7 +1039,7 @@ extension ChatViewController: NSTableViewDataSource, NSTableViewDelegate {
                 let cell = TerminalCommandMessageCellView()
                 configure(cell: cell, for: message.message, isLast: isLastMessage)
                 return cell
-            case .clientLocal:
+            case .clientLocal, .watcherEvent:
                 let cell = SystemMessageCellView()
                 configure(cell: cell, for: message.message, isLast: isLastMessage)
                 return cell
@@ -1015,10 +1066,10 @@ extension ChatViewController: NSTableViewDataSource, NSTableViewDelegate {
     func tableView(_ tableView: NSTableView, shouldSelectRow row: Int) -> Bool {
         false
     }
-
     private func reloadCell(forMessageID messageID: UUID) {
         if let model, let i = model.index(ofMessageID: messageID) {
-            tableView.reloadData(forRowIndexes: IndexSet(integer: i), columnIndexes: IndexSet(integer: 0))
+            tableView.reloadData(forRowIndexes: IndexSet(integer: i),
+                                 columnIndexes: IndexSet(integer: 0))
             tableView.invalidateIntrinsicContentSize()
         }
     }
@@ -1044,15 +1095,15 @@ extension ChatViewController: NSTableViewDataSource, NSTableViewDelegate {
     }
 
     private func configure(cell: MultipartMessageCellView,
-                           for message: Message,
-                           isLast: Bool) {
+                                for message: Message,
+                                isLast: Bool) {
         cell.configure(with: rendition(for: message, isLast: isLast),
                        maxBubbleWidth: max(16, tableView.bounds.width * 0.7))
     }
 
     private func configure(cell: TerminalCommandMessageCellView,
-                           for message: Message,
-                           isLast: Bool) {
+                                for message: Message,
+                                isLast: Bool) {
         cell.configure(with: rendition(for: message, isLast: isLast),
                        tableViewWidth: tableView.bounds.width)
     }
@@ -1088,7 +1139,11 @@ extension ChatViewController: NSTableViewDataSource, NSTableViewDelegate {
                 }
             case .executingCommand:
                 cell.buttonClicked = { [weak self] identifier, messageID in
-                    if let model = self?.model, let guid = model.terminalSessionGuid,
+                    // buttonClicked closures get re-wired across reloads, so a
+                    // tap on a stale "Executing..." bubble must not cancel
+                    // whatever operation the agent has moved on to.
+                    guard messageID == originalMessageID else { return }
+                    if let guid = self?.model?.terminalSessionGuid,
                        let session = iTermController.sharedInstance().anySession(withGUID: guid) {
                         session.cancelRemoteCommand()
                     }
@@ -1115,7 +1170,25 @@ extension ChatViewController: NSTableViewDataSource, NSTableViewDelegate {
                     guard messageID == originalMessageID else {
                         return
                     }
-                    try? link(terminal: terminal, guid: guid, name: name)
+                    switch identifier {
+                    case "link":
+                        try? link(terminal: terminal, guid: guid, name: name)
+                    case "orchestrate":
+                        // Route through the menu action so the user
+                        // gets the same confirmation alert + permission
+                        // model warning as the menu-driven path.
+                        enableOrchestration(nil)
+                        // If the user cancelled the alert, no state
+                        // change fires and the cell's enableButtons
+                        // would never recompute, leaving both buttons
+                        // greyed out from the optimistic-disable pass.
+                        // Reloading the row recomputes enable state
+                        // (both on cancel and on confirm), so this is
+                        // safe in either branch.
+                        reloadCell(forMessageID: messageID)
+                    default:
+                        break
+                    }
                 }
             case .permissions:
                 cell.buttonClicked = { [weak self] identifier, messageID in
@@ -1133,6 +1206,18 @@ extension ChatViewController: NSTableViewDataSource, NSTableViewDelegate {
                     // ("Category: Allow"/"Ask"/"Never"), so reload the
                     // cell after a toggle to refresh them.
                     reloadCell(forMessageID: messageID)
+                }
+            case .workgroupPermissionRequest:
+                let capturedChatID = self.chatID
+                cell.buttonClicked = { [weak self] identifier, _ in
+                    self?.handleWorkgroupPermissionButton(identifier: identifier,
+                                                          chatID: capturedChatID)
+                }
+            case .enableOrchestrationRequest:
+                let capturedChatID = self.chatID
+                cell.buttonClicked = { [weak self] identifier, _ in
+                    self?.handleEnableOrchestrationButton(identifier: identifier,
+                                                          chatID: capturedChatID)
                 }
             }
         case .vectorStoreCreated, .userCommand:
@@ -1187,7 +1272,14 @@ extension ChatViewController: NSTableViewDataSource, NSTableViewDelegate {
                     }
                 }
             }
-        case .remoteCommandRequest(let remoteCommand, safe: _):
+        case .remoteCommandRequest(let payload, safe: _):
+            // Per-call gating only applies to .classic (session-bound)
+            // payloads. .external payloads come from orchestration and
+            // aren't gated per-call, so no button wiring is needed.
+            guard case let .classic(remoteCommand) = payload else {
+                cell.buttonClicked = nil
+                return
+            }
             let functionCallName = remoteCommand.llmMessage.function_call?.name ?? "Unknown function call name"
             let functionCallID = remoteCommand.llmMessage.functionCallID
             cell.buttonClicked = { [client, listModel] identifier, messageID in
@@ -1205,7 +1297,7 @@ extension ChatViewController: NSTableViewDataSource, NSTableViewDelegate {
                 }
                 guard let guid,
                       let session = iTermController.sharedInstance().anySession(withGUID: guid) else {
-                    try? ChatClient.instance?.publishNotice(chatID: chatID, notice: "This chat is not linked to any \(browser ? "web browser" : "terminal") session.")
+                    try? client.publishNotice(chatID: chatID, notice: "This chat is not linked to any \(browser ? "web browser" : "terminal") session.")
                     try? client.respondSuccessfullyToRemoteCommandRequest(
                         inChat: chatID,
                         requestUUID: messageID,
@@ -1262,7 +1354,7 @@ extension ChatViewController: NSTableViewDataSource, NSTableViewDelegate {
             }
         case .plainText, .markdown, .explanationRequest, .explanationResponse,
                 .remoteCommandResponse, .renameChat, .append, .commit, .setPermissions,
-                .appendAttachment, .multipart:
+                .appendAttachment, .multipart, .watcherEvent:
             cell.buttonClicked = nil
 
         case .terminalCommand:
@@ -1276,8 +1368,9 @@ extension ChatViewController: NSTableViewDataSource, NSTableViewDelegate {
             return 0
         }
         let item = model.items[row]
-        // Cells converted to manual layout report their own height; the
-        // remainder still rely on auto-layout fittingSize via a prototype.
+        // Cells converted to manual layout report their own height;
+        // the remainder still rely on auto-layout fittingSize via a
+        // prototype.
         switch item {
         case .agentTyping:
             return TypingIndicatorCellView.cellHeight
@@ -1288,19 +1381,24 @@ extension ChatViewController: NSTableViewDataSource, NSTableViewDelegate {
                               isLast: model.indexIsLastMessage(row))
             switch r.flavor {
             case .regular:
-                return RegularMessageCellView.cellHeight(for: r,
-                                                         tableViewWidth: tableView.bounds.width)
+                return RegularMessageCellView.cellHeight(
+                    for: r, tableViewWidth: tableView.bounds.width)
             case .command:
-                return TerminalCommandMessageCellView.cellHeight(for: r,
-                                                                 tableViewWidth: tableView.bounds.width)
+                return TerminalCommandMessageCellView.cellHeight(
+                    for: r, tableViewWidth: tableView.bounds.width)
             case .multipart:
-                return MultipartMessageCellView.cellHeight(for: r,
-                                                           tableViewWidth: tableView.bounds.width)
+                return MultipartMessageCellView.cellHeight(
+                    for: r, tableViewWidth: tableView.bounds.width)
             }
         }
     }
 
-    private func rendition(for message: Message, isLast: Bool) -> MessageRendition {
+    // Build the MessageRendition the cell views use to lay themselves
+    // out. The clientLocal branch's button-enable logic is the only
+    // stack-specific part; everything else (timestamp formatting,
+    // multipart subpart construction, regular-flavor attributed-string
+    // creation) is pure per-Message.
+    func rendition(for message: Message, isLast: Bool) -> MessageRendition {
         var enableButtons = isLast
         var editable = false
         switch message.content {
@@ -1334,11 +1432,30 @@ extension ChatViewController: NSTableViewDataSource, NSTableViewDelegate {
             case .streamingChanged:
                 enableButtons = streaming
             case .offerLink(terminal: _, guid: let guid, name: _):
+                // Both Link and Enable Orchestration become moot
+                // once either choice has been committed — the chat is
+                // either linked to a session (terminalSessionGuid /
+                // browserSessionGuid set) or in orchestration mode.
+                // Recheck on every render so a cell reload triggered
+                // by the click handler (e.g. orchestration's notice
+                // publish) reflects the new state instead of showing
+                // freshly-recreated buttons as enabled.
+                let chatIsOrchestration = chatID.flatMap {
+                    listModel.chat(id: $0)?.orchestrationEnabled
+                } ?? false
                 enableButtons = (iTermController.sharedInstance()?.anySession(withGUID: guid) != nil &&
                                  terminalSessionGuid == nil &&
-                                 browserSessionGuid == nil)
+                                 browserSessionGuid == nil &&
+                                 !chatIsOrchestration)
             case .permissions(terminal: _, guid: let guid):
                 enableButtons = (iTermController.sharedInstance()?.anySession(withGUID: guid) != nil)
+            case .workgroupPermissionRequest:
+                // Never appears in a session-bound chat. Cover for exhaustivity.
+                break
+            case .enableOrchestrationRequest:
+                // Enable / Not Now stay tappable until the user answers.
+                // No additional gating beyond isLast.
+                break
             }
         default:
             break
@@ -1350,8 +1467,7 @@ extension ChatViewController: NSTableViewDataSource, NSTableViewDelegate {
         }()
         let flavor: MessageRendition.Flavor = switch message.content {
         case .terminalCommand(let cmd):
-                .command(.init(command: cmd.command,
-                               url: cmd.url))
+                .command(.init(command: cmd.command, url: cmd.url))
         case .multipart(let subparts, _):
                 .multipart(subparts.compactMap { subpart in
                     switch subpart {
@@ -1371,38 +1487,48 @@ extension ChatViewController: NSTableViewDataSource, NSTableViewDelegate {
                                     textColor: message.textColor))
                         case .file(let file):
                             MessageRendition.SubpartContainer(
-                                kind: .fileAttachment(id: attachment.id, name: file.name, file: file),
-                                icon: NSImage.iconImage(filename: file.name,
-                                                        size: .init(width: 16, height: 16)),
-                                attributedString: AttributedStringForFilename(file.name,
-                                                                              textColor: message.textColor))
+                                kind: .fileAttachment(
+                                    id: attachment.id, name: file.name, file: file),
+                                icon: NSImage.iconImage(
+                                    filename: file.name,
+                                    size: .init(width: 16, height: 16)),
+                                attributedString: AttributedStringForFilename(
+                                    file.name,
+                                    textColor: message.textColor))
                         case .fileID(id: let id, name: let name):
                             MessageRendition.SubpartContainer(
-                                kind: .fileAttachment(id: id, name: name, file: nil),
-                                icon: NSImage.iconImage(filename: name,
-                                                        size: .init(width: 16, height: 16)),
-                                attributedString: AttributedStringForFilename(name,
-                                                                              textColor: message.textColor))
+                                kind: .fileAttachment(
+                                    id: id, name: name, file: nil),
+                                icon: NSImage.iconImage(
+                                    filename: name,
+                                    size: .init(width: 16, height: 16)),
+                                attributedString: AttributedStringForFilename(
+                                    name,
+                                    textColor: message.textColor))
                         }
                     case .plainText(let text):
                         MessageRendition.SubpartContainer(
                             kind: .regular,
-                            attributedString: Message.Content.plainText(text, context: nil).attributedStringValue(
-                                linkColor: message.linkColor, textColor: message.textColor))
+                            attributedString: Message.Content.plainText(text, context: nil)
+                                .attributedStringValue(
+                                    linkColor: message.linkColor,
+                                    textColor: message.textColor))
                     case .markdown(let text):
                         MessageRendition.SubpartContainer(
                             kind: .regular,
-                            attributedString: Message.Content.markdown(text).attributedStringValue(
-                                linkColor: message.linkColor, textColor: message.textColor))
+                            attributedString: Message.Content.markdown(text)
+                                .attributedStringValue(
+                                    linkColor: message.linkColor,
+                                    textColor: message.textColor))
                     case .context:
                         nil
                     }
                 })
         default:
-            .regular(.init(attributedString: message.attributedStringValue,
-                           buttons: message.buttons,
-                           enableButtons: enableButtons,
-                           keepsButtonsEnabledAfterClick: message.isPermissionsClientLocal))
+                .regular(.init(attributedString: message.attributedStringValue,
+                               buttons: message.buttons,
+                               enableButtons: enableButtons,
+                               keepsButtonsEnabledAfterClick: message.isPermissionsClientLocal))
         }
         return MessageRendition(isUser: message.author == .user,
                                 messageUniqueID: message.uniqueID,
@@ -1489,43 +1615,30 @@ extension ChatViewController: ChatInputViewDelegate {
         if let mime = openAIExtensionToMime[ext] {
             return mime
         }
-        if #available(macOS 11, *) {
-            let url = URL(fileURLWithPath: filename)
-            if let uti = try? url.resourceValues(forKeys: [.typeIdentifierKey]).typeIdentifier,
-               let mimeType = UTType(uti)?.preferredMIMEType {
-                return mimeType
-            }
-            // This is OK for file search but not if inlining.
-            return "application/octet-stream"
-        } else {
-            let ext = (filename as NSString).pathExtension as CFString
-            guard let uti = UTTypeCreatePreferredIdentifierForTag(kUTTagClassFilenameExtension, ext, nil)?.takeRetainedValue(),
-                  let mime = UTTypeCopyPreferredTagWithClass(uti, kUTTagClassMIMEType)?.takeRetainedValue() as String? else {
-                return "text/plain"
-            }
-            return mime
+        let url = URL(fileURLWithPath: filename)
+        if let uti = try? url.resourceValues(forKeys: [.typeIdentifierKey]).typeIdentifier,
+           let mimeType = UTType(uti)?.preferredMIMEType {
+            return mimeType
         }
+        return "application/octet-stream"
     }
 
     func stopButtonClicked() {
-        guard let chatID else {
-            return
-        }
-
+        guard let chatID else { return }
         let message = Message(chatID: chatID,
                               author: .user,
                               content: .userCommand(.stop),
                               sentDate: Date(),
                               uniqueID: UUID())
-        try? ChatClient.instance?.publish(
-            message: message,
-            toChatID: chatID,
-            partial: false)
+        try? client.publish(message: message,
+                            toChatID: chatID,
+                            partial: false)
         showTypingIndicator = false
     }
 
     func sendButtonClicked(text: String) {
-        guard !text.isEmpty, let chatID else {
+        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty, let chatID else {
             return
         }
         let attachments = inputView.attachedFiles.flatMap { item -> [Message.Subpart] in
@@ -1599,12 +1712,12 @@ extension ChatViewController: ChatInputViewDelegate {
             if attachments.isEmpty {
                 return Message(chatID: chatID,
                                author: .user,
-                               content: .plainText(text, context: context),
+                               content: .plainText(trimmed, context: context),
                                sentDate: Date(),
                                uniqueID: UUID(),
                                configuration: configuration)
             } else {
-                var parts = [.plainText(text)] + attachments
+                var parts = [.plainText(trimmed)] + attachments
                 if let context {
                     parts.append(.context(context))
                 }
@@ -1617,17 +1730,18 @@ extension ChatViewController: ChatInputViewDelegate {
                                configuration: configuration)
             }
         }()
-        if let lastAgentMessage = model?.items.last(where: { item in
-            item.existingMessage?.message.author == .agent
-        }) {
+        // Wire the new user message to the last agent response so
+        // the LLM can resume from that point on edit/retry.
+        if message.inResponseTo == nil,
+           let lastAgentMessage = model?.items.last(where: { item in
+               item.existingMessage?.message.author == .agent
+           }) {
             message.inResponseTo = lastAgentMessage.existingMessage?.message.responseID
         }
         do {
-            try ChatClient.instance?.publish(
-                message: message,
-                toChatID: chatID,
-                partial: false)
-
+            try client.publish(message: message,
+                               toChatID: chatID,
+                               partial: false)
             inputView.clear()
             eligibleForAutoPaste = true
         } catch {
@@ -1671,11 +1785,18 @@ extension ChatViewController {
         let exitCode = (userInfo[PTYCommandDidExitUserInfoKeyExitCode] as? Int32) ?? 0
         let directory = userInfo[PTYCommandDidExitUserInfoKeyDirectory] as? String
         let remoteHost = userInfo[PTYCommandDidExitUserInfoKeyRemoteHost] as? VT100RemoteHostReading
-        let startLine = userInfo[PTYCommandDidExitUserInfoKeyStartLine] as! Int32
-        let lineCount = userInfo[PTYCommandDidExitUserInfoKeyLineCount] as! Int32
-        let dataSource = userInfo[PTYCommandDidExitUserInfoKeyDataSource] as! iTermTextDataSource
+        // Defensive extraction: this is a notification observer with no
+        // type contract on the userInfo dict. A malformed post (future
+        // shape change, third-party poster, etc.) shouldn't crash the
+        // chat window; just log and skip the stream.
+        guard let startLine = userInfo[PTYCommandDidExitUserInfoKeyStartLine] as? Int32,
+              let lineCount = userInfo[PTYCommandDidExitUserInfoKeyLineCount] as? Int32,
+              let dataSource = userInfo[PTYCommandDidExitUserInfoKeyDataSource] as? iTermTextDataSource,
+              let url = userInfo[PTYCommandDidExitUserInfoKeyURL] as? URL else {
+            DLog("PTYCommandDidExit notification missing required userInfo keys: \(userInfo)")
+            return
+        }
         let extractor = iTermTextExtractor(dataSource: dataSource)
-        let url = userInfo[PTYCommandDidExitUserInfoKeyURL] as! URL
         let content = extractor.content(
             in: VT100GridWindowedRange(
                 coordRange: VT100GridCoordRange(
@@ -1699,7 +1820,7 @@ extension ChatViewController {
                                   output: content,
                                   exitCode: exitCode,
                                   url: url)
-        try? ChatClient.instance?.publishMessageFromUser(chatID: chatID,
+        try? client.publishMessageFromUser(chatID: chatID,
                                                          content: .terminalCommand(cmd))
     }
 }
@@ -1708,6 +1829,7 @@ extension ChatViewController: ChatViewControllerModelDelegate {
     private func assertMessageTypeAllowed(_ message: Message?) {
         ChatViewControllerModel.assertMessageTypeAllowed(message)
     }
+
     func chatViewControllerModel(didInsertItemAtIndex i: Int) {
         if let model {
             assertMessageTypeAllowed(model.items[i].existingMessage?.message)
@@ -1717,20 +1839,19 @@ extension ChatViewController: ChatViewControllerModelDelegate {
         it_assert(i <= estimatedCount)
         tableView.insertRows(at: IndexSet(integer: i))
 
-        // Disable buttons in message that just becamse second-to-last
+        // Disable buttons in message that just became second-to-last.
         if let model,
            model.items.count > 1,
            model.items[model.items.count - 2].hasButtons {
             let rows = IndexSet(integer: model.items.count - 2)
             tableView.beginUpdates()
             tableView.reloadData(forRowIndexes: rows,
-                                 columnIndexes: IndexSet(integer: 0))
+                                  columnIndexes: IndexSet(integer: 0))
             tableView.noteHeightOfRows(withIndexesChanged: rows)
             tableView.endUpdates()
         }
         setNeedsLayoutNow()
     }
-
 
     func chatViewControllerModel(didRemoveItemsInRange range: Range<Int>) {
         DLog("Remove tableview row at \(range)")
@@ -1750,14 +1871,18 @@ extension ChatViewController: ChatViewControllerModelDelegate {
               scrollView.documentView != nil else {
             return
         }
-
         tableView.beginUpdates()
         tableView.noteHeightOfRows(withIndexesChanged: indexSet)
-        tableView.reloadData(forRowIndexes: indexSet, columnIndexes: IndexSet(integer: 0))
+        tableView.reloadData(forRowIndexes: indexSet,
+                              columnIndexes: IndexSet(integer: 0))
         tableView.endUpdates()
         setNeedsLayoutNow()
     }
 }
+
+// ChatViewControllerModelDelegate conformance + handler methods
+// live in the base (they're pure table view reactions, no
+// session-binding state involved).
 
 fileprivate enum RemoteCommandButtonIdentifier: String {
     case allowOnce
@@ -1771,6 +1896,11 @@ fileprivate enum PickSessionButtonIdentifier: String {
     case cancel
 }
 
+// Switches over every Message.Content case to produce the rendered
+// attributed-string body. Several cases (.remoteCommandRequest,
+// .selectSessionRequest, .clientLocal(.permissions/.offerLink/
+// .executingCommand/.pickingSession)) produce AITerm session-bound
+// strings and never appear in orchestrator transcripts.
 extension Message.Content {
     func attributedStringValue(linkColor: NSColor,
                                textColor: NSColor) -> NSAttributedString {
@@ -1787,6 +1917,11 @@ extension Message.Content {
                 .font: NSFont.systemFont(ofSize: NSFont.systemFontSize)
             ]
             return NSAttributedString(string: "A vector store was created", attributes: attributes)
+        case .watcherEvent(let payload):
+            // Render with the system-message styling so the user
+            // sees it's not their own message. Symbol prefix marks
+            // it as an iTerm2-posted event.
+            return AttributedStringForSystemMessageMarkdown("📡 \(payload.detail)") {}
         case .plainText(let string, context: _):
             let paragraphStyle = NSMutableParagraphStyle()
             paragraphStyle.lineBreakMode = .byWordWrapping
@@ -1818,18 +1953,28 @@ extension Message.Content {
             return AttributedStringForGPTMarkdown(string + epilogue,
                                                   linkColor: linkColor,
                                                   textColor: textColor) { }
-        case .remoteCommandRequest(let request, safe: let safe):
-            let specific = request.permissionDescription + "."
-            let warning = if safe == false {
-                "⚠️ **Apple Intelligence has flagged this command as potentially dangerous. Review it with care.**\n\n"
-            } else {
-                ""
+        case .remoteCommandRequest(let payload, safe: let safe):
+            switch payload {
+            case .classic(let request):
+                let specific = request.permissionDescription + "."
+                let warning = if safe == false {
+                    "⚠️ **Apple Intelligence has flagged this command as potentially dangerous. Review it with care.**\n\n"
+                } else {
+                    ""
+                }
+                let general =  "Would you like to grant AI **\(request.content.permissionCategory.rawValue)** permission?"
+                let info = "*If you grant or deny permission, it affects only this chat conversation while linked to this particular terminal session. You can change permissions in the chat Info menu.*"
+                return AttributedStringForGPTMarkdown(warning + specific + " " + general + "\n\n" + info,
+                                                      linkColor: linkColor,
+                                                      textColor: textColor) {}
+            case .external(let ext):
+                // External payloads (from orchestration mode) render as
+                // a system-message bubble showing what the agent did.
+                // No Approve / Deny buttons, because the orchestrator's
+                // permission gate is the workgroup-claim prompt, not
+                // per-call.
+                return AttributedStringForSystemMessageMarkdown(ext.markdownDescription) {}
             }
-            let general =  "Would you like to grant AI **\(request.content.permissionCategory.rawValue)** permission?"
-            let info = "*If you grant or deny permission, it affects only this chat conversation while linked to this particular terminal session. You can change permissions in the chat Info menu.*"
-            return AttributedStringForGPTMarkdown(warning + specific + " " + general + "\n\n" + info,
-                                                  linkColor: linkColor,
-                                                  textColor: textColor) {}
         case .remoteCommandResponse(let response, _, _, _):
             switch response {
             case .success(let object):
@@ -1857,9 +2002,45 @@ extension Message.Content {
                     AttributedStringForSystemMessageMarkdown("Terminal commands will no longer be sent to AI automatically. Automatic sending always terminates when iTerm2 restarts or the current chat changes.") {}
                 }
             case let .offerLink(terminal: terminal, guid: _, name: name):
-                return AttributedStringForSystemMessageMarkdown("Link this chat to \(terminal ? "terminal" : "browser") session “\(name ?? "Unnamed session)")”? This gives the AI access to the \(terminal ? "terminal" : "browser") session subject to your permission.") {}
+                let displayName = name ?? "Unnamed session"
+                let kind = terminal ? "terminal" : "browser"
+                let body = "**Link this chat to \(kind) session \u{201C}\(displayName)\u{201D}, "
+                    + "or enable orchestration?**\n\n"
+                    + "Linking gives the AI access to this \(kind) session subject to "
+                    + "your per-call permission. **Orchestration** is an alternative "
+                    + "mode where the AI can coordinate multiple sessions across "
+                    + "workgroups; it uses one-time per-session approval instead of "
+                    + "per-call prompts."
+                return AttributedStringForSystemMessageMarkdown(body) {}
             case .permissions:
                 return AttributedStringForSystemMessageMarkdown("You can use these buttons or the info button menu at the top of the chat window to control AI permissions for this chat.") {}
+            case let .workgroupPermissionRequest(_, workgroupID, workgroupName, summary):
+                // Synthetic single-session workgroups stand in for a
+                // session that isn't part of any user-configured
+                // workgroup. The user never sees the word "workgroup"
+                // anywhere else in that flow, so calling the bubble
+                // "Approve workgroup …" is confusing. Use the session
+                // phrasing in that case; the summary text was already
+                // phrased correspondingly by promptForClaim.
+                let kind = workgroupID.hasPrefix(WorkgroupIntrospection.syntheticWorkgroupIDPrefix)
+                    ? "session"
+                    : "workgroup"
+                let body = "**Approve writing to \(kind) “\(workgroupName)”?**\n\n\(summary)"
+                return AttributedStringForSystemMessageMarkdown(body) {}
+            case .enableOrchestrationRequest:
+                let body = """
+                **Enable orchestration?**
+
+                Orchestration mode lets the agent read screen contents from any session. To type \
+                into a session still requires your permission.
+                
+                This is a more permissive model than when an agent is linked to \
+                a single session, where there are very fine-grained permission settings.
+
+                Enabling will detach any linked terminal or browser session and switch \
+                the chat to Orchestration mode.
+                """
+                return AttributedStringForSystemMessageMarkdown(body) {}
             }
 
         case .selectSessionRequest(_, terminal: let terminal):
@@ -1896,7 +2077,8 @@ extension Message {
         switch content {
         case .plainText, .markdown, .explanationRequest, .explanationResponse,
                 .remoteCommandResponse, .renameChat, .append, .commit, .setPermissions,
-                .terminalCommand, .appendAttachment, .multipart, .vectorStoreCreated, .userCommand:
+                .terminalCommand, .appendAttachment, .multipart, .vectorStoreCreated, .userCommand,
+                .watcherEvent:
             return []
         case .clientLocal(let clientLocal):
             switch clientLocal.action {
@@ -1911,7 +2093,12 @@ extension Message {
                     return []
                 }
             case .offerLink(terminal: _, guid: _, name: _):
-                return [.init(title: "Link", destructive: false, identifier: "")]
+                // Identifiers picked up by the offerLink buttonClicked
+                // handler in configure(cell:RegularMessageCellView,...);
+                // empty-string ids would conflict with the
+                // single-button cases above.
+                return [.init(title: "Link", destructive: false, identifier: "link"),
+                        .init(title: "Enable Orchestration", destructive: false, identifier: "orchestrate")]
             case let .permissions(terminal: terminal, guid: guid):
                 let rce = RemoteCommandExecutor.instance
                 var buttons = [MessageRendition.Regular.Button]()
@@ -1939,15 +2126,43 @@ extension Message {
                                          identifier: category.rawValue))
                 }
                 return buttons
+            case let .workgroupPermissionRequest(requestID, _, _, _):
+                // Button identifiers carry the choice + requestID joined
+                // by a colon. configure(cell:RegularMessageCellView,...)
+                // wires the buttonClicked handler that parses them and
+                // publishes the matching workgroupPermissionResponse.
+                return [
+                    .init(title: "Approve",
+                          destructive: false,
+                          identifier: "workgroupPermission:\(ApprovalChoice.approve.rawValue):\(requestID)"),
+                    .init(title: "Deny",
+                          destructive: true,
+                          identifier: "workgroupPermission:\(ApprovalChoice.deny.rawValue):\(requestID)"),
+                ]
+            case let .enableOrchestrationRequest(requestID):
+                return [
+                    .init(title: "Enable Orchestration",
+                          destructive: false,
+                          identifier: "enableOrchestration:\(ApprovalChoice.approve.rawValue):\(requestID)"),
+                    .init(title: "Not Now",
+                          destructive: true,
+                          identifier: "enableOrchestration:\(ApprovalChoice.deny.rawValue):\(requestID)"),
+                ]
             }
         case .selectSessionRequest:
             return [.init(title: "Select a Session", destructive: false, identifier: PickSessionButtonIdentifier.pickSession.rawValue),
                     .init(title: "Cancel", destructive: true, identifier: PickSessionButtonIdentifier.cancel.rawValue)]
-        case .remoteCommandRequest:
-            return [.init(title: "Allow Once", destructive: false, identifier: RemoteCommandButtonIdentifier.allowOnce.rawValue),
-                    .init(title: "Always Allow", destructive: false, identifier: RemoteCommandButtonIdentifier.allowAlways.rawValue),
-                    .init(title: "Deny this Time", destructive: true, identifier: RemoteCommandButtonIdentifier.denyOnce.rawValue),
-                    .init(title: "Always Deny", destructive: true, identifier: RemoteCommandButtonIdentifier.denyAlways.rawValue)]
+        case .remoteCommandRequest(let payload, safe: _):
+            switch payload {
+            case .classic:
+                return [.init(title: "Allow Once", destructive: false, identifier: RemoteCommandButtonIdentifier.allowOnce.rawValue),
+                        .init(title: "Always Allow", destructive: false, identifier: RemoteCommandButtonIdentifier.allowAlways.rawValue),
+                        .init(title: "Deny this Time", destructive: true, identifier: RemoteCommandButtonIdentifier.denyOnce.rawValue),
+                        .init(title: "Always Deny", destructive: true, identifier: RemoteCommandButtonIdentifier.denyAlways.rawValue)]
+            case .external:
+                // Orchestration tool calls aren't per-call gated; no buttons.
+                return []
+            }
         }
     }
 
@@ -2023,81 +2238,106 @@ extension ChatViewController: ChatToolbarDataSource {
         menu.addItem(withTitle: "Delete Chat", action: #selector(deleteChat(_:)), target: self)
         menu.addItem(NSMenuItem.separator())
 
-        // Terminal session items
-        if let guid = model?.terminalSessionGuid,
-           iTermController.sharedInstance().anySession(withGUID: guid) != nil {
+        // Orchestration mode is mutually exclusive with session/
+        // browser binding. The toggle clears any binding when
+        // enabled and clears claimed workgroups + watchers when
+        // disabled (see ChatListModel.setOrchestrationEnabled).
+        let orchestrationOn = listModel.chat(id: chatID)?.orchestrationEnabled ?? false
+        if orchestrationOn {
+            menu.addItem(withTitle: "Disable Orchestration",
+                         action: #selector(disableOrchestration(_:)),
+                         target: self)
+        } else {
+            menu.addItem(withTitle: "Enable Orchestration",
+                         action: #selector(enableOrchestration(_:)),
+                         target: self)
+        }
+        menu.addItem(NSMenuItem.separator())
 
-            menu.addItem(withTitle: "Reveal Linked Terminal Session", action: #selector(revealLinkedTerminalSession(_:)), target: self)
-            menu.addItem(withTitle: "Unlink Terminal Session", action: #selector(unlinkTerminalSession(_:)), target: self)
-            // Inline-panel CVCs are already hosted in their session — no
-            // need to offer to put themselves there.
-            if !isInlinePanel {
-                menu.addItem(withTitle: "Put Chat in Linked Terminal Session",
-                             action: #selector(putChatInLinkedTerminalSession(_:)),
-                             target: self)
-            }
-            menu.addItem(NSMenuItem.separator())
+        // Terminal / Browser session items are only meaningful in
+        // session-bound mode. In orchestration mode the chat
+        // coordinates workgroups rather than a single bound session,
+        // so suppress the link/unlink/permission items entirely
+        // (rather than letting the user create a chat that has both
+        // a binding and orchestrationEnabled, which the model
+        // prohibits).
+        if !orchestrationOn {
+            // Terminal session items
+            if let guid = model?.terminalSessionGuid,
+               iTermController.sharedInstance().anySession(withGUID: guid) != nil {
 
-            let rce = RemoteCommandExecutor.instance
-            for category in RemoteCommand.Content.PermissionCategory.allCases {
-                if category.isBrowserSpecific {
-                    continue
+                menu.addItem(withTitle: "Reveal Linked Terminal Session", action: #selector(revealLinkedTerminalSession(_:)), target: self)
+                menu.addItem(withTitle: "Unlink Terminal Session", action: #selector(unlinkTerminalSession(_:)), target: self)
+                // Inline-panel CVCs are already hosted in their session — no
+                // need to offer to put themselves there.
+                if !isInlinePanel {
+                    menu.addItem(withTitle: "Put Chat in Linked Terminal Session",
+                                 action: #selector(putChatInLinkedTerminalSession(_:)),
+                                 target: self)
                 }
-                menu.addItem(withTitle: category.regularTitle,
-                             action: #selector(toggleAlwaysAllow(_:)),
-                             target: self,
-                             state: rce.controlState(chatID: chatID,
-                                                     guid: guid,
-                                                     category: category),
-                             object: category)
+                menu.addItem(NSMenuItem.separator())
 
-            }
-            menu.addItem(NSMenuItem.separator())
+                let rce = RemoteCommandExecutor.instance
+                for category in RemoteCommand.Content.PermissionCategory.allCases {
+                    if category.isBrowserSpecific {
+                        continue
+                    }
+                    menu.addItem(withTitle: category.regularTitle,
+                                 action: #selector(toggleAlwaysAllow(_:)),
+                                 target: self,
+                                 state: rce.controlState(chatID: chatID,
+                                                         guid: guid,
+                                                         category: category),
+                                 object: category)
 
-            if haveLinkedTerminalSession {
-                menu.addItem(withTitle: "Send Commands & Output to AI Automatically",
-                             action: #selector(toggleStream(_:)),
-                             target: self,
-                             state: streaming ? .on : .off,
-                             object: nil)
+                }
+                menu.addItem(NSMenuItem.separator())
+
+                if haveLinkedTerminalSession {
+                    menu.addItem(withTitle: "Send Commands & Output to AI Automatically",
+                                 action: #selector(toggleStream(_:)),
+                                 target: self,
+                                 state: streaming ? .on : .off,
+                                 object: nil)
+                    menu.addItem(NSMenuItem.separator())
+                }
+            } else {
+                menu.addItem(withTitle: "Link Terminal Session", action: #selector(objcLinkTerminalSession(_:)), target: self)
                 menu.addItem(NSMenuItem.separator())
             }
-        } else {
-            menu.addItem(withTitle: "Link Terminal Session", action: #selector(objcLinkTerminalSession(_:)), target: self)
-            menu.addItem(NSMenuItem.separator())
-        }
 
-        // Browser session items
-        if let guid = model?.browserSessionGuid,
-           iTermController.sharedInstance().anySession(withGUID: guid) != nil {
+            // Browser session items
+            if let guid = model?.browserSessionGuid,
+               iTermController.sharedInstance().anySession(withGUID: guid) != nil {
 
-            menu.addItem(withTitle: "Reveal Linked Web Browser Session", action: #selector(revealLinkedBrowserSession(_:)), target: self)
-            menu.addItem(withTitle: "Unlink Web Browser Session", action: #selector(unlinkBrowserSession(_:)), target: self)
-            if !isInlinePanel {
-                menu.addItem(withTitle: "Put Chat in Linked Browser Session",
-                             action: #selector(putChatInLinkedBrowserSession(_:)),
-                             target: self)
-            }
-            menu.addItem(NSMenuItem.separator())
-
-            let rce = RemoteCommandExecutor.instance
-            for category in RemoteCommand.Content.PermissionCategory.allCases {
-                if !category.isBrowserSpecific {
-                    continue
+                menu.addItem(withTitle: "Reveal Linked Web Browser Session", action: #selector(revealLinkedBrowserSession(_:)), target: self)
+                menu.addItem(withTitle: "Unlink Web Browser Session", action: #selector(unlinkBrowserSession(_:)), target: self)
+                if !isInlinePanel {
+                    menu.addItem(withTitle: "Put Chat in Linked Browser Session",
+                                 action: #selector(putChatInLinkedBrowserSession(_:)),
+                                 target: self)
                 }
-                menu.addItem(withTitle: "AI can \(category.rawValue)",
-                             action: #selector(toggleAlwaysAllow(_:)),
-                             target: self,
-                             state: rce.controlState(chatID: chatID,
-                                                     guid: guid,
-                                                     category: category),
-                             object: category)
+                menu.addItem(NSMenuItem.separator())
 
+                let rce = RemoteCommandExecutor.instance
+                for category in RemoteCommand.Content.PermissionCategory.allCases {
+                    if !category.isBrowserSpecific {
+                        continue
+                    }
+                    menu.addItem(withTitle: "AI can \(category.rawValue)",
+                                 action: #selector(toggleAlwaysAllow(_:)),
+                                 target: self,
+                                 state: rce.controlState(chatID: chatID,
+                                                         guid: guid,
+                                                         category: category),
+                                 object: category)
+
+                }
+                menu.addItem(NSMenuItem.separator())
+            } else {
+                menu.addItem(withTitle: "Link Browser Session", action: #selector(objcLinkBrowserSession(_:)), target: self)
+                menu.addItem(NSMenuItem.separator())
             }
-            menu.addItem(NSMenuItem.separator())
-        } else {
-            menu.addItem(withTitle: "Link Browser Session", action: #selector(objcLinkBrowserSession(_:)), target: self)
-            menu.addItem(NSMenuItem.separator())
         }
 
 
@@ -2140,20 +2380,16 @@ extension ChatViewController {
         return panelAttachedSession != nil || inlinePanelCoordinator != nil
     }
 
-    // Called by the root view when it enters or leaves a window. In panel
-    // mode load(chatID:) early-returns until the view has a window, so the
-    // attach() flow stashes the chatID in pendingPanelChatID and we retry
-    // here.
     fileprivate func rootViewDidMoveToWindow() {
         guard view.window != nil else { return }
         if let chatID = pendingPanelChatID {
             pendingPanelChatID = nil
             load(chatID: chatID)
-            // load(chatID:) calls scrollToBottom, but at this point the
-            // gutter controller hasn't yet set the panel's frame — its
-            // positionPanels runs immediately after attach. Re-scroll on
-            // the next runloop so row heights are computed against the
-            // final tableview width.
+            // load(chatID:) calls scrollToBottom, but at this point
+            // the gutter controller hasn't yet set the panel's frame
+            // — its positionPanels runs immediately after attach.
+            // Re-scroll on the next runloop so row heights are
+            // computed against the final tableview width.
             DispatchQueue.main.async { [weak self] in
                 self?.scrollToBottom(animated: false)
             }
@@ -2192,20 +2428,35 @@ extension ChatViewController: iTermRightGutterPanel {
             if view.window != nil {
                 rootViewDidMoveToWindow()
             }
-            if model?.terminalSessionGuid == nil && model?.browserSessionGuid == nil {
+            if model?.terminalSessionGuid == nil
+                && model?.browserSessionGuid == nil
+                && !(listModel.chat(id: chatID)?.orchestrationEnabled ?? false) {
+                // Orchestration chats have nil session GUIDs BY DESIGN. Calling
+                // link() in that state would trip the it_assert in
+                // ChatListModel.setTerminalGuid/setBrowserGuid that refuses to
+                // bind an orchestration chat. it_assert is enabled in release,
+                // so without this short-circuit a stale session.inlineChatID
+                // pointing at an orchestration chat (e.g. after the user
+                // toggled an existing chat into orchestration) would crash.
                 try? link(terminal: !session.isBrowserSession(), guid: session.guid, name: session.name)
             }
         }
     }
 
     func detach() {
-        // Tear down streaming so a hidden inline chat doesn't keep mirroring
-        // commands. The broker subscription is unsubscribed in deinit; once
-        // the controller drops the panel and its view leaves the SessionView
-        // hierarchy, the CVC will deallocate.
+        // Tear down streaming so a hidden inline chat doesn't keep
+        // mirroring commands. Also tear down the broker subscription
+        // explicitly: relying on deinit to do it is fragile because the
+        // CVC can stay alive through retained closures and panel-registry
+        // weak references long after detach, during which time broker
+        // deliveries would still flow through and mutate self.model /
+        // post hidden-title side effects on an invisible controller.
         if streaming {
             stopStreaming()
         }
+        brokerSubscription?.unsubscribe()
+        brokerSubscription = nil
+        chatID = nil
         panelAttachedSession = nil
         pendingPanelChatID = nil
         inlinePanelCoordinator = nil
@@ -2317,3 +2568,141 @@ class iTermInlineChatGutterPanelRegistration: NSObject {
             })
     }
 }
+
+// MARK: - New methods (introduced in this branch)
+//
+// Methods added on top of origin/master, grouped here so the diff
+// against origin highlights actual new behavior rather than
+// re-ordered content.
+extension ChatViewController {
+    // Identifier format: "enableOrchestration:<approve|deny>:<requestID>".
+    // The agent's request_orchestration_enable tool parks a
+    // completion keyed by requestID; the agent's broker-driven
+    // handleOrchestrationResponse resumes it when this message lands.
+    fileprivate func handleEnableOrchestrationButton(identifier: String,
+                                                      chatID: String?) {
+        let parts = identifier.split(separator: ":", maxSplits: 2,
+                                      omittingEmptySubsequences: false)
+        guard parts.count == 3,
+              parts[0] == "enableOrchestration",
+              let choice = ApprovalChoice(rawValue: String(parts[1])),
+              let chatID else {
+            return
+        }
+        let approved = (choice == .approve)
+        let requestID = String(parts[2])
+        do {
+            try client.publishUserMessage(
+                chatID: chatID,
+                content: .userCommand(
+                    .enableOrchestrationResponse(requestID: requestID,
+                                                  approved: approved)))
+        } catch {
+            DLog("Chat VC: failed to publish enable-orchestration response: \(error)")
+        }
+    }
+
+    // Identifier format: "workgroupPermission:<approve|deny>:<requestID>".
+    // The orchestrator dispatcher (subscribed on the broker for this
+    // chat) resumes its parked tool-call continuation when the
+    // response lands.
+    fileprivate func handleWorkgroupPermissionButton(identifier: String,
+                                                    chatID: String?) {
+        let parts = identifier.split(separator: ":", maxSplits: 2,
+                                      omittingEmptySubsequences: false)
+        guard parts.count == 3,
+              parts[0] == "workgroupPermission",
+              let choice = ApprovalChoice(rawValue: String(parts[1])),
+              let chatID else {
+            return
+        }
+        let approved = (choice == .approve)
+        let requestID = String(parts[2])
+        do {
+            try client.publishUserMessage(
+                chatID: chatID,
+                content: .userCommand(
+                    .workgroupPermissionResponse(requestID: requestID,
+                                                approved: approved)))
+        } catch {
+            DLog("Chat VC: failed to publish workgroup permission response: \(error)")
+        }
+    }
+
+    // MARK: - Orchestration toggle
+
+    @objc fileprivate func enableOrchestration(_ sender: Any?) {
+        // Confirm before flipping, because orchestration's permission
+        // model is more permissive than the session-bound one: the
+        // per-call Allow Once / Always Allow / Deny prompts (with
+        // separate categories like RunCommands, WriteToClipboard,
+        // etc.) are replaced by one-time per-session approvals that
+        // stick for the rest of the chat. Users coming from the
+        // menu-driven toggle won't know that without being told.
+        let alert = NSAlert()
+        alert.messageText = "Enable orchestration mode?"
+        alert.informativeText = """
+            Orchestration mode lets the agent coordinate across any iTerm2 sessions. \
+            It can read screen contents from any session, but to type into a session requires \
+            your permission. This is a more permissive model than when an agent is linked to \
+            a single session, where there are very fine-grained permission settings.
+
+            Enabling will detach any linked terminal or browser session and switch \
+            the chat to Orchestration mode.
+            """
+        alert.alertStyle = .warning
+        alert.addButton(withTitle: "Enable Orchestration")
+        alert.addButton(withTitle: "Cancel")
+        guard alert.runModal() == .alertFirstButtonReturn else { return }
+        setOrchestrationEnabled(true)
+    }
+
+    @objc fileprivate func disableOrchestration(_ sender: Any?) {
+        setOrchestrationEnabled(false)
+    }
+
+    // Flip this chat between session-bound and orchestrator modes.
+    // The list-model setter clears the fields that don't belong in
+    // the new mode (session GUIDs / vector store on enable,
+    // claimed workgroups / watchers on disable). The in-flight
+    // ChatAgent is dropped FIRST so the next user turn spins up a
+    // fresh agent in the right mode; the existing AIConversation
+    // history is discarded along with it.
+    //
+    // Order matters: dropAgent must run BEFORE
+    // listModel.setOrchestrationEnabled. The in-flight
+    // OrchestratorDispatcher (if any) caches claimedScopes /
+    // watchers in memory and persists them on tab-status / session-
+    // terminate notifications. If the listModel clear runs first,
+    // any queued notification firing between the listModel write and
+    // the agent teardown would write the dispatcher's stale caches
+    // back to disk, undoing the clear. dropAgent first → dispatcher
+    // deinits, unsubscribes its observers, can no longer persist.
+    fileprivate func setOrchestrationEnabled(_ enabled: Bool) {
+        guard let chatID else { return }
+        if streaming {
+            stopStreaming()
+        }
+        ChatService.instance?.dropAgent(forChatID: chatID)
+        // Also drop the client-side orchestrator dispatcher (and its
+        // persisted-watcher and broker-subscription state) so it
+        // rebuilds fresh on the next orchestration tool call. Mirrors
+        // dropAgent: order matters, dispatcher tear-down before the
+        // listModel write so a tab-status notification that fires
+        // between the two doesn't get the dispatcher persisting stale
+        // claim / watcher state back to disk after the model clear.
+        OrchestratorClient.instance?.dropDispatcher(forChatID: chatID)
+        do {
+            try listModel.setOrchestrationEnabled(enabled, forChatID: chatID)
+        } catch {
+            DLog("Failed to toggle orchestration: \(error)")
+            return
+        }
+        let notice = enabled
+            ? "Orchestration enabled. Agent can see content of all sessions."
+            : "Orchestration disabled."
+        try? client.publishNotice(chatID: chatID, notice: notice)
+    }
+
+}
+
