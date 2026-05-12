@@ -1288,22 +1288,27 @@ typedef NS_ENUM(int, iTermShouldHaveTitleSeparator) {
         return;  // close notification handler will finish the swap
     }
 
-    // Detach: hide inline container, host view in a new floating window.
-    NSRect inlineFrame = vc.view.frame;
-    NSRect contentRect = NSMakeRect(NSMidX(self.window.frame) - inlineFrame.size.width / 2.0,
-                                    NSMidY(self.window.frame) - inlineFrame.size.height / 2.0,
-                                    MAX(420, inlineFrame.size.width),
-                                    MAX(360, inlineFrame.size.height));
+    // Detach into a new floating window. Use contentViewController instead of
+    // contentView so NSWindow drives the view lifecycle (loadView triggers,
+    // auto-pinning to window edges, viewDidAppear, etc.) — otherwise the
+    // panel view ended up with a zero frame inside the window.
+    const CGFloat targetW = MAX(480, NSWidth(vc.view.frame));
+    const CGFloat targetH = MAX(360, NSHeight(vc.view.frame));
+    NSRect mainFrame = self.window.frame;
+    NSRect contentRect = NSMakeRect(NSMidX(mainFrame) - targetW / 2.0,
+                                    NSMidY(mainFrame) - targetH / 2.0,
+                                    targetW, targetH);
     NSWindow *window = [[NSWindow alloc] initWithContentRect:contentRect
                                                    styleMask:NSWindowStyleMaskTitled |
                                                              NSWindowStyleMaskClosable |
                                                              NSWindowStyleMaskMiniaturizable |
                                                              NSWindowStyleMaskResizable
                                                      backing:NSBackingStoreBuffered
-                                                       defer:YES];
+                                                       defer:NO];
     window.title = isBrowser ? @"MomenTerm — Browser" : @"MomenTerm — Git Graph";
     window.releasedWhenClosed = NO;
-    window.contentView = vc.view;
+    window.contentViewController = vc;
+
     if (isBrowser) {
         _momentermBrowserDetachedWindow = window;
         _momentermBrowserPanelVC.isDetached = YES;
@@ -1328,9 +1333,10 @@ typedef NS_ENUM(int, iTermShouldHaveTitleSeparator) {
                                                     name:NSWindowWillCloseNotification
                                                   object:window];
     if (window == _momentermBrowserDetachedWindow) {
-        // Re-parent the view back into the inline container AND make it visible
-        // so the user sees the panel land back in the terminal window — closing
+        // Release the view from the window first so it has no superview, then
+        // re-parent into the inline container and make it visible. Closing
         // the floater is the explicit "bring it home" gesture.
+        window.contentViewController = nil;
         _contentView.momentermBrowserPanelContainer = _momentermBrowserPanelVC.view;
         _momentermBrowserPanelVC.isDetached = NO;
         _momentermBrowserDetachedWindow = nil;
@@ -1338,6 +1344,7 @@ typedef NS_ENUM(int, iTermShouldHaveTitleSeparator) {
         _contentView.shouldShowMomentermBrowserPanel = YES;
         [_momentermBottomStripView setActivePanel:@"browser"];
     } else if (window == _momentermGitGraphDetachedWindow) {
+        window.contentViewController = nil;
         _contentView.momentermGitGraphPanelContainer = _momentermGitGraphPanelVC.view;
         _momentermGitGraphPanelVC.isDetached = NO;
         _momentermGitGraphDetachedWindow = nil;
