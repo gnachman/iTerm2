@@ -4260,6 +4260,12 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
 - (void)cleanUpAfterBrokenPipe {
     [self setExited:YES];
     [_logging stop];
+    [self clearTabStatus];
+    // Drop the cached tab-status instance so that if the session restarts and
+    // gets a new guid, the next status update creates a fresh instance keyed by
+    // the current guid instead of the stale one captured here at init time.
+    [_tabStatus release];
+    _tabStatus = nil;
     [[NSNotificationCenter defaultCenter] postNotificationName:PTYSessionTerminatedNotification object:self];
     [[NSNotificationCenter defaultCenter] postNotificationName:kCurrentSessionDidChange object:nil];
     [_delegate updateLabelAttributes];

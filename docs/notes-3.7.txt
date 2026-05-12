@@ -836,3 +836,7 @@ Bug Fixes:
   menu item, so it actually closes all
   windows on the next launch. Issue
   12852.
+- Clear tab status when a session’s
+  program terminates (broken pipe or
+  tmux detach) so stale status text
+  and indicators no longer linger.
