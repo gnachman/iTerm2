@@ -20,6 +20,7 @@
 #import "iTermMultiServerJobManager.h"
 #import "iTermSessionFactory.h"
 #import "iTermSessionLauncher.h"
+#import "iTermUserDefaults.h"
 
 @implementation iTermOrphanServerAdopter {
     NSArray<NSString *> *_pathsOfOrphanedMonoServers;
@@ -54,6 +55,10 @@ static void iTermOrphanServerAdopterFindMonoServers(void (^completion)(NSArray<N
 }
 
 static void iTermOrphanServerAdopterFindMultiServers(void (^completion)(NSArray<NSString *> *)) {
+    NSString *suiteName = [iTermUserDefaults customSuiteName];
+    // Transitional: also accept {suite}-daemon-*.socket so beta builds that wrote that
+    // form (issue 12860) don't strand their daemons.
+    NSString *legacyGlob = suiteName ? [NSString stringWithFormat:@"%@-daemon-*.socket", suiteName] : nil;
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
         NSMutableArray<NSString *> *result = [NSMutableArray array];
         NSString *appSupportPath = [[NSFileManager defaultManager] applicationSupportDirectory];
@@ -63,7 +68,12 @@ static void iTermOrphanServerAdopterFindMultiServers(void (^completion)(NSArray<
                                                 options:NSDirectoryEnumerationSkipsSubdirectoryDescendants
                                            errorHandler:nil];
         for (NSURL *url in enumerator) {
-            if (![url.path.lastPathComponent stringMatchesGlobPattern:@"iterm2-daemon-*.socket" caseSensitive:YES]) {
+            NSString *name = url.path.lastPathComponent;
+            BOOL matches = [name stringMatchesGlobPattern:@"iterm2-daemon-*.socket" caseSensitive:YES];
+            if (!matches && legacyGlob) {
+                matches = [name stringMatchesGlobPattern:legacyGlob caseSensitive:YES];
+            }
+            if (!matches) {
                 continue;
             }
             [result addObject:url.path];
@@ -170,8 +180,18 @@ static void iTermOrphanServerAdopterFindMultiServers(void (^completion)(NSArray<
     DLog(@"Try to connect to multiserver at %@", filename);
     NSString *basename = filename.lastPathComponent.stringByDeletingPathExtension;
     NSString *const prefix = @"iterm2-daemon-";
-    assert([basename hasPrefix:prefix]);
-    NSString *numberAsString = [basename substringFromIndex:prefix.length];
+    // Transitional: a pre-fix 3.7 beta wrote {suite}-daemon-N.socket. Accept either form.
+    NSString *suiteName = [iTermUserDefaults customSuiteName];
+    NSString *legacyPrefix = suiteName ? [NSString stringWithFormat:@"%@-daemon-", suiteName] : nil;
+    NSString *numberAsString = nil;
+    if ([basename hasPrefix:prefix]) {
+        numberAsString = [basename substringFromIndex:prefix.length];
+    } else if (legacyPrefix && [basename hasPrefix:legacyPrefix]) {
+        numberAsString = [basename substringFromIndex:legacyPrefix.length];
+    } else {
+        ITAssertWithMessage(NO, @"Daemon socket filename has unexpected prefix: %@", filename);
+        return;
+    }
     NSScanner *scanner = [NSScanner scannerWithString:numberAsString];
     NSInteger number = -1;
     if (![scanner scanInteger:&number]) {

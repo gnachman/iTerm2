@@ -258,15 +258,27 @@
     // Normally use application support for the socket because that's where we keep everything
     // else. But for some users the path may be too long to fit in sockaddr_un.sun_path, in which
     // case we'll fall back to their home directory.
+    //
+    // Both appSupport and the dotdir fallback are already per-suite directories (e.g.
+    // ~/Library/Application Support/{suite}/ and ~/.{suite}/), so the filename does not need to
+    // re-encode the suite name.
     NSString *suiteName = [iTermUserDefaults customSuiteName];
-    NSString *daemonPrefix = suiteName
-        ? [NSString stringWithFormat:@"%@-daemon", suiteName]
-        : @"iterm2-daemon";
 
     NSString *appSupportPath = [[NSFileManager defaultManager] applicationSupportDirectory];
-    NSString *normalFilename = [NSString stringWithFormat:@"%@-%d.socket", daemonPrefix, number];
+    NSString *normalFilename = [NSString stringWithFormat:@"iterm2-daemon-%d.socket", number];
     NSURL *normalURL = nil;
     if (appSupportPath) {
+        // Transitional: 3.7 betas before the fix for issue 12860 named the socket file
+        // {suite}-daemon-N.socket. If such a file already exists, prefer it so we don't
+        // strand a daemon that's still alive at the old path.
+        if (suiteName) {
+            NSString *legacyFilename = [NSString stringWithFormat:@"%@-daemon-%d.socket", suiteName, number];
+            NSString *legacyPath = [appSupportPath stringByAppendingPathComponent:legacyFilename];
+            if ([self pathIsSafe:legacyPath] &&
+                [[NSFileManager defaultManager] fileExistsAtPath:legacyPath]) {
+                return legacyPath;
+            }
+        }
         normalURL = [[NSURL fileURLWithPath:appSupportPath] URLByAppendingPathComponent:normalFilename];
         if ([self pathIsSafe:normalURL.path] && [[NSFileManager defaultManager] directoryIsWritable:appSupportPath]) {
             return normalURL.path;

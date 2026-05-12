@@ -388,6 +388,22 @@ Bug Fixes:
   modifiers) would also intercept
   Ctrl+Shift+Right and similar keystrokes.
   Modifier comparison is now exact. Issue 12859.
+- When launched with -suite, orphan adoption
+  could no longer reattach to surviving
+  multi-server daemons after a state-database
+  loss. The application-support directory is
+  already isolated per suite, but daemon
+  sockets were also being named with the
+  suite in the filename, while the orphan
+  adopter (and the settings-export exclusion
+  list) still expected the plain
+  iterm2-daemon- prefix. The suite is now
+  carried only by the containing directory,
+  matching how the dotdir fallback already
+  worked. A transitional fallback accepts
+  the {suite}-daemon-N.socket form so betas
+  that wrote that name don't strand their
+  daemons across the upgrade. Issue 12860.
 - Fix a crash when a Python API client invoked
   a function whose argument string contained
   non-BMP characters (for example, emoji). The
