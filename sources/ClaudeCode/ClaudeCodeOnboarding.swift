@@ -92,8 +92,7 @@ class ClaudeCodeOnboarding: NSObject {
     private var doItButton: NSButton!
     private var nextButton: NSButton!
     private var scrims = [OnboardingScrim]()
-    private var introOverlay: NSView?
-    private var introCard: NSView?
+    private var introSheet: NSWindow?
     private var introTitleLabel: NSTextField?
     private var introLeadLabel: NSTextField?
     private var introDisclosureButton: NSButton?
@@ -603,11 +602,11 @@ class ClaudeCodeOnboarding: NSObject {
         onboarding.panel.makeKeyAndOrderFront(nil)
         // Cover the installer with the heads-up intro until the user
         // dismisses it. They might've launched this from the menu
-        // not knowing what's about to be touched on disk; an
-        // overlay (rather than a real installer step) keeps the click
-        // count down for repeat users while still surfacing the
+        // not knowing what's about to be touched on disk; a sheet
+        // (rather than a real installer step) keeps the click count
+        // down for repeat users while still surfacing the
         // "you can undo this" promise to first-timers.
-        onboarding.showIntroOverlay()
+        onboarding.showIntroSheet()
         // Background completion of the install-step pre-mark.
         // Identity-checks against the static instance on return so
         // a panel that was closed-and-reopened during the read
@@ -708,31 +707,17 @@ class ClaudeCodeOnboarding: NSObject {
         contentView.addSubview(backButton)
     }
 
-    // MARK: - Intro Overlay
+    // MARK: - Intro Sheet
 
-    private func showIntroOverlay() {
-        guard let contentView = panel.contentView else { return }
-        let overlay = NSView(frame: contentView.bounds)
-        overlay.autoresizingMask = [.width, .height]
-        overlay.wantsLayer = true
-        overlay.layer?.backgroundColor = NSColor.black.withAlphaComponent(0.4).cgColor
-
-        let cardWidth: CGFloat = 540
-        let cardPadding: CGFloat = 24
-        let textWidth = cardWidth - cardPadding * 2
-
-        let card = NSView()
-        card.wantsLayer = true
-        card.layer?.backgroundColor = NSColor.windowBackgroundColor.cgColor
-        card.layer?.cornerRadius = 10
-        card.layer?.borderColor = NSColor.separatorColor.cgColor
-        card.layer?.borderWidth = 1
+    private func showIntroSheet() {
+        let sheetWidth: CGFloat = 540
+        let sheetPadding: CGFloat = 24
+        let textWidth = sheetWidth - sheetPadding * 2
 
         let titleLabel = NSTextField(labelWithString: "Before You Start")
         titleLabel.font = NSFont.boldSystemFont(ofSize: 16)
         titleLabel.frame.size.width = textWidth
         titleLabel.sizeToFit()
-        card.addSubview(titleLabel)
         introTitleLabel = titleLabel
 
         let lead = NSTextField(wrappingLabelWithString:
@@ -742,7 +727,6 @@ class ClaudeCodeOnboarding: NSObject {
         lead.textColor = .labelColor
         lead.isSelectable = false
         Self.sizeWrappingLabel(lead, width: textWidth)
-        card.addSubview(lead)
         introLeadLabel = lead
 
         // Image-only disclosure triangle plus a sibling label, mirroring
@@ -757,7 +741,6 @@ class ClaudeCodeOnboarding: NSObject {
         disclosure.imagePosition = .imageOnly
         disclosure.state = .off
         disclosure.sizeToFit()
-        card.addSubview(disclosure)
         introDisclosureButton = disclosure
 
         let disclosureLabel = NSTextField(labelWithString: "What gets changed")
@@ -765,7 +748,6 @@ class ClaudeCodeOnboarding: NSObject {
         disclosureLabel.textColor = .labelColor
         disclosureLabel.isSelectable = false
         disclosureLabel.sizeToFit()
-        card.addSubview(disclosureLabel)
         introDisclosureLabel = disclosureLabel
 
         let details = NSTextField(wrappingLabelWithString:
@@ -779,30 +761,35 @@ class ClaudeCodeOnboarding: NSObject {
         details.isSelectable = false
         Self.sizeWrappingLabel(details, width: textWidth)
         details.isHidden = true
-        card.addSubview(details)
         introDetailsLabel = details
 
         let continueButton = NSButton(title: "Continue",
                                       target: self,
-                                      action: #selector(dismissIntroOverlay(_:)))
+                                      action: #selector(dismissIntroSheet(_:)))
         continueButton.bezelStyle = .rounded
         continueButton.keyEquivalent = "\r"
         continueButton.frame.size = NSSize(width: 100, height: 32)
-        card.addSubview(continueButton)
         introContinueButton = continueButton
 
-        // The installer's own Do It / Next buttons set keyEquivalent
-        // "\r" too — clear them while the overlay is up so Enter
-        // routes to Continue. updateUI() restores them on dismiss.
-        nextButton.keyEquivalent = ""
-        doItButton.keyEquivalent = ""
+        let sheetWindow = NSWindow(
+            contentRect: NSRect(x: 0, y: 0, width: sheetWidth, height: 200),
+            styleMask: [.titled],
+            backing: .buffered,
+            defer: false)
+        sheetWindow.isReleasedWhenClosed = false
 
-        overlay.addSubview(card)
-        contentView.addSubview(overlay)
-        introOverlay = overlay
-        introCard = card
+        let contentView = NSView()
+        contentView.addSubview(titleLabel)
+        contentView.addSubview(lead)
+        contentView.addSubview(disclosure)
+        contentView.addSubview(disclosureLabel)
+        contentView.addSubview(details)
+        contentView.addSubview(continueButton)
+        sheetWindow.contentView = contentView
 
-        layoutIntroCard()
+        introSheet = sheetWindow
+        layoutIntroSheet()
+        panel.beginSheet(sheetWindow)
     }
 
     // sizeToFit on a wrapping NSTextField sometimes returns a single-
@@ -817,12 +804,11 @@ class ClaudeCodeOnboarding: NSObject {
         label.frame.size = NSSize(width: width, height: fitted.height)
     }
 
-    // Lay out the intro card top-down based on the disclosure state.
-    // Re-runs whenever the disclosure toggles, so the card grows/shrinks
-    // and re-centers in the overlay.
-    private func layoutIntroCard() {
-        guard let overlay = introOverlay,
-              let card = introCard,
+    // Lay out the intro sheet top-down based on the disclosure state.
+    // Re-runs whenever the disclosure toggles, so the sheet's content
+    // size grows or shrinks to match.
+    private func layoutIntroSheet() {
+        guard let sheet = introSheet,
               let title = introTitleLabel,
               let lead = introLeadLabel,
               let disclosure = introDisclosureButton,
@@ -830,8 +816,8 @@ class ClaudeCodeOnboarding: NSObject {
               let details = introDetailsLabel,
               let continueButton = introContinueButton else { return }
 
-        let cardWidth: CGFloat = 540
-        let cardPadding: CGFloat = 24
+        let sheetWidth: CGFloat = 540
+        let sheetPadding: CGFloat = 24
         let bottomPadding: CGFloat = 16
         let leadGap: CGFloat = 12
         let disclosureGap: CGFloat = 16
@@ -840,7 +826,7 @@ class ClaudeCodeOnboarding: NSObject {
         let disclosureRowHeight = max(disclosure.frame.height,
                                       disclosureLabel.frame.height)
 
-        var height = cardPadding
+        var height = sheetPadding
         height += title.frame.height
         height += leadGap
         height += lead.frame.height
@@ -854,21 +840,17 @@ class ClaudeCodeOnboarding: NSObject {
         height += continueButton.frame.height
         height += bottomPadding
 
-        card.frame = NSRect(
-            x: (overlay.bounds.width - cardWidth) / 2,
-            y: (overlay.bounds.height - height) / 2,
-            width: cardWidth,
-            height: height)
+        sheet.setContentSize(NSSize(width: sheetWidth, height: height))
 
-        var y = height - cardPadding - title.frame.height
-        title.frame.origin = NSPoint(x: cardPadding, y: y)
+        var y = height - sheetPadding - title.frame.height
+        title.frame.origin = NSPoint(x: sheetPadding, y: y)
         y -= leadGap
         y -= lead.frame.height
-        lead.frame.origin = NSPoint(x: cardPadding, y: y)
+        lead.frame.origin = NSPoint(x: sheetPadding, y: y)
         y -= disclosureGap
         y -= disclosureRowHeight
         let disclosureY = y + (disclosureRowHeight - disclosure.frame.height) / 2
-        disclosure.frame.origin = NSPoint(x: cardPadding, y: disclosureY)
+        disclosure.frame.origin = NSPoint(x: sheetPadding, y: disclosureY)
         let labelY = y + (disclosureRowHeight - disclosureLabel.frame.height) / 2
         disclosureLabel.frame.origin = NSPoint(
             x: disclosure.frame.maxX + 4,
@@ -876,22 +858,22 @@ class ClaudeCodeOnboarding: NSObject {
         if !details.isHidden {
             y -= detailsGap
             y -= details.frame.height
-            details.frame.origin = NSPoint(x: cardPadding, y: y)
+            details.frame.origin = NSPoint(x: sheetPadding, y: y)
         }
         continueButton.frame.origin = NSPoint(
-            x: cardWidth - cardPadding - continueButton.frame.width,
+            x: sheetWidth - sheetPadding - continueButton.frame.width,
             y: bottomPadding)
     }
 
     @objc private func toggleIntroDetails(_ sender: NSButton) {
         introDetailsLabel?.isHidden = (sender.state == .off)
-        layoutIntroCard()
+        layoutIntroSheet()
     }
 
-    @objc private func dismissIntroOverlay(_ sender: Any?) {
-        introOverlay?.removeFromSuperview()
-        introOverlay = nil
-        introCard = nil
+    @objc private func dismissIntroSheet(_ sender: Any?) {
+        guard let sheet = introSheet else { return }
+        panel.endSheet(sheet)
+        introSheet = nil
         introTitleLabel = nil
         introLeadLabel = nil
         introDisclosureButton = nil

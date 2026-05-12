@@ -395,6 +395,12 @@ Settings Improvements:
   you commit a selection.
 
 Bug Fixes:
+- The Install Claude Code Integration intro is
+  now presented as a real sheet attached to the
+  installer panel, rather than a subview
+  overlay. Enter now correctly activates
+  Continue instead of the Install/Next button
+  it was visually covering.
 - The Code Review prompt overlay no longer
   drifts out of sync with light/dark mode. The
   panel cached a CGColor snapshot of
