@@ -93,6 +93,7 @@ class ClaudeCodeOnboarding: NSObject {
     // UI elements
     private var stepLabels = [NSTextField]()
     private var contentLabel: NSTextField!
+    private var subtitleToggleCheckbox: NSButton!
     private var backButton: NSButton!
     private var doItButton: NSButton!
     private var nextButton: NSButton!
@@ -682,6 +683,20 @@ class ClaudeCodeOnboarding: NSObject {
         contentLabel.isSelectable = false
         contentView.addSubview(contentLabel)
 
+        // Optional toggle shown only on the explainStatus step. The dot
+        // on the tab already conveys session state; the text under the
+        // title is redundant for users who recognize the dot color, and
+        // can clash with custom tab colors. Default on.
+        subtitleToggleCheckbox = NSButton(checkboxWithTitle: "Show status as subtitle on the tab",
+                                          target: self,
+                                          action: #selector(toggleSubtitlePref(_:)))
+        subtitleToggleCheckbox.state = iTermUserDefaults.showSessionStatusInTabSubtitle ? .on : .off
+        subtitleToggleCheckbox.sizeToFit()
+        subtitleToggleCheckbox.frame.origin = NSPoint(x: margin, y: 55)
+        subtitleToggleCheckbox.autoresizingMask = [.maxXMargin, .maxYMargin]
+        subtitleToggleCheckbox.isHidden = true
+        contentView.addSubview(subtitleToggleCheckbox)
+
         // Button bar at the bottom
         let buttonY: CGFloat = 15
 
@@ -963,6 +978,11 @@ class ClaudeCodeOnboarding: NSObject {
 
         // Update content
         contentLabel.stringValue = currentStep.description
+        // Reflect the live pref each time we land on the step in case
+        // it was flipped from the Session Status settings popover
+        // since the wizard opened.
+        subtitleToggleCheckbox.isHidden = (currentStep != .explainStatus)
+        subtitleToggleCheckbox.state = iTermUserDefaults.showSessionStatusInTabSubtitle ? .on : .off
 
         // Update buttons
         backButton.isEnabled = !isFirstStep
@@ -1015,6 +1035,10 @@ class ClaudeCodeOnboarding: NSObject {
         }
         currentStep = activeSteps[i + 1]
         updateUI()
+    }
+
+    @objc private func toggleSubtitlePref(_ sender: NSButton) {
+        iTermUserDefaults.showSessionStatusInTabSubtitle = (sender.state == .on)
     }
 
     @objc private func doItPressed(_ sender: Any?) {

@@ -282,6 +282,11 @@ Expressions and Variables:
   interpolated strings.
 
 UI Improvements:
+- A new preference hides the session status
+  text from tab subtitles while keeping the
+  colored dot. Toggle it from the Session
+  Status toolbelt tool or during Claude Code
+  integration setup.
 - Contextual alternates (calt) are enabled by
   default for ligature-capable fonts.
 - Prettier, animated toasts.
