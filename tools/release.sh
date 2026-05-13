@@ -67,11 +67,23 @@ ZIP_URL="https://github.com/$REPO_SLUG/releases/download/$TAG/$APP_NAME-$VERSION
 # -- Build & export ---------------------------------------------------------
 
 echo "[release] xcodebuild archive (Deployment / iTerm2 scheme)..."
+# The Deployment build config still references the upstream iTerm2 author's
+# Developer ID. Until we sign up for our own Apple Developer cert, override
+# with ad-hoc so the archive succeeds. Sparkle still verifies via EdDSA,
+# users see the unidentified-developer warning once on first launch (same
+# as the share.sh hand-off path).
 xcodebuild -project "$REPO_ROOT/iTerm2.xcodeproj" \
            -scheme iTerm2 \
            -configuration Deployment \
            -archivePath "$ARCHIVE" \
            -quiet \
+           CODE_SIGN_IDENTITY="-" \
+           CODE_SIGN_STYLE=Manual \
+           CODE_SIGNING_REQUIRED=NO \
+           CODE_SIGNING_ALLOWED=NO \
+           DEVELOPMENT_TEAM= \
+           ARCHS=arm64 \
+           ONLY_ACTIVE_ARCH=YES \
            archive
 
 # Locate the produced .app inside the archive.
