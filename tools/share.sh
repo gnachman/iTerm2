@@ -29,7 +29,9 @@ REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 # -- Flags ------------------------------------------------------------------
 
 CONFIG="Development"
-OUT_DIR="$REPO_ROOT/build/share"
+# Base output dir; the per-run artifacts land in a versioned subfolder
+# (e.g. build/share/v3.6.dev/) created after the version is detected.
+BASE_OUT="$REPO_ROOT/build/share"
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --release)
@@ -41,7 +43,7 @@ while [[ $# -gt 0 ]]; do
       shift
       ;;
     --out)
-      OUT_DIR="$2"
+      BASE_OUT="$2"
       shift 2
       ;;
     -h|--help)
@@ -55,7 +57,7 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-mkdir -p "$OUT_DIR"
+mkdir -p "$BASE_OUT"
 
 # -- Build ------------------------------------------------------------------
 
@@ -87,6 +89,12 @@ TAG="${VERSION}+${GIT_DESCRIBE}"
 
 echo "[share] app: $APP_PATH"
 echo "[share] version: $VERSION (git: $GIT_DESCRIBE)"
+
+# Per-version output dir. e.g. build/share/v3.6.dev/. Wiped at the start
+# of each run so retries don't accumulate stale staging junk.
+OUT_DIR="$BASE_OUT/v${VERSION}"
+rm -rf "$OUT_DIR"
+mkdir -p "$OUT_DIR"
 
 # -- Stage a copy + ad-hoc sign --------------------------------------------
 

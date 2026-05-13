@@ -6,7 +6,10 @@
 *.pbxuser
 *.perspective
 *.perspectivev3
+# tools/share.sh writes per-version artifacts under build/share/v<VERSION>/.
+# The `build/` rule already covers it but kept explicit for discoverability.
 build/
+build/share/
 tmp/
 .DS_Store
 canary.xml
