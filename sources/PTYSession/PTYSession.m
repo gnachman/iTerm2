@@ -330,6 +330,8 @@ static NSString *const SESSION_ARRANGEMENT_TAB_STATUS = @"Tab Status";  // NSDic
 static NSString *const SESSION_ARRANGEMENT_SESSION_NOTE = @"Session Note";  // NSDictionary (graph-encoded)
 static NSString *const SESSION_ARRANGEMENT_CLIPPINGS = @"Clippings";  // NSArray<NSDictionary<NSString *, NSString *> *>, see PTYSessionClipping. Belongs to the leader of the peer group.
 static NSString *const SESSION_ARRANGEMENT_CLIPPINGS_VISIBLE = @"Clippings Visible";  // BOOL
+static NSString *const SESSION_ARRANGEMENT_CLIPPINGS_ARCHIVE = @"Clippings Archive";  // NSArray<NSArray<NSDictionary<NSString *, NSString *> *> *>, oldest first.
+static NSString *const SESSION_ARRANGEMENT_CLIPPINGS_VIEW_INDEX = @"Clippings View Index";  // NSNumber, -1 = live.
 
 // Keys for dictionary in SESSION_ARRANGEMENT_PROGRAM
 NSString *const kProgramType = @"Type";  // Value will be one of the kProgramTypeXxx constants.
@@ -1633,6 +1635,25 @@ ITERM_WEAKLY_REFERENCEABLE
     NSArray *clippingDicts = arrangement[SESSION_ARRANGEMENT_CLIPPINGS];
     if ([clippingDicts isKindOfClass:[NSArray class]]) {
         [aSession setLocalClippingsFromDictionaries:clippingDicts];
+    }
+    NSArray *clippingArchive = arrangement[SESSION_ARRANGEMENT_CLIPPINGS_ARCHIVE];
+    if ([clippingArchive isKindOfClass:[NSArray class]]) {
+        [aSession setLocalClippingsArchiveFromDictionaries:clippingArchive];
+    }
+    NSNumber *clippingViewIndexNumber = [NSNumber castFrom:arrangement[SESSION_ARRANGEMENT_CLIPPINGS_VIEW_INDEX]];
+    if (clippingViewIndexNumber) {
+        // Clamp against the restored archive count: a saved index may be stale
+        // if a future build trimmed archives or a snapshot failed to decode.
+        // Without this, the stale value persists through subsequent saves
+        // because the encoder writes back whatever's in localClippingsViewIndex.
+        // The clippings-archive restore above must run first; it does.
+        const NSInteger requestedIndex = clippingViewIndexNumber.integerValue;
+        const NSInteger archiveCount = (NSInteger)aSession.localClippingsArchive.count;
+        if (requestedIndex >= 0 && requestedIndex < archiveCount) {
+            aSession.localClippingsViewIndex = requestedIndex;
+        } else {
+            aSession.localClippingsViewIndex = -1;
+        }
     }
     aSession.clippingsVisible = [[NSNumber castFrom:arrangement[SESSION_ARRANGEMENT_CLIPPINGS_VISIBLE]] boolValue];
     [aSession.directoryTracker restoreFromArrangement:arrangement];
@@ -6658,6 +6679,13 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
     NSArray *localClippingDicts = self.localClippingsAsDictionaries;
     if (localClippingDicts.count > 0) {
         result[SESSION_ARRANGEMENT_CLIPPINGS] = localClippingDicts;
+    }
+    NSArray *localClippingArchiveDicts = self.localClippingsArchiveAsDictionaries;
+    if (localClippingArchiveDicts.count > 0) {
+        result[SESSION_ARRANGEMENT_CLIPPINGS_ARCHIVE] = localClippingArchiveDicts;
+    }
+    if (self.localClippingsViewIndex != -1) {
+        result[SESSION_ARRANGEMENT_CLIPPINGS_VIEW_INDEX] = @(self.localClippingsViewIndex);
     }
     result[SESSION_ARRANGEMENT_CLIPPINGS_VISIBLE] = @(self.clippingsVisible);
 

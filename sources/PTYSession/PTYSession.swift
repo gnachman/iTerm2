@@ -67,6 +67,18 @@ class PTYSessionSwiftState: NSObject {
     // session). Non-leader sessions keep this empty.
     var clippings = [PTYSessionClipping]()
 
+    // Past snapshots produced by "archive clippings". Oldest first. Each entry
+    // is the full clippings list at the moment the user (or claude-code)
+    // pressed Archive. Combined with `clippings` they form a timeline whose
+    // tail is the live list.
+    var clippingsArchive = [[PTYSessionClipping]]()
+
+    // Which entry in the [archive..., live] timeline the view is showing.
+    // -1 means the live list (`clippings`); 0..<clippingsArchive.count means
+    // that archive entry. Anything else is treated as live. Persisted to
+    // arrangements so re-opening a window restores the view position.
+    var clippingsViewIndex = -1
+
     // Whether the user wants the clippings panel shown. Defaults to false so
     // a fresh launch shows nothing; add_clipping flips it to true. Lives on
     // the leader (parallel to `clippings`) and is exposed via the peer port
@@ -1920,19 +1932,136 @@ extension PTYSession {
         }
     }
 
+    // Public accessor for the archive — delegates to the peer-group leader
+    // when in a peer group so all peers see the same history.
+    @objc var clippingsArchive: [[PTYSessionClipping]] {
+        get {
+            if let peerPort {
+                return peerPort.clippingsArchive
+            }
+            return swiftState.clippingsArchive
+        }
+        set {
+            if let peerPort {
+                peerPort.clippingsArchive = newValue
+            } else {
+                swiftState.clippingsArchive = newValue
+            }
+        }
+    }
+
+    // Bypasses peer-port delegation for save/restore and PTYSessionPeerPort.
+    @objc var localClippingsArchive: [[PTYSessionClipping]] {
+        get { swiftState.clippingsArchive }
+        set { swiftState.clippingsArchive = newValue }
+    }
+
+    @objc var localClippingsArchiveAsDictionaries: [[[String: String]]] {
+        return swiftState.clippingsArchive.map { snapshot in
+            snapshot.map { $0.dictionaryValue }
+        }
+    }
+
+    @objc(setLocalClippingsArchiveFromDictionaries:)
+    func setLocalClippingsArchiveFromDictionaries(_ dictionaries: [[[String: String]]]) {
+        swiftState.clippingsArchive = dictionaries.map { snapshot in
+            snapshot.compactMap { PTYSessionClipping(dictionary: $0) }
+        }
+    }
+
+    // Currently displayed entry in the timeline. -1 = live; 0..<archive.count
+    // = that archive snapshot.
+    @objc var clippingsViewIndex: Int {
+        get {
+            if let peerPort {
+                return peerPort.clippingsViewIndex
+            }
+            return swiftState.clippingsViewIndex
+        }
+        set {
+            let clamped = Self.clampClippingsViewIndex(newValue, archiveCount: clippingsArchive.count)
+            if let peerPort {
+                peerPort.clippingsViewIndex = clamped
+            } else {
+                swiftState.clippingsViewIndex = clamped
+            }
+            clippingsDidChange()
+        }
+    }
+
+    @objc var localClippingsViewIndex: Int {
+        get { swiftState.clippingsViewIndex }
+        set { swiftState.clippingsViewIndex = newValue }
+    }
+
+    private static func clampClippingsViewIndex(_ index: Int, archiveCount: Int) -> Int {
+        if index < 0 || index >= archiveCount {
+            return -1
+        }
+        return index
+    }
+
+    // The list shown in the panel: live or one of the archive entries.
+    @objc var viewedClippings: [PTYSessionClipping] {
+        let index = clippingsViewIndex
+        let archive = clippingsArchive
+        if index >= 0 && index < archive.count {
+            return archive[index]
+        }
+        return clippings
+    }
+
+    // True when the view is on the live list (index -1). Mutating actions in
+    // the panel (add/delete/reorder/drop) are gated by this.
+    @objc var clippingsViewIsLive: Bool {
+        let index = clippingsViewIndex
+        return index < 0 || index >= clippingsArchive.count
+    }
+
     @objc(addClippingWithType:title:detail:)
     func addClipping(type: String, title: String, detail: String) {
         var current = clippings
         current.append(PTYSessionClipping(type: type, title: title, detail: detail))
         clippings = current
-        // Auto-show on arrival; the visibility setter posts the change
-        // notification so the gutter panel relayouts. If already visible,
-        // post the change directly.
+        // Adding a clipping is always an action against the live list, so
+        // hop the view back to live so the new item is visible. The
+        // clippingsViewIndex setter posts the change notification, so the
+        // already-visible branch needs no further work; the auto-show branch
+        // re-posts once via the visibility setter, which is fine.
+        clippingsViewIndex = -1
         if !clippingsVisible {
             clippingsVisible = true
-        } else {
-            clippingsDidChange()
         }
+    }
+
+    // Hard cap on archived snapshots to keep the arrangement size bounded.
+    // The auto-archive integration (one snapshot per Claude Code review pass)
+    // is the primary driver: a long-lived session that runs dozens of passes
+    // would otherwise grow the arrangement unbounded.
+    private static let maxClippingsArchiveEntries = 50
+
+    // Snapshot the live list into the archive (if it's non-empty) and clear
+    // the live list. Leaves the view on "live" so the user immediately sees
+    // a fresh, empty list. Routing for code-review workgroup peers is handled
+    // by callers (the built-in function and toolbar action) so this method
+    // can run unconditionally on the resolved target session.
+    @objc(archiveClippings)
+    @discardableResult
+    func archiveClippings() -> Bool {
+        let live = clippings
+        guard !live.isEmpty else {
+            return false
+        }
+        var archive = clippingsArchive
+        archive.append(live)
+        if archive.count > Self.maxClippingsArchiveEntries {
+            archive.removeFirst(archive.count - Self.maxClippingsArchiveEntries)
+        }
+        clippingsArchive = archive
+        clippings = []
+        // clippingsViewIndex setter broadcasts; no explicit follow-up needed.
+        clippingsViewIndex = -1
+        return true
     }
 
     // Public accessor — delegates to the peer-group's leader, or own storage if solo.

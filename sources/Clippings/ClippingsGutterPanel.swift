@@ -77,12 +77,18 @@ class iTermClippingsGutterPanel: NSObject, iTermRightGutterPanel {
 
 extension iTermClippingsGutterPanel: iTermClippingsViewDelegate {
     func clippingsViewClippings(_ view: iTermClippingsView) -> [PTYSessionClipping] {
-        return currentSession?.clippings ?? []
+        // The view shows whatever entry in the [archive..., live] timeline
+        // the session has selected. Mutating operations are gated by
+        // clippingsViewIsLive on the session side.
+        return currentSession?.viewedClippings ?? []
     }
 
     func clippingsView(_ view: iTermClippingsView,
                        didChangeClippings newClippings: [PTYSessionClipping]) {
         guard let session = currentSession else { return }
+        // Mutations only land when viewing live — the view already disables
+        // its UI in archive mode, but guard here too in case of a stray drop.
+        guard session.clippingsViewIsLive else { return }
         session.clippings = newClippings
         session.clippingsDidChange()
     }
@@ -110,6 +116,23 @@ extension iTermClippingsGutterPanel: iTermClippingsViewDelegate {
             self?.addPanel = nil
             completion(clipping)
         }
+    }
+
+    func clippingsViewDidRequestArchive(_ view: iTermClippingsView) {
+        currentSession?.archiveClippings()
+    }
+
+    func clippingsViewArchiveCount(_ view: iTermClippingsView) -> Int {
+        return currentSession?.clippingsArchive.count ?? 0
+    }
+
+    func clippingsViewSelectedHistoryIndex(_ view: iTermClippingsView) -> Int {
+        return currentSession?.clippingsViewIndex ?? -1
+    }
+
+    func clippingsView(_ view: iTermClippingsView,
+                       setSelectedHistoryIndex index: Int) {
+        currentSession?.clippingsViewIndex = index
     }
 }
 

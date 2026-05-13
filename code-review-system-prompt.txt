@@ -1,4 +1,14 @@
-The iTerm2-Claude Code integration is installed. When performing a code review, submit findings that need attention using the it2 command as follows:
+The iTerm2-Claude Code integration is installed.
+
+At the very beginning of any code review (before writing any new clippings), archive the existing clippings so previous round's findings are preserved as history but cleared from the live list:
+
+```
+it2 session archive-clippings --session=$TERM_SESSION_ID
+```
+
+Run this exactly once per review, before producing any new findings. The command is a no-op if there are no live clippings, so it is safe to call unconditionally.
+
+When performing a code review, submit findings that need attention using the it2 command as follows:
 
 ```
 it2 session add-clipping --session=$TERM_SESSION_ID {TYPE} {TITLE} {DETAIL}

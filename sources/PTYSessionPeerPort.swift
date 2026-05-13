@@ -30,6 +30,19 @@ class PTYSessionPeerPort: NSObject {
         set { leaderSession?.localClippingsVisibilityFlag = newValue }
     }
 
+    // Per-peer-group archive of past clipping snapshots, anchored on the
+    // leader for the same lifetime reasons as `clippings`.
+    @objc var clippingsArchive: [[PTYSessionClipping]] {
+        get { leaderSession?.localClippingsArchive ?? [] }
+        set { leaderSession?.localClippingsArchive = newValue }
+    }
+
+    // Per-peer-group view index into the archive timeline; -1 = live.
+    @objc var clippingsViewIndex: Int {
+        get { leaderSession?.localClippingsViewIndex ?? -1 }
+        set { leaderSession?.localClippingsViewIndex = newValue }
+    }
+
     @objc var leaderSession: PTYSession? {
         return peers[leader]?.maybeValue
     }

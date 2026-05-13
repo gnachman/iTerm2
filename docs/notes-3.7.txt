@@ -76,6 +76,18 @@ Major New Features:
   focuses the prompt text field so you can
   start typing immediately.
 
+- Clippings now keep history. An archive
+  button in the clippings panel snapshots
+  the current list and clears it; back and
+  forward buttons walk the history. The
+  new `it2 session archive-clippings`
+  command and matching `iterm2.archive_
+  clippings` API call do the same. Claude
+  Code reviews now automatically archive
+  before each pass, so each review starts
+  with a clean list while old findings
+  remain reachable.
+
 - The Shell > Workgroups submenu now has
   an Exit Workgroup item to leave the
   current session’s workgroup.

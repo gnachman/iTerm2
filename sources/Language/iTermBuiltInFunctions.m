@@ -162,6 +162,7 @@ NSString *iTermNamespaceFromSignature(NSString *signature) {
 
 + (void)registerStandardFunctions {
     [iTermAddClippingBuiltInFunction registerBuiltInFunction];
+    [iTermArchiveClippingsBuiltInFunction registerBuiltInFunction];
     [iTermArrayCountBuiltInFunction registerBuiltInFunction];
     [iTermAlertBuiltInFunction registerBuiltInFunction];
     [iTermGetStringBuiltInFunction registerBuiltInFunction];

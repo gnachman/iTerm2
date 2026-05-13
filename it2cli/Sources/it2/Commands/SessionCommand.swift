@@ -24,6 +24,7 @@ struct Session: ParsableCommand {
             GetVar.self,
             SetVar.self,
             AddClipping.self,
+            ArchiveClippings.self,
         ]
     )
 }
@@ -851,6 +852,48 @@ extension Session {
                 throw IT2Error.apiError("Failed to JSON-encode string")
             }
             return str
+        }
+    }
+}
+
+// MARK: - session archive-clippings
+
+extension Session {
+    struct ArchiveClippings: ParsableCommand {
+        static let configuration = CommandConfiguration(
+            commandName: "archive-clippings",
+            abstract: "Archive a session's clippings, clearing the live list and adding a history entry."
+        )
+
+        @Option(name: .shortAndLong, help: "Target session ID (default: active).")
+        var session: String?
+
+        func run() throws {
+            let client = try APIClient.connect()
+            defer { client.disconnect() }
+
+            let sessionId = try client.resolveSessionId(session)
+
+            let invoke = ITMInvokeFunctionRequest()
+            let sessionContext = ITMInvokeFunctionRequest_Session()
+            sessionContext.sessionId = sessionId
+            invoke.session = sessionContext
+            invoke.invocation = "iterm2.archive_clippings()"
+
+            let request = ITMClientOriginatedMessage()
+            request.id_p = client.nextId()
+            request.invokeFunctionRequest = invoke
+
+            let response = try client.send(request)
+            guard response.submessageOneOfCase == .invokeFunctionResponse,
+                  let invokeResp = response.invokeFunctionResponse else {
+                throw IT2Error.apiError("No invoke function response")
+            }
+
+            if invokeResp.dispositionOneOfCase == .error {
+                let reason = invokeResp.error?.errorReason ?? "unknown"
+                throw IT2Error.apiError("Archive clippings failed: \(reason)")
+            }
         }
     }
 }

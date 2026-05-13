@@ -19,6 +19,15 @@ import SwiftyMarkdown
     func clippingsView(_ view: iTermClippingsView,
                        presentAddSheetWithCompletion completion: @escaping (PTYSessionClipping?) -> Void)
     func clippingsViewDidRequestClose(_ view: iTermClippingsView)
+
+    // History/archive support. The view layer asks the session-side adapter
+    // for these so the same model backs the gutter UI and external callers
+    // (it2 archive-clippings, archive_clipping built-in function).
+    func clippingsViewDidRequestArchive(_ view: iTermClippingsView)
+    func clippingsViewArchiveCount(_ view: iTermClippingsView) -> Int
+    func clippingsViewSelectedHistoryIndex(_ view: iTermClippingsView) -> Int
+    func clippingsView(_ view: iTermClippingsView,
+                       setSelectedHistoryIndex index: Int)
 }
 
 private let kClippingsControlsTopPadding: CGFloat = 4
@@ -45,6 +54,8 @@ class iTermClippingsView: NSView {
     private let tableView = ClippingsTableView()
     private let editSegmentedControl = NSSegmentedControl()
     private let actionSegmentedControl = NSSegmentedControl()
+    private let historySegmentedControl = NSSegmentedControl()
+    private let historyStatusLabel = NSTextField(labelWithString: "")
     private let closeButton = NSButton()
     private var previewPopover: NSPopover?
     private var previewRow: Int?
@@ -95,7 +106,7 @@ class iTermClippingsView: NSView {
         scrollView.autoresizingMask = [.width, .height]
         addSubview(scrollView)
 
-        editSegmentedControl.segmentCount = 2
+        editSegmentedControl.segmentCount = 3
         editSegmentedControl.segmentStyle = .smallSquare
         editSegmentedControl.trackingMode = .momentary
         if let plus = NSImage(systemSymbolName: "plus", accessibilityDescription: "Add clipping") {
@@ -104,7 +115,14 @@ class iTermClippingsView: NSView {
         if let minus = NSImage(systemSymbolName: "minus", accessibilityDescription: "Remove clipping") {
             editSegmentedControl.setImage(minus, forSegment: 1)
         }
+        if let archive = NSImage(systemSymbolName: "archivebox", accessibilityDescription: "Archive clippings") {
+            editSegmentedControl.setImage(archive, forSegment: 2)
+        }
+        editSegmentedControl.setToolTip("Add clipping", forSegment: 0)
+        editSegmentedControl.setToolTip("Remove selected clipping", forSegment: 1)
+        editSegmentedControl.setToolTip("Archive all clippings", forSegment: 2)
         editSegmentedControl.setEnabled(false, forSegment: 1)
+        editSegmentedControl.setEnabled(false, forSegment: 2)
         editSegmentedControl.target = self
         editSegmentedControl.action = #selector(editSegmentClicked(_:))
         editSegmentedControl.autoresizingMask = [.maxXMargin, .maxYMargin]
@@ -119,12 +137,41 @@ class iTermClippingsView: NSView {
         if let copy = NSImage(systemSymbolName: "doc.on.doc", accessibilityDescription: "Copy clipping") {
             actionSegmentedControl.setImage(copy, forSegment: 1)
         }
+        actionSegmentedControl.setToolTip("Send selected to terminal", forSegment: 0)
+        actionSegmentedControl.setToolTip("Copy selected to pasteboard", forSegment: 1)
         actionSegmentedControl.setEnabled(false, forSegment: 0)
         actionSegmentedControl.setEnabled(false, forSegment: 1)
         actionSegmentedControl.target = self
         actionSegmentedControl.action = #selector(actionSegmentClicked(_:))
         actionSegmentedControl.autoresizingMask = [.maxXMargin, .maxYMargin]
         addSubview(actionSegmentedControl)
+
+        historySegmentedControl.segmentCount = 2
+        historySegmentedControl.segmentStyle = .smallSquare
+        historySegmentedControl.trackingMode = .momentary
+        if let back = NSImage(systemSymbolName: "chevron.left", accessibilityDescription: "Previous archived clippings") {
+            historySegmentedControl.setImage(back, forSegment: 0)
+        }
+        if let forward = NSImage(systemSymbolName: "chevron.right", accessibilityDescription: "Next archived clippings") {
+            historySegmentedControl.setImage(forward, forSegment: 1)
+        }
+        historySegmentedControl.setToolTip("Show previous archived clippings", forSegment: 0)
+        historySegmentedControl.setToolTip("Show next archived clippings", forSegment: 1)
+        historySegmentedControl.setEnabled(false, forSegment: 0)
+        historySegmentedControl.setEnabled(false, forSegment: 1)
+        historySegmentedControl.target = self
+        historySegmentedControl.action = #selector(historySegmentClicked(_:))
+        historySegmentedControl.autoresizingMask = [.maxXMargin, .maxYMargin]
+        addSubview(historySegmentedControl)
+
+        historyStatusLabel.font = NSFont.systemFont(ofSize: 10)
+        historyStatusLabel.textColor = .secondaryLabelColor
+        historyStatusLabel.alignment = .right
+        historyStatusLabel.lineBreakMode = .byTruncatingTail
+        historyStatusLabel.maximumNumberOfLines = 1
+        historyStatusLabel.isHidden = true
+        historyStatusLabel.autoresizingMask = [.minXMargin, .maxYMargin]
+        addSubview(historyStatusLabel)
 
         if let xmark = NSImage(systemSymbolName: "xmark", accessibilityDescription: "Hide clippings") {
             closeButton.image = xmark
@@ -149,8 +196,10 @@ class iTermClippingsView: NSView {
     private func layoutFrames() {
         editSegmentedControl.sizeToFit()
         actionSegmentedControl.sizeToFit()
+        historySegmentedControl.sizeToFit()
         let editSize = editSegmentedControl.frame.size
         let actionSize = actionSegmentedControl.frame.size
+        let historySize = historySegmentedControl.frame.size
         let stripHeight = editSize.height + kClippingsControlsTopPadding + kClippingsControlsBottomPadding
         scrollView.frame = NSRect(x: 0,
                                   y: stripHeight,
@@ -164,6 +213,10 @@ class iTermClippingsView: NSView {
                                               y: kClippingsControlsBottomPadding,
                                               width: actionSize.width,
                                               height: actionSize.height)
+        historySegmentedControl.frame = NSRect(x: 6 + editSize.width + 8 + actionSize.width + 8,
+                                               y: kClippingsControlsBottomPadding,
+                                               width: historySize.width,
+                                               height: historySize.height)
 
         closeButton.sizeToFit()
         let closeSize = closeButton.frame.size
@@ -172,6 +225,16 @@ class iTermClippingsView: NSView {
                                    y: closeY,
                                    width: closeSize.width,
                                    height: closeSize.height)
+
+        let labelLeft = historySegmentedControl.frame.maxX + 6
+        let labelRight = closeButton.frame.minX - 4
+        let labelWidth = max(0, labelRight - labelLeft)
+        let labelHeight: CGFloat = 14
+        let labelY = kClippingsControlsBottomPadding + (editSize.height - labelHeight) / 2
+        historyStatusLabel.frame = NSRect(x: labelLeft,
+                                          y: labelY,
+                                          width: labelWidth,
+                                          height: labelHeight)
     }
 
     @objc func reload() {
@@ -179,11 +242,49 @@ class iTermClippingsView: NSView {
         updateSelectionDependentSegments()
     }
 
+    private var historyIndex: Int {
+        return delegate?.clippingsViewSelectedHistoryIndex(self) ?? -1
+    }
+
+    private var archiveCount: Int {
+        return delegate?.clippingsViewArchiveCount(self) ?? 0
+    }
+
+    private var isViewingLive: Bool {
+        let idx = historyIndex
+        return idx < 0 || idx >= archiveCount
+    }
+
     private func updateSelectionDependentSegments() {
         let hasSelection = tableView.selectedRowIndexes.count > 0
-        editSegmentedControl.setEnabled(hasSelection, forSegment: 1)
+        let viewingLive = isViewingLive
+        let viewedCount = currentClippings().count
+
+        // Add/remove only act on the live list.
+        editSegmentedControl.setEnabled(viewingLive, forSegment: 0)
+        editSegmentedControl.setEnabled(viewingLive && hasSelection, forSegment: 1)
+        // Archive only makes sense when viewing a non-empty live list — once
+        // an entry is in the archive there's nothing to do, and the model's
+        // archiveClippings() is a no-op anyway.
+        editSegmentedControl.setEnabled(viewingLive && viewedCount > 0, forSegment: 2)
+
         actionSegmentedControl.setEnabled(hasSelection, forSegment: 0)
         actionSegmentedControl.setEnabled(hasSelection, forSegment: 1)
+
+        let total = archiveCount
+        let idx = viewingLive ? total : historyIndex
+        historySegmentedControl.setEnabled(idx > 0, forSegment: 0)
+        historySegmentedControl.setEnabled(idx < total, forSegment: 1)
+
+        if !viewingLive {
+            historyStatusLabel.stringValue = "\(historyIndex + 1)/\(total)"
+            historyStatusLabel.toolTip = "Viewing archived clippings (\(historyIndex + 1) of \(total))"
+            historyStatusLabel.isHidden = false
+        } else {
+            historyStatusLabel.stringValue = ""
+            historyStatusLabel.toolTip = nil
+            historyStatusLabel.isHidden = true
+        }
     }
 
     private func selectedClippings() -> [PTYSessionClipping] {
@@ -217,6 +318,8 @@ class iTermClippingsView: NSView {
             promptForNew()
         case 1:
             deleteSelected()
+        case 2:
+            requestArchive()
         default:
             break
         }
@@ -231,6 +334,32 @@ class iTermClippingsView: NSView {
         default:
             break
         }
+    }
+
+    @objc private func historySegmentClicked(_ sender: Any?) {
+        let total = archiveCount
+        let current = isViewingLive ? total : historyIndex
+        let target: Int
+        switch historySegmentedControl.selectedSegment {
+        case 0:
+            target = max(0, current - 1)
+        case 1:
+            target = min(total, current + 1)
+        default:
+            return
+        }
+        let nextIndex = target >= total ? -1 : target
+        // Selection is per-row in the previously displayed list and is
+        // meaningless against a different list. Drop it so the action
+        // segments and any open preview reset.
+        tableView.deselectAll(nil)
+        previewPopover?.close()
+        delegate?.clippingsView(self, setSelectedHistoryIndex: nextIndex)
+    }
+
+    private func requestArchive() {
+        previewPopover?.close()
+        delegate?.clippingsViewDidRequestArchive(self)
     }
 
     private func sendSelected() {
@@ -328,6 +457,10 @@ extension iTermClippingsView: NSTableViewDataSource {
 
     func tableView(_ tableView: NSTableView,
                    pasteboardWriterForRow row: Int) -> NSPasteboardWriting? {
+        // Reordering the archived snapshot wouldn't write through anywhere
+        // meaningful; refuse the drag at the source so the view stays
+        // visibly read-only.
+        guard isViewingLive else { return nil }
         let item = NSPasteboardItem()
         item.setPropertyList([row], forType: kClippingsPasteboardType)
         return item
@@ -338,6 +471,9 @@ extension iTermClippingsView: NSTableViewDataSource {
                    proposedRow row: Int,
                    proposedDropOperation dropOperation: NSTableView.DropOperation) -> NSDragOperation {
         if (info.draggingSource as? NSTableView) !== tableView {
+            return []
+        }
+        if !isViewingLive {
             return []
         }
         if dropOperation == .above {
