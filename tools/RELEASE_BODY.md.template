@@ -1,0 +1,37 @@
+# MomenTerm __VERSION__
+
+`__GIT_DESCRIBE__` · __PUBDATE__ · arm64 (Apple Silicon)
+
+## 다운로드 & 설치 (60초)
+
+1. **zip 다운로드** — 아래 Assets 섹션의 `__ZIP_NAME__` 클릭
+2. **응용 프로그램 등록**
+   - zip 더블클릭으로 `MomenTerm.app` 추출
+   - `/응용 프로그램` 폴더로 드래그
+   - 첫 실행: `MomenTerm.app` **우클릭 → 열기 → 열기** (Gatekeeper 1회 우회)
+3. **이후 자동 업데이트**
+   - 새 버전이 올라오면 앱이 알아서 알려줍니다
+   - 수동 확인: 메뉴 **MomenTerm → Check For Updates…**
+
+> 안 열릴 때 (Gatekeeper가 강하게 차단할 때):
+> ```bash
+> xattr -dr com.apple.quarantine /Applications/MomenTerm.app
+> ```
+
+## 무결성 검증 (선택)
+
+```bash
+shasum -a 256 ~/Downloads/__ZIP_NAME__
+```
+
+기대값: `__SHA256__`
+
+## 요구사항
+
+- macOS 12 (Monterey) 이상
+- Apple Silicon (M1 / M2 / M3 / M4)
+- 디스크 약 300 MB
+
+## 변경 사항
+
+__CHANGELOG__
