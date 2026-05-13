@@ -33,6 +33,9 @@ for tool in sign_update generate_keys generate_appcast; do
     continue
   fi
   echo "[sparkle_tools] building $tool..."
+  # The submodule's Sparkle.xcodeproj hardcodes the upstream iTerm2 author's
+  # Developer ID. These CLI helpers only run locally, so override the signing
+  # settings to ad-hoc / unsigned and we don't need their cert.
   xcodebuild -project "$SPARKLE_DIR/Sparkle.xcodeproj" \
              -scheme "$tool" \
              -configuration Release \
@@ -40,6 +43,11 @@ for tool in sign_update generate_keys generate_appcast; do
              -quiet \
              SYMROOT="$DERIVED/sym" \
              OBJROOT="$DERIVED/obj" \
+             CODE_SIGN_IDENTITY="-" \
+             CODE_SIGN_STYLE=Manual \
+             CODE_SIGNING_REQUIRED=NO \
+             CODE_SIGNING_ALLOWED=NO \
+             DEVELOPMENT_TEAM= \
              build
   cp "$DERIVED/sym/Release/$tool" "$OUT_DIR/$tool"
   chmod +x "$OUT_DIR/$tool"
