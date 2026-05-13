@@ -1192,22 +1192,7 @@ typedef NS_ENUM(int, iTermShouldHaveTitleSeparator) {
         _contentView.shouldShowMomentermGitGraphPanel = NO;
         _contentView.shouldShowMomentermBrowserPanel = show;
         if (show) {
-            NSString *guid = [self currentSession].guid;
-            NSString *url = nil;
-            if (guid) {
-                url = [MomentermLocalhostURLScanner.shared lastURLForSession:guid];
-            }
-            // The TUI of Claude Code (and similar ink-style renderers) repaints
-            // via cursor positioning, so screenDidAppendStringToCurrentLine: may
-            // never have fired for the URL even though it's plainly visible on
-            // screen. Fall back to a direct screen scan when the accumulator
-            // has nothing.
-            if (url.length == 0) {
-                url = [self it_scanActiveSessionForLocalhostURL];
-            }
-            if (url.length > 0) {
-                [_momentermBrowserPanelVC loadURLString:url];
-            }
+            [self it_pickAndLoadLocalhostURLForBrowser];
         }
         [_momentermBottomStripView setActivePanel:show ? @"browser" : @""];
     } else if ([panel isEqualToString:@"gitgraph"]) {
@@ -1233,43 +1218,198 @@ typedef NS_ENUM(int, iTermShouldHaveTitleSeparator) {
     }
 }
 
-// Walks the last ~400 lines of the active session's screen+scrollback and
-// returns the LAST (most-recent) http(s) URL matching loopback host. Used as
-// a fallback when the per-character scanner missed the URL — Claude Code's
-// TUI repaints over previously-written rows, which bypasses the append hook.
-- (NSString *)it_scanActiveSessionForLocalhostURL {
+// Decides which localhost URL — if any — to open in the browser panel.
+// Strategy:
+//   1. Pull candidates from the per-character live scanner (lastURLForSession:)
+//      plus a screen scan covering the last ~400 lines so TUI repaints
+//      (Claude Code, ink, blessed) are caught even when the append hook
+//      didn't fire for them.
+//   2. Score each URL against its line context using keyword heuristics:
+//      "front"/"main"/"진입점" boost, "api"/"backend"/"/health" penalize,
+//      "postgres"/"db:" heavily penalize.
+//   3. If one candidate clearly leads (>=20 pts), load it silently.
+//      Otherwise present a sheet-modal NSAlert with one button per URL so
+//      the user picks. 0 candidates → leave the panel empty (placeholder).
+- (void)it_pickAndLoadLocalhostURLForBrowser {
+    NSArray<NSDictionary *> *ranked = [self it_rankedLocalhostURLCandidates];
+    if (ranked.count == 0) {
+        return;
+    }
+    if (ranked.count == 1) {
+        [_momentermBrowserPanelVC loadURLString:ranked[0][@"url"]];
+        return;
+    }
+    const NSInteger topScore = [ranked[0][@"score"] integerValue];
+    const NSInteger runnerScore = [ranked[1][@"score"] integerValue];
+    if (topScore - runnerScore >= 20) {
+        [_momentermBrowserPanelVC loadURLString:ranked[0][@"url"]];
+        return;
+    }
+    [self it_presentURLPicker:ranked];
+}
+
+- (NSArray<NSDictionary *> *)it_rankedLocalhostURLCandidates {
     PTYSession *session = [self currentSession];
-    if (!session) { return nil; }
+    if (!session || !session.screen) {
+        return @[];
+    }
     VT100Screen *screen = session.screen;
-    if (!screen) { return nil; }
     const int total = MAX(0, screen.numberOfLines);
-    if (total == 0) { return nil; }
+    if (total == 0) {
+        return @[];
+    }
     const int wanted = MIN(400, total);
     const int start = total - wanted;
-    NSMutableString *joined = [NSMutableString stringWithCapacity:wanted * 80];
+
+    NSMutableArray<NSString *> *lines = [NSMutableArray array];
     [screen enumerateLinesInRange:NSMakeRange(start, wanted)
                             block:^(int line, ScreenCharArray *sca, iTermImmutableMetadata md, BOOL *stop) {
-        NSString *s = sca.stringValue;
-        if (s.length > 0) {
-            [joined appendString:s];
-            [joined appendString:@"\n"];
-        }
+        [lines addObject:sca.stringValue ?: @""];
     }];
 
     static NSRegularExpression *rx = nil;
     static dispatch_once_t once;
     dispatch_once(&once, ^{
-        // Mirror MomentermLocalhostURLScanner's pattern.
         NSString *pattern = @"https?://(?:localhost|127\\.0\\.0\\.1|0\\.0\\.0\\.0)(?::\\d{1,5})?(?:/[^\\s'\"<>]{0,256})?";
         rx = [NSRegularExpression regularExpressionWithPattern:pattern options:0 error:nil];
     });
-    if (!rx) { return nil; }
-    NSArray<NSTextCheckingResult *> *matches = [rx matchesInString:joined
-                                                          options:0
-                                                            range:NSMakeRange(0, joined.length)];
-    NSTextCheckingResult *last = matches.lastObject;
-    if (!last) { return nil; }
-    return [joined substringWithRange:last.range];
+    if (!rx) {
+        return @[];
+    }
+
+    NSMutableDictionary<NSString *, NSMutableDictionary *> *byURL = [NSMutableDictionary dictionary];
+    for (NSString *line in lines) {
+        if (line.length == 0) continue;
+        NSArray<NSTextCheckingResult *> *matches = [rx matchesInString:line options:0 range:NSMakeRange(0, line.length)];
+        for (NSTextCheckingResult *m in matches) {
+            NSString *url = [line substringWithRange:m.range];
+            const NSInteger score = [self it_scoreForURL:url inLine:line];
+            NSString *context = [self it_summarizeContextForLine:line urlRange:m.range];
+            NSMutableDictionary *existing = byURL[url];
+            if (existing == nil || [existing[@"score"] integerValue] < score) {
+                byURL[url] = [@{@"url": url,
+                                @"context": context ?: @"",
+                                @"score": @(score)} mutableCopy];
+            }
+        }
+    }
+
+    // Also let the live scanner contribute (it might have URLs from chunks no
+    // longer on screen). Treat them as score 0 unless the line scan beat them.
+    NSString *liveURL = [MomentermLocalhostURLScanner.shared lastURLForSession:session.guid];
+    if (liveURL.length > 0 && byURL[liveURL] == nil) {
+        byURL[liveURL] = [@{@"url": liveURL, @"context": @"", @"score": @(0)} mutableCopy];
+    }
+
+    return [byURL.allValues sortedArrayUsingComparator:^NSComparisonResult(NSDictionary *a, NSDictionary *b) {
+        const NSInteger sa = [a[@"score"] integerValue];
+        const NSInteger sb = [b[@"score"] integerValue];
+        if (sa != sb) return sb > sa ? NSOrderedDescending : NSOrderedAscending;
+        return [a[@"url"] compare:b[@"url"]];
+    }];
+}
+
+- (NSInteger)it_scoreForURL:(NSString *)url inLine:(NSString *)line {
+    NSString *l = line.lowercaseString;
+    NSString *u = url.lowercaseString;
+    NSInteger score = 0;
+
+    NSArray<NSString *> *front = @[@"front", @"frontend", @"메인", @"main", @"진입점",
+                                   @"next.js", @"next", @"react", @"vite", @"vue",
+                                   @"svelte", @"webpack", @"angular", @"dev server",
+                                   @"ui", @"client", @"기본 진입점"];
+    for (NSString *kw in front) {
+        if ([l containsString:kw]) score += 30;
+    }
+
+    NSArray<NSString *> *back = @[@"back", @"backend", @"api server", @" gin", @"fastapi",
+                                  @"express", @"go/gin", @"go-gin", @"helm", @"swagger"];
+    for (NSString *kw in back) {
+        if ([l containsString:kw]) score -= 20;
+    }
+    // Standalone "api" without surrounding words is too noisy in front URLs that
+    // contain /api too, so check explicitly.
+    if ([l rangeOfString:@"\\bapi\\b" options:NSRegularExpressionSearch].location != NSNotFound) {
+        score -= 10;
+    }
+
+    NSArray<NSString *> *db = @[@"postgres", @"postgresql", @"mysql", @"mariadb",
+                                @"redis", @"mongo", @"db:", @"database", @"sql"];
+    for (NSString *kw in db) {
+        if ([l containsString:kw]) score -= 50;
+    }
+
+    // URL path hints.
+    if ([u containsString:@"/api/"]) score -= 30;
+    if ([u containsString:@"/health"]) score -= 30;
+    if ([u containsString:@"/swagger"]) score -= 20;
+    if ([u containsString:@"/graphql"]) score -= 10;
+
+    // Common FE dev-server ports nudge upward.
+    NSArray<NSString *> *fePorts = @[@":3000", @":3300", @":3333", @":4200", @":5173", @":5174",
+                                     @":8080", @":8000", @":4321", @":1313"];
+    for (NSString *p in fePorts) {
+        if ([u containsString:p]) {
+            score += 10;
+            break;
+        }
+    }
+
+    return score;
+}
+
+- (NSString *)it_summarizeContextForLine:(NSString *)line urlRange:(NSRange)urlRange {
+    if (line.length == 0) return @"";
+    NSInteger ctxStart = MAX(0, (NSInteger)urlRange.location - 24);
+    NSInteger ctxEnd = MIN((NSInteger)line.length, (NSInteger)NSMaxRange(urlRange) + 32);
+    NSString *ctx = [line substringWithRange:NSMakeRange(ctxStart, ctxEnd - ctxStart)];
+    NSString *urlString = [line substringWithRange:urlRange];
+    ctx = [ctx stringByReplacingOccurrencesOfString:urlString withString:@"…"];
+    // Collapse repeated whitespace and box-drawing characters that show up in
+    // markdown tables / TUI layouts.
+    NSMutableString *m = [NSMutableString stringWithString:ctx];
+    NSCharacterSet *noise = [NSCharacterSet characterSetWithCharactersInString:@"│┃┆┇┊┋║┝┞┟┠┡┢┣"];
+    NSMutableString *out = [NSMutableString stringWithCapacity:m.length];
+    for (NSUInteger i = 0; i < m.length; i++) {
+        unichar c = [m characterAtIndex:i];
+        if ([noise characterIsMember:c]) continue;
+        [out appendFormat:@"%C", c];
+    }
+    while ([out containsString:@"  "]) {
+        [out replaceOccurrencesOfString:@"  " withString:@" " options:0 range:NSMakeRange(0, out.length)];
+    }
+    return [out stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+}
+
+- (void)it_presentURLPicker:(NSArray<NSDictionary *> *)candidates {
+    NSAlert *alert = [[[NSAlert alloc] init] autorelease];
+    alert.messageText = @"여러 개의 로컬 주소가 보입니다";
+    alert.informativeText = @"브라우저에 띄울 URL을 선택하세요.";
+    alert.alertStyle = NSAlertStyleInformational;
+
+    const NSUInteger cap = 6;
+    NSArray *show = candidates.count > cap ? [candidates subarrayWithRange:NSMakeRange(0, cap)] : candidates;
+    for (NSDictionary *c in show) {
+        NSString *url = c[@"url"];
+        NSString *ctx = c[@"context"];
+        NSString *title;
+        if (ctx.length > 0) {
+            NSString *clip = ctx.length > 42 ? [[ctx substringToIndex:42] stringByAppendingString:@"…"] : ctx;
+            title = [NSString stringWithFormat:@"%@  (%@)", url, clip];
+        } else {
+            title = url;
+        }
+        [alert addButtonWithTitle:title];
+    }
+    [alert addButtonWithTitle:@"취소"];
+
+    [alert beginSheetModalForWindow:self.window completionHandler:^(NSModalResponse response) {
+        const NSInteger idx = response - NSAlertFirstButtonReturn;
+        if (idx >= 0 && idx < (NSInteger)show.count) {
+            NSString *url = show[idx][@"url"];
+            [self->_momentermBrowserPanelVC loadURLString:url];
+        }
+    }];
 }
 
 - (void)it_updateMomentermGitGraphCwd {
