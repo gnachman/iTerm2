@@ -1271,7 +1271,11 @@ typedef NS_ENUM(int, iTermShouldHaveTitleSeparator) {
     static dispatch_once_t once;
     dispatch_once(&once, ^{
         NSString *pattern = @"https?://(?:localhost|127\\.0\\.0\\.1|0\\.0\\.0\\.0)(?::\\d{1,5})?(?:/[^\\s'\"<>]{0,256})?";
-        rx = [NSRegularExpression regularExpressionWithPattern:pattern options:0 error:nil];
+        // PseudoTerminal.m is MRR (not ARC). The factory method returns an
+        // autoreleased instance; without an explicit retain the static
+        // pointer dangles after the current pool drains and the second
+        // toggle crashes deep inside objc_msgSend.
+        rx = [[NSRegularExpression alloc] initWithPattern:pattern options:0 error:nil];
     });
     if (!rx) {
         return @[];
