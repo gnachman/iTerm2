@@ -1046,4 +1046,157 @@ final class AIParserCombiningTests: XCTestCase {
         XCTAssertEqual(call.id, "toolu_round_1")
         XCTAssertEqual(wrapper?.callID, "toolu_round_1")
     }
+
+    // MARK: - Anthropic tool_use / tool_result adjacency
+
+    /// Anthropic 400s if a tool_use block in an assistant message is not
+    /// immediately followed by a user message containing the matching
+    /// tool_result. The Cockpit's racy persistence emits a stray user-text
+    /// message in between sometimes; the request builder must reorder so the
+    /// tool_result lands immediately after the tool_use, with the stray text
+    /// pushed AFTER the tool_result rather than dropped. Pinned offline so
+    /// regressions show up without spending an Anthropic API call.
+    func testAnthropicRequestBuilder_reordersStrayMessageBetweenToolUseAndToolResult() throws {
+        let model = try model(named: "claude-haiku-4-5")
+        let toolID = "toolu_pin_misorder"
+        let toolName = "register_watch"
+        let messages: [LLM.Message] = [
+            LLM.Message(role: .user, content: "kick things off"),
+            LLM.Message(
+                responseID: nil,
+                role: .assistant,
+                body: .functionCall(
+                    LLM.FunctionCall(name: toolName, arguments: "{}", id: toolID),
+                    id: .init(callID: toolID, itemID: toolID))),
+            LLM.Message(role: .user, content: "stray status update"),
+            LLM.Message(
+                responseID: nil,
+                role: .function,
+                body: .functionOutput(
+                    name: toolName,
+                    output: "{\"ok\":true}",
+                    id: .init(callID: toolID, itemID: toolID))),
+            LLM.Message(role: .user, content: "did it work?"),
+        ]
+        let bodyData = try AnthropicRequestBuilder(
+            messages: messages,
+            provider: LLMProvider(model: model),
+            functions: [],
+            stream: false).body()
+        let json = try XCTUnwrap(try JSONSerialization.jsonObject(with: bodyData) as? [String: Any])
+        let wireMessages = try XCTUnwrap(json["messages"] as? [[String: Any]])
+
+        // Find the index of the assistant tool_use and assert the very next
+        // message is a user message whose content array contains a tool_result
+        // for the same id. The stray "stray status update" text must appear
+        // AFTER the tool_result, not before, but must not be dropped.
+        var toolUseIndex: Int?
+        for (idx, m) in wireMessages.enumerated() {
+            guard m["role"] as? String == "assistant",
+                  let blocks = m["content"] as? [[String: Any]] else { continue }
+            for block in blocks {
+                if block["type"] as? String == "tool_use",
+                   block["id"] as? String == toolID {
+                    toolUseIndex = idx
+                    break
+                }
+            }
+            if toolUseIndex != nil { break }
+        }
+        let useIdx = try XCTUnwrap(toolUseIndex, "tool_use never emitted on wire")
+        XCTAssertLessThan(useIdx + 1, wireMessages.count,
+                          "tool_use is the last wire message; nothing follows it")
+        let next = wireMessages[useIdx + 1]
+        XCTAssertEqual(next["role"] as? String, "user",
+                       "message after tool_use must be a user message")
+        let nextBlocks = try XCTUnwrap(next["content"] as? [[String: Any]],
+                                       "message after tool_use must have an array content with a tool_result block")
+        let foundToolResult = nextBlocks.contains { block in
+            block["type"] as? String == "tool_result"
+                && block["tool_use_id"] as? String == toolID
+        }
+        XCTAssertTrue(foundToolResult,
+                      "message after tool_use must contain a tool_result for \(toolID); got \(nextBlocks)")
+
+        // Stray status_update must survive, just after the tool_result.
+        let stray = wireMessages.first { m in
+            guard let s = m["content"] as? String else { return false }
+            return s == "stray status update"
+        }
+        XCTAssertNotNil(stray, "stray user-text message must not be dropped")
+
+        // Final follow-up question must be present too.
+        let final = wireMessages.first { m in
+            guard let s = m["content"] as? String else { return false }
+            return s == "did it work?"
+        }
+        XCTAssertNotNil(final, "trailing user follow-up must survive reorder")
+    }
+
+    /// When the tool_result is already in the right place (immediately after
+    /// the tool_use), reorder must be a no-op — no message duplication, no
+    /// reshuffling of unrelated messages.
+    func testAnthropicRequestBuilder_alreadyAdjacent_isNoOp() throws {
+        let model = try model(named: "claude-haiku-4-5")
+        let toolID = "toolu_already_ok"
+        let toolName = "noop_tool"
+        let messages: [LLM.Message] = [
+            LLM.Message(role: .user, content: "hello"),
+            LLM.Message(
+                responseID: nil,
+                role: .assistant,
+                body: .functionCall(
+                    LLM.FunctionCall(name: toolName, arguments: "{}", id: toolID),
+                    id: .init(callID: toolID, itemID: toolID))),
+            LLM.Message(
+                responseID: nil,
+                role: .function,
+                body: .functionOutput(
+                    name: toolName,
+                    output: "{\"ok\":true}",
+                    id: .init(callID: toolID, itemID: toolID))),
+            LLM.Message(role: .user, content: "thanks"),
+        ]
+        let bodyData = try AnthropicRequestBuilder(
+            messages: messages,
+            provider: LLMProvider(model: model),
+            functions: [],
+            stream: false).body()
+        let json = try XCTUnwrap(try JSONSerialization.jsonObject(with: bodyData) as? [String: Any])
+        let wireMessages = try XCTUnwrap(json["messages"] as? [[String: Any]])
+        XCTAssertEqual(wireMessages.count, 4, "no message duplication when already adjacent")
+        XCTAssertEqual(wireMessages[0]["role"] as? String, "user")
+        XCTAssertEqual(wireMessages[1]["role"] as? String, "assistant")
+        XCTAssertEqual(wireMessages[2]["role"] as? String, "user")
+        let blocks2 = try XCTUnwrap(wireMessages[2]["content"] as? [[String: Any]])
+        XCTAssertTrue(blocks2.contains { $0["type"] as? String == "tool_result" })
+        XCTAssertEqual(wireMessages[3]["content"] as? String, "thanks")
+    }
+
+    /// A tool_use with no matching tool_result anywhere in the conversation
+    /// must not cause an infinite loop or crash. The wire request goes out
+    /// without a tool_result and Anthropic will 400, but the builder itself
+    /// must terminate and produce a well-formed body.
+    func testAnthropicRequestBuilder_orphanToolUse_terminatesCleanly() throws {
+        let model = try model(named: "claude-haiku-4-5")
+        let toolID = "toolu_orphan"
+        let messages: [LLM.Message] = [
+            LLM.Message(role: .user, content: "do the thing"),
+            LLM.Message(
+                responseID: nil,
+                role: .assistant,
+                body: .functionCall(
+                    LLM.FunctionCall(name: "tool", arguments: "{}", id: toolID),
+                    id: .init(callID: toolID, itemID: toolID))),
+            LLM.Message(role: .user, content: "follow up"),
+        ]
+        let bodyData = try AnthropicRequestBuilder(
+            messages: messages,
+            provider: LLMProvider(model: model),
+            functions: [],
+            stream: false).body()
+        let json = try XCTUnwrap(try JSONSerialization.jsonObject(with: bodyData) as? [String: Any])
+        let wireMessages = try XCTUnwrap(json["messages"] as? [[String: Any]])
+        XCTAssertGreaterThanOrEqual(wireMessages.count, 2, "builder must still emit some messages for an orphan tool_use")
+    }
 }

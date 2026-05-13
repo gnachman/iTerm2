@@ -763,7 +763,82 @@ struct AnthropicRequestBuilder {
             }
         }
 
-        return convertedMessages
+        return Self.enforceToolUseAdjacency(convertedMessages)
+    }
+
+    // Anthropic requires that every tool_use block in an assistant message be
+    // immediately followed by a user message containing the matching tool_result
+    // block (or all of them, for parallel tool_use). Callers (notably Cockpit's
+    // racy persistence) may hand us a layout where a plain user-text message
+    // got persisted between a tool_use and its matching tool_result. Reorder so
+    // the tool_result lands immediately after the tool_use, bumping any
+    // intervening messages to AFTER the tool_result while preserving their
+    // relative order. Match tool_use to tool_result by tool_use_id, which is
+    // reliably populated on both halves via FunctionCallID since 92c2c3f9b.
+    static func enforceToolUseAdjacency(_ messages: [AnthropicMessage]) -> [AnthropicMessage] {
+        var input = messages
+        var output: [AnthropicMessage] = []
+        var i = 0
+        while i < input.count {
+            let current = input[i]
+            output.append(current)
+            i += 1
+            let expectedIds = toolUseIds(in: current)
+            guard !expectedIds.isEmpty else { continue }
+
+            // Walk forward gathering tool_result blocks for the expected ids.
+            // Intervening messages stay in input and get processed by the outer
+            // loop on the next iteration (so they land AFTER the synthesized
+            // tool_result message we append below).
+            var resultBlocks: [AnthropicMessage.AnthropicContentBlock] = []
+            var pendingIds = expectedIds
+            var k = i
+            while k < input.count, !pendingIds.isEmpty {
+                let candidate = input[k]
+                guard candidate.role == .user,
+                      case .array(let blocks) = candidate.content else {
+                    k += 1
+                    continue
+                }
+                var consumed: [AnthropicMessage.AnthropicContentBlock] = []
+                var leftover: [AnthropicMessage.AnthropicContentBlock] = []
+                for block in blocks {
+                    if case .toolResult(let toolResult) = block,
+                       let idx = pendingIds.firstIndex(of: toolResult.tool_use_id) {
+                        consumed.append(block)
+                        pendingIds.remove(at: idx)
+                    } else {
+                        leftover.append(block)
+                    }
+                }
+                if consumed.isEmpty {
+                    k += 1
+                    continue
+                }
+                resultBlocks.append(contentsOf: consumed)
+                if leftover.isEmpty {
+                    input.remove(at: k)
+                } else {
+                    input[k] = AnthropicMessage(role: .user, content: .array(leftover))
+                    k += 1
+                }
+            }
+            if !resultBlocks.isEmpty {
+                output.append(AnthropicMessage(role: .user, content: .array(resultBlocks)))
+            }
+        }
+        return output
+    }
+
+    private static func toolUseIds(in message: AnthropicMessage) -> [String] {
+        guard message.role == .assistant,
+              case .array(let blocks) = message.content else {
+            return []
+        }
+        return blocks.compactMap { block in
+            if case .toolUse(let toolUse) = block { return toolUse.id }
+            return nil
+        }
     }
 
     func body() throws -> Data {

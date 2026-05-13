@@ -522,6 +522,120 @@ final class AILiveHarness: XCTestCase {
         runImageDescribe(vendor: "anthropic", modelName: "claude-haiku-4-5", apiKey: key)
     }
 
+    // Pins an Anthropic 400 reproduced in production by iTerm2's Cockpit
+    // orchestrator. AIConversation must not let a tool_use / tool_result pair
+    // get split by an intervening user-role message on the wire. The cockpit
+    // surfaced this naturally because its async watcher fast-path can publish
+    // a user-text status_update message BEFORE the .remoteCommandResponse for
+    // a register_watch tool call lands in the chat DB. Persistence ends up
+    // recording:
+    //
+    //     assistant(tool_use register_watch, id=X)
+    //     user(text "<status_update reason=stateReached>...")
+    //     user(tool_result for X)
+    //
+    // The wire dump captured against a real failing request (Console.app log
+    // line containing "RESPONSE-ERROR: HTTP request failed with status 400")
+    // shows exactly this ordering for the failing tool_use id. Anthropic's
+    // adjacency rule sees the message immediately after the tool_use is a
+    // plain-text user message (not a tool_result for that tool_use_id) and
+    // 400s with:
+    //
+    //   "messages.N: tool_use ids were found without tool_result blocks
+    //    immediately after: toolu_..."
+    //
+    // The upstream FunctionCallID wrapper fix (92c2c3f9b) is unrelated; both
+    // halves of the pair carry the correct id. What's broken is message
+    // ORDERING in AIConversation/AnthropicRequestBuilder's output. This test
+    // pins that AIConversation handles the ordering itself — callers that
+    // hand it a tool_use / tool_result pair with a stray user message in
+    // between should still produce a wire request Anthropic accepts. Fix lives
+    // in AIConversation (or AnthropicRequestBuilder.convertMessages): bring
+    // the matching tool_result up to be immediately after the tool_use,
+    // pushing the intervening user-text to AFTER the tool_result.
+    //
+    // Constraint: do NOT push this fix down to the caller (the cockpit). The
+    // cockpit's persistence ordering may be racy, but it should be impossible
+    // for any caller to construct an AIConversation.messages layout that
+    // produces this 400. Make the conversation layer robust.
+    func test_anthropic_userMessageBetweenToolUseAndToolResult_doesNotProduce400() throws {
+        let key = try keyOrSkip(Self.loadKeys().anthropic, vendor: "anthropic")
+
+        let toolName = "register_watch"
+        let decl = ChatGPTFunctionDeclaration(
+            name: toolName,
+            description: "Register an async watcher for a session reaching a state. Returns immediately.",
+            parameters: JSONSchema(for: EmptyArgs(), descriptions: [:]))
+        let spec = AILiveFunctionSpec<EmptyArgs>(
+            decl: decl,
+            implementation: { _, _, completion in
+                try completion(.success("{\"watcherRegistered\":{}}"))
+            })
+
+        // ID and content mirror what the production cockpit emitted in the
+        // failing wire body: a fast-path watcher fire whose status_update was
+        // persisted between the .remoteCommandRequest and .remoteCommandResponse
+        // for the same register_watch tool call.
+        let toolID = "toolu_test_misorder_register_watch"
+        let statusUpdateText = """
+        <status_update reason="stateReached" watcher_id="2B27BE04-AB12-45A1-ABCE-7C887CCA5758" at="2026-05-12T23:40:12Z">
+        Workgroup: Claude Code
+        Role: Chat
+        Reached state: idle
+        Detail: Chat in Claude Code was already in state 'idle' at watch registration.
+        </status_update>
+        """
+
+        let messages: [LLM.Message] = [
+            LLM.Message(role: .user,
+                        content: "Have the main agent fix the race condition."),
+            // Assistant emits the tool_use.
+            LLM.Message(responseID: nil,
+                        role: .assistant,
+                        body: .functionCall(
+                            LLM.FunctionCall(
+                                name: toolName,
+                                arguments: "{\"target\":{\"role\":\"builtin.claudeCode.main\",\"workgroup_id\":\"wg-test\"},\"target_state\":\"idle\"}",
+                                id: toolID),
+                            id: .init(callID: toolID, itemID: toolID))),
+            // The async watcher fire was persisted as a user-text message
+            // BEFORE the tool_result for the same tool_use. This is the
+            // ordering that triggered the production 400.
+            LLM.Message(role: .user, content: statusUpdateText),
+            // Tool_result for the register_watch tool_use above. Note the
+            // matching tool_use_id (callID) — both halves agree on the id;
+            // it's purely the adjacency that's broken.
+            LLM.Message(responseID: nil,
+                        role: .function,
+                        body: .functionOutput(
+                            name: toolName,
+                            output: "{\"watcherRegistered\":{\"watcher_id\":\"2B27BE04-AB12-45A1-ABCE-7C887CCA5758\"}}",
+                            id: .init(callID: toolID, itemID: toolID))),
+            // New user follow-up that triggers the next request to Anthropic.
+            LLM.Message(role: .user,
+                        content: "Did the watch register successfully? Reply in one short sentence."),
+        ]
+
+        do {
+            let result = try AILiveDriver.run(
+                modelName: "claude-opus-4-6",
+                apiKey: key,
+                messages: messages,
+                streaming: true,
+                function: spec,
+                scenarioTag: "userMessageBetweenToolUseAndToolResult",
+                test: self)
+            // Today this never runs: the driver surfaces the Anthropic 400 as
+            // an AILiveError via the catch branch below. After the fix,
+            // Anthropic accepts the layout (because AIConversation reordered
+            // it to a valid one) and we get a non-empty reply.
+            XCTAssertFalse(result.finalText.isEmpty,
+                           "Anthropic returned empty text; expected a reply about the watch registration")
+        } catch {
+            XCTFail("[anthropic/userMessageBetweenToolUseAndToolResult] \(error) — AIConversation must guarantee tool_use is immediately followed by its matching tool_result on the wire, regardless of caller-supplied ordering. Fix at the conversation layer (AIConversation or AnthropicRequestBuilder.convertMessages), NOT at the caller.")
+        }
+    }
+
     // MARK: - Gemini
 
     func test_gemini_smoke_nonStreaming() throws {

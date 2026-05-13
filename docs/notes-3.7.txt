@@ -428,6 +428,13 @@ Bug Fixes:
   lost on round-trip. Both fields are now
   populated so persisted tool calls survive
   the round-trip.
+- Anthropic requests no longer 400 when a
+  stray user message gets persisted between a
+  tool_use and its matching tool_result. The
+  request builder reorders so the tool_result
+  is always emitted immediately after the
+  tool_use, with any intervening messages
+  bumped to after it.
 - Fix a launch crash when a saved status bar
   layout referenced an RPC-provided text
   component whose configuration was missing
