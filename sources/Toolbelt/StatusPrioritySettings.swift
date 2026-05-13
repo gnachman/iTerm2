@@ -218,7 +218,7 @@ private final class StatusPriorityPopover: NSObject {
         let popover = NSPopover()
         popover.contentViewController = vc
         popover.behavior = .semitransient
-        popover.contentSize = NSSize(width: 280, height: 260)
+        popover.contentSize = NSSize(width: 280, height: 296)
         popover.show(relativeTo: positioningRect, of: positioningView, preferredEdge: edge)
         self.popover = popover
     }
@@ -241,10 +241,12 @@ private final class StatusPriorityViewController: NSViewController, CRUDTableVie
 
     override func loadView() {
         let width: CGFloat = 280
-        let height: CGFloat = 260
+        let height: CGFloat = 296
         let margin: CGFloat = 10
         let segmentHeight: CGFloat = 24
         let labelHeight: CGFloat = 48
+        let toggleHeight: CGFloat = 18
+        let toggleGap: CGFloat = 8
 
         let container = NSView(frame: NSRect(x: 0, y: 0, width: width, height: height))
 
@@ -268,8 +270,24 @@ private final class StatusPriorityViewController: NSViewController, CRUDTableVie
         addRemove.autoresizingMask = [.maxXMargin, .maxYMargin]
         container.addSubview(addRemove)
 
-        // Table view between label and segmented control
-        let scrollY = margin + segmentHeight + 4
+        // Global toggle: gate the status-text subtitle on tabs without
+        // affecting the colored dot or this priority list’s meaning.
+        // Sits between the +/- and the table so it’s visually grouped
+        // with the per-popover controls.
+        let toggleY = margin + segmentHeight + toggleGap
+        let toggle = NSButton(checkboxWithTitle: "Show status in tab subtitle",
+                              target: self,
+                              action: #selector(showSubtitleToggleChanged(_:)))
+        toggle.state = iTermUserDefaults.showSessionStatusInTabSubtitle ? .on : .off
+        toggle.frame = NSRect(x: margin,
+                              y: toggleY,
+                              width: width - 2 * margin,
+                              height: toggleHeight)
+        toggle.autoresizingMask = [.width, .maxYMargin]
+        container.addSubview(toggle)
+
+        // Table view between label and the toggle row
+        let scrollY = toggleY + toggleHeight + toggleGap
         let scrollHeight = height - margin - labelHeight - 4 - scrollY
         let scrollView = NSScrollView(frame: NSRect(x: margin, y: scrollY,
                                                      width: width - 2 * margin,
@@ -322,6 +340,10 @@ private final class StatusPriorityViewController: NSViewController, CRUDTableVie
         let spacing = tv.intercellSpacing.width * CGFloat(tv.numberOfColumns)
         let newWidth = scrollView.contentSize.width - Self.notifyColumnWidth - spacing
         patternColumn.width = newWidth
+    }
+
+    @objc private func showSubtitleToggleChanged(_ sender: NSButton) {
+        iTermUserDefaults.showSessionStatusInTabSubtitle = (sender.state == .on)
     }
 
     func undoableAdd(_ value: String, completion: @escaping (Int) -> ()) {

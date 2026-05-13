@@ -22,6 +22,7 @@
 #import "iTermSwiftyString.h"
 #import "iTermSwiftyStringGraph.h"
 #import "iTermTmuxLayoutBuilder.h"
+#import "iTermUserDefaults.h"
 #import "iTermVariableReference.h"
 #import "iTermVariableScope.h"
 #import "iTermVariableScope+Session.h"
@@ -484,6 +485,10 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
                                              selector:@selector(annotationVisibilityDidChange:)
                                                  name:iTermAnnotationVisibilityDidChange
                                                object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(_refreshLabels:)
+                                                 name:iTermShowSessionStatusInTabSubtitleDidChange
+                                               object:nil];
     [iTermPreferenceDidChangeNotification subscribe:self selector:@selector(preferenceDidChange:)];
     _tabTitleOverrideSwiftyString = [[iTermSwiftyString alloc] initWithScope:self.variablesScope
                                                                   sourcePath:iTermVariableKeyTabTitleOverrideFormat
@@ -692,7 +697,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 - (NSString *)stringByAppendingSubtitleForActiveSession:(NSString *)title {
     NSString *subtitle = self.activeSession.subtitle;
     NSString *statusText = _aggregatedTabStatus.statusText;
-    if (statusText.length > 0) {
+    if (statusText.length > 0 && iTermUserDefaults.showSessionStatusInTabSubtitle) {
         if (subtitle.length > 0) {
             subtitle = [NSString stringWithFormat:@"%@ \u2013 %@", statusText, subtitle];
         } else {
@@ -1213,7 +1218,8 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 - (NSColor *)psmTabStatusSubtitleColor {
     if (!_aggregatedTabStatus.hasActiveStatus ||
         !_aggregatedTabStatus.hasStatusTextColor ||
-        _aggregatedTabStatus.statusText.length == 0) {
+        _aggregatedTabStatus.statusText.length == 0 ||
+        !iTermUserDefaults.showSessionStatusInTabSubtitle) {
         return nil;
     }
     iTermSRGBColor c = _aggregatedTabStatus.statusTextColor;

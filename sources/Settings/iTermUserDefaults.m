@@ -30,6 +30,8 @@ static NSString *const iTermUserDefaultsKeyClaudeCodeWorkgroupUpsellSuppressed =
 static NSString *const iTermUserDefaultsKeyClaudeCodeHooksInstalled = @"NoSyncClaudeCodeHooksInstalled";
 static NSString *const iTermUserDefaultsKeyClaudeCodeTriggersInstalled = @"ClaudeCodeTriggersInstalled";
 static NSString *const iTermUserDefaultsKeyClaudeCodeIntegrationCompleted = @"NoSyncClaudeCodeIntegrationCompleted";
+static NSString *const iTermUserDefaultsKeyShowSessionStatusInTabSubtitle = @"ShowSessionStatusInTabSubtitle";
+NSString *const iTermShowSessionStatusInTabSubtitleDidChange = @"iTermShowSessionStatusInTabSubtitleDidChange";
 static NSString *const iTermUserDefaultsKeyHaveExplainedHowToAddTouchbarControls = @"NoSyncHaveExplainedHowToAddTouchbarControls";
 static NSString *const iTermUserDefaultsKeyIgnoreSystemWindowRestoration = @"NoSyncIgnoreSystemWindowRestoration";
 static NSString *const iTermUserDefaultsKeyGlobalSearchMode = @"NoSyncGlobalSearchMode";
@@ -94,7 +96,8 @@ static NSUserDefaults *iTermPrivateUserDefaults(void) {
             userDefaults = [NSUserDefaults standardUserDefaults];
         }
         [userDefaults registerDefaults:@{ iTermUserDefaultsKeyOpenTmuxDashboardIfHiddenWindows: @YES,
-                                          iTermUserDefaultsKeyShouldSendReturnAfterPassword: @YES }];
+                                          iTermUserDefaultsKeyShouldSendReturnAfterPassword: @YES,
+                                          iTermUserDefaultsKeyShowSessionStatusInTabSubtitle: @YES }];
     });
     return userDefaults;
 }
@@ -229,6 +232,20 @@ static NSUserDefaults *iTermPrivateUserDefaults(void) {
 + (void)setClaudeCodeIntegrationCompleted:(BOOL)completed {
     [self.userDefaults setBool:completed
                         forKey:iTermUserDefaultsKeyClaudeCodeIntegrationCompleted];
+}
+
++ (BOOL)showSessionStatusInTabSubtitle {
+    return [self.userDefaults boolForKey:iTermUserDefaultsKeyShowSessionStatusInTabSubtitle];
+}
+
++ (void)setShowSessionStatusInTabSubtitle:(BOOL)show {
+    if (show == [self showSessionStatusInTabSubtitle]) {
+        return;
+    }
+    [self.userDefaults setBool:show
+                        forKey:iTermUserDefaultsKeyShowSessionStatusInTabSubtitle];
+    [[NSNotificationCenter defaultCenter] postNotificationName:iTermShowSessionStatusInTabSubtitleDidChange
+                                                        object:nil];
 }
 
 + (BOOL)haveExplainedHowToAddTouchbarControls {

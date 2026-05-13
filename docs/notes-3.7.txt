@@ -293,6 +293,10 @@ Expressions and Variables:
   interpolated strings.
 
 UI Improvements:
+- A new preference hides the session status
+  text from tab subtitles while keeping the
+  colored dot. Toggle it from the gear menu
+  in the Session Status toolbelt tool.
 - Contextual alternates (calt) are enabled by
   default for ligature-capable fonts.
 - Prettier, animated toasts.
