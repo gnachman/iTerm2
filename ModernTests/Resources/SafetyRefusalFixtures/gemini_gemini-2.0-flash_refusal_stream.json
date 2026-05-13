@@ -1,5 +1,5 @@
 {
-  "elapsedMs" : 946,
+  "elapsedMs" : 536,
   "request" : {
     "body" : {
       "contents" : [
@@ -20,13 +20,17 @@
     "url" : "https:\/\/generativelanguage.googleapis.com\/v1beta\/models\/gemini-2.0-flash:streamGenerateContent?key=REDACTED&alt=sse"
   },
   "response" : {
-    "body" : "data: {\"candidates\": [{\"content\": {\"parts\": [{\"text\": \"I\"}],\"role\": \"model\"}}],\"usageMetadata\": {\"promptTokenCount\": 40,\"totalTokenCount\": 40,\"promptTokensDetails\": [{\"modality\": \"TEXT\",\"tokenCount\": 40}],\"serviceTier\": \"standard\"},\"modelVersion\": \"gemini-2.0-flash\",\"responseId\": \"BZX_adCfE5-36MEPr7rV4AE\"}\r\n\r\ndata: {\"candidates\": [{\"content\": {\"parts\": [{\"text\": \" am programmed to be a harmless AI assistant. I cannot provide assistance with requests that\"}],\"role\": \"model\"}}],\"usageMetadata\": {\"promptTokenCount\": 40,\"totalTokenCount\": 40,\"promptTokensDetails\": [{\"modality\": \"TEXT\",\"tokenCount\": 40}],\"serviceTier\": \"standard\"},\"modelVersion\": \"gemini-2.0-flash\",\"responseId\": \"BZX_adCfE5-36MEPr7rV4AE\"}\r\n\r\ndata: {\"candidates\": [{\"content\": {\"parts\": [{\"text\": \" are unethical, illegal, or malicious, including creating phishing emails. Phishing is a serious crime\"}],\"role\": \"model\"}}],\"usageMetadata\": {\"promptTokenCount\": 40,\"totalTokenCount\": 40,\"promptTokensDetails\": [{\"modality\": \"TEXT\",\"tokenCount\": 40}],\"serviceTier\": \"standard\"},\"modelVersion\": \"gemini-2.0-flash\",\"responseId\": \"BZX_adCfE5-36MEPr7rV4AE\"}\r\n\r\ndata: {\"candidates\": [{\"content\": {\"parts\": [{\"text\": \" that can lead to identity theft and financial loss.\\n\"}],\"role\": \"model\"},\"finishReason\": \"STOP\"}],\"usageMetadata\": {\"promptTokenCount\": 39,\"candidatesTokenCount\": 47,\"totalTokenCount\": 86,\"promptTokensDetails\": [{\"modality\": \"TEXT\",\"tokenCount\": 39}],\"candidatesTokensDetails\": [{\"modality\": \"TEXT\",\"tokenCount\": 47}],\"serviceTier\": \"standard\"},\"modelVersion\": \"gemini-2.0-flash\",\"responseId\": \"BZX_adCfE5-36MEPr7rV4AE\"}\r\n\r\n"
+    "body" : {
+      "error" : {
+        "code" : 429,
+        "message" : "Resource exhausted. Please try again later. Please refer to https:\/\/cloud.google.com\/vertex-ai\/generative-ai\/docs\/error-code-429 for more details.",
+        "status" : "RESOURCE_EXHAUSTED"
+      }
+    },
+    "error" : "HTTP request failed with status 429."
   },
   "streamChunks" : [
-    "data: {\"candidates\": [{\"content\": {\"parts\": [{\"text\": \"I\"}],\"role\": \"model\"}}],\"usageMetadata\": {\"promptTokenCount\": 40,\"totalTokenCount\": 40,\"promptTokensDetails\": [{\"modality\": \"TEXT\",\"tokenCount\": 40}],\"serviceTier\": \"standard\"},\"modelVersion\": \"gemini-2.0-flash\",\"responseId\": \"BZX_adCfE5-36MEPr7rV4AE\"}\r\n\r\n",
-    "data: {\"candidates\": [{\"content\": {\"parts\": [{\"text\": \" am programmed to be a harmless AI assistant. I cannot provide assistance with requests that\"}],\"role\": \"model\"}}],\"usageMetadata\": {\"promptTokenCount\": 40,\"totalTokenCount\": 40,\"promptTokensDetails\": [{\"modality\": \"TEXT\",\"tokenCount\": 40}],\"serviceTier\": \"standard\"},\"modelVersion\": \"gemini-2.0-flash\",\"responseId\": \"BZX_adCfE5-36MEPr7rV4AE\"}\r\n\r\n",
-    "data: {\"candidates\": [{\"content\": {\"parts\": [{\"text\": \" are unethical, illegal, or malicious, including creating phishing emails. Phishing is a serious crime\"}],\"role\": \"model\"}}],\"usageMetadata\": {\"promptTokenCount\": 40,\"totalTokenCount\": 40,\"promptTokensDetails\": [{\"modality\": \"TEXT\",\"tokenCount\": 40}],\"serviceTier\": \"standard\"},\"modelVersion\": \"gemini-2.0-flash\",\"responseId\": \"BZX_adCfE5-36MEPr7rV4AE\"}\r\n\r\n",
-    "data: {\"candidates\": [{\"content\": {\"parts\": [{\"text\": \" that can lead to identity theft and financial loss.\\n\"}],\"role\": \"model\"},\"finishReason\": \"STOP\"}],\"usageMetadata\": {\"promptTokenCount\": 39,\"candidatesTokenCount\": 47,\"totalTokenCount\": 86,\"promptTokensDetails\": [{\"modality\": \"TEXT\",\"tokenCount\": 39}],\"candidatesTokensDetails\": [{\"modality\": \"TEXT\",\"tokenCount\": 47}],\"serviceTier\": \"standard\"},\"modelVersion\": \"gemini-2.0-flash\",\"responseId\": \"BZX_adCfE5-36MEPr7rV4AE\"}\r\n\r\n"
+    "{\n  \"error\": {\n    \"code\": 429,\n    \"message\": \"Resource exhausted. Please try again later. Please refer to https:\/\/cloud.google.com\/vertex-ai\/generative-ai\/docs\/error-code-429 for more details.\",\n    \"status\": \"RESOURCE_EXHAUSTED\"\n  }\n}\n"
   ],
   "streaming" : true
 }

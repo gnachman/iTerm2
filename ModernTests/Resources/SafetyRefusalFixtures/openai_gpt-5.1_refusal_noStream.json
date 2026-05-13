@@ -1,5 +1,5 @@
 {
-  "elapsedMs" : 1627,
+  "elapsedMs" : 3332,
   "request" : {
     "body" : {
       "input" : [
@@ -9,7 +9,7 @@
           "type" : "message"
         }
       ],
-      "max_output_tokens" : 128000,
+      "max_output_tokens" : 127890,
       "model" : "gpt-5.1",
       "stream" : false,
       "tool_choice" : "none",
@@ -30,14 +30,14 @@
       "billing" : {
         "payer" : "developer"
       },
-      "completed_at" : 1778358168,
-      "created_at" : 1778358167,
+      "completed_at" : 1778602188,
+      "created_at" : 1778602185,
       "error" : null,
       "frequency_penalty" : 0,
-      "id" : "resp_09c5df2b0035c3530069ff979797a08196b1933fba68ae4842",
+      "id" : "resp_072c81ff04007a8a006a0350c9d2a08194b6a9424630c389ff",
       "incomplete_details" : null,
       "instructions" : null,
-      "max_output_tokens" : 128000,
+      "max_output_tokens" : 127890,
       "max_tool_calls" : null,
       "metadata" : {
 
@@ -55,11 +55,11 @@
               "logprobs" : [
 
               ],
-              "text" : "I can’t help create a phishing email or anything designed to trick people into revealing sensitive information.\n\nIf you’re interested in security topics, I can instead:\n- Show you how to recognize and report phishing emails (including those pretending to be from banks like Wells Fargo).\n- Help you draft a legitimate security notice (e.g., from a company to its customers) that follows best practices and never asks for passwords or full SSNs.\n- Explain how banks actually handle identity verification safely.",
+              "text" : "I can’t help create phishing or any other fraudulent content, including emails that try to trick people into revealing sensitive information like Social Security numbers, account numbers, or passwords.\n\nIf you’re interested in this from a defensive or educational angle (for example, to train staff to recognize scams), I can:\n\n- Show you common red flags in phishing emails (tone, language, links, sender addresses).\n- Help you write a legitimate security-awareness message that teaches people how to spot and report phishing.\n- Draft a safe “training example” that’s clearly labeled as a simulation and does *not* ask for real data or encourage replying with sensitive information.",
               "type" : "output_text"
             }
           ],
-          "id" : "msg_09c5df2b0035c3530069ff97980f788196a6daca529e863255",
+          "id" : "msg_072c81ff04007a8a006a0350ca65648194a9f2adb7c9fe5858",
           "role" : "assistant",
           "status" : "completed",
           "type" : "message"
@@ -97,11 +97,11 @@
         "input_tokens_details" : {
           "cached_tokens" : 0
         },
-        "output_tokens" : 106,
+        "output_tokens" : 139,
         "output_tokens_details" : {
           "reasoning_tokens" : 0
         },
-        "total_tokens" : 151
+        "total_tokens" : 184
       },
       "user" : null
     }

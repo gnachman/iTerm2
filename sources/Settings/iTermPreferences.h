@@ -278,6 +278,11 @@ extern NSString *const kPreferenceKeyKeyboardLocale;
 extern NSString *const kPreferenceKeyHotKeyCode;
 extern NSString *const kPreferenceKeyHotkeyCharacter;
 extern NSString *const kPreferenceKeyHotkeyModifiers;
+// Global hotkey that opens Open Quickly without activating iTerm2. All zero
+// means unbound. No separate enabled-flag; an empty shortcut disables it.
+extern NSString *const kPreferenceKeyOpenQuicklyHotKeyCode;
+extern NSString *const kPreferenceKeyOpenQuicklyHotkeyCharacter;
+extern NSString *const kPreferenceKeyOpenQuicklyHotkeyModifiers;
 extern NSString *const kPreferenceKeyEnableHapticFeedbackForEsc;
 extern NSString *const kPreferenceKeyEnableSoundForEsc;
 extern NSString *const kPreferenceKeyVisualIndicatorForEsc;

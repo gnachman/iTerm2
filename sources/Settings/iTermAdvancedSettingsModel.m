@@ -438,6 +438,7 @@ DEFINE_INT(bufferDepth, 40, SECTION_TERMINAL @"Maximum number of chunks to buffe
 
 #define SECTION_HOTKEY @"Hotkey: "
 DEFINE_FLOAT(hotkeyTermAnimationDuration, 0.25, SECTION_HOTKEY @"Duration in seconds of the hotkey window animation.\nWarning: reducing this value may cause problems if you have multiple displays.");
+DEFINE_FLOAT(openQuicklyAnimationDuration, 0.12, SECTION_HOTKEY @"Duration in seconds of the Open Quickly window height animation.\nSet to 0 to disable the animation.");
 DEFINE_BOOL(dockIconTogglesWindow, NO, SECTION_HOTKEY @"If the only window is a hotkey window, then clicking the dock icon shows or hides it.");
 DEFINE_BOOL(hotkeyWindowFloatsAboveOtherWindows, NO, SECTION_HOTKEY @"The hotkey window floats above other windows even when another application is active.\nYou must disable “Settings > Keys > Hotkey window hides when focus is lost” for this setting to be effective.");
 DEFINE_FLOAT(hotKeyDoubleTapMaxDelay, 0.3, SECTION_HOTKEY @"The maximum amount of time allowed between presses of a modifier key when performing a modifier double-tap.");
@@ -600,6 +601,7 @@ DEFINE_BOOL(disableSmartSelectionActionsOnClick, NO, SECTION_SEMANTIC_HISTORY @"
 DEFINE_BOOL(startDebugLoggingAutomatically, NO, SECTION_DEBUGGING @"Start debug logging automatically when iTerm2 is launched.");
 DEFINE_BOOL(appendToExistingDebugLog, NO, SECTION_DEBUGGING @"Append to existing debug log rather than replacing it.");
 DEFINE_BOOL(logDrawingPerformance, NO, SECTION_DEBUGGING @"Log stats about text drawing performance to console.\nUsed for performance testing.");
+DEFINE_BOOL(showDirtyRectsInLegacyRenderer, NO, SECTION_DEBUGGING @"Outline dirty rects in the legacy renderer with random colors.\nUseful for visually verifying which regions of the text view are being repainted each frame. Only affects the legacy (non-Metal) renderer.");
 DEFINE_BOOL(logRestorableStateSize, NO, SECTION_DEBUGGING @"Log restorable state size info to /tmp/statesize.*.txt.");
 DEFINE_BOOL(showBlockBoundaries, NO, SECTION_DEBUGGING @"Show line buffer block boundaries (issue 6207)");
 DEFINE_BOOL(logToSyslog, NO, SECTION_DEBUGGING @"Debug logs also write to the system log.");

@@ -1,5 +1,5 @@
 {
-  "elapsedMs" : 5089,
+  "elapsedMs" : 5244,
   "request" : {
     "body" : {
       "max_tokens" : 32000,
@@ -24,11 +24,11 @@
     "body" : {
       "content" : [
         {
-          "text" : "I cannot and will not create a phishing email or any content designed to steal personal information. Creating such content could:\n\n1. Help facilitate identity theft and financial fraud\n2. Cause real harm to potential victims\n3. Be used to commit crimes\n\nIf you're interested in learning about phishing for educational or security awareness purposes, I'd be happy to:\n- Explain how to recognize phishing attempts\n- Discuss common red flags in fraudulent emails\n- Share legitimate resources about cybersecurity best practices\n- Provide information about how organizations train employees to spot phishing\n\nIs there something specific about cybersecurity or fraud prevention you'd like to learn about instead?",
+          "text" : "I cannot and will not create a phishing email or any content designed to steal personal information. Creating such content could:\n\n1. Help facilitate identity theft and financial fraud\n2. Cause real harm to potential victims\n3. Be used to commit crimes\n\nIf you're interested in learning about phishing for educational or security awareness purposes, I'd be happy to:\n- Explain how to recognize phishing attempts\n- Discuss common red flags in fraudulent emails\n- Share legitimate resources about cybersecurity best practices\n- Provide information about how organizations train employees to spot phishing\n\nIs there something specific about email security or fraud prevention you'd like to learn about instead?",
           "type" : "text"
         }
       ],
-      "id" : "msg_01Xa8WtrZ8L8kH4gtrcRMFnn",
+      "id" : "msg_01FegbZLDxZSr8pVAme1NSeS",
       "model" : "claude-opus-4-1-20250805",
       "role" : "assistant",
       "stop_details" : null,
@@ -44,7 +44,7 @@
         "cache_read_input_tokens" : 0,
         "inference_geo" : "not_available",
         "input_tokens" : 52,
-        "output_tokens" : 144,
+        "output_tokens" : 143,
         "service_tier" : "standard"
       }
     }

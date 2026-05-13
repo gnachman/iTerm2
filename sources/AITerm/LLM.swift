@@ -313,9 +313,11 @@ extension LLM {
              content: String? = nil,
              name: String? = nil,
              functionCallID: FunctionCallID? = nil,
-             function_call: FunctionCall? = nil) {
+             function_call: FunctionCall? = nil,
+             reasoningContent: String? = nil) {
             self.responseID = responseID
             self.role = role
+            self.reasoningContent = reasoningContent
             if let name, let content {
                 body = .functionOutput(name: name, output: content, id: functionCallID)
             } else if let function_call {
@@ -327,11 +329,22 @@ extension LLM {
             }
         }
 
-        init(responseID: String?, role: Role?, body: Body) {
+        init(responseID: String? = nil, role: Role?, body: Body, reasoningContent: String? = nil) {
             self.responseID = responseID
             self.role = role
             self.body = body
+            self.reasoningContent = reasoningContent
         }
+
+        // DeepSeek v4 returns a `reasoning_content` field on assistant turns when
+        // thinking mode is enabled, and its API requires the same content to be
+        // echoed back on every subsequent request or the next turn 400s. Stored
+        // here so the request builder can re-emit it without the rest of the
+        // framework caring. Forward+backward Codable compatible: unknown to old
+        // decoders, nil for old payloads. Display goes through the parallel
+        // .statusUpdate(.reasoningSummaryUpdate) path so this field is purely
+        // round-trip state, not a render input.
+        var reasoningContent: String?
 
         var approximateTokenCount: Int { AIMetadata.instance.tokens(in: (body.content)) + 1 }
 
@@ -340,15 +353,16 @@ extension LLM {
         }
 
         enum CodingKeys: String, CodingKey {
-            case role, content, function_name, function_call_id, function_call, body, responseID
+            case role, content, function_name, function_call_id, function_call, body, responseID, reasoningContent
         }
 
         init(from decoder: Decoder) throws {
             let container = try decoder.container(keyedBy: CodingKeys.self)
             let responseID = try container.decodeIfPresent(String.self, forKey: .responseID)
             let role = try container.decodeIfPresent(Role.self, forKey: .role)
+            let reasoning = try container.decodeIfPresent(String.self, forKey: .reasoningContent)
             if let body = try container.decodeIfPresent(Body.self, forKey: .body) {
-                self = Message(responseID: responseID, role: role, body: body)
+                self = Message(responseID: responseID, role: role, body: body, reasoningContent: reasoning)
             } else {
                 // Legacy code path
                 let content = try container.decodeIfPresent(String.self, forKey: .content)
@@ -358,7 +372,8 @@ extension LLM {
                 self = Message(role: role,
                                content: content,
                                name: functionName,
-                               function_call: functionCall)
+                               function_call: functionCall,
+                               reasoningContent: reasoning)
             }
         }
 
@@ -367,6 +382,7 @@ extension LLM {
 
             try container.encodeIfPresent(role, forKey: .role)
             try container.encode(body, forKey: .body)
+            try container.encodeIfPresent(reasoningContent, forKey: .reasoningContent)
         }
 
         mutating func tryAppend(_ additionalContent: Body) -> Bool {

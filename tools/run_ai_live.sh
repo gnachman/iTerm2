@@ -19,6 +19,12 @@
 #
 #   ITERM2_AI_LIVE_OPENAI_MODELS=gpt-5,gpt-5-mini tools/run_ai_live.sh smoke
 #
+# Refusal scenarios write captured responses to
+# ModernTests/Resources/SafetyRefusalFixtures/ only when explicitly
+# requested. Set ITERM2_AI_LIVE_REFRESH_REFUSAL_FIXTURES=1 to refresh.
+# Without it, refusal runs exercise the API path but leave the on-disk
+# fixtures untouched so casual sweeps don't dirty the working tree.
+#
 # Why a JSON file: xcodebuild's test runner does not inherit shell env
 # vars, so this script writes a JSON config to a temp file and the
 # harness reads from there. The file is mode 0600, lives under
@@ -69,6 +75,7 @@ json_quote() {
     emit GEMINI_INTERVAL    "${ITERM2_AI_LIVE_GEMINI_INTERVAL:-}"
     emit DEEPSEEK_INTERVAL  "${ITERM2_AI_LIVE_DEEPSEEK_INTERVAL:-}"
     emit PROJECT_ROOT       "$PROJECT_DIR"
+    emit REFRESH_REFUSAL_FIXTURES "${ITERM2_AI_LIVE_REFRESH_REFUSAL_FIXTURES:-}"
     echo
     echo "}"
 } > "$CONFIG_FILE"
@@ -123,6 +130,15 @@ else
         test_deepseek_toolCall_streaming
         test_deepseek_refusal_nonStreaming
         test_deepseek_refusal_streaming
+        test_deepseek_thinking_toolCall_nonStreaming
+        test_deepseek_thinking_toolCall_streaming
+        test_deepseek_thinking_smoke_captures_reasoning
+        test_deepseek_thinking_assistantTurn_roundTrips
+        test_deepseek_thinking_userToggle_propagates
+        test_deepseek_thinking_nonStreaming_deliversReasoningToDelegate
+        test_deepseek_thinking_nonStreaming_plainText_aiConversation_multiTurn
+        test_deepseek_thinking_userToggleOff_emitsDisabled
+        test_deepseek_thinking_reasoningOnlyAssistant_roundTrips
         test_openai_refusal_nonStreaming
         test_openai_refusal_streaming
         test_openai_imageDescribe

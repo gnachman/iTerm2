@@ -71,6 +71,11 @@ Major New Features:
   on first launch and the entry has been
   removed from Settings.
 
+- Switching to a Code Review peer that is
+  still showing its prompt overlay now
+  focuses the prompt text field so you can
+  start typing immediately.
+
 - The Shell > Workgroups submenu now has
   an Exit Workgroup item to leave the
   current session’s workgroup.
@@ -209,6 +214,12 @@ AI Improvements:
 - AI chat can connect to LAN-hosted models
   over HTTP.
 - Add DeepSeek v4-flash and v4-pro models.
+- DeepSeek v4 thinking mode is now supported.
+  Toggle the lightbulb in the chat toolbar to
+  enable. Reasoning summaries appear live in
+  the conversation and round-trip correctly
+  on multi-turn tool calls (fixes a 400 from
+  the API when reasoning_content was missing).
 - Chat-completions function calling now uses
   the modern tools/tool_choice request shape
   instead of the deprecated functions/
@@ -284,9 +295,8 @@ Expressions and Variables:
 UI Improvements:
 - A new preference hides the session status
   text from tab subtitles while keeping the
-  colored dot. Toggle it from the Session
-  Status toolbelt tool or during Claude Code
-  integration setup.
+  colored dot. Toggle it from the gear menu
+  in the Session Status toolbelt tool.
 - Contextual alternates (calt) are enabled by
   default for ligature-capable fonts.
 - Prettier, animated toasts.
@@ -375,9 +385,60 @@ Settings Improvements:
   tiebreaker, so the session list (whether
   the query is empty or matches several
   panes) is ordered most-recently-used
-  first across tabs and windows.
+  first across tabs and windows. The
+  current session is omitted from results
+  since it is never a useful jump target,
+  so Cmd-Shift-O followed by Enter now
+  jumps to the most-recently-used other
+  pane. A new preview side panel shows a
+  snapshot of the highlighted session.
+  Open Quickly can also be assigned a
+  system-wide hotkey in Settings > Keys
+  that works while another app is in
+  front, without activating iTerm2 until
+  you commit a selection.
 
 Bug Fixes:
+- The Install Claude Code Integration intro is
+  now presented as a real sheet attached to the
+  installer panel, rather than a subview
+  overlay. Enter now correctly activates
+  Continue instead of the Install/Next button
+  it was visually covering.
+- The Code Review prompt overlay no longer
+  drifts out of sync with light/dark mode. The
+  panel cached a CGColor snapshot of
+  windowBackgroundColor resolved against an
+  arbitrary NSAppearance.current, so its
+  background could disagree with its own text
+  view. It now uses the existing layer-backed
+  solid color view, which refreshes the color
+  in updateLayer under the correct drawing
+  appearance.
+- The legacy (non-GPU) renderer now invalidates
+  only the lines that actually changed, instead
+  of repainting the entire view on every cell
+  update. Heavy TUI animations (e.g. spinners
+  that rewrite a single line at high frequency)
+  use significantly less CPU on hosts where the
+  GPU renderer is disabled. Issue 12790.
+- Anthropic tool calls reloaded from a chat
+  transcript would fail with HTTP 400 because
+  the function output got serialized as plain
+  text instead of a tool_result block. The
+  parser stored the tool_use id only on the
+  inner FunctionCall while the serializer
+  looked on the outer wrapper, so the id was
+  lost on round-trip. Both fields are now
+  populated so persisted tool calls survive
+  the round-trip.
+- Anthropic requests no longer 400 when a
+  stray user message gets persisted between a
+  tool_use and its matching tool_result. The
+  request builder reorders so the tool_result
+  is always emitted immediately after the
+  tool_use, with any intervening messages
+  bumped to after it.
 - Fix a launch crash when a saved status bar
   layout referenced an RPC-provided text
   component whose configuration was missing
@@ -711,6 +772,13 @@ Bug Fixes:
   dev build get a cookie from the right
   iTerm2 instance instead of whichever
   one macOS routes to. Issue 12850.
+- Honor IT2_SUITE when checking for
+  disable-automation-auth in the iterm2
+  Python library, so external scripts
+  targeting a -suite instance no longer
+  silently fail with 401 when stock
+  iTerm2 has “Always Allow All Apps”
+  enabled. Issue 12864.
 - Add advanced settings to customize
   the window border color for focused
   and unfocused windows (requires
@@ -741,6 +809,17 @@ Bug Fixes:
   take precedence over profile key
   bindings and main menu items but
   defer to global key bindings.
+- Add an optional per-peer shortcut
+  for jumping to a peer in a workgroup.
+  Configurable in the workgroup
+  session settings; when unset, the
+  built-in opt-shift-cmd-number
+  fallback still works. Custom peer
+  shortcuts route through the same
+  pipeline as workgroup toolbar
+  shortcuts, so they beat profile
+  bindings and the main menu but
+  defer to global key bindings.
 - Fix vertical window resize being
   silently rejected when the window
   sits partly below the screen.
@@ -753,3 +832,40 @@ Bug Fixes:
   pile millions of blocks onto the main
   queue and exhaust memory. Issue
   12857.
+- Built-in browser: hide our message
+  handlers and skip the page-world
+  Notification, geolocation, console,
+  and audio bridges inside Cloudflare
+  Turnstile, hCaptcha, and similar
+  challenge frames so the captcha
+  probe sees an unmodified Safari
+  surface.
+- Built-in browser geolocation: stop
+  silently dropping requests when
+  permission is not granted; the page
+  now receives a PERMISSION_DENIED
+  error instead of hanging. Push the
+  decision to the calling frame so
+  navigator.permissions.query reflects
+  reality, and route success and error
+  callbacks back to the originating
+  iframe instead of always the main
+  frame. Stop persisting system-level
+  denials (Location Services off, OS
+  prompt declined) as per-site
+  decisions; only an explicit Allow
+  or Block in the per-site dialog is
+  remembered. The same fix applies to
+  notification permissions.
+- Honor the option-modified “Quit and
+  Close All Windows” menu item. iTerm2
+  now samples the option modifier at
+  quit time and erases saved state when
+  the user picked the option-modified
+  menu item, so it actually closes all
+  windows on the next launch. Issue
+  12852.
+- Clear tab status when a session’s
+  program terminates (broken pipe or
+  tmux detach) so stale status text
+  and indicators no longer linger.

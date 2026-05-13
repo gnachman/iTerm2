@@ -28,6 +28,10 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, weak) id<iTermRestorableStateControllerDelegate> delegate;
 @property (nonatomic, readonly) NSInteger numberOfWindowsRestored;
 @property (nonatomic, class) BOOL forceSaveState;
+// Set to YES when the user explicitly asked to discard saved state on this
+// quit (e.g. picked the option-modified “Quit and Close All Windows” menu
+// item). Takes precedence over forceSaveState and the standing pref.
+@property (nonatomic, class) BOOL forceDiscardState;
 // Returns YES if window restoration is still in progress (not yet complete).
 @property (nonatomic, readonly) BOOL restoring;
 

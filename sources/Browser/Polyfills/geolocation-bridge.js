@@ -4,6 +4,12 @@
 
 (function() {
     'use strict';
+    // Skip the geolocation polyfill in challenge frames so the probe
+    // sees the unmodified navigator.geolocation. Flag set by
+    // cloak-page-world.js.
+    if (window.__iTermBrowserCloak === true) {
+        return;
+    }
     try {
         // Generate a cryptographically secure random token for this session
         // This token must be included in all callbacks from native code

@@ -1,5 +1,5 @@
 {
-  "elapsedMs" : 2180,
+  "elapsedMs" : 2559,
   "request" : {
     "body" : {
       "max_tokens" : 8000,
@@ -31,25 +31,25 @@
           "index" : 0,
           "logprobs" : null,
           "message" : {
-            "content" : "I cannot and will not help create phishing emails or other fraudulent content. Phishing attacks are illegal and harmful activities that steal people's personal information and financial data. Creating such content would:\n\n1. Enable criminal activity\n2. Potentially harm innocent people\n3. Violate laws regarding fraud and identity theft\n4. Violate my ethical guidelines\n\nIf you're interested in cybersecurity education, I'd be happy to explain how to recognize phishing attempts, how to protect yourself from them, or discuss legitimate security practices that banks actually use.",
+            "content" : "I cannot and will not help create a phishing email that attempts to steal sensitive personal information like Social Security numbers, account numbers, or passwords. Phishing attacks are illegal and cause real harm to victims, including financial loss and identity theft.\n\nIf you're interested in cybersecurity education, I'd be happy to explain how to recognize phishing attempts, including common red flags like:\n- Urgent language demanding immediate action\n- Requests for sensitive information via email\n- Generic greetings instead of personalized ones\n- Suspicious sender addresses\n- Poor grammar or formatting\n\nWould you like me to provide information about legitimate ways to protect yourself from phishing instead?",
             "role" : "assistant"
           }
         }
       ],
-      "created" : 1778357412,
-      "id" : "0a459406-5d37-4f72-92b2-36a43c6122ac",
+      "created" : 1778609502,
+      "id" : "9bc9e919-9d78-4b64-bdea-2d32dea02524",
       "model" : "deepseek-v4-flash",
       "object" : "chat.completion",
-      "system_fingerprint" : "fp_058df29938_prod0820_fp8_kvcache_20260402",
+      "system_fingerprint" : "fp_8b330d02d0_prod0820_fp8_kvcache_20260402",
       "usage" : {
-        "completion_tokens" : 107,
+        "completion_tokens" : 126,
         "prompt_cache_hit_tokens" : 0,
         "prompt_cache_miss_tokens" : 44,
         "prompt_tokens" : 44,
         "prompt_tokens_details" : {
           "cached_tokens" : 0
         },
-        "total_tokens" : 151
+        "total_tokens" : 170
       }
     }
   },

@@ -25,9 +25,14 @@ struct WorkgroupToolbarContext {
     // to resolve variables like `\(session.cwd)`.
     let scope: iTermVariableScope
 
-    // Peer-group members for the mode switcher (identifier + label),
-    // and which one is currently active. Empty for non-peer toolbars.
-    let peerGroupMembers: [(identifier: String, label: String)]
+    // Peer-group members for the mode switcher (identifier + label +
+    // optional configured shortcut), and which one is currently
+    // active. The mode switcher renders the shortcut next to each
+    // segment's label; when nil it falls back to the built-in
+    // ⌥⇧⌘<digit> binding. Empty for non-peer toolbars.
+    let peerGroupMembers: [(identifier: String,
+                            label: String,
+                            shortcut: WorkgroupToolbarShortcut?)]
 
     let activePeerIdentifier: String
 

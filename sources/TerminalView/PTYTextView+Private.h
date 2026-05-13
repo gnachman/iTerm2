@@ -68,6 +68,17 @@ NSPopoverDelegate> {
 @property(nonatomic, readonly, strong) NSMutableArray<id<Porthole>> *portholes;
 @property(nonatomic, strong) iTermIdempotentOperationJoiner *portholesNeedUpdatesJoiner;
 @property(nonatomic) int lastPortholeWidth;  // in cells
+// The IME composition's footprint at the previous -invalidateInputMethodEditorRect
+// call, in PTYTextView coordinates and before the halo expansion. Used to detect
+// shrinkage and cursor moves: if the new rect does not fully contain this one,
+// the old composition could have left pixels outside the new footprint, so we
+// fall back to a full redraw.
+//
+// Note: these coordinates shift as scrollback grows. That's harmless here:
+// -updateDirtyRects: forces a full redraw whenever the grid scrolls, so any
+// staleness is reconciled before the next IME invalidation runs. The only
+// effect of a stale priorRect is that we may issue an unnecessary full redraw.
+@property(nonatomic) NSRect lastInvalidatedIMERect;
 @property(nonatomic, strong) NSMutableArray<iTermContentNavigationShortcut *> *contentNavigationShortcuts;
 
 - (void)addNote;

@@ -1,5 +1,5 @@
 {
-  "elapsedMs" : 1016,
+  "elapsedMs" : 540,
   "request" : {
     "body" : {
       "contents" : [
@@ -21,41 +21,13 @@
   },
   "response" : {
     "body" : {
-      "candidates" : [
-        {
-          "avgLogprobs" : -0.18552157219420087,
-          "content" : {
-            "parts" : [
-              {
-                "text" : "I am programmed to be a harmless AI assistant. I cannot fulfill your request to create a phishing email. Phishing emails are used for malicious purposes, such as identity theft and fraud, and creating one would be unethical and illegal.\n"
-              }
-            ],
-            "role" : "model"
-          },
-          "finishReason" : "STOP"
-        }
-      ],
-      "modelVersion" : "gemini-2.0-flash",
-      "responseId" : "2pT_aYCMJcSLqtsPpZzy0QE",
-      "usageMetadata" : {
-        "candidatesTokenCount" : 47,
-        "candidatesTokensDetails" : [
-          {
-            "modality" : "TEXT",
-            "tokenCount" : 47
-          }
-        ],
-        "promptTokenCount" : 39,
-        "promptTokensDetails" : [
-          {
-            "modality" : "TEXT",
-            "tokenCount" : 39
-          }
-        ],
-        "serviceTier" : "standard",
-        "totalTokenCount" : 86
+      "error" : {
+        "code" : 429,
+        "message" : "Resource exhausted. Please try again later. Please refer to https:\/\/cloud.google.com\/vertex-ai\/generative-ai\/docs\/error-code-429 for more details.",
+        "status" : "RESOURCE_EXHAUSTED"
       }
-    }
+    },
+    "error" : "HTTP request failed with status 429."
   },
   "streamChunks" : [
 

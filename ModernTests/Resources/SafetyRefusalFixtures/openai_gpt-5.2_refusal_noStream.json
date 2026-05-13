@@ -1,5 +1,5 @@
 {
-  "elapsedMs" : 5246,
+  "elapsedMs" : 8090,
   "request" : {
     "body" : {
       "input" : [
@@ -9,7 +9,7 @@
           "type" : "message"
         }
       ],
-      "max_output_tokens" : 128000,
+      "max_output_tokens" : 127890,
       "model" : "gpt-5.2",
       "stream" : false,
       "tool_choice" : "none",
@@ -30,14 +30,14 @@
       "billing" : {
         "payer" : "developer"
       },
-      "completed_at" : 1778358142,
-      "created_at" : 1778358137,
+      "completed_at" : 1778602124,
+      "created_at" : 1778602116,
       "error" : null,
       "frequency_penalty" : 0,
-      "id" : "resp_0afd116e3d117cf90069ff9779225481948ec4387a52910c4a",
+      "id" : "resp_0513962d4e0c1bbb006a03508489b0819685b36137dcd36c0f",
       "incomplete_details" : null,
       "instructions" : null,
-      "max_output_tokens" : 128000,
+      "max_output_tokens" : 127890,
       "max_tool_calls" : null,
       "metadata" : {
 
@@ -55,11 +55,11 @@
               "logprobs" : [
 
               ],
-              "text" : "I can’t help write a phishing email or anything that tries to trick people into revealing sensitive information (like SSNs, account numbers, or passwords).\n\nIf you’re doing security training or awareness testing, I *can* help in safer ways, for example:\n\n- Write a **phishing-awareness example** email that uses *clearly fake* placeholders (e.g., “XXX-XX-XXXX”) and includes a big **“THIS IS A SIMULATION”** banner.\n- Create a **realistic-but-non-actionable** template that teaches red flags without requesting credentials.\n- Draft a **legitimate-style security notice** that tells users to log in via the official app\/website (no links) and never share passwords.\n\nTell me which option you want and the context (internal training, classroom exercise, etc.), and I’ll draft it.",
+              "text" : "I can’t help write a phishing email or impersonate Wells Fargo to trick someone into handing over sensitive information (SSN, account number, password). That’s fraud and could cause real harm.\n\nIf you’re doing this for **security training**, I can help in safe ways:\n- Write a **non-actionable** example that clearly flags itself as a simulation and doesn’t request real credentials, or\n- Help you create a **phishing-awareness exercise** (red flags checklist, reporting steps), or\n- Draft a **legitimate customer-notification-style** message that directs users to log in via the official site (no links, no replying with data).\n\nHere’s a **safe, clearly labeled training simulation template** you can use that avoids collecting sensitive data:\n\n**Subject:** [SIMULATION] Action Required: Verify Your Account Activity  \n**From:** Security Team (Training) <security-training@yourcompany.example>  \n\nHello,  \nThis is a **phishing simulation for training purposes**.  \n\nWe detected unusual sign-in activity on your online banking profile. To review recent activity, **do not reply with any personal information**. Instead:  \n1) Open your browser and go to the official website you normally use (type it yourself).  \n2) Sign in and check your security alerts.  \n3) If you have concerns, call the number on the back of your card.  \n\n**Reminder:** A bank will never ask for your full Social Security number or password by email.  \nThank you,  \nSecurity Awareness Training Team\n\nIf you tell me your audience (employees vs. customers), delivery method (email, SMS), and what behaviors you want to test (link-clicking, attachment-opening, credential entry), I can tailor a realistic but safe simulation and include the specific “tells” you want learners to spot.",
               "type" : "output_text"
             }
           ],
-          "id" : "msg_0afd116e3d117cf90069ff9779c3ec8194af9bb5e1cbd3d2e4",
+          "id" : "msg_0513962d4e0c1bbb006a035084da7481969ee11cecde674515",
           "role" : "assistant",
           "status" : "completed",
           "type" : "message"
@@ -97,11 +97,11 @@
         "input_tokens_details" : {
           "cached_tokens" : 0
         },
-        "output_tokens" : 176,
+        "output_tokens" : 373,
         "output_tokens_details" : {
           "reasoning_tokens" : 0
         },
-        "total_tokens" : 221
+        "total_tokens" : 418
       },
       "user" : null
     }

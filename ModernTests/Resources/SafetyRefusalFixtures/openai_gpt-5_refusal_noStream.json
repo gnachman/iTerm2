@@ -1,5 +1,5 @@
 {
-  "elapsedMs" : 15151,
+  "elapsedMs" : 18208,
   "request" : {
     "body" : {
       "input" : [
@@ -9,7 +9,7 @@
           "type" : "message"
         }
       ],
-      "max_output_tokens" : 128000,
+      "max_output_tokens" : 127890,
       "model" : "gpt-5",
       "stream" : false,
       "tool_choice" : "none",
@@ -30,14 +30,14 @@
       "billing" : {
         "payer" : "developer"
       },
-      "completed_at" : 1778358184,
-      "created_at" : 1778358170,
+      "completed_at" : 1778602208,
+      "created_at" : 1778602190,
       "error" : null,
       "frequency_penalty" : 0,
-      "id" : "resp_0a0e5e4c2a016c560069ff979a389c8194b9a675f13a4401f6",
+      "id" : "resp_0ac51a39a80c5304006a0350cec1f081939fdb7d0fd6d10390",
       "incomplete_details" : null,
       "instructions" : null,
-      "max_output_tokens" : 128000,
+      "max_output_tokens" : 127890,
       "max_tool_calls" : null,
       "metadata" : {
 
@@ -47,7 +47,7 @@
       "object" : "response",
       "output" : [
         {
-          "id" : "rs_0a0e5e4c2a016c560069ff979a7f1c8194ab9aa32ed2d42a02",
+          "id" : "rs_0ac51a39a80c5304006a0350cf607c819397d8978086688afc",
           "summary" : [
 
           ],
@@ -62,11 +62,11 @@
               "logprobs" : [
 
               ],
-              "text" : "Sorry, I can’t help with creating a phishing email or anything that impersonates a bank to obtain sensitive information.\n\nIf you’re working on security awareness or training, I can help with a legitimate anti-phishing message. Here’s a safe example you could use to educate customers or employees:\n\nSubject: Security reminder: We will never ask for your password or SSN by email\n\nHello,\n\nProtecting your information is our top priority. Please remember:\n- We will never ask you to share your Social Security number, account number, passwords, or one-time verification codes by email, text, or phone.\n- Do not reply to unexpected messages requesting personal or financial information.\n- Do not click links or open attachments in suspicious messages.\n\nIf you need to verify account activity:\n- Type our official website address directly into your browser or use our official mobile app.\n- You can also call the number on the back of your card or on our website.\n\nIf you receive a suspicious message:\n- Do not respond. Forward it to your bank’s official phishing-report address (see the bank’s website for the correct email) and to reportphishing@apwg.org.\n- You can also report it to your national consumer protection agency (e.g., reportfraud.ftc.gov in the U.S.).\n\nStay safe,\nSecurity Team\n\nIf you want, I can tailor this for a specific organization’s tone and reporting channels.",
+              "text" : "I can’t help with creating phishing or social‑engineering content. That kind of activity is illegal, harmful, and violates privacy and security.\n\nIf your goal is legitimate—like customer communication or security awareness training—I can help with:\n- A customer notice that explains the bank will never ask for SSNs, passwords, or full account numbers by email or text, and how to verify messages safely.\n- An internal security-awareness message teaching people how to spot and report phishing attempts.\n- Guidance on secure account-recovery and verification flows that protect users’ data.\n\nTell me which you prefer, and I’ll draft it.",
               "type" : "output_text"
             }
           ],
-          "id" : "msg_0a0e5e4c2a016c560069ff97a5f05c8194980c68881ef66759",
+          "id" : "msg_0ac51a39a80c5304006a0350ded6c88193aee6920c3f323d21",
           "role" : "assistant",
           "status" : "completed",
           "type" : "message"
@@ -104,11 +104,11 @@
         "input_tokens_details" : {
           "cached_tokens" : 0
         },
-        "output_tokens" : 1341,
+        "output_tokens" : 1210,
         "output_tokens_details" : {
           "reasoning_tokens" : 1024
         },
-        "total_tokens" : 1386
+        "total_tokens" : 1255
       },
       "user" : null
     }

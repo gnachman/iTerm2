@@ -41,6 +41,7 @@ class iTermWorkgroupSessionDetailViewController: NSViewController {
     private var perFileCommandRow: NSView!
     private var urlRow: NSView!
     private var peerRow: NSView!
+    private var peerShortcutRow: NSView!
     private var splitSection: NSView!
     private var toolbarSection: NSView!
     private var emptyLabel: NSTextField!
@@ -52,6 +53,7 @@ class iTermWorkgroupSessionDetailViewController: NSViewController {
     private var perFileCommandField: NSTextField!
     private var urlField: NSTextField!
     private var peerNameField: NSTextField!
+    private var peerShortcutInput: iTermShortcutInputView!
 
     private var splitOrientationPicker: NSSegmentedControl!
     private var splitSidePicker: NSSegmentedControl!
@@ -112,11 +114,13 @@ class iTermWorkgroupSessionDetailViewController: NSViewController {
         urlRow = makeLabeledRow(labelText: "URL:", control: makeURLField())
         peerRow = makeLabeledRow(labelText: "Name:",
                                  control: makePeerNameField())
+        peerShortcutRow = makeLabeledRow(labelText: "Shortcut:",
+                                         control: makePeerShortcutInput())
         splitSection = makeSplitSection()
         toolbarSection = makeToolbarSection()
 
         for section in [profileRow, modeRow, commandRow, perFileCommandRow,
-                        urlRow, peerRow,
+                        urlRow, peerRow, peerShortcutRow,
                         splitSection, toolbarSection] as [NSView] {
             root.addSubview(section)
         }
@@ -196,6 +200,23 @@ class iTermWorkgroupSessionDetailViewController: NSViewController {
         field.delegate = self
         peerNameField = field
         return field
+    }
+
+    // Captures the optional keystroke that jumps focus to this peer.
+    // Routed through the shared iTermShortcutInputViewDelegate
+    // implementation on this VC; see shortcutInputView(_:didReceiveKeyPress:).
+    private func makePeerShortcutInput() -> NSView {
+        let input = iTermShortcutInputView(
+            frame: NSRect(x: 0, y: 0,
+                          width: 200, height: kShortcutPreferredHeight))
+        input.shortcutDelegate = self
+        // Treat the captured chord as a literal shortcut: don't run it
+        // through the per-profile key-remapping table that
+        // iTermShortcutInputView normally consults — peer shortcuts
+        // are dispatched in their own pipeline.
+        input.disableKeyRemapping = true
+        peerShortcutInput = input
+        return input
     }
 
     private func makeSplitSection() -> NSView {
@@ -420,6 +441,7 @@ class iTermWorkgroupSessionDetailViewController: NSViewController {
         layoutSection(perFileCommandRow, height: rowHeight)
         layoutSection(urlRow, height: rowHeight)
         layoutSection(peerRow, height: rowHeight)
+        layoutSection(peerShortcutRow, height: kShortcutPreferredHeight)
         layoutSection(splitSection, height: 2 * rowHeight + rowSpacing)
 
         // Toolbar section fills the remaining vertical space (down to the
@@ -437,6 +459,7 @@ class iTermWorkgroupSessionDetailViewController: NSViewController {
         layoutLabeledRow(perFileCommandRow)
         layoutLabeledRow(urlRow)
         layoutLabeledRow(peerRow)
+        layoutLabeledRow(peerShortcutRow)
         layoutSplitSection()
         layoutToolbarSubsections()
     }
@@ -598,6 +621,7 @@ class iTermWorkgroupSessionDetailViewController: NSViewController {
         if session == nil || workgroup == nil {
             emptyLabel.isHidden = false
             [profileRow, modeRow, commandRow, perFileCommandRow, urlRow, peerRow,
+             peerShortcutRow,
              splitSection, toolbarSection].forEach { $0.isHidden = true }
             view.needsLayout = true
             return
@@ -638,6 +662,13 @@ class iTermWorkgroupSessionDetailViewController: NSViewController {
         // editable display name. Required for .peer; for the others
         // it's the leader's own switcher label.
         peerRow.isHidden = false
+        // Peer-jump shortcut shows for every member of a peer group:
+        // the .peer children AND the leader (root or any non-peer
+        // host that has .peer children), because the leader sits in
+        // the mode switcher alongside the peer children and is
+        // equally a target for "jump to peer N".
+        peerShortcutRow.isHidden = !sessionIsInPeerGroup(s)
+        peerShortcutInput.shortcut = s.peerSwitchShortcut?.makeShortcut()
         splitSection.isHidden = !(s.kind.isSplit)
         toolbarSection.isHidden = false
 
@@ -1288,9 +1319,7 @@ extension iTermWorkgroupSessionDetailViewController: NSTableViewDataSource, NSTa
 extension iTermWorkgroupSessionDetailViewController: iTermShortcutInputViewDelegate {
     func shortcutInputView(_ view: iTermShortcutInputView!,
                            didReceiveKeyPress event: NSEvent!) {
-        guard var s = session,
-              let row = selectedToolbarRow,
-              row < s.toolbarItems.count else { return }
+        guard var s = session else { return }
         // The view has already updated its `shortcut` property to
         // reflect the captured event (or to nil for the clear button).
         // Mirror that into the model.
@@ -1300,6 +1329,19 @@ extension iTermWorkgroupSessionDetailViewController: iTermShortcutInputViewDeleg
         } else {
             newValue = nil
         }
+        // Peer-jump shortcut input is session-level, not toolbar-item
+        // level — handle it first so the toolbar selection isn't a
+        // prerequisite. Allowed for any session in a peer group
+        // (the .peer children AND the leader, which can be a .root
+        // or any non-peer host with peer children).
+        if view === peerShortcutInput {
+            guard sessionIsInPeerGroup(s) else { return }
+            s.peerSwitchShortcut = newValue
+            commitUpdate(s, actionName: "Change Peer Shortcut")
+            return
+        }
+        guard let row = selectedToolbarRow,
+              row < s.toolbarItems.count else { return }
         switch s.toolbarItems[row] {
         case .navigation(var shortcuts):
             if view === backShortcutInput {

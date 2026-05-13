@@ -1,5 +1,12 @@
 ;(function() {
     'use strict';
+    // Skip the AudioContext / Audio / createElement wraps in challenge
+    // frames so the probe does not see them as non-native and so the
+    // audio fingerprint runs against unmodified WebAudio. Flag set by
+    // cloak-page-world.js.
+    if (window.__iTermBrowserCloak === true) {
+        return;
+    }
     try {
         const secret = '{{SECRET}}';
         console.debug('[iTerm2-AudioMute] mute-audio.js loading in frame:', window.location.href);

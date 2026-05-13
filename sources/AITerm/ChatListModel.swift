@@ -234,7 +234,22 @@ class ChatListModel: ChatListDataSource {
                 DLog("Drop explanation response update \(update)")
                 return
             }
-        case .commit:
+        case .commit(let streamID):
+            // Final harvest: removeStatusUpdates normally fires on each text
+            // chunk via the .append case above, which moves reasoning subparts
+            // off the body and into agentReasoning. A stream that delivers
+            // only reasoning attachments and then ends (no text chunks ever
+            // arrived) would skip that path entirely, leaving reasoning stuck
+            // in the body as statusUpdate subparts and agentReasoning nil —
+            // which then breaks the next-turn round-trip for DeepSeek thinking
+            // mode. Run the harvest once more here so commit is always the
+            // settling point.
+            if let i = index(ofMessageID: streamID, inChat: chatID),
+               let messages = messages(forChat: chatID, createIfNeeded: false) {
+                var existing = messages[i]
+                existing.removeStatusUpdates()
+                try messages.set(at: i, existing)
+            }
             return
         case .plainText, .markdown, .explanationRequest, .remoteCommandRequest,
                 .remoteCommandResponse, .selectSessionRequest, .clientLocal, .renameChat,

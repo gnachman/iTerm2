@@ -117,6 +117,14 @@ struct iTermWorkgroupSessionConfig: Codable, Equatable {
     // interpolation in `command`.
     var mode: iTermWorkgroupSessionMode
 
+    // Optional keystroke that switches focus to this peer when the
+    // active session belongs to the same workgroup. Only meaningful
+    // when `kind == .peer`; ignored for other kinds. When nil, the
+    // peer falls back to the built-in ⌥⇧⌘<position> shortcut. Routed
+    // through the same dispatch as workgroup toolbar shortcuts:
+    // overrides the main menu but yields to global key bindings.
+    var peerSwitchShortcut: WorkgroupToolbarShortcut?
+
     private enum CodingKeys: String, CodingKey {
         case uniqueIdentifier
         case parentID
@@ -128,6 +136,7 @@ struct iTermWorkgroupSessionConfig: Codable, Equatable {
         case toolbarItems
         case displayName
         case mode
+        case peerSwitchShortcut
     }
 
     init(uniqueIdentifier: String,
@@ -139,7 +148,8 @@ struct iTermWorkgroupSessionConfig: Codable, Equatable {
          toolbarItems: [iTermWorkgroupToolbarItem],
          displayName: String = "",
          perFileCommand: String = "",
-         mode: iTermWorkgroupSessionMode = .regular) {
+         mode: iTermWorkgroupSessionMode = .regular,
+         peerSwitchShortcut: WorkgroupToolbarShortcut? = nil) {
         self.uniqueIdentifier = uniqueIdentifier
         self.parentID = parentID
         self.kind = kind
@@ -150,6 +160,7 @@ struct iTermWorkgroupSessionConfig: Codable, Equatable {
         self.toolbarItems = toolbarItems
         self.displayName = displayName
         self.mode = mode
+        self.peerSwitchShortcut = peerSwitchShortcut
     }
 
     init(from decoder: Decoder) throws {
@@ -168,6 +179,8 @@ struct iTermWorkgroupSessionConfig: Codable, Equatable {
             (try? c.decode(String.self, forKey: .displayName)) ?? ""
         mode =
             (try? c.decode(iTermWorkgroupSessionMode.self, forKey: .mode)) ?? .regular
+        peerSwitchShortcut = try c.decodeIfPresent(
+            WorkgroupToolbarShortcut.self, forKey: .peerSwitchShortcut)
     }
 
     enum Kind: Codable, Equatable {

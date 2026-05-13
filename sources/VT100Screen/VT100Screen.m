@@ -1639,7 +1639,7 @@ additionalWordCharacters:(NSString *)additionalWordCharacters
         DLog(@"Short-circuiting sync because there is shared state between threads.\n%@", [NSThread callStackSymbols]);
         return (VT100SyncResult) {
             .overflow = 0,
-            .haveScrolled = _state.currentGrid.haveScrolled
+            .haveScrolled = mutableState.currentGrid.haveScrolled
         };
     }
     DLog(@"Begin %@", self);
@@ -1703,11 +1703,15 @@ additionalWordCharacters:(NSString *)additionalWordCharacters
     _wantsSearchBuffer = NO;
     [unpauser unpause];
     [self.delegate screenDidSynchronize];
+    // Capture before -didSynchronize: clears it on the mutable grid. The
+    // immutable _state.currentGrid is a deep copy whose _haveScrolled is never
+    // propagated, so reading it there would always return NO.
+    const BOOL haveScrolled = mutableState.currentGrid.haveScrolled;
     [mutableState didSynchronize:resetOverflow];
-    DLog(@"%@: End overflow=%@ haveScrolled=%@", self, @(overflow), @(_state.currentGrid.haveScrolled));
+    DLog(@"%@: End overflow=%@ haveScrolled=%@", self, @(overflow), @(haveScrolled));
     return (VT100SyncResult) {
         .overflow = overflow,
-        .haveScrolled = _state.currentGrid.haveScrolled,
+        .haveScrolled = haveScrolled,
         .namedMarksChanged = namedMarksChanged
     };
 }

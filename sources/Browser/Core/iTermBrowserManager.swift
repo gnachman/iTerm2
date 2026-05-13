@@ -180,6 +180,7 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler 
     }
 
     private enum UserScripts: String {
+        case cloakPageWorld
         case consoleLog
         case notificationHandler
         case selectionMonitor
@@ -215,6 +216,22 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler 
         let js = iTermBrowserTemplateLoader.loadTemplate(named: "console-log",
                                                          type: "js",
                                                          substitutions: ["LOG_ERRORS": logErrors])
+
+        // Inject the cloak first in the page world so it runs before any
+        // of the bridges below and before any page script. In challenge
+        // frames (Cloudflare Turnstile, hCaptcha, etc.) it sets
+        // window.__iTermBrowserCloak and strips window.webkit so the
+        // probe sees a clean Safari surface.
+        let cloakJS = iTermBrowserTemplateLoader.loadTemplate(named: "cloak-page-world",
+                                                              type: "js",
+                                                              substitutions: [:])
+        contentManager.add(userScript: BrowserExtensionUserContentManager.UserScript(
+            code: cloakJS,
+            injectionTime: .atDocumentStart,
+            forMainFrameOnly: false,
+            worlds: [.page],
+            identifier: UserScripts.cloakPageWorld.rawValue))
+
         configuration.userContentController.add(handlerProxy, contentWorld: .page, name: "iTerm2ConsoleLog")
         configuration.userContentController.add(handlerProxy, contentWorld: .defaultClient, name: "iTerm2ConsoleLog")
         configuration.userContentController.add(handlerProxy, contentWorld: .page, name: "iterm2-about:permissions")

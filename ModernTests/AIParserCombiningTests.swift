@@ -535,6 +535,232 @@ final class AIParserCombiningTests: XCTestCase {
                       "tool_calls sentinel must not surface a message")
     }
 
+    // MARK: - DeepSeek thinking-mode reasoning_content (issue 12858)
+
+    /// A DeepSeek streaming chunk delivering reasoning_content must surface
+    /// it via the .statusUpdate(.reasoningSummaryUpdate) attachment path so
+    /// the cell view renders it like an OpenAI reasoning summary.
+    func testDeepSeekStreaming_reasoningContent_surfacesAsStatusUpdate() throws {
+        let chunk = """
+        {
+            "id": "chatcmpl_test",
+            "object": "chat.completion.chunk",
+            "created": 0,
+            "model": "deepseek-v4-flash",
+            "choices": [
+                {
+                    "index": 0,
+                    "delta": {"role": "assistant", "reasoning_content": "I will think..."},
+                    "finish_reason": null
+                }
+            ]
+        }
+        """.data(using: .utf8)!
+        var parser = DeepSeekStreamingResponseParser()
+        let response = try XCTUnwrap(try parser.parse(data: chunk))
+        XCTAssertEqual(response.choiceMessages.count, 1)
+        guard case .attachment(let attachment) = response.choiceMessages[0].body,
+              case .statusUpdate(let update) = attachment.type else {
+            XCTFail("expected attachment(.statusUpdate), got \(response.choiceMessages[0].body)")
+            return
+        }
+        XCTAssertEqual(update, .reasoningSummaryUpdate("I will think..."))
+    }
+
+    /// Streamed reasoning_content must also land on the LLM.Message's
+    /// dedicated reasoningContent field so the streaming accumulator in
+    /// AITermController can fold it into the final assistant turn for
+    /// round-trip on the next request.
+    func testDeepSeekStreaming_reasoningContent_propagatesToMessage() throws {
+        let chunk = """
+        {
+            "id": "chatcmpl_test",
+            "object": "chat.completion.chunk",
+            "created": 0,
+            "model": "deepseek-v4-flash",
+            "choices": [
+                {"index": 0, "delta": {"reasoning_content": "deep thoughts"}, "finish_reason": null}
+            ]
+        }
+        """.data(using: .utf8)!
+        var parser = DeepSeekStreamingResponseParser()
+        let response = try XCTUnwrap(try parser.parse(data: chunk))
+        XCTAssertEqual(response.choiceMessages.first?.reasoningContent, "deep thoughts")
+    }
+
+    /// Non-streaming DeepSeek responses carry reasoning_content on the
+    /// assistant message; the shared LLMModernResponseParser path used by
+    /// DeepSeekResponseParser must decode it into LLM.Message.reasoningContent.
+    func testDeepSeekNonStreaming_reasoningContentDecoded() throws {
+        let body = """
+        {
+            "id": "chatcmpl_test_n",
+            "object": "chat.completion",
+            "created": 0,
+            "model": "deepseek-v4-flash",
+            "choices": [
+                {
+                    "index": 0,
+                    "message": {
+                        "role": "assistant",
+                        "content": "final answer",
+                        "reasoning_content": "captured reasoning"
+                    },
+                    "finish_reason": "stop"
+                }
+            ]
+        }
+        """.data(using: .utf8)!
+        var parser = DeepSeekResponseParser()
+        let response = try XCTUnwrap(try parser.parse(data: body))
+        XCTAssertEqual(response.choiceMessages.first?.reasoningContent, "captured reasoning")
+        XCTAssertEqual(response.choiceMessages.first?.body.maybeContent, "final answer")
+    }
+
+    /// DeepSeekRequestBuilder must emit reasoning_content on assistant turns
+    /// when LLM.Message.reasoningContent is set, and only on assistant role.
+    func testDeepSeekRequestBuilder_emitsReasoningContent() throws {
+        let model = try model(named: "deepseek-v4-flash")
+        var assistant = LLM.Message(role: .assistant, content: "the visible reply")
+        assistant.reasoningContent = "the hidden thinking"
+        let messages: [LLM.Message] = [
+            LLM.Message(role: .user, content: "ask"),
+            assistant,
+            LLM.Message(role: .user, content: "follow-up")
+        ]
+        let builder = DeepSeekRequestBuilder(messages: messages,
+                                             provider: LLMProvider(model: model),
+                                             functions: [],
+                                             stream: false,
+                                             shouldThink: true)
+        let data = try builder.body()
+        let json = try XCTUnwrap(try JSONSerialization.jsonObject(with: data) as? [String: Any])
+        let wireMessages = try XCTUnwrap(json["messages"] as? [[String: Any]])
+        XCTAssertEqual(wireMessages.count, 3)
+        XCTAssertNil(wireMessages[0]["reasoning_content"], "user role must not carry reasoning")
+        XCTAssertEqual(wireMessages[1]["reasoning_content"] as? String, "the hidden thinking",
+                       "assistant role must carry reasoning")
+        XCTAssertNil(wireMessages[2]["reasoning_content"], "user role must not carry reasoning")
+    }
+
+    /// When LLM.Message has no reasoningContent, the wire body must omit the
+    /// field entirely (not encode it as null). DeepSeek's API may reject
+    /// `reasoning_content: null` as ambiguous; absence is the safe shape.
+    func testDeepSeekRequestBuilder_omitsReasoningWhenNil() throws {
+        let model = try model(named: "deepseek-v4-flash")
+        let messages: [LLM.Message] = [
+            LLM.Message(role: .user, content: "ask"),
+            LLM.Message(role: .assistant, content: "reply"),  // no reasoningContent
+        ]
+        let builder = DeepSeekRequestBuilder(messages: messages,
+                                             provider: LLMProvider(model: model),
+                                             functions: [],
+                                             stream: false,
+                                             shouldThink: false)
+        let data = try builder.body()
+        let raw = String(data: data, encoding: .utf8) ?? ""
+        XCTAssertFalse(raw.contains("reasoning_content"),
+                       "reasoning_content key must be absent (not null) when nil; got \(raw)")
+    }
+
+    /// A streaming chunk that carries both reasoning_content AND tool_calls in
+    /// the same delta must surface BOTH messages, not just the reasoning one.
+    /// DeepSeek docs say these arrive in separate deltas in practice, but
+    /// silently dropping a tool call if the server ever co-emits them would
+    /// break the agent loop with no visible error.
+    func testDeepSeekStreaming_reasoningAndToolCallInOneDelta_surfacesBoth() throws {
+        let chunk = """
+        {
+            "id": "chatcmpl_test_both",
+            "object": "chat.completion.chunk",
+            "created": 0,
+            "model": "deepseek-v4-flash",
+            "choices": [
+                {
+                    "index": 0,
+                    "delta": {
+                        "role": "assistant",
+                        "reasoning_content": "deliberating",
+                        "tool_calls": [
+                            {"index": 0, "id": "call_1", "type": "function",
+                             "function": {"name": "get_word", "arguments": "{}"}}
+                        ]
+                    },
+                    "finish_reason": null
+                }
+            ]
+        }
+        """.data(using: .utf8)!
+        var parser = DeepSeekStreamingResponseParser()
+        let response = try XCTUnwrap(try parser.parse(data: chunk))
+        XCTAssertEqual(response.choiceMessages.count, 2,
+                       "parser must surface reasoning AND tool-call as separate messages")
+        guard case .attachment(let attachment) = response.choiceMessages[0].body,
+              case .statusUpdate(.reasoningSummaryUpdate(let text)) = attachment.type else {
+            XCTFail("first message must be reasoning status update; got \(response.choiceMessages[0].body)")
+            return
+        }
+        XCTAssertEqual(text, "deliberating")
+        XCTAssertEqual(response.choiceMessages[1].function_call?.name, "get_word")
+    }
+
+    /// A reasoning-only assistant turn (no content, no tool_calls, just
+    /// reasoningContent) is the persisted shape that ChatListModel's `.commit`
+    /// case produces after harvesting statusUpdate subparts from a streamed
+    /// reasoning-only response. The request builder serializes the turn with
+    /// content="" so the wire body preserves user→assistant→user alternation
+    /// AND the reasoning round-trip. The empirical check against DeepSeek's
+    /// API lives in test_deepseek_thinking_reasoningOnlyAssistant_roundTrips
+    /// in the live harness; this offline test only locks the local wire shape.
+    func testDeepSeekRequestBuilder_reasoningOnlyAssistant_serializesEmptyContent() throws {
+        let model = try model(named: "deepseek-v4-flash")
+        var assistant = LLM.Message(role: .assistant, body: .multipart([]))
+        assistant.reasoningContent = "the hidden thinking"
+        let messages: [LLM.Message] = [
+            LLM.Message(role: .user, content: "ask"),
+            assistant,
+            LLM.Message(role: .user, content: "follow-up")
+        ]
+        let builder = DeepSeekRequestBuilder(messages: messages,
+                                             provider: LLMProvider(model: model),
+                                             functions: [],
+                                             stream: false,
+                                             shouldThink: true)
+        let data = try builder.body()
+        let json = try XCTUnwrap(try JSONSerialization.jsonObject(with: data) as? [String: Any])
+        let wireMessages = try XCTUnwrap(json["messages"] as? [[String: Any]])
+        XCTAssertEqual(wireMessages.count, 3,
+                       "all three turns must survive — dropping the assistant turn would leave consecutive user turns and break alternation; got \(wireMessages)")
+        XCTAssertEqual(wireMessages[1]["role"] as? String, "assistant")
+        XCTAssertEqual(wireMessages[1]["content"] as? String, "",
+                       "reasoning-only assistant turn must serialize with content=\"\" to keep alternation valid; got \(wireMessages[1])")
+        XCTAssertEqual(wireMessages[1]["reasoning_content"] as? String, "the hidden thinking",
+                       "reasoning must round-trip on the rebuilt assistant turn; got \(wireMessages[1])")
+    }
+
+    /// DeepSeek models without `.configurableThinking` (chat / coder / reasoner)
+    /// must omit the `thinking` block from the wire body rather than guessing
+    /// the older endpoints tolerate `thinking: {type: disabled}`. The v4 case
+    /// is covered by testDeepSeekRequestBuilder_emitsReasoningContent /
+    /// _omitsReasoningWhenNil (those models advertise configurableThinking).
+    func testDeepSeekRequestBuilder_omitsThinkingBlock_forNonThinkingModel() throws {
+        guard let model = AIMetadata.instance.models.first(where: {
+            $0.vendor == .deepSeek && !$0.features.contains(.configurableThinking)
+        }) else {
+            throw XCTSkip("no non-thinking DeepSeek model in AIMetadata")
+        }
+        let messages: [LLM.Message] = [LLM.Message(role: .user, content: "ask")]
+        let builder = DeepSeekRequestBuilder(messages: messages,
+                                             provider: LLMProvider(model: model),
+                                             functions: [],
+                                             stream: false,
+                                             shouldThink: nil)
+        let data = try builder.body()
+        let json = try XCTUnwrap(try JSONSerialization.jsonObject(with: data) as? [String: Any])
+        XCTAssertNil(json["thinking"],
+                     "thinking block must be absent for \(model.name); got \(json["thinking"] ?? "nil")")
+    }
+
     // MARK: - Responses request builder backward-compat fallback
 
     /// Pre-refactor persisted history can hold an .assistant message
@@ -687,5 +913,290 @@ final class AIParserCombiningTests: XCTestCase {
         let response = try XCTUnwrap(try parser.parse(data: body))
         XCTAssertEqual(response.choiceMessages.count, 1)
         XCTAssertEqual(response.choiceMessages[0].body.maybeContent, "first")
+    }
+
+    // MARK: - Anthropic tool_use id wrapper population
+    //
+    // The Anthropic serializer's .functionOutput branch reads the tool_use_id
+    // from the outer LLM.Message.Body.functionCall wrapper FunctionCallID. If
+    // the parser leaves the wrapper nil and stashes the id only on the inner
+    // LLM.FunctionCall.id, persisted tool calls round-trip back to Anthropic
+    // as plain text and the API rejects the request for a missing tool_result.
+    // These tests pin the wrapper id on all three Anthropic parse paths.
+
+    /// Non-streaming AnthropicResponseParser: the wrapper FunctionCallID's
+    /// callID must equal the inner FunctionCall.id.
+    func testAnthropicParser_choiceMessage_setsWrapperFunctionCallID() throws {
+        let body = """
+        {
+            "id": "msg_test_wrap_1",
+            "type": "message",
+            "role": "assistant",
+            "model": "claude-haiku-4-5",
+            "content": [
+                {"type": "tool_use", "id": "toolu_wrap_1", "name": "f", "input": {}}
+            ],
+            "stop_reason": "tool_use",
+            "stop_sequence": null,
+            "usage": {"input_tokens": 1, "output_tokens": 1}
+        }
+        """.data(using: .utf8)!
+        var parser = AnthropicResponseParser()
+        let response = try XCTUnwrap(try parser.parse(data: body))
+        let message = try XCTUnwrap(response.choiceMessages.first)
+        guard case let .functionCall(call, wrapper) = message.body else {
+            XCTFail("expected .functionCall body, got \(message.body)")
+            return
+        }
+        XCTAssertEqual(call.id, "toolu_wrap_1")
+        XCTAssertEqual(wrapper?.callID, "toolu_wrap_1",
+                       "wrapper FunctionCallID.callID must equal tool_use id so .functionOutput round-trips back to Anthropic as a tool_result block")
+    }
+
+    /// Streaming AnthropicStreamingResponseParser: a content_block_start
+    /// event for a tool_use must produce a .functionCall whose wrapper
+    /// FunctionCallID.callID equals the tool_use id. itemID must also be
+    /// the tool_use id (not "") so two distinct parallel tool_use blocks
+    /// don't merge in LLM.Message.Body.tryAppend on matching empty itemIDs.
+    func testAnthropicStreamingParser_toolUse_setsWrapperFunctionCallID() throws {
+        let event = """
+        {
+            "type": "content_block_start",
+            "index": 0,
+            "content_block": {
+                "type": "tool_use",
+                "id": "toolu_stream_1",
+                "name": "f",
+                "input": {}
+            }
+        }
+        """.data(using: .utf8)!
+        var parser = AnthropicStreamingResponseParser()
+        let response = try XCTUnwrap(try parser.parse(data: event))
+        let message = try XCTUnwrap(response.choiceMessages.first)
+        guard case let .functionCall(call, wrapper) = message.body else {
+            XCTFail("expected .functionCall body, got \(message.body)")
+            return
+        }
+        XCTAssertEqual(call.id, "toolu_stream_1")
+        XCTAssertEqual(wrapper?.callID, "toolu_stream_1")
+        XCTAssertEqual(wrapper?.itemID, "toolu_stream_1",
+                       "itemID must equal tool_use id so tryAppend doesn't merge distinct parallel tool calls")
+    }
+
+    /// Two streaming content_block_start events for different parallel
+    /// tool_use blocks must NOT merge into one .functionCall via
+    /// LLM.Message.Body.tryAppend. The merge predicate compares wrapper
+    /// itemIDs, so populating itemID with the tool_use id (rather than "")
+    /// is what keeps the second tool call from being concatenated into the
+    /// first. Anthropic disables parallel tool use today, so this is a
+    /// guard for future enablement.
+    func testAnthropicStreamingParser_distinctToolUseBlocks_doNotMerge() throws {
+        let event1 = """
+        {
+            "type": "content_block_start",
+            "index": 0,
+            "content_block": {"type": "tool_use", "id": "toolu_a", "name": "alpha", "input": {}}
+        }
+        """.data(using: .utf8)!
+        let event2 = """
+        {
+            "type": "content_block_start",
+            "index": 1,
+            "content_block": {"type": "tool_use", "id": "toolu_b", "name": "beta", "input": {}}
+        }
+        """.data(using: .utf8)!
+        var parser = AnthropicStreamingResponseParser()
+        let first = try XCTUnwrap(try parser.parse(data: event1)?.choiceMessages.first?.body)
+        let second = try XCTUnwrap(try parser.parse(data: event2)?.choiceMessages.first?.body)
+        var accumulator = first
+        let merged = accumulator.tryAppend(second)
+        XCTAssertFalse(merged,
+                       "distinct parallel tool_use blocks must keep distinct itemIDs so tryAppend rejects the merge")
+    }
+
+    /// AnthropicMessage.llmMessage (the round-trip deserialization path):
+    /// a multipart content array containing a toolUse block must produce a
+    /// .functionCall whose wrapper FunctionCallID.callID equals the tool_use
+    /// id.
+    func testAnthropicMessage_llmMessage_toolUse_setsWrapperFunctionCallID() throws {
+        let raw = """
+        {
+            "role": "assistant",
+            "content": [
+                {"type": "text", "text": "thinking"},
+                {"type": "tool_use", "id": "toolu_round_1", "name": "f", "input": {}}
+            ]
+        }
+        """.data(using: .utf8)!
+        let anthropicMessage = try JSONDecoder().decode(AnthropicMessage.self, from: raw)
+        let llmMessage = anthropicMessage.llmMessage
+        guard case let .multipart(parts) = llmMessage.body else {
+            XCTFail("expected multipart body, got \(llmMessage.body)")
+            return
+        }
+        let callPart = parts.first { part in
+            if case .functionCall = part { return true }
+            return false
+        }
+        guard case let .functionCall(call, wrapper) = try XCTUnwrap(callPart) else {
+            XCTFail("expected .functionCall part")
+            return
+        }
+        XCTAssertEqual(call.id, "toolu_round_1")
+        XCTAssertEqual(wrapper?.callID, "toolu_round_1")
+    }
+
+    // MARK: - Anthropic tool_use / tool_result adjacency
+
+    /// Anthropic 400s if a tool_use block in an assistant message is not
+    /// immediately followed by a user message containing the matching
+    /// tool_result. The Cockpit's racy persistence emits a stray user-text
+    /// message in between sometimes; the request builder must reorder so the
+    /// tool_result lands immediately after the tool_use, with the stray text
+    /// pushed AFTER the tool_result rather than dropped. Pinned offline so
+    /// regressions show up without spending an Anthropic API call.
+    func testAnthropicRequestBuilder_reordersStrayMessageBetweenToolUseAndToolResult() throws {
+        let model = try model(named: "claude-haiku-4-5")
+        let toolID = "toolu_pin_misorder"
+        let toolName = "register_watch"
+        let messages: [LLM.Message] = [
+            LLM.Message(role: .user, content: "kick things off"),
+            LLM.Message(
+                responseID: nil,
+                role: .assistant,
+                body: .functionCall(
+                    LLM.FunctionCall(name: toolName, arguments: "{}", id: toolID),
+                    id: .init(callID: toolID, itemID: toolID))),
+            LLM.Message(role: .user, content: "stray status update"),
+            LLM.Message(
+                responseID: nil,
+                role: .function,
+                body: .functionOutput(
+                    name: toolName,
+                    output: "{\"ok\":true}",
+                    id: .init(callID: toolID, itemID: toolID))),
+            LLM.Message(role: .user, content: "did it work?"),
+        ]
+        let bodyData = try AnthropicRequestBuilder(
+            messages: messages,
+            provider: LLMProvider(model: model),
+            functions: [],
+            stream: false).body()
+        let json = try XCTUnwrap(try JSONSerialization.jsonObject(with: bodyData) as? [String: Any])
+        let wireMessages = try XCTUnwrap(json["messages"] as? [[String: Any]])
+
+        // Find the index of the assistant tool_use and assert the very next
+        // message is a user message whose content array contains a tool_result
+        // for the same id. The stray "stray status update" text must appear
+        // AFTER the tool_result, not before, but must not be dropped.
+        var toolUseIndex: Int?
+        for (idx, m) in wireMessages.enumerated() {
+            guard m["role"] as? String == "assistant",
+                  let blocks = m["content"] as? [[String: Any]] else { continue }
+            for block in blocks {
+                if block["type"] as? String == "tool_use",
+                   block["id"] as? String == toolID {
+                    toolUseIndex = idx
+                    break
+                }
+            }
+            if toolUseIndex != nil { break }
+        }
+        let useIdx = try XCTUnwrap(toolUseIndex, "tool_use never emitted on wire")
+        XCTAssertLessThan(useIdx + 1, wireMessages.count,
+                          "tool_use is the last wire message; nothing follows it")
+        let next = wireMessages[useIdx + 1]
+        XCTAssertEqual(next["role"] as? String, "user",
+                       "message after tool_use must be a user message")
+        let nextBlocks = try XCTUnwrap(next["content"] as? [[String: Any]],
+                                       "message after tool_use must have an array content with a tool_result block")
+        let foundToolResult = nextBlocks.contains { block in
+            block["type"] as? String == "tool_result"
+                && block["tool_use_id"] as? String == toolID
+        }
+        XCTAssertTrue(foundToolResult,
+                      "message after tool_use must contain a tool_result for \(toolID); got \(nextBlocks)")
+
+        // Stray status_update must survive, just after the tool_result.
+        let stray = wireMessages.first { m in
+            guard let s = m["content"] as? String else { return false }
+            return s == "stray status update"
+        }
+        XCTAssertNotNil(stray, "stray user-text message must not be dropped")
+
+        // Final follow-up question must be present too.
+        let final = wireMessages.first { m in
+            guard let s = m["content"] as? String else { return false }
+            return s == "did it work?"
+        }
+        XCTAssertNotNil(final, "trailing user follow-up must survive reorder")
+    }
+
+    /// When the tool_result is already in the right place (immediately after
+    /// the tool_use), reorder must be a no-op — no message duplication, no
+    /// reshuffling of unrelated messages.
+    func testAnthropicRequestBuilder_alreadyAdjacent_isNoOp() throws {
+        let model = try model(named: "claude-haiku-4-5")
+        let toolID = "toolu_already_ok"
+        let toolName = "noop_tool"
+        let messages: [LLM.Message] = [
+            LLM.Message(role: .user, content: "hello"),
+            LLM.Message(
+                responseID: nil,
+                role: .assistant,
+                body: .functionCall(
+                    LLM.FunctionCall(name: toolName, arguments: "{}", id: toolID),
+                    id: .init(callID: toolID, itemID: toolID))),
+            LLM.Message(
+                responseID: nil,
+                role: .function,
+                body: .functionOutput(
+                    name: toolName,
+                    output: "{\"ok\":true}",
+                    id: .init(callID: toolID, itemID: toolID))),
+            LLM.Message(role: .user, content: "thanks"),
+        ]
+        let bodyData = try AnthropicRequestBuilder(
+            messages: messages,
+            provider: LLMProvider(model: model),
+            functions: [],
+            stream: false).body()
+        let json = try XCTUnwrap(try JSONSerialization.jsonObject(with: bodyData) as? [String: Any])
+        let wireMessages = try XCTUnwrap(json["messages"] as? [[String: Any]])
+        XCTAssertEqual(wireMessages.count, 4, "no message duplication when already adjacent")
+        XCTAssertEqual(wireMessages[0]["role"] as? String, "user")
+        XCTAssertEqual(wireMessages[1]["role"] as? String, "assistant")
+        XCTAssertEqual(wireMessages[2]["role"] as? String, "user")
+        let blocks2 = try XCTUnwrap(wireMessages[2]["content"] as? [[String: Any]])
+        XCTAssertTrue(blocks2.contains { $0["type"] as? String == "tool_result" })
+        XCTAssertEqual(wireMessages[3]["content"] as? String, "thanks")
+    }
+
+    /// A tool_use with no matching tool_result anywhere in the conversation
+    /// must not cause an infinite loop or crash. The wire request goes out
+    /// without a tool_result and Anthropic will 400, but the builder itself
+    /// must terminate and produce a well-formed body.
+    func testAnthropicRequestBuilder_orphanToolUse_terminatesCleanly() throws {
+        let model = try model(named: "claude-haiku-4-5")
+        let toolID = "toolu_orphan"
+        let messages: [LLM.Message] = [
+            LLM.Message(role: .user, content: "do the thing"),
+            LLM.Message(
+                responseID: nil,
+                role: .assistant,
+                body: .functionCall(
+                    LLM.FunctionCall(name: "tool", arguments: "{}", id: toolID),
+                    id: .init(callID: toolID, itemID: toolID))),
+            LLM.Message(role: .user, content: "follow up"),
+        ]
+        let bodyData = try AnthropicRequestBuilder(
+            messages: messages,
+            provider: LLMProvider(model: model),
+            functions: [],
+            stream: false).body()
+        let json = try XCTUnwrap(try JSONSerialization.jsonObject(with: bodyData) as? [String: Any])
+        let wireMessages = try XCTUnwrap(json["messages"] as? [[String: Any]])
+        XCTAssertGreaterThanOrEqual(wireMessages.count, 2, "builder must still emit some messages for an orphan tool_use")
     }
 }

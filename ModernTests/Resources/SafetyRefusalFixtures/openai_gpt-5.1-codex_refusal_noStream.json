@@ -1,5 +1,5 @@
 {
-  "elapsedMs" : 975,
+  "elapsedMs" : 1604,
   "request" : {
     "body" : {
       "input" : [
@@ -9,7 +9,7 @@
           "type" : "message"
         }
       ],
-      "max_output_tokens" : 128000,
+      "max_output_tokens" : 127890,
       "model" : "gpt-5.1-codex",
       "stream" : false,
       "tool_choice" : "none",
@@ -30,14 +30,14 @@
       "billing" : {
         "payer" : "developer"
       },
-      "completed_at" : 1778358169,
-      "created_at" : 1778358169,
+      "completed_at" : 1778602190,
+      "created_at" : 1778602189,
       "error" : null,
       "frequency_penalty" : 0,
-      "id" : "resp_0aac8d83859c3e470069ff97993a20819498155a46e6647234",
+      "id" : "resp_0299f0572bedbcfe006a0350cdbda081a3a1f157c8ed22943e",
       "incomplete_details" : null,
       "instructions" : null,
-      "max_output_tokens" : 128000,
+      "max_output_tokens" : 127890,
       "max_tool_calls" : null,
       "metadata" : {
 
@@ -47,7 +47,7 @@
       "object" : "response",
       "output" : [
         {
-          "id" : "rs_0aac8d83859c3e470069ff9799818c8194a531bb84d29edd66",
+          "id" : "rs_0299f0572bedbcfe006a0350ce104081a3a3adb3ce87970e25",
           "summary" : [
 
           ],
@@ -66,7 +66,7 @@
               "type" : "output_text"
             }
           ],
-          "id" : "msg_0aac8d83859c3e470069ff9799988481949ba09e23b85fa356",
+          "id" : "msg_0299f0572bedbcfe006a0350ce2c6881a39bb810ecc47cb532",
           "role" : "assistant",
           "status" : "completed",
           "type" : "message"
@@ -104,11 +104,11 @@
         "input_tokens_details" : {
           "cached_tokens" : 0
         },
-        "output_tokens" : 26,
+        "output_tokens" : 27,
         "output_tokens_details" : {
           "reasoning_tokens" : 0
         },
-        "total_tokens" : 71
+        "total_tokens" : 72
       },
       "user" : null
     }

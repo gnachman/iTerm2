@@ -1072,7 +1072,19 @@ const CGFloat PTYTextViewMarginClickGraceWidth = 2.0;
 
 // For Metal
 - (void)requestDelegateRedraw {
-    [_delegate textViewNeedsDisplayInRect:self.bounds];
+    // An empty rect is a sentinel telling the delegate to invalidate the entire renderer view.
+    [_delegate textViewNeedsDisplayInRect:NSZeroRect];
+}
+
+- (void)requestDelegateRedrawInRect:(NSRect)rect {
+    DLog(@"-[PTYTextView requestDelegateRedrawInRect:%@]", NSStringFromRect(rect));
+    if (NSIsEmptyRect(rect)) {
+        [self requestDelegateRedraw];
+        return;
+    }
+    // Translate from PTYTextView coordinates to the legacy renderer view's coordinates.
+    rect.origin.y -= [self virtualOffset];
+    [_delegate textViewNeedsDisplayInRect:rect];
 }
 
 - (void)removeAllTrackingAreas {
@@ -1124,18 +1136,62 @@ const CGFloat PTYTextViewMarginClickGraceWidth = 2.0;
 #pragma mark Set Needs Display Helpers
 
 - (void)setNeedsDisplayOnLine:(int)line {
-    [self requestDelegateRedraw];
+    // The halo extends the dirty rect by one line on each side so that descenders spilling out
+    // of line N into N+1 (and ascenders spilling out of line N into N-1) are not clipped away,
+    // and so any leftover spill from the previous frame's glyph in those regions is repainted.
+    const NSRect rect = NSMakeRect(0,
+                                   line * _lineHeight,
+                                   self.frame.size.width,
+                                   _lineHeight);
+    [self requestDelegateRedrawInRect:[self rectWithHalo:rect]];
 }
 
 - (void)setNeedsDisplayOnLine:(int)y inRange:(VT100GridRange)range {
-    [self requestDelegateRedraw];
+    // Dirty tracking is per-line; the range is ignored. The drawing helper widens its draw
+    // region for ligatures and oversize glyphs, so a tight one-row dirty rect is correct.
+    [self setNeedsDisplayOnLine:y];
 }
 
 - (void)invalidateInputMethodEditorRect {
     if ([_dataSource width] == 0) {
         return;
     }
-    [self requestDelegateRedraw];
+    const int length = [self inputMethodEditorLength];
+    if (length == 0) {
+        // Composition cleared. Erase the entire previous footprint.
+        _lastInvalidatedIMERect = NSZeroRect;
+        [self requestDelegateRedraw];
+        return;
+    }
+    // Number of rows the marked text occupies, ceiling((cursorX-1+length) / width).
+    const int width = [_dataSource width];
+    const int imeLines = ([_dataSource cursorX] - 1 + length - 1) / width + 1;
+    // The IME is always drawn at the cursor's natural row in PTYTextView coords.
+    // _drawingHelper.numberOfIMELines enlarges PTYTextView's frame downward (see
+    // -desiredHeight) and bumps -virtualOffset (PTYTextView.m near 1552) so the
+    // IME appears higher in the legacy viewport when it would otherwise overflow
+    // the bottom of the grid — it does not change the IME's PTYTextView origin.
+    // imeLines counts the rows the marked text actually covers, which can extend
+    // below numberOfLines * _lineHeight into the extra IME headroom.
+    const int topRow = [_dataSource cursorY] - 1 + [_dataSource numberOfLines] - [_dataSource height];
+    const NSRect imeRect = NSMakeRect([iTermPreferences intForKey:kPreferenceKeySideMargins],
+                                      topRow * _lineHeight,
+                                      width * _charWidth,
+                                      imeLines * _lineHeight);
+    // If the new footprint doesn't fully contain the previous one, old IME
+    // glyphs could be left rendered outside the new rect — e.g. backspacing a
+    // multi-row composition down to fewer rows, or the cursor moving to a new
+    // origin while length stays the same or grows. Fall back to a full redraw
+    // in those cases. NSContainsRect returns NO when the inner rect is empty,
+    // so explicitly take the partial-rect path on the first call after a clear
+    // (there's no prior content that could need erasing).
+    const NSRect priorRect = _lastInvalidatedIMERect;
+    _lastInvalidatedIMERect = imeRect;
+    if (!NSIsEmptyRect(priorRect) && !NSContainsRect(imeRect, priorRect)) {
+        [self requestDelegateRedraw];
+        return;
+    }
+    [self requestDelegateRedrawInRect:[self rectWithHalo:imeRect]];
 }
 
 - (void)viewDidMoveToWindow {
@@ -2362,7 +2418,7 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
 }
 
 - (void)setCursorNeedsDisplay {
-    [self requestDelegateRedraw];
+    [self requestDelegateRedrawInRect:[self rectWithHalo:[self cursorFrame]]];
 }
 
 - (void)setCursorType:(ITermCursorType)value {
@@ -2662,6 +2718,25 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
         [_findOnPageHelper removeSearchResultsInRange:range];
         [self requestDelegateRedraw];
     } else {
+        // A screen scroll shifts -virtualOffset, which is the translation we
+        // use to convert between PTYTextView coordinates (used by per-line
+        // invalidation) and the legacy view's coordinate space (used by AppKit's
+        // dirty tracking). Any pending small dirty rect that was enqueued before
+        // the scroll is still sitting in the legacy view at its pre-scroll
+        // legacy-coord y, but -drawRect: would translate it back using the new
+        // virtualOffset and ask the helper to repaint a different PTYTextView
+        // row. Lines that scrolled into a new screen position aren't marked
+        // dirty by VT100Grid either. Force a full redraw so AppKit unions it
+        // with anything already pending and the visible area is reconciled.
+        //
+        // The highlight/search-result bookkeeping stays per-line: a scroll
+        // shifts pixels but absolute-line keys in iTermFindOnPageHelper are
+        // unaffected, so wiping the whole grid range here would drop matches
+        // on lines that merely moved up the screen.
+        if (haveScrolled) {
+            DLog(@"haveScrolled=YES");
+            [self requestDelegateRedraw];
+        }
         for (int y = lineStart; y < lineEnd; y++) {
             VT100GridRange range = [_dataSource dirtyRangeForLine:y - lineStart];
             if (y == cursorLines[0] || y == cursorLines[1]) {
@@ -2673,12 +2748,14 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
                 // TODO: It would be more correct to remove all search results from this point down and reset the cursor location to the start of the first dirty line. VT100Screen.savedFindContextAbsPos can be after some of the dirty cells causing them not to be searched.
                 [_findOnPageHelper removeHighlightsInRange:NSMakeRange(y + totalScrollbackOverflow, 1)];
                 [_findOnPageHelper removeSearchResultsInRange:NSMakeRange(y + totalScrollbackOverflow, 1)];
+                // No per-line invalidation needed if we already requested a
+                // full redraw above; AppKit's dirty rect is the full bounds.
+                if (!haveScrolled) {
+                    [self setNeedsDisplayOnLine:y];
+                }
             } else if (!haveScrolled) {
                 [cleanLines addIndex:y - lineStart];
             }
-        }
-        if (foundDirty) {
-            [self requestDelegateRedraw];
         }
     }
 
@@ -3452,15 +3529,10 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
                 anyBlinkers |= charBlinks;
                 const BOOL blinked = redrawBlink && charBlinks;
                 if (blinked) {
-                    NSRect dirtyRect = [self visibleRect];
-                    dirtyRect.origin.y = y * _lineHeight;
-                    dirtyRect.size.height = _lineHeight;
                     if (gDebugLogging) {
                         DLog(@"Found blinking char on line %d", y);
                     }
-                    const NSRect rect = [self rectWithHalo:dirtyRect];
-                    DLog(@"Redraw rect for line y=%d i=%d blink: %@", y, i, NSStringFromRect(rect));
-                    [self requestDelegateRedraw];
+                    [self setNeedsDisplayOnLine:y];
                     break;
                 }
             }
@@ -3472,13 +3544,10 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
         NSIndexSet *wereSelected = [_oldSelection selectedIndexesOnAbsoluteLine:y + overflow];
         if (![areSelected isEqualToIndexSet:wereSelected]) {
             // Just redraw the whole line for simplicity.
-            NSRect dirtyRect = [self visibleRect];
-            dirtyRect.origin.y = y * _lineHeight;
-            dirtyRect.size.height = _lineHeight;
             if (gDebugLogging) {
                 DLog(@"found selection change on line %d", y);
             }
-            [self requestDelegateRedraw];
+            [self setNeedsDisplayOnLine:y];
         }
     }
     return anyBlinkers;
@@ -6967,6 +7036,7 @@ static NSString *iTermStringFromRange(NSRange range) {
         _drawingHelper.inputMethodMarkedRange = NSMakeRange(0, 0);
         _drawingHelper.markedText = nil;
         _drawingHelper.numberOfIMELines = 0;
+        _lastInvalidatedIMERect = NSZeroRect;
     }
 
     if (![_selection hasSelection]) {

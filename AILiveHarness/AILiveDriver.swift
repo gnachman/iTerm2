@@ -27,6 +27,38 @@ struct AILiveRunResult {
     var attachments: [LLM.Message.Attachment]
     var functionsInvoked: [String]
     var elapsed: TimeInterval
+    /// Raw outbound request bodies (one per HTTP request captured by
+    /// iTermAIClient.liveObserver). Exposed so tests that need to assert on
+    /// the wire-level body shape (e.g. "thinking.type == enabled") don't have
+    /// to fish the value out of the on-disk xcresult attachments.
+    var capturedRequestBodies: [String]
+    /// Raw Authorization header values (one per HTTP request). Exposed so
+    /// tests that drive AIConversation through its registration provider can
+    /// verify the API key actually used on the wire matches the one the test
+    /// loaded — not whatever happens to be in the keychain singleton. Empty
+    /// string if the request didn't carry an Authorization header.
+    var capturedAuthorizationHeaders: [String]
+    /// Reasoning text surfaced via the dedicated didReceiveReasoning delegate
+    /// channel. Populated for both streaming (final accumulated reasoning)
+    /// and non-streaming. Distinct from `reasoningText` below which derives
+    /// from the streaming UI attachment path.
+    var deliveredReasoning: String?
+
+    /// Concatenated reasoning text extracted from any `.statusUpdate(.reasoningSummaryUpdate)`
+    /// content under `attachments`. Empty when no reasoning was surfaced (typical for
+    /// vendors that don't expose reasoning, or for thinking-disabled DeepSeek calls).
+    var reasoningText: String {
+        var pieces: [String] = []
+        for attachment in attachments {
+            guard case .statusUpdate(let update) = attachment.type else { continue }
+            for sub in update.exploded {
+                if case .reasoningSummaryUpdate(let text) = sub {
+                    pieces.append(text)
+                }
+            }
+        }
+        return pieces.joined()
+    }
 }
 
 enum AILiveError: Error, CustomStringConvertible {
@@ -70,6 +102,14 @@ final class AILiveDriver: NSObject, AITermControllerDelegate {
     private var capturedError: Error?
     private var done = false
     private let startTime = Date()
+    private var capturedRequestBodies: [String] = []
+    private var capturedAuthorizationHeaders: [String] = []
+    /// Reasoning text delivered via aitermController(_:didReceiveReasoning:).
+    /// Distinct from the attachment-derived `reasoningText` on the result;
+    /// this path fires for non-streaming responses and for the final
+    /// accumulated reasoning of streaming responses, regardless of whether
+    /// the attachment-based UI path also fired.
+    private var receivedReasoning: String?
 
     private init(controller: AITermController,
                  streamingRequested: Bool,
@@ -213,7 +253,10 @@ final class AILiveDriver: NSObject, AITermControllerDelegate {
                                streamedChunks: driver.streamedChunks,
                                attachments: driver.attachments,
                                functionsInvoked: driver.functionsInvoked,
-                               elapsed: Date().timeIntervalSince(driver.startTime))
+                               elapsed: Date().timeIntervalSince(driver.startTime),
+                               capturedRequestBodies: driver.capturedRequestBodies,
+                               capturedAuthorizationHeaders: driver.capturedAuthorizationHeaders,
+                               deliveredReasoning: driver.receivedReasoning)
     }
 
     /// Decide whether a single-attempt failure is worth retrying. Match
@@ -303,6 +346,23 @@ final class AILiveDriver: NSObject, AITermControllerDelegate {
 
     private func consume(capture: iTermAIClient.LiveCapture) {
         captureSeq += 1
+        // Stash the raw request body so tests can assert on wire shape
+        // without having to fish it out of xcresult attachments.
+        switch capture.request.body {
+        case .string(let s):
+            capturedRequestBodies.append(s)
+        case .bytes(let b):
+            capturedRequestBodies.append("<\(b.count) bytes>")
+        }
+        // Stash the Authorization header verbatim (NOT redacted — this stays
+        // in memory only, never written to xcresult). Used by AIConversation
+        // tests to verify the key actually used on the wire matches the test's
+        // loaded key, rather than whatever AITermControllerRegistrationHelper
+        // pulled from the keychain singleton.
+        capturedAuthorizationHeaders.append(
+            capture.request.headers["Authorization"]
+            ?? capture.request.headers["authorization"]
+            ?? "")
         let mode = streamingRequested ? "stream" : "noStream"
         let safeModel = AILiveDriver.sanitize(modelName)
         let safeScenario = AILiveDriver.sanitize(scenarioTag)
@@ -328,7 +388,12 @@ final class AILiveDriver: NSObject, AITermControllerDelegate {
         // input for offline parser tests. Filename is keyed by vendor + model +
         // mode (no sequence) since a refusal is always a single round-trip;
         // re-running for the same model overwrites the existing fixture.
+        // Opt-in: every refusal run otherwise leaves the fixtures dirty in git
+        // (model wording, request IDs, latency, and token counts all drift run
+        // to run), which pollutes diffs. Set REFRESH_REFUSAL_FIXTURES=1 in the
+        // config to intentionally refresh.
         if scenarioTag.hasPrefix("refusal"),
+           AILiveDriver.configFlag("REFRESH_REFUSAL_FIXTURES"),
            let projectRoot = AILiveDriver.projectRoot() {
             let fixturesDir = (projectRoot as NSString)
                 .appendingPathComponent("ModernTests")
@@ -349,15 +414,23 @@ final class AILiveDriver: NSObject, AITermControllerDelegate {
     }
 
     private static func projectRoot() -> String? {
+        guard let root = configValue("PROJECT_ROOT"), !root.isEmpty else { return nil }
+        return root
+    }
+
+    private static func configValue(_ key: String) -> String? {
         let configPath = (NSTemporaryDirectory() as NSString)
             .appendingPathComponent("iterm2-ai-live.json")
         guard let data = try? Data(contentsOf: URL(fileURLWithPath: configPath)),
-              let json = try? JSONSerialization.jsonObject(with: data) as? [String: String],
-              let root = json["PROJECT_ROOT"], !root.isEmpty
+              let json = try? JSONSerialization.jsonObject(with: data) as? [String: String]
         else {
             return nil
         }
-        return root
+        return json[key]
+    }
+
+    private static func configFlag(_ key: String) -> Bool {
+        return configValue(key) == "1"
     }
 
     private static func guessVendor(modelName: String) -> String? {
@@ -549,6 +622,14 @@ final class AILiveDriver: NSObject, AITermControllerDelegate {
         functionsInvoked.append(function.decl.name)
     }
 
+    func aitermController(_ sender: AITermController, didReceiveReasoning reasoning: String) {
+        // Per the protocol contract on AITermControllerDelegate, this fires
+        // at most once per turn with the full reasoning text. Replace, don't
+        // append — appending would silently double the content if the
+        // contract ever changed to multi-fire and a parser regressed.
+        receivedReasoning = reasoning
+    }
+
     func aitermControllerDidCancelOutstandingRequest(_ sender: AITermController) {
         capturedError = AILiveError.providerFailure("request cancelled")
         finish()
@@ -556,3 +637,21 @@ final class AILiveDriver: NSObject, AITermControllerDelegate {
 }
 
 struct EmptyArgs: Codable {}
+
+/// Hands out a pre-built Registration on demand. Used by AIConversation
+/// regression tests that need to drive a live request through the full
+/// AIConversation → AITermController stack without touching the keychain UI
+/// the production registration helper would normally pop up.
+final class AILiveStaticRegistrationProvider: AIRegistrationProvider {
+    private let apiKey: String
+
+    init(apiKey: String) {
+        self.apiKey = apiKey
+    }
+
+    func registrationProviderRequestRegistration(
+        _ completion: @escaping (AITermController.Registration?) -> ()
+    ) {
+        completion(AITermController.Registration(apiKey: apiKey))
+    }
+}

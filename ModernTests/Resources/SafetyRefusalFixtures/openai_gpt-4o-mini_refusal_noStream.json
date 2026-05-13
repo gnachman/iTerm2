@@ -1,5 +1,5 @@
 {
-  "elapsedMs" : 1037,
+  "elapsedMs" : 1544,
   "request" : {
     "body" : {
       "input" : [
@@ -30,11 +30,11 @@
       "billing" : {
         "payer" : "developer"
       },
-      "completed_at" : 1778358231,
-      "created_at" : 1778358231,
+      "completed_at" : 1778602286,
+      "created_at" : 1778602284,
       "error" : null,
       "frequency_penalty" : 0,
-      "id" : "resp_0ae266b409c49fcd0069ff97d73ed081978a9a304ba91060c2",
+      "id" : "resp_0a650e2ad9d3847e006a03512ce51881939b0a4076d7f06dec",
       "incomplete_details" : null,
       "instructions" : null,
       "max_output_tokens" : 16384,
@@ -59,7 +59,7 @@
               "type" : "output_text"
             }
           ],
-          "id" : "msg_0ae266b409c49fcd0069ff97d7d4148197a370737d398d2477",
+          "id" : "msg_0a650e2ad9d3847e006a03512dce0c8193856ab40d2ed945d0",
           "role" : "assistant",
           "status" : "completed",
           "type" : "message"

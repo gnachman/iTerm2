@@ -4260,6 +4260,12 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
 - (void)cleanUpAfterBrokenPipe {
     [self setExited:YES];
     [_logging stop];
+    [self clearTabStatus];
+    // Drop the cached tab-status instance so that if the session restarts and
+    // gets a new guid, the next status update creates a fresh instance keyed by
+    // the current guid instead of the stale one captured here at init time.
+    [_tabStatus release];
+    _tabStatus = nil;
     [[NSNotificationCenter defaultCenter] postNotificationName:PTYSessionTerminatedNotification object:self];
     [[NSNotificationCenter defaultCenter] postNotificationName:kCurrentSessionDidChange object:nil];
     [_delegate updateLabelAttributes];
@@ -4717,6 +4723,14 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
 }
 
 - (NSView *)mainResponder {
+    // Route focus to the Code Review prompt overlay while it's on
+    // screen. Without this, PTYTab.setActiveSession's first-responder
+    // assignment after a peer swap would steal focus from the prompt's
+    // text view back to the (deferred, not-yet-running) terminal.
+    iTermCodeReviewPromptView *promptOverlay = _view.codeReviewPromptOverlay;
+    if (promptOverlay != nil && promptOverlay.window != nil && !promptOverlay.isHidden) {
+        return promptOverlay.promptResponder;
+    }
     if (@available(macOS 11, *)) {
         if (_view.isBrowser) {
             return _view.browserViewController.webView;
@@ -8074,6 +8088,33 @@ extendResultsAcrossSoftBoundaries:(BOOL)extendResultsAcrossSoftBoundaries {
 - (NSImage *)snapshot {
     DLog(@"Session %@ calling refresh", self);
     [_textview refresh];
+    return [_view snapshot];
+}
+
+- (NSImage *)terminalContentSnapshot {
+    // Intentionally skip [_textview refresh] here. refresh runs the full
+    // textViewWillRefresh -> refreshAfterSync: cycle (frame resize, scrollback
+    // overflow handling, scrollEnd), which is more side-effecting than a
+    // snapshot helper should be. We render against whatever state the
+    // timer-driven refresh has already produced; the resulting preview may be a
+    // few tens of milliseconds stale but never wrong.
+    const VT100GridRange range = [_textview rangeOfVisibleLines];
+    if (range.length > 0) {
+        NSColor *bg = [_textview.colorMap colorForKey:kColorMapBackground];
+        NSImage *rendered = [_textview renderImageWithLines:NSMakeRange(range.location, range.length)
+                                             includeMargins:YES
+                                            backgroundColor:bg
+                                                 showCursor:YES];
+        if (rendered) {
+            return rendered;
+        }
+    }
+    if (_view.useMetal) {
+        NSImage *metalImage = [_view drawMetalFrameToImage];
+        if (metalImage) {
+            return metalImage;
+        }
+    }
     return [_view snapshot];
 }
 
@@ -13149,8 +13190,19 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 }
 
 - (void)textViewNeedsDisplayInRect:(NSRect)rect {
-    DLog(@"text view needs display");
-    [self requestRedraw];
+    DLog(@"text view needs display in rect %@", NSStringFromRect(rect));
+    if (NSIsEmptyRect(rect)) {
+        [self requestRedraw];
+        return;
+    }
+    // Skip -updateWrapperAlphaForMetalEnabled: and
+    // -configureIndicatorsHelperWithRightMargin: on the partial-rect path.
+    // Both depend only on session-level state (porthole/annotation/nav-shortcut
+    // presence, useMetal, browser indicators) — none of which a partial-rect
+    // invalidation can change. Anything that does change that state already
+    // funnels through the empty-rect / -requestRedraw path or calls those
+    // updaters directly (e.g. -textViewDidAddOrRemovePorthole).
+    [_view requestRedrawInRect:rect];
 }
 
 - (void)requestRedraw {

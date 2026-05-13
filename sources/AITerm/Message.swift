@@ -226,6 +226,18 @@ struct Message: Codable {
     var uniqueID: UUID
     var inResponseTo: String?  // This is a responseID, not a uniqueID. Not all AI providers support response IDs.
     var responseID: String?
+    // Opaque vendor-required thinking-mode state captured on agent messages.
+    // Currently populated for DeepSeek v4 (its API requires this be echoed
+    // back on every subsequent turn or it returns 400). Stored alongside
+    // content rather than as a subpart because its lifetime, visibility, and
+    // wire treatment are all distinct from the displayed body: never rendered
+    // directly (the reasoning text is shown ephemerally via
+    // .statusUpdate(.reasoningSummaryUpdate) subparts that get stripped at
+    // persist time), but always round-tripped on resend.
+    // Forward+backward Codable compatible: an old build decoding this field
+    // ignores it (JSONDecoder ignores unknown keys); a new build decoding old
+    // history gets nil and behaves as before.
+    var agentReasoning: String?
 
     // This is only present in user-sent messages.
     struct Configuration: Codable {
@@ -273,6 +285,26 @@ struct Message: Codable {
 
     mutating func removeStatusUpdates() {
         if case .multipart(var subparts, let vectorStoreID) = content {
+            // Distill any reasoning-summary status updates into agentReasoning
+            // before stripping them. The status-update path is ephemeral display
+            // state and gets removed at persist time; agentReasoning is durable
+            // and required by DeepSeek's API on every subsequent turn. Without
+            // this distillation step, streaming reasoning would vanish the first
+            // time a follow-up text chunk arrives (because the chat list model
+            // calls removeStatusUpdates before appending each chunk).
+            var harvestedReasoning = ""
+            for subpart in subparts {
+                guard case .attachment(let attachment) = subpart,
+                      case .statusUpdate(let update) = attachment.type else { continue }
+                for piece in update.exploded {
+                    if case .reasoningSummaryUpdate(let text) = piece {
+                        harvestedReasoning.append(text)
+                    }
+                }
+            }
+            if !harvestedReasoning.isEmpty {
+                agentReasoning = (agentReasoning ?? "") + harvestedReasoning
+            }
             subparts.removeAll { subpart in
                 switch subpart {
                 case .attachment(let attachment):
@@ -371,6 +403,7 @@ extension Message: iTermDatabaseElement {
         case uniqueID
         case chatID
         case responseID
+        case agentReasoning
     }
 
     static func schema() -> String {
@@ -381,7 +414,8 @@ extension Message: iTermDatabaseElement {
              \(Columns.chatID.rawValue) text not null,
              \(Columns.content.rawValue) text not null,
              \(Columns.sentDate.rawValue) integer not null,
-             \(Columns.responseID.rawValue) text)
+             \(Columns.responseID.rawValue) text,
+             \(Columns.agentReasoning.rawValue) text)
         """
     }
 
@@ -389,6 +423,9 @@ extension Message: iTermDatabaseElement {
         var result = [Migration]()
         if !existingColumns.contains(Columns.responseID.rawValue) {
             result.append(.init(query: "ALTER TABLE Message ADD COLUMN \(Columns.responseID.rawValue) text", args: []))
+        }
+        if !existingColumns.contains(Columns.agentReasoning.rawValue) {
+            result.append(.init(query: "ALTER TABLE Message ADD COLUMN \(Columns.agentReasoning.rawValue) text", args: []))
         }
         return result
     }
@@ -413,12 +450,13 @@ extension Message: iTermDatabaseElement {
             """
             insert into Message (
                 \(Columns.uniqueID.rawValue),
-                \(Columns.author.rawValue), 
+                \(Columns.author.rawValue),
                 \(Columns.chatID.rawValue),
-                \(Columns.content.rawValue), 
+                \(Columns.content.rawValue),
                 \(Columns.sentDate.rawValue),
-                \(Columns.responseID.rawValue))
-            values (?, ?, ?, ?, ?, ?)
+                \(Columns.responseID.rawValue),
+                \(Columns.agentReasoning.rawValue))
+            values (?, ?, ?, ?, ?, ?, ?)
             """,
             [
                 uniqueID.uuidString,
@@ -426,7 +464,8 @@ extension Message: iTermDatabaseElement {
                 chatID,
                 jsonString,
                 sentDate.timeIntervalSince1970,
-                responseID
+                responseID,
+                agentReasoning
             ]
         )
     }
@@ -445,7 +484,8 @@ extension Message: iTermDatabaseElement {
                                 \(Columns.chatID.rawValue) = ?,
                                 \(Columns.content.rawValue) = ?,
                                 \(Columns.sentDate.rawValue) = ?,
-                                \(Columns.responseID.rawValue) = ?
+                                \(Columns.responseID.rawValue) = ?,
+                                \(Columns.agentReasoning.rawValue) = ?
             where \(Columns.uniqueID.rawValue) = ?
             """,
             [
@@ -454,6 +494,7 @@ extension Message: iTermDatabaseElement {
                 jsonString,
                 sentDate.timeIntervalSince1970,
                 responseID,
+                agentReasoning,
                 uniqueID.uuidString,
             ]
         )
@@ -478,5 +519,6 @@ extension Message: iTermDatabaseElement {
         self.content = content
         self.sentDate = sentDate
         self.responseID = result.string(forColumn: Columns.responseID.rawValue)
+        self.agentReasoning = result.string(forColumn: Columns.agentReasoning.rawValue)
     }
 }

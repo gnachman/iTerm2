@@ -26,18 +26,29 @@ final class WorkgroupModeSwitcherItem: SessionToolbarControl {
 
     init(identifier: String,
          priority: Int,
-         members: [(identifier: String, label: String)],
+         members: [(identifier: String,
+                    label: String,
+                    shortcut: WorkgroupToolbarShortcut?)],
          activeIdentifier: String) {
         self.identifiers = members.map { $0.identifier }
-        // Suffix each label with its activation shortcut: ⌥⇧⌘1..8
-        // for the first eight segments; ⌥⇧⌘9 also appears on the
-        // last segment when there are nine or more peers (so the
-        // "always go to last" hint is visible). For ≤8 peers the
-        // direct number wins on the last segment because it's how
-        // the user thinks ("press 5 for the 5th peer").
+        // Suffix each label with its activation shortcut. When the
+        // peer has a configured `peerSwitchShortcut`, render that —
+        // it's the binding that actually fires. Otherwise fall back
+        // to the built-in ⌥⇧⌘1..8 for the first eight segments;
+        // ⌥⇧⌘9 also appears on the last segment when there are nine
+        // or more peers (so the "always go to last" hint is visible).
+        // For ≤8 peers the direct number wins on the last segment
+        // because it's how the user thinks ("press 5 for the 5th peer").
         let labels = members.enumerated().map { (index, member) -> String in
-            guard let suffix = Self.shortcutLabel(forSegmentIndex: index,
-                                                  total: members.count) else {
+            let suffix: String?
+            if let custom = member.shortcut,
+               let keystroke = custom.keystroke {
+                suffix = iTermKeystrokeFormatter.string(for: keystroke)
+            } else {
+                suffix = Self.shortcutLabel(forSegmentIndex: index,
+                                            total: members.count)
+            }
+            guard let suffix, !suffix.isEmpty else {
                 return member.label
             }
             // U+2003 EM SPACE — wider than a regular space so the

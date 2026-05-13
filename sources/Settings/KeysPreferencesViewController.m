@@ -81,6 +81,9 @@ static NSString *const kKeyCode0MitigationSuffixGlobal = @"Global";
     IBOutlet NSButton *_configureHotKeyWindow;
     IBOutlet NSButton *_emulateUSKeyboard;
 
+    // Open Quickly global hotkey
+    IBOutlet iTermShortcutInputView *_openQuicklyHotkeyField;
+
     iTermHotkeyPreferencesWindowController *_hotkeyPanel;
 
     IBOutlet NSTabView *_tabView;
@@ -121,6 +124,10 @@ static NSString *const kKeyCode0MitigationSuffixGlobal = @"Global";
 
     _hotkeyField.leaderAllowed = NO;
     _hotkeyField.purpose = @"as a hotkey";
+
+    _openQuicklyHotkeyField.leaderAllowed = NO;
+    _openQuicklyHotkeyField.purpose = @"as the Open Quickly hotkey";
+    [self updateOpenQuicklyHotkeyField];
 
     [_keyMappingViewController addViewsToSearchIndex:self];
 
@@ -510,6 +517,35 @@ static NSString *const kKeyCode0MitigationSuffixGlobal = @"Global";
     [[iTermAppHotKeyProvider sharedInstance] invalidate];
 }
 
+- (void)updateOpenQuicklyHotkeyField {
+    const int theChar = [iTermPreferences intForKey:kPreferenceKeyOpenQuicklyHotkeyCharacter];
+    const int modifiers = [iTermPreferences intForKey:kPreferenceKeyOpenQuicklyHotkeyModifiers];
+    const int code = [iTermPreferences intForKey:kPreferenceKeyOpenQuicklyHotKeyCode];
+    if (code || theChar) {
+        iTermKeystroke *keystroke = [[iTermKeystroke alloc] initWithVirtualKeyCode:code
+                                                                        hasKeyCode:YES
+                                                                     modifierFlags:modifiers
+                                                                         character:theChar
+                                                                 modifiedCharacter:theChar];
+        _openQuicklyHotkeyField.stringValue = [iTermKeystrokeFormatter stringForKeystroke:keystroke];
+    } else {
+        _openQuicklyHotkeyField.stringValue = @"";
+    }
+}
+
+- (void)setOpenQuicklyHotKeyChar:(unsigned short)keyChar
+                            code:(unsigned int)keyCode
+                            mods:(unsigned int)keyMods {
+    [iTermPreferences setInt:keyChar forKey:kPreferenceKeyOpenQuicklyHotkeyCharacter];
+    [iTermPreferences setInt:keyCode forKey:kPreferenceKeyOpenQuicklyHotKeyCode];
+    [iTermPreferences setInt:keyMods forKey:kPreferenceKeyOpenQuicklyHotkeyModifiers];
+
+    PreferencePanel *prefs = [PreferencePanel sharedInstance];
+    [prefs.window makeFirstResponder:prefs.window];
+    [self updateOpenQuicklyHotkeyField];
+    [[iTermOpenQuicklyHotKeyProvider sharedInstance] invalidate];
+}
+
 - (NSArray<iTermTuple<NSControl *, NSNumber *> *> *)modifierRemappingTuples {
     return @[[iTermTuple tupleWithObject:_leftControlButton andObject:@(kPreferencesModifierTagLeftControl)],
              [iTermTuple tupleWithObject:_rightControlButton andObject:@(kPreferencesModifierTagRightControl)],
@@ -613,6 +649,15 @@ static NSString *const kKeyCode0MitigationSuffixGlobal = @"Global";
                 _hotkeyEnabled.state = NSControlStateValueOff;
             }
         }
+    } else if (view == _openQuicklyHotkeyField) {
+        // event nil means the user cleared the field. Storing all zeros causes
+        // the provider's -invalidate to unregister the hotkey without
+        // re-registering anything.
+        unsigned int keyMods = [event it_modifierFlags];
+        NSString *unmodkeystr = [event charactersIgnoringModifiers];
+        unsigned short keyChar = unmodkeystr.length > 0 ? [unmodkeystr characterAtIndex:0] : 0;
+        unsigned int keyCode = event ? [event keyCode] : 0;
+        [self setOpenQuicklyHotKeyChar:keyChar code:keyCode mods:keyMods];
     } else if (view == _leader) {
         if (event) {
             iTermKeystroke *keystroke = [iTermKeystroke withEvent:event];

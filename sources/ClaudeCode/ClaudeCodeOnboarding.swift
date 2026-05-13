@@ -27,7 +27,6 @@ class ClaudeCodeOnboarding: NSObject {
         case enablePythonAPI = 0
         case installHook = 1
         case showToolbelt = 2
-        case explainStatus = 3
         case installWorkgroup = 4
         case installTriggers = 5
 
@@ -36,7 +35,6 @@ class ClaudeCodeOnboarding: NSObject {
             case .enablePythonAPI: return "Enable Python API"
             case .installHook: return "Install Hook"
             case .showToolbelt: return "Show Toolbelt"
-            case .explainStatus: return "Using Session Status"
             case .installWorkgroup: return "Install Workgroup"
             case .installTriggers: return "Auto-Enter Workgroup"
             }
@@ -47,7 +45,6 @@ class ClaudeCodeOnboarding: NSObject {
             case .enablePythonAPI: return "Enable"
             case .installHook: return "Install"
             case .showToolbelt: return "Show"
-            case .explainStatus: return "Show Settings"
             case .installWorkgroup: return "Install"
             case .installTriggers: return "Install"
             }
@@ -61,8 +58,6 @@ class ClaudeCodeOnboarding: NSObject {
                 return "Install a Claude Code hook that lets iTerm2 detect Claude\u{2019}s state (working, waiting, idle) and display it in the Session Status tool.\n\nThis adds a hook to your Claude Code settings that runs automatically as Claude works."
             case .showToolbelt:
                 return "Show the toolbelt and enable the Session Status tool. The toolbelt appears on the right side of your terminal window.\n\nYou can toggle the toolbelt from View > Toolbelt > Show Toolbelt, or with the shortcut \u{2318}\u{21E7}B."
-            case .explainStatus:
-                return "The Session Status tool shows all your Claude Code sessions sorted by status.\n\nSessions waiting for input appear at the top, followed by those actively working, with idle sessions at the bottom.\n\nClick a session to jump to it. Use the gear icon (\u{2699}\u{FE0F}) to configure which statuses are visible and how sessions are sorted."
             case .installWorkgroup:
                 return "Install the Claude Code workgroup, which groups your main Claude session with two peer sessions: a diff viewer and a code-review session. You can switch between them with one click.\n\nYou can customize this layout later in Settings > Shortcuts > Workgroups."
             case .installTriggers:
@@ -93,13 +88,11 @@ class ClaudeCodeOnboarding: NSObject {
     // UI elements
     private var stepLabels = [NSTextField]()
     private var contentLabel: NSTextField!
-    private var subtitleToggleCheckbox: NSButton!
     private var backButton: NSButton!
     private var doItButton: NSButton!
     private var nextButton: NSButton!
     private var scrims = [OnboardingScrim]()
-    private var introOverlay: NSView?
-    private var introCard: NSView?
+    private var introSheet: NSWindow?
     private var introTitleLabel: NSTextField?
     private var introLeadLabel: NSTextField?
     private var introDisclosureButton: NSButton?
@@ -572,7 +565,6 @@ class ClaudeCodeOnboarding: NSObject {
         }
         steps.append(contentsOf: [.installHook,
                                   .showToolbelt,
-                                  .explainStatus,
                                   .installWorkgroup,
                                   .installTriggers])
 
@@ -610,11 +602,11 @@ class ClaudeCodeOnboarding: NSObject {
         onboarding.panel.makeKeyAndOrderFront(nil)
         // Cover the installer with the heads-up intro until the user
         // dismisses it. They might've launched this from the menu
-        // not knowing what's about to be touched on disk; an
-        // overlay (rather than a real installer step) keeps the click
-        // count down for repeat users while still surfacing the
+        // not knowing what's about to be touched on disk; a sheet
+        // (rather than a real installer step) keeps the click count
+        // down for repeat users while still surfacing the
         // "you can undo this" promise to first-timers.
-        onboarding.showIntroOverlay()
+        onboarding.showIntroSheet()
         // Background completion of the install-step pre-mark.
         // Identity-checks against the static instance on return so
         // a panel that was closed-and-reopened during the read
@@ -683,20 +675,6 @@ class ClaudeCodeOnboarding: NSObject {
         contentLabel.isSelectable = false
         contentView.addSubview(contentLabel)
 
-        // Optional toggle shown only on the explainStatus step. The dot
-        // on the tab already conveys session state; the text under the
-        // title is redundant for users who recognize the dot color, and
-        // can clash with custom tab colors. Default on.
-        subtitleToggleCheckbox = NSButton(checkboxWithTitle: "Show status as subtitle on the tab",
-                                          target: self,
-                                          action: #selector(toggleSubtitlePref(_:)))
-        subtitleToggleCheckbox.state = iTermUserDefaults.showSessionStatusInTabSubtitle ? .on : .off
-        subtitleToggleCheckbox.sizeToFit()
-        subtitleToggleCheckbox.frame.origin = NSPoint(x: margin, y: 55)
-        subtitleToggleCheckbox.autoresizingMask = [.maxXMargin, .maxYMargin]
-        subtitleToggleCheckbox.isHidden = true
-        contentView.addSubview(subtitleToggleCheckbox)
-
         // Button bar at the bottom
         let buttonY: CGFloat = 15
 
@@ -729,31 +707,17 @@ class ClaudeCodeOnboarding: NSObject {
         contentView.addSubview(backButton)
     }
 
-    // MARK: - Intro Overlay
+    // MARK: - Intro Sheet
 
-    private func showIntroOverlay() {
-        guard let contentView = panel.contentView else { return }
-        let overlay = NSView(frame: contentView.bounds)
-        overlay.autoresizingMask = [.width, .height]
-        overlay.wantsLayer = true
-        overlay.layer?.backgroundColor = NSColor.black.withAlphaComponent(0.4).cgColor
-
-        let cardWidth: CGFloat = 540
-        let cardPadding: CGFloat = 24
-        let textWidth = cardWidth - cardPadding * 2
-
-        let card = NSView()
-        card.wantsLayer = true
-        card.layer?.backgroundColor = NSColor.windowBackgroundColor.cgColor
-        card.layer?.cornerRadius = 10
-        card.layer?.borderColor = NSColor.separatorColor.cgColor
-        card.layer?.borderWidth = 1
+    private func showIntroSheet() {
+        let sheetWidth: CGFloat = 540
+        let sheetPadding: CGFloat = 24
+        let textWidth = sheetWidth - sheetPadding * 2
 
         let titleLabel = NSTextField(labelWithString: "Before You Start")
         titleLabel.font = NSFont.boldSystemFont(ofSize: 16)
         titleLabel.frame.size.width = textWidth
         titleLabel.sizeToFit()
-        card.addSubview(titleLabel)
         introTitleLabel = titleLabel
 
         let lead = NSTextField(wrappingLabelWithString:
@@ -763,7 +727,6 @@ class ClaudeCodeOnboarding: NSObject {
         lead.textColor = .labelColor
         lead.isSelectable = false
         Self.sizeWrappingLabel(lead, width: textWidth)
-        card.addSubview(lead)
         introLeadLabel = lead
 
         // Image-only disclosure triangle plus a sibling label, mirroring
@@ -778,7 +741,6 @@ class ClaudeCodeOnboarding: NSObject {
         disclosure.imagePosition = .imageOnly
         disclosure.state = .off
         disclosure.sizeToFit()
-        card.addSubview(disclosure)
         introDisclosureButton = disclosure
 
         let disclosureLabel = NSTextField(labelWithString: "What gets changed")
@@ -786,7 +748,6 @@ class ClaudeCodeOnboarding: NSObject {
         disclosureLabel.textColor = .labelColor
         disclosureLabel.isSelectable = false
         disclosureLabel.sizeToFit()
-        card.addSubview(disclosureLabel)
         introDisclosureLabel = disclosureLabel
 
         let details = NSTextField(wrappingLabelWithString:
@@ -800,30 +761,35 @@ class ClaudeCodeOnboarding: NSObject {
         details.isSelectable = false
         Self.sizeWrappingLabel(details, width: textWidth)
         details.isHidden = true
-        card.addSubview(details)
         introDetailsLabel = details
 
         let continueButton = NSButton(title: "Continue",
                                       target: self,
-                                      action: #selector(dismissIntroOverlay(_:)))
+                                      action: #selector(dismissIntroSheet(_:)))
         continueButton.bezelStyle = .rounded
         continueButton.keyEquivalent = "\r"
         continueButton.frame.size = NSSize(width: 100, height: 32)
-        card.addSubview(continueButton)
         introContinueButton = continueButton
 
-        // The installer's own Do It / Next buttons set keyEquivalent
-        // "\r" too — clear them while the overlay is up so Enter
-        // routes to Continue. updateUI() restores them on dismiss.
-        nextButton.keyEquivalent = ""
-        doItButton.keyEquivalent = ""
+        let sheetWindow = NSWindow(
+            contentRect: NSRect(x: 0, y: 0, width: sheetWidth, height: 200),
+            styleMask: [.titled],
+            backing: .buffered,
+            defer: false)
+        sheetWindow.isReleasedWhenClosed = false
 
-        overlay.addSubview(card)
-        contentView.addSubview(overlay)
-        introOverlay = overlay
-        introCard = card
+        let contentView = NSView()
+        contentView.addSubview(titleLabel)
+        contentView.addSubview(lead)
+        contentView.addSubview(disclosure)
+        contentView.addSubview(disclosureLabel)
+        contentView.addSubview(details)
+        contentView.addSubview(continueButton)
+        sheetWindow.contentView = contentView
 
-        layoutIntroCard()
+        introSheet = sheetWindow
+        layoutIntroSheet()
+        panel.beginSheet(sheetWindow)
     }
 
     // sizeToFit on a wrapping NSTextField sometimes returns a single-
@@ -838,12 +804,11 @@ class ClaudeCodeOnboarding: NSObject {
         label.frame.size = NSSize(width: width, height: fitted.height)
     }
 
-    // Lay out the intro card top-down based on the disclosure state.
-    // Re-runs whenever the disclosure toggles, so the card grows/shrinks
-    // and re-centers in the overlay.
-    private func layoutIntroCard() {
-        guard let overlay = introOverlay,
-              let card = introCard,
+    // Lay out the intro sheet top-down based on the disclosure state.
+    // Re-runs whenever the disclosure toggles, so the sheet's content
+    // size grows or shrinks to match.
+    private func layoutIntroSheet() {
+        guard let sheet = introSheet,
               let title = introTitleLabel,
               let lead = introLeadLabel,
               let disclosure = introDisclosureButton,
@@ -851,8 +816,8 @@ class ClaudeCodeOnboarding: NSObject {
               let details = introDetailsLabel,
               let continueButton = introContinueButton else { return }
 
-        let cardWidth: CGFloat = 540
-        let cardPadding: CGFloat = 24
+        let sheetWidth: CGFloat = 540
+        let sheetPadding: CGFloat = 24
         let bottomPadding: CGFloat = 16
         let leadGap: CGFloat = 12
         let disclosureGap: CGFloat = 16
@@ -861,7 +826,7 @@ class ClaudeCodeOnboarding: NSObject {
         let disclosureRowHeight = max(disclosure.frame.height,
                                       disclosureLabel.frame.height)
 
-        var height = cardPadding
+        var height = sheetPadding
         height += title.frame.height
         height += leadGap
         height += lead.frame.height
@@ -875,21 +840,17 @@ class ClaudeCodeOnboarding: NSObject {
         height += continueButton.frame.height
         height += bottomPadding
 
-        card.frame = NSRect(
-            x: (overlay.bounds.width - cardWidth) / 2,
-            y: (overlay.bounds.height - height) / 2,
-            width: cardWidth,
-            height: height)
+        sheet.setContentSize(NSSize(width: sheetWidth, height: height))
 
-        var y = height - cardPadding - title.frame.height
-        title.frame.origin = NSPoint(x: cardPadding, y: y)
+        var y = height - sheetPadding - title.frame.height
+        title.frame.origin = NSPoint(x: sheetPadding, y: y)
         y -= leadGap
         y -= lead.frame.height
-        lead.frame.origin = NSPoint(x: cardPadding, y: y)
+        lead.frame.origin = NSPoint(x: sheetPadding, y: y)
         y -= disclosureGap
         y -= disclosureRowHeight
         let disclosureY = y + (disclosureRowHeight - disclosure.frame.height) / 2
-        disclosure.frame.origin = NSPoint(x: cardPadding, y: disclosureY)
+        disclosure.frame.origin = NSPoint(x: sheetPadding, y: disclosureY)
         let labelY = y + (disclosureRowHeight - disclosureLabel.frame.height) / 2
         disclosureLabel.frame.origin = NSPoint(
             x: disclosure.frame.maxX + 4,
@@ -897,22 +858,22 @@ class ClaudeCodeOnboarding: NSObject {
         if !details.isHidden {
             y -= detailsGap
             y -= details.frame.height
-            details.frame.origin = NSPoint(x: cardPadding, y: y)
+            details.frame.origin = NSPoint(x: sheetPadding, y: y)
         }
         continueButton.frame.origin = NSPoint(
-            x: cardWidth - cardPadding - continueButton.frame.width,
+            x: sheetWidth - sheetPadding - continueButton.frame.width,
             y: bottomPadding)
     }
 
     @objc private func toggleIntroDetails(_ sender: NSButton) {
         introDetailsLabel?.isHidden = (sender.state == .off)
-        layoutIntroCard()
+        layoutIntroSheet()
     }
 
-    @objc private func dismissIntroOverlay(_ sender: Any?) {
-        introOverlay?.removeFromSuperview()
-        introOverlay = nil
-        introCard = nil
+    @objc private func dismissIntroSheet(_ sender: Any?) {
+        guard let sheet = introSheet else { return }
+        panel.endSheet(sheet)
+        introSheet = nil
         introTitleLabel = nil
         introLeadLabel = nil
         introDisclosureButton = nil
@@ -971,18 +932,13 @@ class ClaudeCodeOnboarding: NSObject {
         }
         layoutStepLabels()
 
-        // Keep scrims visible during steps 2 and 3; remove otherwise.
-        if currentStep != .showToolbelt && currentStep != .explainStatus {
+        // Keep scrims visible during the Show Toolbelt step; remove otherwise.
+        if currentStep != .showToolbelt {
             removeScrims()
         }
 
         // Update content
         contentLabel.stringValue = currentStep.description
-        // Reflect the live pref each time we land on the step in case
-        // it was flipped from the Session Status settings popover
-        // since the wizard opened.
-        subtitleToggleCheckbox.isHidden = (currentStep != .explainStatus)
-        subtitleToggleCheckbox.state = iTermUserDefaults.showSessionStatusInTabSubtitle ? .on : .off
 
         // Update buttons
         backButton.isEnabled = !isFirstStep
@@ -1037,10 +993,6 @@ class ClaudeCodeOnboarding: NSObject {
         updateUI()
     }
 
-    @objc private func toggleSubtitlePref(_ sender: NSButton) {
-        iTermUserDefaults.showSessionStatusInTabSubtitle = (sender.state == .on)
-    }
-
     @objc private func doItPressed(_ sender: Any?) {
         let success: Bool
         switch currentStep {
@@ -1050,9 +1002,6 @@ class ClaudeCodeOnboarding: NSObject {
             success = doInstallHook()
         case .showToolbelt:
             doShowToolbelt()
-            success = true
-        case .explainStatus:
-            showSettingsPopover()
             success = true
         case .installWorkgroup:
             success = doInstallWorkgroup()
@@ -1508,20 +1457,6 @@ class ClaudeCodeOnboarding: NSObject {
                 contentView.addSubview(scrim)
                 scrims.append(scrim)
             }
-        }
-    }
-
-    // MARK: - Step 3: Explain Status
-
-    private func showSettingsPopover() {
-        for session in claudeSessions() {
-            guard let windowController = session.view?.window?.windowController as? PseudoTerminal,
-                  let toolbeltView = windowController.toolbelt(),
-                  let statusTool = toolbeltView.tool(withName: kStatusToolName) as? ToolStatus else {
-                continue
-            }
-            statusTool.showSettings(nil)
-            return
         }
     }
 
