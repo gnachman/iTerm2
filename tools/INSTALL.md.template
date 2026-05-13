@@ -1,0 +1,72 @@
+# MomenTerm 설치 안내
+
+- **버전**: `__VERSION__` (`__GIT_DESCRIBE__`)
+- **빌드 날짜**: `__PUBDATE__`
+- **파일**: `__ZIP_NAME__` (`__ZIP_MB__` MB)
+- **SHA-256**: `__SHA256__`
+
+> MomenTerm은 [iTerm2](https://iterm2.com/)를 기반으로 한 macOS 터미널 앱입니다.
+
+---
+
+## 설치 (60초)
+
+1. **압축 해제**: 받은 `__ZIP_NAME__`을 더블클릭해서 `MomenTerm.app`을 꺼냅니다.
+2. **앱 이동**: `MomenTerm.app`을 `/응용 프로그램` 폴더로 드래그합니다.
+3. **첫 실행**:
+   - `/응용 프로그램` 폴더에서 `MomenTerm.app` 아이콘을 **오른쪽 클릭** (또는 `Control + 클릭`).
+   - 메뉴에서 **"열기"** 선택.
+   - macOS가 "확인되지 않은 개발자가 만든 응용 프로그램입니다" 경고를 띄우면 다시 **"열기"** 클릭.
+
+> 처음 한 번만 이 단계를 거치면, 이후에는 더블클릭으로 바로 열립니다.
+
+---
+
+## 안 열릴 때 (Gatekeeper가 강하게 차단할 때)
+
+macOS 버전이나 보안 설정에 따라 위 방법으로도 안 열릴 수 있어요. 그럴 땐 **터미널 한 줄**로 quarantine 플래그를 제거합니다.
+
+```bash
+xattr -dr com.apple.quarantine /Applications/MomenTerm.app
+```
+
+이후 다시 더블클릭하면 정상 실행됩니다.
+
+---
+
+## 무결성 검증 (선택)
+
+받은 zip이 손상되지 않았는지 확인하려면 터미널에서:
+
+```bash
+shasum -a 256 ~/Downloads/__ZIP_NAME__
+```
+
+결과가 위의 SHA-256 값과 같아야 정상입니다.
+
+---
+
+## 자동 업데이트
+
+MomenTerm은 Sparkle 프레임워크를 통해 GitHub Releases에서 새 버전을 확인합니다. 새 버전이 올라오면 앱이 알아서 알려줘요. 수동으로 확인하려면 메뉴 **MomenTerm → Check For Updates…**
+
+---
+
+## 시스템 요구 사항
+
+- macOS 12 (Monterey) 이상
+- Apple Silicon (M1 이상) 또는 Intel CPU 모두 지원
+- 디스크 약 300 MB
+
+---
+
+## 문제가 생기면
+
+1. **앱이 충돌하면**: `~/Library/Logs/DiagnosticReports/` 폴더의 가장 최근 `MomenTerm-*.ips` 파일을 보내주세요.
+2. **기능에 대한 질문**: 메뉴 **MomenTerm → About MomenTerm** 에 빌드 버전이 표시됩니다.
+
+---
+
+## 한 줄 요약
+
+> `/응용 프로그램`에 드래그 → 오른쪽 클릭 → 열기 → 열기. 끝.
