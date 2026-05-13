@@ -388,7 +388,12 @@ final class AILiveDriver: NSObject, AITermControllerDelegate {
         // input for offline parser tests. Filename is keyed by vendor + model +
         // mode (no sequence) since a refusal is always a single round-trip;
         // re-running for the same model overwrites the existing fixture.
+        // Opt-in: every refusal run otherwise leaves the fixtures dirty in git
+        // (model wording, request IDs, latency, and token counts all drift run
+        // to run), which pollutes diffs. Set REFRESH_REFUSAL_FIXTURES=1 in the
+        // config to intentionally refresh.
         if scenarioTag.hasPrefix("refusal"),
+           AILiveDriver.configFlag("REFRESH_REFUSAL_FIXTURES"),
            let projectRoot = AILiveDriver.projectRoot() {
             let fixturesDir = (projectRoot as NSString)
                 .appendingPathComponent("ModernTests")
@@ -409,15 +414,23 @@ final class AILiveDriver: NSObject, AITermControllerDelegate {
     }
 
     private static func projectRoot() -> String? {
+        guard let root = configValue("PROJECT_ROOT"), !root.isEmpty else { return nil }
+        return root
+    }
+
+    private static func configValue(_ key: String) -> String? {
         let configPath = (NSTemporaryDirectory() as NSString)
             .appendingPathComponent("iterm2-ai-live.json")
         guard let data = try? Data(contentsOf: URL(fileURLWithPath: configPath)),
-              let json = try? JSONSerialization.jsonObject(with: data) as? [String: String],
-              let root = json["PROJECT_ROOT"], !root.isEmpty
+              let json = try? JSONSerialization.jsonObject(with: data) as? [String: String]
         else {
             return nil
         }
-        return root
+        return json[key]
+    }
+
+    private static func configFlag(_ key: String) -> Bool {
+        return configValue(key) == "1"
     }
 
     private static func guessVendor(modelName: String) -> String? {
