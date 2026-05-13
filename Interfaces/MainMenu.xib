@@ -15,15 +15,15 @@
         <customObject id="2Vu-IH-16w" customClass="ColorsMenuItemView"/>
         <menu title="MainMenu" systemMenu="main" id="29" userLabel="MainMenu">
             <items>
-                <menuItem title="iTerm2" id="56">
-                    <menu key="submenu" title="iTerm2" systemMenu="apple" id="57">
+                <menuItem title="MomenTerm" id="56">
+                    <menu key="submenu" title="MomenTerm" systemMenu="apple" id="57">
                         <items>
-                            <menuItem title="About iTerm2" identifier="About iTerm2" id="233">
+                            <menuItem title="About MomenTerm" identifier="About iTerm2" id="233">
                                 <connections>
                                     <action selector="showAbout:" target="201" id="509"/>
                                 </connections>
                             </menuItem>
-                            <menuItem title="Show Tip of the Day" identifier="Show Tip of the Day" id="ft3-BP-igZ">
+                            <menuItem title="Show Tip of the Day" hidden="YES" identifier="Show Tip of the Day" id="ft3-BP-igZ">
                                 <connections>
                                     <action selector="showTipOfTheDay:" target="201" id="mc2-ec-uGY"/>
                                 </connections>
@@ -39,18 +39,18 @@
                             <menuItem isSeparatorItem="YES" id="Dpc-y9-dq3">
                                 <modifierMask key="keyEquivalentModifierMask" command="YES"/>
                             </menuItem>
-                            <menuItem title="Toggle Debug Logging" enabled="NO" identifier="Toggle Debug Logging" id="950">
+                            <menuItem title="Toggle Debug Logging" enabled="NO" hidden="YES" identifier="Toggle Debug Logging" id="950">
                                 <modifierMask key="keyEquivalentModifierMask"/>
                                 <connections>
                                     <action selector="debugLogging:" target="-1" id="951"/>
                                 </connections>
                             </menuItem>
-                            <menuItem title="Copy Performance Stats" identifier="Copy Performance Stats" id="cYu-lQ-5GD">
+                            <menuItem title="Copy Performance Stats" hidden="YES" identifier="Copy Performance Stats" id="cYu-lQ-5GD">
                                 <connections>
                                     <action selector="copyPerformanceStats:" target="201" id="Q9K-AS-x9Q"/>
                                 </connections>
                             </menuItem>
-                            <menuItem title="Capture GPU Frame" keyEquivalent="G" identifier="Capture Metal Frame" id="8KO-hG-xdC">
+                            <menuItem title="Capture GPU Frame" keyEquivalent="G" hidden="YES" identifier="Capture Metal Frame" id="8KO-hG-xdC">
                                 <modifierMask key="keyEquivalentModifierMask" control="YES" option="YES" command="YES"/>
                                 <connections>
                                     <action selector="captureNextMetalFrame:" target="-1" id="vR7-q7-IN8"/>
@@ -73,7 +73,7 @@
                             <menuItem isSeparatorItem="YES" id="144">
                                 <modifierMask key="keyEquivalentModifierMask" command="YES"/>
                             </menuItem>
-                            <menuItem title="Hide iTerm2" keyEquivalent="h" identifier="Hide iTerm2" id="134">
+                            <menuItem title="Hide MomenTerm" keyEquivalent="h" identifier="Hide iTerm2" id="134">
                                 <connections>
                                     <action selector="hide:" target="-2" id="152"/>
                                 </connections>
@@ -99,7 +99,7 @@
                                 </connections>
                             </menuItem>
                             <menuItem isSeparatorItem="YES" id="1176"/>
-                            <menuItem title="Make iTerm2 Default Term" keyEquivalent="\" identifier="Make iTerm2 Default Term" id="1470">
+                            <menuItem title="Make MomenTerm Default Term" keyEquivalent="\" identifier="Make iTerm2 Default Term" id="1470">
                                 <modifierMask key="keyEquivalentModifierMask" shift="YES" control="YES" command="YES"/>
                                 <connections>
                                     <action selector="makeDefaultTerminal:" target="201" id="1472"/>
@@ -130,7 +130,7 @@
                                 </connections>
                             </menuItem>
                             <menuItem isSeparatorItem="YES" id="1469"/>
-                            <menuItem title="Quit iTerm2" keyEquivalent="q" identifier="Quit iTerm2" id="136">
+                            <menuItem title="Quit MomenTerm" keyEquivalent="q" identifier="Quit iTerm2" id="136">
                                 <connections>
                                     <action selector="terminate:" target="-1" id="532"/>
                                 </connections>
@@ -1948,7 +1948,7 @@ CQ
                 <menuItem title="Help" id="103">
                     <menu key="submenu" title="Help" id="106">
                         <items>
-                            <menuItem title="iTerm2 Help" keyEquivalent="?" identifier="iTerm2 Help" id="111">
+                            <menuItem title="MomenTerm Help" keyEquivalent="?" identifier="iTerm2 Help" id="111">
                                 <connections>
                                     <action selector="showHelp:" target="201" id="hFO-6H-VeJ"/>
                                 </connections>

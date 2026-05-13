@@ -27,7 +27,7 @@
                     <textField focusRingType="none" verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="GaD-UM-uz4">
                         <rect key="frame" x="181" y="361" width="389" height="27"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMinY="YES"/>
-                        <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="center" title="iTerm2" id="U4n-GV-8aZ">
+                        <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="center" title="MomenTerm" id="U4n-GV-8aZ">
                             <font key="font" metaFont="system" size="22"/>
                             <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
                             <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
@@ -126,7 +126,7 @@
                                     <size key="maxSize" width="553" height="10000000"/>
                                     <attributedString key="textStorage">
                                         <fragment>
-                                            <string key="content">iTerm2 is supported by these backers on &lt;a href="https://patreon.com/gnachman"&gt;Patreon&lt;/a&gt; and &lt;a href="https://github.com/sponsors/gnachman"&gt;GitHub Sponsors&lt;/a&gt;</string>
+                                            <string key="content">MomenTerm is built on iTerm2. Support iTerm2 on &lt;a href="https://patreon.com/gnachman"&gt;Patreon&lt;/a&gt; and &lt;a href="https://github.com/sponsors/gnachman"&gt;GitHub Sponsors&lt;/a&gt;</string>
                                             <attributes>
                                                 <color key="NSColor" name="textColor" catalog="System" colorSpace="catalog"/>
                                                 <font key="NSFont" metaFont="systemSemibold" size="13"/>

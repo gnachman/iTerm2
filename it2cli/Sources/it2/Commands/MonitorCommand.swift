@@ -354,7 +354,7 @@ extension Monitor {
                 shellIntegrationInstalled = (val != "null" && val != "false" && val != "0" && !val.isEmpty)
             }
             if !shellIntegrationInstalled {
-                FileHandle.standardError.write(Data("Warning: Shell integration may not be installed.\nInstall it from: iTerm2 > Install Shell Integration\n".utf8))
+                FileHandle.standardError.write(Data("Warning: Shell integration may not be installed.\nInstall it from: MomenTerm > Install Shell Integration\n".utf8))
             }
 
             let notifReq = ITMNotificationRequest()

@@ -982,7 +982,7 @@ static NSModalResponse iTermCompareRenderingRunModal(id self, SEL _cmd) {
         }
         [NSApp activateIgnoringOtherApps:YES];
         NSAlert *alert = [[[NSAlert alloc] init] autorelease];
-        alert.messageText = @"Quit iTerm2?";
+        alert.messageText = @"Quit MomenTerm?";
         alert.informativeText = message;
         [alert addButtonWithTitle:@"OK"];
         [alert addButtonWithTitle:@"Cancel"];
@@ -1670,7 +1670,7 @@ static iTermKeyEventReplayer *gReplayer;
     mainMenuItem.submenu = [[NSApp mainMenu] it_deepCopy];
     [menu addItem:mainMenuItem];
     
-    item = [[[NSMenuItem alloc] initWithTitle:@"Quit iTerm2"
+    item = [[[NSMenuItem alloc] initWithTitle:@"Quit MomenTerm"
                                        action:@selector(terminate:)
                                 keyEquivalent:@""] autorelease];
     [menu addItem:item];
