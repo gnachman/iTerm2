@@ -510,7 +510,13 @@
 - (PSMCachedTitleInputs *)cachedTitleInputsForTabCell:(PSMTabBarCell *)cell {
     const BOOL parseHTML = [[_tabBar.delegate tabView:_tabBar valueOfOption:PSMTabBarControlOptionHTMLTabTitles] boolValue];
     id<PSMPUAFontProvider> puaFontProvider = [_tabBar.delegate tabView:_tabBar valueOfOption:PSMTabBarControlOptionPUAFontProvider];
-    PSMCachedTitleInputs *inputs = [[PSMCachedTitleInputs alloc] initWithTitle:cell.stringValue
+    // When the style can't draw a separate subtitle line (short bar / single-line
+    // style), fold subtitleString into the title so its content still shows.
+    NSString *title = cell.stringValue;
+    if (!self.supportsMultiLineLabels && cell.subtitleString.length > 0) {
+        title = [NSString stringWithFormat:@"%@ %@", cell.stringValue, cell.subtitleString];
+    }
+    PSMCachedTitleInputs *inputs = [[PSMCachedTitleInputs alloc] initWithTitle:title
                                                                truncationStyle:cell.truncationStyle
                                                                          color:[self textColorForCell:cell]
                                                                        graphic:[(id)[[cell representedObject] identifier] psmTabGraphic]
