@@ -906,3 +906,15 @@ Bug Fixes:
   program terminates (broken pipe or
   tmux detach) so stale status text
   and indicators no longer linger.
+- Fix a stall after large output bursts
+  when the main thread was reading every
+  line of the burst to announce it for
+  VoiceOver. Two changes: the LineBlock
+  metadata provider no longer allocates
+  a heap block per inner-loop iteration
+  (which was churning through the objc
+  associated-objects table on release),
+  and the new-output announcement is
+  capped to the most recent 256 lines so
+  giant floods stop overwhelming
+  VoiceOver’s speech queue.
