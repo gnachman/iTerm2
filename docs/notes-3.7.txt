@@ -411,6 +411,11 @@ Settings Improvements:
   you commit a selection.
 
 Bug Fixes:
+- Showing the clippings panel in a window
+  zoomed to fit the display no longer grows
+  the window horizontally. The tab content
+  area absorbs the panel’s width instead,
+  mirroring the toolbelt’s behavior.
 - The Install Claude Code Integration intro is
   now presented as a real sheet attached to the
   installer panel, rather than a subview
