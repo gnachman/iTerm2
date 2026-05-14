@@ -51,6 +51,13 @@ class PTYSessionPeerPort: NSObject {
         return peers[activeSessionIdentifier]?.maybeValue
     }
 
+    // Every peer session whose promise has fulfilled. Exposed so callers
+    // that need to walk the peer group (e.g. iTermWorkgroupInstance’s
+    // deferred-launch fan-out) don't have to know the internal storage.
+    var realizedPeerSessions: [PTYSession] {
+        return peers.values.compactMap { $0.maybeValue }
+    }
+
     init(peers: [String: iTermPromise<PTYSession>],
          activeSessionIdentifier: String,
          leaderIdentifier: String) {

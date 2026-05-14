@@ -59,6 +59,13 @@ class PTYSessionSwiftState: NSObject {
     // re-present the prompt overlay against the original template.
     var codeReviewRawCommand: String?
 
+    // For .diff sessions whose spawn was deferred (the workgroup's git
+    // poller hadn't reported any pending change yet at spawn time), the
+    // captured closure that fires the launch request. Cleared by
+    // firePendingDiffLaunch after it runs so a subsequent poll doesn't
+    // re-launch the same session.
+    var pendingDiffLaunch: (() -> Void)?
+
     var delegateObservers = [(PTYSessionDelegate) -> ()]()
 
     // Canonical storage for this session's clippings. Sessions in a peer group
@@ -1725,6 +1732,123 @@ extension PTYSession {
         set { swiftState.codeReviewRawCommand = newValue }
     }
 
+    // Closure that fires the deferred launch for a .diff-mode session
+    // whose spawn was held back because the workgroup’s git poller had
+    // not yet reported a pending change. iTermWorkgroupInstance calls
+    // firePendingDiffLaunch from gitPollerDidUpdate once changes appear.
+    var pendingDiffLaunch: (() -> Void)? {
+        get { swiftState.pendingDiffLaunch }
+        set { swiftState.pendingDiffLaunch = newValue }
+    }
+
+    @objc var hasPendingDiffLaunch: Bool {
+        return swiftState.pendingDiffLaunch != nil
+    }
+
+    // Run the captured deferred-launch closure (if any) and clear it so
+    // a later gitPollerDidUpdate doesn’t fire a second launch. Also
+    // dismiss the waiting overlay (if presented); the actual launch
+    // will paint terminal output onto a freshly-cleared session view.
+    @objc
+    func firePendingDiffLaunch() {
+        let closure = swiftState.pendingDiffLaunch
+        swiftState.pendingDiffLaunch = nil
+        view?.dismissDiffWaitingPromptOverlay()
+        closure?()
+    }
+
+    // Drop the initial-spawn waiting overlay onto the session view.
+    // Called from the .diff spawn paths immediately after
+    // pendingDiffLaunch is set, so the user sees an explanation rather
+    // than a blank screen the moment they activate the buried peer
+    // (or, for split/tab .diff sessions, the moment the spawn lands in
+    // the window). The Run Anyway button routes back through
+    // firePendingDiffLaunch so the manual override and the poller-
+    // driven path go through the same dismiss + launch sequence.
+    @objc
+    func presentDiffWaitingPromptOverlay() {
+        guard let sessionView: SessionView = view else { return }
+        sessionView.presentDiffWaitingPromptOverlay { [weak self] in
+            self?.firePendingDiffLaunch()
+        }
+    }
+
+    // Drop the queued-reload waiting overlay onto the session view.
+    // Distinct from the initial-spawn variant: the previous program
+    // is still rendered on the terminal underneath, so the text says
+    // "Reload queued" rather than "waiting to start" and there's a
+    // Cancel button that clears pendingDiffLaunch without firing it
+    // (otherwise an accidental Reload click on a clean tree would
+    // queue a restart that the next poll tick fires, killing the
+    // visible output).
+    @objc
+    func presentDiffWaitingPromptOverlayForQueuedReload() {
+        guard let sessionView: SessionView = view else { return }
+        sessionView.presentDiffWaitingPromptOverlayForQueuedReload(
+            onRunAnyway: { [weak self] in
+                self?.firePendingDiffLaunch()
+            },
+            onCancel: { [weak self] in
+                // Clear the closure without firing it: the user picked
+                // Cancel because they don't want to restart after all.
+                self?.pendingDiffLaunch = nil
+            })
+    }
+
+    // Reload entry point for .diff-mode workgroup sessions. Handles
+    // all three runtime states:
+    //
+    //   A) Initial spawn still waiting: pendingDiffLaunch is set, no
+    //      program has run yet. If the poller now reports pending
+    //      changes, fire the stashed closure (which is the original
+    //      attachOrLaunch). Otherwise the overlay is already up; do
+    //      nothing and let the next poll tick fire it.
+    //
+    //   B) Program is running or restartable: if there are pending
+    //      changes, restart() immediately. Otherwise install a fresh
+    //      restart() closure as pendingDiffLaunch and re-present the
+    //      waiting overlay so a subsequent poll tick (or Run Anyway)
+    //      re-runs the command. Re-checks isRestartable() inside the
+    //      closure because the program may exit between the click and
+    //      the fire, and -restart asserts isRestartable on entry.
+    //
+    //   C) Not restartable and no pending launch: nothing to do.
+    //
+    // Called from both the peer-port and instance-side reload
+    // delegates so a reload button on either a peer or a non-peer
+    // (split/tab) .diff session lands here. Both call sites bypass
+    // the global isRestartable() guard for .diff because State A is a
+    // legitimately reloadable state even though _program is nil.
+    @objc
+    func reloadDiffWithDeferralIfNeeded() {
+        let ready = workgroupInstance?.diffLaunchReady ?? false
+        if hasPendingDiffLaunch {
+            if ready {
+                firePendingDiffLaunch()
+            }
+            return
+        }
+        guard isRestartable() else { return }
+        if ready {
+            restart()
+            return
+        }
+        // No inner isRestartable() re-check inside the closure: under
+        // current invariants -isRestartable becomes true once _program
+        // is assigned and never flips back (no code path clears
+        // _program; browser-ness is fixed at session creation). The
+        // outer guard is enough, so the closure only needs the weak
+        // self check.
+        pendingDiffLaunch = { [weak self] in
+            self?.restart()
+        }
+        // Queued-reload variant of the overlay: the previous diff
+        // output is still on screen behind the panel. Cancel clears
+        // pendingDiffLaunch without firing it, so an accidental
+        // Reload click can be undone.
+        presentDiffWaitingPromptOverlayForQueuedReload()
+    }
+
     // Build a peer session for a workgroup's configured peer, driven
     // by an iTermWorkgroupSessionConfig config (profile override, command
     // override, buried until activated). `workgroupInstanceID` is
@@ -1836,6 +1960,72 @@ extension PTYSession {
                         return
                     }
 
+                    if config.mode == .diff {
+                        // Bury immediately and defer the actual launch
+                        // until the workgroup’s git poller reports a
+                        // pending change (see firePendingDiffLaunch).
+                        // The seal is fulfilled now so the peer port
+                        // wires up the session and the workgroup is
+                        // not blocked waiting on this peer.
+                        //
+                        // `factory` is a local with no other strong
+                        // reference once this closure unwinds, so it
+                        // has to be captured strongly here. Otherwise
+                        // it deallocs before the poller's first update
+                        // and the deferred launch silently no-ops. The
+                        // closure itself dies after firePendingDiffLaunch
+                        // clears it, so there's no long-lived retain.
+                        //
+                        // The captured `oldCWD` is the leader's PWD at
+                        // spawn time; the deferred launch uses it
+                        // as-is rather than re-resolving when the
+                        // closure fires. A workgroup peer is supposed
+                        // to mirror the entry point, so if the leader
+                        // cd's elsewhere later the diff peer keeps
+                        // diffing the repo the workgroup was opened
+                        // on.
+                        //
+                        // gitBase is intentionally re-resolved at fire
+                        // time using the workgroup instance's current
+                        // value. The caller (iTermWorkgroupInstance.enter
+                        // and friends) hands us an unsubstituted config
+                        // for .diff, so a gitBase change while the
+                        // deferred launch is pending automatically
+                        // propagates without the gitBase delegate path
+                        // having to rebuild this closure.
+                        newSession.bury()
+                        newSession.presentDiffWaitingPromptOverlay()
+                        let cfg = config
+                        newSession.pendingDiffLaunch = { [weak newSession] in
+                            guard let newSession else { return }
+                            let base = newSession.workgroupInstance?.currentGitBase
+                                ?? CCGitBaseSelectorItem.defaultBase
+                            let resolved = cfg.resolvedCommand(gitBase: base)
+                            let cmd = resolved.isEmpty
+                                ? nil
+                                : ITAddressBookMgr.commandByWrapping(inLoginShell: resolved)
+                            let request = iTermSessionAttachOrLaunchRequest(
+                                session: newSession,
+                                canPrompt: false,
+                                objectType: .paneObject,
+                                hasServerConnection: false,
+                                serverConnection: iTermGeneralServerConnection(),
+                                urlString: urlString,
+                                allowURLSubs: false,
+                                environment: ["ITERM_WORKGROUP_ID": workgroupInstanceID],
+                                customShell: nil,
+                                oldCWD: oldCWD,
+                                forceUseOldCWD: true,
+                                command: cmd,
+                                isUTF8: nil,
+                                substitutions: nil,
+                                windowController: nil,
+                                ready: nil) { _, _ in }
+                            factory.attachOrLaunch(with: request)
+                        }
+                        seal.fulfill(newSession)
+                        return
+                    }
                     let command = config.command.isEmpty
                         ? nil
                         : ITAddressBookMgr.commandByWrapping(inLoginShell: config.command)

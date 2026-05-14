@@ -918,3 +918,15 @@ Bug Fixes:
   capped to the most recent 256 lines so
   giant floods stop overwhelming
   VoiceOver’s speech queue.
+- Add a Diff workgroup session mode
+  that defers running the configured
+  command until there are staged or
+  unstaged changes to show. The Claude
+  Code workgroup’s Diff peer uses it,
+  so the peer no longer launches
+  difftool on a clean tree. Existing
+  Claude Code workgroups are migrated
+  on first launch so the Diff peer
+  picks up the new mode automatically;
+  flip it back to Regular in Settings
+  if you prefer the old behavior.

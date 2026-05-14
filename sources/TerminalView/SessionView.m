@@ -174,6 +174,7 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
     iTermSessionNoteView *_sessionNoteView;
     iTermSessionToolbarView *_toolbarView;
     __weak iTermCodeReviewPromptView *_codeReviewPromptOverlay;
+    __weak iTermDiffWaitingPromptView *_diffWaitingPromptOverlay;
 
     iTermRightGutterController *_rightGutterController;
 }
@@ -1277,6 +1278,7 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
     [self updateUploadIndicatorFrame];
     [self updateSessionNoteFrame];
     [self updateCodeReviewPromptOverlayFrame];
+    [self updateDiffWaitingPromptOverlayFrame];
     [_rightGutterController layoutPanels];
     DLog(@"After:\n%@", [self iterm_recursiveDescription]);
 }
@@ -1288,6 +1290,11 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
     // changes resize the scrollview without changing the SessionView's
     // own frame, so we re-poke the overlay here.
     [_codeReviewPromptOverlay sessionViewLayoutDidChange];
+}
+
+- (void)updateDiffWaitingPromptOverlayFrame {
+    // Same rationale as updateCodeReviewPromptOverlayFrame.
+    [_diffWaitingPromptOverlay sessionViewLayoutDidChange];
 }
 
 - (void)updateUploadIndicatorFrame {

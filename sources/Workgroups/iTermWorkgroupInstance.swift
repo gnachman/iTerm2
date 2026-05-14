@@ -395,9 +395,17 @@ final class iTermWorkgroupInstance: NSObject {
         var peers: [String: iTermPromise<PTYSession>] = [:]
         peers[root.uniqueIdentifier] = iTermPromise<PTYSession>(value: mainSession)
         for peer in peerChildren {
+            // .diff peers resolve gitBase at fire time so a gitBase
+            // change while the deferred launch is pending propagates
+            // without rebuilding the closure. Pass the unsubstituted
+            // config through to the spawner for .diff; substitute as
+            // before for other modes.
+            let configToSpawn = peer.mode == .diff
+                ? peer
+                : peer.substitutingGitBase(CCGitBaseSelectorItem.defaultBase)
             peers[peer.uniqueIdentifier] =
                 spawner.spawnPeer(parent: mainSession,
-                                  config: peer.substitutingGitBase(CCGitBaseSelectorItem.defaultBase),
+                                  config: configToSpawn,
                                   workgroupInstanceID: instanceUniqueIdentifier)
         }
 
@@ -409,7 +417,11 @@ final class iTermWorkgroupInstance: NSObject {
         // construction, avoiding a strong cycle through the poller's
         // update handler.
         let needsPoller = workgroup.sessions.contains { s in
-            s.toolbarItems.contains(where: { $0.needsGitPoller })
+            // .diff mode gates its launch on the poller's fileStatuses,
+            // so the workgroup must own one whether or not any toolbar
+            // item independently asks for it.
+            if s.mode == .diff { return true }
+            return s.toolbarItems.contains(where: { $0.needsGitPoller })
         }
         weak var instanceForPoller: iTermWorkgroupInstance?
         let poller: iTermGitPoller? = needsPoller
@@ -448,6 +460,23 @@ final class iTermWorkgroupInstance: NSObject {
                                             gitPoller: poller)
             instance.gitDirectoryTracker =
                 iTermAutoGitString(stringMaker: maker)
+            // Best-effort attempt to compress the "waiting for changes"
+            // overlay flash on entry into a dirty tree. iTermGitPoller.bump
+            // just calls -poll directly: it doesn't go through a rate
+            // limiter, and -poll early-returns when currentDirectory is
+            // empty. iTermGitStringMaker.init has just pushed the
+            // leader's PWD into the poller, so the bump succeeds when
+            // the leader's shell has already published its PWD by entry
+            // time (typical for user-driven "Enter Workgroup" on a
+            // long-running session). When the workgroup is entered via
+            // a trigger the moment the shell starts (the Claude Code
+            // flow), PWD hasn't been published yet, the bump no-ops on
+            // the empty-directory guard, and the first useful poll is
+            // the one iTermGitPoller.setCurrentDirectory triggers when
+            // the PWD finally arrives. We accept the overlay flash in
+            // that case; nothing here is harmful, just not always
+            // productive.
+            poller.bump()
         }
 
         // Propagate workgroupInstance to every peer (not just the
@@ -518,6 +547,82 @@ final class iTermWorkgroupInstance: NSObject {
                 selector.set(fileStatuses: statuses)
             }
         }
+        if statuses.containsDiffableChange {
+            fireDeferredDiffLaunches()
+        } else {
+            // Empty state under the current gitBase. For any .diff
+            // session that has a pendingDiffLaunch (i.e., the gitBase-
+            // change fan-out queued a restart that's still waiting
+            // for diffable state) and isn't already showing an
+            // overlay, drop the queued-reload overlay over its
+            // previous output. The pendingDiffLaunch closure stays
+            // installed so a later change will fire it.
+            //
+            // The state-A overlay is skipped here automatically: it
+            // already exists, so the
+            // diffWaitingPromptOverlay-non-nil check excludes it.
+            showQueuedReloadOverlayForEmptyDiffSessions()
+        }
+    }
+
+    private func showQueuedReloadOverlayForEmptyDiffSessions() {
+        var sessions: [PTYSession] = peerPort.realizedPeerSessions
+        for port in nestedPeerPorts {
+            sessions.append(contentsOf: port.realizedPeerSessions)
+        }
+        for entry in nonPeerEntriesByConfigID.values {
+            sessions.append(entry.session)
+        }
+        for session in sessions
+        where session.workgroupSessionMode == .diff
+            && session.hasPendingDiffLaunch
+            && session.view?.diffWaitingPromptOverlay == nil {
+            session.presentDiffWaitingPromptOverlayForQueuedReload()
+        }
+    }
+
+    // True iff the workgroup's git poller has reported at least one
+    // pending change that git difftool can actually show. Read from
+    // spawn paths to decide whether a fresh .diff peer can launch
+    // immediately (re-entering an already-dirty workspace) instead of
+    // waiting for the next poll tick. Untracked-only state is excluded:
+    // difftool ignores untracked files, so firing the launch would just
+    // dump "No changes" and immediately exit, which is exactly the
+    // situation the deferred-launch path exists to avoid.
+    @objc var diffLaunchReady: Bool {
+        guard let statuses = gitPoller?.state.fileStatuses else { return false }
+        return statuses.containsDiffableChange
+    }
+
+    // Public entry point to drain any pending diff launches if the
+    // poller already reports diffable changes. The non-peer
+    // (.split/.tab) spawn path sets pendingDiffLaunch inside an async
+    // PWD-fetch callback, while registerNonPeer runs synchronously
+    // beforehand: a poll that completes between the two would see
+    // hasPendingDiffLaunch == false on that session and skip it. The
+    // async callback calls this after assigning pendingDiffLaunch to
+    // close that gap. Safe to call when not ready (gated below).
+    @objc
+    func fireDeferredDiffLaunchesIfReady() {
+        guard diffLaunchReady else { return }
+        fireDeferredDiffLaunches()
+    }
+
+    // Walk every session we own and fire any deferred .diff-mode
+    // launch. Safe to call repeatedly: firePendingDiffLaunch clears
+    // the closure as it runs, so a session that already launched is
+    // a no-op on subsequent calls.
+    private func fireDeferredDiffLaunches() {
+        var sessions: [PTYSession] = peerPort.realizedPeerSessions
+        for port in nestedPeerPorts {
+            sessions.append(contentsOf: port.realizedPeerSessions)
+        }
+        for entry in nonPeerEntriesByConfigID.values {
+            sessions.append(entry.session)
+        }
+        for session in sessions where session.hasPendingDiffLaunch {
+            session.firePendingDiffLaunch()
+        }
     }
 }
 
@@ -548,17 +653,24 @@ extension iTermWorkgroupInstance: WorkgroupNavigationToolbarItemDelegate {
 
     func workgroupNavigationDidTapReload(ownerPeerID: String?) {
         guard let configID = ownerPeerID else { return }
-        // "Reload" means redo what's currently running — i.e.
+        // "Reload" means redo what's currently running, i.e.
         // re-execute the session's program. After a per-file pick
         // restart, that's the per-file command; before any pick,
         // it's whatever the session was launched with. We don't
         // pull cfg.command here because that would always reset to
         // the original entry command, which is not what users
         // expect from a reload button (cf. browser reload).
-        guard let session = liveSession(forConfigID: configID),
-              session.isRestartable() else {
+        guard let session = liveSession(forConfigID: configID) else { return }
+        // Diff hosts handle their own restartability: a waiting host
+        // (pendingDiffLaunch != nil, _program nil) reports
+        // isRestartable() == false, but Reload there is still
+        // meaningful (poll-check + fire if ready). See
+        // PTYSession.reloadDiffWithDeferralIfNeeded for state matrix.
+        if session.workgroupSessionMode == .diff {
+            session.reloadDiffWithDeferralIfNeeded()
             return
         }
+        guard session.isRestartable() else { return }
         // Code-review hosts re-show the prompt overlay so the user
         // can edit their prompt before the program is rerun.
         if session.workgroupSessionMode == .codeReview,
@@ -718,11 +830,58 @@ extension iTermWorkgroupInstance {
                 .compactMap { $0 as? CCDiffSelectorItem }
                 .first
             guard let selector else { continue }
+            let session = entry.session
+            // .diff mode mirrors the peer-port path: install a
+            // deferred restart closure for State B sessions and let
+            // the bumped poll's gitPollerDidUpdate either fire it or
+            // show the queued-reload overlay. See
+            // iTermWorkgroupPeerPort.installDeferredDiffRestart for
+            // the State A skip rationale.
+            if session.workgroupSessionMode == .diff
+                && session.isRestartable() {
+                installDeferredDiffRestart(forNonPeerConfigID: selector.ownerPeerID,
+                                           selector: selector)
+                continue
+            }
+            if session.workgroupSessionMode == .diff {
+                continue
+            }
             if let file = selector.currentlySelectedFilename {
                 diffDidSelect(filename: file, sender: selector)
             } else {
                 diffDidSelectAllFiles(sender: selector)
             }
+        }
+    }
+
+    // Non-peer counterpart of iTermWorkgroupPeerPort.installDeferredDiffRestart.
+    // Looks up the workgroup config and live session by config ID,
+    // captures the selector's current file pick, and installs a
+    // pendingDiffLaunch closure that re-resolves the command against
+    // the current gitBase at fire time.
+    private func installDeferredDiffRestart(forNonPeerConfigID configID: String?,
+                                            selector: CCDiffSelectorItem) {
+        guard let configID,
+              let cfg = config(forConfigID: configID),
+              let session = liveSession(forConfigID: configID) else {
+            return
+        }
+        let pickedFile = selector.currentlySelectedFilename
+        session.pendingDiffLaunch = { [weak self, weak session] in
+            guard let session else { return }
+            let base = self?.currentGitBase
+                ?? CCGitBaseSelectorItem.defaultBase
+            let resolved: String
+            if let pickedFile {
+                resolved = cfg.resolvedPerFileCommand(filename: pickedFile,
+                                                      gitBase: base)
+            } else {
+                resolved = cfg.resolvedCommand(gitBase: base)
+            }
+            guard !resolved.isEmpty else { return }
+            let wrapped = ITAddressBookMgr.commandByWrapping(
+                inLoginShell: resolved)
+            session.restart(withCommand: wrapped)
         }
     }
 

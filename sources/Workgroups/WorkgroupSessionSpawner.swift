@@ -72,9 +72,7 @@ final class DefaultWorkgroupSessionSpawner: WorkgroupSessionSpawner {
                                 newSession: newSession,
                                 targetSession: parent)
         Self.launch(session: newSession,
-                    command: config.command,
-                    urlString: config.urlString,
-                    mode: config.mode,
+                    config: config,
                     objectType: .paneObject,
                     factory: factory,
                     windowController: windowController,
@@ -94,9 +92,7 @@ final class DefaultWorkgroupSessionSpawner: WorkgroupSessionSpawner {
         let newSession = factory.newSession(withProfile: profile, parent: parent)
         windowController.addSession(inNewTab: newSession)
         Self.launch(session: newSession,
-                    command: config.command,
-                    urlString: config.urlString,
-                    mode: config.mode,
+                    config: config,
                     objectType: .tabObject,
                     factory: factory,
                     windowController: windowController,
@@ -267,15 +263,22 @@ final class DefaultWorkgroupSessionSpawner: WorkgroupSessionSpawner {
     // For .codeReview mode the launch is deferred: the prompt overlay
     // is added to the session view immediately, and attachOrLaunch
     // fires only when the user presses Start.
+    //
+    // For .diff mode the launch is deferred until the workgroup's git
+    // poller reports a non-empty fileStatuses list: the closure is
+    // captured on session.pendingDiffLaunch and iTermWorkgroupInstance
+    // fires it from gitPollerDidUpdate when changes appear. The
+    // caller hands us an unsubstituted config for .diff so we can
+    // re-resolve gitBase at fire time.
     private static func launch(session: PTYSession,
-                               command: String,
-                               urlString: String,
-                               mode: iTermWorkgroupSessionMode,
+                               config: iTermWorkgroupSessionConfig,
                                objectType: iTermObjectType,
                                factory: iTermSessionFactory,
                                windowController: PseudoTerminal,
                                parent: PTYSession,
                                workgroupInstanceID: String) {
+        let mode = config.mode
+        let urlString = config.urlString
         parent.asyncInitialDirectoryForNewSessionBased { oldCWD in
             // Wrap workgroup-supplied commands so they go through
             // /usr/bin/login + ShellLauncher and pick up the user's
@@ -287,13 +290,13 @@ final class DefaultWorkgroupSessionSpawner: WorkgroupSessionSpawner {
             if mode == .codeReview {
                 // Splits/tabs are already installed in the window by
                 // splitVertically: / addSession:inNewTab: above, so
-                // they're visible immediately — no bury() needed (peer
+                // they're visible immediately. No bury() needed: peer
                 // sessions, handled by PTYSession.makeWorkgroupPeer,
-                // do bury here for the same reason a peer can't be
-                // visible until activated). The overlay is added on
+                // do bury for the same reason a peer can't be
+                // visible until activated. The overlay is added on
                 // top of the freshly-installed pane.
                 session.presentCodeReviewPromptOverlay(
-                    rawCommand: command,
+                    rawCommand: config.command,
                     urlString: url,
                     objectType: objectType,
                     factory: factory,
@@ -302,9 +305,75 @@ final class DefaultWorkgroupSessionSpawner: WorkgroupSessionSpawner {
                     workgroupInstanceID: workgroupInstanceID)
                 return
             }
-            let cmd = command.isEmpty
+            if mode == .diff {
+                // Defer until the workgroup poller reports pending
+                // changes. session.workgroupInstance is always nil
+                // here: WorkgroupChildSpawning.registerNonPeer wires
+                // it up after spawnSplit/spawnTab returns, and the
+                // peer-spawn path likewise sets it via the promise
+                // resolution. So we always present the overlay and
+                // wait for the first poll tick. fireDeferredDiffLaunches
+                // will pick this session up as soon as fileStatuses
+                // first goes non-empty.
+                //
+                // The captured `oldCWD` is the leader's PWD at spawn
+                // time. The deferred launch uses it as-is rather than
+                // re-resolving when the closure fires, because a peer
+                // is supposed to mirror the workgroup entry point: if
+                // the leader cd's elsewhere later, the diff peer keeps
+                // diffing the repo the workgroup was opened on.
+                //
+                // gitBase, by contrast, IS re-resolved at fire time
+                // using the workgroup instance's current value, so a
+                // gitBase change while the deferred launch is pending
+                // propagates without rebuilding the closure. The
+                // caller passed us an unsubstituted config to enable
+                // this. Capture factory/windowController strongly: a
+                // fresh-built factory has no other strong reference
+                // once this closure unwinds and would dealloc before
+                // the poller's first update, silently no-opping the
+                // launch.
+                session.pendingDiffLaunch = { [weak session] in
+                    guard let session else { return }
+                    let base = session.workgroupInstance?.currentGitBase
+                        ?? CCGitBaseSelectorItem.defaultBase
+                    let resolved = config.resolvedCommand(gitBase: base)
+                    let cmd = resolved.isEmpty
+                        ? nil
+                        : ITAddressBookMgr.commandByWrapping(inLoginShell: resolved)
+                    let request = iTermSessionAttachOrLaunchRequest(
+                        session: session,
+                        canPrompt: false,
+                        objectType: objectType,
+                        hasServerConnection: false,
+                        serverConnection: iTermGeneralServerConnection(),
+                        urlString: url,
+                        allowURLSubs: false,
+                        environment: ["ITERM_WORKGROUP_ID": workgroupInstanceID],
+                        customShell: nil,
+                        oldCWD: oldCWD,
+                        forceUseOldCWD: true,
+                        command: cmd,
+                        isUTF8: nil,
+                        substitutions: nil,
+                        windowController: windowController,
+                        ready: nil) { _, _ in }
+                    factory.attachOrLaunch(with: request)
+                }
+                session.presentDiffWaitingPromptOverlay()
+                // Close the race between registerNonPeer (which runs
+                // synchronously above) and the current async callback
+                // (which assigns pendingDiffLaunch above): a poll
+                // completing in that window would skip the session.
+                // Now that pendingDiffLaunch is set, ask the instance
+                // to fire any deferred launches if the poller already
+                // has diffable state. No-op when not ready.
+                session.workgroupInstance?.fireDeferredDiffLaunchesIfReady()
+                return
+            }
+            let cmd = config.command.isEmpty
                 ? nil
-                : ITAddressBookMgr.commandByWrapping(inLoginShell: command)
+                : ITAddressBookMgr.commandByWrapping(inLoginShell: config.command)
             let request = iTermSessionAttachOrLaunchRequest(
                 session: session,
                 canPrompt: false,

@@ -17,7 +17,13 @@ extension iTermWorkgroupInstance {
     // resulting session in the workgroup tree and recurse.
     func spawnSplit(config: iTermWorkgroupSessionConfig, parent: PTYSession) {
         guard case .split(let settings) = config.kind else { return }
-        let resolved = config.substitutingGitBase(currentGitBase)
+        // .diff sessions resolve gitBase at fire time, not at spawn
+        // time, so a gitBase change while the deferred launch is
+        // pending propagates without rebuilding the closure. Pass
+        // the unsubstituted config through to the spawner for .diff.
+        let resolved = config.mode == .diff
+            ? config
+            : config.substitutingGitBase(currentGitBase)
         guard let newSession = spawner.spawnSplit(parent: parent,
                                                   config: resolved,
                                                   settings: settings,
@@ -33,7 +39,10 @@ extension iTermWorkgroupInstance {
 
     // Add a new-tab child from the workgroup config.
     func spawnTab(config: iTermWorkgroupSessionConfig, parent: PTYSession) {
-        let resolved = config.substitutingGitBase(currentGitBase)
+        // Same .diff rationale as spawnSplit above.
+        let resolved = config.mode == .diff
+            ? config
+            : config.substitutingGitBase(currentGitBase)
         guard let newSession = spawner.spawnTab(parent: parent,
                                                 config: resolved,
                                                 workgroupInstanceID: instanceUniqueIdentifier) else {
@@ -69,10 +78,14 @@ extension iTermWorkgroupInstance {
         var peers: [String: iTermPromise<PTYSession>] = [:]
         peers[config.uniqueIdentifier] = iTermPromise<PTYSession>(value: session)
         for peer in peerChildren {
+            // .diff peers resolve gitBase at fire time; see the
+            // matching spawnSplit/spawnTab/enter branches.
+            let configToSpawn = peer.mode == .diff
+                ? peer
+                : peer.substitutingGitBase(currentGitBase)
             peers[peer.uniqueIdentifier] =
                 spawner.spawnPeer(parent: parent,
-                                  config: peer.substitutingGitBase(
-                                    currentGitBase),
+                                  config: configToSpawn,
                                   workgroupInstanceID: instanceUniqueIdentifier)
         }
         let port = iTermWorkgroupPeerPort(

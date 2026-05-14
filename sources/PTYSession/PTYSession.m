@@ -4752,6 +4752,13 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
     if (promptOverlay != nil && promptOverlay.window != nil && !promptOverlay.isHidden) {
         return promptOverlay.promptResponder;
     }
+    // Same rationale for the Diff-waiting overlay: a buried .diff peer
+    // being activated should land focus on Run Anyway, not on the
+    // never-launched terminal underneath.
+    iTermDiffWaitingPromptView *diffOverlay = _view.diffWaitingPromptOverlay;
+    if (diffOverlay != nil && diffOverlay.window != nil && !diffOverlay.isHidden) {
+        return diffOverlay.promptResponder;
+    }
     if (@available(macOS 11, *)) {
         if (_view.isBrowser) {
             return _view.browserViewController.webView;

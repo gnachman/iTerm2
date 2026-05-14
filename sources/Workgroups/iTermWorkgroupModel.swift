@@ -27,6 +27,7 @@ final class iTermWorkgroupModel: NSObject {
         self.workgroups = Self.load()
         super.init()
         backfillToolbarShortcutsIfNeeded()
+        backfillClaudeCodeDiffModeIfNeeded()
     }
 
     // MARK: - Top-level mutations
@@ -92,12 +93,46 @@ final class iTermWorkgroupModel: NSObject {
             object: self)
     }
 
+    // One-time migration: flip the Claude Code workgroup's Diff peer
+    // from .regular to .diff. The peer's command starts difftool, which
+    // does nothing useful against a clean tree; before .diff mode
+    // existed the peer ran immediately on workgroup entry, popping
+    // open vimdiff on no files. Users who installed the integration
+    // before .diff existed already have mode=.regular persisted; this
+    // migration brings them in line with the template default without
+    // forcing a full reinstall.
+    //
+    // Latched in NoSync user defaults so a user who has *intentionally*
+    // switched the peer back to .regular doesn't get it flipped a
+    // second time on the next launch. Same precedent and rationale as
+    // backfillToolbarShortcutsIfNeeded below.
+    private func backfillClaudeCodeDiffModeIfNeeded() {
+        guard !iTermUserDefaults.claudeCodeDiffModeBackfilled else { return }
+        defer { iTermUserDefaults.claudeCodeDiffModeBackfilled = true }
+
+        var changed = false
+        for wgIdx in workgroups.indices
+        where workgroups[wgIdx].uniqueIdentifier
+                == ClaudeCodeWorkgroupTemplate.ID.workgroup {
+            for sIdx in workgroups[wgIdx].sessions.indices
+            where workgroups[wgIdx].sessions[sIdx].uniqueIdentifier
+                    == ClaudeCodeWorkgroupTemplate.ID.diff
+                && workgroups[wgIdx].sessions[sIdx].mode == .regular {
+                workgroups[wgIdx].sessions[sIdx].mode = .diff
+                changed = true
+            }
+        }
+        if changed {
+            persist()
+        }
+    }
+
     // One-time migration: stamp the default keyboard shortcuts onto
     // .navigation and .reload toolbar items that pre-date this
     // feature. Runs once per user (latched in NoSync user defaults)
     // so a subsequent intentional clear by the user doesn't get
     // re-seeded on the next launch. Only items whose shortcuts are
-    // entirely empty are touched — if any of the three navigation
+    // entirely empty are touched: if any of the three navigation
     // sub-shortcuts is set, that item is left as-is on the
     // assumption it has already been updated.
     private func backfillToolbarShortcutsIfNeeded() {
