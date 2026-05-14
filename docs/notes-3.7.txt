@@ -423,6 +423,14 @@ Bug Fixes:
   keystroke as text input before the host
   session’s PTYTextView could route it to the
   workgroup handler.
+- The Claude Code installer now reliably adds
+  Enter/Exit Workgroup triggers to divorced
+  sessions whose original profile was picked.
+  The previous pass matched on the dict’s
+  KEY_ORIGINAL_GUID, which could be stale
+  after an arrangement reload. The walk now
+  also consults each live or buried session’s
+  runtime originalProfile reference.
 - The Code Review prompt overlay no longer
   drifts out of sync with light/dark mode. The
   panel cached a CGColor snapshot of

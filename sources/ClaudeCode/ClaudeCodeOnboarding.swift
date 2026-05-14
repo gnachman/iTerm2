@@ -1314,13 +1314,41 @@ class ClaudeCodeOnboarding: NSObject {
         // uninstall, which already walks sessionsInstance.
         // TriggerController.add(_:toProfileWithGUID:) only walks
         // sharedInstance, so use the in-model overload here.
+        //
+        // Use two sources for the match: the dict in
+        // ProfileModel.sessionsInstance() (KEY_ORIGINAL_GUID) AND
+        // the live session's originalProfile reference. The latter
+        // is the runtime authority set at divorce time and survives
+        // arrangement reloads that would otherwise leave the dict's
+        // KEY_ORIGINAL_GUID stale relative to what the session
+        // actually merges from. Dedupe by divorced GUID so a
+        // session present in both sources only gets written once;
+        // TriggerController.add also dedupes the trigger payload,
+        // so a repeated write would be a no-op anyway.
         if let sessions = ProfileModel.sessionsInstance() {
+            var divorcedGuidsToUpdate = Set<String>()
             for divorced in sessions.bookmarks() {
                 guard let originalGuid = divorced[KEY_ORIGINAL_GUID] as? String,
                       guidsToInstall.contains(originalGuid),
                       let divorcedGuid = divorced[KEY_GUID] as? String else {
                     continue
                 }
+                divorcedGuidsToUpdate.insert(divorcedGuid)
+            }
+            let liveSessions =
+                iTermController.sharedInstance()?.allSessions() ?? []
+            let buriedSessions =
+                iTermBuriedSessions.sharedInstance()?.buriedSessions() ?? []
+            for session in liveSessions + buriedSessions {
+                guard session.isDivorced,
+                      let originalGuid = session.originalProfile?[KEY_GUID] as? String,
+                      guidsToInstall.contains(originalGuid),
+                      let divorcedGuid = session.profile?[KEY_GUID] as? String else {
+                    continue
+                }
+                divorcedGuidsToUpdate.insert(divorcedGuid)
+            }
+            for divorcedGuid in divorcedGuidsToUpdate {
                 TriggerController.add([enter, exit],
                                       toProfileWithGUID: divorcedGuid,
                                       in: sessions)
