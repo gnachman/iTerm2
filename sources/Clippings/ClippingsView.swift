@@ -49,6 +49,16 @@ class iTermClippingsView: NSView {
         didSet { reload() }
     }
 
+    // Forwarded to the table view so workgroup peer-switch and toolbar
+    // shortcuts fire even when the clippings table is first responder.
+    // Without this, the table view consumes the keystroke (via keyDown:
+    // or NSTableView’s built-in handling) before the host session’s
+    // PTYTextView ever sees performKeyEquivalent:, since PTYTextView
+    // bails out of performKeyEquivalent: when it isn’t first responder.
+    var workgroupShortcutHandler: ((NSEvent) -> Bool)? {
+        didSet { tableView.workgroupShortcutHandler = workgroupShortcutHandler }
+    }
+
     private let backgroundView = NSVisualEffectView()
     private let scrollView = NSScrollView()
     private let tableView = ClippingsTableView()
@@ -775,6 +785,19 @@ private class ClippingsCellView: NSTableCellView {
 private class ClippingsTableView: NSTableView {
     var deletePressedHandler: (() -> Void)?
     var spacePressedHandler: (() -> Void)?
+    // Route workgroup peer-switch / toolbar shortcuts to the host
+    // session before the table claims the event as text/navigation
+    // input. PTYTextView’s performKeyEquivalent: bails when it isn’t
+    // first responder, so without this hook nothing else in the
+    // hierarchy walk picks up the shortcut.
+    var workgroupShortcutHandler: ((NSEvent) -> Bool)?
+
+    override func performKeyEquivalent(with event: NSEvent) -> Bool {
+        if workgroupShortcutHandler?(event) == true {
+            return true
+        }
+        return super.performKeyEquivalent(with: event)
+    }
 
     override func keyDown(with event: NSEvent) {
         let key = Int(event.keyCode)

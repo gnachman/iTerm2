@@ -423,6 +423,12 @@ Bug Fixes:
   keystroke as text input before the host
   session’s PTYTextView could route it to the
   workgroup handler.
+- Workgroup peer-switch and toolbar shortcuts
+  now fire when the clippings panel is first
+  responder. The clippings table was claiming
+  the keystroke before PTYTextView (which is
+  no longer first responder) could route it to
+  the workgroup handler.
 - The Claude Code installer now reliably adds
   Enter/Exit Workgroup triggers to divorced
   sessions whose original profile was picked.
