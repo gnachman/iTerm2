@@ -2940,6 +2940,10 @@
 		A68BE9432DE41371002DD513 /* SVGSizeEstimator.swift in Sources */ = {isa = PBXBuildFile; fileRef = A68BE9422DE4136F002DD513 /* SVGSizeEstimator.swift */; };
 		A68BE9502DE5142A002DD513 /* librailroad_dsl.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = A68BE93E2DE3BA3D002DD513 /* librailroad_dsl.dylib */; };
 		A68BE9512DE51591002DD513 /* librailroad_dsl.dylib in CopyFiles */ = {isa = PBXBuildFile; fileRef = A68BE93E2DE3BA3D002DD513 /* librailroad_dsl.dylib */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
+		BEEFCAFEDEADC0DE00000002 /* librailroad_dsl.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = A68BE93E2DE3BA3D002DD513 /* librailroad_dsl.dylib */; };
+		BEEFCAFEDEADC0DE00000003 /* AppleScriptTest.m in Sources */ = {isa = PBXBuildFile; fileRef = A6F6B0222F9934CF00F9F8F3 /* AppleScriptTest.m */; };
+		BEEFCAFEDEADC0DE00000004 /* iTermSwiftPackages.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A69FEEBA2E123B8700AFF7A8 /* iTermSwiftPackages.framework */; };
+		BEEFCAFEDEADC0DE00000005 /* librailroad_dsl.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = A68BE93E2DE3BA3D002DD513 /* librailroad_dsl.dylib */; };
 		A68CB8592E3FC40E002531F5 /* ReaderModeBrowserTrigger.swift in Sources */ = {isa = PBXBuildFile; fileRef = A68CB8582E3FC40A002531F5 /* ReaderModeBrowserTrigger.swift */; };
 		A68CB85B2E3FD510002531F5 /* triggers.js in Resources */ = {isa = PBXBuildFile; fileRef = A600A93C2E3EDEDD00D05EAD /* triggers.js */; };
 		A68CB85C2E3FD510002531F5 /* triggers.js in Resources */ = {isa = PBXBuildFile; fileRef = A600A93C2E3EDEDD00D05EAD /* triggers.js */; };
@@ -3094,6 +3098,7 @@
 		A69FEECD2E123B8700AFF7A8 /* iTermSwiftPackages.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A69FEEBA2E123B8700AFF7A8 /* iTermSwiftPackages.framework */; };
 		A69FEECE2E123B8700AFF7A8 /* iTermSwiftPackages.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = A69FEEBA2E123B8700AFF7A8 /* iTermSwiftPackages.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		A69FEF272E12417B00AFF7A8 /* iTermSwiftPackages.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A69FEEBA2E123B8700AFF7A8 /* iTermSwiftPackages.framework */; };
+		BEEFCAFEDEADC0DE00000001 /* iTermSwiftPackages.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A69FEEBA2E123B8700AFF7A8 /* iTermSwiftPackages.framework */; };
 		A69FF3892E12FC3B00AFF7A8 /* iTermBrowserContextMenuHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = A69FF3882E12FC3500AFF7A8 /* iTermBrowserContextMenuHelper.swift */; };
 		A69FF38B2E13012F00AFF7A8 /* iTermContextMenuUtilities.h in Headers */ = {isa = PBXBuildFile; fileRef = A69FF38A2E13012900AFF7A8 /* iTermContextMenuUtilities.h */; };
 		A69FF38D2E13014600AFF7A8 /* iTermContextMenuUtilities.m in Sources */ = {isa = PBXBuildFile; fileRef = A69FF38C2E13014400AFF7A8 /* iTermContextMenuUtilities.m */; };
@@ -9574,6 +9579,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				BEEFCAFEDEADC0DE00000001 /* iTermSwiftPackages.framework in Frameworks */,
+				BEEFCAFEDEADC0DE00000002 /* librailroad_dsl.dylib in Frameworks */,
 				A667196A1DCE396A000CE608 /* libiTerm2SharedARC.a in Frameworks */,
 				A6661311225CFF7A00840E89 /* BetterFontPicker.framework in Frameworks */,
 				A690F7041B424EF8009F76D8 /* OpenDirectory.framework in Frameworks */,
@@ -9596,6 +9603,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				BEEFCAFEDEADC0DE00000004 /* iTermSwiftPackages.framework in Frameworks */,
+				BEEFCAFEDEADC0DE00000005 /* librailroad_dsl.dylib in Frameworks */,
 				A62B04A529B428B60077B955 /* Highlightr.framework in Frameworks */,
 				A67D19502237045C00BD0D4D /* libsixel.a in Frameworks */,
 				A66719691DCE3965000CE608 /* libiTerm2SharedARC.a in Frameworks */,
@@ -17082,7 +17091,6 @@
 			dependencies = (
 				A62B04A829B429A70077B955 /* PBXTargetDependency */,
 				A6C763D51B45C5BE00E3C992 /* PBXTargetDependency */,
-				1D6EDB0D19AEA276005A7799 /* PBXTargetDependency */,
 			);
 			name = iTerm2Tests;
 			productName = iTermTests;
@@ -19817,6 +19825,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				BEEFCAFEDEADC0DE00000003 /* AppleScriptTest.m in Sources */,
 				A6C763FE1B45C72F00E3C992 /* iTermTests.m in Sources */,
 				A62A7A2F2F98838F007CAA0B /* TerminalButton.metal in Sources */,
 				A62A7A302F98838F007CAA0B /* UnderlineComposite.metal in Sources */,
@@ -22021,6 +22030,7 @@
 				HEADER_SEARCH_PATHS = (
 					.,
 					ThirdParty,
+					"sources/**",
 				);
 				INFOPLIST_FILE = "plists/iTerm2ForApplescriptTesting-Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -22030,6 +22040,7 @@
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(PROJECT_DIR)/ThirdParty/libsixel/lib",
+					"$(PROJECT_DIR)/ThirdParty/librailroad_dsl/lib",
 				);
 				LINK_WITH_STANDARD_LIBRARIES = YES;
 				MACOSX_DEPLOYMENT_TARGET = 12.4;
@@ -22095,6 +22106,7 @@
 				HEADER_SEARCH_PATHS = (
 					.,
 					ThirdParty,
+					"sources/**",
 				);
 				INFOPLIST_FILE = "plists/iTerm2ForApplescriptTesting-Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -22104,6 +22116,7 @@
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(PROJECT_DIR)/ThirdParty/libsixel/lib",
+					"$(PROJECT_DIR)/ThirdParty/librailroad_dsl/lib",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 12.4;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
@@ -22166,6 +22179,7 @@
 				HEADER_SEARCH_PATHS = (
 					.,
 					ThirdParty,
+					"sources/**",
 				);
 				INFOPLIST_FILE = "plists/iTerm2ForApplescriptTesting-Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -22175,6 +22189,7 @@
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(PROJECT_DIR)/ThirdParty/libsixel/lib",
+					"$(PROJECT_DIR)/ThirdParty/librailroad_dsl/lib",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 12.4;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
@@ -22253,6 +22268,7 @@
 					"$(inherited)",
 					/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include,
 					ThirdParty,
+					"sources/**",
 				);
 				INFOPLIST_FILE = "plists/iTermTests-Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -22262,6 +22278,7 @@
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(PROJECT_DIR)/ThirdParty/libsixel/lib",
+					"$(PROJECT_DIR)/ThirdParty/librailroad_dsl/lib",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 12.4;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
@@ -22335,6 +22352,7 @@
 					"$(inherited)",
 					/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include,
 					ThirdParty,
+					"sources/**",
 				);
 				INFOPLIST_FILE = "plists/iTermTests-Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -22344,6 +22362,7 @@
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(PROJECT_DIR)/ThirdParty/libsixel/lib",
+					"$(PROJECT_DIR)/ThirdParty/librailroad_dsl/lib",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 12.4;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
@@ -22416,6 +22435,7 @@
 					"$(inherited)",
 					/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include,
 					ThirdParty,
+					"sources/**",
 				);
 				INFOPLIST_FILE = "plists/iTermTests-Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -22425,6 +22445,7 @@
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(PROJECT_DIR)/ThirdParty/libsixel/lib",
+					"$(PROJECT_DIR)/ThirdParty/librailroad_dsl/lib",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 12.4;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
@@ -23306,6 +23327,7 @@
 					"$(inherited)",
 					/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include,
 					ThirdParty,
+					"sources/**",
 				);
 				INFOPLIST_FILE = "plists/iTermTests-Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -23315,6 +23337,7 @@
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(PROJECT_DIR)/ThirdParty/libsixel/lib",
+					"$(PROJECT_DIR)/ThirdParty/librailroad_dsl/lib",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 12.4;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
@@ -23414,6 +23437,7 @@
 				HEADER_SEARCH_PATHS = (
 					.,
 					ThirdParty,
+					"sources/**",
 				);
 				INFOPLIST_FILE = "plists/iTerm2ForApplescriptTesting-Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -23423,6 +23447,7 @@
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(PROJECT_DIR)/ThirdParty/libsixel/lib",
+					"$(PROJECT_DIR)/ThirdParty/librailroad_dsl/lib",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 12.4;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
@@ -23544,6 +23569,9 @@
 					"$(inherited)",
 					"$(PROJECT_DIR)",
 					"$(PROJECT_DIR)/ThirdParty",
+					"$(PROJECT_DIR)/BetterFontPicker",
+					"$(PROJECT_DIR)/ColorPicker",
+					"$(PROJECT_DIR)/SearchableComboListView",
 				);
 				GCC_C_LANGUAGE_STANDARD = gnu99;
 				GCC_NO_COMMON_BLOCKS = YES;
@@ -25728,6 +25756,9 @@
 					"$(inherited)",
 					"$(PROJECT_DIR)",
 					"$(PROJECT_DIR)/ThirdParty",
+					"$(PROJECT_DIR)/BetterFontPicker",
+					"$(PROJECT_DIR)/ColorPicker",
+					"$(PROJECT_DIR)/SearchableComboListView",
 				);
 				GCC_C_LANGUAGE_STANDARD = gnu99;
 				GCC_DYNAMIC_NO_PIC = NO;
@@ -25804,6 +25835,9 @@
 					"$(inherited)",
 					"$(PROJECT_DIR)",
 					"$(PROJECT_DIR)/ThirdParty",
+					"$(PROJECT_DIR)/BetterFontPicker",
+					"$(PROJECT_DIR)/ColorPicker",
+					"$(PROJECT_DIR)/SearchableComboListView",
 				);
 				GCC_C_LANGUAGE_STANDARD = gnu99;
 				GCC_NO_COMMON_BLOCKS = YES;
@@ -25870,6 +25904,9 @@
 					"$(inherited)",
 					"$(PROJECT_DIR)",
 					"$(PROJECT_DIR)/ThirdParty",
+					"$(PROJECT_DIR)/BetterFontPicker",
+					"$(PROJECT_DIR)/ColorPicker",
+					"$(PROJECT_DIR)/SearchableComboListView",
 				);
 				GCC_C_LANGUAGE_STANDARD = gnu99;
 				GCC_NO_COMMON_BLOCKS = YES;
