@@ -26,8 +26,9 @@ struct LLMVectorStoreBatchStatusChecker {
     }
 
     var headers: [String: String] {
-        return LLMAuthorizationProvider(provider: provider,
-                                        apiKey: apiKey).headers
+        var result = LLMAuthorizationProvider(provider: provider, apiKey: apiKey).headers
+        result = AICustomHeaders.merged(into: result)
+        return result
     }
 
     var method: String { "GET" }
@@ -86,6 +87,7 @@ struct LLMVectorStoreAdder {
         var result = LLMAuthorizationProvider(provider: provider,
                                               apiKey: apiKey).headers
         result["Content-Type"] = "application/json"
+        result = AICustomHeaders.merged(into: result)
         return result
     }
 
@@ -155,6 +157,7 @@ struct LLMVectorStoreCreator {
     var headers: [String: String] {
         var result = LLMAuthorizationProvider(provider: provider, apiKey: apiKey).headers
         result["Content-Type"] = "application/json"
+        result = AICustomHeaders.merged(into: result)
         return result
     }
     var method: String { "POST" }

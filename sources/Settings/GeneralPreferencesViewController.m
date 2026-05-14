@@ -30,6 +30,9 @@
 #import "iTermWarning.h"
 #import <SSKeychain/SSKeychain.h>
 
+@interface GeneralPreferencesViewController () <NSTableViewDataSource, NSTableViewDelegate>
+@end
+
 enum {
     kUseSystemWindowRestorationSettingTag = 0,
     kOpenDefaultWindowArrangementTag = 1,
@@ -236,6 +239,13 @@ enum {
     IBOutlet NSButton *_sshIntegrationForURLs;
 
     NSString *_lastModel;
+
+    // Custom headers section (created programmatically)
+    NSButton *_aiCustomHeadersEnabled;
+    NSTableView *_aiCustomHeadersTableView;
+    NSButton *_aiAddCustomHeader;
+    NSButton *_aiRemoveCustomHeader;
+    NSMutableArray<NSMutableDictionary *> *_customHeaders;
 }
 
 - (instancetype)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil {
@@ -272,6 +282,7 @@ enum {
 }
 
 - (void)awakeFromNib {
+    [self setupCustomHeadersSection];
     PreferenceInfo *info;
 
     __weak __typeof(self) weakSelf = self;
@@ -991,6 +1002,11 @@ enum {
                    type:kPreferenceInfoTypeCheckbox];
     _aiSafetyCheck.enabled = [iTermAIAvailabilityProbe check];
 
+    [self defineControl:_aiCustomHeadersEnabled
+                    key:kPreferenceKeyAICustomHeadersEnabled
+            relatedView:nil
+                   type:kPreferenceInfoTypeCheckbox];
+
     // ---------------------------------------------------------------------------------------------
     [self defineControl:_enableRTL
                     key:kPreferenceKeyBidi
@@ -1318,6 +1334,167 @@ enum {
             }
         }
     }];
+}
+
+#pragma mark - Custom Headers
+
+- (void)setupCustomHeadersSection {
+    if (_aiCustomHeadersEnabled != nil) {
+        return;
+    }
+    if (!_manualAISettings) {
+        return;
+    }
+
+    NSView *effectView = _manualAISettings.subviews.firstObject;
+    if (!effectView) {
+        return;
+    }
+
+    const CGFloat kNewSectionHeight = 200.0;
+    const CGFloat kLeft = 18.0;
+    const CGFloat kViewWidth = _manualAISettings.frame.size.width;
+    const CGFloat kContentWidth = kViewWidth - kLeft * 2;
+
+    // Extend _manualAISettings. The NSVisualEffectView (effectView) carries
+    // heightSizable+widthSizable so it fills the parent automatically.
+    // Its subviews carry flexibleMinY so they stay anchored to the top,
+    // freeing the bottom kNewSectionHeight pt for the new controls.
+    NSRect manualFrame = _manualAISettings.frame;
+    manualFrame.size.height += kNewSectionHeight;
+    _manualAISettings.frame = manualFrame;
+
+    CGFloat y = 8.0;
+
+    // Disclaimer label
+    NSTextField *disclaimerLabel = [NSTextField labelWithString:@"Custom headers replace built-in headers with the same name."];
+    disclaimerLabel.font = [NSFont systemFontOfSize:[NSFont smallSystemFontSize]];
+    disclaimerLabel.textColor = [NSColor secondaryLabelColor];
+    disclaimerLabel.frame = NSMakeRect(kLeft, y, kContentWidth, 14.0);
+    [effectView addSubview:disclaimerLabel];
+    y += 18.0;
+
+    // + / − buttons
+    NSButton *addButton = [NSButton buttonWithTitle:@"" target:self action:@selector(addCustomHeader:)];
+    addButton.image = [NSImage imageNamed:NSImageNameAddTemplate];
+    addButton.bezelStyle = NSBezelStyleSmallSquare;
+    addButton.frame = NSMakeRect(kLeft, y, 21.0, 21.0);
+    [effectView addSubview:addButton];
+    _aiAddCustomHeader = addButton;
+
+    NSButton *removeButton = [NSButton buttonWithTitle:@"" target:self action:@selector(removeCustomHeader:)];
+    removeButton.image = [NSImage imageNamed:NSImageNameRemoveTemplate];
+    removeButton.bezelStyle = NSBezelStyleSmallSquare;
+    removeButton.frame = NSMakeRect(kLeft + 22.0, y, 21.0, 21.0);
+    [effectView addSubview:removeButton];
+    _aiRemoveCustomHeader = removeButton;
+    y += 25.0;
+
+    // Scroll view + table view
+    NSScrollView *scrollView = [[NSScrollView alloc] initWithFrame:NSMakeRect(kLeft, y, kContentWidth, 100.0)];
+    scrollView.hasVerticalScroller = YES;
+    scrollView.autohidesScrollers = YES;
+    scrollView.borderType = NSLineBorder;
+
+    NSTableView *tableView = [[NSTableView alloc] initWithFrame:NSMakeRect(0, 0, kContentWidth, 100.0)];
+    tableView.style = NSTableViewStyleInset;
+    tableView.allowsColumnReordering = NO;
+    tableView.allowsColumnSelection = NO;
+    tableView.allowsMultipleSelection = NO;
+    tableView.usesAlternatingRowBackgroundColors = YES;
+    tableView.gridStyleMask = NSTableViewSolidVerticalGridLineMask;
+
+    NSTableColumn *nameColumn = [[NSTableColumn alloc] initWithIdentifier:@"name"];
+    nameColumn.title = @"Name";
+    nameColumn.width = kContentWidth / 2.0 - 2.0;
+    nameColumn.editable = YES;
+    nameColumn.resizingMask = NSTableColumnUserResizingMask | NSTableColumnAutoresizingMask;
+    [tableView addTableColumn:nameColumn];
+
+    NSTableColumn *valueColumn = [[NSTableColumn alloc] initWithIdentifier:@"value"];
+    valueColumn.title = @"Value";
+    valueColumn.width = kContentWidth / 2.0 - 2.0;
+    valueColumn.editable = YES;
+    valueColumn.resizingMask = NSTableColumnUserResizingMask | NSTableColumnAutoresizingMask;
+    [tableView addTableColumn:valueColumn];
+
+    tableView.dataSource = self;
+    tableView.delegate = self;
+
+    scrollView.documentView = tableView;
+    [effectView addSubview:scrollView];
+    _aiCustomHeadersTableView = tableView;
+    y += 104.0;
+
+    // Checkbox
+    NSButton *enableCheckbox = [NSButton checkboxWithTitle:@"Append custom headers to AI requests"
+                                                    target:self
+                                                    action:@selector(settingChanged:)];
+    enableCheckbox.frame = NSMakeRect(kLeft, y, kContentWidth, 18.0);
+    [effectView addSubview:enableCheckbox];
+    _aiCustomHeadersEnabled = enableCheckbox;
+
+    // Load saved headers
+    id saved = [iTermPreferences objectForKey:kPreferenceKeyAICustomHeaders];
+    if ([saved isKindOfClass:[NSArray class]]) {
+        _customHeaders = [NSMutableArray array];
+        for (id entry in (NSArray *)saved) {
+            if ([entry isKindOfClass:[NSDictionary class]]) {
+                [_customHeaders addObject:[entry mutableCopy]];
+            }
+        }
+    } else {
+        _customHeaders = [NSMutableArray array];
+    }
+}
+
+- (void)saveCustomHeaders {
+    [iTermPreferences setObject:[_customHeaders copy] forKey:kPreferenceKeyAICustomHeaders];
+}
+
+- (IBAction)addCustomHeader:(id)sender {
+    [_customHeaders addObject:[@{@"name": @"", @"value": @""} mutableCopy]];
+    [self saveCustomHeaders];
+    [_aiCustomHeadersTableView reloadData];
+    NSInteger newRow = (NSInteger)_customHeaders.count - 1;
+    [_aiCustomHeadersTableView selectRowIndexes:[NSIndexSet indexSetWithIndex:(NSUInteger)newRow]
+                           byExtendingSelection:NO];
+    [_aiCustomHeadersTableView editColumn:0 row:newRow withEvent:nil select:YES];
+}
+
+- (IBAction)removeCustomHeader:(id)sender {
+    NSInteger row = _aiCustomHeadersTableView.selectedRow;
+    if (row < 0 || row >= (NSInteger)_customHeaders.count) {
+        return;
+    }
+    [_customHeaders removeObjectAtIndex:(NSUInteger)row];
+    [self saveCustomHeaders];
+    [_aiCustomHeadersTableView reloadData];
+}
+
+#pragma mark - NSTableViewDataSource
+
+- (NSInteger)numberOfRowsInTableView:(NSTableView *)tableView {
+    return (NSInteger)_customHeaders.count;
+}
+
+- (id)tableView:(NSTableView *)tableView objectValueForTableColumn:(NSTableColumn *)tableColumn row:(NSInteger)row {
+    NSMutableDictionary *entry = _customHeaders[(NSUInteger)row];
+    return entry[tableColumn.identifier];
+}
+
+- (void)tableView:(NSTableView *)tableView setObjectValue:(id)object forTableColumn:(NSTableColumn *)tableColumn row:(NSInteger)row {
+    NSMutableDictionary *entry = _customHeaders[(NSUInteger)row];
+    entry[tableColumn.identifier] = object ?: @"";
+    [self saveCustomHeaders];
+}
+
+#pragma mark - NSTableViewDelegate
+
+- (void)tableViewSelectionDidChange:(NSNotification *)notification {
+    if (notification.object == _aiCustomHeadersTableView) {
+        _aiRemoveCustomHeader.enabled = (_aiCustomHeadersTableView.selectedRow >= 0);
+    }
 }
 
 - (IBAction)showManualAIConfigurationPanel:(NSButton *)button {

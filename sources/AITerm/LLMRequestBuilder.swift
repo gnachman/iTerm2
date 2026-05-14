@@ -18,6 +18,7 @@ struct LLMRequestBuilder {
     var headers: [String: String] {
         var result = LLMAuthorizationProvider(provider: provider, apiKey: apiKey).headers
         result["Content-Type"] = "application/json"
+        result = AICustomHeaders.merged(into: result)
         return result
     }
 
