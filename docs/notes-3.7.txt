@@ -417,6 +417,12 @@ Bug Fixes:
   overlay. Enter now correctly activates
   Continue instead of the Install/Next button
   it was visually covering.
+- Workgroup peer-switch and toolbar shortcuts
+  now fire from the Code Review prompt overlay.
+  The prompt’s text view was consuming the
+  keystroke as text input before the host
+  session’s PTYTextView could route it to the
+  workgroup handler.
 - The Code Review prompt overlay no longer
   drifts out of sync with light/dark mode. The
   panel cached a CGColor snapshot of
