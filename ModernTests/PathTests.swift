@@ -15,17 +15,18 @@ final class PathTests: XCTestCase {
     // MARK: - Application Support Directory Tests
 
     func testApplicationSupportDirectory_DefaultSuite() {
-        // Given: No custom suite is set (default behavior)
-        // Note: We can't easily reset the suite in tests since it's set once at startup
-
         // When
         let path = FileManager.default.applicationSupportDirectory()
 
         // Then
         XCTAssertNotNil(path)
         XCTAssertTrue(path!.contains("Application Support"))
-        // Default should use iTerm2 as the directory name
-        XCTAssertTrue(path!.hasSuffix("/iTerm2") || path!.contains("iTerm2"))
+        // The trailing path component is the custom suite name (set by the
+        // test runner to keep tests from clobbering real prefs) when one is
+        // configured, otherwise iTerm2.
+        let expected = (iTermUserDefaults.customSuiteName() as String?) ?? "iTerm2"
+        XCTAssertTrue(path!.hasSuffix("/\(expected)"),
+                      "Path \(path!) should end with /\(expected)")
     }
 
     func testApplicationSupportDirectoryWithoutCreating_DefaultSuite() {
@@ -35,7 +36,9 @@ final class PathTests: XCTestCase {
         // Then
         XCTAssertNotNil(path)
         XCTAssertTrue(path!.contains("Application Support"))
-        XCTAssertTrue(path!.hasSuffix("/iTerm2") || path!.contains("iTerm2"))
+        let expected = (iTermUserDefaults.customSuiteName() as String?) ?? "iTerm2"
+        XCTAssertTrue(path!.hasSuffix("/\(expected)"),
+                      "Path \(path!) should end with /\(expected)")
     }
 
     // MARK: - Home Directory Dot-Dir Tests

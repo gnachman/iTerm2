@@ -45,6 +45,15 @@ final class AILiveHarness: XCTestCase {
 
     private static let configFileName = "iterm2-ai-live.json"
 
+    // Stale-config grace window. The wrapper script clears the file on
+    // EXIT, but a SIGKILL or aborted xcodebuild can leave it behind. If
+    // the file is older than this, treat it as no-config — otherwise a
+    // regular ModernTests run hours later would pick up dead state and
+    // either bill the vendor or fail visibly with "API key invalid".
+    // The default xcodebuild build+test cycle stays well under 60
+    // minutes for the longest live sweeps we run today.
+    private static let maxConfigAge: TimeInterval = 60 * 60
+
     private static func configPath() -> String {
         return (NSTemporaryDirectory() as NSString).appendingPathComponent(configFileName)
     }
@@ -55,7 +64,13 @@ final class AILiveHarness: XCTestCase {
     }
 
     private static func loadConfig() -> [String: String]? {
-        guard let data = try? Data(contentsOf: URL(fileURLWithPath: configPath())),
+        let url = URL(fileURLWithPath: configPath())
+        guard let attrs = try? FileManager.default.attributesOfItem(atPath: url.path),
+              let mtime = attrs[.modificationDate] as? Date,
+              Date().timeIntervalSince(mtime) < maxConfigAge else {
+            return nil
+        }
+        guard let data = try? Data(contentsOf: url),
               let any = try? JSONSerialization.jsonObject(with: data),
               let json = any as? [String: String]
         else {
