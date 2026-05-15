@@ -22,7 +22,11 @@ enum WorkgroupPresets {
         WorkgroupPreset(
             identifier: "codingAgentPlusDiff",
             displayName: "Coding Agent + Diff",
-            build: buildCodingAgentPlusDiff)
+            build: buildCodingAgentPlusDiff),
+        WorkgroupPreset(
+            identifier: "codingAgentPlusDiffPlusCodeReview",
+            displayName: "Coding Agent + Diff + Code Review",
+            build: buildCodingAgentPlusDiffPlusCodeReview)
     ]
 
     private static func buildCodingAgentPlusDiff() -> iTermWorkgroup {
@@ -64,5 +68,58 @@ enum WorkgroupPresets {
             uniqueIdentifier: UUID().uuidString,
             name: "Coding Agent + Diff",
             sessions: [root, diff])
+    }
+
+    // Mirrors the workgroup the Claude Code onboarding installer adds:
+    // a Chat root with mode switcher + git status, a Diff peer running
+    // `git difftool` with file picker + nav, and a Code Review peer
+    // running `claude` in code-review mode. Uses fresh UUIDs so this
+    // preset is independent of the installer's stable-ID copy.
+    private static func buildCodingAgentPlusDiffPlusCodeReview() -> iTermWorkgroup {
+        let rootID = UUID().uuidString
+        let diffID = UUID().uuidString
+        let reviewID = UUID().uuidString
+
+        let main = iTermWorkgroupSessionConfig(
+            uniqueIdentifier: rootID,
+            parentID: nil,
+            kind: .root,
+            profileGUID: nil,
+            command: "",
+            urlString: "",
+            toolbarItems: [.modeSwitcher, .gitStatus],
+            displayName: "Chat")
+
+        let diff = iTermWorkgroupSessionConfig(
+            uniqueIdentifier: diffID,
+            parentID: rootID,
+            kind: .peer,
+            profileGUID: nil,
+            command: "git difftool -y -x vimdiff \\(gitBase)",
+            urlString: "",
+            toolbarItems: [.modeSwitcher,
+                           .changedFileSelector,
+                           .gitBaseSelector,
+                           .navigation(WorkgroupNavigationShortcuts.defaults)],
+            displayName: "Diff",
+            perFileCommand: "git difftool -y -x vimdiff \\(gitBase) -- \\(file)",
+            mode: .diff)
+
+        let review = iTermWorkgroupSessionConfig(
+            uniqueIdentifier: reviewID,
+            parentID: rootID,
+            kind: .peer,
+            profileGUID: nil,
+            command: "claude \\(codeReviewPrompt) --append-system-prompt-file '\\(iterm2.appBundlePath)/Contents/Resources/code-review-system-prompt.txt' --settings '\\(iterm2.appBundlePath)/Contents/Resources/code-review-settings.txt'",
+            urlString: "",
+            toolbarItems: [.modeSwitcher,
+                           .reload(WorkgroupToolbarShortcut.reloadDefault)],
+            displayName: "Code Review",
+            mode: .codeReview)
+
+        return iTermWorkgroup(
+            uniqueIdentifier: UUID().uuidString,
+            name: "Coding Agent + Diff + Code Review",
+            sessions: [main, diff, review])
     }
 }
