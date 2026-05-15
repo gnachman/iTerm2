@@ -58,15 +58,6 @@ final class AISafetyRefusalParserTests: XCTestCase {
                 continue
             }
 
-            // Skip captures whose request itself failed (rate limit, model
-            // not found, transient 5xx). They carry no refusal payload to
-            // exercise the parser against; treating them as test failures
-            // poisons the suite on whatever vendor was unhealthy the day
-            // the fixture was refreshed.
-            if response["error"] != nil {
-                continue
-            }
-
             // The body in the fixture was already parsed-as-JSON for
             // readability when serialized; re-encode it for the parser.
             let bodyData: Data
@@ -147,14 +138,6 @@ final class AISafetyRefusalParserTests: XCTestCase {
                 json = (try JSONSerialization.jsonObject(with: data) as? [String: Any]) ?? [:]
             } catch {
                 failures.append("\(filename): unreadable JSON (\(error))")
-                continue
-            }
-
-            // Skip captures whose streaming request itself failed (rate
-            // limit, transient 5xx, model unavailable). The "chunk" they
-            // carry is an HTTP error envelope, not refusal-shaped SSE.
-            if let response = json["response"] as? [String: Any],
-               response["error"] != nil {
                 continue
             }
 

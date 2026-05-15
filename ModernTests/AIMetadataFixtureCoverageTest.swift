@@ -77,10 +77,15 @@ final class AIMetadataFixtureCoverageTest: XCTestCase {
     }
 
     // Models that AIMetadata still lists (so grandfathered keys keep working)
-    // but that a freshly-minted vendor API key cannot reach. Capture
-    // attempts return 404 / "no longer available to new users", so the
-    // coverage test skips them.
+    // but that a freshly-minted vendor API key cannot reach — either the
+    // capture returns 404 / "no longer available to new users", or the
+    // model's per-key quota for fresh accounts is too tight to actually
+    // record a refusal (Google's 2.0-generation Gemini models return 429
+    // RESOURCE_EXHAUSTED on the first request from a new key as of
+    // 2026-05). The coverage test skips these rather than failing on
+    // capture problems we can't fix from inside the test suite.
     private static let deprecatedToNewKeys: Set<String> = [
+        "gemini-2.0-flash",
         "gemini-2.0-flash-lite",
     ]
 
