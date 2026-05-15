@@ -26,7 +26,7 @@ enum WorkgroupPresets {
         WorkgroupPreset(
             identifier: "codingAgentPlusDiffPlusCodeReview",
             displayName: "Coding Agent + Diff + Code Review",
-            build: buildCodingAgentPlusDiffPlusCodeReview)
+            build: { buildCodingAgentPlusDiffPlusCodeReview() })
     ]
 
     private static func buildCodingAgentPlusDiff() -> iTermWorkgroup {
@@ -70,16 +70,18 @@ enum WorkgroupPresets {
             sessions: [root, diff])
     }
 
-    // Mirrors the workgroup the Claude Code onboarding installer adds:
-    // a Chat root with mode switcher + git status, a Diff peer running
-    // `git difftool` with file picker + nav, and a Code Review peer
-    // running `claude` in code-review mode. Uses fresh UUIDs so this
-    // preset is independent of the installer's stable-ID copy.
-    private static func buildCodingAgentPlusDiffPlusCodeReview() -> iTermWorkgroup {
-        let rootID = UUID().uuidString
-        let diffID = UUID().uuidString
-        let reviewID = UUID().uuidString
-
+    // Builds a Chat-root + Diff-peer + Code-Review-peer workgroup. Shared
+    // between the user-pickable preset (defaults: fresh UUIDs and a
+    // user-friendly name) and the Claude Code onboarding installer, which
+    // overrides every ID and the workgroup name so its triggers and saved
+    // references keep resolving across upgrades.
+    static func buildCodingAgentPlusDiffPlusCodeReview(
+        workgroupID: String = UUID().uuidString,
+        rootID: String = UUID().uuidString,
+        diffID: String = UUID().uuidString,
+        reviewID: String = UUID().uuidString,
+        name: String = "Coding Agent + Diff + Code Review"
+    ) -> iTermWorkgroup {
         let main = iTermWorkgroupSessionConfig(
             uniqueIdentifier: rootID,
             parentID: nil,
@@ -118,8 +120,8 @@ enum WorkgroupPresets {
             mode: .codeReview)
 
         return iTermWorkgroup(
-            uniqueIdentifier: UUID().uuidString,
-            name: "Coding Agent + Diff + Code Review",
+            uniqueIdentifier: workgroupID,
+            name: name,
             sessions: [main, diff, review])
     }
 }

@@ -24,58 +24,16 @@ enum ClaudeCodeWorkgroupTemplate {
         static let review = "builtin.claudeCode.review"
     }
 
-    // Mirrors the behavior of the old hardcoded Claude Code mode:
-    // Main session with mode switcher + git status, Diff peer running
-    // `git diff` with mode switcher + changed-file selector + nav
-    // buttons, Code Review peer running `claude -p '...'` with mode
-    // switcher + reload.
-    static let config: iTermWorkgroup = {
-        let main = iTermWorkgroupSessionConfig(
-            uniqueIdentifier: ID.main,
-            parentID: nil,
-            kind: .root,
-            profileGUID: nil,
-            command: "",
-            urlString: "",
-            toolbarItems: [
-                .modeSwitcher,
-                .gitStatus,
-            ],
-            displayName: "Chat")
-
-        let diff = iTermWorkgroupSessionConfig(
-            uniqueIdentifier: ID.diff,
-            parentID: ID.main,
-            kind: .peer,
-            profileGUID: nil,
-            command: "git difftool -y -x vimdiff \\(gitBase)",
-            urlString: "",
-            toolbarItems: [
-                .modeSwitcher,
-                .changedFileSelector,
-                .gitBaseSelector,
-                .navigation(WorkgroupNavigationShortcuts.defaults),
-            ],
-            displayName: "Diff",
-            perFileCommand: "git difftool -y -x vimdiff \\(gitBase) -- \\(file)",
-            mode: .diff)
-
-        let review = iTermWorkgroupSessionConfig(
-            uniqueIdentifier: ID.review,
-            parentID: ID.main,
-            kind: .peer,
-            profileGUID: nil,
-            command: "claude \\(codeReviewPrompt) --append-system-prompt-file '\\(iterm2.appBundlePath)/Contents/Resources/code-review-system-prompt.txt' --settings '\\(iterm2.appBundlePath)/Contents/Resources/code-review-settings.txt'",
-            urlString: "",
-            toolbarItems: [
-                .modeSwitcher,
-                .reload(WorkgroupToolbarShortcut.reloadDefault),
-            ],
-            displayName: "Code Review",
-            mode: .codeReview)
-
-        return iTermWorkgroup(uniqueIdentifier: ID.workgroup,
-                              name: "Claude Code",
-                              sessions: [main, diff, review])
-    }()
+    // Defers the actual structure to the shared preset builder so the
+    // installed workgroup and the user-pickable "Coding Agent + Diff +
+    // Code Review" preset can't drift apart. Only IDs and the display
+    // name diverge; everything else (commands, toolbar items, modes)
+    // lives in WorkgroupPresets.
+    static let config: iTermWorkgroup =
+        WorkgroupPresets.buildCodingAgentPlusDiffPlusCodeReview(
+            workgroupID: ID.workgroup,
+            rootID: ID.main,
+            diffID: ID.diff,
+            reviewID: ID.review,
+            name: "Claude Code")
 }
