@@ -464,34 +464,6 @@ final class AILiveHarness: XCTestCase {
         let key = try keyOrSkip(Self.loadKeys().openAI, vendor: "openai")
         runRefusal(vendor: "openai", apiKey: key, streaming: true)
     }
-    func test_openai_imageDescribe() throws {
-        // TODO: drive ChatAgent end-to-end here so OpenAI image attachments
-        // get coverage. Currently skipped because AILiveDriver bypasses the
-        // upload pipeline.
-        //
-        // iTerm2 supports OpenAI image attachments end-to-end, but not
-        // through the path AILiveDriver exercises. The production flow is:
-        //
-        //   ChatAgent.fetchCompletion(.multipart([.attachment(.file(image))]))
-        //     -> MessagePrepPipeline.handleMultipartUserMessage
-        //        -> ingestFiles(addToVectorStore: false)
-        //           -> zip + upload + replace .file with .fileID
-        //     -> hostedTools.codeInterpreter = true
-        //     -> ResponsesBodyRequestBuilder picks up file_ids via the
-        //        code_interpreter.container hook (line 1710-1722 of
-        //        ResponsesAPIRequest.swift), so the model reads the image
-        //        from a Python sandbox via the code interpreter.
-        //
-        // AILiveDriver calls AITermController.request(messages:stream:)
-        // directly, bypassing the prepPipeline upload. There's no inline
-        // image-bytes path to OpenAI in the request builder because the
-        // production flow always pre-uploads. Adding live coverage means
-        // driving through ChatAgent + a stub broker + a real upload, which
-        // is enough setup that it deserves its own test class. For now we
-        // skip; AIRequestBuilderAttachmentTests covers the PDF inline path
-        // (the only inline binary OpenAI Responses accepts).
-        throw XCTSkip("OpenAI image attachments require the ChatAgent / MessagePrepPipeline upload path; AILiveDriver doesn't drive that")
-    }
     func test_openai_hostedCodeInterpreter() throws {
         let key = try keyOrSkip(Self.loadKeys().openAI, vendor: "openai")
         runHostedCodeInterpreter(vendor: "openai", modelName: "gpt-4o-mini", apiKey: key)

@@ -141,7 +141,6 @@ else
         test_deepseek_thinking_reasoningOnlyAssistant_roundTrips
         test_openai_refusal_nonStreaming
         test_openai_refusal_streaming
-        test_openai_imageDescribe
         test_openai_hostedCodeInterpreter
     )
     matched=()
