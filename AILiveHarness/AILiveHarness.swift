@@ -72,11 +72,24 @@ final class AILiveHarness: XCTestCase {
                     deepSeek: json["DEEPSEEK_API_KEY"])
     }
 
+    // Models that AIMetadata still lists but that a freshly-minted vendor
+    // API key cannot reach. Capture attempts return 404 ("no longer
+    // available to new users") or 429 RESOURCE_EXHAUSTED on the first
+    // call, so exercising them on a default sweep is pure noise. An
+    // explicit ITERM2_AI_LIVE_<VENDOR>_MODELS override still lets you
+    // target them deliberately if a grandfathered key works.
+    // Keep in sync with AIMetadataFixtureCoverageTest.deprecatedToNewKeys.
+    static let unreachableForNewKeys: Set<String> = [
+        "gemini-2.0-flash",
+        "gemini-2.0-flash-lite",
+    ]
+
     private static func models(forVendor vendor: String) -> [String] {
         if let raw = loadConfig()?["\(vendor.uppercased())_MODELS"], !raw.isEmpty {
             return splitModels(raw)
         }
-        // Default: every model registered for this vendor in AIMetadata.
+        // Default: every model registered for this vendor in AIMetadata,
+        // minus the ones a fresh API key can't reach.
         let vendorEnum: iTermAIVendor? = {
             switch vendor {
             case "openai":    return .openAI
@@ -90,6 +103,7 @@ final class AILiveHarness: XCTestCase {
         return AIMetadata.instance.models
             .filter { $0.vendor == vendorEnum }
             .map { $0.name }
+            .filter { !Self.unreachableForNewKeys.contains($0) }
     }
 
     private static func splitModels(_ raw: String) -> [String] {
