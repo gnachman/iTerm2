@@ -17,7 +17,6 @@
 @implementation SearchTests
 
 - (void)setUp {
-    [iTermCharacterBufferContext ensureInstanceForQueue:dispatch_get_main_queue()];
 }
 
 // `end` is inclusive.
@@ -35,7 +34,7 @@
     screen_char_t zero = { 0 };
     int len = 8192;
     BOOL foundDwc = NO;
-    StringToScreenChars(zalgo, buf, zero, zero, &len, NO, nil, &foundDwc, iTermUnicodeNormalizationNone, 9, NO);
+    StringToScreenChars(zalgo, buf, zero, zero, &len, NO, nil, &foundDwc, iTermUnicodeNormalizationNone, 9, NO, NULL);
     screen_char_t eol = { .code = EOL_HARD };
     [block appendLine:buf length:len partial:NO width:80 metadata:iTermMetadataMakeImmutable(iTermMetadataDefault()) continuation:eol];
 
@@ -63,7 +62,7 @@
     screen_char_t zero = { 0 };
     int len = 8192;
     BOOL foundDwc = NO;
-    StringToScreenChars(haystack, buf, zero, zero, &len, NO, nil, &foundDwc, iTermUnicodeNormalizationNone, 9, NO);
+    StringToScreenChars(haystack, buf, zero, zero, &len, NO, nil, &foundDwc, iTermUnicodeNormalizationNone, 9, NO, NULL);
     screen_char_t eol = { .code = EOL_HARD };
     [block appendLine:buf length:len partial:NO width:80 metadata:iTermMetadataMakeImmutable(iTermMetadataDefault()) continuation:eol];
 
@@ -89,7 +88,7 @@
     screen_char_t zero = { 0 };
     int len = 8192;
     BOOL foundDwc = NO;
-    StringToScreenChars(haystack, buf, zero, zero, &len, NO, nil, &foundDwc, iTermUnicodeNormalizationNone, 9, NO);
+    StringToScreenChars(haystack, buf, zero, zero, &len, NO, nil, &foundDwc, iTermUnicodeNormalizationNone, 9, NO, NULL);
     screen_char_t eol = { .code = EOL_HARD };
     [block appendLine:buf length:len partial:NO width:80 metadata:iTermMetadataMakeImmutable(iTermMetadataDefault()) continuation:eol];
 

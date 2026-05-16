@@ -381,7 +381,8 @@ static const NSInteger kUnicodeVersion = 9;
                         NULL,
                         NO,
                         kUnicodeVersion,
-                        NO);
+                        NO,
+                        NULL);
     screen_char_t *buffer = data.mutableBytes;
     // Turn replacement characters into tab fillers. StringToScreenChars removes private range codes.
     buffer[1].code = TAB_FILLER;
@@ -423,7 +424,8 @@ static const NSInteger kUnicodeVersion = 9;
                         NULL,
                         NO,
                         kUnicodeVersion,
-                        NO);
+                        NO,
+                        NULL);
     screen_char_t *buffer = data.mutableBytes;
     // Turn replacement characters into tab fillers. StringToScreenChars removes private range codes.
     buffer[2].code = TAB_FILLER;
@@ -483,7 +485,8 @@ static const NSInteger kUnicodeVersion = 9;
                         NULL,
                         NO,
                         kUnicodeVersion,
-                        NO);
+                        NO,
+                        NULL);
     screen_char_t *buffer = (screen_char_t *)data.mutableBytes;
     buffer[width].code = eol;
     if (!_lines) {
@@ -657,7 +660,8 @@ static const NSInteger kUnicodeVersion = 9;
                             NULL,
                             NO,
                             kUnicodeVersion,
-                            NO);
+                            NO,
+                            NULL);
         return len;
     }
 }
@@ -706,7 +710,8 @@ static const NSInteger kUnicodeVersion = 9;
                             NULL,
                             NO,
                             kUnicodeVersion,
-                            NO);
+                            NO,
+                            NULL);
         _buffer[len].code = EOL_SOFT;
     }
 

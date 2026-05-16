@@ -389,7 +389,7 @@
 - (iTermLineBlockMetadataProvider)metadataProviderAtIndex:(int)i {
     return (iTermLineBlockMetadataProvider){
         ._metadata = &_guts->_array[i],
-        ._willMutate = ^{ [self willMutate]; }
+        ._array = self
     };
 }
 

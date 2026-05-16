@@ -39,7 +39,7 @@ final class AIMetadataFixtureCoverageTest: XCTestCase {
             // for grandfathered accounts so we keep the AIMetadata entry,
             // but a fixture can't be captured from a fresh API key. The list
             // is short and easy to revisit when Google fully removes a model.
-            if Self.deprecatedToNewKeys.contains(model.name) { continue }
+            if AILiveHarness.unreachableForNewKeys.contains(model.name) { continue }
             let vendorString = AIMetadataFixtureCoverageTest.vendorSlug(for: vendor)
             let safeModel = AIMetadataFixtureCoverageTest.sanitize(model.name)
             // Filenames are <vendor>_<safeModel>_refusal_<mode>_<seq>.json.
@@ -76,13 +76,9 @@ final class AIMetadataFixtureCoverageTest: XCTestCase {
         }
     }
 
-    // Models that AIMetadata still lists (so grandfathered keys keep working)
-    // but that a freshly-minted vendor API key cannot reach. Capture
-    // attempts return 404 / "no longer available to new users", so the
-    // coverage test skips them.
-    private static let deprecatedToNewKeys: Set<String> = [
-        "gemini-2.0-flash-lite",
-    ]
+    // The "fresh API key can't reach this model" list lives on AILiveHarness
+    // (see AILiveHarness.unreachableForNewKeys). The harness skips them on
+    // default sweeps; coverage skips them here for the same reason.
 
     // MARK: - Helpers
 

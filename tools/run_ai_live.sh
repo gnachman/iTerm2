@@ -141,7 +141,6 @@ else
         test_deepseek_thinking_reasoningOnlyAssistant_roundTrips
         test_openai_refusal_nonStreaming
         test_openai_refusal_streaming
-        test_openai_imageDescribe
         test_openai_hostedCodeInterpreter
     )
     matched=()
@@ -159,4 +158,13 @@ else
 fi
 
 cd "$PROJECT_DIR"
-exec tools/run_tests.expect "${only_testing_args[@]}"
+# Tell run_tests.expect to leave the config file alone — it's the live
+# invocation marker for AILiveHarness's setUpWithError. Plain ModernTests
+# runs default to deleting stale configs, which is what we want for them.
+export ITERM2_AI_LIVE_KEEP_CONFIG=1
+# Don't `exec` here: bash needs to live long enough for the EXIT trap
+# above to fire and remove $CONFIG_FILE after the tests finish. An
+# `exec` would replace bash with run_tests.expect, dropping the trap
+# and leaking the config file (the very stale-state bug the cleanup in
+# run_tests.expect is there to catch).
+tools/run_tests.expect "${only_testing_args[@]}"

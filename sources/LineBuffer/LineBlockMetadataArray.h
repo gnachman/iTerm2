@@ -10,6 +10,7 @@
 #import "iTermMetadata.h"
 #import "iTermPromise.h"
 
+@class LineBlockMetadataArray;
 @class iTermBidiDisplayInfo;
 
 NS_ASSUME_NONNULL_BEGIN
@@ -30,25 +31,15 @@ typedef struct {
 } LineBlockMutableMetadata;
 
 // Don't access this directly. Use the functions below.
+// _array is held unretained: providers are intended to be stack-local within
+// a single method call on LineBlockMetadataArray's owner, which keeps the
+// array alive for the provider's lifetime. Storing an unretained back-pointer
+// instead of a copy-on-write trigger block avoids per-call Block_copy in tight
+// inner loops like -[LineBlock locationOfRawLineForWidth:lineNum:].
 typedef struct {
     LineBlockMetadata *_metadata;
-    void (^_Nullable _willMutate)(void);
+    __unsafe_unretained LineBlockMetadataArray *_Nullable _array;
 } iTermLineBlockMetadataProvider;
-
-NS_INLINE const LineBlockMetadata *iTermLineBlockMetadataProviderGetImmutable(iTermLineBlockMetadataProvider provider) {
-    return provider._metadata;
-}
-
-NS_INLINE LineBlockMutableMetadata iTermLineBlockMetadataProvideGetMutable(iTermLineBlockMetadataProvider provider) {
-    if (provider._willMutate) {
-        provider._willMutate();
-        provider._willMutate = nil;
-    }
-    return (LineBlockMutableMetadata) {
-        .metadata = provider._metadata,
-        .mutableBidiDisplayInfo = provider._metadata->bidi_display_info,
-    };
-}
 
 
 // Stores an array of `LineBlockMetadata`. Offers copy-on-write. This is maybe
@@ -169,5 +160,20 @@ migrationIndex:(iTermExternalAttributeIndex * _Nullable)migrationIndex
 - (void)eraseFirstLineCache;
 
 @end
+
+// Defined after the @interface so -willMutate is visible at the call site.
+NS_INLINE const LineBlockMetadata *iTermLineBlockMetadataProviderGetImmutable(iTermLineBlockMetadataProvider provider) {
+    return provider._metadata;
+}
+
+NS_INLINE LineBlockMutableMetadata iTermLineBlockMetadataProvideGetMutable(iTermLineBlockMetadataProvider provider) {
+    if (provider._array) {
+        [provider._array willMutate];
+    }
+    return (LineBlockMutableMetadata) {
+        .metadata = provider._metadata,
+        .mutableBidiDisplayInfo = provider._metadata->bidi_display_info,
+    };
+}
 
 NS_ASSUME_NONNULL_END

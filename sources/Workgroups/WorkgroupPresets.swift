@@ -57,7 +57,8 @@ enum WorkgroupPresets {
                            .gitBaseSelector,
                            .navigation(WorkgroupNavigationShortcuts.defaults)],
             displayName: "Diff",
-            perFileCommand: "git diff \\(gitBase) -- \\(file)")
+            perFileCommand: "git diff \\(gitBase) -- \\(file)",
+            mode: .diff)
 
         return iTermWorkgroup(
             uniqueIdentifier: UUID().uuidString,

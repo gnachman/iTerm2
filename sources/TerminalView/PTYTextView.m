@@ -3110,8 +3110,25 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
     const long long oldAbsY = _accessibilityPendingOutputStartAbsY.longLongValue;
     const long long overflow = [_dataSource totalScrollbackOverflow];
 
-    const long long firstAbsY = oldAbsY;
     const long long lastAbsY = absCursorY - 1;
+
+    // Cap the announcement to the most recent N lines. Very large bursts
+    // (e.g. `cat largefile`) used to read every line out of the LineBuffer
+    // and then hand VoiceOver a multi-MB string that it would silently drop
+    // or truncate anyway. Clamping to the tail keeps the speech queue useful
+    // and bounds the work done in the LineBuffer read loop. VoiceOver users
+    // can still navigate to earlier lines via the regular accessibility
+    // text APIs.
+    static const long long kMaxAccessibilityAnnounceLines = 256;
+    long long firstAbsY = oldAbsY;
+    if (lastAbsY - firstAbsY + 1 > kMaxAccessibilityAnnounceLines) {
+        firstAbsY = lastAbsY - kMaxAccessibilityAnnounceLines + 1;
+        // Passing the capped firstAbsY to
+        // +accessibilityAnnouncementLinesForTrimmedLines: makes cmdIndex
+        // (oldAbsoluteCursorY - firstAbsoluteLine) negative, so the
+        // cmd-line strip is naturally skipped (the original cmd line is no
+        // longer in the array).
+    }
 
     AccLog(@"Output settle: firstAbsY=%lld lastAbsY=%lld cursorAbsY=%lld overflow=%lld", firstAbsY, lastAbsY, absCursorY, overflow);
 

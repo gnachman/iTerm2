@@ -411,12 +411,37 @@ Settings Improvements:
   you commit a selection.
 
 Bug Fixes:
+- Showing the clippings panel in a window
+  zoomed to fit the display no longer grows
+  the window horizontally. The tab content
+  area absorbs the panel’s width instead,
+  mirroring the toolbelt’s behavior.
 - The Install Claude Code Integration intro is
   now presented as a real sheet attached to the
   installer panel, rather than a subview
   overlay. Enter now correctly activates
   Continue instead of the Install/Next button
   it was visually covering.
+- Workgroup peer-switch and toolbar shortcuts
+  now fire from the Code Review prompt overlay.
+  The prompt’s text view was consuming the
+  keystroke as text input before the host
+  session’s PTYTextView could route it to the
+  workgroup handler.
+- Workgroup peer-switch and toolbar shortcuts
+  now fire when the clippings panel is first
+  responder. The clippings table was claiming
+  the keystroke before PTYTextView (which is
+  no longer first responder) could route it to
+  the workgroup handler.
+- The Claude Code installer now reliably adds
+  Enter/Exit Workgroup triggers to divorced
+  sessions whose original profile was picked.
+  The previous pass matched on the dict’s
+  KEY_ORIGINAL_GUID, which could be stale
+  after an arrangement reload. The walk now
+  also consults each live or buried session’s
+  runtime originalProfile reference.
 - The Code Review prompt overlay no longer
   drifts out of sync with light/dark mode. The
   panel cached a CGColor snapshot of
@@ -881,3 +906,27 @@ Bug Fixes:
   program terminates (broken pipe or
   tmux detach) so stale status text
   and indicators no longer linger.
+- Fix a stall after large output bursts
+  when the main thread was reading every
+  line of the burst to announce it for
+  VoiceOver. Two changes: the LineBlock
+  metadata provider no longer allocates
+  a heap block per inner-loop iteration
+  (which was churning through the objc
+  associated-objects table on release),
+  and the new-output announcement is
+  capped to the most recent 256 lines so
+  giant floods stop overwhelming
+  VoiceOver’s speech queue.
+- Add a Diff workgroup session mode
+  that defers running the configured
+  command until there are staged or
+  unstaged changes to show. The Claude
+  Code workgroup’s Diff peer uses it,
+  so the peer no longer launches
+  difftool on a clean tree. Existing
+  Claude Code workgroups are migrated
+  on first launch so the Diff peer
+  picks up the new mode automatically;
+  flip it back to Regular in Settings
+  if you prefer the old behavior.

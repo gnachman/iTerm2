@@ -1302,7 +1302,8 @@ ITERM_WEAKLY_REFERENCEABLE
 
 // Symmetric resize for right-gutter panel show/hide. Mirrors the toolbelt's
 // "remember whether show grew the window, undo on hide" pattern so that
-// toggling clippings (or any other gutter panel) doesn't bloat the window.
+// toggling clippings (or any other gutter panel) doesn't bloat the window
+// past the screen edge.
 - (void)rightExtraDidChangeImpl {
     DLog(@"rightExtraDidChangeImpl");
     // actualRightExtra/desiredRightExtra live on each SessionView; capture
@@ -1334,31 +1335,69 @@ ITERM_WEAKLY_REFERENCEABLE
     const NSRect beforeFrame = self.window.frame;
     NSScreen *screen = self.window.screen;
     if (!screen) {
-        // Off-screen window: visibleFrame would return NSZeroRect, making
-        // atRightEdgeBefore almost always false and causing the window to
-        // grow on every panel toggle. Fall back to a plain re-layout.
+        // Off-screen window: visibleFrame would return NSZeroRect, which
+        // would defeat the screen-edge clamp below. Fall back to a plain
+        // re-layout.
         [self fitTabsToWindow];
         return;
     }
     const NSRect screenFrame = screen.visibleFrame;
 
-    // Ask each tab for its ideal size (which reflects the new rightExtra),
-    // then size the window to fit. fitWindowToTabsExcludingTmuxTabs:... will
-    // grow or shrink the window to match.
-    const BOOL atRightEdgeBefore =
-        fabs(NSMaxX(beforeFrame) - NSMaxX(screenFrame)) <= 0.5;
-
-    // For shrinks: cap how much we shrink by what we previously grew. This
-    // keeps the window pinned to the screen edge if the user had it there
-    // (we never grew it, so we won't shrink it either).
-    if (!atRightEdgeBefore || _rightExtraWindowGrowthDelta > 0) {
-        [self fitWindowToIdealizedTabsPreservingHeight:YES];
-        const NSRect afterFrame = self.window.frame;
-        const CGFloat actualDelta = afterFrame.size.width - beforeFrame.size.width;
-        _rightExtraWindowGrowthDelta += actualDelta;
-        if (_rightExtraWindowGrowthDelta < 0) {
-            _rightExtraWindowGrowthDelta = 0;
+    // Fast path: if the window is pinned to (or past) the screen's right
+    // edge and we haven't previously grown it, leave the frame alone. The
+    // tab content area absorbs the rightExtra change. This avoids a
+    // visible grow-then-shrink flicker for windows the user has zoomed
+    // (green-button) or dragged to fit the display. A 10pt slop matches
+    // -finishToolbeltInitialization's edge detection; a tight threshold
+    // (e.g. 0.5pt) misses windows that are off by a fraction of a pixel
+    // due to character-grid snapping.
+    const CGFloat distanceToRightEdge = NSMaxX(screenFrame) - NSMaxX(beforeFrame);
+    if (distanceToRightEdge < 10 && _rightExtraWindowGrowthDelta <= 0) {
+        [self fitTabsToWindow];
+        for (TmuxController *controller in [self uniqueTmuxControllers]) {
+            [controller fitLayoutToWindows];
         }
+        return;
+    }
+
+    // Ask each tab for its ideal size (which reflects the new rightExtra)
+    // and size the window to fit. fitWindowToIdealizedTabsPreservingHeight:
+    // will grow or shrink the window to match.
+    [self fitWindowToIdealizedTabsPreservingHeight:YES];
+
+    // Correct the new frame so we honor:
+    //   - the screen's right edge: never push the window past it. The tab
+    //     content area absorbs the shortfall. Mirrors
+    //     -showToolbeltNotFullScreen, which shrinks the toolbelt rather
+    //     than growing the window past the screen.
+    //   - prior growth: only undo shrinkage up to what we previously grew,
+    //     so a window pinned to the edge before any panel was shown stays
+    //     pinned when panels toggle off.
+    NSRect correctedFrame = self.window.frame;
+    const CGFloat rawDelta = correctedFrame.size.width - beforeFrame.size.width;
+    CGFloat correctedDelta = rawDelta;
+    if (rawDelta > 0) {
+        const CGFloat overage = NSMaxX(correctedFrame) - NSMaxX(screenFrame);
+        if (overage > 0) {
+            correctedDelta = MAX(0, rawDelta - overage);
+        }
+    } else if (rawDelta < 0 && -rawDelta > _rightExtraWindowGrowthDelta) {
+        correctedDelta = -_rightExtraWindowGrowthDelta;
+    }
+    if (correctedDelta != rawDelta) {
+        correctedFrame.size.width = beforeFrame.size.width + correctedDelta;
+        [self.window setFrame:correctedFrame display:YES];
+    }
+    // Read back the actual width: -constrainFrameRect:toScreen:,
+    // content min/max size, and -canonicalFrameForScreen:windowFrame:preserveSize:
+    // can each adjust the frame between setFrame: and the realized
+    // window.frame, so the result may differ from correctedDelta.
+    // Accumulating the intended delta would let any discrepancy drift
+    // over many panel toggles and corrupt the shrink cap and edge anchor.
+    const CGFloat actualDelta = self.window.frame.size.width - beforeFrame.size.width;
+    _rightExtraWindowGrowthDelta += actualDelta;
+    if (_rightExtraWindowGrowthDelta < 0) {
+        _rightExtraWindowGrowthDelta = 0;
     }
 
     [self fitTabsToWindow];

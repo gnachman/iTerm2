@@ -273,12 +273,76 @@ final class iTermWorkgroupPeerPort: PTYSessionPeerPort {
                 guard let selector = view as? CCDiffSelectorItem else {
                     continue
                 }
+                guard let ownerPeerID = selector.ownerPeerID,
+                      let session = session(forIdentifier: ownerPeerID) else {
+                    continue
+                }
+                // For .diff peers in State B (program ran), don't
+                // restart immediately. Install a deferred restart
+                // closure instead, then let the bumped poll's
+                // gitPollerDidUpdate decide: fire the closure if the
+                // new base has changes, or show the queued-reload
+                // overlay if it doesn't. Without this, switching to
+                // a base with no diff (e.g. HEAD^ -> HEAD on a clean
+                // tree) would silently exit and leave the previous
+                // diff output on screen with no explanation.
+                //
+                // State A (.diff peer waiting for initial spawn) is
+                // skipped: its existing pendingDiffLaunch already
+                // re-resolves gitBase at fire time via the captured
+                // unsubstituted config, so a gitBase change between
+                // spawn and first poll propagates automatically.
+                if session.workgroupSessionMode == .diff
+                    && session.isRestartable() {
+                    installDeferredDiffRestart(forPeerID: ownerPeerID,
+                                               selector: selector)
+                    continue
+                }
+                if session.workgroupSessionMode == .diff {
+                    continue
+                }
                 if let file = selector.currentlySelectedFilename {
                     diffDidSelect(filename: file, sender: selector)
                 } else {
                     diffDidSelectAllFiles(sender: selector)
                 }
             }
+        }
+    }
+
+    // Build a closure that re-resolves the diff command against the
+    // workgroup's CURRENT gitBase at fire time and calls
+    // restart(withCommand:). Stashed on the session as
+    // pendingDiffLaunch so the next gitPollerDidUpdate can either
+    // fire it (changes appeared) or show the waiting overlay (still
+    // empty). Captures the peer's config (held in this port) and the
+    // selector's current file pick so the eventual restart uses the
+    // right command shape (per-file vs All Files) even if the popup
+    // state changes before the poll completes.
+    private func installDeferredDiffRestart(forPeerID peerID: String,
+                                            selector: CCDiffSelectorItem) {
+        guard let cfg = peerConfigs.first(where: {
+            $0.uniqueIdentifier == peerID
+        }) else {
+            return
+        }
+        guard let session = session(forIdentifier: peerID) else { return }
+        let pickedFile = selector.currentlySelectedFilename
+        session.pendingDiffLaunch = { [weak session, weak workgroupInstance] in
+            guard let session else { return }
+            let base = workgroupInstance?.currentGitBase
+                ?? CCGitBaseSelectorItem.defaultBase
+            let resolved: String
+            if let pickedFile {
+                resolved = cfg.resolvedPerFileCommand(filename: pickedFile,
+                                                      gitBase: base)
+            } else {
+                resolved = cfg.resolvedCommand(gitBase: base)
+            }
+            guard !resolved.isEmpty else { return }
+            let wrapped = ITAddressBookMgr.commandByWrapping(
+                inLoginShell: resolved)
+            session.restart(withCommand: wrapped)
         }
     }
 }
@@ -296,10 +360,19 @@ extension iTermWorkgroupPeerPort: WorkgroupNavigationToolbarItemDelegate {
 
     func workgroupNavigationDidTapReload(ownerPeerID: String?) {
         guard let ownerPeerID,
-              let session = session(forIdentifier: ownerPeerID),
-              session.isRestartable() else {
+              let session = session(forIdentifier: ownerPeerID) else {
             return
         }
+        // Diff peers handle their own restartability: a waiting peer
+        // (pendingDiffLaunch != nil, _program nil) reports
+        // isRestartable() == false, but Reload there is still
+        // meaningful (poll-check + fire if ready). See
+        // PTYSession.reloadDiffWithDeferralIfNeeded for state matrix.
+        if session.workgroupSessionMode == .diff {
+            session.reloadDiffWithDeferralIfNeeded()
+            return
+        }
+        guard session.isRestartable() else { return }
         // Code-review peers re-show the prompt overlay so the user can
         // edit their prompt before the program is rerun.
         if session.workgroupSessionMode == .codeReview,
@@ -308,8 +381,8 @@ extension iTermWorkgroupPeerPort: WorkgroupNavigationToolbarItemDelegate {
             return
         }
         // Reload re-runs whatever the session is currently set to run
-        // (its _program), not the original cfg.command — same
-        // rationale as the workgroup instance's reload path.
+        // (its _program), not the original cfg.command. Same rationale
+        // as the workgroup instance's reload path.
         session.restart()
     }
 }

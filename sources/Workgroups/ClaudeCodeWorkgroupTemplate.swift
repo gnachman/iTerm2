@@ -57,7 +57,8 @@ enum ClaudeCodeWorkgroupTemplate {
                 .navigation(WorkgroupNavigationShortcuts.defaults),
             ],
             displayName: "Diff",
-            perFileCommand: "git difftool -y -x vimdiff \\(gitBase) -- \\(file)")
+            perFileCommand: "git difftool -y -x vimdiff \\(gitBase) -- \\(file)",
+            mode: .diff)
 
         let review = iTermWorkgroupSessionConfig(
             uniqueIdentifier: ID.review,

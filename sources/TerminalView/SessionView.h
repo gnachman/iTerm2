@@ -38,6 +38,7 @@
 @class iTermAnnouncementViewController;
 @class iTermBrowserViewController;
 @class iTermCodeReviewPromptView;
+@class iTermDiffWaitingPromptView;
 @class iTermFindDriver;
 @class iTermImageWrapper;
 @class iTermIncrementalMinimapView;
@@ -358,11 +359,24 @@ typedef NS_ENUM(NSUInteger, iTermSessionViewFindDriver) {
 // Code review prompt overlay (created in a Swift extension on SessionView).
 @property(nonatomic, weak, nullable) iTermCodeReviewPromptView *codeReviewPromptOverlay;
 
+// Diff-waiting prompt overlay shown on .diff-mode workgroup peers while
+// no pending change has been detected. Same lifetime/host pattern as
+// codeReviewPromptOverlay above.
+@property(nonatomic, weak, nullable) iTermDiffWaitingPromptView *diffWaitingPromptOverlay;
+
 @end
 
 @interface SessionView (CodeReviewPromptOverlay)
 - (void)presentCodeReviewPromptOverlayWithDefaultPrompt:(nullable NSString *)defaultPrompt
+                               workgroupShortcutHandler:(BOOL (^ _Nullable)(NSEvent *event))workgroupShortcutHandler
                                                 onStart:(void (^)(NSString *text))onStart;
+@end
+
+@interface SessionView (DiffWaitingPromptOverlay)
+- (void)presentDiffWaitingPromptOverlayWithOnRunAnyway:(void (^)(void))onRunAnyway;
+- (void)presentDiffWaitingPromptOverlayForQueuedReloadWithOnRunAnyway:(void (^)(void))onRunAnyway
+                                                             onCancel:(void (^)(void))onCancel;
+- (void)dismissDiffWaitingPromptOverlay;
 @end
 
 NS_ASSUME_NONNULL_END

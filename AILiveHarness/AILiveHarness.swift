@@ -72,11 +72,24 @@ final class AILiveHarness: XCTestCase {
                     deepSeek: json["DEEPSEEK_API_KEY"])
     }
 
+    // Models that AIMetadata still lists but that a freshly-minted vendor
+    // API key cannot reach. Capture attempts return 404 ("no longer
+    // available to new users") or 429 RESOURCE_EXHAUSTED on the first
+    // call, so exercising them on a default sweep is pure noise. An
+    // explicit ITERM2_AI_LIVE_<VENDOR>_MODELS override still lets you
+    // target them deliberately if a grandfathered key works.
+    // Keep in sync with AIMetadataFixtureCoverageTest.deprecatedToNewKeys.
+    static let unreachableForNewKeys: Set<String> = [
+        "gemini-2.0-flash",
+        "gemini-2.0-flash-lite",
+    ]
+
     private static func models(forVendor vendor: String) -> [String] {
         if let raw = loadConfig()?["\(vendor.uppercased())_MODELS"], !raw.isEmpty {
             return splitModels(raw)
         }
-        // Default: every model registered for this vendor in AIMetadata.
+        // Default: every model registered for this vendor in AIMetadata,
+        // minus the ones a fresh API key can't reach.
         let vendorEnum: iTermAIVendor? = {
             switch vendor {
             case "openai":    return .openAI
@@ -90,6 +103,7 @@ final class AILiveHarness: XCTestCase {
         return AIMetadata.instance.models
             .filter { $0.vendor == vendorEnum }
             .map { $0.name }
+            .filter { !Self.unreachableForNewKeys.contains($0) }
     }
 
     private static func splitModels(_ raw: String) -> [String] {
@@ -449,34 +463,6 @@ final class AILiveHarness: XCTestCase {
     func test_openai_refusal_streaming() throws {
         let key = try keyOrSkip(Self.loadKeys().openAI, vendor: "openai")
         runRefusal(vendor: "openai", apiKey: key, streaming: true)
-    }
-    func test_openai_imageDescribe() throws {
-        // TODO: drive ChatAgent end-to-end here so OpenAI image attachments
-        // get coverage. Currently skipped because AILiveDriver bypasses the
-        // upload pipeline.
-        //
-        // iTerm2 supports OpenAI image attachments end-to-end, but not
-        // through the path AILiveDriver exercises. The production flow is:
-        //
-        //   ChatAgent.fetchCompletion(.multipart([.attachment(.file(image))]))
-        //     -> MessagePrepPipeline.handleMultipartUserMessage
-        //        -> ingestFiles(addToVectorStore: false)
-        //           -> zip + upload + replace .file with .fileID
-        //     -> hostedTools.codeInterpreter = true
-        //     -> ResponsesBodyRequestBuilder picks up file_ids via the
-        //        code_interpreter.container hook (line 1710-1722 of
-        //        ResponsesAPIRequest.swift), so the model reads the image
-        //        from a Python sandbox via the code interpreter.
-        //
-        // AILiveDriver calls AITermController.request(messages:stream:)
-        // directly, bypassing the prepPipeline upload. There's no inline
-        // image-bytes path to OpenAI in the request builder because the
-        // production flow always pre-uploads. Adding live coverage means
-        // driving through ChatAgent + a stub broker + a real upload, which
-        // is enough setup that it deserves its own test class. For now we
-        // skip; AIRequestBuilderAttachmentTests covers the PDF inline path
-        // (the only inline binary OpenAI Responses accepts).
-        throw XCTSkip("OpenAI image attachments require the ChatAgent / MessagePrepPipeline upload path; AILiveDriver doesn't drive that")
     }
     func test_openai_hostedCodeInterpreter() throws {
         let key = try keyOrSkip(Self.loadKeys().openAI, vendor: "openai")

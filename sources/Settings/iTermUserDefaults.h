@@ -76,6 +76,11 @@ typedef NS_ENUM(NSUInteger, iTermAppleWindowTabbingMode) {
 // migration state through synced prefs.
 @property (class, nonatomic) BOOL workgroupShortcutsBackfilled;
 
+// Latched once the one-time migration that flips the Claude Code
+// workgroup's Diff peer mode from .regular to .diff has run.
+// NoSync for the same reason as workgroupShortcutsBackfilled.
+@property (class, nonatomic) BOOL claudeCodeDiffModeBackfilled;
+
 // Returns whether the previous process exited cleanly. The value is latched on
 // first access: the on-disk flag is read then immediately reset so that if this
 // process crashes before +markShutdownAsClean is called, the next launch will
