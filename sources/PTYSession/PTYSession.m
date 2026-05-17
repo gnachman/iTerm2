@@ -5037,11 +5037,26 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
         return;
     }
 
-    // Copy non-overridden fields over.
-    NSMutableDictionary *temp = [NSMutableDictionary dictionaryWithDictionary:_profile];
+    // Use the latest divorced profile from sessionsInstance as the
+    // base for the merge, not the in-memory _profile. They are usually
+    // in sync, but writers like TriggerController.add(_:toProfileWithGUID:in:)
+    // mutate sessionsInstance directly without routing through this
+    // session's setProfile:. If we built temp from a stale _profile
+    // and wrote it back to sessionsInstance below, those external
+    // writes (e.g. the Claude Code installer pushing triggers into a
+    // divorced profile) would get clobbered for keys in
+    // _overriddenFields.
+    NSDictionary *latestSessionProfile =
+        [[ProfileModel sessionsInstance] bookmarkWithGuid:_profile[KEY_GUID]] ?: _profile;
+    NSMutableDictionary *temp = [NSMutableDictionary dictionaryWithDictionary:latestSessionProfile];
+    DLog(@"sharedProfileDidChange (divorced): merging from %@ latestCount=%@ inMemoryCount=%@ overridden=%@",
+         latestSessionProfile == _profile ? @"FALLBACK to in-memory _profile" : @"sessionsInstance",
+         @(latestSessionProfile.count),
+         @(_profile.count),
+         _overriddenFields);
     NSMutableArray *noLongerOverriddenFields = [NSMutableArray array];
     NSMutableSet *keys = [NSMutableSet setWithArray:[updatedProfile allKeys]];
-    [keys addObjectsFromArray:[_profile allKeys]];
+    [keys addObjectsFromArray:[latestSessionProfile allKeys]];
 
     [ProfileModel log:[NSString stringWithFormat:@"DIVORCE_MERGE_START: tempGUID=%@ updatedGUID=%@ KEY_GUID_is_overridden=%d",
                        temp[KEY_GUID],
@@ -5050,7 +5065,7 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
 
     for (NSString *key in keys) {
         NSObject *originalValue = updatedProfile[key];
-        NSObject *currentValue = _profile[key];
+        NSObject *currentValue = latestSessionProfile[key];
         if ([_overriddenFields containsObject:key]) {
             if ([originalValue isEqual:currentValue]) {
                 [noLongerOverriddenFields addObject:key];
@@ -5137,12 +5152,19 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
 
     BOOL didChange = NO;
     NSDictionary *sharedProfile = [[ProfileModel sharedInstance] bookmarkWithGuid:_originalProfile[KEY_GUID]];
+    DLog(@"reloadProfile: lookup originalGUID=%@ -> sharedProfile=%@",
+         _originalProfile[KEY_GUID], sharedProfile ? @"found" : @"NIL");
     if (sharedProfile && ![sharedProfile isEqual:_originalProfile]) {
         DLog(@"Shared profile changed");
         [self sharedProfileDidChange];
         didChange = YES;
         [_originalProfile autorelease];
         _originalProfile = [sharedProfile copy];
+    } else if (!sharedProfile) {
+        DLog(@"reloadProfile: shared profile not found for originalGUID=%@; isDivorced=%d sessionProfileGUID=%@. Triggers and other shared-profile updates will be ignored for this session.",
+             _originalProfile[KEY_GUID], self.isDivorced, _profile[KEY_GUID]);
+    } else {
+        DLog(@"reloadProfile: shared profile unchanged for originalGUID=%@", _originalProfile[KEY_GUID]);
     }
 
     if (self.isDivorced) {
@@ -5151,6 +5173,8 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
             DLog(@"Session profile changed");
             [self sessionProfileDidChange];
             didChange = YES;
+        } else {
+            DLog(@"reloadProfile: divorced session profile unchanged for guid=%@", _profile[KEY_GUID]);
         }
     }
 

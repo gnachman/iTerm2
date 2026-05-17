@@ -1210,6 +1210,88 @@ class ClaudeCodeOnboarding: NSObject {
 
     // MARK: - Step: Install Triggers
 
+    // Two flavors of "orphan": sessions whose authoritative profile
+    // is gone and so cannot be reached by the normal sharedInstance
+    // -> reloadProfile path.
+    //
+    //   Divorced orphan: session.isDivorced is true and the divorced
+    //     profile's KEY_ORIGINAL_GUID is missing from sharedInstance.
+    //     A bookmark already exists in sessionsInstance, so we can
+    //     write triggers to it directly.
+    //
+    //   Non-divorced orphan: session.isDivorced is false and
+    //     session.profile's KEY_GUID is missing from sharedInstance
+    //     (the user deleted the source profile after the session was
+    //     created). There is no sessionsInstance bookmark yet, so to
+    //     write triggers we must first call
+    //     divorceAddressBookEntryFromPreferences to create one.
+    private struct OrphanScan {
+        // Divorced GUIDs (KEY_GUID of the divorced profile) for
+        // already-divorced orphans. These come from
+        // sessionsInstance.bookmarks() and from live/buried divorced
+        // sessions; the two sources usually overlap so we dedupe.
+        var divorcedOrphanGuids = Set<String>()
+        // Non-divorced sessions whose profile GUID is missing from
+        // sharedInstance. Need to be divorced before triggers can be
+        // written.
+        var nonDivorcedOrphanSessions: [PTYSession] = []
+        // Total count of unique sessions affected, for the checkbox
+        // label.
+        var sessionCount: Int {
+            divorcedOrphanGuids.count + nonDivorcedOrphanSessions.count
+        }
+    }
+
+    private static func scanOrphans() -> OrphanScan {
+        var result = OrphanScan()
+        guard let sharedModel = ProfileModel.sharedInstance() else {
+            DLog("Onboarding: orphan scan: sharedInstance is nil")
+            return result
+        }
+        let sharedGuids = Set(sharedModel.bookmarks().compactMap { $0[KEY_GUID] as? String })
+        DLog("Onboarding: orphan scan: sharedInstance has \(sharedGuids.count) GUIDs")
+        // Only count live and buried sessions. sessionsInstance can
+        // hold stale divorced bookmarks for sessions that have since
+        // been closed, and those would inflate the count without
+        // actually corresponding to anything the user can see.
+        let liveSessions =
+            iTermController.sharedInstance()?.allSessions() ?? []
+        let buriedSessions =
+            iTermBuriedSessions.sharedInstance()?.buriedSessions() ?? []
+        DLog("Onboarding: orphan scan: \(liveSessions.count) live + \(buriedSessions.count) buried sessions")
+        for session in liveSessions + buriedSessions {
+            let profileGuidStr = (session.profile?[KEY_GUID] as? String) ?? "<nil>"
+            let originalGuidStr = (session.originalProfile?[KEY_GUID] as? String) ?? "<nil>"
+            let name = (session.profile?[KEY_NAME] as? String) ?? "?"
+            if session.isDivorced {
+                guard let originalGuid = session.originalProfile?[KEY_GUID] as? String,
+                      let divorcedGuid = session.profile?[KEY_GUID] as? String else {
+                    DLog("Onboarding: orphan scan: skip divorced session=\(session) name=\(name) (missing key) profileGUID=\(profileGuidStr) originalGUID=\(originalGuidStr)")
+                    continue
+                }
+                if sharedGuids.contains(originalGuid) {
+                    DLog("Onboarding: orphan scan: not-orphan divorced session=\(session) name=\(name) divorcedGUID=\(divorcedGuid) originalGUID=\(originalGuid)")
+                    continue
+                }
+                DLog("Onboarding: orphan scan: ORPHAN(divorced-live) session=\(session) name=\(name) divorcedGUID=\(divorcedGuid) originalGUID=\(originalGuid)")
+                result.divorcedOrphanGuids.insert(divorcedGuid)
+            } else {
+                guard let profileGuid = session.profile?[KEY_GUID] as? String else {
+                    DLog("Onboarding: orphan scan: skip non-divorced session=\(session) name=\(name) (missing profile GUID)")
+                    continue
+                }
+                if sharedGuids.contains(profileGuid) {
+                    DLog("Onboarding: orphan scan: not-orphan non-divorced session=\(session) name=\(name) profileGUID=\(profileGuid)")
+                    continue
+                }
+                DLog("Onboarding: orphan scan: ORPHAN(non-divorced) session=\(session) name=\(name) profileGUID=\(profileGuid)")
+                result.nonDivorcedOrphanSessions.append(session)
+            }
+        }
+        DLog("Onboarding: orphan scan complete: divorcedOrphanGuids=\(result.divorcedOrphanGuids.count) nonDivorcedOrphanSessions=\(result.nonDivorcedOrphanSessions.count)")
+        return result
+    }
+
     // Show a modal asking which profiles should receive the Enter/Exit
     // workgroup triggers, all selected by default. Returns false if
     // the user cancels (so the installer step doesn't tick over to
@@ -1224,8 +1306,10 @@ class ClaudeCodeOnboarding: NSObject {
             DLog("Onboarding: failed to construct trigger objects")
             return false
         }
+        let listWidth: CGFloat = 360
+        let listHeight: CGFloat = 240
         guard let listView = ProfileListView(
-            frame: NSRect(x: 0, y: 0, width: 360, height: 240),
+            frame: NSRect(x: 0, y: 0, width: listWidth, height: listHeight),
             model: ProfileModel.sharedInstance(),
             font: nil,
             profileTypes: .terminal) else {
@@ -1234,6 +1318,55 @@ class ClaudeCodeOnboarding: NSObject {
         listView.disableArrowHandler()
         listView.allowMultipleSelections()
 
+        // Offer to also update orphan sessions: running sessions
+        // whose source profile is missing from sharedInstance (the
+        // user deleted the profile after spawning the session, or an
+        // arrangement was restored without the original). They can't
+        // appear in the picker above, so without this checkbox the
+        // user has no way to opt them in. Default on so the obvious
+        // behavior happens without the user thinking about it.
+        let orphanCheckbox: NSButton?
+        let accessoryView: NSView
+        let orphanScan = Self.scanOrphans()
+        let orphanCount = orphanScan.sessionCount
+        if orphanCount > 0 {
+            let title = orphanCount == 1
+                ? "Also update 1 session whose profile is missing"
+                : "Also update \(orphanCount) sessions whose profiles are missing"
+            let checkbox = NSButton(
+                checkboxWithTitle: title,
+                target: nil,
+                action: nil)
+            checkbox.toolTip = "Includes running sessions that were created from a profile that has since been deleted."
+            checkbox.state = .on
+            checkbox.translatesAutoresizingMaskIntoConstraints = true
+            checkbox.sizeToFit()
+            let checkboxHeight = checkbox.frame.height
+            let spacing: CGFloat = 8
+            let container = NSView(frame: NSRect(
+                x: 0,
+                y: 0,
+                width: listWidth,
+                height: listHeight + spacing + checkboxHeight))
+            listView.frame = NSRect(
+                x: 0,
+                y: checkboxHeight + spacing,
+                width: listWidth,
+                height: listHeight)
+            checkbox.frame = NSRect(
+                x: 0,
+                y: 0,
+                width: max(listWidth, checkbox.frame.width),
+                height: checkboxHeight)
+            container.addSubview(listView)
+            container.addSubview(checkbox)
+            orphanCheckbox = checkbox
+            accessoryView = container
+        } else {
+            orphanCheckbox = nil
+            accessoryView = listView
+        }
+
         let alert = NSAlert()
         alert.messageText = "Install Auto-Enter Triggers"
         alert.informativeText = "Pick the profiles you\u{2019}ll run claude in. "
@@ -1241,7 +1374,7 @@ class ClaudeCodeOnboarding: NSObject {
             + "Claude Code workgroup is entered automatically."
         alert.addButton(withTitle: "Install")
         alert.addButton(withTitle: "Cancel")
-        alert.accessoryView = listView
+        alert.accessoryView = accessoryView
 
         // Pre-select every visible row so the default action is "all
         // profiles" and the user just deselects anything they don't
@@ -1303,6 +1436,7 @@ class ClaudeCodeOnboarding: NSObject {
             }
         }
 
+        DLog("Onboarding: guidsToInstall = \(guidsToInstall)")
         for guid in guidsToInstall {
             TriggerController.add([enter, exit], toProfileWithGUID: guid)
         }
@@ -1326,11 +1460,35 @@ class ClaudeCodeOnboarding: NSObject {
         // TriggerController.add also dedupes the trigger payload,
         // so a repeated write would be a no-op anyway.
         if let sessions = ProfileModel.sessionsInstance() {
+            // A divorced session whose original GUID still exists in
+            // sharedInstance is "adopted" by that shared profile. We
+            // only push triggers into it if the user picked its parent.
+            //
+            // A divorced session whose original GUID is no longer in
+            // sharedInstance is "orphaned" (the shared profile was
+            // deleted, or the session was restored from an arrangement
+            // whose original profile is gone). The picker can't list a
+            // profile that doesn't exist, and reloadProfile can't
+            // propagate changes from a missing shared profile, so the
+            // only way to update those sessions is to write directly
+            // to their divorced profile here. We expose this as an
+            // opt-in checkbox (default on) so users with stale orphans
+            // they have no intention of using can skip them.
+            let sharedModel = ProfileModel.sharedInstance()
+            let includeOrphans = orphanCheckbox?.state != .off
+            let isOrphan: (String) -> Bool = { originalGuid in
+                includeOrphans && sharedModel?.bookmark(withGuid: originalGuid) == nil
+            }
+
             var divorcedGuidsToUpdate = Set<String>()
+            // Stale divorced bookmarks (no live session) are skipped
+            // for the orphan case because writing triggers there is
+            // dead weight. The live/buried iteration below picks up
+            // orphan sessions that actually exist.
             for divorced in sessions.bookmarks() {
                 guard let originalGuid = divorced[KEY_ORIGINAL_GUID] as? String,
-                      guidsToInstall.contains(originalGuid),
-                      let divorcedGuid = divorced[KEY_GUID] as? String else {
+                      let divorcedGuid = divorced[KEY_GUID] as? String,
+                      guidsToInstall.contains(originalGuid) else {
                     continue
                 }
                 divorcedGuidsToUpdate.insert(divorcedGuid)
@@ -1340,14 +1498,36 @@ class ClaudeCodeOnboarding: NSObject {
             let buriedSessions =
                 iTermBuriedSessions.sharedInstance()?.buriedSessions() ?? []
             for session in liveSessions + buriedSessions {
+                let profileGuid = session.profile?[KEY_GUID] as? String ?? "<nil>"
+                let originalGuid = session.originalProfile?[KEY_GUID] as? String ?? "<nil>"
+                DLog("Onboarding: live session \(session) divorced=\(session.isDivorced) profileGUID=\(profileGuid) originalGUID=\(originalGuid)")
                 guard session.isDivorced,
                       let originalGuid = session.originalProfile?[KEY_GUID] as? String,
-                      guidsToInstall.contains(originalGuid),
                       let divorcedGuid = session.profile?[KEY_GUID] as? String else {
                     continue
                 }
-                divorcedGuidsToUpdate.insert(divorcedGuid)
+                if guidsToInstall.contains(originalGuid) || isOrphan(originalGuid) {
+                    divorcedGuidsToUpdate.insert(divorcedGuid)
+                }
             }
+            // Non-divorced orphans don't have a sessionsInstance
+            // bookmark we can target, so divorce each one first. The
+            // divorce assigns a fresh KEY_GUID and inserts the
+            // bookmark into sessionsInstance. We add that fresh GUID
+            // to the trigger-write set; the kReloadAllProfiles post
+            // below will then drive reloadProfile on the live
+            // session, which picks the new triggers up via the
+            // divorced branch (the shared branch is a no-op because
+            // the original profile is gone).
+            if includeOrphans {
+                for session in orphanScan.nonDivorcedOrphanSessions {
+                    let beforeGuid = session.profile?[KEY_GUID] as? String ?? "<nil>"
+                    let newGuid = session.divorceAddressBookEntryFromPreferences()
+                    DLog("Onboarding: divorced non-divorced orphan session=\(session) beforeGUID=\(beforeGuid) newDivorcedGUID=\(newGuid)")
+                    divorcedGuidsToUpdate.insert(newGuid)
+                }
+            }
+            DLog("Onboarding: divorcedGuidsToUpdate = \(divorcedGuidsToUpdate)")
             for divorcedGuid in divorcedGuidsToUpdate {
                 TriggerController.add([enter, exit],
                                       toProfileWithGUID: divorcedGuid,
