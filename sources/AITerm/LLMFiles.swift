@@ -75,6 +75,7 @@ struct ResponsesFileUploadBuilder {
         var result = LLMAuthorizationProvider(provider: provider,
                                               apiKey: apiKey).headers
         result["Content-Type"] = "multipart/form-data; boundary=\(boundary)"
+        result = AICustomHeaders.merged(into: result)
         return result
     }
 
