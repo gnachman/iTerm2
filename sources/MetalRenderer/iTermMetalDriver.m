@@ -2620,6 +2620,12 @@ extraIdentifyingInfoForIcon:button.extraIdentifyingInfoForIcon];
         iTermTextRendererTransientState *textState = [frameData transientStateForRenderer:_offscreenCommandLineTextRenderer];
         [textState didComplete];
     }
+    // Issue 12604/12791: Read back the GPU-written checksum report.
+    if (!_backgroundImageRenderer.rendererDisabled) {
+        iTermBackgroundImageRendererTransientState *bgState =
+            [frameData transientStateForRenderer:_backgroundImageRenderer];
+        [bgState didComplete];
+    }
     DLog(@"  Recording final stats");
 
 #if ENABLE_STATS

@@ -10,6 +10,11 @@ NS_ASSUME_NONNULL_BEGIN
 @interface iTermBackgroundImageRendererTransientState : iTermMetalRendererTransientState
 @property (nonatomic) NSEdgeInsets edgeInsets;
 @property (nonatomic) CGFloat computedAlpha;  // See iTermAlphaBlendingHelper.h
+
+// Issue 12604/12791: Called from iTermMetalDriver after the frame's command buffer
+// completes. Reads the GPU-written checksum report and, if nonzero, dumps a
+// diagnostic file under Application Support.
+- (void)didComplete;
 @end
 
 @interface iTermBackgroundImageRenderer : NSObject<iTermMetalRenderer>

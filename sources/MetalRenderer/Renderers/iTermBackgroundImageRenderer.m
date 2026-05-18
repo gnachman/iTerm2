@@ -12,6 +12,30 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
+// Issue 12604/12791: FNV-1a-32 over the 24 uint32 words of the 6-vertex array.
+// Must match the GPU-side implementation in iTermBackgroundImage.metal.
+static inline uint32_t iTermBgImageVertexHash(const iTermVertex *vertices) {
+    uint32_t hash = 2166136261u;
+    for (int i = 0; i < 6; i++) {
+        // Vector element addresses aren't taken in C/ObjC; copy through stack floats.
+        const float px = vertices[i].position.x;
+        const float py = vertices[i].position.y;
+        const float tx = vertices[i].textureCoordinate.x;
+        const float ty = vertices[i].textureCoordinate.y;
+        uint32_t words[4];
+        memcpy(&words[0], &px, sizeof(uint32_t));
+        memcpy(&words[1], &py, sizeof(uint32_t));
+        memcpy(&words[2], &tx, sizeof(uint32_t));
+        memcpy(&words[3], &ty, sizeof(uint32_t));
+        for (int j = 0; j < 4; j++) {
+            hash ^= words[j];
+            hash *= 16777619u;
+        }
+    }
+    // Reserve 0 as a "skip check" sentinel; clip a legitimate-but-zero hash to 1.
+    return hash == 0u ? 1u : hash;
+}
+
 @interface iTermBackgroundImageRendererTransientState ()
 @property (nonatomic, strong) id<MTLTexture> texture;
 @property (nonatomic) iTermBackgroundImageMode mode;
@@ -23,9 +47,24 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic) vector_float4 defaultBackgroundColor;
 @property (nullable, nonatomic, strong) id<MTLBuffer> box1;
 @property (nullable, nonatomic, strong) id<MTLBuffer> box2;
+// Issue 12604/12791: GPU checksum witness
+@property (nullable, nonatomic, strong) id<MTLBuffer> checksumReportBuffer;
+@property (nonatomic) uint32_t expectedChecksum;
+@property (nonatomic) vector_uint2 capturedViewportSize;
+- (void)setCapturedVertices:(const iTermVertex *)vertices;
+- (const iTermVertex *)capturedVertices;
+- (void)setOwner:(iTermBackgroundImageRenderer *)owner;
 @end
 
-@implementation iTermBackgroundImageRendererTransientState
+@interface iTermBackgroundImageRenderer (TransientStateReports)
+- (void)reportChecksumFailureForTransientState:(iTermBackgroundImageRendererTransientState *)tState
+                                         report:(uint32_t)report;
+@end
+
+@implementation iTermBackgroundImageRendererTransientState {
+    iTermVertex _capturedVertices[6];
+    __weak iTermBackgroundImageRenderer *_owner;
+}
 
 - (BOOL)skipRenderer {
     return _texture == nil;
@@ -37,6 +76,30 @@ NS_ASSUME_NONNULL_BEGIN
                                                       atomically:NO
                                                         encoding:NSUTF8StringEncoding
                                                            error:NULL];
+}
+
+- (void)setCapturedVertices:(const iTermVertex *)vertices {
+    memcpy(_capturedVertices, vertices, sizeof(_capturedVertices));
+}
+
+- (const iTermVertex *)capturedVertices {
+    return _capturedVertices;
+}
+
+- (void)setOwner:(iTermBackgroundImageRenderer *)owner {
+    _owner = owner;
+}
+
+- (void)didComplete {
+    if (!_checksumReportBuffer) {
+        return;
+    }
+    uint32_t report = 0;
+    memcpy(&report, _checksumReportBuffer.contents, sizeof(report));
+    if (report == 0) {
+        return;
+    }
+    [_owner reportChecksumFailureForTransientState:self report:report];
 }
 
 @end
@@ -209,6 +272,72 @@ NS_ASSUME_NONNULL_BEGIN
     ITCriticalError(NO, @"Background image vertex validation failed: %@. Diagnostic written to %@", reason, path);
 }
 
+- (void)reportChecksumFailureForTransientState:(iTermBackgroundImageRendererTransientState *)tState
+                                         report:(uint32_t)report {
+    NSString *appSupport = [[NSFileManager defaultManager] applicationSupportDirectory];
+    NSString *filename = [NSString stringWithFormat:@"bgimage-diag-checksum-%f.txt",
+                          [NSDate timeIntervalSinceReferenceDate]];
+    NSString *path = [appSupport stringByAppendingPathComponent:filename];
+
+    const iTermVertex *captured = tState.capturedVertices;
+    const iTermVertex *currentBytes = (const iTermVertex *)tState.vertexBuffer.contents;
+
+    NSMutableString *dump = [NSMutableString string];
+    [dump appendFormat:@"Timestamp: %@\n", [NSDate date]];
+    [dump appendFormat:@"Reason: GPU checksum mismatch (report bits=0x%x)\n", report];
+    [dump appendFormat:@"Expected checksum (CPU, FNV-1a-32): 0x%08x\n", tState.expectedChecksum];
+    [dump appendFormat:@"Re-hashed buffer contents now: 0x%08x\n",
+        iTermBgImageVertexHash(currentBytes)];
+    [dump appendFormat:@"Viewport: %u x %u\n",
+        tState.capturedViewportSize.x, tState.capturedViewportSize.y];
+    [dump appendFormat:@"Frame: %@\n", NSStringFromRect(tState.frame)];
+    [dump appendFormat:@"ContainerFrame: %@\n", NSStringFromRect(tState.containerFrame)];
+    [dump appendFormat:@"Mode: %d\n", (int)tState.mode];
+    [dump appendFormat:@"ImageSize: %@\n", NSStringFromSize(tState.imageSize)];
+    [dump appendFormat:@"ImageScale: %f\n", tState.imageScale];
+    [dump appendFormat:@"VertexBuffer label: %@\n", tState.vertexBuffer.label];
+    [dump appendFormat:@"VertexBuffer length: %lu\n", (unsigned long)tState.vertexBuffer.length];
+
+    [dump appendString:@"\nCaptured Vertices (what the CPU wrote and hashed):\n"];
+    for (int i = 0; i < 6; i++) {
+        [dump appendFormat:@"  v[%d]: pos=(%.4f, %.4f) tex=(%.6f, %.6f)\n",
+            i, captured[i].position.x, captured[i].position.y,
+            captured[i].textureCoordinate.x, captured[i].textureCoordinate.y];
+    }
+    [dump appendString:@"\nBuffer Vertices Now (after GPU finished):\n"];
+    for (int i = 0; i < 6; i++) {
+        [dump appendFormat:@"  v[%d]: pos=(%.4f, %.4f) tex=(%.6f, %.6f)\n",
+            i, currentBytes[i].position.x, currentBytes[i].position.y,
+            currentBytes[i].textureCoordinate.x, currentBytes[i].textureCoordinate.y];
+    }
+    [dump appendString:@"\nByte diffs (captured vs now):\n"];
+    const uint8_t *a = (const uint8_t *)captured;
+    const uint8_t *b = (const uint8_t *)currentBytes;
+    int diffCount = 0;
+    for (size_t off = 0; off < sizeof(iTermVertex) * 6; off++) {
+        if (a[off] != b[off]) {
+            [dump appendFormat:@"  byte %zu: captured=0x%02x now=0x%02x\n", off, a[off], b[off]];
+            diffCount++;
+            if (diffCount > 32) {
+                [dump appendString:@"  ... (truncated)\n"];
+                break;
+            }
+        }
+    }
+    if (diffCount == 0) {
+        [dump appendString:@"  (none - buffer bytes match CPU capture; corruption was transient)\n"];
+    }
+
+    NSError *error = nil;
+    [dump writeToFile:path atomically:YES encoding:NSUTF8StringEncoding error:&error];
+    if (error) {
+        ELog(@"Failed to write checksum diagnostic: %@", error);
+    }
+    ITCriticalError(NO,
+                    @"Background image GPU vertex checksum failed. Diagnostic written to %@",
+                    path);
+}
+
 - (BOOL)validateVertexBuffer:(id<MTLBuffer>)buffer
                 viewportSize:(vector_uint2)viewportSize
                       tState:(iTermBackgroundImageRendererTransientState *)tState {
@@ -301,6 +430,26 @@ NS_ASSUME_NONNULL_BEGIN
     _hasPreviousVertices = YES;
     _previousViewportSize = viewportSize;
 
+    // Issue 12604/12791: Compute an independent checksum witness for the vertex buffer.
+    // The expected checksum rides through setVertexBytes (inline command-buffer payload,
+    // no MTLBuffer involved) so a stomp on pool memory can't corrupt both witnesses
+    // in lockstep. A fresh shared-storage MTLBuffer is the GPU's path to report a
+    // mismatch back; allocated per-frame and read in didComplete.
+    iTermVertex capturedVertices[6];
+    memcpy(capturedVertices, tState.vertexBuffer.contents, sizeof(capturedVertices));
+    const uint32_t expectedChecksum = iTermBgImageVertexHash(capturedVertices);
+    tState.expectedChecksum = expectedChecksum;
+    tState.capturedViewportSize = viewportSize;
+    [tState setCapturedVertices:capturedVertices];
+    [tState setOwner:self];
+
+    const uint32_t zero = 0;
+    id<MTLBuffer> checksumReportBuffer = [_metalRenderer.device newBufferWithBytes:&zero
+                                                                            length:sizeof(zero)
+                                                                           options:MTLResourceStorageModeShared];
+    checksumReportBuffer.label = @"BG image checksum report";
+    tState.checksumReportBuffer = checksumReportBuffer;
+
     NSDictionary *fragmentBuffers = nil;
 #if ENABLE_TRANSPARENT_METAL_WINDOWS
     float alpha = tState.computedAlpha;
@@ -311,17 +460,20 @@ NS_ASSUME_NONNULL_BEGIN
         _metalRenderer.fragmentFunctionName = tState.repeat ? @"iTermBackgroundImageWithAlphaRepeatFragmentShader" : @"iTermBackgroundImageWithAlphaClampFragmentShader";
         id<MTLBuffer> alphaBuffer = [self alphaBufferWithValue:alpha poolContext:tState.poolContext];
         fragmentBuffers = @{ @(iTermFragmentInputIndexAlpha): alphaBuffer,
-                             @(iTermFragmentInputIndexColor): underlayColorBuffer
+                             @(iTermFragmentInputIndexColor): underlayColorBuffer,
+                             @(iTermFragmentBufferIndexBgImageChecksumReport): checksumReportBuffer,
         };
     } else {
         _metalRenderer.fragmentFunctionName = tState.repeat ? @"iTermBackgroundImageRepeatFragmentShader" : @"iTermBackgroundImageClampFragmentShader";
-        fragmentBuffers = @{ @(iTermFragmentInputIndexColor): underlayColorBuffer };
+        fragmentBuffers = @{ @(iTermFragmentInputIndexColor): underlayColorBuffer,
+                             @(iTermFragmentBufferIndexBgImageChecksumReport): checksumReportBuffer,
+        };
     }
 #else
     float alpha = 1;
     id<MTLBuffer> colorBuffer = [self colorBufferForState:tState alpha:alpha];
     _metalRenderer.fragmentFunctionName = tState.repeat ? @"iTermBackgroundImageRepeatFragmentShader" : @"iTermBackgroundImageClampFragmentShader";
-    fragmentBuffers = @{};
+    fragmentBuffers = @{ @(iTermFragmentBufferIndexBgImageChecksumReport): checksumReportBuffer };
 #endif
 
     tState.pipelineState = _metalRenderer.pipelineState;
@@ -340,6 +492,12 @@ NS_ASSUME_NONNULL_BEGIN
                                      @(iTermVertexInputIndexValidationFlag): validationBuffer };
     NSDictionary *textures = @{ @(iTermTextureIndexPrimary): tState.texture };
 
+    // Issue 12604/12791: Bind the expected checksum via setVertexBytes so it travels
+    // inline with the command buffer rather than as an MTLBuffer reference.
+    [frameData.renderEncoder setVertexBytes:&expectedChecksum
+                                     length:sizeof(expectedChecksum)
+                                    atIndex:iTermVertexInputIndexBgImageChecksum];
+
     // Draw triangle 1 (vertices 0-2)
     [_metalRenderer drawWithTransientState:tState
                              renderEncoder:frameData.renderEncoder
@@ -349,6 +507,12 @@ NS_ASSUME_NONNULL_BEGIN
                              vertexBuffers:vertexBuffers
                            fragmentBuffers:fragmentBuffers
                                   textures:textures];
+
+    // setVertexBytes binding persists, but rebind defensively for the second triangle
+    // in case any other state-management code clears it.
+    [frameData.renderEncoder setVertexBytes:&expectedChecksum
+                                     length:sizeof(expectedChecksum)
+                                    atIndex:iTermVertexInputIndexBgImageChecksum];
 
     // Draw triangle 2 (vertices 3-5)
     [_metalRenderer drawWithTransientState:tState
@@ -365,21 +529,33 @@ NS_ASSUME_NONNULL_BEGIN
         _metalRenderer.fragmentFunctionName = @"iTermBackgroundImageLetterboxFragmentShader";
         id<MTLBuffer> letterboxColorBuffer = [self colorBufferForState:tState alpha:alpha];
         tState.pipelineState = _metalRenderer.pipelineState;
+        // Issue 12604/12791: Skip checksum check for letterbox boxes (sentinel=0).
+        // Report buffer is reused so any GPU-side mismatch from those draws would
+        // also surface, but with expected=0 the shader skips comparison.
+        const uint32_t skipChecksum = 0;
+        [frameData.renderEncoder setVertexBytes:&skipChecksum
+                                         length:sizeof(skipChecksum)
+                                        atIndex:iTermVertexInputIndexBgImageChecksum];
         [_metalRenderer drawWithTransientState:tState
                                  renderEncoder:frameData.renderEncoder
                               numberOfVertices:6
                                   numberOfPIUs:0
                                  vertexBuffers:@{ @(iTermVertexInputIndexVertices): tState.box1,
                                                   @(iTermVertexInputIndexValidationFlag): validationBuffer }
-                               fragmentBuffers:@{ @(iTermFragmentInputIndexColor): letterboxColorBuffer }
+                               fragmentBuffers:@{ @(iTermFragmentInputIndexColor): letterboxColorBuffer,
+                                                  @(iTermFragmentBufferIndexBgImageChecksumReport): checksumReportBuffer }
                                       textures:@{}];
+        [frameData.renderEncoder setVertexBytes:&skipChecksum
+                                         length:sizeof(skipChecksum)
+                                        atIndex:iTermVertexInputIndexBgImageChecksum];
         [_metalRenderer drawWithTransientState:tState
                                  renderEncoder:frameData.renderEncoder
                               numberOfVertices:6
                                   numberOfPIUs:0
                                  vertexBuffers:@{ @(iTermVertexInputIndexVertices): tState.box2,
                                                   @(iTermVertexInputIndexValidationFlag): validationBuffer }
-                               fragmentBuffers:@{ @(iTermFragmentInputIndexColor): letterboxColorBuffer }
+                               fragmentBuffers:@{ @(iTermFragmentInputIndexColor): letterboxColorBuffer,
+                                                  @(iTermFragmentBufferIndexBgImageChecksumReport): checksumReportBuffer }
                                       textures:@{}];
     }
 }
