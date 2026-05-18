@@ -13,6 +13,7 @@ typedef enum iTermVertexInputIndex {
     iTermVertexTextInfo,
     iTermVertexColorArray,  // Points at per-quad vector_float4 color
     iTermVertexInputIndexValidationFlag,  // Issue 12604: uint32 where bit 0 = CPU validation failed
+    iTermVertexInputIndexBgImageChecksum,  // Issue 12604/12791: uint32, expected FNV-1a hash of the 6-vertex array
 } iTermVertexInputIndex;
 
 typedef enum iTermTextureIndex {
@@ -32,7 +33,8 @@ typedef enum {
     iTermFragmentBufferIndexFullScreenFlashColor = 4, // Points at a float4
     iTermFragmentInputIndexAlpha = 5,  // float4 pointer. Used by transparent windows on 10.14
     iTermFragmentInputIndexColor = 6,  // float4. Gives color for letterboxes/pillarboxes
-    iTermFragmentBufferIndexScale = 7  // backing scale factor float
+    iTermFragmentBufferIndexScale = 7,  // backing scale factor float
+    iTermFragmentBufferIndexBgImageChecksumReport = 8,  // Issue 12604/12791: device atomic_uint
 } iTermFragmentBufferIndex;
 
 // AND with mask to remove strikethrough bit
