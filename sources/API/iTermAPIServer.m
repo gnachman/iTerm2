@@ -24,6 +24,9 @@
 #import <objc/runtime.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/file.h>
+#include <fcntl.h>
+#include <unistd.h>
 
 #import <Cocoa/Cocoa.h>
 
@@ -135,6 +138,7 @@ NSString *const iTermAPIServerConnectionClosed = @"iTermAPIServerConnectionClose
     NSMutableArray<iTermHTTPConnection *> *_pendingConnections;  // _queue
     BOOL _socketReady;  // main queue
     NSMutableArray<void (^)(void)> *_whenReadyBlocks;  // main queue
+    int _lockFd;  // flock held for the lifetime of the listening server; -1 when not held
 }
 
 + (instancetype)sharedInstance {
@@ -155,9 +159,14 @@ NSString *const iTermAPIServerConnectionClosed = @"iTermAPIServerConnectionClose
     return [[self folderForUnixSocket] stringByAppendingPathComponent:@"socket"];
 }
 
++ (NSString *)unixSocketLockPath {
+    return [[self folderForUnixSocket] stringByAppendingPathComponent:@"socket.lock"];
+}
+
 - (instancetype)init {
     self = [super init];
     if (self) {
+        _lockFd = -1;
         _connections = [[NSMutableDictionary alloc] init];
         _unixSocket = [iTermSocket unixDomainSocket];
         if (!_unixSocket) {
@@ -175,6 +184,38 @@ NSString *const iTermAPIServerConnectionClosed = @"iTermAPIServerConnectionClose
     return self;
 }
 
+- (void)dealloc {
+    if (_lockFd >= 0) {
+        close(_lockFd);
+        _lockFd = -1;
+    }
+}
+
+// Take an exclusive, non-blocking advisory lock on socket.lock in the same
+// directory as the API socket. This prevents a second iTerm2 process that
+// shares this application-support directory (same -suite, or both with no
+// -suite) from silently unlink()ing the running instance's socket and
+// rebinding to the path. Lock is released automatically when the process
+// exits or _lockFd is closed.
+- (BOOL)acquireSocketLock {
+    NSString *lockPath = [iTermAPIServer unixSocketLockPath];
+    int fd = open(lockPath.UTF8String, O_RDWR | O_CREAT | O_CLOEXEC, S_IRUSR | S_IWUSR);
+    if (fd < 0) {
+        XLog(@"Failed to open API socket lock file %@: %s", lockPath, strerror(errno));
+        return NO;
+    }
+    if (flock(fd, LOCK_EX | LOCK_NB) != 0) {
+        XLog(@"Failed to acquire API socket lock at %@ (%s). Another iTerm2 "
+             @"instance appears to be using this application-support directory; "
+             @"refusing to start the API server to avoid clobbering its socket.",
+             lockPath, strerror(errno));
+        close(fd);
+        return NO;
+    }
+    _lockFd = fd;
+    return YES;
+}
+
 - (BOOL)listenOnUnixSocket {
     iTermSocketAddress *socketAddress = nil;
     NSString *path = [iTermAPIServer unixSocketPath];
@@ -182,6 +223,9 @@ NSString *const iTermAPIServerConnectionClosed = @"iTermAPIServerConnectionClose
                               withIntermediateDirectories:YES
                                                attributes:@{ NSFilePosixPermissions: @(S_IRWXU) }
                                                     error:nil];
+    if (![self acquireSocketLock]) {
+        return NO;
+    }
     socketAddress = [iTermSocketAddress socketAddressWithPath:path];
     unlink(path.UTF8String);
     if (![_unixSocket bindToAddress:socketAddress]) {
@@ -247,6 +291,10 @@ NSString *const iTermAPIServerConnectionClosed = @"iTermAPIServerConnectionClose
     self.delegate = nil;
     [_unixSocket close];
     _unixSocket = nil;
+    if (_lockFd >= 0) {
+        close(_lockFd);
+        _lockFd = -1;
+    }
     dispatch_sync(_queue, ^{
         DLog(@"Private queue: stop - begin");
         [self->_pendingConnections enumerateObjectsUsingBlock:^(iTermHTTPConnection * _Nonnull connection, NSUInteger idx, BOOL * _Nonnull stop) {

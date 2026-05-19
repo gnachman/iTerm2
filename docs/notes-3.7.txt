@@ -424,6 +424,15 @@ Bug Fixes:
   P3 (or back). The color space the well is
   showing is now preserved across the edit
   roundtrip. Issue 12720.
+- The Python API server now takes an
+  advisory lock on its socket directory at
+  startup. A second iTerm2 instance sharing
+  the same application-support directory
+  (e.g. two non-suited copies launched from
+  different .app bundles) will refuse to
+  start the API server instead of silently
+  unlinking and rebinding the original
+  instance’s socket.
 - Pressing Enter to commit an IME
   composition (e.g. Chinese, Japanese,
   Korean) in the AI Chat input no longer
