@@ -111,6 +111,12 @@ BOOL iTermSRGBColorFromHexString(NSString *hexString, iTermSRGBColor *colorOut);
 @property(nonatomic, readonly) NSString *shortDescription;
 
 @property(nonatomic, readonly) NSDictionary *dictionaryValue;
+
+// Like dictionaryValue but encodes the receiver in its own color space (sRGB, P3, or
+// Calibrated/deviceRGB) instead of forcing conversion to a default. Use this when serializing a
+// color whose color space was deliberately chosen by the user.
+@property(nonatomic, readonly) NSDictionary *dictionaryValuePreservingColorSpace;
+
 @property(nonatomic, readonly) NSString *stringValue;
 @property(nonatomic, readonly) iTermSRGBColor itermSRGBColor;
 

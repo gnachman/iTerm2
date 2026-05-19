@@ -1060,7 +1060,8 @@ static NSString * const kColorGalleryURL = @"https://www.iterm2.com/colorgallery
 #pragma mark - iTermHueVisualizationViewDelegate
 
 - (void)hueVisualizationDidModifyColorWithKey:(NSString *)key to:(NSColor *)color {
-    [self setObject:[color dictionaryValue] forKey:key];
+    // Preserve the source color space; see Issue 12720.
+    [self setObject:[color dictionaryValuePreservingColorSpace] forKey:key];
 }
 
 @end

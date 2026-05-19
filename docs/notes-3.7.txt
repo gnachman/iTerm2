@@ -419,6 +419,11 @@ Settings Improvements:
   you commit a selection.
 
 Bug Fixes:
+- Editing a color in a color well no longer
+  silently switches the picker from sRGB to
+  P3 (or back). The color space the well is
+  showing is now preserved across the edit
+  roundtrip. Issue 12720.
 - Pressing Enter to commit an IME
   composition (e.g. Chinese, Japanese,
   Korean) in the AI Chat input no longer

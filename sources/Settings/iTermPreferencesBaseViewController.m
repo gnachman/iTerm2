@@ -408,7 +408,9 @@ NSString *const iTermPreferencesDidToggleIndicateNonDefaultValues = @"iTermPrefe
                 break;
 
             case kPreferenceInfoTypeColorWell:
-                [self setObject:[[(CPKColorWell *)sender color] dictionaryValue] forKey:info.key];
+                // Preserve the well's color space so an sRGB picker stays sRGB across the
+                // edit roundtrip instead of being silently coerced to the default. Issue 12720.
+                [self setObject:[[(CPKColorWell *)sender color] dictionaryValuePreservingColorSpace] forKey:info.key];
                 break;
 
             default:
