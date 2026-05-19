@@ -40,6 +40,7 @@ NSString *const kPreferenceKeyRestoreWindowsToSameSpaces = @"RestoreWindowsToSam
 NSString *const kPreferenceKeyOpenNoWindowsAtStartup = @"OpenNoWindowsAtStartup";
 NSString *const kPreferenceKeyQuitWhenAllWindowsClosed = @"QuitWhenAllWindowsClosed";
 NSString *const kPreferenceKeyConfirmClosingMultipleTabs = @"OnlyWhenMoreTabs";  // The key predates split panes
+NSString *const kPreferenceKeyConfirmClosingTab = @"PromptOnCloseTab";
 NSString *const kPreferenceKeyPromptOnQuit = @"PromptOnQuit";
 NSString *const kPreferenceKeyPromptOnQuitEvenIfThereAreNoWindows = @"PromptOnQuitEvenIfThereAreNoWindows";
 NSString *const kPreferenceKeyInstantReplayMemoryMegabytes = @"IRMemory";
@@ -487,6 +488,7 @@ static NSString *sPreviousVersion;
                   kPreferenceKeyOpenNoWindowsAtStartup: @NO,
                   kPreferenceKeyQuitWhenAllWindowsClosed: @NO,
                   kPreferenceKeyConfirmClosingMultipleTabs: @YES,
+                  kPreferenceKeyConfirmClosingTab: @NO,
                   kPreferenceKeyPromptOnQuit: @YES,
                   kPreferenceKeyPromptOnQuitEvenIfThereAreNoWindows: @NO,
                   kPreferenceKeyInstantReplayMemoryMegabytes: @4,

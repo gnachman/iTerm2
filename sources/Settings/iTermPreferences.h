@@ -126,6 +126,7 @@ extern NSString *const kPreferenceKeyRestoreWindowsToSameSpaces;
 extern NSString *const kPreferenceKeyOpenNoWindowsAtStartup;
 extern NSString *const kPreferenceKeyQuitWhenAllWindowsClosed;
 extern NSString *const kPreferenceKeyConfirmClosingMultipleTabs;
+extern NSString *const kPreferenceKeyConfirmClosingTab;
 extern NSString *const kPreferenceKeyPromptOnQuit;
 extern NSString *const kPreferenceKeyPromptOnQuitEvenIfThereAreNoWindows;
 extern NSString *const kPreferenceKeyInstantReplayMemoryMegabytes;

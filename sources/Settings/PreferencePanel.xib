@@ -1328,6 +1328,7 @@ CA
                 <outlet property="_checkUpdate" destination="5048" id="Oi0-3Y-fu1"/>
                 <outlet property="_clickToSelectCommand" destination="2Pt-rH-WYj" id="kzN-to-jNw"/>
                 <outlet property="_confirmClosingMultipleSessions" destination="1996" id="1wi-R8-LGb"/>
+                <outlet property="_confirmClosingTab" destination="cTb-cl-Tab" id="cTo-cl-Tab"/>
                 <outlet property="_copyLastNewline" destination="5747" id="y4f-IT-rUT"/>
                 <outlet property="_customAIEndpoint" destination="1ex-YA-kns" id="0uj-2P-Lhd"/>
                 <outlet property="_customScriptsFolder" destination="llA-8R-abf" id="38A-bU-e4J"/>
@@ -6769,11 +6770,11 @@ See the [documentation](https://iterm2.com/automatic-profile-switching.html) for
                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                 <subviews>
                                     <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="8ns-Nz-VFk" customClass="iTermPreferencesInnerTabContainerView">
-                                        <rect key="frame" x="88" y="563" width="581" height="137"/>
+                                        <rect key="frame" x="88" y="563" width="581" height="157"/>
                                         <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxX="YES" flexibleMinY="YES"/>
                                         <subviews>
                                             <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="1950">
-                                                <rect key="frame" x="135" y="101" width="227" height="18"/>
+                                                <rect key="frame" x="135" y="121" width="227" height="18"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <buttonCell key="cell" type="check" title="Quit when all windows are closed" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="1951">
                                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -6784,7 +6785,7 @@ See the [documentation](https://iterm2.com/automatic-profile-switching.html) for
                                                 </connections>
                                             </button>
                                             <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="1996">
-                                                <rect key="frame" x="135" y="81" width="229" height="18"/>
+                                                <rect key="frame" x="135" y="101" width="229" height="18"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <buttonCell key="cell" type="check" title="Confirm closing multiple sessions" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="1997">
                                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -6792,7 +6793,19 @@ See the [documentation](https://iterm2.com/automatic-profile-switching.html) for
                                                 </buttonCell>
                                                 <connections>
                                                     <action selector="settingChanged:" target="9Se-ld-UJa" id="rss-OX-QhV"/>
-                                                    <outlet property="nextKeyView" destination="4757" id="5183"/>
+                                                    <outlet property="nextKeyView" destination="cTb-cl-Tab" id="5183"/>
+                                                </connections>
+                                            </button>
+                                            <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="cTb-cl-Tab">
+                                                <rect key="frame" x="135" y="81" width="229" height="18"/>
+                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                                <buttonCell key="cell" type="check" title="Confirm closing a tab" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="cTc-cl-Tab">
+                                                    <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                                                    <font key="font" metaFont="system"/>
+                                                </buttonCell>
+                                                <connections>
+                                                    <action selector="settingChanged:" target="9Se-ld-UJa" id="cTa-cl-Tab"/>
+                                                    <outlet property="nextKeyView" destination="4757" id="cTn-cl-Tab"/>
                                                 </connections>
                                             </button>
                                             <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="4757">

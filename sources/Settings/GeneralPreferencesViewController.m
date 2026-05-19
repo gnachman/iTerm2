@@ -60,6 +60,9 @@ enum {
     // Confirm closing multiple sessions
     IBOutlet id _confirmClosingMultipleSessions;
 
+    // Confirm closing a tab
+    IBOutlet id _confirmClosingTab;
+
     // Warn when quitting
     IBOutlet id _promptOnQuit;
     IBOutlet NSButton *_evenIfThereAreNoWindows;
@@ -366,6 +369,11 @@ enum {
 
     [self defineControl:_confirmClosingMultipleSessions
                     key:kPreferenceKeyConfirmClosingMultipleTabs
+            relatedView:nil
+                   type:kPreferenceInfoTypeCheckbox];
+
+    [self defineControl:_confirmClosingTab
+                    key:kPreferenceKeyConfirmClosingTab
             relatedView:nil
                    type:kPreferenceInfoTypeCheckbox];
 

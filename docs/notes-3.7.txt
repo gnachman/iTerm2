@@ -417,6 +417,9 @@ Settings Improvements:
   that works while another app is in
   front, without activating iTerm2 until
   you commit a selection.
+- A new “Confirm closing a tab” setting in
+  Settings > General > Closing prompts
+  before any tab is closed (off by default).
 
 Bug Fixes:
 - Pressing Enter to commit an IME

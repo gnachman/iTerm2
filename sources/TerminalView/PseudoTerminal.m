@@ -2085,6 +2085,9 @@ ITERM_WEAKLY_REFERENCEABLE
         [iTermPreferences boolForKey:kPreferenceKeyConfirmClosingMultipleTabs]) {
         mustAsk = YES;
     }
+    if ([iTermPreferences boolForKey:kPreferenceKeyConfirmClosingTab]) {
+        mustAsk = YES;
+    }
 
     if (mustAsk && !suppressConfirmation) {
         const BOOL anyIsLocked = [[aTab sessions] anyWithBlock:^BOOL(PTYSession *anObject) {
