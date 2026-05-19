@@ -210,6 +210,11 @@ Tabs, Windows, and UI:
   folder of images at a configurable interval.
   Pick a folder instead of a file in
   Settings > Profiles > Window > Background.
+- ⌘⇧T now triggers Shell > Undo Close,
+  matching the reopen-tab shortcut used by
+  web browsers. “Show Tabs in Fullscreen”
+  no longer has a default shortcut and can
+  be re-bound in Settings > Keys.
 
 
 Triggers Improvements:
