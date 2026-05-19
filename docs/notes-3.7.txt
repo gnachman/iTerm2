@@ -416,6 +416,13 @@ Bug Fixes:
   Korean) in the AI Chat input no longer
   prematurely submits the unfinalized
   candidate text.
+- Open Quickly now updates the MRU order
+  when you jump to a session, so repeated
+  Cmd-Shift-O Enter cycles between the two
+  most-recently-used panes instead of
+  drifting onto a sibling pane that
+  happened to be active in the destination
+  tab. Issue 12799.
 - Showing the clippings panel in a window
   zoomed to fit the display no longer grows
   the window horizontally. The tab content

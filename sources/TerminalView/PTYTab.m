@@ -1039,7 +1039,10 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
         [root_ replaceSubview:[[root_ subviews] objectAtIndex:0]
                          with:[session view]];
     }
-    [self setActiveSession:session updateActivityCounter:NO];
+    // -reveal is the only caller path and every -reveal site is an explicit
+    // user-initiated jump, so bump both the per-tab activity counter (for
+    // cmd-[/]) and the global lastActivityOrdinal (for Open Quickly MRU).
+    [self setActiveSession:session updateActivityCounter:YES];
     if (maximize) {
         [self.activeSession toggleTmuxZoom];
     }

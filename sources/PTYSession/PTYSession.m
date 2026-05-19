@@ -15006,7 +15006,8 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     NSWindowController<iTermWindowController> *terminal = [_delegate realParentWindow];
     iTermController *controller = [iTermController sharedInstance];
     BOOL okToActivateApp = YES;
-    if ([terminal isHotKeyWindow]) {
+    const BOOL isHotKey = [terminal isHotKeyWindow];
+    if (isHotKey) {
         DLog(@"Showing hotkey window");
         iTermProfileHotKey *hotKey = [[iTermHotKeyController sharedInstance] profileHotKeyForWindowController:(PseudoTerminal *)terminal];
         [[iTermHotKeyController sharedInstance] showWindowForProfileHotKey:hotKey url:nil];
@@ -15016,8 +15017,6 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
         [controller setCurrentTerminal:(PseudoTerminal *)terminal];
         DLog(@"Making window key and ordering front");
         [[terminal window] makeKeyAndOrderFront:self];
-        DLog(@"Selecting tab from delegate %@", _delegate);
-        [_delegate sessionSelectContainingTab];
     }
     if (okToActivateApp) {
         DLog(@"Activate the app");
@@ -15041,7 +15040,18 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     }
 
     DLog(@"Make this session active in delegate %@", _delegate);
+    // Stamp the active session BEFORE selecting the containing tab.
+    // tabView:didSelectTabViewItem: stamps the destination tab's
+    // activeSession_ on the cross-window MRU ordinal; if the tab
+    // switch ran first while activeSession_ was still the previously-
+    // active sibling, that sibling would get the MRU bump in our
+    // place and Cmd-Shift-O Enter would drift onto it. Setting
+    // active first means the tab switch (redundantly) stamps self.
     [_delegate setActiveSessionPreservingMaximization:self];
+    if (!isHotKey) {
+        DLog(@"Selecting tab from delegate %@", _delegate);
+        [_delegate sessionSelectContainingTab];
+    }
 }
 
 - (void)revealSelection:(iTermSelection *)selection {

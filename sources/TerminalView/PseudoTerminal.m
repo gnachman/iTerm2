@@ -2620,23 +2620,6 @@ ITERM_WEAKLY_REFERENCEABLE
     return [[_contentView.tabView selectedTabViewItem] identifier];
 }
 
-- (void)makeSessionActive:(PTYSession *)session {
-    PTYTab *tab = [self tabForSession:session];
-    if (tab.realParentWindow != self) {
-        return;
-    }
-    if ([self isHotKeyWindow]) {
-        iTermProfileHotKey *hotKey = [[iTermHotKeyController sharedInstance] profileHotKeyForWindowController:self];
-        [[iTermHotKeyController sharedInstance] showWindowForProfileHotKey:hotKey url:nil];
-    } else {
-        [self.window makeKeyAndOrderFront:nil];
-    }
-    [_contentView.tabView selectTabViewItem:tab.tabViewItem];
-    if (tab.activeSession != session) {
-        [tab setActiveSessionPreservingMaximization:session];
-    }
-}
-
 - (PTYTextView *)checkFirstResponder {
     if (@available(macOS 11, *)) {
         NSResponder *responder = self.window.firstResponder;

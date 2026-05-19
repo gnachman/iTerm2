@@ -622,10 +622,7 @@ static CGFloat iTermOpenQuicklyPreviewLabelsBlockHeight(void) {
         if ([object isKindOfClass:[PTYSession class]]) {
             // Switch to session
             PTYSession *session = object;
-            if (session) {
-                NSWindowController<iTermWindowController> *term = session.delegate.realParentWindow;
-                [term makeSessionActive:session];
-            }
+            [session reveal];
         } else if ([object isKindOfClass:[Profile class]]) {
             // Create a new tab/window
             Profile *profile = object;
