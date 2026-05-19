@@ -436,6 +436,15 @@ Bug Fixes:
   drifting onto a sibling pane that
   happened to be active in the destination
   tab. Issue 12799.
+- OSC color overrides (foreground, background,
+  cursor, selection, palette, and the iTerm2
+  SetColors variants) now survive macOS Light
+  / Dark appearance switches and toggles of
+  the separate light / dark colors profile
+  setting. The override is written to every
+  appearance variant of the profile key so
+  it persists until OSC 110/111 or a manual
+  reset clears it.
 - Showing the clippings panel in a window
   zoomed to fit the display no longer grows
   the window horizontally. The tab content
