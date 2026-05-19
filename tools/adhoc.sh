@@ -1,4 +1,9 @@
 #!/bin/bash
+function die {
+  echo "$1"
+  exit 1
+}
+
 echo Enter the notarization password
 read -s NOTPASS
 COMPACTDATE=$(date +"%Y%m%d_%H%M%S")
@@ -6,16 +11,11 @@ VERSION="0.$COMPACTDATE-adhoc"
 echo "$VERSION" > version.txt
 NAME=$(echo $VERSION | sed -e "s/\\./_/g")
 make clean
-make SIGNED=1 UNIVERSAL=1 release
+make SIGNED=1 UNIVERSAL=1 release || die "make release failed"
+[ -d build/Deployment/iTerm2.app ] || die "Build did not produce build/Deployment/iTerm2.app"
 rm -rf build/Deployment/iTerm.app
-mv build/Deployment/iTerm2.app build/Deployment/iTerm.app
-pushd build/Deployment
-
-
-function die {
-  echo "$1"
-  exit 1
-}
+mv build/Deployment/iTerm2.app build/Deployment/iTerm.app || die "Failed to rename iTerm2.app to iTerm.app"
+pushd build/Deployment || die "build/Deployment directory missing"
 
 # - notarize -
 PRENOTARIZED_ZIP=iTerm2-${NAME}-prenotarized.zip
