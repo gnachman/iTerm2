@@ -411,6 +411,11 @@ Settings Improvements:
   you commit a selection.
 
 Bug Fixes:
+- Pressing Enter to commit an IME
+  composition (e.g. Chinese, Japanese,
+  Korean) in the AI Chat input no longer
+  prematurely submits the unfinalized
+  candidate text.
 - Showing the clippings panel in a window
   zoomed to fit the display no longer grows
   the window horizontally. The tab content

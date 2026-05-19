@@ -266,20 +266,19 @@ class ChatInputTextView: ShiftEnterTextView {
     private lazy var privateUndoManager = UndoManager()
     override var undoManager: UndoManager? { privateUndoManager }
 
-    override func keyDown(with event: NSEvent) {
-        guard let characters = event.charactersIgnoringModifiers, characters == "\r" else {
-            super.keyDown(with: event)
+    // Don't override keyDown to intercept "\r". AppKit calls insertNewline(_:)
+    // (via the delegate's doCommandBy:) only after the input-method client has
+    // had a chance to consume the event, so submitting from there lets IMEs
+    // commit composing text on Enter without iTerm2 stealing the keystroke.
+    // Issue 12867.
+    override func insertNewline(_ sender: Any?) {
+        if iTermApplication.shared().it_modifierFlags.contains(.shift) {
+            super.insertNewline(sender)
             return
         }
-        if event.modifierFlags.contains(.shift) {
-            super.insertNewline(nil)
-        } else {
-            if delegate?.textView?(self, doCommandBy: #selector(NSResponder.insertNewline(_:))) ?? false {
-                self.string = ""
-                self.needsDisplay = true
-                invalidateIntrinsicContentSize()
-            }
-        }
+        // Plain Enter only reaches here when the delegate declined to submit
+        // (e.g. send button disabled). Old behavior was a no-op in that case,
+        // so don't insert a newline.
     }
 
     override func paste(_ sender: Any?) {

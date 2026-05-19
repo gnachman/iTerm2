@@ -549,7 +549,9 @@ extension ChatInputView {
 
 extension ChatInputView: NSTextViewDelegate {
     func textView(_ textView: NSTextView, doCommandBy commandSelector: Selector) -> Bool {
-        if commandSelector == #selector(NSResponder.insertNewline(_:)) && sendButton.isEnabled {
+        if commandSelector == #selector(NSResponder.insertNewline(_:))
+            && !iTermApplication.shared().it_modifierFlags.contains(.shift)
+            && sendButton.isEnabled {
             let wasStoppable = stoppable
             sendButtonClicked(self)
             if wasStoppable && !stoppable {
