@@ -30,7 +30,7 @@
 #import "iTermWarning.h"
 #import <SSKeychain/SSKeychain.h>
 
-@interface GeneralPreferencesViewController () <NSTableViewDataSource, NSTableViewDelegate>
+@interface GeneralPreferencesViewController () <NSTableViewDataSource, CompetentTableViewDelegate, NSTextFieldDelegate>
 @end
 
 enum {
@@ -40,6 +40,7 @@ enum {
 };
 
 @implementation GeneralPreferencesViewController {
+    BOOL _awoken;
     // open bookmarks when iterm starts
     IBOutlet NSButton *_openBookmark;
     IBOutlet NSButton *_advancedGPUPrefsButton;
@@ -212,7 +213,7 @@ enum {
 
     IBOutlet NSButton *_useRecommendedModel;
     IBOutlet NSView *_manualAISettings;
-    NSPopover *_popover;
+    NSWindow *_manualAIConfigurationSheet;
     IBOutlet NSButton *_manualAIConfiguration;
     IBOutlet NSPopUpButton *_aiVendor;
     IBOutlet NSButton *_aiSafetyCheck;
@@ -240,11 +241,10 @@ enum {
 
     NSString *_lastModel;
 
-    // Custom headers section (created programmatically)
-    NSButton *_aiCustomHeadersEnabled;
-    NSTableView *_aiCustomHeadersTableView;
-    NSButton *_aiAddCustomHeader;
-    NSButton *_aiRemoveCustomHeader;
+    // Custom headers section (wired up in the XIB).
+    IBOutlet NSButton *_aiCustomHeadersEnabled;
+    IBOutlet NSTableView *_aiCustomHeadersTableView;
+    IBOutlet NSSegmentedControl *_aiCustomHeadersAddRemove;  // segment 0 = add, segment 1 = remove
     NSMutableArray<NSMutableDictionary *> *_customHeaders;
 }
 
@@ -282,6 +282,14 @@ enum {
 }
 
 - (void)awakeFromNib {
+    if (_awoken) {
+        // View-based NSTableView lazily unarchives each NSTableCellView prototype
+        // from an inline nib using File’s Owner as the nib owner, which causes a
+        // second -awakeFromNib on this controller. Idempotency is required.
+        return;
+    }
+    _awoken = YES;
+
     [self setupCustomHeadersSection];
     PreferenceInfo *info;
 
@@ -1002,10 +1010,14 @@ enum {
                    type:kPreferenceInfoTypeCheckbox];
     _aiSafetyCheck.enabled = [iTermAIAvailabilityProbe check];
 
-    [self defineControl:_aiCustomHeadersEnabled
-                    key:kPreferenceKeyAICustomHeadersEnabled
-            relatedView:nil
-                   type:kPreferenceInfoTypeCheckbox];
+    info = [self defineControl:_aiCustomHeadersEnabled
+                           key:kPreferenceKeyAICustomHeadersEnabled
+                   relatedView:nil
+                          type:kPreferenceInfoTypeCheckbox];
+    info.onChange = ^{
+        __strong __typeof(weakSelf) strongSelf = weakSelf;
+        [strongSelf updateCustomHeadersControlsEnabled];
+    };
 
     // ---------------------------------------------------------------------------------------------
     [self defineControl:_enableRTL
@@ -1057,8 +1069,9 @@ enum {
 
 - (void)updateCoarseAIModelSettingsEnabled {
     const BOOL automatic = [self boolForKey:kPreferenceKeyUseRecommendedAIModel];
-    _manualAIConfiguration.enabled = !automatic;
-    _aiVendor.enabled = automatic;
+    const BOOL allowed = _pluginOK && [iTermAITermGatekeeper allowed];
+    _manualAIConfiguration.enabled = allowed && !automatic;
+    _aiVendor.enabled = allowed && automatic;
 }
 
 - (void)updateAIModelFromVendor {
@@ -1179,6 +1192,7 @@ enum {
     _aiFeatureStreamingResponses.enabled = allowed;
     _vectorStore.enabled = allowed;
 
+    [self updateCoarseAIModelSettingsEnabled];
 }
 
 - (BOOL)modelSupportsModernAPI {
@@ -1338,180 +1352,300 @@ enum {
 
 #pragma mark - Custom Headers
 
+// Loads the persisted headers into _customHeaders and sets initial UI state.
+// All view layout (labels, segmented control, table view, columns, scroll
+// view) lives in the XIB; the controls are connected via the IBOutlets above
+// and the table view's dataSource/delegate are set in the XIB to this
+// controller.
 - (void)setupCustomHeadersSection {
-    if (_aiCustomHeadersEnabled != nil) {
-        return;
-    }
-    if (!_manualAISettings) {
-        return;
-    }
-
-    NSView *effectView = _manualAISettings.subviews.firstObject;
-    if (!effectView) {
-        return;
-    }
-
-    const CGFloat kNewSectionHeight = 200.0;
-    const CGFloat kLeft = 18.0;
-    const CGFloat kViewWidth = _manualAISettings.frame.size.width;
-    const CGFloat kContentWidth = kViewWidth - kLeft * 2;
-
-    // Extend _manualAISettings. The NSVisualEffectView (effectView) carries
-    // heightSizable+widthSizable so it fills the parent automatically.
-    // Its subviews carry flexibleMinY so they stay anchored to the top,
-    // freeing the bottom kNewSectionHeight pt for the new controls.
-    NSRect manualFrame = _manualAISettings.frame;
-    manualFrame.size.height += kNewSectionHeight;
-    _manualAISettings.frame = manualFrame;
-
-    CGFloat y = 8.0;
-
-    // Disclaimer label
-    NSTextField *disclaimerLabel = [NSTextField labelWithString:@"Custom headers replace built-in headers with the same name."];
-    disclaimerLabel.font = [NSFont systemFontOfSize:[NSFont smallSystemFontSize]];
-    disclaimerLabel.textColor = [NSColor secondaryLabelColor];
-    disclaimerLabel.frame = NSMakeRect(kLeft, y, kContentWidth, 14.0);
-    [effectView addSubview:disclaimerLabel];
-    y += 18.0;
-
-    // + / − buttons
-    NSButton *addButton = [NSButton buttonWithTitle:@"" target:self action:@selector(addCustomHeader:)];
-    addButton.image = [NSImage imageNamed:NSImageNameAddTemplate];
-    addButton.bezelStyle = NSBezelStyleSmallSquare;
-    addButton.frame = NSMakeRect(kLeft, y, 21.0, 21.0);
-    [effectView addSubview:addButton];
-    _aiAddCustomHeader = addButton;
-
-    NSButton *removeButton = [NSButton buttonWithTitle:@"" target:self action:@selector(removeCustomHeader:)];
-    removeButton.image = [NSImage imageNamed:NSImageNameRemoveTemplate];
-    removeButton.bezelStyle = NSBezelStyleSmallSquare;
-    removeButton.frame = NSMakeRect(kLeft + 22.0, y, 21.0, 21.0);
-    [effectView addSubview:removeButton];
-    _aiRemoveCustomHeader = removeButton;
-    y += 25.0;
-
-    // Scroll view + table view
-    NSScrollView *scrollView = [[NSScrollView alloc] initWithFrame:NSMakeRect(kLeft, y, kContentWidth, 100.0)];
-    scrollView.hasVerticalScroller = YES;
-    scrollView.autohidesScrollers = YES;
-    scrollView.borderType = NSLineBorder;
-
-    NSTableView *tableView = [[NSTableView alloc] initWithFrame:NSMakeRect(0, 0, kContentWidth, 100.0)];
-    tableView.style = NSTableViewStyleInset;
-    tableView.allowsColumnReordering = NO;
-    tableView.allowsColumnSelection = NO;
-    tableView.allowsMultipleSelection = NO;
-    tableView.usesAlternatingRowBackgroundColors = YES;
-    tableView.gridStyleMask = NSTableViewSolidVerticalGridLineMask;
-
-    NSTableColumn *nameColumn = [[NSTableColumn alloc] initWithIdentifier:@"name"];
-    nameColumn.title = @"Name";
-    nameColumn.width = kContentWidth / 2.0 - 2.0;
-    nameColumn.editable = YES;
-    nameColumn.resizingMask = NSTableColumnUserResizingMask | NSTableColumnAutoresizingMask;
-    [tableView addTableColumn:nameColumn];
-
-    NSTableColumn *valueColumn = [[NSTableColumn alloc] initWithIdentifier:@"value"];
-    valueColumn.title = @"Value";
-    valueColumn.width = kContentWidth / 2.0 - 2.0;
-    valueColumn.editable = YES;
-    valueColumn.resizingMask = NSTableColumnUserResizingMask | NSTableColumnAutoresizingMask;
-    [tableView addTableColumn:valueColumn];
-
-    tableView.dataSource = self;
-    tableView.delegate = self;
-
-    scrollView.documentView = tableView;
-    [effectView addSubview:scrollView];
-    _aiCustomHeadersTableView = tableView;
-    y += 104.0;
-
-    // Checkbox
-    NSButton *enableCheckbox = [NSButton checkboxWithTitle:@"Append custom headers to AI requests"
-                                                    target:self
-                                                    action:@selector(settingChanged:)];
-    enableCheckbox.frame = NSMakeRect(kLeft, y, kContentWidth, 18.0);
-    [effectView addSubview:enableCheckbox];
-    _aiCustomHeadersEnabled = enableCheckbox;
-
-    // Load saved headers
     id saved = [iTermPreferences objectForKey:kPreferenceKeyAICustomHeaders];
+    _customHeaders = [NSMutableArray array];
     if ([saved isKindOfClass:[NSArray class]]) {
-        _customHeaders = [NSMutableArray array];
         for (id entry in (NSArray *)saved) {
             if ([entry isKindOfClass:[NSDictionary class]]) {
                 [_customHeaders addObject:[entry mutableCopy]];
             }
         }
-    } else {
-        _customHeaders = [NSMutableArray array];
     }
+    [_aiCustomHeadersTableView reloadData];
+    [self updateCustomHeadersControlsEnabled];
+}
+
+- (BOOL)customHeadersEnabled {
+    return [iTermPreferences boolForKey:kPreferenceKeyAICustomHeadersEnabled];
+}
+
+- (void)updateCustomHeadersControlsEnabled {
+    const BOOL enabled = [self customHeadersEnabled];
+    _aiCustomHeadersAddRemove.enabled = enabled;
+    _aiCustomHeadersTableView.enabled = enabled;
+    if (!enabled) {
+        [_aiCustomHeadersTableView deselectAll:nil];
+    }
+    [_aiCustomHeadersTableView reloadData];  // refresh cell editability
+    [self updateCustomHeadersRemoveEnabled];
+}
+
+- (void)updateCustomHeadersRemoveEnabled {
+    const BOOL hasSelection = (_aiCustomHeadersTableView.selectedRow >= 0);
+    const BOOL canRemove = hasSelection && [self customHeadersEnabled];
+    [_aiCustomHeadersAddRemove setEnabled:canRemove forSegment:1];
 }
 
 - (void)saveCustomHeaders {
-    [iTermPreferences setObject:[_customHeaders copy] forKey:kPreferenceKeyAICustomHeaders];
+    // Skip rows with empty names so the persisted plist doesn't accumulate
+    // blanks from rows the user added but never named.
+    NSMutableArray *toSave = [NSMutableArray array];
+    for (NSDictionary *entry in _customHeaders) {
+        NSString *name = entry[@"name"];
+        if ([name isKindOfClass:[NSString class]] && name.length > 0) {
+            [toSave addObject:[entry copy]];
+        }
+    }
+    [iTermPreferences setObject:toSave forKey:kPreferenceKeyAICustomHeaders];
 }
 
-- (IBAction)addCustomHeader:(id)sender {
-    [_customHeaders addObject:[@{@"name": @"", @"value": @""} mutableCopy]];
-    [self saveCustomHeaders];
-    [_aiCustomHeadersTableView reloadData];
-    NSInteger newRow = (NSInteger)_customHeaders.count - 1;
-    [_aiCustomHeadersTableView selectRowIndexes:[NSIndexSet indexSetWithIndex:(NSUInteger)newRow]
-                           byExtendingSelection:NO];
-    [_aiCustomHeadersTableView editColumn:0 row:newRow withEvent:nil select:YES];
+- (IBAction)customHeadersAddRemove:(id)sender {
+    NSSegmentedControl *control = (NSSegmentedControl *)sender;
+    switch (control.selectedSegment) {
+        case 0:
+            [self addCustomHeader];
+            break;
+        case 1:
+            [self removeCustomHeader];
+            break;
+    }
 }
 
-- (IBAction)removeCustomHeader:(id)sender {
+- (void)addCustomHeader {
+    NSAlert *alert = [[NSAlert alloc] init];
+    alert.messageText = @"Add Custom Header";
+    alert.informativeText = @"Enter a header name and value. The name is required.";
+    [alert addButtonWithTitle:@"Add"];
+    [alert addButtonWithTitle:@"Cancel"];
+
+    const CGFloat width = 280.0;
+    const CGFloat fieldHeight = 22.0;
+    const CGFloat labelHeight = 17.0;
+    const CGFloat gap = 4.0;
+    const CGFloat sectionGap = 10.0;
+    const CGFloat totalHeight = labelHeight + gap + fieldHeight + sectionGap + labelHeight + gap + fieldHeight;
+
+    NSView *accessory = [[NSView alloc] initWithFrame:NSMakeRect(0, 0, width, totalHeight)];
+
+    CGFloat y = totalHeight;
+
+    y -= labelHeight;
+    NSTextField *nameLabel = [NSTextField labelWithString:@"Name:"];
+    nameLabel.frame = NSMakeRect(0, y, width, labelHeight);
+    [accessory addSubview:nameLabel];
+
+    y -= gap + fieldHeight;
+    NSTextField *nameField = [[NSTextField alloc] initWithFrame:NSMakeRect(0, y, width, fieldHeight)];
+    [accessory addSubview:nameField];
+
+    y -= sectionGap + labelHeight;
+    NSTextField *valueLabel = [NSTextField labelWithString:@"Value:"];
+    valueLabel.frame = NSMakeRect(0, y, width, labelHeight);
+    [accessory addSubview:valueLabel];
+
+    y -= gap + fieldHeight;
+    NSTextField *valueField = [[NSTextField alloc] initWithFrame:NSMakeRect(0, y, width, fieldHeight)];
+    [accessory addSubview:valueField];
+
+    alert.accessoryView = accessory;
+
+    NSTextField *focusField = nameField;
+    while (YES) {
+        [alert.window setInitialFirstResponder:focusField];
+        const NSModalResponse response = [alert runModal];
+        if (response != NSAlertFirstButtonReturn) {
+            return;
+        }
+        NSString *name = [nameField.stringValue stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+        NSString *value = valueField.stringValue ?: @"";
+        if (![AICustomHeaders isValidName:name]) {
+            alert.informativeText = @"The header name must be non-empty and contain only RFC 7230 token characters (letters, digits, and any of !#$%&'*+-.^_`|~).";
+            focusField = nameField;
+            continue;
+        }
+        if (![AICustomHeaders isValidValue:value]) {
+            alert.informativeText = @"The header value must not contain newline or null characters.";
+            focusField = valueField;
+            continue;
+        }
+        [_customHeaders addObject:[@{@"name": name, @"value": value} mutableCopy]];
+        [self saveCustomHeaders];
+        [_aiCustomHeadersTableView reloadData];
+        NSInteger newRow = (NSInteger)_customHeaders.count - 1;
+        [_aiCustomHeadersTableView selectRowIndexes:[NSIndexSet indexSetWithIndex:(NSUInteger)newRow]
+                               byExtendingSelection:NO];
+        [_aiCustomHeadersTableView scrollRowToVisible:newRow];
+        return;
+    }
+}
+
+- (void)removeCustomHeader {
     NSInteger row = _aiCustomHeadersTableView.selectedRow;
     if (row < 0 || row >= (NSInteger)_customHeaders.count) {
         return;
     }
     [_customHeaders removeObjectAtIndex:(NSUInteger)row];
     [self saveCustomHeaders];
+    [_aiCustomHeadersTableView deselectAll:nil];
     [_aiCustomHeadersTableView reloadData];
+    [self updateCustomHeadersRemoveEnabled];
 }
 
 #pragma mark - NSTableViewDataSource
 
 - (NSInteger)numberOfRowsInTableView:(NSTableView *)tableView {
+    if (tableView != _aiCustomHeadersTableView) {
+        return 0;
+    }
     return (NSInteger)_customHeaders.count;
-}
-
-- (id)tableView:(NSTableView *)tableView objectValueForTableColumn:(NSTableColumn *)tableColumn row:(NSInteger)row {
-    NSMutableDictionary *entry = _customHeaders[(NSUInteger)row];
-    return entry[tableColumn.identifier];
-}
-
-- (void)tableView:(NSTableView *)tableView setObjectValue:(id)object forTableColumn:(NSTableColumn *)tableColumn row:(NSInteger)row {
-    NSMutableDictionary *entry = _customHeaders[(NSUInteger)row];
-    entry[tableColumn.identifier] = object ?: @"";
-    [self saveCustomHeaders];
 }
 
 #pragma mark - NSTableViewDelegate
 
+// View-based table view. The XIB defines an NSTableCellView prototype per
+// column whose identifier matches the column identifier (“name” or “value”),
+// containing an editable NSTextField wired to the cell view’s textField
+// outlet. The text field’s delegate is forced to this controller here so
+// edits always route through -controlTextDidEndEditing:.
+- (NSView *)tableView:(NSTableView *)tableView
+   viewForTableColumn:(NSTableColumn *)tableColumn
+                  row:(NSInteger)row {
+    if (tableView != _aiCustomHeadersTableView) {
+        return nil;
+    }
+    NSTableCellView *cell = [tableView makeViewWithIdentifier:tableColumn.identifier owner:self];
+    NSMutableDictionary *entry = _customHeaders[(NSUInteger)row];
+    const BOOL enabled = [self customHeadersEnabled];
+    cell.textField.stringValue = entry[tableColumn.identifier] ?: @"";
+    cell.textField.editable = enabled;
+    cell.textField.selectable = enabled;
+    cell.textField.enabled = enabled;
+    cell.textField.delegate = self;
+    return cell;
+}
+
+- (BOOL)tableView:(NSTableView *)tableView shouldSelectRow:(NSInteger)row {
+    if (tableView == _aiCustomHeadersTableView && ![self customHeadersEnabled]) {
+        return NO;
+    }
+    return YES;
+}
+
 - (void)tableViewSelectionDidChange:(NSNotification *)notification {
     if (notification.object == _aiCustomHeadersTableView) {
-        _aiRemoveCustomHeader.enabled = (_aiCustomHeadersTableView.selectedRow >= 0);
+        [self updateCustomHeadersRemoveEnabled];
     }
 }
 
+- (void)competentTableViewDeleteSelectedRows:(CompetentTableView *)sender {
+    if (sender != _aiCustomHeadersTableView || ![self customHeadersEnabled]) {
+        return;
+    }
+    [self removeCustomHeader];
+}
+
+#pragma mark - NSTextFieldDelegate
+
+- (void)controlTextDidEndEditing:(NSNotification *)notification {
+    NSTextField *field = (NSTextField *)notification.object;
+    if (![field isKindOfClass:[NSTextField class]]) {
+        [super controlTextDidEndEditing:notification];
+        return;
+    }
+    const NSInteger row = [_aiCustomHeadersTableView rowForView:field];
+    const NSInteger column = [_aiCustomHeadersTableView columnForView:field];
+    if (row < 0 || column < 0) {
+        // Not one of our custom-header cells; let the base class handle
+        // info.controlTextDidEndEditing blocks and integer/double field
+        // canonicalization.
+        [super controlTextDidEndEditing:notification];
+        return;
+    }
+    if (row >= (NSInteger)_customHeaders.count ||
+        column >= (NSInteger)_aiCustomHeadersTableView.tableColumns.count) {
+        return;
+    }
+    NSTableColumn *tableColumn = _aiCustomHeadersTableView.tableColumns[(NSUInteger)column];
+    NSMutableDictionary *entry = _customHeaders[(NSUInteger)row];
+    NSString *newValue = field.stringValue;
+    NSString *failure = nil;
+    if ([tableColumn.identifier isEqualToString:@"name"]) {
+        newValue = [newValue stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+        if (![AICustomHeaders isValidName:newValue]) {
+            failure = @"The header name must be non-empty and contain only RFC 7230 token characters (letters, digits, and any of !#$%&'*+-.^_`|~).";
+        }
+    } else if ([tableColumn.identifier isEqualToString:@"value"]) {
+        if (![AICustomHeaders isValidValue:newValue]) {
+            failure = @"The header value must not contain newline or null characters.";
+        }
+    }
+    if (failure) {
+        NSAlert *alert = [[NSAlert alloc] init];
+        alert.messageText = @"Invalid HTTP header";
+        alert.informativeText = failure;
+        [alert runModal];
+        // Put the user back into the same cell so they can fix the value
+        // without retyping it from scratch.
+        dispatch_async(dispatch_get_main_queue(), ^{
+            if (row < (NSInteger)self->_customHeaders.count &&
+                column < (NSInteger)self->_aiCustomHeadersTableView.tableColumns.count) {
+                [self->_aiCustomHeadersTableView editColumn:column
+                                                        row:row
+                                                  withEvent:nil
+                                                     select:YES];
+            }
+        });
+        return;
+    }
+    entry[tableColumn.identifier] = newValue;
+    [self saveCustomHeaders];
+}
+
 - (IBAction)showManualAIConfigurationPanel:(NSButton *)button {
-    NSViewController *vc = [[NSViewController alloc] init];
-    vc.view = _manualAISettings;
+    NSWindow *parent = self.view.window;
+    if (parent == nil) {
+        return;
+    }
 
-    NSPopover *popover = [[NSPopover alloc] init];
-    [popover setContentSize:_manualAISettings.frame.size];
-    [popover setBehavior:NSPopoverBehaviorTransient];
-    [popover setAnimates:YES];
-    [popover setContentViewController:vc];
+    if (_manualAIConfigurationSheet == nil) {
+        const NSSize size = _manualAISettings.frame.size;
+        NSWindow *sheet = [[NSWindow alloc] initWithContentRect:NSMakeRect(0, 0, size.width, size.height)
+                                                      styleMask:(NSWindowStyleMaskTitled |
+                                                                 NSWindowStyleMaskFullSizeContentView)
+                                                        backing:NSBackingStoreBuffered
+                                                          defer:NO];
+        sheet.titlebarAppearsTransparent = YES;
+        sheet.titleVisibility = NSWindowTitleHidden;
+        sheet.contentView = _manualAISettings;
+        [sheet setContentSize:size];
 
-    // Show popover
-    [popover showRelativeToRect:button.bounds
-                         ofView:button
-                  preferredEdge:NSMinYEdge];
-    _popover = popover;
+        // Hidden Cancel button so Escape dismisses the sheet. NSWindow routes
+        // ⎋ to whichever button has keyEquivalent == "\e", but XML 1.0 forbids
+        // U+001B in attributes so we add it in code rather than the XIB.
+        NSButton *escapeButton = [[NSButton alloc] initWithFrame:NSZeroRect];
+        escapeButton.hidden = YES;
+        escapeButton.keyEquivalent = @"\e";
+        escapeButton.target = self;
+        escapeButton.action = @selector(closeManualAIConfigurationSheet:);
+        [_manualAISettings addSubview:escapeButton];
+
+        _manualAIConfigurationSheet = sheet;
+    }
+
+    [parent beginSheet:_manualAIConfigurationSheet completionHandler:^(NSModalResponse returnCode) {}];
+}
+
+- (IBAction)closeManualAIConfigurationSheet:(id)sender {
+    if (_manualAIConfigurationSheet == nil) {
+        return;
+    }
+    [self.view.window endSheet:_manualAIConfigurationSheet returnCode:NSModalResponseOK];
 }
 
 - (IBAction)reloadPlugin:(id)sender {

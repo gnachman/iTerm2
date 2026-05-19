@@ -85,8 +85,8 @@ extension CRUDTableViewControllerDelegate {
                                newValue: Bool) {}
 }
 
-protocol CompetentTableViewDelegate: NSTableViewDelegate {
-    func competentTableViewDeleteSelectedRows(_ sender: CompetentTableView)
+@objc protocol CompetentTableViewDelegate: NSTableViewDelegate {
+    @objc func competentTableViewDeleteSelectedRows(_ sender: CompetentTableView)
 }
 
 @objc

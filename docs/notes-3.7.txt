@@ -243,6 +243,14 @@ AI Improvements:
   understands functions/function_call, tool
   calls will stop working until you upgrade
   the backend.
+- The “Configure AI Model Manually…” popover
+  now has a section for custom HTTP headers
+  that are appended to every AI request (chat,
+  vector store, and file upload). Useful for
+  proxy auth or routing tags. Custom headers
+  override built-in headers with the same
+  name. Values are stored unencrypted in
+  iTerm2’s preferences.
 
 Python API Improvements:
 - Move sessions to new tabs or windows via the
