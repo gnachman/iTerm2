@@ -168,6 +168,7 @@
 #import "iTermSessionHotkeyController.h"
 #import "iTermSessionLauncher.h"
 #import "iTermSessionNameController.h"
+#import "iTermSessionRestoreDiag.h"
 #import "iTermSessionTitleBuiltInFunction.h"
 #import "iTermSetFindStringNotification.h"
 #import "iTermSharedImageStore.h"
@@ -2152,6 +2153,21 @@ ITERM_WEAKLY_REFERENCEABLE
             // profile.
             [aSession resetForRelaunch];
             NSString *oldCWD = arrangement[SESSION_ARRANGEMENT_WORKING_DIRECTORY];
+            // Issue 12866 diagnostic. See iTermSessionRestoreDiag.h.
+            iTermSessionRestoreDiagLog(@"LOAD guid=%@ oldCWD=%@ wdKey=%@ hasContents=%d hasProgram=%d hasEnv=%d hasSubst=%d hasIsUTF8=%d hasLastLocalDir=%@ hasLastDir=%@ objectType=%d attached=%d keyCount=%lu",
+                                       arrangement[SESSION_ARRANGEMENT_GUID] ?: @"<nil>",
+                                       oldCWD ? (oldCWD.length ? oldCWD : @"<empty>") : @"<nil>",
+                                       arrangement[SESSION_ARRANGEMENT_WORKING_DIRECTORY] ? @"present" : @"missing",
+                                       (int)(contents != nil),
+                                       (int)haveSavedProgramData,
+                                       (int)(arrangement[SESSION_ARRANGEMENT_ENVIRONMENT] != nil),
+                                       (int)(arrangement[SESSION_ARRANGEMENT_SUBSTITUTIONS] != nil),
+                                       (int)(arrangement[SESSION_ARRANGEMENT_IS_UTF_8] != nil),
+                                       arrangement[@"Last Local Directory"] ?: @"<nil>",
+                                       arrangement[@"Last Directory"] ?: @"<nil>",
+                                       (int)objectType,
+                                       (int)attachedToServer,
+                                       (unsigned long)arrangement.count);
             DLog(@"Running command...");
 
             NSDictionary *environmentArg = @{};
@@ -6722,6 +6738,17 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
 
     NSString *pwd = [self currentLocalWorkingDirectory];
     result[SESSION_ARRANGEMENT_WORKING_DIRECTORY] = pwd ? pwd : @"";
+
+    // Issue 12866 diagnostic. See iTermSessionRestoreDiag.h.
+    iTermSessionRestoreDiagLog(@"SAVE guid=%@ pwd=%@ includeContents=%d saveProgram=%d tmux=%d liveSession=%d program=%@ lastLocalDir=%@",
+                               _guid ?: @"<nil>",
+                               pwd ? (pwd.length ? pwd : @"<empty>") : @"<nil>",
+                               (int)includeContents,
+                               (int)saveProgram,
+                               (int)self.isTmuxClient,
+                               (int)(_liveSession != nil),
+                               self.program ?: @"<nil>",
+                               _directoryTracker.lastLocalDirectory ?: @"<nil>");
 
     if (includeContents) {
         NSDictionary *tabStatusDict = [_tabStatus arrangementDictionary];
