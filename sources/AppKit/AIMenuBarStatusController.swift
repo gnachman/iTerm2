@@ -6,6 +6,7 @@ class AIMenuBarStatusController: NSObject {
     @objc(sharedInstance) static let instance = AIMenuBarStatusController()
 
     private var statusItem: NSStatusItem?
+    private var badgeView: BadgeView?
     private var busyChatIDs = Set<String>()
     private var subscription: ChatBroker.Subscription?
     private let baseImage: NSImage?
@@ -46,13 +47,13 @@ class AIMenuBarStatusController: NSObject {
     }
 
     private func refreshOnMain() {
-        let prefOn = iTermPreferences.bool(forKey: kPreferenceKeyShowMenuBarItem)
+        let prefOn = iTermAdvancedSettingsModel.showMenuBarItem()
         let legacyMode = iTermPreferences.bool(forKey: kPreferenceKeyUIElement) &&
             iTermAdvancedSettingsModel.statusBarIcon()
         let shouldShow = prefOn || legacyMode
         if shouldShow {
             installStatusItemIfNeeded()
-            updateImage()
+            updateBadge()
         } else {
             removeStatusItem()
         }
@@ -62,73 +63,46 @@ class AIMenuBarStatusController: NSObject {
         guard statusItem == nil else { return }
         let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
         item.button?.title = ""
+        item.button?.image = baseImage
+        item.button?.image?.isTemplate = true
         (item.button?.cell as? NSButtonCell)?.highlightsBy = .changeBackgroundCellMask
         if let delegate = NSApp.delegate as? iTermApplicationDelegate {
             item.menu = delegate.statusBarMenu()
+        }
+        if let button = item.button {
+            let badge = BadgeView(frame: .zero)
+            badge.autoresizingMask = []
+            button.addSubview(badge)
+            badgeView = badge
         }
         statusItem = item
     }
 
     private func removeStatusItem() {
+        badgeView?.removeFromSuperview()
+        badgeView = nil
         if let item = statusItem {
             NSStatusBar.system.removeStatusItem(item)
         }
         statusItem = nil
     }
 
-    private func updateImage() {
-        guard let button = statusItem?.button, let base = baseImage else { return }
+    private func updateBadge() {
+        guard let button = statusItem?.button, let badge = badgeView else { return }
         let count = busyChatIDs.count
         if count == 0 {
-            button.image = base
-            button.image?.isTemplate = true
-        } else {
-            let composite = badgedImage(base: base, count: count)
-            composite.isTemplate = false
-            button.image = composite
+            badge.isHidden = true
+            return
         }
-    }
-
-    private func badgedImage(base: NSImage, count: Int) -> NSImage {
-        let size = base.size
-        let image = NSImage(size: size)
-        image.lockFocus()
-        defer { image.unlockFocus() }
-
-        if let ctx = NSGraphicsContext.current {
-            ctx.imageInterpolation = .high
-        }
-
-        base.draw(in: NSRect(origin: .zero, size: size),
-                  from: .zero,
-                  operation: .sourceOver,
-                  fraction: 1.0)
-
-        let label = count > 9 ? "9+" : "\(count)"
-        let fontSize = max(8.0, floor(size.height * 0.55))
-        let font = NSFont.systemFont(ofSize: fontSize, weight: .bold)
-        let textAttrs: [NSAttributedString.Key: Any] = [
-            .font: font,
-            .foregroundColor: NSColor.white
-        ]
-        let textSize = (label as NSString).size(withAttributes: textAttrs)
-        let padding: CGFloat = 2.0
-        let badgeDiameter = max(textSize.width + padding * 2, textSize.height + padding * 1.2)
-        let badgeRect = NSRect(
-            x: size.width - badgeDiameter,
-            y: size.height - badgeDiameter,
-            width: badgeDiameter,
-            height: badgeDiameter)
-
-        NSColor.systemOrange.setFill()
-        NSBezierPath(ovalIn: badgeRect).fill()
-
-        let textOrigin = NSPoint(
-            x: badgeRect.midX - textSize.width / 2.0,
-            y: badgeRect.midY - textSize.height / 2.0)
-        (label as NSString).draw(at: textOrigin, withAttributes: textAttrs)
-
-        return image
+        badge.isHidden = false
+        badge.count = count
+        let badgeSize = badge.intrinsicContentSize
+        let buttonSize = button.bounds.size
+        badge.frame = NSRect(
+            x: buttonSize.width - badgeSize.width,
+            y: buttonSize.height - badgeSize.height,
+            width: badgeSize.width,
+            height: badgeSize.height)
     }
 
     private func subscribeToBrokerIfPossible() {
@@ -140,21 +114,82 @@ class AIMenuBarStatusController: NSObject {
             return
         }
         subscription = broker.subscribe(chatID: nil, registrationProvider: nil) { [weak self] update in
-            self?.handle(update: update)
+            DispatchQueue.main.async {
+                self?.handleOnMain(update: update)
+            }
         }
     }
 
-    private func handle(update: ChatBroker.Update) {
+    private func handleOnMain(update: ChatBroker.Update) {
         switch update {
         case .typingStatus(_, let participant):
             guard participant == .agent else { return }
             let snapshot = TypingStatusModel.instance.chatIDs(forParticipant: .agent)
             if snapshot != busyChatIDs {
                 busyChatIDs = snapshot
-                updateImage()
+                updateBadge()
             }
         case .delivery:
             break
         }
+    }
+}
+
+private class BadgeView: NSView {
+    var count: Int = 0 {
+        didSet {
+            invalidateIntrinsicContentSize()
+            needsDisplay = true
+        }
+    }
+
+    private let horizontalPadding: CGFloat = 3.0
+    private let verticalPadding: CGFloat = 1.0
+    private let minDiameter: CGFloat = 12.0
+
+    private var label: String {
+        return count > 9 ? "9+" : "\(count)"
+    }
+
+    private var labelFont: NSFont {
+        return NSFont.systemFont(ofSize: 9.0, weight: .bold)
+    }
+
+    private var textAttributes: [NSAttributedString.Key: Any] {
+        return [
+            .font: labelFont,
+            .foregroundColor: NSColor.white
+        ]
+    }
+
+    override var intrinsicContentSize: NSSize {
+        let textSize = (label as NSString).size(withAttributes: textAttributes)
+        let width = max(minDiameter, textSize.width + horizontalPadding * 2.0)
+        let height = max(minDiameter, textSize.height + verticalPadding * 2.0)
+        return NSSize(width: width, height: height)
+    }
+
+    override var isFlipped: Bool {
+        return false
+    }
+
+    override func draw(_ dirtyRect: NSRect) {
+        guard count > 0 else { return }
+        let rect = bounds
+        NSColor.systemOrange.setFill()
+        let path: NSBezierPath
+        if rect.width == rect.height {
+            path = NSBezierPath(ovalIn: rect)
+        } else {
+            path = NSBezierPath(roundedRect: rect, xRadius: rect.height / 2.0, yRadius: rect.height / 2.0)
+        }
+        path.fill()
+
+        let attrs = textAttributes
+        let textSize = (label as NSString).size(withAttributes: attrs)
+        let origin = NSPoint(
+            x: rect.midX - textSize.width / 2.0,
+            y: rect.midY - textSize.height / 2.0)
+        (label as NSString).draw(at: origin, withAttributes: attrs)
     }
 }
