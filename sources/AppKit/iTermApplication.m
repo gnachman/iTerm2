@@ -960,21 +960,8 @@ static void iTermUncaughtExceptionHandler(NSException *exception) {
             RLog(@"uiElement=%@", @(uiElement));
             [[NSApplication sharedApplication] activateIgnoringOtherApps:YES];
         });
-
-        if ([iTermAdvancedSettingsModel statusBarIcon]) {
-            NSImage *image = [NSImage it_imageNamed:@"StatusItem" forClass:self.class];
-            image.template = YES;
-            self.statusBarItem = [[NSStatusBar systemStatusBar] statusItemWithLength:image.size.width];
-            _statusBarItem.button.title = @"";
-            _statusBarItem.button.image = image;
-            ((NSButtonCell *)_statusBarItem.button.cell).highlightsBy = NSChangeBackgroundCellMask;
-
-            _statusBarItem.menu = [(id<iTermApplicationDelegate>)[self delegate] statusBarMenu];
-        }
-    } else if (_statusBarItem != nil) {
-        [[NSStatusBar systemStatusBar] removeStatusItem:_statusBarItem];
-        self.statusBarItem = nil;
     }
+    [[iTermAIMenuBarStatusController sharedInstance] refresh];
 }
 
 - (NSArray<NSWindow *> *)orderedWindowsPlusVisibleHotkeyPanels {
