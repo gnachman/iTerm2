@@ -285,6 +285,12 @@ run: Development
 	( sleep 1 && osascript -e "tell application \"System Events\" to set frontmost of (first process whose unix id is $$pid) to true" >/dev/null 2>&1 ) & \
 	wait $$pid
 
+runbg: Development
+	"$(BUILD_DIR)/Development/iTerm2.app/Contents/MacOS/iTerm2" -suite $(notdir $(CURDIR)) & \
+	pid=$$!; \
+	trap 'kill $$pid 2>/dev/null' INT TERM; \
+	( sleep 1 && osascript -e "tell application \"System Events\" to set frontmost of (first process whose unix id is $$pid) to true" >/dev/null 2>&1 ) & \
+
 watch: Development
 	tools/run.sh "$(BUILD_DIR)/Development/iTerm2.app/Contents/MacOS/iTerm2" "$(BUILD_DIR)" -suite iterm2-dev
 
