@@ -186,7 +186,7 @@ extension ToolStatus {
             } else {
                 return nil
             }
-        }
+        }.sorted()
         DLog("ToolStatus viewDidMoveToWindow: populated \(statuses.count) statuses")
         _tableView?.reloadData()
         updateSelectionWithoutChangingFirstResponder()

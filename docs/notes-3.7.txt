@@ -961,6 +961,12 @@ Bug Fixes:
   capped to the most recent 256 lines so
   giant floods stop overwhelming
   VoiceOver’s speech queue.
+- Fix Session Status toolbelt rows
+  appearing in arbitrary order when
+  the toolbelt is first opened. The
+  initial population now sorts by
+  priority like every other update
+  path.
 - Add a Diff workgroup session mode
   that defers running the configured
   command until there are staged or
