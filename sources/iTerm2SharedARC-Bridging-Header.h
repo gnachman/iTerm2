@@ -164,6 +164,7 @@
 #import "LineBlock.h"
 #import "LineBlock+Private.h"
 #import "LineBufferHelpers.h"
+#import "iTermLineBlockArray.h"
 #import "MovePaneController.h"
 #import <NMSSH/NMSSH.h>
 #import <NMSSH/NMSSHConfig.h>

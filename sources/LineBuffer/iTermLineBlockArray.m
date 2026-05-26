@@ -490,8 +490,39 @@ static NSUInteger iTermLineBlockArrayNextUniqueID;
     return position;
 }
 
-- (LineBlock *)blockContainingPosition:(long long)position
-                               yOffset:(int)yOffset
+- (LineBlock *)testOnly_fast_firstBlockContainingPosition:(long long)position
+                                                width:(int)width
+                                            remainder:(int *)remainderPtr
+                                          blockOffset:(int *)blockOffsetPtr
+                                                index:(int *)indexPtr {
+    if (width > 0) {
+        [self buildCacheForWidth:width];
+    }
+    [self updateCacheIfNeeded];
+    return [self fast_firstBlockContainingPosition:position
+                                         width:width
+                                     remainder:remainderPtr
+                                   blockOffset:blockOffsetPtr
+                                         index:indexPtr];
+}
+
+- (LineBlock *)testOnly_slow_firstBlockContainingPosition:(long long)position
+                                                width:(int)width
+                                            remainder:(int *)remainderPtr
+                                          blockOffset:(int *)blockOffsetPtr
+                                                index:(int *)indexPtr {
+    if (width > 0) {
+        [self buildCacheForWidth:width];
+    }
+    [self updateCacheIfNeeded];
+    return [self slow_firstBlockContainingPosition:position
+                                         width:width
+                                     remainder:remainderPtr
+                                   blockOffset:blockOffsetPtr
+                                         index:indexPtr];
+}
+
+- (LineBlock *)firstBlockContainingPosition:(long long)position
                                  width:(int)width
                              remainder:(int *)remainderPtr
                            blockOffset:(int *)blockOffsetPtr
@@ -506,8 +537,7 @@ static NSUInteger iTermLineBlockArrayNextUniqueID;
     [self updateCacheIfNeeded];
     if (width > 0 && _rawSpaceCache) {
         int r=0, y=0, i=0;
-        LineBlock *result = [self fast_blockContainingPosition:position
-                                                       yOffset:yOffset
+        LineBlock *result = [self fast_firstBlockContainingPosition:position
                                                          width:width
                                                      remainder:&r
                                                    blockOffset:blockOffsetPtr ? &y : NULL
@@ -523,8 +553,7 @@ static NSUInteger iTermLineBlockArrayNextUniqueID;
         }
         return result;
     } else {
-        return [self slow_blockContainingPosition:position
-                                          yOffset:yOffset
+        return [self slow_firstBlockContainingPosition:position
                                             width:width
                                         remainder:remainderPtr
                                       blockOffset:blockOffsetPtr
@@ -532,8 +561,7 @@ static NSUInteger iTermLineBlockArrayNextUniqueID;
     }
 }
 
-- (LineBlock *)fast_blockContainingPosition:(long long)position
-                                    yOffset:(int)originalDesiredYOffset
+- (LineBlock *)fast_firstBlockContainingPosition:(long long)position
                                       width:(int)width
                                   remainder:(int *)remainderPtr
                                 blockOffset:(int *)blockOffsetPtr
@@ -545,81 +573,20 @@ static NSUInteger iTermLineBlockArrayNextUniqueID;
     if (index == NSNotFound) {
         return nil;
     }
+    // Closed-right semantics at block boundaries: a position equal to the end
+    // of block i is reported as "inside block i, at offset rawSpaceUsed". This
+    // is what convertPosition: needs to produce the natural "past last char of
+    // block i" coordinate without ruler-shopping into the next block. yOffset
+    // is the caller's concern: coordinateForPosition: adds it to the y of the
+    // base coord this function produces.
     LineBlock *block = _blocks[index];
 
-    // To avoid double-counting Y offsets, reduce the offset in lines within the block by the number
-    // of empty lines that were skipped.
-    int dy = 0;
-    int additionalRemainder = 0;
-    int desiredYOffset = originalDesiredYOffset;
-    if (roundUp) {
-        // Seek forward until we find a block that contains this position.
-        if (block.numberOfTrailingEmptyLines <= desiredYOffset) {
-            // Skip over trailing lines.
-            const int emptyCount = block.numberOfTrailingEmptyLines;
-            desiredYOffset -= emptyCount;
-            // In the diagrams below the | indicates the location given by position.
-            //
-            // Cases 1 and 2 involve the unfortunate behavior that occurs for the position after a
-            // non-empty line not belonging to the next wrapped line but to the location just after
-            // the last character on the non-empty line.
-            //
-            // 1. The block has trailing empty lines
-            //        abc
-            //        xyz|
-            //        (empty)
-            //    In this case, advancing to the next block moves the cursor down two lines:
-            //    first to the start of the empty line and then to the start of the line after it.
-            //
-            // 2. The block does not have trailing empty lines
-            //        abc
-            //        xyz|
-            //    In this case, advancing to the next block moves the cursor down one line: just to
-            //    the beginning of the line that starts the next block.
-            //
-            // 3. The block has only empty lines.
-            //        |(empty)
-            //        (empty)
-            //    In this case, advancing the the next block moves the cursor down by the number of
-            //    empty lines in this block.
-            dy += emptyCount;
-            if (!block.allLinesAreEmpty) {
-                // case 1 or 2
-                dy += 1;
-                if (block.numberOfTrailingEmptyLines == 0) {
-                    // Case 2
-                    // The X position will be equal to the length of the last wrapped line.
-                    // For case 1, the x position will be 0.
-                    additionalRemainder = [block lengthOfLastWrappedLineForWidth:width];
-                }
-            }
-            index += 1;
-            block = _blocks[index];
-
-            // Skip over entirely empty blocks.
-            while (!block.containsAnyNonEmptyLine &&
-                   block.numberOfLeadingEmptyLines <= desiredYOffset &&
-                   index + 1 < _blocks.count) {
-                const int emptyCount = block.numberOfTrailingEmptyLines;
-                desiredYOffset -= emptyCount;
-                // Here this is no +1. We begin with something like:
-                //     |(empty)
-                //     (empty)
-                // Moving the cursor to the next block advances by exactly as many lines as the
-                // number of lines in the block.
-                dy += emptyCount;
-                index += 1;
-                block = _blocks[index];
-            }
-        }
-    }
-
     if (remainderPtr) {
-        *remainderPtr = position - [_rawSpaceCache sumOfValuesInRange:NSMakeRange(0, index)] + additionalRemainder;
+        *remainderPtr = position - [_rawSpaceCache sumOfValuesInRange:NSMakeRange(0, index)];
         assert(*remainderPtr >= 0);
     }
     if (blockOffsetPtr) {
-        *blockOffsetPtr = [[_numLinesCaches numLinesCacheForWidth:width] sumOfValuesInRange:NSMakeRange(0, index)] - dy;
+        *blockOffsetPtr = [[_numLinesCaches numLinesCacheForWidth:width] sumOfValuesInRange:NSMakeRange(0, index)];
     }
     if (indexPtr) {
         *indexPtr = index;
@@ -636,59 +603,40 @@ static NSUInteger iTermLineBlockArrayNextUniqueID;
 // (empty)
 // y
 
-- (LineBlock *)slow_blockContainingPosition:(long long)position
-                                    yOffset:(int)desiredYOffset
+- (LineBlock *)slow_firstBlockContainingPosition:(long long)position
                                       width:(int)width
                                   remainder:(int *)remainderPtr
                                 blockOffset:(int *)blockOffsetPtr
                                       index:(int *)indexPtr {
+    // Closed-right semantics at block boundaries (mirroring fast_): a position
+    // equal to the end of block i is reported as "inside block i, at offset
+    // rawSpaceUsed". yOffset is the caller's concern.
     long long p = position;
-    int emptyLinesLeftToSkip = desiredYOffset;
     int yoffset = 0;
     int index = 0;
     for (LineBlock *block in _blocks) {
         const int used = [block rawSpaceUsed];
-        BOOL found = NO;
         if (p > used) {
-            // It's definitely not in this block.
+            // Definitely not in this block; advance.
             p -= used;
             if (blockOffsetPtr) {
                 yoffset += [block getNumLinesWithWrapWidth:width];
             }
-        } else if (p == used) {
-            // It might be in this block!
-            if (blockOffsetPtr) {
-                yoffset += [block getNumLinesWithWrapWidth:width];
-            }
-            const int numTrailingEmptyLines = [block numberOfTrailingEmptyLines];
-            if (numTrailingEmptyLines < emptyLinesLeftToSkip) {
-                // Need to keep consuming empty lines.
-                emptyLinesLeftToSkip -= numTrailingEmptyLines;
-                p = 0;
-            } else {
-                // This block has enough trailing blank lines.
-                found = YES;
-            }
-        } else {
-            // It was not in the previous block and this one has enough raw spaced used that it must
-            // contain it.
-            found = YES;
+            index++;
+            continue;
         }
-        if (found) {
-            // It is in this block.
-            assert(p >= 0);
-            if (remainderPtr) {
-                *remainderPtr = p;
-            }
-            if (blockOffsetPtr) {
-                *blockOffsetPtr = yoffset;
-            }
-            if (indexPtr) {
-                *indexPtr = index;
-            }
-            return block;
+        // p <= used: position belongs to this block (closed-right at p == used).
+        assert(p >= 0);
+        if (remainderPtr) {
+            *remainderPtr = (int)p;
         }
-        index++;
+        if (blockOffsetPtr) {
+            *blockOffsetPtr = yoffset;
+        }
+        if (indexPtr) {
+            *indexPtr = index;
+        }
+        return block;
     }
     return nil;
 }

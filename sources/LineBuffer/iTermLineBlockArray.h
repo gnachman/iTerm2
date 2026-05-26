@@ -58,19 +58,46 @@ NS_ASSUME_NONNULL_BEGIN
 - (NSInteger)rawSpaceUsed;
 - (NSInteger)rawSpaceUsedInRangeOfBlocks:(NSRange)range;
 
-// If you don't need a yoffset pass -1 for width and NULL for blockOffset to avoid building a cache.
-- (LineBlock * _Nullable)blockContainingPosition:(long long)p
-                                         yOffset:(int)yOffset
-                                           width:(int)width
-                                       remainder:(nullable int *)remainder
-                                     blockOffset:(nullable int *)yoffset
-                                           index:(nullable int *)indexPtr;
+// Returns the first block (lowest index) whose raw-character range covers
+// `position`, using closed-right semantics: a position equal to the end of
+// block i is reported as "inside block i, at offset rawSpaceUsed", not as the
+// start of block i+1.
+//
+// Multiple blocks can contain the same raw position. Any block whose
+// rawSpaceUsed is 0 (i.e. contains only empty raw lines) shares its raw
+// offset with the block before and after it, and the boundary value at the
+// end of block i equals the start of block i+1. The visual y-coordinate of
+// the position is what disambiguates which logical block the caller meant,
+// and that information lives in the LineBufferPosition's yOffset field, not
+// in `position` here. Callers that need the visually-correct block (rather
+// than just any block whose raw range covers `position`) must consume
+// yOffset themselves by walking forward through subsequent blocks.
+//
+// Pass -1 for width and NULL for blockOffset to avoid building a cache.
+- (LineBlock * _Nullable)firstBlockContainingPosition:(long long)p
+                                                width:(int)width
+                                            remainder:(nullable int *)remainder
+                                          blockOffset:(nullable int *)yoffset
+                                                index:(nullable int *)indexPtr;
 - (void)sanityCheck:(long long)droppedChars;
 - (void)oopsWithWidth:(int)width droppedChars:(long long)droppedChars block:(void (^)(void))block;
 - (NSSet<NSNumber *> *)cachedWidths;
 - (NSInteger)numberOfWrappedLinesForWidth:(int)width
                           upToBlockAtIndex:(NSInteger)limit;
 - (NSInteger)numberOfRawLinesInRange:(NSRange)range width:(int)width;
+
+// Tests only. Exposes the two implementations of firstBlockContainingPosition:
+// so tests can verify fast/slow agree (or, when they don't, demonstrate where).
+- (LineBlock * _Nullable)testOnly_fast_firstBlockContainingPosition:(long long)position
+                                                              width:(int)width
+                                                          remainder:(nullable int *)remainder
+                                                        blockOffset:(nullable int *)blockOffset
+                                                              index:(nullable int *)indexPtr;
+- (LineBlock * _Nullable)testOnly_slow_firstBlockContainingPosition:(long long)position
+                                                              width:(int)width
+                                                          remainder:(nullable int *)remainder
+                                                        blockOffset:(nullable int *)blockOffset
+                                                              index:(nullable int *)indexPtr;
 
 @end
 

@@ -1252,33 +1252,45 @@ NS_INLINE int TotalNumberOfRawLines(LineBuffer *self) {
     return NO;
 }
 
-- (BOOL)_findPosition:(LineBufferPosition *)start inBlock:(int*)block_num inOffset:(int*)offset {
-    LineBlock *block = [_lineBlocks blockContainingPosition:start.absolutePosition - droppedChars
-                                                    yOffset:start.yOffset
-                                                      width:-1
-                                                  remainder:offset
-                                                blockOffset:NULL
-                                                      index:block_num];
+- (BOOL)_findPosition:(LineBufferPosition *)start
+              inBlock:(int *)block_num
+             inOffset:(int *)offset
+                width:(int)width {
+    LineBlock *block = [_lineBlocks firstBlockContainingPosition:start.absolutePosition - droppedChars
+                                                           width:-1
+                                                       remainder:offset
+                                                     blockOffset:NULL
+                                                           index:block_num];
     if (!block) {
         return NO;
+    }
+    if (width > 0 && start.yOffset > 0) {
+        int yOffsetRemaining = start.yOffset;
+        const int rawSpaceUsed = [block rawSpaceUsed];
+        // We only know how to advance from "end of block" (offset == rawSpaceUsed,
+        // the closed-right boundary case). For positions in the interior of a
+        // block, computing the wrapped row containing the offset would require
+        // more work and isn't needed by today's callers.
+        if (*offset == rawSpaceUsed) {
+            int currentIndex = *block_num;
+            while (yOffsetRemaining > 0 && currentIndex + 1 < (int)_lineBlocks.count) {
+                currentIndex += 1;
+                LineBlock *next = _lineBlocks[currentIndex];
+                const int linesInNext = [next getNumLinesWithWrapWidth:width];
+                if (yOffsetRemaining <= linesInNext) {
+                    *block_num = currentIndex;
+                    *offset = 0;
+                    return YES;
+                }
+                yOffsetRemaining -= linesInNext;
+            }
+        }
     }
     return YES;
 }
 
 - (int)_blockPosition:(int) block_num {
     return [_lineBlocks rawSpaceUsedInRangeOfBlocks:NSMakeRange(0, block_num)];
-}
-
-- (BOOL)setStartCoord:(VT100GridCoord)coord ofFindContext:(FindContext *)findContext width:(int)width {
-    LineBufferPosition *position = [self positionForCoordinate:coord width:width offset:0];
-    int absBlockNum = 0;
-    int offset = 0;
-    if (![self _findPosition:position inBlock:&absBlockNum inOffset:&offset]) {
-        return NO;
-    }
-    findContext.offset = offset;
-    findContext.absBlockNum = absBlockNum + num_dropped_blocks;
-    return YES;
 }
 
 - (void)prepareToSearchFor:(NSString*)substring
@@ -1297,14 +1309,16 @@ NS_INLINE int TotalNumberOfRawLines(LineBuffer *self) {
     context.mode = mode;
     int offset = context.offset;
     int absBlockNum = context.absBlockNum;
-    if ([self _findPosition:start inBlock:&absBlockNum inOffset:&offset]) {
+    // width:-1 skips the yOffset walk; search advances raw-character by
+    // raw-character so the starting position is correct regardless of yOffset.
+    if ([self _findPosition:start inBlock:&absBlockNum inOffset:&offset width:-1]) {
         DLog(@"Converted %@ to absBlock=%@, offset=%@", start, @(absBlockNum), @(offset));
         context.offset = offset;
         context.absBlockNum = absBlockNum + num_dropped_blocks;
         context.status = Searching;
     } else {
         DLog(@"Failed to convert %@", start);
-        [self _findPosition:start inBlock:&absBlockNum inOffset:&offset];
+        [self _findPosition:start inBlock:&absBlockNum inOffset:&offset width:-1];
         context.status = NotFound;
     }
     context.results = [NSMutableArray array];
@@ -1721,8 +1735,7 @@ NS_INLINE int TotalNumberOfRawLines(LineBuffer *self) {
     int yoffset;
     VLog(@"coordinateForPosition: find block with position %@, yoffset=%@",
          @(position.absolutePosition - droppedChars), @(position.yOffset));
-    LineBlock *block = [_lineBlocks blockContainingPosition:position.absolutePosition - droppedChars
-                                                    yOffset:position.yOffset
+    LineBlock *block = [_lineBlocks firstBlockContainingPosition:position.absolutePosition - droppedChars
                                                       width:width
                                                   remainder:&p
                                                 blockOffset:&yoffset
@@ -1751,21 +1764,16 @@ NS_INLINE int TotalNumberOfRawLines(LineBuffer *self) {
         VLog(@"coordinateForPosition: failed to convert position");
     }
     if (position.yOffset > 0) {
-        if (!position.extendsToEndOfLine) {
-            VLog(@"coordinateForPosition: wrap x to next line");
-            x = 0;
-        }
+        // We've advanced y onto an empty wrapped row below the content; the natural
+        // x from convertPosition: belongs to the row above, so pin x to the start.
+        VLog(@"coordinateForPosition: wrap x to next line");
+        x = 0;
         y += position.yOffset;
         VLog(@"coordinateForPosition: advance y by %d to %d", position.yOffset, y);
     }
-    if (position.extendsToEndOfLine) {
-        if (extendsRight) {
-            VLog(@"coordinateForPosition: extends right is true, set x to last column");
-            x = width - 1;
-        } else {
-            VLog(@"coordinateForPosition: extends right is false, set x to 0");
-            x = 0;
-        }
+    if (position.extendsToEndOfLine && extendsRight) {
+        VLog(@"coordinateForPosition: extends right is true, set x to last column");
+        x = width - 1;
     }
     VT100GridCoord coord = VT100GridCoordMake(x, y + yoffset);
     VLog(@"coordinateForPosition: return %@", VT100GridCoordDescription(coord));
@@ -1799,11 +1807,12 @@ NS_INLINE int TotalNumberOfRawLines(LineBuffer *self) {
     return position;
 }
 
-- (LineBufferPosition * _Nonnull)positionForStartOfLastLineBeforePosition:(LineBufferPosition *)limit {
+- (LineBufferPosition * _Nonnull)positionForStartOfLastLineBeforePosition:(LineBufferPosition *)limit
+                                                                    width:(int)width {
     [self removeTrailingEmptyBlocks];
     int blockNum = 0;
     int offset = 0;
-    if (![self _findPosition:limit inBlock:&blockNum inOffset:&offset]) {
+    if (![self _findPosition:limit inBlock:&blockNum inOffset:&offset width:width]) {
         return [self positionForStartOfLastLine];
     }
     const long long precedingBlocksLength = [_lineBlocks rawSpaceUsedInRangeOfBlocks:NSMakeRange(0, blockNum)];
@@ -1852,33 +1861,11 @@ NS_INLINE int TotalNumberOfRawLines(LineBuffer *self) {
     return absPos + droppedChars;
 }
 
-- (int)absBlockNumberOfAbsPos:(long long)absPos {
-    int index;
-    LineBlock *block = [_lineBlocks blockContainingPosition:absPos - droppedChars
-                                                    yOffset:0
-                                                      width:0
-                                                  remainder:NULL
-                                                blockOffset:NULL
-                                                      index:&index];
-    if (!block) {
-        return _lineBlocks.count + num_dropped_blocks;
-    }
-    return index + num_dropped_blocks;
-}
-
 - (long long)absPositionOfAbsBlock:(int)absBlockNum {
     if (absBlockNum <= num_dropped_blocks) {
         return droppedChars;
     }
     return droppedChars + [_lineBlocks rawSpaceUsedInRangeOfBlocks:NSMakeRange(0, absBlockNum - num_dropped_blocks)];
-}
-
-- (void)storeLocationOfAbsPos:(long long)absPos
-                    inContext:(FindContext *)context
-{
-    context.absBlockNum = [self absBlockNumberOfAbsPos:absPos];
-    long long absOffset = [self absPositionOfAbsBlock:context.absBlockNum];
-    context.offset = MAX(0, absPos - absOffset);
 }
 
 - (long long)numberOfDroppedChars {
@@ -2138,6 +2125,10 @@ NS_INLINE int TotalNumberOfRawLines(LineBuffer *self) {
 
 - (BOOL)isPartial {
     return _lineBlocks.lastBlock.hasPartial;
+}
+
+- (iTermLineBlockArray *)testOnly_lineBlockArray {
+    return _lineBlocks;
 }
 
 - (LineBlock *)testOnlyBlockAtIndex:(int)i {

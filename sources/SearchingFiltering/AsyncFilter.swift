@@ -195,7 +195,7 @@ class FilteringUpdater: HexAddressFormatting {
             self.context = context
 
             let startPosition = lineBuffer.position(of: context, width: width)
-            let lastLineStartPosition = lineBuffer.positionForStartOfLastLine(before: computedStopAt)
+            let lastLineStartPosition = lineBuffer.positionForStartOfLastLine(before: computedStopAt, width: width)
             let lastLineStartCoord = lineBuffer.coordinate(for: lastLineStartPosition,
                                                            width: width,
                                                            extendsRight: false,
@@ -270,7 +270,7 @@ class FilteringUpdater: HexAddressFormatting {
         if backupInfo?.shouldBackUp == true {
             // We know we searched the last line so prepare to search again from the beginning
             // of the last line next time.
-            lastPosition = lineBuffer.positionForStartOfLastLine(before: computedStopAt)
+            lastPosition = lineBuffer.positionForStartOfLastLine(before: computedStopAt, width: width)
             DLog("\(hexAddress): FilteringUpdater: update: Back up to \(String(describing: lastPosition))")
             return false
         }

@@ -41,6 +41,7 @@ NS_ASSUME_NONNULL_BEGIN
 @class LineBlock;
 @class LineBuffer;
 @class iTermBidiDisplayInfo;
+@class iTermLineBlockArray;
 
 @protocol iTermLineBufferDelegate<NSObject>
 - (void)lineBufferDidDropLines:(LineBuffer * _Nonnull)lineBuffer;
@@ -131,7 +132,6 @@ NS_ASSUME_NONNULL_BEGIN
                    options:(FindOptions)options
                       mode:(iTermFindMode)findMode
                withContext:(FindContext * _Nonnull)context;
-- (BOOL)setStartCoord:(VT100GridCoord)coord ofFindContext:(FindContext *)findContext width:(int)width;
 
 // Performs a search. Use prepareToSearchFor:startingAt:options:withContext: to initialize
 // the FindContext prior to calling this.
@@ -161,7 +161,11 @@ NS_ASSUME_NONNULL_BEGIN
 - (LineBufferPosition * _Nonnull)penultimatePosition;
 - (LineBufferPosition * _Nonnull)positionForStartOfLastLine;
 
-- (LineBufferPosition * _Nonnull)positionForStartOfLastLineBeforePosition:(LineBufferPosition *)limit;
+// width is needed only to honor limit.yOffset: if yOffset spans empty rows that
+// cross a block boundary, the returned position is in the block that visually
+// contains the line at base + yOffset. Pass the screen width here.
+- (LineBufferPosition * _Nonnull)positionForStartOfLastLineBeforePosition:(LineBufferPosition *)limit
+                                                                    width:(int)width;
 - (LineBufferPosition * _Nonnull)positionForStartOfResultRange:(ResultRange *)resultRange;
 
 // Convert the block,offset in a findcontext into an absolute position.
@@ -170,10 +174,6 @@ NS_ASSUME_NONNULL_BEGIN
 - (int)positionForAbsPosition:(long long)absPosition;
 // Convert a position into an absolute position.
 - (long long)absPositionForPosition:(int)pos;
-
-// Set the start location of a find context to an absolute position.
-- (void)storeLocationOfAbsPos:(long long)absPos
-                    inContext:(FindContext * _Nonnull)context;
 
 - (NSString * _Nonnull)debugString;
 - (void)dumpWrappedToWidth:(int)width;
@@ -198,6 +198,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 // Tests only!
 - (LineBlock * _Nonnull)testOnlyBlockAtIndex:(int)i;
+- (iTermLineBlockArray * _Nonnull)testOnly_lineBlockArray;
 
 - (unsigned int)numberOfUnwrappedLines;
 - (BOOL)isEqual:(LineBuffer *)other;
