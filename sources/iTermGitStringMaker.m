@@ -16,6 +16,8 @@
 #import "iTermGitState+MainApp.h"
 #import "iTermVariableReference.h"
 #import "iTermVariableScope+Session.h"
+#import "iTermVariables.h"
+#import "NSObject+iTerm.h"
 
 @implementation iTermGitStringMaker
 
@@ -174,9 +176,17 @@
 }
 
 - (BOOL)onLocalhost {
+    // Prefer the frozen locality published when the host was reported. It's
+    // immune to network-driven local hostname changes, which the string
+    // compare below is not.
+    NSNumber *flag = [NSNumber castFrom:[self.scope valueForVariableName:iTermVariableKeySessionIsLocalhost]];
+    if (flag != nil) {
+        DLog(@"git poller isLocalhost variable is %@", flag);
+        return flag.boolValue;
+    }
     NSString *localhostName = [NSHost fullyQualifiedDomainName];
     NSString *currentHostname = self.scope.hostname;
-    DLog(@"git poller current hostname is %@, localhost is %@", currentHostname, localhostName);
+    DLog(@"git poller current hostname is %@, localhost is %@ (no locality flag)", currentHostname, localhostName);
     return [localhostName isEqualToString:currentHostname];
 }
 

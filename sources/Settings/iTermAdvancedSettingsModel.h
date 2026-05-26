@@ -197,6 +197,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (BOOL)extendBackgroundColorIntoMargins;
 + (double)extraSpaceBeforeCompactTopTabBar;
 + (double)fakeNotchHeight;
++ (NSString *)fakeFullyQualifiedDomainName;
 + (NSString *)fallbackLCCType;
 + (BOOL)fastForegroundJobUpdates;
 + (BOOL)fastTriggerRegexes;

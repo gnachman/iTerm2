@@ -447,6 +447,16 @@ Bug Fixes:
   start the API server instead of silently
   unlinking and rebinding the original
   instance’s socket.
+- Localhost detection no longer breaks when
+  your computer's hostname changes (for
+  example after switching networks). Whether
+  a session is on the local machine is now
+  recorded when the host is first reported,
+  rather than recomputed later by comparing
+  names. This fixes the git status bar, the
+  workgroup diff list, opening local files,
+  and uploads/downloads going stale after a
+  rename.
 - Pressing Enter to commit an IME
   composition (e.g. Chinese, Japanese,
   Korean) in the AI Chat input no longer

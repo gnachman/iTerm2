@@ -17,6 +17,7 @@
 #import "NSArray+iTerm.h"
 #import "NSData+iTerm.h"
 #import "NSDictionary+iTerm.h"
+#import "NSHost+iTerm.h"
 #import "PTYAnnotation.h"
 #import "PTYTriggerEvaluator.h"
 #import "TmuxStateParser.h"
@@ -3546,30 +3547,66 @@ void VT100ScreenEraseCell(screen_char_t *sct,
         host = remoteHost;
     }
 
-    [self setHost:host user:user ssh:NO completion:^{}];
+    [self setHost:host user:user viaSSHIntegration:NO completion:^{}];
 }
 
+// viaSSHIntegration: see -screenCurrentHostDidChange:pwd:viaSSHIntegration:.
+// It is the cause of the change (SSH/conductor layer vs. shell integration),
+// not a claim that the host is remote.
 - (void)setHost:(NSString *)host
            user:(NSString *)user
-            ssh:(BOOL)ssh  // Due to ssh integration?
+ viaSSHIntegration:(BOOL)viaSSHIntegration
      completion:(void (^)(void))completion {
-    DLog(@"setHost:%@ user:%@ %@", host, user, self);
-    id<VT100RemoteHostReading> currentHost = [self remoteHostOnLine:self.numberOfLines];
-    if (!host || !user) {
-        // A trigger can set the host and user alone. If remoteHost looks like example.com or
-        // user@, then preserve the previous host/user. Also ensure neither value is nil; the
-        // empty string will stand in for a real value if necessary.
-        id<VT100RemoteHostReading> lastRemoteHost = [self lastRemoteHost];
-        if (!host) {
-            host = [lastRemoteHost.hostname copy] ?: @"";
-        }
-        if (!user) {
-            user = [lastRemoteHost.username copy] ?: @"";
-        }
+    // Whether the caller actually reported a hostname (vs. a trigger that
+    // supplied only a username and relies on backfill). This decides whether
+    // locality is computed fresh or carried forward.
+    const BOOL hostWasProvided = (host != nil);
+    id<VT100RemoteHostReading> lastRemoteHost = [self lastRemoteHost];
+    if (!host) {
+        // A trigger can set the user alone (e.g. "user@"); preserve the
+        // previous hostname. The empty string stands in if there's none.
+        host = [lastRemoteHost.hostname copy] ?: @"";
+    }
+    if (!user) {
+        user = [lastRemoteHost.username copy] ?: @"";
     }
 
+    // Determine localhost-ness now, while the reporting shell's name and our
+    // gethostname() are contemporaneous, and freeze it onto the host. This is
+    // the only reliable moment to compare: a later network change can rename
+    // the local .local host, breaking any after-the-fact string compare.
+    VT100RemoteHostLocality locality;
+    if (viaSSHIntegration) {
+        // Reached via ssh integration / conductor: structurally remote.
+        locality = VT100RemoteHostLocalityRemote;
+    } else if (!hostWasProvided) {
+        // Only a username was reported; the hostname was carried over from the
+        // previous host, so its locality carries over too rather than being
+        // recomputed against a backfilled name.
+        locality = lastRemoteHost ? lastRemoteHost.localityState : VT100RemoteHostLocalityUnknown;
+    } else if ([host isEqualToString:[NSHost fullyQualifiedDomainName]]) {
+        locality = VT100RemoteHostLocalityLocalhost;
+    } else {
+        locality = VT100RemoteHostLocalityRemote;
+    }
+
+    [self setHost:host user:user viaSSHIntegration:viaSSHIntegration locality:locality completion:completion];
+}
+
+// Core of setHost: host/user are already resolved and locality already
+// decided by the caller. restoreFromSavedState: calls this directly with a
+// deserialized host's locality so that path's viaSSHIntegration:YES (which
+// only suppresses the host-change side effects below) doesn't re-stamp the
+// restored host as remote.
+- (void)setHost:(NSString *)host
+           user:(NSString *)user
+ viaSSHIntegration:(BOOL)viaSSHIntegration
+       locality:(VT100RemoteHostLocality)locality
+     completion:(void (^)(void))completion {
+    DLog(@"setHost:%@ user:%@ viaSSHIntegration:%@ locality:%@ %@", host, user, @(viaSSHIntegration), @(locality), self);
+    id<VT100RemoteHostReading> currentHost = [self remoteHostOnLine:self.numberOfLines];
     const int cursorLine = self.numberOfLines - self.height + self.currentGrid.cursorY;
-    id<VT100RemoteHostReading> remoteHostObj = [[self setRemoteHost:host user:user onLine:cursorLine] doppelganger];
+    id<VT100RemoteHostReading> remoteHostObj = [[self setRemoteHost:host user:user locality:locality onLine:cursorLine] doppelganger];
 
     const BOOL hostChangedInTree = ![remoteHostObj isEqualToRemoteHost:currentHost];
     // Also fire on first push or when the value differs from what we last pushed,
@@ -3585,7 +3622,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
         dispatch_queue_t queue = _queue;
         // Unmanaged because this can make APS change profile.
         [self addUnmanagedPausedSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate, iTermTokenExecutorUnpauser * _Nonnull unpauser) {
-            [delegate screenCurrentHostDidChange:remoteHostObj pwd:pwd ssh:ssh];
+            [delegate screenCurrentHostDidChange:remoteHostObj pwd:pwd viaSSHIntegration:viaSSHIntegration];
             dispatch_async(queue, ^{
                 completion();
                 [unpauser unpause];
@@ -3596,8 +3633,13 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     }
 }
 
-- (id<VT100RemoteHostReading>)setRemoteHost:(NSString *)host user:(NSString *)user onLine:(int)line {
-    VT100RemoteHost *remoteHostObj = [[VT100RemoteHost alloc] initWithUsername:user hostname:host];
+- (id<VT100RemoteHostReading>)setRemoteHost:(NSString *)host
+                                       user:(NSString *)user
+                                   locality:(VT100RemoteHostLocality)locality
+                                     onLine:(int)line {
+    VT100RemoteHost *remoteHostObj = [[VT100RemoteHost alloc] initWithUsername:user
+                                                                     hostname:host
+                                                                     locality:locality];
     VT100GridCoordRange range = VT100GridCoordRangeMake(0, line, self.width, line);
     DLog(@"setRemoteHost:%@", remoteHostObj);
     [self.mutableIntervalTree addObject:remoteHostObj
@@ -3866,7 +3908,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
 
     if (host.length > 0 || user.length > 0) {
         __weak __typeof(self) weakSelf = self;
-        [self setHost:host user:user ssh:NO completion:^{
+        [self setHost:host user:user viaSSHIntegration:NO completion:^{
             [weakSelf setPathFromURL:path];
         }];
     } else {
@@ -5864,9 +5906,19 @@ lengthExcludingInBandSignaling:data.length
     }
 }
 
+// Restores the terminal state captured in -[VT100ScreenState savedState] when
+// SSH integration began. This is the SSH-integration counterpart to -[PTYSession
+// maybeResetTerminalStateOnHostChange:]: on a conductor unhook we put the exact
+// pre-ssh terminal state back (Mouse Mode, Report Focus, Bracketed Paste, DEC
+// 2048, colors, tab stops, charsets, ...) rather than heuristically guessing
+// which modes to turn off. Because this exact restore supersedes that heuristic,
+// the heuristic is skipped for SSH-integration host changes (the
+// viaSSHIntegration gate in -[PTYSession screenCurrentHostDidChange:pwd:viaSSHIntegration:]).
 - (void)restoreFromSavedState:(NSDictionary *)terminalState {
     NSDictionary *terminalDict = [NSDictionary castFrom:terminalState[VT100ScreenTerminalStateKeyVT100Terminal]];
     if (terminalDict) {
+        // The wholesale terminal-state restore that stands in for the non-ssh
+        // path's mode cleanup.
         [_terminal setStateFromDictionary:terminalDict];
     }
     NSData *colorData = [NSData castFrom:terminalState[VT100ScreenTerminalStateKeySavedColors]];
@@ -5886,7 +5938,22 @@ lengthExcludingInBandSignaling:data.length
     }
     NSDictionary *remoteHostDictionary = [NSDictionary castFrom:terminalState[VT100ScreenTerminalStateKeyRemoteHost]];
     VT100RemoteHost *remoteHost = remoteHostDictionary ? [[VT100RemoteHost alloc] initWithDictionary:remoteHostDictionary] : nil;
-    [self setHost:remoteHost.hostname user:remoteHost.username ssh:YES completion:^{}];
+    if (remoteHost) {
+        // Restore the pre-ssh host with its serialized locality intact.
+        // viaSSHIntegration:YES is only for the host-change side-effect
+        // semantics (this is a restore driven by the conductor unhook, not
+        // entering a new host); it must not re-stamp a restored localhost host
+        // as remote, which is why we pass the deserialized locality explicitly.
+        [self setHost:remoteHost.hostname
+                 user:remoteHost.username
+    viaSSHIntegration:YES
+             locality:remoteHost.localityState
+           completion:^{}];
+    } else {
+        // No saved remote host: fall back to the resolving path, which backfills
+        // host/user from the current host.
+        [self setHost:nil user:nil viaSSHIntegration:YES completion:^{}];
+    }
     NSString *path = [NSString castFrom:terminalState[VT100ScreenTerminalStateKeyPath]];
     if (path) {
         [self setPathFromURL:path];

@@ -2330,7 +2330,7 @@ ITERM_WEAKLY_REFERENCEABLE
         NSString *pwd = [_screen workingDirectoryOnLine:_screen.numberOfLines];
         [self screenCurrentHostDidChange:lastRemoteHost
                                      pwd:pwd
-                                     ssh:NO];
+                       viaSSHIntegration:NO];
     }
 
     const BOOL enabled = _screen.terminalSoftAlternateScreenMode;
@@ -16149,8 +16149,8 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 
 - (void)screenCurrentHostDidChange:(id<VT100RemoteHostReading>)host
                                pwd:(NSString *)workingDirectory
-                               ssh:(BOOL)ssh {
-    DLog(@"Current host did change to %@, pwd=%@, ssh=%@. %@", host, workingDirectory, @(ssh), self);
+                 viaSSHIntegration:(BOOL)viaSSHIntegration {
+    DLog(@"Current host did change to %@, pwd=%@, viaSSHIntegration=%@. %@", host, workingDirectory, @(viaSSHIntegration), self);
     NSString *previousHostName = _currentHost.hostname;
     NSString *previousUsername = _currentHost.username;
 
@@ -16165,8 +16165,22 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     }
 
     NSNull *null = [NSNull null];
+    // Mirror the host's frozen locality. Unknown stays unset so consumers can
+    // tell "we don't know" (fall back to the legacy compare) from "known".
+    id isLocalhostValue = null;
+    switch (host.localityState) {
+        case VT100RemoteHostLocalityLocalhost:
+            isLocalhostValue = @YES;
+            break;
+        case VT100RemoteHostLocalityRemote:
+            isLocalhostValue = @NO;
+            break;
+        case VT100RemoteHostLocalityUnknown:
+            break;
+    }
     NSDictionary *variablesUpdate = @{ iTermVariableKeySessionHostname: host.hostname ?: null,
-                                       iTermVariableKeySessionUsername: host.username ?: null };
+                                       iTermVariableKeySessionUsername: host.username ?: null,
+                                       iTermVariableKeySessionIsLocalhost: isLocalhostValue };
     [self.variablesScope setValuesFromDictionary:variablesUpdate];
 
     [_textview setBadgeLabel:[self badgeLabel]];
@@ -16181,7 +16195,9 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
                                commandLine:self.variablesScope.commandLine];
 
     // Ignore changes to username; only update on hostname changes. See issue 8030.
-    if (previousHostName && ![previousHostName isEqualToString:host.hostname] && !ssh) {
+    // Skip these shell-integration host-change heuristics when the change came
+    // from the SSH/conductor layer (e.g. a restore), which manages this itself.
+    if (previousHostName && ![previousHostName isEqualToString:host.hostname] && !viaSSHIntegration) {
         [self maybeResetTerminalStateOnHostChange:host];
         if ([iTermAdvancedSettingsModel restoreKeyModeAutomaticallyOnHostChange]) {
             [self pushOrPopHostState:host];
@@ -16221,6 +16237,17 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     }
 }
 
+// Best-effort cleanup for the non-SSH-integration path: when shell integration
+// reports a host change, programs on the previous host may have left terminal
+// modes (mouse/focus reporting, bracketed paste, DEC 2048) enabled that the new
+// host won't know to turn off. We have no snapshot of the prior state here, so
+// we can only turn them off (or offer to). The SSH-integration path does this
+// far more precisely instead: on conductor unhook it restores the exact pre-ssh
+// terminal state. See -[VT100ScreenMutableState restoreFromSavedState:] (the
+// setStateFromDictionary: call). The two are mutually exclusive: this heuristic
+// is gated on !viaSSHIntegration in
+// -screenCurrentHostDidChange:pwd:viaSSHIntegration: so it never runs alongside
+// the exact restore.
 - (void)maybeResetTerminalStateOnHostChange:(id<VT100RemoteHostReading>)newRemoteHost {
     _modeHandler.mode = iTermSessionModeDefault;
     [_screen performBlockWithJoinedThreads:^(VT100Terminal *terminal,

@@ -124,8 +124,13 @@
 - (NSView *)statusBarComponentView {
     [self updateForTerminalBackgroundColor];
 
+    // Carry the published locality so the composer's isLocalhost-driven path
+    // completion stays correct after a local hostname change.
+    const VT100RemoteHostLocality locality =
+        [VT100RemoteHost localityForIsLocalhostVariableValue:[self.scope valueForVariableName:iTermVariableKeySessionIsLocalhost]];
     VT100RemoteHost *remoteHost = [[VT100RemoteHost alloc] initWithUsername:[self.scope valueForVariableName:iTermVariableKeySessionUsername]
-                                                                   hostname:[self.scope valueForVariableName:iTermVariableKeySessionHostname]];
+                                                                   hostname:[self.scope valueForVariableName:iTermVariableKeySessionHostname]
+                                                                   locality:locality];
 
     [self.viewController setHost:remoteHost];
     return self.viewController.view;

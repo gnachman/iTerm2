@@ -331,9 +331,15 @@ typedef NS_ENUM(NSUInteger, PTYSessionResizePermission) {
 
 - (void)screenSelectColorPresetNamed:(NSString * _Nonnull)name;
 
+// viaSSHIntegration describes the cause of the host change: YES means it came
+// from the SSH/conductor integration layer (today, only the conductor-unhook
+// restore), NO means shell-integration host reporting (OSC/trigger). It is not
+// a statement about whether the host is remote. Its only effect is to suppress
+// the shell-integration host-change side effects (terminal-state reset and the
+// key-mapping host stack), which a deliberate restore must not run.
 - (void)screenCurrentHostDidChange:(id<VT100RemoteHostReading> _Nonnull)host
                                pwd:(NSString * _Nullable)workingDirectory
-                               ssh:(BOOL)ssh;  // Due to ssh integration?
+                 viaSSHIntegration:(BOOL)viaSSHIntegration;
 - (void)screenCurrentDirectoryDidChangeTo:(NSString * _Nullable)newPath
                                remoteHost:(id<VT100RemoteHostReading> _Nullable)remoteHost;
 

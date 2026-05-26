@@ -35,6 +35,7 @@ extern NSString *const iTermVariableKeySessionAutoLogID;
 extern NSString *const iTermVariableKeySessionColumns;
 extern NSString *const iTermVariableKeySessionCreationTimeString;
 extern NSString *const iTermVariableKeySessionHostname;
+extern NSString *const iTermVariableKeySessionIsLocalhost;  // NSNumber (bool), or unset when locality is unknown. YES if the current host is the local machine.
 extern NSString *const iTermVariableKeySessionID;
 extern NSString *const iTermVariableKeySessionLastCommand;
 extern NSString *const iTermVariableKeySessionPath;

@@ -46,6 +46,7 @@
                                     iTermVariableKeySessionColumns,
                                     iTermVariableKeySessionCreationTimeString,
                                     iTermVariableKeySessionHostname,
+                                    iTermVariableKeySessionIsLocalhost,
                                     iTermVariableKeySessionID,
                                     iTermVariableKeySessionLastCommand,
                                     iTermVariableKeySessionPath,

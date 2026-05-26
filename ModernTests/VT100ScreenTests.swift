@@ -1988,7 +1988,7 @@ class FakeSession: NSObject, VT100ScreenDelegate {
 
     }
     
-    func screenCurrentHostDidChange(_ host: any VT100RemoteHostReading, pwd workingDirectory: String?, ssh: Bool) {
+    func screenCurrentHostDidChange(_ host: any VT100RemoteHostReading, pwd workingDirectory: String?, viaSSHIntegration: Bool) {
 
     }
     

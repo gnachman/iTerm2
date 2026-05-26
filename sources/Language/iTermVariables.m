@@ -49,6 +49,7 @@ NSString *const iTermVariableKeySessionAutoLogID = @"autoLogId";
 NSString *const iTermVariableKeySessionColumns = @"columns";
 NSString *const iTermVariableKeySessionCreationTimeString = @"creationTimeString";
 NSString *const iTermVariableKeySessionHostname = @"hostname";
+NSString *const iTermVariableKeySessionIsLocalhost = @"isLocalhost";
 NSString *const iTermVariableKeySessionID = @"id";
 NSString *const iTermVariableKeySessionLastCommand = @"lastCommand";
 NSString *const iTermVariableKeySessionPath = @"path";

@@ -169,11 +169,20 @@ static NSString *const iTermStatusBarHostnameComponentAbbreviateLocalhost = @"ab
 - (nullable NSArray<NSString *> *)stringVariants {
     NSDictionary *knobValues = self.configuration[iTermStatusBarComponentConfigurationKeyKnobValues];
     NSString *abbreviation = [NSString castFrom:knobValues[iTermStatusBarHostnameComponentAbbreviateLocalhost]];
-    if (abbreviation.length &&
-        [[NSHost fullyQualifiedDomainName] isEqualToString:self.cached]) {
+    if (abbreviation.length && [self onLocalhost]) {
         return @[ abbreviation ];
     }
     return [super stringVariants];
+}
+
+- (BOOL)onLocalhost {
+    // Prefer the frozen locality bit; it survives a network-driven rename of
+    // the local .local host that would otherwise defeat the name compare.
+    NSNumber *flag = [NSNumber castFrom:[self.scope valueForVariableName:iTermVariableKeySessionIsLocalhost]];
+    if (flag != nil) {
+        return flag.boolValue;
+    }
+    return [[NSHost fullyQualifiedDomainName] isEqualToString:self.cached];
 }
 
 - (nullable NSString *)stringByCompressingString:(NSString *)source {
@@ -393,8 +402,13 @@ static NSString *const iTermStatusBarHostnameComponentAbbreviateLocalhost = @"ab
 }
 
 - (id<VT100RemoteHostReading>)remoteHost {
+    // Carry the published locality so isLocalhost (used for path completion)
+    // survives a local hostname change instead of falling back to a name compare.
+    const VT100RemoteHostLocality locality =
+        [VT100RemoteHost localityForIsLocalhostVariableValue:[self.scope valueForVariableName:iTermVariableKeySessionIsLocalhost]];
     VT100RemoteHost *result = [[VT100RemoteHost alloc] initWithUsername:[self.scope valueForVariableName:iTermVariableKeySessionUsername]
-                                                               hostname:[self.scope valueForVariableName:iTermVariableKeySessionHostname]];
+                                                               hostname:[self.scope valueForVariableName:iTermVariableKeySessionHostname]
+                                                               locality:locality];
     return result;
 }
 
