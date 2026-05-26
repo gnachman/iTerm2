@@ -330,6 +330,21 @@ private extension ToolStatus {
             }
         }
         _tableView?.endUpdates()
+        // Row heights depend on how the detail text wraps (0–3 lines), so a row
+        // must shrink when its detail is cleared. Doing that note inside the
+        // begin/endUpdates batch above (alongside the row's content reload and
+        // any moveRow) is unreliable: AppKit can swallow an in-batch height note,
+        // and coalesced bursts re-sort the array per key so an in-batch index no
+        // longer points at the row that changed. The net effect is a row that
+        // drops its detail label but keeps its taller height, leaving an empty
+        // gap. Re-note heights here, outside the batch, at each changed row's
+        // final index so the recomputation always lands on the right row.
+        let changed = IndexSet(keys.compactMap { key in
+            statuses.firstIndex { $0.sessionID == key }
+        })
+        if !changed.isEmpty {
+            _tableView?.noteHeightOfRows(withIndexesChanged: changed)
+        }
         updateSelectionWithoutChangingFirstResponder()
     }
 
@@ -386,11 +401,10 @@ private extension ToolStatus {
                 if i != j {
                     _tableView?.moveRow(at: i, to: j)
                 }
+                // reloadData refreshes the cell's content but keeps the cached
+                // row height; the height is recomputed in flushPendingChanges
+                // after endUpdates (see the note there).
                 _tableView?.reloadData(forRowIndexes: IndexSet(integer: j), columnIndexes: IndexSet(integer: 0))
-                // reloadData reloads cell content but keeps the cached row
-                // height; detail text can wrap 1–3 lines so height must be
-                // recomputed whenever tabStatus changes.
-                _tableView?.noteHeightOfRows(withIndexesChanged: IndexSet(integer: j))
                 _tableView?.endUpdates()
             }
         }

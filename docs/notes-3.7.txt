@@ -964,3 +964,8 @@ Bug Fixes:
   picks up the new mode automatically;
   flip it back to Regular in Settings
   if you prefer the old behavior.
+- Fix the Session Status toolbelt
+  leaving a blank gap below a status
+  when its detail text was cleared.
+  The row height now shrinks back to
+  fit the remaining lines.
