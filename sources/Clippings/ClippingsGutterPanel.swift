@@ -41,7 +41,10 @@ class iTermClippingsGutterPanel: NSObject, iTermRightGutterPanel {
 
     var view: NSView { clippingsView }
 
-    var width: CGFloat { iTermClippingsView.fixedWidth }
+    var width: CGFloat {
+        iTermGutterPanelWidths.width(forIdentifier: iTermClippingsGutterPanel.panelIdentifier,
+                                     defaultValue: iTermClippingsView.fixedWidth)
+    }
 
     var visible: Bool {
         return currentSession?.clippingsVisible ?? false
@@ -146,7 +149,9 @@ class iTermClippingsGutterPanelRegistration: NSObject {
                 guard let session, session.clippingsVisible else {
                     return 0
                 }
-                return iTermClippingsView.fixedWidth
+                return iTermGutterPanelWidths.width(
+                    forIdentifier: iTermClippingsGutterPanel.panelIdentifier,
+                    defaultValue: iTermClippingsView.fixedWidth)
             })
     }
 }

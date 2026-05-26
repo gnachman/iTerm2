@@ -217,6 +217,7 @@
 #import "ScreenChar.h"
 #import "ScreenCharArray.h"
 #import "SearchResult.h"
+#import "iTermDragHandleView.h"
 #import "iTermFindOnPageHelper.h"
 #import "SessionView.h"
 #import "SessionView+Nullability.h"

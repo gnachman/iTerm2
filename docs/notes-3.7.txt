@@ -88,6 +88,11 @@ Major New Features:
   with a clean list while old findings
   remain reachable.
 
+- The clippings and inline AI chat panels
+  can now be resized by dragging their left
+  edge. The chosen width is remembered per
+  machine.
+
 - The Shell > Workgroups submenu now has
   an Exit Workgroup item to leave the
   current session’s workgroup.

@@ -10,25 +10,87 @@
 import AppKit
 import Foundation
 
-// Vertical 1pt separator drawn between adjacent right-gutter panels. Uses
-// NSColor.separatorColor so it adapts to dark/light mode and matches the
-// system divider styling used elsewhere in the app.
-final class iTermRightGutterDividerView: NSView {
+// Vertical separator drawn between/around adjacent right-gutter panels. It is
+// itself an iTermDragHandleView (the same view the toolbelt uses for its
+// left-edge resize), so it handles its own mouse tracking and resize cursor.
+// The visible 1pt hairline is drawn flush with the left edge (the panel
+// boundary), while the wider, transparent body is the grab area: it overhangs
+// into the panel so the resize affordance can't steal mouse events from the
+// terminal grid or the neighboring panel. The owning controller is the drag
+// handle's delegate and applies the width change.
+final class iTermRightGutterDividerView: iTermDragHandleView {
+    // Identifier of the panel whose width this divider adjusts (the panel
+    // immediately to its right — every divider sits on the left edge of some
+    // panel). nil makes the divider purely decorative and non-draggable.
+    var resizablePanelIdentifier: String?
+
+    static let lineWidth: CGFloat = 1
+    static let grabWidth: CGFloat = 6
+
+    // The visible hairline. A 1pt sublayer pinned to the left edge (the panel
+    // boundary), leaving the rest of the view as a transparent grab area. A
+    // layer-backed fill avoids the cost of a draw(_:) override; the view's own
+    // backing layer would color the full grab width, so the line gets its own
+    // sublayer.
+    private let lineLayer = CALayer()
+
     override var isFlipped: Bool { false }
 
-    override func draw(_ dirtyRect: NSRect) {
-        NSColor.separatorColor.setFill()
-        bounds.fill()
+    override init(frame frameRect: NSRect) {
+        super.init(frame: frameRect)
+        commonInit()
+    }
+
+    required init?(coder: NSCoder) {
+        super.init(coder: coder)
+        commonInit()
+    }
+
+    private func commonInit() {
+        wantsLayer = true
+        // The hairline is pinned to the left edge (the panel boundary) with a
+        // fixed width and x; only its height tracks the view. Letting the
+        // layer autoresize keeps that in sync without any per-layout frame
+        // bookkeeping. (Height is the sole flexible part with both margins
+        // fixed at 0, so it absorbs the full size delta even growing from the
+        // initial zero frame.)
+        lineLayer.autoresizingMask = [.layerHeightSizable]
+        lineLayer.frame = CGRect(x: 0, y: 0, width: Self.lineWidth, height: bounds.height)
+        updateLineColor()
+        layer?.addSublayer(lineLayer)
+    }
+
+    private func updateLineColor() {
+        // Resolve the dynamic system color against this view's appearance so
+        // the cached CGColor matches dark/light mode.
+        effectiveAppearance.performAsCurrentDrawingAppearance {
+            lineLayer.backgroundColor = NSColor.separatorColor.cgColor
+        }
     }
 
     override func viewDidChangeEffectiveAppearance() {
         super.viewDidChangeEffectiveAppearance()
-        needsDisplay = true
+        updateLineColor()
+    }
+
+    override func resetCursorRects() {
+        guard resizablePanelIdentifier != nil else {
+            return
+        }
+        super.resetCursorRects()
+    }
+
+    // The resize cursor rect lives in this view's own coordinates, but the
+    // divider is repositioned to a new window x on every layout pass, so the
+    // window's cached rects must be rebuilt for it to keep showing the resize
+    // cursor at its new location.
+    func updateGrabCursorRects() {
+        window?.invalidateCursorRects(for: self)
     }
 }
 
 @objc(iTermRightGutterController)
-class iTermRightGutterController: NSObject, iTermRightGutterPanelDelegate {
+class iTermRightGutterController: NSObject, iTermRightGutterPanelDelegate, iTermDragHandleViewDelegate {
     private weak var sessionView: SessionView?
     private var panels: [iTermRightGutterPanel] = []
     // Mirrors panels' identifiers in order; used for diffing against the
@@ -43,7 +105,6 @@ class iTermRightGutterController: NSObject, iTermRightGutterPanelDelegate {
     // the cell grid / timestamps slot and the leftmost visible panel).
     // Lazily attached on first use.
     private var leadingDivider: iTermRightGutterDividerView?
-    private static let dividerWidth: CGFloat = 1
 
     @objc(initWithSessionView:)
     init(sessionView: SessionView) {
@@ -238,7 +299,8 @@ class iTermRightGutterController: NSObject, iTermRightGutterPanelDelegate {
             return
         }
         if leadingDivider == nil {
-            let divider = iTermRightGutterDividerView()
+            let divider = iTermRightGutterDividerView(frame: .zero)
+            divider.delegate = self
             sessionView.addSubview(belowFind: divider)
             leadingDivider = divider
         }
@@ -252,39 +314,49 @@ class iTermRightGutterController: NSObject, iTermRightGutterPanelDelegate {
         let x = panels[firstIndex].view.frame.minX.isFinite
             ? panels[firstIndex].view.frame.minX
             : gutterMinX
-        divider.frame = NSRect(x: x, y: y, width: Self.dividerWidth, height: height)
+        // The leftmost visible panel's left edge: dragging this divider
+        // resizes that panel.
+        divider.resizablePanelIdentifier = panels[firstIndex].panelIdentifier
+        divider.frame = NSRect(x: x, y: y,
+                               width: iTermRightGutterDividerView.grabWidth, height: height)
         divider.isHidden = false
         // Re-add to push to the end of the subview list so it draws above
         // its panel neighbor.
         sessionView.addSubview(belowFind: divider)
+        divider.updateGrabCursorRects()
     }
 
     // Hairline divider between consecutive visible panels. Drawn as an
-    // overlay above the panels — it overlaps the leftmost dividerWidth pt
-    // of the right panel rather than reserving budget space, which would
-    // require plumbing through PTYSession.desiredRightExtraForProfile.
+    // overlay above the panels — its grab strip overlaps the leftmost pts of
+    // the right panel rather than reserving budget space, which would require
+    // plumbing through PTYSession.desiredRightExtraForProfile.
     private func positionDividers(visiblePanelIndices: [Int],
                                   y: CGFloat,
                                   height: CGFloat,
                                   in sessionView: SessionView) {
         let neededDividerCount = max(visiblePanelIndices.count - 1, 0)
         while dividers.count < neededDividerCount {
-            let divider = iTermRightGutterDividerView()
+            let divider = iTermRightGutterDividerView(frame: .zero)
+            divider.delegate = self
             sessionView.addSubview(belowFind: divider)
             dividers.append(divider)
         }
         for (slot, divider) in dividers.enumerated() {
             if slot < neededDividerCount {
                 let rightPanel = panels[visiblePanelIndices[slot + 1]]
+                // The divider is the right panel's left edge; dragging it
+                // resizes that panel.
+                divider.resizablePanelIdentifier = rightPanel.panelIdentifier
                 let frame = NSRect(x: rightPanel.view.frame.minX,
                                    y: y,
-                                   width: Self.dividerWidth,
+                                   width: iTermRightGutterDividerView.grabWidth,
                                    height: height)
                 divider.frame = frame
                 divider.isHidden = false
                 // Re-add so the divider is at the end of the subview list
                 // (and therefore drawn above the just-positioned panels).
                 sessionView.addSubview(belowFind: divider)
+                divider.updateGrabCursorRects()
             } else {
                 divider.isHidden = true
             }
@@ -294,22 +366,78 @@ class iTermRightGutterController: NSObject, iTermRightGutterPanelDelegate {
     // MARK: - iTermRightGutterPanelDelegate
 
     func rightGutterPanelDidChangeWidthOrVisibility(_ panel: iTermRightGutterPanel) {
+        relayoutAfterWidthChange()
+    }
+
+    // The registry's totalWidthForProfile reads the same store the panels'
+    // widthProviders use, so the next time desiredRightExtra is evaluated it
+    // reflects the new width. Notify the parent window to rerun the layout
+    // cascade, or relayout in place when the budget is unchanged (e.g., a
+    // visibility toggle that doesn't affect the configured width).
+    private func relayoutAfterWidthChange() {
         guard let sessionView = sessionView,
               let session = sessionView.delegate as? PTYSession,
               let view = session.view,
               session.profile != nil else {
             return
         }
-        // The registry's totalWidthForProfile reads the same prefs the panels
-        // use, so the next time desiredRightExtra is evaluated it will reflect
-        // the new width. Notify the parent window to rerun the layout cascade.
         if view.actualRightExtra != session.desiredRightExtra() {
             session.delegate?.realParentWindow()?.rightExtraDidChange()
         } else {
-            // Width unchanged at the budget level (e.g., visibility toggle
-            // that doesn't affect the configured width). Just relayout in
-            // place.
             positionPanels(in: sessionView)
         }
+    }
+
+    // MARK: - iTermDragHandleViewDelegate
+
+    func dragHandleView(_ dragHandle: iTermDragHandleView, didMoveBy delta: CGFloat) -> CGFloat {
+        guard let divider = dragHandle as? iTermRightGutterDividerView,
+              let identifier = divider.resizablePanelIdentifier,
+              let sessionView = sessionView,
+              let panel = panels.first(where: { $0.panelIdentifier == identifier }) else {
+            return 0
+        }
+        let before = panel.width
+        // Dragging the handle right (delta > 0) shrinks the panel; left widens
+        // it (the gutter is right-anchored, so a panel's left edge moves left
+        // as it grows).
+        let proposed = before - delta
+        let after = min(maxResizableWidth(forIdentifier: identifier, in: sessionView),
+                        max(iTermGutterPanelWidths.minWidth, proposed))
+        if after != before {
+            iTermGutterPanelWidths.setWidth(after, forIdentifier: identifier)
+            relayoutAfterWidthChange()
+        }
+        // The handle moved right by however much the panel narrowed; reporting
+        // this lets iTermDragHandleView make the handle "stick" at the clamp.
+        return before - after
+    }
+
+    func dragHandleViewDidFinishMoving(_ dragHandle: iTermDragHandleView) {
+        // Live dragging relayouts the visible session; make sure the final
+        // size is committed across the window, mirroring the toolbelt's
+        // toolbeltDidFinishGrowing.
+        relayoutAfterWidthChange()
+    }
+
+    // Largest width this panel may take without crushing the terminal grid
+    // below a usable minimum, holding the other panels and the timestamp slot
+    // fixed. The other panels' widths come from the store (they don't change
+    // during this drag) and the timestamp slot is stable, so this is robust to
+    // the asynchronous right-extra relayout lagging a frame behind.
+    private func maxResizableWidth(forIdentifier identifier: String,
+                                   in sessionView: SessionView) -> CGFloat {
+        let minTerminalWidth: CGFloat = 120
+        guard let session = sessionView.delegate as? PTYSession,
+              let view = session.view else {
+            return iTermGutterPanelWidths.maxWidth
+        }
+        let timestampSlot = max(0, view.actualRightExtra - view.actualPanelReservation)
+        let otherPanels = panels
+            .filter { $0.visible && $0.panelIdentifier != identifier }
+            .reduce(0) { $0 + $1.width }
+        let available = sessionView.bounds.width - timestampSlot - otherPanels - minTerminalWidth
+        return max(iTermGutterPanelWidths.minWidth,
+                   min(iTermGutterPanelWidths.maxWidth, available))
     }
 }

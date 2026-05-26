@@ -2168,7 +2168,10 @@ extension ChatViewController: iTermRightGutterPanel {
 
     var panelIdentifier: String { Self.inlineChatPanelIdentifier }
 
-    var width: CGFloat { Self.inlineChatPanelWidth }
+    var width: CGFloat {
+        iTermGutterPanelWidths.width(forIdentifier: Self.inlineChatPanelIdentifier,
+                                     defaultValue: Self.inlineChatPanelWidth)
+    }
 
     var visible: Bool {
         guard let session = currentInlinePanelSession else { return false }
@@ -2308,7 +2311,9 @@ class iTermInlineChatGutterPanelRegistration: NSObject {
                       ChatClient.instance != nil else {
                     return 0
                 }
-                return ChatViewController.inlineChatPanelWidth
+                return iTermGutterPanelWidths.width(
+                    forIdentifier: ChatViewController.inlineChatPanelIdentifier,
+                    defaultValue: ChatViewController.inlineChatPanelWidth)
             })
     }
 }
